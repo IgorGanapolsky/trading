@@ -1,0 +1,92 @@
+# .dockerignore - Excludes files from Docker build context
+# This improves build performance and reduces image size
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.cover
+.hypothesis/
+
+# Documentation
+docs/
+*.md
+README*
+LICENSE
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Docker files (no need to copy into image)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Environment files (use env_file in compose)
+.env
+.env.*
+
+# Data and logs (mounted as volumes)
+data/
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Claude AI files
+.claude/
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Jupyter notebooks
+*.ipynb
+.ipynb_checkpoints/
+
+# Test files (not needed in production)
+tests/
+test_*.py
+*_test.py

@@ -1,0 +1,149 @@
+version: '3.8'
+
+# Docker Compose configuration for Trading System
+# This orchestrates the trading bot and dashboard services
+
+services:
+  # Main trading bot service
+  trading_bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: trading-bot
+
+    # Load environment variables from .env file
+    # Create this file from .env.example with your actual API keys
+    env_file:
+      - .env
+
+    # Additional environment variables
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - TRADING_MODE=${TRADING_MODE:-paper}
+      - TZ=${TZ:-America/New_York}
+
+    # Mount volumes for persistent data
+    volumes:
+      # Trading data: positions, history, cache
+      - ./data:/app/data
+      # Application logs
+      - ./logs:/app/logs
+      # Mount source code for development (comment out in production)
+      # - ./src:/app/src:ro
+
+    # Restart policy: always restart unless explicitly stopped
+    restart: unless-stopped
+
+    # Resource limits to prevent container from consuming too much
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    # Health check configuration
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "python.*main.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Network configuration
+    networks:
+      - trading-network
+
+  # Dashboard service (Streamlit)
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: trading-dashboard
+
+    # Override entrypoint to run Streamlit instead of main.py
+    command: ["streamlit", "run", "dashboard/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+
+    # Load environment variables
+    env_file:
+      - .env
+
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=${TZ:-America/New_York}
+
+    # Mount volumes (read-only for data safety)
+    volumes:
+      # Read-only access to trading data
+      - ./data:/app/data:ro
+      # Read-only access to logs
+      - ./logs:/app/logs:ro
+      # Mount dashboard code for hot reload in development
+      # - ./dashboard:/app/dashboard:ro
+
+    # Expose Streamlit port
+    ports:
+      - "8501:8501"
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+    # Health check for Streamlit
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Depends on trading bot (optional - can run independently)
+    depends_on:
+      trading_bot:
+        condition: service_healthy
+
+    # Network configuration
+    networks:
+      - trading-network
+
+# Define networks
+networks:
+  trading-network:
+    driver: bridge
+    name: trading-network
+
+# Define named volumes (optional - using bind mounts above)
+# Uncomment to use Docker-managed volumes instead of local directories
+# volumes:
+#   trading_data:
+#     driver: local
+#   trading_logs:
+#     driver: local

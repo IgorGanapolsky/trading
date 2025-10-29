@@ -1,0 +1,41 @@
+# Environment
+.env
+.env.local
+.env.*.local
+venv/
+env/
+ENV/
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Data
+data/*.csv
+data/*.json
+logs/*.log
+
+# Docker
+*.pid
+
+# Secrets
+*_secret*
+*_key*
+api_keys.txt
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Distribution
+dist/
+build/
+*.egg-info/
