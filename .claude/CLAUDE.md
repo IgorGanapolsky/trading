@@ -301,7 +301,19 @@ While waiting (30 days): $150 × 3.56% APY = ~$0.44 extra
 ...continues exponentially
 ```
 
-**Action Items**:
+**When We Can Use This**:
+- ❌ NOT available during paper trading (current phase)
+- ✅ Only available with LIVE account + real money
+- ✅ Must meet balance or income requirements
+- ✅ Cannot be a Pattern Day Trader
+
+**Timeline**:
+- **Now (Days 1-30)**: Paper trading - High-Yield Cash NOT available
+- **Month 2+**: Switch to live $1/day Fibonacci strategy → THEN enroll in High-Yield Cash
+- **Benefit Starts**: When we have real cash accumulating between Fibonacci phases
+
+**Action Items** (Future - After Going Live):
+- [ ] Switch from paper to live account (Month 2)
 - [ ] Enroll in Alpaca High-Yield Cash program
 - [ ] Track High-Yield Cash earnings in daily reports
 - [ ] Include passive interest in profit calculations
