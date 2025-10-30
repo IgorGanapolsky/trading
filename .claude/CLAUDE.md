@@ -1,5 +1,34 @@
 # AI Trading System - Agent Coordination
 
+## CLAUDE MEMORY USAGE
+
+**How to Use Claude Memory Effectively**:
+- View current memory state: `/memory` command
+- Add quick memories: Use `#` shortcut during conversation
+- Review periodically: Check memory summary in Settings
+- Project-scoped: This project's memory is separate from other work
+- Incognito mode: Use for sensitive discussions not to be remembered
+
+**What Claude Should Remember**:
+- CEO/CTO chain of command (you take charge, don't tell CEO what to do)
+- Current day in 30-day challenge (read from `data/system_state.json`)
+- Research findings documented in this file
+- System architecture and key decisions
+- Enhancement roadmap and priorities
+
+**Where System State Lives**:
+- `data/system_state.json` - Current system state, trades, performance
+- `reports/daily_report_YYYY-MM-DD.txt` - Daily CEO reports
+- `.claude/CLAUDE.md` - Project memory and instructions (this file)
+
+**Memory Hierarchy** (per Anthropic guidelines):
+1. Enterprise policies (if applicable)
+2. Project-level instructions (this CLAUDE.md file)
+3. User preferences (personal settings)
+4. Local customizations (conversation-specific)
+
+---
+
 ## CHAIN OF COMMAND
 
 **CEO**: Igor Ganapolsky
