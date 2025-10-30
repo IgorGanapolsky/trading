@@ -70,6 +70,15 @@
 
 **Example**: When researching multiple topics, launch 3-5 agents simultaneously rather than one at a time.
 
+### Documentation Protocol
+
+**README is our source of truth**:
+- ONE README.md at project root - this is the ONLY README
+- All other .md files belong in `docs/` directory
+- README.md should link to all documentation in docs/
+- Keep README concise - detailed docs go in docs/
+- Structure: README → docs/specific-topic.md
+
 ---
 
 ## Project Overview

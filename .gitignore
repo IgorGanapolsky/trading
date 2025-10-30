@@ -29,6 +29,8 @@ logs/*.log
 *_secret*
 *_key*
 api_keys.txt
+test_*.py
+*_test.py
 
 # Testing
 .pytest_cache/
