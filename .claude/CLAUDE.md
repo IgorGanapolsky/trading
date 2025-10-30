@@ -325,7 +325,81 @@ While waiting (30 days): $150 × 3.56% APY = ~$0.44 extra
 - **Negative spread** = NEVER use margin
 - **Strategy**: Only trade with cash we have
 
-### 2. Claude Batching Strategy (Prevent Token Exhaustion)
+### 2. OpenRouter Multi-LLM Strategy (Cost-Benefit Analysis)
+
+**Current Status**: October 30, 2025 - Security incident resolved
+
+**Security Incident**:
+- ❌ Old API key exposed in git history (commit d3fa92d)
+- ✅ OpenRouter automatically disabled exposed key
+- ✅ New API key created and secured in .env
+- ✅ .env verified in .gitignore (will NOT be committed)
+- ⚠️ Old key still in git history but disabled by OpenRouter
+
+**Integration Status**:
+- ✅ MultiLLMAnalyzer fully built and integrated into CoreStrategy
+- ✅ Configured with 3 models: Claude 3.5 Sonnet, GPT-4o, Gemini 2 Flash
+- ✅ Code supports `use_sentiment=True` flag
+- ❌ Currently NOT calling AI during trades (making simple buy orders)
+
+**Cost Analysis**:
+| Model | Cost per 1M tokens | Input | Output |
+|-------|-------------------|--------|---------|
+| Claude 3.5 Sonnet | $3/$15 | In/Out | Deep analysis |
+| GPT-4o | $2.50/$10 | In/Out | Reasoning |
+| Gemini 2 Flash | $0.075/$0.30 | In/Out | Fast sentiment |
+
+**Estimated Costs If Enabled**:
+- Daily: 3 models × 2 calls × ~1000 tokens = $0.50-2/day
+- Monthly: $15-60 for AI analysis
+- Annually: $180-720
+
+**Decision: When to Enable OpenRouter**
+
+**Phase 1 (Now - Days 1-30)**: ❌ **DISABLED**
+- Current: Paper trading with simple buy orders ($10/day)
+- Profit: $0.02/day (essentially break-even)
+- Analysis: NOT worth spending $15-60/month for $0.02/day profit
+- Purpose: Testing infrastructure, not making real money yet
+
+**Phase 2 (Month 2-3)**: ❌ **STILL DISABLED**
+- Live $1/day Fibonacci strategy with RL system
+- Projected: $1-3/day profit
+- Analysis: NOT worth spending $2/day AI cost when making $1-3/day
+- Purpose: Validate RL system profitability first
+
+**Phase 3 (Month 4+)**: ✅ **ENABLE WHEN PROFITABLE**
+- Scaled to $5-13/day Fibonacci phases
+- Projected: $10-50/day profit
+- Analysis: **Worth enabling** - $2/day AI cost becomes negligible
+- Purpose: Multi-LLM consensus improves market regime detection
+- ROI: If AI improves returns by 10-20%, pays for itself immediately
+
+**Enable OpenRouter When**:
+```python
+# Conditions to enable:
+if (
+    daily_profit > 10  # Making $10+/day consistently
+    and fibonacci_phase >= 5  # At $5/day investment phase or higher
+    and rl_sharpe_ratio > 1.0  # RL system validated
+):
+    use_sentiment = True  # Enable multi-LLM analysis
+```
+
+**What OpenRouter Will Do (When Enabled)**:
+- Market sentiment analysis (3-model consensus)
+- Risk-off detection (market crashes, volatility spikes)
+- Sector rotation signals (which sectors to weight)
+- Entry/exit timing optimization
+- News sentiment integration
+
+**Action Items**:
+- [ ] Keep OpenRouter integrated but disabled (current)
+- [ ] Monitor profit levels in Month 4+
+- [ ] Enable when making $10+/day consistently
+- [ ] Track ROI: Does AI improve returns enough to justify cost?
+
+### 3. Claude Batching Strategy (Prevent Token Exhaustion)
 
 **Problem**: Running out of Claude tokens daily, interrupting progress
 
