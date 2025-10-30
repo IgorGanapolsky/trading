@@ -15,9 +15,9 @@ print("=" * 60)
 
 # 1. Check environment variables
 print("\n1️⃣ Checking Environment Variables...")
-alpaca_key = os.getenv('ALPACA_API_KEY')
-alpaca_secret = os.getenv('ALPACA_SECRET_KEY')
-openrouter_key = os.getenv('OPENROUTER_API_KEY')
+alpaca_key = os.getenv("ALPACA_API_KEY")
+alpaca_secret = os.getenv("ALPACA_SECRET_KEY")
+openrouter_key = os.getenv("OPENROUTER_API_KEY")
 
 if alpaca_key and alpaca_secret and openrouter_key:
     print(f"   ✅ Alpaca Key: {alpaca_key[:10]}...")
@@ -51,16 +51,13 @@ print("\n3️⃣ Testing OpenRouter Connection...")
 try:
     from openai import OpenAI
 
-    client = OpenAI(
-        base_url='https://openrouter.ai/api/v1',
-        api_key=openrouter_key
-    )
+    client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=openrouter_key)
 
     # Simple test query
     response = client.chat.completions.create(
-        model='anthropic/claude-3.5-sonnet',
-        messages=[{'role': 'user', 'content': 'Reply with just: WORKING'}],
-        max_tokens=10
+        model="anthropic/claude-3.5-sonnet",
+        messages=[{"role": "user", "content": "Reply with just: WORKING"}],
+        max_tokens=10,
     )
 
     result = response.choices[0].message.content.strip()
@@ -75,14 +72,14 @@ except Exception as e:
 # 4. Check file structure
 print("\n4️⃣ Checking File Structure...")
 required_files = [
-    'src/core/multi_llm_analysis.py',
-    'src/core/alpaca_trader.py',
-    'src/core/risk_manager.py',
-    'src/strategies/core_strategy.py',
-    'src/strategies/growth_strategy.py',
-    'src/strategies/ipo_strategy.py',
-    'src/main.py',
-    'dashboard/dashboard.py',
+    "src/core/multi_llm_analysis.py",
+    "src/core/alpaca_trader.py",
+    "src/core/risk_manager.py",
+    "src/strategies/core_strategy.py",
+    "src/strategies/growth_strategy.py",
+    "src/strategies/ipo_strategy.py",
+    "src/main.py",
+    "dashboard/dashboard.py",
 ]
 
 all_present = True

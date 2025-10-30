@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Position:
     """Represents an open trading position."""
+
     symbol: str
     entry_price: float
     quantity: int
@@ -45,6 +46,7 @@ class Position:
 @dataclass
 class Order:
     """Represents a trading order."""
+
     symbol: str
     action: str  # 'buy' or 'sell'
     quantity: int
@@ -57,6 +59,7 @@ class Order:
 @dataclass
 class CandidateStock:
     """Represents a candidate stock for trading."""
+
     symbol: str
     technical_score: float
     consensus_score: float
@@ -111,11 +114,11 @@ class MultiLLMAnalyzer:
         # Simple scoring based on technical data for now
         score = 50.0  # Base score
 
-        if technical_data.get('momentum', 0) > 0:
+        if technical_data.get("momentum", 0) > 0:
             score += 15
-        if 30 < technical_data.get('rsi', 50) < 70:
+        if 30 < technical_data.get("rsi", 50) < 70:
             score += 15
-        if technical_data.get('volume_ratio', 1) > 1.2:
+        if technical_data.get("volume_ratio", 1) > 1.2:
             score += 20
 
         return min(100.0, max(0.0, score))
@@ -144,7 +147,9 @@ class AlpacaTrader:
         Returns:
             True if order was submitted successfully
         """
-        logger.info(f"Submitting {order.action} order for {order.symbol}: {order.quantity} shares")
+        logger.info(
+            f"Submitting {order.action} order for {order.symbol}: {order.quantity} shares"
+        )
         # Mock implementation
         return True
 
@@ -197,9 +202,13 @@ class RiskManager:
         """
         self.max_position_size = max_position_size
         self.max_daily_loss = max_daily_loss
-        logger.info(f"Initializing RiskManager (max_position={max_position_size}, max_loss={max_daily_loss})")
+        logger.info(
+            f"Initializing RiskManager (max_position={max_position_size}, max_loss={max_daily_loss})"
+        )
 
-    def validate_order(self, order: Order, portfolio_value: float, current_positions: int) -> Tuple[bool, str]:
+    def validate_order(
+        self, order: Order, portfolio_value: float, current_positions: int
+    ) -> Tuple[bool, str]:
         """
         Validate if an order meets risk requirements.
 
@@ -212,16 +221,21 @@ class RiskManager:
             Tuple of (is_valid, reason)
         """
         # Check position count
-        if order.action == 'buy' and current_positions >= 2:
+        if order.action == "buy" and current_positions >= 2:
             return False, "Maximum position count (2) reached"
 
         # Check position size
-        if order.action == 'buy':
+        if order.action == "buy":
             order_value = order.quantity * (order.limit_price or 0)
-            position_fraction = order_value / portfolio_value if portfolio_value > 0 else 1.0
+            position_fraction = (
+                order_value / portfolio_value if portfolio_value > 0 else 1.0
+            )
 
             if position_fraction > self.max_position_size:
-                return False, f"Position size ({position_fraction:.1%}) exceeds maximum ({self.max_position_size:.1%})"
+                return (
+                    False,
+                    f"Position size ({position_fraction:.1%}) exceeds maximum ({self.max_position_size:.1%})",
+                )
 
         return True, "Order validated"
 
@@ -273,12 +287,56 @@ class GrowthStrategy:
 
     # S&P 500 tickers (sample - in production would load from file or API)
     SP500_TICKERS = [
-        'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'BRK.B',
-        'UNH', 'XOM', 'JNJ', 'JPM', 'V', 'PG', 'MA', 'HD', 'CVX', 'ABBV',
-        'MRK', 'LLY', 'AVGO', 'PEP', 'COST', 'KO', 'WMT', 'MCD', 'CSCO',
-        'TMO', 'ABT', 'ACN', 'ADBE', 'CRM', 'NFLX', 'AMD', 'TXN', 'DHR',
-        'INTC', 'VZ', 'CMCSA', 'PM', 'NEE', 'UPS', 'HON', 'ORCL', 'NKE',
-        'UNP', 'IBM', 'BA', 'GE', 'CAT'
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "AMZN",
+        "NVDA",
+        "META",
+        "TSLA",
+        "BRK.B",
+        "UNH",
+        "XOM",
+        "JNJ",
+        "JPM",
+        "V",
+        "PG",
+        "MA",
+        "HD",
+        "CVX",
+        "ABBV",
+        "MRK",
+        "LLY",
+        "AVGO",
+        "PEP",
+        "COST",
+        "KO",
+        "WMT",
+        "MCD",
+        "CSCO",
+        "TMO",
+        "ABT",
+        "ACN",
+        "ADBE",
+        "CRM",
+        "NFLX",
+        "AMD",
+        "TXN",
+        "DHR",
+        "INTC",
+        "VZ",
+        "CMCSA",
+        "PM",
+        "NEE",
+        "UPS",
+        "HON",
+        "ORCL",
+        "NKE",
+        "UNP",
+        "IBM",
+        "BA",
+        "GE",
+        "CAT",
     ]
 
     def __init__(self, weekly_allocation: float = 10.0):
@@ -305,7 +363,9 @@ class GrowthStrategy:
         self.winning_trades = 0
         self.total_pnl = 0.0
 
-        logger.info(f"GrowthStrategy initialized with ${weekly_allocation} weekly allocation")
+        logger.info(
+            f"GrowthStrategy initialized with ${weekly_allocation} weekly allocation"
+        )
 
     def execute_weekly(self) -> List[Order]:
         """
@@ -382,7 +442,9 @@ class GrowthStrategy:
         # Use LLM analyzer to screen
         screened = self.llm_analyzer.screen_stocks(candidates)
 
-        logger.info(f"AI screening complete: {len(screened)}/{len(candidates)} stocks passed")
+        logger.info(
+            f"AI screening complete: {len(screened)}/{len(candidates)} stocks passed"
+        )
         return screened
 
     def apply_technical_filters(self, candidates: List[str]) -> List[CandidateStock]:
@@ -411,13 +473,13 @@ class GrowthStrategy:
 
                 # Get current price and technical indicators
                 ticker = yf.Ticker(symbol)
-                hist = ticker.history(period='3mo')
+                hist = ticker.history(period="3mo")
 
                 if len(hist) < 20:
                     logger.debug(f"{symbol}: Insufficient data")
                     continue
 
-                current_price = hist['Close'].iloc[-1]
+                current_price = hist["Close"].iloc[-1]
 
                 # Calculate indicators
                 momentum = self._calculate_momentum(hist)
@@ -433,21 +495,29 @@ class GrowthStrategy:
                         current_price=current_price,
                         momentum=momentum,
                         rsi=rsi,
-                        volume_ratio=volume_ratio
+                        volume_ratio=volume_ratio,
                     )
                     filtered_stocks.append(candidate)
-                    logger.debug(f"{symbol}: PASSED (momentum={momentum:.2f}, RSI={rsi:.1f}, vol_ratio={volume_ratio:.2f})")
+                    logger.debug(
+                        f"{symbol}: PASSED (momentum={momentum:.2f}, RSI={rsi:.1f}, vol_ratio={volume_ratio:.2f})"
+                    )
                 else:
-                    logger.debug(f"{symbol}: FILTERED OUT (momentum={momentum:.2f}, RSI={rsi:.1f}, vol_ratio={volume_ratio:.2f})")
+                    logger.debug(
+                        f"{symbol}: FILTERED OUT (momentum={momentum:.2f}, RSI={rsi:.1f}, vol_ratio={volume_ratio:.2f})"
+                    )
 
             except Exception as e:
                 logger.warning(f"Error processing {symbol}: {e}")
                 continue
 
-        logger.info(f"Technical filtering complete: {len(filtered_stocks)} stocks passed")
+        logger.info(
+            f"Technical filtering complete: {len(filtered_stocks)} stocks passed"
+        )
         return filtered_stocks
 
-    def get_multi_llm_ranking(self, candidates: List[CandidateStock]) -> List[CandidateStock]:
+    def get_multi_llm_ranking(
+        self, candidates: List[CandidateStock]
+    ) -> List[CandidateStock]:
         """
         Get multi-LLM consensus scores and rank candidates.
 
@@ -460,20 +530,21 @@ class GrowthStrategy:
         Returns:
             List of CandidateStock objects sorted by ranking (best first)
         """
-        logger.info(f"Getting multi-LLM consensus scores for {len(candidates)} candidates")
+        logger.info(
+            f"Getting multi-LLM consensus scores for {len(candidates)} candidates"
+        )
 
         # Get consensus scores from LLM analyzer
         for candidate in candidates:
             technical_data = {
-                'momentum': candidate.momentum,
-                'rsi': candidate.rsi,
-                'volume_ratio': candidate.volume_ratio,
-                'technical_score': candidate.technical_score
+                "momentum": candidate.momentum,
+                "rsi": candidate.rsi,
+                "volume_ratio": candidate.volume_ratio,
+                "technical_score": candidate.technical_score,
             }
 
             consensus_score = self.llm_analyzer.get_consensus_score(
-                candidate.symbol,
-                technical_data
+                candidate.symbol, technical_data
             )
             candidate.consensus_score = consensus_score
 
@@ -482,15 +553,19 @@ class GrowthStrategy:
         # Rank by combined score (50% technical, 50% consensus)
         candidates.sort(
             key=lambda x: (0.5 * x.technical_score + 0.5 * x.consensus_score),
-            reverse=True
+            reverse=True,
         )
 
         logger.info("Multi-LLM ranking complete")
         for i, candidate in enumerate(candidates[:5], 1):
-            combined_score = 0.5 * candidate.technical_score + 0.5 * candidate.consensus_score
-            logger.info(f"  #{i}: {candidate.symbol} (combined={combined_score:.1f}, "
-                       f"technical={candidate.technical_score:.1f}, "
-                       f"consensus={candidate.consensus_score:.1f})")
+            combined_score = (
+                0.5 * candidate.technical_score + 0.5 * candidate.consensus_score
+            )
+            logger.info(
+                f"  #{i}: {candidate.symbol} (combined={combined_score:.1f}, "
+                f"technical={candidate.technical_score:.1f}, "
+                f"consensus={candidate.consensus_score:.1f})"
+            )
 
         return candidates
 
@@ -522,29 +597,31 @@ class GrowthStrategy:
             try:
                 # Get current price
                 ticker = yf.Ticker(position.symbol)
-                current_price = ticker.history(period='1d')['Close'].iloc[-1]
+                current_price = ticker.history(period="1d")["Close"].iloc[-1]
 
                 # Calculate current P&L
                 pnl_pct = (current_price - position.entry_price) / position.entry_price
                 holding_days = (datetime.now() - position.entry_date).days
                 holding_weeks = holding_days / 7
 
-                logger.info(f"  {position.symbol}: price=${current_price:.2f}, "
-                           f"entry=${position.entry_price:.2f}, P&L={pnl_pct:.2%}, "
-                           f"holding={holding_weeks:.1f}w")
+                logger.info(
+                    f"  {position.symbol}: price=${current_price:.2f}, "
+                    f"entry=${position.entry_price:.2f}, P&L={pnl_pct:.2%}, "
+                    f"holding={holding_weeks:.1f}w"
+                )
 
                 # Check stop-loss
                 if self.risk_manager.check_stop_loss(position, current_price):
                     logger.info(f"  -> STOP-LOSS TRIGGERED for {position.symbol}")
                     order = Order(
                         symbol=position.symbol,
-                        action='sell',
+                        action="sell",
                         quantity=position.quantity,
-                        order_type='market',
-                        reason=f"Stop-loss triggered at {current_price:.2f} (entry: {position.entry_price:.2f})"
+                        order_type="market",
+                        reason=f"Stop-loss triggered at {current_price:.2f} (entry: {position.entry_price:.2f})",
                     )
                     orders.append(order)
-                    self._record_trade(position, current_price, 'stop_loss')
+                    self._record_trade(position, current_price, "stop_loss")
                     continue
 
                 # Check take-profit
@@ -552,13 +629,13 @@ class GrowthStrategy:
                     logger.info(f"  -> TAKE-PROFIT TRIGGERED for {position.symbol}")
                     order = Order(
                         symbol=position.symbol,
-                        action='sell',
+                        action="sell",
                         quantity=position.quantity,
-                        order_type='market',
-                        reason=f"Take-profit triggered at {current_price:.2f} (entry: {position.entry_price:.2f})"
+                        order_type="market",
+                        reason=f"Take-profit triggered at {current_price:.2f} (entry: {position.entry_price:.2f})",
                     )
                     orders.append(order)
-                    self._record_trade(position, current_price, 'take_profit')
+                    self._record_trade(position, current_price, "take_profit")
                     continue
 
                 # Check maximum holding period
@@ -566,13 +643,13 @@ class GrowthStrategy:
                     logger.info(f"  -> MAX HOLDING PERIOD for {position.symbol}")
                     order = Order(
                         symbol=position.symbol,
-                        action='sell',
+                        action="sell",
                         quantity=position.quantity,
-                        order_type='market',
-                        reason=f"Maximum holding period ({self.max_holding_weeks}w) reached"
+                        order_type="market",
+                        reason=f"Maximum holding period ({self.max_holding_weeks}w) reached",
                     )
                     orders.append(order)
-                    self._record_trade(position, current_price, 'max_holding')
+                    self._record_trade(position, current_price, "max_holding")
                     continue
 
                 # Weekly review after minimum holding period
@@ -583,13 +660,13 @@ class GrowthStrategy:
                         logger.info(f"  -> REVIEW EXIT for {position.symbol}")
                         order = Order(
                             symbol=position.symbol,
-                            action='sell',
+                            action="sell",
                             quantity=position.quantity,
-                            order_type='market',
-                            reason="Weekly review indicates exit"
+                            order_type="market",
+                            reason="Weekly review indicates exit",
                         )
                         orders.append(order)
-                        self._record_trade(position, current_price, 'review_exit')
+                        self._record_trade(position, current_price, "review_exit")
                     else:
                         logger.info(f"  -> HOLD {position.symbol}")
 
@@ -597,7 +674,9 @@ class GrowthStrategy:
                 logger.error(f"Error managing position {position.symbol}: {e}")
                 continue
 
-        logger.info(f"Position management complete: {len(orders)} exit orders generated")
+        logger.info(
+            f"Position management complete: {len(orders)} exit orders generated"
+        )
         return orders
 
     def calculate_technical_score(self, symbol: str) -> float:
@@ -618,7 +697,7 @@ class GrowthStrategy:
         """
         try:
             ticker = yf.Ticker(symbol)
-            hist = ticker.history(period='3mo')
+            hist = ticker.history(period="3mo")
 
             if len(hist) < 20:
                 return 0.0
@@ -680,7 +759,7 @@ class GrowthStrategy:
         for pos in positions:
             try:
                 ticker = yf.Ticker(pos.symbol)
-                current_price = ticker.history(period='1d')['Close'].iloc[-1]
+                current_price = ticker.history(period="1d")["Close"].iloc[-1]
                 position_value += current_price * pos.quantity
             except:
                 position_value += pos.entry_price * pos.quantity
@@ -688,20 +767,26 @@ class GrowthStrategy:
         total_value = cash + position_value
         allocation_used = (position_value / total_value * 100) if total_value > 0 else 0
 
-        win_rate = (self.winning_trades / self.total_trades * 100) if self.total_trades > 0 else 0
-        avg_return = (self.total_pnl / self.total_trades) if self.total_trades > 0 else 0
+        win_rate = (
+            (self.winning_trades / self.total_trades * 100)
+            if self.total_trades > 0
+            else 0
+        )
+        avg_return = (
+            (self.total_pnl / self.total_trades) if self.total_trades > 0 else 0
+        )
 
         metrics = {
-            'total_trades': self.total_trades,
-            'winning_trades': self.winning_trades,
-            'win_rate': win_rate,
-            'total_pnl': self.total_pnl,
-            'avg_return': avg_return,
-            'current_positions': len(positions),
-            'allocation_used': allocation_used,
-            'position_value': position_value,
-            'cash': cash,
-            'total_value': total_value
+            "total_trades": self.total_trades,
+            "winning_trades": self.winning_trades,
+            "win_rate": win_rate,
+            "total_pnl": self.total_pnl,
+            "avg_return": avg_return,
+            "current_positions": len(positions),
+            "allocation_used": allocation_used,
+            "position_value": position_value,
+            "cash": cash,
+            "total_value": total_value,
         }
 
         return metrics
@@ -711,8 +796,8 @@ class GrowthStrategy:
         if len(hist) < 20:
             return 0.0
 
-        current_price = hist['Close'].iloc[-1]
-        price_20d_ago = hist['Close'].iloc[-20]
+        current_price = hist["Close"].iloc[-1]
+        price_20d_ago = hist["Close"].iloc[-20]
 
         momentum = (current_price - price_20d_ago) / price_20d_ago
         return momentum
@@ -722,7 +807,7 @@ class GrowthStrategy:
         if len(hist) < period + 1:
             return 50.0
 
-        closes = hist['Close']
+        closes = hist["Close"]
         deltas = closes.diff()
 
         gains = deltas.where(deltas > 0, 0.0)
@@ -741,8 +826,8 @@ class GrowthStrategy:
         if len(hist) < 20:
             return 1.0
 
-        current_volume = hist['Volume'].iloc[-1]
-        avg_volume = hist['Volume'].iloc[-20:].mean()
+        current_volume = hist["Volume"].iloc[-1]
+        avg_volume = hist["Volume"].iloc[-20:].mean()
 
         if avg_volume == 0:
             return 1.0
@@ -754,7 +839,7 @@ class GrowthStrategy:
         if len(hist) < 50:
             return 0.0
 
-        closes = hist['Close']
+        closes = hist["Close"]
         ma20 = closes.rolling(window=20).mean()
         ma50 = closes.rolling(window=50).mean()
 
@@ -778,7 +863,9 @@ class GrowthStrategy:
         """Generate buy orders for top candidate stocks."""
         orders = []
         available_cash = self.trader.get_account_cash()
-        cash_per_position = self.weekly_allocation / len(candidates) if candidates else 0
+        cash_per_position = (
+            self.weekly_allocation / len(candidates) if candidates else 0
+        )
 
         logger.info(f"Generating buy orders for {len(candidates)} candidates")
         logger.info(f"Cash per position: ${cash_per_position:.2f}")
@@ -789,27 +876,33 @@ class GrowthStrategy:
                 quantity = int(cash_per_position / candidate.current_price)
 
                 if quantity < 1:
-                    logger.warning(f"Insufficient funds for {candidate.symbol} at ${candidate.current_price:.2f}")
+                    logger.warning(
+                        f"Insufficient funds for {candidate.symbol} at ${candidate.current_price:.2f}"
+                    )
                     continue
 
                 # Validate order with risk manager
                 order = Order(
                     symbol=candidate.symbol,
-                    action='buy',
+                    action="buy",
                     quantity=quantity,
-                    order_type='market',
+                    order_type="market",
                     limit_price=candidate.current_price,
-                    reason=f"Top ranked stock (score={0.5 * candidate.technical_score + 0.5 * candidate.consensus_score:.1f})"
+                    reason=f"Top ranked stock (score={0.5 * candidate.technical_score + 0.5 * candidate.consensus_score:.1f})",
                 )
 
                 portfolio_value = available_cash
                 current_positions = len(self.trader.get_all_positions())
 
-                is_valid, reason = self.risk_manager.validate_order(order, portfolio_value, current_positions)
+                is_valid, reason = self.risk_manager.validate_order(
+                    order, portfolio_value, current_positions
+                )
 
                 if is_valid:
                     orders.append(order)
-                    logger.info(f"  BUY order created: {candidate.symbol} x{quantity} @ ${candidate.current_price:.2f}")
+                    logger.info(
+                        f"  BUY order created: {candidate.symbol} x{quantity} @ ${candidate.current_price:.2f}"
+                    )
                 else:
                     logger.warning(f"  Order rejected for {candidate.symbol}: {reason}")
 
@@ -856,8 +949,10 @@ class GrowthStrategy:
 
         self.total_pnl += pnl
 
-        logger.info(f"Trade recorded: {position.symbol} {exit_reason} - "
-                   f"P&L: ${pnl:.2f} ({pnl_pct:.2%})")
+        logger.info(
+            f"Trade recorded: {position.symbol} {exit_reason} - "
+            f"P&L: ${pnl:.2f} ({pnl_pct:.2%})"
+        )
 
 
 def main():
@@ -865,7 +960,7 @@ def main():
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     # Initialize strategy

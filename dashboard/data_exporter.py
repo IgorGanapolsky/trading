@@ -32,7 +32,7 @@ from datetime import datetime
 class DashboardExporter:
     """Exports trading system data for dashboard consumption."""
 
-    def __init__(self, data_dir: str = 'data/'):
+    def __init__(self, data_dir: str = "data/"):
         """
         Initialize the data exporter.
 
@@ -84,19 +84,28 @@ class DashboardExporter:
             df = pd.DataFrame(trades)
 
             # Ensure required columns exist
-            required_cols = ['timestamp', 'symbol', 'side', 'quantity', 'price',
-                           'amount', 'strategy', 'pnl', 'status']
+            required_cols = [
+                "timestamp",
+                "symbol",
+                "side",
+                "quantity",
+                "price",
+                "amount",
+                "strategy",
+                "pnl",
+                "status",
+            ]
 
             for col in required_cols:
                 if col not in df.columns:
                     df[col] = None
 
             # Convert timestamp to datetime if needed
-            if 'timestamp' in df.columns:
-                df['timestamp'] = pd.to_datetime(df['timestamp'])
+            if "timestamp" in df.columns:
+                df["timestamp"] = pd.to_datetime(df["timestamp"])
 
             # Sort by timestamp
-            df = df.sort_values('timestamp', ascending=False)
+            df = df.sort_values("timestamp", ascending=False)
 
             # Save to CSV
             df.to_csv(self.trades_file, index=False)
@@ -144,25 +153,25 @@ class DashboardExporter:
         try:
             # Ensure required fields exist
             default_performance = {
-                'total_value': 0.0,
-                'cash': 0.0,
-                'equity': 0.0,
-                'daily_pnl': 0.0,
-                'total_pnl': 0.0,
-                'total_pnl_pct': 0.0,
-                'strategies': {},
-                'equity_curve': [],
-                'daily_pnl_history': []
+                "total_value": 0.0,
+                "cash": 0.0,
+                "equity": 0.0,
+                "daily_pnl": 0.0,
+                "total_pnl": 0.0,
+                "total_pnl_pct": 0.0,
+                "strategies": {},
+                "equity_curve": [],
+                "daily_pnl_history": [],
             }
 
             # Merge with defaults
             export_data = {**default_performance, **performance}
 
             # Add metadata
-            export_data['last_updated'] = datetime.now().isoformat()
+            export_data["last_updated"] = datetime.now().isoformat()
 
             # Save to JSON
-            with open(self.performance_file, 'w') as f:
+            with open(self.performance_file, "w") as f:
                 json.dump(export_data, f, indent=2)
 
             print(f"[EXPORTER] Exported performance metrics to {self.performance_file}")
@@ -204,8 +213,16 @@ class DashboardExporter:
             df = pd.DataFrame(positions)
 
             # Ensure required columns exist
-            required_cols = ['symbol', 'quantity', 'avg_entry_price', 'current_price',
-                           'market_value', 'cost_basis', 'unrealized_pnl', 'unrealized_pnl_pct']
+            required_cols = [
+                "symbol",
+                "quantity",
+                "avg_entry_price",
+                "current_price",
+                "market_value",
+                "cost_basis",
+                "unrealized_pnl",
+                "unrealized_pnl_pct",
+            ]
 
             for col in required_cols:
                 if col not in df.columns:
@@ -213,7 +230,9 @@ class DashboardExporter:
 
             # Save to CSV
             df.to_csv(self.positions_file, index=False)
-            print(f"[EXPORTER] Exported {len(positions)} positions to {self.positions_file}")
+            print(
+                f"[EXPORTER] Exported {len(positions)} positions to {self.positions_file}"
+            )
 
         except Exception as e:
             print(f"[EXPORTER] Error exporting positions: {e}")
@@ -243,15 +262,15 @@ class DashboardExporter:
         try:
             # Ensure required fields
             for alert in alerts:
-                if 'timestamp' not in alert:
-                    alert['timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                if 'severity' not in alert:
-                    alert['severity'] = 'INFO'
-                if 'details' not in alert:
-                    alert['details'] = {}
+                if "timestamp" not in alert:
+                    alert["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                if "severity" not in alert:
+                    alert["severity"] = "INFO"
+                if "details" not in alert:
+                    alert["details"] = {}
 
             # Save to JSON
-            with open(self.alerts_file, 'w') as f:
+            with open(self.alerts_file, "w") as f:
                 json.dump(alerts, f, indent=2)
 
             print(f"[EXPORTER] Exported {len(alerts)} alerts to {self.alerts_file}")
@@ -287,23 +306,23 @@ class DashboardExporter:
         try:
             # Ensure required fields
             default_status = {
-                'trading_enabled': False,
-                'circuit_breakers': {
-                    'daily_loss_breaker': False,
-                    'drawdown_breaker': False,
-                    'consecutive_loss_breaker': False
+                "trading_enabled": False,
+                "circuit_breakers": {
+                    "daily_loss_breaker": False,
+                    "drawdown_breaker": False,
+                    "consecutive_loss_breaker": False,
                 },
-                'system_health': 'UNKNOWN',
-                'active_strategies': [],
-                'last_update': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                "system_health": "UNKNOWN",
+                "active_strategies": [],
+                "last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
 
             # Merge with defaults
             export_data = {**default_status, **status}
-            export_data['last_update'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            export_data["last_update"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             # Save to JSON
-            with open(self.system_status_file, 'w') as f:
+            with open(self.system_status_file, "w") as f:
                 json.dump(export_data, f, indent=2)
 
             print(f"[EXPORTER] Exported system status to {self.system_status_file}")
@@ -317,7 +336,7 @@ class DashboardExporter:
         performance: Optional[Dict] = None,
         positions: Optional[List[Dict]] = None,
         alerts: Optional[List[Dict]] = None,
-        status: Optional[Dict] = None
+        status: Optional[Dict] = None,
     ) -> None:
         """
         Export all data types at once.
@@ -389,15 +408,15 @@ def export_from_alpaca_trader(trader, risk_manager, exporter):
         if performance_data:
             # Convert to dashboard format
             dashboard_performance = {
-                'total_value': performance_data.get('portfolio_value', 0),
-                'cash': performance_data.get('cash', 0),
-                'equity': performance_data.get('equity', 0),
-                'daily_pnl': performance_data.get('profit_loss', 0),
-                'total_pnl': performance_data.get('profit_loss', 0),
-                'total_pnl_pct': performance_data.get('profit_loss_pct', 0),
-                'strategies': {},  # Would need to track separately
-                'equity_curve': [],  # Would need to track over time
-                'daily_pnl_history': []  # Would need to track over time
+                "total_value": performance_data.get("portfolio_value", 0),
+                "cash": performance_data.get("cash", 0),
+                "equity": performance_data.get("equity", 0),
+                "daily_pnl": performance_data.get("profit_loss", 0),
+                "total_pnl": performance_data.get("profit_loss", 0),
+                "total_pnl_pct": performance_data.get("profit_loss_pct", 0),
+                "strategies": {},  # Would need to track separately
+                "equity_curve": [],  # Would need to track over time
+                "daily_pnl_history": [],  # Would need to track over time
             }
             exporter.export_performance(dashboard_performance)
 
@@ -405,19 +424,30 @@ def export_from_alpaca_trader(trader, risk_manager, exporter):
         risk_metrics = risk_manager.get_risk_metrics()
 
         # Export alerts
-        if 'alerts' in risk_metrics:
-            exporter.export_alerts(risk_metrics['alerts'])
+        if "alerts" in risk_metrics:
+            exporter.export_alerts(risk_metrics["alerts"])
 
         # Export system status
         status = {
-            'trading_enabled': not risk_metrics['account_metrics']['circuit_breaker_triggered'],
-            'circuit_breakers': {
-                'daily_loss_breaker': risk_metrics['account_metrics']['circuit_breaker_triggered'],
-                'drawdown_breaker': False,
-                'consecutive_loss_breaker': risk_metrics['trade_statistics']['consecutive_losses'] >= risk_metrics['risk_limits']['max_consecutive_losses_limit']
+            "trading_enabled": not risk_metrics["account_metrics"][
+                "circuit_breaker_triggered"
+            ],
+            "circuit_breakers": {
+                "daily_loss_breaker": risk_metrics["account_metrics"][
+                    "circuit_breaker_triggered"
+                ],
+                "drawdown_breaker": False,
+                "consecutive_loss_breaker": risk_metrics["trade_statistics"][
+                    "consecutive_losses"
+                ]
+                >= risk_metrics["risk_limits"]["max_consecutive_losses_limit"],
             },
-            'system_health': 'HEALTHY' if not risk_metrics['account_metrics']['circuit_breaker_triggered'] else 'WARNING',
-            'active_strategies': ['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4']
+            "system_health": (
+                "HEALTHY"
+                if not risk_metrics["account_metrics"]["circuit_breaker_triggered"]
+                else "WARNING"
+            ),
+            "active_strategies": ["Tier 1", "Tier 2", "Tier 3", "Tier 4"],
         }
         exporter.export_system_status(status)
 
@@ -434,88 +464,84 @@ if __name__ == "__main__":
     print("=" * 70)
 
     # Initialize exporter
-    exporter = DashboardExporter(data_dir='../data/')
+    exporter = DashboardExporter(data_dir="../data/")
 
     # Example trades
     sample_trades = [
         {
-            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'symbol': 'AAPL',
-            'side': 'BUY',
-            'quantity': 10,
-            'price': 175.50,
-            'amount': 1755.00,
-            'strategy': 'Tier 1',
-            'pnl': 55.25,
-            'status': 'FILLED'
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "symbol": "AAPL",
+            "side": "BUY",
+            "quantity": 10,
+            "price": 175.50,
+            "amount": 1755.00,
+            "strategy": "Tier 1",
+            "pnl": 55.25,
+            "status": "FILLED",
         },
         {
-            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'symbol': 'GOOGL',
-            'side': 'BUY',
-            'quantity': 5,
-            'price': 138.20,
-            'amount': 691.00,
-            'strategy': 'Tier 2',
-            'pnl': 22.50,
-            'status': 'FILLED'
-        }
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "symbol": "GOOGL",
+            "side": "BUY",
+            "quantity": 5,
+            "price": 138.20,
+            "amount": 691.00,
+            "strategy": "Tier 2",
+            "pnl": 22.50,
+            "status": "FILLED",
+        },
     ]
 
     # Example performance
     sample_performance = {
-        'total_value': 125000.0,
-        'cash': 45000.0,
-        'equity': 80000.0,
-        'daily_pnl': 1250.75,
-        'total_pnl': 25000.0,
-        'total_pnl_pct': 25.0,
-        'strategies': {
-            'Tier 1': {'pnl': 8500.0, 'trades': 45, 'win_rate': 62.5},
-            'Tier 2': {'pnl': 6200.0, 'trades': 38, 'win_rate': 58.3}
+        "total_value": 125000.0,
+        "cash": 45000.0,
+        "equity": 80000.0,
+        "daily_pnl": 1250.75,
+        "total_pnl": 25000.0,
+        "total_pnl_pct": 25.0,
+        "strategies": {
+            "Tier 1": {"pnl": 8500.0, "trades": 45, "win_rate": 62.5},
+            "Tier 2": {"pnl": 6200.0, "trades": 38, "win_rate": 58.3},
         },
-        'equity_curve': [
-            {'date': '2025-10-28', 'equity': 125000.0}
-        ],
-        'daily_pnl_history': [
-            {'date': '2025-10-28', 'pnl': 1250.75}
-        ]
+        "equity_curve": [{"date": "2025-10-28", "equity": 125000.0}],
+        "daily_pnl_history": [{"date": "2025-10-28", "pnl": 1250.75}],
     }
 
     # Example positions
     sample_positions = [
         {
-            'symbol': 'AAPL',
-            'quantity': 15.5,
-            'avg_entry_price': 175.20,
-            'current_price': 182.30,
-            'market_value': 2825.65,
-            'cost_basis': 2715.60,
-            'unrealized_pnl': 110.05,
-            'unrealized_pnl_pct': 4.05
+            "symbol": "AAPL",
+            "quantity": 15.5,
+            "avg_entry_price": 175.20,
+            "current_price": 182.30,
+            "market_value": 2825.65,
+            "cost_basis": 2715.60,
+            "unrealized_pnl": 110.05,
+            "unrealized_pnl_pct": 4.05,
         }
     ]
 
     # Example alerts
     sample_alerts = [
         {
-            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'severity': 'INFO',
-            'message': 'Trading session started',
-            'details': {}
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "severity": "INFO",
+            "message": "Trading session started",
+            "details": {},
         }
     ]
 
     # Example system status
     sample_status = {
-        'trading_enabled': True,
-        'circuit_breakers': {
-            'daily_loss_breaker': False,
-            'drawdown_breaker': False,
-            'consecutive_loss_breaker': False
+        "trading_enabled": True,
+        "circuit_breakers": {
+            "daily_loss_breaker": False,
+            "drawdown_breaker": False,
+            "consecutive_loss_breaker": False,
         },
-        'system_health': 'HEALTHY',
-        'active_strategies': ['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4']
+        "system_health": "HEALTHY",
+        "active_strategies": ["Tier 1", "Tier 2", "Tier 3", "Tier 4"],
     }
 
     # Export all data
@@ -524,7 +550,7 @@ if __name__ == "__main__":
         performance=sample_performance,
         positions=sample_positions,
         alerts=sample_alerts,
-        status=sample_status
+        status=sample_status,
     )
 
     print("\n" + "=" * 70)

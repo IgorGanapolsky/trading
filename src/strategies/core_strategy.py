@@ -54,6 +54,7 @@ logger = logging.getLogger(__name__)
 
 class MarketSentiment(Enum):
     """Market sentiment classification."""
+
     VERY_BULLISH = "very_bullish"
     BULLISH = "bullish"
     NEUTRAL = "neutral"
@@ -64,6 +65,7 @@ class MarketSentiment(Enum):
 @dataclass
 class MomentumScore:
     """Data class for ETF momentum analysis."""
+
     symbol: str
     score: float
     returns_1m: float
@@ -79,6 +81,7 @@ class MomentumScore:
 @dataclass
 class TradeOrder:
     """Data class for trade order details."""
+
     symbol: str
     action: str  # 'buy' or 'sell'
     quantity: float
@@ -114,20 +117,16 @@ class CoreStrategy:
     """
 
     # Default ETF universe for Tier 1 strategy
-    DEFAULT_ETF_UNIVERSE = ['SPY', 'QQQ', 'VOO']
+    DEFAULT_ETF_UNIVERSE = ["SPY", "QQQ", "VOO"]
 
     # Momentum calculation periods (in days)
-    LOOKBACK_PERIODS = {
-        '1month': 21,
-        '3month': 63,
-        '6month': 126
-    }
+    LOOKBACK_PERIODS = {"1month": 21, "3month": 63, "6month": 126}
 
     # Momentum weight distribution
     MOMENTUM_WEIGHTS = {
-        '1month': 0.5,   # 50% weight to recent performance
-        '3month': 0.3,   # 30% weight to medium-term
-        '6month': 0.2    # 20% weight to long-term
+        "1month": 0.5,  # 50% weight to recent performance
+        "3month": 0.3,  # 30% weight to medium-term
+        "6month": 0.2,  # 20% weight to long-term
     }
 
     # RSI parameters
@@ -137,7 +136,7 @@ class CoreStrategy:
 
     # Risk parameters
     DEFAULT_STOP_LOSS_PCT = 0.05  # 5% trailing stop
-    REBALANCE_THRESHOLD = 0.15     # 15% deviation triggers rebalance
+    REBALANCE_THRESHOLD = 0.15  # 15% deviation triggers rebalance
     REBALANCE_FREQUENCY_DAYS = 30  # Monthly rebalancing
 
     def __init__(
@@ -145,7 +144,7 @@ class CoreStrategy:
         daily_allocation: float = 6.0,
         etf_universe: Optional[List[str]] = None,
         stop_loss_pct: float = DEFAULT_STOP_LOSS_PCT,
-        use_sentiment: bool = True
+        use_sentiment: bool = True,
     ):
         """
         Initialize the Core Strategy.
@@ -160,7 +159,9 @@ class CoreStrategy:
             ValueError: If daily_allocation is non-positive
         """
         if daily_allocation <= 0:
-            raise ValueError(f"daily_allocation must be positive, got {daily_allocation}")
+            raise ValueError(
+                f"daily_allocation must be positive, got {daily_allocation}"
+            )
 
         self.daily_allocation = daily_allocation
         self.etf_universe = etf_universe or self.DEFAULT_ETF_UNIVERSE
@@ -180,13 +181,15 @@ class CoreStrategy:
 
         # Initialize dependencies
         try:
-            self.llm_analyzer = MultiLLMAnalyzer(use_async=False) if use_sentiment else None
+            self.llm_analyzer = (
+                MultiLLMAnalyzer(use_async=False) if use_sentiment else None
+            )
             self.alpaca_trader = AlpacaTrader(paper=True)
             self.risk_manager = RiskManager(
                 max_daily_loss_pct=2.0,
                 max_position_size_pct=20.0,  # 20% for low-risk tier
                 max_drawdown_pct=10.0,
-                max_consecutive_losses=5
+                max_consecutive_losses=5,
             )
             logger.info("Successfully initialized core dependencies")
         except Exception as e:
@@ -229,7 +232,9 @@ class CoreStrategy:
 
             # Step 2: Check if we should pause trading based on sentiment
             if sentiment == MarketSentiment.VERY_BEARISH:
-                logger.warning("Very bearish sentiment detected - pausing new purchases")
+                logger.warning(
+                    "Very bearish sentiment detected - pausing new purchases"
+                )
                 return None
 
             # Step 3: Calculate momentum scores for all ETFs
@@ -258,25 +263,21 @@ class CoreStrategy:
                 symbol=best_etf,
                 quantity=quantity,
                 price=current_price,
-                sentiment=sentiment
+                sentiment=sentiment,
             )
 
             # Step 9: Execute order via Alpaca
             if self.alpaca_trader:
                 try:
                     executed_order = self.alpaca_trader.execute_order(
-                        symbol=best_etf,
-                        amount_usd=self.daily_allocation,
-                        side='buy'
+                        symbol=best_etf, amount_usd=self.daily_allocation, side="buy"
                     )
                     logger.info(f"Alpaca order executed: {executed_order['id']}")
 
                     # Set stop-loss order
                     if order.stop_loss:
                         self.alpaca_trader.set_stop_loss(
-                            symbol=best_etf,
-                            qty=quantity,
-                            stop_price=order.stop_loss
+                            symbol=best_etf, qty=quantity, stop_price=order.stop_loss
                         )
                         logger.info(f"Stop-loss set at ${order.stop_loss:.2f}")
                 except Exception as e:
@@ -325,7 +326,9 @@ class CoreStrategy:
 
         try:
             # Fetch historical data
-            lookback_days = max(self.LOOKBACK_PERIODS.values()) + 20  # Extra for calculations
+            lookback_days = (
+                max(self.LOOKBACK_PERIODS.values()) + 20
+            )  # Extra for calculations
             end_date = datetime.now()
             start_date = end_date - timedelta(days=lookback_days)
 
@@ -336,12 +339,18 @@ class CoreStrategy:
                 raise ValueError(f"Insufficient data for {symbol}")
 
             # Calculate returns for different periods
-            returns_1m = self._calculate_period_return(hist, self.LOOKBACK_PERIODS['1month'])
-            returns_3m = self._calculate_period_return(hist, self.LOOKBACK_PERIODS['3month'])
-            returns_6m = self._calculate_period_return(hist, self.LOOKBACK_PERIODS['6month'])
+            returns_1m = self._calculate_period_return(
+                hist, self.LOOKBACK_PERIODS["1month"]
+            )
+            returns_3m = self._calculate_period_return(
+                hist, self.LOOKBACK_PERIODS["3month"]
+            )
+            returns_6m = self._calculate_period_return(
+                hist, self.LOOKBACK_PERIODS["6month"]
+            )
 
             # Calculate volatility (annualized)
-            daily_returns = hist['Close'].pct_change().dropna()
+            daily_returns = hist["Close"].pct_change().dropna()
             volatility = daily_returns.std() * np.sqrt(252)
 
             # Calculate Sharpe ratio (assuming 4% risk-free rate)
@@ -350,13 +359,13 @@ class CoreStrategy:
             sharpe_ratio = excess_return / volatility if volatility > 0 else 0
 
             # Calculate RSI
-            rsi = self._calculate_rsi(hist['Close'], self.RSI_PERIOD)
+            rsi = self._calculate_rsi(hist["Close"], self.RSI_PERIOD)
 
             # Weighted momentum score
             momentum_score = (
-                returns_1m * self.MOMENTUM_WEIGHTS['1month'] * 100 +
-                returns_3m * self.MOMENTUM_WEIGHTS['3month'] * 100 +
-                returns_6m * self.MOMENTUM_WEIGHTS['6month'] * 100
+                returns_1m * self.MOMENTUM_WEIGHTS["1month"] * 100
+                + returns_3m * self.MOMENTUM_WEIGHTS["3month"] * 100
+                + returns_6m * self.MOMENTUM_WEIGHTS["6month"] * 100
             )
 
             # Adjust for volatility (penalize high volatility)
@@ -390,8 +399,7 @@ class CoreStrategy:
             raise ValueError(f"Failed to calculate momentum for {symbol}: {str(e)}")
 
     def select_best_etf(
-        self,
-        momentum_scores: Optional[List[MomentumScore]] = None
+        self, momentum_scores: Optional[List[MomentumScore]] = None
     ) -> str:
         """
         Select the ETF with the highest momentum score.
@@ -427,7 +435,9 @@ class CoreStrategy:
             )
 
         best_etf = momentum_scores[0].symbol
-        logger.info(f"Best ETF selected: {best_etf} with score {momentum_scores[0].score:.2f}")
+        logger.info(
+            f"Best ETF selected: {best_etf} with score {momentum_scores[0].score:.2f}"
+        )
 
         return best_etf
 
@@ -528,7 +538,9 @@ class CoreStrategy:
             target_allocation = 1.0 / len(self.etf_universe)
             target_value_per_etf = total_value * target_allocation
 
-            logger.info(f"Target allocation per ETF: {target_allocation:.1%} (${target_value_per_etf:.2f})")
+            logger.info(
+                f"Target allocation per ETF: {target_allocation:.1%} (${target_value_per_etf:.2f})"
+            )
 
             # Calculate current allocations
             current_allocations = {}
@@ -537,10 +549,10 @@ class CoreStrategy:
                 price = self._get_current_price(symbol)
                 current_value = qty * price
                 current_allocations[symbol] = {
-                    'quantity': qty,
-                    'price': price,
-                    'value': current_value,
-                    'pct': current_value / total_value
+                    "quantity": qty,
+                    "price": price,
+                    "value": current_value,
+                    "pct": current_value / total_value,
                 }
 
             # Log current state
@@ -553,7 +565,7 @@ class CoreStrategy:
 
             # Calculate required trades
             for symbol in self.etf_universe:
-                current_value = current_allocations[symbol]['value']
+                current_value = current_allocations[symbol]["value"]
                 target_value = target_value_per_etf
                 value_diff = target_value - current_value
 
@@ -561,7 +573,7 @@ class CoreStrategy:
                 if abs(value_diff) < 1.0:
                     continue
 
-                price = current_allocations[symbol]['price']
+                price = current_allocations[symbol]["price"]
                 quantity_diff = value_diff / price
 
                 if value_diff > 0:
@@ -571,20 +583,20 @@ class CoreStrategy:
                         quantity=quantity_diff,
                         price=price,
                         sentiment=None,
-                        reason=f"Rebalancing - target {target_allocation:.1%}"
+                        reason=f"Rebalancing - target {target_allocation:.1%}",
                     )
                 else:
                     # Need to sell
                     order = TradeOrder(
                         symbol=symbol,
-                        action='sell',
+                        action="sell",
                         quantity=abs(quantity_diff),
                         amount=abs(value_diff),
                         price=price,
-                        order_type='market',
+                        order_type="market",
                         stop_loss=None,
                         timestamp=datetime.now(),
-                        reason=f"Rebalancing - target {target_allocation:.1%}"
+                        reason=f"Rebalancing - target {target_allocation:.1%}",
                     )
 
                 rebalance_orders.append(order)
@@ -597,11 +609,9 @@ class CoreStrategy:
             if self.alpaca_trader:
                 for order in rebalance_orders:
                     try:
-                        if order.action == 'buy':
+                        if order.action == "buy":
                             executed = self.alpaca_trader.execute_order(
-                                symbol=order.symbol,
-                                amount_usd=order.amount,
-                                side='buy'
+                                symbol=order.symbol, amount_usd=order.amount, side="buy"
                             )
                             logger.info(f"Rebalance buy executed: {executed['id']}")
                         else:  # sell
@@ -609,26 +619,32 @@ class CoreStrategy:
                             executed = self.alpaca_trader.execute_order(
                                 symbol=order.symbol,
                                 amount_usd=order.amount,
-                                side='sell'
+                                side="sell",
                             )
                             logger.info(f"Rebalance sell executed: {executed['id']}")
                     except Exception as e:
-                        logger.error(f"Failed to execute rebalance order for {order.symbol}: {e}")
+                        logger.error(
+                            f"Failed to execute rebalance order for {order.symbol}: {e}"
+                        )
                         continue
 
             # Update state
             for order in rebalance_orders:
-                if order.action == 'buy':
-                    self.current_holdings[order.symbol] = \
+                if order.action == "buy":
+                    self.current_holdings[order.symbol] = (
                         self.current_holdings.get(order.symbol, 0.0) + order.quantity
+                    )
                 else:  # sell
-                    self.current_holdings[order.symbol] = \
+                    self.current_holdings[order.symbol] = (
                         self.current_holdings.get(order.symbol, 0.0) - order.quantity
+                    )
 
             self.last_rebalance_date = datetime.now()
             self.trades_executed.extend(rebalance_orders)
 
-            logger.info(f"Rebalancing complete - executed {len(rebalance_orders)} orders")
+            logger.info(
+                f"Rebalancing complete - executed {len(rebalance_orders)} orders"
+            )
             logger.info("=" * 80)
 
             return rebalance_orders
@@ -647,12 +663,12 @@ class CoreStrategy:
         if not self.alpaca_trader:
             logger.warning("Alpaca trader not initialized")
             return {
-                'account_value': self._calculate_total_portfolio_value(),
-                'buying_power': 0.0,
-                'cash': 0.0,
-                'portfolio_value': self._calculate_total_portfolio_value(),
-                'positions': [],
-                'source': 'local_tracking'
+                "account_value": self._calculate_total_portfolio_value(),
+                "buying_power": 0.0,
+                "cash": 0.0,
+                "portfolio_value": self._calculate_total_portfolio_value(),
+                "positions": [],
+                "source": "local_tracking",
             }
 
         try:
@@ -666,17 +682,17 @@ class CoreStrategy:
             performance = self.alpaca_trader.get_portfolio_performance()
 
             summary = {
-                'account_value': account_info['portfolio_value'],
-                'buying_power': account_info['buying_power'],
-                'cash': account_info['cash'],
-                'equity': account_info['equity'],
-                'portfolio_value': performance['portfolio_value'],
-                'profit_loss': performance['profit_loss'],
-                'profit_loss_pct': performance['profit_loss_pct'],
-                'positions': positions,
-                'positions_count': len(positions),
-                'source': 'alpaca_api',
-                'timestamp': datetime.now().isoformat()
+                "account_value": account_info["portfolio_value"],
+                "buying_power": account_info["buying_power"],
+                "cash": account_info["cash"],
+                "equity": account_info["equity"],
+                "portfolio_value": performance["portfolio_value"],
+                "profit_loss": performance["profit_loss"],
+                "profit_loss_pct": performance["profit_loss_pct"],
+                "positions": positions,
+                "positions_count": len(positions),
+                "source": "alpaca_api",
+                "timestamp": datetime.now().isoformat(),
             }
 
             logger.info(f"Account summary retrieved: ${summary['account_value']:.2f}")
@@ -685,13 +701,13 @@ class CoreStrategy:
         except Exception as e:
             logger.error(f"Error getting account summary: {e}")
             return {
-                'account_value': self._calculate_total_portfolio_value(),
-                'buying_power': 0.0,
-                'cash': 0.0,
-                'portfolio_value': self._calculate_total_portfolio_value(),
-                'positions': [],
-                'source': 'error_fallback',
-                'error': str(e)
+                "account_value": self._calculate_total_portfolio_value(),
+                "buying_power": 0.0,
+                "cash": 0.0,
+                "portfolio_value": self._calculate_total_portfolio_value(),
+                "positions": [],
+                "source": "error_fallback",
+                "error": str(e),
             }
 
     def update_daily_performance(self) -> None:
@@ -749,7 +765,8 @@ class CoreStrategy:
         total_return = current_value - self.total_invested
         total_return_pct = (
             (total_return / self.total_invested * 100)
-            if self.total_invested > 0 else 0.0
+            if self.total_invested > 0
+            else 0.0
         )
 
         # Calculate holding period
@@ -764,7 +781,8 @@ class CoreStrategy:
             years = holding_period_days / 365.25
             annualized_return = (
                 (pow(current_value / self.total_invested, 1 / years) - 1) * 100
-                if years > 0 else 0.0
+                if years > 0
+                else 0.0
             )
         else:
             annualized_return = 0.0
@@ -776,7 +794,8 @@ class CoreStrategy:
             risk_free_rate_daily = 0.04 / 252  # 4% annual / 252 trading days
             sharpe_ratio = (
                 (mean_return - risk_free_rate_daily) / std_return * np.sqrt(252)
-                if std_return > 0 else 0.0
+                if std_return > 0
+                else 0.0
             )
         else:
             sharpe_ratio = 0.0
@@ -788,37 +807,41 @@ class CoreStrategy:
         positive_days = sum(1 for r in self.daily_returns if r > 0)
         win_rate = (
             (positive_days / len(self.daily_returns) * 100)
-            if self.daily_returns else 0.0
+            if self.daily_returns
+            else 0.0
         )
 
         # Trade statistics
         num_trades = len(self.trades_executed)
         average_trade_size = (
             sum(trade.amount for trade in self.trades_executed) / num_trades
-            if num_trades > 0 else 0.0
+            if num_trades > 0
+            else 0.0
         )
 
         metrics = {
-            'total_invested': self.total_invested,
-            'current_value': current_value,
-            'total_return': total_return,
-            'total_return_pct': total_return_pct,
-            'annualized_return': annualized_return,
-            'sharpe_ratio': sharpe_ratio,
-            'max_drawdown': max_drawdown,
-            'win_rate': win_rate,
-            'num_trades': num_trades,
-            'average_trade_size': average_trade_size,
-            'holding_period_days': holding_period_days,
-            'current_holdings': self.current_holdings.copy(),
-            'last_rebalance_date': self.last_rebalance_date,
+            "total_invested": self.total_invested,
+            "current_value": current_value,
+            "total_return": total_return,
+            "total_return_pct": total_return_pct,
+            "annualized_return": annualized_return,
+            "sharpe_ratio": sharpe_ratio,
+            "max_drawdown": max_drawdown,
+            "win_rate": win_rate,
+            "num_trades": num_trades,
+            "average_trade_size": average_trade_size,
+            "holding_period_days": holding_period_days,
+            "current_holdings": self.current_holdings.copy(),
+            "last_rebalance_date": self.last_rebalance_date,
         }
 
         # Log summary
         logger.info("Performance Summary:")
         logger.info(f"  Total Invested: ${metrics['total_invested']:.2f}")
         logger.info(f"  Current Value: ${metrics['current_value']:.2f}")
-        logger.info(f"  Total Return: ${metrics['total_return']:.2f} ({metrics['total_return_pct']:.2f}%)")
+        logger.info(
+            f"  Total Return: ${metrics['total_return']:.2f} ({metrics['total_return_pct']:.2f}%)"
+        )
         logger.info(f"  Annualized Return: {metrics['annualized_return']:.2f}%")
         logger.info(f"  Sharpe Ratio: {metrics['sharpe_ratio']:.2f}")
         logger.info(f"  Max Drawdown: {metrics['max_drawdown']:.2f}%")
@@ -844,9 +867,10 @@ class CoreStrategy:
         try:
             # Get market outlook from AI
             import asyncio
+
             outlook = asyncio.run(self.llm_analyzer.get_market_outlook())
 
-            sentiment_score = outlook['overall_sentiment']
+            sentiment_score = outlook["overall_sentiment"]
 
             # Convert sentiment score to enum
             if sentiment_score >= 0.6:
@@ -860,7 +884,9 @@ class CoreStrategy:
             else:
                 sentiment = MarketSentiment.VERY_BEARISH
 
-            logger.info(f"AI sentiment analysis: {sentiment.value} (score: {sentiment_score:.2f})")
+            logger.info(
+                f"AI sentiment analysis: {sentiment.value} (score: {sentiment_score:.2f})"
+            )
             logger.info(f"Market trend: {outlook['trend']}")
             logger.info(f"Key drivers: {outlook['key_drivers'][:3]}")
 
@@ -872,8 +898,7 @@ class CoreStrategy:
             return MarketSentiment.NEUTRAL
 
     def _calculate_all_momentum_scores(
-        self,
-        sentiment: MarketSentiment
+        self, sentiment: MarketSentiment
     ) -> List[MomentumScore]:
         """
         Calculate momentum scores for all ETFs in universe.
@@ -897,20 +922,20 @@ class CoreStrategy:
 
                 # Get additional metrics for the score object
                 ticker = yf.Ticker(symbol)
-                hist = ticker.history(period='6mo')
+                hist = ticker.history(period="6mo")
 
                 returns_1m = self._calculate_period_return(hist, 21)
                 returns_3m = self._calculate_period_return(hist, 63)
                 returns_6m = self._calculate_period_return(hist, 126)
 
-                daily_returns = hist['Close'].pct_change().dropna()
+                daily_returns = hist["Close"].pct_change().dropna()
                 volatility = daily_returns.std() * np.sqrt(252)
 
                 risk_free_rate = 0.04
                 excess_return = returns_6m - risk_free_rate
                 sharpe_ratio = excess_return / volatility if volatility > 0 else 0
 
-                rsi = self._calculate_rsi(hist['Close'], self.RSI_PERIOD)
+                rsi = self._calculate_rsi(hist["Close"], self.RSI_PERIOD)
 
                 score_obj = MomentumScore(
                     symbol=symbol,
@@ -922,7 +947,7 @@ class CoreStrategy:
                     sharpe_ratio=sharpe_ratio,
                     rsi=rsi,
                     sentiment_boost=sentiment_boost,
-                    timestamp=datetime.now()
+                    timestamp=datetime.now(),
                 )
 
                 scores.append(score_obj)
@@ -965,9 +990,9 @@ class CoreStrategy:
         """
         try:
             ticker = yf.Ticker(symbol)
-            data = ticker.history(period='1d')
+            data = ticker.history(period="1d")
             if not data.empty:
-                return float(data['Close'].iloc[-1])
+                return float(data["Close"].iloc[-1])
             return None
         except Exception as e:
             logger.error(f"Error fetching price for {symbol}: {str(e)}")
@@ -990,8 +1015,8 @@ class CoreStrategy:
         if periods <= 0:
             return 0.0
 
-        end_price = hist['Close'].iloc[-1]
-        start_price = hist['Close'].iloc[-periods]
+        end_price = hist["Close"].iloc[-1]
+        start_price = hist["Close"].iloc[-periods]
 
         return (end_price - start_price) / start_price
 
@@ -1016,11 +1041,7 @@ class CoreStrategy:
         return float(rsi.iloc[-1]) if not pd.isna(rsi.iloc[-1]) else 50.0
 
     def _validate_trade(
-        self,
-        symbol: str,
-        quantity: float,
-        price: float,
-        sentiment: MarketSentiment
+        self, symbol: str, quantity: float, price: float, sentiment: MarketSentiment
     ) -> bool:
         """
         Validate trade against risk management rules using RiskManager.
@@ -1045,7 +1066,9 @@ class CoreStrategy:
         if self.risk_manager:
             try:
                 # Get account info
-                account_value = self._calculate_total_portfolio_value() + self.total_invested
+                account_value = (
+                    self._calculate_total_portfolio_value() + self.total_invested
+                )
                 if account_value == 0:
                     account_value = 10000.0  # Default starting value
 
@@ -1058,19 +1081,23 @@ class CoreStrategy:
                     amount=trade_value,
                     sentiment_score=sentiment_score,
                     account_value=account_value,
-                    trade_type="BUY"
+                    trade_type="BUY",
                 )
 
-                if not validation['valid']:
-                    logger.warning(f"Risk manager rejected trade: {validation['reason']}")
+                if not validation["valid"]:
+                    logger.warning(
+                        f"Risk manager rejected trade: {validation['reason']}"
+                    )
                     return False
 
-                if validation['warnings']:
-                    for warning in validation['warnings']:
+                if validation["warnings"]:
+                    for warning in validation["warnings"]:
                         logger.warning(f"Risk manager warning: {warning}")
 
                 # Check if trading is allowed (circuit breakers)
-                if not self.risk_manager.can_trade(account_value, self.risk_manager.metrics.daily_pl):
+                if not self.risk_manager.can_trade(
+                    account_value, self.risk_manager.metrics.daily_pl
+                ):
                     logger.warning("Trading suspended by circuit breaker")
                     return False
 
@@ -1088,7 +1115,7 @@ class CoreStrategy:
         quantity: float,
         price: float,
         sentiment: Optional[MarketSentiment],
-        reason: Optional[str] = None
+        reason: Optional[str] = None,
     ) -> TradeOrder:
         """
         Create a buy order with stop-loss.
@@ -1111,14 +1138,14 @@ class CoreStrategy:
 
         return TradeOrder(
             symbol=symbol,
-            action='buy',
+            action="buy",
             quantity=quantity,
             amount=amount,
             price=price,
-            order_type='market',
+            order_type="market",
             stop_loss=stop_loss_price,
             timestamp=datetime.now(),
-            reason=reason
+            reason=reason,
         )
 
     def _update_holdings(self, symbol: str, quantity: float) -> None:
@@ -1129,7 +1156,9 @@ class CoreStrategy:
             symbol: Ticker symbol
             quantity: Quantity to add (positive) or remove (negative)
         """
-        self.current_holdings[symbol] = self.current_holdings.get(symbol, 0.0) + quantity
+        self.current_holdings[symbol] = (
+            self.current_holdings.get(symbol, 0.0) + quantity
+        )
 
         # Remove if quantity is now zero or negative
         if self.current_holdings[symbol] <= 0:
@@ -1172,24 +1201,26 @@ if __name__ == "__main__":
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     # Initialize strategy
     strategy = CoreStrategy(
-        daily_allocation=6.0,
-        etf_universe=['SPY', 'QQQ', 'VOO'],
-        stop_loss_pct=0.05
+        daily_allocation=6.0, etf_universe=["SPY", "QQQ", "VOO"], stop_loss_pct=0.05
     )
 
     # Execute daily routine
     order = strategy.execute_daily()
 
     if order:
-        print(f"\nOrder executed: {order.action.upper()} {order.quantity:.4f} "
-              f"{order.symbol} @ ${order.price:.2f}")
+        print(
+            f"\nOrder executed: {order.action.upper()} {order.quantity:.4f} "
+            f"{order.symbol} @ ${order.price:.2f}"
+        )
 
     # Get performance metrics
     metrics = strategy.get_performance_metrics()
     print(f"\nCurrent Portfolio Value: ${metrics['current_value']:.2f}")
-    print(f"Total Return: ${metrics['total_return']:.2f} ({metrics['total_return_pct']:.2f}%)")
+    print(
+        f"Total Return: ${metrics['total_return']:.2f} ({metrics['total_return_pct']:.2f}%)"
+    )

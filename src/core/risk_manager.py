@@ -30,7 +30,9 @@ class RiskMetrics:
     losing_trades: int = 0
     max_drawdown_reached: float = 0.0
     circuit_breaker_triggered: bool = False
-    last_reset_date: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
+    last_reset_date: str = field(
+        default_factory=lambda: datetime.now().strftime("%Y-%m-%d")
+    )
 
 
 class RiskManager:
@@ -55,7 +57,7 @@ class RiskManager:
         max_daily_loss_pct: float = 2.0,
         max_position_size_pct: float = 10.0,
         max_drawdown_pct: float = 10.0,
-        max_consecutive_losses: int = 3
+        max_consecutive_losses: int = 3,
     ):
         """
         Initialize the Risk Manager with configurable parameters.
@@ -105,22 +107,29 @@ class RiskManager:
             self._send_alert(
                 severity="CRITICAL",
                 message=f"Daily loss limit breached: {daily_loss_pct:.2f}% (limit: {-self.max_daily_loss_pct}%)",
-                details={"daily_pl": daily_pl, "account_value": account_value}
+                details={"daily_pl": daily_pl, "account_value": account_value},
             )
             self.metrics.circuit_breaker_triggered = True
             return False
 
         # Check drawdown limit
         if self.peak_account_value > 0:
-            current_drawdown_pct = ((self.peak_account_value - account_value) / self.peak_account_value) * 100
+            current_drawdown_pct = (
+                (self.peak_account_value - account_value) / self.peak_account_value
+            ) * 100
             if current_drawdown_pct > self.max_drawdown_pct:
                 self._send_alert(
                     severity="CRITICAL",
                     message=f"Maximum drawdown breached: {current_drawdown_pct:.2f}% (limit: {self.max_drawdown_pct}%)",
-                    details={"peak_value": self.peak_account_value, "current_value": account_value}
+                    details={
+                        "peak_value": self.peak_account_value,
+                        "current_value": account_value,
+                    },
                 )
                 self.metrics.circuit_breaker_triggered = True
-                self.metrics.max_drawdown_reached = max(self.metrics.max_drawdown_reached, current_drawdown_pct)
+                self.metrics.max_drawdown_reached = max(
+                    self.metrics.max_drawdown_reached, current_drawdown_pct
+                )
                 return False
 
         # Check consecutive losses
@@ -128,7 +137,7 @@ class RiskManager:
             self._send_alert(
                 severity="WARNING",
                 message=f"Maximum consecutive losses reached: {self.metrics.consecutive_losses}",
-                details={"consecutive_losses": self.metrics.consecutive_losses}
+                details={"consecutive_losses": self.metrics.consecutive_losses},
             )
             # Don't stop trading, just warn
 
@@ -138,7 +147,7 @@ class RiskManager:
         self,
         account_value: float,
         risk_per_trade_pct: float = 1.0,
-        price_per_share: Optional[float] = None
+        price_per_share: Optional[float] = None,
     ) -> float:
         """
         Calculate appropriate position size based on risk parameters.
@@ -177,7 +186,7 @@ class RiskManager:
         amount: float,
         sentiment_score: float,
         account_value: float,
-        trade_type: str = "BUY"
+        trade_type: str = "BUY",
     ) -> Dict[str, any]:
         """
         Validate a trade before execution.
@@ -201,13 +210,15 @@ class RiskManager:
             "amount": amount,
             "trade_type": trade_type,
             "warnings": [],
-            "reason": None
+            "reason": None,
         }
 
         # Check if trading is allowed (circuit breakers)
         if self.metrics.circuit_breaker_triggered:
             validation_result["valid"] = False
-            validation_result["reason"] = "Circuit breaker triggered - trading suspended"
+            validation_result["reason"] = (
+                "Circuit breaker triggered - trading suspended"
+            )
             return validation_result
 
         # Validate amount is positive
@@ -220,13 +231,17 @@ class RiskManager:
         position_size_pct = (amount / account_value * 100) if account_value > 0 else 0
         if position_size_pct > self.max_position_size_pct:
             validation_result["valid"] = False
-            validation_result["reason"] = f"Position size {position_size_pct:.2f}% exceeds limit of {self.max_position_size_pct}%"
+            validation_result["reason"] = (
+                f"Position size {position_size_pct:.2f}% exceeds limit of {self.max_position_size_pct}%"
+            )
             return validation_result
 
         # Validate sentiment score
         if not -1.0 <= sentiment_score <= 1.0:
             validation_result["valid"] = False
-            validation_result["reason"] = f"Invalid sentiment score: {sentiment_score} (must be between -1 and 1)"
+            validation_result["reason"] = (
+                f"Invalid sentiment score: {sentiment_score} (must be between -1 and 1)"
+            )
             return validation_result
 
         # Check sentiment strength (weak sentiment warning)
@@ -254,7 +269,9 @@ class RiskManager:
         # Log warnings if any
         if validation_result["warnings"]:
             for warning in validation_result["warnings"]:
-                self._send_alert(severity="INFO", message=warning, details={"symbol": symbol})
+                self._send_alert(
+                    severity="INFO", message=warning, details={"symbol": symbol}
+                )
 
         return validation_result
 
@@ -282,28 +299,31 @@ class RiskManager:
         daily_loss_pct = (daily_pl / account_value * 100) if account_value > 0 else 0
         current_drawdown_pct = 0.0
         if self.peak_account_value > 0:
-            current_drawdown_pct = ((self.peak_account_value - account_value) / self.peak_account_value) * 100
+            current_drawdown_pct = (
+                (self.peak_account_value - account_value) / self.peak_account_value
+            ) * 100
 
         status = {
             "trading_allowed": True,
             "daily_loss": {
                 "current_pct": daily_loss_pct,
                 "limit_pct": -self.max_daily_loss_pct,
-                "breached": daily_loss_pct < -self.max_daily_loss_pct
+                "breached": daily_loss_pct < -self.max_daily_loss_pct,
             },
             "drawdown": {
                 "current_pct": current_drawdown_pct,
                 "limit_pct": self.max_drawdown_pct,
-                "breached": current_drawdown_pct > self.max_drawdown_pct
+                "breached": current_drawdown_pct > self.max_drawdown_pct,
             },
             "consecutive_losses": {
                 "current": self.metrics.consecutive_losses,
                 "limit": self.max_consecutive_losses,
-                "breached": self.metrics.consecutive_losses >= self.max_consecutive_losses
+                "breached": self.metrics.consecutive_losses
+                >= self.max_consecutive_losses,
             },
             "account_value": account_value,
             "peak_account_value": self.peak_account_value,
-            "daily_pl": daily_pl
+            "daily_pl": daily_pl,
         }
 
         # Determine if trading should be stopped
@@ -335,8 +355,7 @@ class RiskManager:
             self.metrics.losing_trades += 1
             self.metrics.consecutive_losses += 1
             self.metrics.max_consecutive_losses = max(
-                self.metrics.max_consecutive_losses,
-                self.metrics.consecutive_losses
+                self.metrics.max_consecutive_losses, self.metrics.consecutive_losses
             )
             print(f"[RISK MANAGER] Trade result: LOSS ${profit_loss:.2f}")
 
@@ -345,14 +364,20 @@ class RiskManager:
                 self._send_alert(
                     severity="WARNING",
                     message=f"Consecutive losses: {self.metrics.consecutive_losses}",
-                    details={"total_loss": profit_loss}
+                    details={"total_loss": profit_loss},
                 )
         else:
             print(f"[RISK MANAGER] Trade result: BREAKEVEN")
 
         # Log current metrics
-        win_rate = (self.metrics.winning_trades / self.metrics.total_trades * 100) if self.metrics.total_trades > 0 else 0
-        print(f"[RISK MANAGER] Daily P&L: ${self.metrics.daily_pl:.2f} | Win Rate: {win_rate:.1f}%")
+        win_rate = (
+            (self.metrics.winning_trades / self.metrics.total_trades * 100)
+            if self.metrics.total_trades > 0
+            else 0
+        )
+        print(
+            f"[RISK MANAGER] Daily P&L: ${self.metrics.daily_pl:.2f} | Win Rate: {win_rate:.1f}%"
+        )
 
     def reset_daily_counters(self) -> None:
         """
@@ -390,7 +415,7 @@ class RiskManager:
             "daily_metrics": {
                 "daily_pl": self.metrics.daily_pl,
                 "daily_trades": self.metrics.daily_trades,
-                "last_reset": self.metrics.last_reset_date
+                "last_reset": self.metrics.last_reset_date,
             },
             "trade_statistics": {
                 "total_trades": self.metrics.total_trades,
@@ -398,27 +423,24 @@ class RiskManager:
                 "losing_trades": self.metrics.losing_trades,
                 "win_rate_pct": round(win_rate, 2),
                 "consecutive_losses": self.metrics.consecutive_losses,
-                "max_consecutive_losses": self.metrics.max_consecutive_losses
+                "max_consecutive_losses": self.metrics.max_consecutive_losses,
             },
             "risk_limits": {
                 "max_daily_loss_pct": self.max_daily_loss_pct,
                 "max_position_size_pct": self.max_position_size_pct,
                 "max_drawdown_pct": self.max_drawdown_pct,
-                "max_consecutive_losses_limit": self.max_consecutive_losses
+                "max_consecutive_losses_limit": self.max_consecutive_losses,
             },
             "account_metrics": {
                 "peak_account_value": self.peak_account_value,
                 "max_drawdown_reached": self.metrics.max_drawdown_reached,
-                "circuit_breaker_triggered": self.metrics.circuit_breaker_triggered
+                "circuit_breaker_triggered": self.metrics.circuit_breaker_triggered,
             },
-            "alerts": self.alerts[-10:]  # Last 10 alerts
+            "alerts": self.alerts[-10:],  # Last 10 alerts
         }
 
     def _send_alert(
-        self,
-        severity: str,
-        message: str,
-        details: Optional[Dict] = None
+        self, severity: str, message: str, details: Optional[Dict] = None
     ) -> None:
         """
         Send a risk management alert.
@@ -437,17 +459,13 @@ class RiskManager:
             "timestamp": timestamp,
             "severity": severity,
             "message": message,
-            "details": details or {}
+            "details": details or {},
         }
 
         self.alerts.append(alert)
 
         # Console output with color-coded severity
-        severity_symbols = {
-            "INFO": "ℹ️",
-            "WARNING": "⚠️",
-            "CRITICAL": "🚨"
-        }
+        severity_symbols = {"INFO": "ℹ️", "WARNING": "⚠️", "CRITICAL": "🚨"}
 
         symbol = severity_symbols.get(severity, "•")
         print(f"\n{symbol} [RISK ALERT - {severity}] {timestamp}")
@@ -468,7 +486,7 @@ if __name__ == "__main__":
         max_daily_loss_pct=2.0,
         max_position_size_pct=10.0,
         max_drawdown_pct=10.0,
-        max_consecutive_losses=3
+        max_consecutive_losses=3,
     )
 
     # Simulate trading scenarios
@@ -480,7 +498,9 @@ if __name__ == "__main__":
     print(f"Can trade: {can_trade}")
 
     print("\n--- Scenario 2: Calculate Position Size ---")
-    position_size = risk_mgr.calculate_position_size(account_value, risk_per_trade_pct=1.0)
+    position_size = risk_mgr.calculate_position_size(
+        account_value, risk_per_trade_pct=1.0
+    )
     print(f"Position size (1% risk): ${position_size:.2f}")
 
     print("\n--- Scenario 3: Validate Trade ---")
@@ -489,10 +509,10 @@ if __name__ == "__main__":
         amount=5000.0,
         sentiment_score=0.75,
         account_value=account_value,
-        trade_type="BUY"
+        trade_type="BUY",
     )
     print(f"Trade valid: {validation['valid']}")
-    if validation['warnings']:
+    if validation["warnings"]:
         print(f"Warnings: {validation['warnings']}")
 
     print("\n--- Scenario 4: Record Trade Results ---")

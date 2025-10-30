@@ -75,8 +75,8 @@ def setup_logging(log_dir: str = "logs", log_level: str = "INFO") -> logging.Log
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.INFO)
     console_formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
     console_handler.setFormatter(console_formatter)
     logger.addHandler(console_handler)
@@ -86,12 +86,12 @@ def setup_logging(log_dir: str = "logs", log_level: str = "INFO") -> logging.Log
         log_path / "trading_system.log",
         maxBytes=10 * 1024 * 1024,  # 10MB
         backupCount=5,
-        encoding='utf-8'
+        encoding="utf-8",
     )
     file_handler.setLevel(logging.DEBUG)
     file_formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
     file_handler.setFormatter(file_formatter)
     logger.addHandler(file_handler)
@@ -101,7 +101,7 @@ def setup_logging(log_dir: str = "logs", log_level: str = "INFO") -> logging.Log
         log_path / "trading_errors.log",
         maxBytes=10 * 1024 * 1024,
         backupCount=5,
-        encoding='utf-8'
+        encoding="utf-8",
     )
     error_handler.setLevel(logging.ERROR)
     error_handler.setFormatter(file_formatter)
@@ -146,11 +146,13 @@ class TradingOrchestrator:
         self.logger = logging.getLogger("TradingOrchestrator")
         self.mode = mode.lower()
 
-        if self.mode not in ['paper', 'live']:
+        if self.mode not in ["paper", "live"]:
             raise ValueError(f"Invalid mode '{mode}'. Must be 'paper' or 'live'.")
 
         self.logger.info("=" * 80)
-        self.logger.info(f"Initializing Trading Orchestrator in {self.mode.upper()} mode")
+        self.logger.info(
+            f"Initializing Trading Orchestrator in {self.mode.upper()} mode"
+        )
         self.logger.info("=" * 80)
 
         # Load configuration
@@ -158,7 +160,7 @@ class TradingOrchestrator:
         self._validate_config()
 
         # Initialize timezone (Eastern Time for market hours)
-        self.timezone = pytz.timezone('America/New_York')
+        self.timezone = pytz.timezone("America/New_York")
 
         # Initialize components
         self._initialize_components()
@@ -166,14 +168,14 @@ class TradingOrchestrator:
         # Orchestrator state
         self.running = False
         self.last_execution: Dict[str, Optional[datetime]] = {
-            'core_strategy': None,
-            'growth_strategy': None,
-            'ipo_strategy': None
+            "core_strategy": None,
+            "growth_strategy": None,
+            "ipo_strategy": None,
         }
         self.health_status: Dict[str, Any] = {
-            'status': 'initialized',
-            'last_check': datetime.now().isoformat(),
-            'errors': []
+            "status": "initialized",
+            "last_check": datetime.now().isoformat(),
+            "errors": [],
         }
 
         # Register signal handlers for graceful shutdown
@@ -181,9 +183,13 @@ class TradingOrchestrator:
         signal.signal(signal.SIGINT, self._signal_handler)
 
         self.logger.info("Trading Orchestrator initialized successfully")
-        self.logger.info(f"Daily investment allocation: ${self.config['daily_investment']:.2f}")
-        self.logger.info(f"Risk limits: Daily loss {self.config['max_daily_loss_pct']}%, "
-                        f"Drawdown {self.config['max_drawdown_pct']}%")
+        self.logger.info(
+            f"Daily investment allocation: ${self.config['daily_investment']:.2f}"
+        )
+        self.logger.info(
+            f"Risk limits: Daily loss {self.config['max_daily_loss_pct']}%, "
+            f"Drawdown {self.config['max_drawdown_pct']}%"
+        )
 
     def _load_config(self) -> Dict[str, Any]:
         """
@@ -202,29 +208,25 @@ class TradingOrchestrator:
 
         config = {
             # API Keys
-            'alpaca_api_key': os.getenv('ALPACA_API_KEY'),
-            'alpaca_secret_key': os.getenv('ALPACA_SECRET_KEY'),
-            'openrouter_api_key': os.getenv('OPENROUTER_API_KEY'),
-
+            "alpaca_api_key": os.getenv("ALPACA_API_KEY"),
+            "alpaca_secret_key": os.getenv("ALPACA_SECRET_KEY"),
+            "openrouter_api_key": os.getenv("OPENROUTER_API_KEY"),
             # Trading Configuration
-            'paper_trading': os.getenv('PAPER_TRADING', 'true').lower() == 'true',
-            'daily_investment': float(os.getenv('DAILY_INVESTMENT', '10.0')),
-
+            "paper_trading": os.getenv("PAPER_TRADING", "true").lower() == "true",
+            "daily_investment": float(os.getenv("DAILY_INVESTMENT", "10.0")),
             # Tier Allocations
-            'tier1_allocation': float(os.getenv('TIER1_ALLOCATION', '0.60')),
-            'tier2_allocation': float(os.getenv('TIER2_ALLOCATION', '0.20')),
-            'tier3_allocation': float(os.getenv('TIER3_ALLOCATION', '0.10')),
-            'tier4_allocation': float(os.getenv('TIER4_ALLOCATION', '0.10')),
-
+            "tier1_allocation": float(os.getenv("TIER1_ALLOCATION", "0.60")),
+            "tier2_allocation": float(os.getenv("TIER2_ALLOCATION", "0.20")),
+            "tier3_allocation": float(os.getenv("TIER3_ALLOCATION", "0.10")),
+            "tier4_allocation": float(os.getenv("TIER4_ALLOCATION", "0.10")),
             # Risk Management
-            'max_daily_loss_pct': float(os.getenv('MAX_DAILY_LOSS_PCT', '2.0')),
-            'max_position_size_pct': float(os.getenv('MAX_POSITION_SIZE_PCT', '10.0')),
-            'max_drawdown_pct': float(os.getenv('MAX_DRAWDOWN_PCT', '10.0')),
-            'stop_loss_pct': float(os.getenv('STOP_LOSS_PCT', '5.0')),
-
+            "max_daily_loss_pct": float(os.getenv("MAX_DAILY_LOSS_PCT", "2.0")),
+            "max_position_size_pct": float(os.getenv("MAX_POSITION_SIZE_PCT", "10.0")),
+            "max_drawdown_pct": float(os.getenv("MAX_DRAWDOWN_PCT", "10.0")),
+            "stop_loss_pct": float(os.getenv("STOP_LOSS_PCT", "5.0")),
             # Alerts
-            'alert_email': os.getenv('ALERT_EMAIL'),
-            'alert_webhook_url': os.getenv('ALERT_WEBHOOK_URL'),
+            "alert_email": os.getenv("ALERT_EMAIL"),
+            "alert_webhook_url": os.getenv("ALERT_WEBHOOK_URL"),
         }
 
         self.logger.info("Configuration loaded successfully")
@@ -237,18 +239,20 @@ class TradingOrchestrator:
         Raises:
             ValueError: If required configuration is missing or invalid
         """
-        required_keys = ['alpaca_api_key', 'alpaca_secret_key']
+        required_keys = ["alpaca_api_key", "alpaca_secret_key"]
         missing_keys = [key for key in required_keys if not self.config.get(key)]
 
         if missing_keys:
-            raise ValueError(f"Missing required configuration: {', '.join(missing_keys)}")
+            raise ValueError(
+                f"Missing required configuration: {', '.join(missing_keys)}"
+            )
 
         # Validate tier allocations sum to <= 1.0
         total_allocation = (
-            self.config['tier1_allocation'] +
-            self.config['tier2_allocation'] +
-            self.config['tier3_allocation'] +
-            self.config['tier4_allocation']
+            self.config["tier1_allocation"]
+            + self.config["tier2_allocation"]
+            + self.config["tier3_allocation"]
+            + self.config["tier4_allocation"]
         )
 
         if total_allocation > 1.0:
@@ -265,45 +269,57 @@ class TradingOrchestrator:
 
         try:
             # Initialize Alpaca trader
-            use_paper = self.mode == 'paper' or self.config['paper_trading']
+            use_paper = self.mode == "paper" or self.config["paper_trading"]
             self.alpaca_trader = AlpacaTrader(paper=use_paper)
-            self.logger.info(f"Alpaca trader initialized in {'PAPER' if use_paper else 'LIVE'} mode")
+            self.logger.info(
+                f"Alpaca trader initialized in {'PAPER' if use_paper else 'LIVE'} mode"
+            )
 
             # Initialize risk manager
             self.risk_manager = RiskManager(
-                max_daily_loss_pct=self.config['max_daily_loss_pct'],
-                max_position_size_pct=self.config['max_position_size_pct'],
-                max_drawdown_pct=self.config['max_drawdown_pct']
+                max_daily_loss_pct=self.config["max_daily_loss_pct"],
+                max_position_size_pct=self.config["max_position_size_pct"],
+                max_drawdown_pct=self.config["max_drawdown_pct"],
             )
             self.logger.info("Risk manager initialized")
 
             # Calculate strategy allocations
-            daily_investment = self.config['daily_investment']
-            tier1_daily = daily_investment * self.config['tier1_allocation']  # 60% -> $6
-            tier2_weekly = (daily_investment * 5) * self.config['tier2_allocation']  # 20% of weekly -> $10
-            tier3_daily = daily_investment * self.config['tier3_allocation']  # 10% -> $1
+            daily_investment = self.config["daily_investment"]
+            tier1_daily = (
+                daily_investment * self.config["tier1_allocation"]
+            )  # 60% -> $6
+            tier2_weekly = (daily_investment * 5) * self.config[
+                "tier2_allocation"
+            ]  # 20% of weekly -> $10
+            tier3_daily = (
+                daily_investment * self.config["tier3_allocation"]
+            )  # 10% -> $1
 
             # Initialize CoreStrategy (Tier 1)
             self.core_strategy = CoreStrategy(
                 daily_allocation=tier1_daily,
-                stop_loss_pct=self.config['stop_loss_pct'] / 100,
-                use_sentiment=True
+                stop_loss_pct=self.config["stop_loss_pct"] / 100,
+                use_sentiment=True,
             )
-            self.logger.info(f"Core strategy initialized (daily allocation: ${tier1_daily:.2f})")
+            self.logger.info(
+                f"Core strategy initialized (daily allocation: ${tier1_daily:.2f})"
+            )
 
             # Initialize GrowthStrategy (Tier 2)
-            self.growth_strategy = GrowthStrategy(
-                weekly_allocation=tier2_weekly
+            self.growth_strategy = GrowthStrategy(weekly_allocation=tier2_weekly)
+            self.logger.info(
+                f"Growth strategy initialized (weekly allocation: ${tier2_weekly:.2f})"
             )
-            self.logger.info(f"Growth strategy initialized (weekly allocation: ${tier2_weekly:.2f})")
 
             # Initialize IPOStrategy (Tier 3)
             self.ipo_strategy = IPOStrategy(
                 daily_deposit=tier3_daily,
-                anthropic_api_key=os.getenv('ANTHROPIC_API_KEY'),
-                openai_api_key=os.getenv('OPENAI_API_KEY')
+                anthropic_api_key=os.getenv("ANTHROPIC_API_KEY"),
+                openai_api_key=os.getenv("OPENAI_API_KEY"),
             )
-            self.logger.info(f"IPO strategy initialized (daily deposit: ${tier3_daily:.2f})")
+            self.logger.info(
+                f"IPO strategy initialized (daily deposit: ${tier3_daily:.2f})"
+            )
 
             self.logger.info("All components initialized successfully")
 
@@ -319,10 +335,12 @@ class TradingOrchestrator:
             signum: Signal number
             frame: Current stack frame
         """
-        signal_names = {signal.SIGTERM: 'SIGTERM', signal.SIGINT: 'SIGINT'}
+        signal_names = {signal.SIGTERM: "SIGTERM", signal.SIGINT: "SIGINT"}
         signal_name = signal_names.get(signum, str(signum))
 
-        self.logger.warning(f"Received {signal_name} signal - initiating graceful shutdown")
+        self.logger.warning(
+            f"Received {signal_name} signal - initiating graceful shutdown"
+        )
         self.stop()
 
     def setup_schedule(self) -> None:
@@ -341,27 +359,35 @@ class TradingOrchestrator:
         schedule.clear()
 
         # Daily risk counter reset at 9:30 AM ET (before market open)
-        schedule.every().day.at("09:30").do(self._reset_daily_risk).tag('risk_reset')
+        schedule.every().day.at("09:30").do(self._reset_daily_risk).tag("risk_reset")
         self.logger.info("Scheduled: Risk reset - Daily at 9:30 AM ET")
 
         # Core Strategy: Daily at 9:35 AM ET
-        schedule.every().day.at("09:35").do(self._execute_core_strategy).tag('core_strategy')
+        schedule.every().day.at("09:35").do(self._execute_core_strategy).tag(
+            "core_strategy"
+        )
         self.logger.info("Scheduled: Core strategy - Daily at 9:35 AM ET")
 
         # Growth Strategy: Weekly on Mondays at 9:35 AM ET
-        schedule.every().monday.at("09:35").do(self._execute_growth_strategy).tag('growth_strategy')
+        schedule.every().monday.at("09:35").do(self._execute_growth_strategy).tag(
+            "growth_strategy"
+        )
         self.logger.info("Scheduled: Growth strategy - Mondays at 9:35 AM ET")
 
         # IPO Strategy: Daily deposit at 10:00 AM ET
-        schedule.every().day.at("10:00").do(self._execute_ipo_deposit).tag('ipo_deposit')
+        schedule.every().day.at("10:00").do(self._execute_ipo_deposit).tag(
+            "ipo_deposit"
+        )
         self.logger.info("Scheduled: IPO deposit tracking - Daily at 10:00 AM ET")
 
         # IPO Strategy: Weekly check on Wednesdays at 10:00 AM ET
-        schedule.every().wednesday.at("10:00").do(self._check_ipo_opportunities).tag('ipo_check')
+        schedule.every().wednesday.at("10:00").do(self._check_ipo_opportunities).tag(
+            "ipo_check"
+        )
         self.logger.info("Scheduled: IPO opportunity check - Wednesdays at 10:00 AM ET")
 
         # Health check: Every hour
-        schedule.every().hour.do(self._update_health_status).tag('health_check')
+        schedule.every().hour.do(self._update_health_status).tag("health_check")
         self.logger.info("Scheduled: Health check - Every hour")
 
         self.logger.info("Schedule setup complete")
@@ -373,7 +399,9 @@ class TradingOrchestrator:
             self.risk_manager.reset_daily_counters()
             self.logger.info("Daily risk counters reset successfully")
         except Exception as e:
-            self.logger.error(f"Error resetting daily risk counters: {e}", exc_info=True)
+            self.logger.error(
+                f"Error resetting daily risk counters: {e}", exc_info=True
+            )
             self._send_alert("Risk Reset Error", str(e), severity="ERROR")
 
     def _execute_core_strategy(self) -> None:
@@ -385,15 +413,17 @@ class TradingOrchestrator:
         try:
             # Check if trading is allowed
             account_info = self.alpaca_trader.get_account_info()
-            account_value = account_info['portfolio_value']
-            daily_pl = account_value - account_info.get('last_equity', account_value)
+            account_value = account_info["portfolio_value"]
+            daily_pl = account_value - account_info.get("last_equity", account_value)
 
             if not self.risk_manager.can_trade(account_value, daily_pl):
-                self.logger.warning("Trading blocked by risk manager - skipping Core Strategy execution")
+                self.logger.warning(
+                    "Trading blocked by risk manager - skipping Core Strategy execution"
+                )
                 self._send_alert(
                     "Trading Blocked",
                     "Core Strategy execution skipped due to risk limits",
-                    severity="WARNING"
+                    severity="WARNING",
                 )
                 return
 
@@ -401,22 +431,26 @@ class TradingOrchestrator:
             order = self.core_strategy.execute_daily()
 
             if order:
-                self.logger.info(f"Core Strategy order executed: {order.symbol} - ${order.amount:.2f}")
-                self.last_execution['core_strategy'] = datetime.now()
+                self.logger.info(
+                    f"Core Strategy order executed: {order.symbol} - ${order.amount:.2f}"
+                )
+                self.last_execution["core_strategy"] = datetime.now()
             else:
                 self.logger.info("Core Strategy: No order placed")
 
             # Update health status
-            self.health_status['status'] = 'healthy'
-            self.health_status['last_core_execution'] = datetime.now().isoformat()
+            self.health_status["status"] = "healthy"
+            self.health_status["last_core_execution"] = datetime.now().isoformat()
 
         except Exception as e:
             self.logger.error(f"Error executing Core Strategy: {e}", exc_info=True)
-            self.health_status['errors'].append({
-                'timestamp': datetime.now().isoformat(),
-                'strategy': 'core',
-                'error': str(e)
-            })
+            self.health_status["errors"].append(
+                {
+                    "timestamp": datetime.now().isoformat(),
+                    "strategy": "core",
+                    "error": str(e),
+                }
+            )
             self._send_alert("Core Strategy Error", str(e), severity="CRITICAL")
 
         finally:
@@ -431,15 +465,17 @@ class TradingOrchestrator:
         try:
             # Check if trading is allowed
             account_info = self.alpaca_trader.get_account_info()
-            account_value = account_info['portfolio_value']
-            daily_pl = account_value - account_info.get('last_equity', account_value)
+            account_value = account_info["portfolio_value"]
+            daily_pl = account_value - account_info.get("last_equity", account_value)
 
             if not self.risk_manager.can_trade(account_value, daily_pl):
-                self.logger.warning("Trading blocked by risk manager - skipping Growth Strategy execution")
+                self.logger.warning(
+                    "Trading blocked by risk manager - skipping Growth Strategy execution"
+                )
                 self._send_alert(
                     "Trading Blocked",
                     "Growth Strategy execution skipped due to risk limits",
-                    severity="WARNING"
+                    severity="WARNING",
                 )
                 return
 
@@ -449,26 +485,32 @@ class TradingOrchestrator:
             if orders:
                 self.logger.info(f"Growth Strategy: {len(orders)} orders generated")
                 for order in orders:
-                    self.logger.info(f"  {order.action.upper()} {order.symbol} x{order.quantity}")
-                self.last_execution['growth_strategy'] = datetime.now()
+                    self.logger.info(
+                        f"  {order.action.upper()} {order.symbol} x{order.quantity}"
+                    )
+                self.last_execution["growth_strategy"] = datetime.now()
             else:
                 self.logger.info("Growth Strategy: No orders generated")
 
             # Get performance metrics
             metrics = self.growth_strategy.get_performance_metrics()
-            self.logger.info(f"Growth Strategy metrics: Win rate {metrics['win_rate']:.1f}%, "
-                           f"Total P&L ${metrics['total_pnl']:.2f}")
+            self.logger.info(
+                f"Growth Strategy metrics: Win rate {metrics['win_rate']:.1f}%, "
+                f"Total P&L ${metrics['total_pnl']:.2f}"
+            )
 
             # Update health status
-            self.health_status['last_growth_execution'] = datetime.now().isoformat()
+            self.health_status["last_growth_execution"] = datetime.now().isoformat()
 
         except Exception as e:
             self.logger.error(f"Error executing Growth Strategy: {e}", exc_info=True)
-            self.health_status['errors'].append({
-                'timestamp': datetime.now().isoformat(),
-                'strategy': 'growth',
-                'error': str(e)
-            })
+            self.health_status["errors"].append(
+                {
+                    "timestamp": datetime.now().isoformat(),
+                    "strategy": "growth",
+                    "error": str(e),
+                }
+            )
             self._send_alert("Growth Strategy Error", str(e), severity="CRITICAL")
 
         finally:
@@ -481,7 +523,7 @@ class TradingOrchestrator:
         try:
             balance = self.ipo_strategy.track_daily_deposit()
             self.logger.info(f"IPO Strategy: New balance ${balance:.2f}")
-            self.last_execution['ipo_strategy'] = datetime.now()
+            self.last_execution["ipo_strategy"] = datetime.now()
 
         except Exception as e:
             self.logger.error(f"Error tracking IPO deposit: {e}", exc_info=True)
@@ -500,17 +542,21 @@ class TradingOrchestrator:
             # Get current balance info
             balance_info = self.ipo_strategy.get_balance_info()
             self.logger.info(f"IPO balance: ${balance_info['balance']:.2f}")
-            self.logger.info(f"Projected 30 days: ${balance_info['projected_30_days']:.2f}")
+            self.logger.info(
+                f"Projected 30 days: ${balance_info['projected_30_days']:.2f}"
+            )
 
             # Get any existing recommendations
             recommendations = self.ipo_strategy.get_ipo_recommendations()
             if recommendations:
                 self.logger.info(f"Active IPO recommendations: {len(recommendations)}")
                 for rec in recommendations[:3]:  # Top 3
-                    self.logger.info(f"  {rec['company_name']}: {rec['score']}/100 - ${rec['target_allocation']:.2f}")
+                    self.logger.info(
+                        f"  {rec['company_name']}: {rec['score']}/100 - ${rec['target_allocation']:.2f}"
+                    )
 
             # Update health status
-            self.health_status['last_ipo_check'] = datetime.now().isoformat()
+            self.health_status["last_ipo_check"] = datetime.now().isoformat()
 
         except Exception as e:
             self.logger.error(f"Error checking IPO opportunities: {e}", exc_info=True)
@@ -529,21 +575,31 @@ class TradingOrchestrator:
             risk_metrics = self.risk_manager.get_risk_metrics()
 
             # Update health status
-            self.health_status.update({
-                'status': 'healthy' if not risk_metrics['account_metrics']['circuit_breaker_triggered'] else 'degraded',
-                'last_check': datetime.now().isoformat(),
-                'account_value': account_info['portfolio_value'],
-                'buying_power': account_info['buying_power'],
-                'daily_pl': risk_metrics['daily_metrics']['daily_pl'],
-                'circuit_breaker': risk_metrics['account_metrics']['circuit_breaker_triggered']
-            })
+            self.health_status.update(
+                {
+                    "status": (
+                        "healthy"
+                        if not risk_metrics["account_metrics"][
+                            "circuit_breaker_triggered"
+                        ]
+                        else "degraded"
+                    ),
+                    "last_check": datetime.now().isoformat(),
+                    "account_value": account_info["portfolio_value"],
+                    "buying_power": account_info["buying_power"],
+                    "daily_pl": risk_metrics["daily_metrics"]["daily_pl"],
+                    "circuit_breaker": risk_metrics["account_metrics"][
+                        "circuit_breaker_triggered"
+                    ],
+                }
+            )
 
             self.logger.debug(f"Health check: {self.health_status['status']}")
 
         except Exception as e:
             self.logger.error(f"Error updating health status: {e}", exc_info=True)
-            self.health_status['status'] = 'unhealthy'
-            self.health_status['last_error'] = str(e)
+            self.health_status["status"] = "unhealthy"
+            self.health_status["last_error"] = str(e)
 
     def _send_alert(self, title: str, message: str, severity: str = "INFO") -> None:
         """
@@ -578,9 +634,9 @@ class TradingOrchestrator:
         """
         return {
             **self.health_status,
-            'running': self.running,
-            'mode': self.mode,
-            'last_executions': self.last_execution
+            "running": self.running,
+            "mode": self.mode,
+            "last_executions": self.last_execution,
         }
 
     def run_once(self, strategy: Optional[str] = None) -> None:
@@ -594,13 +650,13 @@ class TradingOrchestrator:
         self.logger.info("MANUAL EXECUTION MODE - RUN ONCE")
         self.logger.info("=" * 80)
 
-        if strategy is None or strategy == 'core':
+        if strategy is None or strategy == "core":
             self._execute_core_strategy()
 
-        if strategy is None or strategy == 'growth':
+        if strategy is None or strategy == "growth":
             self._execute_growth_strategy()
 
-        if strategy is None or strategy == 'ipo':
+        if strategy is None or strategy == "ipo":
             self._execute_ipo_deposit()
             self._check_ipo_opportunities()
 
@@ -685,43 +741,43 @@ Examples:
 
   # Debug mode with verbose logging
   python src/main.py --mode paper --log-level DEBUG
-        """
+        """,
     )
 
     parser.add_argument(
-        '--mode',
+        "--mode",
         type=str,
-        choices=['paper', 'live'],
-        default='paper',
-        help='Trading mode: paper or live (default: paper)'
+        choices=["paper", "live"],
+        default="paper",
+        help="Trading mode: paper or live (default: paper)",
     )
 
     parser.add_argument(
-        '--run-once',
-        action='store_true',
-        help='Execute strategies once and exit (for testing)'
+        "--run-once",
+        action="store_true",
+        help="Execute strategies once and exit (for testing)",
     )
 
     parser.add_argument(
-        '--strategy',
+        "--strategy",
         type=str,
-        choices=['core', 'growth', 'ipo'],
-        help='Specific strategy to run with --run-once (default: all)'
+        choices=["core", "growth", "ipo"],
+        help="Specific strategy to run with --run-once (default: all)",
     )
 
     parser.add_argument(
-        '--log-level',
+        "--log-level",
         type=str,
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        default='INFO',
-        help='Logging level (default: INFO)'
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO",
+        help="Logging level (default: INFO)",
     )
 
     parser.add_argument(
-        '--log-dir',
+        "--log-dir",
         type=str,
-        default='logs',
-        help='Directory for log files (default: logs)'
+        default="logs",
+        help="Directory for log files (default: logs)",
     )
 
     args = parser.parse_args()
@@ -740,13 +796,13 @@ Examples:
     print("=" * 80 + "\n")
 
     # Safety warning for live mode
-    if args.mode == 'live':
+    if args.mode == "live":
         print("\n" + "!" * 80)
         print("  WARNING: LIVE TRADING MODE")
         print("  Real money will be used for trades!")
         print("!" * 80)
         response = input("\nType 'yes' to confirm live trading: ")
-        if response.lower() != 'yes':
+        if response.lower() != "yes":
             print("Live trading cancelled.")
             sys.exit(0)
         print()

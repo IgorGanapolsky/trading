@@ -12,9 +12,9 @@ print("=" * 70)
 
 # Connect to Alpaca
 api = tradeapi.REST(
-    'PKSGVK5JNGYIFPTW53EAKCNBP5',
-    '9DCF1pY2wgTTY3TBasjAHUWWLXiDTyrAhMJ4ZD6nVWaG',
-    'https://paper-api.alpaca.markets'
+    "PKSGVK5JNGYIFPTW53EAKCNBP5",
+    "9DCF1pY2wgTTY3TBasjAHUWWLXiDTyrAhMJ4ZD6nVWaG",
+    "https://paper-api.alpaca.markets",
 )
 
 # Step 1: Check Account
@@ -30,7 +30,7 @@ print(f"Current Equity: ${float(account.equity):,.2f}")
 print("\n📈 STEP 2: Analyzing Index ETFs (Technical Analysis)")
 print("-" * 70)
 
-etfs = ['SPY', 'QQQ', 'VOO']
+etfs = ["SPY", "QQQ", "VOO"]
 momentum_scores = {}
 
 for symbol in etfs:
@@ -39,12 +39,17 @@ for symbol in etfs:
         end = datetime.now()
         start = end - timedelta(days=30)
 
-        bars = api.get_bars(symbol, '1Day', start=start.strftime('%Y-%m-%d'), end=end.strftime('%Y-%m-%d')).df
+        bars = api.get_bars(
+            symbol,
+            "1Day",
+            start=start.strftime("%Y-%m-%d"),
+            end=end.strftime("%Y-%m-%d"),
+        ).df
 
         if len(bars) > 0:
             # Calculate simple momentum (% change over period)
-            first_price = bars['close'].iloc[0]
-            last_price = bars['close'].iloc[-1]
+            first_price = bars["close"].iloc[0]
+            last_price = bars["close"].iloc[-1]
             momentum = ((last_price - first_price) / first_price) * 100
 
             momentum_scores[symbol] = momentum
@@ -91,9 +96,9 @@ try:
     order = api.submit_order(
         symbol=best_etf,
         notional=6.00,  # $6 worth
-        side='buy',
-        type='market',
-        time_in_force='day'
+        side="buy",
+        type="market",
+        time_in_force="day",
     )
 
     print(f"✅ ORDER PLACED!")

@@ -26,9 +26,20 @@ from dashboard.data_exporter import DashboardExporter
 
 def generate_realistic_trades(num_trades: int = 100):
     """Generate realistic trade data."""
-    symbols = ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'NVDA', 'META', 'JPM', 'V', 'WMT']
-    strategies = ['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4']
-    sides = ['BUY', 'SELL']
+    symbols = [
+        "AAPL",
+        "GOOGL",
+        "MSFT",
+        "TSLA",
+        "AMZN",
+        "NVDA",
+        "META",
+        "JPM",
+        "V",
+        "WMT",
+    ]
+    strategies = ["Tier 1", "Tier 2", "Tier 3", "Tier 4"]
+    sides = ["BUY", "SELL"]
 
     trades = []
     current_time = datetime.now()
@@ -50,19 +61,21 @@ def generate_realistic_trades(num_trades: int = 100):
         tier_multiplier = {1: 1.5, 2: 1.2, 3: 1.0, 4: 0.8}
         pnl = base_pnl * tier_multiplier[strategy_tier]
 
-        trades.append({
-            'timestamp': trade_time.strftime('%Y-%m-%d %H:%M:%S'),
-            'symbol': symbol,
-            'side': side,
-            'quantity': quantity,
-            'price': round(price, 2),
-            'amount': round(amount, 2),
-            'strategy': strategy,
-            'pnl': round(pnl, 2),
-            'status': 'FILLED'
-        })
+        trades.append(
+            {
+                "timestamp": trade_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "symbol": symbol,
+                "side": side,
+                "quantity": quantity,
+                "price": round(price, 2),
+                "amount": round(amount, 2),
+                "strategy": strategy,
+                "pnl": round(pnl, 2),
+                "status": "FILLED",
+            }
+        )
 
-    return sorted(trades, key=lambda x: x['timestamp'], reverse=True)
+    return sorted(trades, key=lambda x: x["timestamp"], reverse=True)
 
 
 def generate_realistic_performance(trades):
@@ -70,27 +83,23 @@ def generate_realistic_performance(trades):
     # Calculate strategy performance
     strategies = {}
     for trade in trades:
-        strategy = trade['strategy']
+        strategy = trade["strategy"]
         if strategy not in strategies:
-            strategies[strategy] = {
-                'pnl': 0.0,
-                'trades': 0,
-                'wins': 0
-            }
+            strategies[strategy] = {"pnl": 0.0, "trades": 0, "wins": 0}
 
-        strategies[strategy]['pnl'] += trade['pnl']
-        strategies[strategy]['trades'] += 1
-        if trade['pnl'] > 0:
-            strategies[strategy]['wins'] += 1
+        strategies[strategy]["pnl"] += trade["pnl"]
+        strategies[strategy]["trades"] += 1
+        if trade["pnl"] > 0:
+            strategies[strategy]["wins"] += 1
 
     # Calculate win rates
     for strategy in strategies:
-        total = strategies[strategy]['trades']
-        wins = strategies[strategy]['wins']
-        strategies[strategy]['win_rate'] = (wins / total * 100) if total > 0 else 0
+        total = strategies[strategy]["trades"]
+        wins = strategies[strategy]["wins"]
+        strategies[strategy]["win_rate"] = (wins / total * 100) if total > 0 else 0
 
     # Calculate totals
-    total_pnl = sum(s['pnl'] for s in strategies.values())
+    total_pnl = sum(s["pnl"] for s in strategies.values())
     initial_capital = 100000
     total_value = initial_capital + total_pnl
     equity = total_value * 0.65
@@ -98,9 +107,12 @@ def generate_realistic_performance(trades):
 
     # Calculate daily P/L (last 24 hours)
     yesterday = datetime.now() - timedelta(hours=24)
-    recent_trades = [t for t in trades
-                    if datetime.strptime(t['timestamp'], '%Y-%m-%d %H:%M:%S') > yesterday]
-    daily_pnl = sum(t['pnl'] for t in recent_trades)
+    recent_trades = [
+        t
+        for t in trades
+        if datetime.strptime(t["timestamp"], "%Y-%m-%d %H:%M:%S") > yesterday
+    ]
+    daily_pnl = sum(t["pnl"] for t in recent_trades)
 
     # Generate equity curve (last 30 days)
     equity_curve = []
@@ -112,44 +124,45 @@ def generate_realistic_performance(trades):
         daily_change = random.gauss(300, 500)  # Average $300 gain per day with variance
         current_equity += daily_change
 
-        equity_curve.append({
-            'date': date.strftime('%Y-%m-%d'),
-            'equity': round(max(current_equity, initial_capital * 0.95), 2)
-        })
+        equity_curve.append(
+            {
+                "date": date.strftime("%Y-%m-%d"),
+                "equity": round(max(current_equity, initial_capital * 0.95), 2),
+            }
+        )
 
-        daily_pnl_history.append({
-            'date': date.strftime('%Y-%m-%d'),
-            'pnl': round(daily_change, 2)
-        })
+        daily_pnl_history.append(
+            {"date": date.strftime("%Y-%m-%d"), "pnl": round(daily_change, 2)}
+        )
 
     # Format strategy data
     strategy_data = {}
     for name, data in strategies.items():
         strategy_data[name] = {
-            'pnl': round(data['pnl'], 2),
-            'trades': data['trades'],
-            'win_rate': round(data['win_rate'], 2)
+            "pnl": round(data["pnl"], 2),
+            "trades": data["trades"],
+            "win_rate": round(data["win_rate"], 2),
         }
 
     return {
-        'total_value': round(total_value, 2),
-        'cash': round(cash, 2),
-        'equity': round(equity, 2),
-        'daily_pnl': round(daily_pnl, 2),
-        'total_pnl': round(total_pnl, 2),
-        'total_pnl_pct': round((total_pnl / initial_capital * 100), 2),
-        'strategies': strategy_data,
-        'equity_curve': equity_curve,
-        'daily_pnl_history': daily_pnl_history
+        "total_value": round(total_value, 2),
+        "cash": round(cash, 2),
+        "equity": round(equity, 2),
+        "daily_pnl": round(daily_pnl, 2),
+        "total_pnl": round(total_pnl, 2),
+        "total_pnl_pct": round((total_pnl / initial_capital * 100), 2),
+        "strategies": strategy_data,
+        "equity_curve": equity_curve,
+        "daily_pnl_history": daily_pnl_history,
     }
 
 
 def generate_realistic_positions():
     """Generate realistic current positions."""
-    symbols = ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'NVDA', 'AMZN']
+    symbols = ["AAPL", "GOOGL", "MSFT", "TSLA", "NVDA", "AMZN"]
     positions = []
 
-    for symbol in symbols[:random.randint(3, 6)]:
+    for symbol in symbols[: random.randint(3, 6)]:
         quantity = round(random.uniform(5, 25), 2)
         avg_entry = random.uniform(100, 500)
         # Current price varies from entry by -5% to +10%
@@ -159,18 +172,22 @@ def generate_realistic_positions():
         cost_basis = quantity * avg_entry
         market_value = quantity * current_price
         unrealized_pnl = market_value - cost_basis
-        unrealized_pnl_pct = (unrealized_pnl / cost_basis * 100) if cost_basis > 0 else 0
+        unrealized_pnl_pct = (
+            (unrealized_pnl / cost_basis * 100) if cost_basis > 0 else 0
+        )
 
-        positions.append({
-            'symbol': symbol,
-            'quantity': round(quantity, 2),
-            'avg_entry_price': round(avg_entry, 2),
-            'current_price': round(current_price, 2),
-            'market_value': round(market_value, 2),
-            'cost_basis': round(cost_basis, 2),
-            'unrealized_pnl': round(unrealized_pnl, 2),
-            'unrealized_pnl_pct': round(unrealized_pnl_pct, 2)
-        })
+        positions.append(
+            {
+                "symbol": symbol,
+                "quantity": round(quantity, 2),
+                "avg_entry_price": round(avg_entry, 2),
+                "current_price": round(current_price, 2),
+                "market_value": round(market_value, 2),
+                "cost_basis": round(cost_basis, 2),
+                "unrealized_pnl": round(unrealized_pnl, 2),
+                "unrealized_pnl_pct": round(unrealized_pnl_pct, 2),
+            }
+        )
 
     return positions
 
@@ -178,26 +195,26 @@ def generate_realistic_positions():
 def generate_realistic_alerts():
     """Generate realistic alert history."""
     alerts = []
-    severities = ['INFO', 'WARNING', 'CRITICAL']
+    severities = ["INFO", "WARNING", "CRITICAL"]
     messages = {
-        'INFO': [
-            'Trading session started',
-            'Daily P/L milestone reached',
-            'Position opened successfully',
-            'Target profit achieved'
+        "INFO": [
+            "Trading session started",
+            "Daily P/L milestone reached",
+            "Position opened successfully",
+            "Target profit achieved",
         ],
-        'WARNING': [
-            'Consecutive losses: 3',
-            'Position size approaching limit',
-            'High volatility detected',
-            'Slippage exceeds normal range'
+        "WARNING": [
+            "Consecutive losses: 3",
+            "Position size approaching limit",
+            "High volatility detected",
+            "Slippage exceeds normal range",
         ],
-        'CRITICAL': [
-            'Circuit breaker triggered',
-            'Daily loss limit approaching',
-            'System health degraded',
-            'API connection issue'
-        ]
+        "CRITICAL": [
+            "Circuit breaker triggered",
+            "Daily loss limit approaching",
+            "System health degraded",
+            "API connection issue",
+        ],
     }
 
     # Generate 10-15 recent alerts
@@ -209,23 +226,23 @@ def generate_realistic_alerts():
         message = random.choice(messages[severity])
 
         alert = {
-            'timestamp': timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-            'severity': severity,
-            'message': message,
-            'details': {}
+            "timestamp": timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            "severity": severity,
+            "message": message,
+            "details": {},
         }
 
         # Add specific details based on message
-        if 'Consecutive losses' in message:
-            alert['details'] = {'consecutive_losses': 3}
-        elif 'Position size' in message:
-            alert['details'] = {'position_size_pct': 9.5}
-        elif 'P/L' in message:
-            alert['details'] = {'pnl': random.uniform(500, 2000)}
+        if "Consecutive losses" in message:
+            alert["details"] = {"consecutive_losses": 3}
+        elif "Position size" in message:
+            alert["details"] = {"position_size_pct": 9.5}
+        elif "P/L" in message:
+            alert["details"] = {"pnl": random.uniform(500, 2000)}
 
         alerts.append(alert)
 
-    return sorted(alerts, key=lambda x: x['timestamp'], reverse=True)
+    return sorted(alerts, key=lambda x: x["timestamp"], reverse=True)
 
 
 def generate_realistic_system_status():
@@ -236,26 +253,26 @@ def generate_realistic_system_status():
     if is_healthy:
         trading_enabled = True
         breakers = {
-            'daily_loss_breaker': False,
-            'drawdown_breaker': False,
-            'consecutive_loss_breaker': False
+            "daily_loss_breaker": False,
+            "drawdown_breaker": False,
+            "consecutive_loss_breaker": False,
         }
-        health = 'HEALTHY'
+        health = "HEALTHY"
     else:
         trading_enabled = False
         breakers = {
-            'daily_loss_breaker': random.choice([True, False]),
-            'drawdown_breaker': random.choice([True, False]),
-            'consecutive_loss_breaker': random.choice([True, False])
+            "daily_loss_breaker": random.choice([True, False]),
+            "drawdown_breaker": random.choice([True, False]),
+            "consecutive_loss_breaker": random.choice([True, False]),
         }
-        health = 'WARNING'
+        health = "WARNING"
 
     return {
-        'trading_enabled': trading_enabled,
-        'circuit_breakers': breakers,
-        'system_health': health,
-        'active_strategies': ['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4'],
-        'last_update': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        "trading_enabled": trading_enabled,
+        "circuit_breakers": breakers,
+        "system_health": health,
+        "active_strategies": ["Tier 1", "Tier 2", "Tier 3", "Tier 4"],
+        "last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
 
 
@@ -303,7 +320,7 @@ def main():
         performance=performance,
         positions=positions,
         alerts=alerts,
-        status=status
+        status=status,
     )
 
     print()

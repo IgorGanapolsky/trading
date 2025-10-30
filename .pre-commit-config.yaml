@@ -1,0 +1,34 @@
+repos:
+  - repo: local
+    hooks:
+      - id: file-organization
+        name: Check File Organization
+        entry: python3 .claude/skills/precommit_hygiene/scripts/precommit_hygiene.py check_file_organization
+        language: system
+        pass_filenames: false
+
+      - id: python-black
+        name: Python Black Formatting
+        entry: black
+        language: system
+        types: [python]
+
+      - id: python-flake8
+        name: Python Flake8 Linting
+        entry: flake8
+        language: system
+        types: [python]
+        args: [--max-line-length=100, --ignore=E203,W503]
+
+      - id: python-mypy
+        name: Python Type Checking
+        entry: mypy
+        language: system
+        types: [python]
+        args: [--ignore-missing-imports]
+
+      - id: detect-secrets
+        name: Detect Secrets
+        entry: python3 .claude/skills/precommit_hygiene/scripts/precommit_hygiene.py check_secrets
+        language: system
+        pass_filenames: false

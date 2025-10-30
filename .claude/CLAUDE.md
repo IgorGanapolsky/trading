@@ -262,7 +262,8 @@ Phase 6: $13/day → Funded by profits from Phase 5
 - Returns compound (reinvested profits)
 - Investment compounds (Fibonacci scaling)
 - Intelligence compounds (system learns)
-- **Triple compounding = exponential growth**
+- **Idle cash compounds (3.56% APY High-Yield Cash via Alpaca)**
+- **Quadruple compounding = exponential growth**
 
 **Scaling Rules**:
 - Scale up when cumulative profit ≥ next Fibonacci level × 30 days
@@ -271,6 +272,85 @@ Phase 6: $13/day → Funded by profits from Phase 5
 
 **Current Status**: Testing with $10/day paper trading to build RL system.
 **Target**: Deploy real $1/day strategy once RL system validated.
+
+---
+
+## PROFIT OPTIMIZATION STRATEGIES 💰
+
+### 1. Alpaca High-Yield Cash (3.56% APY)
+
+**Discovered**: October 30, 2025 (Alpaca rate update email)
+
+**Key Features**:
+- **APY**: 3.56% (nearly 10x national average of 0.40%)
+- **FDIC Insurance**: Up to $1M
+- **Liquidity**: Full - can use as buying power anytime
+- **Cost**: $0 - automatically earns on idle cash
+
+**How This Boosts Fibonacci Strategy**:
+1. **Profit Buffer Growth**: When we make $1 profit in Phase 1, that $1 earns 3.56% APY while we wait to accumulate enough to scale to $2/day
+2. **Passive Income Layer**: Even uninvested cash generates returns
+3. **Compounding Multiplier**: Every dollar waiting to be deployed is earning interest
+
+**Example Math**:
+```
+Phase 1: Make $60 profit → Move to $2/day Phase
+While waiting (30 days): $60 × 3.56% APY = ~$0.18 extra
+Phase 2: Make $90 profit → Move to $3/day Phase
+While waiting (30 days): $150 × 3.56% APY = ~$0.44 extra
+...continues exponentially
+```
+
+**Action Items**:
+- [ ] Enroll in Alpaca High-Yield Cash program
+- [ ] Track High-Yield Cash earnings in daily reports
+- [ ] Include passive interest in profit calculations
+
+**Margin Rate Warning** ⚠️:
+- Alpaca margin costs 6.5% (base rate + 2.5%)
+- High-Yield Cash earns 3.56%
+- **Negative spread** = NEVER use margin
+- **Strategy**: Only trade with cash we have
+
+### 2. Claude Batching Strategy (Prevent Token Exhaustion)
+
+**Problem**: Running out of Claude tokens daily, interrupting progress
+
+**Solution**: Agent parallelization via Claude Agents SDK
+
+**Key Strategies** (from https://adrianco.medium.com/vibe-coding-is-so-last-month-my-first-agent-swarm-experience-with-claude-flow-414b0bd6f2f2):
+
+1. **Batch Agent Swarms**: Spawn multiple agents in parallel using Task tool
+   - Example: "Spawn 5 agents in parallel to work through remaining tasks"
+   - Reduces total time and maximizes output per token
+
+2. **Work Incrementally**: Break work into smaller focused batches
+   - One batch for planning
+   - One batch for implementation
+   - One batch for testing
+
+3. **Upgrade Plan If Needed**:
+   - Pro: $20/mo
+   - Elite: $200/mo (20x more than Pro)
+   - Monitor usage and adjust
+
+4. **Pause When Credits Exhausted**:
+   - Review output
+   - Document progress
+   - Clean up code
+   - Resume when credits refresh
+
+**Implementation Guidelines**:
+- ALWAYS use parallel Task tool calls when possible
+- Launch 3-5 agents simultaneously for research
+- Use specialized agent types (general-purpose, Explore, Plan)
+- Work in focused batches rather than trying to complete everything at once
+
+**Claude Batching Skill** (Future):
+- Could create a skill to manage agent spawning
+- Track token usage across tasks
+- Optimize batch sizes for efficiency
+- Auto-pause before exhaustion
 
 ---
 

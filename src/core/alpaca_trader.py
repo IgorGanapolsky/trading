@@ -33,29 +33,32 @@ from alpaca_trade_api.entity import Order, Position, Account, BarSet
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
 class AlpacaTraderError(Exception):
     """Base exception for Alpaca trading errors."""
+
     pass
 
 
 class OrderExecutionError(AlpacaTraderError):
     """Exception raised when order execution fails."""
+
     pass
 
 
 class AccountError(AlpacaTraderError):
     """Exception raised when account operations fail."""
+
     pass
 
 
 class MarketDataError(AlpacaTraderError):
     """Exception raised when market data retrieval fails."""
+
     pass
 
 
@@ -94,8 +97,8 @@ class AlpacaTrader:
         self.paper = paper
 
         # Get API credentials from environment variables
-        api_key = os.getenv('ALPACA_API_KEY')
-        secret_key = os.getenv('ALPACA_SECRET_KEY')
+        api_key = os.getenv("ALPACA_API_KEY")
+        secret_key = os.getenv("ALPACA_SECRET_KEY")
 
         if not api_key or not secret_key:
             raise AlpacaTraderError(
@@ -104,11 +107,12 @@ class AlpacaTrader:
             )
 
         # Set base URL based on trading mode
-        base_url = os.getenv('APCA_API_BASE_URL')
+        base_url = os.getenv("APCA_API_BASE_URL")
         if not base_url:
             base_url = (
-                'https://paper-api.alpaca.markets' if paper
-                else 'https://api.alpaca.markets'
+                "https://paper-api.alpaca.markets"
+                if paper
+                else "https://api.alpaca.markets"
             )
 
         try:
@@ -117,7 +121,7 @@ class AlpacaTrader:
                 key_id=api_key,
                 secret_key=secret_key,
                 base_url=base_url,
-                api_version='v2'
+                api_version="v2",
             )
 
             # Verify connection by fetching account
@@ -164,23 +168,25 @@ class AlpacaTrader:
             account: Account = self.api.get_account()
 
             account_info = {
-                'account_number': account.account_number,
-                'status': account.status,
-                'currency': account.currency,
-                'buying_power': float(account.buying_power),
-                'cash': float(account.cash),
-                'portfolio_value': float(account.portfolio_value),
-                'equity': float(account.equity),
-                'last_equity': float(account.last_equity),
-                'pattern_day_trader': account.pattern_day_trader,
-                'trading_blocked': account.trading_blocked,
-                'transfers_blocked': account.transfers_blocked,
-                'account_blocked': account.account_blocked,
-                'created_at': str(account.created_at),
-                'trade_suspended_by_user': account.trade_suspended_by_user,
+                "account_number": account.account_number,
+                "status": account.status,
+                "currency": account.currency,
+                "buying_power": float(account.buying_power),
+                "cash": float(account.cash),
+                "portfolio_value": float(account.portfolio_value),
+                "equity": float(account.equity),
+                "last_equity": float(account.last_equity),
+                "pattern_day_trader": account.pattern_day_trader,
+                "trading_blocked": account.trading_blocked,
+                "transfers_blocked": account.transfers_blocked,
+                "account_blocked": account.account_blocked,
+                "created_at": str(account.created_at),
+                "trade_suspended_by_user": account.trade_suspended_by_user,
             }
 
-            logger.info(f"Retrieved account info: Portfolio value ${account_info['portfolio_value']:.2f}")
+            logger.info(
+                f"Retrieved account info: Portfolio value ${account_info['portfolio_value']:.2f}"
+            )
             return account_info
 
         except APIError as e:
@@ -191,10 +197,7 @@ class AlpacaTrader:
             raise AccountError(f"Unexpected error: {e}") from e
 
     def execute_order(
-        self,
-        symbol: str,
-        amount_usd: float,
-        side: str = 'buy'
+        self, symbol: str, amount_usd: float, side: str = "buy"
     ) -> Dict[str, Any]:
         """
         Execute a market order with fractional shares based on USD amount.
@@ -226,7 +229,7 @@ class AlpacaTrader:
             >>> print(f"Order {order['id']} submitted for ${order['notional']}")
         """
         # Validate inputs
-        if side not in ['buy', 'sell']:
+        if side not in ["buy", "sell"]:
             raise ValueError(f"Invalid side '{side}'. Must be 'buy' or 'sell'.")
 
         if amount_usd <= 0:
@@ -241,7 +244,7 @@ class AlpacaTrader:
             if account.trading_blocked:
                 raise OrderExecutionError("Trading is blocked for this account")
 
-            if side == 'buy' and float(account.buying_power) < amount_usd:
+            if side == "buy" and float(account.buying_power) < amount_usd:
                 raise OrderExecutionError(
                     f"Insufficient buying power. Available: ${account.buying_power}, "
                     f"Required: ${amount_usd}"
@@ -254,23 +257,25 @@ class AlpacaTrader:
                 symbol=symbol,
                 notional=amount_usd,
                 side=side,
-                type='market',
-                time_in_force='day'
+                type="market",
+                time_in_force="day",
             )
 
             order_info = {
-                'id': order.id,
-                'client_order_id': order.client_order_id,
-                'symbol': order.symbol,
-                'notional': float(order.notional) if order.notional else amount_usd,
-                'side': order.side,
-                'type': order.type,
-                'time_in_force': order.time_in_force,
-                'status': order.status,
-                'submitted_at': str(order.submitted_at),
-                'filled_at': str(order.filled_at) if order.filled_at else None,
-                'filled_qty': float(order.filled_qty) if order.filled_qty else 0,
-                'filled_avg_price': float(order.filled_avg_price) if order.filled_avg_price else None,
+                "id": order.id,
+                "client_order_id": order.client_order_id,
+                "symbol": order.symbol,
+                "notional": float(order.notional) if order.notional else amount_usd,
+                "side": order.side,
+                "type": order.type,
+                "time_in_force": order.time_in_force,
+                "status": order.status,
+                "submitted_at": str(order.submitted_at),
+                "filled_at": str(order.filled_at) if order.filled_at else None,
+                "filled_qty": float(order.filled_qty) if order.filled_qty else 0,
+                "filled_avg_price": (
+                    float(order.filled_avg_price) if order.filled_avg_price else None
+                ),
             }
 
             logger.info(
@@ -288,10 +293,7 @@ class AlpacaTrader:
             raise OrderExecutionError(f"Unexpected error: {e}") from e
 
     def set_stop_loss(
-        self,
-        symbol: str,
-        qty: float,
-        stop_price: float
+        self, symbol: str, qty: float, stop_price: float
     ) -> Dict[str, Any]:
         """
         Set a stop-loss order to limit potential losses.
@@ -327,23 +329,23 @@ class AlpacaTrader:
             order: Order = self.api.submit_order(
                 symbol=symbol,
                 qty=qty,
-                side='sell',
-                type='stop',
-                time_in_force='gtc',  # Good 'til cancelled
-                stop_price=stop_price
+                side="sell",
+                type="stop",
+                time_in_force="gtc",  # Good 'til cancelled
+                stop_price=stop_price,
             )
 
             order_info = {
-                'id': order.id,
-                'client_order_id': order.client_order_id,
-                'symbol': order.symbol,
-                'qty': float(order.qty),
-                'side': order.side,
-                'type': order.type,
-                'stop_price': float(order.stop_price),
-                'time_in_force': order.time_in_force,
-                'status': order.status,
-                'submitted_at': str(order.submitted_at),
+                "id": order.id,
+                "client_order_id": order.client_order_id,
+                "symbol": order.symbol,
+                "qty": float(order.qty),
+                "side": order.side,
+                "type": order.type,
+                "stop_price": float(order.stop_price),
+                "time_in_force": order.time_in_force,
+                "status": order.status,
+                "submitted_at": str(order.submitted_at),
             }
 
             logger.info(f"Stop-loss order created: {order.id}")
@@ -357,10 +359,7 @@ class AlpacaTrader:
             raise OrderExecutionError(f"Unexpected error: {e}") from e
 
     def set_take_profit(
-        self,
-        symbol: str,
-        qty: float,
-        limit_price: float
+        self, symbol: str, qty: float, limit_price: float
     ) -> Dict[str, Any]:
         """
         Set a take-profit order to lock in gains.
@@ -391,28 +390,30 @@ class AlpacaTrader:
         symbol = symbol.upper().strip()
 
         try:
-            logger.info(f"Setting take-profit: {symbol} qty={qty} at ${limit_price:.2f}")
+            logger.info(
+                f"Setting take-profit: {symbol} qty={qty} at ${limit_price:.2f}"
+            )
 
             order: Order = self.api.submit_order(
                 symbol=symbol,
                 qty=qty,
-                side='sell',
-                type='limit',
-                time_in_force='gtc',  # Good 'til cancelled
-                limit_price=limit_price
+                side="sell",
+                type="limit",
+                time_in_force="gtc",  # Good 'til cancelled
+                limit_price=limit_price,
             )
 
             order_info = {
-                'id': order.id,
-                'client_order_id': order.client_order_id,
-                'symbol': order.symbol,
-                'qty': float(order.qty),
-                'side': order.side,
-                'type': order.type,
-                'limit_price': float(order.limit_price),
-                'time_in_force': order.time_in_force,
-                'status': order.status,
-                'submitted_at': str(order.submitted_at),
+                "id": order.id,
+                "client_order_id": order.client_order_id,
+                "symbol": order.symbol,
+                "qty": float(order.qty),
+                "side": order.side,
+                "type": order.type,
+                "limit_price": float(order.limit_price),
+                "time_in_force": order.time_in_force,
+                "status": order.status,
+                "submitted_at": str(order.submitted_at),
             }
 
             logger.info(f"Take-profit order created: {order.id}")
@@ -456,25 +457,31 @@ class AlpacaTrader:
 
             # Calculate profit/loss
             profit_loss = equity - last_equity
-            profit_loss_pct = (profit_loss / last_equity * 100) if last_equity > 0 else 0
+            profit_loss_pct = (
+                (profit_loss / last_equity * 100) if last_equity > 0 else 0
+            )
 
             # Calculate total return from initial investment
             # Using cash + equity vs just last_equity for more accurate return
             initial_value = float(account.last_equity)
             current_value = equity
-            total_return = ((current_value - initial_value) / initial_value * 100) if initial_value > 0 else 0
+            total_return = (
+                ((current_value - initial_value) / initial_value * 100)
+                if initial_value > 0
+                else 0
+            )
 
             performance = {
-                'equity': equity,
-                'last_equity': last_equity,
-                'profit_loss': profit_loss,
-                'profit_loss_pct': profit_loss_pct,
-                'total_return': total_return,
-                'positions_count': len(positions),
-                'cash': float(account.cash),
-                'buying_power': float(account.buying_power),
-                'portfolio_value': float(account.portfolio_value),
-                'timestamp': datetime.now().isoformat(),
+                "equity": equity,
+                "last_equity": last_equity,
+                "profit_loss": profit_loss,
+                "profit_loss_pct": profit_loss_pct,
+                "total_return": total_return,
+                "positions_count": len(positions),
+                "cash": float(account.cash),
+                "buying_power": float(account.buying_power),
+                "portfolio_value": float(account.portfolio_value),
+                "timestamp": datetime.now().isoformat(),
             }
 
             logger.info(
@@ -523,18 +530,20 @@ class AlpacaTrader:
             positions_data = []
             for pos in positions:
                 position_info = {
-                    'symbol': pos.symbol,
-                    'qty': float(pos.qty),
-                    'avg_entry_price': float(pos.avg_entry_price),
-                    'current_price': float(pos.current_price),
-                    'market_value': float(pos.market_value),
-                    'cost_basis': float(pos.cost_basis),
-                    'unrealized_pl': float(pos.unrealized_pl),
-                    'unrealized_plpc': float(pos.unrealized_plpc) * 100,  # Convert to percentage
-                    'unrealized_intraday_pl': float(pos.unrealized_intraday_pl),
-                    'unrealized_intraday_plpc': float(pos.unrealized_intraday_plpc) * 100,
-                    'side': pos.side,
-                    'exchange': pos.exchange,
+                    "symbol": pos.symbol,
+                    "qty": float(pos.qty),
+                    "avg_entry_price": float(pos.avg_entry_price),
+                    "current_price": float(pos.current_price),
+                    "market_value": float(pos.market_value),
+                    "cost_basis": float(pos.cost_basis),
+                    "unrealized_pl": float(pos.unrealized_pl),
+                    "unrealized_plpc": float(pos.unrealized_plpc)
+                    * 100,  # Convert to percentage
+                    "unrealized_intraday_pl": float(pos.unrealized_intraday_pl),
+                    "unrealized_intraday_plpc": float(pos.unrealized_intraday_plpc)
+                    * 100,
+                    "side": pos.side,
+                    "exchange": pos.exchange,
                 }
                 positions_data.append(position_info)
 
@@ -549,10 +558,7 @@ class AlpacaTrader:
             raise AccountError(f"Unexpected error: {e}") from e
 
     def get_historical_bars(
-        self,
-        symbol: str,
-        timeframe: str = '1Day',
-        limit: int = 100
+        self, symbol: str, timeframe: str = "1Day", limit: int = 100
     ) -> List[Dict[str, Any]]:
         """
         Get historical price bars (OHLCV data) for a symbol.
@@ -582,7 +588,7 @@ class AlpacaTrader:
             >>> for bar in bars[-5:]:
             ...     print(f"{bar['timestamp']}: Close ${bar['close']:.2f}")
         """
-        valid_timeframes = ['1Min', '5Min', '15Min', '1Hour', '1Day']
+        valid_timeframes = ["1Min", "5Min", "15Min", "1Hour", "1Day"]
         if timeframe not in valid_timeframes:
             raise ValueError(
                 f"Invalid timeframe '{timeframe}'. "
@@ -598,22 +604,18 @@ class AlpacaTrader:
             logger.info(f"Fetching {limit} {timeframe} bars for {symbol}")
 
             # Get bars from Alpaca API
-            barset: BarSet = self.api.get_bars(
-                symbol,
-                timeframe,
-                limit=limit
-            )
+            barset: BarSet = self.api.get_bars(symbol, timeframe, limit=limit)
 
             bars_data = []
             if symbol in barset:
                 for bar in barset[symbol]:
                     bar_info = {
-                        'timestamp': str(bar.t),
-                        'open': float(bar.o),
-                        'high': float(bar.h),
-                        'low': float(bar.l),
-                        'close': float(bar.c),
-                        'volume': int(bar.v),
+                        "timestamp": str(bar.t),
+                        "open": float(bar.o),
+                        "high": float(bar.h),
+                        "low": float(bar.l),
+                        "close": float(bar.c),
+                        "volume": int(bar.v),
                     }
                     bars_data.append(bar_info)
 
@@ -648,16 +650,16 @@ class AlpacaTrader:
             logger.info("Cancelling all open orders")
 
             # Get all open orders before cancelling
-            open_orders = self.api.list_orders(status='open')
+            open_orders = self.api.list_orders(status="open")
             order_count = len(open_orders)
 
             # Cancel all orders
             self.api.cancel_all_orders()
 
             result = {
-                'cancelled_count': order_count,
-                'status': 'success',
-                'timestamp': datetime.now().isoformat(),
+                "cancelled_count": order_count,
+                "status": "success",
+                "timestamp": datetime.now().isoformat(),
             }
 
             logger.info(f"Successfully cancelled {order_count} orders")
@@ -692,17 +694,19 @@ class AlpacaTrader:
             order: Order = self.api.get_order(order_id)
 
             order_info = {
-                'id': order.id,
-                'symbol': order.symbol,
-                'qty': float(order.qty) if order.qty else None,
-                'notional': float(order.notional) if order.notional else None,
-                'side': order.side,
-                'type': order.type,
-                'status': order.status,
-                'filled_qty': float(order.filled_qty) if order.filled_qty else 0,
-                'filled_avg_price': float(order.filled_avg_price) if order.filled_avg_price else None,
-                'submitted_at': str(order.submitted_at),
-                'filled_at': str(order.filled_at) if order.filled_at else None,
+                "id": order.id,
+                "symbol": order.symbol,
+                "qty": float(order.qty) if order.qty else None,
+                "notional": float(order.notional) if order.notional else None,
+                "side": order.side,
+                "type": order.type,
+                "status": order.status,
+                "filled_qty": float(order.filled_qty) if order.filled_qty else 0,
+                "filled_avg_price": (
+                    float(order.filled_avg_price) if order.filled_avg_price else None
+                ),
+                "submitted_at": str(order.submitted_at),
+                "filled_at": str(order.filled_at) if order.filled_at else None,
             }
 
             logger.info(f"Retrieved status for order {order_id}: {order.status}")
@@ -738,9 +742,9 @@ class AlpacaTrader:
             self.api.cancel_order(order_id)
 
             result = {
-                'order_id': order_id,
-                'status': 'cancelled',
-                'timestamp': datetime.now().isoformat(),
+                "order_id": order_id,
+                "status": "cancelled",
+                "timestamp": datetime.now().isoformat(),
             }
 
             logger.info(f"Successfully cancelled order {order_id}")
@@ -779,13 +783,13 @@ class AlpacaTrader:
             order: Order = self.api.close_position(symbol)
 
             order_info = {
-                'id': order.id,
-                'symbol': order.symbol,
-                'qty': float(order.qty) if order.qty else None,
-                'side': order.side,
-                'type': order.type,
-                'status': order.status,
-                'submitted_at': str(order.submitted_at),
+                "id": order.id,
+                "symbol": order.symbol,
+                "qty": float(order.qty) if order.qty else None,
+                "side": order.side,
+                "type": order.type,
+                "status": order.status,
+                "submitted_at": str(order.submitted_at),
             }
 
             logger.info(f"Successfully closed position for {symbol}")
@@ -825,10 +829,10 @@ class AlpacaTrader:
             self.api.close_all_positions()
 
             result = {
-                'closed_count': len(symbols),
-                'closed_symbols': symbols,
-                'status': 'success',
-                'timestamp': datetime.now().isoformat(),
+                "closed_count": len(symbols),
+                "closed_symbols": symbols,
+                "status": "success",
+                "timestamp": datetime.now().isoformat(),
             }
 
             logger.info(f"Successfully closed {len(symbols)} positions: {symbols}")

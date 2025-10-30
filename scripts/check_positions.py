@@ -6,9 +6,9 @@ import alpaca_trade_api as tradeapi
 from datetime import datetime
 
 api = tradeapi.REST(
-    'PKSGVK5JNGYIFPTW53EAKCNBP5',
-    '9DCF1pY2wgTTY3TBasjAHUWWLXiDTyrAhMJ4ZD6nVWaG',
-    'https://paper-api.alpaca.markets'
+    "PKSGVK5JNGYIFPTW53EAKCNBP5",
+    "9DCF1pY2wgTTY3TBasjAHUWWLXiDTyrAhMJ4ZD6nVWaG",
+    "https://paper-api.alpaca.markets",
 )
 
 print("=" * 70)
@@ -45,7 +45,7 @@ else:
 # Recent Orders
 print("\n📝 RECENT ORDERS (Last 10)")
 print("-" * 70)
-orders = api.list_orders(status='all', limit=10)
+orders = api.list_orders(status="all", limit=10)
 
 if orders:
     for order in orders:

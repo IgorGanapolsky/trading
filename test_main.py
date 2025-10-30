@@ -12,21 +12,26 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
+
 def test_imports():
     """Test that all required modules can be imported."""
     print("Testing imports...")
 
     try:
         from main import TradingOrchestrator, setup_logging
+
         print("✓ Successfully imported TradingOrchestrator and setup_logging")
 
         from strategies.core_strategy import CoreStrategy
+
         print("✓ Successfully imported CoreStrategy")
 
         from strategies.growth_strategy import GrowthStrategy
+
         print("✓ Successfully imported GrowthStrategy")
 
         from strategies.ipo_strategy import IPOStrategy
+
         print("✓ Successfully imported IPOStrategy")
 
         print("\n✓ All imports successful!")
@@ -43,6 +48,7 @@ def test_logger_setup():
 
     try:
         from main import setup_logging
+
         logger = setup_logging(log_dir="test_logs", log_level="INFO")
         logger.info("Test log message")
         print("✓ Logger setup successful")
