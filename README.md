@@ -22,15 +22,19 @@ A comprehensive automated trading system that combines AI-powered market analysi
 
 ## Overview
 
+> **Current Phase**: R&D Phase (Days 1-90) - Building Profitable Trading Edge
+> **Status**: Day 3 of 90 | P/L: -$0.14 | Focus: Infrastructure + Data Collection
+> **Goal**: Build momentum + RL system that can make $100+/day by Month 6
+
 ### Project Goals
 
 This trading system aims to achieve consistent, risk-adjusted returns through:
 
-1. **AI-Powered Analysis**: Multi-LLM ensemble analysis for market sentiment and stock evaluation
-2. **Systematic Risk Management**: Circuit breakers, position sizing, and automated stop-losses
-3. **Diversified Strategy Framework**: Four-tier approach balancing risk and return
-4. **Full Automation**: Scheduled daily/weekly execution with minimal manual intervention
-5. **Transparency**: Comprehensive logging and performance tracking
+1. **Introspective AI Agents**: Multi-agent system with self-debugging and bias detection
+2. **Momentum Trading Edge**: MACD + RSI + Volume indicators for profitable entries/exits
+3. **Systematic Risk Management**: Circuit breakers, position sizing, and automated stop-losses
+4. **Fibonacci Compounding**: Scale investment using Fibonacci sequence funded by profits
+5. **Full Automation**: Scheduled daily execution with comprehensive reporting
 
 ### Key Features
 
@@ -57,65 +61,205 @@ This trading system aims to achieve consistent, risk-adjusted returns through:
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      Trading System Architecture                 │
-└─────────────────────────────────────────────────────────────────┘
+### Introspective Multi-Agent System
 
-┌──────────────────┐         ┌──────────────────┐
-│   Daily Trigger  │────────▶│  Strategy Engine  │
-│   (Cron/Scheduler)│         └─────────┬─────────┘
-└──────────────────┘                   │
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                   MASTER TRADING AGENT (Orchestrator)                    │
+│  • Coordinates subagents with introspection at each step                 │
+│  • Aggregates decisions with bias detection                              │
+│  • Final go/no-go authority with safety checks                           │
+└───────────────────────────┬─────────────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┬───────────────────┐
+        │                   │                   │                   │
+        ▼                   ▼                   ▼                   ▼
+┌──────────────────┐ ┌──────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│  RESEARCH AGENT  │ │   SIGNAL AGENT   │ │   RISK AGENT    │ │ EXECUTION AGENT │
+├──────────────────┤ ├──────────────────┤ ├─────────────────┤ ├─────────────────┤
+│ DATA SOURCES:    │ │ INDICATORS:      │ │ SAFETY CHECKS:  │ │ ORDER MGMT:     │
+│ • News (Alpha    │ │ • MACD           │ │ • Circuit       │ │ • Pre-flight    │
+│   Vantage)       │ │ • RSI            │ │   breakers      │ │   validation    │
+│ • Social (Reddit)│ │ • Volume ratio   │ │ • Position      │ │ • Alpaca API    │
+│ • Macro (FRED)   │ │ • Momentum       │ │   limits        │ │ • Fill confirm  │
+│ • Market data    │ │   scores         │ │ • Stop-loss     │ │                 │
+├──────────────────┤ ├──────────────────┤ ├─────────────────┤ ├─────────────────┤
+│ INTROSPECTION:   │ │ INTROSPECTION:   │ │ INTROSPECTION:  │ │ INTROSPECTION:  │
+├──────────────────┤ ├──────────────────┤ ├─────────────────┤ ├─────────────────┤
+│ "Am I biased by  │ │ "Do indicators   │ │ "Is this trade  │ │ "Does order     │
+│  recent news?"   │ │  agree?"         │ │  safe?"         │ │  match intent?" │
+│                  │ │                  │ │                 │ │                 │
+│ "Is data         │ │ "Are we at an    │ │ "Do I have      │ │ "Are market     │
+│  reliable?"      │ │  extreme?"       │ │  capacity?"     │ │  hours OK?"     │
+│                  │ │                  │ │                 │ │                 │
+│ "Sources         │ │ "Any indicator   │ │ "Risk rules     │ │ "Quantity       │
+│  aligned?"       │ │  contradictions?"│ │  violated?"     │ │  correct?"      │
+└──────────────────┘ └──────────────────┘ └─────────────────┘ └─────────────────┘
+         │                    │                     │                    │
+         └────────────────────┴─────────────────────┴────────────────────┘
                                        │
-                    ┌──────────────────┴──────────────────┐
-                    │                                      │
-            ┌───────▼────────┐                  ┌─────────▼────────┐
-            │  Multi-LLM      │                  │  Risk Manager    │
-            │  Analyzer       │                  │  - Validation    │
-            │  - Claude 3.5   │                  │  - Circuit Break │
-            │  - GPT-4o       │                  │  - Position Size │
-            │  - Gemini 2.0   │                  └─────────┬────────┘
-            └────────┬────────┘                            │
-                     │                                     │
-                     └───────────┬─────────────────────────┘
-                                 │
-                    ┌────────────▼────────────┐
-                    │   Strategy Execution    │
-                    │  ┌──────────────────┐   │
-                    │  │ Tier 1: Core     │   │
-                    │  │ (SPY/QQQ/VOO)    │   │
-                    │  └──────────────────┘   │
-                    │  ┌──────────────────┐   │
-                    │  │ Tier 2: Growth   │   │
-                    │  │ (S&P 500 Stocks) │   │
-                    │  └──────────────────┘   │
-                    │  ┌──────────────────┐   │
-                    │  │ Tier 3: IPO      │   │
-                    │  │ (Manual + AI)    │   │
-                    │  └──────────────────┘   │
-                    │  ┌──────────────────┐   │
-                    │  │ Tier 4: Swing    │   │
-                    │  │ (Manual + AI)    │   │
-                    │  └──────────────────┘   │
-                    └────────┬────────────────┘
-                             │
-                    ┌────────▼────────────┐
-                    │   Alpaca Trader     │
-                    │   - Order Execution │
-                    │   - Portfolio Mgmt  │
-                    └────────┬────────────┘
-                             │
-            ┌────────────────┴────────────────┐
-            │                                  │
-    ┌───────▼─────────┐            ┌─────────▼────────┐
-    │  Data Storage   │            │   Alerting       │
-    │  - Logs         │            │   - Email        │
-    │  - Trades       │            │   - Webhook      │
-    │  - Performance  │            │   - Dashboard    │
-    └─────────────────┘            └──────────────────┘
+                          ┌────────────▼────────────┐
+                          │   ALPACA TRADING API    │
+                          │   (Paper/Live Trading)  │
+                          └─────────────────────────┘
 ```
 
-### Component Overview
+### Decision Flow with Introspection
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         DAILY TRADING WORKFLOW                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+09:35 AM ET - Market Open
+     │
+     ├─► [1] RESEARCH AGENT: Analyze Market
+     │    ├─► Fetch news sentiment (Alpha Vantage)
+     │    ├─► Check social sentiment (Reddit r/wallstreetbets)
+     │    ├─► Get macro indicators (FRED API)
+     │    └─► 🔍 INTROSPECT: "Am I biased? Is data reliable?"
+     │         ├─► ✅ PASS → confidence: 0.85
+     │         └─► ❌ BIAS DETECTED → reduce confidence: 0.60
+     │
+     ├─► [2] SIGNAL AGENT: Generate Trade Signal
+     │    ├─► Calculate MACD (bullish/bearish crossover)
+     │    ├─► Calculate RSI (overbought/oversold)
+     │    ├─► Check volume ratio (confirmation)
+     │    ├─► Calculate momentum scores
+     │    └─► 🔍 INTROSPECT: "Do indicators agree?"
+     │         ├─► ✅ CONSENSUS >75% → strong signal
+     │         └─► ❌ CONSENSUS <75% → weak signal, skip trade
+     │
+     ├─► [3] RISK AGENT: Validate Trade
+     │    ├─► Check circuit breakers (daily loss, max drawdown)
+     │    ├─► Validate position size (Kelly Criterion)
+     │    ├─► Check consecutive losses
+     │    └─► 🔍 INTROSPECT: "Is trade safe?"
+     │         ├─► ✅ ALL CHECKS PASS → approve trade
+     │         └─► ❌ RISK VIOLATION → block trade
+     │
+     ├─► [4] EXECUTION AGENT: Execute Order
+     │    ├─► Pre-flight validation (symbol, quantity, side)
+     │    ├─► Verify market hours
+     │    ├─► Submit order to Alpaca API
+     │    └─► 🔍 INTROSPECT: "Does order match intent?"
+     │         ├─► ✅ INTENT VERIFIED → execute
+     │         └─► ❌ MISMATCH → abort
+     │
+     └─► [5] MASTER AGENT: Final Review
+          ├─► Aggregate all introspection results
+          ├─► Log decision trail for audit
+          └─► Generate CEO report
+
+10:00 AM ET - Report Generated
+     │
+     └─► CEO receives daily report with:
+          • Trades executed
+          • Agent introspection highlights
+          • Performance metrics
+          • Next day preview
+```
+
+### Data Flow Architecture
+
+```
+┌───────────────────────────────────────────────────────────────────────┐
+│                         DATA SOURCES                                   │
+├───────────────────────────────────────────────────────────────────────┤
+│ Alpha Vantage API  │  Reddit API  │  FRED API  │  Alpaca Market Data │
+│ (News Sentiment)   │  (Social)    │  (Macro)   │  (Prices, Volume)   │
+└─────────┬──────────┴──────┬──────┴─────┬──────┴──────────┬───────────┘
+          │                 │            │                 │
+          └─────────────────┴────────────┴─────────────────┘
+                                   │
+                    ┌──────────────▼──────────────┐
+                    │   DATA PROCESSING LAYER     │
+                    │  • Technical Indicators     │
+                    │  • Sentiment Aggregation    │
+                    │  • Feature Engineering      │
+                    └──────────────┬──────────────┘
+                                   │
+                    ┌──────────────▼──────────────┐
+                    │   AGENT REASONING LAYER     │
+                    │  • Multi-agent coordination │
+                    │  • Introspection checks     │
+                    │  • Decision aggregation     │
+                    └──────────────┬──────────────┘
+                                   │
+                    ┌──────────────▼──────────────┐
+                    │   EXECUTION LAYER           │
+                    │  • Order validation         │
+                    │  • Alpaca API integration   │
+                    │  • Position tracking        │
+                    └──────────────┬──────────────┘
+                                   │
+                    ┌──────────────▼──────────────┐
+                    │   STATE MANAGEMENT          │
+                    │  • data/system_state.json   │
+                    │  • Trade logs               │
+                    │  • Performance tracking     │
+                    └─────────────────────────────┘
+```
+
+### System Components
+
+```
+trading/
+├── src/
+│   ├── agents/                    # 🤖 Introspective Agent System
+│   │   ├── research_agent.py      # Market analysis + bias detection
+│   │   ├── signal_agent.py        # MACD/RSI/Volume + consensus
+│   │   ├── risk_agent.py          # Safety checks + circuit breakers
+│   │   ├── execution_agent.py     # Order mgmt + pre-flight validation
+│   │   └── master_orchestrator.py # Agent coordination
+│   │
+│   ├── core/                      # Core Trading Infrastructure
+│   │   ├── indicators.py          # Technical indicators (MACD, RSI, etc.)
+│   │   ├── alpaca_trader.py       # Alpaca API integration
+│   │   ├── risk_manager.py        # Risk rules + circuit breakers
+│   │   └── multi_llm_analysis.py  # Multi-LLM sentiment (future)
+│   │
+│   ├── strategies/                # Trading Strategies
+│   │   ├── core_strategy.py       # Tier 1: Index ETFs (SPY, QQQ, VOO)
+│   │   └── growth_strategy.py     # Tier 2: Disruptive (NVDA, GOOGL)
+│   │
+│   └── utils/                     # Utilities
+│       ├── news_sentiment.py      # Alpha Vantage integration
+│       └── youtube_analyzer.py    # YouTube transcript analysis
+│
+├── scripts/                       # Automation Scripts
+│   ├── autonomous_trader.py       # Daily execution (Fibonacci)
+│   ├── daily_checkin.py          # CEO reporting
+│   └── validate_setup.py         # System validation
+│
+├── .claude/                       # Claude Code Configuration
+│   ├── CLAUDE.md                  # Project memory & strategy
+│   └── skills/                    # Claude skills
+│       ├── precommit_hygiene/     # Auto file organization
+│       ├── financial_data_fetcher/
+│       └── portfolio_risk_assessment/
+│
+├── docs/                          # Documentation
+│   ├── AGENT_ARCHITECTURE.md      # 🆕 Introspective agents design
+│   ├── PLAN.md                    # 🆕 90-day R&D roadmap
+│   └── ark_invest_research_report.md
+│
+├── data/                          # System State (gitignored)
+│   ├── system_state.json          # Current state & heuristics
+│   └── trades_YYYY-MM-DD.json     # Daily trade logs
+│
+└── reports/                       # CEO Reports
+    └── daily_report_YYYY-MM-DD.txt
+```
+
+**Key Documentation**:
+- 📘 [PLAN.md](docs/PLAN.md) - 90-Day R&D Roadmap
+- 🤖 [AGENT_ARCHITECTURE.md](docs/AGENT_ARCHITECTURE.md) - Introspective Agent Design
+- 📋 [CLAUDE.md](.claude/CLAUDE.md) - Project Memory & Strategy
+
+---
+
+## Component Overview
 
 1. **Multi-LLM Analysis Engine** (`src/core/multi_llm_analysis.py`)
    - Parallel queries to Claude, GPT-4, and Gemini

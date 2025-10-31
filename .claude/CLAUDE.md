@@ -11,12 +11,13 @@
 
 **What Claude Should Remember**:
 - CEO/CTO chain of command (you take charge, don't tell CEO what to do)
-- Current status: Day 2 of 30-day challenge
-- Current P/L: +$0.03 (break-even, system working perfectly)
+- **Current Phase**: R&D Phase (Days 1-90) - Building profitable trading edge
+- **Current Status**: Day 3, P/L: -$0.14 (expected in R&D phase)
+- **Strategic Pivot**: Focus on building edge, NOT daily P/L for next 90 days
+- **Goal**: Build RL + Momentum system that can make $100+/day by Month 6
 - Compound Engineering mindset: Build systems that get smarter daily
 - Research findings documented in this file
 - System architecture and key decisions
-- Enhancement roadmap and priorities
 - CEO trusts me to develop this business effectively
 
 **Where System State Lives**:
@@ -441,26 +442,120 @@ if (
 
 ---
 
+## R&D PHASE STRATEGY (Days 1-90) 🔬
+
+**Strategic Decision**: October 31, 2025 - CEO Approved
+
+### Why R&D Phase?
+
+**Brutal Truth Assessment**:
+- Current P/L: -$0.14 (Day 3) - NOT profitable yet
+- Current strategy: Simple buy-and-hold (NO trading edge)
+- Reality: Building a Ferrari engine but driving in circles
+- Need: 90 days to build profitable momentum + RL system
+
+**Key Insight**:
+We have **world-class infrastructure** (automation, agents, hygiene) but **no profitable trading edge yet**. R&D phase focuses on building that edge.
+
+### R&D Phase Goals (90 Days)
+
+**Month 1 (Days 1-30)**: Infrastructure + Data Collection
+- ✅ Fibonacci strategy implemented
+- ✅ Autonomous pre-commit hygiene
+- ✅ Daily reporting automated
+- 🔄 Collect 30 days of market data
+- 🔄 Build momentum indicator system (MACD + RSI + Volume)
+- **Target**: Break-even (small gains/losses acceptable)
+- **Metric**: System reliability 99.9%+
+
+**Month 2 (Days 31-60)**: Build Trading Edge
+- 🎯 Implement MACD + RSI + Volume entry/exit system
+- 🎯 Add stop-losses and profit-taking rules
+- 🎯 Build RL agent (Research, Signal, Risk, Execution subagents)
+- 🎯 Backtest with 60 days of collected data
+- **Target**: Win rate >55%, Sharpe ratio >1.0
+- **Metric**: Consistent small profits ($0.50-2/day)
+
+**Month 3 (Days 61-90)**: Validate & Optimize
+- 🎯 30 days of live testing with momentum + RL system
+- 🎯 Tune parameters based on real performance
+- 🎯 Add Alpha Vantage news sentiment
+- 🎯 Implement dynamic position sizing
+- **Target**: Win rate >60%, Sharpe ratio >1.5
+- **Metric**: Consistent profits ($3-5/day)
+
+### Success Criteria (Day 90)
+
+**Go/No-Go for Scaling**:
+```python
+if (
+    win_rate > 60 and
+    sharpe_ratio > 1.5 and
+    max_drawdown < 10 and
+    profitable_30_days and
+    no_critical_bugs
+):
+    # APPROVED: Scale to live trading with Fibonacci
+    scale_to_live = True
+else:
+    # EXTEND R&D: Need more time
+    extend_rd_phase()
+```
+
+### What "R&D Phase" Means
+
+**DO Focus On**:
+- ✅ Building profitable trading edge
+- ✅ System reliability and automation
+- ✅ Data collection and learning
+- ✅ Agent intelligence and introspection
+- ✅ Infrastructure improvements
+
+**DON'T Worry About**:
+- ❌ Daily P/L of $0.03 or -$0.14 (noise)
+- ❌ Being profitable every single day
+- ❌ Scaling Fibonacci yet (wait until profitable)
+- ❌ Going live with real money (paper trading until Month 4+)
+
+**Mindset Shift**:
+- Old: "We need to make money TODAY"
+- New: "We're building a system that makes $100+/day by Month 6"
+
+### R&D Phase Investments
+
+**Current Approach** (October 31 - approved):
+- Invest ~$3-10/day via Fibonacci for testing
+- Focus: Collect data, test strategies, validate automation
+- Expectation: Break-even to small losses acceptable
+- Total R&D "cost": ~$270 over 90 days (acceptable tuition fee)
+
+**If profitable during R&D**: BONUS! Banking profits for future scaling.
+**If break-even during R&D**: EXPECTED! System learning, data collecting.
+**If small losses during R&D**: ACCEPTABLE! Building edge worth the tuition.
+
+---
+
 ## Current Challenge Status (Updated Live)
 
-**30-Day Challenge**: Day 2 of 30 (7% complete) - PAPER TRADING TEST
+**90-Day R&D Challenge**: Day 3 of 90 (3% complete) - PAPER TRADING
 **Start Date**: October 29, 2025
-**Total Invested**: $20.00 ($10/day × 2 days)
-**Current P/L**: +$0.03 (essentially break-even)
-**System Status**: ✅ Building RL system, testing with paper trading
+**Current Phase**: Month 1 - Infrastructure + Data Collection
+**Current P/L**: -$0.14 (expected in R&D phase)
+**System Status**: ✅ Infrastructure solid, building trading edge
 
 **Current Positions**:
-- SPY (Core ETF): +$0.04 profit (+0.22%) ✅
-- NVDA (Growth): +$0.01 profit (+0.39%) ✅
-- GOOGL (Growth): -$0.01 loss (-0.64%) ❌
+- SPY (Core ETF): -$0.06 loss (-0.35%) ❌
+- NVDA (Growth): +$0.00 profit (+0.11%) ~
+- GOOGL (Growth): -$0.07 loss (-3.75%) ❌
 
 **Key Learnings (Compounding)**:
-- Day 1: System initialized, first trades placed (SPY, GOOGL)
-- Day 2: Automation working perfectly, SPY and NVDA outperforming
-- Pattern: SPY consistently profitable, will increase weighting
-- Pattern: NVDA > GOOGL for growth tier, prioritize NVDA
+- Day 1-2: System automation validated ($20 invested, wrong amounts)
+- Day 3: Fibonacci implemented correctly ($3 invested today)
+- Pattern: Need momentum indicators - simple buy-and-hold insufficient
+- Next: Implement MACD + RSI + Volume system (Week 2)
 
-**Next Execution**: Day 3 trades at 9:35 AM ET (October 31, 2025)
+**Next Execution**: Day 4 trades at 9:35 AM ET (November 1, 2025)
+**Next Milestone**: Day 30 - Month 1 R&D review
 
 ---
 
