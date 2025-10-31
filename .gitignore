@@ -29,8 +29,9 @@ logs/*.log
 *_secret*
 *_key*
 api_keys.txt
-test_*.py
-*_test.py
+# Block test files in root (but allow in tests/ directory)
+/test_*.py
+/*_test.py
 
 # Testing
 .pytest_cache/

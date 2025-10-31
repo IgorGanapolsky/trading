@@ -2,8 +2,8 @@ repos:
   - repo: local
     hooks:
       - id: file-organization
-        name: Check File Organization
-        entry: python3 .claude/skills/precommit_hygiene/scripts/precommit_hygiene.py check_file_organization
+        name: Check File Organization (Auto-Fix)
+        entry: python3 .claude/skills/precommit_hygiene/scripts/precommit_hygiene.py check_file_organization --fix
         language: system
         pass_filenames: false
 

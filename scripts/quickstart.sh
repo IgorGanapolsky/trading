@@ -72,7 +72,7 @@ echo "✓ Dependencies installed"
 # Run tests
 echo ""
 echo "Step 5: Running tests..."
-python test_main.py
+python tests/test_main.py
 TEST_RESULT=$?
 
 if [ $TEST_RESULT -eq 0 ]; then
