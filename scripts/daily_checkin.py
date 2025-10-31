@@ -20,6 +20,19 @@ api = tradeapi.REST(
 )
 
 
+def get_fibonacci_investment(day):
+    """Get Fibonacci investment amount for given day"""
+    fibonacci_sequence = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377]
+
+    if day <= 0:
+        return 0
+    if day <= len(fibonacci_sequence):
+        return float(fibonacci_sequence[day - 1])
+
+    # If beyond sequence, keep using last value
+    return float(fibonacci_sequence[-1])
+
+
 def get_challenge_day():
     """Calculate which day of 30-day challenge"""
     challenge_file = DATA_DIR / "challenge_start.json"
@@ -42,6 +55,14 @@ def get_challenge_day():
     days = (today - start_date).days + 1
 
     return days
+
+
+def get_total_fibonacci_investment(current_day):
+    """Calculate total investment from Day 1 to current_day using Fibonacci"""
+    total = 0
+    for day in range(1, current_day + 1):
+        total += get_fibonacci_investment(day)
+    return total
 
 
 def get_account_data():
@@ -207,21 +228,22 @@ def main():
     print(f"IPO Reserve:           ${reserves.get('ipo_reserve', 0):>10,.2f}")
     print(f"Crowdfunding Reserve:  ${reserves.get('crowdfunding_reserve', 0):>10,.2f}")
 
-    # Investment Breakdown
-    total_invested = day * 10  # $10/day
-    tier1_invested = day * 6
-    tier2_invested = day * 2
+    # Investment Breakdown using Fibonacci
+    total_invested = get_total_fibonacci_investment(day)
+    tier1_invested = total_invested * 0.60
+    tier2_invested = total_invested * 0.20
 
-    print(f"\n💸 TOTAL INVESTED (Since Day 1)")
+    print(f"\n💸 TOTAL INVESTED (Since Day 1 - Fibonacci Strategy)")
     print("-" * 70)
     print(f"Tier 1 (Core):         ${tier1_invested:>10,.2f} (60%)")
-    print(f"Tier 2 (Growth):       ${tier2_invested:>10,.2f} (20%)")
+    print(f"Tier 2 (Growth):       ${tier2_invested:>10,.2f} (20%) - NVDA/GOOGL")
     print(f"Tier 3 (IPO):          ${reserves.get('ipo_reserve', 0):>10,.2f} (10%)")
     print(
         f"Tier 4 (Crowdfunding): ${reserves.get('crowdfunding_reserve', 0):>10,.2f} (10%)"
     )
     print(f"{'─'*70}")
     print(f"TOTAL:                 ${total_invested:>10,.2f}")
+    print(f"Today's Investment:    ${get_fibonacci_investment(day):.2f}")
 
     # Goals & Targets
     target_30day = total_invested * 1.10  # 10% return target

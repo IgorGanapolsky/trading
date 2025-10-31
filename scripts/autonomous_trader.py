@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-AUTONOMOUS DAILY TRADER
+AUTONOMOUS DAILY TRADER - FIBONACCI STRATEGY
 Runs automatically every day at market open
-Executes $10 daily investment across strategies
+Executes Fibonacci-sequence daily investments: $1, $2, $3, $5, $8, $13...
+Focus: Disruptive Innovation (NVDA, GOOGL)
 """
 import os
 import sys
@@ -16,12 +17,33 @@ ALPACA_KEY = os.getenv("ALPACA_API_KEY", "PKSGVK5JNGYIFPTW53EAKCNBP5")
 ALPACA_SECRET = os.getenv(
     "ALPACA_SECRET_KEY", "9DCF1pY2wgTTY3TBasjAHUWWLXiDTyrAhMJ4ZD6nVWaG"
 )
-DAILY_INVESTMENT = 10.0
 DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)
 
+# Fibonacci sequence for daily investments
+FIBONACCI_SEQUENCE = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377]
+
 # Initialize Alpaca
 api = tradeapi.REST(ALPACA_KEY, ALPACA_SECRET, "https://paper-api.alpaca.markets")
+
+
+def get_fibonacci_investment(day):
+    """
+    Get Fibonacci investment amount for given day.
+
+    Args:
+        day: Challenge day (1-based)
+
+    Returns:
+        Daily investment amount in dollars
+    """
+    if day <= 0:
+        return 0
+    if day <= len(FIBONACCI_SEQUENCE):
+        return float(FIBONACCI_SEQUENCE[day - 1])
+
+    # If beyond sequence, keep using last value
+    return float(FIBONACCI_SEQUENCE[-1])
 
 
 def log_trade(trade_data):
@@ -53,8 +75,10 @@ def get_momentum_score(symbol, days=20):
         return 0
 
 
-def execute_tier1():
-    """Tier 1: Core ETF Strategy - $6/day"""
+def execute_tier1(daily_amount):
+    """Tier 1: Core ETF Strategy - 60% of daily Fibonacci amount"""
+    amount = daily_amount * 0.60
+
     print("\n" + "=" * 70)
     print("🎯 TIER 1: CORE ETF STRATEGY")
     print("=" * 70)
@@ -70,10 +94,9 @@ def execute_tier1():
 
     # Select best
     best = max(scores, key=scores.get)
-    amount = 6.0
 
     print(f"\n✅ Selected: {best}")
-    print(f"💰 Investment: ${amount}")
+    print(f"💰 Investment: ${amount:.2f} (60% of ${daily_amount:.2f})")
 
     try:
         # Place order
@@ -101,22 +124,34 @@ def execute_tier1():
         return False
 
 
-def execute_tier2():
-    """Tier 2: Growth Stock Strategy - $2/day"""
+def execute_tier2(daily_amount):
+    """Tier 2: Disruptive Innovation Strategy - 20% of daily Fibonacci amount
+
+    Focus: NVDA (AI infrastructure) + GOOGL (Autonomous vehicles)
+    Conservative approach - proven disruptive leaders
+    """
+    amount = daily_amount * 0.20
+
     print("\n" + "=" * 70)
-    print("📈 TIER 2: GROWTH STOCK STRATEGY")
+    print("📈 TIER 2: DISRUPTIVE INNOVATION STRATEGY")
     print("=" * 70)
 
-    # Simplified: rotate between AAPL, MSFT, GOOGL, NVDA
-    stocks = ["AAPL", "MSFT", "GOOGL", "NVDA"]
+    # Focus on NVDA + GOOGL (Cathie Wood's recommendations, conservative approach)
+    stocks = ["NVDA", "GOOGL"]
+    scores = {}
 
-    # Simple rotation based on day of week
-    day_of_week = datetime.now().weekday()
-    selected = stocks[day_of_week % len(stocks)]
-    amount = 2.0
+    # Analyze momentum for each
+    for symbol in stocks:
+        score = get_momentum_score(symbol)
+        scores[symbol] = score
+        print(f"{symbol}: Score {score:.2f}")
 
-    print(f"✅ Selected: {selected}")
-    print(f"💰 Investment: ${amount}")
+    # Select best momentum
+    selected = max(scores, key=scores.get)
+
+    print(f"\n✅ Selected: {selected}")
+    print(f"💰 Investment: ${amount:.2f} (20% of ${daily_amount:.2f})")
+    print(f"🎯 Disruptive Theme: {'AI Infrastructure' if selected == 'NVDA' else 'Autonomous Vehicles + AI'}")
 
     try:
         order = api.submit_order(
@@ -146,8 +181,11 @@ def execute_tier2():
         return False
 
 
-def track_daily_deposit():
-    """Track $1/day for Tier 3 (IPO) and Tier 4 (Crowdfunding)"""
+def track_daily_deposit(daily_amount):
+    """Track 10% each for Tier 3 (IPO) and Tier 4 (Crowdfunding)"""
+    ipo_amount = daily_amount * 0.10
+    crowdfunding_amount = daily_amount * 0.10
+
     print("\n" + "=" * 70)
     print("💰 TIER 3 & 4: MANUAL INVESTMENT TRACKING")
     print("=" * 70)
@@ -159,22 +197,22 @@ def track_daily_deposit():
         with open(tracking_file, "r") as f:
             data = json.load(f)
 
-    # Add $1 to each
-    data["ipo_reserve"] += 1.0
-    data["crowdfunding_reserve"] += 1.0
+    # Add Fibonacci-based amounts to each
+    data["ipo_reserve"] += ipo_amount
+    data["crowdfunding_reserve"] += crowdfunding_amount
     data["history"].append(
         {
             "date": date.today().isoformat(),
-            "ipo_deposit": 1.0,
-            "crowdfunding_deposit": 1.0,
+            "ipo_deposit": ipo_amount,
+            "crowdfunding_deposit": crowdfunding_amount,
         }
     )
 
     with open(tracking_file, "w") as f:
         json.dump(data, f, indent=2)
 
-    print(f"✅ IPO Reserve: ${data['ipo_reserve']:.2f}")
-    print(f"✅ Crowdfunding Reserve: ${data['crowdfunding_reserve']:.2f}")
+    print(f"✅ IPO Reserve: ${data['ipo_reserve']:.2f} (+${ipo_amount:.2f} today)")
+    print(f"✅ Crowdfunding Reserve: ${data['crowdfunding_reserve']:.2f} (+${crowdfunding_amount:.2f} today)")
     print(f"💡 Manual investments ready when opportunities arise")
 
 
@@ -213,10 +251,37 @@ def update_performance_log():
 
 
 def main():
-    """Main autonomous trading execution"""
+    """Main autonomous trading execution with Fibonacci strategy"""
     print("\n" + "=" * 70)
-    print("🤖 AUTONOMOUS DAILY TRADER")
+    print("🤖 AUTONOMOUS DAILY TRADER - FIBONACCI STRATEGY")
     print(f"📅 Date: {datetime.now().strftime('%Y-%m-%d %I:%M %p')}")
+    print("=" * 70)
+
+    # Calculate current challenge day
+    challenge_file = DATA_DIR / "challenge_start.json"
+
+    if not challenge_file.exists():
+        # First day!
+        start_data = {
+            "start_date": date.today().isoformat(),
+            "starting_balance": 100000.0,
+        }
+        with open(challenge_file, "w") as f:
+            json.dump(start_data, f, indent=2)
+        current_day = 1
+    else:
+        with open(challenge_file, "r") as f:
+            data = json.load(f)
+        start_date = datetime.fromisoformat(data["start_date"]).date()
+        today = date.today()
+        current_day = (today - start_date).days + 1
+
+    # Calculate Fibonacci investment for today
+    daily_investment = get_fibonacci_investment(current_day)
+
+    print(f"📊 Challenge Day: {current_day} of 30")
+    print(f"💰 Fibonacci Investment: ${daily_investment:.2f}")
+    print(f"📈 Breakdown: Core 60% | Growth 20% | IPO 10% | Crowdfunding 10%")
     print("=" * 70)
 
     # Check if market is open
@@ -224,10 +289,10 @@ def main():
     if not clock.is_open:
         print("⚠️  Market is closed. Order will execute at next open.")
 
-    # Execute strategies
-    tier1_success = execute_tier1()
-    tier2_success = execute_tier2()
-    track_daily_deposit()
+    # Execute strategies with Fibonacci allocation
+    tier1_success = execute_tier1(daily_investment)
+    tier2_success = execute_tier2(daily_investment)
+    track_daily_deposit(daily_investment)
 
     # Update performance
     print("\n" + "=" * 70)
