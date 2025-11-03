@@ -14,7 +14,8 @@ import logging
 from datetime import datetime, timedelta
 
 # Add parent directory to path
-sys.path.insert(0, "/Users/igorganapolsky/workspace/git/apps/trading")
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.strategies.core_strategy import CoreStrategy
 from src.backtesting.backtest_engine import BacktestEngine
