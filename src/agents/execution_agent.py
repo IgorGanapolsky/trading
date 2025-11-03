@@ -17,7 +17,7 @@ Created: 2025-11-03
 
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import List, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -350,4 +350,7 @@ class ExecutionAgent:
             return "REJECTED: Execution validation failed"
 
         total_value = quantity * price
-        return f"APPROVED: {order_side.value.upper()} {quantity:.4f} shares @ ${price:.2f} (${total_value:.2f})"
+        return (
+            f"APPROVED: {order_side.value.upper()} {quantity:.4f} shares "
+            f"@ ${price:.2f} (${total_value:.2f})"
+        )

@@ -14,11 +14,3 @@ Agents:
 Author: Trading System
 Created: 2025-11-03
 """
-
-__all__ = [
-    "ResearchAgent",
-    "SignalAgent",
-    "RiskAgent",
-    "ExecutionAgent",
-    "MasterOrchestrator",
-]
