@@ -15,12 +15,6 @@ Author: Trading System
 Created: 2025-11-03
 """
 
-from src.agents.research_agent import ResearchAgent
-from src.agents.signal_agent import SignalAgent
-from src.agents.risk_agent import RiskAgent
-from src.agents.execution_agent import ExecutionAgent
-from src.agents.master_orchestrator import MasterOrchestrator
-
 __all__ = [
     "ResearchAgent",
     "SignalAgent",

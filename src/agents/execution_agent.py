@@ -66,20 +66,20 @@ class ExecutionOutput:
 class ExecutionAgent:
     """
     Execution Agent for order management with introspection.
-    
+
     This agent validates and executes trades with pre-flight checks
     and performs introspection to detect execution issues.
-    
+
     Attributes:
         max_slippage: Maximum acceptable slippage (fraction)
         min_order_size: Minimum order size in dollars
         max_order_size: Maximum order size in dollars
     """
-    
+
     MAX_SLIPPAGE = 0.001
     MIN_ORDER_SIZE = 1.0
     MAX_ORDER_SIZE = 100000.0
-    
+
     def __init__(
         self,
         max_slippage: float = MAX_SLIPPAGE,
@@ -88,7 +88,7 @@ class ExecutionAgent:
     ):
         """
         Initialize the Execution Agent.
-        
+
         Args:
             max_slippage: Maximum acceptable slippage (fraction)
             min_order_size: Minimum order size in dollars
@@ -97,12 +97,12 @@ class ExecutionAgent:
         self.max_slippage = max_slippage
         self.min_order_size = min_order_size
         self.max_order_size = max_order_size
-        
+
         logger.info("ExecutionAgent initialized")
         logger.info(f"  Max Slippage: {max_slippage:.2%}")
         logger.info(f"  Min Order Size: ${min_order_size:,.2f}")
         logger.info(f"  Max Order Size: ${max_order_size:,.2f}")
-    
+
     def validate_execution(
         self,
         signal_output: any,
@@ -111,26 +111,26 @@ class ExecutionAgent:
     ) -> ExecutionOutput:
         """
         Validate execution with introspection.
-        
+
         Args:
             signal_output: Output from signal agent
             risk_output: Output from risk agent
             current_price: Current market price
-        
+
         Returns:
             ExecutionOutput with validation results
         """
         logger.info("=" * 80)
         logger.info(f"EXECUTION AGENT: Validating Execution for {signal_output.symbol}")
         logger.info("=" * 80)
-        
+
         if not risk_output.approved:
             logger.warning("Risk agent rejected trade - SKIPPING execution")
             return self._create_rejection(
                 signal_output.symbol,
                 "Risk agent rejected trade",
             )
-        
+
         order_side = self._determine_order_side(signal_output)
         if order_side is None:
             logger.warning("No actionable signal - SKIPPING execution")
@@ -138,16 +138,16 @@ class ExecutionAgent:
                 signal_output.symbol,
                 "No actionable signal (HOLD)",
             )
-        
+
         quantity = risk_output.position_size / current_price
-        
+
         introspection = self._perform_introspection(
             symbol=signal_output.symbol,
             quantity=quantity,
             price=current_price,
             position_size=risk_output.position_size,
         )
-        
+
         if not introspection.preflight_passed:
             logger.warning("Pre-flight checks failed - REJECTING execution")
             return self._create_rejection(
@@ -155,16 +155,16 @@ class ExecutionAgent:
                 "Pre-flight validation failed",
                 introspection=introspection,
             )
-        
+
         order_type = OrderType.MARKET
-        
+
         reason = self._generate_reason(
             approved=True,
             order_side=order_side,
             quantity=quantity,
             price=current_price,
         )
-        
+
         output = ExecutionOutput(
             approved=True,
             order_type=order_type,
@@ -177,37 +177,40 @@ class ExecutionAgent:
             timestamp=datetime.now(),
             reason=reason,
         )
-        
-        logger.info(f"Execution Validation: APPROVED")
-        logger.info(f"Order: {order_side.value.upper()} {quantity:.4f} shares @ ${current_price:.2f}")
+
+        logger.info("Execution Validation: APPROVED")
+        logger.info(
+            "Order: %s %.4f shares @ $%.2f",
+            order_side.value.upper(), quantity, current_price
+        )
         logger.info(f"Estimated Slippage: {introspection.estimated_slippage:.4f}")
         logger.info(f"Execution Quality: {introspection.execution_quality}")
-        
+
         if introspection.warnings:
             for warning in introspection.warnings:
                 logger.warning(f"  ⚠️  {warning}")
-        
+
         return output
-    
+
     def _determine_order_side(self, signal_output: any) -> Optional[OrderSide]:
         """
         Determine order side from signal.
-        
+
         Args:
             signal_output: Output from signal agent
-        
+
         Returns:
             OrderSide or None if HOLD
         """
         from src.agents.signal_agent import SignalType
-        
+
         if signal_output.signal == SignalType.BUY:
             return OrderSide.BUY
         elif signal_output.signal == SignalType.SELL:
             return OrderSide.SELL
         else:
             return None
-    
+
     def _perform_introspection(
         self,
         symbol: str,
@@ -217,54 +220,54 @@ class ExecutionAgent:
     ) -> ExecutionIntrospection:
         """
         Perform introspection to validate execution parameters.
-        
+
         This asks:
         - "Are my order parameters valid?"
         - "Is the order size reasonable?"
         - "What's the expected slippage?"
-        
+
         Args:
             symbol: Symbol to trade
             quantity: Order quantity
             price: Current price
             position_size: Position size in dollars
-        
+
         Returns:
             ExecutionIntrospection with validation results
         """
         logger.info("🔍 INTROSPECTION: Validating execution parameters...")
-        
+
         parameter_errors = []
         warnings = []
-        
+
         if quantity <= 0:
             parameter_errors.append(f"Invalid quantity: {quantity}")
-        
+
         if price <= 0:
             parameter_errors.append(f"Invalid price: {price}")
-        
+
         if position_size < self.min_order_size:
             parameter_errors.append(
                 f"Order size ${position_size:.2f} below minimum ${self.min_order_size:.2f}"
             )
-        
+
         if position_size > self.max_order_size:
             parameter_errors.append(
                 f"Order size ${position_size:.2f} above maximum ${self.max_order_size:.2f}"
             )
-        
+
         estimated_slippage = self._estimate_slippage(position_size, price)
-        
+
         if estimated_slippage > self.max_slippage:
             warnings.append(
                 f"High estimated slippage: {estimated_slippage:.4f} > {self.max_slippage:.4f}"
             )
-        
+
         if quantity < 1.0:
             warnings.append(f"Fractional shares: {quantity:.4f}")
-        
+
         preflight_passed = len(parameter_errors) == 0
-        
+
         if preflight_passed:
             if len(warnings) == 0:
                 execution_quality = "excellent"
@@ -274,12 +277,12 @@ class ExecutionAgent:
                 execution_quality = "fair"
         else:
             execution_quality = "failed"
-        
+
         logger.info(f"  Pre-flight: {'PASSED' if preflight_passed else 'FAILED'}")
         logger.info(f"  Parameter Errors: {len(parameter_errors)}")
         logger.info(f"  Estimated Slippage: {estimated_slippage:.4f}")
         logger.info(f"  Execution Quality: {execution_quality}")
-        
+
         return ExecutionIntrospection(
             preflight_passed=preflight_passed,
             parameter_errors=parameter_errors,
@@ -287,15 +290,15 @@ class ExecutionAgent:
             estimated_slippage=estimated_slippage,
             execution_quality=execution_quality,
         )
-    
+
     def _estimate_slippage(self, position_size: float, price: float) -> float:
         """
         Estimate execution slippage.
-        
+
         Args:
             position_size: Position size in dollars
             price: Current price
-        
+
         Returns:
             Estimated slippage as fraction of price
         """
@@ -305,7 +308,7 @@ class ExecutionAgent:
             return 0.0005
         else:
             return 0.001
-    
+
     def _create_rejection(
         self,
         symbol: str,
@@ -321,7 +324,7 @@ class ExecutionAgent:
                 estimated_slippage=0.0,
                 execution_quality="failed",
             )
-        
+
         return ExecutionOutput(
             approved=False,
             order_type=OrderType.MARKET,
@@ -334,7 +337,7 @@ class ExecutionAgent:
             timestamp=datetime.now(),
             reason=f"REJECTED: {reason}",
         )
-    
+
     def _generate_reason(
         self,
         approved: bool,
@@ -345,6 +348,6 @@ class ExecutionAgent:
         """Generate human-readable reason for execution decision."""
         if not approved:
             return "REJECTED: Execution validation failed"
-        
+
         total_value = quantity * price
         return f"APPROVED: {order_side.value.upper()} {quantity:.4f} shares @ ${price:.2f} (${total_value:.2f})"
