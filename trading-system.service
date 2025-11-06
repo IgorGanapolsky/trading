@@ -1,0 +1,44 @@
+[Unit]
+Description=AI Trading System - Automated Multi-Strategy Trading
+Documentation=https://github.com/yourusername/trading
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=user
+Group=user
+WorkingDirectory=/home/user/trading
+
+# Environment file (contains API keys and configuration)
+EnvironmentFile=/home/user/trading/.env
+
+# Main execution command
+ExecStart=/usr/local/bin/python3 /home/user/trading/src/main.py --mode paper --log-level INFO
+
+# Graceful shutdown (sends SIGTERM, then SIGKILL after timeout)
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# Auto-restart configuration
+Restart=on-failure
+RestartSec=10
+StartLimitBurst=5
+StartLimitIntervalSec=300
+
+# Process limits and security
+LimitNOFILE=65536
+PrivateTmp=yes
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/user/trading/logs /home/user/trading/data /home/user/trading/reports
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=trading-system
+
+[Install]
+WantedBy=multi-user.target
