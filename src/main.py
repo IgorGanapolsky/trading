@@ -590,11 +590,11 @@ class TradingOrchestrator:
         schedule.every().day.at("09:30").do(self._reset_daily_risk).tag("risk_reset")
         self.logger.info("Scheduled: Risk reset - Daily at 9:30 AM ET")
 
-        # Core Strategy: Daily at 9:35 AM ET
-        schedule.every().day.at("09:35").do(self._execute_core_strategy).tag(
+        # Core Strategy: Daily at 10:00 AM ET (30 min after open - lower volatility)
+        schedule.every().day.at("10:00").do(self._execute_core_strategy).tag(
             "core_strategy"
         )
-        self.logger.info("Scheduled: Core strategy - Daily at 9:35 AM ET")
+        self.logger.info("Scheduled: Core strategy - Daily at 10:00 AM ET")
 
         # Growth Strategy: Weekly on Mondays at 9:35 AM ET
         schedule.every().monday.at("09:35").do(self._execute_growth_strategy).tag(
