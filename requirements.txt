@@ -51,4 +51,4 @@ chromadb==0.4.22
 sentence-transformers==3.0.1
 
 # Modeling & Training
-scikit-learn==1.4.2
+scikit-learn==1.5.0
