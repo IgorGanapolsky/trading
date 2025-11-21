@@ -15,7 +15,7 @@ openai==1.0.0
 # Data Processing
 pandas==2.1.0
 numpy>=1.25.0,<2.0.0  # Updated: pandas 2.1.0 requires numpy >=1.25.0 (Note: Latest 2.3.5 requires pandas 2.2+)
-yfinance==0.2.28
+yfinance==0.2.66
 alpha-vantage==2.3.1
 # Security: numpy 2.x requires pandas 2.2+, keeping 1.x for compatibility
 
