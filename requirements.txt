@@ -10,7 +10,7 @@
 
 # Trading APIs
 alpaca-trade-api==3.2.0  # Updated for aiohttp>=3.8.3 compatibility with langchain
-openai==1.0.0
+openai==1.109.1
 
 # Data Processing
 pandas==2.1.0
