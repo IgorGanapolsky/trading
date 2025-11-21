@@ -6,7 +6,7 @@
 
 # Vector Database + Embeddings
 chromadb==0.4.22
-sentence-transformers==3.0.1
+sentence-transformers==3.4.1
 
 # Note: sentence-transformers pulls in:
 # - torch (~500MB)
