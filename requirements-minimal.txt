@@ -30,7 +30,7 @@ pydantic-settings==2.12.0
 
 # Testing (dev only - can move to requirements-dev.txt)
 pytest==7.4.0
-pytest-asyncio==0.21.1
+pytest-asyncio==0.26.0
 pytest-cov==4.1.0
 
 # Utilities
