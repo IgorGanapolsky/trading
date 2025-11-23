@@ -68,12 +68,11 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 state: 'open',
-                labels: 'bug,urgent',
               });
               
               const hasExistingIssue = existingIssues.some(issue => 
-                issue.title.toLowerCase().includes('workflow') && 
-                issue.title.toLowerCase().includes('disabled')
+                (issue.title.toLowerCase().includes('workflow') || issue.title.toLowerCase().includes('action')) &&
+                (issue.title.toLowerCase().includes('disabled') || issue.title.toLowerCase().includes('re-enable'))
               );
               
               if (!hasExistingIssue) {
