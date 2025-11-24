@@ -18,7 +18,7 @@ schedule==1.2.0
 # Web Scraping & APIs
 requests==2.32.4
 praw==7.8.1
-feedparser==6.0.10
+feedparser==6.0.12
 
 # YouTube Monitoring
 youtube-transcript-api==1.2.3
