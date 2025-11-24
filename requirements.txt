@@ -20,7 +20,7 @@ alpha-vantage==2.3.1
 # Security: numpy 2.x requires pandas 2.2+, keeping 1.x for compatibility
 
 # Scheduling
-schedule==1.2.0
+schedule==1.2.2
 
 # Web Scraping & APIs
 requests==2.32.5  # langchain-community requires >=2.32.5
