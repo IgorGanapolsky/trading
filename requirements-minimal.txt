@@ -3,7 +3,7 @@
 # Last updated: 2025-11-19
 
 # Trading APIs
-alpaca-trade-api==3.0.2
+alpaca-trade-api==3.2.0
 openai==1.109.1
 
 # Data Processing
