@@ -36,7 +36,7 @@ pytest-cov==4.1.0
 # Utilities
 python-dateutil==2.9.0.post0
 pytz==2023.3
-loguru==0.7.2
+loguru==0.7.3
 anthropic==0.18.1
 
 # REMOVED (unused):
