@@ -33,8 +33,30 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.orchestration.elite_orchestrator import EliteOrchestrator
 
 
-def dry_run(symbols: List[str]) -> int:
+def dry_run(symbols: List[str], args) -> int:
     eo = EliteOrchestrator(paper=True, enable_planning=True)
+    # Optional agent filters
+    include = set(getattr(args, "include_agents", []) or [])
+    exclude = set(getattr(args, "exclude_agents", []) or [])
+    if include or exclude:
+        eo._analysis_agent_filter = {"include": include, "exclude": exclude}
+
+    # Optional weights/thresholds
+    if getattr(args, "weight_mcp", None) is not None:
+        eo.ensemble_weights["mcp"] = args.weight_mcp
+    if getattr(args, "weight_langchain", None) is not None:
+        eo.ensemble_weights["langchain"] = args.weight_langchain
+    if getattr(args, "weight_gemini", None) is not None:
+        eo.ensemble_weights["gemini"] = args.weight_gemini
+    if getattr(args, "weight_ml", None) is not None:
+        eo.ensemble_weights["ml"] = args.weight_ml
+        eo.ensemble_weights["ensemble_rl"] = args.weight_ml
+    if getattr(args, "weight_grok", None) is not None:
+        eo.ensemble_weights["grok"] = args.weight_grok
+    if getattr(args, "buy_threshold", None) is not None:
+        eo.ensemble_buy_threshold = args.buy_threshold
+    if getattr(args, "sell_threshold", None) is not None:
+        eo.ensemble_sell_threshold = args.sell_threshold
     plan = eo.create_trade_plan(symbols)
 
     # Phase 2: Data collection
@@ -45,9 +67,12 @@ def dry_run(symbols: List[str]) -> int:
 
     print("\n=== Ensemble Vote ===")
     for sym, vote in analysis.get("ensemble_vote", {}).items():
-        print(
-            f"{sym}: consensus={vote.get('consensus')} buy_votes={vote.get('buy_votes')}/{vote.get('total_votes')}"
-        )
+        if "weighted_score" in vote:
+            print(
+                f"{sym}: consensus={vote.get('consensus')} score={vote.get('weighted_score')} thresholds=({vote.get('sell_threshold')}, {vote.get('buy_threshold')})"
+            )
+        else:
+            print(f"{sym}: consensus={vote.get('consensus')}")
 
     print("\n=== Agent Recommendations (top 5) ===")
     agent_results = analysis.get("agent_results", [])
@@ -59,7 +84,75 @@ def dry_run(symbols: List[str]) -> int:
     print("\n=== Risk Assessment ===")
     print(json.dumps(risk, indent=2, default=str))
 
-    print("\nDry run complete (no trades executed).")
+    exec_result = None
+    if getattr(args, "execute", False):
+        exec_result = eo._execute_trades(plan, analysis)
+        print("\n=== Execution (paper) ===")
+        print(json.dumps(exec_result, indent=2, default=str))
+
+    # Optional export
+    export_path = getattr(args, "export_json", None)
+    if export_path:
+        payload = {
+            "plan_id": plan.plan_id,
+            "symbols": symbols,
+            "ensemble_vote": analysis.get("ensemble_vote", {}),
+            "agent_results": analysis.get("agent_results", [])[:20],
+            "risk": risk,
+            "execution": exec_result,
+        }
+        with open(export_path, "w") as f:
+            json.dump(payload, f, indent=2, default=str)
+        print(f"\nExported report to: {export_path}")
+
+    # Optional Markdown export
+    export_md = getattr(args, "export_md", None)
+    if export_md:
+        lines = []
+        lines.append(f"# Dry Run Report: {', '.join(symbols)}")
+        lines.append("")
+        lines.append(f"Plan ID: `{plan.plan_id}`")
+        lines.append("")
+        lines.append("## Ensemble Consensus")
+        for sym, vote in (analysis.get("ensemble_vote", {}) or {}).items():
+            if "weighted_score" in vote:
+                lines.append(
+                    f"- **{sym}**: consensus: `{vote.get('consensus')}`, score: `{vote.get('weighted_score')}`, thresholds: `({vote.get('sell_threshold')}, {vote.get('buy_threshold')})`"
+                )
+                contribs = sorted(
+                    vote.get("contributions", []),
+                    key=lambda x: abs(x.get("contrib", 0)),
+                    reverse=True,
+                )[:3]
+                for c in contribs:
+                    lines.append(
+                        f"  - {c.get('agent')}: action `{c.get('action')}`, conf `{c.get('confidence')}`, weight `{c.get('weight')}`, contrib `{c.get('contrib')}`"
+                    )
+            else:
+                lines.append(f"- **{sym}**: consensus: `{vote.get('consensus')}`")
+        lines.append("")
+        lines.append("## Risk Summary")
+        status = risk.get("risk_checks", {}).get("portfolio_health", {})
+        lines.append(f"- Portfolio health success: `{status.get('success', False)}`")
+        for sym in symbols:
+            pos = risk.get("risk_checks", {}).get(f"{sym}_position", {})
+            if pos:
+                primary = (
+                    pos.get("recommendations", {})
+                    .get("primary_method", {})
+                    .get("position_size_dollars", 0)
+                )
+                lines.append(f"- {sym} position (primary): `${primary}`")
+        if exec_result:
+            lines.append("")
+            lines.append("## Execution (Paper)")
+            for o in exec_result.get("orders", []):
+                lines.append(f"- {o.get('symbol')}: agent `{o.get('agent')}`")
+        with open(export_md, "w") as f:
+            f.write("\n".join(lines))
+        print(f"Exported markdown to: {export_md}")
+
+    print("\nDry run complete.")
     return 0
 
 
@@ -70,8 +163,66 @@ def main() -> int:
     parser.add_argument(
         "--symbols", nargs="*", default=["SPY", "QQQ"], help="Symbols to analyze"
     )
+    parser.add_argument(
+        "--include-agents",
+        nargs="*",
+        default=None,
+        help="Only include these agents (mcp langchain gemini ml_model ensemble_rl grok_twitter)",
+    )
+    parser.add_argument(
+        "--exclude-agents",
+        nargs="*",
+        default=None,
+        help="Exclude these agents from analysis",
+    )
+    parser.add_argument(
+        "--weight-mcp", type=float, default=None, help="Ensemble weight for MCP"
+    )
+    parser.add_argument(
+        "--weight-langchain",
+        type=float,
+        default=None,
+        help="Ensemble weight for LangChain",
+    )
+    parser.add_argument(
+        "--weight-gemini", type=float, default=None, help="Ensemble weight for Gemini"
+    )
+    parser.add_argument(
+        "--weight-ml", type=float, default=None, help="Ensemble weight for ML model(s)"
+    )
+    parser.add_argument(
+        "--weight-grok",
+        type=float,
+        default=None,
+        help="Ensemble weight for Grok/X Twitter sentiment",
+    )
+    parser.add_argument(
+        "--buy-threshold",
+        type=float,
+        default=None,
+        help="Weighted BUY threshold (default 0.15)",
+    )
+    parser.add_argument(
+        "--sell-threshold",
+        type=float,
+        default=None,
+        help="Weighted SELL threshold (default -0.15)",
+    )
+    parser.add_argument(
+        "--execute",
+        action="store_true",
+        help="Execute trades if consensus BUY (paper mode)",
+    )
+    parser.add_argument(
+        "--export-json",
+        default=None,
+        help="Export analysis/risk/execution report to JSON file",
+    )
+    parser.add_argument(
+        "--export-md", default=None, help="Export markdown summary report"
+    )
     args = parser.parse_args()
-    return dry_run(args.symbols)
+    return dry_run(args.symbols, args)
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ Strategy Overview:
 - Volume > average confirmation
 - 7% stop-loss (wider than stocks' 3-5%)
 - 2% max position size (tighter than stocks)
-- $0.50/day allocation (configurable)
+- $10/day allocation on weekends (Alpaca minimum)
 
 Target: High-risk experimental returns
 Risk Level: VERY HIGH
@@ -154,7 +154,7 @@ class CryptoStrategy:
         Args:
             trader: AlpacaTrader instance (optional, will create if None)
             risk_manager: RiskManager instance (optional, will create if None)
-            daily_amount: Daily investment amount in dollars (default: from env or $0.50)
+            daily_amount: Daily investment amount in dollars (default: from env or $10 - Alpaca minimum)
             crypto_universe: List of crypto symbols (default: BTCUSD, ETHUSD)
             stop_loss_pct: Stop-loss percentage (default: 7%)
 
@@ -163,7 +163,7 @@ class CryptoStrategy:
         """
         # Get daily amount from env var or use default
         if daily_amount is None:
-            daily_amount = float(os.getenv("CRYPTO_DAILY_AMOUNT", "0.50"))
+            daily_amount = float(os.getenv("CRYPTO_DAILY_AMOUNT", "10.0"))
 
         if daily_amount <= 0:
             raise ValueError(f"daily_amount must be positive, got {daily_amount}")
@@ -1051,7 +1051,7 @@ if __name__ == "__main__":
     )
 
     # Initialize strategy
-    strategy = CryptoStrategy(daily_amount=0.50)
+    strategy = CryptoStrategy(daily_amount=10.0)
 
     # Execute daily routine
     order = strategy.execute_daily()

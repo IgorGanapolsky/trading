@@ -40,7 +40,10 @@ from dotenv import load_dotenv
 # Add src directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.orchestration.adk_integration import ADKTradeAdapter, summarize_adk_decision  # noqa: E402
+from src.orchestration.adk_integration import (
+    ADKTradeAdapter,
+    summarize_adk_decision,
+)  # noqa: E402
 from src.orchestration.elite_orchestrator import EliteOrchestrator  # noqa: E402
 from src.strategies.core_strategy import CoreStrategy  # noqa: E402
 from src.strategies.growth_strategy import GrowthStrategy  # noqa: E402
@@ -49,7 +52,9 @@ from src.strategies.options_strategy import OptionsStrategy  # noqa: E402
 from src.core.alpaca_trader import AlpacaTrader  # noqa: E402
 from src.core.risk_manager import RiskManager  # noqa: E402
 from src.core.skills_integration import get_skills  # noqa: E402
-from src.deepagents_integration.adapter import create_analysis_agent_adapter  # noqa: E402
+from src.deepagents_integration.adapter import (
+    create_analysis_agent_adapter,
+)  # noqa: E402
 from src.agent_framework import RunContext  # noqa: E402
 
 

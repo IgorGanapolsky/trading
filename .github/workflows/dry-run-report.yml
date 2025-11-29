@@ -1,0 +1,44 @@
+name: Nightly Dry Run Report
+
+on:
+  schedule:
+    - cron: '0 2 * * *'   # 02:00 UTC nightly
+  workflow_dispatch: {}
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies (minimal)
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements-minimal.txt ]; then pip install -r requirements-minimal.txt; fi
+          pip install pyyaml
+
+      - name: Run dry run (no external agents)
+        env:
+          PAPER_TRADING: 'true'
+          ENSEMBLE_CONFIG_PATH: profiles/ensemble-config.yaml
+        run: |
+          python scripts/dry_run.py \
+            --symbols SPY QQQ \
+            --exclude-agents mcp langchain gemini ml_model ensemble_rl grok_twitter \
+            --export-json dryrun.json \
+            --export-md dryrun.md
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dry-run-report
+          path: |
+            dryrun.json
+            dryrun.md
+

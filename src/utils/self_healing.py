@@ -4,6 +4,7 @@ Self-Healing & Automatic Retry System for Gemini Agent
 This module provides automatic retry, error recovery, and self-healing
 capabilities for the AI agent to recover from transient failures.
 """
+
 import os
 import time
 import json
@@ -38,7 +39,9 @@ def save_state(state: Dict[str, Any]) -> None:
         logger.error(f"Failed to save state: {e}")
 
 
-def with_retry(max_attempts: int = 3, backoff: float = 1.0, exceptions: tuple = (Exception,)):
+def with_retry(
+    max_attempts: int = 3, backoff: float = 1.0, exceptions: tuple = (Exception,)
+):
     """
     Decorator for automatic retry with exponential backoff.
 
@@ -50,6 +53,7 @@ def with_retry(max_attempts: int = 3, backoff: float = 1.0, exceptions: tuple = 
     Returns:
         Decorated function with retry logic
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs) -> Any:
@@ -70,13 +74,15 @@ def with_retry(max_attempts: int = 3, backoff: float = 1.0, exceptions: tuple = 
 
                     # Log error to state
                     state = load_state()
-                    state["errors"].append({
-                        "id": error_id,
-                        "function": func.__name__,
-                        "msg": str(exc),
-                        "ts": time.time(),
-                        "attempt": attempts
-                    })
+                    state["errors"].append(
+                        {
+                            "id": error_id,
+                            "function": func.__name__,
+                            "msg": str(exc),
+                            "ts": time.time(),
+                            "attempt": attempts,
+                        }
+                    )
                     save_state(state)
 
                     # Exponential backoff before retry
@@ -91,7 +97,9 @@ def with_retry(max_attempts: int = 3, backoff: float = 1.0, exceptions: tuple = 
                         raise last_exception
 
             return None
+
         return wrapper
+
     return decorator
 
 
@@ -111,7 +119,8 @@ def health_check(threshold: int = 5, window_seconds: int = 3600) -> bool:
 
     # Count recent errors within the time window
     recent_errors = [
-        e for e in state.get("errors", [])
+        e
+        for e in state.get("errors", [])
         if current_time - e.get("ts", 0) < window_seconds
     ]
 
@@ -148,6 +157,7 @@ def self_heal() -> None:
     try:
         # Action 1: Re-initialize Anthropic client
         from anthropic import Anthropic
+
         api_key = os.getenv("ANTHROPIC_API_KEY")
 
         if not api_key:
@@ -160,7 +170,7 @@ def self_heal() -> None:
         test_response = new_client.messages.create(
             model="claude-3-5-sonnet-20241022",
             max_tokens=10,
-            messages=[{"role": "user", "content": "test"}]
+            messages=[{"role": "user", "content": "test"}],
         )
 
         logger.info("✅ LLM client re-initialized successfully")
@@ -181,6 +191,7 @@ def self_heal() -> None:
         # Action 4: Fallback to safe mode
         try:
             from src.agents.fallback_strategy import FallbackStrategy
+
             # Signal that we're in fallback mode
             state = load_state()
             state["fallback_mode"] = True

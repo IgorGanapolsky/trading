@@ -1,6 +1,7 @@
 """
 Base Agent Class - Foundation for all trading agents
 """
+
 import os
 import json
 import logging
@@ -12,7 +13,7 @@ from src.utils.self_healing import with_retry, health_check
 from src.agent_framework.context_engine import (
     get_context_engine,
     MemoryTimescale,
-    ContextMemory
+    ContextMemory,
 )
 
 logger = logging.getLogger(__name__)
@@ -29,7 +30,13 @@ class BaseAgent(ABC):
     - Transparency (auditable decision logs)
     """
 
-    def __init__(self, name: str, role: str, model: str = "claude-3-opus-20240229", use_context_engine: bool = True):
+    def __init__(
+        self,
+        name: str,
+        role: str,
+        model: str = "claude-3-opus-20240229",
+        use_context_engine: bool = True,
+    ):
         self.name = name
         self.role = role
         self.model = model
@@ -53,7 +60,9 @@ class BaseAgent(ABC):
         pass
 
     @with_retry(max_attempts=3, backoff=2.0)
-    def reason_with_llm(self, prompt: str, tools: Optional[List[Dict]] = None) -> Dict[str, Any]:
+    def reason_with_llm(
+        self, prompt: str, tools: Optional[List[Dict]] = None
+    ) -> Dict[str, Any]:
         """
         Use LLM reasoning to make decisions.
 
@@ -69,16 +78,11 @@ class BaseAgent(ABC):
 
             if tools:
                 response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=4096,
-                    messages=messages,
-                    tools=tools
+                    model=self.model, max_tokens=4096, messages=messages, tools=tools
                 )
             else:
                 response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=4096,
-                    messages=messages
+                    model=self.model, max_tokens=4096, messages=messages
                 )
 
             # Extract text content
@@ -86,17 +90,16 @@ class BaseAgent(ABC):
                 "reasoning": "",
                 "decision": "",
                 "confidence": 0.0,
-                "tool_calls": []
+                "tool_calls": [],
             }
 
             for block in response.content:
                 if block.type == "text":
                     result["reasoning"] = block.text
                 elif block.type == "tool_use":
-                    result["tool_calls"].append({
-                        "name": block.name,
-                        "input": block.input
-                    })
+                    result["tool_calls"].append(
+                        {"name": block.name, "input": block.input}
+                    )
 
             return result
 
@@ -106,7 +109,7 @@ class BaseAgent(ABC):
                 "reasoning": f"Error: {str(e)}",
                 "decision": "NO_ACTION",
                 "confidence": 0.0,
-                "tool_calls": []
+                "tool_calls": [],
             }
 
     def log_decision(self, decision: Dict[str, Any]) -> None:
@@ -114,7 +117,7 @@ class BaseAgent(ABC):
         entry = {
             "timestamp": datetime.now().isoformat(),
             "agent": self.name,
-            "decision": decision
+            "decision": decision,
         }
         self.decision_log.append(entry)
         logger.info(f"{self.name} decision logged: {decision.get('action', 'N/A')}")
@@ -123,7 +126,7 @@ class BaseAgent(ABC):
         self,
         decision_id: str,
         outcome: Dict[str, Any],
-        timescale: Optional[MemoryTimescale] = None
+        timescale: Optional[MemoryTimescale] = None,
     ) -> None:
         """
         Learn from decision outcomes (reinforcement learning).
@@ -138,7 +141,7 @@ class BaseAgent(ABC):
         memory_entry = {
             "decision_id": decision_id,
             "outcome": outcome,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         # Store in legacy memory (backward compatibility)
@@ -163,16 +166,18 @@ class BaseAgent(ABC):
                 content=memory_entry,
                 tags=tags,
                 timescale=timescale,
-                outcome_pl=pl
+                outcome_pl=pl,
             )
 
-        logger.info(f"{self.name} learned from outcome: {outcome.get('result', 'N/A')} [timescale: {timescale.value if timescale else 'legacy'}]")
+        logger.info(
+            f"{self.name} learned from outcome: {outcome.get('result', 'N/A')} [timescale: {timescale.value if timescale else 'legacy'}]"
+        )
 
     def get_memory_context(
         self,
         limit: int = 10,
         use_multi_timescale: Optional[bool] = None,
-        timescales: Optional[List[MemoryTimescale]] = None
+        timescales: Optional[List[MemoryTimescale]] = None,
     ) -> str:
         """
         Get memory context for LLM reasoning.
@@ -193,7 +198,7 @@ class BaseAgent(ABC):
                 agent_id=self.name,
                 limit=limit,
                 timescales=timescales,
-                use_multi_timescale=True
+                use_multi_timescale=True,
             )
 
             if memories:
@@ -208,7 +213,13 @@ class BaseAgent(ABC):
                     timescale_groups[ts].append(mem)
 
                 # Format by timescale
-                for timescale_name in ["episodic", "monthly", "weekly", "daily", "intraday"]:
+                for timescale_name in [
+                    "episodic",
+                    "monthly",
+                    "weekly",
+                    "daily",
+                    "intraday",
+                ]:
                     if timescale_name in timescale_groups:
                         context += f"\n{timescale_name.upper()} patterns:\n"
                         for mem in timescale_groups[timescale_name]:

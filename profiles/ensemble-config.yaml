@@ -1,0 +1,12 @@
+weights:
+  mcp: 0.40
+  langchain: 0.15
+  gemini: 0.15
+  ml: 0.20
+  ensemble_rl: 0.20
+  grok: 0.10
+
+thresholds:
+  buy: 0.12
+  sell: -0.12
+
