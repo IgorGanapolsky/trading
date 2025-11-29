@@ -19,6 +19,7 @@ from agent_framework import (
 )
 from agent_framework.base import AgentResult
 from agents.data_agent import DataAgent
+from .agents import AuditAgent, ExecutionAgent, RiskAgent, StrategyAgent
 
 logger = logging.getLogger(__name__)
 
@@ -119,10 +120,10 @@ def main(argv: list[str] | None = None) -> int:
         OrchestratorConfig(
             agents=[
                 DataAgent(),
-                NoOpAgent("strategy-agent"),
-                NoOpAgent("risk-agent"),
-                NoOpAgent("execution-agent"),
-                NoOpAgent("audit-agent"),
+                StrategyAgent(),
+                RiskAgent(),
+                ExecutionAgent(),
+                AuditAgent(),
             ],
             state_provider=FileStateProvider(args.state_file),
         )
