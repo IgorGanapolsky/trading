@@ -89,7 +89,8 @@ class DataAgent(TradingAgent):
 
         for symbol in symbols:
             try:
-                df = self._provider.get_daily_bars(symbol, lookback_days=self.lookback_days)
+                result = self._provider.get_daily_bars(symbol, lookback_days=self.lookback_days)
+                df = result.data
                 if df.empty:
                     warnings.append(f"{symbol}: received empty dataframe")
                     continue
@@ -98,7 +99,10 @@ class DataAgent(TradingAgent):
                 self._collector.save_to_csv(symbol, df)
 
                 frames[symbol] = df
-                summaries[symbol] = self._summarize_frame(df)
+                summary = self._summarize_frame(df)
+                summary["data_source"] = result.source.value
+                summary["fetch_attempts"] = result.total_attempts
+                summaries[symbol] = summary
             except Exception as exc:  # pragma: no cover - defensive
                 logger.exception("Failed to load data for %s", symbol)
                 warnings.append(f"{symbol}: {exc}")
