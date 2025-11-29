@@ -1,138 +1,123 @@
-"""CLI entrypoint and scaffolding for the multi-agent trading orchestrator."""
+"""Hybrid funnel orchestrator (Momentum → RL → LLM → Risk)."""
 
 from __future__ import annotations
 
-import argparse
 import logging
-import sys
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Iterable, List
+from typing import List
 
-from agent_framework import (
-    AgentConfig,
-    FileStateProvider,
-    RunContext,
-    RunMode,
-    StateProvider,
-    TradingAgent,
-)
-from agent_framework.base import AgentResult
-from agents.data_agent import DataAgent
-from .agents import AuditAgent, ExecutionAgent, RiskAgent, StrategyAgent
+from src.agents.momentum_agent import MomentumAgent
+from src.agents.rl_agent import RLFilter
+from src.execution.alpaca_executor import AlpacaExecutor
+from src.langchain_agents.analyst import LangChainSentimentAgent
+from src.orchestrator.budget import BudgetController
+from src.risk.risk_manager import RiskManager
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class OrchestratorConfig:
-    """Configuration object used to bootstrap the orchestrator."""
-
-    agents: List[TradingAgent] = field(default_factory=list)
-    state_provider: StateProvider = field(
-        default_factory=lambda: FileStateProvider(Path("data/system_state.json"))
-    )
-
-
-class NoOpAgent(TradingAgent):
-    """
-    Placeholder agent used until dedicated implementations are wired in.
-
-    It simply logs the current run mode and succeeds without side effects.
-    """
-
-    def __init__(self, agent_name: str) -> None:
-        super().__init__(agent_name)
-
-    def execute(self, context: RunContext) -> AgentResult:
-        payload = {
-            "message": f"{self.agent_name} executed in {context.mode.value} mode.",
-            "force": context.force,
-        }
-        return AgentResult(name=self.agent_name, succeeded=True, payload=payload)
-
-
 class TradingOrchestrator:
-    """Coordinates agent execution and state persistence."""
+    """
+    Implements the four-gate funnel:
 
-    def __init__(self, config: OrchestratorConfig) -> None:
-        if not config.agents:
-            logger.warning("Orchestrator started with no agents configured.")
-        self.config = config
+        Gate 1 - Momentum (math, free)
+        Gate 2 - RL filter (local inference)
+        Gate 3 - LLM analyst (budgeted)
+        Gate 4 - Risk sizing (hard rules)
+    """
 
-    def run_once(self, context: RunContext) -> Iterable[AgentResult]:
-        logger.info("Starting orchestrator run (force=%s, mode=%s)", context.force, context.mode.value)
-        state = self.config.state_provider.load()
-        context.state_cache["state"] = state
-        results: list[AgentResult] = []
+    def __init__(self, tickers: List[str], paper: bool = True) -> None:
+        self.tickers = [ticker.strip().upper() for ticker in tickers if ticker.strip()]
+        if not self.tickers:
+            raise ValueError("At least one ticker symbol is required.")
 
-        for agent in self.config.agents:
-            result = agent.run(context)
-            results.append(result)
+        self.momentum_agent = MomentumAgent()
+        self.rl_filter = RLFilter()
+        self.llm_agent = LangChainSentimentAgent()
+        self.budget_controller = BudgetController()
+        self.risk_manager = RiskManager()
+        self.executor = AlpacaExecutor(paper=paper)
+        self.executor.sync_portfolio_state()
 
-        updated_state = context.state_cache.get("state", state)
-        if updated_state != state:
-            logger.debug("Persisting updated state.")
-            self.config.state_provider.save(updated_state)
+    def run(self) -> None:
+        logger.info("Running hybrid funnel for tickers: %s", ", ".join(self.tickers))
+        for ticker in self.tickers:
+            self._process_ticker(ticker)
 
-        logger.info("Orchestrator run complete.")
-        return results
+    def _process_ticker(self, ticker: str) -> None:
+        logger.info("--- Processing %s ---", ticker)
 
-
-def _parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run the multi-agent trading orchestrator.")
-    parser.add_argument(
-        "--mode",
-        choices=[m.value for m in RunMode],
-        default=RunMode.PAPER.value,
-        help="Execution mode (live/paper/dry_run).",
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Force execution even if a run already occurred today.",
-    )
-    parser.add_argument(
-        "--state-file",
-        type=Path,
-        default=Path("data/system_state.json"),
-        help="Path to orchestrator state file (default: data/system_state.json).",
-    )
-    return parser.parse_args(argv)
-
-
-def main(argv: list[str] | None = None) -> int:
-    args = _parse_args(argv or sys.argv[1:])
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s :: %(message)s",
-    )
-
-    mode = RunMode(args.mode)
-    context = RunContext(
-        mode=mode,
-        force=args.force,
-        config=AgentConfig(),
-    )
-
-    orchestrator = TradingOrchestrator(
-        OrchestratorConfig(
-            agents=[
-                DataAgent(),
-                StrategyAgent(),
-                RiskAgent(),
-                ExecutionAgent(),
-                AuditAgent(),
-            ],
-            state_provider=FileStateProvider(args.state_file),
+        # Gate 1: deterministic momentum
+        momentum_signal = self.momentum_agent.analyze(ticker)
+        if not momentum_signal.is_buy:
+            logger.info("Gate 1 (%s): REJECTED by momentum filter.", ticker)
+            return
+        logger.info(
+            "Gate 1 (%s): PASSED (strength=%.2f)", ticker, momentum_signal.strength
         )
-    )
 
-    orchestrator.run_once(context)
-    return 0
+        # Gate 2: RL inference
+        rl_decision = self.rl_filter.predict(momentum_signal.indicators)
+        if rl_decision.get("confidence", 0.0) < 0.6:
+            logger.info(
+                "Gate 2 (%s): REJECTED by RL filter (confidence=%.2f).",
+                ticker,
+                rl_decision.get("confidence", 0.0),
+            )
+            return
+        logger.info(
+            "Gate 2 (%s): PASSED (action=%s, confidence=%.2f).",
+            ticker,
+            rl_decision.get("action"),
+            rl_decision.get("confidence", 0.0),
+        )
 
+        # Gate 3: LLM sentiment (budget-aware)
+        sentiment_score = 0.0
+        if self.budget_controller.can_afford_execution():
+            try:
+                llm_result = self.llm_agent.analyze_news(
+                    ticker, momentum_signal.indicators
+                )
+                sentiment_score = llm_result.get("score", 0.0)
+                self.budget_controller.log_spend(llm_result.get("cost", 0.0))
+                if sentiment_score < -0.2:
+                    logger.info(
+                        "Gate 3 (%s): REJECTED by LLM (score=%.2f, reason=%s).",
+                        ticker,
+                        sentiment_score,
+                        llm_result.get("reason", "N/A"),
+                    )
+                    return
+                logger.info(
+                    "Gate 3 (%s): PASSED (sentiment=%.2f).", ticker, sentiment_score
+                )
+            except Exception as exc:  # noqa: BLE001 - fallback to RL decision
+                logger.warning(
+                    "Gate 3 (%s): Error calling LLM (%s). Falling back to RL output.",
+                    ticker,
+                    exc,
+                )
+        else:
+            logger.info("Gate 3 (%s): Skipped to protect budget.", ticker)
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+        # Gate 4: Risk sizing and execution
+        order_size = self.risk_manager.calculate_size(
+            ticker=ticker,
+            account_equity=self.executor.account_equity,
+            signal_strength=momentum_signal.strength,
+            rl_confidence=rl_decision.get("confidence", 0.0),
+            sentiment_score=sentiment_score,
+            multiplier=rl_decision.get("suggested_multiplier", 1.0),
+        )
+
+        if order_size <= 0:
+            logger.info("Gate 4 (%s): REJECTED (position size calculated as 0).", ticker)
+            return
+
+        logger.info("Executing BUY %s for $%.2f", ticker, order_size)
+        self.executor.place_order(
+            ticker,
+            order_size,
+            side="buy",
+        )
 
