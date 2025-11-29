@@ -1,4 +1,4 @@
-#!/Users/igorganapolsky/workspace/git/apps/trading/.pc-venv/bin/python3
+#!/workspace/.pc-venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
