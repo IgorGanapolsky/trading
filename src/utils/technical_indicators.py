@@ -167,6 +167,12 @@ def calculate_volume_ratio(
     current_volume = hist["Volume"].iloc[-1]
     avg_volume = hist["Volume"].iloc[-window:].mean()
 
+    # yfinance sometimes returns multi-indexed frames even for single symbols.
+    if isinstance(current_volume, pd.Series):
+        current_volume = current_volume.iloc[-1]
+    if isinstance(avg_volume, pd.Series):
+        avg_volume = avg_volume.iloc[-1]
+
     if avg_volume == 0 or pd.isna(avg_volume):
         return 1.0
 
@@ -206,13 +212,17 @@ def calculate_technical_score(
     rsi_val = calculate_rsi(hist["Close"])
     volume_ratio = calculate_volume_ratio(hist)
 
+    price_raw = hist["Close"].iloc[-1]
+    if isinstance(price_raw, pd.Series):
+        price_raw = price_raw.iloc[-1]
+
     indicators = {
         "macd_value": macd_value,
         "macd_signal": macd_signal,
         "macd_histogram": macd_histogram,
         "rsi": rsi_val,
         "volume_ratio": volume_ratio,
-        "current_price": float(hist["Close"].iloc[-1]),
+        "current_price": float(price_raw),
     }
 
     # HARD FILTERS - Reject entries that don't meet criteria

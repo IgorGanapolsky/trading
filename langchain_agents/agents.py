@@ -4,7 +4,12 @@ import logging
 import os
 from typing import Iterable, Optional
 
-from langchain.agents import AgentExecutor, AgentType, initialize_agent
+try:  # LangChain 0.x
+    from langchain.agents import AgentExecutor, AgentType, initialize_agent
+except ImportError:  # LangChain 1.x fallback
+    AgentExecutor = None
+    AgentType = None
+    initialize_agent = None
 from langchain_community.chat_models import ChatAnthropic
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.tools import BaseTool
@@ -28,10 +33,23 @@ def get_default_llm() -> BaseChatModel:
     return ChatAnthropic(model=model, temperature=temperature)
 
 
+class _SimpleLLMExecutor:
+    """Fallback executor if the LangChain Agent API is unavailable."""
+
+    def __init__(self, llm: BaseChatModel):
+        self._llm = llm
+
+    def invoke(self, payload: dict) -> dict:
+        prompt = payload.get("input") if isinstance(payload, dict) else str(payload)
+        response = self._llm.invoke(prompt)
+        text = getattr(response, "content", str(response))
+        return {"output": text}
+
+
 def build_price_action_agent(
     llm: Optional[BaseChatModel] = None,
     extra_tools: Optional[Iterable[BaseTool]] = None,
-) -> AgentExecutor:
+):
     """
     Construct a LangChain agent tuned for price-action/technical analysis.
 
@@ -50,6 +68,12 @@ def build_price_action_agent(
 
     if extra_tools:
         tools.extend(extra_tools)
+
+    if initialize_agent is None or AgentType is None:
+        logger.warning(
+            "LangChain agent interfaces unavailable; using simple LLM executor instead."
+        )
+        return _SimpleLLMExecutor(llm)
 
     logger.info("Initializing price action agent with %d tools.", len(tools))
 

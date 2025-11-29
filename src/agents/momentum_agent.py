@@ -40,6 +40,10 @@ class MomentumAgent:
             strength,
         )
 
+        payload.indicators.setdefault("symbol", ticker)
+        payload.indicators["momentum_strength"] = strength
+        payload.indicators["raw_score"] = score
+
         return MomentumSignal(
             is_buy=is_buy,
             strength=strength,

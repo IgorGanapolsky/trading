@@ -5,6 +5,13 @@
 - Preserve existing Alpaca/Jupyter automation while enabling autonomous decision loops.
 - Provide a framework for rapid experimentation with new strategies, data sources, and guardrails.
 
+## 2025-11 Update — Hybrid Funnel Online
+- `scripts/autonomous_trader.py` now bootstraps the four-gate `TradingOrchestrator` (Momentum → RL → LLM → Risk) described in this spec.
+- Gate 2 uses `RLFilter` weights from `models/ml/rl_filter_weights.json`, replacing the prior `NoOp` stub with deterministic confidence scoring.
+- Gate 3 defaults to **Claude 3.5 Haiku** (override with `HYBRID_LLM_MODEL`) and is budgeted via the new `BudgetController`.
+- Telemetry for every gate is persisted to `data/audit_trail/hybrid_funnel_runs.jsonl`, satisfying the Audit Agent requirements while we finish the full agent mesh.
+- `AlpacaExecutor` now auto-falls back to a simulator when keys are absent, which keeps GitHub Actions stateless but still allows local smoke tests.
+
 ## Target Architecture
 
 ### Agents

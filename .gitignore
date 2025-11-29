@@ -3,6 +3,7 @@
 .env.local
 .env.*.local
 venv/
+.pc-venv/
 env/
 ENV/
 *.pyc

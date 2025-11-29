@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Dict, Any
+import os
+from typing import Any, Dict
+
+from langchain_community.chat_models import ChatAnthropic
 
 from langchain_agents.agents import build_price_action_agent
 
@@ -14,12 +17,28 @@ logger = logging.getLogger(__name__)
 class LangChainSentimentAgent:
     """Thin wrapper around the LangChain price-action agent."""
 
-    def __init__(self) -> None:
+    MODEL_PRICING = {
+        "claude-3-5-haiku-20241022": 0.006,  # ~$0.006 per short call
+        "gpt-4o-mini": 0.008,
+        "claude-3-5-sonnet-20241022": 0.045,
+    }
+
+    def __init__(self, model_name: str | None = None) -> None:
+        self.model_name = model_name or os.getenv(
+            "HYBRID_LLM_MODEL", "claude-3-5-haiku-20241022"
+        )
+        self.cost_override = os.getenv("HYBRID_LLM_COST")
         self._executor = None
+
+    def _build_llm(self) -> ChatAnthropic:
+        temperature = float(os.getenv("HYBRID_LLM_TEMPERATURE", "0.3"))
+        logger.info("Initializing analyst LLM (%s, temp=%s)", self.model_name, temperature)
+        return ChatAnthropic(model=self.model_name, temperature=temperature)
 
     def _get_executor(self):
         if self._executor is None:
-            self._executor = build_price_action_agent()
+            llm = self._build_llm()
+            self._executor = build_price_action_agent(llm=llm)
         return self._executor
 
     def analyze_news(
@@ -29,7 +48,7 @@ class LangChainSentimentAgent:
         Ask the LLM whether current headlines/technicals suggest a red flag.
 
         Returns:
-            dict(score=float, cost=float, reason=str)
+            dict(score=float, cost=float, reason=str, model=str)
         """
         indicators = indicators or {}
         prompt = (
@@ -54,8 +73,15 @@ class LangChainSentimentAgent:
         score = float(parsed.get("score", 0.0))
         reason = parsed.get("reason", "No rationale provided.")
 
-        # Rough cost estimate (Haiku). In production we would read usage metadata.
-        cost_estimate = 0.01
+        if self.cost_override is not None:
+            cost_estimate = float(self.cost_override)
+        else:
+            cost_estimate = self.MODEL_PRICING.get(self.model_name, 0.01)
 
-        return {"score": score, "reason": reason, "cost": cost_estimate}
+        return {
+            "score": score,
+            "reason": reason,
+            "cost": cost_estimate,
+            "model": self.model_name,
+        }
 

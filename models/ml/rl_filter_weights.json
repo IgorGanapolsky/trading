@@ -1,0 +1,38 @@
+{
+  "default": {
+    "bias": -0.15,
+    "weights": {
+      "strength": 2.4,
+      "momentum": 1.1,
+      "rsi_gap": 0.8,
+      "volume_premium": 0.6,
+      "sma_ratio": 1.5
+    },
+    "action_threshold": 0.58,
+    "base_multiplier": 0.75
+  },
+  "SPY": {
+    "bias": -0.1,
+    "weights": {
+      "strength": 2.6,
+      "momentum": 1.0,
+      "rsi_gap": 0.9,
+      "volume_premium": 0.5,
+      "sma_ratio": 1.8
+    },
+    "action_threshold": 0.57,
+    "base_multiplier": 0.8
+  },
+  "QQQ": {
+    "bias": -0.05,
+    "weights": {
+      "strength": 2.2,
+      "momentum": 1.2,
+      "rsi_gap": 0.7,
+      "volume_premium": 0.6,
+      "sma_ratio": 1.6
+    },
+    "action_threshold": 0.56,
+    "base_multiplier": 0.82
+  }
+}

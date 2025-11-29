@@ -97,7 +97,7 @@ class DataValidator:
                     claim=f"{description} on {date}",
                     actual_value=0.0,
                     claimed_value=claimed_profit,
-                    error_message=f"No data found for date {date}",
+                    error_message=f"Claimed {claimed_profit:.2f} but no data found for date {date}",
                     source="performance_log.json"
                 )
         else:

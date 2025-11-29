@@ -26,6 +26,11 @@ def is_weekend() -> bool:
     return datetime.now().weekday() in [5, 6]  # Saturday=5, Sunday=6
 
 
+def crypto_enabled() -> bool:
+    """Feature flag for the legacy crypto branch."""
+    return os.getenv("ENABLE_CRYPTO_AGENT", "false").lower() in {"1", "true", "yes"}
+
+
 def execute_crypto_trading() -> None:
     """Execute crypto trading strategy."""
     from src.core.alpaca_trader import AlpacaTrader
@@ -66,19 +71,32 @@ def main() -> None:
     parser.add_argument(
         "--crypto-only",
         action="store_true",
-        help="Execute crypto trading only (for weekends/holidays)"
+        help="Force crypto trading even on weekdays (requires ENABLE_CRYPTO_AGENT=true)",
+    )
+    parser.add_argument(
+        "--skip-crypto",
+        action="store_true",
+        help="Skip legacy crypto flow even on weekends.",
     )
     args = parser.parse_args()
     
     load_dotenv()
     logger = setup_logging()
 
-    # Check if crypto mode requested or weekend detected
-    if args.crypto_only or is_weekend():
-        logger.info("Weekend/holiday detected - executing crypto trading")
+    crypto_allowed = crypto_enabled()
+    should_run_crypto = not args.skip_crypto and crypto_allowed and (args.crypto_only or is_weekend())
+
+    if args.crypto_only and not crypto_allowed:
+        logger.warning("Crypto-only requested but ENABLE_CRYPTO_AGENT is not true. Skipping crypto branch.")
+
+    if should_run_crypto:
+        logger.info("Crypto branch enabled - executing crypto trading.")
         execute_crypto_trading()
         logger.info("Crypto trading session completed.")
-        return
+        if args.crypto_only:
+            return
+    elif is_weekend() and not args.skip_crypto:
+        logger.info("Weekend detected but crypto branch disabled. Proceeding with hybrid funnel.")
 
     # Normal stock trading - import only when needed
     from src.orchestrator.main import TradingOrchestrator
