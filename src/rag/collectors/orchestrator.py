@@ -20,6 +20,21 @@ from src.rag.collectors.bogleheads_collector import BogleheadsCollector
 
 logger = logging.getLogger(__name__)
 
+# New collectors for comprehensive data coverage
+try:
+    from src.rag.collectors.fred_collector import FREDCollector
+    FRED_AVAILABLE = True
+except ImportError:
+    FRED_AVAILABLE = False
+    logger.debug("FRED collector not available")
+
+try:
+    from src.rag.collectors.sec13f_collector import SEC13FCollector
+    SEC13F_AVAILABLE = True
+except ImportError:
+    SEC13F_AVAILABLE = False
+    logger.debug("SEC 13F collector not available")
+
 
 class NewsOrchestrator:
     """
@@ -33,10 +48,12 @@ class NewsOrchestrator:
     - Seeking Alpha (RSS feeds)
     - Stocktwits (social trading platform)
     - Bogleheads (forum insights)
+    - FRED (Federal Reserve Economic Data) - macro indicators
+    - SEC 13F (institutional holdings) - smart money tracking
 
     Future additions:
     - Bloomberg (web scraping)
-    - Google Finance (web scraping)
+    - Earnings Call Transcripts
     """
 
     def __init__(self):
@@ -50,6 +67,15 @@ class NewsOrchestrator:
             "stocktwits": StockTwitsCollector(),
             "bogleheads": BogleheadsCollector(),
         }
+
+        # Add new collectors if available
+        if FRED_AVAILABLE:
+            self.collectors["fred"] = FREDCollector()
+            logger.info("✅ FRED economic data collector enabled")
+
+        if SEC13F_AVAILABLE:
+            self.collectors["sec13f"] = SEC13FCollector()
+            logger.info("✅ SEC 13F institutional holdings collector enabled")
 
         logger.info(f"Initialized {len(self.collectors)} news collectors")
 
