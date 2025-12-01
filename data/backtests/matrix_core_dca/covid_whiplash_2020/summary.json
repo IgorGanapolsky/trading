@@ -1,0 +1,45 @@
+{
+  "summary": {
+    "scenario": "covid_whiplash_2020",
+    "label": "High-volatility crash/rebound (Feb-May 2020)",
+    "start_date": "2020-02-03",
+    "end_date": "2020-05-29",
+    "trading_days": 0,
+    "total_return_pct": 0.0,
+    "annualized_return_pct": 0.0,
+    "sharpe_ratio": 0.0,
+    "max_drawdown_pct": 0.0,
+    "win_rate_pct": 0.0,
+    "profitable_days": 0,
+    "longest_profitable_streak": 0,
+    "final_capital": 100000.0,
+    "total_trades": 0,
+    "status": "needs_improvement",
+    "description": "Stress test for historic volatility spike. Ensures ATR sizing and guardrails throttle exposure before we allow live promotion.\n",
+    "generated_at": "2025-12-01T21:55:14.384621"
+  },
+  "raw_results": {
+    "trades": [],
+    "equity_curve": [
+      100000.0
+    ],
+    "dates": [
+      "2020-02-03"
+    ],
+    "total_return": 0.0,
+    "sharpe_ratio": 0.0,
+    "max_drawdown": 0.0,
+    "win_rate": 0.0,
+    "total_trades": 0,
+    "profitable_trades": 0,
+    "average_trade_return": 0.0,
+    "initial_capital": 100000.0,
+    "final_capital": 100000.0,
+    "start_date": "2020-02-03",
+    "end_date": "2020-05-29",
+    "trading_days": 0,
+    "annualized_return": 0.0,
+    "volatility": 0.0,
+    "performance_rating": "NEEDS IMPROVEMENT"
+  }
+}

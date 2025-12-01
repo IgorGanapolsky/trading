@@ -86,3 +86,28 @@ Files Changed:
 
 Next Steps:
 - Surface the Markdown/report paths on the Streamlit dashboard and feed ResourceVault JSON into the Elite orchestrator context so prep data drives daily trading plans.
+
+2025-12-01 21:55 - Claude Opus 4
+Summary:
+- Investigated promotion guard system and verified it is working correctly as designed
+- Ran backtest matrix (generates artifacts but with zero data due to network restrictions blocking yfinance)
+- Verified promotion gate correctly blocks with 6 specific deficit reasons:
+  - Paper trading: Win rate 0% < 60%, Sharpe 0.00 < 1.5, Drawdown 21.25% > 10%
+  - Backtests: Streak 0 < 30 days, Sharpe floor 0 < 1.5, Win rate floor 0% < 60%
+- Confirmed ALLOW_PROMOTION_OVERRIDE=1 bypass works correctly
+- Verified telemetry infrastructure requires orchestrator to run first (hybrid_funnel_runs.jsonl created at runtime)
+
+Files Changed:
+- data/backtests/latest_summary.json (generated)
+- data/backtests/matrix_core_dca/* (3 scenario directories with reports)
+
+Key Findings:
+1. Promotion guard is CORRECTLY BLOCKING - this is expected behavior at Day 9 of 90
+2. The guard needs real market data to validate backtests (network blocked in this environment)
+3. In production, either improve paper metrics + re-run backtests OR use ALLOW_PROMOTION_OVERRIDE=1 with documented justification
+4. Telemetry dashboard requires data/audit_trail/hybrid_funnel_runs.jsonl which is created by the orchestrator
+
+Next Steps:
+- When network access is available, re-run backtest matrix to populate real scenario data
+- Continue R&D phase (Day 9/90) to improve paper trading metrics toward 60% win rate, 1.5 Sharpe
+- Once metrics improve, promotion gate will pass naturally
