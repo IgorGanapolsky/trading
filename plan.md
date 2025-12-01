@@ -1,35 +1,35 @@
-# Plan Mode Session: Agentic Day-Trading Support System
-> Managed exclusively in Claude Code Plan Mode. Research only before approval.
+# Plan Mode Session: Promotion Gate + Backtest Matrix + Telemetry
+> Managed in Claude Code Plan Mode. Do not modify outside Plan Mode workflow.
 
 ## Metadata
-- Task: Build coaching/reading/newsletter nodes + coordinator for day-trading enablement
-- Owner: GPT-5.1 Codex (CTO)
+- Task: Enforce R&D promotion gate, expand backtest coverage, and surface telemetry dashboards
+- Owner: GPT-5.1 Codex
 - Status: APPROVED
-- Approved at: 2025-12-01T21:20:00Z
+- Approved at: 2025-12-01T22:05:00Z
 - Valid for (minutes): 180
 
 ## Clarifying Questions
 | # | Question | Resolution | Status |
 |---|----------|------------|--------|
-| 1 | Do these resources need to influence live trading logic? | Not yet; they produce prep artifacts that other orchestrators can consume via JSON/vector stores without mutating trading funnels. | Resolved |
-| 2 | Where should raw definitions live so agents can self-update? | A new `config/day_trading_resources.yaml` describing coaching programs, book metadata, and newsletter feeds plus capture inbox targets. | Resolved |
-| 3 | How do we represent insights for retrieval? | Store structured snapshots in `data/day_trading_resources/resource_state.json` and push text summaries into the existing `rag_store` so LangChain/MCP agents can query them. | Resolved |
+| 1 | What metrics determine promotion to live trading? | Use existing R&D criteria (win rate >60%, Sharpe >1.5, max drawdown <10%, profitable 30 consecutive days, no critical bugs) by parsing audit/backtest JSON artifacts. | Resolved |
+| 2 | Where will scenario backtest artifacts live? | Store standardized JSON + Markdown reports per scenario under `data/backtests/<strategy>/<scenario>/` to keep history and allow CI assertions. | Resolved |
+| 3 | How should telemetry be consumed? | Build a lightweight Streamlit dashboard backed by existing JSONL audit trail plus an optional CLI report writer for headless runs; expose summary metrics + gate pass/fail counts. | Resolved |
 
 ## Execution Plan
-1. Audit existing sentiment/RAG utilities plus newsletter analyzers to understand reuse points for the new knowledge base and ingestion outputs.
-2. Introduce `config/day_trading_resources.yaml` and new `src/day_trading_support/models.py` + `config_loader.py` dataclasses to normalize coaching/book/newsletter definitions.
-3. Implement ingestion nodes (`mentor_monitor.py`, `reading_ingestor.py`, `newsletter_harvester.py`) that fetch schedules/feeds, summarize content, and emit normalized payloads with timestamps and confidence flags.
-4. Build a `ResourceVault` service that writes aggregated state to `data/day_trading_resources/resource_state.json`, indexes text into the Chroma vector store via `rag_store`, and exposes query helpers.
-5. Create agent wrappers (`MentorMonitorAgent`, `StudyGuideAgent`, `MarketPrepAgent`) plus a top-level `DayTradeSupportOrchestrator` that coordinates nodes, produces daily action plans, and logs outcomes.
-6. Ship an orchestration script (`scripts/day_trading_support_cycle.py`) and wiring so orchestrator outputs feed existing telemetry (e.g., writing markdown + JSON reports) without touching trading loops.
-7. Add targeted pytest coverage for config loading, ingestion normalization, vault persistence, and orchestrator planning logic, then refresh docs (`docs/day_trading_support.md`, README) and progress log.
+1. Inventory existing audit/backtest outputs to confirm available metrics and add helpers to parse them.
+2. Implement `scripts/enforce_promotion_gate.py` that aggregates recent metrics and exits non-zero if promotion criteria unmet; expose toggles for paper/live mode.
+3. Wire promotion guard into CI (daily trading + relevant workflows) and add docs describing the automated gate and manual override procedure.
+4. Create scenario definition YAML (e.g., bull, bear, high-vol) and implement `scripts/run_backtest_matrix.py` that iterates scenarios, runs backtests, and saves JSON/Markdown reports.
+5. Add pytest coverage for the promotion guard + scenario runner plus snapshot-based verification of output schemas.
+6. Build telemetry surface: parse `data/audit_trail/hybrid_funnel_runs.jsonl`, aggregate gate stats, and expose both a CLI summary (`scripts/generate_telemetry_report.py`) and an optional Streamlit app under `dashboard/`.
+7. Update README/docs to reference the new guard, backtest matrix, and telemetry views; ensure CI/docs link to generated artifacts.
 
 ## Approval
-- [x] Requirements captured and mapped to concrete modules/files
-- [x] Clarifications resolved with storage + integration strategy
-- [x] CTO Approval — GPT-5.1 Codex @ 2025-12-01T21:20:00Z
+- [x] Requirements captured with repo impact
+- [x] Clarifications resolved with storage, metrics, and UX decisions
+- [x] CTO Approval — GPT-5.1 Codex @ 2025-12-01T22:05:00Z
 
 ## Exit Checklist
-- [x] Tests/lints for new modules executed
-- [x] Docs & progress log updated
-- [x] Resource orchestrator outputs committed and linked in README
+- [ ] Promotion gate script + CI guard added
+- [ ] Backtest matrix automation + tests committed
+- [ ] Telemetry dashboard/report added with docs updated
