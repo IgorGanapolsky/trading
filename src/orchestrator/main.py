@@ -11,6 +11,7 @@ from src.agents.rl_agent import RLFilter
 from src.execution.alpaca_executor import AlpacaExecutor
 from src.langchain_agents.analyst import LangChainSentimentAgent
 from src.orchestrator.budget import BudgetController
+from src.orchestrator.failure_isolation import FailureIsolationManager
 from src.orchestrator.telemetry import OrchestratorTelemetry
 from src.risk.risk_manager import RiskManager
 
@@ -43,6 +44,7 @@ class TradingOrchestrator:
         self.executor = AlpacaExecutor(paper=paper)
         self.executor.sync_portfolio_state()
         self.telemetry = OrchestratorTelemetry()
+        self.failure_manager = FailureIsolationManager(self.telemetry)
 
     def run(self) -> None:
         logger.info("Running hybrid funnel for tickers: %s", ", ".join(self.tickers))
@@ -53,7 +55,20 @@ class TradingOrchestrator:
         logger.info("--- Processing %s ---", ticker)
 
         # Gate 1: deterministic momentum
-        momentum_signal = self.momentum_agent.analyze(ticker)
+        momentum_outcome = self.failure_manager.run(
+            gate="momentum",
+            ticker=ticker,
+            operation=lambda: self.momentum_agent.analyze(ticker),
+        )
+        if not momentum_outcome.ok:
+            logger.error(
+                "Gate 1 (%s): momentum analysis failed: %s",
+                ticker,
+                momentum_outcome.failure.error,
+            )
+            return
+
+        momentum_signal = momentum_outcome.result
         if not momentum_signal.is_buy:
             logger.info("Gate 1 (%s): REJECTED by momentum filter.", ticker)
             self.telemetry.gate_reject(
@@ -79,7 +94,20 @@ class TradingOrchestrator:
 
         # Gate 2: RL inference
         rl_threshold = float(os.getenv("RL_CONFIDENCE_THRESHOLD", "0.6"))
-        rl_decision = self.rl_filter.predict(momentum_signal.indicators)
+        rl_outcome = self.failure_manager.run(
+            gate="rl_filter",
+            ticker=ticker,
+            operation=lambda: self.rl_filter.predict(momentum_signal.indicators),
+        )
+        if not rl_outcome.ok:
+            logger.error(
+                "Gate 2 (%s): RL filter failed: %s",
+                ticker,
+                rl_outcome.failure.error,
+            )
+            return
+
+        rl_decision = rl_outcome.result
         if rl_decision.get("confidence", 0.0) < rl_threshold:
             logger.info(
                 "Gate 2 (%s): REJECTED by RL filter (confidence=%.2f).",
@@ -104,10 +132,16 @@ class TradingOrchestrator:
         sentiment_score = 0.0
         llm_model = getattr(self.llm_agent, "model_name", None)
         if self.budget_controller.can_afford_execution(model=llm_model):
-            try:
-                llm_result = self.llm_agent.analyze_news(
+            llm_outcome = self.failure_manager.run(
+                gate="llm",
+                ticker=ticker,
+                operation=lambda: self.llm_agent.analyze_news(
                     ticker, momentum_signal.indicators
-                )
+                ),
+                retry=2,
+            )
+            if llm_outcome.ok:
+                llm_result = llm_outcome.result
                 sentiment_score = llm_result.get("score", 0.0)
                 self.budget_controller.log_spend(llm_result.get("cost", 0.0))
                 neg_threshold = float(
@@ -130,16 +164,20 @@ class TradingOrchestrator:
                     "Gate 3 (%s): PASSED (sentiment=%.2f).", ticker, sentiment_score
                 )
                 self.telemetry.gate_pass("llm", ticker, llm_result)
-            except Exception as exc:  # noqa: BLE001 - fallback to RL decision
+            else:
                 logger.warning(
                     "Gate 3 (%s): Error calling LLM (%s). Falling back to RL output.",
                     ticker,
-                    exc,
+                    llm_outcome.failure.error,
                 )
                 self.telemetry.gate_reject(
                     "llm",
                     ticker,
-                    {"error": str(exc)},
+                    {
+                        "error": llm_outcome.failure.error,
+                        "reason": "exception",
+                        "attempts": llm_outcome.failure.metadata.get("attempts"),
+                    },
                 )
         else:
             logger.info("Gate 3 (%s): Skipped to protect budget.", ticker)
@@ -174,16 +212,30 @@ class TradingOrchestrator:
             logger.debug("History fetch failed for %s: %s", ticker, exc)
 
         # Gate 4: Risk sizing and execution
-        order_size = self.risk_manager.calculate_size(
+        risk_outcome = self.failure_manager.run(
+            gate="risk",
             ticker=ticker,
-            account_equity=self.executor.account_equity,
-            signal_strength=momentum_signal.strength,
-            rl_confidence=rl_decision.get("confidence", 0.0),
-            sentiment_score=sentiment_score,
-            multiplier=rl_decision.get("suggested_multiplier", 1.0),
-            current_price=current_price,
-            hist=hist,
+            operation=lambda: self.risk_manager.calculate_size(
+                ticker=ticker,
+                account_equity=self.executor.account_equity,
+                signal_strength=momentum_signal.strength,
+                rl_confidence=rl_decision.get("confidence", 0.0),
+                sentiment_score=sentiment_score,
+                multiplier=rl_decision.get("suggested_multiplier", 1.0),
+                current_price=current_price,
+                hist=hist,
+            ),
+            event_type="gate.risk",
         )
+        if not risk_outcome.ok:
+            logger.error(
+                "Gate 4 (%s): Risk sizing failed: %s",
+                ticker,
+                risk_outcome.failure.error,
+            )
+            return
+
+        order_size = risk_outcome.result
 
         if order_size <= 0:
             logger.info(
@@ -200,11 +252,22 @@ class TradingOrchestrator:
             return
 
         logger.info("Executing BUY %s for $%.2f", ticker, order_size)
-        order = self.executor.place_order(
-            ticker,
-            order_size,
-            side="buy",
+        order_outcome = self.failure_manager.run(
+            gate="execution.order",
+            ticker=ticker,
+            operation=lambda: self.executor.place_order(
+                ticker,
+                order_size,
+                side="buy",
+            ),
+            event_type="execution.order",
         )
+        if not order_outcome.ok:
+            logger.error(
+                "Execution failed for %s: %s", ticker, order_outcome.failure.error
+            )
+            return
+        order = order_outcome.result
         self.telemetry.gate_pass(
             "risk",
             ticker,

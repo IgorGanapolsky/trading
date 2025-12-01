@@ -178,6 +178,17 @@ def get_market_data_with_fallback(symbol: str):
 
 ---
 
+#### 1.4 Failure Sandbox & Context Editing ✅
+- `FailureIsolationManager` now wraps every hybrid funnel gate (momentum → RL → LLM → risk → execution).
+- Exceptions are contained inside sandbox logs under `data/audit_trail/failure_sandboxes/`, so one bad ticker no longer crashes the session.
+- Each failure automatically prunes stale memories via `ContextEngine.prune_memories(...)`, keeping agent context clean before retries (Armin’s “context editing” guidance).
+- Telemetry emits `status="error"` rows for every sandbox event, powering dashboards + incident alerts.
+- Successful runs continue untouched; fatal gates simply skip the affected ticker after logging the issue.
+
+**Impact**: Failures become observable, isolated, and recoverable instead of derailing the entire loop.
+
+---
+
 ### Phase 2: Proactive Monitoring (Next Week)
 
 #### 2.1 Health Check Dashboard

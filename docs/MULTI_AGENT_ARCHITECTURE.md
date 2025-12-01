@@ -38,6 +38,7 @@
 - **State Store**: Replace `system_state.json` with typed store (Redis hash or SQLite/Parquet) for durability and concurrency.
 - **Config Layer**: Centralized YAML/JSON configs validated via Pydantic; supports environment overrides.
 - **Logging & Metrics**: Structured JSON logs + Prometheus-style metrics for each agent; integrates with GA artifacts and local CLI.
+- **Failure Sandbox**: `FailureIsolationManager` wraps each gate, writes JSON failure dossiers to `data/audit_trail/failure_sandboxes/`, and prunes stale memories to keep agent context clean when retries kick in.
 - **Error Handling**: Standard retry/backoff policy, dead-letter queue, escalation via orchestrator (Slack/email).
 
 ## Implementation Plan

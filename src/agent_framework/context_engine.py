@@ -425,6 +425,48 @@ class MultiTimescaleMemory:
             ),
         }
 
+    def _remove_from_deque(self, queue: deque, memory_id: str) -> bool:
+        """Remove the first matching memory from a deque while preserving order."""
+        removed = False
+        items = list(queue)
+        queue.clear()
+        for memory in items:
+            if not removed and memory.memory_id == memory_id:
+                removed = True
+                continue
+            queue.append(memory)
+        return removed
+
+    def remove(self, memory_id: str) -> bool:
+        """
+        Remove a memory from all timescales.
+
+        Args:
+            memory_id: Identifier of the memory to remove
+
+        Returns:
+            True if a memory was removed, False otherwise.
+        """
+        removed = False
+        removed = self._remove_from_deque(self.intraday_memory, memory_id) or removed
+        removed = self._remove_from_deque(self.daily_memory, memory_id) or removed
+        removed = self._remove_from_deque(self.weekly_memory, memory_id) or removed
+        removed = self._remove_from_deque(self.monthly_memory, memory_id) or removed
+
+        episodic_len = len(self.episodic_memory)
+        if episodic_len:
+            self.episodic_memory = [
+                memory for memory in self.episodic_memory if memory.memory_id != memory_id
+            ]
+            if len(self.episodic_memory) != episodic_len:
+                removed = True
+
+        if removed:
+            logger.debug(
+                f"🧹 Removed memory {memory_id} from multi-timescale store for {self.agent_id}"
+            )
+        return removed
+
 
 class ContextEngine:
     """
@@ -694,6 +736,77 @@ class ContextEngine:
             f"[timescale: {memory.timescale.value}, importance: {memory.importance_score:.2f}]"
         )
         return memory
+
+    def remove_memory(self, memory_id: str) -> bool:
+        """
+        Remove a memory from the engine and persistent storage.
+
+        Args:
+            memory_id: Identifier of the memory to remove
+
+        Returns:
+            True if a memory was removed, False otherwise.
+        """
+        memory = self.memory.pop(memory_id, None)
+        if not memory:
+            return False
+
+        if self.enable_multi_timescale:
+            mts = self.multi_timescale_memory.get(memory.agent_id)
+            if mts:
+                mts.remove(memory_id)
+
+        memory_file = self.storage_dir / "memories" / f"{memory_id}.json"
+        try:
+            memory_file.unlink()
+        except FileNotFoundError:
+            pass
+
+        logger.debug(f"🧽 Memory removed: {memory_id}")
+        return True
+
+    def prune_memories(
+        self,
+        agent_id: Optional[str] = None,
+        tags: Optional[Set[str]] = None,
+        max_removed: int = 5,
+    ) -> List[str]:
+        """
+        Remove memories that match the provided filters (agent and/or tags).
+
+        Args:
+            agent_id: Agent identifier to filter by
+            tags: Set of tags that must intersect
+            max_removed: Maximum number of memories to delete
+
+        Returns:
+            List of removed memory IDs.
+        """
+        candidates = list(self.memory.values())
+
+        if agent_id:
+            candidates = [mem for mem in candidates if mem.agent_id == agent_id]
+
+        if tags:
+            candidates = [
+                mem for mem in candidates if tags.intersection(mem.tags)
+            ]
+
+        # Sort newest first so stale failures leave the context before recent ones.
+        candidates.sort(key=lambda mem: mem.created_at, reverse=True)
+
+        removed_ids: List[str] = []
+        for memory in candidates[:max_removed]:
+            if self.remove_memory(memory.memory_id):
+                removed_ids.append(memory.memory_id)
+
+        if removed_ids:
+            logger.debug(
+                f"✂️ Pruned {len(removed_ids)} memories "
+                f"(agent={agent_id or 'ALL'}, tags={tags})"
+            )
+
+        return removed_ids
 
     def retrieve_memories(
         self,

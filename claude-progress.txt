@@ -50,3 +50,15 @@ Files Changed:
 
 Next Steps:
 - Wire guardrail freshness + success metrics directly into the dashboard telemetry, then enforce PR templates that reference the new scorecard rows.
+
+2025-12-01 18:45 - GPT-5.1 Codex
+Summary:
+- Added `FailureIsolationManager` and wired every funnel gate (momentum → RL → LLM → risk → execution) through sandboxed runners that emit structured telemetry, retry locally, and drop failing tickers without crashing the loop.
+- Extended `ContextEngine` with memory removal/pruning plus multi-timescale cleanup so failure logs can be edited out of agent context per Armin Ronacher’s guidance; failure reports now land in `data/audit_trail/failure_sandboxes/`.
+- Authored regression tests for the new isolation stack, updated resilience + architecture docs, and logged the work in `claude-progress.txt`.
+
+Files Changed:
+- `src/orchestrator/main.py`, `src/orchestrator/failure_isolation.py`, `src/agent_framework/context_engine.py`, `tests/test_failure_isolation.py`, `docs/RESILIENCE_STRATEGY.md`, `docs/MULTI_AGENT_ARCHITECTURE.md`, `claude-progress.txt`
+
+Next Steps:
+- Surface the new sandbox telemetry on the dashboard and pipe failure summaries into the daily CEO report so incidents are visible without digging into JSON logs.
