@@ -62,3 +62,15 @@ Files Changed:
 
 Next Steps:
 - Surface the new sandbox telemetry on the dashboard and pipe failure summaries into the daily CEO report so incidents are visible without digging into JSON logs.
+
+2025-12-01 20:15 - GPT-5.1 Codex
+Summary:
+- Enforced ClaudeLog Plan Mode mechanics across the repo with a root-level `plan.md`, Opus-style workflow docs, and a guard script that blocks commits without an approved plan.
+- Updated `.claude/CLAUDE.md`, `docs/PLAN.md`, `README.md`, and the new `docs/PLAN_MODE_ENFORCEMENT.md` so every agent knows Plan Mode is mandatory before edits.
+- Wired `.claude/hooks/pre-commit` into `scripts/verify_plan_mode.py`, exempted `plan.md` from relocation, and documented the change in the progress log.
+
+Files Changed:
+- `.claude/CLAUDE.md`, `.claude/hooks/pre-commit`, `plan.md`, `docs/PLAN.md`, `docs/PLAN_MODE_ENFORCEMENT.md`, `README.md`, `scripts/verify_plan_mode.py`, `claude-progress.txt`
+
+Next Steps:
+- Keep `plan.md` up to date per task and monitor the guardrail output; expand the guard with auto-linking to task IDs if we need finer traceability.

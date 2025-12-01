@@ -19,6 +19,16 @@ if [ -f ".claude/hooks/hygiene-orchestrator.sh" ]; then
     bash .claude/hooks/hygiene-orchestrator.sh || exit 1
 fi
 
+# Enforce Plan Mode approval before any commit proceeds
+PLAN_GUARD="scripts/verify_plan_mode.py"
+PLAN_FILE="plan.md"
+if [ -f "$PLAN_GUARD" ]; then
+    echo "🧠 Verifying Plan Mode approval (plan.md)..."
+    python3 "$PLAN_GUARD" --plan-file "$PLAN_FILE" --max-age-minutes 180 || exit 1
+else
+    echo "⚠️  Plan Mode guard script missing at $PLAN_GUARD. Add it to enforce Plan Mode."
+fi
+
 # Track if we made any changes
 MADE_CHANGES=0
 
@@ -100,10 +110,10 @@ for file in test_*.py *_test.py; do
     fi
 done
 
-# Move docs to docs/ (except README.md, LICENSE.md, and CLAUDE.md)
-# CLAUDE.md must stay at root for automatic loading by Claude Code
+# Move docs to docs/ (except README.md, LICENSE.md, CLAUDE.md, and plan.md)
+# CLAUDE.md and plan.md must stay at root for automatic loading by Claude Code
 for file in *.md; do
-    if [ -f "$file" ] && [ "$file" != "README.md" ] && [ "$file" != "LICENSE.md" ] && [ "$file" != "CLAUDE.md" ]; then
+    if [ -f "$file" ] && [ "$file" != "README.md" ] && [ "$file" != "LICENSE.md" ] && [ "$file" != "CLAUDE.md" ] && [ "$file" != "plan.md" ]; then
         echo "  → Moving $file to docs/"
         git mv "$file" docs/ 2>/dev/null || mv "$file" docs/
         git add "docs/$file"

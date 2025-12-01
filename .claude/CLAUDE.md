@@ -119,6 +119,25 @@ If I catch myself about to suggest manual intervention:
 
 ---
 
+## PLAN MODE ENFORCEMENT (Effective Dec 1, 2025)
+
+1. **Activate Plan Mode First**  
+   - Press `Shift+Tab` twice to enter Claude Code Plan Mode.  
+   - Only research/read-only tools are available until a plan is approved.
+2. **Author/Update `plan.md` in Plan Mode**  
+   - Required sections: Metadata, Clarifying Questions, Execution Plan, Approval, Exit Checklist.  
+   - Keep `Status: DRAFT` until the plan is ready; only set `Status: APPROVED` after review.
+3. **Approval & Validity**  
+   - Record `Approved at:` timestamp and validity window (default 180 minutes).  
+   - The pre-commit hook calls `scripts/verify_plan_mode.py` to ensure the plan is approved and fresh.
+4. **Exit Plan Mode, Execute, then Update Exit Checklist**  
+   - Press `Shift+Tab` again to exit. Claude double-confirms before editing.  
+   - Follow the approved plan verbatim; update the exit checklist and `claude-progress.txt` once done.
+
+**Guardrail**: If Plan Mode is skipped or `plan.md` is stale, commits fail with a pointer to `docs/PLAN_MODE_ENFORCEMENT.md`. No plan → no execution.
+
+---
+
 ## 🚨 CRITICAL: ABSOLUTE ANTI-LYING MANDATE
 
 **NEVER LIE. NEVER MAKE FALSE CLAIMS. NEVER CLAIM SOMETHING EXISTS WHEN IT DOESN'T.**

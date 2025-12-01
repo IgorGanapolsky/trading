@@ -79,6 +79,7 @@ python3 scripts/dry_run.py --symbols SPY QQQ --export-json out.json --export-md 
 - **[docs/r-and-d-phase.md](docs/r-and-d-phase.md)** - Current R&D phase strategy and status (90-day plan)
 - **[docs/define-success.md](docs/define-success.md)** - Anthropic “Define Success” scorecard adopted for every iteration
 - **[docs/AGENTS.md](docs/AGENTS.md)** - Agent coordination guidelines for autonomous operation
+- **[docs/PLAN_MODE_ENFORCEMENT.md](docs/PLAN_MODE_ENFORCEMENT.md)** - Mandatory Claude Code Plan Mode workflow + guardrails
 
 **Strategic Context**:
 - **[docs/research-findings.md](docs/research-findings.md)** - Future enhancement roadmap and researched capabilities
