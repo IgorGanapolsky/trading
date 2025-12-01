@@ -74,3 +74,15 @@ Files Changed:
 
 Next Steps:
 - Keep `plan.md` up to date per task and monitor the guardrail output; expand the guard with auto-linking to task IDs if we need finer traceability.
+
+2025-12-01 22:45 - GPT-5.1 Codex
+Summary:
+- Built a day-trading support stack (MentorMonitor, StudyGuide, MarketPrep, ResourceVault, orchestrator) plus a CLI that emits JSON/Markdown artifacts and optional embeddings for LangChain/MCP agents.
+- Authored `config/day_trading_resources.yaml`, tests, and docs so coaching/book/newsletter metadata stays declarative and versioned.
+- Added PyYAML to requirements, repaired the virtualenv’s pip, and verified the new pipeline with targeted pytest + lints.
+
+Files Changed:
+- `plan.md`, `requirements.in`, `requirements.txt`, `config/day_trading_resources.yaml`, `docs/day_trading_support.md`, `README.md`, `scripts/day_trading_support_cycle.py`, `src/day_trading_support/**`, `tests/test_day_trading_support.py`
+
+Next Steps:
+- Surface the Markdown/report paths on the Streamlit dashboard and feed ResourceVault JSON into the Elite orchestrator context so prep data drives daily trading plans.

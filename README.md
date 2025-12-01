@@ -68,6 +68,9 @@ python3 scripts/bogleheads_ingest_once.py
 
 # Generate a dry-run report with ensemble + risk (json/md)
 python3 scripts/dry_run.py --symbols SPY QQQ --export-json out.json --export-md out.md
+
+# Build the agentic coaching/study/newsletter plan
+PYTHONPATH=src python3 scripts/day_trading_support_cycle.py --focus psychology --print-json
 ```
 
 ---
@@ -84,6 +87,7 @@ python3 scripts/dry_run.py --symbols SPY QQQ --export-json out.json --export-md 
 **Strategic Context**:
 - **[docs/research-findings.md](docs/research-findings.md)** - Future enhancement roadmap and researched capabilities
 - **[docs/profit-optimization.md](docs/profit-optimization.md)** - Cost optimization strategies (OpenRouter, High-Yield Cash, batching)
+- **[docs/day_trading_support.md](docs/day_trading_support.md)** - Agentic coaching/study/newsletter orchestration for trader readiness
 
 These documents contain critical protocols and context for understanding how the system operates, what phase we're in, and how to verify work properly. All AI agents MUST read verification-protocols.md before making claims about system status or completion.
 
