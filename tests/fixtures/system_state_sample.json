@@ -1,0 +1,12 @@
+{
+  "performance": {
+    "win_rate": 0.66
+  },
+  "heuristics": {
+    "sharpe_ratio": 1.82,
+    "max_drawdown": 4.3
+  },
+  "challenge": {
+    "current_day": 42
+  }
+}

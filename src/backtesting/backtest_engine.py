@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 import pandas as pd
 import numpy as np
+import yfinance as yf
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
@@ -176,69 +177,115 @@ class BacktestEngine:
         Pre-load historical price data for all ETFs using Alpaca API.
         More reliable than yfinance free tier.
         """
-        logger.info("Pre-loading historical price data from Alpaca...")
+        logger.info("Pre-loading historical price data (Alpaca w/ yfinance fallback)...")
 
-        # Initialize Alpaca client
         alpaca_key = os.getenv("ALPACA_API_KEY")
         alpaca_secret = os.getenv("ALPACA_SECRET_KEY")
+        use_alpaca = bool(alpaca_key and alpaca_secret)
+        client: Optional[StockHistoricalDataClient] = None
 
-        if not alpaca_key or not alpaca_secret:
-            logger.error(
-                "Alpaca API credentials not found. Set ALPACA_API_KEY and ALPACA_SECRET_KEY"
+        if use_alpaca:
+            client = StockHistoricalDataClient(alpaca_key, alpaca_secret)
+        else:
+            logger.warning(
+                "Alpaca API credentials not found. Falling back to yfinance for backtests."
             )
-            return
-
-        client = StockHistoricalDataClient(alpaca_key, alpaca_secret)
 
         etf_universe = getattr(self.strategy, "etf_universe", ["SPY", "QQQ", "VOO"])
 
         for symbol in etf_universe:
-            try:
-                # Get historical bars from Alpaca
-                # Add 200 day buffer for momentum calculations
-                start_with_buffer = datetime.strptime(
-                    self.start_date.strftime("%Y-%m-%d"), "%Y-%m-%d"
-                ) - timedelta(days=200)
-                end_with_buffer = datetime.strptime(
-                    self.end_date.strftime("%Y-%m-%d"), "%Y-%m-%d"
-                ) + timedelta(days=1)
+            bars = None
+            start_with_buffer = datetime.strptime(
+                self.start_date.strftime("%Y-%m-%d"), "%Y-%m-%d"
+            ) - timedelta(days=200)
+            end_with_buffer = datetime.strptime(
+                self.end_date.strftime("%Y-%m-%d"), "%Y-%m-%d"
+            ) + timedelta(days=1)
 
-                req = StockBarsRequest(
-                    symbol_or_symbols=symbol,
-                    timeframe=TimeFrame.Day,
-                    start=start_with_buffer,
-                    end=end_with_buffer,
-                    adjustment="all",
-                )
-
-                bars = client.get_stock_bars(req).df
-
-                if bars is not None and not bars.empty:
-                    # Reset index to get timestamp as column if needed, or just use it
-                    # Alpaca-py returns MultiIndex (symbol, timestamp) or just timestamp if single symbol?
-                    # Usually MultiIndex. Let's check.
-
-                    if "symbol" in bars.index.names:
-                        bars = bars.droplevel("symbol")
-
-                    # Rename columns to match yfinance format
-                    bars = bars.rename(
-                        columns={
-                            "open": "Open",
-                            "high": "High",
-                            "low": "Low",
-                            "close": "Close",
-                            "volume": "Volume",
-                        }
+            if use_alpaca and client:
+                try:
+                    req = StockBarsRequest(
+                        symbol_or_symbols=symbol,
+                        timeframe=TimeFrame.Day,
+                        start=start_with_buffer,
+                        end=end_with_buffer,
+                        adjustment="all",
                     )
 
-                    self.price_cache[symbol] = bars
-                    logger.info(f"Loaded {len(bars)} bars for {symbol} from Alpaca")
-                else:
-                    logger.warning(f"No data returned for {symbol}")
+                    bars = client.get_stock_bars(req).df
 
-            except Exception as e:
-                logger.warning(f"Failed to load data for {symbol}: {e}")
+                    if bars is not None and not bars.empty:
+                        if "symbol" in bars.index.names:
+                            bars = bars.droplevel("symbol")
+
+                        bars = bars.rename(
+                            columns={
+                                "open": "Open",
+                                "high": "High",
+                                "low": "Low",
+                                "close": "Close",
+                                "volume": "Volume",
+                            }
+                        )
+                    else:
+                        logger.warning(f"No Alpaca data returned for {symbol}")
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to load Alpaca data for {symbol}: {e}. Will try yfinance."
+                    )
+
+            if (bars is None or bars.empty) and not self._load_with_yfinance(
+                symbol, start_with_buffer, end_with_buffer
+            ):
+                logger.error(
+                    "Unable to load historical data for %s via Alpaca or yfinance.", symbol
+                )
+            elif bars is not None and not bars.empty:
+                self.price_cache[symbol] = bars
+                logger.info(
+                    "Loaded %s bars for %s from Alpaca",
+                    len(bars),
+                    symbol,
+                )
+            # yfinance handler populates cache internally
+
+    def _load_with_yfinance(
+        self, symbol: str, start: datetime, end: datetime
+    ) -> bool:
+        """
+        Load historical bars using yfinance when Alpaca data is unavailable.
+        """
+        try:
+            ticker = yf.Ticker(symbol)
+            history = ticker.history(
+                start=start.strftime("%Y-%m-%d"),
+                end=end.strftime("%Y-%m-%d"),
+                auto_adjust=False,
+                actions=False,
+            )
+            if history is None or history.empty:
+                logger.warning("yfinance returned no data for %s", symbol)
+                return False
+
+            # Ensure columns align with expected format
+            history = history.rename(
+                columns={
+                    "Open": "Open",
+                    "High": "High",
+                    "Low": "Low",
+                    "Close": "Close",
+                    "Volume": "Volume",
+                }
+            )
+            history.index = pd.to_datetime(history.index)
+            self.price_cache[symbol] = history
+            logger.info(
+                "Loaded %s bars for %s from yfinance fallback", len(history), symbol
+            )
+            return True
+        except Exception as exc:
+            logger.warning("yfinance fallback failed for %s: %s", symbol, exc)
+            return False
 
     def _get_trading_dates(self) -> List[datetime]:
         """

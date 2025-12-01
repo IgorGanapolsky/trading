@@ -143,6 +143,17 @@ date  # What day is TODAY?
 - CEO can reject claim until proven
 - Counts toward trust violations (3 strikes = project termination)
 
+**Promotion Gate Automation**
+
+Before toggling any live trading flags, prove readiness with:
+
+```bash
+python3 scripts/run_backtest_matrix.py  # writes data/backtests/latest_summary.json
+python3 scripts/enforce_promotion_gate.py
+```
+
+CI runs both commands inside `.github/workflows/daily-trading.yml` and will block deployment unless metrics satisfy the R&D criteria. Overrides must be documented explicitly in the run logs.
+
 ---
 
 ## What CEO Trusts Now

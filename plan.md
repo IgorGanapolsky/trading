@@ -30,6 +30,6 @@
 - [x] CTO Approval — GPT-5.1 Codex @ 2025-12-01T22:05:00Z
 
 ## Exit Checklist
-- [ ] Promotion gate script + CI guard added
-- [ ] Backtest matrix automation + tests committed
-- [ ] Telemetry dashboard/report added with docs updated
+- [x] Promotion gate script + CI guard added
+- [x] Backtest matrix automation + tests committed
+- [x] Telemetry dashboard/report added with docs updated

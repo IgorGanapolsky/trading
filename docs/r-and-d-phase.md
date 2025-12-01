@@ -60,6 +60,12 @@ else:
     extend_rd_phase()
 ```
 
+### Enforcement Automation
+
+- `scripts/run_backtest_matrix.py` runs the regime matrix in `config/backtest_scenarios.yaml` and persists structured metrics under `data/backtests/`.
+- `scripts/enforce_promotion_gate.py` consumes `data/system_state.json` plus the latest matrix summary and exits non-zero if any criterion above fails.
+- `.github/workflows/daily-trading.yml` runs both steps before the orchestrator so live trading cannot start unless the guard returns green.
+
 ## What "R&D Phase" Means
 
 ### DO Focus On:

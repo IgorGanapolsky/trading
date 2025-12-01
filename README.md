@@ -66,6 +66,15 @@ python3 scripts/bogleheads_query.py --limit 3 --format md
 # Ingest a one-off Bogleheads snapshot into the RAG store
 python3 scripts/bogleheads_ingest_once.py
 
+# Run multi-regime backtest matrix (writes to data/backtests/)
+python3 scripts/run_backtest_matrix.py --config config/backtest_scenarios.yaml
+
+# Enforce R&D promotion gate before touching live keys
+python3 scripts/enforce_promotion_gate.py
+
+# Generate a telemetry report from gate events (optional JSON export)
+python3 scripts/generate_telemetry_report.py --output-json telemetry_summary.json
+
 # Generate a dry-run report with ensemble + risk (json/md)
 python3 scripts/dry_run.py --symbols SPY QQQ --export-json out.json --export-md out.md
 
@@ -259,6 +268,15 @@ Set `HYBRID_LLM_MODEL=claude-3-5-haiku-20241022` (default) or `gpt-4o-mini` to c
 - `LLM_NEGATIVE_SENTIMENT_THRESHOLD`: Reject if sentiment below this (default: -0.2)
 - `RISK_USE_ATR_SCALING`: Toggle ATR-based volatility sizing (default: true)
 - `ATR_STOP_MULTIPLIER`: ATR multiplier for stop placement (default: 2.0)
+
+---
+
+## ✅ Promotion Gate & Telemetry
+
+- **Scenario Backtests**: `python3 scripts/run_backtest_matrix.py` executes the regime matrix defined in `config/backtest_scenarios.yaml` and persists structured metrics to `data/backtests/`.
+- **Automated Promotion Guard**: `python3 scripts/enforce_promotion_gate.py` blocks any live trading toggles until paper-trading + scenario metrics satisfy the R&D thresholds (win rate >60%, Sharpe >1.5, max drawdown <10%, ≥30-day profitable streak).
+- **CI Integration**: `.github/workflows/daily-trading.yml` now runs the matrix + promotion guard before the orchestrator fires, so we cannot accidentally bypass the R&D phase.
+- **Telemetry Surfaces**: `scripts/generate_telemetry_report.py` and `dashboard/telemetry_app.py` read `data/audit_trail/hybrid_funnel_runs.jsonl` to expose gate pass/reject rates, top tickers, and recent errors for monitoring.
 
 ---
 

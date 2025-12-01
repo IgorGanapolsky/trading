@@ -1,0 +1,36 @@
+defaults:
+  description: "Daily DCA momentum strategy stress tests"
+  initial_capital: 100000
+  daily_allocation: 10.0
+  etf_universe: ["SPY", "QQQ", "VOO"]
+  use_vca: false
+  lookback_buffer_days: 200
+  tags:
+    - r_and_d_phase
+    - promotion_gate
+
+scenarios:
+  - name: bull_run_2024
+    label: "Bullish melt-up (Jan-Mar 2024)"
+    start_date: "2024-01-02"
+    end_date: "2024-03-29"
+    description: >
+      Tests performance when SPY/QQQ melt upward. Ensures system
+      captures upside without blowing risk allocations.
+
+  - name: inflation_shock_2022
+    label: "Inflation drawdown (Apr-Jun 2022)"
+    start_date: "2022-04-01"
+    end_date: "2022-06-30"
+    description: >
+      Simulates a fast drawdown + chop regime to validate drawdown control,
+      ATR sizing, and halt triggers.
+
+  - name: covid_whiplash_2020
+    label: "High-volatility crash/rebound (Feb-May 2020)"
+    start_date: "2020-02-03"
+    end_date: "2020-05-29"
+    daily_allocation: 15.0
+    description: >
+      Stress test for historic volatility spike. Ensures ATR sizing and
+      guardrails throttle exposure before we allow live promotion.

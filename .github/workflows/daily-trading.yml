@@ -60,12 +60,22 @@ jobs:
           echo "🧪 Running test suite..."
           python3 -m pytest \
             tests/test_evaluation_system.py \
+            tests/test_promotion_gate.py \
+            tests/test_backtest_matrix_utils.py \
+            tests/test_telemetry_summary.py \
             --timeout=120 \
             --timeout-method=thread \
             -v \
             --tb=short \
             || exit 1
           echo "✅ All tests passed"
+
+      - name: Run backtest scenario matrix
+        run: |
+          python3 scripts/run_backtest_matrix.py \
+            --config config/backtest_scenarios.yaml \
+            --output-root data/backtests \
+            --summary data/backtests/latest_summary.json
 
       - name: Set up Go for ADK orchestrator
         uses: actions/setup-go@v5
@@ -243,6 +253,11 @@ jobs:
               print(f'⚠️  WARNING: Could not validate system_state.json: {e}')
               print('   Trading will proceed (state will be regenerated)')
           "
+
+      - name: Enforce promotion gate
+        run: |
+          echo "🛡️  Enforcing promotion gate..."
+          python3 scripts/enforce_promotion_gate.py
 
       - name: Check if today's trade already executed
         id: check_execution

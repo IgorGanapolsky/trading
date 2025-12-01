@@ -1,0 +1,8 @@
+{
+  "aggregate_metrics": {
+    "min_win_rate": 62.5,
+    "min_sharpe_ratio": 1.71,
+    "max_drawdown": 7.3,
+    "min_profitable_streak": 34
+  }
+}
