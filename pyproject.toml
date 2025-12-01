@@ -1,0 +1,179 @@
+[project]
+name = "trading"
+version = "1.0.0"
+description = "Validated profitable automated trading system with AI-powered decision making"
+readme = "README.md"
+requires-python = ">=3.9,<3.15"
+license = {text = "MIT"}
+authors = [
+    {name = "Igor Ganapolsky"}
+]
+keywords = ["trading", "alpaca", "ai", "automation", "stocks", "crypto"]
+
+dependencies = [
+    # Trading APIs
+    "alpaca-py>=0.43.2",
+    "openai>=1.109.1",
+
+    # Data Processing
+    "pandas>=2.3.3",
+    "numpy>=1.26.0,<3.0.0",
+    "yfinance>=0.2.66",
+    "alpha-vantage>=2.3.1",
+
+    # Scheduling
+    "schedule>=1.2.0",
+
+    # Web Scraping & APIs
+    "requests>=2.32.5",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.0.0",
+    "praw>=7.8.1",
+    "feedparser>=6.0.10",
+    "PyPDF2>=3.0.0",
+
+    # YouTube Monitoring
+    "youtube-transcript-api>=1.2.3",
+    "yt-dlp>=2024.10.22",
+
+    # Configuration
+    "python-dotenv>=1.2.1",
+    "pydantic-settings>=2.10.1,<3.0.0",
+    "PyYAML>=6.0.0,<8.0.0",
+
+    # Utilities
+    "python-dateutil>=2.9.0",
+    "pytz>=2023.3",
+    "loguru>=0.7.2",
+    "anthropic>=0.73.0,<1.0.0",
+    "google-generativeai>=0.8.0,<1.0.0",
+
+    # Deep Learning
+    "torch>=2.0.0,<3.0.0",
+    "scikit-learn>=1.3.0,<2.0.0",
+
+    # DeepAgents Integration
+    "deepagents>=0.2.5",
+    "langchain>=1.0.0",
+    "langchain-core>=1.0.0",
+    "langchain-anthropic>=1.0.0",
+    "langchain-community>=0.4.0",
+    "langgraph>=1.0.0",
+    "langsmith>=0.1.0",
+
+    # Dashboard
+    "streamlit>=1.29.0",
+    "matplotlib>=3.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.1",
+    "pytest-cov>=4.1.0",
+    "pytest-timeout>=2.2.0",
+    "ruff>=0.9.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
+]
+
+security = [
+    "detect-secrets>=1.5.0",
+    "bandit>=1.7.7",
+]
+
+rag = [
+    "sentence-transformers>=2.2.0",
+    "chromadb>=0.4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/IgorGanapolsky/trading"
+Repository = "https://github.com/IgorGanapolsky/trading"
+Issues = "https://github.com/IgorGanapolsky/trading/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+# Ruff - Fast Python linter and formatter (replaces black, flake8, isort)
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+src = ["src", "tests"]
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "*.pyc",
+    "data",
+    "reports",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "SIM",    # flake8-simplify
+    "S",      # flake8-bandit (security)
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "S101",   # assert usage (needed for tests)
+    "S105",   # hardcoded password (false positives)
+    "S106",   # hardcoded password (false positives)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# Mypy - Static type checker
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+exclude = [
+    "venv",
+    ".venv",
+    "data",
+    "reports",
+]
+
+# Pytest configuration
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+timeout = 120
+addopts = "-v --tb=short"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*", "venv/*", ".venv/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
