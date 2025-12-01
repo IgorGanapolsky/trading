@@ -129,41 +129,64 @@ QUALITY METRICS:
         else:
             quality_info = "QUALITY METRICS: Unable to calculate"
 
-        prompt = f"""You are a Safety Analysis Agent evaluating {safety_analysis.symbol} using Graham-Buffett investment principles.
+        # Goldilocks Prompt: Graham-Buffett principles with clear examples
+        prompt = f"""Evaluate {safety_analysis.symbol} safety. Only invest in quality at fair prices.
 
-{safety_analysis.symbol} SAFETY ANALYSIS:
+ANALYSIS:
 {margin_info}
 {quality_info}
-
-SAFETY RATING: {safety_analysis.safety_rating.value.upper()}
-
-REASONS:
-{chr(10).join(f"- {r}" for r in safety_analysis.reasons)}
-
-WARNINGS:
-{chr(10).join(f"- {w}" for w in safety_analysis.warnings) if safety_analysis.warnings else "None"}
+Rating: {safety_analysis.safety_rating.value.upper()}
+Reasons: {', '.join(safety_analysis.reasons[:3])}
+Warnings: {', '.join(safety_analysis.warnings[:2]) if safety_analysis.warnings else 'None'}
 
 {memory_context}
 
-TASK: Provide comprehensive safety assessment:
-1. Safety Assessment (1-10, where 10 is safest)
-2. Margin of Safety Evaluation (EXCELLENT / GOOD / ADEQUATE / POOR / NONE)
-3. Quality Evaluation (EXCELLENT / GOOD / ADEQUATE / POOR)
-4. Overall Recommendation: APPROVE / REJECT
-5. Confidence (0-1)
-6. Key Safety Factors (what makes this safe/unsafe)
-7. Risk Factors (what could go wrong)
-8. Investment Thesis (2-3 sentences on why this is/isn't a good investment)
+GRAHAM-BUFFETT PRINCIPLES:
+- Margin of Safety >20% required (buy $1 for $0.80)
+- Quality Score >60 (consistent earnings, low debt, strong ROE)
+- Circle of Competence: only invest in understandable businesses
+- Price is what you pay, value is what you get
 
-Format your response as:
+EXAMPLES:
+Example 1 - Approve (Strong Safety):
+SAFETY_SCORE: 8
+MARGIN_EVAL: EXCELLENT
+QUALITY_EVAL: GOOD
+RECOMMENDATION: APPROVE
+CONFIDENCE: 0.85
+SAFETY_FACTORS: 35% margin of safety, 15-year earnings consistency, fortress balance sheet
+RISK_FACTORS: Cyclical business, commodity price exposure
+THESIS: Trading well below intrinsic value with quality fundamentals. Classic Graham value opportunity.
+
+Example 2 - Reject (Insufficient Margin):
+SAFETY_SCORE: 4
+MARGIN_EVAL: POOR
+QUALITY_EVAL: GOOD
+RECOMMENDATION: REJECT
+CONFIDENCE: 0.72
+SAFETY_FACTORS: Strong business quality, market leader position
+RISK_FACTORS: Only 8% margin of safety - insufficient buffer for errors
+THESIS: Good company but price offers no safety cushion. Wait for 20%+ discount.
+
+Example 3 - Reject (Quality Concerns):
+SAFETY_SCORE: 3
+MARGIN_EVAL: ADEQUATE
+QUALITY_EVAL: POOR
+RECOMMENDATION: REJECT
+CONFIDENCE: 0.80
+SAFETY_FACTORS: 25% apparent margin, low P/E ratio
+RISK_FACTORS: Erratic earnings, high debt, declining ROE - value trap signals
+THESIS: Cheap for a reason. Low quality negates margin of safety. Avoid.
+
+NOW EVALUATE {safety_analysis.symbol}:
 SAFETY_SCORE: [1-10]
 MARGIN_EVAL: [EXCELLENT/GOOD/ADEQUATE/POOR/NONE]
 QUALITY_EVAL: [EXCELLENT/GOOD/ADEQUATE/POOR]
 RECOMMENDATION: [APPROVE/REJECT]
 CONFIDENCE: [0-1]
-SAFETY_FACTORS: [key safety factors]
-RISK_FACTORS: [risk factors]
-THESIS: [investment thesis]"""
+SAFETY_FACTORS: [top 2 safety factors]
+RISK_FACTORS: [top 2 risks]
+THESIS: [2 sentences on investment merit]"""
 
         return prompt
 

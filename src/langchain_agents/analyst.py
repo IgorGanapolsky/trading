@@ -53,14 +53,26 @@ class LangChainSentimentAgent:
             dict(score=float, cost=float, reason=str, model=str)
         """
         indicators = indicators or {}
-        prompt = (
-            "You are the analyst gate for an automated trading system. "
-            "Given the technical context below, respond with JSON containing "
-            "keys score (-1 to 1) and reason. Negative score means avoid the trade.\n\n"
-            f"Ticker: {symbol}\n"
-            f"Technical context: {json.dumps(indicators, default=str)[:800]}\n\n"
-            'Respond strictly as JSON, e.g. {"score": 0.1, "reason": "..."}'
-        )
+        # Goldilocks Prompt: Sentiment gate with clear scoring examples
+        prompt = f"""Analyst gate for {symbol}. Score sentiment -1 (strong avoid) to +1 (strong proceed).
+
+TECHNICAL CONTEXT:
+{json.dumps(indicators, default=str)[:600]}
+
+SCORING PRINCIPLES:
+- Negative news (lawsuits, downgrades, misses): -0.3 to -1.0
+- Neutral/mixed signals: -0.2 to +0.2
+- Positive catalysts (upgrades, beats, expansion): +0.3 to +1.0
+- When uncertain, bias toward 0 (neutral) not extremes
+
+EXAMPLES:
+{{"score": 0.7, "reason": "Analyst upgrade to Buy, strong earnings beat, sector tailwinds"}}
+{{"score": -0.5, "reason": "SEC investigation announced, insider selling detected"}}
+{{"score": 0.1, "reason": "No material news, technicals slightly positive but low conviction"}}
+{{"score": -0.8, "reason": "Earnings miss + guidance cut + CEO resignation - multiple red flags"}}
+
+Respond strictly as JSON:
+{{"score": <-1 to 1>, "reason": "<brief rationale>"}}"""""
 
         executor = self._get_executor()
         result = executor.invoke({"input": prompt})

@@ -42,19 +42,42 @@ class ChaosOrchestratorAgent(BaseAgent):
         # In a real system, this would look at recent stability.
         # For now, we randomize slightly but ask LLM for "approval" to simulate reasoning.
 
-        prompt = """You are the Chaos Orchestrator.
-        Current System Status: STABLE (Assumed).
-        Last Drill: Unknown.
+        # Goldilocks Prompt: Principle-based chaos engineering with examples
+        prompt = """Decide: Run chaos drill now? Balance resilience testing against production stability.
 
-        Decide:
-        1. Should we run a chaos drill now? (YES/NO)
-        2. If YES, what intensity? (LOW/MEDIUM/HIGH)
-           - LOW: 10% failure rate, 100-500ms latency
-           - MEDIUM: 30% failure rate, 500-2000ms latency
-           - HIGH: 50% failure rate, 1000-5000ms latency
+SYSTEM: STABLE | Last Drill: Unknown | Market Hours: Active
 
-        Provide reasoning based on "maintaining anti-fragility".
-        """
+INTENSITIES:
+- LOW: 10% failures, 100-500ms latency (safe for market hours)
+- MEDIUM: 30% failures, 500-2000ms latency (after-hours preferred)
+- HIGH: 50% failures, 1-5s latency (maintenance windows only)
+
+PRINCIPLES (Netflix Chaos Engineering):
+- Systems that aren't tested will fail unexpectedly (test proactively)
+- Never drill during critical trading windows (9:30-10:00 AM, 3:30-4:00 PM)
+- Increase intensity gradually - earn confidence before HIGH drills
+- If last drill failed, run LOW to verify fixes before escalating
+
+EXAMPLES:
+Example 1 - Run LOW Drill:
+DECISION: YES
+INTENSITY: LOW
+REASONING: System stable for 7 days, no recent drills. LOW intensity safe during light trading. Validates basic resilience.
+
+Example 2 - Skip Drill:
+DECISION: NO
+INTENSITY: N/A
+REASONING: Market opening in 15 minutes. Never drill near market transitions. Schedule for after 10:30 AM.
+
+Example 3 - Run MEDIUM:
+DECISION: YES
+INTENSITY: MEDIUM
+REASONING: After-hours, 3 consecutive successful LOW drills. Time to stress-test with higher intensity.
+
+NOW DECIDE:
+DECISION: [YES/NO]
+INTENSITY: [LOW/MEDIUM/HIGH or N/A]
+REASONING: [Why this decision maintains anti-fragility]"""
 
         response = self.reason_with_llm(prompt)
         reasoning = response.get("reasoning", "").upper()

@@ -53,40 +53,45 @@ class SignalAgent(BaseAgent):
         # Build signal analysis prompt
         memory_context = self.get_memory_context(limit=3)
 
-        prompt = f"""You are a Signal Agent analyzing {symbol} technical indicators.
+        # Goldilocks Prompt: Concise, principle-based, with examples
+        prompt = f"""Analyze {symbol} technicals. Be decisive - strong signals get high scores, weak signals get low scores.
 
-TECHNICAL INDICATORS:
-- Current Price: ${indicators.get('price', 0):.2f}
-- MACD: {indicators.get('macd', 0):.4f}
-- MACD Signal: {indicators.get('macd_signal', 0):.4f}
-- MACD Histogram: {indicators.get('macd_histogram', 0):.4f} ({'BULLISH' if indicators.get('macd_histogram', 0) > 0 else 'BEARISH'})
-- RSI: {indicators.get('rsi', 50):.2f} ({'OVERBOUGHT' if indicators.get('rsi', 50) > 70 else 'OVERSOLD' if indicators.get('rsi', 50) < 30 else 'NEUTRAL'})
-- Volume Ratio: {indicators.get('volume_ratio', 1.0):.2f}x average
-- 50-day MA: ${indicators.get('ma_50', 0):.2f}
-- 200-day MA: ${indicators.get('ma_200', 0):.2f}
-- Price vs MA50: {indicators.get('price_vs_ma50', 0):.2%}
-
-MOMENTUM ANALYSIS:
-- Trend: {indicators.get('trend', 'UNKNOWN')}
-- Momentum Score: {indicators.get('momentum_score', 0):.2f}/100
+INDICATORS:
+Price: ${indicators.get('price', 0):.2f} | MACD Hist: {indicators.get('macd_histogram', 0):.4f} | RSI: {indicators.get('rsi', 50):.1f} | Volume: {indicators.get('volume_ratio', 1.0):.1f}x
+Trend: {indicators.get('trend', 'UNKNOWN')} | MA50: ${indicators.get('ma_50', 0):.2f} | Momentum: {indicators.get('momentum_score', 0):.0f}/100
 
 {memory_context}
 
-TASK: Provide trading signal analysis:
-1. Signal Strength (1-10)
-2. Momentum Direction (BULLISH/BEARISH/NEUTRAL)
-3. Entry Quality (1-10)
-4. Recommendation: BUY / SELL / HOLD
-5. Confidence (0-1)
-6. Key Technical Factors
+PRINCIPLES:
+- MACD histogram crossing zero = momentum shift (weight: 30%)
+- RSI <30 oversold (bullish), >70 overbought (bearish) (weight: 25%)
+- Price above MA50 = uptrend confirmation (weight: 25%)
+- Volume >1.5x confirms moves, <0.7x suggests false signal (weight: 20%)
 
-Format:
+EXAMPLES:
+Example 1 - Strong Buy:
+STRENGTH: 8
+DIRECTION: BULLISH
+ENTRY_QUALITY: 7
+RECOMMENDATION: BUY
+CONFIDENCE: 0.82
+FACTORS: MACD histogram positive crossover, RSI recovering from 28, volume 1.8x confirms breakout
+
+Example 2 - Hold/Weak:
+STRENGTH: 4
+DIRECTION: NEUTRAL
+ENTRY_QUALITY: 3
+RECOMMENDATION: HOLD
+CONFIDENCE: 0.45
+FACTORS: Mixed signals - MACD flat, RSI neutral at 52, below-average volume suggests no conviction
+
+NOW ANALYZE {symbol}:
 STRENGTH: [1-10]
 DIRECTION: [BULLISH/BEARISH/NEUTRAL]
 ENTRY_QUALITY: [1-10]
 RECOMMENDATION: [BUY/SELL/HOLD]
 CONFIDENCE: [0-1]
-FACTORS: [key factors]"""
+FACTORS: [2-3 key factors driving your decision]"""
 
         # Get LLM analysis
         response = self.reason_with_llm(prompt)

@@ -65,40 +65,54 @@ class RiskAgent(BaseAgent):
         # Risk assessment
         memory_context = self.get_memory_context(limit=3)
 
-        prompt = f"""You are a Risk Agent evaluating a proposed {proposed_action} trade on {symbol}.
+        # Goldilocks Prompt: Principle-based risk management with examples
+        prompt = f"""Evaluate {proposed_action} on {symbol}. Protect capital first, returns second.
 
-PORTFOLIO STATE:
-- Total Value: ${portfolio_value:,.2f}
-- Max Risk Per Trade: {self.max_portfolio_risk:.2%}
-- Max Position Size: {self.max_position_size:.2%}
+PORTFOLIO: ${portfolio_value:,.0f} | Max Risk: {self.max_portfolio_risk:.1%}/trade | Max Position: {self.max_position_size:.1%}
 
-PROPOSED TRADE:
-- Action: {proposed_action}
-- Confidence: {confidence:.2f}
-- Symbol Volatility: {volatility:.2%}
-- Historical Win Rate: {win_rate:.2%}
+TRADE: {proposed_action} | Confidence: {confidence:.0%} | Volatility: {volatility:.1%} | Win Rate: {win_rate:.0%}
 
-CALCULATED RISK PARAMETERS:
-- Recommended Position Size: ${position_size:,.2f} ({position_size/portfolio_value:.2%} of portfolio)
-- Recommended Stop-Loss: {stop_loss_pct:.2%}
-- Max Loss: ${position_size * stop_loss_pct:,.2f}
+CALCULATED: Size ${position_size:,.0f} ({position_size/portfolio_value:.1%}) | Stop: {stop_loss_pct:.1%} | Max Loss: ${position_size * stop_loss_pct:,.0f}
 
 {memory_context}
 
-TASK: Provide risk assessment:
-1. Risk Score (1-10, where 10 is highest risk)
-2. Position Size Approval (APPROVE / REDUCE / REJECT)
-3. Final Position Size (in $)
-4. Stop-Loss Level (%)
-5. Key Risk Factors
-6. Overall Recommendation: APPROVE / REJECT
+PRINCIPLES (Kelly + Safety):
+- Never risk >2% of portfolio on single trade (survival rule)
+- High volatility (>25%) = reduce position 50% (volatility scaling)
+- Low confidence (<0.6) = reduce or reject (conviction filter)
+- Correlation risk: reject if >3 similar positions open (diversification)
 
-Format:
+EXAMPLES:
+Example 1 - Approve Full Size:
+RISK_SCORE: 3
+POSITION_APPROVAL: APPROVE
+POSITION_SIZE: $2,500
+STOP_LOSS: 4%
+RISKS: Normal market risk, sector correlation with existing QQQ position
+RECOMMENDATION: APPROVE
+
+Example 2 - Reduce Due to Volatility:
+RISK_SCORE: 7
+POSITION_APPROVAL: REDUCE
+POSITION_SIZE: $1,200
+STOP_LOSS: 8%
+RISKS: High volatility requires tighter sizing, earnings in 3 days adds event risk
+RECOMMENDATION: APPROVE
+
+Example 3 - Reject:
+RISK_SCORE: 9
+POSITION_APPROVAL: REJECT
+POSITION_SIZE: $0
+STOP_LOSS: N/A
+RISKS: Confidence too low (0.45), already 4 tech positions, max drawdown approaching limit
+RECOMMENDATION: REJECT
+
+NOW EVALUATE {symbol} {proposed_action}:
 RISK_SCORE: [1-10]
 POSITION_APPROVAL: [APPROVE/REDUCE/REJECT]
-POSITION_SIZE: [dollars]
-STOP_LOSS: [percentage]
-RISKS: [key risks]
+POSITION_SIZE: [$ amount]
+STOP_LOSS: [%]
+RISKS: [top 2 risks]
 RECOMMENDATION: [APPROVE/REJECT]"""
 
         # Get LLM analysis

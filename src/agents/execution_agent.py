@@ -65,31 +65,45 @@ class ExecutionAgent(BaseAgent):
         # Build execution analysis prompt
         memory_context = self.get_memory_context(limit=3)
 
-        prompt = f"""You are an Execution Agent preparing to execute a {action} order for {symbol}.
+        # Goldilocks Prompt: Focused execution with timing examples
+        prompt = f"""Execute {action} ${position_size:,.0f} on {symbol}. Minimize slippage, maximize fill quality.
 
-ORDER DETAILS:
-- Action: {action}
-- Symbol: {symbol}
-- Position Size: ${position_size:,.2f}
-- Order Type: Market
-
-MARKET CONDITIONS:
-- Market Status: {market_status['status']}
-- Current Spread: {market_conditions.get('spread', 'N/A')}
-- Volume: {market_conditions.get('volume', 'N/A')}
-- Volatility: {market_conditions.get('volatility', 'N/A')}
+ORDER: {action} {symbol} ${position_size:,.0f} (Market) | Status: {market_status['status']}
+CONDITIONS: Spread {market_conditions.get('spread', 'N/A')} | Vol {market_conditions.get('volume', 'N/A')} | Volatility {market_conditions.get('volatility', 'N/A')}
 
 {memory_context}
 
-TASK: Provide execution analysis:
-1. Execution Timing (IMMEDIATE / WAIT_5MIN / WAIT_OPEN)
-2. Expected Slippage (%)
-3. Confidence in Execution (0-1)
-4. Recommendation: EXECUTE / DELAY / CANCEL
+PRINCIPLES:
+- Wide spread (>0.1%) = wait for better liquidity or use limit order
+- Low volume (<50% avg) = expect higher slippage, consider splitting
+- First/last 15 min of day = higher volatility, avoid if not urgent
+- Market closed = queue for open (unless overnight risk is acceptable)
 
-Format:
+EXAMPLES:
+Example 1 - Execute Now:
+TIMING: IMMEDIATE
+SLIPPAGE: 0.05%
+CONFIDENCE: 0.92
+RECOMMENDATION: EXECUTE
+(Good liquidity, tight spread, mid-day execution)
+
+Example 2 - Wait for Open:
+TIMING: WAIT_OPEN
+SLIPPAGE: 0.15%
+CONFIDENCE: 0.75
+RECOMMENDATION: DELAY
+(Market closed, queue order for 9:35 AM to avoid opening volatility)
+
+Example 3 - Cancel:
+TIMING: N/A
+SLIPPAGE: N/A
+CONFIDENCE: 0.30
+RECOMMENDATION: CANCEL
+(Spread 0.8% too wide, volume dried up, wait for better conditions)
+
+NOW DECIDE FOR {symbol} {action}:
 TIMING: [IMMEDIATE/WAIT_5MIN/WAIT_OPEN]
-SLIPPAGE: [percentage]
+SLIPPAGE: [expected %]
 CONFIDENCE: [0-1]
 RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
 

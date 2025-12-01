@@ -105,39 +105,49 @@ class ResearchAgent(BaseAgent):
         # Build comprehensive research prompt
         memory_context = self.get_memory_context(limit=3)
 
-        prompt = f"""You are a Research Agent analyzing {symbol} for trading decision.
+        # Goldilocks Prompt: Principle-based with examples
+        prompt = f"""Analyze {symbol} fundamentals and sentiment. Focus on value and risk.
 
-FUNDAMENTAL DATA:
-- P/E Ratio: {fundamentals.get('pe_ratio', 'N/A')}
-- Growth Rate: {fundamentals.get('growth_rate', 'N/A')}
-- Profit Margin: {fundamentals.get('profit_margin', 'N/A')}
-- Market Cap: {fundamentals.get('market_cap', 'N/A')}
+FUNDAMENTALS:
+P/E: {fundamentals.get('pe_ratio', 'N/A')} | Growth: {fundamentals.get('growth_rate', 'N/A')} | Margin: {fundamentals.get('profit_margin', 'N/A')} | Cap: {fundamentals.get('market_cap', 'N/A')}
 
-NEWS & SENTIMENT:
+NEWS:
 {self._format_news(news)}
 
-MARKET CONTEXT:
-- Sector: {market_context.get('sector', 'N/A')}
-- Market Trend: {market_context.get('market_trend', 'N/A')}
-- Volatility: {market_context.get('volatility', 'N/A')}
+CONTEXT: {market_context.get('sector', 'N/A')} sector | Market: {market_context.get('market_trend', 'N/A')} | Vol: {market_context.get('volatility', 'N/A')}
 
 {memory_context}
 
-TASK: Provide a comprehensive analysis:
-1. Fundamental strength (1-10)
-2. Sentiment score (-1 to +1)
-3. Investment thesis (2-3 sentences)
-4. Recommendation: BUY / SELL / HOLD
-5. Confidence (0-1)
-6. Key risks
+PRINCIPLES (Graham-Buffett):
+- P/E < 15 is attractive, > 25 is expensive (weight: 30%)
+- Consistent growth > 10% annually preferred (weight: 25%)
+- Profit margin > 15% indicates pricing power (weight: 20%)
+- News sentiment affects short-term, fundamentals drive long-term (weight: 25%)
 
-Format your response as:
+EXAMPLES:
+Example 1 - Strong Fundamental Buy:
+STRENGTH: 8
+SENTIMENT: 0.6
+THESIS: Low P/E of 12 with 18% growth suggests undervalued quality. Recent positive earnings beat confirms trajectory.
+RECOMMENDATION: BUY
+CONFIDENCE: 0.78
+RISKS: Sector rotation risk, margin compression if input costs rise
+
+Example 2 - Avoid Despite Hype:
+STRENGTH: 3
+SENTIMENT: 0.8
+THESIS: High sentiment but P/E of 45 prices in perfection. Any miss will punish stock. Wait for pullback.
+RECOMMENDATION: HOLD
+CONFIDENCE: 0.65
+RISKS: Valuation compression, growth deceleration, sentiment reversal
+
+NOW ANALYZE {symbol}:
 STRENGTH: [1-10]
 SENTIMENT: [-1 to +1]
-THESIS: [your thesis]
+THESIS: [2-3 sentences on value proposition]
 RECOMMENDATION: [BUY/SELL/HOLD]
 CONFIDENCE: [0-1]
-RISKS: [key risks]"""
+RISKS: [top 2 risks]"""
 
         # Get LLM analysis
         response = self.reason_with_llm(prompt)
