@@ -1,0 +1,116 @@
+[
+  {
+    "trade_id": "test_save",
+    "symbol": "QQQ",
+    "timestamp": "2025-12-01T22:22:02.336830",
+    "evaluation": {
+      "accuracy": {
+        "dimension": "accuracy",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "expected_amount": 6.0,
+          "actual_amount": 6.0,
+          "order_status": "filled"
+        },
+        "timestamp": "2025-12-01T22:22:02.336853"
+      },
+      "compliance": {
+        "dimension": "compliance",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "daily_allocation": 10.0,
+          "validated": true,
+          "preflight_passed": true
+        },
+        "timestamp": "2025-12-01T22:22:02.336857"
+      },
+      "reliability": {
+        "dimension": "reliability",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "system_state_age_hours": 1.0,
+          "data_source": "alpaca",
+          "api_errors": [],
+          "execution_time_ms": 500
+        },
+        "timestamp": "2025-12-01T22:22:02.336861"
+      },
+      "errors": {
+        "dimension": "errors",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "error_count": 0
+        },
+        "timestamp": "2025-12-01T22:22:02.336866"
+      }
+    },
+    "overall_score": 1.0,
+    "passed": true,
+    "critical_issues": []
+  },
+  {
+    "trade_id": "test_save",
+    "symbol": "QQQ",
+    "timestamp": "2025-12-01T22:23:13.240013",
+    "evaluation": {
+      "accuracy": {
+        "dimension": "accuracy",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "expected_amount": 6.0,
+          "actual_amount": 6.0,
+          "order_status": "filled"
+        },
+        "timestamp": "2025-12-01T22:23:13.240038"
+      },
+      "compliance": {
+        "dimension": "compliance",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "daily_allocation": 10.0,
+          "validated": true,
+          "preflight_passed": true
+        },
+        "timestamp": "2025-12-01T22:23:13.240042"
+      },
+      "reliability": {
+        "dimension": "reliability",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "system_state_age_hours": 1.0,
+          "data_source": "alpaca",
+          "api_errors": [],
+          "execution_time_ms": 500
+        },
+        "timestamp": "2025-12-01T22:23:13.240047"
+      },
+      "errors": {
+        "dimension": "errors",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "error_count": 0
+        },
+        "timestamp": "2025-12-01T22:23:13.240052"
+      }
+    },
+    "overall_score": 1.0,
+    "passed": true,
+    "critical_issues": []
+  }
+]
