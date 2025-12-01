@@ -1,0 +1,8 @@
+{"ts": "2025-12-01T09:35:00.000000", "session": "20251201T093500", "run_id": "test_run_001", "event": "gate.momentum", "ticker": "SPY", "status": "pass", "payload": {"strength": 0.75, "indicators": {"rsi": 65, "macd": 0.05}}}
+{"ts": "2025-12-01T09:35:01.000000", "session": "20251201T093500", "run_id": "test_run_001", "event": "gate.momentum", "ticker": "QQQ", "status": "pass", "payload": {"strength": 0.68, "indicators": {"rsi": 58, "macd": 0.03}}}
+{"ts": "2025-12-01T09:35:02.000000", "session": "20251201T093500", "run_id": "test_run_001", "event": "gate.rl_filter", "ticker": "SPY", "status": "pass", "payload": {"confidence": 0.82}}
+{"ts": "2025-12-01T09:35:03.000000", "session": "20251201T093500", "run_id": "test_run_001", "event": "gate.rl_filter", "ticker": "QQQ", "status": "pass", "payload": {"confidence": 0.71}}
+{"ts": "2025-12-01T09:35:04.000000", "session": "20251201T093500", "run_id": "test_run_001", "event": "gate.llm", "ticker": "SPY", "status": "pass", "payload": {"sentiment": 0.65, "source": "multi_llm"}}
+{"ts": "2025-12-01T09:35:05.000000", "session": "20251201T093500", "run_id": "test_run_001", "event": "gate.llm", "ticker": "QQQ", "status": "reject", "payload": {"sentiment": -0.35, "reason": "Negative sentiment score below threshold"}}
+{"ts": "2025-12-01T09:35:06.000000", "session": "20251201T093500", "run_id": "test_run_001", "event": "gate.risk", "ticker": "SPY", "status": "pass", "payload": {"position_size": 0.05, "risk_score": 0.3}}
+{"ts": "2025-12-01T09:35:07.000000", "session": "20251201T093500", "run_id": "test_run_001", "event": "execution.order", "ticker": "SPY", "status": "pass", "payload": {"order_id": "order_123", "qty": 1, "side": "buy"}}
