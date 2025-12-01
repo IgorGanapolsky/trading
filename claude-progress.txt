@@ -24,3 +24,18 @@ When starting a new session, agents should:
 3. Read git logs (`git log --oneline -20`) to see recent commits
 4. Choose ONE feature to work on
 5. Update this file at the end of the session
+
+---
+
+2025-12-01 14:30 - GPT-5.1 Codex
+Summary:
+- Added Finnhub-based economic guardrails, regime-aware trend snapshots, and daily report telemetry so Tier 1/2 allocations know when gates are open.
+- Wired RLPolicyLearner plus DeepMomentumForecaster into CoreStrategy, enabling RL vetoes, probability boosts, and automatic Sentry reporting across all entrypoints.
+- Created `tests/test_trading_e2e.py` and `tests/test_sentry_integration.py` to keep the hybrid funnel covered end-to-end.
+
+Files Changed:
+- `src/strategies/core_strategy.py`, `src/utils/economic_guardrails.py`, `src/utils/trend_snapshot.py`, `src/ml/forecasters/deep_momentum.py`, scripts (`autonomous_trader.py`, `advanced_autonomous_trader.py`, `daily_report.py`, `pre_market_health_check.py`), docs/PLAN.md, `feature_list.json`, and new tests.
+
+Next Steps:
+- Monitor guardrail cache freshness and surface alerts externally if Finnhub reports major events.
+- Extend RL reward shaping with benchmark-aware metrics once more trades close, and consider sharing trend + guardrail snapshots on the dashboard.

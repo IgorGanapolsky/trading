@@ -22,6 +22,7 @@ from anthropic import Anthropic
 from datetime import datetime
 import logging
 import signal
+from src.utils.error_monitoring import init_sentry
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -306,6 +307,7 @@ def check_strategy_execution() -> bool:
 
 def main():
     """Run all health checks."""
+    init_sentry()
     # Set global 30-second timeout for entire health check
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(30)

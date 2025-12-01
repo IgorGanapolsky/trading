@@ -32,6 +32,7 @@ from src.agents.risk_agent import RiskAgent
 from src.agents.execution_agent import ExecutionAgent
 from src.agents.reinforcement_learning import RLPolicyLearner
 from src.agents.reinforcement_learning_optimized import OptimizedRLPolicyLearner
+from src.utils.error_monitoring import init_sentry
 
 # Setup logging
 logging.basicConfig(
@@ -123,6 +124,8 @@ def get_market_data(symbol: str) -> dict:
 
 def main():
     """Main execution loop for advanced multi-agent trading system."""
+
+    init_sentry()
 
     print("\n" + "=" * 80)
     print("🤖 ADVANCED MULTI-AGENT TRADING SYSTEM (2025 Standard)")

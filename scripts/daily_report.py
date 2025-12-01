@@ -17,11 +17,13 @@ import sys
 import json
 from pathlib import Path
 from datetime import date, datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import alpaca_trade_api as tradeapi
+
+from src.utils.error_monitoring import init_sentry
 
 # Configuration
 ALPACA_KEY = os.getenv("ALPACA_API_KEY")
@@ -68,6 +70,24 @@ def get_portfolio_status() -> Dict[str, Any]:
         }
     except Exception as e:
         return {"error": str(e)}
+
+
+def _load_json(path: Path) -> Optional[Dict[str, Any]]:
+    if not path.exists():
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            return json.load(fh)
+    except Exception:
+        return None
+
+
+def load_trend_snapshot() -> Optional[Dict[str, Any]]:
+    return _load_json(DATA_DIR / "trend_snapshot.json")
+
+
+def load_guardrail_summary() -> Optional[Dict[str, Any]]:
+    return _load_json(DATA_DIR / "economic_guardrails.json")
 
 
 def get_rl_stats() -> Dict[str, Any]:
@@ -149,6 +169,8 @@ def generate_report() -> str:
     manual_trading = get_manual_trading_status()
     rl_stats = get_rl_stats()
     cb_status = get_circuit_breaker_status()
+    trend_snapshot = load_trend_snapshot()
+    guardrails = load_guardrail_summary()
 
     # Build report
     report = f"""
@@ -240,6 +262,57 @@ Total Trades: {len(trades)}
 
     report += f"""
 {'=' * 80}
+📈 TREND SNAPSHOT (Core ETFs)
+{'=' * 80}
+"""
+    if trend_snapshot and trend_snapshot.get("symbols"):
+        report += (
+            f"Generated: {trend_snapshot.get('generated_at', 'N/A')}\n"
+        )
+        for symbol in sorted(trend_snapshot["symbols"].keys()):
+            entry = trend_snapshot["symbols"][symbol]
+            gate = "OPEN ✅" if entry.get("gate_open") else "CLOSED ❌"
+            report += (
+                f"{symbol:<4} {gate} | SMA20={entry.get('sma20', 0):.2f} "
+                f"SMA50={entry.get('sma50', 0):.2f} 5d={entry.get('return_5d', 0):+.2f}% "
+                f"21d={entry.get('return_21d', 0):+.2f}% ({entry.get('regime_bias', 'n/a')})\n"
+            )
+    else:
+        report += "Trend snapshot unavailable (generate after next trading run)\n"
+
+    report += f"""
+{'=' * 80}
+🛡️ ECONOMIC GUARDRAILS
+{'=' * 80}
+"""
+    if guardrails:
+        market_blockers = guardrails.get("market_blockers") or []
+        symbol_blockers = guardrails.get("symbol_blockers") or {}
+
+        if market_blockers:
+            for blocker in market_blockers:
+                report += (
+                    f"Market: {blocker.get('date', 'N/A')} - "
+                    f"{blocker.get('description', 'Unknown')} "
+                    f"(impact: {blocker.get('impact', 'n/a')})\n"
+                )
+        else:
+            report += "Market: No blocking events detected\n"
+
+        if symbol_blockers:
+            for symbol in sorted(symbol_blockers.keys()):
+                for entry in symbol_blockers[symbol]:
+                    report += (
+                        f"{symbol}: {entry.get('date', 'N/A')} - "
+                        f"{entry.get('description', 'Event')}\n"
+                    )
+        else:
+            report += "Symbols: No blockers for watched tickers\n"
+    else:
+        report += "Guardrail cache unavailable\n"
+
+    report += f"""
+{'=' * 80}
 🎓 REINFORCEMENT LEARNING
 {'=' * 80}
 States Learned:     {rl_stats['states_learned']}
@@ -281,6 +354,7 @@ Generated: {datetime.now().strftime('%Y-%m-%d %I:%M:%S %p')}
 
 def main():
     """Generate and save daily report."""
+    init_sentry()
     today = date.today().isoformat()
     report = generate_report()
 

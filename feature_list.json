@@ -198,8 +198,8 @@
         "Filter relevant events",
         "Incorporate into trading decisions"
       ],
-      "passes": false,
-      "notes": "Planned but not yet implemented"
+      "passes": true,
+      "notes": "Economic guardrails pull Finnhub calendar/EPS to block trades (Dec 1, 2025)"
     },
     {
       "category": "infrastructure",
@@ -232,8 +232,8 @@
         "Capture exceptions automatically",
         "Send alerts for critical errors"
       ],
-      "passes": false,
-      "notes": "Planned but not yet implemented"
+      "passes": true,
+      "notes": "Sentry wired into orchestrators and reports with automated smoke tests"
     },
     {
       "category": "ml",
@@ -243,8 +243,8 @@
         "Adapt policy based on performance",
         "Use RL for position sizing decisions"
       ],
-      "passes": false,
-      "notes": "Basic implementation exists but needs improvement"
+      "passes": true,
+      "notes": "RLPolicyLearner now gates CoreStrategy entries and learns from exits"
     },
     {
       "category": "ml",
@@ -254,8 +254,8 @@
         "Predict price movements",
         "Integrate predictions into trading decisions"
       ],
-      "passes": false,
-      "notes": "Critical gap identified in gap analysis"
+      "passes": true,
+      "notes": "DeepMomentumForecaster (NumPy MLP) boosts signals with daily training"
     },
     {
       "category": "testing",
@@ -266,8 +266,8 @@
         "Verify trades execute correctly",
         "Check state updates properly"
       ],
-      "passes": false,
-      "notes": "Needs comprehensive E2E test suite"
+      "passes": true,
+      "notes": "tests/test_trading_e2e.py exercises CoreStrategy flow with mocks"
     }
   ]
 }

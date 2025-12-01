@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from src.utils.logging_config import setup_logging
+from src.utils.error_monitoring import init_sentry
 
 
 def _parse_tickers() -> List[str]:
@@ -115,6 +116,7 @@ def main() -> None:
     args = parser.parse_args()
 
     load_dotenv()
+    init_sentry()
     logger = setup_logging()
 
     crypto_allowed = crypto_enabled()

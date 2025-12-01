@@ -35,7 +35,7 @@ Updated: 2025-10-28
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
 
@@ -55,6 +55,10 @@ from src.utils.sentiment_loader import (
     get_sentiment_history,
 )
 from src.safety.graham_buffett_safety import get_global_safety_analyzer
+from src.utils.economic_guardrails import EconomicGuardrails
+from src.utils.trend_snapshot import TrendSnapshotBuilder, TrendMetrics
+from src.ml.forecasters.deep_momentum import DeepMomentumForecaster
+from src.agents.reinforcement_learning import RLPolicyLearner
 
 # Optional LLM Council integration
 try:
@@ -269,6 +273,36 @@ class CoreStrategy:
         self.trades_executed: List[TradeOrder] = []
         self.momentum_history: List[MomentumScore] = []
 
+        # Regime and telemetry helpers
+        self.market_regime: str = "neutral"
+        self._price_history_cache: Dict[str, pd.DataFrame] = {}
+        self._trend_snapshot_builder = TrendSnapshotBuilder(
+            cache=self._price_history_cache
+        )
+        self._trend_snapshot: Dict[str, TrendMetrics] = {}
+        self._guardrail_summary: Dict[str, Any] = {}
+        self._open_position_states: Dict[str, Dict[str, Any]] = {}
+
+        # RL policy integration
+        self.rl_enabled = os.getenv("ENABLE_RL_POLICY", "true").lower() == "true"
+        self.rl_learner: Optional[RLPolicyLearner] = None
+        if self.rl_enabled:
+            try:
+                self.rl_learner = RLPolicyLearner()
+                logger.info("RLPolicyLearner initialized for CoreStrategy")
+            except Exception as e:
+                logger.warning(f"Failed to initialize RLPolicyLearner: {e}")
+                self.rl_enabled = False
+
+        # Deep learning forecaster
+        self.deep_forecaster: Optional[DeepMomentumForecaster] = None
+        try:
+            self.deep_forecaster = DeepMomentumForecaster()
+            logger.info("Deep momentum forecaster ready")
+        except Exception as e:
+            logger.warning(f"Deep momentum forecaster unavailable: {e}")
+            self.deep_forecaster = None
+
         # Initialize dependencies
         try:
             # Use optimized analyzer if enabled (default: True)
@@ -403,6 +437,17 @@ class CoreStrategy:
                     )
                     effective_allocation = self.daily_allocation
 
+            guardrails = EconomicGuardrails(
+                self.etf_universe + list(self.DIVERSIFICATION_SYMBOLS.values())
+            )
+            self._guardrail_summary = guardrails.summary()
+            market_blocked, guardrail_reason = guardrails.is_market_blocked()
+            if market_blocked:
+                logger.warning(
+                    f"Market blocked by guardrail ({guardrail_reason}). Skipping session."
+                )
+                return None
+
             # Step 1: Get market sentiment from AI
             sentiment = self._get_market_sentiment()
             logger.info(f"Market sentiment: {sentiment.value}")
@@ -416,15 +461,76 @@ class CoreStrategy:
 
             # Step 3: Calculate momentum scores for all ETFs
             momentum_scores = self._calculate_all_momentum_scores(sentiment)
+            self._update_trend_snapshot()
+            candidate_scores = self._filter_guardrails(momentum_scores, guardrails)
 
-            # Step 4: Select best ETF (may skip if all fail hard filters)
+            if not candidate_scores:
+                logger.info(
+                    "All symbols rejected by guardrails/filters - relaxing thresholds once"
+                )
+                momentum_scores = self._calculate_all_momentum_scores(
+                    sentiment, relaxed_filters=True
+                )
+                self._update_trend_snapshot()
+                candidate_scores = self._filter_guardrails(momentum_scores, guardrails)
+
+            if not candidate_scores:
+                logger.warning("No tradable symbols after guardrails and relaxed pass")
+                return None
+
+            candidate_scores.sort(key=lambda x: x.score, reverse=True)
             try:
-                best_etf = self.select_best_etf(momentum_scores)
-                logger.info(f"Selected ETF: {best_etf}")
+                best_etf = self.select_best_etf(candidate_scores.copy())
             except ValueError as e:
                 logger.warning(f"No valid ETF selection today: {e}")
                 logger.info("SKIPPING TRADE - Will try again tomorrow")
                 return None
+
+            best_score_obj = next(
+                (ms for ms in candidate_scores if ms.symbol == best_etf), None
+            )
+
+            if not self._is_symbol_gate_open(best_etf):
+                fallback = next(
+                    (
+                        score
+                        for score in candidate_scores
+                        if self._is_symbol_gate_open(score.symbol)
+                    ),
+                    None,
+                )
+                if fallback:
+                    logger.info(
+                        f"{best_etf} gate closed by regime snapshot. Using {fallback.symbol} instead."
+                    )
+                    best_etf = fallback.symbol
+                    best_score_obj = fallback
+                else:
+                    logger.info(
+                        "All ETFs gated off by regime snapshot - preserving cash today"
+                    )
+                    return None
+
+            logger.info(f"Selected ETF: {best_etf}")
+
+            market_state = self._build_market_state(best_etf, best_score_obj)
+            if self.rl_enabled and self.rl_learner:
+                rl_action = self.rl_learner.select_action(
+                    market_state, agent_recommendation="BUY"
+                )
+                if rl_action != "BUY":
+                    logger.warning(
+                        f"RL Policy vetoed trade for {best_etf} with action {rl_action}"
+                    )
+                    return None
+                self._open_position_states[best_etf] = {
+                    "state": market_state,
+                    "timestamp": datetime.now().isoformat(),
+                }
+
+            def _clear_pending_rl_state() -> None:
+                if self.rl_enabled:
+                    self._open_position_states.pop(best_etf, None)
 
             # Step 4.5: Gemini 3 AI Validation (if enabled)
             if (
@@ -464,6 +570,7 @@ class CoreStrategy:
                                 f"Gemini reasoning: {decision.get('reasoning', 'N/A')}"
                             )
                             logger.info("SKIPPING TRADE - AI validation failed")
+                            _clear_pending_rl_state()
                             return None
                         else:
                             logger.info(
@@ -477,6 +584,7 @@ class CoreStrategy:
             current_price = self._get_current_price(best_etf)
             if current_price is None:
                 logger.error(f"Failed to get price for {best_etf}")
+                _clear_pending_rl_state()
                 return None
 
             # Step 5.5: Intelligent Investor Safety Check (Graham-Buffett principles)
@@ -523,6 +631,7 @@ class CoreStrategy:
                             "SKIPPING TRADE - Intelligent Investor safety check failed"
                         )
                         logger.info("=" * 80)
+                        _clear_pending_rl_state()
                         return None
                     else:
                         logger.info(
@@ -637,6 +746,7 @@ class CoreStrategy:
                         )
                         logger.info("SKIPPING TRADE - LLM Council consensus rejected")
                         logger.info("=" * 80)
+                        _clear_pending_rl_state()
                         return None
                     else:
                         logger.info(f"✅ LLM Council APPROVED trade: {best_etf}")
@@ -669,6 +779,7 @@ class CoreStrategy:
             # Step 7: Risk validation
             if not self._validate_trade(best_etf, quantity, current_price, sentiment):
                 logger.warning("Trade failed risk validation")
+                _clear_pending_rl_state()
                 return None
 
             # Step 8: Create order
@@ -698,87 +809,80 @@ class CoreStrategy:
                     # At $6/day allocation: bond_amount = $0.90 (below $1.00 minimum)
                     # Need daily allocation >= $6.67 to make bond_amount >= $1.00
                     if bond_amount >= 1.00:
-                        logger.info(
-                            f"🔵 Attempting BND bond order: ${bond_amount:.2f} "
-                            f"(threshold check: {bond_amount >= 0.50})"
-                        )
-                        try:
+                        if not self._is_symbol_gate_open("BND"):
                             logger.info(
-                                f"🔵 Executing BND order via Alpaca: symbol=BND, "
-                                f"amount=${bond_amount:.2f}, tier=T1_CORE"
+                                f"⏭️  Skipping BND (trend gate closed), would-be ${bond_amount:.2f}"
                             )
-                            bond_order = self.alpaca_trader.execute_order(
-                                symbol="BND",
-                                amount_usd=bond_amount,
-                                side="buy",
-                                tier="T1_CORE",
-                            )
+                        else:
                             logger.info(
-                                f"✅ Bond ETF order executed successfully: BND ${bond_amount:.2f} "
-                                f"(order_id: {bond_order.get('id', 'N/A')})"
+                                f"🔵 Attempting BND bond order: ${bond_amount:.2f} "
+                                f"(threshold check: {bond_amount >= 0.50})"
                             )
-                        except Exception as e:
-                            logger.error(
-                                f"❌ Bond order FAILED: BND ${bond_amount:.2f} - {type(e).__name__}: {e}",
-                                exc_info=True,
-                            )
+                            try:
+                                logger.info(
+                                    f"🔵 Executing BND order via Alpaca: symbol=BND, "
+                                    f"amount=${bond_amount:.2f}, tier=T1_CORE"
+                                )
+                                bond_order = self.alpaca_trader.execute_order(
+                                    symbol="BND",
+                                    amount_usd=bond_amount,
+                                    side="buy",
+                                    tier="T1_CORE",
+                                )
+                                logger.info(
+                                    f"✅ Bond ETF order executed successfully: BND ${bond_amount:.2f} "
+                                    f"(order_id: {bond_order.get('id', 'N/A')})"
+                                )
+                            except Exception as e:
+                                logger.error(
+                                    f"❌ Bond order FAILED: BND ${bond_amount:.2f} - {type(e).__name__}: {e}",
+                                    exc_info=True,
+                                )
 
                     # 9c: VNQ - REITs (15%)
                     # Alpaca minimum order size is $1.00 - orders below this will be rejected
                     if reit_amount >= 1.00:
-                        logger.info(
-                            f"🏢 Attempting VNQ REIT order: ${reit_amount:.2f} "
-                            f"(threshold check: {reit_amount >= 0.50})"
-                        )
-                        try:
+                        if not self._is_symbol_gate_open("VNQ"):
                             logger.info(
-                                f"🏢 Executing VNQ order via Alpaca: symbol=VNQ, "
-                                f"amount=${reit_amount:.2f}, tier=T1_CORE"
+                                f"⏭️  Skipping VNQ (trend gate closed), would-be ${reit_amount:.2f}"
                             )
-                            reit_order = self.alpaca_trader.execute_order(
-                                symbol="VNQ",
-                                amount_usd=reit_amount,
-                                side="buy",
-                                tier="T1_CORE",
-                            )
+                        else:
                             logger.info(
-                                f"✅ REIT ETF order executed successfully: VNQ ${reit_amount:.2f} "
-                                f"(order_id: {reit_order.get('id', 'N/A')})"
+                                f"🏢 Attempting VNQ REIT order: ${reit_amount:.2f} "
+                                f"(threshold check: {reit_amount >= 0.50})"
                             )
-                        except Exception as e:
-                            logger.error(
-                                f"❌ REIT order FAILED: VNQ ${reit_amount:.2f} - {type(e).__name__}: {e}",
-                                exc_info=True,
-                            )
+                            try:
+                                logger.info(
+                                    f"🏢 Executing VNQ order via Alpaca: symbol=VNQ, "
+                                    f"amount=${reit_amount:.2f}, tier=T1_CORE"
+                                )
+                                reit_order = self.alpaca_trader.execute_order(
+                                    symbol="VNQ",
+                                    amount_usd=reit_amount,
+                                    side="buy",
+                                    tier="T1_CORE",
+                                )
+                                logger.info(
+                                    f"✅ REIT ETF order executed successfully: VNQ ${reit_amount:.2f} "
+                                    f"(order_id: {reit_order.get('id', 'N/A')})"
+                                )
+                            except Exception as e:
+                                logger.error(
+                                    f"❌ REIT order FAILED: VNQ ${reit_amount:.2f} - {type(e).__name__}: {e}",
+                                    exc_info=True,
+                                )
 
                     # 9d: TLT - Treasuries (10%) with simple momentum gate (SMA20 > SMA50)
                     # Alpaca minimum order size is $1.00 - orders below this will be rejected
                     # At $6/day allocation: treasury_amount = $0.60 (below $1.00 minimum)
                     # Need daily allocation >= $10.00 to make treasury_amount >= $1.00
                     if treasury_amount >= 1.00:
-                        try:
-                            import yfinance as _yf
-
-                            tlt = _yf.Ticker("TLT")
-                            hist = tlt.history(period="6mo")
-                            if not hist.empty and "Close" in hist.columns:
-                                sma20 = hist["Close"].rolling(20).mean().iloc[-1]
-                                sma50 = hist["Close"].rolling(50).mean().iloc[-1]
-                                gate = sma20 >= sma50
-                            else:
-                                gate = True  # fail-open if no data
-                        except Exception as e:
-                            logger.warning(
-                                f"TLT momentum check failed (proceeding): {e}"
+                        if not self._is_symbol_gate_open("TLT"):
+                            logger.info(
+                                f"⏭️  Skipping TLT (momentum gate off), would-be ${treasury_amount:.2f}"
                             )
-                            gate = True
-
-                        try:
-                            if gate:
-                                logger.info(
-                                    f"📈 Attempting TLT treasury order: ${treasury_amount:.2f} "
-                                    f"(momentum gate: SMA20>=SMA50={gate})"
-                                )
+                        else:
+                            try:
                                 logger.info(
                                     f"📈 Executing TLT order via Alpaca: symbol=TLT, "
                                     f"amount=${treasury_amount:.2f}, tier=T1_CORE"
@@ -791,17 +895,13 @@ class CoreStrategy:
                                 )
                                 logger.info(
                                     f"✅ Treasury ETF order executed successfully: TLT ${treasury_amount:.2f} "
-                                    f"(SMA20>=SMA50: {gate}, order_id: {treasury_order.get('id', 'N/A')})"
+                                    f"(order_id: {treasury_order.get('id', 'N/A')})"
                                 )
-                            else:
-                                logger.info(
-                                    f"⏭️  Skipping TLT (momentum gate off: SMA20<SMA50), would-be ${treasury_amount:.2f}"
+                            except Exception as e:
+                                logger.error(
+                                    f"❌ Treasury order FAILED: TLT ${treasury_amount:.2f} - {type(e).__name__}: {e}",
+                                    exc_info=True,
                                 )
-                        except Exception as e:
-                            logger.error(
-                                f"❌ Treasury order FAILED: TLT ${treasury_amount:.2f} - {type(e).__name__}: {e}",
-                                exc_info=True,
-                            )
 
                     # Set stop-loss for momentum ETF
                     if order.stop_loss:
@@ -811,6 +911,7 @@ class CoreStrategy:
                         logger.info(f"Stop-loss set at ${order.stop_loss:.2f}")
                 except Exception as e:
                     logger.error(f"Failed to execute order via Alpaca: {e}")
+                    _clear_pending_rl_state()
                     return None
 
             # Step 10: Update state
@@ -938,6 +1039,7 @@ class CoreStrategy:
                                         closed_positions.append(exit_order)
                                         self.trades_executed.append(exit_order)
                                         self._update_holdings(symbol, -qty)
+                                        self._reward_rl(symbol, unrealized_plpc)
                                         continue  # Skip take-profit check
                                         
                                     except Exception as e:
@@ -978,6 +1080,7 @@ class CoreStrategy:
                             closed_positions.append(exit_order)
                             self.trades_executed.append(exit_order)
                             self._update_holdings(symbol, -qty)
+                            self._reward_rl(symbol, unrealized_plpc)
                             continue  # Skip take-profit check
                             
                         except Exception as e:
@@ -1024,7 +1127,7 @@ class CoreStrategy:
 
                         closed_positions.append(exit_order)
                         self.trades_executed.append(exit_order)
-
+                        self._reward_rl(symbol, unrealized_plpc)
                         # Update holdings
                         self._update_holdings(symbol, -qty)
 
@@ -1047,7 +1150,7 @@ class CoreStrategy:
             logger.error(f"Error managing positions: {str(e)}", exc_info=True)
             return closed_positions
 
-    def calculate_momentum(self, symbol: str) -> float:
+    def calculate_momentum(self, symbol: str, relaxed_filters: bool = False) -> float:
         """
         Calculate composite momentum score for a given ETF.
 
@@ -1069,28 +1172,29 @@ class CoreStrategy:
         """
         logger.info(f"Calculating momentum for {symbol}")
 
-        hist = None
+        hist = self._price_history_cache.get(symbol)
         lookback_days = (
             max(self.LOOKBACK_PERIODS.values()) + 20
         )  # Extra for calculations
         end_date = datetime.now()
         start_date = end_date - timedelta(days=lookback_days)
 
-        # Try yfinance first
-        try:
-            ticker = yf.Ticker(symbol)
-            hist = ticker.history(start=start_date, end=end_date)
+        if hist is None or hist.empty:
+            # Try yfinance first
+            try:
+                ticker = yf.Ticker(symbol)
+                hist = ticker.history(start=start_date, end=end_date)
 
-            if hist.empty or len(hist) < lookback_days * 0.7:
+                if hist.empty or len(hist) < lookback_days * 0.7:
+                    logger.warning(
+                        f"yfinance returned insufficient data for {symbol}, trying Alpaca API"
+                    )
+                    hist = None
+            except Exception as e:
                 logger.warning(
-                    f"yfinance returned insufficient data for {symbol}, trying Alpaca API"
+                    f"yfinance failed for {symbol}: {str(e)}, trying Alpaca API fallback"
                 )
                 hist = None
-        except Exception as e:
-            logger.warning(
-                f"yfinance failed for {symbol}: {str(e)}, trying Alpaca API fallback"
-            )
-            hist = None
 
         # Fallback to Alpaca API if yfinance failed
         if hist is None or hist.empty:
@@ -1102,7 +1206,6 @@ class CoreStrategy:
                     )
 
                     if bars and len(bars) >= lookback_days * 0.7:
-                        # Convert Alpaca bars to pandas DataFrame
                         import pandas as pd
 
                         dates = [pd.Timestamp(bar["timestamp"]) for bar in bars]
@@ -1115,9 +1218,8 @@ class CoreStrategy:
                                 "Volume": [bar["volume"] for bar in bars],
                             },
                             index=dates,
-                        )
+                        ).sort_index()
                         hist.index.name = "Date"
-                        hist.sort_index(inplace=True)
                         logger.info(
                             f"Successfully loaded {len(hist)} bars from Alpaca for {symbol}"
                         )
@@ -1139,6 +1241,8 @@ class CoreStrategy:
             raise ValueError(
                 f"Insufficient data for {symbol} (got {len(hist)} bars, need {int(lookback_days * 0.7)})"
             )
+
+        self._price_history_cache[symbol] = hist
 
         # Calculate returns for different periods
         returns_1m = self._calculate_period_return(
@@ -1178,6 +1282,8 @@ class CoreStrategy:
         sharpe_bonus = sharpe_ratio * 5
         momentum_score += sharpe_bonus
 
+        thresholds = self._get_dynamic_thresholds(relaxed_filters=relaxed_filters)
+
         # HARD FILTERS - Reject entries that don't meet criteria
         # Calculate MACD first for filtering
         macd_value, macd_signal, macd_histogram = self._calculate_macd(hist["Close"])
@@ -1190,8 +1296,8 @@ class CoreStrategy:
             )
             return -1  # Return invalid score to filter out
 
-        # HARD FILTER 2: Reject overbought RSI (>70)
-        if rsi > 70:
+        # HARD FILTER 2: Reject overbought RSI (> dynamic)
+        if rsi > thresholds["max_rsi"]:
             logger.warning(
                 f"{symbol} REJECTED - Overbought RSI ({rsi:.2f}). "
                 f"Too extended, high reversal risk."
@@ -1204,7 +1310,7 @@ class CoreStrategy:
         current_price = hist["Close"].iloc[-1]
         price_vs_ma_pct = ((current_price - ma_20) / ma_20) * 100
 
-        if current_price > ma_20 * 1.02:  # Price > 2% above 20-day MA
+        if price_vs_ma_pct > thresholds["max_price_above_ma_pct"]:
             logger.warning(
                 f"{symbol} REJECTED - Price ${current_price:.2f} is {price_vs_ma_pct:.2f}% above 20-day MA ${ma_20:.2f}. "
                 f"Waiting for pullback entry to avoid buying at peak."
@@ -1215,10 +1321,13 @@ class CoreStrategy:
         # CTO Decision Nov 20, 2025: Prevent entries near local highs
         if len(hist) >= 5:
             high_5d = hist["High"].iloc[-5:].max()
-            if current_price >= high_5d * 0.98:  # Within 2% of 5-day high
+            high_diff_pct = (
+                ((high_5d - current_price) / high_5d) * 100 if high_5d else 0
+            )
+            if high_diff_pct < thresholds["min_distance_from_high_pct"]:
                 logger.warning(
-                    f"{symbol} REJECTED - Price ${current_price:.2f} is within 2% of 5-day high ${high_5d:.2f}. "
-                    f"Avoiding entry at local peak."
+                    f"{symbol} REJECTED - Price ${current_price:.2f} is within {high_diff_pct:.2f}% of 5-day high ${high_5d:.2f} "
+                    f"(min distance {thresholds['min_distance_from_high_pct']:.2f}%). Skipping entry at local peak."
                 )
                 return -1
 
@@ -1238,7 +1347,7 @@ class CoreStrategy:
                 )
 
                 # Reject if ATR > 2x average volatility (too volatile)
-                if atr_pct > avg_atr_pct * 2.0:
+                if atr_pct > avg_atr_pct * thresholds["max_atr_multiple"]:
                     logger.warning(
                         f"{symbol} REJECTED - High volatility detected (ATR: {atr_pct:.2f}% vs avg: {avg_atr_pct:.2f}%). "
                         f"Skipping entry during volatile period."
@@ -1268,6 +1377,14 @@ class CoreStrategy:
             momentum_score += 5
         elif volume_ratio < 0.5:  # Volume 50% below average (low conviction)
             momentum_score -= 10
+
+        # Deep learning probability boost
+        if self.deep_forecaster:
+            try:
+                deep_prob = self.deep_forecaster.predict_probability(symbol, hist)
+                momentum_score += (deep_prob - 0.5) * 40  # +/-20 adjustment
+            except Exception as e:
+                logger.debug(f"{symbol} deep forecast failed: {e}")
 
         # Normalize to 0-100 scale
         momentum_score = max(0, min(100, momentum_score))
@@ -1778,6 +1895,7 @@ class CoreStrategy:
 
             # Get market regime from SPY sentiment
             market_regime = get_market_regime(sentiment_data)
+            self.market_regime = market_regime or "neutral"
 
             # Get SPY sentiment score
             spy_score, spy_confidence, _ = get_ticker_sentiment("SPY", sentiment_data)
@@ -1834,7 +1952,7 @@ class CoreStrategy:
             return MarketSentiment.NEUTRAL
 
     def _calculate_all_momentum_scores(
-        self, sentiment: MarketSentiment
+        self, sentiment: MarketSentiment, relaxed_filters: bool = False
     ) -> List[MomentumScore]:
         """
         Calculate momentum scores for all ETFs in universe.
@@ -1850,7 +1968,9 @@ class CoreStrategy:
 
         for symbol in self.etf_universe:
             try:
-                base_score = self.calculate_momentum(symbol)
+                base_score = self.calculate_momentum(
+                    symbol, relaxed_filters=relaxed_filters
+                )
 
                 # Skip if symbol was rejected by hard filters (score = -1)
                 if base_score < 0:
@@ -1862,8 +1982,11 @@ class CoreStrategy:
                 adjusted_score = max(0, min(100, adjusted_score))
 
                 # Get additional metrics for the score object
-                ticker = yf.Ticker(symbol)
-                hist = ticker.history(period="6mo")
+                hist = self._price_history_cache.get(symbol)
+                if hist is None or hist.empty:
+                    ticker = yf.Ticker(symbol)
+                    hist = ticker.history(period="6mo")
+                    self._price_history_cache[symbol] = hist
 
                 returns_1m = self._calculate_period_return(hist, 21)
                 returns_3m = self._calculate_period_return(hist, 63)
@@ -1928,6 +2051,120 @@ class CoreStrategy:
             MarketSentiment.VERY_BEARISH: -10.0,
         }
         return sentiment_map.get(sentiment, 0.0)
+
+    def _get_dynamic_thresholds(self, relaxed_filters: bool = False) -> Dict[str, float]:
+        """Return regime-aware hard filter thresholds."""
+        regime = (self.market_regime or "neutral").lower()
+        thresholds = {
+            "max_rsi": 70.0,
+            "max_price_above_ma_pct": 2.0,
+            "min_distance_from_high_pct": 2.0,
+            "max_atr_multiple": 2.0,
+        }
+
+        if regime == "risk_on":
+            thresholds["max_rsi"] = 75.0
+            thresholds["max_price_above_ma_pct"] = 3.5
+            thresholds["min_distance_from_high_pct"] = 0.8
+        elif regime == "risk_off":
+            thresholds["max_rsi"] = 67.0
+            thresholds["max_price_above_ma_pct"] = 1.5
+            thresholds["min_distance_from_high_pct"] = 2.5
+            thresholds["max_atr_multiple"] = 1.8
+
+        if relaxed_filters:
+            thresholds["max_rsi"] += 3.0
+            thresholds["max_price_above_ma_pct"] += 0.5
+            thresholds["min_distance_from_high_pct"] = max(
+                0.3, thresholds["min_distance_from_high_pct"] - 0.5
+            )
+            thresholds["max_atr_multiple"] += 0.25
+
+        return thresholds
+
+    def _update_trend_snapshot(self, extra_symbols: Optional[List[str]] = None) -> None:
+        """Build and persist SMA snapshot for Tier 1/2 assets."""
+        base_symbols = list(
+            dict.fromkeys(
+                list(self.etf_universe) + list(self.DIVERSIFICATION_SYMBOLS.values())
+            )
+        )
+        if extra_symbols:
+            base_symbols.extend(extra_symbols)
+        snapshot = self._trend_snapshot_builder.build(base_symbols)
+        if snapshot:
+            self._trend_snapshot = snapshot
+            self._trend_snapshot_builder.save(snapshot)
+
+    def _is_symbol_gate_open(self, symbol: str) -> bool:
+        metrics = self._trend_snapshot.get(symbol)
+        if metrics:
+            return metrics.gate_open
+        return True
+
+    def _filter_guardrails(
+        self, scores: List[MomentumScore], guardrails: EconomicGuardrails
+    ) -> List[MomentumScore]:
+        filtered: List[MomentumScore] = []
+        for score in scores:
+            blocked, reason = guardrails.is_symbol_blocked(score.symbol)
+            if blocked:
+                logger.info(
+                    f"Guardrail blocked {score.symbol} ({reason or 'unspecified'})"
+                )
+                continue
+            filtered.append(score)
+        return filtered
+
+    def _build_market_state(
+        self, symbol: str, momentum_score: Optional[MomentumScore] = None
+    ) -> Dict[str, Any]:
+        snapshot = self._trend_snapshot.get(symbol)
+        hist = self._price_history_cache.get(symbol)
+
+        if momentum_score:
+            rsi = momentum_score.rsi
+            macd_hist = momentum_score.macd_histogram
+        elif hist is not None and not hist.empty:
+            rsi = self._calculate_rsi(hist["Close"], self.RSI_PERIOD)
+            _, _, macd_hist = self._calculate_macd(hist["Close"])
+        else:
+            rsi = 50.0
+            macd_hist = 0.0
+
+        trend_strength = 0.0
+        trend_label = "unknown"
+        if snapshot:
+            trend_label = snapshot.regime_bias
+            if snapshot.sma50:
+                try:
+                    trend_strength = (snapshot.sma20 - snapshot.sma50) / abs(
+                        snapshot.sma50
+                    )
+                except ZeroDivisionError:
+                    trend_strength = 0.0
+
+        return {
+            "market_regime": self.market_regime,
+            "rsi": rsi,
+            "macd_histogram": macd_hist,
+            "trend": trend_label,
+            "trend_strength": trend_strength,
+        }
+
+    def _reward_rl(self, symbol: str, pl_pct: float) -> None:
+        if not self.rl_learner:
+            return
+        prev_state = self._open_position_states.pop(symbol, None)
+        if not prev_state:
+            return
+
+        trade_result = {"pl_pct": pl_pct, "symbol": symbol}
+        new_state = self._build_market_state(symbol)
+        reward = self.rl_learner.calculate_reward(trade_result, new_state)
+        self.rl_learner.update_policy(
+            prev_state["state"], "BUY", reward, new_state, done=True
+        )
 
     def _get_current_price(self, symbol: str) -> Optional[float]:
         """
