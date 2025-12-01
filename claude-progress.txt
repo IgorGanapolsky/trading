@@ -39,3 +39,14 @@ Files Changed:
 Next Steps:
 - Monitor guardrail cache freshness and surface alerts externally if Finnhub reports major events.
 - Extend RL reward shaping with benchmark-aware metrics once more trades close, and consider sharing trend + guardrail snapshots on the dashboard.
+
+2025-12-01 16:05 - GPT-5.1 Codex
+Summary:
+- Adopted Anthropic’s “Define Success” framework by authoring `docs/define-success.md` with scorecards, metrics, and evaluation cadences mapped to our R&D goals.
+- Linked the success playbook into `docs/r-and-d-phase.md` and marked it as required reading in `README.md` so future iterations inherit the same guardrails.
+
+Files Changed:
+- `docs/define-success.md`, `docs/r-and-d-phase.md`, `README.md`
+
+Next Steps:
+- Wire guardrail freshness + success metrics directly into the dashboard telemetry, then enforce PR templates that reference the new scorecard rows.

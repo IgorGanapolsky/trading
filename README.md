@@ -77,6 +77,7 @@ python3 scripts/dry_run.py --symbols SPY QQQ --export-json out.json --export-md 
 **CRITICAL - Read These First**:
 - **[docs/verification-protocols.md](docs/verification-protocols.md)** - "Show, Don't Tell" protocol (MANDATORY reading for all agents and developers)
 - **[docs/r-and-d-phase.md](docs/r-and-d-phase.md)** - Current R&D phase strategy and status (90-day plan)
+- **[docs/define-success.md](docs/define-success.md)** - Anthropic “Define Success” scorecard adopted for every iteration
 - **[docs/AGENTS.md](docs/AGENTS.md)** - Agent coordination guidelines for autonomous operation
 
 **Strategic Context**:

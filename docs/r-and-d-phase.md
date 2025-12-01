@@ -42,6 +42,8 @@ We have **world-class infrastructure** (automation, agents, hygiene) but **no pr
 
 ## Success Criteria (Day 90)
 
+All metrics are now tied to Anthropic’s [Define Success](define-success.md) scorecard so our R&D checkpoints align with enterprise evaluation best practices.
+
 **Go/No-Go for Scaling**:
 ```python
 if (
