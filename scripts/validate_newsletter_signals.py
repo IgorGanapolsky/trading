@@ -5,14 +5,13 @@ Checks for common issues like sentiment/reasoning mismatches, invalid price logi
 """
 
 import sys
-import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from datetime import datetime, timezone, timedelta
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.utils.newsletter_analyzer import NewsletterAnalyzer, CryptoSignal
+from src.utils.newsletter_analyzer import CryptoSignal, NewsletterAnalyzer
 
 
 def validate_signal(ticker: str, signal: CryptoSignal) -> list[str]:
@@ -68,9 +67,7 @@ def validate_signal(ticker: str, signal: CryptoSignal) -> list[str]:
             errors.append(
                 f"❌ Bullish signal but target (${signal.target_price:,.0f}) ≤ entry (${signal.entry_price:,.0f})"
             )
-        elif (
-            signal.sentiment == "bearish" and signal.target_price >= signal.entry_price
-        ):
+        elif signal.sentiment == "bearish" and signal.target_price >= signal.entry_price:
             errors.append(
                 f"❌ Bearish signal but target (${signal.target_price:,.0f}) ≥ entry (${signal.entry_price:,.0f})"
             )
@@ -88,13 +85,13 @@ def validate_signal(ticker: str, signal: CryptoSignal) -> list[str]:
 
     # Check for missing critical fields
     if not signal.entry_price:
-        warnings.append(f"⚠️  Missing entry price")
+        warnings.append("⚠️  Missing entry price")
     if not signal.target_price:
-        warnings.append(f"⚠️  Missing target price")
+        warnings.append("⚠️  Missing target price")
     if not signal.stop_loss:
-        warnings.append(f"⚠️  Missing stop loss (risk management gap)")
+        warnings.append("⚠️  Missing stop loss (risk management gap)")
     if not signal.timeframe:
-        warnings.append(f"⚠️  Missing timeframe")
+        warnings.append("⚠️  Missing timeframe")
 
     # Check confidence level
     if signal.confidence < 0.5:
@@ -140,12 +137,10 @@ def validate_all_signals(max_age_days: int = 7) -> bool:
     total_warnings = 0
 
     for ticker, signal in signals.items():
-        print(f"{'─'*80}")
+        print(f"{'─' * 80}")
         print(f"{ticker} VALIDATION")
-        print(f"{'─'*80}")
-        print(
-            f"Sentiment:   {signal.sentiment.upper()} ({signal.confidence:.0%} confidence)"
-        )
+        print(f"{'─' * 80}")
+        print(f"Sentiment:   {signal.sentiment.upper()} ({signal.confidence:.0%} confidence)")
         print(
             f"Source Date: {signal.source_date.strftime('%Y-%m-%d %H:%M:%S UTC') if signal.source_date else 'Unknown'}"
         )

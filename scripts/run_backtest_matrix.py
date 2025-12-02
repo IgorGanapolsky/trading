@@ -18,14 +18,12 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import yaml
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - for static typing only
-    from src.backtesting.backtest_engine import BacktestEngine
     from src.backtesting.backtest_results import BacktestResults
 
 
@@ -46,7 +44,7 @@ PROMOTION_THRESHOLDS = {
 class MatrixStrategy:
     """Minimal strategy container required by BacktestEngine."""
 
-    etf_universe: List[str]
+    etf_universe: list[str]
     daily_allocation: float
     use_vca: bool = False
     vca_strategy: Any = None  # Not used but required by engine interface
@@ -80,7 +78,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def load_config(config_path: Path) -> Dict[str, Any]:
+def load_config(config_path: Path) -> dict[str, Any]:
     if not config_path.exists():
         raise FileNotFoundError(f"Backtest config not found at {config_path}")
     with config_path.open("r", encoding="utf-8") as handle:
@@ -91,11 +89,13 @@ def load_config(config_path: Path) -> Dict[str, Any]:
 
 
 def run_backtest_for_scenario(
-    scenario: Dict[str, Any],
-    defaults: Dict[str, Any],
+    scenario: dict[str, Any],
+    defaults: dict[str, Any],
     output_dir: Path,
-) -> Dict[str, Any]:
-    from src.backtesting.backtest_engine import BacktestEngine  # local import to avoid heavy deps during tests
+) -> dict[str, Any]:
+    from src.backtesting.backtest_engine import (
+        BacktestEngine,  # local import to avoid heavy deps during tests
+    )
 
     strategy = MatrixStrategy(
         etf_universe=scenario.get("etf_universe", defaults.get("etf_universe", [])),
@@ -119,7 +119,7 @@ def run_backtest_for_scenario(
     return summary
 
 
-def summarize_results(results: BacktestResults, scenario: Dict[str, Any]) -> Dict[str, Any]:
+def summarize_results(results: BacktestResults, scenario: dict[str, Any]) -> dict[str, Any]:
     daily_returns = np.diff(results.equity_curve) / results.equity_curve[:-1]
     profitable_days = int(np.sum(daily_returns > 0))
     longest_streak = longest_positive_streak(daily_returns)
@@ -158,7 +158,7 @@ def longest_positive_streak(daily_returns: np.ndarray) -> int:
     return int(max_streak)
 
 
-def evaluate_status(results: BacktestResults, thresholds: Dict[str, float]) -> str:
+def evaluate_status(results: BacktestResults, thresholds: dict[str, float]) -> str:
     if (
         results.win_rate >= thresholds["win_rate"]
         and results.sharpe_ratio >= thresholds["sharpe_ratio"]
@@ -168,7 +168,7 @@ def evaluate_status(results: BacktestResults, thresholds: Dict[str, float]) -> s
     return "needs_improvement"
 
 
-def save_artifacts(summary: Dict[str, Any], results: BacktestResults, output_dir: Path) -> None:
+def save_artifacts(summary: dict[str, Any], results: BacktestResults, output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     json_path = output_dir / "summary.json"
     md_path = output_dir / "report.md"
@@ -179,7 +179,7 @@ def save_artifacts(summary: Dict[str, Any], results: BacktestResults, output_dir
     md_path.write_text(results.generate_report(), encoding="utf-8")
 
 
-def aggregate_summary(summaries: List[Dict[str, Any]]) -> Dict[str, Any]:
+def aggregate_summary(summaries: list[dict[str, Any]]) -> dict[str, Any]:
     if not summaries:
         raise ValueError("No scenario summaries were produced.")
 
@@ -198,7 +198,7 @@ def aggregate_summary(summaries: List[Dict[str, Any]]) -> Dict[str, Any]:
     return aggregate
 
 
-def write_summary(summary: Dict[str, Any], path: Path) -> None:
+def write_summary(summary: dict[str, Any], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
         json.dump(summary, handle, indent=2)
@@ -207,14 +207,14 @@ def write_summary(summary: Dict[str, Any], path: Path) -> None:
 def main() -> None:
     args = parse_args()
     config = load_config(Path(args.config))
-    scenarios: List[Dict[str, Any]] = config.get("scenarios", [])
-    defaults: Dict[str, Any] = config.get("defaults", {})
+    scenarios: list[dict[str, Any]] = config.get("scenarios", [])
+    defaults: dict[str, Any] = config.get("defaults", {})
 
     if args.max_scenarios > 0:
         scenarios = scenarios[: args.max_scenarios]
 
     output_root = Path(args.output_root)
-    summaries: List[Dict[str, Any]] = []
+    summaries: list[dict[str, Any]] = []
     for scenario in scenarios:
         scenario_dir = output_root / "matrix_core_dca" / scenario["name"]
         summary = run_backtest_for_scenario(scenario, defaults, scenario_dir)

@@ -6,16 +6,14 @@
 - If available, prints collection stats.
 - If not, prints a friendly disabled message.
 """
-import sys
-import sys
+
 import os
+import sys
 
 sys.path.append(os.getcwd())
 import logging
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 

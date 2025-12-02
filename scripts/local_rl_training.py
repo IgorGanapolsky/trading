@@ -27,14 +27,15 @@ Usage:
   # Enable LangSmith monitoring
   python scripts/local_rl_training.py --use-langsmith
 """
+
+import argparse
+import json
 import os
 import sys
-import json
 import time
-import argparse
-from pathlib import Path
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -43,7 +44,13 @@ from scripts.rl_training_orchestrator import RLTrainingOrchestrator
 DATA_DIR = Path("data")
 
 
-def train_all_agents_legacy(agents: List[str], device: str = "cpu") -> Dict[str, Any]:
+def load_json_file(filepath: Path) -> Any:
+    """Load JSON file and return contents."""
+    with open(filepath) as f:
+        return json.load(f)
+
+
+def train_q_learning_agent() -> dict[str, Any]:
     """Train Q-learning agent from experience replay buffer."""
     try:
         from src.agents.reinforcement_learning_optimized import OptimizedRLPolicyLearner
@@ -63,9 +70,7 @@ def train_all_agents_legacy(agents: List[str], device: str = "cpu") -> Dict[str,
         # Train from replay buffer if it has enough samples
         if agent.enable_replay and len(agent.replay_buffer) >= agent.replay_batch_size:
             # Run multiple training iterations
-            training_iterations = min(
-                10, len(agent.replay_buffer) // agent.replay_batch_size
-            )
+            training_iterations = min(10, len(agent.replay_buffer) // agent.replay_batch_size)
             total_updates = 0
 
             for _ in range(training_iterations):
@@ -98,11 +103,63 @@ def train_all_agents_legacy(agents: List[str], device: str = "cpu") -> Dict[str,
         }
 
 
-def train_dqn_agent(device: str = "cpu", episodes: int = 10) -> Dict[str, Any]:
+def train_all_agents_legacy(agents: list[str], device: str = "cpu") -> dict[str, Any]:
+    """Train Q-learning agent from experience replay buffer."""
+    try:
+        from src.agents.reinforcement_learning_optimized import OptimizedRLPolicyLearner
+
+        # Load RL state
+        rl_state_file = DATA_DIR / "rl_policy_state.json"
+        if not rl_state_file.exists():
+            return {
+                "success": False,
+                "message": "No RL state file found - agent will initialize on first trade",
+                "agent": "q_learning",
+            }
+
+        # Initialize agent (will load state)
+        agent = OptimizedRLPolicyLearner()
+
+        # Train from replay buffer if it has enough samples
+        if agent.enable_replay and len(agent.replay_buffer) >= agent.replay_batch_size:
+            # Run multiple training iterations
+            training_iterations = min(10, len(agent.replay_buffer) // agent.replay_batch_size)
+            total_updates = 0
+
+            for _ in range(training_iterations):
+                agent._train_from_replay()
+                total_updates += 1
+
+            agent._save_state()
+
+            return {
+                "success": True,
+                "agent": "q_learning",
+                "training_iterations": total_updates,
+                "replay_buffer_size": len(agent.replay_buffer),
+                "message": f"Trained Q-learning agent: {total_updates} iterations",
+            }
+        else:
+            return {
+                "success": True,
+                "agent": "q_learning",
+                "training_iterations": 0,
+                "replay_buffer_size": len(agent.replay_buffer),
+                "message": f"Replay buffer has {len(agent.replay_buffer)} samples (need {agent.replay_batch_size})",
+            }
+    except Exception as e:
+        return {
+            "success": False,
+            "agent": "q_learning",
+            "error": str(e),
+            "message": f"Q-learning training failed: {e}",
+        }
+
+
+def train_dqn_agent(device: str = "cpu", episodes: int = 10) -> dict[str, Any]:
     """Train DQN agent."""
     try:
         from src.ml.dqn_agent import DQNAgent
-        import torch
 
         # Check if we have enough trade data
         all_trades = []
@@ -136,7 +193,7 @@ def train_dqn_agent(device: str = "cpu", episodes: int = 10) -> Dict[str, Any]:
         total_loss = 0.0
         training_steps = 0
 
-        for episode in range(episodes):
+        for _episode in range(episodes):
             loss = agent.train_step()
             if loss is not None:
                 total_loss += loss
@@ -169,13 +226,9 @@ def train_dqn_agent(device: str = "cpu", episodes: int = 10) -> Dict[str, Any]:
         }
 
 
-def train_ppo_agent(device: str = "cpu", episodes: int = 5) -> Dict[str, Any]:
+def train_ppo_agent(device: str = "cpu", episodes: int = 5) -> dict[str, Any]:
     """Train PPO agent."""
     try:
-        from src.ml.enhanced_ppo import EnhancedPPOTrainer
-        from src.ml.lstm_ppo import LSTMPPO
-        import torch
-
         # Check if we have enough trade data
         all_trades = []
         trade_files = list(DATA_DIR.glob("trades_*.json"))
@@ -192,7 +245,7 @@ def train_ppo_agent(device: str = "cpu", episodes: int = 5) -> Dict[str, Any]:
             }
 
         # Load or create PPO model
-        model_path = DATA_DIR / "models" / "ppo_agent.pt"
+        DATA_DIR / "models" / "ppo_agent.pt"
 
         # For now, return not implemented (would need full environment setup)
         return {
@@ -209,7 +262,7 @@ def train_ppo_agent(device: str = "cpu", episodes: int = 5) -> Dict[str, Any]:
         }
 
 
-def train_all_agents(agents: List[str], device: str = "cpu") -> Dict[str, Any]:
+def train_all_agents(agents: list[str], device: str = "cpu") -> dict[str, Any]:
     """Train all specified RL agents."""
     results = {"timestamp": datetime.now().isoformat(), "device": device, "agents": {}}
 
@@ -250,9 +303,7 @@ def main():
         choices=["cpu", "cuda"],
         help="Device to use for training (default: cpu)",
     )
-    parser.add_argument(
-        "--continuous", action="store_true", help="Run continuously in a loop"
-    )
+    parser.add_argument("--continuous", action="store_true", help="Run continuously in a loop")
     parser.add_argument(
         "--interval",
         type=int,
@@ -285,12 +336,12 @@ def main():
     print(f"Mode: {'Continuous' if args.continuous else 'Single Run'}")
     print(f"LangSmith: {'Enabled' if args.use_langsmith else 'Disabled'}")
     if args.continuous:
-        print(f"Interval: {args.interval} seconds ({args.interval/3600:.1f} hours)")
+        print(f"Interval: {args.interval} seconds ({args.interval / 3600:.1f} hours)")
     print("=" * 70)
     print()
 
     if args.continuous:
-        print(f"🔄 Running continuously (every {args.interval/3600:.1f} hours)")
+        print(f"🔄 Running continuously (every {args.interval / 3600:.1f} hours)")
         print("   Press Ctrl+C to stop")
         print()
 
@@ -298,11 +349,11 @@ def main():
         try:
             while True:
                 iteration += 1
-                print(f"\n{'='*70}")
+                print(f"\n{'=' * 70}")
                 print(
                     f"Training Iteration #{iteration} - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
                 )
-                print(f"{'='*70}\n")
+                print(f"{'=' * 70}\n")
 
                 orchestrator = RLTrainingOrchestrator(platform="local")
                 results = orchestrator.train_all(
@@ -321,7 +372,7 @@ def main():
 
                 # Results already saved by orchestrator
 
-                print(f"\n⏰ Next training in {args.interval/3600:.1f} hours...")
+                print(f"\n⏰ Next training in {args.interval / 3600:.1f} hours...")
                 time.sleep(args.interval)
         except KeyboardInterrupt:
             print("\n\n🛑 Training stopped by user")

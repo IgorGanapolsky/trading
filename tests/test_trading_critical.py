@@ -5,11 +5,11 @@ Tests for the most critical functions that prevent mistakes.
 FREE - No API costs, local testing only.
 """
 
-import unittest
-import sys
 import os
-from pathlib import Path
+import sys
+import unittest
 from datetime import datetime
+from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -205,7 +205,7 @@ class TestEvaluationStorage(unittest.TestCase):
         # Verify content
         import json
 
-        with open(eval_file, "r") as f:
+        with open(eval_file) as f:
             saved_evaluations = json.load(f)
 
         self.assertEqual(len(saved_evaluations), 1)

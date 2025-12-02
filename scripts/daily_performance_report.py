@@ -6,11 +6,11 @@ Generates a comprehensive daily performance report.
 FREE - No API costs, local processing only.
 """
 
-import sys
-import os
 import json
+import os
+import sys
+from datetime import date, datetime, timedelta
 from pathlib import Path
-from datetime import datetime, date, timedelta
 
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -25,7 +25,7 @@ def load_performance_log():
     """Load performance log."""
     if not PERF_LOG_FILE.exists():
         return []
-    with open(PERF_LOG_FILE, "r") as f:
+    with open(PERF_LOG_FILE) as f:
         return json.load(f)
 
 
@@ -33,7 +33,7 @@ def load_system_state():
     """Load system state."""
     if not SYSTEM_STATE_FILE.exists():
         return {}
-    with open(SYSTEM_STATE_FILE, "r") as f:
+    with open(SYSTEM_STATE_FILE) as f:
         return json.load(f)
 
 
@@ -45,7 +45,7 @@ def get_today_evaluations():
     if not eval_file.exists():
         return []
 
-    with open(eval_file, "r") as f:
+    with open(eval_file) as f:
         return json.load(f)
 
 
@@ -114,13 +114,9 @@ def main():
     # Overall performance
     if perf_log:
         latest = perf_log[-1]
-        starting_balance = system_state.get("account", {}).get(
-            "starting_balance", 100000
-        )
+        starting_balance = system_state.get("account", {}).get("starting_balance", 100000)
         total_pl = latest.get("equity", 0) - starting_balance
-        total_pl_pct = (
-            (total_pl / starting_balance * 100) if starting_balance > 0 else 0
-        )
+        total_pl_pct = (total_pl / starting_balance * 100) if starting_balance > 0 else 0
 
         print("📈 OVERALL PERFORMANCE:")
         print(f"   Starting Balance: ${starting_balance:,.2f}")
@@ -154,9 +150,7 @@ def main():
     print(f"   Last Updated: {last_updated}")
     try:
         last_dt = datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
-        age_hours = (
-            datetime.now() - last_dt.replace(tzinfo=None)
-        ).total_seconds() / 3600
+        age_hours = (datetime.now() - last_dt.replace(tzinfo=None)).total_seconds() / 3600
         if age_hours > 24:
             print(f"   ⚠️  WARNING: System state is {age_hours:.1f} hours old")
         else:

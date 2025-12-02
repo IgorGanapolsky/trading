@@ -21,19 +21,18 @@ Usage:
     data = scraper.collect_daily_sentiment()
 """
 
-import os
-import re
+import argparse
 import json
 import logging
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+import os
+import re
 from collections import defaultdict
-import argparse
+from datetime import datetime
+from pathlib import Path
+from typing import Optional
 
 import praw
 from praw.exceptions import PRAWException
-
 from src.utils.retry_decorator import retry_with_backoff
 
 logger = logging.getLogger(__name__)
@@ -154,7 +153,6 @@ class RedditSentiment:
         "AI",
         "ML",
         "RL",
-        "CEO",
         "WSB",
         "TLDR",
         "TL",
@@ -196,9 +194,7 @@ class RedditSentiment:
             if not client_secret:
                 client_secret = os.getenv("REDDIT_CLIENT_SECRET")
             if not user_agent:
-                user_agent = os.getenv(
-                    "REDDIT_USER_AGENT", "TradingBot/1.0 by AutomatedTrader"
-                )
+                user_agent = os.getenv("REDDIT_USER_AGENT", "TradingBot/1.0 by AutomatedTrader")
 
             if client_id and client_secret:
                 self.reddit = praw.Reddit(
@@ -213,9 +209,7 @@ class RedditSentiment:
                 logger.warning("No Reddit API credentials provided!")
                 logger.warning("To use this scraper, create a Reddit app at:")
                 logger.warning("https://www.reddit.com/prefs/apps")
-                logger.warning(
-                    "Then set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET in .env"
-                )
+                logger.warning("Then set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET in .env")
 
                 # This will fail but provides clear error message
                 raise ValueError(
@@ -231,7 +225,7 @@ class RedditSentiment:
     @retry_with_backoff(max_retries=3, initial_delay=2.0)
     def scrape_subreddit(
         self, subreddit_name: str, limit: int = 25, time_filter: str = "day"
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         Scrape posts from a subreddit.
 
@@ -243,9 +237,7 @@ class RedditSentiment:
         Returns:
             List of post dictionaries with metadata
         """
-        logger.info(
-            f"Scraping r/{subreddit_name} (limit={limit}, filter={time_filter})"
-        )
+        logger.info(f"Scraping r/{subreddit_name} (limit={limit}, filter={time_filter})")
 
         try:
             subreddit = self.reddit.subreddit(subreddit_name)
@@ -258,9 +250,12 @@ class RedditSentiment:
                     datetime.utcnow() - datetime.utcfromtimestamp(post.created_utc)
                 ).total_seconds() / 3600
 
-                if time_filter == "day" and post_age_hours > 24:
-                    continue
-                elif time_filter == "week" and post_age_hours > 168:
+                if (
+                    time_filter == "day"
+                    and post_age_hours > 24
+                    or time_filter == "week"
+                    and post_age_hours > 168
+                ):
                     continue
 
                 posts.append(
@@ -286,7 +281,7 @@ class RedditSentiment:
             logger.error(f"Error scraping r/{subreddit_name}: {e}")
             raise
 
-    def extract_tickers(self, text: str) -> List[str]:
+    def extract_tickers(self, text: str) -> list[str]:
         """
         Extract stock tickers from text.
 
@@ -303,9 +298,7 @@ class RedditSentiment:
         tickers = [
             ticker
             for ticker in matches
-            if ticker not in self.EXCLUDED_TICKERS
-            and len(ticker) >= 1
-            and len(ticker) <= 5
+            if ticker not in self.EXCLUDED_TICKERS and len(ticker) >= 1 and len(ticker) <= 5
         ]
 
         # Return unique tickers
@@ -313,7 +306,7 @@ class RedditSentiment:
 
     def calculate_sentiment_score(
         self, text: str, upvotes: int = 0, comments: int = 0
-    ) -> Tuple[int, Dict[str, int]]:
+    ) -> tuple[int, dict[str, int]]:
         """
         Calculate sentiment score for text.
 
@@ -369,7 +362,7 @@ class RedditSentiment:
 
         return weighted_score, keyword_details
 
-    def analyze_posts(self, posts: List[Dict]) -> Dict[str, Dict]:
+    def analyze_posts(self, posts: list[dict]) -> dict[str, dict]:
         """
         Analyze posts and aggregate sentiment by ticker.
 
@@ -438,10 +431,10 @@ class RedditSentiment:
 
     def collect_daily_sentiment(
         self,
-        subreddits: Optional[List[str]] = None,
+        subreddits: Optional[list[str]] = None,
         limit_per_sub: int = 25,
         force_refresh: bool = False,
-    ) -> Dict:
+    ) -> dict:
         """
         Collect daily sentiment from all subreddits.
 
@@ -458,12 +451,10 @@ class RedditSentiment:
 
         # Check cache
         if not force_refresh and cache_file.exists():
-            cache_age = datetime.now() - datetime.fromtimestamp(
-                cache_file.stat().st_mtime
-            )
+            cache_age = datetime.now() - datetime.fromtimestamp(cache_file.stat().st_mtime)
             if cache_age.total_seconds() < self.cache_hours * 3600:
                 logger.info(f"Loading cached sentiment data from {cache_file}")
-                with open(cache_file, "r") as f:
+                with open(cache_file) as f:
                     return json.load(f)
 
         # Use default subreddits if none provided
@@ -538,19 +529,17 @@ class RedditSentiment:
             json.dump(output, f, indent=2)
 
         logger.info(f"Saved sentiment data to {cache_file}")
-        logger.info(
-            f"Analyzed {len(all_posts)} posts, found {len(ticker_sentiment)} tickers"
-        )
+        logger.info(f"Analyzed {len(all_posts)} posts, found {len(ticker_sentiment)} tickers")
 
         return output
 
     def get_top_tickers(
         self,
-        sentiment_data: Optional[Dict] = None,
+        sentiment_data: Optional[dict] = None,
         min_mentions: int = 5,
         min_confidence: str = "medium",
         limit: int = 10,
-    ) -> List[Tuple[str, Dict]]:
+    ) -> list[tuple[str, dict]]:
         """
         Get top tickers by sentiment score.
 
@@ -569,7 +558,7 @@ class RedditSentiment:
             cache_file = self.data_dir / f"reddit_{today}.json"
 
             if cache_file.exists():
-                with open(cache_file, "r") as f:
+                with open(cache_file) as f:
                     sentiment_data = json.load(f)
             else:
                 logger.warning("No cached sentiment data found")
@@ -593,10 +582,10 @@ class RedditSentiment:
 
 
 def get_reddit_sentiment(
-    subreddits: Optional[List[str]] = None,
+    subreddits: Optional[list[str]] = None,
     limit_per_sub: int = 25,
     force_refresh: bool = False,
-) -> Dict:
+) -> dict:
     """
     Lightweight helper to fetch sentiment data with graceful degradation.
     """
@@ -618,9 +607,7 @@ def get_reddit_sentiment(
 
 def main():
     """CLI interface for Reddit sentiment scraping."""
-    parser = argparse.ArgumentParser(
-        description="Scrape Reddit sentiment for trading system"
-    )
+    parser = argparse.ArgumentParser(description="Scrape Reddit sentiment for trading system")
     parser.add_argument(
         "--subreddits",
         type=str,
@@ -636,9 +623,7 @@ def main():
     parser.add_argument(
         "--force-refresh", action="store_true", help="Ignore cache and fetch fresh data"
     )
-    parser.add_argument(
-        "--top", type=int, default=10, help="Show top N tickers (default: 10)"
-    )
+    parser.add_argument("--top", type=int, default=10, help="Show top N tickers (default: 10)")
     parser.add_argument(
         "--min-mentions",
         type=int,
@@ -692,9 +677,7 @@ def main():
 
     for i, (ticker, data) in enumerate(top_tickers, 1):
         sentiment = (
-            "BULLISH"
-            if data["score"] > 0
-            else "BEARISH" if data["score"] < 0 else "NEUTRAL"
+            "BULLISH" if data["score"] > 0 else "BEARISH" if data["score"] < 0 else "NEUTRAL"
         )
         print(
             f"{i}. {ticker:<6} | Score: {data['score']:>6} | Mentions: {data['mentions']:>3} | "
@@ -704,9 +687,7 @@ def main():
             f"   Bullish Keywords: {data['bullish_keywords']}, "
             f"Bearish Keywords: {data['bearish_keywords']}"
         )
-        print(
-            f"   Engagement: {data['total_upvotes']} upvotes, {data['total_comments']} comments"
-        )
+        print(f"   Engagement: {data['total_upvotes']} upvotes, {data['total_comments']} comments")
 
         if data["top_posts"]:
             print(f"   Top Post: {data['top_posts'][0]['title'][:60]}...")
@@ -722,9 +703,7 @@ def main():
         )
 
     print("\n" + "=" * 80)
-    print(
-        f"Data saved to: {scraper.data_dir}/reddit_{sentiment_data['meta']['date']}.json"
-    )
+    print(f"Data saved to: {scraper.data_dir}/reddit_{sentiment_data['meta']['date']}.json")
     print("=" * 80)
 
 

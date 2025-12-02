@@ -12,17 +12,17 @@ Generates comprehensive daily summary:
 
 Runs automatically after trading completes
 """
+
+import json
 import os
 import sys
-import json
-from pathlib import Path
 from datetime import date, datetime
-from typing import List, Dict, Any, Optional
+from pathlib import Path
+from typing import Any, Optional
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import alpaca_trade_api as tradeapi
-
 from src.utils.error_monitoring import init_sentry
 
 # Configuration
@@ -30,16 +30,14 @@ ALPACA_KEY = os.getenv("ALPACA_API_KEY")
 ALPACA_SECRET = os.getenv("ALPACA_SECRET_KEY")
 
 if not ALPACA_KEY or not ALPACA_SECRET:
-    raise ValueError(
-        "ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set"
-    )
+    raise ValueError("ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set")
 
 DATA_DIR = Path("data")
 REPORTS_DIR = Path("reports")
 REPORTS_DIR.mkdir(exist_ok=True)
 
 
-def load_todays_trades() -> List[Dict[str, Any]]:
+def load_todays_trades() -> list[dict[str, Any]]:
     """Load today's trade log."""
     today = date.today().isoformat()
     trades_file = DATA_DIR / f"trades_{today}.json"
@@ -48,18 +46,16 @@ def load_todays_trades() -> List[Dict[str, Any]]:
         return []
 
     try:
-        with open(trades_file, "r") as f:
+        with open(trades_file) as f:
             return json.load(f)
     except:
         return []
 
 
-def get_portfolio_status() -> Dict[str, Any]:
+def get_portfolio_status() -> dict[str, Any]:
     """Get current portfolio status from Alpaca."""
     try:
-        api = tradeapi.REST(
-            ALPACA_KEY, ALPACA_SECRET, "https://paper-api.alpaca.markets"
-        )
+        api = tradeapi.REST(ALPACA_KEY, ALPACA_SECRET, "https://paper-api.alpaca.markets")
         account = api.get_account()
 
         return {
@@ -72,25 +68,25 @@ def get_portfolio_status() -> Dict[str, Any]:
         return {"error": str(e)}
 
 
-def _load_json(path: Path) -> Optional[Dict[str, Any]]:
+def _load_json(path: Path) -> Optional[dict[str, Any]]:
     if not path.exists():
         return None
     try:
-        with open(path, "r", encoding="utf-8") as fh:
+        with open(path, encoding="utf-8") as fh:
             return json.load(fh)
     except Exception:
         return None
 
 
-def load_trend_snapshot() -> Optional[Dict[str, Any]]:
+def load_trend_snapshot() -> Optional[dict[str, Any]]:
     return _load_json(DATA_DIR / "trend_snapshot.json")
 
 
-def load_guardrail_summary() -> Optional[Dict[str, Any]]:
+def load_guardrail_summary() -> Optional[dict[str, Any]]:
     return _load_json(DATA_DIR / "economic_guardrails.json")
 
 
-def get_rl_stats() -> Dict[str, Any]:
+def get_rl_stats() -> dict[str, Any]:
     """Get RL policy learning stats."""
     rl_file = DATA_DIR / "rl_policy_state.json"
 
@@ -98,7 +94,7 @@ def get_rl_stats() -> Dict[str, Any]:
         return {"states_learned": 0, "action_distribution": {}}
 
     try:
-        with open(rl_file, "r") as f:
+        with open(rl_file) as f:
             data = json.load(f)
             q_table = data.get("q_table", {})
 
@@ -117,7 +113,7 @@ def get_rl_stats() -> Dict[str, Any]:
         return {"states_learned": 0, "action_distribution": {}}
 
 
-def get_manual_trading_status() -> Dict[str, Any]:
+def get_manual_trading_status() -> dict[str, Any]:
     """Get manual trading status from SoFi and crowdfunding platforms."""
     manual_trades_file = DATA_DIR / "manual_trades.json"
 
@@ -125,7 +121,7 @@ def get_manual_trading_status() -> Dict[str, Any]:
         return {"positions": [], "total_equity": 0.0, "total_pl": 0.0, "trade_count": 0}
 
     try:
-        with open(manual_trades_file, "r") as f:
+        with open(manual_trades_file) as f:
             data = json.load(f)
             positions = data.get("positions", [])
 
@@ -148,7 +144,7 @@ def get_manual_trading_status() -> Dict[str, Any]:
         return {"positions": [], "total_equity": 0.0, "total_pl": 0.0, "trade_count": 0}
 
 
-def get_circuit_breaker_status() -> Dict[str, Any]:
+def get_circuit_breaker_status() -> dict[str, Any]:
     """Get circuit breaker status."""
     try:
         from src.safety.circuit_breakers import CircuitBreaker
@@ -174,38 +170,38 @@ def generate_report() -> str:
 
     # Build report
     report = f"""
-{'=' * 80}
+{"=" * 80}
 📊 DAILY TRADING REPORT - {today}
-{'=' * 80}
+{"=" * 80}
 
 🤖 SYSTEM STATUS
-{'=' * 80}
+{"=" * 80}
 Multi-Agent Trading System (2025 Standard)
 - MetaAgent + Research + Signal + Risk + Execution + RL
 
-{'=' * 80}
+{"=" * 80}
 💰 PORTFOLIO (Multi-Platform Summary)
-{'=' * 80}
+{"=" * 80}
 
 ALPACA (Automated - Tiers 1-2):
-  Equity:        ${portfolio.get('equity', 0):,.2f}
-  Cash:          ${portfolio.get('cash', 0):,.2f}
-  Buying Power:  ${portfolio.get('buying_power', 0):,.2f}
-  P/L Today:     ${portfolio.get('pl_today', 0):+,.2f}
+  Equity:        ${portfolio.get("equity", 0):,.2f}
+  Cash:          ${portfolio.get("cash", 0):,.2f}
+  Buying Power:  ${portfolio.get("buying_power", 0):,.2f}
+  P/L Today:     ${portfolio.get("pl_today", 0):+,.2f}
 
 MANUAL TRADING (Tiers 3-4):
-  Total Value:   ${manual_trading['total_equity']:,.2f}
-  Positions:     {len(manual_trading['positions'])}
-  P/L:           ${manual_trading['total_pl']:+,.2f}
-  Trades Total:  {manual_trading['trade_count']}
+  Total Value:   ${manual_trading["total_equity"]:,.2f}
+  Positions:     {len(manual_trading["positions"])}
+  P/L:           ${manual_trading["total_pl"]:+,.2f}
+  Trades Total:  {manual_trading["trade_count"]}
 
 COMBINED TOTAL:
-  Total Equity:  ${portfolio.get('equity', 0) + manual_trading['total_equity']:,.2f}
-  Total P/L:     ${portfolio.get('pl_today', 0) + manual_trading['total_pl']:+,.2f}
+  Total Equity:  ${portfolio.get("equity", 0) + manual_trading["total_equity"]:,.2f}
+  Total P/L:     ${portfolio.get("pl_today", 0) + manual_trading["total_pl"]:+,.2f}
 
-{'=' * 80}
+{"=" * 80}
 📈 TRADES EXECUTED
-{'=' * 80}
+{"=" * 80}
 Total Trades: {len(trades)}
 
 """
@@ -224,9 +220,9 @@ Total Trades: {len(trades)}
 
     # Add manual trading positions section
     report += f"""
-{'=' * 80}
+{"=" * 80}
 📊 MANUAL POSITIONS (SoFi + Crowdfunding)
-{'=' * 80}
+{"=" * 80}
 """
 
     if manual_trading["positions"]:
@@ -247,28 +243,24 @@ Total Trades: {len(trades)}
             status = "✅" if pl > 0 else "❌" if pl < 0 else "➖"
 
             report += f"""
-{status} {pos['symbol']} ({platform} - {pos['tier'].upper()})
-  Quantity:      {pos['quantity']}
-  Avg Price:     ${pos['avg_price']:.2f}
-  Current Price: ${pos['current_price']:.2f}
+{status} {pos["symbol"]} ({platform} - {pos["tier"].upper()})
+  Quantity:      {pos["quantity"]}
+  Avg Price:     ${pos["avg_price"]:.2f}
+  Current Price: ${pos["current_price"]:.2f}
   Total Value:   ${value:.2f}
   P/L:           ${pl:+.2f} ({pl_pct:+.2f}%)
 """
     else:
         report += "No manual positions yet\n"
-        report += (
-            "\n💡 Use 'python scripts/manual_trade_entry.py' to log manual trades\n"
-        )
+        report += "\n💡 Use 'python scripts/manual_trade_entry.py' to log manual trades\n"
 
     report += f"""
-{'=' * 80}
+{"=" * 80}
 📈 TREND SNAPSHOT (Core ETFs)
-{'=' * 80}
+{"=" * 80}
 """
     if trend_snapshot and trend_snapshot.get("symbols"):
-        report += (
-            f"Generated: {trend_snapshot.get('generated_at', 'N/A')}\n"
-        )
+        report += f"Generated: {trend_snapshot.get('generated_at', 'N/A')}\n"
         for symbol in sorted(trend_snapshot["symbols"].keys()):
             entry = trend_snapshot["symbols"][symbol]
             gate = "OPEN ✅" if entry.get("gate_open") else "CLOSED ❌"
@@ -281,9 +273,9 @@ Total Trades: {len(trades)}
         report += "Trend snapshot unavailable (generate after next trading run)\n"
 
     report += f"""
-{'=' * 80}
+{"=" * 80}
 🛡️ ECONOMIC GUARDRAILS
-{'=' * 80}
+{"=" * 80}
 """
     if guardrails:
         market_blockers = guardrails.get("market_blockers") or []
@@ -312,41 +304,41 @@ Total Trades: {len(trades)}
         report += "Guardrail cache unavailable\n"
 
     report += f"""
-{'=' * 80}
+{"=" * 80}
 🎓 REINFORCEMENT LEARNING
-{'=' * 80}
-States Learned:     {rl_stats['states_learned']}
-Exploration Rate:   {rl_stats.get('exploration_rate', 0.2):.2%}
+{"=" * 80}
+States Learned:     {rl_stats["states_learned"]}
+Exploration Rate:   {rl_stats.get("exploration_rate", 0.2):.2%}
 Action Preferences:
-  BUY:  {rl_stats['action_distribution'].get('BUY', 0)} states
-  SELL: {rl_stats['action_distribution'].get('SELL', 0)} states
-  HOLD: {rl_stats['action_distribution'].get('HOLD', 0)} states
+  BUY:  {rl_stats["action_distribution"].get("BUY", 0)} states
+  SELL: {rl_stats["action_distribution"].get("SELL", 0)} states
+  HOLD: {rl_stats["action_distribution"].get("HOLD", 0)} states
 
-{'=' * 80}
+{"=" * 80}
 🛡️ CIRCUIT BREAKERS
-{'=' * 80}
-Status:             {'🚨 TRIPPED' if cb_status.get('is_tripped') else '✅ OK'}
-Consecutive Losses: {cb_status.get('consecutive_losses', 0)}
-API Errors Today:   {cb_status.get('api_errors_today', 0)}
+{"=" * 80}
+Status:             {"🚨 TRIPPED" if cb_status.get("is_tripped") else "✅ OK"}
+Consecutive Losses: {cb_status.get("consecutive_losses", 0)}
+API Errors Today:   {cb_status.get("api_errors_today", 0)}
 """
 
     if cb_status.get("is_tripped"):
         report += f"\n⚠️  TRIP REASON: {cb_status.get('trip_reason', 'Unknown')}\n"
         report += f"⚠️  DETAILS: {cb_status.get('trip_details', 'N/A')}\n"
-        report += f"⚠️  ACTION REQUIRED: Manual reset needed\n"
+        report += "⚠️  ACTION REQUIRED: Manual reset needed\n"
 
     report += f"""
-{'=' * 80}
+{"=" * 80}
 📁 LOG FILES
-{'=' * 80}
+{"=" * 80}
 Trading Log:  logs/advanced_trading.log
 Trade Data:   data/trades_{today}.json
 RL Policy:    data/rl_policy_state.json
 CB State:     data/circuit_breaker_state.json
 
-{'=' * 80}
-Generated: {datetime.now().strftime('%Y-%m-%d %I:%M:%S %p')}
-{'=' * 80}
+{"=" * 80}
+Generated: {datetime.now().strftime("%Y-%m-%d %I:%M:%S %p")}
+{"=" * 80}
 """
 
     return report

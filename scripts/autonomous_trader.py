@@ -6,18 +6,17 @@ import argparse
 import os
 import sys
 from datetime import datetime
-from typing import List
 
 from dotenv import load_dotenv
 
 # Ensure src is on the path when executed via GitHub Actions
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from src.utils.logging_config import setup_logging
 from src.utils.error_monitoring import init_sentry
+from src.utils.logging_config import setup_logging
 
 
-def _parse_tickers() -> List[str]:
+def _parse_tickers() -> list[str]:
     raw = os.getenv("TARGET_TICKERS", "SPY,QQQ,VOO")
     return [ticker.strip().upper() for ticker in raw.split(",") if ticker.strip()]
 
@@ -46,9 +45,7 @@ def is_market_holiday() -> bool:
         return not clock.is_open  # Market closed on weekday = holiday
     except Exception as e:
         logger = setup_logging()
-        logger.warning(
-            f"Could not check market holiday status: {e}. Assuming not a holiday."
-        )
+        logger.warning(f"Could not check market holiday status: {e}. Assuming not a holiday.")
         return False  # Fail safe: assume not a holiday if check fails
 
 
@@ -90,9 +87,7 @@ def execute_crypto_trading() -> None:
         order = crypto_strategy.execute_daily()
 
         if order:
-            logger.info(
-                f"✅ Crypto trade executed: {order.symbol} for ${order.amount:.2f}"
-            )
+            logger.info(f"✅ Crypto trade executed: {order.symbol} for ${order.amount:.2f}")
         else:
             logger.info("⚠️  No crypto trade executed (market conditions not favorable)")
 
@@ -141,17 +136,13 @@ def main() -> None:
             reason.append("weekend")
         if is_holiday:
             reason.append("market holiday")
-        logger.info(
-            f"Crypto branch enabled ({', '.join(reason)}) - executing crypto trading."
-        )
+        logger.info(f"Crypto branch enabled ({', '.join(reason)}) - executing crypto trading.")
         execute_crypto_trading()
         logger.info("Crypto trading session completed.")
         if args.crypto_only or is_weekend_day or is_holiday:
             return
     elif (is_weekend_day or is_holiday) and not args.skip_crypto:
-        logger.info(
-            "Weekend detected but crypto branch disabled. Proceeding with hybrid funnel."
-        )
+        logger.info("Weekend detected but crypto branch disabled. Proceeding with hybrid funnel.")
 
     # Normal stock trading - import only when needed
     from src.orchestrator.main import TradingOrchestrator

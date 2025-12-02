@@ -4,10 +4,10 @@ Retry Decorator with Exponential Backoff
 Provides retry functionality for API calls and network operations.
 """
 
-import time
 import logging
+import time
 from functools import wraps
-from typing import Callable, Type, Tuple
+from typing import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ def retry_with_backoff(
     max_retries: int = 3,
     initial_delay: float = 1.0,
     backoff_factor: float = 2.0,
-    exceptions: Tuple[Type[Exception], ...] = (Exception,),
+    exceptions: tuple[type[Exception], ...] = (Exception,),
 ):
     """
     Decorator for retrying functions with exponential backoff.
@@ -47,9 +47,7 @@ def retry_with_backoff(
 
                 except exceptions as e:
                     if attempt == max_retries - 1:
-                        logger.error(
-                            f"{func.__name__} failed after {max_retries} attempts: {e}"
-                        )
+                        logger.error(f"{func.__name__} failed after {max_retries} attempts: {e}")
                         raise
 
                     logger.warning(

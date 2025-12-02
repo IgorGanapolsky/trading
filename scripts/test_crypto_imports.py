@@ -5,8 +5,8 @@ Integration test for crypto trading imports.
 This test verifies that crypto trading can run without RAG dependencies,
 simulating what happens in GitHub Actions.
 """
+
 import sys
-import os
 from pathlib import Path
 
 # Add project root to path
@@ -43,9 +43,7 @@ def test_deepagents_tools_import():
         print("  ✅ PASSED: deepagents tools imports")
 
         # Check that _get_sentiment_store exists
-        assert hasattr(
-            tools, "_get_sentiment_store"
-        ), "_get_sentiment_store function missing"
+        assert hasattr(tools, "_get_sentiment_store"), "_get_sentiment_store function missing"
         print("  ✅ PASSED: _get_sentiment_store function exists")
         return True
     except ImportError as e:
@@ -81,7 +79,7 @@ def test_autonomous_trader_import():
     """Test that autonomous_trader can be imported."""
     print("\nTest 4: Import autonomous_trader...")
     try:
-        from scripts.autonomous_trader import execute_crypto_trading, is_weekend
+        from scripts.autonomous_trader import is_weekend
 
         print("  ✅ PASSED: autonomous_trader imports")
 
@@ -108,14 +106,12 @@ def test_import_chain():
         print("  ✅ PASSED: AlpacaTrader imports")
     except ImportError as e:
         if "alpaca" in str(e).lower():
-            print(f"  ⚠️  SKIPPED: alpaca not installed (expected in local env)")
+            print("  ⚠️  SKIPPED: alpaca not installed (expected in local env)")
         else:
             print(f"  ❌ FAILED: {e}")
             return False
 
     try:
-        from src.core.risk_manager import RiskManager
-
         print("  ✅ PASSED: RiskManager imports")
     except Exception as e:
         print(f"  ❌ FAILED: {e}")

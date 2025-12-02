@@ -8,7 +8,6 @@ This demonstrates the backtest engine with a mock strategy to avoid dependency i
 import logging
 import sys
 
-
 sys.path.insert(0, "/Users/igorganapolsky/workspace/git/apps/trading")
 
 from src.backtesting.backtest_results import BacktestResults

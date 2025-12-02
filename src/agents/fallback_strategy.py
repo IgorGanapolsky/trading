@@ -8,7 +8,7 @@ This ensures the system NEVER stops working due to API issues.
 """
 
 import logging
-from typing import Dict, Any
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class FallbackStrategy:
     """
 
     @staticmethod
-    def analyze_without_llm(data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze_without_llm(data: dict[str, Any]) -> dict[str, Any]:
         """
         Pure technical analysis fallback (no LLM).
 
@@ -128,7 +128,7 @@ DECISION: {action} (Confidence: {confidence:.2f})
         }
 
     @staticmethod
-    def research_fallback(data: Dict[str, Any]) -> Dict[str, Any]:
+    def research_fallback(data: dict[str, Any]) -> dict[str, Any]:
         """Fallback for ResearchAgent (no news/sentiment)."""
         return {
             "action": "HOLD",
@@ -141,7 +141,7 @@ DECISION: {action} (Confidence: {confidence:.2f})
         }
 
     @staticmethod
-    def risk_fallback(portfolio_value: float, volatility: float) -> Dict[str, Any]:
+    def risk_fallback(portfolio_value: float, volatility: float) -> dict[str, Any]:
         """Fallback for RiskAgent (conservative sizing)."""
         # Ultra-conservative: 1% of portfolio, max $100
         position_size = min(portfolio_value * 0.01, 100.0)

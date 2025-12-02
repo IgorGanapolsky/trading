@@ -11,13 +11,14 @@ Note: "thinking_level" and "thought_signatures" are conceptual features
 implemented via temperature adjustments and conversation history, not direct API parameters.
 """
 
-import os
 import json
 import logging
-from typing import Dict, List, Any, Optional
+import os
 from datetime import datetime
+from typing import Any, Optional
+
 import google.generativeai as genai
-from src.utils.self_healing import with_retry, health_check
+from src.utils.self_healing import health_check, with_retry
 
 # Try to import GenerationConfig, fallback to dict if not available
 try:
@@ -80,9 +81,9 @@ class GeminiAgent:
             self.client = genai.GenerativeModel(model)
 
         # Memory and decision tracking
-        self.memory: List[Dict[str, Any]] = []
-        self.decision_log: List[Dict[str, Any]] = []
-        self.conversation_history: List[Dict[str, Any]] = []
+        self.memory: list[dict[str, Any]] = []
+        self.decision_log: list[dict[str, Any]] = []
+        self.conversation_history: list[dict[str, Any]] = []
 
         logger.info(f"Initialized {name} with Gemini 3 ({model})")
 
@@ -91,9 +92,9 @@ class GeminiAgent:
         self,
         prompt: str,
         thinking_level: Optional[str] = None,
-        tools: Optional[List[Dict]] = None,
-        context: Optional[List[Dict]] = None,
-    ) -> Dict[str, Any]:
+        tools: Optional[list[dict]] = None,
+        context: Optional[list[dict]] = None,
+    ) -> dict[str, Any]:
         """
         Use Gemini 3 reasoning to make decisions.
 
@@ -123,7 +124,7 @@ class GeminiAgent:
         try:
             # Build generation config
             # Use GenerationConfig object if available, otherwise dict (both work)
-            if GenerationConfig == dict:
+            if GenerationConfig is dict:
                 generation_config = {
                     "temperature": temperature,
                     "top_p": 0.95,
@@ -153,9 +154,7 @@ class GeminiAgent:
                                 parts.append({"text": part})
                             elif isinstance(part, dict):
                                 parts.append(part)
-                        messages.append(
-                            {"role": msg.get("role", "user"), "parts": parts}
-                        )
+                        messages.append({"role": msg.get("role", "user"), "parts": parts})
                     else:
                         # Fallback: assume it's already in correct format
                         messages.append(msg)
@@ -184,12 +183,8 @@ class GeminiAgent:
                     )
 
             # Store in conversation history
-            self.conversation_history.append(
-                {"role": "user", "parts": [{"text": prompt}]}
-            )
-            self.conversation_history.append(
-                {"role": "model", "parts": [{"text": response.text}]}
-            )
+            self.conversation_history.append({"role": "user", "parts": [{"text": prompt}]})
+            self.conversation_history.append({"role": "model", "parts": [{"text": response.text}]})
 
             # Keep history manageable (last 20 messages)
             if len(self.conversation_history) > 20:
@@ -212,9 +207,7 @@ class GeminiAgent:
                         {
                             "name": call.name,
                             "args": (
-                                dict(call.args)
-                                if hasattr(call.args, "__dict__")
-                                else call.args
+                                dict(call.args) if hasattr(call.args, "__dict__") else call.args
                             ),
                         }
                     )
@@ -233,8 +226,8 @@ class GeminiAgent:
             }
 
     def analyze_with_context(
-        self, data: Dict[str, Any], thinking_level: str = "high"
-    ) -> Dict[str, Any]:
+        self, data: dict[str, Any], thinking_level: str = "high"
+    ) -> dict[str, Any]:
         """
         Analyze data with full context preservation using conversation history.
 
@@ -252,16 +245,14 @@ class GeminiAgent:
         prompt = self._build_analysis_prompt(data)
 
         # Reason with context
-        result = self.reason(
-            prompt=prompt, thinking_level=thinking_level, context=context
-        )
+        result = self.reason(prompt=prompt, thinking_level=thinking_level, context=context)
 
         # Log decision
         self.log_decision(result)
 
         return result
 
-    def _build_analysis_prompt(self, data: Dict[str, Any]) -> str:
+    def _build_analysis_prompt(self, data: dict[str, Any]) -> str:
         """Build analysis prompt from data."""
         return f"""You are {self.name}, responsible for: {self.role}
 
@@ -276,7 +267,7 @@ Provide:
 4. Key factors influencing your decision
 """
 
-    def log_decision(self, decision: Dict[str, Any]) -> None:
+    def log_decision(self, decision: dict[str, Any]) -> None:
         """Log a decision for audit trail."""
         entry = {
             "timestamp": datetime.now().isoformat(),

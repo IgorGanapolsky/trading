@@ -8,11 +8,11 @@ Author: Trading System
 Created: 2025-11-02
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Any
-from datetime import datetime
-import numpy as np
 import json
+from dataclasses import dataclass, field
+from typing import Any
+
+import numpy as np
 
 
 @dataclass
@@ -38,9 +38,9 @@ class BacktestResults:
         trading_days: Number of trading days
     """
 
-    trades: List[Dict[str, Any]] = field(default_factory=list)
-    equity_curve: List[float] = field(default_factory=list)
-    dates: List[str] = field(default_factory=list)
+    trades: list[dict[str, Any]] = field(default_factory=list)
+    equity_curve: list[float] = field(default_factory=list)
+    dates: list[str] = field(default_factory=list)
     total_return: float = 0.0
     sharpe_ratio: float = 0.0
     max_drawdown: float = 0.0
@@ -120,9 +120,7 @@ class BacktestResults:
                 date = trade.get("date", "N/A")
                 amount = trade.get("amount", 0.0)
                 price = trade.get("price", 0.0)
-                report_lines.append(
-                    f"  {date}: BUY {symbol} @ ${price:.2f} (${amount:.2f})"
-                )
+                report_lines.append(f"  {date}: BUY {symbol} @ ${price:.2f} (${amount:.2f})")
             report_lines.append("")
 
         report_lines.append("=" * 80)
@@ -228,7 +226,7 @@ class BacktestResults:
         else:
             return "NEEDS IMPROVEMENT"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert results to dictionary format for serialization.
 

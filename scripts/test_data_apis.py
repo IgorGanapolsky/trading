@@ -1,9 +1,9 @@
 import os
-import sys
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
+
 import alpaca_trade_api as tradeapi
 import requests
+from dotenv import load_dotenv
 
 # Load env
 load_dotenv()
@@ -58,9 +58,7 @@ def test_polygon():
         if resp.status_code == 200:
             data = resp.json()
             if data.get("resultsCount", 0) > 0:
-                print(
-                    f"✅ Polygon Connection Successful. Fetched {data['resultsCount']} bars."
-                )
+                print(f"✅ Polygon Connection Successful. Fetched {data['resultsCount']} bars.")
             else:
                 print(f"⚠️  Polygon returned 0 results. Response: {data}")
         else:

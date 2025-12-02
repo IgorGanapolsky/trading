@@ -3,13 +3,14 @@ Hyperparameter Optimization Framework for RL Trading
 Automated hyperparameter search using Bayesian optimization.
 """
 
-import numpy as np
-from typing import Dict, Any, List, Optional, Callable
-import logging
-from pathlib import Path
-import json
-from datetime import datetime
 import itertools
+import json
+import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Callable, Optional
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class HyperparameterOptimizer:
 
     def __init__(
         self,
-        search_space: Optional[Dict[str, List[Any]]] = None,
+        search_space: Optional[dict[str, list[Any]]] = None,
         optimization_metric: str = "sharpe_ratio",
         n_trials: int = 50,
         save_dir: str = "models/ml/hyperopt",
@@ -52,7 +53,7 @@ class HyperparameterOptimizer:
             f"✅ Hyperparameter Optimizer initialized ({n_trials} trials, metric: {optimization_metric})"
         )
 
-    def _default_search_space(self) -> Dict[str, List[Any]]:
+    def _default_search_space(self) -> dict[str, list[Any]]:
         """Default hyperparameter search space."""
         return {
             "learning_rate": [0.0001, 0.001, 0.01],
@@ -72,7 +73,7 @@ class HyperparameterOptimizer:
         evaluate_fn: Callable,
         symbol: str,
         max_combinations: int = 100,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Perform grid search over hyperparameter space.
 
@@ -107,7 +108,7 @@ class HyperparameterOptimizer:
         for i, combination in enumerate(combinations):
             params = dict(zip(param_names, combination))
 
-            logger.info(f"Trial {i+1}/{len(combinations)}: {params}")
+            logger.info(f"Trial {i + 1}/{len(combinations)}: {params}")
 
             try:
                 # Train model
@@ -134,7 +135,7 @@ class HyperparameterOptimizer:
                     logger.info(f"✅ New best score: {score:.4f} with params: {params}")
 
             except Exception as e:
-                logger.error(f"❌ Trial {i+1} failed: {e}")
+                logger.error(f"❌ Trial {i + 1} failed: {e}")
                 continue
 
         # Save results
@@ -149,7 +150,7 @@ class HyperparameterOptimizer:
 
     def random_search(
         self, train_fn: Callable, evaluate_fn: Callable, symbol: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Perform random search over hyperparameter space.
 
@@ -161,9 +162,7 @@ class HyperparameterOptimizer:
         Returns:
             Best hyperparameters and results
         """
-        logger.info(
-            f"🔍 Starting random search for {symbol} ({self.n_trials} trials)..."
-        )
+        logger.info(f"🔍 Starting random search for {symbol} ({self.n_trials} trials)...")
 
         param_names = list(self.search_space.keys())
 
@@ -174,7 +173,7 @@ class HyperparameterOptimizer:
                 values = self.search_space[name]
                 params[name] = np.random.choice(values)
 
-            logger.info(f"Trial {i+1}/{self.n_trials}: {params}")
+            logger.info(f"Trial {i + 1}/{self.n_trials}: {params}")
 
             try:
                 # Train model
@@ -201,7 +200,7 @@ class HyperparameterOptimizer:
                     logger.info(f"✅ New best score: {score:.4f} with params: {params}")
 
             except Exception as e:
-                logger.error(f"❌ Trial {i+1} failed: {e}")
+                logger.error(f"❌ Trial {i + 1} failed: {e}")
                 continue
 
         # Save results
@@ -233,12 +232,12 @@ class HyperparameterOptimizer:
 
         logger.info(f"💾 Saved optimization results to {results_path}")
 
-    def load_results(self, symbol: str) -> Optional[Dict[str, Any]]:
+    def load_results(self, symbol: str) -> Optional[dict[str, Any]]:
         """Load previous optimization results."""
         results_path = self.save_dir / f"{symbol}_hyperopt_results.json"
 
         if results_path.exists():
-            with open(results_path, "r") as f:
+            with open(results_path) as f:
                 results = json.load(f)
                 self.best_params = results.get("best_params")
                 self.best_score = results.get("best_score", -np.inf)
@@ -247,7 +246,7 @@ class HyperparameterOptimizer:
 
         return None
 
-    def get_best_params(self) -> Optional[Dict[str, Any]]:
+    def get_best_params(self) -> Optional[dict[str, Any]]:
         """Get best hyperparameters found."""
         return self.best_params.copy() if self.best_params else None
 
@@ -257,10 +256,10 @@ def optimize_hyperparameters(
     symbol: str,
     train_fn: Callable,
     evaluate_fn: Callable,
-    search_space: Optional[Dict[str, List[Any]]] = None,
+    search_space: Optional[dict[str, list[Any]]] = None,
     n_trials: int = 50,
     metric: str = "sharpe_ratio",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Quick hyperparameter optimization.
 

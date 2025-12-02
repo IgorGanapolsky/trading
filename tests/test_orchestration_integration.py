@@ -53,42 +53,41 @@ class TestOrchestrationIntegration(unittest.TestCase):
             execution_order.append(phase)
             return {"phase": phase.value, "status": "completed"}
 
-        with patch.object(
-            self.orchestrator, "_execute_phase", side_effect=mock_execute_phase
-        ):
-            with patch.object(
+        with (
+            patch.object(self.orchestrator, "_execute_phase", side_effect=mock_execute_phase),
+            patch.object(
                 self.orchestrator,
                 "_execute_data_collection",
                 return_value={"phase": "data_collection"},
-            ):
-                with patch.object(
-                    self.orchestrator,
-                    "_execute_analysis",
-                    return_value={"phase": "analysis"},
-                ):
-                    with patch.object(
-                        self.orchestrator,
-                        "_execute_risk_assessment",
-                        return_value={"phase": "risk_assessment"},
-                    ):
-                        with patch.object(
-                            self.orchestrator,
-                            "_execute_trades",
-                            return_value={"phase": "execution"},
-                        ):
-                            with patch.object(
-                                self.orchestrator,
-                                "_execute_audit",
-                                return_value={"phase": "audit"},
-                            ):
+            ),
+            patch.object(
+                self.orchestrator,
+                "_execute_analysis",
+                return_value={"phase": "analysis"},
+            ),
+            patch.object(
+                self.orchestrator,
+                "_execute_risk_assessment",
+                return_value={"phase": "risk_assessment"},
+            ),
+            patch.object(
+                self.orchestrator,
+                "_execute_trades",
+                return_value={"phase": "execution"},
+            ),
+            patch.object(
+                self.orchestrator,
+                "_execute_audit",
+                return_value={"phase": "audit"},
+            ),
+        ):
+            result = self.orchestrator.execute_plan(plan)
 
-                                result = self.orchestrator.execute_plan(plan)
+            # Check that all phases executed
+            phases = result.get("phases", {})
+            self.assertEqual(len(phases), len(expected_order))
 
-                                # Check that all phases executed
-                                phases = result.get("phases", {})
-                                self.assertEqual(len(phases), len(expected_order))
-
-                                print("✅ All phases executed in correct order")
+            print("✅ All phases executed in correct order")
 
     def test_ensemble_voting_consensus(self):
         """Test ensemble voting produces consensus"""
@@ -130,9 +129,7 @@ class TestOrchestrationIntegration(unittest.TestCase):
                 },
             }
 
-        with patch.object(
-            self.orchestrator, "_execute_analysis", side_effect=mock_analysis
-        ):
+        with patch.object(self.orchestrator, "_execute_analysis", side_effect=mock_analysis):
             analysis_result = self.orchestrator._execute_analysis(plan)
 
             ensemble_vote = analysis_result.get("ensemble_vote", {})
@@ -156,7 +153,6 @@ class TestOrchestrationIntegration(unittest.TestCase):
             with patch.object(self.orchestrator, "gemini_agent", None):
                 with patch.object(self.orchestrator, "ml_predictor", None):
                     with patch.object(self.orchestrator, "mcp_orchestrator", None):
-
                         # Should still execute without crashing
                         analysis_result = self.orchestrator._execute_analysis(plan)
 
@@ -190,9 +186,7 @@ class TestOrchestrationIntegration(unittest.TestCase):
         def mock_execute_plan(plan):
             return mock_results
 
-        with patch.object(
-            self.orchestrator, "execute_plan", side_effect=mock_execute_plan
-        ):
+        with patch.object(self.orchestrator, "execute_plan", side_effect=mock_execute_plan):
             result = self.orchestrator.execute_plan(plan)
 
             # Validate structure
@@ -243,8 +237,7 @@ class TestAgentCoordination(unittest.TestCase):
             "Langchain": self.orchestrator.langchain_agent is not None,
             "Gemini": self.orchestrator.gemini_agent is not None,
             "Go ADK": (
-                self.orchestrator.adk_adapter is not None
-                and self.orchestrator.adk_adapter.enabled
+                self.orchestrator.adk_adapter is not None and self.orchestrator.adk_adapter.enabled
                 if self.orchestrator.adk_adapter
                 else False
             ),
@@ -255,15 +248,11 @@ class TestAgentCoordination(unittest.TestCase):
         print("\nAgent Status:")
         for agent_name, status in agents_status.items():
             status_icon = "✅" if status else "⚠️"
-            print(
-                f"   {status_icon} {agent_name}: {'Available' if status else 'Unavailable'}"
-            )
+            print(f"   {status_icon} {agent_name}: {'Available' if status else 'Unavailable'}")
 
         # At least some agents should be available
         available_count = sum(1 for v in agents_status.values() if v)
-        self.assertGreater(
-            available_count, 0, "At least some agents should be available"
-        )
+        self.assertGreater(available_count, 0, "At least some agents should be available")
 
         print(f"\n✅ {available_count}/{len(agents_status)} agents available")
 

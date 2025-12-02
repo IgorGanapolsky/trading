@@ -322,7 +322,7 @@ class FibonacciScaler:
 
         # Find highest level we can afford
         current_level = self.FIBONACCI_SEQUENCE[0]
-        for level_idx, fib_amount in enumerate(self.FIBONACCI_SEQUENCE):
+        for _level_idx, fib_amount in enumerate(self.FIBONACCI_SEQUENCE):
             # Calculate milestone for THIS level
             milestone = fib_amount * self.DAYS_PER_LEVEL
 
@@ -334,9 +334,9 @@ class FibonacciScaler:
 
         return float(current_level)
 
-    def get_next_milestone(self, current_level: float) -> dict:
+    def _compute_next_milestone(self, current_level: float) -> dict:
         """
-        Get next Fibonacci milestone details.
+        Get next Fibonacci milestone details (internal method with params).
 
         Args:
             current_level: Current daily amount
@@ -354,7 +354,7 @@ class FibonacciScaler:
         if current_idx >= len(self.FIBONACCI_SEQUENCE) - 1:
             return {
                 "next_level": self.MAX_DAILY_AMOUNT,
-                "milestone_profit": float('inf'),
+                "milestone_profit": float("inf"),
                 "current_level": current_level,
                 "at_max": True,
                 "message": "At maximum daily investment level",
@@ -372,9 +372,9 @@ class FibonacciScaler:
             "message": f"Need ${milestone:.2f} cumulative profit to scale to ${next_level}/day",
         }
 
-    def should_scale_up(self, cumulative_profit: float, current_level: float) -> bool:
+    def _compute_should_scale_up(self, cumulative_profit: float, current_level: float) -> bool:
         """
-        Check if we should scale up to next Fibonacci level.
+        Check if we should scale up to next Fibonacci level (internal method with params).
 
         Args:
             cumulative_profit: Total profit to date
@@ -383,7 +383,7 @@ class FibonacciScaler:
         Returns:
             True if should scale up, False otherwise
         """
-        milestone_info = self.get_next_milestone(current_level)
+        milestone_info = self._compute_next_milestone(current_level)
 
         # Already at max?
         if milestone_info["at_max"]:
@@ -402,17 +402,16 @@ class FibonacciScaler:
         try:
             # Get current account data
             account = self.trader.get_account()
-            equity = float(account.get("equity", 100000))
+            float(account.get("equity", 100000))
 
             # Load system state for cumulative profit tracking
             state_file = Path("data/system_state.json")
-            starting_balance = 100000.0
             cumulative_profit = 0.0
 
             if state_file.exists():
                 with open(state_file) as f:
                     state = json.load(f)
-                    starting_balance = state.get("account", {}).get("starting_balance", 100000.0)
+                    state.get("account", {}).get("starting_balance", 100000.0)
                     cumulative_profit = state.get("account", {}).get("total_pl", 0.0)
 
             # Get current and historical levels
@@ -428,9 +427,13 @@ class FibonacciScaler:
                 self._save_state()
 
             # Get next milestone info
-            milestone_info = self.get_next_milestone(current_level)
+            milestone_info = self._compute_next_milestone(current_level)
             profit_to_next = max(0, milestone_info["milestone_profit"] - cumulative_profit)
-            progress_pct = (cumulative_profit / milestone_info["milestone_profit"] * 100) if not milestone_info["at_max"] else 100.0
+            progress_pct = (
+                (cumulative_profit / milestone_info["milestone_profit"] * 100)
+                if not milestone_info["at_max"]
+                else 100.0
+            )
 
             return {
                 "daily_amount": current_level,
@@ -457,17 +460,21 @@ class FibonacciScaler:
 
     def _log_scale_up(self, old_level: float, new_level: float, profit: float) -> None:
         """Log scale-up event for audit trail."""
-        logger.info(f"🚀 FIBONACCI SCALE-UP: ${old_level}/day → ${new_level}/day (profit: ${profit:.2f})")
+        logger.info(
+            f"🚀 FIBONACCI SCALE-UP: ${old_level}/day → ${new_level}/day (profit: ${profit:.2f})"
+        )
 
         # Add to state history
         self.state["scale_up_history"] = self.state.get("scale_up_history", [])
-        self.state["scale_up_history"].append({
-            "timestamp": datetime.now().isoformat(),
-            "old_level": old_level,
-            "new_level": new_level,
-            "cumulative_profit": profit,
-            "milestone_hit": new_level * self.DAYS_PER_LEVEL,
-        })
+        self.state["scale_up_history"].append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "old_level": old_level,
+                "new_level": new_level,
+                "cumulative_profit": profit,
+                "milestone_hit": new_level * self.DAYS_PER_LEVEL,
+            }
+        )
 
     # ==================== NEW CONVENIENCE API ====================
     # Simpler methods that read from state automatically
@@ -584,14 +591,14 @@ class FibonacciScaler:
 
         # Log to history
         self._log_scale_up(
-            float(self.FIBONACCI[old_level]),
-            float(self.FIBONACCI[new_level]),
-            cumulative_profit
+            float(self.FIBONACCI[old_level]), float(self.FIBONACCI[new_level]), cumulative_profit
         )
 
         self._save_state()
 
-        logger.info(f"🚀 SCALED UP: ${self.FIBONACCI[old_level]}/day → ${self.FIBONACCI[new_level]}/day")
+        logger.info(
+            f"🚀 SCALED UP: ${self.FIBONACCI[old_level]}/day → ${self.FIBONACCI[new_level]}/day"
+        )
 
         return {
             "scaled": True,
@@ -644,22 +651,32 @@ class FibonacciScaler:
                 avg_daily_profit = equity * (avg_daily_return_pct / 100)
 
                 if avg_daily_profit <= 0:
-                    days_to_milestone = float('inf')
+                    days_to_milestone = float("inf")
                 else:
                     days_to_milestone = int(profit_needed / avg_daily_profit)
 
-            projections.append({
-                "level_index": i,
-                "daily_amount": fib_amount,
-                "milestone_profit": milestone_profit,
-                "days_from_now": days_to_milestone,
-                "months_from_now": round(days_to_milestone / 30, 1),
-                "date_estimate": (datetime.now() + timedelta(days=days_to_milestone)).strftime("%Y-%m-%d") if days_to_milestone < 3650 else "Beyond 10 years",
-            })
+            projections.append(
+                {
+                    "level_index": i,
+                    "daily_amount": fib_amount,
+                    "milestone_profit": milestone_profit,
+                    "days_from_now": days_to_milestone,
+                    "months_from_now": round(days_to_milestone / 30, 1),
+                    "date_estimate": (datetime.now() + timedelta(days=days_to_milestone)).strftime(
+                        "%Y-%m-%d"
+                    )
+                    if days_to_milestone < 3650
+                    else "Beyond 10 years",
+                }
+            )
 
         # Find $100/day milestone
         max_level_idx = len(self.FIBONACCI) - 1
-        max_projection = projections[max_level_idx - current_level] if max_level_idx >= current_level else projections[-1]
+        max_projection = (
+            projections[max_level_idx - current_level]
+            if max_level_idx >= current_level
+            else projections[-1]
+        )
 
         return {
             "current_level": current_amount,
@@ -790,22 +807,32 @@ def run_all_automation():
     daily_amount = fib_scaler.get_daily_amount()
     milestone = fib_scaler.get_next_milestone()
     should_scale = fib_scaler.should_scale_up()
+    fib_result = {
+        "daily_amount": daily_amount,
+        "current_level": current_level,
+        "milestone": milestone,
+        "should_scale": should_scale,
+    }
 
     print(f"💎 Today's Investment: ${daily_amount:.2f}/day")
     print(f"📊 Current Profit: ${milestone.get('current_profit', 0):.2f}")
     print(f"📈 Current Level: Level {current_level} (${daily_amount:.0f}/day)")
 
-    if not milestone.get('at_max'):
+    if not milestone.get("at_max"):
         print(f"🎯 Next Level: ${milestone['next_level']:.0f}/day")
         print(f"🏆 Next Milestone: ${milestone['required_profit']:.2f} profit")
-        print(f"🚀 Progress: {milestone['progress_pct']:.1f}% (${milestone['remaining']:.2f} to go)")
+        print(
+            f"🚀 Progress: {milestone['progress_pct']:.1f}% (${milestone['remaining']:.2f} to go)"
+        )
         print(f"✅ Ready to Scale: {'YES' if should_scale else 'NO'}")
 
         if should_scale:
             print("\n⚡ AUTO-SCALING TRIGGERED!")
             scale_result = fib_scaler.scale_up()
-            if scale_result['scaled']:
-                print(f"✨ SCALED UP: ${scale_result['old_amount']:.0f} → ${scale_result['new_amount']:.0f}/day")
+            if scale_result["scaled"]:
+                print(
+                    f"✨ SCALED UP: ${scale_result['old_amount']:.0f} → ${scale_result['new_amount']:.0f}/day"
+                )
                 print(f"🎉 Milestone Hit: ${scale_result['milestone_hit']:.2f} profit")
     else:
         print("🏁 AT MAXIMUM LEVEL: $100/day (safety cap)")
@@ -827,7 +854,7 @@ def run_all_automation():
     legacy_result = legacy_scaler.calculate_daily_investment()
     print(f"Legacy Method: ${legacy_result['daily_amount']:.2f}/day")
     print(f"Floating P/L: ${legacy_result.get('floating_pnl', 0):.2f}")
-    print(f"⚠️  Note: This method is DEPRECATED. Use Fibonacci scaling above.")
+    print("⚠️  Note: This method is DEPRECATED. Use Fibonacci scaling above.")
 
     print("\n" + "=" * 70)
 

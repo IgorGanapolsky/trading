@@ -5,10 +5,10 @@ Collects sentiment and messages from StockTwits API.
 """
 
 import logging
-import requests
-from typing import List, Dict, Any
 from datetime import datetime
+from typing import Any
 
+import requests
 from src.rag.collectors.base_collector import BaseNewsCollector
 
 logger = logging.getLogger(__name__)
@@ -26,9 +26,7 @@ class StockTwitsCollector(BaseNewsCollector):
     def __init__(self):
         super().__init__(source_name="stocktwits")
 
-    def collect_ticker_news(
-        self, ticker: str, days_back: int = 7
-    ) -> List[Dict[str, Any]]:
+    def collect_ticker_news(self, ticker: str, days_back: int = 7) -> list[dict[str, Any]]:
         """
         Collect messages for a specific ticker.
 
@@ -80,20 +78,18 @@ class StockTwitsCollector(BaseNewsCollector):
 
                 results.append(entry)
 
-            logger.info(
-                f"Collected {len(results)} messages from StockTwits for {ticker}"
-            )
+            logger.info(f"Collected {len(results)} messages from StockTwits for {ticker}")
             return results
 
         except Exception as e:
             logger.error(f"Error collecting from StockTwits for {ticker}: {e}")
             return []
 
-    def collect_market_news(self, days_back: int = 1) -> List[Dict[str, Any]]:
+    def collect_market_news(self, days_back: int = 1) -> list[dict[str, Any]]:
         """StockTwits is ticker-centric, no general market news."""
         return []
 
-    def collect_daily_snapshot(self, tickers: List[str]) -> List[Dict[str, Any]]:
+    def collect_daily_snapshot(self, tickers: list[str]) -> list[dict[str, Any]]:
         """Collect latest messages for all tracked tickers."""
         all_messages = []
         for ticker in tickers:

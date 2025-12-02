@@ -17,13 +17,14 @@ Author: Trading System
 Date: 2025-11-24
 """
 
-import logging
 import json
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, field, asdict
+import logging
+from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from typing import Any, Optional
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -127,10 +128,10 @@ class BehavioralFinanceManager:
         self.loss_aversion_threshold = loss_aversion_threshold
 
         # Storage for tracking
-        self.expectations: List[TradeExpectation] = []
-        self.emotional_registry: List[EmotionalRecord] = []
-        self.pattern_history: Dict[str, List[PatternCheck]] = {}
-        self.decision_history: List[Dict[str, Any]] = []
+        self.expectations: list[TradeExpectation] = []
+        self.emotional_registry: list[EmotionalRecord] = []
+        self.pattern_history: dict[str, list[PatternCheck]] = {}
+        self.decision_history: list[dict[str, Any]] = []
 
         # Load historical data
         self._load_historical_data()
@@ -199,9 +200,7 @@ class BehavioralFinanceManager:
         expectation.exit_price = exit_price
         expectation.exit_date = datetime.now()
         expectation.actual_return_pct = actual_return_pct
-        expectation.expectation_gap = (
-            actual_return_pct - expectation.expected_return_pct
-        )
+        expectation.expectation_gap = actual_return_pct - expectation.expected_return_pct
 
         # Record emotional response based on gap
         if expectation.expectation_gap < -0.05:  # Much worse than expected
@@ -280,7 +279,7 @@ class BehavioralFinanceManager:
         pattern_type: str,
         detected_pattern: str,
         confidence: float,
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         """
         Check for pattern recognition bias.
 
@@ -366,10 +365,10 @@ class BehavioralFinanceManager:
 
     def check_loss_aversion(
         self,
-        recent_losses: List[float],
+        recent_losses: list[float],
         account_value: float,
         daily_pl: float,
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         """
         Check for loss aversion bias.
 
@@ -394,9 +393,7 @@ class BehavioralFinanceManager:
         if max_loss < self.loss_aversion_threshold:
             # Check if we're becoming too conservative
             recent_emotions = [
-                e
-                for e in self.emotional_registry[-10:]
-                if e.emotional_state == EmotionalState.FEAR
+                e for e in self.emotional_registry[-10:] if e.emotional_state == EmotionalState.FEAR
             ]
 
             if len(recent_emotions) > 5:  # Too many fear responses
@@ -422,7 +419,7 @@ class BehavioralFinanceManager:
 
         return True, "Loss aversion check passed"
 
-    def check_emotional_state(self) -> Tuple[EmotionalState, float]:
+    def check_emotional_state(self) -> tuple[EmotionalState, float]:
         """
         Check current emotional state based on recent records.
 
@@ -436,7 +433,7 @@ class BehavioralFinanceManager:
         recent_emotions = self.emotional_registry[-10:]
 
         # Count occurrences of each emotion
-        emotion_counts: Dict[EmotionalState, Tuple[int, float]] = {}
+        emotion_counts: dict[EmotionalState, tuple[int, float]] = {}
         for record in recent_emotions:
             state = record.emotional_state
             if state not in emotion_counts:
@@ -449,7 +446,8 @@ class BehavioralFinanceManager:
 
         # Find dominant emotion
         dominant_emotion = max(
-            emotion_counts.items(), key=lambda x: x[1][0]  # Sort by count
+            emotion_counts.items(),
+            key=lambda x: x[1][0],  # Sort by count
         )[0]
 
         # Calculate average intensity
@@ -464,8 +462,8 @@ class BehavioralFinanceManager:
         expected_return: float,
         confidence: float,
         pattern_type: Optional[str] = None,
-        recent_losses: Optional[List[float]] = None,
-    ) -> Tuple[bool, str]:
+        recent_losses: Optional[list[float]] = None,
+    ) -> tuple[bool, str]:
         """
         Comprehensive check to determine if trade should proceed.
 
@@ -519,7 +517,7 @@ class BehavioralFinanceManager:
 
         return True, "All behavioral checks passed"
 
-    def get_behavioral_summary(self) -> Dict[str, Any]:
+    def get_behavioral_summary(self) -> dict[str, Any]:
         """
         Get summary of behavioral finance metrics.
 
@@ -527,9 +525,7 @@ class BehavioralFinanceManager:
             Dictionary with behavioral finance summary
         """
         # Calculate expectation gaps
-        completed_expectations = [
-            e for e in self.expectations if e.expectation_gap is not None
-        ]
+        completed_expectations = [e for e in self.expectations if e.expectation_gap is not None]
         avg_expectation_gap = (
             np.mean([e.expectation_gap for e in completed_expectations])
             if completed_expectations
@@ -573,7 +569,7 @@ class BehavioralFinanceManager:
         # Load expectations
         if expectations_file.exists():
             try:
-                with open(expectations_file, "r") as f:
+                with open(expectations_file) as f:
                     data = json.load(f)
                     self.expectations = [
                         TradeExpectation(
@@ -601,7 +597,7 @@ class BehavioralFinanceManager:
         # Load emotional registry
         if emotions_file.exists():
             try:
-                with open(emotions_file, "r") as f:
+                with open(emotions_file) as f:
                     data = json.load(f)
                     self.emotional_registry = [
                         EmotionalRecord(
@@ -623,7 +619,7 @@ class BehavioralFinanceManager:
         # Load pattern history
         if patterns_file.exists():
             try:
-                with open(patterns_file, "r") as f:
+                with open(patterns_file) as f:
                     data = json.load(f)
                     self.pattern_history = {}
                     for pattern_type, patterns in data.items():
@@ -638,9 +634,7 @@ class BehavioralFinanceManager:
                             )
                             for p in patterns
                         ]
-                logger.info(
-                    f"Loaded pattern history for {len(self.pattern_history)} pattern types"
-                )
+                logger.info(f"Loaded pattern history for {len(self.pattern_history)} pattern types")
             except Exception as e:
                 logger.warning(f"Failed to load pattern history: {e}")
 

@@ -3,9 +3,10 @@
 Test Bond Order Execution
 Manually tests BND order execution to capture exact errors
 """
-import os
+
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -25,11 +26,11 @@ def test_bnd_order():
     # Test with actual bond allocation
     test_amount = 0.90  # 15% of $6.00 daily allocation
 
-    print(f"📊 Test Configuration")
+    print("📊 Test Configuration")
     print("-" * 80)
-    print(f"Symbol: BND")
+    print("Symbol: BND")
     print(f"Amount: ${test_amount:.2f}")
-    print(f"Tier: T1_CORE")
+    print("Tier: T1_CORE")
     print()
 
     try:
@@ -115,4 +116,3 @@ def test_bnd_order():
 
 if __name__ == "__main__":
     test_bnd_order()
-

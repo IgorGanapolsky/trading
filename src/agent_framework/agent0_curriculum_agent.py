@@ -12,11 +12,11 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
@@ -57,25 +57,25 @@ class TradingTask:
     difficulty: TaskDifficulty = TaskDifficulty.BEGINNER
     title: str = ""
     description: str = ""
-    objectives: List[str] = field(default_factory=list)
+    objectives: list[str] = field(default_factory=list)
 
     # Task parameters
-    symbols: List[str] = field(default_factory=list)
-    constraints: Dict[str, Any] = field(default_factory=dict)
-    required_tools: List[str] = field(default_factory=list)
-    evaluation_criteria: Dict[str, Any] = field(default_factory=dict)
+    symbols: list[str] = field(default_factory=list)
+    constraints: dict[str, Any] = field(default_factory=dict)
+    required_tools: list[str] = field(default_factory=list)
+    evaluation_criteria: dict[str, Any] = field(default_factory=dict)
 
     # Evolution tracking
     generation_iteration: int = 0
-    parent_task_id: Optional[str] = None  # If this task evolved from another
+    parent_task_id: str | None = None  # If this task evolved from another
     complexity_score: float = 0.0  # 0-1 scale
 
     # Execution tracking
     executed: bool = False
-    execution_result: Optional[Dict[str, Any]] = None
+    execution_result: dict[str, Any] | None = None
     success_score: float = 0.0  # 0-1 scale
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization"""
         data = asdict(self)
         data["category"] = self.category.value
@@ -83,7 +83,7 @@ class TradingTask:
         return data
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> TradingTask:
+    def from_dict(cls, data: dict[str, Any]) -> TradingTask:
         """Create from dictionary"""
         data["category"] = TaskCategory(data["category"])
         data["difficulty"] = TaskDifficulty(data["difficulty"])
@@ -100,12 +100,10 @@ class CurriculumState:
     tasks_generated: int = 0
     tasks_completed: int = 0
     success_rate: float = 0.0
-    last_evolution: Optional[str] = None
+    last_evolution: str | None = None
 
     # Difficulty progression tracking
-    difficulty_history: List[Tuple[int, TaskDifficulty, float]] = field(
-        default_factory=list
-    )
+    difficulty_history: list[tuple[int, TaskDifficulty, float]] = field(default_factory=list)
 
     def evolve_difficulty(self, success_rate: float) -> TaskDifficulty:
         """
@@ -152,9 +150,7 @@ class CurriculumState:
             )
 
         # Record difficulty change
-        self.difficulty_history.append(
-            (self.iteration, self.current_difficulty, success_rate)
-        )
+        self.difficulty_history.append((self.iteration, self.current_difficulty, success_rate))
 
         return self.current_difficulty
 
@@ -170,7 +166,7 @@ class CurriculumAgent:
     4. Create frontier tasks that push boundaries
     """
 
-    def __init__(self, storage_dir: Optional[Path] = None):
+    def __init__(self, storage_dir: Path | None = None):
         """
         Initialize Curriculum Agent
 
@@ -192,9 +188,9 @@ class CurriculumAgent:
 
     def generate_task(
         self,
-        executor_capability: Optional[float] = None,
-        category: Optional[TaskCategory] = None,
-        symbols: Optional[List[str]] = None,
+        executor_capability: float | None = None,
+        category: TaskCategory | None = None,
+        symbols: list[str] | None = None,
     ) -> TradingTask:
         """
         Generate a new trading task at appropriate difficulty level
@@ -223,9 +219,7 @@ class CurriculumAgent:
             category = self._select_category()
 
         # Select difficulty (may be adjusted based on capability)
-        difficulty = self._adjust_difficulty(
-            self.state.current_difficulty, executor_capability
-        )
+        difficulty = self._adjust_difficulty(self.state.current_difficulty, executor_capability)
 
         # Generate task using template
         task = self._create_task_from_template(category, difficulty, symbols)
@@ -235,15 +229,11 @@ class CurriculumAgent:
         self._save_state()
 
         self.state.tasks_generated += 1
-        logger.info(
-            f"📋 Generated task: {task.title} ({difficulty.value}, {category.value})"
-        )
+        logger.info(f"📋 Generated task: {task.title} ({difficulty.value}, {category.value})")
 
         return task
 
-    def record_execution_result(
-        self, task_id: str, result: Dict[str, Any], success_score: float
-    ):
+    def record_execution_result(self, task_id: str, result: dict[str, Any], success_score: float):
         """
         Record execution result for a task
 
@@ -262,15 +252,13 @@ class CurriculumAgent:
             self.state.tasks_completed += 1
             self._save_state()
 
-            logger.info(
-                f"✅ Task {task_id} completed (success_score={success_score:.2f})"
-            )
+            logger.info(f"✅ Task {task_id} completed (success_score={success_score:.2f})")
 
     def _create_task_from_template(
         self,
         category: TaskCategory,
         difficulty: TaskDifficulty,
-        symbols: Optional[List[str]] = None,
+        symbols: list[str] | None = None,
     ) -> TradingTask:
         """Create a task from template based on category and difficulty"""
         template_key = f"{category.value}_{difficulty.value}"
@@ -305,7 +293,7 @@ class CurriculumAgent:
 
         return task
 
-    def _initialize_templates(self) -> Dict[str, Dict[str, Any]]:
+    def _initialize_templates(self) -> dict[str, dict[str, Any]]:
         """Initialize task templates for different categories and difficulties"""
         templates = {}
 
@@ -606,9 +594,7 @@ class CurriculumAgent:
         category_index = self.state.iteration % len(categories)
         return categories[category_index]
 
-    def _select_symbols(
-        self, category: TaskCategory, difficulty: TaskDifficulty
-    ) -> List[str]:
+    def _select_symbols(self, category: TaskCategory, difficulty: TaskDifficulty) -> list[str]:
         """Select appropriate symbols for the task"""
         # Default symbols
         base_symbols = ["SPY", "QQQ", "VOO"]
@@ -625,7 +611,7 @@ class CurriculumAgent:
         return base_symbols[:2]
 
     def _adjust_difficulty(
-        self, base_difficulty: TaskDifficulty, executor_capability: Optional[float]
+        self, base_difficulty: TaskDifficulty, executor_capability: float | None
     ) -> TaskDifficulty:
         """Adjust difficulty based on executor capability"""
         if executor_capability is None:
@@ -653,9 +639,7 @@ class CurriculumAgent:
 
         return base_difficulty
 
-    def _calculate_complexity(
-        self, category: TaskCategory, difficulty: TaskDifficulty
-    ) -> float:
+    def _calculate_complexity(self, category: TaskCategory, difficulty: TaskDifficulty) -> float:
         """Calculate complexity score (0-1)"""
         difficulty_scores = {
             TaskDifficulty.BEGINNER: 0.2,
@@ -688,14 +672,12 @@ class CurriculumAgent:
             return 0.5  # Default to medium success rate
 
         # Load recent tasks
-        task_files = sorted(
-            tasks_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True
-        )
+        task_files = sorted(tasks_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
         recent_tasks = []
 
         for task_file in task_files[:window]:
             try:
-                with open(task_file, "r") as f:
+                with open(task_file) as f:
                     task_data = json.load(f)
                     task = TradingTask.from_dict(task_data)
                     if task.executed:
@@ -707,9 +689,7 @@ class CurriculumAgent:
             return 0.5
 
         # Calculate average success score
-        avg_success = sum(task.success_score for task in recent_tasks) / len(
-            recent_tasks
-        )
+        avg_success = sum(task.success_score for task in recent_tasks) / len(recent_tasks)
         return avg_success
 
     def _save_task(self, task: TradingTask):
@@ -721,14 +701,14 @@ class CurriculumAgent:
         with open(task_file, "w") as f:
             json.dump(task.to_dict(), f, indent=2)
 
-    def _load_task(self, task_id: str) -> Optional[TradingTask]:
+    def _load_task(self, task_id: str) -> TradingTask | None:
         """Load task from disk"""
         task_file = self.storage_dir / "tasks" / f"{task_id}.json"
         if not task_file.exists():
             return None
 
         try:
-            with open(task_file, "r") as f:
+            with open(task_file) as f:
                 data = json.load(f)
                 return TradingTask.from_dict(data)
         except Exception as e:
@@ -758,7 +738,7 @@ class CurriculumAgent:
             return CurriculumState()
 
         try:
-            with open(state_file, "r") as f:
+            with open(state_file) as f:
                 data = json.load(f)
 
             # Convert difficulty back to enum
@@ -781,7 +761,7 @@ class CurriculumAgent:
             logger.warning(f"Failed to load curriculum state: {e}")
             return CurriculumState()
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get curriculum statistics"""
         return {
             "iteration": self.state.iteration,

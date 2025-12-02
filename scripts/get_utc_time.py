@@ -12,14 +12,14 @@ Examples:
     python3 scripts/get_utc_time.py 9 35        # 9:35 AM ET -> UTC
     python3 scripts/get_utc_time.py 10 0 0,6    # 10:00 AM ET on weekends -> UTC
 """
+
 import sys
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
+
 import pytz
 
 
-def get_utc_cron(
-    eastern_hour: int, eastern_minute: int, day_of_week: str = None
-) -> str:
+def get_utc_cron(eastern_hour: int, eastern_minute: int, day_of_week: str = None) -> str:
     """
     Calculate UTC cron expression for Eastern Time, handling DST automatically.
 
@@ -38,9 +38,7 @@ def get_utc_cron(
     now = datetime.now(eastern)
 
     # Create a time object for Eastern Time
-    et_time = now.replace(
-        hour=eastern_hour, minute=eastern_minute, second=0, microsecond=0
-    )
+    et_time = now.replace(hour=eastern_hour, minute=eastern_minute, second=0, microsecond=0)
 
     # Convert to UTC
     utc_time = eastern.localize(et_time).astimezone(utc)
@@ -71,9 +69,7 @@ def get_utc_time_info(eastern_hour: int, eastern_minute: int) -> dict:
     utc = pytz.UTC
 
     now = datetime.now(eastern)
-    et_time = now.replace(
-        hour=eastern_hour, minute=eastern_minute, second=0, microsecond=0
-    )
+    et_time = now.replace(hour=eastern_hour, minute=eastern_minute, second=0, microsecond=0)
     et_localized = eastern.localize(et_time)
     utc_time = et_localized.astimezone(utc)
 
@@ -93,9 +89,7 @@ def main():
         print("Usage: python3 scripts/get_utc_time.py <hour> <minute> [day_of_week]")
         print("\nExamples:")
         print("  python3 scripts/get_utc_time.py 9 35        # 9:35 AM ET")
-        print(
-            "  python3 scripts/get_utc_time.py 10 0 0,6     # 10:00 AM ET on weekends"
-        )
+        print("  python3 scripts/get_utc_time.py 10 0 0,6     # 10:00 AM ET on weekends")
         sys.exit(1)
 
     try:
@@ -123,7 +117,7 @@ def main():
         )
 
         # Output cron for easy copy-paste
-        print(f"\n# Copy this to your workflow:")
+        print("\n# Copy this to your workflow:")
         print(f"- cron: '{cron}'")
 
     except ValueError as e:

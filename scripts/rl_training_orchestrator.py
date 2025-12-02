@@ -17,14 +17,15 @@ Usage:
   # GitHub Actions (via workflow)
   # Just enable model-training.yml workflow
 """
+
+import argparse
+import json
 import os
 import sys
-import json
-import argparse
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any, Optional, List
-import traceback
+from pathlib import Path
+from typing import Any
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env
@@ -49,7 +50,7 @@ class RLTrainingOrchestrator:
             "errors": [],
         }
 
-    def train_q_learning(self) -> Dict[str, Any]:
+    def train_q_learning(self) -> dict[str, Any]:
         """Train Q-learning agent."""
         try:
             from src.agents.reinforcement_learning_optimized import (
@@ -66,13 +67,8 @@ class RLTrainingOrchestrator:
 
             agent = OptimizedRLPolicyLearner()
 
-            if (
-                agent.enable_replay
-                and len(agent.replay_buffer) >= agent.replay_batch_size
-            ):
-                training_iterations = min(
-                    20, len(agent.replay_buffer) // agent.replay_batch_size
-                )
+            if agent.enable_replay and len(agent.replay_buffer) >= agent.replay_batch_size:
+                training_iterations = min(20, len(agent.replay_buffer) // agent.replay_batch_size)
                 total_updates = 0
 
                 for _ in range(training_iterations):
@@ -106,7 +102,7 @@ class RLTrainingOrchestrator:
                 "message": error_msg,
             }
 
-    def train_dqn(self, device: str = "cpu", episodes: int = 10) -> Dict[str, Any]:
+    def train_dqn(self, device: str = "cpu", episodes: int = 10) -> dict[str, Any]:
         """Train DQN agent."""
         try:
             from src.ml.dqn_agent import DQNAgent
@@ -138,7 +134,7 @@ class RLTrainingOrchestrator:
             total_loss = 0.0
             training_steps = 0
 
-            for episode in range(episodes):
+            for _episode in range(episodes):
                 loss = agent.train_step()
                 if loss is not None:
                     total_loss += loss
@@ -172,7 +168,7 @@ class RLTrainingOrchestrator:
                 "message": error_msg,
             }
 
-    def train_with_langsmith(self, agent_type: str) -> Dict[str, Any]:
+    def train_with_langsmith(self, agent_type: str) -> dict[str, Any]:
         """Train agent with LangSmith monitoring."""
         try:
             # Check if LangSmith is configured
@@ -190,7 +186,7 @@ class RLTrainingOrchestrator:
 
             from langsmith import Client
 
-            client = Client(api_key=langsmith_api_key)
+            Client(api_key=langsmith_api_key)
 
             # Train the agent (LangSmith will auto-trace via wrapper)
             try:
@@ -206,7 +202,7 @@ class RLTrainingOrchestrator:
 
                 # LangSmith automatically traces via wrapper - no manual run creation needed
                 return result
-            except Exception as e:
+            except Exception:
                 raise
         except Exception as e:
             error_msg = f"LangSmith training failed: {e}"
@@ -219,15 +215,13 @@ class RLTrainingOrchestrator:
             }
 
     def train_all(
-        self, agents: List[str], device: str = "cpu", use_langsmith: bool = False
-    ) -> Dict[str, Any]:
+        self, agents: list[str], device: str = "cpu", use_langsmith: bool = False
+    ) -> dict[str, Any]:
         """Train all specified agents."""
         for agent in agents:
             if agent == "q_learning":
                 if use_langsmith:
-                    self.results["agents"]["q_learning"] = self.train_with_langsmith(
-                        "q_learning"
-                    )
+                    self.results["agents"]["q_learning"] = self.train_with_langsmith("q_learning")
                 else:
                     self.results["agents"]["q_learning"] = self.train_q_learning()
 
@@ -245,9 +239,7 @@ class RLTrainingOrchestrator:
                 }
 
         # Calculate summary
-        successful = sum(
-            1 for r in self.results["agents"].values() if r.get("success", False)
-        )
+        successful = sum(1 for r in self.results["agents"].values() if r.get("success", False))
         total = len(self.results["agents"])
 
         self.results["summary"] = {
@@ -264,7 +256,7 @@ class RLTrainingOrchestrator:
         results_file = DATA_DIR / "rl_training_log.json"
 
         if results_file.exists():
-            with open(results_file, "r") as f:
+            with open(results_file) as f:
                 log = json.load(f)
         else:
             log = []
@@ -326,9 +318,7 @@ def main():
     print()
 
     orchestrator = RLTrainingOrchestrator(platform=args.platform)
-    results = orchestrator.train_all(
-        agents, device=args.device, use_langsmith=args.use_langsmith
-    )
+    results = orchestrator.train_all(agents, device=args.device, use_langsmith=args.use_langsmith)
 
     # Print results
     print("\n📊 Training Results:")

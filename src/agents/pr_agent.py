@@ -3,8 +3,8 @@ PR Agent - Intelligent Pull Request Handler
 """
 
 import logging
-import os
-from typing import Dict, Any, List
+from typing import Any
+
 from src.agents.base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ class PRAgent(BaseAgent):
     def __init__(self):
         super().__init__(name="PRAgent", role="PR Reviewer & Automator")
 
-    def analyze(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Analyze a Pull Request.
 
@@ -35,7 +35,7 @@ class PRAgent(BaseAgent):
             Analysis result with action (APPROVE, COMMENT, REQUEST_CHANGES)
         """
         pr_title = data.get("title", "")
-        pr_body = data.get("body", "")
+        data.get("body", "")
         files = data.get("files", [])
 
         logger.info(f"Analyzing PR: {pr_title}")
@@ -61,7 +61,7 @@ class PRAgent(BaseAgent):
             "analysis": f"Analyzed {len(files)} files. Risk score: {risk_score}",
         }
 
-    def _calculate_risk(self, title: str, files: List[str]) -> int:
+    def _calculate_risk(self, title: str, files: list[str]) -> int:
         """Calculate risk score (0-100) based on PR content."""
         score = 0
 

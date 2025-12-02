@@ -4,12 +4,12 @@ Anomaly Detector Skill - Implementation
 Real-time anomaly detection for execution quality and market manipulation
 """
 
+import argparse
+import json
 import os
 import sys
-import json
-import argparse
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Any
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
@@ -19,12 +19,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def error_response(error_msg: str, error_code: str = "ERROR") -> Dict[str, Any]:
+def error_response(error_msg: str, error_code: str = "ERROR") -> dict[str, Any]:
     """Standard error response format"""
     return {"success": False, "error": error_msg, "error_code": error_code}
 
 
-def success_response(data: Any) -> Dict[str, Any]:
+def success_response(data: Any) -> dict[str, Any]:
     """Standard success response format"""
     return {"success": True, **data}
 
@@ -40,7 +40,7 @@ class AnomalyDetector:
         quantity: float,
         order_type: str,
         timestamp: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Analyze execution quality and detect slippage issues
 
@@ -57,9 +57,7 @@ class AnomalyDetector:
         """
         try:
             slippage_amount = abs(actual_fill_price - expected_price)
-            slippage_pct = (
-                (slippage_amount / expected_price) * 100 if expected_price > 0 else 0
-            )
+            slippage_pct = (slippage_amount / expected_price) * 100 if expected_price > 0 else 0
 
             # Determine severity
             if slippage_pct < 0.1:
@@ -74,7 +72,11 @@ class AnomalyDetector:
             grade = (
                 "A"
                 if quality_score >= 90
-                else "B" if quality_score >= 80 else "C" if quality_score >= 70 else "D"
+                else "B"
+                if quality_score >= 80
+                else "C"
+                if quality_score >= 70
+                else "D"
             )
 
             expected_cost = expected_price * quantity
@@ -105,9 +107,7 @@ class AnomalyDetector:
                             "total_cost": round(actual_cost, 2),
                         },
                         "anomalies_detected": slippage_pct > 0.25,
-                        "warnings": (
-                            [] if slippage_pct < 0.25 else ["High slippage detected"]
-                        ),
+                        "warnings": ([] if slippage_pct < 0.25 else ["High slippage detected"]),
                     },
                     "benchmarks": {
                         "typical_slippage_range": [0.05, 0.10],
@@ -127,7 +127,7 @@ class AnomalyDetector:
         symbol: str,
         lookback_periods: int = 100,
         gap_threshold_pct: float = 1.0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Identify significant price gaps
 
@@ -162,9 +162,9 @@ class AnomalyDetector:
 
     def monitor_spread_conditions(
         self,
-        symbols: List[str],
+        symbols: list[str],
         alert_threshold_pct: float = 0.5,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Monitor bid-ask spreads for liquidity issues
 
@@ -213,7 +213,7 @@ class AnomalyDetector:
         current_volume: float,
         lookback_periods: int = 20,
         std_dev_threshold: float = 2.5,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Identify unusual volume patterns
 
@@ -246,12 +246,16 @@ class AnomalyDetector:
                         "anomaly_type": (
                             "high_volume"
                             if volume_ratio > 1.5
-                            else "low_volume" if volume_ratio < 0.5 else "normal"
+                            else "low_volume"
+                            if volume_ratio < 0.5
+                            else "normal"
                         ),
                         "significance": (
                             "high"
                             if abs(std_deviations) > 3
-                            else "medium" if abs(std_deviations) > 2 else "low"
+                            else "medium"
+                            if abs(std_deviations) > 2
+                            else "low"
                         ),
                     },
                     "context": {
@@ -262,24 +266,20 @@ class AnomalyDetector:
                     "trading_implications": {
                         "liquidity": "Excellent" if volume_ratio > 1.0 else "Good",
                         "execution_quality": "Expected to be good",
-                        "caution_level": (
-                            "Monitor for news" if anomaly_detected else "Normal"
-                        ),
+                        "caution_level": ("Monitor for news" if anomaly_detected else "Normal"),
                     },
                 }
             )
 
         except Exception as e:
-            return error_response(
-                f"Error detecting volume anomalies: {str(e)}", "VOLUME_ERROR"
-            )
+            return error_response(f"Error detecting volume anomalies: {str(e)}", "VOLUME_ERROR")
 
     def assess_market_manipulation_risk(
         self,
         symbol: str,
-        price_data: List[Dict[str, Any]],
+        price_data: list[dict[str, Any]],
         sensitivity: str = "medium",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Screen for potential manipulation patterns
 
@@ -332,9 +332,7 @@ def main():
         "detect_execution_anomalies", help="Detect execution anomalies"
     )
     exec_parser.add_argument("--order-id", required=True, help="Order ID")
-    exec_parser.add_argument(
-        "--expected-price", type=float, required=True, help="Expected price"
-    )
+    exec_parser.add_argument("--expected-price", type=float, required=True, help="Expected price")
     exec_parser.add_argument(
         "--actual-fill-price", type=float, required=True, help="Actual fill price"
     )
@@ -342,42 +340,28 @@ def main():
     exec_parser.add_argument(
         "--order-type", required=True, choices=["market", "limit"], help="Order type"
     )
-    exec_parser.add_argument(
-        "--timestamp", required=True, help="Timestamp (ISO format)"
-    )
+    exec_parser.add_argument("--timestamp", required=True, help="Timestamp (ISO format)")
 
     # detect_price_gaps command
     gap_parser = subparsers.add_parser("detect_price_gaps", help="Detect price gaps")
     gap_parser.add_argument("--symbol", required=True, help="Ticker symbol")
-    gap_parser.add_argument(
-        "--lookback-periods", type=int, default=100, help="Lookback periods"
-    )
-    gap_parser.add_argument(
-        "--gap-threshold-pct", type=float, default=1.0, help="Gap threshold %"
-    )
+    gap_parser.add_argument("--lookback-periods", type=int, default=100, help="Lookback periods")
+    gap_parser.add_argument("--gap-threshold-pct", type=float, default=1.0, help="Gap threshold %")
 
     # monitor_spread_conditions command
     spread_parser = subparsers.add_parser(
         "monitor_spread_conditions", help="Monitor spread conditions"
     )
-    spread_parser.add_argument(
-        "--symbols", nargs="+", required=True, help="Ticker symbols"
-    )
+    spread_parser.add_argument("--symbols", nargs="+", required=True, help="Ticker symbols")
     spread_parser.add_argument(
         "--alert-threshold-pct", type=float, default=0.5, help="Alert threshold %"
     )
 
     # detect_volume_anomalies command
-    volume_parser = subparsers.add_parser(
-        "detect_volume_anomalies", help="Detect volume anomalies"
-    )
+    volume_parser = subparsers.add_parser("detect_volume_anomalies", help="Detect volume anomalies")
     volume_parser.add_argument("--symbol", required=True, help="Ticker symbol")
-    volume_parser.add_argument(
-        "--current-volume", type=float, required=True, help="Current volume"
-    )
-    volume_parser.add_argument(
-        "--lookback-periods", type=int, default=20, help="Lookback periods"
-    )
+    volume_parser.add_argument("--current-volume", type=float, required=True, help="Current volume")
+    volume_parser.add_argument("--lookback-periods", type=int, default=20, help="Lookback periods")
     volume_parser.add_argument(
         "--std-dev-threshold", type=float, default=2.5, help="Std dev threshold"
     )

@@ -13,10 +13,9 @@ Strategy:
 
 import logging
 import os
+from typing import Optional
 
-from typing import Dict, Optional
 import yfinance as yf
-
 from src.core.alpaca_trader import AlpacaTrader
 
 logger = logging.getLogger(__name__)
@@ -55,7 +54,7 @@ class OptionsAccumulationStrategy:
             f"Daily=${self.daily_amount:.2f}"
         )
 
-    def get_current_status(self) -> Dict:
+    def get_current_status(self) -> dict:
         """
         Get current accumulation status.
 
@@ -72,13 +71,21 @@ class OptionsAccumulationStrategy:
                     break
 
             current_shares = float(nvda_position["qty"]) if nvda_position else 0.0
-            current_price = float(nvda_position["current_price"]) if nvda_position else self._get_current_price()
+            current_price = (
+                float(nvda_position["current_price"])
+                if nvda_position
+                else self._get_current_price()
+            )
 
             shares_needed = max(0, self.target_shares - current_shares)
             cost_to_target = shares_needed * current_price
-            days_to_target = cost_to_target / self.daily_amount if self.daily_amount > 0 else float('inf')
+            days_to_target = (
+                cost_to_target / self.daily_amount if self.daily_amount > 0 else float("inf")
+            )
 
-            progress_pct = (current_shares / self.target_shares * 100) if self.target_shares > 0 else 0
+            progress_pct = (
+                (current_shares / self.target_shares * 100) if self.target_shares > 0 else 0
+            )
 
             status = {
                 "target_symbol": self.target_symbol,
@@ -98,12 +105,9 @@ class OptionsAccumulationStrategy:
 
         except Exception as e:
             logger.error(f"Error getting accumulation status: {e}")
-            return {
-                "error": str(e),
-                "status": "error"
-            }
+            return {"error": str(e), "status": "error"}
 
-    def execute_daily(self) -> Optional[Dict]:
+    def execute_daily(self) -> Optional[dict]:
         """
         Execute daily accumulation purchase.
 
@@ -127,7 +131,7 @@ class OptionsAccumulationStrategy:
                 return {
                     "action": "complete",
                     "status": status,
-                    "message": "Target threshold reached"
+                    "message": "Target threshold reached",
                 }
 
             if status.get("status") == "error":
@@ -149,15 +153,16 @@ class OptionsAccumulationStrategy:
             logger.info(f"Current NVDA position: {current_shares:.2f} shares")
             logger.info(f"Target: {self.target_shares} shares")
             logger.info(f"Shares needed: {shares_needed:.2f}")
-            logger.info(f"Today's purchase: ${self.daily_amount:.2f} = {shares_to_buy:.4f} shares @ ${current_price:.2f}")
+            logger.info(
+                f"Today's purchase: ${self.daily_amount:.2f} = {shares_to_buy:.4f} shares @ ${current_price:.2f}"
+            )
             logger.info(f"Progress: {status['progress_pct']:.1f}%")
             logger.info(f"Days to target: {status['days_to_target']:.0f} days")
 
             # Execute purchase
             try:
                 order_result = self.trader.buy_market(
-                    symbol=self.target_symbol,
-                    amount=self.daily_amount
+                    symbol=self.target_symbol, amount=self.daily_amount
                 )
 
                 if order_result.get("success"):
@@ -206,4 +211,3 @@ class OptionsAccumulationStrategy:
         except Exception as e:
             logger.error(f"Error getting current price: {e}")
             return 0.0
-

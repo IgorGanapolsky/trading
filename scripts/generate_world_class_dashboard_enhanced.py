@@ -13,17 +13,18 @@ Implements ALL missing features from the critique:
 ✅ Benchmark Comparisons (vs S&P 500)
 ✅ AI Interpretation Layer
 """
+
+import json
 import os
 import sys
-import json
-from datetime import datetime, date, timedelta
+from datetime import date, datetime
 from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from scripts.enhanced_dashboard_metrics import EnhancedMetricsCalculator, load_json_file
-from scripts.dashboard_charts import generate_all_charts
 from scripts.ai_insights_generator import AIInsightsGenerator
+from scripts.dashboard_charts import generate_all_charts
+from scripts.enhanced_dashboard_metrics import EnhancedMetricsCalculator, load_json_file
 
 try:
     from src.utils.tax_optimization import TaxOptimizer
@@ -51,9 +52,7 @@ def calculate_basic_metrics():
             today = date.today()
             days_elapsed = max((today - start_date).days + 1, 1)
         except:
-            days_elapsed = max(
-                system_state.get("challenge", {}).get("current_day", 1), 1
-            )
+            days_elapsed = max(system_state.get("challenge", {}).get("current_day", 1), 1)
         starting_balance = 100000.0
 
     system_state = load_json_file(DATA_DIR / "system_state.json")
@@ -69,16 +68,12 @@ def calculate_basic_metrics():
         total_pl = latest_perf.get("pl", total_pl)
         total_pl_pct = latest_perf.get("pl_pct", total_pl_pct) * 100
 
-    trading_days = (
-        len(perf_log) if isinstance(perf_log, list) and perf_log else days_elapsed
-    )
+    trading_days = len(perf_log) if isinstance(perf_log, list) and perf_log else days_elapsed
     trading_days = max(trading_days, 1)
 
     avg_daily_profit = total_pl / trading_days if trading_days > 0 else 0.0
     north_star_target = 100.0
-    progress_pct = (
-        (avg_daily_profit / north_star_target * 100) if north_star_target > 0 else 0.0
-    )
+    progress_pct = (avg_daily_profit / north_star_target * 100) if north_star_target > 0 else 0.0
 
     if total_pl > 0 and progress_pct < 0.01:
         progress_pct = max(0.01, (total_pl / north_star_target) * 100)
@@ -122,9 +117,7 @@ def calculate_basic_metrics():
             yesterday_equity = yesterday_perf.get("equity", starting_balance)
             today_equity = current_equity
             today_pl = current_equity - yesterday_equity
-            today_pl_pct = (
-                ((today_pl / yesterday_equity) * 100) if yesterday_equity > 0 else 0.0
-            )
+            today_pl_pct = ((today_pl / yesterday_equity) * 100) if yesterday_equity > 0 else 0.0
 
     days_remaining = total_days - current_day
     progress_pct_challenge = (current_day / total_days * 100) if total_days > 0 else 0.0
@@ -208,12 +201,8 @@ def generate_world_class_dashboard() -> str:
                     and trade.get("pl") is not None
                 ):
                     try:
-                        entry_date = dt.fromisoformat(
-                            trade["entry_date"].replace("Z", "+00:00")
-                        )
-                        exit_date = dt.fromisoformat(
-                            trade["exit_date"].replace("Z", "+00:00")
-                        )
+                        entry_date = dt.fromisoformat(trade["entry_date"].replace("Z", "+00:00"))
+                        exit_date = dt.fromisoformat(trade["exit_date"].replace("Z", "+00:00"))
                         entry_price = trade.get("entry_price", 0.0)
                         exit_price = trade.get("exit_price", 0.0)
                         quantity = trade.get("quantity", 0.0)
@@ -239,7 +228,7 @@ def generate_world_class_dashboard() -> str:
                             exit_date,
                             trade_id,
                         )
-                    except Exception as e:
+                    except Exception:
                         pass  # Skip trades that can't be processed
 
             # Get tax summary
@@ -249,13 +238,11 @@ def generate_world_class_dashboard() -> str:
             pdt_status = tax_optimizer.check_pdt_status(current_equity)
 
             # Get recommendations
-            open_positions = system_state.get("performance", {}).get(
-                "open_positions", []
-            )
+            open_positions = system_state.get("performance", {}).get("open_positions", [])
             tax_recommendations = tax_optimizer.get_tax_optimization_recommendations(
                 current_equity, open_positions
             )
-        except Exception as e:
+        except Exception:
             tax_metrics = {
                 "total_trades": 0,
                 "estimated_tax": 0.0,
@@ -287,7 +274,7 @@ def generate_world_class_dashboard() -> str:
 
     # Extract metrics
     risk = all_metrics.get("risk_metrics", {})
-    perf = all_metrics.get("performance_metrics", {})
+    all_metrics.get("performance_metrics", {})
     enhanced_risk = all_metrics.get("enhanced_risk_metrics", {})
     attribution = all_metrics.get("performance_attribution", {})
     execution = all_metrics.get("execution_metrics", {})
@@ -323,7 +310,7 @@ def generate_world_class_dashboard() -> str:
     # Build dashboard
     dashboard = f"""# 📊 World-Class Trading Dashboard
 
-**Last Updated**: {now.strftime('%Y-%m-%d %I:%M %p ET')}
+**Last Updated**: {now.strftime("%Y-%m-%d %I:%M %p ET")}
 **Auto-Updated**: Daily via GitHub Actions
 **Dashboard Version**: Enhanced World-Class (v2.0)
 
@@ -335,10 +322,10 @@ def generate_world_class_dashboard() -> str:
 
 | Metric | Value |
 |--------|-------|
-| **Equity** | ${basic_metrics.get('today_equity', basic_metrics['current_equity']):,.2f} |
-| **P/L** | ${basic_metrics.get('today_pl', 0):+,.2f} ({basic_metrics.get('today_pl_pct', 0):+.2f}%) |
-| **Trades Today** | {basic_metrics.get('today_trade_count', 0)} |
-| **Status** | {'✅ Active' if basic_metrics.get('today_trade_count', 0) > 0 or abs(basic_metrics.get('today_pl', 0)) > 0.01 else '⏸️ No activity yet'} |
+| **Equity** | ${basic_metrics.get("today_equity", basic_metrics["current_equity"]):,.2f} |
+| **P/L** | ${basic_metrics.get("today_pl", 0):+,.2f} ({basic_metrics.get("today_pl_pct", 0):+.2f}%) |
+| **Trades Today** | {basic_metrics.get("today_trade_count", 0)} |
+| **Status** | {"✅ Active" if basic_metrics.get("today_trade_count", 0) > 0 or abs(basic_metrics.get("today_pl", 0)) > 0.01 else "⏸️ No activity yet"} |
 
 **Funnel Activity**: {order_count} orders, {stop_count} stops
 
@@ -350,13 +337,13 @@ def generate_world_class_dashboard() -> str:
 
 | Metric | Current | Target | Progress |
 |--------|---------|--------|----------|
-| **Average Daily Profit** | ${basic_metrics['avg_daily_profit']:.2f}/day | $100.00/day | {display_progress_pct:.2f}% |
-| **Total P/L** | ${basic_metrics['total_pl']:+,.2f} ({basic_metrics['total_pl_pct']:+.2f}%) | TBD | {status_emoji} |
-| **Win Rate** | {basic_metrics['win_rate']:.1f}% | >55% | {'✅' if basic_metrics['win_rate'] >= 55 else '⚠️'} |
+| **Average Daily Profit** | ${basic_metrics["avg_daily_profit"]:.2f}/day | $100.00/day | {display_progress_pct:.2f}% |
+| **Total P/L** | ${basic_metrics["total_pl"]:+,.2f} ({basic_metrics["total_pl_pct"]:+.2f}%) | TBD | {status_emoji} |
+| **Win Rate** | {basic_metrics["win_rate"]:.1f}% | >55% | {"✅" if basic_metrics["win_rate"] >= 55 else "⚠️"} |
 
 **Progress Bar**: `{north_star_bar}` ({display_progress_pct:.2f}%)
 
-**Assessment**: {'✅ **ON TRACK**' if basic_metrics['total_pl'] > 0 and basic_metrics['win_rate'] >= 55 else '⚠️ **R&D PHASE** - Learning, not earning yet'}
+**Assessment**: {"✅ **ON TRACK**" if basic_metrics["total_pl"] > 0 and basic_metrics["win_rate"] >= 55 else "⚠️ **R&D PHASE** - Learning, not earning yet"}
 
 ---
 
@@ -366,19 +353,19 @@ def generate_world_class_dashboard() -> str:
 
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
-| **Max Drawdown** | {risk.get('max_drawdown_pct', 0):.2f}% | <10% | {'✅' if risk.get('max_drawdown_pct', 0) < 10 else '⚠️'} |
-| **Current Drawdown** | {risk.get('current_drawdown_pct', 0):.2f}% | <5% | {'✅' if risk.get('current_drawdown_pct', 0) < 5 else '⚠️'} |
-| **Ulcer Index** | {risk.get('ulcer_index', 0):.2f} | <5.0 | {'✅' if risk.get('ulcer_index', 0) < 5.0 else '⚠️'} |
-| **Sharpe Ratio** | {risk.get('sharpe_ratio', 0):.2f} | >1.0 | {'✅' if risk.get('sharpe_ratio', 0) >= 1.0 else '⚠️'} |
-| **Sortino Ratio** | {risk.get('sortino_ratio', 0):.2f} | >1.5 | {'✅' if risk.get('sortino_ratio', 0) >= 1.5 else '⚠️'} |
-| **Calmar Ratio** | {risk.get('calmar_ratio', 0):.2f} | >1.0 | {'✅' if risk.get('calmar_ratio', 0) >= 1.0 else '⚠️'} |
-| **Volatility (Annualized)** | {risk.get('volatility_annualized', 0):.2f}% | <20% | {'✅' if risk.get('volatility_annualized', 0) < 20 else '⚠️'} |
-| **VaR (95%)** | {abs(risk.get('var_95', 0)):.2f}% | <3% | {'✅' if abs(risk.get('var_95', 0)) < 3 else '⚠️'} |
-| **VaR (99%)** | {abs(risk.get('var_99', 0)):.2f}% | <5% | {'✅' if abs(risk.get('var_99', 0)) < 5 else '⚠️'} |
-| **CVaR (95%)** | {risk.get('cvar_95', enhanced_risk.get('conditional_var_95', 0)):.2f}% | <5% | {'✅' if risk.get('cvar_95', enhanced_risk.get('conditional_var_95', 0)) < 5 else '⚠️'} |
-| **Kelly Fraction** | {enhanced_risk.get('kelly_fraction', 0):.2f}% | 5-10% | {'✅' if 5 <= enhanced_risk.get('kelly_fraction', 0) <= 10 else '⚠️'} |
-| **Margin Usage** | {enhanced_risk.get('margin_usage_pct', 0):.2f}% | <50% | {'✅' if enhanced_risk.get('margin_usage_pct', 0) < 50 else '⚠️'} |
-| **Leverage** | {enhanced_risk.get('leverage', 1.0):.2f}x | <2.0x | {'✅' if enhanced_risk.get('leverage', 1.0) < 2.0 else '⚠️'} |
+| **Max Drawdown** | {risk.get("max_drawdown_pct", 0):.2f}% | <10% | {"✅" if risk.get("max_drawdown_pct", 0) < 10 else "⚠️"} |
+| **Current Drawdown** | {risk.get("current_drawdown_pct", 0):.2f}% | <5% | {"✅" if risk.get("current_drawdown_pct", 0) < 5 else "⚠️"} |
+| **Ulcer Index** | {risk.get("ulcer_index", 0):.2f} | <5.0 | {"✅" if risk.get("ulcer_index", 0) < 5.0 else "⚠️"} |
+| **Sharpe Ratio** | {risk.get("sharpe_ratio", 0):.2f} | >1.0 | {"✅" if risk.get("sharpe_ratio", 0) >= 1.0 else "⚠️"} |
+| **Sortino Ratio** | {risk.get("sortino_ratio", 0):.2f} | >1.5 | {"✅" if risk.get("sortino_ratio", 0) >= 1.5 else "⚠️"} |
+| **Calmar Ratio** | {risk.get("calmar_ratio", 0):.2f} | >1.0 | {"✅" if risk.get("calmar_ratio", 0) >= 1.0 else "⚠️"} |
+| **Volatility (Annualized)** | {risk.get("volatility_annualized", 0):.2f}% | <20% | {"✅" if risk.get("volatility_annualized", 0) < 20 else "⚠️"} |
+| **VaR (95%)** | {abs(risk.get("var_95", 0)):.2f}% | <3% | {"✅" if abs(risk.get("var_95", 0)) < 3 else "⚠️"} |
+| **VaR (99%)** | {abs(risk.get("var_99", 0)):.2f}% | <5% | {"✅" if abs(risk.get("var_99", 0)) < 5 else "⚠️"} |
+| **CVaR (95%)** | {risk.get("cvar_95", enhanced_risk.get("conditional_var_95", 0)):.2f}% | <5% | {"✅" if risk.get("cvar_95", enhanced_risk.get("conditional_var_95", 0)) < 5 else "⚠️"} |
+| **Kelly Fraction** | {enhanced_risk.get("kelly_fraction", 0):.2f}% | 5-10% | {"✅" if 5 <= enhanced_risk.get("kelly_fraction", 0) <= 10 else "⚠️"} |
+| **Margin Usage** | {enhanced_risk.get("margin_usage_pct", 0):.2f}% | <50% | {"✅" if enhanced_risk.get("margin_usage_pct", 0) < 50 else "⚠️"} |
+| **Leverage** | {enhanced_risk.get("leverage", 1.0):.2f}x | <2.0x | {"✅" if enhanced_risk.get("leverage", 1.0) < 2.0 else "⚠️"} |
 
 ### Risk Exposure by Symbol
 
@@ -392,11 +379,11 @@ def generate_world_class_dashboard() -> str:
         for symbol, data in sorted(
             by_symbol.items(), key=lambda x: x[1].get("total_pl", 0), reverse=True
         )[:10]:
-            dashboard += f"| {symbol} | {data.get('total_pl', 0)/basic_metrics['current_equity']*100:.2f}% | ${data.get('total_pl', 0):+.2f} | {data.get('trades', 0)} | {data.get('win_rate', 0):.1f}% |\n"
+            dashboard += f"| {symbol} | {data.get('total_pl', 0) / basic_metrics['current_equity'] * 100:.2f}% | ${data.get('total_pl', 0):+.2f} | {data.get('trades', 0)} | {data.get('win_rate', 0):.1f}% |\n"
     else:
         dashboard += "| *No symbol data available* | - | - | - | - |\n"
 
-    dashboard += f"""
+    dashboard += """
 ---
 
 ## 📊 Performance Attribution
@@ -416,7 +403,7 @@ def generate_world_class_dashboard() -> str:
     else:
         dashboard += "| *No strategy data available* | - | - | - |\n"
 
-    dashboard += f"""
+    dashboard += """
 ### By Time of Day
 
 | Time Period | P/L | Trades | Avg P/L per Trade |
@@ -431,8 +418,8 @@ def generate_world_class_dashboard() -> str:
         dashboard += "| *No time-of-day data available* | - | - | - |\n"
 
     dashboard += f"""
-**Best Trading Time**: {time_analysis.get('best_time', 'N/A')}
-**Worst Trading Time**: {time_analysis.get('worst_time', 'N/A')}
+**Best Trading Time**: {time_analysis.get("best_time", "N/A")}
+**Worst Trading Time**: {time_analysis.get("worst_time", "N/A")}
 
 ---
 
@@ -446,17 +433,17 @@ def generate_world_class_dashboard() -> str:
         if chart_paths.get("equity_curve"):
             dashboard += f"### Equity Curve\n\n![Equity Curve]({chart_paths['equity_curve']})\n\n"
         if chart_paths.get("drawdown"):
-            dashboard += (
-                f"### Drawdown Chart\n\n![Drawdown]({chart_paths['drawdown']})\n\n"
-            )
+            dashboard += f"### Drawdown Chart\n\n![Drawdown]({chart_paths['drawdown']})\n\n"
         if chart_paths.get("daily_pl"):
-            dashboard += f"### Daily P/L Distribution\n\n![Daily P/L]({chart_paths['daily_pl']})\n\n"
+            dashboard += (
+                f"### Daily P/L Distribution\n\n![Daily P/L]({chart_paths['daily_pl']})\n\n"
+            )
         if chart_paths.get("rolling_sharpe_7d"):
             dashboard += f"### Rolling Sharpe Ratio (7-Day)\n\n![Rolling Sharpe]({chart_paths['rolling_sharpe_7d']})\n\n"
     else:
         # Show helpful message when charts can't be generated
         perf_log_count = len(perf_log) if isinstance(perf_log, list) else 0
-        dashboard += f"### Equity Curve Visualization\n\n"
+        dashboard += "### Equity Curve Visualization\n\n"
         if perf_log_count < 2:
             dashboard += f"*Insufficient data for chart (need at least 2 data points, have {perf_log_count})*\n\n"
         else:
@@ -469,12 +456,12 @@ def generate_world_class_dashboard() -> str:
 
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
-| **Avg Slippage** | {execution.get('avg_slippage', 0):.3f}% | <0.5% | {'✅' if execution.get('avg_slippage', 0) < 0.5 else '⚠️'} |
-| **Fill Quality** | {execution.get('fill_quality', 0):.1f}/100 | >90 | {'✅' if execution.get('fill_quality', 0) > 90 else '⚠️'} |
-| **Order Success Rate** | {execution.get('order_success_rate', 0):.1f}% | >95% | {'✅' if execution.get('order_success_rate', 0) > 95 else '⚠️'} |
-| **Order Reject Rate** | {execution.get('order_reject_rate', 0):.1f}% | <5% | {'✅' if execution.get('order_reject_rate', 0) < 5 else '⚠️'} |
-| **Avg Fill Time** | {execution.get('avg_fill_time_ms', 0):.0f} ms | <200ms | {'✅' if execution.get('avg_fill_time_ms', 0) < 200 else '⚠️'} |
-| **Broker Latency** | {execution.get('broker_latency_ms', 0):.0f} ms | <100ms | {'✅' if execution.get('broker_latency_ms', 0) < 100 else '⚠️'} |
+| **Avg Slippage** | {execution.get("avg_slippage", 0):.3f}% | <0.5% | {"✅" if execution.get("avg_slippage", 0) < 0.5 else "⚠️"} |
+| **Fill Quality** | {execution.get("fill_quality", 0):.1f}/100 | >90 | {"✅" if execution.get("fill_quality", 0) > 90 else "⚠️"} |
+| **Order Success Rate** | {execution.get("order_success_rate", 0):.1f}% | >95% | {"✅" if execution.get("order_success_rate", 0) > 95 else "⚠️"} |
+| **Order Reject Rate** | {execution.get("order_reject_rate", 0):.1f}% | <5% | {"✅" if execution.get("order_reject_rate", 0) < 5 else "⚠️"} |
+| **Avg Fill Time** | {execution.get("avg_fill_time_ms", 0):.0f} ms | <200ms | {"✅" if execution.get("avg_fill_time_ms", 0) < 200 else "⚠️"} |
+| **Broker Latency** | {execution.get("broker_latency_ms", 0):.0f} ms | <100ms | {"✅" if execution.get("broker_latency_ms", 0) < 100 else "⚠️"} |
 
 ---
 
@@ -482,12 +469,12 @@ def generate_world_class_dashboard() -> str:
 
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
-| **Performance Log Completeness** | {data_completeness.get('performance_log_completeness', 0):.1f}% | >95% | {'✅' if data_completeness.get('performance_log_completeness', 0) > 95 else '⚠️'} |
-| **Missing Dates** | {data_completeness.get('missing_dates_count', 0)} | 0 | {'✅' if data_completeness.get('missing_dates_count', 0) == 0 else '⚠️'} |
-| **Data Freshness** | {data_completeness.get('data_freshness_days', 999)} days old | <1 day | {'✅' if data_completeness.get('data_freshness_days', 999) < 1 else '⚠️'} |
-| **Missing Candle %** | {data_completeness.get('missing_candle_pct', 0):.2f}% | <1% | {'✅' if data_completeness.get('missing_candle_pct', 0) < 1 else '⚠️'} |
-| **Data Sources** | {', '.join(data_completeness.get('data_sources_used', []))} | Multiple | {'✅' if len(data_completeness.get('data_sources_used', [])) > 1 else '⚠️'} |
-| **Model Version** | {data_completeness.get('model_version', '1.0')} | Latest | ✅ |
+| **Performance Log Completeness** | {data_completeness.get("performance_log_completeness", 0):.1f}% | >95% | {"✅" if data_completeness.get("performance_log_completeness", 0) > 95 else "⚠️"} |
+| **Missing Dates** | {data_completeness.get("missing_dates_count", 0)} | 0 | {"✅" if data_completeness.get("missing_dates_count", 0) == 0 else "⚠️"} |
+| **Data Freshness** | {data_completeness.get("data_freshness_days", 999)} days old | <1 day | {"✅" if data_completeness.get("data_freshness_days", 999) < 1 else "⚠️"} |
+| **Missing Candle %** | {data_completeness.get("missing_candle_pct", 0):.2f}% | <1% | {"✅" if data_completeness.get("missing_candle_pct", 0) < 1 else "⚠️"} |
+| **Data Sources** | {", ".join(data_completeness.get("data_sources_used", []))} | Multiple | {"✅" if len(data_completeness.get("data_sources_used", [])) > 1 else "⚠️"} |
+| **Model Version** | {data_completeness.get("model_version", "1.0")} | Latest | ✅ |
 
 ---
 
@@ -497,14 +484,14 @@ def generate_world_class_dashboard() -> str:
 
 | Metric | Value |
 |--------|-------|
-| **Expected P/L (30d)** | ${predictive.get('expected_pl_30d', 0):+.2f} |
-| **Forecast Mean** | ${predictive.get('monte_carlo_forecast', {}).get('mean_30d', 0):,.2f} |
-| **Forecast Std Dev** | ${predictive.get('monte_carlo_forecast', {}).get('std_30d', 0):,.2f} |
-| **5th Percentile** | ${predictive.get('monte_carlo_forecast', {}).get('percentile_5', 0):,.2f} |
-| **95th Percentile** | ${predictive.get('monte_carlo_forecast', {}).get('percentile_95', 0):,.2f} |
-| **Risk of Ruin** | {predictive.get('risk_of_ruin', 0):.2f}% | {'✅' if predictive.get('risk_of_ruin', 0) < 5 else '⚠️'} |
-| **Forecasted Drawdown** | {predictive.get('forecasted_drawdown', 0):.2f}% |
-| **Strategy Decay Detected** | {'⚠️ YES' if predictive.get('strategy_decay_detected', False) else '✅ NO'} |
+| **Expected P/L (30d)** | ${predictive.get("expected_pl_30d", 0):+.2f} |
+| **Forecast Mean** | ${predictive.get("monte_carlo_forecast", {}).get("mean_30d", 0):,.2f} |
+| **Forecast Std Dev** | ${predictive.get("monte_carlo_forecast", {}).get("std_30d", 0):,.2f} |
+| **5th Percentile** | ${predictive.get("monte_carlo_forecast", {}).get("percentile_5", 0):,.2f} |
+| **95th Percentile** | ${predictive.get("monte_carlo_forecast", {}).get("percentile_95", 0):,.2f} |
+| **Risk of Ruin** | {predictive.get("risk_of_ruin", 0):.2f}% | {"✅" if predictive.get("risk_of_ruin", 0) < 5 else "⚠️"} |
+| **Forecasted Drawdown** | {predictive.get("forecasted_drawdown", 0):.2f}% |
+| **Strategy Decay Detected** | {"⚠️ YES" if predictive.get("strategy_decay_detected", False) else "✅ NO"} |
 
 ---
 
@@ -512,10 +499,10 @@ def generate_world_class_dashboard() -> str:
 
 | Metric | Portfolio | Benchmark | Difference | Status |
 |--------|-----------|-----------|------------|--------|
-| **Total Return** | {benchmark.get('portfolio_return', 0):+.2f}% | {benchmark.get('benchmark_return', 0):+.2f}% | {benchmark.get('alpha', 0):+.2f}% | {'✅ Outperforming' if benchmark.get('alpha', 0) > 0 else '⚠️ Underperforming'} |
-| **Alpha** | {benchmark.get('alpha', 0):+.2f}% | - | - | {'✅ Positive Alpha' if benchmark.get('alpha', 0) > 0 else '⚠️ Negative Alpha'} |
-| **Beta** | {benchmark.get('beta', 1.0):.2f} | 1.0 | {benchmark.get('beta', 1.0) - 1.0:+.2f} | {'Higher Risk' if benchmark.get('beta', 1.0) > 1.0 else 'Lower Risk'} |
-| **Data Available** | {'✅ Yes' if benchmark.get('data_available', False) else '⚠️ Limited'} | - | - | - |
+| **Total Return** | {benchmark.get("portfolio_return", 0):+.2f}% | {benchmark.get("benchmark_return", 0):+.2f}% | {benchmark.get("alpha", 0):+.2f}% | {"✅ Outperforming" if benchmark.get("alpha", 0) > 0 else "⚠️ Underperforming"} |
+| **Alpha** | {benchmark.get("alpha", 0):+.2f}% | - | - | {"✅ Positive Alpha" if benchmark.get("alpha", 0) > 0 else "⚠️ Negative Alpha"} |
+| **Beta** | {benchmark.get("beta", 1.0):.2f} | 1.0 | {benchmark.get("beta", 1.0) - 1.0:+.2f} | {"Higher Risk" if benchmark.get("beta", 1.0) > 1.0 else "Lower Risk"} |
+| **Data Available** | {"✅ Yes" if benchmark.get("data_available", False) else "⚠️ Limited"} | - | - | - |
 
 ---
 
@@ -523,11 +510,11 @@ def generate_world_class_dashboard() -> str:
 
 ### Daily Summary
 
-{ai_insights.get('summary', 'No summary available.')}
+{ai_insights.get("summary", "No summary available.")}
 
 ### Strategy Health Score
 
-**{ai_insights.get('strategy_health', {}).get('emoji', '❓')} {ai_insights.get('strategy_health', {}).get('status', 'UNKNOWN')}** ({ai_insights.get('strategy_health', {}).get('score', 0):.0f}/100)
+**{ai_insights.get("strategy_health", {}).get("emoji", "❓")} {ai_insights.get("strategy_health", {}).get("status", "UNKNOWN")}** ({ai_insights.get("strategy_health", {}).get("score", 0):.0f}/100)
 
 """
 
@@ -538,7 +525,7 @@ def generate_world_class_dashboard() -> str:
         for factor in health_factors:
             dashboard += f"- {factor}\n"
 
-    dashboard += f"""
+    dashboard += """
 ### Trade Analysis
 
 """
@@ -550,7 +537,7 @@ def generate_world_class_dashboard() -> str:
     else:
         dashboard += "No trade analysis available.\n\n"
 
-    dashboard += f"""
+    dashboard += """
 ### Anomalies Detected
 
 """
@@ -566,7 +553,7 @@ def generate_world_class_dashboard() -> str:
     if regime_shift:
         dashboard += f"### Market Regime Shift\n\n{regime_shift}\n\n"
 
-    dashboard += f"""
+    dashboard += """
 ### Recommendations
 
 """
@@ -585,13 +572,13 @@ def generate_world_class_dashboard() -> str:
 
 | Metric | Value |
 |--------|-------|
-| **Current Regime** | {regime.get('regime', 'UNKNOWN')} |
-| **Regime Type** | {regime.get('regime_type', 'UNKNOWN')} |
-| **Confidence** | {regime.get('confidence', 0):.1f}/1.0 |
-| **Trend Strength** | {regime.get('trend_strength', 0):.2f} |
-| **Volatility Regime** | {regime.get('volatility_regime', 'NORMAL')} |
-| **Avg Daily Return** | {regime.get('avg_daily_return', 0):+.2f}% |
-| **Volatility** | {regime.get('volatility', 0):.2f}% |
+| **Current Regime** | {regime.get("regime", "UNKNOWN")} |
+| **Regime Type** | {regime.get("regime_type", "UNKNOWN")} |
+| **Confidence** | {regime.get("confidence", 0):.1f}/1.0 |
+| **Trend Strength** | {regime.get("trend_strength", 0):.2f} |
+| **Volatility Regime** | {regime.get("volatility_regime", "NORMAL")} |
+| **Avg Daily Return** | {regime.get("avg_daily_return", 0):+.2f}% |
+| **Volatility** | {regime.get("volatility", 0):.2f}% |
 
 ---
 
@@ -599,23 +586,23 @@ def generate_world_class_dashboard() -> str:
 
 | Metric | Value |
 |--------|-------|
-| **Starting Balance** | ${basic_metrics['starting_balance']:,.2f} |
-| **Current Equity** | ${basic_metrics['current_equity']:,.2f} |
-| **Total P/L** | ${basic_metrics['total_pl']:+,.2f} ({basic_metrics['total_pl_pct']:+.2f}%) |
-| **Average Daily Profit** | ${basic_metrics['avg_daily_profit']:+.2f} |
-| **Total Trades** | {basic_metrics['total_trades']} |
-| **Win Rate** | {basic_metrics['win_rate']:.1f}% |
-| **Trades Today** | {basic_metrics['today_trade_count']} |
+| **Starting Balance** | ${basic_metrics["starting_balance"]:,.2f} |
+| **Current Equity** | ${basic_metrics["current_equity"]:,.2f} |
+| **Total P/L** | ${basic_metrics["total_pl"]:+,.2f} ({basic_metrics["total_pl_pct"]:+.2f}%) |
+| **Average Daily Profit** | ${basic_metrics["avg_daily_profit"]:+.2f} |
+| **Total Trades** | {basic_metrics["total_trades"]} |
+| **Win Rate** | {basic_metrics["win_rate"]:.1f}% |
+| **Trades Today** | {basic_metrics["today_trade_count"]} |
 
 ---
 
 ## 📈 90-Day R&D Challenge Progress
 
-**Current**: Day {basic_metrics['current_day']} of {basic_metrics['total_days']} ({basic_metrics['progress_pct_challenge']:.1f}% complete)
-**Phase**: {basic_metrics['phase']}
-**Days Remaining**: {basic_metrics['days_remaining']}
+**Current**: Day {basic_metrics["current_day"]} of {basic_metrics["total_days"]} ({basic_metrics["progress_pct_challenge"]:.1f}% complete)
+**Phase**: {basic_metrics["phase"]}
+**Days Remaining**: {basic_metrics["days_remaining"]}
 
-**Progress Bar**: `{progress_bar}` ({basic_metrics['progress_pct_challenge']:.1f}%)
+**Progress Bar**: `{progress_bar}` ({basic_metrics["progress_pct_challenge"]:.1f}%)
 
 ---
 
@@ -623,9 +610,9 @@ def generate_world_class_dashboard() -> str:
 
 | Guardrail | Current | Limit | Status |
 |-----------|---------|-------|--------|
-| **Max Drawdown** | {risk.get('max_drawdown_pct', 0):.2f}% | <10% | {'✅' if risk.get('max_drawdown_pct', 0) < 10 else '⚠️'} |
-| **Sharpe Ratio** | {risk.get('sharpe_ratio', 0):.2f} | >1.0 | {'✅' if risk.get('sharpe_ratio', 0) >= 1.0 else '⚠️'} |
-| **Volatility** | {risk.get('volatility_annualized', 0):.2f}% | <20% | {'✅' if risk.get('volatility_annualized', 0) < 20 else '⚠️'} |
+| **Max Drawdown** | {risk.get("max_drawdown_pct", 0):.2f}% | <10% | {"✅" if risk.get("max_drawdown_pct", 0) < 10 else "⚠️"} |
+| **Sharpe Ratio** | {risk.get("sharpe_ratio", 0):.2f} | >1.0 | {"✅" if risk.get("sharpe_ratio", 0) >= 1.0 else "⚠️"} |
+| **Volatility** | {risk.get("volatility_annualized", 0):.2f}% | <20% | {"✅" if risk.get("volatility_annualized", 0) < 20 else "⚠️"} |
 
 ---
 
@@ -657,14 +644,11 @@ def generate_world_class_dashboard() -> str:
         for log_file in log_files:
             if log_file.exists():
                 # Check last 1000 lines for today's execution mode
-                with open(log_file, "r") as f:
+                with open(log_file) as f:
                     try:
                         lines = f.readlines()[-1000:]
                         for line in lines:
-                            if (
-                                today_str in line
-                                and "CRYPTO STRATEGY - Daily Execution" in line
-                            ):
+                            if today_str in line and "CRYPTO STRATEGY - Daily Execution" in line:
                                 is_crypto_mode = True
                                 break
                     except Exception:
@@ -674,7 +658,7 @@ def generate_world_class_dashboard() -> str:
     except Exception:
         pass
 
-    dashboard += f"""
+    dashboard += """
 **Current Strategy**:
 """
     # Get crypto strategy info
@@ -700,7 +684,7 @@ def generate_world_class_dashboard() -> str:
         dashboard += "- **Daily Investment**: $10/day fixed\n"
         dashboard += f"- **Crypto Trades (Weekend)**: {crypto_trades} executed, ${crypto_invested:.2f} invested\n"
 
-    dashboard += f"""
+    dashboard += """
 ---
 
 ## 💰 Options Income (Yield Generation)
@@ -712,16 +696,14 @@ def generate_world_class_dashboard() -> str:
         log_files = [Path("logs/trading_system.log")]
         for log_file in log_files:
             if log_file.exists():
-                with open(log_file, "r") as f:
+                with open(log_file) as f:
                     lines = f.readlines()[-2000:]  # Check last 2000 lines
                     for line in lines:
                         if "EXECUTING OPTIONS STRATEGY" in line:
                             options_activity = []  # Reset on new execution start
                         if "Proposed: Sell" in line:
                             parts = line.split("Proposed: Sell ")[1].strip()
-                            options_activity.append(
-                                f"- 🎯 **Opportunity**: Sell {parts}"
-                            )
+                            options_activity.append(f"- 🎯 **Opportunity**: Sell {parts}")
                         if "Options Strategy: No opportunities found" in line:
                             options_activity = [
                                 "- ℹ️ No covered call opportunities found today (need 100+ shares)"
@@ -735,7 +717,7 @@ def generate_world_class_dashboard() -> str:
     else:
         dashboard += "- ℹ️ Strategy active (Monitoring for 100+ share positions)\n"
 
-    dashboard += f"""
+    dashboard += """
 ---
 
 ## 🤖 AI & ML System Status
@@ -758,27 +740,23 @@ def generate_world_class_dashboard() -> str:
                 if j.get("status") in ["submitted", "running", "in_progress"]
             )
             completed_jobs = sum(
-                1
-                for j in cloud_jobs.values()
-                if j.get("status") in ["completed", "success"]
+                1 for j in cloud_jobs.values() if j.get("status") in ["completed", "success"]
             )
 
             dashboard += f"| **Cloud RL Jobs** | {len(cloud_jobs)} total ({active_jobs} active, {completed_jobs} completed) |\n"
-            dashboard += (
-                f"| **Last Training** | {len(last_training)} symbols trained |\n"
-            )
+            dashboard += f"| **Last Training** | {len(last_training)} symbols trained |\n"
 
             # Show recent training times
             if last_training:
                 recent_symbols = list(last_training.items())[:5]
-                dashboard += f"| **Recent Training** | {', '.join([f'{s}' for s, _ in recent_symbols])} |\n"
+                dashboard += (
+                    f"| **Recent Training** | {', '.join([f'{s}' for s, _ in recent_symbols])} |\n"
+                )
 
             # Add Vertex AI console link
-            dashboard += f"| **Vertex AI Console** | [View Jobs →](https://console.cloud.google.com/vertex-ai/training/custom-jobs?project=email-outreach-ai-460404) |\n"
+            dashboard += "| **Vertex AI Console** | [View Jobs →](https://console.cloud.google.com/vertex-ai/training/custom-jobs?project=email-outreach-ai-460404) |\n"
         except Exception as e:
-            dashboard += (
-                f"| **Status** | ⚠️ Unable to load training status ({str(e)[:50]}) |\n"
-            )
+            dashboard += f"| **Status** | ⚠️ Unable to load training status ({str(e)[:50]}) |\n"
     else:
         dashboard += "| **Status** | ⚠️ No training data available |\n"
         dashboard += "| **Vertex AI Console** | [View Jobs →](https://console.cloud.google.com/vertex-ai/training/custom-jobs?project=email-outreach-ai-460404) |\n"
@@ -811,26 +789,22 @@ def generate_world_class_dashboard() -> str:
         if health.get("success"):
             stats = monitor.get_project_stats("trading-rl-training", days=7)
             if stats.get("success"):
-                dashboard += f"| **Status** | ✅ Healthy |\n"
+                dashboard += "| **Status** | ✅ Healthy |\n"
                 dashboard += f"| **Total Runs** (7d) | {stats.get('total_runs', 0)} |\n"
+                dashboard += f"| **Success Rate** | {stats.get('success_rate', 0):.1f}% |\n"
                 dashboard += (
-                    f"| **Success Rate** | {stats.get('success_rate', 0):.1f}% |\n"
+                    f"| **Avg Duration** | {stats.get('average_duration_seconds', 0):.1f}s |\n"
                 )
-                dashboard += f"| **Avg Duration** | {stats.get('average_duration_seconds', 0):.1f}s |\n"
                 dashboard += f"| **Project Dashboard** | [trading-rl-training →]({project_url}) |\n"
             else:
-                dashboard += f"| **Status** | ✅ Healthy (no stats available) |\n"
+                dashboard += "| **Status** | ✅ Healthy (no stats available) |\n"
                 dashboard += f"| **Project Dashboard** | [trading-rl-training →]({project_url}) |\n"
         else:
             dashboard += f"| **Status** | ⚠️ {health.get('error', 'Unknown error')} |\n"
-            dashboard += (
-                f"| **Project Dashboard** | [trading-rl-training →]({project_url}) |\n"
-            )
-    except Exception as e:
+            dashboard += f"| **Project Dashboard** | [trading-rl-training →]({project_url}) |\n"
+    except Exception:
         dashboard += "| **Status** | ⚠️ LangSmith monitor unavailable |\n"
-        dashboard += (
-            f"| **Project Dashboard** | [trading-rl-training →]({project_url}) |\n"
-        )
+        dashboard += f"| **Project Dashboard** | [trading-rl-training →]({project_url}) |\n"
 
     dashboard += f"""
 ---
@@ -841,14 +815,14 @@ def generate_world_class_dashboard() -> str:
 
 ### Pattern Day Trader (PDT) Rule Status
 
-{pdt_status.get('status', '⚠️ Unable to calculate')}
+{pdt_status.get("status", "⚠️ Unable to calculate")}
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| **Day Trades (Last 5 Days)** | {pdt_status.get('day_trades_count', 0)} | {'🚨' if pdt_status.get('is_pdt', False) and not pdt_status.get('meets_equity_requirement', False) else '⚠️' if pdt_status.get('day_trades_count', 0) >= 2 else '✅'} |
-| **PDT Threshold** | 4+ day trades in 5 days | {'🚨 VIOLATION RISK' if pdt_status.get('is_pdt', False) and not pdt_status.get('meets_equity_requirement', False) else '⚠️ APPROACHING' if pdt_status.get('day_trades_count', 0) >= 2 else '✅ SAFE'} |
-| **Minimum Equity Required** | $25,000 | {'🚨' if pdt_status.get('is_pdt', False) and not pdt_status.get('meets_equity_requirement', False) else '✅'} |
-| **Current Equity** | ${{current_equity:,.2f}} | {'🚨' if pdt_status.get('is_pdt', False) and current_equity < 25000 else '✅'} |
+| **Day Trades (Last 5 Days)** | {pdt_status.get("day_trades_count", 0)} | {"🚨" if pdt_status.get("is_pdt", False) and not pdt_status.get("meets_equity_requirement", False) else "⚠️" if pdt_status.get("day_trades_count", 0) >= 2 else "✅"} |
+| **PDT Threshold** | 4+ day trades in 5 days | {"🚨 VIOLATION RISK" if pdt_status.get("is_pdt", False) and not pdt_status.get("meets_equity_requirement", False) else "⚠️ APPROACHING" if pdt_status.get("day_trades_count", 0) >= 2 else "✅ SAFE"} |
+| **Minimum Equity Required** | $25,000 | {"🚨" if pdt_status.get("is_pdt", False) and not pdt_status.get("meets_equity_requirement", False) else "✅"} |
+| **Current Equity** | ${{current_equity:,.2f}} | {"🚨" if pdt_status.get("is_pdt", False) and current_equity < 25000 else "✅"} |
 
 **PDT Rule Explanation**: If you make 4+ day trades (same-day entry/exit) in 5 business days, you must maintain $25,000 minimum equity. Violations can result in account restrictions.
 
@@ -856,19 +830,19 @@ def generate_world_class_dashboard() -> str:
 
 | Metric | Value |
 |--------|-------|
-| **Total Closed Trades** | {tax_metrics.get('total_trades', 0)} |
-| **Day Trades** | {tax_metrics.get('day_trade_count', 0)} |
-| **Short-Term Trades** | {tax_metrics.get('short_term_count', 0)} |
-| **Long-Term Trades** | {tax_metrics.get('long_term_count', 0)} |
-| **Wash Sales** | {tax_metrics.get('wash_sale_count', 0)} |
-| **Gross Return** | ${tax_metrics.get('net_gain_loss', basic_metrics.get('total_pl', 0)):+,.2f} |
-| **Estimated Tax Liability** | ${tax_metrics.get('estimated_tax', 0.0):+,.2f} |
-| **After-Tax Return** | ${tax_metrics.get('after_tax_return', basic_metrics.get('total_pl', 0)):+,.2f} |
-| **Tax Efficiency** | {tax_metrics.get('tax_efficiency', 1.0) * 100:.1f}% |
+| **Total Closed Trades** | {tax_metrics.get("total_trades", 0)} |
+| **Day Trades** | {tax_metrics.get("day_trade_count", 0)} |
+| **Short-Term Trades** | {tax_metrics.get("short_term_count", 0)} |
+| **Long-Term Trades** | {tax_metrics.get("long_term_count", 0)} |
+| **Wash Sales** | {tax_metrics.get("wash_sale_count", 0)} |
+| **Gross Return** | ${tax_metrics.get("net_gain_loss", basic_metrics.get("total_pl", 0)):+,.2f} |
+| **Estimated Tax Liability** | ${tax_metrics.get("estimated_tax", 0.0):+,.2f} |
+| **After-Tax Return** | ${tax_metrics.get("after_tax_return", basic_metrics.get("total_pl", 0)):+,.2f} |
+| **Tax Efficiency** | {tax_metrics.get("tax_efficiency", 1.0) * 100:.1f}% |
 
 **Tax Rates**:
-- **Short-Term Capital Gains** (< 1 year): {tax_metrics.get('short_term_tax_rate', 0.37) * 100:.0f}% (taxed as ordinary income)
-- **Long-Term Capital Gains** (≥ 1 year): {tax_metrics.get('long_term_tax_rate', 0.20) * 100:.0f}% (preferred rate)
+- **Short-Term Capital Gains** (< 1 year): {tax_metrics.get("short_term_tax_rate", 0.37) * 100:.0f}% (taxed as ordinary income)
+- **Long-Term Capital Gains** (≥ 1 year): {tax_metrics.get("long_term_tax_rate", 0.20) * 100:.0f}% (preferred rate)
 
 **Key Tax Strategies**:
 1. **Hold positions >1 year** for long-term capital gains rate (20% vs 37%)
@@ -949,9 +923,7 @@ def generate_world_class_dashboard() -> str:
 
     except ImportError:
         verification_status = "⚠️ Verification module not available"
-        verification_details.append(
-            "Verification tests require alpaca-py (available in CI)"
-        )
+        verification_details.append("Verification tests require alpaca-py (available in CI)")
     except Exception as e:
         verification_status = f"❌ Verification failed: {str(e)[:50]}"
         verification_details.append(f"Error running verification: {str(e)}")
@@ -962,7 +934,7 @@ def generate_world_class_dashboard() -> str:
 | **Verification Status** | {verification_status} |
 | **Crypto Trades Tracked** | {crypto_trades} |
 | **Crypto Invested (Tracked)** | ${crypto_invested:.2f} |
-| **Last Execution** | {crypto_last_execution if crypto_last_execution else 'Never'} |
+| **Last Execution** | {crypto_last_execution if crypto_last_execution else "Never"} |
 
 ### Verification Details
 
@@ -998,7 +970,9 @@ def generate_world_class_dashboard() -> str:
 ### LangSmith Observability
 - **[LangSmith Dashboard](https://smith.langchain.com)** - Main dashboard
 """
-    dashboard += f"- **[Trading RL Training Project]({project_url})** - RL training runs and traces\n"
+    dashboard += (
+        f"- **[Trading RL Training Project]({project_url})** - RL training runs and traces\n"
+    )
     dashboard += f"  *Project ID: `{project_id}`*\n"
     dashboard += r"""- **[All Projects](https://smith.langchain.com/o/default/projects)** - View all LangSmith projects
 

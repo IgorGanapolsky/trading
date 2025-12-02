@@ -27,7 +27,7 @@ def analyze_strategy_performance():
         state = json.load(f)
 
     positions = state.get("performance", {}).get("open_positions", [])
-    performance = state.get("performance", {})
+    state.get("performance", {})
 
     # Analyze positions
     print("\n📊 POSITION ANALYSIS")
@@ -55,7 +55,7 @@ def analyze_strategy_performance():
         if pl_pct < 0:
             print(f"  {symbol}: Entered at ${entry:.2f}, now ${current:.2f}")
             print(f"    ⚠️  Entry was {abs(pl_pct):.2f}% above current price")
-            print(f"    💡 Consider: Wait for pullback before entering")
+            print("    💡 Consider: Wait for pullback before entering")
 
     # Recommendations
     print("\n💡 OPTIMIZATION RECOMMENDATIONS")

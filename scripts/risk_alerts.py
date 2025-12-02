@@ -2,10 +2,12 @@
 """
 Risk Alerts - Warn before big losses or unusual activity
 """
-import os
+
 import json
+import os
 from datetime import datetime
 from pathlib import Path
+
 import alpaca_trade_api as tradeapi
 
 DATA_DIR = Path("data")

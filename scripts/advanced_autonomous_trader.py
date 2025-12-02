@@ -12,26 +12,25 @@ Architecture:
 
 This is a 2025-standard AI trading system built with CANI principle.
 """
-import os
-import sys
+
 import json
 import logging
-from datetime import datetime, date
+import os
+import sys
+from datetime import date, datetime
 from pathlib import Path
 
 # Add parent to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import alpaca_trade_api as tradeapi
-import pandas as pd
-
-from src.agents.meta_agent import MetaAgent
-from src.agents.research_agent import ResearchAgent
-from src.agents.signal_agent import SignalAgent
-from src.agents.risk_agent import RiskAgent
 from src.agents.execution_agent import ExecutionAgent
+from src.agents.meta_agent import MetaAgent
 from src.agents.reinforcement_learning import RLPolicyLearner
 from src.agents.reinforcement_learning_optimized import OptimizedRLPolicyLearner
+from src.agents.research_agent import ResearchAgent
+from src.agents.risk_agent import RiskAgent
+from src.agents.signal_agent import SignalAgent
 from src.utils.error_monitoring import init_sentry
 
 # Setup logging
@@ -50,9 +49,7 @@ ALPACA_KEY = os.getenv("ALPACA_API_KEY")
 ALPACA_SECRET = os.getenv("ALPACA_SECRET_KEY")
 
 if not ALPACA_KEY or not ALPACA_SECRET:
-    raise ValueError(
-        "ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set"
-    )
+    raise ValueError("ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set")
 
 DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)
@@ -110,9 +107,7 @@ def get_market_data(symbol: str) -> dict:
                 # Would come from news API
             ],
             "market_context": {
-                "sector": (
-                    "Technology" if symbol in ["NVDA", "GOOGL", "AMZN"] else "ETF"
-                ),
+                "sector": ("Technology" if symbol in ["NVDA", "GOOGL", "AMZN"] else "ETF"),
                 "market_trend": "NEUTRAL",
                 "volatility": volatility,
             },
@@ -166,7 +161,7 @@ def main():
     portfolio_value = float(account.equity)
 
     print(f"\n💰 Portfolio Value: ${portfolio_value:,.2f}")
-    print(f"📊 System: Multi-Agent (Meta + Research + Signal + Risk + Execution + RL)")
+    print("📊 System: Multi-Agent (Meta + Research + Signal + Risk + Execution + RL)")
 
     # Trading symbols
     symbols = ["SPY", "GOOGL"]  # Start with 2 symbols
@@ -215,7 +210,7 @@ def main():
             if risk_assessment.get("action") == "APPROVE":
                 position_size = risk_assessment.get("position_size", 0)
 
-                print(f"\n✅ Risk Agent APPROVED")
+                print("\n✅ Risk Agent APPROVED")
                 print(f"   Position Size: ${position_size:.2f}")
                 print(f"   Stop-Loss: {risk_assessment.get('stop_loss', 0):.2%}")
 
@@ -223,9 +218,7 @@ def main():
                 # Enhanced market state for OptimizedRLPolicyLearner
                 price_history = market_data.get("price_history", {})
                 market_state = {
-                    "market_regime": coordinated_decision.get(
-                        "market_regime", "UNKNOWN"
-                    ),
+                    "market_regime": coordinated_decision.get("market_regime", "UNKNOWN"),
                     "rsi": price_history.get("rsi", 50),
                     "macd_histogram": price_history.get("macd_histogram", 0.0),
                     "trend": price_history.get("trend", "SIDEWAYS"),
@@ -244,16 +237,14 @@ def main():
                         "position_size": position_size,
                         "market_conditions": {
                             "spread": "N/A",
-                            "volume": market_data.get("price_history", {}).get(
-                                "volume", 0
-                            ),
+                            "volume": market_data.get("price_history", {}).get("volume", 0),
                             "volatility": market_data.get("volatility", 0),
                         },
                     }
 
                     execution_result = execution_agent.analyze(execution_data)
 
-                    print(f"\n🚀 Execution Result:")
+                    print("\n🚀 Execution Result:")
                     exec_res = execution_result.get("execution_result", {})
                     print(f"   Status: {exec_res.get('status')}")
                     if exec_res.get("status") == "SUCCESS":
@@ -271,7 +262,7 @@ def main():
                 else:
                     print(f"   RL overrode to {rl_action} - SKIPPING trade")
             else:
-                print(f"\n❌ Risk Agent REJECTED")
+                print("\n❌ Risk Agent REJECTED")
                 print(f"   Reason: {risk_assessment.get('risks', 'N/A')}")
         else:
             print(f"   Action is {action} - no execution needed")
@@ -282,7 +273,7 @@ def main():
     print("=" * 80)
     print(f"Symbols Analyzed: {len(symbols)}")
     print(f"Trades Executed: {len(decisions_made)}")
-    print(f"\nRL Policy Stats:")
+    print("\nRL Policy Stats:")
     rl_stats = rl_learner.get_policy_stats()
     print(f"   States Learned: {rl_stats['total_states_learned']}")
     print(f"   Action Distribution: {rl_stats['action_distribution']}")

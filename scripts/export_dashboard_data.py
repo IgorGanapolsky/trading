@@ -8,12 +8,14 @@ Exports comprehensive dashboard metrics to CSV and Excel formats for:
 - External reporting
 - Data visualization tools
 """
+
+import json
 import os
 import sys
-import json
-import pandas as pd
 from datetime import datetime
 from pathlib import Path
+
+import pandas as pd
 
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -32,7 +34,7 @@ def export_performance_log_csv():
         print("⚠️  Performance log not found")
         return None
 
-    with open(perf_log_file, "r") as f:
+    with open(perf_log_file) as f:
         perf_log = json.load(f)
 
     if not perf_log:
@@ -58,7 +60,7 @@ def export_trades_csv():
     trade_files = list(DATA_DIR.glob("trades_*.json"))
 
     for trade_file in trade_files:
-        with open(trade_file, "r") as f:
+        with open(trade_file) as f:
             trades = json.load(f)
             if isinstance(trades, list):
                 for trade in trades:
@@ -225,15 +227,13 @@ def export_metrics_summary_csv():
 
 def export_to_excel():
     """Export all data to Excel workbook with multiple sheets."""
-    excel_file = (
-        EXPORT_DIR / f"dashboard_export_{datetime.now().strftime('%Y%m%d')}.xlsx"
-    )
+    excel_file = EXPORT_DIR / f"dashboard_export_{datetime.now().strftime('%Y%m%d')}.xlsx"
 
     with pd.ExcelWriter(excel_file, engine="openpyxl") as writer:
         # Performance Log Sheet
         perf_log_file = DATA_DIR / "performance_log.json"
         if perf_log_file.exists():
-            with open(perf_log_file, "r") as f:
+            with open(perf_log_file) as f:
                 perf_log = json.load(f)
             if perf_log:
                 df_perf = pd.DataFrame(perf_log)
@@ -243,7 +243,7 @@ def export_to_excel():
         all_trades = []
         trade_files = list(DATA_DIR.glob("trades_*.json"))
         for trade_file in trade_files:
-            with open(trade_file, "r") as f:
+            with open(trade_file) as f:
                 trades = json.load(f)
                 if isinstance(trades, list):
                     for trade in trades:
@@ -263,9 +263,7 @@ def export_to_excel():
             if isinstance(category_data, dict):
                 for key, value in category_data.items():
                     if isinstance(value, (int, float, str)):
-                        summary_data.append(
-                            {"Category": category, "Metric": key, "Value": value}
-                        )
+                        summary_data.append({"Category": category, "Metric": key, "Value": value})
 
         if summary_data:
             df_summary = pd.DataFrame(summary_data)

@@ -13,8 +13,9 @@ Run with: python3 tests/test_yaml_validation_smoke.py
 
 import os
 import sys
-import yaml
 from pathlib import Path
+
+import yaml
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -78,9 +79,7 @@ def test_github_actions_workflow():
     """Test that GitHub Actions workflow syntax is valid"""
     print("\n🧪 Test 3: GitHub Actions workflow validation...")
 
-    workflow_path = (
-        PROJECT_ROOT / ".github" / "workflows" / "autonomous-security-fixes.yml"
-    )
+    workflow_path = PROJECT_ROOT / ".github" / "workflows" / "autonomous-security-fixes.yml"
 
     if not workflow_path.exists():
         print(f"   ⚠️  Workflow file not found: {workflow_path}")
@@ -91,16 +90,12 @@ def test_github_actions_workflow():
             workflow = yaml.safe_load(f)
 
         # Check required fields
-        assert (
-            "name" in workflow
-        ), f"Workflow missing 'name'. Keys: {list(workflow.keys())}"
+        assert "name" in workflow, f"Workflow missing 'name'. Keys: {list(workflow.keys())}"
         # 'on' is a YAML boolean keyword, so it gets parsed as True
-        assert (
-            True in workflow or "on" in workflow
-        ), f"Workflow missing 'on'. Keys: {list(workflow.keys())}"
-        assert (
-            "jobs" in workflow
-        ), f"Workflow missing 'jobs'. Keys: {list(workflow.keys())}"
+        assert True in workflow or "on" in workflow, (
+            f"Workflow missing 'on'. Keys: {list(workflow.keys())}"
+        )
+        assert "jobs" in workflow, f"Workflow missing 'jobs'. Keys: {list(workflow.keys())}"
 
         print(f"   ✅ Workflow '{workflow_path.name}' is valid")
         return True

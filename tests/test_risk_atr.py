@@ -1,15 +1,14 @@
+import math
 import os
 
-import math
 import pandas as pd
-
 from src.risk.risk_manager import RiskManager
 
 
 def _make_hist(n=30, base=100.0, step=0.5):
     rows = []
     price = base
-    for i in range(n):
+    for _i in range(n):
         high = price + step
         low = price - step
         close = price
@@ -22,7 +21,9 @@ def test_calculate_stop_loss_with_hist():
     hist = _make_hist(n=40, base=100.0, step=1.0)
     rm = RiskManager()
     entry = 100.0
-    stop = rm.calculate_stop_loss(ticker="SPY", entry_price=entry, direction="long", atr_multiplier=2.0, hist=hist)
+    stop = rm.calculate_stop_loss(
+        ticker="SPY", entry_price=entry, direction="long", atr_multiplier=2.0, hist=hist
+    )
     assert 0 < stop < entry
     # ATR of ~1.0 implies stop near 98.0 (allow tolerance)
     assert math.isclose(stop, 98.0, rel_tol=0.05, abs_tol=0.75)

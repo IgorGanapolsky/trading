@@ -8,8 +8,8 @@ As CTO: Architecture decision for maintainability and vendor flexibility.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
+from typing import Any, Optional
 
 
 @dataclass
@@ -85,7 +85,7 @@ class BrokerInterface(ABC):
         pass
 
     @abstractmethod
-    def get_positions(self) -> List[Dict[str, Any]]:
+    def get_positions(self) -> list[dict[str, Any]]:
         """
         Get current positions.
 
@@ -100,7 +100,7 @@ class BrokerInterface(ABC):
         pass
 
     @abstractmethod
-    def get_orders(self, status: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_orders(self, status: Optional[str] = None) -> list[dict[str, Any]]:
         """
         Get order history.
 
@@ -141,7 +141,7 @@ class BrokerInterface(ABC):
     @abstractmethod
     def get_historical_bars(
         self, symbol: str, timeframe: str = "1Day", limit: int = 100
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get historical price bars.
 

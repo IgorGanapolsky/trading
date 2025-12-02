@@ -6,10 +6,10 @@ Alternative to daily_checkin.py that works around Python 3.14 compatibility issu
 Uses direct API calls without problematic dependencies.
 """
 
-import os
 import json
+import os
 import sys
-from datetime import datetime, date
+from datetime import datetime
 from pathlib import Path
 
 # Use requests directly (more compatible)
@@ -28,9 +28,7 @@ ALPACA_SECRET = os.getenv("ALPACA_SECRET_KEY")
 ALPACA_BASE_URL = os.getenv("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
 
 if not ALPACA_KEY or not ALPACA_SECRET:
-    print(
-        "ERROR: ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set"
-    )
+    print("ERROR: ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set")
     sys.exit(1)
 
 
@@ -48,9 +46,7 @@ def get_account_data():
         account = response.json()
 
         # Get positions
-        positions_response = requests.get(
-            f"{ALPACA_BASE_URL}/v2/positions", headers=headers
-        )
+        positions_response = requests.get(f"{ALPACA_BASE_URL}/v2/positions", headers=headers)
         positions_response.raise_for_status()
         positions = positions_response.json()
 
@@ -86,9 +82,7 @@ def get_positions_summary(positions):
 
         unrealized_pl = (current_price - entry_price) * qty
         unrealized_pl_pct = (
-            ((current_price - entry_price) / entry_price * 100)
-            if entry_price > 0
-            else 0
+            ((current_price - entry_price) / entry_price * 100) if entry_price > 0 else 0
         )
 
         summary.append(
@@ -114,7 +108,7 @@ def update_system_state():
 
     # Load existing state
     if SYSTEM_STATE_FILE.exists():
-        with open(SYSTEM_STATE_FILE, "r") as f:
+        with open(SYSTEM_STATE_FILE) as f:
             state = json.load(f)
     else:
         print("ERROR: system_state.json not found. Run daily_checkin.py first.")

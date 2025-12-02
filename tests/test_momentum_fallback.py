@@ -11,8 +11,9 @@ Bug Context:
 - Fix: Fallback to SPY when momentum_scores list is empty
 """
 
-from src.strategies.core_strategy import CoreStrategy, MomentumScore
 from datetime import datetime
+
+from src.strategies.core_strategy import CoreStrategy, MomentumScore
 
 
 def test_empty_momentum_scores_fallback():
@@ -22,7 +23,7 @@ def test_empty_momentum_scores_fallback():
     # Simulate scenario: empty momentum scores (all symbols rejected by filters)
     try:
         strategy.select_best_etf(momentum_scores=[])
-        assert False, "Expected ValueError to be raised, but got result: {result}"
+        raise AssertionError("Expected ValueError to be raised, but got result: {result}")
     except ValueError as e:
         assert "No valid trading opportunities" in str(e)
         print("✅ Empty momentum scores correctly raises ValueError (skip trading)")

@@ -5,8 +5,8 @@ Provides persistent vector storage for market news, sentiment, and research.
 """
 
 import logging
-from typing import List, Dict, Any, Optional
 from datetime import datetime
+from typing import Any, Optional
 
 from src.utils.pydantic_compat import ensure_pydantic_base_settings
 
@@ -15,14 +15,12 @@ logger = logging.getLogger(__name__)
 ensure_pydantic_base_settings()
 
 try:
-    from sentence_transformers import SentenceTransformer, util, CrossEncoder
+    from sentence_transformers import CrossEncoder, SentenceTransformer, util
 
     SENTENCE_TRANSFORMERS_AVAILABLE = True
 except ImportError:
     SENTENCE_TRANSFORMERS_AVAILABLE = False
-    logger.warning(
-        "sentence-transformers not found. InMemoryCollection will use dummy similarity."
-    )
+    logger.warning("sentence-transformers not found. InMemoryCollection will use dummy similarity.")
 
 try:
     from rank_bm25 import BM25Okapi
@@ -54,7 +52,7 @@ class InMemoryCollection:
 
         # Ensure directory exists
         import os
-        import os
+
         os.makedirs(os.path.dirname(self.persist_path), exist_ok=True)
 
         if SENTENCE_TRANSFORMERS_AVAILABLE:
@@ -62,7 +60,7 @@ class InMemoryCollection:
                 # Load Bi-Encoder for fast retrieval
                 self.model = SentenceTransformer("all-MiniLM-L6-v2")
                 # Load Cross-Encoder for high-precision re-ranking
-                self.cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+                self.cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
                 self.embeddings = []
             except Exception as e:
                 logger.warning(f"Failed to load embedding models: {e}")
@@ -75,6 +73,7 @@ class InMemoryCollection:
     def save_to_disk(self):
         """Save collection to disk."""
         import json
+
         try:
             data = {
                 "documents": self.documents,
@@ -85,7 +84,7 @@ class InMemoryCollection:
                 # but for "in-memory" scale it's acceptable for now.
                 # Ideally we'd save embeddings as numpy arrays, but JSON is simple.
             }
-            with open(self.persist_path, 'w') as f:
+            with open(self.persist_path, "w") as f:
                 json.dump(data, f)
             logger.info(f"Saved in-memory RAG store to {self.persist_path}")
         except Exception as e:
@@ -95,11 +94,12 @@ class InMemoryCollection:
         """Load collection from disk."""
         import json
         import os
+
         if not os.path.exists(self.persist_path):
             return
 
         try:
-            with open(self.persist_path, 'r') as f:
+            with open(self.persist_path) as f:
                 data = json.load(f)
 
             self.documents = data.get("documents", [])
@@ -122,9 +122,7 @@ class InMemoryCollection:
         except Exception as e:
             logger.error(f"Failed to load in-memory store: {e}")
 
-    def add(
-        self, documents: list[str], metadatas: list[dict], ids: list[str] | None = None
-    ):
+    def add(self, documents: list[str], metadatas: list[dict], ids: list[str] | None = None):
         if ids is None:
             ids = [f"doc_{len(self.documents) + i}" for i in range(len(documents))]
 
@@ -150,12 +148,10 @@ class InMemoryCollection:
 
         return {"ids": ids}
 
-    def query(
-        self, query_texts: list[str], n_results: int = 5, where: dict | None = None
-    ):
+    def query(self, query_texts: list[str], n_results: int = 5, where: dict | None = None):
         # Filter first
         indices = []
-        for i, (meta, doc_id) in enumerate(zip(self.metadatas, self.ids)):
+        for i, (meta, _doc_id) in enumerate(zip(self.metadatas, self.ids)):
             if where:
                 match = all(meta.get(k) == v for k, v in where.items())
                 if not match:
@@ -172,7 +168,6 @@ class InMemoryCollection:
 
         # If we have embeddings and a model, do semantic search
         if self.model and self.embeddings:
-
             # 1. Semantic Search
             query_embedding = self.model.encode(query_texts[0])
             filtered_embeddings = [self.embeddings[i] for i in indices]
@@ -203,13 +198,15 @@ class InMemoryCollection:
                 original_idx = indices[idx]
                 hybrid_score = (0.7 * float(sem_score)) + (0.3 * float(bm_score))
 
-                candidates.append({
-                    "document": self.documents[original_idx],
-                    "metadata": self.metadatas[original_idx],
-                    "id": self.ids[original_idx],
-                    "score": hybrid_score,
-                    "distance": 1.0 - hybrid_score
-                })
+                candidates.append(
+                    {
+                        "document": self.documents[original_idx],
+                        "metadata": self.metadatas[original_idx],
+                        "id": self.ids[original_idx],
+                        "score": hybrid_score,
+                        "distance": 1.0 - hybrid_score,
+                    }
+                )
 
             # Sort by hybrid score descending
             candidates.sort(key=lambda x: x["score"], reverse=True)
@@ -284,14 +281,10 @@ class InMemoryCollection:
             return {
                 "documents": self.documents[:limit],
                 "metadatas": self.metadatas[:limit],
-                "ids": self.ids[:limit]
+                "ids": self.ids[:limit],
             }
 
-        return {
-            "documents": self.documents,
-            "metadatas": self.metadatas,
-            "ids": self.ids
-        }
+        return {"documents": self.documents, "metadatas": self.metadatas, "ids": self.ids}
 
     def delete(self, ids: list[str]):
         for doc_id in ids:
@@ -337,9 +330,7 @@ class TradingRAGDatabase:
 
         if chromadb is None:
             # Fallback to an in‑memory store when ChromaDB is unavailable.
-            logger.warning(
-                "ChromaDB not installed – using in‑memory RAG store fallback."
-            )
+            logger.warning("ChromaDB not installed – using in‑memory RAG store fallback.")
             self.client = None
             self.collection = InMemoryCollection()
             return
@@ -349,7 +340,8 @@ class TradingRAGDatabase:
 
         # Get or create collection for market news
         self.collection = self.client.get_or_create_collection(
-            name="market_news", metadata={"hnsw:space": "cosine"}  # Cosine similarity
+            name="market_news",
+            metadata={"hnsw:space": "cosine"},  # Cosine similarity
         )
 
         logger.info(f"ChromaDB initialized at {persist_directory}")
@@ -357,10 +349,10 @@ class TradingRAGDatabase:
 
     def add_documents(
         self,
-        documents: List[str],
-        metadatas: List[Dict[str, Any]],
-        ids: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+        documents: list[str],
+        metadatas: list[dict[str, Any]],
+        ids: Optional[list[str]] = None,
+    ) -> dict[str, Any]:
         """
         Add documents to the vector database.
 
@@ -410,8 +402,8 @@ class TradingRAGDatabase:
         self,
         query_text: str,
         n_results: int = 5,
-        where: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        where: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
         """
         Query the vector database with semantic search.
 
@@ -450,7 +442,7 @@ class TradingRAGDatabase:
 
     def get_ticker_news(
         self, ticker: str, n_results: int = 20, date_filter: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get all news for a specific ticker.
 
@@ -491,7 +483,7 @@ class TradingRAGDatabase:
 
         return articles
 
-    def get_by_id(self, doc_id: str) -> Optional[Dict[str, Any]]:
+    def get_by_id(self, doc_id: str) -> Optional[dict[str, Any]]:
         """
         Retrieve a document by its ID.
 
@@ -562,7 +554,7 @@ class TradingRAGDatabase:
             logger.error(f"Error resetting database: {e}")
             return False
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         Get database statistics.
 

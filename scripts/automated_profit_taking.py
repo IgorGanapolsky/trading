@@ -8,13 +8,11 @@ Implements CTO/CFO Decision #5: Automated profit-taking rules
 - Full exit: Sell remaining at +5% or stop-loss
 """
 
-import os
-import sys
 import json
 import logging
+import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -48,7 +46,7 @@ def get_alpaca_client():
         return None
 
 
-def load_system_state() -> Dict:
+def load_system_state() -> dict:
     """Load system state."""
     if not SYSTEM_STATE_FILE.exists():
         logger.error("System state file not found")
@@ -58,7 +56,7 @@ def load_system_state() -> Dict:
         return json.load(f)
 
 
-def get_open_positions() -> List[Dict]:
+def get_open_positions() -> list[dict]:
     """Get open positions from system state."""
     state = load_system_state()
     return state.get("performance", {}).get("open_positions", [])
@@ -69,7 +67,7 @@ def calculate_profit_pct(entry_price: float, current_price: float) -> float:
     return (current_price - entry_price) / entry_price
 
 
-def should_partial_profit(position: Dict) -> bool:
+def should_partial_profit(position: dict) -> bool:
     """Check if position should trigger partial profit-taking."""
     entry_price = position.get("entry_price", 0)
     current_price = position.get("current_price", 0)
@@ -81,19 +79,19 @@ def should_partial_profit(position: Dict) -> bool:
     return unrealized_pl_pct >= PARTIAL_PROFIT_THRESHOLD
 
 
-def should_trail_stop(position: Dict) -> bool:
+def should_trail_stop(position: dict) -> bool:
     """Check if position should trigger trailing stop to breakeven."""
     unrealized_pl_pct = position.get("unrealized_pl_pct", 0)
     return unrealized_pl_pct >= TRAIL_STOP_THRESHOLD
 
 
-def should_full_exit(position: Dict) -> bool:
+def should_full_exit(position: dict) -> bool:
     """Check if position should trigger full exit."""
     unrealized_pl_pct = position.get("unrealized_pl_pct", 0)
     return unrealized_pl_pct >= FULL_EXIT_THRESHOLD
 
 
-def execute_partial_profit(position: Dict, trader) -> bool:
+def execute_partial_profit(position: dict, trader) -> bool:
     """Execute partial profit-taking (sell 50%)."""
     symbol = position.get("symbol")
     quantity = position.get("quantity", 0)
@@ -110,7 +108,7 @@ def execute_partial_profit(position: Dict, trader) -> bool:
         logger.info(f"{symbol}: Executing partial profit-taking")
         logger.info(f"  Selling: {sell_quantity:.6f} shares (50% of {quantity:.6f})")
         logger.info(f"  Current price: ${current_price:.2f}")
-        logger.info(f"  Profit: {position.get('unrealized_pl_pct', 0)*100:.2f}%")
+        logger.info(f"  Profit: {position.get('unrealized_pl_pct', 0) * 100:.2f}%")
 
         # Execute sell order
         result = trader.execute_order(
@@ -128,7 +126,7 @@ def execute_partial_profit(position: Dict, trader) -> bool:
         return False
 
 
-def update_stop_loss(position: Dict, trader) -> bool:
+def update_stop_loss(position: dict, trader) -> bool:
     """Update stop-loss to breakeven (trailing stop)."""
     symbol = position.get("symbol")
     quantity = position.get("quantity", 0)
@@ -146,7 +144,7 @@ def update_stop_loss(position: Dict, trader) -> bool:
         # Set stop-loss at entry price (breakeven)
         trader.set_stop_loss(symbol=symbol, qty=quantity, stop_price=entry_price)
 
-        logger.info(f"✅ Stop-loss updated to breakeven")
+        logger.info("✅ Stop-loss updated to breakeven")
         return True
 
     except Exception as e:
@@ -154,7 +152,7 @@ def update_stop_loss(position: Dict, trader) -> bool:
         return False
 
 
-def execute_full_exit(position: Dict, trader) -> bool:
+def execute_full_exit(position: dict, trader) -> bool:
     """Execute full exit (sell 100%)."""
     symbol = position.get("symbol")
     quantity = position.get("quantity", 0)
@@ -168,7 +166,7 @@ def execute_full_exit(position: Dict, trader) -> bool:
         logger.info(f"{symbol}: Executing full exit")
         logger.info(f"  Selling: {quantity:.6f} shares (100%)")
         logger.info(f"  Current price: ${current_price:.2f}")
-        logger.info(f"  Profit: {position.get('unrealized_pl_pct', 0)*100:.2f}%")
+        logger.info(f"  Profit: {position.get('unrealized_pl_pct', 0) * 100:.2f}%")
 
         # Execute sell order
         result = trader.execute_order(
@@ -217,27 +215,27 @@ def process_positions():
         print(f"\n{symbol}:")
         print(f"  Entry: ${entry_price:.2f}")
         print(f"  Current: ${current_price:.2f}")
-        print(f"  P/L: {unrealized_pl_pct*100:.2f}%")
+        print(f"  P/L: {unrealized_pl_pct * 100:.2f}%")
 
         # Check profit-taking rules
         if should_full_exit(position):
-            print(f"  🎯 Action: FULL EXIT (≥{FULL_EXIT_THRESHOLD*100:.0f}% profit)")
+            print(f"  🎯 Action: FULL EXIT (≥{FULL_EXIT_THRESHOLD * 100:.0f}% profit)")
             if execute_full_exit(position, trader):
                 actions_taken.append(f"{symbol}: Full exit executed")
         elif should_partial_profit(position):
             print(
-                f"  🎯 Action: PARTIAL PROFIT-TAKING (≥{PARTIAL_PROFIT_THRESHOLD*100:.0f}% profit)"
+                f"  🎯 Action: PARTIAL PROFIT-TAKING (≥{PARTIAL_PROFIT_THRESHOLD * 100:.0f}% profit)"
             )
             if execute_partial_profit(position, trader):
                 actions_taken.append(f"{symbol}: Partial profit-taking executed")
         elif should_trail_stop(position):
             print(
-                f"  🎯 Action: TRAIL STOP TO BREAKEVEN (≥{TRAIL_STOP_THRESHOLD*100:.0f}% profit)"
+                f"  🎯 Action: TRAIL STOP TO BREAKEVEN (≥{TRAIL_STOP_THRESHOLD * 100:.0f}% profit)"
             )
             if update_stop_loss(position, trader):
                 actions_taken.append(f"{symbol}: Stop-loss trailed to breakeven")
         else:
-            print(f"  ✅ No action needed (profit: {unrealized_pl_pct*100:.2f}%)")
+            print(f"  ✅ No action needed (profit: {unrealized_pl_pct * 100:.2f}%)")
 
     print("\n" + "=" * 80)
     if actions_taken:
@@ -252,6 +250,6 @@ def process_positions():
 if __name__ == "__main__":
     try:
         process_positions()
-    except Exception as e:
+    except Exception:
         logger.exception("Profit-taking script failed")
         sys.exit(1)

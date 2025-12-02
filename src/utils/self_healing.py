@@ -5,13 +5,13 @@ This module provides automatic retry, error recovery, and self-healing
 capabilities for the AI agent to recover from transient failures.
 """
 
-import os
-import time
 import json
 import logging
+import os
+import time
 from functools import wraps
 from pathlib import Path
-from typing import Callable, Any, Dict, List
+from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ def get_anthropic_api_key():
     return os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY")
 
 
-def load_state() -> Dict[str, Any]:
+def load_state() -> dict[str, Any]:
     """Load agent state from persistent storage."""
     if STATE_FILE.exists():
         try:
@@ -35,7 +35,7 @@ def load_state() -> Dict[str, Any]:
     return {"errors": [], "last_heal": None}
 
 
-def save_state(state: Dict[str, Any]) -> None:
+def save_state(state: dict[str, Any]) -> None:
     """Save agent state to persistent storage."""
     try:
         STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -44,9 +44,7 @@ def save_state(state: Dict[str, Any]) -> None:
         logger.error(f"Failed to save state: {e}")
 
 
-def with_retry(
-    max_attempts: int = 3, backoff: float = 1.0, exceptions: tuple = (Exception,)
-):
+def with_retry(max_attempts: int = 3, backoff: float = 1.0, exceptions: tuple = (Exception,)):
     """
     Decorator for automatic retry with exponential backoff.
 
@@ -96,9 +94,7 @@ def with_retry(
                         logger.info(f"Retrying in {delay:.1f}s...")
                         time.sleep(delay)
                     else:
-                        logger.error(
-                            f"All {max_attempts} attempts failed for {func.__name__}"
-                        )
+                        logger.error(f"All {max_attempts} attempts failed for {func.__name__}")
                         raise last_exception
 
             return None
@@ -124,9 +120,7 @@ def health_check(threshold: int = 5, window_seconds: int = 3600) -> bool:
 
     # Count recent errors within the time window
     recent_errors = [
-        e
-        for e in state.get("errors", [])
-        if current_time - e.get("ts", 0) < window_seconds
+        e for e in state.get("errors", []) if current_time - e.get("ts", 0) < window_seconds
     ]
 
     if len(recent_errors) >= threshold:
@@ -222,7 +216,7 @@ def clear_fallback_mode() -> None:
     logger.info("Fallback mode cleared")
 
 
-def get_error_summary(limit: int = 10) -> List[Dict[str, Any]]:
+def get_error_summary(limit: int = 10) -> list[dict[str, Any]]:
     """
     Get recent error summary for diagnostics.
 

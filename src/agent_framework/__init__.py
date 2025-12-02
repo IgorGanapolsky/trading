@@ -5,30 +5,30 @@ Exports base interfaces, run context dataclasses, state provider helpers,
 and context engineering components.
 """
 
-from .base import TradingAgent, AgentResult
-from .context import RunContext, RunMode, AgentConfig
-from .state import StateProvider, FileStateProvider
+from . import agent_blueprints
+from .base import AgentResult, TradingAgent
+from .context import AgentConfig, RunContext, RunMode
 from .context_engine import (
     ContextEngine,
-    SemanticBlueprint,
-    ContextMessage,
     ContextMemory,
-    ContextType,
+    ContextMessage,
     ContextPriority,
+    ContextType,
+    SemanticBlueprint,
     get_context_engine,
 )
-from . import agent_blueprints
+from .state import FileStateProvider, StateProvider
 
 # Agent0 Co-Evolution components
 try:
+    from .coevolution_engine import CoEvolutionEngine, EvolutionMetrics, EvolutionStage
     from .curriculum_agent import (
         CurriculumAgent,
-        TradingTask,
-        TaskDifficulty,
         TaskCategory,
+        TaskDifficulty,
+        TradingTask,
     )
     from .executor_agent import ExecutorAgent, TaskSolution
-    from .coevolution_engine import CoEvolutionEngine, EvolutionStage, EvolutionMetrics
 except ImportError:
     # Graceful degradation if dependencies missing
     CurriculumAgent = None

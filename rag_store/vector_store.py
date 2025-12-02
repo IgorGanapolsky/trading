@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Iterable, Optional
+from collections.abc import Iterable
 
 import chromadb
 from chromadb.api import Collection
@@ -15,7 +15,7 @@ class SentimentVectorStore:
 
     COLLECTION_NAME = "sentiment_documents"
 
-    def __init__(self, path: Optional[str] = None) -> None:
+    def __init__(self, path: str | None = None) -> None:
         ensure_directories()
         self.path = path or str(VECTOR_PATH)
         self._client = chromadb.PersistentClient(
@@ -31,7 +31,7 @@ class SentimentVectorStore:
             metadata={"description": "Sentiment documents keyed by ticker/source/date"},
         )
 
-    def upsert_documents(self, docs: Iterable[Dict]) -> None:
+    def upsert_documents(self, docs: Iterable[dict]) -> None:
         """Upsert sentiment documents into the vector store."""
         documents = []
         metadatas = []
@@ -55,9 +55,9 @@ class SentimentVectorStore:
         self,
         query_text: str,
         *,
-        ticker: Optional[str] = None,
+        ticker: str | None = None,
         n_results: int = 5,
-    ) -> Dict:
+    ) -> dict:
         """Query the vector store with optional ticker filter."""
         where = {"ticker": ticker} if ticker else None
         return self._collection.query(

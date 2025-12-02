@@ -9,11 +9,11 @@ Prevents catastrophic losses by automatically halting trading when:
 - Position size anomalies
 """
 
-import logging
 import json
+import logging
+from datetime import date, datetime
 from pathlib import Path
-from datetime import datetime, date
-from typing import Dict, Any
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class CircuitBreaker:
         portfolio_value: float,
         proposed_position_size: float,
         current_pl_today: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Check if trading should be allowed.
 
@@ -71,7 +71,6 @@ class CircuitBreaker:
             Dict with 'allowed', 'reason', 'severity'
         """
 
-
         # Check 1: Kill switch
         if self.is_tripped:
             return {
@@ -82,9 +81,7 @@ class CircuitBreaker:
             }
 
         # Check 2: Daily loss limit
-        daily_loss_pct = (
-            abs(current_pl_today) / portfolio_value if portfolio_value > 0 else 0
-        )
+        daily_loss_pct = abs(current_pl_today) / portfolio_value if portfolio_value > 0 else 0
         if current_pl_today < 0 and daily_loss_pct > self.max_daily_loss_pct:
             self._trip_breaker(
                 "DAILY_LOSS_LIMIT",
@@ -100,9 +97,7 @@ class CircuitBreaker:
         # Check 3: Consecutive losses
         consecutive_losses = self.state.get("consecutive_losses", 0)
         if consecutive_losses >= self.max_consecutive_losses:
-            self._trip_breaker(
-                "CONSECUTIVE_LOSSES", f"{consecutive_losses} consecutive losses"
-            )
+            self._trip_breaker("CONSECUTIVE_LOSSES", f"{consecutive_losses} consecutive losses")
             return {
                 "allowed": False,
                 "reason": f"🛑 Too many consecutive losses: {consecutive_losses}",
@@ -111,9 +106,7 @@ class CircuitBreaker:
             }
 
         # Check 4: Position size anomaly
-        position_pct = (
-            proposed_position_size / portfolio_value if portfolio_value > 0 else 0
-        )
+        position_pct = proposed_position_size / portfolio_value if portfolio_value > 0 else 0
         if position_pct > self.max_position_size_pct:
             return {
                 "allowed": False,
@@ -149,12 +142,8 @@ class CircuitBreaker:
     def record_trade_outcome(self, profit_loss: float) -> None:
         """Record trade outcome for consecutive loss tracking."""
         if profit_loss < 0:
-            self.state["consecutive_losses"] = (
-                self.state.get("consecutive_losses", 0) + 1
-            )
-            logger.warning(
-                f"Loss recorded: {self.state['consecutive_losses']} consecutive"
-            )
+            self.state["consecutive_losses"] = self.state.get("consecutive_losses", 0) + 1
+            logger.warning(f"Loss recorded: {self.state['consecutive_losses']} consecutive")
         else:
             self.state["consecutive_losses"] = 0  # Reset on win
             logger.info("Win recorded: consecutive losses reset to 0")
@@ -202,7 +191,7 @@ class CircuitBreaker:
         logger.warning("Circuit breaker manually reset")
         return True
 
-    def _load_state(self) -> Dict[str, Any]:
+    def _load_state(self) -> dict[str, Any]:
         """Load state from disk."""
         if not self.state_file.exists():
             return {
@@ -213,7 +202,7 @@ class CircuitBreaker:
             }
 
         try:
-            with open(self.state_file, "r") as f:
+            with open(self.state_file) as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Error loading circuit breaker state: {e}")
@@ -228,7 +217,7 @@ class CircuitBreaker:
         except Exception as e:
             logger.error(f"Error saving circuit breaker state: {e}")
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get current circuit breaker status."""
         return {
             "is_tripped": self.is_tripped,
@@ -272,11 +261,10 @@ class SharpeKillSwitch:
         self.state = self._load_state()
 
         logger.info(
-            f"Sharpe Kill Switch initialized: min_sharpe={min_sharpe}, "
-            f"rolling_days={rolling_days}"
+            f"Sharpe Kill Switch initialized: min_sharpe={min_sharpe}, rolling_days={rolling_days}"
         )
 
-    def check_sharpe(self, daily_returns: list) -> Dict[str, Any]:
+    def check_sharpe(self, daily_returns: list) -> dict[str, Any]:
         """
         Check if rolling Sharpe ratio is above threshold.
 
@@ -297,7 +285,7 @@ class SharpeKillSwitch:
             }
 
         # Use last N days (up to rolling window)
-        recent_returns = daily_returns[-min(len(daily_returns), self.rolling_days):]
+        recent_returns = daily_returns[-min(len(daily_returns), self.rolling_days) :]
 
         # Calculate Sharpe ratio (annualized)
         mean_return = np.mean(recent_returns)
@@ -381,9 +369,7 @@ class SharpeKillSwitch:
         self.state["sharpe_at_activation"] = sharpe
         self._save_state()
 
-        logger.critical(
-            f"🚨 SHARPE KILL SWITCH ACTIVATED: Sharpe {sharpe:.2f} < {self.min_sharpe}"
-        )
+        logger.critical(f"🚨 SHARPE KILL SWITCH ACTIVATED: Sharpe {sharpe:.2f} < {self.min_sharpe}")
 
     def _deactivate_kill_switch(self) -> None:
         """Deactivate the kill switch after successful research mode."""
@@ -406,13 +392,13 @@ class SharpeKillSwitch:
         except Exception:
             return 0
 
-    def _load_state(self) -> Dict[str, Any]:
+    def _load_state(self) -> dict[str, Any]:
         """Load state from disk."""
         if not self.state_file.exists():
             return {"is_active": False, "in_research_mode": False}
 
         try:
-            with open(self.state_file, "r") as f:
+            with open(self.state_file) as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Error loading Sharpe kill switch state: {e}")
@@ -427,7 +413,7 @@ class SharpeKillSwitch:
         except Exception as e:
             logger.error(f"Error saving Sharpe kill switch state: {e}")
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get current kill switch status."""
         return {
             "is_active": self.state.get("is_active", False),

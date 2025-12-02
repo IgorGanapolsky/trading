@@ -22,9 +22,8 @@ import sqlite3
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
 
@@ -37,18 +36,18 @@ class CacheEntry:
 
     query: str
     query_hash: str
-    results: List[Dict[str, Any]]
-    embedding: Optional[List[float]] = None
+    results: list[dict[str, Any]]
+    embedding: Optional[list[float]] = None
     created_at: float = field(default_factory=time.time)
     hits: int = 0
     ticker: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def is_expired(self, ttl_seconds: float) -> bool:
         """Check if entry is expired."""
         return time.time() - self.created_at > ttl_seconds
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "query": self.query,
@@ -62,7 +61,7 @@ class CacheEntry:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CacheEntry":
+    def from_dict(cls, data: dict[str, Any]) -> "CacheEntry":
         """Create from dictionary."""
         return cls(**data)
 
@@ -84,7 +83,7 @@ class CacheStats:
         total = self.hits + self.misses
         return self.hits / total if total > 0 else 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "hits": self.hits,
             "misses": self.misses,
@@ -128,7 +127,7 @@ class SemanticQueryCache:
         self._cache: OrderedDict[str, CacheEntry] = OrderedDict()
 
         # Embedding index for semantic lookup
-        self._embeddings: Dict[str, np.ndarray] = {}
+        self._embeddings: dict[str, np.ndarray] = {}
 
         # Statistics
         self.stats = CacheStats()
@@ -174,13 +173,16 @@ class SemanticQueryCache:
 
         try:
             with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute("""
+                cursor = conn.execute(
+                    """
                     SELECT query_hash, query, results, embedding, created_at,
                            hits, ticker, metadata
                     FROM query_cache
                     ORDER BY created_at DESC
                     LIMIT ?
-                """, (self.capacity,))
+                """,
+                    (self.capacity,),
+                )
 
                 for row in cursor.fetchall():
                     entry = CacheEntry(
@@ -212,20 +214,23 @@ class SemanticQueryCache:
 
         try:
             with sqlite3.connect(self.db_path) as conn:
-                conn.execute("""
+                conn.execute(
+                    """
                     INSERT OR REPLACE INTO query_cache
                     (query_hash, query, results, embedding, created_at, hits, ticker, metadata)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    entry.query_hash,
-                    entry.query,
-                    json.dumps(entry.results),
-                    json.dumps(entry.embedding) if entry.embedding else None,
-                    entry.created_at,
-                    entry.hits,
-                    entry.ticker,
-                    json.dumps(entry.metadata),
-                ))
+                """,
+                    (
+                        entry.query_hash,
+                        entry.query,
+                        json.dumps(entry.results),
+                        json.dumps(entry.embedding) if entry.embedding else None,
+                        entry.created_at,
+                        entry.hits,
+                        entry.ticker,
+                        json.dumps(entry.metadata),
+                    ),
+                )
                 conn.commit()
         except Exception as e:
             logger.warning(f"Failed to save cache entry: {e}")
@@ -235,7 +240,7 @@ class SemanticQueryCache:
         query: str,
         ticker: Optional[str] = None,
         use_semantic: bool = True,
-    ) -> Optional[List[Dict[str, Any]]]:
+    ) -> Optional[list[dict[str, Any]]]:
         """
         Get cached results for a query.
 
@@ -280,9 +285,9 @@ class SemanticQueryCache:
     def put(
         self,
         query: str,
-        results: List[Dict[str, Any]],
+        results: list[dict[str, Any]],
         ticker: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ) -> None:
         """
         Cache query results.
@@ -330,9 +335,7 @@ class SemanticQueryCache:
 
         logger.debug(f"Cached query: {query[:50]}... ({len(results)} results)")
 
-    def _find_semantic_match(
-        self, query: str, ticker: Optional[str]
-    ) -> Optional[CacheEntry]:
+    def _find_semantic_match(self, query: str, ticker: Optional[str]) -> Optional[CacheEntry]:
         """Find semantically similar cached query."""
         if not self.embedder or len(self._embeddings) == 0:
             return None
@@ -362,9 +365,7 @@ class SemanticQueryCache:
                     best_match = entry
 
             if best_match:
-                logger.debug(
-                    f"Semantic match found with similarity {best_similarity:.3f}"
-                )
+                logger.debug(f"Semantic match found with similarity {best_similarity:.3f}")
 
             return best_match
 
@@ -406,17 +407,14 @@ class SemanticQueryCache:
             self._embeddings.clear()
             return count
 
-        keys_to_remove = [
-            k for k, v in self._cache.items()
-            if v.ticker == ticker
-        ]
+        keys_to_remove = [k for k, v in self._cache.items() if v.ticker == ticker]
 
         for key in keys_to_remove:
             self._evict(key)
 
         return len(keys_to_remove)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         stats = self.stats.to_dict()
         stats["entries"] = len(self._cache)
@@ -437,10 +435,7 @@ class SemanticQueryCache:
 
     def cleanup_expired(self) -> int:
         """Remove expired entries."""
-        expired_keys = [
-            k for k, v in self._cache.items()
-            if v.is_expired(self.ttl_seconds)
-        ]
+        expired_keys = [k for k, v in self._cache.items() if v.is_expired(self.ttl_seconds)]
 
         for key in expired_keys:
             self._evict(key)

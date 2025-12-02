@@ -3,9 +3,11 @@
 Check Alpaca API Minimum Order Requirements
 Investigates minimum order sizes for stocks/ETFs
 """
+
 import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -13,20 +15,19 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 load_dotenv()
 
 try:
-    from alpaca.trading.client import TradingClient
-    from alpaca.trading.requests import MarketOrderRequest
-    from alpaca.trading.enums import OrderSide, TimeInForce
     from alpaca.common.exceptions import APIError
+    from alpaca.trading.client import TradingClient
+    from alpaca.trading.enums import OrderSide, TimeInForce
+    from alpaca.trading.requests import MarketOrderRequest
 except ImportError:
     print("⚠️  Alpaca SDK not available - checking via REST API")
-    import requests
 
     ALPACA_KEY = os.getenv("ALPACA_API_KEY")
     ALPACA_SECRET = os.getenv("ALPACA_SECRET_KEY")
     BASE_URL = os.getenv("APCA_API_BASE_URL", "https://paper-api.alpaca.markets")
 
     if ALPACA_KEY and ALPACA_SECRET:
-        print(f"✅ API credentials found")
+        print("✅ API credentials found")
         print(f"Base URL: {BASE_URL}")
         print()
         print("📚 Alpaca API Minimum Order Requirements:")
@@ -78,7 +79,7 @@ def check_minimum_orders():
         print("🧪 Testing Order Validation")
         print("-" * 80)
         print(f"Symbol: {symbol}")
-        print(f"Tier: T1_CORE")
+        print("Tier: T1_CORE")
         print()
 
         for amount in test_amounts:
@@ -110,4 +111,3 @@ def check_minimum_orders():
 
 if __name__ == "__main__":
     check_minimum_orders()
-

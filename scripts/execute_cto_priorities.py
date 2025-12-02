@@ -47,15 +47,11 @@ def analyze_and_recommend():
         print(f"  Total Portfolio: ${total_value:,.2f}")
 
         if spy_pct > 60:
-            print(
-                f"\n  ⚠️  CRITICAL: SPY is {spy_pct:.1f}% of portfolio (exceeds 60% limit)"
-            )
-            print(f"  🎯 ACTION REQUIRED:")
-            print(
-                f"     1. Reduce SPY position by ${(spy_value - total_value * 0.5):,.2f}"
-            )
-            print(f"     2. Diversify into QQQ/VOO")
-            print(f"     3. Target: SPY < 50% of portfolio")
+            print(f"\n  ⚠️  CRITICAL: SPY is {spy_pct:.1f}% of portfolio (exceeds 60% limit)")
+            print("  🎯 ACTION REQUIRED:")
+            print(f"     1. Reduce SPY position by ${(spy_value - total_value * 0.5):,.2f}")
+            print("     2. Diversify into QQQ/VOO")
+            print("     3. Target: SPY < 50% of portfolio")
         else:
             print(f"  ✅ SPY concentration acceptable ({spy_pct:.1f}%)")
 
@@ -70,14 +66,12 @@ def analyze_and_recommend():
         pl_pct = pos.get("unrealized_pl_pct", 0)
 
         if pl_pct < -2:
-            print(
-                f"  {symbol}: Entered at ${entry:.2f}, now ${current:.2f} ({pl_pct:.2f}%)"
-            )
+            print(f"  {symbol}: Entered at ${entry:.2f}, now ${current:.2f} ({pl_pct:.2f}%)")
             print(f"    ⚠️  Entry was {abs(pl_pct):.2f}% above current price")
-            print(f"    💡 RECOMMENDATION:")
-            print(f"       - Add pullback filter: Wait for RSI < 40")
-            print(f"       - Add MACD confirmation: Require MACD histogram > 0")
-            print(f"       - Add price filter: Entry only if price < 20-day MA")
+            print("    💡 RECOMMENDATION:")
+            print("       - Add pullback filter: Wait for RSI < 40")
+            print("       - Add MACD confirmation: Require MACD histogram > 0")
+            print("       - Add price filter: Entry only if price < 20-day MA")
 
     # Priority 3: Profit-Taking Rules
     print("\n🚨 PRIORITY 3: PROFIT-TAKING RULES")
@@ -88,10 +82,10 @@ def analyze_and_recommend():
         pl_pct = googl_pos.get("unrealized_pl_pct", 0)
         if pl_pct > 2:
             print(f"  GOOGL: Up {pl_pct:.2f}%")
-            print(f"    ✅ Profit target reached (+2%)")
-            print(f"    🎯 ACTION: Consider taking partial profit")
-            print(f"       - Sell 50% at +3%")
-            print(f"       - Trail stop on remaining 50%")
+            print("    ✅ Profit target reached (+2%)")
+            print("    🎯 ACTION: Consider taking partial profit")
+            print("       - Sell 50% at +3%")
+            print("       - Trail stop on remaining 50%")
 
     # Priority 4: Strategy Optimization
     print("\n🚨 PRIORITY 4: STRATEGY OPTIMIZATION")
@@ -115,9 +109,7 @@ def analyze_and_recommend():
         "spy_concentration": spy_pct if spy_pos else 0,
         "needs_rebalancing": spy_pct > 60 if spy_pos else False,
         "entry_improvements": ["pullback_filter", "volume_confirmation", "ma_filter"],
-        "profit_taking_needed": (
-            googl_pos.get("unrealized_pl_pct", 0) > 2 if googl_pos else False
-        ),
+        "profit_taking_needed": (googl_pos.get("unrealized_pl_pct", 0) > 2 if googl_pos else False),
     }
 
 

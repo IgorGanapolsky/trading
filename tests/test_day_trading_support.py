@@ -7,7 +7,6 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-
 from src.day_trading_support.config_loader import (
     DayTradingResourceConfig,
     load_resource_config,
@@ -119,9 +118,7 @@ def test_study_agent_generates_assignments() -> None:
         difficulty="beginner",
         summary="",
         focus_tags=["psychology"],
-        lessons=[
-            BookLesson(title="Reset", trigger="loss", actions=["Stop trade"])
-        ],
+        lessons=[BookLesson(title="Reset", trigger="loss", actions=["Stop trade"])],
         reading_plan=[
             ReadingSegment(
                 label="Chapter 1",
@@ -189,9 +186,7 @@ def test_orchestrator_writes_plan(tmp_path: Path) -> None:
         difficulty="beginner",
         summary="",
         focus_tags=["psychology"],
-        lessons=[
-            BookLesson(title="Reset", trigger="loss", actions=["Stop trade"])
-        ],
+        lessons=[BookLesson(title="Reset", trigger="loss", actions=["Stop trade"])],
         reading_plan=[
             ReadingSegment(
                 label="Chapter 1",

@@ -4,10 +4,10 @@ Test suite for TikTok sentiment collector.
 Tests TikTok API integration, sentiment analysis, and data extraction.
 """
 
-import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime
+from unittest.mock import Mock, patch
 
+import pytest
 from src.rag.collectors.tiktok_collector import TikTokCollector
 
 

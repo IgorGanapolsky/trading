@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from mcp.client import MCPClient, default_client
 
 SERVER_ID = "alpaca-trading"
 
 
-def _client(client: Optional[MCPClient]) -> MCPClient:
+def _client(client: MCPClient | None) -> MCPClient:
     return client or default_client()
 
 
@@ -19,9 +19,9 @@ def submit_order(
     order_type: str = "market",
     time_in_force: str = "day",
     extended_hours: bool = False,
-    client: Optional[MCPClient] = None,
+    client: MCPClient | None = None,
     **kwargs: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     payload = {
         "symbol": symbol,
         "side": side,
@@ -36,20 +36,20 @@ def submit_order(
 
 def get_positions(
     *,
-    client: Optional[MCPClient] = None,
-) -> Dict[str, Any]:
+    client: MCPClient | None = None,
+) -> dict[str, Any]:
     return _client(client).call_tool(SERVER_ID, "get_positions", {})
 
 
 def get_clock(
     *,
-    client: Optional[MCPClient] = None,
-) -> Dict[str, Any]:
+    client: MCPClient | None = None,
+) -> dict[str, Any]:
     return _client(client).call_tool(SERVER_ID, "get_clock", {})
 
 
 def get_account(
     *,
-    client: Optional[MCPClient] = None,
-) -> Dict[str, Any]:
+    client: MCPClient | None = None,
+) -> dict[str, Any]:
     return _client(client).call_tool(SERVER_ID, "get_account", {})

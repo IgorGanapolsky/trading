@@ -3,9 +3,11 @@
 Bonds Trading Diagnostic Script
 Checks why BND/TLT orders aren't executing
 """
+
 import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Add src to path
@@ -28,7 +30,7 @@ def check_configuration():
     print("📊 CONFIGURATION CHECK")
     print("-" * 80)
     print(f"DAILY_INVESTMENT: ${daily_investment:.2f}")
-    print(f"TIER1_ALLOCATION: {tier1_allocation*100:.1f}%")
+    print(f"TIER1_ALLOCATION: {tier1_allocation * 100:.1f}%")
     print()
 
     # Calculate allocations
@@ -81,9 +83,7 @@ def check_configuration():
         print("📈 SYSTEM STATE")
         print("-" * 80)
         tier1_state = state.get("strategies", {}).get("tier1", {})
-        print(
-            f"Tier 1 Daily Amount (from state): ${tier1_state.get('daily_amount', 'N/A')}"
-        )
+        print(f"Tier 1 Daily Amount (from state): ${tier1_state.get('daily_amount', 'N/A')}")
         print(f"Tier 1 Trades Executed: {tier1_state.get('trades_executed', 0)}")
         print(f"Tier 1 Total Invested: ${tier1_state.get('total_invested', 0):.2f}")
         print()

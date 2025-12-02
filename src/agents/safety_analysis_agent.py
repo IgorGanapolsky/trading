@@ -11,14 +11,17 @@ Responsibilities:
 Ensures we only invest in quality companies at attractive prices.
 """
 
+import builtins
+import contextlib
 import logging
-from typing import Dict, Any, Optional
-from .base_agent import BaseAgent
+from typing import Any
+
 from src.safety.graham_buffett_safety import (
-    GrahamBuffettSafety,
-    get_global_safety_analyzer,
     SafetyRating,
+    get_global_safety_analyzer,
 )
+
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +45,7 @@ class SafetyAnalysisAgent(BaseAgent):
         self.safety_analyzer = get_global_safety_analyzer()
         self.min_margin_of_safety = min_margin_of_safety
 
-    def analyze(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Analyze investment opportunity using Graham-Buffett principles.
 
@@ -104,10 +107,10 @@ class SafetyAnalysisAgent(BaseAgent):
         margin_info = ""
         if safety_analysis.margin_of_safety_pct is not None:
             margin_info = f"""
-MARGIN OF SAFETY: {safety_analysis.margin_of_safety_pct*100:.1f}%
+MARGIN OF SAFETY: {safety_analysis.margin_of_safety_pct * 100:.1f}%
 - Intrinsic Value: ${safety_analysis.intrinsic_value:.2f}
 - Market Price: ${safety_analysis.market_price:.2f}
-- Required Minimum: {self.min_margin_of_safety*100:.1f}%
+- Required Minimum: {self.min_margin_of_safety * 100:.1f}%
 """
         else:
             margin_info = "MARGIN OF SAFETY: Unable to calculate (DCF unavailable)"
@@ -118,12 +121,12 @@ MARGIN OF SAFETY: {safety_analysis.margin_of_safety_pct*100:.1f}%
             quality_info = f"""
 QUALITY METRICS:
 - Quality Score: {q.quality_score:.1f}/100
-- Debt-to-Equity: {q.debt_to_equity if q.debt_to_equity else 'N/A'}
-- Current Ratio: {q.current_ratio if q.current_ratio else 'N/A'}
-- ROE: {q.roe*100 if q.roe else 'N/A'}%
-- ROA: {q.roa*100 if q.roa else 'N/A'}%
-- Profit Margin: {q.profit_margin*100 if q.profit_margin else 'N/A'}%
-- Earnings Growth (3Y): {q.earnings_growth_3y*100 if q.earnings_growth_3y else 'N/A'}%
+- Debt-to-Equity: {q.debt_to_equity if q.debt_to_equity else "N/A"}
+- Current Ratio: {q.current_ratio if q.current_ratio else "N/A"}
+- ROE: {q.roe * 100 if q.roe else "N/A"}%
+- ROA: {q.roa * 100 if q.roa else "N/A"}%
+- Profit Margin: {q.profit_margin * 100 if q.profit_margin else "N/A"}%
+- Earnings Growth (3Y): {q.earnings_growth_3y * 100 if q.earnings_growth_3y else "N/A"}%
 - Earnings Consistency: {q.earnings_consistency:.2f}
 """
         else:
@@ -136,8 +139,8 @@ ANALYSIS:
 {margin_info}
 {quality_info}
 Rating: {safety_analysis.safety_rating.value.upper()}
-Reasons: {', '.join(safety_analysis.reasons[:3])}
-Warnings: {', '.join(safety_analysis.warnings[:2]) if safety_analysis.warnings else 'None'}
+Reasons: {", ".join(safety_analysis.reasons[:3])}
+Warnings: {", ".join(safety_analysis.warnings[:2]) if safety_analysis.warnings else "None"}
 
 {memory_context}
 
@@ -191,8 +194,8 @@ THESIS: [2 sentences on investment merit]"""
         return prompt
 
     def _combine_analysis(
-        self, safety_analysis: Any, llm_response: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, safety_analysis: Any, llm_response: dict[str, Any]
+    ) -> dict[str, Any]:
         """Combine safety analysis with LLM insights."""
 
         # Parse LLM response
@@ -214,9 +217,7 @@ THESIS: [2 sentences on investment merit]"""
             "intrinsic_value": safety_analysis.intrinsic_value,
             "margin_of_safety_pct": safety_analysis.margin_of_safety_pct,
             "quality_score": (
-                safety_analysis.quality.quality_score
-                if safety_analysis.quality
-                else None
+                safety_analysis.quality.quality_score if safety_analysis.quality else None
             ),
             "safety_rating": safety_analysis.safety_rating.value,
             "action": action,
@@ -235,7 +236,7 @@ THESIS: [2 sentences on investment merit]"""
 
         return analysis
 
-    def _parse_llm_response(self, reasoning: str) -> Dict[str, Any]:
+    def _parse_llm_response(self, reasoning: str) -> dict[str, Any]:
         """Parse LLM response into structured format."""
         lines = reasoning.split("\n")
         analysis = {
@@ -252,10 +253,8 @@ THESIS: [2 sentences on investment merit]"""
         for line in lines:
             line = line.strip()
             if line.startswith("SAFETY_SCORE:"):
-                try:
+                with contextlib.suppress(builtins.BaseException):
                     analysis["safety_score"] = int(line.split(":")[1].strip())
-                except:
-                    pass
             elif line.startswith("MARGIN_EVAL:"):
                 eval_str = line.split(":")[1].strip().upper()
                 if eval_str in ["EXCELLENT", "GOOD", "ADEQUATE", "POOR", "NONE"]:
@@ -269,10 +268,8 @@ THESIS: [2 sentences on investment merit]"""
                 if rec in ["APPROVE", "REJECT"]:
                     analysis["recommendation"] = rec
             elif line.startswith("CONFIDENCE:"):
-                try:
+                with contextlib.suppress(builtins.BaseException):
                     analysis["confidence"] = float(line.split(":")[1].strip())
-                except:
-                    pass
             elif line.startswith("SAFETY_FACTORS:"):
                 analysis["safety_factors"] = line.split(":", 1)[1].strip()
             elif line.startswith("RISK_FACTORS:"):

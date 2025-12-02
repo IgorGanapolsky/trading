@@ -1,8 +1,8 @@
-import logging
 import json
-from pathlib import Path
-from typing import Dict, Any, List
+import logging
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 from src.agents.base_agent import BaseAgent
 
@@ -27,7 +27,7 @@ class TraceAnalysisAgent(BaseAgent):
         self.trace_dir = Path("data/audit_traces")
         self.trace_dir.mkdir(parents=True, exist_ok=True)
 
-    def analyze(self, data: Dict[str, Any] = None) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any] = None) -> dict[str, Any]:
         """
         Analyze recent audit traces.
 
@@ -73,7 +73,7 @@ class TraceAnalysisAgent(BaseAgent):
             "llm_report": report,
         }
 
-    def _load_recent_traces(self, limit: int = 10) -> List[Dict]:
+    def _load_recent_traces(self, limit: int = 10) -> list[dict]:
         """Load the most recent JSON trace files."""
         files = sorted(
             self.trace_dir.glob("trace_*.json"),
@@ -83,13 +83,13 @@ class TraceAnalysisAgent(BaseAgent):
         traces = []
         for f in files[:limit]:
             try:
-                with open(f, "r") as fd:
+                with open(f) as fd:
                     traces.append(json.load(fd))
             except Exception as e:
                 logger.error(f"Failed to load trace {f}: {e}")
         return traces
 
-    def _analyze_single_trace(self, trace: Dict) -> Dict:
+    def _analyze_single_trace(self, trace: dict) -> dict:
         """Analyze a single trace for issues."""
         anomalies = []
         total_duration = trace.get("duration_ms", 0)
@@ -121,9 +121,7 @@ class TraceAnalysisAgent(BaseAgent):
 
         # Check 3: Final Decision Validity
         final_decision = trace.get("final_decision")
-        if not final_decision or (
-            isinstance(final_decision, dict) and "error" in final_decision
-        ):
+        if not final_decision or (isinstance(final_decision, dict) and "error" in final_decision):
             anomalies.append(
                 {
                     "type": "INVALID_DECISION",
@@ -134,9 +132,7 @@ class TraceAnalysisAgent(BaseAgent):
 
         return {"trace_id": trace_id, "latency": total_duration, "anomalies": anomalies}
 
-    def _generate_llm_report(
-        self, anomalies: List[Dict], latency_stats: List[float]
-    ) -> Dict:
+    def _generate_llm_report(self, anomalies: list[dict], latency_stats: list[float]) -> dict:
         """Use Claude to summarize findings."""
         if not anomalies and not latency_stats:
             return {"summary": "No activity to report."}

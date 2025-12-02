@@ -3,14 +3,16 @@
 Continuous Training System - Automated RL Model Training
 Runs both local and cloud RL training on a schedule.
 """
-import os
-import sys
+
+import argparse
 import json
 import logging
-import argparse
-from pathlib import Path
+import os
+import sys
 from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from pathlib import Path
+from typing import Any
+
 from dotenv import load_dotenv
 
 # Add parent to path
@@ -20,7 +22,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 load_dotenv()
 
 from src.ml.trainer import ModelTrainer
-from src.ml.rl_service_client import RLServiceClient
 
 # Setup logging
 logging.basicConfig(
@@ -43,7 +44,7 @@ class ContinuousTrainer:
 
     def __init__(
         self,
-        symbols: List[str] = None,
+        symbols: list[str] = None,
         train_local: bool = True,
         train_cloud: bool = True,
         retrain_interval_days: int = 7,
@@ -72,9 +73,7 @@ class ContinuousTrainer:
 
         if self.train_cloud:
             try:
-                self.cloud_trainer = ModelTrainer(
-                    use_cloud_rl=True, rl_provider="vertex_ai"
-                )
+                self.cloud_trainer = ModelTrainer(use_cloud_rl=True, rl_provider="vertex_ai")
                 logger.info("✅ Cloud trainer initialized")
             except Exception as e:
                 logger.warning(f"⚠️  Cloud trainer initialization failed: {e}")
@@ -83,11 +82,11 @@ class ContinuousTrainer:
         # Load training status
         self.status = self._load_status()
 
-    def _load_status(self) -> Dict[str, Any]:
+    def _load_status(self) -> dict[str, Any]:
         """Load training status from file."""
         if TRAINING_STATUS_FILE.exists():
             try:
-                with open(TRAINING_STATUS_FILE, "r") as f:
+                with open(TRAINING_STATUS_FILE) as f:
                     return json.load(f)
             except Exception as e:
                 logger.warning(f"Failed to load training status: {e}")
@@ -114,7 +113,7 @@ class ContinuousTrainer:
         except Exception:
             return True
 
-    def train_symbol_local(self, symbol: str) -> Dict[str, Any]:
+    def train_symbol_local(self, symbol: str) -> dict[str, Any]:
         """Train symbol locally."""
         if not self.local_trainer:
             return {"success": False, "error": "Local trainer not initialized"}
@@ -126,13 +125,9 @@ class ContinuousTrainer:
 
             if result.get("success"):
                 logger.info(f"✅ Local training completed for {symbol}")
-                logger.info(
-                    f"   Validation loss: {result.get('final_val_loss', 'N/A'):.4f}"
-                )
+                logger.info(f"   Validation loss: {result.get('final_val_loss', 'N/A'):.4f}")
             else:
-                logger.error(
-                    f"❌ Local training failed for {symbol}: {result.get('error')}"
-                )
+                logger.error(f"❌ Local training failed for {symbol}: {result.get('error')}")
 
             return result
 
@@ -140,7 +135,7 @@ class ContinuousTrainer:
             logger.error(f"❌ Error in local training for {symbol}: {e}")
             return {"success": False, "error": str(e), "symbol": symbol}
 
-    def train_symbol_cloud(self, symbol: str) -> Dict[str, Any]:
+    def train_symbol_cloud(self, symbol: str) -> dict[str, Any]:
         """Train symbol in cloud RL service."""
         if not self.cloud_trainer:
             return {"success": False, "error": "Cloud trainer not initialized"}
@@ -164,9 +159,7 @@ class ContinuousTrainer:
                     "provider": result.get("provider"),
                 }
             else:
-                logger.error(
-                    f"❌ Cloud training failed for {symbol}: {result.get('error')}"
-                )
+                logger.error(f"❌ Cloud training failed for {symbol}: {result.get('error')}")
 
             return result
 
@@ -174,7 +167,7 @@ class ContinuousTrainer:
             logger.error(f"❌ Error in cloud training for {symbol}: {e}")
             return {"success": False, "error": str(e), "symbol": symbol}
 
-    def train_all(self, force: bool = False) -> Dict[str, Any]:
+    def train_all(self, force: bool = False) -> dict[str, Any]:
         """
         Train all symbols (local + cloud).
 
@@ -270,7 +263,7 @@ class ContinuousTrainer:
 
         return results
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get current training status."""
         return {
             "last_training": self.status.get("last_training", {}),
@@ -298,18 +291,12 @@ def main():
         default=TRAINING_SYMBOLS,
         help="Symbols to train (default: SPY QQQ NVDA GOOGL AMZN)",
     )
-    parser.add_argument(
-        "--local-only", action="store_true", help="Train only locally (skip cloud)"
-    )
+    parser.add_argument("--local-only", action="store_true", help="Train only locally (skip cloud)")
     parser.add_argument(
         "--cloud-only", action="store_true", help="Train only in cloud (skip local)"
     )
-    parser.add_argument(
-        "--force", action="store_true", help="Force retraining even if not due"
-    )
-    parser.add_argument(
-        "--status", action="store_true", help="Show training status and exit"
-    )
+    parser.add_argument("--force", action="store_true", help="Force retraining even if not due")
+    parser.add_argument("--status", action="store_true", help="Show training status and exit")
     parser.add_argument(
         "--interval", type=int, default=7, help="Days between retraining (default: 7)"
     )
@@ -348,8 +335,7 @@ def main():
 
         return (
             0
-            if results["summary"]["local_success"] + results["summary"]["cloud_success"]
-            > 0
+            if results["summary"]["local_success"] + results["summary"]["cloud_success"] > 0
             else 1
         )
 

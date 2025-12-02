@@ -4,14 +4,13 @@ Combines multiple RL algorithms (PPO, A2C, SAC) for robust performance.
 Based on 2024-2025 research showing ensembles outperform single models.
 """
 
-import torch
-
-import numpy as np
-from typing import Dict, Any, Tuple, Optional
+import json
 import logging
 from pathlib import Path
-import json
+from typing import Any, Optional
 
+import numpy as np
+import torch
 from src.ml.networks import LSTMPPO
 from src.ml.reward_functions import RiskAdjustedReward
 
@@ -39,7 +38,7 @@ class EnsembleRLAgent:
         hidden_dim: int = 128,
         num_layers: int = 2,
         device: str = "cpu",
-        ensemble_weights: Optional[Dict[str, float]] = None,
+        ensemble_weights: Optional[dict[str, float]] = None,
         models_dir: str = "models/ml",
     ):
         self.input_dim = input_dim
@@ -63,9 +62,7 @@ class EnsembleRLAgent:
         # Reward calculator
         self.reward_calculator = RiskAdjustedReward()
 
-        logger.info(
-            f"✅ Ensemble RL Agent initialized with weights: {self.ensemble_weights}"
-        )
+        logger.info(f"✅ Ensemble RL Agent initialized with weights: {self.ensemble_weights}")
 
     def _initialize_models(self):
         """Initialize all ensemble models."""
@@ -106,7 +103,7 @@ class EnsembleRLAgent:
 
     def predict(
         self, state: torch.Tensor, deterministic: bool = False
-    ) -> Tuple[int, float, Dict[str, Any]]:
+    ) -> tuple[int, float, dict[str, Any]]:
         """
         Get ensemble prediction.
 
@@ -172,9 +169,7 @@ class EnsembleRLAgent:
         if deterministic:
             ensemble_action = int(np.argmax(ensemble_probs))
         else:
-            ensemble_action = int(
-                np.random.choice(len(ensemble_probs), p=ensemble_probs)
-            )
+            ensemble_action = int(np.random.choice(len(ensemble_probs), p=ensemble_probs))
 
         ensemble_confidence = float(ensemble_probs[ensemble_action])
 
@@ -247,19 +242,15 @@ class EnsembleRLAgent:
         """Load all ensemble models."""
         config_path = self.models_dir / f"{symbol}_ensemble_config.json"
         if config_path.exists():
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 config = json.load(f)
-                self.ensemble_weights = config.get(
-                    "ensemble_weights", self.ensemble_weights
-                )
+                self.ensemble_weights = config.get("ensemble_weights", self.ensemble_weights)
 
-        for name in self.models.keys():
+        for name in self.models:
             path = self.models_dir / f"{symbol}_ensemble_{name}.pt"
             if path.exists():
                 try:
-                    self.models[name].load_state_dict(
-                        torch.load(path, map_location=self.device)
-                    )
+                    self.models[name].load_state_dict(torch.load(path, map_location=self.device))
                     logger.info(f"Loaded {name} model from {path}")
                 except Exception as e:
                     logger.warning(f"⚠️  Failed to load {name}: {e}")

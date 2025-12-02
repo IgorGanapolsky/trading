@@ -4,13 +4,13 @@ Data Collection Module for Historical Market Data
 Systematically archives OHLCV data for ML training and backtesting.
 """
 
-import logging
-from pathlib import Path
-from datetime import datetime
-from typing import List, Optional
-import pandas as pd
 import argparse
+import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Optional
 
+import pandas as pd
 from src.utils.market_data import get_market_data_provider
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class DataCollector:
         self.market_data = get_market_data_provider()
         logger.info(f"DataCollector initialized: {self.data_dir}")
 
-    def collect_daily_data(self, symbols: List[str], lookback_days: int = 30) -> None:
+    def collect_daily_data(self, symbols: list[str], lookback_days: int = 30) -> None:
         """
         Collect and save daily OHLCV data for symbols.
 
@@ -86,7 +86,7 @@ class DataCollector:
 
         return str(filepath)
 
-    def get_existing_files(self, symbol: Optional[str] = None) -> List[Path]:
+    def get_existing_files(self, symbol: Optional[str] = None) -> list[Path]:
         """
         List existing CSV files in data directory.
 
@@ -96,10 +96,7 @@ class DataCollector:
         Returns:
             List of Path objects for matching files
         """
-        if symbol:
-            pattern = f"{symbol}_*.csv"
-        else:
-            pattern = "*.csv"
+        pattern = f"{symbol}_*.csv" if symbol else "*.csv"
 
         files = list(self.data_dir.glob(pattern))
         return sorted(files)
@@ -157,9 +154,7 @@ def main():
         help="Directory to store data (default: data/historical)",
     )
     parser.add_argument("--list", action="store_true", help="List existing data files")
-    parser.add_argument(
-        "--load", type=str, help="Load and display historical data for a symbol"
-    )
+    parser.add_argument("--load", type=str, help="Load and display historical data for a symbol")
 
     args = parser.parse_args()
 

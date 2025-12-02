@@ -10,8 +10,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.strategies.core_strategy import CoreStrategy
-
 
 def improve_entry_criteria():
     """Implement improved entry criteria based on research."""

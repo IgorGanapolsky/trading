@@ -9,11 +9,11 @@ Logs comprehensive trade-level attribution including:
 - Actual outcome vs hypothesis
 """
 
+import json
 import logging
-from typing import Dict, Any, Optional
 from datetime import datetime
 from pathlib import Path
-import json
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class TradeAttributionLogger:
         entry_reason: str,
         market_regime: str,
         hypothesis: str,
-        indicators: Optional[Dict[str, float]] = None,
+        indicators: Optional[dict[str, float]] = None,
         strategy: Optional[str] = None,
         tier: Optional[str] = None,
     ) -> str:
@@ -159,7 +159,7 @@ class TradeAttributionLogger:
             f"Hypothesis match: {hypothesis_match} | Outcome: {actual_outcome}"
         )
 
-    def get_trade_attribution_summary(self) -> Dict[str, Any]:
+    def get_trade_attribution_summary(self) -> dict[str, Any]:
         """Get summary of all trade attributions."""
         complete_trades = list(self.attribution_dir.glob("*_complete.json"))
 

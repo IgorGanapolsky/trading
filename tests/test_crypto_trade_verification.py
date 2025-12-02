@@ -9,11 +9,12 @@ Verifies that crypto trades executed correctly by:
 
 These tests run automatically after crypto trading workflows.
 """
+
+import json
 import os
 import sys
-import json
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -36,7 +37,7 @@ class CryptoTradeVerificationTests:
     def test_state_file_valid_json(self) -> tuple[bool, str]:
         """Test that system_state.json is valid JSON."""
         try:
-            with open(self.state_file, "r") as f:
+            with open(self.state_file) as f:
                 json.load(f)
             return True, "system_state.json is valid JSON"
         except json.JSONDecodeError as e:
@@ -45,7 +46,7 @@ class CryptoTradeVerificationTests:
     def test_crypto_strategy_tracked(self) -> tuple[bool, str]:
         """Test that crypto strategy (tier5) is tracked in state."""
         try:
-            with open(self.state_file, "r") as f:
+            with open(self.state_file) as f:
                 state = json.load(f)
 
             tier5 = state.get("strategies", {}).get("tier5", {})
@@ -114,12 +115,10 @@ class CryptoTradeVerificationTests:
 
             # Get positions from Alpaca (GROUND TRUTH)
             positions = client.get_all_positions()
-            crypto_positions = [
-                p for p in positions if "BTC" in p.symbol or "ETH" in p.symbol
-            ]
+            crypto_positions = [p for p in positions if "BTC" in p.symbol or "ETH" in p.symbol]
 
             # Get state from our tracking
-            with open(self.state_file, "r") as f:
+            with open(self.state_file) as f:
                 state = json.load(f)
 
             tier5 = state.get("strategies", {}).get("tier5", {})
@@ -177,9 +176,7 @@ class CryptoTradeVerificationTests:
             # Get orders from last 7 days
             orders = client.get_orders(GetOrdersRequest(status="all", limit=20))
 
-            crypto_orders = [
-                o for o in orders if "BTC" in o.symbol or "ETH" in o.symbol
-            ]
+            crypto_orders = [o for o in orders if "BTC" in o.symbol or "ETH" in o.symbol]
 
             if len(crypto_orders) == 0:
                 return True, "No recent crypto orders (expected if no trades executed)"
@@ -195,7 +192,7 @@ class CryptoTradeVerificationTests:
         except Exception as e:
             return False, f"Order check failed: {e}"
 
-    def run_all_tests(self) -> Dict[str, Any]:
+    def run_all_tests(self) -> dict[str, Any]:
         """Run all verification tests."""
         tests = [
             ("State file exists", self.test_state_file_exists),
@@ -217,9 +214,7 @@ class CryptoTradeVerificationTests:
                 else:
                     results["failed"] += 1
                     status = "❌"
-                results["details"].append(
-                    {"test": test_name, "status": status, "message": message}
-                )
+                results["details"].append({"test": test_name, "status": status, "message": message})
             except Exception as e:
                 results["failed"] += 1
                 results["details"].append(

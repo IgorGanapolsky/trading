@@ -3,13 +3,13 @@
 Check if GitHub Actions workflow already ran today.
 Used by launchd daemons to avoid duplicate execution.
 """
-import os
-import sys
+
 import json
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional
 
 # Cache file to avoid too many API calls
 CACHE_FILE = Path("data/github_actions_cache.json")
@@ -19,9 +19,7 @@ CACHE_TTL_SECONDS = 300  # 5 minutes cache
 def check_github_cli_available() -> bool:
     """Check if GitHub CLI (gh) is available."""
     try:
-        result = subprocess.run(
-            ["gh", "--version"], capture_output=True, text=True, timeout=5
-        )
+        result = subprocess.run(["gh", "--version"], capture_output=True, text=True, timeout=5)
         return result.returncode == 0
     except (subprocess.TimeoutExpired, FileNotFoundError):
         return False
@@ -125,7 +123,9 @@ def check_if_ran_today(
 
                 if check_success_only:
                     if conclusion == "success":
-                        reason = f"Workflow ran successfully today at {run_time.strftime('%H:%M UTC')}"
+                        reason = (
+                            f"Workflow ran successfully today at {run_time.strftime('%H:%M UTC')}"
+                        )
                         # Update cache
                         _update_cache(workflow_name, True, reason)
                         return True, reason
@@ -134,7 +134,7 @@ def check_if_ran_today(
                         _update_cache(workflow_name, False, reason)
                         return False, reason
                     elif status == "in_progress":
-                        reason = f"Workflow currently running - backup should wait"
+                        reason = "Workflow currently running - backup should wait"
                         _update_cache(workflow_name, True, reason)
                         return True, reason
                 else:
@@ -149,7 +149,7 @@ def check_if_ran_today(
                 _update_cache(workflow_name, False, reason)
                 return False, reason
 
-        except (KeyError, ValueError) as e:
+        except (KeyError, ValueError):
             continue  # Skip malformed entries
 
     reason = "No workflow runs found for today"

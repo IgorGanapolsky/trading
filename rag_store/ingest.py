@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import datetime
-from typing import Dict, Iterable
 
 from .sqlite_store import SentimentSQLiteStore
 from .vector_store import SentimentVectorStore
@@ -10,7 +10,7 @@ sqlite_store = SentimentSQLiteStore()
 vector_store = SentimentVectorStore()
 
 
-def _build_reddit_summary(ticker: str, payload: Dict) -> str:
+def _build_reddit_summary(ticker: str, payload: dict) -> str:
     top_posts = payload.get("top_posts", [])
     top_snippet = ""
     if top_posts:
@@ -30,7 +30,7 @@ def _build_reddit_summary(ticker: str, payload: Dict) -> str:
     )
 
 
-def _build_news_summary(ticker: str, payload: Dict) -> str:
+def _build_news_summary(ticker: str, payload: dict) -> str:
     sources = payload.get("sources", {})
     yahoo = sources.get("yahoo", {})
     stocktwits = sources.get("stocktwits", {})
@@ -48,9 +48,9 @@ def _build_news_summary(ticker: str, payload: Dict) -> str:
 def _prepare_docs(
     source: str,
     snapshot_date: str,
-    entries: Iterable[Dict],
+    entries: Iterable[dict],
     summary_builder,
-) -> Iterable[Dict]:
+) -> Iterable[dict]:
     for ticker, payload in entries:
         doc_id = f"{source}-{ticker}-{snapshot_date}"
         summary = summary_builder(ticker, payload)
@@ -69,14 +69,10 @@ def _prepare_docs(
         }
 
 
-def ingest_reddit_snapshot(snapshot: Dict) -> None:
+def ingest_reddit_snapshot(snapshot: dict) -> None:
     """Persist Reddit sentiment snapshot into the RAG store."""
-    date_str = snapshot.get("meta", {}).get("date") or datetime.now().strftime(
-        "%Y-%m-%d"
-    )
-    created_at = snapshot.get("meta", {}).get(
-        "timestamp", datetime.utcnow().isoformat()
-    )
+    date_str = snapshot.get("meta", {}).get("date") or datetime.now().strftime("%Y-%m-%d")
+    created_at = snapshot.get("meta", {}).get("timestamp", datetime.utcnow().isoformat())
     sentiments = snapshot.get("sentiment_by_ticker", {})
 
     if not sentiments:
@@ -110,7 +106,7 @@ def ingest_reddit_snapshot(snapshot: Dict) -> None:
     vector_store.upsert_documents(docs)
 
 
-def ingest_news_snapshot(report: Dict) -> None:
+def ingest_news_snapshot(report: dict) -> None:
     """Persist news sentiment report into the RAG store."""
     date_str = report.get("meta", {}).get("date") or datetime.now().strftime("%Y-%m-%d")
     created_at = report.get("meta", {}).get("timestamp", datetime.utcnow().isoformat())

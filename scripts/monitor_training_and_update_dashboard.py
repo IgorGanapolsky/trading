@@ -3,14 +3,15 @@
 Continuous Training Monitor & Dashboard Updater
 Uses Claude Skills and Vertex MCP to monitor training status and update Progress Dashboard.
 """
-import os
-import sys
+
 import json
 import logging
+import sys
 import time
+from datetime import datetime
 from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from typing import Any
+
 from dotenv import load_dotenv
 
 # Add parent to path
@@ -35,11 +36,7 @@ try:
     sys.path.insert(
         0,
         str(
-            Path(__file__).parent.parent
-            / ".claude"
-            / "skills"
-            / "performance_monitor"
-            / "scripts"
+            Path(__file__).parent.parent / ".claude" / "skills" / "performance_monitor" / "scripts"
         ),
     )
     from performance_monitor import PerformanceMonitor
@@ -53,13 +50,7 @@ except ImportError:
 try:
     sys.path.insert(
         0,
-        str(
-            Path(__file__).parent.parent
-            / ".claude"
-            / "skills"
-            / "langsmith_monitor"
-            / "scripts"
-        ),
+        str(Path(__file__).parent.parent / ".claude" / "skills" / "langsmith_monitor" / "scripts"),
     )
     from langsmith_monitor import LangSmithMonitor
 
@@ -95,7 +86,7 @@ class TrainingMonitor:
             except Exception as e:
                 logger.warning(f"⚠️  LangSmith Monitor initialization failed: {e}")
 
-    def check_training_status(self) -> Dict[str, Any]:
+    def check_training_status(self) -> dict[str, Any]:
         """Check current training status."""
         logger.info("🔍 Checking training status...")
 
@@ -135,7 +126,7 @@ class TrainingMonitor:
             "total_jobs": len(cloud_jobs),
         }
 
-    def check_vertex_ai_jobs(self) -> Dict[str, Any]:
+    def check_vertex_ai_jobs(self) -> dict[str, Any]:
         """Check Vertex AI RL job statuses using MCP."""
         logger.info("☁️  Checking Vertex AI RL jobs...")
 
@@ -202,10 +193,10 @@ class TrainingMonitor:
         """Add RL training status section to dashboard."""
         try:
             status = self.check_training_status()
-            vertex_status = self.check_vertex_ai_jobs()
+            self.check_vertex_ai_jobs()
 
             # Read current dashboard
-            with open(dashboard_path, "r") as f:
+            with open(dashboard_path) as f:
                 content = f.read()
 
             # Create training status section
@@ -214,23 +205,23 @@ class TrainingMonitor:
 
 ## 🤖 RL Training Status
 
-**Last Updated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Last Updated**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ### Cloud RL Jobs
 
-**Active Jobs**: {len(status.get('active_jobs', []))}
-**Completed Jobs**: {len(status.get('completed_jobs', []))}
-**Total Jobs**: {status.get('total_jobs', 0)}
+**Active Jobs**: {len(status.get("active_jobs", []))}
+**Completed Jobs**: {len(status.get("completed_jobs", []))}
+**Total Jobs**: {status.get("total_jobs", 0)}
 
 #### Active Training Jobs
 
 """
 
             for job in status.get("active_jobs", [])[:10]:  # Show top 10
-                training_section += f"- **{job['symbol']}**: {job['status']} (Job ID: `{job['job_id']}`)\n"
                 training_section += (
-                    f"  - Submitted: {job.get('submitted_at', 'Unknown')}\n"
+                    f"- **{job['symbol']}**: {job['status']} (Job ID: `{job['job_id']}`)\n"
                 )
+                training_section += f"  - Submitted: {job.get('submitted_at', 'Unknown')}\n"
 
             training_section += "\n#### Last Training Times\n\n"
             for symbol, last_time in list(status.get("last_training", {}).items())[:10]:
@@ -248,8 +239,8 @@ class TrainingMonitor:
                     )
                     if langsmith_stats.get("success"):
                         stats = langsmith_stats
-                        training_section += f"\n### LangSmith Monitoring\n\n"
-                        training_section += f"**Project**: trading-rl-training\n"
+                        training_section += "\n### LangSmith Monitoring\n\n"
+                        training_section += "**Project**: trading-rl-training\n"
                         training_section += (
                             f"**Total Runs** (7 days): {stats.get('total_runs', 0)}\n"
                         )
@@ -257,9 +248,7 @@ class TrainingMonitor:
                             f"**Success Rate**: {stats.get('success_rate', 0):.1f}%\n"
                         )
                         training_section += f"**Average Duration**: {stats.get('average_duration_seconds', 0):.1f}s\n"
-                        training_section += (
-                            f"\n**View Dashboard**: https://smith.langchain.com\n"
-                        )
+                        training_section += "\n**View Dashboard**: https://smith.langchain.com\n"
                 except Exception as e:
                     logger.debug(f"Failed to add LangSmith stats: {e}")
 
@@ -298,25 +287,23 @@ class TrainingMonitor:
 
         while True:
             iteration += 1
-            logger.info(f"\n{'='*80}")
+            logger.info(f"\n{'=' * 80}")
             logger.info(
                 f"📊 MONITORING CYCLE #{iteration} - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
             )
-            logger.info(f"{'='*80}\n")
+            logger.info(f"{'=' * 80}\n")
 
             try:
                 # Check training status
                 status = self.check_training_status()
-                logger.info(f"✅ Training status checked")
+                logger.info("✅ Training status checked")
                 logger.info(f"   Active jobs: {len(status.get('active_jobs', []))}")
-                logger.info(
-                    f"   Completed jobs: {len(status.get('completed_jobs', []))}"
-                )
+                logger.info(f"   Completed jobs: {len(status.get('completed_jobs', []))}")
 
                 # Check Vertex AI jobs
                 vertex_status = self.check_vertex_ai_jobs()
                 if "error" not in vertex_status:
-                    logger.info(f"✅ Vertex AI jobs checked")
+                    logger.info("✅ Vertex AI jobs checked")
 
                 # Check LangSmith status
                 if self.langsmith_monitor:
@@ -344,15 +331,11 @@ class TrainingMonitor:
 
                 # Check if we should stop
                 if max_iterations and iteration >= max_iterations:
-                    logger.info(
-                        f"\n🏁 Reached max iterations ({max_iterations}), stopping..."
-                    )
+                    logger.info(f"\n🏁 Reached max iterations ({max_iterations}), stopping...")
                     break
 
                 # Wait for next check
-                logger.info(
-                    f"\n⏳ Waiting {interval_minutes} minutes until next check..."
-                )
+                logger.info(f"\n⏳ Waiting {interval_minutes} minutes until next check...")
                 time.sleep(interval_minutes * 60)
 
             except KeyboardInterrupt:
@@ -371,18 +354,14 @@ def main():
     """CLI entry point."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Monitor RL Training & Update Dashboard"
-    )
+    parser = argparse.ArgumentParser(description="Monitor RL Training & Update Dashboard")
     parser.add_argument(
         "--interval",
         type=int,
         default=60,
         help="Check interval in minutes (default: 60)",
     )
-    parser.add_argument(
-        "--once", action="store_true", help="Run once and exit (don't loop)"
-    )
+    parser.add_argument("--once", action="store_true", help="Run once and exit (don't loop)")
     parser.add_argument(
         "--max-iterations",
         type=int,
@@ -411,9 +390,7 @@ def main():
         return 0
 
     # Run continuous monitoring
-    monitor.monitor_loop(
-        interval_minutes=args.interval, max_iterations=args.max_iterations
-    )
+    monitor.monitor_loop(interval_minutes=args.interval, max_iterations=args.max_iterations)
 
     return 0
 

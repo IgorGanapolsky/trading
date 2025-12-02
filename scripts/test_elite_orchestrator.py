@@ -4,7 +4,6 @@ Test Elite Orchestrator
 Verifies elite multi-agent orchestration system
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -15,8 +14,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from src.orchestration.elite_orchestrator import EliteOrchestrator, PlanningPhase
 from src.orchestration.context_engine import ContextEngine
+from src.orchestration.elite_orchestrator import EliteOrchestrator, PlanningPhase
 
 
 def test_elite_orchestrator():
@@ -91,7 +90,7 @@ def test_context_engine():
 
         # Test context summary
         summary = context_engine.get_context_summary("SPY", days=30)
-        print(f"✅ Context summary generated")
+        print("✅ Context summary generated")
         print(f"   Total trades: {summary['summary']['total_trades']}")
         print(f"   Win rate: {summary['summary']['win_rate_pct']:.1f}%")
 

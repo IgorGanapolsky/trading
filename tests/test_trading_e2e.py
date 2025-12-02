@@ -142,7 +142,12 @@ def test_core_strategy_executes_with_mocked_deps(monkeypatch, tmp_path):
     monkeypatch.setattr(
         core_strategy,
         "load_latest_sentiment",
-        lambda: {"meta": {"freshness": "fresh", "days_old": 0}, "sentiment_by_ticker": {"SPY": {"score": 60, "confidence": "high", "market_regime": "risk_on"}}},
+        lambda: {
+            "meta": {"freshness": "fresh", "days_old": 0},
+            "sentiment_by_ticker": {
+                "SPY": {"score": 60, "confidence": "high", "market_regime": "risk_on"}
+            },
+        },
     )
     monkeypatch.setattr(core_strategy, "EconomicGuardrails", DummyGuardrails)
 
@@ -238,7 +243,16 @@ def test_guardrails_block_trade(monkeypatch):
         "Ticker",
         lambda symbol: type("T", (), {"history": lambda self, *_, **__: _mock_history()})(),
     )
-    monkeypatch.setattr(core_strategy, "load_latest_sentiment", lambda: {"meta": {}, "sentiment_by_ticker": {"SPY": {"score": 40, "confidence": "medium", "market_regime": "neutral"}}})
+    monkeypatch.setattr(
+        core_strategy,
+        "load_latest_sentiment",
+        lambda: {
+            "meta": {},
+            "sentiment_by_ticker": {
+                "SPY": {"score": 40, "confidence": "medium", "market_regime": "neutral"}
+            },
+        },
+    )
 
     strategy = core_strategy.CoreStrategy(daily_allocation=20.0, use_sentiment=False)
     strategy.alpaca_trader = DummyTrader()

@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import List, Optional
 
 from src.day_trading_support import DayTradeSupportOrchestrator
 from src.day_trading_support.config_loader import load_resource_config

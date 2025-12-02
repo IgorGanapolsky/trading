@@ -2,11 +2,11 @@
 Yahoo Finance news collector using yfinance.
 """
 
-import yfinance as yf
-from typing import List, Dict, Any
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
+from typing import Any
 
+import yfinance as yf
 from src.rag.collectors.base_collector import BaseNewsCollector
 
 logger = logging.getLogger(__name__)
@@ -20,9 +20,7 @@ class YahooFinanceCollector(BaseNewsCollector):
     def __init__(self):
         super().__init__(source_name="yahoo")
 
-    def collect_ticker_news(
-        self, ticker: str, days_back: int = 7
-    ) -> List[Dict[str, Any]]:
+    def collect_ticker_news(self, ticker: str, days_back: int = 7) -> list[dict[str, Any]]:
         """
         Collect news for a specific ticker from Yahoo Finance.
 
@@ -64,16 +62,14 @@ class YahooFinanceCollector(BaseNewsCollector):
 
                 articles.append(article)
 
-            logger.info(
-                f"Collected {len(articles)} articles for {ticker} from Yahoo Finance"
-            )
+            logger.info(f"Collected {len(articles)} articles for {ticker} from Yahoo Finance")
             return articles
 
         except Exception as e:
             logger.error(f"Error collecting Yahoo Finance news for {ticker}: {e}")
             return []
 
-    def collect_market_news(self, days_back: int = 1) -> List[Dict[str, Any]]:
+    def collect_market_news(self, days_back: int = 1) -> list[dict[str, Any]]:
         """
         Collect general market news from Yahoo Finance.
 
@@ -102,7 +98,5 @@ class YahooFinanceCollector(BaseNewsCollector):
                 seen_urls.add(url)
                 unique_articles.append(article)
 
-        logger.info(
-            f"Collected {len(unique_articles)} unique market articles from Yahoo Finance"
-        )
+        logger.info(f"Collected {len(unique_articles)} unique market articles from Yahoo Finance")
         return unique_articles

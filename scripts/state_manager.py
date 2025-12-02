@@ -4,10 +4,12 @@ STATE MANAGER
 Persistent memory system that survives reboots
 Tracks all heuristics, profits, trades, and system state
 """
+
+import contextlib
 import json
-from datetime import datetime, date
+from datetime import date, datetime
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any, Optional
 
 DATA_DIR = Path("data")
 STATE_FILE = DATA_DIR / "system_state.json"
@@ -23,10 +25,10 @@ class StateManager:
     def __init__(self):
         self.state = self.load_state()
 
-    def load_state(self) -> Dict[str, Any]:
+    def load_state(self) -> dict[str, Any]:
         """Load state from disk or create new"""
         if STATE_FILE.exists():
-            with open(STATE_FILE, "r") as f:
+            with open(STATE_FILE) as f:
                 state = json.load(f)
 
             # CRITICAL: Add staleness metadata and evaluate quality
@@ -42,9 +44,9 @@ class StateManager:
 ║  CRITICAL ERROR: STATE DATA EXPIRED                            ║
 ╚════════════════════════════════════════════════════════════════╝
 
-State last updated: {state['meta']['last_updated']}
-Staleness: {state['meta']['staleness_hours']:.1f} hours ({state['meta']['staleness_hours'] / 24:.1f} days)
-Status: {state['meta']['staleness_status']}
+State last updated: {state["meta"]["last_updated"]}
+Staleness: {state["meta"]["staleness_hours"]:.1f} hours ({state["meta"]["staleness_hours"] / 24:.1f} days)
+Status: {state["meta"]["staleness_status"]}
 
 ⛔ REFUSING TO LOAD EXPIRED DATA ⛔
 
@@ -76,7 +78,7 @@ ACTION REQUIRED:
         with open(STATE_FILE, "w") as f:
             json.dump(self.state, f, indent=2)
 
-    def _create_initial_state(self) -> Dict[str, Any]:
+    def _create_initial_state(self) -> dict[str, Any]:
         """Create initial state structure"""
         return {
             "meta": {
@@ -190,7 +192,7 @@ ACTION REQUIRED:
         symbol: str,
         amount: float,
         order_id: str,
-        attribution_metadata: Optional[Dict[str, Any]] = None,
+        attribution_metadata: Optional[dict[str, Any]] = None,
     ):
         """Record a trade execution (opening a position) with attribution metadata"""
         # Update strategy stats
@@ -257,9 +259,7 @@ ACTION REQUIRED:
 
         # Calculate realized P/L
         pl = (exit_price - entry_price) * quantity
-        pl_pct = (
-            ((exit_price - entry_price) / entry_price) * 100 if entry_price > 0 else 0
-        )
+        pl_pct = ((exit_price - entry_price) / entry_price) * 100 if entry_price > 0 else 0
 
         # Find and remove from open_positions
         if "open_positions" not in self.state["performance"]:
@@ -291,9 +291,7 @@ ACTION REQUIRED:
 
         # Preserve attribution metadata from original position
         if matching_position and "attribution_metadata" in matching_position:
-            closed_trade["attribution_metadata"] = matching_position[
-                "attribution_metadata"
-            ]
+            closed_trade["attribution_metadata"] = matching_position["attribution_metadata"]
 
         self.state["performance"]["closed_trades"].append(closed_trade)
 
@@ -313,17 +311,17 @@ ACTION REQUIRED:
             self.state["performance"]["win_rate"] = 0.0
 
         # Update best/worst trade
-        if not self.state["performance"]["best_trade"] or pl > self.state[
-            "performance"
-        ]["best_trade"].get("pl", -float("inf")):
+        if not self.state["performance"]["best_trade"] or pl > self.state["performance"][
+            "best_trade"
+        ].get("pl", -float("inf")):
             self.state["performance"]["best_trade"] = {
                 "symbol": symbol,
                 "pl": pl,
                 "pl_pct": pl_pct,
             }
-        if not self.state["performance"]["worst_trade"] or pl < self.state[
-            "performance"
-        ]["worst_trade"].get("pl", float("inf")):
+        if not self.state["performance"]["worst_trade"] or pl < self.state["performance"][
+            "worst_trade"
+        ].get("pl", float("inf")):
             self.state["performance"]["worst_trade"] = {
                 "symbol": symbol,
                 "pl": pl,
@@ -332,9 +330,7 @@ ACTION REQUIRED:
 
         # Calculate average return
         if total_closed > 0:
-            total_return = sum(
-                t["pl_pct"] for t in self.state["performance"]["closed_trades"]
-            )
+            total_return = sum(t["pl_pct"] for t in self.state["performance"]["closed_trades"])
             self.state["performance"]["avg_return"] = total_return / total_closed
 
         self.add_note(
@@ -403,9 +399,7 @@ ACTION REQUIRED:
             self.state["notes"] = self.state["notes"][-100:]
         self.save_state()
 
-    def record_video_analysis(
-        self, video_title: str, analyst: str, stocks_added: List[str]
-    ):
+    def record_video_analysis(self, video_title: str, analyst: str, stocks_added: list[str]):
         """Record a YouTube video analysis"""
         if "video_analysis" not in self.state:
             self.state["video_analysis"] = {
@@ -430,9 +424,9 @@ ACTION REQUIRED:
         }
         self.state["video_analysis"]["video_sources"].append(video_entry)
         if len(self.state["video_analysis"]["video_sources"]) > 20:
-            self.state["video_analysis"]["video_sources"] = self.state[
-                "video_analysis"
-            ]["video_sources"][-20:]
+            self.state["video_analysis"]["video_sources"] = self.state["video_analysis"][
+                "video_sources"
+            ][-20:]
 
         # Add to watchlist additions
         for ticker in stocks_added:
@@ -444,12 +438,10 @@ ACTION REQUIRED:
                 }
             )
 
-        self.add_note(
-            f"Video analysis: {analyst} - {len(stocks_added)} stocks added to watchlist"
-        )
+        self.add_note(f"Video analysis: {analyst} - {len(stocks_added)} stocks added to watchlist")
         self.save_state()
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Get current state summary"""
         return {
             "day": self.state["challenge"]["current_day"],
@@ -460,7 +452,7 @@ ACTION REQUIRED:
             "invested": self.state["investments"]["total_invested"],
         }
 
-    def _add_staleness_metadata(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    def _add_staleness_metadata(self, state: dict[str, Any]) -> dict[str, Any]:
         """Add staleness metadata to state"""
         now = datetime.now()
         last_updated = datetime.fromisoformat(state["meta"]["last_updated"])
@@ -484,7 +476,7 @@ ACTION REQUIRED:
 
         return state
 
-    def _evaluate_state_quality(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    def _evaluate_state_quality(self, state: dict[str, Any]) -> dict[str, Any]:
         """
         Self-evaluate state quality and staleness
         PRINTS WARNINGS to console
@@ -517,18 +509,14 @@ ACTION REQUIRED:
             recommendations.append("URGENT: Run daily_checkin.py to refresh state")
         else:  # EXPIRED
             confidence = 0.05
-            warnings.append(
-                f"State is {staleness_days:.1f} days old - CRITICAL STALENESS"
-            )
+            warnings.append(f"State is {staleness_days:.1f} days old - CRITICAL STALENESS")
             warnings.append("Data is severely outdated and CANNOT be trusted")
             warnings.append("Using this data WILL cause hallucinations")
             recommendations.append("REQUIRED: Run daily_checkin.py immediately")
 
         # Check if challenge day calculation would be wrong
         if staleness_days >= 1:
-            warnings.append(
-                f"Challenge day calculation may be off by {int(staleness_days)} days"
-            )
+            warnings.append(f"Challenge day calculation may be off by {int(staleness_days)} days")
 
         evaluation = {
             "warnings": warnings,
@@ -565,7 +553,7 @@ ACTION REQUIRED:
 
         return evaluation
 
-    def check_trade_staleness(self) -> Dict[str, Any]:
+    def check_trade_staleness(self) -> dict[str, Any]:
         """
         Check if last trade was too long ago - detects silent automation failures.
 
@@ -597,10 +585,8 @@ ACTION REQUIRED:
         if not last_trade_date and "automation" in self.state:
             last_exec = self.state["automation"].get("last_successful_execution")
             if last_exec:
-                try:
+                with contextlib.suppress(ValueError, TypeError):
                     last_trade_date = datetime.fromisoformat(last_exec)
-                except (ValueError, TypeError):
-                    pass
 
         # No trades found at all
         if not last_trade_date:
@@ -622,17 +608,19 @@ ACTION REQUIRED:
         # Determine status based on time since last trade
         if hours_since > 120:  # 5 days
             status = "ERROR"
-            message = f"CRITICAL: No trades for {hours_since / 24:.1f} days - automation likely broken"
+            message = (
+                f"CRITICAL: No trades for {hours_since / 24:.1f} days - automation likely broken"
+            )
             action = "URGENT: Check GitHub Actions workflow and system logs immediately"
         elif hours_since > 48:  # 2 days
             status = "ERROR"
-            message = f"No trades for {hours_since / 24:.1f} days on weekday - automation may be broken"
+            message = (
+                f"No trades for {hours_since / 24:.1f} days on weekday - automation may be broken"
+            )
             action = "Check GitHub Actions workflow status and logs"
         elif is_weekday and hours_since > 24:
             status = "WARNING"
-            message = (
-                f"No trades for {hours_since:.1f} hours on weekday - check automation"
-            )
+            message = f"No trades for {hours_since:.1f} hours on weekday - check automation"
             action = "Verify GitHub Actions workflow is running daily at 9:35 AM ET"
         else:
             status = "OK"
@@ -658,34 +646,34 @@ ACTION REQUIRED:
             if eval_data["status"] != "FRESH":
                 staleness_warning = f"""
 ⚠️  DATA STALENESS WARNING ⚠️
-Status: {eval_data['status']}
-Age: {eval_data['staleness_days']:.1f} days
-Confidence: {eval_data['confidence_in_state'] * 100:.0f}%
-Warnings: {len(eval_data['warnings'])} issues detected
+Status: {eval_data["status"]}
+Age: {eval_data["staleness_days"]:.1f} days
+Confidence: {eval_data["confidence_in_state"] * 100:.0f}%
+Warnings: {len(eval_data["warnings"])} issues detected
 """
 
         context = f"""
-TRADING SYSTEM STATE (Day {summary['day']}/30)
+TRADING SYSTEM STATE (Day {summary["day"]}/30)
 {staleness_warning}
 ACCOUNT:
-- Equity: ${summary['equity']:,.2f}
-- P/L: ${summary['pl']:+,.2f} ({summary['pl_pct']:+.2f}%)
-- Total Invested: ${summary['invested']:.2f}
-- Total Trades: {summary['trades']}
+- Equity: ${summary["equity"]:,.2f}
+- P/L: ${summary["pl"]:+,.2f} ({summary["pl_pct"]:+.2f}%)
+- Total Invested: ${summary["invested"]:.2f}
+- Total Trades: {summary["trades"]}
 
 STRATEGIES:
-- Tier 1 (Core ETF): {self.state['strategies']['tier1']['trades_executed']} trades
-- Tier 2 (Growth): {self.state['strategies']['tier2']['trades_executed']} trades
-- Tier 3 (IPO): ${self.state['strategies']['tier3']['reserve_balance']:.2f} reserved
-- Tier 4 (Crowdfunding): ${self.state['strategies']['tier4']['reserve_balance']:.2f} reserved
+- Tier 1 (Core ETF): {self.state["strategies"]["tier1"]["trades_executed"]} trades
+- Tier 2 (Growth): {self.state["strategies"]["tier2"]["trades_executed"]} trades
+- Tier 3 (IPO): ${self.state["strategies"]["tier3"]["reserve_balance"]:.2f} reserved
+- Tier 4 (Crowdfunding): ${self.state["strategies"]["tier4"]["reserve_balance"]:.2f} reserved
 
 HEURISTICS:
-- Best ETF: {self.state['heuristics']['best_performing_etf']}
-- Avg Daily Return: {self.state['heuristics']['avg_daily_return']:.2f}%
-- Max Drawdown: {self.state['heuristics']['max_drawdown']:.2f}%
+- Best ETF: {self.state["heuristics"]["best_performing_etf"]}
+- Avg Daily Return: {self.state["heuristics"]["avg_daily_return"]:.2f}%
+- Max Drawdown: {self.state["heuristics"]["max_drawdown"]:.2f}%
 
 RECENT NOTES:
-{chr(10).join(self.state['notes'][-5:])}
+{chr(10).join(self.state["notes"][-5:])}
 """
         return context
 

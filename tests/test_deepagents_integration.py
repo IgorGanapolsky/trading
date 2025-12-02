@@ -130,9 +130,7 @@ def main():
     results.append(("Environment variable", test_environment_variable()))
     results.append(("Adapter initialization", test_adapter_initialization()))
     results.append(("Import TradingOrchestrator", test_main_orchestrator_import()))
-    results.append(
-        ("Initialize TradingOrchestrator", test_orchestrator_initialization())
-    )
+    results.append(("Initialize TradingOrchestrator", test_orchestrator_initialization()))
 
     # Summary
     print("\n" + "=" * 80)

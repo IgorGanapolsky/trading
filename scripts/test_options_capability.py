@@ -3,9 +3,9 @@
 Test script to verify Alpaca Options API capability.
 """
 
-import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Add project root to path
@@ -52,9 +52,7 @@ def main():
                 greeks = contract.get("greeks") or {}
                 delta = greeks.get("delta") or 0.0
 
-                print(
-                    f"{contract['symbol']:<25} | ${price:<9.2f} | {iv:<8.4f} | {delta:<8.4f}"
-                )
+                print(f"{contract['symbol']:<25} | ${price:<9.2f} | {iv:<8.4f} | {delta:<8.4f}")
             print("-" * 60)
 
             # 4. Success Message

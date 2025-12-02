@@ -30,23 +30,22 @@ Date: December 2, 2025
 import argparse
 import logging
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.rag.collectors.options_book_collector import OptionsBookCollector
 from src.rag.collectors.mcmillan_options_collector import McMillanOptionsKnowledgeBase
+from src.rag.collectors.options_book_collector import OptionsBookCollector
+from src.rag.options_book_retriever import get_options_book_retriever
 from src.rag.vector_db.chroma_client import get_rag_db
 from src.rag.vector_db.embedder import get_embedder
-from src.rag.options_book_retriever import get_options_book_retriever
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -63,19 +62,15 @@ def ingest_pdf_book(pdf_path: str, book_id: str, force: bool = False) -> dict:
     Returns:
         Dict with ingestion status and stats
     """
-    logger.info(f"\n{'='*60}")
+    logger.info(f"\n{'=' * 60}")
     logger.info(f"INGESTING: {book_id}")
     logger.info(f"PDF: {pdf_path}")
-    logger.info(f"{'='*60}")
+    logger.info(f"{'=' * 60}")
 
     collector = OptionsBookCollector()
 
     # Step 1: Ingest PDF
-    result = collector.ingest_pdf(
-        pdf_path=pdf_path,
-        book_id=book_id,
-        force_refresh=force
-    )
+    result = collector.ingest_pdf(pdf_path=pdf_path, book_id=book_id, force_refresh=force)
 
     if result["status"] == "success":
         logger.info(f"PDF ingested: {result['chunks']} chunks from {result['pages']} pages")
@@ -91,11 +86,11 @@ def ingest_pdf_book(pdf_path: str, book_id: str, force: bool = False) -> dict:
             "book_id": book_id,
             "chunks": result["chunks"],
             "pages": result["pages"],
-            "vector_store": vector_result["status"]
+            "vector_store": vector_result["status"],
         }
 
     elif result["status"] == "already_ingested":
-        logger.info(f"Book already ingested. Use --force to re-ingest.")
+        logger.info("Book already ingested. Use --force to re-ingest.")
         return result
 
     else:
@@ -113,13 +108,13 @@ def ingest_mcmillan_knowledge_base() -> dict:
     Returns:
         Dict with ingestion status
     """
-    logger.info("\n" + "="*60)
+    logger.info("\n" + "=" * 60)
     logger.info("INGESTING: McMillan Knowledge Base (Built-in)")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     kb = McMillanOptionsKnowledgeBase()
     db = get_rag_db()
-    embedder = get_embedder()
+    get_embedder()
 
     # Get all knowledge
     all_knowledge = kb.get_all_knowledge()
@@ -140,12 +135,14 @@ def ingest_mcmillan_knowledge_base() -> dict:
             f"Peak Conditions: {greek_data['peak_conditions']}"
         )
         documents.append(content)
-        metadatas.append({
-            "source": "mcmillan_kb",
-            "content_type": "greek",
-            "topic": greek_name,
-            "book_title": "Options as a Strategic Investment"
-        })
+        metadatas.append(
+            {
+                "source": "mcmillan_kb",
+                "content_type": "greek",
+                "topic": greek_name,
+                "book_title": "Options as a Strategic Investment",
+            }
+        )
         ids.append(f"mcmillan_greek_{greek_name}")
 
     # Process Strategies
@@ -155,19 +152,21 @@ def ingest_mcmillan_knowledge_base() -> dict:
             f"Strategy: {strategy_data['strategy_name']}\n"
             f"Description: {strategy_data['description']}\n"
             f"Market Outlook: {strategy_data['market_outlook']}\n"
-            f"Setup Rules:\n- " + "\n- ".join(strategy_data['setup_rules']) + "\n"
-            f"Entry Criteria:\n- " + "\n- ".join(strategy_data['entry_criteria']) + "\n"
-            f"Exit Rules:\n- " + "\n- ".join(strategy_data['exit_rules']) + "\n"
-            f"Risk Management:\n- " + "\n- ".join(strategy_data['risk_management']) + "\n"
-            f"Common Mistakes:\n- " + "\n- ".join(strategy_data['common_mistakes'])
+            f"Setup Rules:\n- " + "\n- ".join(strategy_data["setup_rules"]) + "\n"
+            "Entry Criteria:\n- " + "\n- ".join(strategy_data["entry_criteria"]) + "\n"
+            "Exit Rules:\n- " + "\n- ".join(strategy_data["exit_rules"]) + "\n"
+            "Risk Management:\n- " + "\n- ".join(strategy_data["risk_management"]) + "\n"
+            "Common Mistakes:\n- " + "\n- ".join(strategy_data["common_mistakes"])
         )
         documents.append(content)
-        metadatas.append({
-            "source": "mcmillan_kb",
-            "content_type": "strategy",
-            "topic": strategy_name,
-            "book_title": "Options as a Strategic Investment"
-        })
+        metadatas.append(
+            {
+                "source": "mcmillan_kb",
+                "content_type": "strategy",
+                "topic": strategy_name,
+                "book_title": "Options as a Strategic Investment",
+            }
+        )
         ids.append(f"mcmillan_strategy_{strategy_name}")
 
     # Process Volatility Guidance
@@ -180,12 +179,14 @@ def ingest_mcmillan_knowledge_base() -> dict:
             f"Suggested Strategies: {', '.join(guidance['strategies'])}"
         )
         documents.append(content)
-        metadatas.append({
-            "source": "mcmillan_kb",
-            "content_type": "volatility_guidance",
-            "topic": f"iv_range_{i}",
-            "book_title": "Options as a Strategic Investment"
-        })
+        metadatas.append(
+            {
+                "source": "mcmillan_kb",
+                "content_type": "volatility_guidance",
+                "topic": f"iv_range_{i}",
+                "book_title": "Options as a Strategic Investment",
+            }
+        )
         ids.append(f"mcmillan_iv_guidance_{i}")
 
     # Process Risk Rules
@@ -201,21 +202,19 @@ def ingest_mcmillan_knowledge_base() -> dict:
                 else:
                     content += f"- {key}: {value}\n"
         documents.append(content)
-        metadatas.append({
-            "source": "mcmillan_kb",
-            "content_type": "risk_rule",
-            "topic": category,
-            "book_title": "Options as a Strategic Investment"
-        })
+        metadatas.append(
+            {
+                "source": "mcmillan_kb",
+                "content_type": "risk_rule",
+                "topic": category,
+                "book_title": "Options as a Strategic Investment",
+            }
+        )
         ids.append(f"mcmillan_risk_{category}")
 
     # Add to vector store
     logger.info(f"Adding {len(documents)} documents to vector store...")
-    result = db.add_documents(
-        documents=documents,
-        metadatas=metadatas,
-        ids=ids
-    )
+    result = db.add_documents(documents=documents, metadatas=metadatas, ids=ids)
 
     if result["status"] == "success":
         logger.info(f"Successfully ingested {result['count']} knowledge chunks")
@@ -227,7 +226,7 @@ def ingest_mcmillan_knowledge_base() -> dict:
         return {
             "status": "success",
             "chunks": len(documents),
-            "categories": ["greeks", "strategies", "volatility_guidance", "risk_rules"]
+            "categories": ["greeks", "strategies", "volatility_guidance", "risk_rules"],
         }
     else:
         logger.error(f"Failed to ingest: {result.get('message')}")
@@ -262,11 +261,7 @@ def ingest_directory(dir_path: str, force: bool = False) -> dict:
         result = ingest_pdf_book(str(pdf_file), book_id, force)
         results[book_id] = result
 
-    return {
-        "status": "success",
-        "books_processed": len(results),
-        "results": results
-    }
+    return {"status": "success", "books_processed": len(results), "results": results}
 
 
 def main():
@@ -286,39 +281,19 @@ Examples:
 
   # Force re-ingest
   python scripts/ingest_options_books.py --pdf book.pdf --book-id my_book --force
-        """
+        """,
     )
 
+    parser.add_argument("--pdf", type=str, help="Path to PDF file to ingest")
+    parser.add_argument("--book-id", type=str, help="Book identifier (e.g., 'mcmillan_options')")
+    parser.add_argument("--dir", type=str, help="Directory containing PDF books to ingest")
     parser.add_argument(
-        "--pdf",
-        type=str,
-        help="Path to PDF file to ingest"
+        "--ingest-kb", action="store_true", help="Ingest the built-in McMillan knowledge base"
     )
     parser.add_argument(
-        "--book-id",
-        type=str,
-        help="Book identifier (e.g., 'mcmillan_options')"
+        "--force", action="store_true", help="Force re-ingestion even if already processed"
     )
-    parser.add_argument(
-        "--dir",
-        type=str,
-        help="Directory containing PDF books to ingest"
-    )
-    parser.add_argument(
-        "--ingest-kb",
-        action="store_true",
-        help="Ingest the built-in McMillan knowledge base"
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Force re-ingestion even if already processed"
-    )
-    parser.add_argument(
-        "--test",
-        action="store_true",
-        help="Run a test search after ingestion"
-    )
+    parser.add_argument("--test", action="store_true", help="Run a test search after ingestion")
 
     args = parser.parse_args()
 
@@ -346,9 +321,9 @@ Examples:
     elapsed = (datetime.now() - start_time).total_seconds()
 
     # Print summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("INGESTION COMPLETE")
-    print("="*60)
+    print("=" * 60)
     print(f"Status: {result['status']}")
     print(f"Time: {elapsed:.1f} seconds")
 
@@ -360,9 +335,9 @@ Examples:
 
     # Optional test search
     if args.test and result["status"] == "success":
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST SEARCH")
-        print("="*60)
+        print("=" * 60)
 
         retriever = get_options_book_retriever()
         test_query = "iron condor setup when IV is high"

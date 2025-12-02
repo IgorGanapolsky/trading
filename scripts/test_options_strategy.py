@@ -4,11 +4,11 @@ Test script for Options Strategy Logic (Covered Calls).
 Simulates a portfolio with 100 shares of SPY to test contract selection.
 """
 
-import os
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
 from unittest.mock import MagicMock
+
+from dotenv import load_dotenv
 
 # Add project root to path
 project_root = Path(__file__).parent.parent

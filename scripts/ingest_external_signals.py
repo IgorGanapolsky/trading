@@ -11,22 +11,20 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import re
 import statistics
+import sys
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
-
-import os
-import sys
 
 import requests
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.utils.external_signal_loader import ExternalSignal, save_signals
 from src.utils.bogleheads_integration import get_bogleheads_signal_for_symbol
+from src.utils.external_signal_loader import ExternalSignal, save_signals
 
 logger = logging.getLogger("external_signal_ingest")
 
@@ -66,14 +64,14 @@ def parse_args() -> argparse.Namespace:
 
 
 def collect_alpha_vantage_signals(
-    tickers: List[str], days_back: int, min_articles: int
-) -> Dict[str, List[Dict]]:
+    tickers: list[str], days_back: int, min_articles: int
+) -> dict[str, list[dict]]:
     api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
     if not api_key:
         logger.warning("Alpha Vantage API key missing - skipping news ingestion")
         return {}
 
-    contributions: Dict[str, List[Dict]] = defaultdict(list)
+    contributions: dict[str, list[dict]] = defaultdict(list)
     cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
 
     for ticker in tickers:
@@ -85,9 +83,7 @@ def collect_alpha_vantage_signals(
         }
 
         try:
-            response = requests.get(
-                "https://www.alphavantage.co/query", params=params, timeout=30
-            )
+            response = requests.get("https://www.alphavantage.co/query", params=params, timeout=30)
             response.raise_for_status()
             data = response.json()
         except Exception as exc:  # noqa: BLE001
@@ -137,7 +133,7 @@ def collect_alpha_vantage_signals(
     return contributions
 
 
-def extract_value_from_line(line: str) -> Optional[float]:
+def extract_value_from_line(line: str) -> float | None:
     match = re.search(r"\$([\d,\.]+)", line)
     if not match:
         return None
@@ -147,8 +143,8 @@ def extract_value_from_line(line: str) -> Optional[float]:
         return None
 
 
-def collect_youtube_signals(md_paths: List[str]) -> Dict[str, List[Dict]]:
-    contributions: Dict[str, List[Dict]] = defaultdict(list)
+def collect_youtube_signals(md_paths: list[str]) -> dict[str, list[dict]]:
+    contributions: dict[str, list[dict]] = defaultdict(list)
     header_pattern = re.compile(r"^### .*?\((?P<ticker>[A-Z\.]+)\)")
 
     for path_str in md_paths:
@@ -189,17 +185,15 @@ def collect_youtube_signals(md_paths: List[str]) -> Dict[str, List[Dict]]:
                     "confidence": confidence,
                     "source": f"YouTube:{path.stem}",
                     "signal_type": "fundamental_recommendation",
-                    "notes": f"DCF discount {discount*100:.1f}%",
+                    "notes": f"DCF discount {discount * 100:.1f}%",
                 }
             )
 
     return contributions
 
 
-def aggregate_contributions(
-    contributions: Dict[str, List[Dict]]
-) -> List[ExternalSignal]:
-    aggregated: List[ExternalSignal] = []
+def aggregate_contributions(contributions: dict[str, list[dict]]) -> list[ExternalSignal]:
+    aggregated: list[ExternalSignal] = []
 
     for ticker, items in contributions.items():
         if not items:
@@ -221,9 +215,7 @@ def aggregate_contributions(
                 notes.append(item["notes"])
 
         aggregated_confidence = min(1.0, total_confidence)
-        aggregated_score = (
-            weighted_score / total_confidence if total_confidence else 0.0
-        )
+        aggregated_score = weighted_score / total_confidence if total_confidence else 0.0
 
         aggregated.append(
             ExternalSignal(
@@ -247,11 +239,9 @@ def main() -> None:
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
-    contributions: Dict[str, List[Dict]] = defaultdict(list)
+    contributions: dict[str, list[dict]] = defaultdict(list)
 
-    news_contrib = collect_alpha_vantage_signals(
-        args.tickers, args.days_back, args.min_articles
-    )
+    news_contrib = collect_alpha_vantage_signals(args.tickers, args.days_back, args.min_articles)
     for ticker, items in news_contrib.items():
         contributions[ticker].extend(items)
 
@@ -261,7 +251,7 @@ def main() -> None:
 
     # Add Bogleheads signals
     try:
-        bogleheads_contrib: Dict[str, List[Dict]] = defaultdict(list)
+        bogleheads_contrib: dict[str, list[dict]] = defaultdict(list)
         for t in args.tickers:
             try:
                 sig = get_bogleheads_signal_for_symbol(t)

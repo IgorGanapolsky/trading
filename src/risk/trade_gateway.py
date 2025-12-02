@@ -22,14 +22,14 @@ Author: AI Trading System
 Date: December 2, 2025
 """
 
+import json
 import logging
 import os
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
-import json
 from pathlib import Path
+from typing import Any, Optional
 
 from src.risk.capital_efficiency import get_capital_calculator
 
@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 class RejectionReason(Enum):
     """Enumeration of trade rejection reasons."""
+
     INSUFFICIENT_FUNDS = "Insufficient funds in account"
     MAX_ALLOCATION_EXCEEDED = "Maximum allocation per symbol exceeded (15%)"
     HIGH_CORRELATION = "High correlation with existing positions (>0.8)"
@@ -50,11 +51,13 @@ class RejectionReason(Enum):
     RISK_SCORE_TOO_HIGH = "Trade risk score exceeds threshold"
     CAPITAL_INEFFICIENT = "Strategy not viable for current capital level"
     IV_RANK_TOO_LOW = "IV Rank too low for premium selling (<20)"
+    ILLIQUID_OPTION = "Option is illiquid (bid-ask spread > 5%)"
 
 
 @dataclass
 class TradeRequest:
     """Represents a trade request from the AI."""
+
     symbol: str
     side: str  # 'buy' or 'sell'
     quantity: Optional[float] = None
@@ -66,19 +69,23 @@ class TradeRequest:
     source: str = "ai_agent"  # Track where the request came from
     strategy_type: Optional[str] = None  # e.g., 'iron_condor', 'vertical_spread'
     iv_rank: Optional[float] = None  # Current IV Rank for the underlying
+    bid_price: Optional[float] = None  # Current bid price (for liquidity check)
+    ask_price: Optional[float] = None  # Current ask price (for liquidity check)
+    is_option: bool = False  # True if this is an options trade
 
 
 @dataclass
 class GatewayDecision:
     """Result of the gateway's risk assessment."""
+
     approved: bool
     request: TradeRequest
-    rejection_reasons: List[RejectionReason] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    rejection_reasons: list[RejectionReason] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
     risk_score: float = 0.0
     adjusted_quantity: Optional[float] = None
     adjusted_notional: Optional[float] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class TradeGateway:
@@ -104,13 +111,13 @@ class TradeGateway:
     """
 
     # Risk limits (HARD CODED - cannot be bypassed)
-    MAX_SYMBOL_ALLOCATION_PCT = 0.15      # 15% max per symbol
-    MAX_CORRELATION_THRESHOLD = 0.80      # 80% correlation threshold
-    MAX_TRADES_PER_HOUR = 5               # Frequency limit
-    MIN_TRADE_BATCH = 200.0               # $200 minimum to reduce noise
-    MAX_DAILY_LOSS_PCT = 0.03             # 3% max daily loss
-    MAX_DRAWDOWN_PCT = 0.10               # 10% max drawdown
-    MAX_RISK_SCORE = 0.75                 # Risk score threshold
+    MAX_SYMBOL_ALLOCATION_PCT = 0.15  # 15% max per symbol
+    MAX_CORRELATION_THRESHOLD = 0.80  # 80% correlation threshold
+    MAX_TRADES_PER_HOUR = 5  # Frequency limit
+    MIN_TRADE_BATCH = 200.0  # $200 minimum to reduce noise
+    MAX_DAILY_LOSS_PCT = 0.03  # 3% max daily loss
+    MAX_DRAWDOWN_PCT = 0.10  # 10% max drawdown
+    MAX_RISK_SCORE = 0.75  # Risk score threshold
 
     # Correlation matrix for common holdings (simplified)
     # In production, this would be calculated dynamically
@@ -124,10 +131,19 @@ class TradeGateway:
 
     # Credit strategies that require IV Rank check
     CREDIT_STRATEGIES = {
-        "iron_condor", "credit_spread", "bull_put_spread", "bear_call_spread",
-        "covered_call", "cash_secured_put", "strangle_short", "naked_put"
+        "iron_condor",
+        "credit_spread",
+        "bull_put_spread",
+        "bear_call_spread",
+        "covered_call",
+        "cash_secured_put",
+        "strangle_short",
+        "naked_put",
     }
     MIN_IV_RANK_FOR_CREDIT = 20  # Minimum IV Rank for premium selling
+
+    # Liquidity check - options with wide spreads destroy alpha on fill
+    MAX_BID_ASK_SPREAD_PCT = 0.05  # 5% maximum bid-ask spread
 
     def __init__(self, executor=None, paper: bool = True):
         """
@@ -141,7 +157,7 @@ class TradeGateway:
         self.paper = paper
 
         # Track recent trades for frequency limiting
-        self.recent_trades: List[datetime] = []
+        self.recent_trades: list[datetime] = []
 
         # Track accumulated cash for batching
         self.accumulated_cash = 0.0
@@ -164,7 +180,7 @@ class TradeGateway:
         """Load persisted state."""
         if self.state_file.exists():
             try:
-                with open(self.state_file, "r") as f:
+                with open(self.state_file) as f:
                     state = json.load(f)
                     self.accumulated_cash = state.get("accumulated_cash", 0.0)
                     self.daily_pnl = state.get("daily_pnl", 0.0)
@@ -178,11 +194,16 @@ class TradeGateway:
         try:
             self.state_file.parent.mkdir(parents=True, exist_ok=True)
             with open(self.state_file, "w") as f:
-                json.dump({
-                    "accumulated_cash": self.accumulated_cash,
-                    "daily_pnl": self.daily_pnl,
-                    "daily_pnl_date": self.daily_pnl_date.isoformat() if self.daily_pnl_date else None,
-                }, f)
+                json.dump(
+                    {
+                        "accumulated_cash": self.accumulated_cash,
+                        "daily_pnl": self.daily_pnl,
+                        "daily_pnl_date": self.daily_pnl_date.isoformat()
+                        if self.daily_pnl_date
+                        else None,
+                    },
+                    f,
+                )
         except Exception as e:
             logger.warning(f"Failed to save gateway state: {e}")
 
@@ -198,8 +219,10 @@ class TradeGateway:
         Returns:
             GatewayDecision with approval status and reasons
         """
-        logger.info(f"🔒 Gateway evaluating: {request.side.upper()} {request.symbol} "
-                   f"(qty={request.quantity}, notional={request.notional})")
+        logger.info(
+            f"🔒 Gateway evaluating: {request.side.upper()} {request.symbol} "
+            f"(qty={request.quantity}, notional={request.notional})"
+        )
 
         rejection_reasons = []
         warnings = []
@@ -213,7 +236,9 @@ class TradeGateway:
         # ============================================================
         # CHECK 1: Insufficient Funds
         # ============================================================
-        trade_value = request.notional or (request.quantity * self._get_price(request.symbol) if request.quantity else 0)
+        trade_value = request.notional or (
+            request.quantity * self._get_price(request.symbol) if request.quantity else 0
+        )
 
         if request.side == "buy" and trade_value > account_equity * 0.95:
             rejection_reasons.append(RejectionReason.INSUFFICIENT_FUNDS)
@@ -223,14 +248,18 @@ class TradeGateway:
         # CHECK 2: Maximum Allocation per Symbol (15%)
         # ============================================================
         current_exposure = self._get_symbol_exposure(request.symbol, positions)
-        new_exposure = current_exposure + trade_value if request.side == "buy" else current_exposure - trade_value
+        new_exposure = (
+            current_exposure + trade_value
+            if request.side == "buy"
+            else current_exposure - trade_value
+        )
         exposure_pct = new_exposure / account_equity if account_equity > 0 else 0
 
         if request.side == "buy" and exposure_pct > self.MAX_SYMBOL_ALLOCATION_PCT:
             rejection_reasons.append(RejectionReason.MAX_ALLOCATION_EXCEEDED)
             logger.warning(
-                f"❌ REJECTED: {request.symbol} exposure would be {exposure_pct*100:.1f}% "
-                f"(max: {self.MAX_SYMBOL_ALLOCATION_PCT*100}%)"
+                f"❌ REJECTED: {request.symbol} exposure would be {exposure_pct * 100:.1f}% "
+                f"(max: {self.MAX_SYMBOL_ALLOCATION_PCT * 100}%)"
             )
             metadata["exposure_pct"] = exposure_pct
             risk_score += 0.3
@@ -242,7 +271,7 @@ class TradeGateway:
         if correlation > self.MAX_CORRELATION_THRESHOLD and request.side == "buy":
             rejection_reasons.append(RejectionReason.HIGH_CORRELATION)
             logger.warning(
-                f"❌ REJECTED: {request.symbol} has {correlation*100:.0f}% correlation "
+                f"❌ REJECTED: {request.symbol} has {correlation * 100:.0f}% correlation "
                 f"with existing positions"
             )
             metadata["correlation"] = correlation
@@ -255,8 +284,7 @@ class TradeGateway:
         if recent_count >= self.MAX_TRADES_PER_HOUR:
             rejection_reasons.append(RejectionReason.FREQUENCY_LIMIT)
             logger.warning(
-                f"❌ REJECTED: {recent_count} trades in last hour "
-                f"(max: {self.MAX_TRADES_PER_HOUR})"
+                f"❌ REJECTED: {recent_count} trades in last hour (max: {self.MAX_TRADES_PER_HOUR})"
             )
             metadata["trades_last_hour"] = recent_count
             risk_score += 0.2
@@ -295,7 +323,7 @@ class TradeGateway:
             rejection_reasons.append(RejectionReason.CIRCUIT_BREAKER_DAILY_LOSS)
             logger.warning(
                 f"❌ REJECTED: Daily loss ${abs(self.daily_pnl):.2f} exceeds "
-                f"{self.MAX_DAILY_LOSS_PCT*100}% limit"
+                f"{self.MAX_DAILY_LOSS_PCT * 100}% limit"
             )
             risk_score += 0.4
 
@@ -306,8 +334,8 @@ class TradeGateway:
         if drawdown > self.MAX_DRAWDOWN_PCT:
             rejection_reasons.append(RejectionReason.CIRCUIT_BREAKER_DRAWDOWN)
             logger.warning(
-                f"❌ REJECTED: Drawdown {drawdown*100:.1f}% exceeds "
-                f"{self.MAX_DRAWDOWN_PCT*100}% limit"
+                f"❌ REJECTED: Drawdown {drawdown * 100:.1f}% exceeds "
+                f"{self.MAX_DRAWDOWN_PCT * 100}% limit"
             )
             risk_score += 0.4
 
@@ -318,7 +346,7 @@ class TradeGateway:
             viability = self.capital_calculator.check_strategy_viability(
                 strategy_id=request.strategy_type,
                 account_equity=account_equity,
-                iv_rank=request.iv_rank
+                iv_rank=request.iv_rank,
             )
             if not viability.is_viable:
                 rejection_reasons.append(RejectionReason.CAPITAL_INEFFICIENT)
@@ -331,7 +359,7 @@ class TradeGateway:
                     "reason": viability.reason,
                     "min_capital": viability.min_capital_required,
                     "days_to_viable": viability.days_to_viable,
-                    "recommended_alternative": viability.recommended_alternative
+                    "recommended_alternative": viability.recommended_alternative,
                 }
                 risk_score += 0.3
 
@@ -350,9 +378,41 @@ class TradeGateway:
                         "iv_rank": request.iv_rank,
                         "min_required": self.MIN_IV_RANK_FOR_CREDIT,
                         "strategy": request.strategy_type,
-                        "reason": "Cannot sell premium effectively when IV is cheap"
+                        "reason": "Cannot sell premium effectively when IV is cheap",
                     }
                     risk_score += 0.25
+
+        # ============================================================
+        # CHECK 10: Liquidity Check (Bid-Ask Spread) for Options
+        # ============================================================
+        # Wide bid-ask spreads destroy alpha instantly on fill.
+        # If (Ask - Bid) / Ask > 5%, you lose 10%+ immediately.
+        if request.is_option and request.bid_price and request.ask_price:
+            if request.ask_price > 0:
+                bid_ask_spread_pct = (request.ask_price - request.bid_price) / request.ask_price
+
+                if bid_ask_spread_pct > self.MAX_BID_ASK_SPREAD_PCT:
+                    rejection_reasons.append(RejectionReason.ILLIQUID_OPTION)
+                    logger.warning(
+                        f"❌ REJECTED: Bid-Ask spread {bid_ask_spread_pct * 100:.1f}% > "
+                        f"{self.MAX_BID_ASK_SPREAD_PCT * 100}% max for {request.symbol}"
+                    )
+                    metadata["liquidity_rejection"] = {
+                        "bid": request.bid_price,
+                        "ask": request.ask_price,
+                        "spread_pct": bid_ask_spread_pct * 100,
+                        "max_allowed_pct": self.MAX_BID_ASK_SPREAD_PCT * 100,
+                        "reason": "Illiquid option - wide spread destroys alpha on fill",
+                    }
+                    risk_score += 0.3
+                else:
+                    # Log liquidity info even if acceptable
+                    metadata["liquidity_info"] = {
+                        "bid": request.bid_price,
+                        "ask": request.ask_price,
+                        "spread_pct": bid_ask_spread_pct * 100,
+                        "status": "acceptable",
+                    }
 
         # ============================================================
         # FINAL DECISION
@@ -372,7 +432,7 @@ class TradeGateway:
             warnings=warnings,
             risk_score=risk_score,
             adjusted_notional=trade_value if approved else None,
-            metadata=metadata
+            metadata=metadata,
         )
 
         if approved:
@@ -385,7 +445,7 @@ class TradeGateway:
 
         return decision
 
-    def execute(self, decision: GatewayDecision) -> Optional[Dict[str, Any]]:
+    def execute(self, decision: GatewayDecision) -> Optional[dict[str, Any]]:
         """
         Execute an approved trade.
 
@@ -400,9 +460,8 @@ class TradeGateway:
         """
         if not decision.approved:
             logger.error(
-                "🚫 CANNOT EXECUTE: Trade was not approved. "
-                "Rejection reasons: %s",
-                [r.value for r in decision.rejection_reasons]
+                "🚫 CANNOT EXECUTE: Trade was not approved. Rejection reasons: %s",
+                [r.value for r in decision.rejection_reasons],
             )
             return None
 
@@ -417,8 +476,7 @@ class TradeGateway:
             notional = decision.adjusted_notional or request.notional
 
             logger.info(
-                f"🚀 Gateway executing: {request.side.upper()} {request.symbol} "
-                f"${notional:.2f}"
+                f"🚀 Gateway executing: {request.side.upper()} {request.symbol} ${notional:.2f}"
             )
 
             # Execute through the broker
@@ -439,7 +497,7 @@ class TradeGateway:
             logger.error(f"❌ Execution failed: {e}")
             return None
 
-    def add_daily_deposit(self, amount: float) -> Dict[str, Any]:
+    def add_daily_deposit(self, amount: float) -> dict[str, Any]:
         """
         Handle daily deposit ($10/day).
 
@@ -462,17 +520,15 @@ class TradeGateway:
             return {
                 "status": "batch_ready",
                 "accumulated": self.accumulated_cash,
-                "message": f"Ready to trade ${self.accumulated_cash:.2f}"
+                "message": f"Ready to trade ${self.accumulated_cash:.2f}",
             }
         else:
-            logger.info(
-                f"⏳ Accumulating: ${self.accumulated_cash:.2f} / ${self.MIN_TRADE_BATCH}"
-            )
+            logger.info(f"⏳ Accumulating: ${self.accumulated_cash:.2f} / ${self.MIN_TRADE_BATCH}")
             return {
                 "status": "accumulating",
                 "accumulated": self.accumulated_cash,
                 "remaining": self.MIN_TRADE_BATCH - self.accumulated_cash,
-                "message": f"Need ${self.MIN_TRADE_BATCH - self.accumulated_cash:.2f} more"
+                "message": f"Need ${self.MIN_TRADE_BATCH - self.accumulated_cash:.2f} more",
             }
 
     def stress_test(self, request: TradeRequest) -> GatewayDecision:
@@ -513,7 +569,7 @@ class TradeGateway:
                 pass
         return float(os.getenv("ACCOUNT_EQUITY", "100000"))
 
-    def _get_positions(self) -> List[Dict[str, Any]]:
+    def _get_positions(self) -> list[dict[str, Any]]:
         """Get current positions."""
         if self.executor:
             try:
@@ -527,14 +583,14 @@ class TradeGateway:
         # In production, fetch from market data
         return 100.0  # Placeholder
 
-    def _get_symbol_exposure(self, symbol: str, positions: List[Dict]) -> float:
+    def _get_symbol_exposure(self, symbol: str, positions: list[dict]) -> float:
         """Get current exposure to a symbol."""
         for pos in positions:
             if pos.get("symbol") == symbol:
                 return float(pos.get("market_value", 0))
         return 0.0
 
-    def _check_correlation(self, symbol: str, positions: List[Dict]) -> float:
+    def _check_correlation(self, symbol: str, positions: list[dict]) -> float:
         """
         Check correlation with existing positions.
 
@@ -545,8 +601,7 @@ class TradeGateway:
 
         # Find which groups the new symbol belongs to
         symbol_groups = [
-            group for group, members in self.CORRELATION_GROUPS.items()
-            if symbol in members
+            group for group, members in self.CORRELATION_GROUPS.items() if symbol in members
         ]
 
         if not symbol_groups:
@@ -597,7 +652,7 @@ def create_suicide_test() -> TradeRequest:
         symbol="AMC",
         side="buy",
         notional=1000000,  # $1 million
-        source="stress_test"
+        source="stress_test",
     )
 
 
@@ -618,9 +673,9 @@ if __name__ == "__main__":
 
     gateway = TradeGateway(paper=True)
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TRADE GATEWAY STRESS TEST")
-    print("="*60)
+    print("=" * 60)
 
     # Test 1: Suicide command
     print("\n--- Test 1: Suicide Command ($1M AMC) ---")

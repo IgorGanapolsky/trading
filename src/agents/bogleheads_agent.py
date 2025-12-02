@@ -1,8 +1,9 @@
 import logging
+from datetime import datetime
+from typing import Any, Optional
+
 import requests
 from bs4 import BeautifulSoup
-from typing import Dict, Any, List, Optional
-from datetime import datetime
 from src.agents.base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ class BogleHeadsAgent(BaseAgent):
         )
         self.base_url = "https://www.bogleheads.org/forum/viewforum.php?f=10"  # Investing - Theory, News & General
 
-    def analyze(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Analyze market sentiment via BogleHeads forum.
 
@@ -43,7 +44,7 @@ class BogleHeadsAgent(BaseAgent):
         """
         symbol = data.get("symbol")
 
-        logger.info(f"👴 BogleHeads Agent consulting the wisdom of the elders...")
+        logger.info("👴 BogleHeads Agent consulting the wisdom of the elders...")
 
         # 1. Scrape Forum Topics
         topics = self._scrape_forum_topics()
@@ -63,9 +64,7 @@ class BogleHeadsAgent(BaseAgent):
         result = {
             "agent": self.name,
             "symbol": symbol,
-            "signal": llm_response.get(
-                "decision", "HOLD"
-            ),  # HOLD usually means "Stay the Course"
+            "signal": llm_response.get("decision", "HOLD"),  # HOLD usually means "Stay the Course"
             "confidence": llm_response.get("confidence", 0.5),
             "reasoning": llm_response.get("reasoning", "Stay the course."),
             "bogleheads_sentiment": llm_response.get("sentiment_summary", "Unknown"),
@@ -75,7 +74,7 @@ class BogleHeadsAgent(BaseAgent):
         self.log_decision(result)
         return result
 
-    def _scrape_forum_topics(self) -> List[str]:
+    def _scrape_forum_topics(self) -> list[str]:
         """Scrape the first page of topic titles."""
         try:
             headers = {
@@ -96,7 +95,7 @@ class BogleHeadsAgent(BaseAgent):
             logger.error(f"Failed to scrape BogleHeads: {e}")
             return []
 
-    def _build_sentiment_prompt(self, topics: List[str], symbol: Optional[str]) -> str:
+    def _build_sentiment_prompt(self, topics: list[str], symbol: Optional[str]) -> str:
         topics_str = "\n".join([f"- {t}" for t in topics])
 
         return f"""You are the BogleHeads Agent, representing the wisdom of the BogleHeads community (John Bogle's followers).

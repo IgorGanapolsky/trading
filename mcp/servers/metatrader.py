@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from mcp.client import MCPClient, default_client
 
 SERVER_ID = "metatrader"
 
 
-def _client(client: Optional[MCPClient]) -> MCPClient:
+def _client(client: MCPClient | None) -> MCPClient:
     return client or default_client()
 
 
@@ -17,10 +17,10 @@ def place_order(
     side: str,
     volume: float,
     order_type: str = "market",
-    deviation: Optional[int] = None,
-    client: Optional[MCPClient] = None,
+    deviation: int | None = None,
+    client: MCPClient | None = None,
     **kwargs: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     payload = {
         "symbol": symbol,
         "side": side,
@@ -35,8 +35,8 @@ def place_order(
 
 def get_open_positions(
     *,
-    client: Optional[MCPClient] = None,
-) -> Dict[str, Any]:
+    client: MCPClient | None = None,
+) -> dict[str, Any]:
     return _client(client).call_tool(SERVER_ID, "get_open_positions", {})
 
 
@@ -45,10 +45,10 @@ def get_indicator(
     symbol: str,
     indicator: str,
     timeframe: str = "H1",
-    period: Optional[int] = None,
-    client: Optional[MCPClient] = None,
-) -> Dict[str, Any]:
-    payload: Dict[str, Any] = {
+    period: int | None = None,
+    client: MCPClient | None = None,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
         "symbol": symbol,
         "indicator": indicator,
         "timeframe": timeframe,

@@ -13,12 +13,12 @@ Evaluates:
 
 import json
 import logging
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Any, Optional
-from pathlib import Path
-import sys
 import os
+import sys
+from dataclasses import asdict, dataclass, field
+from datetime import date, datetime, timedelta
+from pathlib import Path
+from typing import Any, Optional
 
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
@@ -43,8 +43,8 @@ class EvaluationResult:
     dimension: str  # "accuracy", "compliance", "reliability", "errors"
     score: float  # 0.0 to 1.0 (1.0 = perfect)
     passed: bool
-    issues: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    issues: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
 
@@ -66,10 +66,10 @@ class TradeEvaluation:
     trade_id: str
     symbol: str
     timestamp: str
-    evaluation: Dict[str, EvaluationResult] = field(default_factory=dict)
+    evaluation: dict[str, EvaluationResult] = field(default_factory=dict)
     overall_score: float = 0.0
     passed: bool = True
-    critical_issues: List[str] = field(default_factory=list)
+    critical_issues: list[str] = field(default_factory=list)
 
 
 class TradingSystemEvaluator:
@@ -111,7 +111,7 @@ class TradingSystemEvaluator:
 
     def evaluate_trade_execution(
         self,
-        trade_result: Dict[str, Any],
+        trade_result: dict[str, Any],
         expected_amount: float,
         daily_allocation: float,
     ) -> TradeEvaluation:
@@ -142,9 +142,7 @@ class TradingSystemEvaluator:
             },
         )
 
-        evaluation = TradeEvaluation(
-            trade_id=trade_id, symbol=symbol, timestamp=timestamp
-        )
+        evaluation = TradeEvaluation(trade_id=trade_id, symbol=symbol, timestamp=timestamp)
 
         # 1. ACCURACY EVALUATION
         accuracy = self._evaluate_accuracy(trade_result, expected_amount)
@@ -181,7 +179,7 @@ class TradingSystemEvaluator:
         return evaluation
 
     def _evaluate_accuracy(
-        self, trade_result: Dict[str, Any], expected_amount: float
+        self, trade_result: dict[str, Any], expected_amount: float
     ) -> EvaluationResult:
         """Evaluate trade execution accuracy."""
         issues = []
@@ -192,7 +190,7 @@ class TradingSystemEvaluator:
         logger.debug(
             f"Accuracy check: actual=${actual_amount:.2f}, "
             f"expected=${expected_amount:.2f}, "
-            f"multiplier={actual_amount/expected_amount if expected_amount > 0 else 0:.2f}x"
+            f"multiplier={actual_amount / expected_amount if expected_amount > 0 else 0:.2f}x"
         )
 
         if actual_amount == 0:
@@ -216,8 +214,7 @@ class TradingSystemEvaluator:
         elif abs(actual_amount - expected_amount) > expected_amount * 0.1:
             # Allow 10% variance
             issues.append(
-                f"Order size {actual_amount} differs from expected {expected_amount} "
-                f"by >10%"
+                f"Order size {actual_amount} differs from expected {expected_amount} by >10%"
             )
             score = 0.7
 
@@ -240,7 +237,7 @@ class TradingSystemEvaluator:
         )
 
     def _evaluate_compliance(
-        self, trade_result: Dict[str, Any], daily_allocation: float
+        self, trade_result: dict[str, Any], daily_allocation: float
     ) -> EvaluationResult:
         """
         Evaluate procedure compliance.
@@ -263,8 +260,7 @@ class TradingSystemEvaluator:
         # Check daily allocation limits
         if daily_allocation < self.MIN_DAILY_ALLOCATION:
             issues.append(
-                f"Daily allocation {daily_allocation} below minimum "
-                f"${self.MIN_DAILY_ALLOCATION}"
+                f"Daily allocation {daily_allocation} below minimum ${self.MIN_DAILY_ALLOCATION}"
             )
             score = 0.5
 
@@ -299,7 +295,7 @@ class TradingSystemEvaluator:
             },
         )
 
-    def _evaluate_reliability(self, trade_result: Dict[str, Any]) -> EvaluationResult:
+    def _evaluate_reliability(self, trade_result: dict[str, Any]) -> EvaluationResult:
         """
         Evaluate system reliability.
 
@@ -319,7 +315,7 @@ class TradingSystemEvaluator:
         score = 1.0
 
         # Check system state freshness
-        system_state_age_hours = trade_result.get("system_state_age_hours", None)
+        system_state_age_hours = trade_result.get("system_state_age_hours")
         if system_state_age_hours is not None:
             logger.debug(f"System state age: {system_state_age_hours:.1f} hours")
             if system_state_age_hours > self.MAX_STALENESS_HOURS:
@@ -348,7 +344,7 @@ class TradingSystemEvaluator:
             score = min(score, 0.5)
 
         # Check execution time
-        execution_time_ms = trade_result.get("execution_time_ms", None)
+        execution_time_ms = trade_result.get("execution_time_ms")
         if execution_time_ms and execution_time_ms > 30000:  # 30 seconds
             issues.append(f"Execution took {execution_time_ms}ms (slow)")
             score = min(score, 0.8)
@@ -367,7 +363,7 @@ class TradingSystemEvaluator:
         )
 
     def _detect_errors(
-        self, trade_result: Dict[str, Any], expected_amount: float
+        self, trade_result: dict[str, Any], expected_amount: float
     ) -> EvaluationResult:
         """
         Detect known error patterns from documented mistakes.
@@ -401,7 +397,7 @@ class TradingSystemEvaluator:
             score = 0.0
 
         # Pattern 2: System state stale (Mistake #2)
-        system_state_age_hours = trade_result.get("system_state_age_hours", None)
+        system_state_age_hours = trade_result.get("system_state_age_hours")
         if system_state_age_hours and system_state_age_hours > self.MAX_STALENESS_HOURS:
             errors.append(
                 f"ERROR PATTERN #2: System state stale ({system_state_age_hours:.1f}h old)"
@@ -410,9 +406,7 @@ class TradingSystemEvaluator:
 
         # Pattern 3: Network/DNS errors (Mistake #3)
         api_errors = trade_result.get("api_errors", [])
-        if any(
-            "network" in str(e).lower() or "dns" in str(e).lower() for e in api_errors
-        ):
+        if any("network" in str(e).lower() or "dns" in str(e).lower() for e in api_errors):
             errors.append("ERROR PATTERN #3: Network/DNS errors detected")
             score = min(score, 0.3)
             logger.warning(
@@ -480,7 +474,7 @@ class TradingSystemEvaluator:
         evaluations = []
         if eval_file.exists():
             try:
-                with open(eval_file, "r") as f:
+                with open(eval_file) as f:
                     evaluations = json.load(f)
             except Exception as e:
                 logger.warning(f"Error loading existing evaluations: {e}")
@@ -495,7 +489,7 @@ class TradingSystemEvaluator:
         logger.info(f"Saved evaluation to {eval_file}")
         return eval_file
 
-    def get_evaluation_summary(self, days: int = 7) -> Dict[str, Any]:
+    def get_evaluation_summary(self, days: int = 7) -> dict[str, Any]:
         """
         Get summary of recent evaluations.
 
@@ -533,7 +527,7 @@ class TradingSystemEvaluator:
                 file_date_str = eval_file.stem.replace("evaluations_", "")
                 file_date = datetime.fromisoformat(file_date_str).date()
                 if file_date >= cutoff_date:
-                    with open(eval_file, "r") as f:
+                    with open(eval_file) as f:
                         file_evaluations = json.load(f)
                         evaluations.extend(file_evaluations)
                         logger.debug(
@@ -562,9 +556,7 @@ class TradingSystemEvaluator:
             error_issues = errors.get("issues", [])
             for issue in error_issues:
                 if "ERROR PATTERN" in issue:
-                    pattern_num = (
-                        issue.split("#")[1].split(":")[0] if "#" in issue else "unknown"
-                    )
+                    pattern_num = issue.split("#")[1].split(":")[0] if "#" in issue else "unknown"
                     summary["error_patterns"][pattern_num] = (
                         summary["error_patterns"].get(pattern_num, 0) + 1
                     )

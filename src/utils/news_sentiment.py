@@ -10,14 +10,15 @@ Combines professional analyst sentiment and social trading sentiment
 for pre-market analysis.
 """
 
-import os
 import json
 import logging
-import requests
-from datetime import datetime, timedelta
+import os
+from dataclasses import asdict, dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
-from dataclasses import dataclass, asdict
+from typing import Optional
+
+import requests
 import yfinance as yf
 from alpha_vantage.timeseries import TimeSeries
 from dotenv import load_dotenv
@@ -37,7 +38,7 @@ class TickerSentiment:
     ticker: str
     score: float  # -100 to +100
     confidence: str  # low, medium, high
-    sources: Dict[str, Dict]
+    sources: dict[str, dict]
     timestamp: str
 
 
@@ -45,8 +46,8 @@ class TickerSentiment:
 class SentimentReport:
     """Aggregated sentiment report."""
 
-    meta: Dict
-    sentiment_by_ticker: Dict[str, TickerSentiment]
+    meta: dict
+    sentiment_by_ticker: dict[str, TickerSentiment]
 
 
 class NewsSentimentAggregator:
@@ -85,9 +86,7 @@ class NewsSentimentAggregator:
         self.av_client = None
         if self.alpha_vantage_key:
             try:
-                self.av_client = TimeSeries(
-                    key=self.alpha_vantage_key, output_format="json"
-                )
+                self.av_client = TimeSeries(key=self.alpha_vantage_key, output_format="json")
                 logger.info("Alpha Vantage client initialized")
             except Exception as e:
                 logger.warning(f"Failed to initialize Alpha Vantage: {e}")
@@ -123,7 +122,7 @@ class NewsSentimentAggregator:
         logger.info(f"NewsSentimentAggregator initialized: {self.output_dir}")
 
     @retry_with_backoff(max_retries=3, initial_delay=1.0)
-    def get_yahoo_sentiment(self, ticker: str) -> Dict:
+    def get_yahoo_sentiment(self, ticker: str) -> dict:
         """
         Get news sentiment from Yahoo Finance.
 
@@ -212,9 +211,7 @@ class NewsSentimentAggregator:
                 normalized_score = 0
 
             confidence = (
-                "high"
-                if articles_analyzed >= 10
-                else "medium" if articles_analyzed >= 5 else "low"
+                "high" if articles_analyzed >= 10 else "medium" if articles_analyzed >= 5 else "low"
             )
 
             return {
@@ -229,7 +226,7 @@ class NewsSentimentAggregator:
             return {"score": 0, "articles": 0, "confidence": "low", "error": str(e)}
 
     @retry_with_backoff(max_retries=3, initial_delay=1.0)
-    def get_stocktwits_sentiment(self, ticker: str) -> Dict:
+    def get_stocktwits_sentiment(self, ticker: str) -> dict:
         """
         Get sentiment from Stocktwits social trading platform.
 
@@ -274,14 +271,14 @@ class NewsSentimentAggregator:
                 return {"score": 0, "messages": len(messages), "confidence": "low"}
 
             # Calculate sentiment score (-100 to +100)
-            sentiment_score = (
-                (bullish_count - bearish_count) / total_with_sentiment
-            ) * 100
+            sentiment_score = ((bullish_count - bearish_count) / total_with_sentiment) * 100
 
             confidence = (
                 "high"
                 if total_with_sentiment >= 20
-                else "medium" if total_with_sentiment >= 10 else "low"
+                else "medium"
+                if total_with_sentiment >= 10
+                else "low"
             )
 
             return {
@@ -303,16 +300,14 @@ class NewsSentimentAggregator:
                     "error": "not_found",
                 }
             else:
-                logger.error(
-                    f"HTTP error getting Stocktwits sentiment for {ticker}: {e}"
-                )
+                logger.error(f"HTTP error getting Stocktwits sentiment for {ticker}: {e}")
                 return {"score": 0, "messages": 0, "confidence": "low", "error": str(e)}
         except Exception as e:
             logger.error(f"Error getting Stocktwits sentiment for {ticker}: {e}")
             return {"score": 0, "messages": 0, "confidence": "low", "error": str(e)}
 
     @retry_with_backoff(max_retries=2, initial_delay=2.0)
-    def get_alpha_vantage_sentiment(self, ticker: str) -> Dict:
+    def get_alpha_vantage_sentiment(self, ticker: str) -> dict:
         """
         Get AI-powered sentiment from Alpha Vantage.
 
@@ -396,18 +391,14 @@ class NewsSentimentAggregator:
             weighted_sentiment = (total_sentiment / total_relevance) * 100
 
             confidence = (
-                "high"
-                if articles_count >= 10
-                else "medium" if articles_count >= 5 else "low"
+                "high" if articles_count >= 10 else "medium" if articles_count >= 5 else "low"
             )
 
             return {
                 "score": round(weighted_sentiment, 2),
                 "articles": articles_count,
                 "relevance": (
-                    round(total_relevance / articles_count, 3)
-                    if articles_count > 0
-                    else 0
+                    round(total_relevance / articles_count, 3) if articles_count > 0 else 0
                 ),
                 "confidence": confidence,
             }
@@ -417,7 +408,7 @@ class NewsSentimentAggregator:
             return {"score": 0, "articles": 0, "confidence": "low", "error": str(e)}
 
     @retry_with_backoff(max_retries=2, initial_delay=1.0)
-    def get_grok_twitter_sentiment(self, ticker: str) -> Dict:
+    def get_grok_twitter_sentiment(self, ticker: str) -> dict:
         """
         Get real-time Twitter/X sentiment via Grok API.
 
@@ -532,9 +523,7 @@ class NewsSentimentAggregator:
         grok_twitter_score = grok_twitter_data.get("score", 0)  # NEW
 
         # Adjust weights if Grok is unavailable (normalize remaining weights)
-        weights_sum = (
-            self.YAHOO_WEIGHT + self.STOCKTWITS_WEIGHT + self.ALPHA_VANTAGE_WEIGHT
-        )
+        weights_sum = self.YAHOO_WEIGHT + self.STOCKTWITS_WEIGHT + self.ALPHA_VANTAGE_WEIGHT
         if grok_twitter_data.get("error") == "no_api_key":
             # Grok unavailable - redistribute its weight proportionally
             grok_weight = 0
@@ -581,7 +570,7 @@ class NewsSentimentAggregator:
             timestamp=datetime.now().isoformat(),
         )
 
-    def analyze_tickers(self, tickers: List[str]) -> SentimentReport:
+    def analyze_tickers(self, tickers: list[str]) -> SentimentReport:
         """
         Analyze sentiment for multiple tickers.
 
@@ -626,9 +615,7 @@ class NewsSentimentAggregator:
 
         return report
 
-    def save_report(
-        self, report: SentimentReport, filename: Optional[str] = None
-    ) -> str:
+    def save_report(self, report: SentimentReport, filename: Optional[str] = None) -> str:
         """
         Save sentiment report to JSON file.
 
@@ -660,7 +647,7 @@ class NewsSentimentAggregator:
         logger.info(f"Sentiment report saved to {filepath}")
         return str(filepath)
 
-    def load_report(self, filename: str) -> Optional[Dict]:
+    def load_report(self, filename: str) -> Optional[dict]:
         """
         Load a sentiment report from file.
 
@@ -676,7 +663,7 @@ class NewsSentimentAggregator:
             logger.error(f"Report file not found: {filepath}")
             return None
 
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             data = json.load(f)
 
         logger.info(f"Loaded sentiment report from {filepath}")
@@ -708,9 +695,7 @@ class NewsSentimentAggregator:
             else:
                 label = "NEUTRAL"
 
-            print(
-                f"\n{ticker}: {label} ({score:+.1f}) - Confidence: {confidence.upper()}"
-            )
+            print(f"\n{ticker}: {label} ({score:+.1f}) - Confidence: {confidence.upper()}")
 
             # Print source breakdown
             for source_name, source_data in sentiment.sources.items():
@@ -749,9 +734,7 @@ def main():
         default="data/sentiment",
         help="Directory to save reports (default: data/sentiment)",
     )
-    parser.add_argument(
-        "--load", type=str, help="Load and display an existing report (filename)"
-    )
+    parser.add_argument("--load", type=str, help="Load and display an existing report (filename)")
     parser.add_argument("--test", action="store_true", help="Test with SPY only")
 
     args = parser.parse_args()

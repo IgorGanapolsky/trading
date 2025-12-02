@@ -12,9 +12,9 @@ Usage:
     python3 examples/tiktok_sentiment_example.py
 """
 
-import sys
-import os
 import logging
+import os
+import sys
 from datetime import datetime
 
 # Add project root to path
@@ -47,9 +47,7 @@ def example_1_ticker_sentiment():
 
     print(f"\n📊 Sentiment Summary for ${ticker}:")
     print(f"   Symbol: {summary['symbol']}")
-    print(
-        f"   Sentiment Score: {summary['sentiment_score']:.3f} (0=bearish, 1=bullish)"
-    )
+    print(f"   Sentiment Score: {summary['sentiment_score']:.3f} (0=bearish, 1=bullish)")
     print(f"   Video Count: {summary['video_count']}")
     print(f"   Avg Engagement: {summary['engagement_score']:.2f}/100")
     print(f"   Source: {summary['source']}")
@@ -150,9 +148,7 @@ def example_4_multi_ticker_comparison():
     tickers = ["SPY", "QQQ", "NVDA", "GOOGL", "AMZN"]
     days_back = 7
 
-    print(
-        f"\nComparing sentiment for {len(tickers)} tickers (last {days_back} days)..."
-    )
+    print(f"\nComparing sentiment for {len(tickers)} tickers (last {days_back} days)...")
 
     results = []
     for ticker in tickers:
@@ -163,9 +159,7 @@ def example_4_multi_ticker_comparison():
     results.sort(key=lambda x: x["sentiment_score"], reverse=True)
 
     print("\n📊 Sentiment Rankings (Most Bullish → Most Bearish):\n")
-    print(
-        f"{'Rank':<6} {'Ticker':<8} {'Sentiment':<12} {'Videos':<10} {'Engagement':<12}"
-    )
+    print(f"{'Rank':<6} {'Ticker':<8} {'Sentiment':<12} {'Videos':<10} {'Engagement':<12}")
     print("-" * 60)
 
     for i, result in enumerate(results, 1):
@@ -223,15 +217,15 @@ def example_5_integrated_with_orchestrator():
 
     # Calculate average sentiment by source
     if tiktok_news:
-        tiktok_sentiment = sum(
-            v["sentiment"] for v in tiktok_news if v.get("sentiment")
-        ) / len(tiktok_news)
+        tiktok_sentiment = sum(v["sentiment"] for v in tiktok_news if v.get("sentiment")) / len(
+            tiktok_news
+        )
         print(f"\n   TikTok Sentiment: {tiktok_sentiment:.3f}")
 
     if reddit_news:
-        reddit_sentiment = sum(
-            v["sentiment"] for v in reddit_news if v.get("sentiment")
-        ) / len(reddit_news)
+        reddit_sentiment = sum(v["sentiment"] for v in reddit_news if v.get("sentiment")) / len(
+            reddit_news
+        )
         print(f"   Reddit Sentiment: {reddit_sentiment:.3f}")
 
     # Show highest engagement TikTok video

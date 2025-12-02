@@ -13,6 +13,7 @@ Usage:
 
 import os
 from typing import Optional
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -21,17 +22,13 @@ load_dotenv()
 # Set up LangSmith tracing if API key is available
 if os.getenv("LANGCHAIN_API_KEY"):
     os.environ["LANGCHAIN_TRACING_V2"] = "true"
-    os.environ["LANGCHAIN_PROJECT"] = os.getenv(
-        "LANGCHAIN_PROJECT", "trading-rl-training"
-    )
+    os.environ["LANGCHAIN_PROJECT"] = os.getenv("LANGCHAIN_PROJECT", "trading-rl-training")
     LANGSMITH_ENABLED = True
 else:
     LANGSMITH_ENABLED = False
 
 
-def get_traced_openai_client(
-    api_key: Optional[str] = None, base_url: Optional[str] = None
-):
+def get_traced_openai_client(api_key: Optional[str] = None, base_url: Optional[str] = None):
     """
     Get OpenAI client wrapped with LangSmith tracing.
 
@@ -71,9 +68,7 @@ def get_traced_openai_client(
     return client
 
 
-def get_traced_async_openai_client(
-    api_key: Optional[str] = None, base_url: Optional[str] = None
-):
+def get_traced_async_openai_client(api_key: Optional[str] = None, base_url: Optional[str] = None):
     """
     Get async OpenAI client wrapped with LangSmith tracing.
 

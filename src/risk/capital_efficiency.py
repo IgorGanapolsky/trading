@@ -18,25 +18,27 @@ Date: December 2, 2025
 """
 
 import logging
-from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class StrategyTier(Enum):
     """Strategy complexity tiers by capital requirement."""
-    TIER_1_ACCUMULATION = "accumulation"      # <$1k: Just accumulate, no options
-    TIER_2_COVERED_CALLS = "covered_calls"    # $1k-$5k: Covered calls only (need 100 shares)
-    TIER_3_DEFINED_RISK = "defined_risk"      # $5k-$25k: Vertical spreads, no hedging
-    TIER_4_SPREADS = "spreads"                # $25k-$50k: Iron condors, limited hedging
-    TIER_5_FULL_OPTIONS = "full_options"      # $50k+: Full options suite with delta management
+
+    TIER_1_ACCUMULATION = "accumulation"  # <$1k: Just accumulate, no options
+    TIER_2_COVERED_CALLS = "covered_calls"  # $1k-$5k: Covered calls only (need 100 shares)
+    TIER_3_DEFINED_RISK = "defined_risk"  # $5k-$25k: Vertical spreads, no hedging
+    TIER_4_SPREADS = "spreads"  # $25k-$50k: Iron condors, limited hedging
+    TIER_5_FULL_OPTIONS = "full_options"  # $50k+: Full options suite with delta management
 
 
 @dataclass
 class StrategyViability:
     """Result of strategy viability check."""
+
     strategy_name: str
     is_viable: bool
     reason: str
@@ -50,14 +52,15 @@ class StrategyViability:
 @dataclass
 class CapitalProfile:
     """Current capital situation analysis."""
+
     account_equity: float
     daily_deposit_rate: float
     current_tier: StrategyTier
-    viable_strategies: List[str]
-    blocked_strategies: Dict[str, str]  # strategy -> reason
+    viable_strategies: list[str]
+    blocked_strategies: dict[str, str]  # strategy -> reason
     next_tier: Optional[StrategyTier]
     days_to_next_tier: int
-    warnings: List[str]
+    warnings: list[str]
 
 
 class CapitalEfficiencyCalculator:
@@ -75,11 +78,11 @@ class CapitalEfficiencyCalculator:
     # Capital thresholds (HARD CODED - based on real market constraints)
     THRESHOLDS = {
         "min_batch": 200,
-        "covered_call_min": 1000,      # Need 100 shares of something
-        "vertical_spread_min": 5000,   # Margin requirement
-        "iron_condor_min": 10000,      # Need multiple legs + collateral
-        "pdt_threshold": 25000,        # Pattern Day Trader rule
-        "delta_hedge_min": 50000,      # Delta-neutral requires frequent adjustment
+        "covered_call_min": 1000,  # Need 100 shares of something
+        "vertical_spread_min": 5000,  # Margin requirement
+        "iron_condor_min": 10000,  # Need multiple legs + collateral
+        "pdt_threshold": 25000,  # Pattern Day Trader rule
+        "delta_hedge_min": 50000,  # Delta-neutral requires frequent adjustment
     }
 
     # Strategy definitions with capital requirements
@@ -161,7 +164,9 @@ class CapitalEfficiencyCalculator:
             daily_deposit_rate: Daily deposit amount (default: $10)
         """
         self.daily_deposit_rate = daily_deposit_rate
-        logger.info(f"Capital Efficiency Calculator initialized (deposit rate: ${daily_deposit_rate}/day)")
+        logger.info(
+            f"Capital Efficiency Calculator initialized (deposit rate: ${daily_deposit_rate}/day)"
+        )
 
     def analyze_capital(self, account_equity: float) -> CapitalProfile:
         """
@@ -183,7 +188,7 @@ class CapitalEfficiencyCalculator:
         blocked_strategies = {}
         warnings = []
 
-        for strategy_id, strategy in self.STRATEGIES.items():
+        for strategy_id, _strategy in self.STRATEGIES.items():
             viability = self.check_strategy_viability(strategy_id, account_equity)
             if viability.is_viable:
                 viable_strategies.append(strategy_id)
@@ -229,14 +234,11 @@ class CapitalEfficiencyCalculator:
             blocked_strategies=blocked_strategies,
             next_tier=next_tier,
             days_to_next_tier=days_to_next_tier,
-            warnings=warnings
+            warnings=warnings,
         )
 
     def check_strategy_viability(
-        self,
-        strategy_id: str,
-        account_equity: float,
-        iv_rank: Optional[float] = None
+        self, strategy_id: str, account_equity: float, iv_rank: Optional[float] = None
     ) -> StrategyViability:
         """
         Check if a specific strategy is viable.
@@ -257,7 +259,7 @@ class CapitalEfficiencyCalculator:
                 min_capital_required=0,
                 current_capital=account_equity,
                 capital_gap=0,
-                days_to_viable=0
+                days_to_viable=0,
             )
 
         strategy = self.STRATEGIES[strategy_id]
@@ -275,7 +277,7 @@ class CapitalEfficiencyCalculator:
                 current_capital=account_equity,
                 capital_gap=capital_gap,
                 days_to_viable=days_to_viable,
-                recommended_alternative=self._get_alternative(strategy_id, account_equity)
+                recommended_alternative=self._get_alternative(strategy_id, account_equity),
             )
 
         # Check IV rank for premium selling strategies
@@ -291,7 +293,7 @@ class CapitalEfficiencyCalculator:
                     current_capital=account_equity,
                     capital_gap=0,
                     days_to_viable=0,
-                    recommended_alternative="Wait for IV expansion or use debit strategies"
+                    recommended_alternative="Wait for IV expansion or use debit strategies",
                 )
 
         return StrategyViability(
@@ -301,15 +303,12 @@ class CapitalEfficiencyCalculator:
             min_capital_required=min_capital,
             current_capital=account_equity,
             capital_gap=0,
-            days_to_viable=0
+            days_to_viable=0,
         )
 
     def calculate_sequence_risk(
-        self,
-        strategy_id: str,
-        account_equity: float,
-        num_positions: int = 1
-    ) -> Dict[str, Any]:
+        self, strategy_id: str, account_equity: float, num_positions: int = 1
+    ) -> dict[str, Any]:
         """
         Calculate sequence risk for a strategy.
 
@@ -350,13 +349,13 @@ class CapitalEfficiencyCalculator:
             "days_to_recover": days_to_recover,
             "risk_level": risk_level,
             "recommendation": (
-                f"CAUTION: One loss = {single_loss_impact*100:.1f}% of account = {days_to_recover:.0f} days of deposits"
-                if risk_level != "LOW" else
-                "Acceptable risk level"
-            )
+                f"CAUTION: One loss = {single_loss_impact * 100:.1f}% of account = {days_to_recover:.0f} days of deposits"
+                if risk_level != "LOW"
+                else "Acceptable risk level"
+            ),
         }
 
-    def should_enable_delta_hedging(self, account_equity: float) -> Dict[str, Any]:
+    def should_enable_delta_hedging(self, account_equity: float) -> dict[str, Any]:
         """
         Determine if delta-neutral hedging should be enabled.
 
@@ -373,7 +372,7 @@ class CapitalEfficiencyCalculator:
                 "enabled": True,
                 "reason": f"Account ${account_equity:,.2f} >= ${threshold:,} threshold",
                 "max_net_delta": 60,
-                "target_delta": 25
+                "target_delta": 25,
             }
         else:
             capital_gap = threshold - account_equity
@@ -388,15 +387,15 @@ class CapitalEfficiencyCalculator:
                 ),
                 "capital_gap": capital_gap,
                 "days_to_enable": days_to_enable,
-                "recommendation": "Hold positions to expiry or stop-loss. Do not dynamically hedge."
+                "recommendation": "Hold positions to expiry or stop-loss. Do not dynamically hedge.",
             }
 
     def get_optimal_strategy_for_capital(
         self,
         account_equity: float,
         iv_rank: Optional[float] = None,
-        market_outlook: str = "neutral"
-    ) -> Dict[str, Any]:
+        market_outlook: str = "neutral",
+    ) -> dict[str, Any]:
         """
         Get the optimal strategy for current capital level.
 
@@ -414,7 +413,7 @@ class CapitalEfficiencyCalculator:
         outlook_strategies = {
             "bullish": ["equity_accumulation", "covered_call", "vertical_spread"],
             "bearish": ["vertical_spread", "cash_secured_put"],
-            "neutral": ["iron_condor", "covered_call", "cash_secured_put", "vertical_spread"]
+            "neutral": ["iron_condor", "covered_call", "cash_secured_put", "vertical_spread"],
         }
 
         preferred = outlook_strategies.get(market_outlook, outlook_strategies["neutral"])
@@ -430,7 +429,7 @@ class CapitalEfficiencyCalculator:
                         "reason": f"Best viable strategy for ${account_equity:,.2f} with {market_outlook} outlook",
                         "tier": profile.current_tier.value,
                         "warnings": profile.warnings,
-                        "sequence_risk": self.calculate_sequence_risk(strategy_id, account_equity)
+                        "sequence_risk": self.calculate_sequence_risk(strategy_id, account_equity),
                     }
 
         # Fallback to accumulation
@@ -440,7 +439,9 @@ class CapitalEfficiencyCalculator:
             "reason": f"No options strategies viable at ${account_equity:,.2f}. Accumulate until ${self.THRESHOLDS['covered_call_min']:,}",
             "tier": StrategyTier.TIER_1_ACCUMULATION.value,
             "warnings": profile.warnings,
-            "days_to_first_option": int((self.THRESHOLDS["covered_call_min"] - account_equity) / self.daily_deposit_rate)
+            "days_to_first_option": int(
+                (self.THRESHOLDS["covered_call_min"] - account_equity) / self.daily_deposit_rate
+            ),
         }
 
     def _determine_tier(self, account_equity: float) -> StrategyTier:
@@ -498,9 +499,9 @@ if __name__ == "__main__":
 
     calc = CapitalEfficiencyCalculator(daily_deposit_rate=10.0)
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CAPITAL EFFICIENCY ANALYSIS")
-    print("="*70)
+    print("=" * 70)
 
     # Test with current portfolio value
     test_capitals = [500, 1000, 5000, 10000, 25000, 50000, 100000]
@@ -510,7 +511,9 @@ if __name__ == "__main__":
         profile = calc.analyze_capital(capital)
 
         print(f"Tier: {profile.current_tier.value}")
-        print(f"Viable strategies: {', '.join(profile.viable_strategies) or 'None (accumulate only)'}")
+        print(
+            f"Viable strategies: {', '.join(profile.viable_strategies) or 'None (accumulate only)'}"
+        )
 
         if profile.next_tier:
             print(f"Next tier: {profile.next_tier.value} in {profile.days_to_next_tier} days")
@@ -523,9 +526,9 @@ if __name__ == "__main__":
         print(f"Delta hedging: {'ENABLED' if delta_check['enabled'] else 'DISABLED'}")
 
     # Test sequence risk
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("SEQUENCE RISK ANALYSIS (Iron Condor)")
-    print("="*70)
+    print("=" * 70)
 
     for capital in [5000, 10000, 25000, 50000]:
         risk = calc.calculate_sequence_risk("iron_condor", capital)

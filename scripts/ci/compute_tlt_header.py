@@ -16,9 +16,7 @@ try:
         gate = "ON" if sma20 >= sma50 else "OFF"
         ret3 = 0.0
         if len(hist) >= 63:
-            ret3 = (
-                float(hist["Close"].iloc[-1]) / float(hist["Close"].iloc[-63]) - 1.0
-            ) * 100.0
+            ret3 = (float(hist["Close"].iloc[-1]) / float(hist["Close"].iloc[-63]) - 1.0) * 100.0
         print(
             f"- SMA20: `${sma20:.2f}` | SMA50: `${sma50:.2f}` | 3M return: `{ret3:.1f}%` | Gate: `{gate}`\n"
         )

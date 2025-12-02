@@ -3,29 +3,27 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional
-
 from zoneinfo import ZoneInfo
 
-from .models import CoachSession, CoachingProgram, SessionTemplate
+from .models import CoachingProgram, CoachSession, SessionTemplate
 
 
 class MentorMonitorAgent:
     """Turns static program metadata into concrete coaching sessions."""
 
-    def __init__(self, programs: List[CoachingProgram]) -> None:
+    def __init__(self, programs: list[CoachingProgram]) -> None:
         self.programs = programs
 
     def build_schedule(
         self,
         *,
-        reference_time: Optional[datetime] = None,
+        reference_time: datetime | None = None,
         per_program: int = 2,
-    ) -> List[CoachSession]:
+    ) -> list[CoachSession]:
         """Build next actionable sessions for each program."""
 
         now = reference_time or datetime.now(timezone.utc)
-        sessions: List[CoachSession] = []
+        sessions: list[CoachSession] = []
         for program in self.programs:
             tz = self._resolve_timezone(program.timezone)
             for template in program.session_templates[:per_program]:
@@ -64,13 +62,11 @@ class MentorMonitorAgent:
         *,
         tz: ZoneInfo,
         reference: datetime,
-    ) -> Optional[datetime]:
+    ) -> datetime | None:
         cadence = template.cadence.lower()
         local_now = reference.astimezone(tz)
         start_hour, start_minute = self._parse_time(template.start_time)
-        candidate = local_now.replace(
-            hour=start_hour, minute=start_minute, second=0, microsecond=0
-        )
+        candidate = local_now.replace(hour=start_hour, minute=start_minute, second=0, microsecond=0)
 
         if cadence == "weekly":
             weekday = self._weekday_index(template.day_of_week)
@@ -95,7 +91,7 @@ class MentorMonitorAgent:
         return candidate
 
     @staticmethod
-    def _weekday_index(name: Optional[str]) -> Optional[int]:
+    def _weekday_index(name: str | None) -> int | None:
         if not name:
             return None
         lookup = {

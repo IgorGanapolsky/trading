@@ -6,6 +6,7 @@ Shows functionality with example data and real API calls where available.
 
 import json
 from datetime import datetime
+
 from src.utils.news_sentiment import NewsSentimentAggregator
 
 
@@ -146,9 +147,7 @@ def create_mock_report():
             messages = source_data.get("messages", 0)
 
             if articles > 0:
-                print(
-                    f"  - {source_name.capitalize()}: {source_score:+.1f} ({articles} articles)"
-                )
+                print(f"  - {source_name.capitalize()}: {source_score:+.1f} ({articles} articles)")
             elif messages > 0:
                 bullish = source_data.get("bullish", 0)
                 bearish = source_data.get("bearish", 0)
@@ -189,13 +188,9 @@ def test_real_apis():
             if error:
                 print(f"    {source_name.capitalize()}: ERROR - {error}")
             elif articles > 0:
-                print(
-                    f"    {source_name.capitalize()}: {score:+.1f} ({articles} articles)"
-                )
+                print(f"    {source_name.capitalize()}: {score:+.1f} ({articles} articles)")
             elif messages > 0:
-                print(
-                    f"    {source_name.capitalize()}: {score:+.1f} ({messages} messages)"
-                )
+                print(f"    {source_name.capitalize()}: {score:+.1f} ({messages} messages)")
             else:
                 print(f"    {source_name.capitalize()}: {score:+.1f} (no data)")
 

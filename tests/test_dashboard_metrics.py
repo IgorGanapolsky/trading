@@ -4,11 +4,13 @@ Tests for dashboard metrics calculations.
 
 Ensures all risk metrics are calculated correctly and completely.
 """
-import numpy as np
-from pathlib import Path
-import sys
+
 import json
+import sys
 from datetime import date, timedelta
+from pathlib import Path
+
+import numpy as np
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -105,9 +107,7 @@ class TestDashboardMetricsCompleteness:
         for i, equity in enumerate(equities):
             perf_log.append(
                 {
-                    "date": (
-                        date.today() - timedelta(days=len(equities) - i)
-                    ).isoformat(),
+                    "date": (date.today() - timedelta(days=len(equities) - i)).isoformat(),
                     "equity": float(equity),
                     "pl": float(equity - base_equity),
                     "pl_pct": (equity - base_equity) / base_equity,
@@ -120,12 +120,8 @@ class TestDashboardMetricsCompleteness:
         )
 
         # With this data, we should have non-zero values for most metrics
-        assert_condition(
-            risk_metrics["max_drawdown_pct"] > 0, "Max drawdown should be > 0"
-        )
-        assert_condition(
-            risk_metrics["volatility_annualized"] > 0, "Volatility should be > 0"
-        )
+        assert_condition(risk_metrics["max_drawdown_pct"] > 0, "Max drawdown should be > 0")
+        assert_condition(risk_metrics["volatility_annualized"] > 0, "Volatility should be > 0")
         assert_condition(risk_metrics["ulcer_index"] >= 0, "Ulcer index should be >= 0")
         assert_condition(
             risk_metrics["trading_days"] == len(equities) - 1,
@@ -179,16 +175,10 @@ class TestDashboardMetricsCompleteness:
             risk_metrics = all_metrics.get("risk_metrics", {})
 
             # Verify enhanced metrics are present
-            assert_condition(
-                "ulcer_index" in risk_metrics, "Ulcer Index should be calculated"
-            )
-            assert_condition(
-                "calmar_ratio" in risk_metrics, "Calmar Ratio should be calculated"
-            )
+            assert_condition("ulcer_index" in risk_metrics, "Ulcer Index should be calculated")
+            assert_condition("calmar_ratio" in risk_metrics, "Calmar Ratio should be calculated")
             assert_condition("var_99" in risk_metrics, "VaR (99%) should be calculated")
-            assert_condition(
-                "cvar_95" in risk_metrics, "CVaR (95%) should be calculated"
-            )
+            assert_condition("cvar_95" in risk_metrics, "CVaR (95%) should be calculated")
 
     def test_metrics_match_world_class_analytics(self):
         """Verify metrics match WorldClassAnalytics implementation."""
@@ -216,9 +206,7 @@ class TestDashboardMetricsCompleteness:
             for i, equity in enumerate(equity_curve):
                 perf_log.append(
                     {
-                        "date": (
-                            date.today() - timedelta(days=len(equity_curve) - i)
-                        ).isoformat(),
+                        "date": (date.today() - timedelta(days=len(equity_curve) - i)).isoformat(),
                         "equity": float(equity),
                     }
                 )
@@ -230,8 +218,7 @@ class TestDashboardMetricsCompleteness:
 
             # Compare key metrics (allow small floating point differences)
             assert_condition(
-                abs(wc_metrics.max_drawdown_pct - calc_metrics["max_drawdown_pct"])
-                < 0.01,
+                abs(wc_metrics.max_drawdown_pct - calc_metrics["max_drawdown_pct"]) < 0.01,
                 f"Max drawdown mismatch: {wc_metrics.max_drawdown_pct} vs {calc_metrics['max_drawdown_pct']}",
             )
             assert_condition(

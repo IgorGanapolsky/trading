@@ -3,13 +3,11 @@ Position Sizing RL Agent
 RL agent that learns both action (BUY/SELL/HOLD) and optimal position size.
 """
 
+import logging
+from typing import Any, Optional
+
 import torch
 import torch.nn as nn
-
-from typing import Tuple, Optional, Dict, Any
-import logging
-
-
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +34,7 @@ class PositionSizingLSTMPPO(nn.Module):
         action_dim: int = 3,
         max_position_pct: float = 0.10,  # Max 10% per trade
     ):
-        super(PositionSizingLSTMPPO, self).__init__()
+        super().__init__()
 
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
@@ -68,14 +66,12 @@ class PositionSizingLSTMPPO(nn.Module):
         )
 
         # Critic Head (Value)
-        self.critic = nn.Sequential(
-            nn.Linear(hidden_dim, 64), nn.ReLU(), nn.Linear(64, 1)
-        )
+        self.critic = nn.Sequential(nn.Linear(hidden_dim, 64), nn.ReLU(), nn.Linear(64, 1))
 
     def forward(
         self,
         x: torch.Tensor,
-        hidden: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
+        hidden: Optional[tuple[torch.Tensor, torch.Tensor]] = None,
     ):
         """
         Forward pass.
@@ -111,9 +107,9 @@ class PositionSizingLSTMPPO(nn.Module):
     def get_action(
         self,
         x: torch.Tensor,
-        hidden: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
+        hidden: Optional[tuple[torch.Tensor, torch.Tensor]] = None,
         deterministic: bool = False,
-    ) -> Tuple[int, float, float, Tuple[torch.Tensor, torch.Tensor]]:
+    ) -> tuple[int, float, float, tuple[torch.Tensor, torch.Tensor]]:
         """
         Select action and position size.
 
@@ -176,12 +172,12 @@ class PositionSizingRLAgent:
         ).to(self.device)
 
         logger.info(
-            f"✅ Position Sizing RL Agent initialized (max position: {max_position_pct*100:.1f}%)"
+            f"✅ Position Sizing RL Agent initialized (max position: {max_position_pct * 100:.1f}%)"
         )
 
     def predict(
         self, state: torch.Tensor, deterministic: bool = False
-    ) -> Tuple[int, float, float, Dict[str, Any]]:
+    ) -> tuple[int, float, float, dict[str, Any]]:
         """
         Get action and position size prediction.
 

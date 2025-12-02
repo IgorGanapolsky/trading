@@ -9,7 +9,8 @@ Responsibilities:
 """
 
 import logging
-from typing import Dict, List, Any
+from typing import Any
+
 from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ class MetaAgent(BaseAgent):
         super().__init__(
             name="MetaAgent", role="Hierarchical coordinator and market regime detector"
         )
-        self.agents: Dict[str, BaseAgent] = {}
+        self.agents: dict[str, BaseAgent] = {}
         self.market_regime = "UNKNOWN"  # LOW_VOL, HIGH_VOL, TRENDING, RANGING
 
     def register_agent(self, agent: BaseAgent) -> None:
@@ -37,7 +38,7 @@ class MetaAgent(BaseAgent):
         self.agents[agent.name] = agent
         logger.info(f"MetaAgent registered: {agent.name}")
 
-    def analyze(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Coordinate all agents to make trading decision.
 
@@ -58,10 +59,10 @@ class MetaAgent(BaseAgent):
 MARKET REGIME: {regime}
 
 CURRENT DATA:
-- Market: {data.get('symbol', 'N/A')}
-- Price: ${data.get('price', 0):.2f}
-- Volatility: {data.get('volatility', 0):.2%}
-- Volume Ratio: {data.get('volume_ratio', 1.0):.2f}x
+- Market: {data.get("symbol", "N/A")}
+- Price: ${data.get("price", 0):.2f}
+- Volatility: {data.get("volatility", 0):.2%}
+- Volume Ratio: {data.get("volume_ratio", 1.0):.2f}x
 
 {memory_context}
 
@@ -103,7 +104,7 @@ Provide your reasoning and agent activation strategy."""
 
         return decision
 
-    def _detect_market_regime(self, data: Dict[str, Any]) -> str:
+    def _detect_market_regime(self, data: dict[str, Any]) -> str:
         """
         Detect current market regime using volatility and trend indicators.
 
@@ -123,7 +124,7 @@ Provide your reasoning and agent activation strategy."""
         else:
             return "RANGING"
 
-    def _parse_activations(self, reasoning: str) -> Dict[str, float]:
+    def _parse_activations(self, reasoning: str) -> dict[str, float]:
         """
         Parse agent activations from LLM reasoning.
 
@@ -166,7 +167,7 @@ Provide your reasoning and agent activation strategy."""
 
         return activations
 
-    def _synthesize_decision(self, recommendations: Dict[str, Dict]) -> Dict[str, Any]:
+    def _synthesize_decision(self, recommendations: dict[str, dict]) -> dict[str, Any]:
         """
         Synthesize final decision from weighted agent recommendations.
 
@@ -181,7 +182,7 @@ Provide your reasoning and agent activation strategy."""
         total_sell_weight = 0.0
         total_hold_weight = 0.0
 
-        for agent_name, rec_data in recommendations.items():
+        for _agent_name, rec_data in recommendations.items():
             rec = rec_data["recommendation"]
             weight = rec_data["weight"]
             action = rec.get("action", "HOLD")

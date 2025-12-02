@@ -13,12 +13,11 @@ Based on:
 - Elite AI Trader Gap Analysis (Phase 1)
 """
 
-import sys
-import os
 import argparse
 import logging
+import sys
 from pathlib import Path
-from typing import List, Dict, Any
+
 import numpy as np
 import pandas as pd
 import torch
@@ -31,9 +30,9 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.agents.lstm_feature_extractor import (
+    LSTMPPOWrapper,
     LSTMTradingFeatureExtractor,
     MarketDataDataset,
-    LSTMPPOWrapper,
 )
 from src.utils.data_collector import DataCollector
 from src.utils.technical_indicators import calculate_all_features
@@ -107,9 +106,9 @@ def prepare_training_data(
             sequences.append(sequence_features)
 
             # Label: future return (for supervised learning)
-            future_return = (
-                close_prices[i + prediction_horizon] - close_prices[i]
-            ) / close_prices[i]
+            future_return = (close_prices[i + prediction_horizon] - close_prices[i]) / close_prices[
+                i
+            ]
             labels.append(future_return)
 
     if not sequences:
@@ -127,7 +126,7 @@ def prepare_training_data(
     return sequences, labels
 
 
-def _features_to_array(features: Dict[str, float]) -> np.ndarray:
+def _features_to_array(features: dict[str, float]) -> np.ndarray:
     """Convert features dict to array in consistent order."""
     feature_order = [
         "close",
@@ -260,7 +259,7 @@ def train_lstm_model(
         avg_loss = total_loss / n_batches if n_batches > 0 else 0.0
 
         if (epoch + 1) % 10 == 0:
-            logger.info(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.6f}")
+            logger.info(f"Epoch {epoch + 1}/{epochs}, Loss: {avg_loss:.6f}")
 
     model.eval()
     logger.info("Training complete")
@@ -280,18 +279,14 @@ def main():
     parser.add_argument(
         "--epochs", type=int, default=50, help="Number of training epochs (default: 50)"
     )
-    parser.add_argument(
-        "--batch-size", type=int, default=32, help="Batch size (default: 32)"
-    )
+    parser.add_argument("--batch-size", type=int, default=32, help="Batch size (default: 32)")
     parser.add_argument(
         "--learning-rate",
         type=float,
         default=0.001,
         help="Learning rate (default: 0.001)",
     )
-    parser.add_argument(
-        "--seq-length", type=int, default=60, help="Sequence length (default: 60)"
-    )
+    parser.add_argument("--seq-length", type=int, default=60, help="Sequence length (default: 60)")
     parser.add_argument(
         "--output",
         type=str,
@@ -332,9 +327,7 @@ def main():
             continue
 
         if len(hist_data) < args.seq_length + 10:
-            logger.warning(
-                f"Insufficient data for {symbol} ({len(hist_data)} bars), skipping"
-            )
+            logger.warning(f"Insufficient data for {symbol} ({len(hist_data)} bars), skipping")
             continue
 
         # Prepare training data
@@ -348,9 +341,7 @@ def main():
             logger.info(f"{symbol}: {len(sequences)} sequences")
 
     if not all_sequences:
-        logger.error(
-            "No training data available. Run populate_historical_data.py first."
-        )
+        logger.error("No training data available. Run populate_historical_data.py first.")
         sys.exit(1)
 
     # Combine all symbols

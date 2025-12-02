@@ -17,7 +17,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
 
 sys.path.append(".")
 
@@ -30,9 +30,7 @@ CHUNK_SIZE = 2000  # ~400 words per chunk
 CHUNK_OVERLAP = 200  # Overlap between chunks for context
 
 
-def chunk_text(
-    text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP
-) -> List[str]:
+def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
     """
     Split text into overlapping chunks for better retrieval.
 
@@ -74,7 +72,7 @@ def chunk_text(
     return chunks
 
 
-def load_video_metadata(video_id: str, cache_dir: Path) -> Optional[Dict[str, Any]]:
+def load_video_metadata(video_id: str, cache_dir: Path) -> Optional[dict[str, Any]]:
     """
     Load video metadata from processed_videos.json if available.
 
@@ -90,7 +88,7 @@ def load_video_metadata(video_id: str, cache_dir: Path) -> Optional[Dict[str, An
         return None
 
     try:
-        with open(processed_file, "r") as f:
+        with open(processed_file) as f:
             processed = json.load(f)
             return processed.get(video_id)
     except Exception as e:
@@ -106,7 +104,7 @@ def extract_video_id(filename: str) -> Optional[str]:
     return None
 
 
-def ingest_youtube_transcripts() -> Dict[str, Any]:
+def ingest_youtube_transcripts() -> dict[str, Any]:
     """
     Ingest all YouTube transcripts into RAG vector store.
 
@@ -158,9 +156,7 @@ def ingest_youtube_transcripts() -> Dict[str, Any]:
 
             # Chunk the transcript
             chunks = chunk_text(transcript_text)
-            logger.info(
-                f"  {video_id}: {len(chunks)} chunks ({len(transcript_text)} chars)"
-            )
+            logger.info(f"  {video_id}: {len(chunks)} chunks ({len(transcript_text)} chars)")
 
             # Prepare documents and metadata
             documents = []
@@ -168,9 +164,7 @@ def ingest_youtube_transcripts() -> Dict[str, Any]:
             ids = []
 
             title = (
-                metadata_dict.get("title", "Unknown Video")
-                if metadata_dict
-                else "Unknown Video"
+                metadata_dict.get("title", "Unknown Video") if metadata_dict else "Unknown Video"
             )
             channel = (
                 metadata_dict.get("channel", "Unknown Channel")
@@ -178,9 +172,7 @@ def ingest_youtube_transcripts() -> Dict[str, Any]:
                 else "Unknown Channel"
             )
             upload_date = (
-                metadata_dict.get("upload_date", "Unknown")
-                if metadata_dict
-                else "Unknown"
+                metadata_dict.get("upload_date", "Unknown") if metadata_dict else "Unknown"
             )
             url = (
                 metadata_dict.get("url", f"https://www.youtube.com/watch?v={video_id}")
@@ -215,9 +207,7 @@ def ingest_youtube_transcripts() -> Dict[str, Any]:
             if result.get("status") == "success":
                 total_chunks += len(chunks)
                 total_videos += 1
-                logger.info(
-                    f"  ✓ Ingested {video_id}: {len(chunks)} chunks - {title[:50]}"
-                )
+                logger.info(f"  ✓ Ingested {video_id}: {len(chunks)} chunks - {title[:50]}")
             else:
                 errors.append(f"{video_id}: {result.get('message', 'Unknown error')}")
                 logger.error(f"  ✗ Failed to ingest {video_id}")

@@ -1,8 +1,8 @@
 import logging
 import random
 import time
-from typing import Any
 from functools import wraps
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -36,18 +36,14 @@ class ChaosMonkey:
 
         return decorator
 
-    def inject_error(
-        self, exception_cls: type = Exception, message: str = "Chaos Monkey Error"
-    ):
+    def inject_error(self, exception_cls: type = Exception, message: str = "Chaos Monkey Error"):
         """Decorator to inject random exceptions."""
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 if self.enabled and random.random() < self.probability:
-                    logger.warning(
-                        f"🐒 Chaos Monkey: Injecting error into {func.__name__}"
-                    )
+                    logger.warning(f"🐒 Chaos Monkey: Injecting error into {func.__name__}")
                     raise exception_cls(message)
                 return func(*args, **kwargs)
 

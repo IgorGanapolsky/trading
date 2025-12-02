@@ -10,14 +10,16 @@ Generates AI-powered insights and commentary:
 - Improvement recommendations
 - Strategy health scoring
 """
+
+import json
 import os
 import sys
-import json
-import numpy as np
-from datetime import datetime, date
-from pathlib import Path
-from typing import Dict, List, Any, Optional
 from collections import defaultdict
+from datetime import date, datetime
+from pathlib import Path
+from typing import Any, Optional
+
+import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -34,12 +36,12 @@ class AIInsightsGenerator:
 
     def generate_daily_insights(
         self,
-        perf_log: List[Dict],
-        all_trades: List[Dict],
-        risk_metrics: Dict[str, Any],
-        performance_metrics: Dict[str, Any],
-        attribution: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        perf_log: list[dict],
+        all_trades: list[dict],
+        risk_metrics: dict[str, Any],
+        performance_metrics: dict[str, Any],
+        attribution: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate comprehensive daily insights."""
         insights = {
             "summary": self._generate_summary(perf_log, all_trades),
@@ -49,39 +51,31 @@ class AIInsightsGenerator:
             "recommendations": self._generate_recommendations(
                 risk_metrics, performance_metrics, attribution
             ),
-            "strategy_health": self._score_strategy_health(
-                risk_metrics, performance_metrics
-            ),
+            "strategy_health": self._score_strategy_health(risk_metrics, performance_metrics),
         }
 
         return insights
 
-    def _generate_summary(self, perf_log: List[Dict], all_trades: List[Dict]) -> str:
+    def _generate_summary(self, perf_log: list[dict], all_trades: list[dict]) -> str:
         """Generate daily summary."""
         if not perf_log:
             return "No trading activity to summarize."
 
         latest = perf_log[-1]
-        equity = latest.get("equity", 100000)
+        latest.get("equity", 100000)
         pl = latest.get("pl", 0)
         pl_pct = latest.get("pl_pct", 0) * 100
 
         # Count today's trades
         today = date.today().isoformat()
-        today_trades = [
-            t for t in all_trades if t.get("trade_date", "").startswith(today)
-        ]
+        today_trades = [t for t in all_trades if t.get("trade_date", "").startswith(today)]
 
         summary_parts = []
 
         if pl > 0:
-            summary_parts.append(
-                f"📈 Portfolio gained ${pl:.2f} ({pl_pct:+.2f}%) today."
-            )
+            summary_parts.append(f"📈 Portfolio gained ${pl:.2f} ({pl_pct:+.2f}%) today.")
         elif pl < 0:
-            summary_parts.append(
-                f"📉 Portfolio declined ${abs(pl):.2f} ({pl_pct:+.2f}%) today."
-            )
+            summary_parts.append(f"📉 Portfolio declined ${abs(pl):.2f} ({pl_pct:+.2f}%) today.")
         else:
             summary_parts.append("➡️ Portfolio remained flat today.")
 
@@ -92,17 +86,13 @@ class AIInsightsGenerator:
         if len(perf_log) >= 3:
             recent_pl = [e.get("pl", 0) for e in perf_log[-3:]]
             if all(p > 0 for p in recent_pl):
-                summary_parts.append(
-                    "✅ Three consecutive positive days - strong momentum."
-                )
+                summary_parts.append("✅ Three consecutive positive days - strong momentum.")
             elif all(p < 0 for p in recent_pl):
-                summary_parts.append(
-                    "⚠️ Three consecutive negative days - review strategy."
-                )
+                summary_parts.append("⚠️ Three consecutive negative days - review strategy.")
 
         return " ".join(summary_parts) if summary_parts else "No significant activity."
 
-    def _analyze_trades(self, all_trades: List[Dict]) -> List[str]:
+    def _analyze_trades(self, all_trades: list[dict]) -> list[str]:
         """Analyze recent trades and provide critiques."""
         if not all_trades:
             return ["No trades to analyze."]
@@ -121,7 +111,7 @@ class AIInsightsGenerator:
             if max_symbol[1] > len(all_trades[-10:]) * 0.5:
                 critiques.append(
                     f"⚠️ Over-concentration detected: {max_symbol[0]} represents "
-                    f"{max_symbol[1]/len(all_trades[-10:])*100:.0f}% of recent trades. "
+                    f"{max_symbol[1] / len(all_trades[-10:]) * 100:.0f}% of recent trades. "
                     "Consider diversification."
                 )
 
@@ -135,7 +125,7 @@ class AIInsightsGenerator:
 
         return critiques if critiques else ["✅ Trade execution appears balanced."]
 
-    def _is_morning_trade(self, trade: Dict) -> bool:
+    def _is_morning_trade(self, trade: dict) -> bool:
         """Check if trade was executed in morning hours."""
         timestamp = trade.get("timestamp", "")
         if not timestamp:
@@ -147,9 +137,7 @@ class AIInsightsGenerator:
         except:
             return False
 
-    def _detect_anomalies(
-        self, perf_log: List[Dict], all_trades: List[Dict]
-    ) -> List[str]:
+    def _detect_anomalies(self, perf_log: list[dict], all_trades: list[dict]) -> list[str]:
         """Detect anomalies in trading activity."""
         anomalies = []
 
@@ -175,9 +163,7 @@ class AIInsightsGenerator:
 
         # Check for missing trades
         today = date.today().isoformat()
-        today_trades = [
-            t for t in all_trades if t.get("trade_date", "").startswith(today)
-        ]
+        today_trades = [t for t in all_trades if t.get("trade_date", "").startswith(today)]
 
         # If we typically trade but didn't today
         if len(all_trades) > 5 and len(today_trades) == 0:
@@ -188,7 +174,7 @@ class AIInsightsGenerator:
 
         return anomalies
 
-    def _detect_regime_shift(self, perf_log: List[Dict]) -> Optional[str]:
+    def _detect_regime_shift(self, perf_log: list[dict]) -> Optional[str]:
         """Detect market regime shifts."""
         if not perf_log or len(perf_log) < 10:
             return None
@@ -230,10 +216,10 @@ class AIInsightsGenerator:
 
     def _generate_recommendations(
         self,
-        risk_metrics: Dict[str, Any],
-        performance_metrics: Dict[str, Any],
-        attribution: Dict[str, Any],
-    ) -> List[str]:
+        risk_metrics: dict[str, Any],
+        performance_metrics: dict[str, Any],
+        attribution: dict[str, Any],
+    ) -> list[str]:
         """Generate actionable recommendations."""
         recommendations = []
 
@@ -272,10 +258,7 @@ class AIInsightsGenerator:
             best_symbol = max(by_symbol.items(), key=lambda x: x[1].get("total_pl", 0))
             worst_symbol = min(by_symbol.items(), key=lambda x: x[1].get("total_pl", 0))
 
-            if (
-                best_symbol[1].get("total_pl", 0) > 0
-                and worst_symbol[1].get("total_pl", 0) < 0
-            ):
+            if best_symbol[1].get("total_pl", 0) > 0 and worst_symbol[1].get("total_pl", 0) < 0:
                 recommendations.append(
                     f"💡 Consider increasing allocation to {best_symbol[0]} "
                     f"(best performer) and reducing {worst_symbol[0]} exposure."
@@ -284,14 +267,12 @@ class AIInsightsGenerator:
         return (
             recommendations
             if recommendations
-            else [
-                "✅ No critical recommendations. System performing within acceptable parameters."
-            ]
+            else ["✅ No critical recommendations. System performing within acceptable parameters."]
         )
 
     def _score_strategy_health(
-        self, risk_metrics: Dict[str, Any], performance_metrics: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, risk_metrics: dict[str, Any], performance_metrics: dict[str, Any]
+    ) -> dict[str, Any]:
         """Score overall strategy health."""
         score = 100.0
         factors = []

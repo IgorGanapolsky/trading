@@ -8,13 +8,13 @@ Ingests options trading books for RAG retrieval:
 Based on the proven Berkshire Letters pattern.
 """
 
-import re
 import json
 import logging
-from typing import List, Dict, Any, Optional
+import re
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from dataclasses import dataclass, asdict
+from typing import Any, Optional
 
 try:
     import PyPDF2
@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BookChunk:
     """A chunk of book content with metadata."""
+
     book_title: str
     author: str
     chapter: str
@@ -36,7 +37,7 @@ class BookChunk:
     page_numbers: str
     content: str
     content_type: str  # 'strategy', 'example', 'definition', 'rule', 'warning'
-    topics: List[str]
+    topics: list[str]
 
 
 class OptionsBookCollector(BaseNewsCollector):
@@ -62,9 +63,15 @@ class OptionsBookCollector(BaseNewsCollector):
             "isbn": "978-0735201972",
             "pages": 1012,
             "topics": [
-                "greeks", "volatility", "covered_calls", "iron_condor",
-                "straddles", "spreads", "risk_management", "taxes"
-            ]
+                "greeks",
+                "volatility",
+                "covered_calls",
+                "iron_condor",
+                "straddles",
+                "spreads",
+                "risk_management",
+                "taxes",
+            ],
         },
         "natenberg_volatility": {
             "title": "Option Volatility and Pricing",
@@ -73,9 +80,12 @@ class OptionsBookCollector(BaseNewsCollector):
             "isbn": "978-0071818773",
             "pages": 512,
             "topics": [
-                "volatility_trading", "pricing_models", "greeks",
-                "volatility_skew", "risk_management"
-            ]
+                "volatility_trading",
+                "pricing_models",
+                "greeks",
+                "volatility_skew",
+                "risk_management",
+            ],
         },
         "sinclair_volatility": {
             "title": "Volatility Trading",
@@ -84,10 +94,13 @@ class OptionsBookCollector(BaseNewsCollector):
             "isbn": "978-1118347133",
             "pages": 384,
             "topics": [
-                "volatility_forecasting", "trade_sizing", "hedging",
-                "psychology", "variance_swaps"
-            ]
-        }
+                "volatility_forecasting",
+                "trade_sizing",
+                "hedging",
+                "psychology",
+                "variance_swaps",
+            ],
+        },
     }
 
     # Chapter patterns for McMillan's book (helps with parsing)
@@ -122,24 +135,49 @@ class OptionsBookCollector(BaseNewsCollector):
     # Content type patterns for classification
     CONTENT_PATTERNS = {
         "strategy": [
-            r"strategy[:\s]", r"setup[:\s]", r"trade[:\s]", r"position[:\s]",
-            r"when to use", r"profit potential", r"maximum (loss|gain)"
+            r"strategy[:\s]",
+            r"setup[:\s]",
+            r"trade[:\s]",
+            r"position[:\s]",
+            r"when to use",
+            r"profit potential",
+            r"maximum (loss|gain)",
         ],
         "example": [
-            r"example[:\s]", r"for instance", r"consider", r"suppose",
-            r"let's say", r"illustration", r"assume that"
+            r"example[:\s]",
+            r"for instance",
+            r"consider",
+            r"suppose",
+            r"let's say",
+            r"illustration",
+            r"assume that",
         ],
         "definition": [
-            r"is defined as", r"refers to", r"means that", r"definition",
-            r"^[A-Z][a-z]+ is [a-z]"  # "Delta is the..."
+            r"is defined as",
+            r"refers to",
+            r"means that",
+            r"definition",
+            r"^[A-Z][a-z]+ is [a-z]",  # "Delta is the..."
         ],
         "rule": [
-            r"rule[:\s]", r"always", r"never", r"must", r"should",
-            r"critical", r"important", r"key point"
+            r"rule[:\s]",
+            r"always",
+            r"never",
+            r"must",
+            r"should",
+            r"critical",
+            r"important",
+            r"key point",
         ],
         "warning": [
-            r"warning", r"caution", r"danger", r"risk", r"avoid",
-            r"mistake", r"trap", r"pitfall"
+            r"warning",
+            r"caution",
+            r"danger",
+            r"risk",
+            r"avoid",
+            r"mistake",
+            r"trap",
+            r"pitfall",
         ],
     }
 
@@ -159,10 +197,10 @@ class OptionsBookCollector(BaseNewsCollector):
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         # Subdirectories
-        self.raw_dir = self.cache_dir / "raw"      # Original PDFs
+        self.raw_dir = self.cache_dir / "raw"  # Original PDFs
         self.parsed_dir = self.cache_dir / "parsed"  # Extracted text
         self.chunks_dir = self.cache_dir / "chunks"  # Chunked content
-        self.index_dir = self.cache_dir / "index"    # Search index
+        self.index_dir = self.cache_dir / "index"  # Search index
 
         for dir_path in [self.raw_dir, self.parsed_dir, self.chunks_dir, self.index_dir]:
             dir_path.mkdir(exist_ok=True)
@@ -173,11 +211,11 @@ class OptionsBookCollector(BaseNewsCollector):
 
         logger.info(f"Options Book Collector initialized (cache: {self.cache_dir})")
 
-    def _load_index(self) -> Dict[str, Dict[str, Any]]:
+    def _load_index(self) -> dict[str, dict[str, Any]]:
         """Load the books index from disk."""
         if self.index_file.exists():
             try:
-                with open(self.index_file, "r") as f:
+                with open(self.index_file) as f:
                     return json.load(f)
             except Exception as e:
                 logger.error(f"Error loading index: {e}")
@@ -194,11 +232,8 @@ class OptionsBookCollector(BaseNewsCollector):
             logger.error(f"Error saving index: {e}")
 
     def ingest_pdf(
-        self,
-        pdf_path: str,
-        book_id: str = "mcmillan_options",
-        force_refresh: bool = False
-    ) -> Dict[str, Any]:
+        self, pdf_path: str, book_id: str = "mcmillan_options", force_refresh: bool = False
+    ) -> dict[str, Any]:
         """
         Ingest a PDF book into the RAG system.
 
@@ -226,12 +261,10 @@ class OptionsBookCollector(BaseNewsCollector):
         logger.info(f"Ingesting book: {book_id} from {pdf_path}")
 
         # Get book metadata
-        book_meta = self.KNOWN_BOOKS.get(book_id, {
-            "title": pdf_path.stem,
-            "author": "Unknown",
-            "edition": "Unknown",
-            "topics": []
-        })
+        book_meta = self.KNOWN_BOOKS.get(
+            book_id,
+            {"title": pdf_path.stem, "author": "Unknown", "edition": "Unknown", "topics": []},
+        )
 
         try:
             # Step 1: Extract text from PDF
@@ -267,18 +300,20 @@ class OptionsBookCollector(BaseNewsCollector):
                 "char_count": len(full_text),
                 "page_count": len(page_texts),
                 "ingested_at": datetime.now().isoformat(),
-                "topics": book_meta.get("topics", [])
+                "topics": book_meta.get("topics", []),
             }
             self._save_index()
 
-            logger.info(f"Successfully ingested {book_id}: {len(chunks)} chunks from {len(page_texts)} pages")
+            logger.info(
+                f"Successfully ingested {book_id}: {len(chunks)} chunks from {len(page_texts)} pages"
+            )
 
             return {
                 "status": "success",
                 "book_id": book_id,
                 "chunks": len(chunks),
                 "pages": len(page_texts),
-                "chars": len(full_text)
+                "chars": len(full_text),
             }
 
         except Exception as e:
@@ -301,10 +336,7 @@ class OptionsBookCollector(BaseNewsCollector):
                 for page_num, page in enumerate(pdf_reader.pages):
                     text = page.extract_text()
                     if text:
-                        page_texts.append({
-                            "page": page_num + 1,
-                            "text": text
-                        })
+                        page_texts.append({"page": page_num + 1, "text": text})
 
             full_text = "\n\n".join([p["text"] for p in page_texts])
             return full_text, page_texts
@@ -314,11 +346,8 @@ class OptionsBookCollector(BaseNewsCollector):
             return "", []
 
     def _chunk_book(
-        self,
-        full_text: str,
-        page_texts: List[Dict],
-        book_meta: Dict
-    ) -> List[BookChunk]:
+        self, full_text: str, page_texts: list[dict], book_meta: dict
+    ) -> list[BookChunk]:
         """
         Chunk book into semantic units.
 
@@ -341,12 +370,11 @@ class OptionsBookCollector(BaseNewsCollector):
             char_pos += len(page_text) + 2  # +2 for \n\n separator
 
         # Split into paragraphs
-        paragraphs = re.split(r'\n\s*\n', full_text)
+        paragraphs = re.split(r"\n\s*\n", full_text)
 
         current_chapter = "Introduction"
         current_section = ""
         current_chunk_text = ""
-        current_chunk_start = 0
         chunk_page_start = 1
 
         max_chunk_size = 2000  # Characters per chunk
@@ -357,33 +385,34 @@ class OptionsBookCollector(BaseNewsCollector):
                 continue
 
             # Detect chapter headers
-            chapter_match = re.match(r'^(?:CHAPTER|Chapter)\s*(\d+)[:\s]+(.+)$', para)
+            chapter_match = re.match(r"^(?:CHAPTER|Chapter)\s*(\d+)[:\s]+(.+)$", para)
             if chapter_match:
                 # Save current chunk if not empty
                 if current_chunk_text:
-                    chunks.append(self._create_chunk(
-                        current_chunk_text,
-                        book_meta,
-                        current_chapter,
-                        current_section,
-                        chunk_page_start
-                    ))
+                    chunks.append(
+                        self._create_chunk(
+                            current_chunk_text,
+                            book_meta,
+                            current_chapter,
+                            current_section,
+                            chunk_page_start,
+                        )
+                    )
                     current_chunk_text = ""
 
                 chapter_num = int(chapter_match.group(1))
                 current_chapter = self.MCMILLAN_CHAPTERS.get(
-                    chapter_num,
-                    chapter_match.group(2).strip()
+                    chapter_num, chapter_match.group(2).strip()
                 )
                 current_section = ""
                 chunk_page_start = self._get_page_for_position(
-                    len(full_text) - len("\n\n".join(paragraphs[paragraphs.index(para):])),
-                    page_lookup
+                    len(full_text) - len("\n\n".join(paragraphs[paragraphs.index(para) :])),
+                    page_lookup,
                 )
                 continue
 
             # Detect section headers (ALL CAPS or Title Case with specific patterns)
-            if re.match(r'^[A-Z][A-Z\s]+$', para) and len(para) < 100:
+            if re.match(r"^[A-Z][A-Z\s]+$", para) and len(para) < 100:
                 current_section = para.title()
                 continue
 
@@ -391,17 +420,19 @@ class OptionsBookCollector(BaseNewsCollector):
             if len(current_chunk_text) + len(para) > max_chunk_size:
                 # Save current chunk
                 if current_chunk_text:
-                    chunks.append(self._create_chunk(
-                        current_chunk_text,
-                        book_meta,
-                        current_chapter,
-                        current_section,
-                        chunk_page_start
-                    ))
+                    chunks.append(
+                        self._create_chunk(
+                            current_chunk_text,
+                            book_meta,
+                            current_chapter,
+                            current_section,
+                            chunk_page_start,
+                        )
+                    )
                 current_chunk_text = para
                 chunk_page_start = self._get_page_for_position(
-                    len(full_text) - len("\n\n".join(paragraphs[paragraphs.index(para):])),
-                    page_lookup
+                    len(full_text) - len("\n\n".join(paragraphs[paragraphs.index(para) :])),
+                    page_lookup,
                 )
             else:
                 if current_chunk_text:
@@ -411,23 +442,20 @@ class OptionsBookCollector(BaseNewsCollector):
 
         # Don't forget the last chunk
         if current_chunk_text:
-            chunks.append(self._create_chunk(
-                current_chunk_text,
-                book_meta,
-                current_chapter,
-                current_section,
-                chunk_page_start
-            ))
+            chunks.append(
+                self._create_chunk(
+                    current_chunk_text,
+                    book_meta,
+                    current_chapter,
+                    current_section,
+                    chunk_page_start,
+                )
+            )
 
         return chunks
 
     def _create_chunk(
-        self,
-        text: str,
-        book_meta: Dict,
-        chapter: str,
-        section: str,
-        page_start: int
+        self, text: str, book_meta: dict, chapter: str, section: str, page_start: int
     ) -> BookChunk:
         """Create a BookChunk with content classification."""
 
@@ -445,7 +473,7 @@ class OptionsBookCollector(BaseNewsCollector):
             page_numbers=str(page_start),
             content=text,
             content_type=content_type,
-            topics=topics
+            topics=topics,
         )
 
     def _classify_content(self, text: str) -> str:
@@ -454,10 +482,7 @@ class OptionsBookCollector(BaseNewsCollector):
 
         scores = {}
         for content_type, patterns in self.CONTENT_PATTERNS.items():
-            score = sum(
-                1 for pattern in patterns
-                if re.search(pattern, text_lower)
-            )
+            score = sum(1 for pattern in patterns if re.search(pattern, text_lower))
             scores[content_type] = score
 
         if not scores or max(scores.values()) == 0:
@@ -465,7 +490,7 @@ class OptionsBookCollector(BaseNewsCollector):
 
         return max(scores, key=scores.get)
 
-    def _extract_topics(self, text: str, known_topics: List[str]) -> List[str]:
+    def _extract_topics(self, text: str, known_topics: list[str]) -> list[str]:
         """Extract relevant topics from chunk."""
         text_lower = text.lower()
         found_topics = []
@@ -489,7 +514,7 @@ class OptionsBookCollector(BaseNewsCollector):
 
         return found_topics
 
-    def _get_page_for_position(self, char_position: int, page_lookup: Dict) -> int:
+    def _get_page_for_position(self, char_position: int, page_lookup: dict) -> int:
         """Find the page number for a character position."""
         last_page = 1
         for pos, page in sorted(page_lookup.items()):
@@ -503,8 +528,8 @@ class OptionsBookCollector(BaseNewsCollector):
         query: str,
         book_id: Optional[str] = None,
         top_k: int = 5,
-        content_types: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        content_types: Optional[list[str]] = None,
+    ) -> dict[str, Any]:
         """
         Search ingested books for relevant content.
 
@@ -523,7 +548,7 @@ class OptionsBookCollector(BaseNewsCollector):
             return {
                 "query": query,
                 "results": [],
-                "message": "No books ingested. Use ingest_pdf() first."
+                "message": "No books ingested. Use ingest_pdf() first.",
             }
 
         # Determine which books to search
@@ -541,7 +566,7 @@ class OptionsBookCollector(BaseNewsCollector):
             if not chunks_file.exists():
                 continue
 
-            with open(chunks_file, "r") as f:
+            with open(chunks_file) as f:
                 chunks = json.load(f)
 
             # Score each chunk
@@ -552,19 +577,23 @@ class OptionsBookCollector(BaseNewsCollector):
 
                 score = self._score_chunk(query, chunk)
                 if score > 0:
-                    all_results.append({
-                        "book_id": bid,
-                        "book_title": chunk["book_title"],
-                        "author": chunk["author"],
-                        "chapter": chunk["chapter"],
-                        "section": chunk["section"],
-                        "page": chunk["page_numbers"],
-                        "content_type": chunk["content_type"],
-                        "topics": chunk["topics"],
-                        "excerpt": chunk["content"][:500] + "..." if len(chunk["content"]) > 500 else chunk["content"],
-                        "full_content": chunk["content"],
-                        "score": score
-                    })
+                    all_results.append(
+                        {
+                            "book_id": bid,
+                            "book_title": chunk["book_title"],
+                            "author": chunk["author"],
+                            "chapter": chunk["chapter"],
+                            "section": chunk["section"],
+                            "page": chunk["page_numbers"],
+                            "content_type": chunk["content_type"],
+                            "topics": chunk["topics"],
+                            "excerpt": chunk["content"][:500] + "..."
+                            if len(chunk["content"]) > 500
+                            else chunk["content"],
+                            "full_content": chunk["content"],
+                            "score": score,
+                        }
+                    )
 
         # Sort by score and return top_k
         all_results.sort(key=lambda x: x["score"], reverse=True)
@@ -574,19 +603,40 @@ class OptionsBookCollector(BaseNewsCollector):
             "query": query,
             "results": top_results,
             "total_matches": len(all_results),
-            "books_searched": books_to_search
+            "books_searched": books_to_search,
         }
 
-    def _score_chunk(self, query: str, chunk: Dict) -> float:
+    def _score_chunk(self, query: str, chunk: dict) -> float:
         """Score a chunk's relevance to query."""
         query_lower = query.lower()
         content_lower = chunk["content"].lower()
 
         # Tokenize query
         stop_words = {
-            "the", "a", "an", "and", "or", "but", "is", "are", "was", "were",
-            "in", "on", "at", "to", "for", "of", "with", "by", "from", "what",
-            "how", "when", "where", "why"
+            "the",
+            "a",
+            "an",
+            "and",
+            "or",
+            "but",
+            "is",
+            "are",
+            "was",
+            "were",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+            "of",
+            "with",
+            "by",
+            "from",
+            "what",
+            "how",
+            "when",
+            "where",
+            "why",
         }
         query_words = [w for w in query_lower.split() if w not in stop_words]
 
@@ -609,10 +659,7 @@ class OptionsBookCollector(BaseNewsCollector):
         word_count = len(content_lower.split())
         return (matches / len(query_words)) * (1000 / max(word_count, 100))
 
-    def get_chunks_for_rag(
-        self,
-        book_id: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+    def get_chunks_for_rag(self, book_id: Optional[str] = None) -> list[dict[str, Any]]:
         """
         Get all chunks formatted for RAG ingestion.
 
@@ -632,40 +679,40 @@ class OptionsBookCollector(BaseNewsCollector):
             if not chunks_file.exists():
                 continue
 
-            with open(chunks_file, "r") as f:
+            with open(chunks_file) as f:
                 chunks = json.load(f)
 
             for i, chunk in enumerate(chunks):
-                all_chunks.append({
-                    "id": f"{bid}_chunk_{i}",
-                    "content": chunk["content"],
-                    "metadata": {
-                        "book_id": bid,
-                        "book_title": chunk["book_title"],
-                        "author": chunk["author"],
-                        "chapter": chunk["chapter"],
-                        "section": chunk["section"],
-                        "page": chunk["page_numbers"],
-                        "content_type": chunk["content_type"],
-                        "topics": ",".join(chunk["topics"]),
-                        "source": "options_book"
+                all_chunks.append(
+                    {
+                        "id": f"{bid}_chunk_{i}",
+                        "content": chunk["content"],
+                        "metadata": {
+                            "book_id": bid,
+                            "book_title": chunk["book_title"],
+                            "author": chunk["author"],
+                            "chapter": chunk["chapter"],
+                            "section": chunk["section"],
+                            "page": chunk["page_numbers"],
+                            "content_type": chunk["content_type"],
+                            "topics": ",".join(chunk["topics"]),
+                            "source": "options_book",
+                        },
                     }
-                })
+                )
 
         return all_chunks
 
     # Implement abstract methods from BaseNewsCollector
 
-    def collect_ticker_news(
-        self, ticker: str, days_back: int = 7
-    ) -> List[Dict[str, Any]]:
+    def collect_ticker_news(self, ticker: str, days_back: int = 7) -> list[dict[str, Any]]:
         """
         Options books don't have ticker-specific news.
         Return empty list.
         """
         return []
 
-    def collect_market_news(self, days_back: int = 1) -> List[Dict[str, Any]]:
+    def collect_market_news(self, days_back: int = 1) -> list[dict[str, Any]]:
         """
         Return general options knowledge as "market news".
 
@@ -676,10 +723,7 @@ class OptionsBookCollector(BaseNewsCollector):
         chunks = self.get_chunks_for_rag()
 
         # Filter to valuable content
-        valuable_chunks = [
-            c for c in chunks
-            if c["metadata"]["content_type"] in valuable_types
-        ]
+        valuable_chunks = [c for c in chunks if c["metadata"]["content_type"] in valuable_types]
 
         # Convert to article format
         articles = []
@@ -690,7 +734,7 @@ class OptionsBookCollector(BaseNewsCollector):
                 url=f"book://{chunk['metadata']['book_id']}/page/{chunk['metadata']['page']}",
                 published_date=datetime.now().strftime("%Y-%m-%d"),
                 ticker=None,
-                sentiment=None
+                sentiment=None,
             )
             articles.append(article)
 

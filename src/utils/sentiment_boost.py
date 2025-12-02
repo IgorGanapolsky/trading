@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import json
 import logging
-from pathlib import Path
-from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +19,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_SENTIMENT_DIR = Path(__file__).parent.parent.parent / "data" / "sentiment"
 
 
-def get_sentiment_score(
-    symbol: str, sentiment_dir: Optional[Path] = None
-) -> Optional[float]:
+def get_sentiment_score(symbol: str, sentiment_dir: Path | None = None) -> float | None:
     """
     Get sentiment score for a symbol from latest sentiment file.
 
@@ -46,7 +44,7 @@ def get_sentiment_score(
 
         if sentiment_file.exists():
             try:
-                with open(sentiment_file, "r") as f:
+                with open(sentiment_file) as f:
                     data = json.load(f)
 
                 # Check if symbol exists in tickers
@@ -54,9 +52,7 @@ def get_sentiment_score(
                 if symbol in tickers:
                     ticker_data = tickers[symbol]
                     # Try different possible keys for sentiment score
-                    score = ticker_data.get("aggregate_score") or ticker_data.get(
-                        "score"
-                    )
+                    score = ticker_data.get("aggregate_score") or ticker_data.get("score")
                     if score is not None:
                         logger.debug(
                             f"Found sentiment score for {symbol}: {score} (from {date_str})"
@@ -76,8 +72,8 @@ def calculate_sentiment_boost(
     technical_score: float,
     sentiment_threshold: float = 0.8,
     boost_multiplier: float = 1.2,
-    sentiment_dir: Optional[Path] = None,
-) -> tuple[float, Dict[str, Any]]:
+    sentiment_dir: Path | None = None,
+) -> tuple[float, dict[str, Any]]:
     """
     Calculate position size boost based on sentiment and technical scores.
 
@@ -110,9 +106,7 @@ def calculate_sentiment_boost(
 
     # Convert sentiment score to 0-1 scale (assuming 0-100 input)
     sentiment_score = (
-        sentiment_score_raw / 100.0
-        if sentiment_score_raw > 1.0
-        else sentiment_score_raw
+        sentiment_score_raw / 100.0 if sentiment_score_raw > 1.0 else sentiment_score_raw
     )
 
     # Check if boost conditions are met
@@ -132,9 +126,7 @@ def calculate_sentiment_boost(
     else:
         adjusted_amount = base_amount
         if sentiment_score < sentiment_threshold:
-            reason = (
-                f"Sentiment {sentiment_score:.2f} < threshold {sentiment_threshold}"
-            )
+            reason = f"Sentiment {sentiment_score:.2f} < threshold {sentiment_threshold}"
         elif technical_score <= 0:
             reason = f"Technical score {technical_score:.2f} <= 0"
         else:

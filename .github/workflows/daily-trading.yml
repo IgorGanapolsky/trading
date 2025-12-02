@@ -34,6 +34,8 @@ jobs:
   execute-trading:
     runs-on: ubuntu-latest
     timeout-minutes: 30  # Increased from 20 to 30 as safety net (fixes should prevent timeouts)
+    env:
+      PYTHONPATH: ${{ github.workspace }}
 
     steps:
       - name: Checkout repository

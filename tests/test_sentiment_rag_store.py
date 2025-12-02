@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 import numpy as np
-
 from src.rag.sentiment_store import SentimentRAGStore
 
 

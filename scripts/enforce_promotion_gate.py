@@ -13,8 +13,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
-
+from typing import Any
 
 DEFAULT_SYSTEM_STATE = Path("data/system_state.json")
 DEFAULT_BACKTEST_SUMMARY = Path("data/backtests/latest_summary.json")
@@ -65,7 +64,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def load_json(path: Path) -> Dict[str, Any]:
+def load_json(path: Path) -> dict[str, Any]:
     if not path.exists():
         raise FileNotFoundError(f"Required metrics file missing: {path}")
     with path.open("r", encoding="utf-8") as handle:
@@ -83,11 +82,11 @@ def normalize_percent(value: Any) -> float:
 
 
 def evaluate_gate(
-    system_state: Dict[str, Any],
-    backtest_summary: Dict[str, Any],
+    system_state: dict[str, Any],
+    backtest_summary: dict[str, Any],
     args: argparse.Namespace,
-) -> List[str]:
-    deficits: List[str] = []
+) -> list[str]:
+    deficits: list[str] = []
 
     win_rate = normalize_percent(
         system_state.get("performance", {}).get("win_rate")
@@ -98,17 +97,11 @@ def evaluate_gate(
     drawdown = abs(float(system_state.get("heuristics", {}).get("max_drawdown", 0.0)))
 
     if win_rate < args.required_win_rate:
-        deficits.append(
-            f"Win rate {win_rate:.2f}% < {args.required_win_rate}% (paper trading)."
-        )
+        deficits.append(f"Win rate {win_rate:.2f}% < {args.required_win_rate}% (paper trading).")
     if sharpe < args.required_sharpe:
-        deficits.append(
-            f"Sharpe ratio {sharpe:.2f} < {args.required_sharpe} (paper trading)."
-        )
+        deficits.append(f"Sharpe ratio {sharpe:.2f} < {args.required_sharpe} (paper trading).")
     if drawdown > args.max_drawdown:
-        deficits.append(
-            f"Max drawdown {drawdown:.2f}% > {args.max_drawdown}% (paper trading)."
-        )
+        deficits.append(f"Max drawdown {drawdown:.2f}% > {args.max_drawdown}% (paper trading).")
 
     aggregate = backtest_summary.get("aggregate_metrics", {})
     min_streak = int(aggregate.get("min_profitable_streak", 0))
@@ -120,9 +113,7 @@ def evaluate_gate(
 
     min_sharpe = float(aggregate.get("min_sharpe_ratio", 0.0))
     if min_sharpe < args.required_sharpe:
-        deficits.append(
-            f"Backtest Sharpe floor {min_sharpe:.2f} < {args.required_sharpe}."
-        )
+        deficits.append(f"Backtest Sharpe floor {min_sharpe:.2f} < {args.required_sharpe}.")
 
     max_drawdown_bt = float(aggregate.get("max_drawdown", 999.0))
     if max_drawdown_bt > args.max_drawdown:
@@ -132,9 +123,7 @@ def evaluate_gate(
 
     min_win_rate = float(aggregate.get("min_win_rate", 0.0))
     if min_win_rate < args.required_win_rate:
-        deficits.append(
-            f"Backtest win-rate floor {min_win_rate:.2f}% < {args.required_win_rate}%."
-        )
+        deficits.append(f"Backtest win-rate floor {min_win_rate:.2f}% < {args.required_win_rate}%.")
 
     return deficits
 

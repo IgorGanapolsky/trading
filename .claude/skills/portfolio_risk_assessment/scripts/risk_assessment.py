@@ -4,12 +4,11 @@ Portfolio Risk Assessment Skill - Implementation
 Comprehensive risk management and circuit breaker system
 """
 
+import argparse
+import json
 import os
 import sys
-import json
-import argparse
-from datetime import datetime
-from typing import Dict, Any, Optional, List
+from typing import Any, Optional
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
@@ -36,12 +35,12 @@ except ImportError:
     print("Warning: RiskManager not available")
 
 
-def error_response(error_msg: str, error_code: str = "ERROR") -> Dict[str, Any]:
+def error_response(error_msg: str, error_code: str = "ERROR") -> dict[str, Any]:
     """Standard error response"""
     return {"success": False, "error": error_msg, "error_code": error_code}
 
 
-def success_response(data: Any) -> Dict[str, Any]:
+def success_response(data: Any) -> dict[str, Any]:
     """Standard success response"""
     return {"success": True, "data": data}
 
@@ -89,7 +88,7 @@ class PortfolioRiskAssessor:
             "anomaly_detected": False,
         }
 
-    def assess_portfolio_health(self) -> Dict[str, Any]:
+    def assess_portfolio_health(self) -> dict[str, Any]:
         """
         Comprehensive portfolio health assessment
 
@@ -110,7 +109,7 @@ class PortfolioRiskAssessor:
 
             # Get positions
             positions = self.trading_client.get_all_positions()
-            position_value = sum(float(p.market_value) for p in positions)
+            sum(float(p.market_value) for p in positions)
             position_count = len(positions)
 
             # Calculate P/L
@@ -137,14 +136,10 @@ class PortfolioRiskAssessor:
             )
 
             # Determine overall status
-            status = self._determine_health_status(
-                risk_score, current_drawdown, daily_pl_pct
-            )
+            status = self._determine_health_status(risk_score, current_drawdown, daily_pl_pct)
 
             # Generate warnings
-            warnings = self._generate_warnings(
-                current_drawdown, daily_pl_pct, cash_pct, risk_score
-            )
+            warnings = self._generate_warnings(current_drawdown, daily_pl_pct, cash_pct, risk_score)
 
             return success_response(
                 {
@@ -165,11 +160,9 @@ class PortfolioRiskAssessor:
             )
 
         except Exception as e:
-            return error_response(
-                f"Error assessing portfolio health: {str(e)}", "ASSESSMENT_ERROR"
-            )
+            return error_response(f"Error assessing portfolio health: {str(e)}", "ASSESSMENT_ERROR")
 
-    def check_circuit_breakers(self, force_check: bool = False) -> Dict[str, Any]:
+    def check_circuit_breakers(self, force_check: bool = False) -> dict[str, Any]:
         """
         Check if any circuit breakers should trigger
 
@@ -217,10 +210,7 @@ class PortfolioRiskAssessor:
                 "triggered": self.consecutive_losses >= self.CONSECUTIVE_LOSS_LIMIT,
                 "current_value": self.consecutive_losses,
                 "threshold": self.CONSECUTIVE_LOSS_LIMIT,
-                "pct_to_threshold": (
-                    self.consecutive_losses / self.CONSECUTIVE_LOSS_LIMIT
-                )
-                * 100,
+                "pct_to_threshold": (self.consecutive_losses / self.CONSECUTIVE_LOSS_LIMIT) * 100,
             }
 
             # Determine which breakers are active
@@ -260,7 +250,7 @@ class PortfolioRiskAssessor:
         order_type: str,
         limit_price: Optional[float] = None,
         stop_price: Optional[float] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Validate a proposed trade against risk rules
 
@@ -304,9 +294,7 @@ class PortfolioRiskAssessor:
 
             # Estimate cost (simplified)
             estimated_cost = quantity * 100  # Rough estimate, should get real quote
-            validation_checks["sufficient_buying_power"] = (
-                buying_power >= estimated_cost
-            )
+            validation_checks["sufficient_buying_power"] = buying_power >= estimated_cost
 
             if not validation_checks["sufficient_buying_power"]:
                 rejection_reasons.append(
@@ -326,15 +314,11 @@ class PortfolioRiskAssessor:
                 )
 
             # 4. Check daily trade limits (PDT rules, etc.)
-            validation_checks["within_daily_trade_limit"] = (
-                True  # TODO: Implement PDT checking
-            )
+            validation_checks["within_daily_trade_limit"] = True  # TODO: Implement PDT checking
 
             # 5. Risk assessment
             estimated_risk = estimated_cost * 0.02  # 2% risk estimate
-            validation_checks["passes_risk_limits"] = (
-                True  # Would integrate with RiskManager
-            )
+            validation_checks["passes_risk_limits"] = True  # Would integrate with RiskManager
 
             # Generate recommendations
             if position_size_pct > 5.0:
@@ -361,9 +345,7 @@ class PortfolioRiskAssessor:
             )
 
         except Exception as e:
-            return error_response(
-                f"Error validating trade: {str(e)}", "VALIDATION_ERROR"
-            )
+            return error_response(f"Error validating trade: {str(e)}", "VALIDATION_ERROR")
 
     def record_trade_result(
         self,
@@ -375,7 +357,7 @@ class PortfolioRiskAssessor:
         exit_price: Optional[float] = None,
         profit_loss: Optional[float] = None,
         status: str = "filled",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Record the outcome of a completed trade
 
@@ -420,9 +402,7 @@ class PortfolioRiskAssessor:
             )
 
         except Exception as e:
-            return error_response(
-                f"Error recording trade result: {str(e)}", "RECORD_ERROR"
-            )
+            return error_response(f"Error recording trade result: {str(e)}", "RECORD_ERROR")
 
     def _calculate_risk_score(
         self, drawdown: float, position_count: int, cash_pct: float, daily_pl_pct: float
@@ -467,7 +447,7 @@ class PortfolioRiskAssessor:
 
     def _generate_warnings(
         self, drawdown: float, daily_pl_pct: float, cash_pct: float, risk_score: float
-    ) -> List[str]:
+    ) -> list[str]:
         """Generate warning messages"""
         warnings = []
 
@@ -475,9 +455,7 @@ class PortfolioRiskAssessor:
             warnings.append(f"Drawdown at {drawdown:.2f}% - approaching 10% limit")
 
         if daily_pl_pct <= -1.5:
-            warnings.append(
-                f"Daily loss at {daily_pl_pct:.2f}% - approaching -2% limit"
-            )
+            warnings.append(f"Daily loss at {daily_pl_pct:.2f}% - approaching -2% limit")
 
         if cash_pct < 20:
             warnings.append(f"Low cash reserves at {cash_pct:.2f}%")
@@ -494,46 +472,30 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
     # assess_portfolio_health command
-    health_parser = subparsers.add_parser(
-        "assess_portfolio_health", help="Assess portfolio health"
-    )
+    subparsers.add_parser("assess_portfolio_health", help="Assess portfolio health")
 
     # check_circuit_breakers command
-    breakers_parser = subparsers.add_parser(
-        "check_circuit_breakers", help="Check circuit breakers"
-    )
-    breakers_parser.add_argument(
-        "--force", action="store_true", help="Force re-evaluation"
-    )
+    breakers_parser = subparsers.add_parser("check_circuit_breakers", help="Check circuit breakers")
+    breakers_parser.add_argument("--force", action="store_true", help="Force re-evaluation")
 
     # validate_trade command
-    validate_parser = subparsers.add_parser(
-        "validate_trade", help="Validate a proposed trade"
-    )
+    validate_parser = subparsers.add_parser("validate_trade", help="Validate a proposed trade")
     validate_parser.add_argument("--symbol", required=True, help="Ticker symbol")
     validate_parser.add_argument(
         "--side", required=True, choices=["buy", "sell"], help="Buy or sell"
     )
-    validate_parser.add_argument(
-        "--quantity", type=float, required=True, help="Number of shares"
-    )
+    validate_parser.add_argument("--quantity", type=float, required=True, help="Number of shares")
     validate_parser.add_argument("--order-type", required=True, help="Order type")
     validate_parser.add_argument("--limit-price", type=float, help="Limit price")
     validate_parser.add_argument("--stop-price", type=float, help="Stop price")
 
     # record_trade_result command
-    record_parser = subparsers.add_parser(
-        "record_trade_result", help="Record trade result"
-    )
+    record_parser = subparsers.add_parser("record_trade_result", help="Record trade result")
     record_parser.add_argument("--trade-id", required=True, help="Trade ID")
     record_parser.add_argument("--symbol", required=True, help="Ticker symbol")
-    record_parser.add_argument(
-        "--side", required=True, choices=["buy", "sell"], help="Buy or sell"
-    )
+    record_parser.add_argument("--side", required=True, choices=["buy", "sell"], help="Buy or sell")
     record_parser.add_argument("--quantity", type=float, required=True, help="Shares")
-    record_parser.add_argument(
-        "--entry-price", type=float, required=True, help="Entry price"
-    )
+    record_parser.add_argument("--entry-price", type=float, required=True, help="Entry price")
     record_parser.add_argument("--exit-price", type=float, help="Exit price")
     record_parser.add_argument("--profit-loss", type=float, help="P/L")
     record_parser.add_argument("--status", default="filled", help="Trade status")
@@ -551,9 +513,7 @@ def main():
     if args.command == "assess_portfolio_health":
         result = assessor.assess_portfolio_health()
     elif args.command == "check_circuit_breakers":
-        result = assessor.check_circuit_breakers(
-            force_check=getattr(args, "force", False)
-        )
+        result = assessor.check_circuit_breakers(force_check=getattr(args, "force", False))
     elif args.command == "validate_trade":
         result = assessor.validate_trade(
             symbol=args.symbol,

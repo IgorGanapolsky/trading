@@ -15,15 +15,15 @@ Features:
 - Respectful of robots.txt and ToS
 """
 
-import feedparser
-import time
-import logging
+import hashlib
 import json
-from typing import List, Dict, Any, Optional
+import logging
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
-import hashlib
+from typing import Any, Optional
 
+import feedparser
 from src.rag.collectors.base_collector import BaseNewsCollector
 
 logger = logging.getLogger(__name__)
@@ -154,7 +154,7 @@ class SeekingAlphaCollector(BaseNewsCollector):
 
         return age < timedelta(hours=self.CACHE_DURATION_HOURS)
 
-    def _load_from_cache(self, ticker: str) -> Optional[List[Dict[str, Any]]]:
+    def _load_from_cache(self, ticker: str) -> Optional[list[dict[str, Any]]]:
         """
         Load articles from cache if valid.
 
@@ -170,7 +170,7 @@ class SeekingAlphaCollector(BaseNewsCollector):
             return None
 
         try:
-            with open(cache_path, "r") as f:
+            with open(cache_path) as f:
                 data = json.load(f)
 
             logger.info(f"Loaded {len(data)} articles from cache for {ticker}")
@@ -180,7 +180,7 @@ class SeekingAlphaCollector(BaseNewsCollector):
             logger.warning(f"Error loading cache for {ticker}: {e}")
             return None
 
-    def _save_to_cache(self, ticker: str, articles: List[Dict[str, Any]]):
+    def _save_to_cache(self, ticker: str, articles: list[dict[str, Any]]):
         """
         Save articles to cache.
 
@@ -255,13 +255,13 @@ class SeekingAlphaCollector(BaseNewsCollector):
         text_lower = text.lower()
 
         # Check for explicit ratings
-        for rating in self.RATING_SCORES.keys():
+        for rating in self.RATING_SCORES:
             if rating in text_lower:
                 return rating.title()
 
         return None
 
-    def _parse_rss_feed(self, ticker: str) -> List[Dict[str, Any]]:
+    def _parse_rss_feed(self, ticker: str) -> list[dict[str, Any]]:
         """
         Parse RSS feed for a ticker.
 
@@ -283,9 +283,7 @@ class SeekingAlphaCollector(BaseNewsCollector):
 
             # Check for errors
             if feed.bozo and not feed.entries:
-                logger.warning(
-                    f"Error parsing feed for {ticker}: {feed.bozo_exception}"
-                )
+                logger.warning(f"Error parsing feed for {ticker}: {feed.bozo_exception}")
                 return []
 
             if not feed.entries:
@@ -333,18 +331,14 @@ class SeekingAlphaCollector(BaseNewsCollector):
 
                 articles.append(article)
 
-            logger.info(
-                f"Collected {len(articles)} articles for {ticker} from Seeking Alpha"
-            )
+            logger.info(f"Collected {len(articles)} articles for {ticker} from Seeking Alpha")
             return articles
 
         except Exception as e:
             logger.error(f"Error fetching Seeking Alpha RSS for {ticker}: {e}")
             return []
 
-    def collect_ticker_news(
-        self, ticker: str, days_back: int = 7
-    ) -> List[Dict[str, Any]]:
+    def collect_ticker_news(self, ticker: str, days_back: int = 7) -> list[dict[str, Any]]:
         """
         Collect news for a specific ticker from Seeking Alpha.
 
@@ -365,8 +359,7 @@ class SeekingAlphaCollector(BaseNewsCollector):
             filtered = [
                 article
                 for article in cached_articles
-                if datetime.strptime(article["published_date"], "%Y-%m-%d")
-                >= cutoff_date
+                if datetime.strptime(article["published_date"], "%Y-%m-%d") >= cutoff_date
             ]
             logger.info(f"Returning {len(filtered)} cached articles for {ticker}")
             return filtered
@@ -388,7 +381,7 @@ class SeekingAlphaCollector(BaseNewsCollector):
 
         return filtered
 
-    def collect_market_news(self, days_back: int = 1) -> List[Dict[str, Any]]:
+    def collect_market_news(self, days_back: int = 1) -> list[dict[str, Any]]:
         """
         Collect general market news from Seeking Alpha.
 
@@ -417,12 +410,10 @@ class SeekingAlphaCollector(BaseNewsCollector):
                 seen_urls.add(url)
                 unique_articles.append(article)
 
-        logger.info(
-            f"Collected {len(unique_articles)} unique market articles from Seeking Alpha"
-        )
+        logger.info(f"Collected {len(unique_articles)} unique market articles from Seeking Alpha")
         return unique_articles
 
-    def get_ticker_summary(self, ticker: str, days_back: int = 7) -> Dict[str, Any]:
+    def get_ticker_summary(self, ticker: str, days_back: int = 7) -> dict[str, Any]:
         """
         Get aggregated sentiment summary for a ticker.
 
@@ -513,9 +504,7 @@ def main():
     """CLI interface for Seeking Alpha collector."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Collect investment research from Seeking Alpha"
-    )
+    parser = argparse.ArgumentParser(description="Collect investment research from Seeking Alpha")
     parser.add_argument(
         "--ticker",
         type=str,
@@ -572,9 +561,7 @@ def main():
         print("\nRecent Articles:")
         for article in summary["recent_articles"]:
             print(f"  - {article['title']}")
-            print(
-                f"    Sentiment: {article['sentiment']:+.3f}, Rating: {article['rating']}"
-            )
+            print(f"    Sentiment: {article['sentiment']:+.3f}, Rating: {article['rating']}")
             print(f"    {article['url']}")
         print("=" * 80 + "\n")
     else:

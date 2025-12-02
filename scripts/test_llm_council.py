@@ -9,7 +9,6 @@ Demonstrates the 3-stage council process:
 """
 
 import asyncio
-import json
 import os
 import sys
 from pathlib import Path
@@ -17,11 +16,10 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.core.llm_council_integration import TradingCouncil, create_trading_council
-from src.core.multi_llm_analysis import LLMModel
-
 # Configure logging
 import logging
+
+from src.core.llm_council_integration import create_trading_council
 
 logging.basicConfig(
     level=logging.INFO,
@@ -68,7 +66,7 @@ async def test_trade_validation():
     print(f"\n💭 Reasoning:\n{result['reasoning']}")
 
     if result.get("council_response"):
-        print(f"\n📋 Individual Responses:")
+        print("\n📋 Individual Responses:")
         for model, response in result["individual_responses"].items():
             print(f"\n  {model}:")
             print(f"    {response[:200]}...")
@@ -97,9 +95,7 @@ async def test_trading_recommendation():
         "momentum_score": 0.75,
     }
 
-    result = await council.get_trading_recommendation(
-        symbol="GOOGL", market_data=market_data
-    )
+    result = await council.get_trading_recommendation(symbol="GOOGL", market_data=market_data)
 
     print(f"\n🎯 Recommendation: {result['action']}")
     print(f"📊 Confidence: {result['confidence']:.2%}")
@@ -182,13 +178,13 @@ data-driven recommendations based on technical analysis and risk management."""
     print(f"👑 Chairman: {response.metadata['chairman_model']}")
     print(f"⏱️  Total Time: {response.metadata['total_time']:.2f}s")
 
-    print(f"\n📋 Individual Responses:")
+    print("\n📋 Individual Responses:")
     for model, content in response.individual_responses.items():
         print(f"\n  {model}:")
         print(f"    {content[:300]}...")
 
     if response.reviews:
-        print(f"\n🔍 Peer Reviews:")
+        print("\n🔍 Peer Reviews:")
         for reviewer, review in response.reviews.items():
             print(f"\n  {reviewer}:")
             if review.get("rankings"):

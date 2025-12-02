@@ -7,9 +7,7 @@ Tests Gemini 3 integration directly without importing full trading system.
 
 import os
 import sys
-import json
 from pathlib import Path
-from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 

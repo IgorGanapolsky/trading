@@ -5,8 +5,8 @@ Utility helpers for MCP-aware code execution.
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Awaitable, Callable, TypeVar
-
+from collections.abc import Awaitable
+from typing import Any, Callable, TypeVar
 
 T = TypeVar("T")
 
@@ -55,6 +55,4 @@ def ensure_env_var(getter: Callable[[], Any], description: str) -> Any:
     try:
         return getter()
     except Exception as exc:  # noqa: BLE001
-        raise RuntimeError(
-            f"{description} is unavailable. Original error: {exc}"
-        ) from exc
+        raise RuntimeError(f"{description} is unavailable. Original error: {exc}") from exc

@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
 
-from typing import Tuple
-
 
 class LSTMPPO(nn.Module):
     """
@@ -28,7 +26,7 @@ class LSTMPPO(nn.Module):
             num_layers: Number of LSTM layers
             action_dim: Number of actions (default 3: Hold, Buy, Sell)
         """
-        super(LSTMPPO, self).__init__()
+        super().__init__()
 
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
@@ -52,13 +50,9 @@ class LSTMPPO(nn.Module):
         )
 
         # 3. Critic Head (Value)
-        self.critic = nn.Sequential(
-            nn.Linear(hidden_dim, 64), nn.ReLU(), nn.Linear(64, 1)
-        )
+        self.critic = nn.Sequential(nn.Linear(hidden_dim, 64), nn.ReLU(), nn.Linear(64, 1))
 
-    def forward(
-        self, x: torch.Tensor, hidden: Tuple[torch.Tensor, torch.Tensor] = None
-    ):
+    def forward(self, x: torch.Tensor, hidden: tuple[torch.Tensor, torch.Tensor] = None):
         """
         Forward pass.
 
@@ -91,7 +85,7 @@ class LSTMPPO(nn.Module):
     def get_action(
         self,
         x: torch.Tensor,
-        hidden: Tuple[torch.Tensor, torch.Tensor] = None,
+        hidden: tuple[torch.Tensor, torch.Tensor] = None,
         deterministic: bool = False,
     ):
         """

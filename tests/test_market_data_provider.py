@@ -4,9 +4,8 @@ Test Suite for Market Data Provider
 Tests data source fallbacks and reliability.
 """
 
-import sys
 import os
-
+import sys
 
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -37,9 +36,7 @@ def test_data_source_fallback():
     provider = get_market_data_provider()
 
     # Verify provider has fallback methods
-    assert hasattr(
-        provider, "get_daily_bars"
-    ), "Provider should have get_daily_bars method"
+    assert hasattr(provider, "get_daily_bars"), "Provider should have get_daily_bars method"
 
     print("✅ Data source fallback structure verified")
 

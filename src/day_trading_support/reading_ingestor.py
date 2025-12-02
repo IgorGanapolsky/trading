@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable, List, Optional, Sequence, Set
+from collections.abc import Iterable, Sequence
 
 from .models import BookResource, ReadingAssignment
 
@@ -16,12 +16,12 @@ class StudyGuideAgent:
     def generate_assignments(
         self,
         *,
-        focus_tags: Optional[Iterable[str]] = None,
+        focus_tags: Iterable[str] | None = None,
         minutes: int = 45,
-    ) -> List[ReadingAssignment]:
+    ) -> list[ReadingAssignment]:
         if minutes <= 0:
             minutes = 30
-        tag_filter: Set[str] = {tag.lower() for tag in focus_tags or []}
+        tag_filter: set[str] = {tag.lower() for tag in focus_tags or []}
 
         def _matches(book: BookResource) -> bool:
             if not tag_filter:
@@ -29,7 +29,7 @@ class StudyGuideAgent:
             return any(tag.lower() in tag_filter for tag in book.focus_tags)
 
         selected_books = [book for book in self.books if _matches(book)] or self.books
-        assignments: List[ReadingAssignment] = []
+        assignments: list[ReadingAssignment] = []
         total_minutes = 0
 
         for book in selected_books:

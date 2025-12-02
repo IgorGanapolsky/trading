@@ -35,11 +35,10 @@ Created: 2025-12-02
 """
 
 import logging
-import os
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any, Optional
 
 from src.core.alpaca_trader import AlpacaTrader
 from src.rag.collectors.fred_collector import FREDCollector
@@ -74,9 +73,9 @@ class RebalanceDecision:
     """Rebalancing decision details."""
 
     should_rebalance: bool
-    current_allocation: Dict[str, float]
-    target_allocation: Dict[str, float]
-    drift_pct: Dict[str, float]
+    current_allocation: dict[str, float]
+    target_allocation: dict[str, float]
+    drift_pct: dict[str, float]
     max_drift: float
     reason: str
     timestamp: datetime
@@ -147,9 +146,7 @@ class TreasuryLadderStrategy:
             ValueError: If daily_allocation is non-positive or threshold invalid
         """
         if daily_allocation <= 0:
-            raise ValueError(
-                f"daily_allocation must be positive, got {daily_allocation}"
-            )
+            raise ValueError(f"daily_allocation must be positive, got {daily_allocation}")
 
         if not 0 < rebalance_threshold < 1:
             raise ValueError(
@@ -161,14 +158,14 @@ class TreasuryLadderStrategy:
         self.etf_symbols = self.ETF_SYMBOLS.copy()
 
         # Strategy state
-        self.current_holdings: Dict[str, float] = {}
+        self.current_holdings: dict[str, float] = {}
         self.last_rebalance_date: Optional[datetime] = None
         self.current_regime: Optional[YieldCurveRegime] = None
 
         # Performance tracking
         self.total_invested: float = 0.0
         self.total_value: float = 0.0
-        self.rebalance_history: List[RebalanceDecision] = []
+        self.rebalance_history: list[RebalanceDecision] = []
 
         # Initialize dependencies
         try:
@@ -188,11 +185,11 @@ class TreasuryLadderStrategy:
         logger.info(
             f"TreasuryLadderStrategy initialized: "
             f"daily_allocation=${daily_allocation:.2f}, "
-            f"rebalance_threshold={rebalance_threshold*100:.1f}%, "
+            f"rebalance_threshold={rebalance_threshold * 100:.1f}%, "
             f"etfs={self.etf_symbols}"
         )
 
-    def analyze_yield_curve(self) -> Tuple[YieldCurveRegime, float, str]:
+    def analyze_yield_curve(self) -> tuple[YieldCurveRegime, float, str]:
         """
         Analyze the current yield curve using FRED data.
 
@@ -332,13 +329,13 @@ class TreasuryLadderStrategy:
         )
 
         logger.info(
-            f"Optimal allocation: SHY={allocation.shy_pct*100:.0f}%, "
-            f"IEF={allocation.ief_pct*100:.0f}%, TLT={allocation.tlt_pct*100:.0f}%"
+            f"Optimal allocation: SHY={allocation.shy_pct * 100:.0f}%, "
+            f"IEF={allocation.ief_pct * 100:.0f}%, TLT={allocation.tlt_pct * 100:.0f}%"
         )
 
         return allocation
 
-    def execute_daily(self, amount: Optional[float] = None) -> Dict[str, Any]:
+    def execute_daily(self, amount: Optional[float] = None) -> dict[str, Any]:
         """
         Execute daily investment across treasury ladder.
 
@@ -425,7 +422,9 @@ class TreasuryLadderStrategy:
             # Update total invested
             self.total_invested += total_invested
 
-            logger.info(f"Daily execution complete: {len(orders)} orders, ${total_invested:.2f} invested")
+            logger.info(
+                f"Daily execution complete: {len(orders)} orders, ${total_invested:.2f} invested"
+            )
 
             return {
                 "orders": orders,
@@ -472,9 +471,7 @@ class TreasuryLadderStrategy:
 
         # Check minimum rebalancing interval
         if self.last_rebalance_date:
-            days_since_rebalance = (
-                datetime.now() - self.last_rebalance_date
-            ).days
+            days_since_rebalance = (datetime.now() - self.last_rebalance_date).days
             if days_since_rebalance < self.MIN_REBALANCE_INTERVAL_DAYS:
                 logger.info(
                     f"Skipping rebalance check: Only {days_since_rebalance} days since last rebalance "
@@ -523,8 +520,8 @@ class TreasuryLadderStrategy:
             max_drift = max(drift_pct.values())
 
             logger.info(
-                f"Allocation drift: SHY={drift_pct['SHY']*100:.1f}%, "
-                f"IEF={drift_pct['IEF']*100:.1f}%, TLT={drift_pct['TLT']*100:.1f}%"
+                f"Allocation drift: SHY={drift_pct['SHY'] * 100:.1f}%, "
+                f"IEF={drift_pct['IEF'] * 100:.1f}%, TLT={drift_pct['TLT'] * 100:.1f}%"
             )
 
             # Determine if rebalancing needed
@@ -532,21 +529,19 @@ class TreasuryLadderStrategy:
 
             if should_rebalance:
                 reason = (
-                    f"Max drift {max_drift*100:.1f}% exceeds threshold "
-                    f"{self.rebalance_threshold*100:.1f}%"
+                    f"Max drift {max_drift * 100:.1f}% exceeds threshold "
+                    f"{self.rebalance_threshold * 100:.1f}%"
                 )
                 logger.info(f"REBALANCING NEEDED: {reason}")
 
                 # Execute rebalancing
-                self._execute_rebalance(
-                    current_allocation, target_allocation, total_value
-                )
+                self._execute_rebalance(current_allocation, target_allocation, total_value)
 
                 self.last_rebalance_date = datetime.now()
             else:
                 reason = (
-                    f"Max drift {max_drift*100:.1f}% within threshold "
-                    f"{self.rebalance_threshold*100:.1f}%"
+                    f"Max drift {max_drift * 100:.1f}% within threshold "
+                    f"{self.rebalance_threshold * 100:.1f}%"
                 )
                 logger.info(f"No rebalancing needed: {reason}")
 
@@ -571,8 +566,8 @@ class TreasuryLadderStrategy:
 
     def _execute_rebalance(
         self,
-        current_allocation: Dict[str, float],
-        target_allocation: Dict[str, float],
+        current_allocation: dict[str, float],
+        target_allocation: dict[str, float],
         total_value: float,
     ) -> None:
         """
@@ -619,10 +614,7 @@ class TreasuryLadderStrategy:
 
                     # Get current position to calculate quantity
                     positions = self.alpaca_trader.get_positions()
-                    pos = next(
-                        (p for p in positions if p["symbol"] == symbol),
-                        None
-                    )
+                    pos = next((p for p in positions if p["symbol"] == symbol), None)
 
                     if pos:
                         # Calculate shares to sell
@@ -638,9 +630,7 @@ class TreasuryLadderStrategy:
                             f"(would sell {sell_qty:.4f} shares)"
                         )
                     else:
-                        logger.warning(
-                            f"Could not find position for {symbol} to rebalance"
-                        )
+                        logger.warning(f"Could not find position for {symbol} to rebalance")
 
             except Exception as e:
                 logger.error(f"Failed to rebalance {symbol}: {e}")
@@ -648,7 +638,7 @@ class TreasuryLadderStrategy:
 
         logger.info("Rebalancing execution complete")
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """
         Get performance summary for treasury ladder.
 
@@ -661,19 +651,11 @@ class TreasuryLadderStrategy:
 
             # Get current positions
             positions = self.alpaca_trader.get_positions()
-            treasury_positions = [
-                pos for pos in positions if pos["symbol"] in self.etf_symbols
-            ]
+            treasury_positions = [pos for pos in positions if pos["symbol"] in self.etf_symbols]
 
-            total_market_value = sum(
-                float(pos["market_value"]) for pos in treasury_positions
-            )
-            total_cost_basis = sum(
-                float(pos["cost_basis"]) for pos in treasury_positions
-            )
-            total_unrealized_pl = sum(
-                float(pos["unrealized_pl"]) for pos in treasury_positions
-            )
+            total_market_value = sum(float(pos["market_value"]) for pos in treasury_positions)
+            total_cost_basis = sum(float(pos["cost_basis"]) for pos in treasury_positions)
+            total_unrealized_pl = sum(float(pos["unrealized_pl"]) for pos in treasury_positions)
 
             return {
                 "total_invested": self.total_invested,
@@ -681,16 +663,12 @@ class TreasuryLadderStrategy:
                 "total_cost_basis": total_cost_basis,
                 "total_unrealized_pl": total_unrealized_pl,
                 "return_pct": (
-                    (total_unrealized_pl / total_cost_basis * 100)
-                    if total_cost_basis > 0
-                    else 0.0
+                    (total_unrealized_pl / total_cost_basis * 100) if total_cost_basis > 0 else 0.0
                 ),
                 "positions": treasury_positions,
                 "current_regime": self.current_regime.value if self.current_regime else "unknown",
                 "last_rebalance": (
-                    self.last_rebalance_date.isoformat()
-                    if self.last_rebalance_date
-                    else None
+                    self.last_rebalance_date.isoformat() if self.last_rebalance_date else None
                 ),
                 "rebalance_count": len(self.rebalance_history),
                 "timestamp": datetime.now().isoformat(),
@@ -731,9 +709,9 @@ if __name__ == "__main__":
     # Get optimal allocation
     print("\n2. OPTIMAL ALLOCATION")
     allocation = strategy.get_optimal_allocation()
-    print(f"   SHY (1-3yr): {allocation.shy_pct*100:.0f}%")
-    print(f"   IEF (7-10yr): {allocation.ief_pct*100:.0f}%")
-    print(f"   TLT (20+yr): {allocation.tlt_pct*100:.0f}%")
+    print(f"   SHY (1-3yr): {allocation.shy_pct * 100:.0f}%")
+    print(f"   IEF (7-10yr): {allocation.ief_pct * 100:.0f}%")
+    print(f"   TLT (20+yr): {allocation.tlt_pct * 100:.0f}%")
 
     # Execute daily (demo - will actually trade if Alpaca configured)
     print("\n3. DAILY EXECUTION (DEMO)")

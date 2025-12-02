@@ -5,10 +5,8 @@ Check GitHub Actions Workflow Status
 Diagnoses workflow issues and provides actionable fixes.
 """
 
-import subprocess
 import json
-import sys
-from datetime import datetime
+import subprocess
 
 
 def run_command(cmd):
@@ -85,9 +83,7 @@ def check_workflow_status():
     print("=" * 80)
 
     print("\n1. Check Workflow Status:")
-    print(
-        "   Visit: https://github.com/IgorGanapolsky/trading/actions/workflows/daily-trading.yml"
-    )
+    print("   Visit: https://github.com/IgorGanapolsky/trading/actions/workflows/daily-trading.yml")
     print("   Look for yellow 'disabled' banner")
 
     print("\n2. If Disabled:")

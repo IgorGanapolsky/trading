@@ -89,9 +89,7 @@ def generate_execution_summary():
             total_unrealized += unrealized
 
             status = "🟢" if unrealized > 0 else "🔴"
-            print(
-                f"    {status} {symbol}: ${unrealized:+,.2f} ({unrealized_pct:+.2f}%)"
-            )
+            print(f"    {status} {symbol}: ${unrealized:+,.2f} ({unrealized_pct:+.2f}%)")
 
         print(f"\n  Total Unrealized P/L: ${total_unrealized:+,.2f}")
 

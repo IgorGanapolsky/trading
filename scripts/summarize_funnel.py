@@ -15,7 +15,7 @@ import json
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 
 
 def load_events(path: Path) -> list[dict[str, Any]]:
@@ -66,7 +66,9 @@ def to_markdown(summary: dict[str, Any]) -> str:
     lines.append("")
     lines.append("## Gate Outcomes")
     for gate, counts in summary["gates"].items():
-        lines.append(f"- {gate}: pass={counts.get('pass_', 0)}, reject={counts.get('reject', 0)}, skipped={counts.get('skipped', 0)}")
+        lines.append(
+            f"- {gate}: pass={counts.get('pass_', 0)}, reject={counts.get('reject', 0)}, skipped={counts.get('skipped', 0)}"
+        )
     lines.append("")
     lines.append("## Orders")
     if not summary["orders"]:
@@ -91,9 +93,7 @@ def to_markdown(summary: dict[str, Any]) -> str:
             atr_pct = p.get("atr_pct")
             atr_mult = p.get("atr_multiplier")
             if atr_pct is not None:
-                lines.append(
-                    f"- {t}: stop=${stop_price} (ATR%={atr_pct:.2%}, mult={atr_mult})"
-                )
+                lines.append(f"- {t}: stop=${stop_price} (ATR%={atr_pct:.2%}, mult={atr_mult})")
             else:
                 lines.append(f"- {t}: stop=${stop_price}")
     lines.append("")

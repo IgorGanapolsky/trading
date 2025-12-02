@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fix shell issue and commit pending changes."""
+
 import subprocess
-import os
 import sys
 
 

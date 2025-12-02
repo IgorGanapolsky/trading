@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Iterable
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
 
 from src.utils.finnhub_client import FinnhubClient
 
@@ -33,20 +33,20 @@ class EconomicGuardrails:
         if self._should_refresh():
             self._refresh()
 
-    def is_market_blocked(self) -> Tuple[bool, Optional[str]]:
+    def is_market_blocked(self) -> tuple[bool, str | None]:
         blockers = self._data.get("market_blockers", [])
         if not blockers:
             return False, None
         return True, blockers[0].get("description")
 
-    def is_symbol_blocked(self, symbol: str) -> Tuple[bool, Optional[str]]:
+    def is_symbol_blocked(self, symbol: str) -> tuple[bool, str | None]:
         symbol = symbol.upper()
         blockers = self._data.get("symbol_blockers", {}).get(symbol, [])
         if not blockers:
             return False, None
         return True, blockers[0].get("description")
 
-    def summary(self) -> Dict[str, List[Dict[str, str]]]:
+    def summary(self) -> dict[str, list[dict[str, str]]]:
         return {
             "market_blockers": self._data.get("market_blockers", []),
             "symbol_blockers": self._data.get("symbol_blockers", {}),
@@ -77,8 +77,8 @@ class EconomicGuardrails:
         }
         self._save_cache()
 
-    def _fetch_major_events(self, start: date, end: date) -> List[Dict[str, str]]:
-        blockers: List[Dict[str, str]] = []
+    def _fetch_major_events(self, start: date, end: date) -> list[dict[str, str]]:
+        blockers: list[dict[str, str]] = []
         events = self.client.get_economic_calendar(start, end)
         for event in events:
             event_name = event.get("event", "")
@@ -95,10 +95,8 @@ class EconomicGuardrails:
             logger.info("Economic guardrail loaded %d market events", len(blockers))
         return blockers
 
-    def _fetch_symbol_events(
-        self, start: date, end: date
-    ) -> Dict[str, List[Dict[str, str]]]:
-        blockers: Dict[str, List[Dict[str, str]]] = {}
+    def _fetch_symbol_events(self, start: date, end: date) -> dict[str, list[dict[str, str]]]:
+        blockers: dict[str, list[dict[str, str]]] = {}
         earnings = self.client.get_earnings_calendar(start, end)
         if not earnings:
             return blockers
@@ -119,11 +117,11 @@ class EconomicGuardrails:
             logger.info("Economic guardrail tracking events for %d symbols", len(blockers))
         return blockers
 
-    def _load_cache(self) -> Dict:
+    def _load_cache(self) -> dict:
         if not self.cache_path.exists():
             return {}
         try:
-            with open(self.cache_path, "r", encoding="utf-8") as fp:
+            with open(self.cache_path, encoding="utf-8") as fp:
                 return json.load(fp)
         except Exception as exc:  # pragma: no cover - best effort
             logger.warning("Failed to read guardrail cache: %s", exc)

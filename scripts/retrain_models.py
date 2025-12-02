@@ -3,8 +3,9 @@
 Script to retrain ML models for all tracked symbols.
 Intended to be run via GitHub Actions or manually.
 """
-import sys
+
 import logging
+import sys
 from pathlib import Path
 
 # Add src to path

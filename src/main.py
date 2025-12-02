@@ -29,28 +29,36 @@ Created: 2025-10-28
 """
 
 import logging as _logging  # Added for deprecation warning on import
+
 _logging.getLogger(__name__).warning(
     "src/main.py is deprecated. Use scripts/autonomous_trader.py (hybrid funnel)."
 )
 
-import os
-import sys
-import signal
-import logging
 import argparse
-from datetime import datetime, timedelta, date
-from pathlib import Path
-from typing import Dict, Optional, Any
-from logging.handlers import RotatingFileHandler
-
-import schedule
+import logging
+import os
+import signal
+import sys
 import time
+from datetime import date, datetime, timedelta
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
+from typing import Any, Optional
+
 import pytz
+import schedule
 from dotenv import load_dotenv
 
 # Add src directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.agent_framework import RunContext  # noqa: E402
+from src.core.alpaca_trader import AlpacaTrader  # noqa: E402
+from src.core.risk_manager import RiskManager  # noqa: E402
+from src.core.skills_integration import get_skills  # noqa: E402
+from src.deepagents_integration.adapter import (
+    create_analysis_agent_adapter,
+)  # noqa: E402
 from src.orchestration.adk_integration import (
     ADKTradeAdapter,
     summarize_adk_decision,
@@ -60,19 +68,10 @@ from src.strategies.core_strategy import CoreStrategy  # noqa: E402
 from src.strategies.growth_strategy import GrowthStrategy  # noqa: E402
 from src.strategies.ipo_strategy import IPOStrategy  # noqa: E402
 from src.strategies.options_strategy import OptionsStrategy  # noqa: E402
-from src.core.alpaca_trader import AlpacaTrader  # noqa: E402
-from src.core.risk_manager import RiskManager  # noqa: E402
-from src.core.skills_integration import get_skills  # noqa: E402
-from src.deepagents_integration.adapter import (
-    create_analysis_agent_adapter,
-)  # noqa: E402
-from src.agent_framework import RunContext  # noqa: E402
 
 
 # Helper function to save trades to daily trade files
-def save_trade_to_daily_file(
-    trade_data: Dict[str, Any], data_dir: Path = Path("data")
-) -> None:
+def save_trade_to_daily_file(trade_data: dict[str, Any], data_dir: Path = Path("data")) -> None:
     """
     Save trade to daily trade file (trades_YYYY-MM-DD.json).
 
@@ -89,7 +88,7 @@ def save_trade_to_daily_file(
     trades = []
     if trade_file.exists():
         try:
-            with open(trade_file, "r") as f:
+            with open(trade_file) as f:
                 trades = json.load(f)
                 if not isinstance(trades, list):
                     trades = [trades] if trades else []
@@ -193,7 +192,7 @@ class TradingOrchestrator:
         health_status: Dictionary containing health check information
     """
 
-    def __init__(self, mode: str = "paper", config: Optional[Dict[str, Any]] = None):
+    def __init__(self, mode: str = "paper", config: Optional[dict[str, Any]] = None):
         """
         Initialize the Trading Orchestrator.
 
@@ -211,9 +210,7 @@ class TradingOrchestrator:
             raise ValueError(f"Invalid mode '{mode}'. Must be 'paper' or 'live'.")
 
         self.logger.info("=" * 80)
-        self.logger.info(
-            f"Initializing Trading Orchestrator in {self.mode.upper()} mode"
-        )
+        self.logger.info(f"Initializing Trading Orchestrator in {self.mode.upper()} mode")
         self.logger.info("=" * 80)
 
         # Load configuration
@@ -229,9 +226,7 @@ class TradingOrchestrator:
         self.skills = get_skills()  # Initialize Claude Skills
 
         # Elite Orchestrator (planning-first multi-agent system)
-        elite_enabled = (
-            os.getenv("ELITE_ORCHESTRATOR_ENABLED", "false").lower() == "true"
-        )
+        elite_enabled = os.getenv("ELITE_ORCHESTRATOR_ENABLED", "false").lower() == "true"
         self.elite_orchestrator: Optional[EliteOrchestrator] = None
 
         # Autonomous Meta-Agents
@@ -247,8 +242,8 @@ class TradingOrchestrator:
                 self.logger.info("✅ Elite Orchestrator initialized")
 
                 # Initialize Meta-Agents
-                from src.agents.trace_analysis_agent import TraceAnalysisAgent
                 from src.agents.chaos_orchestrator_agent import ChaosOrchestratorAgent
+                from src.agents.trace_analysis_agent import TraceAnalysisAgent
 
                 self.trace_analysis_agent = TraceAnalysisAgent()
                 self.chaos_orchestrator_agent = ChaosOrchestratorAgent()
@@ -267,9 +262,7 @@ class TradingOrchestrator:
                 from src.ml.inference import MLPredictor
 
                 self.ml_predictor = MLPredictor()
-                self.logger.info(
-                    "✅ RL Inference (MLPredictor) initialized independently"
-                )
+                self.logger.info("✅ RL Inference (MLPredictor) initialized independently")
             except Exception as e:
                 self.logger.warning(f"⚠️ RL Inference unavailable: {e}")
 
@@ -307,7 +300,7 @@ class TradingOrchestrator:
 
         # Orchestrator state
         self.running = False
-        self.last_execution: Dict[str, Optional[datetime]] = {
+        self.last_execution: dict[str, Optional[datetime]] = {
             "core_strategy": None,
             "growth_strategy": None,
             "ipo_strategy": None,
@@ -315,7 +308,7 @@ class TradingOrchestrator:
             "options_accumulation": None,
             "crypto_position_management": None,
         }
-        self.health_status: Dict[str, Any] = {
+        self.health_status: dict[str, Any] = {
             "status": "initialized",
             "last_check": datetime.now().isoformat(),
             "errors": [],
@@ -326,15 +319,13 @@ class TradingOrchestrator:
         signal.signal(signal.SIGINT, self._signal_handler)
 
         self.logger.info("Trading Orchestrator initialized successfully")
-        self.logger.info(
-            f"Daily investment allocation: ${self.config['daily_investment']:.2f}"
-        )
+        self.logger.info(f"Daily investment allocation: ${self.config['daily_investment']:.2f}")
         self.logger.info(
             f"Risk limits: Daily loss {self.config['max_daily_loss_pct']}%, "
             f"Drawdown {self.config['max_drawdown_pct']}%"
         )
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> dict[str, Any]:
         """
         Load configuration from .env file.
 
@@ -386,9 +377,7 @@ class TradingOrchestrator:
         missing_keys = [key for key in required_keys if not self.config.get(key)]
 
         if missing_keys:
-            raise ValueError(
-                f"Missing required configuration: {', '.join(missing_keys)}"
-            )
+            raise ValueError(f"Missing required configuration: {', '.join(missing_keys)}")
 
         # Validate tier allocations sum to <= 1.0
         total_allocation = (
@@ -436,15 +425,11 @@ class TradingOrchestrator:
 
             # Calculate strategy allocations
             daily_investment = self.config["daily_investment"]
-            tier1_daily = (
-                daily_investment * self.config["tier1_allocation"]
-            )  # 60% -> $6
+            tier1_daily = daily_investment * self.config["tier1_allocation"]  # 60% -> $6
             tier2_weekly = (daily_investment * 5) * self.config[
                 "tier2_allocation"
             ]  # 20% of weekly -> $10
-            tier3_daily = (
-                daily_investment * self.config["tier3_allocation"]
-            )  # 10% -> $1
+            tier3_daily = daily_investment * self.config["tier3_allocation"]  # 10% -> $1
 
             # Initialize CoreStrategy (Tier 1)
             # VCA Configuration
@@ -491,17 +476,16 @@ class TradingOrchestrator:
                 anthropic_api_key=os.getenv("ANTHROPIC_API_KEY"),
                 openai_api_key=os.getenv("OPENAI_API_KEY"),
             )
-            self.logger.info(
-                f"IPO strategy initialized (daily deposit: ${tier3_daily:.2f})"
-            )
+            self.logger.info(f"IPO strategy initialized (daily deposit: ${tier3_daily:.2f})")
 
             # Initialize OptionsStrategy (Yield Generation)
             self.options_strategy = OptionsStrategy(paper=use_paper)
             self.logger.info("Options strategy initialized (Covered Calls)")
-            
+
             # Initialize Options Accumulation Strategy (NVDA focus)
             try:
                 from src.strategies.options_accumulation_strategy import OptionsAccumulationStrategy
+
                 self.options_accumulation_strategy = OptionsAccumulationStrategy(paper=use_paper)
                 self.logger.info("Options accumulation strategy initialized (NVDA focus)")
             except Exception as e:
@@ -519,11 +503,12 @@ class TradingOrchestrator:
                 user_id=os.getenv("ADK_USER_ID"),
             )
             if self.adk_adapter.enabled:
-                self.logger.info("ADK orchestrator client initialized (base_url=%s)", self.adk_adapter.client.config.base_url)  # type: ignore[union-attr]
-            else:
                 self.logger.info(
-                    "ADK orchestrator integration disabled via ADK_ENABLED=0"
-                )
+                    "ADK orchestrator client initialized (base_url=%s)",
+                    self.adk_adapter.client.config.base_url,
+                )  # type: ignore[union-attr]
+            else:
+                self.logger.info("ADK orchestrator integration disabled via ADK_ENABLED=0")
 
             # Initialize DeepAgents adapter
             deepagents_enabled_env = os.getenv("DEEPAGENTS_ENABLED", "true").lower()
@@ -545,9 +530,7 @@ class TradingOrchestrator:
                     )
                     self.deepagents_adapter = None
             else:
-                self.logger.info(
-                    "DeepAgents integration disabled via DEEPAGENTS_ENABLED=false"
-                )
+                self.logger.info("DeepAgents integration disabled via DEEPAGENTS_ENABLED=false")
 
             self.logger.info("All components initialized successfully")
 
@@ -566,9 +549,7 @@ class TradingOrchestrator:
         signal_names = {signal.SIGTERM: "SIGTERM", signal.SIGINT: "SIGINT"}
         signal_name = signal_names.get(signum, str(signum))
 
-        self.logger.warning(
-            f"Received {signal_name} signal - initiating graceful shutdown"
-        )
+        self.logger.warning(f"Received {signal_name} signal - initiating graceful shutdown")
         self.stop()
 
     def setup_schedule(self) -> None:
@@ -591,27 +572,19 @@ class TradingOrchestrator:
         self.logger.info("Scheduled: Risk reset - Daily at 9:30 AM ET")
 
         # Core Strategy: Daily at 10:00 AM ET (30 min after open - lower volatility)
-        schedule.every().day.at("10:00").do(self._execute_core_strategy).tag(
-            "core_strategy"
-        )
+        schedule.every().day.at("10:00").do(self._execute_core_strategy).tag("core_strategy")
         self.logger.info("Scheduled: Core strategy - Daily at 10:00 AM ET")
 
         # Growth Strategy: Weekly on Mondays at 9:35 AM ET
-        schedule.every().monday.at("09:35").do(self._execute_growth_strategy).tag(
-            "growth_strategy"
-        )
+        schedule.every().monday.at("09:35").do(self._execute_growth_strategy).tag("growth_strategy")
         self.logger.info("Scheduled: Growth strategy - Mondays at 9:35 AM ET")
 
         # IPO Strategy: Daily deposit at 10:00 AM ET
-        schedule.every().day.at("10:00").do(self._execute_ipo_deposit).tag(
-            "ipo_deposit"
-        )
+        schedule.every().day.at("10:00").do(self._execute_ipo_deposit).tag("ipo_deposit")
         self.logger.info("Scheduled: IPO deposit tracking - Daily at 10:00 AM ET")
 
         # IPO Strategy: Weekly check on Wednesdays at 10:00 AM ET
-        schedule.every().wednesday.at("10:00").do(self._check_ipo_opportunities).tag(
-            "ipo_check"
-        )
+        schedule.every().wednesday.at("10:00").do(self._check_ipo_opportunities).tag("ipo_check")
         self.logger.info("Scheduled: IPO opportunity check - Wednesdays at 10:00 AM ET")
 
         # Crypto Position Management: Daily at 9:38 AM ET (before core strategy)
@@ -628,9 +601,7 @@ class TradingOrchestrator:
             self.logger.info("Scheduled: Options accumulation strategy - Daily at 9:40 AM ET")
 
         # Options Strategy: Daily at 10:30 AM ET
-        schedule.every().day.at("10:30").do(self._execute_options_strategy).tag(
-            "options_strategy"
-        )
+        schedule.every().day.at("10:30").do(self._execute_options_strategy).tag("options_strategy")
         self.logger.info("Scheduled: Options strategy - Daily at 10:30 AM ET")
 
         # Health check: Every hour
@@ -658,9 +629,9 @@ class TradingOrchestrator:
 
         if self.chaos_orchestrator_agent:
             # Evaluate chaos drills weekly on Fridays
-            schedule.every().friday.at("14:00").do(
-                self.chaos_orchestrator_agent.analyze
-            ).tag("chaos_orchestration")
+            schedule.every().friday.at("14:00").do(self.chaos_orchestrator_agent.analyze).tag(
+                "chaos_orchestration"
+            )
             self.logger.info("Scheduled: Chaos Orchestration - Fridays at 2:00 PM ET")
 
         self.logger.info("Scheduled: Health check - Every hour")
@@ -674,14 +645,10 @@ class TradingOrchestrator:
             self.risk_manager.reset_daily_counters()
             self.logger.info("Daily risk counters reset successfully")
         except Exception as e:
-            self.logger.error(
-                f"Error resetting daily risk counters: {e}", exc_info=True
-            )
+            self.logger.error(f"Error resetting daily risk counters: {e}", exc_info=True)
             self._send_alert("Risk Reset Error", str(e), severity="ERROR")
 
-    def _execute_core_strategy_with_deepagents(
-        self, account_info: Dict[str, Any]
-    ) -> bool:
+    def _execute_core_strategy_with_deepagents(self, account_info: dict[str, Any]) -> bool:
         """
         Attempt to execute the core strategy via DeepAgents planning-based agent.
 
@@ -698,16 +665,16 @@ class TradingOrchestrator:
             query = f"""Analyze the following ETFs for today's trading opportunity: {symbols_str}
 
 Account Context:
-- Portfolio Value: ${account_info.get('portfolio_value', 0):.2f}
-- Available Cash: ${account_info.get('cash', 0):.2f}
-- Buying Power: ${account_info.get('buying_power', 0):.2f}
+- Portfolio Value: ${account_info.get("portfolio_value", 0):.2f}
+- Available Cash: ${account_info.get("cash", 0):.2f}
+- Buying Power: ${account_info.get("buying_power", 0):.2f}
 - Daily Allocation: ${self.core_strategy.daily_allocation:.2f}
 
 Risk Limits:
-- Max Daily Loss: {self.config['max_daily_loss_pct']}%
-- Max Position Size: {self.config['max_position_size_pct']}%
-- Max Drawdown: {self.config['max_drawdown_pct']}%
-- Stop Loss: {self.config['stop_loss_pct']}%
+- Max Daily Loss: {self.config["max_daily_loss_pct"]}%
+- Max Position Size: {self.config["max_position_size_pct"]}%
+- Max Drawdown: {self.config["max_drawdown_pct"]}%
+- Stop Loss: {self.config["stop_loss_pct"]}%
 
 Instructions:
 1. Fetch market data and technical indicators for each ETF
@@ -761,9 +728,7 @@ Output your recommendation in JSON format for easy parsing."""
                 "DeepAgents provided analysis (execution not yet implemented - falling back to core strategy)"
             )
             self.health_status["last_deepagents_analysis"] = datetime.now().isoformat()
-            self.health_status["deepagents_response"] = str(response)[
-                :500
-            ]  # Store first 500 chars
+            self.health_status["deepagents_response"] = str(response)[:500]  # Store first 500 chars
 
             # Return False to fall back to core strategy for actual execution
             # This ensures DeepAgents is running and providing insights without risking execution bugs
@@ -773,7 +738,7 @@ Output your recommendation in JSON format for easy parsing."""
             self.logger.error("DeepAgents evaluation failed: %s", exc, exc_info=True)
             return False
 
-    def _execute_core_strategy_with_adk(self, account_info: Dict[str, Any]) -> bool:
+    def _execute_core_strategy_with_adk(self, account_info: dict[str, Any]) -> bool:
         """
         Attempt to execute the core strategy via the Go ADK orchestrator.
 
@@ -884,9 +849,7 @@ Output your recommendation in JSON format for easy parsing."""
             if staleness["status"] == "ERROR":
                 self.logger.error(f"TRADE STALENESS ERROR: {staleness['message']}")
                 if staleness["recommended_action"]:
-                    self.logger.error(
-                        f"ACTION REQUIRED: {staleness['recommended_action']}"
-                    )
+                    self.logger.error(f"ACTION REQUIRED: {staleness['recommended_action']}")
                 self._send_alert(
                     "Trade Staleness Alert",
                     f"{staleness['message']}\n\nAction: {staleness['recommended_action']}",
@@ -895,9 +858,7 @@ Output your recommendation in JSON format for easy parsing."""
             elif staleness["status"] == "WARNING":
                 self.logger.warning(f"TRADE STALENESS WARNING: {staleness['message']}")
                 if staleness["recommended_action"]:
-                    self.logger.warning(
-                        f"RECOMMENDED: {staleness['recommended_action']}"
-                    )
+                    self.logger.warning(f"RECOMMENDED: {staleness['recommended_action']}")
             else:
                 self.logger.info(f"Trade staleness check: {staleness['message']}")
 
@@ -926,9 +887,7 @@ Output your recommendation in JSON format for easy parsing."""
                     health_result.get("success")
                     and health_result.get("data", {}).get("overall_status") == "HALTED"
                 ):
-                    self.logger.warning(
-                        "Trading halted by Portfolio Risk Assessment skill"
-                    )
+                    self.logger.warning("Trading halted by Portfolio Risk Assessment skill")
                     self._send_alert(
                         "Trading Halted",
                         "Portfolio health check failed - trading halted",
@@ -954,9 +913,7 @@ Output your recommendation in JSON format for easy parsing."""
                         symbols=["SPY", "QQQ", "VOO"]
                     )
                     if elite_result.get("final_decision") == "TRADE_EXECUTED":
-                        self.logger.info(
-                            "Core Strategy satisfied via Elite Orchestrator"
-                        )
+                        self.logger.info("Core Strategy satisfied via Elite Orchestrator")
                         self.last_execution["core_strategy"] = datetime.now()
                         return
                 except Exception as e:
@@ -985,9 +942,7 @@ Output your recommendation in JSON format for easy parsing."""
                                 f"RL signal for {symbol}: {signal.get('action')} (confidence: {signal.get('confidence', 0):.2f})"
                             )
                         except Exception as e:
-                            self.logger.warning(
-                                f"Failed to get RL signal for {symbol}: {e}"
-                            )
+                            self.logger.warning(f"Failed to get RL signal for {symbol}: {e}")
 
                     # Filter symbols by RL confidence (only consider BUY signals with confidence > 0.6)
                     high_confidence_symbols = [
@@ -1041,8 +996,7 @@ Output your recommendation in JSON format for easy parsing."""
                             "quantity": getattr(
                                 order,
                                 "quantity",
-                                order.amount
-                                / getattr(order, "fill_price", order.amount),
+                                order.amount / getattr(order, "fill_price", order.amount),
                             ),
                             "price": getattr(order, "fill_price", order.amount),
                             "amount": order.amount,
@@ -1054,10 +1008,7 @@ Output your recommendation in JSON format for easy parsing."""
                         self.logger.warning(f"Failed to send trade notification: {e}")
 
                 # Check if approval needed for high-value trades
-                if (
-                    self.approval_agent
-                    and order.amount >= self.approval_agent.high_value_threshold
-                ):
+                if self.approval_agent and order.amount >= self.approval_agent.high_value_threshold:
                     try:
                         approval_result = self.approval_agent._request_approval(
                             {
@@ -1068,9 +1019,7 @@ Output your recommendation in JSON format for easy parsing."""
                                     "side": "buy",
                                     "tier": "T1_CORE",
                                 },
-                                "priority": (
-                                    "high" if order.amount >= 5000 else "medium"
-                                ),
+                                "priority": ("high" if order.amount >= 5000 else "medium"),
                             }
                         )
                         if approval_result.get("approval_required"):
@@ -1169,9 +1118,7 @@ Output your recommendation in JSON format for easy parsing."""
                     health_result.get("success")
                     and health_result.get("data", {}).get("overall_status") == "HALTED"
                 ):
-                    self.logger.warning(
-                        "Trading halted by Portfolio Risk Assessment skill"
-                    )
+                    self.logger.warning("Trading halted by Portfolio Risk Assessment skill")
                     self._send_alert(
                         "Trading Halted",
                         "Portfolio health check failed - trading halted",
@@ -1196,23 +1143,16 @@ Output your recommendation in JSON format for easy parsing."""
             if orders:
                 self.logger.info(f"Growth Strategy: {len(orders)} orders generated")
                 for order in orders:
-                    self.logger.info(
-                        f"  {order.action.upper()} {order.symbol} x{order.quantity}"
-                    )
+                    self.logger.info(f"  {order.action.upper()} {order.symbol} x{order.quantity}")
                     # Save trade to daily file
                     try:
                         trade_data = {
                             "symbol": order.symbol,
-                            "side": (
-                                order.action.lower()
-                                if hasattr(order, "action")
-                                else "buy"
-                            ),
+                            "side": (order.action.lower() if hasattr(order, "action") else "buy"),
                             "amount": getattr(
                                 order,
                                 "amount",
-                                getattr(order, "quantity", 0)
-                                * getattr(order, "price", 0),
+                                getattr(order, "quantity", 0) * getattr(order, "price", 0),
                             ),
                             "tier": "T2_GROWTH",
                             "timestamp": datetime.now().isoformat(),
@@ -1221,9 +1161,7 @@ Output your recommendation in JSON format for easy parsing."""
                         }
                         save_trade_to_daily_file(trade_data)
                     except Exception as e:
-                        self.logger.warning(
-                            f"Failed to save growth trade to daily file: {e}"
-                        )
+                        self.logger.warning(f"Failed to save growth trade to daily file: {e}")
                 self.last_execution["growth_strategy"] = datetime.now()
             else:
                 self.logger.info("Growth Strategy: No orders generated")
@@ -1257,14 +1195,14 @@ Output your recommendation in JSON format for easy parsing."""
         self.logger.info("=" * 80)
         self.logger.info("EXECUTING OPTIONS ACCUMULATION STRATEGY")
         self.logger.info("=" * 80)
-        
+
         if not self.options_accumulation_strategy:
             self.logger.warning("Options accumulation strategy not initialized")
             return
-        
+
         try:
             result = self.options_accumulation_strategy.execute_daily()
-            
+
             if result:
                 action = result.get("action")
                 if action == "purchased":
@@ -1280,19 +1218,23 @@ Output your recommendation in JSON format for easy parsing."""
                     self.logger.info("✅ Options accumulation target reached!")
                     self.logger.info("Covered calls can now be activated")
                 elif action in ["failed", "error"]:
-                    self.logger.warning(f"Options accumulation {action}: {result.get('error', 'Unknown error')}")
-            
+                    self.logger.warning(
+                        f"Options accumulation {action}: {result.get('error', 'Unknown error')}"
+                    )
+
             self.last_execution["options_accumulation"] = datetime.now()
             self.health_status["last_options_accumulation"] = datetime.now().isoformat()
-            
+
         except Exception as e:
             self.logger.error(f"Error executing Options Accumulation Strategy: {e}", exc_info=True)
-            self.health_status["errors"].append({
-                "timestamp": datetime.now().isoformat(),
-                "strategy": "options_accumulation",
-                "error": str(e),
-            })
-        
+            self.health_status["errors"].append(
+                {
+                    "timestamp": datetime.now().isoformat(),
+                    "strategy": "options_accumulation",
+                    "error": str(e),
+                }
+            )
+
         finally:
             self.logger.info("=" * 80)
 
@@ -1301,38 +1243,40 @@ Output your recommendation in JSON format for easy parsing."""
         self.logger.info("=" * 80)
         self.logger.info("MANAGING CRYPTO POSITIONS")
         self.logger.info("=" * 80)
-        
+
         try:
             # Initialize crypto strategy if not already done
-            if not hasattr(self, 'crypto_strategy') or self.crypto_strategy is None:
+            if not hasattr(self, "crypto_strategy") or self.crypto_strategy is None:
                 try:
                     from src.strategies.crypto_strategy import CryptoStrategy
+
                     self.crypto_strategy = CryptoStrategy(
                         trader=self.alpaca_trader,
-                        daily_amount=float(os.getenv("CRYPTO_DAILY_AMOUNT", "0.5"))
+                        daily_amount=float(os.getenv("CRYPTO_DAILY_AMOUNT", "0.5")),
                     )
                     self.logger.info("Crypto strategy initialized for position management")
                 except Exception as e:
                     self.logger.warning(f"Failed to initialize crypto strategy: {e}")
                     return
-            
+
             # Manage positions
             closed_positions = self.crypto_strategy.manage_positions()
-            
+
             if closed_positions:
                 self.logger.info(f"✅ Closed {len(closed_positions)} crypto positions")
-                
+
                 # Record closed trades in system state
                 try:
                     from scripts.state_manager import StateManager
+
                     state_manager = StateManager()
-                    
+
                     for pos in closed_positions:
                         # Get entry price from position (would need to track this)
                         # For now, use a placeholder - in production should track entry prices
                         entry_price = pos.price * 0.93  # Estimate (7% stop-loss)
                         exit_price = pos.price
-                        
+
                         state_manager.record_closed_trade(
                             symbol=pos.symbol,
                             entry_price=entry_price,
@@ -1341,24 +1285,26 @@ Output your recommendation in JSON format for easy parsing."""
                             entry_date=pos.timestamp.isoformat(),
                             exit_date=datetime.now().isoformat(),
                         )
-                    
+
                     self.logger.info("✅ Closed trades recorded in system state")
                 except Exception as e:
                     self.logger.warning(f"Failed to record closed trades: {e}")
             else:
                 self.logger.info("No crypto positions needed closing")
-            
+
             self.last_execution["crypto_position_management"] = datetime.now()
             self.health_status["last_crypto_management"] = datetime.now().isoformat()
-            
+
         except Exception as e:
             self.logger.error(f"Error managing crypto positions: {e}", exc_info=True)
-            self.health_status["errors"].append({
-                "timestamp": datetime.now().isoformat(),
-                "strategy": "crypto_position_management",
-                "error": str(e),
-            })
-        
+            self.health_status["errors"].append(
+                {
+                    "timestamp": datetime.now().isoformat(),
+                    "strategy": "crypto_position_management",
+                    "error": str(e),
+                }
+            )
+
         finally:
             self.logger.info("=" * 80)
 
@@ -1388,9 +1334,7 @@ Output your recommendation in JSON format for easy parsing."""
             # Get current balance info
             balance_info = self.ipo_strategy.get_balance_info()
             self.logger.info(f"IPO balance: ${balance_info['balance']:.2f}")
-            self.logger.info(
-                f"Projected 30 days: ${balance_info['projected_30_days']:.2f}"
-            )
+            self.logger.info(f"Projected 30 days: ${balance_info['projected_30_days']:.2f}")
 
             # Get any existing recommendations
             recommendations = self.ipo_strategy.get_ipo_recommendations()
@@ -1418,9 +1362,7 @@ Output your recommendation in JSON format for easy parsing."""
         self.logger.info("=" * 80)
 
         if not self.workflow_agent:
-            self.logger.warning(
-                "WorkflowAgent not available - skipping end-of-day workflow"
-            )
+            self.logger.warning("WorkflowAgent not available - skipping end-of-day workflow")
             return
 
         try:
@@ -1432,9 +1374,7 @@ Output your recommendation in JSON format for easy parsing."""
             if self.skills.performance_monitor:
                 try:
                     end_date = datetime.now().strftime("%Y-%m-%d")
-                    start_date = (datetime.now() - timedelta(days=1)).strftime(
-                        "%Y-%m-%d"
-                    )
+                    start_date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
                     perf_result = self.skills.get_performance_metrics(
                         start_date=start_date, end_date=end_date
                     )
@@ -1449,16 +1389,12 @@ Output your recommendation in JSON format for easy parsing."""
                     "type": "report_generation",
                     "report_type": "daily",
                     "recipients": (
-                        [self.config.get("alert_email")]
-                        if self.config.get("alert_email")
-                        else []
+                        [self.config.get("alert_email")] if self.config.get("alert_email") else []
                     ),
                     "context": {
                         "account_value": account_info.get("portfolio_value", 0),
                         "daily_pl": account_info.get("portfolio_value", 0)
-                        - account_info.get(
-                            "last_equity", account_info.get("portfolio_value", 0)
-                        ),
+                        - account_info.get("last_equity", account_info.get("portfolio_value", 0)),
                         "cash": account_info.get("cash", 0),
                         "buying_power": account_info.get("buying_power", 0),
                         "performance_metrics": perf_data,
@@ -1489,18 +1425,12 @@ Output your recommendation in JSON format for easy parsing."""
                     f"✅ End-of-day workflow completed: {workflow_result.get('result')}"
                 )
                 if workflow_result.get("report_path"):
-                    self.logger.info(
-                        f"   Report saved to: {workflow_result.get('report_path')}"
-                    )
+                    self.logger.info(f"   Report saved to: {workflow_result.get('report_path')}")
             else:
-                self.logger.warning(
-                    f"⚠️ End-of-day workflow failed: {workflow_result.get('error')}"
-                )
+                self.logger.warning(f"⚠️ End-of-day workflow failed: {workflow_result.get('error')}")
 
         except Exception as e:
-            self.logger.error(
-                f"Error executing end-of-day workflow: {e}", exc_info=True
-            )
+            self.logger.error(f"Error executing end-of-day workflow: {e}", exc_info=True)
 
         finally:
             self.logger.info("=" * 80)
@@ -1518,9 +1448,7 @@ Output your recommendation in JSON format for easy parsing."""
                     health_data = health_result.get("data", {})
                     self.health_status.update(
                         {
-                            "status": health_data.get(
-                                "overall_status", "unknown"
-                            ).lower(),
+                            "status": health_data.get("overall_status", "unknown").lower(),
                             "last_check": datetime.now().isoformat(),
                             "account_value": health_data.get(
                                 "account_equity", account_info["portfolio_value"]
@@ -1529,15 +1457,13 @@ Output your recommendation in JSON format for easy parsing."""
                                 "buying_power", account_info["buying_power"]
                             ),
                             "daily_pl": health_data.get("daily_pl", 0),
-                            "circuit_breaker": health_data.get(
-                                "circuit_breakers", {}
-                            ).get("should_halt_trading", False),
+                            "circuit_breaker": health_data.get("circuit_breakers", {}).get(
+                                "should_halt_trading", False
+                            ),
                             "risk_score": health_data.get("risk_score", 0),
                         }
                     )
-                    self.logger.debug(
-                        f"Health check (via skill): {self.health_status['status']}"
-                    )
+                    self.logger.debug(f"Health check (via skill): {self.health_status['status']}")
                     return
 
             # Fallback to RiskManager if skill not available
@@ -1548,18 +1474,14 @@ Output your recommendation in JSON format for easy parsing."""
                 {
                     "status": (
                         "healthy"
-                        if not risk_metrics["account_metrics"][
-                            "circuit_breaker_triggered"
-                        ]
+                        if not risk_metrics["account_metrics"]["circuit_breaker_triggered"]
                         else "degraded"
                     ),
                     "last_check": datetime.now().isoformat(),
                     "account_value": account_info["portfolio_value"],
                     "buying_power": account_info["buying_power"],
                     "daily_pl": risk_metrics["daily_metrics"]["daily_pl"],
-                    "circuit_breaker": risk_metrics["account_metrics"][
-                        "circuit_breaker_triggered"
-                    ],
+                    "circuit_breaker": risk_metrics["account_metrics"]["circuit_breaker_triggered"],
                 }
             )
 
@@ -1596,21 +1518,13 @@ Output your recommendation in JSON format for easy parsing."""
                 trade_stats = metrics.get("trade_statistics", {})
 
                 self.logger.info("Performance Metrics (30 days):")
-                self.logger.info(
-                    f"  Total Return: {returns.get('total_return_pct', 0):.2f}%"
-                )
-                self.logger.info(
-                    f"  Sharpe Ratio: {risk_metrics.get('sharpe_ratio', 0):.2f}"
-                )
+                self.logger.info(f"  Total Return: {returns.get('total_return_pct', 0):.2f}%")
+                self.logger.info(f"  Sharpe Ratio: {risk_metrics.get('sharpe_ratio', 0):.2f}")
                 self.logger.info(
                     f"  Max Drawdown: {risk_metrics.get('max_drawdown', 0) * 100:.2f}%"
                 )
-                self.logger.info(
-                    f"  Win Rate: {trade_stats.get('win_rate', 0) * 100:.1f}%"
-                )
-                self.logger.info(
-                    f"  Total Trades: {trade_stats.get('total_trades', 0)}"
-                )
+                self.logger.info(f"  Win Rate: {trade_stats.get('win_rate', 0) * 100:.1f}%")
+                self.logger.info(f"  Total Trades: {trade_stats.get('total_trades', 0)}")
 
                 # Store in health status
                 self.health_status["performance_metrics"] = {
@@ -1634,9 +1548,7 @@ Output your recommendation in JSON format for easy parsing."""
                 )
 
         except Exception as e:
-            self.logger.error(
-                f"Error in daily performance monitoring: {e}", exc_info=True
-            )
+            self.logger.error(f"Error in daily performance monitoring: {e}", exc_info=True)
 
         finally:
             self.logger.info("=" * 80)
@@ -1685,7 +1597,7 @@ Output your recommendation in JSON format for easy parsing."""
         # if self.config.get('alert_webhook_url'):
         #     send_webhook_alert(self.config['alert_webhook_url'], title, message, severity)
 
-    def get_health_status(self) -> Dict[str, Any]:
+    def get_health_status(self) -> dict[str, Any]:
         """
         Get current health status for monitoring.
 

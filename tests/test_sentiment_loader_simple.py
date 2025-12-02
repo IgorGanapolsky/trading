@@ -8,8 +8,8 @@ Run:
     python tests/test_sentiment_loader_simple.py
 """
 
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Add project root to path
@@ -17,12 +17,12 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.utils.sentiment_loader import (
-    load_latest_sentiment,
-    get_ticker_sentiment,
     get_market_regime,
-    print_sentiment_summary,
-    normalize_sentiment_score,
+    get_ticker_sentiment,
     is_sentiment_fresh,
+    load_latest_sentiment,
+    normalize_sentiment_score,
+    print_sentiment_summary,
 )
 
 # Setup logging
@@ -95,13 +95,9 @@ def main():
         for source, raw, expected in test_cases:
             actual = normalize_sentiment_score(raw, source)
             if abs(actual - expected) < 0.1:
-                print(
-                    f"  ✓ {source:<12} {raw:>5} → {actual:.1f} (expected {expected:.1f})"
-                )
+                print(f"  ✓ {source:<12} {raw:>5} → {actual:.1f} (expected {expected:.1f})")
             else:
-                print(
-                    f"  ✗ {source:<12} {raw:>5} → {actual:.1f} (expected {expected:.1f})"
-                )
+                print(f"  ✗ {source:<12} {raw:>5} → {actual:.1f} (expected {expected:.1f})")
                 all_passed = False
 
         if all_passed:

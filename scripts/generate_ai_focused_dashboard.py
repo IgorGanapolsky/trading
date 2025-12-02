@@ -11,26 +11,25 @@ Implements investor-grade dashboard with:
 - Capital efficiency metrics (return per unit of risk and compute cost)
 """
 
+import json
 import os
 import sys
-import json
-import numpy as np
-from datetime import datetime, date
-from pathlib import Path
-from typing import Dict, List, Any, Tuple, Optional
 from collections import defaultdict
+from datetime import date, datetime
+from pathlib import Path
+from typing import Any
+
+import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from scripts.generate_world_class_dashboard import (
-    load_json_file,
-    load_trade_data,
+    DATA_DIR,
     calculate_win_rate_from_trades,
-    calculate_performance_attribution,
     generate_equity_curve_chart,
     generate_returns_distribution_chart,
-    generate_risk_heatmap,
-    DATA_DIR,
+    load_json_file,
+    load_trade_data,
 )
 
 # Statistical significance thresholds
@@ -45,7 +44,7 @@ STAT_THRESHOLDS = {
 }
 
 
-def calculate_ai_attribution(trades: List[Dict[str, Any]]) -> Dict[str, Any]:
+def calculate_ai_attribution(trades: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Calculate per-agent P&L attribution.
 
@@ -98,10 +97,7 @@ def calculate_ai_attribution(trades: List[Dict[str, Any]]) -> Dict[str, Any]:
         else:
             # Fallback to agent_type field
             agent_type_raw = trade.get("agent_type", "unknown")
-            if (
-                "rl" in agent_type_raw.lower()
-                or "reinforcement" in agent_type_raw.lower()
-            ):
+            if "rl" in agent_type_raw.lower() or "reinforcement" in agent_type_raw.lower():
                 agent_type = "rl_policy"
             elif (
                 "llm" in agent_type_raw.lower()
@@ -109,10 +105,7 @@ def calculate_ai_attribution(trades: List[Dict[str, Any]]) -> Dict[str, Any]:
                 or "gpt" in agent_type_raw.lower()
             ):
                 agent_type = "llm_analyst"
-            elif (
-                "heuristic" in agent_type_raw.lower()
-                or "rule" in agent_type_raw.lower()
-            ):
+            elif "heuristic" in agent_type_raw.lower() or "rule" in agent_type_raw.lower():
                 agent_type = "heuristic"
             elif "fallback" in agent_type_raw.lower():
                 agent_type = "fallback"
@@ -158,19 +151,13 @@ def calculate_ai_attribution(trades: List[Dict[str, Any]]) -> Dict[str, Any]:
                 agent_data["winning_trades"] / agent_data["closed_trades"] * 100
             )
             if agent_data["gross_loss"] > 0:
-                agent_data["profit_factor"] = (
-                    agent_data["gross_profit"] / agent_data["gross_loss"]
-                )
+                agent_data["profit_factor"] = agent_data["gross_profit"] / agent_data["gross_loss"]
 
         # Capital efficiency: return per $ of compute cost
         if agent_data["estimated_cost"] > 0:
-            agent_data["capital_efficiency"] = (
-                agent_data["total_pl"] / agent_data["estimated_cost"]
-            )
+            agent_data["capital_efficiency"] = agent_data["total_pl"] / agent_data["estimated_cost"]
         else:
-            agent_data["capital_efficiency"] = (
-                float("inf") if agent_data["total_pl"] > 0 else 0.0
-            )
+            agent_data["capital_efficiency"] = float("inf") if agent_data["total_pl"] > 0 else 0.0
 
     return dict(agent_attribution)
 
@@ -179,9 +166,9 @@ def calculate_phase_readiness(
     total_closed_trades: int,
     trading_days: int,
     max_drawdown_pct: float,
-    automation_status: Dict[str, Any],
-    perf_log: List[Dict],
-) -> Dict[str, Any]:
+    automation_status: dict[str, Any],
+    perf_log: list[dict],
+) -> dict[str, Any]:
     """
     Calculate phase readiness for 90-day challenge.
 
@@ -267,7 +254,7 @@ def format_statistically_significant(
 
 
 def generate_drawdown_distribution_chart(
-    perf_log: List[Dict], width: int = 50, height: int = 10
+    perf_log: list[dict], width: int = 50, height: int = 10
 ) -> str:
     """Generate ASCII histogram of drawdown distribution."""
     if len(perf_log) < 3:
@@ -319,9 +306,7 @@ def generate_drawdown_distribution_chart(
     return result
 
 
-def check_automation_blockers(
-    system_state: Dict, automation_status: Dict[str, Any]
-) -> List[str]:
+def check_automation_blockers(system_state: dict, automation_status: dict[str, Any]) -> list[str]:
     """
     Check for automation failures that should block trading.
 
@@ -383,9 +368,7 @@ def generate_ai_focused_dashboard() -> str:
     equity_curve = []
     if len(perf_log) > 0:
         equity_curve = [
-            entry.get("equity", 100000.0)
-            for entry in perf_log
-            if entry.get("equity") is not None
+            entry.get("equity", 100000.0) for entry in perf_log if entry.get("equity") is not None
         ]
 
     if not equity_curve:
@@ -400,9 +383,7 @@ def generate_ai_focused_dashboard() -> str:
     starting_balance = challenge_start.get("starting_balance", 100000.0)
 
     # Calculate win rate
-    win_rate, winning_trades, total_closed_trades = calculate_win_rate_from_trades(
-        trades
-    )
+    win_rate, winning_trades, total_closed_trades = calculate_win_rate_from_trades(trades)
 
     # Calculate returns
     returns = []
@@ -447,9 +428,7 @@ def generate_ai_focused_dashboard() -> str:
     # Calculate averages
     avg_daily_profit = total_pl / trading_days if trading_days > 0 else 0.0
     north_star_target = 100.0
-    progress_pct = (
-        (avg_daily_profit / north_star_target * 100) if north_star_target > 0 else 0.0
-    )
+    progress_pct = (avg_daily_profit / north_star_target * 100) if north_star_target > 0 else 0.0
 
     # Challenge info
     challenge = system_state.get("challenge", {})
@@ -458,7 +437,6 @@ def generate_ai_focused_dashboard() -> str:
 
     # Today's performance
     today_str = date.today().isoformat()
-    today_perf = None
     today_equity = current_equity
     today_pl = 0.0
     today_pl_pct = 0.0
@@ -466,7 +444,6 @@ def generate_ai_focused_dashboard() -> str:
     if perf_log:
         for entry in reversed(perf_log):
             if entry.get("date") == today_str:
-                today_perf = entry
                 today_equity = entry.get("equity", current_equity)
                 today_pl = entry.get("pl", 0.0)
                 today_pl_pct = entry.get("pl_pct", 0.0) * 100
@@ -478,7 +455,7 @@ def generate_ai_focused_dashboard() -> str:
     # Generate dashboard
     dashboard = f"""# 🎯 AI-Focused Trading Dashboard
 
-**Last Updated**: {now.strftime('%Y-%m-%d %I:%M %p ET')}
+**Last Updated**: {now.strftime("%Y-%m-%d %I:%M %p ET")}
 **Dashboard Version**: AI-Focused v3.0 (Investor-Grade)
 **Focus**: Decision-making & AI Attribution
 
@@ -499,10 +476,10 @@ def generate_ai_focused_dashboard() -> str:
 
     dashboard += f"""
 **Automation Health**:
-- Status: {'🟢 OPERATIONAL' if automation_status.get('is_operational') else '🔴 DEGRADED'}
-- Uptime: {automation_status.get('uptime_percentage', 0):.1f}%
-- Executions: {automation_status.get('execution_count', 0)} successful, {automation_status.get('failures', 0)} failures
-- Last Execution: {automation_status.get('last_execution', 'Never')}
+- Status: {"🟢 OPERATIONAL" if automation_status.get("is_operational") else "🔴 DEGRADED"}
+- Uptime: {automation_status.get("uptime_percentage", 0):.1f}%
+- Executions: {automation_status.get("execution_count", 0)} successful, {automation_status.get("failures", 0)} failures
+- Last Execution: {automation_status.get("last_execution", "Never")}
 
 ---
 
@@ -514,7 +491,7 @@ def generate_ai_focused_dashboard() -> str:
 |--------|-------|
 | **Equity** | ${today_equity:,.2f} |
 | **P/L** | ${today_pl:+,.2f} ({today_pl_pct:+.2f}%) |
-| **Status** | {'✅ Active' if abs(today_pl) > 0.01 else '⏸️ No activity yet'} |
+| **Status** | {"✅ Active" if abs(today_pl) > 0.01 else "⏸️ No activity yet"} |
 
 """
 
@@ -549,19 +526,19 @@ def generate_ai_focused_dashboard() -> str:
 | Metric | Current | Target | Progress |
 |--------|---------|--------|----------|
 | **Average Daily Profit** | ${avg_daily_profit:.2f}/day | $100.00/day | {progress_pct:.2f}% |
-| **Total P/L** | ${total_pl:+,.2f} ({total_pl / starting_balance * 100:+.2f}%) | TBD | {'✅' if total_pl > 0 else '⚠️'} |
+| **Total P/L** | ${total_pl:+,.2f} ({total_pl / starting_balance * 100:+.2f}%) | TBD | {"✅" if total_pl > 0 else "⚠️"} |
 
 ---
 
 ## 🚦 Phase Readiness (90-Day Challenge)
 
-**Current Phase**: {phase_readiness['current_phase']} | **Can Advance**: {'✅ YES' if phase_readiness['can_advance'] else '❌ NO'}
+**Current Phase**: {phase_readiness["current_phase"]} | **Can Advance**: {"✅ YES" if phase_readiness["can_advance"] else "❌ NO"}
 
 | Phase | Status | Gates |
 |-------|--------|-------|
-| **Phase 1** (Days 1-30) | {phase_readiness['phase1']['status']} | Trades: {'✅' if phase_readiness['phase1']['gates']['min_trades'] else '❌'} | Execution: {'✅' if phase_readiness['phase1']['gates']['execution_health'] else '❌'} | Data: {'✅' if phase_readiness['phase1']['gates']['data_quality'] else '❌'} |
-| **Phase 2** (Days 31-60) | {phase_readiness['phase2']['status']} | Trades: {'✅' if phase_readiness['phase2']['gates']['min_trades'] else '❌'} | DD Control: {'✅' if phase_readiness['phase2']['gates']['drawdown_control'] else '❌'} | Execution: {'✅' if phase_readiness['phase2']['gates']['execution_health'] else '❌'} |
-| **Phase 3** (Days 61-90) | {phase_readiness['phase3']['status']} | Trades: {'✅' if phase_readiness['phase3']['gates']['min_trades'] else '❌'} | DD Control: {'✅' if phase_readiness['phase3']['gates']['drawdown_control'] else '❌'} | Edge: {'✅' if phase_readiness['phase3']['gates']['positive_edge'] else '❌'} |
+| **Phase 1** (Days 1-30) | {phase_readiness["phase1"]["status"]} | Trades: {"✅" if phase_readiness["phase1"]["gates"]["min_trades"] else "❌"} | Execution: {"✅" if phase_readiness["phase1"]["gates"]["execution_health"] else "❌"} | Data: {"✅" if phase_readiness["phase1"]["gates"]["data_quality"] else "❌"} |
+| **Phase 2** (Days 31-60) | {phase_readiness["phase2"]["status"]} | Trades: {"✅" if phase_readiness["phase2"]["gates"]["min_trades"] else "❌"} | DD Control: {"✅" if phase_readiness["phase2"]["gates"]["drawdown_control"] else "❌"} | Execution: {"✅" if phase_readiness["phase2"]["gates"]["execution_health"] else "❌"} |
+| **Phase 3** (Days 61-90) | {phase_readiness["phase3"]["status"]} | Trades: {"✅" if phase_readiness["phase3"]["gates"]["min_trades"] else "❌"} | DD Control: {"✅" if phase_readiness["phase3"]["gates"]["drawdown_control"] else "❌"} | Edge: {"✅" if phase_readiness["phase3"]["gates"]["positive_edge"] else "❌"} |
 
 **Current**: Day {current_day} of {total_days} ({current_day / total_days * 100:.1f}% complete)
 
@@ -608,14 +585,14 @@ def generate_ai_focused_dashboard() -> str:
             dashboard += f"| **{agent_name}** | {data['trades']} | {data['closed_trades']} | {win_rate_display} | ${data['total_pl']:+,.2f} | ${data['avg_pl']:+,.2f} | {profit_factor_display} | ${data['capital_efficiency']:,.0f}/$ | ${data['estimated_cost']:.2f} |\n"
 
         dashboard += "\n**Observability**:\n"
-        total_traces = sum(
-            a.get("langsmith_traces", 0) for a in ai_attribution.values()
-        )
+        total_traces = sum(a.get("langsmith_traces", 0) for a in ai_attribution.values())
         total_jobs = sum(a.get("vertex_jobs", 0) for a in ai_attribution.values())
         dashboard += f"- LangSmith Traces: {total_traces}\n"
         dashboard += f"- Vertex AI Jobs: {total_jobs}\n"
     else:
-        dashboard += "⚠️ **No AI attribution data available** - Trades may not have attribution metadata\n\n"
+        dashboard += (
+            "⚠️ **No AI attribution data available** - Trades may not have attribution metadata\n\n"
+        )
 
     dashboard += "\n---\n\n## ⚖️ Risk Metrics (Statistically Significant Only)\n\n"
 
@@ -645,14 +622,14 @@ def generate_ai_focused_dashboard() -> str:
     dashboard += f"""
 | Metric | Value | Status |
 |--------|-------|--------|
-| **Max Drawdown** | {risk_metrics_dict.get('max_drawdown_pct', 0.0):.2f}% | {'✅' if risk_metrics_dict.get('max_drawdown_pct', 0.0) < 5.0 else '⚠️' if risk_metrics_dict.get('max_drawdown_pct', 0.0) < 10.0 else '🚨'} |
-| **Volatility (Annualized)** | {risk_metrics_dict.get('volatility_annualized', 0.0):.2f}% | {'✅' if risk_metrics_dict.get('volatility_annualized', 0.0) < 20.0 else '⚠️'} |
-| **Sharpe Ratio** | {sharpe_display} | {'✅' if isinstance(sharpe_display, float) and sharpe_display > 1.0 else '⚠️' if isinstance(sharpe_display, float) and sharpe_display > 0.5 else ''} |
-| **Sortino Ratio** | {sortino_display} | {'✅' if isinstance(sortino_display, float) and sortino_display > 1.0 else ''} |
-| **VaR (95%)** | {risk_metrics_dict.get('var_95', 0.0):.2f}% | Risk level |
-| **CVaR (95%)** | {risk_metrics_dict.get('cvar_95', 0.0):.2f}% | Expected tail loss |
+| **Max Drawdown** | {risk_metrics_dict.get("max_drawdown_pct", 0.0):.2f}% | {"✅" if risk_metrics_dict.get("max_drawdown_pct", 0.0) < 5.0 else "⚠️" if risk_metrics_dict.get("max_drawdown_pct", 0.0) < 10.0 else "🚨"} |
+| **Volatility (Annualized)** | {risk_metrics_dict.get("volatility_annualized", 0.0):.2f}% | {"✅" if risk_metrics_dict.get("volatility_annualized", 0.0) < 20.0 else "⚠️"} |
+| **Sharpe Ratio** | {sharpe_display} | {"✅" if isinstance(sharpe_display, float) and sharpe_display > 1.0 else "⚠️" if isinstance(sharpe_display, float) and sharpe_display > 0.5 else ""} |
+| **Sortino Ratio** | {sortino_display} | {"✅" if isinstance(sortino_display, float) and sortino_display > 1.0 else ""} |
+| **VaR (95%)** | {risk_metrics_dict.get("var_95", 0.0):.2f}% | Risk level |
+| **CVaR (95%)** | {risk_metrics_dict.get("cvar_95", 0.0):.2f}% | Expected tail loss |
 
-**Note**: Sharpe/Sortino ratios require ≥{STAT_THRESHOLDS['sharpe_sortino']} closed trades for statistical significance. Current: {total_closed_trades} trades.
+**Note**: Sharpe/Sortino ratios require ≥{STAT_THRESHOLDS["sharpe_sortino"]} closed trades for statistical significance. Current: {total_closed_trades} trades.
 
 ---
 
@@ -661,11 +638,11 @@ def generate_ai_focused_dashboard() -> str:
 | Metric | Value | Significance |
 |--------|-------|--------------|
 | **Total P/L** | ${total_pl:+,.2f} ({total_pl / starting_balance * 100:+.2f}%) | ✅ Always meaningful |
-| **Win Rate** | {format_statistically_significant(win_rate, STAT_THRESHOLDS['win_rate'], total_closed_trades, '{:.1f}%')} ({winning_trades}/{total_closed_trades}) | {'✅' if total_closed_trades >= STAT_THRESHOLDS['win_rate'] else '⚠️'} |
+| **Win Rate** | {format_statistically_significant(win_rate, STAT_THRESHOLDS["win_rate"], total_closed_trades, "{:.1f}%")} ({winning_trades}/{total_closed_trades}) | {"✅" if total_closed_trades >= STAT_THRESHOLDS["win_rate"] else "⚠️"} |
 | **Total Trades** | {len(trades)} | ✅ Always meaningful |
 | **Closed Trades** | {total_closed_trades} | ✅ Always meaningful |
 
-**Note**: Win rate requires ≥{STAT_THRESHOLDS['win_rate']} closed trades for statistical significance.
+**Note**: Win rate requires ≥{STAT_THRESHOLDS["win_rate"]} closed trades for statistical significance.
 
 ---
 
@@ -678,18 +655,14 @@ def generate_ai_focused_dashboard() -> str:
     if len(returns) > 3:
         dashboard += f"```\n{generate_returns_distribution_chart(returns)}\n```\n\n"
     else:
-        dashboard += (
-            "⚠️ **Insufficient data** - Need ≥4 data points for distribution\n\n"
-        )
+        dashboard += "⚠️ **Insufficient data** - Need ≥4 data points for distribution\n\n"
 
     dashboard += "### Drawdown Distribution\n\n"
 
     if len(perf_log) > 3:
         dashboard += f"```\n{generate_drawdown_distribution_chart(perf_log)}\n```\n\n"
     else:
-        dashboard += (
-            "⚠️ **Insufficient data** - Need ≥4 data points for distribution\n\n"
-        )
+        dashboard += "⚠️ **Insufficient data** - Need ≥4 data points for distribution\n\n"
 
     dashboard += "### Equity Curve\n\n"
 
@@ -718,11 +691,9 @@ def generate_ai_focused_dashboard() -> str:
             dashboard += f"✅ **BEST AI AGENT**: {best_agent[0].replace('_', ' ').title()} with ${best_agent[1].get('total_pl', 0):+,.2f} P/L\n\n"
 
     if automation_blockers:
-        dashboard += (
-            "🚨 **CRITICAL**: Resolve automation blockers before continuing trading\n\n"
-        )
+        dashboard += "🚨 **CRITICAL**: Resolve automation blockers before continuing trading\n\n"
 
-    dashboard += f"""---
+    dashboard += """---
 
 ## 🔗 Quick Links
 

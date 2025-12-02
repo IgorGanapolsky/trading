@@ -3,9 +3,10 @@ World-Class Risk-Adjusted Reward Functions for RL Trading
 Based on 2024-2025 research on risk-aware reinforcement learning.
 """
 
-import numpy as np
-from typing import Dict, Any, Optional
 import logging
+from typing import Any, Optional
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -95,9 +96,9 @@ class RiskAdjustedReward:
             elif returns_series is not None and len(returns_series) > 0:
                 vol = np.std(returns_series)
                 if vol > 0:
-                    sharpe_ratio = (
-                        np.mean(returns_series) * 252 - self.risk_free_rate
-                    ) / (vol * np.sqrt(252))
+                    sharpe_ratio = (np.mean(returns_series) * 252 - self.risk_free_rate) / (
+                        vol * np.sqrt(252)
+                    )
                 else:
                     sharpe_ratio = 0.0
             else:
@@ -148,8 +149,8 @@ class RiskAdjustedReward:
 
     def calculate_from_trade_result(
         self,
-        trade_result: Dict[str, Any],
-        market_state: Optional[Dict[str, Any]] = None,
+        trade_result: dict[str, Any],
+        market_state: Optional[dict[str, Any]] = None,
     ) -> float:
         """
         Calculate reward from trade result dictionary.
@@ -198,7 +199,7 @@ class RiskAdjustedReward:
 
 # Convenience function for backward compatibility
 def calculate_risk_adjusted_reward(
-    trade_result: Dict[str, Any], market_state: Optional[Dict[str, Any]] = None
+    trade_result: dict[str, Any], market_state: Optional[dict[str, Any]] = None
 ) -> float:
     """
     Calculate world-class risk-adjusted reward from trade result.

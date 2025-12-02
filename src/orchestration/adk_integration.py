@@ -15,9 +15,10 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Sequence
 from dataclasses import dataclass
 from statistics import mean
-from typing import Any, Dict, Optional, Sequence
+from typing import Any
 
 try:
     from rag_store import SentimentSQLiteStore  # type: ignore
@@ -42,10 +43,10 @@ class ADKDecision:
     action: str
     confidence: float
     position_size: float
-    risk: Dict[str, Any]
-    execution: Dict[str, Any]
-    sentiment: Dict[str, Any]
-    raw: Dict[str, Any]
+    risk: dict[str, Any]
+    execution: dict[str, Any]
+    sentiment: dict[str, Any]
+    raw: dict[str, Any]
 
 
 class ADKTradeAdapter:
@@ -57,18 +58,17 @@ class ADKTradeAdapter:
         self,
         *,
         enabled: bool = True,
-        base_url: Optional[str] = None,
-        app_name: Optional[str] = None,
-        root_agent_name: Optional[str] = None,
-        user_id: Optional[str] = None,
+        base_url: str | None = None,
+        app_name: str | None = None,
+        root_agent_name: str | None = None,
+        user_id: str | None = None,
     ) -> None:
         self.enabled = enabled
         if not enabled:
-            self.client: Optional[ADKOrchestratorClient] = None
+            self.client: ADKOrchestratorClient | None = None
         else:
             config = ADKClientConfig(
-                base_url=base_url
-                or os.getenv("ADK_BASE_URL", "http://127.0.0.1:8080/api"),
+                base_url=base_url or os.getenv("ADK_BASE_URL", "http://127.0.0.1:8080/api"),
                 app_name=app_name or os.getenv("ADK_APP_NAME", "trading_orchestrator"),
                 root_agent_name=root_agent_name
                 or os.getenv("ADK_ROOT_AGENT", "trading_orchestrator_root_agent"),
@@ -78,7 +78,7 @@ class ADKTradeAdapter:
             self.client = ADKOrchestratorClient(config=config)
 
         # RAG sentiment store (optional; lazy init)
-        self._sentiment_store: Optional[Any] = None
+        self._sentiment_store: Any | None = None
 
     # --------------------------------------------------------------------- #
     # Public API
@@ -87,8 +87,8 @@ class ADKTradeAdapter:
         self,
         *,
         symbols: Sequence[str],
-        context: Optional[Dict[str, Any]] = None,
-    ) -> Optional[ADKDecision]:
+        context: dict[str, Any] | None = None,
+    ) -> ADKDecision | None:
         """
         Run the ADK orchestrator across a universe of symbols and return the
         most confident actionable decision.
@@ -101,7 +101,7 @@ class ADKTradeAdapter:
             symbols = DEFAULT_SYMBOL_UNIVERSE
 
         context_base = context.copy() if context else {}
-        best: Optional[ADKDecision] = None
+        best: ADKDecision | None = None
 
         for symbol in symbols:
             enriched_ctx = {
@@ -159,7 +159,7 @@ class ADKTradeAdapter:
     # ------------------------------------------------------------------ #
     # Helpers
     # ------------------------------------------------------------------ #
-    def _load_sentiment(self, symbol: str) -> Dict[str, Any]:
+    def _load_sentiment(self, symbol: str) -> dict[str, Any]:
         """
         Retrieve the latest sentiment snapshots for a symbol from the SQLite store.
         """
@@ -184,9 +184,7 @@ class ADKTradeAdapter:
 
         scores = [row["score"] for row in rows if row["score"] is not None]
         confidence = [row["confidence"] for row in rows if row["confidence"]]
-        regime = next(
-            (row["market_regime"] for row in rows if row["market_regime"]), None
-        )
+        regime = next((row["market_regime"] for row in rows if row["market_regime"]), None)
 
         return {
             "samples": [dict(row) for row in rows[:5]],
@@ -196,9 +194,7 @@ class ADKTradeAdapter:
             "market_regime": regime,
         }
 
-    def _decision_from_payload(
-        self, symbol: str, payload: Dict[str, Any]
-    ) -> Optional[ADKDecision]:
+    def _decision_from_payload(self, symbol: str, payload: dict[str, Any]) -> ADKDecision | None:
         trade_summary = payload.get("trade_summary") or {}
         action = trade_summary.get("action", "HOLD").upper()
         if action not in {"BUY", "SELL"}:
@@ -234,7 +230,7 @@ class ADKTradeAdapter:
         )
 
 
-def summarize_adk_decision(decision: ADKDecision) -> Dict[str, Any]:
+def summarize_adk_decision(decision: ADKDecision) -> dict[str, Any]:
     """
     Convert an ADKDecision into a serialisable summary for logging/metrics.
     """

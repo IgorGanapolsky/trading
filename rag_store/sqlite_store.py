@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Iterable
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Iterable, Optional
 
-from .config import SQLITE_PATH, MIGRATIONS_PATH, ensure_directories
+from .config import MIGRATIONS_PATH, SQLITE_PATH, ensure_directories
 
 
 @contextmanager
@@ -24,15 +24,13 @@ def _connection(path: Path):
 class SentimentSQLiteStore:
     """Wrapper around SQLite for structured sentiment snapshots."""
 
-    def __init__(self, db_path: Optional[Path] = None) -> None:
+    def __init__(self, db_path: Path | None = None) -> None:
         self.db_path = db_path or SQLITE_PATH
         self.apply_migrations()
 
     def apply_migrations(self) -> None:
         """Apply any pending SQL migrations."""
-        migration_files = sorted(
-            p for p in MIGRATIONS_PATH.glob("*.sql") if p.is_file()
-        )
+        migration_files = sorted(p for p in MIGRATIONS_PATH.glob("*.sql") if p.is_file())
 
         if not migration_files:
             return
@@ -48,15 +46,14 @@ class SentimentSQLiteStore:
                 """
             )
             applied = {
-                row["filename"]
-                for row in conn.execute("SELECT filename FROM schema_migrations")
+                row["filename"] for row in conn.execute("SELECT filename FROM schema_migrations")
             }
 
             for migration in migration_files:
                 if migration.name in applied:
                     continue
 
-                with open(migration, "r", encoding="utf-8") as handle:
+                with open(migration, encoding="utf-8") as handle:
                     sql = handle.read()
 
                 conn.executescript(sql)
@@ -77,10 +74,10 @@ class SentimentSQLiteStore:
         snapshot_date: str,
         score: float,
         confidence: str,
-        market_regime: Optional[str],
+        market_regime: str | None,
         summary: str,
-        metadata: Dict,
-        created_at: Optional[str] = None,
+        metadata: dict,
+        created_at: str | None = None,
     ) -> None:
         """Insert or update a single sentiment snapshot."""
         created_ts = created_at or datetime.utcnow().isoformat()
@@ -115,7 +112,7 @@ class SentimentSQLiteStore:
             )
             conn.commit()
 
-    def bulk_upsert(self, entries: Iterable[Dict]) -> None:
+    def bulk_upsert(self, entries: Iterable[dict]) -> None:
         """Bulk upsert multiple snapshots."""
         with _connection(self.db_path) as conn:
             cursor = conn.cursor()

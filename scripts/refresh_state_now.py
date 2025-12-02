@@ -5,14 +5,13 @@ State Refresh - Using Built-in Libraries Only
 Works with any Python version - uses urllib instead of requests.
 """
 
-import os
 import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from urllib.request import Request, urlopen
 from urllib.error import HTTPError
-import base64
+from urllib.request import Request, urlopen
 
 # Load environment variables
 try:
@@ -31,9 +30,7 @@ ALPACA_SECRET = os.getenv("ALPACA_SECRET_KEY")
 ALPACA_BASE_URL = os.getenv("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
 
 if not ALPACA_KEY or not ALPACA_SECRET:
-    print(
-        "ERROR: ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set"
-    )
+    print("ERROR: ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set")
     sys.exit(1)
 
 
@@ -87,7 +84,7 @@ def update_system_state():
         print("ERROR: system_state.json not found")
         return False
 
-    with open(SYSTEM_STATE_FILE, "r") as f:
+    with open(SYSTEM_STATE_FILE) as f:
         state = json.load(f)
 
     print("\n📊 Fetching current account data from Alpaca...")
@@ -112,9 +109,7 @@ def update_system_state():
 
             unrealized_pl = (current_price - entry_price) * qty
             unrealized_pl_pct = (
-                ((current_price - entry_price) / entry_price * 100)
-                if entry_price > 0
-                else 0
+                ((current_price - entry_price) / entry_price * 100) if entry_price > 0 else 0
             )
 
             state["performance"]["open_positions"].append(

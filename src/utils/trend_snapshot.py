@@ -9,10 +9,10 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, asdict
+from collections.abc import Iterable
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Iterable, Optional
 
 import pandas as pd
 
@@ -41,16 +41,16 @@ class TrendSnapshotBuilder:
 
     def __init__(
         self,
-        cache: Optional[Dict[str, pd.DataFrame]] = None,
+        cache: dict[str, pd.DataFrame] | None = None,
         snapshot_path: Path = Path("data/trend_snapshot.json"),
     ) -> None:
         self._history_cache = cache or {}
         self.snapshot_path = snapshot_path
         self.snapshot_path.parent.mkdir(parents=True, exist_ok=True)
 
-    def build(self, symbols: Iterable[str]) -> Dict[str, TrendMetrics]:
+    def build(self, symbols: Iterable[str]) -> dict[str, TrendMetrics]:
         """Return latest metrics for requested symbols."""
-        metrics: Dict[str, TrendMetrics] = {}
+        metrics: dict[str, TrendMetrics] = {}
         for symbol in symbols:
             hist = self._history_cache.get(symbol)
             if hist is None or hist.empty:
@@ -69,7 +69,7 @@ class TrendSnapshotBuilder:
 
         return metrics
 
-    def save(self, metrics: Dict[str, TrendMetrics]) -> None:
+    def save(self, metrics: dict[str, TrendMetrics]) -> None:
         """Persist snapshot to disk for reporting and CI consumers."""
         payload = {
             "generated_at": datetime.utcnow().isoformat(),
@@ -83,12 +83,12 @@ class TrendSnapshotBuilder:
             self.snapshot_path,
         )
 
-    def load(self) -> Optional[Dict[str, TrendMetrics]]:
+    def load(self) -> dict[str, TrendMetrics] | None:
         """Load previously saved snapshot if it exists."""
         if not self.snapshot_path.exists():
             return None
         try:
-            with open(self.snapshot_path, "r", encoding="utf-8") as fp:
+            with open(self.snapshot_path, encoding="utf-8") as fp:
                 data = json.load(fp)
             symbols = data.get("symbols", {})
             return {
@@ -99,7 +99,7 @@ class TrendSnapshotBuilder:
             logger.warning("Failed to load cached trend snapshot: %s", exc)
             return None
 
-    def _fetch_history(self, symbol: str) -> Optional[pd.DataFrame]:
+    def _fetch_history(self, symbol: str) -> pd.DataFrame | None:
         """Fetch 6 months of daily data via yfinance (fail-open)."""
         try:
             import yfinance as yf

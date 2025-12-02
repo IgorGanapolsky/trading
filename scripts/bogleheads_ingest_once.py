@@ -5,6 +5,7 @@ Ingest a single Bogleheads forum snapshot into the Sentiment RAG store.
 Prefers the BogleheadsLearner (from .claude skills). Falls back to BogleHeadsAgent
 if the learner is unavailable.
 """
+
 from __future__ import annotations
 
 import json
@@ -12,21 +13,18 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict
 
 # Add project root to sys.path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.rag.sentiment_store import SentimentRAGStore, SentimentDocument
+from src.rag.sentiment_store import SentimentDocument, SentimentRAGStore
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("bogleheads_ingest")
 
 
-def _try_learner() -> Dict:
+def _try_learner() -> dict:
     try:
         # Try to import from .claude/skills first, fall back to direct path
         try:
@@ -35,9 +33,7 @@ def _try_learner() -> Dict:
             )
         except ModuleNotFoundError:
             # In CI/CD environment, use absolute path
-            skills_path = (
-                project_root / ".claude" / "skills" / "bogleheads_learner" / "scripts"
-            )
+            skills_path = project_root / ".claude" / "skills" / "bogleheads_learner" / "scripts"
             sys.path.insert(0, str(skills_path))
             from bogleheads_learner import BogleheadsLearner
 
@@ -53,7 +49,7 @@ def _try_learner() -> Dict:
         return {}
 
 
-def _fallback_agent() -> Dict:
+def _fallback_agent() -> dict:
     try:
         from src.agents.bogleheads_agent import BogleHeadsAgent
 

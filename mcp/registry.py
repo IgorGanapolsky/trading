@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, Optional
 
 REGISTRY_FILENAME = "registry.json"
 REGISTRY_PATH = Path(__file__).with_name(REGISTRY_FILENAME)
@@ -26,7 +26,7 @@ class MCPServer:
     id: str
     display_name: str
     module: str
-    tools: Dict[str, str]
+    tools: dict[str, str]
 
     def tool_names(self) -> Iterable[str]:
         return self.tools.keys()
@@ -36,8 +36,8 @@ class MCPServer:
 class MCPRegistry:
     """In-memory representation of the MCP registry."""
 
-    servers: Dict[str, MCPServer]
-    generated_at: Optional[str] = None
+    servers: dict[str, MCPServer]
+    generated_at: str | None = None
 
     def get(self, server_id: str) -> MCPServer:
         try:
@@ -49,7 +49,7 @@ class MCPRegistry:
         return server_id in self.servers
 
 
-def load_registry(path: Optional[os.PathLike] = None) -> MCPRegistry:
+def load_registry(path: os.PathLike | None = None) -> MCPRegistry:
     """
     Load the registry from disk.
 
@@ -68,7 +68,7 @@ def load_registry(path: Optional[os.PathLike] = None) -> MCPRegistry:
         raw = json.load(handle)
 
     raw_servers = raw.get("servers", [])
-    servers: Dict[str, MCPServer] = {}
+    servers: dict[str, MCPServer] = {}
 
     for entry in raw_servers:
         server_id = entry["id"]

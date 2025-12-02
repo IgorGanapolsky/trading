@@ -15,19 +15,19 @@ Or run manually:
     python scripts/collect_sentiment.py --test  # Test with minimal data
 """
 
-import sys
-import logging
 import argparse
+import logging
+import sys
 from dataclasses import asdict
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.utils.reddit_sentiment import RedditSentiment
 from src.utils.news_sentiment import NewsSentimentAggregator
+from src.utils.reddit_sentiment import RedditSentiment
 
 # Optional RAG store ingestion (graceful degradation if not available)
 try:
@@ -38,11 +38,10 @@ except ImportError:
     RAG_AVAILABLE = False
 
 from src.utils.sentiment_loader import (
+    get_market_regime,
     load_latest_sentiment,
     print_sentiment_summary,
-    get_market_regime,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +49,7 @@ if not RAG_AVAILABLE:
     logger.warning("RAG store not available - skipping sentiment ingestion")
 
 
-def collect_reddit_sentiment(
-    force_refresh: bool = False, test_mode: bool = False
-) -> bool:
+def collect_reddit_sentiment(force_refresh: bool = False, test_mode: bool = False) -> bool:
     """
     Collect sentiment from Reddit.
 
@@ -91,18 +88,14 @@ def collect_reddit_sentiment(
         logger.info(f"  Date: {meta.get('date')}")
         logger.info(f"  Total Posts: {meta.get('total_posts')}")
         logger.info(f"  Total Tickers: {meta.get('total_tickers')}")
-        logger.info(
-            f"  Subreddits: {', '.join(['r/' + s for s in meta.get('subreddits', [])])}"
-        )
+        logger.info(f"  Subreddits: {', '.join(['r/' + s for s in meta.get('subreddits', [])])}")
 
         if RAG_AVAILABLE:
             try:
                 ingest_reddit_snapshot(sentiment_data)
                 logger.info("✓ Reddit sentiment ingested into RAG store")
             except Exception as ingest_error:  # noqa: BLE001
-                logger.error(
-                    f"Failed to ingest Reddit sentiment: {ingest_error}", exc_info=True
-                )
+                logger.error(f"Failed to ingest Reddit sentiment: {ingest_error}", exc_info=True)
 
         return True
 
@@ -169,9 +162,7 @@ def collect_news_sentiment(tickers: list, test_mode: bool = False) -> bool:
                 ingest_news_snapshot(report_dict)
                 logger.info("✓ News sentiment ingested into RAG store")
             except Exception as ingest_error:  # noqa: BLE001
-                logger.error(
-                    f"Failed to ingest news sentiment: {ingest_error}", exc_info=True
-                )
+                logger.error(f"Failed to ingest news sentiment: {ingest_error}", exc_info=True)
 
         return True
 
@@ -188,15 +179,9 @@ def main():
     parser.add_argument(
         "--force-refresh", action="store_true", help="Ignore cache and fetch fresh data"
     )
-    parser.add_argument(
-        "--test", action="store_true", help="Test mode - collect minimal data"
-    )
-    parser.add_argument(
-        "--reddit-only", action="store_true", help="Collect only Reddit sentiment"
-    )
-    parser.add_argument(
-        "--news-only", action="store_true", help="Collect only news sentiment"
-    )
+    parser.add_argument("--test", action="store_true", help="Test mode - collect minimal data")
+    parser.add_argument("--reddit-only", action="store_true", help="Collect only Reddit sentiment")
+    parser.add_argument("--news-only", action="store_true", help="Collect only news sentiment")
     parser.add_argument(
         "--tickers",
         type=str,
@@ -280,9 +265,7 @@ def main():
     print("=" * 80 + "\n")
 
     # Exit with appropriate code
-    overall_success = (reddit_success or args.news_only) and (
-        news_success or args.reddit_only
-    )
+    overall_success = (reddit_success or args.news_only) and (news_success or args.reddit_only)
 
     if overall_success:
         logger.info("✓ All sentiment collection completed successfully")

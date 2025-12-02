@@ -10,7 +10,7 @@ remain decoupled.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 try:
     from src.risk.risk_manager import RiskManager as _SimpleRiskManager
@@ -29,8 +29,8 @@ class UnifiedRiskManager:
     def __init__(
         self,
         *,
-        simple_params: Optional[Dict[str, Any]] = None,
-        full_params: Optional[Dict[str, Any]] = None,
+        simple_params: dict[str, Any] | None = None,
+        full_params: dict[str, Any] | None = None,
     ) -> None:
         simple_params = simple_params or {}
         full_params = full_params or {}
@@ -65,7 +65,7 @@ class UnifiedRiskManager:
         self,
         account_value: float,
         daily_pl: float,
-        account_info: Optional[Dict[str, Any]] = None,
+        account_info: dict[str, Any] | None = None,
     ) -> bool:
         if not self._full:
             return True
@@ -75,7 +75,7 @@ class UnifiedRiskManager:
         self,
         account_value: float,
         risk_per_trade_pct: float = 1.0,
-        price_per_share: Optional[float] = None,
+        price_per_share: float | None = None,
     ) -> float:
         if not self._full:
             return 0.0
@@ -91,11 +91,11 @@ class UnifiedRiskManager:
         sentiment_score: float,
         account_value: float,
         trade_type: str = "BUY",
-        account_info: Optional[Dict[str, Any]] = None,
-        expected_return_pct: Optional[float] = None,
-        confidence: Optional[float] = None,
-        pattern_type: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        account_info: dict[str, Any] | None = None,
+        expected_return_pct: float | None = None,
+        confidence: float | None = None,
+        pattern_type: str | None = None,
+    ) -> dict[str, Any]:
         if not self._full:
             return {
                 "valid": True,
@@ -116,4 +116,3 @@ class UnifiedRiskManager:
             confidence=confidence,
             pattern_type=pattern_type,
         )
-

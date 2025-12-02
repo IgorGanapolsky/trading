@@ -3,6 +3,7 @@
 Test Bond Execution Logic
 Simulates the bond execution path to identify issues
 """
+
 import sys
 from pathlib import Path
 
@@ -43,9 +44,7 @@ def test_bond_allocation():
     print(f"Actual Daily Allocation (from trades): ${actual_daily:.2f}")
     print(f"Expected Bond Allocation (15%): ${actual_bond:.2f}")
     print(f"Threshold: ${MIN_THRESHOLD:.2f}")
-    print(
-        f"Bond should execute: {'✅ YES' if actual_bond >= MIN_THRESHOLD else '❌ NO'}"
-    )
+    print(f"Bond should execute: {'✅ YES' if actual_bond >= MIN_THRESHOLD else '❌ NO'}")
     print()
 
     print("🔍 EXECUTION LOGIC CHECK")
@@ -57,9 +56,7 @@ def test_bond_allocation():
     print()
     print(f"With ${actual_daily:.2f} daily allocation:")
     print(f"  bond_amount = ${actual_daily:.2f} * 0.15 = ${actual_bond:.2f}")
-    print(
-        f"  ${actual_bond:.2f} >= ${MIN_THRESHOLD:.2f} = {actual_bond >= MIN_THRESHOLD}"
-    )
+    print(f"  ${actual_bond:.2f} >= ${MIN_THRESHOLD:.2f} = {actual_bond >= MIN_THRESHOLD}")
     print()
 
     if actual_bond >= MIN_THRESHOLD:

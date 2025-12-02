@@ -11,8 +11,8 @@ Modules:
 """
 
 from src.signals.options_signal_enhancer import (
-    OptionsSignalEnhancer,
     EnhancedSignal,
+    OptionsSignalEnhancer,
     get_signal_enhancer,
 )
 

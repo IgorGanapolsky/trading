@@ -2,12 +2,14 @@
 """
 Performance Dashboard - Visual charts for P/L, win rate, positions
 """
-import os
+
 import json
-from datetime import datetime, timedelta
+import os
+from datetime import datetime
 from pathlib import Path
-from dotenv import load_dotenv
+
 import alpaca_trade_api as tradeapi
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -152,7 +154,7 @@ def display_dashboard():
 
         # Last 30 days
         recent = perf_log[-30:]
-        dates = [e.get("date", "") for e in recent]
+        [e.get("date", "") for e in recent]
         pl_values = [e.get("pl", 0) for e in recent]
         equity_values = [e.get("equity", 0) for e in recent]
 
@@ -163,7 +165,7 @@ def display_dashboard():
 
             print(f"Best Day:  ${max(pl_values):+,.2f}")
             print(f"Worst Day: ${min(pl_values):+,.2f}")
-            print(f"Avg Daily: ${sum(pl_values)/len(pl_values):+,.2f}")
+            print(f"Avg Daily: ${sum(pl_values) / len(pl_values):+,.2f}")
             print()
 
         if equity_values:

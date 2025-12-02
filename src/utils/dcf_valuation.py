@@ -8,14 +8,12 @@ avoid breaching the provider's rate limits.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, Optional, Tuple
 import json
 import logging
 import os
-
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from pathlib import Path
 
 import requests
 
@@ -44,7 +42,7 @@ class DCFResult:
     projected_growth: float
     timestamp: datetime
 
-    def to_json(self) -> Dict:
+    def to_json(self) -> dict:
         return {
             "intrinsic_value": self.intrinsic_value,
             "discount_rate": self.discount_rate,
@@ -54,7 +52,7 @@ class DCFResult:
         }
 
     @classmethod
-    def from_json(cls, data: Dict) -> "DCFResult":
+    def from_json(cls, data: dict) -> DCFResult:
         return cls(
             intrinsic_value=float(data["intrinsic_value"]),
             discount_rate=float(data["discount_rate"]),
@@ -78,16 +76,20 @@ class DCFValuationCalculator:
     """
 
     # Alpha Vantage endpoints (fallback)
-    OVERVIEW_ENDPOINT = "https://www.alphavantage.co/query?function=OVERVIEW&symbol={ticker}&apikey={api_key}"
-    CASH_FLOW_ENDPOINT = "https://www.alphavantage.co/query?function=CASH_FLOW&symbol={ticker}&apikey={api_key}"
+    OVERVIEW_ENDPOINT = (
+        "https://www.alphavantage.co/query?function=OVERVIEW&symbol={ticker}&apikey={api_key}"
+    )
+    CASH_FLOW_ENDPOINT = (
+        "https://www.alphavantage.co/query?function=CASH_FLOW&symbol={ticker}&apikey={api_key}"
+    )
 
     # Polygon.io endpoints (preferred)
     POLYGON_BASE_URL = "https://api.polygon.io/v2"
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        cache_dir: Optional[Path] = None,
+        api_key: str | None = None,
+        cache_dir: Path | None = None,
         cache_ttl_hours: int = DEFAULT_CACHE_TTL_HOURS,
     ) -> None:
         # Try Polygon.io first (preferred), then Alpha Vantage (fallback)
@@ -108,14 +110,12 @@ class DCFValuationCalculator:
         self.cache_ttl = timedelta(hours=cache_ttl_hours)
 
         # In-memory session cache to limit disk reads
-        self._session_cache: Dict[str, DCFResult] = {}
+        self._session_cache: dict[str, DCFResult] = {}
 
     # ------------------------------------------------------------------ #
     # Public API
     # ------------------------------------------------------------------ #
-    def get_intrinsic_value(
-        self, ticker: str, force_refresh: bool = False
-    ) -> Optional[DCFResult]:
+    def get_intrinsic_value(self, ticker: str, force_refresh: bool = False) -> DCFResult | None:
         """
         Return cached or freshly computed DCF valuation for a ticker.
 
@@ -174,15 +174,11 @@ class DCFValuationCalculator:
             else:
                 logger.warning("DCF valuation unavailable for %s: %s", ticker, exc)
         except Exception as exc:  # noqa: BLE001
-            logger.error(
-                "Unexpected error computing DCF for %s: %s", ticker, exc, exc_info=True
-            )
+            logger.error("Unexpected error computing DCF for %s: %s", ticker, exc, exc_info=True)
 
         return None
 
-    def calculate_margin_of_safety(
-        self, ticker: str, market_price: float
-    ) -> Optional[float]:
+    def calculate_margin_of_safety(self, ticker: str, market_price: float) -> float | None:
         """
         Compute margin of safety given a market price.
 
@@ -201,7 +197,7 @@ class DCFValuationCalculator:
     # ------------------------------------------------------------------ #
     # Internal helpers
     # ------------------------------------------------------------------ #
-    def _load_from_cache(self, ticker: str) -> Optional[DCFResult]:
+    def _load_from_cache(self, ticker: str) -> DCFResult | None:
         # In-memory cache first
         if ticker in self._session_cache:
             cached = self._session_cache[ticker]
@@ -235,7 +231,7 @@ class DCFValuationCalculator:
         except Exception as exc:  # noqa: BLE001
             logger.debug("Failed to persist DCF cache for %s: %s", ticker, exc)
 
-    def _fetch_polygon_overview(self, ticker: str) -> Dict:
+    def _fetch_polygon_overview(self, ticker: str) -> dict:
         """Fetch company overview from Polygon.io."""
         # Polygon.io v3 API endpoint
         url = f"https://api.polygon.io/v3/reference/tickers/{ticker}"
@@ -248,26 +244,22 @@ class DCFValuationCalculator:
 
             # Polygon.io v3 returns results directly, not nested
             if data.get("status") != "OK":
-                raise DCFError(
-                    f"Polygon.io API error: {data.get('error', 'Unknown error')}"
-                )
+                raise DCFError(f"Polygon.io API error: {data.get('error', 'Unknown error')}")
 
             result = data.get("results", {})
             if not result:
                 raise DCFError("Polygon.io overview unavailable - no results")
 
             # Convert Polygon.io format to Alpha Vantage-like format for compatibility
-            shares_outstanding = result.get(
-                "share_class_shares_outstanding"
-            ) or result.get("weighted_shares_outstanding", 0)
+            shares_outstanding = result.get("share_class_shares_outstanding") or result.get(
+                "weighted_shares_outstanding", 0
+            )
             market_cap = result.get("market_cap", 0)
 
             overview = {
                 "Symbol": result.get("ticker", ticker),
                 "Beta": "1.0",  # Polygon.io doesn't provide beta in ticker endpoint, use default
-                "SharesOutstanding": (
-                    str(int(shares_outstanding)) if shares_outstanding else "0"
-                ),
+                "SharesOutstanding": (str(int(shares_outstanding)) if shares_outstanding else "0"),
                 "MarketCapitalization": str(int(market_cap)) if market_cap else "0",
                 "Name": result.get("name", ""),
             }
@@ -278,7 +270,7 @@ class DCFValuationCalculator:
         except (ValueError, KeyError) as exc:
             raise DCFError("Invalid Polygon.io JSON response") from exc
 
-    def _fetch_polygon_cash_flows(self, ticker: str) -> Dict:
+    def _fetch_polygon_cash_flows(self, ticker: str) -> dict:
         """
         Fetch cash flow statements from Polygon.io.
 
@@ -311,9 +303,7 @@ class DCFValuationCalculator:
 
             results = data.get("results", [])
             if not results:
-                raise DCFError(
-                    "No cash flow data from Polygon.io - using Alpha Vantage fallback"
-                )
+                raise DCFError("No cash flow data from Polygon.io - using Alpha Vantage fallback")
 
             # Convert Polygon.io format to Alpha Vantage-like format
             annual_reports = []
@@ -338,9 +328,7 @@ class DCFValuationCalculator:
                     annual_reports.append(
                         {
                             "fiscalDateEnding": result.get("filing_date", ""),
-                            "operatingCashflow": (
-                                str(operating_cf) if operating_cf else "0"
-                            ),
+                            "operatingCashflow": (str(operating_cf) if operating_cf else "0"),
                             "capitalExpenditures": str(capex) if capex else "0",
                         }
                     )
@@ -361,7 +349,7 @@ class DCFValuationCalculator:
                 "Invalid Polygon.io JSON response - using Alpha Vantage fallback"
             ) from exc
 
-    def _fetch_company_overview(self, ticker: str) -> Dict:
+    def _fetch_company_overview(self, ticker: str) -> dict:
         """Fetch company overview from Alpha Vantage (fallback)."""
         url = self.OVERVIEW_ENDPOINT.format(ticker=ticker, api_key=self.api_key)
         data = self._perform_request(url)
@@ -370,7 +358,7 @@ class DCFValuationCalculator:
             raise DCFError("Company overview unavailable")
         return data
 
-    def _fetch_cash_flows(self, ticker: str) -> Dict:
+    def _fetch_cash_flows(self, ticker: str) -> dict:
         """Fetch cash flows from Alpha Vantage (fallback)."""
         url = self.CASH_FLOW_ENDPOINT.format(ticker=ticker, api_key=self.api_key)
         data = self._perform_request(url)
@@ -380,25 +368,21 @@ class DCFValuationCalculator:
             raise DCFError("Cash flow reports missing")
         return reports
 
-    def _perform_request(self, url: str) -> Dict:
+    def _perform_request(self, url: str) -> dict:
         try:
             response = requests.get(url, timeout=30)
             response.raise_for_status()
             data = response.json()
             # Alpha Vantage returns a dict with "Information" on throttling
             if "Note" in data or "Information" in data:
-                raise DCFError(
-                    data.get("Note") or data.get("Information") or "API limit reached"
-                )
+                raise DCFError(data.get("Note") or data.get("Information") or "API limit reached")
             return data
         except requests.RequestException as exc:
             raise DCFError(f"HTTP error: {exc}") from exc
         except ValueError as exc:
             raise DCFError("Invalid JSON response") from exc
 
-    def _compute_dcf(
-        self, ticker: str, overview: Dict, cash_reports: Dict
-    ) -> DCFResult:
+    def _compute_dcf(self, ticker: str, overview: dict, cash_reports: dict) -> DCFResult:
         free_cash_flows = self._extract_free_cash_flows(cash_reports)
         if len(free_cash_flows) < 2:
             raise DCFError("Insufficient FCF history")
@@ -432,7 +416,7 @@ class DCFValuationCalculator:
     # ------------------------------------------------------------------ #
     # Numeric helpers
     # ------------------------------------------------------------------ #
-    def _extract_free_cash_flows(self, cash_reports: Dict) -> Tuple[float, ...]:
+    def _extract_free_cash_flows(self, cash_reports: dict) -> tuple[float, ...]:
         fcfs = []
         for report in cash_reports:
             operating_cf = self._parse_float(report.get("operatingCashflow"))
@@ -444,7 +428,7 @@ class DCFValuationCalculator:
             raise DCFError("Unable to compute free cash flow")
         return tuple(fcfs)
 
-    def _estimate_growth(self, fcfs: Tuple[float, ...]) -> float:
+    def _estimate_growth(self, fcfs: tuple[float, ...]) -> float:
         # Use CAGR over the last 3 intervals where possible
         if len(fcfs) < 2:
             return 0.0
@@ -460,7 +444,7 @@ class DCFValuationCalculator:
         # Clamp growth to a reasonable range to avoid runaway projections
         return max(-0.15, min(0.30, cagr))
 
-    def _estimate_discount_rate(self, overview: Dict) -> float:
+    def _estimate_discount_rate(self, overview: dict) -> float:
         beta = self._parse_float(overview.get("Beta"), default=1.0)
         discount = DEFAULT_RISK_FREE_RATE + beta * DEFAULT_EQUITY_RISK_PREMIUM
         return max(MIN_DISCOUNT_RATE, min(MAX_DISCOUNT_RATE, discount))
@@ -494,9 +478,7 @@ class DCFValuationCalculator:
         return intrinsic_value
 
     @staticmethod
-    def _parse_float(
-        value: Optional[str], default: Optional[float] = None
-    ) -> Optional[float]:
+    def _parse_float(value: str | None, default: float | None = None) -> float | None:
         if value in (None, "", "None"):
             return default
         try:
@@ -509,7 +491,7 @@ class DCFValuationCalculator:
 
 
 # Convenience singleton for reuse across modules without repeated initialization
-_GLOBAL_DCF_CALCULATOR: Optional[DCFValuationCalculator] = None
+_GLOBAL_DCF_CALCULATOR: DCFValuationCalculator | None = None
 
 
 def get_global_dcf_calculator() -> DCFValuationCalculator:

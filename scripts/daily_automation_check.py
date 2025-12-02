@@ -7,7 +7,7 @@ Verifies that automation is working and system is healthy.
 
 import json
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -34,17 +34,13 @@ def check_automation_health():
         last_updated = state.get("meta", {}).get("last_updated", "")
         if last_updated:
             try:
-                last_update_dt = datetime.fromisoformat(
-                    last_updated.replace("Z", "+00:00")
-                )
+                last_update_dt = datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
                 age_hours = (
                     datetime.now(last_update_dt.tzinfo) - last_update_dt
                 ).total_seconds() / 3600
 
                 if age_hours > 48:
-                    issues.append(
-                        f"System state is {age_hours:.1f} hours old (CRITICAL)"
-                    )
+                    issues.append(f"System state is {age_hours:.1f} hours old (CRITICAL)")
                 elif age_hours > 24:
                     warnings.append(f"System state is {age_hours:.1f} hours old")
                 else:
@@ -79,9 +75,7 @@ def check_automation_health():
 
         if losing_positions:
             for pos in losing_positions:
-                issues.append(
-                    f"{pos['symbol']} down {pos['unrealized_pl_pct']:.2f}% (CRITICAL)"
-                )
+                issues.append(f"{pos['symbol']} down {pos['unrealized_pl_pct']:.2f}% (CRITICAL)")
 
         print(f"✅ Positions monitored: {len(positions)} open")
 

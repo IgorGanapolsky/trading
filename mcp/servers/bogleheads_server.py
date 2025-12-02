@@ -8,14 +8,14 @@ Provides MCP tools for monitoring Bogleheads forum and integrating insights.
 import asyncio
 import json
 import logging
-from typing import Any, Dict, List, Optional
 from pathlib import Path
+from typing import Any, Optional
 
 # MCP imports
 try:
     from mcp.server import Server
     from mcp.server.stdio import stdio_server
-    from mcp.types import Tool, TextContent
+    from mcp.types import TextContent, Tool
 except ImportError:
     print("⚠️  MCP server dependencies not installed")
     Server = None
@@ -30,7 +30,7 @@ import sys
 sys.path.insert(0, str(project_root))
 
 
-async def monitor_forum_tool(arguments: Dict[str, Any]) -> List[TextContent]:
+async def monitor_forum_tool(arguments: dict[str, Any]) -> list[TextContent]:
     """Monitor Bogleheads forum for new insights."""
     try:
         from claude.skills.bogleheads_learner.scripts.bogleheads_learner import (
@@ -49,7 +49,7 @@ async def monitor_forum_tool(arguments: Dict[str, Any]) -> List[TextContent]:
         return [TextContent(type="text", text=f"Error: {str(e)}")]
 
 
-async def get_signal_tool(arguments: Dict[str, Any]) -> List[TextContent]:
+async def get_signal_tool(arguments: dict[str, Any]) -> list[TextContent]:
     """Get Bogleheads trading signal for a symbol."""
     try:
         from src.utils.bogleheads_integration import get_bogleheads_signal_for_symbol
@@ -64,7 +64,7 @@ async def get_signal_tool(arguments: Dict[str, Any]) -> List[TextContent]:
         return [TextContent(type="text", text=f"Error: {str(e)}")]
 
 
-async def analyze_regime_tool(arguments: Dict[str, Any]) -> List[TextContent]:
+async def analyze_regime_tool(arguments: dict[str, Any]) -> list[TextContent]:
     """Analyze market regime from Bogleheads discussions."""
     try:
         from src.utils.bogleheads_integration import get_bogleheads_regime
@@ -84,7 +84,7 @@ def create_server() -> Optional[Server]:
     server = Server("bogleheads-learner")
 
     @server.list_tools()
-    async def list_tools() -> List[Tool]:
+    async def list_tools() -> list[Tool]:
         return [
             Tool(
                 name="monitor_bogleheads_forum",
@@ -143,7 +143,7 @@ def create_server() -> Optional[Server]:
         ]
 
     @server.call_tool()
-    async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
+    async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         if name == "monitor_bogleheads_forum":
             return await monitor_forum_tool(arguments)
         elif name == "get_bogleheads_signal":
@@ -164,9 +164,7 @@ async def main():
         return
 
     async with stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream, write_stream, server.create_initialization_options()
-        )
+        await server.run(read_stream, write_stream, server.create_initialization_options())
 
 
 if __name__ == "__main__":

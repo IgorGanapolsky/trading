@@ -8,12 +8,12 @@ Integrates with MCP servers for:
 - Dashboard updates
 """
 
-import os
 import json
 import logging
+import os
 from datetime import datetime
-from typing import Dict, List, Any, Optional
 from enum import Enum
+from typing import Any
 
 from src.agents.base_agent import BaseAgent
 
@@ -51,15 +51,13 @@ class NotificationAgent(BaseAgent):
     """
 
     def __init__(self):
-        super().__init__(
-            name="NotificationAgent", role="Multi-Channel Notification Coordinator"
-        )
+        super().__init__(name="NotificationAgent", role="Multi-Channel Notification Coordinator")
         self.enabled_channels = os.getenv(
             "NOTIFICATION_CHANNELS",
             "email,dashboard,log",  # Slack removed - use email instead
         ).split(",")
 
-    def analyze(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Send a notification.
 
@@ -108,8 +106,8 @@ class NotificationAgent(BaseAgent):
         }
 
     def _send_slack_notification(
-        self, message: str, priority: str, context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, message: str, priority: str, context: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Send Slack notification via MCP.
 
@@ -126,7 +124,7 @@ class NotificationAgent(BaseAgent):
         # TODO: Integrate with Slack MCP when available
         # For now, simulate
 
-        slack_payload = {
+        {
             "channel": context.get("slack_channel", "#trading-alerts"),
             "message": message,
             "priority": priority,
@@ -143,8 +141,8 @@ class NotificationAgent(BaseAgent):
         }
 
     def _send_email_notification(
-        self, message: str, priority: str, context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, message: str, priority: str, context: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Send email notification via MCP.
 
@@ -161,7 +159,7 @@ class NotificationAgent(BaseAgent):
         # TODO: Integrate with Gmail MCP when available
         # For now, simulate
 
-        email_payload = {
+        {
             "to": context.get("recipients", [os.getenv("ALERT_EMAIL", "")]),
             "subject": f"[{priority.upper()}] Trading System Alert",
             "body": message,
@@ -178,8 +176,8 @@ class NotificationAgent(BaseAgent):
         }
 
     def _update_dashboard(
-        self, message: str, notification_type: str, context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, message: str, notification_type: str, context: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Update dashboard with notification.
 
@@ -194,7 +192,7 @@ class NotificationAgent(BaseAgent):
         logger.info(f"Dashboard update ({notification_type}): {message[:100]}...")
 
         # Save notification to dashboard data
-        dashboard_data = {
+        {
             "message": message,
             "type": notification_type,
             "timestamp": datetime.now().isoformat(),
@@ -211,8 +209,8 @@ class NotificationAgent(BaseAgent):
         }
 
     def _log_notification(
-        self, message: str, priority: str, context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, message: str, priority: str, context: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Log notification to file.
 
@@ -239,7 +237,7 @@ class NotificationAgent(BaseAgent):
             "message_id": f"log_{datetime.now().timestamp()}",
         }
 
-    def send_trade_alert(self, trade_data: Dict[str, Any]):
+    def send_trade_alert(self, trade_data: dict[str, Any]):
         """Send trade execution alert."""
         message = (
             f"Trade Executed: {trade_data.get('symbol')} "
@@ -257,7 +255,7 @@ class NotificationAgent(BaseAgent):
             }
         )
 
-    def send_risk_alert(self, risk_data: Dict[str, Any]):
+    def send_risk_alert(self, risk_data: dict[str, Any]):
         """Send risk management alert."""
         message = (
             f"Risk Alert: {risk_data.get('alert_type')} - "
@@ -274,7 +272,7 @@ class NotificationAgent(BaseAgent):
             }
         )
 
-    def send_approval_request(self, approval_data: Dict[str, Any]):
+    def send_approval_request(self, approval_data: dict[str, Any]):
         """Send approval request notification."""
         message = (
             f"Approval Required: {approval_data.get('type')} - "

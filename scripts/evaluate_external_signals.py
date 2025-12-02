@@ -8,17 +8,14 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
-from typing import Dict
-
 import os
 import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import yfinance as yf
-
 from src.utils.external_signal_loader import list_signal_files, load_signals_file
 
 logger = logging.getLogger("external_signal_eval")
@@ -43,7 +40,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def evaluate_signals(signals: Dict[str, Dict], horizon_days: int) -> Dict:
+def evaluate_signals(signals: dict[str, dict], horizon_days: int) -> dict:
     results = []
     for ticker, info in signals.items():
         timestamp_str = info.get("timestamp") or info.get("generated_at")

@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -59,14 +58,12 @@ class DeepMomentumForecaster:
 
     # Internal helpers -------------------------------------------------
 
-    def _build_dataset(self, hist: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
+    def _build_dataset(self, hist: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
         if hist is None or hist.empty:
             return np.array([]), np.array([])
 
         closes = hist["Close"].astype(float)
-        volume = hist.get("Volume", pd.Series(index=hist.index, data=np.nan)).astype(
-            float
-        )
+        volume = hist.get("Volume", pd.Series(index=hist.index, data=np.nan)).astype(float)
 
         df = pd.DataFrame(
             {

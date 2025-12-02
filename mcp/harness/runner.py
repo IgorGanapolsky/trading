@@ -4,26 +4,23 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from mcp.client import MCPClient, default_client
 from mcp.registry import load_registry
 
 
-def _load_payload(payload_arg: Optional[str]) -> Dict[str, Any]:
+def _load_payload(payload_arg: str | None) -> dict[str, Any]:
     if not payload_arg:
         return {}
 
     candidate = Path(payload_arg)
-    if candidate.exists():
-        text = candidate.read_text(encoding="utf-8")
-    else:
-        text = payload_arg
+    text = candidate.read_text(encoding="utf-8") if candidate.exists() else payload_arg
 
     return json.loads(text)
 
 
-def _dump_output(result: Dict[str, Any], output_path: Optional[str]) -> None:
+def _dump_output(result: dict[str, Any], output_path: str | None) -> None:
     serialized = json.dumps(result, indent=2)
     if output_path:
         Path(output_path).write_text(serialized, encoding="utf-8")
@@ -31,7 +28,7 @@ def _dump_output(result: Dict[str, Any], output_path: Optional[str]) -> None:
         sys.stdout.write(serialized + "\n")
 
 
-def run(argv: Optional[list[str]] = None) -> int:
+def run(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Execute an MCP tool via the code-execution harness. "
@@ -64,8 +61,7 @@ def run(argv: Optional[list[str]] = None) -> int:
     registry = load_registry()
     if args.server not in registry:
         parser.error(
-            f"Unknown server '{args.server}'. "
-            "Update mcp/registry.json if this is a new server."
+            f"Unknown server '{args.server}'. Update mcp/registry.json if this is a new server."
         )
 
     payload = _load_payload(args.payload)
