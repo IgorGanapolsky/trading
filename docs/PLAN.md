@@ -43,6 +43,7 @@ Through **PROVEN, DATA-DRIVEN profitability**.
 - ✅ **RL Policy & Deep Forecast Boost (Dec 1, 2025)** - RLPolicyLearner now vetoes risky entries and learns from exits while DeepMomentumForecaster augments momentum scores
 - ✅ **Sentry telemetry + E2E tests (Dec 1, 2025)** - All orchestrators initialize Sentry, and `tests/test_trading_e2e.py` ensures CoreStrategy can run end-to-end with mocks
 - ✅ **Plan Mode Enforcement (Dec 1, 2025)** - Claude Code Plan Mode is mandatory (`plan.md`, guard script, docs) so every execution has an approved plan
+- ✅ **Rule #1 Options Upgrade (Dec 2, 2025)** - Puts/calls now enforce IV-rank + delta filters, cash/share sizing, and emit daily signal journals under `data/options_signals/`.
 
 **Critical Fixes** (November 25, 2025):
 - **Take-Profit Bug**: Fixed `elif` logic preventing take-profit from checking independently

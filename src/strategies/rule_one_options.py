@@ -18,15 +18,16 @@ Key Principles:
 - 15% Minimum Acceptable Rate of Return (MARR)
 """
 
+import json
 import logging
-import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
 from enum import Enum
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
-import yfinance as yf
 import numpy as np
+import yfinance as yf
 
 from src.core.alpaca_trader import AlpacaTrader
 from src.core.options_client import AlpacaOptionsClient
@@ -79,7 +80,7 @@ class BigFiveMetrics:
 
         # Rule #1: All Big Five should be >= 10% over 10, 5, and 1 year
         # Simplified: Average growth >= 10% and ROIC >= 10%
-        self.passes_rule_one = (
+        self.passes_rule_one = bool(
             self.avg_growth >= 0.10 and
             self.roic is not None and
             self.roic >= 0.10
@@ -139,11 +140,32 @@ class RuleOneOptionsSignal:
     current_price: float
     rationale: str
     confidence: float  # 0.0 to 1.0
+    contracts: int = 1
+    total_premium: float = 0.0
+    iv_rank: Optional[float] = None
+    delta: Optional[float] = None
     timestamp: datetime = None
 
     def __post_init__(self):
         if self.timestamp is None:
             self.timestamp = datetime.now()
+
+
+@dataclass
+class OptionContract:
+    """Lightweight container for option chain selections."""
+
+    symbol: str
+    option_type: str  # 'put' or 'call'
+    expiration: str
+    strike: float
+    bid: float
+    ask: float
+    mid: float
+    delta: Optional[float]
+    implied_vol: Optional[float]
+    days_to_expiry: int
+    iv_rank: Optional[float] = None
 
 
 class RuleOneOptionsStrategy:
@@ -181,6 +203,7 @@ class RuleOneOptionsStrategy:
     # Lower delta = lower risk of assignment, safer for beginners
     TARGET_DELTA_PUT = 0.20  # ~20% chance of assignment (was 0.30)
     TARGET_DELTA_CALL = 0.25  # ~25% chance of being called away (was 0.30)
+    DELTA_TOLERANCE = 0.05  # Allow small variance around target
 
     # IV Rank filter - only sell premium when IV is low
     # High IV = expensive options = higher premium but more risk
@@ -218,6 +241,7 @@ class RuleOneOptionsStrategy:
         # Initialize trading clients
         self.trader = AlpacaTrader(paper=paper)
         self.options_client = AlpacaOptionsClient(paper=paper)
+        self.options_log_dir = Path("data/options_signals")
 
         # Cache for valuations
         self._valuation_cache: Dict[str, StickerPriceResult] = {}
@@ -351,6 +375,107 @@ class RuleOneOptionsStrategy:
             logger.error(f"Failed to calculate Sticker Price for {symbol}: {e}")
             return None
 
+    def _get_available_cash(self) -> float:
+        """Fetch available cash/buying power for sizing put contracts."""
+        try:
+            account = self.trader.get_account()
+            cash_fields = [
+                account.get("cash"),
+                account.get("buying_power"),
+                account.get("equity"),
+            ]
+            for value in cash_fields:
+                if value is None:
+                    continue
+                try:
+                    cash_val = float(value)
+                    if cash_val > 0:
+                        return cash_val
+                except (TypeError, ValueError):
+                    continue
+        except Exception as exc:
+            logger.error(f"Unable to load account cash for options sizing: {exc}")
+        return 0.0
+
+    @staticmethod
+    def _compute_iv_rank(implied_vols, current_iv: Optional[float]) -> Optional[float]:
+        """
+        Approximate IV rank (0-100) using min/max IV from current option chain.
+        """
+        try:
+            if current_iv is None or np.isnan(current_iv):
+                return None
+
+            clean = [
+                float(iv)
+                for iv in implied_vols
+                if iv is not None and not np.isnan(iv) and iv > 0
+            ]
+            if len(clean) < 5:
+                return None
+
+            iv_min = min(clean)
+            iv_max = max(clean)
+            if iv_max <= iv_min:
+                return None
+
+            rank = (float(current_iv) - iv_min) / (iv_max - iv_min)
+            rank = max(0.0, min(rank, 1.0))
+            return round(rank * 100, 2)
+        except Exception:
+            return None
+
+    @staticmethod
+    def _serialize_signal(signal: RuleOneOptionsSignal) -> Dict:
+        """Convert signal dataclass into JSON-friendly dict."""
+        payload = {
+            "symbol": signal.symbol,
+            "type": signal.signal_type,
+            "strike": signal.strike,
+            "expiration": signal.expiration,
+            "premium": signal.premium,
+            "total_premium": signal.total_premium,
+            "annualized_return": signal.annualized_return,
+            "contracts": signal.contracts,
+            "sticker_price": signal.sticker_price,
+            "mos_price": signal.mos_price,
+            "current_price": signal.current_price,
+            "iv_rank": signal.iv_rank,
+            "delta": signal.delta,
+            "confidence": signal.confidence,
+            "rationale": signal.rationale,
+            "timestamp": signal.timestamp.isoformat(),
+        }
+        return payload
+
+    @staticmethod
+    def _serialize_valuation(result: StickerPriceResult) -> Dict:
+        """Convert StickerPriceResult to JSON-friendly dict."""
+        return {
+            "symbol": result.symbol,
+            "current_price": result.current_price,
+            "sticker_price": result.sticker_price,
+            "mos_price": result.mos_price,
+            "growth_rate": result.growth_rate,
+            "future_pe": result.future_pe,
+            "recommendation": result.recommendation,
+            "upside_to_sticker": result.upside_to_sticker,
+            "margin_of_safety": result.margin_of_safety,
+            "timestamp": result.timestamp.isoformat() if result.timestamp else None,
+        }
+
+    def _persist_signals(self, snapshot: Dict) -> None:
+        """Persist daily signals to disk for audit trail."""
+        try:
+            self.options_log_dir.mkdir(parents=True, exist_ok=True)
+            filename = datetime.now().strftime("%Y-%m-%d.json")
+            filepath = self.options_log_dir / filename
+            with open(filepath, "w", encoding="utf-8") as handle:
+                json.dump(snapshot, handle, indent=2)
+            logger.info(f"Saved options snapshot → {filepath}")
+        except Exception as exc:
+            logger.error(f"Failed to persist options snapshot: {exc}")
+
     def find_put_opportunities(self) -> List[RuleOneOptionsSignal]:
         """
         Find opportunities to sell puts at MOS price.
@@ -364,68 +489,87 @@ class RuleOneOptionsStrategy:
         Returns:
             List of RuleOneOptionsSignal for put selling opportunities
         """
-        signals = []
+        signals: List[RuleOneOptionsSignal] = []
+        cash_available = self._get_available_cash()
+
+        if cash_available <= 0:
+            logger.warning("No available cash for put selling; skipping opportunities.")
+            return signals
 
         for symbol in self.universe:
             try:
-                # Get valuation
                 valuation = self._valuation_cache.get(symbol) or self.calculate_sticker_price(symbol)
                 if not valuation:
                     continue
 
-                # Check Big Five quality
                 big_five = self._big_five_cache.get(symbol)
                 if big_five and not big_five.passes_rule_one:
                     logger.debug(f"{symbol}: Fails Big Five test, skipping")
                     continue
 
-                # Strategy: Sell puts when stock is ABOVE MOS price
-                # We want to get PAID to wait for a better entry
                 if valuation.current_price < valuation.mos_price:
-                    # Already cheap enough to buy, don't sell puts
                     logger.info(f"{symbol}: Below MOS ${valuation.mos_price:.2f}, just BUY")
                     continue
 
-                # Target strike at MOS price
                 target_strike = valuation.mos_price
-
-                # Get options chain
-                expiry, premium = self._find_best_put_option(symbol, target_strike)
-                if not expiry or premium <= 0:
+                contract = self._find_best_put_option(symbol, target_strike)
+                if not contract or contract.mid <= 0:
                     continue
 
-                # Calculate annualized return
-                days_to_expiry = (datetime.strptime(expiry, "%Y-%m-%d") - datetime.now()).days
-                if days_to_expiry <= 0:
+                # Enforce IV rank + delta gates
+                if contract.iv_rank is not None and contract.iv_rank > self.MAX_IV_RANK:
+                    logger.debug(f"{symbol}: IV rank {contract.iv_rank:.1f} exceeds max {self.MAX_IV_RANK}")
                     continue
 
-                # Annualized return = (premium / strike) * (365 / days)
-                annualized_return = (premium / target_strike) * (365 / days_to_expiry)
+                if contract.delta is not None and abs(contract.delta) > (self.TARGET_DELTA_PUT + self.DELTA_TOLERANCE):
+                    logger.debug(f"{symbol}: Put delta {contract.delta:.2f} too high for target {self.TARGET_DELTA_PUT}")
+                    continue
 
+                premium_pct = contract.mid / valuation.current_price if valuation.current_price else 0
+                if premium_pct > self.MAX_PREMIUM_PCT:
+                    logger.debug(f"{symbol}: Premium {premium_pct:.2%} exceeds cap {self.MAX_PREMIUM_PCT:.2%}")
+                    continue
+
+                if contract.days_to_expiry <= 0:
+                    continue
+
+                annualized_return = (contract.mid / target_strike) * (365 / contract.days_to_expiry)
                 if annualized_return < self.MIN_ANNUALIZED_RETURN:
                     logger.debug(f"{symbol}: Annualized return {annualized_return:.1%} below minimum")
                     continue
 
+                max_contracts = int(cash_available // (target_strike * 100))
+                if max_contracts <= 0:
+                    logger.debug(f"{symbol}: Not enough cash (${cash_available:.2f}) for cash-secured puts")
+                    continue
+
+                total_premium = contract.mid * 100 * max_contracts
                 signal = RuleOneOptionsSignal(
                     symbol=symbol,
                     signal_type="sell_put",
                     strike=target_strike,
-                    expiration=expiry,
-                    premium=premium,
+                    expiration=contract.expiration,
+                    premium=contract.mid,
                     annualized_return=annualized_return,
                     sticker_price=valuation.sticker_price,
                     mos_price=valuation.mos_price,
                     current_price=valuation.current_price,
-                    rationale=f"Sell put at MOS ${target_strike:.2f} to buy {symbol} at discount. "
-                              f"If assigned, own at {valuation.margin_of_safety:.0%} below fair value.",
-                    confidence=0.8 if big_five and big_five.passes_rule_one else 0.6,
+                    rationale=(
+                        f"Sell {max_contracts} put(s) at MOS ${target_strike:.2f}; "
+                        f"{valuation.margin_of_safety:.0%} below fair value, "
+                        f"IV rank {contract.iv_rank if contract.iv_rank is not None else 'n/a'}."
+                    ),
+                    confidence=0.85 if big_five and big_five.passes_rule_one else 0.65,
+                    contracts=max_contracts,
+                    total_premium=total_premium,
+                    iv_rank=contract.iv_rank,
+                    delta=contract.delta,
                 )
                 signals.append(signal)
 
             except Exception as e:
                 logger.warning(f"Error analyzing {symbol} for puts: {e}")
 
-        # Sort by annualized return
         signals.sort(key=lambda x: x.annualized_return, reverse=True)
         return signals
 
@@ -467,41 +611,53 @@ class RuleOneOptionsStrategy:
                 if not valuation:
                     continue
 
-                # Strategy: Sell calls at Sticker Price
-                # If called away, we sell at fair value (happy outcome)
                 target_strike = valuation.sticker_price
-
-                # Get options chain
-                expiry, premium = self._find_best_call_option(symbol, target_strike)
-                if not expiry or premium <= 0:
+                contract = self._find_best_call_option(symbol, target_strike)
+                if not contract or contract.mid <= 0:
                     continue
 
-                # Calculate annualized return
-                days_to_expiry = (datetime.strptime(expiry, "%Y-%m-%d") - datetime.now()).days
-                if days_to_expiry <= 0:
+                if contract.iv_rank is not None and contract.iv_rank > self.MAX_IV_RANK:
+                    logger.debug(f"{symbol}: Call IV rank {contract.iv_rank:.1f} exceeds max {self.MAX_IV_RANK}")
                     continue
 
-                annualized_return = (premium / valuation.current_price) * (365 / days_to_expiry)
+                if contract.delta is not None and contract.delta > (self.TARGET_DELTA_CALL + self.DELTA_TOLERANCE):
+                    logger.debug(f"{symbol}: Call delta {contract.delta:.2f} too high for target {self.TARGET_DELTA_CALL}")
+                    continue
 
+                premium_pct = contract.mid / valuation.current_price if valuation.current_price else 0
+                if premium_pct > self.MAX_PREMIUM_PCT:
+                    logger.debug(f"{symbol}: Call premium {premium_pct:.2%} exceeds cap {self.MAX_PREMIUM_PCT:.2%}")
+                    continue
+
+                if contract.days_to_expiry <= 0:
+                    continue
+
+                annualized_return = (contract.mid / valuation.current_price) * (365 / contract.days_to_expiry)
                 if annualized_return < self.MIN_ANNUALIZED_RETURN:
                     continue
 
-                # Calculate how many contracts we can write
                 num_contracts = int(qty // 100)
+                total_premium = contract.mid * 100 * num_contracts
 
                 signal = RuleOneOptionsSignal(
                     symbol=symbol,
                     signal_type="sell_call",
                     strike=target_strike,
-                    expiration=expiry,
-                    premium=premium * num_contracts * 100,  # Total premium for all contracts
+                    expiration=contract.expiration,
+                    premium=contract.mid,
                     annualized_return=annualized_return,
                     sticker_price=valuation.sticker_price,
                     mos_price=valuation.mos_price,
                     current_price=valuation.current_price,
-                    rationale=f"Sell {num_contracts} covered call(s) at Sticker Price ${target_strike:.2f}. "
-                              f"If called away, sell at fair value + ${premium:.2f} premium.",
-                    confidence=0.85,
+                    rationale=(
+                        f"Sell {num_contracts} covered call(s) at Sticker ${target_strike:.2f}; "
+                        f"IV rank {contract.iv_rank if contract.iv_rank is not None else 'n/a'}."
+                    ),
+                    confidence=0.9,
+                    contracts=num_contracts,
+                    total_premium=total_premium,
+                    iv_rank=contract.iv_rank,
+                    delta=contract.delta,
                 )
                 signals.append(signal)
 
@@ -513,7 +669,7 @@ class RuleOneOptionsStrategy:
 
     def _find_best_put_option(
         self, symbol: str, target_strike: float
-    ) -> Tuple[Optional[str], float]:
+    ) -> Optional[OptionContract]:
         """
         Find the best put option near target strike.
 
@@ -526,53 +682,70 @@ class RuleOneOptionsStrategy:
         """
         try:
             ticker = yf.Ticker(symbol)
-
-            # Get options expiration dates
             expirations = ticker.options
             if not expirations:
-                return None, 0
+                return None
 
-            # Find expiration in target range (25-50 days)
             today = datetime.now()
             target_expiry = None
+            days_out = 0
 
             for exp in expirations:
                 exp_date = datetime.strptime(exp, "%Y-%m-%d")
-                days_out = (exp_date - today).days
-
-                if self.MIN_DAYS_TO_EXPIRY <= days_out <= self.MAX_DAYS_TO_EXPIRY:
+                diff_days = (exp_date - today).days
+                if self.MIN_DAYS_TO_EXPIRY <= diff_days <= self.MAX_DAYS_TO_EXPIRY:
                     target_expiry = exp
+                    days_out = diff_days
                     break
 
             if not target_expiry:
-                # Take first available if none in range
                 target_expiry = expirations[0] if expirations else None
+                if target_expiry:
+                    exp_date = datetime.strptime(target_expiry, "%Y-%m-%d")
+                    days_out = (exp_date - today).days
 
             if not target_expiry:
-                return None, 0
+                return None
 
-            # Get put options for that expiration
             options = ticker.option_chain(target_expiry)
             puts = options.puts
 
             if puts.empty:
-                return None, 0
+                return None
 
-            # Find strike closest to target
-            puts['strike_diff'] = abs(puts['strike'] - target_strike)
-            best_put = puts.loc[puts['strike_diff'].idxmin()]
+            puts = puts.copy()
+            puts["strike_diff"] = abs(puts["strike"] - target_strike)
+            best_put = puts.loc[puts["strike_diff"].idxmin()]
 
-            premium = (best_put['bid'] + best_put['ask']) / 2
+            bid = float(best_put.get("bid", 0) or 0)
+            ask = float(best_put.get("ask", 0) or 0)
+            mid = (bid + ask) / 2 if (bid > 0 and ask > 0) else max(bid, ask)
+            delta = best_put.get("delta")
+            implied_vol = best_put.get("impliedVolatility")
+            vol_series = puts["impliedVolatility"] if "impliedVolatility" in puts else []
+            iv_rank = self._compute_iv_rank(vol_series, implied_vol)
 
-            return target_expiry, premium
+            return OptionContract(
+                symbol=symbol,
+                option_type="put",
+                expiration=target_expiry,
+                strike=float(best_put.get("strike", target_strike)),
+                bid=bid,
+                ask=ask,
+                mid=float(mid or 0),
+                delta=float(delta) if delta is not None else None,
+                implied_vol=float(implied_vol) if implied_vol is not None else None,
+                days_to_expiry=days_out,
+                iv_rank=iv_rank,
+            )
 
         except Exception as e:
             logger.debug(f"Could not find put option for {symbol}: {e}")
-            return None, 0
+            return None
 
     def _find_best_call_option(
         self, symbol: str, target_strike: float
-    ) -> Tuple[Optional[str], float]:
+    ) -> Optional[OptionContract]:
         """
         Find the best call option near target strike.
 
@@ -588,44 +761,64 @@ class RuleOneOptionsStrategy:
             expirations = ticker.options
 
             if not expirations:
-                return None, 0
+                return None
 
-            # Find expiration in target range
             today = datetime.now()
             target_expiry = None
+            days_out = 0
 
             for exp in expirations:
                 exp_date = datetime.strptime(exp, "%Y-%m-%d")
-                days_out = (exp_date - today).days
-
-                if self.MIN_DAYS_TO_EXPIRY <= days_out <= self.MAX_DAYS_TO_EXPIRY:
+                diff_days = (exp_date - today).days
+                if self.MIN_DAYS_TO_EXPIRY <= diff_days <= self.MAX_DAYS_TO_EXPIRY:
                     target_expiry = exp
+                    days_out = diff_days
                     break
 
             if not target_expiry:
                 target_expiry = expirations[0] if expirations else None
+                if target_expiry:
+                    exp_date = datetime.strptime(target_expiry, "%Y-%m-%d")
+                    days_out = (exp_date - today).days
 
             if not target_expiry:
-                return None, 0
+                return None
 
-            # Get call options
             options = ticker.option_chain(target_expiry)
             calls = options.calls
 
             if calls.empty:
-                return None, 0
+                return None
 
-            # Find strike closest to target
-            calls['strike_diff'] = abs(calls['strike'] - target_strike)
-            best_call = calls.loc[calls['strike_diff'].idxmin()]
+            calls = calls.copy()
+            calls["strike_diff"] = abs(calls["strike"] - target_strike)
+            best_call = calls.loc[calls["strike_diff"].idxmin()]
 
-            premium = (best_call['bid'] + best_call['ask']) / 2
+            bid = float(best_call.get("bid", 0) or 0)
+            ask = float(best_call.get("ask", 0) or 0)
+            mid = (bid + ask) / 2 if (bid > 0 and ask > 0) else max(bid, ask)
+            delta = best_call.get("delta")
+            implied_vol = best_call.get("impliedVolatility")
+            vol_series = calls["impliedVolatility"] if "impliedVolatility" in calls else []
+            iv_rank = self._compute_iv_rank(vol_series, implied_vol)
 
-            return target_expiry, premium
+            return OptionContract(
+                symbol=symbol,
+                option_type="call",
+                expiration=target_expiry,
+                strike=float(best_call.get("strike", target_strike)),
+                bid=bid,
+                ask=ask,
+                mid=float(mid or 0),
+                delta=float(delta) if delta is not None else None,
+                implied_vol=float(implied_vol) if implied_vol is not None else None,
+                days_to_expiry=days_out,
+                iv_rank=iv_rank,
+            )
 
         except Exception as e:
             logger.debug(f"Could not find call option for {symbol}: {e}")
-            return None, 0
+            return None
 
     def analyze_universe(self) -> Dict[str, StickerPriceResult]:
         """
@@ -669,6 +862,18 @@ class RuleOneOptionsStrategy:
         call_signals = self.find_call_opportunities()
 
         logger.info(f"Found {len(put_signals)} put opportunities, {len(call_signals)} call opportunities")
+
+        snapshot = {
+            "timestamp": datetime.now().isoformat(),
+            "put_opportunities": [self._serialize_signal(s) for s in put_signals],
+            "call_opportunities": [self._serialize_signal(s) for s in call_signals],
+            "valuations": {
+                symbol: self._serialize_valuation(val)
+                for symbol, val in self._valuation_cache.items()
+            },
+            "universe": self.universe,
+        }
+        self._persist_signals(snapshot)
 
         return {
             "puts": put_signals,
@@ -727,12 +932,14 @@ if __name__ == "__main__":
     print("\n--- Top Put Opportunities (Getting Paid to Wait) ---")
     for opp in analysis['put_opportunities']:
         print(f"  {opp['symbol']}: Sell put at ${opp['strike']:.2f}, "
-              f"Yield: {opp['annualized_return']:.1%}")
+              f"Yield: {opp['annualized_return']:.1%}, "
+              f"Premium ${opp['premium']:.2f}/sh × {opp.get('contracts', 1)} contract(s)")
 
     print("\n--- Top Call Opportunities (Getting Paid to Sell) ---")
     for opp in analysis['call_opportunities']:
         print(f"  {opp['symbol']}: Sell call at ${opp['strike']:.2f}, "
-              f"Yield: {opp['annualized_return']:.1%}")
+              f"Yield: {opp['annualized_return']:.1%}, "
+              f"Premium ${opp['premium']:.2f}/sh × {opp.get('contracts', 1)} contract(s)")
 
     print("\n--- Undervalued (Below MOS Price) ---")
     for sym in analysis['undervalued_stocks']:
