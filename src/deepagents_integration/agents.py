@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import logging
 
-from deepagents import create_deep_agent
 from langchain.chat_models import init_chat_model
 from langchain_core.language_models.chat_models import BaseChatModel
 
@@ -14,6 +13,14 @@ from .mcp_tools import build_mcp_tools_for_deepagents
 from .tools import build_trading_tools
 
 logger = logging.getLogger(__name__)
+
+try:
+    from deepagents import create_deep_agent
+except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
+    create_deep_agent = None  # type: ignore
+    DEEPAGENTS_IMPORT_ERROR = exc
+else:
+    DEEPAGENTS_IMPORT_ERROR = None
 
 
 TRADING_RESEARCH_SYSTEM_PROMPT = """You are an expert trading research analyst specializing in comprehensive market analysis.
@@ -110,6 +117,12 @@ def create_trading_research_agent(
     Returns:
         DeepAgent instance configured for trading research
     """
+    if create_deep_agent is None:
+        raise ImportError(
+            "deepagents is not installed. Install optional extras with "
+            '`python -m pip install ".[deepagents]"` and set DEEPAGENTS_ENABLED=true.'
+        ) from DEEPAGENTS_IMPORT_ERROR
+
     if model is None:
         model = init_chat_model(
             model="anthropic:claude-sonnet-4-5-20250929",
@@ -152,6 +165,12 @@ def create_market_analysis_agent(
     Returns:
         DeepAgent instance configured for market analysis
     """
+    if create_deep_agent is None:
+        raise ImportError(
+            "deepagents is not installed. Install optional extras with "
+            '`python -m pip install ".[deepagents]"` and set DEEPAGENTS_ENABLED=true.'
+        ) from DEEPAGENTS_IMPORT_ERROR
+
     if model is None:
         model = init_chat_model(
             model="anthropic:claude-sonnet-4-5-20250929",
