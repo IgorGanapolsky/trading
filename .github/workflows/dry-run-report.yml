@@ -211,11 +211,8 @@ jobs:
           git add badges/dryrun.json
           git add badges/progress.json
           git commit -m "chore: update dry run badge timestamp (${TS})" || echo "No changes"
-          # Try direct push; if blocked by rules, create a PR from a temp branch
+          # Try direct push; if blocked, skip (badges are non-critical, don't create orphaned branches)
           if ! git push; then
-            BR="automation/badges-$(date -u +%Y%m%d%H%M%S)"
-            git checkout -b "$BR"
-            git push -u origin "$BR"
-            export GH_TOKEN="$GITHUB_TOKEN"
-            gh pr create -t "chore: update badges (${TS})" -b "Automated nightly update of dry run and dashboard badges." -H "$BR" -B main || true
+            echo "::warning::Could not push badge update directly to main (branch protection). Skipping badge update."
+            echo "Badge updates are non-critical. To enable, allow GitHub Actions to push to main or manually update badges."
           fi
