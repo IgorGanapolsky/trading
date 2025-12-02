@@ -211,6 +211,7 @@ Set `HYBRID_LLM_MODEL=claude-3-5-haiku-20241022` (default) or `gpt-4o-mini` to c
 - **Momentum Indicators**: MACD, RSI, Volume analysis
 - **Multi-tier Allocation**: ETFs (60%), Growth stocks (20%), IPOs (10%), Crowdfunding (10%)
 - **Risk Management**: Daily loss limits, max drawdown protection, position sizing
+- **Hybrid RL Filter**: Gate 2 now ensembles PPO heuristics with a transformer encoder for multi-horizon context plus attribution logging
 - **Paper Trading**: 90-day validation before live trading
 
 ### Treasuries Momentum Gate (New)
@@ -234,6 +235,7 @@ Set `HYBRID_LLM_MODEL=claude-3-5-haiku-20241022` (default) or `gpt-4o-mini` to c
 - **Daily Reporting**: Automated CEO reports with performance metrics
 - **State Persistence**: Complete system state tracking
 - **Error Handling**: Retry logic, graceful failures, comprehensive logging
+- **Realtime Anomaly Guardrails**: Rolling rejection/confidence monitor halts or flags gates that misbehave mid-session
 
 ### Sentiment Analysis
 - **Reddit Scraper**: Monitors 4 key investing subreddits
@@ -273,7 +275,7 @@ Set `HYBRID_LLM_MODEL=claude-3-5-haiku-20241022` (default) or `gpt-4o-mini` to c
 
 ## ✅ Promotion Gate & Telemetry
 
-- **Scenario Backtests**: `python3 scripts/run_backtest_matrix.py` executes the regime matrix defined in `config/backtest_scenarios.yaml` and persists structured metrics to `data/backtests/`.
+- **Scenario Backtests**: `python3 scripts/run_backtest_matrix.py` executes the regime matrix defined in `config/backtest_scenarios.yaml` and persists structured metrics to `data/backtests/`. Pass `--use-hybrid-gates` to replay the full production funnel (momentum → transformer RL → LLM proxy → risk) inside CI-safe backtests.
 - **Automated Promotion Guard**: `python3 scripts/enforce_promotion_gate.py` blocks any live trading toggles until paper-trading + scenario metrics satisfy the R&D thresholds (win rate >60%, Sharpe >1.5, max drawdown <10%, ≥30-day profitable streak).
 - **CI Integration**: `.github/workflows/daily-trading.yml` now runs the matrix + promotion guard before the orchestrator fires, so we cannot accidentally bypass the R&D phase.
 - **Telemetry Surfaces**: `scripts/generate_telemetry_report.py` and `dashboard/telemetry_app.py` read `data/audit_trail/hybrid_funnel_runs.jsonl` to expose gate pass/reject rates, top tickers, and recent errors for monitoring.
