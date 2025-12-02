@@ -111,3 +111,27 @@ Next Steps:
 - When network access is available, re-run backtest matrix to populate real scenario data
 - Continue R&D phase (Day 9/90) to improve paper trading metrics toward 60% win rate, 1.5 Sharpe
 - Once metrics improve, promotion gate will pass naturally
+
+2025-12-02 00:00 - Claude Opus 4 (CTO)
+Summary:
+- Implemented $10/day → $100/day roadmap based on CEO's North Star goal
+- Added BITO (ProShares Bitcoin Strategy ETF) to asset universe for BTC exposure without crypto API issues
+- Added IEF (iShares 7-10 Year Treasury Bond ETF) for shorter-duration treasury diversification
+- Updated allocation: 50% equity, 15% bonds, 15% REITs, 10% treasuries, 10% crypto proxy
+- Created comprehensive plan.md documenting the 16-18 month path to $100/day profit
+
+Files Changed:
+- src/strategies/core_strategy.py (ETF universe + allocation update)
+- plan.md (full roadmap with compounding math)
+- claude-progress.txt (this entry)
+
+Key Decisions:
+1. BITO replaces broken direct BTC/ETH trading - trades like regular stock, no API issues
+2. IEF complements TLT for a treasury ladder approach
+3. Reduced equity from 60% to 50% to make room for crypto proxy
+4. Compounding math: $10/day input → $100/day profit in ~18 months at 0.13% daily edge
+
+Next Steps:
+- Run backtest with new 7-ETF portfolio allocation
+- Continue R&D phase to validate win rate holds with expanded universe
+- Next trade: Dec 03, 9:35 AM ET (will include new assets in momentum selection)

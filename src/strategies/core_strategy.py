@@ -156,10 +156,12 @@ class CoreStrategy:
     """
 
     # Default ETF universe for Tier 1 strategy
-    # Includes equity ETFs (SPY, QQQ, VOO), bond ETF (BND), and REIT ETF (VNQ) for diversification
+    # Includes equity ETFs (SPY, QQQ, VOO), bond ETF (BND), REIT ETF (VNQ), and crypto proxy (BITO)
     # BND: Vanguard Total Bond Market ETF - provides bond exposure per Graham's defensive investor principles
     # VNQ: Vanguard Real Estate Index Fund ETF - provides real estate exposure for diversification and income
-    DEFAULT_ETF_UNIVERSE = ["SPY", "QQQ", "VOO", "BND", "VNQ"]
+    # BITO: ProShares Bitcoin Strategy ETF - provides BTC exposure via futures, trades like regular stock
+    # IEF: iShares 7-10 Year Treasury Bond ETF - shorter duration treasury for rate sensitivity diversification
+    DEFAULT_ETF_UNIVERSE = ["SPY", "QQQ", "VOO", "BND", "VNQ", "BITO", "IEF"]
 
     # Momentum calculation periods (in days)
     LOOKBACK_PERIODS = {"1month": 21, "3month": 63, "6month": 126}
@@ -192,12 +194,20 @@ class CoreStrategy:
     TAKE_PROFIT_PCT = 0.05  # 5% profit target (conservative for Day 9 R&D)
 
     # Diversification allocation (guaranteed minimums)
-    # 60% equity, 15% bonds, 15% REITs, 10% treasuries
-    EQUITY_ALLOCATION_PCT = 0.60  # SPY/QQQ/VOO (momentum-selected)
+    # 50% equity, 15% bonds, 15% REITs, 10% treasuries, 10% crypto proxy
+    # This allocation targets $100/day profit goal via diversified compounding
+    EQUITY_ALLOCATION_PCT = 0.50  # SPY/QQQ/VOO (momentum-selected)
     BOND_ALLOCATION_PCT = 0.15  # BND (Vanguard Total Bond Market)
     REIT_ALLOCATION_PCT = 0.15  # VNQ (Vanguard Real Estate)
-    TREASURY_ALLOCATION_PCT = 0.10  # TLT (iShares 20+ Year Treasury)
-    DIVERSIFICATION_SYMBOLS = {"bond": "BND", "reit": "VNQ", "treasury": "TLT"}
+    TREASURY_ALLOCATION_PCT = 0.10  # TLT/IEF (Treasury ladder)
+    CRYPTO_PROXY_ALLOCATION_PCT = 0.10  # BITO (Bitcoin ETF proxy for BTC exposure)
+    DIVERSIFICATION_SYMBOLS = {
+        "bond": "BND",
+        "reit": "VNQ",
+        "treasury": "TLT",
+        "treasury_short": "IEF",
+        "crypto_proxy": "BITO"
+    }
 
     def __init__(
         self,

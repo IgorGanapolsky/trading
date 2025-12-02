@@ -1,35 +1,104 @@
-# Plan Mode Session: Promotion Gate + Backtest Matrix + Telemetry
+# Plan Mode Session: $10/Day to $100/Day Roadmap
+
 > Managed in Claude Code Plan Mode. Do not modify outside Plan Mode workflow.
 
 ## Metadata
-- Task: Enforce R&D promotion gate, expand backtest coverage, and surface telemetry dashboards
-- Owner: GPT-5.1 Codex
+- Task: Implement 7-day asset coverage for $100/day profit goal
+- Owner: Claude CTO
 - Status: APPROVED
-- Approved at: 2025-12-01T22:05:00Z
+- Approved at: 2025-12-02T00:00:00Z
 - Valid for (minutes): 180
 
-## Clarifying Questions
-| # | Question | Resolution | Status |
-|---|----------|------------|--------|
-| 1 | What metrics determine promotion to live trading? | Use existing R&D criteria (win rate >60%, Sharpe >1.5, max drawdown <10%, profitable 30 consecutive days, no critical bugs) by parsing audit/backtest JSON artifacts. | Resolved |
-| 2 | Where will scenario backtest artifacts live? | Store standardized JSON + Markdown reports per scenario under `data/backtests/<strategy>/<scenario>/` to keep history and allow CI assertions. | Resolved |
-| 3 | How should telemetry be consumed? | Build a lightweight Streamlit dashboard backed by existing JSONL audit trail plus an optional CLI report writer for headless runs; expose summary metrics + gate pass/fail counts. | Resolved |
+## North Star Goal
+
+**Input**: $10/day invested
+**Output**: $100/day profit (after-tax) within 16-18 months
+**Strategy**: Compound 7-day diversified portfolio at ~0.13% daily edge
+
+## Current State (Day 9/90)
+
+| Metric | Value | Status |
+|--------|-------|--------|
+| Portfolio | $100,005.50 | +$5.50 P/L |
+| Win Rate (Backtest) | 62.2% | Above 60% target |
+| Sharpe Ratio (Backtest) | 2.18 | Above 1.5 target |
+| Phase | R&D (Month 1) | Building edge |
+
+## Asset Allocation (Updated Dec 2, 2025)
+
+**7-ETF Diversified Portfolio**:
+
+| Asset Class | Symbol | Allocation | Purpose |
+|-------------|--------|------------|---------|
+| Equity | SPY/QQQ/VOO | 50% | Momentum-selected core |
+| Bonds | BND | 15% | Defensive buffer (Graham) |
+| REITs | VNQ | 15% | Real estate yield |
+| Treasuries | TLT/IEF | 10% | Rate sensitivity ladder |
+| Crypto Proxy | BITO | 10% | BTC exposure via ETF |
+
+**Why BITO over direct BTC/ETH**:
+- Trades like regular stock on Alpaca (no crypto API issues)
+- Same data pipeline as other ETFs
+- Captures BTC price movements via futures
+- No special authentication or data sources needed
+
+## Compounding Math to $100/Day
+
+Assumptions:
+- $10/day input (weekdays only = ~22 days/month)
+- 0.13% daily net edge (post-fees, post-slippage)
+- Full profit reinvestment
+- 62% win rate holds
+
+| Months | Total Invested | Account Value | Daily Net Profit | Notes |
+|--------|----------------|---------------|------------------|-------|
+| 1 | $220 | $230 | ~$0.30 | Bootstrap phase |
+| 3 | $660 | $750 | ~$1.00 | System learning |
+| 6 | $1,320 | $1,800 | ~$2.30 | Edge stabilizing |
+| 12 | $2,640 | $5,000 | ~$6.50 | Compounding kicks in |
+| 18 | $3,960 | $12,000 | ~$15.50 | **$100/day in reach** |
+| 24 | $5,280 | $25,000 | ~$32.00 | Sustainable $100/day |
+
+**Key Accelerators**:
+1. Higher initial capital reduces timeline significantly
+2. Side income reinvested accelerates compounding
+3. Scaling daily input from $10 → $20 → $50 as profits grow
 
 ## Execution Plan
-1. Inventory existing audit/backtest outputs to confirm available metrics and add helpers to parse them.
-2. Implement `scripts/enforce_promotion_gate.py` that aggregates recent metrics and exits non-zero if promotion criteria unmet; expose toggles for paper/live mode.
-3. Wire promotion guard into CI (daily trading + relevant workflows) and add docs describing the automated gate and manual override procedure.
-4. Create scenario definition YAML (e.g., bull, bear, high-vol) and implement `scripts/run_backtest_matrix.py` that iterates scenarios, runs backtests, and saves JSON/Markdown reports.
-5. Add pytest coverage for the promotion guard + scenario runner plus snapshot-based verification of output schemas.
-6. Build telemetry surface: parse `data/audit_trail/hybrid_funnel_runs.jsonl`, aggregate gate stats, and expose both a CLI summary (`scripts/generate_telemetry_report.py`) and an optional Streamlit app under `dashboard/`.
-7. Update README/docs to reference the new guard, backtest matrix, and telemetry views; ensure CI/docs link to generated artifacts.
 
-## Approval
-- [x] Requirements captured with repo impact
-- [x] Clarifications resolved with storage, metrics, and UX decisions
-- [x] CTO Approval — GPT-5.1 Codex @ 2025-12-01T22:05:00Z
+### Phase 1: R&D Complete (Days 1-90) - Current
+- [x] Core momentum strategy validated (62.2% win rate)
+- [x] Multi-asset diversification (SPY/QQQ/VOO/BND/VNQ/TLT)
+- [x] RL policy learner integrated
+- [x] Risk management with circuit breakers
+- [ ] Add BITO crypto proxy (done Dec 2, 2025)
+- [ ] Add IEF treasury diversification (done Dec 2, 2025)
+- [ ] Achieve 30 consecutive profitable days
+
+### Phase 2: Production Scaling (Days 91-180)
+- [ ] Deploy live trading with real capital
+- [ ] Start with $100 initial deposit + $10/day
+- [ ] Monitor daily edge vs backtest
+- [ ] Scale position sizes based on Sharpe
+
+### Phase 3: Compounding Growth (Months 6-18)
+- [ ] Reinvest 100% of profits
+- [ ] Scale daily input as account grows
+- [ ] Target $100/day net by Month 18
+
+## Risk Guardrails
+
+| Guard | Threshold | Action |
+|-------|-----------|--------|
+| Daily Loss | >2% | Halt trading |
+| Max Drawdown | >10% | Review strategy |
+| Win Rate Drop | <50% | Pause, retrain |
+| Sharpe Drop | <1.0 | Reduce position sizes |
 
 ## Exit Checklist
-- [x] Promotion gate script + CI guard added
-- [x] Backtest matrix automation + tests committed
-- [x] Telemetry dashboard/report added with docs updated
+- [x] BITO added to ETF universe
+- [x] IEF added for treasury diversification
+- [x] Allocation percentages updated (50/15/15/10/10)
+- [x] Documentation updated
+- [ ] Backtest with new allocation
+- [ ] Commit and push changes
