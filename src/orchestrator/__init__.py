@@ -1,7 +1,14 @@
 """
-Trading orchestrator package.
+Trading orchestrator package - CLI entrypoint and hybrid funnel pipeline.
 
-Provides the CLI entrypoint and helper utilities for coordinating agents.
+This module provides:
+- TradingOrchestrator: Main CLI entry point with Momentum → RL → LLM → Risk gates
+- BudgetController: Daily budget management
+- FailureIsolationManager: Error handling and recovery
+- OrchestratorTelemetry: Performance monitoring
+
+Note: This is distinct from src/orchestration/ which contains specialized
+orchestrator implementations (Elite, MCP, Workflow). Both may be used together.
 """
 
 from __future__ import annotations
