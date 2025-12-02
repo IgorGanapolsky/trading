@@ -19,7 +19,7 @@ Each integration attempts to make a trading decision. If it succeeds, the flow s
 ### Current Implementation Status
 
 **Phase 1: Analysis Only (Current)**
-- DeepAgents is enabled by default
+- DeepAgents is **disabled** by default (install + set env to enable)
 - Runs comprehensive market analysis
 - Logs recommendations and insights
 - **Does NOT execute trades** (returns False to fall back to Core Strategy)
@@ -35,28 +35,31 @@ Each integration attempts to make a trading decision. If it succeeds, the flow s
 
 ### Environment Variables
 
-Add to your `.env` file:
+Add to your `.env` file (defaults to disabled so CI stays lean):
 
 ```bash
 # DeepAgents - Planning-based trading agent with sub-agent delegation
-DEEPAGENTS_ENABLED=true
+DEEPAGENTS_ENABLED=false
 ```
 
 **Values:**
 - `true`, `1`, `on`, `yes` → DeepAgents ENABLED
 - `false`, `0`, `off`, `no` → DeepAgents DISABLED
 
-**Default:** `true` (per CEO directive Nov 24, 2025)
+**Default:** `false` (enable explicitly once dependencies are installed)
 
 ### Dependencies
 
-DeepAgents requires the following Python packages:
+DeepAgents is now an **optional extra**. Install it only if you plan to run the planning agent:
 
 ```bash
-pip install deepagents langchain langchain-core
+# Install base dependencies
+python3 -m pip install -r requirements.txt
+# Then install the DeepAgents extra
+python3 -m pip install ".[deepagents]"
 ```
 
-If these are missing, the system will:
+If DeepAgents is not installed, the system will:
 1. Log a warning during initialization
 2. Set `deepagents_adapter = None`
 3. Fall back to ADK or Core Strategy
@@ -83,7 +86,7 @@ If these are missing, the system will:
 
 ```python
 # In TradingOrchestrator._initialize_components()
-deepagents_enabled_env = os.getenv("DEEPAGENTS_ENABLED", "true").lower()
+deepagents_enabled_env = os.getenv("DEEPAGENTS_ENABLED", "false").lower()
 deepagents_enabled = deepagents_enabled_env not in {"0", "false", "off", "no"}
 
 if deepagents_enabled:
@@ -263,7 +266,7 @@ python src/main.py --mode paper --run-once
 
 ### Phase 1: Analysis Only (Current - Nov 25, 2025)
 - [x] Integrate DeepAgents into main trading loop
-- [x] Enable by default via DEEPAGENTS_ENABLED=true
+- [x] Document opt-in install/env toggle (`pip install ".[deepagents]"` + `DEEPAGENTS_ENABLED=true`)
 - [x] Log analysis and recommendations
 - [x] Fall back to Core Strategy for execution
 - [x] Validate output quality
@@ -294,7 +297,7 @@ python src/main.py --mode paper --run-once
 3. Verify dependencies: `pip show deepagents langchain langchain-core`
 
 **Solutions:**
-- Install missing dependencies: `pip install deepagents langchain langchain-core`
+- Install optional dependencies: `python3 -m pip install ".[deepagents]"`
 - Enable via `.env`: `DEEPAGENTS_ENABLED=true`
 - Check for initialization exceptions in logs
 

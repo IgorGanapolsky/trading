@@ -347,7 +347,9 @@ class TradingOrchestrator:
             "openrouter_api_key": os.getenv("OPENROUTER_API_KEY"),
             # Trading Configuration
             "paper_trading": os.getenv("PAPER_TRADING", "true").lower() == "true",
-            "daily_investment": float(os.getenv("DAILY_INVESTMENT", "1500.0")),
+            "daily_investment": float(
+                os.getenv("DAILY_INVESTMENT", "10.0")
+            ),  # Aligned with config.py default
             # Tier Allocations
             "tier1_allocation": float(os.getenv("TIER1_ALLOCATION", "0.60")),
             "tier2_allocation": float(os.getenv("TIER2_ALLOCATION", "0.20")),
@@ -511,7 +513,7 @@ class TradingOrchestrator:
                 self.logger.info("ADK orchestrator integration disabled via ADK_ENABLED=0")
 
             # Initialize DeepAgents adapter
-            deepagents_enabled_env = os.getenv("DEEPAGENTS_ENABLED", "true").lower()
+            deepagents_enabled_env = os.getenv("DEEPAGENTS_ENABLED", "false").lower()
             deepagents_enabled = deepagents_enabled_env not in {
                 "0",
                 "false",

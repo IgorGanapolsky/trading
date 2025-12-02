@@ -27,7 +27,10 @@ import yfinance as yf
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
+from src.agents.rl_agent import RLFilter
 from src.backtesting.backtest_results import BacktestResults
+from src.risk.risk_manager import RiskManager
+from src.utils.technical_indicators import calculate_technical_score
 
 # Import slippage model for realistic execution costs
 try:
@@ -69,6 +72,8 @@ class BacktestEngine:
         initial_capital: float = 100000.0,
         enable_slippage: bool = True,
         slippage_bps: float = 5.0,
+        use_hybrid_gates: bool = False,
+        hybrid_options: Optional[dict[str, Any]] = None,
     ):
         """
         Initialize the backtest engine.
@@ -120,6 +125,15 @@ class BacktestEngine:
         self.enable_slippage = enable_slippage and SLIPPAGE_AVAILABLE
         self.slippage_model = None
         self.total_slippage_cost = 0.0  # Track cumulative slippage
+        self.use_hybrid_gates = use_hybrid_gates
+        self.hybrid_options = hybrid_options or {}
+        self.hybrid_gate_rl: Optional[RLFilter] = None
+        self.hybrid_risk: Optional[RiskManager] = None
+        self.hybrid_sentiment: Optional[SyntheticSentimentModel] = None
+        self.momentum_min_score = float(os.getenv("MOMENTUM_MIN_SCORE", "0.0"))
+        self.momentum_macd_threshold = float(os.getenv("MOMENTUM_MACD_THRESHOLD", "0.0"))
+        self.momentum_rsi_overbought = float(os.getenv("MOMENTUM_RSI_OVERBOUGHT", "70.0"))
+        self.momentum_volume_min = float(os.getenv("MOMENTUM_VOLUME_MIN", "0.8"))
 
         if self.enable_slippage:
             self.slippage_model = SlippageModel(
@@ -131,6 +145,14 @@ class BacktestEngine:
             logger.info(f"Slippage model enabled: {slippage_bps} bps base spread")
         else:
             logger.warning("Slippage model disabled - results may be optimistic")
+
+        if self.use_hybrid_gates:
+            logger.info("Hybrid funnel simulation enabled for backtests.")
+            self.hybrid_gate_rl = RLFilter()
+            self.hybrid_risk = RiskManager()
+            self.hybrid_sentiment = SyntheticSentimentModel(
+                negative_threshold=float(os.getenv("LLM_NEGATIVE_SENTIMENT_THRESHOLD", "-0.2"))
+            )
 
         logger.info(f"Backtest engine initialized: {start_date} to {end_date}")
         logger.info(f"Initial capital: ${initial_capital:,.2f}")
@@ -336,154 +358,224 @@ class BacktestEngine:
         """
         date_str = date.strftime("%Y-%m-%d")
 
-        # Update portfolio value with current prices
-        self._update_portfolio_value(date)
-
-        # Get the best ETF to buy from strategy
         try:
-            # Calculate momentum scores for this date
-            # Skip sentiment in backtest mode (would require live API calls)
-            momentum_scores = []
-
-            for symbol in self.strategy.etf_universe:
-                try:
-                    # Get historical data up to this date
-                    hist = self._get_historical_data(symbol, date)
-                    if hist is None:
-                        logger.warning(f"{date_str}: No historical data for {symbol}")
-                        continue
-                    if len(hist) < 50:
-                        logger.warning(
-                            f"{date_str}: Insufficient data for {symbol}: {len(hist)} bars (need 50)"
-                        )
-                        continue
-
-                    # Calculate momentum score using strategy's method
-                    # We need to temporarily modify yfinance calls to use cached data
-                    score = self._calculate_momentum_for_date(symbol, date)
-                    if score is not None:
-                        momentum_scores.append({"symbol": symbol, "score": score})
-                        logger.info(f"{date_str}: {symbol} momentum={score:.2f}")
-                    else:
-                        logger.warning(
-                            f"{date_str}: Momentum calculation returned None for {symbol}"
-                        )
-
-                except Exception as e:
-                    logger.warning(f"Failed to calculate momentum for {symbol}: {e}")
-                    continue
-
-            if not momentum_scores:
-                logger.warning(f"{date_str}: No valid momentum scores")
-                return
-
-            # Select best ETF
-            momentum_scores.sort(key=lambda x: x["score"], reverse=True)
-            best_etf = momentum_scores[0]["symbol"]
-
-            # Get current price
-            price = self._get_price(best_etf, date)
-            if price is None:
-                logger.debug(f"{date_str}: No price available for {best_etf}")
-                return
-
-            # Calculate effective allocation (VCA-adjusted if enabled)
-            daily_allocation = self.strategy.daily_allocation
-            effective_allocation = daily_allocation
-            allocation_type = "DCA"
-
-            if self.strategy.use_vca and self.strategy.vca_strategy:
-                try:
-                    # Calculate current portfolio value
-                    current_portfolio_value = self.portfolio_value
-                    vca_calc = self.strategy.vca_strategy.calculate_investment_amount(
-                        current_portfolio_value, date
-                    )
-                    effective_allocation = vca_calc.adjusted_amount
-                    allocation_type = "VCA"
-
-                    # Skip if VCA recommends not investing
-                    if not vca_calc.should_invest:
-                        logger.debug(
-                            f"{date_str}: VCA recommends skipping investment: {vca_calc.reason}"
-                        )
-                        # Still record equity curve
-                        self._update_portfolio_value(date)
-                        self.equity_curve.append(self.portfolio_value)
-                        self.dates.append(date_str)
-                        return
-                except Exception as e:
-                    logger.warning(f"{date_str}: VCA calculation failed, using base: {e}")
-                    effective_allocation = daily_allocation
-
-            # Execute trade if we have capital
-            if self.current_capital >= effective_allocation:
-                # Apply slippage to get realistic execution price
-                executed_price = price
-                slippage_cost = 0.0
-
-                if self.enable_slippage and self.slippage_model:
-                    # Get volume for market impact calculation
-                    hist = self._get_historical_data(best_etf, date)
-                    avg_volume = None
-                    volatility = None
-                    if hist is not None and len(hist) >= 20:
-                        avg_volume = hist["Volume"].tail(20).mean()
-                        returns = hist["Close"].pct_change().dropna()
-                        volatility = returns.tail(20).std() if len(returns) >= 20 else 0.02
-
-                    quantity_estimate = effective_allocation / price
-                    slippage_result = self.slippage_model.calculate_slippage(
-                        price=price,
-                        quantity=quantity_estimate,
-                        side="buy",
-                        symbol=best_etf,
-                        volume=avg_volume,
-                        volatility=volatility,
-                    )
-                    executed_price = slippage_result.executed_price
-                    slippage_cost = slippage_result.slippage_amount * quantity_estimate
-                    self.total_slippage_cost += slippage_cost
-
-                # Calculate actual quantity at executed price
-                quantity = effective_allocation / executed_price
-
-                # Record trade with slippage info
-                trade = {
-                    "date": date_str,
-                    "symbol": best_etf,
-                    "action": "buy",
-                    "quantity": quantity,
-                    "price": executed_price,
-                    "base_price": price,
-                    "slippage_cost": slippage_cost,
-                    "amount": effective_allocation,
-                    "reason": f"Daily {allocation_type} purchase",
-                }
-                self.trades.append(trade)
-
-                # Update positions
-                self.positions[best_etf] = self.positions.get(best_etf, 0.0) + quantity
-                self.position_costs[best_etf] = (
-                    self.position_costs.get(best_etf, 0.0) + effective_allocation
-                )
-                self.current_capital -= effective_allocation
-
-                if slippage_cost > 0:
-                    logger.debug(
-                        f"{date_str}: BUY {quantity:.4f} {best_etf} @ ${executed_price:.2f} "
-                        f"(base: ${price:.2f}, slippage: ${slippage_cost:.4f})"
-                    )
-                else:
-                    logger.debug(f"{date_str}: BUY {quantity:.4f} {best_etf} @ ${price:.2f}")
-
-        except Exception as e:
-            logger.debug(f"Error simulating {date_str}: {e}")
+            if self.use_hybrid_gates:
+                self._simulate_hybrid_day(date, date_str)
+            else:
+                self._simulate_dca_day(date, date_str)
+        except Exception as exc:  # pragma: no cover - safety net
+            logger.debug(f"Error simulating {date_str}: {exc}")
 
         # Record equity curve
         self._update_portfolio_value(date)
         self.equity_curve.append(self.portfolio_value)
         self.dates.append(date_str)
+
+    def _simulate_dca_day(self, date: datetime, date_str: str) -> None:
+        """Legacy DCA-style backtest flow (pre-hybrid)."""
+        # Update portfolio value with current prices
+        self._update_portfolio_value(date)
+
+        # Calculate momentum scores for this date
+        momentum_scores = []
+
+        for symbol in self.strategy.etf_universe:
+            try:
+                hist = self._get_historical_data(symbol, date)
+                if hist is None:
+                    logger.warning(f"{date_str}: No historical data for {symbol}")
+                    continue
+                if len(hist) < 50:
+                    logger.warning(
+                        f"{date_str}: Insufficient data for {symbol}: {len(hist)} bars (need 50)"
+                    )
+                    continue
+
+                score = self._calculate_momentum_for_date(symbol, date)
+                if score is not None:
+                    momentum_scores.append({"symbol": symbol, "score": score})
+                    logger.info(f"{date_str}: {symbol} momentum={score:.2f}")
+                else:
+                    logger.warning(f"{date_str}: Momentum calculation returned None for {symbol}")
+
+            except Exception as exc:  # pragma: no cover - defensively continue
+                logger.warning(f"Failed to calculate momentum for {symbol}: {exc}")
+                continue
+
+        if not momentum_scores:
+            logger.warning(f"{date_str}: No valid momentum scores")
+            return
+
+        momentum_scores.sort(key=lambda x: x["score"], reverse=True)
+        best_etf = momentum_scores[0]["symbol"]
+
+        price = self._get_price(best_etf, date)
+        if price is None:
+            logger.debug(f"{date_str}: No price available for {best_etf}")
+            return
+
+        daily_allocation = self.strategy.daily_allocation
+        effective_allocation = daily_allocation
+        allocation_type = "DCA"
+
+        if self.strategy.use_vca and self.strategy.vca_strategy:
+            try:
+                current_portfolio_value = self.portfolio_value
+                vca_calc = self.strategy.vca_strategy.calculate_investment_amount(
+                    current_portfolio_value, date
+                )
+                effective_allocation = vca_calc.adjusted_amount
+                allocation_type = "VCA"
+
+                if not vca_calc.should_invest:
+                    logger.debug(
+                        f"{date_str}: VCA recommends skipping investment: {vca_calc.reason}"
+                    )
+                    return
+            except Exception as exc:
+                logger.warning(f"{date_str}: VCA calculation failed, using base: {exc}")
+                effective_allocation = daily_allocation
+
+        if self.current_capital < effective_allocation:
+            return
+
+        executed_price, slippage_cost = self._apply_slippage_adjustment(
+            symbol=best_etf,
+            date=date,
+            base_price=price,
+            notional=effective_allocation,
+        )
+
+        quantity = effective_allocation / executed_price
+        trade = {
+            "date": date_str,
+            "symbol": best_etf,
+            "action": "buy",
+            "quantity": quantity,
+            "price": executed_price,
+            "base_price": price,
+            "slippage_cost": slippage_cost,
+            "amount": effective_allocation,
+            "reason": f"Daily {allocation_type} purchase",
+        }
+        self.trades.append(trade)
+
+        self.positions[best_etf] = self.positions.get(best_etf, 0.0) + quantity
+        self.position_costs[best_etf] = (
+            self.position_costs.get(best_etf, 0.0) + effective_allocation
+        )
+        self.current_capital -= effective_allocation
+
+    def _simulate_hybrid_day(self, date: datetime, date_str: str) -> None:
+        """Hybrid funnel-aware simulation that mirrors the production gates."""
+        if not self.hybrid_gate_rl or not self.hybrid_risk or not self.hybrid_sentiment:
+            logger.warning("Hybrid gate components not initialised. Skipping day.")
+            return
+
+        max_trades = int(self.hybrid_options.get("max_trades_per_day", 1))
+        trades_placed = 0
+
+        for symbol in self.strategy.etf_universe:
+            hist = self._get_historical_data(symbol, date)
+            if hist is None or len(hist) < 80:
+                continue
+
+            momentum_signal = self._calculate_momentum_snapshot(symbol, hist)
+            if not momentum_signal["is_buy"]:
+                continue
+
+            rl_decision = self.hybrid_gate_rl.predict(momentum_signal["state"])
+            if rl_decision["action"] != "long":
+                continue
+
+            sentiment = self.hybrid_sentiment.score(hist)
+            if not sentiment["accepted"]:
+                continue
+
+            price = float(hist["Close"].iloc[-1])
+            notional = self.hybrid_risk.calculate_size(
+                ticker=symbol,
+                account_equity=self.portfolio_value,
+                signal_strength=momentum_signal["strength"],
+                rl_confidence=rl_decision["confidence"],
+                sentiment_score=sentiment["score"],
+                multiplier=rl_decision.get("suggested_multiplier", 1.0),
+                current_price=price,
+                hist=hist,
+            )
+
+            if notional <= 0 or self.current_capital <= 0:
+                continue
+
+            notional = min(notional, self.current_capital)
+            executed_price, slippage_cost = self._apply_slippage_adjustment(
+                symbol=symbol,
+                date=date,
+                base_price=price,
+                notional=notional,
+                hist=hist,
+            )
+
+            quantity = notional / executed_price
+            self.positions[symbol] = self.positions.get(symbol, 0.0) + quantity
+            self.position_costs[symbol] = self.position_costs.get(symbol, 0.0) + notional
+            self.current_capital -= notional
+            self.trades.append(
+                {
+                    "date": date_str,
+                    "symbol": symbol,
+                    "action": "buy",
+                    "quantity": quantity,
+                    "price": executed_price,
+                    "amount": notional,
+                    "slippage_cost": slippage_cost,
+                    "reason": "hybrid_funnel_pass",
+                    "gate_payload": {
+                        "momentum": momentum_signal,
+                        "rl": rl_decision,
+                        "sentiment": sentiment,
+                    },
+                }
+            )
+            trades_placed += 1
+            if trades_placed >= max_trades:
+                break
+
+    def _apply_slippage_adjustment(
+        self,
+        *,
+        symbol: str,
+        date: datetime,
+        base_price: float,
+        notional: float,
+        hist: pd.DataFrame | None = None,
+    ) -> tuple[float, float]:
+        executed_price = base_price
+        slippage_cost = 0.0
+
+        if self.enable_slippage and self.slippage_model:
+            hist = hist or self._get_historical_data(symbol, date)
+            avg_volume = None
+            volatility = None
+            if hist is not None and len(hist) >= 20:
+                avg_volume = hist["Volume"].tail(20).mean()
+                returns = hist["Close"].pct_change().dropna()
+                volatility = returns.tail(20).std() if len(returns) >= 20 else 0.02
+
+            quantity_estimate = notional / base_price
+            slippage_result = self.slippage_model.calculate_slippage(
+                price=base_price,
+                quantity=quantity_estimate,
+                side="buy",
+                symbol=symbol,
+                volume=avg_volume,
+                volatility=volatility,
+            )
+            executed_price = slippage_result.executed_price
+            slippage_cost = slippage_result.slippage_amount * quantity_estimate
+            self.total_slippage_cost += slippage_cost
+
+        return executed_price, slippage_cost
 
     def _get_historical_data(self, symbol: str, date: datetime) -> Optional[pd.DataFrame]:
         """
@@ -511,6 +603,32 @@ class BacktestEngine:
         hist_filtered = hist[hist.index <= date]
 
         return hist_filtered if len(hist_filtered) > 0 else None
+
+    def _calculate_momentum_snapshot(self, symbol: str, hist: pd.DataFrame) -> dict[str, Any]:
+        score, indicators = calculate_technical_score(
+            hist,
+            symbol,
+            macd_threshold=self.momentum_macd_threshold,
+            rsi_overbought=self.momentum_rsi_overbought,
+            volume_min=self.momentum_volume_min,
+        )
+        indicators = indicators or {}
+        indicators["symbol"] = symbol
+
+        strength = 0.0
+        if score > 0:
+            strength = score / (score + 100.0)
+
+        is_buy = score > self.momentum_min_score
+        return {
+            "is_buy": is_buy,
+            "strength": strength,
+            "state": {
+                **indicators,
+                "momentum_strength": strength,
+                "raw_score": score,
+            },
+        }
 
     def _calculate_momentum_for_date(self, symbol: str, date: datetime) -> Optional[float]:
         """
@@ -678,6 +796,37 @@ class BacktestEngine:
             )
 
         return results
+
+
+class SyntheticSentimentModel:
+    """Offline sentiment proxy derived from historical price/volume."""
+
+    def __init__(self, negative_threshold: float = -0.2) -> None:
+        self.negative_threshold = negative_threshold
+
+    def score(self, hist: pd.DataFrame) -> dict[str, Any]:
+        closes = hist["Close"].astype(float)
+        returns = closes.pct_change().fillna(0.0)
+        short_window = returns.tail(3).mean()
+        medium_window = returns.tail(7).mean()
+        volatility = returns.tail(10).std() if len(returns) >= 10 else returns.std()
+
+        volume = hist["Volume"].astype(float)
+        if len(volume) >= 20:
+            volume_ratio = float(volume.iloc[-1] / max(volume.tail(20).mean(), 1e-6))
+        else:
+            volume_ratio = 1.0
+
+        score = short_window * 15 + medium_window * 5 + (volume_ratio - 1.0) * 0.2 - volatility * 5
+        score = max(-1.0, min(1.0, float(score)))
+        accepted = score >= self.negative_threshold
+
+        return {
+            "score": score,
+            "accepted": accepted,
+            "threshold": self.negative_threshold,
+            "reason": "synthetic_sentiment_proxy",
+        }
 
 
 # Example usage

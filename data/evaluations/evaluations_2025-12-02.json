@@ -55,5 +55,62 @@
     "overall_score": 1.0,
     "passed": true,
     "critical_issues": []
+  },
+  {
+    "trade_id": "test_save",
+    "symbol": "QQQ",
+    "timestamp": "2025-12-02T19:55:42.248846",
+    "evaluation": {
+      "accuracy": {
+        "dimension": "accuracy",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "expected_amount": 6.0,
+          "actual_amount": 6.0,
+          "order_status": "filled"
+        },
+        "timestamp": "2025-12-02T19:55:42.248893"
+      },
+      "compliance": {
+        "dimension": "compliance",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "daily_allocation": 10.0,
+          "validated": true,
+          "preflight_passed": true
+        },
+        "timestamp": "2025-12-02T19:55:42.248899"
+      },
+      "reliability": {
+        "dimension": "reliability",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "system_state_age_hours": 1.0,
+          "data_source": "alpaca",
+          "api_errors": [],
+          "execution_time_ms": 500
+        },
+        "timestamp": "2025-12-02T19:55:42.248905"
+      },
+      "errors": {
+        "dimension": "errors",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "error_count": 0
+        },
+        "timestamp": "2025-12-02T19:55:42.248912"
+      }
+    },
+    "overall_score": 1.0,
+    "passed": true,
+    "critical_issues": []
   }
 ]

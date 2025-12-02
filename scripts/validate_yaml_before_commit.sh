@@ -57,6 +57,43 @@ with open('$file') as f:
                 FAILED=1
             fi
         fi
+
+        # Check for duplicate step IDs in GitHub Actions workflows
+        if ! python3 -c "
+import yaml
+import sys
+from collections import Counter
+
+with open('$file') as f:
+    content = yaml.safe_load(f)
+
+if not content or 'jobs' not in content:
+    sys.exit(0)
+
+errors = []
+for job_name, job_config in content.get('jobs', {}).items():
+    if not isinstance(job_config, dict):
+        continue
+    steps = job_config.get('steps', [])
+    if not steps:
+        continue
+
+    # Collect all step IDs
+    step_ids = [s.get('id') for s in steps if isinstance(s, dict) and s.get('id')]
+    duplicates = [id for id, count in Counter(step_ids).items() if count > 1]
+
+    if duplicates:
+        errors.append(f'Job \"{job_name}\" has duplicate step IDs: {duplicates}')
+
+if errors:
+    for err in errors:
+        print(f'    ❌ {err}')
+    sys.exit(1)
+print('    ✅ No duplicate step IDs')
+"; then
+            echo "    ❌ FAILED: $file has duplicate step IDs"
+            FAILED=1
+        fi
     fi
 done
 

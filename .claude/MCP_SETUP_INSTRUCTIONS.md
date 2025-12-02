@@ -96,7 +96,11 @@ Example of merged config:
 }
 ```
 
-**Important**: For live trading, change `"--paper"` to `"--live"` and set `"ALPACA_PAPER": "false"`.
+<<<<<<< HEAD
+**Important**: For live trading, remove the `"--paper"` flag and set `"ALPACA_PAPER": "false"`.
+=======
+**Important**: For live trading, change `"--paper"` to remove it and set `"ALPACA_PAPER": "false"`.
+>>>>>>> origin/main
 
 #### Option B: Fresh Installation
 

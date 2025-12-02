@@ -151,28 +151,6 @@ jobs:
 
           echo "✅ Data collection complete"
 
-      - name: Validate data quality and hygiene
-        id: data_hygiene
-        if: steps.check_data.outputs.data_available == 'true'
-        env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
-          POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
-        run: |
-          echo "🧹 Validating data quality and hygiene..."
-
-          SYMBOLS="${{ github.event.inputs.symbols || 'SPY,QQQ,VOO' }}"
-
-          python3 scripts/data_hygiene_check.py validate \
-            --symbols "$SYMBOLS" \
-            --min-days 252 || {
-              echo "⚠️  Data quality issues detected - will attempt to fix"
-              echo "data_quality_issues=true" >> $GITHUB_OUTPUT
-              exit 0  # Don't fail workflow, but flag issues
-            }
-
-          echo "data_quality_issues=false" >> $GITHUB_OUTPUT
-
       - name: Rotate old historical data
         if: steps.check_data.outputs.data_available == 'true'
         run: |

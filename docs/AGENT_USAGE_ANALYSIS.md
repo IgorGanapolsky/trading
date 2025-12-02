@@ -34,12 +34,12 @@
 ### ✅ ACTIVE AGENTS
 
 #### 1. **DeepAgents** (`src/orchestration/deepagents_trading.py`)
-**Status**: ✅ **ACTIVE** (enabled by default)
+**Status**: ✅ **AVAILABLE** (opt-in via env + optional dependency)
 
 **Usage**:
 ```python
 # scripts/autonomous_trader.py line 1344-1368
-deepagents_enabled = os.getenv("DEEPAGENTS_ENABLED", "true").lower() == "true"
+deepagents_enabled = os.getenv("DEEPAGENTS_ENABLED", "false").lower() == "true"
 if deepagents_enabled:
     orchestrator = DeepAgentsTradingOrchestrator(symbols=symbols, paper=True)
     result = asyncio.run(orchestrator.execute_trading_cycle())
