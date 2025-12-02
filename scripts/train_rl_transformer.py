@@ -14,18 +14,17 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Sequence
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Sequence
 
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, TensorDataset
-
 from src.agents.rl_transformer import RLTransformerModel
 from src.agents.rl_transformer_features import build_feature_matrix
 from src.utils.market_data import get_market_data_provider
+from torch.utils.data import DataLoader, TensorDataset
 
 
 def parse_args() -> argparse.Namespace:

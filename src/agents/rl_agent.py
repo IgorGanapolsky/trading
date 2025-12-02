@@ -7,7 +7,7 @@ import logging
 import math
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from src.agents.rl_transformer import TransformerRLPolicy, TransformerUnavailableError
 
@@ -32,7 +32,7 @@ class RLFilter:
         self.weights_path = Path(weights_path or "models/ml/rl_filter_weights.json")
         self.weights = self._load_weights()
         self.default_threshold = float(os.getenv("RL_CONFIDENCE_THRESHOLD", "0.6"))
-        self.transformer: Optional[TransformerRLPolicy] = None
+        self.transformer: TransformerRLPolicy | None = None
 
         flag = (
             enable_transformer
@@ -91,7 +91,7 @@ class RLFilter:
         """
         symbol = (market_state.get("symbol") or "default").upper()
         heuristic = self._predict_with_heuristics(symbol, market_state)
-        transformer_decision: Optional[dict[str, Any]] = None
+        transformer_decision: dict[str, Any] | None = None
 
         if self.transformer:
             try:

@@ -428,7 +428,9 @@ class BacktestEngine:
                 allocation_type = "VCA"
 
                 if not vca_calc.should_invest:
-                    logger.debug(f"{date_str}: VCA recommends skipping investment: {vca_calc.reason}")
+                    logger.debug(
+                        f"{date_str}: VCA recommends skipping investment: {vca_calc.reason}"
+                    )
                     return
             except Exception as exc:
                 logger.warning(f"{date_str}: VCA calculation failed, using base: {exc}")
@@ -574,6 +576,7 @@ class BacktestEngine:
             self.total_slippage_cost += slippage_cost
 
         return executed_price, slippage_cost
+
     def _get_historical_data(self, symbol: str, date: datetime) -> Optional[pd.DataFrame]:
         """
         Get historical data for a symbol up to a specific date.

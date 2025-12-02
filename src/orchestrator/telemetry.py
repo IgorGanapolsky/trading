@@ -53,7 +53,11 @@ class OrchestratorTelemetry:
         )
 
     def explainability_event(
-        self, gate: str, ticker: str, contributions: dict[str, Any], metadata: dict[str, Any] | None = None
+        self,
+        gate: str,
+        ticker: str,
+        contributions: dict[str, Any],
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         payload = {"contributions": contributions}
         if metadata:
