@@ -104,7 +104,7 @@ class BigFiveMetrics:
 
         # Rule #1: All Big Five should be >= 10% over 10, 5, and 1 year
         # Simplified: Average growth >= 10% and ROIC >= 10%
-        self.passes_rule_one = (
+        self.passes_rule_one = bool(
             self.avg_growth >= 0.10 and self.roic is not None and self.roic >= 0.10
         )
 

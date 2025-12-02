@@ -2,7 +2,7 @@
 Multi-LLM Analysis Engine for Trading System
 
 This module provides a comprehensive analysis engine that queries multiple LLMs
-(Gemini 3 Pro Preview, Claude Sonnet 4, GPT-4o) through OpenRouter API to generate
+(Gemini 3 Pro Preview, Claude Sonnet 4, GPT-4o, optional DeepSeek) through OpenRouter API to generate
 ensemble sentiment scores, IPO analysis, and market outlooks.
 
 Features:
@@ -41,6 +41,7 @@ class LLMModel(Enum):
     CLAUDE_SONNET_4 = "anthropic/claude-sonnet-4"  # Latest Claude Sonnet
     GPT4O = "openai/gpt-4o"  # GPT-4o
     GEMINI_2_FLASH = "google/gemini-2.5-flash"  # Fallback Gemini model
+    DEEPSEEK_R1 = "deepseek/deepseek-r1"  # DeepSeek reasoning model (via OpenRouter)
 
 
 @dataclass
@@ -153,6 +154,10 @@ class MultiLLMAnalyzer:
             LLMModel.CLAUDE_SONNET_4,  # Latest Claude Sonnet
             LLMModel.GPT4O,  # GPT-4o
         ]
+        deepseek_enabled_env = os.getenv("OPENROUTER_ENABLE_DEEPSEEK", "false").lower()
+        deepseek_enabled = deepseek_enabled_env not in {"0", "false", "off", "no"}
+        if deepseek_enabled and LLMModel.DEEPSEEK_R1 not in self.models:
+            self.models.append(LLMModel.DEEPSEEK_R1)
         self.max_retries = max_retries
         self.timeout = timeout
         self.rate_limit_delay = rate_limit_delay
@@ -180,6 +185,12 @@ class MultiLLMAnalyzer:
                 self.client = AsyncOpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
             else:
                 self.sync_client = OpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
+
+        if deepseek_enabled:
+            logger.info(
+                "DeepSeek (model=%s) enabled via OPENROUTER_ENABLE_DEEPSEEK",
+                LLMModel.DEEPSEEK_R1.value,
+            )
 
         logger.info(f"Initialized MultiLLMAnalyzer with models: {[m.value for m in self.models]}")
 
@@ -1080,6 +1091,11 @@ class LLMCouncilAnalyzer:
             LLMModel.CLAUDE_SONNET_4,
             LLMModel.GPT4O,
         ]
+        deepseek_enabled_env = os.getenv("OPENROUTER_ENABLE_DEEPSEEK", "false").lower()
+        deepseek_enabled = deepseek_enabled_env not in {"0", "false", "off", "no"}
+        if deepseek_enabled and LLMModel.DEEPSEEK_R1 not in self.council_models:
+            self.council_models.append(LLMModel.DEEPSEEK_R1)
+
         self.chairman_model = chairman_model or LLMModel.GEMINI_3_PRO
         self.max_retries = max_retries
         self.timeout = timeout
@@ -1108,6 +1124,12 @@ class LLMCouncilAnalyzer:
                 self.client = AsyncOpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
             else:
                 self.sync_client = OpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
+
+        if deepseek_enabled:
+            logger.info(
+                "LLM Council: DeepSeek (model=%s) enabled via OPENROUTER_ENABLE_DEEPSEEK",
+                LLMModel.DEEPSEEK_R1.value,
+            )
 
         logger.info(
             f"Initialized LLMCouncilAnalyzer with council: {[m.value for m in self.council_models]}"

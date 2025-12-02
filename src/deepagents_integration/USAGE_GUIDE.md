@@ -298,7 +298,8 @@ pyenv local 3.13.0
 **Solution**: Ensure dependencies installed
 
 ```bash
-pip install deepagents langchain langchain-anthropic langgraph
+python3 -m pip install -r requirements.txt
+python3 -m pip install ".[deepagents]"
 ```
 
 ### Agent Not Planning

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -23,11 +24,15 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 import yaml
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Ensure repo root is importable when script executed via `python scripts/...`
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
 if TYPE_CHECKING:  # pragma: no cover - for static typing only
     from src.backtesting.backtest_results import BacktestResults
 
-
-BASE_DIR = Path(__file__).resolve().parent.parent
 DEFAULT_CONFIG = BASE_DIR / "config" / "backtest_scenarios.yaml"
 BACKTEST_ROOT = BASE_DIR / "data" / "backtests"
 SUMMARY_PATH = BACKTEST_ROOT / "latest_summary.json"
