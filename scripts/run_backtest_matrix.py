@@ -18,6 +18,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+import sys
 from typing import Any, Dict, List
 
 import numpy as np
@@ -30,6 +31,10 @@ if TYPE_CHECKING:  # pragma: no cover - for static typing only
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Ensure project root is importable when script executed as a file (e.g., in CI)
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
 DEFAULT_CONFIG = BASE_DIR / "config" / "backtest_scenarios.yaml"
 BACKTEST_ROOT = BASE_DIR / "data" / "backtests"
 SUMMARY_PATH = BACKTEST_ROOT / "latest_summary.json"
