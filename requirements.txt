@@ -57,7 +57,8 @@ scikit-learn>=1.3.0,<2.0.0  # Feature engineering and preprocessing
 
 # DeepAgents Integration
 deepagents>=0.2.5
-acontext>=0.0.6  # Context data platform for agent learning (Store, Observe, Learn)
+# acontext removed - requires openai>=2.6.1 which conflicts with openai==1.109.1
+# Trade context learning uses local fallback storage in src/integrations/acontext_store.py
 langchain>=1.0.0
 langchain-core>=1.0.0
 langchain-anthropic>=1.0.0
