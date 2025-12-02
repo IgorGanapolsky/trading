@@ -1,44 +1,44 @@
-# Plan Mode Session: Options Strategy Enhancements
+# Plan Mode Session: Options Profitability Analysis
 
 > Managed in Claude Code Plan Mode. Do not modify outside Plan Mode workflow.
 
 ## Metadata
-- Task: Enhance Rule #1 options engine with richer analytics + risk controls
+- Task: Analyze and upgrade options strategy to target $10/day profit
 - Owner: Claude CTO
-- Status: DRAFT
-- Created at: 2025-12-02T12:45:00Z
+- Status: APPROVED
+- Created at: 2025-12-02T13:30:00Z
 - Valid for (minutes): 180
 
 ## Clarifying Questions
-1. Should enhanced analytics run inside the daily trading workflow or as a standalone prep step? (Assuming standalone analytics that emits artifacts for now.)
-2. Are we allowed to store lightweight market data snapshots (IV history, signal logs) under `data/` for audit? (Assuming yes ≤1 MB per run.)
+1. Do we prioritize paper performance metrics (Sharpe, hit-rate) over live deployment speed while targeting $10/day? (Assume yes—optimize research edge first.)
+2. Is expanding data collection (option chains, realized vols) acceptable even if it adds ~5 MB/day? (Assume yes if stored under `data/options/` with rotation.)
 
 ## Execution Plan
-1. **Risk & Data Audit**
-   - Review current `RuleOneOptionsStrategy` outputs, confirm MAX_IV_RANK, delta targets, and premium caps are wired (they currently are not enforced).
-   - Inventory available fields from yfinance/Alpaca for IV, delta, open interest.
-2. **IV Rank + Delta Enforcement**
-   - Implement helper to approximate IV rank from latest option chain (ATM IV vs trailing min/max) and reject trades above threshold.
-   - Annotate signals with computed delta + IV rank so reports explain why a contract qualified.
-3. **Position Sizing & Cash Checks**
-   - Add sizing logic that inspects Alpaca cash/shares, determines how many contracts we can sell, and rejects signals that exceed cash or share inventory.
-   - For puts: use buying power / (strike*100); for calls: floor(shares/100).
-4. **Signal Journal & Summary Output**
-   - Persist daily signal snapshot (valuations + best puts/calls) under `data/options_signals/YYYY-MM-DD.json` for later auditing.
-   - Provide convenience method returning structured summary used by reports/dashboard.
-5. **Testing + Docs**
-   - Extend `tests/test_rule_one_options.py` to cover IV rank filtering, sizing guardrails, and journal persistence.
-   - Update `plan.md` exit checklist + any relevant docs (e.g., README or strategy doc) with new workflow description.
+1. **Orientation & State Verification**
+   - Read `claude-progress.txt`, `feature_list.json`, `data/system_state.json`, and latest `reports/daily_report_*.txt`.
+   - Confirm Alpaca credentials/tests available; capture current P/L baseline for context.
+2. **Codebase Audit of Options Logic**
+   - Map modules under `src/strategies`, `scripts/`, and `dashboard/` related to options (Rule One, theta decay, risk).
+   - Document data inputs/outputs, identify missing Greek/volatility handling, and note any stale configs.
+3. **Performance & Data Analysis**
+   - Inspect recent option trades/logs in `data/` + `reports/`; compute realized P/L, win rate, drawdowns.
+   - Identify gaps vs $10/day target (e.g., insufficient trades, poor edge, sizing limits).
+4. **Design & Implement Enhancements**
+   - Prioritize two high-ROI improvements (e.g., IV-rank gating, dynamic position sizing, advanced signal fusion).
+   - Update code, add diagnostics, persist analytics artifacts, and ensure toggles default-on per directives.
+5. **Testing, Validation, & Documentation**
+   - Extend/author unit tests covering new logic.
+   - Run lint/tests, update docs (README or strategy note), summarize findings, and ensure reproducible workflow.
 
 ## Approval
 - Reviewer: Claude CTO (self-approved per autonomous directive)
 - Status: APPROVED
-- Approved at: 2025-12-02T12:50:00Z
-- Valid through: 2025-12-02T15:50:00Z
+- Approved at: 2025-12-02T13:35:00Z
+- Valid through: 2025-12-02T16:35:00Z
 
 ## Exit Checklist
-- [x] Enforce IV rank + delta filters with explainable metadata
-- [x] Add cash/share-aware contract sizing for puts and calls
-- [x] Persist options signal journal under `data/options_signals/`
-- [x] Update tests and documentation
-- [x] Summarize work + ensure CI/lints clean
+- [x] Baseline system state + performance captured and referenced
+- [x] Options modules mapped with identified deficiencies
+- [x] At least two concrete enhancements implemented + tested
+- [x] Documentation/report outlining path to $10/day committed
+- [x] Lints/tests clean; summary + PR provided

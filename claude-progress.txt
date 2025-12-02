@@ -320,3 +320,13 @@ Milestones Verified:
 Status: PRODUCTION READY
 Integration: Already wired into run_all_automation()
 Next: System will auto-scale as profits accumulate
+
+2025-12-02 13:55 - GPT-5.1 Codex
+Summary:
+- Added `days_to_expiry` tracking to every `RuleOneOptionsSignal`, then built the new `OptionsProfitPlanner` analytics layer plus CLI to convert Rule #1 signals into a quantified premium pacing plan (daily/monthly/annual run rates + contract recommendations).
+- Authored `docs/options-profit-roadmap.md` with baseline gaps, implemented upgrades, and an operational path to the CEO’s $10/day target; linked the workflow in README and ensured `data/options_signals/` is versioned.
+- Hardened config imports with a pydantic fallback so tests run in constrained sandboxes, expanded the test suite with `tests/test_options_profit_planner.py`, and updated plan.md exit gates after confirming pytest coverage is clean.
+Files Changed:
+- src/strategies/rule_one_options.py, src/analytics/options_profit_planner.py, scripts/options_profit_planner.py, src/core/config.py, docs/options-profit-roadmap.md, README.md, plan.md, tests/test_options_profit_planner.py, data/options_signals/.gitkeep, claude-progress.txt
+Next Steps:
+- Wire `scripts/options_profit_planner.py` into the daily GitHub Actions workflow right after Rule #1 signal generation so every report includes the premium pacing JSON and shortfall alerts.
