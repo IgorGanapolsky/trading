@@ -137,10 +137,70 @@ All metrics should be 10%+ over 10 years:
 
 | Guard | Threshold | Action |
 |-------|-----------|--------|
-| Daily Loss | >2% | Halt trading |
-| Max Drawdown | >10% | Review strategy |
+| Daily Loss | >1% | Halt trading for day |
+| Weekly Loss | >2.5% | Review and reduce size |
+| Monthly Drawdown | >4% | Pause new entries |
+| Max Drawdown | >10% | Emergency liquidation |
 | Win Rate Drop | <50% | Pause, retrain |
-| Sharpe Drop | <1.0 | Reduce position sizes |
+| **Sharpe Kill Switch** | **<1.3 (90-day)** | **Liquidate all except TLT/IEF/BND, 30-day research mode** |
+
+### Sharpe Kill Switch (Ultimate Moat)
+
+**Implemented Dec 2, 2025** - If rolling 90-day Sharpe drops below 1.3:
+1. Pause all new entries immediately
+2. Liquidate everything EXCEPT safe havens (TLT, IEF, BND, VNQ, SCHD)
+3. Enter mandatory 30-day research mode
+4. Investigate root cause of strategy decay
+5. Only resume when Sharpe recovers above 1.3
+
+This is the "Buffett moat" - protects against slow strategy decay that kills most traders.
+
+## Victory Ladder (Psychological Milestones)
+
+**Purpose**: Keep you sane during the 18-month grind. Celebrate wins, stay motivated.
+
+| Milestone | Daily Profit | Account Value | Life Impact |
+|-----------|--------------|---------------|-------------|
+| **Bronze** | $10/day | ~$3,000 | Coffee money - you're profitable! |
+| **Silver** | $30/day | ~$8,000 | Side hustle income - quit a side gig |
+| **Gold** | $70/day | ~$18,000 | Part-time income - reduce day job hours |
+| **Platinum** | $100/day | ~$25,000 | **GOAL ACHIEVED** - sustainable passive income |
+| **Diamond** | $150/day | ~$40,000 | Hire a junior dev to maintain the repo |
+| **Champion** | $300/day | ~$80,000 | Your system now pays your rent |
+
+### Milestone Rewards (Self-Incentives)
+- **Bronze ($10/day)**: Celebrate with a nice dinner
+- **Silver ($30/day)**: Buy yourself something you've wanted
+- **Gold ($70/day)**: Take a weekend trip
+- **Platinum ($100/day)**: Major celebration - you built a money machine!
+
+## Financial Automation (Dec 2, 2025)
+
+### Weekend Funding Auto Top-Up
+- Runs every Saturday 8 AM ET
+- Checks if cash < $150
+- Auto-requests Plaid transfer if needed
+- Ensures weekend crypto trading has capital
+
+### Quarterly Tax Withdrawal (28%)
+- Runs Q1 Apr 1, Q2 Jul 1, Q3 Oct 1, Q4 Jan 1
+- Withdraws 28% of YTD profits to high-yield savings
+- Prevents "made $50k, owe $18k, only have $15k" nightmare
+- Target: Ally/Marcus HY savings at 4%+ APY
+
+### Dynamic Investment Scaling
+```
+daily_invest = min($10 + 0.3 × floating_pnl, $50)
+```
+- Base: $10/day
+- Scale: +$0.30 for every $1 of floating profit
+- Cap: $50/day maximum
+- Floor: $5/day even in drawdown
+
+### Dividend Reinvestment
+- VNQ: Auto-DRIP enabled
+- SCHD: Auto-DRIP enabled
+- Compounds yield without manual intervention
 
 ## Exit Checklist
 - [x] BITO added to ETF universe

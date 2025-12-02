@@ -238,3 +238,202 @@ class CircuitBreaker:
             "trip_reason": self.state.get("trip_reason", None),
             "trip_details": self.state.get("trip_details", None),
         }
+
+
+class SharpeKillSwitch:
+    """
+    Sharpe Ratio-based Kill Switch.
+
+    If rolling 90-day Sharpe drops below 1.3:
+    1. Pause all new entries
+    2. Liquidate everything except treasuries (TLT, IEF, BND)
+    3. Force 30-day research mode
+
+    This is the ultimate Buffett moat - protects against strategy decay.
+    """
+
+    # Thresholds
+    MIN_SHARPE_THRESHOLD = 1.3  # Below this triggers kill switch
+    ROLLING_WINDOW_DAYS = 90
+    RESEARCH_MODE_DAYS = 30
+
+    # Safe haven assets to keep during liquidation
+    SAFE_HAVENS = {"TLT", "IEF", "BND", "SCHD", "VNQ"}
+
+    def __init__(
+        self,
+        min_sharpe: float = MIN_SHARPE_THRESHOLD,
+        rolling_days: int = ROLLING_WINDOW_DAYS,
+        state_file: str = "data/sharpe_kill_switch_state.json",
+    ):
+        self.min_sharpe = min_sharpe
+        self.rolling_days = rolling_days
+        self.state_file = Path(state_file)
+        self.state = self._load_state()
+
+        logger.info(
+            f"Sharpe Kill Switch initialized: min_sharpe={min_sharpe}, "
+            f"rolling_days={rolling_days}"
+        )
+
+    def check_sharpe(self, daily_returns: list) -> Dict[str, Any]:
+        """
+        Check if rolling Sharpe ratio is above threshold.
+
+        Args:
+            daily_returns: List of daily returns (last 90 days)
+
+        Returns:
+            Dict with 'allowed', 'sharpe', 'action' fields
+        """
+        import numpy as np
+
+        if len(daily_returns) < 30:  # Need minimum data
+            return {
+                "allowed": True,
+                "sharpe": None,
+                "action": "INSUFFICIENT_DATA",
+                "message": f"Only {len(daily_returns)} days of data, need 30+",
+            }
+
+        # Use last N days (up to rolling window)
+        recent_returns = daily_returns[-min(len(daily_returns), self.rolling_days):]
+
+        # Calculate Sharpe ratio (annualized)
+        mean_return = np.mean(recent_returns)
+        std_return = np.std(recent_returns)
+
+        if std_return == 0:
+            sharpe = 0.0
+        else:
+            # Annualized Sharpe = daily_mean / daily_std * sqrt(252)
+            sharpe = (mean_return / std_return) * np.sqrt(252)
+
+        # Check if below threshold
+        if sharpe < self.min_sharpe:
+            self._activate_kill_switch(sharpe)
+            return {
+                "allowed": False,
+                "sharpe": sharpe,
+                "action": "KILL_SWITCH_ACTIVATED",
+                "message": f"Rolling {len(recent_returns)}-day Sharpe {sharpe:.2f} < {self.min_sharpe}",
+                "required_action": [
+                    "1. Pause all new entries immediately",
+                    "2. Liquidate all positions EXCEPT treasuries (TLT, IEF, BND)",
+                    "3. Enter 30-day research mode",
+                    "4. Investigate strategy decay root cause",
+                ],
+            }
+
+        # Check if in research mode
+        if self.state.get("in_research_mode", False):
+            days_in_research = self._days_in_research_mode()
+            if days_in_research < self.RESEARCH_MODE_DAYS:
+                return {
+                    "allowed": False,
+                    "sharpe": sharpe,
+                    "action": "RESEARCH_MODE",
+                    "message": f"In research mode: {days_in_research}/{self.RESEARCH_MODE_DAYS} days",
+                    "days_remaining": self.RESEARCH_MODE_DAYS - days_in_research,
+                }
+            else:
+                # Research mode complete, check if Sharpe recovered
+                if sharpe >= self.min_sharpe:
+                    self._deactivate_kill_switch()
+                    return {
+                        "allowed": True,
+                        "sharpe": sharpe,
+                        "action": "RESEARCH_MODE_COMPLETE",
+                        "message": f"Sharpe recovered to {sharpe:.2f}, trading resumed",
+                    }
+
+        return {
+            "allowed": True,
+            "sharpe": sharpe,
+            "action": "HEALTHY",
+            "message": f"Rolling Sharpe {sharpe:.2f} >= {self.min_sharpe} threshold",
+        }
+
+    def get_positions_to_liquidate(self, positions: list) -> list:
+        """
+        Get list of positions to liquidate (everything except safe havens).
+
+        Args:
+            positions: List of position dicts with 'symbol' key
+
+        Returns:
+            List of symbols to liquidate
+        """
+        to_liquidate = []
+        for pos in positions:
+            symbol = pos.get("symbol", "").upper()
+            if symbol not in self.SAFE_HAVENS:
+                to_liquidate.append(symbol)
+
+        logger.warning(f"Sharpe kill switch: {len(to_liquidate)} positions to liquidate")
+        return to_liquidate
+
+    def _activate_kill_switch(self, sharpe: float) -> None:
+        """Activate the Sharpe kill switch."""
+        self.state["is_active"] = True
+        self.state["in_research_mode"] = True
+        self.state["activated_at"] = datetime.now().isoformat()
+        self.state["sharpe_at_activation"] = sharpe
+        self._save_state()
+
+        logger.critical(
+            f"🚨 SHARPE KILL SWITCH ACTIVATED: Sharpe {sharpe:.2f} < {self.min_sharpe}"
+        )
+
+    def _deactivate_kill_switch(self) -> None:
+        """Deactivate the kill switch after successful research mode."""
+        self.state["is_active"] = False
+        self.state["in_research_mode"] = False
+        self.state["deactivated_at"] = datetime.now().isoformat()
+        self._save_state()
+
+        logger.info("✅ Sharpe kill switch deactivated - trading resumed")
+
+    def _days_in_research_mode(self) -> int:
+        """Calculate days spent in research mode."""
+        activated = self.state.get("activated_at")
+        if not activated:
+            return 0
+
+        try:
+            activated_date = datetime.fromisoformat(activated)
+            return (datetime.now() - activated_date).days
+        except Exception:
+            return 0
+
+    def _load_state(self) -> Dict[str, Any]:
+        """Load state from disk."""
+        if not self.state_file.exists():
+            return {"is_active": False, "in_research_mode": False}
+
+        try:
+            with open(self.state_file, "r") as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Error loading Sharpe kill switch state: {e}")
+            return {"is_active": False, "in_research_mode": False}
+
+    def _save_state(self) -> None:
+        """Save state to disk."""
+        try:
+            self.state_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.state_file, "w") as f:
+                json.dump(self.state, f, indent=2)
+        except Exception as e:
+            logger.error(f"Error saving Sharpe kill switch state: {e}")
+
+    def get_status(self) -> Dict[str, Any]:
+        """Get current kill switch status."""
+        return {
+            "is_active": self.state.get("is_active", False),
+            "in_research_mode": self.state.get("in_research_mode", False),
+            "days_in_research": self._days_in_research_mode(),
+            "activated_at": self.state.get("activated_at"),
+            "sharpe_at_activation": self.state.get("sharpe_at_activation"),
+            "threshold": self.min_sharpe,
+        }

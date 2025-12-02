@@ -177,8 +177,17 @@ class RuleOneOptionsStrategy:
     # Options parameters
     MIN_DAYS_TO_EXPIRY = 25
     MAX_DAYS_TO_EXPIRY = 50
-    TARGET_DELTA_PUT = 0.30  # ~30% chance of assignment
-    TARGET_DELTA_CALL = 0.30
+    # Conservative delta targets (CEO directive Dec 2, 2025)
+    # Lower delta = lower risk of assignment, safer for beginners
+    TARGET_DELTA_PUT = 0.20  # ~20% chance of assignment (was 0.30)
+    TARGET_DELTA_CALL = 0.25  # ~25% chance of being called away (was 0.30)
+
+    # IV Rank filter - only sell premium when IV is low
+    # High IV = expensive options = higher premium but more risk
+    MAX_IV_RANK = 40  # Only sell when IV rank < 40 (options are cheap)
+
+    # Premium cap - never receive more than 1.2% of underlying per trade
+    MAX_PREMIUM_PCT = 0.012  # 1.2% of stock price max
     MIN_ANNUALIZED_RETURN = 0.12  # 12% minimum annualized yield
 
     # Default wonderful companies (Rule #1 quality stocks)
