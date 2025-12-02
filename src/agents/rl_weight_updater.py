@@ -24,8 +24,7 @@ try:
     from stable_baselines3 import PPO
 except ImportError as exc:  # pragma: no cover - surfaced via CLI
     raise ImportError(
-        "stable-baselines3 is required for RL weight updates. "
-        "Install stable-baselines3>=2.0."
+        "stable-baselines3 is required for RL weight updates. Install stable-baselines3>=2.0."
     ) from exc
 
 FEATURE_KEYS = ["strength", "momentum", "rsi_gap", "volume_premium", "sma_ratio"]
@@ -274,7 +273,9 @@ class RLWeightUpdater:
                 learned["default"] = self._serialize_coefficients(clf, X)
         return learned
 
-    def _serialize_coefficients(self, clf: LogisticRegression, feature_matrix: np.ndarray) -> dict[str, Any]:
+    def _serialize_coefficients(
+        self, clf: LogisticRegression, feature_matrix: np.ndarray
+    ) -> dict[str, Any]:
         weights = clf.coef_[0]
         intercept = float(clf.intercept_[0])
         probabilities = clf.predict_proba(feature_matrix)[:, 1]
@@ -282,9 +283,7 @@ class RLWeightUpdater:
 
         return {
             "bias": round(intercept, 4),
-            "weights": {
-                key: round(weight, 4) for key, weight in zip(FEATURE_KEYS, weights)
-            },
+            "weights": {key: round(weight, 4) for key, weight in zip(FEATURE_KEYS, weights)},
             "action_threshold": round(max(0.5, min(0.85, avg_probability)), 3),
             "base_multiplier": round(0.6 + avg_probability * 0.5, 3),
         }
@@ -305,16 +304,21 @@ class RLWeightUpdater:
         return blended
 
     @staticmethod
-    def _blend_payload(old: dict[str, Any], new: dict[str, Any], alpha: float = 0.7) -> dict[str, Any]:
+    def _blend_payload(
+        old: dict[str, Any], new: dict[str, Any], alpha: float = 0.7
+    ) -> dict[str, Any]:
         weights = {}
         for key in FEATURE_KEYS:
             old_val = float(old.get("weights", {}).get(key, 0.0))
             new_val = float(new.get("weights", {}).get(key, 0.0))
             weights[key] = round(alpha * old_val + (1 - alpha) * new_val, 4)
 
-        bias = round(alpha * float(old.get("bias", 0.0)) + (1 - alpha) * float(new.get("bias", 0.0)), 4)
+        bias = round(
+            alpha * float(old.get("bias", 0.0)) + (1 - alpha) * float(new.get("bias", 0.0)), 4
+        )
         action_threshold = round(
-            alpha * float(old.get("action_threshold", 0.6)) + (1 - alpha) * float(new.get("action_threshold", 0.6)),
+            alpha * float(old.get("action_threshold", 0.6))
+            + (1 - alpha) * float(new.get("action_threshold", 0.6)),
             3,
         )
         base_multiplier = round(

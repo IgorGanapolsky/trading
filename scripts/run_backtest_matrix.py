@@ -159,7 +159,9 @@ def summarize_results(results: BacktestResults, scenario: dict[str, Any]) -> dic
         "profitable_days": profitable_days,
         "longest_profitable_streak": longest_streak,
         "final_capital": round(results.final_capital, 2),
-        "final_capital_after_costs": round(results.final_capital - costs["total_execution_cost"], 2),
+        "final_capital_after_costs": round(
+            results.final_capital - costs["total_execution_cost"], 2
+        ),
         "total_trades": results.total_trades,
         "status": status,
         "description": scenario.get("description"),
@@ -192,7 +194,9 @@ def evaluate_status(results: BacktestResults, thresholds: dict[str, float]) -> s
     return "needs_improvement"
 
 
-def compute_execution_costs(results: BacktestResults, fee_rate: float = FEE_RATE) -> dict[str, float]:
+def compute_execution_costs(
+    results: BacktestResults, fee_rate: float = FEE_RATE
+) -> dict[str, float]:
     total_notional = sum(float(trade.get("amount", 0.0)) for trade in results.trades)
     fee_cost = total_notional * fee_rate
     slippage_cost = float(getattr(results, "total_slippage_cost", 0.0))
