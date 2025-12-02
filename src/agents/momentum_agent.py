@@ -24,6 +24,32 @@ class MomentumAgent:
     def __init__(self, min_score: float = 0.0) -> None:
         self._calculator = LegacyMomentumCalculator()
         self._min_score = min_score
+        self._base_config = {
+            "macd_threshold": self._calculator.macd_threshold,
+            "rsi_overbought": self._calculator.rsi_overbought,
+            "volume_min": self._calculator.volume_min,
+        }
+
+    def configure_regime(
+        self,
+        overrides: dict[str, float] | None = None,
+    ) -> None:
+        """
+        Apply regime-specific indicator thresholds.
+
+        Args:
+            overrides: Optional dict with macd_threshold, rsi_overbought, volume_min.
+                       Passing an empty dict resets to defaults captured at init time.
+        """
+        config = dict(self._base_config)
+        if overrides:
+            for key, value in overrides.items():
+                if key in config and value is not None:
+                    config[key] = float(value)
+
+        self._calculator.macd_threshold = config["macd_threshold"]
+        self._calculator.rsi_overbought = config["rsi_overbought"]
+        self._calculator.volume_min = config["volume_min"]
 
     def analyze(self, ticker: str) -> MomentumSignal:
         payload = self._calculator.evaluate(ticker)

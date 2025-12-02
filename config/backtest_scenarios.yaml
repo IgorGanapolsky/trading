@@ -34,3 +34,13 @@ scenarios:
     description: >
       Stress test for historic volatility spike. Ensures ATR sizing and
       guardrails throttle exposure before we allow live promotion.
+
+  - name: weekend_crypto_proxy_2023
+    label: "Closed-market coverage (BITO proxy)"
+    start_date: "2023-06-01"
+    end_date: "2023-09-04"
+    etf_universe: ["BITO"]
+    description: >
+      Validates weekend/holiday coverage by routing the funnel through
+      a Bitcoin ETF proxy. Ensures thresholds and sizing logic remain
+      stable when traditional equity markets are unavailable.

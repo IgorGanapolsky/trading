@@ -118,3 +118,28 @@ class RLFilter:
             "volume_premium": volume_premium,
             "sma_ratio": sma_ratio,
         }
+
+    def update_from_telemetry(
+        self,
+        audit_path: str = "data/audit_trail/hybrid_funnel_runs.jsonl",
+        model_path: str = "models/ml/rl_filter_policy.zip",
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Recompute RL weights using telemetry replay and persist them to disk.
+
+        Returns:
+            Summary dict describing the update result.
+        """
+        from src.agents.rl_weight_updater import RLWeightUpdater
+
+        updater = RLWeightUpdater(
+            audit_path=audit_path,
+            weights_path=self.weights_path,
+            model_path=model_path,
+            dry_run=dry_run,
+        )
+        summary = updater.run()
+        if summary.get("updated"):
+            self.weights = self._load_weights()
+        return summary
