@@ -4,7 +4,7 @@
 
 The LLM Council system implements a multi-stage consensus approach for trading decisions, inspired by [Karpathy's llm-council](https://github.com/karpathy/llm-council). Instead of relying on a single LLM, the system:
 
-1. **Stage 1: First Opinions** - Queries multiple LLMs (Gemini 3 Pro, Claude Sonnet 4, GPT-4o) in parallel
+1. **Stage 1: First Opinions** - Queries multiple LLMs (Gemini 3 Pro, Claude Sonnet 4, GPT-4o, optional DeepSeek) in parallel
 2. **Stage 2: Peer Review** - Each LLM reviews and ranks other responses (anonymized to prevent bias)
 3. **Stage 3: Chairman Synthesis** - A designated chairman LLM compiles the final consensus answer
 
@@ -58,6 +58,10 @@ LLM_COUNCIL_ENABLED=true
 
 # OpenRouter API key (required)
 OPENROUTER_API_KEY=sk-or-v1-...
+
+# Optional: add DeepSeek via OpenRouter (for reasoning-heavy votes)
+OPENROUTER_ENABLE_DEEPSEEK=true
+# OPENROUTER_DEEPSEEK_MODEL=deepseek/deepseek-r1
 ```
 
 ### Code Configuration
@@ -74,6 +78,7 @@ council = TradingCouncil(
         LLMModel.GEMINI_3_PRO,
         LLMModel.CLAUDE_SONNET_4,
         LLMModel.GPT4O,
+        LLMModel.DEEPSEEK_R1,
     ],
     chairman_model=LLMModel.GEMINI_3_PRO,  # Chairman model
     enabled=True,

@@ -1,17 +1,15 @@
 """
-Risk Management Module
+Risk Management Module (Lightweight Pipeline Version)
 
-Provides comprehensive risk management tools for the trading system:
-- Position sizing with ATR-based scaling
-- Slippage modeling for realistic backtests
-- VaR/CVaR risk metrics for real-time monitoring
-- Circuit breakers and risk alerts
-
-Components:
-- RiskManager: Position sizing and stop-loss calculation
+This module provides lightweight risk tools for the hybrid funnel pipeline:
+- RiskManager: Position sizing with ATR-based scaling (Gate 4)
 - SlippageModel: Execution cost modeling
 - VaRCalculator: Value at Risk calculations
 - RiskMonitor: Real-time risk monitoring with alerts
+
+Note: For comprehensive risk management with circuit breakers, behavioral
+finance, and drawdown tracking, use src/core/risk_manager.RiskManager instead.
+This module is optimized for the modular orchestrator (src/orchestrator/).
 """
 
 import contextlib

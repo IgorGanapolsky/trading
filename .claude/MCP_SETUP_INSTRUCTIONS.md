@@ -2,7 +2,40 @@
 
 ## What This Does
 
-This MCP (Model Context Protocol) server enables Claude Desktop to read RSS feeds directly, allowing you to consume crypto newsletters (like CoinSnacks) and market analysis content during conversations.
+This MCP (Model Context Protocol) configuration enables Claude Desktop to:
+
+1. **Trade via Alpaca**: Execute stock/options orders, manage positions, get market data via the Alpaca MCP server
+2. **Read RSS Feeds**: Consume crypto newsletters (like CoinSnacks) and market analysis content
+
+## Available MCP Servers
+
+### 1. Alpaca Trading MCP Server (`@ideadesignmedia/alpaca-mcp`)
+
+Full trading and market data access via Alpaca APIs:
+
+**Trading Tools**:
+- `alpaca.create_order` - Place stock/options orders
+- `alpaca.list_positions` - View current positions
+- `alpaca.get_position` - Get specific position details
+- `alpaca.close_position` / `alpaca.close_all_positions` - Close positions
+- `alpaca.list_orders` / `alpaca.get_order` - View order status
+- `alpaca.cancel_order` / `alpaca.cancel_all_orders` - Cancel orders
+- `alpaca.get_account` / `alpaca.account_overview` - Account info
+- `alpaca.get_clock` / `alpaca.get_calendar` - Market hours
+- `alpaca.get_portfolio_history` - Historical performance
+
+**Market Data Tools**:
+- `alpaca.data.stocks.latest_bar` / `alpaca.data.stocks.latest_quote` - Real-time prices
+- `alpaca.data.stocks.bars` / `alpaca.data.stocks.quotes` - Historical data
+- `alpaca.data.options.chain` / `alpaca.data.options.snapshots` - Options data
+- `alpaca.data.news` - Market news
+- `alpaca.get_stock_info` - Comprehensive stock summary
+
+**Configuration**: Requires `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` environment variables.
+
+### 2. RSS Feed MCP Server (`@veithly/rss-mcp`)
+
+Read RSS feeds for crypto newsletters and market analysis.
 
 ## Installation Steps
 
@@ -41,6 +74,16 @@ Example of merged config:
     "your-existing-server": {
       ...
     },
+    "alpaca": {
+      "command": "npx",
+      "args": ["-y", "@ideadesignmedia/alpaca-mcp", "--paper"],
+      "description": "Alpaca Trading MCP Server - stocks, options, and market data",
+      "env": {
+        "ALPACA_KEY_ID": "${ALPACA_API_KEY}",
+        "ALPACA_SECRET_KEY": "${ALPACA_SECRET_KEY}",
+        "ALPACA_PAPER": "true"
+      }
+    },
     "rss": {
       "command": "npx",
       "args": ["-y", "@veithly/rss-mcp"],
@@ -52,6 +95,8 @@ Example of merged config:
   }
 }
 ```
+
+**Important**: For live trading, change `"--paper"` to remove it and set `"ALPACA_PAPER": "false"`.
 
 #### Option B: Fresh Installation
 

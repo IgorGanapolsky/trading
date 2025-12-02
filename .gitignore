@@ -1,8 +1,10 @@
-I don# Environment
+# Environment
 .env
 .env.local
 .env.*.local
+.venv/
 venv/
+.venv/
 .pc-venv/
 env/
 ENV/
@@ -22,6 +24,11 @@ __pycache__/
 data/*.csv
 data/*.json
 logs/*.log
+population_log*.txt
+
+# Web artifacts (downloaded pages, archives)
+*.mht
+article_*.html
 
 # Cache directories (API responses, health logs, etc.) - ignore recursively
 data/cache/

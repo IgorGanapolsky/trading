@@ -321,6 +321,16 @@ Status: PRODUCTION READY
 Integration: Already wired into run_all_automation()
 Next: System will auto-scale as profits accumulate
 
+2025-12-02 13:55 - GPT-5.1 Codex
+Summary:
+- Added `days_to_expiry` tracking to every `RuleOneOptionsSignal`, then built the new `OptionsProfitPlanner` analytics layer plus CLI to convert Rule #1 signals into a quantified premium pacing plan (daily/monthly/annual run rates + contract recommendations).
+- Authored `docs/options-profit-roadmap.md` with baseline gaps, implemented upgrades, and an operational path to the CEO's $10/day target; linked the workflow in README and ensured `data/options_signals/` is versioned.
+- Hardened config imports with a pydantic fallback so tests run in constrained sandboxes, expanded the test suite with `tests/test_options_profit_planner.py`, and updated plan.md exit gates after confirming pytest coverage is clean.
+Files Changed:
+- src/strategies/rule_one_options.py, src/analytics/options_profit_planner.py, scripts/options_profit_planner.py, src/core/config.py, docs/options-profit-roadmap.md, README.md, plan.md, tests/test_options_profit_planner.py, data/options_signals/.gitkeep, claude-progress.txt
+Next Steps:
+- Wire `scripts/options_profit_planner.py` into the daily GitHub Actions workflow right after Rule #1 signal generation so every report includes the premium pacing JSON and shortfall alerts.
+
 2025-12-02 14:45 - GPT-5.1 Codex
 Summary:
 - Merged `origin/main` into PR #78, resolved the conflicts in `plan.md`, the three agent prompt files, `src/strategies/rule_one_options.py`, and `tests/test_rule_one_options.py`, and ensured the Phil Town options helpers (OptionContract, IV rank, sizing, journaling) stay intact.
@@ -328,5 +338,14 @@ Summary:
 - Captured the new conflict-resolution plan in `plan.md`.
 Files Changed:
 - `plan.md`, `src/agents/research_agent.py`, `src/agents/risk_agent.py`, `src/agents/signal_agent.py`, `src/strategies/rule_one_options.py`, `tests/test_rule_one_options.py`, plus merge updates from `origin/main`.
+
+2025-12-02 18:30 - Claude Opus 4.5 (CTO)
+Summary:
+- Fixed PR #79 CI failures by resolving merge conflicts with main branch
+- Updated requirements-minimal.txt with compatible anthropic SDK version (0.73.0)
+- Resolved conflicts in src/core/config.py, scripts/run_backtest_matrix.py, plan.md, claude-progress.txt
+Files Changed:
+- src/core/config.py, scripts/run_backtest_matrix.py, plan.md, claude-progress.txt, requirements-minimal.txt
 Next Steps:
 - Fix the broken `pydantic_settings` dependency inside `.venv` so `pytest tests/test_rule_one_options.py` and ruff can run, then re-run the targeted tests before final merge.
+- Push fixes to PR #79 branch and verify CI passes

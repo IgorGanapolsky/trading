@@ -34,6 +34,29 @@ results = engine.run()
 print(results.generate_report())
 ```
 
+### Hybrid Funnel Replay (Gate-by-Gate)
+
+To mirror the production orchestrator inside your backtests, enable the hybrid gates:
+
+```python
+engine = BacktestEngine(
+    strategy=strategy,
+    start_date="2025-09-01",
+    end_date="2025-10-31",
+    initial_capital=100000,
+    use_hybrid_gates=True,  # Momentum → Transformer RL → Sentiment proxy → Risk
+    hybrid_options={"max_trades_per_day": 1},
+)
+```
+
+When running the scenario matrix CLI you can toggle the same behaviour:
+
+```bash
+python3 scripts/run_backtest_matrix.py --use-hybrid-gates
+```
+
+This executes every scenario with the transformer-enabled Gate 2, the synthetic sentiment fallback, and the deterministic risk sizing logic. Telemetry artefacts include the explainability payloads so you can audit the RL gate offline.
+
 ## Features
 
 ### 1. BacktestEngine

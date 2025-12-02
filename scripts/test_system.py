@@ -13,11 +13,11 @@ Usage:
     python test_system.py
 """
 
-import sys
-import os
-from pathlib import Path
-from datetime import datetime
 import json
+import os
+import sys
+from datetime import datetime
+from pathlib import Path
 
 # Add src to Python path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -51,10 +51,11 @@ def test_imports():
 
     # Test standard library imports
     try:
-        import logging
-        import typing
-        import dataclasses
-        import enum
+        import dataclasses  # noqa: F401 - testing importability
+        import enum  # noqa: F401 - testing importability
+        import logging  # noqa: F401 - testing importability
+        import typing  # noqa: F401 - testing importability
+
         print_test("Standard library imports", True, "logging, typing, dataclasses, enum")
     except ImportError as e:
         print_test("Standard library imports", False, str(e))
@@ -178,8 +179,8 @@ def test_alpaca_connection():
     print_header("TEST 4: Alpaca API Connection")
 
     try:
-        from src.core.alpaca_trader import AlpacaTrader
         from dotenv import load_dotenv
+        from src.core.alpaca_trader import AlpacaTrader
 
         load_dotenv("/home/user/trading/.env")
 
@@ -190,8 +191,11 @@ def test_alpaca_connection():
         # Test account info retrieval
         try:
             account = trader.get_account_info()
-            print_test("Account info retrieval", True,
-                      f"Equity: ${account.get('equity', 0):,.2f}, Cash: ${account.get('cash', 0):,.2f}")
+            print_test(
+                "Account info retrieval",
+                True,
+                f"Equity: ${account.get('equity', 0):,.2f}, Cash: ${account.get('cash', 0):,.2f}",
+            )
             return True
         except Exception as e:
             print_test("Account info retrieval", False, str(e))
@@ -207,10 +211,10 @@ def test_core_strategy():
     print_header("TEST 5: CoreStrategy Initialization")
 
     try:
-        from src.strategies.core_strategy import CoreStrategy
+        from dotenv import load_dotenv
         from src.core.alpaca_trader import AlpacaTrader
         from src.core.risk_manager import RiskManager
-        from dotenv import load_dotenv
+        from src.strategies.core_strategy import CoreStrategy
 
         load_dotenv("/home/user/trading/.env")
 
@@ -225,14 +229,18 @@ def test_core_strategy():
             trader=trader,
             risk_manager=risk_manager,
             daily_amount=6.0,
-            use_sentiment=False  # Disable AI calls for testing
+            use_sentiment=False,  # Disable AI calls for testing
         )
 
         print_test("CoreStrategy initialization", True, "Daily amount: $6.00, Sentiment: OFF")
 
         # Test ETF list
         if strategy.etf_universe:
-            print_test("ETF universe loaded", True, f"{len(strategy.etf_universe)} ETFs: {', '.join(strategy.etf_universe)}")
+            print_test(
+                "ETF universe loaded",
+                True,
+                f"{len(strategy.etf_universe)} ETFs: {', '.join(strategy.etf_universe)}",
+            )
         else:
             print_test("ETF universe loaded", False, "No ETFs configured")
             return False
@@ -249,10 +257,10 @@ def test_simulated_trade():
     print_header("TEST 6: Simulated Trade Execution")
 
     try:
-        from src.strategies.core_strategy import CoreStrategy
+        from dotenv import load_dotenv
         from src.core.alpaca_trader import AlpacaTrader
         from src.core.risk_manager import RiskManager
-        from dotenv import load_dotenv
+        from src.strategies.core_strategy import CoreStrategy
 
         load_dotenv("/home/user/trading/.env")
 
@@ -266,8 +274,9 @@ def test_simulated_trade():
         # Get ETF prices (this validates yfinance works)
         try:
             import yfinance as yf
+
             spy = yf.Ticker("SPY")
-            price = spy.history(period="1d")['Close'].iloc[-1]
+            price = spy.history(period="1d")["Close"].iloc[-1]
             print_test("Market data retrieval", True, f"SPY current price: ${price:.2f}")
         except Exception as e:
             print_test("Market data retrieval", False, str(e))
@@ -279,8 +288,9 @@ def test_simulated_trade():
             if momentum_scores:
                 best_etf = max(momentum_scores, key=momentum_scores.get)
                 best_score = momentum_scores[best_etf]
-                print_test("Momentum calculation", True,
-                          f"Best ETF: {best_etf} (score: {best_score:.4f})")
+                print_test(
+                    "Momentum calculation", True, f"Best ETF: {best_etf} (score: {best_score:.4f})"
+                )
             else:
                 print_test("Momentum calculation", False, "No momentum scores calculated")
                 return False
@@ -313,7 +323,7 @@ def test_state_persistence():
 
     # Try to read and parse state file
     try:
-        with open(state_file, 'r') as f:
+        with open(state_file) as f:
             state = json.load(f)
 
         print_test("State file readable", True, "Valid JSON format")
@@ -331,8 +341,8 @@ def test_state_persistence():
 
         # Test write capability (create backup first)
         try:
-            backup_file = state_file.with_suffix('.json.bak')
-            with open(backup_file, 'w') as f:
+            backup_file = state_file.with_suffix(".json.bak")
+            with open(backup_file, "w") as f:
                 json.dump(state, f, indent=2)
 
             print_test("State file writable", True, f"Backup created: {backup_file.name}")
@@ -365,7 +375,7 @@ def generate_summary():
     print(f"Total Tests:  {total_tests}")
     print(f"Passed:       {passed_tests} ✅")
     print(f"Failed:       {failed_tests} ❌")
-    print(f"Success Rate: {(passed_tests/total_tests)*100:.1f}%")
+    print(f"Success Rate: {(passed_tests / total_tests) * 100:.1f}%")
 
     if failed_tests > 0:
         print("\n" + "=" * 80)
@@ -423,6 +433,7 @@ def main():
     except Exception as e:
         print(f"\n\n❌ FATAL ERROR: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

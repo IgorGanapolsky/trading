@@ -70,6 +70,17 @@
   - Graceful fallback if unavailable (system continues without it)
 - **Cost**: ~$15-60/month (within $100/month budget)
 
+#### `OPENROUTER_ENABLE_DEEPSEEK`
+- **Required**: ❌ Optional
+- **Purpose**: Adds the DeepSeek reasoning model (`deepseek/deepseek-r1`) to the LLM council via OpenRouter
+- **Values**: `"true"` / `"false"` (default `"false"`)
+- **GitHub Secret**: ❌ No (set in `.env` or workflow variables)
+- **Notes**:
+  - When enabled, the multi-LLM analyzer automatically queries DeepSeek alongside Gemini, Claude, and GPT-4o
+  - Useful for math/programming-heavy research prompts
+  - Still respects OpenRouter API key rate limits
+
+
 #### `GROK_API_KEY`
 - **Required**: ⚠️ Recommended (enables real-time Twitter/X sentiment)
 - **Purpose**: Real-time Twitter/X sentiment analysis via Grok API
