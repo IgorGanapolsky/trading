@@ -4,8 +4,8 @@ Utilities for replaying recorded bias snapshots inside backtests.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import datetime, timezone
-from typing import Iterable
 
 from src.analyst.bias_store import BiasSnapshot, BiasStore
 
@@ -31,7 +31,7 @@ class BiasReplay:
             bucket.sort(key=lambda snap: snap.created_at)
 
     @classmethod
-    def from_store(cls, store: BiasStore, *, limit: int | None = None) -> "BiasReplay":
+    def from_store(cls, store: BiasStore, *, limit: int | None = None) -> BiasReplay:
         return cls(store.iter_journal(limit=limit) or [])
 
     def get_bias(self, symbol: str, as_of: datetime) -> BiasSnapshot | None:
