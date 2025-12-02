@@ -15,6 +15,7 @@ from src.orchestrator.failure_isolation import FailureIsolationManager
 from src.orchestrator.telemetry import OrchestratorTelemetry
 from src.risk.risk_manager import RiskManager
 from src.risk.options_risk_monitor import OptionsRiskMonitor
+from src.risk.trade_gateway import TradeGateway, TradeRequest
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,8 @@ class TradingOrchestrator:
         self.telemetry = OrchestratorTelemetry()
         self.failure_manager = FailureIsolationManager(self.telemetry)
         self.options_risk_monitor = OptionsRiskMonitor(paper=paper)
+        # CRITICAL: All trades must go through the gateway - no direct executor calls
+        self.trade_gateway = TradeGateway(executor=self.executor, paper=paper)
 
     def run(self) -> None:
         logger.info("Running hybrid funnel for tickers: %s", ", ".join(self.tickers))
@@ -257,14 +260,36 @@ class TradingOrchestrator:
             return
 
         logger.info("Executing BUY %s for $%.2f", ticker, order_size)
+
+        # CRITICAL: All trades go through the mandatory gateway
+        trade_request = TradeRequest(
+            symbol=ticker,
+            side="buy",
+            notional=order_size,
+            source="orchestrator"
+        )
+        gateway_decision = self.trade_gateway.evaluate(trade_request)
+
+        if not gateway_decision.approved:
+            logger.warning(
+                "Gate GATEWAY (%s): REJECTED by Trade Gateway - %s",
+                ticker,
+                [r.value for r in gateway_decision.rejection_reasons],
+            )
+            self.telemetry.gate_reject(
+                "gateway",
+                ticker,
+                {
+                    "rejection_reasons": [r.value for r in gateway_decision.rejection_reasons],
+                    "risk_score": gateway_decision.risk_score,
+                },
+            )
+            return
+
         order_outcome = self.failure_manager.run(
             gate="execution.order",
             ticker=ticker,
-            operation=lambda: self.executor.place_order(
-                ticker,
-                order_size,
-                side="buy",
-            ),
+            operation=lambda: self.trade_gateway.execute(gateway_decision),
             event_type="execution.order",
         )
         if not order_outcome.ok:
@@ -354,16 +379,24 @@ class TradingOrchestrator:
                 hedge["symbol"],
             )
 
-            # Execute the hedge
+            # Execute the hedge through the gateway
             try:
-                order_size = hedge["quantity"]
-                side = hedge["action"].lower()
-
-                order = self.executor.place_order(
-                    hedge["symbol"],
-                    order_size,
-                    side=side,
+                hedge_request = TradeRequest(
+                    symbol=hedge["symbol"],
+                    side=hedge["action"].lower(),
+                    quantity=hedge["quantity"],
+                    source="delta_hedge"
                 )
+                hedge_decision = self.trade_gateway.evaluate(hedge_request)
+
+                if not hedge_decision.approved:
+                    logger.warning(
+                        "Delta hedge rejected by gateway: %s",
+                        [r.value for r in hedge_decision.rejection_reasons]
+                    )
+                    return {"action": "rejected", "reasons": [r.value for r in hedge_decision.rejection_reasons]}
+
+                order = self.trade_gateway.execute(hedge_decision)
 
                 self.telemetry.record(
                     event_type="gate.delta_rebalance",
