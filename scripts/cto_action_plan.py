@@ -31,7 +31,7 @@ def generate_action_plan():
         state = json.load(f)
 
     positions = state.get("performance", {}).get("open_positions", [])
-    account = state.get("account", {})
+    state.get("account", {})
 
     # Immediate Actions
     print("\n🚨 IMMEDIATE ACTIONS (Can Do Now)")
@@ -91,9 +91,7 @@ def generate_action_plan():
     # 5. Position Diversification
     total_value = sum(p.get("amount", 0) for p in positions)
     if spy_pos:
-        spy_pct = (
-            (spy_pos.get("amount", 0) / total_value * 100) if total_value > 0 else 0
-        )
+        spy_pct = (spy_pos.get("amount", 0) / total_value * 100) if total_value > 0 else 0
         if spy_pct > 70:
             actions.append(
                 {
@@ -108,9 +106,7 @@ def generate_action_plan():
     # Display actions
     for i, act in enumerate(actions, 1):
         priority_emoji = (
-            "🚨"
-            if act["priority"] == "CRITICAL"
-            else "⚠️" if act["priority"] == "HIGH" else "ℹ️"
+            "🚨" if act["priority"] == "CRITICAL" else "⚠️" if act["priority"] == "HIGH" else "ℹ️"
         )
         print(f"\n{i}. {priority_emoji} [{act['priority']}] {act['action']}")
         print(f"   Reason: {act['reason']}")

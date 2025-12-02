@@ -10,10 +10,10 @@ Notes:
   - Skips execution phase entirely (no ADK/MCP orders).
   - Prints ensemble vote and top agent recommendations per symbol.
 """
+
 import argparse
 import json
 import os  # noqa: F401
-from typing import List
 
 try:
     from dotenv import load_dotenv
@@ -34,7 +34,7 @@ from src.orchestration.elite_orchestrator import EliteOrchestrator
 from src.rag.sentiment_store import SentimentRAGStore
 
 
-def dry_run(symbols: List[str], args) -> int:
+def dry_run(symbols: list[str], args) -> int:
     eo = EliteOrchestrator(paper=True, enable_planning=True)
     # Optional agent filters
     include = set(getattr(args, "include_agents", []) or [])
@@ -126,9 +126,7 @@ def dry_run(symbols: List[str], args) -> int:
                     import json as _J
 
                     doc = md.get("document", "")
-                    parsed = (
-                        _J.loads(doc) if doc and doc.strip().startswith("{") else {}
-                    )
+                    parsed = _J.loads(doc) if doc and doc.strip().startswith("{") else {}
                     tldr = parsed.get("tl_dr")
                 except Exception:
                     tldr = None
@@ -159,8 +157,8 @@ def dry_run(symbols: List[str], args) -> int:
         except Exception:
             # Last-resort: read JSON fallback if present
             try:
-                from pathlib import Path as _P
                 import json as _J
+                from pathlib import Path as _P
 
                 fp = _P("data/rag/bogleheads_latest.json")
                 if fp.exists():
@@ -223,12 +221,8 @@ def dry_run(symbols: List[str], args) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Dry run trading analysis without execution"
-    )
-    parser.add_argument(
-        "--symbols", nargs="*", default=["SPY", "QQQ"], help="Symbols to analyze"
-    )
+    parser = argparse.ArgumentParser(description="Dry run trading analysis without execution")
+    parser.add_argument("--symbols", nargs="*", default=["SPY", "QQQ"], help="Symbols to analyze")
     parser.add_argument(
         "--include-agents",
         nargs="*",
@@ -241,9 +235,7 @@ def main() -> int:
         default=None,
         help="Exclude these agents from analysis",
     )
-    parser.add_argument(
-        "--weight-mcp", type=float, default=None, help="Ensemble weight for MCP"
-    )
+    parser.add_argument("--weight-mcp", type=float, default=None, help="Ensemble weight for MCP")
     parser.add_argument(
         "--weight-langchain",
         type=float,
@@ -284,9 +276,7 @@ def main() -> int:
         default=None,
         help="Export analysis/risk/execution report to JSON file",
     )
-    parser.add_argument(
-        "--export-md", default=None, help="Export markdown summary report"
-    )
+    parser.add_argument("--export-md", default=None, help="Export markdown summary report")
     args = parser.parse_args()
     return dry_run(args.symbols, args)
 

@@ -3,11 +3,11 @@ Trade Tracker for Online Learning Integration
 Tracks trades and triggers online learning updates.
 """
 
+import json
 import logging
-from typing import Dict, Any, Optional
 from datetime import datetime
 from pathlib import Path
-import json
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class TradeTracker:
         symbol: str,
         action: int,
         entry_state: Any,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ):
         """
         Called when a trade is entered.
@@ -68,8 +68,8 @@ class TradeTracker:
         self,
         symbol: str,
         exit_state: Any,
-        trade_result: Dict[str, Any],
-        market_state: Optional[Dict[str, Any]] = None,
+        trade_result: dict[str, Any],
+        market_state: Optional[dict[str, Any]] = None,
     ):
         """
         Called when a trade is exited.
@@ -120,11 +120,9 @@ class TradeTracker:
         # Save trade record
         self._save_trade(complete_trade)
 
-        logger.info(
-            f"✅ Trade exit tracked: {symbol} (P/L: {trade_result.get('pl_pct', 0):.2%})"
-        )
+        logger.info(f"✅ Trade exit tracked: {symbol} (P/L: {trade_result.get('pl_pct', 0):.2%})")
 
-    def _save_trade(self, trade: Dict[str, Any]):
+    def _save_trade(self, trade: dict[str, Any]):
         """Save trade record to disk."""
         symbol = trade["symbol"]
         timestamp = trade["entry_time"].replace(":", "-").split(".")[0]
@@ -149,7 +147,7 @@ class TradeTracker:
         else:
             return obj
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get trade tracking statistics."""
         return {
             "active_trades": len(self.active_trades),

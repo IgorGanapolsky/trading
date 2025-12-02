@@ -6,18 +6,17 @@ Comprehensive data quality and staleness validation.
 Can be run manually or integrated into CI/CD pipeline.
 """
 
-import sys
-import os
 import argparse
 import json
 import logging
+import sys
 from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.utils.data_hygiene import DataHygieneChecker
 from src.utils.data_collector import DataCollector
+from src.utils.data_hygiene import DataHygieneChecker
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -35,15 +34,11 @@ def main():
     validate_parser.add_argument(
         "--symbols", type=str, help="Comma-separated symbols (default: all)"
     )
-    validate_parser.add_argument(
-        "--min-days", type=int, default=252, help="Minimum days required"
-    )
+    validate_parser.add_argument("--min-days", type=int, default=252, help="Minimum days required")
 
     # Rotate command
     rotate_parser = subparsers.add_parser("rotate", help="Rotate old historical data")
-    rotate_parser.add_argument(
-        "--max-age-days", type=int, default=365, help="Maximum age in days"
-    )
+    rotate_parser.add_argument("--max-age-days", type=int, default=365, help="Maximum age in days")
     rotate_parser.add_argument("--dry-run", action="store_true", help="Preview changes")
 
     # Model check command
@@ -51,22 +46,16 @@ def main():
     model_parser.add_argument("--model-path", type=str, help="Specific model path")
 
     # Cleanup models command
-    cleanup_parser = subparsers.add_parser(
-        "cleanup-models", help="Clean up stale models"
-    )
+    cleanup_parser = subparsers.add_parser("cleanup-models", help="Clean up stale models")
     cleanup_parser.add_argument("--max-age-days", type=int, help="Maximum age in days")
-    cleanup_parser.add_argument(
-        "--dry-run", action="store_true", help="Preview changes"
-    )
+    cleanup_parser.add_argument("--dry-run", action="store_true", help="Preview changes")
     cleanup_parser.add_argument(
         "--keep-latest", action="store_true", default=True, help="Keep latest model"
     )
 
     # Full check command
     full_parser = subparsers.add_parser("full-check", help="Run full hygiene check")
-    full_parser.add_argument(
-        "--symbols", type=str, help="Comma-separated symbols (default: all)"
-    )
+    full_parser.add_argument("--symbols", type=str, help="Comma-separated symbols (default: all)")
     full_parser.add_argument("--output", type=str, help="Output JSON report path")
 
     args = parser.parse_args()
@@ -96,9 +85,7 @@ def main():
 
         for symbol in symbols:
             hist_data = collector.load_historical_data(symbol)
-            validation = checker.validate_historical_data_quality(
-                symbol, hist_data, args.min_days
-            )
+            validation = checker.validate_historical_data_quality(symbol, hist_data, args.min_days)
 
             status = "✅" if validation["valid"] else "❌"
             print(f"\n{status} {symbol}")
@@ -134,11 +121,9 @@ def main():
         print(f"   Cutoff date: {result['cutoff_date']}")
 
         if result["deleted_files"]:
-            print(f"\n   Deleted files (showing first 10):")
+            print("\n   Deleted files (showing first 10):")
             for file_info in result["deleted_files"][:10]:
-                print(
-                    f"      - {file_info['file']} ({file_info['data_age_days']} days old)"
-                )
+                print(f"      - {file_info['file']} ({file_info['data_age_days']} days old)")
 
     elif args.command == "check-models":
         print("\n🔍 Checking model staleness...")
@@ -150,9 +135,7 @@ def main():
         print(f"Reason: {result['reason']}")
 
         if result["stale"]:
-            print(
-                f"\n⚠️  Model needs retraining (max age: {result['max_age_days']} days)"
-            )
+            print(f"\n⚠️  Model needs retraining (max age: {result['max_age_days']} days)")
             sys.exit(1)
         else:
             sys.exit(0)
@@ -170,7 +153,7 @@ def main():
         print(f"   Space freed: {result['space_freed_mb']} MB")
 
         if result["deleted_files"]:
-            print(f"\n   Deleted models:")
+            print("\n   Deleted models:")
             for file_info in result["deleted_files"]:
                 print(f"      - {file_info['file']} ({file_info['age_days']} days old)")
 

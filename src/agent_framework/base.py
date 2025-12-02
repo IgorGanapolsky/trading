@@ -13,7 +13,7 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .context import RunContext
 
@@ -26,11 +26,11 @@ class AgentResult:
 
     name: str
     succeeded: bool
-    payload: Dict[str, Any] = field(default_factory=dict)
+    payload: dict[str, Any] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
-    error: Optional[str] = None
+    error: str | None = None
     started_at: datetime = field(default_factory=datetime.utcnow)
-    finished_at: Optional[datetime] = None
+    finished_at: datetime | None = None
 
     def mark_finished(self) -> None:
         self.finished_at = datetime.utcnow()
@@ -84,9 +84,7 @@ class TradingAgent(ABC):
             try:
                 self.cleanup(context)
             except Exception:  # pragma: no cover - defensive
-                logger.exception(
-                    "Agent %s cleanup raised an exception", self.agent_name
-                )
+                logger.exception("Agent %s cleanup raised an exception", self.agent_name)
 
         result.mark_finished()
         status = "succeeded" if result.succeeded else "failed"

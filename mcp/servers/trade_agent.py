@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from mcp.client import MCPClient, default_client
 
 SERVER_ID = "trade-agent"
 
 
-def _client(client: Optional[MCPClient]) -> MCPClient:
+def _client(client: MCPClient | None) -> MCPClient:
     return client or default_client()
 
 
@@ -18,9 +18,9 @@ def place_equity_order(
     quantity: float,
     order_type: str = "market",
     time_in_force: str = "day",
-    client: Optional[MCPClient] = None,
+    client: MCPClient | None = None,
     **kwargs: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Place an equity order through the Trade Agent MCP server.
 
@@ -50,9 +50,9 @@ def place_crypto_order(
     side: str,
     notional: float,
     order_type: str = "market",
-    client: Optional[MCPClient] = None,
+    client: MCPClient | None = None,
     **kwargs: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     payload = {
         "symbol": symbol,
         "side": side,
@@ -66,23 +66,23 @@ def place_crypto_order(
 def cancel_order(
     *,
     order_id: str,
-    client: Optional[MCPClient] = None,
-) -> Dict[str, Any]:
+    client: MCPClient | None = None,
+) -> dict[str, Any]:
     payload = {"order_id": order_id}
     return _client(client).call_tool(SERVER_ID, "cancel_order", payload)
 
 
 def get_positions(
     *,
-    client: Optional[MCPClient] = None,
+    client: MCPClient | None = None,
     **kwargs: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     payload = {**kwargs} if kwargs else {}
     return _client(client).call_tool(SERVER_ID, "get_positions", payload)
 
 
 def get_account_overview(
     *,
-    client: Optional[MCPClient] = None,
-) -> Dict[str, Any]:
+    client: MCPClient | None = None,
+) -> dict[str, Any]:
     return _client(client).call_tool(SERVER_ID, "get_account_overview", {})

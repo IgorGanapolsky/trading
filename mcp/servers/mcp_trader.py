@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from mcp.client import MCPClient, default_client
 
 SERVER_ID = "mcp-trader"
 
 
-def _client(client: Optional[MCPClient]) -> MCPClient:
+def _client(client: MCPClient | None) -> MCPClient:
     return client or default_client()
 
 
@@ -15,9 +15,9 @@ def analyze_stock(
     *,
     symbol: str,
     lookback_days: int = 60,
-    client: Optional[MCPClient] = None,
+    client: MCPClient | None = None,
     **kwargs: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     payload = {
         "symbol": symbol,
         "lookback_days": lookback_days,
@@ -31,8 +31,8 @@ def relative_strength(
     symbol: str,
     benchmark: str = "SPY",
     lookback_days: int = 60,
-    client: Optional[MCPClient] = None,
-) -> Dict[str, Any]:
+    client: MCPClient | None = None,
+) -> dict[str, Any]:
     payload = {
         "symbol": symbol,
         "benchmark": benchmark,
@@ -47,8 +47,8 @@ def position_size(
     entry_price: float,
     stop_loss: float,
     risk_dollars: float,
-    client: Optional[MCPClient] = None,
-) -> Dict[str, Any]:
+    client: MCPClient | None = None,
+) -> dict[str, Any]:
     payload = {
         "symbol": symbol,
         "entry_price": entry_price,

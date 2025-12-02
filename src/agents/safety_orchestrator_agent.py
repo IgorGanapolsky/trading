@@ -11,11 +11,12 @@ Ensures comprehensive safety analysis across all agents.
 """
 
 import logging
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any
+
 from .base_agent import BaseAgent
-from .safety_analysis_agent import SafetyAnalysisAgent
 from .quality_monitor_agent import QualityMonitorAgent
+from .safety_analysis_agent import SafetyAnalysisAgent
 from .value_discovery_agent import ValueDiscoveryAgent
 
 logger = logging.getLogger(__name__)
@@ -45,7 +46,7 @@ class SafetyOrchestratorAgent(BaseAgent):
 
         logger.info("Safety Orchestrator Agent initialized with 3 sub-agents")
 
-    def analyze(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Orchestrate comprehensive safety analysis.
 
@@ -75,7 +76,7 @@ class SafetyOrchestratorAgent(BaseAgent):
                 "message": f"Unknown analysis type: {analysis_type}",
             }
 
-    def _analyze_trade(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_trade(self, data: dict[str, Any]) -> dict[str, Any]:
         """Analyze a specific trade opportunity."""
         symbol = data.get("symbol", "")
         market_price = data.get("market_price", 0.0)
@@ -111,7 +112,7 @@ class SafetyOrchestratorAgent(BaseAgent):
 
         return response
 
-    def _monitor_quality(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _monitor_quality(self, data: dict[str, Any]) -> dict[str, Any]:
         """Monitor portfolio quality."""
         positions = data.get("positions", [])
         portfolio_value = data.get("portfolio_value", 0.0)
@@ -136,7 +137,7 @@ class SafetyOrchestratorAgent(BaseAgent):
 
         return response
 
-    def _discover_value(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _discover_value(self, data: dict[str, Any]) -> dict[str, Any]:
         """Discover undervalued opportunities."""
         watchlist = data.get("watchlist", [])
         market_prices = data.get("market_prices", {})
@@ -161,7 +162,7 @@ class SafetyOrchestratorAgent(BaseAgent):
 
         return response
 
-    def _comprehensive_analysis(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _comprehensive_analysis(self, data: dict[str, Any]) -> dict[str, Any]:
         """Perform comprehensive safety analysis."""
 
         # Run all analyses in parallel (simulated - in production would use async)
@@ -200,9 +201,7 @@ class SafetyOrchestratorAgent(BaseAgent):
 
         return comprehensive
 
-    def _build_comprehensive_prompt(
-        self, results: Dict[str, Any], memory_context: str
-    ) -> str:
+    def _build_comprehensive_prompt(self, results: dict[str, Any], memory_context: str) -> str:
         """Build LLM prompt for comprehensive analysis synthesis."""
 
         results_summary = ""
@@ -232,7 +231,7 @@ INVESTMENT_READINESS: [READY/WAIT/AVOID]"""
 
         return prompt
 
-    def _parse_synthesis(self, reasoning: str) -> Dict[str, Any]:
+    def _parse_synthesis(self, reasoning: str) -> dict[str, Any]:
         """Parse LLM synthesis response."""
         lines = reasoning.split("\n")
         synthesis = {

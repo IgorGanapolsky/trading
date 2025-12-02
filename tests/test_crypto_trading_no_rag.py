@@ -5,9 +5,10 @@ These tests verify that crypto trading can run without requiring
 sentence-transformers or other RAG dependencies.
 """
 
-import pytest
 import sys
 from unittest.mock import patch
+
+import pytest
 
 
 class TestCryptoTradingImports:
@@ -53,9 +54,7 @@ class TestCryptoTradingImports:
 
         # sentiment_store should NOT be in new modules
         sentiment_modules = [m for m in new_modules if "sentiment_store" in m]
-        assert (
-            len(sentiment_modules) == 0
-        ), f"sentiment_store was imported: {sentiment_modules}"
+        assert len(sentiment_modules) == 0, f"sentiment_store was imported: {sentiment_modules}"
 
     def test_deepagents_tools_lazy_import(self):
         """Test that deepagents tools handle missing RAG gracefully."""
@@ -84,8 +83,8 @@ class TestCryptoTradingWorkflow:
         """Test the full import chain without RAG dependencies."""
         # This simulates what happens in GitHub Actions
         from scripts.autonomous_trader import execute_crypto_trading
-        from src.strategies.crypto_strategy import CryptoStrategy
         from src.core.risk_manager import RiskManager
+        from src.strategies.crypto_strategy import CryptoStrategy
 
         # All should import successfully
         assert execute_crypto_trading is not None

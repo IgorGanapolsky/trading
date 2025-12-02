@@ -12,13 +12,13 @@ Finds the best value investment opportunities.
 
 import logging
 from datetime import datetime
-from typing import Dict, Any, List, Optional
-from .base_agent import BaseAgent
+from typing import Any, Optional
+
 from src.safety.graham_buffett_safety import (
-    GrahamBuffettSafety,
     get_global_safety_analyzer,
-    SafetyRating,
 )
+
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ class ValueDiscoveryAgent(BaseAgent):
         )
         self.safety_analyzer = get_global_safety_analyzer()
 
-    def analyze(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Discover undervalued opportunities from watchlist.
 
@@ -102,8 +102,8 @@ class ValueDiscoveryAgent(BaseAgent):
                     }
 
                     # Calculate opportunity score (combination of margin and quality)
-                    opportunity["opportunity_score"] = (
-                        self._calculate_opportunity_score(opportunity)
+                    opportunity["opportunity_score"] = self._calculate_opportunity_score(
+                        opportunity
                     )
 
                     opportunities.append(opportunity)
@@ -130,7 +130,7 @@ class ValueDiscoveryAgent(BaseAgent):
 
         return analysis
 
-    def _calculate_opportunity_score(self, opportunity: Dict[str, Any]) -> float:
+    def _calculate_opportunity_score(self, opportunity: dict[str, Any]) -> float:
         """Calculate composite opportunity score (0-100)."""
 
         margin_pct = opportunity.get("margin_of_safety_pct", 0.0)
@@ -171,21 +171,19 @@ class ValueDiscoveryAgent(BaseAgent):
             logger.warning(f"Error fetching price for {symbol}: {e}")
             return None
 
-    def _build_discovery_prompt(
-        self, opportunities: List[Dict], memory_context: str
-    ) -> str:
+    def _build_discovery_prompt(self, opportunities: list[dict], memory_context: str) -> str:
         """Build LLM prompt for value discovery analysis."""
 
         opportunities_summary = ""
         for i, opp in enumerate(opportunities[:5], 1):  # Top 5
             opportunities_summary += f"""
-{i}. {opp['symbol']}:
-   - Market Price: ${opp['market_price']:.2f}
-   - Intrinsic Value: ${opp['intrinsic_value']:.2f}
-   - Margin of Safety: {opp['margin_of_safety_pct']*100:.1f}%
-   - Quality Score: {opp['quality_score']:.1f}/100
-   - Safety Rating: {opp['safety_rating'].upper()}
-   - Opportunity Score: {opp['opportunity_score']:.1f}/100
+{i}. {opp["symbol"]}:
+   - Market Price: ${opp["market_price"]:.2f}
+   - Intrinsic Value: ${opp["intrinsic_value"]:.2f}
+   - Margin of Safety: {opp["margin_of_safety_pct"] * 100:.1f}%
+   - Quality Score: {opp["quality_score"]:.1f}/100
+   - Safety Rating: {opp["safety_rating"].upper()}
+   - Opportunity Score: {opp["opportunity_score"]:.1f}/100
 """
 
         prompt = f"""You are a Value Discovery Agent identifying the best investment opportunities.
@@ -212,8 +210,8 @@ STRATEGY: [investment strategy]"""
         return prompt
 
     def _combine_discovery_analysis(
-        self, opportunities: List[Dict], llm_response: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, opportunities: list[dict], llm_response: dict[str, Any]
+    ) -> dict[str, Any]:
         """Combine opportunities with LLM insights."""
 
         llm_analysis = self._parse_llm_response(llm_response.get("reasoning", ""))
@@ -233,7 +231,7 @@ STRATEGY: [investment strategy]"""
 
         return analysis
 
-    def _parse_llm_response(self, reasoning: str) -> Dict[str, Any]:
+    def _parse_llm_response(self, reasoning: str) -> dict[str, Any]:
         """Parse LLM response."""
         lines = reasoning.split("\n")
         analysis = {

@@ -2,12 +2,12 @@
 Reddit news collector using existing reddit_sentiment infrastructure.
 """
 
-from typing import List, Dict, Any
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
+from typing import Any
 
-from src.utils.reddit_sentiment import get_reddit_sentiment
 from src.rag.collectors.base_collector import BaseNewsCollector
+from src.utils.reddit_sentiment import get_reddit_sentiment
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +20,7 @@ class RedditCollector(BaseNewsCollector):
     def __init__(self):
         super().__init__(source_name="reddit")
 
-    def collect_ticker_news(
-        self, ticker: str, days_back: int = 7
-    ) -> List[Dict[str, Any]]:
+    def collect_ticker_news(self, ticker: str, days_back: int = 7) -> list[dict[str, Any]]:
         """
         Collect Reddit posts mentioning a ticker.
 
@@ -73,7 +71,7 @@ class RedditCollector(BaseNewsCollector):
             logger.error(f"Error collecting Reddit posts for {ticker}: {e}")
             return []
 
-    def collect_market_news(self, days_back: int = 1) -> List[Dict[str, Any]]:
+    def collect_market_news(self, days_back: int = 1) -> list[dict[str, Any]]:
         """
         Collect general market posts from Reddit.
 

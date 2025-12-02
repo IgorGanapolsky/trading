@@ -1,4 +1,6 @@
 # Generic, formatter-friendly config.
+# Note: Primary ruff config is in pyproject.toml, this is for Trunk integration
+[lint]
 select = ["B", "D3", "E", "F"]
 
 # Never enforce `E501` (line length violations). This should be handled by formatters.

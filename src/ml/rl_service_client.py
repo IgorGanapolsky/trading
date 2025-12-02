@@ -2,11 +2,11 @@
 RL Service Client - Integration with cloud RL providers (Vertex AI RL, Azure ML, etc.)
 """
 
-import os
 import logging
-from typing import Dict, Any, Optional
-
+import os
 from datetime import datetime
+from typing import Any, Optional
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -73,9 +73,7 @@ class RLServiceClient:
                 from google.cloud import aiplatform
 
                 # Initialize Vertex AI (requires project and location)
-                project_id = os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv(
-                    "GCP_PROJECT"
-                )
+                project_id = os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("GCP_PROJECT")
                 location = os.getenv("GOOGLE_CLOUD_LOCATION") or os.getenv(
                     "GCP_LOCATION", "us-central1"
                 )
@@ -135,8 +133,7 @@ class RLServiceClient:
 
         except ImportError:
             logger.warning(
-                "⚠️  azure-ai-ml not installed. "
-                "Install with: pip install azure-ai-ml azure-identity"
+                "⚠️  azure-ai-ml not installed. Install with: pip install azure-ai-ml azure-identity"
             )
             self.client = None
         except Exception as e:
@@ -153,7 +150,7 @@ class RLServiceClient:
             logger.info("✅ Connected to RL service (AWS SageMaker RL)")
 
         except ImportError:
-            logger.warning("⚠️  boto3 not installed. " "Install with: pip install boto3")
+            logger.warning("⚠️  boto3 not installed. Install with: pip install boto3")
             self.client = None
         except Exception as e:
             logger.error(f"❌ Failed to initialize AWS SageMaker: {e}")
@@ -178,11 +175,11 @@ class RLServiceClient:
 
     def start_training(
         self,
-        env_spec: Dict[str, Any],
+        env_spec: dict[str, Any],
         algorithm: str = "DQN",
         job_name: Optional[str] = None,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Start a training job on the cloud RL service.
 
@@ -196,19 +193,13 @@ class RLServiceClient:
             Job information dict with job_id, status, etc.
         """
         if self.provider == "vertex_ai":
-            return self._start_vertex_ai_training(
-                env_spec, algorithm, job_name, **kwargs
-            )
+            return self._start_vertex_ai_training(env_spec, algorithm, job_name, **kwargs)
         elif self.provider == "azure_ml":
-            return self._start_azure_ml_training(
-                env_spec, algorithm, job_name, **kwargs
-            )
+            return self._start_azure_ml_training(env_spec, algorithm, job_name, **kwargs)
         elif self.provider == "aws_sagemaker":
             return self._start_aws_training(env_spec, algorithm, job_name, **kwargs)
         elif self.provider == "paperspace":
-            return self._start_paperspace_training(
-                env_spec, algorithm, job_name, **kwargs
-            )
+            return self._start_paperspace_training(env_spec, algorithm, job_name, **kwargs)
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
@@ -223,8 +214,6 @@ class RLServiceClient:
         # Use Vertex AI SDK if available
         if self.client and self.project_id:
             try:
-
-
                 # Create custom training job
                 # Note: This is a simplified example - actual RL training would require
                 # a proper training container and pipeline configuration
@@ -314,14 +303,14 @@ class RLServiceClient:
 
         return job_info
 
-    def get_job_status(self, job_id: str) -> Dict[str, Any]:
+    def get_job_status(self, job_id: str) -> dict[str, Any]:
         """Get status of a training job."""
         logger.info(f"📊 Checking job status: {job_id}")
 
         # Placeholder - would query provider API
         return {"job_id": job_id, "status": "running", "progress": 0.5, "metrics": {}}
 
-    def get_trained_policy(self, job_id: str) -> Optional[Dict[str, Any]]:
+    def get_trained_policy(self, job_id: str) -> Optional[dict[str, Any]]:
         """Download trained policy from completed job."""
         logger.info(f"📥 Fetching trained policy for job: {job_id}")
 

@@ -7,6 +7,7 @@ Tests Alpaca API, strategies, and readiness for trading execution
 import os
 import sys
 from datetime import datetime
+
 from dotenv import load_dotenv
 
 # Add project root to path
@@ -29,8 +30,6 @@ def test_alpaca_connection():
 
     try:
         from alpaca.trading.client import TradingClient
-        from alpaca.trading.requests import GetAssetsRequest
-        from alpaca.trading.enums import AssetClass
 
         # Load environment variables
         load_dotenv()
@@ -48,14 +47,14 @@ def test_alpaca_connection():
 
         # Test 1: Get account info
         account = client.get_account()
-        print(f"\n✅ Account connected successfully!")
+        print("\n✅ Account connected successfully!")
         print(f"   Account Number: {account.account_number}")
         print(f"   Account Status: {account.status}")
         print(f"   Trading Blocked: {account.trading_blocked}")
         print(f"   Pattern Day Trader: {account.pattern_day_trader}")
 
         # Test 2: Get portfolio values
-        print(f"\n📊 Portfolio Status:")
+        print("\n📊 Portfolio Status:")
         print(f"   Equity: ${float(account.equity):,.2f}")
         print(f"   Cash: ${float(account.cash):,.2f}")
         print(f"   Buying Power: ${float(account.buying_power):,.2f}")
@@ -73,16 +72,14 @@ def test_alpaca_connection():
         for pos in positions:
             unrealized_pl = float(pos.unrealized_pl)
             unrealized_pl_pct = float(pos.unrealized_plpc) * 100
-            print(
-                f"   {pos.symbol}: {pos.qty} shares @ ${float(pos.avg_entry_price):.2f}"
-            )
+            print(f"   {pos.symbol}: {pos.qty} shares @ ${float(pos.avg_entry_price):.2f}")
             print(
                 f"      Current: ${float(pos.current_price):.2f} | P/L: ${unrealized_pl:+.2f} ({unrealized_pl_pct:+.2f}%)"
             )
 
         # Test 4: Check market status
         clock = client.get_clock()
-        print(f"\n🕒 Market Status:")
+        print("\n🕒 Market Status:")
         print(f"   Is Open: {clock.is_open}")
         print(f"   Current Time: {clock.timestamp}")
         print(f"   Next Open: {clock.next_open}")
@@ -124,7 +121,7 @@ def test_market_data():
             print("   This is not critical - yfinance can be temperamental on weekends")
             return True  # Don't fail the test for this
 
-        print(f"✅ SPY data fetched successfully!")
+        print("✅ SPY data fetched successfully!")
         print(f"   Last 5 days: {len(hist)} records")
         print(f"   Latest close: ${hist['Close'].iloc[-1]:.2f}")
         print(f"   Latest date: {hist.index[-1].strftime('%Y-%m-%d')}")
@@ -163,14 +160,14 @@ def test_strategies():
 
         print("Testing CoreStrategy...")
         core = CoreStrategy(use_sentiment=False)  # Disable sentiment to avoid API calls
-        print(f"✅ CoreStrategy initialized")
+        print("✅ CoreStrategy initialized")
         print(f"   Daily allocation: ${core.daily_allocation}")
         print(f"   ETF universe: {core.etf_universe}")
         print(f"   Stop loss: {core.stop_loss_pct * 100}%")
 
         print("\nTesting GrowthStrategy...")
         growth = GrowthStrategy(weekly_allocation=10.0)
-        print(f"✅ GrowthStrategy initialized")
+        print("✅ GrowthStrategy initialized")
         print(f"   Weekly allocation: ${growth.weekly_allocation}")
         print(f"   Stop loss: {growth.stop_loss_pct * 100}%")
         print(f"   Take profit: {growth.take_profit_pct * 100}%")
@@ -195,8 +192,8 @@ def test_order_submission(client):
         return False
 
     try:
-        from alpaca.trading.requests import MarketOrderRequest
         from alpaca.trading.enums import OrderSide, TimeInForce
+        from alpaca.trading.requests import MarketOrderRequest
 
         # Check if market is open
         clock = client.get_clock()
@@ -215,7 +212,7 @@ def test_order_submission(client):
 
         # Submit order
         order = client.submit_order(order_request)
-        print(f"✅ Order submitted successfully!")
+        print("✅ Order submitted successfully!")
         print(f"   Order ID: {order.id}")
         print(f"   Symbol: {order.symbol}")
         print(f"   Side: {order.side}")
@@ -255,7 +252,7 @@ def test_autonomous_trader():
         print(f"✅ Script exists: {script_path}")
 
         # Read script to check for dry-run capability
-        with open(script_path, "r") as f:
+        with open(script_path) as f:
             content = f.read()
 
         print(f"   Size: {len(content)} bytes")
@@ -268,14 +265,10 @@ def test_autonomous_trader():
             "GrowthStrategy import": "from src.strategies.growth_strategy import GrowthStrategy"
             in content,
             "Alpaca client": (
-                "TradingClient" in content
-                or "alpaca_trade_api" in content
-                or "tradeapi" in content
+                "TradingClient" in content or "alpaca_trade_api" in content or "tradeapi" in content
             ),
             "Environment variables": (
-                "load_dotenv" in content
-                or "os.getenv" in content
-                or "os.environ" in content
+                "load_dotenv" in content or "os.getenv" in content or "os.environ" in content
             ),
         }
 
@@ -301,11 +294,9 @@ def verify_system_state():
     try:
         import json
 
-        state_path = os.path.join(
-            os.path.dirname(__file__), "..", "data", "system_state.json"
-        )
+        state_path = os.path.join(os.path.dirname(__file__), "..", "data", "system_state.json")
 
-        with open(state_path, "r") as f:
+        with open(state_path) as f:
             state = json.load(f)
 
         print("📊 Current System State:")
@@ -315,29 +306,27 @@ def verify_system_state():
         print(f"   Phase: {state['challenge']['phase']}")
         print(f"   Status: {state['challenge']['status']}")
 
-        print(f"\n💰 Account Summary:")
+        print("\n💰 Account Summary:")
         print(f"   Starting Balance: ${state['account']['starting_balance']:,.2f}")
         print(f"   Current Equity: ${state['account']['current_equity']:,.2f}")
         print(
             f"   Total P/L: ${state['account']['total_pl']:,.2f} ({state['account']['total_pl_pct']:.2f}%)"
         )
 
-        print(f"\n📈 Performance:")
+        print("\n📈 Performance:")
         print(f"   Total Trades: {state['performance']['total_trades']}")
         print(f"   Win Rate: {state['performance']['win_rate'] * 100:.1f}%")
         print(f"   Winning Trades: {state['performance']['winning_trades']}")
         print(f"   Losing Trades: {state['performance']['losing_trades']}")
 
-        print(f"\n🎯 Strategies:")
-        print(
-            f"   Tier 1 (Core): ${state['strategies']['tier1']['total_invested']:,.2f} invested"
-        )
+        print("\n🎯 Strategies:")
+        print(f"   Tier 1 (Core): ${state['strategies']['tier1']['total_invested']:,.2f} invested")
         print(
             f"   Tier 2 (Growth): ${state['strategies']['tier2']['total_invested']:,.2f} invested"
         )
         print(f"   Tier 2 Stocks: {', '.join(state['strategies']['tier2']['stocks'])}")
 
-        print(f"\n🤖 Automation:")
+        print("\n🤖 Automation:")
         automation = state["automation"]
         print(f"   GitHub Actions Enabled: {automation.get('github_actions_enabled')}")
         print(f"   Workflow Name: {automation.get('workflow_name')}")
@@ -345,11 +334,9 @@ def verify_system_state():
         print(f"   Execution Count: {state['automation']['execution_count']}")
         print(f"   Failures: {state['automation']['failures']}")
 
-        print(f"\n📹 Video Analysis:")
+        print("\n📹 Video Analysis:")
         print(f"   Enabled: {state['video_analysis']['enabled']}")
-        print(
-            f"   Autonomous Monitoring: {state['video_analysis']['autonomous_monitoring']}"
-        )
+        print(f"   Autonomous Monitoring: {state['video_analysis']['autonomous_monitoring']}")
         print(f"   Channels Monitored: {state['video_analysis']['channels_monitored']}")
         print(f"   Videos Analyzed: {state['video_analysis']['videos_analyzed']}")
 

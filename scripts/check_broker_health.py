@@ -10,9 +10,8 @@ Usage:
     python3 scripts/check_broker_health.py --alert  # Send alerts if unhealthy
 """
 
-import os
-import sys
 import argparse
+import sys
 from pathlib import Path
 
 # Add project root to path
@@ -22,9 +21,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from src.core.broker_health import BrokerHealthMonitor
-from src.alerts.telegram_alerter import TelegramAlerter
 import logging
+
+from src.alerts.telegram_alerter import TelegramAlerter
+from src.core.broker_health import BrokerHealthMonitor
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -34,12 +34,8 @@ logger = logging.getLogger(__name__)
 
 def main():
     parser = argparse.ArgumentParser(description="Check broker health")
-    parser.add_argument(
-        "--alert", action="store_true", help="Send alerts if broker is unhealthy"
-    )
-    parser.add_argument(
-        "--broker", default="alpaca", help="Broker name to check (default: alpaca)"
-    )
+    parser.add_argument("--alert", action="store_true", help="Send alerts if broker is unhealthy")
+    parser.add_argument("--broker", default="alpaca", help="Broker name to check (default: alpaca)")
     args = parser.parse_args()
 
     print("=" * 70)
@@ -51,7 +47,7 @@ def main():
     monitor = BrokerHealthMonitor(broker_name=args.broker)
 
     # Run health check
-    metrics = monitor.check_health()
+    monitor.check_health()
     summary = monitor.get_health_summary()
 
     # Display results
@@ -95,9 +91,7 @@ def main():
                         title="Broker Health Alert",
                         message=alert_msg,
                         severity=(
-                            "CRITICAL"
-                            if summary["consecutive_failures"] >= 3
-                            else "WARNING"
+                            "CRITICAL" if summary["consecutive_failures"] >= 3 else "WARNING"
                         ),
                     )
                     print("✅ Alert sent via Telegram")

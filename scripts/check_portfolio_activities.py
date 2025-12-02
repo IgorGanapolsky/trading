@@ -5,10 +5,10 @@ Query Alpaca Portfolio Activities (trades, dividends, etc.)
 
 import os
 import sys
-from datetime import datetime, timedelta
-from dotenv import load_dotenv
+from datetime import datetime
+
 import alpaca_trade_api as tradeapi
-import json
+from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
@@ -25,11 +25,7 @@ def main():
         sys.exit(1)
 
     # Initialize API
-    base_url = (
-        "https://paper-api.alpaca.markets"
-        if paper_trading
-        else "https://api.alpaca.markets"
-    )
+    base_url = "https://paper-api.alpaca.markets" if paper_trading else "https://api.alpaca.markets"
     api = tradeapi.REST(api_key, secret_key, base_url, api_version="v2")
 
     print("=" * 80)
@@ -40,9 +36,7 @@ def main():
 
     try:
         # Get activities since Oct 29
-        activities = api.get_activities(
-            activity_types="FILL", date="2025-10-29", direction="desc"
-        )
+        activities = api.get_activities(activity_types="FILL", date="2025-10-29", direction="desc")
 
         print("📊 ALL FILL ACTIVITIES (Since Oct 29, 2025)")
         print("-" * 80)
@@ -95,15 +89,13 @@ def main():
 
         if history:
             print(f"Base Value: ${float(history.base_value):,.2f}")
-            print(f"\nDaily Equity:")
+            print("\nDaily Equity:")
 
             # Get timestamps and equity values
             timestamps = history.timestamp if hasattr(history, "timestamp") else []
             equity = history.equity if hasattr(history, "equity") else []
             profit_loss = history.profit_loss if hasattr(history, "profit_loss") else []
-            profit_loss_pct = (
-                history.profit_loss_pct if hasattr(history, "profit_loss_pct") else []
-            )
+            profit_loss_pct = history.profit_loss_pct if hasattr(history, "profit_loss_pct") else []
 
             for i, ts in enumerate(timestamps):
                 dt = datetime.fromtimestamp(ts)
@@ -112,7 +104,7 @@ def main():
                 pl_pct = profit_loss_pct[i] if i < len(profit_loss_pct) else 0
 
                 print(
-                    f"  {dt.strftime('%Y-%m-%d')}: ${eq:,.2f} | P/L: ${pl:+,.2f} ({pl_pct*100:+.2f}%)"
+                    f"  {dt.strftime('%Y-%m-%d')}: ${eq:,.2f} | P/L: ${pl:+,.2f} ({pl_pct * 100:+.2f}%)"
                 )
 
         print()

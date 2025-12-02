@@ -16,15 +16,15 @@ Based on:
 """
 
 import logging
+from pathlib import Path
+from typing import Any, Optional
+
 import numpy as np
 import pandas as pd
-from typing import Dict, Any, Optional, Tuple
-from pathlib import Path
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
-
 from src.utils.technical_indicators import calculate_all_features
+from torch.utils.data import Dataset
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class LSTMTradingFeatureExtractor(nn.Module):
             output_dim: Output feature dimension
             dropout: Dropout rate
         """
-        super(LSTMTradingFeatureExtractor, self).__init__()
+        super().__init__()
 
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
@@ -121,9 +121,7 @@ class LSTMTradingFeatureExtractor(nn.Module):
 
         return features
 
-    def extract_features(
-        self, hist_data: pd.DataFrame, seq_length: int = 60
-    ) -> np.ndarray:
+    def extract_features(self, hist_data: pd.DataFrame, seq_length: int = 60) -> np.ndarray:
         """
         Extract features from historical data.
 
@@ -159,7 +157,7 @@ class LSTMTradingFeatureExtractor(nn.Module):
             features = self.forward(x)
             return features.numpy().flatten()
 
-    def _features_to_array(self, features: Dict[str, float]) -> np.ndarray:
+    def _features_to_array(self, features: dict[str, float]) -> np.ndarray:
         """Convert features dict to array in consistent order."""
         # Define feature order (must match input_dim)
         feature_order = [
@@ -235,9 +233,7 @@ class LSTMPPOWrapper:
             logger.info("LSTM feature extractor initialized with random weights")
             logger.info("Train the model before using for production")
 
-    def extract_state_features(
-        self, hist_data: pd.DataFrame, symbol: str = ""
-    ) -> Dict[str, Any]:
+    def extract_state_features(self, hist_data: pd.DataFrame, symbol: str = "") -> dict[str, Any]:
         """
         Extract deep learning features from historical data.
 
@@ -294,7 +290,7 @@ class LSTMPPOWrapper:
 
 def create_lstm_ppo_integration(
     rl_learner, hist_data: pd.DataFrame, symbol: str = ""
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Integrate LSTM features with existing RL learner.
 

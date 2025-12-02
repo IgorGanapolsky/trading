@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class RunMode(Enum):
@@ -20,12 +20,12 @@ class RunMode(Enum):
 class AgentConfig:
     """Configuration values injected into agents."""
 
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
 
-    def get(self, key: str, default: Optional[Any] = None) -> Any:
+    def get(self, key: str, default: Any | None = None) -> Any:
         return self.data.get(key, default)
 
-    def copy_with(self, **overrides: Any) -> "AgentConfig":
+    def copy_with(self, **overrides: Any) -> AgentConfig:
         """Return a shallow copy with updates."""
         new_data = self.data.copy()
         if "data" in overrides:
@@ -39,12 +39,12 @@ class RunContext:
 
     mode: RunMode
     force: bool = False
-    run_id: Optional[str] = None
+    run_id: str | None = None
     config: AgentConfig = field(default_factory=AgentConfig)
     workspace_dir: Path = field(default_factory=lambda: Path.cwd())
-    state_cache: Dict[str, Any] = field(default_factory=dict)
+    state_cache: dict[str, Any] = field(default_factory=dict)
 
-    def copy_with(self, **overrides: Any) -> "RunContext":
+    def copy_with(self, **overrides: Any) -> RunContext:
         """Return a shallow copy with updates."""
         data = self.__dict__.copy()
         data.update(overrides)

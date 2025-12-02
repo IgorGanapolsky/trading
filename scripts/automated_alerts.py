@@ -9,12 +9,11 @@ Implements CTO/CFO Decision #4: Automated alerts for:
 - Stop-loss triggers
 """
 
-import sys
 import json
 import logging
+import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -38,7 +37,7 @@ CONCENTRATION_THRESHOLD = 0.60  # 60%
 STALE_THRESHOLD_HOURS = 24  # 24 hours
 
 
-def load_system_state() -> Dict:
+def load_system_state() -> dict:
     """Load system state."""
     if not SYSTEM_STATE_FILE.exists():
         return {}
@@ -47,7 +46,7 @@ def load_system_state() -> Dict:
         return json.load(f)
 
 
-def check_pl_alerts(positions: List[Dict]) -> List[str]:
+def check_pl_alerts(positions: list[dict]) -> list[str]:
     """Check for P/L threshold alerts."""
     alerts = []
 
@@ -70,7 +69,7 @@ def check_pl_alerts(positions: List[Dict]) -> List[str]:
     return alerts
 
 
-def check_concentration_alerts(positions: List[Dict], total_value: float) -> List[str]:
+def check_concentration_alerts(positions: list[dict], total_value: float) -> list[str]:
     """Check for position concentration alerts."""
     alerts = []
 
@@ -84,14 +83,14 @@ def check_concentration_alerts(positions: List[Dict], total_value: float) -> Lis
 
         if concentration > CONCENTRATION_THRESHOLD:
             alerts.append(
-                f"⚠️ {symbol}: Position concentration {concentration*100:.1f}% "
-                f"exceeds {CONCENTRATION_THRESHOLD*100:.0f}% threshold"
+                f"⚠️ {symbol}: Position concentration {concentration * 100:.1f}% "
+                f"exceeds {CONCENTRATION_THRESHOLD * 100:.0f}% threshold"
             )
 
     return alerts
 
 
-def check_system_health(state: Dict) -> List[str]:
+def check_system_health(state: dict) -> list[str]:
     """Check for system health issues."""
     alerts = []
 
@@ -123,7 +122,7 @@ def check_system_health(state: Dict) -> List[str]:
     return alerts
 
 
-def check_stop_loss_alerts(positions: List[Dict]) -> List[str]:
+def check_stop_loss_alerts(positions: list[dict]) -> list[str]:
     """Check for stop-loss proximity alerts."""
     alerts = []
 
@@ -144,13 +143,13 @@ def check_stop_loss_alerts(positions: List[Dict]) -> List[str]:
         if 0 < distance_to_stop < 0.5:
             alerts.append(
                 f"⚠️ {symbol}: Price ${current_price:.2f} is within 0.5% of stop-loss "
-                f"${stop_loss_price:.2f} (P/L: {unrealized_pl_pct*100:.2f}%)"
+                f"${stop_loss_price:.2f} (P/L: {unrealized_pl_pct * 100:.2f}%)"
             )
 
     return alerts
 
 
-def check_tlt_gate_status() -> List[str]:
+def check_tlt_gate_status() -> list[str]:
     """Check TLT momentum gate status and return alerts if gate opened."""
     alerts = []
     try:

@@ -44,7 +44,7 @@ class FibonacciScalerDemo:
         if current_idx >= len(self.FIBONACCI_SEQUENCE) - 1:
             return {
                 "next_level": self.MAX_DAILY_AMOUNT,
-                "milestone_profit": float('inf'),
+                "milestone_profit": float("inf"),
                 "current_level": current_level,
                 "at_max": True,
             }
@@ -78,7 +78,7 @@ class FibonacciScalerDemo:
         current_equity = state.get("account", {}).get("current_equity", 0.0)
         starting_balance = state.get("account", {}).get("starting_balance", 100000.0)
 
-        print(f"\n📊 Current Account Status:")
+        print("\n📊 Current Account Status:")
         print(f"  Starting Balance: ${starting_balance:,.2f}")
         print(f"  Current Equity: ${current_equity:,.2f}")
         print(f"  Cumulative P/L: ${cumulative_profit:,.2f}")
@@ -87,22 +87,26 @@ class FibonacciScalerDemo:
         current_level = self.get_fibonacci_level(cumulative_profit)
         milestone_info = self.get_next_milestone(current_level)
 
-        print(f"\n💎 Fibonacci Scaling Analysis:")
+        print("\n💎 Fibonacci Scaling Analysis:")
         print(f"  Current Level: ${current_level:.0f}/day")
         print(f"  Next Level: ${milestone_info['next_level']:.0f}/day")
         print(f"  Next Milestone: ${milestone_info['milestone_profit']:.2f} profit needed")
 
-        if not milestone_info['at_max']:
-            profit_needed = milestone_info['milestone_profit'] - cumulative_profit
-            progress_pct = (cumulative_profit / milestone_info['milestone_profit']) * 100 if cumulative_profit > 0 else 0
+        if not milestone_info["at_max"]:
+            profit_needed = milestone_info["milestone_profit"] - cumulative_profit
+            progress_pct = (
+                (cumulative_profit / milestone_info["milestone_profit"]) * 100
+                if cumulative_profit > 0
+                else 0
+            )
 
             print(f"  Progress: {progress_pct:.1f}%")
             print(f"  Profit Needed: ${profit_needed:.2f}")
         else:
-            print(f"  Status: 🏁 AT MAXIMUM LEVEL")
+            print("  Status: 🏁 AT MAXIMUM LEVEL")
 
         # Show roadmap
-        print(f"\n🗺️  Fibonacci Roadmap (from current level):")
+        print("\n🗺️  Fibonacci Roadmap (from current level):")
         print(f"{'Level':<8} {'Daily $':<12} {'Milestone $':<15} {'Status':<20}")
         print("-" * 60)
 
@@ -116,10 +120,10 @@ class FibonacciScalerDemo:
             else:
                 status = f"🎯 Need ${milestone:.2f}"
 
-            print(f"{i+1:<8} ${fib:<11.0f} ${milestone:<14.2f} {status:<20}")
+            print(f"{i + 1:<8} ${fib:<11.0f} ${milestone:<14.2f} {status:<20}")
 
         # Show example scaling projection
-        print(f"\n📈 Scaling Projection (if 10% monthly returns):")
+        print("\n📈 Scaling Projection (if 10% monthly returns):")
         print(f"{'Month':<8} {'Profit $':<12} {'Daily Amount':<15} {'Monthly Invest':<15}")
         print("-" * 60)
 

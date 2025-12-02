@@ -1,8 +1,7 @@
-import types
 import sys
+import types
 
 import pytest
-
 from src.utils import error_monitoring
 
 
@@ -42,18 +41,12 @@ def reset_sentry_state(monkeypatch):
 
 def test_init_sentry_with_stub(monkeypatch):
     dummy_sdk = DummySDK()
-    logging_module = types.SimpleNamespace(
-        LoggingIntegration=lambda **kwargs: ("logging", kwargs)
-    )
+    logging_module = types.SimpleNamespace(LoggingIntegration=lambda **kwargs: ("logging", kwargs))
     requests_module = types.SimpleNamespace(RequestsIntegration=lambda: object())
 
     monkeypatch.setitem(sys.modules, "sentry_sdk", dummy_sdk)
-    monkeypatch.setitem(
-        sys.modules, "sentry_sdk.integrations.logging", logging_module
-    )
-    monkeypatch.setitem(
-        sys.modules, "sentry_sdk.integrations.requests", requests_module
-    )
+    monkeypatch.setitem(sys.modules, "sentry_sdk.integrations.logging", logging_module)
+    monkeypatch.setitem(sys.modules, "sentry_sdk.integrations.requests", requests_module)
 
     monkeypatch.setenv("SENTRY_DSN", "http://example.com/123")
 

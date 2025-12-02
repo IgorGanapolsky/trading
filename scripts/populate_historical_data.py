@@ -13,8 +13,8 @@ Environment Variables Required:
     - OR POLYGON_API_KEY (recommended)
     - OR ALPHA_VANTAGE_API_KEY (fallback)
 """
+
 import sys
-import os
 from pathlib import Path
 
 # Add project root to path
@@ -25,8 +25,8 @@ from dotenv import load_dotenv
 
 load_dotenv()  # Load environment variables from .env
 
-from src.utils.data_collector import DataCollector
 from src.strategies.core_strategy import CoreStrategy
+from src.utils.data_collector import DataCollector
 
 
 def main():

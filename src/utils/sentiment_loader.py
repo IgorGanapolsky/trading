@@ -24,9 +24,9 @@ Usage:
 
 import json
 import logging
-from pathlib import Path
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Optional
 
 try:
     from rag_store.sqlite_store import SentimentSQLiteStore
@@ -53,7 +53,7 @@ VERY_BULLISH_THRESHOLD = 70  # Above 70 = very bullish
 MAX_AGE_HOURS = 24
 
 
-def _load_source_from_sqlite(source: str, date_str: str) -> Optional[Dict]:
+def _load_source_from_sqlite(source: str, date_str: str) -> Optional[dict]:
     """
     Load sentiment snapshot from SQLite store when JSON cache is missing.
 
@@ -67,9 +67,7 @@ def _load_source_from_sqlite(source: str, date_str: str) -> Optional[Dict]:
     if _SQLITE_STORE is None:
         return None
 
-    rows = list(
-        _SQLITE_STORE.fetch_by_source_date(source=source, snapshot_date=date_str)
-    )
+    rows = list(_SQLITE_STORE.fetch_by_source_date(source=source, snapshot_date=date_str))
     if not rows:
         return None
 
@@ -139,7 +137,7 @@ def normalize_sentiment_score(score: float, source: str) -> float:
         return max(0, min(100, score))
 
 
-def load_latest_sentiment(date: Optional[str] = None, fallback_days: int = 7) -> Dict:
+def load_latest_sentiment(date: Optional[str] = None, fallback_days: int = 7) -> dict:
     """
     Load the most recent sentiment data from cache files.
 
@@ -174,10 +172,7 @@ def load_latest_sentiment(date: Optional[str] = None, fallback_days: int = 7) ->
             }
         }
     """
-    if date is None:
-        target_date = datetime.now()
-    else:
-        target_date = datetime.strptime(date, "%Y-%m-%d")
+    target_date = datetime.now() if date is None else datetime.strptime(date, "%Y-%m-%d")
 
     logger.info(f"Loading sentiment data for {target_date.strftime('%Y-%m-%d')}")
 
@@ -196,7 +191,7 @@ def load_latest_sentiment(date: Optional[str] = None, fallback_days: int = 7) ->
             reddit_file = SENTIMENT_DIR / f"reddit_{date_str}.json"
             if reddit_file.exists():
                 try:
-                    with open(reddit_file, "r") as f:
+                    with open(reddit_file) as f:
                         reddit_data = json.load(f)
                         logger.info(f"Loaded Reddit sentiment from {reddit_file}")
                 except Exception as e:
@@ -211,7 +206,7 @@ def load_latest_sentiment(date: Optional[str] = None, fallback_days: int = 7) ->
             news_file = SENTIMENT_DIR / f"news_{date_str}.json"
             if news_file.exists():
                 try:
-                    with open(news_file, "r") as f:
+                    with open(news_file) as f:
                         news_data = json.load(f)
                         logger.info(f"Loaded news sentiment from {news_file}")
                 except Exception as e:
@@ -276,9 +271,7 @@ def load_latest_sentiment(date: Optional[str] = None, fallback_days: int = 7) ->
             }
 
             combined_sentiment[ticker]["scores"].append(normalized_score)
-            combined_sentiment[ticker]["confidences"].append(
-                data.get("confidence", "low")
-            )
+            combined_sentiment[ticker]["confidences"].append(data.get("confidence", "low"))
 
     # Process News data
     if news_data:
@@ -307,9 +300,7 @@ def load_latest_sentiment(date: Optional[str] = None, fallback_days: int = 7) ->
             }
 
             combined_sentiment[ticker]["scores"].append(normalized_score)
-            combined_sentiment[ticker]["confidences"].append(
-                ticker_obj.get("confidence", "low")
-            )
+            combined_sentiment[ticker]["confidences"].append(ticker_obj.get("confidence", "low"))
 
     # Calculate final scores and confidence
     final_sentiment = {}
@@ -356,10 +347,10 @@ def load_latest_sentiment(date: Optional[str] = None, fallback_days: int = 7) ->
 
 def get_ticker_sentiment(
     ticker: str,
-    sentiment_data: Optional[Dict] = None,
+    sentiment_data: Optional[dict] = None,
     default_score: float = 50.0,
     default_confidence: str = "low",
-) -> Tuple[float, str, str]:
+) -> tuple[float, str, str]:
     """
     Get sentiment score for a specific ticker.
 
@@ -399,16 +390,13 @@ def get_ticker_sentiment(
     market_regime = ticker_data.get("market_regime", "neutral")
 
     logger.debug(
-        f"{ticker} sentiment: score={score}, confidence={confidence}, "
-        f"regime={market_regime}"
+        f"{ticker} sentiment: score={score}, confidence={confidence}, regime={market_regime}"
     )
 
     return score, confidence, market_regime
 
 
-def is_sentiment_fresh(
-    sentiment_data: Dict, max_age_hours: int = MAX_AGE_HOURS
-) -> bool:
+def is_sentiment_fresh(sentiment_data: dict, max_age_hours: int = MAX_AGE_HOURS) -> bool:
     """
     Check if sentiment data is fresh (recent enough to use).
 
@@ -429,7 +417,7 @@ def is_sentiment_fresh(
     return hours_old <= max_age_hours
 
 
-def get_market_regime(sentiment_data: Optional[Dict] = None) -> str:
+def get_market_regime(sentiment_data: Optional[dict] = None) -> str:
     """
     Get overall market regime based on SPY sentiment.
 
@@ -448,14 +436,13 @@ def get_market_regime(sentiment_data: Optional[Dict] = None) -> str:
     spy_score, spy_confidence, spy_regime = get_ticker_sentiment("SPY", sentiment_data)
 
     logger.info(
-        f"Market regime: {spy_regime} (SPY sentiment: {spy_score}, "
-        f"confidence: {spy_confidence})"
+        f"Market regime: {spy_regime} (SPY sentiment: {spy_score}, confidence: {spy_confidence})"
     )
 
     return spy_regime
 
 
-def get_sentiment_summary(sentiment_data: Optional[Dict] = None) -> Dict:
+def get_sentiment_summary(sentiment_data: Optional[dict] = None) -> dict:
     """
     Get a human-readable summary of sentiment data.
 
@@ -472,12 +459,8 @@ def get_sentiment_summary(sentiment_data: Optional[Dict] = None) -> Dict:
     tickers = sentiment_data.get("sentiment_by_ticker", {})
 
     # Count tickers by sentiment
-    bullish = sum(
-        1 for t in tickers.values() if t.get("score", 50) >= BULLISH_THRESHOLD
-    )
-    bearish = sum(
-        1 for t in tickers.values() if t.get("score", 50) <= BEARISH_THRESHOLD
-    )
+    bullish = sum(1 for t in tickers.values() if t.get("score", 50) >= BULLISH_THRESHOLD)
+    bearish = sum(1 for t in tickers.values() if t.get("score", 50) <= BEARISH_THRESHOLD)
     neutral = len(tickers) - bullish - bearish
 
     # Count by confidence
@@ -501,7 +484,7 @@ def get_sentiment_summary(sentiment_data: Optional[Dict] = None) -> Dict:
     }
 
 
-def print_sentiment_summary(sentiment_data: Optional[Dict] = None):
+def print_sentiment_summary(sentiment_data: Optional[dict] = None):
     """
     Print a formatted summary of sentiment data.
 
@@ -540,7 +523,7 @@ def query_sentiment_rag(
     query: str,
     ticker: Optional[str] = None,
     top_k: int = 5,
-) -> List[Dict]:
+) -> list[dict]:
     """
     Retrieve historical sentiment snapshots using the vector store.
 
@@ -560,7 +543,7 @@ def query_sentiment_rag(
 def get_sentiment_history(
     ticker: str,
     limit: int = 10,
-) -> List[Dict]:
+) -> list[dict]:
     """
     Fetch the most recent sentiment snapshots for a ticker from the RAG store.
 
@@ -596,9 +579,5 @@ if __name__ == "__main__":
         print("-" * 80)
 
         for ticker in tickers:
-            score, confidence, regime = get_ticker_sentiment(
-                ticker.strip(), sentiment_data
-            )
-            print(
-                f"{ticker}: score={score:.1f}, confidence={confidence}, regime={regime}"
-            )
+            score, confidence, regime = get_ticker_sentiment(ticker.strip(), sentiment_data)
+            print(f"{ticker}: score={score:.1f}, confidence={confidence}, regime={regime}")

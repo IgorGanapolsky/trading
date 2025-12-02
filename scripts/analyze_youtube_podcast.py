@@ -4,14 +4,14 @@ YouTube Podcast Analyzer
 Extracts trading insights from YouTube videos using transcripts and AI analysis
 """
 
-import os
-import sys
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
-from youtube_transcript_api import YouTubeTranscriptApi as _YouTubeTranscriptApi
+from typing import Optional
+
 import yt_dlp
+from youtube_transcript_api import YouTubeTranscriptApi as _YouTubeTranscriptApi
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -43,7 +43,7 @@ class YouTubePodcastAnalyzer:
         self.cache_dir = Path(__file__).parent.parent / "data" / "youtube_cache"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
-    def get_video_metadata(self, video_id: str) -> Dict:
+    def get_video_metadata(self, video_id: str) -> dict:
         """
         Get video metadata using yt-dlp
 
@@ -107,7 +107,7 @@ class YouTubePodcastAnalyzer:
         # Check cache first
         cache_file = self.cache_dir / f"{video_id}_transcript.txt"
         if cache_file.exists():
-            print(f"[CACHE] Using cached transcript")
+            print("[CACHE] Using cached transcript")
             return cache_file.read_text()
 
         try:
@@ -128,7 +128,7 @@ class YouTubePodcastAnalyzer:
             print(f"[ERROR] Failed to get transcript: {e}")
             return None
 
-    def keyword_analysis(self, transcript: str) -> Dict:
+    def keyword_analysis(self, transcript: str) -> dict:
         """
         Perform keyword-based analysis when LLM is unavailable
 
@@ -212,13 +212,11 @@ class YouTubePodcastAnalyzer:
                 if count > 0:
                     found[word] = count
             if found:
-                results[category] = sorted(
-                    found.items(), key=lambda x: x[1], reverse=True
-                )
+                results[category] = sorted(found.items(), key=lambda x: x[1], reverse=True)
 
         return results
 
-    def format_keyword_analysis(self, keyword_results: Dict, metadata: Dict) -> str:
+    def format_keyword_analysis(self, keyword_results: dict, metadata: dict) -> str:
         """
         Format keyword analysis as markdown
 
@@ -229,7 +227,7 @@ class YouTubePodcastAnalyzer:
         Returns:
             Formatted markdown analysis
         """
-        analysis = f"""### Keyword-Based Analysis
+        analysis = """### Keyword-Based Analysis
 
 **Note**: This analysis uses keyword extraction. For deeper insights, enable MultiLLM analysis.
 
@@ -261,14 +259,12 @@ class YouTubePodcastAnalyzer:
                 analysis += f"- {keyword.title()}: {count} mentions\n"
 
         # Summary
-        total_mentions = sum(
-            sum(count for _, count in items) for items in keyword_results.values()
-        )
+        total_mentions = sum(sum(count for _, count in items) for items in keyword_results.values())
 
         analysis += f"""
 **Summary**:
 - Total trading-related keyword mentions: {total_mentions}
-- Primary focus: {max(keyword_results.keys(), key=lambda k: sum(c for _, c in keyword_results[k])) if keyword_results else 'Unknown'}
+- Primary focus: {max(keyword_results.keys(), key=lambda k: sum(c for _, c in keyword_results[k])) if keyword_results else "Unknown"}
 
 **Actionable Insights**:
 Based on keyword frequency, this video appears to focus on:
@@ -283,13 +279,11 @@ Based on keyword frequency, this video appears to focus on:
 
         for category, items in sorted_categories[:3]:
             top_item = items[0][0] if items else "N/A"
-            analysis += (
-                f"- **{category.replace('_', ' ').title()}**: Focus on {top_item}\n"
-            )
+            analysis += f"- **{category.replace('_', ' ').title()}**: Focus on {top_item}\n"
 
         return analysis
 
-    def analyze_transcript(self, metadata: Dict, transcript: str) -> Dict:
+    def analyze_transcript(self, metadata: dict, transcript: str) -> dict:
         """
         Analyze transcript for trading insights using MultiLLM or keyword analysis
 
@@ -301,13 +295,13 @@ Based on keyword frequency, this video appears to focus on:
             Dictionary with extracted insights
         """
         if self.use_llm and self.llm_analyzer:
-            print(f"\n[INFO] Analyzing transcript with MultiLLM...")
+            print("\n[INFO] Analyzing transcript with MultiLLM...")
             return self._llm_analysis(metadata, transcript)
         else:
-            print(f"\n[INFO] Analyzing transcript with keyword extraction...")
+            print("\n[INFO] Analyzing transcript with keyword extraction...")
             return self._keyword_analysis_wrapper(metadata, transcript)
 
-    def _keyword_analysis_wrapper(self, metadata: Dict, transcript: str) -> Dict:
+    def _keyword_analysis_wrapper(self, metadata: dict, transcript: str) -> dict:
         """
         Wrapper for keyword-based analysis
 
@@ -325,7 +319,7 @@ Based on keyword frequency, this video appears to focus on:
             # Format as markdown
             analysis_text = self.format_keyword_analysis(keyword_results, metadata)
 
-            print(f"[SUCCESS] Keyword analysis complete")
+            print("[SUCCESS] Keyword analysis complete")
 
             return {
                 "video_id": metadata["video_id"],
@@ -347,7 +341,7 @@ Based on keyword frequency, this video appears to focus on:
                 "timestamp": datetime.now().isoformat(),
             }
 
-    def _llm_analysis(self, metadata: Dict, transcript: str) -> Dict:
+    def _llm_analysis(self, metadata: dict, transcript: str) -> dict:
         """
         LLM-based analysis (when OpenRouter is available)
 
@@ -361,16 +355,14 @@ Based on keyword frequency, this video appears to focus on:
         # Truncate transcript if too long (max ~15k chars for API limits)
         max_chars = 15000
         if len(transcript) > max_chars:
-            print(
-                f"[INFO] Truncating transcript from {len(transcript)} to {max_chars} chars"
-            )
+            print(f"[INFO] Truncating transcript from {len(transcript)} to {max_chars} chars")
             transcript = transcript[:max_chars] + "..."
 
         analysis_prompt = f"""
 Analyze this YouTube trading podcast transcript and extract actionable insights.
 
-VIDEO: {metadata.get('title', 'Unknown')}
-CHANNEL: {metadata.get('channel', 'Unknown')}
+VIDEO: {metadata.get("title", "Unknown")}
+CHANNEL: {metadata.get("channel", "Unknown")}
 
 TRANSCRIPT:
 {transcript}
@@ -453,7 +445,7 @@ Format as structured markdown with clear sections.
                 "timestamp": datetime.now().isoformat(),
             }
 
-    def analyze_video(self, video_id: str) -> Dict:
+    def analyze_video(self, video_id: str) -> dict:
         """
         Complete analysis pipeline for a single video
 
@@ -463,9 +455,9 @@ Format as structured markdown with clear sections.
         Returns:
             Dictionary with complete analysis
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"ANALYZING VIDEO: {video_id}")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Step 1: Get metadata
         metadata = self.get_video_metadata(video_id)
@@ -491,7 +483,7 @@ Format as structured markdown with clear sections.
             "analysis": analysis,
         }
 
-    def analyze_multiple_videos(self, video_ids: List[str]) -> Dict:
+    def analyze_multiple_videos(self, video_ids: list[str]) -> dict:
         """
         Analyze multiple videos and generate comprehensive report
 
@@ -501,9 +493,9 @@ Format as structured markdown with clear sections.
         Returns:
             Dictionary with all analyses and cross-video insights
         """
-        print(f"\n{'#'*80}")
+        print(f"\n{'#' * 80}")
         print(f"ANALYZING {len(video_ids)} VIDEOS")
-        print(f"{'#'*80}")
+        print(f"{'#' * 80}")
 
         results = []
 
@@ -514,9 +506,9 @@ Format as structured markdown with clear sections.
             results.append(result)
 
         # Generate cross-video analysis
-        print(f"\n{'='*80}")
-        print(f"GENERATING CROSS-VIDEO ANALYSIS")
-        print(f"{'='*80}")
+        print(f"\n{'=' * 80}")
+        print("GENERATING CROSS-VIDEO ANALYSIS")
+        print(f"{'=' * 80}")
 
         cross_analysis = self.generate_cross_video_analysis(results)
 
@@ -528,7 +520,7 @@ Format as structured markdown with clear sections.
             "timestamp": datetime.now().isoformat(),
         }
 
-    def generate_cross_video_analysis(self, results: List[Dict]) -> str:
+    def generate_cross_video_analysis(self, results: list[dict]) -> str:
         """
         Generate cross-video pattern analysis using MultiLLM or keyword aggregation
 
@@ -557,7 +549,7 @@ You are analyzing multiple YouTube trading podcast videos to identify patterns a
 
 Here are the individual video analyses:
 
-{chr(10).join([f"{'='*80}\nVIDEO {i+1}:\n{'='*80}\n{analysis}\n" for i, analysis in enumerate(analyses)])}
+{chr(10).join(["=" * 80 + chr(10) + "VIDEO " + str(i + 1) + ":" + chr(10) + "=" * 80 + chr(10) + analysis + chr(10) for i, analysis in enumerate(analyses)])}
 
 Based on these analyses, provide:
 
@@ -612,7 +604,7 @@ Format as structured markdown with clear sections and actionable recommendations
         except Exception as e:
             return f"ERROR: Cross-video analysis failed: {str(e)}"
 
-    def _generate_keyword_cross_analysis(self, results: List[Dict]) -> str:
+    def _generate_keyword_cross_analysis(self, results: list[dict]) -> str:
         """
         Generate cross-video analysis using keyword aggregation
 
@@ -632,14 +624,9 @@ Format as structured markdown with clear sections and actionable recommendations
         }
 
         for result in results:
-            if (
-                result.get("analysis")
-                and result["analysis"].get("analysis_type") == "keyword"
-            ):
+            if result.get("analysis") and result["analysis"].get("analysis_type") == "keyword":
                 # Re-analyze transcript to get keyword counts
-                transcript_cache = (
-                    self.cache_dir / f"{result['video_id']}_transcript.txt"
-                )
+                transcript_cache = self.cache_dir / f"{result['video_id']}_transcript.txt"
                 if transcript_cache.exists():
                     transcript = transcript_cache.read_text()
                     keywords = self.keyword_analysis(transcript)
@@ -665,7 +652,9 @@ Format as structured markdown with clear sections and actionable recommendations
                 )
                 analysis += f"\n### {category.replace('_', ' ').title()}\n"
                 for keyword, count in sorted_items[:10]:
-                    analysis += f"- **{keyword.title()}**: {count} total mentions across all videos\n"
+                    analysis += (
+                        f"- **{keyword.title()}**: {count} total mentions across all videos\n"
+                    )
 
         # Generate actionable recommendations
         analysis += """
@@ -690,13 +679,13 @@ Based on keyword frequency across all videos, prioritize:
         # Top risk management
         if all_keywords["risk_management"]:
             top_risk = max(all_keywords["risk_management"].items(), key=lambda x: x[1])
-            analysis += f"3. **Risk Management**: Implement {top_risk[0]} (mentioned {top_risk[1]} times)\n"
+            analysis += (
+                f"3. **Risk Management**: Implement {top_risk[0]} (mentioned {top_risk[1]} times)\n"
+            )
 
         # Top tools
         if all_keywords["tools"]:
-            top_tools = sorted(
-                all_keywords["tools"].items(), key=lambda x: x[1], reverse=True
-            )[:3]
+            top_tools = sorted(all_keywords["tools"].items(), key=lambda x: x[1], reverse=True)[:3]
             analysis += f"4. **Tools/Technology**: Consider {', '.join(t[0] for t in top_tools)}\n"
 
         analysis += """
@@ -711,7 +700,7 @@ Based on keyword frequency across all videos, prioritize:
 
         return analysis
 
-    def save_report(self, analysis_results: Dict, output_path: Path):
+    def save_report(self, analysis_results: dict, output_path: Path):
         """
         Save analysis results as markdown report
 
@@ -719,19 +708,19 @@ Based on keyword frequency across all videos, prioritize:
             analysis_results: Complete analysis results
             output_path: Path to save report
         """
-        print(f"\n[INFO] Generating markdown report...")
+        print("\n[INFO] Generating markdown report...")
 
         report = f"""# YouTube Podcast Analysis Report
 
-**Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-**Total Videos Analyzed**: {analysis_results['total_videos']}
-**Successful Analyses**: {analysis_results['successful_analyses']}
+**Generated**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+**Total Videos Analyzed**: {analysis_results["total_videos"]}
+**Successful Analyses**: {analysis_results["successful_analyses"]}
 
 ---
 
 ## Cross-Video Insights
 
-{analysis_results['cross_video_analysis']}
+{analysis_results["cross_video_analysis"]}
 
 ---
 
@@ -752,14 +741,14 @@ Based on keyword frequency across all videos, prioritize:
                 analysis_text = str(analysis)
 
             report += f"""
-### Video {i}: {metadata.get('title', 'Unknown')}
+### Video {i}: {metadata.get("title", "Unknown")}
 
-**Channel**: {metadata.get('channel', 'Unknown')}
-**Video ID**: {result['video_id']}
-**URL**: https://www.youtube.com/watch?v={result['video_id']}
-**Duration**: {metadata.get('duration', 0)}s ({metadata.get('duration', 0) // 60} min)
-**Upload Date**: {metadata.get('upload_date', 'Unknown')}
-**Transcript Length**: {result.get('transcript_length', 'N/A')} chars
+**Channel**: {metadata.get("channel", "Unknown")}
+**Video ID**: {result["video_id"]}
+**URL**: https://www.youtube.com/watch?v={result["video_id"]}
+**Duration**: {metadata.get("duration", 0)}s ({metadata.get("duration", 0) // 60} min)
+**Upload Date**: {metadata.get("upload_date", "Unknown")}
+**Transcript Length**: {result.get("transcript_length", "N/A")} chars
 
 #### Analysis
 

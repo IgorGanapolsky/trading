@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Dict, Iterable, Optional
 
 try:  # pragma: no cover - optional dependency
     import chromadb
@@ -28,6 +28,7 @@ def ensure_directories() -> None:
     RAG_ROOT.mkdir(parents=True, exist_ok=True)
     VECTOR_PATH.mkdir(parents=True, exist_ok=True)
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,14 +37,12 @@ class ResourceVectorStore:
 
     COLLECTION_NAME = "day_trading_resources"
 
-    def __init__(self, path: Optional[str] = None) -> None:
+    def __init__(self, path: str | None = None) -> None:
         ensure_directories()
         self.path = path or str(VECTOR_PATH)
-        self._collection: Optional[Collection] = None
+        self._collection: Collection | None = None
         if chromadb is None:
-            logger.warning(
-                "chromadb unavailable; resource embeddings will be skipped"
-            )
+            logger.warning("chromadb unavailable; resource embeddings will be skipped")
             return
         client = chromadb.PersistentClient(  # type: ignore[call-arg]
             path=self.path,
@@ -58,7 +57,7 @@ class ResourceVectorStore:
             metadata={"description": "Day-trading resource knowledge base"},
         )
 
-    def upsert_documents(self, docs: Iterable[Dict]) -> None:
+    def upsert_documents(self, docs: Iterable[dict]) -> None:
         if self._collection is None:
             return
         doc_list = list(docs)

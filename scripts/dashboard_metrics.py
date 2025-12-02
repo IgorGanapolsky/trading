@@ -15,14 +15,16 @@ Calculates comprehensive metrics for AI trading dashboard including:
 
 This module provides the foundation for a professional quant dashboard.
 """
+
+import json
 import os
 import sys
-import json
-import numpy as np
-from datetime import datetime, date
-from pathlib import Path
-from typing import Dict, List, Any
 from collections import defaultdict
+from datetime import date, datetime
+from pathlib import Path
+from typing import Any
+
+import numpy as np
 
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -41,7 +43,7 @@ def load_json_file(filepath: Path) -> Any:
     """Load JSON file, return empty dict/list if not found."""
     if filepath.exists():
         try:
-            with open(filepath, "r") as f:
+            with open(filepath) as f:
                 return json.load(f)
         except Exception:
             return {} if "json" in str(filepath) else []
@@ -57,7 +59,7 @@ class TradingMetricsCalculator:
         self.data_dir = data_dir
         self.risk_free_rate = 0.04  # 4% annual risk-free rate
 
-    def calculate_all_metrics(self) -> Dict[str, Any]:
+    def calculate_all_metrics(self) -> dict[str, Any]:
         """
         Calculate all world-class metrics for the dashboard.
 
@@ -109,30 +111,22 @@ class TradingMetricsCalculator:
             "strategy_equity_curves": self._calculate_strategy_equity_curves(
                 perf_log, closed_trades, all_trades
             ),
-            "holding_period_analysis": self._calculate_holding_period_analysis(
-                closed_trades
-            ),
-            "time_of_day_analysis": self._calculate_time_of_day_analysis(
-                all_trades, closed_trades
-            ),
+            "holding_period_analysis": self._calculate_holding_period_analysis(closed_trades),
+            "time_of_day_analysis": self._calculate_time_of_day_analysis(all_trades, closed_trades),
             "signal_quality": self._calculate_signal_quality(all_trades, closed_trades),
             "market_regime": self._calculate_market_regime(perf_log),
             "benchmark_comparison": self._calculate_benchmark_comparison(
                 perf_log, starting_balance
             ),
             "ai_kpis": self._calculate_ai_kpis(system_state, all_trades),
-            "automation_status": self._calculate_automation_status(
-                system_state, perf_log
-            ),
+            "automation_status": self._calculate_automation_status(system_state, perf_log),
             "trading_journal": self._calculate_journal_summary(),
-            "compliance": self._calculate_compliance_metrics(
-                system_state, perf_log, all_trades
-            ),
+            "compliance": self._calculate_compliance_metrics(system_state, perf_log, all_trades),
         }
 
         return metrics
 
-    def _load_all_trades(self) -> List[Dict]:
+    def _load_all_trades(self) -> list[dict]:
         """Load all trade files and combine into single list."""
         all_trades = []
 
@@ -149,13 +143,11 @@ class TradingMetricsCalculator:
         return all_trades
 
     def _calculate_account_summary(
-        self, account: Dict, starting_balance: float, current_equity: float
-    ) -> Dict[str, Any]:
+        self, account: dict, starting_balance: float, current_equity: float
+    ) -> dict[str, Any]:
         """Calculate basic account summary metrics."""
         total_pl = current_equity - starting_balance
-        total_pl_pct = (
-            (total_pl / starting_balance * 100) if starting_balance > 0 else 0.0
-        )
+        total_pl_pct = (total_pl / starting_balance * 100) if starting_balance > 0 else 0.0
 
         return {
             "starting_balance": starting_balance,
@@ -167,8 +159,8 @@ class TradingMetricsCalculator:
         }
 
     def _calculate_risk_metrics(
-        self, perf_log: List[Dict], starting_balance: float, current_equity: float
-    ) -> Dict[str, Any]:
+        self, perf_log: list[dict], starting_balance: float, current_equity: float
+    ) -> dict[str, Any]:
         """Calculate comprehensive risk metrics."""
         if not perf_log or len(perf_log) < 2:
             return {
@@ -193,9 +185,7 @@ class TradingMetricsCalculator:
         daily_returns = []
         for i in range(1, len(equity_values)):
             if equity_values[i - 1] > 0:
-                daily_return = (
-                    equity_values[i] - equity_values[i - 1]
-                ) / equity_values[i - 1]
+                daily_return = (equity_values[i] - equity_values[i - 1]) / equity_values[i - 1]
                 daily_returns.append(daily_return)
 
         if not daily_returns:
@@ -229,9 +219,7 @@ class TradingMetricsCalculator:
 
         # Current drawdown
         current_drawdown_pct = (
-            ((peak_equity - current_equity) / peak_equity * 100)
-            if peak_equity > 0
-            else 0.0
+            ((peak_equity - current_equity) / peak_equity * 100) if peak_equity > 0 else 0.0
         )
 
         # Calculate Sharpe ratio
@@ -250,14 +238,10 @@ class TradingMetricsCalculator:
         if downside_returns:
             downside_std = np.std(downside_returns)
             if downside_std > 0:
-                sortino_ratio = (
-                    (mean_return - risk_free_rate_daily) / downside_std * np.sqrt(252)
-                )
+                sortino_ratio = (mean_return - risk_free_rate_daily) / downside_std * np.sqrt(252)
 
         # Annualized volatility
-        volatility_annualized = (
-            std_return * np.sqrt(252) * 100 if std_return > 0 else 0.0
-        )
+        volatility_annualized = std_return * np.sqrt(252) * 100 if std_return > 0 else 0.0
 
         # Worst daily loss
         worst_daily_loss = min(daily_returns) * 100 if daily_returns else 0.0
@@ -282,18 +266,14 @@ class TradingMetricsCalculator:
         drawdowns = (cumulative - running_max) / running_max
         drawdowns_squared = drawdowns**2
         ulcer_index = (
-            np.sqrt(np.mean(drawdowns_squared)) * 100
-            if len(drawdowns_squared) > 0
-            else 0.0
+            np.sqrt(np.mean(drawdowns_squared)) * 100 if len(drawdowns_squared) > 0 else 0.0
         )
 
         # Calmar Ratio (annualized return / max drawdown)
         # Both should be in same units (decimal, not percentage)
         annualized_return = mean_return * 252  # Annualized return as decimal
         max_dd_decimal = max_drawdown_pct / 100  # Convert percentage to decimal
-        calmar_ratio = (
-            (annualized_return / max_dd_decimal) if max_dd_decimal > 0 else 0.0
-        )
+        calmar_ratio = (annualized_return / max_dd_decimal) if max_dd_decimal > 0 else 0.0
 
         return {
             "max_drawdown_pct": max_drawdown_pct,
@@ -312,8 +292,8 @@ class TradingMetricsCalculator:
         }
 
     def _calculate_performance_metrics(
-        self, perf_log: List[Dict], closed_trades: List[Dict], all_trades: List[Dict]
-    ) -> Dict[str, Any]:
+        self, perf_log: list[dict], closed_trades: list[dict], all_trades: list[dict]
+    ) -> dict[str, Any]:
         """Calculate performance metrics including profit factor and expectancy."""
         if not closed_trades:
             return {
@@ -329,9 +309,7 @@ class TradingMetricsCalculator:
 
         # Calculate profit factor
         gross_profit = sum(t.get("pl", 0) for t in closed_trades if t.get("pl", 0) > 0)
-        gross_loss = abs(
-            sum(t.get("pl", 0) for t in closed_trades if t.get("pl", 0) < 0)
-        )
+        gross_loss = abs(sum(t.get("pl", 0) for t in closed_trades if t.get("pl", 0) < 0))
         profit_factor = (gross_profit / gross_loss) if gross_loss > 0 else 0.0
 
         # Calculate expectancy
@@ -339,17 +317,9 @@ class TradingMetricsCalculator:
         winning_trades = [t for t in closed_trades if t.get("pl", 0) > 0]
         losing_trades = [t for t in closed_trades if t.get("pl", 0) < 0]
 
-        win_rate = (
-            (len(winning_trades) / total_trades * 100) if total_trades > 0 else 0.0
-        )
-        avg_win = (
-            np.mean([t.get("pl", 0) for t in winning_trades]) if winning_trades else 0.0
-        )
-        avg_loss = (
-            np.mean([abs(t.get("pl", 0)) for t in losing_trades])
-            if losing_trades
-            else 0.0
-        )
+        win_rate = (len(winning_trades) / total_trades * 100) if total_trades > 0 else 0.0
+        avg_win = np.mean([t.get("pl", 0) for t in winning_trades]) if winning_trades else 0.0
+        avg_loss = np.mean([abs(t.get("pl", 0)) for t in losing_trades]) if losing_trades else 0.0
 
         # Expectancy per trade ($)
         expectancy_per_trade = (
@@ -368,9 +338,7 @@ class TradingMetricsCalculator:
         largest_loss = min([t.get("pl", 0) for t in closed_trades], default=0.0)
 
         # Win/Loss Ratio
-        win_loss_ratio = (
-            (len(winning_trades) / len(losing_trades)) if losing_trades else 0.0
-        )
+        win_loss_ratio = (len(winning_trades) / len(losing_trades)) if losing_trades else 0.0
 
         # Average Win/Loss Ratio (R-multiple)
         avg_win_loss_ratio = (avg_win / avg_loss) if avg_loss > 0 else 0.0
@@ -392,8 +360,8 @@ class TradingMetricsCalculator:
         }
 
     def _calculate_strategy_metrics(
-        self, system_state: Dict, closed_trades: List[Dict], all_trades: List[Dict]
-    ) -> Dict[str, Any]:
+        self, system_state: dict, closed_trades: list[dict], all_trades: list[dict]
+    ) -> dict[str, Any]:
         """Calculate per-strategy performance metrics with enhanced attribution."""
         strategies = system_state.get("strategies", {})
         strategy_performance = {}
@@ -423,17 +391,13 @@ class TradingMetricsCalculator:
 
             # Get strategy name from system state or use formatted strategy_id
             strategy_data = strategies.get(strategy_id, {})
-            strategy_name = strategy_data.get(
-                "name", strategy_id.replace("_", " ").title()
-            )
+            strategy_name = strategy_data.get("name", strategy_id.replace("_", " ").title())
 
             # Calculate metrics for this strategy
             total_pl = sum(t.get("pl", 0) for t in strategy_trades)
             winning = [t for t in strategy_trades if t.get("pl", 0) > 0]
             losing = [t for t in strategy_trades if t.get("pl", 0) < 0]
-            win_rate = (
-                (len(winning) / len(strategy_trades) * 100) if strategy_trades else 0.0
-            )
+            win_rate = (len(winning) / len(strategy_trades) * 100) if strategy_trades else 0.0
 
             # Calculate profit factor for this strategy
             gross_profit = sum(t.get("pl", 0) for t in winning)
@@ -480,8 +444,8 @@ class TradingMetricsCalculator:
         }
 
     def _calculate_exposure_metrics(
-        self, open_positions: List[Dict], current_equity: float, all_trades: List[Dict]
-    ) -> Dict[str, Any]:
+        self, open_positions: list[dict], current_equity: float, all_trades: list[dict]
+    ) -> dict[str, Any]:
         """Calculate exposure by ticker, sector, and asset class."""
         if not open_positions:
             return {
@@ -581,8 +545,8 @@ class TradingMetricsCalculator:
         }
 
     def _calculate_risk_guardrails(
-        self, system_state: Dict, perf_log: List[Dict], current_equity: float
-    ) -> Dict[str, Any]:
+        self, system_state: dict, perf_log: list[dict], current_equity: float
+    ) -> dict[str, Any]:
         """Calculate risk guardrail status."""
         # Get today's P/L
         today = date.today().isoformat()
@@ -614,7 +578,7 @@ class TradingMetricsCalculator:
             "consecutive_losses_limit": 5,  # Default limit
         }
 
-    def _calculate_time_series_metrics(self, perf_log: List[Dict]) -> Dict[str, Any]:
+    def _calculate_time_series_metrics(self, perf_log: list[dict]) -> dict[str, Any]:
         """Calculate time-series analytics with proper rolling window calculations."""
         if not perf_log or len(perf_log) < 2:
             return {
@@ -626,8 +590,7 @@ class TradingMetricsCalculator:
 
         # Equity curve
         equity_curve = [
-            {"date": entry.get("date", ""), "equity": entry.get("equity", 0)}
-            for entry in perf_log
+            {"date": entry.get("date", ""), "equity": entry.get("equity", 0)} for entry in perf_log
         ]
 
         # Calculate daily returns
@@ -635,9 +598,7 @@ class TradingMetricsCalculator:
         daily_returns = []
         for i in range(1, len(equity_values)):
             if equity_values[i - 1] > 0:
-                daily_return = (
-                    equity_values[i] - equity_values[i - 1]
-                ) / equity_values[i - 1]
+                daily_return = (equity_values[i] - equity_values[i - 1]) / equity_values[i - 1]
                 daily_returns.append(daily_return)
 
         if not daily_returns:
@@ -656,9 +617,7 @@ class TradingMetricsCalculator:
             std_return = np.std(recent_7d)
             if std_return > 0:
                 risk_free_rate_daily = self.risk_free_rate / 252
-                rolling_sharpe_7d = (
-                    (mean_return - risk_free_rate_daily) / std_return * np.sqrt(252)
-                )
+                rolling_sharpe_7d = (mean_return - risk_free_rate_daily) / std_return * np.sqrt(252)
 
         # Calculate rolling Sharpe (30d window)
         rolling_sharpe_30d = 0.0
@@ -694,8 +653,8 @@ class TradingMetricsCalculator:
         }
 
     def _calculate_strategy_equity_curves(
-        self, perf_log: List[Dict], closed_trades: List[Dict], all_trades: List[Dict]
-    ) -> Dict[str, Any]:
+        self, perf_log: list[dict], closed_trades: list[dict], all_trades: list[dict]
+    ) -> dict[str, Any]:
         """Calculate equity curves per strategy over time."""
         if not closed_trades:
             return {}
@@ -747,9 +706,7 @@ class TradingMetricsCalculator:
 
         return strategy_curves
 
-    def _calculate_holding_period_analysis(
-        self, closed_trades: List[Dict]
-    ) -> Dict[str, Any]:
+    def _calculate_holding_period_analysis(self, closed_trades: list[dict]) -> dict[str, Any]:
         """Calculate P/L by holding period (days held)."""
         if not closed_trades:
             return {
@@ -770,16 +727,12 @@ class TradingMetricsCalculator:
             try:
                 # Parse dates
                 if "T" in entry_date_str:
-                    entry_date = datetime.fromisoformat(
-                        entry_date_str.replace("Z", "+00:00")
-                    )
+                    entry_date = datetime.fromisoformat(entry_date_str.replace("Z", "+00:00"))
                 else:
                     entry_date = datetime.strptime(entry_date_str, "%Y-%m-%d")
 
                 if "T" in exit_date_str:
-                    exit_date = datetime.fromisoformat(
-                        exit_date_str.replace("Z", "+00:00")
-                    )
+                    exit_date = datetime.fromisoformat(exit_date_str.replace("Z", "+00:00"))
                 else:
                     exit_date = datetime.strptime(exit_date_str, "%Y-%m-%d")
 
@@ -830,8 +783,8 @@ class TradingMetricsCalculator:
         }
 
     def _calculate_time_of_day_analysis(
-        self, all_trades: List[Dict], closed_trades: List[Dict]
-    ) -> Dict[str, Any]:
+        self, all_trades: list[dict], closed_trades: list[dict]
+    ) -> dict[str, Any]:
         """Calculate P/L by time of day to identify optimal execution windows."""
         if not all_trades:
             return {
@@ -850,9 +803,7 @@ class TradingMetricsCalculator:
             try:
                 # Parse timestamp
                 if "T" in timestamp_str:
-                    timestamp = datetime.fromisoformat(
-                        timestamp_str.replace("Z", "+00:00")
-                    )
+                    timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
                 else:
                     timestamp = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
 
@@ -898,11 +849,7 @@ class TradingMetricsCalculator:
 
         # Find best hours (top 3 by avg_pl)
         best_hours = sorted(
-            [
-                (h, data["avg_pl"])
-                for h, data in by_hour.items()
-                if data["closed_trades"] > 0
-            ],
+            [(h, data["avg_pl"]) for h, data in by_hour.items() if data["closed_trades"] > 0],
             key=lambda x: x[1],
             reverse=True,
         )[:3]
@@ -913,8 +860,8 @@ class TradingMetricsCalculator:
         }
 
     def _calculate_signal_quality(
-        self, all_trades: List[Dict], closed_trades: List[Dict]
-    ) -> Dict[str, Any]:
+        self, all_trades: list[dict], closed_trades: list[dict]
+    ) -> dict[str, Any]:
         """Calculate signal quality metrics."""
         # This is a placeholder - would need signal type data in trades
         return {
@@ -924,7 +871,7 @@ class TradingMetricsCalculator:
             "avg_return_20d": 0.0,
         }
 
-    def _calculate_market_regime(self, perf_log: List[Dict]) -> Dict[str, Any]:
+    def _calculate_market_regime(self, perf_log: list[dict]) -> dict[str, Any]:
         """Detect market regime (bull/bear/sideways) based on recent performance."""
         if not perf_log or len(perf_log) < 10:
             return {
@@ -996,8 +943,8 @@ class TradingMetricsCalculator:
         }
 
     def _calculate_benchmark_comparison(
-        self, perf_log: List[Dict], starting_balance: float
-    ) -> Dict[str, Any]:
+        self, perf_log: list[dict], starting_balance: float
+    ) -> dict[str, Any]:
         """Compare portfolio performance to S&P 500 benchmark."""
         if not perf_log or len(perf_log) < 2:
             return {
@@ -1087,9 +1034,7 @@ class TradingMetricsCalculator:
             "data_available": True,
         }
 
-    def _calculate_ai_kpis(
-        self, system_state: Dict, all_trades: List[Dict]
-    ) -> Dict[str, Any]:
+    def _calculate_ai_kpis(self, system_state: dict, all_trades: list[dict]) -> dict[str, Any]:
         """Calculate AI-specific KPIs."""
         # Check if AI/LLM features are enabled
         video_analysis = system_state.get("video_analysis", {})
@@ -1122,8 +1067,8 @@ class TradingMetricsCalculator:
         }
 
     def _calculate_automation_status(
-        self, system_state: Dict, perf_log: List[Dict]
-    ) -> Dict[str, Any]:
+        self, system_state: dict, perf_log: list[dict]
+    ) -> dict[str, Any]:
         """Calculate automation uptime and reliability metrics."""
         automation = system_state.get("automation", {})
 
@@ -1144,9 +1089,7 @@ class TradingMetricsCalculator:
         if last_execution != "Never":
             try:
                 last_dt = datetime.fromisoformat(last_execution.replace("Z", "+00:00"))
-                days_since_execution = (
-                    datetime.now() - last_dt.replace(tzinfo=None)
-                ).days
+                days_since_execution = (datetime.now() - last_dt.replace(tzinfo=None)).days
             except Exception:
                 pass
 
@@ -1164,7 +1107,7 @@ class TradingMetricsCalculator:
             "is_operational": workflow_status == "OPERATIONAL",
         }
 
-    def _calculate_journal_summary(self) -> Dict[str, Any]:
+    def _calculate_journal_summary(self) -> dict[str, Any]:
         """Calculate trading journal summary metrics."""
         journal_dir = DATA_DIR / "journal"
         if not journal_dir.exists():
@@ -1182,11 +1125,11 @@ class TradingMetricsCalculator:
         entries_with_notes = 0
         recent_entries = []
 
-        for journal_file in sorted(
-            journal_files, key=lambda x: x.stat().st_mtime, reverse=True
-        )[:5]:
+        for journal_file in sorted(journal_files, key=lambda x: x.stat().st_mtime, reverse=True)[
+            :5
+        ]:
             try:
-                with open(journal_file, "r") as f:
+                with open(journal_file) as f:
                     entry = json.load(f)
                     if entry.get("notes"):
                         entries_with_notes += 1
@@ -1210,7 +1153,7 @@ class TradingMetricsCalculator:
             "recent_entries": recent_entries[:5],
         }
 
-    def _calculate_execution_metrics(self, all_trades: List[Dict]) -> Dict[str, Any]:
+    def _calculate_execution_metrics(self, all_trades: list[dict]) -> dict[str, Any]:
         """Calculate execution quality metrics (slippage, latency, fill quality)."""
         if not all_trades:
             return {
@@ -1239,12 +1182,8 @@ class TradingMetricsCalculator:
             or t.get("status") == "cancelled"
         )
 
-        success_rate = (
-            (successful_orders / total_orders * 100) if total_orders > 0 else 0.0
-        )
-        reject_rate = (
-            (rejected_orders / total_orders * 100) if total_orders > 0 else 0.0
-        )
+        success_rate = (successful_orders / total_orders * 100) if total_orders > 0 else 0.0
+        reject_rate = (rejected_orders / total_orders * 100) if total_orders > 0 else 0.0
 
         # Calculate real slippage from order data (fill price vs intended price)
         slippage_estimates = []
@@ -1263,19 +1202,13 @@ class TradingMetricsCalculator:
                         slippage_estimates.append(slippage)
                 else:
                     # Fallback: estimate based on order size (less accurate)
-                    amount = trade.get("amount", 0) or trade.get("qty", 0) * trade.get(
-                        "price", 0
-                    )
+                    amount = trade.get("amount", 0) or trade.get("qty", 0) * trade.get("price", 0)
                     if amount < 100:
                         slippage_estimates.append(0.1)  # 0.1% estimate for small orders
                     elif amount < 1000:
-                        slippage_estimates.append(
-                            0.2
-                        )  # 0.2% estimate for medium orders
+                        slippage_estimates.append(0.2)  # 0.2% estimate for medium orders
                     else:
-                        slippage_estimates.append(
-                            0.3
-                        )  # 0.3% estimate for larger orders
+                        slippage_estimates.append(0.3)  # 0.3% estimate for larger orders
 
         avg_slippage = np.mean(slippage_estimates) if slippage_estimates else None
         has_real_slippage = any(
@@ -1307,8 +1240,8 @@ class TradingMetricsCalculator:
         }
 
     def _calculate_compliance_metrics(
-        self, system_state: Dict, perf_log: List[Dict], all_trades: List[Dict]
-    ) -> Dict[str, Any]:
+        self, system_state: dict, perf_log: list[dict], all_trades: list[dict]
+    ) -> dict[str, Any]:
         """Calculate risk management and compliance metrics."""
         account = system_state.get("account", {})
         current_equity = account.get("current_equity", 100000.0)
@@ -1322,9 +1255,7 @@ class TradingMetricsCalculator:
 
         # Stop-loss adherence (check if trades have stop-losses)
         trades_with_stop_loss = sum(1 for t in all_trades if t.get("stop_loss"))
-        stop_loss_adherence = (
-            (trades_with_stop_loss / len(all_trades) * 100) if all_trades else 0.0
-        )
+        stop_loss_adherence = (trades_with_stop_loss / len(all_trades) * 100) if all_trades else 0.0
 
         # Position size compliance
         max_position_size = (
@@ -1337,9 +1268,7 @@ class TradingMetricsCalculator:
 
         # Audit trail availability
         audit_trail_dir = DATA_DIR / "audit_trail"
-        audit_files = (
-            list(audit_trail_dir.glob("*.json")) if audit_trail_dir.exists() else []
-        )
+        audit_files = list(audit_trail_dir.glob("*.json")) if audit_trail_dir.exists() else []
         audit_trail_count = len(audit_files)
 
         return {

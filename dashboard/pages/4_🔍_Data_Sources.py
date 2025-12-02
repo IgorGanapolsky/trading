@@ -2,19 +2,19 @@
 Data Sources Page - Breakdown of sentiment data by source and API usage metrics.
 """
 
-import streamlit as st
 import json
-import pandas as pd
-from pathlib import Path
-from datetime import datetime
 import sys
+from datetime import datetime
+from pathlib import Path
+
+import pandas as pd
+import streamlit as st
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from dashboard.utils.chart_builders import (
-    create_source_breakdown_pie,
-    create_mentions_timeline,
     COLORS,
+    create_source_breakdown_pie,
 )
 
 st.set_page_config(page_title="Data Sources", page_icon="🔍", layout="wide")
@@ -126,11 +126,9 @@ def main():
                     {
                         "Source": k,
                         "Count": v,
-                        "Percentage": f"{(v/sum(source_counts.values())*100):.1f}%",
+                        "Percentage": f"{(v / sum(source_counts.values()) * 100):.1f}%",
                     }
-                    for k, v in sorted(
-                        source_counts.items(), key=lambda x: x[1], reverse=True
-                    )
+                    for k, v in sorted(source_counts.items(), key=lambda x: x[1], reverse=True)
                 ]
             )
 
@@ -157,9 +155,7 @@ def main():
                     "Sentiment": (
                         "🟢 Bullish"
                         if data.get("score", 0) > 50
-                        else (
-                            "🔴 Bearish" if data.get("score", 0) < -50 else "🟡 Neutral"
-                        )
+                        else ("🔴 Bearish" if data.get("score", 0) < -50 else "🟡 Neutral")
                     ),
                 }
             )
@@ -216,9 +212,7 @@ def main():
                     "Sentiment": (
                         "🟢 Bullish"
                         if data.get("score", 0) > 20
-                        else (
-                            "🔴 Bearish" if data.get("score", 0) < -20 else "🟡 Neutral"
-                        )
+                        else ("🔴 Bearish" if data.get("score", 0) < -20 else "🟡 Neutral")
                     ),
                 }
             )
@@ -251,9 +245,9 @@ def main():
 
     st.markdown(
         f"""
-        <div style='background: {COLORS['grid']}; padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem;'>
-            <h4 style='color: {COLORS['text']}; margin-top: 0;'>Data Source APIs</h4>
-            <p style='color: {COLORS['secondary']}; margin-bottom: 0;'>
+        <div style='background: {COLORS["grid"]}; padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem;'>
+            <h4 style='color: {COLORS["text"]}; margin-top: 0;'>Data Source APIs</h4>
+            <p style='color: {COLORS["secondary"]}; margin-bottom: 0;'>
                 All data sources use free tier APIs with generous rate limits.
                 No additional costs for sentiment collection.
             </p>
@@ -293,18 +287,12 @@ def main():
         covered_tickers = set()
 
         if source_data.get("reddit"):
-            covered_tickers.update(
-                source_data["reddit"].get("sentiment_by_ticker", {}).keys()
-            )
+            covered_tickers.update(source_data["reddit"].get("sentiment_by_ticker", {}).keys())
         if source_data.get("news"):
-            covered_tickers.update(
-                source_data["news"].get("sentiment_by_ticker", {}).keys()
-            )
+            covered_tickers.update(source_data["news"].get("sentiment_by_ticker", {}).keys())
 
         coverage = (
-            len([t for t in target_tickers if t in covered_tickers])
-            / len(target_tickers)
-            * 100
+            len([t for t in target_tickers if t in covered_tickers]) / len(target_tickers) * 100
         )
 
         st.metric(
@@ -338,17 +326,13 @@ def main():
         total_signals = 0
 
         if source_data.get("reddit"):
-            for ticker_data in (
-                source_data["reddit"].get("sentiment_by_ticker", {}).values()
-            ):
+            for ticker_data in source_data["reddit"].get("sentiment_by_ticker", {}).values():
                 total_signals += 1
                 if ticker_data.get("confidence") == "high":
                     high_conf += 1
 
         if source_data.get("news"):
-            for ticker_data in (
-                source_data["news"].get("sentiment_by_ticker", {}).values()
-            ):
+            for ticker_data in source_data["news"].get("sentiment_by_ticker", {}).values():
                 total_signals += 1
                 if ticker_data.get("confidence") == "high":
                     high_conf += 1
@@ -368,15 +352,15 @@ def main():
 
     st.markdown(
         f"""
-        <div style='background: {COLORS['grid']}; padding: 1.5rem; border-radius: 10px;'>
-            <h4 style='color: {COLORS['text']}; margin-top: 0;'>Automated Data Collection</h4>
-            <ul style='color: {COLORS['text']};'>
+        <div style='background: {COLORS["grid"]}; padding: 1.5rem; border-radius: 10px;'>
+            <h4 style='color: {COLORS["text"]}; margin-top: 0;'>Automated Data Collection</h4>
+            <ul style='color: {COLORS["text"]};'>
                 <li><strong>Reddit Sentiment:</strong> Every 4 hours (6x daily)</li>
                 <li><strong>News Sentiment:</strong> Every 2 hours (12x daily)</li>
                 <li><strong>Alpha Vantage:</strong> Once daily at 8:00 AM ET</li>
                 <li><strong>YouTube Analysis:</strong> Daily at 8:00 AM ET</li>
             </ul>
-            <p style='color: {COLORS['secondary']}; margin-bottom: 0;'>
+            <p style='color: {COLORS["secondary"]}; margin-bottom: 0;'>
                 All collection is fully automated and requires zero manual intervention.
             </p>
         </div>
@@ -390,7 +374,7 @@ if __name__ == "__main__":
         f"""
         <style>
         .stApp {{
-            background-color: {COLORS['background']};
+            background-color: {COLORS["background"]};
         }}
         </style>
     """,

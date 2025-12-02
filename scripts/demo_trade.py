@@ -3,9 +3,11 @@
 DEMO: First Paper Trade Without AI
 Shows how the system executes a trade using technical analysis only
 """
+
 import os
-import alpaca_trade_api as tradeapi
 from datetime import datetime, timedelta
+
+import alpaca_trade_api as tradeapi
 
 print("=" * 70)
 print("🎯 DEMO: YOUR FIRST PAPER TRADE")
@@ -16,9 +18,7 @@ ALPACA_KEY = os.getenv("ALPACA_API_KEY")
 ALPACA_SECRET = os.getenv("ALPACA_SECRET_KEY")
 
 if not ALPACA_KEY or not ALPACA_SECRET:
-    raise ValueError(
-        "ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set"
-    )
+    raise ValueError("ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set")
 
 # Connect to Alpaca
 api = tradeapi.REST(
@@ -111,7 +111,7 @@ try:
         time_in_force="day",
     )
 
-    print(f"✅ ORDER PLACED!")
+    print("✅ ORDER PLACED!")
     print(f"Order ID: {order.id}")
     print(f"Symbol: {order.symbol}")
     print(f"Amount: ${6.00}")
@@ -126,16 +126,16 @@ except Exception as e:
 print("\n" + "=" * 70)
 print("✅ PAPER TRADE COMPLETE!")
 print("=" * 70)
-print(f"\n📋 TRADE SUMMARY:")
-print(f"   Strategy: Core (Tier 1 - Index ETFs)")
+print("\n📋 TRADE SUMMARY:")
+print("   Strategy: Core (Tier 1 - Index ETFs)")
 print(f"   Symbol: {best_etf}")
-print(f"   Investment: $6.00")
-print(f"   Method: Technical Momentum Analysis")
-print(f"   Risk: LOW")
-print(f"   Target: 8-12% annual return")
-print(f"\n💡 NEXT STEPS:")
-print(f"   1. Check order status: python3 scripts/check_positions.py")
-print(f"   2. Check Alpaca web dashboard for real-time positions")
-print(f"   3. Review tomorrow's trade at 9:35 AM ET")
-print(f"\n🎯 THIS IS YOUR SYSTEM IN ACTION!")
+print("   Investment: $6.00")
+print("   Method: Technical Momentum Analysis")
+print("   Risk: LOW")
+print("   Target: 8-12% annual return")
+print("\n💡 NEXT STEPS:")
+print("   1. Check order status: python3 scripts/check_positions.py")
+print("   2. Check Alpaca web dashboard for real-time positions")
+print("   3. Review tomorrow's trade at 9:35 AM ET")
+print("\n🎯 THIS IS YOUR SYSTEM IN ACTION!")
 print("=" * 70)

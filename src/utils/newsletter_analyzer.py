@@ -18,9 +18,8 @@ import json
 import logging
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 try:
     import feedparser
@@ -47,14 +46,14 @@ class CryptoSignal:
     ticker: str  # BTC or ETH
     sentiment: str  # bullish, bearish, neutral
     confidence: float  # 0.0 - 1.0
-    entry_price: Optional[float] = None
-    target_price: Optional[float] = None
-    stop_loss: Optional[float] = None
-    timeframe: Optional[str] = None  # short-term, medium-term, long-term
-    reasoning: Optional[str] = None
-    source_date: Optional[datetime] = None
+    entry_price: float | None = None
+    target_price: float | None = None
+    stop_loss: float | None = None
+    timeframe: str | None = None  # short-term, medium-term, long-term
+    reasoning: str | None = None
+    source_date: datetime | None = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert signal to dictionary for JSON serialization"""
         return {
             "ticker": self.ticker,
@@ -69,23 +68,19 @@ class CryptoSignal:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "CryptoSignal":
+    def from_dict(cls, data: dict) -> CryptoSignal:
         """Create signal from dictionary"""
         return cls(
             ticker=data["ticker"],
             sentiment=data["sentiment"],
             confidence=float(data["confidence"]),
             entry_price=float(data["entry_price"]) if data.get("entry_price") else None,
-            target_price=(
-                float(data["target_price"]) if data.get("target_price") else None
-            ),
+            target_price=(float(data["target_price"]) if data.get("target_price") else None),
             stop_loss=float(data["stop_loss"]) if data.get("stop_loss") else None,
             timeframe=data.get("timeframe"),
             reasoning=data.get("reasoning"),
             source_date=(
-                datetime.fromisoformat(data["source_date"])
-                if data.get("source_date")
-                else None
+                datetime.fromisoformat(data["source_date"]) if data.get("source_date") else None
             ),
         )
 
@@ -99,7 +94,7 @@ class NewsletterAnalyzer:
     2. Falls back to direct RSS parsing if available
     """
 
-    def __init__(self, data_dir: Optional[Path] = None):
+    def __init__(self, data_dir: Path | None = None):
         self.data_dir = data_dir or NEWSLETTER_DATA_DIR
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
@@ -159,7 +154,7 @@ class NewsletterAnalyzer:
             "trendline",
         ]
 
-    def get_latest_signals(self, max_age_days: int = 7) -> Dict[str, CryptoSignal]:
+    def get_latest_signals(self, max_age_days: int = 7) -> dict[str, CryptoSignal]:
         """
         Get latest BTC/ETH signals from newsletter.
 
@@ -188,7 +183,7 @@ class NewsletterAnalyzer:
         logger.warning("No newsletter signals available from any source")
         return {}
 
-    def _read_mcp_signals(self, max_age_days: int) -> Dict[str, CryptoSignal]:
+    def _read_mcp_signals(self, max_age_days: int) -> dict[str, CryptoSignal]:
         """
         Read newsletter signals from MCP-populated JSON files.
 
@@ -208,9 +203,7 @@ class NewsletterAnalyzer:
             try:
                 # Extract date from filename
                 date_str = signal_file.stem.replace("newsletter_signals_", "")
-                file_date = datetime.strptime(date_str, "%Y-%m-%d").replace(
-                    tzinfo=timezone.utc
-                )
+                file_date = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
 
                 # Skip if too old
                 if file_date < cutoff_date:
@@ -234,7 +227,7 @@ class NewsletterAnalyzer:
 
         return signals
 
-    def _parse_rss_feed(self, max_age_days: int) -> Dict[str, CryptoSignal]:
+    def _parse_rss_feed(self, max_age_days: int) -> dict[str, CryptoSignal]:
         """
         Parse CoinSnacks RSS feed directly for trading signals.
 
@@ -258,9 +251,7 @@ class NewsletterAnalyzer:
                 try:
                     # Parse entry date
                     if hasattr(entry, "published_parsed"):
-                        entry_date = datetime(
-                            *entry.published_parsed[:6], tzinfo=timezone.utc
-                        )
+                        entry_date = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
                     else:
                         entry_date = datetime.now(timezone.utc)
 
@@ -273,9 +264,7 @@ class NewsletterAnalyzer:
                     title = entry.get("title", "")
 
                     # Parse article for BTC and ETH signals
-                    article_signals = self.parse_article(
-                        title + "\n\n" + content, entry_date
-                    )
+                    article_signals = self.parse_article(title + "\n\n" + content, entry_date)
 
                     # Update signals dictionary (newer signals override older ones)
                     for ticker, signal in article_signals.items():
@@ -296,8 +285,8 @@ class NewsletterAnalyzer:
             return {}
 
     def parse_article(
-        self, article_text: str, source_date: Optional[datetime] = None
-    ) -> Dict[str, CryptoSignal]:
+        self, article_text: str, source_date: datetime | None = None
+    ) -> dict[str, CryptoSignal]:
         """
         Extract crypto recommendations from article text.
 
@@ -327,9 +316,7 @@ class NewsletterAnalyzer:
             sentiment, confidence = self._extract_sentiment(article_text, ticker)
 
             # Extract price targets
-            entry_price, target_price, stop_loss = self._extract_price_targets(
-                article_text, ticker
-            )
+            entry_price, target_price, stop_loss = self._extract_price_targets(article_text, ticker)
 
             # Extract timeframe
             timeframe = self._extract_timeframe(article_text)
@@ -351,13 +338,11 @@ class NewsletterAnalyzer:
             )
 
             signals[ticker] = signal
-            logger.info(
-                f"Extracted {ticker} signal: {sentiment} (confidence: {confidence:.2f})"
-            )
+            logger.info(f"Extracted {ticker} signal: {sentiment} (confidence: {confidence:.2f})")
 
         return signals
 
-    def _extract_sentiment(self, text: str, ticker: str) -> Tuple[str, float]:
+    def _extract_sentiment(self, text: str, ticker: str) -> tuple[str, float]:
         """
         Extract bullish/bearish sentiment and confidence score.
 
@@ -368,29 +353,19 @@ class NewsletterAnalyzer:
         text_lower = text.lower()
 
         # Count bullish and bearish keywords
-        bullish_count = sum(
-            1 for keyword in self.bullish_keywords if keyword in text_lower
-        )
-        bearish_count = sum(
-            1 for keyword in self.bearish_keywords if keyword in text_lower
-        )
+        bullish_count = sum(1 for keyword in self.bullish_keywords if keyword in text_lower)
+        bearish_count = sum(1 for keyword in self.bearish_keywords if keyword in text_lower)
 
         # Check for technical indicators (increases confidence)
-        technical_count = sum(
-            1 for keyword in self.technical_keywords if keyword in text_lower
-        )
+        technical_count = sum(1 for keyword in self.technical_keywords if keyword in text_lower)
 
         # Determine sentiment
         if bullish_count > bearish_count:
             sentiment = "bullish"
-            confidence = min(
-                0.5 + (bullish_count * 0.1) + (technical_count * 0.05), 1.0
-            )
+            confidence = min(0.5 + (bullish_count * 0.1) + (technical_count * 0.05), 1.0)
         elif bearish_count > bullish_count:
             sentiment = "bearish"
-            confidence = min(
-                0.5 + (bearish_count * 0.1) + (technical_count * 0.05), 1.0
-            )
+            confidence = min(0.5 + (bearish_count * 0.1) + (technical_count * 0.05), 1.0)
         else:
             sentiment = "neutral"
             confidence = 0.3
@@ -399,7 +374,7 @@ class NewsletterAnalyzer:
 
     def _extract_price_targets(
         self, text: str, ticker: str
-    ) -> Tuple[Optional[float], Optional[float], Optional[float]]:
+    ) -> tuple[float | None, float | None, float | None]:
         """
         Extract entry price, target price, and stop loss from article.
 
@@ -455,7 +430,7 @@ class NewsletterAnalyzer:
 
         return entry_price, target_price, stop_loss
 
-    def _extract_timeframe(self, text: str) -> Optional[str]:
+    def _extract_timeframe(self, text: str) -> str | None:
         """
         Extract trading timeframe from article.
 
@@ -484,7 +459,7 @@ class NewsletterAnalyzer:
 
         return None
 
-    def _extract_reasoning(self, text: str, ticker: str) -> Optional[str]:
+    def _extract_reasoning(self, text: str, ticker: str) -> str | None:
         """
         Extract reasoning/justification for the signal.
 
@@ -499,10 +474,7 @@ class NewsletterAnalyzer:
         # Find first paragraph mentioning the ticker
         for paragraph in paragraphs:
             paragraph_lower = paragraph.lower()
-            if any(
-                name in paragraph_lower
-                for name in ticker_names.get(ticker, [ticker_lower])
-            ):
+            if any(name in paragraph_lower for name in ticker_names.get(ticker, [ticker_lower])):
                 # Truncate to 500 chars
                 if len(paragraph) > 500:
                     return paragraph[:497] + "..."
@@ -510,9 +482,7 @@ class NewsletterAnalyzer:
 
         return None
 
-    def save_signals(
-        self, signals: Dict[str, CryptoSignal], date: Optional[datetime] = None
-    ) -> Path:
+    def save_signals(self, signals: dict[str, CryptoSignal], date: datetime | None = None) -> Path:
         """
         Save extracted signals to JSON file (for MCP to populate or manual caching).
 
@@ -539,9 +509,7 @@ class NewsletterAnalyzer:
         logger.info(f"Saved {len(signals)} newsletter signals to {file_path}")
         return file_path
 
-    def get_signal_for_ticker(
-        self, ticker: str, max_age_days: int = 7
-    ) -> Optional[CryptoSignal]:
+    def get_signal_for_ticker(self, ticker: str, max_age_days: int = 7) -> CryptoSignal | None:
         """
         Get signal for specific ticker (BTC or ETH).
 
@@ -559,19 +527,19 @@ class NewsletterAnalyzer:
 # Convenience functions for quick access
 
 
-def get_btc_signal(max_age_days: int = 7) -> Optional[CryptoSignal]:
+def get_btc_signal(max_age_days: int = 7) -> CryptoSignal | None:
     """Get latest BTC trading signal from newsletter"""
     analyzer = NewsletterAnalyzer()
     return analyzer.get_signal_for_ticker("BTC", max_age_days)
 
 
-def get_eth_signal(max_age_days: int = 7) -> Optional[CryptoSignal]:
+def get_eth_signal(max_age_days: int = 7) -> CryptoSignal | None:
     """Get latest ETH trading signal from newsletter"""
     analyzer = NewsletterAnalyzer()
     return analyzer.get_signal_for_ticker("ETH", max_age_days)
 
 
-def get_all_signals(max_age_days: int = 7) -> Dict[str, CryptoSignal]:
+def get_all_signals(max_age_days: int = 7) -> dict[str, CryptoSignal]:
     """Get all latest crypto trading signals from newsletter"""
     analyzer = NewsletterAnalyzer()
     return analyzer.get_latest_signals(max_age_days)
@@ -603,22 +571,8 @@ if __name__ == "__main__":
     for ticker, signal in signals.items():
         print(f"\n{ticker} Signal:")
         print(f"  Sentiment: {signal.sentiment} ({signal.confidence:.2f} confidence)")
-        print(
-            f"  Entry: ${signal.entry_price:,.0f}"
-            if signal.entry_price
-            else "  Entry: N/A"
-        )
-        print(
-            f"  Target: ${signal.target_price:,.0f}"
-            if signal.target_price
-            else "  Target: N/A"
-        )
-        print(
-            f"  Stop Loss: ${signal.stop_loss:,.0f}"
-            if signal.stop_loss
-            else "  Stop Loss: N/A"
-        )
+        print(f"  Entry: ${signal.entry_price:,.0f}" if signal.entry_price else "  Entry: N/A")
+        print(f"  Target: ${signal.target_price:,.0f}" if signal.target_price else "  Target: N/A")
+        print(f"  Stop Loss: ${signal.stop_loss:,.0f}" if signal.stop_loss else "  Stop Loss: N/A")
         print(f"  Timeframe: {signal.timeframe or 'N/A'}")
-        print(
-            f"  Reasoning: {signal.reasoning[:100] if signal.reasoning else 'N/A'}..."
-        )
+        print(f"  Reasoning: {signal.reasoning[:100] if signal.reasoning else 'N/A'}...")

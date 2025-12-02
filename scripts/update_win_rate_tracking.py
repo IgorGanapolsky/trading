@@ -9,8 +9,8 @@ that separates closed trades from open positions.
 import json
 import os
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from dotenv import load_dotenv
@@ -120,7 +120,7 @@ def main():
         state["performance"]["win_rate"] = 0.0
 
     print()
-    print(f"📊 Win Rate Statistics:")
+    print("📊 Win Rate Statistics:")
     print(f"   Closed Trades: {len(closed_trades)}")
     print(f"   Winning Trades: {winning_trades}")
     print(f"   Losing Trades: {losing_trades}")
@@ -130,9 +130,9 @@ def main():
     # Update metadata
     state["meta"]["last_updated"] = datetime.now().isoformat()
     state["meta"]["last_audit"] = datetime.now().isoformat()
-    state["meta"][
-        "audit_notes"
-    ] = f"Day {state['challenge']['current_day']} - Win rate tracking updated (separated closed vs open)"
+    state["meta"]["audit_notes"] = (
+        f"Day {state['challenge']['current_day']} - Win rate tracking updated (separated closed vs open)"
+    )
 
     # Save updated state
     with open(state_file, "w") as f:

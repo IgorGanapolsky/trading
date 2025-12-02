@@ -3,13 +3,15 @@
 Standalone script to update performance log with current account status.
 Can be run independently of trading execution to capture daily P/L.
 """
+
 import json
 import os
 import sys
 from datetime import date, datetime
 from pathlib import Path
-from dotenv import load_dotenv
+
 import alpaca_trade_api as tradeapi
+from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
@@ -29,11 +31,7 @@ def get_account_summary():
         print("ERROR: Missing ALPACA_API_KEY or ALPACA_SECRET_KEY in .env")
         sys.exit(1)
 
-    base_url = (
-        "https://paper-api.alpaca.markets"
-        if paper_trading
-        else "https://api.alpaca.markets"
-    )
+    base_url = "https://paper-api.alpaca.markets" if paper_trading else "https://api.alpaca.markets"
     api = tradeapi.REST(api_key, secret_key, base_url, api_version="v2")
 
     account = api.get_account()
@@ -57,7 +55,7 @@ def update_performance_log():
     # Load existing data
     perf_data = []
     if PERF_FILE.exists():
-        with open(PERF_FILE, "r") as f:
+        with open(PERF_FILE) as f:
             perf_data = json.load(f)
         print(f"✅ Loaded {len(perf_data)} existing entries")
     else:
@@ -78,9 +76,7 @@ def update_performance_log():
         print(
             f"   Existing: Equity ${existing_today[0]['equity']:,.2f}, P/L ${existing_today[0]['pl']:+,.2f}"
         )
-        print(
-            f"   New:      Equity ${summary['equity']:,.2f}, P/L ${summary['pl']:+,.2f}"
-        )
+        print(f"   New:      Equity ${summary['equity']:,.2f}, P/L ${summary['pl']:+,.2f}")
 
         # Update existing entry
         for i, entry in enumerate(perf_data):

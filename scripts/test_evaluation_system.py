@@ -8,17 +8,15 @@ it catches them automatically.
 FREE - No API costs, uses local data.
 """
 
-import sys
 import os
-from pathlib import Path
-from datetime import datetime, timedelta
-import json
+import sys
+from datetime import datetime
 
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.evaluation.trading_evaluator import TradingSystemEvaluator
 from src.evaluation.rag_storage import EvaluationRAGStorage
+from src.evaluation.trading_evaluator import TradingSystemEvaluator
 
 
 def test_mistake_1():
@@ -62,7 +60,7 @@ def test_mistake_1():
     # Check error detection
     errors = evaluation.evaluation.get("errors")
     if errors:
-        print(f"\nError Detection:")
+        print("\nError Detection:")
         print(f"  Issues Found: {len(errors.issues)}")
         for issue in errors.issues:
             print(f"    - {issue}")
@@ -71,8 +69,7 @@ def test_mistake_1():
     assert not evaluation.passed, "Should FAIL - order size is 200x expected"
     assert accuracy.score == 0.0, "Accuracy should be 0.0 for 200x error"
     assert any(
-        "10x" in issue.lower() or "order size" in issue.lower()
-        for issue in accuracy.issues
+        "10x" in issue.lower() or "order size" in issue.lower() for issue in accuracy.issues
     ), "Should detect order size error"
 
     print("\n✅ TEST PASSED - Mistake #1 detected correctly")
@@ -120,8 +117,7 @@ def test_mistake_2():
     assert not reliability.passed, "Should FAIL - system state is stale"
     assert reliability.score == 0.0, "Reliability should be 0.0 for stale state"
     assert any(
-        "stale" in issue.lower() or "hours old" in issue.lower()
-        for issue in reliability.issues
+        "stale" in issue.lower() or "hours old" in issue.lower() for issue in reliability.issues
     ), "Should detect stale system state"
 
     print("\n✅ TEST PASSED - Mistake #2 detected correctly")
@@ -161,14 +157,14 @@ def test_mistake_3():
     # Check error detection
     errors = evaluation.evaluation.get("errors")
     if errors:
-        print(f"\nError Detection:")
+        print("\nError Detection:")
         for issue in errors.issues:
             print(f"  - {issue}")
 
     # Verify it caught the mistake
-    assert any(
-        "network" in issue.lower() or "dns" in issue.lower() for issue in errors.issues
-    ), "Should detect network/DNS errors"
+    assert any("network" in issue.lower() or "dns" in issue.lower() for issue in errors.issues), (
+        "Should detect network/DNS errors"
+    )
 
     print("\n✅ TEST PASSED - Mistake #3 detected correctly")
     return evaluation
@@ -209,14 +205,13 @@ def test_mistake_5():
     # Check error detection
     errors = evaluation.evaluation.get("errors")
     if errors:
-        print(f"\nError Detection:")
+        print("\nError Detection:")
         for issue in errors.issues:
             print(f"  - {issue}")
 
     # Verify it caught the mistake
     assert any(
-        "weekend" in issue.lower() or "saturday" in issue.lower()
-        for issue in errors.issues
+        "weekend" in issue.lower() or "saturday" in issue.lower() for issue in errors.issues
     ), "Should detect weekend trade"
 
     print("\n✅ TEST PASSED - Mistake #5 detected correctly")
@@ -242,9 +237,7 @@ def test_rag_storage():
         "timestamp": datetime.now().isoformat(),
         "overall_score": 0.5,
         "passed": False,
-        "evaluation": {
-            "accuracy": {"score": 0.0, "passed": False, "issues": ["Order size error"]}
-        },
+        "evaluation": {"accuracy": {"score": 0.0, "passed": False, "issues": ["Order size error"]}},
         "critical_issues": ["Order size >10x expected"],
     }
 

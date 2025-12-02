@@ -2,12 +2,14 @@
 """
 Trade Journal - Detailed analysis of each trade with reasoning
 """
-import os
+
 import json
+import os
 from datetime import datetime
 from pathlib import Path
-from dotenv import load_dotenv
+
 import alpaca_trade_api as tradeapi
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -138,7 +140,9 @@ def analyze_trade(entry):
             else (
                 "good"
                 if entry["exit"]["pnl_pct"] > 2
-                else "poor" if entry["exit"]["pnl_pct"] < -3 else "acceptable"
+                else "poor"
+                if entry["exit"]["pnl_pct"] < -3
+                else "acceptable"
             )
         ),
     }

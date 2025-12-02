@@ -4,14 +4,14 @@ Financial Data Fetcher Skill - Implementation
 Fetches real-time and historical market data from Alpaca and other sources
 """
 
+import argparse
+import json
 import os
 import sys
-import json
-import argparse
-from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
-from functools import wraps
 import time
+from datetime import datetime, timedelta
+from functools import wraps
+from typing import Any, Optional
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
@@ -21,7 +21,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 try:
-    from alpaca.trading.client import TradingClient
     from alpaca.data.historical import StockHistoricalDataClient
     from alpaca.data.requests import (
         StockBarsRequest,
@@ -29,6 +28,7 @@ try:
         StockSnapshotRequest,
     )
     from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
+    from alpaca.trading.client import TradingClient
 
     ALPACA_AVAILABLE = True
 except ImportError:
@@ -77,12 +77,12 @@ def cached(ttl=300):
     return decorator
 
 
-def error_response(error_msg: str, error_code: str = "ERROR") -> Dict[str, Any]:
+def error_response(error_msg: str, error_code: str = "ERROR") -> dict[str, Any]:
     """Standard error response format"""
     return {"success": False, "error": error_msg, "error_code": error_code}
 
 
-def success_response(data: Any) -> Dict[str, Any]:
+def success_response(data: Any) -> dict[str, Any]:
     """Standard success response format"""
     return {"success": True, "data": data}
 
@@ -97,9 +97,7 @@ class FinancialDataFetcher:
         self.paper_trading = os.getenv("PAPER_TRADING", "true").lower() == "true"
 
         if ALPACA_AVAILABLE and self.alpaca_api_key and self.alpaca_secret:
-            self.data_client = StockHistoricalDataClient(
-                self.alpaca_api_key, self.alpaca_secret
-            )
+            self.data_client = StockHistoricalDataClient(self.alpaca_api_key, self.alpaca_secret)
             self.trading_client = TradingClient(
                 self.alpaca_api_key, self.alpaca_secret, paper=self.paper_trading
             )
@@ -121,12 +119,12 @@ class FinancialDataFetcher:
     @cached(ttl=300)
     def get_price_data(
         self,
-        symbols: List[str],
+        symbols: list[str],
         timeframe: str = "1Day",
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         limit: int = 100,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Fetch historical price data for symbols
 
@@ -146,9 +144,7 @@ class FinancialDataFetcher:
 
             # Use Alpaca if available
             if self.data_client:
-                return self._get_price_data_alpaca(
-                    symbols, timeframe, start_date, end_date, limit
-                )
+                return self._get_price_data_alpaca(symbols, timeframe, start_date, end_date, limit)
 
             # Fall back to yfinance
             elif YFINANCE_AVAILABLE:
@@ -164,12 +160,12 @@ class FinancialDataFetcher:
 
     def _get_price_data_alpaca(
         self,
-        symbols: List[str],
+        symbols: list[str],
         timeframe: str,
         start_date: Optional[str],
         end_date: Optional[str],
         limit: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Fetch price data from Alpaca"""
         try:
             # Parse dates
@@ -178,10 +174,7 @@ class FinancialDataFetcher:
             else:
                 start = datetime.now() - timedelta(days=30)
 
-            if end_date:
-                end = datetime.strptime(end_date, "%Y-%m-%d")
-            else:
-                end = datetime.now()
+            end = datetime.strptime(end_date, "%Y-%m-%d") if end_date else datetime.now()
 
             # Create request
             request = StockBarsRequest(
@@ -208,9 +201,7 @@ class FinancialDataFetcher:
                             "close": float(bar.close),
                             "volume": int(bar.volume),
                             "vwap": (
-                                float(bar.vwap)
-                                if hasattr(bar, "vwap") and bar.vwap
-                                else None
+                                float(bar.vwap) if hasattr(bar, "vwap") and bar.vwap else None
                             ),
                         }
                         for bar in bars[symbol]
@@ -225,12 +216,12 @@ class FinancialDataFetcher:
 
     def _get_price_data_yfinance(
         self,
-        symbols: List[str],
+        symbols: list[str],
         timeframe: str,
         start_date: Optional[str],
         end_date: Optional[str],
         limit: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Fetch price data from yfinance (fallback)"""
         try:
             # Map timeframe to yfinance interval
@@ -244,10 +235,7 @@ class FinancialDataFetcher:
             interval = interval_map.get(timeframe, "1d")
 
             # Calculate period if no dates provided
-            if not start_date:
-                period = "1mo"
-            else:
-                period = None
+            period = "1mo" if not start_date else None
 
             result = {}
             for symbol in symbols:
@@ -257,9 +245,7 @@ class FinancialDataFetcher:
                     if period:
                         df = ticker.history(period=period, interval=interval)
                     else:
-                        df = ticker.history(
-                            start=start_date, end=end_date, interval=interval
-                        )
+                        df = ticker.history(start=start_date, end=end_date, interval=interval)
 
                     if len(df) > limit:
                         df = df.tail(limit)
@@ -286,7 +272,7 @@ class FinancialDataFetcher:
             return error_response(f"yfinance error: {str(e)}", "YFINANCE_ERROR")
 
     @cached(ttl=60)
-    def get_market_snapshot(self, symbols: List[str]) -> Dict[str, Any]:
+    def get_market_snapshot(self, symbols: list[str]) -> dict[str, Any]:
         """
         Get real-time market snapshot for symbols
 
@@ -315,39 +301,19 @@ class FinancialDataFetcher:
                 if symbol in snapshots:
                     snap = snapshots[symbol]
                     result[symbol] = {
-                        "price": (
-                            float(snap.latest_trade.price)
-                            if snap.latest_trade
-                            else None
-                        ),
-                        "bid": (
-                            float(snap.latest_quote.bid_price)
-                            if snap.latest_quote
-                            else None
-                        ),
-                        "ask": (
-                            float(snap.latest_quote.ask_price)
-                            if snap.latest_quote
-                            else None
-                        ),
+                        "price": (float(snap.latest_trade.price) if snap.latest_trade else None),
+                        "bid": (float(snap.latest_quote.bid_price) if snap.latest_quote else None),
+                        "ask": (float(snap.latest_quote.ask_price) if snap.latest_quote else None),
                         "bid_size": (
-                            int(snap.latest_quote.bid_size)
-                            if snap.latest_quote
-                            else None
+                            int(snap.latest_quote.bid_size) if snap.latest_quote else None
                         ),
                         "ask_size": (
-                            int(snap.latest_quote.ask_size)
-                            if snap.latest_quote
-                            else None
+                            int(snap.latest_quote.ask_size) if snap.latest_quote else None
                         ),
                         "last_trade_time": (
-                            snap.latest_trade.timestamp.isoformat()
-                            if snap.latest_trade
-                            else None
+                            snap.latest_trade.timestamp.isoformat() if snap.latest_trade else None
                         ),
-                        "volume": (
-                            int(snap.daily_bar.volume) if snap.daily_bar else None
-                        ),
+                        "volume": (int(snap.daily_bar.volume) if snap.daily_bar else None),
                         "vwap": (
                             float(snap.daily_bar.vwap)
                             if snap.daily_bar and hasattr(snap.daily_bar, "vwap")
@@ -360,11 +326,9 @@ class FinancialDataFetcher:
             return success_response(result)
 
         except Exception as e:
-            return error_response(
-                f"Error fetching market snapshot: {str(e)}", "FETCH_ERROR"
-            )
+            return error_response(f"Error fetching market snapshot: {str(e)}", "FETCH_ERROR")
 
-    def get_latest_news(self, symbols: List[str], limit: int = 10) -> Dict[str, Any]:
+    def get_latest_news(self, symbols: list[str], limit: int = 10) -> dict[str, Any]:
         """
         Fetch latest financial news for symbols
 
@@ -397,8 +361,8 @@ class FinancialDataFetcher:
             return error_response(f"Error fetching news: {str(e)}", "FETCH_ERROR")
 
     def get_fundamentals(
-        self, symbols: List[str], metrics: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        self, symbols: list[str], metrics: Optional[list[str]] = None
+    ) -> dict[str, Any]:
         """
         Fetch fundamental data for symbols
 
@@ -438,9 +402,7 @@ class FinancialDataFetcher:
             return success_response(result)
 
         except Exception as e:
-            return error_response(
-                f"Error fetching fundamentals: {str(e)}", "FETCH_ERROR"
-            )
+            return error_response(f"Error fetching fundamentals: {str(e)}", "FETCH_ERROR")
 
 
 def main():
@@ -450,9 +412,7 @@ def main():
 
     # get_price_data command
     price_parser = subparsers.add_parser("get_price_data", help="Fetch price data")
-    price_parser.add_argument(
-        "--symbols", nargs="+", required=True, help="Ticker symbols"
-    )
+    price_parser.add_argument("--symbols", nargs="+", required=True, help="Ticker symbols")
     price_parser.add_argument(
         "--timeframe", default="1Day", help="Timeframe (1Min, 5Min, 1Hour, 1Day)"
     )
@@ -461,27 +421,17 @@ def main():
     price_parser.add_argument("--limit", type=int, default=100, help="Number of bars")
 
     # get_market_snapshot command
-    snapshot_parser = subparsers.add_parser(
-        "get_market_snapshot", help="Get market snapshot"
-    )
-    snapshot_parser.add_argument(
-        "--symbols", nargs="+", required=True, help="Ticker symbols"
-    )
+    snapshot_parser = subparsers.add_parser("get_market_snapshot", help="Get market snapshot")
+    snapshot_parser.add_argument("--symbols", nargs="+", required=True, help="Ticker symbols")
 
     # get_latest_news command
     news_parser = subparsers.add_parser("get_latest_news", help="Fetch latest news")
-    news_parser.add_argument(
-        "--symbols", nargs="+", required=True, help="Ticker symbols"
-    )
-    news_parser.add_argument(
-        "--limit", type=int, default=10, help="Number of news items"
-    )
+    news_parser.add_argument("--symbols", nargs="+", required=True, help="Ticker symbols")
+    news_parser.add_argument("--limit", type=int, default=10, help="Number of news items")
 
     # get_fundamentals command
     fund_parser = subparsers.add_parser("get_fundamentals", help="Fetch fundamentals")
-    fund_parser.add_argument(
-        "--symbols", nargs="+", required=True, help="Ticker symbols"
-    )
+    fund_parser.add_argument("--symbols", nargs="+", required=True, help="Ticker symbols")
 
     args = parser.parse_args()
 

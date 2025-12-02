@@ -4,10 +4,12 @@ DAILY CHECK-IN REPORT
 Shows you exactly how profitable you are
 Run this every day to track progress
 """
-import os
+
 import json
-from datetime import datetime, date, timedelta
+import os
+from datetime import date, datetime
 from pathlib import Path
+
 import alpaca_trade_api as tradeapi
 
 DATA_DIR = Path("data")
@@ -19,9 +21,7 @@ ALPACA_KEY = os.getenv("ALPACA_API_KEY")
 ALPACA_SECRET = os.getenv("ALPACA_SECRET_KEY")
 
 if not ALPACA_KEY or not ALPACA_SECRET:
-    raise ValueError(
-        "ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set"
-    )
+    raise ValueError("ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set")
 
 api = tradeapi.REST(
     ALPACA_KEY,
@@ -57,7 +57,7 @@ def get_challenge_day():
             json.dump(start_data, f, indent=2)
         return 1
 
-    with open(challenge_file, "r") as f:
+    with open(challenge_file) as f:
         data = json.load(f)
 
     start_date = datetime.fromisoformat(data["start_date"]).date()
@@ -115,7 +115,7 @@ def get_todays_trades():
     today_file = DATA_DIR / f"trades_{date.today().isoformat()}.json"
 
     if today_file.exists():
-        with open(today_file, "r") as f:
+        with open(today_file) as f:
             return json.load(f)
     return []
 
@@ -125,7 +125,7 @@ def get_manual_reserves():
     tracking_file = DATA_DIR / "manual_investments.json"
 
     if tracking_file.exists():
-        with open(tracking_file, "r") as f:
+        with open(tracking_file) as f:
             return json.load(f)
 
     return {"ipo_reserve": 0, "crowdfunding_reserve": 0}
@@ -138,7 +138,7 @@ def calculate_daily_return():
     if not perf_file.exists():
         return 0, 0
 
-    with open(perf_file, "r") as f:
+    with open(perf_file) as f:
         data = json.load(f)
 
     if len(data) < 2:
@@ -158,7 +158,7 @@ def get_video_analysis_summary():
     if not WATCHLIST_FILE.exists():
         return None
 
-    with open(WATCHLIST_FILE, "r") as f:
+    with open(WATCHLIST_FILE) as f:
         watchlist_data = json.load(f)
 
     # Get watchlist stocks (not current holdings)
@@ -167,7 +167,7 @@ def get_video_analysis_summary():
     # Load system state for video analysis tracking
     video_stats = None
     if SYSTEM_STATE_FILE.exists():
-        with open(SYSTEM_STATE_FILE, "r") as f:
+        with open(SYSTEM_STATE_FILE) as f:
             state = json.load(f)
             video_stats = state.get("video_analysis", {})
 
@@ -189,9 +189,7 @@ def get_video_analysis_summary():
         "new_today_stocks": new_today,
         "high_priority_count": len(high_priority),
         "high_priority_stocks": high_priority,
-        "videos_analyzed_total": (
-            video_stats.get("videos_analyzed", 0) if video_stats else 0
-        ),
+        "videos_analyzed_total": (video_stats.get("videos_analyzed", 0) if video_stats else 0),
         "stocks_from_videos": (
             video_stats.get("stocks_added_from_videos", 0) if video_stats else 0
         ),
@@ -214,7 +212,7 @@ def main():
     days_remaining = 30 - day
     progress = (day / 30) * 100
 
-    print(f"\n🎯 30-DAY CHALLENGE PROGRESS")
+    print("\n🎯 30-DAY CHALLENGE PROGRESS")
     print("-" * 70)
     print(f"Day {day} of 30 ({progress:.0f}% complete)")
     print(f"Days Remaining: {days_remaining}")
@@ -223,14 +221,14 @@ def main():
     # Account Performance
     account = get_account_data()
 
-    print(f"\n💰 ACCOUNT SUMMARY")
+    print("\n💰 ACCOUNT SUMMARY")
     print("-" * 70)
     print(f"Total Equity:     ${account['equity']:>12,.2f}")
     print(f"Cash:             ${account['cash']:>12,.2f}")
     print(f"Positions Value:  ${account['positions_value']:>12,.2f}")
     print(f"Buying Power:     ${account['buying_power']:>12,.2f}")
 
-    print(f"\n📈 PROFIT/LOSS")
+    print("\n📈 PROFIT/LOSS")
     print("-" * 70)
     print(f"Total P/L:        ${account['pl']:>12,.2f}")
     print(f"Return:           {account['pl_pct']:>12,.2f}%")
@@ -239,7 +237,7 @@ def main():
     daily_return, daily_pct = calculate_daily_return()
 
     if daily_return != 0:
-        print(f"\n📊 TODAY'S PERFORMANCE")
+        print("\n📊 TODAY'S PERFORMANCE")
         print("-" * 70)
         print(f"Daily Return:     ${daily_return:>12,.2f}")
         print(f"Daily Change:     {daily_pct:>12,.2f}%")
@@ -258,7 +256,7 @@ def main():
                 f"P/L: ${pos['pl']:>7,.2f} ({pos['pl_pct']:>+6.2f}%)"
             )
     else:
-        print(f"\n📍 CURRENT POSITIONS")
+        print("\n📍 CURRENT POSITIONS")
         print("-" * 70)
         print("No positions yet")
 
@@ -269,11 +267,9 @@ def main():
         print(f"\n🔄 TODAY'S TRADES ({len(trades)})")
         print("-" * 70)
         for trade in trades:
-            print(
-                f"✅ {trade['tier']:10s} | {trade['symbol']:5s} | ${trade['amount']:.2f}"
-            )
+            print(f"✅ {trade['tier']:10s} | {trade['symbol']:5s} | ${trade['amount']:.2f}")
     else:
-        print(f"\n🔄 TODAY'S TRADES")
+        print("\n🔄 TODAY'S TRADES")
         print("-" * 70)
         print("No trades executed today")
 
@@ -281,7 +277,7 @@ def main():
     video_summary = get_video_analysis_summary()
 
     if video_summary:
-        print(f"\n📺 VIDEO ANALYSIS UPDATES")
+        print("\n📺 VIDEO ANALYSIS UPDATES")
         print("-" * 70)
 
         # Overall stats
@@ -300,26 +296,22 @@ def main():
                 if "catalyst" in stock:
                     print(f"      Catalyst: {stock['catalyst'][:60]}...")
         else:
-            print(f"\nNo new stocks added today")
+            print("\nNo new stocks added today")
 
         # High priority picks
         if video_summary["high_priority_count"] > 0:
-            print(
-                f"\n🎯 HIGH PRIORITY WATCHLIST ({video_summary['high_priority_count']})"
-            )
+            print(f"\n🎯 HIGH PRIORITY WATCHLIST ({video_summary['high_priority_count']})")
             for stock in video_summary["high_priority_stocks"]:
                 analyst = stock.get("source", "Unknown").split("-")[0].strip()
                 print(f"   ⭐ {stock['ticker']:5s} - {stock['name']}")
                 print(f"      Source: {analyst}")
-                print(
-                    f"      Rationale: {stock.get('rationale', 'See analysis')[:60]}..."
-                )
+                print(f"      Rationale: {stock.get('rationale', 'See analysis')[:60]}...")
                 if "profit_targets" in stock and stock["profit_targets"]:
                     print(f"      Target: {stock['profit_targets'][0]}")
 
         # Recent video sources
         if video_summary["recent_videos"]:
-            print(f"\n📹 RECENT ANALYSIS")
+            print("\n📹 RECENT ANALYSIS")
             for video in video_summary["recent_videos"][:3]:
                 video_date = datetime.fromisoformat(video["date"]).strftime("%b %d")
                 print(
@@ -335,14 +327,14 @@ def main():
             )
             print(f"\nLast Analysis: {last_date}")
     else:
-        print(f"\n📺 VIDEO ANALYSIS UPDATES")
+        print("\n📺 VIDEO ANALYSIS UPDATES")
         print("-" * 70)
         print("No video analysis data available yet")
 
     # Manual Reserves
     reserves = get_manual_reserves()
 
-    print(f"\n💼 MANUAL INVESTMENT RESERVES")
+    print("\n💼 MANUAL INVESTMENT RESERVES")
     print("-" * 70)
     print(f"IPO Reserve:           ${reserves.get('ipo_reserve', 0):>10,.2f}")
     print(f"Crowdfunding Reserve:  ${reserves.get('crowdfunding_reserve', 0):>10,.2f}")
@@ -352,15 +344,13 @@ def main():
     tier1_invested = total_invested * 0.60
     tier2_invested = total_invested * 0.20
 
-    print(f"\n💸 TOTAL INVESTED (Since Day 1 - Fibonacci Strategy)")
+    print("\n💸 TOTAL INVESTED (Since Day 1 - Fibonacci Strategy)")
     print("-" * 70)
     print(f"Tier 1 (Core):         ${tier1_invested:>10,.2f} (60%)")
     print(f"Tier 2 (Growth):       ${tier2_invested:>10,.2f} (20%) - NVDA/GOOGL")
     print(f"Tier 3 (IPO):          ${reserves.get('ipo_reserve', 0):>10,.2f} (10%)")
-    print(
-        f"Tier 4 (Crowdfunding): ${reserves.get('crowdfunding_reserve', 0):>10,.2f} (10%)"
-    )
-    print(f"{'─'*70}")
+    print(f"Tier 4 (Crowdfunding): ${reserves.get('crowdfunding_reserve', 0):>10,.2f} (10%)")
+    print(f"{'─' * 70}")
     print(f"TOTAL:                 ${total_invested:>10,.2f}")
     print(f"Today's Investment:    ${get_fibonacci_investment(day):.2f}")
 
@@ -369,7 +359,7 @@ def main():
     current_value = account["equity"]
     to_target = target_30day - current_value
 
-    print(f"\n🎯 30-DAY GOALS")
+    print("\n🎯 30-DAY GOALS")
     print("-" * 70)
     print(f"Target Equity (10% return):  ${target_30day:>12,.2f}")
     print(f"Current Equity:              ${current_value:>12,.2f}")
@@ -380,7 +370,7 @@ def main():
     elif account["pl"] < 0:
         print(f"\n💪 Down ${abs(account['pl']):.2f} - Stay disciplined!")
     else:
-        print(f"\n➡️  Break-even - Building momentum!")
+        print("\n➡️  Break-even - Building momentum!")
 
     # Footer
     print("\n" + "=" * 70)

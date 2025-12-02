@@ -4,8 +4,8 @@ Test Suite for Order Validation
 Tests order size validation to prevent Mistake #1 ($1,600 instead of $8).
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add parent directory to path
@@ -37,9 +37,9 @@ def test_order_validation():
     # Test 2: Order >10x expected (Mistake #1 scenario)
     is_valid, error_msg = validate_order_size(1600.0, 8.0, "T1_CORE")
     assert not is_valid, "Order >10x expected should be rejected"
-    assert (
-        "10x" in error_msg.lower() or "multiplier" in error_msg.lower()
-    ), "Error message should mention multiplier"
+    assert "10x" in error_msg.lower() or "multiplier" in error_msg.lower(), (
+        "Error message should mention multiplier"
+    )
 
     # Test 3: Order too small (<$10 minimum)
     is_valid, error_msg = validate_order_size(5.0, 5.0, "T1_CORE")

@@ -2,8 +2,10 @@
 """
 Quick validation script to test API connections
 """
+
 import os
 import sys
+
 from dotenv import load_dotenv
 
 # Add project root to path
@@ -46,7 +48,7 @@ try:
     trader = TradingClient(alpaca_key, alpaca_secret, paper=True)
     account = trader.get_account()
 
-    print(f"   ✅ Connected to Alpaca!")
+    print("   ✅ Connected to Alpaca!")
     print(f"   📊 Account Status: {account.status}")
     print(f"   💰 Buying Power: ${float(account.buying_power):,.2f}")
     print(f"   💵 Cash: ${float(account.cash):,.2f}")
@@ -72,9 +74,9 @@ try:
     )
 
     result = response.choices[0].message.content.strip()
-    print(f"   ✅ Connected to OpenRouter!")
+    print("   ✅ Connected to OpenRouter!")
     print(f"   🤖 Test Response: {result}")
-    print(f"   💳 Credits: Available (no error)")
+    print("   💳 Credits: Available (no error)")
 
 except Exception as e:
     print(f"   ❌ OpenRouter connection failed: {e}")

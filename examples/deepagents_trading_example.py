@@ -7,7 +7,6 @@ with planning, sub-agent delegation, and filesystem capabilities.
 
 import asyncio
 import os
-from pathlib import Path
 
 from src.deepagents_integration import (
     create_market_analysis_agent,
@@ -42,9 +41,7 @@ async def example_research_agent():
     print("Agent is processing...\n")
 
     # Invoke agent (async)
-    result = await agent.ainvoke(
-        {"messages": [{"role": "user", "content": research_query}]}
-    )
+    result = await agent.ainvoke({"messages": [{"role": "user", "content": research_query}]})
 
     # Display results
     if "messages" in result:
@@ -140,9 +137,7 @@ async def example_planning_workflow():
 
     print(f"\nPlanning Query: {planning_query}\n")
 
-    result = await agent.ainvoke(
-        {"messages": [{"role": "user", "content": planning_query}]}
-    )
+    result = await agent.ainvoke({"messages": [{"role": "user", "content": planning_query}]})
 
     # Check if agent created todos
     if "messages" in result:

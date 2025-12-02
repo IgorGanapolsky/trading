@@ -3,14 +3,15 @@ Online Learning System for RL Trading
 Continuously updates models from live trade results.
 """
 
-import torch
-import numpy as np
-from collections import deque
-from typing import Dict, Any, Optional
-import logging
-from pathlib import Path
 import json
+import logging
+from collections import deque
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Optional
+
+import numpy as np
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,7 @@ class OnlineRLLearner:
         reward: float,
         next_state: torch.Tensor,
         done: bool = False,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ):
         """
         Add a trade experience to the replay buffer.
@@ -149,7 +150,7 @@ class OnlineRLLearner:
 
     def on_trade_complete(
         self,
-        trade_result: Dict[str, Any],
+        trade_result: dict[str, Any],
         entry_state: torch.Tensor,
         exit_state: torch.Tensor,
         action: int,
@@ -186,7 +187,7 @@ class OnlineRLLearner:
             },
         )
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get learning statistics."""
         if len(self.performance_history) == 0:
             return {
@@ -224,9 +225,7 @@ class OnlineRLLearner:
                 {
                     "trade_count": self.trade_count,
                     "update_count": self.update_count,
-                    "performance_history": self.performance_history[
-                        -100:
-                    ],  # Last 100 updates
+                    "performance_history": self.performance_history[-100:],  # Last 100 updates
                     "buffer_size": len(self.replay_buffer),
                 },
                 f,
@@ -238,7 +237,7 @@ class OnlineRLLearner:
         """Load online learning state."""
         state_path = self.save_dir / f"{symbol}_online_learner.json"
         if state_path.exists():
-            with open(state_path, "r") as f:
+            with open(state_path) as f:
                 state = json.load(f)
                 self.trade_count = state.get("trade_count", 0)
                 self.update_count = state.get("update_count", 0)

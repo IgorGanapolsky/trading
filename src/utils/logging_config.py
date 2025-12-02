@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Optional
 
 
-def setup_logging(level: Optional[str] = None) -> logging.Logger:
+def setup_logging(level: str | None = None) -> logging.Logger:
     """
     Configure application-wide logging.
 

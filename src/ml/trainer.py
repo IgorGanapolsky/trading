@@ -1,14 +1,14 @@
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from pathlib import Path
 import logging
 import os
 from datetime import datetime
-from typing import Dict, Any, Optional
+from pathlib import Path
+from typing import Any, Optional
 
-from src.ml.networks import LSTMPPO
+import torch
+import torch.nn as nn
+import torch.optim as optim
 from src.ml.data_processor import DataProcessor
+from src.ml.networks import LSTMPPO
 
 logger = logging.getLogger(__name__)
 
@@ -59,9 +59,7 @@ class ModelTrainer:
         # Load optimized hyperparameters if available
         self._load_optimized_hyperparameters()
 
-    def train_supervised(
-        self, symbol: str, use_cloud_rl: Optional[bool] = None
-    ) -> Dict[str, Any]:
+    def train_supervised(self, symbol: str, use_cloud_rl: Optional[bool] = None) -> dict[str, Any]:
         """
         Pre-train the model using supervised learning (predicting price direction).
         This stabilizes the LSTM features before RL fine-tuning.
@@ -183,12 +181,10 @@ class ModelTrainer:
             # So Target 1 (Up) -> Action 1 (Buy). Target 0 (Down) -> Action 2 (Sell).
 
             # Map binary targets to Action indices: 0->2 (Sell), 1->1 (Buy)
-            y_train_mapped = torch.where(
-                y_train == 1, torch.tensor(1), torch.tensor(2)
-            ).to(self.device)
-            y_val_mapped = torch.where(y_val == 1, torch.tensor(1), torch.tensor(2)).to(
+            y_train_mapped = torch.where(y_train == 1, torch.tensor(1), torch.tensor(2)).to(
                 self.device
             )
+            y_val_mapped = torch.where(y_val == 1, torch.tensor(1), torch.tensor(2)).to(self.device)
 
             loss = criterion(action_probs, y_train_mapped)
             loss.backward()
@@ -238,12 +234,10 @@ class ModelTrainer:
             model.to(self.device)
             logger.info(f"Loaded model for {symbol}")
         else:
-            logger.warning(
-                f"No existing model found for {symbol}, returning initialized model"
-            )
+            logger.warning(f"No existing model found for {symbol}, returning initialized model")
         return model
 
-    def retrain_all(self, symbols: list) -> Dict[str, Any]:
+    def retrain_all(self, symbols: list) -> dict[str, Any]:
         """
         Retrain models for all symbols.
         This is the entry point for the 'Dynamic Retraining' pipeline.
@@ -257,7 +251,7 @@ class ModelTrainer:
                 results[symbol] = {"success": False, "error": str(e)}
         return results
 
-    def _train_with_cloud_rl(self, symbol: str) -> Dict[str, Any]:
+    def _train_with_cloud_rl(self, symbol: str) -> dict[str, Any]:
         """
         Train model using cloud RL service (Vertex AI RL).
 
@@ -320,9 +314,7 @@ class ModelTrainer:
             if best_params:
                 self.hidden_dim = best_params.get("hidden_dim", self.hidden_dim)
                 self.num_layers = best_params.get("num_layers", self.num_layers)
-                self.learning_rate = best_params.get(
-                    "learning_rate", self.learning_rate
-                )
+                self.learning_rate = best_params.get("learning_rate", self.learning_rate)
                 self.batch_size = best_params.get("batch_size", self.batch_size)
                 logger.info(f"✅ Loaded optimized hyperparameters: {best_params}")
         except Exception as e:

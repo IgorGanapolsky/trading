@@ -15,15 +15,14 @@ Date: 2025-10-28
 """
 
 import json
-
 import logging
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, field, asdict
 from pathlib import Path
+from typing import Any, Optional
+
 import anthropic
 from src.utils.langsmith_wrapper import get_traced_openai_client
-
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -61,10 +60,10 @@ class CompanyData:
     ticker: str
     industry: str
     ipo_date: Optional[str] = None
-    price_range: Optional[Tuple[float, float]] = None
+    price_range: Optional[tuple[float, float]] = None
     shares_offered: Optional[int] = None
     valuation: Optional[float] = None
-    underwriters: List[str] = field(default_factory=list)
+    underwriters: list[str] = field(default_factory=list)
     revenue: Optional[float] = None
     revenue_growth: Optional[float] = None
     net_income: Optional[float] = None
@@ -72,10 +71,10 @@ class CompanyData:
     founded: Optional[int] = None
     ceo: Optional[str] = None
     business_model: Optional[str] = None
-    competitors: List[str] = field(default_factory=list)
-    risk_factors: List[str] = field(default_factory=list)
+    competitors: list[str] = field(default_factory=list)
+    risk_factors: list[str] = field(default_factory=list)
     use_of_proceeds: Optional[str] = None
-    financials: Dict[str, Any] = field(default_factory=dict)
+    financials: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -106,14 +105,14 @@ class IPOAnalysis:
     score: float
     recommendation: str
     confidence: str
-    strengths: List[str] = field(default_factory=list)
-    risks: List[str] = field(default_factory=list)
+    strengths: list[str] = field(default_factory=list)
+    risks: list[str] = field(default_factory=list)
     underwriter_rating: float = 0.0
     financial_health: float = 0.0
     market_timing: float = 0.0
     comparable_analysis: str = ""
     investment_thesis: str = ""
-    red_flags: List[str] = field(default_factory=list)
+    red_flags: list[str] = field(default_factory=list)
     target_allocation: float = 0.0
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
@@ -171,7 +170,7 @@ class IPOStrategy:
 
         # Initialize balance tracking
         self.balance = self._load_balance()
-        self.analysis_history: List[Dict[str, Any]] = self._load_history()
+        self.analysis_history: list[dict[str, Any]] = self._load_history()
 
         # Initialize AI clients
         self.anthropic_client = None
@@ -207,7 +206,7 @@ class IPOStrategy:
         """Load current balance from file."""
         if self.balance_file.exists():
             try:
-                with open(self.balance_file, "r") as f:
+                with open(self.balance_file) as f:
                     data = json.load(f)
                     return data.get("balance", 0.0)
             except Exception as e:
@@ -228,11 +227,11 @@ class IPOStrategy:
         except Exception as e:
             logger.error(f"Error saving balance: {e}")
 
-    def _load_history(self) -> List[Dict[str, Any]]:
+    def _load_history(self) -> list[dict[str, Any]]:
         """Load analysis history from file."""
         if self.history_file.exists():
             try:
-                with open(self.history_file, "r") as f:
+                with open(self.history_file) as f:
                     return json.load(f)
             except Exception as e:
                 logger.error(f"Error loading history: {e}")
@@ -274,7 +273,7 @@ class IPOStrategy:
         logger.info(f"Deposited ${amount:.2f}. New balance: ${self.balance:.2f}")
         return self.balance
 
-    def _evaluate_underwriters(self, underwriters: List[str]) -> Tuple[float, str]:
+    def _evaluate_underwriters(self, underwriters: list[str]) -> tuple[float, str]:
         """
         Evaluate quality of IPO underwriters.
 
@@ -316,18 +315,12 @@ class IPOStrategy:
 
         underwriter_lower = [u.lower() for u in underwriters]
 
-        top_tier_count = sum(
-            1 for u in underwriter_lower if any(t in u for t in top_tier)
-        )
-        mid_tier_count = sum(
-            1 for u in underwriter_lower if any(m in u for m in mid_tier)
-        )
+        top_tier_count = sum(1 for u in underwriter_lower if any(t in u for t in top_tier))
+        mid_tier_count = sum(1 for u in underwriter_lower if any(m in u for m in mid_tier))
 
         if top_tier_count >= 2:
             rating = 9.0
-            analysis = (
-                f"Excellent underwriter syndicate with {top_tier_count} top-tier banks"
-            )
+            analysis = f"Excellent underwriter syndicate with {top_tier_count} top-tier banks"
         elif top_tier_count == 1:
             rating = 7.5
             analysis = "Strong lead underwriter from top tier"
@@ -343,9 +336,7 @@ class IPOStrategy:
 
         return rating, analysis
 
-    def _evaluate_financials(
-        self, company: CompanyData
-    ) -> Tuple[float, List[str], List[str]]:
+    def _evaluate_financials(self, company: CompanyData) -> tuple[float, list[str], list[str]]:
         """
         Evaluate company financial health.
 
@@ -363,14 +354,10 @@ class IPOStrategy:
         if company.revenue_growth is not None:
             if company.revenue_growth > 50:
                 rating += 2.0
-                strengths.append(
-                    f"Exceptional revenue growth: {company.revenue_growth:.1f}%"
-                )
+                strengths.append(f"Exceptional revenue growth: {company.revenue_growth:.1f}%")
             elif company.revenue_growth > 25:
                 rating += 1.5
-                strengths.append(
-                    f"Strong revenue growth: {company.revenue_growth:.1f}%"
-                )
+                strengths.append(f"Strong revenue growth: {company.revenue_growth:.1f}%")
             elif company.revenue_growth > 10:
                 rating += 0.5
                 strengths.append(f"Solid revenue growth: {company.revenue_growth:.1f}%")
@@ -380,11 +367,7 @@ class IPOStrategy:
 
         # Profitability
         if company.net_income is not None and company.revenue is not None:
-            margin = (
-                (company.net_income / company.revenue) * 100
-                if company.revenue > 0
-                else -100
-            )
+            margin = (company.net_income / company.revenue) * 100 if company.revenue > 0 else -100
             if margin > 20:
                 rating += 1.5
                 strengths.append(f"Highly profitable: {margin:.1f}% margin")
@@ -395,9 +378,7 @@ class IPOStrategy:
                 rating += 0.5
                 strengths.append(f"Positive margins: {margin:.1f}%")
             else:
-                if (
-                    company.revenue and company.revenue > 1_000_000_000
-                ):  # Over $1B revenue
+                if company.revenue and company.revenue > 1_000_000_000:  # Over $1B revenue
                     concerns.append(
                         f"Not yet profitable: {margin:.1f}% margin (acceptable for growth stage)"
                     )
@@ -420,7 +401,7 @@ class IPOStrategy:
 
         return rating, strengths, concerns
 
-    def _evaluate_market_timing(self) -> Tuple[float, str]:
+    def _evaluate_market_timing(self) -> tuple[float, str]:
         """
         Evaluate current market conditions for IPOs.
 
@@ -463,12 +444,12 @@ Company: {company.name} ({company.ticker})
 Industry: {company.industry}
 Valuation: ${company.valuation:,.0f if company.valuation else 0}
 Revenue: ${company.revenue:,.0f if company.revenue else 0}
-Revenue Growth: {company.revenue_growth if company.revenue_growth else 'N/A'}%
+Revenue Growth: {company.revenue_growth if company.revenue_growth else "N/A"}%
 Net Income: ${company.net_income:,.0f if company.net_income else 0}
-Underwriters: {', '.join(company.underwriters)}
+Underwriters: {", ".join(company.underwriters)}
 
-Business Model: {company.business_model or 'N/A'}
-Competitors: {', '.join(company.competitors) if company.competitors else 'N/A'}
+Business Model: {company.business_model or "N/A"}
+Competitors: {", ".join(company.competitors) if company.competitors else "N/A"}
 
 Provide a concise analysis covering:
 1. Investment thesis (2-3 sentences)
@@ -511,12 +492,12 @@ Company: {company.name} ({company.ticker})
 Industry: {company.industry}
 Valuation: ${company.valuation:,.0f if company.valuation else 0}
 Revenue: ${company.revenue:,.0f if company.revenue else 0}
-Revenue Growth: {company.revenue_growth if company.revenue_growth else 'N/A'}%
+Revenue Growth: {company.revenue_growth if company.revenue_growth else "N/A"}%
 Net Income: ${company.net_income:,.0f if company.net_income else 0}
-Underwriters: {', '.join(company.underwriters)}
+Underwriters: {", ".join(company.underwriters)}
 
-Business Model: {company.business_model or 'N/A'}
-Competitors: {', '.join(company.competitors) if company.competitors else 'N/A'}
+Business Model: {company.business_model or "N/A"}
+Competitors: {", ".join(company.competitors) if company.competitors else "N/A"}
 
 Provide analysis covering:
 1. Competitive positioning
@@ -540,7 +521,7 @@ Be analytical and balanced."""
             logger.error(f"Error getting GPT-4 analysis: {e}")
             return None
 
-    def analyze_ipo(self, company_data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze_ipo(self, company_data: dict[str, Any]) -> dict[str, Any]:
         """
         Analyze an IPO opportunity using multi-LLM analysis.
 
@@ -592,9 +573,7 @@ Be analytical and balanced."""
         red_flags = []
 
         # 1. Evaluate underwriters (20% of score)
-        underwriter_rating, underwriter_analysis = self._evaluate_underwriters(
-            company.underwriters
-        )
+        underwriter_rating, underwriter_analysis = self._evaluate_underwriters(company.underwriters)
         underwriter_score = (underwriter_rating / 10) * 20
 
         if underwriter_rating >= 7:
@@ -603,9 +582,7 @@ Be analytical and balanced."""
             risks.append(underwriter_analysis)
 
         # 2. Evaluate financials (40% of score)
-        financial_rating, fin_strengths, fin_concerns = self._evaluate_financials(
-            company
-        )
+        financial_rating, fin_strengths, fin_concerns = self._evaluate_financials(company)
         financial_score = (financial_rating / 10) * 40
         strengths.extend(fin_strengths)
         risks.extend(fin_concerns)
@@ -641,9 +618,7 @@ Be analytical and balanced."""
             red_flags.append("Weak underwriting syndicate")
 
         if len(company.risk_factors) > 10:
-            red_flags.append(
-                f"Excessive risk factors disclosed: {len(company.risk_factors)}"
-            )
+            red_flags.append(f"Excessive risk factors disclosed: {len(company.risk_factors)}")
 
         # Calculate total score
         total_score = underwriter_score + financial_score + market_score + ai_score
@@ -736,7 +711,7 @@ Be analytical and balanced."""
     def generate_ipo_report(
         self,
         company_name: str,
-        analysis: Dict[str, Any],
+        analysis: dict[str, Any],
         output_file: Optional[str] = None,
     ) -> None:
         """
@@ -757,33 +732,29 @@ Be analytical and balanced."""
         """
         if output_file is None:
             timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-            safe_name = "".join(
-                c for c in company_name if c.isalnum() or c in (" ", "-", "_")
-            )
-            output_file = str(
-                self.data_dir / f"{safe_name}_IPO_Analysis_{timestamp}.md"
-            )
+            safe_name = "".join(c for c in company_name if c.isalnum() or c in (" ", "-", "_"))
+            output_file = str(self.data_dir / f"{safe_name}_IPO_Analysis_{timestamp}.md")
 
         # Build report
         report = f"""# IPO Analysis Report: {company_name}
 
 **Generated:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-**Ticker:** {analysis['ticker']}
-**Overall Score:** {analysis['score']}/100
+**Ticker:** {analysis["ticker"]}
+**Overall Score:** {analysis["score"]}/100
 
 ---
 
-## RECOMMENDATION: {analysis['recommendation']}
-**Confidence Level:** {analysis['confidence']}
+## RECOMMENDATION: {analysis["recommendation"]}
+**Confidence Level:** {analysis["confidence"]}
 
 ### Target Allocation
-${analysis['target_allocation']:.2f} (Available Balance: ${self.balance:.2f})
+${analysis["target_allocation"]:.2f} (Available Balance: ${self.balance:.2f})
 
 ---
 
 ## Investment Thesis
 
-{analysis['investment_thesis']}
+{analysis["investment_thesis"]}
 
 ---
 
@@ -791,13 +762,13 @@ ${analysis['target_allocation']:.2f} (Available Balance: ${self.balance:.2f})
 
 | Component | Score | Rating |
 |-----------|-------|--------|
-| Underwriters | {analysis['detailed_breakdown']['underwriter_score']:.1f}/20 | {analysis['underwriter_rating']:.1f}/10 |
-| Financial Health | {analysis['detailed_breakdown']['financial_score']:.1f}/40 | {analysis['financial_health']:.1f}/10 |
-| Market Timing | {analysis['detailed_breakdown']['market_score']:.1f}/15 | {analysis['market_timing']:.1f}/10 |
-| AI Analysis | {analysis['detailed_breakdown']['ai_score']:.1f}/25 | - |
-| **Total** | **{analysis['score']:.1f}/100** | - |
+| Underwriters | {analysis["detailed_breakdown"]["underwriter_score"]:.1f}/20 | {analysis["underwriter_rating"]:.1f}/10 |
+| Financial Health | {analysis["detailed_breakdown"]["financial_score"]:.1f}/40 | {analysis["financial_health"]:.1f}/10 |
+| Market Timing | {analysis["detailed_breakdown"]["market_score"]:.1f}/15 | {analysis["market_timing"]:.1f}/10 |
+| AI Analysis | {analysis["detailed_breakdown"]["ai_score"]:.1f}/25 | - |
+| **Total** | **{analysis["score"]:.1f}/100** | - |
 
-Red Flag Penalty: -{analysis['detailed_breakdown']['red_flag_penalty']} points
+Red Flag Penalty: -{analysis["detailed_breakdown"]["red_flag_penalty"]} points
 
 ---
 
@@ -831,9 +802,7 @@ Red Flag Penalty: -{analysis['detailed_breakdown']['red_flag_penalty']} points
                 report += f"### {model_name}\n\n{ai_analysis}\n\n"
 
         # Add comparable analysis
-        report += (
-            f"\n---\n\n## Market & Comparables\n\n{analysis['comparable_analysis']}\n"
-        )
+        report += f"\n---\n\n## Market & Comparables\n\n{analysis['comparable_analysis']}\n"
 
         # Add action items
         report += "\n---\n\n## Next Steps\n\n"
@@ -842,7 +811,7 @@ Red Flag Penalty: -{analysis['detailed_breakdown']['red_flag_penalty']} points
 2. Check SoFi for IPO availability and terms
 3. Review S-1 filing for additional details
 4. Verify current market conditions
-5. If approved, invest up to ${analysis['target_allocation']:.2f}
+5. If approved, invest up to ${analysis["target_allocation"]:.2f}
 6. Set calendar reminder for lock-up expiration (typically 180 days)
 """
         else:
@@ -910,7 +879,7 @@ investment decisions.
         print(f"Current IPO Balance: ${self.balance:.2f}")
         print("=" * 70 + "\n")
 
-    def get_ipo_recommendations(self) -> List[Dict[str, Any]]:
+    def get_ipo_recommendations(self) -> list[dict[str, Any]]:
         """
         Get list of IPO recommendations from analysis history.
 
@@ -934,9 +903,7 @@ investment decisions.
         """
         # Filter for INVEST recommendations
         recommendations = [
-            entry
-            for entry in self.analysis_history
-            if entry.get("recommendation") == "INVEST"
+            entry for entry in self.analysis_history if entry.get("recommendation") == "INVEST"
         ]
 
         # Sort by score (highest first)
@@ -962,7 +929,7 @@ investment decisions.
 
     def get_analysis_history(
         self, limit: Optional[int] = None, recommendation_filter: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get IPO analysis history.
 
@@ -983,9 +950,7 @@ investment decisions.
 
         # Apply filter
         if recommendation_filter:
-            history = [
-                h for h in history if h.get("recommendation") == recommendation_filter
-            ]
+            history = [h for h in history if h.get("recommendation") == recommendation_filter]
 
         # Apply limit
         if limit:
@@ -993,7 +958,7 @@ investment decisions.
 
         return history
 
-    def get_balance_info(self) -> Dict[str, Any]:
+    def get_balance_info(self) -> dict[str, Any]:
         """
         Get current balance and deposit information.
 
@@ -1060,9 +1025,7 @@ def main():
 
     print(f"\n   Company: {analysis['company_name']}")
     print(f"   Score: {analysis['score']}/100")
-    print(
-        f"   Recommendation: {analysis['recommendation']} ({analysis['confidence']} confidence)"
-    )
+    print(f"   Recommendation: {analysis['recommendation']} ({analysis['confidence']} confidence)")
     print(f"   Target Allocation: ${analysis['target_allocation']:.2f}")
 
     # Generate report

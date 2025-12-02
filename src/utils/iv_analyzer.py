@@ -16,15 +16,16 @@ Author: AI Trading System
 Date: December 2, 2025
 """
 
+import json
 import logging
 import os
 import sys
-from datetime import datetime, timedelta, date
-from typing import Dict, Any, Optional, List, Tuple
-import numpy as np
-import json
+from dataclasses import asdict, dataclass
+from datetime import date, datetime, timedelta
 from pathlib import Path
-from dataclasses import dataclass, asdict
+from typing import Any, Optional
+
+import numpy as np
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -48,6 +49,7 @@ except ImportError:
 @dataclass
 class IVHistoryPoint:
     """Single IV data point in history"""
+
     date: str
     iv: float
     underlying_price: float
@@ -56,6 +58,7 @@ class IVHistoryPoint:
 @dataclass
 class IVMetrics:
     """Comprehensive IV metrics for a symbol"""
+
     symbol: str
     current_iv: float
     current_price: float
@@ -67,7 +70,7 @@ class IVMetrics:
     iv_52w_low: float
     is_2std_cheap: bool
     recommendation: str
-    suggested_strategies: List[str]
+    suggested_strategies: list[str]
     reasoning: str
     timestamp: str
 
@@ -127,8 +130,8 @@ class IVAnalyzer:
         os.makedirs(self.cache_dir, exist_ok=True)
 
         # In-memory cache for current session
-        self.iv_history: Dict[str, List[IVHistoryPoint]] = {}
-        self.last_fetch: Dict[str, datetime] = {}
+        self.iv_history: dict[str, list[IVHistoryPoint]] = {}
+        self.last_fetch: dict[str, datetime] = {}
 
         # Cache expiration (refresh IV data every 6 hours)
         self.cache_ttl = timedelta(hours=6)
@@ -139,7 +142,7 @@ class IVAnalyzer:
         """Get file path for cached IV data"""
         return Path(self.cache_dir) / f"{symbol}_iv_history.json"
 
-    def _load_from_cache(self, symbol: str) -> Optional[List[IVHistoryPoint]]:
+    def _load_from_cache(self, symbol: str) -> Optional[list[IVHistoryPoint]]:
         """Load IV history from disk cache if available and fresh"""
         cache_path = self._get_cache_path(symbol)
 
@@ -153,7 +156,7 @@ class IVAnalyzer:
                 logger.info(f"Cache for {symbol} is stale ({cache_age}). Refreshing...")
                 return None
 
-            with open(cache_path, 'r') as f:
+            with open(cache_path) as f:
                 data = json.load(f)
 
             iv_history = [IVHistoryPoint(**item) for item in data]
@@ -164,12 +167,12 @@ class IVAnalyzer:
             logger.warning(f"Failed to load cache for {symbol}: {e}")
             return None
 
-    def _save_to_cache(self, symbol: str, iv_history: List[IVHistoryPoint]):
+    def _save_to_cache(self, symbol: str, iv_history: list[IVHistoryPoint]):
         """Save IV history to disk cache"""
         cache_path = self._get_cache_path(symbol)
 
         try:
-            with open(cache_path, 'w') as f:
+            with open(cache_path, "w") as f:
                 json.dump([asdict(item) for item in iv_history], f, indent=2)
             logger.info(f"Saved {len(iv_history)} IV data points for {symbol} to cache")
         except Exception as e:
@@ -200,7 +203,7 @@ class IVAnalyzer:
                 target_date = datetime.now() + timedelta(days=dte)
                 closest_exp = min(
                     expirations,
-                    key=lambda x: abs((datetime.strptime(x, "%Y-%m-%d") - target_date).days)
+                    key=lambda x: abs((datetime.strptime(x, "%Y-%m-%d") - target_date).days),
                 )
             else:
                 closest_exp = expirations[0]  # Nearest expiration
@@ -213,18 +216,18 @@ class IVAnalyzer:
                 return None
 
             # Get ATM implied volatility (closest to current price)
-            current_price = ticker.info.get('currentPrice', 0)
-            calls['strike_diff'] = abs(calls['strike'] - current_price)
-            atm_call = calls.loc[calls['strike_diff'].idxmin()]
+            current_price = ticker.info.get("currentPrice", 0)
+            calls["strike_diff"] = abs(calls["strike"] - current_price)
+            atm_call = calls.loc[calls["strike_diff"].idxmin()]
 
-            iv = atm_call.get('impliedVolatility')
+            iv = atm_call.get("impliedVolatility")
             return float(iv) if iv else None
 
         except Exception as e:
             logger.error(f"Failed to get current IV for {symbol}: {e}")
             return None
 
-    def get_iv_history(self, symbol: str, days: int = 252) -> List[IVHistoryPoint]:
+    def get_iv_history(self, symbol: str, days: int = 252) -> list[IVHistoryPoint]:
         """
         Get historical IV data for percentile and rank calculations.
 
@@ -275,12 +278,12 @@ class IVAnalyzer:
 
             for dt in sampled_dates:
                 try:
-                    price = hist.loc[dt, 'Close']
+                    price = hist.loc[dt, "Close"]
 
                     # Calculate Historical Volatility (HV) as IV proxy
                     # HV = std(log returns) * sqrt(252)
                     window_start = dt - timedelta(days=30)
-                    window_data = hist.loc[window_start:dt, 'Close']
+                    window_data = hist.loc[window_start:dt, "Close"]
 
                     if len(window_data) < 2:
                         continue
@@ -288,11 +291,13 @@ class IVAnalyzer:
                     log_returns = np.log(window_data / window_data.shift(1)).dropna()
                     hv = log_returns.std() * np.sqrt(252)
 
-                    iv_data.append(IVHistoryPoint(
-                        date=dt.strftime("%Y-%m-%d"),
-                        iv=float(hv),
-                        underlying_price=float(price)
-                    ))
+                    iv_data.append(
+                        IVHistoryPoint(
+                            date=dt.strftime("%Y-%m-%d"),
+                            iv=float(hv),
+                            underlying_price=float(price),
+                        )
+                    )
 
                 except Exception as e:
                     logger.debug(f"Failed to calculate IV for {symbol} on {dt}: {e}")
@@ -509,7 +514,11 @@ class IVAnalyzer:
 
             # Get current price
             ticker = yf.Ticker(symbol)
-            current_price = ticker.history(period="1d")['Close'].iloc[-1] if not ticker.history(period="1d").empty else 0.0
+            current_price = (
+                ticker.history(period="1d")["Close"].iloc[-1]
+                if not ticker.history(period="1d").empty
+                else 0.0
+            )
 
             # Decision Logic
             recommendation = "NEUTRAL"
@@ -523,7 +532,7 @@ class IVAnalyzer:
                     "sell_20_delta_weeklies",
                     "covered_calls",
                     "short_strangles",
-                    "iron_condors"
+                    "iron_condors",
                 ]
                 reasoning = (
                     f"IV is 2σ below mean ({current_iv:.2%} vs {mean_iv:.2%}±{std_iv:.2%}). "
@@ -535,7 +544,12 @@ class IVAnalyzer:
             elif iv_rank > 50 and iv_percentile > 50:
                 if iv_rank > 75 and iv_percentile > 75:
                     recommendation = "STRONG_SELL_PREMIUM"
-                    strategies = ["covered_calls", "iron_condors", "credit_spreads", "short_strangles"]
+                    strategies = [
+                        "covered_calls",
+                        "iron_condors",
+                        "credit_spreads",
+                        "short_strangles",
+                    ]
                     reasoning = (
                         f"IV Rank {iv_rank:.0f} and IV Percentile {iv_percentile:.0f} both > 75. "
                         "Volatility is EXPENSIVE relative to recent history. "
@@ -594,7 +608,7 @@ class IVAnalyzer:
                 recommendation=recommendation,
                 suggested_strategies=strategies,
                 reasoning=reasoning,
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
             logger.info(
@@ -626,12 +640,10 @@ class IVAnalyzer:
                 recommendation="ERROR",
                 suggested_strategies=["wait"],
                 reasoning=f"Failed to analyze IV: {str(e)}",
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
-    def calculate_expected_move(
-        self, symbol: str, dte: int, std_devs: int = 1
-    ) -> Dict[str, Any]:
+    def calculate_expected_move(self, symbol: str, dte: int, std_devs: int = 1) -> dict[str, Any]:
         """
         Calculate Expected Move based on IV.
 
@@ -666,7 +678,7 @@ class IVAnalyzer:
         """
         try:
             ticker = yf.Ticker(symbol)
-            current_price = ticker.history(period="1d")['Close'].iloc[-1]
+            current_price = ticker.history(period="1d")["Close"].iloc[-1]
             current_iv = self.get_current_iv(symbol)
 
             if not current_iv or current_iv == 0:
@@ -734,21 +746,21 @@ if __name__ == "__main__":
     # Initialize analyzer
     analyzer = IVAnalyzer()
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"IV ANALYSIS FOR {args.symbol}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Get comprehensive recommendation
     metrics = analyzer.get_recommendation(args.symbol)
 
-    print(f"📊 CURRENT METRICS:")
+    print("📊 CURRENT METRICS:")
     print(f"   Price: ${metrics.current_price:.2f}")
     print(f"   Current IV: {metrics.current_iv:.2%}")
     print(f"   IV Range (52w): {metrics.iv_52w_low:.2%} - {metrics.iv_52w_high:.2%}")
     print(f"   Mean IV (1y): {metrics.mean_iv:.2%} ± {metrics.std_iv:.2%}")
     print()
 
-    print(f"📈 IV INDICATORS:")
+    print("📈 IV INDICATORS:")
     print(f"   IV Rank: {metrics.iv_rank:.1f}/100")
     print(f"   IV Percentile: {metrics.iv_percentile:.1f}/100")
     print(f"   2σ Below Mean: {'YES 🚨' if metrics.is_2std_cheap else 'No'}")
@@ -763,8 +775,14 @@ if __name__ == "__main__":
     print(f"📐 EXPECTED MOVE ({args.dte} days):")
     expected = analyzer.calculate_expected_move(args.symbol, args.dte)
     if expected:
-        print(f"   1σ Move: ±${expected['expected_move_1sd']:.2f} ({expected['expected_move_1sd_pct']:.1f}%)")
-        print(f"   1σ Range: ${expected['range_1sd_low']:.2f} - ${expected['range_1sd_high']:.2f} (68% prob)")
-        print(f"   2σ Range: ${expected['range_2sd_low']:.2f} - ${expected['range_2sd_high']:.2f} (95% prob)")
+        print(
+            f"   1σ Move: ±${expected['expected_move_1sd']:.2f} ({expected['expected_move_1sd_pct']:.1f}%)"
+        )
+        print(
+            f"   1σ Range: ${expected['range_1sd_low']:.2f} - ${expected['range_1sd_high']:.2f} (68% prob)"
+        )
+        print(
+            f"   2σ Range: ${expected['range_2sd_low']:.2f} - ${expected['range_2sd_high']:.2f} (95% prob)"
+        )
 
-    print(f"\n{'='*60}\n")
+    print(f"\n{'=' * 60}\n")

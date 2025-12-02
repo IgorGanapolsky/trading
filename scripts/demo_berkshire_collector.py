@@ -6,12 +6,12 @@ This script demonstrates the collector without relying on package imports
 that may have dependency issues.
 """
 
-import re
 import json
 import logging
-from typing import List, Dict, Any, Optional
+import re
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Optional
 
 import requests
 from bs4 import BeautifulSoup
@@ -51,11 +51,11 @@ class SimpleBerkshireCollector:
 
         logger.info(f"Initialized collector (cache: {self.cache_dir})")
 
-    def _load_index(self) -> Dict:
+    def _load_index(self) -> dict:
         """Load the letters index from disk."""
         if self.index_file.exists():
             try:
-                with open(self.index_file, "r") as f:
+                with open(self.index_file) as f:
                     return json.load(f)
             except Exception as e:
                 logger.error(f"Error loading index: {e}")
@@ -92,12 +92,8 @@ class SimpleBerkshireCollector:
             letter_links = []
             for link in soup.find_all("a", href=True):
                 href = link["href"]
-                if "/letters/" in href and any(
-                    str(year) in href for year in range(1977, 2025)
-                ):
-                    full_url = (
-                        href if href.startswith("http") else f"{self.BASE_URL}{href}"
-                    )
+                if "/letters/" in href and any(str(year) in href for year in range(1977, 2025)):
+                    full_url = href if href.startswith("http") else f"{self.BASE_URL}{href}"
                     letter_links.append(full_url)
 
             # Deduplicate and sort
@@ -148,10 +144,7 @@ class SimpleBerkshireCollector:
                 f.write(response.content)
 
             # Parse content
-            if is_pdf:
-                text = self._parse_pdf(raw_file)
-            else:
-                text = self._parse_html(response.text)
+            text = self._parse_pdf(raw_file) if is_pdf else self._parse_html(response.text)
 
             if not text:
                 logger.warning(f"No text extracted from {year} letter")
@@ -223,7 +216,7 @@ class SimpleBerkshireCollector:
             logger.error(f"Error parsing HTML: {e}")
             return ""
 
-    def search(self, query: str, top_k: int = 3) -> Dict[str, Any]:
+    def search(self, query: str, top_k: int = 3) -> dict[str, Any]:
         """
         Search shareholder letters for relevant content.
 
@@ -255,7 +248,7 @@ class SimpleBerkshireCollector:
                 continue
 
             # Load text
-            with open(parsed_file, "r", encoding="utf-8") as f:
+            with open(parsed_file, encoding="utf-8") as f:
                 text = f.read()
 
             # Simple keyword search
@@ -280,8 +273,7 @@ class SimpleBerkshireCollector:
         return {
             "query": query,
             "relevant_excerpts": [
-                {"year": r["year"], "excerpts": r["excerpts"], "url": r["url"]}
-                for r in results
+                {"year": r["year"], "excerpts": r["excerpts"], "url": r["url"]} for r in results
             ],
             "years_referenced": [r["year"] for r in results],
             "sentiment": (
@@ -329,15 +321,11 @@ class SimpleBerkshireCollector:
 
         # Normalize by text length
         text_word_count = len(text_lower.split())
-        normalized_score = (total_matches / len(query_words)) * (
-            1000 / max(text_word_count, 1000)
-        )
+        normalized_score = (total_matches / len(query_words)) * (1000 / max(text_word_count, 1000))
 
         return normalized_score
 
-    def _extract_excerpts(
-        self, query: str, text: str, max_excerpts: int = 2
-    ) -> List[str]:
+    def _extract_excerpts(self, query: str, text: str, max_excerpts: int = 2) -> list[str]:
         """Extract relevant excerpts from text containing query keywords."""
         query_lower = query.lower()
         sentences = re.split(r"[.!?]+", text)
@@ -398,7 +386,7 @@ def main():
     # Check cache
     if len(collector.index) > 0:
         print(f"✓ Found {len(collector.index)} cached letters")
-        print(f"  Years: {sorted([int(y) for y in collector.index.keys()])}")
+        print(f"  Years: {sorted([int(y) for y in collector.index])}")
     else:
         print("Downloading sample letters (limited to 5 for demo)...")
         count = collector.download_all_letters(limit=5)
@@ -418,7 +406,7 @@ def main():
 
         for i, excerpt in enumerate(results["relevant_excerpts"], 1):
             print(f"{i}. Year {excerpt['year']}:")
-            for j, text in enumerate(excerpt["excerpts"][:1], 1):
+            for _j, text in enumerate(excerpt["excerpts"][:1], 1):
                 print(f"   {text[:200]}...")
         print()
 

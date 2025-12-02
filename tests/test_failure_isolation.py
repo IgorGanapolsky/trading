@@ -31,9 +31,7 @@ def test_prune_memories(tmp_path):
         tags={"failure", "gate.momentum", "SPY"},
     )
 
-    removed_ids = engine.prune_memories(
-        agent_id="agent", tags={"failure"}, max_removed=3
-    )
+    removed_ids = engine.prune_memories(agent_id="agent", tags={"failure"}, max_removed=3)
 
     assert remove.memory_id in removed_ids
     assert keep.memory_id in engine.memory

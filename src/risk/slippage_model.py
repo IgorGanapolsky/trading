@@ -131,9 +131,7 @@ class SlippageModel:
         elif self.model_type == SlippageModelType.VOLUME_BASED:
             return self._volume_based_slippage(price, quantity, side, symbol, volume)
         elif self.model_type == SlippageModelType.VOLATILITY_BASED:
-            return self._volatility_based_slippage(
-                price, quantity, side, symbol, volatility
-            )
+            return self._volatility_based_slippage(price, quantity, side, symbol, volatility)
         else:  # COMPREHENSIVE
             return self._comprehensive_slippage(
                 price, quantity, side, symbol, volume, volatility, order_type
@@ -348,12 +346,8 @@ class SlippageModel:
         Returns:
             Total round-trip slippage cost as percentage
         """
-        entry = self.calculate_slippage(
-            price, quantity, "buy", symbol, volume, volatility
-        )
-        exit_slip = self.calculate_slippage(
-            price, quantity, "sell", symbol, volume, volatility
-        )
+        entry = self.calculate_slippage(price, quantity, "buy", symbol, volume, volatility)
+        exit_slip = self.calculate_slippage(price, quantity, "sell", symbol, volume, volatility)
 
         return entry.slippage_pct + exit_slip.slippage_pct
 
@@ -395,7 +389,13 @@ if __name__ == "__main__":
         {"symbol": "SPY", "price": 450.0, "quantity": 100, "volume": 80_000_000},
         {"symbol": "QQQ", "price": 380.0, "quantity": 50, "volume": 50_000_000},
         {"symbol": "AAPL", "price": 175.0, "quantity": 200, "volume": 60_000_000},
-        {"symbol": "TSLA", "price": 250.0, "quantity": 100, "volume": 100_000_000, "volatility": 0.04},
+        {
+            "symbol": "TSLA",
+            "price": 250.0,
+            "quantity": 100,
+            "volume": 100_000_000,
+            "volatility": 0.04,
+        },
     ]
 
     print("\nSlippage Analysis:")

@@ -12,14 +12,13 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import os
 import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent.parent
@@ -50,9 +49,7 @@ except ImportError:
     AI_AVAILABLE = False
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -77,9 +74,7 @@ class YouTubeAnalyzer:
                 logger.warning("OPENROUTER_API_KEY not found - AI analysis disabled")
                 self.use_ai = False
             else:
-                self.ai_client = OpenAI(
-                    base_url="https://openrouter.ai/api/v1", api_key=api_key
-                )
+                self.ai_client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)
 
     def extract_video_id(self, url: str) -> Optional[str]:
         """
@@ -104,7 +99,7 @@ class YouTubeAnalyzer:
 
         return None
 
-    def fetch_metadata(self, video_id: str) -> Dict:
+    def fetch_metadata(self, video_id: str) -> dict:
         """
         Fetch video metadata using yt-dlp.
 
@@ -148,7 +143,7 @@ class YouTubeAnalyzer:
             logger.error(f"Failed to fetch metadata: {e}")
             raise
 
-    def fetch_transcript(self, video_id: str) -> List[Dict]:
+    def fetch_transcript(self, video_id: str) -> list[dict]:
         """
         Fetch video transcript.
 
@@ -167,8 +162,7 @@ class YouTubeAnalyzer:
 
             # Convert to list of dicts for compatibility
             transcript = [
-                {"start": s.start, "duration": s.duration, "text": s.text}
-                for s in fetched.snippets
+                {"start": s.start, "duration": s.duration, "text": s.text} for s in fetched.snippets
             ]
 
             logger.info(f"Transcript fetched: {len(transcript)} segments")
@@ -187,7 +181,7 @@ class YouTubeAnalyzer:
             logger.error(f"Failed to fetch transcript: {e}")
             raise
 
-    def format_transcript(self, transcript: List[Dict]) -> str:
+    def format_transcript(self, transcript: list[dict]) -> str:
         """
         Format transcript segments into readable text.
 
@@ -207,7 +201,7 @@ class YouTubeAnalyzer:
 
         return "\n".join(formatted)
 
-    def analyze_with_ai(self, metadata: Dict, transcript_text: str) -> Dict:
+    def analyze_with_ai(self, metadata: dict, transcript_text: str) -> dict:
         """
         Analyze video content using AI.
 
@@ -225,8 +219,8 @@ class YouTubeAnalyzer:
 
         prompt = f"""Analyze this YouTube video transcript for trading insights.
 
-Video Title: {metadata['title']}
-Channel: {metadata['channel']}
+Video Title: {metadata["title"]}
+Channel: {metadata["channel"]}
 
 Transcript:
 {transcript_text[:10000]}  # Limit to first 10k chars
@@ -277,7 +271,7 @@ If no trading content is found, clearly state that.
             return {"error": str(e)}
 
     def generate_report(
-        self, metadata: Dict, transcript: List[Dict], ai_analysis: Optional[Dict] = None
+        self, metadata: dict, transcript: list[dict], ai_analysis: Optional[dict] = None
     ) -> str:
         """
         Generate markdown report.
@@ -311,9 +305,7 @@ If no trading content is found, clearly state that.
 
         # Add AI analysis if available
         if ai_analysis and "analysis" in ai_analysis:
-            report_lines.extend(
-                ["## AI Analysis", "", ai_analysis["analysis"], "", "---", ""]
-            )
+            report_lines.extend(["## AI Analysis", "", ai_analysis["analysis"], "", "---", ""])
 
         # Add full transcript
         report_lines.extend(
@@ -330,7 +322,7 @@ If no trading content is found, clearly state that.
 
         return "\n".join(report_lines)
 
-    def save_report(self, report: str, metadata: Dict) -> Path:
+    def save_report(self, report: str, metadata: dict) -> Path:
         """
         Save report to file.
 
@@ -397,9 +389,7 @@ If no trading content is found, clearly state that.
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Analyze YouTube videos for trading insights"
-    )
+    parser = argparse.ArgumentParser(description="Analyze YouTube videos for trading insights")
     parser.add_argument("--url", help="YouTube video URL")
     parser.add_argument("--video-id", help="YouTube video ID (alternative to --url)")
     parser.add_argument(
@@ -439,7 +429,7 @@ def main():
         # Analyze video
         report_path = analyzer.analyze_video(video_input)
 
-        print(f"\n✓ Analysis complete!")
+        print("\n✓ Analysis complete!")
         print(f"Report saved to: {report_path}")
 
         if not args.analyze:

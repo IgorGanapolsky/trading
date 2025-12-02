@@ -8,7 +8,7 @@ TradingAgent framework, allowing gradual migration and hybrid approaches.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from agent_framework import AgentResult, RunContext, TradingAgent
 
@@ -27,7 +27,7 @@ class DeepAgentsTradingAgent(TradingAgent):
         self,
         agent_name: str,
         deepagent: Any,
-        task_prompt_template: Optional[str] = None,
+        task_prompt_template: str | None = None,
     ) -> None:
         """
         Initialize adapter.
@@ -65,9 +65,7 @@ class DeepAgentsTradingAgent(TradingAgent):
             prompt = self.task_prompt_template.format(context_summary=context_summary)
 
             # Invoke deepagent (sync version)
-            result = self.deepagent.invoke(
-                {"messages": [{"role": "user", "content": prompt}]}
-            )
+            result = self.deepagent.invoke({"messages": [{"role": "user", "content": prompt}]})
 
             # Extract response
             response_text = self._extract_response(result)
@@ -90,7 +88,7 @@ class DeepAgentsTradingAgent(TradingAgent):
                 error=str(exc),
             )
 
-    def _build_context_summary(self, market_data: Dict, config: Dict) -> str:
+    def _build_context_summary(self, market_data: dict, config: dict) -> str:
         """Build a summary of context for the deepagent."""
         summary_parts = []
 
@@ -102,23 +100,18 @@ class DeepAgentsTradingAgent(TradingAgent):
         if config:
             summary_parts.append(f"Configuration: {config}")
 
-        return (
-            "\n".join(summary_parts)
-            if summary_parts
-            else "No specific context provided."
-        )
+        return "\n".join(summary_parts) if summary_parts else "No specific context provided."
 
     def _extract_response(self, result: Any) -> str:
         """Extract text response from deepagent result."""
-        if isinstance(result, dict):
-            if "messages" in result:
-                messages = result["messages"]
-                if messages:
-                    last_message = messages[-1]
-                    if hasattr(last_message, "content"):
-                        return str(last_message.content)
-                    elif isinstance(last_message, dict) and "content" in last_message:
-                        return str(last_message["content"])
+        if isinstance(result, dict) and "messages" in result:
+            messages = result["messages"]
+            if messages:
+                last_message = messages[-1]
+                if hasattr(last_message, "content"):
+                    return str(last_message.content)
+                elif isinstance(last_message, dict) and "content" in last_message:
+                    return str(last_message["content"])
 
         return str(result)
 
@@ -134,8 +127,8 @@ class HybridTradingAgent(TradingAgent):
     def __init__(
         self,
         agent_name: str,
-        deepagent: Optional[Any] = None,
-        fallback_agent: Optional[TradingAgent] = None,
+        deepagent: Any | None = None,
+        fallback_agent: TradingAgent | None = None,
     ) -> None:
         """
         Initialize hybrid agent.
@@ -206,7 +199,7 @@ def create_deepagents_research_agent() -> DeepAgentsTradingAgent:
 
 
 def create_hybrid_analysis_agent(
-    fallback_agent: Optional[TradingAgent] = None,
+    fallback_agent: TradingAgent | None = None,
 ) -> HybridTradingAgent:
     """
     Factory function to create a hybrid analysis agent.

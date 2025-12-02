@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
 
 import yaml
 
@@ -18,7 +17,6 @@ from .models import (
     SessionTemplate,
 )
 
-
 DEFAULT_CONFIG_PATH = Path("config/day_trading_resources.yaml")
 
 
@@ -26,9 +24,9 @@ DEFAULT_CONFIG_PATH = Path("config/day_trading_resources.yaml")
 class DayTradingResourceConfig:
     """Top-level configuration payload used by the orchestrator."""
 
-    coaching_programs: List[CoachingProgram]
-    books: List[BookResource]
-    newsletters: List[NewsletterResource]
+    coaching_programs: list[CoachingProgram]
+    books: list[BookResource]
+    newsletters: list[NewsletterResource]
 
     def to_json(self) -> str:
         return json.dumps(
@@ -42,7 +40,7 @@ class DayTradingResourceConfig:
         )
 
 
-def _ensure_path(path: Optional[Path]) -> Path:
+def _ensure_path(path: Path | None) -> Path:
     if path is not None:
         return path
     return DEFAULT_CONFIG_PATH
@@ -104,9 +102,7 @@ def _build_newsletter(payload) -> NewsletterResource:
 
 
 def _build_coaching_program(payload) -> CoachingProgram:
-    sessions = [
-        _build_session_template(item) for item in payload.get("session_templates", [])
-    ]
+    sessions = [_build_session_template(item) for item in payload.get("session_templates", [])]
     return CoachingProgram(
         name=payload["name"],
         url=payload.get("url", ""),
@@ -118,7 +114,7 @@ def _build_coaching_program(payload) -> CoachingProgram:
     )
 
 
-def load_resource_config(path: Optional[Path] = None) -> DayTradingResourceConfig:
+def load_resource_config(path: Path | None = None) -> DayTradingResourceConfig:
     """Load the YAML config (default path config/day_trading_resources.yaml)."""
 
     config_path = _ensure_path(path)
@@ -127,7 +123,7 @@ def load_resource_config(path: Optional[Path] = None) -> DayTradingResourceConfi
             f"Resource config not found at {config_path}. Create it before running."
         )
 
-    with open(config_path, "r", encoding="utf-8") as handle:
+    with open(config_path, encoding="utf-8") as handle:
         raw = yaml.safe_load(handle) or {}
 
     coaching = [_build_coaching_program(item) for item in raw.get("coaching_programs", [])]

@@ -6,9 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
-
 from src.utils.telemetry_summary import load_events, summarize_events
-
 
 LOG_PATH = Path("data/audit_trail/hybrid_funnel_runs.jsonl")
 
@@ -32,9 +30,7 @@ def main() -> None:
     st.metric("Generated", summary["generated_at"])
 
     gate_df = pd.DataFrame.from_dict(summary["gates"], orient="index")
-    gate_df["pass_rate_pct"] = (
-        gate_df["pass"] / gate_df["total"] * 100
-    ).fillna(0).round(1)
+    gate_df["pass_rate_pct"] = (gate_df["pass"] / gate_df["total"] * 100).fillna(0).round(1)
     st.subheader("Gate Outcomes")
     st.dataframe(gate_df, use_container_width=True)
 

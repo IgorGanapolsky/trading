@@ -24,11 +24,11 @@ import os
 import re
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Tuple
-import urllib.request
-import urllib.error
+from typing import Optional
 
 
 @dataclass
@@ -70,7 +70,7 @@ def fetch_pypi_latest(package_name: str, timeout: int = 10) -> Optional[str]:
 
 def parse_vulnerable_range(
     vulnerable_range: str,
-) -> Tuple[Optional[str], Optional[str]]:
+) -> tuple[Optional[str], Optional[str]]:
     """
     Parse vulnerable range like ">= 0, < 24.3.0" or ">= 1.0.0, < 1.2.0"
     Returns: (min_version, max_version_exclusive)
@@ -131,9 +131,7 @@ def find_safe_version(
     return None
 
 
-def update_requirements_file(
-    req_file: Path, package_name: str, new_version: str
-) -> bool:
+def update_requirements_file(req_file: Path, package_name: str, new_version: str) -> bool:
     """Update requirements.txt with new version"""
     try:
         content = req_file.read_text()
@@ -165,7 +163,7 @@ def update_requirements_file(
         return False
 
 
-def test_dependencies(req_file: Path) -> Tuple[bool, str]:
+def test_dependencies(req_file: Path) -> tuple[bool, str]:
     """Test if updated dependencies resolve correctly"""
     print("   🧪 Testing dependency resolution...")
     try:
@@ -188,7 +186,7 @@ def test_dependencies(req_file: Path) -> Tuple[bool, str]:
         return False, f"Test error: {str(e)}"
 
 
-def fetch_dependabot_alerts(repo: str, token: str) -> List[SecurityAlert]:
+def fetch_dependabot_alerts(repo: str, token: str) -> list[SecurityAlert]:
     """Fetch open Dependabot security alerts"""
     url = f"https://api.github.com/repos/{repo}/dependabot/alerts"
     headers = {
@@ -248,9 +246,7 @@ def fetch_dependabot_alerts(repo: str, token: str) -> List[SecurityAlert]:
     return alerts
 
 
-def fix_security_alert(
-    alert: SecurityAlert, req_file: Path, dry_run: bool = False
-) -> FixResult:
+def fix_security_alert(alert: SecurityAlert, req_file: Path, dry_run: bool = False) -> FixResult:
     """Fix a single security alert"""
     print(f"\n🔧 Fixing alert #{alert.number}: {alert.package}")
     print(f"   Severity: {alert.severity}")
@@ -259,9 +255,7 @@ def fix_security_alert(
     print(f"   Current version: {alert.current_version or 'unknown'}")
 
     # Find safe version
-    safe_version = find_safe_version(
-        alert.package, alert.vulnerable_range, alert.current_version
-    )
+    safe_version = find_safe_version(alert.package, alert.vulnerable_range, alert.current_version)
 
     if not safe_version:
         return FixResult(
@@ -283,9 +277,7 @@ def fix_security_alert(
 
     # Update requirements.txt
     if not update_requirements_file(req_file, alert.package, safe_version):
-        return FixResult(
-            alert=alert, success=False, message="Failed to update requirements.txt"
-        )
+        return FixResult(alert=alert, success=False, message="Failed to update requirements.txt")
 
     # Test dependencies
     test_ok, test_msg = test_dependencies(req_file)
@@ -305,9 +297,7 @@ def fix_security_alert(
     )
 
 
-def create_pr(
-    repo: str, token: str, branch: str, title: str, body: str
-) -> Optional[str]:
+def create_pr(repo: str, token: str, branch: str, title: str, body: str) -> Optional[str]:
     """Create a GitHub PR"""
     # This is a simplified version - in production, use GitHub CLI or API properly
     print(f"   📝 Would create PR: {title}")
@@ -377,11 +367,7 @@ def main():
     severity_order = {"low": 1, "medium": 2, "high": 3, "critical": 4}
     if args.severity:
         min_severity = severity_order.get(args.severity, 0)
-        alerts = [
-            a
-            for a in alerts
-            if severity_order.get(a.severity.lower(), 0) >= min_severity
-        ]
+        alerts = [a for a in alerts if severity_order.get(a.severity.lower(), 0) >= min_severity]
         print(f"   Filtered to {len(alerts)} alert(s) with severity >= {args.severity}")
 
     # Fix each alert
@@ -415,9 +401,7 @@ def main():
     if args.auto_commit and successful and not args.dry_run:
         print("\n📝 Committing changes...")
         try:
-            subprocess.run(
-                ["git", "add", str(req_file)], check=True, capture_output=True
-            )
+            subprocess.run(["git", "add", str(req_file)], check=True, capture_output=True)
             subprocess.run(
                 [
                     "git",
@@ -425,8 +409,7 @@ def main():
                     "-m",
                     f"chore(security): Fix {len(successful)} security vulnerability(ies)\n\n"
                     + "\n".join(
-                        f"- {fix.alert.package}: {fix.updated_version}"
-                        for fix in successful
+                        f"- {fix.alert.package}: {fix.updated_version}" for fix in successful
                     ),
                 ],
                 check=True,

@@ -3,11 +3,13 @@
 Pre-Flight Check for Trading System
 Verifies all systems are ready for tomorrow's workflow execution.
 """
+
+import json
 import os
 import sys
-import json
-from pathlib import Path
 from datetime import datetime, timedelta
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -154,9 +156,7 @@ def check_performance_log():
             )
             return True
         else:
-            print(
-                f"{fail_mark()} Performance log: Last updated {last_date.date()} (stale)"
-            )
+            print(f"{fail_mark()} Performance log: Last updated {last_date.date()} (stale)")
             return False
     except Exception as e:
         print(f"{fail_mark()} Performance log: Error reading - {e}")

@@ -12,14 +12,14 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 
-from .vector_db.embedder import get_embedder, NewsEmbedder
+from .vector_db.embedder import NewsEmbedder, get_embedder
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class SentimentDocument:
 
     document_id: str
     text: str
-    metadata: Dict[str, str]
+    metadata: dict[str, str]
 
 
 class SentimentRAGStore:
@@ -46,7 +46,7 @@ class SentimentRAGStore:
     def __init__(
         self,
         db_path: Path = DB_PATH,
-        embedder: Optional[NewsEmbedder] = None,
+        embedder: NewsEmbedder | None = None,
         sentiment_dir: Path = DEFAULT_SENTIMENT_DIR,
     ):
         self.db_path = Path(db_path)
@@ -140,9 +140,7 @@ class SentimentRAGStore:
         return len(docs)
 
     def ingest_from_cache(self, days: int = 30) -> int:
-        documents = list(
-            load_sentiment_documents(window_days=days, base_dir=self.sentiment_dir)
-        )
+        documents = list(load_sentiment_documents(window_days=days, base_dir=self.sentiment_dir))
         return self.upsert_documents(documents)
 
     def reset(self) -> None:
@@ -155,9 +153,9 @@ class SentimentRAGStore:
     def query(
         self,
         query: str,
-        ticker: Optional[str] = None,
+        ticker: str | None = None,
         top_k: int = 5,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         query_embedding = self.embedder.embed_single(query).astype(np.float32)
         rows = self._fetch_rows(ticker=ticker)
         if not rows:
@@ -180,7 +178,7 @@ class SentimentRAGStore:
             )
         return results
 
-    def get_ticker_history(self, ticker: str, limit: int = 10) -> List[Dict]:
+    def get_ticker_history(self, ticker: str, limit: int = 10) -> list[dict]:
         rows = self._fetch_rows(ticker=ticker, limit=limit, order_by_date=True)
         return [
             {
@@ -197,17 +195,17 @@ class SentimentRAGStore:
     # ------------------------------------------------------------------ #
     def _fetch_rows(
         self,
-        ticker: Optional[str] = None,
-        limit: Optional[int] = None,
+        ticker: str | None = None,
+        limit: int | None = None,
         order_by_date: bool = False,
-    ) -> List["SentimentRow"]:
+    ) -> list[SentimentRow]:
         sql = """
             SELECT id, ticker, snapshot_date, sentiment_score, confidence,
                    market_regime, source_list, freshness, days_old,
                    document, embedding, embedding_dim
             FROM sentiment_documents
         """
-        params: Tuple = ()
+        params: tuple = ()
         if ticker:
             sql += " WHERE ticker = ?"
             params = (ticker.upper(),)
@@ -243,17 +241,17 @@ class SentimentRow:
     id: str
     ticker: str
     snapshot_date: str
-    sentiment_score: Optional[float]
-    confidence: Optional[str]
-    market_regime: Optional[str]
-    source_list: Optional[str]
-    freshness: Optional[str]
-    days_old: Optional[int]
+    sentiment_score: float | None
+    confidence: str | None
+    market_regime: str | None
+    source_list: str | None
+    freshness: str | None
+    days_old: int | None
     document: str
     embedding: np.ndarray
     embedding_dim: int
 
-    def metadata_dict(self) -> Dict[str, Optional[str]]:
+    def metadata_dict(self) -> dict[str, str | None]:
         return {
             "ticker": self.ticker,
             "snapshot_date": self.snapshot_date,
@@ -284,7 +282,7 @@ def load_sentiment_documents(
 
     for file_path in files:
         try:
-            with open(file_path, "r") as handle:
+            with open(file_path) as handle:
                 payload = json.load(handle)
         except Exception as exc:
             logger.error("Failed to load sentiment file %s: %s", file_path, exc)
@@ -307,7 +305,7 @@ def load_sentiment_documents(
             yield SentimentDocument(document_id, text, metadata)
 
 
-def _render_document_text(ticker: str, date: str, meta: Dict, ticker_data: Dict) -> str:
+def _render_document_text(ticker: str, date: str, meta: dict, ticker_data: dict) -> str:
     sources = ticker_data.get("sources", {})
     lines = [
         f"Date: {date}",
@@ -339,9 +337,7 @@ def _render_document_text(ticker: str, date: str, meta: Dict, ticker_data: Dict)
     return "\n".join(lines)
 
 
-def _build_metadata(
-    ticker: str, date: str, meta: Dict, ticker_data: Dict
-) -> Dict[str, str]:
+def _build_metadata(ticker: str, date: str, meta: dict, ticker_data: dict) -> dict[str, str]:
     meta_section = meta.get("meta", {})
     metadata = {
         "ticker": ticker.upper(),

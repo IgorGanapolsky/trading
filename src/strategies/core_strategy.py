@@ -34,31 +34,31 @@ Updated: 2025-10-28
 
 import logging
 import os
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any, Optional
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import yfinance as yf
+from src.agents.reinforcement_learning import RLPolicyLearner
+from src.core.alpaca_trader import AlpacaTrader
 
 # Import project modules
 from src.core.multi_llm_analysis import MultiLLMAnalyzer
 from src.core.multi_llm_analysis_optimized import OptimizedMultiLLMAnalyzer
-from src.core.alpaca_trader import AlpacaTrader
 from src.core.risk_manager import RiskManager
-from src.utils.sentiment_loader import (
-    load_latest_sentiment,
-    get_ticker_sentiment,
-    get_market_regime,
-    get_sentiment_history,
-)
+from src.ml.forecasters.deep_momentum import DeepMomentumForecaster
 from src.safety.graham_buffett_safety import get_global_safety_analyzer
 from src.utils.economic_guardrails import EconomicGuardrails
-from src.utils.trend_snapshot import TrendSnapshotBuilder, TrendMetrics
-from src.ml.forecasters.deep_momentum import DeepMomentumForecaster
-from src.agents.reinforcement_learning import RLPolicyLearner
+from src.utils.sentiment_loader import (
+    get_market_regime,
+    get_sentiment_history,
+    get_ticker_sentiment,
+    load_latest_sentiment,
+)
+from src.utils.trend_snapshot import TrendMetrics, TrendSnapshotBuilder
 
 # Optional LLM Council integration
 try:
@@ -71,7 +71,7 @@ except ImportError:
 
 # VCA Strategy integration
 try:
-    from src.strategies.vca_strategy import VCAStrategy, VCACalculation
+    from src.strategies.vca_strategy import VCACalculation, VCAStrategy
 
     VCA_AVAILABLE = True
 except ImportError:
@@ -205,13 +205,13 @@ class CoreStrategy:
         "reit": "VNQ",
         "treasury": "TLT",
         "treasury_short": "IEF",
-        "crypto_proxy": "BITO"
+        "crypto_proxy": "BITO",
     }
 
     def __init__(
         self,
         daily_allocation: float = 900.0,
-        etf_universe: Optional[List[str]] = None,
+        etf_universe: Optional[list[str]] = None,
         stop_loss_pct: float = DEFAULT_STOP_LOSS_PCT,
         take_profit_pct: float = TAKE_PROFIT_PCT,
         use_sentiment: bool = True,
@@ -238,9 +238,7 @@ class CoreStrategy:
             ValueError: If daily_allocation is non-positive
         """
         if daily_allocation <= 0:
-            raise ValueError(
-                f"daily_allocation must be positive, got {daily_allocation}"
-            )
+            raise ValueError(f"daily_allocation must be positive, got {daily_allocation}")
 
         self.daily_allocation = daily_allocation
         self.etf_universe = etf_universe or self.DEFAULT_ETF_UNIVERSE
@@ -272,25 +270,23 @@ class CoreStrategy:
                 self.vca_strategy = None
 
         # Strategy state
-        self.current_holdings: Dict[str, float] = {}
+        self.current_holdings: dict[str, float] = {}
         self.last_rebalance_date: Optional[datetime] = None
         self.total_invested: float = 0.0
         self.total_value: float = 0.0
 
         # Performance tracking
-        self.daily_returns: List[float] = []
-        self.trades_executed: List[TradeOrder] = []
-        self.momentum_history: List[MomentumScore] = []
+        self.daily_returns: list[float] = []
+        self.trades_executed: list[TradeOrder] = []
+        self.momentum_history: list[MomentumScore] = []
 
         # Regime and telemetry helpers
         self.market_regime: str = "neutral"
-        self._price_history_cache: Dict[str, pd.DataFrame] = {}
-        self._trend_snapshot_builder = TrendSnapshotBuilder(
-            cache=self._price_history_cache
-        )
-        self._trend_snapshot: Dict[str, TrendMetrics] = {}
-        self._guardrail_summary: Dict[str, Any] = {}
-        self._open_position_states: Dict[str, Dict[str, Any]] = {}
+        self._price_history_cache: dict[str, pd.DataFrame] = {}
+        self._trend_snapshot_builder = TrendSnapshotBuilder(cache=self._price_history_cache)
+        self._trend_snapshot: dict[str, TrendMetrics] = {}
+        self._guardrail_summary: dict[str, Any] = {}
+        self._open_position_states: dict[str, dict[str, Any]] = {}
 
         # RL policy integration
         self.rl_enabled = os.getenv("ENABLE_RL_POLICY", "true").lower() == "true"
@@ -345,9 +341,7 @@ class CoreStrategy:
 
         # Initialize LLM Council (ENABLED BY DEFAULT per CEO directive Nov 24, 2025)
         # CEO directive: Enable all systems with $100/mo budget - move fast towards North Star
-        self.llm_council_enabled = (
-            os.getenv("LLM_COUNCIL_ENABLED", "true").lower() == "true"
-        )
+        self.llm_council_enabled = os.getenv("LLM_COUNCIL_ENABLED", "true").lower() == "true"
         self._llm_council = None
         if self.llm_council_enabled and LLM_COUNCIL_AVAILABLE and TradingCouncil:
             try:
@@ -364,9 +358,7 @@ class CoreStrategy:
         if self.use_intelligent_investor:
             try:
                 self.safety_analyzer = get_global_safety_analyzer()
-                logger.info(
-                    "Intelligent Investor safety analyzer initialized for CoreStrategy"
-                )
+                logger.info("Intelligent Investor safety analyzer initialized for CoreStrategy")
             except Exception as e:
                 logger.warning(f"Failed to initialize safety analyzer: {e}")
                 self.safety_analyzer = None
@@ -377,8 +369,8 @@ class CoreStrategy:
         logger.info(
             f"CoreStrategy initialized: daily_allocation=${daily_allocation}, "
             f"allocation_mode={allocation_mode}, "
-            f"etf_universe={self.etf_universe}, stop_loss={stop_loss_pct*100}%, "
-            f"take_profit={take_profit_pct*100}%"
+            f"etf_universe={self.etf_universe}, stop_loss={stop_loss_pct * 100}%, "
+            f"take_profit={take_profit_pct * 100}%"
         )
 
     def execute_daily(self) -> Optional[TradeOrder]:
@@ -409,9 +401,7 @@ class CoreStrategy:
             # Step 0: Manage existing positions (take-profit exits)
             closed_positions = self.manage_positions()
             if closed_positions:
-                logger.info(
-                    f"Closed {len(closed_positions)} positions at take-profit target"
-                )
+                logger.info(f"Closed {len(closed_positions)} positions at take-profit target")
 
             # Step 0.5: Calculate VCA-adjusted allocation if using VCA
             effective_allocation = self.daily_allocation
@@ -436,14 +426,10 @@ class CoreStrategy:
 
                     # Skip investment if VCA recommends not investing
                     if not vca_calculation.should_invest:
-                        logger.info(
-                            f"VCA recommends skipping investment: {vca_calculation.reason}"
-                        )
+                        logger.info(f"VCA recommends skipping investment: {vca_calculation.reason}")
                         return None
                 except Exception as e:
-                    logger.warning(
-                        f"VCA calculation failed, using base allocation: {e}"
-                    )
+                    logger.warning(f"VCA calculation failed, using base allocation: {e}")
                     effective_allocation = self.daily_allocation
 
             guardrails = EconomicGuardrails(
@@ -463,9 +449,7 @@ class CoreStrategy:
 
             # Step 2: Check if we should pause trading based on sentiment
             if sentiment == MarketSentiment.VERY_BEARISH:
-                logger.warning(
-                    "Very bearish sentiment detected - pausing new purchases"
-                )
+                logger.warning("Very bearish sentiment detected - pausing new purchases")
                 return None
 
             # Step 3: Calculate momentum scores for all ETFs
@@ -474,9 +458,7 @@ class CoreStrategy:
             candidate_scores = self._filter_guardrails(momentum_scores, guardrails)
 
             if not candidate_scores:
-                logger.info(
-                    "All symbols rejected by guardrails/filters - relaxing thresholds once"
-                )
+                logger.info("All symbols rejected by guardrails/filters - relaxing thresholds once")
                 momentum_scores = self._calculate_all_momentum_scores(
                     sentiment, relaxed_filters=True
                 )
@@ -495,9 +477,7 @@ class CoreStrategy:
                 logger.info("SKIPPING TRADE - Will try again tomorrow")
                 return None
 
-            best_score_obj = next(
-                (ms for ms in candidate_scores if ms.symbol == best_etf), None
-            )
+            best_score_obj = next((ms for ms in candidate_scores if ms.symbol == best_etf), None)
 
             if not self._is_symbol_gate_open(best_etf):
                 fallback = next(
@@ -515,22 +495,16 @@ class CoreStrategy:
                     best_etf = fallback.symbol
                     best_score_obj = fallback
                 else:
-                    logger.info(
-                        "All ETFs gated off by regime snapshot - preserving cash today"
-                    )
+                    logger.info("All ETFs gated off by regime snapshot - preserving cash today")
                     return None
 
             logger.info(f"Selected ETF: {best_etf}")
 
             market_state = self._build_market_state(best_etf, best_score_obj)
             if self.rl_enabled and self.rl_learner:
-                rl_action = self.rl_learner.select_action(
-                    market_state, agent_recommendation="BUY"
-                )
+                rl_action = self.rl_learner.select_action(market_state, agent_recommendation="BUY")
                 if rl_action != "BUY":
-                    logger.warning(
-                        f"RL Policy vetoed trade for {best_etf} with action {rl_action}"
-                    )
+                    logger.warning(f"RL Policy vetoed trade for {best_etf} with action {rl_action}")
                     return None
                 self._open_position_states[best_etf] = {
                     "state": market_state,
@@ -552,18 +526,14 @@ class CoreStrategy:
                     market_context = {
                         "symbol": best_etf,
                         "sentiment": sentiment.value,
-                        "momentum_scores": {
-                            ms.symbol: ms.score for ms in momentum_scores
-                        },
+                        "momentum_scores": {ms.symbol: ms.score for ms in momentum_scores},
                         "timestamp": datetime.now().isoformat(),
                     }
 
-                    gemini_recommendation = (
-                        self._gemini3_integration.get_trading_recommendation(
-                            symbol=best_etf,
-                            market_context=market_context,
-                            thinking_level="high",  # Deep analysis for trade validation
-                        )
+                    gemini_recommendation = self._gemini3_integration.get_trading_recommendation(
+                        symbol=best_etf,
+                        market_context=market_context,
+                        thinking_level="high",  # Deep analysis for trade validation
                     )
 
                     if gemini_recommendation.get("decision"):
@@ -575,9 +545,7 @@ class CoreStrategy:
                             logger.warning(
                                 f"Gemini 3 AI rejected trade: {action} (confidence: {confidence:.2f})"
                             )
-                            logger.info(
-                                f"Gemini reasoning: {decision.get('reasoning', 'N/A')}"
-                            )
+                            logger.info(f"Gemini reasoning: {decision.get('reasoning', 'N/A')}")
                             logger.info("SKIPPING TRADE - AI validation failed")
                             _clear_pending_rl_state()
                             return None
@@ -609,12 +577,8 @@ class CoreStrategy:
                     )
 
                     if not should_buy:
-                        logger.warning(
-                            f"❌ {best_etf} REJECTED by Intelligent Investor principles"
-                        )
-                        logger.warning(
-                            f"   Safety Rating: {safety_analysis.safety_rating.value}"
-                        )
+                        logger.warning(f"❌ {best_etf} REJECTED by Intelligent Investor principles")
+                        logger.warning(f"   Safety Rating: {safety_analysis.safety_rating.value}")
                         if safety_analysis.reasons:
                             for reason in safety_analysis.reasons:
                                 logger.warning(f"   Reason: {reason}")
@@ -632,26 +596,18 @@ class CoreStrategy:
                                 f"   Mr. Market Sentiment: {safety_analysis.mr_market_sentiment}"
                             )
                         if safety_analysis.value_score is not None:
-                            logger.info(
-                                f"   Value Score: {safety_analysis.value_score:.1f}/100"
-                            )
+                            logger.info(f"   Value Score: {safety_analysis.value_score:.1f}/100")
 
-                        logger.info(
-                            "SKIPPING TRADE - Intelligent Investor safety check failed"
-                        )
+                        logger.info("SKIPPING TRADE - Intelligent Investor safety check failed")
                         logger.info("=" * 80)
                         _clear_pending_rl_state()
                         return None
                     else:
-                        logger.info(
-                            f"✅ {best_etf} PASSED Intelligent Investor Safety Check"
-                        )
-                        logger.info(
-                            f"   Safety Rating: {safety_analysis.safety_rating.value}"
-                        )
+                        logger.info(f"✅ {best_etf} PASSED Intelligent Investor Safety Check")
+                        logger.info(f"   Safety Rating: {safety_analysis.safety_rating.value}")
                         if safety_analysis.margin_of_safety_pct is not None:
                             logger.info(
-                                f"   Margin of Safety: {safety_analysis.margin_of_safety_pct*100:.1f}%"
+                                f"   Margin of Safety: {safety_analysis.margin_of_safety_pct * 100:.1f}%"
                             )
                         if safety_analysis.quality:
                             logger.info(
@@ -666,14 +622,10 @@ class CoreStrategy:
                                 f"   Mr. Market Sentiment: {safety_analysis.mr_market_sentiment}"
                             )
                         if safety_analysis.value_score is not None:
-                            logger.info(
-                                f"   Value Score: {safety_analysis.value_score:.1f}/100"
-                            )
+                            logger.info(f"   Value Score: {safety_analysis.value_score:.1f}/100")
                         logger.info("=" * 80)
                 except Exception as e:
-                    logger.warning(
-                        f"Intelligent Investor safety check error (proceeding): {e}"
-                    )
+                    logger.warning(f"Intelligent Investor safety check error (proceeding): {e}")
                     # Fail-open: continue with trade if safety check unavailable
 
             # Step 5.6: LLM Council Validation (if enabled) - After safety checks
@@ -695,15 +647,9 @@ class CoreStrategy:
                         "sentiment": sentiment.value,
                         "momentum_score": etf_momentum.score if etf_momentum else None,
                         "rsi": etf_momentum.rsi if etf_momentum else None,
-                        "macd_histogram": (
-                            etf_momentum.macd_histogram if etf_momentum else None
-                        ),
-                        "volume_ratio": (
-                            etf_momentum.volume_ratio if etf_momentum else None
-                        ),
-                        "momentum_scores": {
-                            ms.symbol: ms.score for ms in momentum_scores
-                        },
+                        "macd_histogram": (etf_momentum.macd_histogram if etf_momentum else None),
+                        "volume_ratio": (etf_momentum.volume_ratio if etf_momentum else None),
+                        "momentum_scores": {ms.symbol: ms.score for ms in momentum_scores},
                     }
 
                     # Include Intelligent Investor safety analysis if available
@@ -941,7 +887,7 @@ class CoreStrategy:
             logger.error(f"Error in daily execution: {str(e)}", exc_info=True)
             raise
 
-    def manage_positions(self) -> List[TradeOrder]:
+    def manage_positions(self) -> list[TradeOrder]:
         """
         Manage existing positions - close winners at take-profit target.
 
@@ -956,7 +902,7 @@ class CoreStrategy:
         """
         logger.info("=" * 80)
         logger.info("Managing existing positions (take-profit exits)")
-        logger.info(f"Take-profit target: {self.take_profit_pct*100:.1f}%")
+        logger.info(f"Take-profit target: {self.take_profit_pct * 100:.1f}%")
 
         closed_positions = []
 
@@ -988,7 +934,7 @@ class CoreStrategy:
                 logger.info(f"  Entry Price: ${avg_entry_price:.2f}")
                 logger.info(f"  Current Price: ${current_price:.2f}")
                 logger.info(
-                    f"  Unrealized P/L: ${unrealized_pl:.2f} ({unrealized_plpc*100:.2f}%)"
+                    f"  Unrealized P/L: ${unrealized_pl:.2f} ({unrealized_plpc * 100:.2f}%)"
                 )
 
                 # Calculate ATR-based stop-loss if enabled
@@ -996,12 +942,15 @@ class CoreStrategy:
                 if self.USE_ATR_STOPS:
                     try:
                         import yfinance as yf
-                        from src.utils.technical_indicators import calculate_atr, calculate_atr_stop_loss
-                        
+                        from src.utils.technical_indicators import (
+                            calculate_atr,
+                            calculate_atr_stop_loss,
+                        )
+
                         # Get historical data for ATR calculation
                         ticker = yf.Ticker(symbol)
                         hist = ticker.history(period="1mo")  # 1 month of data
-                        
+
                         if not hist.empty and len(hist) >= 15:
                             atr = calculate_atr(hist)
                             if atr > 0:
@@ -1009,19 +958,21 @@ class CoreStrategy:
                                     entry_price=avg_entry_price,
                                     atr=atr,
                                     multiplier=self.ATR_STOP_MULTIPLIER,
-                                    direction="long"
+                                    direction="long",
                                 )
-                                atr_stop_pct = ((avg_entry_price - atr_stop_price) / avg_entry_price) * 100
+                                atr_stop_pct = (
+                                    (avg_entry_price - atr_stop_price) / avg_entry_price
+                                ) * 100
                                 logger.info(
                                     f"  ATR Stop-Loss: ${atr_stop_price:.2f} ({atr_stop_pct:.2f}% below entry, ATR: ${atr:.2f})"
                                 )
-                                
+
                                 # Check ATR-based stop-loss
                                 if current_price <= atr_stop_price:
                                     logger.info(
                                         f"  🛑 ATR STOP-LOSS TRIGGERED: ${current_price:.2f} <= ${atr_stop_price:.2f}"
                                     )
-                                    
+
                                     try:
                                         # Close the position
                                         executed_order = self.alpaca_trader.execute_order(
@@ -1030,9 +981,11 @@ class CoreStrategy:
                                             side="sell",
                                             tier="T1_CORE",
                                         )
-                                        
-                                        logger.info(f"  ✅ Position closed: Order ID {executed_order['id']}")
-                                        
+
+                                        logger.info(
+                                            f"  ✅ Position closed: Order ID {executed_order['id']}"
+                                        )
+
                                         exit_order = TradeOrder(
                                             symbol=symbol,
                                             action="sell",
@@ -1044,7 +997,7 @@ class CoreStrategy:
                                             timestamp=datetime.now(),
                                             reason=f"ATR stop-loss triggered at ${atr_stop_price:.2f} (ATR: ${atr:.2f})",
                                         )
-                                        
+
                                         closed_positions.append(exit_order)
                                         self.trades_executed.append(exit_order)
                                         self._update_holdings(symbol, -qty)
@@ -1054,16 +1007,18 @@ class CoreStrategy:
                                     except Exception as e:
                                         logger.error(f"  ❌ Failed to close position {symbol}: {e}")
                     except Exception as e:
-                        logger.debug(f"ATR calculation failed for {symbol}: {e}, using percentage-based stop")
-                
+                        logger.debug(
+                            f"ATR calculation failed for {symbol}: {e}, using percentage-based stop"
+                        )
+
                 # Fallback to percentage-based stop-loss if ATR not available
                 if not self.USE_ATR_STOPS or atr_stop_price is None:
                     pct_stop_price = avg_entry_price * (1 - self.stop_loss_pct)
                     if current_price <= pct_stop_price:
                         logger.info(
-                            f"  🛑 PERCENTAGE STOP-LOSS TRIGGERED: ${current_price:.2f} <= ${pct_stop_price:.2f} ({self.stop_loss_pct*100:.1f}%)"
+                            f"  🛑 PERCENTAGE STOP-LOSS TRIGGERED: ${current_price:.2f} <= ${pct_stop_price:.2f} ({self.stop_loss_pct * 100:.1f}%)"
                         )
-                        
+
                         try:
                             executed_order = self.alpaca_trader.execute_order(
                                 symbol=symbol,
@@ -1071,9 +1026,9 @@ class CoreStrategy:
                                 side="sell",
                                 tier="T1_CORE",
                             )
-                            
+
                             logger.info(f"  ✅ Position closed: Order ID {executed_order['id']}")
-                            
+
                             exit_order = TradeOrder(
                                 symbol=symbol,
                                 action="sell",
@@ -1083,9 +1038,9 @@ class CoreStrategy:
                                 order_type="market",
                                 stop_loss=None,
                                 timestamp=datetime.now(),
-                                reason=f"Percentage stop-loss triggered at {self.stop_loss_pct*100:.1f}%",
+                                reason=f"Percentage stop-loss triggered at {self.stop_loss_pct * 100:.1f}%",
                             )
-                            
+
                             closed_positions.append(exit_order)
                             self.trades_executed.append(exit_order)
                             self._update_holdings(symbol, -qty)
@@ -1098,7 +1053,7 @@ class CoreStrategy:
                 # Check if position has reached take-profit target
                 if unrealized_plpc >= self.take_profit_pct:
                     logger.info(
-                        f"  🎯 TAKE-PROFIT TRIGGERED: {unrealized_plpc*100:.2f}% >= {self.take_profit_pct*100:.1f}%"
+                        f"  🎯 TAKE-PROFIT TRIGGERED: {unrealized_plpc * 100:.2f}% >= {self.take_profit_pct * 100:.1f}%"
                     )
 
                     try:
@@ -1114,11 +1069,9 @@ class CoreStrategy:
                             tier="T1_CORE",
                         )
 
+                        logger.info(f"  ✅ Position closed: Order ID {executed_order['id']}")
                         logger.info(
-                            f"  ✅ Position closed: Order ID {executed_order['id']}"
-                        )
-                        logger.info(
-                            f"  Realized profit: ${unrealized_pl:.2f} ({unrealized_plpc*100:.2f}%)"
+                            f"  Realized profit: ${unrealized_pl:.2f} ({unrealized_plpc * 100:.2f}%)"
                         )
 
                         # Create TradeOrder record for the exit
@@ -1131,7 +1084,7 @@ class CoreStrategy:
                             order_type="market",
                             stop_loss=None,
                             timestamp=datetime.now(),
-                            reason=f"Take-profit exit at {unrealized_plpc*100:.2f}% profit",
+                            reason=f"Take-profit exit at {unrealized_plpc * 100:.2f}% profit",
                         )
 
                         closed_positions.append(exit_order)
@@ -1144,7 +1097,7 @@ class CoreStrategy:
                         logger.error(f"  ❌ Failed to close position {symbol}: {e}")
                 else:
                     logger.info(
-                        f"  ✅ Holding position (P/L {unrealized_plpc*100:.2f}% < target {self.take_profit_pct*100:.1f}%)"
+                        f"  ✅ Holding position (P/L {unrealized_plpc * 100:.2f}% < target {self.take_profit_pct * 100:.1f}%)"
                     )
 
             logger.info("=" * 80)
@@ -1182,9 +1135,7 @@ class CoreStrategy:
         logger.info(f"Calculating momentum for {symbol}")
 
         hist = self._price_history_cache.get(symbol)
-        lookback_days = (
-            max(self.LOOKBACK_PERIODS.values()) + 20
-        )  # Extra for calculations
+        lookback_days = max(self.LOOKBACK_PERIODS.values()) + 20  # Extra for calculations
         end_date = datetime.now()
         start_date = end_date - timedelta(days=lookback_days)
 
@@ -1233,13 +1184,9 @@ class CoreStrategy:
                             f"Successfully loaded {len(hist)} bars from Alpaca for {symbol}"
                         )
                     else:
-                        raise ValueError(
-                            f"Alpaca returned insufficient data for {symbol}"
-                        )
+                        raise ValueError(f"Alpaca returned insufficient data for {symbol}")
                 else:
-                    raise ValueError(
-                        f"No Alpaca trader available and yfinance failed for {symbol}"
-                    )
+                    raise ValueError(f"No Alpaca trader available and yfinance failed for {symbol}")
             except Exception as e:
                 logger.error(f"Alpaca API fallback also failed for {symbol}: {str(e)}")
                 raise ValueError(
@@ -1254,15 +1201,9 @@ class CoreStrategy:
         self._price_history_cache[symbol] = hist
 
         # Calculate returns for different periods
-        returns_1m = self._calculate_period_return(
-            hist, self.LOOKBACK_PERIODS["1month"]
-        )
-        returns_3m = self._calculate_period_return(
-            hist, self.LOOKBACK_PERIODS["3month"]
-        )
-        returns_6m = self._calculate_period_return(
-            hist, self.LOOKBACK_PERIODS["6month"]
-        )
+        returns_1m = self._calculate_period_return(hist, self.LOOKBACK_PERIODS["1month"])
+        returns_3m = self._calculate_period_return(hist, self.LOOKBACK_PERIODS["3month"])
+        returns_6m = self._calculate_period_return(hist, self.LOOKBACK_PERIODS["6month"])
 
         # Calculate volatility (annualized)
         daily_returns = hist["Close"].pct_change().dropna()
@@ -1308,8 +1249,7 @@ class CoreStrategy:
         # HARD FILTER 2: Reject overbought RSI (> dynamic)
         if rsi > thresholds["max_rsi"]:
             logger.warning(
-                f"{symbol} REJECTED - Overbought RSI ({rsi:.2f}). "
-                f"Too extended, high reversal risk."
+                f"{symbol} REJECTED - Overbought RSI ({rsi:.2f}). Too extended, high reversal risk."
             )
             return -1  # Return invalid score to filter out
 
@@ -1330,9 +1270,7 @@ class CoreStrategy:
         # CTO Decision Nov 20, 2025: Prevent entries near local highs
         if len(hist) >= 5:
             high_5d = hist["High"].iloc[-5:].max()
-            high_diff_pct = (
-                ((high_5d - current_price) / high_5d) * 100 if high_5d else 0
-            )
+            high_diff_pct = ((high_5d - current_price) / high_5d) * 100 if high_5d else 0
             if high_diff_pct < thresholds["min_distance_from_high_pct"]:
                 logger.warning(
                     f"{symbol} REJECTED - Price ${current_price:.2f} is within {high_diff_pct:.2f}% of 5-day high ${high_5d:.2f} "
@@ -1363,9 +1301,7 @@ class CoreStrategy:
                     )
                     return -1
         except Exception as e:
-            logger.debug(
-                f"{symbol}: ATR calculation failed, skipping volatility filter: {e}"
-            )
+            logger.debug(f"{symbol}: ATR calculation failed, skipping volatility filter: {e}")
             # Fail-open: continue if ATR unavailable
 
         # RSI adjustment (bonus if in healthy range, prefer pullbacks)
@@ -1400,8 +1336,8 @@ class CoreStrategy:
 
         logger.info(
             f"{symbol} momentum: {momentum_score:.2f} "
-            f"(1m: {returns_1m*100:.2f}%, 3m: {returns_3m*100:.2f}%, "
-            f"6m: {returns_6m*100:.2f}%, vol: {volatility:.2f}, "
+            f"(1m: {returns_1m * 100:.2f}%, 3m: {returns_3m * 100:.2f}%, "
+            f"6m: {returns_6m * 100:.2f}%, vol: {volatility:.2f}, "
             f"sharpe: {sharpe_ratio:.2f}, rsi: {rsi:.2f}, "
             f"macd: {macd_value:.4f}, signal: {macd_signal:.4f}, "
             f"histogram: {macd_histogram:.4f}, vol_ratio: {volume_ratio:.2f})"
@@ -1409,9 +1345,7 @@ class CoreStrategy:
 
         return momentum_score
 
-    def select_best_etf(
-        self, momentum_scores: Optional[List[MomentumScore]] = None
-    ) -> str:
+    def select_best_etf(self, momentum_scores: Optional[list[MomentumScore]] = None) -> str:
         """
         Select the ETF with the highest momentum score.
 
@@ -1433,13 +1367,9 @@ class CoreStrategy:
 
         # If no momentum scores available, DO NOT TRADE
         if not momentum_scores:
-            logger.warning(
-                "🚫 NO VALID ENTRIES TODAY - All symbols rejected by hard filters"
-            )
+            logger.warning("🚫 NO VALID ENTRIES TODAY - All symbols rejected by hard filters")
             logger.warning("Either all symbols have bearish MACD or overbought RSI")
-            logger.warning(
-                "SKIPPING TRADE - Better to sit in cash than fight the trend"
-            )
+            logger.warning("SKIPPING TRADE - Better to sit in cash than fight the trend")
             raise ValueError(
                 "No valid trading opportunities today. All symbols failed hard filters."
             )
@@ -1456,9 +1386,7 @@ class CoreStrategy:
             )
 
         best_etf = momentum_scores[0].symbol
-        logger.info(
-            f"Best ETF selected: {best_etf} with score {momentum_scores[0].score:.2f}"
-        )
+        logger.info(f"Best ETF selected: {best_etf} with score {momentum_scores[0].score:.2f}")
 
         return best_etf
 
@@ -1523,7 +1451,7 @@ class CoreStrategy:
         )
         return False
 
-    def rebalance_portfolio(self) -> List[TradeOrder]:
+    def rebalance_portfolio(self) -> list[TradeOrder]:
         """
         Rebalance portfolio to maintain target allocations.
 
@@ -1544,7 +1472,7 @@ class CoreStrategy:
         logger.info("Starting portfolio rebalancing")
         logger.info(f"Timestamp: {datetime.now().isoformat()}")
 
-        rebalance_orders: List[TradeOrder] = []
+        rebalance_orders: list[TradeOrder] = []
 
         try:
             # Calculate current portfolio value
@@ -1644,9 +1572,7 @@ class CoreStrategy:
                             )
                             logger.info(f"Rebalance sell executed: {executed['id']}")
                     except Exception as e:
-                        logger.error(
-                            f"Failed to execute rebalance order for {order.symbol}: {e}"
-                        )
+                        logger.error(f"Failed to execute rebalance order for {order.symbol}: {e}")
                         continue
 
             # Update state
@@ -1663,9 +1589,7 @@ class CoreStrategy:
             self.last_rebalance_date = datetime.now()
             self.trades_executed.extend(rebalance_orders)
 
-            logger.info(
-                f"Rebalancing complete - executed {len(rebalance_orders)} orders"
-            )
+            logger.info(f"Rebalancing complete - executed {len(rebalance_orders)} orders")
             logger.info("=" * 80)
 
             return rebalance_orders
@@ -1674,7 +1598,7 @@ class CoreStrategy:
             logger.error(f"Error during rebalancing: {str(e)}", exc_info=True)
             raise ValueError(f"Rebalancing failed: {str(e)}") from e
 
-    def get_account_summary(self) -> Dict[str, any]:
+    def get_account_summary(self) -> dict[str, any]:
         """
         Get comprehensive account summary from Alpaca.
 
@@ -1745,7 +1669,7 @@ class CoreStrategy:
             if self.total_value > 0:
                 daily_return = (current_value - self.total_value) / self.total_value
                 self.daily_returns.append(daily_return)
-                logger.info(f"Daily return: {daily_return*100:.2f}%")
+                logger.info(f"Daily return: {daily_return * 100:.2f}%")
 
             # Update stored value
             self.total_value = current_value
@@ -1758,7 +1682,7 @@ class CoreStrategy:
         except Exception as e:
             logger.error(f"Error updating daily performance: {e}")
 
-    def get_performance_metrics(self) -> Dict[str, any]:
+    def get_performance_metrics(self) -> dict[str, any]:
         """
         Calculate comprehensive performance metrics for the strategy.
 
@@ -1785,9 +1709,7 @@ class CoreStrategy:
         # Basic metrics
         total_return = current_value - self.total_invested
         total_return_pct = (
-            (total_return / self.total_invested * 100)
-            if self.total_invested > 0
-            else 0.0
+            (total_return / self.total_invested * 100) if self.total_invested > 0 else 0.0
         )
 
         # Calculate holding period
@@ -1826,11 +1748,7 @@ class CoreStrategy:
 
         # Win rate
         positive_days = sum(1 for r in self.daily_returns if r > 0)
-        win_rate = (
-            (positive_days / len(self.daily_returns) * 100)
-            if self.daily_returns
-            else 0.0
-        )
+        win_rate = (positive_days / len(self.daily_returns) * 100) if self.daily_returns else 0.0
 
         # Trade statistics
         num_trades = len(self.trades_executed)
@@ -1962,7 +1880,7 @@ class CoreStrategy:
 
     def _calculate_all_momentum_scores(
         self, sentiment: MarketSentiment, relaxed_filters: bool = False
-    ) -> List[MomentumScore]:
+    ) -> list[MomentumScore]:
         """
         Calculate momentum scores for all ETFs in universe.
 
@@ -1977,9 +1895,7 @@ class CoreStrategy:
 
         for symbol in self.etf_universe:
             try:
-                base_score = self.calculate_momentum(
-                    symbol, relaxed_filters=relaxed_filters
-                )
+                base_score = self.calculate_momentum(symbol, relaxed_filters=relaxed_filters)
 
                 # Skip if symbol was rejected by hard filters (score = -1)
                 if base_score < 0:
@@ -2011,9 +1927,7 @@ class CoreStrategy:
                 rsi = self._calculate_rsi(hist["Close"], self.RSI_PERIOD)
 
                 # Calculate MACD and volume
-                macd_value, macd_signal, macd_histogram = self._calculate_macd(
-                    hist["Close"]
-                )
+                macd_value, macd_signal, macd_histogram = self._calculate_macd(hist["Close"])
                 volume_ratio = self._calculate_volume_ratio(hist)
 
                 score_obj = MomentumScore(
@@ -2061,7 +1975,7 @@ class CoreStrategy:
         }
         return sentiment_map.get(sentiment, 0.0)
 
-    def _get_dynamic_thresholds(self, relaxed_filters: bool = False) -> Dict[str, float]:
+    def _get_dynamic_thresholds(self, relaxed_filters: bool = False) -> dict[str, float]:
         """Return regime-aware hard filter thresholds."""
         regime = (self.market_regime or "neutral").lower()
         thresholds = {
@@ -2091,12 +2005,10 @@ class CoreStrategy:
 
         return thresholds
 
-    def _update_trend_snapshot(self, extra_symbols: Optional[List[str]] = None) -> None:
+    def _update_trend_snapshot(self, extra_symbols: Optional[list[str]] = None) -> None:
         """Build and persist SMA snapshot for Tier 1/2 assets."""
         base_symbols = list(
-            dict.fromkeys(
-                list(self.etf_universe) + list(self.DIVERSIFICATION_SYMBOLS.values())
-            )
+            dict.fromkeys(list(self.etf_universe) + list(self.DIVERSIFICATION_SYMBOLS.values()))
         )
         if extra_symbols:
             base_symbols.extend(extra_symbols)
@@ -2112,22 +2024,20 @@ class CoreStrategy:
         return True
 
     def _filter_guardrails(
-        self, scores: List[MomentumScore], guardrails: EconomicGuardrails
-    ) -> List[MomentumScore]:
-        filtered: List[MomentumScore] = []
+        self, scores: list[MomentumScore], guardrails: EconomicGuardrails
+    ) -> list[MomentumScore]:
+        filtered: list[MomentumScore] = []
         for score in scores:
             blocked, reason = guardrails.is_symbol_blocked(score.symbol)
             if blocked:
-                logger.info(
-                    f"Guardrail blocked {score.symbol} ({reason or 'unspecified'})"
-                )
+                logger.info(f"Guardrail blocked {score.symbol} ({reason or 'unspecified'})")
                 continue
             filtered.append(score)
         return filtered
 
     def _build_market_state(
         self, symbol: str, momentum_score: Optional[MomentumScore] = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         snapshot = self._trend_snapshot.get(symbol)
         hist = self._price_history_cache.get(symbol)
 
@@ -2147,9 +2057,7 @@ class CoreStrategy:
             trend_label = snapshot.regime_bias
             if snapshot.sma50:
                 try:
-                    trend_strength = (snapshot.sma20 - snapshot.sma50) / abs(
-                        snapshot.sma50
-                    )
+                    trend_strength = (snapshot.sma20 - snapshot.sma50) / abs(snapshot.sma50)
                 except ZeroDivisionError:
                     trend_strength = 0.0
 
@@ -2171,9 +2079,7 @@ class CoreStrategy:
         trade_result = {"pl_pct": pl_pct, "symbol": symbol}
         new_state = self._build_market_state(symbol)
         reward = self.rl_learner.calculate_reward(trade_result, new_state)
-        self.rl_learner.update_policy(
-            prev_state["state"], "BUY", reward, new_state, done=True
-        )
+        self.rl_learner.update_policy(prev_state["state"], "BUY", reward, new_state, done=True)
 
     def _get_current_price(self, symbol: str) -> Optional[float]:
         """
@@ -2237,7 +2143,7 @@ class CoreStrategy:
 
         return float(rsi.iloc[-1]) if not pd.isna(rsi.iloc[-1]) else 50.0
 
-    def _calculate_macd(self, prices: pd.Series) -> Tuple[float, float, float]:
+    def _calculate_macd(self, prices: pd.Series) -> tuple[float, float, float]:
         """
         Calculate MACD (Moving Average Convergence Divergence).
 
@@ -2303,12 +2209,12 @@ class CoreStrategy:
         if total_portfolio_value > 0:
             current_position_value = self.current_holdings.get(symbol, 0) * price
             new_position_value = current_position_value + trade_value
-            position_pct = (
-                new_position_value / (total_portfolio_value + trade_value)
-            ) * 100
+            position_pct = (new_position_value / (total_portfolio_value + trade_value)) * 100
 
             # Graham's diversification rule: Max 30% per position (defensive investor)
-            MAX_POSITION_PCT = 30.0  # Intelligent Investor: defensive investor max 25%, we use 30% for ETFs
+            MAX_POSITION_PCT = (
+                30.0  # Intelligent Investor: defensive investor max 25%, we use 30% for ETFs
+            )
             if position_pct > MAX_POSITION_PCT:
                 logger.warning(
                     f"Position size limit exceeded (Graham's diversification rule): "
@@ -2321,11 +2227,7 @@ class CoreStrategy:
             # Graham recommended minimum 10-30 stocks for defensive investor
             # For ETFs, we require at least 2 different ETFs
             current_positions_count = len(
-                [
-                    s
-                    for s in self.current_holdings.keys()
-                    if self.current_holdings[s] > 0
-                ]
+                [s for s in self.current_holdings if self.current_holdings[s] > 0]
             )
             if current_positions_count < 2 and symbol not in self.current_holdings:
                 logger.info(
@@ -2338,9 +2240,7 @@ class CoreStrategy:
             try:
                 # Get account info from Alpaca if available
                 account_info = None
-                account_value = (
-                    self._calculate_total_portfolio_value() + self.total_invested
-                )
+                account_value = self._calculate_total_portfolio_value() + self.total_invested
                 if account_value == 0:
                     account_value = 10000.0  # Default starting value
 
@@ -2348,9 +2248,7 @@ class CoreStrategy:
                 if self.alpaca_trader:
                     try:
                         account_info = self.alpaca_trader.get_account_info()
-                        account_value = account_info.get(
-                            "portfolio_value", account_value
-                        )
+                        account_value = account_info.get("portfolio_value", account_value)
                     except Exception:
                         pass  # Fall back to calculated value
 
@@ -2368,9 +2266,7 @@ class CoreStrategy:
                 )
 
                 if not validation["valid"]:
-                    logger.warning(
-                        f"Risk manager rejected trade: {validation['reason']}"
-                    )
+                    logger.warning(f"Risk manager rejected trade: {validation['reason']}")
                     return False
 
                 if validation["warnings"]:
@@ -2384,12 +2280,8 @@ class CoreStrategy:
                     logger.warning("Trading suspended by circuit breaker")
                     return False
 
-                if self.langchain_guard_enabled and not self._langchain_guard(
-                    symbol, sentiment
-                ):
-                    logger.warning(
-                        "LangChain approval gate rejected trade for %s", symbol
-                    )
+                if self.langchain_guard_enabled and not self._langchain_guard(symbol, sentiment):
+                    logger.warning("LangChain approval gate rejected trade for %s", symbol)
                     return False
 
                 return True
@@ -2398,9 +2290,7 @@ class CoreStrategy:
                 logger.error(f"Error in risk validation: {e}")
                 # Fall through to basic validation
 
-        if self.langchain_guard_enabled and not self._langchain_guard(
-            symbol, sentiment
-        ):
+        if self.langchain_guard_enabled and not self._langchain_guard(symbol, sentiment):
             logger.warning("LangChain approval gate rejected trade for %s", symbol)
             return False
 
@@ -2470,10 +2360,7 @@ class CoreStrategy:
             )
 
             response = self._langchain_agent.invoke({"input": prompt})
-            if isinstance(response, dict):
-                text = response.get("output", "")
-            else:
-                text = str(response)
+            text = response.get("output", "") if isinstance(response, dict) else str(response)
 
             normalized = text.strip().lower()
             approved = "approve" in normalized and "decline" not in normalized
@@ -2488,9 +2375,7 @@ class CoreStrategy:
             logger.error("LangChain approval gate error: %s", exc)
             fail_open = os.getenv("LANGCHAIN_APPROVAL_FAIL_OPEN", "true").lower()
             if fail_open == "true":
-                logger.warning(
-                    "LangChain approval unavailable; defaulting to APPROVE (fail-open)."
-                )
+                logger.warning("LangChain approval unavailable; defaulting to APPROVE (fail-open).")
                 return True
             return False
 
@@ -2502,9 +2387,7 @@ class CoreStrategy:
             symbol: Ticker symbol
             quantity: Quantity to add (positive) or remove (negative)
         """
-        self.current_holdings[symbol] = (
-            self.current_holdings.get(symbol, 0.0) + quantity
-        )
+        self.current_holdings[symbol] = self.current_holdings.get(symbol, 0.0) + quantity
 
         # Remove if quantity is now zero or negative
         if self.current_holdings[symbol] <= 0:
@@ -2567,6 +2450,4 @@ if __name__ == "__main__":
     # Get performance metrics
     metrics = strategy.get_performance_metrics()
     print(f"\nCurrent Portfolio Value: ${metrics['current_value']:.2f}")
-    print(
-        f"Total Return: ${metrics['total_return']:.2f} ({metrics['total_return_pct']:.2f}%)"
-    )
+    print(f"Total Return: ${metrics['total_return']:.2f} ({metrics['total_return_pct']:.2f}%)")

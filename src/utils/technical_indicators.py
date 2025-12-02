@@ -11,9 +11,9 @@ Consolidates duplicate logic from:
 """
 
 import logging
-from typing import Tuple, Dict
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ def calculate_macd(
     fast_period: int = 12,
     slow_period: int = 26,
     signal_period: int = 9,
-) -> Tuple[float, float, float]:
+) -> tuple[float, float, float]:
     """
     Calculate MACD (Moving Average Convergence Divergence).
 
@@ -104,8 +104,7 @@ def calculate_rsi(prices: pd.Series, period: int = 14) -> float:
     """
     if len(prices) < period + 1:
         logger.warning(
-            f"Insufficient data for RSI calculation: {len(prices)} bars, "
-            f"need at least {period + 1}"
+            f"Insufficient data for RSI calculation: {len(prices)} bars, need at least {period + 1}"
         )
         return 50.0  # Neutral RSI
 
@@ -154,8 +153,7 @@ def calculate_volume_ratio(hist: pd.DataFrame, window: int = 20) -> float:
     """
     if len(hist) < window:
         logger.warning(
-            f"Insufficient data for volume ratio: {len(hist)} bars, "
-            f"need at least {window}"
+            f"Insufficient data for volume ratio: {len(hist)} bars, need at least {window}"
         )
         return 1.0
 
@@ -184,7 +182,7 @@ def calculate_technical_score(
     macd_threshold: float = 0.0,
     rsi_overbought: float = 70.0,
     volume_min: float = 0.8,
-) -> Tuple[float, dict]:
+) -> tuple[float, dict]:
     """
     Calculate composite technical score for a symbol.
 
@@ -226,9 +224,7 @@ def calculate_technical_score(
 
     # HARD FILTERS - Reject entries that don't meet criteria
     if macd_histogram < macd_threshold:
-        logger.info(
-            f"{symbol}: REJECTED - Bearish MACD histogram ({macd_histogram:.3f})"
-        )
+        logger.info(f"{symbol}: REJECTED - Bearish MACD histogram ({macd_histogram:.3f})")
         return (0.0, indicators)
 
     if rsi_val > rsi_overbought:
@@ -241,9 +237,7 @@ def calculate_technical_score(
 
     # Calculate composite score (price weighted by technical strength)
     price = hist["Close"].iloc[-1]
-    technical_score = (
-        price * (1 + macd_histogram / 10) * (1 + (70 - rsi_val) / 100) * volume_ratio
-    )
+    technical_score = price * (1 + macd_histogram / 10) * (1 + (70 - rsi_val) / 100) * volume_ratio
 
     logger.info(
         f"{symbol}: Score {technical_score:.2f} | "
@@ -276,8 +270,7 @@ def calculate_atr(hist: pd.DataFrame, period: int = 14) -> float:
     """
     if len(hist) < period + 1:
         logger.warning(
-            f"Insufficient data for ATR calculation: {len(hist)} bars, "
-            f"need at least {period + 1}"
+            f"Insufficient data for ATR calculation: {len(hist)} bars, need at least {period + 1}"
         )
         return 0.0
 
@@ -357,7 +350,7 @@ def calculate_atr_stop_loss(
 
 def calculate_bollinger_bands(
     prices: pd.Series, period: int = 20, num_std: float = 2.0
-) -> Tuple[float, float, float]:
+) -> tuple[float, float, float]:
     """
     Calculate Bollinger Bands (upper, middle, lower).
 
@@ -381,8 +374,7 @@ def calculate_bollinger_bands(
     """
     if len(prices) < period:
         logger.warning(
-            f"Insufficient data for Bollinger Bands: {len(prices)} bars, "
-            f"need at least {period}"
+            f"Insufficient data for Bollinger Bands: {len(prices)} bars, need at least {period}"
         )
         current_price = float(prices.iloc[-1]) if not prices.empty else 0.0
         return (current_price, current_price, current_price)
@@ -415,7 +407,7 @@ def calculate_bollinger_bands(
     )
 
 
-def calculate_adx(hist: pd.DataFrame, period: int = 14) -> Tuple[float, float, float]:
+def calculate_adx(hist: pd.DataFrame, period: int = 14) -> tuple[float, float, float]:
     """
     Calculate ADX (Average Directional Index) and Directional Movement Indicators.
 
@@ -437,10 +429,7 @@ def calculate_adx(hist: pd.DataFrame, period: int = 14) -> Tuple[float, float, f
         Tuple of (adx, plus_di, minus_di)
     """
     if len(hist) < period + 1:
-        logger.warning(
-            f"Insufficient data for ADX: {len(hist)} bars, "
-            f"need at least {period + 1}"
-        )
+        logger.warning(f"Insufficient data for ADX: {len(hist)} bars, need at least {period + 1}")
         return (0.0, 0.0, 0.0)
 
     if not all(col in hist.columns for col in ["High", "Low", "Close"]):
@@ -490,7 +479,7 @@ def calculate_adx(hist: pd.DataFrame, period: int = 14) -> Tuple[float, float, f
     )
 
 
-def calculate_all_features(hist: pd.DataFrame, symbol: str = "") -> Dict[str, float]:
+def calculate_all_features(hist: pd.DataFrame, symbol: str = "") -> dict[str, float]:
     """
     Calculate comprehensive feature set (30-50 features) for deep learning models.
 
@@ -512,25 +501,19 @@ def calculate_all_features(hist: pd.DataFrame, symbol: str = "") -> Dict[str, fl
         Dictionary of feature values (normalized where appropriate)
     """
     if hist.empty or len(hist) < 200:
-        logger.warning(
-            f"{symbol}: Insufficient data for feature extraction ({len(hist)} bars)"
-        )
+        logger.warning(f"{symbol}: Insufficient data for feature extraction ({len(hist)} bars)")
         return {}
 
     close = hist["Close"]
     high = hist["High"] if "High" in hist.columns else close
     low = hist["Low"] if "Low" in hist.columns else close
-    volume = (
-        hist["Volume"] if "Volume" in hist.columns else pd.Series([1.0] * len(hist))
-    )
+    volume = hist["Volume"] if "Volume" in hist.columns else pd.Series([1.0] * len(hist))
 
     features = {}
 
     # Price Features (10 features)
     features["close"] = float(close.iloc[-1])
-    features["open"] = (
-        float(hist["Open"].iloc[-1]) if "Open" in hist.columns else features["close"]
-    )
+    features["open"] = float(hist["Open"].iloc[-1]) if "Open" in hist.columns else features["close"]
     features["high"] = float(high.iloc[-1])
     features["low"] = float(low.iloc[-1])
 
@@ -545,9 +528,7 @@ def calculate_all_features(hist: pd.DataFrame, symbol: str = "") -> Dict[str, fl
     # Volatility (rolling std of returns)
     daily_returns = close.pct_change().dropna()
     volatility_20d = (
-        daily_returns.iloc[-20:].std() * np.sqrt(252)
-        if len(daily_returns) >= 20
-        else 0.0
+        daily_returns.iloc[-20:].std() * np.sqrt(252) if len(daily_returns) >= 20 else 0.0
     )
     features["volatility_20d"] = volatility_20d
 
@@ -556,12 +537,8 @@ def calculate_all_features(hist: pd.DataFrame, symbol: str = "") -> Dict[str, fl
     ma_20 = close.rolling(20).mean()
     ma_50 = close.rolling(50).mean()
     ma_200 = close.rolling(200).mean() if len(close) >= 200 else ma_50
-    features["ma_20"] = (
-        float(ma_20.iloc[-1]) if not pd.isna(ma_20.iloc[-1]) else features["close"]
-    )
-    features["ma_50"] = (
-        float(ma_50.iloc[-1]) if not pd.isna(ma_50.iloc[-1]) else features["close"]
-    )
+    features["ma_20"] = float(ma_20.iloc[-1]) if not pd.isna(ma_20.iloc[-1]) else features["close"]
+    features["ma_50"] = float(ma_50.iloc[-1]) if not pd.isna(ma_50.iloc[-1]) else features["close"]
     features["ma_200"] = (
         float(ma_200.iloc[-1]) if not pd.isna(ma_200.iloc[-1]) else features["close"]
     )
@@ -598,14 +575,10 @@ def calculate_all_features(hist: pd.DataFrame, symbol: str = "") -> Dict[str, fl
 
     # Rate of Change (ROC)
     roc_10 = (
-        ((close.iloc[-1] - close.iloc[-11]) / close.iloc[-11] * 100)
-        if len(close) > 10
-        else 0.0
+        ((close.iloc[-1] - close.iloc[-11]) / close.iloc[-11] * 100) if len(close) > 10 else 0.0
     )
     roc_20 = (
-        ((close.iloc[-1] - close.iloc[-21]) / close.iloc[-21] * 100)
-        if len(close) > 20
-        else 0.0
+        ((close.iloc[-1] - close.iloc[-21]) / close.iloc[-21] * 100) if len(close) > 20 else 0.0
     )
     features["roc_10"] = roc_10
     features["roc_20"] = roc_20
@@ -618,17 +591,13 @@ def calculate_all_features(hist: pd.DataFrame, symbol: str = "") -> Dict[str, fl
     features["bb_lower"] = bb_lower
     features["bb_width"] = (bb_upper - bb_lower) / bb_middle if bb_middle > 0 else 0.0
     features["bb_position"] = (
-        (features["close"] - bb_lower) / (bb_upper - bb_lower)
-        if (bb_upper - bb_lower) > 0
-        else 0.5
+        (features["close"] - bb_lower) / (bb_upper - bb_lower) if (bb_upper - bb_lower) > 0 else 0.5
     )
 
     # ATR
     atr = calculate_atr(hist)
     features["atr"] = atr
-    features["atr_pct"] = (
-        (atr / features["close"] * 100) if features["close"] > 0 else 0.0
-    )
+    features["atr_pct"] = (atr / features["close"] * 100) if features["close"] > 0 else 0.0
 
     # Volume Indicators (5 features)
     features["volume"] = float(volume.iloc[-1])

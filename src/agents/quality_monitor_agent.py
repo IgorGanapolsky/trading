@@ -10,15 +10,18 @@ Responsibilities:
 Ensures portfolio maintains high quality standards.
 """
 
+import builtins
+import contextlib
 import logging
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
-from .base_agent import BaseAgent
+from datetime import datetime
+from typing import Any, Optional
+
 from src.safety.graham_buffett_safety import (
-    GrahamBuffettSafety,
-    get_global_safety_analyzer,
     CompanyQuality,
+    get_global_safety_analyzer,
 )
+
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +43,9 @@ class QualityMonitorAgent(BaseAgent):
             role="Portfolio quality monitoring and deterioration detection",
         )
         self.safety_analyzer = get_global_safety_analyzer()
-        self.quality_history: Dict[str, List[Dict[str, Any]]] = {}
+        self.quality_history: dict[str, list[dict[str, Any]]] = {}
 
-    def analyze(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Monitor portfolio quality and detect issues.
 
@@ -53,7 +56,7 @@ class QualityMonitorAgent(BaseAgent):
             Quality monitoring report with alerts and recommendations
         """
         positions = data.get("positions", [])
-        portfolio_value = data.get("portfolio_value", 0.0)
+        data.get("portfolio_value", 0.0)
 
         if not positions:
             return {
@@ -92,9 +95,7 @@ class QualityMonitorAgent(BaseAgent):
                     deterioration = self._check_quality_deterioration(symbol, quality)
                     if deterioration:
                         alerts.append(deterioration)
-                        recommendations.append(
-                            self._generate_recommendation(symbol, deterioration)
-                        )
+                        recommendations.append(self._generate_recommendation(symbol, deterioration))
 
                     # Store quality history
                     self._store_quality_history(symbol, quality)
@@ -106,9 +107,7 @@ class QualityMonitorAgent(BaseAgent):
         # Build comprehensive monitoring report
         memory_context = self.get_memory_context(limit=5)
 
-        prompt = self._build_monitoring_prompt(
-            positions, quality_scores, alerts, memory_context
-        )
+        prompt = self._build_monitoring_prompt(positions, quality_scores, alerts, memory_context)
 
         llm_response = self.reason_with_llm(prompt)
 
@@ -124,7 +123,7 @@ class QualityMonitorAgent(BaseAgent):
 
     def _check_quality_deterioration(
         self, symbol: str, current_quality: CompanyQuality
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         """Check if quality has deteriorated compared to history."""
 
         if symbol not in self.quality_history:
@@ -160,10 +159,7 @@ class QualityMonitorAgent(BaseAgent):
                 "previous_score": previous_score,
                 "current_score": current_score,
                 "deterioration": previous_score - current_score,
-                "message": (
-                    f"{symbol} quality dropped below threshold "
-                    f"({current_score:.1f} < 40)"
-                ),
+                "message": (f"{symbol} quality dropped below threshold ({current_score:.1f} < 40)"),
             }
 
         return None
@@ -192,8 +188,8 @@ class QualityMonitorAgent(BaseAgent):
             self.quality_history[symbol] = self.quality_history[symbol][-30:]
 
     def _generate_recommendation(
-        self, symbol: str, deterioration: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, symbol: str, deterioration: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate recommendation based on quality deterioration."""
 
         severity = deterioration["severity"]
@@ -223,9 +219,9 @@ class QualityMonitorAgent(BaseAgent):
 
     def _build_monitoring_prompt(
         self,
-        positions: List[Dict],
-        quality_scores: Dict[str, float],
-        alerts: List[Dict],
+        positions: list[dict],
+        quality_scores: dict[str, float],
+        alerts: list[dict],
         memory_context: str,
     ) -> str:
         """Build LLM prompt for quality monitoring."""
@@ -246,9 +242,7 @@ class QualityMonitorAgent(BaseAgent):
         alerts_summary = ""
         if alerts:
             for alert in alerts:
-                alerts_summary += (
-                    f"- {alert['message']} (Severity: {alert['severity']})\n"
-                )
+                alerts_summary += f"- {alert['message']} (Severity: {alert['severity']})\n"
         else:
             alerts_summary = "No quality alerts"
 
@@ -280,21 +274,17 @@ PRIORITY_ACTIONS: [priority actions]"""
 
     def _combine_monitoring_analysis(
         self,
-        quality_scores: Dict[str, float],
-        alerts: List[Dict],
-        recommendations: List[Dict],
-        llm_response: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        quality_scores: dict[str, float],
+        alerts: list[dict],
+        recommendations: list[dict],
+        llm_response: dict[str, Any],
+    ) -> dict[str, Any]:
         """Combine monitoring data with LLM insights."""
 
         llm_analysis = self._parse_llm_response(llm_response.get("reasoning", ""))
 
         # Calculate average quality score
-        avg_quality = (
-            sum(quality_scores.values()) / len(quality_scores)
-            if quality_scores
-            else 0.0
-        )
+        avg_quality = sum(quality_scores.values()) / len(quality_scores) if quality_scores else 0.0
 
         analysis = {
             "action": "MONITOR" if not alerts else "ALERT",
@@ -312,7 +302,7 @@ PRIORITY_ACTIONS: [priority actions]"""
 
         return analysis
 
-    def _parse_llm_response(self, reasoning: str) -> Dict[str, Any]:
+    def _parse_llm_response(self, reasoning: str) -> dict[str, Any]:
         """Parse LLM response."""
         lines = reasoning.split("\n")
         analysis = {
@@ -326,10 +316,8 @@ PRIORITY_ACTIONS: [priority actions]"""
         for line in lines:
             line = line.strip()
             if line.startswith("PORTFOLIO_QUALITY:"):
-                try:
+                with contextlib.suppress(builtins.BaseException):
                     analysis["portfolio_quality"] = int(line.split(":")[1].strip())
-                except:
-                    pass
             elif line.startswith("QUALITY_TREND:"):
                 trend = line.split(":")[1].strip().upper()
                 if trend in ["IMPROVING", "STABLE", "DECLINING"]:

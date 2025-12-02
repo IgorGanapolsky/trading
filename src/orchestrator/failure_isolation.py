@@ -7,7 +7,7 @@ import traceback
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable
 
 from src.agent_framework.context_engine import (
     ContextEngine,
@@ -25,8 +25,8 @@ class SandboxFailure:
     error: str
     attempts: int
     log_path: Path
-    pruned_memories: List[str]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    pruned_memories: list[str]
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -35,7 +35,7 @@ class SandboxOutcome:
 
     ok: bool
     result: Any = None
-    failure: Optional[SandboxFailure] = None
+    failure: SandboxFailure | None = None
 
 
 class FailureIsolationManager:
@@ -52,8 +52,8 @@ class FailureIsolationManager:
     def __init__(
         self,
         telemetry: Any,
-        context_engine: Optional[ContextEngine] = None,
-        log_dir: Optional[Path] = None,
+        context_engine: ContextEngine | None = None,
+        log_dir: Path | None = None,
         agent_id: str = "orchestrator",
         max_pruned: int = 5,
     ) -> None:
@@ -71,9 +71,9 @@ class FailureIsolationManager:
         operation: Callable[[], Any],
         *,
         retry: int = 1,
-        event_type: Optional[str] = None,
-        prune_tags: Optional[Set[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        event_type: str | None = None,
+        prune_tags: set[str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> SandboxOutcome:
         """
         Execute `operation` with retries and context isolation.
@@ -87,7 +87,7 @@ class FailureIsolationManager:
             prune_tags: Additional tags to use when pruning context memories
             metadata: Optional metadata merged into the log payload
         """
-        attempts: List[Dict[str, Any]] = []
+        attempts: list[dict[str, Any]] = []
 
         for attempt in range(1, retry + 1):
             try:
@@ -117,10 +117,10 @@ class FailureIsolationManager:
         self,
         gate: str,
         ticker: str,
-        attempts: List[Dict[str, Any]],
+        attempts: list[dict[str, Any]],
         event_type: str,
-        prune_tags: Optional[Set[str]],
-        metadata: Optional[Dict[str, Any]],
+        prune_tags: set[str] | None,
+        metadata: dict[str, Any] | None,
     ) -> SandboxFailure:
         log_path = self._write_log(gate, ticker, attempts, metadata)
 
@@ -180,8 +180,8 @@ class FailureIsolationManager:
         self,
         gate: str,
         ticker: str,
-        attempts: List[Dict[str, Any]],
-        metadata: Optional[Dict[str, Any]],
+        attempts: list[dict[str, Any]],
+        metadata: dict[str, Any] | None,
     ) -> Path:
         """Persist failure details so other agents/tools can inspect them."""
         timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%S%f")

@@ -6,8 +6,9 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Dict, Iterable, List
+from typing import Any
 
 import pandas as pd
 
@@ -24,19 +25,17 @@ WATCHLIST_PATH = Path("data/tier2_watchlist.json")
 class DataAgent(TradingAgent):
     """Loads market data for the configured symbol universe."""
 
-    def __init__(
-        self, lookback_days: int = 60, symbols: Iterable[str] | None = None
-    ) -> None:
+    def __init__(self, lookback_days: int = 60, symbols: Iterable[str] | None = None) -> None:
         super().__init__("data-agent")
         self.lookback_days = lookback_days
-        self._default_symbols: List[str] = list(symbols) if symbols else DEFAULT_SYMBOLS
+        self._default_symbols: list[str] = list(symbols) if symbols else DEFAULT_SYMBOLS
         self._provider = get_market_data_provider()
         self._collector = DataCollector()
 
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
-    def _load_watchlist_symbols(self) -> List[str]:
+    def _load_watchlist_symbols(self) -> list[str]:
         """Extract symbols from the tier2 watchlist JSON if available."""
         if not WATCHLIST_PATH.exists():
             return []
@@ -57,7 +56,7 @@ class DataAgent(TradingAgent):
             logger.warning("Failed to parse tier2 watchlist: %s", exc)
             return []
 
-    def _resolve_symbol_universe(self, context: RunContext) -> List[str]:
+    def _resolve_symbol_universe(self, context: RunContext) -> list[str]:
         configured = context.config.get("symbols")
         if configured:
             return [sym.upper() for sym in configured]
@@ -66,7 +65,7 @@ class DataAgent(TradingAgent):
             return from_watchlist
         return self._default_symbols
 
-    def _summarize_frame(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def _summarize_frame(self, df: pd.DataFrame) -> dict[str, Any]:
         if df.empty:
             return {"rows": 0}
         latest_row = df.iloc[-1]
@@ -85,15 +84,13 @@ class DataAgent(TradingAgent):
         symbols = self._resolve_symbol_universe(context)
         logger.info("Fetching market data for symbols: %s", ", ".join(symbols))
 
-        summaries: Dict[str, Any] = {}
-        frames: Dict[str, pd.DataFrame] = {}
-        warnings: List[str] = []
+        summaries: dict[str, Any] = {}
+        frames: dict[str, pd.DataFrame] = {}
+        warnings: list[str] = []
 
         for symbol in symbols:
             try:
-                result = self._provider.get_daily_bars(
-                    symbol, lookback_days=self.lookback_days
-                )
+                result = self._provider.get_daily_bars(symbol, lookback_days=self.lookback_days)
                 df = result.data
                 if df.empty:
                     warnings.append(f"{symbol}: received empty dataframe")

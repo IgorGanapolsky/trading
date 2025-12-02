@@ -16,23 +16,23 @@ AI Integration:
 """
 
 import logging
+import math
 import os
 import sys
-from datetime import datetime, timedelta, date
-from typing import Dict, List, Optional, Any
-import math
+from datetime import date, datetime, timedelta
 
 # Add project root to path for imports if needed
 from pathlib import Path
+from typing import Any, Optional
 
 project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from src.core.options_client import AlpacaOptionsClient
 from src.core.alpaca_trader import AlpacaTrader
-from src.utils.iv_analyzer import IVAnalyzer
+from src.core.options_client import AlpacaOptionsClient
 from src.rag.collectors.mcmillan_options_collector import McMillanKnowledge
+from src.utils.iv_analyzer import IVAnalyzer
 
 # Configure logging
 logging.basicConfig(
@@ -118,9 +118,9 @@ class OptionsStrategy:
         expiration_date: date,
         delta: float,
         current_price: float,
-        iv_data: Dict[str, Any],
-        expected_move: Optional[Any] = None
-    ) -> Dict[str, Any]:
+        iv_data: dict[str, Any],
+        expected_move: Optional[Any] = None,
+    ) -> dict[str, Any]:
         """
         Validate trade against McMillan options rules.
 
@@ -207,10 +207,10 @@ class OptionsStrategy:
             "warnings": warnings,
             "recommendations": recommendations,
             "iv_recommendation": iv_rec,
-            "rules_checked": 5  # Number of rules we validated
+            "rules_checked": 5,  # Number of rules we validated
         }
 
-    def _analyze_sentiment(self, symbol: str) -> Dict[str, Any]:
+    def _analyze_sentiment(self, symbol: str) -> dict[str, Any]:
         """
         Analyze sentiment using AI agents.
 
@@ -257,9 +257,7 @@ class OptionsStrategy:
                 if "YES" in output.upper() and (
                     "earnings" in output.lower() or "merger" in output.lower()
                 ):
-                    sentiment_score += (
-                        1  # Volatility event likely (Don't sell call or be careful)
-                    )
+                    sentiment_score += 1  # Volatility event likely (Don't sell call or be careful)
 
             except Exception as e:
                 logger.warning(f"LangChain analysis failed: {e}")
@@ -279,7 +277,7 @@ class OptionsStrategy:
                 "reasoning": "; ".join(reasons),
             }
 
-    def execute_daily(self) -> List[Dict[str, Any]]:
+    def execute_daily(self) -> list[dict[str, Any]]:
         """
         Execute the daily options routine with live execution.
 
@@ -323,8 +321,7 @@ class OptionsStrategy:
             eligible_positions = [
                 p
                 for p in positions
-                if float(p["qty"]) >= self.min_shares_threshold
-                and p["side"] == "long"
+                if float(p["qty"]) >= self.min_shares_threshold and p["side"] == "long"
             ]
 
             if not eligible_positions:
@@ -353,7 +350,7 @@ class OptionsStrategy:
                 iv_data = self.iv_analyzer.get_recommendation(symbol)
 
                 # Convert IVMetrics dataclass to dict if needed
-                if hasattr(iv_data, '__dict__'):
+                if hasattr(iv_data, "__dict__"):
                     iv_dict = {
                         "symbol": iv_data.symbol,
                         "current_iv": iv_data.current_iv,
@@ -364,7 +361,7 @@ class OptionsStrategy:
                         "is_2std_cheap": iv_data.is_2std_cheap,
                         "recommendation": iv_data.recommendation,
                         "suggested_strategies": iv_data.suggested_strategies,
-                        "reasoning": iv_data.reasoning
+                        "reasoning": iv_data.reasoning,
                     }
                 else:
                     iv_dict = iv_data
@@ -379,7 +376,7 @@ class OptionsStrategy:
 
                 logger.info(
                     f"✅ {symbol} IV Rank: {iv_dict.get('iv_rank', 0):.1f}% "
-                    f"(Current IV: {iv_dict.get('current_iv', 0)*100:.1f}%) - Good for selling premium"
+                    f"(Current IV: {iv_dict.get('current_iv', 0) * 100:.1f}%) - Good for selling premium"
                 )
 
                 # === IV ANALYZER CHECK 3: 2 STD DEV AUTO-TRIGGER ===
@@ -400,9 +397,7 @@ class OptionsStrategy:
                 )
 
                 if analysis["action"] == "SKIP":
-                    logger.info(
-                        f"Skipping {symbol} due to AI analysis: {analysis['reasoning']}"
-                    )
+                    logger.info(f"Skipping {symbol} due to AI analysis: {analysis['reasoning']}")
                     continue
 
                 # 4. Find Best Covered Call
@@ -418,16 +413,14 @@ class OptionsStrategy:
                     # === IV ANALYZER CHECK 2: EXPECTED MOVE VALIDATION ===
                     dte = (contract["expiration_date"] - date.today()).days
                     expected_move = self.iv_analyzer.calculate_expected_move(
-                        symbol,
-                        dte=dte,
-                        iv=iv_dict.get("current_iv")
+                        symbol, dte=dte, iv=iv_dict.get("current_iv")
                     )
 
                     if expected_move:
                         logger.info(
                             f"📊 Expected Move for {symbol} ({dte} days): "
                             f"${expected_move.range_low:.2f} - ${expected_move.range_high:.2f} "
-                            f"(±${expected_move.move_dollars:.2f} or {expected_move.move_percent*100:.1f}%)"
+                            f"(±${expected_move.move_dollars:.2f} or {expected_move.move_percent * 100:.1f}%)"
                         )
 
                         # Check if strike is within expected move range (higher assignment risk)
@@ -443,7 +436,7 @@ class OptionsStrategy:
                         expected_move = None
 
                     # === RAG INTEGRATION: MCMILLAN RULE VALIDATION ===
-                    logger.info(f"🔍 Validating trade against McMillan options rules...")
+                    logger.info("🔍 Validating trade against McMillan options rules...")
                     validation = self._validate_against_mcmillan_rules(
                         symbol=symbol,
                         strike=contract["strike_price"],
@@ -451,17 +444,17 @@ class OptionsStrategy:
                         delta=contract["delta"],
                         current_price=current_price,
                         iv_data=iv_dict,
-                        expected_move=expected_move
+                        expected_move=expected_move,
                     )
 
                     # Check for critical violations
                     if not validation["passed"]:
-                        logger.error(
-                            f"❌ Trade violates McMillan rules for {symbol}. Violations:"
-                        )
+                        logger.error(f"❌ Trade violates McMillan rules for {symbol}. Violations:")
                         for violation in validation["violations"]:
                             logger.error(f"   - {violation}")
-                        logger.info("Skipping this trade to comply with McMillan strategy guidelines.")
+                        logger.info(
+                            "Skipping this trade to comply with McMillan strategy guidelines."
+                        )
                         continue
 
                     # Log warnings (non-blocking)
@@ -503,15 +496,13 @@ class OptionsStrategy:
 
                     if premium_pct < self.min_premium_pct:
                         logger.warning(
-                            f"⚠️ Premium {premium_pct*100:.2f}% below minimum "
-                            f"({self.min_premium_pct*100:.2f}%). Skipping."
+                            f"⚠️ Premium {premium_pct * 100:.2f}% below minimum "
+                            f"({self.min_premium_pct * 100:.2f}%). Skipping."
                         )
                         continue
 
                     # ALL SAFETY GATES PASSED - EXECUTE TRADE
-                    logger.info(
-                        f"🚀 ALL SAFETY GATES PASSED - Executing covered call for {symbol}"
-                    )
+                    logger.info(f"🚀 ALL SAFETY GATES PASSED - Executing covered call for {symbol}")
 
                     try:
                         # Use limit order at bid price to ensure fill
@@ -548,8 +539,12 @@ class OptionsStrategy:
                             "current_iv": iv_dict.get("current_iv"),
                             "iv_recommendation": iv_dict.get("recommendation"),
                             # Expected Move
-                            "expected_move_range": f"${expected_move.range_low:.2f} - ${expected_move.range_high:.2f}" if expected_move else "N/A",
-                            "expected_move_pct": f"{expected_move.move_percent*100:.1f}%" if expected_move else "N/A",
+                            "expected_move_range": f"${expected_move.range_low:.2f} - ${expected_move.range_high:.2f}"
+                            if expected_move
+                            else "N/A",
+                            "expected_move_pct": f"{expected_move.move_percent * 100:.1f}%"
+                            if expected_move
+                            else "N/A",
                             # McMillan Validation
                             "mcmillan_passed": validation["passed"],
                             "mcmillan_warnings": validation["warnings"],
@@ -586,7 +581,7 @@ class OptionsStrategy:
             return []
 
     def _has_open_covered_call(
-        self, underlying_symbol: str, positions: List[Dict[str, Any]]
+        self, underlying_symbol: str, positions: list[dict[str, Any]]
     ) -> bool:
         """
         Check if there is an existing short call position for the underlying symbol.
@@ -611,7 +606,7 @@ class OptionsStrategy:
 
     def find_covered_call_contract(
         self, symbol: str, current_price: float
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         """
         Find the best call option to sell based on strategy criteria.
         """
@@ -714,9 +709,7 @@ class OptionsStrategy:
                     contract["strike_price"] = strike_price
                     contract["delta"] = delta
                     contract["price"] = (
-                        contract["latest_trade_price"]
-                        or contract["latest_quote_bid"]
-                        or 0.0
+                        contract["latest_trade_price"] or contract["latest_quote_bid"] or 0.0
                     )
 
                     candidates.append(contract)
@@ -729,9 +722,7 @@ class OptionsStrategy:
             if not candidates:
                 return None
 
-            best_contract = min(
-                candidates, key=lambda x: abs(x["delta"] - self.target_delta)
-            )
+            best_contract = min(candidates, key=lambda x: abs(x["delta"] - self.target_delta))
             return best_contract
 
         except Exception as e:

@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Dict, Iterable, List
 
 from .models import DailySupportPlan
 from .vector_store import ResourceVectorStore
@@ -28,7 +27,7 @@ class ResourceVault:
         self.state_path = self.storage_dir / "resource_state.json"
         self.vector_store = vector_store or ResourceVectorStore()
 
-    def persist_plan(self, plan: DailySupportPlan) -> Dict[str, Path]:
+    def persist_plan(self, plan: DailySupportPlan) -> dict[str, Path]:
         payload = plan.to_dict()
         with open(self.state_path, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, indent=2)
@@ -79,16 +78,14 @@ class ResourceVault:
         if plan.newsletters:
             for insight in plan.newsletters[:5]:
                 tickers = ", ".join(insight.tickers) or "No tickers"
-                lines.append(
-                    f"- **{insight.source}**: {insight.headline} ({tickers})"
-                )
+                lines.append(f"- **{insight.source}**: {insight.headline} ({tickers})")
         else:
             lines.append("- No fresh newsletter items")
         return "\n".join(lines)
 
-    def _build_vector_docs(self, plan: DailySupportPlan) -> Iterable[Dict]:
+    def _build_vector_docs(self, plan: DailySupportPlan) -> Iterable[dict]:
         generated = plan.generated_at.strftime("%Y%m%dT%H%M")
-        docs: List[Dict] = []
+        docs: list[dict] = []
         for idx, session in enumerate(plan.coaching):
             text = (
                 f"Coaching session {session.session_name} from {session.program}"

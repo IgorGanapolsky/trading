@@ -23,14 +23,14 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.risk.trade_gateway import TradeGateway, TradeRequest, RejectionReason
+from src.risk.trade_gateway import RejectionReason, TradeGateway, TradeRequest
 
 
 def run_stress_tests():
     """Run all stress tests against the trade gateway."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🧪 TRADE GATEWAY STRESS TEST SUITE")
-    print("="*70)
+    print("=" * 70)
 
     gateway = TradeGateway(executor=None, paper=True)
     all_passed = True
@@ -41,12 +41,7 @@ def run_stress_tests():
     print("\n--- TEST 1: Suicide Command ($1,000,000 AMC buy) ---")
     print("Expected: REJECT with 'Insufficient Funds' and 'Max Allocation Exceeded'")
 
-    request = TradeRequest(
-        symbol="AMC",
-        side="buy",
-        notional=1000000,
-        source="stress_test"
-    )
+    request = TradeRequest(symbol="AMC", side="buy", notional=1000000, source="stress_test")
     decision = gateway.evaluate(request)
 
     if decision.approved:
@@ -55,7 +50,7 @@ def run_stress_tests():
     else:
         expected_rejections = {
             RejectionReason.INSUFFICIENT_FUNDS,
-            RejectionReason.MAX_ALLOCATION_EXCEEDED
+            RejectionReason.MAX_ALLOCATION_EXCEEDED,
         }
         actual_rejections = set(decision.rejection_reasons)
 
@@ -74,18 +69,22 @@ def run_stress_tests():
     print("Expected: REJECT for high correlation with existing positions")
 
     # Simulate having NVDA position
-    gateway.executor = type('MockExecutor', (), {
-        'account_equity': 10000,
-        'get_positions': lambda self: [
-            {'symbol': 'NVDA', 'market_value': 3000}  # 30% of portfolio
-        ]
-    })()
+    gateway.executor = type(
+        "MockExecutor",
+        (),
+        {
+            "account_equity": 10000,
+            "get_positions": lambda self: [
+                {"symbol": "NVDA", "market_value": 3000}  # 30% of portfolio
+            ],
+        },
+    )()
 
     request = TradeRequest(
         symbol="AMD",  # High correlation with NVDA
         side="buy",
         notional=2000,  # Would be 20% more in semiconductors
-        source="stress_test"
+        source="stress_test",
     )
     decision = gateway.evaluate(request)
 
@@ -102,24 +101,28 @@ def run_stress_tests():
     print("\n--- TEST 3: Over-Allocation (>15% single symbol) ---")
     print("Expected: REJECT for exceeding 15% allocation limit")
 
-    gateway.executor = type('MockExecutor', (), {
-        'account_equity': 10000,
-        'get_positions': lambda self: [
-            {'symbol': 'TSLA', 'market_value': 1400}  # 14% already
-        ]
-    })()
+    gateway.executor = type(
+        "MockExecutor",
+        (),
+        {
+            "account_equity": 10000,
+            "get_positions": lambda self: [
+                {"symbol": "TSLA", "market_value": 1400}  # 14% already
+            ],
+        },
+    )()
 
     request = TradeRequest(
         symbol="TSLA",
         side="buy",
         notional=200,  # Would push to 16%
-        source="stress_test"
+        source="stress_test",
     )
     decision = gateway.evaluate(request)
 
     if RejectionReason.MAX_ALLOCATION_EXCEEDED in decision.rejection_reasons:
         print("✅ PASSED: Over-allocation rejected")
-        print(f"   Exposure would be: {decision.metadata.get('exposure_pct', 'N/A')*100:.1f}%")
+        print(f"   Exposure would be: {decision.metadata.get('exposure_pct', 'N/A') * 100:.1f}%")
     else:
         print("⚠️ CHECK: Trade not rejected for over-allocation")
         print(f"   Rejections: {[r.value for r in decision.rejection_reasons]}")
@@ -131,21 +134,16 @@ def run_stress_tests():
     print("Expected: REJECT after 5 trades in one hour")
 
     gateway = TradeGateway(executor=None, paper=True)
-    gateway.executor = type('MockExecutor', (), {
-        'account_equity': 100000,
-        'get_positions': lambda self: []
-    })()
+    gateway.executor = type(
+        "MockExecutor", (), {"account_equity": 100000, "get_positions": lambda self: []}
+    )()
 
     # Simulate 5 recent trades
     from datetime import datetime, timedelta
+
     gateway.recent_trades = [datetime.now() - timedelta(minutes=i) for i in range(5)]
 
-    request = TradeRequest(
-        symbol="SPY",
-        side="buy",
-        notional=500,
-        source="stress_test"
-    )
+    request = TradeRequest(symbol="SPY", side="buy", notional=500, source="stress_test")
     decision = gateway.evaluate(request)
 
     if RejectionReason.FREQUENCY_LIMIT in decision.rejection_reasons:
@@ -163,16 +161,15 @@ def run_stress_tests():
 
     gateway = TradeGateway(executor=None, paper=True)
     gateway.accumulated_cash = 0
-    gateway.executor = type('MockExecutor', (), {
-        'account_equity': 100000,
-        'get_positions': lambda self: []
-    })()
+    gateway.executor = type(
+        "MockExecutor", (), {"account_equity": 100000, "get_positions": lambda self: []}
+    )()
 
     request = TradeRequest(
         symbol="SPY",
         side="buy",
         notional=10,  # $10 trade
-        source="stress_test"
+        source="stress_test",
     )
     decision = gateway.evaluate(request)
 
@@ -191,17 +188,11 @@ def run_stress_tests():
     print("Expected: APPROVED (all checks pass)")
 
     gateway = TradeGateway(executor=None, paper=True)
-    gateway.executor = type('MockExecutor', (), {
-        'account_equity': 100000,
-        'get_positions': lambda self: []
-    })()
+    gateway.executor = type(
+        "MockExecutor", (), {"account_equity": 100000, "get_positions": lambda self: []}
+    )()
 
-    request = TradeRequest(
-        symbol="SPY",
-        side="buy",
-        notional=500,
-        source="stress_test"
-    )
+    request = TradeRequest(symbol="SPY", side="buy", notional=500, source="stress_test")
     decision = gateway.evaluate(request)
 
     if decision.approved:
@@ -219,10 +210,14 @@ def run_stress_tests():
     print("Expected: REJECT for insufficient capital (need $10k for iron condors)")
 
     gateway = TradeGateway(executor=None, paper=True)
-    gateway.executor = type('MockExecutor', (), {
-        'account_equity': 5000,  # Small account
-        'get_positions': lambda self: []
-    })()
+    gateway.executor = type(
+        "MockExecutor",
+        (),
+        {
+            "account_equity": 5000,  # Small account
+            "get_positions": lambda self: [],
+        },
+    )()
 
     request = TradeRequest(
         symbol="SPY",
@@ -230,13 +225,15 @@ def run_stress_tests():
         notional=500,
         source="stress_test",
         strategy_type="iron_condor",  # Strategy that needs $10k+
-        iv_rank=50.0
+        iv_rank=50.0,
     )
     decision = gateway.evaluate(request)
 
     if RejectionReason.CAPITAL_INEFFICIENT in decision.rejection_reasons:
         print("✅ PASSED: Iron condor rejected for small account")
-        print(f"   Capital viability: {decision.metadata.get('capital_viability', {}).get('reason', 'N/A')}")
+        print(
+            f"   Capital viability: {decision.metadata.get('capital_viability', {}).get('reason', 'N/A')}"
+        )
     else:
         print("⚠️ CHECK: Trade not rejected for capital inefficiency")
         print(f"   Rejections: {[r.value for r in decision.rejection_reasons]}")
@@ -248,10 +245,14 @@ def run_stress_tests():
     print("Expected: REJECT for IV Rank too low (<20 for premium selling)")
 
     gateway = TradeGateway(executor=None, paper=True)
-    gateway.executor = type('MockExecutor', (), {
-        'account_equity': 50000,  # Adequate capital
-        'get_positions': lambda self: []
-    })()
+    gateway.executor = type(
+        "MockExecutor",
+        (),
+        {
+            "account_equity": 50000,  # Adequate capital
+            "get_positions": lambda self: [],
+        },
+    )()
 
     request = TradeRequest(
         symbol="SPY",
@@ -259,13 +260,15 @@ def run_stress_tests():
         notional=500,
         source="stress_test",
         strategy_type="iron_condor",  # Credit strategy
-        iv_rank=15.0  # Below the 20 minimum
+        iv_rank=15.0,  # Below the 20 minimum
     )
     decision = gateway.evaluate(request)
 
     if RejectionReason.IV_RANK_TOO_LOW in decision.rejection_reasons:
         print("✅ PASSED: Credit strategy rejected for low IV Rank")
-        print(f"   IV Rank rejection: {decision.metadata.get('iv_rank_rejection', {}).get('reason', 'N/A')}")
+        print(
+            f"   IV Rank rejection: {decision.metadata.get('iv_rank_rejection', {}).get('reason', 'N/A')}"
+        )
     else:
         print("⚠️ CHECK: Trade not rejected for low IV Rank")
         print(f"   Rejections: {[r.value for r in decision.rejection_reasons]}")
@@ -277,10 +280,14 @@ def run_stress_tests():
     print("Expected: APPROVED (IV Rank meets requirement)")
 
     gateway = TradeGateway(executor=None, paper=True)
-    gateway.executor = type('MockExecutor', (), {
-        'account_equity': 50000,  # Adequate capital
-        'get_positions': lambda self: []
-    })()
+    gateway.executor = type(
+        "MockExecutor",
+        (),
+        {
+            "account_equity": 50000,  # Adequate capital
+            "get_positions": lambda self: [],
+        },
+    )()
 
     request = TradeRequest(
         symbol="SPY",
@@ -288,7 +295,7 @@ def run_stress_tests():
         notional=500,
         source="stress_test",
         strategy_type="iron_condor",  # Credit strategy
-        iv_rank=60.0  # Above the 20 minimum
+        iv_rank=60.0,  # Above the 20 minimum
     )
     decision = gateway.evaluate(request)
 
@@ -300,16 +307,74 @@ def run_stress_tests():
         print(f"   Rejections: {[r.value for r in decision.rejection_reasons]}")
 
     # ================================================================
+    # TEST 10: Illiquid Option (Wide Bid-Ask Spread > 5%)
+    # ================================================================
+    print("\n--- TEST 10: Illiquid Option (Bid-Ask Spread = 15%) ---")
+    print("Expected: REJECT for illiquid option (spread > 5%)")
+
+    gateway = TradeGateway(executor=None, paper=True)
+    gateway.executor = type(
+        "MockExecutor", (), {"account_equity": 50000, "get_positions": lambda self: []}
+    )()
+
+    request = TradeRequest(
+        symbol="SPY240315C00500000",  # Option symbol
+        side="buy",
+        notional=500,
+        source="stress_test",
+        is_option=True,
+        bid_price=1.70,  # Wide spread
+        ask_price=2.00,  # 15% spread = (2.00-1.70)/2.00 = 15%
+    )
+    decision = gateway.evaluate(request)
+
+    if RejectionReason.ILLIQUID_OPTION in decision.rejection_reasons:
+        print("✅ PASSED: Illiquid option rejected")
+        print(f"   Liquidity info: {decision.metadata.get('liquidity_rejection', {})}")
+    else:
+        print("⚠️ CHECK: Trade not rejected for illiquidity")
+        print(f"   Rejections: {[r.value for r in decision.rejection_reasons]}")
+
+    # ================================================================
+    # TEST 11: Liquid Option (Tight Bid-Ask Spread < 5%)
+    # ================================================================
+    print("\n--- TEST 11: Liquid Option (Bid-Ask Spread = 2%) ---")
+    print("Expected: APPROVED (spread acceptable)")
+
+    gateway = TradeGateway(executor=None, paper=True)
+    gateway.executor = type(
+        "MockExecutor", (), {"account_equity": 50000, "get_positions": lambda self: []}
+    )()
+
+    request = TradeRequest(
+        symbol="SPY240315C00500000",  # Option symbol
+        side="buy",
+        notional=500,
+        source="stress_test",
+        is_option=True,
+        bid_price=1.96,  # Tight spread
+        ask_price=2.00,  # 2% spread = (2.00-1.96)/2.00 = 2%
+    )
+    decision = gateway.evaluate(request)
+
+    if decision.approved:
+        print("✅ PASSED: Liquid option approved")
+        print(f"   Liquidity info: {decision.metadata.get('liquidity_info', {})}")
+    else:
+        print("⚠️ CHECK: Trade rejected unexpectedly")
+        print(f"   Rejections: {[r.value for r in decision.rejection_reasons]}")
+
+    # ================================================================
     # FINAL RESULT
     # ================================================================
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     if all_passed:
         print("🎉 ALL CRITICAL TESTS PASSED")
         print("The gateway is working correctly.")
     else:
         print("⚠️ SOME TESTS FAILED")
         print("Review the gateway logic before deploying.")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
     return all_passed
 

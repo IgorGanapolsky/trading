@@ -12,8 +12,9 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any
 
 import requests
 
@@ -39,11 +40,11 @@ class ADKClientConfig:
 @dataclass(slots=True)
 class OrchestratorResult:
     session_id: str
-    events: List[Dict[str, Any]] = field(default_factory=list)
-    final_text: Optional[str] = None
-    root_event: Optional[Dict[str, Any]] = None
+    events: list[dict[str, Any]] = field(default_factory=list)
+    final_text: str | None = None
+    root_event: dict[str, Any] | None = None
 
-    def as_structured(self) -> Optional[Dict[str, Any]]:
+    def as_structured(self) -> dict[str, Any] | None:
         """
         Parse the final orchestrator response as JSON if possible.
 
@@ -68,7 +69,7 @@ class ADKOrchestratorClient:
         result = client.run("NVDA", context={"mode": "paper"})
     """
 
-    def __init__(self, config: Optional[ADKClientConfig] = None) -> None:
+    def __init__(self, config: ADKClientConfig | None = None) -> None:
         self.config = config or ADKClientConfig()
         self._http = requests.Session()
         self._http.headers.update({"Content-Type": "application/json"})
@@ -76,9 +77,9 @@ class ADKOrchestratorClient:
     def run(
         self,
         symbol: str,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
         *,
-        session_id: Optional[str] = None,
+        session_id: str | None = None,
         streaming: bool = False,
     ) -> OrchestratorResult:
         session_id = session_id or self._generate_session_id(symbol)
@@ -100,7 +101,7 @@ class ADKOrchestratorClient:
             timeout=self.config.request_timeout,
         )
         response.raise_for_status()
-        events: List[Dict[str, Any]] = response.json()
+        events: list[dict[str, Any]] = response.json()
         root_event = self._select_root_event(events)
         final_text = _extract_text(root_event)
         logger.info("ADK run complete for %s session=%s", symbol, session_id)
@@ -114,12 +115,12 @@ class ADKOrchestratorClient:
     def run_structured(
         self,
         symbol: str,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
         *,
-        session_id: Optional[str] = None,
+        session_id: str | None = None,
         streaming: bool = False,
         require_json: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Execute the orchestrator and return the parsed JSON payload.
 
@@ -174,10 +175,10 @@ class ADKOrchestratorClient:
         self,
         *,
         symbol: str,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         session_id: str,
         streaming: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         message = self._build_prompt(symbol, context)
         new_message = {
             "role": "user",
@@ -191,7 +192,7 @@ class ADKOrchestratorClient:
             "streaming": streaming,
         }
 
-    def _build_prompt(self, symbol: str, context: Dict[str, Any]) -> str:
+    def _build_prompt(self, symbol: str, context: dict[str, Any]) -> str:
         serialized_context = json.dumps(context, indent=2, sort_keys=True)
         return (
             f"Run the ADK trading orchestrator end-to-end for symbol {symbol.upper()}.\n"
@@ -199,9 +200,7 @@ class ADKOrchestratorClient:
             "Return the final JSON summary produced by the orchestrator."
         )
 
-    def _select_root_event(
-        self, events: Iterable[Dict[str, Any]]
-    ) -> Optional[Dict[str, Any]]:
+    def _select_root_event(self, events: Iterable[dict[str, Any]]) -> dict[str, Any] | None:
         root_name = self.config.root_agent_name
         for event in reversed(list(events)):
             if event.get("author") == root_name and not event.get("partial", False):
@@ -214,7 +213,7 @@ class ADKOrchestratorClient:
         return f"{symbol.lower()}-{timestamp}-{suffix}"
 
 
-def _extract_text(event: Optional[Dict[str, Any]]) -> Optional[str]:
+def _extract_text(event: dict[str, Any] | None) -> str | None:
     if not event:
         return None
     content = event.get("content") or {}

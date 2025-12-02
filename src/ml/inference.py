@@ -1,6 +1,7 @@
-import torch
 import logging
-from typing import Dict, Any
+from typing import Any
+
+import torch
 from src.ml.data_processor import DataProcessor
 from src.ml.trainer import ModelTrainer
 
@@ -18,7 +19,7 @@ class MLPredictor:
         self.data_processor = DataProcessor()
         self.models = {}  # Cache loaded models
 
-    def get_signal(self, symbol: str) -> Dict[str, Any]:
+    def get_signal(self, symbol: str) -> dict[str, Any]:
         """
         Get a trading signal for the given symbol.
 
@@ -59,9 +60,7 @@ class MLPredictor:
         best_action = actions[best_action_idx]
         confidence = probs[best_action_idx]
 
-        logger.info(
-            f"ML Signal for {symbol}: {best_action} ({confidence:.2f}), Value: {value:.2f}"
-        )
+        logger.info(f"ML Signal for {symbol}: {best_action} ({confidence:.2f}), Value: {value:.2f}")
 
         return {
             "action": best_action,

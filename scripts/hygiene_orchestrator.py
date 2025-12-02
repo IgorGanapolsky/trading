@@ -4,14 +4,13 @@ Autonomous Hygiene Orchestrator
 Automatically cleans up garbage, organizes repository, and maintains code quality
 """
 
+import argparse
+import json
 import os
 import sys
-import json
-import shutil
-import argparse
-from pathlib import Path
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
+from pathlib import Path
+from typing import Any
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -28,14 +27,12 @@ class HygieneOrchestrator:
         """Initialize hygiene orchestrator"""
         self.dry_run = dry_run
         self.project_root = Path(__file__).parent.parent
-        self.garbage_cache_dir = (
-            self.project_root / ".claude" / "cache" / "garbage-detection"
-        )
+        self.garbage_cache_dir = self.project_root / ".claude" / "cache" / "garbage-detection"
         self.reports_dir = self.project_root / ".claude" / "reports"
         self.logs_dir = self.project_root / "logs"
         self.data_cache_dir = self.project_root / "data" / "cache"
 
-    def cleanup_garbage_detection_cache(self, max_age_days: int = 7) -> Dict[str, Any]:
+    def cleanup_garbage_detection_cache(self, max_age_days: int = 7) -> dict[str, Any]:
         """
         Clean up old garbage detection cache files
 
@@ -95,7 +92,7 @@ class HygieneOrchestrator:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def cleanup_old_reports(self, max_age_days: int = 30) -> Dict[str, Any]:
+    def cleanup_old_reports(self, max_age_days: int = 30) -> dict[str, Any]:
         """
         Clean up old hygiene reports
 
@@ -131,7 +128,7 @@ class HygieneOrchestrator:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def cleanup_old_logs(self, max_age_days: int = 7) -> Dict[str, Any]:
+    def cleanup_old_logs(self, max_age_days: int = 7) -> dict[str, Any]:
         """
         Clean up old log files
 
@@ -172,7 +169,7 @@ class HygieneOrchestrator:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def cleanup_old_cache_files(self, max_age_days: int = 3) -> Dict[str, Any]:
+    def cleanup_old_cache_files(self, max_age_days: int = 3) -> dict[str, Any]:
         """
         Clean up old data cache files
 
@@ -214,7 +211,7 @@ class HygieneOrchestrator:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def run_all_cleanup(self) -> Dict[str, Any]:
+    def run_all_cleanup(self) -> dict[str, Any]:
         """
         Run all cleanup operations
 
@@ -228,22 +225,18 @@ class HygieneOrchestrator:
         }
 
         # Cleanup garbage detection cache
-        results["cleanup_results"]["garbage_cache"] = (
-            self.cleanup_garbage_detection_cache(max_age_days=7)
+        results["cleanup_results"]["garbage_cache"] = self.cleanup_garbage_detection_cache(
+            max_age_days=7
         )
 
         # Cleanup old reports
-        results["cleanup_results"]["reports"] = self.cleanup_old_reports(
-            max_age_days=30
-        )
+        results["cleanup_results"]["reports"] = self.cleanup_old_reports(max_age_days=30)
 
         # Cleanup old logs
         results["cleanup_results"]["logs"] = self.cleanup_old_logs(max_age_days=7)
 
         # Cleanup old cache files
-        results["cleanup_results"]["data_cache"] = self.cleanup_old_cache_files(
-            max_age_days=3
-        )
+        results["cleanup_results"]["data_cache"] = self.cleanup_old_cache_files(max_age_days=3)
 
         # Calculate totals
         total_files = sum(
@@ -264,7 +257,7 @@ class HygieneOrchestrator:
 
         return results
 
-    def check_repository_hygiene(self) -> Dict[str, Any]:
+    def check_repository_hygiene(self) -> dict[str, Any]:
         """
         Check repository hygiene status
 
@@ -272,20 +265,14 @@ class HygieneOrchestrator:
             Dict with hygiene status
         """
         try:
-            issues = []
-
             # Check for large files
             large_files = []
             for file_path in self.project_root.rglob("*"):
-                if (
-                    file_path.is_file() and file_path.stat().st_size > 10 * 1024 * 1024
-                ):  # 10MB
+                if file_path.is_file() and file_path.stat().st_size > 10 * 1024 * 1024:  # 10MB
                     large_files.append(
                         {
                             "path": str(file_path.relative_to(self.project_root)),
-                            "size_mb": round(
-                                file_path.stat().st_size / (1024 * 1024), 2
-                            ),
+                            "size_mb": round(file_path.stat().st_size / (1024 * 1024), 2),
                         }
                     )
 
@@ -305,9 +292,7 @@ class HygieneOrchestrator:
                 "success": True,
                 "hygiene_status": {
                     "large_files": large_files[:10],  # Limit to first 10
-                    "garbage_cache_size_mb": round(
-                        garbage_cache_size / (1024 * 1024), 2
-                    ),
+                    "garbage_cache_size_mb": round(garbage_cache_size / (1024 * 1024), 2),
                     "pycache_dirs_count": len(pycache_dirs),
                     "issues_found": len(large_files)
                     + (1 if garbage_cache_size > 100 * 1024 * 1024 else 0),
@@ -326,24 +311,16 @@ class HygieneOrchestrator:
 def main():
     """CLI interface for hygiene orchestrator"""
     parser = argparse.ArgumentParser(description="Autonomous Hygiene Orchestrator")
-    parser.add_argument(
-        "--dry-run", action="store_true", help="Preview changes without applying"
-    )
-    parser.add_argument(
-        "--check-only", action="store_true", help="Only check hygiene status"
-    )
+    parser.add_argument("--dry-run", action="store_true", help="Preview changes without applying")
+    parser.add_argument("--check-only", action="store_true", help="Only check hygiene status")
     parser.add_argument(
         "--cleanup-garbage",
         action="store_true",
         help="Clean up garbage detection cache",
     )
-    parser.add_argument(
-        "--cleanup-reports", action="store_true", help="Clean up old reports"
-    )
+    parser.add_argument("--cleanup-reports", action="store_true", help="Clean up old reports")
     parser.add_argument("--cleanup-logs", action="store_true", help="Clean up old logs")
-    parser.add_argument(
-        "--cleanup-cache", action="store_true", help="Clean up data cache"
-    )
+    parser.add_argument("--cleanup-cache", action="store_true", help="Clean up data cache")
     parser.add_argument("--all", action="store_true", help="Run all cleanup operations")
 
     args = parser.parse_args()

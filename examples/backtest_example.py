@@ -9,15 +9,15 @@ Usage:
     python examples/backtest_example.py
 """
 
-import sys
 import logging
+import sys
 from datetime import datetime, timedelta
 
 # Add parent directory to path
 sys.path.insert(0, "/Users/igorganapolsky/workspace/git/apps/trading")
 
-from src.strategies.core_strategy import CoreStrategy
 from src.backtesting.backtest_engine import BacktestEngine
+from src.strategies.core_strategy import CoreStrategy
 
 
 def run_backtest(

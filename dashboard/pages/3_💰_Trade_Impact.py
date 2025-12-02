@@ -2,20 +2,20 @@
 Trade Impact Page - Performance comparison with vs without sentiment analysis.
 """
 
-import streamlit as st
 import json
-import pandas as pd
-import numpy as np
-from pathlib import Path
-from datetime import datetime
 import sys
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import streamlit as st
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from dashboard.utils.chart_builders import (
+    COLORS,
     create_performance_comparison_table,
     create_roi_attribution_waterfall,
-    COLORS,
 )
 
 st.set_page_config(page_title="Trade Impact", page_icon="💰", layout="wide")
@@ -76,9 +76,7 @@ def calculate_performance_metrics(trades: list, with_sentiment: bool = True):
 
     # Calculate Sharpe ratio (simplified)
     if returns and len(returns) > 1:
-        sharpe_ratio = (
-            (np.mean(returns) / np.std(returns)) if np.std(returns) != 0 else 0
-        )
+        sharpe_ratio = (np.mean(returns) / np.std(returns)) if np.std(returns) != 0 else 0
     else:
         sharpe_ratio = 0
 
@@ -96,7 +94,7 @@ def main():
     data_dir = project_root / "data"
 
     # Load data
-    trades = load_trade_data(data_dir)
+    load_trade_data(data_dir)
     system_state = load_system_state(data_dir)
 
     if not system_state:
@@ -105,9 +103,9 @@ def main():
 
     st.markdown(
         f"""
-        <div style='background: {COLORS['grid']}; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem;'>
-            <h3 style='color: {COLORS['text']}; margin-top: 0;'>Impact Analysis Overview</h3>
-            <p style='color: {COLORS['secondary']}; margin-bottom: 0;'>
+        <div style='background: {COLORS["grid"]}; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem;'>
+            <h3 style='color: {COLORS["text"]}; margin-top: 0;'>Impact Analysis Overview</h3>
+            <p style='color: {COLORS["secondary"]}; margin-bottom: 0;'>
                 This page compares trading performance with sentiment-driven decisions versus baseline strategies.
                 As the system evolves, sentiment integration will show measurable ROI improvements.
             </p>
@@ -133,7 +131,7 @@ def main():
 
     with col3:
         total_pl = system_state.get("account", {}).get("total_pl", 0)
-        pl_color = COLORS["bullish"] if total_pl > 0 else COLORS["bearish"]
+        COLORS["bullish"] if total_pl > 0 else COLORS["bearish"]
         st.metric("Total P/L", f"${total_pl:.2f}")
 
     with col4:
@@ -147,7 +145,7 @@ def main():
 
     st.markdown(
         f"""
-        <div style='background: {COLORS['neutral']}20; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid {COLORS['neutral']}'>
+        <div style='background: {COLORS["neutral"]}20; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid {COLORS["neutral"]}'>
             <strong>⚠️ Note:</strong> Sentiment integration is currently in development.
             Below shows projected improvements once fully implemented.
         </div>
@@ -196,8 +194,8 @@ def main():
 
     st.markdown(
         f"""
-        <div style='background: {COLORS['grid']}; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;'>
-            <p style='color: {COLORS['text']}; margin: 0;'>
+        <div style='background: {COLORS["grid"]}; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;'>
+            <p style='color: {COLORS["text"]}; margin: 0;'>
                 <strong>Attribution Breakdown:</strong> Shows how different factors contribute to overall ROI.
                 Sentiment analysis is expected to add significant alpha once integrated.
             </p>
@@ -226,8 +224,8 @@ def main():
 
     st.markdown(
         f"""
-        <div style='background: {COLORS['grid']}; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;'>
-            <p style='color: {COLORS['text']}; margin: 0;'>
+        <div style='background: {COLORS["grid"]}; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;'>
+            <p style='color: {COLORS["text"]}; margin: 0;'>
                 Once sentiment integration is active, this section will show specific trades
                 that were influenced by sentiment signals and their outcomes.
             </p>
@@ -266,9 +264,9 @@ def main():
     with col1:
         st.markdown(
             f"""
-            <div style='background: {COLORS['bullish']}20; padding: 1.5rem; border-radius: 10px; border-left: 5px solid {COLORS['bullish']}'>
-                <h4 style='color: {COLORS['bullish']}; margin-top: 0;'>Phase 1: Data Collection ✅</h4>
-                <ul style='color: {COLORS['text']}; margin-bottom: 0;'>
+            <div style='background: {COLORS["bullish"]}20; padding: 1.5rem; border-radius: 10px; border-left: 5px solid {COLORS["bullish"]}'>
+                <h4 style='color: {COLORS["bullish"]}; margin-top: 0;'>Phase 1: Data Collection ✅</h4>
+                <ul style='color: {COLORS["text"]}; margin-bottom: 0;'>
                     <li>Reddit sentiment scraping</li>
                     <li>News sentiment analysis</li>
                     <li>Data storage pipeline</li>
@@ -282,9 +280,9 @@ def main():
     with col2:
         st.markdown(
             f"""
-            <div style='background: {COLORS['neutral']}20; padding: 1.5rem; border-radius: 10px; border-left: 5px solid {COLORS['neutral']}'>
-                <h4 style='color: {COLORS['neutral']}; margin-top: 0;'>Phase 2: Integration 🔄</h4>
-                <ul style='color: {COLORS['text']}; margin-bottom: 0;'>
+            <div style='background: {COLORS["neutral"]}20; padding: 1.5rem; border-radius: 10px; border-left: 5px solid {COLORS["neutral"]}'>
+                <h4 style='color: {COLORS["neutral"]}; margin-top: 0;'>Phase 2: Integration 🔄</h4>
+                <ul style='color: {COLORS["text"]}; margin-bottom: 0;'>
                     <li>Connect to trading engine</li>
                     <li>Sentiment-based filters</li>
                     <li>Position sizing adjustments</li>
@@ -298,9 +296,9 @@ def main():
     with col3:
         st.markdown(
             f"""
-            <div style='background: {COLORS['secondary']}40; padding: 1.5rem; border-radius: 10px; border-left: 5px solid {COLORS['secondary']}'>
-                <h4 style='color: {COLORS['text']}; margin-top: 0;'>Phase 3: Optimization ⏳</h4>
-                <ul style='color: {COLORS['text']}; margin-bottom: 0;'>
+            <div style='background: {COLORS["secondary"]}40; padding: 1.5rem; border-radius: 10px; border-left: 5px solid {COLORS["secondary"]}'>
+                <h4 style='color: {COLORS["text"]}; margin-top: 0;'>Phase 3: Optimization ⏳</h4>
+                <ul style='color: {COLORS["text"]}; margin-bottom: 0;'>
                     <li>ML-based sentiment weighting</li>
                     <li>Real-time signal generation</li>
                     <li>Multi-source aggregation</li>
@@ -337,11 +335,11 @@ def main():
     for insight in insights:
         st.markdown(
             f"""
-            <div style='background: {COLORS['grid']}; padding: 1.2rem; border-radius: 8px; margin-bottom: 1rem;'>
-                <h4 style='color: {COLORS['bullish']}; margin-top: 0;'>✨ {insight['title']}</h4>
-                <p style='color: {COLORS['text']}; margin-bottom: 0.5rem;'>{insight['description']}</p>
-                <p style='color: {COLORS['secondary']}; margin-bottom: 0; font-size: 0.9rem;'>
-                    <strong>Impact:</strong> {insight['impact']}
+            <div style='background: {COLORS["grid"]}; padding: 1.2rem; border-radius: 8px; margin-bottom: 1rem;'>
+                <h4 style='color: {COLORS["bullish"]}; margin-top: 0;'>✨ {insight["title"]}</h4>
+                <p style='color: {COLORS["text"]}; margin-bottom: 0.5rem;'>{insight["description"]}</p>
+                <p style='color: {COLORS["secondary"]}; margin-bottom: 0; font-size: 0.9rem;'>
+                    <strong>Impact:</strong> {insight["impact"]}
                 </p>
             </div>
         """,
@@ -354,7 +352,7 @@ if __name__ == "__main__":
         f"""
         <style>
         .stApp {{
-            background-color: {COLORS['background']};
+            background-color: {COLORS["background"]};
         }}
         </style>
     """,

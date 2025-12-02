@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 import pytest
-
 from src.orchestration.adk_integration import (
     ADKDecision,
     ADKTradeAdapter,
@@ -12,28 +11,26 @@ from src.orchestration.adk_integration import (
 
 
 class DummyClient:
-    def __init__(self, responses: Dict[str, Dict[str, Any]]) -> None:
+    def __init__(self, responses: dict[str, dict[str, Any]]) -> None:
         self.responses = responses
-        self.calls: List[str] = []
+        self.calls: list[str] = []
 
     def run_structured(
-        self, *, symbol: str, context: Dict[str, Any], require_json: bool
-    ) -> Dict[str, Any]:
+        self, *, symbol: str, context: dict[str, Any], require_json: bool
+    ) -> dict[str, Any]:
         self.calls.append(symbol)
         return self.responses.get(symbol, {})
 
 
 class DummyStore:
-    def __init__(self, rows: List[Dict[str, Any]]) -> None:
+    def __init__(self, rows: list[dict[str, Any]]) -> None:
         self._rows = rows
 
     def fetch_latest_by_ticker(self, ticker: str, limit: int = 10):
         return self._rows
 
 
-def _decision_payload(
-    action: str, confidence: float, position_size: float = 0.0
-) -> Dict[str, Any]:
+def _decision_payload(action: str, confidence: float, position_size: float = 0.0) -> dict[str, Any]:
     return {
         "trade_summary": {
             "action": action,

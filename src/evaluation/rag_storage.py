@@ -5,13 +5,11 @@ Stores evaluation results in ChromaDB for semantic search and pattern detection.
 FREE - Uses existing ChromaDB infrastructure.
 """
 
-
 import logging
-from typing import Dict, List, Any
-from datetime import datetime
-
-import sys
 import os
+import sys
+from datetime import datetime
+from typing import Any
 
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
@@ -52,9 +50,7 @@ class EvaluationRAGStorage:
             logger.error(f"Failed to initialize RAG storage: {e}")
             self.enabled = False
 
-    def store_evaluation(
-        self, evaluation: Dict[str, Any], trade_result: Dict[str, Any]
-    ) -> bool:
+    def store_evaluation(self, evaluation: dict[str, Any], trade_result: dict[str, Any]) -> bool:
         """
         Store evaluation result in RAG system.
 
@@ -87,9 +83,7 @@ class EvaluationRAGStorage:
             doc_id = f"eval_{evaluation.get('trade_id', 'unknown')}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
             # Store in ChromaDB
-            result = self.db.add_documents(
-                documents=[doc_text], metadatas=[metadata], ids=[doc_id]
-            )
+            result = self.db.add_documents(documents=[doc_text], metadatas=[metadata], ids=[doc_id])
 
             logger.info(f"Stored evaluation {doc_id} in RAG system")
             return result.get("status") == "success"
@@ -99,7 +93,7 @@ class EvaluationRAGStorage:
             return False
 
     def _create_document_text(
-        self, evaluation: Dict[str, Any], trade_result: Dict[str, Any]
+        self, evaluation: dict[str, Any], trade_result: dict[str, Any]
     ) -> str:
         """Create searchable text from evaluation."""
         lines = []
@@ -135,9 +129,7 @@ class EvaluationRAGStorage:
 
         return "\n".join(lines)
 
-    def query_similar_evaluations(
-        self, query: str, n_results: int = 5
-    ) -> List[Dict[str, Any]]:
+    def query_similar_evaluations(self, query: str, n_results: int = 5) -> list[dict[str, Any]]:
         """
         Query similar evaluations using semantic search.
 

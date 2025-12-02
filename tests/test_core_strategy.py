@@ -4,12 +4,11 @@ Unit tests for core trading strategy.
 Tests strategy logic, signal generation, and risk management integration.
 """
 
-import pytest
-
-
 # Import strategy classes
 import sys
 from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 

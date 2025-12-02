@@ -10,7 +10,6 @@ Examples:
 import argparse
 import logging
 import sys
-from typing import Optional
 
 sys.path.append(".")
 

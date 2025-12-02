@@ -19,19 +19,20 @@ Created: 2025-11-02
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
-import pandas as pd
+from typing import Any, Optional
+
 import numpy as np
+import pandas as pd
 import yfinance as yf
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
-
 from src.backtesting.backtest_results import BacktestResults
 
 # Import slippage model for realistic execution costs
 try:
     from src.risk.slippage_model import SlippageModel, SlippageModelType
+
     SLIPPAGE_AVAILABLE = True
 except ImportError:
     SLIPPAGE_AVAILABLE = False
@@ -104,16 +105,16 @@ class BacktestEngine:
         self.portfolio_value = initial_capital
 
         # Portfolio state
-        self.positions: Dict[str, float] = {}
-        self.position_costs: Dict[str, float] = {}  # Track cost basis
+        self.positions: dict[str, float] = {}
+        self.position_costs: dict[str, float] = {}  # Track cost basis
 
         # Performance tracking
-        self.trades: List[Dict[str, Any]] = []
-        self.equity_curve: List[float] = [initial_capital]
-        self.dates: List[str] = [start_date]
+        self.trades: list[dict[str, Any]] = []
+        self.equity_curve: list[float] = [initial_capital]
+        self.dates: list[str] = [start_date]
 
         # Price cache for efficiency
-        self.price_cache: Dict[str, pd.DataFrame] = {}
+        self.price_cache: dict[str, pd.DataFrame] = {}
 
         # Slippage model for realistic execution costs
         self.enable_slippage = enable_slippage and SLIPPAGE_AVAILABLE
@@ -185,8 +186,7 @@ class BacktestEngine:
             logger.info("=" * 80)
             logger.info(f"Total Trades: {results.total_trades}")
             logger.info(
-                f"Final Capital: ${results.final_capital:,.2f} "
-                f"({results.total_return:+.2f}%)"
+                f"Final Capital: ${results.final_capital:,.2f} ({results.total_return:+.2f}%)"
             )
             logger.info(f"Sharpe Ratio: {results.sharpe_ratio:.2f}")
             logger.info(f"Max Drawdown: {results.max_drawdown:.2f}%")
@@ -275,9 +275,7 @@ class BacktestEngine:
                 )
             # yfinance handler populates cache internally
 
-    def _load_with_yfinance(
-        self, symbol: str, start: datetime, end: datetime
-    ) -> bool:
+    def _load_with_yfinance(self, symbol: str, start: datetime, end: datetime) -> bool:
         """
         Load historical bars using yfinance when Alpaca data is unavailable.
         """
@@ -305,15 +303,13 @@ class BacktestEngine:
             )
             history.index = pd.to_datetime(history.index)
             self.price_cache[symbol] = history
-            logger.info(
-                "Loaded %s bars for %s from yfinance fallback", len(history), symbol
-            )
+            logger.info("Loaded %s bars for %s from yfinance fallback", len(history), symbol)
             return True
         except Exception as exc:
             logger.warning("yfinance fallback failed for %s: %s", symbol, exc)
             return False
 
-    def _get_trading_dates(self) -> List[datetime]:
+    def _get_trading_dates(self) -> list[datetime]:
         """
         Generate list of trading dates (weekdays only) in the backtest period.
 
@@ -417,9 +413,7 @@ class BacktestEngine:
                         self.dates.append(date_str)
                         return
                 except Exception as e:
-                    logger.warning(
-                        f"{date_str}: VCA calculation failed, using base: {e}"
-                    )
+                    logger.warning(f"{date_str}: VCA calculation failed, using base: {e}")
                     effective_allocation = daily_allocation
 
             # Execute trade if we have capital
@@ -481,9 +475,7 @@ class BacktestEngine:
                         f"(base: ${price:.2f}, slippage: ${slippage_cost:.4f})"
                     )
                 else:
-                    logger.debug(
-                        f"{date_str}: BUY {quantity:.4f} {best_etf} @ ${price:.2f}"
-                    )
+                    logger.debug(f"{date_str}: BUY {quantity:.4f} {best_etf} @ ${price:.2f}")
 
         except Exception as e:
             logger.debug(f"Error simulating {date_str}: {e}")
@@ -493,9 +485,7 @@ class BacktestEngine:
         self.equity_curve.append(self.portfolio_value)
         self.dates.append(date_str)
 
-    def _get_historical_data(
-        self, symbol: str, date: datetime
-    ) -> Optional[pd.DataFrame]:
+    def _get_historical_data(self, symbol: str, date: datetime) -> Optional[pd.DataFrame]:
         """
         Get historical data for a symbol up to a specific date.
 
@@ -522,9 +512,7 @@ class BacktestEngine:
 
         return hist_filtered if len(hist_filtered) > 0 else None
 
-    def _calculate_momentum_for_date(
-        self, symbol: str, date: datetime
-    ) -> Optional[float]:
+    def _calculate_momentum_for_date(self, symbol: str, date: datetime) -> Optional[float]:
         """
         Calculate momentum score for a symbol at a specific date.
 
@@ -618,9 +606,7 @@ class BacktestEngine:
         """
         # Basic metrics
         final_capital = self.portfolio_value
-        total_return = (
-            (final_capital - self.initial_capital) / self.initial_capital * 100
-        )
+        total_return = (final_capital - self.initial_capital) / self.initial_capital * 100
 
         # Calculate daily returns for Sharpe ratio
         daily_returns = np.diff(self.equity_curve) / self.equity_curve[:-1]
@@ -646,11 +632,7 @@ class BacktestEngine:
 
         # Win rate
         positive_days = np.sum(daily_returns > 0)
-        win_rate = (
-            (positive_days / len(daily_returns) * 100)
-            if len(daily_returns) > 0
-            else 0.0
-        )
+        win_rate = (positive_days / len(daily_returns) * 100) if len(daily_returns) > 0 else 0.0
 
         # Trade statistics
         total_trades = len(self.trades)
@@ -665,9 +647,7 @@ class BacktestEngine:
             if final_price and final_price > buy_price:
                 profitable_trades += 1
 
-        average_trade_return = (
-            (total_return / total_trades) if total_trades > 0 else 0.0
-        )
+        average_trade_return = (total_return / total_trades) if total_trades > 0 else 0.0
 
         results = BacktestResults(
             trades=self.trades,
@@ -694,8 +674,7 @@ class BacktestEngine:
             pnl = final_capital - self.initial_capital
             slippage_pct = (self.total_slippage_cost / pnl * 100) if pnl > 0 else 0
             logger.info(
-                f"Total Slippage Cost: ${self.total_slippage_cost:.2f} "
-                f"({slippage_pct:.1f}% of P&L)"
+                f"Total Slippage Cost: ${self.total_slippage_cost:.2f} ({slippage_pct:.1f}% of P&L)"
             )
 
         return results

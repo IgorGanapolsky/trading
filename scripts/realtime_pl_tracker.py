@@ -2,11 +2,13 @@
 """
 Real-time P/L Tracker - Updates every few minutes during market hours
 """
+
+import json
 import os
 import time
-import json
-from datetime import datetime, time as dt_time
+from datetime import datetime
 from pathlib import Path
+
 import alpaca_trade_api as tradeapi
 
 DATA_DIR = Path("data")
@@ -131,9 +133,7 @@ def main():
                     print(f"  Positions: {len(entry['positions'])}")
                     print()
             else:
-                print(
-                    f"[{datetime.now().strftime('%H:%M:%S')}] Market closed - waiting..."
-                )
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] Market closed - waiting...")
 
             time.sleep(update_interval)
 

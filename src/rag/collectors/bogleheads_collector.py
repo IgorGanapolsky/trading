@@ -7,11 +7,11 @@ Respects robots.txt and rate limits.
 
 import logging
 import time
-import requests
-from typing import List, Dict, Any
-from bs4 import BeautifulSoup
 from datetime import datetime
+from typing import Any
 
+import requests
+from bs4 import BeautifulSoup
 from src.rag.collectors.base_collector import BaseNewsCollector
 
 logger = logging.getLogger(__name__)
@@ -37,13 +37,11 @@ class BogleheadsCollector(BaseNewsCollector):
             "User-Agent": "Mozilla/5.0 (compatible; TradingBotResearch/1.0; +http://example.com/bot)"
         }
 
-    def collect_ticker_news(
-        self, ticker: str, days_back: int = 7
-    ) -> List[Dict[str, Any]]:
+    def collect_ticker_news(self, ticker: str, days_back: int = 7) -> list[dict[str, Any]]:
         """Bogleheads is forum-centric, hard to filter by ticker reliably."""
         return []
 
-    def collect_market_news(self, days_back: int = 1) -> List[Dict[str, Any]]:
+    def collect_market_news(self, days_back: int = 1) -> list[dict[str, Any]]:
         """
         Collect recent forum topics.
 
@@ -60,9 +58,7 @@ class BogleheadsCollector(BaseNewsCollector):
             try:
                 response = requests.get(url, headers=self.headers)
                 if response.status_code != 200:
-                    logger.error(
-                        f"Failed to fetch Bogleheads forum: {response.status_code}"
-                    )
+                    logger.error(f"Failed to fetch Bogleheads forum: {response.status_code}")
                     continue
 
                 soup = BeautifulSoup(response.text, "html.parser")
@@ -114,6 +110,6 @@ class BogleheadsCollector(BaseNewsCollector):
         logger.info(f"Collected {len(results)} topics from Bogleheads")
         return results
 
-    def collect_daily_snapshot(self) -> List[Dict[str, Any]]:
+    def collect_daily_snapshot(self) -> list[dict[str, Any]]:
         """Collect snapshot of current forum discussions."""
         return self.collect_market_news(days_back=1)

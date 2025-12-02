@@ -11,7 +11,6 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from agent_framework import AgentConfig, RunContext, RunMode
 from src.agents.data_agent import DataAgent
 from src.deepagents_integration.bridge import (
     create_deepagents_research_agent,
@@ -19,6 +18,8 @@ from src.deepagents_integration.bridge import (
 )
 from src.orchestrator.main import OrchestratorConfig, TradingOrchestrator
 from src.orchestrator.state import FileStateProvider
+
+from agent_framework import AgentConfig, RunContext, RunMode
 
 logging.basicConfig(
     level=logging.INFO,
@@ -101,9 +102,7 @@ def example_run_with_deepagents():
 
         if result.succeeded and result.payload:
             if "analysis" in result.payload:
-                logger.info(
-                    f"  Analysis preview: {result.payload['analysis'][:200]}..."
-                )
+                logger.info(f"  Analysis preview: {result.payload['analysis'][:200]}...")
         elif result.error:
             logger.error(f"  Error: {result.error}")
 

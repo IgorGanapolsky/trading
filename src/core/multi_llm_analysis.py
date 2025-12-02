@@ -26,7 +26,7 @@ import os
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from openai import AsyncOpenAI, OpenAI
 
@@ -62,8 +62,8 @@ class SentimentAnalysis:
     score: float  # -1.0 to 1.0
     confidence: float  # 0.0 to 1.0
     reasoning: str
-    individual_scores: Dict[str, float]
-    metadata: Dict[str, Any]
+    individual_scores: dict[str, float]
+    metadata: dict[str, Any]
 
 
 @dataclass
@@ -73,11 +73,11 @@ class IPOAnalysis:
     score: int  # 0-100
     recommendation: str  # "Strong Buy", "Buy", "Hold", "Avoid"
     risk_level: str  # "Low", "Medium", "High"
-    key_factors: List[str]
-    concerns: List[str]
+    key_factors: list[str]
+    concerns: list[str]
     price_target: Optional[float]
     confidence: float
-    individual_analyses: Dict[str, Dict[str, Any]]
+    individual_analyses: dict[str, dict[str, Any]]
 
 
 @dataclass
@@ -89,7 +89,7 @@ class StockAnalysis:
     recommendation: str
     target_price: Optional[float]
     risk_assessment: str
-    key_insights: List[str]
+    key_insights: list[str]
     confidence: float
     timestamp: float
 
@@ -100,9 +100,9 @@ class MarketOutlook:
 
     overall_sentiment: float
     trend: str  # "Bullish", "Bearish", "Neutral"
-    key_drivers: List[str]
-    risks: List[str]
-    opportunities: List[str]
+    key_drivers: list[str]
+    risks: list[str]
+    opportunities: list[str]
     timeframe: str
     confidence: float
 
@@ -125,7 +125,7 @@ class MultiLLMAnalyzer:
     def __init__(
         self,
         api_key: Optional[str] = None,
-        models: Optional[List[LLMModel]] = None,
+        models: Optional[list[LLMModel]] = None,
         max_retries: int = 3,
         timeout: int = 60,
         rate_limit_delay: float = 0.5,
@@ -164,8 +164,8 @@ class MultiLLMAnalyzer:
         # Use LangSmith wrapper if available
         try:
             from src.utils.langsmith_wrapper import (
-                get_traced_openai_client,
                 get_traced_async_openai_client,
+                get_traced_openai_client,
             )
 
             if use_async:
@@ -173,23 +173,15 @@ class MultiLLMAnalyzer:
                     api_key=self.api_key, base_url=base_url
                 )
             else:
-                self.sync_client = get_traced_openai_client(
-                    api_key=self.api_key, base_url=base_url
-                )
+                self.sync_client = get_traced_openai_client(api_key=self.api_key, base_url=base_url)
         except ImportError:
             # Fallback to regular client if wrapper not available
             if use_async:
-                self.client = AsyncOpenAI(
-                    api_key=self.api_key, base_url=base_url, timeout=timeout
-                )
+                self.client = AsyncOpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
             else:
-                self.sync_client = OpenAI(
-                    api_key=self.api_key, base_url=base_url, timeout=timeout
-                )
+                self.sync_client = OpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
 
-        logger.info(
-            f"Initialized MultiLLMAnalyzer with models: {[m.value for m in self.models]}"
-        )
+        logger.info(f"Initialized MultiLLMAnalyzer with models: {[m.value for m in self.models]}")
 
     async def _query_llm_async(
         self,
@@ -325,7 +317,7 @@ class MultiLLMAnalyzer:
         system_prompt: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
-    ) -> List[LLMResponse]:
+    ) -> list[LLMResponse]:
         """
         Query all configured LLMs in parallel.
 
@@ -371,13 +363,11 @@ class MultiLLMAnalyzer:
         system_prompt: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
-    ) -> List[LLMResponse]:
+    ) -> list[LLMResponse]:
         """Synchronous version of _query_all_llms_async."""
         responses = []
         for model in self.models:
-            response = self._query_llm_sync(
-                model, prompt, system_prompt, temperature, max_tokens
-            )
+            response = self._query_llm_sync(model, prompt, system_prompt, temperature, max_tokens)
             responses.append(response)
             time.sleep(self.rate_limit_delay)
         return responses
@@ -466,8 +456,8 @@ class MultiLLMAnalyzer:
             return None
 
     def _calculate_ensemble_sentiment(
-        self, responses: List[LLMResponse]
-    ) -> Tuple[float, float, Dict[str, float]]:
+        self, responses: list[LLMResponse]
+    ) -> tuple[float, float, dict[str, float]]:
         """
         Calculate ensemble sentiment from multiple LLM responses.
 
@@ -496,9 +486,7 @@ class MultiLLMAnalyzer:
 
         # Calculate confidence based on agreement
         if len(valid_scores) > 1:
-            variance = sum((s - ensemble_score) ** 2 for s in valid_scores) / len(
-                valid_scores
-            )
+            variance = sum((s - ensemble_score) ** 2 for s in valid_scores) / len(valid_scores)
             # Confidence inversely proportional to variance
             confidence = max(0.0, min(1.0, 1.0 - variance))
         else:
@@ -507,8 +495,8 @@ class MultiLLMAnalyzer:
         return ensemble_score, confidence, individual_scores
 
     def _calculate_ensemble_ipo_score(
-        self, responses: List[LLMResponse]
-    ) -> Tuple[int, float, Dict[str, int]]:
+        self, responses: list[LLMResponse]
+    ) -> tuple[int, float, dict[str, int]]:
         """
         Calculate ensemble IPO score from multiple LLM responses.
 
@@ -537,9 +525,7 @@ class MultiLLMAnalyzer:
 
         # Calculate confidence based on agreement
         if len(valid_scores) > 1:
-            variance = sum((s - ensemble_score) ** 2 for s in valid_scores) / len(
-                valid_scores
-            )
+            variance = sum((s - ensemble_score) ** 2 for s in valid_scores) / len(valid_scores)
             # Normalize variance to 0-1 range (max variance is 50^2 = 2500)
             confidence = max(0.0, min(1.0, 1.0 - variance / 2500))
         else:
@@ -548,7 +534,7 @@ class MultiLLMAnalyzer:
         return ensemble_score, confidence, individual_scores
 
     async def get_ensemble_sentiment(
-        self, market_data: Dict[str, Any], news: List[Dict[str, Any]]
+        self, market_data: dict[str, Any], news: list[dict[str, Any]]
     ) -> float:
         """
         Generate ensemble sentiment score from market data and news.
@@ -604,27 +590,21 @@ Format your response as JSON:
 Provide objective, data-driven sentiment scores based on technical indicators and news sentiment."""
 
         if self.use_async:
-            responses = await self._query_all_llms_async(
-                prompt, system_prompt, temperature=0.3
-            )
+            responses = await self._query_all_llms_async(prompt, system_prompt, temperature=0.3)
         else:
-            responses = self._query_all_llms_sync(
-                prompt, system_prompt, temperature=0.3
-            )
+            responses = self._query_all_llms_sync(prompt, system_prompt, temperature=0.3)
 
-        ensemble_score, confidence, individual_scores = (
-            self._calculate_ensemble_sentiment(responses)
+        ensemble_score, confidence, individual_scores = self._calculate_ensemble_sentiment(
+            responses
         )
 
-        logger.info(
-            f"Ensemble sentiment: {ensemble_score:.3f} (confidence: {confidence:.3f})"
-        )
+        logger.info(f"Ensemble sentiment: {ensemble_score:.3f} (confidence: {confidence:.3f})")
         logger.info(f"Individual scores: {individual_scores}")
 
         return ensemble_score
 
     async def get_ensemble_sentiment_detailed(
-        self, market_data: Dict[str, Any], news: List[Dict[str, Any]]
+        self, market_data: dict[str, Any], news: list[dict[str, Any]]
     ) -> SentimentAnalysis:
         """
         Generate detailed ensemble sentiment analysis.
@@ -665,16 +645,12 @@ Format your response as JSON:
 Provide objective, data-driven sentiment scores with detailed reasoning."""
 
         if self.use_async:
-            responses = await self._query_all_llms_async(
-                prompt, system_prompt, temperature=0.3
-            )
+            responses = await self._query_all_llms_async(prompt, system_prompt, temperature=0.3)
         else:
-            responses = self._query_all_llms_sync(
-                prompt, system_prompt, temperature=0.3
-            )
+            responses = self._query_all_llms_sync(prompt, system_prompt, temperature=0.3)
 
-        ensemble_score, confidence, individual_scores = (
-            self._calculate_ensemble_sentiment(responses)
+        ensemble_score, confidence, individual_scores = self._calculate_ensemble_sentiment(
+            responses
         )
 
         # Extract reasoning from successful responses
@@ -684,16 +660,12 @@ Provide objective, data-driven sentiment scores with detailed reasoning."""
                 try:
                     data = json.loads(response.content)
                     if "reasoning" in data:
-                        reasoning_parts.append(
-                            f"[{response.model}] {data['reasoning']}"
-                        )
+                        reasoning_parts.append(f"[{response.model}] {data['reasoning']}")
                 except Exception:  # noqa: BLE001
                     pass
 
         reasoning = (
-            "\n\n".join(reasoning_parts)
-            if reasoning_parts
-            else "No detailed reasoning available"
+            "\n\n".join(reasoning_parts) if reasoning_parts else "No detailed reasoning available"
         )
 
         return SentimentAnalysis(
@@ -708,7 +680,7 @@ Provide objective, data-driven sentiment scores with detailed reasoning."""
             },
         )
 
-    async def analyze_ipo(self, company_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def analyze_ipo(self, company_data: dict[str, Any]) -> dict[str, Any]:
         """
         Analyze an IPO opportunity and provide scoring.
 
@@ -770,16 +742,12 @@ Provide thorough, objective analysis considering market conditions, company fund
 valuation, competitive landscape, and risk factors."""
 
         if self.use_async:
-            responses = await self._query_all_llms_async(
-                prompt, system_prompt, temperature=0.3
-            )
+            responses = await self._query_all_llms_async(prompt, system_prompt, temperature=0.3)
         else:
-            responses = self._query_all_llms_sync(
-                prompt, system_prompt, temperature=0.3
-            )
+            responses = self._query_all_llms_sync(prompt, system_prompt, temperature=0.3)
 
-        ensemble_score, confidence, individual_scores = (
-            self._calculate_ensemble_ipo_score(responses)
+        ensemble_score, confidence, individual_scores = self._calculate_ensemble_ipo_score(
+            responses
         )
 
         # Aggregate recommendations and factors
@@ -807,9 +775,7 @@ valuation, competitive landscape, and risk factors."""
                     if "price_target" in data and data["price_target"]:
                         price_targets.append(data["price_target"])
                 except Exception as e:
-                    logger.warning(
-                        f"Error parsing IPO analysis from {response.model}: {str(e)}"
-                    )
+                    logger.warning(f"Error parsing IPO analysis from {response.model}: {str(e)}")
 
         # Determine ensemble recommendation based on score
         if ensemble_score >= 80:
@@ -825,14 +791,10 @@ valuation, competitive landscape, and risk factors."""
         risk_counts = {}
         for risk in all_risk_levels:
             risk_counts[risk] = risk_counts.get(risk, 0) + 1
-        risk_level = (
-            max(risk_counts.items(), key=lambda x: x[1])[0] if risk_counts else "Medium"
-        )
+        risk_level = max(risk_counts.items(), key=lambda x: x[1])[0] if risk_counts else "Medium"
 
         # Average price target
-        avg_price_target = (
-            sum(price_targets) / len(price_targets) if price_targets else None
-        )
+        avg_price_target = sum(price_targets) / len(price_targets) if price_targets else None
 
         return {
             "score": ensemble_score,
@@ -847,7 +809,7 @@ valuation, competitive landscape, and risk factors."""
             "timestamp": time.time(),
         }
 
-    async def analyze_stock(self, symbol: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def analyze_stock(self, symbol: str, data: dict[str, Any]) -> dict[str, Any]:
         """
         Analyze a stock and provide trading recommendations.
 
@@ -901,16 +863,12 @@ Format your response as JSON:
 fundamental analysis, and market sentiment. Provide objective, actionable recommendations."""
 
         if self.use_async:
-            responses = await self._query_all_llms_async(
-                prompt, system_prompt, temperature=0.3
-            )
+            responses = await self._query_all_llms_async(prompt, system_prompt, temperature=0.3)
         else:
-            responses = self._query_all_llms_sync(
-                prompt, system_prompt, temperature=0.3
-            )
+            responses = self._query_all_llms_sync(prompt, system_prompt, temperature=0.3)
 
-        ensemble_sentiment, confidence, individual_scores = (
-            self._calculate_ensemble_sentiment(responses)
+        ensemble_sentiment, confidence, individual_scores = self._calculate_ensemble_sentiment(
+            responses
         )
 
         # Aggregate results
@@ -953,7 +911,9 @@ fundamental analysis, and market sentiment. Provide objective, actionable recomm
             "risk_assessment": (
                 "High"
                 if abs(ensemble_sentiment) > 0.7
-                else "Medium" if abs(ensemble_sentiment) > 0.3 else "Low"
+                else "Medium"
+                if abs(ensemble_sentiment) > 0.3
+                else "Low"
             ),
             "key_insights": list(set(all_insights))[:10],
             "confidence": confidence,
@@ -961,7 +921,7 @@ fundamental analysis, and market sentiment. Provide objective, actionable recomm
             "timestamp": time.time(),
         }
 
-    async def get_market_outlook(self) -> Dict[str, Any]:
+    async def get_market_outlook(self) -> dict[str, Any]:
         """
         Generate overall market outlook and sentiment.
 
@@ -1005,16 +965,12 @@ Format your response as JSON:
 market trends, and investment strategy. Provide comprehensive, balanced market outlook."""
 
         if self.use_async:
-            responses = await self._query_all_llms_async(
-                prompt, system_prompt, temperature=0.5
-            )
+            responses = await self._query_all_llms_async(prompt, system_prompt, temperature=0.5)
         else:
-            responses = self._query_all_llms_sync(
-                prompt, system_prompt, temperature=0.5
-            )
+            responses = self._query_all_llms_sync(prompt, system_prompt, temperature=0.5)
 
-        ensemble_sentiment, confidence, individual_scores = (
-            self._calculate_ensemble_sentiment(responses)
+        ensemble_sentiment, confidence, individual_scores = self._calculate_ensemble_sentiment(
+            responses
         )
 
         # Aggregate insights
@@ -1072,11 +1028,11 @@ class CouncilResponse:
 
     final_answer: str
     confidence: float
-    individual_responses: Dict[str, str]
-    reviews: Dict[str, Dict[str, Any]]
-    rankings: Dict[str, List[str]]
+    individual_responses: dict[str, str]
+    reviews: dict[str, dict[str, Any]]
+    rankings: dict[str, list[str]]
     chairman_reasoning: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 class LLMCouncilAnalyzer:
@@ -1094,7 +1050,7 @@ class LLMCouncilAnalyzer:
     def __init__(
         self,
         api_key: Optional[str] = None,
-        council_models: Optional[List[LLMModel]] = None,
+        council_models: Optional[list[LLMModel]] = None,
         chairman_model: Optional[LLMModel] = None,
         max_retries: int = 3,
         timeout: int = 60,
@@ -1136,8 +1092,8 @@ class LLMCouncilAnalyzer:
         # Use LangSmith wrapper if available
         try:
             from src.utils.langsmith_wrapper import (
-                get_traced_openai_client,
                 get_traced_async_openai_client,
+                get_traced_openai_client,
             )
 
             if use_async:
@@ -1145,19 +1101,13 @@ class LLMCouncilAnalyzer:
                     api_key=self.api_key, base_url=base_url
                 )
             else:
-                self.sync_client = get_traced_openai_client(
-                    api_key=self.api_key, base_url=base_url
-                )
+                self.sync_client = get_traced_openai_client(api_key=self.api_key, base_url=base_url)
         except ImportError:
             # Fallback to regular client if wrapper not available
             if use_async:
-                self.client = AsyncOpenAI(
-                    api_key=self.api_key, base_url=base_url, timeout=timeout
-                )
+                self.client = AsyncOpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
             else:
-                self.sync_client = OpenAI(
-                    api_key=self.api_key, base_url=base_url, timeout=timeout
-                )
+                self.sync_client = OpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
 
         logger.info(
             f"Initialized LLMCouncilAnalyzer with council: {[m.value for m in self.council_models]}"
@@ -1224,7 +1174,7 @@ class LLMCouncilAnalyzer:
 
     async def _stage1_first_opinions(
         self, query: str, system_prompt: Optional[str] = None
-    ) -> Dict[str, LLMResponse]:
+    ) -> dict[str, LLMResponse]:
         """
         Stage 1: Get first opinions from all council members.
 
@@ -1272,8 +1222,8 @@ class LLMCouncilAnalyzer:
         return first_opinions
 
     async def _stage2_review(
-        self, first_opinions: Dict[str, LLMResponse], query: str
-    ) -> Dict[str, Dict[str, Any]]:
+        self, first_opinions: dict[str, LLMResponse], query: str
+    ) -> dict[str, dict[str, Any]]:
         """
         Stage 2: Each LLM reviews and ranks other responses (anonymized).
 
@@ -1310,10 +1260,7 @@ class LLMCouncilAnalyzer:
 
         # Build review prompt with anonymized responses
         responses_text = "\n\n".join(
-            [
-                f"Response {anon_id}:\n{content}"
-                for anon_id, content in anonymous_responses.items()
-            ]
+            [f"Response {anon_id}:\n{content}" for anon_id, content in anonymous_responses.items()]
         )
 
         review_prompt = f"""You are part of an LLM Council evaluating trading decisions.
@@ -1405,8 +1352,8 @@ Be honest and critical in your assessment."""
     async def _stage3_chairman(
         self,
         query: str,
-        first_opinions: Dict[str, LLMResponse],
-        reviews: Dict[str, Dict[str, Any]],
+        first_opinions: dict[str, LLMResponse],
+        reviews: dict[str, dict[str, Any]],
     ) -> str:
         """
         Stage 3: Chairman compiles final response from all inputs.
@@ -1486,8 +1433,8 @@ multiple expert opinions into a final, high-quality decision. Your role is to:
 
     def _fallback_response(
         self,
-        first_opinions: Dict[str, LLMResponse],
-        reviews: Dict[str, Dict[str, Any]],
+        first_opinions: dict[str, LLMResponse],
+        reviews: dict[str, dict[str, Any]],
     ) -> str:
         """Fallback: Use highest-ranked response if chairman fails."""
         # Simple fallback: use first successful response
@@ -1520,10 +1467,7 @@ multiple expert opinions into a final, high-quality decision. Your role is to:
 
         # Stage 2: Review (optional but recommended)
         reviews = {}
-        if (
-            include_reviews
-            and len([r for r in first_opinions.values() if r.success]) >= 2
-        ):
+        if include_reviews and len([r for r in first_opinions.values() if r.success]) >= 2:
             reviews = await self._stage2_review(first_opinions, query)
         else:
             logger.info("Skipping Stage 2 review (not enough responses or disabled)")
@@ -1534,9 +1478,7 @@ multiple expert opinions into a final, high-quality decision. Your role is to:
         # Calculate confidence based on agreement
         successful_responses = [r for r in first_opinions.values() if r.success]
         confidence = (
-            len(successful_responses) / len(self.council_models)
-            if self.council_models
-            else 0.0
+            len(successful_responses) / len(self.council_models) if self.council_models else 0.0
         )
 
         # Extract individual responses
@@ -1547,9 +1489,7 @@ multiple expert opinions into a final, high-quality decision. Your role is to:
         }
 
         # Extract rankings from reviews
-        rankings = {
-            reviewer: review.get("rankings", []) for reviewer, review in reviews.items()
-        }
+        rankings = {reviewer: review.get("rankings", []) for reviewer, review in reviews.items()}
 
         total_time = time.time() - start_time
 
@@ -1574,8 +1514,8 @@ multiple expert opinions into a final, high-quality decision. Your role is to:
     async def analyze_trading_decision(
         self,
         symbol: str,
-        market_data: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
+        market_data: dict[str, Any],
+        context: Optional[dict[str, Any]] = None,
     ) -> CouncilResponse:
         """
         Analyze a trading decision using the LLM Council.
@@ -1622,9 +1562,7 @@ trading recommendations based on technical analysis, market conditions, and risk
 
 
 # Convenience functions for synchronous usage
-def create_analyzer(
-    api_key: Optional[str] = None, use_async: bool = True
-) -> MultiLLMAnalyzer:
+def create_analyzer(api_key: Optional[str] = None, use_async: bool = True) -> MultiLLMAnalyzer:
     """
     Create a MultiLLMAnalyzer instance.
 

@@ -14,10 +14,12 @@ Components:
 - RiskMonitor: Real-time risk monitoring with alerts
 """
 
+import contextlib
+
 from src.risk.risk_manager import RiskManager
 
 # Import new risk components
-try:
+with contextlib.suppress(ImportError):
     from src.risk.slippage_model import (
         SlippageModel,
         SlippageModelType,
@@ -25,21 +27,17 @@ try:
         apply_slippage,
         get_default_slippage_model,
     )
-except ImportError:
-    pass
 
-try:
+with contextlib.suppress(ImportError):
     from src.risk.var_metrics import (
+        RiskAlert,
+        RiskMonitor,
         VaRCalculator,
         VaRMethod,
         VaRResult,
-        RiskMonitor,
-        RiskAlert,
         calculate_portfolio_var,
         get_risk_monitor,
     )
-except ImportError:
-    pass
 
 __all__ = [
     "RiskManager",

@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Optional
 
 try:  # Optional at runtime; tests will provide synthetic data
     import pandas as pd  # type: ignore
@@ -28,7 +27,7 @@ class RiskManager:
         self,
         max_position_pct: float = 0.05,
         min_notional: float = 3.0,
-        use_atr_scaling: Optional[bool] = None,
+        use_atr_scaling: bool | None = None,
         atr_period: int = 14,
     ) -> None:
         self.max_position_pct = max_position_pct
@@ -50,8 +49,8 @@ class RiskManager:
         rl_confidence: float,
         sentiment_score: float,
         multiplier: float = 1.0,
-        current_price: Optional[float] = None,
-        hist: Optional["pd.DataFrame"] = None,
+        current_price: float | None = None,
+        hist: pd.DataFrame | None = None,
     ) -> float:
         if account_equity <= 0:
             logger.warning("Account equity unknown; aborting trade.")
@@ -107,8 +106,8 @@ class RiskManager:
         ticker: str,
         entry_price: float,
         direction: str = "long",
-        atr_multiplier: Optional[float] = None,
-        hist: Optional["pd.DataFrame"] = None,
+        atr_multiplier: float | None = None,
+        hist: pd.DataFrame | None = None,
     ) -> float:
         """Compute ATR-based stop-loss price with safe fallbacks.
 

@@ -11,9 +11,9 @@ Date: December 2, 2025
 """
 
 import logging
-from typing import Dict, List, Any, Optional
-from datetime import datetime, date
 from dataclasses import dataclass
+from datetime import date, datetime
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class OptionsPosition:
     """Represents an open options position for monitoring."""
+
     symbol: str
     underlying: str
     position_type: str  # 'covered_call', 'iron_condor', 'credit_spread', 'put_spread', etc.
@@ -54,14 +55,14 @@ class OptionsRiskMonitor:
 
     # McMillan stop-loss multipliers
     CREDIT_SPREAD_STOP_MULTIPLIER = 2.2  # Exit at 2.2x credit received
-    IRON_CONDOR_STOP_MULTIPLIER = 2.0    # Exit at 2.0x credit (tighter for IC)
-    LONG_OPTION_STOP_PCT = 0.50          # Exit at 50% loss of premium
+    IRON_CONDOR_STOP_MULTIPLIER = 2.0  # Exit at 2.0x credit (tighter for IC)
+    LONG_OPTION_STOP_PCT = 0.50  # Exit at 50% loss of premium
     COVERED_CALL_UNDERLYING_STOP = 0.08  # 8% stop on underlying
 
     # Delta management thresholds
-    MAX_NET_DELTA = 60.0        # Rebalance if |delta| > this
-    TARGET_NET_DELTA = 25.0     # Target after rebalancing
-    DELTA_PER_SPY_SHARE = 1.0   # Each SPY share = 1 delta
+    MAX_NET_DELTA = 60.0  # Rebalance if |delta| > this
+    TARGET_NET_DELTA = 25.0  # Target after rebalancing
+    DELTA_PER_SPY_SHARE = 1.0  # Each SPY share = 1 delta
 
     def __init__(self, paper: bool = True):
         """
@@ -71,7 +72,7 @@ class OptionsRiskMonitor:
             paper: If True, use paper trading environment
         """
         self.paper = paper
-        self.positions: Dict[str, OptionsPosition] = {}
+        self.positions: dict[str, OptionsPosition] = {}
         self._last_check = None
 
         logger.info("Options Risk Monitor initialized")
@@ -87,7 +88,7 @@ class OptionsRiskMonitor:
             del self.positions[symbol]
             logger.info(f"Removed position from monitor: {symbol}")
 
-    def check_stop_losses(self, current_prices: Dict[str, float]) -> List[Dict[str, Any]]:
+    def check_stop_losses(self, current_prices: dict[str, float]) -> list[dict[str, Any]]:
         """
         Check all positions against stop-loss rules.
 
@@ -109,7 +110,7 @@ class OptionsRiskMonitor:
 
         return exits
 
-    def _check_position_stop(self, position: OptionsPosition) -> Optional[Dict[str, Any]]:
+    def _check_position_stop(self, position: OptionsPosition) -> Optional[dict[str, Any]]:
         """
         Check if a single position has hit its stop-loss.
 
@@ -151,7 +152,7 @@ class OptionsRiskMonitor:
                     "current_price": position.current_price,
                     "unrealized_loss": unrealized_loss,
                     "max_loss_threshold": max_loss,
-                    "mcmillan_rule": f"Exit credit spreads at {stop_multiplier}x credit received"
+                    "mcmillan_rule": f"Exit credit spreads at {stop_multiplier}x credit received",
                 }
 
         else:  # Long positions
@@ -168,17 +169,17 @@ class OptionsRiskMonitor:
                     "symbol": position.symbol,
                     "underlying": position.underlying,
                     "position_type": position.position_type,
-                    "reason": f"STOP_LOSS: Loss ${unrealized_loss:.2f} exceeds {self.LONG_OPTION_STOP_PCT*100}% of premium (${max_loss:.2f})",
+                    "reason": f"STOP_LOSS: Loss ${unrealized_loss:.2f} exceeds {self.LONG_OPTION_STOP_PCT * 100}% of premium (${max_loss:.2f})",
                     "entry_price": position.entry_price,
                     "current_price": position.current_price,
                     "unrealized_loss": unrealized_loss,
                     "max_loss_threshold": max_loss,
-                    "mcmillan_rule": f"Exit long options at {self.LONG_OPTION_STOP_PCT*100}% loss"
+                    "mcmillan_rule": f"Exit long options at {self.LONG_OPTION_STOP_PCT * 100}% loss",
                 }
 
         return None
 
-    def calculate_net_delta(self) -> Dict[str, Any]:
+    def calculate_net_delta(self) -> dict[str, Any]:
         """
         Calculate net delta exposure across all options positions.
 
@@ -196,13 +197,15 @@ class OptionsRiskMonitor:
                 position_delta = -position_delta
 
             net_delta += position_delta
-            positions_by_delta.append({
-                "symbol": symbol,
-                "delta": position.delta,
-                "quantity": position.quantity,
-                "side": position.side,
-                "contribution": position_delta
-            })
+            positions_by_delta.append(
+                {
+                    "symbol": symbol,
+                    "delta": position.delta,
+                    "quantity": position.quantity,
+                    "side": position.side,
+                    "contribution": position_delta,
+                }
+            )
 
         rebalance_needed = abs(net_delta) > self.MAX_NET_DELTA
 
@@ -213,10 +216,10 @@ class OptionsRiskMonitor:
             "target_delta": self.TARGET_NET_DELTA,
             "rebalance_needed": rebalance_needed,
             "positions_by_delta": positions_by_delta,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
-    def calculate_delta_hedge(self, net_delta: float) -> Dict[str, Any]:
+    def calculate_delta_hedge(self, net_delta: float) -> dict[str, Any]:
         """
         Calculate the hedge trade needed to bring delta back to target.
 
@@ -233,11 +236,13 @@ class OptionsRiskMonitor:
         if abs(net_delta) <= self.MAX_NET_DELTA:
             return {
                 "action": "NONE",
-                "reason": f"Net delta {net_delta:.1f} within acceptable range (±{self.MAX_NET_DELTA})"
+                "reason": f"Net delta {net_delta:.1f} within acceptable range (±{self.MAX_NET_DELTA})",
             }
 
         # Calculate shares needed to reach target delta
-        delta_to_neutralize = net_delta - (self.TARGET_NET_DELTA if net_delta > 0 else -self.TARGET_NET_DELTA)
+        delta_to_neutralize = net_delta - (
+            self.TARGET_NET_DELTA if net_delta > 0 else -self.TARGET_NET_DELTA
+        )
         shares_needed = abs(int(delta_to_neutralize / self.DELTA_PER_SPY_SHARE))
 
         if net_delta > self.MAX_NET_DELTA:
@@ -249,7 +254,7 @@ class OptionsRiskMonitor:
                 "reason": f"Net delta {net_delta:.1f} exceeds +{self.MAX_NET_DELTA}. Selling {shares_needed} SPY to reduce to {self.TARGET_NET_DELTA}",
                 "current_delta": net_delta,
                 "target_delta": self.TARGET_NET_DELTA,
-                "delta_reduction": delta_to_neutralize
+                "delta_reduction": delta_to_neutralize,
             }
         else:
             # Too short - buy SPY to increase delta
@@ -260,14 +265,10 @@ class OptionsRiskMonitor:
                 "reason": f"Net delta {net_delta:.1f} below -{self.MAX_NET_DELTA}. Buying {shares_needed} SPY to increase to -{self.TARGET_NET_DELTA}",
                 "current_delta": net_delta,
                 "target_delta": -self.TARGET_NET_DELTA,
-                "delta_increase": abs(delta_to_neutralize)
+                "delta_increase": abs(delta_to_neutralize),
             }
 
-    def run_risk_check(
-        self,
-        current_prices: Dict[str, float],
-        executor=None
-    ) -> Dict[str, Any]:
+    def run_risk_check(self, current_prices: dict[str, float], executor=None) -> dict[str, Any]:
         """
         Run complete risk check: stop-losses + delta management.
 
@@ -286,7 +287,7 @@ class OptionsRiskMonitor:
             "stop_loss_exits": [],
             "delta_analysis": None,
             "hedge_recommendation": None,
-            "actions_taken": []
+            "actions_taken": [],
         }
 
         # 1. Check stop-losses
@@ -301,12 +302,14 @@ class OptionsRiskMonitor:
                 if executor:
                     try:
                         # Execute the close
-                        order = executor.close_position(exit_signal['symbol'])
-                        results["actions_taken"].append({
-                            "type": "stop_loss_exit",
-                            "symbol": exit_signal['symbol'],
-                            "order": order
-                        })
+                        order = executor.close_position(exit_signal["symbol"])
+                        results["actions_taken"].append(
+                            {
+                                "type": "stop_loss_exit",
+                                "symbol": exit_signal["symbol"],
+                                "order": order,
+                            }
+                        )
                         logger.info(f"✅ Closed {exit_signal['symbol']} via stop-loss")
                     except Exception as e:
                         logger.error(f"❌ Failed to close {exit_signal['symbol']}: {e}")
@@ -328,17 +331,17 @@ class OptionsRiskMonitor:
                 try:
                     # Execute the hedge
                     order = executor.place_order(
-                        hedge["symbol"],
-                        hedge["quantity"],
-                        side=hedge["action"].lower()
+                        hedge["symbol"], hedge["quantity"], side=hedge["action"].lower()
                     )
-                    results["actions_taken"].append({
-                        "type": "delta_hedge",
-                        "symbol": hedge["symbol"],
-                        "side": hedge["action"],
-                        "quantity": hedge["quantity"],
-                        "order": order
-                    })
+                    results["actions_taken"].append(
+                        {
+                            "type": "delta_hedge",
+                            "symbol": hedge["symbol"],
+                            "side": hedge["action"],
+                            "quantity": hedge["quantity"],
+                            "order": order,
+                        }
+                    )
                     logger.info(
                         f"✅ Delta hedge executed: {hedge['action']} {hedge['quantity']} {hedge['symbol']}"
                     )
@@ -355,10 +358,8 @@ class OptionsRiskMonitor:
 
 
 def check_credit_spread_stop(
-    entry_credit: float,
-    current_cost_to_close: float,
-    stop_multiplier: float = 2.2
-) -> Dict[str, Any]:
+    entry_credit: float, current_cost_to_close: float, stop_multiplier: float = 2.2
+) -> dict[str, Any]:
     """
     Quick helper to check if a credit spread has hit its stop.
 
@@ -387,15 +388,13 @@ def check_credit_spread_stop(
         "loss_multiple": loss_multiple,
         "entry_credit": entry_credit,
         "current_cost_to_close": current_cost_to_close,
-        "mcmillan_rule": f"Close at {stop_multiplier}x credit received"
+        "mcmillan_rule": f"Close at {stop_multiplier}x credit received",
     }
 
 
 def check_iron_condor_stop(
-    entry_credit: float,
-    current_cost_to_close: float,
-    stop_multiplier: float = 2.0
-) -> Dict[str, Any]:
+    entry_credit: float, current_cost_to_close: float, stop_multiplier: float = 2.0
+) -> dict[str, Any]:
     """
     Check if an iron condor has hit its stop.
 
@@ -412,7 +411,7 @@ def check_iron_condor_stop(
     return check_credit_spread_stop(
         entry_credit=entry_credit,
         current_cost_to_close=current_cost_to_close,
-        stop_multiplier=stop_multiplier
+        stop_multiplier=stop_multiplier,
     )
 
 
@@ -429,7 +428,7 @@ if __name__ == "__main__":
     print("\n=== Credit Spread Stop-Loss Check ===")
     result = check_credit_spread_stop(
         entry_credit=1.50,  # Received $1.50 credit
-        current_cost_to_close=3.50  # Would cost $3.50 to close
+        current_cost_to_close=3.50,  # Would cost $3.50 to close
     )
     print(f"Entry Credit: ${result['entry_credit']:.2f}")
     print(f"Current Cost to Close: ${result['current_cost_to_close']:.2f}")
@@ -441,9 +440,6 @@ if __name__ == "__main__":
 
     # Example: Iron condor stop
     print("\n=== Iron Condor Stop-Loss Check ===")
-    ic_result = check_iron_condor_stop(
-        entry_credit=2.00,
-        current_cost_to_close=3.80
-    )
+    ic_result = check_iron_condor_stop(entry_credit=2.00, current_cost_to_close=3.80)
     print(f"Should Close: {ic_result['should_close']}")
     print(f"Loss Multiple: {ic_result['loss_multiple']:.2f}x credit")

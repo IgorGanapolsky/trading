@@ -3,22 +3,22 @@
 Hyperparameter Optimization Script for RL Trading Models
 Finds optimal hyperparameters for LSTM-PPO models using grid/random search.
 """
-import os
-import sys
+
 import argparse
 import logging
+import sys
 from pathlib import Path
+
 import torch
-import numpy as np
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.ml.hyperparameter_optimizer import HyperparameterOptimizer
-from src.ml.trainer import ModelTrainer
-from src.ml.data_processor import DataProcessor
-from src.ml.networks import LSTMPPO
 from dotenv import load_dotenv
+from src.ml.data_processor import DataProcessor
+from src.ml.hyperparameter_optimizer import HyperparameterOptimizer
+from src.ml.networks import LSTMPPO
+from src.ml.trainer import ModelTrainer
 
 load_dotenv()
 
@@ -71,7 +71,7 @@ def evaluate_model(model: LSTMPPO, symbol: str) -> dict:
     # For now, use simple evaluation based on validation loss
     # In production, this would use backtesting or walk-forward analysis
 
-    trainer = ModelTrainer(device="cpu")
+    ModelTrainer(device="cpu")
     data_processor = DataProcessor()
 
     # Fetch and prepare data
@@ -86,10 +86,7 @@ def evaluate_model(model: LSTMPPO, symbol: str) -> dict:
     X_tensor = data_processor.create_sequences(df)
     targets = (df["Returns"].shift(-1) > 0).astype(int).values
     y_tensor = torch.LongTensor(
-        targets[
-            data_processor.sequence_length : data_processor.sequence_length
-            + len(X_tensor)
-        ]
+        targets[data_processor.sequence_length : data_processor.sequence_length + len(X_tensor)]
     )
 
     # Split for validation
@@ -119,18 +116,14 @@ def evaluate_model(model: LSTMPPO, symbol: str) -> dict:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Optimize hyperparameters for RL trading models"
-    )
+    parser = argparse.ArgumentParser(description="Optimize hyperparameters for RL trading models")
     parser.add_argument(
         "--symbol",
         type=str,
         default="SPY",
         help="Symbol to optimize for (default: SPY)",
     )
-    parser.add_argument(
-        "--n-trials", type=int, default=20, help="Number of trials (default: 20)"
-    )
+    parser.add_argument("--n-trials", type=int, default=20, help="Number of trials (default: 20)")
     parser.add_argument(
         "--metric",
         type=str,
@@ -159,9 +152,7 @@ def main():
     print()
 
     # Initialize optimizer
-    optimizer = HyperparameterOptimizer(
-        optimization_metric=args.metric, n_trials=args.n_trials
-    )
+    optimizer = HyperparameterOptimizer(optimization_metric=args.metric, n_trials=args.n_trials)
 
     # Run optimization
     if args.method == "random":
@@ -182,7 +173,7 @@ def main():
     print("OPTIMIZATION RESULTS")
     print("=" * 70)
     print(f"Best {args.metric}: {results['best_score']:.4f}")
-    print(f"\nBest Hyperparameters:")
+    print("\nBest Hyperparameters:")
     for key, value in results["best_params"].items():
         print(f"  {key}: {value}")
     print(f"\nTotal trials: {results['total_trials']}")

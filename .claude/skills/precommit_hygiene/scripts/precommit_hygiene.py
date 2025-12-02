@@ -4,22 +4,22 @@ Pre-Commit Hygiene Orchestrator - Implementation
 Automated code quality and repository organization enforcement
 """
 
-import os
-import sys
-import json
 import argparse
-import subprocess
-from pathlib import Path
-from typing import Dict, List, Any
+import json
+import os
 import shutil
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
 
 
-def error_response(error_msg: str, error_code: str = "ERROR") -> Dict[str, Any]:
+def error_response(error_msg: str, error_code: str = "ERROR") -> dict[str, Any]:
     """Standard error response"""
     return {"success": False, "error": error_msg, "error_code": error_code}
 
 
-def success_response(data: Any) -> Dict[str, Any]:
+def success_response(data: Any) -> dict[str, Any]:
     """Standard success response"""
     return {"success": True, "data": data}
 
@@ -66,7 +66,7 @@ class PreCommitHygiene:
         """Initialize hygiene checker"""
         self.project_root = project_root or Path.cwd()
 
-    def check_file_organization(self, fix: bool = False) -> Dict[str, Any]:
+    def check_file_organization(self, fix: bool = False) -> dict[str, Any]:
         """
         Check if files are properly organized
 
@@ -117,11 +117,9 @@ class PreCommitHygiene:
             )
 
         except Exception as e:
-            return error_response(
-                f"Error checking file organization: {str(e)}", "CHECK_ERROR"
-            )
+            return error_response(f"Error checking file organization: {str(e)}", "CHECK_ERROR")
 
-    def _check_file_placement(self, filename: str, filepath: str) -> Dict[str, Any]:
+    def _check_file_placement(self, filename: str, filepath: str) -> dict[str, Any]:
         """Check if a file is in the correct location"""
         ext = Path(filename).suffix
 
@@ -177,9 +175,7 @@ class PreCommitHygiene:
             print(f"✗ Failed to move {filename}: {str(e)}")
             return False
 
-    def lint_python_code(
-        self, files: List[str] = None, fix: bool = False
-    ) -> Dict[str, Any]:
+    def lint_python_code(self, files: list[str] = None, fix: bool = False) -> dict[str, Any]:
         """
         Run Python linters
 
@@ -220,15 +216,13 @@ class PreCommitHygiene:
         except Exception as e:
             return error_response(f"Error linting code: {str(e)}", "LINT_ERROR")
 
-    def _find_python_files(self) -> List[str]:
+    def _find_python_files(self) -> list[str]:
         """Find all Python files in project"""
         python_files = []
         for root, dirs, files in os.walk(self.project_root):
             # Skip hidden and virtual env directories
             dirs[:] = [
-                d
-                for d in dirs
-                if not d.startswith(".") and d not in ["venv", "__pycache__"]
+                d for d in dirs if not d.startswith(".") and d not in ["venv", "__pycache__"]
             ]
 
             for file in files:
@@ -237,7 +231,7 @@ class PreCommitHygiene:
 
         return python_files
 
-    def _run_black(self, files: List[str], fix: bool) -> Dict[str, Any]:
+    def _run_black(self, files: list[str], fix: bool) -> dict[str, Any]:
         """Run black formatter"""
         try:
             cmd = ["black", "--check"] if not fix else ["black"]
@@ -253,7 +247,7 @@ class PreCommitHygiene:
         except FileNotFoundError:
             return {"passed": None, "error": "black not installed"}
 
-    def _run_flake8(self, files: List[str]) -> Dict[str, Any]:
+    def _run_flake8(self, files: list[str]) -> dict[str, Any]:
         """Run flake8 linter"""
         try:
             result = subprocess.run(["flake8"] + files, capture_output=True, text=True)
@@ -268,7 +262,7 @@ class PreCommitHygiene:
         except FileNotFoundError:
             return {"passed": None, "error": "flake8 not installed"}
 
-    def _run_mypy(self, files: List[str]) -> Dict[str, Any]:
+    def _run_mypy(self, files: list[str]) -> dict[str, Any]:
         """Run mypy type checker"""
         try:
             result = subprocess.run(["mypy"] + files, capture_output=True, text=True)
@@ -277,7 +271,7 @@ class PreCommitHygiene:
         except FileNotFoundError:
             return {"passed": None, "error": "mypy not installed"}
 
-    def validate_commit_message(self, message: str) -> Dict[str, Any]:
+    def validate_commit_message(self, message: str) -> dict[str, Any]:
         """
         Validate commit message format
 
@@ -292,16 +286,12 @@ class PreCommitHygiene:
             # Format: <type>(<scope>): <subject>
             import re
 
-            pattern = (
-                r"^(feat|fix|docs|style|refactor|test|chore)(\([a-z\-]+\))?: .{10,}"
-            )
+            pattern = r"^(feat|fix|docs|style|refactor|test|chore)(\([a-z\-]+\))?: .{10,}"
 
             match = re.match(pattern, message)
 
             if match:
-                return success_response(
-                    {"is_valid": True, "format": "conventional", "issues": []}
-                )
+                return success_response({"is_valid": True, "format": "conventional", "issues": []})
             else:
                 return success_response(
                     {
@@ -316,11 +306,9 @@ class PreCommitHygiene:
                 )
 
         except Exception as e:
-            return error_response(
-                f"Error validating commit message: {str(e)}", "VALIDATION_ERROR"
-            )
+            return error_response(f"Error validating commit message: {str(e)}", "VALIDATION_ERROR")
 
-    def check_secrets(self, files: List[str] = None) -> Dict[str, Any]:
+    def check_secrets(self, files: list[str] = None) -> dict[str, Any]:
         """
         Check for accidentally committed secrets
 
@@ -356,16 +344,14 @@ class PreCommitHygiene:
 
             for filepath in files:
                 try:
-                    with open(filepath, "r") as f:
+                    with open(filepath) as f:
                         content = f.read()
 
                         for secret_type, pattern in patterns.items():
                             matches = re.finditer(pattern, content, re.IGNORECASE)
                             for match in matches:
                                 # Skip if it's just an example or placeholder
-                                value = (
-                                    match.group(1) if match.groups() else match.group(0)
-                                )
+                                value = match.group(1) if match.groups() else match.group(0)
                                 if value.lower() not in [
                                     "your",
                                     "example",
@@ -376,8 +362,7 @@ class PreCommitHygiene:
                                         {
                                             "file": filepath,
                                             "type": secret_type,
-                                            "line": content[: match.start()].count("\n")
-                                            + 1,
+                                            "line": content[: match.start()].count("\n") + 1,
                                         }
                                     )
 
@@ -392,15 +377,13 @@ class PreCommitHygiene:
                                 # Skip if mask_api_key is used properly (assigned to variable first)
                                 if (
                                     "mask_api_key" not in line_content
-                                    or "("
-                                    in line_content.split("mask_api_key")[0][-20:]
+                                    or "(" in line_content.split("mask_api_key")[0][-20:]
                                 ):
                                     violations.append(
                                         {
                                             "file": filepath,
                                             "type": f"cleartext_logging_{pattern_name}",
-                                            "line": content[: match.start()].count("\n")
-                                            + 1,
+                                            "line": content[: match.start()].count("\n") + 1,
                                             "issue": "API key may be logged in cleartext. Use: masked = mask_api_key(key); print(masked)",
                                         }
                                     )
@@ -416,11 +399,9 @@ class PreCommitHygiene:
             )
 
         except Exception as e:
-            return error_response(
-                f"Error checking secrets: {str(e)}", "SECRET_CHECK_ERROR"
-            )
+            return error_response(f"Error checking secrets: {str(e)}", "SECRET_CHECK_ERROR")
 
-    def check_workflow_security(self, files: List[str] = None) -> Dict[str, Any]:
+    def check_workflow_security(self, files: list[str] = None) -> dict[str, Any]:
         """
         Check GitHub Actions workflows for security issues
 
@@ -431,17 +412,16 @@ class PreCommitHygiene:
             Dict with workflow security scan results
         """
         try:
-            import yaml
             import re
+
+            import yaml
 
             violations = []
 
             if not files:
                 workflow_dir = self.project_root / ".github" / "workflows"
                 if workflow_dir.exists():
-                    files = list(workflow_dir.glob("*.yml")) + list(
-                        workflow_dir.glob("*.yaml")
-                    )
+                    files = list(workflow_dir.glob("*.yml")) + list(workflow_dir.glob("*.yaml"))
                     files = [str(f) for f in files if not f.name.endswith(".disabled")]
 
             for filepath in files:
@@ -449,7 +429,7 @@ class PreCommitHygiene:
                     continue
 
                 try:
-                    with open(filepath, "r") as f:
+                    with open(filepath) as f:
                         content = f.read()
                         workflow = yaml.safe_load(content)
 
@@ -469,9 +449,7 @@ class PreCommitHygiene:
                                     "file": filepath,
                                     "type": "unsafe_pr_checkout",
                                     "line": content[
-                                        : content.find(
-                                            "github.event.pull_request.head.sha"
-                                        )
+                                        : content.find("github.event.pull_request.head.sha")
                                     ].count("\n")
                                     + 1,
                                     "issue": "CRITICAL: pull_request_target with checkout from PR head SHA allows untrusted code execution. Use GitHub API instead of checking out PR code directly.",
@@ -508,7 +486,7 @@ class PreCommitHygiene:
                                     "file": filepath,
                                     "type": "hardcoded_secret",
                                     "line": content[: match.start()].count("\n") + 1,
-                                    "issue": f"Hardcoded secret detected. Use GitHub Secrets: ${{{{ secrets.SECRET_NAME }}}}",
+                                    "issue": "Hardcoded secret detected. Use GitHub Secrets: ${{ secrets.SECRET_NAME }}",
                                 }
                             )
 
@@ -526,7 +504,7 @@ class PreCommitHygiene:
                             "issue": f"YAML parsing error: {e}",
                         }
                     )
-                except Exception as e:
+                except Exception:
                     # Skip files that can't be parsed
                     pass
 
@@ -543,7 +521,7 @@ class PreCommitHygiene:
                 f"Error checking workflow security: {str(e)}", "WORKFLOW_CHECK_ERROR"
             )
 
-    def organize_repository(self, dry_run: bool = True) -> Dict[str, Any]:
+    def organize_repository(self, dry_run: bool = True) -> dict[str, Any]:
         """
         Automatically organize repository
 
@@ -580,11 +558,9 @@ class PreCommitHygiene:
             )
 
         except Exception as e:
-            return error_response(
-                f"Error organizing repository: {str(e)}", "ORGANIZE_ERROR"
-            )
+            return error_response(f"Error organizing repository: {str(e)}", "ORGANIZE_ERROR")
 
-    def run_all_checks(self, fix: bool = False) -> Dict[str, Any]:
+    def run_all_checks(self, fix: bool = False) -> dict[str, Any]:
         """
         Run all pre-commit checks
 
@@ -611,9 +587,7 @@ class PreCommitHygiene:
 
             # Secrets check
             secrets_result = self.check_secrets()
-            results["secrets"] = (
-                "passed" if secrets_result["data"]["safe_to_commit"] else "failed"
-            )
+            results["secrets"] = "passed" if secrets_result["data"]["safe_to_commit"] else "failed"
 
             # Workflow security check
             workflow_result = self.check_workflow_security()
@@ -648,9 +622,7 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
     # check_file_organization
-    org_parser = subparsers.add_parser(
-        "check_file_organization", help="Check file organization"
-    )
+    org_parser = subparsers.add_parser("check_file_organization", help="Check file organization")
     org_parser.add_argument("--fix", action="store_true", help="Auto-fix issues")
 
     # lint_python_code
@@ -659,9 +631,7 @@ def main():
     lint_parser.add_argument("--fix", action="store_true", help="Auto-fix issues")
 
     # validate_commit_message
-    commit_parser = subparsers.add_parser(
-        "validate_commit_message", help="Validate commit message"
-    )
+    commit_parser = subparsers.add_parser("validate_commit_message", help="Validate commit message")
     commit_parser.add_argument("message", help="Commit message")
 
     # check_secrets
@@ -675,12 +645,8 @@ def main():
     workflow_parser.add_argument("--files", nargs="+", help="Workflow files to scan")
 
     # organize_repository
-    organize_parser = subparsers.add_parser(
-        "organize_repository", help="Organize repository"
-    )
-    organize_parser.add_argument(
-        "--no-dry-run", action="store_true", help="Execute changes"
-    )
+    organize_parser = subparsers.add_parser("organize_repository", help="Organize repository")
+    organize_parser.add_argument("--no-dry-run", action="store_true", help="Execute changes")
 
     # run_all_checks
     all_parser = subparsers.add_parser("run_all_checks", help="Run all checks")
@@ -699,9 +665,7 @@ def main():
     if args.command == "check_file_organization":
         result = hygiene.check_file_organization(fix=args.fix)
     elif args.command == "lint_python_code":
-        result = hygiene.lint_python_code(
-            files=getattr(args, "files", None), fix=args.fix
-        )
+        result = hygiene.lint_python_code(files=getattr(args, "files", None), fix=args.fix)
     elif args.command == "validate_commit_message":
         result = hygiene.validate_commit_message(args.message)
     elif args.command == "check_secrets":
@@ -720,9 +684,7 @@ def main():
     print(json.dumps(result, indent=2))
 
     # Exit with error code if check failed
-    if not result["success"] or (
-        result["success"] and not result["data"].get("can_commit", True)
-    ):
+    if not result["success"] or (result["success"] and not result["data"].get("can_commit", True)):
         sys.exit(1)
 
 

@@ -12,24 +12,23 @@ Run:
     python tests/test_sentiment_integration.py
 """
 
-import sys
 import json
 import logging
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.utils.sentiment_loader import (
-    load_latest_sentiment,
-    get_ticker_sentiment,
     get_market_regime,
-    print_sentiment_summary,
+    get_ticker_sentiment,
+    load_latest_sentiment,
     normalize_sentiment_score,
+    print_sentiment_summary,
 )
-
 
 # Setup logging
 logging.basicConfig(
@@ -242,9 +241,7 @@ def test_growth_strategy_integration(sentiment_data):
 
     for ticker, score, confidence, expected_mod in test_cases:
         # Calculate modifier (same logic as GrowthStrategy)
-        confidence_weight = {"high": 1.0, "medium": 0.6, "low": 0.3}.get(
-            confidence, 0.3
-        )
+        confidence_weight = {"high": 1.0, "medium": 0.6, "low": 0.3}.get(confidence, 0.3)
         actual_mod = ((score - 50) / 50) * 15 * confidence_weight
 
         # Get from sentiment data
@@ -266,15 +263,11 @@ def test_growth_strategy_integration(sentiment_data):
 
     for ticker, score, confidence, _ in test_cases:
         data_score, data_confidence, _ = get_ticker_sentiment(ticker, sentiment_data)
-        confidence_weight = {"high": 1.0, "medium": 0.6, "low": 0.3}.get(
-            data_confidence, 0.3
-        )
+        confidence_weight = {"high": 1.0, "medium": 0.6, "low": 0.3}.get(data_confidence, 0.3)
         sentiment_modifier = ((data_score - 50) / 50) * 15 * confidence_weight
 
         # Final score: 40% tech + 40% consensus + 20% sentiment
-        final_score = (
-            0.4 * base_score + 0.4 * base_score + 0.2 * (50 + sentiment_modifier)
-        )
+        final_score = 0.4 * base_score + 0.4 * base_score + 0.2 * (50 + sentiment_modifier)
         print(
             f"  {ticker:<6}: {final_score:>5.1f} (sentiment modifier: {sentiment_modifier:>+5.1f})"
         )
@@ -303,17 +296,13 @@ def test_normalization():
 
     print("\nNormalization Tests:")
     print("-" * 80)
-    print(
-        f"{'Source':<15} | {'Raw Score':>10} | {'Expected':>10} | {'Actual':>10} | {'Status'}"
-    )
+    print(f"{'Source':<15} | {'Raw Score':>10} | {'Expected':>10} | {'Actual':>10} | {'Status'}")
     print("-" * 80)
 
     for source, raw_score, expected in test_cases:
         actual = normalize_sentiment_score(raw_score, source)
         match = "✓" if abs(actual - expected) < 0.1 else "✗"
-        print(
-            f"{source:<15} | {raw_score:>10} | {expected:>10.1f} | {actual:>10.1f} | {match}"
-        )
+        print(f"{source:<15} | {raw_score:>10} | {expected:>10.1f} | {actual:>10.1f} | {match}")
 
     return True
 

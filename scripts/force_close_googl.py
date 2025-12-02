@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Force close GOOGL position that has exceeded take-profit threshold."""
+
 import os
 import sys
-from pathlib import Path
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from dotenv import load_dotenv
 import alpaca_trade_api as tradeapi
+from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
@@ -49,15 +49,15 @@ current_price = float(googl_position.current_price)
 unrealized_pct = float(googl_position.unrealized_plpc) * 100
 unrealized_pl = float(googl_position.unrealized_pl)
 
-print(f"\n🔍 GOOGL Analysis:")
+print("\n🔍 GOOGL Analysis:")
 print(f"   Entry: ${entry_price:.2f}")
 print(f"   Current: ${current_price:.2f}")
 print(f"   P/L: {unrealized_pct:.2f}%")
-print(f"   Take-profit threshold: 10.0%")
+print("   Take-profit threshold: 10.0%")
 
 if unrealized_pct >= 10.0:
     print(f"\n✅ TAKE-PROFIT TRIGGERED! ({unrealized_pct:.2f}% >= 10.0%)")
-    print(f"🚀 Closing GOOGL position...")
+    print("🚀 Closing GOOGL position...")
 
     try:
         # Close the position
@@ -68,12 +68,10 @@ if unrealized_pct >= 10.0:
             type="market",
             time_in_force="day",
         )
-        print(f"✅ CLOSED GOOGL position!")
+        print("✅ CLOSED GOOGL position!")
         print(f"   Order ID: {order.id}")
         print(f"   Quantity: {googl_position.qty} shares")
-        print(
-            f"   Estimated proceeds: ${float(googl_position.qty) * current_price:.2f}"
-        )
+        print(f"   Estimated proceeds: ${float(googl_position.qty) * current_price:.2f}")
         print(f"   Realized profit: ${unrealized_pl:.2f} ({unrealized_pct:.2f}%)")
     except Exception as e:
         print(f"❌ Failed to close position: {e}")

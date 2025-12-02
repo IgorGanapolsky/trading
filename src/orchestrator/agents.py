@@ -6,7 +6,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 from uuid import uuid4
 
 import pandas as pd
@@ -32,7 +32,7 @@ class StrategyAgent(TradingAgent):
 
     def execute(self, context: RunContext) -> AgentResult:
         market_data = context.state_cache.get("market_data", {})
-        frames: Dict[str, pd.DataFrame] = market_data.get("frames", {})
+        frames: dict[str, pd.DataFrame] = market_data.get("frames", {})
         if not frames:
             message = "No market data found in context; run DataAgent first."
             logger.warning(message)
@@ -42,7 +42,7 @@ class StrategyAgent(TradingAgent):
                 payload={"message": message},
             )
 
-        scored: List[Dict[str, Any]] = []
+        scored: list[dict[str, Any]] = []
         for symbol, frame in frames.items():
             try:
                 signal = self._score_symbol(symbol, frame)
@@ -62,9 +62,7 @@ class StrategyAgent(TradingAgent):
 
         scored.sort(key=lambda item: item["score"], reverse=True)
         top_signal = scored[0]
-        allocation = float(
-            context.config.get("daily_allocation", self.default_allocation)
-        )
+        allocation = float(context.config.get("daily_allocation", self.default_allocation))
 
         intent = {
             "symbol": top_signal["symbol"],
@@ -89,7 +87,7 @@ class StrategyAgent(TradingAgent):
 
         return AgentResult(name=self.agent_name, succeeded=True, payload=intent)
 
-    def _score_symbol(self, symbol: str, frame: pd.DataFrame) -> Dict[str, Any]:
+    def _score_symbol(self, symbol: str, frame: pd.DataFrame) -> dict[str, Any]:
         if not isinstance(frame, pd.DataFrame):
             raise ValueError("market frame is not a DataFrame")
         if len(frame) < self.min_history:
@@ -163,7 +161,7 @@ class RiskAgent(TradingAgent):
         planned_notional = float(intent.get("notional", 0.0))
         recommended = min(planned_notional, max_allowed_by_pct, self.max_trade_amount)
 
-        warnings: List[str] = []
+        warnings: list[str] = []
         approved = recommended >= self.min_trade_amount
         if not approved:
             warnings.append(
@@ -233,7 +231,7 @@ class ExecutionAgent(TradingAgent):
 
         return AgentResult(name=self.agent_name, succeeded=True, payload=order)
 
-    def _simulate_order(self, plan: Dict[str, Any]) -> Dict[str, Any]:
+    def _simulate_order(self, plan: dict[str, Any]) -> dict[str, Any]:
         order = {
             "order_id": f"SIM-{uuid4().hex[:12].upper()}",
             "symbol": plan["symbol"],
@@ -245,7 +243,7 @@ class ExecutionAgent(TradingAgent):
         }
         return order
 
-    def _append_log(self, order: Dict[str, Any]) -> None:
+    def _append_log(self, order: dict[str, Any]) -> None:
         try:
             with self.log_path.open("a", encoding="utf-8") as fh:
                 fh.write(json.dumps(order) + "\n")
@@ -267,7 +265,7 @@ class AuditAgent(TradingAgent):
         summary = self._build_summary(context)
 
         orchestrator_state = state.setdefault("orchestrator", {})
-        history: List[Dict[str, Any]] = orchestrator_state.setdefault("history", [])
+        history: list[dict[str, Any]] = orchestrator_state.setdefault("history", [])
         history.append(summary)
         if len(history) > self.history_limit:
             del history[0 : len(history) - self.history_limit]
@@ -279,7 +277,7 @@ class AuditAgent(TradingAgent):
         logger.info("Audit recorded orchestrator summary for %s", summary.get("symbol"))
         return AgentResult(name=self.agent_name, succeeded=True, payload=summary)
 
-    def _build_summary(self, context: RunContext) -> Dict[str, Any]:
+    def _build_summary(self, context: RunContext) -> dict[str, Any]:
         strategy = context.state_cache.get("strategy", {})
         risk = context.state_cache.get("risk", {})
         execution = context.state_cache.get("execution", {})
@@ -300,7 +298,7 @@ class AuditAgent(TradingAgent):
             "warnings": plan.get("warnings", []),
         }
 
-    def _append_log(self, summary: Dict[str, Any]) -> None:
+    def _append_log(self, summary: dict[str, Any]) -> None:
         try:
             with self.log_path.open("a", encoding="utf-8") as fh:
                 fh.write(json.dumps(summary) + "\n")

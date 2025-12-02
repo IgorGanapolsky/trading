@@ -7,9 +7,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from src.utils.newsletter_analyzer import (
+    get_all_signals,
     get_btc_signal,
     get_eth_signal,
-    get_all_signals,
 )
 
 

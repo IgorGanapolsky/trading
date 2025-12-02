@@ -7,10 +7,10 @@ to ensure accuracy and prevent false reporting.
 
 import json
 import logging
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional
-from dataclasses import dataclass
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -46,28 +46,28 @@ class DataValidator:
         self.perf_log = self._load_perf_log()
         self.system_state = self._load_system_state()
 
-    def _load_perf_log(self) -> List[Dict]:
+    def _load_perf_log(self) -> list[dict]:
         """Load performance log."""
         if not PERF_LOG_FILE.exists():
             logger.warning(f"Performance log not found: {PERF_LOG_FILE}")
             return []
 
         try:
-            with open(PERF_LOG_FILE, "r") as f:
+            with open(PERF_LOG_FILE) as f:
                 data = json.load(f)
                 return data if isinstance(data, list) else []
         except Exception as e:
             logger.error(f"Error loading performance log: {e}")
             return []
 
-    def _load_system_state(self) -> Dict:
+    def _load_system_state(self) -> dict:
         """Load system state."""
         if not SYSTEM_STATE_FILE.exists():
             logger.warning(f"System state not found: {SYSTEM_STATE_FILE}")
             return {}
 
         try:
-            with open(SYSTEM_STATE_FILE, "r") as f:
+            with open(SYSTEM_STATE_FILE) as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Error loading system state: {e}")
@@ -174,10 +174,7 @@ class DataValidator:
         Returns:
             ValidationResult
         """
-        if date:
-            target_date = date
-        else:
-            target_date = datetime.now().date().isoformat()
+        target_date = date or datetime.now().date().isoformat()
 
         # Get profit for target date and previous day
         target_profit = self.get_profit_for_date(target_date)
@@ -225,7 +222,7 @@ class DataValidator:
             source="performance_log.json",
         )
 
-    def validate_all_claims(self, claims: Dict[str, float]) -> List[ValidationResult]:
+    def validate_all_claims(self, claims: dict[str, float]) -> list[ValidationResult]:
         """
         Validate multiple claims at once.
 
@@ -249,7 +246,7 @@ class DataValidator:
 
         return results
 
-    def check_data_consistency(self) -> List[ValidationResult]:
+    def check_data_consistency(self) -> list[ValidationResult]:
         """
         Check consistency between performance_log.json and system_state.json.
 
@@ -280,7 +277,7 @@ class DataValidator:
         return results
 
 
-def validate_report_claims(report_text: str) -> List[ValidationResult]:
+def validate_report_claims(report_text: str) -> list[ValidationResult]:
     """
     Extract and validate profit claims from report text.
 
@@ -313,9 +310,7 @@ def validate_report_claims(report_text: str) -> List[ValidationResult]:
 
     for match in matches:
         claimed_value = float(match)
-        result = validator.validate_profit_claim(
-            claimed_value, description="profit claim"
-        )
+        result = validator.validate_profit_claim(claimed_value, description="profit claim")
         results.append(result)
 
     return results

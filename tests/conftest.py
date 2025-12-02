@@ -60,9 +60,7 @@ def cleanup_async_operations():
                 if not task.done():
                     task.cancel()
             if pending:
-                loop.run_until_complete(
-                    asyncio.gather(*pending, return_exceptions=True)
-                )
+                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
     except RuntimeError:
         # No event loop exists, which is fine
         pass

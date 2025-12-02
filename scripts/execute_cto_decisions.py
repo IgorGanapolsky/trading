@@ -30,7 +30,6 @@ def execute_decisions():
         from scripts.state_manager import StateManager
 
         state_manager = StateManager()
-        state = state_manager.state
 
         # Update challenge day
         state_manager.update_challenge_day()
@@ -76,7 +75,7 @@ def execute_decisions():
 
         if perf_data:
             latest = perf_data[-1]
-            print(f"✅ Performance data loaded")
+            print("✅ Performance data loaded")
             print(f"   Last entry: {latest.get('date')}")
             print(f"   Last P/L: ${latest.get('pl', 0):+.2f}")
             decisions_executed.append("Strategy review preparation")

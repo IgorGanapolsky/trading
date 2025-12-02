@@ -10,10 +10,7 @@ import json
 import logging
 from datetime import datetime
 
-from typing import List, Optional
-
 from langchain_core.tools import tool
-
 from src.utils.market_data import get_market_data_provider
 
 logger = logging.getLogger(__name__)
@@ -84,7 +81,7 @@ def get_market_data(
 @tool
 def query_sentiment(
     query: str,
-    ticker: Optional[str] = None,
+    ticker: str | None = None,
     limit: int = 5,
 ) -> str:
     """
@@ -102,9 +99,7 @@ def query_sentiment(
         SentimentRAGStore = _get_sentiment_store()
         if SentimentRAGStore is None:
             return json.dumps(
-                {
-                    "error": "SentimentRAGStore not available - RAG dependencies not installed"
-                }
+                {"error": "SentimentRAGStore not available - RAG dependencies not installed"}
             )
 
         store = SentimentRAGStore()
@@ -154,9 +149,7 @@ def get_sentiment_history(
         SentimentRAGStore = _get_sentiment_store()
         if SentimentRAGStore is None:
             return json.dumps(
-                {
-                    "error": "SentimentRAGStore not available - RAG dependencies not installed"
-                }
+                {"error": "SentimentRAGStore not available - RAG dependencies not installed"}
             )
 
         store = SentimentRAGStore()
@@ -215,9 +208,7 @@ def analyze_technical_indicators(
             return json.dumps({"error": f"No data available for {symbol}"})
 
         if len(df) < 26:
-            return json.dumps(
-                {"error": f"Insufficient data for {symbol} (need at least 26 bars)"}
-            )
+            return json.dumps({"error": f"Insufficient data for {symbol} (need at least 26 bars)"})
 
         # Calculate indicators
         macd_value, macd_signal, macd_histogram = calculate_macd(df["Close"])
@@ -243,7 +234,7 @@ def analyze_technical_indicators(
         return json.dumps({"error": str(e)})
 
 
-def build_trading_tools() -> List:
+def build_trading_tools() -> list:
     """
     Build all trading-specific tools for deepagents.
 

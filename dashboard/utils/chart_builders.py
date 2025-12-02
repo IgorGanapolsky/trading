@@ -5,13 +5,9 @@ This module provides consistent, themed chart functions for visualizing
 trading sentiment data across multiple data sources.
 """
 
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
 import pandas as pd
-from typing import Dict, List, Optional
-from datetime import datetime, timedelta
-
+import plotly.express as px
+import plotly.graph_objects as go
 
 # Trading theme colors
 COLORS = {
@@ -35,9 +31,7 @@ def get_sentiment_color(score: float) -> str:
         return COLORS["neutral"]
 
 
-def create_sentiment_gauge(
-    ticker: str, score: float, confidence: str = "medium"
-) -> go.Figure:
+def create_sentiment_gauge(ticker: str, score: float, confidence: str = "medium") -> go.Figure:
     """
     Create a gauge chart for sentiment score.
 
@@ -50,7 +44,7 @@ def create_sentiment_gauge(
         Plotly figure object
     """
     # Normalize score to 0-100 for gauge
-    normalized_score = (score + 100) / 2
+    (score + 100) / 2
 
     fig = go.Figure(
         go.Indicator(
@@ -97,7 +91,7 @@ def create_sentiment_gauge(
     return fig
 
 
-def create_sentiment_timeline(df: pd.DataFrame, tickers: List[str]) -> go.Figure:
+def create_sentiment_timeline(df: pd.DataFrame, tickers: list[str]) -> go.Figure:
     """
     Create a timeline chart showing sentiment trends over time.
 
@@ -193,7 +187,7 @@ def create_correlation_heatmap(correlation_df: pd.DataFrame) -> go.Figure:
     return fig
 
 
-def create_source_breakdown_pie(source_data: Dict[str, int]) -> go.Figure:
+def create_source_breakdown_pie(source_data: dict[str, int]) -> go.Figure:
     """
     Create a pie chart showing data source breakdown.
 
@@ -248,7 +242,9 @@ def create_win_rate_by_sentiment_bar(win_rate_data: pd.DataFrame) -> go.Figure:
         (
             COLORS["bearish"]
             if "Bearish" in x
-            else COLORS["neutral"] if "Neutral" in x else COLORS["bullish"]
+            else COLORS["neutral"]
+            if "Neutral" in x
+            else COLORS["bullish"]
         )
         for x in win_rate_data["sentiment_range"]
     ]
@@ -261,9 +257,7 @@ def create_win_rate_by_sentiment_bar(win_rate_data: pd.DataFrame) -> go.Figure:
                 marker_color=colors,
                 text=[
                     f"{wr:.1f}%<br>({tc} trades)"
-                    for wr, tc in zip(
-                        win_rate_data["win_rate"], win_rate_data["trade_count"]
-                    )
+                    for wr, tc in zip(win_rate_data["win_rate"], win_rate_data["trade_count"])
                 ],
                 textposition="outside",
                 textfont=dict(size=12, color=COLORS["text"]),
@@ -277,9 +271,7 @@ def create_win_rate_by_sentiment_bar(win_rate_data: pd.DataFrame) -> go.Figure:
             "text": "Win Rate by Sentiment Level",
             "font": {"size": 24, "color": COLORS["text"]},
         },
-        xaxis=dict(
-            title="Sentiment Range", gridcolor=COLORS["grid"], color=COLORS["text"]
-        ),
+        xaxis=dict(title="Sentiment Range", gridcolor=COLORS["grid"], color=COLORS["text"]),
         yaxis=dict(
             title="Win Rate (%)",
             gridcolor=COLORS["grid"],
@@ -371,7 +363,7 @@ def create_mentions_timeline(df: pd.DataFrame) -> go.Figure:
     return fig
 
 
-def create_roi_attribution_waterfall(attribution_data: Dict[str, float]) -> go.Figure:
+def create_roi_attribution_waterfall(attribution_data: dict[str, float]) -> go.Figure:
     """
     Create a waterfall chart showing ROI attribution.
 
@@ -406,9 +398,7 @@ def create_roi_attribution_waterfall(attribution_data: Dict[str, float]) -> go.F
             "font": {"size": 24, "color": COLORS["text"]},
         },
         xaxis=dict(title="Component", gridcolor=COLORS["grid"], color=COLORS["text"]),
-        yaxis=dict(
-            title="ROI Contribution (%)", gridcolor=COLORS["grid"], color=COLORS["text"]
-        ),
+        yaxis=dict(title="ROI Contribution (%)", gridcolor=COLORS["grid"], color=COLORS["text"]),
         paper_bgcolor=COLORS["background"],
         plot_bgcolor=COLORS["background"],
         font={"color": COLORS["text"], "family": "Arial"},

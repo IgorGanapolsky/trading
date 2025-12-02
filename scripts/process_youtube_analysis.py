@@ -17,7 +17,7 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
 # Paths
 BASE_DIR = Path(__file__).parent.parent
@@ -43,7 +43,7 @@ def check_prerequisites() -> bool:
     return True
 
 
-def extract_stock_tickers(markdown_content: str) -> List[Dict[str, str]]:
+def extract_stock_tickers(markdown_content: str) -> list[dict[str, str]]:
     """
     Extract stock tickers from markdown analysis
 
@@ -55,9 +55,7 @@ def extract_stock_tickers(markdown_content: str) -> List[Dict[str, str]]:
     stocks = []
 
     # Pattern 1: **TICKER** - Company Name
-    pattern1 = re.findall(
-        r"\*\*([A-Z]{1,5})\*\*\s*[-:]\s*(.+?)(?:\n|$)", markdown_content
-    )
+    pattern1 = re.findall(r"\*\*([A-Z]{1,5})\*\*\s*[-:]\s*(.+?)(?:\n|$)", markdown_content)
     for ticker, name in pattern1:
         stocks.append({"ticker": ticker, "name": name.strip()})
 
@@ -70,11 +68,11 @@ def extract_stock_tickers(markdown_content: str) -> List[Dict[str, str]]:
     return stocks
 
 
-def parse_video_2_analysis() -> List[Dict[str, Any]]:
+def parse_video_2_analysis() -> list[dict[str, Any]]:
     """Parse Video #2 analysis (top 6 stocks)"""
     print("\n📊 Parsing Video #2: Top 6 Stocks...")
 
-    with open(VIDEO_2_FILE, "r") as f:
+    with open(VIDEO_2_FILE) as f:
         content = f.read()
 
     stocks = extract_stock_tickers(content)
@@ -100,11 +98,11 @@ def parse_video_2_analysis() -> List[Dict[str, Any]]:
     return stocks
 
 
-def parse_video_4_analysis() -> Dict[str, Any]:
+def parse_video_4_analysis() -> dict[str, Any]:
     """Parse Video #4 analysis (AMZN OpenAI deal)"""
     print("\n📊 Parsing Video #4: AMZN OpenAI Deal...")
 
-    with open(VIDEO_4_FILE, "r") as f:
+    with open(VIDEO_4_FILE) as f:
         content = f.read()
 
     # Extract AMZN recommendation
@@ -143,12 +141,12 @@ def parse_video_4_analysis() -> Dict[str, Any]:
     return amzn_stock
 
 
-def update_watchlist(video_2_stocks: List[Dict], amzn_stock: Dict) -> None:
+def update_watchlist(video_2_stocks: list[dict], amzn_stock: dict) -> None:
     """Update tier2_watchlist.json with new stocks"""
     print("\n📝 Updating watchlist...")
 
     # Load current watchlist
-    with open(WATCHLIST_FILE, "r") as f:
+    with open(WATCHLIST_FILE) as f:
         watchlist = json.load(f)
 
     # Add new stocks to watchlist section
@@ -173,9 +171,7 @@ def update_watchlist(video_2_stocks: List[Dict], amzn_stock: Dict) -> None:
     print(f"✅ Watchlist updated: {len(all_new_stocks)} new stocks")
 
 
-def generate_recommendations_report(
-    video_2_stocks: List[Dict], amzn_stock: Dict
-) -> None:
+def generate_recommendations_report(video_2_stocks: list[dict], amzn_stock: dict) -> None:
     """Generate final recommendations report"""
     print("\n📋 Generating recommendations report...")
 
@@ -193,9 +189,9 @@ def generate_recommendations_report(
 - Video #2: {len(video_2_stocks)} stocks (Top 6 for November 2025)
 - Video #4: 1 stock (AMZN - OpenAI partnership)
 
-**Recommended for Tier 2**: {len([s for s in video_2_stocks + [amzn_stock] if s['priority'] == 'high'])} high-priority
-**Monitor/Consider**: {len([s for s in video_2_stocks + [amzn_stock] if s['priority'] == 'medium'])} medium-priority
-**Lower Priority**: {len([s for s in video_2_stocks + [amzn_stock] if s['priority'] == 'low'])} low-priority
+**Recommended for Tier 2**: {len([s for s in video_2_stocks + [amzn_stock] if s["priority"] == "high"])} high-priority
+**Monitor/Consider**: {len([s for s in video_2_stocks + [amzn_stock] if s["priority"] == "medium"])} medium-priority
+**Lower Priority**: {len([s for s in video_2_stocks + [amzn_stock] if s["priority"] == "low"])} low-priority
 
 ---
 
@@ -208,11 +204,11 @@ def generate_recommendations_report(
     # Add each stock from Video #2
     for i, stock in enumerate(video_2_stocks, 1):
         report += f"""
-### {i}. **{stock['ticker']}** - {stock['name']}
-- **Rationale**: {stock['rationale']}
-- **Priority**: {stock['priority'].upper()}
-- **Action**: {'Add to Tier 2' if stock['priority'] == 'high' else 'Monitor' if stock['priority'] == 'medium' else 'Low priority'}
-- **Timeline**: {'Immediate' if stock['priority'] == 'high' else 'Month 2-3' if stock['priority'] == 'medium' else 'Future consideration'}
+### {i}. **{stock["ticker"]}** - {stock["name"]}
+- **Rationale**: {stock["rationale"]}
+- **Priority**: {stock["priority"].upper()}
+- **Action**: {"Add to Tier 2" if stock["priority"] == "high" else "Monitor" if stock["priority"] == "medium" else "Low priority"}
+- **Timeline**: {"Immediate" if stock["priority"] == "high" else "Month 2-3" if stock["priority"] == "medium" else "Future consideration"}
 
 """
 
@@ -226,12 +222,12 @@ def generate_recommendations_report(
 
 ### AMZN Assessment
 
-- **Ticker**: {amzn_stock['ticker']}
-- **Company**: {amzn_stock['name']}
-- **Partnership Impact**: {amzn_stock['rationale']}
-- **Priority**: {amzn_stock['priority'].upper()}
-- **Action**: {'Add to Tier 2' if amzn_stock['priority'] == 'high' else 'Monitor' if amzn_stock['priority'] == 'medium' else 'Low priority'}
-- **Timeline**: {'Immediate' if amzn_stock['priority'] == 'high' else 'Month 2-3' if amzn_stock['priority'] == 'medium' else 'Future consideration'}
+- **Ticker**: {amzn_stock["ticker"]}
+- **Company**: {amzn_stock["name"]}
+- **Partnership Impact**: {amzn_stock["rationale"]}
+- **Priority**: {amzn_stock["priority"].upper()}
+- **Action**: {"Add to Tier 2" if amzn_stock["priority"] == "high" else "Monitor" if amzn_stock["priority"] == "medium" else "Low priority"}
+- **Timeline**: {"Immediate" if amzn_stock["priority"] == "high" else "Month 2-3" if amzn_stock["priority"] == "medium" else "Future consideration"}
 
 ---
 
@@ -244,9 +240,7 @@ def generate_recommendations_report(
 ### Immediate Additions (High Priority)
 """
 
-    high_priority = [
-        s for s in video_2_stocks + [amzn_stock] if s["priority"] == "high"
-    ]
+    high_priority = [s for s in video_2_stocks + [amzn_stock] if s["priority"] == "high"]
     if high_priority:
         for stock in high_priority:
             report += f"- {stock['ticker']} ({stock['name']})\n"
@@ -254,9 +248,7 @@ def generate_recommendations_report(
         report += "- None (all stocks medium/low priority)\n"
 
     report += "\n### Monitor (Medium Priority)\n"
-    medium_priority = [
-        s for s in video_2_stocks + [amzn_stock] if s["priority"] == "medium"
-    ]
+    medium_priority = [s for s in video_2_stocks + [amzn_stock] if s["priority"] == "medium"]
     if medium_priority:
         for stock in medium_priority:
             report += f"- {stock['ticker']} ({stock['name']})\n"
@@ -310,7 +302,7 @@ def update_system_state() -> None:
     """Update system_state.json with YouTube analysis integration"""
     print("\n🔧 Updating system state...")
 
-    with open(SYSTEM_STATE_FILE, "r") as f:
+    with open(SYSTEM_STATE_FILE) as f:
         state = json.load(f)
 
     # Add note about YouTube analysis
@@ -363,11 +355,11 @@ def main():
     print("\n" + "=" * 60)
     print("✅ COMPLETE: YouTube analysis integration finished")
     print("=" * 60)
-    print(f"\nNext steps:")
+    print("\nNext steps:")
     print(f"1. Review: {RECOMMENDATIONS_FILE}")
     print(f"2. Check: {WATCHLIST_FILE}")
-    print(f"3. CEO approval for high-priority stocks")
-    print(f"4. Update CoreStrategy with approved tickers")
+    print("3. CEO approval for high-priority stocks")
+    print("4. Update CoreStrategy with approved tickers")
 
 
 if __name__ == "__main__":

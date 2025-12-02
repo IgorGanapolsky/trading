@@ -2,19 +2,18 @@
 Base Agent Class - Foundation for all trading agents
 """
 
-import os
-import json
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Any, Optional
+
 from anthropic import Anthropic
-from src.utils.self_healing import with_retry, health_check, get_anthropic_api_key
 from src.agent_framework.context_engine import (
-    get_context_engine,
-    MemoryTimescale,
     ContextMemory,
+    MemoryTimescale,
+    get_context_engine,
 )
+from src.utils.self_healing import get_anthropic_api_key, with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -41,13 +40,13 @@ class BaseAgent(ABC):
         self.role = role
         self.model = model
         self.client = Anthropic(api_key=get_anthropic_api_key())
-        self.memory: List[Dict[str, Any]] = []  # Legacy memory (backward compatibility)
-        self.decision_log: List[Dict[str, Any]] = []
+        self.memory: list[dict[str, Any]] = []  # Legacy memory (backward compatibility)
+        self.decision_log: list[dict[str, Any]] = []
         self.use_context_engine = use_context_engine
         self.context_engine = get_context_engine() if use_context_engine else None
 
     @abstractmethod
-    def analyze(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Main analysis method - must be implemented by each agent.
 
@@ -60,9 +59,7 @@ class BaseAgent(ABC):
         pass
 
     @with_retry(max_attempts=3, backoff=2.0)
-    def reason_with_llm(
-        self, prompt: str, tools: Optional[List[Dict]] = None
-    ) -> Dict[str, Any]:
+    def reason_with_llm(self, prompt: str, tools: Optional[list[dict]] = None) -> dict[str, Any]:
         """
         Use LLM reasoning to make decisions.
 
@@ -97,9 +94,7 @@ class BaseAgent(ABC):
                 if block.type == "text":
                     result["reasoning"] = block.text
                 elif block.type == "tool_use":
-                    result["tool_calls"].append(
-                        {"name": block.name, "input": block.input}
-                    )
+                    result["tool_calls"].append({"name": block.name, "input": block.input})
 
             return result
 
@@ -112,7 +107,7 @@ class BaseAgent(ABC):
                 "tool_calls": [],
             }
 
-    def log_decision(self, decision: Dict[str, Any]) -> None:
+    def log_decision(self, decision: dict[str, Any]) -> None:
         """Log a decision for audit trail and learning."""
         entry = {
             "timestamp": datetime.now().isoformat(),
@@ -125,7 +120,7 @@ class BaseAgent(ABC):
     def learn_from_outcome(
         self,
         decision_id: str,
-        outcome: Dict[str, Any],
+        outcome: dict[str, Any],
         timescale: Optional[MemoryTimescale] = None,
     ) -> None:
         """
@@ -177,7 +172,7 @@ class BaseAgent(ABC):
         self,
         limit: int = 10,
         use_multi_timescale: Optional[bool] = None,
-        timescales: Optional[List[MemoryTimescale]] = None,
+        timescales: Optional[list[MemoryTimescale]] = None,
     ) -> str:
         """
         Get memory context for LLM reasoning.
@@ -205,7 +200,7 @@ class BaseAgent(ABC):
                 context = "Multi-timescale experience:\n"
 
                 # Group by timescale
-                timescale_groups: Dict[str, List[ContextMemory]] = {}
+                timescale_groups: dict[str, list[ContextMemory]] = {}
                 for mem in memories:
                     ts = mem.timescale.value
                     if ts not in timescale_groups:

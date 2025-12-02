@@ -62,9 +62,9 @@ def generate_status_report():
 
             # Risk assessment
             if unrealized_pct < -5:
-                print(f"      🚨 CRITICAL: Loss exceeds 5%")
+                print("      🚨 CRITICAL: Loss exceeds 5%")
             elif unrealized_pct < -2:
-                print(f"      ⚠️  WARNING: Loss exceeds 2%")
+                print("      ⚠️  WARNING: Loss exceeds 2%")
 
         print(f"\n  Total Unrealized P/L: ${total_unrealized:+,.2f}")
 
@@ -91,12 +91,8 @@ def generate_status_report():
 
     best = performance.get("best_trade", {})
     worst = performance.get("worst_trade", {})
-    print(
-        f"  Best Trade:           {best.get('symbol', 'N/A')} ${best.get('pl', 0):+,.2f}"
-    )
-    print(
-        f"  Worst Trade:          {worst.get('symbol', 'N/A')} ${worst.get('pl', 0):+,.2f}"
-    )
+    print(f"  Best Trade:           {best.get('symbol', 'N/A')} ${best.get('pl', 0):+,.2f}")
+    print(f"  Worst Trade:          {worst.get('symbol', 'N/A')} ${worst.get('pl', 0):+,.2f}")
 
     # Today's Status
     today = datetime.now().strftime("%Y-%m-%d")

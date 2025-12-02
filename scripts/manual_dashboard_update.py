@@ -11,7 +11,6 @@ Usage:
 
 import os
 import sys
-import subprocess
 from pathlib import Path
 
 # Add parent directory to path
@@ -68,7 +67,7 @@ def main():
     print("   " + "=" * 66)
     with open(dashboard_file) as f:
         lines = f.readlines()
-        for i, line in enumerate(lines[:30]):  # First 30 lines
+        for _i, line in enumerate(lines[:30]):  # First 30 lines
             print(f"   {line.rstrip()}")
         if len(lines) > 30:
             print(f"   ... ({len(lines) - 30} more lines)")

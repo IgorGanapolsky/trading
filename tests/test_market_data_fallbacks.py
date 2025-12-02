@@ -13,12 +13,10 @@ import json
 import os
 import time
 from datetime import datetime, timedelta
-
 from unittest.mock import MagicMock, Mock, patch
 
 import pandas as pd
 import pytest
-
 from src.utils.market_data import (
     DataSource,
     FetchAttempt,
@@ -221,9 +219,7 @@ class TestYFinanceFallback:
 
     def test_yfinance_exponential_backoff(self, mock_provider):
         """Test that exponential backoff is applied between retries."""
-        with patch.object(
-            mock_provider, "_fetch_yfinance", side_effect=Exception("Fail")
-        ):
+        with patch.object(mock_provider, "_fetch_yfinance", side_effect=Exception("Fail")):
             start_time = time.time()
             result = MarketDataResult(data=pd.DataFrame(), source=DataSource.UNKNOWN)
             mock_provider._fetch_yfinance_with_retries(
@@ -328,9 +324,7 @@ class TestAlphaVantageFallback:
             index=pd.date_range("2025-01-01", periods=1),
         )
 
-        with patch.object(
-            mock_provider, "_fetch_alpha_vantage", return_value=mock_data
-        ):
+        with patch.object(mock_provider, "_fetch_alpha_vantage", return_value=mock_data):
             result = MarketDataResult(data=pd.DataFrame(), source=DataSource.UNKNOWN)
             data = mock_provider._fetch_alpha_vantage_with_retries("SPY", result)
 

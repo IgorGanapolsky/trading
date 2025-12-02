@@ -12,7 +12,7 @@ that responds to market conditions.
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -110,15 +110,9 @@ class VCAStrategy:
 
         self.base_allocation = base_allocation
         self.target_growth_rate = target_growth_rate or self.DEFAULT_TARGET_GROWTH_RATE
-        self.max_adjustment_factor = (
-            max_adjustment_factor or self.DEFAULT_MAX_ADJUSTMENT
-        )
-        self.min_adjustment_factor = (
-            min_adjustment_factor or self.DEFAULT_MIN_ADJUSTMENT
-        )
-        self.deviation_threshold = (
-            deviation_threshold or self.DEFAULT_DEVIATION_THRESHOLD
-        )
+        self.max_adjustment_factor = max_adjustment_factor or self.DEFAULT_MAX_ADJUSTMENT
+        self.min_adjustment_factor = min_adjustment_factor or self.DEFAULT_MIN_ADJUSTMENT
+        self.deviation_threshold = deviation_threshold or self.DEFAULT_DEVIATION_THRESHOLD
         self.sell_threshold = sell_threshold or self.DEFAULT_SELL_THRESHOLD
 
         # Initialize target path
@@ -131,7 +125,7 @@ class VCAStrategy:
         )
 
         # Track history
-        self.calculation_history: List[VCACalculation] = []
+        self.calculation_history: list[VCACalculation] = []
 
         logger.info(
             f"VCA Strategy initialized: base=${base_allocation:.2f}, "
@@ -182,9 +176,7 @@ class VCAStrategy:
             # Linear scaling: -20% deviation -> 2.0x, 0% deviation -> 1.0x
             raw_factor = (
                 1.0
-                + abs(deviation_pct)
-                * (self.max_adjustment_factor - 1.0)
-                / self.deviation_threshold
+                + abs(deviation_pct) * (self.max_adjustment_factor - 1.0) / self.deviation_threshold
             )
             adjustment_factor = min(raw_factor, self.max_adjustment_factor)
             reason = (
@@ -269,7 +261,7 @@ class VCAStrategy:
             date = datetime.now()
         return self.target_path.get_target_value(date)
 
-    def get_recent_calculations(self, n: int = 10) -> List[VCACalculation]:
+    def get_recent_calculations(self, n: int = 10) -> list[VCACalculation]:
         """
         Get recent VCA calculations.
 
@@ -284,7 +276,7 @@ class VCAStrategy:
 
 def create_vca_strategy_from_config(
     base_allocation: float,
-    config: Optional[Dict] = None,
+    config: Optional[dict] = None,
 ) -> VCAStrategy:
     """
     Create VCA strategy from configuration dictionary.

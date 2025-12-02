@@ -2,17 +2,16 @@
 """
 Check your current positions and orders
 """
+
 import os
+
 import alpaca_trade_api as tradeapi
-from datetime import datetime
 
 ALPACA_KEY = os.getenv("ALPACA_API_KEY")
 ALPACA_SECRET = os.getenv("ALPACA_SECRET_KEY")
 
 if not ALPACA_KEY or not ALPACA_SECRET:
-    raise ValueError(
-        "ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set"
-    )
+    raise ValueError("ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set")
 
 api = tradeapi.REST(
     ALPACA_KEY,

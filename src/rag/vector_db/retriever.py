@@ -4,9 +4,9 @@ RAG Retrieval Interface for Trading System
 High-level API for querying the vector database.
 """
 
-from typing import List, Dict, Any, Optional
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
+from typing import Any, Optional
 
 from src.rag.vector_db.chroma_client import get_rag_db
 from src.rag.vector_db.embedder import get_embedder
@@ -38,7 +38,7 @@ class RAGRetriever:
         ticker: Optional[str] = None,
         source: Optional[str] = None,
         days_back: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Query RAG database with natural language.
 
@@ -86,9 +86,7 @@ class RAGRetriever:
             if days_back is not None:
                 article_date = metadata.get("date")
                 if article_date:
-                    cutoff_date = (datetime.now() - timedelta(days=days_back)).strftime(
-                        "%Y-%m-%d"
-                    )
+                    cutoff_date = (datetime.now() - timedelta(days=days_back)).strftime("%Y-%m-%d")
                     if article_date < cutoff_date:
                         continue  # Skip old articles
 
@@ -105,9 +103,7 @@ class RAGRetriever:
         logger.info(f"Retrieved {len(articles)} articles for query: {query[:50]}...")
         return articles
 
-    def get_ticker_context(
-        self, ticker: str, n_results: int = 20, days_back: int = 7
-    ) -> str:
+    def get_ticker_context(self, ticker: str, n_results: int = 20, days_back: int = 7) -> str:
         """
         Get formatted context for a ticker (for LLM prompt).
 
@@ -148,7 +144,7 @@ class RAGRetriever:
 
         return "\n".join(context_lines)
 
-    def get_market_sentiment(self, ticker: str, days_back: int = 7) -> Dict[str, Any]:
+    def get_market_sentiment(self, ticker: str, days_back: int = 7) -> dict[str, Any]:
         """
         Aggregate sentiment for a ticker from RAG database.
 
@@ -190,11 +186,7 @@ class RAGRetriever:
 
         # Extract unique sources
         sources = list(
-            set(
-                a["metadata"].get("source")
-                for a in articles
-                if a["metadata"].get("source")
-            )
+            set(a["metadata"].get("source") for a in articles if a["metadata"].get("source"))
         )
 
         # Classify sentiment
@@ -217,7 +209,7 @@ class RAGRetriever:
             "summary": summary,
         }
 
-    def semantic_search(self, query: str, n_results: int = 10) -> List[str]:
+    def semantic_search(self, query: str, n_results: int = 10) -> list[str]:
         """
         Simple semantic search (returns just content).
 
@@ -231,7 +223,7 @@ class RAGRetriever:
         articles = self.query_rag(query, n_results=n_results)
         return [a["content"] for a in articles]
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get RAG database statistics."""
         return self.db.get_stats()
 

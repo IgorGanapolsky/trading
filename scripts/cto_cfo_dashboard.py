@@ -5,7 +5,6 @@ CTO/CFO Executive Dashboard
 Real-time performance monitoring and decision support.
 """
 
-import json
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -34,7 +33,7 @@ def analyze_performance():
     total_pl = account.get("total_pl", 0)
     total_pl_pct = account.get("total_pl_pct", 0)
 
-    print(f"\n📊 FINANCIAL POSITION")
+    print("\n📊 FINANCIAL POSITION")
     print(f"  Starting Capital:    ${starting:,.2f}")
     print(f"  Current Equity:      ${current:,.2f}")
     print(f"  Total P/L:           ${total_pl:+,.2f} ({total_pl_pct:+.4f}%)")
@@ -44,7 +43,7 @@ def analyze_performance():
     # Position analysis
     positions = performance.get("open_positions", [])
     if positions:
-        print(f"\n📦 POSITION ANALYSIS")
+        print("\n📦 POSITION ANALYSIS")
         total_unrealized = sum(p.get("unrealized_pl", 0) for p in positions)
 
         for pos in positions:
@@ -61,29 +60,25 @@ def analyze_performance():
 
             # Risk assessment
             if unrealized_pct < -2:
-                print(f"    ⚠️  RISK: Loss exceeds 2% - consider stop-loss")
+                print("    ⚠️  RISK: Loss exceeds 2% - consider stop-loss")
             if unrealized_pct < -5:
-                print(f"    🚨 CRITICAL: Loss exceeds 5% - immediate review needed")
+                print("    🚨 CRITICAL: Loss exceeds 5% - immediate review needed")
 
         print(f"\n  Total Unrealized P/L: ${total_unrealized:+,.2f}")
 
     # Performance metrics
-    print(f"\n📈 TRADING METRICS")
+    print("\n📈 TRADING METRICS")
     print(f"  Total Trades:        {performance.get('total_trades', 0)}")
     print(f"  Win Rate:            {performance.get('win_rate', 0):.1f}%")
 
     best = performance.get("best_trade", {})
     worst = performance.get("worst_trade", {})
-    print(
-        f"  Best Trade:          {best.get('symbol', 'N/A')} ${best.get('pl', 0):+,.2f}"
-    )
-    print(
-        f"  Worst Trade:         {worst.get('symbol', 'N/A')} ${worst.get('pl', 0):+,.2f}"
-    )
+    print(f"  Best Trade:          {best.get('symbol', 'N/A')} ${best.get('pl', 0):+,.2f}")
+    print(f"  Worst Trade:         {worst.get('symbol', 'N/A')} ${worst.get('pl', 0):+,.2f}")
 
     # Strategy allocation
     strategies = data.get("strategies", {})
-    print(f"\n🎯 STRATEGY ALLOCATION")
+    print("\n🎯 STRATEGY ALLOCATION")
     for tier, config in strategies.items():
         if isinstance(config, dict) and "name" in config:
             invested = config.get("total_invested", 0)
@@ -109,20 +104,18 @@ def technical_analysis():
 
     # Automation status
     automation = data.get("automation", {})
-    print(f"\n🤖 AUTOMATION STATUS")
+    print("\n🤖 AUTOMATION STATUS")
     print(
         f"  GitHub Actions:      {'✅ ENABLED' if automation.get('github_actions_enabled') else '❌ DISABLED'}"
     )
     print(f"  Workflow Status:     {automation.get('workflow_status', 'UNKNOWN')}")
-    print(
-        f"  Last Execution:      {automation.get('last_successful_execution', 'NEVER')}"
-    )
+    print(f"  Last Execution:      {automation.get('last_successful_execution', 'NEVER')}")
     print(f"  Execution Count:     {automation.get('execution_count', 0)}")
     print(f"  Failures:            {automation.get('failures', 0)}")
 
     # Challenge status
     challenge = data.get("challenge", {})
-    print(f"\n📅 CHALLENGE STATUS")
+    print("\n📅 CHALLENGE STATUS")
     print(
         f"  Day:                 {challenge.get('current_day', 0)}/{challenge.get('total_days', 90)}"
     )
@@ -130,21 +123,21 @@ def technical_analysis():
     print(f"  Status:              {challenge.get('status', 'Unknown')}")
 
     # System health
-    print(f"\n💚 SYSTEM HEALTH")
+    print("\n💚 SYSTEM HEALTH")
     today = datetime.now().strftime("%Y-%m-%d")
     last_update = data.get("meta", {}).get("last_updated", "")
 
     if last_update.startswith(today):
-        print(f"  Status:              ✅ UP TO DATE")
+        print("  Status:              ✅ UP TO DATE")
     else:
-        print(f"  Status:              ⚠️  STALE DATA")
+        print("  Status:              ⚠️  STALE DATA")
         print(f"  Last Update:          {last_update}")
 
     # Learned patterns
     heuristics = data.get("heuristics", {})
     patterns = heuristics.get("learned_patterns", [])
     if patterns:
-        print(f"\n🧠 KEY LEARNINGS")
+        print("\n🧠 KEY LEARNINGS")
         for pattern in patterns[-5:]:  # Last 5 patterns
             print(f"  • {pattern}")
 
@@ -213,11 +206,9 @@ def generate_recommendations(perf_data, tech_data):
 
     # Display recommendations
     if recommendations:
-        for i, rec in enumerate(recommendations, 1):
+        for _i, rec in enumerate(recommendations, 1):
             priority_emoji = (
-                "🚨"
-                if rec["priority"] == "CRITICAL"
-                else "⚠️" if rec["priority"] == "HIGH" else "ℹ️"
+                "🚨" if rec["priority"] == "CRITICAL" else "⚠️" if rec["priority"] == "HIGH" else "ℹ️"
             )
             print(f"\n{priority_emoji} [{rec['priority']}] {rec['category']}")
             print(f"   Action: {rec['action']}")

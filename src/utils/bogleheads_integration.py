@@ -4,11 +4,10 @@ Bogleheads Forum Integration for RL Engine
 Integrates Bogleheads forum wisdom into RL trading decisions.
 """
 
-
-import sys
 import logging
-from typing import Dict, Any, Optional
+import sys
 from pathlib import Path
+from typing import Any, Optional
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -27,9 +26,7 @@ def get_bogleheads_learner():
     if _bogleheads_learner is None:
         try:
             # Add .claude/skills to path
-            skills_path = (
-                project_root / ".claude" / "skills" / "bogleheads_learner" / "scripts"
-            )
+            skills_path = project_root / ".claude" / "skills" / "bogleheads_learner" / "scripts"
             if str(skills_path) not in sys.path:
                 sys.path.insert(0, str(skills_path))
 
@@ -45,8 +42,8 @@ def get_bogleheads_learner():
 
 
 def get_bogleheads_signal_for_symbol(
-    symbol: str, market_context: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
+    symbol: str, market_context: Optional[dict[str, Any]] = None
+) -> dict[str, Any]:
     """
     Get Bogleheads-based trading signal for a symbol.
 
@@ -71,15 +68,11 @@ def get_bogleheads_signal_for_symbol(
         market_context = market_context or {}
 
         # Get signal from Bogleheads
-        signal = learner.get_bogleheads_signal(
-            symbol=symbol, market_context=market_context
-        )
+        signal = learner.get_bogleheads_signal(symbol=symbol, market_context=market_context)
 
         # Convert signal to score (-100 to +100)
         signal_map = {"BUY": 50, "SELL": -50, "HOLD": 0}
-        score = signal_map.get(signal.get("signal", "HOLD"), 0) * signal.get(
-            "confidence", 0.5
-        )
+        score = signal_map.get(signal.get("signal", "HOLD"), 0) * signal.get("confidence", 0.5)
 
         return {
             "score": score,
@@ -99,7 +92,7 @@ def get_bogleheads_signal_for_symbol(
         }
 
 
-def get_bogleheads_regime() -> Dict[str, Any]:
+def get_bogleheads_regime() -> dict[str, Any]:
     """
     Get current market regime from Bogleheads analysis.
 
@@ -129,10 +122,10 @@ def get_bogleheads_regime() -> Dict[str, Any]:
 
 
 def add_bogleheads_features_to_rl_state(
-    rl_state: Dict[str, Any],
+    rl_state: dict[str, Any],
     symbol: str,
-    market_context: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    market_context: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
     """
     Add Bogleheads features to RL state space.
 
@@ -164,14 +157,10 @@ def add_bogleheads_features_to_rl_state(
         "uncertain": 0.0,
         "unknown": 0.0,
     }
-    rl_state["bogleheads_regime_score"] = regime_map.get(
-        regime.get("regime", "unknown"), 0.0
-    )
+    rl_state["bogleheads_regime_score"] = regime_map.get(regime.get("regime", "unknown"), 0.0)
 
     # Convert risk level to numeric
     risk_map = {"low": 0.0, "medium": 0.5, "high": 1.0}
-    rl_state["bogleheads_risk_score"] = risk_map.get(
-        regime.get("risk_level", "medium"), 0.5
-    )
+    rl_state["bogleheads_risk_score"] = risk_map.get(regime.get("risk_level", "medium"), 0.5)
 
     return rl_state

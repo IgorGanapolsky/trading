@@ -8,16 +8,16 @@ import json
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 
-def load_events(path: Path) -> List[Dict[str, Any]]:
+def load_events(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         raise FileNotFoundError(
             f"Telemetry log not found at {path}. "
             "Run the orchestrator to generate telemetry or provide a sample file."
         )
-    events: List[Dict[str, Any]] = []
+    events: list[dict[str, Any]] = []
     with path.open("r", encoding="utf-8") as handle:
         for line in handle:
             line = line.strip()
@@ -30,10 +30,10 @@ def load_events(path: Path) -> List[Dict[str, Any]]:
     return events
 
 
-def summarize_events(events: List[Dict[str, Any]], top_n: int = 10) -> Dict[str, Any]:
+def summarize_events(events: list[dict[str, Any]], top_n: int = 10) -> dict[str, Any]:
     gate_counts = defaultdict(lambda: Counter())
     ticker_counts = Counter()
-    errors: List[Dict[str, Any]] = []
+    errors: list[dict[str, Any]] = []
 
     for event in events:
         gate = event.get("event", "unknown")

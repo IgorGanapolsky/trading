@@ -19,9 +19,9 @@ Created: 2025-12-02
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
 from scipy import stats
@@ -47,11 +47,11 @@ class VaRResult:
     cvar_99: float  # 99% CVaR (expected shortfall)
     method: str
     horizon_days: int
-    confidence_levels: Dict[float, float] = field(default_factory=dict)
+    confidence_levels: dict[float, float] = field(default_factory=dict)
     portfolio_value: float = 0.0
     timestamp: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "var_95": self.var_95,
             "var_99": self.var_99,
@@ -115,7 +115,7 @@ class VaRCalculator:
         self,
         returns: np.ndarray,
         portfolio_value: float,
-        confidence_levels: List[float] = None,
+        confidence_levels: list[float] = None,
     ) -> VaRResult:
         """
         Calculate VaR and CVaR for given returns.
@@ -132,9 +132,7 @@ class VaRCalculator:
             confidence_levels = [0.95, 0.99]
 
         if len(returns) < 20:
-            logger.warning(
-                f"Insufficient data for VaR: {len(returns)} returns (need >= 20)"
-            )
+            logger.warning(f"Insufficient data for VaR: {len(returns)} returns (need >= 20)")
             return self._empty_result(portfolio_value)
 
         # Clean returns
@@ -177,8 +175,8 @@ class VaRCalculator:
         )
 
     def _historical_var(
-        self, returns: np.ndarray, confidence_levels: List[float]
-    ) -> Tuple[Dict[float, float], Dict[float, float]]:
+        self, returns: np.ndarray, confidence_levels: list[float]
+    ) -> tuple[dict[float, float], dict[float, float]]:
         """Historical simulation VaR."""
         var_values = {}
         cvar_values = {}
@@ -197,8 +195,8 @@ class VaRCalculator:
         return var_values, cvar_values
 
     def _parametric_var(
-        self, returns: np.ndarray, confidence_levels: List[float]
-    ) -> Tuple[Dict[float, float], Dict[float, float]]:
+        self, returns: np.ndarray, confidence_levels: list[float]
+    ) -> tuple[dict[float, float], dict[float, float]]:
         """Parametric (Gaussian) VaR."""
         mu = np.mean(returns)
         sigma = np.std(returns)
@@ -221,8 +219,8 @@ class VaRCalculator:
         return var_values, cvar_values
 
     def _monte_carlo_var(
-        self, returns: np.ndarray, confidence_levels: List[float]
-    ) -> Tuple[Dict[float, float], Dict[float, float]]:
+        self, returns: np.ndarray, confidence_levels: list[float]
+    ) -> tuple[dict[float, float], dict[float, float]]:
         """Monte Carlo simulation VaR."""
         mu = np.mean(returns)
         sigma = np.std(returns)
@@ -287,7 +285,7 @@ class RiskMonitor:
         self.position_limit_pct = position_limit_pct
 
         self.var_calculator = VaRCalculator(method=VaRMethod.HISTORICAL)
-        self.alerts: List[RiskAlert] = []
+        self.alerts: list[RiskAlert] = []
 
         # State tracking
         self.peak_value = 0.0
@@ -304,8 +302,8 @@ class RiskMonitor:
         self,
         portfolio_value: float,
         returns: np.ndarray,
-        positions: Optional[Dict[str, float]] = None,
-    ) -> List[RiskAlert]:
+        positions: Optional[dict[str, float]] = None,
+    ) -> list[RiskAlert]:
         """
         Run comprehensive risk checks.
 
@@ -342,9 +340,7 @@ class RiskMonitor:
         # 2. Daily Loss Check
         if self.daily_starting_value > 0:
             daily_pnl_pct = (
-                (portfolio_value - self.daily_starting_value)
-                / self.daily_starting_value
-                * 100
+                (portfolio_value - self.daily_starting_value) / self.daily_starting_value * 100
             )
             if daily_pnl_pct < -self.daily_loss_limit_pct:
                 alert = RiskAlert(
@@ -401,7 +397,7 @@ class RiskMonitor:
         self.is_paused = False
         logger.info(f"New trading day started. Portfolio: ${portfolio_value:,.2f}")
 
-    def can_trade(self) -> Tuple[bool, str]:
+    def can_trade(self) -> tuple[bool, str]:
         """Check if trading is allowed based on risk state."""
         if self.is_halted:
             return False, "Trading HALTED due to drawdown limit breach"
@@ -409,9 +405,7 @@ class RiskMonitor:
             return False, "Trading PAUSED due to daily loss limit breach"
         return True, "Trading allowed"
 
-    def get_risk_summary(
-        self, portfolio_value: float, returns: np.ndarray
-    ) -> Dict[str, Any]:
+    def get_risk_summary(self, portfolio_value: float, returns: np.ndarray) -> dict[str, Any]:
         """Get comprehensive risk summary."""
         var_result = self.var_calculator.calculate_var(returns, portfolio_value)
 
@@ -422,9 +416,7 @@ class RiskMonitor:
         daily_pnl = 0.0
         if self.daily_starting_value > 0:
             daily_pnl = (
-                (portfolio_value - self.daily_starting_value)
-                / self.daily_starting_value
-                * 100
+                (portfolio_value - self.daily_starting_value) / self.daily_starting_value * 100
             )
 
         can_trade, reason = self.can_trade()
@@ -432,9 +424,7 @@ class RiskMonitor:
         return {
             "portfolio_value": portfolio_value,
             "var_95": var_result.var_95,
-            "var_95_pct": var_result.var_95 / portfolio_value * 100
-            if portfolio_value > 0
-            else 0,
+            "var_95_pct": var_result.var_95 / portfolio_value * 100 if portfolio_value > 0 else 0,
             "var_99": var_result.var_99,
             "cvar_95": var_result.cvar_95,
             "cvar_99": var_result.cvar_99,
@@ -497,8 +487,8 @@ if __name__ == "__main__":
         result = calc.calculate_var(returns, portfolio_value)
 
         print(f"\n{method.value.upper()}:")
-        print(f"  VaR 95%: ${result.var_95:,.2f} ({result.var_95/portfolio_value*100:.2f}%)")
-        print(f"  VaR 99%: ${result.var_99:,.2f} ({result.var_99/portfolio_value*100:.2f}%)")
+        print(f"  VaR 95%: ${result.var_95:,.2f} ({result.var_95 / portfolio_value * 100:.2f}%)")
+        print(f"  VaR 99%: ${result.var_99:,.2f} ({result.var_99 / portfolio_value * 100:.2f}%)")
         print(f"  CVaR 95%: ${result.cvar_95:,.2f}")
         print(f"  CVaR 99%: ${result.cvar_99:,.2f}")
 

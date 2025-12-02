@@ -111,7 +111,8 @@ Examples:
     )
 
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Enable verbose logging",
     )
@@ -156,10 +157,12 @@ Examples:
         print("\n📈 OPTIMAL ALLOCATION")
         print("-" * 80)
         allocation = strategy.get_optimal_allocation()
-        print(f"SHY (1-3yr):   {allocation.shy_pct*100:>5.1f}%")
-        print(f"IEF (7-10yr):  {allocation.ief_pct*100:>5.1f}%")
-        print(f"TLT (20+yr):   {allocation.tlt_pct*100:>5.1f}%")
-        print(f"Total:         {(allocation.shy_pct + allocation.ief_pct + allocation.tlt_pct)*100:>5.1f}%")
+        print(f"SHY (1-3yr):   {allocation.shy_pct * 100:>5.1f}%")
+        print(f"IEF (7-10yr):  {allocation.ief_pct * 100:>5.1f}%")
+        print(f"TLT (20+yr):   {allocation.tlt_pct * 100:>5.1f}%")
+        print(
+            f"Total:         {(allocation.shy_pct + allocation.ief_pct + allocation.tlt_pct) * 100:>5.1f}%"
+        )
 
         if args.amount:
             print(f"\n💰 INVESTMENT BREAKDOWN (${args.amount:.2f})")
@@ -199,17 +202,21 @@ Examples:
         if decision:
             if decision.should_rebalance:
                 print(f"✅ REBALANCED: {decision.reason}")
-                print(f"   Max drift: {decision.max_drift*100:.1f}%")
+                print(f"   Max drift: {decision.max_drift * 100:.1f}%")
 
                 print("\n   Current → Target:")
                 for symbol in ["SHY", "IEF", "TLT"]:
                     curr = decision.current_allocation[symbol]
                     targ = decision.target_allocation[symbol]
                     drift = decision.drift_pct[symbol]
-                    print(f"   {symbol}: {curr*100:>5.1f}% → {targ*100:>5.1f}% (drift: {drift*100:>4.1f}%)")
+                    print(
+                        f"   {symbol}: {curr * 100:>5.1f}% → {targ * 100:>5.1f}% (drift: {drift * 100:>4.1f}%)"
+                    )
             else:
                 print(f"ℹ️  No rebalancing needed: {decision.reason}")
-                print(f"   Max drift: {decision.max_drift*100:.1f}% (threshold: {strategy.rebalance_threshold*100:.1f}%)")
+                print(
+                    f"   Max drift: {decision.max_drift * 100:.1f}% (threshold: {strategy.rebalance_threshold * 100:.1f}%)"
+                )
         else:
             print("⚠️  Could not check rebalancing (insufficient data or too soon)")
 
@@ -232,10 +239,12 @@ Examples:
             print(f"Last rebalance:       {summary['last_rebalance'] or 'Never'}")
             print(f"Rebalance count:      {summary['rebalance_count']}")
 
-            if summary['positions']:
+            if summary["positions"]:
                 print("\nPositions:")
-                for pos in summary['positions']:
-                    print(f"  {pos['symbol']:>4}: {pos['qty']:>8.4f} shares @ ${pos['avg_entry_price']:>8.2f} = ${pos['market_value']:>8.2f}")
+                for pos in summary["positions"]:
+                    print(
+                        f"  {pos['symbol']:>4}: {pos['qty']:>8.4f} shares @ ${pos['avg_entry_price']:>8.2f} = ${pos['market_value']:>8.2f}"
+                    )
 
     print("\n" + "=" * 80)
     print("Demo complete!")

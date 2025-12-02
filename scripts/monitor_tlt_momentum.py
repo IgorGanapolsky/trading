@@ -9,12 +9,12 @@ The momentum gate is OPEN when SMA20 >= SMA50 (uptrend).
 The momentum gate is CLOSED when SMA20 < SMA50 (downtrend).
 """
 
-import sys
 import json
 import logging
+import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Optional
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -25,16 +25,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # State file to track gate status changes
 STATE_FILE = Path("data") / "tlt_gate_state.json"
 
 
-def get_tlt_momentum_status() -> Tuple[bool, Dict]:
+def get_tlt_momentum_status() -> tuple[bool, dict]:
     """
     Check TLT momentum gate status.
 
@@ -82,20 +80,20 @@ def get_tlt_momentum_status() -> Tuple[bool, Dict]:
         return False, {"error": str(e)}
 
 
-def load_gate_state() -> Dict:
+def load_gate_state() -> dict:
     """Load previous gate state from file."""
     if not STATE_FILE.exists():
         return {}
 
     try:
-        with open(STATE_FILE, "r") as f:
+        with open(STATE_FILE) as f:
             return json.load(f)
     except Exception as e:
         logger.warning(f"Error loading gate state: {e}")
         return {}
 
 
-def save_gate_state(state: Dict) -> None:
+def save_gate_state(state: dict) -> None:
     """Save gate state to file."""
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
 
@@ -106,7 +104,7 @@ def save_gate_state(state: Dict) -> None:
         logger.error(f"Error saving gate state: {e}")
 
 
-def check_tlt_gate_change() -> Optional[Dict]:
+def check_tlt_gate_change() -> Optional[dict]:
     """
     Check if TLT gate status has changed and return alert info if so.
 
@@ -176,10 +174,10 @@ def get_tlt_status_report() -> str:
 {emoji} *TLT Momentum Gate: {gate_text}*
 
 *Current Status:*
-• Price: ${status['current_price']:.2f}
-• SMA20: ${status['sma20']:.2f}
-• SMA50: ${status['sma50']:.2f}
-• Gate: {gate_text} (SMA20 {'>=' if gate_open else '<'} SMA50)
+• Price: ${status["current_price"]:.2f}
+• SMA20: ${status["sma20"]:.2f}
+• SMA50: ${status["sma50"]:.2f}
+• Gate: {gate_text} (SMA20 {">=" if gate_open else "<"} SMA50)
 
 *Allocation:*
 • Daily Investment: $1,500
@@ -190,9 +188,9 @@ def get_tlt_status_report() -> str:
 *Action:* {action_text}
 
 *Performance:*
-• 3-Month Return: {status['ret3m_pct']:.2f}%{' ✅' if status['ret3m_pct'] and status['ret3m_pct'] > 0 else '' if status['ret3m_pct'] else ' (N/A)'}
+• 3-Month Return: {status["ret3m_pct"]:.2f}%{" ✅" if status["ret3m_pct"] and status["ret3m_pct"] > 0 else "" if status["ret3m_pct"] else " (N/A)"}
 
-*Last Check:* {datetime.now().strftime('%Y-%m-%d %H:%M:%S ET')}
+*Last Check:* {datetime.now().strftime("%Y-%m-%d %H:%M:%S ET")}
 """
 
     return report.strip()
@@ -228,19 +226,19 @@ def main():
             alerter = TelegramAlerter()
             if alerter.enabled:
                 message = f"""
-*TLT MOMENTUM GATE {'OPENED' if alert['gate_opened'] else 'CLOSED'}*
+*TLT MOMENTUM GATE {"OPENED" if alert["gate_opened"] else "CLOSED"}*
 
-Treasuries trading is now {'ENABLED' if alert['gate_opened'] else 'PAUSED'}.
+Treasuries trading is now {"ENABLED" if alert["gate_opened"] else "PAUSED"}.
 
 *Details:*
-• Previous Status: {alert['previous_status']}
-• Current Status: {alert['current_status']}
-• Current Price: ${alert['details']['current_price']:.2f}
-• SMA20: ${alert['details']['sma20']:.2f}
-• SMA50: ${alert['details']['sma50']:.2f}
+• Previous Status: {alert["previous_status"]}
+• Current Status: {alert["current_status"]}
+• Current Price: ${alert["details"]["current_price"]:.2f}
+• SMA20: ${alert["details"]["sma20"]:.2f}
+• SMA50: ${alert["details"]["sma50"]:.2f}
 
 *Impact:*
-{'✅ System will now allocate $90/day to TLT' if alert['gate_opened'] else '⏸️  System will skip TLT orders until gate opens'}
+{"✅ System will now allocate $90/day to TLT" if alert["gate_opened"] else "⏸️  System will skip TLT orders until gate opens"}
 
 *Next Check:* Daily at market open
 """

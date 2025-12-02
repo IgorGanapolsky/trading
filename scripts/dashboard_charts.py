@@ -12,20 +12,21 @@ Generates visualizations for the trading dashboard:
 
 Uses matplotlib to create images that can be embedded in markdown.
 """
+
 import os
 import sys
-import numpy as np
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
-import json
+from typing import Optional
+
+import numpy as np
 
 try:
     import matplotlib
 
     matplotlib.use("Agg")  # Non-interactive backend
-    import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
+    import matplotlib.pyplot as plt
 
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
@@ -39,7 +40,7 @@ CHARTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def generate_equity_curve_chart(
-    perf_log: List[Dict], output_path: Optional[Path] = None
+    perf_log: list[dict], output_path: Optional[Path] = None
 ) -> Optional[str]:
     """Generate equity curve chart."""
     if not MATPLOTLIB_AVAILABLE or not perf_log or len(perf_log) < 2:
@@ -64,9 +65,7 @@ def generate_equity_curve_chart(
 
     # Create chart
     fig, ax = plt.subplots(figsize=(12, 6))
-    ax.plot(
-        dates, equity_values, linewidth=2, color="#2563eb", label="Portfolio Equity"
-    )
+    ax.plot(dates, equity_values, linewidth=2, color="#2563eb", label="Portfolio Equity")
     ax.fill_between(dates, equity_values, alpha=0.3, color="#2563eb")
     ax.set_xlabel("Date", fontsize=10)
     ax.set_ylabel("Equity ($)", fontsize=10)
@@ -86,11 +85,11 @@ def generate_equity_curve_chart(
     plt.savefig(output_path, dpi=100, bbox_inches="tight")
     plt.close()
 
-    return f"charts/equity_curve.png"
+    return "charts/equity_curve.png"
 
 
 def generate_drawdown_chart(
-    perf_log: List[Dict], output_path: Optional[Path] = None
+    perf_log: list[dict], output_path: Optional[Path] = None
 ) -> Optional[str]:
     """Generate drawdown chart."""
     if not MATPLOTLIB_AVAILABLE or not perf_log or len(perf_log) < 2:
@@ -144,11 +143,11 @@ def generate_drawdown_chart(
     plt.savefig(output_path, dpi=100, bbox_inches="tight")
     plt.close()
 
-    return f"charts/drawdown.png"
+    return "charts/drawdown.png"
 
 
 def generate_daily_pl_chart(
-    perf_log: List[Dict], output_path: Optional[Path] = None
+    perf_log: list[dict], output_path: Optional[Path] = None
 ) -> Optional[str]:
     """Generate daily P/L bar chart."""
     if not MATPLOTLIB_AVAILABLE or not perf_log or len(perf_log) < 2:
@@ -193,11 +192,11 @@ def generate_daily_pl_chart(
     plt.savefig(output_path, dpi=100, bbox_inches="tight")
     plt.close()
 
-    return f"charts/daily_pl.png"
+    return "charts/daily_pl.png"
 
 
 def generate_rolling_sharpe_chart(
-    perf_log: List[Dict], window: int = 7, output_path: Optional[Path] = None
+    perf_log: list[dict], window: int = 7, output_path: Optional[Path] = None
 ) -> Optional[str]:
     """Generate rolling Sharpe ratio chart."""
     if not MATPLOTLIB_AVAILABLE or not perf_log or len(perf_log) < window + 1:
@@ -267,9 +266,7 @@ def generate_rolling_sharpe_chart(
     ax.axhline(y=0, color="black", linestyle="-", linewidth=0.5)
     ax.set_xlabel("Date", fontsize=10)
     ax.set_ylabel("Sharpe Ratio", fontsize=10)
-    ax.set_title(
-        f"Rolling Sharpe Ratio ({window}-Day Window)", fontsize=12, fontweight="bold"
-    )
+    ax.set_title(f"Rolling Sharpe Ratio ({window}-Day Window)", fontsize=12, fontweight="bold")
     ax.grid(True, alpha=0.3)
     ax.legend()
 
@@ -289,7 +286,7 @@ def generate_rolling_sharpe_chart(
 
 
 def generate_attribution_bar_chart(
-    strategy_data: Dict[str, Dict], output_path: Optional[Path] = None
+    strategy_data: dict[str, dict], output_path: Optional[Path] = None
 ) -> Optional[str]:
     """Generate performance attribution bar chart by strategy."""
     if not MATPLOTLIB_AVAILABLE or not strategy_data:
@@ -324,8 +321,7 @@ def generate_attribution_bar_chart(
         height = bar.get_height()
         ax.text(
             bar.get_x() + bar.get_width() / 2.0,
-            height
-            + (0.01 * max(pl_values) if max(pl_values) > 0 else -0.01 * min(pl_values)),
+            height + (0.01 * max(pl_values) if max(pl_values) > 0 else -0.01 * min(pl_values)),
             f"${height:.2f}",
             ha="center",
             va="bottom" if height >= 0 else "top",
@@ -339,12 +335,12 @@ def generate_attribution_bar_chart(
     plt.savefig(output_path, dpi=100, bbox_inches="tight")
     plt.close()
 
-    return f"charts/attribution_bar.png"
+    return "charts/attribution_bar.png"
 
 
 def generate_regime_timeline_chart(
-    perf_log: List[Dict],
-    regime_data: Optional[Dict] = None,
+    perf_log: list[dict],
+    regime_data: Optional[dict] = None,
     output_path: Optional[Path] = None,
 ) -> Optional[str]:
     """Generate market regime timeline chart."""
@@ -404,9 +400,7 @@ def generate_regime_timeline_chart(
     fig, ax = plt.subplots(figsize=(14, 6))
 
     # Plot equity curve
-    ax.plot(
-        dates, equity_values, linewidth=2, color="#2563eb", alpha=0.3, label="Equity"
-    )
+    ax.plot(dates, equity_values, linewidth=2, color="#2563eb", alpha=0.3, label="Equity")
 
     # Color background by regime
     for i, (date, regime) in enumerate(zip(regime_dates, regimes)):
@@ -419,8 +413,7 @@ def generate_regime_timeline_chart(
     from matplotlib.patches import Patch
 
     legend_elements = [
-        Patch(facecolor=color, alpha=0.3, label=regime)
-        for regime, color in regime_colors.items()
+        Patch(facecolor=color, alpha=0.3, label=regime) for regime, color in regime_colors.items()
     ]
     ax.legend(handles=legend_elements, loc="upper left")
 
@@ -441,12 +434,12 @@ def generate_regime_timeline_chart(
     plt.savefig(output_path, dpi=100, bbox_inches="tight")
     plt.close()
 
-    return f"charts/regime_timeline.png"
+    return "charts/regime_timeline.png"
 
 
 def generate_all_charts(
-    perf_log: List[Dict], strategy_data: Optional[Dict[str, Dict]] = None
-) -> Dict[str, Optional[str]]:
+    perf_log: list[dict], strategy_data: Optional[dict[str, dict]] = None
+) -> dict[str, Optional[str]]:
     """Generate all charts and return paths."""
     charts = {}
 

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Any
 
 from src.utils.market_data import get_market_data_provider
-from src.utils.technical_indicators import calculate_technical_score, calculate_atr
+from src.utils.technical_indicators import calculate_atr, calculate_technical_score
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MomentumPayload:
     score: float
-    indicators: Dict[str, Any]
+    indicators: dict[str, Any]
 
 
 def _coerce_scalar(value: Any) -> float:

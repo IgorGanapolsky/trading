@@ -11,7 +11,7 @@ Usage:
 
 import json
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 # Paths
@@ -31,14 +31,12 @@ def validate_watchlist():
         return False
 
     try:
-        with open(WATCHLIST_FILE, "r") as f:
+        with open(WATCHLIST_FILE) as f:
             data = json.load(f)
 
         # Check structure
         assert "meta" in data, "Missing meta section"
-        assert (
-            "current_holdings" in data or "watchlist" in data
-        ), "Missing holdings/watchlist"
+        assert "current_holdings" in data or "watchlist" in data, "Missing holdings/watchlist"
 
         # Check staleness (warn if > 7 days old)
         last_updated = data["meta"].get("last_updated", "")
@@ -55,16 +53,14 @@ def validate_watchlist():
                     f"⚠️  WARNING: Watchlist is {age_days} days old (last updated: {last_updated})"
                 )
             else:
-                print(
-                    f"✅ Watchlist age: {age_days} days (last updated: {last_updated})"
-                )
+                print(f"✅ Watchlist age: {age_days} days (last updated: {last_updated})")
 
         # Count stocks
         holdings_count = len(data.get("current_holdings", []))
         watchlist_count = len(data.get("watchlist", []))
         total = holdings_count + watchlist_count
 
-        print(f"✅ Valid watchlist JSON")
+        print("✅ Valid watchlist JSON")
         print(f"   - Current holdings: {holdings_count}")
         print(f"   - Watchlist stocks: {watchlist_count}")
         print(f"   - Total tracked: {total}")
@@ -92,7 +88,7 @@ def validate_system_state():
         return True  # Not a failure
 
     try:
-        with open(SYSTEM_STATE_FILE, "r") as f:
+        with open(SYSTEM_STATE_FILE) as f:
             data = json.load(f)
 
         # Check staleness
@@ -103,9 +99,7 @@ def validate_system_state():
                 if "T" in last_updated
                 else datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S")
             )
-            age_hours = (
-                datetime.now() - updated_date.replace(tzinfo=None)
-            ).total_seconds() / 3600
+            age_hours = (datetime.now() - updated_date.replace(tzinfo=None)).total_seconds() / 3600
 
             if age_hours > 48:
                 print(f"⚠️  WARNING: system_state.json is {age_hours:.1f} hours old")
@@ -113,7 +107,7 @@ def validate_system_state():
             else:
                 print(f"✅ System state current (updated {age_hours:.1f} hours ago)")
 
-        print(f"✅ Valid system_state.json")
+        print("✅ Valid system_state.json")
         return True
 
     except Exception as e:

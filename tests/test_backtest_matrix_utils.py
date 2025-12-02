@@ -1,5 +1,4 @@
 import numpy as np
-
 from scripts.run_backtest_matrix import (
     aggregate_summary,
     longest_positive_streak,

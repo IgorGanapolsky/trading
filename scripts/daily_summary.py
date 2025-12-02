@@ -8,9 +8,10 @@ Shows:
 - Overall performance
 - Next actions
 """
+
+import json
 import os
 import sys
-import json
 from datetime import datetime
 from pathlib import Path
 
@@ -62,9 +63,7 @@ def get_today_summary():
         print("⚠️  No entries for today yet")
         if perf_data:
             latest = perf_data[-1]
-            print(
-                f"  Last entry: {latest.get('date')} - P/L: ${latest.get('pl', 0):+,.2f}"
-            )
+            print(f"  Last entry: {latest.get('date')} - P/L: ${latest.get('pl', 0):+,.2f}")
 
     print()
 
@@ -81,7 +80,7 @@ def get_today_summary():
     print("📈 OVERALL PERFORMANCE")
     print(f"  Starting:    ${starting:,.2f}")
     print(f"  Current:     ${current:,.2f}")
-    print(f"  Total P/L:   ${total_pnl:+,.2f} ({total_pnl/starting*100:+.4f}%)")
+    print(f"  Total P/L:   ${total_pnl:+,.2f} ({total_pnl / starting * 100:+.4f}%)")
     print()
 
     # Current positions
@@ -122,9 +121,7 @@ def get_today_summary():
     if state.get("challenge"):
         challenge = state["challenge"]
         print("🎯 CHALLENGE STATUS")
-        print(
-            f"  Day: {challenge.get('current_day', 0)}/{challenge.get('total_days', 90)}"
-        )
+        print(f"  Day: {challenge.get('current_day', 0)}/{challenge.get('total_days', 90)}")
         print(f"  Phase: {challenge.get('phase', 'Unknown')}")
         print()
 

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import List
 
 from src.agents.momentum_agent import MomentumAgent
 from src.agents.rl_agent import RLFilter
@@ -13,10 +12,10 @@ from src.langchain_agents.analyst import LangChainSentimentAgent
 from src.orchestrator.budget import BudgetController
 from src.orchestrator.failure_isolation import FailureIsolationManager
 from src.orchestrator.telemetry import OrchestratorTelemetry
-from src.risk.risk_manager import RiskManager
-from src.risk.options_risk_monitor import OptionsRiskMonitor
-from src.risk.trade_gateway import TradeGateway, TradeRequest
 from src.risk.capital_efficiency import get_capital_calculator
+from src.risk.options_risk_monitor import OptionsRiskMonitor
+from src.risk.risk_manager import RiskManager
+from src.risk.trade_gateway import TradeGateway, TradeRequest
 
 logger = logging.getLogger(__name__)
 
@@ -31,12 +30,13 @@ class TradingOrchestrator:
         Gate 4 - Risk sizing (hard rules)
     """
 
-    def __init__(self, tickers: List[str], paper: bool = True) -> None:
+    def __init__(self, tickers: list[str], paper: bool = True) -> None:
         self.tickers = [ticker.strip().upper() for ticker in tickers if ticker.strip()]
         if not self.tickers:
             raise ValueError("At least one ticker symbol is required.")
 
         import os as _os
+
         self.momentum_agent = MomentumAgent(
             min_score=float(_os.getenv("MOMENTUM_MIN_SCORE", "0.0"))
         )
@@ -91,9 +91,7 @@ class TradingOrchestrator:
                 },
             )
             return
-        logger.info(
-            "Gate 1 (%s): PASSED (strength=%.2f)", ticker, momentum_signal.strength
-        )
+        logger.info("Gate 1 (%s): PASSED (strength=%.2f)", ticker, momentum_signal.strength)
         self.telemetry.gate_pass(
             "momentum",
             ticker,
@@ -146,18 +144,14 @@ class TradingOrchestrator:
             llm_outcome = self.failure_manager.run(
                 gate="llm",
                 ticker=ticker,
-                operation=lambda: self.llm_agent.analyze_news(
-                    ticker, momentum_signal.indicators
-                ),
+                operation=lambda: self.llm_agent.analyze_news(ticker, momentum_signal.indicators),
                 retry=2,
             )
             if llm_outcome.ok:
                 llm_result = llm_outcome.result
                 sentiment_score = llm_result.get("score", 0.0)
                 self.budget_controller.log_spend(llm_result.get("cost", 0.0))
-                neg_threshold = float(
-                    os.getenv("LLM_NEGATIVE_SENTIMENT_THRESHOLD", "-0.2")
-                )
+                neg_threshold = float(os.getenv("LLM_NEGATIVE_SENTIMENT_THRESHOLD", "-0.2"))
                 if sentiment_score < neg_threshold:
                     logger.info(
                         "Gate 3 (%s): REJECTED by LLM (score=%.2f, reason=%s).",
@@ -171,9 +165,7 @@ class TradingOrchestrator:
                         {**llm_result, "trigger": "negative_sentiment"},
                     )
                     return
-                logger.info(
-                    "Gate 3 (%s): PASSED (sentiment=%.2f).", ticker, sentiment_score
-                )
+                logger.info("Gate 3 (%s): PASSED (sentiment=%.2f).", ticker, sentiment_score)
                 self.telemetry.gate_pass("llm", ticker, llm_result)
             else:
                 logger.warning(
@@ -249,9 +241,7 @@ class TradingOrchestrator:
         order_size = risk_outcome.result
 
         if order_size <= 0:
-            logger.info(
-                "Gate 4 (%s): REJECTED (position size calculated as 0).", ticker
-            )
+            logger.info("Gate 4 (%s): REJECTED (position size calculated as 0).", ticker)
             self.telemetry.gate_reject(
                 "risk",
                 ticker,
@@ -266,10 +256,7 @@ class TradingOrchestrator:
 
         # CRITICAL: All trades go through the mandatory gateway
         trade_request = TradeRequest(
-            symbol=ticker,
-            side="buy",
-            notional=order_size,
-            source="orchestrator"
+            symbol=ticker, side="buy", notional=order_size, source="orchestrator"
         )
         gateway_decision = self.trade_gateway.evaluate(trade_request)
 
@@ -296,9 +283,7 @@ class TradingOrchestrator:
             event_type="execution.order",
         )
         if not order_outcome.ok:
-            logger.error(
-                "Execution failed for %s: %s", ticker, order_outcome.failure.error
-            )
+            logger.error("Execution failed for %s: %s", ticker, order_outcome.failure.error)
             return
         order = order_outcome.result
         self.telemetry.gate_pass(
@@ -352,10 +337,7 @@ class TradingOrchestrator:
         delta_hedge_check = self.capital_calculator.should_enable_delta_hedging(account_equity)
 
         if not delta_hedge_check["enabled"]:
-            logger.warning(
-                "Gate 5: Delta hedging DISABLED - %s",
-                delta_hedge_check["reason"]
-            )
+            logger.warning("Gate 5: Delta hedging DISABLED - %s", delta_hedge_check["reason"])
             self.telemetry.record(
                 event_type="gate.delta_rebalance",
                 ticker="PORTFOLIO",
@@ -370,7 +352,9 @@ class TradingOrchestrator:
             return {
                 "action": "disabled",
                 "reason": delta_hedge_check["reason"],
-                "recommendation": delta_hedge_check.get("recommendation", "Use defined-risk strategies")
+                "recommendation": delta_hedge_check.get(
+                    "recommendation", "Use defined-risk strategies"
+                ),
             }
 
         try:
@@ -397,9 +381,7 @@ class TradingOrchestrator:
                 return {"action": "none", "delta_analysis": delta_analysis}
 
             # Calculate hedge trade
-            hedge = self.options_risk_monitor.calculate_delta_hedge(
-                delta_analysis["net_delta"]
-            )
+            hedge = self.options_risk_monitor.calculate_delta_hedge(delta_analysis["net_delta"])
 
             if hedge["action"] == "NONE":
                 return {"action": "none", "delta_analysis": delta_analysis}
@@ -417,16 +399,19 @@ class TradingOrchestrator:
                     symbol=hedge["symbol"],
                     side=hedge["action"].lower(),
                     quantity=hedge["quantity"],
-                    source="delta_hedge"
+                    source="delta_hedge",
                 )
                 hedge_decision = self.trade_gateway.evaluate(hedge_request)
 
                 if not hedge_decision.approved:
                     logger.warning(
                         "Delta hedge rejected by gateway: %s",
-                        [r.value for r in hedge_decision.rejection_reasons]
+                        [r.value for r in hedge_decision.rejection_reasons],
                     )
-                    return {"action": "rejected", "reasons": [r.value for r in hedge_decision.rejection_reasons]}
+                    return {
+                        "action": "rejected",
+                        "reasons": [r.value for r in hedge_decision.rejection_reasons],
+                    }
 
                 order = self.trade_gateway.execute(hedge_decision)
 
@@ -494,8 +479,7 @@ class TradingOrchestrator:
 
         try:
             results = self.options_risk_monitor.run_risk_check(
-                current_prices=option_prices,
-                executor=self.executor
+                current_prices=option_prices, executor=self.executor
             )
 
             self.telemetry.record(

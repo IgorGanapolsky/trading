@@ -5,11 +5,10 @@ Offloads context from prompts to persistent storage for better agent performance
 
 import json
 import logging
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
-
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -19,11 +18,11 @@ class ContextEntry:
     """Context entry for persistent storage"""
 
     key: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
     timestamp: str
     agent_type: str
     ttl_seconds: Optional[int] = None
-    tags: List[str] = None
+    tags: list[str] = None
 
 
 class ContextEngine:
@@ -67,7 +66,7 @@ class ContextEngine:
 
         logger.info(f"✅ Context Engine initialized: {self.base_dir}")
 
-    def save_trade_log(self, trade_data: Dict[str, Any]) -> str:
+    def save_trade_log(self, trade_data: dict[str, Any]) -> str:
         """
         Save trade log to persistent storage
 
@@ -96,7 +95,7 @@ class ContextEngine:
         logger.debug(f"Saved trade log: {filepath}")
         return str(filepath)
 
-    def save_backtest_result(self, backtest_data: Dict[str, Any]) -> str:
+    def save_backtest_result(self, backtest_data: dict[str, Any]) -> str:
         """
         Save backtest result
 
@@ -125,7 +124,7 @@ class ContextEngine:
         logger.debug(f"Saved backtest result: {filepath}")
         return str(filepath)
 
-    def save_agent_decision(self, decision_data: Dict[str, Any]) -> str:
+    def save_agent_decision(self, decision_data: dict[str, Any]) -> str:
         """
         Save agent decision for traceability
 
@@ -157,7 +156,7 @@ class ContextEngine:
 
     def load_recent_trades(
         self, symbol: Optional[str] = None, days: int = 7
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Load recent trades from storage
 
@@ -190,7 +189,7 @@ class ContextEngine:
         agent_type: Optional[str] = None,
         symbol: Optional[str] = None,
         days: int = 7,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Load recent agent decisions
 
@@ -213,16 +212,16 @@ class ContextEngine:
 
                     if entry_timestamp >= cutoff_date:
                         data = entry["data"]
-                        if (
-                            agent_type is None or data.get("agent_type") == agent_type
-                        ) and (symbol is None or data.get("symbol") == symbol):
+                        if (agent_type is None or data.get("agent_type") == agent_type) and (
+                            symbol is None or data.get("symbol") == symbol
+                        ):
                             decisions.append(data)
             except Exception as e:
                 logger.warning(f"Error loading decision {filepath}: {e}")
 
         return sorted(decisions, key=lambda x: x.get("timestamp", ""), reverse=True)
 
-    def get_context_summary(self, symbol: str, days: int = 30) -> Dict[str, Any]:
+    def get_context_summary(self, symbol: str, days: int = 30) -> dict[str, Any]:
         """
         Get context summary for a symbol (for prompt injection)
 

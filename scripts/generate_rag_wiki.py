@@ -10,7 +10,7 @@ import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any
 
 # Paths
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -20,7 +20,7 @@ WIKI_DIR = PROJECT_ROOT / "wiki"
 OUTPUT_FILE = WIKI_DIR / "RAG-Knowledge-Base.md"
 
 
-def get_sentiment_rag_stats() -> Dict[str, Any]:
+def get_sentiment_rag_stats() -> dict[str, Any]:
     """Query sentiment RAG database for stats."""
     db_path = RAG_DIR / "sentiment_rag.db"
     if not db_path.exists():
@@ -70,7 +70,7 @@ def get_sentiment_rag_stats() -> Dict[str, Any]:
         return {"error": str(e), "tickers": []}
 
 
-def get_berkshire_stats() -> Dict[str, Any]:
+def get_berkshire_stats() -> dict[str, Any]:
     """Get Berkshire Hathaway letters stats."""
     raw_dir = RAG_DIR / "berkshire_letters" / "raw"
     parsed_dir = RAG_DIR / "berkshire_letters" / "parsed"
@@ -90,7 +90,7 @@ def get_berkshire_stats() -> Dict[str, Any]:
     }
 
 
-def get_bogleheads_stats() -> Dict[str, Any]:
+def get_bogleheads_stats() -> dict[str, Any]:
     """Get Bogleheads forum data stats."""
     bogleheads_dir = RAG_DIR / "bogleheads"
 
@@ -116,7 +116,7 @@ def get_bogleheads_stats() -> Dict[str, Any]:
     }
 
 
-def get_sentiment_files_stats() -> Dict[str, Any]:
+def get_sentiment_files_stats() -> dict[str, Any]:
     """Get sentiment JSON files stats."""
     sentiment_dir = DATA_DIR / "sentiment"
 
@@ -134,7 +134,7 @@ def get_sentiment_files_stats() -> Dict[str, Any]:
     }
 
 
-def get_youtube_stats() -> Dict[str, Any]:
+def get_youtube_stats() -> dict[str, Any]:
     """Get YouTube cache stats."""
     cache_dir = DATA_DIR / "youtube_cache"
 
@@ -160,7 +160,7 @@ def get_youtube_stats() -> Dict[str, Any]:
     }
 
 
-def get_collector_status() -> List[Dict[str, Any]]:
+def get_collector_status() -> list[dict[str, Any]]:
     """Get status of all RAG collectors."""
     collectors_dir = PROJECT_ROOT / "src" / "rag" / "collectors"
 
@@ -237,7 +237,7 @@ def generate_wiki_page() -> str:
     # Build the page
     page = f"""# 🧠 RAG Knowledge Base
 
-**Last Updated**: {now.strftime('%Y-%m-%d %I:%M %p ET')}
+**Last Updated**: {now.strftime("%Y-%m-%d %I:%M %p ET")}
 **Auto-Updated**: Daily via GitHub Actions
 
 ---
@@ -246,12 +246,12 @@ def generate_wiki_page() -> str:
 
 | Source | Records | Status | Last Update |
 |--------|---------|--------|-------------|
-| **Sentiment RAG** | {sentiment_stats.get('count', 0)} tickers | {'✅ Active' if sentiment_stats.get('count', 0) > 0 else '⚠️ Empty'} | {sentiment_stats.get('last_update', 'Never')} |
-| **Berkshire Letters** | {berkshire_stats['count']} PDFs ({berkshire_stats['total_size_mb']}MB) | {'✅ Downloaded' if berkshire_stats['count'] > 0 else '⚠️ Pending'} | {berkshire_stats['year_range']} |
-| **Bogleheads Forum** | {bogleheads_stats['insights']} insights | {'✅ Active' if bogleheads_stats['insights'] > 0 else '⏳ ' + bogleheads_stats['status']} | Daily |
-| **YouTube Transcripts** | {youtube_stats['transcripts']} videos ({youtube_stats['total_size_kb']}KB) | {'✅ Active' if youtube_stats['transcripts'] > 0 else '⚠️ Empty'} | Daily |
-| **Reddit Sentiment** | {sentiment_files['reddit_count']} files | {'✅ Active' if sentiment_files['reddit_count'] > 0 else '⚠️ Empty'} | Daily |
-| **News Sentiment** | {sentiment_files['news_count']} files | {'✅ Active' if sentiment_files['news_count'] > 0 else '⚠️ Empty'} | Daily |
+| **Sentiment RAG** | {sentiment_stats.get("count", 0)} tickers | {"✅ Active" if sentiment_stats.get("count", 0) > 0 else "⚠️ Empty"} | {sentiment_stats.get("last_update", "Never")} |
+| **Berkshire Letters** | {berkshire_stats["count"]} PDFs ({berkshire_stats["total_size_mb"]}MB) | {"✅ Downloaded" if berkshire_stats["count"] > 0 else "⚠️ Pending"} | {berkshire_stats["year_range"]} |
+| **Bogleheads Forum** | {bogleheads_stats["insights"]} insights | {"✅ Active" if bogleheads_stats["insights"] > 0 else "⏳ " + bogleheads_stats["status"]} | Daily |
+| **YouTube Transcripts** | {youtube_stats["transcripts"]} videos ({youtube_stats["total_size_kb"]}KB) | {"✅ Active" if youtube_stats["transcripts"] > 0 else "⚠️ Empty"} | Daily |
+| **Reddit Sentiment** | {sentiment_files["reddit_count"]} files | {"✅ Active" if sentiment_files["reddit_count"] > 0 else "⚠️ Empty"} | Daily |
+| **News Sentiment** | {sentiment_files["news_count"]} files | {"✅ Active" if sentiment_files["news_count"] > 0 else "⚠️ Empty"} | Daily |
 
 ---
 
@@ -269,7 +269,9 @@ def generate_wiki_page() -> str:
             signal = (
                 "BULLISH"
                 if t["sentiment"] > 20
-                else "BEARISH" if t["sentiment"] < -20 else "NEUTRAL"
+                else "BEARISH"
+                if t["sentiment"] < -20
+                else "NEUTRAL"
             )
             page += f"| **{t['ticker']}** | {emoji} {t['sentiment']:+.1f} | {signal} | {t['regime']} | {t['confidence']} |\n"
     else:
@@ -280,9 +282,9 @@ def generate_wiki_page() -> str:
 
 ## 📚 Warren Buffett's Wisdom (Berkshire Letters)
 
-**Years Available**: {berkshire_stats['year_range']}
-**Total Letters**: {berkshire_stats['count']} PDFs
-**Total Size**: {berkshire_stats['total_size_mb']} MB
+**Years Available**: {berkshire_stats["year_range"]}
+**Total Letters**: {berkshire_stats["count"]} PDFs
+**Total Size**: {berkshire_stats["total_size_mb"]} MB
 
 ### Recent Letters
 """
@@ -291,9 +293,7 @@ def generate_wiki_page() -> str:
         for year in berkshire_stats["years"]:
             page += f"- 📄 **{year}** Annual Letter\n"
     else:
-        page += (
-            "*No letters downloaded yet. Run `download_all_letters()` to populate.*\n"
-        )
+        page += "*No letters downloaded yet. Run `download_all_letters()` to populate.*\n"
 
     page += f"""
 ### How to Query Buffett's Wisdom
@@ -314,9 +314,9 @@ apple_wisdom = collector.get_stock_mentions("AAPL")
 
 ## 🗣️ Bogleheads Forum Insights
 
-**Status**: {bogleheads_stats['status']}
-**Total Insights**: {bogleheads_stats['insights']}
-**Data Files**: {bogleheads_stats['files']}
+**Status**: {bogleheads_stats["status"]}
+**Total Insights**: {bogleheads_stats["insights"]}
+**Data Files**: {bogleheads_stats["files"]}
 
 ### Forums Monitored
 - Personal Investments
@@ -331,9 +331,9 @@ apple_wisdom = collector.get_stock_mentions("AAPL")
 
 ## 🎬 YouTube Financial Analysis
 
-**Transcripts Cached**: {youtube_stats['transcripts']}
-**Videos Processed**: {youtube_stats['processed']}
-**Total Size**: {youtube_stats['total_size_kb']} KB
+**Transcripts Cached**: {youtube_stats["transcripts"]}
+**Videos Processed**: {youtube_stats["processed"]}
+**Total Size**: {youtube_stats["total_size_kb"]} KB
 
 ### Channels Monitored
 - Parkev Tatevosian, CFA

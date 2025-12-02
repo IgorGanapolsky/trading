@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Any
 
 from src.strategies.legacy_momentum import LegacyMomentumCalculator
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class MomentumSignal:
     is_buy: bool
     strength: float  # Normalised 0-1 confidence
-    indicators: Dict[str, Any]
+    indicators: dict[str, Any]
 
 
 class MomentumAgent:

@@ -20,33 +20,30 @@ Example:
     >>> trader.set_stop_loss('SPY', 1.0, 450.0)
 """
 
-import os
 import logging
-import time
-from typing import Dict, List, Optional, Union, Any
-from datetime import datetime, timedelta
-from decimal import Decimal
-
-from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import (
-    MarketOrderRequest,
-    LimitOrderRequest,
-    StopOrderRequest,
-    GetOrdersRequest,
-)
-from alpaca.trading.enums import OrderSide, TimeInForce, OrderClass, OrderStatus
-from alpaca.data.historical import StockHistoricalDataClient
-from alpaca.data.requests import StockBarsRequest, StockLatestQuoteRequest
-from alpaca.data.timeframe import TimeFrame
-from alpaca.common.exceptions import APIError
+import os
 
 # Import retry decorator
 import sys
+import time
+from datetime import datetime
+from typing import Any, Optional
+
+from alpaca.common.exceptions import APIError
+from alpaca.data.historical import StockHistoricalDataClient
+from alpaca.data.requests import StockBarsRequest, StockLatestQuoteRequest
+from alpaca.data.timeframe import TimeFrame
+from alpaca.trading.client import TradingClient
+from alpaca.trading.enums import OrderSide, TimeInForce
+from alpaca.trading.requests import (
+    LimitOrderRequest,
+    MarketOrderRequest,
+    StopOrderRequest,
+)
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
-from src.utils.retry_decorator import retry_with_backoff
 from src.core.config import load_config
-
+from src.utils.retry_decorator import retry_with_backoff
 
 # Configure logging
 logging.basicConfig(
@@ -150,21 +147,16 @@ class AlpacaTrader:
 
         try:
             # Initialize Alpaca Trading Client
-            self.trading_client = TradingClient(
-                api_key=api_key, secret_key=secret_key, paper=paper
-            )
+            self.trading_client = TradingClient(api_key=api_key, secret_key=secret_key, paper=paper)
 
             # Initialize Alpaca Data Client
-            self.data_client = StockHistoricalDataClient(
-                api_key=api_key, secret_key=secret_key
-            )
+            self.data_client = StockHistoricalDataClient(api_key=api_key, secret_key=secret_key)
 
             # Verify connection by fetching account
             account = self.trading_client.get_account()
 
             logger.info(
-                f"Successfully connected to Alpaca "
-                f"({'paper' if paper else 'live'} trading)"
+                f"Successfully connected to Alpaca ({'paper' if paper else 'live'} trading)"
             )
             logger.info(f"Account status: {account.status}")
 
@@ -172,7 +164,7 @@ class AlpacaTrader:
             logger.error(f"Failed to connect to Alpaca API: {e}")
             raise AlpacaTraderError(f"Initialization failed: {e}") from e
 
-    def get_current_quote(self, symbol: str) -> Optional[Dict[str, float]]:
+    def get_current_quote(self, symbol: str) -> Optional[dict[str, float]]:
         """
         Get current bid/ask prices for a symbol.
 
@@ -194,19 +186,17 @@ class AlpacaTrader:
             if symbol in quote_data:
                 quote = quote_data[symbol]
                 return {
-                    'bid': float(quote.bid_price),
-                    'ask': float(quote.ask_price),
-                    'bid_size': int(quote.bid_size),
-                    'ask_size': int(quote.ask_size),
+                    "bid": float(quote.bid_price),
+                    "ask": float(quote.ask_price),
+                    "bid_size": int(quote.bid_size),
+                    "ask_size": int(quote.ask_size),
                 }
             return None
         except Exception as e:
             logger.warning(f"Could not fetch quote for {symbol}: {e}")
             return None
 
-    def validate_order_amount(
-        self, symbol: str, amount: float, tier: Optional[str] = None
-    ) -> None:
+    def validate_order_amount(self, symbol: str, amount: float, tier: Optional[str] = None) -> None:
         """
         Validate order amount is reasonable to prevent catastrophic errors.
 
@@ -273,10 +263,8 @@ class AlpacaTrader:
                 f"(expected: ${expected_amount:.2f}, tier: {tier_name})"
             )
 
-    @retry_with_backoff(
-        max_retries=3, initial_delay=1.0, exceptions=(APIError, ConnectionError)
-    )
-    def get_account_info(self) -> Dict[str, Any]:
+    @retry_with_backoff(max_retries=3, initial_delay=1.0, exceptions=(APIError, ConnectionError))
+    def get_account_info(self) -> dict[str, Any]:
         """
         Retrieve account information including buying power, equity, and cash.
 
@@ -339,16 +327,14 @@ class AlpacaTrader:
             logger.error(f"Failed to retrieve account information: {e}")
             raise AccountError(f"Account retrieval failed: {e}") from e
 
-    @retry_with_backoff(
-        max_retries=3, initial_delay=2.0, exceptions=(APIError, ConnectionError)
-    )
+    @retry_with_backoff(max_retries=3, initial_delay=2.0, exceptions=(APIError, ConnectionError))
     def execute_order(
         self,
         symbol: str,
         amount_usd: float,
         side: str = "buy",
         tier: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Execute an order with fractional shares based on USD amount.
         Uses limit orders by default (if configured) to reduce slippage, with
@@ -430,17 +416,17 @@ class AlpacaTrader:
 
             if quote:
                 # Set intended price based on side
-                intended_price = quote['ask'] if side == "buy" else quote['bid']
+                intended_price = quote["ask"] if side == "buy" else quote["bid"]
 
                 # Calculate limit price with buffer
                 if use_limit_order:
                     buffer_multiplier = 1 + (self.config.LIMIT_ORDER_BUFFER_PCT / 100)
                     if side == "buy":
                         # For buys: limit at ask + buffer (willing to pay slightly more)
-                        limit_price = quote['ask'] * buffer_multiplier
+                        limit_price = quote["ask"] * buffer_multiplier
                     else:
                         # For sells: limit at bid - buffer (willing to accept slightly less)
-                        limit_price = quote['bid'] / buffer_multiplier
+                        limit_price = quote["bid"] / buffer_multiplier
 
                     logger.info(
                         f"Executing LIMIT {side} order: {symbol} for ${amount_usd:.2f} "
@@ -479,7 +465,7 @@ class AlpacaTrader:
             timeout = self.config.LIMIT_ORDER_TIMEOUT_SECONDS
             start_time = time.time()
 
-            while order and str(order.status) not in ['filled', 'cancelled', 'expired', 'rejected']:
+            while order and str(order.status) not in ["filled", "cancelled", "expired", "rejected"]:
                 if time.time() - start_time > timeout:
                     logger.warning(
                         f"Order {order.id} did not fill within {timeout}s. "
@@ -491,7 +477,7 @@ class AlpacaTrader:
                 order = self.trading_client.get_order_by_id(order.id)
 
             # Check if we need to cancel and retry with market order
-            if order and str(order.status) not in ['filled', 'partially_filled']:
+            if order and str(order.status) not in ["filled", "partially_filled"]:
                 if use_limit_order:
                     logger.warning(
                         f"Limit order {order.id} not filled. Cancelling and retrying with market order."
@@ -515,9 +501,7 @@ class AlpacaTrader:
                     time.sleep(2)
                     order = self.trading_client.get_order_by_id(order.id)
 
-            filled_avg_price = (
-                float(order.filled_avg_price) if order.filled_avg_price else None
-            )
+            filled_avg_price = float(order.filled_avg_price) if order.filled_avg_price else None
 
             # Calculate slippage if we have both prices
             slippage_pct = None
@@ -565,8 +549,6 @@ class AlpacaTrader:
 
             # Trigger trade tracking for online learning (if available)
             try:
-                from src.ml.trade_tracker import TradeTracker
-
                 # Get global trade tracker instance if it exists
                 # This will be set up by the orchestrator
                 if hasattr(self, "_trade_tracker") and self._trade_tracker:
@@ -582,9 +564,7 @@ class AlpacaTrader:
             logger.error(f"Order execution failed: {e}")
             raise OrderExecutionError(f"Failed to execute order: {e}") from e
 
-    def set_stop_loss(
-        self, symbol: str, qty: float, stop_price: float
-    ) -> Dict[str, Any]:
+    def set_stop_loss(self, symbol: str, qty: float, stop_price: float) -> dict[str, Any]:
         """
         Set a stop-loss order to limit potential losses.
 
@@ -646,9 +626,7 @@ class AlpacaTrader:
             logger.error(f"Failed to set stop-loss: {e}")
             raise OrderExecutionError(f"Stop-loss creation failed: {e}") from e
 
-    def set_take_profit(
-        self, symbol: str, qty: float, limit_price: float
-    ) -> Dict[str, Any]:
+    def set_take_profit(self, symbol: str, qty: float, limit_price: float) -> dict[str, Any]:
         """
         Set a take-profit order to lock in gains.
 
@@ -678,9 +656,7 @@ class AlpacaTrader:
         symbol = symbol.upper().strip()
 
         try:
-            logger.info(
-                f"Setting take-profit: {symbol} qty={qty} at ${limit_price:.2f}"
-            )
+            logger.info(f"Setting take-profit: {symbol} qty={qty} at ${limit_price:.2f}")
 
             req = LimitOrderRequest(
                 symbol=symbol,
@@ -712,7 +688,7 @@ class AlpacaTrader:
             logger.error(f"Failed to set take-profit: {e}")
             raise OrderExecutionError(f"Take-profit creation failed: {e}") from e
 
-    def get_portfolio_performance(self) -> Dict[str, Any]:
+    def get_portfolio_performance(self) -> dict[str, Any]:
         """
         Get portfolio performance metrics including profit/loss and returns.
 
@@ -743,18 +719,14 @@ class AlpacaTrader:
 
             # Calculate profit/loss
             profit_loss = equity - last_equity
-            profit_loss_pct = (
-                (profit_loss / last_equity * 100) if last_equity > 0 else 0
-            )
+            profit_loss_pct = (profit_loss / last_equity * 100) if last_equity > 0 else 0
 
             # Calculate total return from initial investment
             # Using cash + equity vs just last_equity for more accurate return
             initial_value = float(account.last_equity)
             current_value = equity
             total_return = (
-                ((current_value - initial_value) / initial_value * 100)
-                if initial_value > 0
-                else 0
+                ((current_value - initial_value) / initial_value * 100) if initial_value > 0 else 0
             )
 
             performance = {
@@ -781,7 +753,7 @@ class AlpacaTrader:
             logger.error(f"Failed to retrieve portfolio performance: {e}")
             raise AccountError(f"Portfolio performance retrieval failed: {e}") from e
 
-    def get_positions(self) -> List[Dict[str, Any]]:
+    def get_positions(self) -> list[dict[str, Any]]:
         """
         Get all current portfolio positions.
 
@@ -820,11 +792,9 @@ class AlpacaTrader:
                     "market_value": float(pos.market_value),
                     "cost_basis": float(pos.cost_basis),
                     "unrealized_pl": float(pos.unrealized_pl),
-                    "unrealized_plpc": float(pos.unrealized_plpc)
-                    * 100,  # Convert to percentage
+                    "unrealized_plpc": float(pos.unrealized_plpc) * 100,  # Convert to percentage
                     "unrealized_intraday_pl": float(pos.unrealized_intraday_pl),
-                    "unrealized_intraday_plpc": float(pos.unrealized_intraday_plpc)
-                    * 100,
+                    "unrealized_intraday_plpc": float(pos.unrealized_intraday_plpc) * 100,
                     "side": str(pos.side),
                     "exchange": str(pos.exchange),
                 }
@@ -839,7 +809,7 @@ class AlpacaTrader:
 
     def get_historical_bars(
         self, symbol: str, timeframe: str = "1Day", limit: int = 100
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get historical price bars (OHLCV data) for a symbol.
 
@@ -927,7 +897,7 @@ class AlpacaTrader:
             logger.error(f"Failed to retrieve historical bars: {e}")
             raise MarketDataError(f"Historical data retrieval failed: {e}") from e
 
-    def cancel_all_orders(self) -> Dict[str, Any]:
+    def cancel_all_orders(self) -> dict[str, Any]:
         """
         Cancel all open orders.
 
@@ -967,7 +937,7 @@ class AlpacaTrader:
             logger.error(f"Failed to cancel orders: {e}")
             raise OrderExecutionError(f"Order cancellation failed: {e}") from e
 
-    def get_order_status(self, order_id: str) -> Dict[str, Any]:
+    def get_order_status(self, order_id: str) -> dict[str, Any]:
         """
         Get the status of a specific order.
 
@@ -1011,7 +981,7 @@ class AlpacaTrader:
             logger.error(f"Failed to get order status: {e}")
             raise OrderExecutionError(f"Order status retrieval failed: {e}") from e
 
-    def cancel_order(self, order_id: str) -> Dict[str, Any]:
+    def cancel_order(self, order_id: str) -> dict[str, Any]:
         """
         Cancel a specific order.
 
@@ -1046,7 +1016,7 @@ class AlpacaTrader:
             logger.error(f"Failed to cancel order: {e}")
             raise OrderExecutionError(f"Order cancellation failed: {e}") from e
 
-    def close_position(self, symbol: str) -> Dict[str, Any]:
+    def close_position(self, symbol: str) -> dict[str, Any]:
         """
         Close an entire position for a symbol.
 
@@ -1088,7 +1058,7 @@ class AlpacaTrader:
             logger.error(f"Failed to close position: {e}")
             raise OrderExecutionError(f"Position closure failed: {e}") from e
 
-    def close_all_positions(self) -> Dict[str, Any]:
+    def close_all_positions(self) -> dict[str, Any]:
         """
         Close all open positions.
 

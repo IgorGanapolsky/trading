@@ -6,11 +6,11 @@ Identifies and fixes data gaps to improve system reliability.
 FREE - No API costs, local processing only.
 """
 
-import sys
-import os
 import json
+import os
+import sys
+from datetime import datetime, timedelta
 from pathlib import Path
-from datetime import datetime, timedelta, date
 
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -26,7 +26,7 @@ def analyze_reliability():
         print("⚠️  Performance log not found")
         return None
 
-    with open(PERF_LOG_FILE, "r") as f:
+    with open(PERF_LOG_FILE) as f:
         perf_log = json.load(f)
 
     if not perf_log:
@@ -153,9 +153,7 @@ def main():
             for i, suggestion in enumerate(suggestions[:5], 1):
                 print(f"   {i}. {suggestion['description']}")
             print()
-            print(
-                "   Note: These are historical gaps. Future gaps can be prevented by:"
-            )
+            print("   Note: These are historical gaps. Future gaps can be prevented by:")
             print("   • Ensuring workflow runs daily")
             print("   • Adding retry logic for failed executions")
             print("   • Monitoring workflow status")

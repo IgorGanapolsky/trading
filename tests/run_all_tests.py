@@ -6,8 +6,8 @@ Runs complete test suite for trading system.
 FREE - No API costs, local testing only.
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add parent directory to path

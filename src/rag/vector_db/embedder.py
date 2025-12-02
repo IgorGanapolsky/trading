@@ -4,8 +4,9 @@ Embedding Pipeline for Trading RAG System
 Uses sentence-transformers for local, FREE text embeddings.
 """
 
-from typing import List, Dict, Any, Optional
 import logging
+from typing import Any, Optional
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -23,9 +24,7 @@ def _get_sentence_transformer():
 
             _SentenceTransformer = SentenceTransformer
         except ImportError:
-            logger.warning(
-                "sentence-transformers not installed - RAG features disabled"
-            )
+            logger.warning("sentence-transformers not installed - RAG features disabled")
             raise ImportError(
                 "sentence-transformers is required for RAG features. "
                 "Install with: pip install -r requirements-rag.txt"
@@ -86,7 +85,7 @@ class NewsEmbedder:
             logger.error(f"Error embedding text: {e}")
             raise
 
-    def embed_batch(self, texts: List[str], batch_size: int = 32) -> List[np.ndarray]:
+    def embed_batch(self, texts: list[str], batch_size: int = 32) -> list[np.ndarray]:
         """
         Generate embeddings for multiple texts (batch processing).
 
@@ -115,7 +114,7 @@ class NewsEmbedder:
             logger.error(f"Error embedding batch: {e}")
             raise
 
-    def embed_articles(self, articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def embed_articles(self, articles: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Embed news articles with metadata.
 

@@ -3,9 +3,11 @@
 Test script for RL Service integration.
 Verifies RL_AGENT_KEY is loaded and can connect to cloud RL provider.
 """
+
 import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Add parent to path
@@ -14,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Load environment
 load_dotenv()
 
-from src.ml.rl_service_client import RLServiceClient, test_rl_service_connection
+from src.ml.rl_service_client import RLServiceClient
 
 
 def main():
@@ -56,7 +58,7 @@ def main():
             env_spec=env_spec, algorithm="DQN", job_name="dqn_trading_v1"
         )
 
-        print(f"✅ Training job submitted successfully")
+        print("✅ Training job submitted successfully")
         print(f"   Job ID: {job_info['job_id']}")
         print(f"   Status: {job_info['status']}")
         print(f"   Algorithm: {job_info['algorithm']}")

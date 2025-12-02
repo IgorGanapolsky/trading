@@ -6,10 +6,10 @@ Gets real-time account status, positions, and order history
 
 import os
 import sys
-from datetime import datetime, timedelta
-from dotenv import load_dotenv
+from datetime import datetime
+
 import alpaca_trade_api as tradeapi
-import json
+from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
@@ -26,11 +26,7 @@ def main():
         sys.exit(1)
 
     # Initialize API
-    base_url = (
-        "https://paper-api.alpaca.markets"
-        if paper_trading
-        else "https://api.alpaca.markets"
-    )
+    base_url = "https://paper-api.alpaca.markets" if paper_trading else "https://api.alpaca.markets"
     api = tradeapi.REST(api_key, secret_key, base_url, api_version="v2")
 
     print("=" * 80)
@@ -95,9 +91,7 @@ def main():
                 print(f"  Current Price: ${current_price:.2f}")
                 print(f"  Market Value: ${market_value:.2f}")
                 print(f"  Cost Basis: ${cost_basis:.2f}")
-                print(
-                    f"  Unrealized P/L: ${unrealized_pl:+.2f} ({unrealized_plpc:+.2f}%)"
-                )
+                print(f"  Unrealized P/L: ${unrealized_pl:+.2f} ({unrealized_plpc:+.2f}%)")
 
             print(f"\nTOTAL Position Value: ${total_position_value:.2f}")
             print(f"TOTAL Unrealized P/L: ${total_unrealized_pl:+.2f}")
@@ -120,9 +114,7 @@ def main():
             if hasattr(order.created_at, "to_pydatetime"):
                 order_time = order.created_at.to_pydatetime()
             else:
-                order_time = datetime.fromisoformat(
-                    str(order.created_at).replace("Z", "+00:00")
-                )
+                order_time = datetime.fromisoformat(str(order.created_at).replace("Z", "+00:00"))
 
             if order_time.replace(tzinfo=None) >= start_date:
                 relevant_orders.append(order)
@@ -147,13 +139,10 @@ def main():
                 symbol = order.symbol
                 side = order.side
                 qty = order.qty
-                order_type = order.type
                 status = order.status
 
                 if status == "filled":
-                    filled_price = (
-                        float(order.filled_avg_price) if order.filled_avg_price else 0
-                    )
+                    filled_price = float(order.filled_avg_price) if order.filled_avg_price else 0
                     filled_qty = float(order.filled_qty) if order.filled_qty else 0
                     filled_orders.append(
                         {
@@ -185,9 +174,7 @@ def main():
             )
 
             if filled_orders:
-                total_invested = sum(
-                    o["total"] for o in filled_orders if o["side"] == "buy"
-                )
+                total_invested = sum(o["total"] for o in filled_orders if o["side"] == "buy")
                 print(f"Total Invested (Filled Buy Orders): ${total_invested:.2f}")
 
         print()

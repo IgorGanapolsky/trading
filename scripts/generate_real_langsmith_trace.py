@@ -4,6 +4,7 @@ Generate a real trading trace in LangSmith.
 
 This creates an actual trace from the trading system (not a test/demo).
 """
+
 import os
 import sys
 from pathlib import Path
@@ -50,15 +51,15 @@ try:
     )
 
     result = response.choices[0].message.content
-    print(f"✅ Real trading trace created!")
+    print("✅ Real trading trace created!")
     print(f"   Analysis: {result[:150]}...")
-    print(f"\n🔗 Check LangSmith dashboard:")
+    print("\n🔗 Check LangSmith dashboard:")
     print(
-        f"   https://smith.langchain.com/o/bb00a62e-c62a-4c42-9031-43e1f74bb5b3/projects/p/04fa554e-f155-4039-bb7f-e866f082103b"
+        "   https://smith.langchain.com/o/bb00a62e-c62a-4c42-9031-43e1f74bb5b3/projects/p/04fa554e-f155-4039-bb7f-e866f082103b"
     )
-    print(f"\n   ✅ This is a REAL trace from your trading system!")
-    print(f"   ✅ It will appear in the 'default' project (that's correct)")
-    print(f"   ✅ Look for ChatOpenAI trace with SPY analysis")
+    print("\n   ✅ This is a REAL trace from your trading system!")
+    print("   ✅ It will appear in the 'default' project (that's correct)")
+    print("   ✅ Look for ChatOpenAI trace with SPY analysis")
 
 except Exception as e:
     print(f"❌ Error: {e}")

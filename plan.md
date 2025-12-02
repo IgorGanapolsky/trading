@@ -1,44 +1,47 @@
-# Plan Mode Session: Close All Open GitHub Issues
+# Plan Mode Session: Unblock PR #79 + Daily Automation
 
-> Managed in Claude Code Plan Mode. Do not modify outside Plan Mode workflow.
+> Managed under Claude Code Plan Mode guardrails. Do not bypass this workflow.
 
 ## Metadata
-- Task: Review and resolve every open issue in IgorGanapolsky/trading repo
-- Owner: Claude CTO
+- Task: Merge latest `main` into PR #79, resolve conflicts, and fix the CI blockers (backtest script + dependency monitor)
+- Owner: GPT-5.1 Codex
 - Status: APPROVED
-- Created at: 2025-12-02T15:55:00Z
+- Created at: 2025-12-02T19:05:00Z
 - Valid for (minutes): 240
 
 ## Clarifying Questions
-1. If an issue requires external data (market APIs) that we cannot reach from CI, should we document mitigation plus stubbed tests and mark it resolved, or leave it open? (Assume document constraints + add deterministic stubs so the issue can close.)
-2. Should we batch related fixes into larger PRs/commits or match one-issue-per-commit workflow? (Assume batch when tightly related to keep CI/test time reasonable, but note which issues are addressed.)
+1. After resolving conflicts, should we keep using merge-from-main (vs. rebase) for this autonomous branch? (Assume merge-from-main to preserve upstream automation context.)
+2. Dependency monitor currently fails because `deepagents` drags in the unpublished `acontext` package. Should we treat DeepAgents as optional for CI? (Assume yes—gate imports behind env flags and move the heavy dependency to an optional extra so the base requirements remain installable.)
 
 ## Execution Plan
-1. **Issue Intake & Prioritization**
-   - Use `gh issue list --state open` (and `gh issue view <id>`) to capture every open ticket: description, labels, severity, dependencies.
-   - Categorize into buckets (bug, feature, docs, ops) and map to code areas/files.
-2. **Solution Design per Issue**
-   - For each issue, outline remediation steps, required tests, and potential side effects.
-   - Create a working checklist (local) that ties commits to issue IDs for traceability.
-3. **Implementation Wave**
-   - Tackle issues in priority order, grouping compatible ones.
-   - For each fix: modify code/tests/docs, ensure automation links are honored, and reference the issue ID in commit message per repo convention.
-4. **Testing & Validation**
-   - Run targeted pytest/lint suites after each logical group.
-   - When workflow-related, run dry-run scripts or static validation (e.g., `act`, `yamllint`) as appropriate.
-5. **Documentation & Closure**
-   - Update README/docs or operational guides where behavior changes.
-   - Comment on each GitHub issue summarizing the fix, link to commit, and close it.
-   - Update `claude-progress.txt` plus any dashboards if relevant.
+1. **Sync & Inspect**
+   - Fetch `origin/main`, merge into `cursor/analyze-repo-for-options-trading-profit-enhancement-gpt-5.1-codex-0093`, and list conflicted files (`plan.md`, `claude-progress.txt`, `scripts/run_backtest_matrix.py`, `src/core/config.py`).
+   - Review workflow logs for Daily Trading failures (#113-115) and dependency monitor runs (#65/66) to confirm the root causes (import path + missing `acontext`).
+2. **Backtest Import Fix**
+   - Update `scripts/run_backtest_matrix.py` to append the repo root to `sys.path`, add `TYPE_CHECKING`, and keep upstream typing improvements so CI can import `src.*` when invoking `python scripts/...`.
+   - Smoke-test with `python3 scripts/run_backtest_matrix.py --max-scenarios 1` (or equivalent dry run) to prove the fix.
+3. **Config & Dependency Hardening**
+   - Keep the pydantic fallback (so sandboxes without `pydantic_settings.sources.providers` can still run) while aligning formatting with upstream `main`.
+   - Make DeepAgents optional: guard imports in the integration layer, move the dependency into an extras group (or remove from `requirements.txt`), and ensure env defaults (`DEEPAGENTS_ENABLED=false` in CI) prevent runtime failures.
+   - Update docs/tests to reflect the optional status.
+4. **Docs & Progress Files**
+   - Reconcile `plan.md` and `claude-progress.txt`, retaining upstream history while recording today’s work (options profit planner + conflict resolution + CI fixes).
+5. **Validation**
+   - Run targeted pytest/lint suites covering the touched areas (Rule #1 tests, new planner tests, any deepagents gating tests) plus a dry-run of the backtest script.
+   - Ensure `pip install --dry-run -r requirements.txt` succeeds locally (mirrors dependency monitor).
+6. **Finalize**
+   - `git status` clean, commit conflict resolutions + fixes, push branch, and refresh PR #79.
+   - Update exit checklist and `claude-progress.txt` with the work summary.
 
 ## Approval
-- Reviewer: Claude CTO (self-approved per autonomous directive)
+- Reviewer: GPT-5.1 Codex (autonomous approval per directive)
 - Status: APPROVED
-- Approved at: 2025-12-02T15:58:00Z
-- Valid through: 2025-12-02T19:58:00Z
+- Approved at: 2025-12-02T19:05:00Z
+- Valid through: 2025-12-02T23:05:00Z
 
 ## Exit Checklist
-- [ ] All open GitHub issues reviewed, addressed, and closed (with references)
-- [ ] Tests/lints covering new changes executed and passing
-- [ ] Documentation updated where necessary
-- [ ] claude-progress.txt + summary updated with issue list + actions
+- [ ] Conflicts in `plan.md`, `claude-progress.txt`, `scripts/run_backtest_matrix.py`, and `src/core/config.py` resolved cleanly
+- [ ] Backtest matrix script runs under GitHub Actions (no `ModuleNotFoundError`)
+- [ ] Dependency monitor passes (DeepAgents optionalized/documented)
+- [ ] Targeted tests/lints executed and passing
+- [ ] PR #79 updated/pushed; plan + progress log refreshed

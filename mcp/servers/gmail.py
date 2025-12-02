@@ -10,21 +10,20 @@ Provides tools for:
 
 from __future__ import annotations
 
-import os
-import json
 import base64
 import logging
-from typing import Any, Dict, Mapping, Optional, List
+import os
 from datetime import datetime
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
 from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from typing import Any
 
 try:
+    from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
     from google_auth_oauthlib.flow import InstalledAppFlow
-    from google.auth.transport.requests import Request
     from googleapiclient.discovery import build
     from googleapiclient.errors import HttpError
 
@@ -32,8 +31,7 @@ try:
 except ImportError:
     GMAIL_API_AVAILABLE = False
 
-from mcp.client import default_client
-from mcp.utils import ensure_env_var, run_sync
+from mcp.utils import run_sync
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +50,7 @@ def _get_gmail_client():
     global _gmail_service
 
     if not GMAIL_API_AVAILABLE:
-        logger.warning(
-            "Gmail API libraries not installed - install google-api-python-client"
-        )
+        logger.warning("Gmail API libraries not installed - install google-api-python-client")
         return None
 
     if _gmail_service is not None:
@@ -81,14 +77,10 @@ def _get_gmail_client():
                 creds.refresh(Request())
             else:
                 if not os.path.exists(credentials_path):
-                    logger.error(
-                        f"Gmail credentials file not found: {credentials_path}"
-                    )
+                    logger.error(f"Gmail credentials file not found: {credentials_path}")
                     return None
 
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    credentials_path, SCOPES
-                )
+                flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
                 creds = flow.run_local_server(port=0)
 
             # Save credentials for next run
@@ -106,9 +98,7 @@ def _get_gmail_client():
         return None
 
 
-async def monitor_emails_async(
-    query: str = "is:unread", max_results: int = 10
-) -> Dict[str, Any]:
+async def monitor_emails_async(query: str = "is:unread", max_results: int = 10) -> dict[str, Any]:
     """
     Monitor emails matching query.
 
@@ -210,7 +200,7 @@ async def monitor_emails_async(
         }
 
 
-def monitor_emails(query: str = "is:unread", max_results: int = 10) -> Dict[str, Any]:
+def monitor_emails(query: str = "is:unread", max_results: int = 10) -> dict[str, Any]:
     """Sync wrapper for monitor_emails_async."""
     return run_sync(monitor_emails_async(query, max_results))
 
@@ -219,8 +209,8 @@ async def send_email_async(
     to: str | list[str],
     subject: str,
     body: str,
-    attachments: Optional[list[str]] = None,
-) -> Dict[str, Any]:
+    attachments: list[str] | None = None,
+) -> dict[str, Any]:
     """
     Send email via Gmail.
 
@@ -272,10 +262,7 @@ async def send_email_async(
 
         # Send message
         send_message = (
-            service.users()
-            .messages()
-            .send(userId="me", body={"raw": raw_message})
-            .execute()
+            service.users().messages().send(userId="me", body={"raw": raw_message}).execute()
         )
 
         return {
@@ -309,15 +296,15 @@ def send_email(
     to: str | list[str],
     subject: str,
     body: str,
-    attachments: Optional[list[str]] = None,
-) -> Dict[str, Any]:
+    attachments: list[str] | None = None,
+) -> dict[str, Any]:
     """Sync wrapper for send_email_async."""
     return run_sync(send_email_async(to, subject, body, attachments))
 
 
 async def process_attachment_async(
-    message_id: str, attachment_id: str, save_path: Optional[str] = None
-) -> Dict[str, Any]:
+    message_id: str, attachment_id: str, save_path: str | None = None
+) -> dict[str, Any]:
     """
     Download and process email attachment.
 
@@ -387,7 +374,7 @@ async def process_attachment_async(
 
 
 def process_attachment(
-    message_id: str, attachment_id: str, save_path: Optional[str] = None
-) -> Dict[str, Any]:
+    message_id: str, attachment_id: str, save_path: str | None = None
+) -> dict[str, Any]:
     """Sync wrapper for process_attachment_async."""
     return run_sync(process_attachment_async(message_id, attachment_id, save_path))

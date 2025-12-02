@@ -7,9 +7,10 @@ Setup time: 10 minutes | Cost: $0 forever | Reliability: 99.9%+
 """
 
 import os
-import requests
-from typing import Optional, Dict, Any
 from datetime import datetime
+from typing import Any, Optional
+
+import requests
 
 
 class TelegramAlerter:
@@ -42,9 +43,7 @@ class TelegramAlerter:
             self.enabled = True
             self.api_url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
 
-    def send_alert(
-        self, message: str, level: str = "INFO", include_timestamp: bool = True
-    ) -> bool:
+    def send_alert(self, message: str, level: str = "INFO", include_timestamp: bool = True) -> bool:
         """
         Send alert to CEO via Telegram.
 
@@ -70,9 +69,7 @@ class TelegramAlerter:
         if include_timestamp:
             timestamp_str = f"\n⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S ET')}"
 
-        formatted_message = (
-            f"{emoji} *{level.upper()}*\n\n" f"{message}" f"{timestamp_str}"
-        )
+        formatted_message = f"{emoji} *{level.upper()}*\n\n{message}{timestamp_str}"
 
         # Send to Telegram
         try:
@@ -97,9 +94,7 @@ class TelegramAlerter:
             print(f"❌ Failed to send Telegram alert: {e}")
             return False
 
-    def send_trade_failure(
-        self, error: str, context: Optional[Dict[str, Any]] = None
-    ) -> bool:
+    def send_trade_failure(self, error: str, context: Optional[dict[str, Any]] = None) -> bool:
         """
         Send trading-specific failure alert.
 
@@ -145,9 +140,7 @@ class TelegramAlerter:
 
         return self.send_alert(message, level="CRITICAL")
 
-    def send_no_trades_alert(
-        self, reason: str, day: int, portfolio_value: float
-    ) -> bool:
+    def send_no_trades_alert(self, reason: str, day: int, portfolio_value: float) -> bool:
         """
         Send alert when no trades executed.
 
@@ -181,9 +174,7 @@ class TelegramAlerter:
         """
         return self.send_alert(report, level="INFO")
 
-    def send_health_alert(
-        self, status: str, failed_checks: list, portfolio_value: float
-    ) -> bool:
+    def send_health_alert(self, status: str, failed_checks: list, portfolio_value: float) -> bool:
         """
         Send health check failure alert.
 
@@ -195,7 +186,7 @@ class TelegramAlerter:
         Returns:
             True if sent successfully
         """
-        message = f"*HEALTH CHECK {status}*\n\n" f"Failed Checks:\n"
+        message = f"*HEALTH CHECK {status}*\n\nFailed Checks:\n"
 
         for check in failed_checks:
             message += f"❌ {check}\n"

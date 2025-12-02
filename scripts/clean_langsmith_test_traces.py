@@ -5,8 +5,10 @@ Clean up test/demo traces from LangSmith project.
 This script identifies and optionally deletes test traces (like "Sample Agent Trace")
 that are not from the actual trading system.
 """
+
 import os
 import sys
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -18,9 +20,7 @@ except ImportError:
     sys.exit(1)
 
 
-def identify_test_traces(
-    client: Client, project_name: str = "default", limit: int = 50
-):
+def identify_test_traces(client: Client, project_name: str = "default", limit: int = 50):
     """Identify test/demo traces."""
     test_keywords = [
         "sample",
@@ -92,35 +92,31 @@ def generate_deletion_guide(test_traces: list, project_name: str):
     print("Delete them manually in the UI:\n")
 
     if parent_trace:
-        print(f"🎯 EASIEST METHOD: Delete the parent trace")
+        print("🎯 EASIEST METHOD: Delete the parent trace")
         print(
-            f"   1. Go to: https://smith.langchain.com/o/bb00a62e-c62a-4c42-9031-43e1f74bb5b3/projects/p/04fa554e-f155-4039-bb7f-e866f082103b"
+            "   1. Go to: https://smith.langchain.com/o/bb00a62e-c62a-4c42-9031-43e1f74bb5b3/projects/p/04fa554e-f155-4039-bb7f-e866f082103b"
         )
         print(f"   2. Find: 'Sample Agent Trace' (ID: {parent_trace.id})")
-        print(f"   3. Click on it")
-        print(f"   4. Click the delete/archive button (usually top right)")
-        print(
-            f"   5. This will delete the parent and all {len(test_traces)} sub-traces"
-        )
-        print(f"\n   ✅ This removes all test traces at once!")
+        print("   3. Click on it")
+        print("   4. Click the delete/archive button (usually top right)")
+        print(f"   5. This will delete the parent and all {len(test_traces)} sub-traces")
+        print("\n   ✅ This removes all test traces at once!")
     else:
-        print(f"📝 Delete individual traces:")
+        print("📝 Delete individual traces:")
         print(
-            f"   1. Go to: https://smith.langchain.com/o/bb00a62e-c62a-4c42-9031-43e1f74bb5b3/projects/p/04fa554e-f155-4039-bb7f-e866f082103b"
+            "   1. Go to: https://smith.langchain.com/o/bb00a62e-c62a-4c42-9031-43e1f74bb5b3/projects/p/04fa554e-f155-4039-bb7f-e866f082103b"
         )
-        print(f"   2. Find each trace listed above")
-        print(f"   3. Click delete/archive for each")
+        print("   2. Find each trace listed above")
+        print("   3. Click delete/archive for each")
 
-    print(f"\n💡 After deletion, your project will only show REAL trading traces!")
+    print("\n💡 After deletion, your project will only show REAL trading traces!")
 
 
 def main():
     """Main function."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Clean up test/demo traces from LangSmith"
-    )
+    parser = argparse.ArgumentParser(description="Clean up test/demo traces from LangSmith")
     parser.add_argument(
         "--delete",
         action="store_true",
@@ -149,10 +145,7 @@ def main():
     print("=" * 70)
 
     # Check projects
-    if args.project:
-        projects = [args.project]
-    else:
-        projects = ["default", "trading-rl-training"]
+    projects = [args.project] if args.project else ["default", "trading-rl-training"]
 
     total_deleted = 0
     total_failed = 0
@@ -196,9 +189,7 @@ def main():
         print("   python scripts/clean_langsmith_test_traces.py --delete")
 
     print("\n💡 To generate REAL trading traces:")
-    print(
-        "   python scripts/rl_training_orchestrator.py --platform local --use-langsmith"
-    )
+    print("   python scripts/rl_training_orchestrator.py --platform local --use-langsmith")
     print("   OR run your trading system - traces will appear automatically")
 
 

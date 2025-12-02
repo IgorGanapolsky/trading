@@ -18,19 +18,16 @@ Usage:
     python scripts/autonomous_model_training.py --force-retrain  # Force retrain even if model exists
 """
 
-import sys
-import os
 import argparse
 import logging
+import sys
+from datetime import datetime
 from pathlib import Path
-from datetime import datetime, timedelta
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
-sys.path.insert(
-    0, str(project_root / ".claude" / "skills" / "model_trainer" / "scripts")
-)
+sys.path.insert(0, str(project_root / ".claude" / "skills" / "model_trainer" / "scripts"))
 
 from model_trainer import ModelTrainerSkill
 from src.utils.data_collector import DataCollector
@@ -60,9 +57,7 @@ def main():
         default="SPY,QQQ,VOO",
         help="Comma-separated symbols (default: SPY,QQQ,VOO)",
     )
-    parser.add_argument(
-        "--epochs", type=int, default=50, help="Training epochs (default: 50)"
-    )
+    parser.add_argument("--epochs", type=int, default=50, help="Training epochs (default: 50)")
 
     args = parser.parse_args()
 
@@ -81,9 +76,9 @@ def main():
     data_check = skill.check_training_data_availability(symbols, min_days=252)
 
     if not data_check["available"]:
-        print(f"\n❌ Insufficient data for training:")
+        print("\n❌ Insufficient data for training:")
         print(f"   Missing symbols: {data_check['missing_symbols']}")
-        print(f"\n   Collecting data automatically...")
+        print("\n   Collecting data automatically...")
 
         # Automatically collect data
         collector = DataCollector(data_dir="data/historical")
@@ -92,11 +87,11 @@ def main():
         # Re-check
         data_check = skill.check_training_data_availability(symbols, min_days=252)
         if not data_check["available"]:
-            print(f"\n❌ Still insufficient data after collection")
-            print(f"   Please ensure API keys are configured")
+            print("\n❌ Still insufficient data after collection")
+            print("   Please ensure API keys are configured")
             sys.exit(1)
 
-    print(f"✅ Data available for all symbols")
+    print("✅ Data available for all symbols")
     for symbol, info in data_check["data_summary"].items():
         print(f"   {symbol}: {info['days']} days")
 
@@ -109,20 +104,18 @@ def main():
     existing_model = list(models_dir.glob("lstm_feature_extractor*.pt"))
 
     if existing_model and not args.force_retrain:
-        model_age = datetime.now() - datetime.fromtimestamp(
-            existing_model[0].stat().st_mtime
-        )
+        model_age = datetime.now() - datetime.fromtimestamp(existing_model[0].stat().st_mtime)
         print(f"\n[Step 2] Existing model found: {existing_model[0].name}")
         print(f"   Age: {model_age.days} days")
 
         # Only retrain if model is >7 days old
         if model_age.days < 7:
-            print(f"   ✅ Model is fresh (<7 days old), skipping retraining")
-            print(f"   Use --force-retrain to override")
+            print("   ✅ Model is fresh (<7 days old), skipping retraining")
+            print("   Use --force-retrain to override")
             return
 
     # Step 3: Train model
-    print(f"\n[Step 3] Training LSTM model...")
+    print("\n[Step 3] Training LSTM model...")
     result = skill.train_lstm_model(
         symbols=symbols,
         epochs=args.epochs,
@@ -132,13 +125,13 @@ def main():
     )
 
     if result["success"]:
-        print(f"\n✅ Model training complete!")
+        print("\n✅ Model training complete!")
         print(f"   Model saved to: {result['model_path']}")
         print(f"   Training metrics: {result['training_metrics']}")
-        print(f"\nNext steps:")
-        print(f"1. Integrate with OptimizedRLPolicyLearner")
-        print(f"2. Test on live market data")
-        print(f"3. A/B test against current strategy")
+        print("\nNext steps:")
+        print("1. Integrate with OptimizedRLPolicyLearner")
+        print("2. Test on live market data")
+        print("3. A/B test against current strategy")
     else:
         print(f"\n❌ Training failed: {result.get('error', 'Unknown error')}")
         sys.exit(1)

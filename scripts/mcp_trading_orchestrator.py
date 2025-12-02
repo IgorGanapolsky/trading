@@ -9,12 +9,11 @@ import argparse
 import json
 import logging
 import sys
-from typing import List
 
 from src.orchestration.mcp_trading import MCPTradingOrchestrator
 
 
-def parse_args(argv: List[str]) -> argparse.Namespace:
+def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run the MCP-based multi-agent trading orchestrator."
     )
@@ -44,7 +43,7 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def main(argv: List[str] | None = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
 
     logging.basicConfig(
@@ -52,9 +51,7 @@ def main(argv: List[str] | None = None) -> int:
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
-    symbols = [
-        symbol.strip().upper() for symbol in args.symbols.split(",") if symbol.strip()
-    ]
+    symbols = [symbol.strip().upper() for symbol in args.symbols.split(",") if symbol.strip()]
 
     orchestrator = MCPTradingOrchestrator(symbols=symbols, paper=not args.live)
     summary = orchestrator.run_once(execute_orders=args.execute)

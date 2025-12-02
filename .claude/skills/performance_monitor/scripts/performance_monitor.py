@@ -4,13 +4,13 @@ Performance Monitor Skill - Implementation
 Comprehensive trading performance tracking and analytics
 """
 
+import argparse
+import json
+import math
 import os
 import sys
-import json
-import argparse
-import math
-from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
+from datetime import datetime
+from typing import Any, Optional
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
@@ -28,12 +28,12 @@ except ImportError:
     print("Warning: RiskManager not available")
 
 
-def error_response(error_msg: str, error_code: str = "ERROR") -> Dict[str, Any]:
+def error_response(error_msg: str, error_code: str = "ERROR") -> dict[str, Any]:
     """Standard error response format"""
     return {"success": False, "error": error_msg, "error_code": error_code}
 
 
-def success_response(data: Any) -> Dict[str, Any]:
+def success_response(data: Any) -> dict[str, Any]:
     """Standard success response format"""
     return {"success": True, **data}
 
@@ -54,7 +54,7 @@ class PerformanceMonitor:
         end_date: Optional[str] = None,
         benchmark_symbol: str = "SPY",
         include_closed_positions: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate comprehensive performance statistics
 
@@ -72,10 +72,9 @@ class PerformanceMonitor:
             if self.risk_manager:
                 metrics = self.risk_manager.get_risk_metrics()
                 trade_stats = metrics.get("trade_statistics", {})
-                daily_metrics = metrics.get("daily_metrics", {})
+                metrics.get("daily_metrics", {})
             else:
                 trade_stats = {}
-                daily_metrics = {}
 
             # Calculate returns (simplified - would need actual trade history)
             total_return = 0.125  # Placeholder
@@ -155,10 +154,10 @@ class PerformanceMonitor:
 
     def get_sharpe_ratio(
         self,
-        returns: List[float],
+        returns: list[float],
         risk_free_rate: float = 0.045,
         periods_per_year: int = 252,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate Sharpe ratio for risk-adjusted returns
 
@@ -182,16 +181,10 @@ class PerformanceMonitor:
             excess_return = mean_return - risk_free_daily
 
             sharpe_ratio = (
-                (excess_return / std_dev) * math.sqrt(periods_per_year)
-                if std_dev > 0
-                else 0.0
+                (excess_return / std_dev) * math.sqrt(periods_per_year) if std_dev > 0 else 0.0
             )
 
-            rating = (
-                "excellent"
-                if sharpe_ratio > 2.0
-                else "good" if sharpe_ratio > 1.5 else "poor"
-            )
+            rating = "excellent" if sharpe_ratio > 2.0 else "good" if sharpe_ratio > 1.5 else "poor"
 
             return success_response(
                 {
@@ -215,15 +208,13 @@ class PerformanceMonitor:
             )
 
         except Exception as e:
-            return error_response(
-                f"Error calculating Sharpe ratio: {str(e)}", "SHARPE_ERROR"
-            )
+            return error_response(f"Error calculating Sharpe ratio: {str(e)}", "SHARPE_ERROR")
 
     def calculate_drawdown_analysis(
         self,
-        equity_curve: List[Dict[str, Any]],
+        equity_curve: list[dict[str, Any]],
         rolling_window_days: int = 252,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Analyze drawdown patterns and recovery times
 
@@ -278,16 +269,14 @@ class PerformanceMonitor:
             )
 
         except Exception as e:
-            return error_response(
-                f"Error calculating drawdown: {str(e)}", "DRAWDOWN_ERROR"
-            )
+            return error_response(f"Error calculating drawdown: {str(e)}", "DRAWDOWN_ERROR")
 
     def get_win_rate_analysis(
         self,
-        trades: List[Dict[str, Any]],
+        trades: list[dict[str, Any]],
         grouping: str = "monthly",
         min_sample_size: int = 20,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Analyze win rate trends and patterns
 
@@ -331,17 +320,15 @@ class PerformanceMonitor:
             )
 
         except Exception as e:
-            return error_response(
-                f"Error analyzing win rate: {str(e)}", "WINRATE_ERROR"
-            )
+            return error_response(f"Error analyzing win rate: {str(e)}", "WINRATE_ERROR")
 
     def compare_to_benchmark(
         self,
-        portfolio_returns: List[float],
+        portfolio_returns: list[float],
         benchmark_symbol: str = "SPY",
         start_date: str = "",
         end_date: str = "",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Compare strategy performance to market benchmark
 
@@ -356,9 +343,7 @@ class PerformanceMonitor:
         """
         try:
             portfolio_return = (
-                sum(portfolio_returns) / len(portfolio_returns)
-                if portfolio_returns
-                else 0.0
+                sum(portfolio_returns) / len(portfolio_returns) if portfolio_returns else 0.0
             )
             benchmark_return = 0.085  # Placeholder
 
@@ -390,9 +375,7 @@ class PerformanceMonitor:
                             "information_ratio": 1.12,
                             "outperformance": alpha,
                             "outperformance_pct": (
-                                (alpha / benchmark_return) * 100
-                                if benchmark_return > 0
-                                else 0
+                                (alpha / benchmark_return) * 100 if benchmark_return > 0 else 0
                             ),
                         },
                     },
@@ -411,9 +394,7 @@ class PerformanceMonitor:
             )
 
         except Exception as e:
-            return error_response(
-                f"Error comparing to benchmark: {str(e)}", "BENCHMARK_ERROR"
-            )
+            return error_response(f"Error comparing to benchmark: {str(e)}", "BENCHMARK_ERROR")
 
 
 def main():
@@ -427,9 +408,7 @@ def main():
     )
     metrics_parser.add_argument("--start-date", help="Start date (YYYY-MM-DD)")
     metrics_parser.add_argument("--end-date", help="End date (YYYY-MM-DD)")
-    metrics_parser.add_argument(
-        "--benchmark-symbol", default="SPY", help="Benchmark symbol"
-    )
+    metrics_parser.add_argument("--benchmark-symbol", default="SPY", help="Benchmark symbol")
 
     # get_sharpe_ratio command
     sharpe_parser = subparsers.add_parser("get_sharpe_ratio", help="Get Sharpe ratio")

@@ -4,10 +4,8 @@ RAG System Configuration
 Centralized configuration for vector database and embedding settings.
 """
 
-
 from pathlib import Path
-from typing import Dict, Any
-
+from typing import Any
 
 # Project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -61,7 +59,7 @@ METADATA_SCHEMA = {
 }
 
 
-def get_config() -> Dict[str, Any]:
+def get_config() -> dict[str, Any]:
     """
     Get complete RAG configuration.
 
@@ -99,9 +97,7 @@ def validate_config() -> bool:
     assert EMBEDDING_CONFIG["batch_size"] > 0, "Batch size must be positive"
 
     # Check retrieval parameters
-    assert (
-        RETRIEVAL_CONFIG["default_k"] <= RETRIEVAL_CONFIG["max_k"]
-    ), "default_k must be <= max_k"
+    assert RETRIEVAL_CONFIG["default_k"] <= RETRIEVAL_CONFIG["max_k"], "default_k must be <= max_k"
     assert 0 <= RETRIEVAL_CONFIG["min_score"] <= 1, "min_score must be between 0 and 1"
 
     return True
