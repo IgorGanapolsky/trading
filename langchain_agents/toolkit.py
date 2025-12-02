@@ -2,11 +2,23 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+from pathlib import Path
 
-from langchain_core.tools import StructuredTool
-from mcp import MCPClient, default_client
+from langchain_core.tools import BaseTool, StructuredTool
+from langchain_community.tools.file_management import (
+    ListDirectoryTool,
+    ReadFileTool,
+    WriteFileTool,
+)
 from pydantic import BaseModel, Field
 from src.rag.sentiment_store import SentimentRAGStore
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # pragma: no cover
+    from mcp import MCPClient
+else:
+    MCPClient = Any  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +120,37 @@ def build_sentiment_tools(
     return [query_tool, history_tool]
 
 
+def build_filesystem_tools(
+    root_path: str | os.PathLike[str] | None = None,
+    *,
+    include_write_tool: bool = True,
+) -> list[BaseTool]:
+    """
+    Provide LangChain file-management tools scoped to an agent workspace.
+
+    The new LangChain "context engineering" patterns rely on agents persisting
+    scratch work (notes, intermediate calculations, mini-datasets) to disk.  We
+    expose the standard file-management helpers but sandbox them inside a
+    configurable directory so the agent cannot wander across the repo.
+    """
+
+    base_dir = Path(
+        root_path
+        or os.environ.get("LANGCHAIN_AGENT_FS_ROOT", ".agent_workspace")
+    ).expanduser()
+    base_dir.mkdir(parents=True, exist_ok=True)
+
+    tools: list[BaseTool] = [
+        ListDirectoryTool(root_dir=str(base_dir)),
+        ReadFileTool(root_dir=str(base_dir)),
+    ]
+
+    if include_write_tool:
+        tools.append(WriteFileTool(root_dir=str(base_dir)))
+
+    return tools
+
+
 def build_mcp_tool(client: MCPClient | None = None) -> StructuredTool:
     """
     Wrap the MCP client so LangChain agents can call any registered MCP server.
@@ -115,11 +158,13 @@ def build_mcp_tool(client: MCPClient | None = None) -> StructuredTool:
     Args:
         client: Optional MCPClient instance (defaults to shared singleton).
     """
-    mcp_client = client or default_client()
+    from mcp import default_client  # local import to avoid heavy deps at import time
+
+    resolved_client = client or default_client()
 
     def call_mcp(server: str, tool: str, payload: dict) -> str:
         logger.info("LangChain MCP call: %s.%s", server, tool)
-        response = mcp_client.call_tool(server=server, tool=tool, payload=payload)
+        response = resolved_client.call_tool(server=server, tool=tool, payload=payload)
         return json.dumps(response, indent=2)
 
     return StructuredTool.from_function(

@@ -16,6 +16,26 @@ All LangSmith integrations are complete and verified. Your `.env` file has `LANG
 | `src/utils/news_sentiment.py` | ✅ Updated | Grok/X.ai client uses LangSmith wrapper |
 | `src/strategies/ipo_strategy.py` | ✅ Updated | OpenAI client uses LangSmith wrapper |
 | `scripts/test_langsmith.py` | ✅ Created | Verification script |
+| `langchain_agents/agents.py` | ✅ Updated | LangGraph + LangSmith agent builder bridge |
+| `scripts/langsmith_price_action_eval.py` | ✅ Created | Dataset regression trigger |
+| `langchain_agents/config/price_action_agent.yaml` | ✅ Added | Declarative agent prompt/spec synced to LangSmith |
+
+---
+
+## 🧠 Agent Builder Enhancements
+
+- `langchain_agents/agents.py` now constructs the price-action guard as a LangGraph runnable with filesystem tools (context engineering) and optional MCP access.
+- Every build automatically logs the prompt + tool manifest to a LangSmith dataset (`LANGSMITH_AGENT_REGISTRY_DATASET`, default `price-action-agent-versions`). This mirrors the Agent Builder change-log from the blog post.
+- Runtime executions can be persisted by setting `LANGSMITH_AGENT_RUN_DATASET=my-agent-runs`.
+- Dataset regressions are one command away:
+
+```bash
+LANGCHAIN_API_KEY=sk-... \
+LANGSMITH_AGENT_EVAL_DATASET=price-action-regression \
+python scripts/langsmith_price_action_eval.py --pretty
+```
+
+The script uses `langsmith.Client.run_on_dataset` so it plugs directly into CI (add it to a workflow step or scheduled GitHub Action).
 
 ---
 
@@ -30,6 +50,12 @@ LANGCHAIN_API_KEY=your_langsmith_api_key_here
 # Optional
 LANGCHAIN_PROJECT=trading-rl-training  # Default project name
 LANGCHAIN_TRACING_V2=true              # Auto-set by wrapper
+# Agent Builder / Eval (optional)
+LANGSMITH_AGENT_REGISTRY_DATASET=price-action-agent-versions
+LANGSMITH_AGENT_RUN_DATASET=price-action-agent-runs
+LANGSMITH_AGENT_EVAL_DATASET=price-action-regression
+LANGCHAIN_AGENT_ENGINE=langgraph
+LANGCHAIN_AGENT_FS_ROOT=.agent_workspace
 ```
 
 **Status**: ✅ `LANGCHAIN_API_KEY` is configured in `.env`
