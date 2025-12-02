@@ -10,13 +10,11 @@ Handles automated financial operations:
 Per CEO directive: No manual operations - everything automated.
 """
 
-import os
-import sys
 import json
 import logging
-from datetime import datetime, date, timedelta
+import sys
+from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Dict, Optional, Tuple
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -43,7 +41,7 @@ class WeekendFundingAutomation:
         self.trader = AlpacaTrader(paper=paper)
         self.state_file = Path("data/weekend_funding_state.json")
 
-    def check_and_topup(self) -> Dict:
+    def check_and_topup(self) -> dict:
         """
         Check if weekend funding is needed and initiate top-up.
 
@@ -105,24 +103,26 @@ class WeekendFundingAutomation:
         """Log top-up request for audit trail."""
         state = self._load_state()
         state["topup_requests"] = state.get("topup_requests", [])
-        state["topup_requests"].append({
-            "date": date.today().isoformat(),
-            "current_cash": current_cash,
-            "amount_requested": amount,
-            "timestamp": datetime.now().isoformat(),
-        })
+        state["topup_requests"].append(
+            {
+                "date": date.today().isoformat(),
+                "current_cash": current_cash,
+                "amount_requested": amount,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
         self._save_state(state)
 
-    def _load_state(self) -> Dict:
+    def _load_state(self) -> dict:
         if not self.state_file.exists():
             return {}
         try:
-            with open(self.state_file, "r") as f:
+            with open(self.state_file) as f:
                 return json.load(f)
         except Exception:
             return {}
 
-    def _save_state(self, state: Dict) -> None:
+    def _save_state(self, state: dict) -> None:
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
         with open(self.state_file, "w") as f:
             json.dump(state, f, indent=2)
@@ -138,10 +138,10 @@ class TaxWithdrawalAutomation:
 
     TAX_RATE = 0.28  # 28% estimated tax rate for short-term gains
     QUARTERS = {
-        1: (1, 3),   # Q1: Jan-Mar, withdraw April 1
-        2: (4, 6),   # Q2: Apr-Jun, withdraw July 1
-        3: (7, 9),   # Q3: Jul-Sep, withdraw October 1
-        4: (10, 12), # Q4: Oct-Dec, withdraw January 1
+        1: (1, 3),  # Q1: Jan-Mar, withdraw April 1
+        2: (4, 6),  # Q2: Apr-Jun, withdraw July 1
+        3: (7, 9),  # Q3: Jul-Sep, withdraw October 1
+        4: (10, 12),  # Q4: Oct-Dec, withdraw January 1
     }
 
     def __init__(self, paper: bool = True):
@@ -150,7 +150,7 @@ class TaxWithdrawalAutomation:
         self.state_file = Path("data/tax_withdrawal_state.json")
         self.state = self._load_state()
 
-    def check_quarterly_withdrawal(self) -> Dict:
+    def check_quarterly_withdrawal(self) -> dict:
         """
         Check if it's time for quarterly tax withdrawal.
 
@@ -226,7 +226,7 @@ class TaxWithdrawalAutomation:
             if not state_file.exists():
                 return 0.0
 
-            with open(state_file, "r") as f:
+            with open(state_file) as f:
                 state = json.load(f)
 
             return state.get("account", {}).get("total_pl", 0.0)
@@ -234,26 +234,26 @@ class TaxWithdrawalAutomation:
             logger.error(f"Failed to calculate YTD profit: {e}")
             return 0.0
 
-    def _log_withdrawal(
-        self, year: int, quarter: int, profit: float, amount: float
-    ) -> None:
+    def _log_withdrawal(self, year: int, quarter: int, profit: float, amount: float) -> None:
         """Log tax withdrawal for audit trail."""
         self.state["last_quarter_processed"] = f"{year}Q{quarter}"
         self.state["ytd_withdrawals"] = self.state.get("ytd_withdrawals", 0) + amount
         self.state["withdrawal_history"] = self.state.get("withdrawal_history", [])
-        self.state["withdrawal_history"].append({
-            "quarter": f"{year}Q{quarter}",
-            "ytd_profit": profit,
-            "amount": amount,
-            "timestamp": datetime.now().isoformat(),
-        })
+        self.state["withdrawal_history"].append(
+            {
+                "quarter": f"{year}Q{quarter}",
+                "ytd_profit": profit,
+                "amount": amount,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
         self._save_state()
 
-    def _load_state(self) -> Dict:
+    def _load_state(self) -> dict:
         if not self.state_file.exists():
             return {}
         try:
-            with open(self.state_file, "r") as f:
+            with open(self.state_file) as f:
                 return json.load(f)
         except Exception:
             return {}
@@ -290,7 +290,7 @@ class DynamicInvestmentScaler:
         self.paper = paper
         self.trader = AlpacaTrader(paper=paper)
 
-    def calculate_daily_investment(self) -> Dict:
+    def calculate_daily_investment(self) -> dict:
         """
         Calculate today's investment amount based on floating P/L.
 
@@ -300,13 +300,12 @@ class DynamicInvestmentScaler:
         try:
             account = self.trader.get_account()
             equity = float(account.get("equity", 100000))
-            cash = float(account.get("cash", 0))
 
             # Load starting balance from system state
             state_file = Path("data/system_state.json")
             starting_balance = 100000.0
             if state_file.exists():
-                with open(state_file, "r") as f:
+                with open(state_file) as f:
                     state = json.load(f)
                     starting_balance = state.get("account", {}).get("starting_balance", 100000.0)
 
