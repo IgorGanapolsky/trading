@@ -4,7 +4,6 @@ import argparse
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from langchain_agents.agents import build_price_action_agent
 
@@ -21,7 +20,7 @@ If sentiment data is unavailable, state that explicitly. Keep the answer under 3
 
 def run_price_action_analysis(
     ticker: str,
-    custom_prompt: Optional[str] = None,
+    custom_prompt: str | None = None,
 ) -> str:
     agent = build_price_action_agent()
     prompt = custom_prompt or DEFAULT_PROMPT
@@ -62,8 +61,7 @@ def main() -> None:
     output_path = (
         Path(args.output)
         if args.output
-        else Path("reports")
-        / f"price_action_{args.ticker.lower()}_{datetime.now().date()}.txt"
+        else Path("reports") / f"price_action_{args.ticker.lower()}_{datetime.now().date()}.txt"
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(report, encoding="utf-8")

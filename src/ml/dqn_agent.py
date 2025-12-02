@@ -12,16 +12,15 @@ Replaces tabular Q-learning with deep neural networks for better
 generalization and handling of continuous state spaces.
 """
 
-import torch
-
-import torch.optim as optim
-import numpy as np
 import logging
-
-from pathlib import Path
-from typing import Dict, Any, Optional
-from collections import deque
 import random
+from collections import deque
+from pathlib import Path
+from typing import Any, Optional
+
+import numpy as np
+import torch
+import torch.optim as optim
 
 from .dqn_networks import DQNNetwork, DuelingDQNNetwork, LSTMDQNNetwork
 from .prioritized_replay import PrioritizedReplayBuffer
@@ -99,26 +98,24 @@ class DQNAgent:
 
         # Build networks
         if use_lstm:
-            self.q_network = LSTMDQNNetwork(
-                input_dim=state_dim, num_actions=action_dim
-            ).to(self.device)
-            self.target_network = LSTMDQNNetwork(
-                input_dim=state_dim, num_actions=action_dim
-            ).to(self.device)
-        elif use_dueling:
-            self.q_network = DuelingDQNNetwork(
-                input_dim=state_dim, num_actions=action_dim
-            ).to(self.device)
-            self.target_network = DuelingDQNNetwork(
-                input_dim=state_dim, num_actions=action_dim
-            ).to(self.device)
-        else:
-            self.q_network = DQNNetwork(input_dim=state_dim, num_actions=action_dim).to(
+            self.q_network = LSTMDQNNetwork(input_dim=state_dim, num_actions=action_dim).to(
                 self.device
             )
-            self.target_network = DQNNetwork(
-                input_dim=state_dim, num_actions=action_dim
-            ).to(self.device)
+            self.target_network = LSTMDQNNetwork(input_dim=state_dim, num_actions=action_dim).to(
+                self.device
+            )
+        elif use_dueling:
+            self.q_network = DuelingDQNNetwork(input_dim=state_dim, num_actions=action_dim).to(
+                self.device
+            )
+            self.target_network = DuelingDQNNetwork(input_dim=state_dim, num_actions=action_dim).to(
+                self.device
+            )
+        else:
+            self.q_network = DQNNetwork(input_dim=state_dim, num_actions=action_dim).to(self.device)
+            self.target_network = DQNNetwork(input_dim=state_dim, num_actions=action_dim).to(
+                self.device
+            )
 
         # Copy weights to target network
         self.target_network.load_state_dict(self.q_network.state_dict())
@@ -138,9 +135,7 @@ class DQNAgent:
         self.update_count = 0
         self.losses = deque(maxlen=1000)
 
-        logger.info(
-            f"DQN Agent initialized: state_dim={state_dim}, actions={action_dim}"
-        )
+        logger.info(f"DQN Agent initialized: state_dim={state_dim}, actions={action_dim}")
         logger.info(f"  Dueling: {use_dueling}, LSTM: {use_lstm}, Double: {use_double}")
         logger.info(f"  Prioritized Replay: {use_prioritized_replay}")
 
@@ -165,9 +160,7 @@ class DQNAgent:
             # Explore: random or use agent recommendation
             if agent_recommendation:
                 action_map = {"HOLD": 0, "BUY": 1, "SELL": 2}
-                return action_map.get(
-                    agent_recommendation, random.randint(0, self.action_dim - 1)
-                )
+                return action_map.get(agent_recommendation, random.randint(0, self.action_dim - 1))
             return random.randint(0, self.action_dim - 1)
 
         # Exploit: use Q-network
@@ -219,18 +212,10 @@ class DQNAgent:
         # Sample batch
         if self.use_prioritized_replay:
             batch, indices, weights = self.replay_buffer.sample(self.batch_size)
-            states = torch.FloatTensor(np.array([e.state for e in batch])).to(
-                self.device
-            )
-            actions = torch.LongTensor(np.array([e.action for e in batch])).to(
-                self.device
-            )
-            rewards = torch.FloatTensor(np.array([e.reward for e in batch])).to(
-                self.device
-            )
-            next_states = torch.FloatTensor(np.array([e.next_state for e in batch])).to(
-                self.device
-            )
+            states = torch.FloatTensor(np.array([e.state for e in batch])).to(self.device)
+            actions = torch.LongTensor(np.array([e.action for e in batch])).to(self.device)
+            rewards = torch.FloatTensor(np.array([e.reward for e in batch])).to(self.device)
+            next_states = torch.FloatTensor(np.array([e.next_state for e in batch])).to(self.device)
             dones = torch.BoolTensor(np.array([e.done for e in batch])).to(self.device)
             weights = torch.FloatTensor(weights).to(self.device)
         else:
@@ -238,9 +223,7 @@ class DQNAgent:
             states = torch.FloatTensor(np.array([e[0] for e in batch])).to(self.device)
             actions = torch.LongTensor(np.array([e[1] for e in batch])).to(self.device)
             rewards = torch.FloatTensor(np.array([e[2] for e in batch])).to(self.device)
-            next_states = torch.FloatTensor(np.array([e[3] for e in batch])).to(
-                self.device
-            )
+            next_states = torch.FloatTensor(np.array([e[3] for e in batch])).to(self.device)
             dones = torch.BoolTensor(np.array([e[4] for e in batch])).to(self.device)
             weights = None
 
@@ -299,8 +282,8 @@ class DQNAgent:
 
     def calculate_reward(
         self,
-        trade_result: Dict[str, Any],
-        market_state: Optional[Dict[str, Any]] = None,
+        trade_result: dict[str, Any],
+        market_state: Optional[dict[str, Any]] = None,
     ) -> float:
         """
         Calculate reward from trade result.
@@ -360,7 +343,7 @@ class DQNAgent:
         self.update_count = checkpoint.get("update_count", 0)
         logger.info(f"Model loaded from {filepath}")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get training statistics."""
         avg_loss = np.mean(self.losses) if self.losses else 0.0
         return {

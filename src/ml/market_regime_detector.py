@@ -3,9 +3,10 @@ Market Regime Detection for RL Trading
 Detects bull, bear, and sideways markets for regime-aware training.
 """
 
-import numpy as np
-from typing import Dict, Any, Optional
 import logging
+from typing import Any, Optional
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ class MarketRegimeDetector:
         prices: np.ndarray,
         returns: Optional[np.ndarray] = None,
         volatility: Optional[float] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Detect current market regime.
 
@@ -67,9 +68,7 @@ class MarketRegimeDetector:
 
         # Calculate momentum (recent returns)
         recent_returns = (
-            returns[-self.momentum_window :]
-            if len(returns) >= self.momentum_window
-            else returns
+            returns[-self.momentum_window :] if len(returns) >= self.momentum_window else returns
         )
         momentum = np.mean(recent_returns)
 
@@ -100,7 +99,7 @@ class MarketRegimeDetector:
             "volatility": float(volatility),
         }
 
-    def detect_from_state(self, market_state: Dict[str, Any]) -> Dict[str, Any]:
+    def detect_from_state(self, market_state: dict[str, Any]) -> dict[str, Any]:
         """
         Detect regime from market state dictionary.
 

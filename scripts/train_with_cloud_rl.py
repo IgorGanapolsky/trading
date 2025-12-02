@@ -3,10 +3,12 @@
 Train models using cloud RL service (Vertex AI RL).
 This script demonstrates how to use the cloud RL integration.
 """
+
+import argparse
 import os
 import sys
-import argparse
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Add parent to path
@@ -51,7 +53,7 @@ def main():
         return 1
 
     # Initialize trainer
-    print(f"🔧 Initializing trainer...")
+    print("🔧 Initializing trainer...")
     print(f"   Mode: {'Cloud RL' if not args.local else 'Local'}")
     print(f"   Provider: {args.provider if not args.local else 'N/A'}")
     print()
@@ -76,13 +78,9 @@ def main():
                     print(f"   Provider: {result.get('provider')}")
                 else:
                     print(f"✅ Local training completed for {symbol}")
-                    print(
-                        f"   Final validation loss: {result.get('final_val_loss', 'N/A'):.4f}"
-                    )
+                    print(f"   Final validation loss: {result.get('final_val_loss', 'N/A'):.4f}")
             else:
-                print(
-                    f"❌ Training failed for {symbol}: {result.get('error', 'Unknown error')}"
-                )
+                print(f"❌ Training failed for {symbol}: {result.get('error', 'Unknown error')}")
 
         except Exception as e:
             print(f"❌ Error training {symbol}: {e}")

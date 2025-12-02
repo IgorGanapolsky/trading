@@ -10,8 +10,11 @@ Responsibilities:
 Inspired by P1GPT multi-modal analysis framework
 """
 
+import builtins
+import contextlib
 import logging
-from typing import Dict, Any
+from typing import Any
+
 from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -52,7 +55,7 @@ class ResearchAgent(BaseAgent):
         else:
             self.retriever = None
 
-    def analyze(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Analyze fundamentals, news, and sentiment.
 
@@ -83,9 +86,7 @@ class ResearchAgent(BaseAgent):
                 for article in rag_articles:
                     news.append(
                         {
-                            "title": article["metadata"].get(
-                                "title", article["content"][:100]
-                            ),
+                            "title": article["metadata"].get("title", article["content"][:100]),
                             "date": article["metadata"].get("date", "N/A"),
                             "sentiment": article["metadata"].get("sentiment", 0.5),
                             "source": article["metadata"].get("source", "unknown"),
@@ -118,7 +119,7 @@ Fundamentals drive long-term performance; sentiment affects short-term price act
 </context>
 
 <fundamentals>
-P/E: {fundamentals.get('pe_ratio', 'N/A')} | Growth: {fundamentals.get('growth_rate', 'N/A')} | Margin: {fundamentals.get('profit_margin', 'N/A')} | Cap: {fundamentals.get('market_cap', 'N/A')}
+P/E: {fundamentals.get("pe_ratio", "N/A")} | Growth: {fundamentals.get("growth_rate", "N/A")} | Margin: {fundamentals.get("profit_margin", "N/A")} | Cap: {fundamentals.get("market_cap", "N/A")}
 </fundamentals>
 
 <news>
@@ -126,7 +127,7 @@ P/E: {fundamentals.get('pe_ratio', 'N/A')} | Growth: {fundamentals.get('growth_r
 </news>
 
 <market_context>
-Sector: {market_context.get('sector', 'N/A')} | Market Trend: {market_context.get('market_trend', 'N/A')} | Volatility: {market_context.get('volatility', 'N/A')}
+Sector: {market_context.get("sector", "N/A")} | Market Trend: {market_context.get("market_trend", "N/A")} | Volatility: {market_context.get("volatility", "N/A")}
 </market_context>
 
 {memory_context}
@@ -188,14 +189,12 @@ RISKS: [top 2 risks]
 
         formatted = ""
         for i, item in enumerate(news[:5], 1):  # Top 5 news items
-            formatted += (
-                f"{i}. {item.get('title', 'N/A')} ({item.get('date', 'N/A')})\n"
-            )
+            formatted += f"{i}. {item.get('title', 'N/A')} ({item.get('date', 'N/A')})\n"
             formatted += f"   Sentiment: {item.get('sentiment', 'neutral')}\n"
 
         return formatted
 
-    def _parse_research_response(self, reasoning: str) -> Dict[str, Any]:
+    def _parse_research_response(self, reasoning: str) -> dict[str, Any]:
         """
         Parse LLM response into structured analysis.
 
@@ -218,15 +217,11 @@ RISKS: [top 2 risks]
         for line in lines:
             line = line.strip()
             if line.startswith("STRENGTH:"):
-                try:
+                with contextlib.suppress(builtins.BaseException):
                     analysis["strength"] = int(line.split(":")[1].strip())
-                except:
-                    pass
             elif line.startswith("SENTIMENT:"):
-                try:
+                with contextlib.suppress(builtins.BaseException):
                     analysis["sentiment"] = float(line.split(":")[1].strip())
-                except:
-                    pass
             elif line.startswith("THESIS:"):
                 analysis["thesis"] = line.split(":", 1)[1].strip()
             elif line.startswith("RECOMMENDATION:"):
@@ -234,10 +229,8 @@ RISKS: [top 2 risks]
                 if rec in ["BUY", "SELL", "HOLD"]:
                     analysis["action"] = rec
             elif line.startswith("CONFIDENCE:"):
-                try:
+                with contextlib.suppress(builtins.BaseException):
                     analysis["confidence"] = float(line.split(":")[1].strip())
-                except:
-                    pass
             elif line.startswith("RISKS:"):
                 analysis["risks"] = line.split(":", 1)[1].strip()
 

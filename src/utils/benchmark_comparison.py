@@ -7,10 +7,11 @@ Compares trading performance against passive strategies:
 """
 
 import logging
-from typing import Dict, Any
 from datetime import datetime
-import pandas as pd
+from typing import Any
+
 import numpy as np
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class BenchmarkComparator:
 
     def calculate_spy_performance(
         self, start_date: datetime, end_date: datetime, initial_capital: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate buy-and-hold SPY performance.
 
@@ -79,7 +80,7 @@ class BenchmarkComparator:
 
     def calculate_6040_performance(
         self, start_date: datetime, end_date: datetime, initial_capital: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate 60/40 portfolio performance (60% SPY, 40% BND).
 
@@ -161,11 +162,11 @@ class BenchmarkComparator:
 
     def compare_strategies(
         self,
-        strategy_performance: Dict[str, Any],
+        strategy_performance: dict[str, Any],
         start_date: datetime,
         end_date: datetime,
         initial_capital: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Compare strategy performance against benchmarks.
 
@@ -179,9 +180,7 @@ class BenchmarkComparator:
             Comparison results
         """
         spy_perf = self.calculate_spy_performance(start_date, end_date, initial_capital)
-        perf_6040 = self.calculate_6040_performance(
-            start_date, end_date, initial_capital
-        )
+        perf_6040 = self.calculate_6040_performance(start_date, end_date, initial_capital)
 
         comparison = {
             "strategy": strategy_performance,
@@ -199,8 +198,7 @@ class BenchmarkComparator:
                     - spy_perf.get("total_return_pct", 0)
                 ),
                 "sharpe_diff": (
-                    strategy_performance.get("sharpe_ratio", 0)
-                    - spy_perf.get("sharpe_ratio", 0)
+                    strategy_performance.get("sharpe_ratio", 0) - spy_perf.get("sharpe_ratio", 0)
                 ),
                 "beats_spy": (
                     strategy_performance.get("total_return_pct", 0)
@@ -216,8 +214,7 @@ class BenchmarkComparator:
                     - perf_6040.get("total_return_pct", 0)
                 ),
                 "sharpe_diff": (
-                    strategy_performance.get("sharpe_ratio", 0)
-                    - perf_6040.get("sharpe_ratio", 0)
+                    strategy_performance.get("sharpe_ratio", 0) - perf_6040.get("sharpe_ratio", 0)
                 ),
                 "beats_6040": (
                     strategy_performance.get("total_return_pct", 0)

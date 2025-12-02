@@ -7,9 +7,9 @@ Tests:
 2. X.com API connection (if implemented)
 """
 
+import json
 import os
 import sys
-import json
 from pathlib import Path
 
 # Add parent directory to path
@@ -64,7 +64,7 @@ def test_grok_api():
         )
 
         content = response.choices[0].message.content
-        print(f"✅ Grok API response received:")
+        print("✅ Grok API response received:")
         print(f"   Response length: {len(content)} characters")
         print(f"   First 200 chars: {content[:200]}...")
 
@@ -74,7 +74,7 @@ def test_grok_api():
         json_match = re.search(r"\{.*\}", content, re.DOTALL)
         if json_match:
             parsed = json.loads(json_match.group(0))
-            print(f"✅ Successfully parsed JSON response:")
+            print("✅ Successfully parsed JSON response:")
             print(f"   Score: {parsed.get('score', 'N/A')}")
             print(f"   Tweets: {parsed.get('tweets', 'N/A')}")
             print(f"   Confidence: {parsed.get('confidence', 'N/A')}")
@@ -101,9 +101,7 @@ def test_sentiment_aggregator():
         aggregator = NewsSentimentAggregator()
 
         if not aggregator.grok_client:
-            print(
-                "⚠️  Grok client not initialized (no API key or initialization failed)"
-            )
+            print("⚠️  Grok client not initialized (no API key or initialization failed)")
             return False
 
         print("✅ NewsSentimentAggregator initialized with Grok support")
@@ -112,7 +110,7 @@ def test_sentiment_aggregator():
         print("\n📊 Testing Grok Twitter sentiment for NVDA...")
         result = aggregator.get_grok_twitter_sentiment("NVDA")
 
-        print(f"✅ Grok sentiment result:")
+        print("✅ Grok sentiment result:")
         print(f"   Score: {result.get('score', 'N/A')}")
         print(f"   Tweets: {result.get('tweets', 'N/A')}")
         print(f"   Confidence: {result.get('confidence', 'N/A')}")
@@ -153,7 +151,7 @@ def test_x_com_api():
     masked_xkey_value = mask_api_key(api_key) if api_key else None
     masked_xsecret_value = mask_api_key(api_secret) if api_secret else None
 
-    print(f"✅ Found X.com credentials:")
+    print("✅ Found X.com credentials:")
     print(f"   Bearer Token: {masked_bearer_value}")
     if masked_xkey_value:
         print(f"   X API Key: {masked_xkey_value}")

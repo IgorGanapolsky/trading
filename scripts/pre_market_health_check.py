@@ -12,16 +12,18 @@ Runs before trading starts to validate:
 
 CRITICAL: Must pass before allowing trading
 """
+
 import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from anthropic import Anthropic
-from datetime import datetime
 import logging
 import signal
+from datetime import datetime
+
+from anthropic import Anthropic
 from src.utils.error_monitoring import init_sentry
 
 # Setup logging
@@ -34,9 +36,7 @@ ALPACA_SECRET = os.getenv("ALPACA_SECRET_KEY")
 ANTHROPIC_KEY = os.getenv("ANTHROPIC_API_KEY")
 
 if not ALPACA_KEY or not ALPACA_SECRET:
-    raise ValueError(
-        "ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set"
-    )
+    raise ValueError("ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set")
 
 
 class TimeoutError(Exception):
@@ -61,7 +61,7 @@ def check_alpaca_api() -> bool:
         metrics = monitor.check_health()
 
         if metrics.is_healthy:
-            print(f"✅ Alpaca API: Connected")
+            print("✅ Alpaca API: Connected")
             if metrics.buying_power:
                 print(f"   Buying Power: ${metrics.buying_power:,.2f}")
             if metrics.account_status:
@@ -70,7 +70,7 @@ def check_alpaca_api() -> bool:
                 print(f"   Response Time: {metrics.avg_response_time_ms:.2f}ms")
             return True
         else:
-            print(f"❌ Alpaca API: UNHEALTHY")
+            print("❌ Alpaca API: UNHEALTHY")
             print(f"   Status: {metrics.status.value}")
             if metrics.last_error:
                 print(f"   Error: {metrics.last_error}")
@@ -85,11 +85,11 @@ def check_alpaca_api() -> bool:
 def check_anthropic_api() -> bool:
     """Check Anthropic API accessibility."""
     if not ANTHROPIC_KEY:
-        print(f"⚠️  Anthropic API: No API key configured (will use fallback mode)")
+        print("⚠️  Anthropic API: No API key configured (will use fallback mode)")
         return True  # Not critical - we have fallback
 
     # Skip Anthropic check - not critical and can hang (we have fallback)
-    print(f"✅ Anthropic API: Skipped (not critical, fallback available)")
+    print("✅ Anthropic API: Skipped (not critical, fallback available)")
     return True  # Not critical - we have fallback
 
     # DISABLED: Can hang in GitHub Actions environment
@@ -100,24 +100,24 @@ def check_anthropic_api() -> bool:
     try:
         client = Anthropic(api_key=ANTHROPIC_KEY)
         # Simple test call
-        response = client.messages.create(
+        client.messages.create(
             model="claude-3-5-sonnet-20241022",
             max_tokens=10,
             messages=[{"role": "user", "content": "test"}],
         )
 
         signal.alarm(0)  # Cancel timeout
-        print(f"✅ Anthropic API: Connected")
+        print("✅ Anthropic API: Connected")
         return True
     except TimeoutError:
         signal.alarm(0)  # Cancel timeout
-        print(f"⚠️  Anthropic API: Timeout (5s) - continuing without LLM check")
+        print("⚠️  Anthropic API: Timeout (5s) - continuing without LLM check")
         return True  # Fail-open, not critical
     except Exception as e:
         signal.alarm(0)  # Cancel timeout
         error_str = str(e)
         if "credit balance" in error_str.lower():
-            print(f"⚠️  Anthropic API: Low credits (will use fallback mode)")
+            print("⚠️  Anthropic API: Low credits (will use fallback mode)")
             return True  # Not critical - we have fallback
         else:
             print(f"❌ Anthropic API: FAILED - {e}")
@@ -133,12 +133,12 @@ def check_market_status() -> bool:
         clock = trader.trading_client.get_clock()
 
         if clock.is_open:
-            print(f"✅ Market: OPEN")
+            print("✅ Market: OPEN")
             return True
         else:
             next_open = clock.next_open if hasattr(clock, "next_open") else None
             print(f"⚠️  Market: CLOSED (opens at {next_open})")
-            print(f"   Trading will execute when market opens")
+            print("   Trading will execute when market opens")
             return True  # Not a failure - orders will queue
     except Exception as e:
         print(f"❌ Market Status: FAILED - {e}")
@@ -157,9 +157,7 @@ def check_economic_calendar() -> bool:
         client = FinnhubClient()
         if not client.api_key:
             signal.alarm(0)  # Cancel timeout
-            print(
-                "⚠️  Finnhub API key not configured - skipping economic calendar check"
-            )
+            print("⚠️  Finnhub API key not configured - skipping economic calendar check")
             return True  # Not critical if not configured
 
         if client.has_major_event_today():
@@ -173,7 +171,7 @@ def check_economic_calendar() -> bool:
         return True
     except TimeoutError:
         signal.alarm(0)  # Cancel timeout
-        print(f"⚠️  Economic calendar: Timeout (10s) - continuing without event check")
+        print("⚠️  Economic calendar: Timeout (10s) - continuing without event check")
         return True  # Fail-open, not critical
     except Exception as e:
         signal.alarm(0)  # Cancel timeout
@@ -190,13 +188,13 @@ def check_circuit_breakers() -> bool:
         status = breaker.get_status()
 
         if status["is_tripped"]:
-            print(f"🚨 Circuit Breaker: TRIPPED")
+            print("🚨 Circuit Breaker: TRIPPED")
             print(f"   Reason: {status.get('trip_reason', 'Unknown')}")
             print(f"   Details: {status.get('trip_details', 'N/A')}")
-            print(f"   MANUAL RESET REQUIRED")
+            print("   MANUAL RESET REQUIRED")
             return False
         else:
-            print(f"✅ Circuit Breaker: OK")
+            print("✅ Circuit Breaker: OK")
             print(f"   Consecutive losses: {status['consecutive_losses']}")
             print(f"   API errors today: {status['api_errors_today']}")
             return True
@@ -216,7 +214,7 @@ def check_data_access() -> bool:
         test_file.write_text(datetime.now().isoformat())
         test_file.unlink()
 
-        print(f"✅ Data Directory: Writable")
+        print("✅ Data Directory: Writable")
         return True
     except Exception as e:
         print(f"❌ Data Directory: FAILED - {e}")
@@ -238,7 +236,7 @@ def check_dependencies() -> bool:
         print(f"❌ Dependencies: MISSING - {', '.join(missing)}")
         return False
     else:
-        print(f"✅ Dependencies: All present")
+        print("✅ Dependencies: All present")
         return True
 
 
@@ -258,7 +256,7 @@ def check_strategy_execution() -> bool:
 
         import json
 
-        with open(system_state_file, "r") as f:
+        with open(system_state_file) as f:
             system_state = json.load(f)
 
         strategies = system_state.get("strategies", {})
@@ -277,27 +275,23 @@ def check_strategy_execution() -> bool:
                     # Check if it's been active for more than 1 week without trades
                     # (weekends happen weekly, so should have at least 1-2 trades)
                     if trades_executed == 0:
-                        issues.append(
-                            f"{name}: 0 trades executed (should execute weekends)"
-                        )
+                        issues.append(f"{name}: 0 trades executed (should execute weekends)")
 
                 # Stock strategies (tier1, tier2) should have executed on weekdays
                 elif tier_id in ["tier1", "tier2"]:
                     # Check if it's been active for more than 3 days without trades
                     # (should execute daily on weekdays)
                     if trades_executed == 0:
-                        issues.append(
-                            f"{name}: 0 trades executed (should execute daily)"
-                        )
+                        issues.append(f"{name}: 0 trades executed (should execute daily)")
 
         if issues:
-            print(f"⚠️  Strategy Execution: ISSUES DETECTED")
+            print("⚠️  Strategy Execution: ISSUES DETECTED")
             for issue in issues:
                 print(f"   - {issue}")
             print(f"   Total issues: {len(issues)}")
             return False
         else:
-            print(f"✅ Strategy Execution: All active strategies have executed trades")
+            print("✅ Strategy Execution: All active strategies have executed trades")
             return True
 
     except Exception as e:

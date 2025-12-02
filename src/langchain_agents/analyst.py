@@ -5,11 +5,10 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import Any, Dict
-
-from langchain_community.chat_models import ChatAnthropic
+from typing import Any
 
 from langchain_agents.agents import build_price_action_agent
+from langchain_community.chat_models import ChatAnthropic
 
 logger = logging.getLogger(__name__)
 
@@ -24,17 +23,13 @@ class LangChainSentimentAgent:
     }
 
     def __init__(self, model_name: str | None = None) -> None:
-        self.model_name = model_name or os.getenv(
-            "HYBRID_LLM_MODEL", "claude-3-5-haiku-20241022"
-        )
+        self.model_name = model_name or os.getenv("HYBRID_LLM_MODEL", "claude-3-5-haiku-20241022")
         self.cost_override = os.getenv("HYBRID_LLM_COST")
         self._executor = None
 
     def _build_llm(self) -> ChatAnthropic:
         temperature = float(os.getenv("HYBRID_LLM_TEMPERATURE", "0.3"))
-        logger.info(
-            "Initializing analyst LLM (%s, temp=%s)", self.model_name, temperature
-        )
+        logger.info("Initializing analyst LLM (%s, temp=%s)", self.model_name, temperature)
         return ChatAnthropic(model=self.model_name, temperature=temperature)
 
     def _get_executor(self):
@@ -43,9 +38,7 @@ class LangChainSentimentAgent:
             self._executor = build_price_action_agent(llm=llm)
         return self._executor
 
-    def analyze_news(
-        self, symbol: str, indicators: Dict[str, Any] | None = None
-    ) -> Dict[str, Any]:
+    def analyze_news(self, symbol: str, indicators: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Ask the LLM whether current headlines/technicals suggest a red flag.
 
@@ -54,7 +47,8 @@ class LangChainSentimentAgent:
         """
         indicators = indicators or {}
         # Goldilocks Prompt: Sentiment gate with clear scoring examples
-        prompt = f"""Analyst gate for {symbol}. Score sentiment -1 (strong avoid) to +1 (strong proceed).
+        prompt = (
+            f"""Analyst gate for {symbol}. Score sentiment -1 (strong avoid) to +1 (strong proceed).
 
 TECHNICAL CONTEXT:
 {json.dumps(indicators, default=str)[:600]}
@@ -72,13 +66,13 @@ EXAMPLES:
 {{"score": -0.8, "reason": "Earnings miss + guidance cut + CEO resignation - multiple red flags"}}
 
 Respond strictly as JSON:
-{{"score": <-1 to 1>, "reason": "<brief rationale>"}}"""""
+{{"score": <-1 to 1>, "reason": "<brief rationale>"}}"""
+            ""
+        )
 
         executor = self._get_executor()
         result = executor.invoke({"input": prompt})
-        raw_output = (
-            result.get("output", "") if isinstance(result, dict) else str(result)
-        )
+        raw_output = result.get("output", "") if isinstance(result, dict) else str(result)
 
         try:
             parsed = json.loads(raw_output)

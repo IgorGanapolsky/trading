@@ -12,11 +12,11 @@ Benefits:
 - Reduced variance compared to 1-step
 """
 
-import numpy as np
-
-from typing import List, Tuple, Optional, Deque
 from collections import deque
 from dataclasses import dataclass
+from typing import Optional
+
+import numpy as np
 
 
 @dataclass
@@ -25,7 +25,7 @@ class NStepTransition:
 
     state: np.ndarray
     action: int
-    rewards: List[float]  # n rewards
+    rewards: list[float]  # n rewards
     next_state: np.ndarray
     done: bool
     n: int  # Number of steps
@@ -48,7 +48,7 @@ class NStepBuffer:
         """
         self.n = n
         self.gamma = gamma
-        self.buffer: Deque[Tuple] = deque(maxlen=n)
+        self.buffer: deque[tuple] = deque(maxlen=n)
 
     def add(
         self,
@@ -102,7 +102,7 @@ class NStepBuffer:
 
         return None
 
-    def _compute_n_step_return(self, rewards: List[float], done: bool) -> float:
+    def _compute_n_step_return(self, rewards: list[float], done: bool) -> float:
         """Compute n-step return."""
         return sum(r * (self.gamma**i) for i, r in enumerate(rewards))
 
@@ -157,15 +157,12 @@ class NStepDQNAgent:
     ):
         """Store transition and train on n-step returns."""
         # Add to n-step buffer
-        n_step_transition = self.n_step_buffer.add(
-            state, action, reward, next_state, done
-        )
+        n_step_transition = self.n_step_buffer.add(state, action, reward, next_state, done)
 
         if n_step_transition:
             # Compute n-step return
             n_step_return = sum(
-                r * (self.base_agent.gamma**i)
-                for i, r in enumerate(n_step_transition.rewards)
+                r * (self.base_agent.gamma**i) for i, r in enumerate(n_step_transition.rewards)
             )
 
             # Store with n-step return as reward

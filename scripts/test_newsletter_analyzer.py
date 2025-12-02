@@ -62,9 +62,7 @@ def test_article_parsing():
 
     for ticker, signal in signals.items():
         print(f"{ticker} Signal:")
-        print(
-            f"  Sentiment: {signal.sentiment.upper()} (confidence: {signal.confidence:.2f})"
-        )
+        print(f"  Sentiment: {signal.sentiment.upper()} (confidence: {signal.confidence:.2f})")
         if signal.entry_price:
             print(f"  Entry: ${signal.entry_price:,.0f}")
         if signal.target_price:
@@ -93,9 +91,7 @@ def test_mcp_file_reading():
         print(f"\nLoaded {len(signals)} signals from MCP files:\n")
         for ticker, signal in signals.items():
             print(f"{ticker} Signal (from {signal.source_date.strftime('%Y-%m-%d')}):")
-            print(
-                f"  Sentiment: {signal.sentiment.upper()} (confidence: {signal.confidence:.2f})"
-            )
+            print(f"  Sentiment: {signal.sentiment.upper()} (confidence: {signal.confidence:.2f})")
             if signal.entry_price:
                 print(f"  Entry: ${signal.entry_price:,.0f}")
             if signal.target_price:
@@ -119,16 +115,12 @@ def test_convenience_functions():
     eth_signal = get_eth_signal(max_age_days=30)
 
     if btc_signal:
-        print(
-            f"\nBTC: {btc_signal.sentiment.upper()} ({btc_signal.confidence:.2f} confidence)"
-        )
+        print(f"\nBTC: {btc_signal.sentiment.upper()} ({btc_signal.confidence:.2f} confidence)")
     else:
         print("\nBTC: No signal available")
 
     if eth_signal:
-        print(
-            f"ETH: {eth_signal.sentiment.upper()} ({eth_signal.confidence:.2f} confidence)"
-        )
+        print(f"ETH: {eth_signal.sentiment.upper()} ({eth_signal.confidence:.2f} confidence)")
     else:
         print("ETH: No signal available")
 

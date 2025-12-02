@@ -12,20 +12,20 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from enum import Enum
+from pathlib import Path
+from typing import Any
 
+from .context import RunContext
 from .curriculum_agent import (
     CurriculumAgent,
-    TradingTask,
-    TaskPerformance,
     TaskDifficulty,
+    TaskPerformance,
+    TradingTask,
 )
 from .executor_agent import ExecutorAgent, TaskSolution
-from .context import RunContext
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ class EvolutionMetrics:
     avg_quality_score: float
     frontier_tasks_attempted: int
     frontier_tasks_solved: int
-    capabilities_discovered: List[str] = field(default_factory=list)
+    capabilities_discovered: list[str] = field(default_factory=list)
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
 
@@ -61,8 +61,8 @@ class EvolutionHistory:
     """Complete evolution history"""
 
     start_time: str
-    iterations: List[EvolutionMetrics] = field(default_factory=list)
-    best_performance: Optional[EvolutionMetrics] = None
+    iterations: list[EvolutionMetrics] = field(default_factory=list)
+    best_performance: EvolutionMetrics | None = None
     current_stage: EvolutionStage = EvolutionStage.INITIALIZATION
 
 
@@ -79,7 +79,7 @@ class CoEvolutionEngine:
 
     def __init__(
         self,
-        storage_dir: Optional[Path] = None,
+        storage_dir: Path | None = None,
         max_iterations: int = 100,
         tasks_per_iteration: int = 5,
     ):
@@ -90,9 +90,7 @@ class CoEvolutionEngine:
         self.tasks_per_iteration = tasks_per_iteration
 
         # Initialize agents
-        self.curriculum_agent = CurriculumAgent(
-            storage_dir=self.storage_dir / "curriculum"
-        )
+        self.curriculum_agent = CurriculumAgent(storage_dir=self.storage_dir / "curriculum")
         self.executor_agent = ExecutorAgent(
             storage_dir=self.storage_dir / "executor",
             curriculum_agent=self.curriculum_agent,
@@ -106,11 +104,11 @@ class CoEvolutionEngine:
         # Load history
         self._load_history()
 
-        logger.info(f"✅ Co-Evolution Engine initialized")
+        logger.info("✅ Co-Evolution Engine initialized")
         logger.info(f"   Iteration: {self.current_iteration}/{self.max_iterations}")
         logger.info(f"   Stage: {self.current_stage.value}")
 
-    def evolve(self, context: RunContext) -> Dict[str, Any]:
+    def evolve(self, context: RunContext) -> dict[str, Any]:
         """
         Execute one evolution cycle.
 
@@ -130,12 +128,10 @@ class CoEvolutionEngine:
             }
 
         self.current_iteration += 1
-        logger.info(
-            f"🔄 Evolution iteration {self.current_iteration}/{self.max_iterations}"
-        )
+        logger.info(f"🔄 Evolution iteration {self.current_iteration}/{self.max_iterations}")
 
         # Generate tasks
-        tasks: List[TradingTask] = []
+        tasks: list[TradingTask] = []
         for _ in range(self.tasks_per_iteration):
             task_result = self.curriculum_agent.execute(context)
             if task_result.succeeded and "task" in task_result.payload:
@@ -145,8 +141,8 @@ class CoEvolutionEngine:
         logger.info(f"📚 Generated {len(tasks)} tasks")
 
         # Solve tasks
-        solutions: List[TaskSolution] = []
-        performances: List[TaskPerformance] = []
+        solutions: list[TaskSolution] = []
+        performances: list[TaskPerformance] = []
 
         for task in tasks:
             # Create context for executor
@@ -195,9 +191,9 @@ class CoEvolutionEngine:
 
     def _calculate_metrics(
         self,
-        tasks: List[TradingTask],
-        solutions: List[TaskSolution],
-        performances: List[TaskPerformance],
+        tasks: list[TradingTask],
+        solutions: list[TaskSolution],
+        performances: list[TaskPerformance],
     ) -> EvolutionMetrics:
         """Calculate evolution metrics for this iteration"""
         tasks_solved = len(solutions)
@@ -269,7 +265,7 @@ class CoEvolutionEngine:
             if metrics.avg_quality_score > best.avg_quality_score:
                 self.evolution_history.best_performance = metrics
 
-    def get_evolution_summary(self) -> Dict[str, Any]:
+    def get_evolution_summary(self) -> dict[str, Any]:
         """Get summary of evolution progress"""
         if not self.evolution_history.iterations:
             return {"status": "not_started", "iterations": 0}
@@ -284,9 +280,7 @@ class CoEvolutionEngine:
             "total_tasks_generated": sum(
                 m.tasks_generated for m in self.evolution_history.iterations
             ),
-            "total_tasks_solved": sum(
-                m.tasks_solved for m in self.evolution_history.iterations
-            ),
+            "total_tasks_solved": sum(m.tasks_solved for m in self.evolution_history.iterations),
             "recent_success_rate": (
                 sum(m.success_rate for m in recent_metrics) / len(recent_metrics)
                 if recent_metrics
@@ -319,7 +313,7 @@ class CoEvolutionEngine:
             return
 
         try:
-            with open(history_file, "r") as f:
+            with open(history_file) as f:
                 data = json.load(f)
 
             self.evolution_history = EvolutionHistory(**data)

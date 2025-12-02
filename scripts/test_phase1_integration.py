@@ -55,7 +55,7 @@ def test_polygon_api():
         result = calculator.get_intrinsic_value("AAPL", force_refresh=True)
 
         if result:
-            print(f"✅ DCF calculation successful!")
+            print("✅ DCF calculation successful!")
             print(f"   Intrinsic Value: ${result.intrinsic_value:.2f}")
             print(f"   Discount Rate: {result.discount_rate:.2%}")
             print(f"   Projected Growth: {result.projected_growth:.2%}")
@@ -174,7 +174,7 @@ def test_dcf_fallback():
         )  # Use cache if available
 
         if result:
-            print(f"✅ DCF calculation successful!")
+            print("✅ DCF calculation successful!")
             print(f"   Intrinsic Value: ${result.intrinsic_value:.2f}")
             return True
         else:

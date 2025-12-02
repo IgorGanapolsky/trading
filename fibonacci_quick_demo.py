@@ -29,10 +29,10 @@ def show_scaling():
     print("=" * 70)
 
     print("\n💰 Your Current Status:")
-    print(f"  Profit: $5.50")
+    print("  Profit: $5.50")
     print(f"  Current Level: ${get_level(5.5)}/day")
-    print(f"  Next Milestone: $60 profit → $2/day")
-    print(f"  Progress: 9.2% ($54.50 to go)")
+    print("  Next Milestone: $60 profit → $2/day")
+    print("  Progress: 9.2% ($54.50 to go)")
 
     print("\n📈 Scaling Roadmap:")
     print(f"{'Profit $':<12} {'Daily Amount':<15} {'Milestone':<30}")

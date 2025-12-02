@@ -14,27 +14,19 @@ while maintaining backward compatibility.
 """
 
 import asyncio
+import hashlib
 import json
 import logging
-import os
 import time
-import hashlib
+from collections import deque
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
-from collections import deque
-from datetime import datetime, timedelta
-
-from openai import AsyncOpenAI, OpenAI
+from typing import Any, Optional
 
 from src.core.multi_llm_analysis import (
-    MultiLLMAnalyzer,
     LLMModel,
     LLMResponse,
-    SentimentAnalysis,
-    IPOAnalysis,
-    StockAnalysis,
-    MarketOutlook,
+    MultiLLMAnalyzer,
 )
 
 logger = logging.getLogger(__name__)
@@ -76,7 +68,7 @@ class OptimizedMultiLLMAnalyzer(MultiLLMAnalyzer):
     def __init__(
         self,
         api_key: Optional[str] = None,
-        models: Optional[List[LLMModel]] = None,
+        models: Optional[list[LLMModel]] = None,
         max_retries: int = 3,
         timeout: int = 60,
         rate_limit_delay: float = 0.5,
@@ -117,7 +109,7 @@ class OptimizedMultiLLMAnalyzer(MultiLLMAnalyzer):
         self.max_cache_size = max_cache_size
 
         # Response cache: {cache_key: CachedResponse}
-        self._response_cache: Dict[str, CachedResponse] = {}
+        self._response_cache: dict[str, CachedResponse] = {}
 
         # Request queue for prioritization
         self._request_queue: deque = deque()
@@ -154,9 +146,7 @@ class OptimizedMultiLLMAnalyzer(MultiLLMAnalyzer):
         content = f"{model.value}:{system_prompt or ''}:{prompt}"
         return hashlib.sha256(content.encode()).hexdigest()
 
-    def _get_cached_response(
-        self, cache_key: str, model: LLMModel
-    ) -> Optional[LLMResponse]:
+    def _get_cached_response(self, cache_key: str, model: LLMModel) -> Optional[LLMResponse]:
         """
         Retrieve cached response if available and valid.
 
@@ -201,9 +191,7 @@ class OptimizedMultiLLMAnalyzer(MultiLLMAnalyzer):
             success=True,
         )
 
-    def _cache_response(
-        self, cache_key: str, response: LLMResponse, model: LLMModel
-    ) -> None:
+    def _cache_response(self, cache_key: str, response: LLMResponse, model: LLMModel) -> None:
         """
         Cache response for future use.
 
@@ -288,9 +276,9 @@ class OptimizedMultiLLMAnalyzer(MultiLLMAnalyzer):
 
         # Use adaptive timeout for critical requests
         if priority == RequestPriority.CRITICAL:
-            timeout = self._calculate_adaptive_timeout(market_volatility)
+            self._calculate_adaptive_timeout(market_volatility)
         else:
-            timeout = self._base_timeout
+            pass
 
         # Query LLM with optimized timeout
         response = await self._query_llm_async(
@@ -306,11 +294,11 @@ class OptimizedMultiLLMAnalyzer(MultiLLMAnalyzer):
 
     async def get_ensemble_sentiment_optimized(
         self,
-        market_data: Dict[str, Any],
-        news: List[Dict[str, Any]],
+        market_data: dict[str, Any],
+        news: list[dict[str, Any]],
         priority: RequestPriority = RequestPriority.MEDIUM,
         use_cache: bool = True,
-    ) -> Tuple[float, Dict[str, Any]]:
+    ) -> tuple[float, dict[str, Any]]:
         """
         Optimized ensemble sentiment with prioritization and caching.
 
@@ -393,15 +381,14 @@ Provide objective, data-driven sentiment scores based on technical indicators an
                 valid_responses.append(response)
 
         # Calculate ensemble sentiment
-        ensemble_score, confidence, individual_scores = (
-            self._calculate_ensemble_sentiment(valid_responses)
+        ensemble_score, confidence, individual_scores = self._calculate_ensemble_sentiment(
+            valid_responses
         )
 
         metadata = {
             "confidence": confidence,
             "individual_scores": individual_scores,
-            "cache_hit_rate": self._cache_hits
-            / max(1, self._cache_hits + self._cache_misses),
+            "cache_hit_rate": self._cache_hits / max(1, self._cache_hits + self._cache_misses),
             "tokens_saved": self._total_tokens_saved,
             "priority": priority.value,
         }
@@ -413,7 +400,7 @@ Provide objective, data-driven sentiment scores based on technical indicators an
 
         return ensemble_score, metadata
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """
         Get cache performance statistics.
 

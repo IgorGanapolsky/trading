@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional
 
 ISO_FMT = "%Y-%m-%dT%H:%M:%S%z"
 
@@ -18,9 +17,9 @@ class SessionTemplate:
     start_time: str  # HH:MM in local timezone
     duration_minutes: int
     format: str  # chatroom, webinar, 1:1, psychology
-    focus: List[str]
-    day_of_week: Optional[str] = None  # e.g., Monday
-    notes: List[str] = field(default_factory=list)
+    focus: list[str]
+    day_of_week: str | None = None  # e.g., Monday
+    notes: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -30,10 +29,10 @@ class CoachingProgram:
     name: str
     url: str
     timezone: str
-    highlights: List[str]
-    session_templates: List[SessionTemplate]
-    accountability_prompts: List[str] = field(default_factory=list)
-    escalation_contacts: List[str] = field(default_factory=list)
+    highlights: list[str]
+    session_templates: list[SessionTemplate]
+    accountability_prompts: list[str] = field(default_factory=list)
+    escalation_contacts: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -42,7 +41,7 @@ class BookLesson:
 
     title: str
     trigger: str
-    actions: List[str]
+    actions: list[str]
 
 
 @dataclass
@@ -63,9 +62,9 @@ class BookResource:
     author: str
     difficulty: str
     summary: str
-    focus_tags: List[str]
-    lessons: List[BookLesson]
-    reading_plan: List[ReadingSegment]
+    focus_tags: list[str]
+    lessons: list[BookLesson]
+    reading_plan: list[ReadingSegment]
 
 
 @dataclass
@@ -75,10 +74,10 @@ class NewsletterResource:
     name: str
     provider: str
     url: str
-    feed_url: Optional[str]
+    feed_url: str | None
     cadence: str
-    focus_tags: List[str]
-    emphasis: List[str]
+    focus_tags: list[str]
+    emphasis: list[str]
     window_hours: int = 24
 
 
@@ -90,9 +89,9 @@ class CoachSession:
     session_name: str
     scheduled_for: datetime
     format: str
-    focus: List[str]
+    focus: list[str]
     duration_minutes: int
-    accountability_prompt: Optional[str]
+    accountability_prompt: str | None
     url: str
 
 
@@ -105,7 +104,7 @@ class ReadingAssignment:
     task: str
     minutes: int
     difficulty: str
-    tags: List[str]
+    tags: list[str]
 
 
 @dataclass
@@ -115,9 +114,9 @@ class NewsletterInsight:
     source: str
     headline: str
     summary: str
-    tickers: List[str]
+    tickers: list[str]
     urgency: str
-    link: Optional[str]
+    link: str | None
 
 
 @dataclass
@@ -125,12 +124,12 @@ class DailySupportPlan:
     """Full output of the day-trading support orchestrator."""
 
     generated_at: datetime
-    focus_areas: List[str]
-    coaching: List[CoachSession]
-    reading: List[ReadingAssignment]
-    newsletters: List[NewsletterInsight]
+    focus_areas: list[str]
+    coaching: list[CoachSession]
+    reading: list[ReadingAssignment]
+    newsletters: list[NewsletterInsight]
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert the plan into primitive types for persistence."""
 
         def _convert(value):

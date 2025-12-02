@@ -1,5 +1,5 @@
-import sys
 import logging
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -32,14 +32,12 @@ def run_chaos_drill():
 
         logger.info("\n✅ DRILL COMPLETE: System survived chaos")
         logger.info(f"Final Decision: {results.get('final_decision')}")
-        logger.info(
-            f"Errors encountered (and handled): {len(results.get('errors', []))}"
-        )
+        logger.info(f"Errors encountered (and handled): {len(results.get('errors', []))}")
         for err in results.get("errors", []):
             logger.info(f"  - {err}")
 
     except Exception as e:
-        logger.error(f"\n❌ DRILL FAILED: System crashed under chaos")
+        logger.error("\n❌ DRILL FAILED: System crashed under chaos")
         logger.error(f"Reason: {e}")
         sys.exit(1)
 

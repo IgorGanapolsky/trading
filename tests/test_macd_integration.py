@@ -11,8 +11,8 @@ Test Coverage:
 4. Buy/sell signal generation based on MACD histogram
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -35,9 +35,7 @@ def test_macd_calculation():
 
     # Test CoreStrategy MACD calculation
     core_strategy = CoreStrategy(daily_allocation=6.0, use_sentiment=False)
-    macd_value, macd_signal, macd_histogram = core_strategy._calculate_macd(
-        hist["Close"]
-    )
+    macd_value, macd_signal, macd_histogram = core_strategy._calculate_macd(hist["Close"])
 
     print("\nSPY MACD Indicators:")
     print(f"  MACD Line:      {macd_value:.4f}")
@@ -117,9 +115,7 @@ def test_macd_scoring_logic():
     test_symbols = ["SPY", "NVDA", "GOOGL", "AMZN"]
 
     print("\nMACD Analysis for Multiple Stocks:")
-    print(
-        f"{'Symbol':<8} {'MACD':<10} {'Signal':<10} {'Histogram':<12} {'Trading Signal'}"
-    )
+    print(f"{'Symbol':<8} {'MACD':<10} {'Signal':<10} {'Histogram':<12} {'Trading Signal'}")
     print("-" * 70)
 
     for symbol in test_symbols:
@@ -131,9 +127,7 @@ def test_macd_scoring_logic():
                 print(f"{symbol:<8} INSUFFICIENT DATA")
                 continue
 
-            macd_value, macd_signal, macd_histogram = growth_strategy._calculate_macd(
-                hist
-            )
+            macd_value, macd_signal, macd_histogram = growth_strategy._calculate_macd(hist)
 
             # Determine signal
             if macd_histogram > 0:

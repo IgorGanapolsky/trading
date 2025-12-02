@@ -5,11 +5,12 @@ Test dashboard output completeness and correctness.
 Validates that generated dashboards contain all required sections.
 This prevents regressions where sections are accidentally removed.
 """
+
+import json
 import sys
 import tempfile
-import json
-from pathlib import Path
 from datetime import date, timedelta
+from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -126,9 +127,7 @@ def test_world_class_dashboard():
             dashboard = generate_world_class_dashboard()
 
             # Validate required sections
-            test_dashboard_has_required_sections(
-                dashboard, "generate_world_class_dashboard.py"
-            )
+            test_dashboard_has_required_sections(dashboard, "generate_world_class_dashboard.py")
 
             print("✅ generate_world_class_dashboard.py: PASSED")
             return True
@@ -182,9 +181,7 @@ def test_progress_dashboard():
 
             dashboard = generate_dashboard()
 
-            test_dashboard_has_required_sections(
-                dashboard, "generate_progress_dashboard.py"
-            )
+            test_dashboard_has_required_sections(dashboard, "generate_progress_dashboard.py")
 
             print("✅ generate_progress_dashboard.py: PASSED")
             return True

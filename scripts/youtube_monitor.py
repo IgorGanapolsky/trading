@@ -8,13 +8,13 @@ analyzes content, and updates trading system watchlists.
 Runs daily at 8:00 AM ET (before market open at 9:30 AM)
 """
 
-import os
-import sys
 import json
 import logging
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Optional
+
 import yt_dlp
 from youtube_transcript_api import YouTubeTranscriptApi
 
@@ -64,14 +64,14 @@ class YouTubeMonitor:
                 logger.warning(f"⚠️  MultiLLM unavailable: {e}")
                 logger.info("Using keyword-based analysis instead")
 
-    def _load_config(self) -> Dict:
+    def _load_config(self) -> dict:
         """Load configuration from JSON file"""
         if not self.config_path.exists():
             logger.error(f"❌ Config file not found: {self.config_path}")
             logger.info("Creating default configuration...")
             self._create_default_config()
 
-        with open(self.config_path, "r") as f:
+        with open(self.config_path) as f:
             return json.load(f)
 
     def _create_default_config(self):
@@ -138,11 +138,11 @@ class YouTubeMonitor:
 
         logger.info(f"✅ Created default config: {self.config_path}")
 
-    def _load_processed_videos(self) -> Dict:
+    def _load_processed_videos(self) -> dict:
         """Load history of processed videos"""
         cache_file = CACHE_DIR / "processed_videos.json"
         if cache_file.exists():
-            with open(cache_file, "r") as f:
+            with open(cache_file) as f:
                 return json.load(f)
         return {}
 
@@ -152,9 +152,7 @@ class YouTubeMonitor:
         with open(cache_file, "w") as f:
             json.dump(self.processed_videos, f, indent=2)
 
-    def get_recent_videos(
-        self, channel_id: str, lookback_hours: int = 24
-    ) -> List[Dict]:
+    def get_recent_videos(self, channel_id: str, lookback_hours: int = 24) -> list[dict]:
         """
         Get recent videos from a YouTube channel
 
@@ -246,7 +244,7 @@ class YouTubeMonitor:
             logger.error(f"❌ Error fetching videos: {e}")
             return []
 
-    def is_trading_related(self, video: Dict, channel_config: Dict) -> bool:
+    def is_trading_related(self, video: dict, channel_config: dict) -> bool:
         """
         Check if video is trading/investing related using keywords
 
@@ -319,7 +317,7 @@ class YouTubeMonitor:
             logger.error(f"❌ Failed to get transcript: {e}")
             return None
 
-    def analyze_video(self, video: Dict, transcript: str) -> Dict:
+    def analyze_video(self, video: dict, transcript: str) -> dict:
         """
         Analyze video transcript for trading insights
 
@@ -337,7 +335,7 @@ class YouTubeMonitor:
         else:
             return self._keyword_analysis(video, transcript)
 
-    def _keyword_analysis(self, video: Dict, transcript: str) -> Dict:
+    def _keyword_analysis(self, video: dict, transcript: str) -> dict:
         """Simple keyword-based analysis"""
         # Look for stock tickers (1-5 uppercase letters)
         import re
@@ -388,7 +386,7 @@ class YouTubeMonitor:
             "timestamp": datetime.now().isoformat(),
         }
 
-    def _llm_analysis(self, video: Dict, transcript: str) -> Dict:
+    def _llm_analysis(self, video: dict, transcript: str) -> dict:
         """LLM-based deep analysis"""
         # Truncate if too long
         max_chars = 15000
@@ -398,9 +396,9 @@ class YouTubeMonitor:
         prompt = f"""
 Analyze this YouTube trading video transcript and extract actionable stock picks.
 
-VIDEO: {video['title']}
-CHANNEL: {video['channel']}
-DATE: {video['upload_date']}
+VIDEO: {video["title"]}
+CHANNEL: {video["channel"]}
+DATE: {video["upload_date"]}
 
 TRANSCRIPT:
 {transcript}
@@ -421,9 +419,7 @@ Format as JSON with fields:
 """
 
         try:
-            analysis = self.llm_analyzer.analyze_sentiment(
-                symbol="YOUTUBE_VIDEO", context=prompt
-            )
+            analysis = self.llm_analyzer.analyze_sentiment(symbol="YOUTUBE_VIDEO", context=prompt)
 
             if isinstance(analysis, dict):
                 return {
@@ -447,7 +443,7 @@ Format as JSON with fields:
             # Fallback to keyword analysis
             return self._keyword_analysis(video, transcript)
 
-    def update_watchlist(self, analysis: Dict) -> bool:
+    def update_watchlist(self, analysis: dict) -> bool:
         """
         Update tier2_watchlist.json with new stock picks
 
@@ -479,7 +475,7 @@ Format as JSON with fields:
             return False
 
         # Load current watchlist
-        with open(WATCHLIST_FILE, "r") as f:
+        with open(WATCHLIST_FILE) as f:
             watchlist = json.load(f)
 
         # Add new stocks
@@ -527,7 +523,7 @@ Format as JSON with fields:
 
         return updated
 
-    def save_analysis_report(self, video: Dict, transcript: str, analysis: Dict):
+    def save_analysis_report(self, video: dict, transcript: str, analysis: dict):
         """
         Save analysis report to markdown file
 
@@ -541,21 +537,21 @@ Format as JSON with fields:
 
         report_file = ANALYSIS_DIR / f"{video['video_id']}.md"
 
-        report = f"""# YouTube Video Analysis: {video['title']}
+        report = f"""# YouTube Video Analysis: {video["title"]}
 
-**Channel**: {video['channel']}
-**Upload Date**: {video['upload_date']}
-**Duration**: {video['duration']}s ({video['duration'] // 60} minutes)
-**Views**: {video['view_count']:,}
-**Video URL**: {video['url']}
-**Analysis Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-**Analysis Type**: {analysis['analysis_type'].upper()}
+**Channel**: {video["channel"]}
+**Upload Date**: {video["upload_date"]}
+**Duration**: {video["duration"]}s ({video["duration"] // 60} minutes)
+**Views**: {video["view_count"]:,}
+**Video URL**: {video["url"]}
+**Analysis Date**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+**Analysis Type**: {analysis["analysis_type"].upper()}
 
 ---
 
 ## Summary
 
-{analysis.get('summary', 'No summary available')}
+{analysis.get("summary", "No summary available")}
 
 ---
 
@@ -574,10 +570,10 @@ Format as JSON with fields:
             if isinstance(analysis_data, dict) and "tickers" in analysis_data:
                 for stock in analysis_data["tickers"]:
                     report += f"""
-### {stock.get('ticker', 'Unknown')}
-- **Sentiment**: {stock.get('sentiment', 'Unknown').upper()}
-- **Confidence**: {stock.get('confidence', 'Unknown').upper()}
-- **Rationale**: {stock.get('rationale', 'N/A')}
+### {stock.get("ticker", "Unknown")}
+- **Sentiment**: {stock.get("sentiment", "Unknown").upper()}
+- **Confidence**: {stock.get("confidence", "Unknown").upper()}
+- **Rationale**: {stock.get("rationale", "N/A")}
 """
 
         report += f"""
@@ -587,7 +583,7 @@ Format as JSON with fields:
 ## Full Transcript
 
 ```
-{transcript[:10000]}{'...' if len(transcript) > 10000 else ''}
+{transcript[:10000]}{"..." if len(transcript) > 10000 else ""}
 ```
 
 ---
@@ -600,7 +596,7 @@ Format as JSON with fields:
         report_file.write_text(report)
         logger.info(f"💾 Saved analysis report: {report_file}")
 
-    def process_video(self, video: Dict, channel_config: Dict) -> bool:
+    def process_video(self, video: dict, channel_config: dict) -> bool:
         """
         Complete processing pipeline for a single video
 
@@ -611,9 +607,9 @@ Format as JSON with fields:
         Returns:
             True if video was successfully processed
         """
-        logger.info(f"\n{'='*60}")
+        logger.info(f"\n{'=' * 60}")
         logger.info(f"📹 Processing: {video['title']}")
-        logger.info(f"{'='*60}")
+        logger.info(f"{'=' * 60}")
 
         # Check if trading-related
         if not self.is_trading_related(video, channel_config):
@@ -671,9 +667,7 @@ Format as JSON with fields:
         lookback_hours = self.config.get("lookback_hours", 24)
         channels = self.config.get("channels", [])
 
-        logger.info(
-            f"📊 Monitoring {len(channels)} channels (lookback: {lookback_hours}h)"
-        )
+        logger.info(f"📊 Monitoring {len(channels)} channels (lookback: {lookback_hours}h)")
 
         total_processed = 0
         total_found = 0
@@ -682,9 +676,9 @@ Format as JSON with fields:
             channel_name = channel_config["name"]
             channel_id = channel_config["channel_id"]
 
-            logger.info(f"\n{'─'*60}")
+            logger.info(f"\n{'─' * 60}")
             logger.info(f"📺 Channel: {channel_name}")
-            logger.info(f"{'─'*60}")
+            logger.info(f"{'─' * 60}")
 
             # Get recent videos
             videos = self.get_recent_videos(channel_id, lookback_hours)

@@ -10,15 +10,16 @@ Tests:
 5. ResearchAgent integration
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import logging
+
+from src.agents.research_agent import ResearchAgent
 from src.rag.ingestion_pipeline import get_pipeline
 from src.rag.vector_db.retriever import get_retriever
-from src.agents.research_agent import ResearchAgent
-import logging
 
 # Configure logging
 logging.basicConfig(
@@ -108,7 +109,7 @@ def test_ticker_context():
     # Get formatted context for NVDA
     context = retriever.get_ticker_context("NVDA", n_results=5, days_back=7)
 
-    logger.info(f"\n✅ Generated context for NVDA:")
+    logger.info("\n✅ Generated context for NVDA:")
     logger.info(context)
 
     return len(context) > 0
@@ -127,20 +128,6 @@ def test_research_agent_integration():
         logger.info("✅ RAG retriever initialized in ResearchAgent")
 
         # Test analysis (will query RAG internally)
-        data = {
-            "symbol": "NVDA",
-            "fundamentals": {
-                "pe_ratio": 40.5,
-                "growth_rate": 0.35,
-                "profit_margin": 0.25,
-                "market_cap": "1.2T",
-            },
-            "market_context": {
-                "sector": "Technology",
-                "market_trend": "bullish",
-                "volatility": "moderate",
-            },
-        }
 
         # This should query RAG internally
         # NOTE: Commenting out actual analysis to avoid LLM call

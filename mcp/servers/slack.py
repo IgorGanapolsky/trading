@@ -10,11 +10,10 @@ Provides tools for:
 
 from __future__ import annotations
 
-import os
-import json
 import logging
-from typing import Any, Dict, Mapping, Optional
+import os
 from datetime import datetime
+from typing import Any
 
 try:
     from slack_sdk import WebClient
@@ -24,8 +23,7 @@ try:
 except ImportError:
     SLACK_API_AVAILABLE = False
 
-from mcp.client import default_client
-from mcp.utils import ensure_env_var, run_sync
+from mcp.utils import run_sync
 
 logger = logging.getLogger(__name__)
 
@@ -60,8 +58,8 @@ def _get_slack_client():
 
 
 async def send_message_async(
-    channel: str, message: str, thread_ts: Optional[str] = None
-) -> Dict[str, Any]:
+    channel: str, message: str, thread_ts: str | None = None
+) -> dict[str, Any]:
     """
     Send message to Slack channel.
 
@@ -118,16 +116,14 @@ async def send_message_async(
         }
 
 
-def send_message(
-    channel: str, message: str, thread_ts: Optional[str] = None
-) -> Dict[str, Any]:
+def send_message(channel: str, message: str, thread_ts: str | None = None) -> dict[str, Any]:
     """Sync wrapper for send_message_async."""
     return run_sync(send_message_async(channel, message, thread_ts))
 
 
 async def send_formatted_message_async(
-    channel: str, blocks: list[Dict[str, Any]], text: Optional[str] = None
-) -> Dict[str, Any]:
+    channel: str, blocks: list[dict[str, Any]], text: str | None = None
+) -> dict[str, Any]:
     """
     Send formatted message with Slack blocks.
 
@@ -180,13 +176,13 @@ async def send_formatted_message_async(
 
 
 def send_formatted_message(
-    channel: str, blocks: list[Dict[str, Any]], text: Optional[str] = None
-) -> Dict[str, Any]:
+    channel: str, blocks: list[dict[str, Any]], text: str | None = None
+) -> dict[str, Any]:
     """Sync wrapper for send_formatted_message_async."""
     return run_sync(send_formatted_message_async(channel, blocks, text))
 
 
-async def send_dm_async(user_id: str, message: str) -> Dict[str, Any]:
+async def send_dm_async(user_id: str, message: str) -> dict[str, Any]:
     """
     Send direct message to user.
 
@@ -244,12 +240,12 @@ async def send_dm_async(user_id: str, message: str) -> Dict[str, Any]:
         }
 
 
-def send_dm(user_id: str, message: str) -> Dict[str, Any]:
+def send_dm(user_id: str, message: str) -> dict[str, Any]:
     """Sync wrapper for send_dm_async."""
     return run_sync(send_dm_async(user_id, message))
 
 
-def create_trade_alert_block(trade_data: Dict[str, Any]) -> list[Dict[str, Any]]:
+def create_trade_alert_block(trade_data: dict[str, Any]) -> list[dict[str, Any]]:
     """
     Create Slack block kit blocks for trade alert.
 

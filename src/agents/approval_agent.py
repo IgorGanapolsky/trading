@@ -5,16 +5,16 @@ Implements approval workflows for high-value trades and critical decisions.
 Based on AgentKit pattern with human approval gates.
 """
 
-import os
+import asyncio
 import json
 import logging
-import asyncio
+import os
 import uuid
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
 from enum import Enum
 from pathlib import Path
+from typing import Any, Optional
 
 from src.agents.base_agent import BaseAgent
 
@@ -37,12 +37,12 @@ class ApprovalRequest:
 
     id: str
     type: str  # "trade", "risk_override", "circuit_breaker", etc.
-    context: Dict[str, Any]
+    context: dict[str, Any]
     priority: str  # "low", "medium", "high", "critical"
     timeout_seconds: int = 900  # Default 15 minutes
     created_at: str = ""
     status: str = ApprovalStatus.PENDING.value
-    decision: Optional[Dict[str, Any]] = None
+    decision: Optional[dict[str, Any]] = None
 
     def __post_init__(self):
         if not self.created_at:
@@ -62,20 +62,16 @@ class ApprovalAgent(BaseAgent):
 
     def __init__(self):
         super().__init__(name="ApprovalAgent", role="Human Approval Coordinator")
-        self.pending_approvals: Dict[str, ApprovalRequest] = {}
-        self.approval_history: List[ApprovalRequest] = []
+        self.pending_approvals: dict[str, ApprovalRequest] = {}
+        self.approval_history: list[ApprovalRequest] = []
         self.approval_dir = Path("data/approvals")
         self.approval_dir.mkdir(parents=True, exist_ok=True)
 
         # Configuration
-        self.high_value_threshold = float(
-            os.getenv("APPROVAL_HIGH_VALUE_THRESHOLD", "1000.0")
-        )
-        self.notification_channels = os.getenv(
-            "APPROVAL_NOTIFICATION_CHANNELS", "email"
-        ).split(",")
+        self.high_value_threshold = float(os.getenv("APPROVAL_HIGH_VALUE_THRESHOLD", "1000.0"))
+        self.notification_channels = os.getenv("APPROVAL_NOTIFICATION_CHANNELS", "email").split(",")
 
-    def analyze(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Process an approval request.
 
@@ -96,7 +92,7 @@ class ApprovalAgent(BaseAgent):
         else:
             return {"success": False, "error": f"Unknown approval type: {request_type}"}
 
-    def _request_approval(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _request_approval(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Request human approval for a decision.
 
@@ -150,7 +146,7 @@ class ApprovalAgent(BaseAgent):
             "notification_channels": self.notification_channels,
         }
 
-    def _check_approval_status(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _check_approval_status(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Check status of an approval request.
 
@@ -203,7 +199,7 @@ class ApprovalAgent(BaseAgent):
                 "error": f"Approval request {approval_id} not found",
             }
 
-    def _submit_decision(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _submit_decision(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Submit human decision for an approval request.
 
@@ -288,9 +284,7 @@ class ApprovalAgent(BaseAgent):
         with open(file_path, "w") as f:
             json.dump(asdict(request), f, indent=2)
 
-    async def wait_for_approval(
-        self, approval_id: str, check_interval: int = 5
-    ) -> Dict[str, Any]:
+    async def wait_for_approval(self, approval_id: str, check_interval: int = 5) -> dict[str, Any]:
         """
         Wait for approval decision (async).
 

@@ -1,9 +1,10 @@
-import pandas as pd
-import numpy as np
-import torch
-from typing import List, Tuple, Optional
-import yfinance as yf
 import logging
+from typing import Optional
+
+import numpy as np
+import pandas as pd
+import torch
+import yfinance as yf
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +14,7 @@ class DataProcessor:
     Handles data fetching, feature engineering, and preprocessing for the ML model.
     """
 
-    def __init__(self, sequence_length: int = 60, feature_columns: List[str] = None):
+    def __init__(self, sequence_length: int = 60, feature_columns: list[str] = None):
         self.sequence_length = sequence_length
         self.feature_columns = feature_columns or [
             "Close",
@@ -29,9 +30,7 @@ class DataProcessor:
         ]
         self.scalers = {}  # Store scalers per symbol if needed
 
-    def fetch_data(
-        self, symbol: str, period: str = "2y", interval: str = "1d"
-    ) -> pd.DataFrame:
+    def fetch_data(self, symbol: str, period: str = "2y", interval: str = "1d") -> pd.DataFrame:
         """Fetch historical data using yfinance."""
         try:
             df = yf.download(symbol, period=period, interval=interval, progress=False)
@@ -81,8 +80,8 @@ class DataProcessor:
         bogleheads_added = False
         try:
             from src.utils.bogleheads_integration import (
-                get_bogleheads_signal_for_symbol,
                 get_bogleheads_regime,
+                get_bogleheads_signal_for_symbol,
             )
 
             signal = get_bogleheads_signal_for_symbol("SPY")  # Use SPY as market proxy
@@ -128,7 +127,7 @@ class DataProcessor:
 
         return df_norm
 
-    def create_sequences(self, df: pd.DataFrame) -> Tuple[torch.Tensor, torch.Tensor]:
+    def create_sequences(self, df: pd.DataFrame) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Create sequences for LSTM input.
 
@@ -156,9 +155,7 @@ class DataProcessor:
         Prepare the latest sequence for inference.
         Includes Bogleheads features if available.
         """
-        df = self.fetch_data(
-            symbol, period="6mo"
-        )  # Fetch enough for indicators + sequence
+        df = self.fetch_data(symbol, period="6mo")  # Fetch enough for indicators + sequence
         if df.empty:
             return None
 
@@ -167,17 +164,15 @@ class DataProcessor:
         # Add Bogleheads features if available
         try:
             from src.utils.bogleheads_integration import (
-                get_bogleheads_signal_for_symbol,
                 get_bogleheads_regime,
+                get_bogleheads_signal_for_symbol,
             )
 
             signal = get_bogleheads_signal_for_symbol(symbol)
             regime = get_bogleheads_regime()
 
             # Add Bogleheads features to all rows (use current values)
-            df["Bogleheads_Sentiment"] = (
-                signal.get("score", 0.0) / 100.0
-            )  # Normalize to -1 to 1
+            df["Bogleheads_Sentiment"] = signal.get("score", 0.0) / 100.0  # Normalize to -1 to 1
             df["Bogleheads_Regime"] = {
                 "bull": 1.0,
                 "bear": -1.0,

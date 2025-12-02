@@ -10,16 +10,16 @@ This example demonstrates:
 """
 
 import sys
+from datetime import datetime
 from pathlib import Path
-from datetime import datetime, timedelta
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.utils.newsletter_analyzer import (
+    NewsletterAnalyzer,
     get_btc_signal,
     get_eth_signal,
-    NewsletterAnalyzer,
 )
 
 
@@ -172,7 +172,7 @@ def example_daily_trading_workflow():
             # Get trading parameters
             params = get_trading_parameters(ticker)
 
-            print(f"\n  Trading Parameters:")
+            print("\n  Trading Parameters:")
             if params.get("entry_price"):
                 print(f"    Entry: ${params['entry_price']:,.0f}")
             if params.get("target_price"):
@@ -184,9 +184,7 @@ def example_daily_trading_workflow():
 
             # Calculate position size
             if params.get("entry_price") and params.get("stop_loss"):
-                position_size = calculate_position_size_with_newsletter(
-                    ticker, account_value
-                )
+                position_size = calculate_position_size_with_newsletter(ticker, account_value)
                 print(f"\n  Calculated Position Size: ${position_size:,.0f}")
 
                 # Calculate risk/reward
@@ -203,7 +201,7 @@ def example_daily_trading_workflow():
 
             # Show reasoning
             if params.get("reasoning"):
-                print(f"\n  Newsletter Reasoning:")
+                print("\n  Newsletter Reasoning:")
                 print(f"    {params['reasoning'][:150]}...")
 
 
@@ -246,11 +244,11 @@ def example_risk_management():
             print(f"  Risk/Reward Ratio: {rr_ratio:.2f}")
 
             if rr_ratio >= 2.0:
-                print(f"  ✅ GOOD SETUP: Risk/reward >= 2:1")
+                print("  ✅ GOOD SETUP: Risk/reward >= 2:1")
             elif rr_ratio >= 1.5:
-                print(f"  ⚠️  ACCEPTABLE: Risk/reward >= 1.5:1")
+                print("  ⚠️  ACCEPTABLE: Risk/reward >= 1.5:1")
             else:
-                print(f"  ❌ POOR SETUP: Risk/reward < 1.5:1")
+                print("  ❌ POOR SETUP: Risk/reward < 1.5:1")
 
 
 def example_signal_monitoring():
@@ -261,7 +259,7 @@ def example_signal_monitoring():
     print("SIGNAL MONITORING - NEWSLETTER INTEGRATION EXAMPLE")
     print("=" * 80)
 
-    analyzer = NewsletterAnalyzer()
+    NewsletterAnalyzer()
 
     # Check signal freshness
     for ticker in ["BTC", "ETH"]:
@@ -275,12 +273,8 @@ def example_signal_monitoring():
                 signal = get_eth_signal(max_age_days=max_age)
 
             if signal:
-                age = (
-                    datetime.now(signal.source_date.tzinfo) - signal.source_date
-                ).days
-                print(
-                    f"  ✅ Signal found (age: {age} days, confidence: {signal.confidence:.2f})"
-                )
+                age = (datetime.now(signal.source_date.tzinfo) - signal.source_date).days
+                print(f"  ✅ Signal found (age: {age} days, confidence: {signal.confidence:.2f})")
                 break
             elif max_age == 14:
                 print(f"  ❌ No signal found (checked last {max_age} days)")

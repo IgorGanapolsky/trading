@@ -60,9 +60,7 @@ def test_nov3_scenario():
         print(f"  Multiplier: {order['amount'] / order['expected']:.1f}x")
 
         try:
-            trader.validate_order_amount(
-                order["symbol"], order["amount"], order["tier"]
-            )
+            trader.validate_order_amount(order["symbol"], order["amount"], order["tier"])
         except OrderExecutionError:
             print("  ✅ VALIDATION SUCCESS - Order was REJECTED (good!)")
             total_rejected += order["amount"]

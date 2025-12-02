@@ -7,7 +7,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +22,7 @@ class OrchestratorTelemetry:
         self.session_id = datetime.utcnow().strftime("%Y%m%dT%H%M%S")
         self.run_id = os.getenv("GITHUB_RUN_ID") or os.getenv("RUN_ID")
 
-    def record(
-        self, event_type: str, ticker: str, status: str, payload: Dict[str, Any]
-    ) -> None:
+    def record(self, event_type: str, ticker: str, status: str, payload: dict[str, Any]) -> None:
         entry = {
             "ts": datetime.utcnow().isoformat(),
             "session": self.session_id,
@@ -40,17 +38,13 @@ class OrchestratorTelemetry:
         except Exception as exc:  # pragma: no cover - best effort logging
             logger.warning("Telemetry write failed: %s", exc)
 
-    def gate_pass(self, gate: str, ticker: str, payload: Dict[str, Any]) -> None:
-        self.record(
-            event_type=f"gate.{gate}", ticker=ticker, status="pass", payload=payload
-        )
+    def gate_pass(self, gate: str, ticker: str, payload: dict[str, Any]) -> None:
+        self.record(event_type=f"gate.{gate}", ticker=ticker, status="pass", payload=payload)
 
-    def gate_reject(self, gate: str, ticker: str, payload: Dict[str, Any]) -> None:
-        self.record(
-            event_type=f"gate.{gate}", ticker=ticker, status="reject", payload=payload
-        )
+    def gate_reject(self, gate: str, ticker: str, payload: dict[str, Any]) -> None:
+        self.record(event_type=f"gate.{gate}", ticker=ticker, status="reject", payload=payload)
 
-    def order_event(self, ticker: str, payload: Dict[str, Any]) -> None:
+    def order_event(self, ticker: str, payload: dict[str, Any]) -> None:
         self.record(
             event_type="execution.order",
             ticker=ticker,

@@ -5,15 +5,13 @@ This module provides easy integration of the LLM Council system into trading wor
 The council provides consensus-based decisions through peer review and chairman synthesis.
 """
 
-import logging
 import json
-from typing import Dict, Any, Optional, List
-from dataclasses import asdict
+import logging
+from typing import Any, Optional
 
 from src.core.multi_llm_analysis import (
     LLMCouncilAnalyzer,
     LLMModel,
-    CouncilResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -33,7 +31,7 @@ class TradingCouncil:
     def __init__(
         self,
         api_key: Optional[str] = None,
-        council_models: Optional[List[LLMModel]] = None,
+        council_models: Optional[list[LLMModel]] = None,
         chairman_model: Optional[LLMModel] = None,
         enabled: bool = True,
     ):
@@ -67,9 +65,9 @@ class TradingCouncil:
         self,
         symbol: str,
         action: str,
-        market_data: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        market_data: dict[str, Any],
+        context: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
         """
         Validate a trading decision using LLM Council consensus.
 
@@ -114,12 +112,12 @@ Market Data:
                     query += f"""
 
 **Intelligent Investor Analysis (Graham-Buffett Principles):**
-- Safety Rating: {ii_analysis.get('safety_rating', 'N/A')}
-- Defensive Investor Score: {ii_analysis.get('defensive_investor_score', 'N/A')}/100
-- Value Score: {ii_analysis.get('value_score', 'N/A')}/100
-- Margin of Safety: {ii_analysis.get('margin_of_safety_pct', 0)*100 if ii_analysis.get('margin_of_safety_pct') else 0:.1f}%
-- Mr. Market Sentiment: {ii_analysis.get('mr_market_sentiment', 'N/A')}
-- Quality Score: {ii_analysis.get('quality_score', 'N/A')}/100
+- Safety Rating: {ii_analysis.get("safety_rating", "N/A")}
+- Defensive Investor Score: {ii_analysis.get("defensive_investor_score", "N/A")}/100
+- Value Score: {ii_analysis.get("value_score", "N/A")}/100
+- Margin of Safety: {ii_analysis.get("margin_of_safety_pct", 0) * 100 if ii_analysis.get("margin_of_safety_pct") else 0:.1f}%
+- Mr. Market Sentiment: {ii_analysis.get("mr_market_sentiment", "N/A")}
+- Quality Score: {ii_analysis.get("quality_score", "N/A")}/100
 """
                     if ii_analysis.get("reasons"):
                         query += f"\nReasons: {', '.join(ii_analysis['reasons'])}\n"
@@ -204,9 +202,9 @@ Be conservative - reject trades with ANY of:
     async def get_trading_recommendation(
         self,
         symbol: str,
-        market_data: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        market_data: dict[str, Any],
+        context: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
         """
         Get trading recommendation from LLM Council.
 
@@ -259,9 +257,9 @@ Be conservative - reject trades with ANY of:
         self,
         symbol: str,
         position_size: float,
-        market_data: Dict[str, Any],
-        portfolio_context: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        market_data: dict[str, Any],
+        portfolio_context: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
         """
         Assess risk of a proposed position using LLM Council.
 
@@ -292,9 +290,7 @@ Market Data:
 """
 
         if portfolio_context:
-            query += (
-                f"\n\nPortfolio Context:\n{json.dumps(portfolio_context, indent=2)}"
-            )
+            query += f"\n\nPortfolio Context:\n{json.dumps(portfolio_context, indent=2)}"
 
         query += """
 Provide:
@@ -344,9 +340,7 @@ Be conservative - reject positions that:
             else:
                 risk_level = "MEDIUM"
 
-            approved = (
-                "approve" in final_answer_lower and "reject" not in final_answer_lower
-            )
+            approved = "approve" in final_answer_lower and "reject" not in final_answer_lower
 
             return {
                 "risk_level": risk_level,

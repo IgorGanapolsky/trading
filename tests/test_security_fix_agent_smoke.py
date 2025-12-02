@@ -12,7 +12,6 @@ Quick validation that the agent can:
 Run with: python3 tests/test_security_fix_agent_smoke.py
 """
 
-
 import sys
 import tempfile
 from pathlib import Path
@@ -22,10 +21,10 @@ PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.autonomous_security_fix_agent import (
-    parse_vulnerable_range,
-    find_safe_version,
-    update_requirements_file,
     fetch_pypi_latest,
+    find_safe_version,
+    parse_vulnerable_range,
+    update_requirements_file,
 )
 
 
@@ -97,9 +96,9 @@ def test_update_requirements_file():
 
         # Verify update
         content = temp_file.read_text()
-        assert (
-            "black==24.3.0" in content or "black>=24.3.0" in content
-        ), f"Black version not updated correctly. Content: {content}"
+        assert "black==24.3.0" in content or "black>=24.3.0" in content, (
+            f"Black version not updated correctly. Content: {content}"
+        )
         assert "pytest==7.4.0" in content, "Other packages should remain unchanged"
         print("   ✅ Requirements file updated correctly")
 
@@ -115,8 +114,8 @@ def test_imports():
 
     try:
         from scripts.autonomous_security_fix_agent import (
-            SecurityAlert,
             FixResult,
+            SecurityAlert,
             fetch_dependabot_alerts,
             fix_security_alert,
         )

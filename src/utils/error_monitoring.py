@@ -5,8 +5,8 @@ Provides centralized error tracking for the trading system.
 Integrates with GitHub Actions, workflow failures, and runtime errors.
 """
 
-import os
 import logging
+import os
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -79,12 +79,8 @@ def _add_trading_context(event, hint):
 
         # Add GitHub Actions context if available
         if os.getenv("GITHUB_ACTIONS"):
-            event.setdefault("tags", {})["workflow"] = os.getenv(
-                "GITHUB_WORKFLOW", "unknown"
-            )
-            event.setdefault("tags", {})["run_id"] = os.getenv(
-                "GITHUB_RUN_ID", "unknown"
-            )
+            event.setdefault("tags", {})["workflow"] = os.getenv("GITHUB_WORKFLOW", "unknown")
+            event.setdefault("tags", {})["run_id"] = os.getenv("GITHUB_RUN_ID", "unknown")
             event.setdefault("contexts", {})["github"] = {
                 "workflow": os.getenv("GITHUB_WORKFLOW"),
                 "run_id": os.getenv("GITHUB_RUN_ID"),
@@ -145,9 +141,7 @@ def capture_workflow_failure(reason: str, context: Optional[dict] = None):
         logger.debug(f"Failed to capture workflow failure in Sentry: {e}")
 
 
-def capture_api_failure(
-    api_name: str, error: Exception, context: Optional[dict] = None
-):
+def capture_api_failure(api_name: str, error: Exception, context: Optional[dict] = None):
     """Capture API failure in Sentry."""
     if not _sentry_initialized:
         return

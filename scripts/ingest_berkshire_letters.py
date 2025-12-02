@@ -17,7 +17,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
 sys.path.append(".")
 
@@ -36,9 +36,7 @@ CHUNK_SIZE = 2000  # ~400 words per chunk
 CHUNK_OVERLAP = 200  # Overlap between chunks for context
 
 
-def chunk_text(
-    text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP
-) -> List[str]:
+def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
     """
     Split text into overlapping chunks for better retrieval.
 
@@ -100,7 +98,7 @@ def parse_pdf(file_path: Path) -> str:
         return ""
 
 
-def ingest_berkshire_letters(force_reparse: bool = False) -> Dict[str, Any]:
+def ingest_berkshire_letters(force_reparse: bool = False) -> dict[str, Any]:
     """
     Ingest all Berkshire letters into RAG vector store.
 
@@ -124,9 +122,7 @@ def ingest_berkshire_letters(force_reparse: bool = False) -> Dict[str, Any]:
     logger.info(f"Found {len(pdf_files)} PDF files")
 
     if not pdf_files:
-        logger.warning(
-            "No PDF files found. Run collector.download_all_letters() first."
-        )
+        logger.warning("No PDF files found. Run collector.download_all_letters() first.")
         return {"status": "error", "message": "No PDF files found"}
 
     # Parse PDFs if not already parsed or if force_reparse
@@ -166,7 +162,7 @@ def ingest_berkshire_letters(force_reparse: bool = False) -> Dict[str, Any]:
         year = parsed_file.stem
         try:
             # Read parsed text
-            with open(parsed_file, "r", encoding="utf-8") as f:
+            with open(parsed_file, encoding="utf-8") as f:
                 text = f.read()
 
             if not text.strip():

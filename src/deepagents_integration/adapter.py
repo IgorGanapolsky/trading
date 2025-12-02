@@ -1,4 +1,3 @@
-
 """
 Adapter to integrate deepagents with existing agent framework.
 
@@ -9,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from src.agent_framework import AgentResult, RunContext, TradingAgent
 
@@ -28,7 +27,7 @@ class DeepAgentsAdapter(TradingAgent):
         self,
         agent_name: str,
         deepagent: Any,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
     ) -> None:
         """
         Initialize adapter.
@@ -66,12 +65,10 @@ class DeepAgentsAdapter(TradingAgent):
                 payload={
                     "query": query,
                     "response": result,
-                    "messages": (
-                        result.get("messages", []) if isinstance(result, dict) else []
-                    ),
+                    "messages": (result.get("messages", []) if isinstance(result, dict) else []),
                 },
             )
-        except Exception:
+        except Exception as e:
             logger.exception(f"DeepAgentsAdapter {self.agent_name} failed")
             return AgentResult(
                 name=self.agent_name,
@@ -95,14 +92,14 @@ class DeepAgentsAdapter(TradingAgent):
         symbol = symbols[0] if symbols else "SPY"
         return f"Analyze {symbol} and provide trading recommendation"
 
-    async def _run_deepagent(self, query: str) -> Dict[str, Any]:
+    async def _run_deepagent(self, query: str) -> dict[str, Any]:
         """Run the deepagent with a query."""
         try:
             result = await self.deepagent.ainvoke(
                 {"messages": [{"role": "user", "content": query}]}
             )
             return result
-        except Exception as e:
+        except Exception:
             logger.exception("Error running deepagent")
             raise
 

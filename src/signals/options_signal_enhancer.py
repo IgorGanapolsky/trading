@@ -18,16 +18,16 @@ Date: December 2, 2025
 """
 
 import logging
-from typing import Dict, Any, Optional, List
+from dataclasses import dataclass
 from datetime import datetime
-from dataclasses import dataclass, asdict
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
 # Import dependencies
 try:
-    from src.rag.options_book_retriever import get_options_book_retriever
     from src.rag.collectors.mcmillan_options_collector import McMillanOptionsKnowledgeBase
+    from src.rag.options_book_retriever import get_options_book_retriever
 except ImportError as e:
     logger.warning(f"Optional import failed: {e}")
 
@@ -47,6 +47,7 @@ class EnhancedSignal:
     Contains the original sentiment signal plus McMillan's expected move
     validation and recommended action.
     """
+
     # Original signal
     ticker: str
     original_signal: str  # 'overbought', 'oversold', 'bullish', 'bearish', 'neutral'
@@ -78,7 +79,7 @@ class EnhancedSignal:
 
     # Book Reference
     mcmillan_guidance: str
-    book_references: List[str]
+    book_references: list[str]
 
     # Metadata
     timestamp: str
@@ -116,28 +117,34 @@ class OptionsSignalEnhancer:
         "oversold": "bullish",
         "bullish": "bullish",
         "bearish": "bearish",
-        "neutral": "neutral"
+        "neutral": "neutral",
     }
 
     # IV-based strategy mappings
     HIGH_IV_STRATEGIES = {
         "bullish": ["covered_call", "cash_secured_put", "bull_put_spread"],
         "bearish": ["bear_call_spread", "naked_put"],  # Careful with naked
-        "neutral": ["iron_condor", "strangle_short", "butterfly"]
+        "neutral": ["iron_condor", "strangle_short", "butterfly"],
     }
 
     LOW_IV_STRATEGIES = {
         "bullish": ["long_call", "call_debit_spread", "long_straddle"],
         "bearish": ["long_put", "put_debit_spread"],
-        "neutral": ["calendar_spread", "long_butterfly"]
+        "neutral": ["calendar_spread", "long_butterfly"],
     }
 
     # CRITICAL: IV Rank minimum thresholds for premium selling strategies
     # McMillan Rule: NEVER sell premium when IV is cheap (IV Rank < 20)
     CREDIT_SPREAD_MIN_IV_RANK = 20  # Hard floor for credit strategies
     CREDIT_STRATEGIES = {
-        "iron_condor", "credit_spread", "bull_put_spread", "bear_call_spread",
-        "covered_call", "cash_secured_put", "strangle_short", "naked_put"
+        "iron_condor",
+        "credit_spread",
+        "bull_put_spread",
+        "bear_call_spread",
+        "covered_call",
+        "cash_secured_put",
+        "strangle_short",
+        "naked_put",
     }
 
     def __init__(self, portfolio_value: float = 10000.0):
@@ -178,7 +185,7 @@ class OptionsSignalEnhancer:
         current_price: Optional[float] = None,
         current_iv: Optional[float] = None,
         iv_rank: Optional[float] = None,
-        dte: int = 30
+        dte: int = 30,
     ) -> EnhancedSignal:
         """
         Enhance a sentiment signal with IV/expected move cross-check.
@@ -206,10 +213,7 @@ class OptionsSignalEnhancer:
 
         # Step 1: Get IV metrics
         iv_metrics = self._get_iv_metrics(
-            ticker=ticker,
-            current_price=current_price,
-            current_iv=current_iv,
-            iv_rank=iv_rank
+            ticker=ticker, current_price=current_price, current_iv=current_iv, iv_rank=iv_rank
         )
 
         # Step 2: Calculate expected move (McMillan's formula)
@@ -217,7 +221,7 @@ class OptionsSignalEnhancer:
             stock_price=iv_metrics["current_price"],
             implied_volatility=iv_metrics["current_iv"],
             days_to_expiration=dte,
-            confidence_level=1.0  # 1 std dev
+            confidence_level=1.0,  # 1 std dev
         )
 
         # Step 3: Cross-check sentiment with expected move
@@ -226,27 +230,26 @@ class OptionsSignalEnhancer:
             sentiment_score=sentiment_score,
             sentiment_confidence=sentiment_confidence,
             expected_move=expected_move,
-            iv_metrics=iv_metrics
+            iv_metrics=iv_metrics,
         )
 
         # Step 4: Get strategy recommendation
         strategy_rec = self._get_strategy_recommendation(
             direction=self.SIGNAL_DIRECTIONS.get(sentiment_signal, "neutral"),
             iv_rank=iv_metrics["iv_rank"],
-            alignment=alignment
+            alignment=alignment,
         )
 
         # Step 5: Calculate position sizing
         position_sizing = self._calculate_position_size(
             strategy=strategy_rec["strategy"],
             iv_rank=iv_metrics["iv_rank"],
-            confidence=sentiment_confidence
+            confidence=sentiment_confidence,
         )
 
         # Step 6: Get book references
         book_refs = self._get_book_references(
-            sentiment_signal=sentiment_signal,
-            strategy=strategy_rec["strategy"]
+            sentiment_signal=sentiment_signal, strategy=strategy_rec["strategy"]
         )
 
         # Build enhanced signal
@@ -273,7 +276,7 @@ class OptionsSignalEnhancer:
             mcmillan_guidance=alignment["mcmillan_guidance"],
             book_references=book_refs,
             timestamp=datetime.now().isoformat(),
-            current_price=iv_metrics["current_price"]
+            current_price=iv_metrics["current_price"],
         )
 
         logger.info(
@@ -288,8 +291,8 @@ class OptionsSignalEnhancer:
         ticker: str,
         current_price: Optional[float],
         current_iv: Optional[float],
-        iv_rank: Optional[float]
-    ) -> Dict[str, float]:
+        iv_rank: Optional[float],
+    ) -> dict[str, float]:
         """Get IV metrics, fetching from analyzer if needed."""
 
         # Try to get live data if analyzer available
@@ -301,7 +304,7 @@ class OptionsSignalEnhancer:
                         "current_price": metrics.current_price,
                         "current_iv": metrics.current_iv,
                         "iv_rank": metrics.iv_rank,
-                        "iv_percentile": metrics.iv_percentile
+                        "iv_percentile": metrics.iv_percentile,
                     }
             except Exception as e:
                 logger.warning(f"Failed to fetch IV metrics: {e}")
@@ -310,8 +313,8 @@ class OptionsSignalEnhancer:
         return {
             "current_price": current_price or 100.0,
             "current_iv": current_iv or 0.25,  # Default 25% IV
-            "iv_rank": iv_rank or 50.0,        # Default middle range
-            "iv_percentile": iv_rank or 50.0
+            "iv_rank": iv_rank or 50.0,  # Default middle range
+            "iv_percentile": iv_rank or 50.0,
         }
 
     def _cross_check_alignment(
@@ -319,9 +322,9 @@ class OptionsSignalEnhancer:
         sentiment_signal: str,
         sentiment_score: float,
         sentiment_confidence: float,
-        expected_move: Dict,
-        iv_metrics: Dict
-    ) -> Dict[str, Any]:
+        expected_move: dict,
+        iv_metrics: dict,
+    ) -> dict[str, Any]:
         """
         Cross-check if sentiment signal aligns with expected move.
 
@@ -409,8 +412,7 @@ class OptionsSignalEnhancer:
 
         # Get McMillan's IV guidance
         iv_rec = self.mcmillan_kb.get_iv_recommendation(
-            iv_rank=iv_rank,
-            iv_percentile=iv_metrics.get("iv_percentile", iv_rank)
+            iv_rank=iv_rank, iv_percentile=iv_metrics.get("iv_percentile", iv_rank)
         )
 
         # CRITICAL: Add IV Rank < 20 warning for credit strategies
@@ -436,15 +438,12 @@ class OptionsSignalEnhancer:
             "status": status,
             "reason": reason,
             "mcmillan_guidance": mcmillan_guidance,
-            "iv_recommendation": iv_rec["recommendation"]
+            "iv_recommendation": iv_rec["recommendation"],
         }
 
     def _get_strategy_recommendation(
-        self,
-        direction: str,
-        iv_rank: float,
-        alignment: Dict
-    ) -> Dict[str, Any]:
+        self, direction: str, iv_rank: float, alignment: dict
+    ) -> dict[str, Any]:
         """Get recommended strategy based on direction and IV."""
 
         # CRITICAL IV RANK FILTER: Reject credit spreads when IV < 20
@@ -501,15 +500,9 @@ class OptionsSignalEnhancer:
             # Can be more aggressive
             strategy = strategies[0]
             if direction == "bullish":
-                if credit_blocked or not is_high_iv:
-                    action = "BUY_CALL"
-                else:
-                    action = "SELL_PUT"
+                action = "BUY_CALL" if credit_blocked or not is_high_iv else "SELL_PUT"
             elif direction == "bearish":
-                if credit_blocked or not is_high_iv:
-                    action = "BUY_PUT"
-                else:
-                    action = "SELL_CALL"
+                action = "BUY_PUT" if credit_blocked or not is_high_iv else "SELL_CALL"
             else:
                 if credit_blocked:
                     action = "BUY_BUTTERFLY"  # Debit neutral strategy
@@ -523,15 +516,12 @@ class OptionsSignalEnhancer:
             "delta": delta,
             "is_high_iv": is_high_iv,
             "iv_rank_blocked_credit": credit_blocked,
-            "iv_rank": iv_rank
+            "iv_rank": iv_rank,
         }
 
     def _calculate_position_size(
-        self,
-        strategy: str,
-        iv_rank: float,
-        confidence: float
-    ) -> Dict[str, float]:
+        self, strategy: str, iv_rank: float, confidence: float
+    ) -> dict[str, float]:
         """Calculate position size based on strategy and confidence."""
 
         # Base position size: 2% of portfolio
@@ -548,7 +538,7 @@ class OptionsSignalEnhancer:
             "wait": 0.0,
             "iron_condor": 1.2,  # Defined risk, can size up
             "covered_call": 1.0,
-            "long_call": 0.8,   # Single leg, more risky
+            "long_call": 0.8,  # Single leg, more risky
             "long_put": 0.8,
             "call_debit_spread": 1.0,
             "put_debit_spread": 1.0,
@@ -567,15 +557,11 @@ class OptionsSignalEnhancer:
             "adjustments": {
                 "confidence": confidence_multiplier,
                 "iv": iv_multiplier,
-                "strategy": strategy_mult
-            }
+                "strategy": strategy_mult,
+            },
         }
 
-    def _get_book_references(
-        self,
-        sentiment_signal: str,
-        strategy: str
-    ) -> List[str]:
+    def _get_book_references(self, sentiment_signal: str, strategy: str) -> list[str]:
         """Get relevant book references for the trade."""
 
         if not self.book_retriever:
@@ -583,8 +569,7 @@ class OptionsSignalEnhancer:
 
         try:
             search_result = self.book_retriever.search_options_knowledge(
-                query=f"{strategy} {sentiment_signal}",
-                top_k=2
+                query=f"{strategy} {sentiment_signal}", top_k=2
             )
             refs = []
             for result in search_result.get("book_results", []):
@@ -598,10 +583,7 @@ class OptionsSignalEnhancer:
             logger.warning(f"Failed to get book references: {e}")
             return ["McMillan: Options as a Strategic Investment"]
 
-    def batch_enhance(
-        self,
-        signals: List[Dict[str, Any]]
-    ) -> List[EnhancedSignal]:
+    def batch_enhance(self, signals: list[dict[str, Any]]) -> list[EnhancedSignal]:
         """
         Batch enhance multiple signals.
 
@@ -622,7 +604,7 @@ class OptionsSignalEnhancer:
                     sentiment_confidence=signal.get("confidence", 0.5),
                     current_price=signal.get("price"),
                     current_iv=signal.get("iv"),
-                    iv_rank=signal.get("iv_rank")
+                    iv_rank=signal.get("iv_rank"),
                 )
                 enhanced_signals.append(enhanced)
             except Exception as e:
@@ -652,7 +634,7 @@ if __name__ == "__main__":
         current_price=450.0,
         current_iv=0.18,
         iv_rank=35.0,
-        dte=7
+        dte=7,
     )
 
     print(f"Ticker: {signal.ticker}")
@@ -676,7 +658,7 @@ if __name__ == "__main__":
         current_price=140.0,
         current_iv=0.45,
         iv_rank=75.0,
-        dte=30
+        dte=30,
     )
 
     print(f"Ticker: {signal2.ticker}")

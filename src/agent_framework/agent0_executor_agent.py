@@ -13,13 +13,13 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from uuid import uuid4
 
-from .agent0_curriculum_agent import TradingTask, TaskDifficulty, TaskCategory
+from .agent0_curriculum_agent import TaskCategory, TaskDifficulty, TradingTask
 
 logger = logging.getLogger(__name__)
 
@@ -31,23 +31,23 @@ class ExecutionResult:
     execution_id: str = field(default_factory=lambda: str(uuid4()))
     task_id: str = ""
     started_at: str = field(default_factory=lambda: datetime.now().isoformat())
-    finished_at: Optional[str] = None
+    finished_at: str | None = None
 
     # Execution details
     success: bool = False
     success_score: float = 0.0  # 0-1 scale
-    error: Optional[str] = None
+    error: str | None = None
 
     # Results
-    outputs: Dict[str, Any] = field(default_factory=dict)
-    tool_calls: List[Dict[str, Any]] = field(default_factory=list)
-    reasoning_steps: List[str] = field(default_factory=list)
+    outputs: dict[str, Any] = field(default_factory=dict)
+    tool_calls: list[dict[str, Any]] = field(default_factory=list)
+    reasoning_steps: list[str] = field(default_factory=list)
 
     # Evaluation
-    evaluation_scores: Dict[str, float] = field(default_factory=dict)
+    evaluation_scores: dict[str, float] = field(default_factory=dict)
     evaluation_feedback: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return asdict(self)
 
@@ -63,9 +63,7 @@ class ExecutorAgent:
     4. Enable curriculum evolution through performance feedback
     """
 
-    def __init__(
-        self, storage_dir: Optional[Path] = None, tools: Optional[Dict[str, Any]] = None
-    ):
+    def __init__(self, storage_dir: Path | None = None, tools: dict[str, Any] | None = None):
         """
         Initialize Executor Agent
 
@@ -81,7 +79,7 @@ class ExecutorAgent:
         self._initialize_tools()
 
         # Execution tracking
-        self.execution_history: List[ExecutionResult] = []
+        self.execution_history: list[ExecutionResult] = []
 
         logger.info(f"✅ Executor Agent initialized with {len(self.tools)} tools")
 
@@ -97,9 +95,7 @@ class ExecutorAgent:
         """
         logger.info(f"🎯 Executing task: {task.title} ({task.difficulty.value})")
 
-        result = ExecutionResult(
-            task_id=task.task_id, started_at=datetime.now().isoformat()
-        )
+        result = ExecutionResult(task_id=task.task_id, started_at=datetime.now().isoformat())
 
         try:
             # Execute based on task category
@@ -184,9 +180,7 @@ class ExecutorAgent:
                         indicators[symbol] = ind
 
                 result.outputs["indicators"] = indicators
-                result.tool_calls.append(
-                    {"tool": "analyze_technical_indicators", "success": True}
-                )
+                result.tool_calls.append({"tool": "analyze_technical_indicators", "success": True})
             except Exception as e:
                 logger.warning(f"Failed to analyze indicators: {e}")
                 result.tool_calls.append(
@@ -199,9 +193,7 @@ class ExecutorAgent:
 
         # Determine market regime
         result.reasoning_steps.append("Analyzing market regime")
-        regime = self._determine_regime(
-            market_data_results, result.outputs.get("indicators", {})
-        )
+        regime = self._determine_regime(market_data_results, result.outputs.get("indicators", {}))
         result.outputs["market_regime"] = regime
 
         # For advanced tasks, add more sophisticated analysis
@@ -212,8 +204,8 @@ class ExecutorAgent:
         ]:
             # Multi-timeframe analysis
             if task.difficulty != TaskDifficulty.BEGINNER:
-                result.outputs["multi_timeframe_analysis"] = (
-                    self._multi_timeframe_analysis(task.symbols)
+                result.outputs["multi_timeframe_analysis"] = self._multi_timeframe_analysis(
+                    task.symbols
                 )
 
             # Sentiment integration
@@ -238,9 +230,7 @@ class ExecutorAgent:
         result.reasoning_steps.append("Starting signal generation")
 
         # First, get market analysis
-        market_result = self._execute_market_analysis(
-            task, ExecutionResult(task_id=task.task_id)
-        )
+        market_result = self._execute_market_analysis(task, ExecutionResult(task_id=task.task_id))
 
         # Generate signals based on analysis
         signals = {}
@@ -280,20 +270,14 @@ class ExecutorAgent:
         for symbol in task.symbols:
             if "get_market_data" in self.tools:
                 try:
-                    data = self.tools["get_market_data"](
-                        symbol=symbol, lookback_days=30
-                    )
+                    data = self.tools["get_market_data"](symbol=symbol, lookback_days=30)
                     volatility = self._calculate_volatility(data)
 
                     # Calculate position size based on difficulty
                     if task.difficulty == TaskDifficulty.BEGINNER:
-                        position_size = self._basic_position_size(
-                            account_info, volatility
-                        )
+                        position_size = self._basic_position_size(account_info, volatility)
                     elif task.difficulty == TaskDifficulty.INTERMEDIATE:
-                        position_size = self._volatility_adjusted_size(
-                            account_info, volatility
-                        )
+                        position_size = self._volatility_adjusted_size(account_info, volatility)
                     else:
                         position_size = self._advanced_position_size(
                             account_info, volatility, task.symbols
@@ -301,9 +285,7 @@ class ExecutorAgent:
 
                     position_sizes[symbol] = position_size
                 except Exception as e:
-                    logger.warning(
-                        f"Failed to calculate position size for {symbol}: {e}"
-                    )
+                    logger.warning(f"Failed to calculate position size for {symbol}: {e}")
 
         result.outputs["position_sizes"] = position_sizes
         result.outputs["account_info"] = account_info
@@ -322,9 +304,7 @@ class ExecutorAgent:
         for symbol in task.symbols:
             if "get_market_data" in self.tools:
                 try:
-                    data = self.tools["get_market_data"](
-                        symbol=symbol, lookback_days=60
-                    )
+                    data = self.tools["get_market_data"](symbol=symbol, lookback_days=60)
                     market_data[symbol] = data
                 except Exception as e:
                     logger.warning(f"Failed to get data for {symbol}: {e}")
@@ -333,9 +313,7 @@ class ExecutorAgent:
         correlations = self._calculate_correlations(market_data)
 
         # Optimize portfolio
-        optimization = self._optimize_portfolio(
-            market_data, correlations, task.constraints
-        )
+        optimization = self._optimize_portfolio(market_data, correlations, task.constraints)
 
         result.outputs["correlations"] = correlations
         result.outputs["optimization"] = optimization
@@ -360,16 +338,12 @@ class ExecutorAgent:
 
         return result
 
-    def _execute_multi_asset(
-        self, task: TradingTask, result: ExecutionResult
-    ) -> ExecutionResult:
+    def _execute_multi_asset(self, task: TradingTask, result: ExecutionResult) -> ExecutionResult:
         """Execute multi-asset task"""
         result.reasoning_steps.append("Starting multi-asset analysis")
 
         # Combine market analysis for multiple assets
-        market_result = self._execute_market_analysis(
-            task, ExecutionResult(task_id=task.task_id)
-        )
+        market_result = self._execute_market_analysis(task, ExecutionResult(task_id=task.task_id))
 
         # Cross-asset analysis
         cross_asset = self._cross_asset_analysis(task.symbols, market_result.outputs)
@@ -391,9 +365,7 @@ class ExecutorAgent:
         for symbol in task.symbols:
             if "get_market_data" in self.tools:
                 try:
-                    data = self.tools["get_market_data"](
-                        symbol=symbol, lookback_days=90
-                    )
+                    data = self.tools["get_market_data"](symbol=symbol, lookback_days=90)
                     market_data[symbol] = data
                 except Exception as e:
                     logger.warning(f"Failed to get data for {symbol}: {e}")
@@ -409,9 +381,7 @@ class ExecutorAgent:
             TaskDifficulty.EXPERT,
             TaskDifficulty.FRONTIER,
         ]:
-            transition_probability = self._predict_regime_transition(
-                market_data, regime
-            )
+            transition_probability = self._predict_regime_transition(market_data, regime)
             result.outputs["transition_probability"] = transition_probability
 
         result.success = True
@@ -424,9 +394,7 @@ class ExecutorAgent:
         result.reasoning_steps.append("Starting sentiment integration")
 
         # Get market analysis
-        market_result = self._execute_market_analysis(
-            task, ExecutionResult(task_id=task.task_id)
-        )
+        market_result = self._execute_market_analysis(task, ExecutionResult(task_id=task.task_id))
 
         # Get sentiment
         sentiment_results = {}
@@ -439,9 +407,7 @@ class ExecutorAgent:
                     logger.warning(f"Failed to get sentiment for {symbol}: {e}")
 
         # Integrate sentiment with market analysis
-        integrated_analysis = self._integrate_sentiment(
-            market_result.outputs, sentiment_results
-        )
+        integrated_analysis = self._integrate_sentiment(market_result.outputs, sentiment_results)
 
         result.outputs.update(market_result.outputs)
         result.outputs["sentiment"] = sentiment_results
@@ -450,9 +416,7 @@ class ExecutorAgent:
 
         return result
 
-    def _evaluate_execution(
-        self, task: TradingTask, result: ExecutionResult
-    ) -> ExecutionResult:
+    def _evaluate_execution(self, task: TradingTask, result: ExecutionResult) -> ExecutionResult:
         """Evaluate execution against task criteria"""
         if not result.success:
             result.success_score = 0.0
@@ -470,9 +434,7 @@ class ExecutorAgent:
 
         # Calculate weighted success score
         if total_weight > 0:
-            weighted_score = (
-                sum(scores[c] * criteria[c] for c in criteria.keys()) / total_weight
-            )
+            weighted_score = sum(scores[c] * criteria[c] for c in criteria) / total_weight
         else:
             weighted_score = 0.5  # Default
 
@@ -513,11 +475,7 @@ class ExecutorAgent:
 
         elif criterion == "position_size_accuracy":
             # Check if position sizes were calculated
-            return (
-                1.0
-                if "position_sizes" in outputs and outputs["position_sizes"]
-                else 0.0
-            )
+            return 1.0 if "position_sizes" in outputs and outputs["position_sizes"] else 0.0
 
         elif criterion == "volatility_estimation":
             # Check if volatility was considered
@@ -533,9 +491,7 @@ class ExecutorAgent:
 
         elif criterion == "data_integration":
             # Check if multiple data sources were used
-            data_sources = sum(
-                1 for k in outputs.keys() if k in ["indicators", "sentiment", "regime"]
-            )
+            data_sources = sum(1 for k in outputs if k in ["indicators", "sentiment", "regime"])
             return min(1.0, data_sources / 2.0)
 
         else:
@@ -543,7 +499,7 @@ class ExecutorAgent:
             return 0.7 if outputs else 0.0
 
     def _generate_feedback(
-        self, task: TradingTask, result: ExecutionResult, scores: Dict[str, float]
+        self, task: TradingTask, result: ExecutionResult, scores: dict[str, float]
     ) -> str:
         """Generate evaluation feedback"""
         feedback_parts = []
@@ -566,7 +522,7 @@ class ExecutorAgent:
 
     # Helper methods for task execution
 
-    def _determine_regime(self, market_data: Dict, indicators: Dict) -> str:
+    def _determine_regime(self, market_data: dict, indicators: dict) -> str:
         """Determine market regime"""
         # Simple regime detection based on indicators
         if not indicators:
@@ -576,7 +532,7 @@ class ExecutorAgent:
         bullish_signals = 0
         bearish_signals = 0
 
-        for symbol, ind in indicators.items():
+        for _symbol, ind in indicators.items():
             if isinstance(ind, dict):
                 rsi = ind.get("rsi", 50)
                 macd_hist = ind.get("macd_histogram", 0)
@@ -593,21 +549,17 @@ class ExecutorAgent:
         else:
             return "RANGE_BOUND"
 
-    def _multi_timeframe_analysis(self, symbols: List[str]) -> Dict[str, Any]:
+    def _multi_timeframe_analysis(self, symbols: list[str]) -> dict[str, Any]:
         """Perform multi-timeframe analysis"""
         return {"daily": "analyzed", "hourly": "analyzed", "15min": "analyzed"}
 
     def _generate_signal(
-        self, symbol: str, market_data: Dict, regime: str, difficulty: TaskDifficulty
-    ) -> Dict[str, Any]:
+        self, symbol: str, market_data: dict, regime: str, difficulty: TaskDifficulty
+    ) -> dict[str, Any]:
         """Generate trading signal"""
         return {
             "symbol": symbol,
-            "action": (
-                "BUY"
-                if regime == "BULLISH"
-                else "SELL" if regime == "BEARISH" else "HOLD"
-            ),
+            "action": ("BUY" if regime == "BULLISH" else "SELL" if regime == "BEARISH" else "HOLD"),
             "confidence": 0.7,
             "entry": 100.0,
             "stop_loss": 95.0,
@@ -619,9 +571,7 @@ class ExecutorAgent:
         # Placeholder - would calculate actual volatility
         return 0.02  # 2% volatility
 
-    def _basic_position_size(
-        self, account_info: Dict, volatility: float
-    ) -> Dict[str, Any]:
+    def _basic_position_size(self, account_info: dict, volatility: float) -> dict[str, Any]:
         """Calculate basic position size"""
         account_value = account_info.get("equity", 10000)
         risk_per_trade = account_value * 0.01  # 1% risk
@@ -633,9 +583,7 @@ class ExecutorAgent:
             "method": "basic",
         }
 
-    def _volatility_adjusted_size(
-        self, account_info: Dict, volatility: float
-    ) -> Dict[str, Any]:
+    def _volatility_adjusted_size(self, account_info: dict, volatility: float) -> dict[str, Any]:
         """Calculate volatility-adjusted position size"""
         base_size = self._basic_position_size(account_info, volatility)
         # Adjust for volatility
@@ -645,8 +593,8 @@ class ExecutorAgent:
         return base_size
 
     def _advanced_position_size(
-        self, account_info: Dict, volatility: float, symbols: List[str]
-    ) -> Dict[str, Any]:
+        self, account_info: dict, volatility: float, symbols: list[str]
+    ) -> dict[str, Any]:
         """Calculate advanced position size with portfolio considerations"""
         base_size = self._volatility_adjusted_size(account_info, volatility)
         # Adjust for portfolio concentration
@@ -655,9 +603,7 @@ class ExecutorAgent:
         base_size["method"] = "advanced"
         return base_size
 
-    def _calculate_correlations(
-        self, market_data: Dict[str, Any]
-    ) -> Dict[str, Dict[str, float]]:
+    def _calculate_correlations(self, market_data: dict[str, Any]) -> dict[str, dict[str, float]]:
         """Calculate correlations between symbols"""
         correlations = {}
         symbols = list(market_data.keys())
@@ -671,20 +617,16 @@ class ExecutorAgent:
         return correlations
 
     def _optimize_portfolio(
-        self, market_data: Dict, correlations: Dict, constraints: Dict
-    ) -> Dict[str, Any]:
+        self, market_data: dict, correlations: dict, constraints: dict
+    ) -> dict[str, Any]:
         """Optimize portfolio allocation"""
         return {
-            "allocations": {
-                symbol: 1.0 / len(market_data) for symbol in market_data.keys()
-            },
+            "allocations": {symbol: 1.0 / len(market_data) for symbol in market_data},
             "expected_return": 0.08,
             "risk": 0.15,
         }
 
-    def _cross_asset_analysis(
-        self, symbols: List[str], outputs: Dict
-    ) -> Dict[str, Any]:
+    def _cross_asset_analysis(self, symbols: list[str], outputs: dict) -> dict[str, Any]:
         """Perform cross-asset analysis"""
         return {
             "correlations": "calculated",
@@ -692,19 +634,17 @@ class ExecutorAgent:
             "macro_regime": "identified",
         }
 
-    def _detect_regime(self, market_data: Dict) -> str:
+    def _detect_regime(self, market_data: dict) -> str:
         """Detect market regime"""
         return "BULLISH"  # Placeholder
 
     def _predict_regime_transition(
-        self, market_data: Dict, current_regime: str
-    ) -> Dict[str, float]:
+        self, market_data: dict, current_regime: str
+    ) -> dict[str, float]:
         """Predict regime transition probabilities"""
         return {"BULLISH": 0.4, "BEARISH": 0.3, "RANGE_BOUND": 0.3}
 
-    def _integrate_sentiment(
-        self, market_outputs: Dict, sentiment_results: Dict
-    ) -> Dict[str, Any]:
+    def _integrate_sentiment(self, market_outputs: dict, sentiment_results: dict) -> dict[str, Any]:
         """Integrate sentiment with market analysis"""
         return {"combined_score": 0.7, "sentiment_weight": 0.3, "market_weight": 0.7}
 
@@ -713,10 +653,10 @@ class ExecutorAgent:
         # Try to import and initialize tools from existing system
         try:
             from src.deepagents_integration.tools import (
-                get_market_data,
                 analyze_technical_indicators,
-                query_sentiment,
+                get_market_data,
                 get_sentiment_history,
+                query_sentiment,
             )
 
             self.tools["get_market_data"] = get_market_data
@@ -732,9 +672,7 @@ class ExecutorAgent:
 
             mcp_client = MCPClient()
 
-            def call_mcp_tool(
-                server: str, tool: str, params: Dict[str, Any]
-            ) -> Dict[str, Any]:
+            def call_mcp_tool(server: str, tool: str, params: dict[str, Any]) -> dict[str, Any]:
                 """Wrapper for MCP tool calls"""
                 try:
                     return mcp_client.call_tool(server, tool, params)
@@ -766,13 +704,11 @@ class ExecutorAgent:
 
         return avg_score
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get executor statistics"""
         return {
             "total_executions": len(self.execution_history),
-            "successful_executions": sum(
-                1 for r in self.execution_history if r.success
-            ),
+            "successful_executions": sum(1 for r in self.execution_history if r.success),
             "average_success_score": self.get_capability_score(),
             "available_tools": list(self.tools.keys()),
         }

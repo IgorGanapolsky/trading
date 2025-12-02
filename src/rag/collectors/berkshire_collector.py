@@ -13,12 +13,12 @@ Features:
 - Multi-year cross-referencing
 """
 
-import re
 import json
 import logging
-from typing import List, Dict, Any, Optional
+import re
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Optional
 
 import requests
 from bs4 import BeautifulSoup
@@ -98,15 +98,13 @@ class BerkshireLettersCollector(BaseNewsCollector):
         self.index_file = self.index_dir / "letters_index.json"
         self.index = self._load_index()
 
-        logger.info(
-            f"Initialized Berkshire letters collector (cache: {self.cache_dir})"
-        )
+        logger.info(f"Initialized Berkshire letters collector (cache: {self.cache_dir})")
 
-    def _load_index(self) -> Dict[int, Dict[str, Any]]:
+    def _load_index(self) -> dict[int, dict[str, Any]]:
         """Load the letters index from disk."""
         if self.index_file.exists():
             try:
-                with open(self.index_file, "r") as f:
+                with open(self.index_file) as f:
                     return json.load(f)
             except Exception as e:
                 logger.error(f"Error loading index: {e}")
@@ -152,12 +150,8 @@ class BerkshireLettersCollector(BaseNewsCollector):
             for link in soup.find_all("a", href=True):
                 href = link["href"]
                 # Look for letter links (typically /letters/YYYY.html or /letters/YYYY.pdf)
-                if "/letters/" in href and any(
-                    str(year) in href for year in range(1977, 2025)
-                ):
-                    full_url = (
-                        href if href.startswith("http") else f"{self.BASE_URL}{href}"
-                    )
+                if "/letters/" in href and any(str(year) in href for year in range(1977, 2025)):
+                    full_url = href if href.startswith("http") else f"{self.BASE_URL}{href}"
                     letter_links.append(full_url)
 
             # Deduplicate
@@ -188,9 +182,7 @@ class BerkshireLettersCollector(BaseNewsCollector):
                 return year
         return None
 
-    def _download_letter(
-        self, year: int, url: str, force_refresh: bool = False
-    ) -> bool:
+    def _download_letter(self, year: int, url: str, force_refresh: bool = False) -> bool:
         """
         Download a single letter.
 
@@ -231,10 +223,7 @@ class BerkshireLettersCollector(BaseNewsCollector):
                 f.write(response.content)
 
             # Parse content
-            if is_pdf:
-                text = self._parse_pdf(raw_file)
-            else:
-                text = self._parse_html(response.text)
+            text = self._parse_pdf(raw_file) if is_pdf else self._parse_html(response.text)
 
             if not text:
                 logger.warning(f"No text extracted from {year} letter")
@@ -261,9 +250,7 @@ class BerkshireLettersCollector(BaseNewsCollector):
                 **metadata,
             }
 
-            logger.info(
-                f"Successfully downloaded and parsed {year} letter ({len(text)} chars)"
-            )
+            logger.info(f"Successfully downloaded and parsed {year} letter ({len(text)} chars)")
             return True
 
         except Exception as e:
@@ -312,7 +299,7 @@ class BerkshireLettersCollector(BaseNewsCollector):
             logger.error(f"Error parsing HTML: {e}")
             return ""
 
-    def _extract_metadata(self, year: int, text: str) -> Dict[str, Any]:
+    def _extract_metadata(self, year: int, text: str) -> dict[str, Any]:
         """
         Extract metadata from letter text.
 
@@ -426,8 +413,8 @@ class BerkshireLettersCollector(BaseNewsCollector):
             return "neutral"
 
     def search(
-        self, query: str, top_k: int = 5, years: Optional[List[int]] = None
-    ) -> Dict[str, Any]:
+        self, query: str, top_k: int = 5, years: Optional[list[int]] = None
+    ) -> dict[str, Any]:
         """
         Search shareholder letters for relevant content.
 
@@ -467,7 +454,7 @@ class BerkshireLettersCollector(BaseNewsCollector):
                 continue
 
             # Load text
-            with open(parsed_file, "r", encoding="utf-8") as f:
+            with open(parsed_file, encoding="utf-8") as f:
                 text = f.read()
 
             # Simple keyword search (can be enhanced with embeddings)
@@ -495,8 +482,7 @@ class BerkshireLettersCollector(BaseNewsCollector):
         return {
             "query": query,
             "relevant_excerpts": [
-                {"year": r["year"], "excerpts": r["excerpts"], "url": r["url"]}
-                for r in results
+                {"year": r["year"], "excerpts": r["excerpts"], "url": r["url"]} for r in results
             ],
             "years_referenced": [r["year"] for r in results],
             "sentiment": sentiment,
@@ -545,15 +531,11 @@ class BerkshireLettersCollector(BaseNewsCollector):
 
         # Normalize by text length (favor shorter, more focused matches)
         text_word_count = len(text_lower.split())
-        normalized_score = (total_matches / len(query_words)) * (
-            1000 / max(text_word_count, 1000)
-        )
+        normalized_score = (total_matches / len(query_words)) * (1000 / max(text_word_count, 1000))
 
         return normalized_score
 
-    def _extract_excerpts(
-        self, query: str, text: str, max_excerpts: int = 2
-    ) -> List[str]:
+    def _extract_excerpts(self, query: str, text: str, max_excerpts: int = 2) -> list[str]:
         """Extract relevant excerpts from text containing query keywords."""
         query_lower = query.lower()
         sentences = re.split(r"[.!?]+", text)
@@ -600,7 +582,7 @@ class BerkshireLettersCollector(BaseNewsCollector):
         # Return top excerpts
         return relevant_sentences[:max_excerpts]
 
-    def _extract_overall_sentiment(self, query: str, results: List[Dict]) -> str:
+    def _extract_overall_sentiment(self, query: str, results: list[dict]) -> str:
         """Extract overall sentiment/answer from search results."""
         if not results:
             return "No relevant information found"
@@ -614,13 +596,9 @@ class BerkshireLettersCollector(BaseNewsCollector):
             return "Information found but no clear excerpts"
 
         # Return first excerpt as summary (can be enhanced with LLM summarization)
-        return (
-            all_excerpts[0][:500] + "..."
-            if len(all_excerpts[0]) > 500
-            else all_excerpts[0]
-        )
+        return all_excerpts[0][:500] + "..." if len(all_excerpts[0]) > 500 else all_excerpts[0]
 
-    def get_stock_mentions(self, ticker: str) -> List[Dict[str, Any]]:
+    def get_stock_mentions(self, ticker: str) -> list[dict[str, Any]]:
         """
         Get all mentions of a stock across all letters.
 
@@ -680,7 +658,7 @@ class BerkshireLettersCollector(BaseNewsCollector):
             return None
 
         try:
-            with open(parsed_file, "r", encoding="utf-8") as f:
+            with open(parsed_file, encoding="utf-8") as f:
                 return f.read()
         except Exception as e:
             logger.error(f"Error reading {year} letter: {e}")
@@ -688,9 +666,7 @@ class BerkshireLettersCollector(BaseNewsCollector):
 
     # Implement abstract methods from BaseNewsCollector
 
-    def collect_ticker_news(
-        self, ticker: str, days_back: int = 7
-    ) -> List[Dict[str, Any]]:
+    def collect_ticker_news(self, ticker: str, days_back: int = 7) -> list[dict[str, Any]]:
         """
         Collect historical mentions of a ticker from shareholder letters.
 
@@ -720,9 +696,7 @@ class BerkshireLettersCollector(BaseNewsCollector):
             # Extract excerpts
             excerpts = self._extract_excerpts(company_name, letter_text, max_excerpts=3)
             content = (
-                "\n\n".join(excerpts)
-                if excerpts
-                else f"Mentioned {mention['mention_count']} times"
+                "\n\n".join(excerpts) if excerpts else f"Mentioned {mention['mention_count']} times"
             )
 
             article = self.normalize_article(
@@ -738,7 +712,7 @@ class BerkshireLettersCollector(BaseNewsCollector):
 
         return articles
 
-    def collect_market_news(self, days_back: int = 1) -> List[Dict[str, Any]]:
+    def collect_market_news(self, days_back: int = 1) -> list[dict[str, Any]]:
         """
         Collect general investment wisdom from most recent letters.
 
@@ -807,6 +781,4 @@ if __name__ == "__main__":
     print("\n--- Stock Mentions: Apple (AAPL) ---")
     mentions = collector.get_stock_mentions("AAPL")
     for mention in mentions:
-        print(
-            f"{mention['year']}: {mention['mention_count']} mentions ({mention['sentiment']})"
-        )
+        print(f"{mention['year']}: {mention['mention_count']} mentions ({mention['sentiment']})")

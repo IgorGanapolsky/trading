@@ -6,12 +6,11 @@ Runs continuously to monitor Bogleheads forum, extract insights,
 and update RAG storage for RL engine integration.
 """
 
-import os
+import logging
 import sys
 import time
-import logging
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -40,9 +39,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--once", action="store_true", help="Run once and exit")
-    parser.add_argument(
-        "--max-posts", type=int, default=50, help="Max posts to analyze"
-    )
+    parser.add_argument("--max-posts", type=int, default=50, help="Max posts to analyze")
     args = parser.parse_args()
 
     learner = BogleheadsLearner()
@@ -56,7 +53,7 @@ def main():
     while True:
         try:
             iteration += 1
-            logger.info(f"\n{'='*80}")
+            logger.info(f"\n{'=' * 80}")
             logger.info(f"Iteration {iteration} - {datetime.now().isoformat()}")
             logger.info("=" * 80)
 
@@ -97,9 +94,7 @@ def main():
             if args.once:
                 logger.info("✅ Single run complete (--once flag set)")
                 if not result.get("success", False):
-                    logger.error(
-                        f"❌ Monitoring failed: {result.get('error', 'Unknown error')}"
-                    )
+                    logger.error(f"❌ Monitoring failed: {result.get('error', 'Unknown error')}")
                     sys.exit(1)
                 break
 

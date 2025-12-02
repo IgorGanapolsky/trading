@@ -11,9 +11,8 @@ before claiming success.
 """
 
 import json
-from datetime import datetime
-from typing import Dict, List, Tuple
 from dataclasses import dataclass
+from datetime import datetime
 
 
 @dataclass
@@ -41,7 +40,7 @@ class OutputVerifier:
         self.system_state_path = system_state_path
         self.verification_rules = self._define_rules()
 
-    def _define_rules(self) -> List[VerificationRule]:
+    def _define_rules(self) -> list[VerificationRule]:
         """
         Define quality rules for trade verification
         Following SDK pattern: "Defining Rules - Provide specific rules on quality and types of outputs"
@@ -50,23 +49,19 @@ class OutputVerifier:
             # CRITICAL RULES (must pass)
             VerificationRule(
                 name="portfolio_not_negative",
-                condition=lambda state: state["account"]["total_pl"]
-                > -1000,  # Max $1000 loss
+                condition=lambda state: state["account"]["total_pl"] > -1000,  # Max $1000 loss
                 severity="critical",
                 message="Portfolio loss exceeds $1000 limit",
             ),
             VerificationRule(
                 name="automation_operational",
-                condition=lambda state: state["automation"].get("workflow_status")
-                == "OPERATIONAL",
+                condition=lambda state: state["automation"].get("workflow_status") == "OPERATIONAL",
                 severity="critical",
                 message="Automation workflow is not operational",
             ),
             VerificationRule(
                 name="data_freshness",
-                condition=lambda state: self._check_freshness(
-                    state["meta"]["last_updated"]
-                ),
+                condition=lambda state: self._check_freshness(state["meta"]["last_updated"]),
                 severity="critical",
                 message="System state data is stale (>24 hours old)",
             ),
@@ -88,8 +83,7 @@ class OutputVerifier:
             # INFO RULES (nice to have)
             VerificationRule(
                 name="backtest_alignment",
-                condition=lambda state: abs(state["performance"]["win_rate"] - 62.2)
-                < 20
+                condition=lambda state: abs(state["performance"]["win_rate"] - 62.2) < 20
                 or state["challenge"]["current_day"] < 30,
                 severity="info",
                 message="Live win rate diverging from backtest (62.2%)",
@@ -105,7 +99,7 @@ class OutputVerifier:
         except Exception:
             return False
 
-    def verify_execution(self, trades: List[Dict]) -> Tuple[bool, List[str]]:
+    def verify_execution(self, trades: list[dict]) -> tuple[bool, list[str]]:
         """
         Verify trade execution quality
 
@@ -122,9 +116,7 @@ class OutputVerifier:
         # Rule: Daily investment must be $8-10 (allowing for rounding)
         total_invested = sum(t["amount"] for t in trades)
         if not (7 <= total_invested <= 11):
-            issues.append(
-                f"Invalid daily investment: ${total_invested:.2f} (expected $8-10)"
-            )
+            issues.append(f"Invalid daily investment: ${total_invested:.2f} (expected $8-10)")
 
         # Rule: Must have Tier 1 (core) trade
         has_tier1 = any(t["tier"] == "T1_CORE" for t in trades)
@@ -133,7 +125,7 @@ class OutputVerifier:
 
         return len(issues) == 0, issues
 
-    def verify_system_state(self) -> Tuple[bool, Dict[str, List[str]]]:
+    def verify_system_state(self) -> tuple[bool, dict[str, list[str]]]:
         """
         Verify system state quality using defined rules
 
@@ -152,18 +144,14 @@ class OutputVerifier:
                 if not rule.condition(state):
                     results[rule.severity].append(f"{rule.name}: {rule.message}")
             except Exception as e:
-                results["critical"].append(
-                    f"{rule.name}: Error running rule - {str(e)}"
-                )
+                results["critical"].append(f"{rule.name}: Error running rule - {str(e)}")
 
         # Success = no critical issues
         success = len(results["critical"]) == 0
 
         return success, results
 
-    def verify_portfolio_claims(
-        self, claimed_pl: float, claimed_equity: float
-    ) -> Tuple[bool, str]:
+    def verify_portfolio_claims(self, claimed_pl: float, claimed_equity: float) -> tuple[bool, str]:
         """
         Verify portfolio claims against system state
         Prevents anti-lying violations
@@ -179,9 +167,7 @@ class OutputVerifier:
 
         # Allow 1% tolerance for rounding
         pl_matches = abs(claimed_pl - actual_pl) < (abs(actual_pl) * 0.01 + 1)
-        equity_matches = abs(claimed_equity - actual_equity) < (
-            actual_equity * 0.01 + 1
-        )
+        equity_matches = abs(claimed_equity - actual_equity) < (actual_equity * 0.01 + 1)
 
         if pl_matches and equity_matches:
             return True, "Claims verified accurate"
@@ -254,7 +240,7 @@ class LLMJudge:
     def __init__(self, llm_client=None):
         self.llm_client = llm_client
 
-    def evaluate_trading_session(self, session_data: Dict) -> Dict:
+    def evaluate_trading_session(self, session_data: dict) -> dict:
         """
         Use LLM to evaluate if trading session met fuzzy quality criteria
 
@@ -304,7 +290,5 @@ if __name__ == "__main__":
     print()
 
     # Test portfolio claim verification
-    accurate, message = verifier.verify_portfolio_claims(
-        claimed_pl=13.96, claimed_equity=100013.96
-    )
+    accurate, message = verifier.verify_portfolio_claims(claimed_pl=13.96, claimed_equity=100013.96)
     print(f"Portfolio Claims: {message}")

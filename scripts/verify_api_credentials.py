@@ -36,7 +36,7 @@ def verify_grok_credentials():
         print(f"⚠️  GROK_API_KEY format unexpected (should start with 'xai-'): {masked}")
         return False
 
-    print(f"✅ GROK_API_KEY found")
+    print("✅ GROK_API_KEY found")
     masked = mask_api_key(grok_key)
     print(f"   Key: {masked}")
     print(f"   Length: {len(grok_key)} characters")

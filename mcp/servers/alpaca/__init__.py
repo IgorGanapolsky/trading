@@ -8,9 +8,9 @@ from .market import (
     get_portfolio_positions,
 )
 from .orders import (
-    validate_order_amount,
-    submit_market_order,
     set_stop_loss,
+    submit_market_order,
+    validate_order_amount,
 )
 
 __all__ = [

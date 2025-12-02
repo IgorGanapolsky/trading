@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import datetime, timezone
-from typing import Iterable, List, Optional, Sequence
 
 from .config_loader import DayTradingResourceConfig, load_resource_config
 from .mentor_monitor import MentorMonitorAgent
-from .models import DailySupportPlan, NewsletterInsight, ReadingAssignment
+from .models import DailySupportPlan
 from .newsletter_harvester import MarketPrepAgent
 from .reading_ingestor import StudyGuideAgent
 from .resource_vault import ResourceVault
@@ -19,11 +19,11 @@ class DayTradeSupportOrchestrator:
     def __init__(
         self,
         *,
-        config: Optional[DayTradingResourceConfig] = None,
-        mentor_agent: Optional[MentorMonitorAgent] = None,
-        study_agent: Optional[StudyGuideAgent] = None,
-        market_agent: Optional[MarketPrepAgent] = None,
-        vault: Optional[ResourceVault] = None,
+        config: DayTradingResourceConfig | None = None,
+        mentor_agent: MentorMonitorAgent | None = None,
+        study_agent: StudyGuideAgent | None = None,
+        market_agent: MarketPrepAgent | None = None,
+        vault: ResourceVault | None = None,
     ) -> None:
         self.config = config or load_resource_config()
         self.mentor = mentor_agent or MentorMonitorAgent(self.config.coaching_programs)
@@ -34,7 +34,7 @@ class DayTradeSupportOrchestrator:
     def run(
         self,
         *,
-        focus_tags: Optional[Iterable[str]] = None,
+        focus_tags: Iterable[str] | None = None,
         study_minutes: int = 45,
     ) -> DailySupportPlan:
         focus_list = list(focus_tags or [])

@@ -2,8 +2,8 @@
 Compatibility helpers for third-party libraries expecting pydantic.BaseSettings.
 """
 
-from functools import lru_cache
 import logging
+from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 

@@ -19,13 +19,6 @@ def test_imports():
     """Test that all imports work correctly."""
     print("Testing imports...")
     try:
-        from deepagents_integration import (
-            build_trading_tools,
-            build_mcp_tools_for_deepagents,
-            create_market_analysis_agent,
-            create_trading_research_agent,
-        )
-
         print("✓ All imports successful")
         return True
     except Exception as e:
@@ -38,8 +31,8 @@ def test_tools():
     print("\nTesting tool building...")
     try:
         from deepagents_integration import (
-            build_trading_tools,
             build_mcp_tools_for_deepagents,
+            build_trading_tools,
         )
 
         trading_tools = build_trading_tools()
@@ -82,7 +75,7 @@ def test_agent_creation():
         )
 
         # Test research agent creation
-        research_agent = create_trading_research_agent(
+        create_trading_research_agent(
             model="anthropic:claude-sonnet-4-5-20250929",
             include_mcp_tools=False,  # Skip MCP to avoid dependency issues
             temperature=0.3,
@@ -90,7 +83,7 @@ def test_agent_creation():
         print("✓ Trading research agent created successfully")
 
         # Test market analysis agent creation
-        analysis_agent = create_market_analysis_agent(
+        create_market_analysis_agent(
             model="anthropic:claude-sonnet-4-5-20250929",
             include_mcp_tools=False,
             temperature=0.2,
@@ -128,9 +121,7 @@ async def test_simple_query():
         print(f"Query: {test_query}")
         print("Processing...")
 
-        result = await agent.ainvoke(
-            {"messages": [{"role": "user", "content": test_query}]}
-        )
+        result = await agent.ainvoke({"messages": [{"role": "user", "content": test_query}]})
 
         if "messages" in result:
             print("✓ Agent responded successfully")

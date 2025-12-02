@@ -16,28 +16,24 @@ Target: 15-25% annual returns
 Risk Level: MEDIUM
 """
 
-from typing import List, Dict, Optional, Tuple
-from datetime import datetime
-from dataclasses import dataclass
+import contextlib
 import logging
 import os
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Optional
 
-import yfinance as yf
 import pandas as pd
-
-
-from src.utils.sentiment_loader import (
-    load_latest_sentiment,
-    get_ticker_sentiment,
-    get_sentiment_history,
-)
-from src.utils.dcf_valuation import get_global_dcf_calculator, DCFValuationCalculator
-from src.utils.external_signal_loader import load_latest_signals, get_signal_for_ticker
-
-from src.safety.graham_buffett_safety import get_global_safety_analyzer
-from src.rag.knowledge_graph import get_knowledge_graph
+import yfinance as yf
 from src.rag.vector_db.chroma_client import get_rag_db
-
+from src.safety.graham_buffett_safety import get_global_safety_analyzer
+from src.utils.dcf_valuation import DCFValuationCalculator, get_global_dcf_calculator
+from src.utils.external_signal_loader import get_signal_for_ticker, load_latest_signals
+from src.utils.sentiment_loader import (
+    get_sentiment_history,
+    get_ticker_sentiment,
+    load_latest_sentiment,
+)
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -102,7 +98,7 @@ class MultiLLMAnalyzer:
         """Initialize the multi-LLM analyzer."""
         logger.info("Initializing MultiLLMAnalyzer")
 
-    def screen_stocks(self, symbols: List[str]) -> List[str]:
+    def screen_stocks(self, symbols: list[str]) -> list[str]:
         """
         Screen stocks using AI models.
 
@@ -117,7 +113,7 @@ class MultiLLMAnalyzer:
         # For now, return a subset of symbols
         return symbols[:50] if len(symbols) > 50 else symbols
 
-    def get_consensus_score(self, symbol: str, technical_data: Dict) -> float:
+    def get_consensus_score(self, symbol: str, technical_data: dict) -> float:
         """
         Get multi-LLM consensus score for a stock.
 
@@ -158,7 +154,7 @@ class AlpacaTrader:
     def __init__(self):
         """Initialize the Alpaca trader."""
         logger.info("Initializing AlpacaTrader")
-        self.positions: Dict[str, Position] = {}
+        self.positions: dict[str, Position] = {}
 
     def submit_order(self, order: Order) -> bool:
         """
@@ -170,9 +166,7 @@ class AlpacaTrader:
         Returns:
             True if order was submitted successfully
         """
-        logger.info(
-            f"Submitting {order.action} order for {order.symbol}: {order.quantity} shares"
-        )
+        logger.info(f"Submitting {order.action} order for {order.symbol}: {order.quantity} shares")
         # Mock implementation
         return True
 
@@ -188,7 +182,7 @@ class AlpacaTrader:
         """
         return self.positions.get(symbol)
 
-    def get_all_positions(self) -> List[Position]:
+    def get_all_positions(self) -> list[Position]:
         """
         Get all current positions.
 
@@ -231,7 +225,7 @@ class RiskManager:
 
     def validate_order(
         self, order: Order, portfolio_value: float, current_positions: int
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         """
         Validate if an order meets risk requirements.
 
@@ -250,9 +244,7 @@ class RiskManager:
         # Check position size
         if order.action == "buy":
             order_value = order.quantity * (order.limit_price or 0)
-            position_fraction = (
-                order_value / portfolio_value if portfolio_value > 0 else 1.0
-            )
+            position_fraction = order_value / portfolio_value if portfolio_value > 0 else 1.0
 
             if position_fraction > self.max_position_size:
                 return (
@@ -393,15 +385,13 @@ class GrowthStrategy:
         self.trader = AlpacaTrader()
         self.risk_manager = RiskManager(max_position_size=0.15, max_daily_loss=0.05)
         self.dcf_calculator: DCFValuationCalculator = get_global_dcf_calculator()
-        self.external_signals_cache: Dict[str, Dict] = {}
+        self.external_signals_cache: dict[str, dict] = {}
 
         # Initialize Intelligent Investor safety analyzer
         if self.use_intelligent_investor:
             try:
                 self.safety_analyzer = get_global_safety_analyzer()
-                logger.info(
-                    "Intelligent Investor safety analyzer initialized for GrowthStrategy"
-                )
+                logger.info("Intelligent Investor safety analyzer initialized for GrowthStrategy")
             except Exception as e:
                 logger.warning(f"Failed to initialize safety analyzer: {e}")
                 self.safety_analyzer = None
@@ -441,7 +431,7 @@ class GrowthStrategy:
             f"intelligent_investor={'enabled' if use_intelligent_investor else 'disabled'}"
         )
 
-    def execute_weekly(self) -> List[Order]:
+    def execute_weekly(self) -> list[Order]:
         """
         Execute the weekly trading routine.
 
@@ -475,9 +465,7 @@ class GrowthStrategy:
                 ),
             )
         else:
-            logger.info(
-                "No external signals found - proceeding with internal models only"
-            )
+            logger.info("No external signals found - proceeding with internal models only")
 
         orders = []
 
@@ -515,7 +503,7 @@ class GrowthStrategy:
         logger.info(f"Weekly execution complete: {len(orders)} orders generated")
         return orders
 
-    def screen_candidates_with_ai(self) -> List[str]:
+    def screen_candidates_with_ai(self) -> list[str]:
         """
         Screen S&P 500 stocks using AI models.
 
@@ -541,12 +529,10 @@ class GrowthStrategy:
         # Use LLM analyzer to screen
         screened = self.llm_analyzer.screen_stocks(candidates)
 
-        logger.info(
-            f"AI screening complete: {len(screened)}/{len(candidates)} stocks passed"
-        )
+        logger.info(f"AI screening complete: {len(screened)}/{len(candidates)} stocks passed")
         return screened
 
-    def apply_technical_filters(self, candidates: List[str]) -> List[CandidateStock]:
+    def apply_technical_filters(self, candidates: list[str]) -> list[CandidateStock]:
         """
         Apply technical filters to candidate stocks.
 
@@ -587,12 +573,7 @@ class GrowthStrategy:
                 volume_ratio = self._calculate_volume_ratio(hist)
 
                 # Apply filters (MACD histogram > 0 = bullish momentum confirmation)
-                if (
-                    momentum > 0
-                    and 30 < rsi < 70
-                    and volume_ratio > 1.2
-                    and macd_histogram > 0
-                ):
+                if momentum > 0 and 30 < rsi < 70 and volume_ratio > 1.2 and macd_histogram > 0:
                     candidate = CandidateStock(
                         symbol=symbol,
                         technical_score=score,
@@ -620,14 +601,10 @@ class GrowthStrategy:
                 logger.warning(f"Error processing {symbol}: {e}")
                 continue
 
-        logger.info(
-            f"Technical filtering complete: {len(filtered_stocks)} stocks passed"
-        )
+        logger.info(f"Technical filtering complete: {len(filtered_stocks)} stocks passed")
         return filtered_stocks
 
-    def get_multi_llm_ranking(
-        self, candidates: List[CandidateStock]
-    ) -> List[CandidateStock]:
+    def get_multi_llm_ranking(self, candidates: list[CandidateStock]) -> list[CandidateStock]:
         """
         Get multi-LLM consensus scores and rank candidates with sentiment overlay.
 
@@ -651,9 +628,7 @@ class GrowthStrategy:
         Returns:
             List of CandidateStock objects sorted by ranking (best first)
         """
-        logger.info(
-            f"Getting multi-LLM consensus scores for {len(candidates)} candidates"
-        )
+        logger.info(f"Getting multi-LLM consensus scores for {len(candidates)} candidates")
 
         # Load sentiment data once (cached for all candidates)
         if self.use_sentiment and self.sentiment_data is None:
@@ -679,7 +654,7 @@ class GrowthStrategy:
                 self.sentiment_data = {}
 
         # Get consensus scores from LLM analyzer + apply sentiment + DCF filter
-        filtered_candidates: List[CandidateStock] = []
+        filtered_candidates: list[CandidateStock] = []
         for i, candidate in enumerate(candidates):
             technical_data = {
                 "momentum": candidate.momentum,
@@ -708,7 +683,9 @@ class GrowthStrategy:
                         volume_ratio=0.0,
                     )
                     candidates.append(placeholder)
-                    logger.debug(f"GraphRAG: added related ticker {rel_ticker} for {candidate.symbol}")
+                    logger.debug(
+                        f"GraphRAG: added related ticker {rel_ticker} for {candidate.symbol}"
+                    )
 
             # Get LLM consensus score
             consensus_score = self.llm_analyzer.get_consensus_score(
@@ -730,9 +707,13 @@ class GrowthStrategy:
                         if rag_news:
                             # Simple average of sentiment scores stored in metadata
                             scores = [n["metadata"].get("sentiment", 0.5) for n in rag_news]
-                            rag_sentiment_score = sum(scores) / len(scores) * 100  # Convert 0-1 to 0-100
+                            rag_sentiment_score = (
+                                sum(scores) / len(scores) * 100
+                            )  # Convert 0-1 to 0-100
                             rag_article_count = len(rag_news)
-                            logger.debug(f"{candidate.symbol}: Found {rag_article_count} RAG articles, avg sentiment={rag_sentiment_score:.1f}")
+                            logger.debug(
+                                f"{candidate.symbol}: Found {rag_article_count} RAG articles, avg sentiment={rag_sentiment_score:.1f}"
+                            )
                     except Exception as e:
                         logger.warning(f"RAG lookup failed for {candidate.symbol}: {e}")
 
@@ -741,23 +722,25 @@ class GrowthStrategy:
                 legacy_confidence = "low"
 
                 if self.sentiment_data:
-                    try:
+                    with contextlib.suppress(Exception):
                         legacy_score, legacy_confidence, _ = get_ticker_sentiment(
                             candidate.symbol,
                             self.sentiment_data,
                             default_score=50.0,
                         )
-                    except Exception:
-                        pass
 
                 # Blend scores: If RAG has data, weight it 70%, legacy 30%
                 # If RAG has no data, use legacy 100%
                 final_sentiment_score = legacy_score
-                confidence_weight = {"high": 1.0, "medium": 0.6, "low": 0.3}.get(legacy_confidence, 0.3)
+                confidence_weight = {"high": 1.0, "medium": 0.6, "low": 0.3}.get(
+                    legacy_confidence, 0.3
+                )
 
                 if rag_article_count > 0:
                     final_sentiment_score = (0.7 * rag_sentiment_score) + (0.3 * legacy_score)
-                    confidence_weight = max(confidence_weight, 0.8)  # Boost confidence if we have fresh RAG news
+                    confidence_weight = max(
+                        confidence_weight, 0.8
+                    )  # Boost confidence if we have fresh RAG news
 
                 # Calculate modifier
                 # Sentiment score 70+ = +15 bonus, 30- = -15 penalty
@@ -807,9 +790,7 @@ class GrowthStrategy:
             )
             if external_signal:
                 candidate.external_signal_score = external_signal.get("score", 0.0)
-                candidate.external_signal_confidence = external_signal.get(
-                    "confidence", 0.0
-                )
+                candidate.external_signal_confidence = external_signal.get("confidence", 0.0)
 
                 if candidate.external_signal_score < -20:
                     logger.info(
@@ -857,9 +838,7 @@ class GrowthStrategy:
         for i, candidate in enumerate(filtered_candidates[:5], 1):
             sentiment_mod = candidate.sentiment_modifier
             dcf_score = min(100.0, max(0.0, (candidate.dcf_discount or 0.0) * 400))
-            external_score = min(
-                100.0, max(0.0, (candidate.external_signal_score + 100) / 2)
-            )
+            external_score = min(100.0, max(0.0, (candidate.external_signal_score + 100) / 2))
             combined_score = (
                 0.30 * candidate.technical_score
                 + 0.30 * candidate.consensus_score
@@ -870,13 +849,13 @@ class GrowthStrategy:
             logger.info(
                 f"  #{i}: {candidate.symbol} (combined={combined_score:.1f}, technical={candidate.technical_score:.1f}, "
                 f"consensus={candidate.consensus_score:.1f}, sentiment_mod={sentiment_mod:+.1f}, "
-                f"dcf_discount={(candidate.dcf_discount or 0.0)*100:.1f}%, external={candidate.external_signal_score:.1f}, "
+                f"dcf_discount={(candidate.dcf_discount or 0.0) * 100:.1f}%, external={candidate.external_signal_score:.1f}, "
                 f"intrinsic={candidate.intrinsic_value:.2f})"
             )
 
         return filtered_candidates
 
-    def manage_existing_positions(self) -> List[Order]:
+    def manage_existing_positions(self) -> list[Order]:
         """
         Manage existing positions and generate exit orders.
 
@@ -981,9 +960,7 @@ class GrowthStrategy:
                 logger.error(f"Error managing position {position.symbol}: {e}")
                 continue
 
-        logger.info(
-            f"Position management complete: {len(orders)} exit orders generated"
-        )
+        logger.info(f"Position management complete: {len(orders)} exit orders generated")
         return orders
 
     def calculate_technical_score(self, symbol: str) -> float:
@@ -1060,7 +1037,7 @@ class GrowthStrategy:
             logger.warning(f"Error calculating technical score for {symbol}: {e}")
             return 0.0
 
-    def get_performance_metrics(self) -> Dict:
+    def get_performance_metrics(self) -> dict:
         """
         Get strategy performance metrics.
 
@@ -1090,14 +1067,8 @@ class GrowthStrategy:
         total_value = cash + position_value
         allocation_used = (position_value / total_value * 100) if total_value > 0 else 0
 
-        win_rate = (
-            (self.winning_trades / self.total_trades * 100)
-            if self.total_trades > 0
-            else 0
-        )
-        avg_return = (
-            (self.total_pnl / self.total_trades) if self.total_trades > 0 else 0
-        )
+        win_rate = (self.winning_trades / self.total_trades * 100) if self.total_trades > 0 else 0
+        avg_return = (self.total_pnl / self.total_trades) if self.total_trades > 0 else 0
 
         metrics = {
             "total_trades": self.total_trades,
@@ -1260,13 +1231,11 @@ class GrowthStrategy:
 
         return score
 
-    def _generate_buy_orders(self, candidates: List[CandidateStock]) -> List[Order]:
+    def _generate_buy_orders(self, candidates: list[CandidateStock]) -> list[Order]:
         """Generate buy orders for top candidate stocks."""
         orders = []
         available_cash = self.trader.get_account_cash()
-        cash_per_position = (
-            self.weekly_allocation / len(candidates) if candidates else 0
-        )
+        cash_per_position = self.weekly_allocation / len(candidates) if candidates else 0
 
         logger.info(f"Generating buy orders for {len(candidates)} candidates")
         logger.info(f"Cash per position: ${cash_per_position:.2f}")
@@ -1308,8 +1277,7 @@ class GrowthStrategy:
                     + 0.30 * candidate.consensus_score
                     + 0.15 * (50 + candidate.sentiment_modifier)
                     + 0.15 * dcf_score
-                    + 0.10
-                    * min(100.0, max(0.0, (candidate.external_signal_score + 100) / 2))
+                    + 0.10 * min(100.0, max(0.0, (candidate.external_signal_score + 100) / 2))
                 )
                 order = Order(
                     symbol=candidate.symbol,
@@ -1340,12 +1308,10 @@ class GrowthStrategy:
                             logger.info(
                                 f"  Running Intelligent Investor safety check for {candidate.symbol}..."
                             )
-                            should_buy, safety_analysis = (
-                                self.safety_analyzer.should_buy(
-                                    symbol=candidate.symbol,
-                                    market_price=candidate.current_price,
-                                    force_refresh=False,
-                                )
+                            should_buy, safety_analysis = self.safety_analyzer.should_buy(
+                                symbol=candidate.symbol,
+                                market_price=candidate.current_price,
+                                force_refresh=False,
                             )
 
                             if not should_buy:
@@ -1390,9 +1356,7 @@ class GrowthStrategy:
                             )
                             # Fail-open: continue with trade if safety check unavailable
 
-                    if self.langchain_guard_enabled and not self._langchain_guard(
-                        candidate.symbol
-                    ):
+                    if self.langchain_guard_enabled and not self._langchain_guard(candidate.symbol):
                         logger.warning(
                             "  LangChain approval gate rejected order for %s",
                             candidate.symbol,
@@ -1450,8 +1414,7 @@ class GrowthStrategy:
         self.total_pnl += pnl
 
         logger.info(
-            f"Trade recorded: {position.symbol} {exit_reason} - "
-            f"P&L: ${pnl:.2f} ({pnl_pct:.2%})"
+            f"Trade recorded: {position.symbol} {exit_reason} - P&L: ${pnl:.2f} ({pnl_pct:.2%})"
         )
 
     def _langchain_guard(self, symbol: str) -> bool:
@@ -1474,10 +1437,7 @@ class GrowthStrategy:
             )
 
             response = self._langchain_agent.invoke({"input": prompt})
-            if isinstance(response, dict):
-                text = response.get("output", "")
-            else:
-                text = str(response)
+            text = response.get("output", "") if isinstance(response, dict) else str(response)
 
             normalized = text.strip().lower()
             approved = "approve" in normalized and "decline" not in normalized
@@ -1492,9 +1452,7 @@ class GrowthStrategy:
             logger.error("LangChain approval gate error for %s: %s", symbol, exc)
             fail_open = os.getenv("LANGCHAIN_APPROVAL_FAIL_OPEN", "true").lower()
             if fail_open == "true":
-                logger.warning(
-                    "LangChain approval unavailable; defaulting to APPROVE (fail-open)."
-                )
+                logger.warning("LangChain approval unavailable; defaulting to APPROVE (fail-open).")
                 return True
             return False
 

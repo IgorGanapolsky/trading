@@ -16,9 +16,7 @@ from src.rag.sentiment_store import SentimentRAGStore  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Build or refresh the sentiment RAG vector store."
-    )
+    parser = argparse.ArgumentParser(description="Build or refresh the sentiment RAG vector store.")
     parser.add_argument(
         "--days",
         type=int,

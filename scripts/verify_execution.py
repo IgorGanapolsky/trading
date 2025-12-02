@@ -9,9 +9,10 @@ Anti-Lying Mandate Compliance:
 - Reports honest P/L (even if negative)
 - No assumptions or estimates
 """
+
 import os
 import sys
-from datetime import datetime, date
+from datetime import date, datetime
 from pathlib import Path
 
 # Add parent directory to path
@@ -28,9 +29,7 @@ ALPACA_KEY = os.getenv("ALPACA_API_KEY")
 ALPACA_SECRET = os.getenv("ALPACA_SECRET_KEY")
 
 if not ALPACA_KEY or not ALPACA_SECRET:
-    raise ValueError(
-        "ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set"
-    )
+    raise ValueError("ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set")
 
 
 def verify_execution():

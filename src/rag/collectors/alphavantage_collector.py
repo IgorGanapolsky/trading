@@ -2,12 +2,12 @@
 Alpha Vantage news and sentiment collector.
 """
 
-from typing import List, Dict, Any
-from datetime import datetime, timedelta
 import logging
 import os
-import requests
+from datetime import datetime, timedelta
+from typing import Any
 
+import requests
 from src.rag.collectors.base_collector import BaseNewsCollector
 
 logger = logging.getLogger(__name__)
@@ -27,15 +27,11 @@ class AlphaVantageCollector(BaseNewsCollector):
         # Get API key from environment
         self.api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
         if not self.api_key:
-            logger.warning(
-                "ALPHA_VANTAGE_API_KEY not found - collector will be disabled"
-            )
+            logger.warning("ALPHA_VANTAGE_API_KEY not found - collector will be disabled")
 
         self.base_url = "https://www.alphavantage.co/query"
 
-    def collect_ticker_news(
-        self, ticker: str, days_back: int = 7
-    ) -> List[Dict[str, Any]]:
+    def collect_ticker_news(self, ticker: str, days_back: int = 7) -> list[dict[str, Any]]:
         """
         Collect news and sentiment for a ticker from Alpha Vantage.
 
@@ -105,23 +101,19 @@ class AlphaVantageCollector(BaseNewsCollector):
                 )
 
                 # Add additional metadata
-                article["overall_sentiment_score"] = item.get(
-                    "overall_sentiment_score", 0
-                )
+                article["overall_sentiment_score"] = item.get("overall_sentiment_score", 0)
                 article["relevance_score"] = item.get("relevance_score", 0)
 
                 articles.append(article)
 
-            logger.info(
-                f"Collected {len(articles)} articles for {ticker} from Alpha Vantage"
-            )
+            logger.info(f"Collected {len(articles)} articles for {ticker} from Alpha Vantage")
             return articles
 
         except Exception as e:
             logger.error(f"Error collecting Alpha Vantage news for {ticker}: {e}")
             return []
 
-    def collect_market_news(self, days_back: int = 1) -> List[Dict[str, Any]]:
+    def collect_market_news(self, days_back: int = 1) -> list[dict[str, Any]]:
         """
         Collect general market news from Alpha Vantage.
 

@@ -5,14 +5,12 @@ Autonomous Issue Resolution Agent
 Uses Elite Orchestrator and all AI agents to autonomously diagnose and fix trading failures.
 """
 
-import os
-import sys
 import json
 import logging
+import sys
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, Any, List, Optional
-from datetime import datetime
-from dataclasses import dataclass, asdict
+from typing import Any, Optional
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -33,7 +31,7 @@ class IssueDiagnosis:
     fix_strategy: str
     confidence: float
     can_auto_fix: bool
-    fix_steps: List[str]
+    fix_steps: list[str]
     estimated_time_minutes: int
 
 
@@ -53,7 +51,7 @@ class IssueResolutionAgent:
         self.resolved_issues = []
         self.failed_fixes = []
 
-    def diagnose_issue(self, issue_data: Dict[str, Any]) -> IssueDiagnosis:
+    def diagnose_issue(self, issue_data: dict[str, Any]) -> IssueDiagnosis:
         """
         Diagnose a GitHub issue using all agents.
 
@@ -63,9 +61,7 @@ class IssueResolutionAgent:
         Returns:
             IssueDiagnosis with root cause and fix strategy
         """
-        logger.info(
-            f"🔍 Diagnosing issue #{issue_data['number']}: {issue_data['title']}"
-        )
+        logger.info(f"🔍 Diagnosing issue #{issue_data['number']}: {issue_data['title']}")
 
         # Extract issue context
         issue_title = issue_data.get("title", "")
@@ -93,7 +89,7 @@ Analyze this trading system failure and provide diagnosis:
 
 Issue Title: {issue_title}
 Issue Body: {issue_body}
-Labels: {', '.join(issue_labels)}
+Labels: {", ".join(issue_labels)}
 
 Provide:
 1. Root cause (what actually failed)
@@ -134,15 +130,11 @@ Format as JSON:
                         issue_number=issue_data["number"],
                         issue_title=issue_title,
                         root_cause=diagnosis_json.get("root_cause", "Unknown"),
-                        fix_strategy=diagnosis_json.get(
-                            "fix_strategy", "Manual review required"
-                        ),
+                        fix_strategy=diagnosis_json.get("fix_strategy", "Manual review required"),
                         confidence=diagnosis_json.get("confidence", 0.5),
                         can_auto_fix=diagnosis_json.get("can_auto_fix", False),
                         fix_steps=diagnosis_json.get("fix_steps", []),
-                        estimated_time_minutes=diagnosis_json.get(
-                            "estimated_time_minutes", 10
-                        ),
+                        estimated_time_minutes=diagnosis_json.get("estimated_time_minutes", 10),
                     )
             except Exception as e:
                 logger.warning(f"Gemini diagnosis failed: {e}")
@@ -187,7 +179,7 @@ Format as JSON:
         self,
         issue_title: str,
         issue_body: str,
-        issue_labels: List[str],
+        issue_labels: list[str],
         issue_created: str,
     ) -> Optional[IssueDiagnosis]:
         """
@@ -203,19 +195,15 @@ Format as JSON:
             import re
 
             run_match = re.search(r"Run #(\d+)", issue_title)
-            run_number = int(run_match.group(1)) if run_match else None
+            int(run_match.group(1)) if run_match else None
 
             # Check if issue is older than 6 hours (reduced from 24h for faster resolution)
             if issue_created:
-                from datetime import datetime, timezone, timedelta
+                from datetime import datetime, timezone
 
                 try:
-                    created_dt = datetime.fromisoformat(
-                        issue_created.replace("Z", "+00:00")
-                    )
-                    age_hours = (
-                        datetime.now(timezone.utc) - created_dt
-                    ).total_seconds() / 3600
+                    created_dt = datetime.fromisoformat(issue_created.replace("Z", "+00:00"))
+                    age_hours = (datetime.now(timezone.utc) - created_dt).total_seconds() / 3600
 
                     # If older than 6 hours, likely transient and can be auto-resolved
                     # Most trading failures are transient (timeouts, API errors, etc.)
@@ -267,15 +255,11 @@ Format as JSON:
         # Pattern 2: Issues with "auto-resolve" label older than 6 hours (reduced from 48h)
         # If an issue is marked for auto-resolve, it should be resolved quickly
         if "auto-resolve" in issue_labels and issue_created:
-            from datetime import datetime, timezone, timedelta
+            from datetime import datetime, timezone
 
             try:
-                created_dt = datetime.fromisoformat(
-                    issue_created.replace("Z", "+00:00")
-                )
-                age_hours = (
-                    datetime.now(timezone.utc) - created_dt
-                ).total_seconds() / 3600
+                created_dt = datetime.fromisoformat(issue_created.replace("Z", "+00:00"))
+                age_hours = (datetime.now(timezone.utc) - created_dt).total_seconds() / 3600
 
                 # If older than 6 hours and still open, likely resolved or stale
                 if age_hours > 6:
@@ -291,13 +275,11 @@ Format as JSON:
                         estimated_time_minutes=0,
                     )
             except Exception as e:
-                logger.warning(
-                    f"Could not parse issue date for auto-resolve check: {e}"
-                )
+                logger.warning(f"Could not parse issue date for auto-resolve check: {e}")
 
         return None
 
-    def attempt_fix(self, diagnosis: IssueDiagnosis) -> Dict[str, Any]:
+    def attempt_fix(self, diagnosis: IssueDiagnosis) -> dict[str, Any]:
         """
         Attempt to automatically fix the issue.
 
@@ -345,9 +327,7 @@ Format as JSON:
                         break
                 except Exception as e:
                     logger.error(f"Error executing fix step '{step}': {e}")
-                    fix_results.append(
-                        {"step": step, "success": False, "error": str(e)}
-                    )
+                    fix_results.append({"step": step, "success": False, "error": str(e)})
                     break
 
         all_succeeded = all(r.get("success", False) for r in fix_results)
@@ -358,7 +338,7 @@ Format as JSON:
             "diagnosis": asdict(diagnosis),
         }
 
-    def _execute_fix_step(self, step: str, diagnosis: IssueDiagnosis) -> Dict[str, Any]:
+    def _execute_fix_step(self, step: str, diagnosis: IssueDiagnosis) -> dict[str, Any]:
         """
         Execute a single fix step.
 
@@ -384,7 +364,7 @@ Format as JSON:
         else:
             return {"success": False, "message": f"Unknown fix step: {step}"}
 
-    def _retry_workflow(self, diagnosis: IssueDiagnosis) -> Dict[str, Any]:
+    def _retry_workflow(self, diagnosis: IssueDiagnosis) -> dict[str, Any]:
         """Retry the failed workflow"""
         # Extract workflow name from issue title
         # Issue format: "Daily Trading Execution Failed - Run #98"
@@ -405,11 +385,10 @@ Format as JSON:
         else:
             return {"success": False, "message": "Could not identify workflow to retry"}
 
-    def _check_secrets(self, diagnosis: IssueDiagnosis) -> Dict[str, Any]:
+    def _check_secrets(self, diagnosis: IssueDiagnosis) -> dict[str, Any]:
         """Check if GitHub Secrets are configured"""
         required_secrets = ["ALPACA_API_KEY", "ALPACA_SECRET_KEY"]
 
-        missing_secrets = []
         for secret in required_secrets:
             # Can't actually check GitHub Secrets from here
             # But we can verify if they're mentioned in error
@@ -423,7 +402,7 @@ Format as JSON:
             "message": "Secret check completed (manual verification may be needed)",
         }
 
-    def _fix_dependencies(self, diagnosis: IssueDiagnosis) -> Dict[str, Any]:
+    def _fix_dependencies(self, diagnosis: IssueDiagnosis) -> dict[str, Any]:
         """Fix dependency issues"""
         logger.info("📦 Checking dependencies...")
 
@@ -434,7 +413,7 @@ Format as JSON:
         else:
             return {"success": False, "message": "requirements.txt not found"}
 
-    def _fix_workflow_syntax(self, diagnosis: IssueDiagnosis) -> Dict[str, Any]:
+    def _fix_workflow_syntax(self, diagnosis: IssueDiagnosis) -> dict[str, Any]:
         """Fix workflow YAML syntax errors"""
         logger.info("🔧 Checking workflow syntax...")
 
@@ -445,7 +424,7 @@ Format as JSON:
         else:
             return {"success": False, "message": "Workflows directory not found"}
 
-    def _clear_cache(self, diagnosis: IssueDiagnosis) -> Dict[str, Any]:
+    def _clear_cache(self, diagnosis: IssueDiagnosis) -> dict[str, Any]:
         """Clear stale cache"""
         logger.info("🧹 Clearing cache...")
 
@@ -476,7 +455,7 @@ Format as JSON:
                 "message": "No cache directory found (nothing to clear)",
             }
 
-    def resolve_issue(self, issue_data: Dict[str, Any]) -> Dict[str, Any]:
+    def resolve_issue(self, issue_data: dict[str, Any]) -> dict[str, Any]:
         """
         Complete issue resolution workflow.
 

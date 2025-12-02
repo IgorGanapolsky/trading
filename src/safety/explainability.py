@@ -1,9 +1,9 @@
 import json
 import logging
-from datetime import datetime
-from typing import Dict, Any, Optional
-from pathlib import Path
 import uuid
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +35,7 @@ class ExplainabilityTracer:
         self.trace_stack.append(trace_entry)
         return trace_id
 
-    def log_step(
-        self, agent: str, action: str, reasoning: str, data: Optional[Dict] = None
-    ):
+    def log_step(self, agent: str, action: str, reasoning: str, data: Optional[dict] = None):
         """Log a specific step/thought in the decision process."""
         if not self.trace_stack:
             return

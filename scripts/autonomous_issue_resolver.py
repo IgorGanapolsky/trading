@@ -5,14 +5,13 @@ Autonomous Issue Resolution Script
 Monitors GitHub issues and autonomously resolves them using AI agents.
 """
 
-import sys
-import os
-import json
 import argparse
 import logging
-from pathlib import Path
-from typing import List, Dict, Any
+import os
+import sys
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -25,9 +24,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def get_github_issues(
-    github_token: str, label: str = "trading-failure"
-) -> List[Dict[str, Any]]:
+def get_github_issues(github_token: str, label: str = "trading-failure") -> list[dict[str, Any]]:
     """
     Get GitHub issues with specified label.
 
@@ -46,7 +43,7 @@ def get_github_issues(
             "Accept": "application/vnd.github.v3+json",
         }
 
-        url = f"https://api.github.com/repos/IgorGanapolsky/trading/issues"
+        url = "https://api.github.com/repos/IgorGanapolsky/trading/issues"
         params = {"state": "open", "labels": label, "per_page": 100}
 
         response = requests.get(url, headers=headers, params=params)
@@ -58,9 +55,7 @@ def get_github_issues(
         return []
 
 
-def update_issue(
-    github_token: str, issue_number: int, comment: str, close: bool = False
-) -> bool:
+def update_issue(github_token: str, issue_number: int, comment: str, close: bool = False) -> bool:
     """
     Update GitHub issue with comment and optionally close it.
 
@@ -82,7 +77,9 @@ def update_issue(
         }
 
         # Add comment
-        comment_url = f"https://api.github.com/repos/IgorGanapolsky/trading/issues/{issue_number}/comments"
+        comment_url = (
+            f"https://api.github.com/repos/IgorGanapolsky/trading/issues/{issue_number}/comments"
+        )
         comment_data = {"body": comment}
 
         response = requests.post(comment_url, headers=headers, json=comment_data)
@@ -179,14 +176,14 @@ def main():
 
 **Status**: ✅ Auto-resolved
 
-**Root Cause**: {result['diagnosis']['root_cause']}
+**Root Cause**: {result["diagnosis"]["root_cause"]}
 
-**Fix Strategy**: {result['diagnosis']['fix_strategy']}
+**Fix Strategy**: {result["diagnosis"]["fix_strategy"]}
 
 **Fix Steps Executed**:
-{chr(10).join(f"- ✅ {step['step']}: {step.get('message', 'Completed')}" for step in result.get('fix_result', {}).get('fix_results', []))}
+{chr(10).join(f"- ✅ {step['step']}: {step.get('message', 'Completed')}" for step in result.get("fix_result", {}).get("fix_results", []))}
 
-**Confidence**: {result['diagnosis']['confidence']:.0%}
+**Confidence**: {result["diagnosis"]["confidence"]:.0%}
 
 This issue was automatically resolved by the AI Issue Resolution Agent.
 
@@ -204,14 +201,14 @@ This issue was automatically resolved by the AI Issue Resolution Agent.
 
 **Status**: ⚠️ Requires manual review
 
-**Root Cause**: {result['diagnosis']['root_cause']}
+**Root Cause**: {result["diagnosis"]["root_cause"]}
 
-**Fix Strategy**: {result['diagnosis']['fix_strategy']}
+**Fix Strategy**: {result["diagnosis"]["fix_strategy"]}
 
-**Why Not Auto-Fixed**: {result.get('message', 'Issue cannot be auto-fixed')}
+**Why Not Auto-Fixed**: {result.get("message", "Issue cannot be auto-fixed")}
 
 **Recommended Actions**:
-{chr(10).join(f"- {step}" for step in result.get('diagnosis', {}).get('fix_steps', []))}
+{chr(10).join(f"- {step}" for step in result.get("diagnosis", {}).get("fix_steps", []))}
 
 ---
 *Diagnosed at: {datetime.now().isoformat()}*

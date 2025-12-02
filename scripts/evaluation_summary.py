@@ -6,11 +6,8 @@ Shows recent evaluations, detected issues, and patterns.
 FREE - No API costs, local processing only.
 """
 
-import sys
 import os
-import json
-from pathlib import Path
-from datetime import datetime, timedelta
+import sys
 from collections import defaultdict
 
 # Add parent directory to path
@@ -31,7 +28,7 @@ def main():
     print("=" * 70)
     print()
 
-    print(f"📊 OVERVIEW:")
+    print("📊 OVERVIEW:")
     print(f"   Total Evaluations: {summary['total_evaluations']}")
     print(f"   Passed: {summary['passed']} ✅")
     print(f"   Failed: {summary['failed']} ❌")
@@ -45,14 +42,12 @@ def main():
         for issue in summary["critical_issues"]:
             issue_counts[issue] += 1
 
-        for issue, count in sorted(
-            issue_counts.items(), key=lambda x: x[1], reverse=True
-        )[:10]:
+        for issue, count in sorted(issue_counts.items(), key=lambda x: x[1], reverse=True)[:10]:
             print(f"   [{count}x] {issue}")
         print()
 
     if summary["error_patterns"]:
-        print(f"🔍 ERROR PATTERNS DETECTED:")
+        print("🔍 ERROR PATTERNS DETECTED:")
         for pattern_num, count in sorted(summary["error_patterns"].items()):
             pattern_names = {
                 "1": "Order size >10x expected",

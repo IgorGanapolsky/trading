@@ -22,10 +22,9 @@ Created: 2025-12-01
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import requests
-
 from src.rag.collectors.base_collector import BaseNewsCollector
 
 logger = logging.getLogger(__name__)
@@ -194,9 +193,7 @@ class FREDCollector(BaseNewsCollector):
 
         self.series_config = FRED_SERIES
 
-    def collect_ticker_news(
-        self, ticker: str, days_back: int = 7
-    ) -> List[Dict[str, Any]]:
+    def collect_ticker_news(self, ticker: str, days_back: int = 7) -> list[dict[str, Any]]:
         """
         Collect economic data relevant to a ticker.
 
@@ -211,7 +208,7 @@ class FREDCollector(BaseNewsCollector):
         """
         return self.collect_market_news(days_back=days_back)
 
-    def collect_market_news(self, days_back: int = 30) -> List[Dict[str, Any]]:
+    def collect_market_news(self, days_back: int = 30) -> list[dict[str, Any]]:
         """
         Collect all key economic indicators.
 
@@ -251,7 +248,7 @@ class FREDCollector(BaseNewsCollector):
 
     def _fetch_series(
         self, series_id: str, start_date: str, end_date: str
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         """
         Fetch a single FRED series.
 
@@ -287,9 +284,7 @@ class FREDCollector(BaseNewsCollector):
             return {
                 "series_id": series_id,
                 "observations": observations,
-                "latest_value": observations[0].get("value", ".")
-                if observations
-                else None,
+                "latest_value": observations[0].get("value", ".") if observations else None,
                 "latest_date": observations[0].get("date") if observations else None,
             }
 
@@ -298,8 +293,8 @@ class FREDCollector(BaseNewsCollector):
             return None
 
     def _convert_to_article(
-        self, series_id: str, config: Dict[str, Any], data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+        self, series_id: str, config: dict[str, Any], data: dict[str, Any]
+    ) -> Optional[dict[str, Any]]:
         """
         Convert FRED data to article format.
 
@@ -325,16 +320,16 @@ class FREDCollector(BaseNewsCollector):
         # Generate analysis based on indicator type
         analysis = self._generate_analysis(series_id, config, value, data)
 
-        content = f"""Economic Indicator: {config['name']} ({series_id})
-Category: {config['category']}
+        content = f"""Economic Indicator: {config["name"]} ({series_id})
+Category: {config["category"]}
 Latest Value: {value}
 Date: {latest_date}
-Impact Level: {config['impact']}
+Impact Level: {config["impact"]}
 
 {analysis}
 
 Historical Context:
-{self._format_history(data.get('observations', []))}
+{self._format_history(data.get("observations", []))}
 """
 
         return self.normalize_article(
@@ -349,9 +344,9 @@ Historical Context:
     def _generate_analysis(
         self,
         series_id: str,
-        config: Dict[str, Any],
+        config: dict[str, Any],
         value: float,
-        data: Dict[str, Any],
+        data: dict[str, Any],
     ) -> str:
         """Generate analysis text based on indicator."""
         observations = data.get("observations", [])
@@ -417,9 +412,13 @@ Historical Context:
         """Analyze employment indicators."""
         if series_id == "UNRATE":
             if value < 4:
-                return "SIGNAL: Very tight labor market - wage pressure likely. Late cycle indicator."
+                return (
+                    "SIGNAL: Very tight labor market - wage pressure likely. Late cycle indicator."
+                )
             elif value > 6:
-                return "SIGNAL: Elevated unemployment - recession signal. Risk-off, favor defensives."
+                return (
+                    "SIGNAL: Elevated unemployment - recession signal. Risk-off, favor defensives."
+                )
             else:
                 return "SIGNAL: Healthy labor market - supports consumer spending."
         elif series_id == "ICSA":
@@ -465,7 +464,7 @@ Historical Context:
                 return "SIGNAL: Consumer sentiment neutral."
         return ""
 
-    def _format_history(self, observations: List[Dict]) -> str:
+    def _format_history(self, observations: list[dict]) -> str:
         """Format observation history."""
         if not observations:
             return "No historical data available."
@@ -478,9 +477,7 @@ Historical Context:
 
         return "\n".join(lines)
 
-    def _calculate_sentiment(
-        self, series_id: str, value: float, data: Dict[str, Any]
-    ) -> float:
+    def _calculate_sentiment(self, series_id: str, value: float, data: dict[str, Any]) -> float:
         """
         Calculate sentiment score for economic indicator.
 
@@ -539,7 +536,7 @@ Historical Context:
 
         return 0.5
 
-    def get_macro_regime(self) -> Dict[str, Any]:
+    def get_macro_regime(self) -> dict[str, Any]:
         """
         Determine current macro regime from key indicators.
 

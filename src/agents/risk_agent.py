@@ -10,8 +10,11 @@ Responsibilities:
 Ensures we never blow up the account
 """
 
+import builtins
+import contextlib
 import logging
-from typing import Dict, Any
+from typing import Any
+
 from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -28,16 +31,12 @@ class RiskAgent(BaseAgent):
     - Circuit breakers
     """
 
-    def __init__(
-        self, max_portfolio_risk: float = 0.02, max_position_size: float = 0.05
-    ):
-        super().__init__(
-            name="RiskAgent", role="Portfolio risk management and position sizing"
-        )
+    def __init__(self, max_portfolio_risk: float = 0.02, max_position_size: float = 0.05):
+        super().__init__(name="RiskAgent", role="Portfolio risk management and position sizing")
         self.max_portfolio_risk = max_portfolio_risk  # Max 2% risk per trade
         self.max_position_size = max_position_size  # Max 5% per position
 
-    def analyze(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Assess risk and calculate position sizing.
 
@@ -86,7 +85,7 @@ Action: {proposed_action} | Confidence: {confidence:.0%} | Volatility: {volatili
 </trade_proposal>
 
 <calculated_parameters>
-Suggested Size: ${position_size:,.0f} ({position_size/portfolio_value:.1%} of portfolio)
+Suggested Size: ${position_size:,.0f} ({position_size / portfolio_value:.1%} of portfolio)
 Stop Loss: {stop_loss_pct:.1%}
 Max Loss if Stopped: ${position_size * stop_loss_pct:,.0f}
 </calculated_parameters>
@@ -217,7 +216,7 @@ RECOMMENDATION: [APPROVE/REJECT]
 
         return stop_loss
 
-    def _parse_risk_response(self, reasoning: str) -> Dict[str, Any]:
+    def _parse_risk_response(self, reasoning: str) -> dict[str, Any]:
         """Parse LLM response into structured risk assessment."""
         lines = reasoning.split("\n")
         analysis = {
@@ -232,19 +231,15 @@ RECOMMENDATION: [APPROVE/REJECT]
         for line in lines:
             line = line.strip()
             if line.startswith("RISK_SCORE:"):
-                try:
+                with contextlib.suppress(builtins.BaseException):
                     analysis["risk_score"] = int(line.split(":")[1].strip())
-                except:
-                    pass
             elif line.startswith("POSITION_APPROVAL:"):
                 approval = line.split(":")[1].strip().upper()
                 if approval in ["APPROVE", "REDUCE", "REJECT"]:
                     analysis["position_approval"] = approval
             elif line.startswith("POSITION_SIZE:"):
                 try:
-                    size_str = (
-                        line.split(":")[1].strip().replace("$", "").replace(",", "")
-                    )
+                    size_str = line.split(":")[1].strip().replace("$", "").replace(",", "")
                     analysis["position_size"] = float(size_str)
                 except:
                     pass

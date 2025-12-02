@@ -5,8 +5,7 @@ Collects company posts and thought leadership content.
 """
 
 import logging
-from typing import List, Dict, Any
-
+from typing import Any
 
 from src.rag.collectors.base_collector import BaseNewsCollector
 
@@ -24,7 +23,7 @@ class LinkedInCollector(BaseNewsCollector):
     def __init__(self):
         super().__init__(source_name="linkedin")
 
-    def collect_ticker_news(self, ticker: str, days_back: int = 7) -> List[Dict[str, Any]]:
+    def collect_ticker_news(self, ticker: str, days_back: int = 7) -> list[dict[str, Any]]:
         """
         Collect LinkedIn posts relevant to a ticker.
 
@@ -34,7 +33,7 @@ class LinkedInCollector(BaseNewsCollector):
         # Placeholder for now
         return []
 
-    def collect_market_news(self, days_back: int = 1) -> List[Dict[str, Any]]:
+    def collect_market_news(self, days_back: int = 1) -> list[dict[str, Any]]:
         """Collect general market news from LinkedIn influencers."""
         # Placeholder
         return []

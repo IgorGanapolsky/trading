@@ -3,6 +3,7 @@
 Check bond momentum vs equities to see if BND should be selected.
 Simple version using yfinance directly.
 """
+
 import yfinance as yf
 
 
@@ -105,9 +106,7 @@ def check_bond_momentum():
     bnd_result = next((r for r in results if r["symbol"] == "BND"), None)
 
     if best and bnd_result:
-        print(
-            f"Best ETF: {best['symbol']} (Momentum Score: {best['momentum_score']:.2f})"
-        )
+        print(f"Best ETF: {best['symbol']} (Momentum Score: {best['momentum_score']:.2f})")
         print(f"BND Score: {bnd_result['momentum_score']:.2f}")
 
         if best["symbol"] == "BND":

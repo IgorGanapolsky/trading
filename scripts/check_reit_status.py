@@ -11,9 +11,9 @@ Shows:
 
 import json
 import os
-from pathlib import Path
-from datetime import datetime
 from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
 
 
 def load_trade_files():
@@ -23,7 +23,7 @@ def load_trade_files():
 
     for trade_file in sorted(trades_dir.glob("trades_*.json")):
         try:
-            with open(trade_file, "r") as f:
+            with open(trade_file) as f:
                 file_trades = json.load(f)
                 if isinstance(file_trades, list):
                     trades.extend(file_trades)
@@ -93,9 +93,7 @@ def main():
     print(f"   VNQ added to strategy: {vnq_added_date}")
 
     if trades:
-        trade_dates = [
-            t.get("timestamp", "")[:10] for t in trades if t.get("timestamp")
-        ]
+        trade_dates = [t.get("timestamp", "")[:10] for t in trades if t.get("timestamp")]
         if trade_dates:
             last_trade_date = max(trade_dates)
             print(f"   Last trade execution: {last_trade_date}")
@@ -119,9 +117,7 @@ def main():
         if reit_amount >= execution_threshold:
             print("✅ REIT trading is CONFIGURED and READY")
             print(f"   Expected execution: ${reit_amount:.2f} per day")
-            print(
-                "   ⚠️  No VNQ trades yet - system hasn't executed since VNQ was added"
-            )
+            print("   ⚠️  No VNQ trades yet - system hasn't executed since VNQ was added")
             print("   ✅ VNQ will execute automatically on next trading day")
         else:
             print("❌ REIT trading NOT READY")

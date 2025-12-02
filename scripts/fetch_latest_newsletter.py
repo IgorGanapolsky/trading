@@ -6,7 +6,6 @@ Saves signals to data/newsletter_signals/newsletter_signals_YYYY-MM-DD.json
 
 import sys
 from pathlib import Path
-from datetime import datetime, timezone
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -36,15 +35,13 @@ def main():
 
             # Display signals
             for ticker, signal in signals.items():
-                print(f"{'─'*80}")
+                print(f"{'─' * 80}")
                 print(f"{ticker} SIGNAL")
-                print(f"{'─'*80}")
+                print(f"{'─' * 80}")
                 print(
                     f"Sentiment:   {signal.sentiment.upper()} ({signal.confidence:.0%} confidence)"
                 )
-                print(
-                    f"Source Date: {signal.source_date.strftime('%Y-%m-%d %H:%M:%S UTC')}"
-                )
+                print(f"Source Date: {signal.source_date.strftime('%Y-%m-%d %H:%M:%S UTC')}")
 
                 if signal.entry_price:
                     print(f"Entry:       ${signal.entry_price:,.0f}")

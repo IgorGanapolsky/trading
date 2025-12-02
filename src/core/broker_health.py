@@ -9,10 +9,10 @@ As CTO/CFO: Critical infrastructure monitoring for trading execution reliability
 
 import logging
 import os
-from datetime import datetime, timedelta
-from typing import Dict, Optional, Any
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -55,9 +55,7 @@ class BrokerHealthMetrics:
         """Determine if broker is healthy."""
         if self.status == BrokerStatus.HEALTHY:
             return True
-        if self.status == BrokerStatus.DEGRADED and self.consecutive_failures < 3:
-            return True
-        return False
+        return bool(self.status == BrokerStatus.DEGRADED and self.consecutive_failures < 3)
 
 
 class BrokerHealthMonitor:
@@ -102,8 +100,7 @@ class BrokerHealthMonitor:
             self.metrics.total_checks += 1
             self.metrics.successful_checks += 1
             self.metrics.avg_response_time_ms = (
-                self.metrics.avg_response_time_ms * (self.metrics.total_checks - 1)
-                + elapsed_ms
+                self.metrics.avg_response_time_ms * (self.metrics.total_checks - 1) + elapsed_ms
             ) / self.metrics.total_checks
             self.metrics.consecutive_failures = 0
             self.metrics.account_status = account_info.get("status", "UNKNOWN")
@@ -120,9 +117,7 @@ class BrokerHealthMonitor:
                 self.metrics.last_error = "Trading blocked"
             else:
                 self.metrics.status = BrokerStatus.DEGRADED
-                self.metrics.last_error = (
-                    f"Account status: {account_info.get('status')}"
-                )
+                self.metrics.last_error = f"Account status: {account_info.get('status')}"
 
             # Log health check
             self._log_health_check(success=True, response_time_ms=elapsed_ms)
@@ -144,9 +139,7 @@ class BrokerHealthMonitor:
             self.metrics.status = BrokerStatus.FAILING
 
             # Log health check failure
-            self._log_health_check(
-                success=False, response_time_ms=elapsed_ms, error=str(e)
-            )
+            self._log_health_check(success=False, response_time_ms=elapsed_ms, error=str(e))
 
             logger.error(
                 f"❌ Broker health check failed: {self.broker_name} "
@@ -181,7 +174,7 @@ class BrokerHealthMonitor:
         with open(log_file, "a") as f:
             f.write(json.dumps(log_entry) + "\n")
 
-    def get_health_summary(self) -> Dict[str, Any]:
+    def get_health_summary(self) -> dict[str, Any]:
         """Get formatted health summary."""
         return {
             "broker": self.broker_name,
@@ -219,10 +212,7 @@ class BrokerHealthMonitor:
             return True
 
         # Alert if success rate drops below 50% in recent checks
-        if self.metrics.total_checks >= 10 and self.metrics.success_rate < 50.0:
-            return True
-
-        return False
+        return bool(self.metrics.total_checks >= 10 and self.metrics.success_rate < 50.0)
 
     def get_alert_message(self) -> Optional[str]:
         """Generate alert message if needed."""

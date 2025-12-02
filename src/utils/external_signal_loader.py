@@ -4,12 +4,11 @@ Utilities for saving and loading external trading signals from open sources.
 
 from __future__ import annotations
 
+import json
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
-import json
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +24,9 @@ class ExternalSignal:
     source: str
     signal_type: str
     timestamp: datetime
-    notes: Optional[str] = None
+    notes: str | None = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "ticker": self.ticker.upper(),
             "score": self.score,
@@ -39,7 +38,7 @@ class ExternalSignal:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "ExternalSignal":
+    def from_dict(cls, data: dict) -> ExternalSignal:
         return cls(
             ticker=data["ticker"],
             score=float(data.get("score", 0.0)),
@@ -51,9 +50,7 @@ class ExternalSignal:
         )
 
 
-def save_signals(
-    signals: List[ExternalSignal], metadata: Optional[Dict] = None
-) -> Path:
+def save_signals(signals: list[ExternalSignal], metadata: dict | None = None) -> Path:
     """
     Persist a batch of signals to disk.
     """
@@ -76,7 +73,7 @@ def save_signals(
     return file_path
 
 
-def list_signal_files(limit: Optional[int] = None) -> List[Path]:
+def list_signal_files(limit: int | None = None) -> list[Path]:
     files = sorted(
         EXTERNAL_SIGNAL_DIR.glob("signals_*.json"),
         key=lambda p: p.stat().st_mtime,
@@ -87,7 +84,7 @@ def list_signal_files(limit: Optional[int] = None) -> List[Path]:
     return files
 
 
-def load_signals_file(path: Path) -> Dict[str, Dict]:
+def load_signals_file(path: Path) -> dict[str, dict]:
     if not path.exists():
         raise FileNotFoundError(path)
     with path.open("r", encoding="utf-8") as f:
@@ -97,7 +94,7 @@ def load_signals_file(path: Path) -> Dict[str, Dict]:
     return {entry["ticker"].upper(): entry for entry in signals}
 
 
-def load_latest_signals() -> Dict[str, Dict]:
+def load_latest_signals() -> dict[str, dict]:
     files = list_signal_files(limit=1)
     if not files:
         return {}
@@ -108,9 +105,7 @@ def load_latest_signals() -> Dict[str, Dict]:
         return {}
 
 
-def get_signal_for_ticker(
-    ticker: str, signals: Optional[Dict[str, Dict]] = None
-) -> Optional[Dict]:
+def get_signal_for_ticker(ticker: str, signals: dict[str, dict] | None = None) -> dict | None:
     if not ticker:
         return None
     signals = signals or load_latest_signals()

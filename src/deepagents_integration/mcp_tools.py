@@ -8,10 +8,8 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Dict, List
 
 from langchain_core.tools import tool
-
 from mcp import default_client
 
 logger = logging.getLogger(__name__)
@@ -21,7 +19,7 @@ logger = logging.getLogger(__name__)
 def call_mcp_tool(
     server: str,
     tool_name: str,
-    payload: Dict,
+    payload: dict,
 ) -> str:
     """
     Call a tool from an MCP server.
@@ -61,9 +59,7 @@ def get_mcp_servers() -> str:
             servers_info.append(
                 {
                     "id": server_config["id"],
-                    "display_name": server_config.get(
-                        "display_name", server_config["id"]
-                    ),
+                    "display_name": server_config.get("display_name", server_config["id"]),
                     "tools": list(server_config.get("tools", {}).keys()),
                 }
             )
@@ -74,7 +70,7 @@ def get_mcp_servers() -> str:
         return json.dumps({"error": str(e)})
 
 
-def build_mcp_tools_for_deepagents() -> List:
+def build_mcp_tools_for_deepagents() -> list:
     """
     Build MCP-related tools for deepagents.
 

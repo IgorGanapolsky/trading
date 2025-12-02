@@ -3,10 +3,9 @@
 Analyze Nov 6 trades - technical indicators and performance
 """
 
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
 import json
+
+import pandas as pd
 
 
 def calculate_rsi(prices, period=14):
@@ -159,16 +158,12 @@ print("=" * 80)
 
 # Try to load system state to get more context
 try:
-    with open(
-        "/Users/igorganapolsky/workspace/git/apps/trading/data/system_state.json", "r"
-    ) as f:
+    with open("/Users/igorganapolsky/workspace/git/apps/trading/data/system_state.json") as f:
         state = json.load(f)
         print()
         print("SYSTEM STATE CONTEXT:")
         print(f"  Challenge Day: {state['challenge']['current_day']}")
-        print(
-            f"  Total P/L: ${state['account']['total_pl']} ({state['account']['total_pl_pct']}%)"
-        )
+        print(f"  Total P/L: ${state['account']['total_pl']} ({state['account']['total_pl_pct']}%)")
         print(f"  Win Rate: {state['performance']['win_rate']}%")
         print()
 except Exception as e:

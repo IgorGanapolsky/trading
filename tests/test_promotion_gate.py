@@ -4,7 +4,6 @@ from pathlib import Path
 
 from scripts.enforce_promotion_gate import evaluate_gate
 
-
 FIXTURES = Path("tests/fixtures")
 
 

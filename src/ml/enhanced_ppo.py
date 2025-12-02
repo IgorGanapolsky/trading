@@ -10,12 +10,12 @@ Improvements over basic PPO:
 - Entropy bonus for exploration
 """
 
+import logging
+from dataclasses import dataclass
+
+import numpy as np
 import torch
 import torch.optim as optim
-import numpy as np
-import logging
-from typing import Dict, List, Tuple
-from dataclasses import dataclass
 
 from .networks import LSTMPPO
 
@@ -98,9 +98,7 @@ class EnhancedPPOTrainer:
         self.values = []
         self.dones = []
 
-        logger.info(
-            f"Enhanced PPO Trainer initialized: lr={learning_rate}, clip={clip_epsilon}"
-        )
+        logger.info(f"Enhanced PPO Trainer initialized: lr={learning_rate}, clip={clip_epsilon}")
 
     def store_transition(
         self,
@@ -121,11 +119,11 @@ class EnhancedPPOTrainer:
 
     def compute_gae(
         self,
-        rewards: List[float],
-        values: List[float],
-        dones: List[bool],
+        rewards: list[float],
+        values: list[float],
+        dones: list[bool],
         next_value: float = 0.0,
-    ) -> Tuple[List[float], List[float]]:
+    ) -> tuple[list[float], list[float]]:
         """
         Compute Generalized Advantage Estimation (GAE).
 
@@ -159,7 +157,7 @@ class EnhancedPPOTrainer:
 
         return advantages, returns
 
-    def train(self) -> Dict[str, float]:
+    def train(self) -> dict[str, float]:
         """
         Train on collected experiences.
 
@@ -197,7 +195,7 @@ class EnhancedPPOTrainer:
         total_value_loss = 0.0
         total_entropy = 0.0
 
-        for epoch in range(self.ppo_epochs):
+        for _epoch in range(self.ppo_epochs):
             # Shuffle indices
             indices = torch.randperm(len(states))
 
@@ -239,18 +237,12 @@ class EnhancedPPOTrainer:
                 value_loss = 0.5 * torch.max(value_loss1, value_loss2).mean()
 
                 # Total loss
-                loss = (
-                    policy_loss
-                    + self.value_coef * value_loss
-                    - self.entropy_coef * entropy
-                )
+                loss = policy_loss + self.value_coef * value_loss - self.entropy_coef * entropy
 
                 # Backward pass
                 self.optimizer.zero_grad()
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(
-                    self.model.parameters(), self.max_grad_norm
-                )
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
                 self.optimizer.step()
 
                 total_policy_loss += policy_loss.item()
@@ -268,12 +260,8 @@ class EnhancedPPOTrainer:
         avg_policy_loss = total_policy_loss / (
             self.ppo_epochs * (len(states) // self.batch_size + 1)
         )
-        avg_value_loss = total_value_loss / (
-            self.ppo_epochs * (len(states) // self.batch_size + 1)
-        )
-        avg_entropy = total_entropy / (
-            self.ppo_epochs * (len(states) // self.batch_size + 1)
-        )
+        avg_value_loss = total_value_loss / (self.ppo_epochs * (len(states) // self.batch_size + 1))
+        avg_entropy = total_entropy / (self.ppo_epochs * (len(states) // self.batch_size + 1))
 
         return {
             "policy_loss": avg_policy_loss,

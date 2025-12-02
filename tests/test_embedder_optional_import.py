@@ -4,9 +4,9 @@ Test that embedder can be imported without sentence_transformers installed.
 This test verifies that the lazy import fix works correctly.
 """
 
-import pytest
-
 from unittest.mock import patch
+
+import pytest
 
 
 def test_embedder_import_without_sentence_transformers():
@@ -44,9 +44,7 @@ def test_deepagents_tools_import_without_rag():
         from src.deepagents_integration import tools
 
         # _get_sentiment_store should return None when RAG not available
-        with patch(
-            "src.deepagents_integration.tools._get_sentiment_store", return_value=None
-        ):
+        with patch("src.deepagents_integration.tools._get_sentiment_store", return_value=None):
             # Should handle gracefully
             result = tools.query_sentiment("test query")
             assert "error" in result.lower() or "not available" in result.lower()

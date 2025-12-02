@@ -6,16 +6,16 @@ Continuously monitors and learns from Bogleheads.org forum to extract
 investing wisdom and integrate insights into RL trading engine.
 """
 
-import os
-import sys
 import json
 import logging
-import time
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
+import os
 import re
+import sys
+import time
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Optional
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -39,8 +39,8 @@ except ImportError:
 
 try:
     from langchain.embeddings import OpenAIEmbeddings
-    from langchain.vectorstores import FAISS
     from langchain.text_splitter import RecursiveCharacterTextSplitter
+    from langchain.vectorstores import FAISS
 except ImportError:
     print("⚠️  Missing langchain: pip install langchain faiss-cpu")
     OpenAIEmbeddings = None
@@ -138,11 +138,11 @@ class BogleheadsLearner:
 
     def monitor_bogleheads_forum(
         self,
-        topics: Optional[List[str]] = None,
-        keywords: Optional[List[str]] = None,
+        topics: Optional[list[str]] = None,
+        keywords: Optional[list[str]] = None,
         max_posts: int = 50,
         min_replies: int = 5,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Monitor Bogleheads forum for new discussions.
 
@@ -180,7 +180,6 @@ class BogleheadsLearner:
 
         posts_analyzed = 0
         insights_extracted = 0
-        topics_found = []
 
         try:
             # Check robots.txt first
@@ -228,9 +227,7 @@ class BogleheadsLearner:
                                     posts_found.append(
                                         {
                                             "title": title_text,
-                                            "content": desc_text[
-                                                :1000
-                                            ],  # Limit content
+                                            "content": desc_text[:1000],  # Limit content
                                             "url": link.get_text() if link else "",
                                             "date": (
                                                 item.find("pubDate").get_text()
@@ -261,9 +258,7 @@ class BogleheadsLearner:
                     soup = BeautifulSoup(resp.text, "html.parser")
 
                     # Find topic links (phpBB structure)
-                    topic_links = soup.find_all(
-                        "a", class_=["topictitle", "forumtitle"], href=True
-                    )
+                    topic_links = soup.find_all("a", class_=["topictitle", "forumtitle"], href=True)
 
                     for link in topic_links[:max_posts]:
                         title = link.get_text(strip=True)
@@ -275,9 +270,7 @@ class BogleheadsLearner:
                             try:
                                 self._rate_limit()
                                 post_url = (
-                                    href
-                                    if href.startswith("http")
-                                    else f"{self.forum_url}/{href}"
+                                    href if href.startswith("http") else f"{self.forum_url}/{href}"
                                 )
                                 post_resp = requests.get(
                                     post_url,
@@ -286,21 +279,13 @@ class BogleheadsLearner:
                                 )
 
                                 if post_resp.status_code == 200:
-                                    post_soup = BeautifulSoup(
-                                        post_resp.text, "html.parser"
-                                    )
-                                    content_div = post_soup.find(
-                                        "div", class_="content"
-                                    )
+                                    post_soup = BeautifulSoup(post_resp.text, "html.parser")
+                                    content_div = post_soup.find("div", class_="content")
                                     content = (
-                                        content_div.get_text(strip=True)
-                                        if content_div
-                                        else ""
+                                        content_div.get_text(strip=True) if content_div else ""
                                     )
 
-                                    if (
-                                        len(content) > 100
-                                    ):  # Only if substantial content
+                                    if len(content) > 100:  # Only if substantial content
                                         posts_found.append(
                                             {
                                                 "title": title,
@@ -316,9 +301,7 @@ class BogleheadsLearner:
                                 break
 
                     if posts_found:
-                        logger.info(
-                            f"✅ Found {len(posts_found)} posts via HTML scraping"
-                        )
+                        logger.info(f"✅ Found {len(posts_found)} posts via HTML scraping")
                 except Exception as e:
                     logger.warning(f"HTML scraping failed: {e}")
 
@@ -344,9 +327,7 @@ class BogleheadsLearner:
                 # Store insights in RAG
                 if all_insights:
                     store_result = self.store_insights_to_rag(all_insights)
-                    logger.info(
-                        f"✅ Stored {store_result.get('stored_count', 0)} insights to RAG"
-                    )
+                    logger.info(f"✅ Stored {store_result.get('stored_count', 0)} insights to RAG")
 
             return {
                 "success": True,
@@ -361,8 +342,8 @@ class BogleheadsLearner:
             return {"success": False, "error": str(e)}
 
     def extract_investing_insights(
-        self, post_content: str, post_metadata: Dict[str, Any]
-    ) -> List[InvestingInsight]:
+        self, post_content: str, post_metadata: dict[str, Any]
+    ) -> list[InvestingInsight]:
         """
         Extract investing insights from forum post using Claude.
 
@@ -379,10 +360,10 @@ class BogleheadsLearner:
 
         prompt = f"""Analyze this Bogleheads forum post and extract investing insights.
 
-POST TITLE: {post_metadata.get('title', 'N/A')}
-AUTHOR: {post_metadata.get('author', 'N/A')}
-REPLIES: {post_metadata.get('replies', 0)}
-DATE: {post_metadata.get('date', 'N/A')}
+POST TITLE: {post_metadata.get("title", "N/A")}
+AUTHOR: {post_metadata.get("author", "N/A")}
+REPLIES: {post_metadata.get("replies", 0)}
+DATE: {post_metadata.get("date", "N/A")}
 
 POST CONTENT:
 {post_content[:2000]}  # Limit to 2000 chars
@@ -445,9 +426,9 @@ Return JSON array of insights:
 
     def store_insights_to_rag(
         self,
-        insights: List[InvestingInsight],
+        insights: list[InvestingInsight],
         embedding_model: str = "text-embedding-3-small",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Store insights in RAG vector store.
 
@@ -506,8 +487,8 @@ Extracted: {insight.extracted_at}
             return {"stored_count": 0, "error": str(e)}
 
     def get_bogleheads_signal(
-        self, symbol: str, market_context: Dict[str, Any], query: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, symbol: str, market_context: dict[str, Any], query: Optional[str] = None
+    ) -> dict[str, Any]:
         """
         Get trading signal based on Bogleheads forum wisdom.
 
@@ -530,9 +511,7 @@ Extracted: {insight.extracted_at}
         try:
             # Build query
             if not query:
-                query = (
-                    f"What do Bogleheads recommend for {symbol} given: {market_context}"
-                )
+                query = f"What do Bogleheads recommend for {symbol} given: {market_context}"
 
             # Search RAG
             docs = self.vectorstore.similarity_search(query, k=5)
@@ -607,9 +586,7 @@ Return JSON:
                 "insights_used": [],
             }
 
-    def analyze_market_regime_bogleheads(
-        self, timeframe: str = "30d"
-    ) -> Dict[str, Any]:
+    def analyze_market_regime_bogleheads(self, timeframe: str = "30d") -> dict[str, Any]:
         """
         Analyze market regime based on Bogleheads discussions.
 

@@ -38,9 +38,7 @@ def test_result_non_json_returns_none(caplog: pytest.LogCaptureFixture) -> None:
 def test_run_structured_raises_when_invalid_json(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    client = ADKOrchestratorClient(
-        config=ADKClientConfig(base_url="http://localhost:8080/api")
-    )
+    client = ADKOrchestratorClient(config=ADKClientConfig(base_url="http://localhost:8080/api"))
 
     def fake_run(*_, **__) -> OrchestratorResult:
         return OrchestratorResult(session_id="abc", final_text="{}")

@@ -2,21 +2,20 @@
 Historical Trends Page - 30-day sentiment trends and correlation analysis.
 """
 
-import streamlit as st
 import json
-import pandas as pd
-import numpy as np
-from pathlib import Path
-from datetime import datetime, timedelta
 import sys
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import pandas as pd
+import streamlit as st
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from dashboard.utils.chart_builders import (
-    create_sentiment_timeline,
-    create_correlation_heatmap,
-    create_win_rate_by_sentiment_bar,
     COLORS,
+    create_sentiment_timeline,
+    create_win_rate_by_sentiment_bar,
 )
 
 st.set_page_config(page_title="Historical Trends", page_icon="📈", layout="wide")
@@ -90,9 +89,7 @@ def load_performance_data(data_dir: Path):
         return json.load(f)
 
 
-def calculate_correlation(
-    sentiment_df: pd.DataFrame, returns_df: pd.DataFrame
-) -> pd.DataFrame:
+def calculate_correlation(sentiment_df: pd.DataFrame, returns_df: pd.DataFrame) -> pd.DataFrame:
     """Calculate correlation between sentiment and returns."""
     # Merge on date and ticker
     merged = pd.merge(sentiment_df, returns_df, on=["date", "ticker"], how="inner")
@@ -173,10 +170,7 @@ def main():
     with col1:
         st.markdown("**Average Sentiment by Ticker**")
         avg_sentiment = (
-            df_timeline.groupby("ticker")["score"]
-            .mean()
-            .sort_values(ascending=False)
-            .head(10)
+            df_timeline.groupby("ticker")["score"].mean().sort_values(ascending=False).head(10)
         )
 
         stats_df = pd.DataFrame(
@@ -184,11 +178,7 @@ def main():
                 "Ticker": avg_sentiment.index,
                 "Avg Sentiment": avg_sentiment.values.round(1),
                 "Trend": [
-                    (
-                        "🟢 Bullish"
-                        if x > 20
-                        else "🔴 Bearish" if x < -20 else "🟡 Neutral"
-                    )
+                    ("🟢 Bullish" if x > 20 else "🔴 Bearish" if x < -20 else "🟡 Neutral")
                     for x in avg_sentiment.values
                 ],
             }
@@ -198,10 +188,7 @@ def main():
     with col2:
         st.markdown("**Sentiment Volatility (Std Dev)**")
         volatility = (
-            df_timeline.groupby("ticker")["score"]
-            .std()
-            .sort_values(ascending=False)
-            .head(10)
+            df_timeline.groupby("ticker")["score"].std().sort_values(ascending=False).head(10)
         )
 
         vol_df = pd.DataFrame(
@@ -232,8 +219,8 @@ def main():
 
         st.markdown(
             f"""
-            <div style='background: {COLORS['grid']}; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;'>
-                <p style='color: {COLORS['text']}; margin: 0;'>
+            <div style='background: {COLORS["grid"]}; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;'>
+                <p style='color: {COLORS["text"]}; margin: 0;'>
                     <strong>Correlation Analysis:</strong> Comparing sentiment scores with actual portfolio returns.
                     High positive correlation indicates sentiment is a good predictor of returns.
                 </p>
@@ -267,7 +254,9 @@ def main():
                     corr_strength = (
                         "Strong"
                         if abs(overall_corr) > 0.7
-                        else "Moderate" if abs(overall_corr) > 0.4 else "Weak"
+                        else "Moderate"
+                        if abs(overall_corr) > 0.4
+                        else "Weak"
                     )
                     st.metric("Correlation Strength", corr_strength)
 
@@ -315,8 +304,8 @@ def main():
 
     st.markdown(
         f"""
-        <div style='background: {COLORS['grid']}; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;'>
-            <p style='color: {COLORS['text']}; margin: 0;'>
+        <div style='background: {COLORS["grid"]}; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;'>
+            <p style='color: {COLORS["text"]}; margin: 0;'>
                 <strong>Analysis:</strong> Breakdown of trading success rate by sentiment strength.
                 This helps validate whether stronger sentiment signals lead to better outcomes.
             </p>
@@ -372,7 +361,7 @@ if __name__ == "__main__":
         f"""
         <style>
         .stApp {{
-            background-color: {COLORS['background']};
+            background-color: {COLORS["background"]};
         }}
         </style>
     """,

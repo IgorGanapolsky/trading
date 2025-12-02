@@ -10,10 +10,11 @@ Based on LangChain DeepAgents demo:
 - Middleware for human-in-the-loop verification
 """
 
-
+import json
+import logging
 from datetime import datetime
-from typing import Dict, List, Any
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ class DeepAgentsTradingOrchestrator:
     5. Human-in-the-loop approval gates
     """
 
-    def __init__(self, symbols: List[str], paper: bool = True):
+    def __init__(self, symbols: list[str], paper: bool = True):
         self.symbols = symbols
         self.paper = paper
         self.plan_file = Path("data/trading_plans")
@@ -41,7 +42,7 @@ class DeepAgentsTradingOrchestrator:
         self._signal_agent = None
         self._risk_agent = None
 
-    async def execute_trading_cycle(self) -> Dict[str, Any]:
+    async def execute_trading_cycle(self) -> dict[str, Any]:
         """
         Execute full trading cycle using DeepAgents pattern.
 
@@ -93,7 +94,7 @@ class DeepAgentsTradingOrchestrator:
             logger.error(f"Trading cycle failed: {e}")
             return {"cycle_id": cycle_id, "status": "failed", "error": str(e)}
 
-    async def _create_trading_plan(self, cycle_id: str) -> Dict[str, Any]:
+    async def _create_trading_plan(self, cycle_id: str) -> dict[str, Any]:
         """
         Create trading plan using DeepAgents planning pattern.
 
@@ -109,7 +110,7 @@ class DeepAgentsTradingOrchestrator:
 
             planning_prompt = f"""Create a trading plan for today's market analysis.
 
-Symbols to analyze: {', '.join(self.symbols)}
+Symbols to analyze: {", ".join(self.symbols)}
 
 Break this down into steps using write_todos:
 1. Gather market data for each symbol
@@ -147,7 +148,7 @@ Limit each step to maximum 5 tool calls.
             logger.error(f"Planning failed: {e}")
             return self._create_fallback_plan(cycle_id)
 
-    def _create_fallback_plan(self, cycle_id: str) -> Dict[str, Any]:
+    def _create_fallback_plan(self, cycle_id: str) -> dict[str, Any]:
         """Fallback plan if DeepAgents unavailable."""
         return {
             "cycle_id": cycle_id,
@@ -161,7 +162,7 @@ Limit each step to maximum 5 tool calls.
             ],
         }
 
-    def _extract_plan_from_result(self, result: Any) -> Dict[str, Any]:
+    def _extract_plan_from_result(self, result: Any) -> dict[str, Any]:
         """Extract structured plan from DeepAgents result."""
         # Try to find plan in messages
         if isinstance(result, dict) and "messages" in result:
@@ -185,7 +186,7 @@ Limit each step to maximum 5 tool calls.
             ],
         }
 
-    def _parse_steps_from_content(self, content: str) -> List[Dict[str, Any]]:
+    def _parse_steps_from_content(self, content: str) -> list[dict[str, Any]]:
         """Parse steps from agent content (simplified)."""
         steps = []
         lines = content.split("\n")
@@ -194,9 +195,7 @@ Limit each step to maximum 5 tool calls.
             if any(marker in line.lower() for marker in ["1.", "step", "todo", "-"]):
                 step_name = line.strip().split(".", 1)[-1].strip()
                 step_type = self._infer_step_type(step_name)
-                steps.append(
-                    {"name": f"step_{i}", "type": step_type, "description": step_name}
-                )
+                steps.append({"name": f"step_{i}", "type": step_type, "description": step_name})
 
         return (
             steps
@@ -224,17 +223,15 @@ Limit each step to maximum 5 tool calls.
             return "report"
         return "research"
 
-    async def _execute_research(self, step: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_research(self, step: dict[str, Any]) -> dict[str, Any]:
         """Execute research step using DeepAgents."""
         try:
             from src.deepagents_integration import create_trading_research_agent
 
             if not self._research_agent:
-                self._research_agent = create_trading_research_agent(
-                    include_mcp_tools=True
-                )
+                self._research_agent = create_trading_research_agent(include_mcp_tools=True)
 
-            research_prompt = f"""Research the following symbols: {', '.join(self.symbols)}
+            research_prompt = f"""Research the following symbols: {", ".join(self.symbols)}
 
 For each symbol:
 1. Gather latest market data
@@ -256,7 +253,7 @@ Limit to 5 tool calls per symbol.
             logger.error(f"Research step failed: {e}")
             return {"success": False, "error": str(e)}
 
-    async def _execute_signal_generation(self, step: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_signal_generation(self, step: dict[str, Any]) -> dict[str, Any]:
         """Execute signal generation step."""
         try:
             from src.deepagents_integration import create_market_analysis_agent
@@ -266,7 +263,7 @@ Limit to 5 tool calls per symbol.
                     include_mcp_tools=True, temperature=0.2
                 )
 
-            signal_prompt = f"""Generate trading signals for: {', '.join(self.symbols)}
+            signal_prompt = f"""Generate trading signals for: {", ".join(self.symbols)}
 
 For each symbol:
 1. Review research data (read from files if saved)
@@ -287,7 +284,7 @@ Save signals to a file.
             logger.error(f"Signal generation failed: {e}")
             return {"success": False, "error": str(e)}
 
-    async def _execute_risk_validation(self, step: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_risk_validation(self, step: dict[str, Any]) -> dict[str, Any]:
         """Execute risk validation step."""
         # Use existing risk agent
 
@@ -296,7 +293,7 @@ Save signals to a file.
         # This would validate signals from previous step
         return {"success": True, "type": "risk", "result": "Risk validation completed"}
 
-    async def _execute_trade(self, step: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_trade(self, step: dict[str, Any]) -> dict[str, Any]:
         """Execute trade step (with approval gates)."""
         # Use existing execution agent
 
@@ -308,12 +305,10 @@ Save signals to a file.
         }
 
     async def _generate_report(
-        self, step: Dict[str, Any], results: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, step: dict[str, Any], results: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate final report using filesystem."""
-        report_path = (
-            self.plan_file / f"report_{datetime.now().strftime('%Y%m%d')}.json"
-        )
+        report_path = self.plan_file / f"report_{datetime.now().strftime('%Y%m%d')}.json"
 
         report = {
             "date": datetime.now().isoformat(),
@@ -327,9 +322,7 @@ Save signals to a file.
 
         return {"success": True, "type": "report", "report_path": str(report_path)}
 
-    def _save_cycle_results(
-        self, cycle_id: str, plan: Dict[str, Any], results: Dict[str, Any]
-    ):
+    def _save_cycle_results(self, cycle_id: str, plan: dict[str, Any], results: dict[str, Any]):
         """Save cycle results to filesystem."""
         results_path = self.plan_file / f"{cycle_id}_results.json"
 

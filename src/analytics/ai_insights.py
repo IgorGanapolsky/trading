@@ -5,12 +5,10 @@ Generates natural language insights, anomaly detection, trade critiques,
 and strategy health scoring using AI agents.
 """
 
-import os
-import json
-from typing import Dict, List, Any, Optional
-from datetime import datetime
-from dataclasses import dataclass
 import logging
+import os
+from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +18,9 @@ class DailyBriefing:
     """AI-generated daily briefing"""
 
     summary: str
-    key_changes: List[str]
-    anomalies: List[str]
-    recommendations: List[str]
+    key_changes: list[str]
+    anomalies: list[str]
+    recommendations: list[str]
     confidence_score: float  # 0-1
 
 
@@ -36,7 +34,7 @@ class TradeCritique:
     position_sizing_score: float
     overall_score: float
     critique: str
-    suggestions: List[str]
+    suggestions: list[str]
 
 
 @dataclass
@@ -49,7 +47,7 @@ class StrategyHealth:
     consistency_score: float
     edge_score: float
     diagnosis: str
-    action_items: List[str]
+    action_items: list[str]
 
 
 class AIInsightGenerator:
@@ -70,9 +68,9 @@ class AIInsightGenerator:
 
     def generate_daily_briefing(
         self,
-        metrics: Dict[str, Any],
-        recent_trades: List[Dict[str, Any]],
-        risk_metrics: Dict[str, Any],
+        metrics: dict[str, Any],
+        recent_trades: list[dict[str, Any]],
+        risk_metrics: dict[str, Any],
     ) -> DailyBriefing:
         """
         Generate natural language daily briefing.
@@ -103,7 +101,7 @@ class AIInsightGenerator:
         if max_dd > 5.0:
             summary += f"⚠️ Max drawdown: {max_dd:.1f}% - monitor risk closely."
         else:
-            summary += f"Risk metrics are within acceptable range."
+            summary += "Risk metrics are within acceptable range."
 
         # Key changes
         key_changes = []
@@ -126,9 +124,7 @@ class AIInsightGenerator:
         # Recommendations
         recommendations = []
         if avg_daily < 1.0:
-            recommendations.append(
-                "Consider increasing position sizes if win rate is stable"
-            )
+            recommendations.append("Consider increasing position sizes if win rate is stable")
 
         if win_rate < 40:
             recommendations.append("Review entry signals - may need tighter filters")
@@ -148,10 +144,10 @@ class AIInsightGenerator:
 
     def detect_anomalies(
         self,
-        equity_curve: List[float],
-        trades: List[Dict[str, Any]],
-        metrics: Dict[str, Any],
-    ) -> List[str]:
+        equity_curve: list[float],
+        trades: list[dict[str, Any]],
+        metrics: dict[str, Any],
+    ) -> list[str]:
         """
         Detect anomalies in trading performance.
 
@@ -179,7 +175,7 @@ class AIInsightGenerator:
             for i, ret in enumerate(recent_returns[-5:]):
                 if abs(ret - avg_return) > 3 * std_return:
                     anomalies.append(
-                        f"Outlier return detected: {ret*100:.2f}% on day {len(equity_curve)-5+i}"
+                        f"Outlier return detected: {ret * 100:.2f}% on day {len(equity_curve) - 5 + i}"
                     )
 
         # Check for unusual trade patterns
@@ -197,9 +193,7 @@ class AIInsightGenerator:
 
         return anomalies
 
-    def critique_trade(
-        self, trade: Dict[str, Any], market_data: Dict[str, Any]
-    ) -> TradeCritique:
+    def critique_trade(self, trade: dict[str, Any], market_data: dict[str, Any]) -> TradeCritique:
         """
         AI critique of a specific trade.
 
@@ -212,8 +206,8 @@ class AIInsightGenerator:
         """
         trade_id = trade.get("order_id", "unknown")
         pl = trade.get("pl", 0.0)
-        entry_price = trade.get("entry_price", 0.0)
-        exit_price = trade.get("exit_price", 0.0)
+        trade.get("entry_price", 0.0)
+        trade.get("exit_price", 0.0)
 
         # Entry timing (simplified - would use market regime)
         entry_score = 0.5  # Placeholder
@@ -222,7 +216,7 @@ class AIInsightGenerator:
         exit_score = 0.5  # Placeholder
 
         # Position sizing
-        amount = trade.get("amount", 0.0)
+        trade.get("amount", 0.0)
         sizing_score = 0.5  # Placeholder
 
         # Overall score
@@ -254,9 +248,9 @@ class AIInsightGenerator:
 
     def assess_strategy_health(
         self,
-        metrics: Dict[str, Any],
-        risk_metrics: Dict[str, Any],
-        forecast: Dict[str, Any],
+        metrics: dict[str, Any],
+        risk_metrics: dict[str, Any],
+        forecast: dict[str, Any],
     ) -> StrategyHealth:
         """
         Assess overall strategy health.

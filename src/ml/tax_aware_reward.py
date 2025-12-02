@@ -6,13 +6,13 @@ This ensures the RL agent optimizes for after-tax returns, not just gross return
 """
 
 import logging
-from typing import Dict, Any, Optional
 from datetime import datetime
+from typing import Any, Optional
 
 from src.utils.tax_optimization import (
-    TaxOptimizer,
     LONG_TERM_THRESHOLD_DAYS,
     PDT_DAY_TRADE_THRESHOLD,
+    TaxOptimizer,
 )
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class TaxAwareRewardFunction:
 
     def calculate_reward(
         self,
-        trade_result: Dict[str, Any],
+        trade_result: dict[str, Any],
         base_reward: float,
         current_equity: float,
     ) -> float:
@@ -86,16 +86,12 @@ class TaxAwareRewardFunction:
                 # Reward long-term gains (lower tax rate)
                 tax_savings = pl * (0.37 - 0.20)  # 17% tax savings
                 adjusted_reward += tax_savings * 0.5  # Scale down for RL stability
-                logger.debug(
-                    f"Long-term gain bonus: {symbol} +${tax_savings:.2f} tax savings"
-                )
+                logger.debug(f"Long-term gain bonus: {symbol} +${tax_savings:.2f} tax savings")
             elif holding_period_days < 30:
                 # Penalize very short-term gains (highest tax rate)
                 tax_penalty = pl * (0.37 - 0.20) * 0.3  # 17% tax penalty, scaled
                 adjusted_reward -= tax_penalty
-                logger.debug(
-                    f"Short-term gain penalty: {symbol} -${tax_penalty:.2f} tax penalty"
-                )
+                logger.debug(f"Short-term gain penalty: {symbol} -${tax_penalty:.2f} tax penalty")
             elif holding_period_days < 90:
                 # Moderate penalty for short-term gains
                 tax_penalty = pl * (0.37 - 0.20) * 0.15
@@ -108,9 +104,7 @@ class TaxAwareRewardFunction:
                 # Heavy penalty if close to PDT threshold
                 pdt_penalty = base_reward * 0.2  # 20% penalty
                 adjusted_reward -= pdt_penalty
-                logger.warning(
-                    f"Day trade penalty (PDT risk): {symbol} -${pdt_penalty:.2f}"
-                )
+                logger.warning(f"Day trade penalty (PDT risk): {symbol} -${pdt_penalty:.2f}")
             elif pdt_status["day_trades_count"] >= 2:
                 # Moderate penalty
                 pdt_penalty = base_reward * 0.1
@@ -131,29 +125,24 @@ class TaxAwareRewardFunction:
                 wash_sale_penalty = abs(pl) * 0.5  # 50% penalty
                 adjusted_reward -= wash_sale_penalty
                 logger.warning(
-                    f"Wash sale penalty: {symbol} -${wash_sale_penalty:.2f} "
-                    f"(loss disallowed)"
+                    f"Wash sale penalty: {symbol} -${wash_sale_penalty:.2f} (loss disallowed)"
                 )
 
         # Reward tax-loss harvesting (realizing losses to offset gains)
         if pl < 0 and len(self.tax_optimizer.tax_events) >= 3:
             # Check if we have gains to offset
             recent_gains = sum(
-                e.gain_loss
-                for e in self.tax_optimizer.tax_events[-10:]
-                if e.gain_loss > 0
+                e.gain_loss for e in self.tax_optimizer.tax_events[-10:] if e.gain_loss > 0
             )
             if recent_gains > abs(pl):
                 # Small bonus for tax-loss harvesting
                 tax_loss_bonus = abs(pl) * 0.1  # 10% bonus
                 adjusted_reward += tax_loss_bonus
-                logger.debug(
-                    f"Tax-loss harvesting bonus: {symbol} +${tax_loss_bonus:.2f}"
-                )
+                logger.debug(f"Tax-loss harvesting bonus: {symbol} +${tax_loss_bonus:.2f}")
 
         return adjusted_reward
 
-    def get_tax_constraints(self, current_equity: float) -> Dict[str, Any]:
+    def get_tax_constraints(self, current_equity: float) -> dict[str, Any]:
         """
         Get tax constraints for RL agent action space.
 

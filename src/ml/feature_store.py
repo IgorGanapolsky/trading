@@ -28,7 +28,7 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -44,15 +44,15 @@ class FeatureMetadata:
     symbol: str
     version: int
     created_at: str
-    feature_names: List[str]
+    feature_names: list[str]
     data_start: str
     data_end: str
     num_samples: int
-    normalization_params: Dict[str, Dict[str, float]]
+    normalization_params: dict[str, dict[str, float]]
     source_hash: str  # Hash of source data for reproducibility
-    extra: Dict[str, Any] = field(default_factory=dict)
+    extra: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "feature_id": self.feature_id,
             "symbol": self.symbol,
@@ -68,7 +68,7 @@ class FeatureMetadata:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "FeatureMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> "FeatureMetadata":
         return cls(**data)
 
 
@@ -80,8 +80,8 @@ class FeatureDriftReport:
     old_version: int
     new_version: int
     drift_detected: bool
-    drift_features: List[str]
-    drift_scores: Dict[str, float]
+    drift_features: list[str]
+    drift_scores: dict[str, float]
     recommendation: str
     timestamp: str
 
@@ -195,9 +195,9 @@ class FeatureStore:
         self,
         symbol: str,
         features_df: pd.DataFrame,
-        feature_names: Optional[List[str]] = None,
-        normalization_params: Optional[Dict[str, Dict[str, float]]] = None,
-        extra_metadata: Optional[Dict[str, Any]] = None,
+        feature_names: Optional[list[str]] = None,
+        normalization_params: Optional[dict[str, dict[str, float]]] = None,
+        extra_metadata: Optional[dict[str, Any]] = None,
     ) -> FeatureMetadata:
         """
         Store a feature set with automatic versioning.
@@ -224,9 +224,7 @@ class FeatureStore:
 
         # Compute normalization params if not provided
         if normalization_params is None:
-            normalization_params = self._compute_normalization_params(
-                features_df, feature_names
-            )
+            normalization_params = self._compute_normalization_params(features_df, feature_names)
 
         # Create metadata
         metadata = FeatureMetadata(
@@ -299,7 +297,7 @@ class FeatureStore:
         symbol: str,
         version: Optional[int] = None,
         include_data: bool = True,
-    ) -> Optional[Tuple[FeatureMetadata, Optional[pd.DataFrame]]]:
+    ) -> Optional[tuple[FeatureMetadata, Optional[pd.DataFrame]]]:
         """
         Retrieve a feature set by symbol and version.
 
@@ -321,9 +319,10 @@ class FeatureStore:
         cached = self.cache.get(cache_key)
         if cached is not None:
             metadata, features_df = cached
-            if self.ttl is None or datetime.fromisoformat(
-                metadata.created_at
-            ) > datetime.now() - self.ttl:
+            if (
+                self.ttl is None
+                or datetime.fromisoformat(metadata.created_at) > datetime.now() - self.ttl
+            ):
                 if include_data:
                     return metadata, features_df
                 else:
@@ -368,7 +367,7 @@ class FeatureStore:
 
             return metadata, features_df
 
-    def get_normalization_params(self, symbol: str) -> Optional[Dict[str, Dict[str, float]]]:
+    def get_normalization_params(self, symbol: str) -> Optional[dict[str, dict[str, float]]]:
         """
         Get normalization parameters for a symbol.
 
@@ -476,7 +475,7 @@ class FeatureStore:
 
         return report
 
-    def list_versions(self, symbol: str) -> List[FeatureMetadata]:
+    def list_versions(self, symbol: str) -> list[FeatureMetadata]:
         """
         List all stored versions for a symbol.
 
@@ -587,8 +586,8 @@ class FeatureStore:
         return hashlib.md5(content.encode()).hexdigest()[:16]
 
     def _compute_normalization_params(
-        self, df: pd.DataFrame, feature_names: List[str]
-    ) -> Dict[str, Dict[str, float]]:
+        self, df: pd.DataFrame, feature_names: list[str]
+    ) -> dict[str, dict[str, float]]:
         """Compute normalization parameters for features."""
         params = {}
         for col in feature_names:
@@ -609,13 +608,12 @@ class FeatureStore:
         """Deserialize bytes to DataFrame."""
         try:
             from io import BytesIO
+
             return pd.read_parquet(BytesIO(blob))
         except Exception:
             return pd.read_json(blob.decode())
 
-    def _calculate_drift_score(
-        self, old_vals: np.ndarray, new_vals: np.ndarray
-    ) -> float:
+    def _calculate_drift_score(self, old_vals: np.ndarray, new_vals: np.ndarray) -> float:
         """Calculate drift score using histogram comparison."""
         # Normalize to same scale
         combined = np.concatenate([old_vals, new_vals])
@@ -631,8 +629,7 @@ class FeatureStore:
         # Jensen-Shannon divergence (symmetric, bounded 0-1)
         m = 0.5 * (old_hist + new_hist)
         js_divergence = 0.5 * (
-            np.sum(old_hist * np.log(old_hist / m))
-            + np.sum(new_hist * np.log(new_hist / m))
+            np.sum(old_hist * np.log(old_hist / m)) + np.sum(new_hist * np.log(new_hist / m))
         )
 
         return float(js_divergence)

@@ -10,11 +10,12 @@ These tests verify the system is fundamentally working:
 
 Run before commits, deployments, or when you need quick confidence.
 """
-import sys
-from pathlib import Path
-from datetime import date, timedelta
+
 import json
+import sys
 import tempfile
+from datetime import date, timedelta
+from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -156,9 +157,7 @@ class SmokeTests:
                 return False, "load_json_file should return dict for .json files"
 
             # Test with temp file
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".json", delete=False
-            ) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
                 json.dump({"test": "data"}, f)
                 temp_path = Path(f.name)
 
@@ -186,9 +185,7 @@ class SmokeTests:
             for i, equity in enumerate(equities):
                 perf_log.append(
                     {
-                        "date": (
-                            date.today() - timedelta(days=len(equities) - i)
-                        ).isoformat(),
+                        "date": (date.today() - timedelta(days=len(equities) - i)).isoformat(),
                         "equity": float(equity),
                     }
                 )

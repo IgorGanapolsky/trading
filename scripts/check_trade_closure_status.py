@@ -5,10 +5,10 @@ Check Trade Closure Status
 Verifies that positions are being properly closed and recorded.
 """
 
+import json
 import sys
 from pathlib import Path
-from datetime import datetime
-import json
+
 from dotenv import load_dotenv
 
 sys.path.append(str(Path(__file__).parent.parent))
@@ -23,24 +23,24 @@ def main():
     print("🔍 TRADE CLOSURE STATUS CHECK")
     print("=" * 80)
     print()
-    
+
     try:
         trader = AlpacaTrader(paper=True)
-        
+
         # Get current positions
         positions = trader.get_positions()
-        
+
         # Load system state
         state_file = Path("data/system_state.json")
         if state_file.exists():
             with open(state_file) as f:
                 state = json.load(f)
-            
+
             open_positions_state = state.get("performance", {}).get("open_positions", [])
             closed_trades = state.get("performance", {}).get("closed_trades", [])
             win_rate = state.get("performance", {}).get("win_rate", 0.0)
-            
-            print(f"📊 SYSTEM STATE:")
+
+            print("📊 SYSTEM STATE:")
             print(f"   Open Positions (State): {len(open_positions_state)}")
             print(f"   Closed Trades: {len(closed_trades)}")
             print(f"   Win Rate: {win_rate:.1f}%")
@@ -50,12 +50,12 @@ def main():
             open_positions_state = []
             closed_trades = []
             win_rate = 0.0
-        
+
         # Get actual positions from Alpaca
-        print(f"📈 ALPACA POSITIONS:")
+        print("📈 ALPACA POSITIONS:")
         print(f"   Current Positions: {len(positions)}")
         print()
-        
+
         if positions:
             print("   Position Details:")
             for pos in positions:
@@ -65,39 +65,41 @@ def main():
                 market_value = qty * current_price
                 unrealized_pl = float(pos.get("unrealized_pl", 0))
                 unrealized_plpc = float(pos.get("unrealized_plpc", 0))
-                
+
                 print(f"   - {symbol}:")
                 print(f"     Quantity: {qty:.4f} shares")
                 print(f"     Current Price: ${current_price:.2f}")
                 print(f"     Market Value: ${market_value:.2f}")
-                print(f"     Unrealized P/L: ${unrealized_pl:.2f} ({unrealized_plpc*100:.2f}%)")
-                
+                print(f"     Unrealized P/L: ${unrealized_pl:.2f} ({unrealized_plpc * 100:.2f}%)")
+
                 # Check if should be closed
                 if unrealized_plpc >= 0.10:  # 10% take-profit
-                    print(f"     ⚠️  SHOULD CLOSE: Take-profit target reached!")
+                    print("     ⚠️  SHOULD CLOSE: Take-profit target reached!")
                 elif unrealized_plpc <= -0.03:  # 3% stop-loss
-                    print(f"     ⚠️  SHOULD CLOSE: Stop-loss triggered!")
+                    print("     ⚠️  SHOULD CLOSE: Stop-loss triggered!")
                 print()
         else:
             print("   No open positions")
             print()
-        
+
         # Check for discrepancies
         print("🔍 DISCREPANCY CHECK:")
         if len(positions) != len(open_positions_state):
-            print(f"   ⚠️  MISMATCH: Alpaca has {len(positions)} positions, state has {len(open_positions_state)}")
+            print(
+                f"   ⚠️  MISMATCH: Alpaca has {len(positions)} positions, state has {len(open_positions_state)}"
+            )
         else:
-            print(f"   ✅ Position counts match")
-        
+            print("   ✅ Position counts match")
+
         if len(closed_trades) == 0:
-            print(f"   ⚠️  NO CLOSED TRADES: Win rate cannot be calculated")
-            print(f"   💡 Action: Need to close positions to get win rate data")
+            print("   ⚠️  NO CLOSED TRADES: Win rate cannot be calculated")
+            print("   💡 Action: Need to close positions to get win rate data")
         else:
             print(f"   ✅ Closed trades recorded: {len(closed_trades)}")
-        
+
         print()
         print("=" * 80)
-        
+
         # Recommendations
         print()
         print("💡 RECOMMENDATIONS:")
@@ -107,13 +109,13 @@ def main():
             print("   3. Ensure record_closed_trade() is being called")
         else:
             print(f"   ✅ System is tracking closed trades (Win rate: {win_rate:.1f}%)")
-        
+
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
 
 
 if __name__ == "__main__":
     main()
-

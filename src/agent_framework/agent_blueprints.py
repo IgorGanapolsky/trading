@@ -12,8 +12,8 @@ These blueprints move beyond simple prompts to structured definitions of:
 import logging
 
 from src.agent_framework.context_engine import (
-    SemanticBlueprint,
     ContextPriority,
+    SemanticBlueprint,
     get_context_engine,
 )
 

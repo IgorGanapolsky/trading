@@ -8,13 +8,12 @@ This agent implements the AgentKit-style workflow automation pattern:
 - Multi-step workflow orchestration
 """
 
-import os
+import asyncio
 import json
 import logging
-import asyncio
 from datetime import datetime
-from typing import Dict, List, Any, Optional
 from pathlib import Path
+from typing import Any
 
 from src.agents.base_agent import BaseAgent
 
@@ -34,11 +33,11 @@ class WorkflowAgent(BaseAgent):
 
     def __init__(self):
         super().__init__(name="WorkflowAgent", role="Workflow Automation Orchestrator")
-        self.workflow_queue: List[Dict[str, Any]] = []
+        self.workflow_queue: list[dict[str, Any]] = []
         self.data_dir = Path("data/workflows")
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
-    def analyze(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Process a workflow request.
 
@@ -68,7 +67,7 @@ class WorkflowAgent(BaseAgent):
             logger.error(f"Workflow execution error: {e}")
             return {"success": False, "error": str(e)}
 
-    def _process_email_workflow(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_email_workflow(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Process email monitoring workflow.
 
@@ -106,7 +105,7 @@ class WorkflowAgent(BaseAgent):
             "result": "Email workflow completed successfully",
         }
 
-    def _process_report_workflow(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_report_workflow(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Process automated report generation workflow.
 
@@ -153,7 +152,7 @@ class WorkflowAgent(BaseAgent):
             "result": f"Report generated: {report_path}",
         }
 
-    def _process_file_workflow(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_file_workflow(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Process file processing workflow.
 
@@ -188,7 +187,7 @@ class WorkflowAgent(BaseAgent):
             "result": f"File processed: {file_path}",
         }
 
-    def _process_multi_step_workflow(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_multi_step_workflow(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Process a custom multi-step workflow.
 
@@ -209,7 +208,7 @@ class WorkflowAgent(BaseAgent):
             step_name = step.get("name", f"step_{i}")
             step_action = step.get("action", "unknown")
 
-            logger.info(f"Executing step {i+1}/{len(steps)}: {step_name}")
+            logger.info(f"Executing step {i + 1}/{len(steps)}: {step_name}")
 
             # Execute step (simplified - would call actual MCP tools)
             executed_steps.append(
@@ -230,7 +229,7 @@ class WorkflowAgent(BaseAgent):
             "result": f"Multi-step workflow completed: {len(steps)} steps",
         }
 
-    async def execute_workflow_async(self, workflow: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute_workflow_async(self, workflow: dict[str, Any]) -> dict[str, Any]:
         """
         Execute workflow asynchronously.
 
@@ -242,7 +241,7 @@ class WorkflowAgent(BaseAgent):
         """
         return await asyncio.to_thread(self.analyze, workflow)
 
-    def queue_workflow(self, workflow: Dict[str, Any]) -> str:
+    def queue_workflow(self, workflow: dict[str, Any]) -> str:
         """
         Queue a workflow for execution.
 
@@ -252,9 +251,7 @@ class WorkflowAgent(BaseAgent):
         Returns:
             Workflow ID
         """
-        workflow_id = (
-            f"wf_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{len(self.workflow_queue)}"
-        )
+        workflow_id = f"wf_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{len(self.workflow_queue)}"
         workflow["id"] = workflow_id
         workflow["queued_at"] = datetime.now().isoformat()
         self.workflow_queue.append(workflow)

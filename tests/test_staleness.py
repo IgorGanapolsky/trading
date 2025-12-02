@@ -3,6 +3,7 @@
 Test staleness detection system
 Simulates different staleness scenarios
 """
+
 import json
 import sys
 from datetime import datetime, timedelta
@@ -14,14 +15,14 @@ sys.path.insert(0, str(Path(__file__).parent))
 import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
-from state_manager import StateManager, STATE_FILE
+from state_manager import STATE_FILE, StateManager
 
 
 def backup_state():
     """Backup current state"""
     if STATE_FILE.exists():
         backup_file = STATE_FILE.with_suffix(".json.backup")
-        with open(STATE_FILE, "r") as src, open(backup_file, "w") as dst:
+        with open(STATE_FILE) as src, open(backup_file, "w") as dst:
             dst.write(src.read())
         print(f"✅ Backed up state to {backup_file}")
         return True
@@ -32,7 +33,7 @@ def restore_state():
     """Restore state from backup"""
     backup_file = STATE_FILE.with_suffix(".json.backup")
     if backup_file.exists():
-        with open(backup_file, "r") as src, open(STATE_FILE, "w") as dst:
+        with open(backup_file) as src, open(STATE_FILE, "w") as dst:
             dst.write(src.read())
         print(f"✅ Restored state from {backup_file}")
         backup_file.unlink()
@@ -46,7 +47,7 @@ def set_state_age(hours_old: float):
         print(f"❌ State file not found: {STATE_FILE}")
         return False
 
-    with open(STATE_FILE, "r") as f:
+    with open(STATE_FILE) as f:
         state = json.load(f)
 
     # Set last_updated to be hours_old ago
@@ -113,9 +114,7 @@ def main():
         results.append(
             (
                 "FRESH (12 hours)",
-                test_scenario(
-                    "FRESH State - 12 hours old", hours_old=12, should_fail=False
-                ),
+                test_scenario("FRESH State - 12 hours old", hours_old=12, should_fail=False),
             )
         )
 
@@ -123,9 +122,7 @@ def main():
         results.append(
             (
                 "AGING (36 hours)",
-                test_scenario(
-                    "AGING State - 36 hours old", hours_old=36, should_fail=False
-                ),
+                test_scenario("AGING State - 36 hours old", hours_old=36, should_fail=False),
             )
         )
 
@@ -133,9 +130,7 @@ def main():
         results.append(
             (
                 "STALE (2.5 days)",
-                test_scenario(
-                    "STALE State - 2.5 days old", hours_old=60, should_fail=False
-                ),
+                test_scenario("STALE State - 2.5 days old", hours_old=60, should_fail=False),
             )
         )
 
@@ -143,9 +138,7 @@ def main():
         results.append(
             (
                 "EXPIRED (4 days)",
-                test_scenario(
-                    "EXPIRED State - 4 days old", hours_old=96, should_fail=True
-                ),
+                test_scenario("EXPIRED State - 4 days old", hours_old=96, should_fail=True),
             )
         )
 

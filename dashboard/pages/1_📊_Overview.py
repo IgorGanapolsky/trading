@@ -2,17 +2,17 @@
 Overview Page - High-level sentiment metrics and market regime analysis.
 """
 
-import streamlit as st
 import json
-import pandas as pd
-from pathlib import Path
-from datetime import datetime, timedelta
 import sys
+from datetime import datetime
+from pathlib import Path
+
+import streamlit as st
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from dashboard.utils.chart_builders import create_sentiment_gauge, COLORS
+from dashboard.utils.chart_builders import COLORS
 
 st.set_page_config(page_title="Overview", page_icon="📊", layout="wide")
 
@@ -70,7 +70,9 @@ def load_latest_sentiment(data_dir: Path):
             "confidence": (
                 "high"
                 if abs(combined_score) > 30
-                else "medium" if abs(combined_score) > 10 else "low"
+                else "medium"
+                if abs(combined_score) > 10
+                else "low"
             ),
         }
 
@@ -93,13 +95,9 @@ def main():
 
     bullish_tickers = [t for t, s in data["combined"].items() if s["score"] > 20]
     bearish_tickers = [t for t, s in data["combined"].items() if s["score"] < -20]
-    neutral_tickers = [
-        t for t, s in data["combined"].items() if -20 <= s["score"] <= 20
-    ]
+    neutral_tickers = [t for t, s in data["combined"].items() if -20 <= s["score"] <= 20]
 
-    high_confidence = sum(
-        1 for s in data["combined"].values() if s["confidence"] == "high"
-    )
+    high_confidence = sum(1 for s in data["combined"].values() if s["confidence"] == "high")
 
     # Market regime determination
     if avg_sentiment > 20:
@@ -149,7 +147,7 @@ def main():
         st.metric(
             "High Confidence Signals",
             high_confidence,
-            delta=f"{(high_confidence/total_tickers)*100:.0f}%",
+            delta=f"{(high_confidence / total_tickers) * 100:.0f}%",
             help="Signals with strong conviction",
         )
 
@@ -171,11 +169,11 @@ def main():
     with col1:
         st.markdown(
             f"""
-            <div style='background: {COLORS['bullish']}20; padding: 1.5rem; border-radius: 10px; border-left: 5px solid {COLORS['bullish']}'>
-                <h2 style='color: {COLORS['bullish']}; margin: 0;'>{len(bullish_tickers)}</h2>
-                <p style='color: {COLORS['text']}; margin: 0.5rem 0 0 0;'>Bullish Signals</p>
-                <p style='color: {COLORS['secondary']}; font-size: 0.9rem; margin: 0;'>
-                    {', '.join(bullish_tickers[:5])}{' +more' if len(bullish_tickers) > 5 else ''}
+            <div style='background: {COLORS["bullish"]}20; padding: 1.5rem; border-radius: 10px; border-left: 5px solid {COLORS["bullish"]}'>
+                <h2 style='color: {COLORS["bullish"]}; margin: 0;'>{len(bullish_tickers)}</h2>
+                <p style='color: {COLORS["text"]}; margin: 0.5rem 0 0 0;'>Bullish Signals</p>
+                <p style='color: {COLORS["secondary"]}; font-size: 0.9rem; margin: 0;'>
+                    {", ".join(bullish_tickers[:5])}{" +more" if len(bullish_tickers) > 5 else ""}
                 </p>
             </div>
         """,
@@ -185,11 +183,11 @@ def main():
     with col2:
         st.markdown(
             f"""
-            <div style='background: {COLORS['neutral']}20; padding: 1.5rem; border-radius: 10px; border-left: 5px solid {COLORS['neutral']}'>
-                <h2 style='color: {COLORS['neutral']}; margin: 0;'>{len(neutral_tickers)}</h2>
-                <p style='color: {COLORS['text']}; margin: 0.5rem 0 0 0;'>Neutral Signals</p>
-                <p style='color: {COLORS['secondary']}; font-size: 0.9rem; margin: 0;'>
-                    {', '.join(neutral_tickers[:5])}{' +more' if len(neutral_tickers) > 5 else ''}
+            <div style='background: {COLORS["neutral"]}20; padding: 1.5rem; border-radius: 10px; border-left: 5px solid {COLORS["neutral"]}'>
+                <h2 style='color: {COLORS["neutral"]}; margin: 0;'>{len(neutral_tickers)}</h2>
+                <p style='color: {COLORS["text"]}; margin: 0.5rem 0 0 0;'>Neutral Signals</p>
+                <p style='color: {COLORS["secondary"]}; font-size: 0.9rem; margin: 0;'>
+                    {", ".join(neutral_tickers[:5])}{" +more" if len(neutral_tickers) > 5 else ""}
                 </p>
             </div>
         """,
@@ -199,11 +197,11 @@ def main():
     with col3:
         st.markdown(
             f"""
-            <div style='background: {COLORS['bearish']}20; padding: 1.5rem; border-radius: 10px; border-left: 5px solid {COLORS['bearish']}'>
-                <h2 style='color: {COLORS['bearish']}; margin: 0;'>{len(bearish_tickers)}</h2>
-                <p style='color: {COLORS['text']}; margin: 0.5rem 0 0 0;'>Bearish Signals</p>
-                <p style='color: {COLORS['secondary']}; font-size: 0.9rem; margin: 0;'>
-                    {', '.join(bearish_tickers[:5])}{' +more' if len(bearish_tickers) > 5 else ''}
+            <div style='background: {COLORS["bearish"]}20; padding: 1.5rem; border-radius: 10px; border-left: 5px solid {COLORS["bearish"]}'>
+                <h2 style='color: {COLORS["bearish"]}; margin: 0;'>{len(bearish_tickers)}</h2>
+                <p style='color: {COLORS["text"]}; margin: 0.5rem 0 0 0;'>Bearish Signals</p>
+                <p style='color: {COLORS["secondary"]}; font-size: 0.9rem; margin: 0;'>
+                    {", ".join(bearish_tickers[:5])}{" +more" if len(bearish_tickers) > 5 else ""}
                 </p>
             </div>
         """,
@@ -218,18 +216,16 @@ def main():
     col1, col2 = st.columns(2)
 
     # Most bullish
-    most_bullish = sorted(
-        data["combined"].items(), key=lambda x: x[1]["score"], reverse=True
-    )[:5]
+    most_bullish = sorted(data["combined"].items(), key=lambda x: x[1]["score"], reverse=True)[:5]
 
     with col1:
         st.markdown("**Most Bullish**")
         for ticker, sentiment_data in most_bullish:
             st.markdown(
                 f"""
-                <div style='background: {COLORS['grid']}; padding: 0.8rem; margin: 0.5rem 0; border-radius: 5px; border-left: 3px solid {COLORS['bullish']}'>
-                    <strong>{ticker}</strong>: {sentiment_data['score']:.1f}
-                    <span style='color: {COLORS['secondary']}; float: right;'>{sentiment_data['confidence']}</span>
+                <div style='background: {COLORS["grid"]}; padding: 0.8rem; margin: 0.5rem 0; border-radius: 5px; border-left: 3px solid {COLORS["bullish"]}'>
+                    <strong>{ticker}</strong>: {sentiment_data["score"]:.1f}
+                    <span style='color: {COLORS["secondary"]}; float: right;'>{sentiment_data["confidence"]}</span>
                 </div>
             """,
                 unsafe_allow_html=True,
@@ -243,9 +239,9 @@ def main():
         for ticker, sentiment_data in most_bearish:
             st.markdown(
                 f"""
-                <div style='background: {COLORS['grid']}; padding: 0.8rem; margin: 0.5rem 0; border-radius: 5px; border-left: 3px solid {COLORS['bearish']}'>
-                    <strong>{ticker}</strong>: {sentiment_data['score']:.1f}
-                    <span style='color: {COLORS['secondary']}; float: right;'>{sentiment_data['confidence']}</span>
+                <div style='background: {COLORS["grid"]}; padding: 0.8rem; margin: 0.5rem 0; border-radius: 5px; border-left: 3px solid {COLORS["bearish"]}'>
+                    <strong>{ticker}</strong>: {sentiment_data["score"]:.1f}
+                    <span style='color: {COLORS["secondary"]}; float: right;'>{sentiment_data["confidence"]}</span>
                 </div>
             """,
                 unsafe_allow_html=True,
@@ -264,14 +260,16 @@ def main():
             freshness_color = (
                 COLORS["bullish"]
                 if hours_ago < 1
-                else COLORS["neutral"] if hours_ago < 6 else COLORS["bearish"]
+                else COLORS["neutral"]
+                if hours_ago < 6
+                else COLORS["bearish"]
             )
 
             st.markdown(
                 f"""
-                <div style='text-align: center; padding: 1rem; background: {COLORS['grid']}; border-radius: 8px;'>
+                <div style='text-align: center; padding: 1rem; background: {COLORS["grid"]}; border-radius: 8px;'>
                     <p style='color: {freshness_color}; font-size: 1.2rem; margin: 0;'>
-                        Data last updated: {last_update.strftime('%Y-%m-%d %I:%M %p')}
+                        Data last updated: {last_update.strftime("%Y-%m-%d %I:%M %p")}
                         ({hours_ago:.1f} hours ago)
                     </p>
                 </div>
@@ -286,7 +284,7 @@ if __name__ == "__main__":
         f"""
         <style>
         .stApp {{
-            background-color: {COLORS['background']};
+            background-color: {COLORS["background"]};
         }}
         .big-metric {{
             font-size: 3rem;
@@ -297,16 +295,16 @@ if __name__ == "__main__":
             margin: 1rem 0;
         }}
         .bullish {{
-            color: {COLORS['bullish']};
-            background: {COLORS['bullish']}20;
+            color: {COLORS["bullish"]};
+            background: {COLORS["bullish"]}20;
         }}
         .bearish {{
-            color: {COLORS['bearish']};
-            background: {COLORS['bearish']}20;
+            color: {COLORS["bearish"]};
+            background: {COLORS["bearish"]}20;
         }}
         .neutral {{
-            color: {COLORS['neutral']};
-            background: {COLORS['neutral']}20;
+            color: {COLORS["neutral"]};
+            background: {COLORS["neutral"]}20;
         }}
         </style>
     """,

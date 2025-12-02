@@ -34,9 +34,7 @@ def example_1_basic_usage():
     print(f"Recommendation: {result['recommendation']}")
 
     # Show which sources contributed
-    active_sources = [
-        name for name, data in result["sources"].items() if data["available"]
-    ]
+    active_sources = [name for name, data in result["sources"].items() if data["available"]]
     print(f"Active Sources: {', '.join(active_sources) if active_sources else 'None'}")
 
 
@@ -55,9 +53,7 @@ def example_2_batch_analysis():
     print(f"\nAnalyzing {len(watchlist)} tickers...\n")
 
     # Display results in table format
-    print(
-        f"{'Ticker':<8} {'Score':<8} {'Signal':<10} {'Recommendation':<15} {'Confidence':<12}"
-    )
+    print(f"{'Ticker':<8} {'Score':<8} {'Signal':<10} {'Recommendation':<15} {'Confidence':<12}")
     print("-" * 80)
 
     for symbol, data in results.items():
@@ -66,9 +62,7 @@ def example_2_batch_analysis():
         recommendation = data["recommendation"]
         confidence = data["confidence"]
 
-        print(
-            f"{symbol:<8} {score:+.2f}     {signal:<10} {recommendation:<15} {confidence:.1%}"
-        )
+        print(f"{symbol:<8} {score:+.2f}     {signal:<10} {recommendation:<15} {confidence:.1%}")
 
 
 def example_3_trading_decision():

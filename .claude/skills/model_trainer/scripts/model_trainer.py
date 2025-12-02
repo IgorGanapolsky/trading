@@ -11,26 +11,24 @@ Usage:
     python .claude/skills/model_trainer/scripts/model_trainer.py schedule-retraining
 """
 
-import sys
-import os
 import argparse
-import logging
 import json
-from pathlib import Path
-from typing import Dict, List, Any, Optional
+import logging
+import sys
 from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Optional
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.utils.data_collector import DataCollector
+import numpy as np
 from scripts.train_lstm_features import (
     prepare_training_data,
     train_lstm_model,
-    _features_to_array,
 )
-import numpy as np
+from src.utils.data_collector import DataCollector
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -48,8 +46,8 @@ class ModelTrainerSkill:
         self.collector = DataCollector(data_dir=str(self.data_dir))
 
     def check_training_data_availability(
-        self, symbols: List[str], min_days: int = 252
-    ) -> Dict[str, Any]:
+        self, symbols: list[str], min_days: int = 252
+    ) -> dict[str, Any]:
         """
         Check if sufficient historical data exists for training.
 
@@ -87,16 +85,8 @@ class ModelTrainerSkill:
                     "days": len(hist_data),
                     "status": "sufficient",
                     "date_range": {
-                        "start": (
-                            hist_data.index[0].isoformat()
-                            if not hist_data.empty
-                            else None
-                        ),
-                        "end": (
-                            hist_data.index[-1].isoformat()
-                            if not hist_data.empty
-                            else None
-                        ),
+                        "start": (hist_data.index[0].isoformat() if not hist_data.empty else None),
+                        "end": (hist_data.index[-1].isoformat() if not hist_data.empty else None),
                     },
                 }
 
@@ -111,14 +101,14 @@ class ModelTrainerSkill:
 
     def train_lstm_model(
         self,
-        symbols: List[str],
+        symbols: list[str],
         epochs: int = 50,
         batch_size: int = 32,
         learning_rate: float = 0.001,
         seq_length: int = 60,
         output_path: Optional[str] = None,
         device: str = "cpu",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Train LSTM feature extractor.
 
@@ -136,16 +126,12 @@ class ModelTrainerSkill:
         """
         if output_path is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_path = str(
-                self.models_dir / f"lstm_feature_extractor_{timestamp}.pt"
-            )
+            output_path = str(self.models_dir / f"lstm_feature_extractor_{timestamp}.pt")
 
         logger.info(f"Starting LSTM training for symbols: {symbols}")
 
         # Check data availability
-        data_check = self.check_training_data_availability(
-            symbols, min_days=seq_length + 200
-        )
+        data_check = self.check_training_data_availability(symbols, min_days=seq_length + 200)
         if not data_check["available"]:
             return {
                 "success": False,
@@ -225,7 +211,7 @@ class ModelTrainerSkill:
         check_interval_days: int = 7,
         performance_threshold: float = 0.9,
         auto_retrain: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Schedule automatic model retraining.
 
@@ -265,9 +251,7 @@ def main():
     train_parser.add_argument("--batch-size", type=int, default=32)
     train_parser.add_argument("--learning-rate", type=float, default=0.001)
     train_parser.add_argument("--output", type=str, default=None)
-    train_parser.add_argument(
-        "--device", type=str, default="cpu", choices=["cpu", "cuda"]
-    )
+    train_parser.add_argument("--device", type=str, default="cpu", choices=["cpu", "cuda"])
 
     # Check data command
     check_parser = subparsers.add_parser("check-data", help="Check data availability")
@@ -275,9 +259,7 @@ def main():
     check_parser.add_argument("--min-days", type=int, default=252)
 
     # Schedule command
-    schedule_parser = subparsers.add_parser(
-        "schedule-retraining", help="Schedule retraining"
-    )
+    schedule_parser = subparsers.add_parser("schedule-retraining", help="Schedule retraining")
     schedule_parser.add_argument("--interval-days", type=int, default=7)
     schedule_parser.add_argument("--auto-retrain", action="store_true", default=True)
 

@@ -5,14 +5,15 @@ Data Integrity Validator
 Validates all financial claims and data consistency across the system.
 Run this before generating reports to catch false claims.
 """
-import sys
+
 import logging
+import sys
 from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.utils.data_validator import DataValidator, validate_report_claims
+from src.utils.data_validator import DataValidator
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -59,9 +60,7 @@ def main():
         for claim in test_claims:
             result = validator.validate_yesterday_profit(claim)
             status = "✅" if result.is_valid else "❌"
-            print(
-                f"   {status} Claim: ${claim:.2f} → Actual: ${result.actual_value:.2f}"
-            )
+            print(f"   {status} Claim: ${claim:.2f} → Actual: ${result.actual_value:.2f}")
             if not result.is_valid:
                 print(f"      Error: {result.error_message}")
     else:

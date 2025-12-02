@@ -7,15 +7,15 @@ ticker mentions and sentiment from video captions/descriptions.
 API Documentation: https://developers.tiktok.com/doc/research-api-overview
 """
 
+import logging
 import os
 import re
 import time
-import logging
-from typing import List, Dict, Any, Optional, Set
 from datetime import datetime, timedelta
+from typing import Any, Optional
+
 import requests
 from dotenv import load_dotenv
-
 from src.rag.collectors.base_collector import BaseNewsCollector
 
 # Load environment variables
@@ -200,7 +200,7 @@ class TikTokCollector(BaseNewsCollector):
 
     def _search_videos(
         self, query: str, max_results: int = 20, days_back: int = 7
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Search TikTok videos using Research API.
 
@@ -266,7 +266,7 @@ class TikTokCollector(BaseNewsCollector):
             logger.error(f"Error searching TikTok videos for '{query}': {e}")
             return []
 
-    def _extract_tickers(self, text: str) -> Set[str]:
+    def _extract_tickers(self, text: str) -> set[str]:
         """
         Extract stock ticker symbols from text.
 
@@ -328,7 +328,7 @@ class TikTokCollector(BaseNewsCollector):
 
         return round(sentiment, 3)
 
-    def _calculate_engagement_score(self, video: Dict[str, Any]) -> float:
+    def _calculate_engagement_score(self, video: dict[str, Any]) -> float:
         """
         Calculate engagement score from video metrics.
 
@@ -346,18 +346,14 @@ class TikTokCollector(BaseNewsCollector):
 
         # Weighted engagement rate
         # Higher weight on shares (most valuable) > comments > likes
-        engagement = (
-            share_count * 10 + comment_count * 5 + like_count * 1
-        ) / view_count
+        engagement = (share_count * 10 + comment_count * 5 + like_count * 1) / view_count
 
         # Normalize to 0-100 scale (cap at 0.1 engagement rate = 100 score)
         engagement_score = min(engagement * 1000, 100)
 
         return round(engagement_score, 2)
 
-    def collect_ticker_news(
-        self, ticker: str, days_back: int = 7
-    ) -> List[Dict[str, Any]]:
+    def collect_ticker_news(self, ticker: str, days_back: int = 7) -> list[dict[str, Any]]:
         """
         Collect TikTok videos mentioning a specific ticker.
 
@@ -373,9 +369,7 @@ class TikTokCollector(BaseNewsCollector):
 
             # Search financial hashtags for ticker mentions
             for hashtag in self.FINANCIAL_HASHTAGS[:3]:  # Limit to top 3 hashtags
-                videos = self._search_videos(
-                    query=hashtag, max_results=20, days_back=days_back
-                )
+                videos = self._search_videos(query=hashtag, max_results=20, days_back=days_back)
 
                 for video in videos:
                     # Extract video metadata
@@ -430,7 +424,7 @@ class TikTokCollector(BaseNewsCollector):
             logger.error(f"Error collecting TikTok videos for {ticker}: {e}")
             return []
 
-    def collect_market_news(self, days_back: int = 1) -> List[Dict[str, Any]]:
+    def collect_market_news(self, days_back: int = 1) -> list[dict[str, Any]]:
         """
         Collect general market videos from TikTok.
 
@@ -447,9 +441,7 @@ class TikTokCollector(BaseNewsCollector):
 
             # Search top financial hashtags
             for hashtag in self.FINANCIAL_HASHTAGS[:5]:  # Top 5 hashtags
-                videos = self._search_videos(
-                    query=hashtag, max_results=10, days_back=days_back
-                )
+                videos = self._search_videos(query=hashtag, max_results=10, days_back=days_back)
 
                 for video in videos:
                     video_id = video.get("id", "")
@@ -498,9 +490,7 @@ class TikTokCollector(BaseNewsCollector):
             logger.error(f"Error collecting market TikTok videos: {e}")
             return []
 
-    def get_ticker_sentiment_summary(
-        self, ticker: str, days_back: int = 7
-    ) -> Dict[str, Any]:
+    def get_ticker_sentiment_summary(self, ticker: str, days_back: int = 7) -> dict[str, Any]:
         """
         Get aggregated sentiment summary for a ticker.
 
@@ -542,16 +532,12 @@ class TikTokCollector(BaseNewsCollector):
                 total_engagement += engagement
 
             avg_sentiment = (
-                total_weighted_sentiment / total_engagement
-                if total_engagement > 0
-                else 0.5
+                total_weighted_sentiment / total_engagement if total_engagement > 0 else 0.5
             )
 
             # Calculate average engagement score
             avg_engagement = (
-                sum(v.get("engagement_score", 0) for v in videos) / len(videos)
-                if videos
-                else 0.0
+                sum(v.get("engagement_score", 0) for v in videos) / len(videos) if videos else 0.0
             )
 
             return {
@@ -581,15 +567,9 @@ def main():
     import json
 
     parser = argparse.ArgumentParser(description="Collect TikTok financial sentiment")
-    parser.add_argument(
-        "--ticker", type=str, help="Stock ticker to analyze (e.g., NVDA)"
-    )
-    parser.add_argument(
-        "--days", type=int, default=7, help="Days back to search (default: 7)"
-    )
-    parser.add_argument(
-        "--market", action="store_true", help="Collect general market videos"
-    )
+    parser.add_argument("--ticker", type=str, help="Stock ticker to analyze (e.g., NVDA)")
+    parser.add_argument("--days", type=int, default=7, help="Days back to search (default: 7)")
+    parser.add_argument("--market", action="store_true", help="Collect general market videos")
 
     args = parser.parse_args()
 
@@ -612,9 +592,7 @@ def main():
     elif args.ticker:
         # Get ticker sentiment summary
         print(f"\nAnalyzing TikTok sentiment for {args.ticker}...")
-        summary = collector.get_ticker_sentiment_summary(
-            args.ticker.upper(), days_back=args.days
-        )
+        summary = collector.get_ticker_sentiment_summary(args.ticker.upper(), days_back=args.days)
         print("\nSentiment Summary:")
         print(json.dumps(summary, indent=2))
 

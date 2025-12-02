@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Optional
 
 from langchain_core.tools import StructuredTool
-from pydantic import BaseModel, Field
-
 from mcp import MCPClient, default_client
+from pydantic import BaseModel, Field
 from src.rag.sentiment_store import SentimentRAGStore
 
 logger = logging.getLogger(__name__)
@@ -15,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class SentimentQueryInput(BaseModel):
     query: str = Field(..., description="Natural language sentiment query.")
-    ticker: Optional[str] = Field(
+    ticker: str | None = Field(
         default=None,
         description="Optional ticker symbol (e.g., SPY, NVDA) to filter results.",
     )
@@ -67,7 +65,7 @@ def _format_results(raw_results):
 
 
 def build_sentiment_tools(
-    store: Optional[SentimentRAGStore] = None,
+    store: SentimentRAGStore | None = None,
 ) -> list[StructuredTool]:
     """
     Create LangChain tools that expose the sentiment RAG store.
@@ -77,7 +75,7 @@ def build_sentiment_tools(
     """
     sentiment_store = store or SentimentRAGStore()
 
-    def query_sentiment(query: str, ticker: Optional[str] = None, limit: int = 5):
+    def query_sentiment(query: str, ticker: str | None = None, limit: int = 5):
         logger.info("LangChain sentiment query: %s (ticker=%s)", query, ticker)
         results = sentiment_store.query(query=query, ticker=ticker, top_k=limit)
         return _format_results(results)
@@ -110,7 +108,7 @@ def build_sentiment_tools(
     return [query_tool, history_tool]
 
 
-def build_mcp_tool(client: Optional[MCPClient] = None) -> StructuredTool:
+def build_mcp_tool(client: MCPClient | None = None) -> StructuredTool:
     """
     Wrap the MCP client so LangChain agents can call any registered MCP server.
 

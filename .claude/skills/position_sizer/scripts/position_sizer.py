@@ -4,12 +4,11 @@ Position Sizer Skill - Implementation
 Advanced position sizing using multiple methodologies
 """
 
+import argparse
+import json
 import os
 import sys
-import json
-import argparse
-import math
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
@@ -19,8 +18,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 try:
-    from src.core.risk_manager import RiskManager
     from src.agents.risk_agent import RiskAgent
+    from src.core.risk_manager import RiskManager
 
     RISK_AVAILABLE = True
 except ImportError:
@@ -28,12 +27,12 @@ except ImportError:
     print("Warning: RiskManager not available")
 
 
-def error_response(error_msg: str, error_code: str = "ERROR") -> Dict[str, Any]:
+def error_response(error_msg: str, error_code: str = "ERROR") -> dict[str, Any]:
     """Standard error response format"""
     return {"success": False, "error": error_msg, "error_code": error_code}
 
 
-def success_response(data: Any) -> Dict[str, Any]:
+def success_response(data: Any) -> dict[str, Any]:
     """Standard success response format"""
     return {"success": True, **data}
 
@@ -60,7 +59,7 @@ class PositionSizer:
         stop_loss_price: Optional[float] = None,
         win_rate: float = 0.55,
         avg_win_loss_ratio: float = 1.5,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate optimal position size for a trade
 
@@ -91,9 +90,7 @@ class PositionSizer:
             volatility_adjusted_position = fixed_position * (target_vol / volatility)
 
             # Kelly Criterion
-            kelly_fraction = (
-                win_rate * avg_win_loss_ratio - (1 - win_rate)
-            ) / avg_win_loss_ratio
+            kelly_fraction = (win_rate * avg_win_loss_ratio - (1 - win_rate)) / avg_win_loss_ratio
             kelly_fraction = max(0, min(kelly_fraction, 0.25))  # Cap at 25%
             kelly_position = account_value * kelly_fraction * 0.25  # Use 25% Kelly
 
@@ -120,9 +117,7 @@ class PositionSizer:
                 primary_method = "volatility_adjusted"
 
             # Calculate shares if price provided
-            position_shares = (
-                int(primary_position / current_price) if current_price else None
-            )
+            position_shares = int(primary_position / current_price) if current_price else None
 
             # Constraints
             max_position_dollars = account_value * 0.10  # 10% max
@@ -145,26 +140,20 @@ class PositionSizer:
                             "fixed_percentage": {
                                 "position_size_dollars": round(fixed_position, 2),
                                 "position_size_shares": (
-                                    int(fixed_position / current_price)
-                                    if current_price
-                                    else None
+                                    int(fixed_position / current_price) if current_price else None
                                 ),
                             },
                             "kelly_criterion": {
                                 "position_size_dollars": round(kelly_position, 2),
                                 "position_size_shares": (
-                                    int(kelly_position / current_price)
-                                    if current_price
-                                    else None
+                                    int(kelly_position / current_price) if current_price else None
                                 ),
                                 "kelly_fraction": round(kelly_fraction, 4),
                             },
                             "atr_based": {
                                 "position_size_dollars": round(atr_position, 2),
                                 "position_size_shares": (
-                                    int(atr_position / current_price)
-                                    if current_price
-                                    else None
+                                    int(atr_position / current_price) if current_price else None
                                 ),
                             },
                         },
@@ -185,8 +174,7 @@ class PositionSizer:
                         "constrained": constrained_position != primary_position,
                     },
                     "validation": {
-                        "within_risk_limits": constrained_position
-                        <= max_position_dollars,
+                        "within_risk_limits": constrained_position <= max_position_dollars,
                         "sufficient_buying_power": True,
                         "liquidity_adequate": True,
                     },
@@ -194,16 +182,14 @@ class PositionSizer:
             )
 
         except Exception as e:
-            return error_response(
-                f"Error calculating position size: {str(e)}", "CALCULATION_ERROR"
-            )
+            return error_response(f"Error calculating position size: {str(e)}", "CALCULATION_ERROR")
 
     def calculate_portfolio_heat(
         self,
         account_value: float,
-        positions: List[Dict[str, Any]],
-        pending_trades: Optional[List[Dict[str, Any]]] = None,
-    ) -> Dict[str, Any]:
+        positions: list[dict[str, Any]],
+        pending_trades: Optional[list[dict[str, Any]]] = None,
+    ) -> dict[str, Any]:
         """
         Calculate total risk exposure across all positions
 
@@ -231,21 +217,15 @@ class PositionSizer:
                         "position_value": position_value,
                         "risk_dollars": risk_dollars,
                         "risk_pct": (
-                            (risk_dollars / account_value) * 100
-                            if account_value > 0
-                            else 0
+                            (risk_dollars / account_value) * 100 if account_value > 0 else 0
                         ),
                         "stop_loss": pos.get("stop_loss"),
                     }
                 )
 
-            total_risk_pct = (
-                (total_risk / account_value) * 100 if account_value > 0 else 0
-            )
+            total_risk_pct = (total_risk / account_value) * 100 if account_value > 0 else 0
             max_total_risk_pct = 5.0
-            remaining_capacity = max(
-                0, (max_total_risk_pct - total_risk_pct) / 100 * account_value
-            )
+            remaining_capacity = max(0, (max_total_risk_pct - total_risk_pct) / 100 * account_value)
 
             return success_response(
                 {
@@ -255,9 +235,7 @@ class PositionSizer:
                         "individual_positions": individual_positions,
                         "capacity": {
                             "max_total_risk_pct": max_total_risk_pct,
-                            "remaining_capacity_pct": round(
-                                max_total_risk_pct - total_risk_pct, 2
-                            ),
+                            "remaining_capacity_pct": round(max_total_risk_pct - total_risk_pct, 2),
                             "remaining_capacity_dollars": round(remaining_capacity, 2),
                         },
                     },
@@ -274,16 +252,14 @@ class PositionSizer:
             )
 
         except Exception as e:
-            return error_response(
-                f"Error calculating portfolio heat: {str(e)}", "HEAT_ERROR"
-            )
+            return error_response(f"Error calculating portfolio heat: {str(e)}", "HEAT_ERROR")
 
     def calculate_kelly_fraction(
         self,
         win_rate: float,
         avg_win_loss_ratio: float,
         kelly_multiplier: float = 0.25,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate Kelly Criterion for position sizing
 
@@ -296,9 +272,7 @@ class PositionSizer:
             Dict with Kelly calculation
         """
         try:
-            raw_kelly = (
-                win_rate * avg_win_loss_ratio - (1 - win_rate)
-            ) / avg_win_loss_ratio
+            raw_kelly = (win_rate * avg_win_loss_ratio - (1 - win_rate)) / avg_win_loss_ratio
             raw_kelly = max(0, min(raw_kelly, 1.0))  # Clamp between 0 and 1
             adjusted_kelly = raw_kelly * kelly_multiplier
 
@@ -336,13 +310,9 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
     # calculate_position_size command
-    size_parser = subparsers.add_parser(
-        "calculate_position_size", help="Calculate position size"
-    )
+    size_parser = subparsers.add_parser("calculate_position_size", help="Calculate position size")
     size_parser.add_argument("--symbol", required=True, help="Ticker symbol")
-    size_parser.add_argument(
-        "--account-value", type=float, required=True, help="Account value"
-    )
+    size_parser.add_argument("--account-value", type=float, required=True, help="Account value")
     size_parser.add_argument(
         "--risk-per-trade-pct", type=float, default=1.0, help="Risk per trade %"
     )
@@ -353,9 +323,7 @@ def main():
     )
     size_parser.add_argument("--current-price", type=float, help="Current price")
     size_parser.add_argument("--stop-loss-price", type=float, help="Stop loss price")
-    size_parser.add_argument(
-        "--win-rate", type=float, default=0.55, help="Win rate (for Kelly)"
-    )
+    size_parser.add_argument("--win-rate", type=float, default=0.55, help="Win rate (for Kelly)")
     size_parser.add_argument(
         "--avg-win-loss-ratio",
         type=float,
@@ -364,21 +332,15 @@ def main():
     )
 
     # calculate_portfolio_heat command
-    heat_parser = subparsers.add_parser(
-        "calculate_portfolio_heat", help="Calculate portfolio heat"
-    )
-    heat_parser.add_argument(
-        "--account-value", type=float, required=True, help="Account value"
-    )
+    heat_parser = subparsers.add_parser("calculate_portfolio_heat", help="Calculate portfolio heat")
+    heat_parser.add_argument("--account-value", type=float, required=True, help="Account value")
     heat_parser.add_argument("--positions-file", help="JSON file with positions")
 
     # calculate_kelly_fraction command
     kelly_parser = subparsers.add_parser(
         "calculate_kelly_fraction", help="Calculate Kelly fraction"
     )
-    kelly_parser.add_argument(
-        "--win-rate", type=float, required=True, help="Win rate (0-1)"
-    )
+    kelly_parser.add_argument("--win-rate", type=float, required=True, help="Win rate (0-1)")
     kelly_parser.add_argument(
         "--avg-win-loss-ratio", type=float, required=True, help="Avg win/loss ratio"
     )

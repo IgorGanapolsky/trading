@@ -21,22 +21,44 @@ Key Principles:
 import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 import numpy as np
 import yfinance as yf
 
-from src.core.alpaca_trader import AlpacaTrader
-from src.core.options_client import AlpacaOptionsClient
-
 logger = logging.getLogger(__name__)
+
+try:
+    from src.core.alpaca_trader import AlpacaTrader
+    from src.core.options_client import AlpacaOptionsClient
+except ModuleNotFoundError:  # pragma: no cover - fallback for lightweight test envs
+    logger.warning("Falling back to stubbed Alpaca clients (dependency not available).")
+
+    class AlpacaTrader:  # type: ignore[override]
+        """Minimal stub used only for unit tests when full stack deps are unavailable."""
+
+        def __init__(self, *args, **kwargs) -> None:
+            self._account = {"cash": "0"}
+
+        def get_account(self) -> dict[str, str]:
+            return self._account
+
+        def get_positions(self) -> list[dict[str, str]]:
+            return []
+
+    class AlpacaOptionsClient:  # type: ignore[override]
+        """Minimal stub used only for unit tests when full stack deps are unavailable."""
+
+        def __init__(self, *args, **kwargs) -> None:
+            pass
 
 
 class MeaningRating(Enum):
     """Phil Town's 'Meaning' rating - do you understand the business?"""
+
     EXCELLENT = "excellent"  # Fully understand, use products
     GOOD = "good"  # Understand well
     FAIR = "fair"  # Basic understanding
@@ -45,6 +67,7 @@ class MeaningRating(Enum):
 
 class MoatRating(Enum):
     """Phil Town's 'Moat' rating - competitive advantage durability."""
+
     WIDE = "wide"  # Strong, durable advantage (brand, network, patents)
     NARROW = "narrow"  # Some advantage but vulnerable
     NONE = "none"  # No sustainable advantage
@@ -52,6 +75,7 @@ class MoatRating(Enum):
 
 class ManagementRating(Enum):
     """Phil Town's 'Management' rating - quality of leadership."""
+
     EXCELLENT = "excellent"  # Owner-oriented, high integrity
     GOOD = "good"  # Competent, shareholder-friendly
     FAIR = "fair"  # Mixed track record
@@ -80,10 +104,8 @@ class BigFiveMetrics:
 
         # Rule #1: All Big Five should be >= 10% over 10, 5, and 1 year
         # Simplified: Average growth >= 10% and ROIC >= 10%
-        self.passes_rule_one = bool(
-            self.avg_growth >= 0.10 and
-            self.roic is not None and
-            self.roic >= 0.10
+        self.passes_rule_one = (
+            self.avg_growth >= 0.10 and self.roic is not None and self.roic >= 0.10
         )
 
 
@@ -216,15 +238,27 @@ class RuleOneOptionsStrategy:
 
     # Default wonderful companies (Rule #1 quality stocks)
     DEFAULT_UNIVERSE = [
-        "AAPL", "MSFT", "GOOGL", "AMZN", "BRK-B",  # Large cap quality
-        "V", "MA", "JNJ", "PG", "KO",  # Consumer/Financial moats
-        "NVDA", "COST", "UNH", "HD", "MCD"  # Growth + moat
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "AMZN",
+        "BRK-B",  # Large cap quality
+        "V",
+        "MA",
+        "JNJ",
+        "PG",
+        "KO",  # Consumer/Financial moats
+        "NVDA",
+        "COST",
+        "UNH",
+        "HD",
+        "MCD",  # Growth + moat
     ]
 
     def __init__(
         self,
         paper: bool = True,
-        universe: Optional[List[str]] = None,
+        universe: Optional[list[str]] = None,
         min_shares_for_calls: int = 100,
     ):
         """
@@ -245,10 +279,12 @@ class RuleOneOptionsStrategy:
         self.options_log_dir = Path("data/options_signals")
 
         # Cache for valuations
-        self._valuation_cache: Dict[str, StickerPriceResult] = {}
-        self._big_five_cache: Dict[str, BigFiveMetrics] = {}
+        self._valuation_cache: dict[str, StickerPriceResult] = {}
+        self._big_five_cache: dict[str, BigFiveMetrics] = {}
 
-        logger.info(f"Rule #1 Options Strategy initialized: {len(self.universe)} symbols, paper={paper}")
+        logger.info(
+            f"Rule #1 Options Strategy initialized: {len(self.universe)} symbols, paper={paper}"
+        )
 
     def calculate_big_five(self, symbol: str) -> Optional[BigFiveMetrics]:
         """
@@ -264,18 +300,13 @@ class RuleOneOptionsStrategy:
             ticker = yf.Ticker(symbol)
             info = ticker.info
 
-            # Get financial data
-            financials = ticker.financials
-            balance_sheet = ticker.balance_sheet
-            cash_flow = ticker.cashflow
-
             # Calculate ROIC (Return on Invested Capital)
             # ROIC = NOPAT / Invested Capital
-            roic = info.get('returnOnCapital') or info.get('returnOnEquity', 0.10)
+            roic = info.get("returnOnCapital") or info.get("returnOnEquity", 0.10)
 
             # Get growth rates from yfinance
-            eps_growth = info.get('earningsGrowth', 0.10)
-            revenue_growth = info.get('revenueGrowth', 0.10)
+            eps_growth = info.get("earningsGrowth", 0.10)
+            revenue_growth = info.get("revenueGrowth", 0.10)
 
             # Estimate equity and FCF growth (simplified)
             equity_growth = eps_growth * 0.8 if eps_growth else 0.10
@@ -320,15 +351,15 @@ class RuleOneOptionsStrategy:
             info = ticker.info
 
             # Get current data
-            current_price = info.get('currentPrice') or info.get('regularMarketPrice', 0)
-            current_eps = info.get('trailingEps', 0)
+            current_price = info.get("currentPrice") or info.get("regularMarketPrice", 0)
+            current_eps = info.get("trailingEps", 0)
 
             if current_eps <= 0:
                 logger.warning(f"{symbol}: Negative or zero EPS, skipping")
                 return None
 
             # Get growth rate estimate
-            analyst_growth = info.get('earningsGrowth')
+            analyst_growth = info.get("earningsGrowth")
 
             # Get Big Five for growth estimate
             big_five = self._big_five_cache.get(symbol) or self.calculate_big_five(symbol)
@@ -408,9 +439,7 @@ class RuleOneOptionsStrategy:
                 return None
 
             clean = [
-                float(iv)
-                for iv in implied_vols
-                if iv is not None and not np.isnan(iv) and iv > 0
+                float(iv) for iv in implied_vols if iv is not None and not np.isnan(iv) and iv > 0
             ]
             if len(clean) < 5:
                 return None
@@ -427,7 +456,7 @@ class RuleOneOptionsStrategy:
             return None
 
     @staticmethod
-    def _serialize_signal(signal: RuleOneOptionsSignal) -> Dict:
+    def _serialize_signal(signal: RuleOneOptionsSignal) -> dict:
         """Convert signal dataclass into JSON-friendly dict."""
         payload = {
             "symbol": signal.symbol,
@@ -451,7 +480,7 @@ class RuleOneOptionsStrategy:
         return payload
 
     @staticmethod
-    def _serialize_valuation(result: StickerPriceResult) -> Dict:
+    def _serialize_valuation(result: StickerPriceResult) -> dict:
         """Convert StickerPriceResult to JSON-friendly dict."""
         return {
             "symbol": result.symbol,
@@ -466,7 +495,7 @@ class RuleOneOptionsStrategy:
             "timestamp": result.timestamp.isoformat() if result.timestamp else None,
         }
 
-    def _persist_signals(self, snapshot: Dict) -> None:
+    def _persist_signals(self, snapshot: dict) -> None:
         """Persist daily signals to disk for audit trail."""
         try:
             self.options_log_dir.mkdir(parents=True, exist_ok=True)
@@ -478,7 +507,7 @@ class RuleOneOptionsStrategy:
         except Exception as exc:
             logger.error(f"Failed to persist options snapshot: {exc}")
 
-    def find_put_opportunities(self) -> List[RuleOneOptionsSignal]:
+    def find_put_opportunities(self) -> list[RuleOneOptionsSignal]:
         """
         Find opportunities to sell puts at MOS price.
 
@@ -491,7 +520,7 @@ class RuleOneOptionsStrategy:
         Returns:
             List of RuleOneOptionsSignal for put selling opportunities
         """
-        signals: List[RuleOneOptionsSignal] = []
+        signals: list[RuleOneOptionsSignal] = []
         cash_available = self._get_available_cash()
 
         if cash_available <= 0:
@@ -500,7 +529,9 @@ class RuleOneOptionsStrategy:
 
         for symbol in self.universe:
             try:
-                valuation = self._valuation_cache.get(symbol) or self.calculate_sticker_price(symbol)
+                valuation = self._valuation_cache.get(symbol) or self.calculate_sticker_price(
+                    symbol
+                )
                 if not valuation:
                     continue
 
@@ -520,16 +551,26 @@ class RuleOneOptionsStrategy:
 
                 # Enforce IV rank + delta gates
                 if contract.iv_rank is not None and contract.iv_rank > self.MAX_IV_RANK:
-                    logger.debug(f"{symbol}: IV rank {contract.iv_rank:.1f} exceeds max {self.MAX_IV_RANK}")
+                    logger.debug(
+                        f"{symbol}: IV rank {contract.iv_rank:.1f} exceeds max {self.MAX_IV_RANK}"
+                    )
                     continue
 
-                if contract.delta is not None and abs(contract.delta) > (self.TARGET_DELTA_PUT + self.DELTA_TOLERANCE):
-                    logger.debug(f"{symbol}: Put delta {contract.delta:.2f} too high for target {self.TARGET_DELTA_PUT}")
+                if contract.delta is not None and abs(contract.delta) > (
+                    self.TARGET_DELTA_PUT + self.DELTA_TOLERANCE
+                ):
+                    logger.debug(
+                        f"{symbol}: Put delta {contract.delta:.2f} too high for target {self.TARGET_DELTA_PUT}"
+                    )
                     continue
 
-                premium_pct = contract.mid / valuation.current_price if valuation.current_price else 0
+                premium_pct = (
+                    contract.mid / valuation.current_price if valuation.current_price else 0
+                )
                 if premium_pct > self.MAX_PREMIUM_PCT:
-                    logger.debug(f"{symbol}: Premium {premium_pct:.2%} exceeds cap {self.MAX_PREMIUM_PCT:.2%}")
+                    logger.debug(
+                        f"{symbol}: Premium {premium_pct:.2%} exceeds cap {self.MAX_PREMIUM_PCT:.2%}"
+                    )
                     continue
 
                 if contract.days_to_expiry <= 0:
@@ -537,12 +578,16 @@ class RuleOneOptionsStrategy:
 
                 annualized_return = (contract.mid / target_strike) * (365 / contract.days_to_expiry)
                 if annualized_return < self.MIN_ANNUALIZED_RETURN:
-                    logger.debug(f"{symbol}: Annualized return {annualized_return:.1%} below minimum")
+                    logger.debug(
+                        f"{symbol}: Annualized return {annualized_return:.1%} below minimum"
+                    )
                     continue
 
                 max_contracts = int(cash_available // (target_strike * 100))
                 if max_contracts <= 0:
-                    logger.debug(f"{symbol}: Not enough cash (${cash_available:.2f}) for cash-secured puts")
+                    logger.debug(
+                        f"{symbol}: Not enough cash (${cash_available:.2f}) for cash-secured puts"
+                    )
                     continue
 
                 total_premium = contract.mid * 100 * max_contracts
@@ -576,7 +621,7 @@ class RuleOneOptionsStrategy:
         signals.sort(key=lambda x: x.annualized_return, reverse=True)
         return signals
 
-    def find_call_opportunities(self) -> List[RuleOneOptionsSignal]:
+    def find_call_opportunities(self) -> list[RuleOneOptionsSignal]:
         """
         Find opportunities to sell covered calls at Sticker Price.
 
@@ -610,7 +655,9 @@ class RuleOneOptionsStrategy:
                     continue
 
                 # Get valuation
-                valuation = self._valuation_cache.get(symbol) or self.calculate_sticker_price(symbol)
+                valuation = self._valuation_cache.get(symbol) or self.calculate_sticker_price(
+                    symbol
+                )
                 if not valuation:
                     continue
 
@@ -620,22 +667,34 @@ class RuleOneOptionsStrategy:
                     continue
 
                 if contract.iv_rank is not None and contract.iv_rank > self.MAX_IV_RANK:
-                    logger.debug(f"{symbol}: Call IV rank {contract.iv_rank:.1f} exceeds max {self.MAX_IV_RANK}")
+                    logger.debug(
+                        f"{symbol}: Call IV rank {contract.iv_rank:.1f} exceeds max {self.MAX_IV_RANK}"
+                    )
                     continue
 
-                if contract.delta is not None and contract.delta > (self.TARGET_DELTA_CALL + self.DELTA_TOLERANCE):
-                    logger.debug(f"{symbol}: Call delta {contract.delta:.2f} too high for target {self.TARGET_DELTA_CALL}")
+                if contract.delta is not None and contract.delta > (
+                    self.TARGET_DELTA_CALL + self.DELTA_TOLERANCE
+                ):
+                    logger.debug(
+                        f"{symbol}: Call delta {contract.delta:.2f} too high for target {self.TARGET_DELTA_CALL}"
+                    )
                     continue
 
-                premium_pct = contract.mid / valuation.current_price if valuation.current_price else 0
+                premium_pct = (
+                    contract.mid / valuation.current_price if valuation.current_price else 0
+                )
                 if premium_pct > self.MAX_PREMIUM_PCT:
-                    logger.debug(f"{symbol}: Call premium {premium_pct:.2%} exceeds cap {self.MAX_PREMIUM_PCT:.2%}")
+                    logger.debug(
+                        f"{symbol}: Call premium {premium_pct:.2%} exceeds cap {self.MAX_PREMIUM_PCT:.2%}"
+                    )
                     continue
 
                 if contract.days_to_expiry <= 0:
                     continue
 
-                annualized_return = (contract.mid / valuation.current_price) * (365 / contract.days_to_expiry)
+                annualized_return = (contract.mid / valuation.current_price) * (
+                    365 / contract.days_to_expiry
+                )
                 if annualized_return < self.MIN_ANNUALIZED_RETURN:
                     continue
 
@@ -671,9 +730,7 @@ class RuleOneOptionsStrategy:
         signals.sort(key=lambda x: x.annualized_return, reverse=True)
         return signals
 
-    def _find_best_put_option(
-        self, symbol: str, target_strike: float
-    ) -> Optional[OptionContract]:
+    def _find_best_put_option(self, symbol: str, target_strike: float) -> Optional[OptionContract]:
         """
         Find the best put option near target strike.
 
@@ -726,7 +783,7 @@ class RuleOneOptionsStrategy:
             mid = (bid + ask) / 2 if (bid > 0 and ask > 0) else max(bid, ask)
             delta = best_put.get("delta")
             implied_vol = best_put.get("impliedVolatility")
-            vol_series = puts["impliedVolatility"] if "impliedVolatility" in puts else []
+            vol_series = puts["impliedVolatility"] if "impliedVolatility" in puts.columns else []
             iv_rank = self._compute_iv_rank(vol_series, implied_vol)
 
             return OptionContract(
@@ -747,9 +804,7 @@ class RuleOneOptionsStrategy:
             logger.debug(f"Could not find put option for {symbol}: {e}")
             return None
 
-    def _find_best_call_option(
-        self, symbol: str, target_strike: float
-    ) -> Optional[OptionContract]:
+    def _find_best_call_option(self, symbol: str, target_strike: float) -> Optional[OptionContract]:
         """
         Find the best call option near target strike.
 
@@ -803,7 +858,7 @@ class RuleOneOptionsStrategy:
             mid = (bid + ask) / 2 if (bid > 0 and ask > 0) else max(bid, ask)
             delta = best_call.get("delta")
             implied_vol = best_call.get("impliedVolatility")
-            vol_series = calls["impliedVolatility"] if "impliedVolatility" in calls else []
+            vol_series = calls["impliedVolatility"] if "impliedVolatility" in calls.columns else []
             iv_rank = self._compute_iv_rank(vol_series, implied_vol)
 
             return OptionContract(
@@ -824,7 +879,7 @@ class RuleOneOptionsStrategy:
             logger.debug(f"Could not find call option for {symbol}: {e}")
             return None
 
-    def analyze_universe(self) -> Dict[str, StickerPriceResult]:
+    def analyze_universe(self) -> dict[str, StickerPriceResult]:
         """
         Analyze all stocks in universe and return valuations.
 
@@ -834,7 +889,7 @@ class RuleOneOptionsStrategy:
         results = {}
 
         for symbol in self.universe:
-            big_five = self.calculate_big_five(symbol)
+            self.calculate_big_five(symbol)  # Populates _big_five_cache
             valuation = self.calculate_sticker_price(symbol)
 
             if valuation:
@@ -850,7 +905,7 @@ class RuleOneOptionsStrategy:
 
         return results
 
-    def generate_daily_signals(self) -> Dict[str, List[RuleOneOptionsSignal]]:
+    def generate_daily_signals(self) -> dict[str, list[RuleOneOptionsSignal]]:
         """
         Generate all Rule #1 options signals for today.
 
@@ -865,7 +920,9 @@ class RuleOneOptionsStrategy:
         put_signals = self.find_put_opportunities()
         call_signals = self.find_call_opportunities()
 
-        logger.info(f"Found {len(put_signals)} put opportunities, {len(call_signals)} call opportunities")
+        logger.info(
+            f"Found {len(put_signals)} put opportunities, {len(call_signals)} call opportunities"
+        )
 
         snapshot = {
             "timestamp": datetime.now().isoformat(),
@@ -885,7 +942,7 @@ class RuleOneOptionsStrategy:
             "timestamp": datetime.now().isoformat(),
         }
 
-    def get_portfolio_analysis(self) -> Dict:
+    def get_portfolio_analysis(self) -> dict:
         """
         Get comprehensive Rule #1 analysis for current portfolio.
 
@@ -900,16 +957,10 @@ class RuleOneOptionsStrategy:
         best_calls = signals["calls"][:3] if signals["calls"] else []
 
         # Find undervalued stocks (below MOS)
-        undervalued = [
-            v for v in valuations.values()
-            if v.current_price <= v.mos_price
-        ]
+        undervalued = [v for v in valuations.values() if v.current_price <= v.mos_price]
 
         # Find overvalued stocks (above Sticker)
-        overvalued = [
-            v for v in valuations.values()
-            if v.current_price > v.sticker_price * 1.2
-        ]
+        overvalued = [v for v in valuations.values() if v.current_price > v.sticker_price * 1.2]
 
         return {
             "valuations": {s: v.__dict__ for s, v in valuations.items()},
@@ -934,21 +985,25 @@ if __name__ == "__main__":
     print(f"Analyzed: {analysis['analyzed_count']}/{analysis['universe_size']} stocks")
 
     print("\n--- Top Put Opportunities (Getting Paid to Wait) ---")
-    for opp in analysis['put_opportunities']:
-        print(f"  {opp['symbol']}: Sell put at ${opp['strike']:.2f}, "
-              f"Yield: {opp['annualized_return']:.1%}, "
-              f"Premium ${opp['premium']:.2f}/sh × {opp.get('contracts', 1)} contract(s)")
+    for opp in analysis["put_opportunities"]:
+        print(
+            f"  {opp['symbol']}: Sell put at ${opp['strike']:.2f}, "
+            f"Yield: {opp['annualized_return']:.1%}, "
+            f"Premium ${opp['premium']:.2f}/sh × {opp.get('contracts', 1)} contract(s)"
+        )
 
     print("\n--- Top Call Opportunities (Getting Paid to Sell) ---")
-    for opp in analysis['call_opportunities']:
-        print(f"  {opp['symbol']}: Sell call at ${opp['strike']:.2f}, "
-              f"Yield: {opp['annualized_return']:.1%}, "
-              f"Premium ${opp['premium']:.2f}/sh × {opp.get('contracts', 1)} contract(s)")
+    for opp in analysis["call_opportunities"]:
+        print(
+            f"  {opp['symbol']}: Sell call at ${opp['strike']:.2f}, "
+            f"Yield: {opp['annualized_return']:.1%}, "
+            f"Premium ${opp['premium']:.2f}/sh × {opp.get('contracts', 1)} contract(s)"
+        )
 
     print("\n--- Undervalued (Below MOS Price) ---")
-    for sym in analysis['undervalued_stocks']:
+    for sym in analysis["undervalued_stocks"]:
         print(f"  {sym}: STRONG BUY")
 
     print("\n--- Overvalued (Above Sticker Price) ---")
-    for sym in analysis['overvalued_stocks']:
+    for sym in analysis["overvalued_stocks"]:
         print(f"  {sym}: Consider selling")

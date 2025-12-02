@@ -14,14 +14,14 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from uuid import uuid4
 
-from .agent0_curriculum_agent import CurriculumAgent, TradingTask, TaskDifficulty
-from .agent0_executor_agent import ExecutorAgent, ExecutionResult
+from .agent0_curriculum_agent import CurriculumAgent, TaskDifficulty, TradingTask
+from .agent0_executor_agent import ExecutionResult, ExecutorAgent
 
 logger = logging.getLogger(__name__)
 
@@ -32,15 +32,15 @@ class EvolutionCycle:
 
     cycle_id: str = field(default_factory=lambda: str(uuid4()))
     started_at: str = field(default_factory=lambda: datetime.now().isoformat())
-    finished_at: Optional[str] = None
+    finished_at: str | None = None
 
     # Cycle details
-    task: Optional[TradingTask] = None
-    execution_result: Optional[ExecutionResult] = None
+    task: TradingTask | None = None
+    execution_result: ExecutionResult | None = None
 
     # Evolution metrics
-    curriculum_difficulty_before: Optional[str] = None
-    curriculum_difficulty_after: Optional[str] = None
+    curriculum_difficulty_before: str | None = None
+    curriculum_difficulty_after: str | None = None
     executor_capability_before: float = 0.0
     executor_capability_after: float = 0.0
 
@@ -48,7 +48,7 @@ class EvolutionCycle:
     success: bool = False
     evolution_occurred: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         data = asdict(self)
         if self.task:
@@ -71,18 +71,16 @@ class CoEvolutionState:
     executor_capability: float = 0.5
 
     # Performance tracking
-    success_rate_history: List[float] = field(default_factory=list)
-    capability_history: List[float] = field(default_factory=list)
+    success_rate_history: list[float] = field(default_factory=list)
+    capability_history: list[float] = field(default_factory=list)
 
     # Evolution milestones
-    last_evolution: Optional[str] = None
-    difficulty_progression: List[Tuple[str, str]] = field(
+    last_evolution: str | None = None
+    difficulty_progression: list[tuple[str, str]] = field(
         default_factory=list
     )  # (timestamp, difficulty)
 
-    def record_cycle(
-        self, success: bool, capability: float, difficulty: TaskDifficulty
-    ):
+    def record_cycle(self, success: bool, capability: float, difficulty: TaskDifficulty):
         """Record a completed cycle"""
         self.total_cycles += 1
         if success:
@@ -92,9 +90,7 @@ class CoEvolutionState:
         self.current_difficulty = difficulty
 
         # Track history
-        success_rate = (
-            self.successful_cycles / self.total_cycles if self.total_cycles > 0 else 0.0
-        )
+        success_rate = self.successful_cycles / self.total_cycles if self.total_cycles > 0 else 0.0
         self.success_rate_history.append(success_rate)
         self.capability_history.append(capability)
 
@@ -104,19 +100,13 @@ class CoEvolutionState:
         if len(self.capability_history) > 100:
             self.capability_history = self.capability_history[-100:]
 
-    def record_evolution(
-        self, from_difficulty: TaskDifficulty, to_difficulty: TaskDifficulty
-    ):
+    def record_evolution(self, from_difficulty: TaskDifficulty, to_difficulty: TaskDifficulty):
         """Record a difficulty evolution"""
         if from_difficulty != to_difficulty:
             self.evolution_count += 1
             self.last_evolution = datetime.now().isoformat()
-            self.difficulty_progression.append(
-                (self.last_evolution, to_difficulty.value)
-            )
-            logger.info(
-                f"🔄 Evolution recorded: {from_difficulty.value} -> {to_difficulty.value}"
-            )
+            self.difficulty_progression.append((self.last_evolution, to_difficulty.value))
+            logger.info(f"🔄 Evolution recorded: {from_difficulty.value} -> {to_difficulty.value}")
 
 
 class CoEvolutionEngine:
@@ -132,9 +122,9 @@ class CoEvolutionEngine:
 
     def __init__(
         self,
-        storage_dir: Optional[Path] = None,
-        curriculum_agent: Optional[CurriculumAgent] = None,
-        executor_agent: Optional[ExecutorAgent] = None,
+        storage_dir: Path | None = None,
+        curriculum_agent: CurriculumAgent | None = None,
+        executor_agent: ExecutorAgent | None = None,
     ):
         """
         Initialize Co-Evolution Engine
@@ -159,8 +149,8 @@ class CoEvolutionEngine:
         self.state = self._load_state()
 
         # Cycle tracking
-        self.current_cycle: Optional[EvolutionCycle] = None
-        self.cycle_history: List[EvolutionCycle] = []
+        self.current_cycle: EvolutionCycle | None = None
+        self.cycle_history: list[EvolutionCycle] = []
 
         logger.info("✅ Co-Evolution Engine initialized")
         logger.info(f"   Current difficulty: {self.state.current_difficulty.value}")
@@ -168,7 +158,7 @@ class CoEvolutionEngine:
         logger.info(f"   Total cycles: {self.state.total_cycles}")
 
     def run_evolution_cycle(
-        self, category: Optional[str] = None, symbols: Optional[List[str]] = None
+        self, category: str | None = None, symbols: list[str] | None = None
     ) -> EvolutionCycle:
         """
         Run a single co-evolution cycle
@@ -221,16 +211,12 @@ class CoEvolutionEngine:
 
             # Step 5: Check for evolution
             difficulty_before = self.state.current_difficulty
-            self.state.current_difficulty = (
-                self.curriculum_agent.state.current_difficulty
-            )
+            self.state.current_difficulty = self.curriculum_agent.state.current_difficulty
             cycle.curriculum_difficulty_after = self.state.current_difficulty.value
 
             if difficulty_before != self.state.current_difficulty:
                 cycle.evolution_occurred = True
-                self.state.record_evolution(
-                    difficulty_before, self.state.current_difficulty
-                )
+                self.state.record_evolution(difficulty_before, self.state.current_difficulty)
                 logger.info(
                     f"🔄 Evolution occurred: {difficulty_before.value} -> {self.state.current_difficulty.value}"
                 )
@@ -264,7 +250,7 @@ class CoEvolutionEngine:
 
     def run_evolution_loop(
         self, num_cycles: int = 10, min_cycles_before_evolution: int = 3
-    ) -> List[EvolutionCycle]:
+    ) -> list[EvolutionCycle]:
         """
         Run multiple evolution cycles
 
@@ -279,9 +265,9 @@ class CoEvolutionEngine:
 
         cycles = []
         for i in range(num_cycles):
-            logger.info(f"\n{'='*60}")
-            logger.info(f"Cycle {i+1}/{num_cycles}")
-            logger.info(f"{'='*60}")
+            logger.info(f"\n{'=' * 60}")
+            logger.info(f"Cycle {i + 1}/{num_cycles}")
+            logger.info(f"{'=' * 60}")
 
             cycle = self.run_evolution_cycle()
             cycles.append(cycle)
@@ -295,7 +281,7 @@ class CoEvolutionEngine:
 
         return cycles
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get co-evolution statistics"""
         return {
             "total_cycles": self.state.total_cycles,
@@ -309,18 +295,12 @@ class CoEvolutionEngine:
             "current_difficulty": self.state.current_difficulty.value,
             "executor_capability": self.state.executor_capability,
             "last_evolution": self.state.last_evolution,
-            "difficulty_progression": self.state.difficulty_progression[
-                -10:
-            ],  # Last 10 evolutions
+            "difficulty_progression": self.state.difficulty_progression[-10:],  # Last 10 evolutions
             "recent_success_rate": (
-                self.state.success_rate_history[-10:]
-                if self.state.success_rate_history
-                else []
+                self.state.success_rate_history[-10:] if self.state.success_rate_history else []
             ),
             "recent_capability": (
-                self.state.capability_history[-10:]
-                if self.state.capability_history
-                else []
+                self.state.capability_history[-10:] if self.state.capability_history else []
             ),
         }
 
@@ -334,7 +314,7 @@ class CoEvolutionEngine:
         logger.info(f"   Executor Capability: {stats['executor_capability']:.2f}")
         logger.info(f"   Evolutions: {stats['evolution_count']}")
 
-    def _log_final_summary(self, cycles: List[EvolutionCycle]):
+    def _log_final_summary(self, cycles: list[EvolutionCycle]):
         """Log final summary after evolution loop"""
         successful = sum(1 for c in cycles if c.success)
         evolutions = sum(1 for c in cycles if c.evolution_occurred)
@@ -343,7 +323,7 @@ class CoEvolutionEngine:
         logger.info("🎯 Evolution Loop Complete")
         logger.info("=" * 60)
         logger.info(f"Total Cycles: {len(cycles)}")
-        logger.info(f"Successful: {successful} ({successful/len(cycles)*100:.1f}%)")
+        logger.info(f"Successful: {successful} ({successful / len(cycles) * 100:.1f}%)")
         logger.info(f"Evolutions: {evolutions}")
         logger.info(f"Final Difficulty: {self.state.current_difficulty.value}")
         logger.info(f"Final Capability: {self.state.executor_capability:.2f}")
@@ -357,8 +337,7 @@ class CoEvolutionEngine:
         state_dict["current_difficulty"] = self.state.current_difficulty.value
         # Convert difficulty_progression tuples
         state_dict["difficulty_progression"] = [
-            {"timestamp": t, "difficulty": d}
-            for t, d in self.state.difficulty_progression
+            {"timestamp": t, "difficulty": d} for t, d in self.state.difficulty_progression
         ]
 
         with open(state_file, "w") as f:
@@ -372,7 +351,7 @@ class CoEvolutionEngine:
             return CoEvolutionState()
 
         try:
-            with open(state_file, "r") as f:
+            with open(state_file) as f:
                 data = json.load(f)
 
             # Convert difficulty back to enum

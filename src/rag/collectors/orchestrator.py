@@ -4,25 +4,26 @@ News Collection Orchestrator
 Coordinates all news collectors and aggregates results.
 """
 
-from typing import List, Dict, Any
-from datetime import datetime
-import logging
 import json
+import logging
 import os
+from datetime import datetime
+from typing import Any
 
-from src.rag.collectors.yahoo_collector import YahooFinanceCollector
-from src.rag.collectors.reddit_collector import RedditCollector
 from src.rag.collectors.alphavantage_collector import AlphaVantageCollector
-from src.rag.collectors.tiktok_collector import TikTokCollector
+from src.rag.collectors.bogleheads_collector import BogleheadsCollector
+from src.rag.collectors.reddit_collector import RedditCollector
 from src.rag.collectors.seekingalpha_collector import SeekingAlphaCollector
 from src.rag.collectors.stocktwits_collector import StockTwitsCollector
-from src.rag.collectors.bogleheads_collector import BogleheadsCollector
+from src.rag.collectors.tiktok_collector import TikTokCollector
+from src.rag.collectors.yahoo_collector import YahooFinanceCollector
 
 logger = logging.getLogger(__name__)
 
 # New collectors for comprehensive data coverage
 try:
     from src.rag.collectors.fred_collector import FREDCollector
+
     FRED_AVAILABLE = True
 except ImportError:
     FRED_AVAILABLE = False
@@ -30,6 +31,7 @@ except ImportError:
 
 try:
     from src.rag.collectors.sec13f_collector import SEC13FCollector
+
     SEC13F_AVAILABLE = True
 except ImportError:
     SEC13F_AVAILABLE = False
@@ -79,9 +81,7 @@ class NewsOrchestrator:
 
         logger.info(f"Initialized {len(self.collectors)} news collectors")
 
-    def collect_all_ticker_news(
-        self, ticker: str, days_back: int = 7
-    ) -> List[Dict[str, Any]]:
+    def collect_all_ticker_news(self, ticker: str, days_back: int = 7) -> list[dict[str, Any]]:
         """
         Collect news for a ticker from ALL sources.
 
@@ -112,8 +112,8 @@ class NewsOrchestrator:
         return all_articles
 
     def collect_watchlist_news(
-        self, tickers: List[str], days_back: int = 7
-    ) -> Dict[str, List[Dict[str, Any]]]:
+        self, tickers: list[str], days_back: int = 7
+    ) -> dict[str, list[dict[str, Any]]]:
         """
         Collect news for multiple tickers (watchlist).
 
@@ -132,13 +132,11 @@ class NewsOrchestrator:
             results[ticker] = articles
 
         total_articles = sum(len(articles) for articles in results.values())
-        logger.info(
-            f"\n✅ Collected {total_articles} total articles for {len(tickers)} tickers"
-        )
+        logger.info(f"\n✅ Collected {total_articles} total articles for {len(tickers)} tickers")
 
         return results
 
-    def collect_market_news(self, days_back: int = 1) -> List[Dict[str, Any]]:
+    def collect_market_news(self, days_back: int = 1) -> list[dict[str, Any]]:
         """
         Collect general market news from ALL sources.
 
@@ -167,7 +165,7 @@ class NewsOrchestrator:
         logger.info(f"Collected {len(all_articles)} total market articles")
         return all_articles
 
-    def save_collected_news(self, articles: List[Dict[str, Any]], ticker: str = None):
+    def save_collected_news(self, articles: list[dict[str, Any]], ticker: str = None):
         """
         Save collected news to data/rag/normalized/.
 
@@ -193,7 +191,7 @@ class NewsOrchestrator:
         except Exception as e:
             logger.error(f"Error saving articles: {e}")
 
-    def _deduplicate(self, articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _deduplicate(self, articles: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Remove duplicate articles based on URL.
 

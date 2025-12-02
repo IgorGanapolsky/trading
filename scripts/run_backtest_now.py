@@ -3,9 +3,10 @@
 IMMEDIATE BACKTEST - Prove Strategy Profitability
 Tests momentum system (MACD + RSI + Volume) on 60 days of historical data
 """
+
 import sys
-from datetime import datetime, timedelta
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env
@@ -14,8 +15,8 @@ load_dotenv()
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.strategies.core_strategy import CoreStrategy
 from src.backtesting.backtest_engine import BacktestEngine
+from src.strategies.core_strategy import CoreStrategy
 
 print("=" * 80)
 print("🔬 RUNNING 60-DAY BACKTEST - MOMENTUM STRATEGY")
@@ -34,7 +35,7 @@ print("📊 Strategy Configuration:")
 print(f"  - Daily Allocation: ${strategy.daily_allocation}")
 print(f"  - ETF Universe: {strategy.etf_universe}")
 print(f"  - Stop Loss: {strategy.stop_loss_pct * 100}%")
-print(f"  - Indicators: MACD, RSI, Volume Ratio")
+print("  - Indicators: MACD, RSI, Volume Ratio")
 print()
 
 # Define backtest period (Sept 1 - Oct 31, 2025 = 60 days)
@@ -42,7 +43,7 @@ start_date = "2025-09-01"
 end_date = "2025-10-31"
 
 print(f"📅 Backtest Period: {start_date} to {end_date}")
-print(f"💰 Initial Capital: $100,000")
+print("💰 Initial Capital: $100,000")
 print()
 
 # Create and run backtest
@@ -82,23 +83,17 @@ else:
 if results.sharpe_ratio >= 1.0:
     criteria_met.append(f"✅ Sharpe Ratio: {results.sharpe_ratio:.2f} (target: >1.0)")
 else:
-    criteria_failed.append(
-        f"❌ Sharpe Ratio: {results.sharpe_ratio:.2f} (target: >1.0)"
-    )
+    criteria_failed.append(f"❌ Sharpe Ratio: {results.sharpe_ratio:.2f} (target: >1.0)")
 
 if results.max_drawdown <= 10:
     criteria_met.append(f"✅ Max Drawdown: {results.max_drawdown:.1f}% (target: <10%)")
 else:
-    criteria_failed.append(
-        f"❌ Max Drawdown: {results.max_drawdown:.1f}% (target: <10%)"
-    )
+    criteria_failed.append(f"❌ Max Drawdown: {results.max_drawdown:.1f}% (target: <10%)")
 
 if results.total_return > 0:
     criteria_met.append(f"✅ Total Return: {results.total_return:.2f}% (target: >0%)")
 else:
-    criteria_failed.append(
-        f"❌ Total Return: {results.total_return:.2f}% (target: >0%)"
-    )
+    criteria_failed.append(f"❌ Total Return: {results.total_return:.2f}% (target: >0%)")
 
 print("\n📊 Criteria Met:")
 for item in criteria_met:

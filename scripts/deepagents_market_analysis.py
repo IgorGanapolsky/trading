@@ -5,11 +5,10 @@ DeepAgents-Powered Market Analysis
 CTO Decision: Use DeepAgents for comprehensive market analysis and recommendations.
 """
 
+import asyncio
 import os
 import sys
-import asyncio
 from pathlib import Path
-from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -94,7 +93,7 @@ async def analyze_market():
         analysis_files.extend(Path(".").glob("**/market_analysis_*.md"))
 
         if analysis_files:
-            print(f"\n✅ Analysis files created:")
+            print("\n✅ Analysis files created:")
             for f in analysis_files:
                 print(f"   - {f}")
 

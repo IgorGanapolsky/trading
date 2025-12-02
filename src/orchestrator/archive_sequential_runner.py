@@ -11,9 +11,9 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, List
 
 from agent_framework import (
     AgentConfig,
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class OrchestratorConfig:
     """Configuration object used to bootstrap the orchestrator."""
 
-    agents: List[TradingAgent] = field(default_factory=list)
+    agents: list[TradingAgent] = field(default_factory=list)
     state_provider: StateProvider = field(
         default_factory=lambda: FileStateProvider(Path("data/system_state.json"))
     )
@@ -89,9 +89,7 @@ class TradingOrchestrator:
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Run the multi-agent trading orchestrator."
-    )
+    parser = argparse.ArgumentParser(description="Run the multi-agent trading orchestrator.")
     parser.add_argument(
         "--mode",
         choices=[m.value for m in RunMode],

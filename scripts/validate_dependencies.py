@@ -26,7 +26,7 @@ def check_dependency_conflicts():
         print("❌ requirements.txt not found")
         return False
 
-    print(f"✅ Found requirements.txt")
+    print("✅ Found requirements.txt")
 
     # Try to install dependencies in dry-run mode using pip's resolver
     print("\n📦 Checking for dependency conflicts...")
@@ -104,8 +104,8 @@ def check_python_version():
         return True
     elif version.major == 3 and version.minor >= 15:
         print(f"❌ Python {version.major}.{version.minor} is NOT supported!")
-        print(f"   pandas 2.3.3 requires Python <3.15")
-        print(f"   Please use Python 3.13/3.14 or wait for pandas upgrade")
+        print("   pandas 2.3.3 requires Python <3.15")
+        print("   Please use Python 3.13/3.14 or wait for pandas upgrade")
         return False
     else:
         print(f"⚠️  Python {version.major}.{version.minor} (CI uses 3.13)")

@@ -20,11 +20,10 @@ Created: 2025-12-01
 import logging
 import re
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from xml.etree import ElementTree
 
 import requests
-
 from src.rag.collectors.base_collector import BaseNewsCollector
 
 logger = logging.getLogger(__name__)
@@ -76,11 +75,9 @@ class SEC13FCollector(BaseNewsCollector):
         }
 
         # Cache for filings
-        self._filing_cache: Dict[str, Dict] = {}
+        self._filing_cache: dict[str, dict] = {}
 
-    def collect_ticker_news(
-        self, ticker: str, days_back: int = 90
-    ) -> List[Dict[str, Any]]:
+    def collect_ticker_news(self, ticker: str, days_back: int = 90) -> list[dict[str, Any]]:
         """
         Collect institutional activity for a specific ticker.
 
@@ -101,14 +98,10 @@ class SEC13FCollector(BaseNewsCollector):
                     continue
 
                 # Find this ticker in holdings
-                ticker_holdings = [
-                    h for h in holdings if self._match_ticker(h, ticker)
-                ]
+                ticker_holdings = [h for h in holdings if self._match_ticker(h, ticker)]
 
                 if ticker_holdings:
-                    article = self._create_ticker_article(
-                        ticker, institution, ticker_holdings
-                    )
+                    article = self._create_ticker_article(ticker, institution, ticker_holdings)
                     if article:
                         articles.append(article)
 
@@ -119,7 +112,7 @@ class SEC13FCollector(BaseNewsCollector):
         logger.info(f"Found {len(articles)} institutional activities for {ticker}")
         return articles
 
-    def collect_market_news(self, days_back: int = 45) -> List[Dict[str, Any]]:
+    def collect_market_news(self, days_back: int = 45) -> list[dict[str, Any]]:
         """
         Collect recent 13F filings from tracked institutions.
 
@@ -148,9 +141,7 @@ class SEC13FCollector(BaseNewsCollector):
         logger.info(f"Collected {len(articles)} institutional filing summaries")
         return articles
 
-    def _get_recent_filings(
-        self, cik: str, form_type: str, days_back: int
-    ) -> List[Dict]:
+    def _get_recent_filings(self, cik: str, form_type: str, days_back: int) -> list[dict]:
         """
         Get recent filings for an institution.
 
@@ -196,7 +187,7 @@ class SEC13FCollector(BaseNewsCollector):
             logger.debug(f"Error fetching filings for CIK {cik}: {e}")
             return []
 
-    def _get_institution_holdings(self, cik: str) -> Optional[List[Dict]]:
+    def _get_institution_holdings(self, cik: str) -> Optional[list[dict]]:
         """
         Get current holdings for an institution from most recent 13F.
 
@@ -222,10 +213,7 @@ class SEC13FCollector(BaseNewsCollector):
         accession = latest["accession"].replace("-", "")
 
         # Fetch the information table
-        url = (
-            f"{self.EDGAR_BASE}/Archives/edgar/data/{cik.lstrip('0')}/"
-            f"{accession}/infotable.xml"
-        )
+        url = f"{self.EDGAR_BASE}/Archives/edgar/data/{cik.lstrip('0')}/{accession}/infotable.xml"
 
         try:
             response = requests.get(url, headers=self.headers, timeout=15)
@@ -251,7 +239,7 @@ class SEC13FCollector(BaseNewsCollector):
             logger.debug(f"Error fetching holdings for CIK {cik}: {e}")
             return None
 
-    def _parse_13f_xml(self, xml_content: str) -> List[Dict]:
+    def _parse_13f_xml(self, xml_content: str) -> list[dict]:
         """
         Parse 13F XML information table.
 
@@ -303,7 +291,7 @@ class SEC13FCollector(BaseNewsCollector):
 
         return holdings
 
-    def _match_ticker(self, holding: Dict, ticker: str) -> bool:
+    def _match_ticker(self, holding: dict, ticker: str) -> bool:
         """
         Check if a holding matches a ticker.
 
@@ -359,9 +347,9 @@ class SEC13FCollector(BaseNewsCollector):
     def _create_ticker_article(
         self,
         ticker: str,
-        institution: Dict,
-        holdings: List[Dict],
-    ) -> Optional[Dict[str, Any]]:
+        institution: dict,
+        holdings: list[dict],
+    ) -> Optional[dict[str, Any]]:
         """Create article for ticker-specific institutional holdings."""
         if not holdings:
             return None
@@ -369,7 +357,7 @@ class SEC13FCollector(BaseNewsCollector):
         total_value = sum(h.get("value", 0) for h in holdings)
         total_shares = sum(h.get("shares", 0) for h in holdings)
 
-        content = f"""Institutional Holding: {institution['name']} ({institution['type']})
+        content = f"""Institutional Holding: {institution["name"]} ({institution["type"]})
 Ticker: {ticker}
 
 Position Summary:
@@ -384,7 +372,7 @@ Holdings Detail:
             if h.get("put_call"):
                 content += f"    Type: {h.get('put_call')}\n"
 
-        content += f"""
+        content += """
 Trading Signal:
 Major institutional ownership signals validation of investment thesis.
 Monitor quarterly changes for buying/selling pressure.
@@ -402,9 +390,9 @@ Monitor quarterly changes for buying/selling pressure.
     def _create_filing_article(
         self,
         cik: str,
-        institution: Dict,
-        filing: Dict,
-    ) -> Optional[Dict[str, Any]]:
+        institution: dict,
+        filing: dict,
+    ) -> Optional[dict[str, Any]]:
         """Create article summarizing an institution's 13F filing."""
         holdings = self._get_institution_holdings(cik)
         if not holdings:
@@ -418,9 +406,9 @@ Monitor quarterly changes for buying/selling pressure.
         sorted_holdings = sorted(holdings, key=lambda x: x.get("value", 0), reverse=True)
         top_5 = sorted_holdings[:5]
 
-        content = f"""13F Filing Summary: {institution['name']}
-Filing Date: {filing['date']}
-Institution Type: {institution['type']}
+        content = f"""13F Filing Summary: {institution["name"]}
+Filing Date: {filing["date"]}
+Institution Type: {institution["type"]}
 
 Portfolio Overview:
 - Total Portfolio Value: ${total_value:,.0f}
@@ -442,7 +430,7 @@ Sector Exposure:
 """
 
         return self.normalize_article(
-            title=f"{institution['name']} 13F Filing: ${total_value/1e9:.1f}B Portfolio",
+            title=f"{institution['name']} 13F Filing: ${total_value / 1e9:.1f}B Portfolio",
             content=content,
             url=f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={cik}&type=13F-HR",
             published_date=filing["date"],
@@ -450,7 +438,7 @@ Sector Exposure:
             sentiment=0.5,  # Neutral - informational
         )
 
-    def _analyze_portfolio_style(self, holdings: List[Dict], institution: Dict) -> str:
+    def _analyze_portfolio_style(self, holdings: list[dict], institution: dict) -> str:
         """Analyze portfolio concentration and style."""
         if not holdings:
             return "unknown"
@@ -473,7 +461,7 @@ Sector Exposure:
 
         return f"{style} {institution['type']}"
 
-    def _estimate_sector_exposure(self, holdings: List[Dict]) -> str:
+    def _estimate_sector_exposure(self, holdings: list[dict]) -> str:
         """Estimate sector exposure from holding names."""
         # Simple keyword-based sector classification
         sectors = {
@@ -486,12 +474,75 @@ Sector Exposure:
             "Other": 0,
         }
 
-        tech_keywords = ["APPLE", "MICROSOFT", "GOOGLE", "ALPHABET", "NVIDIA", "META", "AMAZON", "ADOBE", "SALESFORCE", "ORACLE", "INTEL", "AMD", "BROADCOM", "QUALCOMM"]
-        health_keywords = ["PFIZER", "JOHNSON", "UNITEDHEALTH", "MERCK", "LILLY", "ABBVIE", "BRISTOL", "AMGEN", "GILEAD", "REGENERON"]
-        finance_keywords = ["JPMORGAN", "BANK", "GOLDMAN", "MORGAN STANLEY", "WELLS", "VISA", "MASTERCARD", "BERKSHIRE", "BLACKROCK"]
-        consumer_keywords = ["WALMART", "COSTCO", "HOME DEPOT", "NIKE", "MCDONALD", "STARBUCKS", "COCA-COLA", "PEPSI", "PROCTER", "DISNEY"]
-        energy_keywords = ["EXXON", "CHEVRON", "CONOCOPHILLIPS", "SCHLUMBERGER", "OCCIDENTAL", "PIONEER"]
-        industrial_keywords = ["CATERPILLAR", "DEERE", "BOEING", "LOCKHEED", "RAYTHEON", "HONEYWELL", "3M", "UNION PACIFIC"]
+        tech_keywords = [
+            "APPLE",
+            "MICROSOFT",
+            "GOOGLE",
+            "ALPHABET",
+            "NVIDIA",
+            "META",
+            "AMAZON",
+            "ADOBE",
+            "SALESFORCE",
+            "ORACLE",
+            "INTEL",
+            "AMD",
+            "BROADCOM",
+            "QUALCOMM",
+        ]
+        health_keywords = [
+            "PFIZER",
+            "JOHNSON",
+            "UNITEDHEALTH",
+            "MERCK",
+            "LILLY",
+            "ABBVIE",
+            "BRISTOL",
+            "AMGEN",
+            "GILEAD",
+            "REGENERON",
+        ]
+        finance_keywords = [
+            "JPMORGAN",
+            "BANK",
+            "GOLDMAN",
+            "MORGAN STANLEY",
+            "WELLS",
+            "VISA",
+            "MASTERCARD",
+            "BERKSHIRE",
+            "BLACKROCK",
+        ]
+        consumer_keywords = [
+            "WALMART",
+            "COSTCO",
+            "HOME DEPOT",
+            "NIKE",
+            "MCDONALD",
+            "STARBUCKS",
+            "COCA-COLA",
+            "PEPSI",
+            "PROCTER",
+            "DISNEY",
+        ]
+        energy_keywords = [
+            "EXXON",
+            "CHEVRON",
+            "CONOCOPHILLIPS",
+            "SCHLUMBERGER",
+            "OCCIDENTAL",
+            "PIONEER",
+        ]
+        industrial_keywords = [
+            "CATERPILLAR",
+            "DEERE",
+            "BOEING",
+            "LOCKHEED",
+            "RAYTHEON",
+            "HONEYWELL",
+            "3M",
+            "UNION PACIFIC",
+        ]
 
         for h in holdings:
             name = h.get("name", "").upper()
@@ -525,14 +576,14 @@ Sector Exposure:
 
         return "\n".join(lines[:5])  # Top 5 sectors
 
-    def get_top_holdings_summary(self) -> List[Dict[str, Any]]:
+    def get_top_holdings_summary(self) -> list[dict[str, Any]]:
         """
         Get summary of top holdings across tracked institutions.
 
         Returns:
             List of most commonly held stocks with institutional counts
         """
-        holdings_count: Dict[str, Dict] = {}
+        holdings_count: dict[str, dict] = {}
 
         for cik, institution in TRACKED_INSTITUTIONS.items():
             try:
@@ -583,5 +634,5 @@ if __name__ == "__main__":
     for holding in top[:10]:
         print(
             f"  {holding['name']}: {len(holding['institutions'])} institutions, "
-            f"${holding['total_value']/1e9:.1f}B total"
+            f"${holding['total_value'] / 1e9:.1f}B total"
         )

@@ -40,33 +40,31 @@ def analyze_spy_loss():
     current_price = spy_pos.get("current_price", 0)
     unrealized_pl_pct = spy_pos.get("unrealized_pl_pct", 0)
 
-    print(f"\n📊 SPY Position Details:")
+    print("\n📊 SPY Position Details:")
     print(f"  Entry Price:    ${entry_price:.2f}")
     print(f"  Current Price:  ${current_price:.2f}")
     print(f"  Loss:           {unrealized_pl_pct:.2f}%")
     print(f"  Dollar Loss:    ${spy_pos.get('unrealized_pl', 0):+.2f}")
 
     # Analysis
-    print(f"\n💡 Analysis:")
+    print("\n💡 Analysis:")
     print(f"  • SPY is down {abs(unrealized_pl_pct):.2f}% from entry")
-    print(
-        f"  • This represents a ${abs(spy_pos.get('unrealized_pl', 0)):.2f} unrealized loss"
-    )
-    print(f"  • Stop-loss is set at $669.04 (will trigger if drops further)")
+    print(f"  • This represents a ${abs(spy_pos.get('unrealized_pl', 0)):.2f} unrealized loss")
+    print("  • Stop-loss is set at $669.04 (will trigger if drops further)")
 
     # Recommendations
-    print(f"\n🎯 Recommendations:")
+    print("\n🎯 Recommendations:")
     if unrealized_pl_pct < -5:
-        print(f"  🚨 CRITICAL: Loss exceeds 5% - Consider immediate review")
-        print(f"     - Market may be in correction")
-        print(f"     - Consider reducing position size")
+        print("  🚨 CRITICAL: Loss exceeds 5% - Consider immediate review")
+        print("     - Market may be in correction")
+        print("     - Consider reducing position size")
     elif unrealized_pl_pct < -2:
-        print(f"  ⚠️  WARNING: Loss exceeds 2% - Monitor closely")
-        print(f"     - Stop-loss will protect further downside")
-        print(f"     - Consider if this is temporary volatility")
+        print("  ⚠️  WARNING: Loss exceeds 2% - Monitor closely")
+        print("     - Stop-loss will protect further downside")
+        print("     - Consider if this is temporary volatility")
 
-    print(f"  ✅ Stop-loss active: Will auto-sell if drops to $669.04")
-    print(f"  📈 If SPY recovers above entry ($682.70), consider taking profits")
+    print("  ✅ Stop-loss active: Will auto-sell if drops to $669.04")
+    print("  📈 If SPY recovers above entry ($682.70), consider taking profits")
 
     return {
         "entry": entry_price,
@@ -92,7 +90,7 @@ def analyze_win_rate():
     total_trades = performance.get("total_trades", 0)
     win_rate = performance.get("win_rate", 0)
 
-    print(f"\n📈 Current Metrics:")
+    print("\n📈 Current Metrics:")
     print(f"  Total Trades:    {total_trades}")
     print(f"  Win Rate:        {win_rate:.1f}%")
     print(f"  Winning Trades:  {performance.get('winning_trades', 0)}")
@@ -102,25 +100,23 @@ def analyze_win_rate():
     profitable = sum(1 for p in positions if p.get("unrealized_pl", 0) > 0)
     losing = len(positions) - profitable
 
-    print(f"\n📦 Current Positions:")
+    print("\n📦 Current Positions:")
     print(f"  Profitable:       {profitable}/{len(positions)}")
     print(f"  Losing:           {losing}/{len(positions)}")
 
-    print(f"\n💡 Analysis:")
+    print("\n💡 Analysis:")
     if total_trades == 0:
-        print(f"  • No trades executed yet - win rate will populate after trades")
+        print("  • No trades executed yet - win rate will populate after trades")
     elif win_rate == 0 and total_trades > 0:
-        print(f"  • Win rate is 0% because no positions have been closed profitably")
+        print("  • Win rate is 0% because no positions have been closed profitably")
         print(f"  • Current positions show: {profitable} profitable, {losing} losing")
-        print(f"  • Win rate will update when positions are closed")
+        print("  • Win rate will update when positions are closed")
 
-    print(f"\n🎯 Recommendations:")
-    print(f"  • Focus on position management and exit timing")
-    print(
-        f"  • Current unrealized P/L: ${sum(p.get('unrealized_pl', 0) for p in positions):+.2f}"
-    )
-    print(f"  • Consider taking profits on GOOGL (+2.34%)")
-    print(f"  • Monitor SPY closely (-4.44%)")
+    print("\n🎯 Recommendations:")
+    print("  • Focus on position management and exit timing")
+    print(f"  • Current unrealized P/L: ${sum(p.get('unrealized_pl', 0) for p in positions):+.2f}")
+    print("  • Consider taking profits on GOOGL (+2.34%)")
+    print("  • Monitor SPY closely (-4.44%)")
 
 
 def suggest_optimizations():
@@ -164,9 +160,7 @@ def suggest_optimizations():
 
     for opt in optimizations:
         priority_emoji = (
-            "🚨"
-            if opt["priority"] == "HIGH"
-            else "⚠️" if opt["priority"] == "MEDIUM" else "ℹ️"
+            "🚨" if opt["priority"] == "HIGH" else "⚠️" if opt["priority"] == "MEDIUM" else "ℹ️"
         )
         print(f"\n{priority_emoji} [{opt['priority']}] {opt['action']}")
         print(f"   Reason: {opt['reason']}")

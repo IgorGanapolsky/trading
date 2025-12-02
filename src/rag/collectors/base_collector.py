@@ -2,11 +2,11 @@
 Base class for news collectors.
 """
 
-from abc import ABC, abstractmethod
-from typing import List, Dict, Any
-from datetime import datetime
-import logging
 import json
+import logging
+from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +31,7 @@ class BaseNewsCollector(ABC):
         logger.info(f"Initialized {source_name} collector")
 
     @abstractmethod
-    def collect_ticker_news(
-        self, ticker: str, days_back: int = 7
-    ) -> List[Dict[str, Any]]:
+    def collect_ticker_news(self, ticker: str, days_back: int = 7) -> list[dict[str, Any]]:
         """
         Collect news for a specific ticker.
 
@@ -58,7 +56,7 @@ class BaseNewsCollector(ABC):
         pass
 
     @abstractmethod
-    def collect_market_news(self, days_back: int = 1) -> List[Dict[str, Any]]:
+    def collect_market_news(self, days_back: int = 1) -> list[dict[str, Any]]:
         """
         Collect general market news.
 
@@ -78,7 +76,7 @@ class BaseNewsCollector(ABC):
         published_date: str,
         ticker: str = None,
         sentiment: float = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Normalize article to standard format.
 
@@ -104,7 +102,7 @@ class BaseNewsCollector(ABC):
             "collected_at": datetime.now().isoformat(),
         }
 
-    def save_raw(self, articles: List[Dict[str, Any]], ticker: str = None):
+    def save_raw(self, articles: list[dict[str, Any]], ticker: str = None):
         """
         Save raw collected articles to data/rag/raw/.
 

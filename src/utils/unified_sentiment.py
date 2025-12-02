@@ -24,10 +24,10 @@ Usage:
 
 import json
 import logging
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
+from typing import Any, Optional
 
 # Import existing sentiment modules
 try:
@@ -59,7 +59,7 @@ class SourceSentiment:
     source: str
     score: float  # Normalized -1.0 to 1.0
     confidence: float  # 0.0 to 1.0
-    raw_data: Dict[str, Any]
+    raw_data: dict[str, Any]
     timestamp: str
     available: bool = True
     error: Optional[str] = None
@@ -74,7 +74,7 @@ class UnifiedSentimentResult:
     confidence: float  # 0.0 to 1.0
     signal: str  # "BULLISH", "BEARISH", "NEUTRAL"
     recommendation: str  # "BUY_SIGNAL", "SELL_SIGNAL", "HOLD"
-    sources: Dict[str, SourceSentiment]
+    sources: dict[str, SourceSentiment]
     timestamp: str
     cache_hit: bool = False
 
@@ -146,9 +146,7 @@ class UnifiedSentiment:
 
         if enable_news and NewsSentimentAggregator:
             try:
-                self.news_analyzer = NewsSentimentAggregator(
-                    output_dir=str(self.cache_dir)
-                )
+                self.news_analyzer = NewsSentimentAggregator(output_dir=str(self.cache_dir))
                 logger.info("News sentiment analyzer initialized")
             except Exception as e:
                 logger.warning(f"Failed to initialize news analyzer: {e}")
@@ -165,9 +163,7 @@ class UnifiedSentiment:
         # Calculate active source weights (normalize to 1.0)
         self._normalize_weights()
 
-        logger.info(
-            f"UnifiedSentiment initialized. Active sources: {self._get_active_sources()}"
-        )
+        logger.info(f"UnifiedSentiment initialized. Active sources: {self._get_active_sources()}")
 
     def _normalize_weights(self):
         """Normalize weights based on enabled sources to sum to 1.0"""
@@ -190,7 +186,7 @@ class UnifiedSentiment:
 
         logger.debug(f"Normalized weights: {self.normalized_weights}")
 
-    def _get_active_sources(self) -> List[str]:
+    def _get_active_sources(self) -> list[str]:
         """Get list of active sentiment sources"""
         return [source for source, enabled in self.enabled_sources.items() if enabled]
 
@@ -207,21 +203,17 @@ class UnifiedSentiment:
 
         try:
             # Check if cache is still fresh
-            cache_age = datetime.now() - datetime.fromtimestamp(
-                cache_file.stat().st_mtime
-            )
+            cache_age = datetime.now() - datetime.fromtimestamp(cache_file.stat().st_mtime)
             if cache_age.total_seconds() > self.CACHE_TTL_SECONDS:
                 logger.debug(f"Cache expired for {symbol} (age: {cache_age})")
                 return None
 
-            with open(cache_file, "r") as f:
+            with open(cache_file) as f:
                 data = json.load(f)
 
             logger.info(f"Cache hit for {symbol}")
             # Convert dict back to dataclass
-            sources = {
-                k: SourceSentiment(**v) for k, v in data.get("sources", {}).items()
-            }
+            sources = {k: SourceSentiment(**v) for k, v in data.get("sources", {}).items()}
             result = UnifiedSentimentResult(
                 symbol=data["symbol"],
                 overall_score=data["overall_score"],
@@ -323,9 +315,7 @@ class UnifiedSentiment:
 
         try:
             # Get Reddit sentiment data (from cache if available)
-            sentiment_data = self.reddit_analyzer.collect_daily_sentiment(
-                force_refresh=False
-            )
+            sentiment_data = self.reddit_analyzer.collect_daily_sentiment(force_refresh=False)
 
             ticker_data = sentiment_data.get("sentiment_by_ticker", {}).get(symbol)
 
@@ -452,12 +442,8 @@ class UnifiedSentiment:
             bearish_count = 0
 
             for content_lower in [c.lower() for c in recent_analyses]:
-                bullish_count += sum(
-                    1 for kw in bullish_keywords if kw in content_lower
-                )
-                bearish_count += sum(
-                    1 for kw in bearish_keywords if kw in content_lower
-                )
+                bullish_count += sum(1 for kw in bullish_keywords if kw in content_lower)
+                bearish_count += sum(1 for kw in bearish_keywords if kw in content_lower)
 
             # Normalize score
             total_keywords = bullish_count + bearish_count
@@ -525,7 +511,7 @@ class UnifiedSentiment:
             error="TikTok sentiment not yet implemented",
         )
 
-    def get_ticker_sentiment(self, symbol: str, use_cache: bool = True) -> Dict:
+    def get_ticker_sentiment(self, symbol: str, use_cache: bool = True) -> dict:
         """
         Get aggregated sentiment for a ticker from all sources.
 
@@ -599,9 +585,7 @@ class UnifiedSentiment:
 
         # Calculate overall confidence (average of available sources)
         overall_confidence = (
-            sum(confidence_scores) / len(confidence_scores)
-            if confidence_scores
-            else 0.0
+            sum(confidence_scores) / len(confidence_scores) if confidence_scores else 0.0
         )
 
         # Determine signal
@@ -639,9 +623,7 @@ class UnifiedSentiment:
         )
 
         # Log which sources contributed
-        active_sources = [
-            name for name, sent in source_sentiments.items() if sent.available
-        ]
+        active_sources = [name for name, sent in source_sentiments.items() if sent.available]
         logger.info(
             f"{symbol}: score={overall_score:.2f}, confidence={overall_confidence:.2f}, "
             f"signal={signal}, recommendation={recommendation}, "
@@ -653,9 +635,7 @@ class UnifiedSentiment:
 
         return asdict(result)
 
-    def get_batch_sentiment(
-        self, symbols: List[str], use_cache: bool = True
-    ) -> Dict[str, Dict]:
+    def get_batch_sentiment(self, symbols: list[str], use_cache: bool = True) -> dict[str, dict]:
         """
         Get sentiment for multiple tickers in batch.
 
@@ -745,18 +725,10 @@ def main():
         default="SPY,QQQ,NVDA",
         help="Comma-separated list of tickers (default: SPY,QQQ,NVDA)",
     )
-    parser.add_argument(
-        "--no-cache", action="store_true", help="Disable cache (fetch fresh data)"
-    )
-    parser.add_argument(
-        "--disable-news", action="store_true", help="Disable news sentiment"
-    )
-    parser.add_argument(
-        "--disable-reddit", action="store_true", help="Disable Reddit sentiment"
-    )
-    parser.add_argument(
-        "--disable-youtube", action="store_true", help="Disable YouTube sentiment"
-    )
+    parser.add_argument("--no-cache", action="store_true", help="Disable cache (fetch fresh data)")
+    parser.add_argument("--disable-news", action="store_true", help="Disable news sentiment")
+    parser.add_argument("--disable-reddit", action="store_true", help="Disable Reddit sentiment")
+    parser.add_argument("--disable-youtube", action="store_true", help="Disable YouTube sentiment")
 
     args = parser.parse_args()
 

@@ -5,25 +5,25 @@ Tests: MCP file reading, RSS parsing, signal extraction
 """
 
 import sys
-from pathlib import Path
 from datetime import datetime, timezone
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.utils.newsletter_analyzer import (
     NewsletterAnalyzer,
+    get_all_signals,
     get_btc_signal,
     get_eth_signal,
-    get_all_signals,
 )
 
 
 def print_header(title):
     """Print formatted section header"""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"{title:^80}")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
 
 def test_existing_mcp_files():
@@ -37,12 +37,10 @@ def test_existing_mcp_files():
         print(f"✅ Found {len(signals)} signals from MCP files\n")
 
         for ticker, signal in signals.items():
-            print(f"{'─'*80}")
+            print(f"{'─' * 80}")
             print(f"  {ticker} Signal")
-            print(f"{'─'*80}")
-            print(
-                f"  Sentiment:   {signal.sentiment.upper()} ({signal.confidence:.0%} confidence)"
-            )
+            print(f"{'─' * 80}")
+            print(f"  Sentiment:   {signal.sentiment.upper()} ({signal.confidence:.0%} confidence)")
             print(
                 f"  Source Date: {signal.source_date.strftime('%Y-%m-%d %H:%M:%S') if signal.source_date else 'Unknown'}"
             )
@@ -63,9 +61,7 @@ def test_existing_mcp_files():
         return True
     else:
         print("❌ No signals found from MCP files")
-        print(
-            "Expected file location: data/newsletter_signals/newsletter_signals_YYYY-MM-DD.json"
-        )
+        print("Expected file location: data/newsletter_signals/newsletter_signals_YYYY-MM-DD.json")
         return False
 
 
@@ -112,12 +108,8 @@ def test_rss_fallback():
 
             return True
         else:
-            print(
-                "⚠️  RSS feed accessible but no crypto signals found in recent articles"
-            )
-            print(
-                "This is normal if CoinSnacks hasn't published BTC/ETH analysis recently"
-            )
+            print("⚠️  RSS feed accessible but no crypto signals found in recent articles")
+            print("This is normal if CoinSnacks hasn't published BTC/ETH analysis recently")
             return True  # Not a failure, just no signals
 
     except Exception as e:
@@ -147,10 +139,7 @@ def test_signal_freshness():
             age_hours = age.total_seconds() / 3600
             age_days = age.days
 
-            if age_days == 0:
-                age_str = f"{age_hours:.1f} hours ago"
-            else:
-                age_str = f"{age_days} days ago"
+            age_str = f"{age_hours:.1f} hours ago" if age_days == 0 else f"{age_days} days ago"
 
             freshness = "✅ FRESH" if age_days < 2 else "⚠️  STALE"
             print(f"{ticker}: {freshness} - {age_str}")
@@ -195,9 +184,7 @@ def test_integration_readiness():
         return False
     else:
         print("Integration Status: ✅ READY FOR WEEKEND CRYPTO TRADING\n")
-        print(
-            "Newsletter signals are available and ready for crypto_strategy.py to consume"
-        )
+        print("Newsletter signals are available and ready for crypto_strategy.py to consume")
         print("\nNext Steps:")
         print("  1. crypto_strategy.py will call get_btc_signal() and get_eth_signal()")
         print("  2. Combine newsletter signals (30%) with MACD/RSI indicators (70%)")
@@ -231,9 +218,9 @@ def main():
         status = "✅ PASS" if passed_test else "❌ FAIL"
         print(f"{status:12} {test_name}")
 
-    print(f"\n{'─'*80}")
-    print(f"Results: {passed}/{total} tests passed ({passed/total:.0%})")
-    print(f"{'─'*80}\n")
+    print(f"\n{'─' * 80}")
+    print(f"Results: {passed}/{total} tests passed ({passed / total:.0%})")
+    print(f"{'─' * 80}\n")
 
     if passed == total:
         print("🎉 ALL TESTS PASSED - Newsletter integration fully functional!")

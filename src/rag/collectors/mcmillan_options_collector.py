@@ -18,9 +18,9 @@ Implementation: Claude (AI Agent)
 
 import logging
 import math
-from typing import Dict, Any, List, Optional
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from dataclasses import dataclass, asdict
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class GreekGuidance:
     """Guidance for interpreting a specific Greek."""
+
     name: str
     definition: str
     range: str
@@ -39,28 +40,30 @@ class GreekGuidance:
 @dataclass
 class StrategyRules:
     """Complete ruleset for an options strategy."""
+
     strategy_name: str
     description: str
     market_outlook: str
-    setup_rules: List[str]
-    entry_criteria: List[str]
-    position_sizing: List[str]
-    exit_rules: List[str]
-    risk_management: List[str]
-    common_mistakes: List[str]
-    optimal_conditions: Dict[str, Any]
+    setup_rules: list[str]
+    entry_criteria: list[str]
+    position_sizing: list[str]
+    exit_rules: list[str]
+    risk_management: list[str]
+    common_mistakes: list[str]
+    optimal_conditions: dict[str, Any]
 
 
 @dataclass
 class VolatilityGuidance:
     """Volatility-based trading guidance."""
+
     iv_rank_min: float
     iv_rank_max: float
     iv_percentile_min: float
     iv_percentile_max: float
     recommendation: str
     reasoning: str
-    strategies: List[str]
+    strategies: list[str]
 
 
 class McMillanOptionsKnowledgeBase:
@@ -105,9 +108,8 @@ class McMillanOptionsKnowledgeBase:
                     "Low delta (<0.30): Cheaper, more leverage, faster decay. "
                     "ATM delta (~0.50): Balanced risk/reward for directional plays."
                 ),
-                peak_conditions="Delta is highest for deep ITM options and approaches 1.0 (calls) or -1.0 (puts)"
+                peak_conditions="Delta is highest for deep ITM options and approaches 1.0 (calls) or -1.0 (puts)",
             ),
-
             "gamma": GreekGuidance(
                 name="Gamma",
                 definition="Rate of change of delta with respect to underlying price",
@@ -123,9 +125,8 @@ class McMillanOptionsKnowledgeBase:
                     "Gamma risk peaks in final 30 days before expiration. "
                     "Short gamma positions need active management as expiration approaches."
                 ),
-                peak_conditions="Gamma peaks for ATM options with 7-30 DTE"
+                peak_conditions="Gamma peaks for ATM options with 7-30 DTE",
             ),
-
             "theta": GreekGuidance(
                 name="Theta",
                 definition="Rate of time decay - daily option value loss due to passage of time",
@@ -140,9 +141,8 @@ class McMillanOptionsKnowledgeBase:
                     "Buy options: Fight theta, need quick moves. Avoid final 30 days unless expecting big move. "
                     "Optimal selling window: 30-45 DTE (balance premium vs gamma risk)."
                 ),
-                peak_conditions="Theta decay accelerates exponentially in final 30 days"
+                peak_conditions="Theta decay accelerates exponentially in final 30 days",
             ),
-
             "vega": GreekGuidance(
                 name="Vega",
                 definition="Sensitivity to 1% change in implied volatility",
@@ -157,9 +157,8 @@ class McMillanOptionsKnowledgeBase:
                     "Earnings vega crush: IV drops 20-40% post-earnings, devastating to long premium. "
                     "Time to expiration: Vega decreases as expiration approaches."
                 ),
-                peak_conditions="Vega highest for ATM options with 60-90 DTE"
+                peak_conditions="Vega highest for ATM options with 60-90 DTE",
             ),
-
             "rho": GreekGuidance(
                 name="Rho",
                 definition="Sensitivity to 1% change in interest rates",
@@ -173,11 +172,11 @@ class McMillanOptionsKnowledgeBase:
                     "Relevant for LEAPS (1+ year to expiration). "
                     "2024-2025: Higher rate environment makes rho more relevant than 2010-2020."
                 ),
-                peak_conditions="Rho impact increases linearly with time to expiration"
+                peak_conditions="Rho impact increases linearly with time to expiration",
             ),
         }
 
-    def get_greek_guidance(self, greek_name: str) -> Dict[str, Any]:
+    def get_greek_guidance(self, greek_name: str) -> dict[str, Any]:
         """
         Get comprehensive guidance for a specific Greek.
 
@@ -204,8 +203,8 @@ class McMillanOptionsKnowledgeBase:
         stock_price: float,
         implied_volatility: float,  # As decimal (e.g., 0.30 for 30%)
         days_to_expiration: int,
-        confidence_level: float = 1.0  # 1.0 = 1 std dev (68%), 2.0 = 2 std dev (95%)
-    ) -> Dict[str, Any]:
+        confidence_level: float = 1.0,  # 1.0 = 1 std dev (68%), 2.0 = 2 std dev (95%)
+    ) -> dict[str, Any]:
         """
         Calculate expected move using McMillan's formula.
 
@@ -260,7 +259,7 @@ class McMillanOptionsKnowledgeBase:
             2.0: 0.95,  # 2 std dev
             2.5: 0.99,  # 2.5 std dev
         }
-        probability = probability_map.get(confidence_level, None)
+        probability = probability_map.get(confidence_level)
 
         return {
             "expected_move": round(expected_move, 2),
@@ -271,7 +270,7 @@ class McMillanOptionsKnowledgeBase:
             "confidence_level": confidence_level,
             "annual_iv": implied_volatility,
             "dte": days_to_expiration,
-            "formula": f"{stock_price} × {implied_volatility} × √({days_to_expiration}/365) × {confidence_level}"
+            "formula": f"{stock_price} × {implied_volatility} × √({days_to_expiration}/365) × {confidence_level}",
         }
 
     # ============================================================================
@@ -325,9 +324,8 @@ class McMillanOptionsKnowledgeBase:
                     "dte_min": 30,
                     "dte_max": 45,
                     "delta_target": 0.20,  # 20 delta = ~20% prob of assignment
-                }
+                },
             ),
-
             "iron_condor": StrategyRules(
                 strategy_name="Iron Condor",
                 description="Sell OTM call spread + OTM put spread. Profit if stock stays in range.",
@@ -374,9 +372,8 @@ class McMillanOptionsKnowledgeBase:
                     "dte_max": 45,
                     "delta_short_put": 0.16,  # 16 delta = ~1 std dev
                     "delta_short_call": 0.16,
-                }
+                },
             ),
-
             "cash_secured_put": StrategyRules(
                 strategy_name="Cash-Secured Put",
                 description="Sell OTM put, keep cash to buy shares if assigned. Bullish strategy.",
@@ -421,9 +418,8 @@ class McMillanOptionsKnowledgeBase:
                     "dte_min": 30,
                     "dte_max": 45,
                     "delta_target": 0.20,
-                }
+                },
             ),
-
             "long_call": StrategyRules(
                 strategy_name="Long Call",
                 description="Buy call option. Bullish strategy with limited risk, unlimited upside.",
@@ -467,9 +463,8 @@ class McMillanOptionsKnowledgeBase:
                     "iv_rank_max": 50,
                     "dte_min": 60,
                     "delta_target": 0.55,
-                }
+                },
             ),
-
             "protective_put": StrategyRules(
                 strategy_name="Protective Put (Married Put)",
                 description="Own 100 shares + buy 1 put for downside protection. Insurance strategy.",
@@ -510,11 +505,11 @@ class McMillanOptionsKnowledgeBase:
                 optimal_conditions={
                     "iv_rank_min": 20,  # Not too high (expensive)
                     "delta_target": 0.15,  # 15 delta = meaningful protection
-                }
+                },
             ),
         }
 
-    def get_strategy_rules(self, strategy_name: str) -> Optional[Dict[str, Any]]:
+    def get_strategy_rules(self, strategy_name: str) -> Optional[dict[str, Any]]:
         """
         Get complete ruleset for an options strategy.
 
@@ -533,7 +528,7 @@ class McMillanOptionsKnowledgeBase:
         rules = self.strategies[strategy_name]
         return asdict(rules)
 
-    def list_strategies(self) -> List[str]:
+    def list_strategies(self) -> list[str]:
         """Get list of all available strategies."""
         return list(self.strategies.keys())
 
@@ -555,9 +550,8 @@ class McMillanOptionsKnowledgeBase:
                     "Likely to mean-revert higher, giving vega tailwind. "
                     "Good for buying calls, puts, straddles, strangles."
                 ),
-                strategies=["long_call", "long_put", "long_straddle", "calendar_spread"]
+                strategies=["long_call", "long_put", "long_straddle", "calendar_spread"],
             ),
-
             VolatilityGuidance(
                 iv_rank_min=20.0,
                 iv_rank_max=40.0,
@@ -569,9 +563,8 @@ class McMillanOptionsKnowledgeBase:
                     "Make decisions based on other factors (technicals, fundamentals, catalyst). "
                     "Can buy or sell depending on setup."
                 ),
-                strategies=["covered_call", "cash_secured_put", "long_call", "protective_put"]
+                strategies=["covered_call", "cash_secured_put", "long_call", "protective_put"],
             ),
-
             VolatilityGuidance(
                 iv_rank_min=40.0,
                 iv_rank_max=60.0,
@@ -583,9 +576,8 @@ class McMillanOptionsKnowledgeBase:
                     "Good for premium selling strategies. "
                     "Mean reversion suggests IV will decline, benefiting sellers."
                 ),
-                strategies=["iron_condor", "covered_call", "cash_secured_put", "credit_spread"]
+                strategies=["iron_condor", "covered_call", "cash_secured_put", "credit_spread"],
             ),
-
             VolatilityGuidance(
                 iv_rank_min=60.0,
                 iv_rank_max=100.0,
@@ -597,15 +589,11 @@ class McMillanOptionsKnowledgeBase:
                     "Strong mean reversion edge. Excellent for premium selling. "
                     "Caution: High IV often precedes big moves, so manage risk carefully."
                 ),
-                strategies=["iron_condor", "straddle_short", "strangle_short", "credit_spread"]
+                strategies=["iron_condor", "straddle_short", "strangle_short", "credit_spread"],
             ),
         ]
 
-    def get_iv_recommendation(
-        self,
-        iv_rank: float,
-        iv_percentile: float
-    ) -> Dict[str, Any]:
+    def get_iv_recommendation(self, iv_rank: float, iv_percentile: float) -> dict[str, Any]:
         """
         Get trading recommendation based on IV Rank and IV Percentile.
 
@@ -630,8 +618,10 @@ class McMillanOptionsKnowledgeBase:
         # Find matching guidance
         guidance = None
         for g in self.volatility_guidance:
-            if (g.iv_rank_min <= iv_rank < g.iv_rank_max and
-                g.iv_percentile_min <= iv_percentile < g.iv_percentile_max):
+            if (
+                g.iv_rank_min <= iv_rank < g.iv_rank_max
+                and g.iv_percentile_min <= iv_percentile < g.iv_percentile_max
+            ):
                 guidance = g
                 break
 
@@ -640,7 +630,7 @@ class McMillanOptionsKnowledgeBase:
             guidance = self.volatility_guidance[-1]
 
         # Determine confidence based on agreement between IV Rank and Percentile
-        avg_iv = (iv_rank + iv_percentile) / 2
+        (iv_rank + iv_percentile) / 2
         diff = abs(iv_rank - iv_percentile)
 
         if diff < 10:
@@ -657,7 +647,7 @@ class McMillanOptionsKnowledgeBase:
             "iv_rank": iv_rank,
             "iv_percentile": iv_percentile,
             "confidence": confidence,
-            "note": "IV Rank and Percentile disagreement" if confidence == "low" else None
+            "note": "IV Rank and Percentile disagreement" if confidence == "low" else None,
         }
 
     # ============================================================================
@@ -680,7 +670,6 @@ class McMillanOptionsKnowledgeBase:
                     "final_add": 0.25,  # Final 25% if still working
                 },
             },
-
             "stop_losses": {
                 "long_options": {
                     "max_loss": 0.50,  # Exit at 50% loss
@@ -695,7 +684,6 @@ class McMillanOptionsKnowledgeBase:
                     "volatility_adjusted": True,  # Widen stop for volatile stocks
                 },
             },
-
             "tax_traps": {
                 "wash_sale_rule": {
                     "period_days": 30,
@@ -715,7 +703,6 @@ class McMillanOptionsKnowledgeBase:
                     ],
                 },
             },
-
             "assignment_risk": {
                 "early_assignment_triggers": [
                     "Ex-dividend date approaching (calls)",
@@ -731,11 +718,8 @@ class McMillanOptionsKnowledgeBase:
         }
 
     def get_position_size(
-        self,
-        portfolio_value: float,
-        option_premium: float,
-        max_risk_pct: float = 0.02
-    ) -> Dict[str, Any]:
+        self, portfolio_value: float, option_premium: float, max_risk_pct: float = 0.02
+    ) -> dict[str, Any]:
         """
         Calculate optimal position size based on risk.
 
@@ -772,11 +756,11 @@ class McMillanOptionsKnowledgeBase:
             "total_cost": round(total_cost, 2),
             "risk_percentage": round(actual_risk_pct * 100, 2),
             "recommendation": (
-                f"Trade up to {max_contracts} contracts to stay within {max_risk_pct*100}% risk limit"
-            )
+                f"Trade up to {max_contracts} contracts to stay within {max_risk_pct * 100}% risk limit"
+            ),
         }
 
-    def get_risk_rules(self, category: str = None) -> Dict[str, Any]:
+    def get_risk_rules(self, category: str = None) -> dict[str, Any]:
         """
         Get risk management rules.
 
@@ -799,7 +783,7 @@ class McMillanOptionsKnowledgeBase:
     # SECTION 6: HELPER METHODS & UTILITIES
     # ============================================================================
 
-    def get_all_knowledge(self) -> Dict[str, Any]:
+    def get_all_knowledge(self) -> dict[str, Any]:
         """
         Export entire knowledge base as dictionary.
         Useful for RAG ingestion or full context retrieval.
@@ -816,10 +800,10 @@ class McMillanOptionsKnowledgeBase:
                 "source": "Options as a Strategic Investment by Lawrence G. McMillan",
                 "edition": "5th Edition",
                 "last_updated": datetime.now().isoformat(),
-            }
+            },
         }
 
-    def search_knowledge(self, query: str) -> List[Dict[str, Any]]:
+    def search_knowledge(self, query: str) -> list[dict[str, Any]]:
         """
         Search knowledge base for relevant information.
 
@@ -835,30 +819,24 @@ class McMillanOptionsKnowledgeBase:
         # Search Greeks
         for name, greek in self.greeks.items():
             if query_lower in name or query_lower in greek.definition.lower():
-                results.append({
-                    "type": "greek",
-                    "name": name,
-                    "content": asdict(greek)
-                })
+                results.append({"type": "greek", "name": name, "content": asdict(greek)})
 
         # Search Strategies
         for name, strategy in self.strategies.items():
-            if (query_lower in name or
-                query_lower in strategy.description.lower() or
-                query_lower in strategy.market_outlook.lower()):
-                results.append({
-                    "type": "strategy",
-                    "name": name,
-                    "content": asdict(strategy)
-                })
+            if (
+                query_lower in name
+                or query_lower in strategy.description.lower()
+                or query_lower in strategy.market_outlook.lower()
+            ):
+                results.append({"type": "strategy", "name": name, "content": asdict(strategy)})
 
         # Search Volatility Guidance
         for guidance in self.volatility_guidance:
-            if query_lower in guidance.recommendation.lower() or query_lower in guidance.reasoning.lower():
-                results.append({
-                    "type": "volatility_guidance",
-                    "content": asdict(guidance)
-                })
+            if (
+                query_lower in guidance.recommendation.lower()
+                or query_lower in guidance.reasoning.lower()
+            ):
+                results.append({"type": "volatility_guidance", "content": asdict(guidance)})
 
         return results
 
@@ -866,6 +844,7 @@ class McMillanOptionsKnowledgeBase:
 # ============================================================================
 # USAGE EXAMPLES & TESTS
 # ============================================================================
+
 
 def example_usage():
     """Demonstrate knowledge base usage."""
@@ -889,18 +868,20 @@ def example_usage():
         stock_price=100.0,
         implied_volatility=0.30,  # 30% IV
         days_to_expiration=30,
-        confidence_level=1.0  # 1 std dev
+        confidence_level=1.0,  # 1 std dev
     )
     print(f"Stock: ${move['expected_move']} expected move")
-    print(f"Range: ${move['lower_bound']} - ${move['upper_bound']} ({move['probability']*100}% probability)")
+    print(
+        f"Range: ${move['lower_bound']} - ${move['upper_bound']} ({move['probability'] * 100}% probability)"
+    )
 
     # Example 3: Get strategy rules
     print("\n3. IRON CONDOR STRATEGY:")
     print("-" * 80)
     ic = kb.get_strategy_rules("iron_condor")
     print(f"Description: {ic['description']}")
-    print(f"Setup Rules:")
-    for rule in ic['setup_rules']:
+    print("Setup Rules:")
+    for rule in ic["setup_rules"]:
         print(f"  - {rule}")
 
     # Example 4: Get IV recommendation
@@ -917,7 +898,7 @@ def example_usage():
     sizing = kb.get_position_size(
         portfolio_value=10000,
         option_premium=2.50,  # $250 per contract
-        max_risk_pct=0.02
+        max_risk_pct=0.02,
     )
     print(f"Max Contracts: {sizing['max_contracts']}")
     print(f"Total Cost: ${sizing['total_cost']}")

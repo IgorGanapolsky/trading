@@ -13,21 +13,16 @@ Features:
 Note: Requires an Alpaca account with Options trading enabled.
 """
 
-import os
 import logging
-from typing import Dict, List, Optional, Any, Union
-from datetime import datetime, date
+import os
+from typing import Any, Optional, Union
 
-from alpaca.trading.client import TradingClient
 from alpaca.data.historical.option import OptionHistoricalDataClient
 from alpaca.data.requests import (
     OptionChainRequest,
     OptionSnapshotRequest,
-    OptionBarsRequest,
-    OptionLatestQuoteRequest,
 )
-from alpaca.data.timeframe import TimeFrame
-from alpaca.common.exceptions import APIError
+from alpaca.trading.client import TradingClient
 
 # Configure logging
 logging.basicConfig(
@@ -72,7 +67,7 @@ class AlpacaOptionsClient:
             logger.error(f"Failed to initialize AlpacaOptionsClient: {e}")
             raise
 
-    def get_option_chain(self, underlying_symbol: str) -> List[Dict[str, Any]]:
+    def get_option_chain(self, underlying_symbol: str) -> list[dict[str, Any]]:
         """
         Fetch the option chain for a given underlying symbol.
 
@@ -105,14 +100,10 @@ class AlpacaOptionsClient:
                         snapshot.latest_trade.price if snapshot.latest_trade else None
                     ),
                     "latest_quote_bid": (
-                        snapshot.latest_quote.bid_price
-                        if snapshot.latest_quote
-                        else None
+                        snapshot.latest_quote.bid_price if snapshot.latest_quote else None
                     ),
                     "latest_quote_ask": (
-                        snapshot.latest_quote.ask_price
-                        if snapshot.latest_quote
-                        else None
+                        snapshot.latest_quote.ask_price if snapshot.latest_quote else None
                     ),
                     "implied_volatility": snapshot.implied_volatility,
                     "greeks": (
@@ -136,9 +127,7 @@ class AlpacaOptionsClient:
             logger.error(f"Error fetching option chain for {underlying_symbol}: {e}")
             raise
 
-    def get_option_snapshot(
-        self, symbol_or_symbols: Union[str, List[str]]
-    ) -> Dict[str, Any]:
+    def get_option_snapshot(self, symbol_or_symbols: Union[str, list[str]]) -> dict[str, Any]:
         """
         Get snapshot data (price, greeks, IV) for specific option contract(s).
         """
@@ -150,19 +139,9 @@ class AlpacaOptionsClient:
             results = {}
             for symbol, snapshot in snapshots.items():
                 results[symbol] = {
-                    "price": (
-                        snapshot.latest_trade.price if snapshot.latest_trade else None
-                    ),
-                    "bid": (
-                        snapshot.latest_quote.bid_price
-                        if snapshot.latest_quote
-                        else None
-                    ),
-                    "ask": (
-                        snapshot.latest_quote.ask_price
-                        if snapshot.latest_quote
-                        else None
-                    ),
+                    "price": (snapshot.latest_trade.price if snapshot.latest_trade else None),
+                    "bid": (snapshot.latest_quote.bid_price if snapshot.latest_quote else None),
+                    "ask": (snapshot.latest_quote.ask_price if snapshot.latest_quote else None),
                     "iv": snapshot.implied_volatility,
                     "delta": snapshot.greeks.delta if snapshot.greeks else None,
                 }
@@ -199,7 +178,7 @@ class AlpacaOptionsClient:
         side: str = "sell_to_open",
         order_type: str = "limit",
         limit_price: Optional[float] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Submit an option order (sell covered call, buy to close, etc).
 
@@ -217,11 +196,11 @@ class AlpacaOptionsClient:
             ValueError: If parameters are invalid
             APIError: If order submission fails
         """
-        from alpaca.trading.requests import (
-            MarketOrderRequest,
-            LimitOrderRequest,
-        )
         from alpaca.trading.enums import OrderSide, TimeInForce
+        from alpaca.trading.requests import (
+            LimitOrderRequest,
+            MarketOrderRequest,
+        )
 
         # Validate inputs
         if qty <= 0:
@@ -242,16 +221,12 @@ class AlpacaOptionsClient:
         }
 
         if side not in side_map:
-            raise ValueError(
-                f"Invalid side '{side}'. Must be one of: {list(side_map.keys())}"
-            )
+            raise ValueError(f"Invalid side '{side}'. Must be one of: {list(side_map.keys())}")
 
         alpaca_side = side_map[side]
 
         try:
-            logger.info(
-                f"Submitting option order: {side} {qty} contract(s) of {option_symbol}"
-            )
+            logger.info(f"Submitting option order: {side} {qty} contract(s) of {option_symbol}")
 
             # Check account status before placing order
             account = self.trading_client.get_account()

@@ -6,15 +6,13 @@ Monitors trading system health and sends alerts for critical issues.
 Can be run continuously or as a one-time check.
 """
 
+import json
+import logging
 import os
 import sys
-import json
 import time
-import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
-import subprocess
 
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -24,9 +22,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Configuration
@@ -45,8 +41,8 @@ class SystemMonitor:
     """Monitors trading system health and generates alerts."""
 
     def __init__(self):
-        self.alerts: List[Dict] = []
-        self.metrics: Dict = {}
+        self.alerts: list[dict] = []
+        self.metrics: dict = {}
 
     def check_performance_log_freshness(self) -> bool:
         """Check if performance log was updated recently."""
@@ -62,7 +58,7 @@ class SystemMonitor:
             return False
 
         try:
-            with open(PERF_LOG_FILE, "r") as f:
+            with open(PERF_LOG_FILE) as f:
                 perf_data = json.load(f)
 
             if not perf_data:
@@ -80,9 +76,7 @@ class SystemMonitor:
             last_date = datetime.fromisoformat(
                 last_entry.get("timestamp", last_entry.get("date", ""))
             )
-            age_hours = (
-                datetime.now() - last_date.replace(tzinfo=None)
-            ).total_seconds() / 3600
+            age_hours = (datetime.now() - last_date.replace(tzinfo=None)).total_seconds() / 3600
 
             self.metrics["perf_log_age_hours"] = age_hours
 
@@ -123,13 +117,13 @@ class SystemMonitor:
             return False
 
         try:
-            with open(SYSTEM_STATE_FILE, "r") as f:
+            with open(SYSTEM_STATE_FILE) as f:
                 system_state = json.load(f)
 
             # Check both root level and meta.last_updated (backwards compatibility)
-            last_updated_str = system_state.get("last_updated") or system_state.get(
-                "meta", {}
-            ).get("last_updated")
+            last_updated_str = system_state.get("last_updated") or system_state.get("meta", {}).get(
+                "last_updated"
+            )
             if not last_updated_str:
                 self.alerts.append(
                     {
@@ -141,12 +135,8 @@ class SystemMonitor:
                 )
                 return False
 
-            last_updated = datetime.fromisoformat(
-                last_updated_str.replace("Z", "+00:00")
-            )
-            age_hours = (
-                datetime.now() - last_updated.replace(tzinfo=None)
-            ).total_seconds() / 3600
+            last_updated = datetime.fromisoformat(last_updated_str.replace("Z", "+00:00"))
+            age_hours = (datetime.now() - last_updated.replace(tzinfo=None)).total_seconds() / 3600
 
             self.metrics["system_state_age_hours"] = age_hours
 
@@ -176,7 +166,7 @@ class SystemMonitor:
     def check_portfolio_health(self) -> bool:
         """Check portfolio equity and P/L."""
         try:
-            with open(PERF_LOG_FILE, "r") as f:
+            with open(PERF_LOG_FILE) as f:
                 perf_data = json.load(f)
 
             if not perf_data:
@@ -241,7 +231,7 @@ class SystemMonitor:
             return False
         return True
 
-    def run_all_checks(self) -> Dict:
+    def run_all_checks(self) -> dict:
         """Run all health checks."""
         logger.info("Running system health checks...")
 
@@ -267,7 +257,7 @@ class SystemMonitor:
             },
         }
 
-    def print_report(self, report: Dict):
+    def print_report(self, report: dict):
         """Print formatted monitoring report."""
         print("\n" + "=" * 70)
         print("SYSTEM MONITORING REPORT")

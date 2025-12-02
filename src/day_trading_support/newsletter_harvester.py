@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone
-from typing import Callable, Iterable, List, Optional
+from typing import Callable
 
 import feedparser
 
@@ -23,14 +24,14 @@ class MarketPrepAgent:
         self,
         newsletters: Iterable[NewsletterResource],
         *,
-        parser: Optional[FeedParser] = None,
+        parser: FeedParser | None = None,
     ) -> None:
         self.newsletters = list(newsletters)
         self._parser = parser or feedparser.parse
 
-    def harvest(self, *, reference_time: Optional[datetime] = None) -> List[NewsletterInsight]:
+    def harvest(self, *, reference_time: datetime | None = None) -> list[NewsletterInsight]:
         now = reference_time or datetime.now(timezone.utc)
-        insights: List[NewsletterInsight] = []
+        insights: list[NewsletterInsight] = []
         for resource in self.newsletters:
             if not resource.feed_url:
                 logger.debug("Newsletter %s missing feed URL", resource.name)
@@ -69,7 +70,7 @@ class MarketPrepAgent:
         return insights
 
     @staticmethod
-    def _to_datetime(entry) -> Optional[datetime]:
+    def _to_datetime(entry) -> datetime | None:
         published = entry.get("published_parsed") or entry.get("updated_parsed")
         if published:
             return datetime(*published[:6], tzinfo=timezone.utc)
@@ -81,7 +82,7 @@ class MarketPrepAgent:
         return None
 
     @staticmethod
-    def _extract_tickers(text: str) -> List[str]:
+    def _extract_tickers(text: str) -> list[str]:
         if not text:
             return []
         pattern = r"\b[A-Z]{2,5}\b"

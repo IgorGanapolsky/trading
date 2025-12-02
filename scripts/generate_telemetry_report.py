@@ -8,8 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Any, Dict
-
+from typing import Any
 
 DEFAULT_LOG = Path("data/audit_trail/hybrid_funnel_runs.jsonl")
 
@@ -31,7 +30,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def print_report(summary: Dict[str, Any]) -> None:
+def print_report(summary: dict[str, Any]) -> None:
     print("==== Hybrid Funnel Telemetry ====")
     print(f"Generated at: {summary['generated_at']}")
     print(f"Total events: {summary['event_count']}")

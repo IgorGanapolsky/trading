@@ -4,16 +4,15 @@ Sentiment-focused helpers powered by MultiLLMAnalyzer.
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from dataclasses import asdict, is_dataclass
-from typing import Any, Dict, Iterable, List, Mapping, Optional
+from typing import Any
 
 from mcp.client import get_multi_llm_analyzer
 from mcp.utils import ensure_env_var, run_sync
 
 
-def _normalize_news(
-    news: Optional[Iterable[Mapping[str, Any]]]
-) -> List[Dict[str, Any]]:
+def _normalize_news(news: Iterable[Mapping[str, Any]] | None) -> list[dict[str, Any]]:
     if not news:
         return []
     normalized = []
@@ -29,8 +28,8 @@ def _normalize_news(
 
 
 async def ensemble_sentiment_async(
-    market_data: Mapping[str, Any], news: Optional[Iterable[Mapping[str, Any]]] = None
-) -> Dict[str, Any]:
+    market_data: Mapping[str, Any], news: Iterable[Mapping[str, Any]] | None = None
+) -> dict[str, Any]:
     """
     Return aggregate sentiment score across configured LLMs.
     """
@@ -38,15 +37,13 @@ async def ensemble_sentiment_async(
     analyzer = ensure_env_var(
         lambda: get_multi_llm_analyzer(use_async=True), "OpenRouter MultiLLMAnalyzer"
     )
-    sentiment = await analyzer.get_ensemble_sentiment(
-        dict(market_data), _normalize_news(news)
-    )
+    sentiment = await analyzer.get_ensemble_sentiment(dict(market_data), _normalize_news(news))
     return {"sentiment": sentiment}
 
 
 def ensemble_sentiment(
-    market_data: Mapping[str, Any], news: Optional[Iterable[Mapping[str, Any]]] = None
-) -> Dict[str, Any]:
+    market_data: Mapping[str, Any], news: Iterable[Mapping[str, Any]] | None = None
+) -> dict[str, Any]:
     """
     Sync wrapper around `ensemble_sentiment_async`.
     """
@@ -55,8 +52,8 @@ def ensemble_sentiment(
 
 
 async def detailed_sentiment_async(
-    market_data: Mapping[str, Any], news: Optional[Iterable[Mapping[str, Any]]] = None
-) -> Dict[str, Any]:
+    market_data: Mapping[str, Any], news: Iterable[Mapping[str, Any]] | None = None
+) -> dict[str, Any]:
     """
     Return detailed sentiment analysis with per-model breakdown.
     """
@@ -76,8 +73,8 @@ async def detailed_sentiment_async(
 
 
 def detailed_sentiment(
-    market_data: Mapping[str, Any], news: Optional[Iterable[Mapping[str, Any]]] = None
-) -> Dict[str, Any]:
+    market_data: Mapping[str, Any], news: Iterable[Mapping[str, Any]] | None = None
+) -> dict[str, Any]:
     """
     Sync wrapper around `detailed_sentiment_async`.
     """
@@ -85,7 +82,7 @@ def detailed_sentiment(
     return run_sync(detailed_sentiment_async(market_data, news))
 
 
-async def market_outlook_async() -> Dict[str, Any]:
+async def market_outlook_async() -> dict[str, Any]:
     """
     Generate a broad market outlook using the ensemble models.
     """
@@ -98,7 +95,7 @@ async def market_outlook_async() -> Dict[str, Any]:
     return outlook
 
 
-def market_outlook() -> Dict[str, Any]:
+def market_outlook() -> dict[str, Any]:
     """
     Sync wrapper around `market_outlook_async`.
     """

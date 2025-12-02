@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 try:  # LangChain 0.x
     from langchain.agents import AgentExecutor, AgentType, initialize_agent
@@ -14,12 +14,12 @@ from langchain_community.chat_models import ChatAnthropic
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.tools import BaseTool
 
-from .toolkit import build_sentiment_tools, build_mcp_tool
+from .toolkit import build_mcp_tool, build_sentiment_tools
 
 logger = logging.getLogger(__name__)
 
 
-def _get_anthropic_api_key() -> Optional[str]:
+def _get_anthropic_api_key() -> str | None:
     """
     Get Anthropic API key with fallback to CLAUDE_API_KEY.
 
@@ -49,9 +49,7 @@ def get_default_llm() -> BaseChatModel:
     api_key = _get_anthropic_api_key()
 
     logger.info("Initializing LangChain ChatAnthropic model: %s", model)
-    return ChatAnthropic(
-        model=model, temperature=temperature, anthropic_api_key=api_key
-    )
+    return ChatAnthropic(model=model, temperature=temperature, anthropic_api_key=api_key)
 
 
 class _SimpleLLMExecutor:
@@ -81,8 +79,8 @@ class _SimpleLLMExecutor:
 
 
 def build_price_action_agent(
-    llm: Optional[BaseChatModel] = None,
-    extra_tools: Optional[Iterable[BaseTool]] = None,
+    llm: BaseChatModel | None = None,
+    extra_tools: Iterable[BaseTool] | None = None,
 ):
     """
     Construct a LangChain agent tuned for price-action/technical analysis.
@@ -104,9 +102,7 @@ def build_price_action_agent(
         tools.extend(extra_tools)
 
     if initialize_agent is None or AgentType is None:
-        logger.warning(
-            "LangChain agent interfaces unavailable; using simple LLM executor instead."
-        )
+        logger.warning("LangChain agent interfaces unavailable; using simple LLM executor instead.")
         return _SimpleLLMExecutor(llm)
 
     logger.info("Initializing price action agent with %d tools.", len(tools))

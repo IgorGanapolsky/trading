@@ -6,7 +6,7 @@ import json
 import logging
 import math
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class RLFilter:
         self.weights_path = Path(weights_path or "models/ml/rl_filter_weights.json")
         self.weights = self._load_weights()
 
-    def _load_weights(self) -> Dict[str, Any]:
+    def _load_weights(self) -> dict[str, Any]:
         if self.weights_path.exists():
             try:
                 data = json.loads(self.weights_path.read_text())
@@ -54,7 +54,7 @@ class RLFilter:
             }
         }
 
-    def predict(self, market_state: Dict[str, Any]) -> Dict[str, Any]:
+    def predict(self, market_state: dict[str, Any]) -> dict[str, Any]:
         """
         Args:
             market_state: Dict of indicators from Gate 1.
@@ -95,13 +95,13 @@ class RLFilter:
         return 1 / (1 + math.exp(-value))
 
     @staticmethod
-    def _compute_multiplier(confidence: float, params: Dict[str, Any]) -> float:
+    def _compute_multiplier(confidence: float, params: dict[str, Any]) -> float:
         base = params.get("base_multiplier", 0.8)
         raw = base + confidence * 0.6
         return max(0.4, min(1.6, raw))
 
     @staticmethod
-    def _extract_features(market_state: Dict[str, Any]) -> Dict[str, float]:
+    def _extract_features(market_state: dict[str, Any]) -> dict[str, float]:
         strength = float(market_state.get("momentum_strength", 0.0))
         momentum = float(market_state.get("macd_histogram", 0.0))
         rsi = float(market_state.get("rsi", 50.0))

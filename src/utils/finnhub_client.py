@@ -10,7 +10,6 @@ from __future__ import annotations
 import logging
 import os
 from datetime import date, timedelta
-from typing import Dict, List, Optional
 
 import requests
 
@@ -32,16 +31,14 @@ class FinnhubClient:
         "Interest Rate Decision",  # Central bank rate decisions
     ]
 
-    def __init__(self, api_key: Optional[str] = None) -> None:
+    def __init__(self, api_key: str | None = None) -> None:
         self.api_key = api_key or os.getenv("FINNHUB_API_KEY")
         if not self.api_key:
-            logger.warning(
-                "FINNHUB_API_KEY not set. Economic calendar checks will be unavailable."
-            )
+            logger.warning("FINNHUB_API_KEY not set. Economic calendar checks will be unavailable.")
 
     def get_economic_calendar(
-        self, start_date: Optional[date] = None, end_date: Optional[date] = None
-    ) -> List[Dict]:
+        self, start_date: date | None = None, end_date: date | None = None
+    ) -> list[dict]:
         """
         Get economic calendar events for a date range.
 
@@ -125,8 +122,8 @@ class FinnhubClient:
         return False
 
     def get_earnings_calendar(
-        self, start_date: Optional[date] = None, end_date: Optional[date] = None
-    ) -> List[Dict]:
+        self, start_date: date | None = None, end_date: date | None = None
+    ) -> list[dict]:
         """
         Get earnings calendar for a date range.
 
@@ -165,7 +162,7 @@ class FinnhubClient:
             logger.warning("Failed to fetch earnings calendar: %s", exc)
             return []
 
-    def is_earnings_week(self, symbol: Optional[str] = None) -> bool:
+    def is_earnings_week(self, symbol: str | None = None) -> bool:
         """
         Check if it's earnings week for a symbol (or any major symbol).
 

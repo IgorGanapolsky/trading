@@ -10,19 +10,20 @@ Detects when trading automation fails silently by checking:
 Exit codes:
     0 = OK, 1 = WARNING, 2 = ERROR
 """
+
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from scripts.state_manager import StateManager
 
 
 def main():
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("🔍 TRADE STALENESS MONITOR")
     print(f"📅 {datetime.now().strftime('%Y-%m-%d %I:%M %p ET')}")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     try:
         state_mgr = StateManager()
@@ -36,15 +37,13 @@ def main():
         if staleness.get("last_trade_date"):
             print(f"Last Trade: {staleness['last_trade_date']}")
             hours = staleness.get("hours_since_last_trade", 0)
-            print(f"Time Since: {hours:.1f} hours ({hours/24:.1f} days)\n")
+            print(f"Time Since: {hours:.1f} hours ({hours / 24:.1f} days)\n")
 
         if staleness.get("recommended_action"):
             print(f"Action: {staleness['recommended_action']}\n")
 
         return (
-            2
-            if staleness["status"] == "ERROR"
-            else (1 if staleness["status"] == "WARNING" else 0)
+            2 if staleness["status"] == "ERROR" else (1 if staleness["status"] == "WARNING" else 0)
         )
     except Exception as e:
         print(f"❌ ERROR: {e}\n")

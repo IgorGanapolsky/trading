@@ -17,17 +17,16 @@ Target: High-risk experimental returns
 Risk Level: VERY HIGH
 """
 
-from typing import Dict, List, Optional, Tuple
-from datetime import datetime, timedelta
-from dataclasses import dataclass
-from enum import Enum
 import logging
 import os
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Optional
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import yfinance as yf
-
 from src.core.alpaca_trader import AlpacaTrader
 from src.core.risk_manager import RiskManager
 
@@ -41,9 +40,7 @@ try:
     NEWSLETTER_AVAILABLE = True
 except ImportError:
     NEWSLETTER_AVAILABLE = False
-    logger.info(
-        "NewsletterAnalyzer not available - crypto trades will use algo-only signals"
-    )
+    logger.info("NewsletterAnalyzer not available - crypto trades will use algo-only signals")
 
 
 class CryptoSentiment(Enum):
@@ -145,7 +142,7 @@ class CryptoStrategy:
         trader=None,
         risk_manager=None,
         daily_amount: Optional[float] = None,
-        crypto_universe: Optional[List[str]] = None,
+        crypto_universe: Optional[list[str]] = None,
         stop_loss_pct: float = DEFAULT_STOP_LOSS_PCT,
     ):
         """
@@ -173,22 +170,21 @@ class CryptoStrategy:
         self.stop_loss_pct = stop_loss_pct
 
         # Strategy state
-        self.current_holdings: Dict[str, float] = {}
+        self.current_holdings: dict[str, float] = {}
         self.total_invested: float = 0.0
         self.total_value: float = 0.0
 
         # Performance tracking
-        self.daily_returns: List[float] = []
-        self.trades_executed: List[CryptoOrder] = []
-        self.score_history: List[CryptoScore] = []
+        self.daily_returns: list[float] = []
+        self.trades_executed: list[CryptoOrder] = []
+        self.score_history: list[CryptoScore] = []
 
         # Initialize dependencies (use provided or create new)
         try:
             self.trader = trader or AlpacaTrader(paper=True)
             self.risk_manager = risk_manager or RiskManager(
                 max_daily_loss_pct=2.0,
-                max_position_size_pct=self.MAX_POSITION_PCT
-                * 100,  # Convert to percentage
+                max_position_size_pct=self.MAX_POSITION_PCT * 100,  # Convert to percentage
                 max_drawdown_pct=15.0,  # Higher for crypto
                 max_consecutive_losses=3,
             )
@@ -215,7 +211,7 @@ class CryptoStrategy:
             f"crypto_universe={self.crypto_universe}, stop_loss={stop_loss_pct * 100}%"
         )
 
-    def execute(self) -> Dict:
+    def execute(self) -> dict:
         """
         Execute the crypto trading routine (compatible with autonomous_trader.py interface).
 
@@ -314,9 +310,7 @@ class CryptoStrategy:
                         f"Confidence boost: +{validation['confidence_boost']}"
                     )
             else:
-                logger.info(
-                    f"Newsletter validation not available: {validation['reasoning']}"
-                )
+                logger.info(f"Newsletter validation not available: {validation['reasoning']}")
 
             # Step 3: Get current price
             current_price = self._get_current_price(best_coin)
@@ -383,7 +377,7 @@ class CryptoStrategy:
             logger.error(f"Error in daily execution: {str(e)}", exc_info=True)
             raise
 
-    def get_newsletter_validation(self, our_pick: str) -> Dict:
+    def get_newsletter_validation(self, our_pick: str) -> dict:
         """
         Fetch CoinSnacks recommendation and compare to our pick.
 
@@ -425,9 +419,7 @@ class CryptoStrategy:
 
             # Compare picks (handle different formats: BTCUSD vs BTC)
             our_coin = our_pick.replace("USD", "")  # BTCUSD -> BTC
-            newsletter_coin = (
-                newsletter_pick.replace("USD", "") if newsletter_pick else None
-            )
+            newsletter_coin = newsletter_pick.replace("USD", "") if newsletter_pick else None
 
             agreement = (our_coin == newsletter_coin) if newsletter_coin else False
             boost = 10 if agreement else -10
@@ -481,13 +473,11 @@ class CryptoStrategy:
             )
 
         best_crypto = scores[0].symbol
-        logger.info(
-            f"Best crypto selected: {best_crypto} with score {scores[0].score:.2f}"
-        )
+        logger.info(f"Best crypto selected: {best_crypto} with score {scores[0].score:.2f}")
 
         return best_crypto
 
-    def analyze_coin(self, symbol: str) -> Dict:
+    def analyze_coin(self, symbol: str) -> dict:
         """
         Analyze a single crypto coin and return scoring metrics.
 
@@ -524,9 +514,7 @@ class CryptoStrategy:
             sharpe_ratio = excess_return / volatility if volatility > 0 else 0
 
             rsi = self._calculate_rsi(hist["Close"], self.RSI_PERIOD)
-            macd_value, macd_signal, macd_histogram = self._calculate_macd(
-                hist["Close"]
-            )
+            macd_value, macd_signal, macd_histogram = self._calculate_macd(hist["Close"])
             volume_ratio = self._calculate_volume_ratio(hist)
 
             # Calculate composite score
@@ -547,9 +535,7 @@ class CryptoStrategy:
                 "rsi": self._classify_rsi(rsi),
                 "macd": "bullish" if macd_histogram > 0 else "bearish",
                 "volume": (
-                    "high"
-                    if volume_ratio > 1.2
-                    else "normal" if volume_ratio > 0.8 else "low"
+                    "high" if volume_ratio > 1.2 else "normal" if volume_ratio > 0.8 else "low"
                 ),
             }
 
@@ -585,7 +571,7 @@ class CryptoStrategy:
             logger.error(f"Error analyzing {symbol}: {e}")
             raise ValueError(f"Failed to analyze {symbol}") from e
 
-    def get_performance_metrics(self) -> Dict:
+    def get_performance_metrics(self) -> dict:
         """
         Calculate comprehensive performance metrics for the strategy.
 
@@ -600,9 +586,7 @@ class CryptoStrategy:
         # Basic metrics
         total_return = current_value - self.total_invested
         total_return_pct = (
-            (total_return / self.total_invested * 100)
-            if self.total_invested > 0
-            else 0.0
+            (total_return / self.total_invested * 100) if self.total_invested > 0 else 0.0
         )
 
         # Calculate Sharpe ratio
@@ -620,11 +604,7 @@ class CryptoStrategy:
 
         # Win rate
         positive_days = sum(1 for r in self.daily_returns if r > 0)
-        win_rate = (
-            (positive_days / len(self.daily_returns) * 100)
-            if self.daily_returns
-            else 0.0
-        )
+        win_rate = (positive_days / len(self.daily_returns) * 100) if self.daily_returns else 0.0
 
         # Trade statistics
         num_trades = len(self.trades_executed)
@@ -661,7 +641,7 @@ class CryptoStrategy:
 
     # ==================== Private Helper Methods ====================
 
-    def _calculate_all_scores(self) -> List[CryptoScore]:
+    def _calculate_all_scores(self) -> list[CryptoScore]:
         """Calculate scores for all coins in universe."""
         scores = []
 
@@ -686,9 +666,7 @@ class CryptoStrategy:
                 sharpe_ratio = excess_return / volatility if volatility > 0 else 0
 
                 rsi = self._calculate_rsi(hist["Close"], self.RSI_PERIOD)
-                macd_value, macd_signal, macd_histogram = self._calculate_macd(
-                    hist["Close"]
-                )
+                macd_value, macd_signal, macd_histogram = self._calculate_macd(hist["Close"])
                 volume_ratio = self._calculate_volume_ratio(hist)
 
                 # HARD FILTER 1: Reject strongly bearish MACD (allow slightly negative for less conservative approach)
@@ -710,9 +688,7 @@ class CryptoStrategy:
                 # HARD FILTER 3: Require volume confirmation
                 # Note: Weekend volume is typically lower, so threshold is 0.3 (30% of avg)
                 if volume_ratio < 0.3:
-                    logger.warning(
-                        f"{symbol} REJECTED - Low volume ({volume_ratio:.2f} < 0.3)"
-                    )
+                    logger.warning(f"{symbol} REJECTED - Low volume ({volume_ratio:.2f} < 0.3)")
                     continue
 
                 # Calculate composite score
@@ -773,9 +749,7 @@ class CryptoStrategy:
         )
 
         # Adjust for volatility (penalize high volatility)
-        volatility_penalty = (
-            volatility * 5
-        )  # Lower penalty than stocks (crypto is volatile)
+        volatility_penalty = volatility * 5  # Lower penalty than stocks (crypto is volatile)
         momentum_score -= volatility_penalty
 
         # Adjust for Sharpe ratio
@@ -830,9 +804,7 @@ class CryptoStrategy:
                                 "Low": bar.get("low", bar.get("l", 0)),
                                 "Close": bar.get("close", bar.get("c", 0)),
                                 "Volume": bar.get("volume", bar.get("v", 0)),
-                                "Date": pd.to_datetime(
-                                    bar.get("timestamp", bar.get("t", ""))
-                                ),
+                                "Date": pd.to_datetime(bar.get("timestamp", bar.get("t", ""))),
                             }
                         )
 
@@ -851,9 +823,7 @@ class CryptoStrategy:
                 else:
                     logger.warning(f"Alpaca returned empty data for {symbol}")
             except Exception as e:
-                logger.warning(
-                    f"Alpaca data fetch failed for {symbol}: {e}, trying yfinance..."
-                )
+                logger.warning(f"Alpaca data fetch failed for {symbol}: {e}, trying yfinance...")
 
         # Fallback to yfinance
         try:
@@ -869,9 +839,7 @@ class CryptoStrategy:
                 logger.warning(f"Insufficient data for {symbol} (got {len(hist)} bars)")
                 return None
 
-            logger.info(
-                f"✅ Successfully fetched {len(hist)} bars from yfinance for {symbol}"
-            )
+            logger.info(f"✅ Successfully fetched {len(hist)} bars from yfinance for {symbol}")
             return hist
 
         except Exception as e:
@@ -888,18 +856,14 @@ class CryptoStrategy:
         if self.trader:
             try:
                 # Try to get latest bar
-                bars = self.trader.get_historical_bars(
-                    symbol=symbol, timeframe="1Day", limit=1
-                )
+                bars = self.trader.get_historical_bars(symbol=symbol, timeframe="1Day", limit=1)
                 if bars and len(bars) > 0:
                     price = bars[0].get("close", bars[0].get("c", None))
                     if price:
                         logger.info(f"✅ Got {symbol} price ${price:.2f} from Alpaca")
                         return float(price)
             except Exception as e:
-                logger.debug(
-                    f"Alpaca price fetch failed for {symbol}: {e}, trying yfinance..."
-                )
+                logger.debug(f"Alpaca price fetch failed for {symbol}: {e}, trying yfinance...")
 
         # Fallback to yfinance
         try:
@@ -939,7 +903,7 @@ class CryptoStrategy:
 
         return float(rsi.iloc[-1]) if not pd.isna(rsi.iloc[-1]) else 50.0
 
-    def _calculate_macd(self, prices: pd.Series) -> Tuple[float, float, float]:
+    def _calculate_macd(self, prices: pd.Series) -> tuple[float, float, float]:
         """Calculate MACD (Moving Average Convergence Divergence)."""
         from src.utils.technical_indicators import calculate_macd
 
@@ -977,9 +941,7 @@ class CryptoStrategy:
         # Use RiskManager if available
         if self.risk_manager:
             try:
-                account_value = (
-                    self._calculate_total_portfolio_value() + self.total_invested
-                )
+                account_value = self._calculate_total_portfolio_value() + self.total_invested
                 if account_value == 0:
                     account_value = 10000.0  # Default
 
@@ -992,9 +954,7 @@ class CryptoStrategy:
                 )
 
                 if not validation["valid"]:
-                    logger.warning(
-                        f"Risk manager rejected trade: {validation['reason']}"
-                    )
+                    logger.warning(f"Risk manager rejected trade: {validation['reason']}")
                     return False
 
                 if validation["warnings"]:
@@ -1033,9 +993,7 @@ class CryptoStrategy:
 
     def _update_holdings(self, symbol: str, quantity: float) -> None:
         """Update current holdings after trade."""
-        self.current_holdings[symbol] = (
-            self.current_holdings.get(symbol, 0.0) + quantity
-        )
+        self.current_holdings[symbol] = self.current_holdings.get(symbol, 0.0) + quantity
 
         # Remove if quantity is now zero or negative
         if self.current_holdings[symbol] <= 0:
@@ -1050,69 +1008,70 @@ class CryptoStrategy:
                 total += quantity * price
         return total
 
-    def manage_positions(self) -> List[CryptoOrder]:
+    def manage_positions(self) -> list[CryptoOrder]:
         """
         Manage existing crypto positions - check stop-losses and take-profits.
-        
+
         Since Alpaca crypto doesn't support stop-loss orders, we need to manually
         check positions and close them if stop-loss or take-profit is triggered.
-        
+
         Returns:
             List of CryptoOrder objects for positions that should be closed
         """
         logger.info("=" * 80)
         logger.info("Managing Crypto Positions")
         logger.info("=" * 80)
-        
+
         closed_positions = []
-        
+
         try:
             # Get current positions from Alpaca
             if not self.trader:
                 logger.warning("No trader instance available")
                 return closed_positions
-            
+
             positions = self.trader.get_positions()
             crypto_positions = [
-                p for p in positions 
+                p
+                for p in positions
                 if p.get("symbol") in self.crypto_universe and p.get("side") == "long"
             ]
-            
+
             if not crypto_positions:
                 logger.info("No crypto positions to manage")
                 return closed_positions
-            
+
             logger.info(f"Checking {len(crypto_positions)} crypto positions")
-            
+
             for pos in crypto_positions:
                 symbol = pos.get("symbol")
                 qty = float(pos.get("qty", 0))
                 current_price = float(pos.get("current_price", 0))
-                
+
                 if qty <= 0 or current_price <= 0:
                     continue
-                
+
                 # Get entry price (need to track this - for now use avg_cost if available)
                 avg_cost = float(pos.get("avg_entry_price", current_price))
                 entry_price = avg_cost if avg_cost > 0 else current_price
-                
+
                 # Calculate P/L
                 market_value = qty * current_price
                 cost_basis = qty * entry_price
                 unrealized_pl = market_value - cost_basis
                 unrealized_plpc = (unrealized_pl / cost_basis) if cost_basis > 0 else 0.0
-                
+
                 logger.info(
                     f"  {symbol}: {qty:.6f} shares @ ${current_price:.2f} "
-                    f"(Entry: ${entry_price:.2f}, P/L: ${unrealized_pl:.2f} ({unrealized_plpc*100:.2f}%))"
+                    f"(Entry: ${entry_price:.2f}, P/L: ${unrealized_pl:.2f} ({unrealized_plpc * 100:.2f}%))"
                 )
-                
+
                 # Check stop-loss (7% for crypto)
                 if unrealized_plpc <= -self.stop_loss_pct:
                     logger.info(
-                        f"  🛑 STOP-LOSS TRIGGERED: {unrealized_plpc*100:.2f}% <= {-self.stop_loss_pct*100:.1f}%"
+                        f"  🛑 STOP-LOSS TRIGGERED: {unrealized_plpc * 100:.2f}% <= {-self.stop_loss_pct * 100:.1f}%"
                     )
-                    
+
                     try:
                         # Close the position
                         executed_order = self.trader.execute_order(
@@ -1121,9 +1080,9 @@ class CryptoStrategy:
                             side="sell",
                             tier="CRYPTO",
                         )
-                        
+
                         logger.info(f"  ✅ Position closed: Order ID {executed_order.get('id')}")
-                        
+
                         # Create exit order record
                         exit_order = CryptoOrder(
                             symbol=symbol,
@@ -1134,21 +1093,21 @@ class CryptoStrategy:
                             order_type="market",
                             stop_loss=None,
                             timestamp=datetime.now(),
-                            reason=f"Stop-loss triggered at {unrealized_plpc*100:.2f}% loss",
+                            reason=f"Stop-loss triggered at {unrealized_plpc * 100:.2f}% loss",
                         )
-                        
+
                         closed_positions.append(exit_order)
                         self._update_holdings(symbol, -qty)
-                        
+
                     except Exception as e:
                         logger.error(f"  ❌ Failed to close position {symbol}: {e}")
-                
+
                 # Check take-profit (10% for crypto, same as stocks)
                 elif unrealized_plpc >= 0.10:
                     logger.info(
-                        f"  🎯 TAKE-PROFIT TRIGGERED: {unrealized_plpc*100:.2f}% >= 10.0%"
+                        f"  🎯 TAKE-PROFIT TRIGGERED: {unrealized_plpc * 100:.2f}% >= 10.0%"
                     )
-                    
+
                     try:
                         # Close the position
                         executed_order = self.trader.execute_order(
@@ -1157,9 +1116,9 @@ class CryptoStrategy:
                             side="sell",
                             tier="CRYPTO",
                         )
-                        
+
                         logger.info(f"  ✅ Position closed: Order ID {executed_order.get('id')}")
-                        
+
                         # Create exit order record
                         exit_order = CryptoOrder(
                             symbol=symbol,
@@ -1170,26 +1129,26 @@ class CryptoStrategy:
                             order_type="market",
                             stop_loss=None,
                             timestamp=datetime.now(),
-                            reason=f"Take-profit triggered at {unrealized_plpc*100:.2f}% profit",
+                            reason=f"Take-profit triggered at {unrealized_plpc * 100:.2f}% profit",
                         )
-                        
+
                         closed_positions.append(exit_order)
                         self._update_holdings(symbol, -qty)
-                        
+
                     except Exception as e:
                         logger.error(f"  ❌ Failed to close position {symbol}: {e}")
                 else:
                     logger.info(
-                        f"  ✅ Holding position (P/L {unrealized_plpc*100:.2f}% within bounds)"
+                        f"  ✅ Holding position (P/L {unrealized_plpc * 100:.2f}% within bounds)"
                     )
-            
+
             if closed_positions:
                 logger.info(f"Closed {len(closed_positions)} crypto positions")
             else:
                 logger.info("No crypto positions ready for exit")
-            
+
             return closed_positions
-            
+
         except Exception as e:
             logger.error(f"Error managing crypto positions: {e}", exc_info=True)
             return closed_positions
@@ -1218,6 +1177,4 @@ if __name__ == "__main__":
     # Get performance metrics
     metrics = strategy.get_performance_metrics()
     print(f"\nCurrent Portfolio Value: ${metrics['current_value']:.2f}")
-    print(
-        f"Total Return: ${metrics['total_return']:.2f} ({metrics['total_return_pct']:.2f}%)"
-    )
+    print(f"Total Return: ${metrics['total_return']:.2f} ({metrics['total_return_pct']:.2f}%)")

@@ -251,9 +251,7 @@ def main():
     print("REDDIT SENTIMENT SCRAPER - DEMO MODE")
     print("=" * 80)
     print("\n⚠️  This is DEMO data - not real Reddit sentiment")
-    print(
-        "To use real data, follow setup instructions in docs/reddit_sentiment_setup.md\n"
-    )
+    print("To use real data, follow setup instructions in docs/reddit_sentiment_setup.md\n")
 
     # Generate demo data
     data = generate_demo_data()
@@ -289,7 +287,9 @@ def main():
         sentiment = (
             "📈 BULLISH"
             if ticker_data["score"] > 0
-            else "📉 BEARISH" if ticker_data["score"] < 0 else "➡️ NEUTRAL"
+            else "📉 BEARISH"
+            if ticker_data["score"] < 0
+            else "➡️ NEUTRAL"
         )
         print(
             f"{i:2}. {ticker:<6} | Score: {ticker_data['score']:>6} | Mentions: {ticker_data['mentions']:>3} | "

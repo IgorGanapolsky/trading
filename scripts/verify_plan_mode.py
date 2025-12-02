@@ -17,7 +17,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import NoReturn
 
-
 REQUIRED_SECTIONS = [
     "## Metadata",
     "## Clarifying Questions",
@@ -81,9 +80,7 @@ def assert_metadata(metadata: str, required_status: str) -> None:
         fail("Metadata block must include 'Status: <value>'.")
     status = status_match.group(1).upper()
     if status != required_status.upper():
-        fail(
-            f"Plan status is '{status}', but '{required_status}' is required before committing."
-        )
+        fail(f"Plan status is '{status}', but '{required_status}' is required before committing.")
 
     if "Approved at:" not in metadata:
         fail("Metadata must include 'Approved at:' timestamp to document the approval.")

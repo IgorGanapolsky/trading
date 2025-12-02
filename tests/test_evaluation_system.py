@@ -7,9 +7,8 @@ they are caught automatically.
 FREE - No API costs, local testing only.
 """
 
-import sys
 import os
-
+import sys
 from datetime import datetime
 
 # Add parent directory to path
@@ -49,8 +48,7 @@ class TestEvaluationSystem:
         accuracy = evaluation.evaluation.get("accuracy")
         assert accuracy.score == 0.0, "Accuracy should be 0.0 for 200x error"
         assert any(
-            "10x" in issue.lower() or "order size" in issue.lower()
-            for issue in accuracy.issues
+            "10x" in issue.lower() or "order size" in issue.lower() for issue in accuracy.issues
         ), "Should detect order size error"
 
     def test_mistake_2_stale_system_state(self):
@@ -77,8 +75,7 @@ class TestEvaluationSystem:
         assert not reliability.passed, "Should FAIL - system state is stale"
         assert reliability.score == 0.0, "Reliability should be 0.0 for stale state"
         assert any(
-            "stale" in issue.lower() or "hours old" in issue.lower()
-            for issue in reliability.issues
+            "stale" in issue.lower() or "hours old" in issue.lower() for issue in reliability.issues
         ), "Should detect stale system state"
 
     def test_mistake_3_network_errors(self):
@@ -106,8 +103,7 @@ class TestEvaluationSystem:
 
         errors = evaluation.evaluation.get("errors")
         assert any(
-            "network" in issue.lower() or "dns" in issue.lower()
-            for issue in errors.issues
+            "network" in issue.lower() or "dns" in issue.lower() for issue in errors.issues
         ), "Should detect network/DNS errors"
 
     def test_mistake_5_weekend_trade(self):
@@ -134,8 +130,7 @@ class TestEvaluationSystem:
 
         errors = evaluation.evaluation.get("errors")
         assert any(
-            "weekend" in issue.lower() or "saturday" in issue.lower()
-            for issue in errors.issues
+            "weekend" in issue.lower() or "saturday" in issue.lower() for issue in errors.issues
         ), "Should detect weekend trade"
 
     def test_valid_trade_passes(self):
@@ -160,9 +155,7 @@ class TestEvaluationSystem:
 
         assert evaluation.passed, "Valid trade should pass"
         assert evaluation.overall_score >= 0.7, "Valid trade should score >= 0.7"
-        assert (
-            len(evaluation.critical_issues) == 0
-        ), "Valid trade should have no critical issues"
+        assert len(evaluation.critical_issues) == 0, "Valid trade should have no critical issues"
 
     def test_evaluation_save_and_load(self):
         """Test that evaluations can be saved and loaded"""
@@ -191,12 +184,10 @@ class TestEvaluationSystem:
         # Verify file contains evaluation
         import json
 
-        with open(eval_file, "r") as f:
+        with open(eval_file) as f:
             evaluations = json.load(f)
         assert len(evaluations) > 0, "Evaluation file should contain data"
-        assert (
-            evaluations[-1]["trade_id"] == evaluation.trade_id
-        ), "Saved evaluation should match"
+        assert evaluations[-1]["trade_id"] == evaluation.trade_id, "Saved evaluation should match"
 
 
 def run_tests():

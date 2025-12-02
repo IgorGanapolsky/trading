@@ -21,12 +21,10 @@ Enhanced: Added Intelligent Investor principles
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional, Tuple
 from enum import Enum
+from typing import Optional
 
 import yfinance as yf
-
-
 from src.utils.dcf_valuation import get_global_dcf_calculator
 
 logger = logging.getLogger(__name__)
@@ -73,15 +71,11 @@ class SafetyAnalysis:
     margin_of_safety_pct: Optional[float]  # Positive = discount, negative = premium
     quality: Optional[CompanyQuality]
     safety_rating: SafetyRating
-    reasons: List[str]  # Reasons for rating
-    warnings: List[str]  # Warning messages
+    reasons: list[str]  # Reasons for rating
+    warnings: list[str]  # Warning messages
     # Intelligent Investor additions
-    defensive_investor_score: Optional[
-        float
-    ]  # 0-100 score for defensive investor criteria
-    mr_market_sentiment: Optional[
-        str
-    ]  # "fearful", "greedy", "neutral" - Mr. Market concept
+    defensive_investor_score: Optional[float]  # 0-100 score for defensive investor criteria
+    mr_market_sentiment: Optional[str]  # "fearful", "greedy", "neutral" - Mr. Market concept
     value_score: Optional[float]  # 0-100 value investing score
     timestamp: datetime
 
@@ -111,15 +105,9 @@ class GrahamBuffettSafety:
     MIN_EARNINGS_GROWTH = 0.05  # Minimum 5% annual earnings growth
 
     # Intelligent Investor - Defensive Investor Criteria (Graham's checklist)
-    MAX_PE_RATIO = (
-        15.0  # Maximum P/E ratio for defensive investor (Graham recommended <15)
-    )
-    MAX_PB_RATIO = (
-        1.5  # Maximum P/B ratio for defensive investor (Graham recommended <1.5)
-    )
-    MIN_DIVIDEND_YIELD = (
-        0.02  # Minimum 2% dividend yield (preferred for defensive investor)
-    )
+    MAX_PE_RATIO = 15.0  # Maximum P/E ratio for defensive investor (Graham recommended <15)
+    MAX_PB_RATIO = 1.5  # Maximum P/B ratio for defensive investor (Graham recommended <1.5)
+    MIN_DIVIDEND_YIELD = 0.02  # Minimum 2% dividend yield (preferred for defensive investor)
     MAX_PE_RATIO_STRICT = 20.0  # Absolute maximum P/E (reject if above)
     MAX_PB_RATIO_STRICT = 2.0  # Absolute maximum P/B (reject if above)
 
@@ -197,7 +185,7 @@ class GrahamBuffettSafety:
 
         logger.info(
             f"Graham-Buffett Safety Module initialized: "
-            f"min_margin_of_safety={min_margin_of_safety*100:.1f}%, "
+            f"min_margin_of_safety={min_margin_of_safety * 100:.1f}%, "
             f"quality_screening={require_quality_screening}, "
             f"circle_of_competence={require_circle_of_competence}"
         )
@@ -256,40 +244,36 @@ class GrahamBuffettSafety:
 
             if dcf_result and dcf_result.intrinsic_value > 0:
                 intrinsic_value = dcf_result.intrinsic_value
-                margin_of_safety_pct = (
-                    intrinsic_value - market_price
-                ) / intrinsic_value
+                margin_of_safety_pct = (intrinsic_value - market_price) / intrinsic_value
 
                 logger.info(
                     f"{symbol} intrinsic value: ${intrinsic_value:.2f}, "
-                    f"margin of safety: {margin_of_safety_pct*100:.1f}%"
+                    f"margin of safety: {margin_of_safety_pct * 100:.1f}%"
                 )
 
                 # Check margin of safety threshold
                 if margin_of_safety_pct >= self.IDEAL_MARGIN_OF_SAFETY:
                     reasons.append(
-                        f"Excellent margin of safety: {margin_of_safety_pct*100:.1f}% "
-                        f"(ideal: {self.IDEAL_MARGIN_OF_SAFETY*100:.1f}%)"
+                        f"Excellent margin of safety: {margin_of_safety_pct * 100:.1f}% "
+                        f"(ideal: {self.IDEAL_MARGIN_OF_SAFETY * 100:.1f}%)"
                     )
                 elif margin_of_safety_pct >= self.min_margin_of_safety:
                     reasons.append(
-                        f"Adequate margin of safety: {margin_of_safety_pct*100:.1f}% "
-                        f"(minimum: {self.min_margin_of_safety*100:.1f}%)"
+                        f"Adequate margin of safety: {margin_of_safety_pct * 100:.1f}% "
+                        f"(minimum: {self.min_margin_of_safety * 100:.1f}%)"
                     )
                 elif margin_of_safety_pct > 0:
                     warnings.append(
-                        f"Low margin of safety: {margin_of_safety_pct*100:.1f}% "
-                        f"(below minimum: {self.min_margin_of_safety*100:.1f}%)"
+                        f"Low margin of safety: {margin_of_safety_pct * 100:.1f}% "
+                        f"(below minimum: {self.min_margin_of_safety * 100:.1f}%)"
                     )
                 else:
                     reasons.append(
                         f"No margin of safety - trading at premium: "
-                        f"{abs(margin_of_safety_pct)*100:.1f}% above intrinsic value"
+                        f"{abs(margin_of_safety_pct) * 100:.1f}% above intrinsic value"
                     )
             else:
-                warnings.append(
-                    "Unable to calculate intrinsic value - DCF analysis unavailable"
-                )
+                warnings.append("Unable to calculate intrinsic value - DCF analysis unavailable")
         except Exception as e:
             logger.warning(f"Error calculating intrinsic value for {symbol}: {e}")
             warnings.append(f"DCF calculation failed: {str(e)}")
@@ -331,13 +315,9 @@ class GrahamBuffettSafety:
             )
             if defensive_score:
                 if defensive_score >= 80:
-                    reasons.append(
-                        f"Excellent defensive investor score: {defensive_score:.1f}/100"
-                    )
+                    reasons.append(f"Excellent defensive investor score: {defensive_score:.1f}/100")
                 elif defensive_score >= 60:
-                    reasons.append(
-                        f"Good defensive investor score: {defensive_score:.1f}/100"
-                    )
+                    reasons.append(f"Good defensive investor score: {defensive_score:.1f}/100")
                 elif defensive_score < 40:
                     warnings.append(
                         f"Low defensive investor score: {defensive_score:.1f}/100 - "
@@ -349,18 +329,12 @@ class GrahamBuffettSafety:
             symbol, market_price, intrinsic_value, quality
         )
         if mr_market_sentiment == "fearful":
-            reasons.append(
-                "Mr. Market is fearful - opportunity to buy at attractive prices"
-            )
+            reasons.append("Mr. Market is fearful - opportunity to buy at attractive prices")
         elif mr_market_sentiment == "greedy":
-            warnings.append(
-                "Mr. Market is greedy - prices may be inflated, wait for pullback"
-            )
+            warnings.append("Mr. Market is greedy - prices may be inflated, wait for pullback")
 
         # Step 6: Value Score (Intelligent Investor)
-        value_score = self._calculate_value_score(
-            margin_of_safety_pct, quality, defensive_score
-        )
+        value_score = self._calculate_value_score(margin_of_safety_pct, quality, defensive_score)
 
         # Step 7: Determine Safety Rating
         safety_rating = self._determine_safety_rating(
@@ -369,14 +343,10 @@ class GrahamBuffettSafety:
 
         # Step 8: Additional Warnings
         if margin_of_safety_pct is not None and margin_of_safety_pct < 0:
-            warnings.append(
-                "⚠️  Trading at premium to intrinsic value - no margin of safety"
-            )
+            warnings.append("⚠️  Trading at premium to intrinsic value - no margin of safety")
 
         if quality and quality.quality_score < 40:
-            warnings.append(
-                "⚠️  Low quality company - fails fundamental screening criteria"
-            )
+            warnings.append("⚠️  Low quality company - fails fundamental screening criteria")
 
         if quality and quality.pe_ratio and quality.pe_ratio > self.MAX_PE_RATIO_STRICT:
             warnings.append(
@@ -405,7 +375,7 @@ class GrahamBuffettSafety:
 
         logger.info(
             f"{symbol} safety analysis complete: {safety_rating.value} "
-            f"(margin: {margin_of_safety_pct*100:.1f}% if available, "
+            f"(margin: {margin_of_safety_pct * 100:.1f}% if available, "
             f"quality: {quality.quality_score if quality else 'N/A'})"
         )
 
@@ -416,7 +386,7 @@ class GrahamBuffettSafety:
         symbol: str,
         market_price: float,
         force_refresh: bool = False,
-    ) -> Tuple[bool, SafetyAnalysis]:
+    ) -> tuple[bool, SafetyAnalysis]:
         """
         Determine if a stock should be purchased based on Graham-Buffett principles.
 
@@ -438,15 +408,11 @@ class GrahamBuffettSafety:
         ]
 
         if not should_buy:
-            logger.warning(
-                f"❌ {symbol} REJECTED - Safety rating: {analysis.safety_rating.value}"
-            )
+            logger.warning(f"❌ {symbol} REJECTED - Safety rating: {analysis.safety_rating.value}")
             for reason in analysis.reasons:
                 logger.warning(f"  Reason: {reason}")
         else:
-            logger.info(
-                f"✅ {symbol} APPROVED - Safety rating: {analysis.safety_rating.value}"
-            )
+            logger.info(f"✅ {symbol} APPROVED - Safety rating: {analysis.safety_rating.value}")
 
         return should_buy, analysis
 
@@ -475,9 +441,7 @@ class GrahamBuffettSafety:
 
             market_cap = info.get("marketCap", 0)
             if market_cap >= self.MIN_MARKET_CAP:
-                logger.info(
-                    f"{symbol} in circle of competence (market cap: ${market_cap:,.0f})"
-                )
+                logger.info(f"{symbol} in circle of competence (market cap: ${market_cap:,.0f})")
                 return True
             else:
                 logger.warning(
@@ -529,24 +493,18 @@ class GrahamBuffettSafety:
                 try:
                     # Get net income for last 3 years
                     net_income = (
-                        financials.loc["Net Income"]
-                        if "Net Income" in financials.index
-                        else None
+                        financials.loc["Net Income"] if "Net Income" in financials.index else None
                     )
                     if net_income is not None and len(net_income) >= 2:
                         # Calculate growth
                         years = (
-                            net_income.index[:3]
-                            if len(net_income) >= 3
-                            else net_income.index[:2]
+                            net_income.index[:3] if len(net_income) >= 3 else net_income.index[:2]
                         )
                         if len(years) >= 2:
                             latest = net_income.iloc[0]
                             oldest = net_income.iloc[-1]
                             if oldest != 0:
-                                earnings_growth_3y = (latest / oldest) ** (
-                                    1 / (len(years) - 1)
-                                ) - 1
+                                earnings_growth_3y = (latest / oldest) ** (1 / (len(years) - 1)) - 1
 
                             # Calculate consistency (lower variance = higher consistency)
                             if len(net_income) >= 3:
@@ -934,8 +892,8 @@ class GrahamBuffettSafety:
         self,
         margin_of_safety_pct: Optional[float],
         quality: Optional[CompanyQuality],
-        reasons: List[str],
-        warnings: List[str],
+        reasons: list[str],
+        warnings: list[str],
         defensive_score: Optional[float] = None,
     ) -> SafetyRating:
         """
@@ -979,10 +937,7 @@ class GrahamBuffettSafety:
 
         # Acceptable: Either good margin OR good quality OR good defensive score
         if (
-            (
-                margin_of_safety_pct is not None
-                and margin_of_safety_pct >= self.min_margin_of_safety
-            )
+            (margin_of_safety_pct is not None and margin_of_safety_pct >= self.min_margin_of_safety)
             or (quality and quality.quality_score >= 60)
             or (defensive_score is not None and defensive_score >= 60)
         ):
@@ -990,10 +945,7 @@ class GrahamBuffettSafety:
 
         # Poor: Low margin of safety AND low quality AND low defensive score
         if (
-            (
-                margin_of_safety_pct is not None
-                and margin_of_safety_pct < self.min_margin_of_safety
-            )
+            (margin_of_safety_pct is not None and margin_of_safety_pct < self.min_margin_of_safety)
             or (quality and quality.quality_score < 40)
             or (defensive_score is not None and defensive_score < 40)
         ):

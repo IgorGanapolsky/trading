@@ -9,22 +9,23 @@ World-class multi-agent system combining:
 - Context engineering with persistent storage
 """
 
-import os
+import asyncio  # noqa: F401
+import contextlib
 import json
 import logging
+import os
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, field, asdict
 from enum import Enum
-import asyncio  # noqa: F401
+from pathlib import Path
+from typing import Any, Optional
 
-from src.core.skills_integration import get_skills
-from src.agent_framework.context_engine import (
-    get_context_engine,
-    ContextType,
-)
 from src.agent_framework import agent_blueprints
+from src.agent_framework.context_engine import (
+    ContextType,
+    get_context_engine,
+)
+from src.core.skills_integration import get_skills
 
 logger = logging.getLogger(__name__)
 
@@ -57,10 +58,10 @@ class TradePlan:
 
     plan_id: str
     timestamp: str
-    symbols: List[str]
-    phases: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-    decisions: List[Dict[str, Any]] = field(default_factory=list)
-    context: Dict[str, Any] = field(default_factory=dict)
+    symbols: list[str]
+    phases: dict[str, dict[str, Any]] = field(default_factory=dict)
+    decisions: list[dict[str, Any]] = field(default_factory=list)
+    context: dict[str, Any] = field(default_factory=dict)
     status: str = "planning"
     git_commit: Optional[str] = None
 
@@ -71,10 +72,10 @@ class AgentResult:
 
     agent_type: AgentType
     success: bool
-    data: Dict[str, Any]
+    data: dict[str, Any]
     confidence: float = 0.0
     reasoning: str = ""
-    errors: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
     execution_time_ms: float = 0.0
 
 
@@ -149,9 +150,7 @@ class EliteOrchestrator:
 
         # Ensemble voting configuration and agent filters
         self.ensemble_buy_threshold = float(os.getenv("ENSEMBLE_BUY_THRESHOLD", "0.15"))
-        self.ensemble_sell_threshold = float(
-            os.getenv("ENSEMBLE_SELL_THRESHOLD", "-0.15")
-        )
+        self.ensemble_sell_threshold = float(os.getenv("ENSEMBLE_SELL_THRESHOLD", "-0.15"))
 
         # Execution sizing scale bounds
         self.size_scale_min = float(os.getenv("ENSEMBLE_SIZE_SCALE_MIN", "0.5"))
@@ -163,7 +162,7 @@ class EliteOrchestrator:
         # Optional analysis agent filter (can be set by CLI/scripts)
         self._analysis_agent_filter = None
 
-    def _load_ensemble_weights(self) -> Dict[str, float]:
+    def _load_ensemble_weights(self) -> dict[str, float]:
         """Load ensemble weights from environment with defaults and optional YAML config."""
         weights = {
             "mcp": float(os.getenv("ENSEMBLE_WEIGHT_MCP", "0.35")),
@@ -184,30 +183,24 @@ class EliteOrchestrator:
                 try:
                     import yaml  # type: ignore
 
-                    with open(p, "r") as f:
+                    with open(p) as f:
                         cfg = yaml.safe_load(f) or {}
                     if isinstance(cfg, dict):
                         w = cfg.get("weights") or {}
                         if isinstance(w, dict):
                             for k, v in w.items():
-                                try:
+                                with contextlib.suppress(Exception):
                                     weights[k] = float(v)
-                                except Exception:
-                                    pass
                         th = cfg.get("thresholds") or {}
                         if isinstance(th, dict):
-                            try:
+                            with contextlib.suppress(Exception):
                                 self.ensemble_buy_threshold = float(
                                     th.get("buy", self.ensemble_buy_threshold)
                                 )
-                            except Exception:
-                                pass
-                            try:
+                            with contextlib.suppress(Exception):
                                 self.ensemble_sell_threshold = float(
                                     th.get("sell", self.ensemble_sell_threshold)
                                 )
-                            except Exception:
-                                pass
                 except Exception:
                     pass
         except Exception:
@@ -223,9 +216,7 @@ class EliteOrchestrator:
         exclude = filt.get("exclude") or set()
         if include and agent_name not in include:
             return False
-        if exclude and agent_name in exclude:
-            return False
-        return True
+        return not (exclude and agent_name in exclude)
 
     def _initialize_agents(self):
         """Initialize all agent frameworks"""
@@ -238,9 +229,7 @@ class EliteOrchestrator:
             )
             logger.info("✅ MCP Orchestrator initialized")
         except (ImportError, ModuleNotFoundError) as e:
-            logger.warning(
-                f"⚠️ MCP Orchestrator unavailable (dependencies missing): {e}"
-            )
+            logger.warning(f"⚠️ MCP Orchestrator unavailable (dependencies missing): {e}")
             self.mcp_orchestrator = None
         except Exception as e:
             logger.warning(f"⚠️ MCP Orchestrator unavailable: {e}")
@@ -275,9 +264,7 @@ class EliteOrchestrator:
         try:
             from src.agents.gemini_agent import GeminiAgent
 
-            self.gemini_agent = GeminiAgent(
-                name="EliteGemini", model="gemini-3-pro-preview"
-            )
+            self.gemini_agent = GeminiAgent(name="EliteGemini", model="gemini-3-pro-preview")
             logger.info("✅ Gemini Agent initialized")
         except Exception as e:
             logger.warning(f"⚠️ Gemini Agent unavailable: {e}")
@@ -326,9 +313,7 @@ class EliteOrchestrator:
             self.gamma_agent = GammaExposureAgent()
             logger.info("✅ Gamma Exposure Agent initialized")
         except (ImportError, ModuleNotFoundError) as e:
-            logger.warning(
-                f"⚠️ Gamma Exposure Agent unavailable (dependencies missing): {e}"
-            )
+            logger.warning(f"⚠️ Gamma Exposure Agent unavailable (dependencies missing): {e}")
             self.gamma_agent = None
         except Exception as e:
             logger.warning(f"⚠️ Gamma Exposure Agent unavailable: {e}")
@@ -349,7 +334,7 @@ class EliteOrchestrator:
         )
 
     def create_trade_plan(
-        self, symbols: List[str], context: Optional[Dict[str, Any]] = None
+        self, symbols: list[str], context: Optional[dict[str, Any]] = None
     ) -> TradePlan:
         """
         Create a planning-first trade plan
@@ -451,7 +436,7 @@ class EliteOrchestrator:
         logger.info(f"📋 Created trade plan: {plan_id} for {len(symbols)} symbols")
         return plan
 
-    def execute_plan(self, plan: TradePlan) -> Dict[str, Any]:
+    def execute_plan(self, plan: TradePlan) -> dict[str, Any]:
         """
         Execute a trade plan with multi-agent coordination
 
@@ -525,9 +510,7 @@ class EliteOrchestrator:
         try:
             if analysis_result is None:
                 logger.error("Cannot execute trades: analysis phase failed")
-                results["errors"].append(
-                    "Execution: Analysis phase failed, skipping execution"
-                )
+                results["errors"].append("Execution: Analysis phase failed, skipping execution")
             else:
                 exec_result = self._execute_trades(plan, analysis_result)
             results["phases"][PlanningPhase.EXECUTION.value] = exec_result
@@ -553,7 +536,7 @@ class EliteOrchestrator:
         logger.info(f"✅ Plan execution complete: {plan.plan_id}")
         return results
 
-    def _execute_phase(self, plan: TradePlan, phase: PlanningPhase) -> Dict[str, Any]:
+    def _execute_phase(self, plan: TradePlan, phase: PlanningPhase) -> dict[str, Any]:
         """Execute a single phase"""
         phase_config = plan.phases[phase.value]
         results = {"phase": phase.value, "tasks": {}, "agent_results": []}
@@ -576,7 +559,7 @@ class EliteOrchestrator:
 
         return results
 
-    def _execute_data_collection(self, plan: TradePlan) -> Dict[str, Any]:
+    def _execute_data_collection(self, plan: TradePlan) -> dict[str, Any]:
         """Execute data collection phase with multiple agents using Context Engine"""
         results = {
             "phase": PlanningPhase.DATA_COLLECTION.value,
@@ -612,7 +595,9 @@ class EliteOrchestrator:
                 try:
                     # Get context for langchain agent
 
-                    prompt = f"Analyze recent news and sentiment for {symbol}. Provide key insights."
+                    prompt = (
+                        f"Analyze recent news and sentiment for {symbol}. Provide key insights."
+                    )
                     langchain_result = self.langchain_agent.invoke({"input": prompt})
 
                     result_data = {"agent": "langchain", "data": str(langchain_result)}
@@ -627,9 +612,7 @@ class EliteOrchestrator:
                         metadata={"symbol": symbol, "phase": "data_collection"},
                     )
                 except Exception as e:
-                    logger.warning(
-                        f"Langchain data collection failed for {symbol}: {e}"
-                    )
+                    logger.warning(f"Langchain data collection failed for {symbol}: {e}")
 
             # Gemini: Long-horizon research
             if self.gemini_agent:
@@ -656,8 +639,8 @@ class EliteOrchestrator:
         return results
 
     def _execute_analysis(
-        self, plan: TradePlan, data_collection_results: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+        self, plan: TradePlan, data_collection_results: dict[str, Any] = None
+    ) -> dict[str, Any]:
         """Execute analysis phase with ensemble voting using Context Engine"""
         results = {
             "phase": PlanningPhase.ANALYSIS.value,
@@ -676,20 +659,12 @@ class EliteOrchestrator:
             store = SentimentRAGStore()
             bh = store.get_ticker_history("MARKET", limit=1)
             if bh:
-                regime = (
-                    (bh[0].get("metadata", {}) or {})
-                    .get("market_regime", "unknown")
-                    .lower()
-                )
+                regime = (bh[0].get("metadata", {}) or {}).get("market_regime", "unknown").lower()
                 boost_map = {
                     "bull": float(os.getenv("ENSEMBLE_BOGLEHEADS_BOOST_BULL", "1.0")),
                     "bear": float(os.getenv("ENSEMBLE_BOGLEHEADS_BOOST_BEAR", "1.2")),
-                    "choppy": float(
-                        os.getenv("ENSEMBLE_BOGLEHEADS_BOOST_CHOPPY", "1.0")
-                    ),
-                    "unknown": float(
-                        os.getenv("ENSEMBLE_BOGLEHEADS_BOOST_UNKNOWN", "1.0")
-                    ),
+                    "choppy": float(os.getenv("ENSEMBLE_BOGLEHEADS_BOOST_CHOPPY", "1.0")),
+                    "unknown": float(os.getenv("ENSEMBLE_BOGLEHEADS_BOOST_UNKNOWN", "1.0")),
                 }
                 bogleheads_multiplier = boost_map.get(regime, boost_map["unknown"])
         except Exception:
@@ -712,9 +687,7 @@ class EliteOrchestrator:
                     if symbol in mcp_result.get("symbols", []):
                         rec_data = {
                             "agent": "mcp",
-                            "recommendation": mcp_result.get("symbols", {}).get(
-                                symbol, {}
-                            ),
+                            "recommendation": mcp_result.get("symbols", {}).get(symbol, {}),
                             "confidence": 0.8,
                         }
                         recommendations[f"{symbol}_mcp"] = rec_data
@@ -737,9 +710,7 @@ class EliteOrchestrator:
                     prompt = f"Should we trade {symbol}? Provide recommendation with reasoning."
                     langchain_result = self.langchain_agent.invoke({"input": prompt})
                     text = str(langchain_result)
-                    approve = (
-                        "approve" in text.lower() and "decline" not in text.lower()
-                    )
+                    approve = "approve" in text.lower() and "decline" not in text.lower()
                     recommendations[f"{symbol}_langchain"] = {
                         "agent": "langchain",
                         "recommendation": "BUY" if approve else "HOLD",
@@ -753,7 +724,9 @@ class EliteOrchestrator:
         if self.gemini_agent and self._agent_enabled("gemini"):
             for symbol in plan.symbols:
                 try:
-                    gemini_prompt = f"Analyze {symbol} for trading. Consider long-term portfolio fit and risk."
+                    gemini_prompt = (
+                        f"Analyze {symbol} for trading. Consider long-term portfolio fit and risk."
+                    )
                     gemini_result = self.gemini_agent.reason(prompt=gemini_prompt)
                     decision = gemini_result.get("decision", "").upper()
                     recommendations[f"{symbol}_gemini"] = {
@@ -772,15 +745,13 @@ class EliteOrchestrator:
             for symbol in plan.symbols:
                 try:
                     # Try to use ensemble RL if available
-                    use_ensemble = (
-                        os.getenv("USE_ENSEMBLE_RL", "false").lower() == "true"
-                    )
+                    use_ensemble = os.getenv("USE_ENSEMBLE_RL", "false").lower() == "true"
 
                     if use_ensemble:
                         try:
-                            from src.ml.ensemble_rl import EnsembleRLAgent
-                            from src.ml.data_processor import DataProcessor
                             import torch  # noqa: F401
+                            from src.ml.data_processor import DataProcessor
+                            from src.ml.ensemble_rl import EnsembleRLAgent
 
                             # Get state representation
                             data_processor = DataProcessor()
@@ -792,9 +763,7 @@ class EliteOrchestrator:
 
                                 if len(sequences) > 0:
                                     # Use last sequence
-                                    state = sequences[-1:].unsqueeze(
-                                        0
-                                    )  # Add batch dimension
+                                    state = sequences[-1:].unsqueeze(0)  # Add batch dimension
 
                                     # Initialize ensemble agent
                                     ensemble_agent = EnsembleRLAgent(
@@ -803,16 +772,12 @@ class EliteOrchestrator:
                                     )
 
                                     # Get prediction
-                                    action, confidence, details = (
-                                        ensemble_agent.predict(state)
-                                    )
+                                    action, confidence, details = ensemble_agent.predict(state)
 
                                     action_map = {0: "HOLD", 1: "BUY", 2: "SELL"}
                                     recommendations[f"{symbol}_ml"] = {
                                         "agent": "ensemble_rl",
-                                        "recommendation": action_map.get(
-                                            action, "HOLD"
-                                        ),
+                                        "recommendation": action_map.get(action, "HOLD"),
                                         "confidence": confidence,
                                         "reasoning": f"Ensemble RL (PPO+A2C+SAC): {details.get('individual_predictions', {})}",
                                     }
@@ -820,9 +785,7 @@ class EliteOrchestrator:
                                         f"✅ Ensemble RL prediction for {symbol}: {action_map.get(action)} (confidence: {confidence:.2f})"
                                     )
                         except Exception as e:
-                            logger.debug(
-                                f"Ensemble RL not available, using single model: {e}"
-                            )
+                            logger.debug(f"Ensemble RL not available, using single model: {e}")
 
                     # Fallback to single model
                     if f"{symbol}_ml" not in recommendations:
@@ -862,14 +825,10 @@ class EliteOrchestrator:
                                 "reasoning": f"Twitter sentiment score={score}",
                             }
             except Exception as e:
-                logger.debug(
-                    f"Grok/X sentiment integration in analysis unavailable: {e}"
-                )
+                logger.debug(f"Grok/X sentiment integration in analysis unavailable: {e}")
 
         # BogleHeads Agent (long-term sanity check / sentiment)
-        if getattr(self, "bogleheads_agent", None) and self._agent_enabled(
-            "bogleheads"
-        ):
+        if getattr(self, "bogleheads_agent", None) and self._agent_enabled("bogleheads"):
             for symbol in plan.symbols:
                 try:
                     analysis = self.bogleheads_agent.analyze({"symbol": symbol})
@@ -879,9 +838,7 @@ class EliteOrchestrator:
                     confidence = float(analysis.get("confidence", 0.5))
                     recommendations[f"{symbol}_bogleheads"] = {
                         "agent": "bogleheads_agent",
-                        "recommendation": (
-                            decision if decision in {"BUY", "SELL"} else "HOLD"
-                        ),
+                        "recommendation": (decision if decision in {"BUY", "SELL"} else "HOLD"),
                         "confidence": max(0.0, min(1.0, confidence)),
                         "reasoning": (analysis.get("reasoning") or "")[:200],
                     }
@@ -910,11 +867,7 @@ class EliteOrchestrator:
                         w = w * bogleheads_multiplier
                     conf = float(rec.get("confidence", 0.5))
                     action = (rec.get("recommendation") or "HOLD").upper()
-                    val = (
-                        conf
-                        if action == "BUY"
-                        else (-conf if action == "SELL" else 0.0)
-                    )
+                    val = conf if action == "BUY" else (-conf if action == "SELL" else 0.0)
                     contrib = w * val
                     score += contrib
                     contributions.append(
@@ -945,7 +898,7 @@ class EliteOrchestrator:
         results["agent_results"] = list(recommendations.values())
         return results
 
-    def _execute_risk_assessment(self, plan: TradePlan) -> Dict[str, Any]:
+    def _execute_risk_assessment(self, plan: TradePlan) -> dict[str, Any]:
         """Execute risk assessment phase"""
         results = {
             "phase": PlanningPhase.RISK_ASSESSMENT.value,
@@ -978,9 +931,7 @@ class EliteOrchestrator:
 
         return results
 
-    def _execute_trades(
-        self, plan: TradePlan, analysis_result: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _execute_trades(self, plan: TradePlan, analysis_result: dict[str, Any]) -> dict[str, Any]:
         """Execute trades using high-speed agents"""
         results = {
             "phase": PlanningPhase.EXECUTION.value,
@@ -994,9 +945,7 @@ class EliteOrchestrator:
         health_result = self.skills.assess_portfolio_health()
         account_value = 100000
         if isinstance(health_result, dict) and health_result.get("success"):
-            account_value = health_result.get("data", {}).get(
-                "account_equity", account_value
-            )
+            account_value = health_result.get("data", {}).get("account_equity", account_value)
 
         # Use Go ADK for high-speed execution
         if self.adk_adapter and self.adk_adapter.enabled:
@@ -1073,9 +1022,7 @@ class EliteOrchestrator:
 
         return results
 
-    def _execute_audit(
-        self, plan: TradePlan, execution_results: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _execute_audit(self, plan: TradePlan, execution_results: dict[str, Any]) -> dict[str, Any]:
         """Execute audit phase"""
         results = {
             "phase": PlanningPhase.AUDIT.value,
@@ -1112,13 +1059,13 @@ class EliteOrchestrator:
         with open(plan_file, "w") as f:
             json.dump(asdict(plan), f, indent=2, default=str)
 
-    def _save_results(self, plan_id: str, results: Dict[str, Any]):
+    def _save_results(self, plan_id: str, results: dict[str, Any]):
         """Save execution results"""
         results_file = self.plans_dir / f"{plan_id}_results.json"
         with open(results_file, "w") as f:
             json.dump(results, f, indent=2, default=str)
 
-    def run_trading_cycle(self, symbols: List[str]) -> Dict[str, Any]:
+    def run_trading_cycle(self, symbols: list[str]) -> dict[str, Any]:
         """
         Run a complete trading cycle with planning-first approach
 
@@ -1139,9 +1086,7 @@ class EliteOrchestrator:
                 logger.info("🔄 Running Agent0 co-evolution cycle...")
                 from src.agent_framework.context import RunContext, RunMode
 
-                evolution_context = RunContext(
-                    mode=RunMode.PAPER if self.paper else RunMode.LIVE
-                )
+                evolution_context = RunContext(mode=RunMode.PAPER if self.paper else RunMode.LIVE)
                 agent0_result = self.coevolution_engine.evolve(evolution_context)
                 if agent0_result.get("status") == "success":
                     logger.info(

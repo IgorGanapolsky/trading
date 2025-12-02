@@ -23,9 +23,7 @@ Created: 2025-12-01
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -58,9 +56,9 @@ class WalkForwardFold:
     test_win_rate: float = 0.0
 
     # Predictions for analysis
-    predictions: List[int] = field(default_factory=list)
-    actuals: List[int] = field(default_factory=list)
-    returns: List[float] = field(default_factory=list)
+    predictions: list[int] = field(default_factory=list)
+    actuals: list[int] = field(default_factory=list)
+    returns: list[float] = field(default_factory=list)
 
 
 @dataclass
@@ -69,7 +67,7 @@ class WalkForwardResults:
 
     symbol: str
     total_folds: int
-    folds: List[WalkForwardFold]
+    folds: list[WalkForwardFold]
 
     # Aggregated metrics (out-of-sample)
     mean_test_accuracy: float = 0.0
@@ -83,13 +81,13 @@ class WalkForwardResults:
     mean_win_rate: float = 0.0
 
     # Regime analysis
-    regime_performance: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    regime_performance: dict[str, dict[str, float]] = field(default_factory=dict)
 
     # Validation status
     passed_validation: bool = False
     validation_message: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert results to dictionary for JSON serialization."""
         return {
             "symbol": self.symbol,
@@ -162,7 +160,7 @@ class WalkForwardValidator:
 
     def generate_folds(
         self, data_length: int, sequence_length: int = 60
-    ) -> List[Tuple[Tuple[int, int], Tuple[int, int]]]:
+    ) -> list[tuple[tuple[int, int], tuple[int, int]]]:
         """
         Generate train/test indices for walk-forward validation.
 
@@ -204,7 +202,7 @@ class WalkForwardValidator:
         self,
         symbol: str,
         model_class: type,
-        model_kwargs: Dict[str, Any],
+        model_kwargs: dict[str, Any],
         data_processor,
         epochs: int = 30,
         learning_rate: float = 0.001,
@@ -317,7 +315,7 @@ class WalkForwardValidator:
         self,
         fold_num: int,
         model_class: type,
-        model_kwargs: Dict[str, Any],
+        model_kwargs: dict[str, Any],
         X_train: torch.Tensor,
         y_train: torch.Tensor,
         X_test: torch.Tensor,
@@ -340,13 +338,11 @@ class WalkForwardValidator:
 
         # Map binary targets to action indices (0=Hold, 1=Buy, 2=Sell)
         # Up (1) -> Buy (1), Down (0) -> Sell (2)
-        y_train_mapped = torch.where(
-            y_train == 1, torch.tensor(1), torch.tensor(2)
-        ).to(self.device)
+        y_train_mapped = torch.where(y_train == 1, torch.tensor(1), torch.tensor(2)).to(self.device)
 
         # Training loop
         best_train_loss = float("inf")
-        for epoch in range(epochs):
+        for _epoch in range(epochs):
             model.train()
             optimizer.zero_grad()
 
@@ -378,9 +374,7 @@ class WalkForwardValidator:
 
             # Sharpe ratio (annualized)
             if len(strategy_returns) > 1 and np.std(strategy_returns) > 0:
-                sharpe = (np.mean(strategy_returns) / np.std(strategy_returns)) * np.sqrt(
-                    252
-                )
+                sharpe = (np.mean(strategy_returns) / np.std(strategy_returns)) * np.sqrt(252)
             else:
                 sharpe = 0.0
 
@@ -399,10 +393,26 @@ class WalkForwardValidator:
             win_rate = profitable.mean()
 
         # Get date strings
-        train_start_date = df.index[train_start].strftime("%Y-%m-%d") if hasattr(df.index[train_start], 'strftime') else str(df.index[train_start])[:10]
-        train_end_date = df.index[train_end - 1].strftime("%Y-%m-%d") if hasattr(df.index[train_end - 1], 'strftime') else str(df.index[train_end - 1])[:10]
-        test_start_date = df.index[test_start].strftime("%Y-%m-%d") if hasattr(df.index[test_start], 'strftime') else str(df.index[test_start])[:10]
-        test_end_date = df.index[min(test_end - 1, len(df) - 1)].strftime("%Y-%m-%d") if hasattr(df.index[min(test_end - 1, len(df) - 1)], 'strftime') else str(df.index[min(test_end - 1, len(df) - 1)])[:10]
+        train_start_date = (
+            df.index[train_start].strftime("%Y-%m-%d")
+            if hasattr(df.index[train_start], "strftime")
+            else str(df.index[train_start])[:10]
+        )
+        train_end_date = (
+            df.index[train_end - 1].strftime("%Y-%m-%d")
+            if hasattr(df.index[train_end - 1], "strftime")
+            else str(df.index[train_end - 1])[:10]
+        )
+        test_start_date = (
+            df.index[test_start].strftime("%Y-%m-%d")
+            if hasattr(df.index[test_start], "strftime")
+            else str(df.index[test_start])[:10]
+        )
+        test_end_date = (
+            df.index[min(test_end - 1, len(df) - 1)].strftime("%Y-%m-%d")
+            if hasattr(df.index[min(test_end - 1, len(df) - 1)], "strftime")
+            else str(df.index[min(test_end - 1, len(df) - 1)])[:10]
+        )
 
         return WalkForwardFold(
             fold_number=fold_num,
@@ -425,7 +435,7 @@ class WalkForwardValidator:
         )
 
     def _aggregate_results(
-        self, symbol: str, fold_results: List[WalkForwardFold]
+        self, symbol: str, fold_results: list[WalkForwardFold]
     ) -> WalkForwardResults:
         """Aggregate results across all folds."""
 
@@ -560,7 +570,7 @@ if __name__ == "__main__":
 
     print(f"\nSymbol: {results.symbol}")
     print(f"Total Folds: {results.total_folds}")
-    print(f"\nOut-of-Sample Performance:")
+    print("\nOut-of-Sample Performance:")
     print(f"  Mean Accuracy: {results.mean_test_accuracy:.1%} (±{results.std_test_accuracy:.1%})")
     print(f"  Mean Sharpe: {results.mean_test_sharpe:.2f} (±{results.std_test_sharpe:.2f})")
     print(f"  Mean Win Rate: {results.mean_win_rate:.1%}")

@@ -5,8 +5,8 @@ Query latest Bogleheads snapshots from the Sentiment RAG store.
 Usage:
   python scripts/bogleheads_query.py --limit 3 --format md
 """
+
 import argparse
-from typing import List  # noqa: F401
 
 from src.rag.sentiment_store import SentimentRAGStore
 

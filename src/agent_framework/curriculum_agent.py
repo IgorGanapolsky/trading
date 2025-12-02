@@ -12,14 +12,14 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 from uuid import uuid4
 
-from .base import TradingAgent, AgentResult
+from .base import AgentResult, TradingAgent
 from .context import RunContext
 
 logger = logging.getLogger(__name__)
@@ -61,14 +61,14 @@ class TradingTask:
     difficulty: TaskDifficulty = TaskDifficulty.MEDIUM
     category: TaskCategory = TaskCategory.MARKET_ANALYSIS
     description: str = ""
-    objectives: List[str] = field(default_factory=list)
-    constraints: Dict[str, Any] = field(default_factory=dict)
-    required_tools: List[str] = field(default_factory=list)
-    expected_capabilities: List[str] = field(default_factory=list)
-    context: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    objectives: list[str] = field(default_factory=list)
+    constraints: dict[str, Any] = field(default_factory=dict)
+    required_tools: list[str] = field(default_factory=list)
+    expected_capabilities: list[str] = field(default_factory=list)
+    context: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for storage"""
         return {
             "task_id": self.task_id,
@@ -85,7 +85,7 @@ class TradingTask:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> TradingTask:
+    def from_dict(cls, data: dict[str, Any]) -> TradingTask:
         """Create from dictionary"""
         return cls(
             task_id=data["task_id"],
@@ -111,8 +111,8 @@ class TaskPerformance:
     success: bool
     completion_time_seconds: float
     quality_score: float  # 0.0 to 1.0
-    tool_usage: Dict[str, int] = field(default_factory=dict)
-    errors: List[str] = field(default_factory=list)
+    tool_usage: dict[str, int] = field(default_factory=dict)
+    errors: list[str] = field(default_factory=list)
     feedback: str = ""
     completed_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
@@ -128,18 +128,18 @@ class CurriculumAgent(TradingAgent):
     4. Create tasks requiring tool-integrated reasoning
     """
 
-    def __init__(self, storage_dir: Optional[Path] = None):
+    def __init__(self, storage_dir: Path | None = None):
         super().__init__("CurriculumAgent")
         self.storage_dir = storage_dir or Path("data/agent_context/curriculum")
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
         # Task history
-        self.generated_tasks: Dict[str, TradingTask] = {}
-        self.task_performances: List[TaskPerformance] = []
+        self.generated_tasks: dict[str, TradingTask] = {}
+        self.task_performances: list[TaskPerformance] = []
 
         # Capability tracking
-        self.current_capabilities: Set[str] = set()
-        self.successful_difficulties: Dict[TaskDifficulty, int] = {
+        self.current_capabilities: set[str] = set()
+        self.successful_difficulties: dict[TaskDifficulty, int] = {
             diff: 0 for diff in TaskDifficulty
         }
 
@@ -176,9 +176,7 @@ class CurriculumAgent(TradingAgent):
             self.generated_tasks[task.task_id] = task
             self._save_task(task)
 
-            logger.info(
-                f"📚 Generated task: {task.task_id} ({target_difficulty.value})"
-            )
+            logger.info(f"📚 Generated task: {task.task_id} ({target_difficulty.value})")
             logger.info(f"   Category: {task.category.value}")
             logger.info(f"   Objectives: {len(task.objectives)}")
 
@@ -196,7 +194,7 @@ class CurriculumAgent(TradingAgent):
             logger.exception(f"❌ Curriculum Agent failed: {e}")
             return AgentResult(name=self.agent_name, succeeded=False, error=str(e))
 
-    def _analyze_capabilities(self, context: RunContext) -> Set[str]:
+    def _analyze_capabilities(self, context: RunContext) -> set[str]:
         """
         Analyze current system capabilities based on:
         - Recent task performances
@@ -208,9 +206,7 @@ class CurriculumAgent(TradingAgent):
         # Analyze recent successes
         recent_performances = [
             p for p in self.task_performances if p.success and p.quality_score > 0.7
-        ][
-            -10:
-        ]  # Last 10 successful tasks
+        ][-10:]  # Last 10 successful tasks
 
         for perf in recent_performances:
             if perf.task_id in self.generated_tasks:
@@ -248,7 +244,7 @@ class CurriculumAgent(TradingAgent):
             return TaskDifficulty.MEDIUM
 
         # Calculate success rate by difficulty
-        success_by_difficulty: Dict[TaskDifficulty, List[bool]] = {
+        success_by_difficulty: dict[TaskDifficulty, list[bool]] = {
             diff: [] for diff in TaskDifficulty
         }
 
@@ -285,7 +281,7 @@ class CurriculumAgent(TradingAgent):
         return TaskDifficulty.MEDIUM
 
     def _generate_task(
-        self, context: RunContext, difficulty: TaskDifficulty, capabilities: Set[str]
+        self, context: RunContext, difficulty: TaskDifficulty, capabilities: set[str]
     ) -> TradingTask:
         """
         Generate a specific trading task.
@@ -316,9 +312,7 @@ class CurriculumAgent(TradingAgent):
         else:  # EDGE_CASE
             return self._generate_edge_case_task(difficulty, context)
 
-    def _select_category(
-        self, difficulty: TaskDifficulty, capabilities: Set[str]
-    ) -> TaskCategory:
+    def _select_category(self, difficulty: TaskDifficulty, capabilities: set[str]) -> TaskCategory:
         """Select task category based on difficulty and capabilities"""
         # For frontier tasks, prefer complex categories
         if difficulty == TaskDifficulty.FRONTIER:
@@ -549,10 +543,6 @@ class CurriculumAgent(TradingAgent):
         self, difficulty: TaskDifficulty, context: RunContext
     ) -> TradingTask:
         """Generate multi-timeframe analysis task"""
-        description = (
-            "Perform analysis across multiple timeframes (1h, 4h, daily, weekly) to identify "
-            "trade setups with high probability, ensuring alignment across timeframes."
-        )
         objectives = [
             "Analyze 4+ timeframes",
             "Identify confluence zones",
@@ -638,7 +628,7 @@ class CurriculumAgent(TradingAgent):
         if tasks_dir.exists():
             for task_file in tasks_dir.glob("*.json"):
                 try:
-                    with open(task_file, "r") as f:
+                    with open(task_file) as f:
                         data = json.load(f)
                         task = TradingTask.from_dict(data)
                         self.generated_tasks[task.task_id] = task
@@ -650,7 +640,7 @@ class CurriculumAgent(TradingAgent):
         if perf_dir.exists():
             for perf_file in perf_dir.glob("*.json"):
                 try:
-                    with open(perf_file, "r") as f:
+                    with open(perf_file) as f:
                         data = json.load(f)
                         perf = TaskPerformance(**data)
                         self.task_performances.append(perf)

@@ -9,11 +9,11 @@ Implements prioritized experience replay from Deep Learning Specialization:
 Improves sample efficiency by replaying important transitions more frequently.
 """
 
-import numpy as np
-
-from typing import Any, List, Tuple, Optional
-from collections import namedtuple
 import random
+from collections import namedtuple
+from typing import Any, Optional
+
+import numpy as np
 
 Experience = namedtuple(
     "Experience", ["state", "action", "reward", "next_state", "done", "td_error"]
@@ -79,7 +79,7 @@ class SumTree:
         self.tree[idx] = priority
         self._propagate(idx, change)
 
-    def get(self, s: float) -> Tuple[int, Any, float]:
+    def get(self, s: float) -> tuple[int, Any, float]:
         """Sample experience."""
         idx = self._retrieve(0, s)
         data_idx = idx - self.capacity + 1
@@ -147,9 +147,7 @@ class PrioritizedReplayBuffer:
 
         self.tree.add(priority, experience)
 
-    def sample(
-        self, batch_size: int
-    ) -> Tuple[List[Experience], np.ndarray, np.ndarray]:
+    def sample(self, batch_size: int) -> tuple[list[Experience], np.ndarray, np.ndarray]:
         """
         Sample batch of experiences.
 

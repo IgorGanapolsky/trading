@@ -14,11 +14,11 @@ Inspired by:
 - Prioritized Experience Replay (2016)
 """
 
+from typing import Optional
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Tuple, Optional
-
 
 
 class DQNNetwork(nn.Module):
@@ -34,11 +34,13 @@ class DQNNetwork(nn.Module):
     def __init__(
         self,
         input_dim: int,
-        hidden_dims: list = [128, 128, 64],
+        hidden_dims: list = None,
         num_actions: int = 3,
         dropout: float = 0.1,
     ):
-        super(DQNNetwork, self).__init__()
+        if hidden_dims is None:
+            hidden_dims = [128, 128, 64]
+        super().__init__()
 
         layers = []
         prev_dim = input_dim
@@ -86,7 +88,7 @@ class DuelingDQNNetwork(nn.Module):
         num_actions: int = 3,
         dropout: float = 0.1,
     ):
-        super(DuelingDQNNetwork, self).__init__()
+        super().__init__()
 
         # Shared feature extractor
         self.feature_layer = nn.Sequential(
@@ -98,9 +100,7 @@ class DuelingDQNNetwork(nn.Module):
         )
 
         # Value stream: V(s)
-        self.value_stream = nn.Sequential(
-            nn.Linear(hidden_dim, 64), nn.ReLU(), nn.Linear(64, 1)
-        )
+        self.value_stream = nn.Sequential(nn.Linear(hidden_dim, 64), nn.ReLU(), nn.Linear(64, 1))
 
         # Advantage stream: A(s,a)
         self.advantage_stream = nn.Sequential(
@@ -151,7 +151,7 @@ class LSTMDQNNetwork(nn.Module):
         num_actions: int = 3,
         dropout: float = 0.2,
     ):
-        super(LSTMDQNNetwork, self).__init__()
+        super().__init__()
 
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
@@ -166,9 +166,7 @@ class LSTMDQNNetwork(nn.Module):
         )
 
         # Dueling head
-        self.value_stream = nn.Sequential(
-            nn.Linear(hidden_dim, 64), nn.ReLU(), nn.Linear(64, 1)
-        )
+        self.value_stream = nn.Sequential(nn.Linear(hidden_dim, 64), nn.ReLU(), nn.Linear(64, 1))
 
         self.advantage_stream = nn.Sequential(
             nn.Linear(hidden_dim, 64), nn.ReLU(), nn.Linear(64, num_actions)
@@ -179,8 +177,8 @@ class LSTMDQNNetwork(nn.Module):
     def forward(
         self,
         state: torch.Tensor,
-        hidden: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
-    ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+        hidden: Optional[tuple[torch.Tensor, torch.Tensor]] = None,
+    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
         """
         Forward pass with LSTM.
 
@@ -224,7 +222,7 @@ class DistributionalDQNNetwork(nn.Module):
         v_min: float = -10.0,
         v_max: float = 10.0,
     ):
-        super(DistributionalDQNNetwork, self).__init__()
+        super().__init__()
 
         self.num_actions = num_actions
         self.num_atoms = num_atoms

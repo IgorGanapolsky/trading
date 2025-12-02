@@ -10,11 +10,15 @@ Responsibilities:
 Ensures best execution
 """
 
+import builtins
+import contextlib
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Optional
+
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import MarketOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
+from alpaca.trading.requests import MarketOrderRequest
+
 from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -32,13 +36,11 @@ class ExecutionAgent(BaseAgent):
     """
 
     def __init__(self, alpaca_api: Optional[TradingClient] = None):
-        super().__init__(
-            name="ExecutionAgent", role="Order execution and timing optimization"
-        )
+        super().__init__(name="ExecutionAgent", role="Order execution and timing optimization")
         self.alpaca_api = alpaca_api
         self.execution_history: list = []
 
-    def analyze(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Analyze execution timing and prepare order.
 
@@ -68,8 +70,8 @@ class ExecutionAgent(BaseAgent):
         # Goldilocks Prompt: Focused execution with timing examples
         prompt = f"""Execute {action} ${position_size:,.0f} on {symbol}. Minimize slippage, maximize fill quality.
 
-ORDER: {action} {symbol} ${position_size:,.0f} (Market) | Status: {market_status['status']}
-CONDITIONS: Spread {market_conditions.get('spread', 'N/A')} | Vol {market_conditions.get('volume', 'N/A')} | Volatility {market_conditions.get('volatility', 'N/A')}
+ORDER: {action} {symbol} ${position_size:,.0f} (Market) | Status: {market_status["status"]}
+CONDITIONS: Spread {market_conditions.get("spread", "N/A")} | Vol {market_conditions.get("volume", "N/A")} | Volatility {market_conditions.get("volatility", "N/A")}
 
 {memory_context}
 
@@ -130,7 +132,7 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
 
         return analysis
 
-    def _check_market_status(self) -> Dict[str, Any]:
+    def _check_market_status(self) -> dict[str, Any]:
         """Check if market is open and ready for trading."""
         if not self.alpaca_api:
             return {"status": "UNKNOWN", "is_open": False}
@@ -140,20 +142,14 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
             return {
                 "status": "OPEN" if clock.is_open else "CLOSED",
                 "is_open": clock.is_open,
-                "next_open": (
-                    str(clock.next_open) if hasattr(clock, "next_open") else None
-                ),
-                "next_close": (
-                    str(clock.next_close) if hasattr(clock, "next_close") else None
-                ),
+                "next_open": (str(clock.next_open) if hasattr(clock, "next_open") else None),
+                "next_close": (str(clock.next_close) if hasattr(clock, "next_close") else None),
             }
         except Exception as e:
             logger.error(f"Error checking market status: {e}")
             return {"status": "ERROR", "is_open": False, "error": str(e)}
 
-    def _execute_order(
-        self, symbol: str, action: str, position_size: float
-    ) -> Dict[str, Any]:
+    def _execute_order(self, symbol: str, action: str, position_size: float) -> dict[str, Any]:
         """
         Execute order via Alpaca API.
 
@@ -191,9 +187,7 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
 
             # Track execution
             self.execution_history.append(result)
-            logger.info(
-                f"Order executed: {order.id} - {symbol} {action} ${position_size}"
-            )
+            logger.info(f"Order executed: {order.id} - {symbol} {action} ${position_size}")
 
             return result
 
@@ -207,7 +201,7 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
                 "amount": position_size,
             }
 
-    def _parse_execution_response(self, reasoning: str) -> Dict[str, Any]:
+    def _parse_execution_response(self, reasoning: str) -> dict[str, Any]:
         """Parse LLM response into structured execution plan."""
         lines = reasoning.split("\n")
         analysis = {
@@ -230,10 +224,8 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
                 except:
                     pass
             elif line.startswith("CONFIDENCE:"):
-                try:
+                with contextlib.suppress(builtins.BaseException):
                     analysis["confidence"] = float(line.split(":")[1].strip())
-                except:
-                    pass
             elif line.startswith("RECOMMENDATION:"):
                 rec = line.split(":")[1].strip().upper()
                 if rec in ["EXECUTE", "DELAY", "CANCEL"]:

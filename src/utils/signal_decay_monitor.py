@@ -4,11 +4,12 @@ Signal Decay Monitor
 Tracks RL model performance vs baseline over time to detect signal decay.
 """
 
+import json
 import logging
-from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 from pathlib import Path
-import json
+from typing import Any, Optional
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -25,8 +26,8 @@ class SignalDecayMonitor:
     def record_model_performance(
         self,
         model_id: str,
-        performance_metrics: Dict[str, float],
-        baseline_metrics: Optional[Dict[str, float]] = None,
+        performance_metrics: dict[str, float],
+        baseline_metrics: Optional[dict[str, float]] = None,
     ) -> None:
         """
         Record model performance for decay monitoring.
@@ -51,9 +52,7 @@ class SignalDecayMonitor:
                     baseline_val = baseline_metrics[key]
                     current_val = performance_metrics[key]
                     if baseline_val != 0:
-                        decay_pct = (
-                            (current_val - baseline_val) / abs(baseline_val)
-                        ) * 100
+                        decay_pct = ((current_val - baseline_val) / abs(baseline_val)) * 100
                         decay_metrics[f"{key}_decay_pct"] = decay_pct
                     else:
                         decay_metrics[f"{key}_decay_pct"] = None
@@ -61,9 +60,7 @@ class SignalDecayMonitor:
             record["decay_metrics"] = decay_metrics
 
         # Save record
-        filepath = (
-            self.monitoring_dir / f"{model_id}_{datetime.now().strftime('%Y%m%d')}.json"
-        )
+        filepath = self.monitoring_dir / f"{model_id}_{datetime.now().strftime('%Y%m%d')}.json"
 
         # Load existing records
         records = []
@@ -78,18 +75,14 @@ class SignalDecayMonitor:
 
         # Keep only last 90 days
         cutoff_date = datetime.now() - timedelta(days=90)
-        records = [
-            r for r in records if datetime.fromisoformat(r["timestamp"]) > cutoff_date
-        ]
+        records = [r for r in records if datetime.fromisoformat(r["timestamp"]) > cutoff_date]
 
         with open(filepath, "w") as f:
             json.dump(records, f, indent=2)
 
         logger.debug(f"Signal decay record saved for {model_id}")
 
-    def detect_signal_decay(
-        self, model_id: str, lookback_days: int = 30
-    ) -> Dict[str, Any]:
+    def detect_signal_decay(self, model_id: str, lookback_days: int = 30) -> dict[str, Any]:
         """
         Detect signal decay by comparing recent vs baseline performance.
 
@@ -101,9 +94,7 @@ class SignalDecayMonitor:
             Decay detection results
         """
         # Load recent records
-        filepath = (
-            self.monitoring_dir / f"{model_id}_{datetime.now().strftime('%Y%m%d')}.json"
-        )
+        filepath = self.monitoring_dir / f"{model_id}_{datetime.now().strftime('%Y%m%d')}.json"
 
         if not filepath.exists():
             return {
@@ -131,14 +122,12 @@ class SignalDecayMonitor:
         baseline_perf = baseline.get("performance", {})
 
         # Get recent performance (last N records)
-        recent_records = (
-            records[-lookback_days:] if len(records) > lookback_days else records
-        )
+        recent_records = records[-lookback_days:] if len(records) > lookback_days else records
         recent_perfs = [r.get("performance", {}) for r in recent_records]
 
         # Calculate average recent performance
         recent_avg = {}
-        for key in baseline_perf.keys():
+        for key in baseline_perf:
             values = [p.get(key) for p in recent_perfs if p.get(key) is not None]
             if values:
                 recent_avg[key] = np.mean(values)
@@ -147,7 +136,7 @@ class SignalDecayMonitor:
         decay_detected = False
         decay_alerts = []
 
-        for key in baseline_perf.keys():
+        for key in baseline_perf:
             if key in recent_avg:
                 baseline_val = baseline_perf[key]
                 recent_val = recent_avg[key]

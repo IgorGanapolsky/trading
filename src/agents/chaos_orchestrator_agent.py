@@ -1,11 +1,9 @@
 import logging
-import random
-from typing import Dict, Any
-from datetime import datetime
+from typing import Any
 
 from src.agents.base_agent import BaseAgent
-from src.safety.chaos_monkey import chaos_monkey
 from src.orchestration.elite_orchestrator import EliteOrchestrator
+from src.safety.chaos_monkey import chaos_monkey
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +24,7 @@ class ChaosOrchestratorAgent(BaseAgent):
             role="Resilience testing and chaos engineering orchestration",
         )
 
-    def analyze(self, data: Dict[str, Any] = None) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any] = None) -> dict[str, Any]:
         """
         Decide whether to run a chaos drill.
 
@@ -97,9 +95,7 @@ REASONING: [Why this decision maintains anti-fragility]"""
         chaos_monkey.enabled = True
         chaos_monkey.probability = config["probability"]
 
-        self.log_decision(
-            {"action": "START_DRILL", "intensity": intensity, "config": config}
-        )
+        self.log_decision({"action": "START_DRILL", "intensity": intensity, "config": config})
 
         # 3. Execute Drill (Run a trading cycle under chaos)
         logger.info(f"🚀 STARTING {intensity} INTENSITY CHAOS DRILL")
@@ -126,7 +122,7 @@ REASONING: [Why this decision maintains anti-fragility]"""
             "details": drill_results,
         }
 
-    def _get_config_for_intensity(self, intensity: str) -> Dict[str, Any]:
+    def _get_config_for_intensity(self, intensity: str) -> dict[str, Any]:
         if intensity == "HIGH":
             return {"probability": 0.5, "min_ms": 1000, "max_ms": 5000}
         elif intensity == "MEDIUM":

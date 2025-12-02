@@ -8,22 +8,21 @@ Usage:
     streamlit run sentiment_dashboard.py
 """
 
-import streamlit as st
 import json
-import pandas as pd
-from pathlib import Path
-from datetime import datetime, timedelta
 import sys
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import pandas as pd
+import streamlit as st
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
 from dashboard.utils.chart_builders import (
-    create_sentiment_gauge,
-    create_sentiment_timeline,
     COLORS,
+    create_sentiment_gauge,
 )
-
 
 # Page configuration
 st.set_page_config(
@@ -38,7 +37,7 @@ st.markdown(
     f"""
     <style>
     .stApp {{
-        background-color: {COLORS['background']};
+        background-color: {COLORS["background"]};
     }}
     .big-metric {{
         font-size: 3rem;
@@ -49,33 +48,33 @@ st.markdown(
         margin: 1rem 0;
     }}
     .bullish {{
-        color: {COLORS['bullish']};
-        background: {COLORS['bullish']}20;
+        color: {COLORS["bullish"]};
+        background: {COLORS["bullish"]}20;
     }}
     .bearish {{
-        color: {COLORS['bearish']};
-        background: {COLORS['bearish']}20;
+        color: {COLORS["bearish"]};
+        background: {COLORS["bearish"]}20;
     }}
     .neutral {{
-        color: {COLORS['neutral']};
-        background: {COLORS['neutral']}20;
+        color: {COLORS["neutral"]};
+        background: {COLORS["neutral"]}20;
     }}
     .stMetric {{
-        background-color: {COLORS['grid']};
+        background-color: {COLORS["grid"]};
         padding: 1rem;
         border-radius: 8px;
     }}
     .timestamp {{
         text-align: center;
-        color: {COLORS['secondary']};
+        color: {COLORS["secondary"]};
         font-size: 0.9rem;
         margin-top: 1rem;
     }}
     .stale-warning {{
-        background-color: {COLORS['bearish']}30;
+        background-color: {COLORS["bearish"]}30;
         padding: 1rem;
         border-radius: 8px;
-        border-left: 4px solid {COLORS['bearish']};
+        border-left: 4px solid {COLORS["bearish"]};
         margin: 1rem 0;
     }}
     </style>
@@ -149,7 +148,9 @@ def load_sentiment_data(data_dir: Path, date: str = None):
                 "confidence": (
                     "high"
                     if abs(combined_score) > 30
-                    else "medium" if abs(combined_score) > 10 else "low"
+                    else "medium"
+                    if abs(combined_score) > 10
+                    else "low"
                 ),
             }
 
@@ -190,9 +191,7 @@ def main():
     )
 
     if not available_dates:
-        st.error(
-            "No sentiment data found. Please run sentiment collection scripts first."
-        )
+        st.error("No sentiment data found. Please run sentiment collection scripts first.")
         st.stop()
 
     selected_date = st.sidebar.selectbox("Select Date", available_dates, index=0)
@@ -223,7 +222,7 @@ def main():
         st.markdown(
             f"""
             <div class="timestamp">
-                Last Updated: {last_update.strftime('%Y-%m-%d %I:%M:%S %p')}
+                Last Updated: {last_update.strftime("%Y-%m-%d %I:%M:%S %p")}
             </div>
         """,
             unsafe_allow_html=True,
@@ -241,7 +240,7 @@ def main():
         st.markdown(
             f"""
             <div class="big-metric {regime_class}">
-                Market Regime: {regime.replace('_', ' ').upper()}
+                Market Regime: {regime.replace("_", " ").upper()}
             </div>
         """,
             unsafe_allow_html=True,
@@ -268,9 +267,7 @@ def main():
         st.metric("Bearish Signals", bearish_count)
 
     with col4:
-        avg_score = sum(s["score"] for s in data["combined"].values()) / len(
-            data["combined"]
-        )
+        avg_score = sum(s["score"] for s in data["combined"].values()) / len(data["combined"])
         st.metric("Avg Sentiment", f"{avg_score:.1f}")
 
     st.markdown("---")
@@ -307,9 +304,7 @@ def main():
         news_articles = 0
 
         if data["reddit"] and ticker in data["reddit"]["sentiment_by_ticker"]:
-            reddit_mentions = data["reddit"]["sentiment_by_ticker"][ticker].get(
-                "mentions", 0
-            )
+            reddit_mentions = data["reddit"]["sentiment_by_ticker"][ticker].get("mentions", 0)
 
         if data["news"] and ticker in data["news"]["sentiment_by_ticker"]:
             news_data = data["news"]["sentiment_by_ticker"][ticker]
@@ -330,7 +325,9 @@ def main():
                 "Signal": (
                     "🟢 BUY"
                     if sentiment_data["score"] > 20
-                    else "🔴 SELL" if sentiment_data["score"] < -20 else "🟡 HOLD"
+                    else "🔴 SELL"
+                    if sentiment_data["score"] < -20
+                    else "🟡 HOLD"
                 ),
             }
         )

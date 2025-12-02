@@ -7,10 +7,8 @@ Uses direct API calls to avoid Python 3.14 compatibility issues.
 """
 
 import os
-import json
 import sys
 from pathlib import Path
-from datetime import datetime
 
 try:
     import requests
@@ -81,9 +79,7 @@ def place_stop_order(symbol, qty, stop_price):
     }
 
     try:
-        response = requests.post(
-            f"{ALPACA_BASE_URL}/v2/orders", headers=headers, json=data
-        )
+        response = requests.post(f"{ALPACA_BASE_URL}/v2/orders", headers=headers, json=data)
         response.raise_for_status()
         return response.json()
     except Exception as e:
@@ -120,9 +116,7 @@ def implement_stop_losses():
         current_price = float(pos["current_price"])
 
         unrealized_pl_pct = (
-            ((current_price - entry_price) / entry_price * 100)
-            if entry_price > 0
-            else 0
+            ((current_price - entry_price) / entry_price * 100) if entry_price > 0 else 0
         )
 
         print(f"{symbol}:")
@@ -133,9 +127,7 @@ def implement_stop_losses():
         # Check if stop already exists
         if symbol in existing_stops:
             existing_stop = existing_stops[symbol]
-            print(
-                f"  ✅ Stop-loss already exists at ${float(existing_stop['stop_price']):.2f}"
-            )
+            print(f"  ✅ Stop-loss already exists at ${float(existing_stop['stop_price']):.2f}")
             continue
 
         # Decision logic based on CFO decisions
@@ -175,7 +167,7 @@ def implement_stop_losses():
                 )
                 print(f"  ✅ Stop-loss order placed: {order.get('id')}")
             else:
-                print(f"  ❌ Failed to place stop-loss order")
+                print("  ❌ Failed to place stop-loss order")
                 actions_taken.append(
                     {
                         "symbol": symbol,
@@ -194,9 +186,7 @@ def implement_stop_losses():
     print(f"Stop-losses placed: {len(placed)}")
 
     for action in placed:
-        print(
-            f"  ✅ {action['symbol']}: ${action['stop_price']:.2f} ({action['reason']})"
-        )
+        print(f"  ✅ {action['symbol']}: ${action['stop_price']:.2f} ({action['reason']})")
 
     if not placed:
         print("  No new stop-losses needed (all positions already protected)")

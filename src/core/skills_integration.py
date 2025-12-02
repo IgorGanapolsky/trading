@@ -3,11 +3,10 @@ Claude Skills Integration Module
 Wraps all Claude Skills for use in trading orchestrator
 """
 
-import os
-import sys
 import logging
-from typing import Dict, List, Any, Optional
+import sys
 from pathlib import Path
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -93,15 +92,13 @@ class SkillsIntegration:
         except Exception as e:
             logger.warning(f"⚠️ Could not load Portfolio Risk Assessment skill: {e}")
 
-    def get_sentiment(self, symbols: List[str]) -> Dict[str, Any]:
+    def get_sentiment(self, symbols: list[str]) -> dict[str, Any]:
         """Get composite sentiment for symbols"""
         if not self.sentiment_analyzer:
             return {"success": False, "error": "Sentiment Analyzer not available"}
         return self.sentiment_analyzer.get_composite_sentiment(symbols=symbols)
 
-    def calculate_position(
-        self, symbol: str, account_value: float, **kwargs
-    ) -> Dict[str, Any]:
+    def calculate_position(self, symbol: str, account_value: float, **kwargs) -> dict[str, Any]:
         """Calculate position size"""
         if not self.position_sizer:
             return {"success": False, "error": "Position Sizer not available"}
@@ -117,7 +114,7 @@ class SkillsIntegration:
         quantity: float,
         order_type: str,
         timestamp: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Detect execution anomalies"""
         if not self.anomaly_detector:
             return {"success": False, "error": "Anomaly Detector not available"}
@@ -135,7 +132,7 @@ class SkillsIntegration:
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         benchmark_symbol: str = "SPY",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get performance metrics"""
         if not self.performance_monitor:
             return {"success": False, "error": "Performance Monitor not available"}
@@ -143,13 +140,13 @@ class SkillsIntegration:
             start_date=start_date, end_date=end_date, benchmark_symbol=benchmark_symbol
         )
 
-    def assess_portfolio_health(self) -> Dict[str, Any]:
+    def assess_portfolio_health(self) -> dict[str, Any]:
         """Assess portfolio health"""
         if not self.portfolio_risk_assessor:
             return {"success": False, "error": "Portfolio Risk Assessor not available"}
         return self.portfolio_risk_assessor.assess_portfolio_health()
 
-    def get_price_data(self, symbols: List[str], **kwargs) -> Dict[str, Any]:
+    def get_price_data(self, symbols: list[str], **kwargs) -> dict[str, Any]:
         """Get price data"""
         if not self.financial_data_fetcher:
             return {"success": False, "error": "Financial Data Fetcher not available"}

@@ -14,10 +14,10 @@ Date: 2025-10-28
 Updated: 2025-11-24 - Added behavioral finance integration
 """
 
-from typing import Dict, Optional, Tuple, List
-from datetime import datetime
-from dataclasses import dataclass, field
 import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +35,7 @@ class RiskMetrics:
     losing_trades: int = 0
     max_drawdown_reached: float = 0.0
     circuit_breaker_triggered: bool = False
-    last_reset_date: str = field(
-        default_factory=lambda: datetime.now().strftime("%Y-%m-%d")
-    )
+    last_reset_date: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
 
 
 class RiskManager:
@@ -114,7 +112,7 @@ class RiskManager:
         self,
         account_value: float,
         daily_pl: float,
-        account_info: Optional[Dict[str, any]] = None,
+        account_info: Optional[dict[str, any]] = None,
     ) -> bool:
         """
         Determine if trading is allowed based on current risk parameters.
@@ -254,11 +252,11 @@ class RiskManager:
         sentiment_score: float,
         account_value: float,
         trade_type: str = "BUY",
-        account_info: Optional[Dict[str, any]] = None,
+        account_info: Optional[dict[str, any]] = None,
         expected_return_pct: Optional[float] = None,
         confidence: Optional[float] = None,
         pattern_type: Optional[str] = None,
-    ) -> Dict[str, any]:
+    ) -> dict[str, any]:
         """
         Validate a trade before execution.
 
@@ -292,9 +290,7 @@ class RiskManager:
         # Check if trading is allowed (circuit breakers)
         if self.metrics.circuit_breaker_triggered:
             validation_result["valid"] = False
-            validation_result["reason"] = (
-                "Circuit breaker triggered - trading suspended"
-            )
+            validation_result["reason"] = "Circuit breaker triggered - trading suspended"
             return validation_result
 
         # Check Pattern Day Trader restrictions
@@ -358,14 +354,12 @@ class RiskManager:
                 recent_losses = [-self.max_daily_loss_pct / 100]  # Placeholder
 
             # Check if trade should proceed based on behavioral finance
-            should_proceed, behavioral_reason = (
-                self.behavioral_manager.should_proceed_with_trade(
-                    symbol=symbol,
-                    expected_return=expected_return_pct or 0.0,
-                    confidence=confidence or 0.5,
-                    pattern_type=pattern_type,
-                    recent_losses=recent_losses if recent_losses else None,
-                )
+            should_proceed, behavioral_reason = self.behavioral_manager.should_proceed_with_trade(
+                symbol=symbol,
+                expected_return=expected_return_pct or 0.0,
+                confidence=confidence or 0.5,
+                pattern_type=pattern_type,
+                recent_losses=recent_losses if recent_losses else None,
             )
 
             if not should_proceed:
@@ -411,9 +405,7 @@ class RiskManager:
         # Log warnings if any
         if validation_result["warnings"]:
             for warning in validation_result["warnings"]:
-                self._send_alert(
-                    severity="INFO", message=warning, details={"symbol": symbol}
-                )
+                self._send_alert(severity="INFO", message=warning, details={"symbol": symbol})
 
         return validation_result
 
@@ -466,7 +458,7 @@ class RiskManager:
                 actual_return_pct=actual_return_pct,
             )
 
-    def get_behavioral_summary(self) -> Dict[str, any]:
+    def get_behavioral_summary(self) -> dict[str, any]:
         """
         Get behavioral finance summary.
 
@@ -477,7 +469,7 @@ class RiskManager:
             return self.behavioral_manager.get_behavioral_summary()
         return {}
 
-    def check_circuit_breakers(self, account_info: Dict[str, float]) -> Dict[str, any]:
+    def check_circuit_breakers(self, account_info: dict[str, float]) -> dict[str, any]:
         """
         Check all circuit breaker conditions.
 
@@ -520,8 +512,7 @@ class RiskManager:
             "consecutive_losses": {
                 "current": self.metrics.consecutive_losses,
                 "limit": self.max_consecutive_losses,
-                "breached": self.metrics.consecutive_losses
-                >= self.max_consecutive_losses,
+                "breached": self.metrics.consecutive_losses >= self.max_consecutive_losses,
             },
             "account_value": account_value,
             "peak_account_value": self.peak_account_value,
@@ -569,7 +560,7 @@ class RiskManager:
                     details={"total_loss": profit_loss},
                 )
         else:
-            print(f"[RISK MANAGER] Trade result: BREAKEVEN")
+            print("[RISK MANAGER] Trade result: BREAKEVEN")
 
         # Log current metrics
         win_rate = (
@@ -577,9 +568,7 @@ class RiskManager:
             if self.metrics.total_trades > 0
             else 0
         )
-        print(
-            f"[RISK MANAGER] Daily P&L: ${self.metrics.daily_pl:.2f} | Win Rate: {win_rate:.1f}%"
-        )
+        print(f"[RISK MANAGER] Daily P&L: ${self.metrics.daily_pl:.2f} | Win Rate: {win_rate:.1f}%")
 
     def reset_daily_counters(self) -> None:
         """
@@ -590,7 +579,7 @@ class RiskManager:
         """
         current_date = datetime.now().strftime("%Y-%m-%d")
 
-        print(f"[RISK MANAGER] Resetting daily counters")
+        print("[RISK MANAGER] Resetting daily counters")
         print(f"  - Previous Daily P&L: ${self.metrics.daily_pl:.2f}")
         print(f"  - Previous Daily Trades: {self.metrics.daily_trades}")
 
@@ -602,7 +591,7 @@ class RiskManager:
 
         print(f"[RISK MANAGER] Daily counters reset for {current_date}")
 
-    def get_risk_metrics(self) -> Dict[str, any]:
+    def get_risk_metrics(self) -> dict[str, any]:
         """
         Get current risk metrics and statistics.
 
@@ -641,9 +630,7 @@ class RiskManager:
             "alerts": self.alerts[-10:],  # Last 10 alerts
         }
 
-    def _send_alert(
-        self, severity: str, message: str, details: Optional[Dict] = None
-    ) -> None:
+    def _send_alert(self, severity: str, message: str, details: Optional[dict] = None) -> None:
         """
         Send a risk management alert.
 
@@ -700,9 +687,7 @@ if __name__ == "__main__":
     print(f"Can trade: {can_trade}")
 
     print("\n--- Scenario 2: Calculate Position Size ---")
-    position_size = risk_mgr.calculate_position_size(
-        account_value, risk_per_trade_pct=1.0
-    )
+    position_size = risk_mgr.calculate_position_size(account_value, risk_per_trade_pct=1.0)
     print(f"Position size (1% risk): ${position_size:.2f}")
 
     print("\n--- Scenario 3: Validate Trade ---")

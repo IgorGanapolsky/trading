@@ -3,13 +3,13 @@
 LangSmith Monitor Skill - Continuous monitoring of LangSmith traces and runs
 Provides insights into LLM usage, RL training performance, and system health.
 """
-import os
-import sys
+
 import json
 import logging
+import os
+import sys
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
-from pathlib import Path
+from typing import Any
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
@@ -21,12 +21,12 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
-def error_response(error_msg: str, error_code: str = "ERROR") -> Dict[str, Any]:
+def error_response(error_msg: str, error_code: str = "ERROR") -> dict[str, Any]:
     """Standard error response format"""
     return {"success": False, "error": error_msg, "error_code": error_code}
 
 
-def success_response(data: Any) -> Dict[str, Any]:
+def success_response(data: Any) -> dict[str, Any]:
     """Standard success response format"""
     return {"success": True, **data}
 
@@ -57,7 +57,7 @@ class LangSmithMonitor:
         project_name: str = "trading-rl-training",
         limit: int = 50,
         hours: int = 24,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get recent LangSmith runs.
 
@@ -78,9 +78,7 @@ class LangSmithMonitor:
 
             # Query runs
             runs = list(
-                self.client.list_runs(
-                    project_name=project_name, start_time=start_time, limit=limit
-                )
+                self.client.list_runs(project_name=project_name, start_time=start_time, limit=limit)
             )
 
             # Analyze runs
@@ -88,9 +86,7 @@ class LangSmithMonitor:
             successful_runs = sum(1 for r in runs if r.status == "success")
             failed_runs = sum(1 for r in runs if r.status == "error")
             total_tokens = sum(
-                getattr(r, "total_tokens", 0) or 0
-                for r in runs
-                if hasattr(r, "total_tokens")
+                getattr(r, "total_tokens", 0) or 0 for r in runs if hasattr(r, "total_tokens")
             )
 
             # Group by run type
@@ -108,9 +104,7 @@ class LangSmithMonitor:
                     "total_runs": total_runs,
                     "successful_runs": successful_runs,
                     "failed_runs": failed_runs,
-                    "success_rate": (
-                        (successful_runs / total_runs * 100) if total_runs > 0 else 0
-                    ),
+                    "success_rate": ((successful_runs / total_runs * 100) if total_runs > 0 else 0),
                     "total_tokens": total_tokens,
                     "run_types": run_types,
                     "recent_runs": [
@@ -119,12 +113,8 @@ class LangSmithMonitor:
                             "name": run.name,
                             "status": run.status,
                             "run_type": getattr(run, "run_type", "unknown"),
-                            "start_time": (
-                                run.start_time.isoformat() if run.start_time else None
-                            ),
-                            "end_time": (
-                                run.end_time.isoformat() if run.end_time else None
-                            ),
+                            "start_time": (run.start_time.isoformat() if run.start_time else None),
+                            "end_time": (run.end_time.isoformat() if run.end_time else None),
                             "error": run.error if hasattr(run, "error") else None,
                         }
                         for run in runs[:20]  # Return top 20
@@ -138,7 +128,7 @@ class LangSmithMonitor:
 
     def get_project_stats(
         self, project_name: str = "trading-rl-training", days: int = 7
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get project statistics.
 
@@ -156,9 +146,7 @@ class LangSmithMonitor:
             start_time = datetime.now() - timedelta(days=days)
 
             runs = list(
-                self.client.list_runs(
-                    project_name=project_name, start_time=start_time, limit=1000
-                )
+                self.client.list_runs(project_name=project_name, start_time=start_time, limit=1000)
             )
 
             if not runs:
@@ -205,9 +193,7 @@ class LangSmithMonitor:
                     "total_runs": total_runs,
                     "successful_runs": successful,
                     "failed_runs": failed,
-                    "success_rate": (
-                        (successful / total_runs * 100) if total_runs > 0 else 0
-                    ),
+                    "success_rate": ((successful / total_runs * 100) if total_runs > 0 else 0),
                     "average_duration_seconds": avg_duration,
                     "daily_stats": daily_stats,
                 }
@@ -217,7 +203,7 @@ class LangSmithMonitor:
             logger.error(f"Failed to get project stats: {e}")
             return error_response(str(e))
 
-    def get_trace_details(self, run_id: str) -> Dict[str, Any]:
+    def get_trace_details(self, run_id: str) -> dict[str, Any]:
         """
         Get detailed trace information for a specific run.
 
@@ -239,9 +225,7 @@ class LangSmithMonitor:
                     "name": run.name,
                     "status": run.status,
                     "run_type": getattr(run, "run_type", "unknown"),
-                    "start_time": (
-                        run.start_time.isoformat() if run.start_time else None
-                    ),
+                    "start_time": (run.start_time.isoformat() if run.start_time else None),
                     "end_time": run.end_time.isoformat() if run.end_time else None,
                     "inputs": run.inputs if hasattr(run, "inputs") else {},
                     "outputs": run.outputs if hasattr(run, "outputs") else {},
@@ -254,7 +238,7 @@ class LangSmithMonitor:
             logger.error(f"Failed to get trace details: {e}")
             return error_response(str(e))
 
-    def monitor_health(self) -> Dict[str, Any]:
+    def monitor_health(self) -> dict[str, Any]:
         """
         Monitor LangSmith service health and connectivity.
 
@@ -269,7 +253,7 @@ class LangSmithMonitor:
 
         try:
             # Try to list projects as health check
-            projects = list(self.client.list_projects(limit=1))
+            list(self.client.list_projects(limit=1))
 
             return success_response(
                 {
@@ -295,9 +279,7 @@ def main():
         default="trading-rl-training",
         help="Project name (default: trading-rl-training)",
     )
-    parser.add_argument(
-        "--hours", type=int, default=24, help="Hours of history (default: 24)"
-    )
+    parser.add_argument("--hours", type=int, default=24, help="Hours of history (default: 24)")
     parser.add_argument("--health", action="store_true", help="Check health status")
     parser.add_argument("--stats", action="store_true", help="Get project statistics")
 

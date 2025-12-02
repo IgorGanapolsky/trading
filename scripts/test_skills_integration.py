@@ -4,9 +4,7 @@ Test Claude Skills Integration
 Verifies all skills are working correctly in the trading system
 """
 
-import os
 import sys
-import json
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -44,9 +42,7 @@ def test_skill_loading():
         status = "✅" if loaded else "❌"
         print(f"{status} {skill_name}: {'Loaded' if loaded else 'Failed to load'}")
 
-    print(
-        f"\n{'✅ ALL SKILLS LOADED' if all_loaded else '❌ SOME SKILLS FAILED TO LOAD'}"
-    )
+    print(f"\n{'✅ ALL SKILLS LOADED' if all_loaded else '❌ SOME SKILLS FAILED TO LOAD'}")
     return all_loaded, results
 
 
@@ -67,7 +63,7 @@ def test_portfolio_risk_assessment():
 
         if result.get("success"):
             data = result.get("data", {})
-            print(f"✅ Portfolio health check successful")
+            print("✅ Portfolio health check successful")
             print(f"   Status: {data.get('overall_status', 'UNKNOWN')}")
             print(f"   Account Equity: ${data.get('account_equity', 0):,.2f}")
             print(f"   Daily P&L: ${data.get('daily_pl', 0):,.2f}")
@@ -115,19 +111,15 @@ def test_anomaly_detector():
             slippage = analysis.get("slippage", {})
             quality = analysis.get("execution_quality", {})
 
-            print(f"✅ Execution anomaly detection successful")
+            print("✅ Execution anomaly detection successful")
             print(
                 f"   Slippage: {slippage.get('percentage', 0):.3f}% ({slippage.get('severity', 'unknown')})"
             )
-            print(
-                f"   Quality Score: {quality.get('score', 0)} ({quality.get('grade', 'N/A')})"
-            )
+            print(f"   Quality Score: {quality.get('score', 0)} ({quality.get('grade', 'N/A')})")
             print(f"   Anomalies Detected: {analysis.get('anomalies_detected', False)}")
             return True
         else:
-            print(
-                f"❌ Anomaly detection failed: {result.get('error', 'Unknown error')}"
-            )
+            print(f"❌ Anomaly detection failed: {result.get('error', 'Unknown error')}")
             return False
     except Exception as e:
         print(f"❌ Error testing Anomaly Detector: {e}")
@@ -162,17 +154,15 @@ def test_performance_monitor():
             risk_metrics = result.get("risk_metrics", {})
             trade_stats = result.get("trade_statistics", {})
 
-            print(f"✅ Performance metrics calculation successful")
+            print("✅ Performance metrics calculation successful")
             print(f"   Total Return: {returns.get('total_return_pct', 0):.2f}%")
             print(f"   Sharpe Ratio: {risk_metrics.get('sharpe_ratio', 0):.2f}")
-            print(f"   Max Drawdown: {risk_metrics.get('max_drawdown', 0)*100:.2f}%")
-            print(f"   Win Rate: {trade_stats.get('win_rate', 0)*100:.1f}%")
+            print(f"   Max Drawdown: {risk_metrics.get('max_drawdown', 0) * 100:.2f}%")
+            print(f"   Win Rate: {trade_stats.get('win_rate', 0) * 100:.1f}%")
             print(f"   Total Trades: {trade_stats.get('total_trades', 0)}")
             return True
         else:
-            print(
-                f"❌ Performance monitoring failed: {result.get('error', 'Unknown error')}"
-            )
+            print(f"❌ Performance monitoring failed: {result.get('error', 'Unknown error')}")
             return False
     except Exception as e:
         print(f"❌ Error testing Performance Monitor: {e}")
@@ -199,7 +189,7 @@ def test_sentiment_analyzer():
 
         if result.get("success"):
             composite = result.get("composite_sentiment", {})
-            print(f"✅ Sentiment analysis successful")
+            print("✅ Sentiment analysis successful")
 
             for symbol, data in composite.items():
                 score = data.get("score", 0)
@@ -247,7 +237,7 @@ def test_position_sizer():
             recommendations = result.get("recommendations", {})
             primary = recommendations.get("primary_method", {})
 
-            print(f"✅ Position sizing calculation successful")
+            print("✅ Position sizing calculation successful")
             print(f"   Method: {primary.get('method', 'unknown')}")
             print(f"   Position Size: ${primary.get('position_size_dollars', 0):,.2f}")
             print(f"   Shares: {primary.get('position_size_shares', 0)}")
@@ -281,7 +271,7 @@ def test_financial_data_fetcher():
 
         if result.get("success"):
             data = result.get("data", {})
-            print(f"✅ Financial data fetch successful")
+            print("✅ Financial data fetch successful")
 
             for symbol, price_data in data.items():
                 if isinstance(price_data, list) and len(price_data) > 0:

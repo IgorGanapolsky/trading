@@ -6,7 +6,7 @@ import logging
 import os
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 from src.core.alpaca_trader import AlpacaTrader, AlpacaTraderError
 
@@ -17,9 +17,9 @@ class AlpacaExecutor:
     """Handles portfolio sync and order placement."""
 
     def __init__(self, paper: bool = True, allow_simulator: bool = True) -> None:
-        self.simulated_orders: List[Dict[str, Any]] = []
-        self.account_snapshot: Dict[str, Any] = {}
-        self.positions: List[Dict[str, Any]] = []
+        self.simulated_orders: list[dict[str, Any]] = []
+        self.account_snapshot: dict[str, Any] = {}
+        self.positions: list[dict[str, Any]] = []
         self.simulated = os.getenv("ALPACA_SIMULATED", "false").lower() in {"1", "true"}
         self.paper = paper
 
@@ -57,20 +57,14 @@ class AlpacaExecutor:
     @property
     def account_equity(self) -> float:
         if not self.account_snapshot:
-            return (
-                float(os.getenv("SIMULATED_EQUITY", "100000"))
-                if self.simulated
-                else 0.0
-            )
+            return float(os.getenv("SIMULATED_EQUITY", "100000")) if self.simulated else 0.0
         return float(
             self.account_snapshot.get("equity")
             or self.account_snapshot.get("portfolio_value")
             or 0.0
         )
 
-    def place_order(
-        self, symbol: str, notional: float, side: str = "buy"
-    ) -> Dict[str, Any]:
+    def place_order(self, symbol: str, notional: float, side: str = "buy") -> dict[str, Any]:
         logger.debug(
             "Submitting %s order via AlpacaExecutor: %s for $%.2f",
             side,
@@ -98,7 +92,7 @@ class AlpacaExecutor:
         )
         return order
 
-    def set_stop_loss(self, symbol: str, qty: float, stop_price: float) -> Dict[str, Any]:
+    def set_stop_loss(self, symbol: str, qty: float, stop_price: float) -> dict[str, Any]:
         """Place or simulate a stop-loss order.
 
         In simulated mode, records a synthetic stop order entry.

@@ -16,7 +16,7 @@ import subprocess
 from dataclasses import dataclass
 from functools import lru_cache
 from threading import Lock
-from typing import Any, Dict, Optional
+from typing import Any
 
 from src.core.alpaca_trader import AlpacaTrader, AlpacaTraderError
 from src.core.multi_llm_analysis import MultiLLMAnalyzer
@@ -25,7 +25,7 @@ DEFAULT_CLI_BIN = os.environ.get("MCP_CLI_BIN", "claude")
 DEFAULT_PROFILE = os.environ.get("MCP_PROFILE")
 
 _DEFAULT_CLIENT_LOCK = Lock()
-_DEFAULT_CLIENT: Optional["MCPClient"] = None
+_DEFAULT_CLIENT: MCPClient | None = None
 
 
 class MCPError(RuntimeError):
@@ -39,17 +39,17 @@ class MCPClient:
     """
 
     cli_bin: str = DEFAULT_CLI_BIN
-    profile: Optional[str] = DEFAULT_PROFILE
-    env: Optional[Dict[str, str]] = None
+    profile: str | None = DEFAULT_PROFILE
+    env: dict[str, str] | None = None
 
     def call_tool(
         self,
         server: str,
         tool: str,
-        payload: Dict[str, Any],
+        payload: dict[str, Any],
         *,
         timeout: int = 120,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Invoke an MCP tool via the CLI and return parsed JSON.
         """
@@ -82,8 +82,7 @@ class MCPClient:
             raise MCPError(
                 "\n".join(
                     [
-                        f"MCP tool '{server}:{tool}' failed "
-                        f"(exit {process.returncode}).",
+                        f"MCP tool '{server}:{tool}' failed (exit {process.returncode}).",
                         "STDOUT:",
                         process.stdout or "<empty>",
                         "STDERR:",
@@ -103,7 +102,7 @@ class MCPClient:
                 f"MCP tool '{server}:{tool}' returned non-JSON output: {stdout}"
             ) from exc
 
-    def _build_env(self) -> Dict[str, str]:
+    def _build_env(self) -> dict[str, str]:
         env = os.environ.copy()
         if self.env:
             env.update(self.env)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Archive redundant documentation files."""
-import os
+
 import shutil
 from pathlib import Path
 

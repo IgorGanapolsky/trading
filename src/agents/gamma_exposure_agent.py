@@ -1,8 +1,7 @@
 import logging
-import pandas as pd
-import numpy as np
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime
+from typing import Any
+
 from src.agents.base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -31,7 +30,7 @@ class GammaExposureAgent(BaseAgent):
             model="claude-3-opus-20240229",
         )
 
-    def analyze(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Analyze Gamma Exposure for a symbol.
 
@@ -74,7 +73,7 @@ class GammaExposureAgent(BaseAgent):
         self.log_decision(result)
         return result
 
-    def _estimate_gex_profile(self, symbol: str, price: float) -> Dict[str, Any]:
+    def _estimate_gex_profile(self, symbol: str, price: float) -> dict[str, Any]:
         """
         Estimate GEX profile.
         NOTE: In production, this requires a live Options Chain API (e.g., Polygon/ThetaData).
@@ -101,7 +100,7 @@ class GammaExposureAgent(BaseAgent):
             "volatility_implication": "LOW_VOL" if total_gex > 0 else "HIGH_VOL",
         }
 
-    def _interpret_gex(self, profile: Dict[str, Any]) -> Dict[str, Any]:
+    def _interpret_gex(self, profile: dict[str, Any]) -> dict[str, Any]:
         """Interpret the GEX numbers into a trading signal."""
         if profile["regime"] == "POSITIVE_GAMMA":
             return {
@@ -116,20 +115,18 @@ class GammaExposureAgent(BaseAgent):
                 "description": "Dealers are Short Gamma. They must chase the price. Expect explosive moves.",
             }
 
-    def _build_gex_prompt(
-        self, symbol: str, price: float, profile: Dict, implication: Dict
-    ) -> str:
+    def _build_gex_prompt(self, symbol: str, price: float, profile: dict, implication: dict) -> str:
         return f"""You are the Gamma Exposure Agent.
 
         ANALYSIS FOR {symbol}:
         Current Price: ${price}
-        GEX Regime: {profile['regime']} ({profile['volatility_implication']})
-        Total GEX: ${profile['total_gex_dollars']:,.0f}
-        Zero Gamma Level: ${profile['zero_gamma_level']:.2f}
+        GEX Regime: {profile["regime"]} ({profile["volatility_implication"]})
+        Total GEX: ${profile["total_gex_dollars"]:,.0f}
+        Zero Gamma Level: ${profile["zero_gamma_level"]:.2f}
 
         IMPLICATION:
-        {implication['description']}
-        Signal: {implication['signal']}
+        {implication["description"]}
+        Signal: {implication["signal"]}
 
         Task:
         Explain how this Gamma positioning affects price action today.

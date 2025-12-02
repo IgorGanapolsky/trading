@@ -5,7 +5,6 @@ Tests the hierarchical memory structure and multi-timescale retrieval.
 """
 
 import pytest
-
 from src.agent_framework.context_engine import (
     ContextEngine,
     ContextMemory,
@@ -95,7 +94,7 @@ class TestMultiTimescaleMemory:
         mts = MultiTimescaleMemory("test_agent")
 
         # Add multiple daily memories with same pattern
-        for i in range(5):
+        for _i in range(5):
             memory = ContextMemory(
                 agent_id="test_agent",
                 content={"pattern": "momentum", "pl": 10.0},
@@ -144,9 +143,7 @@ class TestContextEngineMultiTimescale:
             importance_score=0.9,
         )
 
-        memories = engine.retrieve_memories(
-            agent_id="test_agent", use_multi_timescale=True
-        )
+        memories = engine.retrieve_memories(agent_id="test_agent", use_multi_timescale=True)
 
         assert len(memories) >= 2
 
@@ -161,9 +158,7 @@ class TestContextEngineMultiTimescale:
             timescale=MemoryTimescale.DAILY,
         )
 
-        context = engine.get_agent_context(
-            agent_id="test_agent", use_multi_timescale=True
-        )
+        context = engine.get_agent_context(agent_id="test_agent", use_multi_timescale=True)
 
         assert "memories" in context
         assert "timescale_breakdown" in context

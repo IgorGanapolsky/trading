@@ -5,14 +5,15 @@ Verifies MACD is properly integrated without requiring live market data.
 Uses synthetic data to test the MACD calculation logic.
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
 
 # Import strategies
 from src.strategies.core_strategy import CoreStrategy
@@ -58,9 +59,7 @@ def test_macd_calculation_bullish():
 
     # Test CoreStrategy MACD
     core_strategy = CoreStrategy(daily_allocation=6.0, use_sentiment=False)
-    macd_value, macd_signal, macd_histogram = core_strategy._calculate_macd(
-        hist["Close"]
-    )
+    macd_value, macd_signal, macd_histogram = core_strategy._calculate_macd(hist["Close"])
 
     print("\nBullish Trend MACD:")
     print(f"  MACD Line:      {macd_value:.4f}")
@@ -128,9 +127,7 @@ def test_macd_parameters():
     # Should be identical
     assert macd_default[0] == macd_explicit[0], "MACD should use 12, 26, 9 by default"
     assert macd_default[1] == macd_explicit[1], "Signal should use 12, 26, 9 by default"
-    assert (
-        macd_default[2] == macd_explicit[2]
-    ), "Histogram should use 12, 26, 9 by default"
+    assert macd_default[2] == macd_explicit[2], "Histogram should use 12, 26, 9 by default"
 
     print("\n✓ MACD uses correct parameters (12, 26, 9)")
 
@@ -262,15 +259,11 @@ def test_macd_formula():
     print("\nFormula Verification:")
     print(f"  MACD Line (calculated):   {macd_value:.4f}")
     print(f"  MACD Line (manual):       {float(macd_manual.iloc[-1]):.4f}")
-    print(
-        f"  Match: {'✓' if abs(macd_value - float(macd_manual.iloc[-1])) < 0.0001 else '✗'}"
-    )
+    print(f"  Match: {'✓' if abs(macd_value - float(macd_manual.iloc[-1])) < 0.0001 else '✗'}")
 
     print(f"\n  Signal Line (calculated): {macd_signal:.4f}")
     print(f"  Signal Line (manual):     {float(signal_manual.iloc[-1]):.4f}")
-    print(
-        f"  Match: {'✓' if abs(macd_signal - float(signal_manual.iloc[-1])) < 0.0001 else '✗'}"
-    )
+    print(f"  Match: {'✓' if abs(macd_signal - float(signal_manual.iloc[-1])) < 0.0001 else '✗'}")
 
     print(f"\n  Histogram (calculated):   {macd_histogram:.4f}")
     print(f"  Histogram (manual):       {float(histogram_manual.iloc[-1]):.4f}")
@@ -279,15 +272,11 @@ def test_macd_formula():
     )
 
     # Verify values match (within floating point precision)
-    assert (
-        abs(macd_value - float(macd_manual.iloc[-1])) < 0.0001
-    ), "MACD calculation mismatch"
-    assert (
-        abs(macd_signal - float(signal_manual.iloc[-1])) < 0.0001
-    ), "Signal calculation mismatch"
-    assert (
-        abs(macd_histogram - float(histogram_manual.iloc[-1])) < 0.0001
-    ), "Histogram calculation mismatch"
+    assert abs(macd_value - float(macd_manual.iloc[-1])) < 0.0001, "MACD calculation mismatch"
+    assert abs(macd_signal - float(signal_manual.iloc[-1])) < 0.0001, "Signal calculation mismatch"
+    assert abs(macd_histogram - float(histogram_manual.iloc[-1])) < 0.0001, (
+        "Histogram calculation mismatch"
+    )
 
     print("\n✓ MACD formula implementation is correct")
 

@@ -3,12 +3,11 @@
 Stop-Loss Implementation - Using Built-in Libraries Only
 """
 
-import os
 import json
+import os
 import sys
-from pathlib import Path
-from urllib.request import Request, urlopen
 from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 # Load environment variables
 try:
@@ -107,9 +106,7 @@ def implement_stop_losses():
         return
 
     existing_orders = get_existing_orders()
-    existing_stops = {
-        o["symbol"]: o for o in existing_orders if o.get("type") == "stop"
-    }
+    existing_stops = {o["symbol"]: o for o in existing_orders if o.get("type") == "stop"}
 
     print(f"\n📊 Analyzing {len(positions)} positions...\n")
 
@@ -121,9 +118,7 @@ def implement_stop_losses():
         entry_price = float(pos["avg_entry_price"])
         current_price = float(pos["current_price"])
         unrealized_pl_pct = (
-            ((current_price - entry_price) / entry_price * 100)
-            if entry_price > 0
-            else 0
+            ((current_price - entry_price) / entry_price * 100) if entry_price > 0 else 0
         )
 
         print(f"{symbol}:")
@@ -131,7 +126,7 @@ def implement_stop_losses():
         print(f"  P/L: {unrealized_pl_pct:+.2f}%")
 
         if symbol in existing_stops:
-            print(f"  ✅ Stop-loss already exists")
+            print("  ✅ Stop-loss already exists")
             continue
 
         # CFO Decision: Stop-loss strategy

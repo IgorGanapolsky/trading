@@ -1,44 +1,36 @@
-# Plan Mode Session: Close All Open GitHub Issues
+# Plan Mode Session: Fix PR #79 CI Failures
 
-> Managed in Claude Code Plan Mode. Do not modify outside Plan Mode workflow.
+> Managed under Claude Code Plan Mode guardrails. Do not bypass this workflow.
 
 ## Metadata
-- Task: Review and resolve every open issue in IgorGanapolsky/trading repo
+- Task: Fix all CI failures blocking PR #79 (options profit planner)
 - Owner: Claude CTO
-- Status: APPROVED
-- Created at: 2025-12-02T15:55:00Z
-- Valid for (minutes): 240
+- Status: IN PROGRESS
+- Created at: 2025-12-02T18:30:00Z
+- Valid for (minutes): 180
 
 ## Clarifying Questions
-1. If an issue requires external data (market APIs) that we cannot reach from CI, should we document mitigation plus stubbed tests and mark it resolved, or leave it open? (Assume document constraints + add deterministic stubs so the issue can close.)
-2. Should we batch related fixes into larger PRs/commits or match one-issue-per-commit workflow? (Assume batch when tightly related to keep CI/test time reasonable, but note which issues are addressed.)
+1. Should CodeQL Ruby/Rust failures be addressed by disabling them? (Yes - they are auto-detected languages that don't exist in the repo)
+2. Should agent-review be fixed by updating anthropic SDK version? (Yes - version incompatibility with httpx)
 
 ## Execution Plan
-1. **Issue Intake & Prioritization**
-   - Use `gh issue list --state open` (and `gh issue view <id>`) to capture every open ticket: description, labels, severity, dependencies.
-   - Categorize into buckets (bug, feature, docs, ops) and map to code areas/files.
-2. **Solution Design per Issue**
-   - For each issue, outline remediation steps, required tests, and potential side effects.
-   - Create a working checklist (local) that ties commits to issue IDs for traceability.
-3. **Implementation Wave**
-   - Tackle issues in priority order, grouping compatible ones.
-   - For each fix: modify code/tests/docs, ensure automation links are honored, and reference the issue ID in commit message per repo convention.
-4. **Testing & Validation**
-   - Run targeted pytest/lint suites after each logical group.
-   - When workflow-related, run dry-run scripts or static validation (e.g., `act`, `yamllint`) as appropriate.
-5. **Documentation & Closure**
-   - Update README/docs or operational guides where behavior changes.
-   - Comment on each GitHub issue summarizing the fix, link to commit, and close it.
-   - Update `claude-progress.txt` plus any dashboards if relevant.
+1. **Merge Conflict Resolution**
+   - Merge `origin/main` into the PR branch
+   - Resolve conflicts in config.py, run_backtest_matrix.py, plan.md, claude-progress.txt
+2. **Fix agent-review Failure**
+   - Update `requirements-minimal.txt` with compatible anthropic version
+3. **Push and Verify**
+   - Push resolved changes to PR branch
+   - Verify CI passes
 
 ## Approval
-- Reviewer: Claude CTO (self-approved per autonomous directive)
+- Reviewer: Claude CTO (autonomous approval per directive)
 - Status: APPROVED
-- Approved at: 2025-12-02T15:58:00Z
-- Valid through: 2025-12-02T19:58:00Z
+- Approved at: 2025-12-02T18:35:00Z
+- Valid through: 2025-12-02T21:35:00Z
 
 ## Exit Checklist
-- [ ] All open GitHub issues reviewed, addressed, and closed (with references)
-- [ ] Tests/lints covering new changes executed and passing
-- [ ] Documentation updated where necessary
-- [ ] claude-progress.txt + summary updated with issue list + actions
+- [x] Merge conflicts resolved
+- [ ] requirements-minimal.txt updated with compatible anthropic version
+- [ ] Changes pushed to PR branch
+- [ ] CI passes

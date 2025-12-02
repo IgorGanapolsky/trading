@@ -10,15 +10,16 @@ Adds all missing metrics from the critique:
 - Enhanced Risk Metrics (Conditional VaR, Kelly fraction, margin usage)
 - Real-time insights generation
 """
+
+import json
 import os
 import sys
-import json
-import numpy as np
-from datetime import datetime, date, timedelta
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
 from collections import defaultdict
-import statistics
+from datetime import date, datetime, timedelta
+from pathlib import Path
+from typing import Any
+
+import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -33,13 +34,13 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
     Extends TradingMetricsCalculator with missing metrics.
     """
 
-    def calculate_all_metrics(self) -> Dict[str, Any]:
+    def calculate_all_metrics(self) -> dict[str, Any]:
         """Calculate all metrics including enhanced features."""
         # Get base metrics
         base_metrics = super().calculate_all_metrics()
 
         # Load additional data
-        system_state = load_json_file(self.data_dir / "system_state.json")
+        load_json_file(self.data_dir / "system_state.json")
         perf_log = load_json_file(self.data_dir / "performance_log.json")
         all_trades = self._load_all_trades()
 
@@ -53,9 +54,7 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
                 all_trades, perf_log
             ),
             "execution_metrics": self._calculate_execution_metrics(all_trades),
-            "data_completeness": self._calculate_data_completeness(
-                perf_log, all_trades
-            ),
+            "data_completeness": self._calculate_data_completeness(perf_log, all_trades),
             "predictive_analytics": self._calculate_predictive_analytics(perf_log),
             "enhanced_risk_metrics": self._calculate_enhanced_risk_metrics(perf_log),
             "time_of_day_analysis": self._calculate_time_of_day_analysis(all_trades),
@@ -65,8 +64,8 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
         return enhanced_metrics
 
     def _calculate_performance_attribution(
-        self, all_trades: List[Dict], perf_log: List[Dict]
-    ) -> Dict[str, Any]:
+        self, all_trades: list[dict], perf_log: list[dict]
+    ) -> dict[str, Any]:
         """Calculate performance attribution by symbol, strategy, and time."""
         attribution = {
             "by_symbol": {},
@@ -99,9 +98,7 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
                 "total_pl": total_pl,
                 "trades": trades_count,
                 "win_rate": win_rate,
-                "avg_pl_per_trade": (
-                    total_pl / trades_count if trades_count > 0 else 0.0
-                ),
+                "avg_pl_per_trade": (total_pl / trades_count if trades_count > 0 else 0.0),
             }
 
         # Group by strategy/tier
@@ -119,9 +116,7 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
             attribution["by_strategy"][strategy] = {
                 "total_pl": total_pl,
                 "trades": trades_count,
-                "avg_pl_per_trade": (
-                    total_pl / trades_count if trades_count > 0 else 0.0
-                ),
+                "avg_pl_per_trade": (total_pl / trades_count if trades_count > 0 else 0.0),
             }
 
         # Time-of-day analysis
@@ -133,9 +128,7 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
 
         for bucket_name, (start_hour, end_hour) in time_buckets.items():
             bucket_trades = [
-                t
-                for t in all_trades
-                if self._is_in_time_bucket(t, start_hour, end_hour)
+                t for t in all_trades if self._is_in_time_bucket(t, start_hour, end_hour)
             ]
             if bucket_trades:
                 bucket_pl = sum(t.get("pl", 0) for t in bucket_trades)
@@ -147,7 +140,7 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
 
         return attribution
 
-    def _is_in_time_bucket(self, trade: Dict, start_hour: int, end_hour: int) -> bool:
+    def _is_in_time_bucket(self, trade: dict, start_hour: int, end_hour: int) -> bool:
         """Check if trade timestamp is in time bucket."""
         timestamp = trade.get("timestamp", "")
         if not timestamp:
@@ -160,7 +153,7 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
         except:
             return False
 
-    def _calculate_execution_metrics(self, all_trades: List[Dict]) -> Dict[str, Any]:
+    def _calculate_execution_metrics(self, all_trades: list[dict]) -> dict[str, Any]:
         """Calculate execution quality metrics."""
         if not all_trades:
             return {
@@ -175,22 +168,14 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
         # Calculate order success rate
         total_orders = len(all_trades)
         successful_orders = sum(
-            1
-            for t in all_trades
-            if t.get("status") == "filled" or t.get("status") == "accepted"
+            1 for t in all_trades if t.get("status") == "filled" or t.get("status") == "accepted"
         )
         rejected_orders = sum(
-            1
-            for t in all_trades
-            if t.get("status") == "rejected" or t.get("status") == "canceled"
+            1 for t in all_trades if t.get("status") == "rejected" or t.get("status") == "canceled"
         )
 
-        success_rate = (
-            (successful_orders / total_orders * 100) if total_orders > 0 else 0.0
-        )
-        reject_rate = (
-            (rejected_orders / total_orders * 100) if total_orders > 0 else 0.0
-        )
+        success_rate = (successful_orders / total_orders * 100) if total_orders > 0 else 0.0
+        reject_rate = (rejected_orders / total_orders * 100) if total_orders > 0 else 0.0
 
         # Calculate real slippage from order data (fill price vs intended price)
         slippage_estimates = []
@@ -242,8 +227,8 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
         }
 
     def _calculate_data_completeness(
-        self, perf_log: List[Dict], all_trades: List[Dict]
-    ) -> Dict[str, Any]:
+        self, perf_log: list[dict], all_trades: list[dict]
+    ) -> dict[str, Any]:
         """Calculate data completeness and quality metrics."""
         # Check performance log completeness
         if perf_log:
@@ -252,9 +237,7 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
             expected_dates = self._get_expected_trading_dates()
             missing_dates = expected_dates - unique_dates
             completeness_pct = (
-                (len(unique_dates) / len(expected_dates) * 100)
-                if expected_dates
-                else 100.0
+                (len(unique_dates) / len(expected_dates) * 100) if expected_dates else 100.0
             )
         else:
             completeness_pct = 0.0
@@ -314,7 +297,7 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
 
         return expected_dates
 
-    def _calculate_predictive_analytics(self, perf_log: List[Dict]) -> Dict[str, Any]:
+    def _calculate_predictive_analytics(self, perf_log: list[dict]) -> dict[str, Any]:
         """Calculate predictive analytics using Monte Carlo simulation."""
         if not perf_log or len(perf_log) < 5:
             return {
@@ -371,16 +354,12 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
         risk_of_ruin = (ruin_count / simulations * 100) if simulations > 0 else 0.0
 
         # Forecasted drawdown
-        forecasted_drawdown = (
-            0.0  # Placeholder - would need to track drawdowns in simulation
-        )
+        forecasted_drawdown = 0.0  # Placeholder - would need to track drawdowns in simulation
 
         # Strategy decay detection (check if recent performance is worse)
         if len(daily_returns) >= 10:
             recent_returns = daily_returns[-10:]
-            older_returns = (
-                daily_returns[:-10] if len(daily_returns) > 10 else daily_returns
-            )
+            older_returns = daily_returns[:-10] if len(daily_returns) > 10 else daily_returns
             recent_mean = np.mean(recent_returns)
             older_mean = np.mean(older_returns)
             decay_detected = recent_mean < older_mean * 0.8  # 20% worse
@@ -400,7 +379,7 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
             "strategy_decay_detected": decay_detected,
         }
 
-    def _calculate_enhanced_risk_metrics(self, perf_log: List[Dict]) -> Dict[str, Any]:
+    def _calculate_enhanced_risk_metrics(self, perf_log: list[dict]) -> dict[str, Any]:
         """Calculate enhanced risk metrics."""
         if not perf_log or len(perf_log) < 2:
             return {
@@ -459,8 +438,8 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
         }
 
     def _calculate_time_of_day_analysis(
-        self, all_trades: List[Dict], closed_trades: List[Dict] = None
-    ) -> Dict[str, Any]:
+        self, all_trades: list[dict], closed_trades: list[dict] = None
+    ) -> dict[str, Any]:
         """Analyze performance by time of day."""
         if closed_trades is None:
             closed_trades = [t for t in all_trades if t.get("status") == "closed"]
@@ -512,7 +491,7 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
             "performance_by_hour": performance_by_hour,
         }
 
-    def _enhance_market_regime(self, perf_log: List[Dict]) -> Dict[str, Any]:
+    def _enhance_market_regime(self, perf_log: list[dict]) -> dict[str, Any]:
         """Enhanced market regime classification."""
         base_regime = self._calculate_market_regime(perf_log)
 
@@ -538,10 +517,7 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
             mean_return = abs(np.mean(returns))
 
             # Classify as trending or choppy
-            if std_return < mean_return * 2:
-                regime_type = "TRENDING"
-            else:
-                regime_type = "CHOPPY"
+            regime_type = "TRENDING" if std_return < mean_return * 2 else "CHOPPY"
         else:
             regime_type = "UNKNOWN"
 

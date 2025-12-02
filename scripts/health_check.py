@@ -11,13 +11,12 @@ Runs 30 minutes after trading execution (10:05 AM ET) to verify:
 Alerts CEO via Telegram if any issues detected.
 """
 
-import os
-import sys
 import json
 import subprocess
+import sys
+from datetime import date, datetime
 from pathlib import Path
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Optional
+from typing import Optional
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -28,9 +27,7 @@ from src.alerts.telegram_alerter import TelegramAlerter
 class HealthCheckResult:
     """Result of a single health check."""
 
-    def __init__(
-        self, check_name: str, status: str, message: str, details: Optional[Dict] = None
-    ):
+    def __init__(self, check_name: str, status: str, message: str, details: Optional[dict] = None):
         self.check_name = check_name
         self.status = status  # HEALTHY, WARNING, CRITICAL
         self.message = message
@@ -50,7 +47,7 @@ class HealthChecker:
         self.data_dir = self.project_root / "data"
         self.logs_dir = self.project_root / "logs"
 
-    def run_all_checks(self) -> List[HealthCheckResult]:
+    def run_all_checks(self) -> list[HealthCheckResult]:
         """
         Run all health checks.
 
@@ -132,7 +129,7 @@ class HealthChecker:
                 return HealthCheckResult(
                     check_name="github_actions_status",
                     status="CRITICAL",
-                    message=f"Last 3 workflow runs FAILED - trading not executing!",
+                    message="Last 3 workflow runs FAILED - trading not executing!",
                     details={
                         "consecutive_failures": 3,
                         "last_run": runs[0].get("createdAt"),
@@ -145,7 +142,7 @@ class HealthChecker:
                 return HealthCheckResult(
                     check_name="github_actions_status",
                     status="WARNING",
-                    message=f"2 of last 3 workflow runs FAILED",
+                    message="2 of last 3 workflow runs FAILED",
                     details={
                         "failures": len(failures),
                         "successes": len(successes),
@@ -202,7 +199,7 @@ class HealthChecker:
                 return HealthCheckResult(
                     check_name="trade_file_exists",
                     status="HEALTHY",
-                    message=f"Market closed (weekend) - no trades expected",
+                    message="Market closed (weekend) - no trades expected",
                 )
 
             return HealthCheckResult(
@@ -214,14 +211,14 @@ class HealthChecker:
 
         # File exists - check if it has content
         try:
-            with open(trade_file, "r") as f:
+            with open(trade_file) as f:
                 trades = json.load(f)
 
             if not trades:
                 return HealthCheckResult(
                     check_name="trade_file_exists",
                     status="WARNING",
-                    message=f"Trades file exists but is empty",
+                    message="Trades file exists but is empty",
                     details={"file": str(trade_file)},
                 )
 
@@ -254,7 +251,7 @@ class HealthChecker:
             )
 
         try:
-            with open(state_file, "r") as f:
+            with open(state_file) as f:
                 state = json.load(f)
 
             last_updated_str = state.get("meta", {}).get("last_updated")
@@ -313,7 +310,7 @@ class HealthChecker:
 
         try:
             # Read last 100 lines (today's execution)
-            with open(stderr_log, "r") as f:
+            with open(stderr_log) as f:
                 lines = f.readlines()[-100:]
 
             # Look for critical error patterns
@@ -371,7 +368,7 @@ class HealthChecker:
             )
 
         try:
-            with open(state_file, "r") as f:
+            with open(state_file) as f:
                 state = json.load(f)
 
             account = state.get("account", {})
@@ -403,7 +400,7 @@ class HealthChecker:
                 message=f"Failed to read portfolio data: {e}",
             )
 
-    def calculate_overall_status(self, results: List[HealthCheckResult]) -> str:
+    def calculate_overall_status(self, results: list[HealthCheckResult]) -> str:
         """
         Determine overall health status from individual checks.
 
@@ -419,7 +416,7 @@ class HealthChecker:
         else:
             return "HEALTHY"
 
-    def format_results(self, results: List[HealthCheckResult]) -> str:
+    def format_results(self, results: list[HealthCheckResult]) -> str:
         """Format results for display and alerting."""
         output = []
 
@@ -432,7 +429,7 @@ class HealthChecker:
 
         return "\n".join(output)
 
-    def send_alerts(self, overall_status: str, results: List[HealthCheckResult]):
+    def send_alerts(self, overall_status: str, results: list[HealthCheckResult]):
         """Send alerts via Telegram if issues detected."""
         if overall_status == "HEALTHY":
             print("\n✅ All checks passed - no alerts sent")
@@ -449,8 +446,8 @@ class HealthChecker:
             message += f"{status_emoji} {check.check_name}\n"
             message += f"   {check.message}\n"
 
-        message += f"\n📁 Check logs for details"
-        message += f"\n🎯 Next execution: Tomorrow 9:35 AM ET"
+        message += "\n📁 Check logs for details"
+        message += "\n🎯 Next execution: Tomorrow 9:35 AM ET"
 
         # Send via Telegram
         if overall_status == "CRITICAL":
