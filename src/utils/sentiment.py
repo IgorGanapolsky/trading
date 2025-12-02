@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Optional
 
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
@@ -13,7 +12,7 @@ def _get_analyzer() -> SentimentIntensityAnalyzer:
     return SentimentIntensityAnalyzer()
 
 
-def compute_lexical_sentiment(text: Optional[str]) -> float:
+def compute_lexical_sentiment(text: str | None) -> float:
     """
     Compute a deterministic sentiment score using VADER.
 

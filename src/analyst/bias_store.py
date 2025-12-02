@@ -6,10 +6,11 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ class BiasSnapshot:
         }
 
     @classmethod
-    def from_dict(cls, payload: dict[str, Any]) -> "BiasSnapshot":
+    def from_dict(cls, payload: dict[str, Any]) -> BiasSnapshot:
         return cls(
             symbol=payload["symbol"].upper(),
             score=float(payload.get("score", 0.0)),
@@ -126,7 +127,9 @@ class BiasStore:
             logger.warning("Failed to parse %s: %s", self.latest_path, exc)
             return {}
         return {
-            symbol.upper(): snapshot for symbol, snapshot in data.items() if isinstance(snapshot, dict)
+            symbol.upper(): snapshot
+            for symbol, snapshot in data.items()
+            if isinstance(snapshot, dict)
         }
 
     def get_latest(self, symbol: str) -> BiasSnapshot | None:
