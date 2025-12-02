@@ -120,7 +120,7 @@ def create_trading_research_agent(
     if create_deep_agent is None:
         raise ImportError(
             "deepagents is not installed. Install optional extras with "
-            "`python -m pip install \".[deepagents]\"` and set DEEPAGENTS_ENABLED=true."
+            '`python -m pip install ".[deepagents]"` and set DEEPAGENTS_ENABLED=true.'
         ) from DEEPAGENTS_IMPORT_ERROR
 
     if model is None:
@@ -168,7 +168,7 @@ def create_market_analysis_agent(
     if create_deep_agent is None:
         raise ImportError(
             "deepagents is not installed. Install optional extras with "
-            "`python -m pip install \".[deepagents]\"` and set DEEPAGENTS_ENABLED=true."
+            '`python -m pip install ".[deepagents]"` and set DEEPAGENTS_ENABLED=true.'
         ) from DEEPAGENTS_IMPORT_ERROR
 
     if model is None:

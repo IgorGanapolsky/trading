@@ -187,7 +187,10 @@ class MultiLLMAnalyzer:
                 self.sync_client = OpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
 
         if deepseek_enabled:
-            logger.info("DeepSeek (model=%s) enabled via OPENROUTER_ENABLE_DEEPSEEK", LLMModel.DEEPSEEK_R1.value)
+            logger.info(
+                "DeepSeek (model=%s) enabled via OPENROUTER_ENABLE_DEEPSEEK",
+                LLMModel.DEEPSEEK_R1.value,
+            )
 
         logger.info(f"Initialized MultiLLMAnalyzer with models: {[m.value for m in self.models]}")
 
