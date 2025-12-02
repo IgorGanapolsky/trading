@@ -15,11 +15,11 @@ from core.config import load_config
 def main() -> int:
     try:
         cfg = load_config()
-        # Print minimal summary using correct attribute names
+        # Print minimal summary using correct attribute names (uppercase in AppConfig)
         print("Config OK:")
-        print(f"  daily_investment={cfg.daily_investment}")
-        print(f"  paper_trading={cfg.paper_trading}")
-        print(f"  max_position_size={cfg.max_position_size}")
+        print(f"  DAILY_INVESTMENT={cfg.DAILY_INVESTMENT}")
+        print(f"  ALPACA_SIMULATED={cfg.ALPACA_SIMULATED}")
+        print(f"  HYBRID_LLM_MODEL={cfg.HYBRID_LLM_MODEL}")
         return 0
     except Exception as exc:
         print(f"Config invalid: {exc}")

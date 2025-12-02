@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from src.analytics.options_profit_planner import OptionsProfitPlanner
 from src.strategies.rule_one_options import RuleOneOptionsSignal
 

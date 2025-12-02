@@ -39,7 +39,7 @@ pytest-timeout==2.3.1
 python-dateutil==2.9.0.post0
 pytz==2023.3
 loguru==0.7.3
-anthropic==0.18.1
+anthropic>=0.73.0,<1.0.0
 
 # REMOVED (unused):
 # streamlit==1.39.0              # Never imported - dashboard not built
