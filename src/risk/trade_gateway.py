@@ -50,6 +50,7 @@ class RejectionReason(Enum):
     RISK_SCORE_TOO_HIGH = "Trade risk score exceeds threshold"
     CAPITAL_INEFFICIENT = "Strategy not viable for current capital level"
     IV_RANK_TOO_LOW = "IV Rank too low for premium selling (<20)"
+    ILLIQUID_OPTION = "Option is illiquid (bid-ask spread > 5%)"
 
 
 @dataclass
@@ -66,6 +67,9 @@ class TradeRequest:
     source: str = "ai_agent"  # Track where the request came from
     strategy_type: Optional[str] = None  # e.g., 'iron_condor', 'vertical_spread'
     iv_rank: Optional[float] = None  # Current IV Rank for the underlying
+    bid_price: Optional[float] = None  # Current bid price (for liquidity check)
+    ask_price: Optional[float] = None  # Current ask price (for liquidity check)
+    is_option: bool = False  # True if this is an options trade
 
 
 @dataclass
@@ -128,6 +132,9 @@ class TradeGateway:
         "covered_call", "cash_secured_put", "strangle_short", "naked_put"
     }
     MIN_IV_RANK_FOR_CREDIT = 20  # Minimum IV Rank for premium selling
+
+    # Liquidity check - options with wide spreads destroy alpha on fill
+    MAX_BID_ASK_SPREAD_PCT = 0.05  # 5% maximum bid-ask spread
 
     def __init__(self, executor=None, paper: bool = True):
         """
@@ -353,6 +360,38 @@ class TradeGateway:
                         "reason": "Cannot sell premium effectively when IV is cheap"
                     }
                     risk_score += 0.25
+
+        # ============================================================
+        # CHECK 10: Liquidity Check (Bid-Ask Spread) for Options
+        # ============================================================
+        # Wide bid-ask spreads destroy alpha instantly on fill.
+        # If (Ask - Bid) / Ask > 5%, you lose 10%+ immediately.
+        if request.is_option and request.bid_price and request.ask_price:
+            if request.ask_price > 0:
+                bid_ask_spread_pct = (request.ask_price - request.bid_price) / request.ask_price
+
+                if bid_ask_spread_pct > self.MAX_BID_ASK_SPREAD_PCT:
+                    rejection_reasons.append(RejectionReason.ILLIQUID_OPTION)
+                    logger.warning(
+                        f"❌ REJECTED: Bid-Ask spread {bid_ask_spread_pct*100:.1f}% > "
+                        f"{self.MAX_BID_ASK_SPREAD_PCT*100}% max for {request.symbol}"
+                    )
+                    metadata["liquidity_rejection"] = {
+                        "bid": request.bid_price,
+                        "ask": request.ask_price,
+                        "spread_pct": bid_ask_spread_pct * 100,
+                        "max_allowed_pct": self.MAX_BID_ASK_SPREAD_PCT * 100,
+                        "reason": "Illiquid option - wide spread destroys alpha on fill"
+                    }
+                    risk_score += 0.3
+                else:
+                    # Log liquidity info even if acceptable
+                    metadata["liquidity_info"] = {
+                        "bid": request.bid_price,
+                        "ask": request.ask_price,
+                        "spread_pct": bid_ask_spread_pct * 100,
+                        "status": "acceptable"
+                    }
 
         # ============================================================
         # FINAL DECISION

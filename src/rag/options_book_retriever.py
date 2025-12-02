@@ -35,6 +35,11 @@ class OptionsBookRetriever:
     - Structured knowledge (via McMillanOptionsKnowledgeBase)
     - Vector search (via ChromaDB)
 
+    CRITICAL: IV Regime Selector
+    Before any RAG query, we MUST determine the IV regime to prevent
+    "strategy hallucination" - retrieving low IV strategies during high IV
+    environments (and vice versa).
+
     Usage:
         retriever = OptionsBookRetriever()
 
@@ -62,6 +67,44 @@ class OptionsBookRetriever:
     # Collection name for options books in ChromaDB
     COLLECTION_NAME = "options_books"
 
+    # IV Regime thresholds (CRITICAL for preventing strategy hallucination)
+    IV_REGIME_THRESHOLDS = {
+        "very_low": 20,    # IV Rank < 20: Buy premium only
+        "low": 35,         # IV Rank 20-35: Slight preference for debit
+        "neutral": 50,     # IV Rank 35-50: Either works
+        "high": 65,        # IV Rank 50-65: Slight preference for credit
+        "very_high": 80,   # IV Rank > 65: Sell premium only
+    }
+
+    # Strategy mappings by IV regime (prevents wrong strategy retrieval)
+    IV_REGIME_STRATEGIES = {
+        "very_low": {
+            "allowed": ["long_call", "long_put", "debit_spread", "calendar_spread", "diagonal_spread"],
+            "forbidden": ["iron_condor", "credit_spread", "naked_put", "covered_call", "strangle_short"],
+            "query_prefix": "Low IV debit"
+        },
+        "low": {
+            "allowed": ["long_call", "long_put", "debit_spread", "calendar_spread", "butterfly"],
+            "forbidden": ["iron_condor", "naked_put", "strangle_short"],
+            "query_prefix": "Low IV"
+        },
+        "neutral": {
+            "allowed": ["iron_condor", "butterfly", "calendar_spread", "debit_spread", "credit_spread"],
+            "forbidden": [],
+            "query_prefix": "Neutral IV"
+        },
+        "high": {
+            "allowed": ["credit_spread", "iron_condor", "covered_call", "cash_secured_put", "butterfly"],
+            "forbidden": ["long_call", "long_put", "straddle_long"],
+            "query_prefix": "High IV credit"
+        },
+        "very_high": {
+            "allowed": ["credit_spread", "iron_condor", "covered_call", "cash_secured_put", "strangle_short"],
+            "forbidden": ["long_call", "long_put", "straddle_long", "debit_spread"],
+            "query_prefix": "Very high IV premium selling"
+        }
+    }
+
     def __init__(self):
         """Initialize retriever with all knowledge sources."""
         self.book_collector = get_options_book_collector()
@@ -70,6 +113,150 @@ class OptionsBookRetriever:
         self.embedder = get_embedder()
 
         logger.info("Options Book Retriever initialized")
+
+    def get_iv_regime(self, iv_rank: float) -> Dict[str, Any]:
+        """
+        CRITICAL: Determine IV regime before ANY RAG query.
+
+        This prevents "strategy hallucination" where the RAG retrieves
+        a low-IV strategy (like Long Puts) during a high-IV spike,
+        causing the trader to buy expensive premium that gets crushed.
+
+        Args:
+            iv_rank: Current IV Rank (0-100)
+
+        Returns:
+            Dict with regime info, allowed/forbidden strategies, and query prefix
+        """
+        if iv_rank < self.IV_REGIME_THRESHOLDS["very_low"]:
+            regime = "very_low"
+        elif iv_rank < self.IV_REGIME_THRESHOLDS["low"]:
+            regime = "low"
+        elif iv_rank < self.IV_REGIME_THRESHOLDS["neutral"]:
+            regime = "neutral"
+        elif iv_rank < self.IV_REGIME_THRESHOLDS["high"]:
+            regime = "high"
+        else:
+            regime = "very_high"
+
+        regime_config = self.IV_REGIME_STRATEGIES[regime]
+
+        logger.info(
+            f"IV Regime determined: {regime.upper()} (IV Rank: {iv_rank:.0f}%) - "
+            f"Query prefix: '{regime_config['query_prefix']}'"
+        )
+
+        return {
+            "regime": regime,
+            "iv_rank": iv_rank,
+            "allowed_strategies": regime_config["allowed"],
+            "forbidden_strategies": regime_config["forbidden"],
+            "query_prefix": regime_config["query_prefix"],
+            "guidance": self._get_regime_guidance(regime, iv_rank)
+        }
+
+    def _get_regime_guidance(self, regime: str, iv_rank: float) -> str:
+        """Get human-readable guidance for current IV regime."""
+        guidance_map = {
+            "very_low": (
+                f"IV Rank {iv_rank:.0f}% is VERY LOW. Premium is cheap. "
+                "BUY options (long calls, long puts, debit spreads). "
+                "DO NOT sell premium - you're giving away cheap lottery tickets."
+            ),
+            "low": (
+                f"IV Rank {iv_rank:.0f}% is LOW. Prefer debit strategies. "
+                "Long options and debit spreads are favored. "
+                "Credit strategies may work but premiums are thin."
+            ),
+            "neutral": (
+                f"IV Rank {iv_rank:.0f}% is NEUTRAL. Both debit and credit work. "
+                "Choose based on directional outlook. "
+                "Iron condors and butterflies are viable."
+            ),
+            "high": (
+                f"IV Rank {iv_rank:.0f}% is HIGH. Premium is expensive. "
+                "SELL options (credit spreads, iron condors, covered calls). "
+                "Avoid buying expensive premium."
+            ),
+            "very_high": (
+                f"IV Rank {iv_rank:.0f}% is VERY HIGH. Premium is inflated. "
+                "SELL premium aggressively (credit spreads, iron condors). "
+                "DO NOT buy options - volatility crush will destroy you."
+            )
+        }
+        return guidance_map.get(regime, "Unknown regime")
+
+    def search_with_iv_regime(
+        self,
+        query: str,
+        iv_rank: float,
+        top_k: int = 5,
+        content_types: Optional[List[str]] = None,
+        include_structured: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Search options knowledge with IV regime awareness.
+
+        ALWAYS use this instead of raw search_options_knowledge when
+        you have IV data available. This prevents strategy hallucination.
+
+        Args:
+            query: Natural language query
+            iv_rank: Current IV Rank (0-100) - REQUIRED for regime selection
+            top_k: Number of results per source
+            content_types: Filter by content types
+            include_structured: Also search McMillan KB
+
+        Returns:
+            Dict with regime-aware results
+        """
+        # Step 1: Determine IV regime
+        regime_info = self.get_iv_regime(iv_rank)
+
+        # Step 2: Prepend regime-aware prefix to query
+        regime_query = f"{regime_info['query_prefix']} strategies for {query}"
+
+        logger.info(
+            f"Regime-aware search: Original='{query}' -> Modified='{regime_query}'"
+        )
+
+        # Step 3: Execute search with modified query
+        results = self.search_options_knowledge(
+            query=regime_query,
+            top_k=top_k,
+            content_types=content_types,
+            include_structured=include_structured
+        )
+
+        # Step 4: Filter out forbidden strategies from results
+        filtered_book_results = []
+        for result in results.get("book_results", []):
+            strategy_mentioned = result.get("strategy", "").lower()
+            content = result.get("content", "").lower()
+
+            # Check if result mentions a forbidden strategy
+            is_forbidden = False
+            for forbidden in regime_info["forbidden_strategies"]:
+                if forbidden.replace("_", " ") in content or forbidden in strategy_mentioned:
+                    is_forbidden = True
+                    logger.warning(
+                        f"Filtering out forbidden strategy '{forbidden}' from results "
+                        f"(IV Regime: {regime_info['regime']})"
+                    )
+                    break
+
+            if not is_forbidden:
+                filtered_book_results.append(result)
+
+        # Step 5: Augment response with regime info
+        results["iv_regime"] = regime_info
+        results["book_results"] = filtered_book_results
+        results["regime_warning"] = (
+            f"Results filtered for {regime_info['regime'].upper()} IV regime. "
+            f"Forbidden strategies removed: {regime_info['forbidden_strategies']}"
+        )
+
+        return results
 
     def search_options_knowledge(
         self,

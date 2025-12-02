@@ -300,6 +300,66 @@ def run_stress_tests():
         print(f"   Rejections: {[r.value for r in decision.rejection_reasons]}")
 
     # ================================================================
+    # TEST 10: Illiquid Option (Wide Bid-Ask Spread > 5%)
+    # ================================================================
+    print("\n--- TEST 10: Illiquid Option (Bid-Ask Spread = 15%) ---")
+    print("Expected: REJECT for illiquid option (spread > 5%)")
+
+    gateway = TradeGateway(executor=None, paper=True)
+    gateway.executor = type('MockExecutor', (), {
+        'account_equity': 50000,
+        'get_positions': lambda self: []
+    })()
+
+    request = TradeRequest(
+        symbol="SPY240315C00500000",  # Option symbol
+        side="buy",
+        notional=500,
+        source="stress_test",
+        is_option=True,
+        bid_price=1.70,   # Wide spread
+        ask_price=2.00,   # 15% spread = (2.00-1.70)/2.00 = 15%
+    )
+    decision = gateway.evaluate(request)
+
+    if RejectionReason.ILLIQUID_OPTION in decision.rejection_reasons:
+        print("✅ PASSED: Illiquid option rejected")
+        print(f"   Liquidity info: {decision.metadata.get('liquidity_rejection', {})}")
+    else:
+        print("⚠️ CHECK: Trade not rejected for illiquidity")
+        print(f"   Rejections: {[r.value for r in decision.rejection_reasons]}")
+
+    # ================================================================
+    # TEST 11: Liquid Option (Tight Bid-Ask Spread < 5%)
+    # ================================================================
+    print("\n--- TEST 11: Liquid Option (Bid-Ask Spread = 2%) ---")
+    print("Expected: APPROVED (spread acceptable)")
+
+    gateway = TradeGateway(executor=None, paper=True)
+    gateway.executor = type('MockExecutor', (), {
+        'account_equity': 50000,
+        'get_positions': lambda self: []
+    })()
+
+    request = TradeRequest(
+        symbol="SPY240315C00500000",  # Option symbol
+        side="buy",
+        notional=500,
+        source="stress_test",
+        is_option=True,
+        bid_price=1.96,   # Tight spread
+        ask_price=2.00,   # 2% spread = (2.00-1.96)/2.00 = 2%
+    )
+    decision = gateway.evaluate(request)
+
+    if decision.approved:
+        print("✅ PASSED: Liquid option approved")
+        print(f"   Liquidity info: {decision.metadata.get('liquidity_info', {})}")
+    else:
+        print("⚠️ CHECK: Trade rejected unexpectedly")
+        print(f"   Rejections: {[r.value for r in decision.rejection_reasons]}")
+
+    # ================================================================
     # FINAL RESULT
     # ================================================================
     print("\n" + "="*70)
