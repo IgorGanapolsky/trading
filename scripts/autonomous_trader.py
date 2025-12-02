@@ -16,6 +16,10 @@ from src.utils.error_monitoring import init_sentry
 from src.utils.logging_config import setup_logging
 
 
+def _flag_enabled(env_name: str, default: str = "true") -> bool:
+    return os.getenv(env_name, default).strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _parse_tickers() -> list[str]:
     raw = os.getenv("TARGET_TICKERS", "SPY,QQQ,VOO")
     return [ticker.strip().upper() for ticker in raw.split(",") if ticker.strip()]
@@ -117,10 +121,16 @@ def main() -> None:
     crypto_allowed = crypto_enabled()
     is_holiday = is_market_holiday()
     is_weekend_day = is_weekend()
+    weekend_proxy_enabled = _flag_enabled("ENABLE_WEEKEND_PROXY", "true")
+    weekend_proxy_active = (
+        weekend_proxy_enabled and (is_weekend_day or is_holiday) and not args.crypto_only
+    )
+
     should_run_crypto = (
         not args.skip_crypto
         and crypto_allowed
         and (args.crypto_only or is_weekend_day or is_holiday)
+        and not weekend_proxy_active
     )
 
     if args.crypto_only and not crypto_allowed:
@@ -128,7 +138,12 @@ def main() -> None:
             "Crypto-only requested but ENABLE_CRYPTO_AGENT is not true. Skipping crypto branch."
         )
 
-    if should_run_crypto:
+    if weekend_proxy_active:
+        logger.info(
+            "Weekend proxy mode enabled (%s) - routing funnel through ETF proxies.",
+            "holiday" if is_holiday and not is_weekend_day else "weekend",
+        )
+    elif should_run_crypto:
         reason = []
         if args.crypto_only:
             reason.append("--crypto-only flag")

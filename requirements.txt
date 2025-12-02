@@ -49,6 +49,7 @@ pytest-timeout==2.2.0  # Prevent hanging tests in CI
 python-dateutil==2.9.0.post0
 pytz==2023.3
 loguru==0.7.2
+vaderSentiment==3.3.2
 httpx>=0.27.0,<0.28.0  # Pin to avoid 'proxies' arg removal in 0.28+
 anthropic>=0.73.0,<1.0.0
 google-generativeai>=0.8.0,<0.9.0  # Required for gemini_agent - pin for protobuf compat

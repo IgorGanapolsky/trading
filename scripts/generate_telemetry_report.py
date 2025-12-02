@@ -27,6 +27,11 @@ def parse_args() -> argparse.Namespace:
         default="",
         help="Optional path to write structured JSON summary.",
     )
+    parser.add_argument(
+        "--adapt-rl",
+        action="store_true",
+        help="Run RL filter adaptation using the same telemetry log after reporting.",
+    )
     return parser.parse_args()
 
 
@@ -72,6 +77,17 @@ def main() -> None:
         with output_path.open("w", encoding="utf-8") as handle:
             json.dump(summary, handle, indent=2)
         print(f"\nStructured summary written to {output_path}")
+
+    if args.adapt_rl:
+        try:
+            from src.agents.rl_agent import RLFilter
+
+            rl_filter = RLFilter()
+            adaptation = rl_filter.update_from_telemetry(audit_path=args.log)
+            print("\nRL filter adaptation summary:")
+            print(json.dumps(adaptation, indent=2))
+        except Exception as exc:  # pragma: no cover - adaptation is optional
+            print(f"\n⚠️  RL adaptation failed: {exc}")
 
 
 if __name__ == "__main__":

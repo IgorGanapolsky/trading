@@ -410,7 +410,11 @@ class RuleOneOptionsStrategy:
     def _get_available_cash(self) -> float:
         """Fetch available cash/buying power for sizing put contracts."""
         try:
-            account = self.trader.get_account()
+            # Use get_account_info (correct method) with fallback to get_account
+            if hasattr(self.trader, "get_account_info"):
+                account = self.trader.get_account_info()
+            else:
+                account = self.trader.get_account()
             cash_fields = [
                 account.get("cash"),
                 account.get("buying_power"),

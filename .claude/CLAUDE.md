@@ -138,6 +138,56 @@ If I catch myself about to suggest manual intervention:
 
 ---
 
+## LOCAL CI VERIFICATION (Effective Dec 2, 2025)
+
+**MANDATORY before pushing any PR or branch:**
+
+1. **Run ruff lint/format check** (fast, always):
+   ```bash
+   uvx ruff check . && uvx ruff format --check .
+   ```
+
+2. **Fix any issues before pushing** - don't rely on GitHub CI to catch them
+
+3. **For significant changes**, run ACT locally:
+   ```bash
+   act -j "Lint & Format" -W .github/workflows/ci.yml --container-architecture linux/amd64
+   ```
+
+**Why**: GitHub CI failures waste time and create noise. Catch issues locally first.
+
+**Skill Reference**: See `.claude/skills/local_ci_runner/SKILL.md` for full documentation.
+
+---
+
+## GIT WORKTREE PROTOCOL (Effective Dec 2, 2025)
+
+**ALWAYS use git worktrees when working on PRs to avoid conflicts with other agents.**
+
+**Why**: Multiple agents may be working on different branches. Switching branches in the main repo can cause conflicts and lost work.
+
+**Protocol**:
+1. **Create worktree for PR work**:
+   ```bash
+   git worktree add ../trading-pr-XX pr-branch-name
+   cd ../trading-pr-XX
+   ```
+
+2. **Do all PR work in the worktree** - don't switch branches in main repo
+
+3. **Clean up after PR is merged**:
+   ```bash
+   git worktree remove ../trading-pr-XX
+   ```
+
+**Benefits**:
+- Isolated work environment per PR
+- No branch switching in main repo
+- Multiple PRs can be worked on in parallel
+- Other agents aren't affected by your branch changes
+
+---
+
 ## 🚨 CRITICAL: ABSOLUTE ANTI-LYING MANDATE
 
 **NEVER LIE. NEVER MAKE FALSE CLAIMS. NEVER CLAIM SOMETHING EXISTS WHEN IT DOESN'T.**
