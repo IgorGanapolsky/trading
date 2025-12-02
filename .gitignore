@@ -2,6 +2,7 @@ I don# Environment
 .env
 .env.local
 .env.*.local
+.venv/
 venv/
 .pc-venv/
 env/

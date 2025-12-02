@@ -80,6 +80,13 @@ python3 scripts/dry_run.py --symbols SPY QQQ --export-json out.json --export-md 
 
 # Build the agentic coaching/study/newsletter plan
 PYTHONPATH=src python3 scripts/day_trading_support_cycle.py --focus psychology --print-json
+
+# Train + export the transformer RL gate (writes weights + dataset cache)
+PYTHONPATH=. python3 scripts/train_rl_transformer.py \
+  --tickers SPY QQQ IWM \
+  --start 2023-01-01 \
+  --end 2024-11-30 \
+  --epochs 4
 ```
 
 ---
@@ -212,6 +219,7 @@ Set `HYBRID_LLM_MODEL=claude-3-5-haiku-20241022` (default) or `gpt-4o-mini` to c
 - **Multi-tier Allocation**: ETFs (60%), Growth stocks (20%), IPOs (10%), Crowdfunding (10%)
 - **Risk Management**: Daily loss limits, max drawdown protection, position sizing
 - **Hybrid RL Filter**: Gate 2 now ensembles PPO heuristics with a transformer encoder for multi-horizon context plus attribution logging
+- **RL Gate Training Pipeline**: `scripts/train_rl_transformer.py` exports weights to `models/ml/rl_transformer_state.pt` and archives labeled tensors under `data/datasets/rl_transformer_sequences.npz` for offline audits
 - **Paper Trading**: 90-day validation before live trading
 
 ### Treasuries Momentum Gate (New)

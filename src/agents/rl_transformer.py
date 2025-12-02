@@ -22,6 +22,7 @@ from typing import Any, Optional
 
 import numpy as np
 
+from src.agents.rl_transformer_features import build_feature_matrix
 from src.utils.market_data import get_market_data_provider
 
 logger = logging.getLogger(__name__)
@@ -203,39 +204,10 @@ if torch is not None and nn is not None:
             if hist is None or hist.empty or len(hist) < 40:
                 return None, None
 
-            frame = hist.tail(self.context_window * 2).copy()
-            frame = frame[["Close", "Volume"]].dropna()
-            if frame.empty:
+            frame = hist[["Close", "Volume"]].dropna().copy()
+            stacked = build_feature_matrix(frame)
+            if stacked.size == 0:
                 return None, None
-
-            closes = frame["Close"].astype(float)
-            volumes = frame["Volume"].astype(float)
-
-            returns = closes.pct_change().fillna(0.0)
-            rolling_vol = returns.rolling(5).std().fillna(0.0)
-            price_z = (closes - closes.rolling(20).mean()) / (closes.rolling(20).std() + 1e-6)
-            drawdown = (closes / closes.cummax()) - 1.0
-
-            log_volume = np.log1p(volumes)
-            volume_z = (log_volume - log_volume.rolling(20).mean()) / (
-                log_volume.rolling(20).std() + 1e-6
-            )
-            volume_z = volume_z.fillna(0.0)
-
-            rsi_series = self._compute_rsi_series(closes)
-            rsi_norm = (rsi_series / 100.0).fillna(0.5)
-
-            stacked = np.stack(
-                [
-                    returns.to_numpy(),
-                    rolling_vol.to_numpy(),
-                    volume_z.to_numpy(),
-                    rsi_norm.to_numpy(),
-                    price_z.to_numpy(),
-                    drawdown.to_numpy(),
-                ],
-                axis=1,
-            )
 
             if stacked.shape[0] >= self.context_window:
                 sliced = stacked[-self.context_window :]
@@ -245,21 +217,6 @@ if torch is not None and nn is not None:
 
             tensor = torch.from_numpy(sliced).float().unsqueeze(0).to(self.device)
             return tensor, sliced
-
-        @staticmethod
-        def _compute_rsi_series(prices: Any, period: int = 14) -> Any:
-            # calculate_rsi returns a scalar, so we recreate the rolling computation for vectors
-            if len(prices) < period + 2:
-                return prices.copy() * 0 + 50.0
-            delta = prices.diff().fillna(0.0)
-            gain = delta.clip(lower=0.0)
-            loss = -delta.clip(upper=0.0)
-            avg_gain = gain.rolling(window=period).mean()
-            avg_loss = loss.rolling(window=period).mean()
-            rs = avg_gain / avg_loss.replace(0, np.nan)
-            rsi = 100 - (100 / (1 + rs))
-            rsi = rsi.fillna(method="bfill").fillna(50.0)
-            return rsi
 
         def _compute_attribution(self, engineered: np.ndarray | None) -> dict[str, float]:
             if engineered is None:
