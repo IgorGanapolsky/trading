@@ -22,7 +22,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from src.analytics.options_profit_planner import OptionsProfitPlanner
 
@@ -33,7 +33,7 @@ logging.basicConfig(
 )
 
 
-def run_scan(paper: bool) -> Optional[Dict[str, Any]]:
+def run_scan(paper: bool) -> dict[str, Any] | None:
     """Optionally generate fresh signals (requires yfinance + Alpaca creds)."""
     try:
         from src.strategies.rule_one_options import RuleOneOptionsStrategy
@@ -52,13 +52,11 @@ def run_scan(paper: bool) -> Optional[Dict[str, Any]]:
         )
         return snapshot
     except Exception as exc:
-        logger.warning(
-            "Live scan failed (likely due to missing network/API access): %s", exc
-        )
+        logger.warning("Live scan failed (likely due to missing network/API access): %s", exc)
         return None
 
 
-def print_summary(summary: Dict[str, Any]) -> None:
+def print_summary(summary: dict[str, Any]) -> None:
     """Pretty-print planner output."""
     print("\n=== Options Profit Planner ===")
     print(f"Target Daily Profit : ${summary['target_daily_profit']:.2f}")
@@ -87,7 +85,7 @@ def print_summary(summary: Dict[str, Any]) -> None:
     print()
 
 
-def main(argv: Optional[list[str]] = None) -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Options Profit Planner")
     parser.add_argument(
         "--target-daily",

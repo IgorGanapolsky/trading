@@ -18,10 +18,11 @@ from __future__ import annotations
 import json
 import logging
 import math
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Union
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ except Exception:  # pragma: no cover - fallback for test environments without f
     RuleOneOptionsSignal = Any  # type: ignore
 
 
-SignalInput = Union[Dict[str, Any], "RuleOneOptionsSignal"]
+SignalInput = Union[dict[str, Any], "RuleOneOptionsSignal"]
 
 
 @dataclass
@@ -49,8 +50,8 @@ class SignalProfitProjection:
     daily_premium_per_contract: float
     daily_premium_total: float
     annualized_return: float
-    iv_rank: Optional[float]
-    delta: Optional[float]
+    iv_rank: float | None
+    delta: float | None
     rationale: str
 
 
@@ -64,7 +65,7 @@ class OptionsProfitPlanner:
         self,
         target_daily_profit: float = 10.0,
         trading_days_per_month: int = 21,
-        snapshot_dir: Optional[Path] = None,
+        snapshot_dir: Path | None = None,
     ):
         self.target_daily_profit = target_daily_profit
         self.trading_days_per_month = trading_days_per_month
@@ -74,7 +75,7 @@ class OptionsProfitPlanner:
     # --------------------------------------------------------------------- #
     # Snapshot helpers
     # --------------------------------------------------------------------- #
-    def load_latest_snapshot(self) -> Optional[Dict[str, Any]]:
+    def load_latest_snapshot(self) -> dict[str, Any] | None:
         """Load the most recent options snapshot from disk."""
         if not self.snapshot_dir.exists():
             return None
@@ -93,7 +94,7 @@ class OptionsProfitPlanner:
             logger.error("Failed to read snapshot %s: %s", latest_path, exc)
             return None
 
-    def persist_summary(self, summary: Dict[str, Any]) -> Path:
+    def persist_summary(self, summary: dict[str, Any]) -> Path:
         """Persist planner output for downstream dashboards."""
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
         output_path = self.snapshot_dir / f"options_profit_plan_{timestamp}.json"
@@ -109,8 +110,8 @@ class OptionsProfitPlanner:
         self,
         put_signals: Sequence[SignalInput],
         call_signals: Sequence[SignalInput],
-        data_source: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        data_source: str | None = None,
+    ) -> dict[str, Any]:
         """Generate profit pacing summary for supplied signals."""
         put_metrics = [self._score_signal(signal) for signal in put_signals]
         call_metrics = [self._score_signal(signal) for signal in call_signals]
@@ -139,9 +140,7 @@ class OptionsProfitPlanner:
         }
         return summary
 
-    def build_summary_from_snapshot(
-        self, snapshot: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def build_summary_from_snapshot(self, snapshot: dict[str, Any] | None) -> dict[str, Any]:
         """
         Convenience method for snapshot payloads persisted by
         `RuleOneOptionsStrategy.generate_daily_signals()`.
@@ -164,7 +163,7 @@ class OptionsProfitPlanner:
     # --------------------------------------------------------------------- #
     # Internal helpers
     # --------------------------------------------------------------------- #
-    def _empty_summary(self, reason: str, data_source: Optional[str] = None) -> Dict[str, Any]:
+    def _empty_summary(self, reason: str, data_source: str | None = None) -> dict[str, Any]:
         """Return placeholder summary when no signals are available."""
         return {
             "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -212,20 +211,16 @@ class OptionsProfitPlanner:
         return projection
 
     @staticmethod
-    def _to_payload(signal: SignalInput) -> Dict[str, Any]:
+    def _to_payload(signal: SignalInput) -> dict[str, Any]:
         """Coerce dataclass or dict signals into a plain dict."""
         if hasattr(signal, "__dict__"):
-            return {
-                key: value
-                for key, value in signal.__dict__.items()
-                if not key.startswith("_")
-            }
+            return {key: value for key, value in signal.__dict__.items() if not key.startswith("_")}
         if isinstance(signal, dict):
             return dict(signal)
         raise TypeError(f"Unsupported signal type: {type(signal)}")
 
     @staticmethod
-    def _resolve_days_to_expiry(payload: Dict[str, Any]) -> int:
+    def _resolve_days_to_expiry(payload: dict[str, Any]) -> int:
         """Best-effort resolution of days to expiry."""
         days = payload.get("days_to_expiry")
         if days is None and payload.get("expiration"):
@@ -242,7 +237,7 @@ class OptionsProfitPlanner:
         return days
 
     @staticmethod
-    def _maybe_float(value: Any) -> Optional[float]:
+    def _maybe_float(value: Any) -> float | None:
         try:
             if value is None:
                 return None
@@ -252,16 +247,13 @@ class OptionsProfitPlanner:
 
     def _recommend_contract_plan(
         self, projections: Sequence[SignalProfitProjection], gap: float
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Recommend additional contracts required to close the gap."""
         if gap <= 0 or not projections:
             return None
 
         # Sort by best daily premium per contract
-        best = max(
-            projections,
-            key=lambda proj: proj.daily_premium_per_contract
-        )
+        best = max(projections, key=lambda proj: proj.daily_premium_per_contract)
         per_contract_daily = best.daily_premium_per_contract
         if per_contract_daily <= 0:
             return None
@@ -283,7 +275,7 @@ class OptionsProfitPlanner:
         self,
         projections: Sequence[SignalProfitProjection],
         gap: float,
-    ) -> List[str]:
+    ) -> list[str]:
         """Generate human-readable notes for the summary."""
         notes = []
         if not projections:
@@ -291,9 +283,7 @@ class OptionsProfitPlanner:
             return notes
 
         top_symbols = {proj.symbol for proj in projections}
-        notes.append(
-            f"Analyzed {len(projections)} signals across {len(top_symbols)} symbols."
-        )
+        notes.append(f"Analyzed {len(projections)} signals across {len(top_symbols)} symbols.")
 
         if gap > 0:
             notes.append(
