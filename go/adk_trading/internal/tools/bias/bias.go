@@ -39,6 +39,19 @@ type snapshot struct {
 	Reason     string                 `json:"reason"`
 	Model      string                 `json:"model"`
 	Sources    []string               `json:"sources"`
+	CreatedAt  time.Time              `json:"created_at"`
+	ExpiresAt  time.Time              `json:"expires_at"`
+	Metadata   map[string]interface{} `json:"metadata"`
+}
+
+type rawSnapshot struct {
+	Symbol     string                 `json:"symbol"`
+	Score      float64                `json:"score"`
+	Direction  string                 `json:"direction"`
+	Conviction float64                `json:"conviction"`
+	Reason     string                 `json:"reason"`
+	Model      string                 `json:"model"`
+	Sources    []string               `json:"sources"`
 	CreatedAt  string                 `json:"created_at"`
 	ExpiresAt  string                 `json:"expires_at"`
 	Metadata   map[string]interface{} `json:"metadata"`
@@ -85,7 +98,7 @@ func New(biasDir string) (tool.Tool, error) {
 	return functiontool.New(functiontool.Config{
 		Name:        "get_bias_snapshot",
 		Description: "Load the most recent analyst bias snapshot for a symbol from the shared bias store.",
-	}, handler), nil
+	}, handler)
 }
 
 func loadSnapshot(path string, symbol string) (*snapshot, error) {
@@ -105,25 +118,28 @@ func readLatest(path string) (map[string]*snapshot, error) {
 	if err != nil {
 		return nil, err
 	}
-	var blob map[string]snapshot
+	var blob map[string]rawSnapshot
 	if err := json.Unmarshal(data, &blob); err != nil {
 		return nil, err
 	}
 	out := make(map[string]*snapshot, len(blob))
 	for sym, snap := range blob {
 		sym = strings.ToUpper(sym)
-		snap.Symbol = sym
-		snap.CreatedAt = parseTime(snap.CreatedAt)
-		snap.ExpiresAt = parseTime(snap.ExpiresAt)
-		out[sym] = copySnapshot(snap)
+		parsed := snapshot{
+			Symbol:     sym,
+			Score:      snap.Score,
+			Direction:  snap.Direction,
+			Conviction: snap.Conviction,
+			Reason:     snap.Reason,
+			Model:      snap.Model,
+			Sources:    append([]string(nil), snap.Sources...),
+			CreatedAt:  parseTime(snap.CreatedAt),
+			ExpiresAt:  parseTime(snap.ExpiresAt),
+			Metadata:   snap.Metadata,
+		}
+		out[sym] = &parsed
 	}
 	return out, nil
-}
-
-func copySnapshot(src snapshot) *snapshot {
-	dst := src
-	dst.Sources = append([]string(nil), src.Sources...)
-	return &dst
 }
 
 func parseTime(value string) time.Time {
