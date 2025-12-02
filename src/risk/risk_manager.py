@@ -1,6 +1,15 @@
-"""Risk sizing logic for Gate 4.
+"""Risk sizing logic for Gate 4 (Hybrid Funnel Pipeline).
 
-Adds optional ATR-based stop computation and volatility-aware sizing.
+This is a lightweight position sizer for the modular orchestrator pipeline.
+It provides:
+- ATR-based stop computation
+- Volatility-aware sizing
+- Daily budget enforcement
+
+Note: This is distinct from src/core/risk_manager.py which provides comprehensive
+risk management with circuit breakers, behavioral finance, and drawdown tracking.
+Use this module for the hybrid funnel pipeline (src/orchestrator/).
+Use src/core/risk_manager.py for the main trading system (src/main.py).
 """
 
 from __future__ import annotations
