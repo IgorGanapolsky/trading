@@ -8,10 +8,9 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 import holidays
-
-from src.analyst.bias_store import BiasProvider, BiasSnapshot, BiasStore
 from src.agents.momentum_agent import MomentumAgent
 from src.agents.rl_agent import RLFilter
+from src.analyst.bias_store import BiasProvider, BiasSnapshot, BiasStore
 from src.execution.alpaca_executor import AlpacaExecutor
 from src.langchain_agents.analyst import LangChainSentimentAgent
 from src.orchestrator.anomaly_monitor import AnomalyMonitor
@@ -93,7 +92,11 @@ class TradingOrchestrator:
         self.bias_snapshot_ttl_minutes = int(
             os.getenv("BIAS_TTL_MINUTES", str(max(self.bias_fresh_minutes, 360)))
         )
-        enable_async_analyst = os.getenv("ENABLE_ASYNC_ANALYST", "true").lower() in {"1", "true", "yes"}
+        enable_async_analyst = os.getenv("ENABLE_ASYNC_ANALYST", "true").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
         self.bias_provider: BiasProvider | None = None
         if enable_async_analyst:
             self.bias_provider = BiasProvider(
@@ -132,11 +135,16 @@ class TradingOrchestrator:
         # Gate 5: Post-execution delta rebalancing
         self.run_delta_rebalancing()
 
+        # Gate 6: Phil Town Rule #1 Options Strategy
+        self.run_options_strategy()
+
     def _build_session_profile(self) -> dict[str, Any]:
         today = datetime.utcnow().date()
         market_day = is_us_market_day(today)
         proxy_symbols = os.getenv("WEEKEND_PROXY_SYMBOLS", "BITO,RWCR")
-        proxy_list = [symbol.strip().upper() for symbol in proxy_symbols.split(",") if symbol.strip()]
+        proxy_list = [
+            symbol.strip().upper() for symbol in proxy_symbols.split(",") if symbol.strip()
+        ]
         momentum_overrides: dict[str, float] = {}
         rl_threshold = float(os.getenv("RL_CONFIDENCE_THRESHOLD", "0.6"))
         session_type = "market_hours"
