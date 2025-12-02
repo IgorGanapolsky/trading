@@ -53,6 +53,9 @@ class BacktestResults:
     start_date: str = ""
     end_date: str = ""
     trading_days: int = 0
+    # Slippage tracking for realistic cost analysis
+    total_slippage_cost: float = 0.0
+    slippage_enabled: bool = False
 
     def generate_report(self) -> str:
         """
@@ -84,6 +87,12 @@ class BacktestResults:
             f"Sharpe Ratio:      {self.sharpe_ratio:.2f}",
             f"Max Drawdown:      {self.max_drawdown:.2f}%",
             f"Volatility:        {self._calculate_volatility():.2f}%",
+            "",
+            "EXECUTION COSTS",
+            "-" * 80,
+            f"Slippage Model:    {'Enabled' if self.slippage_enabled else 'Disabled (results may be optimistic)'}",
+            f"Total Slippage:    ${self.total_slippage_cost:.2f}",
+            f"Slippage % of PnL: {self._calculate_slippage_impact():.2f}%",
             "",
             "TRADE STATISTICS",
             "-" * 80,
@@ -154,6 +163,18 @@ class BacktestResults:
         # Annualized volatility
         volatility = np.std(daily_returns) * np.sqrt(252) * 100
         return volatility
+
+    def _calculate_slippage_impact(self) -> float:
+        """
+        Calculate slippage as percentage of P&L.
+
+        Returns:
+            Slippage impact percentage (higher = more of your gains eaten by slippage)
+        """
+        pnl = self.final_capital - self.initial_capital
+        if pnl <= 0:
+            return 0.0
+        return (self.total_slippage_cost / pnl) * 100 if pnl > 0 else 0.0
 
     def _get_performance_rating(self) -> str:
         """
@@ -233,6 +254,9 @@ class BacktestResults:
             "annualized_return": self._calculate_annualized_return(),
             "volatility": self._calculate_volatility(),
             "performance_rating": self._get_performance_rating(),
+            "total_slippage_cost": self.total_slippage_cost,
+            "slippage_enabled": self.slippage_enabled,
+            "slippage_impact_pct": self._calculate_slippage_impact(),
         }
 
     def save_to_json(self, filepath: str) -> None:

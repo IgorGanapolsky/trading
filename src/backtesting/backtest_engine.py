@@ -29,6 +29,12 @@ from alpaca.data.timeframe import TimeFrame
 
 from src.backtesting.backtest_results import BacktestResults
 
+# Import slippage model for realistic execution costs
+try:
+    from src.risk.slippage_model import SlippageModel, SlippageModelType
+    SLIPPAGE_AVAILABLE = True
+except ImportError:
+    SLIPPAGE_AVAILABLE = False
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -60,6 +66,8 @@ class BacktestEngine:
         start_date: str,
         end_date: str,
         initial_capital: float = 100000.0,
+        enable_slippage: bool = True,
+        slippage_bps: float = 5.0,
     ):
         """
         Initialize the backtest engine.
@@ -69,6 +77,8 @@ class BacktestEngine:
             start_date: Start date in YYYY-MM-DD format
             end_date: End date in YYYY-MM-DD format
             initial_capital: Starting capital amount (default: $100,000)
+            enable_slippage: Whether to model execution slippage (default: True)
+            slippage_bps: Base slippage in basis points (default: 5 bps)
 
         Raises:
             ValueError: If dates are invalid or strategy is None
@@ -104,6 +114,22 @@ class BacktestEngine:
 
         # Price cache for efficiency
         self.price_cache: Dict[str, pd.DataFrame] = {}
+
+        # Slippage model for realistic execution costs
+        self.enable_slippage = enable_slippage and SLIPPAGE_AVAILABLE
+        self.slippage_model = None
+        self.total_slippage_cost = 0.0  # Track cumulative slippage
+
+        if self.enable_slippage:
+            self.slippage_model = SlippageModel(
+                model_type=SlippageModelType.COMPREHENSIVE,
+                base_spread_bps=slippage_bps,
+                market_impact_bps=10.0,
+                latency_ms=100.0,
+            )
+            logger.info(f"Slippage model enabled: {slippage_bps} bps base spread")
+        else:
+            logger.warning("Slippage model disabled - results may be optimistic")
 
         logger.info(f"Backtest engine initialized: {start_date} to {end_date}")
         logger.info(f"Initial capital: ${initial_capital:,.2f}")
@@ -398,15 +424,45 @@ class BacktestEngine:
 
             # Execute trade if we have capital
             if self.current_capital >= effective_allocation:
-                quantity = effective_allocation / price
+                # Apply slippage to get realistic execution price
+                executed_price = price
+                slippage_cost = 0.0
 
-                # Record trade
+                if self.enable_slippage and self.slippage_model:
+                    # Get volume for market impact calculation
+                    hist = self._get_historical_data(best_etf, date)
+                    avg_volume = None
+                    volatility = None
+                    if hist is not None and len(hist) >= 20:
+                        avg_volume = hist["Volume"].tail(20).mean()
+                        returns = hist["Close"].pct_change().dropna()
+                        volatility = returns.tail(20).std() if len(returns) >= 20 else 0.02
+
+                    quantity_estimate = effective_allocation / price
+                    slippage_result = self.slippage_model.calculate_slippage(
+                        price=price,
+                        quantity=quantity_estimate,
+                        side="buy",
+                        symbol=best_etf,
+                        volume=avg_volume,
+                        volatility=volatility,
+                    )
+                    executed_price = slippage_result.executed_price
+                    slippage_cost = slippage_result.slippage_amount * quantity_estimate
+                    self.total_slippage_cost += slippage_cost
+
+                # Calculate actual quantity at executed price
+                quantity = effective_allocation / executed_price
+
+                # Record trade with slippage info
                 trade = {
                     "date": date_str,
                     "symbol": best_etf,
                     "action": "buy",
                     "quantity": quantity,
-                    "price": price,
+                    "price": executed_price,
+                    "base_price": price,
+                    "slippage_cost": slippage_cost,
                     "amount": effective_allocation,
                     "reason": f"Daily {allocation_type} purchase",
                 }
@@ -419,9 +475,15 @@ class BacktestEngine:
                 )
                 self.current_capital -= effective_allocation
 
-                logger.debug(
-                    f"{date_str}: BUY {quantity:.4f} {best_etf} @ ${price:.2f}"
-                )
+                if slippage_cost > 0:
+                    logger.debug(
+                        f"{date_str}: BUY {quantity:.4f} {best_etf} @ ${executed_price:.2f} "
+                        f"(base: ${price:.2f}, slippage: ${slippage_cost:.4f})"
+                    )
+                else:
+                    logger.debug(
+                        f"{date_str}: BUY {quantity:.4f} {best_etf} @ ${price:.2f}"
+                    )
 
         except Exception as e:
             logger.debug(f"Error simulating {date_str}: {e}")
@@ -623,7 +685,18 @@ class BacktestEngine:
             start_date=self.start_date.strftime("%Y-%m-%d"),
             end_date=self.end_date.strftime("%Y-%m-%d"),
             trading_days=len(self.dates) - 1,
+            total_slippage_cost=self.total_slippage_cost,
+            slippage_enabled=self.enable_slippage,
         )
+
+        # Log slippage impact
+        if self.enable_slippage and self.total_slippage_cost > 0:
+            pnl = final_capital - self.initial_capital
+            slippage_pct = (self.total_slippage_cost / pnl * 100) if pnl > 0 else 0
+            logger.info(
+                f"Total Slippage Cost: ${self.total_slippage_cost:.2f} "
+                f"({slippage_pct:.1f}% of P&L)"
+            )
 
         return results
 
