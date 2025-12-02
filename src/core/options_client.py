@@ -191,3 +191,119 @@ class AlpacaOptionsClient:
         except Exception as e:
             logger.error(f"Account check failed: {e}")
             return False
+
+    def submit_option_order(
+        self,
+        option_symbol: str,
+        qty: int,
+        side: str = "sell_to_open",
+        order_type: str = "limit",
+        limit_price: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """
+        Submit an option order (sell covered call, buy to close, etc).
+
+        Args:
+            option_symbol: OCC option symbol (e.g., "SPY251219C00600000")
+            qty: Number of contracts (1 contract = 100 shares)
+            side: Order side - "sell_to_open", "buy_to_close", "buy_to_open", "sell_to_close"
+            order_type: "market" or "limit"
+            limit_price: Limit price per contract (required if order_type="limit")
+
+        Returns:
+            Dictionary containing order information
+
+        Raises:
+            ValueError: If parameters are invalid
+            APIError: If order submission fails
+        """
+        from alpaca.trading.requests import (
+            MarketOrderRequest,
+            LimitOrderRequest,
+        )
+        from alpaca.trading.enums import OrderSide, TimeInForce
+
+        # Validate inputs
+        if qty <= 0:
+            raise ValueError(f"Quantity must be positive. Got {qty}")
+
+        if order_type not in ["market", "limit"]:
+            raise ValueError(f"Invalid order_type '{order_type}'. Must be 'market' or 'limit'.")
+
+        if order_type == "limit" and limit_price is None:
+            raise ValueError("limit_price is required for limit orders")
+
+        # Map side to Alpaca OrderSide
+        side_map = {
+            "sell_to_open": OrderSide.SELL,
+            "buy_to_close": OrderSide.BUY,
+            "buy_to_open": OrderSide.BUY,
+            "sell_to_close": OrderSide.SELL,
+        }
+
+        if side not in side_map:
+            raise ValueError(
+                f"Invalid side '{side}'. Must be one of: {list(side_map.keys())}"
+            )
+
+        alpaca_side = side_map[side]
+
+        try:
+            logger.info(
+                f"Submitting option order: {side} {qty} contract(s) of {option_symbol}"
+            )
+
+            # Check account status before placing order
+            account = self.trading_client.get_account()
+            if account.trading_blocked:
+                raise ValueError("Trading is blocked for this account")
+
+            # Create order request
+            if order_type == "market":
+                req = MarketOrderRequest(
+                    symbol=option_symbol,
+                    qty=qty,
+                    side=alpaca_side,
+                    time_in_force=TimeInForce.DAY,
+                )
+            else:  # limit
+                req = LimitOrderRequest(
+                    symbol=option_symbol,
+                    qty=qty,
+                    side=alpaca_side,
+                    time_in_force=TimeInForce.DAY,
+                    limit_price=limit_price,
+                )
+
+            # Submit order
+            order = self.trading_client.submit_order(req)
+
+            # Build result
+            order_info = {
+                "id": str(order.id),
+                "client_order_id": order.client_order_id,
+                "symbol": order.symbol,
+                "qty": float(order.qty) if order.qty else qty,
+                "side": str(order.side),
+                "type": str(order.type),
+                "time_in_force": str(order.time_in_force),
+                "status": str(order.status),
+                "submitted_at": str(order.submitted_at),
+                "filled_at": str(order.filled_at) if order.filled_at else None,
+                "filled_qty": float(order.filled_qty) if order.filled_qty else 0,
+                "filled_avg_price": (
+                    float(order.filled_avg_price) if order.filled_avg_price else None
+                ),
+                "limit_price": limit_price,
+            }
+
+            logger.info(
+                f"Option order submitted successfully: {order.id} - "
+                f"{side.upper()} {qty} {option_symbol}"
+            )
+
+            return order_info
+
+        except Exception as e:
+            logger.error(f"Option order submission failed: {e}")
+            raise

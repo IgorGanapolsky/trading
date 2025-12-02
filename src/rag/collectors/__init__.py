@@ -10,6 +10,7 @@ from src.rag.collectors.seekingalpha_collector import SeekingAlphaCollector
 from src.rag.collectors.berkshire_collector import BerkshireLettersCollector
 from src.rag.collectors.stocktwits_collector import StockTwitsCollector
 from src.rag.collectors.bogleheads_collector import BogleheadsCollector
+from src.rag.collectors.mcmillan_options_collector import McMillanOptionsKnowledgeBase
 
 __all__ = [
     "get_orchestrator",
@@ -23,4 +24,5 @@ __all__ = [
     "BerkshireLettersCollector",
     "StockTwitsCollector",
     "BogleheadsCollector",
+    "McMillanOptionsKnowledgeBase",
 ]

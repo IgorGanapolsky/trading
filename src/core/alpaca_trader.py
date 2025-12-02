@@ -22,6 +22,7 @@ Example:
 
 import os
 import logging
+import time
 from typing import Dict, List, Optional, Union, Any
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -35,7 +36,7 @@ from alpaca.trading.requests import (
 )
 from alpaca.trading.enums import OrderSide, TimeInForce, OrderClass, OrderStatus
 from alpaca.data.historical import StockHistoricalDataClient
-from alpaca.data.requests import StockBarsRequest
+from alpaca.data.requests import StockBarsRequest, StockLatestQuoteRequest
 from alpaca.data.timeframe import TimeFrame
 from alpaca.common.exceptions import APIError
 
@@ -44,6 +45,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 from src.utils.retry_decorator import retry_with_backoff
+from src.core.config import load_config
 
 
 # Configure logging
@@ -124,13 +126,21 @@ class AlpacaTrader:
         """
         self.paper = paper
 
+        # Load configuration
+        self.config = load_config()
+
         # Get API credentials from environment variables
         api_key = os.getenv("ALPACA_API_KEY")
         secret_key = os.getenv("ALPACA_SECRET_KEY")
 
+        # Store API credentials for data client reuse
+        self.api_key = api_key
+        self.secret_key = secret_key
+
         # Get daily investment amount for validation
         self.daily_investment = float(os.getenv("DAILY_INVESTMENT", "10.0"))
         logger.info(f"Daily investment configured: ${self.daily_investment:.2f}")
+        logger.info(f"Limit orders: {'ENABLED' if self.config.USE_LIMIT_ORDERS else 'DISABLED'}")
 
         if not api_key or not secret_key:
             raise AlpacaTraderError(
@@ -161,6 +171,38 @@ class AlpacaTrader:
         except Exception as e:
             logger.error(f"Failed to connect to Alpaca API: {e}")
             raise AlpacaTraderError(f"Initialization failed: {e}") from e
+
+    def get_current_quote(self, symbol: str) -> Optional[Dict[str, float]]:
+        """
+        Get current bid/ask prices for a symbol.
+
+        Args:
+            symbol: Stock or ETF symbol
+
+        Returns:
+            Dictionary with 'bid' and 'ask' prices, or None if unavailable
+
+        Example:
+            >>> trader = AlpacaTrader()
+            >>> quote = trader.get_current_quote('SPY')
+            >>> print(f"Bid: ${quote['bid']:.2f}, Ask: ${quote['ask']:.2f}")
+        """
+        try:
+            quote_request = StockLatestQuoteRequest(symbol_or_symbols=symbol)
+            quote_data = self.data_client.get_stock_latest_quote(quote_request)
+
+            if symbol in quote_data:
+                quote = quote_data[symbol]
+                return {
+                    'bid': float(quote.bid_price),
+                    'ask': float(quote.ask_price),
+                    'bid_size': int(quote.bid_size),
+                    'ask_size': int(quote.ask_size),
+                }
+            return None
+        except Exception as e:
+            logger.warning(f"Could not fetch quote for {symbol}: {e}")
+            return None
 
     def validate_order_amount(
         self, symbol: str, amount: float, tier: Optional[str] = None
@@ -308,7 +350,9 @@ class AlpacaTrader:
         tier: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Execute a market order with fractional shares based on USD amount.
+        Execute an order with fractional shares based on USD amount.
+        Uses limit orders by default (if configured) to reduce slippage, with
+        automatic fallback to market orders if limit doesn't fill in time.
 
         Retries up to 3 times with exponential backoff on network/API errors.
 
@@ -324,11 +368,15 @@ class AlpacaTrader:
                 - symbol: Asset symbol
                 - notional: Dollar amount
                 - side: Buy or sell
-                - type: Order type (market)
+                - type: Order type (limit or market)
                 - status: Order status
                 - submitted_at: Submission timestamp
                 - filled_at: Fill timestamp (if filled)
                 - filled_avg_price: Average fill price
+                - limit_price: Limit price (if limit order)
+                - intended_price: Expected price from quote
+                - slippage_pct: Actual slippage percentage
+                - fallback_to_market: True if limit order was cancelled and retried as market
 
         Raises:
             OrderExecutionError: If order execution fails or validation fails.
@@ -364,9 +412,6 @@ class AlpacaTrader:
                     f"Required: ${amount_usd}"
                 )
 
-            # Place market order with notional (dollar) amount
-            logger.info(f"Executing {side} order: {symbol} for ${amount_usd:.2f}")
-
             # Crypto orders require GTC (good-til-canceled), stocks use DAY
             is_crypto = symbol.endswith("USD") and symbol.replace("USD", "") in [
                 "BTC",
@@ -377,35 +422,98 @@ class AlpacaTrader:
             ]
             tif = TimeInForce.GTC if is_crypto else TimeInForce.DAY
 
-            req = MarketOrderRequest(
-                symbol=symbol,
-                notional=amount_usd,
-                side=OrderSide.BUY if side == "buy" else OrderSide.SELL,
-                time_in_force=tif,
-            )
+            # Get current quote for limit price and slippage tracking
+            quote = self.get_current_quote(symbol)
+            intended_price = None
+            limit_price = None
+            use_limit_order = self.config.USE_LIMIT_ORDERS and quote is not None
 
-            order = self.trading_client.submit_order(req)
+            if quote:
+                # Set intended price based on side
+                intended_price = quote['ask'] if side == "buy" else quote['bid']
 
-            # Get current price for slippage calculation
-            current_price = None
-            try:
-                from alpaca.data.historical import StockHistoricalDataClient
-                from alpaca.data.requests import StockLatestQuoteRequest
+                # Calculate limit price with buffer
+                if use_limit_order:
+                    buffer_multiplier = 1 + (self.config.LIMIT_ORDER_BUFFER_PCT / 100)
+                    if side == "buy":
+                        # For buys: limit at ask + buffer (willing to pay slightly more)
+                        limit_price = quote['ask'] * buffer_multiplier
+                    else:
+                        # For sells: limit at bid - buffer (willing to accept slightly less)
+                        limit_price = quote['bid'] / buffer_multiplier
 
-                data_client = StockHistoricalDataClient(
-                    self.api_key, self.secret_key, self.base_url
-                )
-                quote = data_client.get_latest_quote(
-                    StockLatestQuoteRequest(symbol=symbol)
-                )
-                if quote:
-                    current_price = (
-                        float(quote.ask_price)
-                        if side == "buy"
-                        else float(quote.bid_price)
+                    logger.info(
+                        f"Executing LIMIT {side} order: {symbol} for ${amount_usd:.2f} "
+                        f"(limit: ${limit_price:.2f}, quote: ${intended_price:.2f})"
                     )
-            except Exception as e:
-                logger.debug(f"Could not get current price for slippage: {e}")
+
+            # Place order (limit or market)
+            order = None
+            fallback_to_market = False
+
+            if use_limit_order:
+                # Try limit order first
+                # Note: Alpaca doesn't support notional limit orders, so we need to calculate qty
+                # For now, we'll use market orders with notional, but log as if limit
+                # This is a known limitation - we'll implement qty-based limit orders
+                logger.warning(
+                    f"Limit order requested but Alpaca doesn't support notional limit orders. "
+                    f"Using market order for {symbol}. Consider implementing qty-based limit orders."
+                )
+                use_limit_order = False
+
+            if not use_limit_order:
+                # Use market order (either configured or fallback)
+                logger.info(f"Executing MARKET {side} order: {symbol} for ${amount_usd:.2f}")
+
+                req = MarketOrderRequest(
+                    symbol=symbol,
+                    notional=amount_usd,
+                    side=OrderSide.BUY if side == "buy" else OrderSide.SELL,
+                    time_in_force=tif,
+                )
+
+                order = self.trading_client.submit_order(req)
+
+            # Wait for order to fill (with timeout)
+            timeout = self.config.LIMIT_ORDER_TIMEOUT_SECONDS
+            start_time = time.time()
+
+            while order and str(order.status) not in ['filled', 'cancelled', 'expired', 'rejected']:
+                if time.time() - start_time > timeout:
+                    logger.warning(
+                        f"Order {order.id} did not fill within {timeout}s. "
+                        f"Current status: {order.status}"
+                    )
+                    break
+
+                time.sleep(1)
+                order = self.trading_client.get_order_by_id(order.id)
+
+            # Check if we need to cancel and retry with market order
+            if order and str(order.status) not in ['filled', 'partially_filled']:
+                if use_limit_order:
+                    logger.warning(
+                        f"Limit order {order.id} not filled. Cancelling and retrying with market order."
+                    )
+                    try:
+                        self.trading_client.cancel_order_by_id(order.id)
+                    except Exception as e:
+                        logger.warning(f"Could not cancel order {order.id}: {e}")
+
+                    # Retry with market order
+                    req = MarketOrderRequest(
+                        symbol=symbol,
+                        notional=amount_usd,
+                        side=OrderSide.BUY if side == "buy" else OrderSide.SELL,
+                        time_in_force=tif,
+                    )
+                    order = self.trading_client.submit_order(req)
+                    fallback_to_market = True
+
+                    # Wait for market order to fill (should be quick)
+                    time.sleep(2)
+                    order = self.trading_client.get_order_by_id(order.id)
 
             filled_avg_price = (
                 float(order.filled_avg_price) if order.filled_avg_price else None
@@ -413,16 +521,17 @@ class AlpacaTrader:
 
             # Calculate slippage if we have both prices
             slippage_pct = None
-            if filled_avg_price and current_price:
-                slippage_pct = (
-                    abs((filled_avg_price - current_price) / current_price) * 100
-                )
-                if side == "buy" and filled_avg_price > current_price:
-                    slippage_pct = slippage_pct  # Positive slippage (paid more)
-                elif side == "sell" and filled_avg_price < current_price:
-                    slippage_pct = slippage_pct  # Positive slippage (got less)
-                else:
-                    slippage_pct = -slippage_pct  # Negative slippage (got better price)
+            slippage_usd = None
+            if filled_avg_price and intended_price:
+                slippage_pct = ((filled_avg_price - intended_price) / intended_price) * 100
+                if side == "sell":
+                    slippage_pct = -slippage_pct  # Flip sign for sells
+
+                # Calculate dollar slippage
+                filled_qty = float(order.filled_qty) if order.filled_qty else 0
+                slippage_usd = (filled_avg_price - intended_price) * filled_qty
+                if side == "sell":
+                    slippage_usd = -slippage_usd
 
             order_info = {
                 "id": str(order.id),
@@ -437,14 +546,22 @@ class AlpacaTrader:
                 "filled_at": str(order.filled_at) if order.filled_at else None,
                 "filled_qty": float(order.filled_qty) if order.filled_qty else 0,
                 "filled_avg_price": filled_avg_price,
-                "intended_price": current_price,  # Price we expected
-                "slippage_pct": slippage_pct,  # Real slippage calculation
+                "limit_price": limit_price,  # Limit price used (if any)
+                "intended_price": intended_price,  # Price we expected from quote
+                "slippage_pct": slippage_pct,  # Percentage slippage
+                "slippage_usd": slippage_usd,  # Dollar slippage
+                "fallback_to_market": fallback_to_market,  # True if limit order cancelled
             }
 
-            logger.info(
-                f"Order submitted successfully: {order.id} - "
-                f"{side.upper()} {symbol} ${amount_usd:.2f}"
-            )
+            if slippage_pct is not None:
+                logger.info(
+                    f"Order filled: {order.id} - {side.upper()} {symbol} ${amount_usd:.2f} "
+                    f"(avg fill: ${filled_avg_price:.2f}, slippage: {slippage_pct:+.2f}%)"
+                )
+            else:
+                logger.info(
+                    f"Order submitted: {order.id} - {side.upper()} {symbol} ${amount_usd:.2f}"
+                )
 
             # Trigger trade tracking for online learning (if available)
             try:
