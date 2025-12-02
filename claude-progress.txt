@@ -135,3 +135,41 @@ Next Steps:
 - Run backtest with new 7-ETF portfolio allocation
 - Continue R&D phase to validate win rate holds with expanded universe
 - Next trade: Dec 03, 9:35 AM ET (will include new assets in momentum selection)
+
+2025-12-02 01:00 - Claude Opus 4 (CTO)
+Summary:
+- Implemented Phil Town's Rule #1 Options Strategy per CEO request
+- Created comprehensive src/strategies/rule_one_options.py with:
+  - Sticker Price Calculator (Phil Town's formula)
+  - Big Five Analysis (ROIC, Equity, EPS, Sales, FCF growth)
+  - "Selling Puts to Buy at Discount" strategy
+  - "Selling Covered Calls to Sell at Premium" strategy
+- Added quality universe: AAPL, MSFT, GOOGL, AMZN, BRK-B, V, MA, JNJ, etc.
+- Created tests in tests/test_rule_one_options.py
+- Updated plan.md with options roadmap and yield estimates
+
+Files Changed:
+- src/strategies/rule_one_options.py (NEW - 550+ lines)
+- tests/test_rule_one_options.py (NEW - comprehensive tests)
+- plan.md (added Phil Town options section)
+- claude-progress.txt (this entry)
+
+Key Features:
+1. Sticker Price = Future Value discounted at 15% MARR
+2. MOS Price = 50% of Sticker Price (buy target)
+3. Sell puts at MOS, sell calls at Sticker
+4. Big Five screen ensures only quality stocks
+5. 12%+ annualized yield target on options
+
+Options Timeline:
+- Now: Building positions, research only
+- Month 3: Start covered calls (need 50+ shares)
+- Month 6: Start put selling ($5k+ cash)
+- Month 12: Full deployment of both strategies
+
+Expected Yield Boost: +$50-150/month at $10k portfolio
+
+Next Steps:
+- Accumulate 50+ shares of NVDA for first covered call
+- Monitor Big Five metrics on Rule #1 universe
+- Options trading will auto-activate when thresholds met

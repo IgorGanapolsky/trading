@@ -86,6 +86,53 @@ Assumptions:
 - [ ] Scale daily input as account grows
 - [ ] Target $100/day net by Month 18
 
+## Phil Town Rule #1 Options (Yield Acceleration)
+
+**Added Dec 2, 2025** - Options strategies to accelerate path to $100/day.
+
+### Strategy 1: Selling Puts ("Getting Paid to Wait")
+- Sell cash-secured puts at MOS (Margin of Safety) price
+- Strike = 50% below Sticker Price (fair value)
+- If assigned: Own stock at target price minus premium
+- If not assigned: Keep premium as profit
+- Target: 12%+ annualized yield
+
+### Strategy 2: Covered Calls ("Getting Paid to Sell")
+- Sell calls at Sticker Price on stocks you own
+- If called away: Sell at fair value plus premium
+- If not called: Keep premium and shares
+- Requires: 100+ shares per position
+
+### Sticker Price Formula (Phil Town)
+```
+1. Future EPS = Current EPS × (1 + growth)^10
+2. Future P/E = min(growth × 200, 50)
+3. Future Price = Future EPS × Future P/E
+4. Sticker Price = Future Price ÷ 1.15^10
+5. MOS Price = Sticker Price × 0.50
+```
+
+### Big Five Quality Screen
+All metrics should be 10%+ over 10 years:
+- ROIC (Return on Invested Capital)
+- Equity Growth Rate
+- EPS Growth Rate
+- Sales Growth Rate
+- Free Cash Flow Growth Rate
+
+### Options Timeline
+| Phase | Requirement | Options Action |
+|-------|------------|----------------|
+| Now (Day 9) | Building positions | Research, no trades |
+| Month 3 | 50+ shares NVDA | Start covered calls |
+| Month 6 | $5,000+ cash | Start put selling |
+| Month 12 | Full deployment | Both strategies active |
+
+### Estimated Yield Boost
+- Covered calls: +1-2% monthly on positions
+- Put selling: +1-3% monthly on cash
+- Combined: +$50-150/month at $10k portfolio
+
 ## Risk Guardrails
 
 | Guard | Threshold | Action |
