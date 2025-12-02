@@ -48,6 +48,9 @@ class UnifiedRiskManager:
         rl_confidence: float,
         sentiment_score: float,
         multiplier: float = 1.0,
+        current_price: float | None = None,
+        hist: Any | None = None,
+        market_regime: str | None = None,
     ) -> float:
         if not self._simple:
             return 0.0
@@ -58,6 +61,9 @@ class UnifiedRiskManager:
             rl_confidence=rl_confidence,
             sentiment_score=sentiment_score,
             multiplier=multiplier,
+            current_price=current_price,
+            hist=hist,
+            market_regime=market_regime,
         )
 
     # --- Full safeguards used by legacy/crypto flows ---

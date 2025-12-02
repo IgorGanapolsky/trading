@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/igorganapolsky/trading/adk_trading/internal/observability"
+	"github.com/igorganapolsky/trading/adk_trading/internal/tools/bias"
 	"github.com/igorganapolsky/trading/adk_trading/internal/tools/logging"
 	"github.com/igorganapolsky/trading/adk_trading/internal/tools/marketdata"
 	"github.com/igorganapolsky/trading/adk_trading/internal/tools/risk"
@@ -74,6 +75,15 @@ func BuildTradingOrchestrator(ctx context.Context, cfg Config) (agent.Agent, []a
 		return nil, nil, fmt.Errorf("market data tool: %w", err)
 	}
 
+	biasDir := os.Getenv("BIAS_DATA_DIR")
+	if strings.TrimSpace(biasDir) == "" {
+		biasDir = filepath.Join(cfg.DataDir, "bias")
+	}
+	biasTool, err := bias.New(biasDir)
+	if err != nil {
+		return nil, nil, fmt.Errorf("bias tool: %w", err)
+	}
+
 	logTool, err := logging.New(cfg.LogPath, cfg.ObservabilityRecorder)
 	if err != nil {
 		return nil, nil, fmt.Errorf("logging tool: %w", err)
@@ -84,12 +94,12 @@ func BuildTradingOrchestrator(ctx context.Context, cfg Config) (agent.Agent, []a
 		return nil, nil, fmt.Errorf("risk tool: %w", err)
 	}
 
-	researchAgent, err := newResearchAgent(geminiModel, marketTool)
+	researchAgent, err := newResearchAgent(geminiModel, marketTool, biasTool)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	signalAgent, err := newSignalAgent(geminiModel, marketTool)
+	signalAgent, err := newSignalAgent(geminiModel, marketTool, biasTool)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -112,7 +122,11 @@ func BuildTradingOrchestrator(ctx context.Context, cfg Config) (agent.Agent, []a
 	return rootAgent, []agent.Agent{researchAgent, signalAgent, riskAgent, executionAgent}, nil
 }
 
-func newResearchAgent(llm model.LLM, market tool.Tool) (agent.Agent, error) {
+func newResearchAgent(llm model.LLM, market tool.Tool, bias tool.Tool) (agent.Agent, error) {
+	tools := []tool.Tool{market}
+	if bias != nil {
+		tools = append(tools, bias)
+	}
 	return llmagent.New(llmagent.Config{
 		Name:        "research_agent",
 		Model:       llm,
@@ -120,30 +134,36 @@ func newResearchAgent(llm model.LLM, market tool.Tool) (agent.Agent, error) {
 		Instruction: strings.TrimSpace(`
 You synthesize recent market structure for the target symbol.
 Always call the get_market_snapshot tool before drafting conclusions to inspect quantitative features.
+If get_bias_snapshot is available, compare its score with your findings.
 Return a concise JSON object with keys:
   - symbol
   - market_regime (bullish, bearish, range-bound)
   - narrative (two sentences max)
   - supporting_metrics (map of indicator -> value)
 `),
-		Tools: []tool.Tool{market},
+		Tools: tools,
 	})
 }
 
-func newSignalAgent(llm model.LLM, market tool.Tool) (agent.Agent, error) {
+func newSignalAgent(llm model.LLM, market tool.Tool, bias tool.Tool) (agent.Agent, error) {
+	tools := []tool.Tool{market}
+	if bias != nil {
+		tools = append(tools, bias)
+	}
 	return llmagent.New(llmagent.Config{
 		Name:        "signal_agent",
 		Model:       llm,
 		Description: "Generates directional trade hypotheses with entry/exit targets.",
 		Instruction: strings.TrimSpace(`
 Leverage research_agent findings and get_market_snapshot as needed to produce a trading signal.
+If get_bias_snapshot is available, explicitly state whether you are aligned or deliberately fading it.
 Provide JSON with fields:
   - action (BUY, SELL, HOLD)
   - conviction (0-1)
   - entry_window (price range)
   - exit_plan (targets and stop)
 `),
-		Tools: []tool.Tool{market},
+		Tools: tools,
 	})
 }
 
