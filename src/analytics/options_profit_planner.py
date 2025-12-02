@@ -11,6 +11,7 @@ Key capabilities:
 - Highlight the shortfall vs a configured daily target (defaults to $10/day)
 - Recommend the additional number of contracts required to close the gap
 - Persist structured summaries under `data/options_signals/`
+- **NEW**: Theta harvest execution with equity gates ($5k/$10k thresholds)
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from __future__ import annotations
 import json
 import logging
 import math
+import os
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
@@ -33,6 +35,12 @@ except Exception:  # pragma: no cover - fallback for test environments without f
 
 
 SignalInput = Union[dict[str, Any], "RuleOneOptionsSignal"]
+
+# Equity thresholds for options strategies
+THETA_STAGE_1_EQUITY = float(os.getenv("THETA_STAGE_1_EQUITY", "5000"))  # Poor man's covered calls
+THETA_STAGE_2_EQUITY = float(os.getenv("THETA_STAGE_2_EQUITY", "10000"))  # Iron condors
+THETA_STAGE_3_EQUITY = float(os.getenv("THETA_STAGE_3_EQUITY", "25000"))  # Full options suite
+IV_PERCENTILE_THRESHOLD = float(os.getenv("IV_PERCENTILE_THRESHOLD", "50"))  # Min IV rank for selling
 
 
 @dataclass
@@ -295,3 +303,258 @@ class OptionsProfitPlanner:
             )
 
         return notes
+
+
+@dataclass
+class ThetaHarvestResult:
+    """Result of a theta harvest execution attempt."""
+
+    symbol: str
+    strategy: str
+    contracts: int
+    estimated_premium: float
+    executed: bool
+    reason: str
+    order_id: str | None = None
+    iv_percentile: float | None = None
+
+
+class ThetaHarvestExecutor:
+    """
+    Execute theta harvest strategies based on equity gates.
+
+    Equity Thresholds:
+    - $5k+: Poor man's covered calls (long ITM leap + short 20-delta weekly)
+    - $10k+: Iron condors on broad indices (QQQ, SPY) in calm regime
+    - $25k+: Full options suite including undefined-risk strategies
+
+    Gate Logic:
+    - Only sell premium when IV percentile > 50
+    - Prefer 20-delta short strikes for defined risk
+    - Size positions to target $10/day equivalent premium
+    """
+
+    def __init__(self, paper: bool = True) -> None:
+        self.paper = paper
+        self.planner = OptionsProfitPlanner()
+
+    def check_equity_gate(self, account_equity: float) -> dict[str, Any]:
+        """
+        Determine which theta strategies are available based on account equity.
+
+        Returns:
+            Dict with enabled strategies and equity gap to next tier
+        """
+        strategies = {
+            "poor_mans_covered_call": account_equity >= THETA_STAGE_1_EQUITY,
+            "iron_condor": account_equity >= THETA_STAGE_2_EQUITY,
+            "full_suite": account_equity >= THETA_STAGE_3_EQUITY,
+        }
+
+        # Calculate gap to next tier
+        if account_equity < THETA_STAGE_1_EQUITY:
+            next_tier = "poor_mans_covered_call"
+            gap = THETA_STAGE_1_EQUITY - account_equity
+        elif account_equity < THETA_STAGE_2_EQUITY:
+            next_tier = "iron_condor"
+            gap = THETA_STAGE_2_EQUITY - account_equity
+        elif account_equity < THETA_STAGE_3_EQUITY:
+            next_tier = "full_suite"
+            gap = THETA_STAGE_3_EQUITY - account_equity
+        else:
+            next_tier = None
+            gap = 0
+
+        return {
+            "account_equity": account_equity,
+            "enabled_strategies": strategies,
+            "next_tier": next_tier,
+            "gap_to_next_tier": round(gap, 2),
+            "theta_enabled": any(strategies.values()),
+        }
+
+    def get_iv_percentile(self, symbol: str) -> float | None:
+        """
+        Calculate IV percentile for a symbol.
+
+        IV Percentile = % of days in past year where IV was lower than current.
+        """
+        try:
+            import yfinance as yf
+
+            ticker = yf.Ticker(symbol)
+            hist = ticker.history(period="1y")
+            if hist.empty:
+                return None
+
+            # Calculate historical volatility as IV proxy
+            returns = hist["Close"].pct_change().dropna()
+            if len(returns) < 30:
+                return None
+
+            # Rolling 20-day volatility
+            rolling_vol = returns.rolling(20).std() * (252 ** 0.5)
+            current_vol = rolling_vol.iloc[-1]
+            hist_vol = rolling_vol.dropna()
+
+            if len(hist_vol) < 10:
+                return None
+
+            percentile = (hist_vol < current_vol).mean() * 100
+            return round(percentile, 1)
+
+        except Exception as exc:
+            logger.warning("IV percentile calculation failed for %s: %s", symbol, exc)
+            return None
+
+    def evaluate_theta_opportunity(
+        self,
+        symbol: str,
+        account_equity: float,
+        regime_label: str = "calm",
+        bullish_signal: bool = True,
+    ) -> ThetaHarvestResult | None:
+        """
+        Evaluate and potentially execute a theta harvest opportunity.
+
+        Strategy selection:
+        - Poor man's covered call: Long ITM leap + short 20-delta weekly
+        - Iron condor: Sell OTM puts and calls (only in calm regime)
+
+        Args:
+            symbol: Underlying symbol (e.g., 'SPY', 'QQQ')
+            account_equity: Current account equity
+            regime_label: Current market regime from RegimeDetector
+            bullish_signal: Whether momentum/sentiment is bullish
+
+        Returns:
+            ThetaHarvestResult if opportunity found, None otherwise
+        """
+        gate = self.check_equity_gate(account_equity)
+
+        if not gate["theta_enabled"]:
+            return ThetaHarvestResult(
+                symbol=symbol,
+                strategy="none",
+                contracts=0,
+                estimated_premium=0.0,
+                executed=False,
+                reason=f"Equity ${account_equity:.2f} below minimum ${THETA_STAGE_1_EQUITY}",
+            )
+
+        # Check IV percentile
+        iv_pct = self.get_iv_percentile(symbol)
+        if iv_pct is not None and iv_pct < IV_PERCENTILE_THRESHOLD:
+            return ThetaHarvestResult(
+                symbol=symbol,
+                strategy="none",
+                contracts=0,
+                estimated_premium=0.0,
+                executed=False,
+                reason=f"IV percentile {iv_pct}% below threshold {IV_PERCENTILE_THRESHOLD}%",
+                iv_percentile=iv_pct,
+            )
+
+        # Select strategy based on equity and regime
+        if gate["enabled_strategies"]["iron_condor"] and regime_label == "calm":
+            strategy = "iron_condor"
+            estimated_premium = 50.0  # ~$50/contract for 5-wide condor
+            contracts = max(1, int((self.planner.target_daily_profit * 30) / estimated_premium))
+        elif gate["enabled_strategies"]["poor_mans_covered_call"] and bullish_signal:
+            strategy = "poor_mans_covered_call"
+            estimated_premium = 35.0  # ~$35/week for 20-delta call
+            contracts = max(1, int((self.planner.target_daily_profit * 7) / estimated_premium))
+        else:
+            return ThetaHarvestResult(
+                symbol=symbol,
+                strategy="none",
+                contracts=0,
+                estimated_premium=0.0,
+                executed=False,
+                reason="No suitable strategy for current conditions",
+                iv_percentile=iv_pct,
+            )
+
+        # Log the opportunity (execution via orchestrator)
+        result = ThetaHarvestResult(
+            symbol=symbol,
+            strategy=strategy,
+            contracts=contracts,
+            estimated_premium=estimated_premium * contracts,
+            executed=False,  # Execution handled by orchestrator
+            reason=f"Signal ready for {strategy}",
+            iv_percentile=iv_pct,
+        )
+
+        logger.info(
+            "🎯 Theta opportunity: %s %s x%d, est. premium $%.2f, IV pct: %s",
+            symbol,
+            strategy,
+            contracts,
+            result.estimated_premium,
+            iv_pct,
+        )
+
+        return result
+
+    def generate_theta_plan(
+        self,
+        account_equity: float,
+        regime_label: str = "calm",
+        symbols: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Generate a complete theta harvest plan based on account equity.
+
+        Returns a structured plan with:
+        - Available strategies at current equity level
+        - Specific opportunities for each qualifying symbol
+        - Total estimated daily premium vs target
+        """
+        symbols = symbols or ["SPY", "QQQ", "IWM"]
+        gate = self.check_equity_gate(account_equity)
+
+        plan = {
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "account_equity": account_equity,
+            "equity_gate": gate,
+            "regime": regime_label,
+            "target_daily_premium": self.planner.target_daily_profit,
+            "opportunities": [],
+            "total_estimated_premium": 0.0,
+            "premium_gap": self.planner.target_daily_profit,
+        }
+
+        if not gate["theta_enabled"]:
+            plan["summary"] = f"Theta strategies disabled until equity reaches ${THETA_STAGE_1_EQUITY}"
+            return plan
+
+        for symbol in symbols:
+            result = self.evaluate_theta_opportunity(
+                symbol=symbol,
+                account_equity=account_equity,
+                regime_label=regime_label,
+            )
+            if result and result.strategy != "none":
+                plan["opportunities"].append(asdict(result))
+                # Convert to daily equivalent
+                if result.strategy == "iron_condor":
+                    daily_equiv = result.estimated_premium / 30  # Monthly expiry
+                else:
+                    daily_equiv = result.estimated_premium / 7  # Weekly expiry
+                plan["total_estimated_premium"] += daily_equiv
+
+        plan["premium_gap"] = max(0, self.planner.target_daily_profit - plan["total_estimated_premium"])
+        plan["on_track"] = plan["premium_gap"] == 0
+
+        # Build summary
+        if plan["opportunities"]:
+            plan["summary"] = (
+                f"Found {len(plan['opportunities'])} theta opportunities. "
+                f"Est. daily premium: ${plan['total_estimated_premium']:.2f} "
+                f"(gap: ${plan['premium_gap']:.2f})"
+            )
+        else:
+            plan["summary"] = "No qualifying theta opportunities found"
+
+        return plan

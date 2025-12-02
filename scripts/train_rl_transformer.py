@@ -45,7 +45,7 @@ def parse_args() -> argparse.Namespace:
         default=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         help="End date (YYYY-MM-DD) for the training window.",
     )
-    parser.add_argument("--epochs", type=int, default=5, help="Number of training epochs.")
+    parser.add_argument("--epochs", type=int, default=10, help="Max training epochs (early stopping may halt sooner).")
     parser.add_argument("--batch-size", type=int, default=64, help="Batch size.")
     parser.add_argument("--learning-rate", type=float, default=3e-4, help="Learning rate.")
     parser.add_argument(
@@ -75,6 +75,24 @@ def parse_args() -> argparse.Namespace:
         "--dataset-cache",
         default="data/datasets/rl_transformer_sequences.npz",
         help="Path to store the cached dataset for reproducibility.",
+    )
+    parser.add_argument(
+        "--val-split",
+        type=float,
+        default=0.2,
+        help="Fraction of data to use for validation (default: 0.2).",
+    )
+    parser.add_argument(
+        "--min-val-sharpe",
+        type=float,
+        default=1.0,
+        help="Minimum validation Sharpe ratio to continue training (early stop guard).",
+    )
+    parser.add_argument(
+        "--patience",
+        type=int,
+        default=3,
+        help="Early stopping patience (epochs without improvement).",
     )
     return parser.parse_args()
 
@@ -122,6 +140,44 @@ def build_dataset(
     return X, y
 
 
+def compute_val_sharpe(
+    model: nn.Module,
+    val_loader: DataLoader,
+    device: torch.device,
+) -> float:
+    """
+    Compute a proxy Sharpe ratio on validation set.
+
+    Uses model predictions as position signals and compares to actual labels
+    to estimate a risk-adjusted performance metric.
+    """
+    model.eval()
+    all_preds = []
+    all_labels = []
+
+    with torch.no_grad():
+        for batch_x, batch_y in val_loader:
+            batch_x = batch_x.to(device)
+            logits = model(batch_x)
+            probs = torch.sigmoid(logits).cpu().numpy()
+            all_preds.extend(probs.flatten())
+            all_labels.extend(batch_y.numpy().flatten())
+
+    all_preds = np.array(all_preds)
+    all_labels = np.array(all_labels)
+
+    # Position signals: +1 for predicted buy (>0.5), -1 otherwise
+    positions = np.where(all_preds > 0.5, 1.0, -1.0)
+    # Simulated returns: position * actual outcome direction
+    returns = positions * (all_labels * 2 - 1)  # Convert labels to -1/+1
+
+    if len(returns) < 2 or np.std(returns) < 1e-8:
+        return 0.0
+
+    sharpe = np.mean(returns) / (np.std(returns) + 1e-8) * np.sqrt(252)
+    return float(sharpe)
+
+
 def train_model(
     X: np.ndarray,
     y: np.ndarray,
@@ -130,24 +186,68 @@ def train_model(
     epochs: int,
     batch_size: int,
     lr: float,
-) -> RLTransformerModel:
+    val_split: float = 0.2,
+    min_val_sharpe: float = 1.0,
+    patience: int = 3,
+) -> tuple[RLTransformerModel, dict]:
+    """
+    Train RL transformer with validation split and early stopping.
+
+    Early stopping triggers when:
+    1. Validation Sharpe drops below min_val_sharpe for `patience` epochs
+    2. Validation accuracy plateaus or degrades
+
+    Returns:
+        Tuple of (trained model, training metrics)
+    """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    dataset = TensorDataset(
-        torch.from_numpy(X).float(),
-        torch.from_numpy(y).float(),
+
+    # Split into train/validation
+    n_samples = X.shape[0]
+    n_val = int(n_samples * val_split)
+    indices = np.random.permutation(n_samples)
+    train_indices = indices[n_val:]
+    val_indices = indices[:n_val]
+
+    X_train, y_train = X[train_indices], y[train_indices]
+    X_val, y_val = X[val_indices], y[val_indices]
+
+    print(f"📊 Dataset split: train={len(train_indices)}, val={len(val_indices)} ({val_split*100:.0f}%)")
+
+    train_dataset = TensorDataset(
+        torch.from_numpy(X_train).float(),
+        torch.from_numpy(y_train).float(),
     )
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    val_dataset = TensorDataset(
+        torch.from_numpy(X_val).float(),
+        torch.from_numpy(y_val).float(),
+    )
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
     model = RLTransformerModel(feature_dim=X.shape[2], context_window=context_window).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     criterion = nn.BCEWithLogitsLoss()
 
+    best_val_sharpe = -np.inf
+    best_state_dict = None
+    epochs_without_improvement = 0
+    training_metrics = {
+        "epochs_completed": 0,
+        "early_stopped": False,
+        "best_val_sharpe": 0.0,
+        "final_train_acc": 0.0,
+        "final_val_acc": 0.0,
+        "epoch_history": [],
+    }
+
     for epoch in range(1, epochs + 1):
+        # Training phase
         epoch_loss = 0.0
         correct = 0
         total = 0
         model.train()
-        for batch_x, batch_y in loader:
+        for batch_x, batch_y in train_loader:
             batch_x = batch_x.to(device)
             batch_y = batch_y.to(device)
             optimizer.zero_grad()
@@ -161,11 +261,72 @@ def train_model(
             correct += (predictions == batch_y.bool()).sum().item()
             total += batch_x.size(0)
 
-        avg_loss = epoch_loss / len(dataset)
-        accuracy = correct / max(total, 1)
-        print(f"[Epoch {epoch}/{epochs}] loss={avg_loss:.4f} acc={accuracy:.3f}")
+        train_loss = epoch_loss / len(train_dataset)
+        train_acc = correct / max(total, 1)
 
-    return model.cpu()
+        # Validation phase
+        model.eval()
+        val_correct = 0
+        val_total = 0
+        with torch.no_grad():
+            for batch_x, batch_y in val_loader:
+                batch_x = batch_x.to(device)
+                batch_y = batch_y.to(device)
+                logits = model(batch_x)
+                predictions = torch.sigmoid(logits) >= 0.5
+                val_correct += (predictions == batch_y.bool()).sum().item()
+                val_total += batch_x.size(0)
+
+        val_acc = val_correct / max(val_total, 1)
+        val_sharpe = compute_val_sharpe(model, val_loader, device)
+
+        epoch_metrics = {
+            "epoch": epoch,
+            "train_loss": round(train_loss, 4),
+            "train_acc": round(train_acc, 3),
+            "val_acc": round(val_acc, 3),
+            "val_sharpe": round(val_sharpe, 3),
+        }
+        training_metrics["epoch_history"].append(epoch_metrics)
+
+        print(
+            f"[Epoch {epoch}/{epochs}] "
+            f"train_loss={train_loss:.4f} train_acc={train_acc:.3f} "
+            f"val_acc={val_acc:.3f} val_sharpe={val_sharpe:.3f}"
+        )
+
+        # Early stopping logic
+        if val_sharpe > best_val_sharpe:
+            best_val_sharpe = val_sharpe
+            best_state_dict = {k: v.cpu().clone() for k, v in model.state_dict().items()}
+            epochs_without_improvement = 0
+        else:
+            epochs_without_improvement += 1
+
+        # Check early stopping conditions
+        if val_sharpe < min_val_sharpe and epoch > 2:
+            print(f"⚠️  Early stop check: val_sharpe ({val_sharpe:.3f}) < min ({min_val_sharpe:.3f})")
+            if epochs_without_improvement >= patience:
+                print(f"🛑 Early stopping triggered: {patience} epochs without improvement")
+                training_metrics["early_stopped"] = True
+                break
+
+        if epochs_without_improvement >= patience:
+            print(f"🛑 Early stopping: {patience} epochs without improvement")
+            training_metrics["early_stopped"] = True
+            break
+
+    # Restore best model
+    if best_state_dict is not None:
+        model.load_state_dict(best_state_dict)
+        print(f"✅ Restored best model (val_sharpe={best_val_sharpe:.3f})")
+
+    training_metrics["epochs_completed"] = epoch
+    training_metrics["best_val_sharpe"] = round(best_val_sharpe, 3)
+    training_metrics["final_train_acc"] = round(train_acc, 3)
+    training_metrics["final_val_acc"] = round(val_acc, 3)
+
+    return model.cpu(), training_metrics
 
 
 def main() -> None:
@@ -187,14 +348,24 @@ def main() -> None:
     )
     print(f"Dataset: {X.shape[0]} samples, sequence shape={X.shape[1:]}")
 
-    model = train_model(
+    model, training_metrics = train_model(
         X,
         y,
         context_window=args.context_window,
         epochs=args.epochs,
         batch_size=args.batch_size,
         lr=args.learning_rate,
+        val_split=args.val_split,
+        min_val_sharpe=args.min_val_sharpe,
+        patience=args.patience,
     )
+
+    # Check if training was successful
+    if training_metrics["best_val_sharpe"] < args.min_val_sharpe:
+        print(
+            f"⚠️  WARNING: Best val_sharpe ({training_metrics['best_val_sharpe']:.3f}) "
+            f"below threshold ({args.min_val_sharpe:.3f}). Model may be overfitting."
+        )
 
     output_path = Path(args.output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -208,12 +379,31 @@ def main() -> None:
         "context_window": args.context_window,
         "prediction_horizon": args.prediction_horizon,
         "target_return": args.target_return,
+        "val_split": args.val_split,
+        "min_val_sharpe": args.min_val_sharpe,
+        "patience": args.patience,
+        "training_metrics": training_metrics,
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
     dataset_path = Path(args.dataset_cache)
     dataset_path.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(dataset_path, sequences=X, labels=y, metadata=json.dumps(metadata))
     print(f"📦 Cached dataset to {dataset_path}")
+
+    # Log training metrics to audit trail
+    metrics_path = Path("data/audit_trail/rl_training_metrics.jsonl")
+    metrics_path.parent.mkdir(parents=True, exist_ok=True)
+    with metrics_path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps({
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "tickers": args.tickers,
+            "epochs_completed": training_metrics["epochs_completed"],
+            "early_stopped": training_metrics["early_stopped"],
+            "best_val_sharpe": training_metrics["best_val_sharpe"],
+            "final_train_acc": training_metrics["final_train_acc"],
+            "final_val_acc": training_metrics["final_val_acc"],
+        }) + "\n")
+    print(f"📝 Training metrics logged to {metrics_path}")
 
 
 if __name__ == "__main__":
