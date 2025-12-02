@@ -79,6 +79,21 @@ except ImportError:
     VCAStrategy = None
     VCACalculation = None
 
+# Acontext trade learning integration
+try:
+    from src.integrations.acontext_store import (
+        AcontextTradeStore,
+        TradeContext,
+        get_trade_store,
+    )
+
+    ACONTEXT_AVAILABLE = True
+except ImportError:
+    ACONTEXT_AVAILABLE = False
+    AcontextTradeStore = None
+    TradeContext = None
+    get_trade_store = None
+
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -381,6 +396,36 @@ class CoreStrategy:
             f"etf_universe={self.etf_universe}, stop_loss={stop_loss_pct*100}%, "
             f"take_profit={take_profit_pct*100}%"
         )
+
+    def _update_acontext_outcome(
+        self, symbol: str, exit_price: float, pnl: float, pnl_pct: float, reason: str
+    ) -> None:
+        """Update Acontext with trade outcome when position is closed."""
+        if not ACONTEXT_AVAILABLE:
+            return
+
+        try:
+            if not hasattr(self, "_acontext_trade_ids"):
+                return
+
+            trade_info = self._acontext_trade_ids.get(symbol)
+            if not trade_info:
+                return
+
+            trade_store = get_trade_store()
+            trade_store.update_trade_outcome(
+                trade_id=trade_info["trade_id"],
+                exit_price=exit_price,
+                pnl=pnl,
+                pnl_pct=pnl_pct,
+                lessons=reason,
+            )
+            logger.info(f"Acontext outcome updated for {symbol}: {reason}")
+
+            # Remove from tracking
+            del self._acontext_trade_ids[symbol]
+        except Exception as e:
+            logger.debug(f"Acontext outcome update failed (non-critical): {e}")
 
     def execute_daily(self) -> Optional[TradeOrder]:
         """
@@ -932,6 +977,57 @@ class CoreStrategy:
             logger.info(f"Order executed successfully: {order}")
             logger.info(f"Total invested to date: ${self.total_invested:.2f}")
 
+            # Step 10.5: Store trade context in Acontext for learning
+            if ACONTEXT_AVAILABLE and best_score_obj:
+                try:
+                    trade_store = get_trade_store()
+                    # Determine MACD signal from histogram
+                    macd_sig = "neutral"
+                    if best_score_obj.macd_histogram > 0:
+                        macd_sig = "bullish"
+                    elif best_score_obj.macd_histogram < 0:
+                        macd_sig = "bearish"
+
+                    # Determine market regime from sentiment
+                    regime = "sideways"
+                    if sentiment in (MarketSentiment.BULLISH, MarketSentiment.VERY_BULLISH):
+                        regime = "bull"
+                    elif sentiment in (MarketSentiment.BEARISH, MarketSentiment.VERY_BEARISH):
+                        regime = "bear"
+
+                    trade_context = TradeContext(
+                        symbol=best_etf,
+                        action="buy",
+                        amount=equity_amount,
+                        price=current_price,
+                        timestamp=datetime.now().isoformat(),
+                        momentum_score=best_score_obj.score,
+                        rsi=best_score_obj.rsi,
+                        macd_signal=macd_sig,
+                        volume_ratio=best_score_obj.volume_ratio,
+                        market_regime=regime,
+                        vix_level=0.0,  # TODO: Add VIX data
+                        sector_momentum=best_score_obj.sharpe_ratio,
+                        pattern_tags=[
+                            f"sentiment_{sentiment.value}",
+                            f"macd_{macd_sig}",
+                            f"rsi_{int(best_score_obj.rsi)}",
+                        ],
+                    )
+                    trade_id = trade_store.store_trade(trade_context)
+                    logger.info(f"Trade context stored in Acontext: {trade_id}")
+
+                    # Save trade_id for later outcome update
+                    if not hasattr(self, "_acontext_trade_ids"):
+                        self._acontext_trade_ids = {}
+                    self._acontext_trade_ids[best_etf] = {
+                        "trade_id": trade_id,
+                        "entry_price": current_price,
+                        "amount": equity_amount,
+                    }
+                except Exception as e:
+                    logger.debug(f"Acontext trade storage failed (non-critical): {e}")
+
             # Step 11: Check if rebalancing needed
             if self.should_rebalance():
                 logger.info("Rebalancing required - will execute after market close")
@@ -1050,8 +1146,12 @@ class CoreStrategy:
                                         self.trades_executed.append(exit_order)
                                         self._update_holdings(symbol, -qty)
                                         self._reward_rl(symbol, unrealized_plpc)
+                                        self._update_acontext_outcome(
+                                            symbol, current_price, unrealized_pl, unrealized_plpc,
+                                            f"ATR stop-loss at ${atr_stop_price:.2f}"
+                                        )
                                         continue  # Skip take-profit check
-                                        
+
                                     except Exception as e:
                                         logger.error(f"  ❌ Failed to close position {symbol}: {e}")
                     except Exception as e:
@@ -1091,8 +1191,12 @@ class CoreStrategy:
                             self.trades_executed.append(exit_order)
                             self._update_holdings(symbol, -qty)
                             self._reward_rl(symbol, unrealized_plpc)
+                            self._update_acontext_outcome(
+                                symbol, current_price, unrealized_pl, unrealized_plpc,
+                                f"Percentage stop-loss at {self.stop_loss_pct*100:.1f}%"
+                            )
                             continue  # Skip take-profit check
-                            
+
                         except Exception as e:
                             logger.error(f"  ❌ Failed to close position {symbol}: {e}")
 
@@ -1140,6 +1244,10 @@ class CoreStrategy:
                         self._reward_rl(symbol, unrealized_plpc)
                         # Update holdings
                         self._update_holdings(symbol, -qty)
+                        self._update_acontext_outcome(
+                            symbol, current_price, unrealized_pl, unrealized_plpc,
+                            f"Take-profit at {unrealized_plpc*100:.2f}% profit"
+                        )
 
                     except Exception as e:
                         logger.error(f"  ❌ Failed to close position {symbol}: {e}")
