@@ -132,6 +132,14 @@ class OptionsSignalEnhancer:
         "neutral": ["calendar_spread", "long_butterfly"]
     }
 
+    # CRITICAL: IV Rank minimum thresholds for premium selling strategies
+    # McMillan Rule: NEVER sell premium when IV is cheap (IV Rank < 20)
+    CREDIT_SPREAD_MIN_IV_RANK = 20  # Hard floor for credit strategies
+    CREDIT_STRATEGIES = {
+        "iron_condor", "credit_spread", "bull_put_spread", "bear_call_spread",
+        "covered_call", "cash_secured_put", "strangle_short", "naked_put"
+    }
+
     def __init__(self, portfolio_value: float = 10000.0):
         """
         Initialize signal enhancer.
@@ -405,10 +413,22 @@ class OptionsSignalEnhancer:
             iv_percentile=iv_metrics.get("iv_percentile", iv_rank)
         )
 
+        # CRITICAL: Add IV Rank < 20 warning for credit strategies
+        iv_rank_warning = ""
+        if iv_rank < self.CREDIT_SPREAD_MIN_IV_RANK:
+            iv_rank_warning = (
+                f" ⚠️ IV RANK TOO LOW ({iv_rank:.0f}% < {self.CREDIT_SPREAD_MIN_IV_RANK}%): "
+                "Credit spreads BLOCKED. Premium is cheap - use debit strategies only."
+            )
+            logger.warning(
+                f"IV Rank filter triggered for {sentiment_signal}: "
+                f"IV Rank {iv_rank:.0f}% < {self.CREDIT_SPREAD_MIN_IV_RANK}% minimum"
+            )
+
         mcmillan_guidance = (
             f"IV Rank: {iv_rank:.0f}. {iv_rec['recommendation']}. "
             f"Expected move formula: Price × IV × √(DTE/365) = "
-            f"${expected_move['expected_move']:.2f} ({move_pct:.1f}%)."
+            f"${expected_move['expected_move']:.2f} ({move_pct:.1f}%).{iv_rank_warning}"
         )
 
         return {
@@ -427,49 +447,83 @@ class OptionsSignalEnhancer:
     ) -> Dict[str, Any]:
         """Get recommended strategy based on direction and IV."""
 
+        # CRITICAL IV RANK FILTER: Reject credit spreads when IV < 20
+        # McMillan Rule: Don't sell premium when premium is cheap
+        credit_blocked = iv_rank < self.CREDIT_SPREAD_MIN_IV_RANK
+
         # Determine if high or low IV
         is_high_iv = iv_rank >= 50
 
         # Select strategy pool
-        if is_high_iv:
+        if is_high_iv and not credit_blocked:
             strategies = self.HIGH_IV_STRATEGIES.get(direction, ["iron_condor"])
         else:
+            # Force LOW_IV (debit) strategies when IV Rank < 20
             strategies = self.LOW_IV_STRATEGIES.get(direction, ["long_call"])
 
         # Pick based on alignment status
         if alignment["status"] == "REJECT":
             # Conservative: sell premium or wait
-            strategy = "wait" if not is_high_iv else "iron_condor"
-            action = "WAIT" if strategy == "wait" else "SELL_PREMIUM"
+            # BUT NEVER sell premium if IV Rank < 20
+            if credit_blocked:
+                strategy = "wait"
+                action = "WAIT"
+            else:
+                strategy = "wait" if not is_high_iv else "iron_condor"
+                action = "WAIT" if strategy == "wait" else "SELL_PREMIUM"
             delta = 0.16  # Conservative delta for premium selling
         elif alignment["status"] == "CAUTION":
             # Use defined-risk strategy
+            # Respect IV Rank filter for credit strategies
             if direction == "bullish":
-                strategy = "call_debit_spread" if not is_high_iv else "bull_put_spread"
-                action = "BUY_CALL_SPREAD" if not is_high_iv else "SELL_PUT_SPREAD"
+                if credit_blocked or not is_high_iv:
+                    strategy = "call_debit_spread"
+                    action = "BUY_CALL_SPREAD"
+                else:
+                    strategy = "bull_put_spread"
+                    action = "SELL_PUT_SPREAD"
             elif direction == "bearish":
-                strategy = "put_debit_spread" if not is_high_iv else "bear_call_spread"
-                action = "BUY_PUT_SPREAD" if not is_high_iv else "SELL_CALL_SPREAD"
+                if credit_blocked or not is_high_iv:
+                    strategy = "put_debit_spread"
+                    action = "BUY_PUT_SPREAD"
+                else:
+                    strategy = "bear_call_spread"
+                    action = "SELL_CALL_SPREAD"
             else:
-                strategy = "iron_condor"
-                action = "IRON_CONDOR"
+                if credit_blocked:
+                    strategy = "long_butterfly"  # Debit strategy for neutral
+                    action = "BUY_BUTTERFLY"
+                else:
+                    strategy = "iron_condor"
+                    action = "IRON_CONDOR"
             delta = 0.30
         else:  # ALIGNED
             # Can be more aggressive
             strategy = strategies[0]
             if direction == "bullish":
-                action = "BUY_CALL" if not is_high_iv else "SELL_PUT"
+                if credit_blocked or not is_high_iv:
+                    action = "BUY_CALL"
+                else:
+                    action = "SELL_PUT"
             elif direction == "bearish":
-                action = "BUY_PUT" if not is_high_iv else "SELL_CALL"
+                if credit_blocked or not is_high_iv:
+                    action = "BUY_PUT"
+                else:
+                    action = "SELL_CALL"
             else:
-                action = "IRON_CONDOR"
+                if credit_blocked:
+                    action = "BUY_BUTTERFLY"  # Debit neutral strategy
+                else:
+                    action = "IRON_CONDOR"
             delta = 0.45 if not is_high_iv else 0.30
 
         return {
             "strategy": strategy,
             "action": action,
             "delta": delta,
-            "is_high_iv": is_high_iv
+            "is_high_iv": is_high_iv,
+            "iv_rank_blocked_credit": credit_blocked,
+            "iv_rank": iv_rank
         }
 
     def _calculate_position_size(

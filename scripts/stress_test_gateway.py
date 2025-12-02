@@ -213,6 +213,93 @@ def run_stress_tests():
         all_passed = False
 
     # ================================================================
+    # TEST 7: Capital Efficiency - Iron Condor on Small Account
+    # ================================================================
+    print("\n--- TEST 7: Capital Efficiency (Iron Condor on $5k account) ---")
+    print("Expected: REJECT for insufficient capital (need $10k for iron condors)")
+
+    gateway = TradeGateway(executor=None, paper=True)
+    gateway.executor = type('MockExecutor', (), {
+        'account_equity': 5000,  # Small account
+        'get_positions': lambda self: []
+    })()
+
+    request = TradeRequest(
+        symbol="SPY",
+        side="buy",
+        notional=500,
+        source="stress_test",
+        strategy_type="iron_condor",  # Strategy that needs $10k+
+        iv_rank=50.0
+    )
+    decision = gateway.evaluate(request)
+
+    if RejectionReason.CAPITAL_INEFFICIENT in decision.rejection_reasons:
+        print("✅ PASSED: Iron condor rejected for small account")
+        print(f"   Capital viability: {decision.metadata.get('capital_viability', {}).get('reason', 'N/A')}")
+    else:
+        print("⚠️ CHECK: Trade not rejected for capital inefficiency")
+        print(f"   Rejections: {[r.value for r in decision.rejection_reasons]}")
+
+    # ================================================================
+    # TEST 8: IV Rank Filter - Credit Spread when IV < 20
+    # ================================================================
+    print("\n--- TEST 8: IV Rank Filter (Credit Spread when IV Rank = 15) ---")
+    print("Expected: REJECT for IV Rank too low (<20 for premium selling)")
+
+    gateway = TradeGateway(executor=None, paper=True)
+    gateway.executor = type('MockExecutor', (), {
+        'account_equity': 50000,  # Adequate capital
+        'get_positions': lambda self: []
+    })()
+
+    request = TradeRequest(
+        symbol="SPY",
+        side="buy",
+        notional=500,
+        source="stress_test",
+        strategy_type="iron_condor",  # Credit strategy
+        iv_rank=15.0  # Below the 20 minimum
+    )
+    decision = gateway.evaluate(request)
+
+    if RejectionReason.IV_RANK_TOO_LOW in decision.rejection_reasons:
+        print("✅ PASSED: Credit strategy rejected for low IV Rank")
+        print(f"   IV Rank rejection: {decision.metadata.get('iv_rank_rejection', {}).get('reason', 'N/A')}")
+    else:
+        print("⚠️ CHECK: Trade not rejected for low IV Rank")
+        print(f"   Rejections: {[r.value for r in decision.rejection_reasons]}")
+
+    # ================================================================
+    # TEST 9: High IV Rank Credit Strategy (Should PASS)
+    # ================================================================
+    print("\n--- TEST 9: High IV Rank Credit Strategy (IV Rank = 60) ---")
+    print("Expected: APPROVED (IV Rank meets requirement)")
+
+    gateway = TradeGateway(executor=None, paper=True)
+    gateway.executor = type('MockExecutor', (), {
+        'account_equity': 50000,  # Adequate capital
+        'get_positions': lambda self: []
+    })()
+
+    request = TradeRequest(
+        symbol="SPY",
+        side="buy",
+        notional=500,
+        source="stress_test",
+        strategy_type="iron_condor",  # Credit strategy
+        iv_rank=60.0  # Above the 20 minimum
+    )
+    decision = gateway.evaluate(request)
+
+    if decision.approved:
+        print("✅ PASSED: Credit strategy approved with high IV Rank")
+        print(f"   Risk score: {decision.risk_score:.2f}")
+    else:
+        print("⚠️ CHECK: Trade rejected unexpectedly")
+        print(f"   Rejections: {[r.value for r in decision.rejection_reasons]}")
+
+    # ================================================================
     # FINAL RESULT
     # ================================================================
     print("\n" + "="*70)

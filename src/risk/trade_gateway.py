@@ -31,6 +31,8 @@ from enum import Enum
 import json
 from pathlib import Path
 
+from src.risk.capital_efficiency import get_capital_calculator
+
 logger = logging.getLogger(__name__)
 
 
@@ -46,6 +48,8 @@ class RejectionReason(Enum):
     INVALID_ORDER = "Invalid order parameters"
     MARKET_CLOSED = "Market is closed"
     RISK_SCORE_TOO_HIGH = "Trade risk score exceeds threshold"
+    CAPITAL_INEFFICIENT = "Strategy not viable for current capital level"
+    IV_RANK_TOO_LOW = "IV Rank too low for premium selling (<20)"
 
 
 @dataclass
@@ -60,6 +64,8 @@ class TradeRequest:
     stop_price: Optional[float] = None
     request_time: datetime = field(default_factory=datetime.now)
     source: str = "ai_agent"  # Track where the request came from
+    strategy_type: Optional[str] = None  # e.g., 'iron_condor', 'vertical_spread'
+    iv_rank: Optional[float] = None  # Current IV Rank for the underlying
 
 
 @dataclass
@@ -116,6 +122,13 @@ class TradeGateway:
         "ai_plays": ["NVDA", "AMD", "MSFT", "GOOGL", "META", "CRM", "PLTR"],
     }
 
+    # Credit strategies that require IV Rank check
+    CREDIT_STRATEGIES = {
+        "iron_condor", "credit_spread", "bull_put_spread", "bear_call_spread",
+        "covered_call", "cash_secured_put", "strangle_short", "naked_put"
+    }
+    MIN_IV_RANK_FOR_CREDIT = 20  # Minimum IV Rank for premium selling
+
     def __init__(self, executor=None, paper: bool = True):
         """
         Initialize the trade gateway.
@@ -137,6 +150,9 @@ class TradeGateway:
         # Daily P&L tracking
         self.daily_pnl = 0.0
         self.daily_pnl_date: Optional[datetime] = None
+
+        # Capital efficiency calculator
+        self.capital_calculator = get_capital_calculator(daily_deposit_rate=10.0)
 
         # State file for persistence
         self.state_file = Path("data/trade_gateway_state.json")
@@ -294,6 +310,49 @@ class TradeGateway:
                 f"{self.MAX_DRAWDOWN_PCT*100}% limit"
             )
             risk_score += 0.4
+
+        # ============================================================
+        # CHECK 8: Capital Efficiency (strategy viability)
+        # ============================================================
+        if request.strategy_type:
+            viability = self.capital_calculator.check_strategy_viability(
+                strategy_id=request.strategy_type,
+                account_equity=account_equity,
+                iv_rank=request.iv_rank
+            )
+            if not viability.is_viable:
+                rejection_reasons.append(RejectionReason.CAPITAL_INEFFICIENT)
+                logger.warning(
+                    f"❌ REJECTED: Strategy '{request.strategy_type}' not viable - "
+                    f"{viability.reason}"
+                )
+                metadata["capital_viability"] = {
+                    "strategy": request.strategy_type,
+                    "reason": viability.reason,
+                    "min_capital": viability.min_capital_required,
+                    "days_to_viable": viability.days_to_viable,
+                    "recommended_alternative": viability.recommended_alternative
+                }
+                risk_score += 0.3
+
+        # ============================================================
+        # CHECK 9: IV Rank Filter for Credit Strategies
+        # ============================================================
+        if request.strategy_type and request.iv_rank is not None:
+            if request.strategy_type in self.CREDIT_STRATEGIES:
+                if request.iv_rank < self.MIN_IV_RANK_FOR_CREDIT:
+                    rejection_reasons.append(RejectionReason.IV_RANK_TOO_LOW)
+                    logger.warning(
+                        f"❌ REJECTED: IV Rank {request.iv_rank:.0f}% < "
+                        f"{self.MIN_IV_RANK_FOR_CREDIT}% for credit strategy '{request.strategy_type}'"
+                    )
+                    metadata["iv_rank_rejection"] = {
+                        "iv_rank": request.iv_rank,
+                        "min_required": self.MIN_IV_RANK_FOR_CREDIT,
+                        "strategy": request.strategy_type,
+                        "reason": "Cannot sell premium effectively when IV is cheap"
+                    }
+                    risk_score += 0.25
 
         # ============================================================
         # FINAL DECISION

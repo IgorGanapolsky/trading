@@ -16,6 +16,7 @@ from src.orchestrator.telemetry import OrchestratorTelemetry
 from src.risk.risk_manager import RiskManager
 from src.risk.options_risk_monitor import OptionsRiskMonitor
 from src.risk.trade_gateway import TradeGateway, TradeRequest
+from src.risk.capital_efficiency import get_capital_calculator
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,8 @@ class TradingOrchestrator:
         self.options_risk_monitor = OptionsRiskMonitor(paper=paper)
         # CRITICAL: All trades must go through the gateway - no direct executor calls
         self.trade_gateway = TradeGateway(executor=self.executor, paper=paper)
+        # Capital efficiency calculator - determines what strategies are viable
+        self.capital_calculator = get_capital_calculator(daily_deposit_rate=10.0)
 
     def run(self) -> None:
         logger.info("Running hybrid funnel for tickers: %s", ", ".join(self.tickers))
@@ -336,10 +339,39 @@ class TradingOrchestrator:
         This should be called after all ticker processing to ensure the overall
         portfolio delta exposure remains within acceptable bounds.
 
+        CAPITAL GUARD: Delta hedging requires $50k+ to be efficient.
+        For smaller accounts, frequent adjustments destroy alpha through fees.
+
         Returns:
             Dict with rebalancing results
         """
         logger.info("--- Gate 5: Delta-Neutral Rebalancing Check ---")
+
+        # CRITICAL: Capital efficiency guard - disable delta hedging for small accounts
+        account_equity = self.executor.account_equity
+        delta_hedge_check = self.capital_calculator.should_enable_delta_hedging(account_equity)
+
+        if not delta_hedge_check["enabled"]:
+            logger.warning(
+                "Gate 5: Delta hedging DISABLED - %s",
+                delta_hedge_check["reason"]
+            )
+            self.telemetry.record(
+                event_type="gate.delta_rebalance",
+                ticker="PORTFOLIO",
+                status="disabled",
+                payload={
+                    "reason": delta_hedge_check["reason"],
+                    "account_equity": account_equity,
+                    "capital_gap": delta_hedge_check.get("capital_gap", 0),
+                    "days_to_enable": delta_hedge_check.get("days_to_enable", 0),
+                },
+            )
+            return {
+                "action": "disabled",
+                "reason": delta_hedge_check["reason"],
+                "recommendation": delta_hedge_check.get("recommendation", "Use defined-risk strategies")
+            }
 
         try:
             # Calculate current delta exposure
