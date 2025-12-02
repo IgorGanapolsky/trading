@@ -53,45 +53,63 @@ class SignalAgent(BaseAgent):
         # Build signal analysis prompt
         memory_context = self.get_memory_context(limit=3)
 
-        # Goldilocks Prompt: Concise, principle-based, with examples
-        prompt = f"""Analyze {symbol} technicals. Be decisive - strong signals get high scores, weak signals get low scores.
+        # Prompt following Anthropic best practices:
+        # - XML tags for structure (Claude trained on XML)
+        # - Motivation/context explaining WHY
+        # - Clear examples aligned with desired behavior
+        # - Weighted principles for decision framework
+        prompt = f"""Analyze {symbol} technicals and provide a trading signal.
 
-INDICATORS:
+<context>
+You are evaluating technical indicators to generate actionable trading signals.
+Being decisive matters because hesitation in trading leads to missed opportunities or delayed exits.
+Strong signals deserve high scores; weak/mixed signals deserve low scores.
+</context>
+
+<indicators>
 Price: ${indicators.get('price', 0):.2f} | MACD Hist: {indicators.get('macd_histogram', 0):.4f} | RSI: {indicators.get('rsi', 50):.1f} | Volume: {indicators.get('volume_ratio', 1.0):.1f}x
 Trend: {indicators.get('trend', 'UNKNOWN')} | MA50: ${indicators.get('ma_50', 0):.2f} | Momentum: {indicators.get('momentum_score', 0):.0f}/100
+</indicators>
 
 {memory_context}
 
-PRINCIPLES:
-- MACD histogram crossing zero = momentum shift (weight: 30%)
-- RSI <30 oversold (bullish), >70 overbought (bearish) (weight: 25%)
-- Price above MA50 = uptrend confirmation (weight: 25%)
-- Volume >1.5x confirms moves, <0.7x suggests false signal (weight: 20%)
+<principles>
+These weights reflect empirical backtesting results:
+- MACD histogram crossing zero = momentum shift (weight: 30%) - Most predictive of near-term moves
+- RSI below 30 oversold (bullish), above 70 overbought (bearish) (weight: 25%) - Mean reversion signal
+- Price above MA50 = uptrend confirmation (weight: 25%) - Trend-following filter
+- Volume above 1.5x confirms moves, below 0.7x suggests false signal (weight: 20%) - Conviction validator
+</principles>
 
-EXAMPLES:
-Example 1 - Strong Buy:
+<examples>
+<example type="strong_buy">
 STRENGTH: 8
 DIRECTION: BULLISH
 ENTRY_QUALITY: 7
 RECOMMENDATION: BUY
 CONFIDENCE: 0.82
 FACTORS: MACD histogram positive crossover, RSI recovering from 28, volume 1.8x confirms breakout
+</example>
 
-Example 2 - Hold/Weak:
+<example type="hold_weak">
 STRENGTH: 4
 DIRECTION: NEUTRAL
 ENTRY_QUALITY: 3
 RECOMMENDATION: HOLD
 CONFIDENCE: 0.45
 FACTORS: Mixed signals - MACD flat, RSI neutral at 52, below-average volume suggests no conviction
+</example>
+</examples>
 
-NOW ANALYZE {symbol}:
+<task>
+Analyze {symbol} now and respond in this exact format:
 STRENGTH: [1-10]
 DIRECTION: [BULLISH/BEARISH/NEUTRAL]
 ENTRY_QUALITY: [1-10]
 RECOMMENDATION: [BUY/SELL/HOLD]
 CONFIDENCE: [0-1]
-FACTORS: [2-3 key factors driving your decision]"""
+FACTORS: [2-3 key factors driving your decision]
+</task>"""
 
         # Get LLM analysis
         response = self.reason_with_llm(prompt)

@@ -143,19 +143,33 @@ Consider Graham-Buffett principles:
 
 Format clearly with reasoning."""
 
+            # System prompt follows Anthropic best practices:
+            # - Role setting in system message
+            # - Clear evaluation criteria with motivation
+            # - Specific rejection criteria for conservative bias
             system_prompt = """You are an expert trading risk manager following Graham-Buffett value investing principles.
-Evaluate trades objectively based on:
-- Market conditions and technical indicators
-- Graham-Buffett Intelligent Investor principles (margin of safety, value, quality)
-- Risk management principles
-- Portfolio context and diversification
-- Intelligent Investor safety analysis (if provided)
 
-Be conservative - reject trades with:
-- High risk or low confidence
-- Insufficient margin of safety
-- Poor value characteristics
-- Overvaluation concerns"""
+<role_context>
+Your primary duty is capital preservation. A 50% loss requires 100% gain to recover.
+You evaluate trades through the lens of margin of safety - buying $1 of value for $0.80.
+</role_context>
+
+<evaluation_criteria>
+Evaluate trades objectively based on:
+- Market conditions and technical indicators (timing)
+- Graham-Buffett Intelligent Investor principles: margin of safety, intrinsic value, quality (value)
+- Risk management principles: position sizing, stop losses, portfolio heat (risk)
+- Portfolio context and diversification (concentration)
+- Intelligent Investor safety analysis if provided (safety)
+</evaluation_criteria>
+
+<rejection_triggers>
+Be conservative - reject trades with ANY of:
+- High risk or low confidence (below 0.6)
+- Insufficient margin of safety (below 20%)
+- Poor value characteristics (P/E above 25 without exceptional growth)
+- Overvaluation concerns (Mr. Market sentiment too bullish)
+</rejection_triggers>"""
 
             council_response = await self.council.query_council(
                 query, system_prompt, include_reviews=True
@@ -292,14 +306,29 @@ Provide:
 
 Format clearly with reasoning."""
 
-        system_prompt = """You are an expert risk manager. Assess position risk based on:
-- Portfolio concentration
-- Market volatility
-- Position size relative to portfolio
-- Correlation with existing positions
-- Market conditions
+        # System prompt with XML structure and motivation
+        system_prompt = """You are an expert risk manager focused on capital preservation.
 
-Be conservative - reject positions that exceed risk limits."""
+<role_context>
+Risk management is the only edge that compounds - one blown account erases years of gains.
+Your job is to say "no" to trades that violate risk limits, even if they look attractive.
+</role_context>
+
+<assessment_criteria>
+Assess position risk based on:
+- Portfolio concentration (no single position above 5%)
+- Market volatility (higher vol = smaller position)
+- Position size relative to portfolio (Kelly Criterion with half-sizing)
+- Correlation with existing positions (sector/factor exposure)
+- Market conditions (regime: trending, mean-reverting, or chaotic)
+</assessment_criteria>
+
+<risk_limits>
+Be conservative - reject positions that:
+- Would exceed 2% portfolio risk on a single trade
+- Add correlated exposure to an already concentrated sector
+- Size inappropriately for current volatility regime
+</risk_limits>"""
 
         try:
             council_response = await self.council.query_council(

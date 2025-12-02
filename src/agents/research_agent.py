@@ -105,49 +105,69 @@ class ResearchAgent(BaseAgent):
         # Build comprehensive research prompt
         memory_context = self.get_memory_context(limit=3)
 
-        # Goldilocks Prompt: Principle-based with examples
-        prompt = f"""Analyze {symbol} fundamentals and sentiment. Focus on value and risk.
+        # Prompt following Anthropic best practices:
+        # - XML tags for structure (Claude trained on XML)
+        # - Motivation/context explaining WHY each principle matters
+        # - Clear examples aligned with desired behavior
+        prompt = f"""Analyze {symbol} fundamentals and sentiment for investment decision.
 
-FUNDAMENTALS:
+<context>
+You are a value-oriented research analyst following Graham-Buffett principles.
+Focus on value and risk because overpaying destroys long-term returns, even for great companies.
+Fundamentals drive long-term performance; sentiment affects short-term price action.
+</context>
+
+<fundamentals>
 P/E: {fundamentals.get('pe_ratio', 'N/A')} | Growth: {fundamentals.get('growth_rate', 'N/A')} | Margin: {fundamentals.get('profit_margin', 'N/A')} | Cap: {fundamentals.get('market_cap', 'N/A')}
+</fundamentals>
 
-NEWS:
+<news>
 {self._format_news(news)}
+</news>
 
-CONTEXT: {market_context.get('sector', 'N/A')} sector | Market: {market_context.get('market_trend', 'N/A')} | Vol: {market_context.get('volatility', 'N/A')}
+<market_context>
+Sector: {market_context.get('sector', 'N/A')} | Market Trend: {market_context.get('market_trend', 'N/A')} | Volatility: {market_context.get('volatility', 'N/A')}
+</market_context>
 
 {memory_context}
 
-PRINCIPLES (Graham-Buffett):
-- P/E < 15 is attractive, > 25 is expensive (weight: 30%)
-- Consistent growth > 10% annually preferred (weight: 25%)
-- Profit margin > 15% indicates pricing power (weight: 20%)
-- News sentiment affects short-term, fundamentals drive long-term (weight: 25%)
+<principles>
+Graham-Buffett value investing framework (weights reflect empirical importance):
+- P/E below 15 is attractive, above 25 is expensive (weight: 30%) - Valuation is strongest predictor of 10-year returns
+- Consistent growth above 10% annually preferred (weight: 25%) - Quality companies compound
+- Profit margin above 15% indicates pricing power (weight: 20%) - Moat indicator
+- News sentiment affects short-term, fundamentals drive long-term (weight: 25%) - Don't confuse noise with signal
+</principles>
 
-EXAMPLES:
-Example 1 - Strong Fundamental Buy:
+<examples>
+<example type="strong_fundamental_buy">
 STRENGTH: 8
 SENTIMENT: 0.6
 THESIS: Low P/E of 12 with 18% growth suggests undervalued quality. Recent positive earnings beat confirms trajectory.
 RECOMMENDATION: BUY
 CONFIDENCE: 0.78
 RISKS: Sector rotation risk, margin compression if input costs rise
+</example>
 
-Example 2 - Avoid Despite Hype:
+<example type="avoid_despite_hype">
 STRENGTH: 3
 SENTIMENT: 0.8
 THESIS: High sentiment but P/E of 45 prices in perfection. Any miss will punish stock. Wait for pullback.
 RECOMMENDATION: HOLD
 CONFIDENCE: 0.65
 RISKS: Valuation compression, growth deceleration, sentiment reversal
+</example>
+</examples>
 
-NOW ANALYZE {symbol}:
+<task>
+Analyze {symbol} now and respond in this exact format:
 STRENGTH: [1-10]
 SENTIMENT: [-1 to +1]
 THESIS: [2-3 sentences on value proposition]
 RECOMMENDATION: [BUY/SELL/HOLD]
 CONFIDENCE: [0-1]
-RISKS: [top 2 risks]"""
+RISKS: [top 2 risks]
+</task>"""
 
         # Get LLM analysis
         response = self.reason_with_llm(prompt)

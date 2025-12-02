@@ -65,55 +65,80 @@ class RiskAgent(BaseAgent):
         # Risk assessment
         memory_context = self.get_memory_context(limit=3)
 
-        # Goldilocks Prompt: Principle-based risk management with examples
-        prompt = f"""Evaluate {proposed_action} on {symbol}. Protect capital first, returns second.
+        # Prompt following Anthropic best practices:
+        # - XML tags for structure (Claude trained on XML)
+        # - Motivation/context explaining WHY capital protection matters
+        # - Clear examples covering approve, reduce, and reject scenarios
+        prompt = f"""Evaluate the risk of {proposed_action} on {symbol}.
 
-PORTFOLIO: ${portfolio_value:,.0f} | Max Risk: {self.max_portfolio_risk:.1%}/trade | Max Position: {self.max_position_size:.1%}
+<context>
+You are a risk manager with one paramount rule: protect capital first, returns second.
+A 50% loss requires a 100% gain to recover - survival is non-negotiable.
+Position sizing is the most underappreciated edge in trading.
+</context>
 
-TRADE: {proposed_action} | Confidence: {confidence:.0%} | Volatility: {volatility:.1%} | Win Rate: {win_rate:.0%}
+<portfolio>
+Value: ${portfolio_value:,.0f} | Max Risk: {self.max_portfolio_risk:.1%}/trade | Max Position: {self.max_position_size:.1%}
+</portfolio>
 
-CALCULATED: Size ${position_size:,.0f} ({position_size/portfolio_value:.1%}) | Stop: {stop_loss_pct:.1%} | Max Loss: ${position_size * stop_loss_pct:,.0f}
+<trade_proposal>
+Action: {proposed_action} | Confidence: {confidence:.0%} | Volatility: {volatility:.1%} | Historical Win Rate: {win_rate:.0%}
+</trade_proposal>
+
+<calculated_parameters>
+Suggested Size: ${position_size:,.0f} ({position_size/portfolio_value:.1%} of portfolio)
+Stop Loss: {stop_loss_pct:.1%}
+Max Loss if Stopped: ${position_size * stop_loss_pct:,.0f}
+</calculated_parameters>
 
 {memory_context}
 
-PRINCIPLES (Kelly + Safety):
-- Never risk >2% of portfolio on single trade (survival rule)
-- High volatility (>25%) = reduce position 50% (volatility scaling)
-- Low confidence (<0.6) = reduce or reject (conviction filter)
-- Correlation risk: reject if >3 similar positions open (diversification)
+<principles>
+Kelly Criterion + Safety rules (each prevents a different failure mode):
+- Never risk more than 2% of portfolio on single trade (weight: 35%) - Survival rule prevents ruin
+- High volatility above 25% = reduce position 50% (weight: 25%) - Volatility scaling prevents outsized losses
+- Low confidence below 0.6 = reduce or reject (weight: 25%) - Conviction filter prevents FOMO trades
+- Correlation risk: reject if more than 3 similar positions open (weight: 15%) - Diversification prevents concentration blowup
+</principles>
 
-EXAMPLES:
-Example 1 - Approve Full Size:
+<examples>
+<example type="approve_full">
 RISK_SCORE: 3
 POSITION_APPROVAL: APPROVE
 POSITION_SIZE: $2,500
 STOP_LOSS: 4%
 RISKS: Normal market risk, sector correlation with existing QQQ position
 RECOMMENDATION: APPROVE
+</example>
 
-Example 2 - Reduce Due to Volatility:
+<example type="reduce_volatility">
 RISK_SCORE: 7
 POSITION_APPROVAL: REDUCE
 POSITION_SIZE: $1,200
 STOP_LOSS: 8%
 RISKS: High volatility requires tighter sizing, earnings in 3 days adds event risk
 RECOMMENDATION: APPROVE
+</example>
 
-Example 3 - Reject:
+<example type="reject">
 RISK_SCORE: 9
 POSITION_APPROVAL: REJECT
 POSITION_SIZE: $0
 STOP_LOSS: N/A
 RISKS: Confidence too low (0.45), already 4 tech positions, max drawdown approaching limit
 RECOMMENDATION: REJECT
+</example>
+</examples>
 
-NOW EVALUATE {symbol} {proposed_action}:
+<task>
+Evaluate {symbol} {proposed_action} now and respond in this exact format:
 RISK_SCORE: [1-10]
 POSITION_APPROVAL: [APPROVE/REDUCE/REJECT]
 POSITION_SIZE: [$ amount]
 STOP_LOSS: [%]
 RISKS: [top 2 risks]
-RECOMMENDATION: [APPROVE/REJECT]"""
+RECOMMENDATION: [APPROVE/REJECT]
+</task>"""
 
         # Get LLM analysis
         response = self.reason_with_llm(prompt)
