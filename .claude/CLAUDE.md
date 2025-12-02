@@ -366,6 +366,10 @@ Phase 3: $3/day  → Funded by profits from Phase 2
 **MCP & Newsletter Integration**:
 - See `.claude/MCP_SETUP_INSTRUCTIONS.md` for MCP configuration
 - See `.claude/NEWSLETTER_WORKFLOW.md` for CoinSnacks automation
+- **Alpaca MCP Server**: Official trading & market data via `@ideadesignmedia/alpaca-mcp`
+  - Trading tools: `alpaca.create_order`, `alpaca.list_positions`, `alpaca.get_account`, etc.
+  - Market data: `alpaca.data.stocks.*`, `alpaca.data.options.*`, `alpaca.data.news`
+  - Configured in `.claude/mcp_config.json` (paper trading enabled by default)
 
 ---
 
