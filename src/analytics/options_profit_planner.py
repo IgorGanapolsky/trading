@@ -290,6 +290,8 @@ class OptionsProfitPlanner:
                 f"Premium run-rate is ${gap:.2f}/day below the ${self.target_daily_profit:.2f} target."
             )
         else:
-            notes.append("Current premium pace meets or exceeds the $10/day target.")
+            notes.append(
+                f"Current premium pace meets or exceeds the ${self.target_daily_profit:.2f}/day target."
+            )
 
         return notes
