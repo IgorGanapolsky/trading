@@ -12,6 +12,7 @@
 ## Clarifying Questions
 1. After resolving conflicts, should we keep using merge-from-main (vs. rebase) for this autonomous branch? (Assume merge-from-main to preserve upstream automation context.)
 2. Dependency monitor currently fails because `deepagents` drags in the unpublished `acontext` package. Should we treat DeepAgents as optional for CI? (Assume yes—gate imports behind env flags and move the heavy dependency to an optional extra so the base requirements remain installable.)
+3. The CEO wants DeepSeek integrated via OpenRouter—should it join the LLM council by default or be env-gated? (Assume we add it as an opt-in model controlled by `OPENROUTER_ENABLE_DEEPSEEK` + configurable slug.)
 
 ## Execution Plan
 1. **Sync & Inspect**
@@ -20,10 +21,11 @@
 2. **Backtest Import Fix**
    - Update `scripts/run_backtest_matrix.py` to append the repo root to `sys.path`, add `TYPE_CHECKING`, and keep upstream typing improvements so CI can import `src.*` when invoking `python scripts/...`.
    - Smoke-test with `python3 scripts/run_backtest_matrix.py --max-scenarios 1` (or equivalent dry run) to prove the fix.
-3. **Config & Dependency Hardening**
+3. **Config & Dependency Hardening + DeepSeek Integration**
    - Keep the pydantic fallback (so sandboxes without `pydantic_settings.sources.providers` can still run) while aligning formatting with upstream `main`.
    - Make DeepAgents optional: guard imports in the integration layer, move the dependency into an extras group (or remove from `requirements.txt`), and ensure env defaults (`DEEPAGENTS_ENABLED=false` in CI) prevent runtime failures.
-   - Update docs/tests to reflect the optional status.
+   - Add DeepSeek to `MultiLLMAnalyzer` (new enum entry + env flag `OPENROUTER_ENABLE_DEEPSEEK` + optional model slug) so the LLM council can include it via OpenRouter.
+   - Update docs/tests to reflect both DeepAgents optional status and DeepSeek integration instructions.
 4. **Docs & Progress Files**
    - Reconcile `plan.md` and `claude-progress.txt`, retaining upstream history while recording today’s work (options profit planner + conflict resolution + CI fixes).
 5. **Validation**
