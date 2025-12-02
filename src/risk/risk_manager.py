@@ -17,6 +17,8 @@ from __future__ import annotations
 import logging
 import os
 
+from src.risk.kelly import kelly_fraction
+
 try:  # Optional at runtime; tests will provide synthetic data
     import pandas as pd  # type: ignore
 except Exception:  # pragma: no cover - pandas always present in prod
@@ -27,9 +29,7 @@ logger = logging.getLogger(__name__)
 
 class RiskManager:
     """
-    Applies deterministic caps:
-        - Max 5% of account equity per trade
-        - Scale position by blended confidence
+    Applies deterministic caps combined with Kelly sizing heuristics.
     """
 
     def __init__(
@@ -38,6 +38,7 @@ class RiskManager:
         min_notional: float = 3.0,
         use_atr_scaling: bool | None = None,
         atr_period: int = 14,
+        kelly_cap: float = 0.05,
     ) -> None:
         self.max_position_pct = max_position_pct
         self.min_notional = min_notional
@@ -49,6 +50,7 @@ class RiskManager:
         else:
             self.use_atr_scaling = bool(use_atr_scaling)
         self.atr_period = atr_period
+        self.kelly_cap = kelly_cap
 
     def calculate_size(
         self,
@@ -60,6 +62,7 @@ class RiskManager:
         multiplier: float = 1.0,
         current_price: float | None = None,
         hist: pd.DataFrame | None = None,
+        market_regime: str | None = None,
     ) -> float:
         if account_equity <= 0:
             logger.warning("Account equity unknown; aborting trade.")
@@ -68,7 +71,18 @@ class RiskManager:
         blended_confidence = max(0.0, min(1.0, (signal_strength + rl_confidence) / 2))
         sentiment_multiplier = 1.0 + (sentiment_score * 0.25)
 
-        base_notional = self.daily_budget * blended_confidence * sentiment_multiplier * multiplier
+        baseline = self.daily_budget * blended_confidence * sentiment_multiplier * multiplier
+
+        kelly_frac = self._estimate_kelly_fraction(
+            signal_strength=signal_strength,
+            rl_confidence=rl_confidence,
+            sentiment_score=sentiment_score,
+            regime=market_regime,
+            multiplier=multiplier,
+        )
+        notional = account_equity * min(max(kelly_frac, 0.0), self.kelly_cap, self.max_position_pct)
+        if notional < baseline:
+            notional = baseline
 
         # Optional volatility-aware scaling using ATR if price history available
         scale = 1.0
@@ -87,7 +101,7 @@ class RiskManager:
             except Exception as exc:  # pragma: no cover - conservative fail-open
                 logger.debug("ATR scaling disabled due to error: %s", exc)
 
-        notional = base_notional * scale
+        notional = notional * scale
 
         cap = account_equity * self.max_position_pct
         notional = min(notional, cap)
@@ -108,6 +122,37 @@ class RiskManager:
             cap,
         )
         return round(notional, 2)
+
+    def _estimate_kelly_fraction(
+        self,
+        *,
+        signal_strength: float,
+        rl_confidence: float,
+        sentiment_score: float,
+        regime: str | None,
+        multiplier: float,
+    ) -> float:
+        win_prob = 0.45 + 0.25 * max(0.0, signal_strength) + 0.2 * max(0.0, rl_confidence)
+        win_prob += 0.1 * max(0.0, sentiment_score)
+        win_prob = max(0.05, min(0.95, win_prob))
+
+        payoff_ratio = 1.0 + 0.5 * max(0.2, multiplier)
+        payoff_ratio += sentiment_score * 0.4
+
+        if regime:
+            regime_lower = regime.lower()
+            if "volatile" in regime_lower:
+                payoff_ratio *= 0.7
+                win_prob -= 0.08
+            elif "bear" in regime_lower:
+                payoff_ratio *= 0.8
+                win_prob -= 0.05
+            elif "bull" in regime_lower:
+                payoff_ratio *= 1.15
+                win_prob += 0.03
+
+        payoff_ratio = max(0.2, payoff_ratio)
+        return kelly_fraction(win_prob, payoff_ratio)
 
     def calculate_stop_loss(
         self,

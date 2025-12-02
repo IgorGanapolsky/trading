@@ -22,6 +22,8 @@ from src.risk.capital_efficiency import get_capital_calculator
 from src.risk.options_risk_monitor import OptionsRiskMonitor
 from src.risk.risk_manager import RiskManager
 from src.risk.trade_gateway import TradeGateway, TradeRequest
+from src.signals.microstructure_features import MicrostructureFeatureExtractor
+from src.utils.regime_detector import RegimeDetector
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +84,8 @@ class TradingOrchestrator:
         # Capital efficiency calculator - determines what strategies are viable
         self.capital_calculator = get_capital_calculator(daily_deposit_rate=10.0)
         self.session_profile: dict[str, Any] | None = None
+        self.microstructure = MicrostructureFeatureExtractor()
+        self.regime_detector = RegimeDetector()
 
         bias_dir = os.getenv("BIAS_DATA_DIR", "data/bias")
         self.bias_store = BiasStore(bias_dir)
@@ -302,6 +306,34 @@ class TradingOrchestrator:
             metrics={"confidence": rl_decision.get("confidence", 0.0)},
         )
 
+        micro_features = {}
+        regime_snapshot = {"label": "unknown", "confidence": 0.0}
+        try:
+            micro_features = self.microstructure.extract(ticker)
+            if "microstructure_error" not in micro_features:
+                momentum_signal.indicators.update(micro_features)
+                regime_snapshot = self.regime_detector.detect(micro_features)
+                self.telemetry.record(
+                    event_type="microstructure",
+                    ticker=ticker,
+                    status="ok",
+                    payload={**micro_features, **regime_snapshot},
+                )
+            else:
+                self.telemetry.record(
+                    event_type="microstructure",
+                    ticker=ticker,
+                    status="error",
+                    payload=micro_features,
+                )
+        except Exception as exc:  # pragma: no cover - diagnostics only
+            self.telemetry.record(
+                event_type="microstructure",
+                ticker=ticker,
+                status="exception",
+                payload={"error": str(exc)},
+            )
+
         # Gate 3: LLM sentiment (budget-aware, bias-cache first)
         sentiment_score = 0.0
         llm_model = getattr(self.llm_agent, "model_name", None)
@@ -445,6 +477,7 @@ class TradingOrchestrator:
                 multiplier=rl_decision.get("suggested_multiplier", 1.0),
                 current_price=current_price,
                 hist=hist,
+                market_regime=regime_snapshot.get("label"),
             ),
             event_type="gate.risk",
         )
