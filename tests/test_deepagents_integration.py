@@ -8,6 +8,7 @@ This script:
 3. Tests the integration without executing actual trades
 """
 
+import importlib
 import os
 import sys
 from pathlib import Path
@@ -19,6 +20,15 @@ from dotenv import load_dotenv
 
 # Load environment
 load_dotenv()
+
+
+def _deepagents_available() -> bool:
+    """Return True if deepagents can be imported, False otherwise."""
+    try:
+        importlib.import_module("deepagents")
+        return True
+    except Exception:
+        return False
 
 
 def test_deepagents_import():
@@ -40,10 +50,10 @@ def test_deepagents_import():
 def test_environment_variable():
     """Test that DEEPAGENTS_ENABLED environment variable is recognized."""
     print("\nTesting DEEPAGENTS_ENABLED environment variable...")
-    deepagents_enabled_env = os.getenv("DEEPAGENTS_ENABLED", "true").lower()
+    deepagents_enabled_env = os.getenv("DEEPAGENTS_ENABLED", "false").lower()
     deepagents_enabled = deepagents_enabled_env not in {"0", "false", "off", "no"}
 
-    print(f"DEEPAGENTS_ENABLED={os.getenv('DEEPAGENTS_ENABLED', 'true')}")
+    print(f"DEEPAGENTS_ENABLED={os.getenv('DEEPAGENTS_ENABLED', 'false')}")
     print(f"Interpreted as: {deepagents_enabled}")
 
     if deepagents_enabled:
@@ -57,6 +67,9 @@ def test_environment_variable():
 def test_adapter_initialization():
     """Test that DeepAgents adapter can be initialized."""
     print("\nTesting DeepAgents adapter initialization...")
+    if not _deepagents_available():
+        print("ℹ️ DeepAgents not installed; skipping adapter initialization test.")
+        return True
     try:
         from src.deepagents_integration.adapter import create_analysis_agent_adapter
 

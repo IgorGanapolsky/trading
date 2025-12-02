@@ -65,19 +65,6 @@ class _SimpleLLMExecutor:
         return {"output": text}
 
 
-class _SimpleLLMExecutor:
-    """Fallback executor if the LangChain Agent API is unavailable."""
-
-    def __init__(self, llm: BaseChatModel):
-        self._llm = llm
-
-    def invoke(self, payload: dict) -> dict:
-        prompt = payload.get("input") if isinstance(payload, dict) else str(payload)
-        response = self._llm.invoke(prompt)
-        text = getattr(response, "content", str(response))
-        return {"output": text}
-
-
 def build_price_action_agent(
     llm: BaseChatModel | None = None,
     extra_tools: Iterable[BaseTool] | None = None,
