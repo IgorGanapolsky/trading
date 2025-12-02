@@ -33,7 +33,7 @@ pydantic-settings==2.12.0
 python-dateutil==2.9.0.post0
 pytz==2023.3
 loguru==0.7.3
-anthropic>=0.73.0  # Aligned with pyproject.toml - was critically outdated at 0.18.1
+anthropic>=0.73.0,<1.0.0  # Aligned with pyproject.toml
 
 # NOTE: Testing packages (pytest*) moved to requirements-dev.txt
 # They should not be in production minimal dependencies

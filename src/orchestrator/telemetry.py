@@ -51,3 +51,36 @@ class OrchestratorTelemetry:
             status="submitted",
             payload=payload,
         )
+
+    def explainability_event(
+        self, gate: str, ticker: str, contributions: dict[str, Any], metadata: dict[str, Any] | None = None
+    ) -> None:
+        payload = {"contributions": contributions}
+        if metadata:
+            payload.update(metadata)
+        self.record(
+            event_type=f"explainability.{gate}",
+            ticker=ticker,
+            status="generated",
+            payload=payload,
+        )
+
+    def anomaly_event(
+        self,
+        *,
+        ticker: str,
+        gate: str,
+        reason: str,
+        metrics: dict[str, Any],
+    ) -> None:
+        payload = {
+            "gate": gate,
+            "reason": reason,
+            "metrics": metrics,
+        }
+        self.record(
+            event_type="anomaly",
+            ticker=ticker,
+            status="triggered",
+            payload=payload,
+        )

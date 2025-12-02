@@ -319,7 +319,7 @@ jobs:
           LANGCHAIN_MODEL: ${{ secrets.LANGCHAIN_MODEL || 'claude-3-5-sonnet-20241022' }}
           # Enable all agent integrations (CEO directive Nov 24, 2025: $100/mo budget)
           LLM_COUNCIL_ENABLED: ${{ secrets.LLM_COUNCIL_ENABLED || 'true' }}
-          DEEPAGENTS_ENABLED: ${{ secrets.DEEPAGENTS_ENABLED || 'true' }}
+          DEEPAGENTS_ENABLED: ${{ secrets.DEEPAGENTS_ENABLED || 'false' }}
         run: |
           python scripts/autonomous_trader.py
 

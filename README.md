@@ -80,6 +80,16 @@ python3 scripts/dry_run.py --symbols SPY QQQ --export-json out.json --export-md 
 
 # Build the agentic coaching/study/newsletter plan
 PYTHONPATH=src python3 scripts/day_trading_support_cycle.py --focus psychology --print-json
+
+# Train + export the transformer RL gate (writes weights + dataset cache)
+PYTHONPATH=. python3 scripts/train_rl_transformer.py \
+  --tickers SPY QQQ IWM \
+  --start 2023-01-01 \
+  --end 2024-11-30 \
+  --epochs 4
+
+# Convert Rule #1 signals into a $10/day premium plan
+PYTHONPATH=src python3 scripts/options_profit_planner.py --target-daily 10
 ```
 
 ---
@@ -97,6 +107,7 @@ PYTHONPATH=src python3 scripts/day_trading_support_cycle.py --focus psychology -
 - **[docs/research-findings.md](docs/research-findings.md)** - Future enhancement roadmap and researched capabilities
 - **[docs/profit-optimization.md](docs/profit-optimization.md)** - Cost optimization strategies (OpenRouter, High-Yield Cash, batching)
 - **[docs/day_trading_support.md](docs/day_trading_support.md)** - Agentic coaching/study/newsletter orchestration for trader readiness
+- **[docs/options-profit-roadmap.md](docs/options-profit-roadmap.md)** - Options income plan + instrumentation for the $10/day directive
 
 These documents contain critical protocols and context for understanding how the system operates, what phase we're in, and how to verify work properly. All AI agents MUST read verification-protocols.md before making claims about system status or completion.
 
@@ -211,6 +222,8 @@ Set `HYBRID_LLM_MODEL=claude-3-5-haiku-20241022` (default) or `gpt-4o-mini` to c
 - **Momentum Indicators**: MACD, RSI, Volume analysis
 - **Multi-tier Allocation**: ETFs (60%), Growth stocks (20%), IPOs (10%), Crowdfunding (10%)
 - **Risk Management**: Daily loss limits, max drawdown protection, position sizing
+- **Hybrid RL Filter**: Gate 2 now ensembles PPO heuristics with a transformer encoder for multi-horizon context plus attribution logging
+- **RL Gate Training Pipeline**: `scripts/train_rl_transformer.py` exports weights to `models/ml/rl_transformer_state.pt` and archives labeled tensors under `data/datasets/rl_transformer_sequences.npz` for offline audits
 - **Paper Trading**: 90-day validation before live trading
 
 ### Treasuries Momentum Gate (New)
@@ -234,6 +247,7 @@ Set `HYBRID_LLM_MODEL=claude-3-5-haiku-20241022` (default) or `gpt-4o-mini` to c
 - **Daily Reporting**: Automated CEO reports with performance metrics
 - **State Persistence**: Complete system state tracking
 - **Error Handling**: Retry logic, graceful failures, comprehensive logging
+- **Realtime Anomaly Guardrails**: Rolling rejection/confidence monitor halts or flags gates that misbehave mid-session
 
 ### Sentiment Analysis
 - **Reddit Scraper**: Monitors 4 key investing subreddits
@@ -273,7 +287,7 @@ Set `HYBRID_LLM_MODEL=claude-3-5-haiku-20241022` (default) or `gpt-4o-mini` to c
 
 ## ✅ Promotion Gate & Telemetry
 
-- **Scenario Backtests**: `python3 scripts/run_backtest_matrix.py` executes the regime matrix defined in `config/backtest_scenarios.yaml` and persists structured metrics to `data/backtests/`.
+- **Scenario Backtests**: `python3 scripts/run_backtest_matrix.py` executes the regime matrix defined in `config/backtest_scenarios.yaml` and persists structured metrics to `data/backtests/`. Pass `--use-hybrid-gates` to replay the full production funnel (momentum → transformer RL → LLM proxy → risk) inside CI-safe backtests.
 - **Automated Promotion Guard**: `python3 scripts/enforce_promotion_gate.py` blocks any live trading toggles until paper-trading + scenario metrics satisfy the R&D thresholds (win rate >60%, Sharpe >1.5, max drawdown <10%, ≥30-day profitable streak).
 - **CI Integration**: `.github/workflows/daily-trading.yml` now runs the matrix + promotion guard before the orchestrator fires, so we cannot accidentally bypass the R&D phase.
 - **Telemetry Surfaces**: `scripts/generate_telemetry_report.py` and `dashboard/telemetry_app.py` read `data/audit_trail/hybrid_funnel_runs.jsonl` to expose gate pass/reject rates, top tickers, and recent errors for monitoring.

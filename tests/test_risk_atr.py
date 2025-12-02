@@ -56,6 +56,8 @@ def test_calculate_size_volatility_scaling():
         hist=hist,
     )
 
-    # Base notional = 10 * 0.8 * 0.8 = 6.4
-    assert math.isclose(size_no_hist, 6.4, rel_tol=0.01)
+    # Base notional = daily_budget * blended_confidence * sentiment_multiplier * multiplier
+    # blended_confidence = (signal_strength + rl_confidence) / 2 = (0.8 + 0.8) / 2 = 0.8
+    # base_notional = 10 * 0.8 * 1.0 * 1.0 = 8.0
+    assert math.isclose(size_no_hist, 8.0, rel_tol=0.01)
     assert size_with_hist <= size_no_hist

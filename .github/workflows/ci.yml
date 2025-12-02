@@ -58,6 +58,7 @@ jobs:
             tests/test_promotion_gate.py \
             tests/test_backtest_matrix_utils.py \
             tests/test_telemetry_summary.py \
+            tests/test_trade_gateway.py \
             --timeout=120 \
             --timeout-method=thread \
             -v \

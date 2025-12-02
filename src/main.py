@@ -513,7 +513,7 @@ class TradingOrchestrator:
                 self.logger.info("ADK orchestrator integration disabled via ADK_ENABLED=0")
 
             # Initialize DeepAgents adapter
-            deepagents_enabled_env = os.getenv("DEEPAGENTS_ENABLED", "true").lower()
+            deepagents_enabled_env = os.getenv("DEEPAGENTS_ENABLED", "false").lower()
             deepagents_enabled = deepagents_enabled_env not in {
                 "0",
                 "false",

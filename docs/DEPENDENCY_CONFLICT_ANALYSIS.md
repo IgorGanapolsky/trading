@@ -13,7 +13,7 @@
 - **Stability**: `requirements-minimal.txt` uses exact pinning (more stable), `requirements.txt` uses mixed pinning
 
 **Verification Complete** (2025-11-23):
-- ✅ DeepAgents + LangChain: **KEEP** (actively used in production)
+- ✅ LangChain stack: **KEEP** (actively used in production). DeepAgents now ships as an optional extra (`pip install ".[deepagents]"`) to avoid CI dependency conflicts.
 - ✅ Streamlit: **KEEP** (operational dashboards)
 - ❌ slack-sdk: **REMOVE** (not imported anywhere)
 - ❌ gspread: **REMOVE** (not imported anywhere)
@@ -33,7 +33,7 @@
 | **pydantic-settings** | 2.2.1 (exact) | >=2.10.1,<3.0.0 (range) | **Version + pinning** | 🟡 MEDIUM |
 | **anthropic** | 0.18.1 (exact) | >=0.73.0,<1.0.0 (range) | **Major version gap** | 🔴 CRITICAL |
 | **streamlit** | ❌ Removed (unused) | >=1.29.0 (range) | **Missing in minimal** | 🟢 LOW |
-| **deepagents** | ❌ Not present | >=0.2.5 (range) | **Missing in minimal** | 🟡 MEDIUM |
+| **deepagents** | ❌ Not present | *(optional extra via `pip install ".[deepagents]"`)* | **Optional** | 🟢 LOW |
 | **langchain** | ❌ Not present | >=1.0.0 (range) | **Missing in minimal** | 🟡 MEDIUM |
 | **langchain-anthropic** | ❌ Not present | >=1.0.0 (range) | **Missing in minimal** | 🟡 MEDIUM |
 | **langchain-community** | ❌ Not present | >=0.4.0 (range) | **Missing in minimal** | 🟡 MEDIUM |
@@ -146,15 +146,18 @@ pydantic-settings>=2.10.1,<3.0.0  # Required by langchain-community
 
 ## Packages in requirements.txt NOT in requirements-minimal.txt
 
-### DeepAgents & LangChain Ecosystem (5 packages)
+### DeepAgents & LangChain Ecosystem
 ```python
-deepagents>=0.2.5
+# Base requirements (installed by default)
 langchain>=1.0.0
 langchain-anthropic>=1.0.0
 langchain-community>=0.4.0
 langgraph>=1.0.0
+
+# Optional extras (install via `python -m pip install ".[deepagents]"`)
+deepagents>=0.2.5
 ```
-**Status**: **KEEP** - Used for multi-agent RL system (core R&D functionality)
+**Status**: **KEEP** - LangChain stack is core; DeepAgents is now an opt-in extra to avoid CI conflicts
 
 ### MCP Integrations (6 packages)
 ```python
