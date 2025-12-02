@@ -13,6 +13,7 @@ from src.agents.momentum_agent import MomentumAgent
 from src.agents.rl_agent import RLFilter
 from src.execution.alpaca_executor import AlpacaExecutor
 from src.langchain_agents.analyst import LangChainSentimentAgent
+from src.orchestrator.anomaly_monitor import AnomalyMonitor
 from src.orchestrator.budget import BudgetController
 from src.orchestrator.failure_isolation import FailureIsolationManager
 from src.orchestrator.telemetry import OrchestratorTelemetry
@@ -67,6 +68,12 @@ class TradingOrchestrator:
         self.executor = AlpacaExecutor(paper=paper)
         self.executor.sync_portfolio_state()
         self.telemetry = OrchestratorTelemetry()
+        self.anomaly_monitor = AnomalyMonitor(
+            telemetry=self.telemetry,
+            window=int(os.getenv("ANOMALY_WINDOW", "40")),
+            rejection_threshold=float(os.getenv("ANOMALY_REJECTION_THRESHOLD", "0.8")),
+            confidence_floor=float(os.getenv("ANOMALY_CONFIDENCE_FLOOR", "0.45")),
+        )
         self.failure_manager = FailureIsolationManager(self.telemetry)
         self.options_risk_monitor = OptionsRiskMonitor(paper=paper)
         # CRITICAL: All trades must go through the gateway - no direct executor calls
@@ -152,6 +159,24 @@ class TradingOrchestrator:
             "fee_rate": sec_fee_rate + broker_fee_rate,
         }
 
+    def _track_gate_event(
+        self,
+        *,
+        gate: str,
+        ticker: str,
+        status: str,
+        metrics: dict[str, Any] | None = None,
+    ) -> None:
+        try:
+            self.anomaly_monitor.track(
+                gate=gate,
+                ticker=ticker,
+                status=status,
+                metrics=metrics or {},
+            )
+        except Exception as exc:  # pragma: no cover - non-critical
+            logger.debug("Anomaly monitor tracking failed for %s: %s", gate, exc)
+
     def _process_ticker(self, ticker: str, rl_threshold: float) -> None:
         logger.info("--- Processing %s ---", ticker)
 
@@ -180,6 +205,12 @@ class TradingOrchestrator:
                     "indicators": momentum_signal.indicators,
                 },
             )
+            self._track_gate_event(
+                gate="momentum",
+                ticker=ticker,
+                status="reject",
+                metrics={"confidence": momentum_signal.strength},
+            )
             return
         logger.info("Gate 1 (%s): PASSED (strength=%.2f)", ticker, momentum_signal.strength)
         self.telemetry.gate_pass(
@@ -189,6 +220,12 @@ class TradingOrchestrator:
                 "strength": momentum_signal.strength,
                 "indicators": momentum_signal.indicators,
             },
+        )
+        self._track_gate_event(
+            gate="momentum",
+            ticker=ticker,
+            status="pass",
+            metrics={"confidence": momentum_signal.strength},
         )
 
         # Gate 2: RL inference
@@ -202,6 +239,12 @@ class TradingOrchestrator:
                 "Gate 2 (%s): RL filter failed: %s",
                 ticker,
                 rl_outcome.failure.error,
+            )
+            self._track_gate_event(
+                gate="rl_filter",
+                ticker=ticker,
+                status="error",
+                metrics={"confidence": 0.0},
             )
             return
 
@@ -217,6 +260,12 @@ class TradingOrchestrator:
                 ticker,
                 rl_decision,
             )
+            self._track_gate_event(
+                gate="rl_filter",
+                ticker=ticker,
+                status="reject",
+                metrics={"confidence": rl_decision.get("confidence", 0.0)},
+            )
             return
         logger.info(
             "Gate 2 (%s): PASSED (action=%s, confidence=%.2f).",
@@ -225,6 +274,18 @@ class TradingOrchestrator:
             rl_decision.get("confidence", 0.0),
         )
         self.telemetry.gate_pass("rl_filter", ticker, rl_decision)
+        self.telemetry.explainability_event(
+            gate="rl_filter",
+            ticker=ticker,
+            contributions=rl_decision.get("explainability", {}),
+            metadata={"sources": rl_decision.get("sources")},
+        )
+        self._track_gate_event(
+            gate="rl_filter",
+            ticker=ticker,
+            status="pass",
+            metrics={"confidence": rl_decision.get("confidence", 0.0)},
+        )
 
         # Gate 3: LLM sentiment (budget-aware)
         sentiment_score = 0.0
@@ -253,9 +314,21 @@ class TradingOrchestrator:
                         ticker,
                         {**llm_result, "trigger": "negative_sentiment"},
                     )
+                    self._track_gate_event(
+                        gate="llm",
+                        ticker=ticker,
+                        status="reject",
+                        metrics={"confidence": sentiment_score},
+                    )
                     return
                 logger.info("Gate 3 (%s): PASSED (sentiment=%.2f).", ticker, sentiment_score)
                 self.telemetry.gate_pass("llm", ticker, llm_result)
+                self._track_gate_event(
+                    gate="llm",
+                    ticker=ticker,
+                    status="pass",
+                    metrics={"confidence": sentiment_score},
+                )
             else:
                 logger.warning(
                     "Gate 3 (%s): Error calling LLM (%s). Falling back to RL output.",
@@ -271,6 +344,12 @@ class TradingOrchestrator:
                         "attempts": llm_outcome.failure.metadata.get("attempts"),
                     },
                 )
+                self._track_gate_event(
+                    gate="llm",
+                    ticker=ticker,
+                    status="error",
+                    metrics={"confidence": sentiment_score},
+                )
         else:
             logger.info("Gate 3 (%s): Skipped to protect budget.", ticker)
             self.telemetry.record(
@@ -281,6 +360,12 @@ class TradingOrchestrator:
                     "remaining_budget": self.budget_controller.remaining_budget,
                     "model": llm_model,
                 },
+            )
+            self._track_gate_event(
+                gate="llm",
+                ticker=ticker,
+                status="skipped",
+                metrics={"confidence": sentiment_score},
             )
 
         # Gather recent history for ATR-based sizing and stops
@@ -325,6 +410,12 @@ class TradingOrchestrator:
                 ticker,
                 risk_outcome.failure.error,
             )
+            self._track_gate_event(
+                gate="risk",
+                ticker=ticker,
+                status="error",
+                metrics={"confidence": rl_decision.get("confidence", 0.0)},
+            )
             return
 
         order_size = risk_outcome.result
@@ -338,6 +429,12 @@ class TradingOrchestrator:
                     "order_size": order_size,
                     "account_equity": self.executor.account_equity,
                 },
+            )
+            self._track_gate_event(
+                gate="risk",
+                ticker=ticker,
+                status="reject",
+                metrics={"confidence": rl_decision.get("confidence", 0.0)},
             )
             return
 
@@ -379,6 +476,12 @@ class TradingOrchestrator:
             "risk",
             ticker,
             {"order_size": order_size, "account_equity": self.executor.account_equity},
+        )
+        self._track_gate_event(
+            gate="risk",
+            ticker=ticker,
+            status="pass",
+            metrics={"confidence": rl_decision.get("confidence", 0.0)},
         )
         cost_estimate = self._estimate_execution_costs(order_size)
         self.telemetry.order_event(

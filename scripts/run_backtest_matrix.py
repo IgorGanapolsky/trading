@@ -82,6 +82,11 @@ def parse_args() -> argparse.Namespace:
         default=0,
         help="Optional cap on number of scenarios to execute (0 = all).",
     )
+    parser.add_argument(
+        "--use-hybrid-gates",
+        action="store_true",
+        help="Replay the full hybrid funnel (momentum → RL → LLM proxy → risk) inside the backtest engine.",
+    )
     return parser.parse_args()
 
 
@@ -99,6 +104,8 @@ def run_backtest_for_scenario(
     scenario: dict[str, Any],
     defaults: dict[str, Any],
     output_dir: Path,
+    *,
+    use_hybrid_gates: bool = False,
 ) -> dict[str, Any]:
     from src.backtesting.backtest_engine import (
         BacktestEngine,  # local import to avoid heavy deps during tests
@@ -111,6 +118,7 @@ def run_backtest_for_scenario(
         ),
     )
 
+    hybrid_options = {"max_trades_per_day": scenario.get("max_trades_per_day", 1)}
     engine = BacktestEngine(
         strategy=strategy,
         start_date=scenario["start_date"],
@@ -118,6 +126,8 @@ def run_backtest_for_scenario(
         initial_capital=float(
             scenario.get("initial_capital", defaults.get("initial_capital", 100000.0))
         ),
+        use_hybrid_gates=use_hybrid_gates,
+        hybrid_options=hybrid_options,
     )
     results = engine.run()
 
@@ -157,6 +167,7 @@ def summarize_results(results: BacktestResults, scenario: dict[str, Any]) -> dic
         "execution_costs": costs,
         "cost_adjusted_return_pct": costs["cost_adjusted_total_return_pct"],
         "cost_adjusted_annualized_return_pct": costs["cost_adjusted_annualized_return_pct"],
+        "hybrid_gates": scenario.get("hybrid_gates", False),
     }
 
 
@@ -256,7 +267,10 @@ def main() -> None:
     summaries: list[dict[str, Any]] = []
     for scenario in scenarios:
         scenario_dir = output_root / "matrix_core_dca" / scenario["name"]
-        summary = run_backtest_for_scenario(scenario, defaults, scenario_dir)
+        scenario["hybrid_gates"] = args.use_hybrid_gates
+        summary = run_backtest_for_scenario(
+            scenario, defaults, scenario_dir, use_hybrid_gates=args.use_hybrid_gates
+        )
         summaries.append(summary)
 
     aggregate = aggregate_summary(summaries)
