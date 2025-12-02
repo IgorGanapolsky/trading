@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import logging
 import os
+from datetime import datetime, timedelta, timezone
 
+from src.analyst.bias_store import BiasProvider, BiasSnapshot, BiasStore
 from src.agents.momentum_agent import MomentumAgent
 from src.agents.rl_agent import RLFilter
 from src.execution.alpaca_executor import AlpacaExecutor
@@ -53,6 +55,20 @@ class TradingOrchestrator:
         self.trade_gateway = TradeGateway(executor=self.executor, paper=paper)
         # Capital efficiency calculator - determines what strategies are viable
         self.capital_calculator = get_capital_calculator(daily_deposit_rate=10.0)
+
+        bias_dir = os.getenv("BIAS_DATA_DIR", "data/bias")
+        self.bias_store = BiasStore(bias_dir)
+        self.bias_fresh_minutes = int(os.getenv("BIAS_FRESHNESS_MINUTES", "90"))
+        self.bias_snapshot_ttl_minutes = int(
+            os.getenv("BIAS_TTL_MINUTES", str(max(self.bias_fresh_minutes, 360)))
+        )
+        enable_async_analyst = os.getenv("ENABLE_ASYNC_ANALYST", "true").lower() in {"1", "true", "yes"}
+        self.bias_provider: BiasProvider | None = None
+        if enable_async_analyst:
+            self.bias_provider = BiasProvider(
+                self.bias_store,
+                freshness=timedelta(minutes=self.bias_fresh_minutes),
+            )
 
     def run(self) -> None:
         logger.info("Running hybrid funnel for tickers: %s", ", ".join(self.tickers))
@@ -137,10 +153,39 @@ class TradingOrchestrator:
         )
         self.telemetry.gate_pass("rl_filter", ticker, rl_decision)
 
-        # Gate 3: LLM sentiment (budget-aware)
+        # Gate 3: LLM sentiment (budget-aware, bias-cache first)
         sentiment_score = 0.0
         llm_model = getattr(self.llm_agent, "model_name", None)
-        if self.budget_controller.can_afford_execution(model=llm_model):
+        neg_threshold = float(os.getenv("LLM_NEGATIVE_SENTIMENT_THRESHOLD", "-0.2"))
+        bias_snapshot: BiasSnapshot | None = None
+
+        if self.bias_provider:
+            bias_snapshot = self.bias_provider.get_bias(ticker)
+
+        if bias_snapshot:
+            sentiment_score = bias_snapshot.score
+            payload = bias_snapshot.to_dict()
+            payload["source"] = "bias_store"
+            if sentiment_score < neg_threshold:
+                logger.info(
+                    "Gate 3 (%s): REJECTED by bias store (score=%.2f, reason=%s).",
+                    ticker,
+                    sentiment_score,
+                    bias_snapshot.reason,
+                )
+                self.telemetry.gate_reject(
+                    "llm",
+                    ticker,
+                    {**payload, "trigger": "negative_sentiment"},
+                )
+                return
+            logger.info(
+                "Gate 3 (%s): PASSED via bias store (sentiment=%.2f).",
+                ticker,
+                sentiment_score,
+            )
+            self.telemetry.gate_pass("llm", ticker, payload)
+        elif self.budget_controller.can_afford_execution(model=llm_model):
             llm_outcome = self.failure_manager.run(
                 gate="llm",
                 ticker=ticker,
@@ -151,7 +196,6 @@ class TradingOrchestrator:
                 llm_result = llm_outcome.result
                 sentiment_score = llm_result.get("score", 0.0)
                 self.budget_controller.log_spend(llm_result.get("cost", 0.0))
-                neg_threshold = float(os.getenv("LLM_NEGATIVE_SENTIMENT_THRESHOLD", "-0.2"))
                 if sentiment_score < neg_threshold:
                     logger.info(
                         "Gate 3 (%s): REJECTED by LLM (score=%.2f, reason=%s).",
@@ -167,6 +211,7 @@ class TradingOrchestrator:
                     return
                 logger.info("Gate 3 (%s): PASSED (sentiment=%.2f).", ticker, sentiment_score)
                 self.telemetry.gate_pass("llm", ticker, llm_result)
+                self._persist_bias_from_llm(ticker, llm_result)
             else:
                 logger.warning(
                     "Gate 3 (%s): Error calling LLM (%s). Falling back to RL output.",
@@ -314,6 +359,34 @@ class TradingOrchestrator:
                 )
         except Exception as exc:  # pragma: no cover - non-fatal
             logger.info("Stop-loss placement skipped for %s: %s", ticker, exc)
+
+    def _persist_bias_from_llm(self, ticker: str, llm_payload: dict) -> None:
+        try:
+            score = float(llm_payload.get("score", 0.0))
+            now = datetime.now(timezone.utc)
+            snapshot = BiasSnapshot(
+                symbol=ticker,
+                score=score,
+                direction=self._score_to_direction(score),
+                conviction=min(1.0, max(0.0, abs(score))),
+                reason=llm_payload.get("reason", "llm sentiment"),
+                created_at=now,
+                expires_at=now + timedelta(minutes=self.bias_snapshot_ttl_minutes),
+                model=llm_payload.get("model"),
+                sources=llm_payload.get("sources", []),
+                metadata={"source": "orchestrator.llm", "raw": llm_payload},
+            )
+            self.bias_store.persist(snapshot)
+        except Exception as exc:  # pragma: no cover - analytics only
+            logger.debug("Failed to persist bias snapshot for %s: %s", ticker, exc)
+
+    @staticmethod
+    def _score_to_direction(score: float) -> str:
+        if score >= 0.2:
+            return "bullish"
+        if score <= -0.2:
+            return "bearish"
+        return "neutral"
 
     def run_delta_rebalancing(self) -> dict:
         """

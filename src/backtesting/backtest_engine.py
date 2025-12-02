@@ -18,7 +18,7 @@ Created: 2025-11-02
 
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 import numpy as np
@@ -27,7 +27,9 @@ import yfinance as yf
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
+from src.analyst.bias_store import BiasSnapshot
 from src.backtesting.backtest_results import BacktestResults
+from src.backtesting.bias_replay import BiasReplay
 
 # Import slippage model for realistic execution costs
 try:
@@ -69,6 +71,7 @@ class BacktestEngine:
         initial_capital: float = 100000.0,
         enable_slippage: bool = True,
         slippage_bps: float = 5.0,
+        bias_replay: BiasReplay | None = None,
     ):
         """
         Initialize the backtest engine.
@@ -135,6 +138,9 @@ class BacktestEngine:
         logger.info(f"Backtest engine initialized: {start_date} to {end_date}")
         logger.info(f"Initial capital: ${initial_capital:,.2f}")
         logger.info(f"Strategy: {type(strategy).__name__}")
+
+        self.bias_replay = bias_replay
+        self.bias_replay_threshold = float(os.getenv("BACKTEST_BIAS_NEGATIVE_THRESHOLD", "-0.2"))
 
     def run(self) -> BacktestResults:
         """
@@ -347,6 +353,13 @@ class BacktestEngine:
 
             for symbol in self.strategy.etf_universe:
                 try:
+                    if self._bias_blocks_trade(symbol, date):
+                        logger.debug(
+                            "%s: Bias replay blocked %s due to negative sentiment.",
+                            date_str,
+                            symbol,
+                        )
+                        continue
                     # Get historical data up to this date
                     hist = self._get_historical_data(symbol, date)
                     if hist is None:
@@ -563,6 +576,26 @@ class BacktestEngine:
         start_price = hist["Close"].iloc[-periods]
 
         return (end_price - start_price) / start_price
+
+    def _get_bias_snapshot(self, symbol: str, date: datetime) -> BiasSnapshot | None:
+        if not self.bias_replay:
+            return None
+        if date.tzinfo is None:
+            aware_date = date.replace(tzinfo=timezone.utc)
+        else:
+            aware_date = date.astimezone(timezone.utc)
+        try:
+            return self.bias_replay.get_bias(symbol, aware_date)
+        except Exception:
+            return None
+
+    def _bias_blocks_trade(self, symbol: str, date: datetime) -> bool:
+        snapshot = self._get_bias_snapshot(symbol, date)
+        if snapshot is None:
+            return False
+        if snapshot.score < self.bias_replay_threshold:
+            return True
+        return False
 
     def _get_price(self, symbol: str, date: datetime) -> Optional[float]:
         """
