@@ -166,6 +166,7 @@ class RuleOneOptionsSignal:
     total_premium: float = 0.0
     iv_rank: Optional[float] = None
     delta: Optional[float] = None
+    days_to_expiry: Optional[int] = None
     timestamp: datetime = None
 
     def __post_init__(self):
@@ -471,6 +472,7 @@ class RuleOneOptionsStrategy:
             "current_price": signal.current_price,
             "iv_rank": signal.iv_rank,
             "delta": signal.delta,
+            "days_to_expiry": signal.days_to_expiry,
             "confidence": signal.confidence,
             "rationale": signal.rationale,
             "timestamp": signal.timestamp.isoformat(),
@@ -609,6 +611,7 @@ class RuleOneOptionsStrategy:
                     total_premium=total_premium,
                     iv_rank=contract.iv_rank,
                     delta=contract.delta,
+                    days_to_expiry=contract.days_to_expiry,
                 )
                 signals.append(signal)
 
@@ -717,6 +720,7 @@ class RuleOneOptionsStrategy:
                     total_premium=total_premium,
                     iv_rank=contract.iv_rank,
                     delta=contract.delta,
+                    days_to_expiry=contract.days_to_expiry,
                 )
                 signals.append(signal)
 
