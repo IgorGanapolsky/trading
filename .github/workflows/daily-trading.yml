@@ -54,13 +54,11 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies (lean)
-        env:
-          PIP_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
         run: |
           sudo rm -rf /tmp/pip-* /tmp/pipcache ~/.cache/pip ~/.cache/torch || true
           df -h .
           python3 -m pip install --upgrade pip
-          python3 -m pip install --no-cache-dir -r requirements-minimal.txt
+          python3 -m pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r requirements-minimal.txt
 
       - name: Install full deps for unit gates (optional)
         if: ${{ false }}  # enable only if additional tests need full stack
