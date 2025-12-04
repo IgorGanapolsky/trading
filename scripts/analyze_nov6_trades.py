@@ -157,8 +157,11 @@ print("  3. Consider strengthening filters to REJECT bad entries")
 print("=" * 80)
 
 # Try to load system state to get more context
+from pathlib import Path
+SCRIPT_DIR = Path(__file__).parent
+PROJECT_ROOT = SCRIPT_DIR.parent
 try:
-    with open("/Users/igorganapolsky/workspace/git/apps/trading/data/system_state.json") as f:
+    with open(PROJECT_ROOT / "data" / "system_state.json") as f:
         state = json.load(f)
         print()
         print("SYSTEM STATE CONTEXT:")

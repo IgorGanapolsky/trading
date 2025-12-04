@@ -19,9 +19,11 @@ git init
 git config user.name "GitHub Actions Bot"
 git config user.email "actions@github.com"
 
-# Copy wiki files
-cp /Users/igorganapolsky/workspace/git/apps/trading/wiki/Home.md .
-cp /Users/igorganapolsky/workspace/git/apps/trading/wiki/Progress-Dashboard.md .
+# Copy wiki files (use PROJECT_ROOT from earlier in script)
+SCRIPT_DIR_ORIG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT_ORIG="$(cd "$SCRIPT_DIR_ORIG/.." && pwd)"
+cp "$PROJECT_ROOT_ORIG/wiki/Home.md" .
+cp "$PROJECT_ROOT_ORIG/wiki/Progress-Dashboard.md" .
 
 # Commit
 git add -A

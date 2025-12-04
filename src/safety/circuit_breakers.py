@@ -7,15 +7,45 @@ Prevents catastrophic losses by automatically halting trading when:
 - Unusual trading patterns
 - API errors exceed limit
 - Position size anomalies
+
+Updated: 2025-12-04 - Added file locking for thread-safe state operations.
 """
 
+import fcntl
 import json
 import logging
+from contextlib import contextmanager
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def file_lock(file_path: Path, exclusive: bool = True) -> Generator[None, None, None]:
+    """
+    Context manager for file locking to prevent race conditions.
+
+    Args:
+        file_path: Path to the file to lock
+        exclusive: If True, acquire exclusive lock (for writes). If False, shared lock (for reads).
+
+    Usage:
+        with file_lock(state_file):
+            # Safe to read/write
+    """
+    lock_path = file_path.with_suffix(".lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+
+    lock_file = open(lock_path, "w")
+    try:
+        lock_type = fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH
+        fcntl.flock(lock_file.fileno(), lock_type)
+        yield
+    finally:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+        lock_file.close()
 
 
 class CircuitBreaker:
@@ -192,7 +222,7 @@ class CircuitBreaker:
         return True
 
     def _load_state(self) -> dict[str, Any]:
-        """Load state from disk."""
+        """Load state from disk with file locking."""
         if not self.state_file.exists():
             return {
                 "is_tripped": False,
@@ -202,18 +232,23 @@ class CircuitBreaker:
             }
 
         try:
-            with open(self.state_file) as f:
-                return json.load(f)
+            with file_lock(self.state_file, exclusive=False):
+                with open(self.state_file) as f:
+                    return json.load(f)
         except Exception as e:
             logger.error(f"Error loading circuit breaker state: {e}")
             return {}
 
     def _save_state(self) -> None:
-        """Save state to disk."""
+        """Save state to disk with file locking (atomic write)."""
         try:
             self.state_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.state_file, "w") as f:
-                json.dump(self.state, f, indent=2)
+            with file_lock(self.state_file, exclusive=True):
+                # Write to temp file then rename for atomic operation
+                temp_file = self.state_file.with_suffix(".tmp")
+                with open(temp_file, "w") as f:
+                    json.dump(self.state, f, indent=2)
+                temp_file.replace(self.state_file)
         except Exception as e:
             logger.error(f"Error saving circuit breaker state: {e}")
 
@@ -393,23 +428,27 @@ class SharpeKillSwitch:
             return 0
 
     def _load_state(self) -> dict[str, Any]:
-        """Load state from disk."""
+        """Load state from disk with file locking."""
         if not self.state_file.exists():
             return {"is_active": False, "in_research_mode": False}
 
         try:
-            with open(self.state_file) as f:
-                return json.load(f)
+            with file_lock(self.state_file, exclusive=False):
+                with open(self.state_file) as f:
+                    return json.load(f)
         except Exception as e:
             logger.error(f"Error loading Sharpe kill switch state: {e}")
             return {"is_active": False, "in_research_mode": False}
 
     def _save_state(self) -> None:
-        """Save state to disk."""
+        """Save state to disk with file locking (atomic write)."""
         try:
             self.state_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.state_file, "w") as f:
-                json.dump(self.state, f, indent=2)
+            with file_lock(self.state_file, exclusive=True):
+                temp_file = self.state_file.with_suffix(".tmp")
+                with open(temp_file, "w") as f:
+                    json.dump(self.state, f, indent=2)
+                temp_file.replace(self.state_file)
         except Exception as e:
             logger.error(f"Error saving Sharpe kill switch state: {e}")
 
