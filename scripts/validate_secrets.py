@@ -49,13 +49,13 @@ def validate_secrets() -> tuple[bool, list[str]]:
     errors = []
 
     if missing_critical:
-        print(f"❌ CRITICAL: Missing required secrets: {', '.join(missing_critical)}")
+        print(f"❌ CRITICAL: Missing {len(missing_critical)} required secrets.")
         errors.extend(missing_critical)
     else:
         print("✅ All critical secrets present")
 
     if missing_optional:
-        print(f"⚠️  WARNING: Missing optional secrets: {', '.join(missing_optional)}")
+        print(f"⚠️  WARNING: Missing {len(missing_optional)} optional secrets.")
         print("   Some features may be limited")
 
     # Additional validation for specific formats
