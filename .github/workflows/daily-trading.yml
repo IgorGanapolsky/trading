@@ -493,6 +493,8 @@ jobs:
           # Enable all agent integrations (CEO directive Nov 24, 2025: $100/mo budget)
           LLM_COUNCIL_ENABLED: ${{ secrets.LLM_COUNCIL_ENABLED || 'true' }}
           DEEPAGENTS_ENABLED: ${{ secrets.DEEPAGENTS_ENABLED || 'false' }}
+          # Enable RL feedback loop (close the learning loop)
+          ENABLE_RL_RETRAIN: ${{ secrets.ENABLE_RL_RETRAIN || 'true' }}
         run: |
           echo "🚀 ========================================"
           echo "🚀 EXECUTING DAILY TRADING - $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
