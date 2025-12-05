@@ -5,6 +5,7 @@ Collects earnings expectations, whisper numbers, and earnings calendar data.
 Provides insights into market expectations vs. analyst estimates.
 """
 
+from __future__ import annotations
 import logging
 import re
 from datetime import datetime

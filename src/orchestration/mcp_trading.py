@@ -96,7 +96,7 @@ def _compute_market_features(price_history: pd.DataFrame) -> dict[str, Any]:
     }
 
 
-@dataclass(slots=True)
+@dataclass
 class MCPTradingResult:
     symbol: str
     sentiment: dict[str, Any] = field(default_factory=dict)
