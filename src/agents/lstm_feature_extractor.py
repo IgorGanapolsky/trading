@@ -23,8 +23,9 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-from src.utils.technical_indicators import calculate_all_features
 from torch.utils.data import Dataset
+
+from src.utils.technical_indicators import calculate_all_features
 
 logger = logging.getLogger(__name__)
 
