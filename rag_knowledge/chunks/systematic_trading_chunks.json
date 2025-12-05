@@ -1,0 +1,1140 @@
+[
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Systematic Trading Rules",
+    "page_or_timestamp": "15-40",
+    "content": "Trading rules should be simple, mechanically implementable, and backed by economic rationale. The three main categories are: trend/momentum (price continues), carry (income from holding), and mean reversion (price returns to fair value). Complexity is the enemy - simple rules are robust.",
+    "content_type": "concept",
+    "topics": [
+      "trading_rules",
+      "trend_following",
+      "carry",
+      "mean_reversion"
+    ],
+    "edge_category": "momentum",
+    "citation": "Robert Carver (2015), \"Systematic Trading\", Ch. 2"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Systematic Trading Rules",
+    "page_or_timestamp": "15-40",
+    "content": "SIMPLE RULES WIN: A moving average crossover beats most complex ML models out-of-sample",
+    "content_type": "concept",
+    "topics": [
+      "trading_rules",
+      "trend_following",
+      "carry",
+      "mean_reversion"
+    ],
+    "edge_category": "backtest",
+    "citation": "Robert Carver (2015), Ch. 2"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Systematic Trading Rules",
+    "page_or_timestamp": "15-40",
+    "content": "Trend following works because: behavioral biases, hedging flows, slow institutional response",
+    "content_type": "concept",
+    "topics": [
+      "trading_rules",
+      "trend_following",
+      "carry",
+      "mean_reversion"
+    ],
+    "edge_category": "momentum",
+    "citation": "Robert Carver (2015), Ch. 2"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Systematic Trading Rules",
+    "page_or_timestamp": "15-40",
+    "content": "Carry works because: risk premium for holding assets, liquidity premium, roll yield",
+    "content_type": "concept",
+    "topics": [
+      "trading_rules",
+      "trend_following",
+      "carry",
+      "mean_reversion"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), Ch. 2"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Systematic Trading Rules",
+    "page_or_timestamp": "15-40",
+    "content": "Mean reversion works over short horizons (days), momentum over medium (weeks-months)",
+    "content_type": "concept",
+    "topics": [
+      "trading_rules",
+      "trend_following",
+      "carry",
+      "mean_reversion"
+    ],
+    "edge_category": "momentum",
+    "citation": "Robert Carver (2015), Ch. 2"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Systematic Trading Rules",
+    "page_or_timestamp": "15-40",
+    "content": "Combine rules with LOW correlation - diversification across rules is as important as across assets",
+    "content_type": "concept",
+    "topics": [
+      "trading_rules",
+      "trend_following",
+      "carry",
+      "mean_reversion"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), Ch. 2"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Systematic Trading Rules",
+    "page_or_timestamp": "15-40",
+    "content": "NEVER optimize rule parameters to the data - use sensible a priori values",
+    "content_type": "rule",
+    "topics": [
+      "trading_rules",
+      "trend_following",
+      "carry",
+      "mean_reversion"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 2"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Systematic Trading Rules",
+    "page_or_timestamp": "15-40",
+    "content": "Exponential Moving Average Crossover: signal = EMA(price, fast) - EMA(price, slow)\n\nExplanation: Typical fast=16-32 days, slow=64-128 days. Sign of signal gives direction, magnitude gives confidence.",
+    "content_type": "formula",
+    "topics": [
+      "trading_rules",
+      "trend_following",
+      "carry",
+      "mean_reversion",
+      "quantitative"
+    ],
+    "edge_category": "momentum",
+    "citation": "Robert Carver (2015), Exponential Moving Average Crossover"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Systematic Trading Rules",
+    "page_or_timestamp": "15-40",
+    "content": "Carry Signal: carry = (near_price - far_price) / far_price * annualization_factor\n\nExplanation: For futures: difference between near and far contract prices, annualized. Positive = backwardation = long signal.",
+    "content_type": "formula",
+    "topics": [
+      "trading_rules",
+      "trend_following",
+      "carry",
+      "mean_reversion",
+      "quantitative"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Carry Signal"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Portfolio Allocation",
+    "page_or_timestamp": "65-95",
+    "content": "Portfolio weights should account for correlation. The 'handcrafting' method groups correlated assets, applies inverse-volatility within groups, then weights groups by diversification potential. This avoids optimized weights that overfit.",
+    "content_type": "concept",
+    "topics": [
+      "instrument_weights",
+      "diversification",
+      "correlation",
+      "handcrafting"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), \"Systematic Trading\", Ch. 4"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Portfolio Allocation",
+    "page_or_timestamp": "65-95",
+    "content": "Inverse volatility weighting: weight \u221d 1/volatility - gives equal risk contribution",
+    "content_type": "concept",
+    "topics": [
+      "instrument_weights",
+      "diversification",
+      "correlation",
+      "handcrafting"
+    ],
+    "edge_category": "options",
+    "citation": "Robert Carver (2015), Ch. 4"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Portfolio Allocation",
+    "page_or_timestamp": "65-95",
+    "content": "Correlation clustering: Group assets with correlation > 0.7, then weight groups equally",
+    "content_type": "concept",
+    "topics": [
+      "instrument_weights",
+      "diversification",
+      "correlation",
+      "handcrafting"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), Ch. 4"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Portfolio Allocation",
+    "page_or_timestamp": "65-95",
+    "content": "Handcrafting beats optimization: Mean-variance optimization is garbage in finance",
+    "content_type": "concept",
+    "topics": [
+      "instrument_weights",
+      "diversification",
+      "correlation",
+      "handcrafting"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), Ch. 4"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Portfolio Allocation",
+    "page_or_timestamp": "65-95",
+    "content": "Diversification multiplier: portfolio_vol / avg(individual_vols) - should be < 0.7 for good diversification",
+    "content_type": "concept",
+    "topics": [
+      "instrument_weights",
+      "diversification",
+      "correlation",
+      "handcrafting"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), Ch. 4"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Portfolio Allocation",
+    "page_or_timestamp": "65-95",
+    "content": "Bootstrap your correlation matrix - point estimates are noisy",
+    "content_type": "concept",
+    "topics": [
+      "instrument_weights",
+      "diversification",
+      "correlation",
+      "handcrafting"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), Ch. 4"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Portfolio Allocation",
+    "page_or_timestamp": "65-95",
+    "content": "CRITICAL: Your current system likely has no correlation-based weighting - add it",
+    "content_type": "concept",
+    "topics": [
+      "instrument_weights",
+      "diversification",
+      "correlation",
+      "handcrafting"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), Ch. 4"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Portfolio Allocation",
+    "page_or_timestamp": "65-95",
+    "content": "Inverse Volatility Weight: w_i = (1/\u03c3_i) / \u03a3(1/\u03c3_j)\n\nExplanation: Weights sum to 1, higher vol assets get lower weight. Use 20-60 day vol estimate.",
+    "content_type": "formula",
+    "topics": [
+      "instrument_weights",
+      "diversification",
+      "correlation",
+      "handcrafting",
+      "quantitative"
+    ],
+    "edge_category": "options",
+    "citation": "Robert Carver (2015), Inverse Volatility Weight"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Portfolio Allocation",
+    "page_or_timestamp": "65-95",
+    "content": "Diversification Multiplier: DM = \u03c3_portfolio / \u03a3(w_i * \u03c3_i)\n\nExplanation: DM < 1 means diversification is working. DM near 0.5 is excellent, near 1.0 means assets are highly correlated.",
+    "content_type": "formula",
+    "topics": [
+      "instrument_weights",
+      "diversification",
+      "correlation",
+      "handcrafting",
+      "quantitative"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), Diversification Multiplier"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Volatility Targeting",
+    "page_or_timestamp": "120-150",
+    "content": "Position size should target a constant portfolio volatility (e.g., 15% annualized). When volatility is low, take larger positions; when high, reduce exposure. This prevents ruin and improves risk-adjusted returns significantly.",
+    "content_type": "concept",
+    "topics": [
+      "volatility_targeting",
+      "position_sizing",
+      "leverage",
+      "risk_scaling"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), \"Systematic Trading\", Ch. 6"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Volatility Targeting",
+    "page_or_timestamp": "120-150",
+    "content": "CRITICAL: Without volatility targeting, you're taking random-sized bets - this DESTROYS Sharpe",
+    "content_type": "concept",
+    "topics": [
+      "volatility_targeting",
+      "position_sizing",
+      "leverage",
+      "risk_scaling"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 6"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Volatility Targeting",
+    "page_or_timestamp": "120-150",
+    "content": "Target volatility should be comfortable (10-25% annual for most traders)",
+    "content_type": "concept",
+    "topics": [
+      "volatility_targeting",
+      "position_sizing",
+      "leverage",
+      "risk_scaling"
+    ],
+    "edge_category": "options",
+    "citation": "Robert Carver (2015), Ch. 6"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Volatility Targeting",
+    "page_or_timestamp": "120-150",
+    "content": "Position size = (target_vol / instrument_vol) * capital / price",
+    "content_type": "concept",
+    "topics": [
+      "volatility_targeting",
+      "position_sizing",
+      "leverage",
+      "risk_scaling"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 6"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Volatility Targeting",
+    "page_or_timestamp": "120-150",
+    "content": "Update volatility estimate daily using exponential weighted average (half-life 20-30 days)",
+    "content_type": "concept",
+    "topics": [
+      "volatility_targeting",
+      "position_sizing",
+      "leverage",
+      "risk_scaling"
+    ],
+    "edge_category": "options",
+    "citation": "Robert Carver (2015), Ch. 6"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Volatility Targeting",
+    "page_or_timestamp": "120-150",
+    "content": "Vol targeting adds ~0.3 Sharpe vs fixed position sizing",
+    "content_type": "concept",
+    "topics": [
+      "volatility_targeting",
+      "position_sizing",
+      "leverage",
+      "risk_scaling"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 6"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Volatility Targeting",
+    "page_or_timestamp": "120-150",
+    "content": "Never let position exceed 2x target due to vol compression - cap leverage",
+    "content_type": "rule",
+    "topics": [
+      "volatility_targeting",
+      "position_sizing",
+      "leverage",
+      "risk_scaling"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 6"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Volatility Targeting",
+    "page_or_timestamp": "120-150",
+    "content": "YOUR SYSTEM NEEDS THIS: Vol targeting will immediately improve your live results",
+    "content_type": "concept",
+    "topics": [
+      "volatility_targeting",
+      "position_sizing",
+      "leverage",
+      "risk_scaling"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 6"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Volatility Targeting",
+    "page_or_timestamp": "120-150",
+    "content": "Volatility-Targeted Position Size: position = (target_vol * capital) / (instrument_vol * price)\n\nExplanation: If target_vol=15%, capital=$10k, instrument_vol=30%, price=$100, position = 0.15*10000/(0.30*100) = 50 shares",
+    "content_type": "formula",
+    "topics": [
+      "volatility_targeting",
+      "position_sizing",
+      "leverage",
+      "risk_scaling",
+      "quantitative"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Volatility-Targeted Position Size"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Volatility Targeting",
+    "page_or_timestamp": "120-150",
+    "content": "Exponential Volatility Estimate: \u03c3\u00b2_t = \u03bb * \u03c3\u00b2_{t-1} + (1-\u03bb) * r\u00b2_t\n\nExplanation: Where \u03bb = exp(-1/halflife). Half-life=32 days gives \u03bb\u22480.97. Take sqrt for volatility.",
+    "content_type": "formula",
+    "topics": [
+      "volatility_targeting",
+      "position_sizing",
+      "leverage",
+      "risk_scaling",
+      "quantitative"
+    ],
+    "edge_category": "options",
+    "citation": "Robert Carver (2015), Exponential Volatility Estimate"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Volatility Targeting",
+    "page_or_timestamp": "120-150",
+    "content": "Risk-Adjusted Forecast: scaled_forecast = raw_forecast * (target_vol / instrument_vol)\n\nExplanation: Scale trading signal by volatility ratio to maintain consistent risk per trade.",
+    "content_type": "formula",
+    "topics": [
+      "volatility_targeting",
+      "position_sizing",
+      "leverage",
+      "risk_scaling",
+      "quantitative"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), Risk-Adjusted Forecast"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Combining Forecasts",
+    "page_or_timestamp": "151-180",
+    "content": "Multiple trading rules should be combined with proper weights. Forecast weights should be based on Sharpe ratio estimates (bootstrapped) and correlation. Apply a forecast diversification multiplier to account for correlation between rules.",
+    "content_type": "concept",
+    "topics": [
+      "forecast_combination",
+      "forecast_weights",
+      "diversification_multiplier"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), \"Systematic Trading\", Ch. 7"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Combining Forecasts",
+    "page_or_timestamp": "151-180",
+    "content": "Don't equally weight forecasts - weight by estimated Sharpe, but shrink toward equal weights",
+    "content_type": "concept",
+    "topics": [
+      "forecast_combination",
+      "forecast_weights",
+      "diversification_multiplier"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 7"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Combining Forecasts",
+    "page_or_timestamp": "151-180",
+    "content": "Shrinkage: final_weight = 0.5 * optimal_weight + 0.5 * equal_weight (typical)",
+    "content_type": "concept",
+    "topics": [
+      "forecast_combination",
+      "forecast_weights",
+      "diversification_multiplier"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 7"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Combining Forecasts",
+    "page_or_timestamp": "151-180",
+    "content": "Forecast diversification multiplier (FDM) scales combined forecast back up",
+    "content_type": "concept",
+    "topics": [
+      "forecast_combination",
+      "forecast_weights",
+      "diversification_multiplier"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), Ch. 7"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Combining Forecasts",
+    "page_or_timestamp": "151-180",
+    "content": "FDM = 1/sqrt(w'Cw) where C is forecast correlation matrix",
+    "content_type": "concept",
+    "topics": [
+      "forecast_combination",
+      "forecast_weights",
+      "diversification_multiplier"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), Ch. 7"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Combining Forecasts",
+    "page_or_timestamp": "151-180",
+    "content": "Capped forecasts: Limit individual forecasts to [-20, 20] before combining",
+    "content_type": "concept",
+    "topics": [
+      "forecast_combination",
+      "forecast_weights",
+      "diversification_multiplier"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 7"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Combining Forecasts",
+    "page_or_timestamp": "151-180",
+    "content": "IMPLEMENT: Even simple averaging of 2-3 rules with FDM will boost Sharpe 0.2-0.4",
+    "content_type": "concept",
+    "topics": [
+      "forecast_combination",
+      "forecast_weights",
+      "diversification_multiplier"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 7"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Combining Forecasts",
+    "page_or_timestamp": "151-180",
+    "content": "Forecast Diversification Multiplier: FDM = 1 / sqrt(\u03a3_i \u03a3_j w_i * w_j * \u03c1_ij)\n\nExplanation: If forecasts are uncorrelated (\u03c1=0), FDM=1/sqrt(\u03a3w\u00b2). For 3 equal forecasts: FDM=sqrt(3)\u22481.73",
+    "content_type": "formula",
+    "topics": [
+      "forecast_combination",
+      "forecast_weights",
+      "diversification_multiplier",
+      "quantitative"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), Forecast Diversification Multiplier"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Combining Forecasts",
+    "page_or_timestamp": "151-180",
+    "content": "Combined Forecast: combined = FDM * \u03a3(w_i * forecast_i)\n\nExplanation: First weight forecasts, then multiply by FDM. Cap result to [-20, 20].",
+    "content_type": "formula",
+    "topics": [
+      "forecast_combination",
+      "forecast_weights",
+      "diversification_multiplier",
+      "quantitative"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Combined Forecast"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Position Sizing",
+    "page_or_timestamp": "181-210",
+    "content": "Kelly criterion gives mathematically optimal position size for growth, but is too aggressive for real trading. Use half-Kelly or less. Position limits prevent blowups. Capital should be allocated across strategies by estimated risk-adjusted return.",
+    "content_type": "concept",
+    "topics": [
+      "kelly_criterion",
+      "half_kelly",
+      "position_limits",
+      "capital_allocation"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), \"Systematic Trading\", Ch. 8"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Position Sizing",
+    "page_or_timestamp": "181-210",
+    "content": "Kelly: f* = (p*W - (1-p)*L) / (W*L) where p=win rate, W=avg win, L=avg loss",
+    "content_type": "concept",
+    "topics": [
+      "kelly_criterion",
+      "half_kelly",
+      "position_limits",
+      "capital_allocation"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 8"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Position Sizing",
+    "page_or_timestamp": "181-210",
+    "content": "NEVER use full Kelly - use 1/4 to 1/2 Kelly for realistic trading",
+    "content_type": "rule",
+    "topics": [
+      "kelly_criterion",
+      "half_kelly",
+      "position_limits",
+      "capital_allocation"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 8"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Position Sizing",
+    "page_or_timestamp": "181-210",
+    "content": "Half-Kelly reduces growth by only ~25% but cuts max drawdown dramatically",
+    "content_type": "concept",
+    "topics": [
+      "kelly_criterion",
+      "half_kelly",
+      "position_limits",
+      "capital_allocation"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 8"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Position Sizing",
+    "page_or_timestamp": "181-210",
+    "content": "Position limits: Never more than 10-20% of capital in single position",
+    "content_type": "rule",
+    "topics": [
+      "kelly_criterion",
+      "half_kelly",
+      "position_limits",
+      "capital_allocation"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 8"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Position Sizing",
+    "page_or_timestamp": "181-210",
+    "content": "Correlation-adjusted Kelly: Reduce further when positions are correlated",
+    "content_type": "concept",
+    "topics": [
+      "kelly_criterion",
+      "half_kelly",
+      "position_limits",
+      "capital_allocation"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 8"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Position Sizing",
+    "page_or_timestamp": "181-210",
+    "content": "Your system: If win rate is truly 0% live, Kelly = 0. Fix edge first, then size.",
+    "content_type": "concept",
+    "topics": [
+      "kelly_criterion",
+      "half_kelly",
+      "position_limits",
+      "capital_allocation"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 8"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Position Sizing",
+    "page_or_timestamp": "181-210",
+    "content": "Kelly Criterion: f* = (p - (1-p)/R) / 1 = (p*R - (1-p)) / R\n\nExplanation: Where p=win probability, R=win/loss ratio. If p=0.6, R=1.5, f*=(0.6*1.5-0.4)/1.5=0.37 (37% of capital)",
+    "content_type": "formula",
+    "topics": [
+      "kelly_criterion",
+      "half_kelly",
+      "position_limits",
+      "capital_allocation",
+      "quantitative"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Kelly Criterion"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Position Sizing",
+    "page_or_timestamp": "181-210",
+    "content": "Half-Kelly Position: f_half = 0.5 * f*\n\nExplanation: More conservative. Achieves 75% of Kelly growth with much lower drawdown risk.",
+    "content_type": "formula",
+    "topics": [
+      "kelly_criterion",
+      "half_kelly",
+      "position_limits",
+      "capital_allocation",
+      "quantitative"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Half-Kelly Position"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Position Sizing",
+    "page_or_timestamp": "181-210",
+    "content": "Fractional Kelly with Uncertainty: f_adj = f* * (SR\u00b2 / (SR\u00b2 + \u03c3\u00b2_SR))\n\nExplanation: Where \u03c3_SR is uncertainty in Sharpe estimate. High uncertainty \u2192 use smaller fraction of Kelly.",
+    "content_type": "formula",
+    "topics": [
+      "kelly_criterion",
+      "half_kelly",
+      "position_limits",
+      "capital_allocation",
+      "quantitative"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Fractional Kelly with Uncertainty"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Speed and Costs",
+    "page_or_timestamp": "240-270",
+    "content": "Transaction costs eat returns. Optimal holding period depends on strategy Sharpe and costs. Faster strategies need much higher raw Sharpe to overcome costs. For retail, daily or weekly rebalancing is usually optimal.",
+    "content_type": "concept",
+    "topics": [
+      "transaction_costs",
+      "turnover",
+      "slippage",
+      "optimal_holding_period"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), \"Systematic Trading\", Ch. 10"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Speed and Costs",
+    "page_or_timestamp": "240-270",
+    "content": "Total cost = commission + half spread + market impact + slippage",
+    "content_type": "concept",
+    "topics": [
+      "transaction_costs",
+      "turnover",
+      "slippage",
+      "optimal_holding_period"
+    ],
+    "edge_category": "mean_reversion",
+    "citation": "Robert Carver (2015), Ch. 10"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Speed and Costs",
+    "page_or_timestamp": "240-270",
+    "content": "For retail: assume 10-30 bps round-trip cost as baseline",
+    "content_type": "concept",
+    "topics": [
+      "transaction_costs",
+      "turnover",
+      "slippage",
+      "optimal_holding_period"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 10"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Speed and Costs",
+    "page_or_timestamp": "240-270",
+    "content": "Breakeven turnover: annual_turnover_max = Sharpe\u00b2 / (2 * cost_per_trade)",
+    "content_type": "concept",
+    "topics": [
+      "transaction_costs",
+      "turnover",
+      "slippage",
+      "optimal_holding_period"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 10"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Speed and Costs",
+    "page_or_timestamp": "240-270",
+    "content": "If cost=20bps and Sharpe=0.5, max turnover = 0.25/(2*0.002) = 62 trades/year",
+    "content_type": "concept",
+    "topics": [
+      "transaction_costs",
+      "turnover",
+      "slippage",
+      "optimal_holding_period"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 10"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Speed and Costs",
+    "page_or_timestamp": "240-270",
+    "content": "Slow down your trading - holding 5 days vs 1 day often improves net Sharpe",
+    "content_type": "concept",
+    "topics": [
+      "transaction_costs",
+      "turnover",
+      "slippage",
+      "optimal_holding_period"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 10"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Speed and Costs",
+    "page_or_timestamp": "240-270",
+    "content": "YOUR SYSTEM: If trading daily, transaction costs may explain live underperformance",
+    "content_type": "concept",
+    "topics": [
+      "transaction_costs",
+      "turnover",
+      "slippage",
+      "optimal_holding_period"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 10"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Speed and Costs",
+    "page_or_timestamp": "240-270",
+    "content": "Cost-Adjusted Sharpe: SR_net = SR_gross - turnover * cost_per_trade / volatility\n\nExplanation: High turnover strategies need much higher gross Sharpe to remain profitable after costs.",
+    "content_type": "formula",
+    "topics": [
+      "transaction_costs",
+      "turnover",
+      "slippage",
+      "optimal_holding_period",
+      "quantitative"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Cost-Adjusted Sharpe"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Speed and Costs",
+    "page_or_timestamp": "240-270",
+    "content": "Optimal Holding Period: T_opt = sqrt(2 * cost / (SR * volatility))\n\nExplanation: Holding period that balances alpha decay against transaction costs. Longer is usually better for retail.",
+    "content_type": "formula",
+    "topics": [
+      "transaction_costs",
+      "turnover",
+      "slippage",
+      "optimal_holding_period",
+      "quantitative"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Optimal Holding Period"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Evaluating Performance",
+    "page_or_timestamp": "271-300",
+    "content": "Sharpe ratio is the primary metric but must be annualized consistently and requires ~3 years of data for statistical significance. Drawdown metrics (Calmar, max drawdown) capture tail risk. Never trust a Sharpe from less than 2 years of live trading.",
+    "content_type": "concept",
+    "topics": [
+      "sharpe_ratio",
+      "sortino",
+      "calmar",
+      "drawdown",
+      "statistical_significance"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), \"Systematic Trading\", Ch. 11"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Evaluating Performance",
+    "page_or_timestamp": "271-300",
+    "content": "Annualized Sharpe = daily_sharpe * sqrt(252) - but beware autocorrelation adjustment",
+    "content_type": "concept",
+    "topics": [
+      "sharpe_ratio",
+      "sortino",
+      "calmar",
+      "drawdown",
+      "statistical_significance"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), Ch. 11"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Evaluating Performance",
+    "page_or_timestamp": "271-300",
+    "content": "Standard error of Sharpe = sqrt((1 + 0.5*SR\u00b2) / T) for T periods",
+    "content_type": "concept",
+    "topics": [
+      "sharpe_ratio",
+      "sortino",
+      "calmar",
+      "drawdown",
+      "statistical_significance"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 11"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Evaluating Performance",
+    "page_or_timestamp": "271-300",
+    "content": "Need T > 3 years for 95% confidence that SR > 0 when measured SR = 1.0",
+    "content_type": "concept",
+    "topics": [
+      "sharpe_ratio",
+      "sortino",
+      "calmar",
+      "drawdown",
+      "statistical_significance"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Ch. 11"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Evaluating Performance",
+    "page_or_timestamp": "271-300",
+    "content": "YOUR 2.18 BACKTEST SHARPE: With 90 days data, SE \u2248 0.6, so true SR could easily be 0.5-3.8",
+    "content_type": "concept",
+    "topics": [
+      "sharpe_ratio",
+      "sortino",
+      "calmar",
+      "drawdown",
+      "statistical_significance"
+    ],
+    "edge_category": "backtest",
+    "citation": "Robert Carver (2015), Ch. 11"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Evaluating Performance",
+    "page_or_timestamp": "271-300",
+    "content": "Max drawdown: Longest peak-to-trough decline - expect 2-3x the biggest historical",
+    "content_type": "concept",
+    "topics": [
+      "sharpe_ratio",
+      "sortino",
+      "calmar",
+      "drawdown",
+      "statistical_significance"
+    ],
+    "edge_category": "regime",
+    "citation": "Robert Carver (2015), Ch. 11"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Evaluating Performance",
+    "page_or_timestamp": "271-300",
+    "content": "Calmar = annualized_return / max_drawdown - good for comparing strategies",
+    "content_type": "concept",
+    "topics": [
+      "sharpe_ratio",
+      "sortino",
+      "calmar",
+      "drawdown",
+      "statistical_significance"
+    ],
+    "edge_category": "regime",
+    "citation": "Robert Carver (2015), Ch. 11"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Evaluating Performance",
+    "page_or_timestamp": "271-300",
+    "content": "Sharpe Ratio Standard Error: SE(SR) = sqrt((1 + SR\u00b2/2) / n)\n\nExplanation: For SR=1 and n=250 days, SE\u22480.08. For n=60 days, SE\u22480.17 - very uncertain.",
+    "content_type": "formula",
+    "topics": [
+      "sharpe_ratio",
+      "sortino",
+      "calmar",
+      "drawdown",
+      "statistical_significance",
+      "quantitative"
+    ],
+    "edge_category": "position_sizing",
+    "citation": "Robert Carver (2015), Sharpe Ratio Standard Error"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Systematic Trading",
+    "author": "Robert Carver",
+    "chapter_or_section": "Evaluating Performance",
+    "page_or_timestamp": "271-300",
+    "content": "Autocorrelation-Adjusted Sharpe: SR_adj = SR * sqrt(1 / (1 + 2*\u03a3\u03c1_k))\n\nExplanation: Where \u03c1_k is return autocorrelation at lag k. Positive autocorr inflates measured Sharpe.",
+    "content_type": "formula",
+    "topics": [
+      "sharpe_ratio",
+      "sortino",
+      "calmar",
+      "drawdown",
+      "statistical_significance",
+      "quantitative"
+    ],
+    "edge_category": "risk",
+    "citation": "Robert Carver (2015), Autocorrelation-Adjusted Sharpe"
+  }
+]
