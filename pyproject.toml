@@ -3,7 +3,7 @@ name = "trading"
 version = "1.0.0"
 description = "Validated profitable automated trading system with AI-powered decision making"
 readme = "README.md"
-requires-python = ">=3.9,<3.15"
+requires-python = ">=3.10,<3.12"
 license = {text = "MIT"}
 authors = [
     {name = "Igor Ganapolsky"}
@@ -61,8 +61,12 @@ dependencies = [
     "langsmith>=0.1.0",
 
     # Dashboard
-    "streamlit>=1.29.0",
+    # Pin to a 3.11-compatible release to satisfy CI runners
+    "streamlit>=1.40.0,<1.46.0",
     "matplotlib>=3.7.0",
+
+    # X.ai Agentic Tools
+    "xai-sdk>=1.5.0",
 ]
 
 [project.optional-dependencies]
@@ -105,7 +109,7 @@ packages = ["src"]
 # Ruff - Fast Python linter and formatter (replaces black, flake8, isort)
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py310"
 src = ["src", "tests"]
 exclude = [
     ".git",
