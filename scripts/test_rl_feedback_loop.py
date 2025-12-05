@@ -130,7 +130,10 @@ def main() -> int:
             logger.info("   Summary: %s", json.dumps(summary, indent=2))
 
             if summary.get("updated"):
-                logger.info("   ✅ Would update weights with %d samples", summary.get("samples_collected", 0))
+                logger.info(
+                    "   ✅ Would update weights with %d samples",
+                    summary.get("samples_collected", 0),
+                )
             else:
                 logger.warning("   ⚠️  Not enough data for retraining: %s", summary.get("reason"))
                 if summary.get("reason") == "insufficient_samples":

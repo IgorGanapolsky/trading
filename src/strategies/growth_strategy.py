@@ -25,6 +25,7 @@ from typing import Optional
 
 import pandas as pd
 import yfinance as yf
+
 from src.rag.vector_db.chroma_client import get_rag_db
 from src.safety.graham_buffett_safety import get_global_safety_analyzer
 from src.utils.dcf_valuation import DCFValuationCalculator, get_global_dcf_calculator
@@ -579,10 +580,10 @@ class GrowthStrategy:
                 # Previous: All 4 conditions required → rejected 80-90% of candidates
                 # New: Any 2 of 4 conditions → more permissive, allows consolidation/low-volume periods
                 conditions = [
-                    momentum > -0.02,          # Allow slight negative momentum (consolidation)
-                    30 < rsi < 75,            # Wider RSI range (allow moderate overbought)
-                    volume_ratio > 0.8,       # Lower volume requirement (accept quiet periods)
-                    macd_histogram > -0.05,   # Allow near-crossover (not just bullish)
+                    momentum > -0.02,  # Allow slight negative momentum (consolidation)
+                    30 < rsi < 75,  # Wider RSI range (allow moderate overbought)
+                    volume_ratio > 0.8,  # Lower volume requirement (accept quiet periods)
+                    macd_histogram > -0.05,  # Allow near-crossover (not just bullish)
                 ]
                 conditions_met = sum(conditions)
 

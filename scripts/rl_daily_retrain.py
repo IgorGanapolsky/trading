@@ -13,10 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import logging
-import os
 import sys
-from datetime import datetime
 from pathlib import Path
 
 # Ensure src is on the path
@@ -108,7 +105,10 @@ def main() -> int:
             if args.dry_run:
                 logger.info("   (DRY RUN - no files modified)")
             else:
-                logger.info("   🎓 System learned from %d trade outcomes", summary.get("samples_collected", 0))
+                logger.info(
+                    "   🎓 System learned from %d trade outcomes",
+                    summary.get("samples_collected", 0),
+                )
 
                 # Log the updated weights for verification
                 weights_path = Path(args.weights_path)
@@ -118,10 +118,12 @@ def main() -> int:
                             weights = json.load(f)
                         logger.info("   Updated weights preview:")
                         for symbol, params in list(weights.items())[:3]:
-                            logger.info("      %s: threshold=%.3f, bias=%.4f",
-                                       symbol,
-                                       params.get("action_threshold", 0),
-                                       params.get("bias", 0))
+                            logger.info(
+                                "      %s: threshold=%.3f, bias=%.4f",
+                                symbol,
+                                params.get("action_threshold", 0),
+                                params.get("bias", 0),
+                            )
                     except Exception as e:
                         logger.warning("Could not preview weights: %s", e)
         else:
