@@ -5,9 +5,10 @@ Collects earnings expectations, whisper numbers, and earnings calendar data.
 Provides insights into market expectations vs. analyst estimates.
 """
 
+from __future__ import annotations
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 import requests
@@ -383,7 +384,9 @@ class EarningsWhisperCollector(BaseNewsCollector):
                     if len(cells) >= 3:
                         try:
                             ticker_elem = cells[0].find("a")
-                            ticker = ticker_elem.text.strip() if ticker_elem else cells[0].text.strip()
+                            ticker = (
+                                ticker_elem.text.strip() if ticker_elem else cells[0].text.strip()
+                            )
 
                             company = cells[1].text.strip() if len(cells) > 1 else ticker
                             time = cells[2].text.strip() if len(cells) > 2 else "N/A"

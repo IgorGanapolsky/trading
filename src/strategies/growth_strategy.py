@@ -25,6 +25,7 @@ from typing import Optional
 
 import pandas as pd
 import yfinance as yf
+
 from src.rag.vector_db.chroma_client import get_rag_db
 from src.safety.graham_buffett_safety import get_global_safety_analyzer
 from src.utils.dcf_valuation import DCFValuationCalculator, get_global_dcf_calculator

@@ -39,6 +39,7 @@ def get_alpaca_trader() -> AlpacaTrader:
         _alpaca_trader = AlpacaTrader(paper=True)
     return _alpaca_trader
 
+
 # Beta header for advanced tool use (PTC)
 PTC_BETA_HEADER = "advanced-tool-use-2025-11-20"
 
@@ -242,8 +243,7 @@ Important: Return a dict with keys: action, symbol, quantity, confidence, reason
                 model=self.model,
                 max_tokens=4096,
                 extra_headers=extra_headers,
-                tools=self._build_tool_definitions()
-                + [self._build_code_execution_tool()],
+                tools=self._build_tool_definitions() + [self._build_code_execution_tool()],
                 messages=[{"role": "user", "content": prompt}],
             )
 
@@ -319,9 +319,7 @@ Important: Return a dict with keys: action, symbol, quantity, confidence, reason
         return decision
 
     # Tool handlers - wired to real Alpaca API
-    def _fetch_market_data_handler(
-        self, symbol: str, timeframe: str = "1d"
-    ) -> dict[str, Any]:
+    def _fetch_market_data_handler(self, symbol: str, timeframe: str = "1d") -> dict[str, Any]:
         """Fetch market data from Alpaca API."""
         logger.info(f"PTC: Fetching market data for {symbol} ({timeframe})")
         try:
@@ -339,7 +337,9 @@ Important: Return a dict with keys: action, symbol, quantity, confidence, reason
                 # Calculate simple volatility from recent bars
                 closes = [b["close"] for b in bars]
                 if len(closes) > 1:
-                    returns = [(closes[i] - closes[i - 1]) / closes[i - 1] for i in range(1, len(closes))]
+                    returns = [
+                        (closes[i] - closes[i - 1]) / closes[i - 1] for i in range(1, len(closes))
+                    ]
                     volatility = sum(abs(r) for r in returns) / len(returns)
                 else:
                     volatility = 0.02
@@ -372,7 +372,13 @@ Important: Return a dict with keys: action, symbol, quantity, confidence, reason
             logger.warning(f"PTC: Failed to fetch market data for {symbol}: {e}")
 
         # Return empty data on failure
-        return {"symbol": symbol, "price": 0, "volume": 0, "volatility": 0, "error": "data unavailable"}
+        return {
+            "symbol": symbol,
+            "price": 0,
+            "volume": 0,
+            "volatility": 0,
+            "error": "data unavailable",
+        }
 
     def _analyze_signals_handler(self, data: dict[str, Any]) -> dict[str, Any]:
         """Analyze technical signals from market data."""
@@ -384,7 +390,12 @@ Important: Return a dict with keys: action, symbol, quantity, confidence, reason
             bars = trader.get_historical_bars(symbol, timeframe="1Day", limit=30)
 
             if len(bars) < 14:
-                return {"signal_strength": 0.5, "rsi": 50, "macd_signal": 0, "error": "insufficient data"}
+                return {
+                    "signal_strength": 0.5,
+                    "rsi": 50,
+                    "macd_signal": 0,
+                    "error": "insufficient data",
+                }
 
             closes = [b["close"] for b in bars]
             volumes = [b["volume"] for b in bars]
@@ -413,7 +424,11 @@ Important: Return a dict with keys: action, symbol, quantity, confidence, reason
             # Composite signal strength (0-1)
             rsi_signal = (rsi - 30) / 40 if 30 <= rsi <= 70 else (0 if rsi < 30 else 1)
             macd_signal = 0.5 + (macd * 10)  # Normalize MACD contribution
-            signal_strength = (rsi_signal * 0.4 + min(1, max(0, macd_signal)) * 0.4 + min(1, volume_ratio / 2) * 0.2)
+            signal_strength = (
+                rsi_signal * 0.4
+                + min(1, max(0, macd_signal)) * 0.4
+                + min(1, volume_ratio / 2) * 0.2
+            )
 
             return {
                 "symbol": symbol,
@@ -442,7 +457,9 @@ Important: Return a dict with keys: action, symbol, quantity, confidence, reason
         position_value = portfolio_value * base_risk * signal_strength * vol_adjustment
         position_value = min(position_value, portfolio_value * 0.05)  # Max 5% per position
 
-        logger.info(f"PTC: Position size: ${position_value:.2f} (signal={signal_strength:.2f}, vol={volatility:.4f})")
+        logger.info(
+            f"PTC: Position size: ${position_value:.2f} (signal={signal_strength:.2f}, vol={volatility:.4f})"
+        )
         return {
             "position_value": round(position_value, 2),
             "risk_percent": round(base_risk * 100, 2),
