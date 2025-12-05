@@ -33,8 +33,8 @@ except Exception:  # pragma: no cover - defensive
 
 try:
     from src.risk.correlation_monitor import (
-        CrossStrategyCorrelationMonitor,
         CorrelationCheckResult,
+        CrossStrategyCorrelationMonitor,
     )
 except Exception:  # pragma: no cover - defensive
     CrossStrategyCorrelationMonitor = None  # type: ignore

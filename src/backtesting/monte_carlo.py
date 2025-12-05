@@ -21,7 +21,6 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 import numpy as np
-from scipy import stats
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +110,7 @@ class MonteCarloResult:
 
         # Check ruin probability
         if self.probability_of_ruin > 0.10:
-            issues.append(f"High ruin risk ({self.probability_of_ruin*100:.0f}%)")
+            issues.append(f"High ruin risk ({self.probability_of_ruin * 100:.0f}%)")
 
         # Check path dependency
         if self.path_dependency > 0.5:
@@ -119,7 +118,7 @@ class MonteCarloResult:
 
         # Check loss probability
         if self.probability_of_loss > 0.40:
-            issues.append(f"High loss probability ({self.probability_of_loss*100:.0f}%)")
+            issues.append(f"High loss probability ({self.probability_of_loss * 100:.0f}%)")
 
         if not issues:
             return "ROBUST: Strategy passes Monte Carlo validation"
@@ -325,7 +324,9 @@ class MonteCarloSimulator:
             stressed_returns = (centered * vol_mult) + mean_return + (shock / len(daily_returns))
 
             results[scenario_name] = self.simulate_from_returns(stressed_returns)
-            logger.info(f"Scenario {scenario_name}: Sharpe={results[scenario_name].sharpe_mean:.2f}")
+            logger.info(
+                f"Scenario {scenario_name}: Sharpe={results[scenario_name].sharpe_mean:.2f}"
+            )
 
         return results
 
@@ -420,26 +421,28 @@ if __name__ == "__main__":
 
     print("\n=== Monte Carlo Simulation Results ===")
     print(f"Simulations: {result.num_simulations}")
-    print(f"\nSharpe Ratio:")
+    print("\nSharpe Ratio:")
     print(f"  Original: {result.original_sharpe:.3f}")
     print(f"  Mean (MC): {result.sharpe_mean:.3f} +/- {result.sharpe_std:.3f}")
     print(f"  95% CI: [{result.sharpe_95_lower:.3f}, {result.sharpe_95_upper:.3f}]")
 
-    print(f"\nTotal Return:")
-    print(f"  Original: {result.original_return*100:.2f}%")
-    print(f"  Mean (MC): {result.total_return_mean*100:.2f}% +/- {result.total_return_std*100:.2f}%")
-    print(f"  95% CI: [{result.return_95_lower*100:.2f}%, {result.return_95_upper*100:.2f}%]")
+    print("\nTotal Return:")
+    print(f"  Original: {result.original_return * 100:.2f}%")
+    print(
+        f"  Mean (MC): {result.total_return_mean * 100:.2f}% +/- {result.total_return_std * 100:.2f}%"
+    )
+    print(f"  95% CI: [{result.return_95_lower * 100:.2f}%, {result.return_95_upper * 100:.2f}%]")
 
-    print(f"\nMax Drawdown:")
-    print(f"  Original: {result.original_drawdown*100:.2f}%")
-    print(f"  Mean (MC): {result.max_drawdown_mean*100:.2f}%")
-    print(f"  95th Percentile (Worst): {result.drawdown_95_upper*100:.2f}%")
+    print("\nMax Drawdown:")
+    print(f"  Original: {result.original_drawdown * 100:.2f}%")
+    print(f"  Mean (MC): {result.max_drawdown_mean * 100:.2f}%")
+    print(f"  95th Percentile (Worst): {result.drawdown_95_upper * 100:.2f}%")
 
-    print(f"\nRisk Metrics:")
-    print(f"  Probability of Loss: {result.probability_of_loss*100:.1f}%")
-    print(f"  Probability of Ruin (>20% DD): {result.probability_of_ruin*100:.1f}%")
-    print(f"  VaR 95%: {result.value_at_risk_95*100:.2f}%")
-    print(f"  Expected Shortfall 95%: {result.expected_shortfall_95*100:.2f}%")
+    print("\nRisk Metrics:")
+    print(f"  Probability of Loss: {result.probability_of_loss * 100:.1f}%")
+    print(f"  Probability of Ruin (>20% DD): {result.probability_of_ruin * 100:.1f}%")
+    print(f"  VaR 95%: {result.value_at_risk_95 * 100:.2f}%")
+    print(f"  Expected Shortfall 95%: {result.expected_shortfall_95 * 100:.2f}%")
 
     print(f"\nPath Dependency: {result.path_dependency:.3f}")
     print(f"\nVerdict: {result._get_verdict()}")
@@ -449,5 +452,7 @@ if __name__ == "__main__":
     stress_results = simulator.stress_test_scenarios(synthetic_returns)
     for scenario, res in stress_results.items():
         print(f"\n{scenario}:")
-        print(f"  Sharpe: {res.sharpe_mean:.2f}, Return: {res.total_return_mean*100:.1f}%, Max DD: {res.max_drawdown_mean*100:.1f}%")
-        print(f"  Ruin Prob: {res.probability_of_ruin*100:.0f}%")
+        print(
+            f"  Sharpe: {res.sharpe_mean:.2f}, Return: {res.total_return_mean * 100:.1f}%, Max DD: {res.max_drawdown_mean * 100:.1f}%"
+        )
+        print(f"  Ruin Prob: {res.probability_of_ruin * 100:.0f}%")

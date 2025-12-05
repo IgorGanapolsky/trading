@@ -42,6 +42,7 @@ from typing import Any, Optional
 import numpy as np
 import pandas as pd
 import yfinance as yf
+
 from src.agents.reinforcement_learning import RLPolicyLearner
 from src.core.alpaca_trader import AlpacaTrader
 
@@ -50,6 +51,10 @@ from src.core.multi_llm_analysis import MultiLLMAnalyzer
 from src.core.multi_llm_analysis_optimized import OptimizedMultiLLMAnalyzer
 from src.core.risk_manager import RiskManager
 from src.ml.forecasters.deep_momentum import DeepMomentumForecaster
+from src.risk.position_manager import (
+    ExitConditions,
+    get_position_manager,
+)
 from src.safety.graham_buffett_safety import get_global_safety_analyzer
 from src.utils.economic_guardrails import EconomicGuardrails
 from src.utils.sentiment_loader import (
@@ -59,13 +64,6 @@ from src.utils.sentiment_loader import (
     load_latest_sentiment,
 )
 from src.utils.trend_snapshot import TrendMetrics, TrendSnapshotBuilder
-from src.risk.position_manager import (
-    ExitConditions,
-    ExitReason,
-    PositionInfo,
-    PositionManager,
-    get_position_manager,
-)
 
 # Optional LLM Council integration
 try:
@@ -788,7 +786,7 @@ class CoreStrategy:
                         f"Momentum ETF: {executed_order['id']} - {best_etf} ${equity_amount:.2f}"
                     )
                     # Track entry for time-based exits
-                    if hasattr(self, 'position_manager') and self.position_manager:
+                    if hasattr(self, "position_manager") and self.position_manager:
                         self.position_manager.track_entry(best_etf)
 
                     # 9b: BND - Bonds (15%)
@@ -821,7 +819,7 @@ class CoreStrategy:
                                     f"(order_id: {bond_order.get('id', 'N/A')})"
                                 )
                                 # Track entry for time-based exits
-                                if hasattr(self, 'position_manager') and self.position_manager:
+                                if hasattr(self, "position_manager") and self.position_manager:
                                     self.position_manager.track_entry("BND")
                             except Exception as e:
                                 logger.error(
@@ -857,7 +855,7 @@ class CoreStrategy:
                                     f"(order_id: {reit_order.get('id', 'N/A')})"
                                 )
                                 # Track entry for time-based exits
-                                if hasattr(self, 'position_manager') and self.position_manager:
+                                if hasattr(self, "position_manager") and self.position_manager:
                                     self.position_manager.track_entry("VNQ")
                             except Exception as e:
                                 logger.error(
@@ -980,6 +978,7 @@ class CoreStrategy:
                 if self.USE_ATR_STOPS:
                     try:
                         import yfinance as yf
+
                         from src.utils.technical_indicators import (
                             calculate_atr,
                             calculate_atr_stop_loss,
@@ -1136,7 +1135,7 @@ class CoreStrategy:
                 else:
                     # Check additional exit conditions using Position Manager
                     # TIME-BASED EXIT: Close positions held too long
-                    if hasattr(self, 'position_manager') and self.position_manager:
+                    if hasattr(self, "position_manager") and self.position_manager:
                         entry_date = self.position_manager.get_entry_date(symbol)
                         if entry_date:
                             days_held = (datetime.now() - entry_date).days
@@ -1151,7 +1150,9 @@ class CoreStrategy:
                                         side="sell",
                                         tier="T1_CORE",
                                     )
-                                    logger.info(f"  ✅ Position closed: Order ID {executed_order['id']}")
+                                    logger.info(
+                                        f"  ✅ Position closed: Order ID {executed_order['id']}"
+                                    )
                                     exit_order = TradeOrder(
                                         symbol=symbol,
                                         action="sell",
@@ -1188,7 +1189,9 @@ class CoreStrategy:
                                     side="sell",
                                     tier="T1_CORE",
                                 )
-                                logger.info(f"  ✅ Position closed: Order ID {executed_order['id']}")
+                                logger.info(
+                                    f"  ✅ Position closed: Order ID {executed_order['id']}"
+                                )
                                 exit_order = TradeOrder(
                                     symbol=symbol,
                                     action="sell",
@@ -1204,7 +1207,7 @@ class CoreStrategy:
                                 self.trades_executed.append(exit_order)
                                 self._update_holdings(symbol, -qty)
                                 self._reward_rl(symbol, unrealized_plpc)
-                                if hasattr(self, 'position_manager') and self.position_manager:
+                                if hasattr(self, "position_manager") and self.position_manager:
                                     self.position_manager.clear_entry(symbol)
                                 continue
                             except Exception as e:
@@ -1216,7 +1219,9 @@ class CoreStrategy:
 
             logger.info("=" * 80)
             if closed_positions:
-                logger.info(f"Closed {len(closed_positions)} positions (take-profit, stop-loss, time-decay, or momentum)")
+                logger.info(
+                    f"Closed {len(closed_positions)} positions (take-profit, stop-loss, time-decay, or momentum)"
+                )
             else:
                 logger.info("No positions ready for exit")
 

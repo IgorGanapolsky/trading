@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 
-@dataclass(slots=True)
+@dataclass
 class ProfitPlan:
     """Container describing the path to the daily profit target."""
 
