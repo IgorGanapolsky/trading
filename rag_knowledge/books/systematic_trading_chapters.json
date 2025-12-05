@@ -1,0 +1,208 @@
+{
+  "book_id": "systematic_trading",
+  "title": "Systematic Trading",
+  "author": "Robert Carver",
+  "year": 2015,
+  "chapters": [
+    {
+      "chapter_num": 2,
+      "title": "Systematic Trading Rules",
+      "pages": "15-40",
+      "topics": ["trading_rules", "trend_following", "carry", "mean_reversion"],
+      "summary": "Trading rules should be simple, mechanically implementable, and backed by economic rationale. The three main categories are: trend/momentum (price continues), carry (income from holding), and mean reversion (price returns to fair value). Complexity is the enemy - simple rules are robust.",
+      "key_points": [
+        "SIMPLE RULES WIN: A moving average crossover beats most complex ML models out-of-sample",
+        "Trend following works because: behavioral biases, hedging flows, slow institutional response",
+        "Carry works because: risk premium for holding assets, liquidity premium, roll yield",
+        "Mean reversion works over short horizons (days), momentum over medium (weeks-months)",
+        "Combine rules with LOW correlation - diversification across rules is as important as across assets",
+        "NEVER optimize rule parameters to the data - use sensible a priori values"
+      ],
+      "formulas": [
+        {
+          "name": "Exponential Moving Average Crossover",
+          "expression": "signal = EMA(price, fast) - EMA(price, slow)",
+          "explanation": "Typical fast=16-32 days, slow=64-128 days. Sign of signal gives direction, magnitude gives confidence."
+        },
+        {
+          "name": "Carry Signal",
+          "expression": "carry = (near_price - far_price) / far_price * annualization_factor",
+          "explanation": "For futures: difference between near and far contract prices, annualized. Positive = backwardation = long signal."
+        }
+      ]
+    },
+    {
+      "chapter_num": 4,
+      "title": "Portfolio Allocation",
+      "pages": "65-95",
+      "topics": ["instrument_weights", "diversification", "correlation", "handcrafting"],
+      "summary": "Portfolio weights should account for correlation. The 'handcrafting' method groups correlated assets, applies inverse-volatility within groups, then weights groups by diversification potential. This avoids optimized weights that overfit.",
+      "key_points": [
+        "Inverse volatility weighting: weight ∝ 1/volatility - gives equal risk contribution",
+        "Correlation clustering: Group assets with correlation > 0.7, then weight groups equally",
+        "Handcrafting beats optimization: Mean-variance optimization is garbage in finance",
+        "Diversification multiplier: portfolio_vol / avg(individual_vols) - should be < 0.7 for good diversification",
+        "Bootstrap your correlation matrix - point estimates are noisy",
+        "CRITICAL: Your current system likely has no correlation-based weighting - add it"
+      ],
+      "formulas": [
+        {
+          "name": "Inverse Volatility Weight",
+          "expression": "w_i = (1/σ_i) / Σ(1/σ_j)",
+          "explanation": "Weights sum to 1, higher vol assets get lower weight. Use 20-60 day vol estimate."
+        },
+        {
+          "name": "Diversification Multiplier",
+          "expression": "DM = σ_portfolio / Σ(w_i * σ_i)",
+          "explanation": "DM < 1 means diversification is working. DM near 0.5 is excellent, near 1.0 means assets are highly correlated."
+        }
+      ]
+    },
+    {
+      "chapter_num": 6,
+      "title": "Volatility Targeting",
+      "pages": "120-150",
+      "topics": ["volatility_targeting", "position_sizing", "leverage", "risk_scaling"],
+      "summary": "Position size should target a constant portfolio volatility (e.g., 15% annualized). When volatility is low, take larger positions; when high, reduce exposure. This prevents ruin and improves risk-adjusted returns significantly.",
+      "key_points": [
+        "CRITICAL: Without volatility targeting, you're taking random-sized bets - this DESTROYS Sharpe",
+        "Target volatility should be comfortable (10-25% annual for most traders)",
+        "Position size = (target_vol / instrument_vol) * capital / price",
+        "Update volatility estimate daily using exponential weighted average (half-life 20-30 days)",
+        "Vol targeting adds ~0.3 Sharpe vs fixed position sizing",
+        "Never let position exceed 2x target due to vol compression - cap leverage",
+        "YOUR SYSTEM NEEDS THIS: Vol targeting will immediately improve your live results"
+      ],
+      "formulas": [
+        {
+          "name": "Volatility-Targeted Position Size",
+          "expression": "position = (target_vol * capital) / (instrument_vol * price)",
+          "explanation": "If target_vol=15%, capital=$10k, instrument_vol=30%, price=$100, position = 0.15*10000/(0.30*100) = 50 shares"
+        },
+        {
+          "name": "Exponential Volatility Estimate",
+          "expression": "σ²_t = λ * σ²_{t-1} + (1-λ) * r²_t",
+          "explanation": "Where λ = exp(-1/halflife). Half-life=32 days gives λ≈0.97. Take sqrt for volatility."
+        },
+        {
+          "name": "Risk-Adjusted Forecast",
+          "expression": "scaled_forecast = raw_forecast * (target_vol / instrument_vol)",
+          "explanation": "Scale trading signal by volatility ratio to maintain consistent risk per trade."
+        }
+      ]
+    },
+    {
+      "chapter_num": 7,
+      "title": "Combining Forecasts",
+      "pages": "151-180",
+      "topics": ["forecast_combination", "forecast_weights", "diversification_multiplier"],
+      "summary": "Multiple trading rules should be combined with proper weights. Forecast weights should be based on Sharpe ratio estimates (bootstrapped) and correlation. Apply a forecast diversification multiplier to account for correlation between rules.",
+      "key_points": [
+        "Don't equally weight forecasts - weight by estimated Sharpe, but shrink toward equal weights",
+        "Shrinkage: final_weight = 0.5 * optimal_weight + 0.5 * equal_weight (typical)",
+        "Forecast diversification multiplier (FDM) scales combined forecast back up",
+        "FDM = 1/sqrt(w'Cw) where C is forecast correlation matrix",
+        "Capped forecasts: Limit individual forecasts to [-20, 20] before combining",
+        "IMPLEMENT: Even simple averaging of 2-3 rules with FDM will boost Sharpe 0.2-0.4"
+      ],
+      "formulas": [
+        {
+          "name": "Forecast Diversification Multiplier",
+          "expression": "FDM = 1 / sqrt(Σ_i Σ_j w_i * w_j * ρ_ij)",
+          "explanation": "If forecasts are uncorrelated (ρ=0), FDM=1/sqrt(Σw²). For 3 equal forecasts: FDM=sqrt(3)≈1.73"
+        },
+        {
+          "name": "Combined Forecast",
+          "expression": "combined = FDM * Σ(w_i * forecast_i)",
+          "explanation": "First weight forecasts, then multiply by FDM. Cap result to [-20, 20]."
+        }
+      ]
+    },
+    {
+      "chapter_num": 8,
+      "title": "Position Sizing",
+      "pages": "181-210",
+      "topics": ["kelly_criterion", "half_kelly", "position_limits", "capital_allocation"],
+      "summary": "Kelly criterion gives mathematically optimal position size for growth, but is too aggressive for real trading. Use half-Kelly or less. Position limits prevent blowups. Capital should be allocated across strategies by estimated risk-adjusted return.",
+      "key_points": [
+        "Kelly: f* = (p*W - (1-p)*L) / (W*L) where p=win rate, W=avg win, L=avg loss",
+        "NEVER use full Kelly - use 1/4 to 1/2 Kelly for realistic trading",
+        "Half-Kelly reduces growth by only ~25% but cuts max drawdown dramatically",
+        "Position limits: Never more than 10-20% of capital in single position",
+        "Correlation-adjusted Kelly: Reduce further when positions are correlated",
+        "Your system: If win rate is truly 0% live, Kelly = 0. Fix edge first, then size."
+      ],
+      "formulas": [
+        {
+          "name": "Kelly Criterion",
+          "expression": "f* = (p - (1-p)/R) / 1 = (p*R - (1-p)) / R",
+          "explanation": "Where p=win probability, R=win/loss ratio. If p=0.6, R=1.5, f*=(0.6*1.5-0.4)/1.5=0.37 (37% of capital)"
+        },
+        {
+          "name": "Half-Kelly Position",
+          "expression": "f_half = 0.5 * f*",
+          "explanation": "More conservative. Achieves 75% of Kelly growth with much lower drawdown risk."
+        },
+        {
+          "name": "Fractional Kelly with Uncertainty",
+          "expression": "f_adj = f* * (SR² / (SR² + σ²_SR))",
+          "explanation": "Where σ_SR is uncertainty in Sharpe estimate. High uncertainty → use smaller fraction of Kelly."
+        }
+      ]
+    },
+    {
+      "chapter_num": 10,
+      "title": "Speed and Costs",
+      "pages": "240-270",
+      "topics": ["transaction_costs", "turnover", "slippage", "optimal_holding_period"],
+      "summary": "Transaction costs eat returns. Optimal holding period depends on strategy Sharpe and costs. Faster strategies need much higher raw Sharpe to overcome costs. For retail, daily or weekly rebalancing is usually optimal.",
+      "key_points": [
+        "Total cost = commission + half spread + market impact + slippage",
+        "For retail: assume 10-30 bps round-trip cost as baseline",
+        "Breakeven turnover: annual_turnover_max = Sharpe² / (2 * cost_per_trade)",
+        "If cost=20bps and Sharpe=0.5, max turnover = 0.25/(2*0.002) = 62 trades/year",
+        "Slow down your trading - holding 5 days vs 1 day often improves net Sharpe",
+        "YOUR SYSTEM: If trading daily, transaction costs may explain live underperformance"
+      ],
+      "formulas": [
+        {
+          "name": "Cost-Adjusted Sharpe",
+          "expression": "SR_net = SR_gross - turnover * cost_per_trade / volatility",
+          "explanation": "High turnover strategies need much higher gross Sharpe to remain profitable after costs."
+        },
+        {
+          "name": "Optimal Holding Period",
+          "expression": "T_opt = sqrt(2 * cost / (SR * volatility))",
+          "explanation": "Holding period that balances alpha decay against transaction costs. Longer is usually better for retail."
+        }
+      ]
+    },
+    {
+      "chapter_num": 11,
+      "title": "Evaluating Performance",
+      "pages": "271-300",
+      "topics": ["sharpe_ratio", "sortino", "calmar", "drawdown", "statistical_significance"],
+      "summary": "Sharpe ratio is the primary metric but must be annualized consistently and requires ~3 years of data for statistical significance. Drawdown metrics (Calmar, max drawdown) capture tail risk. Never trust a Sharpe from less than 2 years of live trading.",
+      "key_points": [
+        "Annualized Sharpe = daily_sharpe * sqrt(252) - but beware autocorrelation adjustment",
+        "Standard error of Sharpe = sqrt((1 + 0.5*SR²) / T) for T periods",
+        "Need T > 3 years for 95% confidence that SR > 0 when measured SR = 1.0",
+        "YOUR 2.18 BACKTEST SHARPE: With 90 days data, SE ≈ 0.6, so true SR could easily be 0.5-3.8",
+        "Max drawdown: Longest peak-to-trough decline - expect 2-3x the biggest historical",
+        "Calmar = annualized_return / max_drawdown - good for comparing strategies"
+      ],
+      "formulas": [
+        {
+          "name": "Sharpe Ratio Standard Error",
+          "expression": "SE(SR) = sqrt((1 + SR²/2) / n)",
+          "explanation": "For SR=1 and n=250 days, SE≈0.08. For n=60 days, SE≈0.17 - very uncertain."
+        },
+        {
+          "name": "Autocorrelation-Adjusted Sharpe",
+          "expression": "SR_adj = SR * sqrt(1 / (1 + 2*Σρ_k))",
+          "explanation": "Where ρ_k is return autocorrelation at lag k. Positive autocorr inflates measured Sharpe."
+        }
+      ]
+    }
+  ]
+}

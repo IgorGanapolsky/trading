@@ -166,11 +166,17 @@ class OnlineRLLearner:
             action: Action taken
             reward_calculator: Reward calculator function
         """
-        # Calculate reward
+        # Calculate reward using multi-objective risk-adjusted reward (Dec 4, 2025)
         if reward_calculator:
             reward = reward_calculator(trade_result)
         else:
-            reward = trade_result.get("pl_pct", 0.0)
+            try:
+                from src.ml.reward_functions import calculate_risk_adjusted_reward
+
+                reward = calculate_risk_adjusted_reward(trade_result)
+            except ImportError:
+                # Fallback to simple P/L if reward functions not available
+                reward = trade_result.get("pl_pct", 0.0)
 
         # Add to replay buffer
         self.add_experience(

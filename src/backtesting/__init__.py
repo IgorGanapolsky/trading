@@ -15,6 +15,11 @@ Created: 2025-11-02
 
 from src.backtesting.backtest_engine import BacktestEngine
 from src.backtesting.backtest_results import BacktestResults
+from src.backtesting.monte_carlo import (
+    MonteCarloResult,
+    MonteCarloSimulator,
+    run_monte_carlo_validation,
+)
 from src.backtesting.performance_report import PerformanceReport, PerformanceReporter
 from src.backtesting.target_integration import (
     BacktestTargetValidator,
@@ -54,4 +59,7 @@ __all__ = [
     "save_target_evaluation",
     "BacktestTargetValidator",
     "TargetBacktestReport",
+    "MonteCarloResult",
+    "MonteCarloSimulator",
+    "run_monte_carlo_validation",
 ]

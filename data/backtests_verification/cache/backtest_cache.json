@@ -1,0 +1,10 @@
+{
+  "d8487c0e32dc": {
+    "scenario": "bull_run_2024",
+    "total_return": 0.134,
+    "sharpe_ratio": 1.54,
+    "max_drawdown": -0.044,
+    "trades": 49,
+    "execution_time": 1764881272.584533
+  }
+}

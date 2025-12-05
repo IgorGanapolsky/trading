@@ -16,7 +16,6 @@ Author: Claude (CTO)
 Date: December 2025
 """
 
-import importlib.util
 import json
 import logging
 import os
@@ -64,13 +63,15 @@ class YouTubeIngestion:
 
     def _check_whisper(self) -> bool:
         """Check if Whisper is available for transcription."""
-        if importlib.util.find_spec("whisper") is None:
+        try:
+            import whisper  # noqa: F401 - availability check
+
+            logger.info("Whisper is available for fallback transcription")
+            return True
+        except ImportError:
             logger.warning("Whisper not installed - will skip videos without captions")
             logger.info("Install with: pip install openai-whisper")
             return False
-
-        logger.info("Whisper is available for fallback transcription")
-        return True
 
     def get_transcript_with_fallback(self, video_id: str, video_url: str) -> Optional[str]:
         """
@@ -347,18 +348,15 @@ class PodcastIngestion:
         self.cache_dir = CACHE_DIR / "podcasts"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
-        has_feedparser = importlib.util.find_spec("feedparser") is not None
-        has_whisper = importlib.util.find_spec("whisper") is not None
-        self.available = has_feedparser and has_whisper
+        try:
+            import feedparser  # noqa: F401 - availability check
+            import whisper  # noqa: F401 - availability check
 
-        if not self.available:
-            missing = []
-            if not has_feedparser:
-                missing.append("feedparser")
-            if not has_whisper:
-                missing.append("whisper")
-            logger.warning(f"Podcast ingestion dependencies missing: {', '.join(missing)}")
+            self.available = True
+        except ImportError as e:
+            logger.warning(f"Podcast ingestion dependencies missing: {e}")
             logger.info("Install with: pip install feedparser openai-whisper")
+            self.available = False
 
     def discover_episodes(self, feed_url: str, max_age_days: int = 7) -> list[dict]:
         """

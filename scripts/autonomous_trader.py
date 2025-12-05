@@ -324,9 +324,14 @@ def main() -> None:
     logger.info("Starting hybrid funnel orchestrator entrypoint.")
     tickers = _parse_tickers()
 
-    orchestrator = TradingOrchestrator(tickers=tickers)
-    orchestrator.run()
-    logger.info("Trading session completed.")
+    try:
+        orchestrator = TradingOrchestrator(tickers=tickers)
+        orchestrator.run()
+        logger.info("Trading session completed.")
+    except Exception as e:
+        logger.critical(f"❌ CRITICAL: Trading session crashed: {e}", exc_info=True)
+        # We re-raise to ensure the workflow still fails, but now it's logged with stack trace
+        raise
 
     # Execute options live simulation (theta harvest)
     options_enabled = _flag_enabled("ENABLE_OPTIONS_SIM", "true")

@@ -240,6 +240,7 @@ class TestRuleOneOptionsStrategy:
         strategy = RuleOneOptionsStrategy(paper=True, universe=["AAPL"])
         strategy.trader = Mock()
         strategy.trader.get_account.return_value = {"cash": "10000"}
+        strategy.trader.get_account_info.return_value = {"cash": "10000"}
 
         valuation = StickerPriceResult(
             symbol="AAPL",
@@ -283,6 +284,7 @@ class TestRuleOneOptionsStrategy:
         strategy = RuleOneOptionsStrategy(paper=True, universe=["MSFT"])
         strategy.trader = Mock()
         strategy.trader.get_account.return_value = {"cash": "20000"}
+        strategy.trader.get_account_info.return_value = {"cash": "20000"}
 
         valuation = StickerPriceResult(
             symbol="MSFT",

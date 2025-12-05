@@ -12,15 +12,17 @@ Key Features:
 4. Detailed logging of which tier triggered and why
 5. Market-wide index monitoring (SPY, VIX)
 6. Rolling drawdown and volatility tracking
+7. AUTOMATIC RE-ENGAGEMENT: Time-based recovery with progressive tier reduction
 
 Tiers:
 - TIER_1 (CAUTION): 1% daily loss - Log warning, reduce position sizes by 50%
 - TIER_2 (WARNING): 2% daily loss - Soft pause (no new entries)
 - TIER_3 (CRITICAL): 3% daily loss OR VIX spike - Hard stop, liquidation review
-- TIER_4 (HALT): 5% daily loss OR market circuit breaker - Full halt, manual reset
+- TIER_4 (HALT): 5% daily loss OR market circuit breaker - Full halt, auto-recovery after timeout
 
 Author: Trading System
 Created: 2025-12-02
+Updated: 2025-12-04 - Added automatic re-engagement with timeout
 """
 
 import json
@@ -119,6 +121,17 @@ class MultiTierCircuitBreaker:
     MARKET_WARNING_PCT = float(os.getenv("CB_MARKET_WARNING", "0.03"))  # 3%
     MARKET_HALT_PCT = float(os.getenv("CB_MARKET_HALT", "0.07"))  # 7% (market-wide CB)
 
+    # AUTOMATIC RE-ENGAGEMENT CONFIGURATION (new Dec 2025)
+    # Time-based recovery: automatically re-engage after timeout if conditions normalize
+    AUTO_RECOVERY_ENABLED = os.getenv("CB_AUTO_RECOVERY", "true").lower() == "true"
+    HALT_RECOVERY_TIMEOUT_HOURS = float(os.getenv("CB_HALT_TIMEOUT_HOURS", "4.0"))  # 4 hours
+    CRITICAL_RECOVERY_TIMEOUT_HOURS = float(os.getenv("CB_CRITICAL_TIMEOUT_HOURS", "2.0"))  # 2 hours
+    WARNING_RECOVERY_TIMEOUT_HOURS = float(os.getenv("CB_WARNING_TIMEOUT_HOURS", "1.0"))  # 1 hour
+
+    # Recovery conditions: must be met for automatic re-engagement
+    RECOVERY_LOSS_THRESHOLD_PCT = float(os.getenv("CB_RECOVERY_LOSS_PCT", "0.005"))  # <0.5% loss
+    RECOVERY_VIX_THRESHOLD = float(os.getenv("CB_RECOVERY_VIX", "22.0"))  # VIX < 22
+
     def __init__(
         self,
         state_file: str = "data/multi_tier_circuit_breaker_state.json",
@@ -168,15 +181,23 @@ class MultiTierCircuitBreaker:
         # Reset daily if needed
         self._reset_daily_if_needed()
 
+        # Calculate daily loss percentage (needed for recovery check)
+        daily_loss_pct = abs(daily_pnl) / portfolio_value if portfolio_value > 0 else 0
+        is_loss = daily_pnl < 0
+        daily_pnl_pct = -daily_loss_pct if is_loss else daily_loss_pct
+
+        # Attempt automatic recovery before evaluating new conditions
+        # This allows the system to recover from HALT/CRITICAL/WARNING if conditions normalize
+        self._attempt_automatic_recovery(
+            daily_pnl_pct=daily_pnl_pct,
+            vix_level=vix_level,
+        )
+
         active_triggers = []
         tier = CircuitBreakerTier.NORMAL
         action = CircuitBreakerAction.ALLOW
         position_multiplier = 1.0
         trigger_events = []
-
-        # Calculate daily loss percentage
-        daily_loss_pct = abs(daily_pnl) / portfolio_value if portfolio_value > 0 else 0
-        is_loss = daily_pnl < 0
 
         # --- TIER 4: FULL HALT ---
         # Check for catastrophic conditions
@@ -632,17 +653,148 @@ class MultiTierCircuitBreaker:
 
         return events[-count:]
 
+    def _attempt_automatic_recovery(
+        self,
+        daily_pnl_pct: float = 0.0,
+        vix_level: Optional[float] = None,
+    ) -> bool:
+        """
+        Attempt automatic recovery from circuit breaker states.
+
+        Recovery happens when:
+        1. Timeout has elapsed since trigger
+        2. Conditions have normalized (low loss, low VIX)
+
+        Returns:
+            True if recovery occurred, False otherwise
+        """
+        if not self.AUTO_RECOVERY_ENABLED:
+            return False
+
+        now = datetime.now()
+        recovered = False
+
+        # Check HALT recovery (Tier 4 → Tier 3 or Normal)
+        if self.state.get("is_halted", False):
+            halt_time_str = self.state.get("halt_triggered_at")
+            if halt_time_str:
+                halt_time = datetime.fromisoformat(halt_time_str)
+                hours_since_halt = (now - halt_time).total_seconds() / 3600
+
+                if hours_since_halt >= self.HALT_RECOVERY_TIMEOUT_HOURS:
+                    # Check if conditions have normalized
+                    conditions_normalized = self._check_recovery_conditions(
+                        daily_pnl_pct, vix_level
+                    )
+                    if conditions_normalized:
+                        # Recover to CRITICAL tier (progressive recovery)
+                        self.state["is_halted"] = False
+                        self.current_tier = CircuitBreakerTier.CRITICAL
+                        self.current_action = CircuitBreakerAction.HARD_STOP
+                        self.state["critical_triggered_at"] = now.isoformat()
+                        self.state["auto_recovery"] = {
+                            "timestamp": now.isoformat(),
+                            "from_tier": "HALT",
+                            "to_tier": "CRITICAL",
+                            "hours_since_halt": hours_since_halt,
+                        }
+                        self._save_state()
+
+                        event = self._create_event(
+                            tier="CRITICAL",
+                            action="auto_recovery",
+                            reason=f"Auto-recovery from HALT after {hours_since_halt:.1f}h",
+                            value=daily_pnl_pct,
+                            threshold=self.RECOVERY_LOSS_THRESHOLD_PCT,
+                        )
+                        self._log_event(event)
+
+                        logger.warning(
+                            f"AUTO-RECOVERY: HALT → CRITICAL after {hours_since_halt:.1f}h "
+                            f"(loss={daily_pnl_pct:.2%}, VIX={vix_level or 'N/A'})"
+                        )
+                        recovered = True
+
+        # Check CRITICAL recovery (Tier 3 → Tier 2)
+        if (
+            self.current_tier == CircuitBreakerTier.CRITICAL
+            and not self.state.get("is_halted", False)
+        ):
+            critical_time_str = self.state.get("critical_triggered_at")
+            if critical_time_str:
+                critical_time = datetime.fromisoformat(critical_time_str)
+                hours_since_critical = (now - critical_time).total_seconds() / 3600
+
+                if hours_since_critical >= self.CRITICAL_RECOVERY_TIMEOUT_HOURS:
+                    if self._check_recovery_conditions(daily_pnl_pct, vix_level):
+                        self.current_tier = CircuitBreakerTier.WARNING
+                        self.current_action = CircuitBreakerAction.SOFT_PAUSE
+                        self.state["warning_triggered_at"] = now.isoformat()
+                        self._save_state()
+
+                        logger.info(
+                            f"AUTO-RECOVERY: CRITICAL → WARNING after {hours_since_critical:.1f}h"
+                        )
+                        recovered = True
+
+        # Check WARNING recovery (Tier 2 → Tier 1 or Normal)
+        if self.current_tier == CircuitBreakerTier.WARNING:
+            warning_time_str = self.state.get("warning_triggered_at")
+            if warning_time_str:
+                warning_time = datetime.fromisoformat(warning_time_str)
+                hours_since_warning = (now - warning_time).total_seconds() / 3600
+
+                if hours_since_warning >= self.WARNING_RECOVERY_TIMEOUT_HOURS:
+                    if self._check_recovery_conditions(daily_pnl_pct, vix_level):
+                        # Recover to CAUTION (reduced sizing) for safety
+                        self.current_tier = CircuitBreakerTier.CAUTION
+                        self.current_action = CircuitBreakerAction.REDUCE_SIZE
+                        self._save_state()
+
+                        logger.info(
+                            f"AUTO-RECOVERY: WARNING → CAUTION after {hours_since_warning:.1f}h"
+                        )
+                        recovered = True
+
+        return recovered
+
+    def _check_recovery_conditions(
+        self,
+        daily_pnl_pct: float,
+        vix_level: Optional[float],
+    ) -> bool:
+        """
+        Check if conditions are favorable for automatic recovery.
+
+        Returns:
+            True if conditions are normalized enough for recovery
+        """
+        # Condition 1: Daily loss is within acceptable range
+        loss_ok = daily_pnl_pct >= -self.RECOVERY_LOSS_THRESHOLD_PCT
+
+        # Condition 2: VIX is below recovery threshold (or not available)
+        vix_ok = vix_level is None or vix_level < self.RECOVERY_VIX_THRESHOLD
+
+        return loss_ok and vix_ok
+
     def _reset_daily_if_needed(self) -> None:
         """Reset daily counters if it's a new day."""
         today = date.today().isoformat()
         last_reset = self.state.get("last_reset", "")
 
         if last_reset != today:
-            # Reset daily state but preserve halt status
+            # Reset daily state but preserve halt status and trigger timestamps
             is_halted = self.state.get("is_halted", False)
+            halt_triggered_at = self.state.get("halt_triggered_at")
+            critical_triggered_at = self.state.get("critical_triggered_at")
+            warning_triggered_at = self.state.get("warning_triggered_at")
+
             self.state = {
                 "last_reset": today,
                 "is_halted": is_halted,
+                "halt_triggered_at": halt_triggered_at,
+                "critical_triggered_at": critical_triggered_at,
+                "warning_triggered_at": warning_triggered_at,
                 "tier_history": self.state.get("tier_history", [])[-100:],
             }
             if not is_halted:
@@ -662,6 +814,18 @@ class MultiTierCircuitBreaker:
 
         if action == CircuitBreakerAction.FULL_HALT:
             self.state["is_halted"] = True
+            # Track when halt was triggered for automatic recovery timeout
+            self.state["halt_triggered_at"] = datetime.now().isoformat()
+            logger.warning(
+                f"HALT triggered at {self.state['halt_triggered_at']} - "
+                f"auto-recovery after {self.HALT_RECOVERY_TIMEOUT_HOURS}h if conditions normalize"
+            )
+        elif action == CircuitBreakerAction.HARD_STOP:
+            # Track critical tier trigger time
+            self.state["critical_triggered_at"] = datetime.now().isoformat()
+        elif action == CircuitBreakerAction.SOFT_PAUSE:
+            # Track warning tier trigger time
+            self.state["warning_triggered_at"] = datetime.now().isoformat()
 
         # Append to tier history
         if "tier_history" not in self.state:

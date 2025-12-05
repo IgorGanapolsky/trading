@@ -1,0 +1,48 @@
+{
+  "source_id": "alpha_architect",
+  "name": "Alpha Architect",
+  "url": "https://alphaarchitect.com/blog/",
+  "focus": "Academic research summaries, factor investing, empirical evidence",
+  "insights": [
+    {
+      "title": "Momentum Works Because Investors Underreact",
+      "date": "2024",
+      "topics": ["momentum", "behavioral_finance", "factor_investing"],
+      "content": "Momentum returns persist because investors systematically underreact to news. Stocks with good news continue to drift up, bad news stocks continue down. The effect is strongest in stocks with high analyst coverage disagreement and low institutional ownership. Implementation: Use 12-1 month momentum (skip last month) with monthly rebalancing. Sharpe improves 0.2-0.3 vs buy-and-hold.",
+      "key_takeaway": "12-1 month momentum signal (exclude last month) has robust out-of-sample evidence across 100+ years and multiple markets.",
+      "citation": "Alpha Architect (2024), summarizing Jegadeesh & Titman momentum research"
+    },
+    {
+      "title": "Value Investing is NOT Dead",
+      "date": "2024",
+      "topics": ["value", "factor_investing", "drawdowns"],
+      "content": "Value's 2020 drawdown was historic (-45% vs growth) but not unprecedented in magnitude. Value has survived multiple 'death' calls: 1999-2000, 2015-2016, 2020-2021. The premium remains positive in out-of-sample tests. Implementation: Use cheap stocks (low P/B, P/E, EV/EBIT) but avoid value traps by requiring positive momentum. Value + Momentum combination is most robust.",
+      "key_takeaway": "Combining value with momentum filter eliminates value traps and improves risk-adjusted returns by 30-50%.",
+      "citation": "Alpha Architect (2024), Quantitative Value research"
+    },
+    {
+      "title": "Trend Following in All Asset Classes",
+      "date": "2024",
+      "topics": ["trend_following", "managed_futures", "crisis_alpha"],
+      "content": "Time-series momentum (trend following) works across: equities, bonds, commodities, currencies. The 'crisis alpha' from trend following provides portfolio insurance during crashes. Simple rule: Go long when 12-month return > 0, else go to cash. Sharpe improvement: 0.3-0.5 vs buy-and-hold. Implementation: Use 200-day SMA as trend filter for position sizing.",
+      "key_takeaway": "Trend filter (200-day SMA or 12-month return) reduces equity drawdowns by 50% with minimal return sacrifice.",
+      "citation": "Alpha Architect (2024), based on Faber TAA research"
+    },
+    {
+      "title": "Backtesting is Broken",
+      "date": "2024",
+      "topics": ["backtest_overfitting", "research_methodology", "multiple_testing"],
+      "content": "90%+ of published trading strategies fail out-of-sample. Key reasons: (1) Look-ahead bias in point-in-time data, (2) Selection bias from testing many strategies, (3) Overfitting to specific market regimes. Solution: Demand economic rationale, require 20+ years of out-of-sample evidence, use strict statistical controls (Bonferroni correction), prefer simple strategies.",
+      "key_takeaway": "If your backtest shows Sharpe > 2 with < 5 years data, it's almost certainly overfit. True Sharpe is likely 0.3-0.7.",
+      "citation": "Alpha Architect (2024), based on Harvey, Liu, Zhu multiple testing research"
+    },
+    {
+      "title": "Factor Investing Implementation Guide",
+      "date": "2024",
+      "topics": ["factor_investing", "implementation", "transaction_costs"],
+      "content": "Factor premiums shrink dramatically after costs. Value: ~1-2% after costs (vs 4-5% gross). Momentum: ~1-3% after costs (vs 6-8% gross). Quality: More stable, ~2-3% after costs. Implementation tips: Trade monthly not daily, use limit orders, avoid small caps (high impact), consider tax efficiency. Optimal factor exposure is 2-3 factors combined.",
+      "key_takeaway": "Net-of-cost factor returns are 50-70% smaller than gross backtests suggest. Account for this in position sizing.",
+      "citation": "Alpha Architect (2024), Implementation Shortfall research"
+    }
+  ]
+}

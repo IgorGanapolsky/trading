@@ -47,6 +47,15 @@ with contextlib.suppress(ImportError):
         create_target_aligned_sizer,
     )
 
+with contextlib.suppress(ImportError):
+    from src.risk.vix_circuit_breaker import (
+        AlertLevel,
+        VIXCircuitBreaker,
+        VIXStatus,
+        check_vix_before_trade,
+        get_vix_circuit_breaker,
+    )
+
 __all__ = [
     "RiskManager",
     "SlippageModel",
@@ -61,4 +70,9 @@ __all__ = [
     "DailyLossLimiter",
     "PositionSizeResult",
     "create_target_aligned_sizer",
+    "VIXCircuitBreaker",
+    "VIXStatus",
+    "AlertLevel",
+    "check_vix_before_trade",
+    "get_vix_circuit_breaker",
 ]

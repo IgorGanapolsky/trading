@@ -59,6 +59,6 @@ def test_calculate_size_volatility_scaling():
     # Base notional = daily_budget * blended_confidence * sentiment_multiplier * multiplier
     # blended_confidence = (signal_strength + rl_confidence) / 2 = (0.8 + 0.8) / 2 = 0.8
     # base_notional = 10 * 0.8 * 1.0 * 1.0 = 8.0
-    # The actual size is capped by `account_equity * max_position_pct` which is 10000 * 0.05 = 500.0
-    assert math.isclose(size_no_hist, 500.0, rel_tol=0.01)
+    # The actual size is capped by `daily_budget` (hard cap) = 10.0 * 0.8 = 8.0
+    assert math.isclose(size_no_hist, 8.0, rel_tol=0.01)
     assert size_with_hist <= size_no_hist
