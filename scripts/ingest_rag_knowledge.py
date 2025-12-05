@@ -94,7 +94,9 @@ def ingest_book(collector: TrainingLibraryCollector, book_id: str, force: bool =
     return result
 
 
-def ingest_newsletter(collector: TrainingLibraryCollector, newsletter_id: str, force: bool = False) -> dict:
+def ingest_newsletter(
+    collector: TrainingLibraryCollector, newsletter_id: str, force: bool = False
+) -> dict:
     """Ingest newsletter insights into the RAG system."""
     newsletters_dir = Path("rag_knowledge/newsletters")
 
@@ -134,10 +136,16 @@ def ingest_newsletter(collector: TrainingLibraryCollector, newsletter_id: str, f
             "chapter_or_section": insight.get("title", ""),
             "page_or_timestamp": insight.get("date", ""),
             "content": f"{insight.get('content', '')}\n\nKey Takeaway: {insight.get('key_takeaway', '')}",
-            "content_type": "strategy" if "strategy" in insight.get("title", "").lower() else "concept",
+            "content_type": "strategy"
+            if "strategy" in insight.get("title", "").lower()
+            else "concept",
             "topics": insight.get("topics", []),
-            "edge_category": insight.get("topics", ["general"])[0] if insight.get("topics") else "general",
-            "citation": insight.get("citation", f"{newsletter_data.get('name')} ({insight.get('date', '2024')})"),
+            "edge_category": insight.get("topics", ["general"])[0]
+            if insight.get("topics")
+            else "general",
+            "citation": insight.get(
+                "citation", f"{newsletter_data.get('name')} ({insight.get('date', '2024')})"
+            ),
         }
         chunks.append(chunk)
 
@@ -230,7 +238,7 @@ def main():
 
         print("\n📄 Available Papers:")
         for paper_id, paper_info in RESEARCH_PAPERS.items():
-            authors = paper_info.get('authors', paper_info.get('author', 'Unknown'))
+            authors = paper_info.get("authors", paper_info.get("author", "Unknown"))
             print(f"  - {paper_id}: {paper_info['title']} by {authors}")
         return
 
@@ -241,7 +249,9 @@ def main():
         results["books"][args.book] = ingest_book(collector, args.book, args.force)
 
     if args.newsletter:
-        results["newsletters"][args.newsletter] = ingest_newsletter(collector, args.newsletter, args.force)
+        results["newsletters"][args.newsletter] = ingest_newsletter(
+            collector, args.newsletter, args.force
+        )
 
     if args.all:
         print("\n" + "=" * 60)
@@ -258,7 +268,9 @@ def main():
         newsletter_files = list(Path("rag_knowledge/newsletters").glob("*_insights.json"))
         for newsletter_file in newsletter_files:
             newsletter_id = newsletter_file.stem.replace("_insights", "")
-            results["newsletters"][newsletter_id] = ingest_newsletter(collector, newsletter_id, args.force)
+            results["newsletters"][newsletter_id] = ingest_newsletter(
+                collector, newsletter_id, args.force
+            )
 
     if args.sync or args.all:
         print("\n" + "=" * 60)

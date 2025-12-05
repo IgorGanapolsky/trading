@@ -10,16 +10,15 @@ Ingests high-value trading knowledge sources into the RAG system:
 Based on proven edge-to-money ratio sources for systematic trading.
 """
 
+# Import base_collector directly to avoid triggering __init__.py's imports
+import importlib.util as _importlib_util
 import json
 import logging
-import re
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
-# Import base_collector directly to avoid triggering __init__.py's imports
-import importlib.util as _importlib_util
 _spec = _importlib_util.spec_from_file_location(
     "base_collector",
     Path(__file__).parent / "base_collector.py",
@@ -253,9 +252,7 @@ class TrainingLibraryCollector(BaseNewsCollector):
         except Exception as e:
             logger.error(f"Error saving index: {e}")
 
-    def ingest_book_summary(
-        self, book_id: str, chapters: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    def ingest_book_summary(self, book_id: str, chapters: list[dict[str, Any]]) -> dict[str, Any]:
         """
         Ingest pre-summarized book content.
 
@@ -299,10 +296,12 @@ class TrainingLibraryCollector(BaseNewsCollector):
                     chapter_or_section=chapter.get("title", "Unknown"),
                     page_or_timestamp=chapter.get("pages", ""),
                     content=point,
-                    content_type="rule" if "always" in point.lower() or "never" in point.lower() else "concept",
+                    content_type="rule"
+                    if "always" in point.lower() or "never" in point.lower()
+                    else "concept",
                     topics=chapter.get("topics", []),
                     edge_category=self._classify_edge_category(point, book_meta["edge_categories"]),
-                    citation=f'{book_meta["author"]} ({book_meta["year"]}), Ch. {chapter.get("chapter_num", "?")}',
+                    citation=f"{book_meta['author']} ({book_meta['year']}), Ch. {chapter.get('chapter_num', '?')}",
                 )
                 chunks.append(point_chunk)
 
@@ -320,7 +319,7 @@ class TrainingLibraryCollector(BaseNewsCollector):
                     edge_category=self._classify_edge_category(
                         formula.get("name", ""), book_meta["edge_categories"]
                     ),
-                    citation=f'{book_meta["author"]} ({book_meta["year"]}), {formula.get("name", "Formula")}',
+                    citation=f"{book_meta['author']} ({book_meta['year']}), {formula.get('name', 'Formula')}",
                 )
                 chunks.append(formula_chunk)
 
@@ -400,21 +399,23 @@ class TrainingLibraryCollector(BaseNewsCollector):
                 if edge_category and chunk["edge_category"] != edge_category:
                     continue
 
-                all_chunks.append({
-                    "id": f"{book_id}_chunk_{i}",
-                    "content": chunk["content"],
-                    "metadata": {
-                        "source_type": chunk["source_type"],
-                        "source_name": chunk["source_name"],
-                        "author": chunk["author"],
-                        "chapter": chunk["chapter_or_section"],
-                        "content_type": chunk["content_type"],
-                        "edge_category": chunk["edge_category"],
-                        "citation": chunk["citation"],
-                        "topics": ",".join(chunk["topics"]),
-                        "source": "training_library",
-                    },
-                })
+                all_chunks.append(
+                    {
+                        "id": f"{book_id}_chunk_{i}",
+                        "content": chunk["content"],
+                        "metadata": {
+                            "source_type": chunk["source_type"],
+                            "source_name": chunk["source_name"],
+                            "author": chunk["author"],
+                            "chapter": chunk["chapter_or_section"],
+                            "content_type": chunk["content_type"],
+                            "edge_category": chunk["edge_category"],
+                            "citation": chunk["citation"],
+                            "topics": ",".join(chunk["topics"]),
+                            "source": "training_library",
+                        },
+                    }
+                )
 
         # Process papers
         for paper_id, paper_info in self.index.get("papers", {}).items():
@@ -431,20 +432,22 @@ class TrainingLibraryCollector(BaseNewsCollector):
                 if edge_category and chunk["edge_category"] != edge_category:
                     continue
 
-                all_chunks.append({
-                    "id": f"{paper_id}_chunk_{i}",
-                    "content": chunk["content"],
-                    "metadata": {
-                        "source_type": chunk["source_type"],
-                        "source_name": chunk["source_name"],
-                        "author": chunk["author"],
-                        "content_type": chunk["content_type"],
-                        "edge_category": chunk["edge_category"],
-                        "citation": chunk["citation"],
-                        "topics": ",".join(chunk["topics"]),
-                        "source": "training_library",
-                    },
-                })
+                all_chunks.append(
+                    {
+                        "id": f"{paper_id}_chunk_{i}",
+                        "content": chunk["content"],
+                        "metadata": {
+                            "source_type": chunk["source_type"],
+                            "source_name": chunk["source_name"],
+                            "author": chunk["author"],
+                            "content_type": chunk["content_type"],
+                            "edge_category": chunk["edge_category"],
+                            "citation": chunk["citation"],
+                            "topics": ",".join(chunk["topics"]),
+                            "source": "training_library",
+                        },
+                    }
+                )
 
         return all_chunks
 
@@ -485,13 +488,17 @@ class TrainingLibraryCollector(BaseNewsCollector):
             score = len(query_words & content_words) / len(query_words) if query_words else 0
 
             if score > 0:
-                scored_results.append({
-                    "content": chunk["content"][:500] + "..." if len(chunk["content"]) > 500 else chunk["content"],
-                    "citation": chunk["metadata"]["citation"],
-                    "source_name": chunk["metadata"]["source_name"],
-                    "edge_category": chunk["metadata"]["edge_category"],
-                    "score": score,
-                })
+                scored_results.append(
+                    {
+                        "content": chunk["content"][:500] + "..."
+                        if len(chunk["content"]) > 500
+                        else chunk["content"],
+                        "citation": chunk["metadata"]["citation"],
+                        "source_name": chunk["metadata"]["source_name"],
+                        "edge_category": chunk["metadata"]["edge_category"],
+                        "score": score,
+                    }
+                )
 
         scored_results.sort(key=lambda x: x["score"], reverse=True)
         return {

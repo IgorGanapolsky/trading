@@ -25,6 +25,7 @@ from datetime import datetime, timedelta
 from typing import Any, Optional
 
 import requests
+
 from src.rag.collectors.base_collector import BaseNewsCollector
 
 logger = logging.getLogger(__name__)

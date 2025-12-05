@@ -218,7 +218,7 @@ def calc_daily_input(equity: float) -> float:
     # This allows the system to scale naturally towards the $100/day profit goal
     # Example: $100k equity -> $1,000 daily investment -> 10% return = $100 profit
     daily_target = equity * 0.01
-    
+
     # Ensure we respect a reasonable floor ($10) but remove the artificial ceiling
     return max(base, daily_target)
 
