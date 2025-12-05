@@ -158,6 +158,7 @@ print("=" * 80)
 
 # Try to load system state to get more context
 from pathlib import Path
+
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 try:

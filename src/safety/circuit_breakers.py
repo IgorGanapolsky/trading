@@ -14,10 +14,11 @@ Updated: 2025-12-04 - Added file locking for thread-safe state operations.
 import fcntl
 import json
 import logging
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

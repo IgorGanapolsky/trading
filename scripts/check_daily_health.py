@@ -26,6 +26,7 @@ from enum import Enum
 from pathlib import Path
 from typing import NamedTuple
 
+
 # Error taxonomy for failure classification
 class ErrorType(Enum):
     DATA_INTEGRITY_ERROR = "data_integrity"
@@ -51,16 +52,25 @@ def classify_error(error_msg: str | None) -> ErrorType:
 
     error_lower = error_msg.lower()
 
-    if any(term in error_lower for term in ["authentication", "api_key", "auth_token", "401", "403"]):
+    if any(
+        term in error_lower for term in ["authentication", "api_key", "auth_token", "401", "403"]
+    ):
         return ErrorType.API_AUTH_ERROR
 
-    if any(term in error_lower for term in ["connection", "timeout", "network", "dns", "unreachable"]):
+    if any(
+        term in error_lower for term in ["connection", "timeout", "network", "dns", "unreachable"]
+    ):
         return ErrorType.BROKER_CONNECTIVITY_ERROR
 
-    if any(term in error_lower for term in ["json", "parse", "invalid data", "corrupt", "missing file"]):
+    if any(
+        term in error_lower for term in ["json", "parse", "invalid data", "corrupt", "missing file"]
+    ):
         return ErrorType.DATA_INTEGRITY_ERROR
 
-    if any(term in error_lower for term in ["risk", "circuit breaker", "max drawdown", "position limit"]):
+    if any(
+        term in error_lower
+        for term in ["risk", "circuit breaker", "max drawdown", "position limit"]
+    ):
         return ErrorType.RISK_VIOLATION_ABORT
 
     if any(term in error_lower for term in ["exception", "error", "traceback", "failed"]):
@@ -73,6 +83,7 @@ def get_market_days(start_date: datetime, end_date: datetime) -> list[str]:
     """Get list of market days (weekdays, excluding US holidays) between dates."""
     try:
         import holidays
+
         us_holidays = holidays.US(years=[start_date.year, end_date.year])
     except ImportError:
         us_holidays = {}
@@ -115,7 +126,9 @@ def load_audit_trail(data_dir: Path) -> dict[str, dict]:
                     continue
 
             # Store most recent audit for each date
-            if date_str not in audits_by_date or timestamp > audits_by_date[date_str].get("timestamp", ""):
+            if date_str not in audits_by_date or timestamp > audits_by_date[date_str].get(
+                "timestamp", ""
+            ):
                 audits_by_date[date_str] = audit
         except Exception:
             continue
@@ -159,10 +172,7 @@ def analyze_audit(audit: dict) -> tuple[bool, ErrorType | None, str | None]:
 
     # Determine overall success
     final_decision = execution_results.get("final_decision", "")
-    success = (
-        final_decision in ["TRADE_EXECUTED", "NO_TRADE_NEEDED", "HOLD"]
-        or not errors
-    )
+    success = final_decision in ["TRADE_EXECUTED", "NO_TRADE_NEEDED", "HOLD"] or not errors
 
     if errors:
         error_msg = "; ".join(str(e) for e in errors[:3])  # Limit to first 3
@@ -193,28 +203,31 @@ def check_health(
     audits = load_audit_trail(data_dir)
 
     # Load system state for additional context
-    system_state = load_system_state(data_dir)
 
     # Analyze each expected market day
     day_statuses = []
     for day in expected_days:
         if day in audits:
             success, error_type, error_msg = analyze_audit(audits[day])
-            day_statuses.append(DayStatus(
-                date=day,
-                executed=True,
-                success=success,
-                error_type=error_type,
-                error_message=error_msg,
-            ))
+            day_statuses.append(
+                DayStatus(
+                    date=day,
+                    executed=True,
+                    success=success,
+                    error_type=error_type,
+                    error_message=error_msg,
+                )
+            )
         else:
-            day_statuses.append(DayStatus(
-                date=day,
-                executed=False,
-                success=False,
-                error_type=ErrorType.UNKNOWN,
-                error_message="No audit trail found",
-            ))
+            day_statuses.append(
+                DayStatus(
+                    date=day,
+                    executed=False,
+                    success=False,
+                    error_type=ErrorType.UNKNOWN,
+                    error_message="No audit trail found",
+                )
+            )
 
     # Calculate statistics
     total_days = len(day_statuses)
@@ -262,10 +275,10 @@ def print_report(day_statuses: list[DayStatus], summary: dict, verbose: bool = F
     print(f"   Execution Rate:       {summary['execution_rate']:.1%}")
     print(f"   Required Threshold:   {summary['threshold']:.1%}")
 
-    if summary['error_breakdown']:
-        print(f"\n🚨 ERROR BREAKDOWN")
+    if summary["error_breakdown"]:
+        print("\n🚨 ERROR BREAKDOWN")
         print("-" * 40)
-        for error_type, count in sorted(summary['error_breakdown'].items(), key=lambda x: -x[1]):
+        for error_type, count in sorted(summary["error_breakdown"].items(), key=lambda x: -x[1]):
             print(f"   {error_type}: {count}")
 
     # Show recent failures
@@ -275,25 +288,31 @@ def print_report(day_statuses: list[DayStatus], summary: dict, verbose: bool = F
         print("-" * 40)
         for status in failures[-5:]:  # Show last 5
             error_type = status.error_type.value if status.error_type else "unknown"
-            msg = status.error_message[:60] + "..." if status.error_message and len(status.error_message) > 60 else status.error_message
+            msg = (
+                status.error_message[:60] + "..."
+                if status.error_message and len(status.error_message) > 60
+                else status.error_message
+            )
             if status.executed:
                 print(f"   {status.date}: [{error_type}] {msg}")
             else:
                 print(f"   {status.date}: MISSING - no execution recorded")
 
     if verbose:
-        print(f"\n📅 DAILY BREAKDOWN")
+        print("\n📅 DAILY BREAKDOWN")
         print("-" * 40)
         for status in day_statuses:
             icon = "✅" if status.success else ("⚠️" if status.executed else "❌")
             print(f"   {status.date}: {icon}")
 
     print("\n" + "=" * 70)
-    if summary['health_ok']:
+    if summary["health_ok"]:
         print("✅ HEALTH CHECK PASSED")
     else:
         print("❌ HEALTH CHECK FAILED")
-        print(f"   Success rate {summary['success_rate']:.1%} is below threshold {summary['threshold']:.1%}")
+        print(
+            f"   Success rate {summary['success_rate']:.1%} is below threshold {summary['threshold']:.1%}"
+        )
     print("=" * 70 + "\n")
 
 

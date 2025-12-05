@@ -162,7 +162,7 @@ class PositionManager:
                 logger.debug(f"State file not found at {self.state_file}")
                 return
 
-            with open(self.state_file, "r", encoding="utf-8") as f:
+            with open(self.state_file, encoding="utf-8") as f:
                 state = json.load(f)
 
             position_entries = state.get("position_entries", {})
@@ -183,15 +183,14 @@ class PositionManager:
         try:
             # Load existing state
             if self.state_file.exists():
-                with open(self.state_file, "r", encoding="utf-8") as f:
+                with open(self.state_file, encoding="utf-8") as f:
                     state = json.load(f)
             else:
                 state = {}
 
             # Update position_entries section
             state["position_entries"] = {
-                symbol: dt.isoformat()
-                for symbol, dt in self._position_entry_dates.items()
+                symbol: dt.isoformat() for symbol, dt in self._position_entry_dates.items()
             }
 
             # Update meta timestamp
@@ -225,7 +224,7 @@ class PositionManager:
         symbol = position.symbol
         unrealized_plpc = position.unrealized_plpc
 
-        logger.info(f"\n{'='*60}")
+        logger.info(f"\n{'=' * 60}")
         logger.info(f"Evaluating position: {symbol}")
         logger.info(f"  Entry: ${position.entry_price:.2f}")
         logger.info(f"  Current: ${position.current_price:.2f}")
@@ -295,9 +294,7 @@ class PositionManager:
 
         # 5. Check ATR-based stop (if enabled)
         if self.conditions.enable_atr_stop:
-            atr_exit = self._check_atr_stop(
-                symbol, position.entry_price, position.current_price
-            )
+            atr_exit = self._check_atr_stop(symbol, position.entry_price, position.current_price)
             if atr_exit:
                 return atr_exit
 
@@ -374,6 +371,7 @@ class PositionManager:
         """
         try:
             import yfinance as yf
+
             from src.utils.technical_indicators import calculate_atr
 
             ticker = yf.Ticker(symbol)

@@ -6,9 +6,9 @@ Updated: 2025-12-04 - Added timeout support to prevent indefinite hangs.
 """
 
 import logging
-import signal
 import time
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeoutError
 from functools import wraps
 from typing import Callable, Optional
 
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class TimeoutException(Exception):
     """Raised when a function call times out."""
+
     pass
 
 
@@ -75,7 +76,7 @@ def retry_with_backoff(
                     else:
                         return func(*args, **kwargs)
 
-                except TimeoutException as e:
+                except TimeoutException:
                     if attempt == max_retries - 1:
                         logger.error(f"{func.__name__} timed out after {max_retries} attempts")
                         raise
