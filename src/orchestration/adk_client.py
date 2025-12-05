@@ -27,7 +27,7 @@ DEFAULT_ROOT_AGENT = "trading_orchestrator_root_agent"
 DEFAULT_USER_ID = "python-stack"
 
 
-@dataclass(slots=True)
+@dataclass
 class ADKClientConfig:
     base_url: str = DEFAULT_BASE_URL
     app_name: str = DEFAULT_APP_NAME
@@ -37,7 +37,7 @@ class ADKClientConfig:
     ensure_session: bool = True
 
 
-@dataclass(slots=True)
+@dataclass
 class OrchestratorResult:
     session_id: str
     events: list[dict[str, Any]] = field(default_factory=list)

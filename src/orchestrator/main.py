@@ -8,6 +8,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 import holidays
+
 from src.agents.macro_agent import MacroeconomicAgent
 from src.agents.momentum_agent import MomentumAgent
 from src.agents.rl_agent import RLFilter
@@ -21,7 +22,7 @@ from src.orchestrator.smart_dca import SmartDCAAllocator
 from src.orchestrator.telemetry import OrchestratorTelemetry
 from src.risk.capital_efficiency import get_capital_calculator
 from src.risk.options_risk_monitor import OptionsRiskMonitor
-from src.risk.position_manager import PositionManager, ExitConditions
+from src.risk.position_manager import ExitConditions, PositionManager
 from src.risk.risk_manager import RiskManager
 from src.risk.trade_gateway import RejectionReason, TradeGateway, TradeRequest
 from src.signals.microstructure_features import MicrostructureFeatureExtractor
@@ -101,7 +102,8 @@ class TradingOrchestrator:
                 take_profit_pct=float(os.getenv("TAKE_PROFIT_PCT", "0.03")),
                 stop_loss_pct=float(os.getenv("STOP_LOSS_PCT", "0.03")),
                 max_holding_days=int(os.getenv("MAX_HOLDING_DAYS", "10")),
-                enable_momentum_exit=os.getenv("ENABLE_MOMENTUM_EXIT", "true").lower() in {"1", "true"},
+                enable_momentum_exit=os.getenv("ENABLE_MOMENTUM_EXIT", "true").lower()
+                in {"1", "true"},
                 enable_atr_stop=os.getenv("ENABLE_ATR_STOP", "true").lower() in {"1", "true"},
             )
         )

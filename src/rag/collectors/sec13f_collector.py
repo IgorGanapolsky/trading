@@ -24,6 +24,7 @@ from typing import Any, Optional
 from xml.etree import ElementTree
 
 import requests
+
 from src.rag.collectors.base_collector import BaseNewsCollector
 
 logger = logging.getLogger(__name__)
