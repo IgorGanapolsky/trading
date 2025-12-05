@@ -16,6 +16,7 @@ from typing import Any, Optional
 
 import requests
 from dotenv import load_dotenv
+
 from src.rag.collectors.base_collector import BaseNewsCollector
 
 # Load environment variables

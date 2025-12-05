@@ -19,9 +19,8 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +62,7 @@ class StressTestResult:
     tier4_halts: int
     total_trades_blocked: int
     capital_preserved_pct: float
-    recovery_time_days: Optional[int]
+    recovery_time_days: int | None
     worst_day_loss: float
     notes: list[str]
 
@@ -157,7 +156,7 @@ class StressTester:
     def run_scenario(
         self,
         scenario: StressScenario,
-        custom_params: Optional[ScenarioParameters] = None,
+        custom_params: ScenarioParameters | None = None,
     ) -> StressTestResult:
         """
         Run a stress test scenario.
@@ -320,7 +319,6 @@ class StressTester:
             return "NO_DATA"
 
         passed_all = all(r.passed for r in self.results)
-        avg_drawdown = sum(r.max_drawdown_hit for r in self.results) / len(self.results)
         avg_preserved = sum(r.capital_preserved_pct for r in self.results) / len(self.results)
 
         if passed_all and avg_preserved > 85:

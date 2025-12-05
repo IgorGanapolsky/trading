@@ -17,9 +17,9 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
-from src.risk.slippage_model import SlippageModel, SlippageModelType, get_default_slippage_model
+from src.risk.slippage_model import SlippageModel, get_default_slippage_model
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +79,7 @@ class TargetAlignedSizer:
         avg_trades_per_day: int = 1,
         target_win_rate: float = 0.55,
         avg_win_loss_ratio: float = 1.5,
-        slippage_model: Optional[SlippageModel] = None,
+        slippage_model: SlippageModel | None = None,
         max_slippage_pct: float = 1.0,  # Max acceptable round-trip slippage
     ):
         """

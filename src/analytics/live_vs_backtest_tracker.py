@@ -22,7 +22,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +35,9 @@ class TradeRecord:
     symbol: str
     side: str  # "buy" or "sell"
     entry_price: float
-    exit_price: Optional[float] = None
+    exit_price: float | None = None
     entry_time: str = ""
-    exit_time: Optional[str] = None
+    exit_time: str | None = None
     pnl: float = 0.0
     pnl_pct: float = 0.0
     signal_strength: float = 0.0
@@ -174,8 +174,8 @@ class LiveVsBacktestTracker:
     def calculate_metrics(
         self,
         trades: list[TradeRecord],
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
     ) -> PerformanceMetrics:
         """Calculate performance metrics for a set of trades."""
         if not trades:
@@ -242,7 +242,7 @@ class LiveVsBacktestTracker:
 
     def generate_divergence_report(
         self,
-        window_days: Optional[int] = None,
+        window_days: int | None = None,
     ) -> DivergenceReport:
         """
         Generate a comparison report between live and backtest performance.
@@ -298,9 +298,7 @@ class LiveVsBacktestTracker:
         elif sharpe_div <= -self.SHARPE_WARNING_THRESHOLD:
             if alert_level != "CRITICAL":
                 alert_level = "WARNING"
-            recommendations.append(
-                f"Sharpe ratio declining {abs(sharpe_div):.2f} vs backtest"
-            )
+            recommendations.append(f"Sharpe ratio declining {abs(sharpe_div):.2f} vs backtest")
 
         # Slippage checks
         if slippage_div >= self.SLIPPAGE_WARNING_THRESHOLD:
@@ -445,14 +443,20 @@ if __name__ == "__main__":
 
     report = summary["divergence_report"]
     print("\n📈 Divergence Analysis:")
-    print(f"   Win Rate: Live={report['live_metrics']['win_rate']:.1%}, "
-          f"Backtest={report['backtest_metrics']['win_rate']:.1%}, "
-          f"Δ={report['divergence']['win_rate']:.1%}")
-    print(f"   Sharpe: Live={report['live_metrics']['sharpe_ratio']:.2f}, "
-          f"Backtest={report['backtest_metrics']['sharpe_ratio']:.2f}, "
-          f"Δ={report['divergence']['sharpe']:.2f}")
-    print(f"   Slippage: Live={report['live_metrics']['avg_slippage']:.3%}, "
-          f"Backtest={report['backtest_metrics']['avg_slippage']:.3%}")
+    print(
+        f"   Win Rate: Live={report['live_metrics']['win_rate']:.1%}, "
+        f"Backtest={report['backtest_metrics']['win_rate']:.1%}, "
+        f"Δ={report['divergence']['win_rate']:.1%}"
+    )
+    print(
+        f"   Sharpe: Live={report['live_metrics']['sharpe_ratio']:.2f}, "
+        f"Backtest={report['backtest_metrics']['sharpe_ratio']:.2f}, "
+        f"Δ={report['divergence']['sharpe']:.2f}"
+    )
+    print(
+        f"   Slippage: Live={report['live_metrics']['avg_slippage']:.3%}, "
+        f"Backtest={report['backtest_metrics']['avg_slippage']:.3%}"
+    )
 
     print("\n💡 Recommendations:")
     for rec in report["recommendations"]:

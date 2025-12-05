@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+
 from src.agents.rl_transformer_features import build_feature_matrix
 from src.utils.market_data import get_market_data_provider
 

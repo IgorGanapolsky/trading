@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import feedparser
+
 from src.rag.collectors.base_collector import BaseNewsCollector
 
 logger = logging.getLogger(__name__)

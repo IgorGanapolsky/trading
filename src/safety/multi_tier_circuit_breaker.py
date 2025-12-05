@@ -125,7 +125,9 @@ class MultiTierCircuitBreaker:
     # Time-based recovery: automatically re-engage after timeout if conditions normalize
     AUTO_RECOVERY_ENABLED = os.getenv("CB_AUTO_RECOVERY", "true").lower() == "true"
     HALT_RECOVERY_TIMEOUT_HOURS = float(os.getenv("CB_HALT_TIMEOUT_HOURS", "4.0"))  # 4 hours
-    CRITICAL_RECOVERY_TIMEOUT_HOURS = float(os.getenv("CB_CRITICAL_TIMEOUT_HOURS", "2.0"))  # 2 hours
+    CRITICAL_RECOVERY_TIMEOUT_HOURS = float(
+        os.getenv("CB_CRITICAL_TIMEOUT_HOURS", "2.0")
+    )  # 2 hours
     WARNING_RECOVERY_TIMEOUT_HOURS = float(os.getenv("CB_WARNING_TIMEOUT_HOURS", "1.0"))  # 1 hour
 
     # Recovery conditions: must be met for automatic re-engagement
@@ -716,9 +718,8 @@ class MultiTierCircuitBreaker:
                         recovered = True
 
         # Check CRITICAL recovery (Tier 3 → Tier 2)
-        if (
-            self.current_tier == CircuitBreakerTier.CRITICAL
-            and not self.state.get("is_halted", False)
+        if self.current_tier == CircuitBreakerTier.CRITICAL and not self.state.get(
+            "is_halted", False
         ):
             critical_time_str = self.state.get("critical_triggered_at")
             if critical_time_str:
