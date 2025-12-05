@@ -39,14 +39,13 @@ def file_lock(file_path: Path, exclusive: bool = True) -> Generator[None, None, 
     lock_path = file_path.with_suffix(".lock")
     lock_path.parent.mkdir(parents=True, exist_ok=True)
 
-    lock_file = open(lock_path, "w")
-    try:
-        lock_type = fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH
-        fcntl.flock(lock_file.fileno(), lock_type)
-        yield
-    finally:
-        fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
-        lock_file.close()
+    with open(lock_path, "w") as lock_file:
+        try:
+            lock_type = fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH
+            fcntl.flock(lock_file.fileno(), lock_type)
+            yield
+        finally:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
 class CircuitBreaker:
