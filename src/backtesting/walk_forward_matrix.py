@@ -17,6 +17,7 @@ Created: 2025-12-02
 """
 
 import json
+from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass, field

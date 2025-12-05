@@ -147,9 +147,7 @@ class RegimeDetector:
             returns = prices.pct_change().dropna()
 
         if len(returns) < self.history_window:
-            logger.warning(
-                f"Insufficient data: {len(returns)} < {self.history_window}"
-            )
+            logger.warning(f"Insufficient data: {len(returns)} < {self.history_window}")
             # Return default regime
             return RegimeState(
                 volatility_regime=VolatilityRegime.MEDIUM,
@@ -178,9 +176,7 @@ class RegimeDetector:
         regime_age = self._track_regime_transition(market_regime, prices.index[-1])
 
         # Calculate recommended position scale
-        position_scale = self._calculate_position_scale(
-            vol_regime, trend_regime, confidence
-        )
+        position_scale = self._calculate_position_scale(vol_regime, trend_regime, confidence)
 
         return RegimeState(
             volatility_regime=vol_regime,
@@ -208,7 +204,7 @@ class RegimeDetector:
         current_vol = rolling_vol.iloc[-1]
 
         # Calculate percentile vs history
-        historical_vol = rolling_vol.iloc[-self.history_window:]
+        historical_vol = rolling_vol.iloc[-self.history_window :]
         percentile = (historical_vol < current_vol).mean() * 100
 
         # Classify regime
@@ -238,7 +234,9 @@ class RegimeDetector:
         long_ma = prices.rolling(window=self.trend_window).mean()
 
         # Calculate trend strength as normalized slope
-        price_range = prices.iloc[-self.trend_window:].max() - prices.iloc[-self.trend_window:].min()
+        price_range = (
+            prices.iloc[-self.trend_window :].max() - prices.iloc[-self.trend_window :].min()
+        )
 
         if price_range > 0:
             ma_diff = (short_ma.iloc[-1] - long_ma.iloc[-1]) / price_range
@@ -308,10 +306,12 @@ class RegimeDetector:
         """
         # Volatility consistency
         vol = returns.rolling(window=self.volatility_window).std()
-        vol_stability = 1 - (vol.iloc[-20:].std() / vol.iloc[-20:].mean() if vol.iloc[-20:].mean() > 0 else 1)
+        vol_stability = 1 - (
+            vol.iloc[-20:].std() / vol.iloc[-20:].mean() if vol.iloc[-20:].mean() > 0 else 1
+        )
 
         # Trend clarity (R-squared of price trend)
-        recent_prices = prices.iloc[-self.trend_window:]
+        recent_prices = prices.iloc[-self.trend_window :]
         x = np.arange(len(recent_prices))
 
         if len(recent_prices) > 1:
@@ -344,9 +344,7 @@ class RegimeDetector:
                     confidence=0.5,  # Could be enhanced
                 )
                 self.regime_history.append(transition)
-                logger.info(
-                    f"Regime transition: {self.current_regime.value} -> {new_regime.value}"
-                )
+                logger.info(f"Regime transition: {self.current_regime.value} -> {new_regime.value}")
 
             self.current_regime = new_regime
             self.regime_start_date = current_date
@@ -438,7 +436,9 @@ class RegimeDetector:
         report.append(f"  Trend: {regime_state.trend_regime.value}")
         report.append(f"  Trend Strength: {regime_state.trend_strength:+.2f}")
 
-        report.append(f"\nRecommended Position Scale: {regime_state.recommended_position_scale:.0%}")
+        report.append(
+            f"\nRecommended Position Scale: {regime_state.recommended_position_scale:.0%}"
+        )
 
         # Trading implications
         report.append("\nTrading Implications:")

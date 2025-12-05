@@ -47,8 +47,8 @@ class EmergencyLiquidator:
     """
 
     # Thresholds
-    AUTO_LIQUIDATE_PCT = 0.03       # 3% daily loss = liquidate risky positions
-    FULL_LIQUIDATE_PCT = 0.05       # 5% daily loss = liquidate EVERYTHING
+    AUTO_LIQUIDATE_PCT = 0.03  # 3% daily loss = liquidate risky positions
+    FULL_LIQUIDATE_PCT = 0.05  # 5% daily loss = liquidate EVERYTHING
 
     # Safe haven assets to preserve at 3% threshold
     SAFE_HAVENS = {"TLT", "IEF", "BND", "SHY", "BIL", "GOVT", "SCHD"}
@@ -158,7 +158,11 @@ class EmergencyLiquidator:
             try:
                 raw_positions = self.trader.get_all_positions()
                 positions = [
-                    {"symbol": p.get("symbol"), "qty": p.get("qty"), "market_value": p.get("market_value")}
+                    {
+                        "symbol": p.get("symbol"),
+                        "qty": p.get("qty"),
+                        "market_value": p.get("market_value"),
+                    }
                     for p in raw_positions
                 ]
             except Exception as e:
@@ -269,7 +273,9 @@ class EmergencyLiquidator:
 
             # Save
             with open(self.state_file, "w") as f:
-                json.dump({"events": events, "last_updated": datetime.now().isoformat()}, f, indent=2)
+                json.dump(
+                    {"events": events, "last_updated": datetime.now().isoformat()}, f, indent=2
+                )
 
         except Exception as e:
             logger.error(f"Failed to save liquidation event: {e}")
@@ -288,7 +294,9 @@ class EmergencyLiquidator:
             return []
 
 
-def create_liquidator(trader: Optional["AlpacaTrader"] = None, dry_run: bool = False) -> EmergencyLiquidator:
+def create_liquidator(
+    trader: Optional["AlpacaTrader"] = None, dry_run: bool = False
+) -> EmergencyLiquidator:
     """
     Factory function to create an EmergencyLiquidator with default settings.
 

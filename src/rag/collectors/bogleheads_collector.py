@@ -12,6 +12,7 @@ from typing import Any
 
 import requests
 from bs4 import BeautifulSoup
+
 from src.rag.collectors.base_collector import BaseNewsCollector
 
 logger = logging.getLogger(__name__)

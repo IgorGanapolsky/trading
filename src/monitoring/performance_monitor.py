@@ -21,10 +21,9 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 import numpy as np
-import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -225,10 +224,7 @@ class LivePerformanceMonitor:
         # Check for alerts
         self._check_alerts()
 
-        logger.info(
-            f"Recorded trade: {symbol} {side} "
-            f"P&L=${pnl:.2f} ({return_pct:+.2f}%)"
-        )
+        logger.info(f"Recorded trade: {symbol} {side} P&L=${pnl:.2f} ({return_pct:+.2f}%)")
 
     def record_daily_equity(self, equity: float, date: Optional[datetime] = None) -> None:
         """
@@ -249,8 +245,8 @@ class LivePerformanceMonitor:
             self.metrics.peak_equity = equity
 
         self.metrics.current_drawdown = (
-            (self.metrics.peak_equity - equity) / self.metrics.peak_equity
-        )
+            self.metrics.peak_equity - equity
+        ) / self.metrics.peak_equity
 
         if self.metrics.current_drawdown > self.metrics.max_drawdown:
             self.metrics.max_drawdown = self.metrics.current_drawdown
@@ -265,9 +261,7 @@ class LivePerformanceMonitor:
             self._update_sharpe()
 
         # Update total return
-        self.metrics.total_return = (
-            (equity - self.initial_capital) / self.initial_capital
-        )
+        self.metrics.total_return = (equity - self.initial_capital) / self.initial_capital
 
         self._check_alerts()
 
@@ -294,8 +288,7 @@ class LivePerformanceMonitor:
 
         # Update drawdown
         self.metrics.current_drawdown = (
-            (self.metrics.peak_equity - self.metrics.current_equity)
-            / self.metrics.peak_equity
+            (self.metrics.peak_equity - self.metrics.current_equity) / self.metrics.peak_equity
             if self.metrics.peak_equity > 0
             else 0.0
         )
@@ -313,9 +306,7 @@ class LivePerformanceMonitor:
         # Update profit factor
         total_wins = sum(wins) if wins else 0
         total_losses = abs(sum(losses)) if losses else 0
-        self.metrics.profit_factor = (
-            total_wins / total_losses if total_losses > 0 else float("inf")
-        )
+        self.metrics.profit_factor = total_wins / total_losses if total_losses > 0 else float("inf")
 
     def _update_sharpe(self) -> None:
         """Update Sharpe ratio from daily returns."""
@@ -324,9 +315,7 @@ class LivePerformanceMonitor:
 
         returns = np.array(self.metrics.daily_returns)
         if np.std(returns) > 0:
-            self.metrics.sharpe_ratio = (
-                np.mean(returns) / np.std(returns) * np.sqrt(252)
-            )
+            self.metrics.sharpe_ratio = np.mean(returns) / np.std(returns) * np.sqrt(252)
             self.metrics.volatility = np.std(returns) * np.sqrt(252)
 
     def _check_alerts(self) -> None:
@@ -391,10 +380,7 @@ class LivePerformanceMonitor:
         recent_cutoff = alert.timestamp - timedelta(hours=1)
 
         for existing in self.alerts:
-            if (
-                existing.alert_type == alert.alert_type
-                and existing.timestamp > recent_cutoff
-            ):
+            if existing.alert_type == alert.alert_type and existing.timestamp > recent_cutoff:
                 return  # Don't add duplicate
 
         self.alerts.append(alert)
@@ -409,36 +395,26 @@ class LivePerformanceMonitor:
         """
         # Calculate ratios (handle division by zero)
         return_ratio = (
-            self.metrics.total_return / self.backtest_return
-            if self.backtest_return != 0
-            else 0.0
+            self.metrics.total_return / self.backtest_return if self.backtest_return != 0 else 0.0
         )
 
         sharpe_ratio = (
-            self.metrics.sharpe_ratio / self.backtest_sharpe
-            if self.backtest_sharpe != 0
-            else 0.0
+            self.metrics.sharpe_ratio / self.backtest_sharpe if self.backtest_sharpe != 0 else 0.0
         )
 
         win_rate_ratio = (
-            self.metrics.win_rate / self.backtest_win_rate
-            if self.backtest_win_rate != 0
-            else 0.0
+            self.metrics.win_rate / self.backtest_win_rate if self.backtest_win_rate != 0 else 0.0
         )
 
         drawdown_ratio = (
-            self.metrics.max_drawdown / self.backtest_max_dd
-            if self.backtest_max_dd != 0
-            else 0.0
+            self.metrics.max_drawdown / self.backtest_max_dd if self.backtest_max_dd != 0 else 0.0
         )
 
         # Statistical test (if enough data)
         is_different, p_value = self._statistical_test()
 
         # Calculate overall score (0-100)
-        score = self._calculate_score(
-            return_ratio, sharpe_ratio, win_rate_ratio, drawdown_ratio
-        )
+        score = self._calculate_score(return_ratio, sharpe_ratio, win_rate_ratio, drawdown_ratio)
 
         # Determine status
         if score >= 70:
@@ -485,10 +461,9 @@ class LivePerformanceMonitor:
 
         # Estimate backtest mean from win rate and avg win/loss
         # This is a rough approximation
-        expected_mean = (
-            self.backtest_win_rate * abs(self.metrics.avg_win)
-            - (1 - self.backtest_win_rate) * abs(self.metrics.avg_loss)
-        )
+        expected_mean = self.backtest_win_rate * abs(self.metrics.avg_win) - (
+            1 - self.backtest_win_rate
+        ) * abs(self.metrics.avg_loss)
 
         if sample_std > 0:
             z_stat = (sample_mean - expected_mean) / (sample_std / np.sqrt(n))
@@ -575,7 +550,9 @@ class LivePerformanceMonitor:
 
         status_emoji = {"healthy": "[OK]", "warning": "[WARN]", "critical": "[FAIL]"}
         report.append(f"\nPerformance Score: {comparison.performance_score:.0f}/100")
-        report.append(f"Status: {status_emoji.get(comparison.status, '')} {comparison.status.upper()}")
+        report.append(
+            f"Status: {status_emoji.get(comparison.status, '')} {comparison.status.upper()}"
+        )
 
         if comparison.is_significantly_different:
             report.append(f"Statistical Significance: Yes (p={comparison.p_value:.3f})")
@@ -588,9 +565,7 @@ class LivePerformanceMonitor:
             report.append("-" * 70)
 
             for alert in self.alerts[-5:]:  # Last 5 alerts
-                report.append(
-                    f"\n  [{alert.severity.value.upper()}] {alert.alert_type.value}"
-                )
+                report.append(f"\n  [{alert.severity.value.upper()}] {alert.alert_type.value}")
                 report.append(f"    {alert.message}")
                 report.append(f"    Action: {alert.recommended_action}")
 
@@ -612,9 +587,7 @@ class LivePerformanceMonitor:
                 "peak_equity": self.metrics.peak_equity,
             },
             "trade_history": self.trade_history,
-            "daily_equity": [
-                (dt.isoformat(), eq) for dt, eq in self.daily_equity
-            ],
+            "daily_equity": [(dt.isoformat(), eq) for dt, eq in self.daily_equity],
             "alerts": [
                 {
                     "type": a.alert_type.value,
@@ -658,8 +631,7 @@ class LivePerformanceMonitor:
 
             # Restore daily equity
             self.daily_equity = [
-                (datetime.fromisoformat(dt), eq)
-                for dt, eq in state.get("daily_equity", [])
+                (datetime.fromisoformat(dt), eq) for dt, eq in state.get("daily_equity", [])
             ]
 
             logger.info("Loaded monitoring state")

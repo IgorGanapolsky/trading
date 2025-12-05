@@ -25,6 +25,7 @@ from enum import Enum
 from typing import Optional
 
 import yfinance as yf
+
 from src.utils.dcf_valuation import get_global_dcf_calculator
 
 logger = logging.getLogger(__name__)

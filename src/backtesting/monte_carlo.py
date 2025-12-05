@@ -22,7 +22,6 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 import numpy as np
-import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +164,9 @@ class MonteCarloSimulator:
             win_rate=float(len(wins) / len(returns)) if len(returns) > 0 else 0.0,
             avg_win=float(np.mean(wins)) if len(wins) > 0 else 0.0,
             avg_loss=float(np.mean(losses)) if len(losses) > 0 else 0.0,
-            profit_factor=float(np.sum(wins) / abs(np.sum(losses))) if len(losses) > 0 and np.sum(losses) != 0 else float("inf"),
+            profit_factor=float(np.sum(wins) / abs(np.sum(losses)))
+            if len(losses) > 0 and np.sum(losses) != 0
+            else float("inf"),
             num_trades=len(returns),
         )
 
@@ -194,9 +195,7 @@ class MonteCarloSimulator:
         if num_trades is None:
             num_trades = len(trade_returns)
 
-        logger.info(
-            f"Running {self.num_simulations} simulations with {num_trades} trades each"
-        )
+        logger.info(f"Running {self.num_simulations} simulations with {num_trades} trades each")
 
         # Pre-allocate arrays for performance
         equity_curves = np.zeros((self.num_simulations, num_trades + 1))

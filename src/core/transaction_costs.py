@@ -210,9 +210,7 @@ class TransactionCostModel:
 
         # 2. Calculate market impact
         if avg_daily_volume and avg_daily_volume > 0:
-            market_impact = self._calculate_market_impact(
-                quantity, price, avg_daily_volume, vol
-            )
+            market_impact = self._calculate_market_impact(quantity, price, avg_daily_volume, vol)
         else:
             # Default impact based on trade value
             impact_bps = self.params.impact_coefficient * np.sqrt(trade_value / 100000) * 10
@@ -257,7 +255,9 @@ class TransactionCostModel:
         Spread increases with volatility (market makers widen spreads).
         """
         base = self.params.base_spread_bps
-        vol_adjustment = self.params.volatility_multiplier * (volatility / 0.20)  # Normalize to 20% vol
+        vol_adjustment = self.params.volatility_multiplier * (
+            volatility / 0.20
+        )  # Normalize to 20% vol
 
         return base * (1 + vol_adjustment)
 
@@ -282,11 +282,7 @@ class TransactionCostModel:
         participation = abs(quantity) / avg_daily_volume
 
         # Square-root impact model
-        impact_pct = (
-            self.params.impact_coefficient
-            * volatility
-            * np.sqrt(participation)
-        )
+        impact_pct = self.params.impact_coefficient * volatility * np.sqrt(participation)
 
         return trade_value * impact_pct
 
@@ -492,7 +488,7 @@ def generate_cost_report(
     report.append("TRANSACTION COST ANALYSIS")
     report.append("=" * 60)
     report.append(f"\nTrades Analyzed: {len(trades)}")
-    report.append(f"\nP&L Summary:")
+    report.append("\nP&L Summary:")
     report.append(f"  Gross P&L: ${total_original_pnl:,.2f}")
     report.append(f"  Transaction Costs: ${total_costs:,.2f}")
     report.append(f"  Net P&L: ${total_adjusted_pnl:,.2f}")
@@ -506,7 +502,7 @@ def generate_cost_report(
         avg_cost = total_costs / len(adjusted)
         avg_cost_pct = np.mean([t.get("cost_impact_pct", 0) for t in adjusted])
 
-        report.append(f"\nPer-Trade Averages:")
+        report.append("\nPer-Trade Averages:")
         report.append(f"  Average Cost: ${avg_cost:.2f}")
         report.append(f"  Average Cost %: {avg_cost_pct:.3f}%")
 
