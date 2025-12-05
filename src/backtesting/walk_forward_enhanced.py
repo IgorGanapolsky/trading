@@ -517,9 +517,7 @@ class EnhancedWalkForwardValidator:
         report.append("\nFold-by-Fold Results:")
         for i, fd in enumerate(results.fold_details):
             report.append(f"\n  Fold {i + 1}:")
-            report.append(
-                f"    Period: {fd.fold.test_start.date()} to {fd.fold.test_end.date()}"
-            )
+            report.append(f"    Period: {fd.fold.test_start.date()} to {fd.fold.test_end.date()}")
             report.append(f"    IS Return: {fd.in_sample_result.total_return:.2f}%")
             report.append(f"    OOS Return: {fd.out_of_sample_result.total_return:.2f}%")
             report.append(f"    Efficiency: {fd.efficiency_ratio:.2f}")

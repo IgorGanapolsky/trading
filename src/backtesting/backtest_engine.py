@@ -16,6 +16,7 @@ Author: Trading System
 Created: 2025-11-02
 """
 
+from __future__ import annotations
 import logging
 import os
 from datetime import datetime, timedelta, timezone

@@ -16,6 +16,7 @@ Created: 2025-11-02
 Updated: 2025-12-03
 """
 
+from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from typing import Any

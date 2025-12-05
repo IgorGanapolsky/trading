@@ -361,6 +361,36 @@ def main() -> None:
     else:
         logger.info("Options simulation disabled via ENABLE_OPTIONS_SIM")
 
+    # RL Feedback Loop: Retrain from telemetry after trading completes
+    rl_retrain_enabled = _flag_enabled("ENABLE_RL_RETRAIN", "true")
+    if rl_retrain_enabled:
+        try:
+            logger.info("=" * 80)
+            logger.info("RL FEEDBACK LOOP - Daily Retraining")
+            logger.info("=" * 80)
+
+            # Import and run RL retraining
+            import subprocess
+
+            script_path = os.path.join(os.path.dirname(__file__), "rl_daily_retrain.py")
+            result = subprocess.run(
+                [sys.executable, script_path],
+                capture_output=False,
+                text=True,
+            )
+
+            if result.returncode == 0:
+                logger.info(
+                    "✅ RL retraining completed successfully - system learned from today's trades."
+                )
+            else:
+                logger.warning(f"⚠️  RL retraining exited with code {result.returncode}")
+        except Exception as e:
+            logger.error(f"RL retraining failed (non-fatal): {e}", exc_info=True)
+            logger.info("Continuing without RL update - will use existing weights...")
+    else:
+        logger.info("RL retraining disabled via ENABLE_RL_RETRAIN")
+
 
 if __name__ == "__main__":
     main()

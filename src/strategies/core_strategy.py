@@ -592,8 +592,11 @@ class CoreStrategy:
                 return None
 
             # Step 5.5: Intelligent Investor Safety Check (Graham-Buffett principles)
+            # OPTIMIZATION (Dec 4, 2025): Skip for ETFs - they're inherently diversified and safe
             safety_analysis = None
-            if self.use_intelligent_investor and self.safety_analyzer:
+            is_etf = best_etf in ["SPY", "QQQ", "VOO", "BND", "VNQ", "BITO", "IEF", "TLT"]
+
+            if self.use_intelligent_investor and self.safety_analyzer and not is_etf:
                 try:
                     logger.info("=" * 80)
                     logger.info("Running Intelligent Investor Safety Analysis...")
@@ -654,6 +657,11 @@ class CoreStrategy:
                 except Exception as e:
                     logger.warning(f"Intelligent Investor safety check error (proceeding): {e}")
                     # Fail-open: continue with trade if safety check unavailable
+            elif is_etf:
+                logger.info(
+                    f"Skipping Intelligent Investor check for ETF {best_etf} (inherently safe)"
+                )
+                # ETFs are inherently diversified and don't need Graham-Buffett individual stock checks
 
             # Step 5.6: LLM Council Validation (if enabled) - After safety checks
             # Council incorporates Graham-Buffett principles and safety analysis

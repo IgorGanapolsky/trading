@@ -20,7 +20,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Callable, Optional
 
-import numpy as np
 import pandas as pd
 
 from src.backtesting.backtest_results import BacktestResults
@@ -30,7 +29,7 @@ from src.backtesting.walk_forward_enhanced import (
     EnhancedWalkForwardValidator,
 )
 from src.core.regime_detection import RegimeDetector, RegimeState
-from src.core.transaction_costs import TransactionCostModel, AssetClass
+from src.core.transaction_costs import AssetClass, TransactionCostModel
 
 logger = logging.getLogger(__name__)
 
@@ -189,15 +188,11 @@ class ExtendedBacktester:
         mc_failures: list[str] = []
 
         if run_monte_carlo and backtest_results.trades:
-            mc_results, mc_valid, mc_failures = self._run_monte_carlo(
-                backtest_results.trades
-            )
+            mc_results, mc_valid, mc_failures = self._run_monte_carlo(backtest_results.trades)
             all_failures.extend(mc_failures)
 
             if not mc_valid:
-                recommendations.append(
-                    "Monte Carlo failed: Consider reviewing trade quality"
-                )
+                recommendations.append("Monte Carlo failed: Consider reviewing trade quality")
 
         # 3. Run walk-forward analysis
         wf_results = None
@@ -211,9 +206,7 @@ class ExtendedBacktester:
             all_failures.extend(wf_failures)
 
             if not wf_valid:
-                recommendations.append(
-                    "Walk-forward failed: Strategy may be overfit"
-                )
+                recommendations.append("Walk-forward failed: Strategy may be overfit")
 
         # 4. Run cost analysis
         gross_return = backtest_results.total_return
@@ -277,9 +270,7 @@ class ExtendedBacktester:
         )
 
         # Generate summary
-        summary = self._generate_summary(
-            is_valid, overall_score, len(all_failures)
-        )
+        summary = self._generate_summary(is_valid, overall_score, len(all_failures))
 
         return ExtendedValidationResults(
             backtest_results=backtest_results,
@@ -336,9 +327,7 @@ class ExtendedBacktester:
         failures = []
 
         if results.sharpe_ratio < self.criteria.min_sharpe:
-            failures.append(
-                f"Sharpe {results.sharpe_ratio:.2f} < {self.criteria.min_sharpe:.1f}"
-            )
+            failures.append(f"Sharpe {results.sharpe_ratio:.2f} < {self.criteria.min_sharpe:.1f}")
 
         if results.max_drawdown > self.criteria.max_drawdown:
             failures.append(
@@ -346,9 +335,7 @@ class ExtendedBacktester:
             )
 
         if results.win_rate < self.criteria.min_win_rate:
-            failures.append(
-                f"Win rate {results.win_rate:.1%} < {self.criteria.min_win_rate:.0%}"
-            )
+            failures.append(f"Win rate {results.win_rate:.1%} < {self.criteria.min_win_rate:.0%}")
 
         if results.total_trades < self.criteria.min_trades:
             failures.append(
@@ -411,15 +398,13 @@ class ExtendedBacktester:
 
             # Check fold consistency
             positive_folds = sum(
-                1 for fd in results.fold_details
-                if fd.out_of_sample_result.total_return > 0
+                1 for fd in results.fold_details if fd.out_of_sample_result.total_return > 0
             )
             consistency = positive_folds / len(results.fold_details) if results.fold_details else 0
 
             if consistency < self.criteria.min_fold_consistency:
                 failures.append(
-                    f"Fold consistency {consistency:.0%} "
-                    f"< {self.criteria.min_fold_consistency:.0%}"
+                    f"Fold consistency {consistency:.0%} < {self.criteria.min_fold_consistency:.0%}"
                 )
 
             return results, len(failures) == 0, failures
@@ -474,20 +459,26 @@ class ExtendedBacktester:
         weights = []
 
         # Backtest score (weight: 25%)
-        bt_score = min(100, max(0, (
-            min(1, backtest_results.sharpe_ratio / 2) * 40 +
-            min(1, backtest_results.win_rate / 0.6) * 30 +
-            max(0, 1 - backtest_results.max_drawdown / 0.3) * 30
-        )))
+        bt_score = min(
+            100,
+            max(
+                0,
+                (
+                    min(1, backtest_results.sharpe_ratio / 2) * 40
+                    + min(1, backtest_results.win_rate / 0.6) * 30
+                    + max(0, 1 - backtest_results.max_drawdown / 0.3) * 30
+                ),
+            ),
+        )
         scores.append(bt_score)
         weights.append(0.25)
 
         # Monte Carlo score (weight: 25%)
         if mc_results:
             mc_score = (
-                mc_results.profit_probability * 50 +
-                max(0, 1 - mc_results.ruin_probability * 10) * 30 +
-                max(0, 1 - mc_results.worst_max_drawdown / 0.5) * 20
+                mc_results.profit_probability * 50
+                + max(0, 1 - mc_results.ruin_probability * 10) * 30
+                + max(0, 1 - mc_results.worst_max_drawdown / 0.5) * 20
             )
             scores.append(mc_score)
             weights.append(0.25)
@@ -495,18 +486,15 @@ class ExtendedBacktester:
         # Walk-forward score (weight: 25%)
         if wf_results:
             wf_score = (
-                min(1, wf_results.mean_efficiency_ratio) * 40 +
-                max(0, 1 - wf_results.overfitting_score) * 40 +
-                wf_results.mean_param_stability * 20
+                min(1, wf_results.mean_efficiency_ratio) * 40
+                + max(0, 1 - wf_results.overfitting_score) * 40
+                + wf_results.mean_param_stability * 20
             ) * 100
             scores.append(wf_score)
             weights.append(0.25)
 
         # Cost/regime score (weight: 25%)
-        misc_score = (
-            min(1, cost_adjusted_sharpe / 1.5) * 50 +
-            regime_score * 50
-        ) * 100
+        misc_score = (min(1, cost_adjusted_sharpe / 1.5) * 50 + regime_score * 50) * 100
         scores.append(misc_score)
         weights.append(0.25)
 
@@ -527,10 +515,7 @@ class ExtendedBacktester:
     ) -> str:
         """Generate validation summary string."""
         if is_valid:
-            return (
-                f"PASS: Strategy validated for live trading "
-                f"(Score: {score:.0f}/100)"
-            )
+            return f"PASS: Strategy validated for live trading (Score: {score:.0f}/100)"
         else:
             return (
                 f"FAIL: Strategy not ready for live trading "

@@ -407,10 +407,13 @@ class GrowthStrategy:
             logger.warning(f"Failed to initialize RAG Database: {e}")
             self.rag_db = None
 
+        # RELAXED MARGIN (Dec 4, 2025): Reduced from 0.15 to 0.05 for realistic bull market valuations
+        # Previous: 15% undervaluation required → rejected 60-70% of candidates
+        # New: 5% margin → accepts fairly valued stocks (appropriate for growth investing)
         try:
-            mos_env = float(os.getenv("DCF_MARGIN_OF_SAFETY", "0.15"))
+            mos_env = float(os.getenv("DCF_MARGIN_OF_SAFETY", "0.05"))
         except ValueError:
-            mos_env = 0.15
+            mos_env = 0.05
         self.required_margin_of_safety = max(0.0, min(0.5, mos_env))
 
         # Performance tracking
@@ -573,8 +576,18 @@ class GrowthStrategy:
                 macd_value, macd_signal, macd_histogram = self._calculate_macd(hist)
                 volume_ratio = self._calculate_volume_ratio(hist)
 
-                # Apply filters (MACD histogram > 0 = bullish momentum confirmation)
-                if momentum > 0 and 30 < rsi < 70 and volume_ratio > 1.2 and macd_histogram > 0:
+                # Apply filters - RELAXED (Dec 4, 2025): Changed from strict AND to "2 of 4" logic
+                # Previous: All 4 conditions required → rejected 80-90% of candidates
+                # New: Any 2 of 4 conditions → more permissive, allows consolidation/low-volume periods
+                conditions = [
+                    momentum > -0.02,  # Allow slight negative momentum (consolidation)
+                    30 < rsi < 75,  # Wider RSI range (allow moderate overbought)
+                    volume_ratio > 0.8,  # Lower volume requirement (accept quiet periods)
+                    macd_histogram > -0.05,  # Allow near-crossover (not just bullish)
+                ]
+                conditions_met = sum(conditions)
+
+                if conditions_met >= 2:  # Need at least 2 of 4 conditions (not all 4)
                     candidate = CandidateStock(
                         symbol=symbol,
                         technical_score=score,
@@ -589,12 +602,14 @@ class GrowthStrategy:
                     )
                     filtered_stocks.append(candidate)
                     logger.debug(
-                        f"{symbol}: PASSED (momentum={momentum:.2f}, RSI={rsi:.1f}, "
+                        f"{symbol}: PASSED {conditions_met}/4 conditions "
+                        f"(momentum={momentum:.2f}, RSI={rsi:.1f}, "
                         f"MACD={macd_histogram:.4f}, vol_ratio={volume_ratio:.2f})"
                     )
                 else:
                     logger.debug(
-                        f"{symbol}: FILTERED OUT (momentum={momentum:.2f}, RSI={rsi:.1f}, "
+                        f"{symbol}: FILTERED OUT {conditions_met}/4 conditions "
+                        f"(momentum={momentum:.2f}, RSI={rsi:.1f}, "
                         f"MACD={macd_histogram:.4f}, vol_ratio={volume_ratio:.2f})"
                     )
 

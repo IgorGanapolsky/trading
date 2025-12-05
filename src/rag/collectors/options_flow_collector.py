@@ -5,6 +5,7 @@ Collects unusual options activity data to identify institutional trading signals
 Sources: Barchart, MarketChameleon (free tiers), Yahoo Finance options chain analysis.
 """
 
+from __future__ import annotations
 import logging
 from datetime import datetime
 from typing import Any

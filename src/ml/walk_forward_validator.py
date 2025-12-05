@@ -1,6 +1,13 @@
 """
 Walk-Forward Validation for Trading ML Models
 
+WARNING: This module is DEPRECATED and BROKEN.
+The LSTM-PPO networks it depends on have been removed from production.
+
+Production system uses:
+- RLFilter (Gate 2) with TransformerRLPolicy
+- RLPolicyLearner (simple Q-learning)
+
 This module implements proper time-series cross-validation using the walk-forward
 methodology - essential for any trading system to prevent look-ahead bias and
 ensure models generalize to unseen market regimes.
@@ -19,6 +26,7 @@ This prevents:
 
 Author: Trading System
 Created: 2025-12-01
+DEPRECATED: 2025-12-04
 """
 
 import logging

@@ -55,8 +55,13 @@ class AlpacaExecutor:
             self.account_snapshot = {"equity": equity, "mode": "simulated"}
             self.positions = []
         else:
-            self.account_snapshot = self.trader.get_account_info()
-            self.positions = self.trader.get_positions()
+            try:
+                self.account_snapshot = self.trader.get_account_info()
+                self.positions = self.trader.get_positions()
+            except Exception as e:
+                logger.error(f"Failed to sync portfolio state: {e}. Falling back to empty state.")
+                self.account_snapshot = {}
+                self.positions = []
 
         logger.info(
             "Synced %s Alpaca state | equity=$%.2f | positions=%d",

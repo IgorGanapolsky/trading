@@ -5,6 +5,7 @@ Collects trading ideas, technical analysis, and signals from TradingView.
 Uses public RSS feeds and web scraping for community insights.
 """
 
+from __future__ import annotations
 import logging
 import re
 from datetime import datetime

@@ -79,7 +79,9 @@ def _get_openrouter_config(
 
     # Add OpenRouter identification headers
     if base_url and "openrouter" in base_url:
-        default_headers["HTTP-Referer"] = os.getenv("OPENROUTER_REFERER", "https://github.com/trading-system")
+        default_headers["HTTP-Referer"] = os.getenv(
+            "OPENROUTER_REFERER", "https://github.com/trading-system"
+        )
         default_headers["X-Title"] = os.getenv("OPENROUTER_TITLE", "AI Trading System")
 
     return api_key, base_url, default_headers
@@ -188,7 +190,9 @@ def get_observability_status() -> dict:
         },
         "langsmith": {
             "enabled": LANGSMITH_ENABLED,
-            "project": os.getenv("LANGCHAIN_PROJECT", "trading-rl-training") if LANGSMITH_ENABLED else None,
+            "project": os.getenv("LANGCHAIN_PROJECT", "trading-rl-training")
+            if LANGSMITH_ENABLED
+            else None,
             "dashboard": "https://smith.langchain.com" if LANGSMITH_ENABLED else None,
         },
         "openrouter": {

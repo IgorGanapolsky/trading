@@ -386,7 +386,10 @@ class TradingOrchestrator:
             symbol.strip().upper() for symbol in proxy_symbols.split(",") if symbol.strip()
         ]
         momentum_overrides: dict[str, float] = {}
-        rl_threshold = float(os.getenv("RL_CONFIDENCE_THRESHOLD", "0.6"))
+        # RELAXED THRESHOLD (Dec 4, 2025): Reduced from 0.6 to 0.45 to allow more trades
+        # Previous: 60% confidence → rejected 30-40% of candidates at Gate 2
+        # New: 45% confidence → more balanced, still above random (50%)
+        rl_threshold = float(os.getenv("RL_CONFIDENCE_THRESHOLD", "0.45"))
         session_type = "market_hours"
 
         if not market_day:

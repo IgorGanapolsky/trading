@@ -95,7 +95,7 @@ def main():
         print(f"❌ Secrets validation failed: {len(errors)} critical errors")
         print("   Please check GitHub repository secrets:")
         print("   Settings > Secrets and variables > Actions")
-        exit_code = 0  # fail-soft: don't break scheduled workflows
+        exit_code = 1  # fail-hard: invalid secrets MUST stop execution
 
     if args.gha_output and os.getenv("GITHUB_OUTPUT"):
         with open(os.getenv("GITHUB_OUTPUT"), "a", encoding="utf-8") as fh:

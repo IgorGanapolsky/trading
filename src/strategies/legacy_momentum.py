@@ -45,9 +45,12 @@ class LegacyMomentumCalculator:
         self._provider = get_market_data_provider()
 
         # Runtime tunables (env)
-        self.macd_threshold = float(os.getenv("MOMENTUM_MACD_THRESHOLD", "0.0"))
-        self.rsi_overbought = float(os.getenv("MOMENTUM_RSI_OVERBOUGHT", "70.0"))
-        self.volume_min = float(os.getenv("MOMENTUM_VOLUME_MIN", "0.8"))
+        # RELAXED THRESHOLDS (Dec 4, 2025): Allow more trades through Gate 1
+        # Previous: macd=0.0 (bullish only), rsi=70, volume=0.8 → rejected 70-80% of candidates
+        # New: macd=-0.1 (near-crossover OK), rsi=75, volume=0.6 → more permissive
+        self.macd_threshold = float(os.getenv("MOMENTUM_MACD_THRESHOLD", "-0.1"))
+        self.rsi_overbought = float(os.getenv("MOMENTUM_RSI_OVERBOUGHT", "75.0"))
+        self.volume_min = float(os.getenv("MOMENTUM_VOLUME_MIN", "0.6"))
 
     def evaluate(self, symbol: str) -> MomentumPayload:
         result = self._provider.get_daily_bars(symbol, lookback_days=self.lookback_days)
