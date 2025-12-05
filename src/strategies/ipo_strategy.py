@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import anthropic
+
 from src.utils.langsmith_wrapper import get_traced_openai_client
 
 # Configure logging

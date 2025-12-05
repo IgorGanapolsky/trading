@@ -11,6 +11,7 @@ import logging
 from datetime import datetime
 
 from langchain_core.tools import tool
+
 from src.utils.market_data import get_market_data_provider
 
 logger = logging.getLogger(__name__)
