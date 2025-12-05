@@ -16,6 +16,7 @@ Created: 2025-11-02
 Updated: 2025-12-03
 """
 
+from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from typing import Any
@@ -105,8 +106,16 @@ class TradeMetrics:
 
         total_wins = sum(wins)
         total_losses = sum(losses)
-        profit_factor = (total_wins / total_losses) if total_losses > 0 else float("inf") if total_wins > 0 else 0
-        risk_reward_ratio = (avg_win / avg_loss) if avg_loss > 0 else float("inf") if avg_win > 0 else 0
+        profit_factor = (
+            (total_wins / total_losses)
+            if total_losses > 0
+            else float("inf")
+            if total_wins > 0
+            else 0
+        )
+        risk_reward_ratio = (
+            (avg_win / avg_loss) if avg_loss > 0 else float("inf") if avg_win > 0 else 0
+        )
 
         # Expectancy = (Win% * Avg Win) - (Loss% * Avg Loss)
         win_pct = winning_trades / total_trades if total_trades > 0 else 0
@@ -130,7 +139,9 @@ class TradeMetrics:
             largest_loss=round(largest_loss, 2),
             profit_factor=round(profit_factor, 2) if profit_factor != float("inf") else 999.99,
             expectancy=round(expectancy, 2),
-            risk_reward_ratio=round(risk_reward_ratio, 2) if risk_reward_ratio != float("inf") else 999.99,
+            risk_reward_ratio=round(risk_reward_ratio, 2)
+            if risk_reward_ratio != float("inf")
+            else 999.99,
             max_consecutive_wins=max_wins,
             max_consecutive_losses=max_losses,
             current_streak=current,
@@ -352,27 +363,31 @@ class BacktestResults:
 
         if self.trade_metrics:
             tm = self.trade_metrics
-            report_lines.extend([
-                "TRADE-BASED METRICS (More Accurate)",
-                "-" * 80,
-                f"Trade Win Rate:    {tm.trade_win_rate:.1f}% ({tm.total_winning_trades}W / {tm.total_losing_trades}L)",
-                f"Profit Factor:     {tm.profit_factor:.2f} (Total Wins / Total Losses)",
-                f"Expectancy:        ${tm.expectancy:.2f} per trade",
-                f"Risk/Reward Ratio: {tm.risk_reward_ratio:.2f}",
-                f"Avg Win Amount:    ${tm.avg_win_amount:.2f}",
-                f"Avg Loss Amount:   ${tm.avg_loss_amount:.2f}",
-                f"Largest Win:       ${tm.largest_win:.2f}",
-                f"Largest Loss:      ${tm.largest_loss:.2f}",
-                f"Max Win Streak:    {tm.max_consecutive_wins}",
-                f"Max Loss Streak:   {tm.max_consecutive_losses}",
-                f"Avg Holding Days:  {tm.avg_holding_period_days:.1f}",
-                "",
-            ])
+            report_lines.extend(
+                [
+                    "TRADE-BASED METRICS (More Accurate)",
+                    "-" * 80,
+                    f"Trade Win Rate:    {tm.trade_win_rate:.1f}% ({tm.total_winning_trades}W / {tm.total_losing_trades}L)",
+                    f"Profit Factor:     {tm.profit_factor:.2f} (Total Wins / Total Losses)",
+                    f"Expectancy:        ${tm.expectancy:.2f} per trade",
+                    f"Risk/Reward Ratio: {tm.risk_reward_ratio:.2f}",
+                    f"Avg Win Amount:    ${tm.avg_win_amount:.2f}",
+                    f"Avg Loss Amount:   ${tm.avg_loss_amount:.2f}",
+                    f"Largest Win:       ${tm.largest_win:.2f}",
+                    f"Largest Loss:      ${tm.largest_loss:.2f}",
+                    f"Max Win Streak:    {tm.max_consecutive_wins}",
+                    f"Max Loss Streak:   {tm.max_consecutive_losses}",
+                    f"Avg Holding Days:  {tm.avg_holding_period_days:.1f}",
+                    "",
+                ]
+            )
 
-        report_lines.extend([
-            "PERFORMANCE SUMMARY",
-            "-" * 80,
-        ])
+        report_lines.extend(
+            [
+                "PERFORMANCE SUMMARY",
+                "-" * 80,
+            ]
+        )
 
         # Add performance rating
         rating = self._get_performance_rating()

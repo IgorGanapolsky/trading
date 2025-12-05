@@ -4,6 +4,7 @@ ChromaDB Vector Database Client for Trading RAG System
 Provides persistent vector storage for market news, sentiment, and research.
 """
 
+from __future__ import annotations
 import logging
 from datetime import datetime
 from typing import Any, Optional
