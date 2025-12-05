@@ -18,7 +18,7 @@
         "Execute trade via Alpaca API"
       ],
       "passes": true,
-      "notes": "Validated with 60-day backtest: 62.2% win rate, 2.18 Sharpe ratio"
+      "notes": "Strategy implemented but backtest shows 38-52% daily win rate across regimes. Needs optimization. See data/backtests/latest_summary.json for actual metrics."
     },
     {
       "category": "core_trading",
@@ -80,7 +80,7 @@
         "Generate backtest reports"
       ],
       "passes": true,
-      "notes": "Validated with 60-day backtest showing profitability"
+      "notes": "Engine works. Current strategy backtests show negative Sharpe (-7 to -72) across all regimes. Win rate 38-52%. Strategy needs improvement."
     },
     {
       "category": "data",
