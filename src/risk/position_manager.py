@@ -155,7 +155,7 @@ class PositionManager:
         symbol = position.symbol
         unrealized_plpc = position.unrealized_plpc
 
-        logger.info(f"\n{'='*60}")
+        logger.info(f"\n{'=' * 60}")
         logger.info(f"Evaluating position: {symbol}")
         logger.info(f"  Entry: ${position.entry_price:.2f}")
         logger.info(f"  Current: ${position.current_price:.2f}")
@@ -225,9 +225,7 @@ class PositionManager:
 
         # 5. Check ATR-based stop (if enabled)
         if self.conditions.enable_atr_stop:
-            atr_exit = self._check_atr_stop(
-                symbol, position.entry_price, position.current_price
-            )
+            atr_exit = self._check_atr_stop(symbol, position.entry_price, position.current_price)
             if atr_exit:
                 return atr_exit
 
@@ -304,6 +302,7 @@ class PositionManager:
         """
         try:
             import yfinance as yf
+
             from src.utils.technical_indicators import calculate_atr
 
             ticker = yf.Ticker(symbol)

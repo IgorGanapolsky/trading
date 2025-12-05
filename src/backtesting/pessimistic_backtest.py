@@ -26,15 +26,15 @@ class PessimisticConfig:
     """Configuration for pessimistic backtest mode."""
 
     # Slippage multipliers
-    spread_multiplier: float = 2.0      # 2x normal spread
-    impact_multiplier: float = 2.0      # 2x market impact
-    latency_multiplier: float = 2.0     # 2x latency slippage
+    spread_multiplier: float = 2.0  # 2x normal spread
+    impact_multiplier: float = 2.0  # 2x market impact
+    latency_multiplier: float = 2.0  # 2x latency slippage
 
     # Fee multipliers
-    fee_multiplier: float = 3.0         # 3x normal fees
+    fee_multiplier: float = 3.0  # 3x normal fees
 
     # Execution assumptions
-    fill_rate: float = 0.90             # Only 90% of orders fill at expected price
+    fill_rate: float = 0.90  # Only 90% of orders fill at expected price
     adverse_selection_bps: float = 5.0  # Additional slippage from adverse selection
 
     # Volatility assumptions
@@ -56,14 +56,14 @@ class PessimisticSlippageModel:
 
     # Conservative spreads (2x normal)
     PESSIMISTIC_SPREADS = {
-        "SPY": 2,    # Normally 1 bps, pessimistic 2 bps
+        "SPY": 2,  # Normally 1 bps, pessimistic 2 bps
         "QQQ": 2,
-        "IWM": 4,    # Normally 2 bps, pessimistic 4 bps
+        "IWM": 4,  # Normally 2 bps, pessimistic 4 bps
         "VOO": 4,
-        "LARGE_CAP": 10,   # Normally 5 bps
-        "MID_CAP": 20,     # Normally 10 bps
-        "SMALL_CAP": 40,   # Normally 20 bps
-        "OPTIONS": 200,    # Normally 100 bps
+        "LARGE_CAP": 10,  # Normally 5 bps
+        "MID_CAP": 20,  # Normally 10 bps
+        "SMALL_CAP": 40,  # Normally 20 bps
+        "OPTIONS": 200,  # Normally 100 bps
     }
 
     def __init__(self, config: Optional[PessimisticConfig] = None):
@@ -117,6 +117,7 @@ class PessimisticSlippageModel:
 
             # Square-root impact with pessimistic multiplier
             import numpy as np
+
             impact_bps = (
                 10.0  # Base impact
                 * np.sqrt(participation_rate)
@@ -257,13 +258,11 @@ def run_pessimistic_validation(
 
     # Calculate degradation
     pnl_degradation = (
-        (normal_pnl - pessimistic_pnl) / abs(normal_pnl) * 100
-        if normal_pnl != 0 else 0
+        (normal_pnl - pessimistic_pnl) / abs(normal_pnl) * 100 if normal_pnl != 0 else 0
     )
 
     sharpe_degradation = (
-        (normal_sharpe - pessimistic_sharpe) / abs(normal_sharpe) * 100
-        if normal_sharpe != 0 else 0
+        (normal_sharpe - pessimistic_sharpe) / abs(normal_sharpe) * 100 if normal_sharpe != 0 else 0
     )
 
     win_rate_degradation = normal_win_rate - pessimistic_win_rate
@@ -311,7 +310,6 @@ def run_pessimistic_validation(
 
 if __name__ == "__main__":
     """Demo the pessimistic backtest mode."""
-    import json
     logging.basicConfig(level=logging.INFO)
 
     print("=" * 80)
@@ -320,7 +318,7 @@ if __name__ == "__main__":
 
     # Create pessimistic config
     config = PessimisticConfig()
-    print(f"\nPessimistic Configuration:")
+    print("\nPessimistic Configuration:")
     print(f"  Spread Multiplier: {config.spread_multiplier}x")
     print(f"  Fee Multiplier: {config.fee_multiplier}x")
     print(f"  Fill Rate: {config.fill_rate:.0%}")
@@ -367,7 +365,7 @@ if __name__ == "__main__":
     validation = run_pessimistic_validation(normal, pessimistic)
     print(f"\nValidation Result: {'PASS' if validation['passes'] else 'FAIL'}")
     print(f"Recommendation: {validation['recommendation']}")
-    print(f"\nDegradation:")
+    print("\nDegradation:")
     print(f"  P/L: -{validation['degradation']['pnl_pct']:.1f}%")
     print(f"  Sharpe: -{validation['degradation']['sharpe_pct']:.1f}%")
     print(f"  Win Rate: -{validation['degradation']['win_rate_points']:.1f} points")
