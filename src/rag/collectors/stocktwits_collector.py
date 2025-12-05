@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Any
 
 import requests
+
 from src.rag.collectors.base_collector import BaseNewsCollector
 
 logger = logging.getLogger(__name__)

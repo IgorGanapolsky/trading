@@ -18,6 +18,7 @@ from typing import Any
 import pandas as pd
 from mcp.servers import alpaca as alpaca_tools
 from mcp.servers import openrouter as openrouter_tools
+
 from src.agent_framework.context_engine import (
     ContextType,
     get_context_engine,
@@ -95,7 +96,7 @@ def _compute_market_features(price_history: pd.DataFrame) -> dict[str, Any]:
     }
 
 
-@dataclass(slots=True)
+@dataclass
 class MCPTradingResult:
     symbol: str
     sentiment: dict[str, Any] = field(default_factory=dict)

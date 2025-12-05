@@ -32,7 +32,7 @@ class MCPError(RuntimeError):
     """Raised when an MCP tool invocation fails."""
 
 
-@dataclass(slots=True)
+@dataclass
 class MCPClient:
     """
     Simple shell-based MCP client.

@@ -5,6 +5,7 @@ Collects unusual options activity data to identify institutional trading signals
 Sources: Barchart, MarketChameleon (free tiers), Yahoo Finance options chain analysis.
 """
 
+from __future__ import annotations
 import logging
 from datetime import datetime
 from typing import Any
@@ -117,7 +118,7 @@ class OptionsFlowCollector(BaseNewsCollector):
                             if oi_num > 0 and vol_num > (oi_num * 2):
                                 entry = self.normalize_article(
                                     title=f"Unusual Options: {ticker} Strike ${strike}",
-                                    content=f"Volume {volume} vs OI {open_interest} ({vol_num/oi_num:.1f}x)",
+                                    content=f"Volume {volume} vs OI {open_interest} ({vol_num / oi_num:.1f}x)",
                                     url=url,
                                     published_date=datetime.now().isoformat(),
                                     ticker=ticker,
@@ -126,7 +127,9 @@ class OptionsFlowCollector(BaseNewsCollector):
                                 entry["strike"] = strike
                                 entry["volume"] = vol_num
                                 entry["open_interest"] = oi_num
-                                entry["vol_oi_ratio"] = round(vol_num / oi_num, 2) if oi_num > 0 else 0
+                                entry["vol_oi_ratio"] = (
+                                    round(vol_num / oi_num, 2) if oi_num > 0 else 0
+                                )
                                 entry["signal_type"] = "unusual_volume"
                                 results.append(entry)
                         except (ValueError, IndexError):
