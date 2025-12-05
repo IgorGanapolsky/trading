@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 import numpy as np
@@ -336,9 +336,7 @@ class CrossStrategyCorrelationMonitor:
 
         # Add proposed position
         proposed_sector = SECTOR_MAP.get(proposed_symbol, "other")
-        sector_exposure[proposed_sector] = (
-            sector_exposure.get(proposed_sector, 0) + proposed_amount
-        )
+        sector_exposure[proposed_sector] = sector_exposure.get(proposed_sector, 0) + proposed_amount
 
         # Convert to percentages
         sector_pct = {k: v / total_value for k, v in sector_exposure.items()}
@@ -359,7 +357,7 @@ class CrossStrategyCorrelationMonitor:
         """Calculate exponentially weighted correlation matrix."""
         # Apply exponential weights (recent data more important)
         weights = np.array(
-            [self.correlation_decay_factor ** i for i in range(len(returns) - 1, -1, -1)]
+            [self.correlation_decay_factor**i for i in range(len(returns) - 1, -1, -1)]
         )
         weights = weights / weights.sum()
 
@@ -379,9 +377,7 @@ class CrossStrategyCorrelationMonitor:
 
         return pd.DataFrame(corr_matrix, index=returns.columns, columns=returns.columns)
 
-    def _calculate_avg_correlation(
-        self, corr_matrix: pd.DataFrame, symbols: list[str]
-    ) -> float:
+    def _calculate_avg_correlation(self, corr_matrix: pd.DataFrame, symbols: list[str]) -> float:
         """Calculate average pairwise correlation for given symbols."""
         if len(symbols) < 2:
             return 0.0
@@ -510,7 +506,9 @@ class CrossStrategyCorrelationMonitor:
             "largest_position_pct": round(largest_pct * 100, 1),
             "avg_correlation": round(est_correlation, 2),
             "status": status,
-            "sector_breakdown": {k: round(v / total_value * 100, 1) for k, v in sector_values.items()},
+            "sector_breakdown": {
+                k: round(v / total_value * 100, 1) for k, v in sector_values.items()
+            },
         }
 
     def generate_alert(
@@ -531,7 +529,9 @@ class CrossStrategyCorrelationMonitor:
 
         if heat["heat_score"] > 70:
             level = "CRITICAL"
-            message = f"Portfolio heat CRITICAL ({heat['heat_score']:.0f}/100) - reduce concentration"
+            message = (
+                f"Portfolio heat CRITICAL ({heat['heat_score']:.0f}/100) - reduce concentration"
+            )
         elif heat["heat_score"] > 55:
             level = "WARNING"
             message = f"Portfolio heat elevated ({heat['heat_score']:.0f}/100) - monitor closely"

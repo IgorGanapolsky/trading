@@ -247,10 +247,13 @@ class RegimeAwareSizer:
         regime_info = self._get_current_regime()
 
         if regime_info.get("risk_bias") == "pause":
-            return True, f"Regime pause: {regime_info.get('label')} with VIX={regime_info.get('vix_level', 'N/A')}"
+            return (
+                True,
+                f"Regime pause: {regime_info.get('label')} with VIX={regime_info.get('vix_level', 'N/A')}",
+            )
 
         if regime_info.get("label") == "spike":
-            return True, f"Crisis regime detected (VIX spike)"
+            return True, "Crisis regime detected (VIX spike)"
 
         return False, "Trading allowed"
 

@@ -10,7 +10,6 @@ Usage:
     python scripts/run_walk_forward_validation.py
 """
 
-import json
 import logging
 import os
 import sys
@@ -18,7 +17,6 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -71,9 +69,9 @@ def generate_comprehensive_report(results: BacktestMatrixResults) -> str:
     report.append(f"   Strategy: {results.strategy_name}")
     report.append(f"   Evaluation Date: {results.evaluation_date[:10]}")
     report.append(f"   Total Windows: {results.total_windows}")
-    report.append(f"   Train Window: 252 trading days (~1 year)")
-    report.append(f"   Test Window: 63 trading days (~1 quarter)")
-    report.append(f"   Step Size: 21 trading days (~1 month)")
+    report.append("   Train Window: 252 trading days (~1 year)")
+    report.append("   Test Window: 63 trading days (~1 quarter)")
+    report.append("   Step Size: 21 trading days (~1 month)")
 
     # Key Metrics
     report.append("\n📈 OUT-OF-SAMPLE PERFORMANCE (THE TRUTH)")
@@ -172,15 +170,11 @@ def generate_comprehensive_report(results: BacktestMatrixResults) -> str:
 
     if results.passed_validation:
         report.append("✅ YES - Strategy shows consistent out-of-sample edge")
-        report.append(
-            f"   • {results.sharpe_consistency:.0%} of test periods had positive Sharpe"
-        )
+        report.append(f"   • {results.sharpe_consistency:.0%} of test periods had positive Sharpe")
         report.append(
             f"   • Mean OOS Sharpe {results.mean_oos_sharpe:.2f} exceeds minimum threshold"
         )
-        report.append(
-            f"   • Overfitting score {results.overfitting_score:.2f} is acceptable"
-        )
+        report.append(f"   • Overfitting score {results.overfitting_score:.2f} is acceptable")
         report.append("\n   RECOMMENDATION: Deploy with confidence")
     else:
         report.append("❌ NO - Strategy lacks robust out-of-sample edge")
@@ -193,9 +187,7 @@ def generate_comprehensive_report(results: BacktestMatrixResults) -> str:
         if results.mean_oos_max_drawdown > 15:
             failures.append(f"Mean drawdown {results.mean_oos_max_drawdown:.1f}% > 15%")
         if results.sharpe_consistency < 0.6:
-            failures.append(
-                f"Only {results.sharpe_consistency:.0%} of windows were profitable"
-            )
+            failures.append(f"Only {results.sharpe_consistency:.0%} of windows were profitable")
 
         for failure in failures:
             report.append(f"   • {failure}")
@@ -236,9 +228,9 @@ def main():
 
     logger.info("Starting walk-forward validation...")
     logger.info(f"Period: {START_DATE} to {END_DATE}")
-    logger.info(f"Train window: 252 days (~1 year)")
-    logger.info(f"Test window: 63 days (~1 quarter)")
-    logger.info(f"Expected folds: ~10+")
+    logger.info("Train window: 252 days (~1 year)")
+    logger.info("Test window: 63 days (~1 quarter)")
+    logger.info("Expected folds: ~10+")
 
     try:
         # Run validation
@@ -283,7 +275,7 @@ def main():
         os.symlink(json_path.name, latest_json)
         os.symlink(report_path.name, latest_report)
 
-        print(f"\n✅ Results saved to:")
+        print("\n✅ Results saved to:")
         print(f"   • {json_path}")
         print(f"   • {report_path}")
         print(f"   • {latest_json} (latest)")
