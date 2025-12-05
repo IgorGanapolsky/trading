@@ -425,7 +425,9 @@ class RegimeDetector:
             # Generate warning if transition likely
             warning = None
             if transition_prob > 0.5:
-                warning = f"High probability ({transition_prob:.0%}) of transition to {predicted_regime}"
+                warning = (
+                    f"High probability ({transition_prob:.0%}) of transition to {predicted_regime}"
+                )
             elif transition_detected and bars_since_transition <= 2:
                 warning = f"Just entered {current_label} regime ({bars_since_transition} bars ago)"
 
@@ -487,11 +489,7 @@ class RegimeDetector:
         skew_score = 1.0 - (skew_percentile / 100.0)
 
         # Weighted composite
-        composite = (
-            0.4 * regime_score
-            + 0.35 * vix_score
-            + 0.25 * skew_score
-        )
+        composite = 0.4 * regime_score + 0.35 * vix_score + 0.25 * skew_score
 
         # Stability: high confidence + consistent signals = stable
         signal_variance = np.var([regime_score, vix_score, skew_score])

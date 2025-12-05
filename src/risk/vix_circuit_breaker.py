@@ -21,8 +21,8 @@ Created: 2025-12-04
 
 import logging
 import os
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
 
@@ -272,7 +272,7 @@ class VIXCircuitBreaker:
         for pos in positions:
             symbol = pos.get("symbol", "")
             qty = float(pos.get("qty", 0))
-            market_value = float(pos.get("market_value", 0))
+            float(pos.get("market_value", 0))
 
             if qty <= 0:
                 continue
@@ -369,7 +369,7 @@ class VIXCircuitBreaker:
             AlertLevel.HIGH: f"VIX {vix_level:.1f} - High volatility, new positions at 50%",
             AlertLevel.VERY_HIGH: f"VIX {vix_level:.1f} - Very high, reducing positions 25%",
             AlertLevel.EXTREME: f"VIX {vix_level:.1f} - EXTREME, reducing positions 50%",
-            AlertLevel.SPIKE: f"VIX SPIKE +{intraday_change*100:.0f}%! Emergency de-risk",
+            AlertLevel.SPIKE: f"VIX SPIKE +{intraday_change * 100:.0f}%! Emergency de-risk",
         }
         return messages.get(alert_level, f"VIX {vix_level:.1f}")
 
@@ -500,8 +500,8 @@ class VIXCircuitBreaker:
                 symbols_affected.append(action.symbol)
             else:
                 try:
-                    from alpaca.trading.requests import MarketOrderRequest
                     from alpaca.trading.enums import OrderSide, TimeInForce
+                    from alpaca.trading.requests import MarketOrderRequest
 
                     client = self._get_alpaca_client()
                     if client:

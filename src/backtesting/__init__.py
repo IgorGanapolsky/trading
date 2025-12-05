@@ -15,6 +15,11 @@ Created: 2025-11-02
 
 from src.backtesting.backtest_engine import BacktestEngine
 from src.backtesting.backtest_results import BacktestResults
+from src.backtesting.monte_carlo import (
+    MonteCarloResult,
+    MonteCarloSimulator,
+    run_monte_carlo_validation,
+)
 from src.backtesting.performance_report import PerformanceReport, PerformanceReporter
 from src.backtesting.target_integration import (
     BacktestTargetValidator,
@@ -34,11 +39,6 @@ from src.backtesting.walk_forward_matrix import (
     LiveVsBacktestTracker,
     WalkForwardMatrixValidator,
     run_walk_forward_matrix,
-)
-from src.backtesting.monte_carlo import (
-    MonteCarloResult,
-    MonteCarloSimulator,
-    run_monte_carlo_validation,
 )
 
 __all__ = [

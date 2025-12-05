@@ -49,9 +49,9 @@ with contextlib.suppress(ImportError):
 
 with contextlib.suppress(ImportError):
     from src.risk.vix_circuit_breaker import (
+        AlertLevel,
         VIXCircuitBreaker,
         VIXStatus,
-        AlertLevel,
         check_vix_before_trade,
         get_vix_circuit_breaker,
     )
