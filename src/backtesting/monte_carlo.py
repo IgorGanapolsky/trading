@@ -1,23 +1,24 @@
 """
-Monte Carlo Simulation for Backtest Validation
+Monte Carlo Simulation Module for Strategy Robustness Testing.
 
-This module provides Monte Carlo simulations for stress-testing trading strategies
-by testing robustness to different return sequences. Key capabilities:
+This module provides Monte Carlo simulation capabilities to test whether trading
+strategy results are due to skill or luck. It generates thousands of simulated
+equity curves by resampling historical trade returns to estimate the probability
+distribution of future outcomes.
 
-1. Return shuffling: Test if profits are path-dependent
-2. Confidence intervals: 95% bounds on key metrics (Sharpe, return, drawdown)
-3. Probability analysis: Estimate ruin probability and tail risk
-4. Bootstrap resampling: Statistical significance testing
-
-Critical for production-grade backtesting - addresses a key gap identified in
-the system audit (Dec 4, 2025).
+Features:
+    - Bootstrap resampling of historical trade returns
+    - Confidence interval estimation (e.g., 95% CI)
+    - Profit probability calculation
+    - Risk of ruin estimation
+    - Distribution analysis of potential outcomes
 
 Author: Trading System
 Created: 2025-12-04
 """
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Optional
 
 import numpy as np
@@ -26,433 +27,438 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class MonteCarloResult:
+class MonteCarloResults:
     """Results from Monte Carlo simulation."""
 
-    # Core metrics with confidence intervals
-    sharpe_mean: float
-    sharpe_std: float
-    sharpe_95_lower: float
-    sharpe_95_upper: float
-
-    total_return_mean: float
-    total_return_std: float
-    return_95_lower: float
-    return_95_upper: float
-
-    max_drawdown_mean: float
-    max_drawdown_std: float
-    drawdown_95_lower: float
-    drawdown_95_upper: float  # 95th percentile of worst drawdowns
-
-    # Risk metrics
-    probability_of_loss: float  # % of simulations with negative return
-    probability_of_ruin: float  # % hitting >20% drawdown
-    value_at_risk_95: float  # 5th percentile of final returns
-    expected_shortfall_95: float  # Average of worst 5% outcomes
-
-    # Simulation stats
+    # Simulation parameters
     num_simulations: int
-    original_sharpe: float
-    original_return: float
-    original_drawdown: float
+    num_trades_per_sim: int
+    initial_capital: float
 
-    # Path dependency score (0 = no dependency, 1 = fully dependent)
-    path_dependency: float
+    # Final equity statistics
+    mean_final_equity: float
+    median_final_equity: float
+    std_final_equity: float
+    min_final_equity: float
+    max_final_equity: float
 
-    # Distribution of outcomes
-    sharpe_distribution: list[float] = field(default_factory=list)
-    return_distribution: list[float] = field(default_factory=list)
-    drawdown_distribution: list[float] = field(default_factory=list)
+    # Percentiles
+    percentile_5: float
+    percentile_25: float
+    percentile_75: float
+    percentile_95: float
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for serialization."""
-        return {
-            "sharpe": {
-                "mean": round(self.sharpe_mean, 3),
-                "std": round(self.sharpe_std, 3),
-                "95_ci": [round(self.sharpe_95_lower, 3), round(self.sharpe_95_upper, 3)],
-                "original": round(self.original_sharpe, 3),
-            },
-            "total_return_pct": {
-                "mean": round(self.total_return_mean * 100, 2),
-                "std": round(self.total_return_std * 100, 2),
-                "95_ci": [
-                    round(self.return_95_lower * 100, 2),
-                    round(self.return_95_upper * 100, 2),
-                ],
-                "original": round(self.original_return * 100, 2),
-            },
-            "max_drawdown_pct": {
-                "mean": round(self.max_drawdown_mean * 100, 2),
-                "std": round(self.max_drawdown_std * 100, 2),
-                "95_worst": round(self.drawdown_95_upper * 100, 2),
-                "original": round(self.original_drawdown * 100, 2),
-            },
-            "risk_metrics": {
-                "probability_of_loss_pct": round(self.probability_of_loss * 100, 1),
-                "probability_of_ruin_pct": round(self.probability_of_ruin * 100, 1),
-                "var_95_pct": round(self.value_at_risk_95 * 100, 2),
-                "es_95_pct": round(self.expected_shortfall_95 * 100, 2),
-            },
-            "path_dependency": round(self.path_dependency, 3),
-            "num_simulations": self.num_simulations,
-            "verdict": self._get_verdict(),
-        }
+    # Probability metrics
+    profit_probability: float  # P(final equity > initial capital)
+    double_probability: float  # P(final equity > 2 * initial capital)
+    ruin_probability: float  # P(final equity < ruin_threshold)
 
-    def _get_verdict(self) -> str:
-        """Provide human-readable assessment."""
-        issues = []
+    # Drawdown statistics
+    mean_max_drawdown: float
+    median_max_drawdown: float
+    worst_max_drawdown: float
 
-        # Check if original is outside confidence interval (overfit)
-        if self.original_sharpe > self.sharpe_95_upper:
-            issues.append("Sharpe may be overfit (above 95% CI)")
+    # Return statistics
+    mean_return: float
+    median_return: float
+    sharpe_distribution: list[float]
 
-        # Check ruin probability
-        if self.probability_of_ruin > 0.10:
-            issues.append(f"High ruin risk ({self.probability_of_ruin * 100:.0f}%)")
+    # Raw data for plotting
+    equity_curves: np.ndarray  # Shape: (num_simulations, num_trades + 1)
+    final_equities: np.ndarray
 
-        # Check path dependency
-        if self.path_dependency > 0.5:
-            issues.append("High path dependency - profits may be luck")
 
-        # Check loss probability
-        if self.probability_of_loss > 0.40:
-            issues.append(f"High loss probability ({self.probability_of_loss * 100:.0f}%)")
+@dataclass
+class TradeStatistics:
+    """Statistics extracted from historical trades."""
 
-        if not issues:
-            return "ROBUST: Strategy passes Monte Carlo validation"
-        return f"CAUTION: {'; '.join(issues)}"
+    returns: np.ndarray
+    mean_return: float
+    std_return: float
+    win_rate: float
+    avg_win: float
+    avg_loss: float
+    profit_factor: float
+    num_trades: int
 
 
 class MonteCarloSimulator:
     """
-    Monte Carlo simulator for backtest stress testing.
+    Monte Carlo simulator for strategy robustness testing.
 
-    Uses bootstrap resampling and return shuffling to test
-    strategy robustness to different return sequences.
-
-    Args:
-        num_simulations: Number of Monte Carlo paths (default: 1000)
-        risk_free_rate: Annual risk-free rate for Sharpe (default: 0.04)
-        ruin_threshold: Drawdown threshold for ruin (default: 0.20)
+    Uses bootstrap resampling of historical trade returns to generate
+    thousands of possible equity curve outcomes. This helps answer:
+    - What is the probability of profit?
+    - What is the probability of ruin?
+    - What is the expected range of outcomes?
+    - Are the backtest results due to skill or luck?
     """
 
     def __init__(
         self,
-        num_simulations: int = 1000,
-        risk_free_rate: float = 0.04,
-        ruin_threshold: float = 0.20,
+        num_simulations: int = 10000,
+        confidence_level: float = 0.95,
+        ruin_threshold: float = 0.5,  # 50% loss = ruin
+        random_seed: Optional[int] = None,
     ):
-        self.num_simulations = num_simulations
-        self.risk_free_rate = risk_free_rate
-        self.ruin_threshold = ruin_threshold
-        self._rng = np.random.default_rng(seed=42)  # Reproducibility
-
-    def simulate_from_returns(
-        self,
-        daily_returns: np.ndarray,
-        initial_capital: float = 100000.0,
-        method: str = "shuffle",
-    ) -> MonteCarloResult:
         """
-        Run Monte Carlo simulation from daily returns.
+        Initialize Monte Carlo simulator.
 
         Args:
-            daily_returns: Array of daily percentage returns (e.g., 0.01 = 1%)
-            initial_capital: Starting capital
-            method: Simulation method ('shuffle', 'bootstrap', 'parametric')
-
-        Returns:
-            MonteCarloResult with confidence intervals and risk metrics
+            num_simulations: Number of simulation paths (default: 10,000)
+            confidence_level: Confidence level for intervals (default: 0.95)
+            ruin_threshold: Fraction of capital loss considered ruin (default: 0.5)
+            random_seed: Random seed for reproducibility
         """
-        if len(daily_returns) < 20:
-            raise ValueError("Need at least 20 daily returns for Monte Carlo")
+        self.num_simulations = num_simulations
+        self.confidence_level = confidence_level
+        self.ruin_threshold = ruin_threshold
 
-        daily_returns = np.asarray(daily_returns, dtype=np.float64)
+        if random_seed is not None:
+            np.random.seed(random_seed)
 
-        # Remove any NaN/Inf
-        daily_returns = daily_returns[np.isfinite(daily_returns)]
-
-        # Calculate original metrics
-        original_sharpe = self._calculate_sharpe(daily_returns)
-        original_return = self._calculate_total_return(daily_returns)
-        original_drawdown = self._calculate_max_drawdown(daily_returns)
-
-        # Run simulations
-        sharpe_results = []
-        return_results = []
-        drawdown_results = []
-
-        for _ in range(self.num_simulations):
-            # Generate shuffled/resampled returns
-            if method == "shuffle":
-                sim_returns = self._shuffle_returns(daily_returns)
-            elif method == "bootstrap":
-                sim_returns = self._bootstrap_returns(daily_returns)
-            elif method == "parametric":
-                sim_returns = self._parametric_returns(daily_returns)
-            else:
-                sim_returns = self._shuffle_returns(daily_returns)
-
-            # Calculate metrics for this simulation
-            sharpe_results.append(self._calculate_sharpe(sim_returns))
-            return_results.append(self._calculate_total_return(sim_returns))
-            drawdown_results.append(self._calculate_max_drawdown(sim_returns))
-
-        # Convert to arrays
-        sharpe_arr = np.array(sharpe_results)
-        return_arr = np.array(return_results)
-        drawdown_arr = np.array(drawdown_results)
-
-        # Calculate statistics
-        sharpe_mean = float(np.mean(sharpe_arr))
-        sharpe_std = float(np.std(sharpe_arr))
-        sharpe_95_lower = float(np.percentile(sharpe_arr, 2.5))
-        sharpe_95_upper = float(np.percentile(sharpe_arr, 97.5))
-
-        return_mean = float(np.mean(return_arr))
-        return_std = float(np.std(return_arr))
-        return_95_lower = float(np.percentile(return_arr, 2.5))
-        return_95_upper = float(np.percentile(return_arr, 97.5))
-
-        drawdown_mean = float(np.mean(drawdown_arr))
-        drawdown_std = float(np.std(drawdown_arr))
-        drawdown_95_lower = float(np.percentile(drawdown_arr, 2.5))
-        drawdown_95_upper = float(np.percentile(drawdown_arr, 95))  # 95th = worst
-
-        # Risk metrics
-        prob_loss = float(np.mean(return_arr < 0))
-        prob_ruin = float(np.mean(drawdown_arr > self.ruin_threshold))
-        var_95 = float(np.percentile(return_arr, 5))  # 5th percentile
-        es_95 = float(np.mean(return_arr[return_arr <= var_95])) if prob_loss > 0 else 0
-
-        # Path dependency: how much does shuffling change results?
-        # If Sharpe is same after shuffling, strategy is not path-dependent
-        sharpe_diff = abs(original_sharpe - sharpe_mean)
-        sharpe_spread = sharpe_95_upper - sharpe_95_lower
-        path_dependency = min(1.0, sharpe_diff / max(sharpe_spread, 0.1))
-
-        return MonteCarloResult(
-            sharpe_mean=sharpe_mean,
-            sharpe_std=sharpe_std,
-            sharpe_95_lower=sharpe_95_lower,
-            sharpe_95_upper=sharpe_95_upper,
-            total_return_mean=return_mean,
-            total_return_std=return_std,
-            return_95_lower=return_95_lower,
-            return_95_upper=return_95_upper,
-            max_drawdown_mean=drawdown_mean,
-            max_drawdown_std=drawdown_std,
-            drawdown_95_lower=drawdown_95_lower,
-            drawdown_95_upper=drawdown_95_upper,
-            probability_of_loss=prob_loss,
-            probability_of_ruin=prob_ruin,
-            value_at_risk_95=var_95,
-            expected_shortfall_95=es_95,
-            num_simulations=self.num_simulations,
-            original_sharpe=original_sharpe,
-            original_return=original_return,
-            original_drawdown=original_drawdown,
-            path_dependency=path_dependency,
-            sharpe_distribution=sharpe_arr.tolist()[:100],  # Sample for storage
-            return_distribution=return_arr.tolist()[:100],
-            drawdown_distribution=drawdown_arr.tolist()[:100],
+        logger.info(
+            f"Initialized Monte Carlo simulator: {num_simulations} simulations, "
+            f"{confidence_level:.0%} confidence, {ruin_threshold:.0%} ruin threshold"
         )
 
-    def simulate_from_equity_curve(
+    def extract_trade_statistics(
         self,
-        equity_curve: np.ndarray,
-        initial_capital: Optional[float] = None,
-    ) -> MonteCarloResult:
+        trades: list[dict[str, Any]],
+    ) -> TradeStatistics:
         """
-        Run Monte Carlo from an equity curve (portfolio values over time).
+        Extract statistics from historical trade data.
 
         Args:
-            equity_curve: Array of daily portfolio values
-            initial_capital: Override starting capital (uses first value if None)
+            trades: List of trade dictionaries with 'return_pct' or 'pnl' fields
 
         Returns:
-            MonteCarloResult
+            TradeStatistics object with computed metrics
         """
-        equity_curve = np.asarray(equity_curve, dtype=np.float64)
+        if not trades:
+            raise ValueError("No trades provided for analysis")
 
-        # Calculate daily returns from equity curve
-        daily_returns = np.diff(equity_curve) / equity_curve[:-1]
+        # Extract returns
+        returns = []
+        for trade in trades:
+            if "return_pct" in trade:
+                returns.append(trade["return_pct"])
+            elif "pnl" in trade and "entry_value" in trade:
+                ret = trade["pnl"] / trade["entry_value"] * 100
+                returns.append(ret)
+            elif "exit_price" in trade and "entry_price" in trade:
+                ret = (trade["exit_price"] - trade["entry_price"]) / trade["entry_price"] * 100
+                returns.append(ret)
 
-        capital = initial_capital if initial_capital else equity_curve[0]
-        return self.simulate_from_returns(daily_returns, capital)
+        if not returns:
+            raise ValueError("Could not extract returns from trades")
 
-    def stress_test_scenarios(
+        returns = np.array(returns)
+        wins = returns[returns > 0]
+        losses = returns[returns < 0]
+
+        return TradeStatistics(
+            returns=returns,
+            mean_return=float(np.mean(returns)),
+            std_return=float(np.std(returns)),
+            win_rate=float(len(wins) / len(returns)) if len(returns) > 0 else 0.0,
+            avg_win=float(np.mean(wins)) if len(wins) > 0 else 0.0,
+            avg_loss=float(np.mean(losses)) if len(losses) > 0 else 0.0,
+            profit_factor=float(np.sum(wins) / abs(np.sum(losses)))
+            if len(losses) > 0 and np.sum(losses) != 0
+            else float("inf"),
+            num_trades=len(returns),
+        )
+
+    def run_simulation(
         self,
-        daily_returns: np.ndarray,
-        scenarios: Optional[dict[str, dict[str, float]]] = None,
-    ) -> dict[str, MonteCarloResult]:
+        trade_returns: np.ndarray,
+        initial_capital: float = 100000.0,
+        num_trades: Optional[int] = None,
+        position_size_pct: float = 100.0,
+    ) -> MonteCarloResults:
         """
-        Run Monte Carlo under different stress scenarios.
+        Run Monte Carlo simulation using bootstrap resampling.
 
         Args:
-            daily_returns: Original daily returns
-            scenarios: Dict of scenario configs, e.g.:
-                {"2008_crisis": {"return_shock": -0.30, "vol_multiplier": 2.0}}
+            trade_returns: Array of historical trade return percentages
+            initial_capital: Starting capital
+            num_trades: Number of trades per simulation (default: same as historical)
+            position_size_pct: Position size as percentage of capital
 
         Returns:
-            Dict mapping scenario name to MonteCarloResult
+            MonteCarloResults with comprehensive statistics
         """
-        if scenarios is None:
-            # Default stress scenarios
-            scenarios = {
-                "base_case": {"return_shock": 0.0, "vol_multiplier": 1.0},
-                "mild_stress": {"return_shock": -0.05, "vol_multiplier": 1.5},
-                "moderate_stress": {"return_shock": -0.10, "vol_multiplier": 2.0},
-                "severe_stress": {"return_shock": -0.20, "vol_multiplier": 3.0},
-                "2008_scenario": {"return_shock": -0.35, "vol_multiplier": 4.0},
-                "flash_crash": {"return_shock": -0.10, "vol_multiplier": 5.0},
-            }
+        if len(trade_returns) == 0:
+            raise ValueError("Empty trade returns array")
 
-        results = {}
-        daily_returns = np.asarray(daily_returns, dtype=np.float64)
+        if num_trades is None:
+            num_trades = len(trade_returns)
 
-        for scenario_name, config in scenarios.items():
-            # Apply scenario adjustments
-            shock = config.get("return_shock", 0.0)
-            vol_mult = config.get("vol_multiplier", 1.0)
+        logger.info(f"Running {self.num_simulations} simulations with {num_trades} trades each")
 
-            # Adjust returns: scale volatility and add shock
-            mean_return = np.mean(daily_returns)
-            centered = daily_returns - mean_return
-            stressed_returns = (centered * vol_mult) + mean_return + (shock / len(daily_returns))
+        # Pre-allocate arrays for performance
+        equity_curves = np.zeros((self.num_simulations, num_trades + 1))
+        equity_curves[:, 0] = initial_capital
+        max_drawdowns = np.zeros(self.num_simulations)
+        sharpe_ratios = []
 
-            results[scenario_name] = self.simulate_from_returns(stressed_returns)
-            logger.info(
-                f"Scenario {scenario_name}: Sharpe={results[scenario_name].sharpe_mean:.2f}"
-            )
+        # Convert returns to multipliers (e.g., 5% return = 1.05)
+        position_fraction = position_size_pct / 100.0
+
+        for sim in range(self.num_simulations):
+            # Bootstrap resample trade returns
+            sampled_returns = np.random.choice(trade_returns, size=num_trades, replace=True)
+
+            # Simulate equity curve
+            equity = initial_capital
+            peak = initial_capital
+            max_dd = 0.0
+
+            for i, ret in enumerate(sampled_returns):
+                # Apply return to position (partial capital at risk)
+                trade_return = (ret / 100.0) * position_fraction
+                equity = equity * (1 + trade_return)
+                equity_curves[sim, i + 1] = equity
+
+                # Track drawdown
+                if equity > peak:
+                    peak = equity
+                current_dd = (peak - equity) / peak
+                if current_dd > max_dd:
+                    max_dd = current_dd
+
+            max_drawdowns[sim] = max_dd
+
+            # Calculate Sharpe ratio for this simulation
+            sim_returns = np.diff(equity_curves[sim]) / equity_curves[sim, :-1]
+            if np.std(sim_returns) > 0:
+                sharpe = np.mean(sim_returns) / np.std(sim_returns) * np.sqrt(252)
+                sharpe_ratios.append(float(sharpe))
+            else:
+                sharpe_ratios.append(0.0)
+
+        # Calculate final equities
+        final_equities = equity_curves[:, -1]
+
+        # Calculate probabilities
+        profit_probability = np.mean(final_equities > initial_capital)
+        double_probability = np.mean(final_equities > 2 * initial_capital)
+        ruin_threshold_value = initial_capital * (1 - self.ruin_threshold)
+        ruin_probability = np.mean(final_equities < ruin_threshold_value)
+
+        # Calculate returns
+        total_returns = (final_equities - initial_capital) / initial_capital * 100
+
+        results = MonteCarloResults(
+            num_simulations=self.num_simulations,
+            num_trades_per_sim=num_trades,
+            initial_capital=initial_capital,
+            mean_final_equity=float(np.mean(final_equities)),
+            median_final_equity=float(np.median(final_equities)),
+            std_final_equity=float(np.std(final_equities)),
+            min_final_equity=float(np.min(final_equities)),
+            max_final_equity=float(np.max(final_equities)),
+            percentile_5=float(np.percentile(final_equities, 5)),
+            percentile_25=float(np.percentile(final_equities, 25)),
+            percentile_75=float(np.percentile(final_equities, 75)),
+            percentile_95=float(np.percentile(final_equities, 95)),
+            profit_probability=float(profit_probability),
+            double_probability=float(double_probability),
+            ruin_probability=float(ruin_probability),
+            mean_max_drawdown=float(np.mean(max_drawdowns)),
+            median_max_drawdown=float(np.median(max_drawdowns)),
+            worst_max_drawdown=float(np.max(max_drawdowns)),
+            mean_return=float(np.mean(total_returns)),
+            median_return=float(np.median(total_returns)),
+            sharpe_distribution=sharpe_ratios,
+            equity_curves=equity_curves,
+            final_equities=final_equities,
+        )
+
+        logger.info(
+            f"Simulation complete: "
+            f"Profit prob={profit_probability:.1%}, "
+            f"Mean return={np.mean(total_returns):.1f}%, "
+            f"Ruin prob={ruin_probability:.1%}"
+        )
 
         return results
 
-    def _shuffle_returns(self, returns: np.ndarray) -> np.ndarray:
-        """Shuffle return sequence (destroys autocorrelation)."""
-        shuffled = returns.copy()
-        self._rng.shuffle(shuffled)
-        return shuffled
+    def run_from_trades(
+        self,
+        trades: list[dict[str, Any]],
+        initial_capital: float = 100000.0,
+        future_trades: Optional[int] = None,
+        position_size_pct: float = 100.0,
+    ) -> MonteCarloResults:
+        """
+        Convenience method to run simulation from trade list.
 
-    def _bootstrap_returns(self, returns: np.ndarray) -> np.ndarray:
-        """Bootstrap resample with replacement."""
-        indices = self._rng.integers(0, len(returns), size=len(returns))
-        return returns[indices]
+        Args:
+            trades: List of trade dictionaries
+            initial_capital: Starting capital
+            future_trades: Number of future trades to simulate
+            position_size_pct: Position size percentage
 
-    def _parametric_returns(self, returns: np.ndarray) -> np.ndarray:
-        """Generate returns from fitted distribution."""
-        # Fit normal distribution (could extend to t-distribution for fat tails)
-        mean = np.mean(returns)
-        std = np.std(returns)
-        return self._rng.normal(mean, std, size=len(returns))
+        Returns:
+            MonteCarloResults
+        """
+        stats = self.extract_trade_statistics(trades)
+        return self.run_simulation(
+            trade_returns=stats.returns,
+            initial_capital=initial_capital,
+            num_trades=future_trades or stats.num_trades,
+            position_size_pct=position_size_pct,
+        )
 
-    def _calculate_sharpe(self, returns: np.ndarray) -> float:
-        """Calculate annualized Sharpe ratio."""
-        if len(returns) < 2 or np.std(returns) < 1e-10:
-            return 0.0
+    def generate_report(self, results: MonteCarloResults) -> str:
+        """
+        Generate human-readable Monte Carlo report.
 
-        daily_excess = returns - (self.risk_free_rate / 252)
-        mean_excess = np.mean(daily_excess)
-        std_returns = np.std(returns)
+        Args:
+            results: MonteCarloResults object
 
-        sharpe = (mean_excess / std_returns) * np.sqrt(252)
-        return float(np.clip(sharpe, -10, 10))
+        Returns:
+            Formatted report string
+        """
+        alpha = 1 - self.confidence_level
+        lower_pct = alpha / 2 * 100
+        upper_pct = (1 - alpha / 2) * 100
 
-    def _calculate_total_return(self, returns: np.ndarray) -> float:
-        """Calculate total cumulative return."""
-        cumulative = np.prod(1 + returns) - 1
-        return float(cumulative)
+        report = []
+        report.append("=" * 80)
+        report.append("MONTE CARLO SIMULATION REPORT")
+        report.append("=" * 80)
 
-    def _calculate_max_drawdown(self, returns: np.ndarray) -> float:
-        """Calculate maximum drawdown from returns."""
-        # Build equity curve
-        equity = np.cumprod(1 + returns)
+        report.append("\nSimulation Parameters:")
+        report.append(f"  Simulations: {results.num_simulations:,}")
+        report.append(f"  Trades per simulation: {results.num_trades_per_sim}")
+        report.append(f"  Initial capital: ${results.initial_capital:,.2f}")
+        report.append(f"  Confidence level: {self.confidence_level:.0%}")
+        report.append(f"  Ruin threshold: {self.ruin_threshold:.0%} loss")
 
-        # Calculate running max and drawdown
-        running_max = np.maximum.accumulate(equity)
-        drawdowns = (running_max - equity) / running_max
+        report.append("\nFinal Equity Statistics:")
+        report.append(f"  Mean: ${results.mean_final_equity:,.2f}")
+        report.append(f"  Median: ${results.median_final_equity:,.2f}")
+        report.append(f"  Std Dev: ${results.std_final_equity:,.2f}")
+        report.append(f"  Min: ${results.min_final_equity:,.2f}")
+        report.append(f"  Max: ${results.max_final_equity:,.2f}")
 
-        return float(np.max(drawdowns))
+        report.append(f"\n{self.confidence_level:.0%} Confidence Interval:")
+        report.append(f"  Lower ({lower_pct:.0f}%): ${results.percentile_5:,.2f}")
+        report.append(f"  Upper ({upper_pct:.0f}%): ${results.percentile_95:,.2f}")
+
+        report.append("\nProbability Analysis:")
+        report.append(f"  Probability of Profit: {results.profit_probability:.1%}")
+        report.append(f"  Probability of Doubling: {results.double_probability:.1%}")
+        report.append(f"  Probability of Ruin: {results.ruin_probability:.1%}")
+
+        report.append("\nReturn Statistics:")
+        report.append(f"  Mean Return: {results.mean_return:.1f}%")
+        report.append(f"  Median Return: {results.median_return:.1f}%")
+
+        report.append("\nDrawdown Statistics:")
+        report.append(f"  Mean Max Drawdown: {results.mean_max_drawdown:.1%}")
+        report.append(f"  Median Max Drawdown: {results.median_max_drawdown:.1%}")
+        report.append(f"  Worst Max Drawdown: {results.worst_max_drawdown:.1%}")
+
+        # Risk assessment
+        report.append("\nRisk Assessment:")
+        if results.profit_probability >= 0.8:
+            report.append("  [OK] High probability of profit (>80%)")
+        elif results.profit_probability >= 0.6:
+            report.append("  [WARN] Moderate probability of profit (60-80%)")
+        else:
+            report.append("  [FAIL] Low probability of profit (<60%)")
+
+        if results.ruin_probability <= 0.01:
+            report.append("  [OK] Very low risk of ruin (<1%)")
+        elif results.ruin_probability <= 0.05:
+            report.append("  [WARN] Moderate risk of ruin (1-5%)")
+        else:
+            report.append("  [FAIL] High risk of ruin (>5%)")
+
+        if results.worst_max_drawdown <= 0.20:
+            report.append("  [OK] Acceptable worst-case drawdown (<20%)")
+        elif results.worst_max_drawdown <= 0.30:
+            report.append("  [WARN] Moderate worst-case drawdown (20-30%)")
+        else:
+            report.append("  [FAIL] High worst-case drawdown (>30%)")
+
+        report.append("\n" + "=" * 80)
+
+        return "\n".join(report)
+
+    def is_statistically_significant(
+        self,
+        results: MonteCarloResults,
+        min_profit_probability: float = 0.6,
+        max_ruin_probability: float = 0.05,
+        min_sharpe: float = 0.5,
+    ) -> tuple[bool, list[str]]:
+        """
+        Determine if strategy results are statistically significant.
+
+        Args:
+            results: Monte Carlo simulation results
+            min_profit_probability: Minimum required profit probability
+            max_ruin_probability: Maximum acceptable ruin probability
+            min_sharpe: Minimum acceptable median Sharpe ratio
+
+        Returns:
+            Tuple of (is_valid, list of failure reasons)
+        """
+        failures = []
+
+        if results.profit_probability < min_profit_probability:
+            failures.append(
+                f"Profit probability {results.profit_probability:.1%} < {min_profit_probability:.0%}"
+            )
+
+        if results.ruin_probability > max_ruin_probability:
+            failures.append(
+                f"Ruin probability {results.ruin_probability:.1%} > {max_ruin_probability:.0%}"
+            )
+
+        median_sharpe = np.median(results.sharpe_distribution)
+        if median_sharpe < min_sharpe:
+            failures.append(f"Median Sharpe {median_sharpe:.2f} < {min_sharpe:.1f}")
+
+        return len(failures) == 0, failures
 
 
-def run_monte_carlo_validation(
-    backtest_results: Any,
-    num_simulations: int = 1000,
-) -> MonteCarloResult:
+def run_monte_carlo_analysis(
+    trades: list[dict[str, Any]],
+    initial_capital: float = 100000.0,
+    num_simulations: int = 10000,
+    future_trades: Optional[int] = None,
+) -> MonteCarloResults:
     """
-    Convenience function to run Monte Carlo on BacktestResults.
+    Convenience function to run Monte Carlo analysis.
 
     Args:
-        backtest_results: BacktestResults object with equity_curve
-        num_simulations: Number of simulations
+        trades: List of historical trade dictionaries
+        initial_capital: Starting capital
+        num_simulations: Number of simulation paths
+        future_trades: Number of future trades to simulate
 
     Returns:
-        MonteCarloResult
+        MonteCarloResults object
+
+    Example:
+        >>> trades = [
+        ...     {"return_pct": 2.5},
+        ...     {"return_pct": -1.0},
+        ...     {"return_pct": 3.0},
+        ...     {"return_pct": -0.5},
+        ... ]
+        >>> results = run_monte_carlo_analysis(trades, num_simulations=1000)
+        >>> print(f"Profit probability: {results.profit_probability:.1%}")
     """
     simulator = MonteCarloSimulator(num_simulations=num_simulations)
-
-    # Extract equity curve or daily returns
-    if hasattr(backtest_results, "equity_curve"):
-        equity = np.array(backtest_results.equity_curve)
-        return simulator.simulate_from_equity_curve(equity)
-    elif hasattr(backtest_results, "daily_returns"):
-        returns = np.array(backtest_results.daily_returns)
-        return simulator.simulate_from_returns(returns)
-    else:
-        raise ValueError("backtest_results must have equity_curve or daily_returns")
-
-
-if __name__ == "__main__":
-    # Demo with synthetic data
-    logging.basicConfig(level=logging.INFO)
-
-    # Generate synthetic daily returns (60 days, ~15% annual return)
-    np.random.seed(42)
-    n_days = 60
-    daily_return = 0.15 / 252  # ~15% annual
-    daily_vol = 0.15 / np.sqrt(252)  # ~15% annual vol
-    synthetic_returns = np.random.normal(daily_return, daily_vol, n_days)
-
-    # Run Monte Carlo
-    simulator = MonteCarloSimulator(num_simulations=1000)
-    result = simulator.simulate_from_returns(synthetic_returns)
-
-    print("\n=== Monte Carlo Simulation Results ===")
-    print(f"Simulations: {result.num_simulations}")
-    print("\nSharpe Ratio:")
-    print(f"  Original: {result.original_sharpe:.3f}")
-    print(f"  Mean (MC): {result.sharpe_mean:.3f} +/- {result.sharpe_std:.3f}")
-    print(f"  95% CI: [{result.sharpe_95_lower:.3f}, {result.sharpe_95_upper:.3f}]")
-
-    print("\nTotal Return:")
-    print(f"  Original: {result.original_return * 100:.2f}%")
-    print(
-        f"  Mean (MC): {result.total_return_mean * 100:.2f}% +/- {result.total_return_std * 100:.2f}%"
+    return simulator.run_from_trades(
+        trades=trades,
+        initial_capital=initial_capital,
+        future_trades=future_trades,
     )
-    print(f"  95% CI: [{result.return_95_lower * 100:.2f}%, {result.return_95_upper * 100:.2f}%]")
-
-    print("\nMax Drawdown:")
-    print(f"  Original: {result.original_drawdown * 100:.2f}%")
-    print(f"  Mean (MC): {result.max_drawdown_mean * 100:.2f}%")
-    print(f"  95th Percentile (Worst): {result.drawdown_95_upper * 100:.2f}%")
-
-    print("\nRisk Metrics:")
-    print(f"  Probability of Loss: {result.probability_of_loss * 100:.1f}%")
-    print(f"  Probability of Ruin (>20% DD): {result.probability_of_ruin * 100:.1f}%")
-    print(f"  VaR 95%: {result.value_at_risk_95 * 100:.2f}%")
-    print(f"  Expected Shortfall 95%: {result.expected_shortfall_95 * 100:.2f}%")
-
-    print(f"\nPath Dependency: {result.path_dependency:.3f}")
-    print(f"\nVerdict: {result._get_verdict()}")
-
-    # Run stress scenarios
-    print("\n\n=== Stress Test Scenarios ===")
-    stress_results = simulator.stress_test_scenarios(synthetic_returns)
-    for scenario, res in stress_results.items():
-        print(f"\n{scenario}:")
-        print(
-            f"  Sharpe: {res.sharpe_mean:.2f}, Return: {res.total_return_mean * 100:.1f}%, Max DD: {res.max_drawdown_mean * 100:.1f}%"
-        )
-        print(f"  Ruin Prob: {res.probability_of_ruin * 100:.0f}%")

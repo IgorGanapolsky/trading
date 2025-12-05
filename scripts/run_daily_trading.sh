@@ -2,5 +2,19 @@
 # Daily Trading Execution Wrapper
 # Ensures proper directory context for cron execution
 
-cd /Users/igorganapolsky/workspace/git/apps/trading
-/Users/igorganapolsky/workspace/git/apps/trading/venv/bin/python3 src/main.py --mode paper --run-once --strategy core
+# Get script directory and navigate to project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+cd "$PROJECT_ROOT"
+
+# Use venv python if available, otherwise system python
+if [ -f "$PROJECT_ROOT/venv/bin/python3" ]; then
+    PYTHON="$PROJECT_ROOT/venv/bin/python3"
+elif [ -f "$PROJECT_ROOT/.venv/bin/python3" ]; then
+    PYTHON="$PROJECT_ROOT/.venv/bin/python3"
+else
+    PYTHON="python3"
+fi
+
+$PYTHON src/main.py --mode paper --run-once --strategy core

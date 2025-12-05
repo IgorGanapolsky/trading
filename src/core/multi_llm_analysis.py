@@ -163,10 +163,8 @@ class MultiLLMAnalyzer:
         self.rate_limit_delay = rate_limit_delay
         self.use_async = use_async
 
-        # Initialize OpenAI client with OpenRouter base URL (wrapped with LangSmith if enabled)
-        base_url = "https://openrouter.ai/api/v1"
-
-        # Use LangSmith wrapper if available
+        # Initialize OpenAI client with OpenRouter (with Helicone + LangSmith observability if enabled)
+        # Use observability wrapper if available (handles Helicone gateway + LangSmith tracing)
         try:
             from src.utils.langsmith_wrapper import (
                 get_traced_async_openai_client,
@@ -174,17 +172,34 @@ class MultiLLMAnalyzer:
             )
 
             if use_async:
-                self.client = get_traced_async_openai_client(
-                    api_key=self.api_key, base_url=base_url
+                # Wrapper auto-routes through Helicone if HELICONE_API_KEY is set
+                self.client = get_traced_async_openai_client(api_key=self.api_key)
+            else:
+                self.sync_client = get_traced_openai_client(api_key=self.api_key)
+        except ImportError:
+            # Fallback to regular client with Helicone support if wrapper not available
+            helicone_key = os.getenv("HELICONE_API_KEY")
+            if helicone_key:
+                base_url = "https://openrouter.helicone.ai/api/v1"
+                default_headers = {"Helicone-Auth": f"Bearer {helicone_key}"}
+            else:
+                base_url = "https://openrouter.ai/api/v1"
+                default_headers = None
+
+            if use_async:
+                self.client = AsyncOpenAI(
+                    api_key=self.api_key,
+                    base_url=base_url,
+                    timeout=timeout,
+                    default_headers=default_headers,
                 )
             else:
-                self.sync_client = get_traced_openai_client(api_key=self.api_key, base_url=base_url)
-        except ImportError:
-            # Fallback to regular client if wrapper not available
-            if use_async:
-                self.client = AsyncOpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
-            else:
-                self.sync_client = OpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
+                self.sync_client = OpenAI(
+                    api_key=self.api_key,
+                    base_url=base_url,
+                    timeout=timeout,
+                    default_headers=default_headers,
+                )
 
         if deepseek_enabled:
             logger.info(
@@ -1102,10 +1117,8 @@ class LLMCouncilAnalyzer:
         self.rate_limit_delay = rate_limit_delay
         self.use_async = use_async
 
-        # Initialize OpenAI client with OpenRouter base URL (wrapped with LangSmith if enabled)
-        base_url = "https://openrouter.ai/api/v1"
-
-        # Use LangSmith wrapper if available
+        # Initialize OpenAI client with OpenRouter (with Helicone + LangSmith observability if enabled)
+        # Use observability wrapper if available (handles Helicone gateway + LangSmith tracing)
         try:
             from src.utils.langsmith_wrapper import (
                 get_traced_async_openai_client,
@@ -1113,17 +1126,34 @@ class LLMCouncilAnalyzer:
             )
 
             if use_async:
-                self.client = get_traced_async_openai_client(
-                    api_key=self.api_key, base_url=base_url
+                # Wrapper auto-routes through Helicone if HELICONE_API_KEY is set
+                self.client = get_traced_async_openai_client(api_key=self.api_key)
+            else:
+                self.sync_client = get_traced_openai_client(api_key=self.api_key)
+        except ImportError:
+            # Fallback to regular client with Helicone support if wrapper not available
+            helicone_key = os.getenv("HELICONE_API_KEY")
+            if helicone_key:
+                base_url = "https://openrouter.helicone.ai/api/v1"
+                default_headers = {"Helicone-Auth": f"Bearer {helicone_key}"}
+            else:
+                base_url = "https://openrouter.ai/api/v1"
+                default_headers = None
+
+            if use_async:
+                self.client = AsyncOpenAI(
+                    api_key=self.api_key,
+                    base_url=base_url,
+                    timeout=timeout,
+                    default_headers=default_headers,
                 )
             else:
-                self.sync_client = get_traced_openai_client(api_key=self.api_key, base_url=base_url)
-        except ImportError:
-            # Fallback to regular client if wrapper not available
-            if use_async:
-                self.client = AsyncOpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
-            else:
-                self.sync_client = OpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
+                self.sync_client = OpenAI(
+                    api_key=self.api_key,
+                    base_url=base_url,
+                    timeout=timeout,
+                    default_headers=default_headers,
+                )
 
         if deepseek_enabled:
             logger.info(

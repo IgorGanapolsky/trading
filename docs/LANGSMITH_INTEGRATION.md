@@ -1,8 +1,50 @@
-# LangSmith Integration Guide
+# LLM Observability Integration Guide
 
 ## ✅ Integration Status: COMPLETE
 
-All LangSmith integrations are complete and verified. Your `.env` file has `LANGCHAIN_API_KEY` configured.
+Full observability stack is integrated:
+- **Helicone**: Server-side observability via OpenRouter gateway (cost tracking, latency, tokens)
+- **LangSmith**: Client-side tracing (detailed spans, debugging)
+
+Your `.env` file should have both `LANGCHAIN_API_KEY` and `HELICONE_API_KEY` configured.
+
+---
+
+## 🔥 Helicone Integration (NEW - Recommended)
+
+### What is Helicone?
+Helicone provides **server-side observability** for OpenRouter requests with zero latency overhead. All requests route through Helicone's gateway, which logs and analyzes them asynchronously.
+
+### Setup Helicone (5 minutes)
+
+1. **Sign up** at https://helicone.ai (free tier available)
+2. **Get API key** from Settings > API Keys
+3. **Add to `.env`**:
+   ```bash
+   HELICONE_API_KEY=sk-helicone-xxx
+   ```
+4. **Done!** All OpenRouter requests now automatically route through Helicone
+
+### What Helicone Tracks
+- **Cost per request**: Real-time spending by model
+- **Latency metrics**: P50, P95, P99 response times
+- **Token usage**: Input/output tokens per request
+- **Request/response logs**: Full debugging capability
+- **Model analytics**: Usage patterns across Gemini, Claude, GPT-4o
+
+### Dashboard
+View all metrics at: https://helicone.ai/dashboard
+
+### Why Both Helicone + LangSmith?
+| Feature | Helicone | LangSmith |
+|---------|----------|-----------|
+| Cost tracking | ✅ Native | ❌ Manual |
+| Zero latency | ✅ Server-side | ❌ Client-side |
+| Detailed traces | Basic | ✅ Full spans |
+| Debugging | Good | ✅ Excellent |
+| Evaluations | Basic | ✅ Full suite |
+
+**Recommendation**: Use both for complete observability.
 
 ---
 
@@ -10,11 +52,12 @@ All LangSmith integrations are complete and verified. Your `.env` file has `LANG
 
 | File | Status | What Changed |
 |------|--------|--------------|
-| `src/utils/langsmith_wrapper.py` | ✅ Created | Central wrapper for OpenAI clients with LangSmith tracing |
-| `src/core/multi_llm_analysis.py` | ✅ Updated | MultiLLMAnalyzer uses LangSmith wrapper (sync & async) |
+| `src/utils/langsmith_wrapper.py` | ✅ Updated | Central wrapper with Helicone gateway + LangSmith tracing |
+| `src/core/multi_llm_analysis.py` | ✅ Updated | MultiLLMAnalyzer uses Helicone gateway when enabled |
 | `src/core/multi_llm_analysis_optimized.py` | ✅ Inherits | Inherits from MultiLLMAnalyzer (automatic) |
-| `src/utils/news_sentiment.py` | ✅ Updated | Grok/X.ai client uses LangSmith wrapper |
-| `src/strategies/ipo_strategy.py` | ✅ Updated | OpenAI client uses LangSmith wrapper |
+| `src/utils/news_sentiment.py` | ✅ Updated | Grok/X.ai client uses observability wrapper |
+| `src/strategies/ipo_strategy.py` | ✅ Updated | OpenAI client uses observability wrapper |
+| `.env.example` | ✅ Updated | Added HELICONE_API_KEY configuration |
 | `scripts/test_langsmith.py` | ✅ Created | Verification script |
 
 ---
@@ -24,15 +67,26 @@ All LangSmith integrations are complete and verified. Your `.env` file has `LANG
 ### Environment Variables (`.env`)
 
 ```bash
-# Required
+# Helicone (recommended - server-side observability)
+HELICONE_API_KEY=sk-helicone-xxx  # Get from https://helicone.ai
+
+# LangSmith (optional - client-side tracing)
 LANGCHAIN_API_KEY=your_langsmith_api_key_here
 
-# Optional
+# Optional LangSmith settings
 LANGCHAIN_PROJECT=trading-rl-training  # Default project name
 LANGCHAIN_TRACING_V2=true              # Auto-set by wrapper
 ```
 
-**Status**: ✅ `LANGCHAIN_API_KEY` is configured in `.env`
+**Status**: ✅ Both `HELICONE_API_KEY` and `LANGCHAIN_API_KEY` should be configured in `.env`
+
+### Check Current Status
+
+```python
+from src.utils.langsmith_wrapper import get_observability_status
+print(get_observability_status())
+# Returns: {'helicone': {'enabled': True, ...}, 'langsmith': {'enabled': True, ...}}
+```
 
 ---
 

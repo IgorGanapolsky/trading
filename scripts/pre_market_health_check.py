@@ -404,12 +404,12 @@ def main():
         print("   This usually indicates an API is hanging")
         print("   Check Anthropic or Finnhub API connectivity\n")
         write_output(False)
-        return 0
+        return 1
     except Exception as e:
         signal.alarm(0)  # Cancel timeout
         print(f"\n❌ UNEXPECTED ERROR: {e}\n")
         write_output(False)
-        return 0
+        return 1
     finally:
         signal.alarm(0)  # Ensure timeout is always cancelled
 

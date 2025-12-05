@@ -33,3 +33,9 @@ jobs:
           SIMULATED_EQUITY: '100000'
         run: |
           python tests/test_smoke.py
+
+      - name: Run deterministic backtest
+        env:
+          PYTHONPATH: .
+        run: |
+          python tests/test_deterministic_backtest.py

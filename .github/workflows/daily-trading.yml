@@ -526,17 +526,17 @@ jobs:
           if [ -f "data/system_state.json" ]; then
             echo ""
             echo "📈 PORTFOLIO STATUS:"
-            python3 -c "
-import json
-with open('data/system_state.json') as f:
-    state = json.load(f)
-    acct = state.get('account', {})
-    perf = state.get('performance', {})
-    print(f\"   Equity: \${acct.get('current_equity', 0):,.2f}\")
-    print(f\"   P/L: \${acct.get('total_pl', 0):,.2f} ({acct.get('total_pl_pct', 0):.4f}%)\")
-    print(f\"   Total Trades: {perf.get('total_trades', 0)}\")
-    print(f\"   Win Rate: {perf.get('win_rate', 0):.1f}%\")
-"
+            python3 - <<'PY'
+            import json
+            with open("data/system_state.json") as f:
+                state = json.load(f)
+            acct = state.get("account", {})
+            perf = state.get("performance", {})
+            print(f"   Equity: ${acct.get('current_equity', 0):,.2f}")
+            print(f"   P/L: ${acct.get('total_pl', 0):,.2f} ({acct.get('total_pl_pct', 0):.4f}%)")
+            print(f"   Total Trades: {perf.get('total_trades', 0)}")
+            print(f"   Win Rate: {perf.get('win_rate', 0):.1f}%")
+            PY
           fi
 
       - name: Check for state changes
@@ -716,6 +716,35 @@ with open('data/system_state.json') as f:
               fi
             fi
           fi
+
+      - name: Record run status (success)
+        if: success()
+        run: |
+          cat > data/last_run_status.json <<'EOF'
+          {
+            "status": "SUCCESS",
+            "timestamp": "${{ github.event.head_commit.timestamp || github.run_started_at }}",
+            "step": "complete",
+            "error": null
+          }
+          EOF
+
+      - name: Record run status (failure)
+        if: failure() || cancelled()
+        run: |
+          cat > data/last_run_status.json <<'EOF'
+          {
+            "status": "FAILURE",
+            "timestamp": "${{ github.event.head_commit.timestamp || github.run_started_at }}",
+            "step": "${{ job.status }}",
+            "error": "See artifacts for details"
+          }
+          EOF
+
+      - name: Regenerate dashboard snapshot
+        if: always()
+        run: |
+          python3 scripts/generate_progress_dashboard.py || true
 
       - name: Upload execution logs
         if: always()

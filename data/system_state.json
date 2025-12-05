@@ -102,6 +102,15 @@
       "next_execution": null
     }
   },
+  "backtest_reality": {
+    "last_comprehensive_test": "2025-12-02",
+    "scenarios_tested": 6,
+    "daily_win_rate_range": "38-52%",
+    "sharpe_ratio_range": "-7 to -72 (all negative)",
+    "status": "NEEDS_IMPROVEMENT",
+    "note": "62.2% claim from Nov 7 was single-scenario, not comprehensive. Full matrix shows strategy underperforms.",
+    "source": "data/backtests/latest_summary.json"
+  },
   "heuristics": {
     "best_performing_etf": "SPY",
     "best_performing_stock": "NVDA",
