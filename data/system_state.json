@@ -168,7 +168,7 @@
     "tier5": {
       "name": "Crypto Weekend Strategy (BTC, ETH)",
       "allocation": 0.05,
-      "daily_amount": 0.5,
+      "daily_amount": 10.0,
       "coins": [
         "BTC/USD",
         "ETH/USD"
@@ -176,9 +176,11 @@
       "trades_executed": 0,
       "total_invested": 0.0,
       "status": "active",
+      "enabled": true,
       "execution_schedule": "Saturday & Sunday 10:00 AM ET",
       "last_execution": null,
-      "next_execution": null
+      "next_execution": "2025-12-07T15:00:00Z",
+      "workflow_issue": "3 weekends with 0 executions - check GitHub Actions for errors"
     }
   },
   "backtest_reality": {
