@@ -12,7 +12,7 @@ Enhanced with PAL (Provider Abstraction Layer) integration for:
 import json
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 
 from src.core.multi_llm_analysis import (
     LLMCouncilAnalyzer,
@@ -56,11 +56,11 @@ class TradingCouncil:
         """
         self.enabled = enabled
         self.council = None
-        self.pal_challenge_enabled = pal_challenge_enabled and os.getenv(
-            "PAL_CHALLENGE_ENABLED", "true"
-        ).lower() == "true"
+        self.pal_challenge_enabled = (
+            pal_challenge_enabled and os.getenv("PAL_CHALLENGE_ENABLED", "true").lower() == "true"
+        )
         self.pal_challenge_threshold = pal_challenge_threshold
-        self._pal: Optional[PALIntegration] = None
+        self._pal: PALIntegration | None = None
 
         if enabled:
             try:
@@ -80,9 +80,7 @@ class TradingCouncil:
         if self.pal_challenge_enabled:
             try:
                 self._pal = get_pal()
-                logger.info(
-                    f"PAL Challenge enabled (threshold={pal_challenge_threshold})"
-                )
+                logger.info(f"PAL Challenge enabled (threshold={pal_challenge_threshold})")
             except Exception as e:
                 logger.warning(f"PAL Challenge unavailable: {e}")
                 self.pal_challenge_enabled = False
