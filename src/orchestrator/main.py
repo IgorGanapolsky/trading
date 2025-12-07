@@ -15,6 +15,7 @@ from src.agents.rl_agent import RLFilter
 from src.analyst.bias_store import BiasProvider, BiasSnapshot, BiasStore
 from src.execution.alpaca_executor import AlpacaExecutor
 from src.langchain_agents.analyst import LangChainSentimentAgent
+from src.integrations.playwright_mcp import SentimentScraper, TradeVerifier
 from src.orchestrator.anomaly_monitor import AnomalyMonitor
 from src.orchestrator.budget import BudgetController
 from src.orchestrator.failure_isolation import FailureIsolationManager
@@ -71,6 +72,9 @@ class TradingOrchestrator:
         )
         self.rl_filter = RLFilter()
         self.llm_agent = LangChainSentimentAgent()
+        # Playwright MCP for dynamic sentiment scraping and trade verification
+        self.playwright_scraper = SentimentScraper()
+        self.trade_verifier = TradeVerifier(paper_trading=paper)
         self.budget_controller = BudgetController()
         self.risk_manager = RiskManager()
         self.executor = AlpacaExecutor(paper=paper)
@@ -609,13 +613,51 @@ class TradingOrchestrator:
             )
 
         # Gate 3: LLM sentiment (budget-aware, bias-cache first)
+        # Enhanced with Playwright MCP for dynamic web scraping
         sentiment_score = 0.0
+        playwright_score = 0.0
         llm_model = getattr(self.llm_agent, "model_name", None)
         neg_threshold = float(os.getenv("LLM_NEGATIVE_SENTIMENT_THRESHOLD", "-0.2"))
         session_type = (self.session_profile or {}).get("session_type")
         if session_type == "off_hours_crypto_proxy":
             neg_threshold = float(os.getenv("WEEKEND_SENTIMENT_FLOOR", "-0.1"))
         bias_snapshot: BiasSnapshot | None = None
+
+        # Playwright MCP sentiment enhancement (async, non-blocking)
+        playwright_weight = float(os.getenv("PLAYWRIGHT_SENTIMENT_WEIGHT", "0.3"))
+        try:
+            import asyncio
+            playwright_result = asyncio.get_event_loop().run_until_complete(
+                self.playwright_scraper.scrape_all([ticker])
+            )
+            if ticker in playwright_result and playwright_result[ticker].total_mentions > 0:
+                playwright_score = playwright_result[ticker].weighted_score
+                logger.info(
+                    "Gate 3 (%s): Playwright sentiment=%.2f (mentions=%d, bull=%d, bear=%d)",
+                    ticker,
+                    playwright_score,
+                    playwright_result[ticker].total_mentions,
+                    playwright_result[ticker].bullish_count,
+                    playwright_result[ticker].bearish_count,
+                )
+                self.telemetry.record(
+                    event_type="gate.playwright",
+                    ticker=ticker,
+                    status="scraped",
+                    payload={
+                        "score": playwright_score,
+                        "mentions": playwright_result[ticker].total_mentions,
+                        "sources": [s.value for s in playwright_result[ticker].sources],
+                    },
+                )
+        except Exception as pw_exc:
+            logger.warning("Gate 3 (%s): Playwright scraping failed: %s", ticker, pw_exc)
+            self.telemetry.record(
+                event_type="gate.playwright",
+                ticker=ticker,
+                status="error",
+                payload={"error": str(pw_exc)},
+            )
 
         if self.bias_provider:
             bias_snapshot = self.bias_provider.get_bias(ticker)
@@ -652,7 +694,19 @@ class TradingOrchestrator:
             )
             if llm_outcome.ok:
                 llm_result = llm_outcome.result
-                sentiment_score = llm_result.get("score", 0.0)
+                llm_score = llm_result.get("score", 0.0)
+                # Blend LLM and Playwright sentiment scores
+                if playwright_score != 0.0:
+                    sentiment_score = (
+                        llm_score * (1 - playwright_weight) +
+                        playwright_score * playwright_weight
+                    )
+                    logger.info(
+                        "Gate 3 (%s): Blended sentiment=%.2f (LLM=%.2f, Playwright=%.2f, weight=%.1f)",
+                        ticker, sentiment_score, llm_score, playwright_score, playwright_weight
+                    )
+                else:
+                    sentiment_score = llm_score
                 self.budget_controller.log_spend(llm_result.get("cost", 0.0))
                 if sentiment_score < neg_threshold:
                     logger.info(
@@ -911,6 +965,43 @@ class TradingOrchestrator:
                 )
         except Exception as exc:  # pragma: no cover - non-fatal
             logger.info("Stop-loss placement skipped for %s: %s", ticker, exc)
+
+        # Playwright MCP: Trade verification with screenshot audit trail
+        verify_trades = os.getenv("ENABLE_TRADE_VERIFICATION", "true").lower() in {"1", "true", "yes"}
+        if verify_trades and order.get("id"):
+            try:
+                import asyncio
+                order_id = order.get("id", "")
+                order_qty = order.get("filled_qty") or order.get("qty") or (order_size / float(current_price or 1))
+                verification = asyncio.get_event_loop().run_until_complete(
+                    self.trade_verifier.verify_order_execution(
+                        order_id=str(order_id),
+                        expected_symbol=ticker,
+                        expected_qty=float(order_qty),
+                        expected_side="buy",
+                        api_response=order,
+                    )
+                )
+                self.telemetry.record(
+                    event_type="execution.verification",
+                    ticker=ticker,
+                    status="verified" if verification.verified else "unverified",
+                    payload={
+                        "order_id": order_id,
+                        "verified": verification.verified,
+                        "screenshot": str(verification.screenshot_path) if verification.screenshot_path else None,
+                        "errors": verification.errors,
+                    },
+                )
+                if verification.verified:
+                    logger.info("Trade verification PASSED for %s (order=%s)", ticker, order_id)
+                else:
+                    logger.warning(
+                        "Trade verification FAILED for %s (order=%s): %s",
+                        ticker, order_id, verification.errors
+                    )
+            except Exception as verify_exc:
+                logger.warning("Trade verification skipped for %s: %s", ticker, verify_exc)
 
     def _deploy_safe_reserve(self) -> None:
         sweep = self.smart_dca.drain_to_safe()
