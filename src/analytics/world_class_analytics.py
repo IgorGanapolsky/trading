@@ -19,7 +19,7 @@ Features:
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -265,7 +265,7 @@ class WorldClassAnalytics:
         self,
         portfolio_returns: list[float],
         benchmark_returns: list[float],
-        factor_returns: Optional[dict[str, list[float]]] = None,
+        factor_returns: dict[str, list[float]] | None = None,
     ) -> PerformanceAttribution:
         """
         Calculate performance attribution vs benchmark and factors.
@@ -388,7 +388,7 @@ class WorldClassAnalytics:
         )
 
     def classify_market_regime(
-        self, prices: list[float], volumes: Optional[list[float]] = None
+        self, prices: list[float], volumes: list[float] | None = None
     ) -> str:
         """
         Classify current market regime.

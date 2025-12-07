@@ -29,7 +29,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from src.risk.capital_efficiency import get_capital_calculator
 
@@ -60,17 +60,17 @@ class TradeRequest:
 
     symbol: str
     side: str  # 'buy' or 'sell'
-    quantity: Optional[float] = None
-    notional: Optional[float] = None
+    quantity: float | None = None
+    notional: float | None = None
     order_type: str = "market"
-    limit_price: Optional[float] = None
-    stop_price: Optional[float] = None
+    limit_price: float | None = None
+    stop_price: float | None = None
     request_time: datetime = field(default_factory=datetime.now)
     source: str = "ai_agent"  # Track where the request came from
-    strategy_type: Optional[str] = None  # e.g., 'iron_condor', 'vertical_spread'
-    iv_rank: Optional[float] = None  # Current IV Rank for the underlying
-    bid_price: Optional[float] = None  # Current bid price (for liquidity check)
-    ask_price: Optional[float] = None  # Current ask price (for liquidity check)
+    strategy_type: str | None = None  # e.g., 'iron_condor', 'vertical_spread'
+    iv_rank: float | None = None  # Current IV Rank for the underlying
+    bid_price: float | None = None  # Current bid price (for liquidity check)
+    ask_price: float | None = None  # Current ask price (for liquidity check)
     is_option: bool = False  # True if this is an options trade
 
 
@@ -83,8 +83,8 @@ class GatewayDecision:
     rejection_reasons: list[RejectionReason] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     risk_score: float = 0.0
-    adjusted_quantity: Optional[float] = None
-    adjusted_notional: Optional[float] = None
+    adjusted_quantity: float | None = None
+    adjusted_notional: float | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -161,11 +161,11 @@ class TradeGateway:
 
         # Track accumulated cash for batching
         self.accumulated_cash = 0.0
-        self.last_accumulation_date: Optional[datetime] = None
+        self.last_accumulation_date: datetime | None = None
 
         # Daily P&L tracking
         self.daily_pnl = 0.0
-        self.daily_pnl_date: Optional[datetime] = None
+        self.daily_pnl_date: datetime | None = None
 
         # Capital efficiency calculator
         self.capital_calculator = get_capital_calculator(daily_deposit_rate=10.0)
@@ -445,7 +445,7 @@ class TradeGateway:
 
         return decision
 
-    def execute(self, decision: GatewayDecision) -> Optional[dict[str, Any]]:
+    def execute(self, decision: GatewayDecision) -> dict[str, Any] | None:
         """
         Execute an approved trade.
 

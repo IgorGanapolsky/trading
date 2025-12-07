@@ -14,8 +14,9 @@ Created: 2025-12-04
 """
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -146,7 +147,7 @@ class EnhancedWalkForwardValidator:
         fold_details = []
         efficiency_ratios = []
         param_stability_scores = []
-        previous_params: Optional[dict] = None
+        previous_params: dict | None = None
 
         for fold in folds:
             logger.info(

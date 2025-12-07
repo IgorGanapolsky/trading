@@ -27,7 +27,7 @@ import os
 import sys
 import time
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from alpaca.common.exceptions import APIError
 from alpaca.data.historical import StockHistoricalDataClient
@@ -164,7 +164,7 @@ class AlpacaTrader:
             logger.error(f"Failed to connect to Alpaca API: {e}")
             raise AlpacaTraderError(f"Initialization failed: {e}") from e
 
-    def get_current_quote(self, symbol: str) -> Optional[dict[str, float]]:
+    def get_current_quote(self, symbol: str) -> dict[str, float] | None:
         """
         Get current bid/ask prices for a symbol.
 
@@ -196,7 +196,7 @@ class AlpacaTrader:
             logger.warning(f"Could not fetch quote for {symbol}: {e}")
             return None
 
-    def validate_order_amount(self, symbol: str, amount: float, tier: Optional[str] = None) -> None:
+    def validate_order_amount(self, symbol: str, amount: float, tier: str | None = None) -> None:
         """
         Validate order amount is reasonable to prevent catastrophic errors.
 
@@ -331,10 +331,10 @@ class AlpacaTrader:
     def execute_order(
         self,
         symbol: str,
-        amount_usd: Optional[float] = None,
-        qty: Optional[float] = None,
+        amount_usd: float | None = None,
+        qty: float | None = None,
         side: str = "buy",
-        tier: Optional[str] = None,
+        tier: str | None = None,
     ) -> dict[str, Any]:
         """
         Execute an order with fractional shares (by USD amount) or share quantity.

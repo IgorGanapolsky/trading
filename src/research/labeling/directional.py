@@ -5,7 +5,6 @@ Creates directional labels (up/down) over multiple horizons.
 """
 
 import logging
-from typing import Optional
 
 import pandas as pd
 
@@ -14,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 def create_directional_labels(
     returns: pd.Series,
-    horizons: Optional[list[str]] = None,
+    horizons: list[str] | None = None,
     threshold: float = 0.01,
     method: str = "binary",
 ) -> pd.DataFrame:
@@ -66,7 +65,7 @@ def create_directional_labels(
 
 def create_magnitude_labels(
     returns: pd.Series,
-    horizons: Optional[list[str]] = None,
+    horizons: list[str] | None = None,
 ) -> pd.DataFrame:
     """
     Create magnitude labels (regression targets).

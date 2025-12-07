@@ -248,8 +248,8 @@ class PortfolioRiskAssessor:
         side: str,
         quantity: float,
         order_type: str,
-        limit_price: Optional[float] = None,
-        stop_price: Optional[float] = None,
+        limit_price: float | None = None,
+        stop_price: float | None = None,
     ) -> dict[str, Any]:
         """
         Validate a proposed trade against risk rules
@@ -354,8 +354,8 @@ class PortfolioRiskAssessor:
         side: str,
         quantity: float,
         entry_price: float,
-        exit_price: Optional[float] = None,
-        profit_loss: Optional[float] = None,
+        exit_price: float | None = None,
+        profit_loss: float | None = None,
         status: str = "filled",
     ) -> dict[str, Any]:
         """

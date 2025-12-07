@@ -14,7 +14,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from src.agents.base_agent import BaseAgent
 
@@ -42,7 +42,7 @@ class ApprovalRequest:
     timeout_seconds: int = 900  # Default 15 minutes
     created_at: str = ""
     status: str = ApprovalStatus.PENDING.value
-    decision: Optional[dict[str, Any]] = None
+    decision: dict[str, Any] | None = None
 
     def __post_init__(self):
         if not self.created_at:

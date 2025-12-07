@@ -76,7 +76,7 @@ class YouTubeAnalyzer:
             else:
                 self.ai_client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)
 
-    def extract_video_id(self, url: str) -> Optional[str]:
+    def extract_video_id(self, url: str) -> str | None:
         """
         Extract video ID from YouTube URL.
 
@@ -271,7 +271,7 @@ If no trading content is found, clearly state that.
             return {"error": str(e)}
 
     def generate_report(
-        self, metadata: dict, transcript: list[dict], ai_analysis: Optional[dict] = None
+        self, metadata: dict, transcript: list[dict], ai_analysis: dict | None = None
     ) -> str:
         """
         Generate markdown report.

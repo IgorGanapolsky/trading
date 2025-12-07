@@ -12,7 +12,7 @@ Enhanced with PAL (Provider Abstraction Layer) integration for:
 import json
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 
 from src.core.multi_llm_analysis import (
     LLMCouncilAnalyzer,
@@ -36,9 +36,9 @@ class TradingCouncil:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        council_models: Optional[list[LLMModel]] = None,
-        chairman_model: Optional[LLMModel] = None,
+        api_key: str | None = None,
+        council_models: list[LLMModel] | None = None,
+        chairman_model: LLMModel | None = None,
         enabled: bool = True,
         pal_challenge_enabled: bool = True,
         pal_challenge_threshold: float = 0.7,
@@ -56,11 +56,11 @@ class TradingCouncil:
         """
         self.enabled = enabled
         self.council = None
-        self.pal_challenge_enabled = pal_challenge_enabled and os.getenv(
-            "PAL_CHALLENGE_ENABLED", "true"
-        ).lower() == "true"
+        self.pal_challenge_enabled = (
+            pal_challenge_enabled and os.getenv("PAL_CHALLENGE_ENABLED", "true").lower() == "true"
+        )
         self.pal_challenge_threshold = pal_challenge_threshold
-        self._pal: Optional[PALIntegration] = None
+        self._pal: PALIntegration | None = None
 
         if enabled:
             try:
@@ -80,9 +80,7 @@ class TradingCouncil:
         if self.pal_challenge_enabled:
             try:
                 self._pal = get_pal()
-                logger.info(
-                    f"PAL Challenge enabled (threshold={pal_challenge_threshold})"
-                )
+                logger.info(f"PAL Challenge enabled (threshold={pal_challenge_threshold})")
             except Exception as e:
                 logger.warning(f"PAL Challenge unavailable: {e}")
                 self.pal_challenge_enabled = False
@@ -92,7 +90,7 @@ class TradingCouncil:
         symbol: str,
         action: str,
         market_data: dict[str, Any],
-        context: Optional[dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Validate a trading decision using LLM Council consensus.
@@ -288,7 +286,7 @@ Be conservative - reject trades with ANY of:
         self,
         symbol: str,
         market_data: dict[str, Any],
-        context: Optional[dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Get trading recommendation from LLM Council.
@@ -343,7 +341,7 @@ Be conservative - reject trades with ANY of:
         symbol: str,
         position_size: float,
         market_data: dict[str, Any],
-        portfolio_context: Optional[dict[str, Any]] = None,
+        portfolio_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Assess risk of a proposed position using LLM Council.
@@ -452,7 +450,7 @@ Be conservative - reject positions that:
 # Convenience function for easy integration
 def create_trading_council(
     enabled: bool = True,
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
 ) -> TradingCouncil:
     """
     Create a Trading Council instance.

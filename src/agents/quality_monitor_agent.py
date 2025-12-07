@@ -14,7 +14,7 @@ import builtins
 import contextlib
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from src.safety.graham_buffett_safety import (
     CompanyQuality,
@@ -123,7 +123,7 @@ class QualityMonitorAgent(BaseAgent):
 
     def _check_quality_deterioration(
         self, symbol: str, current_quality: CompanyQuality
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Check if quality has deteriorated compared to history."""
 
         if symbol not in self.quality_history:

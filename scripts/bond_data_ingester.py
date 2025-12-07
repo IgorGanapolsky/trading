@@ -22,7 +22,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -179,7 +179,7 @@ def fetch_bond_data(
     symbol: str,
     period: str = "6mo",
     interval: str = "1d",
-) -> Optional[pd.DataFrame]:
+) -> pd.DataFrame | None:
     """
     Fetch bond ETF historical data using yfinance.
 
@@ -311,7 +311,7 @@ def save_bond_data(symbol: str, df: pd.DataFrame, metrics: dict) -> Path:
     return parquet_path
 
 
-def load_bond_data(symbol: str) -> tuple[Optional[pd.DataFrame], Optional[dict]]:
+def load_bond_data(symbol: str) -> tuple[pd.DataFrame | None, dict | None]:
     """
     Load cached bond data.
 

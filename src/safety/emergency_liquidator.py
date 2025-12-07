@@ -88,7 +88,7 @@ class EmergencyLiquidator:
         self,
         portfolio_value: float,
         current_pl_today: float,
-        positions: Optional[list[dict[str, Any]]] = None,
+        positions: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """
         Check daily P/L and auto-liquidate if threshold breached.
@@ -144,7 +144,7 @@ class EmergencyLiquidator:
     def _execute_partial_liquidation(
         self,
         loss_pct: float,
-        positions: Optional[list[dict[str, Any]]] = None,
+        positions: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """
         Execute partial liquidation - close risky positions, keep safe havens.
@@ -213,7 +213,7 @@ class EmergencyLiquidator:
     def _execute_full_liquidation(
         self,
         loss_pct: float,
-        positions: Optional[list[dict[str, Any]]] = None,
+        positions: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """
         Execute FULL liquidation - close EVERYTHING including safe havens.

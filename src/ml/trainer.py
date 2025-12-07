@@ -2,7 +2,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -92,7 +92,7 @@ class ModelTrainer:
         # Load optimized hyperparameters if available
         self._load_optimized_hyperparameters()
 
-    def train_supervised(self, symbol: str, use_cloud_rl: Optional[bool] = None) -> dict[str, Any]:
+    def train_supervised(self, symbol: str, use_cloud_rl: bool | None = None) -> dict[str, Any]:
         """
         Pre-train the model using supervised learning (predicting price direction).
         This stabilizes the LSTM features before RL fine-tuning.

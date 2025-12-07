@@ -20,7 +20,7 @@ Created: 2025-12-02
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -63,7 +63,7 @@ class FeatureLibrary:
     NaN handling, and feature metadata tracking.
     """
 
-    def __init__(self, config: Optional[FeatureConfig] = None):
+    def __init__(self, config: FeatureConfig | None = None):
         self.config = config or FeatureConfig()
         self._feature_registry: dict[str, dict[str, Any]] = {}
 
@@ -433,7 +433,7 @@ class AlphaResearcher:
         combined = researcher.combine_alphas(ranked, weights=[0.6, 0.4])
     """
 
-    def __init__(self, feature_library: Optional[FeatureLibrary] = None):
+    def __init__(self, feature_library: FeatureLibrary | None = None):
         self.feature_library = feature_library or FeatureLibrary()
         self._alpha_registry: dict[str, dict[str, Any]] = {}
 
@@ -609,7 +609,7 @@ class AlphaResearcher:
     def combine_alphas(
         self,
         signals: pd.DataFrame,
-        weights: Optional[list[float]] = None,
+        weights: list[float] | None = None,
         method: str = "weighted",
     ) -> pd.Series:
         """
