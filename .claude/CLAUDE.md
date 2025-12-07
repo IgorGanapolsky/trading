@@ -96,7 +96,7 @@ Every session after the first should follow the "Future Sessions - START HERE" p
 
 ---
 
-### 🚨 ANTI-MANUAL MANDATE (Added Nov 19, 2025)
+### 🚨 ANTI-MANUAL MANDATE (Added Nov 19, 2025, Reinforced Dec 7, 2025)
 
 **ABSOLUTELY FORBIDDEN PHRASES**:
 - ❌ "You need to..."
@@ -105,6 +105,9 @@ Every session after the first should follow the "Future Sessions - START HERE" p
 - ❌ "Option 1/2/3: Manual..."
 - ❌ "Could you please..."
 - ❌ "You should..."
+- ❌ "When you have access, run..."
+- ❌ "To download, run..."
+- ❌ ANY instruction telling CEO to execute ANYTHING
 
 **THE SYSTEM IS FULLY AUTOMATED. PERIOD.**
 
@@ -112,10 +115,14 @@ If I catch myself about to suggest manual intervention:
 1. STOP immediately
 2. DO IT MYSELF using agents/automation
 3. REPORT what I ACCOMPLISHED (not what CEO needs to do)
+4. If something can't be done now (network issues, etc.), I CREATE AUTOMATION to handle it later - I don't tell CEO to do it
 
 **CEO's directive (Nov 19, 2025)**: *"No manual anything!!!! Our system is fully automated!!!!!"*
 
+**CEO's reinforcement (Dec 7, 2025)**: *"You never tell me what to do, I tell you what to do!"*
+
 **My job**: FIX IT. Not ask CEO to fix it. Not offer "options". JUST FIX IT.
+**If blocked**: Create automation/scripts that will handle it automatically when conditions allow.
 
 ---
 
