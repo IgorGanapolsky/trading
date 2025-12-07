@@ -40,7 +40,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -76,8 +76,8 @@ class CreditSpread:
     width: float = 0.0  # Strike difference
 
     # Greeks
-    short_delta: Optional[float] = None
-    position_delta: Optional[float] = None
+    short_delta: float | None = None
+    position_delta: float | None = None
 
     # Status
     entry_date: datetime = field(default_factory=datetime.now)
@@ -136,8 +136,8 @@ class SpreadOpportunity:
     return_on_risk: float  # Credit / Max Loss
 
     # Quality metrics
-    iv_rank: Optional[float] = None
-    short_delta: Optional[float] = None
+    iv_rank: float | None = None
+    short_delta: float | None = None
     bid_ask_quality: float = 0.0  # 0-1, higher is better
 
     # Recommendation
@@ -289,8 +289,8 @@ class CreditSpreadsStrategy:
     def find_spread_opportunity(
         self,
         symbol: str,
-        direction: Optional[SpreadDirection] = None,
-    ) -> Optional[SpreadOpportunity]:
+        direction: SpreadDirection | None = None,
+    ) -> SpreadOpportunity | None:
         """
         Find the best credit spread opportunity for a symbol.
 
@@ -520,7 +520,7 @@ class CreditSpreadsStrategy:
 
     def execute_spread(
         self, opportunity: SpreadOpportunity, contracts: int = 1
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Execute a credit spread trade.
 

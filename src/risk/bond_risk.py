@@ -17,7 +17,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -104,9 +104,9 @@ class BondRiskManager:
 
     def __init__(
         self,
-        max_portfolio_duration: Optional[float] = None,
-        max_bond_allocation: Optional[float] = None,
-        max_hy_allocation: Optional[float] = None,
+        max_portfolio_duration: float | None = None,
+        max_bond_allocation: float | None = None,
+        max_hy_allocation: float | None = None,
     ):
         """
         Initialize Bond Risk Manager.
@@ -136,7 +136,7 @@ class BondRiskManager:
         symbol: str,
         position_value: float,
         portfolio_value: float,
-        duration_override: Optional[float] = None,
+        duration_override: float | None = None,
     ) -> DurationRiskMetrics:
         """
         Calculate duration-based risk metrics for a bond position.
@@ -218,7 +218,7 @@ class BondRiskManager:
         self,
         bond_positions: list[dict[str, Any]],
         portfolio_value: float,
-        equity_correlation: Optional[float] = None,
+        equity_correlation: float | None = None,
     ) -> BondRiskAssessment:
         """
         Assess overall bond portfolio risk.
@@ -437,7 +437,7 @@ class BondRiskManager:
         self,
         current_positions: list[dict[str, Any]],
         portfolio_value: float,
-        target_duration: Optional[float] = None,
+        target_duration: float | None = None,
     ) -> dict[str, Any]:
         """
         Get recommendation for adjusting portfolio duration.

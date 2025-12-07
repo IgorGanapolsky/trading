@@ -14,7 +14,6 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -104,7 +103,7 @@ def save_gate_state(state: dict) -> None:
         logger.error(f"Error saving gate state: {e}")
 
 
-def check_tlt_gate_change() -> Optional[dict]:
+def check_tlt_gate_change() -> dict | None:
     """
     Check if TLT gate status has changed and return alert info if so.
 

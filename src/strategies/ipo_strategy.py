@@ -19,7 +19,7 @@ import logging
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import anthropic
 
@@ -60,21 +60,21 @@ class CompanyData:
     name: str
     ticker: str
     industry: str
-    ipo_date: Optional[str] = None
-    price_range: Optional[tuple[float, float]] = None
-    shares_offered: Optional[int] = None
-    valuation: Optional[float] = None
+    ipo_date: str | None = None
+    price_range: tuple[float, float] | None = None
+    shares_offered: int | None = None
+    valuation: float | None = None
     underwriters: list[str] = field(default_factory=list)
-    revenue: Optional[float] = None
-    revenue_growth: Optional[float] = None
-    net_income: Optional[float] = None
-    employees: Optional[int] = None
-    founded: Optional[int] = None
-    ceo: Optional[str] = None
-    business_model: Optional[str] = None
+    revenue: float | None = None
+    revenue_growth: float | None = None
+    net_income: float | None = None
+    employees: int | None = None
+    founded: int | None = None
+    ceo: str | None = None
+    business_model: str | None = None
     competitors: list[str] = field(default_factory=list)
     risk_factors: list[str] = field(default_factory=list)
-    use_of_proceeds: Optional[str] = None
+    use_of_proceeds: str | None = None
     financials: dict[str, Any] = field(default_factory=dict)
 
 
@@ -143,10 +143,10 @@ class IPOStrategy:
 
     def __init__(
         self,
-        data_dir: Optional[str] = None,
+        data_dir: str | None = None,
         daily_deposit: float = 1.0,
-        anthropic_api_key: Optional[str] = None,
-        openai_api_key: Optional[str] = None,
+        anthropic_api_key: str | None = None,
+        openai_api_key: str | None = None,
     ):
         """
         Initialize the IPO Strategy.
@@ -247,7 +247,7 @@ class IPOStrategy:
         except Exception as e:
             logger.error(f"Error saving history: {e}")
 
-    def track_daily_deposit(self, amount: Optional[float] = None) -> float:
+    def track_daily_deposit(self, amount: float | None = None) -> float:
         """
         Track daily deposit to IPO allocation.
 
@@ -425,7 +425,7 @@ class IPOStrategy:
 
         return rating, analysis
 
-    def _get_claude_analysis(self, company: CompanyData) -> Optional[str]:
+    def _get_claude_analysis(self, company: CompanyData) -> str | None:
         """
         Get IPO analysis from Claude.
 
@@ -473,7 +473,7 @@ Be direct and analytical. Focus on facts over speculation."""
             logger.error(f"Error getting Claude analysis: {e}")
             return None
 
-    def _get_gpt4_analysis(self, company: CompanyData) -> Optional[str]:
+    def _get_gpt4_analysis(self, company: CompanyData) -> str | None:
         """
         Get IPO analysis from GPT-4.
 
@@ -713,7 +713,7 @@ Be analytical and balanced."""
         self,
         company_name: str,
         analysis: dict[str, Any],
-        output_file: Optional[str] = None,
+        output_file: str | None = None,
     ) -> None:
         """
         Generate detailed IPO analysis report.
@@ -929,7 +929,7 @@ investment decisions.
         return simplified
 
     def get_analysis_history(
-        self, limit: Optional[int] = None, recommendation_filter: Optional[str] = None
+        self, limit: int | None = None, recommendation_filter: str | None = None
     ) -> list[dict[str, Any]]:
         """
         Get IPO analysis history.

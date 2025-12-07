@@ -4,7 +4,7 @@ Based on 2024-2025 research on risk-aware reinforcement learning.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -44,13 +44,13 @@ class RiskAdjustedReward:
     def calculate(
         self,
         returns: float,
-        volatility: Optional[float] = None,
-        drawdown: Optional[float] = None,
-        sharpe_ratio: Optional[float] = None,
+        volatility: float | None = None,
+        drawdown: float | None = None,
+        sharpe_ratio: float | None = None,
         holding_period_days: int = 1,
-        transaction_costs: Optional[float] = None,
-        returns_series: Optional[np.ndarray] = None,
-        benchmark_returns: Optional[float] = None,
+        transaction_costs: float | None = None,
+        returns_series: np.ndarray | None = None,
+        benchmark_returns: float | None = None,
     ) -> float:
         """
         Calculate risk-adjusted reward from trade result.
@@ -150,7 +150,7 @@ class RiskAdjustedReward:
     def calculate_from_trade_result(
         self,
         trade_result: dict[str, Any],
-        market_state: Optional[dict[str, Any]] = None,
+        market_state: dict[str, Any] | None = None,
     ) -> float:
         """
         Calculate reward from trade result dictionary.
@@ -199,7 +199,7 @@ class RiskAdjustedReward:
 
 # Convenience function for backward compatibility
 def calculate_risk_adjusted_reward(
-    trade_result: dict[str, Any], market_state: Optional[dict[str, Any]] = None
+    trade_result: dict[str, Any], market_state: dict[str, Any] | None = None
 ) -> float:
     """
     Calculate world-class risk-adjusted reward from trade result.

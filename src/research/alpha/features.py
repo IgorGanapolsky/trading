@@ -5,7 +5,6 @@ Provides standardized feature computation functions.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -28,7 +27,7 @@ class FeatureConfig:
 
 def compute_momentum_features(
     df: pd.DataFrame,
-    windows: Optional[list[int]] = None,
+    windows: list[int] | None = None,
 ) -> pd.DataFrame:
     """
     Compute momentum-based features.
@@ -64,7 +63,7 @@ def compute_momentum_features(
 
 def compute_volatility_features(
     df: pd.DataFrame,
-    windows: Optional[list[int]] = None,
+    windows: list[int] | None = None,
 ) -> pd.DataFrame:
     """
     Compute volatility-based features.
@@ -112,7 +111,7 @@ def compute_volatility_features(
 
 def compute_volume_features(
     df: pd.DataFrame,
-    windows: Optional[list[int]] = None,
+    windows: list[int] | None = None,
 ) -> pd.DataFrame:
     """
     Compute volume-based features.
@@ -150,7 +149,7 @@ def compute_volume_features(
 
 def compute_technical_features(
     df: pd.DataFrame,
-    config: Optional[FeatureConfig] = None,
+    config: FeatureConfig | None = None,
 ) -> pd.DataFrame:
     """
     Compute technical indicator features.
@@ -211,7 +210,7 @@ class FeatureLibrary:
         >>> print(features.columns.tolist())
     """
 
-    def __init__(self, config: Optional[FeatureConfig] = None):
+    def __init__(self, config: FeatureConfig | None = None):
         self.config = config or FeatureConfig()
 
     def compute_all(self, df: pd.DataFrame) -> pd.DataFrame:

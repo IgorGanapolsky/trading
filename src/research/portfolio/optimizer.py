@@ -6,7 +6,6 @@ Implements multiple optimization methods for portfolio construction.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -33,9 +32,9 @@ class PortfolioConstraints:
     max_weight: float = 1.0
     max_concentration: float = 0.25
     min_assets: int = 3
-    max_assets: Optional[int] = None
-    target_volatility: Optional[float] = None
-    max_turnover: Optional[float] = None
+    max_assets: int | None = None
+    target_volatility: float | None = None
+    max_turnover: float | None = None
     sector_caps: dict = field(default_factory=dict)
     long_only: bool = True
 
@@ -75,7 +74,7 @@ class PortfolioOptimizer:
         expected_returns: pd.Series,
         covariance_matrix: pd.DataFrame,
         method: OptimizationMethod = OptimizationMethod.MEAN_VARIANCE,
-        constraints: Optional[PortfolioConstraints] = None,
+        constraints: PortfolioConstraints | None = None,
     ) -> OptimizationResult:
         """
         Optimize portfolio weights using the specified method.

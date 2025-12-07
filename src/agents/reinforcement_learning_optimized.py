@@ -24,7 +24,7 @@ import time
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -216,7 +216,7 @@ class OptimizedRLPolicyLearner:
         self,
         market_state: dict[str, Any],
         agent_recommendation: str,
-        agent_id: Optional[str] = None,
+        agent_id: str | None = None,
     ) -> str:
         """
         Select action using epsilon-greedy policy with adaptive exploration.
@@ -267,7 +267,7 @@ class OptimizedRLPolicyLearner:
 
     def _get_historical_action_bias(
         self, market_state: dict[str, Any], agent_id: str
-    ) -> Optional[dict[str, float]]:
+    ) -> dict[str, float] | None:
         """
         Get action bias from multi-timescale historical memories.
 
@@ -524,7 +524,7 @@ class OptimizedRLPolicyLearner:
     def calculate_reward(
         self,
         trade_result: dict[str, Any],
-        market_state: Optional[dict[str, Any]] = None,
+        market_state: dict[str, Any] | None = None,
     ) -> float:
         """
         Calculate reward from trade result (with risk adjustment if state provided).
@@ -630,7 +630,7 @@ class OptimizedRLPolicyLearner:
         except Exception as e:
             logger.error(f"Error loading RL state: {e}")
 
-    def reset_exploration(self, new_rate: Optional[float] = None) -> None:
+    def reset_exploration(self, new_rate: float | None = None) -> None:
         """
         Reset exploration rate (useful for new market regimes).
 

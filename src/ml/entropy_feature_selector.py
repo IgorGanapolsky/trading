@@ -24,7 +24,6 @@ Created: 2025-12-04
 """
 
 import logging
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -52,7 +51,7 @@ class EntropyFeatureSelector:
         self.min_samples_per_bin = min_samples_per_bin
         self._feature_scores: dict[str, dict] = {}
 
-    def _discretize(self, x: np.ndarray, n_bins: Optional[int] = None) -> np.ndarray:
+    def _discretize(self, x: np.ndarray, n_bins: int | None = None) -> np.ndarray:
         """
         Discretize continuous variable into bins.
 
@@ -232,7 +231,7 @@ class EntropyFeatureSelector:
         return scores
 
     def get_feature_scores(
-        self, df: pd.DataFrame, target: str, features: Optional[list[str]] = None
+        self, df: pd.DataFrame, target: str, features: list[str] | None = None
     ) -> pd.DataFrame:
         """
         Score all features in a dataframe.
@@ -268,9 +267,9 @@ class EntropyFeatureSelector:
         self,
         df: pd.DataFrame,
         target: str,
-        k: Optional[int] = None,
+        k: int | None = None,
         min_mi: float = 0.01,
-        features: Optional[list[str]] = None,
+        features: list[str] | None = None,
     ) -> list[str]:
         """
         Select top-k features by mutual information.
@@ -451,7 +450,7 @@ class FeatureSelectionPipeline:
         self.redundancy_threshold = redundancy_threshold
         self.selector = EntropyFeatureSelector()
         self.selected_features: list[str] = []
-        self.feature_scores: Optional[pd.DataFrame] = None
+        self.feature_scores: pd.DataFrame | None = None
 
     def fit(self, df: pd.DataFrame, target: str = "target_direction") -> "FeatureSelectionPipeline":
         """

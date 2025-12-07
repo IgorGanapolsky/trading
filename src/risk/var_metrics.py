@@ -21,7 +21,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from scipy import stats
@@ -302,7 +302,7 @@ class RiskMonitor:
         self,
         portfolio_value: float,
         returns: np.ndarray,
-        positions: Optional[dict[str, float]] = None,
+        positions: dict[str, float] | None = None,
     ) -> list[RiskAlert]:
         """
         Run comprehensive risk checks.

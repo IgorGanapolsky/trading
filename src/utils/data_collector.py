@@ -8,7 +8,6 @@ import argparse
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 from src.utils.market_data import get_market_data_provider
@@ -86,7 +85,7 @@ class DataCollector:
 
         return str(filepath)
 
-    def get_existing_files(self, symbol: Optional[str] = None) -> list[Path]:
+    def get_existing_files(self, symbol: str | None = None) -> list[Path]:
         """
         List existing CSV files in data directory.
 

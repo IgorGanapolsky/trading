@@ -6,7 +6,7 @@ High-level API for querying the vector database.
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from src.rag.vector_db.chroma_client import get_rag_db
 from src.rag.vector_db.embedder import get_embedder
@@ -35,9 +35,9 @@ class RAGRetriever:
         self,
         query: str,
         n_results: int = 5,
-        ticker: Optional[str] = None,
-        source: Optional[str] = None,
-        days_back: Optional[int] = None,
+        ticker: str | None = None,
+        source: str | None = None,
+        days_back: int | None = None,
     ) -> list[dict[str, Any]]:
         """
         Query RAG database with natural language.

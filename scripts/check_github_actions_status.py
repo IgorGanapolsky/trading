@@ -9,7 +9,6 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 # Cache file to avoid too many API calls
 CACHE_FILE = Path("data/github_actions_cache.json")
@@ -25,7 +24,7 @@ def check_github_cli_available() -> bool:
         return False
 
 
-def get_workflow_runs(workflow_name: str, limit: int = 5) -> Optional[list]:
+def get_workflow_runs(workflow_name: str, limit: int = 5) -> list | None:
     """
     Get recent workflow runs using GitHub CLI.
 
@@ -74,7 +73,7 @@ def get_workflow_runs(workflow_name: str, limit: int = 5) -> Optional[list]:
 
 def check_if_ran_today(
     workflow_name: str, check_success_only: bool = True
-) -> tuple[bool, Optional[str]]:
+) -> tuple[bool, str | None]:
     """
     Check if workflow ran successfully today.
 

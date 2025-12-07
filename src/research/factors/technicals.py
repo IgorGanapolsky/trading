@@ -5,7 +5,6 @@ Provides standardized technical indicators (RSI, MACD, Bollinger Bands, etc.).
 """
 
 import logging
-from typing import Optional
 
 import pandas as pd
 
@@ -14,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 def calculate_technical_indicators(
     prices: pd.Series,
-    volume: Optional[pd.Series] = None,
-    indicators: Optional[list[str]] = None,
+    volume: pd.Series | None = None,
+    indicators: list[str] | None = None,
 ) -> pd.DataFrame:
     """
     Calculate multiple technical indicators at once.

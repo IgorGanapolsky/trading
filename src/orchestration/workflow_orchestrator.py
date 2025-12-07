@@ -14,7 +14,7 @@ import logging
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from src.agents.approval_agent import ApprovalAgent
 from src.agents.notification_agent import NotificationAgent
@@ -55,7 +55,7 @@ class WorkflowOrchestrator:
         self.workflow_dir.mkdir(parents=True, exist_ok=True)
 
     async def execute_workflow(
-        self, workflow_definition: dict[str, Any], workflow_id: Optional[str] = None
+        self, workflow_definition: dict[str, Any], workflow_id: str | None = None
     ) -> dict[str, Any]:
         """
         Execute a multi-step workflow.
@@ -357,7 +357,7 @@ class WorkflowOrchestrator:
         with open(workflow_file, "w") as f:
             json.dump(workflow, f, indent=2)
 
-    def get_workflow_status(self, workflow_id: str) -> Optional[dict[str, Any]]:
+    def get_workflow_status(self, workflow_id: str) -> dict[str, Any] | None:
         """Get current workflow status."""
         if workflow_id in self.active_workflows:
             return self.active_workflows[workflow_id]

@@ -22,7 +22,6 @@ import sys
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -33,7 +32,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
-def run_command(cmd: list[str]) -> Optional[str]:
+def run_command(cmd: list[str]) -> str | None:
     """Run a shell command and return output."""
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)

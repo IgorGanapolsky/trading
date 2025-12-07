@@ -5,14 +5,14 @@ Uses sentence-transformers for local, FREE text embeddings.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
 logger = logging.getLogger(__name__)
 
 # Lazy import to avoid breaking crypto trading when RAG dependencies aren't installed
-_SentenceTransformer: Optional[type] = None
+_SentenceTransformer: type | None = None
 
 
 def _get_sentence_transformer():

@@ -20,7 +20,7 @@ Created: 2025-12-01
 import logging
 import re
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 from xml.etree import ElementTree
 
 import requests
@@ -188,7 +188,7 @@ class SEC13FCollector(BaseNewsCollector):
             logger.debug(f"Error fetching filings for CIK {cik}: {e}")
             return []
 
-    def _get_institution_holdings(self, cik: str) -> Optional[list[dict]]:
+    def _get_institution_holdings(self, cik: str) -> list[dict] | None:
         """
         Get current holdings for an institution from most recent 13F.
 
@@ -350,7 +350,7 @@ class SEC13FCollector(BaseNewsCollector):
         ticker: str,
         institution: dict,
         holdings: list[dict],
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Create article for ticker-specific institutional holdings."""
         if not holdings:
             return None
@@ -393,7 +393,7 @@ Monitor quarterly changes for buying/selling pressure.
         cik: str,
         institution: dict,
         filing: dict,
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Create article summarizing an institution's 13F filing."""
         holdings = self._get_institution_holdings(cik)
         if not holdings:

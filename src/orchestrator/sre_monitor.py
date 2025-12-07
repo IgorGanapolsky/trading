@@ -25,7 +25,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -149,7 +149,7 @@ class SREMonitor:
         status: str,
         latency_ms: float = 0.0,
         ticker: str = "",
-        payload: Optional[dict] = None,
+        payload: dict | None = None,
     ) -> None:
         """
         Record a gate evaluation event.
@@ -193,7 +193,7 @@ class SREMonitor:
         regime: str,
         signal_strength: float,
         trade_executed: bool = False,
-        pnl: Optional[float] = None,
+        pnl: float | None = None,
     ) -> None:
         """
         Record a regime observation.
@@ -277,7 +277,7 @@ class SREMonitor:
                 f"expected={expected:.2f}, actual={actual:.2f} ({divergence_pct:.1%})"
             )
 
-    def get_gate_metrics(self, gate: Optional[str] = None) -> dict[str, GateMetrics]:
+    def get_gate_metrics(self, gate: str | None = None) -> dict[str, GateMetrics]:
         """Get gate metrics, optionally filtered by gate name."""
         self._calculate_latency_percentiles()
 
@@ -285,7 +285,7 @@ class SREMonitor:
             return {gate: self.gate_metrics.get(gate, GateMetrics(gate_name=gate))}
         return self.gate_metrics
 
-    def get_regime_metrics(self, regime: Optional[str] = None) -> dict[str, RegimeMetrics]:
+    def get_regime_metrics(self, regime: str | None = None) -> dict[str, RegimeMetrics]:
         """Get regime metrics, optionally filtered by regime."""
         if regime:
             return {regime: self.regime_metrics.get(regime, RegimeMetrics(regime=regime))}
@@ -726,7 +726,7 @@ class SREMonitor:
 
 
 # Global instance
-_GLOBAL_SRE_MONITOR: Optional[SREMonitor] = None
+_GLOBAL_SRE_MONITOR: SREMonitor | None = None
 
 
 def get_sre_monitor() -> SREMonitor:

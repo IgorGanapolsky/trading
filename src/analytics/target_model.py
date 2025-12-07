@@ -12,7 +12,6 @@ Created: 2025-12-03
 
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -437,11 +436,11 @@ class TargetModel:
 def generate_target_model_report(
     target_daily_income: float = 100.0,
     available_capital: float = 10000.0,
-    actual_daily_pnl: Optional[float] = None,
-    actual_win_rate: Optional[float] = None,
-    actual_sharpe: Optional[float] = None,
-    actual_trades_per_day: Optional[float] = None,
-    days_measured: Optional[int] = None,
+    actual_daily_pnl: float | None = None,
+    actual_win_rate: float | None = None,
+    actual_sharpe: float | None = None,
+    actual_trades_per_day: float | None = None,
+    days_measured: int | None = None,
 ) -> str:
     """
     Generate a comprehensive target model report.

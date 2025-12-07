@@ -22,7 +22,7 @@ Created: 2025-12-01
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 import requests
 
@@ -176,7 +176,7 @@ class FREDCollector(BaseNewsCollector):
 
     BASE_URL = "https://api.stlouisfed.org/fred"
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         """
         Initialize FRED collector.
 
@@ -249,7 +249,7 @@ class FREDCollector(BaseNewsCollector):
 
     def _fetch_series(
         self, series_id: str, start_date: str, end_date: str
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Fetch a single FRED series.
 
@@ -295,7 +295,7 @@ class FREDCollector(BaseNewsCollector):
 
     def _convert_to_article(
         self, series_id: str, config: dict[str, Any], data: dict[str, Any]
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Convert FRED data to article format.
 
