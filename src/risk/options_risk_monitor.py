@@ -13,7 +13,7 @@ Date: December 2, 2025
 import logging
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +110,7 @@ class OptionsRiskMonitor:
 
         return exits
 
-    def _check_position_stop(self, position: OptionsPosition) -> Optional[dict[str, Any]]:
+    def _check_position_stop(self, position: OptionsPosition) -> dict[str, Any] | None:
         """
         Check if a single position has hit its stop-loss.
 

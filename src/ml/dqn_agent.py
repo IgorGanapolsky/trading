@@ -16,7 +16,7 @@ import logging
 import random
 from collections import deque
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import torch
@@ -142,7 +142,7 @@ class DQNAgent:
     def select_action(
         self,
         state: np.ndarray,
-        agent_recommendation: Optional[str] = None,
+        agent_recommendation: str | None = None,
         training: bool = True,
     ) -> int:
         """
@@ -179,7 +179,7 @@ class DQNAgent:
         reward: float,
         next_state: np.ndarray,
         done: bool,
-        td_error: Optional[float] = None,
+        td_error: float | None = None,
     ):
         """Store transition in replay buffer."""
         if self.use_prioritized_replay:
@@ -194,7 +194,7 @@ class DQNAgent:
         else:
             self.replay_buffer.append((state, action, reward, next_state, done))
 
-    def train_step(self) -> Optional[float]:
+    def train_step(self) -> float | None:
         """
         Perform one training step.
 
@@ -283,7 +283,7 @@ class DQNAgent:
     def calculate_reward(
         self,
         trade_result: dict[str, Any],
-        market_state: Optional[dict[str, Any]] = None,
+        market_state: dict[str, Any] | None = None,
     ) -> float:
         """
         Calculate reward from trade result using multi-objective risk-adjusted reward.

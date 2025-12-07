@@ -15,7 +15,7 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import google.generativeai as genai
 
@@ -92,9 +92,9 @@ class GeminiAgent:
     def reason(
         self,
         prompt: str,
-        thinking_level: Optional[str] = None,
-        tools: Optional[list[dict]] = None,
-        context: Optional[list[dict]] = None,
+        thinking_level: str | None = None,
+        tools: list[dict] | None = None,
+        context: list[dict] | None = None,
     ) -> dict[str, Any]:
         """
         Use Gemini 3 reasoning to make decisions.

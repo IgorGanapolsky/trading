@@ -5,8 +5,9 @@ Provides time-aware train/test splits to avoid look-ahead bias and overfitting.
 """
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -75,8 +76,8 @@ class WalkForwardValidator:
     def create_folds(
         self,
         data: pd.DataFrame,
-        start_date: Optional[pd.Timestamp] = None,
-        end_date: Optional[pd.Timestamp] = None,
+        start_date: pd.Timestamp | None = None,
+        end_date: pd.Timestamp | None = None,
     ) -> list[WalkForwardFold]:
         """
         Create walk-forward validation folds.
@@ -162,7 +163,7 @@ class WalkForwardValidator:
         self,
         model_class: type,
         data: pd.DataFrame,
-        strategy_factory: Optional[Callable] = None,
+        strategy_factory: Callable | None = None,
         **model_kwargs,
     ) -> WalkForwardResults:
         """

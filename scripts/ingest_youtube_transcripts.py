@@ -17,7 +17,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 sys.path.append(".")
 
@@ -72,7 +72,7 @@ def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVE
     return chunks
 
 
-def load_video_metadata(video_id: str, cache_dir: Path) -> Optional[dict[str, Any]]:
+def load_video_metadata(video_id: str, cache_dir: Path) -> dict[str, Any] | None:
     """
     Load video metadata from processed_videos.json if available.
 
@@ -96,7 +96,7 @@ def load_video_metadata(video_id: str, cache_dir: Path) -> Optional[dict[str, An
         return None
 
 
-def extract_video_id(filename: str) -> Optional[str]:
+def extract_video_id(filename: str) -> str | None:
     """Extract video ID from transcript filename."""
     # Format: {video_id}_transcript.txt
     if "_transcript.txt" in filename:

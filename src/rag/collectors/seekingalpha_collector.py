@@ -21,7 +21,7 @@ import logging
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import feedparser
 
@@ -155,7 +155,7 @@ class SeekingAlphaCollector(BaseNewsCollector):
 
         return age < timedelta(hours=self.CACHE_DURATION_HOURS)
 
-    def _load_from_cache(self, ticker: str) -> Optional[list[dict[str, Any]]]:
+    def _load_from_cache(self, ticker: str) -> list[dict[str, Any]] | None:
         """
         Load articles from cache if valid.
 
@@ -240,7 +240,7 @@ class SeekingAlphaCollector(BaseNewsCollector):
 
         return sentiment
 
-    def _extract_rating_from_text(self, text: str) -> Optional[str]:
+    def _extract_rating_from_text(self, text: str) -> str | None:
         """
         Extract analyst rating from article text.
 

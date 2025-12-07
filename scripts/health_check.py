@@ -16,7 +16,6 @@ import subprocess
 import sys
 from datetime import date, datetime
 from pathlib import Path
-from typing import Optional
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -27,7 +26,7 @@ from src.alerts.telegram_alerter import TelegramAlerter
 class HealthCheckResult:
     """Result of a single health check."""
 
-    def __init__(self, check_name: str, status: str, message: str, details: Optional[dict] = None):
+    def __init__(self, check_name: str, status: str, message: str, details: dict | None = None):
         self.check_name = check_name
         self.status = status  # HEALTHY, WARNING, CRITICAL
         self.message = message

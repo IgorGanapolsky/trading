@@ -8,7 +8,7 @@ import logging
 from collections import deque
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import torch
@@ -62,7 +62,7 @@ class OnlineRLLearner:
         reward: float,
         next_state: torch.Tensor,
         done: bool = False,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ):
         """
         Add a trade experience to the replay buffer.

@@ -21,7 +21,6 @@ import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 import pandas as pd
 import yfinance as yf
@@ -61,8 +60,8 @@ class Order:
     action: str  # 'buy' or 'sell'
     quantity: int
     order_type: str  # 'market', 'limit', 'stop'
-    limit_price: Optional[float] = None
-    stop_price: Optional[float] = None
+    limit_price: float | None = None
+    stop_price: float | None = None
     reason: str = ""
 
 
@@ -80,8 +79,8 @@ class CandidateStock:
     macd_signal: float
     macd_histogram: float
     volume_ratio: float
-    intrinsic_value: Optional[float] = None
-    dcf_discount: Optional[float] = None
+    intrinsic_value: float | None = None
+    dcf_discount: float | None = None
     sentiment_modifier: float = 0.0
     external_signal_score: float = 0.0
     external_signal_confidence: float = 0.0
@@ -171,7 +170,7 @@ class AlpacaTrader:
         # Mock implementation
         return True
 
-    def get_position(self, symbol: str) -> Optional[Position]:
+    def get_position(self, symbol: str) -> Position | None:
         """
         Get current position for a symbol.
 

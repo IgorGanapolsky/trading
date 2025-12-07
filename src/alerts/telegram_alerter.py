@@ -8,7 +8,7 @@ Setup time: 10 minutes | Cost: $0 forever | Reliability: 99.9%+
 
 import os
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import requests
 
@@ -94,7 +94,7 @@ class TelegramAlerter:
             print(f"❌ Failed to send Telegram alert: {e}")
             return False
 
-    def send_trade_failure(self, error: str, context: Optional[dict[str, Any]] = None) -> bool:
+    def send_trade_failure(self, error: str, context: dict[str, Any] | None = None) -> bool:
         """
         Send trading-specific failure alert.
 

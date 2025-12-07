@@ -13,7 +13,6 @@ Strategy:
 
 import logging
 import os
-from typing import Optional
 
 import yfinance as yf
 
@@ -108,7 +107,7 @@ class OptionsAccumulationStrategy:
             logger.error(f"Error getting accumulation status: {e}")
             return {"error": str(e), "status": "error"}
 
-    def execute_daily(self) -> Optional[dict]:
+    def execute_daily(self) -> dict | None:
         """
         Execute daily accumulation purchase.
 

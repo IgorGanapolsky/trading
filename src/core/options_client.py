@@ -15,7 +15,7 @@ Note: Requires an Alpaca account with Options trading enabled.
 
 import logging
 import os
-from typing import Any, Optional, Union
+from typing import Any
 
 from alpaca.data.historical.option import OptionHistoricalDataClient
 from alpaca.data.requests import (
@@ -127,7 +127,7 @@ class AlpacaOptionsClient:
             logger.error(f"Error fetching option chain for {underlying_symbol}: {e}")
             raise
 
-    def get_option_snapshot(self, symbol_or_symbols: Union[str, list[str]]) -> dict[str, Any]:
+    def get_option_snapshot(self, symbol_or_symbols: str | list[str]) -> dict[str, Any]:
         """
         Get snapshot data (price, greeks, IV) for specific option contract(s).
         """
@@ -177,7 +177,7 @@ class AlpacaOptionsClient:
         qty: int,
         side: str = "sell_to_open",
         order_type: str = "limit",
-        limit_price: Optional[float] = None,
+        limit_price: float | None = None,
     ) -> dict[str, Any]:
         """
         Submit an option order (sell covered call, buy to close, etc).

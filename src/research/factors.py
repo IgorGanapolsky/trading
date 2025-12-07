@@ -18,7 +18,7 @@ Created: 2025-12-02
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -91,7 +91,7 @@ class FactorModel:
 
     def __init__(self, risk_free_rate: float = 0.04):
         self.risk_free_rate = risk_free_rate
-        self._factor_returns: Optional[pd.DataFrame] = None
+        self._factor_returns: pd.DataFrame | None = None
 
     def set_factor_returns(self, factor_returns: pd.DataFrame) -> None:
         """
@@ -106,7 +106,7 @@ class FactorModel:
     def calculate_exposures(
         self,
         portfolio_returns: pd.Series,
-        factor_returns: Optional[pd.DataFrame] = None,
+        factor_returns: pd.DataFrame | None = None,
     ) -> dict[str, FactorExposure]:
         """
         Calculate factor exposures (betas) for portfolio returns.
@@ -177,7 +177,7 @@ class FactorModel:
     def calculate_multi_factor_exposure(
         self,
         portfolio_returns: pd.Series,
-        factor_returns: Optional[pd.DataFrame] = None,
+        factor_returns: pd.DataFrame | None = None,
     ) -> tuple[dict[str, float], float, float]:
         """
         Calculate exposures using multiple regression.
@@ -224,7 +224,7 @@ class FactorModel:
     def attribute_returns(
         self,
         portfolio_returns: pd.Series,
-        factor_returns: Optional[pd.DataFrame] = None,
+        factor_returns: pd.DataFrame | None = None,
     ) -> FactorAttributionResult:
         """
         Decompose portfolio returns into factor contributions.
@@ -392,7 +392,7 @@ class FactorRiskMonitor:
         self,
         portfolio_returns: pd.Series,
         factor_returns: pd.DataFrame,
-        timestamp: Optional[datetime] = None,
+        timestamp: datetime | None = None,
     ) -> dict[str, FactorExposure]:
         """
         Update factor exposures with new data.
@@ -483,9 +483,9 @@ class PCAFactorDiscovery:
 
     def __init__(self, n_components: int = 5):
         self.n_components = n_components
-        self._components: Optional[np.ndarray] = None
-        self._explained_variance: Optional[np.ndarray] = None
-        self._mean: Optional[np.ndarray] = None
+        self._components: np.ndarray | None = None
+        self._explained_variance: np.ndarray | None = None
+        self._mean: np.ndarray | None = None
 
     def fit(self, returns: pd.DataFrame) -> "PCAFactorDiscovery":
         """
