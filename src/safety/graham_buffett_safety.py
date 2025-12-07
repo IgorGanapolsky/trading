@@ -22,7 +22,6 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 import yfinance as yf
 
@@ -46,19 +45,19 @@ class CompanyQuality:
     """Container for company quality metrics."""
 
     symbol: str
-    debt_to_equity: Optional[float]  # Lower is better
-    current_ratio: Optional[float]  # Higher is better (>1.0 is healthy)
-    roe: Optional[float]  # Return on equity (higher is better)
-    roa: Optional[float]  # Return on assets (higher is better)
-    profit_margin: Optional[float]  # Net profit margin (higher is better)
-    earnings_growth_3y: Optional[float]  # 3-year earnings growth
+    debt_to_equity: float | None  # Lower is better
+    current_ratio: float | None  # Higher is better (>1.0 is healthy)
+    roe: float | None  # Return on equity (higher is better)
+    roa: float | None  # Return on assets (higher is better)
+    profit_margin: float | None  # Net profit margin (higher is better)
+    earnings_growth_3y: float | None  # 3-year earnings growth
     earnings_consistency: float  # 0-1 score (1 = very consistent)
     quality_score: float  # 0-100 composite quality score
     # Intelligent Investor additions
-    pe_ratio: Optional[float]  # Price-to-earnings ratio
-    pb_ratio: Optional[float]  # Price-to-book ratio
-    dividend_yield: Optional[float]  # Dividend yield percentage
-    market_cap: Optional[float]  # Market capitalization
+    pe_ratio: float | None  # Price-to-earnings ratio
+    pb_ratio: float | None  # Price-to-book ratio
+    dividend_yield: float | None  # Dividend yield percentage
+    market_cap: float | None  # Market capitalization
     timestamp: datetime
 
 
@@ -68,16 +67,16 @@ class SafetyAnalysis:
 
     symbol: str
     market_price: float
-    intrinsic_value: Optional[float]
-    margin_of_safety_pct: Optional[float]  # Positive = discount, negative = premium
-    quality: Optional[CompanyQuality]
+    intrinsic_value: float | None
+    margin_of_safety_pct: float | None  # Positive = discount, negative = premium
+    quality: CompanyQuality | None
     safety_rating: SafetyRating
     reasons: list[str]  # Reasons for rating
     warnings: list[str]  # Warning messages
     # Intelligent Investor additions
-    defensive_investor_score: Optional[float]  # 0-100 score for defensive investor criteria
-    mr_market_sentiment: Optional[str]  # "fearful", "greedy", "neutral" - Mr. Market concept
-    value_score: Optional[float]  # 0-100 value investing score
+    defensive_investor_score: float | None  # 0-100 score for defensive investor criteria
+    mr_market_sentiment: str | None  # "fearful", "greedy", "neutral" - Mr. Market concept
+    value_score: float | None  # 0-100 value investing score
     timestamp: datetime
 
 
@@ -455,7 +454,7 @@ class GrahamBuffettSafety:
             # Fail-open: allow if we can't verify
             return True
 
-    def _analyze_company_quality(self, symbol: str) -> Optional[CompanyQuality]:
+    def _analyze_company_quality(self, symbol: str) -> CompanyQuality | None:
         """
         Analyze company quality using Buffett's criteria.
 
@@ -553,12 +552,12 @@ class GrahamBuffettSafety:
 
     def _calculate_quality_score(
         self,
-        debt_to_equity: Optional[float],
-        current_ratio: Optional[float],
-        roe: Optional[float],
-        roa: Optional[float],
-        profit_margin: Optional[float],
-        earnings_growth_3y: Optional[float],
+        debt_to_equity: float | None,
+        current_ratio: float | None,
+        roe: float | None,
+        roa: float | None,
+        profit_margin: float | None,
+        earnings_growth_3y: float | None,
         earnings_consistency: float,
     ) -> float:
         """
@@ -674,7 +673,7 @@ class GrahamBuffettSafety:
         symbol: str,
         market_price: float,
         quality: CompanyQuality,
-    ) -> Optional[float]:
+    ) -> float | None:
         """
         Calculate defensive investor score based on Graham's criteria from The Intelligent Investor.
 
@@ -773,9 +772,9 @@ class GrahamBuffettSafety:
         self,
         symbol: str,
         market_price: float,
-        intrinsic_value: Optional[float],
-        quality: Optional[CompanyQuality],
-    ) -> Optional[str]:
+        intrinsic_value: float | None,
+        quality: CompanyQuality | None,
+    ) -> str | None:
         """
         Assess Mr. Market sentiment (Graham's concept from The Intelligent Investor).
 
@@ -816,10 +815,10 @@ class GrahamBuffettSafety:
 
     def _calculate_value_score(
         self,
-        margin_of_safety_pct: Optional[float],
-        quality: Optional[CompanyQuality],
-        defensive_score: Optional[float],
-    ) -> Optional[float]:
+        margin_of_safety_pct: float | None,
+        quality: CompanyQuality | None,
+        defensive_score: float | None,
+    ) -> float | None:
         """
         Calculate overall value investing score (0-100).
 
@@ -891,11 +890,11 @@ class GrahamBuffettSafety:
 
     def _determine_safety_rating(
         self,
-        margin_of_safety_pct: Optional[float],
-        quality: Optional[CompanyQuality],
+        margin_of_safety_pct: float | None,
+        quality: CompanyQuality | None,
         reasons: list[str],
         warnings: list[str],
-        defensive_score: Optional[float] = None,
+        defensive_score: float | None = None,
     ) -> SafetyRating:
         """
         Determine overall safety rating based on all factors.
@@ -965,7 +964,7 @@ class GrahamBuffettSafety:
 
 
 # Convenience singleton
-_GLOBAL_SAFETY_ANALYZER: Optional[GrahamBuffettSafety] = None
+_GLOBAL_SAFETY_ANALYZER: GrahamBuffettSafety | None = None
 
 
 def get_global_safety_analyzer() -> GrahamBuffettSafety:

@@ -19,7 +19,6 @@ Created: 2025-12-04
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -120,8 +119,8 @@ class RegimeDetector:
         self.trend_threshold = trend_threshold
 
         self.regime_history: list[RegimeTransition] = []
-        self.current_regime: Optional[MarketRegime] = None
-        self.regime_start_date: Optional[pd.Timestamp] = None
+        self.current_regime: MarketRegime | None = None
+        self.regime_start_date: pd.Timestamp | None = None
 
         logger.info(
             f"Initialized regime detector: vol_window={volatility_window}, "
@@ -131,7 +130,7 @@ class RegimeDetector:
     def detect_regime(
         self,
         prices: pd.Series,
-        returns: Optional[pd.Series] = None,
+        returns: pd.Series | None = None,
     ) -> RegimeState:
         """
         Detect current market regime.

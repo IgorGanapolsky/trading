@@ -106,7 +106,7 @@ class ModelTrainerSkill:
         batch_size: int = 32,
         learning_rate: float = 0.001,
         seq_length: int = 60,
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
         device: str = "cpu",
     ) -> dict[str, Any]:
         """

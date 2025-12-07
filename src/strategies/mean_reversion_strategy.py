@@ -20,7 +20,6 @@ Reference: Quantified Strategies (2024), RSI(2) Mean Reversion
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -40,7 +39,7 @@ class MeanReversionSignal:
     rsi_5: float  # Secondary confirmation
     price: float
     sma_200: float
-    vix: Optional[float]
+    vix: float | None
     confidence: float  # 0-1
     reason: str
 
@@ -120,7 +119,7 @@ class MeanReversionStrategy:
 
         return rsi.fillna(50)  # Neutral if no data
 
-    def get_vix(self) -> Optional[float]:
+    def get_vix(self) -> float | None:
         """Fetch current VIX level."""
         try:
             vix_data = yf.Ticker("^VIX").history(period="5d")

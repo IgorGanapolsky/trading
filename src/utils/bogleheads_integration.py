@@ -7,7 +7,7 @@ Integrates Bogleheads forum wisdom into RL trading decisions.
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -42,7 +42,7 @@ def get_bogleheads_learner():
 
 
 def get_bogleheads_signal_for_symbol(
-    symbol: str, market_context: Optional[dict[str, Any]] = None
+    symbol: str, market_context: dict[str, Any] | None = None
 ) -> dict[str, Any]:
     """
     Get Bogleheads-based trading signal for a symbol.
@@ -124,7 +124,7 @@ def get_bogleheads_regime() -> dict[str, Any]:
 def add_bogleheads_features_to_rl_state(
     rl_state: dict[str, Any],
     symbol: str,
-    market_context: Optional[dict[str, Any]] = None,
+    market_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
     Add Bogleheads features to RL state space.

@@ -13,7 +13,7 @@ import json
 import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -147,7 +147,7 @@ class RLPolicyLearner:
     def calculate_reward(
         self,
         trade_result: dict[str, Any],
-        market_state: Optional[dict[str, Any]] = None,
+        market_state: dict[str, Any] | None = None,
     ) -> float:
         """
         Calculate reward from trade result using world-class risk-adjusted reward function.

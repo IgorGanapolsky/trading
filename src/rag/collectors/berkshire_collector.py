@@ -18,7 +18,7 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import requests
 from bs4 import BeautifulSoup
@@ -70,7 +70,7 @@ class BerkshireLettersCollector(BaseNewsCollector):
         "occidental petroleum": "OXY",
     }
 
-    def __init__(self, cache_dir: Optional[str] = None):
+    def __init__(self, cache_dir: str | None = None):
         """
         Initialize Berkshire letters collector.
 
@@ -173,7 +173,7 @@ class BerkshireLettersCollector(BaseNewsCollector):
             logger.error(f"Error downloading letters: {e}")
             return 0
 
-    def _extract_year(self, url: str) -> Optional[int]:
+    def _extract_year(self, url: str) -> int | None:
         """Extract year from letter URL."""
         match = re.search(r"(19|20)\d{2}", url)
         if match:
@@ -412,9 +412,7 @@ class BerkshireLettersCollector(BaseNewsCollector):
         else:
             return "neutral"
 
-    def search(
-        self, query: str, top_k: int = 5, years: Optional[list[int]] = None
-    ) -> dict[str, Any]:
+    def search(self, query: str, top_k: int = 5, years: list[int] | None = None) -> dict[str, Any]:
         """
         Search shareholder letters for relevant content.
 
@@ -638,7 +636,7 @@ class BerkshireLettersCollector(BaseNewsCollector):
 
         return sorted(mentions, key=lambda x: x["year"])
 
-    def get_letter(self, year: int) -> Optional[str]:
+    def get_letter(self, year: int) -> str | None:
         """
         Get full text of a specific letter.
 
@@ -748,7 +746,7 @@ class BerkshireLettersCollector(BaseNewsCollector):
 
         return articles
 
-    def _sentiment_to_score(self, sentiment: str) -> Optional[float]:
+    def _sentiment_to_score(self, sentiment: str) -> float | None:
         """Convert sentiment label to numeric score (0-1)."""
         sentiment_map = {"bullish": 0.8, "neutral": 0.5, "bearish": 0.2, "mixed": 0.5}
         return sentiment_map.get(sentiment)

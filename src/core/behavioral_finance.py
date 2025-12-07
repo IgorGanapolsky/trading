@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -63,11 +63,11 @@ class TradeExpectation:
     expected_confidence: float
     entry_price: float
     entry_date: datetime
-    exit_price: Optional[float] = None
-    exit_date: Optional[datetime] = None
-    actual_return_pct: Optional[float] = None
-    actual_confidence: Optional[float] = None
-    expectation_gap: Optional[float] = None  # actual - expected
+    exit_price: float | None = None
+    exit_date: datetime | None = None
+    actual_return_pct: float | None = None
+    actual_confidence: float | None = None
+    expectation_gap: float | None = None  # actual - expected
 
 
 @dataclass
@@ -76,11 +76,11 @@ class EmotionalRecord:
 
     timestamp: datetime
     event_type: str  # "trade_execution", "loss", "gain", "decision_point"
-    symbol: Optional[str] = None
+    symbol: str | None = None
     emotional_state: EmotionalState = EmotionalState.NEUTRAL
     intensity: float = 0.0  # 0.0 to 1.0
     decision_made: str = ""
-    outcome: Optional[str] = None
+    outcome: str | None = None
     notes: str = ""
 
 
@@ -234,11 +234,11 @@ class BehavioralFinanceManager:
     def record_emotion(
         self,
         event_type: str,
-        symbol: Optional[str] = None,
+        symbol: str | None = None,
         emotional_state: EmotionalState = EmotionalState.NEUTRAL,
         intensity: float = 0.0,
         decision_made: str = "",
-        outcome: Optional[str] = None,
+        outcome: str | None = None,
         notes: str = "",
     ) -> None:
         """
@@ -461,8 +461,8 @@ class BehavioralFinanceManager:
         symbol: str,
         expected_return: float,
         confidence: float,
-        pattern_type: Optional[str] = None,
-        recent_losses: Optional[list[float]] = None,
+        pattern_type: str | None = None,
+        recent_losses: list[float] | None = None,
     ) -> tuple[bool, str]:
         """
         Comprehensive check to determine if trade should proceed.

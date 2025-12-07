@@ -7,7 +7,7 @@ The council provides consensus-based decisions through peer review and chairman 
 
 import json
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from src.core.multi_llm_analysis import (
     LLMCouncilAnalyzer,
@@ -30,9 +30,9 @@ class TradingCouncil:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        council_models: Optional[list[LLMModel]] = None,
-        chairman_model: Optional[LLMModel] = None,
+        api_key: str | None = None,
+        council_models: list[LLMModel] | None = None,
+        chairman_model: LLMModel | None = None,
         enabled: bool = True,
     ):
         """
@@ -66,7 +66,7 @@ class TradingCouncil:
         symbol: str,
         action: str,
         market_data: dict[str, Any],
-        context: Optional[dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Validate a trading decision using LLM Council consensus.
@@ -203,7 +203,7 @@ Be conservative - reject trades with ANY of:
         self,
         symbol: str,
         market_data: dict[str, Any],
-        context: Optional[dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Get trading recommendation from LLM Council.
@@ -258,7 +258,7 @@ Be conservative - reject trades with ANY of:
         symbol: str,
         position_size: float,
         market_data: dict[str, Any],
-        portfolio_context: Optional[dict[str, Any]] = None,
+        portfolio_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Assess risk of a proposed position using LLM Council.
@@ -367,7 +367,7 @@ Be conservative - reject positions that:
 # Convenience function for easy integration
 def create_trading_council(
     enabled: bool = True,
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
 ) -> TradingCouncil:
     """
     Create a Trading Council instance.

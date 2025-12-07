@@ -16,7 +16,7 @@ Created: 2025-12-04
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class PessimisticSlippageModel:
         "OPTIONS": 200,  # Normally 100 bps
     }
 
-    def __init__(self, config: Optional[PessimisticConfig] = None):
+    def __init__(self, config: PessimisticConfig | None = None):
         """
         Initialize pessimistic slippage model.
 
@@ -87,9 +87,9 @@ class PessimisticSlippageModel:
         price: float,
         quantity: float,
         side: str,
-        symbol: Optional[str] = None,
-        volume: Optional[float] = None,
-        volatility: Optional[float] = None,
+        symbol: str | None = None,
+        volume: float | None = None,
+        volatility: float | None = None,
     ) -> dict[str, Any]:
         """
         Calculate slippage with pessimistic assumptions.
@@ -159,7 +159,7 @@ class PessimisticSlippageModel:
             },
         }
 
-    def _get_pessimistic_spread(self, symbol: Optional[str]) -> float:
+    def _get_pessimistic_spread(self, symbol: str | None) -> float:
         """Get pessimistic spread for symbol."""
         if symbol and symbol.upper() in self.PESSIMISTIC_SPREADS:
             return self.PESSIMISTIC_SPREADS[symbol.upper()]

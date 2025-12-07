@@ -4,7 +4,7 @@ Detects bull, bear, and sideways markets for regime-aware training.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -34,8 +34,8 @@ class MarketRegimeDetector:
     def detect(
         self,
         prices: np.ndarray,
-        returns: Optional[np.ndarray] = None,
-        volatility: Optional[float] = None,
+        returns: np.ndarray | None = None,
+        volatility: float | None = None,
     ) -> dict[str, Any]:
         """
         Detect current market regime.

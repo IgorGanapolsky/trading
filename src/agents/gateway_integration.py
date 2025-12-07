@@ -10,17 +10,15 @@ This module bridges:
 - ErrorRecoveryFramework (new fallback strategies)
 """
 
-import asyncio
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from src.agents.anthropic_patterns import (
     HumanCheckpoint,
     RiskCheckpoint,
     RiskLevel,
-    ErrorRecoveryFramework,
     create_trading_checkpoint,
     error_recovery,
 )
@@ -31,9 +29,10 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EnhancedGatewayDecision:
     """Extended gateway decision with human checkpoint info."""
+
     approved: bool
     requires_human_approval: bool
-    checkpoint: Optional[HumanCheckpoint]
+    checkpoint: HumanCheckpoint | None
     risk_level: RiskLevel
     risk_reasons: list[str]
     original_decision: Any  # GatewayDecision from trade_gateway
@@ -64,15 +63,13 @@ class EnhancedTradeGateway:
             daily_loss_threshold=0.02,
             consecutive_losses=3,
             volatility_multiplier=2.0,
-            correlation_threshold=0.8
+            correlation_threshold=0.8,
         )
         self.error_recovery = error_recovery
         self.pending_checkpoints: dict[str, HumanCheckpoint] = {}
 
     async def evaluate_with_checkpoint(
-        self,
-        request,
-        context: Optional[dict[str, Any]] = None
+        self, request, context: dict[str, Any] | None = None
     ) -> EnhancedGatewayDecision:
         """
         Evaluate trade request with human checkpoint.
@@ -96,7 +93,7 @@ class EnhancedTradeGateway:
                 risk_level=RiskLevel.LOW,
                 risk_reasons=original_decision.rejection_reasons,
                 original_decision=original_decision,
-                metadata={"stage": "gateway_rejected"}
+                metadata={"stage": "gateway_rejected"},
             )
 
         # Step 2: Build context for risk assessment
@@ -132,27 +129,26 @@ class EnhancedTradeGateway:
             original_decision=original_decision,
             metadata={
                 "stage": "checkpoint_created" if requires_human else "auto_approved",
-                "risk_context": risk_context
-            }
+                "risk_context": risk_context,
+            },
         )
 
     def _build_risk_context(
-        self,
-        request,
-        additional_context: Optional[dict] = None
+        self, request, additional_context: dict | None = None
     ) -> dict[str, Any]:
         """Build context for risk assessment."""
         context = {
             "symbol": request.symbol,
             "side": request.side,
             "trade_value": request.notional or 0,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         # Add gateway state
         context["daily_pnl_pct"] = (
             self.gateway.daily_pnl / self._get_account_equity()
-            if hasattr(self.gateway, 'daily_pnl') else 0
+            if hasattr(self.gateway, "daily_pnl")
+            else 0
         )
 
         # Merge additional context
@@ -163,14 +159,12 @@ class EnhancedTradeGateway:
 
     def _get_account_equity(self) -> float:
         """Get account equity from gateway."""
-        if hasattr(self.gateway, '_get_account_equity'):
+        if hasattr(self.gateway, "_get_account_equity"):
             return self.gateway._get_account_equity()
         return 100000.0  # Default for paper trading
 
     async def wait_for_approval(
-        self,
-        checkpoint_id: str,
-        timeout_seconds: int = 300
+        self, checkpoint_id: str, timeout_seconds: int = 300
     ) -> tuple[bool, str]:
         """
         Wait for human approval of a checkpoint.
@@ -193,13 +187,15 @@ class EnhancedTradeGateway:
             return True, "Auto-approved (no approval agent)"
 
         # Request approval
-        result = self.approval_agent.analyze({
-            "type": "request_approval",
-            "approval_type": "trade",
-            "context": checkpoint.context,
-            "priority": "high" if checkpoint.risk_level == RiskLevel.HIGH else "critical",
-            "timeout_seconds": timeout_seconds
-        })
+        result = self.approval_agent.analyze(
+            {
+                "type": "request_approval",
+                "approval_type": "trade",
+                "context": checkpoint.context,
+                "priority": "high" if checkpoint.risk_level == RiskLevel.HIGH else "critical",
+                "timeout_seconds": timeout_seconds,
+            }
+        )
 
         if not result.get("approval_required"):
             return True, "Below threshold"
@@ -208,8 +204,7 @@ class EnhancedTradeGateway:
         approval_id = result.get("approval_id")
         if approval_id:
             final_result = await self.approval_agent.wait_for_approval(
-                approval_id,
-                check_interval=5
+                approval_id, check_interval=5
             )
 
             approved = final_result.get("status") == "approved"
@@ -227,10 +222,7 @@ class EnhancedTradeGateway:
         return False, "Failed to create approval request"
 
     async def execute_with_recovery(
-        self,
-        decision: EnhancedGatewayDecision,
-        execute_func,
-        fallback_funcs: Optional[dict] = None
+        self, decision: EnhancedGatewayDecision, execute_func, fallback_funcs: dict | None = None
     ):
         """
         Execute trade with error recovery framework.
@@ -247,7 +239,7 @@ class EnhancedTradeGateway:
             return {
                 "success": False,
                 "error": "Trade not approved",
-                "reasons": decision.risk_reasons
+                "reasons": decision.risk_reasons,
             }
 
         # Use error recovery framework
@@ -255,21 +247,13 @@ class EnhancedTradeGateway:
             tool_name="execute_trade",
             tool_func=execute_func,
             fallback_funcs=fallback_funcs,
-            decision=decision.original_decision
+            decision=decision.original_decision,
         )
 
         if success:
-            return {
-                "success": True,
-                "result": result,
-                "risk_level": decision.risk_level.value
-            }
+            return {"success": True, "result": result, "risk_level": decision.risk_level.value}
         else:
-            return {
-                "success": False,
-                "error": error,
-                "risk_level": decision.risk_level.value
-            }
+            return {"success": False, "error": error, "risk_level": decision.risk_level.value}
 
 
 def get_enhanced_gateway(gateway=None, approval_agent=None) -> EnhancedTradeGateway:
@@ -280,11 +264,13 @@ def get_enhanced_gateway(gateway=None, approval_agent=None) -> EnhancedTradeGate
     """
     if gateway is None:
         from src.risk.trade_gateway import TradeGateway
+
         gateway = TradeGateway(paper=True)
 
     if approval_agent is None:
         try:
             from src.agents.approval_agent import ApprovalAgent
+
             approval_agent = ApprovalAgent()
         except ImportError:
             logger.warning("ApprovalAgent not available")
@@ -319,11 +305,7 @@ async def example_trade_flow():
     # Evaluate with checkpoint
     decision = await enhanced_gateway.evaluate_with_checkpoint(
         request,
-        context={
-            "consecutive_losses": 2,
-            "current_volatility": 1.8,
-            "normal_volatility": 1.0
-        }
+        context={"consecutive_losses": 2, "current_volatility": 1.8, "normal_volatility": 1.0},
     )
 
     if decision.requires_human_approval:
@@ -331,8 +313,7 @@ async def example_trade_flow():
 
         # Wait for approval (in real system, this would notify CEO)
         approved, reason = await enhanced_gateway.wait_for_approval(
-            decision.checkpoint.checkpoint_id,
-            timeout_seconds=300
+            decision.checkpoint.checkpoint_id, timeout_seconds=300
         )
 
         if not approved:
@@ -343,9 +324,6 @@ async def example_trade_flow():
     async def do_trade(decision):
         return base_gateway.execute(decision)
 
-    result = await enhanced_gateway.execute_with_recovery(
-        decision,
-        do_trade
-    )
+    result = await enhanced_gateway.execute_with_recovery(decision, do_trade)
 
     print(f"Trade result: {result}")

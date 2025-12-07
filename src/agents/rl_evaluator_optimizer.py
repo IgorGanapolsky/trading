@@ -15,17 +15,17 @@ Based on: https://www.anthropic.com/engineering/building-effective-agents
 
 import json
 import logging
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 from src.agents.anthropic_patterns import (
     EvaluationResult,
     EvaluatorOptimizerLoop,
     StrategyEvaluator,
     StrategyOptimizer,
-    TradingStrategyEvaluator,
 )
 
 logger = logging.getLogger(__name__)
@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RLParameters:
     """RL agent tunable parameters."""
+
     # Signal thresholds
     entry_threshold: float = 0.6
     exit_threshold: float = 0.4
@@ -41,11 +42,11 @@ class RLParameters:
 
     # Position sizing
     max_position_pct: float = 0.10  # 10% max per position
-    kelly_fraction: float = 0.25    # Kelly criterion fraction
+    kelly_fraction: float = 0.25  # Kelly criterion fraction
 
     # Risk management
-    stop_loss_pct: float = 0.02     # 2% stop loss
-    take_profit_pct: float = 0.04   # 4% take profit
+    stop_loss_pct: float = 0.02  # 2% stop loss
+    take_profit_pct: float = 0.04  # 4% take profit
     max_daily_loss_pct: float = 0.02  # 2% max daily loss
 
     # Momentum parameters
@@ -125,7 +126,7 @@ class RLStrategyEvaluator(StrategyEvaluator):
             "avg_daily_profit": avg_daily_profit,
             "total_pnl": total_pnl,
             "trade_count": len(trades),
-            "phase": self.phase
+            "phase": self.phase,
         }
 
         feedback = []
@@ -153,13 +154,11 @@ class RLStrategyEvaluator(StrategyEvaluator):
         if sharpe >= self.min_sharpe:
             score += 1
             feedback.append(
-                f"✓ Sharpe ratio {sharpe:.2f} meets Phase {self.phase} target "
-                f"({self.min_sharpe})"
+                f"✓ Sharpe ratio {sharpe:.2f} meets Phase {self.phase} target ({self.min_sharpe})"
             )
         else:
             feedback.append(
-                f"✗ Sharpe ratio {sharpe:.2f} below Phase {self.phase} target "
-                f"({self.min_sharpe})"
+                f"✗ Sharpe ratio {sharpe:.2f} below Phase {self.phase} target ({self.min_sharpe})"
             )
             suggestions.append(
                 "Reduce max_position_pct or lower kelly_fraction for better risk-adjusted returns"
@@ -177,9 +176,7 @@ class RLStrategyEvaluator(StrategyEvaluator):
                 f"✗ Max drawdown {max_dd:.1%} exceeds Phase {self.phase} limit "
                 f"({self.max_drawdown:.0%})"
             )
-            suggestions.append(
-                "Tighten stop_loss_pct or reduce max_daily_loss_pct"
-            )
+            suggestions.append("Tighten stop_loss_pct or reduce max_daily_loss_pct")
 
         # 4. Daily profit evaluation
         if avg_daily_profit >= self.min_daily_profit:
@@ -206,7 +203,7 @@ class RLStrategyEvaluator(StrategyEvaluator):
             metrics=metrics,
             feedback=feedback,
             suggestions=suggestions,
-            passed=passed
+            passed=passed,
         )
 
 
@@ -225,9 +222,7 @@ class RLParameterOptimizer(StrategyOptimizer):
         self.learning_rate = learning_rate
 
     def optimize(
-        self,
-        evaluation: EvaluationResult,
-        current_params: dict[str, Any]
+        self, evaluation: EvaluationResult, current_params: dict[str, Any]
     ) -> dict[str, Any]:
         """Generate optimized RL parameters based on evaluation."""
         new_params = current_params.copy()
@@ -239,17 +234,13 @@ class RLParameterOptimizer(StrategyOptimizer):
             # Tighten entry criteria
             if "entry_threshold" in new_params:
                 new_params["entry_threshold"] = min(
-                    new_params["entry_threshold"] * (1 + 0.1 * lr),
-                    0.9
+                    new_params["entry_threshold"] * (1 + 0.1 * lr), 0.9
                 )
             if "min_confidence" in new_params:
-                new_params["min_confidence"] = min(
-                    new_params["min_confidence"] + 0.05 * lr,
-                    0.95
-                )
+                new_params["min_confidence"] = min(new_params["min_confidence"] + 0.05 * lr, 0.95)
             # Also consider volume filter
             if "volume_threshold" in new_params:
-                new_params["volume_threshold"] *= (1 + 0.1 * lr)
+                new_params["volume_threshold"] *= 1 + 0.1 * lr
 
         # Adjust based on Sharpe ratio
         if metrics.get("sharpe_ratio", 0) < 1.0:
@@ -257,12 +248,12 @@ class RLParameterOptimizer(StrategyOptimizer):
             if "max_position_pct" in new_params:
                 new_params["max_position_pct"] = max(
                     new_params["max_position_pct"] * (1 - 0.1 * lr),
-                    0.02  # Minimum 2%
+                    0.02,  # Minimum 2%
                 )
             if "kelly_fraction" in new_params:
                 new_params["kelly_fraction"] = max(
                     new_params["kelly_fraction"] * (1 - 0.1 * lr),
-                    0.1  # Minimum 10%
+                    0.1,  # Minimum 10%
                 )
 
         # Adjust based on drawdown
@@ -271,12 +262,12 @@ class RLParameterOptimizer(StrategyOptimizer):
             if "stop_loss_pct" in new_params:
                 new_params["stop_loss_pct"] = max(
                     new_params["stop_loss_pct"] * (1 - 0.15 * lr),
-                    0.01  # Minimum 1%
+                    0.01,  # Minimum 1%
                 )
             if "max_daily_loss_pct" in new_params:
                 new_params["max_daily_loss_pct"] = max(
                     new_params["max_daily_loss_pct"] * (1 - 0.1 * lr),
-                    0.01  # Minimum 1%
+                    0.01,  # Minimum 1%
                 )
 
         # Adjust based on daily profit
@@ -285,7 +276,7 @@ class RLParameterOptimizer(StrategyOptimizer):
             if "take_profit_pct" in new_params:
                 new_params["take_profit_pct"] = min(
                     new_params["take_profit_pct"] * (1 + 0.1 * lr),
-                    0.10  # Maximum 10%
+                    0.10,  # Maximum 10%
                 )
 
         return new_params
@@ -304,12 +295,7 @@ class RLEvaluatorOptimizer:
         )
     """
 
-    def __init__(
-        self,
-        phase: int = 1,
-        max_iterations: int = 10,
-        learning_rate: float = 0.1
-    ):
+    def __init__(self, phase: int = 1, max_iterations: int = 10, learning_rate: float = 0.1):
         self.phase = phase
         self.evaluator = RLStrategyEvaluator(phase=phase)
         self.optimizer = RLParameterOptimizer(learning_rate=learning_rate)
@@ -317,7 +303,7 @@ class RLEvaluatorOptimizer:
             evaluator=self.evaluator,
             optimizer=self.optimizer,
             max_iterations=max_iterations,
-            min_improvement=0.05
+            min_improvement=0.05,
         )
         self.params_file = Path("data/rl_parameters.json")
         self.history_file = Path("data/rl_optimization_history.json")
@@ -358,8 +344,8 @@ class RLEvaluatorOptimizer:
 
     async def run(
         self,
-        initial_params: Optional[RLParameters] = None,
-        get_performance_data: Optional[Callable[[], dict[str, Any]]] = None
+        initial_params: RLParameters | None = None,
+        get_performance_data: Callable[[], dict[str, Any]] | None = None,
     ) -> tuple[RLParameters, EvaluationResult]:
         """
         Run the full evaluation-optimization loop.
@@ -384,7 +370,7 @@ class RLEvaluatorOptimizer:
         optimized_dict, final_eval = await self.loop.run_loop(
             initial_params=initial_params.to_dict(),
             execute_strategy=execute_strategy,
-            save_params=self.save_params
+            save_params=self.save_params,
         )
 
         self.save_history()
@@ -401,7 +387,7 @@ class RLEvaluatorOptimizer:
                 "sharpe_ratio": 0,
                 "max_drawdown": 0,
                 "avg_daily_profit": 0,
-                "total_pnl": 0
+                "total_pnl": 0,
             }
 
         try:
@@ -412,7 +398,7 @@ class RLEvaluatorOptimizer:
                 "sharpe_ratio": state.get("sharpe_ratio", 0),
                 "max_drawdown": state.get("max_drawdown", 0),
                 "avg_daily_profit": state.get("avg_daily_profit", 0),
-                "total_pnl": state.get("total_pnl", 0)
+                "total_pnl": state.get("total_pnl", 0),
             }
         except Exception as e:
             logger.error(f"Failed to read system state: {e}")
@@ -422,7 +408,7 @@ class RLEvaluatorOptimizer:
                 "sharpe_ratio": 0,
                 "max_drawdown": 0,
                 "avg_daily_profit": 0,
-                "total_pnl": 0
+                "total_pnl": 0,
             }
 
     def quick_evaluate(self) -> EvaluationResult:
@@ -443,12 +429,12 @@ class RLEvaluatorOptimizer:
                 "passed": eval_result.passed,
                 "metrics": eval_result.metrics,
                 "feedback": eval_result.feedback,
-                "suggestions": eval_result.suggestions
+                "suggestions": eval_result.suggestions,
             },
-            "last_optimized": self._get_last_optimization_time()
+            "last_optimized": self._get_last_optimization_time(),
         }
 
-    def _get_last_optimization_time(self) -> Optional[str]:
+    def _get_last_optimization_time(self) -> str | None:
         """Get timestamp of last optimization."""
         if not self.history_file.exists():
             return None
@@ -474,8 +460,7 @@ def evaluate_rl_strategy(phase: int = 1) -> dict[str, Any]:
 
 # Convenience function for running optimization
 async def optimize_rl_strategy(
-    phase: int = 1,
-    max_iterations: int = 10
+    phase: int = 1, max_iterations: int = 10
 ) -> tuple[RLParameters, EvaluationResult]:
     """
     Run full RL optimization loop.

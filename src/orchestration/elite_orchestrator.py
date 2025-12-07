@@ -18,7 +18,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from src.agent_framework import agent_blueprints
 from src.agent_framework.context_engine import (
@@ -63,7 +63,7 @@ class TradePlan:
     decisions: list[dict[str, Any]] = field(default_factory=list)
     context: dict[str, Any] = field(default_factory=dict)
     status: str = "planning"
-    git_commit: Optional[str] = None
+    git_commit: str | None = None
 
 
 @dataclass
@@ -96,7 +96,7 @@ class EliteOrchestrator:
         self,
         paper: bool = True,
         enable_planning: bool = True,
-        enable_adaptive: Optional[bool] = None,
+        enable_adaptive: bool | None = None,
     ):
         """
         Initialize Elite Orchestrator
@@ -361,7 +361,7 @@ class EliteOrchestrator:
         )
 
     def create_trade_plan(
-        self, symbols: list[str], context: Optional[dict[str, Any]] = None
+        self, symbols: list[str], context: dict[str, Any] | None = None
     ) -> TradePlan:
         """
         Create a planning-first trade plan (with adaptive organization if enabled)

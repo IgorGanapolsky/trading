@@ -12,7 +12,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -32,16 +32,16 @@ class BrokerHealthMetrics:
 
     broker_name: str
     status: BrokerStatus
-    last_successful_connection: Optional[datetime] = None
-    last_failed_connection: Optional[datetime] = None
+    last_successful_connection: datetime | None = None
+    last_failed_connection: datetime | None = None
     consecutive_failures: int = 0
     total_checks: int = 0
     successful_checks: int = 0
     failed_checks: int = 0
     avg_response_time_ms: float = 0.0
-    last_error: Optional[str] = None
-    account_status: Optional[str] = None
-    buying_power: Optional[float] = None
+    last_error: str | None = None
+    account_status: str | None = None
+    buying_power: float | None = None
 
     @property
     def success_rate(self) -> float:
@@ -169,9 +169,7 @@ class BrokerHealthMonitor:
 
         return self.metrics
 
-    def _log_health_check(
-        self, success: bool, response_time_ms: float, error: Optional[str] = None
-    ):
+    def _log_health_check(self, success: bool, response_time_ms: float, error: str | None = None):
         """Log health check result to file."""
         import json
         from pathlib import Path
@@ -234,7 +232,7 @@ class BrokerHealthMonitor:
         # Alert if success rate drops below 50% in recent checks
         return bool(self.metrics.total_checks >= 10 and self.metrics.success_rate < 50.0)
 
-    def get_alert_message(self) -> Optional[str]:
+    def get_alert_message(self) -> str | None:
         """Generate alert message if needed."""
         if not self.should_alert():
             return None

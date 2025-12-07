@@ -20,7 +20,7 @@ Date: December 2, 2025
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ class StrategyViability:
     current_capital: float
     capital_gap: float
     days_to_viable: int  # At $10/day accumulation rate
-    recommended_alternative: Optional[str] = None
+    recommended_alternative: str | None = None
 
 
 @dataclass
@@ -58,7 +58,7 @@ class CapitalProfile:
     current_tier: StrategyTier
     viable_strategies: list[str]
     blocked_strategies: dict[str, str]  # strategy -> reason
-    next_tier: Optional[StrategyTier]
+    next_tier: StrategyTier | None
     days_to_next_tier: int
     warnings: list[str]
 
@@ -238,7 +238,7 @@ class CapitalEfficiencyCalculator:
         )
 
     def check_strategy_viability(
-        self, strategy_id: str, account_equity: float, iv_rank: Optional[float] = None
+        self, strategy_id: str, account_equity: float, iv_rank: float | None = None
     ) -> StrategyViability:
         """
         Check if a specific strategy is viable.
@@ -393,7 +393,7 @@ class CapitalEfficiencyCalculator:
     def get_optimal_strategy_for_capital(
         self,
         account_equity: float,
-        iv_rank: Optional[float] = None,
+        iv_rank: float | None = None,
         market_outlook: str = "neutral",
     ) -> dict[str, Any]:
         """
@@ -468,7 +468,7 @@ class CapitalEfficiencyCalculator:
         }
         return tier_thresholds.get(tier, 0)
 
-    def _get_alternative(self, strategy_id: str, account_equity: float) -> Optional[str]:
+    def _get_alternative(self, strategy_id: str, account_equity: float) -> str | None:
         """Get alternative strategy for insufficient capital."""
         tier = self._determine_tier(account_equity)
 

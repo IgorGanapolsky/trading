@@ -32,7 +32,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class CircuitBreakerStatus:
     is_new_entries_allowed: bool
     position_size_multiplier: float
     active_triggers: list[str]
-    last_trigger_event: Optional[CircuitBreakerEvent]
+    last_trigger_event: CircuitBreakerEvent | None
     tier_history: list[CircuitBreakerEvent]
 
 
@@ -160,10 +160,10 @@ class MultiTierCircuitBreaker:
         portfolio_value: float,
         daily_pnl: float,
         consecutive_losses: int = 0,
-        vix_level: Optional[float] = None,
-        spy_daily_change: Optional[float] = None,
-        rolling_volatility: Optional[float] = None,
-        historical_volatility: Optional[float] = None,
+        vix_level: float | None = None,
+        spy_daily_change: float | None = None,
+        rolling_volatility: float | None = None,
+        historical_volatility: float | None = None,
     ) -> CircuitBreakerStatus:
         """
         Evaluate all circuit breaker conditions and return current status.
@@ -658,7 +658,7 @@ class MultiTierCircuitBreaker:
     def _attempt_automatic_recovery(
         self,
         daily_pnl_pct: float = 0.0,
-        vix_level: Optional[float] = None,
+        vix_level: float | None = None,
     ) -> bool:
         """
         Attempt automatic recovery from circuit breaker states.
@@ -762,7 +762,7 @@ class MultiTierCircuitBreaker:
     def _check_recovery_conditions(
         self,
         daily_pnl_pct: float,
-        vix_level: Optional[float],
+        vix_level: float | None,
     ) -> bool:
         """
         Check if conditions are favorable for automatic recovery.
@@ -864,7 +864,7 @@ class MultiTierCircuitBreaker:
 
 
 # Convenience functions
-def get_vix_level() -> Optional[float]:
+def get_vix_level() -> float | None:
     """Fetch current VIX level."""
     try:
         import yfinance as yf
@@ -878,7 +878,7 @@ def get_vix_level() -> Optional[float]:
     return None
 
 
-def get_spy_daily_change() -> Optional[float]:
+def get_spy_daily_change() -> float | None:
     """Fetch SPY daily percentage change."""
     try:
         import yfinance as yf
@@ -895,7 +895,7 @@ def get_spy_daily_change() -> Optional[float]:
 
 
 # Global instance
-_GLOBAL_CIRCUIT_BREAKER: Optional[MultiTierCircuitBreaker] = None
+_GLOBAL_CIRCUIT_BREAKER: MultiTierCircuitBreaker | None = None
 
 
 def get_circuit_breaker() -> MultiTierCircuitBreaker:

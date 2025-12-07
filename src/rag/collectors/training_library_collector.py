@@ -17,7 +17,7 @@ import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 _spec = _importlib_util.spec_from_file_location(
     "base_collector",
@@ -198,7 +198,7 @@ class TrainingLibraryCollector(BaseNewsCollector):
     All content is tagged with citation metadata for ThesisGenerator.
     """
 
-    def __init__(self, cache_dir: Optional[str] = None):
+    def __init__(self, cache_dir: str | None = None):
         """Initialize training library collector."""
         super().__init__(source_name="training_library")
 
@@ -368,8 +368,8 @@ class TrainingLibraryCollector(BaseNewsCollector):
 
     def get_chunks_for_rag(
         self,
-        source_type: Optional[str] = None,
-        edge_category: Optional[str] = None,
+        source_type: str | None = None,
+        edge_category: str | None = None,
     ) -> list[dict[str, Any]]:
         """
         Get all chunks formatted for RAG ingestion.
@@ -454,8 +454,8 @@ class TrainingLibraryCollector(BaseNewsCollector):
     def search(
         self,
         query: str,
-        source_type: Optional[str] = None,
-        edge_category: Optional[str] = None,
+        source_type: str | None = None,
+        edge_category: str | None = None,
         top_k: int = 5,
     ) -> dict[str, Any]:
         """

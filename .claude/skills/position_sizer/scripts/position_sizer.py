@@ -55,8 +55,8 @@ class PositionSizer:
         account_value: float,
         risk_per_trade_pct: float = 1.0,
         method: str = "volatility_adjusted",
-        current_price: Optional[float] = None,
-        stop_loss_price: Optional[float] = None,
+        current_price: float | None = None,
+        stop_loss_price: float | None = None,
         win_rate: float = 0.55,
         avg_win_loss_ratio: float = 1.5,
     ) -> dict[str, Any]:
@@ -188,7 +188,7 @@ class PositionSizer:
         self,
         account_value: float,
         positions: list[dict[str, Any]],
-        pending_trades: Optional[list[dict[str, Any]]] = None,
+        pending_trades: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """
         Calculate total risk exposure across all positions

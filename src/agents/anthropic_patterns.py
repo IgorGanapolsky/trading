@@ -12,15 +12,13 @@ Implements:
 """
 
 import asyncio
-import json
 import logging
-import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +30,11 @@ logger = logging.getLogger(__name__)
 
 class RiskLevel(Enum):
     """Risk levels requiring different approval thresholds."""
-    LOW = "low"           # Auto-approve
-    MEDIUM = "medium"     # Log + proceed
-    HIGH = "high"         # Require confirmation
-    CRITICAL = "critical" # Block until CEO approval
+
+    LOW = "low"  # Auto-approve
+    MEDIUM = "medium"  # Log + proceed
+    HIGH = "high"  # Require confirmation
+    CRITICAL = "critical"  # Block until CEO approval
 
 
 @dataclass
@@ -46,11 +45,12 @@ class RiskCheckpoint:
     Key insight: Approval thresholds should be MULTI-DIMENSIONAL,
     not just based on trade value.
     """
+
     trade_value_threshold: float = 50.0  # $50 for high-risk flag
-    daily_loss_threshold: float = 0.02   # 2% daily loss triggers checkpoint
-    consecutive_losses: int = 3          # 3 losses in a row
-    volatility_multiplier: float = 2.0   # 2x normal volatility
-    correlation_threshold: float = 0.8   # 80% correlation with existing positions
+    daily_loss_threshold: float = 0.02  # 2% daily loss triggers checkpoint
+    consecutive_losses: int = 3  # 3 losses in a row
+    volatility_multiplier: float = 2.0  # 2x normal volatility
+    correlation_threshold: float = 0.8  # 80% correlation with existing positions
 
     def assess_risk(self, context: dict[str, Any]) -> tuple[RiskLevel, list[str]]:
         """
@@ -109,13 +109,14 @@ class HumanCheckpoint:
     - HIGH: Pause and request confirmation (with timeout)
     - CRITICAL: Block until explicit CEO approval
     """
+
     checkpoint_id: str
     context: dict[str, Any]
     risk_level: RiskLevel
     reasons: list[str]
     created_at: datetime = field(default_factory=datetime.now)
-    resolved_at: Optional[datetime] = None
-    resolution: Optional[str] = None  # "approved", "rejected", "timeout", "escalated"
+    resolved_at: datetime | None = None
+    resolution: str | None = None  # "approved", "rejected", "timeout", "escalated"
 
     def requires_human_approval(self) -> bool:
         """Determine if checkpoint requires human approval."""
@@ -124,9 +125,9 @@ class HumanCheckpoint:
     def get_timeout_seconds(self) -> int:
         """Get appropriate timeout based on risk level."""
         timeouts = {
-            RiskLevel.LOW: 0,       # No wait
-            RiskLevel.MEDIUM: 0,    # No wait, just notify
-            RiskLevel.HIGH: 300,    # 5 minutes
+            RiskLevel.LOW: 0,  # No wait
+            RiskLevel.MEDIUM: 0,  # No wait, just notify
+            RiskLevel.HIGH: 300,  # 5 minutes
             RiskLevel.CRITICAL: 0,  # No timeout - must wait
         }
         return timeouts.get(self.risk_level, 300)
@@ -139,20 +140,22 @@ class HumanCheckpoint:
 
 class ToolFallbackStrategy(Enum):
     """Fallback strategies when a tool fails."""
-    RETRY_SAME = "retry_same"           # Retry the same tool
-    FALLBACK_TOOL = "fallback_tool"     # Use alternative tool
-    DEGRADE_GRACEFULLY = "degrade"      # Continue without this capability
-    ABORT_WORKFLOW = "abort"            # Stop the workflow entirely
-    HUMAN_INTERVENTION = "human"        # Request human help
+
+    RETRY_SAME = "retry_same"  # Retry the same tool
+    FALLBACK_TOOL = "fallback_tool"  # Use alternative tool
+    DEGRADE_GRACEFULLY = "degrade"  # Continue without this capability
+    ABORT_WORKFLOW = "abort"  # Stop the workflow entirely
+    HUMAN_INTERVENTION = "human"  # Request human help
 
 
 @dataclass
 class ToolRecoveryConfig:
     """Configuration for tool error recovery."""
+
     tool_name: str
     max_retries: int = 3
     retry_backoff: float = 2.0  # Exponential backoff base
-    fallback_tool: Optional[str] = None
+    fallback_tool: str | None = None
     fallback_strategy: ToolFallbackStrategy = ToolFallbackStrategy.RETRY_SAME
     critical: bool = False  # If True, abort workflow on failure
 
@@ -178,14 +181,14 @@ class ErrorRecoveryFramework:
                 max_retries=3,
                 fallback_tool="get_cached_market_data",
                 fallback_strategy=ToolFallbackStrategy.FALLBACK_TOOL,
-                critical=False
+                critical=False,
             ),
             # Sentiment analysis - can degrade gracefully
             ToolRecoveryConfig(
                 tool_name="analyze_sentiment",
                 max_retries=2,
                 fallback_strategy=ToolFallbackStrategy.DEGRADE_GRACEFULLY,
-                critical=False
+                critical=False,
             ),
             # Trade execution - CRITICAL, must succeed or abort
             ToolRecoveryConfig(
@@ -193,7 +196,7 @@ class ErrorRecoveryFramework:
                 max_retries=5,
                 retry_backoff=1.5,
                 fallback_strategy=ToolFallbackStrategy.HUMAN_INTERVENTION,
-                critical=True
+                critical=True,
             ),
             # Risk assessment - can fallback to conservative estimate
             ToolRecoveryConfig(
@@ -201,7 +204,7 @@ class ErrorRecoveryFramework:
                 max_retries=2,
                 fallback_tool="conservative_risk_estimate",
                 fallback_strategy=ToolFallbackStrategy.FALLBACK_TOOL,
-                critical=False
+                critical=False,
             ),
             # Position sizing - can fallback to minimum size
             ToolRecoveryConfig(
@@ -209,7 +212,7 @@ class ErrorRecoveryFramework:
                 max_retries=2,
                 fallback_tool="minimum_position_size",
                 fallback_strategy=ToolFallbackStrategy.FALLBACK_TOOL,
-                critical=False
+                critical=False,
             ),
         ]
 
@@ -225,9 +228,9 @@ class ErrorRecoveryFramework:
         tool_name: str,
         tool_func: Callable,
         *args,
-        fallback_funcs: Optional[dict[str, Callable]] = None,
-        **kwargs
-    ) -> tuple[bool, Any, Optional[str]]:
+        fallback_funcs: dict[str, Callable] | None = None,
+        **kwargs,
+    ) -> tuple[bool, Any, str | None]:
         """
         Execute a tool with automatic error recovery.
 
@@ -236,7 +239,7 @@ class ErrorRecoveryFramework:
         """
         config = self.recovery_configs.get(
             tool_name,
-            ToolRecoveryConfig(tool_name=tool_name)  # Default config
+            ToolRecoveryConfig(tool_name=tool_name),  # Default config
         )
 
         last_error = None
@@ -255,7 +258,7 @@ class ErrorRecoveryFramework:
                 self._log_failure(tool_name, attempt + 1, last_error)
 
                 if attempt < config.max_retries - 1:
-                    delay = config.retry_backoff ** attempt
+                    delay = config.retry_backoff**attempt
                     logger.warning(
                         f"Tool {tool_name} failed (attempt {attempt + 1}), "
                         f"retrying in {delay:.1f}s: {e}"
@@ -263,18 +266,16 @@ class ErrorRecoveryFramework:
                     await asyncio.sleep(delay)
 
         # Primary tool exhausted retries - apply fallback strategy
-        return await self._apply_fallback(
-            config, fallback_funcs, last_error, *args, **kwargs
-        )
+        return await self._apply_fallback(config, fallback_funcs, last_error, *args, **kwargs)
 
     async def _apply_fallback(
         self,
         config: ToolRecoveryConfig,
-        fallback_funcs: Optional[dict[str, Callable]],
+        fallback_funcs: dict[str, Callable] | None,
         error: str,
         *args,
-        **kwargs
-    ) -> tuple[bool, Any, Optional[str]]:
+        **kwargs,
+    ) -> tuple[bool, Any, str | None]:
         """Apply the configured fallback strategy."""
 
         strategy = config.fallback_strategy
@@ -311,12 +312,14 @@ class ErrorRecoveryFramework:
 
     def _log_failure(self, tool_name: str, attempt: int, error: str):
         """Log tool failure for analysis."""
-        self.failure_log.append({
-            "tool": tool_name,
-            "attempt": attempt,
-            "error": error,
-            "timestamp": datetime.now().isoformat()
-        })
+        self.failure_log.append(
+            {
+                "tool": tool_name,
+                "attempt": attempt,
+                "error": error,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
         # Keep only last 1000 failures
         if len(self.failure_log) > 1000:
@@ -331,6 +334,7 @@ class ErrorRecoveryFramework:
 @dataclass
 class EvaluationResult:
     """Result of evaluating a trading strategy or decision."""
+
     score: float  # 0.0 to 1.0
     metrics: dict[str, float]
     feedback: list[str]
@@ -364,7 +368,7 @@ class TradingStrategyEvaluator(StrategyEvaluator):
         min_win_rate: float = 0.55,
         min_sharpe: float = 1.0,
         max_drawdown: float = 0.10,
-        min_trades: int = 20
+        min_trades: int = 20,
     ):
         self.min_win_rate = min_win_rate
         self.min_sharpe = min_sharpe
@@ -384,7 +388,7 @@ class TradingStrategyEvaluator(StrategyEvaluator):
             "sharpe_ratio": sharpe,
             "max_drawdown": max_dd,
             "total_return": total_return,
-            "trade_count": len(trades)
+            "trade_count": len(trades),
         }
 
         feedback = []
@@ -420,17 +424,15 @@ class TradingStrategyEvaluator(StrategyEvaluator):
             score += 0.25
             feedback.append(f"✓ Sufficient trades ({len(trades)}) for statistical significance")
         else:
-            feedback.append(f"✗ Only {len(trades)} trades - need {self.min_trades} for significance")
+            feedback.append(
+                f"✗ Only {len(trades)} trades - need {self.min_trades} for significance"
+            )
             suggestions.append("Continue paper trading to gather more data")
 
         passed = score >= 0.75  # Need 3/4 criteria
 
         return EvaluationResult(
-            score=score,
-            metrics=metrics,
-            feedback=feedback,
-            suggestions=suggestions,
-            passed=passed
+            score=score, metrics=metrics, feedback=feedback, suggestions=suggestions, passed=passed
         )
 
 
@@ -439,9 +441,7 @@ class StrategyOptimizer(ABC):
 
     @abstractmethod
     def optimize(
-        self,
-        evaluation: EvaluationResult,
-        current_params: dict[str, Any]
+        self, evaluation: EvaluationResult, current_params: dict[str, Any]
     ) -> dict[str, Any]:
         """Suggest optimized parameters based on evaluation."""
         pass
@@ -455,9 +455,7 @@ class TradingStrategyOptimizer(StrategyOptimizer):
     """
 
     def optimize(
-        self,
-        evaluation: EvaluationResult,
-        current_params: dict[str, Any]
+        self, evaluation: EvaluationResult, current_params: dict[str, Any]
     ) -> dict[str, Any]:
         """Generate optimized parameters based on evaluation."""
         new_params = current_params.copy()
@@ -470,9 +468,7 @@ class TradingStrategyOptimizer(StrategyOptimizer):
             if "entry_threshold" in new_params:
                 new_params["entry_threshold"] *= 1.1
             if "min_confidence" in new_params:
-                new_params["min_confidence"] = min(
-                    new_params["min_confidence"] + 0.05, 0.95
-                )
+                new_params["min_confidence"] = min(new_params["min_confidence"] + 0.05, 0.95)
 
         # Adjust based on Sharpe ratio
         if metrics.get("sharpe_ratio", 0) < 1.0:
@@ -509,7 +505,7 @@ class EvaluatorOptimizerLoop:
         evaluator: StrategyEvaluator,
         optimizer: StrategyOptimizer,
         max_iterations: int = 10,
-        min_improvement: float = 0.01
+        min_improvement: float = 0.01,
     ):
         self.evaluator = evaluator
         self.optimizer = optimizer
@@ -521,7 +517,7 @@ class EvaluatorOptimizerLoop:
         self,
         initial_params: dict[str, Any],
         execute_strategy: Callable[[dict], dict],
-        save_params: Optional[Callable[[dict], None]] = None
+        save_params: Callable[[dict], None] | None = None,
     ) -> tuple[dict[str, Any], EvaluationResult]:
         """
         Run the evaluator-optimizer loop.
@@ -548,14 +544,16 @@ class EvaluatorOptimizerLoop:
             evaluation = self.evaluator.evaluate(context)
 
             # Log iteration
-            self.history.append({
-                "iteration": iteration + 1,
-                "params": current_params.copy(),
-                "score": evaluation.score,
-                "passed": evaluation.passed,
-                "metrics": evaluation.metrics,
-                "timestamp": datetime.now().isoformat()
-            })
+            self.history.append(
+                {
+                    "iteration": iteration + 1,
+                    "params": current_params.copy(),
+                    "score": evaluation.score,
+                    "passed": evaluation.passed,
+                    "metrics": evaluation.metrics,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
             logger.info(
                 f"Iteration {iteration + 1}: score={evaluation.score:.2f}, "
@@ -609,7 +607,7 @@ class EvaluatorOptimizerLoop:
             "final_score": last["score"],
             "improvement": last["score"] - first["score"],
             "passed": last["passed"],
-            "history": self.history
+            "history": self.history,
         }
 
 
@@ -627,6 +625,7 @@ class ActionTool:
     Bad: get_positions(), list_orders()
     Good: close_position(), execute_trade(), assess_risk()
     """
+
     name: str
     description: str
     action_verb: str  # The primary action: "execute", "assess", "validate"
@@ -639,9 +638,22 @@ class ActionTool:
     def validate_name(self) -> bool:
         """Validate tool name follows action-oriented pattern."""
         action_verbs = [
-            "execute", "place", "cancel", "close", "assess", "validate",
-            "calculate", "analyze", "detect", "monitor", "alert", "notify",
-            "optimize", "rebalance", "hedge", "scale"
+            "execute",
+            "place",
+            "cancel",
+            "close",
+            "assess",
+            "validate",
+            "calculate",
+            "analyze",
+            "detect",
+            "monitor",
+            "alert",
+            "notify",
+            "optimize",
+            "rebalance",
+            "hedge",
+            "scale",
         ]
         return any(self.name.startswith(verb) for verb in action_verbs)
 
@@ -657,9 +669,8 @@ ACTION_TOOL_MAPPINGS = {
         returns="RiskAssessment with positions, risk metrics, and recommendations",
         side_effects=[],
         reversible=True,
-        requires_approval=False
+        requires_approval=False,
     ),
-
     # Instead of get_market_data -> analyze_market_conditions
     "get_market_data": ActionTool(
         name="analyze_market_conditions",
@@ -669,9 +680,8 @@ ACTION_TOOL_MAPPINGS = {
         returns="MarketAnalysis with trend, volatility, and signals",
         side_effects=[],
         reversible=True,
-        requires_approval=False
+        requires_approval=False,
     ),
-
     # Instead of place_order -> execute_trade
     "place_order": ActionTool(
         name="execute_trade",
@@ -681,9 +691,8 @@ ACTION_TOOL_MAPPINGS = {
         returns="TradeResult with order_id, fill_price, status",
         side_effects=["modifies_portfolio", "incurs_commission"],
         reversible=True,  # Can close position
-        requires_approval=True  # Goes through human checkpoint
+        requires_approval=True,  # Goes through human checkpoint
     ),
-
     # Instead of get_account -> validate_trading_capacity
     "get_account": ActionTool(
         name="validate_trading_capacity",
@@ -693,7 +702,7 @@ ACTION_TOOL_MAPPINGS = {
         returns="ValidationResult with available_funds, margin_status",
         side_effects=[],
         reversible=True,
-        requires_approval=False
+        requires_approval=False,
     ),
 }
 
@@ -719,28 +728,19 @@ def create_trading_checkpoint(context: dict[str, Any]) -> HumanCheckpoint:
     risk_level, reasons = checkpoint_config.assess_risk(context)
 
     return HumanCheckpoint(
-        checkpoint_id=str(uuid.uuid4()),
-        context=context,
-        risk_level=risk_level,
-        reasons=reasons
+        checkpoint_id=str(uuid.uuid4()), context=context, risk_level=risk_level, reasons=reasons
     )
 
 
 def create_evaluator_optimizer_loop() -> EvaluatorOptimizerLoop:
     """Create a configured evaluator-optimizer loop for trading."""
     evaluator = TradingStrategyEvaluator(
-        min_win_rate=0.55,
-        min_sharpe=1.0,
-        max_drawdown=0.10,
-        min_trades=20
+        min_win_rate=0.55, min_sharpe=1.0, max_drawdown=0.10, min_trades=20
     )
     optimizer = TradingStrategyOptimizer()
 
     return EvaluatorOptimizerLoop(
-        evaluator=evaluator,
-        optimizer=optimizer,
-        max_iterations=10,
-        min_improvement=0.01
+        evaluator=evaluator, optimizer=optimizer, max_iterations=10, min_improvement=0.01
     )
 
 

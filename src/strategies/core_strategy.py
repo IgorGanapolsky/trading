@@ -37,7 +37,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -126,9 +126,9 @@ class TradeOrder:
     action: str  # 'buy' or 'sell'
     quantity: float
     amount: float
-    price: Optional[float]
+    price: float | None
     order_type: str
-    stop_loss: Optional[float]
+    stop_loss: float | None
     timestamp: datetime
     reason: str
 
@@ -222,14 +222,14 @@ class CoreStrategy:
     def __init__(
         self,
         daily_allocation: float = 900.0,
-        etf_universe: Optional[list[str]] = None,
+        etf_universe: list[str] | None = None,
         stop_loss_pct: float = DEFAULT_STOP_LOSS_PCT,
         take_profit_pct: float = TAKE_PROFIT_PCT,
         use_sentiment: bool = True,
         use_vca: bool = False,
-        vca_target_growth_rate: Optional[float] = None,
-        vca_max_adjustment: Optional[float] = None,
-        vca_min_adjustment: Optional[float] = None,
+        vca_target_growth_rate: float | None = None,
+        vca_max_adjustment: float | None = None,
+        vca_min_adjustment: float | None = None,
     ):
         """
         Initialize the Core Strategy.
@@ -259,7 +259,7 @@ class CoreStrategy:
         self.use_vca = use_vca and VCA_AVAILABLE
 
         # Initialize VCA strategy if enabled
-        self.vca_strategy: Optional[VCAStrategy] = None
+        self.vca_strategy: VCAStrategy | None = None
         if self.use_vca:
             try:
                 vca_config = {}
@@ -282,7 +282,7 @@ class CoreStrategy:
 
         # Strategy state
         self.current_holdings: dict[str, float] = {}
-        self.last_rebalance_date: Optional[datetime] = None
+        self.last_rebalance_date: datetime | None = None
         self.total_invested: float = 0.0
         self.total_value: float = 0.0
 
@@ -301,7 +301,7 @@ class CoreStrategy:
 
         # RL policy integration
         self.rl_enabled = os.getenv("ENABLE_RL_POLICY", "true").lower() == "true"
-        self.rl_learner: Optional[RLPolicyLearner] = None
+        self.rl_learner: RLPolicyLearner | None = None
         if self.rl_enabled:
             try:
                 self.rl_learner = RLPolicyLearner()
@@ -311,7 +311,7 @@ class CoreStrategy:
                 self.rl_enabled = False
 
         # Deep learning forecaster
-        self.deep_forecaster: Optional[DeepMomentumForecaster] = None
+        self.deep_forecaster: DeepMomentumForecaster | None = None
         try:
             self.deep_forecaster = DeepMomentumForecaster()
             logger.info("Deep momentum forecaster ready")
@@ -400,7 +400,7 @@ class CoreStrategy:
             f"take_profit={take_profit_pct * 100}%"
         )
 
-    def execute_daily(self) -> Optional[TradeOrder]:
+    def execute_daily(self) -> TradeOrder | None:
         """
         Execute the daily trading routine.
 
@@ -1520,7 +1520,7 @@ class CoreStrategy:
 
         return momentum_score
 
-    def select_best_etf(self, momentum_scores: Optional[list[MomentumScore]] = None) -> str:
+    def select_best_etf(self, momentum_scores: list[MomentumScore] | None = None) -> str:
         """
         Select the ETF with the highest momentum score.
 
@@ -2180,7 +2180,7 @@ class CoreStrategy:
 
         return thresholds
 
-    def _update_trend_snapshot(self, extra_symbols: Optional[list[str]] = None) -> None:
+    def _update_trend_snapshot(self, extra_symbols: list[str] | None = None) -> None:
         """Build and persist SMA snapshot for Tier 1/2 assets."""
         base_symbols = list(
             dict.fromkeys(list(self.etf_universe) + list(self.DIVERSIFICATION_SYMBOLS.values()))
@@ -2211,7 +2211,7 @@ class CoreStrategy:
         return filtered
 
     def _build_market_state(
-        self, symbol: str, momentum_score: Optional[MomentumScore] = None
+        self, symbol: str, momentum_score: MomentumScore | None = None
     ) -> dict[str, Any]:
         snapshot = self._trend_snapshot.get(symbol)
         hist = self._price_history_cache.get(symbol)
@@ -2256,7 +2256,7 @@ class CoreStrategy:
         reward = self.rl_learner.calculate_reward(trade_result, new_state)
         self.rl_learner.update_policy(prev_state["state"], "BUY", reward, new_state, done=True)
 
-    def _get_current_price(self, symbol: str) -> Optional[float]:
+    def _get_current_price(self, symbol: str) -> float | None:
         """
         Get current market price for symbol.
 
@@ -2476,8 +2476,8 @@ class CoreStrategy:
         symbol: str,
         quantity: float,
         price: float,
-        sentiment: Optional[MarketSentiment],
-        reason: Optional[str] = None,
+        sentiment: MarketSentiment | None,
+        reason: str | None = None,
     ) -> TradeOrder:
         """
         Create a buy order with stop-loss.
