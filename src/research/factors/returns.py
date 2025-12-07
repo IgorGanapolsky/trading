@@ -5,7 +5,6 @@ Provides multi-horizon return calculations and return-based features.
 """
 
 import logging
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -39,7 +38,7 @@ def calculate_returns(
 
 def calculate_multi_horizon_returns(
     prices: pd.Series,
-    horizons: Optional[list[str]] = None,
+    horizons: list[str] | None = None,
 ) -> pd.DataFrame:
     """
     Calculate returns over multiple horizons.

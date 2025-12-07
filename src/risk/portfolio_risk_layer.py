@@ -10,7 +10,6 @@ Created: 2025-12-02
 
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 from src.target_model import TARGET_DAILY_NET_INCOME, TargetModel, TargetModelConfig
 
@@ -52,7 +51,7 @@ class PortfolioRiskLayer:
     - Daily loss limits
     """
 
-    def __init__(self, config: Optional[PositionSizingConfig] = None):
+    def __init__(self, config: PositionSizingConfig | None = None):
         """
         Initialize portfolio risk layer.
 
@@ -67,7 +66,7 @@ class PortfolioRiskLayer:
         signal_strength: float,
         volatility: float,
         current_price: float,
-        account_equity: Optional[float] = None,
+        account_equity: float | None = None,
         current_exposure: float = 0.0,
     ) -> PositionSizingResult:
         """
@@ -138,7 +137,7 @@ class PortfolioRiskLayer:
     def check_daily_loss_limit(
         self,
         daily_pnl: float,
-        account_equity: Optional[float] = None,
+        account_equity: float | None = None,
     ) -> tuple[bool, str]:
         """
         Check if daily loss exceeds limits.
@@ -173,7 +172,7 @@ class PortfolioRiskLayer:
     def allocate_across_strategies(
         self,
         strategy_signals: dict[str, dict[str, float]],
-        account_equity: Optional[float] = None,
+        account_equity: float | None = None,
     ) -> dict[str, PositionSizingResult]:
         """
         Allocate capital across multiple strategies.

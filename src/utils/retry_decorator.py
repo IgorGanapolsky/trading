@@ -7,10 +7,10 @@ Updated: 2025-12-04 - Added timeout support to prevent indefinite hangs.
 
 import logging
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FuturesTimeoutError
 from functools import wraps
-from typing import Callable, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +26,8 @@ def retry_with_backoff(
     initial_delay: float = 1.0,
     backoff_factor: float = 2.0,
     exceptions: tuple[type[Exception], ...] = (Exception,),
-    timeout: Optional[float] = 10.0,  # Default 10 second timeout per attempt
-    total_timeout: Optional[float] = 60.0,  # Default 60 second total timeout
+    timeout: float | None = 10.0,  # Default 10 second timeout per attempt
+    total_timeout: float | None = 60.0,  # Default 60 second total timeout
 ):
     """
     Decorator for retrying functions with exponential backoff and timeout.

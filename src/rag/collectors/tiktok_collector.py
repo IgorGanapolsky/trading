@@ -12,7 +12,7 @@ import os
 import re
 import time
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 import requests
 from dotenv import load_dotenv
@@ -133,7 +133,7 @@ class TikTokCollector(BaseNewsCollector):
 
         logger.info("TikTok collector initialized")
 
-    def _get_access_token(self) -> Optional[str]:
+    def _get_access_token(self) -> str | None:
         """
         Get OAuth2 access token using client credentials flow.
 

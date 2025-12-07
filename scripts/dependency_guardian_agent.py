@@ -25,7 +25,6 @@ import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -35,10 +34,10 @@ class PackageInfo:
     name: str
     current_version: str
     latest_version: str
-    release_date: Optional[str] = None
-    requires_python: Optional[str] = None
+    release_date: str | None = None
+    requires_python: str | None = None
     is_deprecated: bool = False
-    deprecation_reason: Optional[str] = None
+    deprecation_reason: str | None = None
     is_outdated: bool = False
     pypi_url: str = ""
 
@@ -62,7 +61,7 @@ KNOWN_DEPRECATED = {
 }
 
 
-def fetch_pypi_info(package_name: str, timeout: int = 10) -> Optional[dict]:
+def fetch_pypi_info(package_name: str, timeout: int = 10) -> dict | None:
     """Fetch package info from PyPI JSON API"""
     url = f"https://pypi.org/pypi/{package_name}/json"
     try:

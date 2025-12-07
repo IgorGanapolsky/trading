@@ -22,7 +22,6 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -81,9 +80,9 @@ class CryptoOrder:
     action: str  # 'buy' or 'sell'
     quantity: float
     amount: float
-    price: Optional[float]
+    price: float | None
     order_type: str
-    stop_loss: Optional[float]
+    stop_loss: float | None
     timestamp: datetime
     reason: str
 
@@ -142,8 +141,8 @@ class CryptoStrategy:
         self,
         trader=None,
         risk_manager=None,
-        daily_amount: Optional[float] = None,
-        crypto_universe: Optional[list[str]] = None,
+        daily_amount: float | None = None,
+        crypto_universe: list[str] | None = None,
         stop_loss_pct: float = DEFAULT_STOP_LOSS_PCT,
     ):
         """
@@ -250,7 +249,7 @@ class CryptoStrategy:
             traceback.print_exc()
             return {"success": False, "reason": "error", "error": str(e)}
 
-    def execute_daily(self) -> Optional[CryptoOrder]:
+    def execute_daily(self) -> CryptoOrder | None:
         """
         Execute the daily crypto trading routine.
 
@@ -443,7 +442,7 @@ class CryptoStrategy:
                 "available": False,
             }
 
-    def select_crypto(self) -> Optional[str]:
+    def select_crypto(self) -> str | None:
         """
         Select the crypto with the highest momentum score.
 
@@ -774,7 +773,7 @@ class CryptoStrategy:
         # Normalize to 0-100 scale
         return max(0, min(100, momentum_score))
 
-    def _get_historical_data(self, symbol: str) -> Optional[pd.DataFrame]:
+    def _get_historical_data(self, symbol: str) -> pd.DataFrame | None:
         """
         Fetch historical data for crypto symbol.
 
@@ -847,7 +846,7 @@ class CryptoStrategy:
             logger.error(f"Error fetching data for {symbol} from yfinance: {e}")
             return None
 
-    def _get_current_price(self, symbol: str) -> Optional[float]:
+    def _get_current_price(self, symbol: str) -> float | None:
         """
         Get current market price for crypto symbol.
 

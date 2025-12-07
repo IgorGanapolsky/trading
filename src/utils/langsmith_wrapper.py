@@ -22,7 +22,6 @@ Usage:
 
 import logging
 import os
-from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -50,7 +49,7 @@ HELICONE_OPENROUTER_URL = "https://openrouter.helicone.ai/api/v1"
 
 
 def _get_openrouter_config(
-    api_key: Optional[str] = None, base_url: Optional[str] = None
+    api_key: str | None = None, base_url: str | None = None
 ) -> tuple[str, str, dict]:
     """
     Get OpenRouter configuration with optional Helicone gateway.
@@ -87,7 +86,7 @@ def _get_openrouter_config(
     return api_key, base_url, default_headers
 
 
-def get_traced_openai_client(api_key: Optional[str] = None, base_url: Optional[str] = None):
+def get_traced_openai_client(api_key: str | None = None, base_url: str | None = None):
     """
     Get OpenAI client with Helicone gateway and LangSmith tracing.
 
@@ -126,7 +125,7 @@ def get_traced_openai_client(api_key: Optional[str] = None, base_url: Optional[s
     return client
 
 
-def get_traced_async_openai_client(api_key: Optional[str] = None, base_url: Optional[str] = None):
+def get_traced_async_openai_client(api_key: str | None = None, base_url: str | None = None):
     """
     Get async OpenAI client with Helicone gateway and LangSmith tracing.
 

@@ -20,7 +20,7 @@ Date: December 2, 2025
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -182,9 +182,9 @@ class OptionsSignalEnhancer:
         sentiment_signal: str,
         sentiment_score: float,
         sentiment_confidence: float,
-        current_price: Optional[float] = None,
-        current_iv: Optional[float] = None,
-        iv_rank: Optional[float] = None,
+        current_price: float | None = None,
+        current_iv: float | None = None,
+        iv_rank: float | None = None,
         dte: int = 30,
     ) -> EnhancedSignal:
         """
@@ -289,9 +289,9 @@ class OptionsSignalEnhancer:
     def _get_iv_metrics(
         self,
         ticker: str,
-        current_price: Optional[float],
-        current_iv: Optional[float],
-        iv_rank: Optional[float],
+        current_price: float | None,
+        current_iv: float | None,
+        iv_rank: float | None,
     ) -> dict[str, float]:
         """Get IV metrics, fetching from analyzer if needed."""
 

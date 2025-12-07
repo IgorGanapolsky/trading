@@ -12,7 +12,6 @@ that responds to market conditions.
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -84,13 +83,13 @@ class VCAStrategy:
     def __init__(
         self,
         base_allocation: float,
-        target_growth_rate: Optional[float] = None,
-        max_adjustment_factor: Optional[float] = None,
-        min_adjustment_factor: Optional[float] = None,
-        deviation_threshold: Optional[float] = None,
-        sell_threshold: Optional[float] = None,
-        start_date: Optional[datetime] = None,
-        start_value: Optional[float] = None,
+        target_growth_rate: float | None = None,
+        max_adjustment_factor: float | None = None,
+        min_adjustment_factor: float | None = None,
+        deviation_threshold: float | None = None,
+        sell_threshold: float | None = None,
+        start_date: datetime | None = None,
+        start_value: float | None = None,
     ):
         """
         Initialize VCA Strategy.
@@ -136,7 +135,7 @@ class VCAStrategy:
     def calculate_investment_amount(
         self,
         current_portfolio_value: float,
-        date: Optional[datetime] = None,
+        date: datetime | None = None,
     ) -> VCACalculation:
         """
         Calculate adjusted investment amount based on portfolio performance.
@@ -247,7 +246,7 @@ class VCAStrategy:
         self.target_path.start_value = new_value
         logger.info(f"VCA start value updated to ${new_value:.2f}")
 
-    def get_target_value(self, date: Optional[datetime] = None) -> float:
+    def get_target_value(self, date: datetime | None = None) -> float:
         """
         Get target portfolio value for a given date.
 
@@ -276,7 +275,7 @@ class VCAStrategy:
 
 def create_vca_strategy_from_config(
     base_allocation: float,
-    config: Optional[dict] = None,
+    config: dict | None = None,
 ) -> VCAStrategy:
     """
     Create VCA strategy from configuration dictionary.

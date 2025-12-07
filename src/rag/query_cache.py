@@ -23,7 +23,7 @@ import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -37,10 +37,10 @@ class CacheEntry:
     query: str
     query_hash: str
     results: list[dict[str, Any]]
-    embedding: Optional[list[float]] = None
+    embedding: list[float] | None = None
     created_at: float = field(default_factory=time.time)
     hits: int = 0
-    ticker: Optional[str] = None
+    ticker: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def is_expired(self, ttl_seconds: float) -> bool:
@@ -115,7 +115,7 @@ class SemanticQueryCache:
         capacity: int = 1000,
         ttl_seconds: float = 3600,
         similarity_threshold: float = 0.9,
-        db_path: Optional[str] = None,
+        db_path: str | None = None,
         embedder=None,
     ):
         self.capacity = capacity
@@ -238,9 +238,9 @@ class SemanticQueryCache:
     def get(
         self,
         query: str,
-        ticker: Optional[str] = None,
+        ticker: str | None = None,
         use_semantic: bool = True,
-    ) -> Optional[list[dict[str, Any]]]:
+    ) -> list[dict[str, Any]] | None:
         """
         Get cached results for a query.
 
@@ -286,8 +286,8 @@ class SemanticQueryCache:
         self,
         query: str,
         results: list[dict[str, Any]],
-        ticker: Optional[str] = None,
-        metadata: Optional[dict[str, Any]] = None,
+        ticker: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """
         Cache query results.
@@ -335,7 +335,7 @@ class SemanticQueryCache:
 
         logger.debug(f"Cached query: {query[:50]}... ({len(results)} results)")
 
-    def _find_semantic_match(self, query: str, ticker: Optional[str]) -> Optional[CacheEntry]:
+    def _find_semantic_match(self, query: str, ticker: str | None) -> CacheEntry | None:
         """Find semantically similar cached query."""
         if not self.embedder or len(self._embeddings) == 0:
             return None
@@ -381,7 +381,7 @@ class SemanticQueryCache:
             return 0.0
         return float(np.dot(a, b) / (norm_a * norm_b))
 
-    def _hash_query(self, query: str, ticker: Optional[str]) -> str:
+    def _hash_query(self, query: str, ticker: str | None) -> str:
         """Generate hash for query."""
         content = f"{query}|{ticker or ''}"
         return hashlib.md5(content.encode()).hexdigest()
@@ -391,7 +391,7 @@ class SemanticQueryCache:
         self._cache.pop(key, None)
         self._embeddings.pop(key, None)
 
-    def invalidate(self, ticker: Optional[str] = None) -> int:
+    def invalidate(self, ticker: str | None = None) -> int:
         """
         Invalidate cache entries.
 
@@ -448,7 +448,7 @@ class SemanticQueryCache:
 
 
 # Global cache instance
-_query_cache: Optional[SemanticQueryCache] = None
+_query_cache: SemanticQueryCache | None = None
 
 
 def get_query_cache(

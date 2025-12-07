@@ -56,7 +56,7 @@ class SentimentAnalyzer:
         self,
         symbols: list[str],
         time_window_hours: int = 24,
-        sources: Optional[list[str]] = None,
+        sources: list[str] | None = None,
     ) -> dict[str, Any]:
         """
         Analyze sentiment from financial news
@@ -146,7 +146,7 @@ class SentimentAnalyzer:
     def analyze_social_sentiment(
         self,
         symbols: list[str],
-        platforms: Optional[list[str]] = None,
+        platforms: list[str] | None = None,
         time_window_hours: int = 6,
         min_mentions: int = 10,
     ) -> dict[str, Any]:
@@ -219,7 +219,7 @@ class SentimentAnalyzer:
     def get_composite_sentiment(
         self,
         symbols: list[str],
-        weights: Optional[dict[str, float]] = None,
+        weights: dict[str, float] | None = None,
         include_market_sentiment: bool = True,
     ) -> dict[str, Any]:
         """

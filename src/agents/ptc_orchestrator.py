@@ -17,9 +17,10 @@ Usage:
 
 import json
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Optional
+from typing import Any
 
 from anthropic import Anthropic
 
@@ -29,7 +30,7 @@ from src.utils.self_healing import get_anthropic_api_key
 logger = logging.getLogger(__name__)
 
 # Lazy-loaded singleton for Alpaca trader
-_alpaca_trader: Optional[AlpacaTrader] = None
+_alpaca_trader: AlpacaTrader | None = None
 
 
 def get_alpaca_trader() -> AlpacaTrader:
@@ -64,7 +65,7 @@ class PTCExecutionResult:
     token_usage: dict[str, int] = field(default_factory=dict)
     execution_time_ms: float = 0.0
     tools_invoked: list[str] = field(default_factory=list)
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class PTCOrchestrator:
@@ -198,7 +199,7 @@ class PTCOrchestrator:
         self,
         symbol: str,
         portfolio_value: float = 100000.0,
-        context: Optional[dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
     ) -> PTCExecutionResult:
         """
         Execute a complete trading workflow using PTC.

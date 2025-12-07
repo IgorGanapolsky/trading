@@ -3,7 +3,6 @@ Alpha signal generation and analysis.
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
 import pandas as pd
 
@@ -14,9 +13,9 @@ class AlphaSignal:
 
     name: str
     signal: pd.Series
-    ic: Optional[float] = None
-    ir: Optional[float] = None
-    turnover: Optional[float] = None
+    ic: float | None = None
+    ir: float | None = None
+    turnover: float | None = None
     description: str = ""
 
     def normalize(self) -> "AlphaSignal":
@@ -199,7 +198,7 @@ def rank_signals_by_ic(
 
 def combine_signals(
     signals: list[AlphaSignal],
-    weights: Optional[dict[str, float]] = None,
+    weights: dict[str, float] | None = None,
     method: str = "equal",
 ) -> AlphaSignal:
     """

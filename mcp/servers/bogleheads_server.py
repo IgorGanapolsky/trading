@@ -9,7 +9,7 @@ import asyncio
 import json
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # MCP imports
 try:
@@ -76,7 +76,7 @@ async def analyze_regime_tool(arguments: dict[str, Any]) -> list[TextContent]:
         return [TextContent(type="text", text=f"Error: {str(e)}")]
 
 
-def create_server() -> Optional[Server]:
+def create_server() -> Server | None:
     """Create MCP server with Bogleheads tools."""
     if not Server:
         return None
