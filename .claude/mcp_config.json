@@ -28,6 +28,16 @@
       "command": "npx",
       "args": ["-y", "@sinco-lab/mcp-youtube-transcript"],
       "description": "YouTube transcript extractor - get transcripts and metadata from YouTube videos"
+    },
+    "pal": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/pal-mcp-server"],
+      "description": "PAL MCP Server - Provider Abstraction Layer for multi-model orchestration. Challenge tool for adversarial validation, Debug tool for systematic investigations",
+      "env": {
+        "OPENROUTER_API_KEY": "${OPENROUTER_API_KEY}",
+        "PAL_ENABLED_TOOLS": "challenge,debug,chat",
+        "PAL_DEFAULT_MODEL": "openrouter/anthropic/claude-sonnet-4"
+      }
     }
   }
 }
