@@ -23,7 +23,6 @@ import sys
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -73,7 +72,7 @@ class YouTubeIngestion:
             logger.info("Install with: pip install openai-whisper")
             return False
 
-    def get_transcript_with_fallback(self, video_id: str, video_url: str) -> Optional[str]:
+    def get_transcript_with_fallback(self, video_id: str, video_url: str) -> str | None:
         """
         Get transcript using YouTube API first, then Whisper fallback.
 
@@ -102,7 +101,7 @@ class YouTubeIngestion:
 
         return self._transcribe_with_whisper(video_id, video_url)
 
-    def _transcribe_with_whisper(self, video_id: str, video_url: str) -> Optional[str]:
+    def _transcribe_with_whisper(self, video_id: str, video_url: str) -> str | None:
         """
         Download audio and transcribe with Whisper.
 
@@ -226,7 +225,7 @@ class RedditIngestion:
 
     def collect_sentiment(
         self,
-        subreddits: Optional[list[str]] = None,
+        subreddits: list[str] | None = None,
         limit_per_sub: int = 25,
     ) -> dict:
         """

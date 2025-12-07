@@ -8,7 +8,7 @@ import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class ContextEntry:
     data: dict[str, Any]
     timestamp: str
     agent_type: str
-    ttl_seconds: Optional[int] = None
+    ttl_seconds: int | None = None
     tags: list[str] = None
 
 
@@ -154,9 +154,7 @@ class ContextEngine:
         logger.debug(f"Saved agent decision: {filepath}")
         return str(filepath)
 
-    def load_recent_trades(
-        self, symbol: Optional[str] = None, days: int = 7
-    ) -> list[dict[str, Any]]:
+    def load_recent_trades(self, symbol: str | None = None, days: int = 7) -> list[dict[str, Any]]:
         """
         Load recent trades from storage
 
@@ -186,8 +184,8 @@ class ContextEngine:
 
     def load_agent_decisions(
         self,
-        agent_type: Optional[str] = None,
-        symbol: Optional[str] = None,
+        agent_type: str | None = None,
+        symbol: str | None = None,
         days: int = 7,
     ) -> list[dict[str, Any]]:
         """
@@ -268,9 +266,7 @@ class ContextEngine:
             },
         }
 
-    def export_context(
-        self, output_file: Path, symbol: Optional[str] = None, days: int = 30
-    ) -> str:
+    def export_context(self, output_file: Path, symbol: str | None = None, days: int = 30) -> str:
         """
         Export context for analysis (bulk import/export)
 

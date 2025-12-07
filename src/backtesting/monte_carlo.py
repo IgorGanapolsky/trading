@@ -18,7 +18,7 @@ Created: 2025-12-04
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -263,7 +263,7 @@ class MonteCarloSimulator:
     def simulate_from_equity_curve(
         self,
         equity_curve: np.ndarray,
-        initial_capital: Optional[float] = None,
+        initial_capital: float | None = None,
     ) -> MonteCarloResult:
         """
         Run Monte Carlo from an equity curve (portfolio values over time).
@@ -286,7 +286,7 @@ class MonteCarloSimulator:
     def stress_test_scenarios(
         self,
         daily_returns: np.ndarray,
-        scenarios: Optional[dict[str, dict[str, float]]] = None,
+        scenarios: dict[str, dict[str, float]] | None = None,
     ) -> dict[str, MonteCarloResult]:
         """
         Run Monte Carlo under different stress scenarios.

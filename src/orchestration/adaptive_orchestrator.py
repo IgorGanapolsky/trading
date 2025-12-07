@@ -17,7 +17,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from src.agent_framework.context_engine import get_context_engine
 from src.core.skills_integration import get_skills
@@ -192,7 +192,7 @@ class AdaptiveOrchestrator:
         }
 
     def create_adaptive_plan(
-        self, symbols: list[str], context: Optional[dict[str, Any]] = None
+        self, symbols: list[str], context: dict[str, Any] | None = None
     ) -> TradePlan:
         """
         Create an adaptive trade plan with dynamic agent organization
@@ -783,7 +783,7 @@ class AdaptiveOrchestrator:
 
     def _get_learned_organization(
         self, complexity: ComplexityAssessment, market_regime: str
-    ) -> Optional[AgentOrganization]:
+    ) -> AgentOrganization | None:
         """Get learned optimal organization from historical performance"""
         if not self.enable_learning or not self.performance_history:
             return None

@@ -25,7 +25,7 @@ Created: 2025-12-02
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -70,7 +70,7 @@ class PortfolioConstraints:
 
     # Risk
     target_volatility: float = 0.15  # 15% annual vol target
-    max_beta: Optional[float] = None  # Max portfolio beta
+    max_beta: float | None = None  # Max portfolio beta
     beta_neutral: bool = False  # Enforce beta neutrality
 
     # Position count
@@ -112,7 +112,7 @@ class PortfolioOptimizer:
 
     def __init__(
         self,
-        constraints: Optional[PortfolioConstraints] = None,
+        constraints: PortfolioConstraints | None = None,
         risk_free_rate: float = 0.04,
     ):
         self.constraints = constraints or PortfolioConstraints()
@@ -123,7 +123,7 @@ class PortfolioOptimizer:
         expected_returns: pd.Series,
         covariance_matrix: pd.DataFrame,
         method: OptimizationMethod = OptimizationMethod.MEAN_VARIANCE,
-        current_weights: Optional[pd.Series] = None,
+        current_weights: pd.Series | None = None,
     ) -> PortfolioResult:
         """
         Optimize portfolio weights.
@@ -500,7 +500,7 @@ class PortfolioOptimizer:
     def _apply_constraints(
         self,
         result: PortfolioResult,
-        current_weights: Optional[pd.Series] = None,
+        current_weights: pd.Series | None = None,
     ) -> PortfolioResult:
         """Apply portfolio constraints to weights."""
         weights = result.weights.copy()
@@ -551,7 +551,7 @@ class PortfolioOptimizer:
 def calculate_portfolio_stats(
     weights: pd.Series,
     returns: pd.DataFrame,
-    benchmark_returns: Optional[pd.Series] = None,
+    benchmark_returns: pd.Series | None = None,
 ) -> dict[str, float]:
     """
     Calculate comprehensive portfolio statistics.

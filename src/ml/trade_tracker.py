@@ -7,7 +7,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class TradeTracker:
         symbol: str,
         action: int,
         entry_state: Any,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ):
         """
         Called when a trade is entered.
@@ -69,7 +69,7 @@ class TradeTracker:
         symbol: str,
         exit_state: Any,
         trade_result: dict[str, Any],
-        market_state: Optional[dict[str, Any]] = None,
+        market_state: dict[str, Any] | None = None,
     ):
         """
         Called when a trade is exited.

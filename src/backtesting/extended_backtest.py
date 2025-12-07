@@ -16,9 +16,10 @@ Created: 2025-12-04
 """
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -64,15 +65,15 @@ class ExtendedValidationResults:
     """Comprehensive validation results."""
 
     # Basic backtest
-    backtest_results: Optional[BacktestResults]
+    backtest_results: BacktestResults | None
 
     # Monte Carlo
-    monte_carlo_results: Optional[MonteCarloResult]
+    monte_carlo_results: MonteCarloResult | None
     monte_carlo_valid: bool
     monte_carlo_failures: list[str]
 
     # Walk-forward
-    walk_forward_results: Optional[EnhancedWalkForwardResults]
+    walk_forward_results: EnhancedWalkForwardResults | None
     walk_forward_valid: bool
     walk_forward_failures: list[str]
 
@@ -84,7 +85,7 @@ class ExtendedValidationResults:
     cost_adjusted_sharpe: float
 
     # Regime analysis
-    regime_state: Optional[RegimeState]
+    regime_state: RegimeState | None
     regime_adjusted_score: float
 
     # Overall assessment
@@ -105,7 +106,7 @@ class ExtendedBacktester:
 
     def __init__(
         self,
-        criteria: Optional[ValidationCriteria] = None,
+        criteria: ValidationCriteria | None = None,
         monte_carlo_sims: int = 10000,
         walk_forward_train: int = 252,
         walk_forward_test: int = 63,
@@ -142,8 +143,8 @@ class ExtendedBacktester:
         self,
         strategy: Any,
         data: pd.DataFrame,
-        param_grid: Optional[dict[str, list[Any]]] = None,
-        strategy_factory: Optional[Callable] = None,
+        param_grid: dict[str, list[Any]] | None = None,
+        strategy_factory: Callable | None = None,
         run_monte_carlo: bool = True,
         run_walk_forward: bool = True,
         run_cost_analysis: bool = True,
@@ -298,7 +299,7 @@ class ExtendedBacktester:
         self,
         strategy: Any,
         data: pd.DataFrame,
-    ) -> Optional[BacktestResults]:
+    ) -> BacktestResults | None:
         """Run basic backtest and return results."""
         try:
             from src.backtesting.backtest_engine import BacktestEngine
@@ -347,7 +348,7 @@ class ExtendedBacktester:
     def _run_monte_carlo(
         self,
         trades: list[dict],
-    ) -> tuple[Optional[MonteCarloResult], bool, list[str]]:
+    ) -> tuple[MonteCarloResult | None, bool, list[str]]:
         """Run Monte Carlo simulation and validate."""
         try:
             results = self.monte_carlo.run_from_trades(
@@ -373,7 +374,7 @@ class ExtendedBacktester:
         data: pd.DataFrame,
         strategy_factory: Callable,
         param_grid: dict[str, list[Any]],
-    ) -> tuple[Optional[EnhancedWalkForwardResults], bool, list[str]]:
+    ) -> tuple[EnhancedWalkForwardResults | None, bool, list[str]]:
         """Run walk-forward analysis and validate."""
         try:
             results = self.walk_forward.run_with_optimization(
@@ -449,8 +450,8 @@ class ExtendedBacktester:
     def _calculate_overall_score(
         self,
         backtest_results: BacktestResults,
-        mc_results: Optional[MonteCarloResult],
-        wf_results: Optional[EnhancedWalkForwardResults],
+        mc_results: MonteCarloResult | None,
+        wf_results: EnhancedWalkForwardResults | None,
         cost_adjusted_sharpe: float,
         regime_score: float,
     ) -> float:
@@ -667,8 +668,8 @@ class ExtendedBacktester:
 def validate_strategy(
     strategy: Any,
     data: pd.DataFrame,
-    param_grid: Optional[dict[str, list[Any]]] = None,
-    strategy_factory: Optional[Callable] = None,
+    param_grid: dict[str, list[Any]] | None = None,
+    strategy_factory: Callable | None = None,
 ) -> ExtendedValidationResults:
     """
     Convenience function to validate a strategy.

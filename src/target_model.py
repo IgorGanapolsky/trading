@@ -10,7 +10,6 @@ Created: 2025-12-02
 
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +68,7 @@ class TargetModel:
     - Feasibility analysis
     """
 
-    def __init__(self, config: Optional[TargetModelConfig] = None):
+    def __init__(self, config: TargetModelConfig | None = None):
         """
         Initialize target model.
 
@@ -223,7 +222,7 @@ class TargetModel:
             "required_annual_return_pct": metrics.required_annual_return_pct,
         }
 
-    def generate_target_report(self, backtest_analysis: Optional[dict[str, any]] = None) -> str:
+    def generate_target_report(self, backtest_analysis: dict[str, any] | None = None) -> str:
         """
         Generate human-readable report of target model analysis.
 

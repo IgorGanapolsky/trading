@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -150,7 +149,7 @@ class DataProcessor:
 
         return torch.FloatTensor(np.array(X))
 
-    def prepare_inference_data(self, symbol: str) -> Optional[torch.Tensor]:
+    def prepare_inference_data(self, symbol: str) -> torch.Tensor | None:
         """
         Prepare the latest sequence for inference.
         Includes Bogleheads features if available.

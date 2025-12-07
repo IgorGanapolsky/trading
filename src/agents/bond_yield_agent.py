@@ -19,7 +19,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +130,7 @@ class BondYieldAgent:
 
         # Cache for yield data
         self._yield_cache: dict[str, Any] = {}
-        self._cache_expiry: Optional[datetime] = None
+        self._cache_expiry: datetime | None = None
 
         logger.info(
             f"BondYieldAgent initialized: min_confidence={min_confidence}, "
@@ -402,7 +402,7 @@ class BondYieldAgent:
 
     def _generate_tips_signal(
         self, curve_signal: YieldCurveSignal, amount: float
-    ) -> Optional[BondAllocationSignal]:
+    ) -> BondAllocationSignal | None:
         """Generate TIPS allocation signal."""
         if amount < 0.50:
             return None
@@ -466,7 +466,7 @@ class BondYieldAgent:
 
         return yield_data
 
-    def _get_credit_spread(self) -> Optional[float]:
+    def _get_credit_spread(self) -> float | None:
         """Get high yield credit spread from FRED."""
         if not self.fred_collector:
             return None

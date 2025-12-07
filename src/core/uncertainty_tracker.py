@@ -16,7 +16,7 @@ from collections import deque
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +43,8 @@ class UncertaintySnapshot:
 
     # Outcome tracking (filled in later)
     trade_executed: bool = False
-    actual_outcome: Optional[str] = None  # "WIN", "LOSS", "HOLD"
-    outcome_pnl: Optional[float] = None
+    actual_outcome: str | None = None  # "WIN", "LOSS", "HOLD"
+    outcome_pnl: float | None = None
 
     # Introspection state
     introspection_state: str = "unknown"
@@ -124,7 +124,7 @@ class UncertaintyTracker:
         consistency_score: float,
         vote_breakdown: dict[str, int],
         introspection_state: str = "unknown",
-        knowledge_gaps: Optional[list[str]] = None,
+        knowledge_gaps: list[str] | None = None,
         trade_executed: bool = False,
     ) -> UncertaintySnapshot:
         """
@@ -224,12 +224,8 @@ class UncertaintyTracker:
         Analyzes how well confidence predictions correlate with outcomes.
         """
         # Separate by confidence level
-        high_conf = [
-            s for s in self.history if s.aggregate_confidence > 0.7 and s.actual_outcome
-        ]
-        low_conf = [
-            s for s in self.history if s.aggregate_confidence < 0.5 and s.actual_outcome
-        ]
+        high_conf = [s for s in self.history if s.aggregate_confidence > 0.7 and s.actual_outcome]
+        low_conf = [s for s in self.history if s.aggregate_confidence < 0.5 and s.actual_outcome]
         all_with_outcomes = [s for s in self.history if s.actual_outcome]
 
         # Calculate win rates
@@ -276,8 +272,7 @@ class UncertaintyTracker:
             "total_unique_gaps": len(gap_counts),
             "top_10_gaps": sorted_gaps[:10],
             "high_epistemic_rate": (
-                self.metrics.high_uncertainty_count
-                / max(1, self.metrics.total_assessments)
+                self.metrics.high_uncertainty_count / max(1, self.metrics.total_assessments)
             ),
             "recommendation": self._generate_gap_recommendation(sorted_gaps),
         }
@@ -295,17 +290,15 @@ class UncertaintyTracker:
         self.metrics.avg_aleatoric = sum(s.aleatoric_score for s in self.history) / len(
             self.history
         )
-        self.metrics.avg_confidence = sum(
-            s.aggregate_confidence for s in self.history
-        ) / len(self.history)
-        self.metrics.avg_consistency = sum(
-            s.consistency_score for s in self.history
-        ) / len(self.history)
+        self.metrics.avg_confidence = sum(s.aggregate_confidence for s in self.history) / len(
+            self.history
+        )
+        self.metrics.avg_consistency = sum(s.consistency_score for s in self.history) / len(
+            self.history
+        )
 
         # Count high uncertainty / low confidence
-        self.metrics.high_uncertainty_count = sum(
-            1 for s in self.history if s.epistemic_score > 60
-        )
+        self.metrics.high_uncertainty_count = sum(1 for s in self.history if s.epistemic_score > 60)
         self.metrics.low_confidence_count = sum(
             1 for s in self.history if s.aggregate_confidence < 0.5
         )
@@ -383,9 +376,7 @@ class UncertaintyTracker:
                 if data.get("metrics"):
                     self.metrics = UncertaintyMetrics(**data["metrics"])
 
-                logger.info(
-                    f"Loaded {len(self.history)} uncertainty assessments from disk"
-                )
+                logger.info(f"Loaded {len(self.history)} uncertainty assessments from disk")
             except Exception as e:
                 logger.warning(f"Failed to load uncertainty history: {e}")
 
@@ -437,7 +428,7 @@ class UncertaintyTracker:
 
 
 # Singleton instance for global access
-_tracker_instance: Optional[UncertaintyTracker] = None
+_tracker_instance: UncertaintyTracker | None = None
 
 
 def get_uncertainty_tracker() -> UncertaintyTracker:

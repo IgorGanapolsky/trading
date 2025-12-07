@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -103,9 +103,9 @@ class PositionManager:
 
     def __init__(
         self,
-        conditions: Optional[ExitConditions] = None,
-        alpaca_trader: Optional[Any] = None,
-        state_file: Optional[Path] = None,
+        conditions: ExitConditions | None = None,
+        alpaca_trader: Any | None = None,
+        state_file: Path | None = None,
     ):
         """
         Initialize position manager.
@@ -131,7 +131,7 @@ class PositionManager:
         logger.info(f"  ATR stop: {self.conditions.enable_atr_stop}")
         logger.info(f"  Loaded {len(self._position_entry_dates)} persisted entry dates")
 
-    def track_entry(self, symbol: str, entry_date: Optional[datetime] = None) -> None:
+    def track_entry(self, symbol: str, entry_date: datetime | None = None) -> None:
         """
         Track when a position was entered for time-based exits.
         Persists to system_state.json to survive restarts.
@@ -144,7 +144,7 @@ class PositionManager:
         logger.info(f"Tracking entry for {symbol} at {self._position_entry_dates[symbol]}")
         self._save_entry_dates()  # Persist immediately
 
-    def get_entry_date(self, symbol: str) -> Optional[datetime]:
+    def get_entry_date(self, symbol: str) -> datetime | None:
         """Get the entry date for a position."""
         return self._position_entry_dates.get(symbol)
 
@@ -357,7 +357,7 @@ class PositionManager:
 
     def _check_atr_stop(
         self, symbol: str, entry_price: float, current_price: float
-    ) -> Optional[ExitSignal]:
+    ) -> ExitSignal | None:
         """
         Check if ATR-based stop has been triggered.
 
@@ -411,7 +411,7 @@ class PositionManager:
             return None
 
     def manage_all_positions(
-        self, positions: list[dict], state_manager: Optional[Any] = None
+        self, positions: list[dict], state_manager: Any | None = None
     ) -> list[dict]:
         """
         Evaluate all positions and return list of exits to execute.
@@ -492,7 +492,7 @@ DEFAULT_POSITION_MANAGER = PositionManager(
 )
 
 
-def get_position_manager(conditions: Optional[ExitConditions] = None) -> PositionManager:
+def get_position_manager(conditions: ExitConditions | None = None) -> PositionManager:
     """
     Get a position manager instance.
 

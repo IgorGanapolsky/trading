@@ -12,12 +12,11 @@ Architecture:
 Reference: Anthropic's Emergent Introspective Awareness in LLMs (2025)
 """
 
-import asyncio
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from src.core.llm_introspection import (
     ConfidenceLevel,
@@ -134,7 +133,7 @@ class IntrospectiveCouncil:
     def __init__(
         self,
         multi_llm_analyzer: Any,
-        llm_council: Optional[Any] = None,
+        llm_council: Any | None = None,
         enable_introspection: bool = True,
         strict_mode: bool = True,
         consistency_samples: int = 5,
@@ -173,7 +172,7 @@ class IntrospectiveCouncil:
         self,
         symbol: str,
         market_data: dict[str, Any],
-        news: Optional[str] = None,
+        news: str | None = None,
     ) -> IntrospectiveTradeRecommendation:
         """
         Perform comprehensive trade analysis with introspection.
@@ -191,9 +190,7 @@ class IntrospectiveCouncil:
         start_time = time.time()
 
         # Step 1: Get ensemble sentiment from Multi-LLM
-        ensemble_result = await self._get_ensemble_sentiment(
-            symbol, market_data, news
-        )
+        ensemble_result = await self._get_ensemble_sentiment(symbol, market_data, news)
 
         # Step 2: Run introspective analysis (if enabled)
         if self.enable_introspection and self.introspector:
@@ -206,9 +203,7 @@ class IntrospectiveCouncil:
             introspection = self._default_introspection()
 
         # Step 3: Get council validation (if available)
-        council_result = await self._get_council_validation(
-            symbol, ensemble_result, introspection
-        )
+        council_result = await self._get_council_validation(symbol, ensemble_result, introspection)
 
         # Step 4: Combine all signals
         recommendation = self._synthesize_recommendation(
@@ -230,7 +225,7 @@ class IntrospectiveCouncil:
         self,
         symbol: str,
         market_data: dict[str, Any],
-        news: Optional[str],
+        news: str | None,
     ) -> dict[str, Any]:
         """Get ensemble sentiment from Multi-LLM analyzer."""
         try:
@@ -245,16 +240,10 @@ class IntrospectiveCouncil:
                 )
                 return {
                     "sentiment": result.score if hasattr(result, "score") else 0.0,
-                    "confidence": (
-                        result.confidence if hasattr(result, "confidence") else 0.5
-                    ),
-                    "reasoning": (
-                        result.reasoning if hasattr(result, "reasoning") else ""
-                    ),
+                    "confidence": (result.confidence if hasattr(result, "confidence") else 0.5),
+                    "reasoning": (result.reasoning if hasattr(result, "reasoning") else ""),
                     "individual_scores": (
-                        result.individual_scores
-                        if hasattr(result, "individual_scores")
-                        else {}
+                        result.individual_scores if hasattr(result, "individual_scores") else {}
                     ),
                 }
             else:
@@ -337,9 +326,7 @@ class IntrospectiveCouncil:
 
         # Determine decision based on sentiment + confidence
         sentiment = ensemble.get("sentiment", 0.0)
-        decision, action = self._determine_decision(
-            sentiment, combined_confidence, introspection
-        )
+        decision, action = self._determine_decision(sentiment, combined_confidence, introspection)
 
         # Position sizing based on confidence level
         confidence_level = self._classify_confidence(combined_confidence)
@@ -369,9 +356,7 @@ class IntrospectiveCouncil:
         )
 
         # Build reasoning summary
-        reasoning_summary = self._build_reasoning_summary(
-            ensemble, introspection, council
-        )
+        reasoning_summary = self._build_reasoning_summary(ensemble, introspection, council)
 
         return IntrospectiveTradeRecommendation(
             symbol=symbol,
@@ -500,10 +485,7 @@ class IntrospectiveCouncil:
             TradeDecision.SKIP: "Skip - conditions not favorable",
         }
 
-        return (
-            f"{decision_desc[decision]} with {state_desc[state]} "
-            f"(confidence: {confidence:.1%})"
-        )
+        return f"{decision_desc[decision]} with {state_desc[state]} (confidence: {confidence:.1%})"
 
     def _build_reasoning_summary(
         self,
@@ -534,9 +516,7 @@ class IntrospectiveCouncil:
 
         # Uncertainty
         if introspection.uncertainty.epistemic_score > 50:
-            parts.append(
-                f"Epistemic uncertainty: {introspection.uncertainty.epistemic_score:.0f}%"
-            )
+            parts.append(f"Epistemic uncertainty: {introspection.uncertainty.epistemic_score:.0f}%")
 
         # Council
         if not council.get("validated", True):
@@ -560,7 +540,6 @@ class IntrospectiveCouncil:
     def _default_introspection(self) -> IntrospectionResult:
         """Default introspection result when disabled."""
         from src.core.llm_introspection import (
-            SelfConsistencyResult,
             SelfCritiqueResult,
             UncertaintyType,
         )
@@ -603,9 +582,7 @@ class IntrospectiveCouncil:
             processing_time_ms=0.0,
         )
 
-    def _update_metrics(
-        self, recommendation: IntrospectiveTradeRecommendation
-    ) -> None:
+    def _update_metrics(self, recommendation: IntrospectiveTradeRecommendation) -> None:
         """Update tracking metrics."""
         self.recommendations_made += 1
 
@@ -615,18 +592,14 @@ class IntrospectiveCouncil:
         # Update rolling average confidence
         prev_avg = self.average_confidence
         new_val = recommendation.combined_confidence
-        self.average_confidence = prev_avg + (
-            new_val - prev_avg
-        ) / self.recommendations_made
+        self.average_confidence = prev_avg + (new_val - prev_avg) / self.recommendations_made
 
     def get_metrics(self) -> dict[str, Any]:
         """Get current metrics."""
         return {
             "recommendations_made": self.recommendations_made,
             "trades_skipped": self.trades_skipped_low_confidence,
-            "skip_rate": (
-                self.trades_skipped_low_confidence / max(1, self.recommendations_made)
-            ),
+            "skip_rate": (self.trades_skipped_low_confidence / max(1, self.recommendations_made)),
             "average_confidence": self.average_confidence,
             "introspection_enabled": self.enable_introspection,
             "strict_mode": self.strict_mode,
@@ -635,7 +608,7 @@ class IntrospectiveCouncil:
 
 # Factory function
 def create_introspective_council(
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
     enable_introspection: bool = True,
     strict_mode: bool = True,
 ) -> IntrospectiveCouncil:

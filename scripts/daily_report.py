@@ -18,7 +18,7 @@ import os
 import sys
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -68,7 +68,7 @@ def get_portfolio_status() -> dict[str, Any]:
         return {"error": str(e)}
 
 
-def _load_json(path: Path) -> Optional[dict[str, Any]]:
+def _load_json(path: Path) -> dict[str, Any] | None:
     if not path.exists():
         return None
     try:
@@ -78,11 +78,11 @@ def _load_json(path: Path) -> Optional[dict[str, Any]]:
         return None
 
 
-def load_trend_snapshot() -> Optional[dict[str, Any]]:
+def load_trend_snapshot() -> dict[str, Any] | None:
     return _load_json(DATA_DIR / "trend_snapshot.json")
 
 
-def load_guardrail_summary() -> Optional[dict[str, Any]]:
+def load_guardrail_summary() -> dict[str, Any] | None:
     return _load_json(DATA_DIR / "economic_guardrails.json")
 
 

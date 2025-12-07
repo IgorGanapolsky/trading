@@ -23,7 +23,7 @@ from datetime import date, datetime, timedelta
 
 # Add project root to path for imports if needed
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
@@ -119,7 +119,7 @@ class OptionsStrategy:
         delta: float,
         current_price: float,
         iv_data: dict[str, Any],
-        expected_move: Optional[Any] = None,
+        expected_move: Any | None = None,
     ) -> dict[str, Any]:
         """
         Validate trade against McMillan options rules.
@@ -606,7 +606,7 @@ class OptionsStrategy:
 
     def find_covered_call_contract(
         self, symbol: str, current_price: float
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Find the best call option to sell based on strategy criteria.
         """

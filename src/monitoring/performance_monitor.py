@@ -21,7 +21,6 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 
@@ -226,7 +225,7 @@ class LivePerformanceMonitor:
 
         logger.info(f"Recorded trade: {symbol} {side} P&L=${pnl:.2f} ({return_pct:+.2f}%)")
 
-    def record_daily_equity(self, equity: float, date: Optional[datetime] = None) -> None:
+    def record_daily_equity(self, equity: float, date: datetime | None = None) -> None:
         """
         Record end-of-day equity value.
 

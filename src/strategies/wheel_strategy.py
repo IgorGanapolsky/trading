@@ -33,7 +33,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -59,14 +59,14 @@ class WheelPosition:
     cost_basis: float = 0.0  # Effective cost after premiums
 
     # Put leg (Phase 1)
-    put_strike: Optional[float] = None
-    put_expiration: Optional[str] = None
+    put_strike: float | None = None
+    put_expiration: str | None = None
     put_premium_collected: float = 0.0
     put_contracts: int = 0
 
     # Call leg (Phase 2)
-    call_strike: Optional[float] = None
-    call_expiration: Optional[str] = None
+    call_strike: float | None = None
+    call_expiration: str | None = None
     call_premium_collected: float = 0.0
     call_contracts: int = 0
 
@@ -140,16 +140,16 @@ class WheelCandidate:
     quality_reasons: list[str] = field(default_factory=list)
 
     # Technical levels
-    support_level: Optional[float] = None
-    resistance_level: Optional[float] = None
+    support_level: float | None = None
+    resistance_level: float | None = None
 
     # Options metrics
-    iv_rank: Optional[float] = None
+    iv_rank: float | None = None
     option_liquidity_score: float = 0.0  # Based on bid-ask spreads
 
     # Wheel suitability
-    recommended_put_strike: Optional[float] = None
-    recommended_call_strike: Optional[float] = None
+    recommended_put_strike: float | None = None
+    recommended_call_strike: float | None = None
     estimated_monthly_yield: float = 0.0
 
     # Risk assessment
@@ -276,7 +276,7 @@ class WheelStrategy:
 
     def _get_support_resistance(
         self, symbol: str, current_price: float
-    ) -> tuple[Optional[float], Optional[float]]:
+    ) -> tuple[float | None, float | None]:
         """
         Calculate support and resistance levels for strike selection.
 
@@ -368,7 +368,7 @@ class WheelStrategy:
 
         return min(max(score, 0), 100), reasons
 
-    def evaluate_candidate(self, symbol: str) -> Optional[WheelCandidate]:
+    def evaluate_candidate(self, symbol: str) -> WheelCandidate | None:
         """
         Evaluate a stock for wheel strategy suitability.
 
@@ -513,7 +513,7 @@ class WheelStrategy:
 
         return candidates
 
-    def execute_put_trade(self, candidate: WheelCandidate) -> Optional[dict[str, Any]]:
+    def execute_put_trade(self, candidate: WheelCandidate) -> dict[str, Any] | None:
         """
         Execute a cash-secured put for wheel strategy.
 
@@ -638,7 +638,7 @@ class WheelStrategy:
             logger.error(f"Failed to execute put trade for {symbol}: {e}")
             return None
 
-    def execute_call_trade(self, symbol: str, shares: int) -> Optional[dict[str, Any]]:
+    def execute_call_trade(self, symbol: str, shares: int) -> dict[str, Any] | None:
         """
         Execute a covered call for wheel strategy (Phase 2).
 

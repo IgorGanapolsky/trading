@@ -9,7 +9,7 @@ import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -19,7 +19,7 @@ class ExperimentConfig:
     name: str
     description: str = ""
     hyperparameters: dict[str, Any] = field(default_factory=dict)
-    data_snapshot_id: Optional[str] = None
+    data_snapshot_id: str | None = None
     tags: list[str] = field(default_factory=list)
 
 
@@ -32,7 +32,7 @@ class ExperimentRun:
     config: ExperimentConfig
     git_sha: str
     started_at: str
-    ended_at: Optional[str] = None
+    ended_at: str | None = None
     status: str = "running"
     metrics: dict[str, float] = field(default_factory=dict)
     artifacts: list[str] = field(default_factory=list)
@@ -76,7 +76,7 @@ class ExperimentTracker:
     def __init__(self, tracking_dir: str = "experiments"):
         self.tracking_dir = Path(tracking_dir)
         self.tracking_dir.mkdir(parents=True, exist_ok=True)
-        self.current_run: Optional[ExperimentRun] = None
+        self.current_run: ExperimentRun | None = None
 
     def start_run(
         self,
@@ -145,7 +145,7 @@ class ExperimentTracker:
 
     def list_runs(
         self,
-        experiment_name: Optional[str] = None,
+        experiment_name: str | None = None,
     ) -> list[dict[str, Any]]:
         """List all runs, optionally filtered by experiment name."""
         runs = []
@@ -169,7 +169,7 @@ class ExperimentTracker:
         experiment_name: str,
         metric: str,
         maximize: bool = True,
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Get the best run for an experiment based on a metric."""
         runs = self.list_runs(experiment_name)
 

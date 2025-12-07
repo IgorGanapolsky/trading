@@ -8,7 +8,6 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import yt_dlp
 from youtube_transcript_api import YouTubeTranscriptApi as _YouTubeTranscriptApi
@@ -92,7 +91,7 @@ class YouTubePodcastAnalyzer:
                 "error": str(e),
             }
 
-    def get_transcript(self, video_id: str) -> Optional[str]:
+    def get_transcript(self, video_id: str) -> str | None:
         """
         Get video transcript using youtube-transcript-api
 

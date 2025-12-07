@@ -21,13 +21,12 @@ Example:
 """
 
 import asyncio
-import json
 import logging
 import re
 from collections import Counter
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +92,7 @@ class SelfCritiqueResult:
     assumptions_made: list[str]
     confidence_after_critique: float
     should_trust: bool
-    corrected_analysis: Optional[str] = None
+    corrected_analysis: str | None = None
 
 
 @dataclass
@@ -188,7 +187,7 @@ class LLMIntrospector:
         self,
         market_data: dict[str, Any],
         symbol: str = "UNKNOWN",
-        context: Optional[str] = None,
+        context: str | None = None,
     ) -> IntrospectionResult:
         """
         Perform comprehensive introspective analysis.
@@ -230,9 +229,7 @@ class LLMIntrospector:
         )
 
         # Self-critique uses the consensus decision
-        self_critique = await self._run_self_critique(
-            prompt_context, self_consistency.decision
-        )
+        self_critique = await self._run_self_critique(prompt_context, self_consistency.decision)
 
         # Aggregate confidence
         aggregate_confidence = self._calculate_aggregate_confidence(
@@ -245,10 +242,8 @@ class LLMIntrospector:
         )
 
         # Make execution decision
-        execute_trade, position_multiplier, recommendation = (
-            self._make_execution_decision(
-                aggregate_confidence, uncertainty, introspection_state
-            )
+        execute_trade, position_multiplier, recommendation = self._make_execution_decision(
+            aggregate_confidence, uncertainty, introspection_state
         )
 
         processing_time = (time.time() - start_time) * 1000
@@ -270,9 +265,7 @@ class LLMIntrospector:
             processing_time_ms=processing_time,
         )
 
-    async def _run_self_consistency(
-        self, prompt_context: str
-    ) -> SelfConsistencyResult:
+    async def _run_self_consistency(self, prompt_context: str) -> SelfConsistencyResult:
         """
         Run self-consistency check with multiple reasoning paths.
 
@@ -326,9 +319,7 @@ DECISION: HOLD
             diversity_score=diversity_score,
         )
 
-    async def _run_epistemic_assessment(
-        self, prompt_context: str
-    ) -> EpistemicUncertaintyResult:
+    async def _run_epistemic_assessment(self, prompt_context: str) -> EpistemicUncertaintyResult:
         """
         Assess epistemic vs aleatoric uncertainty.
 
@@ -412,9 +403,7 @@ REASONING: [your critique]
                 should_trust=True,
             )
 
-    async def _run_rcot_check(
-        self, prompt_context: str, solution: str
-    ) -> RCoTResult:
+    async def _run_rcot_check(self, prompt_context: str, solution: str) -> RCoTResult:
         """
         Reversing Chain-of-Thought hallucination detection.
 
@@ -433,9 +422,7 @@ Be specific about:
 """
 
         try:
-            reconstructed = await self._query_llm(
-                reconstruct_prompt, temperature=0.3
-            )
+            reconstructed = await self._query_llm(reconstruct_prompt, temperature=0.3)
 
             # Compare original vs reconstructed
             compare_prompt = f"""
@@ -604,9 +591,7 @@ DISCREPANCIES: [list or "none"]
         else:
             return ConfidenceLevel.VERY_LOW
 
-    async def _query_llm(
-        self, prompt: str, temperature: float = 0.5
-    ) -> str:
+    async def _query_llm(self, prompt: str, temperature: float = 0.5) -> str:
         """Query the LLM through the analyzer."""
         # Use the analyzer's existing LLM query capability
         if hasattr(self.analyzer, "async_client"):
@@ -692,9 +677,7 @@ DISCREPANCIES: [list or "none"]
             detailed_assessment=response,
         )
 
-    def _parse_critique_response(
-        self, response: str, original: str
-    ) -> SelfCritiqueResult:
+    def _parse_critique_response(self, response: str, original: str) -> SelfCritiqueResult:
         """Parse self-critique response."""
         assumptions = self._extract_list(response, "ASSUMPTIONS")
         errors = self._extract_list(response, "POTENTIAL_ERRORS")
@@ -768,6 +751,4 @@ async def analyze_with_introspection(
         IntrospectionResult with full analysis
     """
     introspector = LLMIntrospector(analyzer)
-    return await introspector.analyze_with_introspection(
-        market_data, symbol=symbol
-    )
+    return await introspector.analyze_with_introspection(market_data, symbol=symbol)

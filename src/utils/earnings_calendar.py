@@ -23,7 +23,6 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +36,10 @@ class EarningsEvent:
     time_of_day: (
         str  # "BMO" (before market open), "AMC" (after market close), "TAS" (time after session)
     )
-    eps_estimate: Optional[float] = None
-    eps_actual: Optional[float] = None
-    revenue_estimate: Optional[float] = None
-    revenue_actual: Optional[float] = None
+    eps_estimate: float | None = None
+    eps_actual: float | None = None
+    revenue_estimate: float | None = None
+    revenue_actual: float | None = None
     source: str = "unknown"
 
     @property
@@ -69,8 +68,8 @@ class EarningsRisk:
     """Risk assessment for holding options through earnings."""
 
     symbol: str
-    earnings_date: Optional[datetime]
-    days_until_earnings: Optional[int]
+    earnings_date: datetime | None
+    days_until_earnings: int | None
 
     # Risk levels
     risk_level: str  # "CRITICAL", "HIGH", "MEDIUM", "LOW", "SAFE"
@@ -107,7 +106,7 @@ class EarningsCalendar:
     def __init__(self):
         """Initialize Earnings Calendar."""
         self._cache: dict[str, EarningsEvent] = {}
-        self._cache_timestamp: Optional[datetime] = None
+        self._cache_timestamp: datetime | None = None
         self._load_cache()
 
     def _load_cache(self) -> None:
@@ -150,7 +149,7 @@ class EarningsCalendar:
         age = datetime.now() - self._cache_timestamp
         return age < timedelta(hours=self.CACHE_DURATION_HOURS)
 
-    def get_next_earnings(self, symbol: str) -> Optional[EarningsEvent]:
+    def get_next_earnings(self, symbol: str) -> EarningsEvent | None:
         """
         Get the next earnings date for a symbol.
 
@@ -240,7 +239,7 @@ class EarningsCalendar:
     def assess_earnings_risk(
         self,
         symbol: str,
-        position_expiration: Optional[str] = None,
+        position_expiration: str | None = None,
     ) -> EarningsRisk:
         """
         Assess earnings risk for a position or potential trade.
@@ -468,7 +467,7 @@ class EarningsCalendar:
 
 
 # Singleton instance for easy access
-_earnings_calendar: Optional[EarningsCalendar] = None
+_earnings_calendar: EarningsCalendar | None = None
 
 
 def get_earnings_calendar() -> EarningsCalendar:

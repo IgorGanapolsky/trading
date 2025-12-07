@@ -16,7 +16,6 @@ import argparse
 import asyncio
 import json
 import logging
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -25,6 +24,12 @@ from unittest.mock import AsyncMock, MagicMock
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.core.introspective_council import (
+    IntrospectiveCouncil,
+    IntrospectiveTradeRecommendation,
+    TradeDecision,
+    create_introspective_council,
+)
 from src.core.llm_introspection import (
     ConfidenceLevel,
     EpistemicUncertaintyResult,
@@ -35,16 +40,9 @@ from src.core.llm_introspection import (
     SelfCritiqueResult,
     UncertaintyType,
 )
-from src.core.introspective_council import (
-    IntrospectiveCouncil,
-    IntrospectiveTradeRecommendation,
-    TradeDecision,
-    create_introspective_council,
-)
 from src.core.uncertainty_tracker import (
     UncertaintySnapshot,
     UncertaintyTracker,
-    get_uncertainty_tracker,
 )
 
 logging.basicConfig(
@@ -125,7 +123,7 @@ class TestLLMIntrospector:
 
         try:
             result = await introspector._run_self_consistency(
-                f"Symbol: SPY\nPrice: $450.25\nRSI: 62.5\nMACD: Bullish"
+                "Symbol: SPY\nPrice: $450.25\nRSI: 62.5\nMACD: Bullish"
             )
 
             assert isinstance(result, SelfConsistencyResult)
@@ -572,9 +570,7 @@ class TestUncertaintyTracker:
 
 async def main():
     """Run all tests."""
-    parser = argparse.ArgumentParser(
-        description="Test LLM Introspective Awareness Module"
-    )
+    parser = argparse.ArgumentParser(description="Test LLM Introspective Awareness Module")
     parser.add_argument(
         "--live",
         action="store_true",

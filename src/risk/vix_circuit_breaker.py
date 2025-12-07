@@ -24,7 +24,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import yfinance as yf
 
@@ -55,8 +55,8 @@ class VIXStatus:
     reduction_target_pct: float  # % of positions to reduce (0 = none, 0.5 = 50%)
     message: str
     timestamp: datetime
-    vvix_level: Optional[float] = None  # Volatility of VIX
-    skew_percentile: Optional[float] = None  # Put/call skew
+    vvix_level: float | None = None  # Volatility of VIX
+    skew_percentile: float | None = None  # Put/call skew
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -170,8 +170,8 @@ class VIXCircuitBreaker:
         self.paper_mode = paper_mode
 
         # State tracking
-        self._last_check: Optional[datetime] = None
-        self._last_status: Optional[VIXStatus] = None
+        self._last_check: datetime | None = None
+        self._last_status: VIXStatus | None = None
         self._event_history: list[CircuitBreakerEvent] = []
         self._daily_reductions: float = 0.0  # Track daily reduction actions
 
@@ -248,7 +248,7 @@ class VIXCircuitBreaker:
 
         return status
 
-    def check_and_act(self, positions: Optional[list[dict[str, Any]]] = None) -> list[DeRiskAction]:
+    def check_and_act(self, positions: list[dict[str, Any]] | None = None) -> list[DeRiskAction]:
         """
         Check VIX status and generate de-risking actions if needed.
 
@@ -548,7 +548,7 @@ class VIXCircuitBreaker:
 
 
 # Singleton instance
-_circuit_breaker: Optional[VIXCircuitBreaker] = None
+_circuit_breaker: VIXCircuitBreaker | None = None
 
 
 def get_vix_circuit_breaker(paper_mode: bool = True) -> VIXCircuitBreaker:
