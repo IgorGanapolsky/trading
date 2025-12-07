@@ -290,6 +290,15 @@ class MultiLLMAnalyzer:
                 # Exponential backoff
                 await asyncio.sleep(2**attempt * self.rate_limit_delay)
 
+        return LLMResponse(
+            model=model.value,
+            content="",
+            tokens_used=0,
+            latency=0,
+            success=False,
+            error="Max retries reached (loop finished)",
+        )
+
     def _query_llm_sync(
         self,
         model: LLMModel,
@@ -358,6 +367,15 @@ class MultiLLMAnalyzer:
 
                 # Exponential backoff
                 time.sleep(2**attempt * self.rate_limit_delay)
+
+        return LLMResponse(
+            model=model.value,
+            content="",
+            tokens_used=0,
+            latency=0,
+            success=False,
+            error="Max retries reached (loop finished)",
+        )
 
     async def _query_all_llms_async(
         self,
@@ -742,6 +760,32 @@ Provide objective, data-driven sentiment scores with detailed reasoning."""
             },
         )
 
+    async def analyze(
+        self,
+        query: str,
+        system_prompt: str | None = None,
+        model: LLMModel | None = None,
+    ) -> LLMResponse:
+        """
+        Generic analysis using a specific or default model.
+
+        Args:
+            query: The analysis query/prompt
+            system_prompt: Optional system prompt
+            model: Optional model to use (defaults to Claude Sonnet 4)
+
+        Returns:
+            LLMResponse object
+        """
+        # Default to Claude Sonnet 4 for high-quality reasoning
+        target_model = model or LLMModel.CLAUDE_SONNET_4
+
+        return await self._query_llm_async(
+            model=target_model,
+            prompt=query,
+            system_prompt=system_prompt,
+        )
+
     async def analyze_ipo(self, company_data: dict[str, Any]) -> dict[str, Any]:
         """
         Analyze an IPO opportunity and provide scoring.
@@ -850,7 +894,7 @@ valuation, competitive landscape, and risk factors."""
             recommendation = "Avoid"
 
         # Determine risk level
-        risk_counts = {}
+        risk_counts: dict[str, int] = {}
         for risk in all_risk_levels:
             risk_counts[risk] = risk_counts.get(risk, 0) + 1
         risk_level = max(risk_counts.items(), key=lambda x: x[1])[0] if risk_counts else "Medium"

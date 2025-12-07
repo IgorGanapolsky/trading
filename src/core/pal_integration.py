@@ -17,7 +17,7 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -57,14 +57,14 @@ class CouncilDecisionAudit:
     council_confidence: float
     individual_votes: dict[str, str]  # model -> vote
     challenge_performed: bool = False
-    challenge_risk_score: Optional[float] = None
+    challenge_risk_score: float | None = None
     challenge_concerns: list[str] = field(default_factory=list)
     final_decision: str = ""  # After challenge
-    entry_price: Optional[float] = None
-    exit_price: Optional[float] = None
+    entry_price: float | None = None
+    exit_price: float | None = None
     actual_outcome: str = "PENDING"  # PENDING, WIN, LOSS
-    pl: Optional[float] = None
-    pl_pct: Optional[float] = None
+    pl: float | None = None
+    pl_pct: float | None = None
 
 
 class PALIntegration:
@@ -79,7 +79,7 @@ class PALIntegration:
         self,
         enabled: bool = True,
         challenge_threshold: float = 0.7,  # Block if risk_score > threshold
-        audit_path: Optional[Path] = None,
+        audit_path: Path | None = None,
     ):
         """
         Initialize PAL integration.
@@ -96,9 +96,7 @@ class PALIntegration:
         self._load_audit_history()
 
         if self.enabled:
-            logger.info(
-                f"PAL Integration enabled (challenge_threshold={challenge_threshold})"
-            )
+            logger.info(f"PAL Integration enabled (challenge_threshold={challenge_threshold})")
         else:
             logger.info("PAL Integration disabled")
 
@@ -108,9 +106,7 @@ class PALIntegration:
             try:
                 with open(self.audit_path) as f:
                     data = json.load(f)
-                    self._decisions = [
-                        CouncilDecisionAudit(**d) for d in data.get("decisions", [])
-                    ]
+                    self._decisions = [CouncilDecisionAudit(**d) for d in data.get("decisions", [])]
                 logger.info(f"Loaded {len(self._decisions)} historical decisions")
             except Exception as e:
                 logger.warning(f"Could not load audit history: {e}")
@@ -125,9 +121,7 @@ class PALIntegration:
         approved = sum(1 for d in self._decisions if d.council_decision == "APPROVED")
         challenged = sum(1 for d in self._decisions if d.challenge_performed)
         blocked = sum(
-            1
-            for d in self._decisions
-            if d.challenge_performed and d.final_decision == "BLOCKED"
+            1 for d in self._decisions if d.challenge_performed and d.final_decision == "BLOCKED"
         )
         wins = sum(1 for d in self._decisions if d.actual_outcome == "WIN")
         losses = sum(1 for d in self._decisions if d.actual_outcome == "LOSS")
@@ -178,7 +172,7 @@ class PALIntegration:
         action: str,
         council_reasoning: str,
         market_data: dict[str, Any],
-        context: Optional[dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
     ) -> ChallengeResult:
         """
         Challenge a council recommendation using devil's advocate analysis.
@@ -254,7 +248,7 @@ CONFIDENCE: [0.0-1.0]
             )
 
             # Parse response
-            result = self._parse_challenge_response(response.analysis)
+            result = self._parse_challenge_response(response.content)
             logger.info(
                 f"Challenge for {action} {symbol}: "
                 f"risk_score={result.risk_score:.2f}, proceed={result.should_proceed}"
@@ -444,7 +438,9 @@ RECOMMENDATIONS:
                 # Parse hypothesis line: H1: [hypothesis] | Confidence: [level] | Evidence: [...]
                 parts = line.split("|")
                 if len(parts) >= 1:
-                    hyp_text = parts[0].split(":", 1)[-1].strip() if ":" in parts[0] else parts[0].strip()
+                    hyp_text = (
+                        parts[0].split(":", 1)[-1].strip() if ":" in parts[0] else parts[0].strip()
+                    )
                     hyp_conf = "low"
                     hyp_evidence = ""
                     for part in parts[1:]:
@@ -478,9 +474,9 @@ RECOMMENDATIONS:
         council_decision: str,
         council_confidence: float,
         individual_votes: dict[str, str],
-        challenge_result: Optional[ChallengeResult] = None,
+        challenge_result: ChallengeResult | None = None,
         final_decision: str = "",
-        entry_price: Optional[float] = None,
+        entry_price: float | None = None,
     ) -> None:
         """
         Record a council decision for audit purposes.
@@ -558,9 +554,7 @@ RECOMMENDATIONS:
         approved = sum(1 for d in self._decisions if d.council_decision == "APPROVED")
         challenged = sum(1 for d in self._decisions if d.challenge_performed)
         blocked = sum(
-            1
-            for d in self._decisions
-            if d.challenge_performed and d.final_decision == "BLOCKED"
+            1 for d in self._decisions if d.challenge_performed and d.final_decision == "BLOCKED"
         )
         wins = sum(1 for d in self._decisions if d.actual_outcome == "WIN")
         losses = sum(1 for d in self._decisions if d.actual_outcome == "LOSS")
@@ -569,9 +563,7 @@ RECOMMENDATIONS:
         # Confidence calibration: Are high-confidence decisions more accurate?
         high_conf_decisions = [d for d in self._decisions if d.council_confidence >= 0.7]
         high_conf_wins = sum(1 for d in high_conf_decisions if d.actual_outcome == "WIN")
-        high_conf_total = sum(
-            1 for d in high_conf_decisions if d.actual_outcome in ("WIN", "LOSS")
-        )
+        high_conf_total = sum(1 for d in high_conf_decisions if d.actual_outcome in ("WIN", "LOSS"))
 
         return {
             "total_decisions": total,
@@ -588,14 +580,12 @@ RECOMMENDATIONS:
             "high_confidence_win_rate": (
                 high_conf_wins / high_conf_total if high_conf_total > 0 else None
             ),
-            "average_confidence": (
-                sum(d.council_confidence for d in self._decisions) / total
-            ),
+            "average_confidence": (sum(d.council_confidence for d in self._decisions) / total),
         }
 
 
 # Singleton instance for easy access
-_pal_instance: Optional[PALIntegration] = None
+_pal_instance: PALIntegration | None = None
 
 
 def get_pal() -> PALIntegration:
