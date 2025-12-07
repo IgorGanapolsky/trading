@@ -24,7 +24,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import yfinance as yf
@@ -165,9 +164,9 @@ class RuleOneOptionsSignal:
     confidence: float  # 0.0 to 1.0
     contracts: int = 1
     total_premium: float = 0.0
-    iv_rank: Optional[float] = None
-    delta: Optional[float] = None
-    days_to_expiry: Optional[int] = None
+    iv_rank: float | None = None
+    delta: float | None = None
+    days_to_expiry: int | None = None
     timestamp: datetime = None
 
     def __post_init__(self):
@@ -186,10 +185,10 @@ class OptionContract:
     bid: float
     ask: float
     mid: float
-    delta: Optional[float]
-    implied_vol: Optional[float]
+    delta: float | None
+    implied_vol: float | None
     days_to_expiry: int
-    iv_rank: Optional[float] = None
+    iv_rank: float | None = None
 
 
 class RuleOneOptionsStrategy:
@@ -259,7 +258,7 @@ class RuleOneOptionsStrategy:
     def __init__(
         self,
         paper: bool = True,
-        universe: Optional[list[str]] = None,
+        universe: list[str] | None = None,
         min_shares_for_calls: int = 100,
     ):
         """
@@ -287,7 +286,7 @@ class RuleOneOptionsStrategy:
             f"Rule #1 Options Strategy initialized: {len(self.universe)} symbols, paper={paper}"
         )
 
-    def calculate_big_five(self, symbol: str) -> Optional[BigFiveMetrics]:
+    def calculate_big_five(self, symbol: str) -> BigFiveMetrics | None:
         """
         Calculate Phil Town's Big Five metrics for a stock.
 
@@ -328,7 +327,7 @@ class RuleOneOptionsStrategy:
             logger.warning(f"Failed to calculate Big Five for {symbol}: {e}")
             return None
 
-    def calculate_sticker_price(self, symbol: str) -> Optional[StickerPriceResult]:
+    def calculate_sticker_price(self, symbol: str) -> StickerPriceResult | None:
         """
         Calculate Phil Town's Sticker Price and MOS Price.
 
@@ -439,7 +438,7 @@ class RuleOneOptionsStrategy:
         return 0.0
 
     @staticmethod
-    def _compute_iv_rank(implied_vols, current_iv: Optional[float]) -> Optional[float]:
+    def _compute_iv_rank(implied_vols, current_iv: float | None) -> float | None:
         """
         Approximate IV rank (0-100) using min/max IV from current option chain.
         """
@@ -739,7 +738,7 @@ class RuleOneOptionsStrategy:
         signals.sort(key=lambda x: x.annualized_return, reverse=True)
         return signals
 
-    def _find_best_put_option(self, symbol: str, target_strike: float) -> Optional[OptionContract]:
+    def _find_best_put_option(self, symbol: str, target_strike: float) -> OptionContract | None:
         """
         Find the best put option near target strike.
 
@@ -813,7 +812,7 @@ class RuleOneOptionsStrategy:
             logger.debug(f"Could not find put option for {symbol}: {e}")
             return None
 
-    def _find_best_call_option(self, symbol: str, target_strike: float) -> Optional[OptionContract]:
+    def _find_best_call_option(self, symbol: str, target_strike: float) -> OptionContract | None:
         """
         Find the best call option near target strike.
 

@@ -17,7 +17,6 @@ Updated: 2025-11-24 - Added behavioral finance integration
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +111,7 @@ class RiskManager:
         self,
         account_value: float,
         daily_pl: float,
-        account_info: Optional[dict[str, any]] = None,
+        account_info: dict[str, any] | None = None,
     ) -> bool:
         """
         Determine if trading is allowed based on current risk parameters.
@@ -212,7 +211,7 @@ class RiskManager:
         self,
         account_value: float,
         risk_per_trade_pct: float = 1.0,
-        price_per_share: Optional[float] = None,
+        price_per_share: float | None = None,
     ) -> float:
         """
         Calculate appropriate position size based on risk parameters.
@@ -252,10 +251,10 @@ class RiskManager:
         sentiment_score: float,
         account_value: float,
         trade_type: str = "BUY",
-        account_info: Optional[dict[str, any]] = None,
-        expected_return_pct: Optional[float] = None,
-        confidence: Optional[float] = None,
-        pattern_type: Optional[str] = None,
+        account_info: dict[str, any] | None = None,
+        expected_return_pct: float | None = None,
+        confidence: float | None = None,
+        pattern_type: str | None = None,
     ) -> dict[str, any]:
         """
         Validate a trade before execution.
@@ -630,7 +629,7 @@ class RiskManager:
             "alerts": self.alerts[-10:],  # Last 10 alerts
         }
 
-    def _send_alert(self, severity: str, message: str, details: Optional[dict] = None) -> None:
+    def _send_alert(self, severity: str, message: str, details: dict | None = None) -> None:
         """
         Send a risk management alert.
 

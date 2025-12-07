@@ -28,7 +28,6 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -296,8 +295,8 @@ class MarginMonitor:
         symbol: str,
         trade_type: str,
         quantity: int,
-        strike: Optional[float] = None,
-        premium: Optional[float] = None,
+        strike: float | None = None,
+        premium: float | None = None,
     ) -> MarginImpact:
         """
         Estimate margin impact of a potential trade.

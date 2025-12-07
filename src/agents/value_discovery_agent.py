@@ -12,7 +12,7 @@ Finds the best value investment opportunities.
 
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from src.safety.graham_buffett_safety import (
     get_global_safety_analyzer,
@@ -157,7 +157,7 @@ class ValueDiscoveryAgent(BaseAgent):
 
         return round(total_score, 1)
 
-    def _get_current_price(self, symbol: str) -> Optional[float]:
+    def _get_current_price(self, symbol: str) -> float | None:
         """Get current market price for symbol."""
         try:
             import yfinance as yf

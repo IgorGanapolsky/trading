@@ -4,10 +4,27 @@ Tests for timezone consistency.
 Ensures all data uses consistent timezones.
 """
 
+import numpy as np
 import pandas as pd
+import pytest
 
 
-def test_timezone_consistency(data: pd.DataFrame, expected_tz: str = "UTC") -> bool:
+@pytest.fixture
+def data_fixture():
+    """Provide tz-aware data frames for timezone tests."""
+    dates = pd.date_range("2023-01-02", periods=10, freq="H", tz="UTC")
+    df = pd.DataFrame({"Close": np.linspace(100, 101, len(dates))}, index=dates)
+    return {"SPY": df, "AAPL": df.copy()}
+
+
+@pytest.fixture(name="data")
+def _data_alias(data_fixture):
+    # For functions expecting a single DataFrame, return first
+    first_df = next(iter(data_fixture.values()))
+    return first_df
+
+
+def test_timezone_consistency(data, expected_tz: str = "UTC") -> bool:
     """
     Test that all timestamps use consistent timezone.
 
@@ -18,6 +35,10 @@ def test_timezone_consistency(data: pd.DataFrame, expected_tz: str = "UTC") -> b
     Returns:
         True if timezone is consistent, False otherwise
     """
+    if isinstance(data, dict):
+        # Use first dataframe in dict
+        data = next(iter(data.values()))
+
     if not isinstance(data.index, pd.DatetimeIndex):
         raise ValueError("Data must have DatetimeIndex")
 
@@ -34,7 +55,7 @@ def test_timezone_consistency(data: pd.DataFrame, expected_tz: str = "UTC") -> b
     return True
 
 
-def test_no_timezone_mixing(data: dict[str, pd.DataFrame]) -> bool:
+def test_no_timezone_mixing(data) -> bool:
     """
     Test that all symbols use the same timezone.
 
@@ -44,11 +65,16 @@ def test_no_timezone_mixing(data: dict[str, pd.DataFrame]) -> bool:
     Returns:
         True if all timezones are consistent, False otherwise
     """
-    if not data:
+    if data is None:
         return True
+    # Normalize to dict of dataframes
+    if isinstance(data, pd.DataFrame):
+        data_map = {"default": data}
+    else:
+        data_map = data
 
     timezones = {}
-    for symbol, df in data.items():
+    for symbol, df in data_map.items():
         if isinstance(df.index, pd.DatetimeIndex):
             tz = str(df.index.tz) if df.index.tz else "naive"
             timezones[symbol] = tz

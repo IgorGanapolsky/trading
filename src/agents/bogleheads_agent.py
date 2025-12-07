@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import requests
 from bs4 import BeautifulSoup
@@ -96,7 +96,7 @@ class BogleHeadsAgent(BaseAgent):
             logger.error(f"Failed to scrape BogleHeads: {e}")
             return []
 
-    def _build_sentiment_prompt(self, topics: list[str], symbol: Optional[str]) -> str:
+    def _build_sentiment_prompt(self, topics: list[str], symbol: str | None) -> str:
         topics_str = "\n".join([f"- {t}" for t in topics])
 
         return f"""You are the BogleHeads Agent, representing the wisdom of the BogleHeads community (John Bogle's followers).

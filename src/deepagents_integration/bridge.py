@@ -35,7 +35,7 @@ class DeepAgentsTradingAgent(TradingAgent):
         Args:
             agent_name: Name for the agent
             deepagent: DeepAgent instance from create_deep_agent
-            task_prompt_template: Optional template for converting context to prompt
+            task_prompt_template:  template for converting context to prompt
         """
         super().__init__(agent_name)
         self.deepagent = deepagent
@@ -135,7 +135,7 @@ class HybridTradingAgent(TradingAgent):
 
         Args:
             agent_name: Name for the agent
-            deepagent: Optional deepagent for complex analysis
+            deepagent:  deepagent for complex analysis
             fallback_agent: Fallback agent if deepagent unavailable
         """
         super().__init__(agent_name)
@@ -205,7 +205,7 @@ def create_hybrid_analysis_agent(
     Factory function to create a hybrid analysis agent.
 
     Args:
-        fallback_agent: Optional fallback agent
+        fallback_agent:  fallback agent
 
     Returns:
         HybridTradingAgent with deepagent and fallback

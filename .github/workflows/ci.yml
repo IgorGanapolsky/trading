@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -138,6 +139,7 @@ jobs:
             tests/test_backtest_matrix_utils.py \
             tests/test_telemetry_summary.py \
             tests/test_trade_gateway.py \
+            tests/test_fred_collector.py \
             --timeout=120 \
             --timeout-method=thread \
             -v \

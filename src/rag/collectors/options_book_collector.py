@@ -14,7 +14,7 @@ import re
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 try:
     import PyPDF2
@@ -181,7 +181,7 @@ class OptionsBookCollector(BaseNewsCollector):
         ],
     }
 
-    def __init__(self, cache_dir: Optional[str] = None):
+    def __init__(self, cache_dir: str | None = None):
         """
         Initialize options book collector.
 
@@ -526,9 +526,9 @@ class OptionsBookCollector(BaseNewsCollector):
     def search(
         self,
         query: str,
-        book_id: Optional[str] = None,
+        book_id: str | None = None,
         top_k: int = 5,
-        content_types: Optional[list[str]] = None,
+        content_types: list[str] | None = None,
     ) -> dict[str, Any]:
         """
         Search ingested books for relevant content.
@@ -659,7 +659,7 @@ class OptionsBookCollector(BaseNewsCollector):
         word_count = len(content_lower.split())
         return (matches / len(query_words)) * (1000 / max(word_count, 100))
 
-    def get_chunks_for_rag(self, book_id: Optional[str] = None) -> list[dict[str, Any]]:
+    def get_chunks_for_rag(self, book_id: str | None = None) -> list[dict[str, Any]]:
         """
         Get all chunks formatted for RAG ingestion.
 

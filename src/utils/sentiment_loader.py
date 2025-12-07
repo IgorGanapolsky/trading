@@ -501,16 +501,20 @@ def print_sentiment_summary(sentiment_data: dict | None = None):
     print(f"Sources: {', '.join(summary['sources'])}")
     print(f"Market Regime: {summary['market_regime'].upper()}")
     print()
+    pct_bullish = (
+        (summary["bullish"] / summary["total_tickers"] * 100) if summary["total_tickers"] > 0 else 0
+    )
+    pct_neutral = (
+        (summary["neutral"] / summary["total_tickers"] * 100) if summary["total_tickers"] > 0 else 0
+    )
+    pct_bearish = (
+        (summary["bearish"] / summary["total_tickers"] * 100) if summary["total_tickers"] > 0 else 0
+    )
+
     print(f"Total Tickers: {summary['total_tickers']}")
-    print(
-        f"  Bullish:  {summary['bullish']} ({summary['bullish'] / summary['total_tickers'] * 100:.0f}%)"
-    )
-    print(
-        f"  Neutral:  {summary['neutral']} ({summary['neutral'] / summary['total_tickers'] * 100:.0f}%)"
-    )
-    print(
-        f"  Bearish:  {summary['bearish']} ({summary['bearish'] / summary['total_tickers'] * 100:.0f}%)"
-    )
+    print(f"  Bullish:  {summary['bullish']} ({pct_bullish:.0f}%)")
+    print(f"  Neutral:  {summary['neutral']} ({pct_neutral:.0f}%)")
+    print(f"  Bearish:  {summary['bearish']} ({pct_bearish:.0f}%)")
     print()
     print("Confidence Levels:")
     print(f"  High:   {summary['high_confidence']}")

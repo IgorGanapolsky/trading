@@ -23,7 +23,7 @@ Usage:
 import argparse
 import logging
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -39,8 +39,8 @@ class ExperimentResults:
     train_metrics: dict[str, float]
     test_metrics: dict[str, float]
     backtest_results: dict[str, Any]
-    feature_importance: Optional[pd.Series] = None
-    predictions: Optional[pd.Series] = None
+    feature_importance: pd.Series | None = None
+    predictions: pd.Series | None = None
 
 
 class BaseModel:
@@ -54,7 +54,7 @@ class BaseModel:
         """Make predictions."""
         raise NotImplementedError
 
-    def get_feature_importance(self) -> Optional[pd.Series]:
+    def get_feature_importance(self) -> pd.Series | None:
         """Get feature importance (if available)."""
         return None
 

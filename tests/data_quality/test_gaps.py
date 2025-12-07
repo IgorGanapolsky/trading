@@ -5,6 +5,20 @@ Ensures no missing trading days in the data.
 """
 
 import pandas as pd
+import pytest
+
+
+@pytest.fixture
+def data_fixture():
+    """Provide a simple business-day time series without gaps or weekends."""
+    dates = pd.date_range("2023-01-02", periods=30, freq="B")  # Business days
+    return pd.DataFrame({"value": range(len(dates))}, index=dates)
+
+
+# Alias fixture so tests expecting 'data' receive the same frame
+@pytest.fixture(name="data")
+def _data_alias(data_fixture):
+    return data_fixture
 
 
 def test_no_gaps_in_trading_days(data: pd.DataFrame) -> bool:
@@ -67,7 +81,7 @@ def test_no_weekend_data(data: pd.DataFrame) -> bool:
     return True
 
 
-def test_consistent_frequency(data: pd.DataFrame, expected_freq: str = "D") -> bool:
+def test_consistent_frequency(data: pd.DataFrame, expected_freq: str = "B") -> bool:
     """
     Test that data has consistent frequency.
 
@@ -104,4 +118,4 @@ def test_weekend_data(data_fixture):
 
 def test_frequency_consistency(data_fixture):
     """Pytest test for frequency consistency."""
-    assert test_consistent_frequency(data_fixture, expected_freq="D"), "Frequency is not consistent"
+    assert test_consistent_frequency(data_fixture, expected_freq="B"), "Frequency is not consistent"

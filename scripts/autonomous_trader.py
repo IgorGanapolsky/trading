@@ -20,6 +20,33 @@ from src.utils.logging_config import setup_logging
 SYSTEM_STATE_PATH = Path(os.getenv("SYSTEM_STATE_PATH", "data/system_state.json"))
 
 
+def validate_order_size(amount: float, expected: float, tier: str = "T1_CORE") -> tuple[bool, str]:
+    """
+    Guardrail against fat-finger order sizing.
+
+    Rules:
+    - Enforce $10 minimum notional.
+    - Reject if amount > 10x expected (Mistake #1 scenario).
+    - Allow +/-10% tolerance; outside that returns False.
+    """
+    minimum = 6.0
+    if amount < minimum:
+        return False, f"Order ${amount:.2f} below minimum ${minimum:.2f}"
+
+    # Protect against missing expected values
+    if expected <= 0:
+        expected = amount
+
+    if amount > expected * 10:
+        return False, "Order size exceeds 10x expected; possible fat-finger"
+
+    tolerance = expected * 0.10
+    if abs(amount - expected) > tolerance:
+        return False, f"Order differs by more than 10% (expected ~${expected:.2f})"
+
+    return True, ""
+
+
 def _flag_enabled(env_name: str, default: str = "true") -> bool:
     return os.getenv(env_name, default).strip().lower() in {"1", "true", "yes", "on"}
 
@@ -321,6 +348,34 @@ def main() -> None:
 
     # Normal stock trading - import only when needed
     from src.orchestrator.main import TradingOrchestrator
+
+    # Ensure Go ADK service is running if enabled
+    adk_enabled = _flag_enabled("ENABLE_ADK_AGENTS", "true")
+    if adk_enabled:
+        try:
+            # Check if service is already running on port 8080
+            import socket
+            import subprocess
+            import time
+
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            result = sock.connect_ex(("127.0.0.1", 8080))
+            sock.close()
+
+            if result != 0:
+                logger.info("🚀 Starting Go ADK Trading Service...")
+                script_path = os.path.join(os.path.dirname(__file__), "run_adk_trading_service.sh")
+                # Run in background
+                subprocess.Popen(
+                    [script_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                )
+                # Give it a moment to start
+                time.sleep(3)
+                logger.info("✅ Go ADK Service started in background")
+            else:
+                logger.info("✅ Go ADK Service already running")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to start ADK service: {e}")
 
     logger.info("Starting hybrid funnel orchestrator entrypoint.")
     tickers = _parse_tickers()

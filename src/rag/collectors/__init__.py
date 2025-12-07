@@ -1,20 +1,21 @@
 """News collectors package."""
 
-from src.rag.collectors.alphavantage_collector import AlphaVantageCollector
-from src.rag.collectors.berkshire_collector import BerkshireLettersCollector
-from src.rag.collectors.bogleheads_collector import BogleheadsCollector
-from src.rag.collectors.earnings_whisper_collector import EarningsWhisperCollector
-from src.rag.collectors.finviz_collector import FinvizCollector
-from src.rag.collectors.linkedin_collector import LinkedInCollector
-from src.rag.collectors.mcmillan_options_collector import McMillanOptionsKnowledgeBase
-from src.rag.collectors.options_flow_collector import OptionsFlowCollector
-from src.rag.collectors.orchestrator import NewsOrchestrator, get_orchestrator
-from src.rag.collectors.reddit_collector import RedditCollector
-from src.rag.collectors.seekingalpha_collector import SeekingAlphaCollector
-from src.rag.collectors.stocktwits_collector import StockTwitsCollector
-from src.rag.collectors.tiktok_collector import TikTokCollector
-from src.rag.collectors.tradingview_collector import TradingViewCollector
-from src.rag.collectors.yahoo_collector import YahooFinanceCollector
+from .alphavantage_collector import AlphaVantageCollector
+from .berkshire_collector import BerkshireLettersCollector
+from .bogleheads_collector import BogleheadsCollector
+from .earnings_whisper_collector import EarningsWhisperCollector
+from .finviz_collector import FinvizCollector
+from .fred_collector import FREDCollector as FredCollector
+from .linkedin_collector import LinkedInCollector
+from .mcmillan_options_collector import McMillanOptionsKnowledgeBase
+from .options_flow_collector import OptionsFlowCollector
+from .orchestrator import NewsOrchestrator, get_orchestrator
+from .reddit_collector import RedditCollector
+from .seekingalpha_collector import SeekingAlphaCollector
+from .stocktwits_collector import StockTwitsCollector
+from .tiktok_collector import TikTokCollector
+from .tradingview_collector import TradingViewCollector
+from .yahoo_collector import YahooFinanceCollector
 
 __all__ = [
     "get_orchestrator",
@@ -33,4 +34,9 @@ __all__ = [
     "FinvizCollector",
     "TradingViewCollector",
     "EarningsWhisperCollector",
+    "FREDCollector",
+    "FredCollector",
 ]
+
+# Backwards-compatible aliases
+FREDCollector = FredCollector

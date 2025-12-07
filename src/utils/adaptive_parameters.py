@@ -21,7 +21,7 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -223,9 +223,9 @@ class AdaptiveParameterManager:
 
     def get_adapted_parameters(
         self,
-        current_volatility: Optional[float] = None,
-        vix_level: Optional[float] = None,
-        market_regime: Optional[str] = None,
+        current_volatility: float | None = None,
+        vix_level: float | None = None,
+        market_regime: str | None = None,
     ) -> AdaptedParameters:
         """
         Get all parameters adapted for current market conditions.
@@ -288,9 +288,9 @@ class AdaptiveParameterManager:
     def get_parameter(
         self,
         name: str,
-        current_volatility: Optional[float] = None,
-        vix_level: Optional[float] = None,
-        market_regime: Optional[str] = None,
+        current_volatility: float | None = None,
+        vix_level: float | None = None,
+        market_regime: str | None = None,
     ) -> float:
         """
         Get a single adapted parameter value.
@@ -384,8 +384,8 @@ class AdaptiveParameterManager:
 
     def _build_volatility_context(
         self,
-        current_volatility: Optional[float],
-        vix_level: Optional[float],
+        current_volatility: float | None,
+        vix_level: float | None,
     ) -> VolatilityContext:
         """Build volatility context from available data."""
         # Fetch VIX if not provided
@@ -427,7 +427,7 @@ class AdaptiveParameterManager:
         # Default based on volatility
         return vol_context.volatility_regime
 
-    def _detect_market_trend(self) -> Optional[str]:
+    def _detect_market_trend(self) -> str | None:
         """Detect current market trend using SPY."""
         try:
             import yfinance as yf
@@ -456,7 +456,7 @@ class AdaptiveParameterManager:
             logger.debug(f"Market trend detection failed: {e}")
             return None
 
-    def _fetch_vix(self) -> Optional[float]:
+    def _fetch_vix(self) -> float | None:
         """Fetch current VIX level."""
         try:
             import yfinance as yf
@@ -559,7 +559,7 @@ class AdaptiveParameterManager:
 
 
 # Global instance
-_GLOBAL_PARAM_MANAGER: Optional[AdaptiveParameterManager] = None
+_GLOBAL_PARAM_MANAGER: AdaptiveParameterManager | None = None
 
 
 def get_adaptive_parameter_manager() -> AdaptiveParameterManager:
@@ -572,9 +572,9 @@ def get_adaptive_parameter_manager() -> AdaptiveParameterManager:
 
 def get_adapted_value(
     name: str,
-    current_volatility: Optional[float] = None,
-    vix_level: Optional[float] = None,
-    market_regime: Optional[str] = None,
+    current_volatility: float | None = None,
+    vix_level: float | None = None,
+    market_regime: str | None = None,
 ) -> float:
     """Convenience function to get a single adapted parameter."""
     manager = get_adaptive_parameter_manager()

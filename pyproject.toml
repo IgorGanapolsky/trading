@@ -3,7 +3,7 @@ name = "trading"
 version = "1.0.0"
 description = "Validated profitable automated trading system with AI-powered decision making"
 readme = "README.md"
-requires-python = ">=3.10,<3.12"
+requires-python = ">=3.11,<3.12"  # CI uses Python 3.11
 license = {text = "MIT"}
 authors = [
     {name = "Igor Ganapolsky"}
@@ -14,6 +14,7 @@ dependencies = [
     # Trading APIs
     "alpaca-py>=0.43.2",
     "openai>=1.109.1",
+    "openai-agents>=0.6.2",
 
     # Data Processing
     "pandas>=2.3.3",
@@ -61,7 +62,6 @@ dependencies = [
     "langsmith>=0.1.0",
 
     # Dashboard
-    # Pin to a 3.11-compatible release to satisfy CI runners
     "streamlit>=1.40.0,<1.46.0",
     "matplotlib>=3.7.0",
 
@@ -156,6 +156,10 @@ ignore = [
     "SIM105", # contextlib.suppress (readability preference)
     "SIM108", # ternary operator (readability preference)
     "SIM117", # nested with statements (readability preference)
+    "UP035",  # prefer collections.abc imports (not yet migrated)
+    "UP045",  # pipe-style Optional annotations (not yet migrated)
+    "UP007",  # pipe unions (not yet migrated)
+    "B905",  # zip strict parameter (backlog)
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -211,3 +215,7 @@ exclude_lines = [
     "raise NotImplementedError",
     "if __name__ == .__main__.:",
 ]
+
+# Poetry compatibility for workflows that still read tool.poetry
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"

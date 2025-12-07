@@ -23,7 +23,7 @@ import sys
 from dataclasses import asdict, dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -142,7 +142,7 @@ class IVAnalyzer:
         """Get file path for cached IV data"""
         return Path(self.cache_dir) / f"{symbol}_iv_history.json"
 
-    def _load_from_cache(self, symbol: str) -> Optional[list[IVHistoryPoint]]:
+    def _load_from_cache(self, symbol: str) -> list[IVHistoryPoint] | None:
         """Load IV history from disk cache if available and fresh"""
         cache_path = self._get_cache_path(symbol)
 
@@ -178,7 +178,7 @@ class IVAnalyzer:
         except Exception as e:
             logger.warning(f"Failed to save cache for {symbol}: {e}")
 
-    def get_current_iv(self, symbol: str, dte: Optional[int] = None) -> Optional[float]:
+    def get_current_iv(self, symbol: str, dte: int | None = None) -> float | None:
         """
         Get current implied volatility for a symbol.
 

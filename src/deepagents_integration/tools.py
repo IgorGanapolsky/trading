@@ -90,7 +90,7 @@ def query_sentiment(
 
     Args:
         query: Natural language query about market sentiment (e.g., "bullish momentum")
-        ticker: Optional ticker symbol to filter results
+        ticker:  ticker symbol to filter results
         limit: Maximum number of results to return (default: 5)
 
     Returns:

@@ -13,7 +13,6 @@ import logging
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 import yt_dlp
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -276,7 +275,7 @@ class YouTubeMonitor:
 
         return False
 
-    def get_transcript(self, video_id: str) -> Optional[str]:
+    def get_transcript(self, video_id: str) -> str | None:
         """
         Get video transcript using youtube-transcript-api
 

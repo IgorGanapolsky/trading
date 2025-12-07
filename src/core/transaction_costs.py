@@ -18,7 +18,6 @@ Created: 2025-12-04
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -104,7 +103,7 @@ class TransactionCostModel:
     def __init__(
         self,
         asset_class: AssetClass = AssetClass.US_EQUITY,
-        params: Optional[CostModelParams] = None,
+        params: CostModelParams | None = None,
     ):
         """
         Initialize transaction cost model.
@@ -163,8 +162,8 @@ class TransactionCostModel:
         price: float,
         order_type: OrderType = OrderType.MARKET,
         is_buy: bool = True,
-        volatility: Optional[float] = None,
-        avg_daily_volume: Optional[float] = None,
+        volatility: float | None = None,
+        avg_daily_volume: float | None = None,
         holding_days: int = 0,
     ) -> TransactionCost:
         """
@@ -322,8 +321,8 @@ class TransactionCostModel:
         entry_price: float,
         exit_price: float,
         holding_days: int = 1,
-        volatility: Optional[float] = None,
-        avg_daily_volume: Optional[float] = None,
+        volatility: float | None = None,
+        avg_daily_volume: float | None = None,
     ) -> tuple[float, TransactionCost, TransactionCost]:
         """
         Estimate total round-trip transaction costs.
@@ -369,7 +368,7 @@ class TransactionCostModel:
     def adjust_returns(
         self,
         trades: list[dict],
-        price_data: Optional[pd.DataFrame] = None,
+        price_data: pd.DataFrame | None = None,
     ) -> list[dict]:
         """
         Adjust trade returns for transaction costs.
@@ -431,7 +430,7 @@ class TransactionCostModel:
 def calculate_breakeven_edge(
     trades_per_year: int = 250,
     avg_trade_value: float = 10000.0,
-    cost_model: Optional[TransactionCostModel] = None,
+    cost_model: TransactionCostModel | None = None,
 ) -> float:
     """
     Calculate the minimum edge needed to break even after costs.
@@ -462,7 +461,7 @@ def calculate_breakeven_edge(
 
 def generate_cost_report(
     trades: list[dict],
-    cost_model: Optional[TransactionCostModel] = None,
+    cost_model: TransactionCostModel | None = None,
 ) -> str:
     """
     Generate transaction cost analysis report.

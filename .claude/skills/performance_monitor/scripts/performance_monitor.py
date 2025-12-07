@@ -50,8 +50,8 @@ class PerformanceMonitor:
 
     def calculate_performance_metrics(
         self,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
         benchmark_symbol: str = "SPY",
         include_closed_positions: bool = False,
     ) -> dict[str, Any]:

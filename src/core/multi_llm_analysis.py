@@ -26,7 +26,7 @@ import os
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from openai import AsyncOpenAI, OpenAI
 
@@ -53,7 +53,7 @@ class LLMResponse:
     tokens_used: int
     latency: float
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -76,7 +76,7 @@ class IPOAnalysis:
     risk_level: str  # "Low", "Medium", "High"
     key_factors: list[str]
     concerns: list[str]
-    price_target: Optional[float]
+    price_target: float | None
     confidence: float
     individual_analyses: dict[str, dict[str, Any]]
 
@@ -88,7 +88,7 @@ class StockAnalysis:
     symbol: str
     sentiment: float
     recommendation: str
-    target_price: Optional[float]
+    target_price: float | None
     risk_assessment: str
     key_insights: list[str]
     confidence: float
@@ -125,11 +125,11 @@ class MultiLLMAnalyzer:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        models: Optional[list[LLMModel]] = None,
+        api_key: str | None = None,
+        models: list[LLMModel] | None = None,
         max_retries: int = 3,
         timeout: int = 60,
-        rate_limit_delay: float = 1.0,
+        rate_limit_delay: float = 2.0,  # Increased from 1.0 to reduce 429/500 errors
         use_async: bool = True,
     ):
         """
@@ -213,7 +213,7 @@ class MultiLLMAnalyzer:
         self,
         model: LLMModel,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
     ) -> LLMResponse:
@@ -262,9 +262,20 @@ class MultiLLMAnalyzer:
                 )
 
             except Exception as e:
-                logger.warning(
-                    f"Attempt {attempt + 1}/{self.max_retries} failed for {model.value}: {str(e)}"
-                )
+                # Enhanced error logging to identify specific failure patterns
+                error_type = type(e).__name__
+                error_msg = str(e)
+                status_code = getattr(e, 'status_code', None)
+                if status_code:
+                    logger.warning(
+                        f"[MultiLLM-Async] Attempt {attempt + 1}/{self.max_retries} failed for "
+                        f"{model.value}: HTTP {status_code} - {error_type}: {error_msg}"
+                    )
+                else:
+                    logger.warning(
+                        f"[MultiLLM-Async] Attempt {attempt + 1}/{self.max_retries} failed for "
+                        f"{model.value}: {error_type}: {error_msg}"
+                    )
 
                 if attempt == self.max_retries - 1:
                     return LLMResponse(
@@ -273,7 +284,7 @@ class MultiLLMAnalyzer:
                         tokens_used=0,
                         latency=0,
                         success=False,
-                        error=str(e),
+                        error=f"{error_type}: {error_msg}",
                     )
 
                 # Exponential backoff
@@ -283,7 +294,7 @@ class MultiLLMAnalyzer:
         self,
         model: LLMModel,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
     ) -> LLMResponse:
@@ -320,9 +331,20 @@ class MultiLLMAnalyzer:
                 )
 
             except Exception as e:
-                logger.warning(
-                    f"Attempt {attempt + 1}/{self.max_retries} failed for {model.value}: {str(e)}"
-                )
+                # Enhanced error logging to identify specific failure patterns
+                error_type = type(e).__name__
+                error_msg = str(e)
+                status_code = getattr(e, 'status_code', None)
+                if status_code:
+                    logger.warning(
+                        f"[MultiLLM-Sync] Attempt {attempt + 1}/{self.max_retries} failed for "
+                        f"{model.value}: HTTP {status_code} - {error_type}: {error_msg}"
+                    )
+                else:
+                    logger.warning(
+                        f"[MultiLLM-Sync] Attempt {attempt + 1}/{self.max_retries} failed for "
+                        f"{model.value}: {error_type}: {error_msg}"
+                    )
 
                 if attempt == self.max_retries - 1:
                     return LLMResponse(
@@ -331,7 +353,7 @@ class MultiLLMAnalyzer:
                         tokens_used=0,
                         latency=0,
                         success=False,
-                        error=str(e),
+                        error=f"{error_type}: {error_msg}",
                     )
 
                 # Exponential backoff
@@ -340,7 +362,7 @@ class MultiLLMAnalyzer:
     async def _query_all_llms_async(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
     ) -> list[LLMResponse]:
@@ -400,7 +422,7 @@ class MultiLLMAnalyzer:
     def _query_all_llms_sync(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
     ) -> list[LLMResponse]:
@@ -412,7 +434,7 @@ class MultiLLMAnalyzer:
             time.sleep(self.rate_limit_delay)
         return responses
 
-    def _parse_sentiment_score(self, content: str) -> Optional[float]:
+    def _parse_sentiment_score(self, content: str) -> float | None:
         """
         Parse sentiment score from LLM response.
 
@@ -456,7 +478,7 @@ class MultiLLMAnalyzer:
             logger.warning(f"Error parsing sentiment score: {str(e)}")
             return None
 
-    def _parse_ipo_score(self, content: str) -> Optional[int]:
+    def _parse_ipo_score(self, content: str) -> int | None:
         """
         Parse IPO score from LLM response.
 
@@ -1089,12 +1111,12 @@ class LLMCouncilAnalyzer:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        council_models: Optional[list[LLMModel]] = None,
-        chairman_model: Optional[LLMModel] = None,
+        api_key: str | None = None,
+        council_models: list[LLMModel] | None = None,
+        chairman_model: LLMModel | None = None,
         max_retries: int = 3,
         timeout: int = 60,
-        rate_limit_delay: float = 1.0,
+        rate_limit_delay: float = 2.0,  # Increased from 1.0 to reduce 429/500 errors
         use_async: bool = True,
     ):
         """
@@ -1184,7 +1206,7 @@ class LLMCouncilAnalyzer:
         self,
         model: LLMModel,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
     ) -> LLMResponse:
@@ -1221,9 +1243,20 @@ class LLMCouncilAnalyzer:
                 )
 
             except Exception as e:
-                logger.warning(
-                    f"Attempt {attempt + 1}/{self.max_retries} failed for {model.value}: {str(e)}"
-                )
+                # Enhanced error logging to identify specific failure patterns
+                error_type = type(e).__name__
+                error_msg = str(e)
+                status_code = getattr(e, 'status_code', None)
+                if status_code:
+                    logger.warning(
+                        f"[Council] Attempt {attempt + 1}/{self.max_retries} failed for "
+                        f"{model.value}: HTTP {status_code} - {error_type}: {error_msg}"
+                    )
+                else:
+                    logger.warning(
+                        f"[Council] Attempt {attempt + 1}/{self.max_retries} failed for "
+                        f"{model.value}: {error_type}: {error_msg}"
+                    )
 
                 if attempt == self.max_retries - 1:
                     return LLMResponse(
@@ -1232,14 +1265,14 @@ class LLMCouncilAnalyzer:
                         tokens_used=0,
                         latency=0,
                         success=False,
-                        error=str(e),
+                        error=f"{error_type}: {error_msg}",
                     )
 
                 # Exponential backoff
                 await asyncio.sleep(2**attempt * self.rate_limit_delay)
 
     async def _stage1_first_opinions(
-        self, query: str, system_prompt: Optional[str] = None
+        self, query: str, system_prompt: str | None = None
     ) -> dict[str, LLMResponse]:
         """
         Stage 1: Get first opinions from all council members.
@@ -1525,7 +1558,7 @@ multiple expert opinions into a final, high-quality decision. Your role is to:
     async def query_council(
         self,
         query: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         include_reviews: bool = True,
     ) -> CouncilResponse:
         """
@@ -1594,7 +1627,7 @@ multiple expert opinions into a final, high-quality decision. Your role is to:
         self,
         symbol: str,
         market_data: dict[str, Any],
-        context: Optional[dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
     ) -> CouncilResponse:
         """
         Analyze a trading decision using the LLM Council.
@@ -1641,7 +1674,7 @@ trading recommendations based on technical analysis, market conditions, and risk
 
 
 # Convenience functions for synchronous usage
-def create_analyzer(api_key: Optional[str] = None, use_async: bool = True) -> MultiLLMAnalyzer:
+def create_analyzer(api_key: str | None = None, use_async: bool = True) -> MultiLLMAnalyzer:
     """
     Create a MultiLLMAnalyzer instance.
 

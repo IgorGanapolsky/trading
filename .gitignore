@@ -78,3 +78,10 @@ data/google_sheets_credentials.json
 worktrees/
 trading_worktrees/
 GEMINI.md
+
+# High-churn agent state and generated artifacts
+data/agent_context/
+data/options_signals/
+data/trading_plans/
+data/evaluations/
+data/sentiment/news_*.json

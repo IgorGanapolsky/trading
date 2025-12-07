@@ -2,6 +2,8 @@
 Risk parity and equal risk contribution implementations.
 """
 
+from typing import Optional
+
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
@@ -9,7 +11,7 @@ from scipy.optimize import minimize
 
 def calculate_risk_parity_weights(
     covariance_matrix: pd.DataFrame,
-    target_risk_budgets: pd.Series | None = None,
+    target_risk_budgets: Optional[pd.Series] = None,
 ) -> pd.Series:
     """
     Calculate risk parity portfolio weights.

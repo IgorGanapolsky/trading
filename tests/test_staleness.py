@@ -9,6 +9,8 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import pytest
+
 # Add scripts directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -61,7 +63,15 @@ def set_state_age(hours_old: float):
     return True
 
 
-def test_scenario(name: str, hours_old: float, should_fail: bool = False):
+@pytest.mark.parametrize(
+    "name,hours_old,should_fail",
+    [
+        ("FRESH State - 12 hours old", 12, False),
+        ("STALE State - 48 hours old", 48, False),
+        ("EXPIRED State - 200 hours old", 200, True),
+    ],
+)
+def test_scenario(name: str, hours_old: float, should_fail: bool):
     """Test a specific staleness scenario"""
     print("\n" + "=" * 70)
     print(f"TEST: {name}")
