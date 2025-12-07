@@ -22,15 +22,15 @@
     "total_pl_pct": 0.017490000000005237
   },
   "investments": {
-    "total_invested": 1631.93,
+    "total_invested": 1621.93,
     "tier1_invested": 1217.96,
     "tier2_invested": 403.97,
     "tier3_reserve": 0.0,
     "tier4_reserve": 0.0,
-    "tier5_invested": 10.0
+    "tier5_invested": 0.0
   },
   "performance": {
-    "total_trades": 8,
+    "total_trades": 7,
     "winning_trades": 0,
     "losing_trades": 0,
     "win_rate": 0.0,
@@ -168,17 +168,19 @@
     "tier5": {
       "name": "Crypto Weekend Strategy (BTC, ETH)",
       "allocation": 0.05,
-      "daily_amount": 0.5,
+      "daily_amount": 10.0,
       "coins": [
         "BTC/USD",
         "ETH/USD"
       ],
-      "trades_executed": 1,
-      "total_invested": 10.0,
+      "trades_executed": 0,
+      "total_invested": 0.0,
       "status": "active",
+      "enabled": true,
       "execution_schedule": "Saturday & Sunday 10:00 AM ET",
-      "last_execution": "2025-12-07T17:11:58",
-      "next_execution": null
+      "last_execution": null,
+      "next_execution": "2025-12-07T15:00:00Z",
+      "workflow_issue": "3 weekends with 0 executions - check GitHub Actions for errors"
     }
   },
   "backtest_reality": {
