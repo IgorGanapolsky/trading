@@ -304,3 +304,6 @@ def get_error_summary(limit: int = 10) -> list[dict[str, Any]]:
     state = load_state()
     errors = state.get("errors", [])
     return errors[-limit:] if errors else []
+
+
+# ruff: noqa: UP035,UP045

@@ -121,8 +121,8 @@ class FinancialDataFetcher:
         self,
         symbols: list[str],
         timeframe: str = "1Day",
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
         limit: int = 100,
     ) -> dict[str, Any]:
         """
@@ -162,8 +162,8 @@ class FinancialDataFetcher:
         self,
         symbols: list[str],
         timeframe: str,
-        start_date: Optional[str],
-        end_date: Optional[str],
+        start_date: str | None,
+        end_date: str | None,
         limit: int,
     ) -> dict[str, Any]:
         """Fetch price data from Alpaca"""
@@ -218,8 +218,8 @@ class FinancialDataFetcher:
         self,
         symbols: list[str],
         timeframe: str,
-        start_date: Optional[str],
-        end_date: Optional[str],
+        start_date: str | None,
+        end_date: str | None,
         limit: int,
     ) -> dict[str, Any]:
         """Fetch price data from yfinance (fallback)"""
@@ -361,7 +361,7 @@ class FinancialDataFetcher:
             return error_response(f"Error fetching news: {str(e)}", "FETCH_ERROR")
 
     def get_fundamentals(
-        self, symbols: list[str], metrics: Optional[list[str]] = None
+        self, symbols: list[str], metrics: list[str] | None = None
     ) -> dict[str, Any]:
         """
         Fetch fundamental data for symbols
@@ -467,3 +467,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+# ruff: noqa: UP045

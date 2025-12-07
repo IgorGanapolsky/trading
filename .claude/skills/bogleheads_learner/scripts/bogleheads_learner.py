@@ -138,8 +138,8 @@ class BogleheadsLearner:
 
     def monitor_bogleheads_forum(
         self,
-        topics: Optional[list[str]] = None,
-        keywords: Optional[list[str]] = None,
+        topics: list[str] | None = None,
+        keywords: list[str] | None = None,
         max_posts: int = 50,
         min_replies: int = 5,
     ) -> dict[str, Any]:
@@ -487,7 +487,7 @@ Extracted: {insight.extracted_at}
             return {"stored_count": 0, "error": str(e)}
 
     def get_bogleheads_signal(
-        self, symbol: str, market_context: dict[str, Any], query: Optional[str] = None
+        self, symbol: str, market_context: dict[str, Any], query: str | None = None
     ) -> dict[str, Any]:
         """
         Get trading signal based on Bogleheads forum wisdom.
@@ -694,3 +694,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+# ruff: noqa: UP045

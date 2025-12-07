@@ -129,7 +129,7 @@ class MultiLLMAnalyzer:
         models: Optional[list[LLMModel]] = None,
         max_retries: int = 3,
         timeout: int = 60,
-        rate_limit_delay: float = 0.5,
+        rate_limit_delay: float = 1.0,
         use_async: bool = True,
     ):
         """
@@ -345,7 +345,10 @@ class MultiLLMAnalyzer:
         max_tokens: int = 2000,
     ) -> list[LLMResponse]:
         """
-        Query all configured LLMs in parallel.
+        Query all configured LLMs with staggered starts to avoid rate limits.
+
+        Uses staggered parallel execution: each model starts with a small delay
+        to prevent hitting OpenRouter rate limits (429 errors).
 
         Args:
             prompt: The user prompt
@@ -356,9 +359,20 @@ class MultiLLMAnalyzer:
         Returns:
             List of LLMResponse objects
         """
+
+        async def query_with_delay(model, delay: float):
+            """Query a model after a staggered delay."""
+            if delay > 0:
+                await asyncio.sleep(delay)
+            return await self._query_llm_async(
+                model, prompt, system_prompt, temperature, max_tokens
+            )
+
+        # Stagger requests: 0s, 0.5s, 1.0s, 1.5s between model starts
+        # This prevents 429 rate limit errors from OpenRouter
         tasks = [
-            self._query_llm_async(model, prompt, system_prompt, temperature, max_tokens)
-            for model in self.models
+            query_with_delay(model, i * self.rate_limit_delay)
+            for i, model in enumerate(self.models)
         ]
 
         responses = await asyncio.gather(*tasks, return_exceptions=True)
@@ -1080,7 +1094,7 @@ class LLMCouncilAnalyzer:
         chairman_model: Optional[LLMModel] = None,
         max_retries: int = 3,
         timeout: int = 60,
-        rate_limit_delay: float = 0.5,
+        rate_limit_delay: float = 1.0,
         use_async: bool = True,
     ):
         """
@@ -1239,15 +1253,22 @@ class LLMCouncilAnalyzer:
         """
         logger.info("Stage 1: Collecting first opinions from council members")
 
-        tasks = [
-            self._query_llm_async(
+        async def query_with_delay(model, delay: float):
+            """Query a model after a staggered delay to avoid rate limits."""
+            if delay > 0:
+                await asyncio.sleep(delay)
+            return await self._query_llm_async(
                 model=model,
                 prompt=query,
                 system_prompt=system_prompt,
                 temperature=0.7,
                 max_tokens=2000,
             )
-            for model in self.council_models
+
+        # Stagger requests to avoid 429 rate limit errors
+        tasks = [
+            query_with_delay(model, i * self.rate_limit_delay)
+            for i, model in enumerate(self.council_models)
         ]
 
         responses = await asyncio.gather(*tasks, return_exceptions=True)
@@ -1348,19 +1369,25 @@ Format your response as JSON:
 Evaluate responses objectively based on accuracy, insight, and reasoning quality.
 Be honest and critical in your assessment."""
 
-        # Each council member reviews (excluding themselves)
+        async def review_with_delay(model, delay: float):
+            """Query review with staggered delay to avoid rate limits."""
+            if delay > 0:
+                await asyncio.sleep(delay)
+            return await self._query_llm_async(
+                model=model,
+                prompt=review_prompt,
+                system_prompt=system_prompt_review,
+                temperature=0.5,
+                max_tokens=2000,
+            )
+
+        # Each council member reviews (excluding themselves) with staggered delays
         review_tasks = []
+        delay_idx = 0
         for model in self.council_models:
             if model.value in first_opinions and first_opinions[model.value].success:
-                review_tasks.append(
-                    self._query_llm_async(
-                        model=model,
-                        prompt=review_prompt,
-                        system_prompt=system_prompt_review,
-                        temperature=0.5,
-                        max_tokens=2000,
-                    )
-                )
+                review_tasks.append(review_with_delay(model, delay_idx * self.rate_limit_delay))
+                delay_idx += 1
             else:
                 review_tasks.append(None)
 

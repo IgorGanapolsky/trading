@@ -1,0 +1,13 @@
+[
+    {
+        "symbol": "BTCUSD",
+        "action": "BUY",
+        "amount": 10.00,
+        "quantity": 0.00011217,
+        "price": 89150.54,
+        "timestamp": "2025-12-07T17:11:58",
+        "status": "FILLED",
+        "strategy": "CryptoStrategy",
+        "order_id": "5ac25926-865b-4d43-b6f6-fef6f00bbe49"
+    }
+]

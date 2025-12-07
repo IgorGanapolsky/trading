@@ -166,3 +166,4 @@ if __name__ == "__main__":
         print(f"Result: {result}")
     except Exception as e:
         print(f"Final failure: {e}")
+# ruff: noqa: UP035,UP045

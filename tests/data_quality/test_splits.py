@@ -138,7 +138,7 @@ def test_split_adjustments(data: pd.DataFrame, threshold: float = 0.2) -> bool:
         jump_dates = data[large_jumps].index.tolist()
         jump_returns = returns[large_jumps]
         print(f"Found {large_jumps.sum()} potential splits (>{threshold * 100}% jumps)")
-        for date, ret in zip(jump_dates, jump_returns):
+        for date, ret in zip(jump_dates, jump_returns, strict=True):
             print(f"  {date}: {ret * 100:.2f}%")
         # This is informational - large jumps might be legitimate
         return True  # Don't fail, just warn

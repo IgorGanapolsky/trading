@@ -27,7 +27,7 @@ import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # Import existing sentiment modules
 try:
@@ -62,7 +62,7 @@ class SourceSentiment:
     raw_data: dict[str, Any]
     timestamp: str
     available: bool = True
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -194,7 +194,7 @@ class UnifiedSentiment:
         """Generate cache key for a symbol"""
         return f"unified_{symbol}_{datetime.now().strftime('%Y%m%d_%H')}"
 
-    def _load_from_cache(self, symbol: str) -> Optional[UnifiedSentimentResult]:
+    def _load_from_cache(self, symbol: str) -> UnifiedSentimentResult | None:
         """Load sentiment from cache if fresh enough"""
         cache_file = self.cache_dir / f"{self._get_cache_key(symbol)}.json"
 
@@ -755,3 +755,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+# ruff: noqa: UP045

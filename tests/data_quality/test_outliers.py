@@ -57,7 +57,7 @@ def test_price_outliers(data: pd.DataFrame, method: str = "zscore", threshold: f
         outlier_dates = data[outliers].index.tolist()
         outlier_prices = prices[outliers]
         print(f"Found {outliers.sum()} price outliers")
-        for date, price in zip(outlier_dates, outlier_prices):
+        for date, price in zip(outlier_dates, outlier_prices, strict=True):
             print(f"  {date}: ${price:.2f}")
         # This is informational - outliers might be legitimate
         return True  # Don't fail, just warn
@@ -86,7 +86,7 @@ def test_return_outliers(data: pd.DataFrame, threshold: float = 0.2) -> bool:
         outlier_dates = data[large_returns].index.tolist()
         outlier_returns = returns[large_returns]
         print(f"Found {large_returns.sum()} return outliers (>{threshold * 100}% moves)")
-        for date, ret in zip(outlier_dates, outlier_returns):
+        for date, ret in zip(outlier_dates, outlier_returns, strict=True):
             print(f"  {date}: {ret * 100:.2f}%")
         # This is informational - large returns might be legitimate
         return True  # Don't fail, just warn
@@ -130,7 +130,7 @@ def test_volume_outliers(
         outlier_dates = data[outliers].index.tolist()
         outlier_volumes = volume[outliers]
         print(f"Found {outliers.sum()} volume outliers")
-        for date, vol in zip(outlier_dates, outlier_volumes):
+        for date, vol in zip(outlier_dates, outlier_volumes, strict=True):
             print(f"  {date}: {vol:,.0f}")
         # This is informational - outliers might be legitimate
         return True  # Don't fail, just warn

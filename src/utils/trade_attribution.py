@@ -13,7 +13,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +34,9 @@ class TradeAttributionLogger:
         entry_reason: str,
         market_regime: str,
         hypothesis: str,
-        indicators: Optional[dict[str, float]] = None,
-        strategy: Optional[str] = None,
-        tier: Optional[str] = None,
+        indicators: dict[str, float] | None = None,
+        strategy: str | None = None,
+        tier: str | None = None,
     ) -> str:
         """
         Log trade entry with full attribution.
@@ -97,7 +97,7 @@ class TradeAttributionLogger:
         pl_pct: float,
         actual_outcome: str,
         hypothesis_match: bool,
-        lessons_learned: Optional[str] = None,
+        lessons_learned: str | None = None,
     ) -> None:
         """
         Log trade exit with outcome analysis.
@@ -202,3 +202,6 @@ class TradeAttributionLogger:
             "by_exit_reason": by_exit_reason,
             "by_regime": by_regime,
         }
+
+
+# ruff: noqa: UP045
