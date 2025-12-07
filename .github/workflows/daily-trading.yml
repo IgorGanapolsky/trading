@@ -544,6 +544,16 @@ jobs:
             PY
           fi
 
+      - name: Record workflow execution
+        if: always()
+        run: |
+          echo "📊 Recording workflow execution for health monitoring..."
+          if [ "${{ job.status }}" == "success" ]; then
+            python3 scripts/workflow_health_monitor.py --record daily-trading --status success
+          else
+            python3 scripts/workflow_health_monitor.py --record daily-trading --status failure
+          fi
+
       - name: Check for state changes
         id: check_state_changes
         if: steps.check_execution.outputs.skip != 'true'
