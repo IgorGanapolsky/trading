@@ -24,7 +24,7 @@ jobs:
 
       - name: Check workflow status
         id: check_status
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -126,7 +126,7 @@ jobs:
 
       - name: Auto-re-enable workflows (if configured)
         if: steps.check_status.outputs.disabled_count > 0
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           DISABLED_WORKFLOWS: ${{ steps.check_status.outputs.disabled_workflows }}
         with:
