@@ -19,7 +19,7 @@ jobs:
         # This prevents untrusted code from running with write permissions
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.10'
 
@@ -39,7 +39,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           # Create a temporary script to run the agent
-          cat <<EOF > run_agent.py
+          cat <<PYTHON_SCRIPT > run_agent.py
           import os
           import json
           from src.agents.pr_agent import PRAgent
@@ -64,6 +64,6 @@ jobs:
 
           if __name__ == "__main__":
               main()
-          EOF
+          PYTHON_SCRIPT
 
           python run_agent.py

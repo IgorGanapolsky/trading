@@ -32,7 +32,7 @@ jobs:
           fetch-depth: 1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -49,9 +49,9 @@ jobs:
           cat health_report.txt
 
           # Save report to output
-          echo "report<<EOF" >> $GITHUB_OUTPUT
+          echo "report<<REPORT_BLOCK" >> $GITHUB_OUTPUT
           cat health_report.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "REPORT_BLOCK" >> $GITHUB_OUTPUT
 
           # Check if critical
           if [ $EXIT_CODE -ne 0 ]; then
