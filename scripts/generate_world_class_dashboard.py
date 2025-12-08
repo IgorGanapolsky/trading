@@ -88,6 +88,34 @@ def load_json_file(filepath: Path) -> dict:
     return {}
 
 
+def get_recent_trades(days: int = 7) -> list[dict]:
+    """Get trades from the last N days for dashboard display."""
+    from datetime import timedelta
+
+    recent_trades = []
+    today = date.today()
+
+    for i in range(days):
+        trade_date = today - timedelta(days=i)
+        trades_file = DATA_DIR / f"trades_{trade_date.isoformat()}.json"
+        if trades_file.exists():
+            try:
+                with open(trades_file) as f:
+                    day_trades = json.load(f)
+                    if isinstance(day_trades, list):
+                        for trade in day_trades:
+                            trade["trade_date"] = trade_date.isoformat()
+                            recent_trades.append(trade)
+            except Exception:
+                continue
+
+    # Sort by timestamp (most recent first)
+    recent_trades.sort(
+        key=lambda x: x.get("timestamp", x.get("trade_date", "")), reverse=True
+    )
+    return recent_trades
+
+
 def get_rag_knowledge_stats() -> dict[str, Any]:
     """Get RAG Knowledge Base statistics for dashboard."""
     import sqlite3
@@ -2103,6 +2131,48 @@ def generate_world_class_dashboard() -> str:
 | **Winning Trades** | {winning_trades} |
 | **Win Rate** | {win_rate:.1f}% |
 
+---
+
+## 📜 Recent Trades (Last 7 Days)
+
+"""
+
+    # Get recent trades
+    recent_trades_list = get_recent_trades(days=7)
+
+    if recent_trades_list:
+        dashboard += "| Date | Symbol | Side | Quantity | Price | Amount | Tier |\n"
+        dashboard += "|------|--------|------|----------|-------|--------|------|\n"
+
+        for trade in recent_trades_list[:15]:  # Show last 15 trades
+            trade_date = trade.get("trade_date", trade.get("timestamp", "N/A"))
+            if "T" in trade_date:  # If it's a timestamp, extract just the date
+                trade_date = trade_date.split("T")[0]
+            symbol = trade.get("symbol", "N/A")
+            # Handle different field names for side/action
+            side = trade.get("side", trade.get("action", "N/A")).upper()
+            # Handle different field names for quantity
+            qty = trade.get("qty", trade.get("quantity", 0))
+            # Handle different field names for price
+            price = trade.get("avg_price", trade.get("price", 0))
+            # Calculate amount from notional or amount field or qty*price
+            amount = trade.get("notional", trade.get("amount", qty * price if qty and price else 0))
+            # Handle tier/strategy
+            tier = trade.get("tier", trade.get("strategy", "N/A"))
+
+            # Format numbers
+            qty_str = f"{float(qty):.4f}" if qty else "N/A"
+            price_str = f"${float(price):,.2f}" if price else "N/A"
+            amount_str = f"${float(amount):,.2f}" if amount else "N/A"
+
+            dashboard += f"| {trade_date} | {symbol} | {side} | {qty_str} | {price_str} | {amount_str} | {tier} |\n"
+
+        if len(recent_trades_list) > 15:
+            dashboard += f"\n*Showing 15 of {len(recent_trades_list)} trades from last 7 days*\n"
+    else:
+        dashboard += "*No trades recorded in the last 7 days*\n"
+
+    dashboard += f"""
 ---
 
 ## 📊 90-Day R&D Challenge Progress
