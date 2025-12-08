@@ -17,11 +17,13 @@ Target: High-risk experimental returns
 Risk Level: VERY HIGH
 """
 
+import json
 import logging
 import os
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from enum import Enum
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -344,6 +346,16 @@ class CryptoStrategy:
                         tier="CRYPTO",
                     )
                     logger.info(f"Alpaca order executed: {executed_order['id']}")
+
+                    # Step 7.5: Save trade to daily file for dashboard tracking
+                    self._save_trade_to_daily_file(
+                        symbol=best_coin,
+                        action="BUY",
+                        amount=self.daily_amount,
+                        quantity=quantity,
+                        price=current_price,
+                        order_id=executed_order.get("id", ""),
+                    )
                 except Exception as e:
                     logger.error(f"Failed to execute order via Alpaca: {e}")
                     return None
@@ -1007,6 +1019,73 @@ class CryptoStrategy:
             if price:
                 total += quantity * price
         return total
+
+    def _save_trade_to_daily_file(
+        self,
+        symbol: str,
+        action: str,
+        amount: float,
+        quantity: float,
+        price: float,
+        order_id: str,
+        data_dir: Path = Path("data"),
+    ) -> None:
+        """
+        Save trade to daily trade file (trades_YYYY-MM-DD.json).
+
+        This ensures crypto trades are tracked in the same format as stock trades
+        for dashboard reporting and system state updates.
+
+        Args:
+            symbol: Crypto symbol (e.g., "BTCUSD")
+            action: Trade action ("BUY" or "SELL")
+            amount: Dollar amount traded
+            quantity: Quantity of crypto purchased
+            price: Execution price
+            order_id: Alpaca order ID
+            data_dir: Data directory path (default: data/)
+        """
+        today = date.today().isoformat()
+        trade_file = data_dir / f"trades_{today}.json"
+
+        # Load existing trades for today
+        trades = []
+        if trade_file.exists():
+            try:
+                with open(trade_file) as f:
+                    trades = json.load(f)
+                    if not isinstance(trades, list):
+                        trades = [trades] if trades else []
+            except Exception:
+                trades = []
+
+        # Create trade record
+        trade_data = {
+            "symbol": symbol,
+            "action": action,
+            "amount": round(amount, 2),
+            "quantity": quantity,
+            "price": round(price, 2),
+            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            "status": "FILLED",
+            "strategy": "CryptoStrategy",
+            "order_id": order_id,
+        }
+
+        # Add new trade
+        trades.append(trade_data)
+
+        # Save updated trades
+        try:
+            # Ensure data directory exists
+            data_dir.mkdir(parents=True, exist_ok=True)
+
+            with open(trade_file, "w") as f:
+                json.dump(trades, f, indent=2, default=str)
+
+            logger.info(f"✅ Trade saved to {trade_file}: {symbol} {action} ${amount:.2f}")
+        except Exception as e:
+            logger.error(f"Failed to save trade to daily file: {e}")
 
     def manage_positions(self) -> list[CryptoOrder]:
         """
