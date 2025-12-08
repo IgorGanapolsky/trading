@@ -1,8 +1,8 @@
 ---
-skill_id: youtube_analyzer
-name: YouTube Analyzer
-version: 1.1.0
-description: Extracts YouTube videos, analyzes for trading insights, and stores in RAG for continuous learning (project)
+skill_id: youtube-analyzer
+name: youtube-analyzer
+version: 1.2.0
+description: Extracts and analyzes YouTube videos for trading insights, market sentiment, and stock signals with RAG storage
 author: Trading System CTO
 tags: [youtube, analysis, trading-insights, transcripts, sentiment, rag, learning]
 tools:
