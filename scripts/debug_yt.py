@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-from youtube_transcript_api import YouTubeTranscriptApi
 import logging
+
+from youtube_transcript_api import YouTubeTranscriptApi
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 def fetch_transcript(video_id):
     try:
@@ -20,6 +22,7 @@ def fetch_transcript(video_id):
             print(f"Success (instance)! Got {len(transcript)} lines.")
         except Exception as e2:
             print(f"Error (instance): {e2}")
+
 
 if __name__ == "__main__":
     fetch_transcript("_OqVDO99YVM")

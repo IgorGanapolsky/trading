@@ -4,10 +4,9 @@ Trade Impact Page - Performance comparison with vs without sentiment analysis.
 
 import json
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -15,7 +14,6 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from dashboard.utils.chart_builders import (
     COLORS,
-    create_performance_comparison_table,
 )
 
 st.set_page_config(page_title="Trade Impact", page_icon="💰", layout="wide")
@@ -51,8 +49,11 @@ def load_system_state(data_dir: Path):
 
 def main():
     # Add timestamp to force UI update and show freshness
-    st.markdown(f"<div style='text-align: right; color: gray; font-size: small;'>Dashboard Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>", unsafe_allow_html=True)
-    
+    st.markdown(
+        f"<div style='text-align: right; color: gray; font-size: small;'>Dashboard Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>",
+        unsafe_allow_html=True,
+    )
+
     project_root = Path(__file__).parent.parent.parent
     data_dir = project_root / "data"
 
@@ -67,7 +68,7 @@ def main():
     # --- Current System Performance ---
     st.subheader("📊 Current System Performance")
     perf = system_state.get("performance", {})
-    
+
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("Total Trades", perf.get("total_trades", 0))
@@ -83,29 +84,29 @@ def main():
 
     # --- Real Trade Log ---
     st.subheader("📝 Real Trade Log")
-    
+
     if trades:
         # Convert to DataFrame
         trade_df = pd.DataFrame(trades)
-        
+
         # Display all columns available, prioritizing key ones
         preferred_cols = ["timestamp", "symbol", "action", "price", "amount", "status", "strategy"]
         cols = [c for c in preferred_cols if c in trade_df.columns]
-        
+
         if not cols:
             cols = trade_df.columns.tolist()
-            
+
         # Format timestamp for readability
         if "timestamp" in trade_df.columns:
             try:
-                trade_df["timestamp"] = pd.to_datetime(trade_df["timestamp"]).dt.strftime("%Y-%m-%d %H:%M:%S")
+                trade_df["timestamp"] = pd.to_datetime(trade_df["timestamp"]).dt.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
             except:
                 pass
 
         st.dataframe(
-            trade_df[cols].style.format(precision=2), 
-            use_container_width=True, 
-            hide_index=True
+            trade_df[cols].style.format(precision=2), use_container_width=True, hide_index=True
         )
     else:
         st.info("No trades found in data directory.")
@@ -114,6 +115,7 @@ def main():
     with st.expander("View Raw Data Source"):
         st.write(f"Data Directory: {data_dir}")
         st.json(trades)
+
 
 if __name__ == "__main__":
     st.markdown(

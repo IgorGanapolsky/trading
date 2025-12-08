@@ -6,12 +6,11 @@ This script autonomously reviews and merges open Pull Requests using the PRAgent
 It is designed to clear the backlog of low-risk PRs.
 """
 
-import os
-import sys
-import subprocess
 import json
 import logging
-from typing import List, Dict
+import os
+import subprocess
+import sys
 
 # Ensure src is in path
 sys.path.append(os.getcwd())
@@ -19,12 +18,23 @@ sys.path.append(os.getcwd())
 from src.agents.pr_agent import PRAgent
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-def get_open_prs() -> List[Dict]:
+
+def get_open_prs() -> list[dict]:
     """Fetch open PRs using gh cli."""
-    cmd = ["gh", "pr", "list", "--state", "open", "--json", "number,title,body,files", "--limit", "100"]
+    cmd = [
+        "gh",
+        "pr",
+        "list",
+        "--state",
+        "open",
+        "--json",
+        "number,title,body,files",
+        "--limit",
+        "100",
+    ]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         return json.loads(result.stdout)
@@ -32,7 +42,8 @@ def get_open_prs() -> List[Dict]:
         logger.error(f"Failed to fetch PRs: {e}")
         return []
 
-def get_pr_files(pr_number: int) -> List[str]:
+
+def get_pr_files(pr_number: int) -> list[str]:
     """Fetch files changed in a PR."""
     cmd = ["gh", "pr", "view", str(pr_number), "--json", "files"]
     try:
@@ -43,6 +54,7 @@ def get_pr_files(pr_number: int) -> List[str]:
         logger.error(f"Failed to fetch files for PR #{pr_number}: {e}")
         return []
 
+
 def merge_pr(pr_number: int, method: str = "squash"):
     """Merge a PR."""
     cmd = ["gh", "pr", "merge", str(pr_number), f"--{method}", "--auto", "--delete-branch"]
@@ -52,12 +64,13 @@ def merge_pr(pr_number: int, method: str = "squash"):
     except subprocess.CalledProcessError as e:
         logger.error(f"❌ Failed to merge PR #{pr_number}: {e}")
 
+
 def main():
     logger.info("🤖 Starting Agentic PR Review...")
-    
+
     agent = PRAgent()
     prs = get_open_prs()
-    
+
     if not prs:
         logger.info("No open PRs found.")
         return
@@ -68,39 +81,55 @@ def main():
         pr_number = pr["number"]
         title = pr["title"]
         body = pr["body"]
-        
+
         logger.info(f"\nAnalyzing PR #{pr_number}: {title}")
-        
+
         # Get real files for better risk assessment
         files = get_pr_files(pr_number)
-        
-        analysis_data = {
-            "title": title,
-            "body": body,
-            "files": files
-        }
-        
+
+        analysis_data = {"title": title, "body": body, "files": files}
+
         # Ask the agent
         result = agent.analyze(analysis_data)
-        
+
         action = result.get("action")
         risk_score = result.get("risk_score")
         comment = result.get("comment")
-        
+
         logger.info(f"  Risk Score: {risk_score}/100")
         logger.info(f"  Agent Verdict: {action}")
-        
+
         if action == "APPROVE":
             logger.info("  🚀 Auto-merging low-risk PR...")
             # First approve
-            subprocess.run(["gh", "pr", "review", str(pr_number), "--approve", "--body", f"{comment}\n\n*Risk Score: {risk_score}*"])
+            subprocess.run(
+                [
+                    "gh",
+                    "pr",
+                    "review",
+                    str(pr_number),
+                    "--approve",
+                    "--body",
+                    f"{comment}\n\n*Risk Score: {risk_score}*",
+                ]
+            )
             # Then merge
             merge_pr(pr_number)
         elif action == "COMMENT":
             logger.info("  ⚠️ Posting comment (Medium Risk)...")
-            subprocess.run(["gh", "pr", "comment", str(pr_number), "--body", f"{comment}\n\n*Risk Score: {risk_score}*"])
+            subprocess.run(
+                [
+                    "gh",
+                    "pr",
+                    "comment",
+                    str(pr_number),
+                    "--body",
+                    f"{comment}\n\n*Risk Score: {risk_score}*",
+                ]
+            )
         else:
             logger.info("  🛑 Skipping (High Risk)")
+
 
 if __name__ == "__main__":
     main()
