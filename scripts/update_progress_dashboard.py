@@ -42,7 +42,9 @@ def _build_execution_rows(notes: list[str], max_rows: int = 5) -> list[str]:
             break
     rows = []
     for ts, text in sorted(executions, key=lambda x: x[0], reverse=True):
-        rows.append(f"| {ts.strftime('%Y-%m-%d %H:%M UTC')} | {text.split(':', 1)[1] if ':' in text else text} | {text} |")
+        rows.append(
+            f"| {ts.strftime('%Y-%m-%d %H:%M UTC')} | {text.split(':', 1)[1] if ':' in text else text} | {text} |"
+        )
     return rows
 
 
@@ -68,9 +70,7 @@ def _build_positions_rows(positions: list[dict[str, Any]]) -> list[str]:
     return rows
 
 
-def _replace_section(
-    text: str, start_marker: str, end_marker: str, new_lines: list[str]
-) -> str:
+def _replace_section(text: str, start_marker: str, end_marker: str, new_lines: list[str]) -> str:
     pattern = re.compile(
         rf"({re.escape(start_marker)})(.*?)(?={re.escape(end_marker)})",
         re.DOTALL,

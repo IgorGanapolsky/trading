@@ -3,10 +3,7 @@ from typing import *
 import torch
 import torch.distributed.rpc as rpc
 from torch import Tensor
-from torch._jit_internal import Future
 from torch.distributed.rpc import RRef
-from typing import Tuple  # pyre-ignore: unused import
-
 
 module_interface_cls = None
 
@@ -40,10 +37,9 @@ _generated_methods = [
 ]
 
 
-
-
 def _remote_forward(
-    module_rref: RRef[module_interface_cls], device: str, is_device_map_set: bool, *args, **kwargs):
+    module_rref: RRef[module_interface_cls], device: str, is_device_map_set: bool, *args, **kwargs
+):
     module = module_rref.local_value()
     device = torch.device(device)
 
@@ -56,7 +52,7 @@ def _remote_forward(
     # have to use concatenation instead of
     # ``tuple(i.to(device) if isinstance(i, Tensor) else i for i in *args)``.
     args = (*args,)
-    out_args: Tuple[()] = ()
+    out_args: tuple[()] = ()
     for arg in args:
         arg = (arg.to(device),) if isinstance(arg, Tensor) else (arg,)
         out_args = out_args + arg
@@ -74,7 +70,7 @@ def _remote_forward(
     # Since torch script does not support generator expression,
     # have to use concatenation instead of
     # ``tuple(i.cpu() if isinstance(i, Tensor) else i for i in module.forward(*out_args, **kwargs))``.
-    ret: Tuple[()] = ()
+    ret: tuple[()] = ()
     for i in module.forward(*out_args, **kwargs):
         i = (i.cpu(),) if isinstance(i, Tensor) else (i,)
         ret = ret + i

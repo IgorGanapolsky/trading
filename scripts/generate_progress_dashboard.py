@@ -28,11 +28,10 @@ from zoneinfo import ZoneInfo
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import yfinance as yf
 from src.utils.data_validator import DataValidator
 
 from scripts.dashboard_metrics import TradingMetricsCalculator
-import yfinance as yf
-import pandas as pd
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -107,35 +106,43 @@ def fetch_real_time_market_regime():
     try:
         spy = yf.Ticker("SPY")
         vix = yf.Ticker("^VIX")
-        
+
         # Get 6 months of data for trend
         spy_hist = spy.history(period="6mo")
         vix_hist = vix.history(period="5d")
-        
+
         if spy_hist.empty:
             return None
-            
+
         current_price = spy_hist["Close"].iloc[-1]
-        sma_200 = spy_hist["Close"].rolling(window=200).mean().iloc[-1] if len(spy_hist) >= 200 else spy_hist["Close"].mean()
-        sma_50 = spy_hist["Close"].rolling(window=50).mean().iloc[-1] if len(spy_hist) >= 50 else spy_hist["Close"].mean()
-        
+        sma_200 = (
+            spy_hist["Close"].rolling(window=200).mean().iloc[-1]
+            if len(spy_hist) >= 200
+            else spy_hist["Close"].mean()
+        )
+        sma_50 = (
+            spy_hist["Close"].rolling(window=50).mean().iloc[-1]
+            if len(spy_hist) >= 50
+            else spy_hist["Close"].mean()
+        )
+
         vix_val = vix_hist["Close"].iloc[-1] if not vix_hist.empty else 15.0
-        
+
         # Calculate returns
         ret_20d = spy_hist["Close"].pct_change(20).iloc[-1] * 100
-        
+
         # Determine regime
         regime = "Bullish" if current_price > sma_50 else "Bearish"
         if vix_val > 25:
             regime += " Volatile"
         elif vix_val < 15:
             regime += " Calm"
-            
+
         return {
             "regime": regime,
             "spy_20d": ret_20d,
             "vix": vix_val,
-            "trend": "Uptrend" if current_price > sma_200 else "Downtrend"
+            "trend": "Uptrend" if current_price > sma_200 else "Downtrend",
         }
     except Exception as e:
         logger.warning(f"Failed to fetch market regime: {e}")
@@ -153,7 +160,7 @@ def calculate_metrics():
         start_date = datetime.fromisoformat(challenge_data["start_date"]).date()
         today = date.today()
         # Fix: Use UTC now for calculation to match trade file conventions
-        # today = datetime.now(ZoneInfo("UTC")).date() 
+        # today = datetime.now(ZoneInfo("UTC")).date()
         days_elapsed = (today - start_date).days + 1
         starting_balance = challenge_data.get("starting_balance", 100000.0)
     else:
@@ -260,22 +267,22 @@ def calculate_metrics():
     # Get recent trades
     # Get recent trades - Look at today AND yesterday to handle timezone overlaps
     today_trades = []
-    
+
     # Check today and yesterday
     for day_offset in [0, 1]:
         d = date.today() - timedelta(days=day_offset)
         t_file = DATA_DIR / f"trades_{d.isoformat()}.json"
-        
+
         if t_file.exists():
             day_trades = load_json_file(t_file)
             if isinstance(day_trades, list):
                 # Only add if we haven't seen this order_id? Simple append for now
                 # Filter for "Analysis" or "Live" logic if needed, but for now show everything
                 today_trades.extend(day_trades)
-                
+
     # Sort by timestamp desc
     today_trades.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
-    
+
     # Determine count (deduplication could happen here if needed)
     today_trade_count = len(today_trades)
 
@@ -461,7 +468,7 @@ def generate_dashboard() -> str:
     guardrails = world_class_metrics.get("risk_guardrails", {})
     account = world_class_metrics.get("account_summary", {})
     market_regime = world_class_metrics.get("market_regime", {})
-    
+
     # FALLBACK: If market regime is unknown, fetch it real-time
     if market_regime.get("regime", "Unknown") == "Unknown" or not market_regime:
         real_time_regime = fetch_real_time_market_regime()
@@ -470,7 +477,7 @@ def generate_dashboard() -> str:
                 "regime": real_time_regime["regime"],
                 "spy_20d_return": real_time_regime["spy_20d"],
                 "vix_level": real_time_regime["vix"],
-                "volatility_regime": real_time_regime["trend"]
+                "volatility_regime": real_time_regime["trend"],
             }
     benchmark = world_class_metrics.get("benchmark_comparison", {})
     ai_kpis = world_class_metrics.get("ai_kpis", {})
@@ -526,19 +533,21 @@ def generate_dashboard() -> str:
             amt = trade.get("amount", 0)
             px = trade.get("price", 0)
             px = trade.get("price", 0)
-            
+
             # Highlight Analysis Mode
             mode = trade.get("mode", "LIVE")
             status_icon = "🟢" if mode == "LIVE" else "🟡"
             st = trade.get("status", "FILLED")
-            
-            # Add Mode column to output if "Analysis" exists? 
+
+            # Add Mode column to output if "Analysis" exists?
             # Or just append to status
             status_display = f"{status_icon} {st}"
             if mode != "LIVE":
                 status_display += f" ({mode})"
-                
-            trades_table_md += f"| {ts} | **{sym}** | {act} | ${amt:,.2f} | ${px:,.2f} | {status_display} |\n"
+
+            trades_table_md += (
+                f"| {ts} | **{sym}** | {act} | ${amt:,.2f} | ${px:,.2f} | {status_display} |\n"
+            )
     elif today_trades > 0:
         trades_table_md = "\n*Trade details unavailable.*\n"
 

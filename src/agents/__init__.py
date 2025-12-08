@@ -29,4 +29,7 @@ __all__ = [
     "PTCOrchestrator",
     "PTCMetaAgent",
     "execute_ptc_trade",
+    # OpenThinker Agent - Local reasoning specialist
+    "OpenThinkerAgent",
+    "create_openthinker_agent",
 ]
