@@ -211,12 +211,59 @@ def execute_crypto_trading() -> None:
 
         if order:
             logger.info(f"✅ Crypto trade executed: {order.symbol} for ${order.amount:.2f}")
+
+            # Update system_state.json with crypto trade
+            _update_system_state_crypto(order.symbol, order.amount, order.quantity, order.price)
         else:
             logger.info("⚠️  No crypto trade executed (market conditions not favorable)")
 
     except Exception as e:
         logger.error(f"❌ Crypto trading failed: {e}", exc_info=True)
         raise
+
+
+def _update_system_state_crypto(symbol: str, amount: float, quantity: float, price: float) -> None:
+    """Update system_state.json with crypto trade execution."""
+    logger = setup_logging()
+
+    try:
+        # Load current state
+        if SYSTEM_STATE_PATH.exists():
+            with open(SYSTEM_STATE_PATH) as f:
+                state = json.load(f)
+        else:
+            logger.error(f"system_state.json not found at {SYSTEM_STATE_PATH}")
+            return
+
+        # Update tier5 (crypto) strategy section
+        tier5 = state.get("strategies", {}).get("tier5", {})
+        tier5["trades_executed"] = tier5.get("trades_executed", 0) + 1
+        tier5["total_invested"] = tier5.get("total_invested", 0.0) + amount
+        tier5["last_execution"] = datetime.now().isoformat()
+        tier5["next_execution"] = None  # Will be set by scheduler
+
+        state["strategies"]["tier5"] = tier5
+
+        # Update meta timestamp
+        state["meta"]["last_updated"] = datetime.now().isoformat()
+
+        # Add note about crypto trade
+        if "notes" not in state:
+            state["notes"] = []
+        state["notes"].append(
+            f"[{datetime.now().strftime('%Y-%m-%d %H:%M')}] Crypto trade: {symbol} "
+            f"${amount:.2f} @ ${price:.2f} ({quantity:.8f} units)"
+        )
+
+        # Save updated state
+        with open(SYSTEM_STATE_PATH, "w") as f:
+            json.dump(state, f, indent=2)
+
+        logger.info(f"✅ System state updated: tier5 trades_executed={tier5['trades_executed']}, "
+                    f"total_invested=${tier5['total_invested']:.2f}")
+
+    except Exception as e:
+        logger.error(f"Failed to update system_state.json: {e}", exc_info=True)
 
 
 def calc_daily_input(equity: float) -> float:
