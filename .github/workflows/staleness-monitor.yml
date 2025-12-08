@@ -103,7 +103,7 @@ jobs:
 
       - name: Create GitHub Issue if stale
         if: steps.staleness_check.outputs.staleness_detected == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             // Check if an issue already exists

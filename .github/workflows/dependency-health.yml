@@ -120,7 +120,7 @@ jobs:
 
       - name: Create issue on failure
         if: failure() && (steps.check-conflicts.outputs.CONFLICTS_FOUND == 'true' || steps.pin-check.outputs.PIN_MISSING == 'true')
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const title = '🚨 Dependency Conflict Detected';
