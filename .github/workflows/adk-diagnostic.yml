@@ -186,7 +186,7 @@ jobs:
 
       - name: Upload diagnostic logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: adk-diagnostic-logs-${{ github.run_id }}
           path: |

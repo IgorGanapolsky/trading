@@ -172,7 +172,7 @@ jobs:
             });
 
       - name: Upload Results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: backtest-results
           path: data/backtest_results/

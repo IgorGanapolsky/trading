@@ -48,7 +48,7 @@ jobs:
 
       - name: Upload dependency report as artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: dependency-report-${{ github.run_number }}
           path: |

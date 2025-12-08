@@ -86,7 +86,7 @@ jobs:
 
       - name: Upload hygiene report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: data-hygiene-report
           path: hygiene_report.json

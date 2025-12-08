@@ -39,7 +39,7 @@ jobs:
           python langchain_agents/playbooks/price_action_analyst.py --ticker SPY --output reports/langchain_price_action_SPY.txt
 
       - name: Upload morning brief artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: langchain-morning-brief
           path: reports/langchain_price_action_SPY.txt
