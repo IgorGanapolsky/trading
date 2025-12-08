@@ -1,17 +1,22 @@
 ---
-skill_id: youtube_analyzer
-name: YouTube Analyzer
-version: 1.0.0
-description: Extracts and analyzes YouTube videos for trading insights using AI-powered transcript analysis
+skill_id: youtube-analyzer
+name: youtube-analyzer
+version: 1.2.0
+description: Extracts and analyzes YouTube videos for trading insights, market sentiment, and stock signals with RAG storage
 author: Trading System CTO
-tags: [youtube, analysis, trading-insights, transcripts, sentiment]
+tags: [youtube, analysis, trading-insights, transcripts, sentiment, rag, learning]
 tools:
   - analyze_youtube_video
   - extract_transcript
   - analyze_trading_signals
+  - store_insights_to_rag
 dependencies:
   - yt-dlp
   - youtube-transcript-api
+  - langchain
+integrations:
+  - src/evaluation/rag_storage.py
+  - rag_knowledge/youtube/
 ---
 
 # YouTube Analyzer Skill
@@ -66,6 +71,29 @@ Analysis results can be:
 - Used to inform Tier 2 Growth Strategy stock selection
 - Tracked over time for accuracy validation
 - Compared with actual market performance
+
+## RAG Integration
+
+All YouTube insights are stored in RAG for continuous learning:
+
+### Storage Locations
+- **Transcripts**: `rag_knowledge/youtube/transcripts/`
+- **Insights**: `rag_knowledge/youtube/insights/`
+- **Cache**: `data/youtube_cache/processed_videos.json`
+
+### `store_insights_to_rag` Tool
+
+Store extracted insights in RAG storage for retrieval.
+
+**Parameters**:
+- `video_id`: YouTube video ID
+- `insights`: List of extracted insights
+- `transcript`: Full transcript text
+- `embedding_model`: Model for embeddings (default: "text-embedding-3-small")
+
+**Returns**:
+- `stored_count`: Number of insights stored
+- `rag_path`: Path to RAG storage
 
 ## Requirements
 

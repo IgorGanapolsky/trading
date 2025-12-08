@@ -34,6 +34,33 @@
 
 ---
 
+## 🎬 YOUTUBE URL HANDLING (MANDATORY)
+
+**When CEO shares a YouTube URL (including Shorts)**:
+
+1. **IMMEDIATELY use the YouTube Analyzer skill** (invoke: `youtube-analyzer`):
+   ```bash
+   python3 .claude/skills/youtube-analyzer/scripts/analyze_youtube.py --url "URL" --analyze
+   ```
+
+2. **NEVER use WebFetch or WebSearch for YouTube** - they don't work
+
+3. **If network blocked** (proxy 403 error):
+   - Ask CEO for: title, topic, key insights
+   - Manually create RAG entry in `rag_knowledge/youtube/`
+   - Track in `data/youtube_cache/processed_videos.json`
+
+4. **Output location**: `docs/youtube_analysis/video_<id>_<topic>.md`
+
+5. **Dependencies** (install if missing):
+   ```bash
+   pip install yt-dlp youtube-transcript-api
+   ```
+
+**This is a PERMANENT instruction. YouTube URLs = YouTube Analyzer skill. No exceptions.**
+
+---
+
 ## Long-Running Agent Harness Pattern
 
 **Reference**: [Anthropic's Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)

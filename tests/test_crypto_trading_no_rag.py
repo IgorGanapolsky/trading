@@ -103,4 +103,4 @@ class TestCryptoTradingWorkflow:
         # Should work without any RAG dependencies
         strategy = CryptoStrategy(daily_amount=0.50)
         assert strategy.daily_amount == 0.50
-        assert strategy.crypto_universe == ["BTCUSD", "ETHUSD"]
+        assert strategy.crypto_universe == ["BTCUSD", "ETHUSD", "SOLUSD"]

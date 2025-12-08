@@ -11,10 +11,10 @@ This provides more robust scraping than HTTP requests for JS-heavy sites.
 import asyncio
 import logging
 import re
-from urllib.parse import urlparse
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from urllib.parse import urlparse
 
 from src.integrations.playwright_mcp.client import (
     AccessibilitySnapshot,
@@ -524,7 +524,7 @@ class SentimentScraper:
                 self._find_by_role(element, "link", links)
                 for link in links:
                     href = link.get("href", "")
-                    
+
                     # Security fix: Verify domain matches reddit.com to prevent open redirects/phishing
                     is_safe_domain = False
                     if href.startswith("/"):
@@ -533,7 +533,9 @@ class SentimentScraper:
                         try:
                             parsed = urlparse(href)
                             domain = parsed.netloc.lower()
-                            is_safe_domain = domain == "reddit.com" or domain.endswith(".reddit.com")
+                            is_safe_domain = domain == "reddit.com" or domain.endswith(
+                                ".reddit.com"
+                            )
                         except Exception:
                             is_safe_domain = False
 

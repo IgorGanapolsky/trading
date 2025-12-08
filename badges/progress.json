@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "label": "dry run",
+  "label": "dashboard",
   "message": "Updated: 2025-12-08 02:44 UTC",
-  "color": "blue"
+  "color": "success"
 }

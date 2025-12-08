@@ -1,5 +1,4 @@
 import json
-import sys
 from pathlib import Path
 
 # Simulate the path logic in dashboard/pages/3_💰_Trade_Impact.py
@@ -9,8 +8,8 @@ current_file = Path("dashboard/pages/3_💰_Trade_Impact.py").resolve()
 project_root = current_file.parent.parent.parent
 data_dir = project_root / "data"
 
-print(f"Diagnostic Report")
-print(f"=================")
+print("Diagnostic Report")
+print("=================")
 print(f"Current working directory: {Path.cwd()}")
 print(f"Simulated project root: {project_root}")
 print(f"Target data directory: {data_dir}")
@@ -20,7 +19,7 @@ if data_dir.exists():
     print("\nScanning for trade files...")
     trade_files = sorted(data_dir.glob("trades_*.json"))
     print(f"Found {len(trade_files)} trade files.")
-    
+
     total_trades = 0
     for f in trade_files:
         print(f"  - Reading {f.name}...", end=" ")
@@ -34,7 +33,7 @@ if data_dir.exists():
                 total_trades += count
         except Exception as e:
             print(f"FAILED: {e}")
-            
+
     print(f"\nTotal trades found: {total_trades}")
 else:
     print("CRITICAL: Data directory not found!")
