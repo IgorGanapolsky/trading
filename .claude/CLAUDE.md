@@ -38,9 +38,9 @@
 
 **When CEO shares a YouTube URL (including Shorts)**:
 
-1. **IMMEDIATELY use the YouTube Analyzer skill**:
+1. **IMMEDIATELY use the YouTube Analyzer skill** (invoke: `youtube-analyzer`):
    ```bash
-   python3 .claude/skills/youtube_analyzer/scripts/analyze_youtube.py --url "URL" --analyze
+   python3 .claude/skills/youtube-analyzer/scripts/analyze_youtube.py --url "URL" --analyze
    ```
 
 2. **NEVER use WebFetch or WebSearch for YouTube** - they don't work
