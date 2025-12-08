@@ -1,3 +1,71 @@
+2025-12-08 - Claude Opus 4 (CTO) - FIX EFFORT PIPELINE: MENTAL TOUGHNESS COACH INTEGRATION
+Summary:
+- Fixed broken "effort pipeline" - Mental Toughness Coach was orphaned (not connected to trading)
+- Integrated MentalToughnessCoach as Gate 0 in the trading pipeline
+- Now prevents emotional/tilt trading through psychological state monitoring
+
+Problem Identified:
+- CEO asked: "How is our mental toughness coach helping to prevent pipeline errors?"
+- Answer: IT WASN'T! The coaching module existed but had ZERO integration with trading
+- src/coaching/mental_toughness_coach.py: Fully implemented ✅
+- src/orchestrator/main.py: Zero imports of coaching ❌
+
+Solution Implemented:
+
+1. Gate 0 Integration (src/orchestrator/main.py)
+   - Added coaching imports with graceful fallback
+   - Initialize MentalToughnessCoach in TradingOrchestrator.__init__
+   - Added ENABLE_MENTAL_COACHING env var (default: true)
+
+2. Session Lifecycle Coaching
+   - Start session: Reset psychological state, provide opening motivation
+   - Pre-trade check: Verify readiness before each ticker (new gate)
+   - Post-trade feedback: Update state on wins/losses, detect biases
+   - Session end: Review and prepare for next day
+
+3. Circuit Breakers (Effort Pipeline Protection)
+   - Tilt zone → Block all trades
+   - Danger zone → Require emotional reset
+   - Low mental energy (< 30%) → Stop trading
+   - 3+ consecutive losses → Revenge trading protection
+   - COACHING_STRICT_MODE=true → Abort entire session if not ready
+
+4. Telemetry Integration
+   - coaching.session_start: Zone, readiness, energy
+   - coaching.pre_trade: Interventions per ticker
+   - coaching.intervention: Post-trade coaching events
+   - coaching.circuit_breaker: When trading blocked
+   - coaching.session_end: Final state summary
+
+How It Prevents Pipeline Errors:
+- After 3 losses: Zone="danger", Ready=False → Blocks further trades
+- System 2 "effortful" thinking drains mental energy
+- Bias detection: Loss aversion, revenge trading, overconfidence
+- Circuit breakers stop emotional decision making
+
+Example Flow:
+1. Session starts: Zone=flow, Readiness=88.6%, Energy=100%
+2. Win trade: No intervention needed
+3. Loss 1, 2, 3: Zone degrades from flow→caution→danger
+4. At danger zone: Ready=False, reason="Emotional Compartmentalization Required"
+5. All subsequent tickers SKIPPED until state recovers
+
+Files Changed:
+- src/orchestrator/main.py (coaching integration)
+- claude-progress.txt (this entry)
+
+Expected Impact:
+- Pipeline errors from emotional trading → prevented by circuit breakers
+- Win rate should improve as tilt trades are blocked
+- Telemetry tracks psychological state for analysis
+
+North Star Status:
+- Day 9/90 of R&D Phase
+- Mental Toughness Coach now ACTIVE in pipeline
+- "Effort process" (System 2 thinking) now connected to trading flow
+
+---
+
 2025-12-08 - Claude Opus 4 (CTO) - DISCORL INTEGRATION FOR IMPROVED WIN RATE
 Summary:
 - Integrated DeepMind's DiscoRL (Nature 2025) into Gate 2 trading filter
