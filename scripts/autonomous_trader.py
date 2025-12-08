@@ -70,7 +70,11 @@ def _update_system_state_with_crypto_trade(trade_record: dict[str, Any], logger)
     open_positions = performance.setdefault("open_positions", [])
     if isinstance(open_positions, list):
         matching = next(
-            (entry for entry in open_positions if entry.get("symbol") == trade_record.get("symbol")),
+            (
+                entry
+                for entry in open_positions
+                if entry.get("symbol") == trade_record.get("symbol")
+            ),
             None,
         )
         entry_payload = {
@@ -270,7 +274,6 @@ def execute_crypto_trading() -> None:
         # Initialize dependencies
         trader = None
         try:
-            from src.core.alpaca_trader import AlpacaTraderError
             trader = AlpacaTrader(paper=True)
         except Exception as e:
             logger.warning(f"⚠️  Trading API unavailable (Missing Keys?): {e}")
@@ -297,22 +300,22 @@ def execute_crypto_trading() -> None:
 
         if order:
             logger.info(f"✅ Crypto trade executed: {order.symbol} for ${order.amount:.2f}")
-            
+
             # PERSISTENCE: Save trade to daily JSON ledger so dashboard sees it
             try:
                 today_str = datetime.now().strftime("%Y-%m-%d")
                 trades_file = Path(f"data/trades_{today_str}.json")
-                
+
                 # Load existing or init new
                 if trades_file.exists():
                     try:
-                        with open(trades_file, "r") as f:
+                        with open(trades_file) as f:
                             daily_trades = json.load(f)
                     except:
                         daily_trades = []
                 else:
                     daily_trades = []
-                
+
                 # Append new trade
                 trade_record = {
                     "symbol": order.symbol,
@@ -324,17 +327,17 @@ def execute_crypto_trading() -> None:
                     "status": "FILLED" if hasattr(order, "status") else "FILLED",
                     "strategy": "CryptoStrategy",
                     "reason": order.reason,
-                    "mode": "ANALYSIS" if trader is None else "LIVE" 
+                    "mode": "ANALYSIS" if trader is None else "LIVE",
                 }
                 daily_trades.append(trade_record)
-                
+
                 # Write back
                 with open(trades_file, "w") as f:
                     json.dump(daily_trades, f, indent=4)
 
                 logger.info(f"💾 Trade saved to {trades_file}")
                 _update_system_state_with_crypto_trade(trade_record, logger)
-                
+
             except Exception as e:
                 logger.error(f"Failed to persist trade to JSON: {e}")
         else:

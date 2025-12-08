@@ -1,0 +1,82 @@
+name: Automated Data Backup
+
+on:
+  schedule:
+    # Run daily at 11:30 PM ET (after market close and all trading activity)
+    - cron: '30 3,4 * * *'  # 11:30 PM ET (covers both EST and EDT)
+  workflow_dispatch:
+    inputs:
+      backup_type:
+        description: 'Backup type'
+        required: false
+        default: 'manual'
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    name: Create Data Backup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git backup
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create backup
+        run: |
+          echo "📦 Creating automated backup..."
+          python3 src/safety/data_backup.py create ${{ github.event.inputs.backup_type || 'daily' }}
+
+      - name: Commit backup to data-backup branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "📝 Committing backup to data-backup branch..."
+
+          # Configure git
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+          # Create/update data-backup branch
+          git checkout -B data-backup
+
+          # Add backup files
+          git add data/backups/ -f 2>/dev/null || true
+          git add data/system_state.json -f 2>/dev/null || true
+          git add data/trades_*.json -f 2>/dev/null || true
+          git add data/kill_switch_state.json -f 2>/dev/null || true
+          git add data/emergency_alerts.json -f 2>/dev/null || true
+
+          # Commit if there are changes
+          if git diff --staged --quiet; then
+            echo "📋 No changes to backup"
+          else
+            git commit -m "🔄 Automated backup: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+            git push -f origin data-backup
+            echo "✅ Backup committed and pushed"
+          fi
+
+          # Switch back to main
+          git checkout main
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trading-backup-${{ github.run_id }}
+          path: data/backups/*.tar.gz
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Verify backup
+        run: |
+          echo "✅ Backup workflow completed"
+          ls -la data/backups/ 2>/dev/null || echo "No local backups created"
