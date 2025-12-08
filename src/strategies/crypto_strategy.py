@@ -111,7 +111,12 @@ class CryptoStrategy:
     """
 
     # Default crypto universe (Alpaca crypto symbols)
-    DEFAULT_CRYPTO_UNIVERSE = ["BTCUSD", "ETHUSD"]
+    # Updated Dec 2025: Added SOL based on Luke Belmar's top 5 crypto picks
+    # - ETH: $10,000+ target (ETF catalyst)
+    # - SOL: $500 target (bull run performer)
+    # - TON: On watchlist (Telegram ecosystem, not yet on Alpaca)
+    # - Monad: Future watch (Layer 1, not launched yet)
+    DEFAULT_CRYPTO_UNIVERSE = ["BTCUSD", "ETHUSD", "SOLUSD"]
 
     # RSI parameters (tighter for crypto volatility)
     RSI_PERIOD = 14
