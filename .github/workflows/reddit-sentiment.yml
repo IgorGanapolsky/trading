@@ -103,7 +103,7 @@ jobs:
 
       - name: Upload execution logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: reddit-sentiment-logs-${{ github.run_id }}
           path: |

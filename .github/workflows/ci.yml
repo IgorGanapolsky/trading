@@ -77,7 +77,7 @@ jobs:
           mkdir -p out
           poetry run ./scripts/run_smoke.sh tests/fixtures/fixture.csv 42 out/smoke.json
       - name: Upload smoke artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: smoke-result
           path: out/smoke.json

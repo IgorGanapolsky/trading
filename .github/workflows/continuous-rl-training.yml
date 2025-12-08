@@ -57,7 +57,7 @@ jobs:
 
       - name: Upload training results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: training-results-${{ github.run_id }}
           path: |
@@ -100,7 +100,7 @@ jobs:
 
       - name: Upload training results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: local-training-results-${{ github.run_id }}
           path: |

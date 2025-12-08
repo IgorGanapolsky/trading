@@ -34,7 +34,7 @@ jobs:
           python scripts/ingest_sentiment_rag.py --days 60 --rebuild
 
       - name: Upload sentiment DB artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sentiment-rag-db
           path: data/rag/sentiment_rag.db
