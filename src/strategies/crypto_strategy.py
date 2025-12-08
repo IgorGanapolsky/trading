@@ -368,7 +368,10 @@ class CryptoStrategy:
                         logger.info(f"  Top insight: {rag_insights['insights'][0][:100]}...")
 
                     # Apply RAG adjustment to decision
-                    if rag_insights["recommendation"] == "bearish" and rag_insights["confidence_adjustment"] < -5:
+                    if (
+                        rag_insights["recommendation"] == "bearish"
+                        and rag_insights["confidence_adjustment"] < -5
+                    ):
                         logger.warning(
                             f"RAG recommends CAUTION for {best_coin}: {rag_insights['reasoning']}"
                         )
@@ -399,8 +402,12 @@ class CryptoStrategy:
                     "rsi": best_score.rsi if best_score else 0,
                     "macd": best_score.macd_histogram if best_score else 0,
                 },
-                "gate2_rag": rag_insights if rag_insights and rag_insights.get("available") else None,
-                "gate3_newsletter": validation if validation and validation.get("available") else None,
+                "gate2_rag": rag_insights
+                if rag_insights and rag_insights.get("available")
+                else None,
+                "gate3_newsletter": validation
+                if validation and validation.get("available")
+                else None,
             }
 
             order = self._create_buy_order(
@@ -521,20 +528,24 @@ class CryptoStrategy:
 
             # Determine recommendation based on keywords
             knowledge_lower = knowledge.lower()
-            bullish_signals = sum([
-                "bullish" in knowledge_lower,
-                "buy" in knowledge_lower,
-                "accumulate" in knowledge_lower,
-                "uptrend" in knowledge_lower,
-                "momentum" in knowledge_lower and macd > 0,
-            ])
-            bearish_signals = sum([
-                "bearish" in knowledge_lower,
-                "sell" in knowledge_lower,
-                "exit" in knowledge_lower,
-                "overbought" in knowledge_lower,
-                "caution" in knowledge_lower,
-            ])
+            bullish_signals = sum(
+                [
+                    "bullish" in knowledge_lower,
+                    "buy" in knowledge_lower,
+                    "accumulate" in knowledge_lower,
+                    "uptrend" in knowledge_lower,
+                    "momentum" in knowledge_lower and macd > 0,
+                ]
+            )
+            bearish_signals = sum(
+                [
+                    "bearish" in knowledge_lower,
+                    "sell" in knowledge_lower,
+                    "exit" in knowledge_lower,
+                    "overbought" in knowledge_lower,
+                    "caution" in knowledge_lower,
+                ]
+            )
 
             if bullish_signals > bearish_signals:
                 recommendation = "bullish"
