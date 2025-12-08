@@ -207,12 +207,13 @@
       "status": "tracking"
     },
     "tier5": {
-      "name": "Crypto Daily Strategy (BTC, ETH)",
+      "name": "Crypto Daily Strategy (BTC, ETH, SOL)",
       "allocation": 0.05,
       "daily_amount": 10.0,
       "coins": [
         "BTC/USD",
-        "ETH/USD"
+        "ETH/USD",
+        "SOL/USD"
       ],
       "trades_executed": 2,
       "total_invested": 19.67,
@@ -221,7 +222,15 @@
       "execution_schedule": "Daily 10:00 AM ET",
       "last_execution": "2025-12-07T20:07:08",
       "next_execution": "2025-12-08T15:00:00Z",
-      "workflow_issue": "3 weekends with 0 executions - check GitHub Actions for errors"
+      "price_targets": {
+        "ETH": {"target": 10000, "source": "Luke Belmar (ETF catalyst)"},
+        "SOL": {"target": 500, "source": "Luke Belmar (bull run performer)"}
+      },
+      "watchlist": [
+        {"symbol": "TON", "reason": "Telegram ecosystem - await Alpaca listing"},
+        {"symbol": "MONAD", "reason": "Layer 1 - await mainnet launch"}
+      ],
+      "strategy_update": "2025-12-08: Added SOL per Luke Belmar recommendations"
     }
   },
   "backtest_reality": {
@@ -264,7 +273,10 @@
       "Nov 17: Tier 5 crypto strategy activated - BTC/ETH weekend trading",
       "Execution schedule: Saturday & Sunday 10:00 AM ET",
       "Initial allocation: $0.50/day (5% of $10 daily budget)",
-      "Strategy: 24/7 crypto markets provide weekend trading opportunities"
+      "Strategy: 24/7 crypto markets provide weekend trading opportunities",
+      "Dec 8 2025: Added SOL to universe per Luke Belmar analysis",
+      "Luke Belmar Price Targets: ETH $10,000+ (ETF catalyst), SOL $500 (bull run)",
+      "Watchlist: TON (Telegram ecosystem), Monad (Layer 1, not yet launched)"
     ]
   },
   "automation": {
