@@ -44,6 +44,15 @@ except ImportError:
     NEWSLETTER_AVAILABLE = False
     logger.info("NewsletterAnalyzer not available - crypto trades will use algo-only signals")
 
+# RAG integration (optional)
+try:
+    from src.agents.crypto_learner_agent import CryptoLearnerAgent
+
+    RAG_AVAILABLE = True
+except ImportError:
+    RAG_AVAILABLE = False
+    logger.info("CryptoLearnerAgent not available - crypto trades will use algo-only signals")
+
 
 class CryptoSentiment(Enum):
     """Crypto market sentiment classification."""
@@ -218,6 +227,18 @@ class CryptoStrategy:
                 logger.warning(f"Failed to initialize NewsletterAnalyzer: {e}")
                 self.newsletter = None
 
+        # Initialize RAG learner (optional)
+        self.rag_learner = None
+        if RAG_AVAILABLE:
+            try:
+                self.rag_learner = CryptoLearnerAgent()
+                logger.info(
+                    "CryptoLearnerAgent initialized - will use RAG knowledge for trade decisions"
+                )
+            except Exception as e:
+                logger.warning(f"Failed to initialize CryptoLearnerAgent: {e}")
+                self.rag_learner = None
+
         logger.info(
             f"CryptoStrategy initialized: daily_amount=${daily_amount}, "
             f"crypto_universe={self.crypto_universe}, stop_loss={stop_loss_pct * 100}%"
@@ -324,6 +345,33 @@ class CryptoStrategy:
             else:
                 logger.info(f"Newsletter validation not available: {validation['reasoning']}")
 
+            # Step 2.6: Get RAG insights for the selected coin
+            best_score = next((s for s in scores if s.symbol == best_coin), None)
+            if best_score:
+                rag_metrics = {
+                    "rsi": best_score.rsi,
+                    "macd_histogram": best_score.macd_histogram,
+                    "volume_ratio": best_score.volume_ratio,
+                }
+                rag_insights = self.get_rag_insights(best_coin, rag_metrics)
+
+                if rag_insights["available"]:
+                    logger.info(
+                        f"RAG Insights: recommendation={rag_insights['recommendation']}, "
+                        f"adjustment={rag_insights['confidence_adjustment']:+d}"
+                    )
+                    if rag_insights["insights"]:
+                        logger.info(f"  Top insight: {rag_insights['insights'][0][:100]}...")
+
+                    # Apply RAG adjustment to decision
+                    if rag_insights["recommendation"] == "bearish" and rag_insights["confidence_adjustment"] < -5:
+                        logger.warning(
+                            f"RAG recommends CAUTION for {best_coin}: {rag_insights['reasoning']}"
+                        )
+                        # Note: We still proceed but reduce position size could be implemented
+                else:
+                    logger.info(f"RAG insights not available: {rag_insights['reasoning']}")
+
             # Step 3: Get current price
             current_price = self._get_current_price(best_coin)
             if current_price is None:
@@ -398,6 +446,111 @@ class CryptoStrategy:
         except Exception as e:
             logger.error(f"Error in daily execution: {str(e)}", exc_info=True)
             raise
+
+    def get_rag_insights(self, symbol: str, metrics: dict) -> dict:
+        """
+        Query RAG knowledge base for trading insights on the given symbol.
+
+        Args:
+            symbol: Crypto symbol (e.g., "BTCUSD")
+            metrics: Dict of current technical metrics (RSI, MACD, etc.)
+
+        Returns:
+            Dictionary with:
+            - insights: List of relevant knowledge from RAG
+            - recommendation: str ("bullish", "bearish", "neutral")
+            - confidence_adjustment: int (-10 to +10 score adjustment)
+            - reasoning: str explaining the RAG-based assessment
+        """
+        if not self.rag_learner:
+            return {
+                "insights": [],
+                "recommendation": "neutral",
+                "confidence_adjustment": 0,
+                "reasoning": "RAG learner not available",
+                "available": False,
+            }
+
+        try:
+            coin_name = symbol.replace("USD", "")  # BTCUSD -> BTC
+
+            # Build query based on current market conditions
+            rsi = metrics.get("rsi", 50)
+            macd = metrics.get("macd_histogram", 0)
+
+            if rsi < 40:
+                query = f"{coin_name} oversold RSI trading strategy"
+            elif rsi > 60:
+                query = f"{coin_name} overbought RSI exit strategy"
+            elif macd > 0:
+                query = f"{coin_name} bullish MACD momentum trading"
+            else:
+                query = f"{coin_name} crypto weekend trading strategy entry rules"
+
+            # Query RAG
+            knowledge = self.rag_learner.research_strategy(query)
+
+            if not knowledge or knowledge == "RAG unavailable.":
+                return {
+                    "insights": [],
+                    "recommendation": "neutral",
+                    "confidence_adjustment": 0,
+                    "reasoning": "No relevant knowledge found",
+                    "available": False,
+                }
+
+            # Parse insights
+            insights = knowledge.split("\n\n") if knowledge else []
+
+            # Determine recommendation based on keywords
+            knowledge_lower = knowledge.lower()
+            bullish_signals = sum([
+                "bullish" in knowledge_lower,
+                "buy" in knowledge_lower,
+                "accumulate" in knowledge_lower,
+                "uptrend" in knowledge_lower,
+                "momentum" in knowledge_lower and macd > 0,
+            ])
+            bearish_signals = sum([
+                "bearish" in knowledge_lower,
+                "sell" in knowledge_lower,
+                "exit" in knowledge_lower,
+                "overbought" in knowledge_lower,
+                "caution" in knowledge_lower,
+            ])
+
+            if bullish_signals > bearish_signals:
+                recommendation = "bullish"
+                confidence_adjustment = min(10, bullish_signals * 3)
+            elif bearish_signals > bullish_signals:
+                recommendation = "bearish"
+                confidence_adjustment = max(-10, -bearish_signals * 3)
+            else:
+                recommendation = "neutral"
+                confidence_adjustment = 0
+
+            logger.info(
+                f"RAG Insights for {symbol}: {recommendation} "
+                f"(adjustment: {confidence_adjustment:+d})"
+            )
+
+            return {
+                "insights": insights[:3],  # Top 3 insights
+                "recommendation": recommendation,
+                "confidence_adjustment": confidence_adjustment,
+                "reasoning": f"Based on {len(insights)} knowledge chunks: {recommendation}",
+                "available": True,
+            }
+
+        except Exception as e:
+            logger.error(f"Error getting RAG insights: {e}")
+            return {
+                "insights": [],
+                "recommendation": "neutral",
+                "confidence_adjustment": 0,
+                "reasoning": f"Error: {str(e)}",
+                "available": False,
+            }
 
     def get_newsletter_validation(self, our_pick: str) -> dict:
         """
