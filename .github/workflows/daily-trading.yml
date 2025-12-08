@@ -39,7 +39,7 @@ jobs:
       secrets_valid: ${{ steps.validate_secrets.outputs.secrets_valid }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: main
           fetch-depth: 1
@@ -109,7 +109,7 @@ jobs:
     if: needs.validate-and-test.outputs.secrets_valid == 'true'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: main
           fetch-depth: 1
@@ -165,7 +165,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # Always fetch latest to get any YouTube analysis updates
           ref: main
