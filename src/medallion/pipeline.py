@@ -191,7 +191,8 @@ class MedallionPipeline:
         )
 
         logger.info(
-            f"[{symbol}] Pipeline complete: {gold_tensor.shape} tensor in {processing_time_ms:.0f}ms"
+            f"[{symbol}] Pipeline complete: {gold_tensor.shape} "
+            f"in {processing_time_ms:.0f}ms"
         )
 
         return gold_tensor, lineage

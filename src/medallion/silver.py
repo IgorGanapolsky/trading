@@ -350,9 +350,10 @@ class SilverLayer:
                 | (data["High"] < data["Low"])
             ]
             if len(high_violations) > 0:
-                price_anomalies.extend(
-                    [{"date": str(idx), "issue": "High < other prices"} for idx in high_violations.index[:5]]
-                )
+                price_anomalies.extend([
+                    {"date": str(idx), "issue": "High < other prices"}
+                    for idx in high_violations.index[:5]
+                ])
                 issues.append(f"Found {len(high_violations)} OHLC consistency violations")
 
         # Calculate completeness

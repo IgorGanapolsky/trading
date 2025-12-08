@@ -17,7 +17,6 @@ Storage Format:
 """
 
 import hashlib
-import json
 import logging
 import sqlite3
 from dataclasses import dataclass
@@ -240,7 +239,9 @@ class BronzeLayer:
             data = pd.read_parquet(file_path)
 
             # Verify integrity
-            if self._compute_checksum(data.drop(columns=["_batch_id", "_ingestion_time", "_source"], errors="ignore")) != metadata.checksum:
+            meta_cols = ["_batch_id", "_ingestion_time", "_source"]
+            clean_data = data.drop(columns=meta_cols, errors="ignore")
+            if self._compute_checksum(clean_data) != metadata.checksum:
                 logger.warning(f"Checksum mismatch for {metadata.batch_id}")
 
             return data, metadata
