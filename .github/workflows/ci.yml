@@ -227,3 +227,30 @@ jobs:
             echo "::error::Metric degradation not accepted. Add 'ACCEPT_METRIC_DEGRADATION' to PR description."
             exit 1
           fi
+
+  workflow-integrity:
+    name: Workflow Integrity Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Run workflow integrity tests
+        run: |
+          echo "🔍 Checking workflow integrity..."
+          echo "   This catches silent failures BEFORE they break trading"
+          python3 tests/test_workflow_integrity.py
+
+      - name: Fail loudly if integrity compromised
+        if: failure()
+        run: |
+          echo "::error::WORKFLOW INTEGRITY COMPROMISED - Fix before merging!"
+          echo "::error::These tests catch bugs that cause silent trading failures."
+          exit 1

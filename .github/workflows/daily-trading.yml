@@ -470,6 +470,7 @@ jobs:
           fi
 
       - name: Execute daily trading
+        id: execute_trading
         if: steps.check_execution.outputs.skip != 'true' && steps.health_check.outputs.health_check_passed == 'true'
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
@@ -541,6 +542,23 @@ jobs:
             print(f"   Win Rate: {perf.get('win_rate', 0):.1f}%")
             PY
           fi
+
+      - name: ALERT - Trading step was skipped
+        if: |
+          always() &&
+          steps.check_execution.outputs.skip != 'true' &&
+          steps.health_check.outputs.health_check_passed == 'true' &&
+          steps.execute_trading.outcome == 'skipped'
+        run: |
+          echo "::error::CRITICAL: Trading step was SKIPPED despite passing all checks!"
+          echo "::error::This is the bug that caused 30+ days of silent failures."
+          echo "::error::Check workflow conditions and GITHUB_OUTPUT writes."
+          echo ""
+          echo "Debug info:"
+          echo "  check_execution.skip: ${{ steps.check_execution.outputs.skip }}"
+          echo "  health_check.passed: ${{ steps.health_check.outputs.health_check_passed }}"
+          echo "  execute_trading.outcome: ${{ steps.execute_trading.outcome }}"
+          exit 1
 
       - name: Record workflow execution
         if: always()
