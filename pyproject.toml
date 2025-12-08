@@ -61,7 +61,7 @@ dependencies = [
     "langsmith>=0.1.0",
 
     # Dashboard
-    "streamlit>=1.40.0,<1.46.0",
+    "streamlit>=1.46.0,<2.0.0",
     "matplotlib>=3.7.0",
 
     # X.ai Agentic Tools
