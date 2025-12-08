@@ -3,7 +3,7 @@ Multi-Broker Failover System
 
 Automatically fails over between brokers when one is unavailable.
 Primary: Alpaca
-Backup: Tradier
+Backup: Interactive Brokers (IBKR)
 
 The system tries the primary broker first, and automatically
 switches to backup if primary fails.
@@ -30,7 +30,7 @@ class BrokerType(Enum):
     """Available broker types."""
 
     ALPACA = "alpaca"
-    TRADIER = "tradier"
+    IBKR = "ibkr"
 
 
 @dataclass
@@ -90,7 +90,7 @@ class MultiBroker:
         # Circuit breakers for each broker
         self.circuit_breakers: dict[BrokerType, CircuitBreakerPattern] = {
             BrokerType.ALPACA: CircuitBreakerPattern(failure_threshold=3),
-            BrokerType.TRADIER: CircuitBreakerPattern(failure_threshold=3),
+            BrokerType.IBKR: CircuitBreakerPattern(failure_threshold=3),
         }
 
         # Health status
@@ -98,7 +98,7 @@ class MultiBroker:
 
         # Initialize broker clients lazily
         self._alpaca_client = None
-        self._tradier_client = None
+        self._ibkr_client = None
 
         logger.info(
             f"MultiBroker initialized with primary={primary.value}, failover={enable_failover}"
@@ -124,19 +124,19 @@ class MultiBroker:
         return self._alpaca_client
 
     @property
-    def tradier(self):
-        """Lazy-load Tradier client."""
-        if self._tradier_client is None:
+    def ibkr(self):
+        """Lazy-load IBKR client."""
+        if self._ibkr_client is None:
             try:
-                from src.brokers.tradier_client import TradierClient
+                from src.brokers.ibkr_client import IBKRClient
 
-                client = TradierClient(sandbox=True)
+                client = IBKRClient(paper=True)
                 if client.is_configured():
-                    self._tradier_client = client
-                    logger.info("Tradier client initialized")
+                    self._ibkr_client = client
+                    logger.info("IBKR client initialized")
             except Exception as e:
-                logger.warning(f"Failed to initialize Tradier: {e}")
-        return self._tradier_client
+                logger.warning(f"Failed to initialize IBKR: {e}")
+        return self._ibkr_client
 
     def _get_broker_order(self) -> list[BrokerType]:
         """Get order of brokers to try based on circuit breaker state."""
@@ -148,7 +148,7 @@ class MultiBroker:
 
         # Add backup if failover enabled
         if self.enable_failover:
-            backup = BrokerType.TRADIER if self.primary == BrokerType.ALPACA else BrokerType.ALPACA
+            backup = BrokerType.IBKR if self.primary == BrokerType.ALPACA else BrokerType.ALPACA
             if self.circuit_breakers[backup].can_execute():
                 brokers.append(backup)
 
@@ -157,7 +157,7 @@ class MultiBroker:
     def _execute_with_failover(
         self,
         alpaca_func: Callable[[], T],
-        tradier_func: Callable[[], T],
+        ibkr_func: Callable[[], T],
         operation_name: str,
     ) -> tuple[T, BrokerType]:
         """
@@ -179,8 +179,8 @@ class MultiBroker:
             try:
                 if broker == BrokerType.ALPACA and self.alpaca:
                     result = alpaca_func()
-                elif broker == BrokerType.TRADIER and self.tradier:
-                    result = tradier_func()
+                elif broker == BrokerType.IBKR and self.ibkr:
+                    result = ibkr_func()
                 else:
                     continue
 
@@ -218,8 +218,8 @@ class MultiBroker:
                 "status": account.status,
             }
 
-        def tradier_call():
-            account = self.tradier.get_account()
+        def ibkr_call():
+            account = self.ibkr.get_account()
             return {
                 "equity": account.equity,
                 "cash": account.cash,
@@ -227,7 +227,7 @@ class MultiBroker:
                 "status": account.status,
             }
 
-        return self._execute_with_failover(alpaca_call, tradier_call, "get_account")
+        return self._execute_with_failover(alpaca_call, ibkr_call, "get_account")
 
     def get_positions(self) -> tuple[list[dict], BrokerType]:
         """Get positions from available broker."""
@@ -245,8 +245,8 @@ class MultiBroker:
                 for pos in positions
             ]
 
-        def tradier_call():
-            positions = self.tradier.get_positions()
+        def ibkr_call():
+            positions = self.ibkr.get_positions()
             return [
                 {
                     "symbol": pos.symbol,
@@ -258,7 +258,7 @@ class MultiBroker:
                 for pos in positions
             ]
 
-        return self._execute_with_failover(alpaca_call, tradier_call, "get_positions")
+        return self._execute_with_failover(alpaca_call, ibkr_call, "get_positions")
 
     def submit_order(
         self,
@@ -306,8 +306,8 @@ class MultiBroker:
             order = self.alpaca.submit_order(request)
             return order
 
-        def tradier_call():
-            return self.tradier.submit_order(
+        def ibkr_call():
+            return self.ibkr.submit_order(
                 symbol=symbol,
                 qty=qty,
                 side=side,
@@ -316,7 +316,7 @@ class MultiBroker:
             )
 
         result, broker = self._execute_with_failover(
-            alpaca_call, tradier_call, f"submit_order({symbol})"
+            alpaca_call, ibkr_call, f"submit_order({symbol})"
         )
 
         # Convert to unified OrderResult
@@ -368,10 +368,10 @@ class MultiBroker:
                 "last": (float(quote.bid_price) + float(quote.ask_price)) / 2 if quote else 0,
             }
 
-        def tradier_call():
-            return self.tradier.get_quote(symbol)
+        def ibkr_call():
+            return self.ibkr.get_quote(symbol)
 
-        return self._execute_with_failover(alpaca_call, tradier_call, f"get_quote({symbol})")
+        return self._execute_with_failover(alpaca_call, ibkr_call, f"get_quote({symbol})")
 
     def health_check(self) -> dict[str, Any]:
         """Check health of all brokers."""
@@ -395,28 +395,28 @@ class MultiBroker:
             }
             self.circuit_breakers[BrokerType.ALPACA].record_failure()
 
-        # Check Tradier
+        # Check IBKR
         try:
-            if self.tradier and self.tradier.is_configured():
-                account = self.tradier.get_account()
-                results["tradier"] = {
+            if self.ibkr and self.ibkr.is_configured():
+                account = self.ibkr.get_account()
+                results["ibkr"] = {
                     "status": "healthy",
                     "equity": account.equity,
-                    "circuit_breaker": self.circuit_breakers[BrokerType.TRADIER].state.value,
+                    "circuit_breaker": self.circuit_breakers[BrokerType.IBKR].state.value,
                 }
-                self.circuit_breakers[BrokerType.TRADIER].record_success()
+                self.circuit_breakers[BrokerType.IBKR].record_success()
             else:
-                results["tradier"] = {
+                results["ibkr"] = {
                     "status": "not_configured",
-                    "circuit_breaker": self.circuit_breakers[BrokerType.TRADIER].state.value,
+                    "circuit_breaker": self.circuit_breakers[BrokerType.IBKR].state.value,
                 }
         except Exception as e:
-            results["tradier"] = {
+            results["ibkr"] = {
                 "status": "unhealthy",
                 "error": str(e),
-                "circuit_breaker": self.circuit_breakers[BrokerType.TRADIER].state.value,
+                "circuit_breaker": self.circuit_breakers[BrokerType.IBKR].state.value,
             }
-            self.circuit_breakers[BrokerType.TRADIER].record_failure()
+            self.circuit_breakers[BrokerType.IBKR].record_failure()
 
         return results
 

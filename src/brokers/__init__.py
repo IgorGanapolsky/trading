@@ -2,7 +2,7 @@
 Broker clients for multi-broker trading.
 
 Primary: Alpaca
-Backup: Tradier
+Backup: Interactive Brokers (IBKR)
 
 Usage:
     from src.brokers import get_multi_broker
@@ -18,9 +18,9 @@ from .multi_broker import (
     OrderResult,
     get_multi_broker,
 )
-from .tradier_client import (
-    TradierClient,
-    get_tradier_client,
+from .ibkr_client import (
+    IBKRClient,
+    get_ibkr_client,
 )
 
 __all__ = [
@@ -28,6 +28,6 @@ __all__ = [
     "get_multi_broker",
     "BrokerType",
     "OrderResult",
-    "TradierClient",
-    "get_tradier_client",
+    "IBKRClient",
+    "get_ibkr_client",
 ]
