@@ -16,7 +16,7 @@ jobs:
       LANGCHAIN_MODEL: "claude-3-5-sonnet-20241022"
       LANGCHAIN_TEMPERATURE: "0.2"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v5
