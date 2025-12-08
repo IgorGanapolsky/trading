@@ -79,7 +79,7 @@ langgraph==1.0.4
 langgraph-checkpoint==3.0.1
 langgraph-prebuilt==1.0.5
 langgraph-sdk==0.2.14
-langsmith==0.3.45
+langsmith==0.4.56
 loguru==0.7.3
 lxml==6.0.2
 markupsafe==3.0.3
