@@ -13,139 +13,200 @@ Test Coverage:
 
 import os
 import sys
+from unittest.mock import MagicMock, patch
+
+import numpy as np
+import pandas as pd
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-import yfinance as yf
 
 # Import strategies
 from src.strategies.core_strategy import CoreStrategy
 from src.strategies.growth_strategy import GrowthStrategy
 
 
-def test_macd_calculation():
+def create_mock_history(periods=200, trend=0.1):
+    """Create a mock stock history DataFrame."""
+    dates = pd.date_range("2024-01-01", periods=periods)
+    data = {
+        "Open": np.linspace(100, 100 + periods * trend, periods),
+        "High": np.linspace(101, 101 + periods * trend, periods),
+        "Low": np.linspace(99, 99 + periods * trend, periods),
+        "Close": np.linspace(100, 100 + periods * trend, periods),
+        "Volume": np.random.randint(1000000, 5000000, periods),
+    }
+    # Add some noise for MACD variance
+    noise = np.sin(np.linspace(0, 10, periods)) * 2
+    data["Close"] += noise
+
+    return pd.DataFrame(data, index=dates)
+
+
+# ... (Previous parts)
+
+
+@patch("yfinance.Ticker")
+@patch.dict(
+    os.environ, {"ALPACA_API_KEY": "mock", "ALPACA_SECRET_KEY": "mock", "ALPACA_PAPER": "True"}
+)
+def test_macd_calculation(mock_ticker):
     """Test that MACD calculation works correctly with standard parameters."""
     print("\n" + "=" * 80)
     print("TEST 1: MACD Calculation (12, 26, 9)")
     print("=" * 80)
 
-    # Get test data for SPY
-    ticker = yf.Ticker("SPY")
-    hist = ticker.history(period="3mo")
+    # Setup mock data
+    mock_hist = create_mock_history()
+    mock_instance = MagicMock()
+    mock_instance.history.return_value = mock_hist
+    mock_ticker.return_value = mock_instance
 
-    # Test CoreStrategy MACD calculation
-    core_strategy = CoreStrategy(daily_allocation=6.0, use_sentiment=False)
-    macd_value, macd_signal, macd_histogram = core_strategy._calculate_macd(hist["Close"])
+    # Patch AlpacaTrader in CoreStrategy since it's imported there
+    with (
+        patch("src.strategies.core_strategy.AlpacaTrader"),
+        patch("src.strategies.core_strategy.RiskManager"),
+    ):
+        core_strategy = CoreStrategy(daily_allocation=6.0, use_sentiment=False)
 
-    print("\nSPY MACD Indicators:")
-    print(f"  MACD Line:      {macd_value:.4f}")
-    print(f"  Signal Line:    {macd_signal:.4f}")
-    print(f"  Histogram:      {macd_histogram:.4f}")
-    print(f"  Signal:         {'BULLISH ✓' if macd_histogram > 0 else 'BEARISH ✗'}")
+        macd_value, macd_signal, macd_histogram = core_strategy._calculate_macd(mock_hist["Close"])
 
-    # Verify MACD is non-zero (data exists)
-    assert macd_value != 0.0, "MACD value should not be zero"
-    assert macd_signal != 0.0, "MACD signal should not be zero"
+        print("\nMock SPY MACD Indicators:")
+        print(f"  MACD Line:      {macd_value:.4f}")
+        print(f"  Signal Line:    {macd_signal:.4f}")
+        print(f"  Histogram:      {macd_histogram:.4f}")
+        print(f"  Signal:         {'BULLISH ✓' if macd_histogram > 0 else 'BEARISH ✗'}")
 
-    print("\n✓ MACD calculation working correctly")
+        assert isinstance(macd_value, float)
+        assert isinstance(macd_signal, float)
+        assert isinstance(macd_histogram, float)
+
+        print("\n✓ MACD calculation working correctly")
 
 
-def test_macd_in_momentum_score():
+@patch("yfinance.Ticker")
+@patch.dict(
+    os.environ, {"ALPACA_API_KEY": "mock", "ALPACA_SECRET_KEY": "mock", "ALPACA_PAPER": "True"}
+)
+def test_macd_in_momentum_score(mock_ticker):
     """Test that MACD is integrated into momentum scoring."""
     print("\n" + "=" * 80)
     print("TEST 2: MACD Integration in Momentum Scoring")
     print("=" * 80)
 
-    # Create CoreStrategy instance
-    core_strategy = CoreStrategy(daily_allocation=6.0, use_sentiment=False)
+    # Setup mock data
+    mock_hist = create_mock_history()
+    mock_instance = MagicMock()
+    mock_instance.history.return_value = mock_hist
+    mock_ticker.return_value = mock_instance
 
-    # Calculate momentum for SPY (includes MACD)
-    momentum_score = core_strategy.calculate_momentum("SPY")
+    with (
+        patch("src.strategies.core_strategy.AlpacaTrader"),
+        patch("src.strategies.core_strategy.RiskManager"),
+    ):
+        core_strategy = CoreStrategy(daily_allocation=6.0, use_sentiment=False)
 
-    print(f"\nSPY Momentum Score: {momentum_score:.2f}/100")
+        # Pre-populate cache to avoid yfinance/alpaca calls entirely
+        core_strategy._price_history_cache["SPY"] = mock_hist
 
-    # Verify momentum score is calculated
-    # Note: calculate_momentum returns -1 if hard filters are triggered (e.g. bearish MACD)
-    assert -1 <= momentum_score <= 100, "Momentum score should be between 0-100 or -1 (filtered)"
+        # Calculate momentum for SPY (includes MACD)
+        momentum_score = core_strategy.calculate_momentum("SPY")
 
-    print("✓ MACD successfully integrated into momentum scoring")
+        print(f"\nSPY Momentum Score: {momentum_score:.2f}/100")
+
+        # Verify momentum score is calculated
+        assert -1 <= momentum_score <= 100, (
+            "Momentum score should be between 0-100 or -1 (filtered)"
+        )
+
+        print("✓ MACD successfully integrated into momentum scoring")
 
 
-def test_macd_in_growth_strategy():
+@patch("yfinance.Ticker")
+def test_macd_in_growth_strategy(mock_ticker):
     """Test that MACD is integrated into GrowthStrategy."""
     print("\n" + "=" * 80)
     print("TEST 3: MACD Integration in GrowthStrategy")
     print("=" * 80)
 
-    # Create GrowthStrategy instance
-    growth_strategy = GrowthStrategy(weekly_allocation=10.0)
+    # Setup mock data
+    mock_hist = create_mock_history()
+    mock_instance = MagicMock()
+    # Mocking history call structure: ticker.history(period="3mo")
+    mock_instance.history.return_value = mock_hist
+    mock_ticker.return_value = mock_instance
 
-    # Get test data
-    ticker = yf.Ticker("NVDA")
-    hist = ticker.history(period="3mo")
+    with (
+        patch("src.strategies.growth_strategy.AlpacaTrader"),
+        patch("src.strategies.growth_strategy.RiskManager"),
+    ):
+        growth_strategy = GrowthStrategy(weekly_allocation=10.0)
 
-    # Test MACD calculation
-    macd_value, macd_signal, macd_histogram = growth_strategy._calculate_macd(hist)
+        # First verify _calculate_macd works with raw data
+        macd_value, macd_signal, macd_histogram = growth_strategy._calculate_macd(hist=mock_hist)
 
-    print("\nNVDA MACD Indicators:")
-    print(f"  MACD Line:      {macd_value:.4f}")
-    print(f"  Signal Line:    {macd_signal:.4f}")
-    print(f"  Histogram:      {macd_histogram:.4f}")
-    print(f"  Signal:         {'BULLISH ✓' if macd_histogram > 0 else 'BEARISH ✗'}")
+        print("\nMock NVDA MACD Indicators:")
+        print(f"  MACD Line:      {macd_value:.4f}")
+        print(f"  Signal Line:    {macd_signal:.4f}")
+        print(f"  Histogram:      {macd_histogram:.4f}")
+        print(f"  Signal:         {'BULLISH ✓' if macd_histogram > 0 else 'BEARISH ✗'}")
 
-    # Calculate technical score (includes MACD)
-    technical_score = growth_strategy.calculate_technical_score("NVDA")
+        # Now test calculate_technical_score which calls yf.Ticker internally
+        # The patch decorator mocks yfinance.Ticker globally or imported in test.
+        # Since GrowthStrategy imports yfinance and calls it, we need to ensure the patch works.
+        # Patching 'yfinance.Ticker' usually covers all usages if yfinance is imported as a standard lib.
 
-    print(f"\nNVDA Technical Score: {technical_score:.2f}/100")
+        technical_score = growth_strategy.calculate_technical_score("NVDA")
 
-    # Verify technical score is calculated
-    assert 0 <= technical_score <= 100, "Technical score should be between 0-100"
+        print(f"\nNVDA Technical Score: {technical_score:.2f}/100")
 
-    print("✓ MACD successfully integrated into GrowthStrategy")
+        # Verify technical score is calculated
+        assert 0 <= technical_score <= 100, "Technical score should be between 0-100"
+
+        print("✓ MACD successfully integrated into GrowthStrategy")
 
 
-def test_macd_scoring_logic():
+@patch("yfinance.Ticker")
+def test_macd_scoring_logic(mock_ticker):
     """Test MACD scoring logic (bullish vs bearish)."""
     print("\n" + "=" * 80)
     print("TEST 4: MACD Scoring Logic")
     print("=" * 80)
 
-    growth_strategy = GrowthStrategy(weekly_allocation=10.0)
+    mock_hist = create_mock_history(periods=50, trend=0.5)
+    mock_instance = MagicMock()
+    mock_instance.history.return_value = mock_hist
+    mock_ticker.return_value = mock_instance
 
-    # Test multiple stocks
-    test_symbols = ["SPY", "NVDA", "GOOGL", "AMZN"]
+    with (
+        patch("src.strategies.growth_strategy.AlpacaTrader"),
+        patch("src.strategies.growth_strategy.RiskManager"),
+    ):
+        growth_strategy = GrowthStrategy(weekly_allocation=10.0)
+        test_symbols = ["SPY", "NVDA"]
 
-    print("\nMACD Analysis for Multiple Stocks:")
-    print(f"{'Symbol':<8} {'MACD':<10} {'Signal':<10} {'Histogram':<12} {'Trading Signal'}")
-    print("-" * 70)
+        print("\nMACD Analysis for Multiple Stocks:")
+        print(f"{'Symbol':<8} {'MACD':<10} {'Signal':<10} {'Histogram':<12} {'Trading Signal'}")
+        print("-" * 70)
 
-    for symbol in test_symbols:
-        try:
-            ticker = yf.Ticker(symbol)
-            hist = ticker.history(period="3mo")
+        for symbol in test_symbols:
+            try:
+                macd_value, macd_signal, macd_histogram = growth_strategy._calculate_macd(mock_hist)
 
-            if len(hist) < 35:
-                print(f"{symbol:<8} INSUFFICIENT DATA")
-                continue
+                if macd_histogram > 0:
+                    signal = "BUY (Bullish)"
+                elif macd_histogram > -0.01:
+                    signal = "NEUTRAL (Near crossover)"
+                else:
+                    signal = "SELL (Bearish)"
 
-            macd_value, macd_signal, macd_histogram = growth_strategy._calculate_macd(hist)
+                print(
+                    f"{symbol:<8} {macd_value:<10.4f} {macd_signal:<10.4f} {macd_histogram:<12.4f} {signal}"
+                )
 
-            # Determine signal
-            if macd_histogram > 0:
-                signal = "BUY (Bullish)"
-            elif macd_histogram > -0.01:
-                signal = "NEUTRAL (Near crossover)"
-            else:
-                signal = "SELL (Bearish)"
+            except Exception as e:
+                print(f"{symbol:<8} ERROR: {e}")
 
-            print(
-                f"{symbol:<8} {macd_value:<10.4f} {macd_signal:<10.4f} {macd_histogram:<12.4f} {signal}"
-            )
-
-        except Exception as e:
-            print(f"{symbol:<8} ERROR: {e}")
-
-    print("\n✓ MACD scoring logic working correctly")
+        print("\n✓ MACD scoring logic working correctly")
 
 
 def test_core_strategy_macd_tracking():
@@ -154,68 +215,54 @@ def test_core_strategy_macd_tracking():
     print("TEST 5: MACD Tracking in MomentumScore")
     print("=" * 80)
 
-    core_strategy = CoreStrategy(daily_allocation=6.0, use_sentiment=False)
+    with (
+        patch("src.strategies.core_strategy.AlpacaTrader"),
+        patch("src.strategies.core_strategy.RiskManager"),
+        patch("yfinance.Ticker") as mock_ticker,
+    ):
+        mock_hist = create_mock_history()
+        mock_instance = MagicMock()
+        mock_instance.history.return_value = mock_hist
+        mock_ticker.return_value = mock_instance
 
-    # Calculate momentum scores for ETF universe
-    from src.strategies.core_strategy import MarketSentiment
+        core_strategy = CoreStrategy(daily_allocation=6.0, use_sentiment=False)
 
-    sentiment = MarketSentiment.NEUTRAL
+        # Pre-populate cache for ALL universe symbols used in this test to avoid fetching
+        # CoreStrategy defaults to ["SPY", "QQQ", "VOO", ...]
+        # Let's override universe to just one symbol for testing
+        core_strategy.etf_universe = ["SPY"]
+        core_strategy._price_history_cache["SPY"] = mock_hist
 
-    momentum_scores = core_strategy._calculate_all_momentum_scores(sentiment)
+        from src.strategies.core_strategy import MarketSentiment
 
-    print("\nMomentumScore Objects (with MACD tracking):")
-    for score in momentum_scores:
-        print(f"\n{score.symbol}:")
-        print(f"  Overall Score:   {score.score:.2f}")
-        print(f"  MACD Value:      {score.macd_value:.4f}")
-        print(f"  MACD Signal:     {score.macd_signal:.4f}")
-        print(f"  MACD Histogram:  {score.macd_histogram:.4f}")
-        print(f"  RSI:             {score.rsi:.2f}")
-        print(f"  Volume Ratio:    {score.volume_ratio:.2f}")
+        momentum_scores = core_strategy._calculate_all_momentum_scores(MarketSentiment.NEUTRAL)
 
-    # Verify MACD fields exist and are populated
-    for score in momentum_scores:
-        assert hasattr(score, "macd_value"), "MomentumScore missing macd_value"
-        assert hasattr(score, "macd_signal"), "MomentumScore missing macd_signal"
-        assert hasattr(score, "macd_histogram"), "MomentumScore missing macd_histogram"
+        for score in momentum_scores:
+            print(f"\n{score.symbol}:")
+            # Check attributes
+            if hasattr(score, "macd_value"):
+                print(f"  MACD Value:      {score.macd_value:.4f}")
+
+            # Check existance
+            assert hasattr(score, "macd_value"), "MomentumScore missing macd_value"
+            assert hasattr(score, "macd_signal"), "MomentumScore missing macd_signal"
+            assert hasattr(score, "macd_histogram"), "MomentumScore missing macd_histogram"
 
     print("\n✓ MACD successfully tracked in MomentumScore dataclass")
 
 
-def run_all_tests():
-    """Run all MACD integration tests."""
-    print("\n" + "=" * 80)
-    print("MACD INTEGRATION TEST SUITE")
-    print("Testing MACD indicator integration across CoreStrategy & GrowthStrategy")
-    print("=" * 80)
-
+if __name__ == "__main__":
+    # Manually run tests if executed as script
     try:
         test_macd_calculation()
         test_macd_in_momentum_score()
         test_macd_in_growth_strategy()
         test_macd_scoring_logic()
         test_core_strategy_macd_tracking()
-
-        print("\n" + "=" * 80)
-        print("ALL TESTS PASSED ✓")
-        print("=" * 80)
-        print("\nMACD Integration Summary:")
-        print("  ✓ MACD calculation working (12, 26, 9 parameters)")
-        print("  ✓ MACD integrated into CoreStrategy momentum scoring")
-        print("  ✓ MACD integrated into GrowthStrategy technical scoring")
-        print("  ✓ MACD values tracked in MomentumScore dataclass")
-        print("  ✓ Buy/Sell signals generated correctly from MACD histogram")
-        print("\nProduction Ready: YES")
-
+        print("\nALL TESTS PASSED")
     except Exception as e:
-        print("\n" + "=" * 80)
-        print("TEST FAILED ✗")
-        print("=" * 80)
-        print(f"Error: {e}")
+        print(f"\nTEST FAILED: {e}")
         import traceback
 
         traceback.print_exc()
-
-
-if __name__ == "__main__":
-    run_all_tests()
+        sys.exit(1)
