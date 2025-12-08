@@ -47,7 +47,7 @@ jobs:
       # Note: pip cache is disabled to avoid large post-job tar uploads that
       # were cancelling runs on GitHub-hosted runners.
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -117,7 +117,7 @@ jobs:
       # Note: pip cache is disabled to avoid large post-job tar uploads that
       # were cancelling runs on GitHub-hosted runners.
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -203,7 +203,7 @@ jobs:
           echo "✅ MCP server started on 127.0.0.1:8801"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
