@@ -338,6 +338,19 @@ def execute_crypto_trading() -> None:
                 logger.info(f"💾 Trade saved to {trades_file}")
                 _update_system_state_with_crypto_trade(trade_record, logger)
 
+                # NEW: Update performance log so dashboard sees the impact
+                try:
+                    import subprocess
+                    perf_script = Path(os.path.dirname(__file__)) / "update_performance_log.py"
+                    subprocess.run(
+                        [sys.executable, str(perf_script)],
+                        check=False,
+                        env=os.environ.copy()
+                    )
+                    logger.info("✅ Performance log updated via subprocess")
+                except Exception as e:
+                    logger.warning(f"Failed to update performance log: {e}")
+
             except Exception as e:
                 logger.error(f"Failed to persist trade to JSON: {e}")
         else:

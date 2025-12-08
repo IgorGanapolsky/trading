@@ -96,6 +96,7 @@ class CryptoOrder:
     stop_loss: float | None
     timestamp: datetime
     reason: str
+    attribution: dict | None = None
 
 
 class CryptoStrategy:
@@ -272,37 +273,11 @@ class CryptoStrategy:
             # Execute daily logic
             order = self.execute_daily()
 
-            if order:
-                return {
-                    "success": True,
-                    "symbol": order.symbol,
-                    "amount": order.amount,
-                    "quantity": order.quantity,
-                    "price": order.price,
-                    "reason": order.reason,
-                    "closed_positions": len(closed_positions),
-                    "closed_details": [
-                        {"symbol": p.symbol, "reason": p.reason} for p in closed_positions
-                    ],
-                }
-            else:
-                # Still return success if we closed positions (even if no new trades)
-                if closed_positions:
-                    return {
-                        "success": True,
-                        "reason": "positions_managed",
-                        "message": f"Closed {len(closed_positions)} positions, no new trades",
-                        "closed_positions": len(closed_positions),
-                        "closed_details": [
-                            {"symbol": p.symbol, "reason": p.reason} for p in closed_positions
-                        ],
-                    }
-                return {
-                    "success": False,
-                    "reason": "no_valid_trades",
-                    "message": "No valid crypto opportunities today",
-                    "closed_positions": 0,
-                }
+            return {
+                "success": bool(order or closed_positions),
+                "order": order,
+                "closed_positions": closed_positions,  # Return full CryptoOrder objects
+            }
 
         except Exception as e:
             logger.error(f"Crypto strategy execution failed: {e}")
@@ -416,10 +391,23 @@ class CryptoStrategy:
                 return None
 
             # Step 6: Create order
+            # Construct attribution metadata
+            attribution = {
+                "agent_type": "CryptoStrategy",
+                "gate1_momentum": {
+                    "score": best_score.score if best_score else 0,
+                    "rsi": best_score.rsi if best_score else 0,
+                    "macd": best_score.macd_histogram if best_score else 0,
+                },
+                "gate2_rag": rag_insights if rag_insights and rag_insights.get("available") else None,
+                "gate3_newsletter": validation if validation and validation.get("available") else None,
+            }
+
             order = self._create_buy_order(
                 symbol=best_coin,
                 quantity=quantity,
                 price=current_price,
+                attribution=attribution,
             )
 
             # Step 7: Execute order via Alpaca
@@ -1178,6 +1166,7 @@ class CryptoStrategy:
         symbol: str,
         quantity: float,
         price: float,
+        attribution: dict | None = None,
     ) -> CryptoOrder:
         """Create a buy order with stop-loss."""
         amount = quantity * price
@@ -1193,6 +1182,7 @@ class CryptoStrategy:
             stop_loss=stop_loss_price,
             timestamp=datetime.now(),
             reason="Daily crypto purchase - best momentum coin",
+            attribution=attribution,
         )
 
     def _update_holdings(self, symbol: str, quantity: float) -> None:
@@ -1364,7 +1354,13 @@ class CryptoStrategy:
                             order_type="market",
                             stop_loss=None,
                             timestamp=datetime.now(),
+                            timestamp=datetime.now(),
                             reason=f"Stop-loss triggered at {unrealized_plpc * 100:.2f}% loss",
+                            attribution={
+                                "agent_type": "RiskManager",
+                                "action": "STOP_LOSS",
+                                "pl_pct": unrealized_plpc,
+                            },
                         )
 
                         closed_positions.append(exit_order)
@@ -1400,7 +1396,13 @@ class CryptoStrategy:
                             order_type="market",
                             stop_loss=None,
                             timestamp=datetime.now(),
+                            timestamp=datetime.now(),
                             reason=f"Take-profit triggered at {unrealized_plpc * 100:.2f}% profit",
+                            attribution={
+                                "agent_type": "RiskManager",
+                                "action": "TAKE_PROFIT",
+                                "pl_pct": unrealized_plpc,
+                            },
                         )
 
                         closed_positions.append(exit_order)

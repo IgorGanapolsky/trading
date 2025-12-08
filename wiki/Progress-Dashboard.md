@@ -1,6 +1,6 @@
 # 🌟 World-Class Trading Dashboard
 
-**Last Updated**: 2025-12-07 10:31 PM ET
+**Last Updated**: 2025-12-07 11:51 PM ET
 **Auto-Updated**: Daily via GitHub Actions
 **Dashboard Version**: World-Class Elite Analytics v2.0
 
@@ -15,7 +15,7 @@
 |------------|-----------|
 | **Equity** | $100,017.49 |
 | **Total P/L** | $+17.49 |
-| **Daily P/L** | $+0.00 (+0.00%) |
+| **Daily P/L** | $+17.49 (+0.02%) |
 | **Trades Today** | 2 |
 | **Status** | ✅ OPERATIONAL |
 
@@ -284,6 +284,15 @@ Optimal conditions for momentum strategies. Focus on breakout entries.
 **Integration with RL Pipeline**: Tax-aware reward function penalizes short-term gains and rewards long-term holdings to optimize after-tax returns.
 
 
+## 📊 Benchmark Comparison
+
+| Strategy | Total Return | Sharpe Ratio | Max Drawdown |
+|----------|--------------|--------------|--------------|
+| **Our Strategy** | +0.02% | 0.00 | 0.00% |
+
+---
+
+
 ---
 
 ## 🧠 AI-Generated Insights
@@ -319,7 +328,7 @@ No trades executed yet. System is ready for trading.
 | **Starting Balance** | $100,000.00 |
 | **Current Equity** | $100,017.49 |
 | **Total P/L** | $+17.49 (+0.02%) |
-| **Total Trades** | 8 |
+| **Total Trades** | 7 |
 | **Closed Trades** | 0 |
 | **Winning Trades** | 0 |
 | **Win Rate** | 0.0% |
@@ -350,12 +359,12 @@ No trades executed yet. System is ready for trading.
 
 | Source | Records | Status | Last Update |
 |--------|---------|--------|-------------|
-| **Sentiment RAG** | 0 tickers | ⚠️ Empty | Never |
+| **Sentiment RAG** | 15 tickers | ✅ Active | 2025-12-05 |
 | **Berkshire Letters** | 14 PDFs (4.15MB) | ✅ Downloaded | 2010-2023 |
 | **Bogleheads Forum** | 0 insights | ⏳ Pending | Daily |
 | **YouTube Transcripts** | 5 videos (100KB) | ✅ Active | Daily |
 | **Reddit Sentiment** | 4 files | ✅ Active | Daily |
-| **News Sentiment** | 2 files | ✅ Active | Daily |
+| **News Sentiment** | 3 files | ✅ Active | Daily |
 
 **Data Flow**: External Sources → RAG Collectors → Vector Store → AI Analysis → Trading Decisions
 
@@ -374,3 +383,4 @@ No trades executed yet. System is ready for trading.
 
 *This world-class dashboard is automatically updated daily by GitHub Actions with elite-level analytics.*
 *Dashboard improvements: Enhanced trade analysis, performance attribution, actionable risk alerts, and better visualizations.*
+
