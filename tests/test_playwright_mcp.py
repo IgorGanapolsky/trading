@@ -4,13 +4,10 @@ These tests verify the Playwright MCP client, sentiment scraper,
 and trade verifier functionality.
 """
 
-import asyncio
 from datetime import datetime
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from src.integrations.playwright_mcp.client import (
     AccessibilitySnapshot,
     BrowserState,
@@ -30,7 +27,6 @@ from src.integrations.playwright_mcp.verifier import (
     TradeVerifier,
     VerificationResult,
 )
-
 
 # ============================================================================
 # Client Tests

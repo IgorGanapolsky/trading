@@ -14,7 +14,6 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
 
 from src.integrations.playwright_mcp.client import (
     AccessibilitySnapshot,
@@ -288,9 +287,9 @@ class SentimentScraper:
                                 author=post.get("author", ""),
                                 metadata={
                                     "subreddit": subreddit,
-                                    "weight": self.REDDIT_SUBREDDITS.get(
-                                        subreddit, {}
-                                    ).get("weight", 0.5),
+                                    "weight": self.REDDIT_SUBREDDITS.get(subreddit, {}).get(
+                                        "weight", 0.5
+                                    ),
                                 },
                             )
                         )
@@ -451,9 +450,7 @@ class SentimentScraper:
                     )
 
                     for ticker in mentioned_tickers:
-                        sentiment, confidence = self._analyze_sentiment(
-                            thread.get("title", "")
-                        )
+                        sentiment, confidence = self._analyze_sentiment(thread.get("title", ""))
 
                         mentions.append(
                             MentionData(
@@ -605,7 +602,9 @@ class SentimentScraper:
                 if "viewtopic.php" in href and name:
                     thread = {
                         "title": name,
-                        "url": href if href.startswith("http") else f"https://www.bogleheads.org{href}",
+                        "url": href
+                        if href.startswith("http")
+                        else f"https://www.bogleheads.org{href}",
                         "author": "",
                         "replies": 0,
                         "views": 0,
@@ -652,12 +651,8 @@ class SentimentScraper:
         """
         text_lower = text.lower()
 
-        bullish_count = sum(
-            1 for keyword in self.BULLISH_KEYWORDS if keyword.lower() in text_lower
-        )
-        bearish_count = sum(
-            1 for keyword in self.BEARISH_KEYWORDS if keyword.lower() in text_lower
-        )
+        bullish_count = sum(1 for keyword in self.BULLISH_KEYWORDS if keyword.lower() in text_lower)
+        bearish_count = sum(1 for keyword in self.BEARISH_KEYWORDS if keyword.lower() in text_lower)
 
         total = bullish_count + bearish_count
         if total == 0:
@@ -722,9 +717,7 @@ class SentimentScraper:
             bearish = [m for m in ticker_mentions if m.sentiment == SentimentSignal.BEARISH]
             neutral = [m for m in ticker_mentions if m.sentiment == SentimentSignal.NEUTRAL]
 
-            avg_confidence = (
-                sum(m.confidence for m in ticker_mentions) / len(ticker_mentions)
-            )
+            avg_confidence = sum(m.confidence for m in ticker_mentions) / len(ticker_mentions)
 
             # Calculate weighted score (-1 to 1)
             total = len(ticker_mentions)

@@ -275,6 +275,7 @@ def calculate_metrics():
         "stale_reason": stale_reason,
         "data_fresh": data_fresh,
         "last_run_status": last_run_status_text,
+        "today_trades_list": today_trades if isinstance(today_trades, list) else [],
     }
 
 
@@ -432,6 +433,31 @@ def generate_dashboard() -> str:
         )
     )
 
+    # Format trades table
+    trades_list = basic_metrics.get("today_trades_list", [])
+    trades_table_md = ""
+    if trades_list and len(trades_list) > 0:
+        trades_table_md = "\n### 📝 Execution Details\n\n| Time | Symbol | Action | Amount | Price | Status |\n|------|--------|--------|--------|-------|--------|\n"
+        for trade in trades_list:
+            ts = trade.get("timestamp", "").replace("T", " ")
+            # Try to show just HH:MM if it's today
+            if ts:
+                try:
+                    dt = datetime.fromisoformat(trade.get("timestamp", ""))
+                    # Convert to ET if possible, otherwise just show raw
+                    ts = dt.strftime("%H:%M")
+                except:
+                    ts = ts[11:16] if len(ts) > 16 else ts
+
+            sym = trade.get("symbol", "?")
+            act = trade.get("action", "?")
+            amt = trade.get("amount", 0)
+            px = trade.get("price", 0)
+            st = trade.get("status", "FILLED")
+            trades_table_md += f"| {ts} | **{sym}** | {act} | ${amt:,.2f} | ${px:,.2f} | {st} |\n"
+    elif today_trades > 0:
+        trades_table_md = "\n*Trade details unavailable.*\n"
+
     dashboard = f"""# 📊 Progress Dashboard
 
 {failure_banner}{stale_banner}**Last Updated**: {now.strftime("%Y-%m-%d %I:%M %p ET")}
@@ -471,6 +497,8 @@ def generate_dashboard() -> str:
 | **P/L** | ${today_pl_val:+,.2f} ({today_pl_pct_val:+.2f}%) |
 | **Trades Today** | {today_trades} |
 | **Status** | {status_today} |
+
+{trades_table_md}
 
 ---
 

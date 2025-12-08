@@ -92,9 +92,7 @@ class PlaywrightMCPClient:
         """
         self.headless = headless
         self.timeout = timeout
-        self.screenshots_dir = Path(
-            screenshots_dir or "data/audit_trail/screenshots"
-        )
+        self.screenshots_dir = Path(screenshots_dir or "data/audit_trail/screenshots")
         self.screenshots_dir.mkdir(parents=True, exist_ok=True)
 
         self._browser_state = BrowserState()

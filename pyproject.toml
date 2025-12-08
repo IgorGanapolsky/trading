@@ -35,7 +35,6 @@ dependencies = [
 
     # YouTube Monitoring
     "youtube-transcript-api>=1.2.3",
-    "yt-dlp>=2024.10.22",
 
     # Configuration
     "python-dotenv>=1.2.1",

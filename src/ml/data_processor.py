@@ -11,6 +11,13 @@ logger = logging.getLogger(__name__)
 class DataProcessor:
     """
     Handles data fetching, feature engineering, and preprocessing for the ML model.
+
+    IMPORTANT: To prevent data leakage, normalization follows a fit/transform pattern:
+    1. Call fit_normalization() on TRAINING data only
+    2. Call transform() on both training and test data
+    3. Parameters are stored and reused for inference
+
+    See: https://www.kdnuggets.com/5-critical-feature-engineering-mistakes-that-kill-machine-learning-projects
     """
 
     def __init__(self, sequence_length: int = 60, feature_columns: list[str] = None):
@@ -28,6 +35,9 @@ class DataProcessor:
             "Bogleheads_Risk",  # Bogleheads features
         ]
         self.scalers = {}  # Store scalers per symbol if needed
+        # Normalization parameters (fit on train data only to prevent leakage)
+        self._norm_params: dict[str, dict[str, float]] = {}
+        self._is_fitted = False
 
     def fetch_data(self, symbol: str, period: str = "2y", interval: str = "1d") -> pd.DataFrame:
         """Fetch historical data using yfinance."""
@@ -111,20 +121,124 @@ class DataProcessor:
 
         return df
 
-    def normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Normalize features using Z-score normalization (StandardScaler logic)."""
+    def fit_normalization(self, df: pd.DataFrame) -> "DataProcessor":
+        """
+        Fit normalization parameters on TRAINING data only.
+
+        This prevents data leakage by ensuring test/validation data statistics
+        don't influence the normalization parameters.
+
+        Args:
+            df: Training DataFrame (must NOT include test/validation data)
+
+        Returns:
+            self for method chaining
+        """
+        self._norm_params = {}
+
+        for col in self.feature_columns:
+            if col in df.columns:
+                mean = float(df[col].mean())
+                std = float(df[col].std())
+                self._norm_params[col] = {"mean": mean, "std": std if std != 0 else 1.0}
+
+        self._is_fitted = True
+        logger.debug(f"Fitted normalization on {len(df)} training samples")
+        return self
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply normalization using pre-fitted parameters.
+
+        Args:
+            df: DataFrame to normalize (can be train, test, or inference data)
+
+        Returns:
+            Normalized DataFrame
+
+        Raises:
+            ValueError: If fit_normalization() hasn't been called
+        """
+        if not self._is_fitted:
+            raise ValueError(
+                "Normalization parameters not fitted. Call fit_normalization() on training data first. "
+                "This prevents data leakage from test data."
+            )
+
         df_norm = df.copy()
 
         for col in self.feature_columns:
-            if col in df_norm.columns:
-                mean = df_norm[col].mean()
-                std = df_norm[col].std()
-                if std != 0:
-                    df_norm[col] = (df_norm[col] - mean) / std
-                else:
-                    df_norm[col] = 0.0
+            if col in df_norm.columns and col in self._norm_params:
+                params = self._norm_params[col]
+                df_norm[col] = (df_norm[col] - params["mean"]) / params["std"]
+            elif col in df_norm.columns:
+                # Column exists but no params - set to 0 (safe default)
+                df_norm[col] = 0.0
 
         return df_norm
+
+    def fit_transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Convenience method: fit on data and transform it.
+
+        WARNING: Only use this on training data! For test/validation data,
+        use transform() with parameters fitted on training data.
+
+        Args:
+            df: Training DataFrame
+
+        Returns:
+            Normalized training DataFrame
+        """
+        return self.fit_normalization(df).transform(df)
+
+    def normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        DEPRECATED: Use fit_normalization() + transform() to prevent data leakage.
+
+        This method is kept for backward compatibility but will fit and transform
+        in one step, which can cause leakage if used on combined train+test data.
+
+        For proper usage:
+            # Training phase
+            processor.fit_normalization(train_df)
+            train_normalized = processor.transform(train_df)
+            test_normalized = processor.transform(test_df)
+
+            # Inference phase
+            inference_normalized = processor.transform(new_data)
+        """
+        import warnings
+
+        warnings.warn(
+            "normalize_data() is deprecated due to data leakage risk. "
+            "Use fit_normalization(train_df) then transform(df) instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.fit_transform(df)
+
+    def get_norm_params(self) -> dict[str, dict[str, float]]:
+        """Get fitted normalization parameters for persistence."""
+        if not self._is_fitted:
+            raise ValueError("Not fitted yet. Call fit_normalization() first.")
+        return self._norm_params.copy()
+
+    def set_norm_params(self, params: dict[str, dict[str, float]]) -> "DataProcessor":
+        """
+        Set normalization parameters from saved state.
+
+        Useful for loading parameters fitted during training for inference.
+
+        Args:
+            params: Dictionary of {column: {mean, std}} parameters
+
+        Returns:
+            self for method chaining
+        """
+        self._norm_params = params.copy()
+        self._is_fitted = True
+        return self
 
     def create_sequences(self, df: pd.DataFrame) -> tuple[torch.Tensor, torch.Tensor]:
         """
@@ -153,6 +267,10 @@ class DataProcessor:
         """
         Prepare the latest sequence for inference.
         Includes Bogleheads features if available.
+
+        NOTE: For proper inference, normalization parameters should be pre-fitted
+        on training data using fit_normalization() or set_norm_params().
+        If not fitted, this will fit on the inference data (not ideal but functional).
         """
         df = self.fetch_data(symbol, period="6mo")  # Fetch enough for indicators + sequence
         if df.empty:
@@ -188,7 +306,16 @@ class DataProcessor:
             df["Bogleheads_Regime"] = 0.0
             df["Bogleheads_Risk"] = 0.5
 
-        df = self.normalize_data(df)
+        # Apply normalization using fitted parameters
+        # If not fitted, fit on this data (logs a warning for awareness)
+        if not self._is_fitted:
+            logger.warning(
+                "Normalizing inference data without pre-fitted parameters. "
+                "For production, load parameters fitted on training data."
+            )
+            df = self.fit_transform(df)
+        else:
+            df = self.transform(df)
 
         # Get the last sequence_length rows
         if len(df) < self.sequence_length:

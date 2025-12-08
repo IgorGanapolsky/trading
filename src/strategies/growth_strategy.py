@@ -34,6 +34,7 @@ from src.utils.sentiment_loader import (
     get_ticker_sentiment,
     load_latest_sentiment,
 )
+from src.utils.technical_indicators import calculate_adx, calculate_bollinger_bands
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -575,18 +576,39 @@ class GrowthStrategy:
                 macd_value, macd_signal, macd_histogram = self._calculate_macd(hist)
                 volume_ratio = self._calculate_volume_ratio(hist)
 
-                # Apply filters - RELAXED (Dec 4, 2025): Changed from strict AND to "2 of 4" logic
-                # Previous: All 4 conditions required → rejected 80-90% of candidates
-                # New: Any 2 of 4 conditions → more permissive, allows consolidation/low-volume periods
+                # ADX REGIME FILTER (Dec 5, 2025): Calculate trend strength
+                adx_value, plus_di, minus_di = calculate_adx(hist)
+
+                # BOLLINGER BANDS (Dec 5, 2025): Calculate for mean-reversion signals
+                bb_upper, bb_middle, bb_lower = calculate_bollinger_bands(hist["Close"])
+                # BB position: 0 = at lower band (oversold), 1 = at upper band (overbought)
+                bb_position = (
+                    (current_price - bb_lower) / (bb_upper - bb_lower)
+                    if (bb_upper - bb_lower) > 0
+                    else 0.5
+                )
+
+                # HARD FILTER: Skip ranging markets (ADX < 20) to avoid whipsaws
+                if adx_value < 20.0:
+                    logger.debug(
+                        f"{symbol}: FILTERED OUT - ADX regime filter (ADX={adx_value:.1f} < 20). "
+                        "Market is ranging/trendless."
+                    )
+                    continue
+
+                # Apply filters - ENHANCED (Dec 5, 2025): "3 of 6" logic with ADX + Bollinger Bands
+                # Added: ADX trending check and Bollinger Bands position for confirmation
                 conditions = [
                     momentum > -0.02,  # Allow slight negative momentum (consolidation)
                     30 < rsi < 75,  # Wider RSI range (allow moderate overbought)
                     volume_ratio > 0.8,  # Lower volume requirement (accept quiet periods)
                     macd_histogram > -0.05,  # Allow near-crossover (not just bullish)
+                    adx_value >= 25.0,  # Moderate to strong trend (ADX 25+)
+                    bb_position < 0.7,  # Not overbought on Bollinger Bands (below upper band)
                 ]
                 conditions_met = sum(conditions)
 
-                if conditions_met >= 2:  # Need at least 2 of 4 conditions (not all 4)
+                if conditions_met >= 3:  # Need at least 3 of 6 conditions
                     candidate = CandidateStock(
                         symbol=symbol,
                         technical_score=score,
@@ -601,15 +623,17 @@ class GrowthStrategy:
                     )
                     filtered_stocks.append(candidate)
                     logger.debug(
-                        f"{symbol}: PASSED {conditions_met}/4 conditions "
+                        f"{symbol}: PASSED {conditions_met}/6 conditions "
                         f"(momentum={momentum:.2f}, RSI={rsi:.1f}, "
-                        f"MACD={macd_histogram:.4f}, vol_ratio={volume_ratio:.2f})"
+                        f"MACD={macd_histogram:.4f}, vol_ratio={volume_ratio:.2f}, "
+                        f"ADX={adx_value:.1f}, BB_pos={bb_position:.2f})"
                     )
                 else:
                     logger.debug(
-                        f"{symbol}: FILTERED OUT {conditions_met}/4 conditions "
+                        f"{symbol}: FILTERED OUT {conditions_met}/6 conditions "
                         f"(momentum={momentum:.2f}, RSI={rsi:.1f}, "
-                        f"MACD={macd_histogram:.4f}, vol_ratio={volume_ratio:.2f})"
+                        f"MACD={macd_histogram:.4f}, vol_ratio={volume_ratio:.2f}, "
+                        f"ADX={adx_value:.1f}, BB_pos={bb_position:.2f})"
                     )
 
             except Exception as e:

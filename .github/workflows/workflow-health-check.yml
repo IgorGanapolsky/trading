@@ -9,7 +9,7 @@ on:
     description: "Manual workflow health check"
 
 permissions:
-  actions: read
+  actions: write
   contents: read
   issues: write
 
@@ -28,7 +28,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { data: workflows } = await github.rest.actions.listWorkflowsForRepo({
+            const { data: workflows } = await github.rest.actions.listRepoWorkflows({
               owner: context.repo.owner,
               repo: context.repo.repo,
             });

@@ -22,7 +22,6 @@ feedparser>=6.0.10,<7.0.0
 
 # YouTube Monitoring
 youtube-transcript-api>=1.2.3,<2.0.0
-yt-dlp>=2025.10.22
 
 # Configuration
 python-dotenv>=1.0.0,<2.0.0

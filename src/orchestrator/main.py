@@ -14,8 +14,8 @@ from src.agents.momentum_agent import MomentumAgent
 from src.agents.rl_agent import RLFilter
 from src.analyst.bias_store import BiasProvider, BiasSnapshot, BiasStore
 from src.execution.alpaca_executor import AlpacaExecutor
-from src.langchain_agents.analyst import LangChainSentimentAgent
 from src.integrations.playwright_mcp import SentimentScraper, TradeVerifier
+from src.langchain_agents.analyst import LangChainSentimentAgent
 from src.orchestrator.anomaly_monitor import AnomalyMonitor
 from src.orchestrator.budget import BudgetController
 from src.orchestrator.failure_isolation import FailureIsolationManager
@@ -29,6 +29,15 @@ from src.risk.trade_gateway import RejectionReason, TradeGateway, TradeRequest
 from src.signals.microstructure_features import MicrostructureFeatureExtractor
 from src.strategies.treasury_ladder_strategy import TreasuryLadderStrategy
 from src.utils.regime_detector import RegimeDetector
+
+# Introspective awareness imports (Dec 2025)
+try:
+    from src.core.introspective_council import IntrospectiveCouncil
+    from src.core.uncertainty_tracker import get_uncertainty_tracker
+
+    INTROSPECTION_AVAILABLE = True
+except ImportError:
+    INTROSPECTION_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +135,30 @@ class TradingOrchestrator:
                 self.bias_store,
                 freshness=timedelta(minutes=self.bias_fresh_minutes),
             )
+
+        # Gate 3.5: Introspective Awareness (Dec 2025 - Anthropic research)
+        self.introspective_council: IntrospectiveCouncil | None = None
+        self.uncertainty_tracker = None
+        enable_introspection = os.getenv("ENABLE_INTROSPECTION", "true").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+        if enable_introspection and INTROSPECTION_AVAILABLE:
+            try:
+                from src.core.multi_llm_analysis import MultiLLMAnalyzer
+
+                analyzer = MultiLLMAnalyzer()
+                self.introspective_council = IntrospectiveCouncil(
+                    multi_llm_analyzer=analyzer,
+                    enable_introspection=True,
+                    strict_mode=os.getenv("INTROSPECTION_STRICT_MODE", "false").lower()
+                    in {"1", "true"},
+                )
+                self.uncertainty_tracker = get_uncertainty_tracker()
+                logger.info("Gate 3.5: IntrospectiveCouncil initialized (Dec 2025 best practice)")
+            except Exception as e:
+                logger.warning(f"IntrospectiveCouncil init failed: {e}")
 
     def run(self) -> None:
         session_profile = self._build_session_profile()
@@ -645,6 +678,7 @@ class TradingOrchestrator:
         playwright_weight = float(os.getenv("PLAYWRIGHT_SENTIMENT_WEIGHT", "0.3"))
         try:
             import asyncio
+
             playwright_result = asyncio.get_event_loop().run_until_complete(
                 self.playwright_scraper.scrape_all([ticker])
             )
@@ -716,12 +750,15 @@ class TradingOrchestrator:
                 # Blend LLM and Playwright sentiment scores
                 if playwright_score != 0.0:
                     sentiment_score = (
-                        llm_score * (1 - playwright_weight) +
-                        playwright_score * playwright_weight
+                        llm_score * (1 - playwright_weight) + playwright_score * playwright_weight
                     )
                     logger.info(
                         "Gate 3 (%s): Blended sentiment=%.2f (LLM=%.2f, Playwright=%.2f, weight=%.1f)",
-                        ticker, sentiment_score, llm_score, playwright_score, playwright_weight
+                        ticker,
+                        sentiment_score,
+                        llm_score,
+                        playwright_score,
+                        playwright_weight,
                     )
                 else:
                     sentiment_score = llm_score
@@ -793,6 +830,81 @@ class TradingOrchestrator:
                 metrics={"confidence": sentiment_score},
             )
 
+        # Gate 3.5: Introspective Awareness (Dec 2025 - Anthropic research)
+        # Combines self-consistency, epistemic uncertainty, and self-critique
+        introspection_multiplier = 1.0
+        if self.introspective_council:
+            try:
+                import asyncio
+
+                # Prepare market data for introspection
+                market_data = {
+                    "symbol": ticker,
+                    "momentum_strength": momentum_signal.strength,
+                    "rl_confidence": rl_decision.get("confidence", 0.0),
+                    "sentiment_score": sentiment_score,
+                    "indicators": momentum_signal.indicators,
+                }
+
+                # Run introspective analysis
+                introspection_result = asyncio.get_event_loop().run_until_complete(
+                    self.introspective_council.analyze_trade(
+                        symbol=ticker,
+                        market_data=market_data,
+                    )
+                )
+
+                # Log introspection metrics
+                self.telemetry.record(
+                    event_type="gate.introspection",
+                    ticker=ticker,
+                    status="pass" if introspection_result.execute else "reject",
+                    payload={
+                        "combined_confidence": introspection_result.combined_confidence,
+                        "epistemic_uncertainty": introspection_result.epistemic_uncertainty,
+                        "aleatoric_uncertainty": introspection_result.aleatoric_uncertainty,
+                        "introspection_state": introspection_result.introspection_state.value,
+                        "position_multiplier": introspection_result.position_multiplier,
+                        "recommendation": introspection_result.recommendation,
+                    },
+                )
+
+                # Track uncertainty for calibration analysis
+                if self.uncertainty_tracker:
+                    self.uncertainty_tracker.record(
+                        symbol=ticker,
+                        decision=introspection_result.action,
+                        epistemic_score=introspection_result.epistemic_uncertainty,
+                        aleatoric_score=introspection_result.aleatoric_uncertainty,
+                        aggregate_confidence=introspection_result.combined_confidence,
+                        consistency_score=introspection_result.introspective_confidence,
+                        vote_breakdown={},
+                        introspection_state=introspection_result.introspection_state.value,
+                        knowledge_gaps=introspection_result.knowledge_gaps,
+                        trade_executed=introspection_result.execute,
+                    )
+
+                # Apply position multiplier or reject
+                if not introspection_result.execute:
+                    logger.info(
+                        "Gate 3.5 (%s): REJECTED by introspection (confidence=%.2f, state=%s)",
+                        ticker,
+                        introspection_result.combined_confidence,
+                        introspection_result.introspection_state.value,
+                    )
+                    return
+
+                introspection_multiplier = introspection_result.position_multiplier
+                logger.info(
+                    "Gate 3.5 (%s): PASSED (confidence=%.2f, multiplier=%.2f)",
+                    ticker,
+                    introspection_result.combined_confidence,
+                    introspection_multiplier,
+                )
+
+            except Exception as e:
+                logger.warning("Gate 3.5 (%s): Introspection failed, continuing: %s", ticker, e)
+
         allocation_plan = self.smart_dca.plan_allocation(
             ticker=ticker,
             momentum_strength=momentum_signal.strength,
@@ -816,6 +928,18 @@ class TradingOrchestrator:
                 },
             )
             return
+
+        # Apply introspection multiplier to position sizing (Gate 3.5)
+        original_cap = allocation_plan.cap
+        allocation_plan.cap *= introspection_multiplier
+        if introspection_multiplier < 1.0:
+            logger.info(
+                "Gate 3.5 (%s): Position reduced %.0f%% ($%.2f -> $%.2f) due to uncertainty",
+                ticker,
+                (1 - introspection_multiplier) * 100,
+                original_cap,
+                allocation_plan.cap,
+            )
 
         # Gather recent history for ATR-based sizing and stops
         hist = None
@@ -985,12 +1109,21 @@ class TradingOrchestrator:
             logger.info("Stop-loss placement skipped for %s: %s", ticker, exc)
 
         # Playwright MCP: Trade verification with screenshot audit trail
-        verify_trades = os.getenv("ENABLE_TRADE_VERIFICATION", "true").lower() in {"1", "true", "yes"}
+        verify_trades = os.getenv("ENABLE_TRADE_VERIFICATION", "true").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
         if verify_trades and order.get("id"):
             try:
                 import asyncio
+
                 order_id = order.get("id", "")
-                order_qty = order.get("filled_qty") or order.get("qty") or (order_size / float(current_price or 1))
+                order_qty = (
+                    order.get("filled_qty")
+                    or order.get("qty")
+                    or (order_size / float(current_price or 1))
+                )
                 verification = asyncio.get_event_loop().run_until_complete(
                     self.trade_verifier.verify_order_execution(
                         order_id=str(order_id),
@@ -1007,7 +1140,9 @@ class TradingOrchestrator:
                     payload={
                         "order_id": order_id,
                         "verified": verification.verified,
-                        "screenshot": str(verification.screenshot_path) if verification.screenshot_path else None,
+                        "screenshot": str(verification.screenshot_path)
+                        if verification.screenshot_path
+                        else None,
                         "errors": verification.errors,
                     },
                 )
@@ -1016,7 +1151,9 @@ class TradingOrchestrator:
                 else:
                     logger.warning(
                         "Trade verification FAILED for %s (order=%s): %s",
-                        ticker, order_id, verification.errors
+                        ticker,
+                        order_id,
+                        verification.errors,
                     )
             except Exception as verify_exc:
                 logger.warning("Trade verification skipped for %s: %s", ticker, verify_exc)

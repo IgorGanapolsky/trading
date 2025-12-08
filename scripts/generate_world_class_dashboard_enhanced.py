@@ -147,6 +147,30 @@ def calculate_basic_metrics():
     }
 
 
+def get_recent_trades(days: int = 7) -> list[dict]:
+    """Get trades from the last N days."""
+    from datetime import timedelta
+
+    recent_trades = []
+    today = date.today()
+
+    for i in range(days):
+        trade_date = today - timedelta(days=i)
+        trades_file = DATA_DIR / f"trades_{trade_date.isoformat()}.json"
+        if trades_file.exists():
+            day_trades = load_json_file(trades_file)
+            if isinstance(day_trades, list):
+                for trade in day_trades:
+                    trade["trade_date"] = trade_date.isoformat()
+                    recent_trades.append(trade)
+
+    # Sort by timestamp descending (most recent first)
+    recent_trades.sort(
+        key=lambda x: x.get("timestamp", x.get("trade_date", "")), reverse=True
+    )
+    return recent_trades
+
+
 def generate_world_class_dashboard() -> str:
     """Generate complete world-class dashboard."""
     # Calculate all metrics
@@ -307,6 +331,43 @@ def generate_world_class_dashboard() -> str:
     # Get today's date string for display
     today_display = date.today().strftime("%Y-%m-%d (%A)")
 
+    # Generate recent trades section
+    recent_trades = get_recent_trades(days=7)
+    if recent_trades:
+        recent_trades_rows = []
+        for trade in recent_trades[:15]:  # Limit to 15 most recent
+            trade_date = trade.get("trade_date", "")
+            symbol = trade.get("symbol", "UNKNOWN")
+            side = trade.get("side", trade.get("action", "BUY")).upper()
+            qty = trade.get("qty", trade.get("quantity", trade.get("notional", 0)))
+            price = trade.get("filled_avg_price", trade.get("price", 0))
+            status = trade.get("status", "FILLED").upper()
+
+            # Format quantity (could be shares or notional)
+            if isinstance(qty, (int, float)) and qty < 1:
+                qty_display = f"{qty:.6f}"
+            elif isinstance(qty, (int, float)):
+                qty_display = f"${qty:,.2f}" if trade.get("notional") else f"{qty}"
+            else:
+                qty_display = str(qty)
+
+            # Format price
+            if isinstance(price, (int, float)) and price > 0:
+                price_display = f"${price:,.2f}"
+            else:
+                price_display = "Market"
+
+            status_icon = "✅" if status in ["FILLED", "COMPLETED", "SUCCESS"] else "⏳" if status == "PENDING" else "❌"
+            recent_trades_rows.append(
+                f"| {trade_date} | **{symbol}** | {side} | {qty_display} | {price_display} | {status_icon} {status} |"
+            )
+
+        recent_trades_section = """| Date | Symbol | Action | Qty/Amount | Price | Status |
+|------|--------|--------|------------|-------|--------|
+""" + "\n".join(recent_trades_rows)
+    else:
+        recent_trades_section = "*No trades in the last 7 days*"
+
     # Build dashboard
     dashboard = f"""# 📊 World-Class Trading Dashboard
 
@@ -328,6 +389,12 @@ def generate_world_class_dashboard() -> str:
 | **Status** | {"✅ Active" if basic_metrics.get("today_trade_count", 0) > 0 or abs(basic_metrics.get("today_pl", 0)) > 0.01 else "⏸️ No activity yet"} |
 
 **Funnel Activity**: {order_count} orders, {stop_count} stops
+
+---
+
+## 📈 Recent Trades (Last 7 Days)
+
+{recent_trades_section}
 
 ---
 

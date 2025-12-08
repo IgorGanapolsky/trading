@@ -214,7 +214,9 @@ def print_results_table(
         if verbose and sentiment.top_mentions:
             print("   Top mentions:")
             for mention in sentiment.top_mentions[:3]:
-                title_preview = mention.title[:50] + "..." if len(mention.title) > 50 else mention.title
+                title_preview = (
+                    mention.title[:50] + "..." if len(mention.title) > 50 else mention.title
+                )
                 print(
                     f"      - [{mention.source.value}] {title_preview} "
                     f"(↑{mention.upvotes} 💬{mention.comments})"
@@ -232,8 +234,8 @@ def print_summary(results: dict[str, AggregatedSentiment]) -> None:
     print("\n📊 SUMMARY")
     print("-" * 40)
     print(f"Total mentions found: {total_mentions}")
-    print(f"Bullish signals: {bullish_total} ({bullish_total/max(total_mentions,1)*100:.1f}%)")
-    print(f"Bearish signals: {bearish_total} ({bearish_total/max(total_mentions,1)*100:.1f}%)")
+    print(f"Bullish signals: {bullish_total} ({bullish_total / max(total_mentions, 1) * 100:.1f}%)")
+    print(f"Bearish signals: {bearish_total} ({bearish_total / max(total_mentions, 1) * 100:.1f}%)")
 
     # Most bullish/bearish tickers
     if results:
@@ -294,9 +296,7 @@ def export_to_csv(
     output_path = Path(filepath)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    lines = [
-        "ticker,total_mentions,bullish,bearish,neutral,weighted_score,sources"
-    ]
+    lines = ["ticker,total_mentions,bullish,bearish,neutral,weighted_score,sources"]
 
     for ticker, sentiment in results.items():
         sources = ";".join(s.value for s in sentiment.sources)
@@ -367,6 +367,7 @@ async def main() -> int:
         logger.error("Scraping failed: %s", e)
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return 1
 

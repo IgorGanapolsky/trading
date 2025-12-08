@@ -2,9 +2,9 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2025-12-07T23:45:00.000000+00:00",
-    "last_audit": "2025-12-07T23:45:00.000000",
-    "audit_notes": "Day 9 - CTO audit: Workflows disabled, triggering auto-enable. Added verify_workflow_health.py"
+    "last_updated": "2025-12-07T18:16:23.571387",
+    "last_audit": "2025-11-17T09:00:00.000000",
+    "audit_notes": "Day 9 - Added Tier 5 crypto tracking (BTC/ETH weekend strategy)"
   },
   "challenge": {
     "start_date": "2025-10-29",
@@ -15,11 +15,11 @@
   },
   "account": {
     "starting_balance": 100000.0,
-    "current_equity": 100005.5,
-    "cash": 100005.5,
-    "positions_value": 0,
-    "total_pl": 5.5,
-    "total_pl_pct": 0.0055000000000000005
+    "current_equity": 100017.49,
+    "cash": 83285.42,
+    "positions_value": 16732.068537,
+    "total_pl": 17.49000000000524,
+    "total_pl_pct": 0.017490000000005237
   },
   "investments": {
     "total_invested": 1621.93,
@@ -46,7 +46,86 @@
     },
     "avg_return": -3.04,
     "closed_trades": [],
-    "open_positions": []
+    "open_positions": [
+      {
+        "symbol": "BIL",
+        "tier": "unknown",
+        "amount": 11998.568967,
+        "order_id": null,
+        "entry_date": "2025-12-07T18:16:23.571342",
+        "entry_price": 91.53,
+        "current_price": 91.52,
+        "quantity": 131.103244836,
+        "unrealized_pl": -1.3110324483606706,
+        "unrealized_pl_pct": -0.010925379656948668,
+        "last_updated": "2025-12-07T18:16:23.571354"
+      },
+      {
+        "symbol": "BTCUSD",
+        "tier": "unknown",
+        "amount": 19.677416,
+        "order_id": null,
+        "entry_date": "2025-12-07T18:16:23.571363",
+        "entry_price": 88915.401420298,
+        "current_price": 89518.89,
+        "quantity": 0.000219813,
+        "unrealized_pl": 0.13265463517003487,
+        "unrealized_pl_pct": 0.6787222124200285,
+        "last_updated": "2025-12-07T18:16:23.571366"
+      },
+      {
+        "symbol": "IEF",
+        "tier": "unknown",
+        "amount": 119.976634,
+        "order_id": null,
+        "entry_date": "2025-12-07T18:16:23.571369",
+        "entry_price": 96.472651,
+        "current_price": 96.47,
+        "quantity": 1.243667814,
+        "unrealized_pl": -0.003296963374914225,
+        "unrealized_pl_pct": -0.002747929047788042,
+        "last_updated": "2025-12-07T18:16:23.571371"
+      },
+      {
+        "symbol": "SHY",
+        "tier": "unknown",
+        "amount": 459.724132,
+        "order_id": null,
+        "entry_date": "2025-12-07T18:16:23.571374",
+        "entry_price": 82.781859,
+        "current_price": 82.77,
+        "quantity": 5.554236223,
+        "unrealized_pl": -0.06586768736856352,
+        "unrealized_pl_pct": -0.014325602424561611,
+        "last_updated": "2025-12-07T18:16:23.571376"
+      },
+      {
+        "symbol": "SPY",
+        "tier": "unknown",
+        "amount": 4114.14,
+        "order_id": null,
+        "entry_date": "2025-12-07T18:16:23.571379",
+        "entry_price": 686.381176,
+        "current_price": 685.69,
+        "quantity": 6.0,
+        "unrealized_pl": -4.147055999999566,
+        "unrealized_pl_pct": -0.10069856577767332,
+        "last_updated": "2025-12-07T18:16:23.571380"
+      },
+      {
+        "symbol": "TLT",
+        "tier": "unknown",
+        "amount": 19.981388,
+        "order_id": null,
+        "entry_date": "2025-12-07T18:16:23.571384",
+        "entry_price": 88.150671,
+        "current_price": 88.17,
+        "quantity": 0.226623435,
+        "unrealized_pl": 0.004380404375114783,
+        "unrealized_pl_pct": 0.021927229572647314,
+        "last_updated": "2025-12-07T18:16:23.571385"
+      }
+    ]
   },
   "strategies": {
     "tier1": {
@@ -89,7 +168,7 @@
     "tier5": {
       "name": "Crypto Weekend Strategy (BTC, ETH)",
       "allocation": 0.05,
-      "daily_amount": 0.5,
+      "daily_amount": 10.0,
       "coins": [
         "BTC/USD",
         "ETH/USD"
@@ -97,9 +176,11 @@
       "trades_executed": 0,
       "total_invested": 0.0,
       "status": "active",
+      "enabled": true,
       "execution_schedule": "Saturday & Sunday 10:00 AM ET",
       "last_execution": null,
-      "next_execution": null
+      "next_execution": "2025-12-07T15:00:00Z",
+      "workflow_issue": "3 weekends with 0 executions - check GitHub Actions for errors"
     }
   },
   "backtest_reality": {

@@ -22,8 +22,6 @@ feedparser==6.0.12
 
 # YouTube Monitoring
 youtube-transcript-api==1.2.3
-# Pin to a published stable version for CI reliability
-yt-dlp==2024.10.22
 
 # Configuration
 python-dotenv==1.2.1

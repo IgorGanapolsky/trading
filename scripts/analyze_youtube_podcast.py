@@ -9,7 +9,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-import yt_dlp
+from src.utils.ytdlp_cli import run_ytdlp_dump_json
 from youtube_transcript_api import YouTubeTranscriptApi as _YouTubeTranscriptApi
 
 # Add parent directory to path for imports
@@ -54,33 +54,24 @@ class YouTubePodcastAnalyzer:
         """
         print(f"\n[INFO] Fetching metadata for video {video_id}...")
 
-        ydl_opts = {
-            "quiet": True,
-            "no_warnings": True,
-            "extract_flat": True,
-        }
-
         try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(
-                    f"https://www.youtube.com/watch?v={video_id}", download=False
-                )
+            info = run_ytdlp_dump_json(f"https://www.youtube.com/watch?v={video_id}")
 
-                metadata = {
-                    "video_id": video_id,
-                    "title": info.get("title", "Unknown"),
-                    "channel": info.get("channel", "Unknown"),
-                    "upload_date": info.get("upload_date", "Unknown"),
-                    "duration": info.get("duration", 0),
-                    "description": info.get("description", ""),
-                    "view_count": info.get("view_count", 0),
-                }
+            metadata = {
+                "video_id": video_id,
+                "title": info.get("title", "Unknown"),
+                "channel": info.get("channel", "Unknown"),
+                "upload_date": info.get("upload_date", "Unknown"),
+                "duration": info.get("duration", 0),
+                "description": info.get("description", ""),
+                "view_count": info.get("view_count", 0),
+            }
 
-                print(f"[SUCCESS] Title: {metadata['title']}")
-                print(f"[SUCCESS] Channel: {metadata['channel']}")
-                print(f"[SUCCESS] Duration: {metadata['duration']}s")
+            print(f"[SUCCESS] Title: {metadata['title']}")
+            print(f"[SUCCESS] Channel: {metadata['channel']}")
+            print(f"[SUCCESS] Duration: {metadata['duration']}s")
 
-                return metadata
+            return metadata
 
         except Exception as e:
             print(f"[ERROR] Failed to get metadata: {e}")

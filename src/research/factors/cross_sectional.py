@@ -5,7 +5,6 @@ Provides rank-based features (percentile ranks, z-scores) for relative compariso
 """
 
 import logging
-from typing import Optional
 
 import pandas as pd
 

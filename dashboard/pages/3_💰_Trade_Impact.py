@@ -15,7 +15,6 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from dashboard.utils.chart_builders import (
     COLORS,
     create_performance_comparison_table,
-    create_roi_attribution_waterfall,
 )
 
 st.set_page_config(page_title="Trade Impact", page_icon="💰", layout="wide")
@@ -141,19 +140,9 @@ def main():
     st.markdown("---")
 
     # Performance comparison (with vs without sentiment)
-    st.subheader("📈 Performance Comparison")
+    st.subheader("📈 Performance Metrics")
 
-    st.markdown(
-        f"""
-        <div style='background: {COLORS["neutral"]}20; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid {COLORS["neutral"]}'>
-            <strong>⚠️ Note:</strong> Sentiment integration is currently in development.
-            Below shows projected improvements once fully implemented.
-        </div>
-    """,
-        unsafe_allow_html=True,
-    )
-
-    # Create comparison data (current vs projected with sentiment)
+    # Create comparison data (current system performance)
     comparison_data = pd.DataFrame(
         {
             "Metric": [
@@ -164,7 +153,7 @@ def main():
                 "Total P/L",
                 "Trades Executed",
             ],
-            "Without Sentiment (Current)": [
+            "Current Performance": [
                 f"{perf.get('win_rate', 0):.1f}%",
                 f"{perf.get('avg_return', 0):.2f}%",
                 f"{system_state.get('heuristics', {}).get('sharpe_ratio', 0):.2f}",
@@ -172,15 +161,6 @@ def main():
                 f"${total_pl:.2f}",
                 str(total_trades),
             ],
-            "With Sentiment (Projected)": [
-                f"{min(perf.get('win_rate', 0) + 10, 100):.1f}%",  # +10% win rate improvement
-                f"{perf.get('avg_return', 0) * 1.25:.2f}%",  # 25% better returns
-                f"{max(system_state.get('heuristics', {}).get('sharpe_ratio', 0) + 0.5, 0.5):.2f}",
-                f"{abs(system_state.get('heuristics', {}).get('max_drawdown', 0)) * 0.8:.2f}%",  # 20% less drawdown
-                f"${total_pl * 1.25:.2f}",
-                str(total_trades),
-            ],
-            "Expected Improvement": ["+10%", "+25%", "+0.5", "-20%", "+25%", "0"],
         }
     )
 
@@ -189,70 +169,40 @@ def main():
 
     st.markdown("---")
 
-    # ROI Attribution
-    st.subheader("💡 ROI Attribution Analysis")
-
-    st.markdown(
-        f"""
-        <div style='background: {COLORS["grid"]}; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;'>
-            <p style='color: {COLORS["text"]}; margin: 0;'>
-                <strong>Attribution Breakdown:</strong> Shows how different factors contribute to overall ROI.
-                Sentiment analysis is expected to add significant alpha once integrated.
-            </p>
-        </div>
-    """,
-        unsafe_allow_html=True,
-    )
-
-    # ROI attribution data
-    attribution_data = {
-        "Base Strategy": 2.0,
-        "Market Timing": -1.5,
-        "Position Sizing": 0.8,
-        "Sentiment Analysis": 3.5,  # Projected
-        "Risk Management": 1.2,
-        "Total ROI": 6.0,
-    }
-
-    fig_attribution = create_roi_attribution_waterfall(attribution_data)
-    st.plotly_chart(fig_attribution, use_container_width=True)
-
-    st.markdown("---")
-
     # Sentiment-driven trade examples
-    st.subheader("📝 Sentiment-Driven Trade Examples")
+    st.subheader("📝 Sentiment-Driven Trade Log")
 
     st.markdown(
         f"""
         <div style='background: {COLORS["grid"]}; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;'>
             <p style='color: {COLORS["text"]}; margin: 0;'>
-                Once sentiment integration is active, this section will show specific trades
-                that were influenced by sentiment signals and their outcomes.
+                This section displays trades that were actively influenced by sentiment signals.
             </p>
         </div>
     """,
         unsafe_allow_html=True,
     )
 
-    # Sample sentiment-driven trades (placeholder)
-    sample_trades = pd.DataFrame(
-        {
-            "Date": ["2025-11-09", "2025-11-08", "2025-11-07"],
-            "Ticker": ["NVDA", "SPY", "GOOGL"],
-            "Sentiment Score": [65.0, 35.0, -25.0],
-            "Action": ["BUY", "BUY", "AVOID"],
-            "Entry Price": [145.20, 587.50, 178.30],
-            "Current Price": [147.50, 589.20, 176.80],
-            "P/L": ["+$2.30", "+$1.70", "N/A (Avoided)"],
-            "Outcome": ["✅ Win", "✅ Win", "✅ Saved Loss"],
-        }
-    )
+    # Load real trades
+    trades = load_trade_data(data_dir)
 
-    st.dataframe(sample_trades, use_container_width=True, hide_index=True)
+    if trades:
+        # Convert to DataFrame
+        trade_df = pd.DataFrame(trades)
 
-    st.info(
-        "Note: These are example trades. Real sentiment-driven trades will appear once the system is integrated."
-    )
+        # Select relevant columns if they exist
+        cols_to_show = ["timestamp", "symbol", "action", "price", "amount", "status", "strategy"]
+        available_cols = [c for c in cols_to_show if c in trade_df.columns]
+
+        if available_cols:
+            display_df = trade_df[available_cols].copy()
+            # Rename for display
+            display_df.columns = [c.title() for c in display_df.columns]
+            st.dataframe(display_df, use_container_width=True, hide_index=True)
+        else:
+            st.info("Trades found but missing required display columns.")
+    else:
+        st.info("No trades recorded yet.")
 
     st.markdown("---")
 

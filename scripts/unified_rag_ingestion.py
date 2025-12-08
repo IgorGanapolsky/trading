@@ -114,32 +114,19 @@ class YouTubeIngestion:
         """
         try:
             import whisper
-            import yt_dlp
+            from src.utils.ytdlp_cli import download_ytdlp_audio
 
             logger.info(f"Downloading audio for Whisper transcription: {video_id}")
 
-            # Download audio only
             with tempfile.TemporaryDirectory() as tmpdir:
                 audio_path = os.path.join(tmpdir, f"{video_id}.mp3")
 
-                ydl_opts = {
-                    "format": "bestaudio/best",
-                    "outtmpl": audio_path,
-                    "postprocessors": [
-                        {
-                            "key": "FFmpegExtractAudio",
-                            "preferredcodec": "mp3",
-                            "preferredquality": "192",
-                        }
-                    ],
-                    "quiet": True,
-                    "no_warnings": True,
-                }
+                download_ytdlp_audio(
+                    video_url,
+                    Path(audio_path),
+                    audio_quality="192K",
+                )
 
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    ydl.download([video_url])
-
-                # Find the actual output file (may have different extension)
                 audio_files = list(Path(tmpdir).glob(f"{video_id}.*"))
                 if not audio_files:
                     logger.error(f"No audio file found for {video_id}")
@@ -147,9 +134,8 @@ class YouTubeIngestion:
 
                 audio_file = str(audio_files[0])
 
-                # Transcribe with Whisper
                 logger.info(f"Transcribing with Whisper: {video_id}")
-                model = whisper.load_model("base")  # Use 'base' for balance of speed/accuracy
+                model = whisper.load_model("base")
                 result = model.transcribe(audio_file)
 
                 transcript = result["text"]

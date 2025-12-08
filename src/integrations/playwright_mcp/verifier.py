@@ -393,9 +393,7 @@ class TradeVerifier:
                 "positions": {
                     "data": positions.positions if positions else [],
                     "screenshot": str(positions.screenshot_path) if positions else None,
-                    "capture_time": (
-                        positions.capture_time.isoformat() if positions else None
-                    ),
+                    "capture_time": (positions.capture_time.isoformat() if positions else None),
                 },
                 "account": {
                     "data": account_data,
