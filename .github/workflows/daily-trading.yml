@@ -462,9 +462,11 @@ jobs:
 
           if [ $? -ne 0 ]; then
             echo "❌ HEALTH CHECK FAILED - Aborting trading execution"
+            echo "health_check_passed=false" >> $GITHUB_OUTPUT
             exit 1
           else
             echo "✅ HEALTH CHECK PASSED - Proceeding with trading"
+            echo "health_check_passed=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Execute daily trading
