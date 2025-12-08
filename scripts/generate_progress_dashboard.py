@@ -45,6 +45,8 @@ logger = logging.getLogger(__name__)
 DATA_DIR = Path("data")
 RUN_LOG = DATA_DIR / "trading_runs.jsonl"
 LAST_RUN_STATUS = DATA_DIR / "last_run_status.json"
+PSYCHOLOGY_STATE = DATA_DIR / "psychology_state.json"
+COACHING_LOG = DATA_DIR / "audit_trail" / "coaching_log.jsonl"
 
 
 def load_json_file(filepath: Path) -> dict:
@@ -74,6 +76,177 @@ def load_run_log(max_items: int = 5) -> list[dict]:
         return []
 
     return list(reversed(records[-max_items:]))
+
+
+def load_psychology_state() -> dict:
+    """Load psychology state from file."""
+    if not PSYCHOLOGY_STATE.exists():
+        return {
+            "current_zone": "flow",
+            "confidence_level": "normal",
+            "mental_energy": 1.0,
+            "consecutive_wins": 0,
+            "consecutive_losses": 0,
+            "trades_today": 0,
+            "readiness_score": 88.6,
+            "active_biases": [],
+        }
+    return load_json_file(PSYCHOLOGY_STATE)
+
+
+def load_coaching_log(max_items: int = 5) -> list[dict]:
+    """Load recent coaching interventions from jsonl log."""
+    if not COACHING_LOG.exists():
+        return []
+
+    try:
+        lines = COACHING_LOG.read_text().splitlines()
+        records = [json.loads(line) for line in lines if line.strip()]
+        return list(reversed(records[-max_items:]))
+    except Exception:
+        return []
+
+
+def format_psychology_section(psych_state: dict, coaching_log: list[dict]) -> str:
+    """Format mental toughness section for dashboard."""
+    zone = psych_state.get("current_zone", "unknown")
+    confidence = psych_state.get("confidence_level", "normal")
+    energy = psych_state.get("mental_energy", 1.0)
+    readiness = psych_state.get("readiness_score", 0)
+    consecutive_wins = psych_state.get("consecutive_wins", 0)
+    consecutive_losses = psych_state.get("consecutive_losses", 0)
+    trades_today = psych_state.get("trades_today", 0)
+    active_biases = psych_state.get("active_biases", [])
+
+    # Zone emoji mapping
+    zone_emoji = {
+        "flow": "🟢",
+        "challenge": "🟡",
+        "caution": "🟠",
+        "danger": "🔴",
+        "tilt": "⛔",
+    }
+
+    # Confidence emoji mapping
+    confidence_emoji = {
+        "elite": "💪",
+        "high": "✅",
+        "normal": "➡️",
+        "shaken": "⚠️",
+        "broken": "❌",
+    }
+
+    zone_display = f"{zone_emoji.get(zone, '❓')} {zone.upper()}"
+    confidence_display = f"{confidence_emoji.get(confidence, '❓')} {confidence.upper()}"
+    energy_pct = energy * 100
+
+    # Readiness status
+    if readiness >= 70:
+        readiness_status = "✅ Ready"
+    elif readiness >= 50:
+        readiness_status = "⚠️ Caution"
+    else:
+        readiness_status = "❌ Not Ready"
+
+    # Circuit breaker status
+    circuit_breaker = "✅ Inactive"
+    if zone in ["danger", "tilt"]:
+        circuit_breaker = "🛑 ACTIVE - Trading Blocked"
+    elif consecutive_losses >= 3:
+        circuit_breaker = "⚠️ Warning - 3+ Losses"
+
+    section = f"""
+## 🧠 Mental Toughness & Psychology
+
+### Psychological State (Gate 0)
+
+| Metric | Value | Status |
+|--------|-------|--------|
+| **Emotional Zone** | {zone_display} | {"✅ Optimal" if zone == "flow" else "⚠️ Monitor" if zone in ["challenge", "caution"] else "❌ Critical"} |
+| **Confidence Level** | {confidence_display} | {"✅ Strong" if confidence in ["elite", "high"] else "➡️ Normal" if confidence == "normal" else "⚠️ Low"} |
+| **Mental Energy** | {energy_pct:.0f}% | {"✅" if energy >= 0.7 else "⚠️" if energy >= 0.3 else "❌"} |
+| **Readiness Score** | {readiness:.1f}/100 | {readiness_status} |
+| **Circuit Breaker** | {circuit_breaker} | - |
+
+### Trading Psychology Metrics
+
+| Metric | Value |
+|--------|-------|
+| **Consecutive Wins** | {consecutive_wins} {"🔥" if consecutive_wins >= 3 else ""} |
+| **Consecutive Losses** | {consecutive_losses} {"⚠️" if consecutive_losses >= 2 else ""} |
+| **Trades Today** | {trades_today} |
+
+"""
+
+    # Active biases section
+    if active_biases:
+        section += """### Active Cognitive Biases Detected
+
+| Bias Type | Severity | Trigger |
+|-----------|----------|---------|
+"""
+        for bias in active_biases[:5]:
+            bias_type = bias.get("type", "unknown").replace("_", " ").title()
+            severity = bias.get("severity", 0)
+            trigger = bias.get("trigger", "N/A")[:50]
+            severity_emoji = "🔴" if severity > 0.7 else "🟠" if severity > 0.4 else "🟡"
+            section += f"| {bias_type} | {severity_emoji} {severity:.0%} | {trigger} |\n"
+    else:
+        section += """### Active Cognitive Biases
+
+✅ No active biases detected - Trading psychology is clear.
+
+"""
+
+    # Recent coaching interventions
+    if coaching_log:
+        section += """### Recent Coaching Interventions
+
+| Time | Type | Headline |
+|------|------|----------|
+"""
+        for entry in coaching_log[:5]:
+            ts = entry.get("ts", "")
+            try:
+                ts_display = datetime.fromisoformat(ts.replace("Z", "+00:00")).strftime("%H:%M")
+            except Exception:
+                ts_display = ts[:5] if ts else "?"
+
+            intervention = entry.get("intervention", {})
+            int_type = intervention.get("intervention_type", "unknown").replace("_", " ").title()
+            headline = intervention.get("headline", "N/A")[:40]
+            section += f"| {ts_display} | {int_type} | {headline} |\n"
+    else:
+        section += """### Recent Coaching Interventions
+
+*No recent coaching interventions recorded.*
+
+"""
+
+    section += """
+### Mental Toughness Framework
+
+**Based on**: Steve Siebold's "177 Mental Toughness Secrets of the World Class"
+
+| Principle | Score |
+|-----------|-------|
+"""
+    siebold = psych_state.get("siebold_principles", {})
+    principles = [
+        ("Emotional Compartmentalization", siebold.get("emotional_compartmentalization", 7.0)),
+        ("Metacognition Level", siebold.get("metacognition_level", 7.0)),
+        ("Abundance Mindset", siebold.get("abundance_mindset", 7.0)),
+        ("Coachability", siebold.get("coachability", 8.0)),
+        ("Purpose Clarity", siebold.get("purpose_clarity", 8.0)),
+    ]
+    for name, score in principles:
+        bar = "█" * int(score) + "░" * (10 - int(score))
+        section += f"| {name} | `{bar}` {score:.1f}/10 |\n"
+
+    section += """
+---
+"""
+    return section
 
 
 def format_recent_runs(runs: list[dict]) -> str:
@@ -413,6 +586,11 @@ def generate_dashboard() -> str:
     now = datetime.now(eastern)
     recent_runs = load_run_log(max_items=5)
 
+    # Load psychology state for mental toughness section
+    psych_state = load_psychology_state()
+    coaching_log = load_coaching_log(max_items=5)
+    psychology_section = format_psychology_section(psych_state, coaching_log)
+
     failure_banner = ""
     stale_banner = ""
     # Failure banner from last_run_status
@@ -573,7 +751,7 @@ def generate_dashboard() -> str:
 | **Circuit Breaker** | ✅ Ready | No trips detected |
 | **Next Run** | 🕒 Scheduled | Tomorrow at 9:35 AM ET |
 
----
+{psychology_section}
 
 ## 🩺 Recent Trading Runs
 
