@@ -11,7 +11,7 @@ openai>=1.40.0,<2.0.0  # Flexible range for better compatibility
 
 # Data Processing
 pandas>=2.0.0,<3.0.0  # Flexible for numpy compatibility
-numpy>=1.26.4,<2.0.0  # <2.0 for langchain/torch compatibility
+numpy>=1.26.4  # <2.0 for langchain/torch compatibility
 yfinance==0.2.58  # Stable version without websocket conflicts (Issue #65)
 alpha-vantage==2.3.1
 
