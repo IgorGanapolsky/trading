@@ -25,6 +25,14 @@ from .data_backup import (
     get_backup,
     create_backup,
 )
+from .failover_system import (
+    FailoverSystem,
+    get_failover,
+    retry_with_backoff,
+    with_failover,
+    CircuitBreakerPattern,
+    Watchdog,
+)
 
 __all__ = [
     # Circuit breakers
@@ -49,4 +57,11 @@ __all__ = [
     "DataBackup",
     "get_backup",
     "create_backup",
+    # Failover system
+    "FailoverSystem",
+    "get_failover",
+    "retry_with_backoff",
+    "with_failover",
+    "CircuitBreakerPattern",
+    "Watchdog",
 ]
