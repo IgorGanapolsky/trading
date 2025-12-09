@@ -36,6 +36,7 @@ class BrokerType(Enum):
     ALPACA = "alpaca"
     IBKR = "ibkr"
     TRADIER = "tradier"
+    KALSHI = "kalshi"  # Prediction markets
 
 
 @dataclass
@@ -97,6 +98,7 @@ class MultiBroker:
             BrokerType.ALPACA: CircuitBreakerPattern(failure_threshold=3),
             BrokerType.IBKR: CircuitBreakerPattern(failure_threshold=3),
             BrokerType.TRADIER: CircuitBreakerPattern(failure_threshold=3),
+            BrokerType.KALSHI: CircuitBreakerPattern(failure_threshold=3),
         }
 
         # Health status
@@ -106,6 +108,7 @@ class MultiBroker:
         self._alpaca_client = None
         self._ibkr_client = None
         self._tradier_client = None
+        self._kalshi_client = None
 
         logger.info(
             f"MultiBroker initialized with primary={primary.value}, failover={enable_failover}"
@@ -159,6 +162,21 @@ class MultiBroker:
             except Exception as e:
                 logger.warning(f"Failed to initialize Tradier: {e}")
         return self._tradier_client
+
+    @property
+    def kalshi(self):
+        """Lazy-load Kalshi client (prediction markets)."""
+        if self._kalshi_client is None:
+            try:
+                from src.brokers.kalshi_client import KalshiClient
+
+                client = KalshiClient(paper=True)
+                if client.is_configured():
+                    self._kalshi_client = client
+                    logger.info("Kalshi client initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Kalshi: {e}")
+        return self._kalshi_client
 
     def _get_broker_order(self) -> list[BrokerType]:
         """Get order of brokers to try based on circuit breaker state."""
@@ -528,6 +546,30 @@ class MultiBroker:
                 "circuit_breaker": self.circuit_breakers[BrokerType.TRADIER].state.value,
             }
             self.circuit_breakers[BrokerType.TRADIER].record_failure()
+
+        # Check Kalshi (prediction markets)
+        try:
+            if self.kalshi and self.kalshi.is_configured():
+                account = self.kalshi.get_account()
+                results["kalshi"] = {
+                    "status": "healthy",
+                    "balance": account.balance,
+                    "portfolio_value": account.portfolio_value,
+                    "circuit_breaker": self.circuit_breakers[BrokerType.KALSHI].state.value,
+                }
+                self.circuit_breakers[BrokerType.KALSHI].record_success()
+            else:
+                results["kalshi"] = {
+                    "status": "not_configured",
+                    "circuit_breaker": self.circuit_breakers[BrokerType.KALSHI].state.value,
+                }
+        except Exception as e:
+            results["kalshi"] = {
+                "status": "unhealthy",
+                "error": str(e),
+                "circuit_breaker": self.circuit_breakers[BrokerType.KALSHI].state.value,
+            }
+            self.circuit_breakers[BrokerType.KALSHI].record_failure()
 
         return results
 

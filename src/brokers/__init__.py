@@ -4,8 +4,9 @@ Broker clients for multi-broker trading with automatic failover.
 Primary: Alpaca (self-clearing)
 Secondary: Interactive Brokers (IBKR) - enterprise-grade
 Tertiary: Tradier (API-first cloud brokerage)
+Quaternary: Kalshi (CFTC-regulated prediction markets)
 
-True redundancy with three different clearing infrastructures.
+True redundancy with four different trading infrastructures.
 
 Usage:
     from src.brokers import get_multi_broker
@@ -13,6 +14,11 @@ Usage:
     broker = get_multi_broker()
     result = broker.submit_order("AAPL", 10, "buy")
     print(f"Order placed on {result.broker.value}")
+
+    # For prediction markets
+    from src.brokers import get_kalshi_client
+    kalshi = get_kalshi_client()
+    markets = kalshi.get_markets(category="elections")
 """
 
 from .multi_broker import (
@@ -29,6 +35,14 @@ from .tradier_client import (
     TradierClient,
     get_tradier_client,
 )
+from .kalshi_client import (
+    KalshiClient,
+    KalshiMarket,
+    KalshiPosition,
+    KalshiOrder,
+    KalshiAccount,
+    get_kalshi_client,
+)
 
 __all__ = [
     "MultiBroker",
@@ -39,4 +53,10 @@ __all__ = [
     "get_ibkr_client",
     "TradierClient",
     "get_tradier_client",
+    "KalshiClient",
+    "KalshiMarket",
+    "KalshiPosition",
+    "KalshiOrder",
+    "KalshiAccount",
+    "get_kalshi_client",
 ]
