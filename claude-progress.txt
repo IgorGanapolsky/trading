@@ -1,3 +1,92 @@
+2025-12-09 - Claude Opus 4 (CTO) - KALSHI PREDICTION MARKETS API INTEGRATION
+
+Summary:
+- Added Kalshi prediction markets as Tier 6 trading strategy
+- Full API client implementation with auth, markets, orders, positions
+- Integrated into daily trading workflow (weekdays + weekends)
+- Created and merged PR #359 autonomously
+
+Problem Solved:
+- Trading limited to equity/crypto markets only
+- Missing 24/7 trading opportunities
+- No exposure to prediction market alpha
+
+Solution Implemented:
+
+1. KalshiClient (src/brokers/kalshi_client.py - 620 lines)
+   - Full Kalshi API v2 implementation
+   - Email/password authentication with 30-min token refresh
+   - Markets, orders, positions, account endpoints
+   - Both demo and production URLs supported
+   - Follows same pattern as IBKR/Tradier clients
+
+2. PredictionStrategy (src/strategies/prediction_strategy.py - 485 lines)
+   - Kelly Criterion position sizing (25% fraction for safety)
+   - Edge detection: |market_price - fair_value| > min_edge (5%)
+   - Exit management: 30% stop-loss, 50% take-profit
+   - Confidence-weighted sizing
+   - Category filtering (economics, crypto, weather, etc.)
+
+3. MultiBroker Integration (src/brokers/multi_broker.py)
+   - Added BrokerType.KALSHI enum
+   - Circuit breaker for Kalshi (5 failures/hour max)
+   - Lazy-load Kalshi client property
+   - Health check for Kalshi in broker rotation
+
+4. Workflow Integration (scripts/autonomous_trader.py)
+   - execute_prediction_trading() function
+   - Runs on weekdays (after main orchestrator) AND weekends (alongside crypto)
+   - CLI flags: --prediction-only, --skip-prediction
+   - State tracking: _update_system_state_with_prediction_trade()
+   - Non-blocking (failures don't crash main workflow)
+
+5. Configuration (.env.example)
+   - KALSHI_EMAIL, KALSHI_PASSWORD credentials
+   - KALSHI_PAPER=true (demo API for safety)
+   - ENABLE_PREDICTION_MARKETS=true
+   - PREDICTION_DAILY_BUDGET=5.0 (USD)
+
+6. Unit Tests (tests/test_kalshi_client.py - 355 lines)
+   - Client initialization tests
+   - Auth expiry tests
+   - Mocked API calls for markets, orders, positions
+   - Singleton pattern verification
+
+PR History:
+- Commits: 2 (initial integration + workflow wiring)
+- Lines: +2213, -6
+- Files: 7 changed
+- PR #359: Created and merged via GitHub API (squash merge)
+
+Trading Opportunities:
+- Elections, economics, weather, crypto price, sports
+- 24/7 markets (no market hours restriction)
+- Binary outcomes with known payoffs
+- Low correlation to equity markets
+
+Expected Impact:
+- Additional alpha source independent of stock/crypto
+- Weekend revenue potential (Kalshi runs 24/7)
+- Diversified portfolio with prediction market exposure
+- Daily budget limits risk ($5/day default)
+
+Files Changed:
+- src/brokers/kalshi_client.py (NEW)
+- src/brokers/__init__.py (exports)
+- src/brokers/multi_broker.py (integration)
+- src/strategies/prediction_strategy.py (NEW)
+- scripts/autonomous_trader.py (workflow)
+- tests/test_kalshi_client.py (NEW)
+- .env.example (configuration)
+
+Next Steps:
+- Configure KALSHI_EMAIL/PASSWORD in secrets
+- Test with paper trading first (KALSHI_PAPER=true)
+- Monitor prediction market P/L separately
+- Tune daily budget based on results
+
+---
+
 2025-12-08 - Claude Opus 4 (CTO) - FIX EFFORT PIPELINE: MENTAL TOUGHNESS COACH INTEGRATION
 Summary:
 - Fixed broken "effort pipeline" - Mental Toughness Coach was orphaned (not connected to trading)
