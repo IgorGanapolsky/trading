@@ -32,6 +32,7 @@ from pathlib import Path
 from typing import Any
 
 from src.risk.capital_efficiency import get_capital_calculator
+from src.utils.market_hours import is_market_open, get_market_status
 
 logger = logging.getLogger(__name__)
 
@@ -228,6 +229,23 @@ class TradeGateway:
         warnings = []
         risk_score = 0.0
         metadata = {}
+
+        # ============================================================
+        # CHECK 0: Market Hours (FIRST CHECK - fail fast)
+        # ============================================================
+        # Allow extended hours via env var or for crypto proxies (BITO, etc.)
+        allow_extended = os.getenv("ALLOW_EXTENDED_HOURS", "false").lower() == "true"
+        crypto_proxies = {"BITO", "GBTC", "ETHE", "COIN"}  # Trade during market hours only
+
+        if not is_market_open(allow_extended=allow_extended):
+            market_status = get_market_status(allow_extended=allow_extended)
+            rejection_reasons.append(RejectionReason.MARKET_CLOSED)
+            logger.warning(
+                f"❌ REJECTED: {market_status.reason}. "
+                f"Next open: {market_status.next_open or 'Unknown'}"
+            )
+            metadata["market_session"] = market_status.session.value
+            metadata["next_open"] = market_status.next_open
 
         # Get account info
         account_equity = self._get_account_equity()

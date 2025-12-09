@@ -70,7 +70,9 @@ class MeanReversionStrategy:
         rsi_period: int = 2,
         use_trend_filter: bool = True,
         use_vix_filter: bool = True,
+        use_volume_filter: bool = True,
         vix_elevated_threshold: float = 20.0,
+        min_volume_ratio: float = 0.8,
     ):
         """
         Initialize mean reversion strategy.
@@ -81,19 +83,24 @@ class MeanReversionStrategy:
             rsi_period: RSI lookback period (default: 2 for RSI(2))
             use_trend_filter: Only buy above 200 SMA (default: True)
             use_vix_filter: Boost confidence when VIX elevated (default: True)
+            use_volume_filter: Require minimum volume ratio (default: True)
             vix_elevated_threshold: VIX level considered elevated (default: 20)
+            min_volume_ratio: Minimum volume vs 20-day avg (default: 0.8)
         """
         self.rsi_buy_threshold = rsi_buy_threshold
         self.rsi_sell_threshold = rsi_sell_threshold
         self.rsi_period = rsi_period
         self.use_trend_filter = use_trend_filter
         self.use_vix_filter = use_vix_filter
+        self.use_volume_filter = use_volume_filter
         self.vix_elevated_threshold = vix_elevated_threshold
+        self.min_volume_ratio = min_volume_ratio
 
         logger.info(
             f"MeanReversionStrategy initialized: RSI({rsi_period}) "
             f"buy<{rsi_buy_threshold}, sell>{rsi_sell_threshold}, "
-            f"trend_filter={use_trend_filter}, vix_filter={use_vix_filter}"
+            f"trend_filter={use_trend_filter}, vix_filter={use_vix_filter}, "
+            f"volume_filter={use_volume_filter} (min_ratio={min_volume_ratio})"
         )
 
     def calculate_rsi(self, prices: pd.Series, period: int) -> pd.Series:
@@ -128,6 +135,29 @@ class MeanReversionStrategy:
         except Exception as e:
             logger.warning(f"Could not fetch VIX: {e}")
         return None
+
+    def calculate_volume_ratio(self, hist: pd.DataFrame, window: int = 20) -> float:
+        """
+        Calculate volume ratio (current vs N-day average).
+
+        Args:
+            hist: DataFrame with 'Volume' column
+            window: Lookback period for average (default: 20)
+
+        Returns:
+            Ratio of current volume to average (1.0 = average, >1 = above avg)
+        """
+        if "Volume" not in hist.columns or len(hist) < window:
+            return 1.0  # Neutral if insufficient data
+
+        volume = hist["Volume"]
+        current_vol = float(volume.iloc[-1])
+        avg_vol = float(volume.rolling(window).mean().iloc[-1])
+
+        if avg_vol == 0 or np.isnan(avg_vol):
+            return 1.0
+
+        return current_vol / avg_vol
 
     def analyze(self, symbol: str = "SPY") -> MeanReversionSignal:
         """
@@ -173,6 +203,10 @@ class MeanReversionStrategy:
         vix = self.get_vix() if self.use_vix_filter else None
         vix_elevated = vix is not None and vix > self.vix_elevated_threshold
 
+        # Volume - liquidity/conviction filter
+        volume_ratio = self.calculate_volume_ratio(hist) if self.use_volume_filter else 1.0
+        volume_sufficient = volume_ratio >= self.min_volume_ratio
+
         # Generate signal
         signal_type = "HOLD"
         confidence = 0.0
@@ -188,6 +222,14 @@ class MeanReversionStrategy:
                 signal_type = "HOLD"
                 reason = f"RSI(2)={current_rsi_2:.1f} oversold but below 200 SMA (trend filter)"
                 confidence = 0.3
+            # Check volume filter - avoid low liquidity whipsaws
+            elif self.use_volume_filter and not volume_sufficient:
+                signal_type = "HOLD"
+                reason = (
+                    f"RSI(2)={current_rsi_2:.1f} oversold but volume ratio "
+                    f"{volume_ratio:.2f} < {self.min_volume_ratio} (volume filter)"
+                )
+                confidence = 0.4
             else:
                 signal_type = "BUY"
 
@@ -207,6 +249,13 @@ class MeanReversionStrategy:
                 if current_rsi_5 < 30:
                     confidence = min(0.95, confidence + 0.05)
                     reason += f", RSI(5)={current_rsi_5:.1f} confirms"
+
+                # Boost for strong volume (conviction)
+                if volume_ratio > 1.5:
+                    confidence = min(0.95, confidence + 0.05)
+                    reason += f", strong volume ({volume_ratio:.1f}x avg)"
+                elif volume_ratio > 1.0:
+                    reason += f", vol={volume_ratio:.1f}x"
 
                 # Position sizing based on confidence
                 # Per Quantified Strategies: Full size at extreme RSI < 5
