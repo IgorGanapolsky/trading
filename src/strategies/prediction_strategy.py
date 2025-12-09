@@ -39,10 +39,10 @@ try:
     from src.brokers.kalshi_client import (
         KalshiClient,
         KalshiMarket,
-        KalshiOrder,
         KalshiPosition,
         get_kalshi_client,
     )
+
     KALSHI_AVAILABLE = True
 except ImportError:
     KALSHI_AVAILABLE = False
@@ -51,6 +51,7 @@ except ImportError:
 
 class MarketCategory(Enum):
     """Prediction market categories on Kalshi."""
+
     ELECTIONS = "elections"
     ECONOMICS = "economics"  # Fed rates, CPI, GDP
     WEATHER = "weather"
@@ -62,7 +63,8 @@ class MarketCategory(Enum):
 
 class SignalStrength(Enum):
     """Signal strength classification."""
-    STRONG_YES = "strong_yes"   # >70% probability edge
+
+    STRONG_YES = "strong_yes"  # >70% probability edge
     MODERATE_YES = "moderate_yes"  # 55-70% probability edge
     NEUTRAL = "neutral"
     MODERATE_NO = "moderate_no"
@@ -72,6 +74,7 @@ class SignalStrength(Enum):
 @dataclass
 class PredictionSignal:
     """Trading signal for a prediction market."""
+
     market_ticker: str
     market_title: str
     side: str  # "yes" or "no"
@@ -88,6 +91,7 @@ class PredictionSignal:
 @dataclass
 class PredictionTrade:
     """Executed prediction market trade."""
+
     market_ticker: str
     side: str
     quantity: int
@@ -215,6 +219,7 @@ class PredictionStrategy:
         except Exception as e:
             logger.error(f"Prediction strategy execution failed: {e}")
             import traceback
+
             traceback.print_exc()
             return {"success": False, "reason": "error", "error": str(e)}
 
@@ -446,7 +451,7 @@ class PredictionStrategy:
         """
         # Convert to probabilities
         p = fair_value / 100  # Our estimated win probability
-        market_p = price / 100  # Market implied probability
+        price / 100  # Market implied probability
 
         # For prediction markets: pay $1 if win, lose stake if lose
         # Odds are (100 - price) / price
@@ -537,14 +542,14 @@ class PredictionStrategy:
 
                 # Exit on 50% profit
                 if pl_pct >= 0.50:
-                    logger.info(f"Taking profit on {ticker}: {pl_pct*100:.1f}% gain")
+                    logger.info(f"Taking profit on {ticker}: {pl_pct * 100:.1f}% gain")
                     trade = self._execute_exit(position, "take_profit")
                     if trade:
                         exit_trades.append(trade)
 
                 # Exit on 30% loss
                 elif pl_pct <= -0.30:
-                    logger.info(f"Stopping out of {ticker}: {pl_pct*100:.1f}% loss")
+                    logger.info(f"Stopping out of {ticker}: {pl_pct * 100:.1f}% loss")
                     trade = self._execute_exit(position, "stop_loss")
                     if trade:
                         exit_trades.append(trade)
@@ -619,7 +624,9 @@ class PredictionStrategy:
 
             try:
                 # Calculate order size
-                contracts = min(signal.recommended_size, int(remaining / (signal.current_price / 100)))
+                contracts = min(
+                    signal.recommended_size, int(remaining / (signal.current_price / 100))
+                )
 
                 if contracts < 1:
                     continue
@@ -735,7 +742,7 @@ if __name__ == "__main__":
         result = strategy.execute()
 
         if result["success"]:
-            print(f"\nExecution successful!")
+            print("\nExecution successful!")
             print(f"Entry trades: {len(result.get('entry_trades', []))}")
             print(f"Exit trades: {len(result.get('exit_trades', []))}")
             print(f"Signals found: {len(result.get('signals', []))}")

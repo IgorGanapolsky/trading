@@ -73,12 +73,8 @@ def example_3_weighted_voting():
     print(f"Action: {decision.action}")
     print(f"Weighted Confidence: {decision.weighted_confidence:.2f}")
     print(f"Consensus Score: {decision.consensus_score:.2f}")
-    print(
-        f"Action Scores: {decision.metadata.get('action_scores', {})}"
-    )
-    print(
-        "\nInterpretation: Despite mixed signals, momentum's high weight + confidence wins."
-    )
+    print(f"Action Scores: {decision.metadata.get('action_scores', {})}")
+    print("\nInterpretation: Despite mixed signals, momentum's high weight + confidence wins.")
 
 
 def example_4_confidence_floor():
@@ -96,7 +92,7 @@ def example_4_confidence_floor():
     voter = EnsembleVoter(voting_threshold=0.5, confidence_floor=0.5)
     decision = voter.vote(signals)
 
-    print(f"Confidence Floor: 0.5")
+    print("Confidence Floor: 0.5")
     print(f"Action: {decision.action}")
     print(f"Votes: {decision.votes}")
     print(
@@ -138,9 +134,7 @@ def example_5_unanimous_required():
     print(f"  Action: {decision_disagree.action}")
     print(f"  Unanimous: {decision_disagree.unanimous}")
     print(f"  Consensus: {decision_disagree.consensus_score:.2f}")
-    print(
-        "\nInterpretation: Unanimous mode defaults to HOLD when disagreement exists."
-    )
+    print("\nInterpretation: Unanimous mode defaults to HOLD when disagreement exists.")
 
 
 def example_6_threshold_tuning():
@@ -171,9 +165,7 @@ def example_6_threshold_tuning():
     print(f"  Action: {decision_supermajority.action}")
     print(f"  Consensus: {decision_supermajority.consensus_score:.2f}")
 
-    print(
-        "\nInterpretation: Higher thresholds reduce false positives but may miss trades."
-    )
+    print("\nInterpretation: Higher thresholds reduce false positives but may miss trades.")
 
 
 def example_7_sentiment_score_inference():
@@ -201,9 +193,7 @@ def example_7_sentiment_score_inference():
         else:
             print("(neutral -> HOLD)")
 
-    print(
-        "\nInterpretation: Sentiment scores auto-convert to BUY/HOLD/SELL signals."
-    )
+    print("\nInterpretation: Sentiment scores auto-convert to BUY/HOLD/SELL signals.")
 
 
 def example_8_real_world_scenario():

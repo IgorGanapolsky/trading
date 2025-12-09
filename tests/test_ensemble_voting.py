@@ -5,11 +5,9 @@ Tests simple majority, weighted, and unanimous voting modes.
 """
 
 import pytest
-
 from src.ensemble.voting_ensemble import (
     EnsembleDecision,
     EnsembleVoter,
-    ModelVote,
     SignalType,
     simple_majority_vote,
     unanimous_vote,

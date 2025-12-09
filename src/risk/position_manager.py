@@ -38,6 +38,7 @@ BOND_ETFS = {"AGG", "BND", "LQD", "HYG", "JNK", "TIP", "VCSH", "VCIT"}
 
 class AssetClass(Enum):
     """Asset class for threshold selection."""
+
     TREASURY = "treasury"
     BOND = "bond"
     CRYPTO = "crypto"
@@ -119,11 +120,19 @@ class ExitConditions:
             Tuple of (take_profit_pct, stop_loss_pct, max_holding_days)
         """
         if asset_class == AssetClass.TREASURY:
-            return (self.treasury_take_profit_pct, self.treasury_stop_loss_pct, self.treasury_max_holding_days)
+            return (
+                self.treasury_take_profit_pct,
+                self.treasury_stop_loss_pct,
+                self.treasury_max_holding_days,
+            )
         if asset_class == AssetClass.BOND:
             return (self.bond_take_profit_pct, self.bond_stop_loss_pct, self.bond_max_holding_days)
         if asset_class == AssetClass.CRYPTO:
-            return (self.crypto_take_profit_pct, self.crypto_stop_loss_pct, self.crypto_max_holding_days)
+            return (
+                self.crypto_take_profit_pct,
+                self.crypto_stop_loss_pct,
+                self.crypto_max_holding_days,
+            )
         # Default: equity
         return (self.take_profit_pct, self.stop_loss_pct, self.max_holding_days)
 
@@ -292,14 +301,18 @@ class PositionManager:
 
         # Get asset-class-specific thresholds
         asset_class = get_asset_class(symbol)
-        take_profit_pct, stop_loss_pct, max_holding_days = self.conditions.get_thresholds_for_asset(asset_class)
+        take_profit_pct, stop_loss_pct, max_holding_days = self.conditions.get_thresholds_for_asset(
+            asset_class
+        )
 
         logger.info(f"\n{'=' * 60}")
         logger.info(f"Evaluating position: {symbol} ({asset_class.value.upper()})")
         logger.info(f"  Entry: ${position.entry_price:.2f}")
         logger.info(f"  Current: ${position.current_price:.2f}")
         logger.info(f"  P/L: {unrealized_plpc * 100:.2f}%")
-        logger.info(f"  Thresholds: TP={take_profit_pct*100:.1f}%, SL={stop_loss_pct*100:.1f}%, MaxDays={max_holding_days}")
+        logger.info(
+            f"  Thresholds: TP={take_profit_pct * 100:.1f}%, SL={stop_loss_pct * 100:.1f}%, MaxDays={max_holding_days}"
+        )
 
         # 1. Check STOP-LOSS (highest priority - protect capital)
         if unrealized_plpc <= -stop_loss_pct:

@@ -20,8 +20,7 @@ Created: 2025-12-09
 import json
 import logging
 import os
-import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Optional
@@ -33,18 +32,21 @@ logger = logging.getLogger(__name__)
 
 class KalshiOrderSide(Enum):
     """Order side for Kalshi markets."""
+
     YES = "yes"
     NO = "no"
 
 
 class KalshiOrderType(Enum):
     """Order types available on Kalshi."""
+
     MARKET = "market"
     LIMIT = "limit"
 
 
 class KalshiOrderStatus(Enum):
     """Order status on Kalshi."""
+
     PENDING = "pending"
     ACTIVE = "active"
     FILLED = "filled"
@@ -56,6 +58,7 @@ class KalshiOrderStatus(Enum):
 @dataclass
 class KalshiMarket:
     """Represents a Kalshi prediction market."""
+
     ticker: str
     title: str
     subtitle: str
@@ -82,6 +85,7 @@ class KalshiMarket:
 @dataclass
 class KalshiPosition:
     """Position in a Kalshi market."""
+
     market_ticker: str
     market_title: str
     side: str  # "yes" or "no"
@@ -95,6 +99,7 @@ class KalshiPosition:
 @dataclass
 class KalshiOrder:
     """Order on Kalshi."""
+
     id: str
     market_ticker: str
     side: str  # "yes" or "no"
@@ -110,6 +115,7 @@ class KalshiOrder:
 @dataclass
 class KalshiAccount:
     """Kalshi account information."""
+
     user_id: str
     balance: float  # Available balance in USD
     portfolio_value: float  # Total portfolio value
@@ -121,6 +127,7 @@ class KalshiAccount:
 @dataclass
 class KalshiAuth:
     """Authentication state for Kalshi API."""
+
     token: str
     user_id: str
     expires_at: datetime
@@ -198,10 +205,7 @@ class KalshiClient:
 
     def _has_credentials(self) -> bool:
         """Check if credentials are available."""
-        return bool(
-            (self.email and self.password) or
-            (self.api_key and self.private_key_path)
-        )
+        return bool((self.email and self.password) or (self.api_key and self.private_key_path))
 
     def is_configured(self) -> bool:
         """Check if client is properly configured."""
@@ -219,10 +223,12 @@ class KalshiClient:
 
         url = f"{self.base_url}/login"
 
-        data = json.dumps({
-            "email": self.email,
-            "password": self.password,
-        }).encode()
+        data = json.dumps(
+            {
+                "email": self.email,
+                "password": self.password,
+            }
+        ).encode()
 
         headers = {
             "Content-Type": "application/json",
@@ -240,11 +246,10 @@ class KalshiClient:
                 member = result.get("member", {})
                 user_id = member.get("user_id", "")
 
-                expires_at = datetime.now(timezone.utc).replace(
-                    second=0, microsecond=0
-                )
+                expires_at = datetime.now(timezone.utc).replace(second=0, microsecond=0)
                 # Token valid for 30 minutes
                 from datetime import timedelta
+
                 expires_at += timedelta(seconds=self.TOKEN_LIFETIME_SECONDS - 60)  # 1 min buffer
 
                 self._auth = KalshiAuth(
@@ -333,7 +338,7 @@ class KalshiClient:
         """Get account balance and info."""
         auth = self._ensure_auth()
 
-        response = self._request("GET", f"/portfolio/balance")
+        response = self._request("GET", "/portfolio/balance")
 
         return KalshiAccount(
             user_id=auth.user_id,
@@ -366,16 +371,18 @@ class KalshiClient:
             cost_basis = (avg_price * quantity) / 100.0  # Convert to USD
             market_value = (market_price * quantity) / 100.0
 
-            positions.append(KalshiPosition(
-                market_ticker=pos.get("ticker", ""),
-                market_title=pos.get("title", pos.get("ticker", "")),
-                side=side,
-                quantity=quantity,
-                cost_basis=cost_basis,
-                market_value=market_value,
-                unrealized_pl=market_value - cost_basis,
-                avg_price=avg_price,
-            ))
+            positions.append(
+                KalshiPosition(
+                    market_ticker=pos.get("ticker", ""),
+                    market_title=pos.get("title", pos.get("ticker", "")),
+                    side=side,
+                    quantity=quantity,
+                    cost_basis=cost_basis,
+                    market_value=market_value,
+                    unrealized_pl=market_value - cost_basis,
+                    avg_price=avg_price,
+                )
+            )
 
         return positions
 
@@ -411,19 +418,21 @@ class KalshiClient:
 
         markets = []
         for m in response.get("markets", []):
-            markets.append(KalshiMarket(
-                ticker=m.get("ticker", ""),
-                title=m.get("title", ""),
-                subtitle=m.get("subtitle", ""),
-                status=m.get("status", ""),
-                yes_price=float(m.get("yes_bid", 0) + m.get("yes_ask", 0)) / 2,
-                no_price=float(m.get("no_bid", 0) + m.get("no_ask", 0)) / 2,
-                volume=int(m.get("volume", 0)),
-                open_interest=int(m.get("open_interest", 0)),
-                close_time=m.get("close_time"),
-                result=m.get("result"),
-                category=m.get("category", ""),
-            ))
+            markets.append(
+                KalshiMarket(
+                    ticker=m.get("ticker", ""),
+                    title=m.get("title", ""),
+                    subtitle=m.get("subtitle", ""),
+                    status=m.get("status", ""),
+                    yes_price=float(m.get("yes_bid", 0) + m.get("yes_ask", 0)) / 2,
+                    no_price=float(m.get("no_bid", 0) + m.get("no_ask", 0)) / 2,
+                    volume=int(m.get("volume", 0)),
+                    open_interest=int(m.get("open_interest", 0)),
+                    close_time=m.get("close_time"),
+                    result=m.get("result"),
+                    category=m.get("category", ""),
+                )
+            )
 
         return markets
 
@@ -601,18 +610,20 @@ class KalshiClient:
 
         orders = []
         for o in response.get("orders", []):
-            orders.append(KalshiOrder(
-                id=o.get("order_id", ""),
-                market_ticker=o.get("ticker", ""),
-                side=o.get("side", ""),
-                type=o.get("type", ""),
-                quantity=o.get("count", 0),
-                price=o.get("yes_price") if o.get("side") == "yes" else o.get("no_price"),
-                filled_quantity=o.get("filled_count", 0),
-                status=o.get("status", ""),
-                created_at=o.get("created_time", ""),
-                avg_fill_price=o.get("avg_fill_price"),
-            ))
+            orders.append(
+                KalshiOrder(
+                    id=o.get("order_id", ""),
+                    market_ticker=o.get("ticker", ""),
+                    side=o.get("side", ""),
+                    type=o.get("type", ""),
+                    quantity=o.get("count", 0),
+                    price=o.get("yes_price") if o.get("side") == "yes" else o.get("no_price"),
+                    filled_quantity=o.get("filled_count", 0),
+                    status=o.get("status", ""),
+                    created_at=o.get("created_time", ""),
+                    avg_fill_price=o.get("avg_fill_price"),
+                )
+            )
 
         return orders
 
@@ -683,9 +694,7 @@ class KalshiClient:
         if max_ts:
             params["max_ts"] = max_ts
 
-        response = self._request(
-            "GET", f"/markets/{ticker}/candlesticks/1h", params=params
-        )
+        response = self._request("GET", f"/markets/{ticker}/candlesticks/1h", params=params)
         return response.get("candlesticks", [])
 
     def is_market_open(self) -> bool:

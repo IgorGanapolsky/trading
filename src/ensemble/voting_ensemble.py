@@ -231,7 +231,9 @@ class EnsembleVoter:
 
         for model_name, vote in votes.items():
             if vote.confidence < self.confidence_floor:
-                logger.debug("Skipping %s vote (confidence %.2f < floor)", model_name, vote.confidence)
+                logger.debug(
+                    "Skipping %s vote (confidence %.2f < floor)", model_name, vote.confidence
+                )
                 continue
 
             # Get model weight (default to equal weight if not specified)
@@ -360,7 +362,11 @@ class EnsembleVoter:
             return EnsembleDecision(
                 action=winning_action,
                 consensus_score=1.0,  # Perfect consensus
-                votes={"for": len(valid_votes), "against": 0, "abstain": len(signals) - len(valid_votes)},
+                votes={
+                    "for": len(valid_votes),
+                    "against": 0,
+                    "abstain": len(signals) - len(valid_votes),
+                },
                 weighted_confidence=weighted_conf,
                 individual_votes=votes,
                 unanimous=True,
@@ -380,7 +386,11 @@ class EnsembleVoter:
             return EnsembleDecision(
                 action="hold",
                 consensus_score=0.0,  # No consensus
-                votes={"for": 0, "against": len(valid_votes), "abstain": len(signals) - len(valid_votes)},
+                votes={
+                    "for": 0,
+                    "against": len(valid_votes),
+                    "abstain": len(signals) - len(valid_votes),
+                },
                 weighted_confidence=0.0,
                 individual_votes=votes,
                 unanimous=False,
@@ -437,7 +447,9 @@ class EnsembleVoter:
                     score = float(signal_data["score"])
                     confidence = abs(score)  # Confidence = strength of opinion
                 else:
-                    logger.warning("Model %s missing confidence/score, defaulting to 0.5", model_name)
+                    logger.warning(
+                        "Model %s missing confidence/score, defaulting to 0.5", model_name
+                    )
                     confidence = 0.5
 
                 # Clamp confidence to [0, 1]

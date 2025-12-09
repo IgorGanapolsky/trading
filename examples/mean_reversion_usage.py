@@ -11,6 +11,7 @@ logging.basicConfig(level=logging.INFO)
 # Example 1: Using Mean Reversion Strategy Standalone
 # ====================================================
 
+
 def example_mean_reversion_standalone():
     """Use mean reversion strategy directly on SPY."""
     from src.strategies.mean_reversion_strategy import MeanReversionStrategy
@@ -25,9 +26,9 @@ def example_mean_reversion_standalone():
     # Analyze single symbol
     signal = strategy.analyze("SPY")
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"MEAN REVERSION SIGNAL - {signal.symbol}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Signal Type: {signal.signal_type}")
     print(f"Confidence: {signal.confidence:.1%}")
     print(f"RSI(2): {signal.rsi_2:.1f}")
@@ -38,7 +39,7 @@ def example_mean_reversion_standalone():
     print(f"Reason: {signal.reason}")
 
     if signal.signal_type == "BUY":
-        print(f"\nPOSITION SIZING:")
+        print("\nPOSITION SIZING:")
         print(f"  Suggested Size: {signal.suggested_size_pct:.1%} of capital")
         print(f"  Stop Loss: {signal.stop_loss_pct:.1%}")
         print(f"  Take Profit: {signal.take_profit_pct:.1%}")
@@ -47,6 +48,7 @@ def example_mean_reversion_standalone():
 
 # Example 2: Scan Multiple Symbols
 # =================================
+
 
 def example_scan_universe():
     """Scan multiple ETFs for mean reversion opportunities."""
@@ -58,9 +60,9 @@ def example_scan_universe():
     symbols = ["SPY", "QQQ", "IWM", "DIA", "TLT", "GLD"]
     signals = strategy.scan_universe(symbols)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("UNIVERSE SCAN - Mean Reversion Opportunities")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     for signal in signals:
         status = "***" if signal.signal_type == "BUY" else "   "
@@ -75,9 +77,9 @@ def example_scan_universe():
     active_signals = strategy.get_active_signals(symbols)
 
     if active_signals:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"ACTIVE SIGNALS: {len(active_signals)}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         for sig in active_signals:
             print(f"{sig.symbol}: {sig.signal_type} @ {sig.confidence:.1%} confidence")
@@ -96,6 +98,7 @@ def example_scan_universe():
 # Example 3: Regime-Aware Strategy Selection
 # ===========================================
 
+
 def example_regime_aware_selection():
     """Use regime detection to select optimal strategy."""
     from src.strategies.regime_aware_strategy_selector import RegimeAwareStrategySelector
@@ -103,9 +106,9 @@ def example_regime_aware_selection():
     selector = RegimeAwareStrategySelector()
 
     # Scenario 1: Strong trend (ADX=35) -> Momentum
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("SCENARIO 1: STRONG TRENDING MARKET (ADX=35)")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     selection = selector.select_strategy(
         symbol="SPY",
@@ -122,9 +125,9 @@ def example_regime_aware_selection():
     print(f"Reason: {selection.reason}")
 
     # Scenario 2: Weak trend (ADX=15) -> Mean Reversion
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("SCENARIO 2: SIDEWAYS/RANGING MARKET (ADX=15)")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     selection = selector.select_strategy(
         symbol="SPY",
@@ -141,9 +144,9 @@ def example_regime_aware_selection():
     print(f"Reason: {selection.reason}")
 
     # Scenario 3: Moderate trend (ADX=22) -> Hybrid
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("SCENARIO 3: MODERATE TREND - HYBRID MODE (ADX=22)")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     selection = selector.select_strategy(
         symbol="SPY",
@@ -164,6 +167,7 @@ def example_regime_aware_selection():
 # Example 4: Combined Signal from Both Strategies
 # ================================================
 
+
 def example_combined_signals():
     """Get weighted signals from both strategies."""
     from src.strategies.regime_aware_strategy_selector import RegimeAwareStrategySelector
@@ -173,9 +177,9 @@ def example_combined_signals():
     # Hybrid mode example (ADX=22)
     selection = selector.select_strategy("SPY", adx=22.0)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("COMBINED SIGNAL - HYBRID MODE")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Get combined signal
     combined = selector.get_combined_signal("SPY", selection)
@@ -207,11 +211,12 @@ def example_combined_signals():
 # Example 5: Integration with Trading System
 # ===========================================
 
+
 def example_trading_integration():
     """Show how to integrate with existing trading system."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("TRADING SYSTEM INTEGRATION EXAMPLE")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Pseudo-code for integration
     code = """

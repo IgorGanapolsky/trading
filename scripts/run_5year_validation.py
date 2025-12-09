@@ -26,9 +26,7 @@ import json
 import logging
 import sys
 import time
-from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -82,7 +80,7 @@ def download_historical_data(
         if cache_file.exists():
             logger.info(f"Loading {symbol} from cache")
             try:
-                data_dict[symbol] = pd.read_pickle(cache_file)
+                data_dict[symbol] = pd.read_pickle(cache_file)  # noqa: S301
                 continue
             except Exception as e:
                 logger.warning(f"Cache read failed for {symbol}: {e}")
@@ -163,9 +161,9 @@ def generate_comprehensive_report(
     report.append("\n" + "=" * 100)
     report.append("VALIDATION CONFIGURATION")
     report.append("=" * 100)
-    report.append(f"   Train Window: 252 trading days (~1 year)")
-    report.append(f"   Test Window: 63 trading days (~1 quarter)")
-    report.append(f"   Step Size: 63 trading days (~1 quarter)")
+    report.append("   Train Window: 252 trading days (~1 year)")
+    report.append("   Test Window: 63 trading days (~1 quarter)")
+    report.append("   Step Size: 63 trading days (~1 quarter)")
     report.append(f"   Total Folds: {results.total_windows}")
     report.append(
         f"   Total Coverage: ~{results.total_windows * 63 // 252:.1f} years of out-of-sample testing"
@@ -188,23 +186,23 @@ def generate_comprehensive_report(
         dd_ci_low, dd_ci_high = calculate_confidence_interval(drawdown_values)
         win_ci_low, win_ci_high = calculate_confidence_interval(win_rate_values)
 
-        report.append(f"\n   Sharpe Ratio:")
+        report.append("\n   Sharpe Ratio:")
         report.append(f"     Mean: {results.mean_oos_sharpe:.3f}")
         report.append(f"     Std Dev: ±{results.std_oos_sharpe:.3f}")
         report.append(f"     95% CI: [{sharpe_ci_low:.3f}, {sharpe_ci_high:.3f}]")
         report.append(f"     Min/Max: [{min(sharpe_values):.2f}, {max(sharpe_values):.2f}]")
 
-        report.append(f"\n   Return per Quarter:")
+        report.append("\n   Return per Quarter:")
         report.append(f"     Mean: {results.mean_oos_return:.2f}%")
         report.append(f"     95% CI: [{return_ci_low:.2f}%, {return_ci_high:.2f}%]")
         report.append(f"     Min/Max: [{min(return_values):.2f}%, {max(return_values):.2f}%]")
 
-        report.append(f"\n   Maximum Drawdown:")
+        report.append("\n   Maximum Drawdown:")
         report.append(f"     Mean: {results.mean_oos_max_drawdown:.2f}%")
         report.append(f"     95% CI: [{dd_ci_low:.2f}%, {dd_ci_high:.2f}%]")
         report.append(f"     Worst: {max(drawdown_values):.2f}%")
 
-        report.append(f"\n   Win Rate:")
+        report.append("\n   Win Rate:")
         report.append(f"     Mean: {results.mean_oos_win_rate:.1f}%")
         report.append(f"     95% CI: [{win_ci_low:.1f}%, {win_ci_high:.1f}%]")
         report.append(f"     Min/Max: [{min(win_rate_values):.1f}%, {max(win_rate_values):.1f}%]")
@@ -217,7 +215,7 @@ def generate_comprehensive_report(
     positive_sharpe_count = int(results.sharpe_consistency * results.total_windows)
     positive_return_count = int(results.return_consistency * results.total_windows)
 
-    report.append(f"\n   Consistency Metrics:")
+    report.append("\n   Consistency Metrics:")
     report.append(
         f"     Positive Sharpe: {results.sharpe_consistency:.1%} "
         f"({positive_sharpe_count}/{results.total_windows} quarters)"
@@ -307,7 +305,9 @@ def generate_comprehensive_report(
     if results.passed_validation:
         report.append("\n✅ YES - Strategy shows consistent out-of-sample edge\n")
         report.append(f"   • {results.sharpe_consistency:.0%} of test quarters had positive Sharpe")
-        report.append(f"   • Mean OOS Sharpe {results.mean_oos_sharpe:.2f} exceeds minimum threshold")
+        report.append(
+            f"   • Mean OOS Sharpe {results.mean_oos_sharpe:.2f} exceeds minimum threshold"
+        )
         report.append(f"   • Mean OOS return {results.mean_oos_return:.2f}% per quarter")
         report.append(f"   • Overfitting score {results.overfitting_score:.2f} is acceptable")
         report.append("\n   💡 RECOMMENDATION: Strategy is ready for live deployment")
@@ -433,7 +433,7 @@ def main():
         logger.info(f"Configuration: train={train_window}d, test={test_window}d, step={step}d")
 
         # Estimate number of windows
-        from datetime import datetime, timedelta
+        from datetime import datetime
 
         start_dt = datetime.strptime(args.start, "%Y-%m-%d")
         end_dt = datetime.strptime(args.end, "%Y-%m-%d")
@@ -502,7 +502,7 @@ def main():
         with open(summary_path, "w") as f:
             json.dump(summary, f, indent=2)
 
-        print(f"\n📁 Files saved:")
+        print("\n📁 Files saved:")
         print(f"   • {json_path}")
         print(f"   • {report_path}")
         print(f"   • {summary_path}")

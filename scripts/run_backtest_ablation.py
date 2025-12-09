@@ -226,7 +226,7 @@ def run_ablation_backtest(
         )
 
         # Calculate metrics
-        daily_pnl = results.daily_pnl if hasattr(results, 'daily_pnl') else []
+        daily_pnl = results.daily_pnl if hasattr(results, "daily_pnl") else []
         avg_daily_pnl = sum(daily_pnl) / len(daily_pnl) if daily_pnl else 0.0
         profitable_days = sum(1 for p in daily_pnl if p > 0) if daily_pnl else 0
 
@@ -269,22 +269,26 @@ def run_ablation_matrix(
             try:
                 result = run_ablation_backtest(scenario, config, defaults)
                 results.append(result)
-                print(f"  → Sharpe: {result.sharpe_ratio:.2f}, Win Rate: {result.win_rate:.1f}%, DD: {result.max_drawdown:.1f}%")
+                print(
+                    f"  → Sharpe: {result.sharpe_ratio:.2f}, Win Rate: {result.win_rate:.1f}%, DD: {result.max_drawdown:.1f}%"
+                )
             except Exception as e:
                 print(f"  → ERROR: {e}")
                 # Record failure
-                results.append(AblationResult(
-                    config_name=config.name,
-                    scenario_name=scenario_name,
-                    sharpe_ratio=float('nan'),
-                    win_rate=0.0,
-                    max_drawdown=100.0,
-                    total_return=0.0,
-                    total_trades=0,
-                    avg_daily_pnl=0.0,
-                    profitable_days=0,
-                    gates_enabled=config.gates_enabled,
-                ))
+                results.append(
+                    AblationResult(
+                        config_name=config.name,
+                        scenario_name=scenario_name,
+                        sharpe_ratio=float("nan"),
+                        win_rate=0.0,
+                        max_drawdown=100.0,
+                        total_return=0.0,
+                        total_trades=0,
+                        avg_daily_pnl=0.0,
+                        profitable_days=0,
+                        gates_enabled=config.gates_enabled,
+                    )
+                )
 
     return results
 
@@ -297,40 +301,67 @@ def generate_ablation_report(results: list[AblationResult], output_dir: Path) ->
     csv_path = output_dir / "ablation_results.csv"
     with csv_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow([
-            "Config", "Scenario", "Sharpe", "Win Rate (%)", "Max DD (%)",
-            "Total Return (%)", "Trades", "Avg Daily PnL", "Profitable Days",
-            "Momentum", "RL", "LLM", "Introspection", "Coach"
-        ])
+        writer.writerow(
+            [
+                "Config",
+                "Scenario",
+                "Sharpe",
+                "Win Rate (%)",
+                "Max DD (%)",
+                "Total Return (%)",
+                "Trades",
+                "Avg Daily PnL",
+                "Profitable Days",
+                "Momentum",
+                "RL",
+                "LLM",
+                "Introspection",
+                "Coach",
+            ]
+        )
         for r in results:
-            writer.writerow([
-                r.config_name, r.scenario_name, f"{r.sharpe_ratio:.2f}",
-                f"{r.win_rate:.1f}", f"{r.max_drawdown:.1f}",
-                f"{r.total_return:.2f}", r.total_trades, f"{r.avg_daily_pnl:.2f}",
-                r.profitable_days,
-                r.gates_enabled.get("momentum", True),
-                r.gates_enabled.get("rl", False),
-                r.gates_enabled.get("llm_sentiment", False),
-                r.gates_enabled.get("introspection", False),
-                r.gates_enabled.get("mental_coach", False),
-            ])
+            writer.writerow(
+                [
+                    r.config_name,
+                    r.scenario_name,
+                    f"{r.sharpe_ratio:.2f}",
+                    f"{r.win_rate:.1f}",
+                    f"{r.max_drawdown:.1f}",
+                    f"{r.total_return:.2f}",
+                    r.total_trades,
+                    f"{r.avg_daily_pnl:.2f}",
+                    r.profitable_days,
+                    r.gates_enabled.get("momentum", True),
+                    r.gates_enabled.get("rl", False),
+                    r.gates_enabled.get("llm_sentiment", False),
+                    r.gates_enabled.get("introspection", False),
+                    r.gates_enabled.get("mental_coach", False),
+                ]
+            )
 
     # Write JSON
     json_path = output_dir / "ablation_results.json"
     with json_path.open("w", encoding="utf-8") as f:
-        json.dump([{
-            "config_name": r.config_name,
-            "scenario_name": r.scenario_name,
-            "sharpe_ratio": r.sharpe_ratio,
-            "win_rate": r.win_rate,
-            "max_drawdown": r.max_drawdown,
-            "total_return": r.total_return,
-            "total_trades": r.total_trades,
-            "avg_daily_pnl": r.avg_daily_pnl,
-            "profitable_days": r.profitable_days,
-            "gates_enabled": r.gates_enabled,
-            "timestamp": r.timestamp,
-        } for r in results], f, indent=2)
+        json.dump(
+            [
+                {
+                    "config_name": r.config_name,
+                    "scenario_name": r.scenario_name,
+                    "sharpe_ratio": r.sharpe_ratio,
+                    "win_rate": r.win_rate,
+                    "max_drawdown": r.max_drawdown,
+                    "total_return": r.total_return,
+                    "total_trades": r.total_trades,
+                    "avg_daily_pnl": r.avg_daily_pnl,
+                    "profitable_days": r.profitable_days,
+                    "gates_enabled": r.gates_enabled,
+                    "timestamp": r.timestamp,
+                }
+                for r in results
+            ],
+            f,
+            indent=2,
+        )
 
     # Generate summary by config (aggregated across scenarios)
     summary: dict[str, dict[str, float]] = {}
@@ -339,13 +370,13 @@ def generate_ablation_report(results: list[AblationResult], output_dir: Path) ->
             summary[r.config_name] = {
                 "count": 0,
                 "sharpe_sum": 0.0,
-                "sharpe_min": float('inf'),
+                "sharpe_min": float("inf"),
                 "win_rate_sum": 0.0,
-                "win_rate_min": float('inf'),
+                "win_rate_min": float("inf"),
                 "max_dd": 0.0,
             }
         s = summary[r.config_name]
-        if not (r.sharpe_ratio != r.sharpe_ratio):  # not NaN
+        if r.sharpe_ratio == r.sharpe_ratio:  # not NaN
             s["count"] += 1
             s["sharpe_sum"] += r.sharpe_ratio
             s["sharpe_min"] = min(s["sharpe_min"], r.sharpe_ratio)
@@ -366,7 +397,9 @@ def generate_ablation_report(results: list[AblationResult], output_dir: Path) ->
             if s["count"] > 0:
                 avg_sharpe = s["sharpe_sum"] / s["count"]
                 avg_wr = s["win_rate_sum"] / s["count"]
-                f.write(f"| {config_name} | {avg_sharpe:.2f} | {s['sharpe_min']:.2f} | {avg_wr:.1f}% | {s['win_rate_min']:.1f}% | {s['max_dd']:.1f}% |\n")
+                f.write(
+                    f"| {config_name} | {avg_sharpe:.2f} | {s['sharpe_min']:.2f} | {avg_wr:.1f}% | {s['win_rate_min']:.1f}% | {s['max_dd']:.1f}% |\n"
+                )
 
         f.write("\n## Gate Value Analysis\n\n")
         f.write("Compare adjacent configurations to see each gate's contribution:\n\n")
@@ -380,9 +413,11 @@ def generate_ablation_report(results: list[AblationResult], output_dir: Path) ->
         f.write("|--------|----------|--------|----------|--------|--------|\n")
         for r in results:
             sharpe_str = f"{r.sharpe_ratio:.2f}" if r.sharpe_ratio == r.sharpe_ratio else "N/A"
-            f.write(f"| {r.config_name} | {r.scenario_name} | {sharpe_str} | {r.win_rate:.1f}% | {r.max_drawdown:.1f}% | {r.total_trades} |\n")
+            f.write(
+                f"| {r.config_name} | {r.scenario_name} | {sharpe_str} | {r.win_rate:.1f}% | {r.max_drawdown:.1f}% | {r.total_trades} |\n"
+            )
 
-    print(f"\n✅ Ablation report generated:")
+    print("\n✅ Ablation report generated:")
     print(f"   - CSV: {csv_path}")
     print(f"   - JSON: {json_path}")
     print(f"   - Summary: {md_path}")
@@ -440,7 +475,12 @@ def main() -> None:
         scenarios = all_scenarios
     else:
         # Default: run key regime scenarios
-        key_scenarios = ["bull_run_2024", "inflation_shock_2022", "covid_whiplash_2020", "high_vol_2022_q4"]
+        key_scenarios = [
+            "bull_run_2024",
+            "inflation_shock_2022",
+            "covid_whiplash_2020",
+            "high_vol_2022_q4",
+        ]
         scenarios = [s for s in all_scenarios if s.get("name") in key_scenarios]
 
     if not scenarios:
@@ -453,7 +493,7 @@ def main() -> None:
         config_keys = [c.strip().upper() for c in args.configs.split(",")]
         configs = [c for c in ABLATION_CONFIGS if c.name.split("_")[0] in config_keys]
 
-    print(f"🔬 Running ablation matrix:")
+    print("🔬 Running ablation matrix:")
     print(f"   Scenarios: {[s.get('name') for s in scenarios]}")
     print(f"   Configs: {[c.name for c in configs]}")
     print(f"   Total runs: {len(scenarios) * len(configs)}")

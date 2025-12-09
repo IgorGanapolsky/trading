@@ -139,13 +139,12 @@ class RegimeAwareStrategySelector:
         # Detect regime if market data provided
         regime = "UNKNOWN"
         regime_confidence = 0.0
-        trend_strength = 0.0
 
         if market_data:
             regime_result = self.regime_detector.detect_from_state(market_data)
             regime = regime_result.get("regime", "UNKNOWN")
             regime_confidence = regime_result.get("confidence", 0.0)
-            trend_strength = regime_result.get("trend_strength", 0.0)
+            regime_result.get("trend_strength", 0.0)
 
         # Use ADX if provided (from momentum calculator)
         if adx is None and market_data:
@@ -229,9 +228,7 @@ class RegimeAwareStrategySelector:
         """Check if mean reversion strategy should be used."""
         return selection.mean_reversion_weight > 0.0
 
-    def get_combined_signal(
-        self, symbol: str, selection: StrategySelection
-    ) -> dict[str, Any]:
+    def get_combined_signal(self, symbol: str, selection: StrategySelection) -> dict[str, Any]:
         """
         Get combined signal from both strategies based on weights.
 
@@ -319,8 +316,10 @@ if __name__ == "__main__":
 
     print(f"Strategy: {selection1.selected_strategy.value}")
     print(f"Regime: {selection1.regime}")
-    print(f"Weights: Momentum={selection1.momentum_weight:.1%}, "
-          f"MeanReversion={selection1.mean_reversion_weight:.1%}")
+    print(
+        f"Weights: Momentum={selection1.momentum_weight:.1%}, "
+        f"MeanReversion={selection1.mean_reversion_weight:.1%}"
+    )
     print(f"Reason: {selection1.reason}")
     print()
 
@@ -337,8 +336,10 @@ if __name__ == "__main__":
 
     print(f"Strategy: {selection2.selected_strategy.value}")
     print(f"Regime: {selection2.regime}")
-    print(f"Weights: Momentum={selection2.momentum_weight:.1%}, "
-          f"MeanReversion={selection2.mean_reversion_weight:.1%}")
+    print(
+        f"Weights: Momentum={selection2.momentum_weight:.1%}, "
+        f"MeanReversion={selection2.mean_reversion_weight:.1%}"
+    )
     print(f"Reason: {selection2.reason}")
     print()
 
@@ -355,7 +356,9 @@ if __name__ == "__main__":
 
     print(f"Strategy: {selection3.selected_strategy.value}")
     print(f"Regime: {selection3.regime}")
-    print(f"Weights: Momentum={selection3.momentum_weight:.1%}, "
-          f"MeanReversion={selection3.mean_reversion_weight:.1%}")
+    print(
+        f"Weights: Momentum={selection3.momentum_weight:.1%}, "
+        f"MeanReversion={selection3.mean_reversion_weight:.1%}"
+    )
     print(f"Reason: {selection3.reason}")
     print()

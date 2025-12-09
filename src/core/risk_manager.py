@@ -281,7 +281,9 @@ class RiskManager:
         # Calculate from historical trades if provided
         if historical_trades and len(historical_trades) > 0:
             wins = [t["profit_loss"] for t in historical_trades if t.get("profit_loss", 0) > 0]
-            losses = [abs(t["profit_loss"]) for t in historical_trades if t.get("profit_loss", 0) < 0]
+            losses = [
+                abs(t["profit_loss"]) for t in historical_trades if t.get("profit_loss", 0) < 0
+            ]
 
             total_trades = len(historical_trades)
             if total_trades == 0:
@@ -331,7 +333,9 @@ class RiskManager:
         # Apply half-Kelly if requested (conservative approach)
         if use_half_kelly:
             kelly_fraction = kelly_fraction / 2.0
-            logger.debug(f"Using half-Kelly: {kelly_fraction:.4f} (full Kelly: {kelly_fraction * 2:.4f})")
+            logger.debug(
+                f"Using half-Kelly: {kelly_fraction:.4f} (full Kelly: {kelly_fraction * 2:.4f})"
+            )
 
         # Apply maximum cap
         kelly_fraction = min(kelly_fraction, max_kelly_cap)
@@ -767,7 +771,6 @@ class RiskManager:
             If no files found or loading fails, returns empty list.
         """
         import json
-        import os
         from pathlib import Path
 
         historical_trades = []
@@ -783,7 +786,7 @@ class RiskManager:
 
             for trade_file in trade_files:
                 try:
-                    with open(trade_file, "r") as f:
+                    with open(trade_file) as f:
                         trades = json.load(f)
                         # Extract profit_loss if available
                         for trade in trades:
@@ -962,8 +965,8 @@ if __name__ == "__main__":
         historical_trades=simulated_trades, use_half_kelly=True
     )
     print(f"Kelly fraction from historical trades: {kelly_frac_historical:.2%}")
-    print(f"Historical: 3 wins (avg $123.33), 2 losses (avg $45.00)")
-    print(f"Win rate: 60%, W/L ratio: 2.74")
+    print("Historical: 3 wins (avg $123.33), 2 losses (avg $45.00)")
+    print("Win rate: 60%, W/L ratio: 2.74")
 
     print("\n--- Scenario 9: Daily Reset ---")
     risk_mgr.reset_daily_counters()

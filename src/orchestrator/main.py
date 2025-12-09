@@ -1678,7 +1678,11 @@ class TradingOrchestrator:
         logger.info("--- Gate 6: Phil Town Rule #1 Options Strategy ---")
 
         # Check if theta automation is enabled
-        theta_enabled = os.getenv("ENABLE_THETA_AUTOMATION", "false").lower() in ("true", "1", "yes")
+        theta_enabled = os.getenv("ENABLE_THETA_AUTOMATION", "false").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
 
         if not theta_enabled:
             # Options disabled - log but don't execute

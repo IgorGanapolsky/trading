@@ -195,7 +195,9 @@ class BenchmarkComparisonResult:
         if self.primary_benchmark.alpha > 0:
             lines.append(f"  Positive alpha of {self.primary_benchmark.alpha:.2f}% suggests skill")
         else:
-            lines.append(f"  Negative alpha of {self.primary_benchmark.alpha:.2f}% suggests no edge")
+            lines.append(
+                f"  Negative alpha of {self.primary_benchmark.alpha:.2f}% suggests no edge"
+            )
 
         lines.append("")
         lines.append("=" * 80)

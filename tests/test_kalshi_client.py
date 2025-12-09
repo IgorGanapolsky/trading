@@ -18,7 +18,6 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from src.brokers.kalshi_client import (
     KalshiAccount,
     KalshiAuth,
@@ -26,8 +25,6 @@ from src.brokers.kalshi_client import (
     KalshiMarket,
     KalshiOrder,
     KalshiOrderSide,
-    KalshiOrderStatus,
-    KalshiOrderType,
     KalshiPosition,
     get_kalshi_client,
 )
@@ -74,10 +71,13 @@ class TestKalshiClientInit:
 
         assert client.is_configured() is False
 
-    @patch.dict("os.environ", {
-        "KALSHI_EMAIL": "env@example.com",
-        "KALSHI_PASSWORD": "envpass",
-    })
+    @patch.dict(
+        "os.environ",
+        {
+            "KALSHI_EMAIL": "env@example.com",
+            "KALSHI_PASSWORD": "envpass",
+        },
+    )
     def test_init_from_env_vars(self):
         """Test initialization from environment variables."""
         client = KalshiClient()
@@ -204,12 +204,14 @@ class TestKalshiClientMocked:
         """Test get_account method."""
         # Mock response
         mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps({
-            "balance": 100000,  # cents
-            "portfolio_value": 150000,
-            "total_deposits": 200000,
-            "total_withdrawals": 50000,
-        }).encode()
+        mock_response.read.return_value = json.dumps(
+            {
+                "balance": 100000,  # cents
+                "portfolio_value": 150000,
+                "total_deposits": 200000,
+                "total_withdrawals": 50000,
+            }
+        ).encode()
         mock_response.__enter__ = MagicMock(return_value=mock_response)
         mock_response.__exit__ = MagicMock(return_value=False)
         mock_urlopen.return_value = mock_response
@@ -224,24 +226,26 @@ class TestKalshiClientMocked:
     def test_get_positions(self, mock_urlopen, mock_client):
         """Test get_positions method."""
         mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps({
-            "market_positions": [
-                {
-                    "ticker": "TRUMP-24",
-                    "title": "Trump 2024",
-                    "position": 100,
-                    "average_price": 55,
-                    "market_price": 60,
-                },
-                {
-                    "ticker": "FED-DEC",
-                    "title": "Fed Rate Dec",
-                    "position": -50,  # Short position
-                    "average_price": 70,
-                    "market_price": 65,
-                },
-            ]
-        }).encode()
+        mock_response.read.return_value = json.dumps(
+            {
+                "market_positions": [
+                    {
+                        "ticker": "TRUMP-24",
+                        "title": "Trump 2024",
+                        "position": 100,
+                        "average_price": 55,
+                        "market_price": 60,
+                    },
+                    {
+                        "ticker": "FED-DEC",
+                        "title": "Fed Rate Dec",
+                        "position": -50,  # Short position
+                        "average_price": 70,
+                        "market_price": 65,
+                    },
+                ]
+            }
+        ).encode()
         mock_response.__enter__ = MagicMock(return_value=mock_response)
         mock_response.__exit__ = MagicMock(return_value=False)
         mock_urlopen.return_value = mock_response
@@ -259,23 +263,25 @@ class TestKalshiClientMocked:
     def test_get_markets(self, mock_urlopen, mock_client):
         """Test get_markets method."""
         mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps({
-            "markets": [
-                {
-                    "ticker": "TRUMP-24",
-                    "title": "Trump 2024",
-                    "subtitle": "Will Trump win?",
-                    "status": "open",
-                    "yes_bid": 54,
-                    "yes_ask": 56,
-                    "no_bid": 44,
-                    "no_ask": 46,
-                    "volume": 50000,
-                    "open_interest": 25000,
-                    "category": "elections",
-                },
-            ]
-        }).encode()
+        mock_response.read.return_value = json.dumps(
+            {
+                "markets": [
+                    {
+                        "ticker": "TRUMP-24",
+                        "title": "Trump 2024",
+                        "subtitle": "Will Trump win?",
+                        "status": "open",
+                        "yes_bid": 54,
+                        "yes_ask": 56,
+                        "no_bid": 44,
+                        "no_ask": 46,
+                        "volume": 50000,
+                        "open_interest": 25000,
+                        "category": "elections",
+                    },
+                ]
+            }
+        ).encode()
         mock_response.__enter__ = MagicMock(return_value=mock_response)
         mock_response.__exit__ = MagicMock(return_value=False)
         mock_urlopen.return_value = mock_response
@@ -291,19 +297,21 @@ class TestKalshiClientMocked:
     def test_place_order(self, mock_urlopen, mock_client):
         """Test place_order method."""
         mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps({
-            "order": {
-                "order_id": "order123",
-                "ticker": "TRUMP-24",
-                "side": "yes",
-                "type": "limit",
-                "count": 10,
-                "yes_price": 55,
-                "filled_count": 0,
-                "status": "active",
-                "created_time": "2025-01-01T00:00:00Z",
+        mock_response.read.return_value = json.dumps(
+            {
+                "order": {
+                    "order_id": "order123",
+                    "ticker": "TRUMP-24",
+                    "side": "yes",
+                    "type": "limit",
+                    "count": 10,
+                    "yes_price": 55,
+                    "filled_count": 0,
+                    "status": "active",
+                    "created_time": "2025-01-01T00:00:00Z",
+                }
             }
-        }).encode()
+        ).encode()
         mock_response.__enter__ = MagicMock(return_value=mock_response)
         mock_response.__exit__ = MagicMock(return_value=False)
         mock_urlopen.return_value = mock_response
@@ -338,16 +346,18 @@ class TestKalshiClientMocked:
     def test_get_orderbook(self, mock_urlopen, mock_client):
         """Test get_orderbook method."""
         mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps({
-            "yes": {
-                "bids": [[54, 100], [53, 200]],
-                "asks": [[56, 150], [57, 250]],
-            },
-            "no": {
-                "bids": [[44, 150], [43, 300]],
-                "asks": [[46, 100], [47, 200]],
-            },
-        }).encode()
+        mock_response.read.return_value = json.dumps(
+            {
+                "yes": {
+                    "bids": [[54, 100], [53, 200]],
+                    "asks": [[56, 150], [57, 250]],
+                },
+                "no": {
+                    "bids": [[44, 150], [43, 300]],
+                    "asks": [[46, 100], [47, 200]],
+                },
+            }
+        ).encode()
         mock_response.__enter__ = MagicMock(return_value=mock_response)
         mock_response.__exit__ = MagicMock(return_value=False)
         mock_urlopen.return_value = mock_response
@@ -365,7 +375,7 @@ class TestKalshiOrderSideValidation:
 
     def test_valid_yes_side(self):
         """Test valid YES side."""
-        client = KalshiClient(email="test@example.com", password="pass")
+        KalshiClient(email="test@example.com", password="pass")
         # Validation happens in place_order, tested via mocked tests
         assert KalshiOrderSide.YES.value == "yes"
 
@@ -381,6 +391,7 @@ class TestSingletonClient:
         """Test that get_kalshi_client returns same instance."""
         # Reset singleton
         import src.brokers.kalshi_client as module
+
         module._kalshi_client = None
 
         client1 = get_kalshi_client(paper=True)

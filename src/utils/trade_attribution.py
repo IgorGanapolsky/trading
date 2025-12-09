@@ -304,27 +304,33 @@ class TradeAttributionLogger:
                 f"${metrics['avg_pnl']:+.2f} | {metrics['win_rate']:.1%} |"
             )
 
-        lines.extend([
-            "",
-            "## By Entry Reason",
-            "",
-        ])
+        lines.extend(
+            [
+                "",
+                "## By Entry Reason",
+                "",
+            ]
+        )
         for reason, count in summary["by_entry_reason"].items():
             lines.append(f"- {reason}: {count} trades")
 
-        lines.extend([
-            "",
-            "## By Exit Reason",
-            "",
-        ])
+        lines.extend(
+            [
+                "",
+                "## By Exit Reason",
+                "",
+            ]
+        )
         for reason, count in summary["by_exit_reason"].items():
             lines.append(f"- {reason}: {count} trades")
 
-        lines.extend([
-            "",
-            "## By Market Regime",
-            "",
-        ])
+        lines.extend(
+            [
+                "",
+                "## By Market Regime",
+                "",
+            ]
+        )
         for regime, count in summary["by_regime"].items():
             lines.append(f"- {regime}: {count} trades")
 

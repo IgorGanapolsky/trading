@@ -18,15 +18,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
-
 from src.backtesting.benchmark_comparison import (
     BenchmarkComparator,
     BenchmarkComparisonResult,
     BenchmarkMetrics,
     compare_to_benchmark,
-    compare_to_buy_and_hold,
 )
-from src.backtesting.data_cache import CacheMetadata, OHLCVDataCache
+from src.backtesting.data_cache import OHLCVDataCache
 
 
 class TestBenchmarkMetrics:
@@ -252,7 +250,7 @@ class TestOHLCVDataCache:
 
     def test_cache_initialization(self, temp_cache_dir):
         """Test cache directory creation."""
-        cache = OHLCVDataCache(cache_dir=temp_cache_dir)
+        OHLCVDataCache(cache_dir=temp_cache_dir)
 
         assert (temp_cache_dir / "bronze").exists()
         assert (temp_cache_dir / "silver").exists()
