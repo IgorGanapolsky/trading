@@ -1,3 +1,74 @@
+2025-12-09 - Claude Opus 4 (CTO) - EXTERNAL REVIEW RESPONSE & DISCORL WEIGHT REDUCTION
+
+Summary:
+- Analyzed external review criticizing system complexity
+- Conducted comprehensive codebase research (762 Python files, 10 Go files)
+- Found most complexity is justified (defense-in-depth, not random accumulation)
+- CRITICAL FIX: Reduced DiscoRL blend weight from 45% → 15% (unvalidated, 0 trades)
+
+External Review Claims vs. Reality:
+
+1. "Kitchen sink of AI hype" - PARTIALLY TRUE
+   - 5 agent frameworks exist (LangChain, DeepAgents, ADK, DiscoRL, SB3)
+   - ACTION: Consolidate to 2 frameworks (LangChain + custom)
+
+2. "DiscoRL is bleeding edge" - TRUE, ADDRESSED
+   - Integrated December 8, 2025 (yesterday!)
+   - Had 45% blend weight with ZERO validated trades
+   - FIXED: Reduced to 15% until validated
+
+3. "LLM agents are slow/expensive" - FALSE FOR US
+   - All risk decisions are DETERMINISTIC (Kelly, ATR, hard thresholds)
+   - LLMs only for sentiment (pre-trade, not decision loop)
+   - Cost: $0.50-2/day (within $100/mo budget)
+
+4. "Go/Python split adds complexity" - FALSE
+   - Go correctly scoped for speed-critical risk calculations
+   - Go serves REST API + observability
+   - NOT involved in LLM orchestration
+
+5. "Risk management should be in Go" - ALREADY DONE
+   - 10 independent risk layers, ALL deterministic
+   - Circuit breakers, kill switches, VIX breaker
+   - Both Python AND Go implementations
+
+Code Changes Made:
+
+1. src/agents/rl_agent.py (DiscoRL weight reduction)
+   - OLD: disco_weight=0.45, heuristic=0.25, transformer=0.30
+   - NEW: disco_weight=0.15, heuristic=0.40, transformer=0.45
+   - Rationale: Transformer proven, DiscoRL needs validation
+
+2. docs/trading-research-response-dec2025.md (NEW)
+   - Comprehensive response to external review
+   - Ground truth assessment vs. assumptions
+   - 3-phase simplification roadmap
+
+Validated Strengths (NOT changing):
+- Defense-in-depth risk management (10 layers)
+- Deterministic trading loop (temperature=0)
+- Go for speed-critical paths
+- Comprehensive audit trail
+- Multi-tier loss limits (2%/3%/5%)
+
+Action Plan Created:
+- Phase 1 (This Week): DiscoRL weight ✅, archive research folder, remove legacy LangChain
+- Phase 2 (Week 2-3): Consolidate agent frameworks, merge orchestration directories
+- Phase 3 (Month 1): Monitor DiscoRL, validate with real trades
+
+Files Changed:
+- src/agents/rl_agent.py (weight adjustment)
+- docs/trading-research-response-dec2025.md (NEW)
+- claude-progress.txt (this entry)
+
+North Star Status:
+- Day 9/90 of R&D Phase
+- Win rate: 0% (awaiting closed trades)
+- Complexity audit complete: 762 Python files, target <600
+- DiscoRL: Now conservative 15% weight
+
+---
+
 2025-12-09 - Claude Opus 4 (CTO) - KALSHI PREDICTION MARKETS API INTEGRATION
 
 Summary:
