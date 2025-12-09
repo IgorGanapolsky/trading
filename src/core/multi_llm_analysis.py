@@ -28,6 +28,13 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+# Prompt engineering for time series analysis
+from src.core.prompt_engineering import (
+    MarketDataSchema,
+    PromptEngineer,
+    get_temporal_header,
+)
+
 # OpenAI client - optional dependency (may use OpenRouter instead)
 try:
     from openai import AsyncOpenAI, OpenAI
@@ -775,6 +782,262 @@ Provide objective, data-driven sentiment scores with detailed reasoning."""
                 "timestamp": time.time(),
             },
         )
+
+    async def get_ensemble_sentiment_enhanced(
+        self,
+        symbol: str,
+        market_data: dict[str, Any],
+        news: list[dict[str, Any]],
+        regime_state: Any | None = None,
+        recent_returns: dict[str, float] | None = None,
+    ) -> SentimentAnalysis:
+        """
+        Enhanced sentiment analysis with temporal context and structured data.
+
+        This method implements prompt engineering best practices from
+        MachineLearningMastery for time series LLM analysis:
+        1. Temporal context header (market session, regime, timing)
+        2. Structured JSON schema for market data
+        3. Confidence-aware responses
+
+        Args:
+            symbol: Trading symbol (e.g., "SPY")
+            market_data: Dictionary containing market data and indicators
+            news: List of news articles
+            regime_state: Optional RegimeState from regime_detection module
+            recent_returns: Optional dict with '1d', '5d', '20d' returns
+
+        Returns:
+            SentimentAnalysis with enhanced confidence and reasoning
+
+        Example:
+            >>> sentiment = await analyzer.get_ensemble_sentiment_enhanced(
+            ...     symbol="SPY",
+            ...     market_data={"close": 450.0, "rsi": 55, "macd": 0.25},
+            ...     news=[{"title": "Market rallies", "content": "..."}],
+            ...     recent_returns={"1d": 0.01, "5d": 0.02}
+            ... )
+        """
+        # Build enhanced prompts using prompt engineering module
+        engineer = PromptEngineer()
+        prompt, system_prompt = engineer.build_enhanced_sentiment_prompt(
+            symbol=symbol,
+            market_data=market_data,
+            news=news,
+            regime_state=regime_state,
+            recent_returns=recent_returns,
+        )
+
+        if self.use_async:
+            responses = await self._query_all_llms_async(prompt, system_prompt, temperature=0.3)
+        else:
+            responses = self._query_all_llms_sync(prompt, system_prompt, temperature=0.3)
+
+        # Calculate ensemble sentiment
+        ensemble_score, base_confidence, individual_scores = self._calculate_ensemble_sentiment(
+            responses
+        )
+
+        # Extract confidence and reasoning from responses
+        confidences = []
+        reasoning_parts = []
+        key_factors = []
+        risks = []
+
+        for response in responses:
+            if response.success and response.content:
+                try:
+                    data = json.loads(response.content)
+                    if "confidence" in data:
+                        confidences.append(float(data["confidence"]))
+                    if "reasoning" in data:
+                        reasoning_parts.append(f"[{response.model}] {data['reasoning']}")
+                    if "key_factors" in data:
+                        key_factors.extend(data["key_factors"])
+                    if "risks" in data:
+                        risks.extend(data["risks"])
+                except Exception:  # noqa: BLE001
+                    pass
+
+        # Use LLM-reported confidence if available, otherwise use calculated confidence
+        final_confidence = sum(confidences) / len(confidences) if confidences else base_confidence
+
+        reasoning = (
+            "\n\n".join(reasoning_parts) if reasoning_parts else "No detailed reasoning available"
+        )
+
+        logger.info(
+            f"Enhanced sentiment for {symbol}: {ensemble_score:.3f} "
+            f"(confidence: {final_confidence:.3f})"
+        )
+
+        return SentimentAnalysis(
+            score=ensemble_score,
+            confidence=final_confidence,
+            reasoning=reasoning,
+            individual_scores=individual_scores,
+            metadata={
+                "symbol": symbol,
+                "market_data": market_data,
+                "news_count": len(news),
+                "timestamp": time.time(),
+                "key_factors": list(set(key_factors))[:5],  # Dedupe, top 5
+                "risks": list(set(risks))[:3],  # Dedupe, top 3
+                "enhanced": True,  # Flag for enhanced analysis
+            },
+        )
+
+    async def analyze_two_pass(
+        self,
+        symbol: str,
+        market_data: dict[str, Any],
+        regime_state: Any | None = None,
+        recent_returns: dict[str, float] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Two-pass analysis: Feature extraction then prediction.
+
+        Implements the recommended pattern from MachineLearningMastery:
+        - Pass 1: Extract features from market data (patterns, anomalies)
+        - Pass 2: Make predictions based on extracted features
+
+        This approach improves prediction quality by separating
+        observation from inference.
+
+        Args:
+            symbol: Trading symbol
+            market_data: Dictionary containing market data and indicators
+            regime_state: Optional RegimeState from regime_detection
+            recent_returns: Optional dict with '1d', '5d', '20d' returns
+
+        Returns:
+            Dictionary with:
+                - extracted_features: Features from Pass 1
+                - prediction: Trading prediction from Pass 2
+                - confidence: Overall confidence
+                - recommendation: Trading recommendation
+        """
+        engineer = PromptEngineer()
+
+        # Build temporal context
+        temporal_ctx = engineer.get_temporal_context(
+            regime_state=regime_state,
+            recent_returns=recent_returns,
+        )
+        temporal_header = engineer.build_temporal_header(temporal_ctx)
+
+        # Build structured market data
+        schema = MarketDataSchema.from_market_data(symbol=symbol, market_data=market_data)
+
+        # === PASS 1: Feature Extraction ===
+        logger.info(f"Two-pass analysis for {symbol}: Starting Pass 1 (feature extraction)")
+
+        pass1_prompt, pass1_system = engineer.build_feature_extraction_prompt(
+            market_data=schema,
+            temporal_header=temporal_header,
+        )
+
+        # Use Claude Sonnet 4 for feature extraction (best reasoning)
+        pass1_response = await self._query_llm_async(
+            model=LLMModel.CLAUDE_SONNET_4,
+            prompt=pass1_prompt,
+            system_prompt=pass1_system,
+            temperature=0.2,  # Low temp for consistent extraction
+        )
+
+        extracted_features = {}
+        if pass1_response.success:
+            try:
+                extracted_features = json.loads(pass1_response.content)
+                logger.info(f"Pass 1 complete: Extracted {len(extracted_features)} feature categories")
+            except json.JSONDecodeError:
+                logger.warning("Pass 1 response not valid JSON, using raw content")
+                extracted_features = {"raw_analysis": pass1_response.content}
+        else:
+            logger.error(f"Pass 1 failed: {pass1_response.error}")
+            return {
+                "extracted_features": {},
+                "prediction": {},
+                "confidence": 0.0,
+                "recommendation": "hold",
+                "error": pass1_response.error,
+            }
+
+        # === PASS 2: Prediction ===
+        logger.info(f"Two-pass analysis for {symbol}: Starting Pass 2 (prediction)")
+
+        pass2_prompt, pass2_system = engineer.build_prediction_prompt(
+            market_data=schema,
+            temporal_header=temporal_header,
+            extracted_features=extracted_features,
+        )
+
+        # Query all LLMs for ensemble prediction
+        if self.use_async:
+            responses = await self._query_all_llms_async(
+                pass2_prompt, pass2_system, temperature=0.3
+            )
+        else:
+            responses = self._query_all_llms_sync(pass2_prompt, pass2_system, temperature=0.3)
+
+        # Aggregate predictions
+        sentiments = []
+        confidences = []
+        recommendations = []
+        all_reasoning = []
+
+        for response in responses:
+            if response.success and response.content:
+                try:
+                    data = json.loads(response.content)
+                    if "sentiment" in data:
+                        sentiments.append(float(data["sentiment"]))
+                    if "confidence" in data:
+                        confidences.append(float(data["confidence"]))
+                    if "recommendation" in data:
+                        recommendations.append(data["recommendation"])
+                    if "reasoning" in data:
+                        all_reasoning.append(f"[{response.model}] {data['reasoning']}")
+                except Exception:  # noqa: BLE001
+                    pass
+
+        # Calculate ensemble values
+        avg_sentiment = sum(sentiments) / len(sentiments) if sentiments else 0.0
+        avg_confidence = sum(confidences) / len(confidences) if confidences else 0.5
+
+        # Most common recommendation
+        if recommendations:
+            from collections import Counter
+
+            rec_counter = Counter(recommendations)
+            final_recommendation = rec_counter.most_common(1)[0][0]
+        else:
+            final_recommendation = "hold"
+
+        logger.info(
+            f"Two-pass complete for {symbol}: sentiment={avg_sentiment:.3f}, "
+            f"confidence={avg_confidence:.3f}, recommendation={final_recommendation}"
+        )
+
+        return {
+            "symbol": symbol,
+            "extracted_features": extracted_features,
+            "prediction": {
+                "sentiment": avg_sentiment,
+                "confidence": avg_confidence,
+                "recommendation": final_recommendation,
+                "reasoning": "\n\n".join(all_reasoning),
+            },
+            "confidence": avg_confidence,
+            "recommendation": final_recommendation,
+            "temporal_context": {
+                "session": temporal_ctx.market_session.value,
+                "day_type": temporal_ctx.day_type.value,
+                "volatility_regime": temporal_ctx.volatility_regime,
+                "trend_regime": temporal_ctx.trend_regime,
+            },
+            "timestamp": time.time(),
+        }
 
     async def analyze(
         self,
