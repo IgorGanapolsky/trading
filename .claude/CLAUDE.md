@@ -207,6 +207,23 @@ If I catch myself about to suggest manual intervention:
    - If you're only working on ONE branch in a session, you MAY work directly in main repo
    - If you need to switch branches or work on multiple features, use worktrees
 
+### 🚨 NEVER MERGE DIRECTLY TO MAIN (Added Dec 9, 2025)
+
+**ABSOLUTE RULE - NO EXCEPTIONS:**
+- ❌ NEVER use `git merge` to main
+- ❌ NEVER use `git push origin main`
+- ❌ NEVER bypass the PR process
+- ✅ ALWAYS create a PR for every change
+- ✅ ALWAYS merge through GitHub PR interface
+
+**Why This Matters:**
+- PRs provide audit trail for all changes
+- PRs trigger CI checks before merge
+- PRs allow review and rollback
+- Direct pushes to main bypass all safety checks
+
+**CEO Directive (Dec 9, 2025)**: *"We can never merge to main. We must always open and merge PRs."*
+
 ### GitHub PR Creation Protocol
 
 **YOU HAVE FULL ACCESS TO `gh` CLI - USE IT!**
