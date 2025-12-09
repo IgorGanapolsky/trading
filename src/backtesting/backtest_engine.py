@@ -452,6 +452,10 @@ class BacktestEngine:
 
         sale_value = quantity * executed_price
 
+        # Calculate P&L correctly: subtract slippage cost from gross P&L
+        gross_pnl = sale_value - self.position_costs[symbol]
+        net_pnl = gross_pnl - slippage_cost  # Slippage reduces actual profit
+
         trade = {
             "date": date_str,
             "symbol": symbol,
@@ -462,10 +466,9 @@ class BacktestEngine:
             "slippage_cost": slippage_cost,
             "amount": sale_value,
             "reason": reason,
-            "pnl": sale_value - self.position_costs[symbol],
-            "return_pct": (executed_price - (self.position_costs[symbol] / quantity))
-            / (self.position_costs[symbol] / quantity)
-            * 100,
+            "pnl": net_pnl,  # Fixed: now accounts for slippage cost
+            "gross_pnl": gross_pnl,  # Track gross for analysis
+            "return_pct": (net_pnl / self.position_costs[symbol]) * 100,  # Fixed: net return %
         }
         self.trades.append(trade)
 
@@ -477,9 +480,21 @@ class BacktestEngine:
         logger.info(f"{date_str}: SOLD {symbol} - {reason}")
 
     def _simulate_dca_day(self, date: datetime, date_str: str) -> None:
-        """Legacy DCA-style backtest flow (pre-hybrid)."""
+        """Legacy DCA-style backtest flow (pre-hybrid) with basic risk checks."""
         # Update portfolio value with current prices
         self._update_portfolio_value(date)
+
+        # ============================================================
+        # RISK CHECK 1: Daily Loss Circuit Breaker
+        # ============================================================
+        max_daily_loss_pct = float(os.getenv("MAX_DAILY_LOSS_PCT", "2.0")) / 100
+        if self.portfolio_value < self.initial_capital * (1 - max_daily_loss_pct):
+            daily_loss = (self.initial_capital - self.portfolio_value) / self.initial_capital
+            logger.warning(
+                f"{date_str}: Daily loss circuit breaker triggered "
+                f"({daily_loss * 100:.2f}% > {max_daily_loss_pct * 100:.1f}% limit)"
+            )
+            return
 
         # Calculate momentum scores for this date
         momentum_scores = []
@@ -544,6 +559,37 @@ class BacktestEngine:
         if self.current_capital < effective_allocation:
             return
 
+        # ============================================================
+        # RISK CHECK 2: Maximum Position Size (15% of portfolio per symbol)
+        # ============================================================
+        max_position_pct = float(os.getenv("MAX_POSITION_SIZE_PCT", "15.0")) / 100
+        current_position_value = self.positions.get(best_etf, 0.0) * price
+        new_position_value = current_position_value + effective_allocation
+        position_pct = new_position_value / self.portfolio_value if self.portfolio_value > 0 else 0
+
+        if position_pct > max_position_pct:
+            # Cap allocation to stay within limit
+            max_additional = (max_position_pct * self.portfolio_value) - current_position_value
+            if max_additional <= 0:
+                logger.warning(
+                    f"{date_str}: {best_etf} already at max position ({position_pct * 100:.1f}% "
+                    f"> {max_position_pct * 100:.0f}% limit). Skipping."
+                )
+                return
+            logger.info(
+                f"{date_str}: Capping {best_etf} allocation from ${effective_allocation:.2f} "
+                f"to ${max_additional:.2f} (position limit)"
+            )
+            effective_allocation = max_additional
+
+        # ============================================================
+        # RISK CHECK 3: Minimum Trade Size
+        # ============================================================
+        min_trade_size = float(os.getenv("MIN_TRADE_SIZE", "3.0"))
+        if effective_allocation < min_trade_size:
+            logger.debug(f"{date_str}: Allocation ${effective_allocation:.2f} below minimum ${min_trade_size}")
+            return
+
         executed_price, slippage_cost = self._apply_slippage_adjustment(
             symbol=best_etf,
             date=date,
@@ -562,6 +608,7 @@ class BacktestEngine:
             "slippage_cost": slippage_cost,
             "amount": effective_allocation,
             "reason": f"Daily {allocation_type} purchase",
+            "risk_checks_passed": ["circuit_breaker", "position_limit", "min_trade_size"],
         }
         self.trades.append(trade)
 
