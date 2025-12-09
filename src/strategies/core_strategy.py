@@ -74,6 +74,16 @@ except ImportError:
     LLM_COUNCIL_AVAILABLE = False
     TradingCouncil = None
 
+# Kalshi Oracle integration (prediction markets as leading indicators)
+try:
+    from src.signals.kalshi_oracle import KalshiOracle, get_kalshi_oracle
+
+    KALSHI_ORACLE_AVAILABLE = True
+except ImportError:
+    KALSHI_ORACLE_AVAILABLE = False
+    KalshiOracle = None
+    get_kalshi_oracle = None
+
 # VCA Strategy integration
 try:
     from src.strategies.vca_strategy import VCACalculation, VCAStrategy
@@ -392,6 +402,20 @@ class CoreStrategy:
         else:
             self.safety_analyzer = None
 
+        # Initialize Kalshi Oracle (prediction markets as leading indicators)
+        # ENABLED BY DEFAULT per CEO directive - use prediction markets as data oracles
+        self.use_kalshi_oracle = (
+            os.getenv("USE_KALSHI_ORACLE", "true").lower() == "true"
+        )
+        self.kalshi_oracle = None
+        if self.use_kalshi_oracle and KALSHI_ORACLE_AVAILABLE and get_kalshi_oracle:
+            try:
+                self.kalshi_oracle = get_kalshi_oracle()
+                logger.info("Kalshi Oracle initialized - using prediction markets as leading indicators")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Kalshi Oracle: {e}")
+                self.kalshi_oracle = None
+
         allocation_mode = "VCA" if self.use_vca else "DCA"
         logger.info(
             f"CoreStrategy initialized: daily_allocation=${daily_allocation}, "
@@ -583,6 +607,35 @@ class CoreStrategy:
                 except Exception as e:
                     logger.warning(f"Gemini 3 validation error (proceeding): {e}")
                     # Fail-open: continue with trade if Gemini 3 unavailable
+
+            # Step 4.6: Kalshi Oracle Validation (prediction markets as leading indicators)
+            # Uses Kalshi odds to validate trade direction against macro signals
+            if self.use_kalshi_oracle and self.kalshi_oracle:
+                try:
+                    logger.info("Checking Kalshi Oracle for prediction market signals...")
+                    should_trade, kalshi_reason = self.kalshi_oracle.should_trade_symbol(
+                        symbol=best_etf, proposed_direction="buy"
+                    )
+
+                    if not should_trade:
+                        logger.warning(f"Kalshi Oracle contra-indicates trade: {kalshi_reason}")
+                        logger.info("SKIPPING TRADE - Prediction markets signal caution")
+                        _clear_pending_rl_state()
+                        return None
+                    else:
+                        logger.info(f"✅ Kalshi Oracle: {kalshi_reason}")
+
+                    # Also fetch any actionable signals for logging
+                    kalshi_signals = self.kalshi_oracle.get_all_signals()
+                    if kalshi_signals:
+                        for sig in kalshi_signals:
+                            logger.info(
+                                f"   Kalshi Signal: {sig.signal_type} → "
+                                f"{sig.direction.value} ({sig.confidence:.0%} confidence)"
+                            )
+                except Exception as e:
+                    logger.warning(f"Kalshi Oracle check error (proceeding): {e}")
+                    # Fail-open: continue with trade if Kalshi unavailable
 
             # Step 5: Get current price
             current_price = self._get_current_price(best_etf)
