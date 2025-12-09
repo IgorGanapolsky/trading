@@ -2,14 +2,18 @@
 Multi-Broker Failover System
 
 Automatically fails over between brokers when one is unavailable.
-Primary: Alpaca
-Backup: Interactive Brokers (IBKR)
+Primary: Alpaca (self-clearing)
+Secondary: Interactive Brokers (IBKR) - enterprise-grade
+Tertiary: Webull (via Apex Clearing) - zero commission
 
-The system tries the primary broker first, and automatically
-switches to backup if primary fails.
+The system tries brokers in priority order, automatically
+switching to the next available broker if one fails.
+
+True redundancy: Three different clearing infrastructures.
 
 Author: Trading System
 Created: 2025-12-08
+Updated: 2025-12-09 - Added Webull as tertiary failover
 """
 
 import logging
@@ -31,6 +35,7 @@ class BrokerType(Enum):
 
     ALPACA = "alpaca"
     IBKR = "ibkr"
+    WEBULL = "webull"
 
 
 @dataclass
@@ -91,6 +96,7 @@ class MultiBroker:
         self.circuit_breakers: dict[BrokerType, CircuitBreakerPattern] = {
             BrokerType.ALPACA: CircuitBreakerPattern(failure_threshold=3),
             BrokerType.IBKR: CircuitBreakerPattern(failure_threshold=3),
+            BrokerType.WEBULL: CircuitBreakerPattern(failure_threshold=3),
         }
 
         # Health status
@@ -99,6 +105,7 @@ class MultiBroker:
         # Initialize broker clients lazily
         self._alpaca_client = None
         self._ibkr_client = None
+        self._webull_client = None
 
         logger.info(
             f"MultiBroker initialized with primary={primary.value}, failover={enable_failover}"
@@ -138,19 +145,40 @@ class MultiBroker:
                 logger.warning(f"Failed to initialize IBKR: {e}")
         return self._ibkr_client
 
+    @property
+    def webull(self):
+        """Lazy-load Webull client."""
+        if self._webull_client is None:
+            try:
+                from src.brokers.webull_client import WebullClient
+
+                client = WebullClient(paper=True)
+                if client.is_configured():
+                    self._webull_client = client
+                    logger.info("Webull client initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Webull: {e}")
+        return self._webull_client
+
     def _get_broker_order(self) -> list[BrokerType]:
         """Get order of brokers to try based on circuit breaker state."""
         brokers = []
+
+        # Define failover priority order
+        # Primary: Alpaca (self-clearing, best API)
+        # Secondary: IBKR (enterprise-grade, battle-tested)
+        # Tertiary: Webull (zero commission, Apex clearing)
+        priority_order = [BrokerType.ALPACA, BrokerType.IBKR, BrokerType.WEBULL]
 
         # Start with primary
         if self.circuit_breakers[self.primary].can_execute():
             brokers.append(self.primary)
 
-        # Add backup if failover enabled
+        # Add backups if failover enabled
         if self.enable_failover:
-            backup = BrokerType.IBKR if self.primary == BrokerType.ALPACA else BrokerType.ALPACA
-            if self.circuit_breakers[backup].can_execute():
-                brokers.append(backup)
+            for broker in priority_order:
+                if broker != self.primary and self.circuit_breakers[broker].can_execute():
+                    brokers.append(broker)
 
         return brokers
 
@@ -159,9 +187,16 @@ class MultiBroker:
         alpaca_func: Callable[[], T],
         ibkr_func: Callable[[], T],
         operation_name: str,
+        webull_func: Optional[Callable[[], T]] = None,
     ) -> tuple[T, BrokerType]:
         """
         Execute operation with automatic failover.
+
+        Args:
+            alpaca_func: Function to call for Alpaca
+            ibkr_func: Function to call for IBKR
+            operation_name: Name of operation for logging
+            webull_func: Optional function to call for Webull
 
         Returns:
             Tuple of (result, broker_used)
@@ -181,6 +216,8 @@ class MultiBroker:
                     result = alpaca_func()
                 elif broker == BrokerType.IBKR and self.ibkr:
                     result = ibkr_func()
+                elif broker == BrokerType.WEBULL and self.webull and webull_func:
+                    result = webull_func()
                 else:
                     continue
 
@@ -227,7 +264,18 @@ class MultiBroker:
                 "status": account.status,
             }
 
-        return self._execute_with_failover(alpaca_call, ibkr_call, "get_account")
+        def webull_call():
+            account = self.webull.get_account()
+            return {
+                "equity": account.equity,
+                "cash": account.cash,
+                "buying_power": account.buying_power,
+                "status": account.status,
+            }
+
+        return self._execute_with_failover(
+            alpaca_call, ibkr_call, "get_account", webull_call
+        )
 
     def get_positions(self) -> tuple[list[dict], BrokerType]:
         """Get positions from available broker."""
@@ -258,7 +306,22 @@ class MultiBroker:
                 for pos in positions
             ]
 
-        return self._execute_with_failover(alpaca_call, ibkr_call, "get_positions")
+        def webull_call():
+            positions = self.webull.get_positions()
+            return [
+                {
+                    "symbol": pos.symbol,
+                    "quantity": pos.quantity,
+                    "market_value": pos.market_value,
+                    "unrealized_pl": pos.unrealized_pl,
+                    "cost_basis": pos.cost_basis,
+                }
+                for pos in positions
+            ]
+
+        return self._execute_with_failover(
+            alpaca_call, ibkr_call, "get_positions", webull_call
+        )
 
     def submit_order(
         self,
@@ -315,8 +378,17 @@ class MultiBroker:
                 limit_price=limit_price,
             )
 
+        def webull_call():
+            return self.webull.submit_order(
+                symbol=symbol,
+                qty=qty,
+                side=side,
+                order_type=order_type,
+                limit_price=limit_price,
+            )
+
         result, broker = self._execute_with_failover(
-            alpaca_call, ibkr_call, f"submit_order({symbol})"
+            alpaca_call, ibkr_call, f"submit_order({symbol})", webull_call
         )
 
         # Convert to unified OrderResult
@@ -333,7 +405,18 @@ class MultiBroker:
                 filled_price=float(result.filled_avg_price) if result.filled_avg_price else None,
                 timestamp=datetime.now().isoformat(),
             )
-        else:
+        elif broker == BrokerType.IBKR:
+            return OrderResult(
+                broker=broker,
+                order_id=result.id,
+                symbol=symbol,
+                side=side,
+                quantity=qty,
+                status=result.status,
+                filled_price=result.avg_fill_price,
+                timestamp=datetime.now().isoformat(),
+            )
+        else:  # Webull
             return OrderResult(
                 broker=broker,
                 order_id=result.id,
@@ -371,7 +454,12 @@ class MultiBroker:
         def ibkr_call():
             return self.ibkr.get_quote(symbol)
 
-        return self._execute_with_failover(alpaca_call, ibkr_call, f"get_quote({symbol})")
+        def webull_call():
+            return self.webull.get_quote(symbol)
+
+        return self._execute_with_failover(
+            alpaca_call, ibkr_call, f"get_quote({symbol})", webull_call
+        )
 
     def health_check(self) -> dict[str, Any]:
         """Check health of all brokers."""
@@ -417,6 +505,29 @@ class MultiBroker:
                 "circuit_breaker": self.circuit_breakers[BrokerType.IBKR].state.value,
             }
             self.circuit_breakers[BrokerType.IBKR].record_failure()
+
+        # Check Webull
+        try:
+            if self.webull and self.webull.is_configured():
+                account = self.webull.get_account()
+                results["webull"] = {
+                    "status": "healthy",
+                    "equity": account.equity,
+                    "circuit_breaker": self.circuit_breakers[BrokerType.WEBULL].state.value,
+                }
+                self.circuit_breakers[BrokerType.WEBULL].record_success()
+            else:
+                results["webull"] = {
+                    "status": "not_configured",
+                    "circuit_breaker": self.circuit_breakers[BrokerType.WEBULL].state.value,
+                }
+        except Exception as e:
+            results["webull"] = {
+                "status": "unhealthy",
+                "error": str(e),
+                "circuit_breaker": self.circuit_breakers[BrokerType.WEBULL].state.value,
+            }
+            self.circuit_breakers[BrokerType.WEBULL].record_failure()
 
         return results
 
