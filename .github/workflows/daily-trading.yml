@@ -589,28 +589,7 @@ jobs:
           echo "   Date: $(date -u +'%Y-%m-%d')"
           echo "   Time: $(date -u +'%H:%M:%S UTC')"
 
-          # Verify trades were placed by checking system_state.json
-          # Use set +e to prevent failures from crashing the step
-          set +e
-          if [ -f "data/system_state.json" ]; then
-            echo ""
-            echo "📈 PORTFOLIO STATUS:"
-            python3 - <<'PY'
-            import json
-            try:
-                with open("data/system_state.json") as f:
-                    state = json.load(f)
-                acct = state.get("account", {})
-                perf = state.get("performance", {})
-                print(f"   Equity: ${acct.get('current_equity', 0):,.2f}")
-                print(f"   P/L: ${acct.get('total_pl', 0):,.2f} ({acct.get('total_pl_pct', 0):.4f}%)")
-                print(f"   Total Trades: {perf.get('total_trades', 0)}")
-                print(f"   Win Rate: {perf.get('win_rate', 0):.1f}%")
-            except Exception as e:
-                print(f"   ⚠️ Error reading state: {e}")
-            PY
-          fi
-          set -e
+          # Portfolio status moved to separate step to prevent failures
 
       - name: Verify Positions (Alpaca vs Local)
         id: verify_positions
