@@ -123,8 +123,8 @@ class TradeExecutionVerifier:
 
         try:
             from alpaca.trading.client import TradingClient
-            from alpaca.trading.requests import GetOrdersRequest
             from alpaca.trading.enums import QueryOrderStatus
+            from alpaca.trading.requests import GetOrdersRequest
 
             client = TradingClient(self.alpaca_key, self.alpaca_secret, paper=True)
 
@@ -143,8 +143,7 @@ class TradeExecutionVerifier:
 
             # Check for orders in last 24 hours (on trading days)
             recent_orders = [
-                o for o in orders
-                if o.created_at > datetime.now(timezone.utc) - timedelta(hours=24)
+                o for o in orders if o.created_at > datetime.now(timezone.utc) - timedelta(hours=24)
             ]
 
             weekday = datetime.now().weekday()
@@ -154,7 +153,10 @@ class TradeExecutionVerifier:
                     f"No Alpaca orders in last 24 hours (found {len(orders)} older orders)",
                 )
 
-            return True, f"Found {len(orders)} orders in last 7 days ({len(recent_orders)} in last 24h)"
+            return (
+                True,
+                f"Found {len(orders)} orders in last 7 days ({len(recent_orders)} in last 24h)",
+            )
 
         except ImportError:
             return True, "alpaca-py not installed (skipping)"

@@ -141,9 +141,7 @@ def load_alpaca_positions() -> dict[str, Position]:
         return {}
 
 
-def compare_positions(
-    local: dict[str, Position], alpaca: dict[str, Position]
-) -> list[Discrepancy]:
+def compare_positions(local: dict[str, Position], alpaca: dict[str, Position]) -> list[Discrepancy]:
     """Compare positions and return list of discrepancies."""
     discrepancies = []
 
@@ -271,7 +269,9 @@ def main() -> int:
             print("\n📈 Verified Positions:")
             for symbol in sorted(local_positions.keys()):
                 pos = local_positions[symbol]
-                print(f"   {symbol:8s} | Qty: {pos.quantity:>12.6f} | Value: ${pos.market_value:>10,.2f}")
+                print(
+                    f"   {symbol:8s} | Qty: {pos.quantity:>12.6f} | Value: ${pos.market_value:>10,.2f}"
+                )
 
         write_github_output(positions_match=True, discrepancy_count=0)
         print("\n" + "=" * 70)
@@ -289,9 +289,9 @@ def main() -> int:
                 print(f"      Diff:   {d.difference:>12.6f}")
             elif d.local_value is not None:
                 print(f"      Local:  {d.local_value:>12.6f}")
-                print(f"      Alpaca: <missing>")
+                print("      Alpaca: <missing>")
             else:
-                print(f"      Local:  <missing>")
+                print("      Local:  <missing>")
                 print(f"      Alpaca: {d.alpaca_value:>12.6f}")
 
         print("\n💡 Next Steps:")

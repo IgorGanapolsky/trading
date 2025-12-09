@@ -291,9 +291,7 @@ class MultiBroker:
                 "status": account.status,
             }
 
-        return self._execute_with_failover(
-            alpaca_call, ibkr_call, "get_account", tradier_call
-        )
+        return self._execute_with_failover(alpaca_call, ibkr_call, "get_account", tradier_call)
 
     def get_positions(self) -> tuple[list[dict], BrokerType]:
         """Get positions from available broker."""
@@ -337,9 +335,7 @@ class MultiBroker:
                 for pos in positions
             ]
 
-        return self._execute_with_failover(
-            alpaca_call, ibkr_call, "get_positions", tradier_call
-        )
+        return self._execute_with_failover(alpaca_call, ibkr_call, "get_positions", tradier_call)
 
     def submit_order(
         self,

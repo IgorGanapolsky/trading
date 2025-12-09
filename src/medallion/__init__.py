@@ -14,8 +14,8 @@ Benefits:
 """
 
 from src.medallion.bronze import BronzeLayer
-from src.medallion.silver import SilverLayer
 from src.medallion.gold import GoldLayer
 from src.medallion.pipeline import MedallionPipeline
+from src.medallion.silver import SilverLayer
 
 __all__ = ["BronzeLayer", "SilverLayer", "GoldLayer", "MedallionPipeline"]

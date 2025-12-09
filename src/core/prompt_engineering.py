@@ -166,10 +166,8 @@ class MarketDataSchema:
 
         # Extract context
         context = {
-            "price_change_1d": market_data.get("return_1d")
-            or market_data.get("price_change_1d"),
-            "price_change_5d": market_data.get("return_5d")
-            or market_data.get("price_change_5d"),
+            "price_change_1d": market_data.get("return_1d") or market_data.get("price_change_1d"),
+            "price_change_5d": market_data.get("return_5d") or market_data.get("price_change_5d"),
             "relative_volume": market_data.get("volume_ratio"),
             "distance_from_high": market_data.get("distance_from_high"),
             "distance_from_low": market_data.get("distance_from_low"),
@@ -333,9 +331,7 @@ class PromptEngineer:
                     "⚠️ First hour of trading - Higher volatility, avoid chasing opening moves"
                 )
             if context.is_last_hour:
-                lines.append(
-                    "⚠️ Last hour of trading - End-of-day flows, potential mean reversion"
-                )
+                lines.append("⚠️ Last hour of trading - End-of-day flows, potential mean reversion")
             if context.is_lunch_lull:
                 lines.append("📊 Lunch hour - Typically lower volume and tighter ranges")
 
@@ -347,7 +343,9 @@ class PromptEngineer:
                 "high": "High volatility - Wider stops, larger position sizing adjustments",
                 "extreme": "⚠️ EXTREME volatility - Crisis conditions, reduce position sizes",
             }
-            lines.append(f"Volatility Regime: {vol_warnings.get(context.volatility_regime, context.volatility_regime)}")
+            lines.append(
+                f"Volatility Regime: {vol_warnings.get(context.volatility_regime, context.volatility_regime)}"
+            )
 
         if context.trend_regime:
             lines.append(f"Trend Regime: {context.trend_regime}")

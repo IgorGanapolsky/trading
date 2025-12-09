@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import os
+
 # Early diagnostic output for CI visibility
 import sys
-import os
 
 # Reduced annotations to avoid GitHub 10-annotation limit
 print("autonomous_trader.py starting - Python:", sys.version.split()[0], flush=True)
@@ -20,7 +21,10 @@ from typing import Any
 try:
     from dotenv import load_dotenv
 except ImportError:
-    def load_dotenv(): pass  # Stub
+
+    def load_dotenv():
+        pass  # Stub
+
 
 # Ensure src is on the path when executed via GitHub Actions
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -789,12 +793,12 @@ def main() -> None:
 
 if __name__ == "__main__":
     # Super-safe error handling that catches everything
-    import traceback
     import os
-    
+    import traceback
+
     # Ensure logs directory exists
     os.makedirs("logs", exist_ok=True)
-    
+
     try:
         main()
         # Explicit success exit
@@ -806,24 +810,24 @@ if __name__ == "__main__":
         if e.code != 0:
             print(f"::error::SystemExit caught with code={e.code}", flush=True)
         else:
-            print(f"::notice::SystemExit caught with code=0 (success)", flush=True)
+            print("::notice::SystemExit caught with code=0 (success)", flush=True)
         raise
     except BaseException as e:
         # Catch EVERYTHING including KeyboardInterrupt, SystemExit, etc.
         tb = traceback.format_exc()
-        
+
         # Write to stdout with GHA annotations
         print("=" * 80, flush=True)
         print("::error::CRITICAL ERROR IN AUTONOMOUS_TRADER.PY", flush=True)
         print(f"::error::Exception Type: {type(e).__name__}", flush=True)
         print(f"::error::Exception Message: {str(e)[:500]}", flush=True)
         print("=" * 80, flush=True)
-        
+
         # Print full traceback as annotations
         for line in tb.split("\n"):
             if line.strip():
                 print(f"::error::{line}", flush=True)
-        
+
         # Write to file for artifact
         try:
             with open("logs/trading_crash.log", "w") as f:
@@ -831,5 +835,5 @@ if __name__ == "__main__":
                 f.write(tb)
         except:
             pass
-        
+
         sys.exit(2)

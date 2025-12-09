@@ -57,7 +57,7 @@ class DiscoDQNAgent:
         # DiscoRL-inspired hyperparameters
         num_bins: int = 51,  # C51 default, can use 601 like DiscoRL
         v_min: float = -10.0,  # Min Q-value (scaled for % returns)
-        v_max: float = 10.0,   # Max Q-value (scaled for % returns)
+        v_max: float = 10.0,  # Max Q-value (scaled for % returns)
         use_disco_network: bool = False,  # Use full DiscoRL-inspired network
         # Standard DQN hyperparameters
         learning_rate: float = 0.0003,  # DiscoRL uses 0.0003
@@ -189,7 +189,9 @@ class DiscoDQNAgent:
         logger.info("DiscoDQNAgent initialized:")
         logger.info(f"  State dim: {state_dim}, Actions: {action_dim}")
         logger.info(f"  Categorical: {num_bins} bins, range [{v_min}, {v_max}]")
-        logger.info(f"  EMA normalization: adv={use_advantage_normalization}, td={use_td_normalization}")
+        logger.info(
+            f"  EMA normalization: adv={use_advantage_normalization}, td={use_td_normalization}"
+        )
         logger.info(f"  Gamma: {gamma}, LR: {learning_rate}, Tau: {tau}")
 
     def select_action(
@@ -216,7 +218,7 @@ class DiscoDQNAgent:
             state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
             q_values = self.q_network(state_tensor)
 
-            if hasattr(self.q_network, 'get_distribution'):
+            if hasattr(self.q_network, "get_distribution"):
                 dist = self.q_network.get_distribution(state_tensor)
                 dist_info = {"distribution": dist.cpu().numpy()}
             else:
@@ -325,13 +327,13 @@ class DiscoDQNAgent:
 
             # Use target network for distribution
             target_dist = self.target_network.get_distribution(next_states)
-            next_actions_expanded = next_actions.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, self.num_bins)
+            next_actions_expanded = (
+                next_actions.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, self.num_bins)
+            )
             next_dist = target_dist.gather(1, next_actions_expanded).squeeze(1)  # [B, num_bins]
 
             # Project distribution (Bellman update)
-            projected_dist = self._project_distribution(
-                next_dist, rewards, dones, self.gamma
-            )
+            projected_dist = self._project_distribution(next_dist, rewards, dones, self.gamma)
 
         # Cross-entropy loss between projected and current distributions
         # Add small epsilon for numerical stability
@@ -398,21 +400,22 @@ class DiscoDQNAgent:
         for i in range(batch_size):
             for j in range(self.num_bins):
                 # Lower bound contribution
-                projected[i, lower_idx[i, j]] += next_dist[i, j] * (upper_idx[i, j].float() - b[i, j])
+                projected[i, lower_idx[i, j]] += next_dist[i, j] * (
+                    upper_idx[i, j].float() - b[i, j]
+                )
                 # Upper bound contribution
-                projected[i, upper_idx[i, j]] += next_dist[i, j] * (b[i, j] - lower_idx[i, j].float())
+                projected[i, upper_idx[i, j]] += next_dist[i, j] * (
+                    b[i, j] - lower_idx[i, j].float()
+                )
 
         return projected
 
     def _soft_update_target(self):
         """Soft update target network (Polyak averaging)."""
         for target_param, param in zip(
-            self.target_network.parameters(),
-            self.q_network.parameters()
+            self.target_network.parameters(), self.q_network.parameters()
         ):
-            target_param.data.copy_(
-                self.tau * param.data + (1 - self.tau) * target_param.data
-            )
+            target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
         self.update_count += 1
 
     def calculate_reward(
@@ -427,6 +430,7 @@ class DiscoDQNAgent:
         """
         try:
             from src.ml.reward_functions import calculate_risk_adjusted_reward
+
             return calculate_risk_adjusted_reward(trade_result, market_state)
         except ImportError:
             # Fallback to simple reward

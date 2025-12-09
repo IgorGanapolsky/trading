@@ -18,8 +18,8 @@ from typing import Any
 import pandas as pd
 import torch
 
-from src.medallion.pipeline import MedallionPipeline, get_medallion_pipeline
-from src.medallion.gold import FeatureContract, DEFAULT_CONTRACT
+from src.medallion.gold import DEFAULT_CONTRACT, FeatureContract
+from src.medallion.pipeline import get_medallion_pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,8 @@ class MedallionDataProcessor:
 
             self._legacy_processor = DataProcessor(
                 sequence_length=sequence_length,
-                feature_columns=feature_columns or [
+                feature_columns=feature_columns
+                or [
                     "Close",
                     "Volume",
                     "Returns",

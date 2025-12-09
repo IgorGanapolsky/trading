@@ -12,18 +12,15 @@ Key Features:
 """
 
 import logging
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-
-from src.medallion.pipeline import get_medallion_pipeline
 from src.medallion.gold import DEFAULT_CONTRACT
+from src.medallion.pipeline import get_medallion_pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -257,8 +254,7 @@ class MedallionTrainer:
         }
 
         logger.info(
-            f"Training complete for {symbol}: "
-            f"accuracy={accuracy:.2%}, best_loss={best_loss:.4f}"
+            f"Training complete for {symbol}: accuracy={accuracy:.2%}, best_loss={best_loss:.4f}"
         )
 
         return results
@@ -377,7 +373,7 @@ class MedallionTrainer:
         # Create labels with threshold
         threshold = 0.1  # Threshold on normalized values
         labels = torch.zeros(len(tensor), dtype=torch.long)
-        labels[pct_change > threshold] = 1   # BUY
+        labels[pct_change > threshold] = 1  # BUY
         labels[pct_change < -threshold] = 2  # SELL
         # Rest stays 0 = HOLD
 

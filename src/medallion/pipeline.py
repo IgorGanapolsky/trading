@@ -24,9 +24,9 @@ from typing import Any
 import pandas as pd
 import torch
 
-from src.medallion.bronze import BronzeLayer, BronzeMetadata
-from src.medallion.gold import GoldLayer, GoldMetadata, FeatureContract
-from src.medallion.silver import SilverLayer, SilverMetadata, DataQualityReport
+from src.medallion.bronze import BronzeLayer
+from src.medallion.gold import FeatureContract, GoldLayer, GoldMetadata
+from src.medallion.silver import DataQualityReport, SilverLayer
 
 logger = logging.getLogger(__name__)
 
@@ -191,8 +191,7 @@ class MedallionPipeline:
         )
 
         logger.info(
-            f"[{symbol}] Pipeline complete: {gold_tensor.shape} "
-            f"in {processing_time_ms:.0f}ms"
+            f"[{symbol}] Pipeline complete: {gold_tensor.shape} in {processing_time_ms:.0f}ms"
         )
 
         return gold_tensor, lineage

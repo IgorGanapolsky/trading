@@ -21,15 +21,15 @@ Usage:
     markets = kalshi.get_markets(category="elections")
 """
 
+from .ibkr_client import (
+    IBKRClient,
+    get_ibkr_client,
+)
 from .multi_broker import (
     BrokerType,
     MultiBroker,
     OrderResult,
     get_multi_broker,
-)
-from .ibkr_client import (
-    IBKRClient,
-    get_ibkr_client,
 )
 from .tradier_client import (
     TradierClient,

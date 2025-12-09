@@ -37,11 +37,13 @@ class DQNNetwork(nn.Module):
         layers = []
         prev_dim = input_dim
         for hidden_dim in hidden_dims:
-            layers.extend([
-                nn.Linear(prev_dim, hidden_dim),
-                nn.ReLU(),
-                nn.LayerNorm(hidden_dim),
-            ])
+            layers.extend(
+                [
+                    nn.Linear(prev_dim, hidden_dim),
+                    nn.ReLU(),
+                    nn.LayerNorm(hidden_dim),
+                ]
+            )
             prev_dim = hidden_dim
 
         self.feature_extractor = nn.Sequential(*layers)
@@ -84,11 +86,13 @@ class DuelingDQNNetwork(nn.Module):
         layers = []
         prev_dim = input_dim
         for hidden_dim in hidden_dims:
-            layers.extend([
-                nn.Linear(prev_dim, hidden_dim),
-                nn.ReLU(),
-                nn.LayerNorm(hidden_dim),
-            ])
+            layers.extend(
+                [
+                    nn.Linear(prev_dim, hidden_dim),
+                    nn.ReLU(),
+                    nn.LayerNorm(hidden_dim),
+                ]
+            )
             prev_dim = hidden_dim
 
         self.feature_extractor = nn.Sequential(*layers)
@@ -223,7 +227,7 @@ class CategoricalDQNNetwork(nn.Module):
         hidden_dims: tuple[int, ...] = (256, 128),
         num_bins: int = 51,  # C51 default, can use 601 like DiscoRL
         v_min: float = -10.0,  # Min value (scaled for % returns)
-        v_max: float = 10.0,   # Max value (scaled for % returns)
+        v_max: float = 10.0,  # Max value (scaled for % returns)
         use_dueling: bool = True,
     ):
         super().__init__()
@@ -235,21 +239,20 @@ class CategoricalDQNNetwork(nn.Module):
         self.use_dueling = use_dueling
 
         # Support atoms
-        self.register_buffer(
-            "support",
-            torch.linspace(v_min, v_max, num_bins)
-        )
+        self.register_buffer("support", torch.linspace(v_min, v_max, num_bins))
         self.delta_z = (v_max - v_min) / (num_bins - 1)
 
         # Shared feature extractor
         layers = []
         prev_dim = input_dim
         for hidden_dim in hidden_dims:
-            layers.extend([
-                nn.Linear(prev_dim, hidden_dim),
-                nn.ReLU(),
-                nn.LayerNorm(hidden_dim),
-            ])
+            layers.extend(
+                [
+                    nn.Linear(prev_dim, hidden_dim),
+                    nn.ReLU(),
+                    nn.LayerNorm(hidden_dim),
+                ]
+            )
             prev_dim = hidden_dim
 
         self.feature_extractor = nn.Sequential(*layers)
@@ -355,8 +358,11 @@ class CategoricalDQNNetwork(nn.Module):
 
         # Distribute probability mass
         projected = torch.zeros(batch_size, self.num_bins, device=rewards.device)
-        offset = torch.linspace(0, (batch_size - 1) * self.num_bins, batch_size,
-                               device=rewards.device).long().unsqueeze(-1)
+        offset = (
+            torch.linspace(0, (batch_size - 1) * self.num_bins, batch_size, device=rewards.device)
+            .long()
+            .unsqueeze(-1)
+        )
 
         # Lower bound contribution
         projected.view(-1).index_add_(
@@ -399,21 +405,20 @@ class DiscoInspiredNetwork(nn.Module):
         self.prediction_size = prediction_size
 
         # Support atoms
-        self.register_buffer(
-            "support",
-            torch.linspace(v_min, v_max, num_bins)
-        )
+        self.register_buffer("support", torch.linspace(v_min, v_max, num_bins))
         self.delta_z = (v_max - v_min) / (num_bins - 1)
 
         # Feature extractor (like DiscoRL's agent network)
         layers = []
         prev_dim = input_dim
         for hidden_dim in hidden_dims:
-            layers.extend([
-                nn.Linear(prev_dim, hidden_dim),
-                nn.ReLU(),
-                nn.LayerNorm(hidden_dim),
-            ])
+            layers.extend(
+                [
+                    nn.Linear(prev_dim, hidden_dim),
+                    nn.ReLU(),
+                    nn.LayerNorm(hidden_dim),
+                ]
+            )
             prev_dim = hidden_dim
 
         self.feature_extractor = nn.Sequential(*layers)

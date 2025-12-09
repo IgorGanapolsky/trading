@@ -199,8 +199,15 @@ class TradierClient:
         return TradierAccount(
             account_id=self.account_number or "",
             equity=float(balances.get("equity", 0) or balances.get("total_equity", 0)),
-            cash=float(balances.get("cash", {}).get("cash_available", 0) if isinstance(balances.get("cash"), dict) else balances.get("total_cash", 0)),
-            buying_power=float(balances.get("buying_power", 0) or balances.get("margin", {}).get("stock_buying_power", 0)),
+            cash=float(
+                balances.get("cash", {}).get("cash_available", 0)
+                if isinstance(balances.get("cash"), dict)
+                else balances.get("total_cash", 0)
+            ),
+            buying_power=float(
+                balances.get("buying_power", 0)
+                or balances.get("margin", {}).get("stock_buying_power", 0)
+            ),
             status="ACTIVE" if balances.get("account_type") else "UNKNOWN",
         )
 
@@ -236,9 +243,7 @@ class TradierClient:
                     current_price=current_price,
                     market_value=market_value,
                     unrealized_pl=unrealized_pl,
-                    unrealized_pl_pct=(unrealized_pl / cost_basis * 100)
-                    if cost_basis
-                    else 0,
+                    unrealized_pl_pct=(unrealized_pl / cost_basis * 100) if cost_basis else 0,
                 )
             )
 
@@ -312,9 +317,7 @@ class TradierClient:
         if not self.is_configured():
             raise RuntimeError("Tradier client not configured")
 
-        response = self._request(
-            "GET", f"/accounts/{self.account_number}/orders/{order_id}"
-        )
+        response = self._request("GET", f"/accounts/{self.account_number}/orders/{order_id}")
 
         order = response.get("order", {})
 
@@ -387,9 +390,7 @@ class TradierClient:
     def get_quote(self, symbol: str) -> dict:
         """Get current quote for a symbol."""
         try:
-            response = self._request(
-                "GET", "/markets/quotes", params={"symbols": symbol.upper()}
-            )
+            response = self._request("GET", "/markets/quotes", params={"symbols": symbol.upper()})
 
             quotes = response.get("quotes", {})
             quote = quotes.get("quote", {})
@@ -449,7 +450,9 @@ class TradierClient:
             "next_close": "",
         }
 
-    def get_history(self, symbol: str, interval: str = "daily", start: str = "", end: str = "") -> list[dict]:
+    def get_history(
+        self, symbol: str, interval: str = "daily", start: str = "", end: str = ""
+    ) -> list[dict]:
         """
         Get historical price data.
 

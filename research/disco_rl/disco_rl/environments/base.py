@@ -20,45 +20,40 @@ from typing import Any, TypeVar
 
 import chex
 
-from disco_rl import types
-from disco_rl import utils
+from disco_rl import types, utils
 
-_EnvState = TypeVar('_EnvState')
+_EnvState = TypeVar("_EnvState")
 
 
 class Environment(abc.ABC):
-  """Interface for environments.
+    """Interface for environments.
 
-  All environments are supposed to be batched.
-  """
+    All environments are supposed to be batched.
+    """
 
-  batch_size: int
+    batch_size: int
 
-  @abc.abstractmethod
-  def step(
-      self, states: _EnvState, actions: chex.ArrayTree
-  ) -> tuple[_EnvState, types.EnvironmentTimestep]:
-    pass
+    @abc.abstractmethod
+    def step(
+        self, states: _EnvState, actions: chex.ArrayTree
+    ) -> tuple[_EnvState, types.EnvironmentTimestep]:
+        pass
 
-  @abc.abstractmethod
-  def reset(
-      self, rng_key: chex.PRNGKey
-  ) -> tuple[Any, types.EnvironmentTimestep]:
-    """Resets episodes."""
-    pass
+    @abc.abstractmethod
+    def reset(self, rng_key: chex.PRNGKey) -> tuple[Any, types.EnvironmentTimestep]:
+        """Resets episodes."""
+        pass
 
-  @abc.abstractmethod
-  def single_observation_spec(self) -> types.Specs:
-    pass
+    @abc.abstractmethod
+    def single_observation_spec(self) -> types.Specs:
+        pass
 
-  @abc.abstractmethod
-  def single_action_spec(self) -> types.ActionSpec:
-    pass
+    @abc.abstractmethod
+    def single_action_spec(self) -> types.ActionSpec:
+        pass
 
-  def batched_action_spec(self) -> types.ActionSpec:
-    return utils.broadcast_specs(self.single_action_spec(), self.batch_size)
+    def batched_action_spec(self) -> types.ActionSpec:
+        return utils.broadcast_specs(self.single_action_spec(), self.batch_size)
 
-  def batched_observation_spec(self) -> types.Specs:
-    return utils.broadcast_specs(
-        self.single_observation_spec(), self.batch_size
-    )
+    def batched_observation_spec(self) -> types.Specs:
+        return utils.broadcast_specs(self.single_observation_spec(), self.batch_size)

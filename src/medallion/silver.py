@@ -210,9 +210,7 @@ class SilverLayer:
         quality_report = self._assess_quality(symbol, batch_id, bronze_data)
 
         if strict_quality and not quality_report.passed:
-            raise ValueError(
-                f"Silver: Quality check failed for {symbol}: {quality_report.issues}"
-            )
+            raise ValueError(f"Silver: Quality check failed for {symbol}: {quality_report.issues}")
 
         # Step 2: Clean data
         cleaned_data = self._clean_data(bronze_data.copy())
@@ -350,10 +348,12 @@ class SilverLayer:
                 | (data["High"] < data["Low"])
             ]
             if len(high_violations) > 0:
-                price_anomalies.extend([
-                    {"date": str(idx), "issue": "High < other prices"}
-                    for idx in high_violations.index[:5]
-                ])
+                price_anomalies.extend(
+                    [
+                        {"date": str(idx), "issue": "High < other prices"}
+                        for idx in high_violations.index[:5]
+                    ]
+                )
                 issues.append(f"Found {len(high_violations)} OHLC consistency violations")
 
         # Calculate completeness

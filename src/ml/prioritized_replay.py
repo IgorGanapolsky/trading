@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Experience:
     """Single experience tuple with optional auxiliary data."""
+
     state: np.ndarray
     action: int
     reward: float
@@ -167,7 +168,7 @@ class PrioritizedReplayBuffer:
         self,
         capacity: int = 100000,
         alpha: float = 0.6,  # Priority exponent
-        beta: float = 0.4,   # IS weight exponent (annealed to 1.0)
+        beta: float = 0.4,  # IS weight exponent (annealed to 1.0)
         beta_increment: float = 0.001,
         min_priority: float = 1e-6,
         use_td_normalization: bool = True,  # DiscoRL-inspired
@@ -224,12 +225,10 @@ class PrioritizedReplayBuffer:
         )
 
         # Use max priority for new experiences (will be updated after first use)
-        priority = self.max_priority ** self.alpha
+        priority = self.max_priority**self.alpha
         self.tree.add(priority, experience)
 
-    def sample(
-        self, batch_size: int
-    ) -> tuple[list[Experience], np.ndarray, np.ndarray]:
+    def sample(self, batch_size: int) -> tuple[list[Experience], np.ndarray, np.ndarray]:
         """
         Sample batch with importance sampling weights.
 

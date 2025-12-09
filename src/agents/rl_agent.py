@@ -23,6 +23,7 @@ from src.agents.rl_transformer import TransformerRLPolicy, TransformerUnavailabl
 DISCO_DQN_AVAILABLE = False
 try:
     from src.ml.disco_dqn_agent import DiscoDQNAgent
+
     DISCO_DQN_AVAILABLE = True
 except ImportError:
     pass  # PyTorch not available
@@ -43,8 +44,16 @@ class RLFilter:
 
     # Feature names for state vector (order matters!)
     STATE_FEATURES = [
-        "strength", "momentum", "rsi_gap", "volume_premium", "sma_ratio",
-        "rsi", "macd_histogram", "volume_ratio", "atr_pct", "price_change_pct"
+        "strength",
+        "momentum",
+        "rsi_gap",
+        "volume_premium",
+        "sma_ratio",
+        "rsi",
+        "macd_histogram",
+        "volume_ratio",
+        "atr_pct",
+        "price_change_pct",
     ]
     STATE_DIM = len(STATE_FEATURES)
 
@@ -188,9 +197,7 @@ class RLFilter:
         )
         return decision
 
-    def _predict_with_disco_dqn(
-        self, symbol: str, market_state: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _predict_with_disco_dqn(self, symbol: str, market_state: dict[str, Any]) -> dict[str, Any]:
         """
         Get prediction from DiscoRL-inspired DQN.
 

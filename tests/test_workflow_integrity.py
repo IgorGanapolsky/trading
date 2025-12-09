@@ -211,7 +211,7 @@ class WorkflowIntegrityTests:
                         )
 
         if errors:
-            return False, f"Missing output writes:\n" + "\n".join(errors)
+            return False, "Missing output writes:\n" + "\n".join(errors)
 
         return True, "All output references have corresponding writes"
 
@@ -260,9 +260,7 @@ class WorkflowIntegrityTests:
                     )
 
         if errors:
-            return False, f"Dangerous fault tolerance in critical steps:\n" + "\n".join(
-                errors
-            )
+            return False, "Dangerous fault tolerance in critical steps:\n" + "\n".join(errors)
 
         return True, "No fault tolerance in critical steps"
 
@@ -301,17 +299,13 @@ class WorkflowIntegrityTests:
 
             # Verify both required conditions are present
             if "skip" not in condition.lower():
-                errors.append(
-                    f"{workflow_name}: Trading step missing skip check in condition"
-                )
+                errors.append(f"{workflow_name}: Trading step missing skip check in condition")
 
             if "health_check" not in condition.lower():
-                errors.append(
-                    f"{workflow_name}: Trading step missing health_check in condition"
-                )
+                errors.append(f"{workflow_name}: Trading step missing health_check in condition")
 
         if errors:
-            return False, f"Incomplete trading conditions:\n" + "\n".join(errors)
+            return False, "Incomplete trading conditions:\n" + "\n".join(errors)
 
         return True, "Trading step conditions are complete"
 
@@ -327,8 +321,14 @@ class WorkflowIntegrityTests:
         errors = []
 
         dangerous_patterns = [
-            (r"python3?\s+scripts/autonomous_trader\.py.*\|\|\s*true", "autonomous_trader.py || true"),
-            (r"python3?\s+scripts/autonomous_trader\.py.*\|\|\s*exit\s+0", "autonomous_trader.py || exit 0"),
+            (
+                r"python3?\s+scripts/autonomous_trader\.py.*\|\|\s*true",
+                "autonomous_trader.py || true",
+            ),
+            (
+                r"python3?\s+scripts/autonomous_trader\.py.*\|\|\s*exit\s+0",
+                "autonomous_trader.py || exit 0",
+            ),
         ]
 
         for workflow_name in self.critical_workflows:
@@ -343,12 +343,11 @@ class WorkflowIntegrityTests:
                 for pattern, description in dangerous_patterns:
                     if re.search(pattern, line):
                         errors.append(
-                            f"{workflow_name}:{line_num} - "
-                            f"Dangerous pattern: {description}"
+                            f"{workflow_name}:{line_num} - Dangerous pattern: {description}"
                         )
 
         if errors:
-            return False, f"Silent exit patterns found:\n" + "\n".join(errors)
+            return False, "Silent exit patterns found:\n" + "\n".join(errors)
 
         return True, "No silent exit patterns in critical workflows"
 

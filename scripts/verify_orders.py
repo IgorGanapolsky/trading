@@ -41,13 +41,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Check for required dependencies
 try:
     from alpaca.trading.client import TradingClient
-    from alpaca.trading.requests import GetOrdersRequest
     from alpaca.trading.enums import QueryOrderStatus
+    from alpaca.trading.requests import GetOrdersRequest
 except ImportError as e:
-    print(f"\n❌ ERROR: Missing required dependencies")
+    print("\n❌ ERROR: Missing required dependencies")
     print(f"   {e}")
-    print(f"\n💡 Install dependencies:")
-    print(f"   pip install -r requirements.txt")
+    print("\n💡 Install dependencies:")
+    print("   pip install -r requirements.txt")
     sys.exit(1)
 
 from dotenv import load_dotenv
@@ -62,16 +62,17 @@ PAPER_TRADING = os.getenv("PAPER_TRADING", "true").lower() == "true"
 
 # Slippage thresholds
 SLIPPAGE_WARNING_PCT = 1.0  # Warn if slippage > 1%
-SLIPPAGE_ERROR_PCT = 2.0    # Fail if slippage > 2%
+SLIPPAGE_ERROR_PCT = 2.0  # Fail if slippage > 2%
+
 
 # Color codes for terminal output
 class Colors:
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    BLUE = '\033[94m'
-    RESET = '\033[0m'
-    BOLD = '\033[1m'
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    BLUE = "\033[94m"
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
 
 
 def get_trades_log_path() -> Path:
@@ -91,7 +92,7 @@ def load_local_trades() -> list[dict[str, Any]]:
         with open(trades_path) as f:
             trades = json.load(f)
             return trades if isinstance(trades, list) else []
-    except (json.JSONDecodeError, IOError) as e:
+    except (OSError, json.JSONDecodeError) as e:
         print(f"{Colors.YELLOW}⚠️  Warning: Could not read trades log: {e}{Colors.RESET}")
         return []
 
@@ -109,7 +110,7 @@ def fetch_alpaca_orders(api: TradingClient) -> dict[str, Any]:
     request = GetOrdersRequest(
         status=QueryOrderStatus.ALL,
         after=today,
-        limit=500  # Maximum limit
+        limit=500,  # Maximum limit
     )
 
     orders = api.get_orders(filter=request)
@@ -122,10 +123,7 @@ def fetch_alpaca_orders(api: TradingClient) -> dict[str, Any]:
     return orders_dict
 
 
-def verify_order(
-    trade: dict[str, Any],
-    alpaca_orders: dict[str, Any]
-) -> dict[str, Any]:
+def verify_order(trade: dict[str, Any], alpaca_orders: dict[str, Any]) -> dict[str, Any]:
     """
     Verify a single trade against Alpaca's records.
 
@@ -146,7 +144,7 @@ def verify_order(
         "slippage_ok": True,
         "slippage_pct": None,
         "slippage_usd": None,
-        "issues": []
+        "issues": [],
     }
 
     # Check if trade has order_id
@@ -173,7 +171,7 @@ def verify_order(
         "FILLED": ["FILLED"],
         "PARTIAL": ["PARTIALLY_FILLED", "PARTIAL_FILL"],
         "REJECTED": ["REJECTED", "CANCELED", "CANCELLED"],
-        "PENDING": ["NEW", "ACCEPTED", "PENDING_NEW", "PENDING_CANCEL", "PENDING_REPLACE"]
+        "PENDING": ["NEW", "ACCEPTED", "PENDING_NEW", "PENDING_CANCEL", "PENDING_REPLACE"],
     }
 
     # Check if statuses match (with variations)
@@ -206,9 +204,7 @@ def verify_order(
             result["quantity_match"] = True
         else:
             result["quantity_match"] = False
-            result["issues"].append(
-                f"Quantity mismatch: logged={logged_qty}, filled={filled_qty}"
-            )
+            result["issues"].append(f"Quantity mismatch: logged={logged_qty}, filled={filled_qty}")
     else:
         # For non-filled orders, quantity check N/A
         result["quantity_match"] = True
@@ -294,13 +290,15 @@ def main() -> int:
         print(f"\n{Colors.GREEN}✅ VERIFICATION PASSED: No trades to verify{Colors.RESET}\n")
 
         # Write GitHub output (all zeros)
-        write_github_output({
-            "all_verified": True,
-            "filled_count": 0,
-            "rejected_count": 0,
-            "missing_count": 0,
-            "slippage_errors": 0
-        })
+        write_github_output(
+            {
+                "all_verified": True,
+                "filled_count": 0,
+                "rejected_count": 0,
+                "missing_count": 0,
+                "slippage_errors": 0,
+            }
+        )
         return 0
 
     print(f"{Colors.GREEN}   Found {len(local_trades)} logged trades{Colors.RESET}\n")
@@ -309,9 +307,7 @@ def main() -> int:
     print(f"{Colors.BLUE}🌐 Connecting to Alpaca API...{Colors.RESET}")
     try:
         api = TradingClient(
-            api_key=ALPACA_API_KEY,
-            secret_key=ALPACA_SECRET_KEY,
-            paper=PAPER_TRADING
+            api_key=ALPACA_API_KEY, secret_key=ALPACA_SECRET_KEY, paper=PAPER_TRADING
         )
     except Exception as e:
         print(f"{Colors.RED}❌ ERROR: Failed to connect to Alpaca: {e}{Colors.RESET}")
@@ -339,7 +335,7 @@ def main() -> int:
         "filled_count": 0,
         "rejected_count": 0,
         "slippage_errors": 0,
-        "has_errors": False
+        "has_errors": False,
     }
 
     for i, trade in enumerate(local_trades, 1):
@@ -363,13 +359,15 @@ def main() -> int:
                 elif abs(result["slippage_pct"]) > SLIPPAGE_WARNING_PCT:
                     slippage_color = Colors.YELLOW
 
-                print(f"  💰 Slippage: {slippage_color}{result['slippage_pct']:+.2f}%{Colors.RESET} "
-                      f"(${result.get('slippage_usd', 0):+.4f})")
+                print(
+                    f"  💰 Slippage: {slippage_color}{result['slippage_pct']:+.2f}%{Colors.RESET} "
+                    f"(${result.get('slippage_usd', 0):+.4f})"
+                )
 
             # Update stats
-            if result.get('alpaca_status') == "filled":
+            if result.get("alpaca_status") == "filled":
                 stats["filled_count"] += 1
-            elif result.get('alpaca_status') in ["rejected", "canceled", "cancelled"]:
+            elif result.get("alpaca_status") in ["rejected", "canceled", "cancelled"]:
                 stats["rejected_count"] += 1
         else:
             print(f"  {Colors.RED}❌ Order NOT FOUND in Alpaca{Colors.RESET}")
@@ -419,11 +417,17 @@ def main() -> int:
     else:
         print(f"{Colors.RED}{Colors.BOLD}❌ VERIFICATION FAILED{Colors.RESET}")
         if stats["missing_count"] > 0:
-            print(f"{Colors.RED}   {stats['missing_count']} orders missing from Alpaca{Colors.RESET}")
+            print(
+                f"{Colors.RED}   {stats['missing_count']} orders missing from Alpaca{Colors.RESET}"
+            )
         if stats["slippage_errors"] > 0:
-            print(f"{Colors.RED}   {stats['slippage_errors']} orders with excessive slippage{Colors.RESET}")
+            print(
+                f"{Colors.RED}   {stats['slippage_errors']} orders with excessive slippage{Colors.RESET}"
+            )
         if stats["rejected_count"] > 0:
-            print(f"{Colors.YELLOW}   {stats['rejected_count']} orders rejected/cancelled{Colors.RESET}")
+            print(
+                f"{Colors.YELLOW}   {stats['rejected_count']} orders rejected/cancelled{Colors.RESET}"
+            )
         exit_code = 1
 
     # Write GitHub Actions output
@@ -443,5 +447,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n{Colors.RED}❌ FATAL ERROR: {e}{Colors.RESET}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

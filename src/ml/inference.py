@@ -32,6 +32,7 @@ class MLPredictor:
         if self.use_medallion:
             try:
                 from src.ml.medallion_trainer import MedallionMLPredictor
+
                 self._medallion_predictor = MedallionMLPredictor(models_dir=models_dir)
                 logger.info("MLPredictor using Medallion Architecture for data quality")
             except Exception as e:
@@ -44,6 +45,7 @@ class MLPredictor:
     def _init_legacy(self):
         """Initialize legacy components."""
         from src.ml.data_processor import DataProcessor
+
         self.data_processor = DataProcessor()
         logger.info("MLPredictor using legacy DataProcessor")
 
@@ -58,7 +60,7 @@ class MLPredictor:
             - value_estimate: float (critic's valuation of current state)
         """
         # Use Medallion predictor if available
-        if self.use_medallion and hasattr(self, '_medallion_predictor'):
+        if self.use_medallion and hasattr(self, "_medallion_predictor"):
             try:
                 return self._medallion_predictor.get_signal(symbol)
             except Exception as e:
@@ -75,6 +77,7 @@ class MLPredictor:
             try:
                 # Try to load medallion model first
                 from src.ml.medallion_trainer import MedallionTrainer
+
                 trainer = MedallionTrainer(models_dir=self.models_dir)
                 model = trainer.load_model(symbol)
                 if model is not None:
@@ -90,7 +93,7 @@ class MLPredictor:
         model = self.models[symbol]
 
         # 2. Prepare Data
-        if not hasattr(self, 'data_processor'):
+        if not hasattr(self, "data_processor"):
             self._init_legacy()
 
         input_tensor = self.data_processor.prepare_inference_data(symbol)

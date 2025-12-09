@@ -168,8 +168,7 @@ class BronzeLayer:
         self._record_batch(metadata, file_path)
 
         logger.info(
-            f"Bronze: Ingested {len(data)} rows for {symbol} from {source} "
-            f"(batch: {batch_id})"
+            f"Bronze: Ingested {len(data)} rows for {symbol} from {source} (batch: {batch_id})"
         )
 
         return metadata

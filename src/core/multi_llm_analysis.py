@@ -32,12 +32,12 @@ from typing import Any
 from src.core.prompt_engineering import (
     MarketDataSchema,
     PromptEngineer,
-    get_temporal_header,
 )
 
 # OpenAI client - optional dependency (may use OpenRouter instead)
 try:
     from openai import AsyncOpenAI, OpenAI
+
     OPENAI_AVAILABLE = True
 except ImportError:
     AsyncOpenAI = None  # type: ignore
@@ -162,8 +162,7 @@ class MultiLLMAnalyzer:
         """
         if not OPENAI_AVAILABLE:
             raise ImportError(
-                "openai package is required for MultiLLMAnalyzer. "
-                "Install with: pip install openai"
+                "openai package is required for MultiLLMAnalyzer. Install with: pip install openai"
             )
 
         self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
@@ -949,7 +948,9 @@ Provide objective, data-driven sentiment scores with detailed reasoning."""
         if pass1_response.success:
             try:
                 extracted_features = json.loads(pass1_response.content)
-                logger.info(f"Pass 1 complete: Extracted {len(extracted_features)} feature categories")
+                logger.info(
+                    f"Pass 1 complete: Extracted {len(extracted_features)} feature categories"
+                )
             except json.JSONDecodeError:
                 logger.warning("Pass 1 response not valid JSON, using raw content")
                 extracted_features = {"raw_analysis": pass1_response.content}

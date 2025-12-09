@@ -6,7 +6,6 @@ Creates various scenarios to verify all alert conditions work correctly.
 """
 
 import json
-import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -27,10 +26,10 @@ def restore_performance_log():
     """Restore original performance log."""
     if PERF_LOG_BACKUP.exists():
         PERF_LOG_BACKUP.rename(PERF_LOG_FILE)
-        print(f"✅ Restored original performance log")
+        print("✅ Restored original performance log")
     elif PERF_LOG_FILE.exists():
         PERF_LOG_FILE.unlink()
-        print(f"✅ Cleaned up test performance log")
+        print("✅ Cleaned up test performance log")
 
 
 def create_test_log(scenario: str) -> list[dict]:
@@ -119,9 +118,9 @@ def create_test_log(scenario: str) -> list[dict]:
 
 def run_test_scenario(scenario: str):
     """Run a test scenario and check results."""
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"TEST SCENARIO: {scenario.upper()}")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
 
     # Create test log
     test_data = create_test_log(scenario)
@@ -133,6 +132,7 @@ def run_test_scenario(scenario: str):
 
     # Run verification
     import subprocess
+
     result = subprocess.run(
         ["python3", "scripts/verify_pl_sanity.py"],
         capture_output=True,
@@ -170,19 +170,23 @@ def main():
             results[scenario] = exit_code
 
         # Summary
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("TEST SUMMARY")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
 
         for scenario, exit_code in results.items():
-            status = "✅ PASS" if (
-                (scenario == "healthy" and exit_code == 0) or
-                (scenario != "healthy" and exit_code == 1)
-            ) else "❌ FAIL"
+            status = (
+                "✅ PASS"
+                if (
+                    (scenario == "healthy" and exit_code == 0)
+                    or (scenario != "healthy" and exit_code == 1)
+                )
+                else "❌ FAIL"
+            )
 
             print(f"{scenario:20s} -> exit code {exit_code} -> {status}")
 
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
 
     finally:
         # Restore original log

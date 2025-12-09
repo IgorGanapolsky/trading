@@ -91,7 +91,11 @@ class PLSanityChecker:
             try:
                 account = self.api.get_account()
                 # In alpaca-py, account attributes are accessed directly
-                equity = float(account.equity) if hasattr(account, 'equity') else float(account.portfolio_value)
+                equity = (
+                    float(account.equity)
+                    if hasattr(account, "equity")
+                    else float(account.portfolio_value)
+                )
                 self.log(f"Current equity from Alpaca API: ${equity:,.2f}")
                 return equity
             except Exception as e:
@@ -307,7 +311,7 @@ class PLSanityChecker:
 
         # Compare most recent historical entry vs the one before it
         # (This avoids flagging today's normal update as anomalous)
-        today = log_data[-1]
+        log_data[-1]
         yesterday = log_data[-2]
         day_before = log_data[-3] if len(log_data) >= 3 else yesterday
 

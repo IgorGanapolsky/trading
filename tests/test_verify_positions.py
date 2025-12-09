@@ -9,7 +9,6 @@ import json
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -264,10 +263,9 @@ def test_write_github_output(tmp_path):
 
 def test_main_missing_credentials():
     """Test main() when credentials are missing."""
-    from verify_positions import main
-
     # Mock missing credentials
     import verify_positions
+    from verify_positions import main
 
     original_key = verify_positions.ALPACA_API_KEY
     original_secret = verify_positions.ALPACA_SECRET_KEY

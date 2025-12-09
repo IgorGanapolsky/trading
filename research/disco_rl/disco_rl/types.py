@@ -19,17 +19,17 @@ from typing import Any, Callable, Mapping, Sequence
 
 import chex
 import dm_env
-from dm_env import specs
 import haiku as hk
 import jax
 import jax.numpy as jnp
 import numpy as np
+from dm_env import specs
 
 Array = jnp.ndarray
 ArraySpec = jax.ShapeDtypeStruct
 ActionSpec = specs.BoundedArray
 Specs = dict[str, specs.Array | ArraySpec]
-SpecsTree = ArraySpec | Sequence['SpecsTree'] | dict[str, 'SpecsTree']
+SpecsTree = ArraySpec | Sequence["SpecsTree"] | dict[str, "SpecsTree"]
 MetaState = dict[str, chex.ArrayTree | None]
 UpdateRuleLog = dict[str, chex.ArrayTree]
 
@@ -70,185 +70,183 @@ SampleActionFn = Callable[
 
 @chex.dataclass
 class ValueFnConfig:
-  """Value function config."""
+    """Value function config."""
 
-  net: str
-  net_args: dict[str, Any]
-  learning_rate: float
-  max_abs_update: float
-  discount_factor: float
-  td_lambda: float
-  outer_value_cost: float
-  ema_decay: float = 0.99
-  ema_eps: float = 1e-6
+    net: str
+    net_args: dict[str, Any]
+    learning_rate: float
+    max_abs_update: float
+    discount_factor: float
+    td_lambda: float
+    outer_value_cost: float
+    ema_decay: float = 0.99
+    ema_eps: float = 1e-6
 
 
 @chex.dataclass
 class ValueState:
-  params: AgentParams
-  state: HaikuState
-  opt_state: OptState
-  adv_ema_state: 'EmaState'
-  td_ema_state: 'EmaState'
+    params: AgentParams
+    state: HaikuState
+    opt_state: OptState
+    adv_ema_state: "EmaState"
+    td_ema_state: "EmaState"
 
 
 @chex.dataclass
 class TransformConfig:
-  source: str
-  transforms: Sequence[str | Callable[[Any], chex.Array]]
+    source: str
+    transforms: Sequence[str | Callable[[Any], chex.Array]]
 
 
 @chex.dataclass
 class MetaNetInputOption:
-  """Meta network input options."""
+    """Meta network input options."""
 
-  base: Sequence[TransformConfig]
-  action_conditional: Sequence[TransformConfig]
+    base: Sequence[TransformConfig]
+    action_conditional: Sequence[TransformConfig]
 
 
 @chex.dataclass(mappable_dataclass=False, frozen=True)
 class PolicyNetwork:
-  """Collects useful callable transformations of underlying agent network."""
+    """Collects useful callable transformations of underlying agent network."""
 
-  # hk-transformed functions.
-  init: Callable[
-      [
-          chex.PRNGKey,  # rng for params
-          chex.ArrayTree,  # obs
-          chex.Array | None,  # should_reset
-      ],
-      tuple[AgentParams, HaikuState],
-  ]
-  one_step: AgentStepFn
-  unroll: AgentUnrollFn
+    # hk-transformed functions.
+    init: Callable[
+        [
+            chex.PRNGKey,  # rng for params
+            chex.ArrayTree,  # obs
+            chex.Array | None,  # should_reset
+        ],
+        tuple[AgentParams, HaikuState],
+    ]
+    one_step: AgentStepFn
+    unroll: AgentUnrollFn
 
 
 @chex.dataclass
 class EmaState:
-  # The tree of first moments.
-  moment1: chex.ArrayTree
-  # The tree of second moments.
-  moment2: chex.ArrayTree
-  # The product of the all decays from the start of accumulating.
-  decay_product: float
+    # The tree of first moments.
+    moment1: chex.ArrayTree
+    # The tree of second moments.
+    moment2: chex.ArrayTree
+    # The product of the all decays from the start of accumulating.
+    decay_product: float
 
 
 @chex.dataclass
 class EnvironmentTimestep:
-  observation: Mapping[str, chex.ArrayTree]
-  step_type: chex.Array
-  reward: chex.Array
+    observation: Mapping[str, chex.ArrayTree]
+    step_type: chex.Array
+    reward: chex.Array
 
 
 @chex.dataclass
 class ActorTimestep:
-  """Actor timestep."""
+    """Actor timestep."""
 
-  observations: chex.ArrayTree
-  actions: Any
-  rewards: Any
-  discounts: Any
-  agent_outs: AgentOuts
-  states: HaikuState
-  logits: Any
+    observations: chex.ArrayTree
+    actions: Any
+    rewards: Any
+    discounts: Any
+    agent_outs: AgentOuts
+    states: HaikuState
+    logits: Any
 
-  @classmethod
-  def from_rollout(cls, rollout: 'ActorRollout') -> 'ActorTimestep':
-    return cls(
-        observations=rollout.observations,
-        actions=rollout.actions,
-        rewards=rollout.rewards,
-        discounts=rollout.discounts,
-        agent_outs=rollout.agent_outs,
-        states=rollout.states,
-        logits=rollout.logits,
-    )
+    @classmethod
+    def from_rollout(cls, rollout: "ActorRollout") -> "ActorTimestep":
+        return cls(
+            observations=rollout.observations,
+            actions=rollout.actions,
+            rewards=rollout.rewards,
+            discounts=rollout.discounts,
+            agent_outs=rollout.agent_outs,
+            states=rollout.states,
+            logits=rollout.logits,
+        )
 
-  def to_env_timestep(self) -> 'EnvironmentTimestep':
-    return EnvironmentTimestep(
-        observation=self.observations,
-        step_type=jnp.where(
-            self.discounts > 0, dm_env.StepType.MID, dm_env.StepType.LAST
-        ),
-        reward=self.rewards,
-    )
+    def to_env_timestep(self) -> "EnvironmentTimestep":
+        return EnvironmentTimestep(
+            observation=self.observations,
+            step_type=jnp.where(self.discounts > 0, dm_env.StepType.MID, dm_env.StepType.LAST),
+            reward=self.rewards,
+        )
 
 
 @chex.dataclass
 class ActorRollout(ActorTimestep):
-  """Stacked actor timesteps.
+    """Stacked actor timesteps.
 
-  Shapes: [D, O, T, B, ...] (by default; can be changed in the code).
+    Shapes: [D, O, T, B, ...] (by default; can be changed in the code).
 
-  where:
-    D: number of learner devices
-    O: outer rollout length (aka, meta rollout length)
-    T: trajectory length
-    B: batch size
-  """
+    where:
+      D: number of learner devices
+      O: outer rollout length (aka, meta rollout length)
+      T: trajectory length
+      B: batch size
+    """
 
-  @classmethod
-  def from_timestep(cls, timestep: ActorTimestep) -> 'ActorRollout':
-    return cls(**timestep)
+    @classmethod
+    def from_timestep(cls, timestep: ActorTimestep) -> "ActorRollout":
+        return cls(**timestep)
 
-  def first_state(self, time_axis: int) -> HaikuState:
-    index = tuple([np.s_[:]] * (time_axis - 1) + [0])
-    return jax.tree.map(lambda x: x[index], self.states)
+    def first_state(self, time_axis: int) -> HaikuState:
+        index = tuple([np.s_[:]] * (time_axis - 1) + [0])
+        return jax.tree.map(lambda x: x[index], self.states)
 
 
 @chex.dataclass
 class ValueOuts:
-  """Value function outputs."""
+    """Value function outputs."""
 
-  value: jax.typing.ArrayLike = 0.0  # Scalar value
-  target_value: jax.typing.ArrayLike = 0.0  # Scalar target value
-  rho: jax.typing.ArrayLike = 0.0  # Importance weight
-  adv: jax.typing.ArrayLike = 0.0  # Advantage
-  normalized_adv: jax.typing.ArrayLike = 0.0  # Normalised advantage
-  value_target: jax.typing.ArrayLike = 0.0  # Value target
-  td: jax.typing.ArrayLike = 0.0  # value_target - value
-  normalized_td: jax.typing.ArrayLike = 0.0  # Normalised TD
-  qv_adv: chex.ArrayTree | None = None  # Q - V
-  normalized_qv_adv: chex.ArrayTree | None = None  # Normalised Q - V
-  q_value: chex.ArrayTree | None = None  # Scalar Q-value
-  target_q_value: chex.ArrayTree | None = None  # Scalar target Q-value
-  q_target: chex.ArrayTree | None = None  # Q-value target
-  q_td: chex.ArrayTree | None = None  # q_target - q_a
-  normalized_q_td: chex.ArrayTree | None = None  # Normalised q_td
+    value: jax.typing.ArrayLike = 0.0  # Scalar value
+    target_value: jax.typing.ArrayLike = 0.0  # Scalar target value
+    rho: jax.typing.ArrayLike = 0.0  # Importance weight
+    adv: jax.typing.ArrayLike = 0.0  # Advantage
+    normalized_adv: jax.typing.ArrayLike = 0.0  # Normalised advantage
+    value_target: jax.typing.ArrayLike = 0.0  # Value target
+    td: jax.typing.ArrayLike = 0.0  # value_target - value
+    normalized_td: jax.typing.ArrayLike = 0.0  # Normalised TD
+    qv_adv: chex.ArrayTree | None = None  # Q - V
+    normalized_qv_adv: chex.ArrayTree | None = None  # Normalised Q - V
+    q_value: chex.ArrayTree | None = None  # Scalar Q-value
+    target_q_value: chex.ArrayTree | None = None  # Scalar target Q-value
+    q_target: chex.ArrayTree | None = None  # Q-value target
+    q_td: chex.ArrayTree | None = None  # q_target - q_a
+    normalized_q_td: chex.ArrayTree | None = None  # Normalised q_td
 
 
 @chex.dataclass
 class UpdateRuleInputs:
-  """Update rule inputs."""
+    """Update rule inputs."""
 
-  observations: chex.ArrayTree
-  actions: chex.Array
-  rewards: chex.Array
-  is_terminal: chex.Array  # whether the action was terminal
-  agent_out: chex.ArrayTree
-  behaviour_agent_out: AgentOuts | None = None
-  value_out: ValueOuts | None = None
-  # Inputs with pre-processing in update rule before meta-net (e.g. advantages)
-  extra_from_rule: chex.ArrayTree | None = None
+    observations: chex.ArrayTree
+    actions: chex.Array
+    rewards: chex.Array
+    is_terminal: chex.Array  # whether the action was terminal
+    agent_out: chex.ArrayTree
+    behaviour_agent_out: AgentOuts | None = None
+    value_out: ValueOuts | None = None
+    # Inputs with pre-processing in update rule before meta-net (e.g. advantages)
+    extra_from_rule: chex.ArrayTree | None = None
 
-  @property
-  def should_reset_mask_fwd(self) -> chex.Array:
-    """Returns `should_reset` mask for forward RNNs."""
-    # Shifts is_terminal to the right by a step, mimicking step_type.is_first().
-    prepend_non_terminal = jnp.zeros_like(self.is_terminal[:1])
-    return jnp.concatenate(
-        (prepend_non_terminal, self.is_terminal),
-        axis=0,
-        dtype=self.is_terminal.dtype,
-    )
+    @property
+    def should_reset_mask_fwd(self) -> chex.Array:
+        """Returns `should_reset` mask for forward RNNs."""
+        # Shifts is_terminal to the right by a step, mimicking step_type.is_first().
+        prepend_non_terminal = jnp.zeros_like(self.is_terminal[:1])
+        return jnp.concatenate(
+            (prepend_non_terminal, self.is_terminal),
+            axis=0,
+            dtype=self.is_terminal.dtype,
+        )
 
-  @property
-  def should_reset_mask_bwd(self) -> chex.Array:
-    """Returns `should_reset` mask for backward RNNs."""
-    # Appends one non-terminal step, for bootstrapping.
-    append_non_terminal = jnp.zeros_like(self.is_terminal[:1])
-    return jnp.concatenate(
-        (self.is_terminal, append_non_terminal),
-        axis=0,
-        dtype=self.is_terminal.dtype,
-    )
+    @property
+    def should_reset_mask_bwd(self) -> chex.Array:
+        """Returns `should_reset` mask for backward RNNs."""
+        # Appends one non-terminal step, for bootstrapping.
+        append_non_terminal = jnp.zeros_like(self.is_terminal[:1])
+        return jnp.concatenate(
+            (self.is_terminal, append_non_terminal),
+            axis=0,
+            dtype=self.is_terminal.dtype,
+        )

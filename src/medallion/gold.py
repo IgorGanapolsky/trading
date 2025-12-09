@@ -228,9 +228,7 @@ class GoldLayer:
 
         # Step 2: Normalize features
         if fit_normalization:
-            normalized_data, norm_params = self._fit_normalize(
-                symbol, feature_data, contract
-            )
+            normalized_data, norm_params = self._fit_normalize(symbol, feature_data, contract)
         else:
             norm_params = self._load_norm_params(symbol)
             if norm_params is None:
@@ -360,9 +358,7 @@ class GoldLayer:
         test_features = self._select_features(test_data, contract)
 
         # Fit normalization on TRAINING data only
-        normalized_train, norm_params = self._fit_normalize(
-            symbol, train_features, contract
-        )
+        normalized_train, norm_params = self._fit_normalize(symbol, train_features, contract)
 
         # Apply to test data using training params
         normalized_test = self._apply_normalize(test_features, norm_params, contract)
@@ -663,7 +659,7 @@ if __name__ == "__main__":
 
     # Test train/test split
     train, test, split_meta = gold.get_training_split("SPY", silver_data)
-    print(f"\nTrain/Test split:")
+    print("\nTrain/Test split:")
     print(f"  Train: {train.shape}")
     print(f"  Test: {test.shape}")
 

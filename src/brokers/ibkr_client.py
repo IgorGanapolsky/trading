@@ -117,9 +117,7 @@ class IBKRClient:
             paper: Use paper trading account (default True for safety)
         """
         self.account_id = account_id or os.environ.get("IBKR_ACCOUNT_ID")
-        self.base_url = gateway_url or os.environ.get(
-            "IBKR_GATEWAY_URL", self.GATEWAY_URL
-        )
+        self.base_url = gateway_url or os.environ.get("IBKR_GATEWAY_URL", self.GATEWAY_URL)
         self.paper = paper
 
         # SSL verification - IBKR Gateway uses self-signed certs by default
@@ -202,9 +200,7 @@ class IBKRClient:
                     current_price=float(pos.get("mktPrice", 0)),
                     market_value=market_value,
                     unrealized_pl=unrealized_pl,
-                    unrealized_pl_pct=(unrealized_pl / cost_basis * 100)
-                    if cost_basis
-                    else 0,
+                    unrealized_pl_pct=(unrealized_pl / cost_basis * 100) if cost_basis else 0,
                 )
             )
 
@@ -212,9 +208,7 @@ class IBKRClient:
 
     def _get_conid(self, symbol: str) -> int:
         """Get contract ID for a symbol (required for IBKR orders)."""
-        response = self._request(
-            "GET", f"/iserver/secdef/search?symbol={symbol}&secType=STK"
-        )
+        response = self._request("GET", f"/iserver/secdef/search?symbol={symbol}&secType=STK")
 
         if response and isinstance(response, list) and len(response) > 0:
             # Return the first US stock match
@@ -321,7 +315,7 @@ class IBKRClient:
 
     def get_order(self, order_id: str) -> IBKROrder:
         """Get order by ID."""
-        response = self._request("GET", f"/iserver/account/orders")
+        response = self._request("GET", "/iserver/account/orders")
 
         # Find the order in the list
         order = {}
@@ -338,9 +332,7 @@ class IBKRClient:
             quantity=float(order.get("totalSize", 0)),
             filled_quantity=float(order.get("filledQuantity", 0)),
             price=float(order.get("price", 0)) if order.get("price") else None,
-            avg_fill_price=float(order.get("avgPrice", 0))
-            if order.get("avgPrice")
-            else None,
+            avg_fill_price=float(order.get("avgPrice", 0)) if order.get("avgPrice") else None,
             status=order.get("status", "unknown"),
             created_at=order.get("lastExecutionTime", ""),
             order_type=order.get("orderType", ""),

@@ -89,7 +89,10 @@ class MacroeconomicAgent:
         # Skip RAG if not available (sentence-transformers not installed)
         if self.rag_store is None:
             logger.info("RAG store unavailable - returning NEUTRAL macro context")
-            return {"state": "NEUTRAL", "reason": "RAG features disabled (sentence-transformers not installed)"}
+            return {
+                "state": "NEUTRAL",
+                "reason": "RAG features disabled (sentence-transformers not installed)",
+            }
 
         try:
             query = (

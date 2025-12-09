@@ -118,6 +118,7 @@ exclude = [
     "*.pyc",
     "data",
     "reports",
+    "research",  # Experimental code, not production
 ]
 
 [tool.ruff.lint]

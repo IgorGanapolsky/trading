@@ -30,27 +30,27 @@ def check_and_enable():
         "Vertex AI RL": {
             "key": "RL_AGENT_KEY",
             "status": "disabled",
-            "url": "https://console.cloud.google.com/iam-admin/serviceaccounts"
+            "url": "https://console.cloud.google.com/iam-admin/serviceaccounts",
         },
         "LangSmith Tracing": {
             "key": "LANGCHAIN_API_KEY",
             "status": "disabled",
-            "url": "https://smith.langchain.com"
+            "url": "https://smith.langchain.com",
         },
         "Helicone Observability": {
             "key": "HELICONE_API_KEY",
             "status": "disabled",
-            "url": "https://helicone.ai"
+            "url": "https://helicone.ai",
         },
         "OpenRouter LLM": {
             "key": "OPENROUTER_API_KEY",
             "status": "disabled",
-            "url": "https://openrouter.ai"
+            "url": "https://openrouter.ai",
         },
         "Alpaca Trading": {
             "key": "ALPACA_API_KEY",
             "status": "disabled",
-            "url": "https://alpaca.markets"
+            "url": "https://alpaca.markets",
         },
     }
 
@@ -82,7 +82,7 @@ def check_and_enable():
         for name, url, key in missing_keys:
             print(f"\n  {name}:")
             print(f"    1. Go to: {url}")
-            print(f"    2. Get API key")
+            print("    2. Get API key")
             print(f"    3. Add to .env: {key}=your_key_here")
 
     # Set environment defaults for enabled features
@@ -123,10 +123,9 @@ def test_services():
     if os.getenv("ALPACA_API_KEY"):
         try:
             from alpaca.trading.client import TradingClient
+
             client = TradingClient(
-                os.getenv("ALPACA_API_KEY"),
-                os.getenv("ALPACA_SECRET_KEY"),
-                paper=True
+                os.getenv("ALPACA_API_KEY"), os.getenv("ALPACA_SECRET_KEY"), paper=True
             )
             account = client.get_account()
             print(f"  ✅ Alpaca: Connected (${float(account.equity):,.2f} equity)")
@@ -135,20 +134,21 @@ def test_services():
 
     # Test OpenRouter
     if os.getenv("OPENROUTER_API_KEY"):
-        print(f"  ✅ OpenRouter: Key configured")
+        print("  ✅ OpenRouter: Key configured")
 
     # Test LangSmith
     if os.getenv("LANGCHAIN_API_KEY"):
         try:
             from langsmith import Client
+
             client = Client()
-            print(f"  ✅ LangSmith: Connected")
+            print("  ✅ LangSmith: Connected")
         except Exception as e:
             print(f"  ⚠️  LangSmith: Key set but {e}")
 
     # Test Helicone
     if os.getenv("HELICONE_API_KEY"):
-        print(f"  ✅ Helicone: Key configured (routes through gateway)")
+        print("  ✅ Helicone: Key configured (routes through gateway)")
 
 
 if __name__ == "__main__":

@@ -76,7 +76,7 @@ def main():
 
         results = {}
         for symbol in args.symbols:
-            print(f"\n{'='*40}")
+            print(f"\n{'=' * 40}")
             print(f"Training {symbol}")
             print("=" * 40)
 
@@ -127,6 +127,7 @@ def main():
     except Exception as e:
         logger.error(f"Training failed: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

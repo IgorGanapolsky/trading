@@ -21,8 +21,8 @@ import logging
 import re
 from datetime import datetime, timedelta
 from typing import Any
-import defusedxml.ElementTree as ElementTree
 
+import defusedxml.ElementTree as ElementTree
 import requests
 
 from src.rag.collectors.base_collector import BaseNewsCollector
