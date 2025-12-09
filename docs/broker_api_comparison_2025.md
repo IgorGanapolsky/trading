@@ -250,13 +250,13 @@ After comprehensive research, Interactive Brokers is the clear winner as the bes
 ```
 Primary:   Alpaca     (self-clearing, best API)
 Secondary: IBKR       (enterprise-grade, battle-tested)
-Tertiary:  Webull     (zero commission, Apex clearing)
+Tertiary:  Tradier    (API-first cloud brokerage)
 ```
 
 **Why Three Brokers?**
 - **True Redundancy**: Three different clearing infrastructures
 - **Risk Mitigation**: If one broker has issues, two backups available
-- **Cost Optimization**: Webull's zero commission as final fallback
+- **API Quality**: All three have official, production-grade APIs
 
 ### PRIMARY: Alpaca (Current)
 
@@ -275,31 +275,29 @@ Already implemented as our main broker with excellent API.
 
 **Implementation Status:** ✅ Implemented in `src/brokers/ibkr_client.py`
 
-### TERTIARY BACKUP: Webull (NEW - Dec 9, 2025)
+### TERTIARY BACKUP: Tradier (Updated - Dec 9, 2025)
 
 **Rationale:**
-1. **Official API**: Unlike Robinhood, Webull has an official OpenAPI
-2. **Zero Commission**: Cost savings on failover trades
-3. **Different Infrastructure**: Apex Clearing (vs Alpaca self-clearing, IBKR)
-4. **Simple Setup**: Cloud-based, no desktop client required
-5. **Stock Lending**: Via Apex Clearing - additional passive income source
+1. **Official REST API**: Best-in-class API designed for algorithmic trading
+2. **Cloud-Based**: No desktop client required
+3. **Low Commissions**: $0 stock trades, competitive options pricing
+4. **Real-Time Streaming**: Built-in quote streaming support
+5. **Simple Integration**: Clean REST API with excellent documentation
 
-**Implementation Status:** ✅ Implemented in `src/brokers/webull_client.py`
+**Implementation Status:** ✅ Implemented in `src/brokers/tradier_client.py`
 
 **Environment Variables Required:**
 ```bash
-WEBULL_APP_KEY=your_app_key
-WEBULL_APP_SECRET=your_app_secret
-WEBULL_ACCOUNT_ID=your_account_id
-WEBULL_ACCESS_TOKEN=your_oauth_token
+TRADIER_ACCOUNT_NUMBER=your_account_number
+TRADIER_API_KEY=your_api_key
 ```
 
 ### NOT RECOMMENDED:
 - ❌ **Robinhood**: Unofficial API, high risk of breakage
 - ❌ **E*TRADE**: Authentication limitations, not automation-friendly
 - ❌ **FirstTrade**: No API access
+- ❌ **Webull**: No official API available for retail traders
 - ⏸️ **Schwab**: Wait for clear retail API availability
-- ⏸️ **Tradier**: Good option but not needed with Webull as tertiary
 
 ---
 
@@ -308,20 +306,19 @@ WEBULL_ACCESS_TOKEN=your_oauth_token
 ### Completed ✅
 - [x] Research broker alternatives
 - [x] Implement IBKR client (`src/brokers/ibkr_client.py`)
-- [x] Implement Webull client (`src/brokers/webull_client.py`)
+- [x] Implement Tradier client (`src/brokers/tradier_client.py`)
 - [x] Create multi-broker failover system (`src/brokers/multi_broker.py`)
 - [x] Add circuit breaker patterns for resilience
 - [x] Integrate all three brokers into failover chain
 
 ### Pending Account Setup
 - [ ] Open IBKR account (when ready for live trading)
-- [ ] Apply for Webull API access (1-3 day approval)
+- [ ] Configure Tradier credentials (already set in .env)
 - [ ] Configure environment variables for each broker
 - [ ] Test paper trading on all three brokers
 
 ### Stock Lending Setup (When Live)
 - [ ] Enable Alpaca FPSL program
-- [ ] Enroll in Webull SLIP (via Apex)
 - [ ] Enable IBKR stock lending (if available)
 - [ ] Track combined lending income in system state
 
@@ -377,4 +374,4 @@ WEBULL_ACCESS_TOKEN=your_oauth_token
 **Last Updated**: December 9, 2025
 **Research Completed By**: Claude (CTO)
 **Status**: ✅ Implementation Complete
-**Architecture**: Alpaca → IBKR → Webull (3-broker failover)
+**Architecture**: Alpaca → IBKR → Tradier (3-broker failover)

@@ -3,7 +3,7 @@ Broker clients for multi-broker trading with automatic failover.
 
 Primary: Alpaca (self-clearing)
 Secondary: Interactive Brokers (IBKR) - enterprise-grade
-Tertiary: Webull (via Apex Clearing) - zero commission
+Tertiary: Tradier (API-first cloud brokerage)
 
 True redundancy with three different clearing infrastructures.
 
@@ -25,9 +25,9 @@ from .ibkr_client import (
     IBKRClient,
     get_ibkr_client,
 )
-from .webull_client import (
-    WebullClient,
-    get_webull_client,
+from .tradier_client import (
+    TradierClient,
+    get_tradier_client,
 )
 
 __all__ = [
@@ -37,6 +37,6 @@ __all__ = [
     "OrderResult",
     "IBKRClient",
     "get_ibkr_client",
-    "WebullClient",
-    "get_webull_client",
+    "TradierClient",
+    "get_tradier_client",
 ]

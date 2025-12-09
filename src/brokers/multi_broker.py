@@ -4,7 +4,7 @@ Multi-Broker Failover System
 Automatically fails over between brokers when one is unavailable.
 Primary: Alpaca (self-clearing)
 Secondary: Interactive Brokers (IBKR) - enterprise-grade
-Tertiary: Webull (via Apex Clearing) - zero commission
+Tertiary: Tradier (API-first cloud brokerage)
 
 The system tries brokers in priority order, automatically
 switching to the next available broker if one fails.
@@ -13,7 +13,7 @@ True redundancy: Three different clearing infrastructures.
 
 Author: Trading System
 Created: 2025-12-08
-Updated: 2025-12-09 - Added Webull as tertiary failover
+Updated: 2025-12-09 - Added Tradier as tertiary failover
 """
 
 import logging
@@ -35,7 +35,7 @@ class BrokerType(Enum):
 
     ALPACA = "alpaca"
     IBKR = "ibkr"
-    WEBULL = "webull"
+    TRADIER = "tradier"
 
 
 @dataclass
@@ -96,7 +96,7 @@ class MultiBroker:
         self.circuit_breakers: dict[BrokerType, CircuitBreakerPattern] = {
             BrokerType.ALPACA: CircuitBreakerPattern(failure_threshold=3),
             BrokerType.IBKR: CircuitBreakerPattern(failure_threshold=3),
-            BrokerType.WEBULL: CircuitBreakerPattern(failure_threshold=3),
+            BrokerType.TRADIER: CircuitBreakerPattern(failure_threshold=3),
         }
 
         # Health status
@@ -105,7 +105,7 @@ class MultiBroker:
         # Initialize broker clients lazily
         self._alpaca_client = None
         self._ibkr_client = None
-        self._webull_client = None
+        self._tradier_client = None
 
         logger.info(
             f"MultiBroker initialized with primary={primary.value}, failover={enable_failover}"
@@ -146,19 +146,19 @@ class MultiBroker:
         return self._ibkr_client
 
     @property
-    def webull(self):
-        """Lazy-load Webull client."""
-        if self._webull_client is None:
+    def tradier(self):
+        """Lazy-load Tradier client."""
+        if self._tradier_client is None:
             try:
-                from src.brokers.webull_client import WebullClient
+                from src.brokers.tradier_client import TradierClient
 
-                client = WebullClient(paper=True)
+                client = TradierClient(paper=True)
                 if client.is_configured():
-                    self._webull_client = client
-                    logger.info("Webull client initialized")
+                    self._tradier_client = client
+                    logger.info("Tradier client initialized")
             except Exception as e:
-                logger.warning(f"Failed to initialize Webull: {e}")
-        return self._webull_client
+                logger.warning(f"Failed to initialize Tradier: {e}")
+        return self._tradier_client
 
     def _get_broker_order(self) -> list[BrokerType]:
         """Get order of brokers to try based on circuit breaker state."""
@@ -167,8 +167,8 @@ class MultiBroker:
         # Define failover priority order
         # Primary: Alpaca (self-clearing, best API)
         # Secondary: IBKR (enterprise-grade, battle-tested)
-        # Tertiary: Webull (zero commission, Apex clearing)
-        priority_order = [BrokerType.ALPACA, BrokerType.IBKR, BrokerType.WEBULL]
+        # Tertiary: Tradier (API-first cloud brokerage)
+        priority_order = [BrokerType.ALPACA, BrokerType.IBKR, BrokerType.TRADIER]
 
         # Start with primary
         if self.circuit_breakers[self.primary].can_execute():
@@ -187,7 +187,7 @@ class MultiBroker:
         alpaca_func: Callable[[], T],
         ibkr_func: Callable[[], T],
         operation_name: str,
-        webull_func: Optional[Callable[[], T]] = None,
+        tradier_func: Optional[Callable[[], T]] = None,
     ) -> tuple[T, BrokerType]:
         """
         Execute operation with automatic failover.
@@ -196,7 +196,7 @@ class MultiBroker:
             alpaca_func: Function to call for Alpaca
             ibkr_func: Function to call for IBKR
             operation_name: Name of operation for logging
-            webull_func: Optional function to call for Webull
+            tradier_func: Optional function to call for Tradier
 
         Returns:
             Tuple of (result, broker_used)
@@ -216,8 +216,8 @@ class MultiBroker:
                     result = alpaca_func()
                 elif broker == BrokerType.IBKR and self.ibkr:
                     result = ibkr_func()
-                elif broker == BrokerType.WEBULL and self.webull and webull_func:
-                    result = webull_func()
+                elif broker == BrokerType.TRADIER and self.tradier and tradier_func:
+                    result = tradier_func()
                 else:
                     continue
 
@@ -264,8 +264,8 @@ class MultiBroker:
                 "status": account.status,
             }
 
-        def webull_call():
-            account = self.webull.get_account()
+        def tradier_call():
+            account = self.tradier.get_account()
             return {
                 "equity": account.equity,
                 "cash": account.cash,
@@ -274,7 +274,7 @@ class MultiBroker:
             }
 
         return self._execute_with_failover(
-            alpaca_call, ibkr_call, "get_account", webull_call
+            alpaca_call, ibkr_call, "get_account", tradier_call
         )
 
     def get_positions(self) -> tuple[list[dict], BrokerType]:
@@ -306,8 +306,8 @@ class MultiBroker:
                 for pos in positions
             ]
 
-        def webull_call():
-            positions = self.webull.get_positions()
+        def tradier_call():
+            positions = self.tradier.get_positions()
             return [
                 {
                     "symbol": pos.symbol,
@@ -320,7 +320,7 @@ class MultiBroker:
             ]
 
         return self._execute_with_failover(
-            alpaca_call, ibkr_call, "get_positions", webull_call
+            alpaca_call, ibkr_call, "get_positions", tradier_call
         )
 
     def submit_order(
@@ -378,8 +378,8 @@ class MultiBroker:
                 limit_price=limit_price,
             )
 
-        def webull_call():
-            return self.webull.submit_order(
+        def tradier_call():
+            return self.tradier.submit_order(
                 symbol=symbol,
                 qty=qty,
                 side=side,
@@ -388,7 +388,7 @@ class MultiBroker:
             )
 
         result, broker = self._execute_with_failover(
-            alpaca_call, ibkr_call, f"submit_order({symbol})", webull_call
+            alpaca_call, ibkr_call, f"submit_order({symbol})", tradier_call
         )
 
         # Convert to unified OrderResult
@@ -416,7 +416,7 @@ class MultiBroker:
                 filled_price=result.avg_fill_price,
                 timestamp=datetime.now().isoformat(),
             )
-        else:  # Webull
+        else:  # Tradier
             return OrderResult(
                 broker=broker,
                 order_id=result.id,
@@ -454,11 +454,11 @@ class MultiBroker:
         def ibkr_call():
             return self.ibkr.get_quote(symbol)
 
-        def webull_call():
-            return self.webull.get_quote(symbol)
+        def tradier_call():
+            return self.tradier.get_quote(symbol)
 
         return self._execute_with_failover(
-            alpaca_call, ibkr_call, f"get_quote({symbol})", webull_call
+            alpaca_call, ibkr_call, f"get_quote({symbol})", tradier_call
         )
 
     def health_check(self) -> dict[str, Any]:
@@ -506,28 +506,28 @@ class MultiBroker:
             }
             self.circuit_breakers[BrokerType.IBKR].record_failure()
 
-        # Check Webull
+        # Check Tradier
         try:
-            if self.webull and self.webull.is_configured():
-                account = self.webull.get_account()
-                results["webull"] = {
+            if self.tradier and self.tradier.is_configured():
+                account = self.tradier.get_account()
+                results["tradier"] = {
                     "status": "healthy",
                     "equity": account.equity,
-                    "circuit_breaker": self.circuit_breakers[BrokerType.WEBULL].state.value,
+                    "circuit_breaker": self.circuit_breakers[BrokerType.TRADIER].state.value,
                 }
-                self.circuit_breakers[BrokerType.WEBULL].record_success()
+                self.circuit_breakers[BrokerType.TRADIER].record_success()
             else:
-                results["webull"] = {
+                results["tradier"] = {
                     "status": "not_configured",
-                    "circuit_breaker": self.circuit_breakers[BrokerType.WEBULL].state.value,
+                    "circuit_breaker": self.circuit_breakers[BrokerType.TRADIER].state.value,
                 }
         except Exception as e:
-            results["webull"] = {
+            results["tradier"] = {
                 "status": "unhealthy",
                 "error": str(e),
-                "circuit_breaker": self.circuit_breakers[BrokerType.WEBULL].state.value,
+                "circuit_breaker": self.circuit_breakers[BrokerType.TRADIER].state.value,
             }
-            self.circuit_breakers[BrokerType.WEBULL].record_failure()
+            self.circuit_breakers[BrokerType.TRADIER].record_failure()
 
         return results
 
