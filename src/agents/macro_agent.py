@@ -32,7 +32,16 @@ class MacroeconomicAgent:
         cache_ttl_hours: int = 12,
         cache_path: str | Path = "data/cache/macro_context.json",
     ):
-        self.rag_store = SentimentRAGStore()
+        # RAG store is optional - trading can proceed without it
+        try:
+            self.rag_store = SentimentRAGStore()
+        except ImportError as e:
+            logger.warning(f"RAG store unavailable (sentence-transformers not installed): {e}")
+            self.rag_store = None
+        except Exception as e:
+            logger.warning(f"RAG store initialization failed: {e}")
+            self.rag_store = None
+
         self.llm_agent = LangChainSentimentAgent()
         self.cache_ttl = timedelta(hours=cache_ttl_hours)
         self.cache_path = Path(cache_path)
@@ -77,6 +86,11 @@ class MacroeconomicAgent:
         logger.info("Performing fresh macroeconomic context analysis...")
 
         # 2. Query RAG store for relevant documents
+        # Skip RAG if not available (sentence-transformers not installed)
+        if self.rag_store is None:
+            logger.info("RAG store unavailable - returning NEUTRAL macro context")
+            return {"state": "NEUTRAL", "reason": "RAG features disabled (sentence-transformers not installed)"}
+
         try:
             query = (
                 "forward-looking macroeconomic outlook, "
