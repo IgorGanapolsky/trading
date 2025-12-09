@@ -61,11 +61,8 @@ dependencies = [
     "langsmith>=0.1.0",
 
     # Dashboard
-    "streamlit>=1.40.0,<1.46.0",
+    "streamlit>=1.40.0",
     "matplotlib>=3.7.0",
-
-    # X.ai Agentic Tools
-    "xai-sdk>=1.5.0",
 ]
 
 [project.optional-dependencies]
@@ -91,6 +88,11 @@ rag = [
 
 deepagents = [
     "deepagents>=0.2.5",
+]
+
+xai = [
+    # X.ai SDK - optional due to packaging conflicts with streamlit
+    "xai-sdk>=1.5.0",
 ]
 
 [project.urls]
