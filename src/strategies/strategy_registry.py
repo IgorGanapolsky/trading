@@ -454,6 +454,24 @@ class StrategyRegistry:
         )
         self.register(crypto_v1)
 
+        # Mean reversion strategy (RSI-2 based)
+        mean_reversion_v1 = StrategyRecord(
+            strategy_id="mean_reversion_rsi2_v1",
+            name="RSI(2) Mean Reversion Strategy",
+            description="RSI(2) mean reversion for ranging markets (75% win rate, 30-year backtest)",
+            strategy_type=StrategyType.MEAN_REVERSION,
+            module_path="src.strategies.mean_reversion_strategy",
+            class_name="MeanReversionStrategy",
+            status=StrategyStatus.DEVELOPMENT,
+            data_sources=["yfinance"],
+            features=["rsi_2", "rsi_5", "sma_200", "vix_filter", "trend_filter"],
+            tags=["mean_reversion", "rsi", "etf", "quantified_strategies"],
+            notes="Based on Quantified Strategies research. Best for SIDEWAYS/ranging markets. "
+            "Complements momentum strategy which works in trending markets. "
+            "Expected: 75% win rate, 0.8% avg gain, 1-5 day holds.",
+        )
+        self.register(mean_reversion_v1)
+
         self._save()
         logger.info("Initialized registry with default strategies")
 
