@@ -535,6 +535,157 @@ class MentalToughnessCoach:
             },
         }
 
+    def get_prompt_context(self) -> str:
+        """Get psychology context formatted for injection into LLM prompts.
+
+        This is the KEY METHOD that bridges psychology to LLM decision-making.
+        Returns text that should be appended to LLM system prompts to help
+        the model make bias-aware, psychologically-informed decisions.
+
+        Based on research showing:
+        - LLMs exhibit cognitive biases (recency, loss aversion, overconfidence)
+        - Self-reflection and bias mitigation prompts improve decisions
+        - Constitutional AI-style self-critique reduces errors
+
+        Returns:
+            Formatted string for LLM prompt injection
+        """
+        state = self.state
+        zone = state.current_zone.value
+        readiness = state.get_readiness_score()
+        energy = state.mental_energy * 100
+        active_biases = [b.bias_type.value for b in state.active_biases]
+        consecutive_losses = state.consecutive_losses
+        consecutive_wins = state.consecutive_wins
+
+        # Build bias-specific warnings
+        bias_warnings = []
+        if "loss_aversion" in active_biases:
+            bias_warnings.append(
+                "- LOSS AVERSION DETECTED: You may be holding losers too long. "
+                "Evaluate positions objectively, not based on entry price."
+            )
+        if "revenge_trading" in active_biases:
+            bias_warnings.append(
+                "- REVENGE TRADING RISK: Recent losses may drive aggressive behavior. "
+                "Reduce position sizes by 50%. Require higher conviction."
+            )
+        if "fomo" in active_biases:
+            bias_warnings.append(
+                "- FOMO DETECTED: Fear of missing out may cause chasing. "
+                "Wait for pullbacks. There will always be another opportunity."
+            )
+        if "overconfidence" in active_biases:
+            bias_warnings.append(
+                "- OVERCONFIDENCE WARNING: Recent wins may inflate confidence. "
+                "Remember: streaks end. Maintain discipline."
+            )
+        if "recency_bias" in active_biases:
+            bias_warnings.append(
+                "- RECENCY BIAS: You may be overweighting recent data. "
+                "Consider historical patterns equally with recent moves."
+            )
+        if "confirmation_bias" in active_biases:
+            bias_warnings.append(
+                "- CONFIRMATION BIAS: Actively seek disconfirming evidence. "
+                "What would make this trade WRONG?"
+            )
+
+        # Zone-specific guidance
+        zone_guidance = {
+            "FLOW": "Psychology: OPTIMAL. Execute with confidence.",
+            "CHALLENGE": "Psychology: ENGAGED. Standard risk parameters.",
+            "CAUTION": "Psychology: ELEVATED RISK. Consider reducing position sizes.",
+            "DANGER": "Psychology: COMPROMISED. Require 80%+ conviction for any trade.",
+            "TILT": "Psychology: CRITICAL. Trading NOT recommended. Capital preservation mode.",
+        }.get(zone, "Psychology: Unknown state.")
+
+        # Position size modifier based on psychology
+        if zone in ["TILT", "DANGER"] or consecutive_losses >= 3:
+            size_modifier = "REDUCE position sizes by 50-75%"
+        elif zone == "CAUTION" or consecutive_losses >= 2:
+            size_modifier = "REDUCE position sizes by 25-50%"
+        elif consecutive_wins >= 4:
+            size_modifier = "MAINTAIN standard sizes (avoid overconfidence scaling)"
+        else:
+            size_modifier = "Standard position sizing"
+
+        # Build the prompt context
+        context_parts = [
+            "",
+            "=" * 60,
+            "COGNITIVE BIAS MITIGATION & PSYCHOLOGY CONTEXT",
+            "=" * 60,
+            "",
+            "RESEARCH-BACKED BIAS AWARENESS (Kahneman, Siebold, Robbins):",
+            "- You exhibit RECENCY BIAS: Weight historical data equally with recent.",
+            "- You exhibit LOSS AVERSION: Losses feel 2x worse than gains. Stay objective.",
+            "- You exhibit OVERCONFIDENCE after wins: Maintain humility and discipline.",
+            "- Engage SYSTEM 2 THINKING: Slow, deliberate, logical analysis.",
+            "",
+            f"CURRENT TRADING PSYCHOLOGY STATE:",
+            f"- Zone: {zone} | Readiness: {readiness:.0f}/100 | Energy: {energy:.0f}%",
+            f"- Consecutive Wins: {consecutive_wins} | Consecutive Losses: {consecutive_losses}",
+            f"- {zone_guidance}",
+            f"- Position Sizing: {size_modifier}",
+        ]
+
+        if bias_warnings:
+            context_parts.extend([
+                "",
+                "ACTIVE BIAS ALERTS (detected in recent trading):",
+            ])
+            context_parts.extend(bias_warnings)
+
+        context_parts.extend([
+            "",
+            "DECISION FRAMEWORK (apply to every recommendation):",
+            "1. What is the BEAR case? (always consider what could go wrong)",
+            "2. Am I chasing or waiting for my setup?",
+            "3. If this trade loses, will I regret the size?",
+            "4. Is my conviction based on analysis or emotion?",
+            "",
+            "=" * 60,
+        ])
+
+        return "\n".join(context_parts)
+
+    def get_position_size_modifier(self) -> float:
+        """Get a multiplier for position sizing based on psychology state.
+
+        Returns:
+            Float multiplier (0.25 to 1.0) to apply to position sizes
+        """
+        state = self.state
+        zone = state.current_zone.value
+
+        # Start with base multiplier
+        multiplier = 1.0
+
+        # Zone adjustments
+        if zone == "TILT":
+            multiplier = 0.0  # No trading
+        elif zone == "DANGER":
+            multiplier = 0.25
+        elif zone == "CAUTION":
+            multiplier = 0.5
+        elif zone == "CHALLENGE":
+            multiplier = 0.75
+
+        # Consecutive loss adjustments
+        if state.consecutive_losses >= 4:
+            multiplier = min(multiplier, 0.25)
+        elif state.consecutive_losses >= 3:
+            multiplier = min(multiplier, 0.5)
+        elif state.consecutive_losses >= 2:
+            multiplier = min(multiplier, 0.75)
+
+        # Overconfidence check (don't increase size after wins)
+        if state.consecutive_wins >= 4:
+            multiplier = min(multiplier, 1.0)  # Cap at 1.0, no increase
+
+        return multiplier
+
     def _is_on_cooldown(self, intervention_type: InterventionType) -> bool:
         """Check if intervention type is on cooldown."""
         if intervention_type not in self._intervention_cooldown:
@@ -603,3 +754,20 @@ def is_ready_to_trade() -> tuple[bool, CoachingIntervention | None]:
 def get_affirmation() -> str:
     """Get daily affirmation."""
     return get_coach().get_daily_affirmation()
+
+
+def get_prompt_context() -> str:
+    """Get psychology context for LLM prompt injection.
+
+    This is the KEY function that bridges psychology to LLM decision-making.
+    Call this and append the result to any LLM system prompt.
+    """
+    return get_coach().get_prompt_context()
+
+
+def get_position_size_modifier() -> float:
+    """Get position size multiplier based on psychology state.
+
+    Returns float between 0.0 (no trading) and 1.0 (full size).
+    """
+    return get_coach().get_position_size_modifier()
