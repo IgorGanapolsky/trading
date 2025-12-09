@@ -629,3 +629,38 @@ Next Steps:
 Status: Infrastructure READY, execution PENDING environment setup
 
 ---
+
+=== Session: December 9, 2025 (Evening) ===
+
+Today's Accomplishments:
+1. Analyzed Kalshi CEO podcast insights on prediction markets
+2. Created comprehensive Kalshi enhancement plan (docs/kalshi-enhancement-plan.md)
+3. Implemented Kalshi Oracle for cross-asset signals (src/signals/kalshi_oracle.py)
+   - Fed rate odds → Bond signals
+   - Recession odds → Sector rotation signals
+   - BTC price odds → Crypto allocation signals
+4. Integrated Kalshi Oracle into CoreStrategy (Step 4.6)
+5. Added unit tests (tests/test_kalshi_oracle.py)
+6. Created and merged PR #374
+
+Dashboard Status:
+- Portfolio: $100,017.49 (+$17.49, +0.017%)
+- Day 9/90 R&D Phase
+- 0% live win rate (1 closed trade, small loss)
+- Backtest: 62.2% win rate, 2.18 Sharpe (promising)
+- All 22 features passing
+
+Next Trade: Dec 10, 9:35 AM ET
+- Kalshi Oracle now active for signal validation
+- Will use prediction markets as leading indicators
+
+Blockers:
+- Walk-forward validation needs numpy (env missing dependencies)
+- Need first profitable closed trade to validate live edge
+
+Next Session Priorities:
+1. Monitor Dec 10 trade execution
+2. Run walk-forward validation when env available
+3. Track positions for take-profit opportunities
+
+---
