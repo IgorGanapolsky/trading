@@ -234,7 +234,7 @@ If I catch myself about to suggest manual intervention:
 - GitHub MCP server
 - `gh` CLI (GitHub CLI) - may be blocked in some environments
 
-**GitHub PAT:** `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`
+**GitHub PAT:** Provided by CEO at runtime (GitHub blocks storing PATs in repos - security feature)
 
 **Create PR (via GitHub API - PREFERRED):**
 ```bash
