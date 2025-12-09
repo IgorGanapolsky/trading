@@ -105,3 +105,14 @@ repos:
         pass_filenames: false
         verbose: true
         stages: [pre-commit]
+
+      - id: validate-workflow-secrets
+        name: Validate Workflow Secrets (Zero Tolerance)
+        entry: python3 scripts/validate_workflow_secrets.py
+        language: python
+        additional_dependencies: [pyyaml]
+        types: [yaml]
+        files: '\.github/workflows/.*\.yml$'
+        pass_filenames: false
+        verbose: true
+        stages: [pre-commit]
