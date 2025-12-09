@@ -19,10 +19,10 @@ from src.signals.options_signal_enhancer import (
 )
 
 from src.signals.kalshi_oracle import (
+    AssetClass,
     KalshiOracle,
     KalshiSignal,
     SignalDirection,
-    AssetClass,
     get_kalshi_oracle,
     get_kalshi_signals,
 )
