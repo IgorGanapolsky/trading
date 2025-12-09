@@ -88,22 +88,25 @@ class UnifiedSentiment:
     """
 
     # Source weights (must sum to 1.0)
+    # Dec 9, 2025: Reduced Reddit from 0.25 to 0.10 - meme forum noise outweighs signal
+    # Redistributed weight to news (professional analysts more reliable)
     SOURCE_WEIGHTS = {
-        "news": 0.30,  # Professional news and analyst sentiment
-        "reddit": 0.25,  # Retail investor sentiment
+        "news": 0.45,  # Professional news and analyst sentiment (increased from 0.30)
+        "reddit": 0.10,  # Retail investor sentiment (reduced from 0.25 - meme forum noise)
         "youtube": 0.20,  # Expert content creator analysis
         "linkedin": 0.15,  # Professional network sentiment
         "tiktok": 0.10,  # Viral trends and momentum
     }
 
     # Signal thresholds
-    BULLISH_THRESHOLD = 0.20  # > 0.20 = bullish
-    BEARISH_THRESHOLD = -0.20  # < -0.20 = bearish
+    # Dec 9, 2025: Increased from 0.20 to 0.35 to reduce false positives from noise
+    BULLISH_THRESHOLD = 0.35  # > 0.35 = bullish (was 0.20)
+    BEARISH_THRESHOLD = -0.35  # < -0.35 = bearish (was -0.20)
 
     # Recommendation thresholds (more conservative)
-    BUY_THRESHOLD = 0.40  # > 0.40 + high confidence = BUY_SIGNAL
-    SELL_THRESHOLD = -0.40  # < -0.40 + high confidence = SELL_SIGNAL
-    MIN_CONFIDENCE_FOR_ACTION = 0.60  # Need 60%+ confidence for BUY/SELL
+    BUY_THRESHOLD = 0.50  # > 0.50 + high confidence = BUY_SIGNAL (was 0.40)
+    SELL_THRESHOLD = -0.50  # < -0.50 + high confidence = SELL_SIGNAL (was -0.40)
+    MIN_CONFIDENCE_FOR_ACTION = 0.75  # Need 75%+ confidence for BUY/SELL (was 0.60)
 
     # Cache settings
     CACHE_TTL_SECONDS = 3600  # 1 hour
@@ -587,6 +590,34 @@ class UnifiedSentiment:
         overall_confidence = (
             sum(confidence_scores) / len(confidence_scores) if confidence_scores else 0.0
         )
+
+        # Dec 9, 2025: Source disagreement circuit breaker
+        # If professional sources (news) disagree significantly with retail (reddit),
+        # reduce confidence - the signal is unreliable
+        news_sent = source_sentiments.get("news")
+        reddit_sent = source_sentiments.get("reddit")
+        if (
+            news_sent
+            and reddit_sent
+            and news_sent.available
+            and reddit_sent.available
+        ):
+            # Check for significant disagreement (opposite directions with strong signals)
+            news_score = news_sent.score
+            reddit_score = reddit_sent.score
+            DISAGREEMENT_THRESHOLD = 0.3  # Both need to be strongly opinionated
+
+            if (news_score > DISAGREEMENT_THRESHOLD and reddit_score < -DISAGREEMENT_THRESHOLD) or (
+                news_score < -DISAGREEMENT_THRESHOLD and reddit_score > DISAGREEMENT_THRESHOLD
+            ):
+                # Sources disagree significantly - reduce confidence by 50%
+                original_confidence = overall_confidence
+                overall_confidence *= 0.5
+                logger.warning(
+                    f"{symbol}: Source disagreement detected! "
+                    f"news={news_score:.2f}, reddit={reddit_score:.2f}. "
+                    f"Reducing confidence from {original_confidence:.2f} to {overall_confidence:.2f}"
+                )
 
         # Determine signal
         if overall_score > self.BULLISH_THRESHOLD:
