@@ -270,6 +270,11 @@ def crypto_enabled() -> bool:
     return os.getenv("ENABLE_CRYPTO_AGENT", "false").lower() in {"1", "true", "yes"}
 
 
+def crypto_daily_enabled() -> bool:
+    """Feature flag for daily crypto trading (not just weekends/holidays)."""
+    return os.getenv("CRYPTO_DAILY", "true").lower() in {"1", "true", "yes"}
+
+
 def _load_equity_snapshot() -> float | None:
     """Pull the most recent equity figure from disk or simulation env."""
 
@@ -617,10 +622,12 @@ def main() -> None:
             logger.warning("Prediction-only requested but ENABLE_PREDICTION_MARKETS is not true.")
             return
 
+    # Crypto runs daily when CRYPTO_DAILY=true (default), or on weekends/holidays
+    crypto_daily = crypto_daily_enabled()
     should_run_crypto = (
         not args.skip_crypto
         and crypto_allowed
-        and (args.crypto_only or is_weekend_day or is_holiday)
+        and (args.crypto_only or crypto_daily or is_weekend_day or is_holiday)
         and not weekend_proxy_active
     )
 
@@ -643,6 +650,8 @@ def main() -> None:
         reason = []
         if args.crypto_only:
             reason.append("--crypto-only flag")
+        if crypto_daily and not (is_weekend_day or is_holiday):
+            reason.append("daily crypto enabled")
         if is_weekend_day:
             reason.append("weekend")
         if is_holiday:
