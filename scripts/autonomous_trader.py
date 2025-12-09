@@ -206,8 +206,58 @@ def _flag_enabled(env_name: str, default: str = "true") -> bool:
 
 
 def _parse_tickers() -> list[str]:
-    raw = os.getenv("TARGET_TICKERS", "SPY,QQQ,VOO")
-    return [ticker.strip().upper() for ticker in raw.split(",") if ticker.strip()]
+    """
+    Parse trading tickers from env var or tier2_watchlist.json.
+
+    Priority:
+    1. TARGET_TICKERS env var (if set)
+    2. Tier 2 watchlist (current_holdings from tier2_watchlist.json)
+    3. Default: SPY,QQQ,VOO,NVDA,GOOGL,AMZN (Tier 1 ETFs + Tier 2 growth stocks)
+
+    Returns:
+        List of ticker symbols to trade
+    """
+    # Check if TARGET_TICKERS is explicitly set
+    raw = os.getenv("TARGET_TICKERS")
+    if raw:
+        return [ticker.strip().upper() for ticker in raw.split(",") if ticker.strip()]
+
+    # Try loading from tier2_watchlist.json
+    try:
+        watchlist_path = Path("data/tier2_watchlist.json")
+        if watchlist_path.exists():
+            with open(watchlist_path) as f:
+                watchlist_data = json.load(f)
+                tier2_tickers = []
+
+                # Get current holdings (active stocks we want to trade)
+                holdings = watchlist_data.get("current_holdings", [])
+                tier2_tickers.extend([h["ticker"] for h in holdings if h.get("status") == "active"])
+
+                # Also include high-priority watchlist items (e.g., AMZN)
+                watchlist_items = watchlist_data.get("watchlist", [])
+                tier2_tickers.extend([
+                    w["ticker"] for w in watchlist_items
+                    if w.get("priority") == "high" and w.get("status") == "watchlist"
+                ])
+
+                if tier2_tickers:
+                    # Combine Tier 1 ETFs with Tier 2 growth stocks (deduplicate)
+                    combined = ["SPY", "QQQ", "VOO"] + list(set(tier2_tickers))
+                    logger = setup_logging()
+                    logger.info(
+                        "Loaded %d Tier 2 tickers from tier2_watchlist.json: %s",
+                        len(tier2_tickers),
+                        ", ".join(tier2_tickers)
+                    )
+                    return combined
+    except Exception as e:
+        logger = setup_logging()
+        logger.warning("Failed to load tier2_watchlist.json: %s. Using default tickers.", e)
+
+    # Default: Tier 1 ETFs + top Tier 2 growth stocks (Dec 9, 2025)
+    # Added NVDA, GOOGL, AMZN to allow more trading opportunities during R&D phase
+    return ["SPY", "QQQ", "VOO", "NVDA", "GOOGL", "AMZN"]
 
 
 def is_weekend() -> bool:
@@ -348,14 +398,15 @@ def execute_crypto_trading() -> None:
     logger.info("=" * 80)
 
     try:
-        # Initialize dependencies
-        trader = None
+        # Initialize dependencies - MUST have valid trader for crypto
         try:
             trader = AlpacaTrader(paper=True)
+            logger.info(f"✅ AlpacaTrader initialized in {'PAPER' if trader.paper else 'LIVE'} mode")
         except Exception as e:
-            logger.warning(f"⚠️  Trading API unavailable (Missing Keys?): {e}")
-            logger.warning("   -> Proceeding in ANALYSIS/INTERNAL SIMULATION mode.")
-            trader = None
+            logger.error(f"❌ Trading API unavailable - cannot execute crypto trades: {e}")
+            logger.error("   -> Crypto trading requires valid Alpaca credentials")
+            logger.error("   -> Set ALPACA_API_KEY and ALPACA_SECRET_KEY in .env")
+            raise RuntimeError(f"Crypto trading failed: Alpaca API unavailable - {e}") from e
 
         risk_manager = RiskManager(
             full_params=dict(
@@ -404,7 +455,7 @@ def execute_crypto_trading() -> None:
                     "status": "FILLED" if hasattr(order, "status") else "FILLED",
                     "strategy": "CryptoStrategy",
                     "reason": order.reason,
-                    "mode": "ANALYSIS" if trader is None else "LIVE",
+                    "mode": "PAPER" if trader.paper else "LIVE",
                 }
                 daily_trades.append(trade_record)
 
