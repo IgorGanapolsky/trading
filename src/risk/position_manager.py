@@ -30,6 +30,31 @@ logger = logging.getLogger(__name__)
 # Default path for persisting position state
 DEFAULT_STATE_FILE = Path(__file__).parent.parent.parent / "data" / "system_state.json"
 
+# Asset class definitions for exit threshold tuning
+TREASURY_ETFS = {"BIL", "SHY", "IEF", "TLT", "GOVT", "ZROZ", "VGSH", "VGIT", "VGLT", "SCHO", "SCHR"}
+CRYPTO_ASSETS = {"BTCUSD", "ETHUSD", "BTC", "ETH", "BITO", "GBTC", "ETHE"}
+BOND_ETFS = {"AGG", "BND", "LQD", "HYG", "JNK", "TIP", "VCSH", "VCIT"}
+
+
+class AssetClass(Enum):
+    """Asset class for threshold selection."""
+    TREASURY = "treasury"
+    BOND = "bond"
+    CRYPTO = "crypto"
+    EQUITY = "equity"
+
+
+def get_asset_class(symbol: str) -> AssetClass:
+    """Determine asset class from symbol for appropriate exit thresholds."""
+    symbol_upper = symbol.upper()
+    if symbol_upper in TREASURY_ETFS:
+        return AssetClass.TREASURY
+    if symbol_upper in CRYPTO_ASSETS:
+        return AssetClass.CRYPTO
+    if symbol_upper in BOND_ETFS:
+        return AssetClass.BOND
+    return AssetClass.EQUITY
+
 
 class ExitReason(Enum):
     """Enumeration of position exit reasons."""
@@ -51,6 +76,12 @@ class ExitConditions:
     These are tighter than typical buy-and-hold strategies to ensure
     active position management and generate closed trade data for win rate.
 
+    Asset-class-specific thresholds (as of Dec 9, 2025):
+    - Treasuries: 0.5% (barely move, need tight thresholds)
+    - Bonds: 1.0% (moderate volatility)
+    - Equities: 3.0% (standard)
+    - Crypto: 5.0% (high volatility)
+
     Attributes:
         take_profit_pct: Profit target percentage (default: 3%)
         stop_loss_pct: Maximum loss percentage (default: 3%)
@@ -66,6 +97,35 @@ class ExitConditions:
     enable_momentum_exit: bool = True  # Exit on MACD bearish cross
     enable_atr_stop: bool = True  # Use ATR-based stops
     atr_multiplier: float = 2.0  # 2x ATR for stop distance
+
+    # Asset-class-specific overrides
+    treasury_take_profit_pct: float = 0.005  # 0.5% for treasuries
+    treasury_stop_loss_pct: float = 0.005  # 0.5% for treasuries
+    treasury_max_holding_days: int = 3  # 3 days for treasuries
+
+    bond_take_profit_pct: float = 0.01  # 1.0% for bonds
+    bond_stop_loss_pct: float = 0.01  # 1.0% for bonds
+    bond_max_holding_days: int = 5  # 5 days for bonds
+
+    crypto_take_profit_pct: float = 0.05  # 5.0% for crypto
+    crypto_stop_loss_pct: float = 0.05  # 5.0% for crypto
+    crypto_max_holding_days: int = 7  # 7 days for crypto
+
+    def get_thresholds_for_asset(self, asset_class: AssetClass) -> tuple[float, float, int]:
+        """
+        Get take_profit, stop_loss, and max_holding_days for an asset class.
+
+        Returns:
+            Tuple of (take_profit_pct, stop_loss_pct, max_holding_days)
+        """
+        if asset_class == AssetClass.TREASURY:
+            return (self.treasury_take_profit_pct, self.treasury_stop_loss_pct, self.treasury_max_holding_days)
+        if asset_class == AssetClass.BOND:
+            return (self.bond_take_profit_pct, self.bond_stop_loss_pct, self.bond_max_holding_days)
+        if asset_class == AssetClass.CRYPTO:
+            return (self.crypto_take_profit_pct, self.crypto_stop_loss_pct, self.crypto_max_holding_days)
+        # Default: equity
+        return (self.take_profit_pct, self.stop_loss_pct, self.max_holding_days)
 
 
 @dataclass
@@ -215,6 +275,12 @@ class PositionManager:
         This is the core method that determines if a position should be closed
         and why. It checks all exit conditions in priority order.
 
+        Uses ASSET-CLASS-SPECIFIC thresholds:
+        - Treasuries (BIL, SHY, IEF, TLT): 0.5% thresholds, 3 day max hold
+        - Bonds (AGG, BND, etc.): 1.0% thresholds, 5 day max hold
+        - Crypto (BTCUSD, ETHUSD): 5.0% thresholds, 7 day max hold
+        - Equities (SPY, QQQ, etc.): 3.0% thresholds, 10 day max hold
+
         Args:
             position: Position information to evaluate
 
@@ -224,37 +290,42 @@ class PositionManager:
         symbol = position.symbol
         unrealized_plpc = position.unrealized_plpc
 
+        # Get asset-class-specific thresholds
+        asset_class = get_asset_class(symbol)
+        take_profit_pct, stop_loss_pct, max_holding_days = self.conditions.get_thresholds_for_asset(asset_class)
+
         logger.info(f"\n{'=' * 60}")
-        logger.info(f"Evaluating position: {symbol}")
+        logger.info(f"Evaluating position: {symbol} ({asset_class.value.upper()})")
         logger.info(f"  Entry: ${position.entry_price:.2f}")
         logger.info(f"  Current: ${position.current_price:.2f}")
         logger.info(f"  P/L: {unrealized_plpc * 100:.2f}%")
+        logger.info(f"  Thresholds: TP={take_profit_pct*100:.1f}%, SL={stop_loss_pct*100:.1f}%, MaxDays={max_holding_days}")
 
         # 1. Check STOP-LOSS (highest priority - protect capital)
-        if unrealized_plpc <= -self.conditions.stop_loss_pct:
+        if unrealized_plpc <= -stop_loss_pct:
             logger.warning(
                 f"  🛑 STOP-LOSS TRIGGERED: {unrealized_plpc * 100:.2f}% <= "
-                f"-{self.conditions.stop_loss_pct * 100:.1f}%"
+                f"-{stop_loss_pct * 100:.1f}%"
             )
             return ExitSignal(
                 symbol=symbol,
                 should_exit=True,
                 reason=ExitReason.STOP_LOSS,
-                details=f"Loss of {unrealized_plpc * 100:.2f}% exceeds {self.conditions.stop_loss_pct * 100:.1f}% limit",
+                details=f"Loss of {unrealized_plpc * 100:.2f}% exceeds {stop_loss_pct * 100:.1f}% limit ({asset_class.value})",
                 urgency=5,
             )
 
         # 2. Check TAKE-PROFIT
-        if unrealized_plpc >= self.conditions.take_profit_pct:
+        if unrealized_plpc >= take_profit_pct:
             logger.info(
                 f"  🎯 TAKE-PROFIT TRIGGERED: {unrealized_plpc * 100:.2f}% >= "
-                f"{self.conditions.take_profit_pct * 100:.1f}%"
+                f"{take_profit_pct * 100:.1f}%"
             )
             return ExitSignal(
                 symbol=symbol,
                 should_exit=True,
                 reason=ExitReason.TAKE_PROFIT,
-                details=f"Profit of {unrealized_plpc * 100:.2f}% reached {self.conditions.take_profit_pct * 100:.1f}% target",
+                details=f"Profit of {unrealized_plpc * 100:.2f}% reached {take_profit_pct * 100:.1f}% target ({asset_class.value})",
                 urgency=4,
             )
 
@@ -262,20 +333,20 @@ class PositionManager:
         entry_date = self.get_entry_date(symbol)
         if entry_date:
             days_held = (datetime.now() - entry_date).days
-            if days_held >= self.conditions.max_holding_days:
+            if days_held >= max_holding_days:
                 logger.info(
                     f"  ⏰ TIME-DECAY TRIGGERED: Held {days_held} days >= "
-                    f"{self.conditions.max_holding_days} day limit"
+                    f"{max_holding_days} day limit ({asset_class.value})"
                 )
                 return ExitSignal(
                     symbol=symbol,
                     should_exit=True,
                     reason=ExitReason.TIME_DECAY,
-                    details=f"Position held {days_held} days exceeds {self.conditions.max_holding_days} day limit",
+                    details=f"Position held {days_held} days exceeds {max_holding_days} day limit ({asset_class.value})",
                     urgency=3,
                 )
             else:
-                logger.info(f"  Days held: {days_held}/{self.conditions.max_holding_days}")
+                logger.info(f"  Days held: {days_held}/{max_holding_days}")
         else:
             logger.warning(f"  ⚠️ No entry date tracked for {symbol} - cannot check time decay")
 
