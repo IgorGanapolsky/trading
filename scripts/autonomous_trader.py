@@ -558,8 +558,11 @@ if __name__ == "__main__":
         print("::notice::5/5 sys.exit(0) called", flush=True)
         sys.exit(0)
     except SystemExit as e:
-        # Capture the exit code
-        print(f"::error::SystemExit caught with code={e.code}", flush=True)
+        # Capture the exit code - only log as error if non-zero
+        if e.code != 0:
+            print(f"::error::SystemExit caught with code={e.code}", flush=True)
+        else:
+            print(f"::notice::SystemExit caught with code=0 (success)", flush=True)
         raise
     except BaseException as e:
         # Catch EVERYTHING including KeyboardInterrupt, SystemExit, etc.
