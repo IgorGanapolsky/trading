@@ -92,16 +92,16 @@ class ExitConditions:
         atr_multiplier: ATR multiplier for dynamic stop calculation
     """
 
-    take_profit_pct: float = 0.03  # 3% profit target (tighter for active trading)
-    stop_loss_pct: float = 0.03  # 3% stop loss (tighter for active trading)
+    take_profit_pct: float = 0.01  # 1% profit target (tighter for active trading)
+    stop_loss_pct: float = 0.01  # 1% stop loss (tighter for active trading)
     max_holding_days: int = 10  # Close after 10 days regardless
     enable_momentum_exit: bool = True  # Exit on MACD bearish cross
     enable_atr_stop: bool = True  # Use ATR-based stops
     atr_multiplier: float = 2.0  # 2x ATR for stop distance
 
     # Asset-class-specific overrides
-    treasury_take_profit_pct: float = 0.005  # 0.5% for treasuries
-    treasury_stop_loss_pct: float = 0.005  # 0.5% for treasuries
+    treasury_take_profit_pct: float = 0.003  # 0.3% for treasuries (they move <0.5%)
+    treasury_stop_loss_pct: float = 0.003  # 0.3% for treasuries (they move <0.5%)
     treasury_max_holding_days: int = 3  # 3 days for treasuries
 
     bond_take_profit_pct: float = 0.01  # 1.0% for bonds
@@ -567,8 +567,8 @@ class PositionManager:
 # Default instance with tighter conditions for active trading
 DEFAULT_POSITION_MANAGER = PositionManager(
     conditions=ExitConditions(
-        take_profit_pct=0.03,  # 3% take-profit
-        stop_loss_pct=0.03,  # 3% stop-loss
+        take_profit_pct=0.01,  # 1% take-profit
+        stop_loss_pct=0.01,  # 1% stop-loss
         max_holding_days=10,  # Max 10 days
         enable_momentum_exit=True,
         enable_atr_stop=True,

@@ -136,8 +136,8 @@ class TradingOrchestrator:
         # Position manager for active exit management
         self.position_manager = PositionManager(
             conditions=ExitConditions(
-                take_profit_pct=float(os.getenv("TAKE_PROFIT_PCT", "0.03")),
-                stop_loss_pct=float(os.getenv("STOP_LOSS_PCT", "0.03")),
+                take_profit_pct=float(os.getenv("TAKE_PROFIT_PCT", "0.01")),
+                stop_loss_pct=float(os.getenv("STOP_LOSS_PCT", "0.01")),
                 max_holding_days=int(os.getenv("MAX_HOLDING_DAYS", "10")),
                 enable_momentum_exit=os.getenv("ENABLE_MOMENTUM_EXIT", "true").lower()
                 in {"1", "true"},
@@ -1678,7 +1678,7 @@ class TradingOrchestrator:
         logger.info("--- Gate 6: Phil Town Rule #1 Options Strategy ---")
 
         # Check if theta automation is enabled
-        theta_enabled = os.getenv("ENABLE_THETA_AUTOMATION", "false").lower() in (
+        theta_enabled = os.getenv("ENABLE_THETA_AUTOMATION", "true").lower() in (
             "true",
             "1",
             "yes",

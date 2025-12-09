@@ -15,6 +15,7 @@ from datetime import datetime
 from typing import Any
 
 from src.core.alpaca_trader import AlpacaTrader, AlpacaTraderError
+from src.brokers.multi_broker import MultiBroker, get_multi_broker
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +35,19 @@ class AlpacaExecutor:
         self.simulated = os.getenv("ALPACA_SIMULATED", "false").lower() in {"1", "true"}
         self.paper = paper
 
+        # Multi-broker failover support (opt-in via env var)
+        self.enable_failover = os.getenv("ENABLE_BROKER_FAILOVER", "false").lower() in {"1", "true"}
+        self.multi_broker: MultiBroker | None = None
+
         if not self.simulated:
             try:
                 self.trader = AlpacaTrader(paper=paper)
+
+                # Initialize multi-broker if failover is enabled
+                if self.enable_failover:
+                    self.multi_broker = get_multi_broker()
+                    logger.info("Multi-broker failover ENABLED (Alpaca → IBKR → Tradier)")
+
             except AlpacaTraderError as exc:
                 if not allow_simulator:
                     raise
@@ -131,6 +142,41 @@ class AlpacaExecutor:
             self.simulated_orders.append(order)
             return order
 
+        # Use multi-broker failover if enabled
+        if self.enable_failover and self.multi_broker:
+            # Convert notional to qty if needed (MultiBroker expects qty)
+            if notional and not qty:
+                # Get current price to estimate qty
+                try:
+                    quote_data, _ = self.multi_broker.get_quote(symbol)
+                    price = quote_data.get("last", 0) or quote_data.get("ask", 0)
+                    if price > 0:
+                        qty = notional / price
+                except Exception as e:
+                    logger.warning(f"Failed to get quote for {symbol}, falling back to Alpaca: {e}")
+                    # Fall through to regular Alpaca order
+
+            if qty:
+                # Submit via MultiBroker with automatic failover
+                order_result = self.multi_broker.submit_order(
+                    symbol=symbol,
+                    qty=qty,
+                    side=side,
+                    order_type="market",
+                )
+
+                # Convert OrderResult to dict format expected by caller
+                return {
+                    "id": order_result.order_id,
+                    "symbol": order_result.symbol,
+                    "side": order_result.side,
+                    "qty": order_result.quantity,
+                    "status": order_result.status,
+                    "filled_avg_price": order_result.filled_price,
+                    "broker": order_result.broker.value,
+                }
+
+        # Standard Alpaca-only path (no failover)
         order = self.trader.execute_order(
             symbol=symbol,
             amount_usd=notional,
@@ -163,6 +209,30 @@ class AlpacaExecutor:
             self.simulated_orders.append(order)
             return order
 
+        # Use multi-broker failover if enabled
+        if self.enable_failover and self.multi_broker:
+            # Submit stop-loss via MultiBroker with automatic failover
+            order_result = self.multi_broker.submit_order(
+                symbol=symbol,
+                qty=qty,
+                side="sell",
+                order_type="limit",  # Use limit order with stop price
+                limit_price=stop_price,
+            )
+
+            # Convert OrderResult to dict format expected by caller
+            return {
+                "id": order_result.order_id,
+                "symbol": order_result.symbol,
+                "side": "sell",
+                "type": "stop",
+                "qty": order_result.quantity,
+                "stop_price": stop_price,
+                "status": order_result.status,
+                "broker": order_result.broker.value,
+            }
+
+        # Standard Alpaca-only path (no failover)
         return self.trader.set_stop_loss(symbol=symbol, qty=qty, stop_price=stop_price)
 
     def place_order_with_stop_loss(
