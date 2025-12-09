@@ -38,6 +38,27 @@ try:
 except ImportError:
     COACHING_AVAILABLE = False
 
+# Bull/Bear Debate Agents - Multi-perspective analysis (Dec 2025)
+# Based on UCLA/MIT TradingAgents research showing 42% CAGR improvement
+try:
+    from src.agents.debate_agents import DebateModerator, quick_debate
+
+    DEBATE_AVAILABLE = True
+except ImportError:
+    DEBATE_AVAILABLE = False
+
+# Reflexion Loop - Self-improving through trade reflection (Dec 2025)
+# Based on Reflexion framework research
+try:
+    from src.coaching.reflexion_loop import (
+        get_reflection_context,
+        reflect_and_store,
+    )
+
+    REFLEXION_AVAILABLE = True
+except ImportError:
+    REFLEXION_AVAILABLE = False
+
 # Introspective awareness imports (Dec 2025)
 try:
     from src.core.introspective_council import IntrospectiveCouncil
@@ -130,6 +151,23 @@ class TradingOrchestrator:
                 )
             except Exception as e:
                 logger.warning(f"MentalToughnessCoach init failed: {e}")
+
+        # Gate 0.5: Bull/Bear Debate - Multi-perspective analysis (Dec 2025)
+        # Based on UCLA/MIT TradingAgents research showing 42% CAGR improvement
+        self.debate_moderator: DebateModerator | None = None
+        enable_debate = os.getenv("ENABLE_BULL_BEAR_DEBATE", "true").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+        if enable_debate and DEBATE_AVAILABLE:
+            try:
+                self.debate_moderator = DebateModerator()
+                logger.info(
+                    "Gate 0.5: Bull/Bear DebateModerator initialized (reduces confirmation bias)"
+                )
+            except Exception as e:
+                logger.warning(f"DebateModerator init failed: {e}")
 
         bias_dir = os.getenv("BIAS_DATA_DIR", "data/bias")
         self.bias_store = BiasStore(bias_dir)
@@ -601,6 +639,43 @@ class TradingOrchestrator:
                 except Exception as coach_err:
                     logger.warning(f"Gate 0: Coaching feedback failed: {coach_err}")
 
+            # Reflexion Loop: Generate and store reflection for learning
+            if REFLEXION_AVAILABLE:
+                try:
+                    import uuid
+
+                    # Generate reflection on this trade
+                    reflection = reflect_and_store(
+                        trade_id=str(uuid.uuid4())[:8],
+                        symbol=symbol,
+                        action="SELL",  # This is an exit
+                        entry_price=entry_price,
+                        exit_price=exit_price,
+                        pnl=pl,
+                        pre_trade_signals={},  # TODO: Store entry signals for reflection
+                        pre_trade_confidence=0.0,  # TODO: Store entry confidence
+                        pre_trade_reasoning=exit_reason,
+                    )
+
+                    logger.info(
+                        f"Reflexion: Stored reflection for {symbol} - "
+                        f"{'WIN' if is_winner else 'LOSS'}: {reflection.lesson_learned}"
+                    )
+
+                    self.telemetry.record(
+                        event_type="reflexion.stored",
+                        ticker=symbol,
+                        status="ok",
+                        payload={
+                            "is_win": is_winner,
+                            "lesson": reflection.lesson_learned,
+                            "pattern_tags": reflection.pattern_tags,
+                            "would_take_again": reflection.would_take_again,
+                        },
+                    )
+                except Exception as refl_err:
+                    logger.warning(f"Reflexion: Failed to store reflection: {refl_err}")
+
         except Exception as e:
             logger.error(f"Failed to record closed trade for {symbol}: {e}")
 
@@ -768,6 +843,69 @@ class TradingOrchestrator:
             status="pass",
             metrics={"confidence": momentum_signal.strength},
         )
+
+        # Gate 1.5: Bull/Bear Debate - Multi-perspective analysis (Dec 2025)
+        # Based on UCLA/MIT TradingAgents research showing 42% CAGR improvement
+        debate_outcome = None
+        if self.debate_moderator and DEBATE_AVAILABLE:
+            try:
+                # Build market data for debate
+                debate_market_data = {
+                    "price": momentum_signal.indicators.get("close", 0),
+                    "rsi": momentum_signal.indicators.get("rsi", 50),
+                    "macd_histogram": momentum_signal.indicators.get("macd_histogram", 0),
+                    "volume_ratio": momentum_signal.indicators.get("volume_ratio", 1.0),
+                    "trend": "BULLISH" if momentum_signal.is_buy else "BEARISH",
+                    "ma_50": momentum_signal.indicators.get("sma_20", 0),  # Approximate
+                    "ma_200": momentum_signal.indicators.get("sma_50", 0),  # Approximate
+                }
+
+                debate_outcome = self.debate_moderator.conduct_debate(ticker, debate_market_data)
+
+                logger.info(
+                    "Gate 1.5 (%s): Bull/Bear Debate - Winner: %s, Rec: %s, Confidence: %.2f",
+                    ticker,
+                    debate_outcome.winner,
+                    debate_outcome.final_recommendation,
+                    debate_outcome.confidence,
+                )
+
+                self.telemetry.record(
+                    event_type="debate.outcome",
+                    ticker=ticker,
+                    status="completed",
+                    payload={
+                        "winner": debate_outcome.winner,
+                        "recommendation": debate_outcome.final_recommendation,
+                        "confidence": debate_outcome.confidence,
+                        "bull_conviction": debate_outcome.bull_position.conviction,
+                        "bear_conviction": debate_outcome.bear_position.conviction,
+                        "position_size_modifier": debate_outcome.position_size_modifier,
+                        "key_factors": debate_outcome.key_factors,
+                        "dissenting_view": debate_outcome.dissenting_view,
+                    },
+                )
+
+                # If debate strongly recommends against, reject the trade
+                if debate_outcome.winner == "BEAR" and debate_outcome.confidence > 0.7:
+                    logger.info(
+                        "Gate 1.5 (%s): REJECTED by Bear - %s",
+                        ticker,
+                        debate_outcome.dissenting_view,
+                    )
+                    self.telemetry.gate_reject(
+                        "debate",
+                        ticker,
+                        {
+                            "winner": "BEAR",
+                            "confidence": debate_outcome.confidence,
+                            "key_factors": debate_outcome.key_factors,
+                        },
+                    )
+                    return
+
+            except Exception as debate_err:
+                logger.warning(f"Gate 1.5 (%s): Debate failed, continuing: {debate_err}", ticker)
 
         # Gate 2: RL inference
         rl_outcome = self.failure_manager.run(
