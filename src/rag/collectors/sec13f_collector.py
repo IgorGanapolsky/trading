@@ -21,7 +21,7 @@ import logging
 import re
 from datetime import datetime, timedelta
 from typing import Any
-from xml.etree import ElementTree
+import defusedxml.ElementTree as ElementTree
 
 import requests
 

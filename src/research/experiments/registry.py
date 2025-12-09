@@ -219,7 +219,7 @@ class ModelRegistry:
             raise ValueError(f"No matching model found: {model_name}")
 
         with open(model_version.artifact_path, "rb") as f:
-            return pickle.load(f)  # noqa: S301 - Models are trusted internal artifacts
+            return pickle.load(f)  # nosec B301  # noqa: S301 - Models are trusted internal artifacts
 
     def list_models(self) -> list[str]:
         """List all registered model names."""

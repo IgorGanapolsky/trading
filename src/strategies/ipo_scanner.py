@@ -139,7 +139,7 @@ class IPOScanner:
             response.raise_for_status()
 
             # Parse Atom feed
-            from xml.etree import ElementTree as ET
+            import defusedxml.ElementTree as ET
 
             root = ET.fromstring(response.content)
 

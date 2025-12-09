@@ -419,9 +419,9 @@ class AlpacaTrader:
                 if use_limit_order:
                     buffer_multiplier = 1 + (self.config.LIMIT_ORDER_BUFFER_PCT / 100)
                     if side == "buy":
-                        limit_price = quote["ask"] * buffer_multiplier
+                        limit_price = round(quote["ask"] * buffer_multiplier, 2)
                     else:
-                        limit_price = quote["bid"] / buffer_multiplier
+                        limit_price = round(quote["bid"] / buffer_multiplier, 2)
 
                     # Format for log
                     amount_str = f"${amount_usd:.2f}" if amount_usd else f"{qty} shares"

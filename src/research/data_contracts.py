@@ -735,7 +735,7 @@ class DataValidator:
 
     def _compute_hash(self, df: pd.DataFrame) -> str:
         content = df.to_json(date_format="iso")
-        return hashlib.md5(content.encode()).hexdigest()[:16]
+        return hashlib.sha256(content.encode()).hexdigest()[:16]
 
 
 class DataSnapshot:
@@ -755,7 +755,7 @@ class DataSnapshot:
         metadata: dict[str, Any] | None = None,
     ) -> str:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        data_hash = hashlib.md5(df.to_json(date_format="iso").encode()).hexdigest()[:8]
+        data_hash = hashlib.sha256(df.to_json(date_format="iso").encode()).hexdigest()[:8]
         snapshot_id = f"{symbol}_{timestamp}_{data_hash}"
 
         snapshot_dir = self.storage_dir / snapshot_id

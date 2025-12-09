@@ -384,7 +384,7 @@ class SemanticQueryCache:
     def _hash_query(self, query: str, ticker: str | None) -> str:
         """Generate hash for query."""
         content = f"{query}|{ticker or ''}"
-        return hashlib.md5(content.encode()).hexdigest()
+        return hashlib.sha256(content.encode()).hexdigest()
 
     def _evict(self, key: str) -> None:
         """Evict entry from cache."""

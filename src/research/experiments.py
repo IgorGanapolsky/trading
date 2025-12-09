@@ -175,7 +175,7 @@ class ExperimentTracker:
         """
         # Generate run ID
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        run_hash = hashlib.md5(
+        run_hash = hashlib.sha256(
             f"{experiment_name}{timestamp}{json.dumps(config.to_dict())}".encode()
         ).hexdigest()[:8]
         run_id = f"{experiment_name}_{timestamp}_{run_hash}"
@@ -396,7 +396,7 @@ class ExperimentTracker:
         model_path = run_dir / "models" / f"{model_name}.pkl"
 
         with open(model_path, "rb") as f:
-            return pickle.load(f)  # noqa: S301 - Models are trusted internal artifacts
+            return pickle.load(f)  # nosec B301  # noqa: S301 - Models are trusted internal artifacts
 
     def list_runs(
         self,

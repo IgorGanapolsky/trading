@@ -7,6 +7,9 @@ Prevents wasted execution time on broken credentials.
 import argparse
 import os
 import sys
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def validate_secrets() -> tuple[bool, list[str]]:

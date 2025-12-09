@@ -527,7 +527,7 @@ class TradingOrchestrator:
             if total_closed > 0:
                 state_manager.state["performance"]["win_rate"] = (winning / total_closed) * 100
 
-            state_manager.save()
+            state_manager.save_state()
 
             logger.info(
                 f"Recorded closed trade: {symbol} {'WIN' if is_winner else 'LOSS'} "

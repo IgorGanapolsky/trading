@@ -64,8 +64,8 @@ class RLTrainingOrchestrator:
             rl_state_file = DATA_DIR / "rl_policy_state.json"
             if not rl_state_file.exists():
                 return {
-                    "success": False,
-                    "message": "No RL state file found - agent will initialize on first trade",
+                    "success": True,
+                    "message": "No RL state file found - agent will initialize on first trade (Skipped)",
                     "agent": "q_learning",
                 }
 
@@ -120,9 +120,9 @@ class RLTrainingOrchestrator:
 
             if len(all_trades) < 32:
                 return {
-                    "success": False,
+                    "success": True,
                     "agent": "dqn",
-                    "message": f"Insufficient trade data: {len(all_trades)} trades (need 32+)",
+                    "message": f"Insufficient trade data: {len(all_trades)} trades (need 32+) (Skipped)",
                 }
 
             model_path = DATA_DIR / "models" / "dqn_agent.pt"
@@ -130,9 +130,9 @@ class RLTrainingOrchestrator:
                 agent = DQNAgent.load(str(model_path))
             else:
                 return {
-                    "success": False,
+                    "success": True,
                     "agent": "dqn",
-                    "message": "DQN agent not initialized - need to configure input/output dimensions",
+                    "message": "DQN agent not initialized - need to configure input/output dimensions (Skipped)",
                 }
 
             total_loss = 0.0

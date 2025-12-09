@@ -364,7 +364,7 @@ class BronzeLayer:
     def _compute_checksum(self, data: pd.DataFrame) -> str:
         """Compute MD5 checksum of DataFrame for integrity verification."""
         content = data.to_json(date_format="iso")
-        return hashlib.md5(content.encode()).hexdigest()[:16]
+        return hashlib.sha256(content.encode()).hexdigest()[:16]
 
     def _get_file_path(self, symbol: str, source: str, timestamp: datetime) -> Path:
         """Generate file path for bronze data."""

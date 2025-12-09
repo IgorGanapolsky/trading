@@ -583,7 +583,7 @@ class FeatureStore:
     def _compute_hash(self, df: pd.DataFrame) -> str:
         """Compute hash of DataFrame for reproducibility."""
         content = df.to_json(date_format="iso")
-        return hashlib.md5(content.encode()).hexdigest()[:16]
+        return hashlib.sha256(content.encode()).hexdigest()[:16]
 
     def _compute_normalization_params(
         self, df: pd.DataFrame, feature_names: list[str]
