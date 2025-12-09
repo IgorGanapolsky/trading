@@ -591,6 +591,17 @@ jobs:
 
           # Portfolio status moved to separate step to prevent failures
 
+      - name: Update performance log
+        if: steps.execute_trading.outcome == 'success'
+        continue-on-error: true  # Non-fatal - trading succeeded
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          PAPER_TRADING: 'true'
+        run: |
+          echo "📊 Updating performance log with current account data..."
+          python3 scripts/update_performance_log.py
+
       - name: Verify Positions (Alpaca vs Local)
         id: verify_positions
         if: steps.execute_trading.outcome == 'success'

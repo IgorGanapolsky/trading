@@ -43,6 +43,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Update performance log
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          PAPER_TRADING: 'true'
+        run: |
+          echo "📊 Updating performance log with current account data..."
+          python3 scripts/update_performance_log.py || echo "⚠️ Performance log update failed (non-fatal)"
+
       - name: Generate dashboard
         run: |
           echo "📊 Generating world-class progress dashboard..."

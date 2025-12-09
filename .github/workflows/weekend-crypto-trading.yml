@@ -139,6 +139,17 @@ jobs:
           echo "🚀 Executing weekend crypto trading..."
           python3 scripts/autonomous_trader.py --crypto-only
 
+      - name: Update performance log
+        if: steps.check_execution.outputs.skip != 'true' && steps.health_check.outputs.health_check_passed == 'true'
+        continue-on-error: true  # Non-fatal
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          PAPER_TRADING: 'true'
+        run: |
+          echo "📊 Updating performance log with current account data..."
+          python3 scripts/update_performance_log.py
+
       - name: Record workflow execution
         if: always()
         run: |
