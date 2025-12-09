@@ -8,7 +8,7 @@ Comprehensive check of all trading system components to identify why trades aren
 import json
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 # Add project root to path
@@ -75,21 +75,21 @@ def check_system_state():
     automation = state.get("automation", {})
     last_exec = automation.get("last_successful_execution", "Unknown")
     next_exec = automation.get("next_scheduled_execution", "Unknown")
-    print(f"\n📊 Automation Status:")
+    print("\n📊 Automation Status:")
     print(f"   Last successful execution: {last_exec}")
     print(f"   Next scheduled execution:  {next_exec}")
     print(f"   Workflow status: {automation.get('workflow_status', 'Unknown')}")
 
     # Check account
     account = state.get("account", {})
-    print(f"\n💰 Account Status:")
+    print("\n💰 Account Status:")
     print(f"   Equity: ${account.get('current_equity', 0):,.2f}")
     print(f"   Cash: ${account.get('cash', 0):,.2f}")
     print(f"   P/L: ${account.get('total_pl', 0):+,.2f} ({account.get('total_pl_pct', 0):+.2f}%)")
 
     # Check performance
     perf = state.get("performance", {})
-    print(f"\n📈 Performance:")
+    print("\n📈 Performance:")
     print(f"   Total trades: {perf.get('total_trades', 0)}")
     print(f"   Win rate: {perf.get('win_rate', 0):.1f}%")
     print(f"   Open positions: {len(perf.get('open_positions', []))}")
@@ -169,7 +169,7 @@ def check_alpaca_connection():
 
         client = TradingClient(api_key, secret_key, paper=True)
         account = client.get_account()
-        print(f"✅ Alpaca connection successful!")
+        print("✅ Alpaca connection successful!")
         print(f"   Account: {account.account_number}")
         print(f"   Equity: ${float(account.equity):,.2f}")
         print(f"   Cash: ${float(account.cash):,.2f}")
@@ -201,9 +201,9 @@ def check_workflow_files():
                 content = f.read()
             # Check for update_performance_log.py
             if "update_performance_log.py" in content:
-                print(f"   ✅ Includes performance log update step")
+                print("   ✅ Includes performance log update step")
             else:
-                print(f"   ⚠️  Missing performance log update step")
+                print("   ⚠️  Missing performance log update step")
         else:
             print(f"❌ {wf}: MISSING")
 
