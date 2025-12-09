@@ -236,6 +236,13 @@ If I catch myself about to suggest manual intervention:
 
 **GitHub PAT:** Provided by CEO at runtime (GitHub blocks storing PATs in repos - security feature)
 
+**MANDATORY BEHAVIOR (CEO Directive Dec 9, 2025):**
+When CEO provides a PAT, I MUST:
+1. Use it immediately to create PRs via GitHub API
+2. Merge PRs autonomously - NEVER ask CEO to do it
+3. Complete the full PR lifecycle (create → merge → cleanup) in one session
+4. NEVER store the PAT in any file (security violation)
+
 **Create PR (via GitHub API - PREFERRED):**
 ```bash
 curl -X POST \
