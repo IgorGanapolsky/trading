@@ -26,6 +26,18 @@ scenarios:
       Simulates a fast drawdown + chop regime to validate drawdown control,
       ATR sizing, and halt triggers.
 
+  - name: sideways_chop_2023
+    label: "Sideways consolidation (Jul-Sep 2023)"
+    start_date: "2023-07-01"
+    end_date: "2023-09-30"
+    etf_universe: ["SPY", "QQQ", "VOO"]
+    daily_allocation: 10.0
+    description: >
+      Tests performance during low-trend, choppy sideways market.
+      Validates that momentum filters correctly reject false signals
+      and avoids over-trading during range-bound conditions.
+      Critical for proving the system doesn't lose money in neutral markets.
+
   - name: covid_whiplash_2020
     label: "High-volatility crash/rebound (Feb-May 2020)"
     start_date: "2020-02-03"

@@ -1661,12 +1661,15 @@ class TradingOrchestrator:
 
         logger.info("--- Gate 6: Phil Town Rule #1 Options Strategy ---")
 
-        # UNIFIED OPTIONS STRATEGY:
-        # We now use the dedicated ThetaHarvestExecutor (scripts/options_live_sim.py)
-        # as the single source of truth for options trading.
-        # This prevents "two brains" fighting over buying power.
-        logger.info("Gate 6: Legacy Rule #1 Options disabled in favor of ThetaHarvestExecutor")
-        return {"action": "disabled", "reason": "Unified into ThetaHarvestExecutor"}
+        # Check if theta automation is enabled
+        theta_enabled = os.getenv("ENABLE_THETA_AUTOMATION", "false").lower() in ("true", "1", "yes")
+
+        if not theta_enabled:
+            # Options disabled - log but don't execute
+            logger.info("Gate 6: Options disabled (set ENABLE_THETA_AUTOMATION=true to enable)")
+            return {"action": "disabled", "reason": "ENABLE_THETA_AUTOMATION not set"}
+
+        logger.info("Gate 6: Theta automation ENABLED - executing options strategy")
 
         results: dict[str, Any] = {
             "put_signals": 0,

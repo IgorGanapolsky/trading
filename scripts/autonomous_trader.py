@@ -730,6 +730,44 @@ def main() -> None:
 
     print("::notice::2/5 Post-trading hooks done", flush=True)
 
+    # Generate profit target report and wire recommendations into budget
+    try:
+        from src.analytics.profit_target_tracker import ProfitTargetTracker
+        import json
+        from pathlib import Path
+
+        logger.info("Generating profit target report...")
+        tracker = ProfitTargetTracker(target_daily_profit=100.0)
+        plan = tracker.generate_plan()
+
+        # Persist report
+        report_path = Path("reports/profit_target_report.json")
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_data = {
+            "current_daily_profit": plan.current_daily_profit,
+            "projected_daily_profit": plan.projected_daily_profit,
+            "target_daily_profit": plan.target_daily_profit,
+            "target_gap": plan.target_gap,
+            "current_daily_budget": plan.current_daily_budget,
+            "recommended_daily_budget": plan.recommended_daily_budget,
+            "scaling_factor": plan.scaling_factor,
+            "avg_return_pct": plan.avg_return_pct,
+            "win_rate": plan.win_rate,
+            "actions": plan.actions,
+        }
+        report_path.write_text(json.dumps(report_data, indent=2))
+        logger.info(f"Profit target report saved to {report_path}")
+
+        # Log $100/day progress
+        progress_pct = (plan.current_daily_profit / plan.target_daily_profit * 100) if plan.target_daily_profit > 0 else 0
+        logger.info(f"$100/day Progress: {progress_pct:.1f}% (current: ${plan.current_daily_profit:.2f}/day)")
+
+        # If avg_return is positive and we have a recommended budget, log it
+        if plan.recommended_daily_budget and plan.avg_return_pct > 0:
+            logger.info(f"Recommended daily budget: ${plan.recommended_daily_budget:.2f}")
+    except Exception as e:
+        logger.warning(f"Failed to generate profit target report: {e}")
+
     # Execute prediction markets after main equity strategies (Tier 6)
     # Kalshi trades 24/7 so this can run on weekdays alongside equity trading
     if should_run_prediction:

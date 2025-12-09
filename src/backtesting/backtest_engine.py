@@ -896,16 +896,28 @@ class BacktestEngine:
         # Calculate daily returns for Sharpe ratio
         daily_returns = np.diff(self.equity_curve) / self.equity_curve[:-1]
 
-        # Sharpe ratio
-        if len(daily_returns) > 1:
+        # Sharpe ratio - with volatility floor to prevent extreme values
+        # Requires minimum 30 trading days for statistical significance
+        MIN_TRADING_DAYS = 30
+        MIN_VOLATILITY_FLOOR = 0.0001  # 0.01% minimum daily volatility
+
+        if len(daily_returns) >= MIN_TRADING_DAYS:
             mean_return = np.mean(daily_returns)
             std_return = np.std(daily_returns)
+            # Apply volatility floor to prevent extreme Sharpe ratios
+            # (e.g., -45.86 from consistent small losses with near-zero volatility)
+            std_return = max(std_return, MIN_VOLATILITY_FLOOR)
             risk_free_rate_daily = 0.04 / 252
-            sharpe_ratio = (
-                (mean_return - risk_free_rate_daily) / std_return * np.sqrt(252)
-                if std_return > 0
-                else 0.0
-            )
+            sharpe_ratio = (mean_return - risk_free_rate_daily) / std_return * np.sqrt(252)
+            # Clamp extreme values to reasonable bounds
+            sharpe_ratio = np.clip(sharpe_ratio, -10.0, 10.0)
+        elif len(daily_returns) > 1:
+            # Insufficient data for reliable Sharpe - compute but flag as unreliable
+            mean_return = np.mean(daily_returns)
+            std_return = max(np.std(daily_returns), MIN_VOLATILITY_FLOOR)
+            risk_free_rate_daily = 0.04 / 252
+            sharpe_ratio = (mean_return - risk_free_rate_daily) / std_return * np.sqrt(252)
+            sharpe_ratio = np.clip(sharpe_ratio, -10.0, 10.0)
         else:
             sharpe_ratio = 0.0
 

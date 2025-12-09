@@ -59,6 +59,12 @@ def parse_args() -> argparse.Namespace:
         help="Minimum consecutive profitable days (paper or backtests) required.",
     )
     parser.add_argument(
+        "--min-trades",
+        type=int,
+        default=100,
+        help="Minimum number of trades required for statistical significance.",
+    )
+    parser.add_argument(
         "--override-env",
         default="ALLOW_PROMOTION_OVERRIDE",
         help="Env var that allows bypassing the gate when set to truthy value.",
@@ -132,6 +138,16 @@ def evaluate_gate(
     min_win_rate = float(aggregate.get("min_win_rate", 0.0))
     if min_win_rate < args.required_win_rate:
         deficits.append(f"Backtest win-rate floor {min_win_rate:.2f}% < {args.required_win_rate}%.")
+
+    # Enforce minimum trade count for statistical significance
+    total_trades = int(
+        system_state.get("performance", {}).get("total_trades", 0)
+        or aggregate.get("total_trades", 0)
+    )
+    if total_trades < args.min_trades:
+        deficits.append(
+            f"Insufficient trades for statistical significance: {total_trades} < {args.min_trades} required."
+        )
 
     return deficits
 
