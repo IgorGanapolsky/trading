@@ -712,7 +712,7 @@ jobs:
         if: steps.check_execution.outputs.skip != 'true' && steps.check_state_changes.outputs.state_changed == 'true'
         continue-on-error: true  # Non-fatal - trading already succeeded
         run: |
-          echo "💾 Committing system_state.json updates..."
+          echo "💾 Committing trading data updates..."
 
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
@@ -721,15 +721,18 @@ jobs:
           git pull --rebase origin main || {
             echo "⚠️  Merge conflict detected - resolving..."
             git checkout --ours data/system_state.json
-            git add data/system_state.json
+            git checkout --ours data/performance_log.json 2>/dev/null || true
+            git add data/system_state.json data/performance_log.json 2>/dev/null || true
             git rebase --continue || echo "::warning::Rebase continue failed"
           }
 
-          # Stage system_state.json
+          # Stage all trading data files (system state, trades, performance log)
           git add data/system_state.json
+          git add data/performance_log.json 2>/dev/null || true
+          git add data/trades_*.json 2>/dev/null || true
 
-          # Simple commit message (heredoc variables don't expand with 'EOF')
-          git commit -m "chore: Update system state after trading (${{ github.run_id }})" || {
+          # Commit with descriptive message
+          git commit -m "chore: Update trading data after execution (${{ github.run_id }})" || {
             echo "::warning::No changes to commit or commit failed"
             exit 0
           }

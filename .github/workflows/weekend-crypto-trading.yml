@@ -181,8 +181,9 @@ jobs:
 
       - name: Commit system state updates
         if: steps.check_execution.outputs.skip != 'true' && steps.check_state_changes.outputs.state_changed == 'true'
+        continue-on-error: true  # Non-fatal - trading already succeeded
         run: |
-          echo "💾 Committing system_state.json updates..."
+          echo "💾 Committing trading data updates..."
 
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
@@ -190,42 +191,27 @@ jobs:
           # Pull latest changes to avoid conflicts
           git pull --rebase origin main || {
             echo "⚠️  Merge conflict detected - resolving..."
-
-            # Keep our version (trading execution takes precedence)
             git checkout --ours data/system_state.json
-            git add data/system_state.json
-            git rebase --continue
+            git checkout --ours data/performance_log.json 2>/dev/null || true
+            git add data/system_state.json data/performance_log.json 2>/dev/null || true
+            git rebase --continue || echo "::warning::Rebase continue failed"
           }
 
-          # Stage system_state.json
+          # Stage all trading data files
           git add data/system_state.json
+          git add data/performance_log.json 2>/dev/null || true
+          git add data/trades_*.json 2>/dev/null || true
 
-          # Create commit with trading execution details
-          git commit -m "$(cat <<'EOF'
-          chore: Update system state after weekend crypto trading
-
-          Weekend crypto trading execution completed and system state updated.
-
-          Execution details:
-          - Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
-          - Workflow: weekend-crypto-trading.yml
-          - Run ID: ${{ github.run_id }}
-
-          Changes:
-          - Updated account balances
-          - Recorded crypto trade execution results
-          - Updated performance metrics
-
-          🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-          Co-Authored-By: Claude <noreply@anthropic.com>
-          EOF
-          )"
+          # Commit with descriptive message
+          git commit -m "chore: Update trading data after weekend crypto (${{ github.run_id }})" || {
+            echo "::warning::No changes to commit or commit failed"
+            exit 0
+          }
 
           # Push changes
           git push origin main
 
-          echo "✅ System state changes committed and pushed"
+          echo "✅ Trading data changes committed and pushed"
 
       - name: Verify Crypto Trade Execution
         # Run smoke tests to verify trades executed correctly
