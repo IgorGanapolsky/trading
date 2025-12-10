@@ -59,11 +59,36 @@ def get_alpaca_clients():
     secret_key = os.getenv("ALPACA_SECRET_KEY")
     paper = os.getenv("PAPER_TRADING", "true").lower() == "true"
 
+    # Debug: show if keys are present (without revealing them)
+    logger.info(f"   API Key present: {bool(api_key)} (length: {len(api_key) if api_key else 0})")
+    logger.info(f"   Secret Key present: {bool(secret_key)} (length: {len(secret_key) if secret_key else 0})")
+    logger.info(f"   Paper trading: {paper}")
+
     if not api_key or not secret_key:
         raise ValueError("ALPACA_API_KEY and ALPACA_SECRET_KEY must be set")
 
-    trading_client = TradingClient(api_key, secret_key, paper=paper)
-    options_client = OptionHistoricalDataClient(api_key, secret_key)
+    try:
+        trading_client = TradingClient(api_key, secret_key, paper=paper)
+        logger.info("   ✅ Trading client initialized")
+    except Exception as e:
+        logger.error(f"   ❌ Trading client failed: {e}")
+        raise
+
+    try:
+        options_client = OptionHistoricalDataClient(api_key, secret_key)
+        logger.info("   ✅ Options client initialized")
+    except Exception as e:
+        logger.error(f"   ❌ Options client failed: {e}")
+        raise
+
+    # Verify account has options trading enabled
+    try:
+        account = trading_client.get_account()
+        logger.info(f"   Account status: {account.status}")
+        logger.info(f"   Options trading approved: {getattr(account, 'options_trading_level', 'unknown')}")
+        logger.info(f"   Options approved level: {getattr(account, 'options_approved_level', 'unknown')}")
+    except Exception as e:
+        logger.warning(f"   ⚠️ Account check failed: {e}")
 
     return trading_client, options_client
 
