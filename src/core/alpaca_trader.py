@@ -101,6 +101,7 @@ class AlpacaTrader:
         "T2_GROWTH": 0.20,  # 20% of daily investment
         "T3_IPO": 0.10,  # 10% of daily investment
         "T4_CROWD": 0.10,  # 10% of daily investment
+        "CRYPTO": 1.00,  # Crypto uses separate $10/day allocation (not from equity budget)
     }
 
     # Safety multiplier: reject orders >10x expected amount
