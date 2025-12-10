@@ -15,6 +15,8 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any
 
+# Ensure date is imported for gamma risk check
+
 logger = logging.getLogger(__name__)
 
 
@@ -72,6 +74,12 @@ class OptionsRiskMonitor:
     PIN_RISK_DTE_THRESHOLD = 2  # Days before expiration to check pin risk
     PIN_RISK_STRIKE_PCT = 0.05  # Within 5% of strike = pin risk zone
     PIN_RISK_CRITICAL_PCT = 0.02  # Within 2% = critical pin risk
+
+    # Gamma risk management thresholds
+    MAX_POSITION_GAMMA = 0.05  # Exit if gamma > 0.05
+    GAMMA_WARNING_DTE = 14  # Warn if DTE < 14 and gamma rising
+    EXPIRATION_WEEK_DTE = 7  # Force exit if DTE < 7 for short positions
+    HIGH_GAMMA_THRESHOLD = 0.03  # Warning threshold for gamma
 
     def __init__(self, paper: bool = True):
         """
@@ -310,6 +318,77 @@ class OptionsRiskMonitor:
             "timestamp": datetime.now().isoformat(),
         }
 
+    def check_gamma_risk(self, position: OptionsPosition) -> Optional[dict[str, Any]]:
+        """
+        Check gamma risk and recommend exit if necessary.
+
+        McMillan Rule: "Gamma is the silent killer of options traders."
+        High gamma = position delta changes rapidly = hard to manage.
+
+        Gamma Risk Rules:
+        1. Force exit in expiration week for short positions (DTE < 7)
+        2. Exit if position gamma exceeds threshold (gamma > 0.05)
+        3. Warn if approaching danger zone (DTE < 14 and gamma > 0.03)
+
+        Args:
+            position: Position to check
+
+        Returns:
+            Exit signal dict if gamma risk triggered, None otherwise
+        """
+        dte = (position.expiration_date - date.today()).days
+
+        # Rule 1: Force exit in expiration week for short positions
+        if position.side == "short" and dte <= self.EXPIRATION_WEEK_DTE:
+            logger.warning(
+                f"GAMMA RISK: {position.symbol} DTE={dte} - expiration week exit triggered"
+            )
+            return {
+                "action": "CLOSE",
+                "symbol": position.symbol,
+                "underlying": position.underlying,
+                "position_type": position.position_type,
+                "reason": f"GAMMA_RISK: DTE={dte} - expiration week rule triggered for short position",
+                "urgency": "HIGH",
+                "gamma": position.gamma,
+                "dte": dte,
+                "mcmillan_rule": "Never hold short premium into expiration week",
+            }
+
+        # Rule 2: Exit if gamma too high
+        if abs(position.gamma) > self.MAX_POSITION_GAMMA:
+            logger.warning(
+                f"GAMMA RISK: {position.symbol} gamma={position.gamma:.4f} exceeds threshold"
+            )
+            return {
+                "action": "CLOSE",
+                "symbol": position.symbol,
+                "underlying": position.underlying,
+                "position_type": position.position_type,
+                "reason": f"GAMMA_RISK: Gamma={position.gamma:.4f} exceeds {self.MAX_POSITION_GAMMA} threshold",
+                "urgency": "MEDIUM",
+                "gamma": position.gamma,
+                "dte": dte,
+                "mcmillan_rule": "High gamma means delta changes rapidly - position becomes unmanageable",
+            }
+
+        # Rule 3: Warn if approaching danger zone
+        if dte <= self.GAMMA_WARNING_DTE and abs(position.gamma) > self.HIGH_GAMMA_THRESHOLD:
+            logger.info(f"GAMMA WARNING: {position.symbol} DTE={dte}, gamma={position.gamma:.4f}")
+            return {
+                "action": "WARN",
+                "symbol": position.symbol,
+                "underlying": position.underlying,
+                "position_type": position.position_type,
+                "reason": f"GAMMA_WARNING: DTE={dte}, Gamma={position.gamma:.4f} - consider closing soon",
+                "urgency": "LOW",
+                "gamma": position.gamma,
+                "dte": dte,
+                "mcmillan_rule": "Gamma accelerates as expiration approaches - plan your exit",
+            }
+
+        return None
+
     def calculate_delta_hedge(self, net_delta: float) -> dict[str, Any]:
         """
         Calculate the hedge trade needed to bring delta back to target.
@@ -410,6 +489,45 @@ class OptionsRiskMonitor:
         # 1. Check stop-losses
         stop_exits = self.check_stop_losses(current_prices)
         results["stop_loss_exits"] = stop_exits
+
+        # 1.5. Check gamma risk (NEW)
+        gamma_exits = []
+        gamma_warnings = []
+        for symbol, position in self.positions.items():
+            gamma_result = self.check_gamma_risk(position)
+            if gamma_result:
+                if gamma_result["action"] == "CLOSE":
+                    gamma_exits.append(gamma_result)
+                elif gamma_result["action"] == "WARN":
+                    gamma_warnings.append(gamma_result)
+
+        results["gamma_exits"] = gamma_exits
+        results["gamma_warnings"] = gamma_warnings
+
+        if gamma_exits:
+            logger.warning(f"🚨 {len(gamma_exits)} positions have GAMMA RISK!")
+            for exit_signal in gamma_exits:
+                logger.warning(f"  - {exit_signal['symbol']}: {exit_signal['reason']}")
+
+                if executor:
+                    try:
+                        order = executor.close_position(exit_signal["symbol"])
+                        results["actions_taken"].append(
+                            {
+                                "type": "gamma_exit",
+                                "symbol": exit_signal["symbol"],
+                                "urgency": exit_signal["urgency"],
+                                "order": order,
+                            }
+                        )
+                        logger.info(f"✅ Closed {exit_signal['symbol']} via gamma exit")
+                    except Exception as e:
+                        logger.error(f"❌ Failed to close {exit_signal['symbol']}: {e}")
+
+        if gamma_warnings:
+            logger.info(f"⚠️ {len(gamma_warnings)} gamma warnings:")
+            for warning in gamma_warnings:
+                logger.info(f"  - {warning['symbol']}: {warning['reason']}")
 
         if stop_exits:
             logger.warning(f"🚨 {len(stop_exits)} positions hit stop-loss!")
