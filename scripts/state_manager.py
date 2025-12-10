@@ -9,7 +9,7 @@ import contextlib
 import json
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 DATA_DIR = Path("data")
 STATE_FILE = DATA_DIR / "system_state.json"
@@ -192,7 +192,7 @@ ACTION REQUIRED:
         symbol: str,
         amount: float,
         order_id: str,
-        attribution_metadata: Optional[dict[str, Any]] = None,
+        attribution_metadata: dict[str, Any] | None = None,
     ):
         """Record a trade execution (opening a position) with attribution metadata"""
         # Update strategy stats

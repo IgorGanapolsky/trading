@@ -26,12 +26,41 @@ import os
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
-from openai import AsyncOpenAI, OpenAI
+# Prompt engineering for time series analysis
+from src.core.prompt_engineering import (
+    MarketDataSchema,
+    PromptEngineer,
+)
+
+# Psychology integration - inject bias mitigation into LLM prompts
+try:
+    from src.coaching.mental_toughness_coach import get_prompt_context as get_psychology_context
+
+    PSYCHOLOGY_AVAILABLE = True
+except ImportError:
+    PSYCHOLOGY_AVAILABLE = False
+
+    def get_psychology_context() -> str:
+        return ""  # No-op if coaching not available
+
+
+# OpenAI client - optional dependency (may use OpenRouter instead)
+try:
+    from openai import AsyncOpenAI, OpenAI
+
+    OPENAI_AVAILABLE = True
+except ImportError:
+    AsyncOpenAI = None  # type: ignore
+    OpenAI = None  # type: ignore
+    OPENAI_AVAILABLE = False
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
+if not OPENAI_AVAILABLE:
+    logger.warning("openai package not installed - MultiLLMAnalyzer will be unavailable")
 
 
 class LLMModel(Enum):
@@ -53,7 +82,7 @@ class LLMResponse:
     tokens_used: int
     latency: float
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -76,7 +105,7 @@ class IPOAnalysis:
     risk_level: str  # "Low", "Medium", "High"
     key_factors: list[str]
     concerns: list[str]
-    price_target: Optional[float]
+    price_target: float | None
     confidence: float
     individual_analyses: dict[str, dict[str, Any]]
 
@@ -88,7 +117,7 @@ class StockAnalysis:
     symbol: str
     sentiment: float
     recommendation: str
-    target_price: Optional[float]
+    target_price: float | None
     risk_assessment: str
     key_insights: list[str]
     confidence: float
@@ -125,11 +154,11 @@ class MultiLLMAnalyzer:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        models: Optional[list[LLMModel]] = None,
+        api_key: str | None = None,
+        models: list[LLMModel] | None = None,
         max_retries: int = 3,
         timeout: int = 60,
-        rate_limit_delay: float = 0.5,
+        rate_limit_delay: float = 2.0,  # Increased from 1.0 to reduce 429/500 errors
         use_async: bool = True,
     ):
         """
@@ -143,6 +172,11 @@ class MultiLLMAnalyzer:
             rate_limit_delay: Delay between requests to avoid rate limits
             use_async: Whether to use async client (recommended)
         """
+        if not OPENAI_AVAILABLE:
+            raise ImportError(
+                "openai package is required for MultiLLMAnalyzer. Install with: pip install openai"
+            )
+
         self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
         if not self.api_key:
             raise ValueError(
@@ -163,10 +197,8 @@ class MultiLLMAnalyzer:
         self.rate_limit_delay = rate_limit_delay
         self.use_async = use_async
 
-        # Initialize OpenAI client with OpenRouter base URL (wrapped with LangSmith if enabled)
-        base_url = "https://openrouter.ai/api/v1"
-
-        # Use LangSmith wrapper if available
+        # Initialize OpenAI client with OpenRouter (with Helicone + LangSmith observability if enabled)
+        # Use observability wrapper if available (handles Helicone gateway + LangSmith tracing)
         try:
             from src.utils.langsmith_wrapper import (
                 get_traced_async_openai_client,
@@ -174,17 +206,34 @@ class MultiLLMAnalyzer:
             )
 
             if use_async:
-                self.client = get_traced_async_openai_client(
-                    api_key=self.api_key, base_url=base_url
+                # Wrapper auto-routes through Helicone if HELICONE_API_KEY is set
+                self.client = get_traced_async_openai_client(api_key=self.api_key)
+            else:
+                self.sync_client = get_traced_openai_client(api_key=self.api_key)
+        except ImportError:
+            # Fallback to regular client with Helicone support if wrapper not available
+            helicone_key = os.getenv("HELICONE_API_KEY")
+            if helicone_key:
+                base_url = "https://openrouter.helicone.ai/api/v1"
+                default_headers = {"Helicone-Auth": f"Bearer {helicone_key}"}
+            else:
+                base_url = "https://openrouter.ai/api/v1"
+                default_headers = None
+
+            if use_async:
+                self.client = AsyncOpenAI(
+                    api_key=self.api_key,
+                    base_url=base_url,
+                    timeout=timeout,
+                    default_headers=default_headers,
                 )
             else:
-                self.sync_client = get_traced_openai_client(api_key=self.api_key, base_url=base_url)
-        except ImportError:
-            # Fallback to regular client if wrapper not available
-            if use_async:
-                self.client = AsyncOpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
-            else:
-                self.sync_client = OpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
+                self.sync_client = OpenAI(
+                    api_key=self.api_key,
+                    base_url=base_url,
+                    timeout=timeout,
+                    default_headers=default_headers,
+                )
 
         if deepseek_enabled:
             logger.info(
@@ -198,7 +247,7 @@ class MultiLLMAnalyzer:
         self,
         model: LLMModel,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
     ) -> LLMResponse:
@@ -247,9 +296,20 @@ class MultiLLMAnalyzer:
                 )
 
             except Exception as e:
-                logger.warning(
-                    f"Attempt {attempt + 1}/{self.max_retries} failed for {model.value}: {str(e)}"
-                )
+                # Enhanced error logging to identify specific failure patterns
+                error_type = type(e).__name__
+                error_msg = str(e)
+                status_code = getattr(e, "status_code", None)
+                if status_code:
+                    logger.warning(
+                        f"[MultiLLM-Async] Attempt {attempt + 1}/{self.max_retries} failed for "
+                        f"{model.value}: HTTP {status_code} - {error_type}: {error_msg}"
+                    )
+                else:
+                    logger.warning(
+                        f"[MultiLLM-Async] Attempt {attempt + 1}/{self.max_retries} failed for "
+                        f"{model.value}: {error_type}: {error_msg}"
+                    )
 
                 if attempt == self.max_retries - 1:
                     return LLMResponse(
@@ -258,17 +318,26 @@ class MultiLLMAnalyzer:
                         tokens_used=0,
                         latency=0,
                         success=False,
-                        error=str(e),
+                        error=f"{error_type}: {error_msg}",
                     )
 
                 # Exponential backoff
                 await asyncio.sleep(2**attempt * self.rate_limit_delay)
 
+        return LLMResponse(
+            model=model.value,
+            content="",
+            tokens_used=0,
+            latency=0,
+            success=False,
+            error="Max retries reached (loop finished)",
+        )
+
     def _query_llm_sync(
         self,
         model: LLMModel,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
     ) -> LLMResponse:
@@ -305,9 +374,20 @@ class MultiLLMAnalyzer:
                 )
 
             except Exception as e:
-                logger.warning(
-                    f"Attempt {attempt + 1}/{self.max_retries} failed for {model.value}: {str(e)}"
-                )
+                # Enhanced error logging to identify specific failure patterns
+                error_type = type(e).__name__
+                error_msg = str(e)
+                status_code = getattr(e, "status_code", None)
+                if status_code:
+                    logger.warning(
+                        f"[MultiLLM-Sync] Attempt {attempt + 1}/{self.max_retries} failed for "
+                        f"{model.value}: HTTP {status_code} - {error_type}: {error_msg}"
+                    )
+                else:
+                    logger.warning(
+                        f"[MultiLLM-Sync] Attempt {attempt + 1}/{self.max_retries} failed for "
+                        f"{model.value}: {error_type}: {error_msg}"
+                    )
 
                 if attempt == self.max_retries - 1:
                     return LLMResponse(
@@ -316,21 +396,33 @@ class MultiLLMAnalyzer:
                         tokens_used=0,
                         latency=0,
                         success=False,
-                        error=str(e),
+                        error=f"{error_type}: {error_msg}",
                     )
 
                 # Exponential backoff
                 time.sleep(2**attempt * self.rate_limit_delay)
 
+        return LLMResponse(
+            model=model.value,
+            content="",
+            tokens_used=0,
+            latency=0,
+            success=False,
+            error="Max retries reached (loop finished)",
+        )
+
     async def _query_all_llms_async(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
     ) -> list[LLMResponse]:
         """
-        Query all configured LLMs in parallel.
+        Query all configured LLMs with staggered starts to avoid rate limits.
+
+        Uses staggered parallel execution: each model starts with a small delay
+        to prevent hitting OpenRouter rate limits (429 errors).
 
         Args:
             prompt: The user prompt
@@ -341,9 +433,20 @@ class MultiLLMAnalyzer:
         Returns:
             List of LLMResponse objects
         """
+
+        async def query_with_delay(model, delay: float):
+            """Query a model after a staggered delay."""
+            if delay > 0:
+                await asyncio.sleep(delay)
+            return await self._query_llm_async(
+                model, prompt, system_prompt, temperature, max_tokens
+            )
+
+        # Stagger requests: 0s, 0.5s, 1.0s, 1.5s between model starts
+        # This prevents 429 rate limit errors from OpenRouter
         tasks = [
-            self._query_llm_async(model, prompt, system_prompt, temperature, max_tokens)
-            for model in self.models
+            query_with_delay(model, i * self.rate_limit_delay)
+            for i, model in enumerate(self.models)
         ]
 
         responses = await asyncio.gather(*tasks, return_exceptions=True)
@@ -371,7 +474,7 @@ class MultiLLMAnalyzer:
     def _query_all_llms_sync(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
     ) -> list[LLMResponse]:
@@ -383,7 +486,7 @@ class MultiLLMAnalyzer:
             time.sleep(self.rate_limit_delay)
         return responses
 
-    def _parse_sentiment_score(self, content: str) -> Optional[float]:
+    def _parse_sentiment_score(self, content: str) -> float | None:
         """
         Parse sentiment score from LLM response.
 
@@ -427,7 +530,7 @@ class MultiLLMAnalyzer:
             logger.warning(f"Error parsing sentiment score: {str(e)}")
             return None
 
-    def _parse_ipo_score(self, content: str) -> Optional[int]:
+    def _parse_ipo_score(self, content: str) -> int | None:
         """
         Parse IPO score from LLM response.
 
@@ -597,8 +700,13 @@ Format your response as JSON:
 }}
 """
 
-        system_prompt = """You are an expert financial analyst specializing in market sentiment analysis.
+        # Build system prompt with psychology context injection
+        base_prompt = """You are an expert financial analyst specializing in market sentiment analysis.
 Provide objective, data-driven sentiment scores based on technical indicators and news sentiment."""
+
+        # Inject psychology context (bias mitigation, state awareness)
+        psychology_context = get_psychology_context() if PSYCHOLOGY_AVAILABLE else ""
+        system_prompt = base_prompt + psychology_context
 
         if self.use_async:
             responses = await self._query_all_llms_async(prompt, system_prompt, temperature=0.3)
@@ -652,8 +760,13 @@ Format your response as JSON:
 }}
 """
 
-        system_prompt = """You are an expert financial analyst specializing in market sentiment analysis.
+        # Build system prompt with psychology context injection
+        base_prompt = """You are an expert financial analyst specializing in market sentiment analysis.
 Provide objective, data-driven sentiment scores with detailed reasoning."""
+
+        # Inject psychology context (bias mitigation, state awareness)
+        psychology_context = get_psychology_context() if PSYCHOLOGY_AVAILABLE else ""
+        system_prompt = base_prompt + psychology_context
 
         if self.use_async:
             responses = await self._query_all_llms_async(prompt, system_prompt, temperature=0.3)
@@ -689,6 +802,290 @@ Provide objective, data-driven sentiment scores with detailed reasoning."""
                 "news_count": len(news),
                 "timestamp": time.time(),
             },
+        )
+
+    async def get_ensemble_sentiment_enhanced(
+        self,
+        symbol: str,
+        market_data: dict[str, Any],
+        news: list[dict[str, Any]],
+        regime_state: Any | None = None,
+        recent_returns: dict[str, float] | None = None,
+    ) -> SentimentAnalysis:
+        """
+        Enhanced sentiment analysis with temporal context and structured data.
+
+        This method implements prompt engineering best practices from
+        MachineLearningMastery for time series LLM analysis:
+        1. Temporal context header (market session, regime, timing)
+        2. Structured JSON schema for market data
+        3. Confidence-aware responses
+
+        Args:
+            symbol: Trading symbol (e.g., "SPY")
+            market_data: Dictionary containing market data and indicators
+            news: List of news articles
+            regime_state: Optional RegimeState from regime_detection module
+            recent_returns: Optional dict with '1d', '5d', '20d' returns
+
+        Returns:
+            SentimentAnalysis with enhanced confidence and reasoning
+
+        Example:
+            >>> sentiment = await analyzer.get_ensemble_sentiment_enhanced(
+            ...     symbol="SPY",
+            ...     market_data={"close": 450.0, "rsi": 55, "macd": 0.25},
+            ...     news=[{"title": "Market rallies", "content": "..."}],
+            ...     recent_returns={"1d": 0.01, "5d": 0.02}
+            ... )
+        """
+        # Build enhanced prompts using prompt engineering module
+        engineer = PromptEngineer()
+        prompt, system_prompt = engineer.build_enhanced_sentiment_prompt(
+            symbol=symbol,
+            market_data=market_data,
+            news=news,
+            regime_state=regime_state,
+            recent_returns=recent_returns,
+        )
+
+        if self.use_async:
+            responses = await self._query_all_llms_async(prompt, system_prompt, temperature=0.3)
+        else:
+            responses = self._query_all_llms_sync(prompt, system_prompt, temperature=0.3)
+
+        # Calculate ensemble sentiment
+        ensemble_score, base_confidence, individual_scores = self._calculate_ensemble_sentiment(
+            responses
+        )
+
+        # Extract confidence and reasoning from responses
+        confidences = []
+        reasoning_parts = []
+        key_factors = []
+        risks = []
+
+        for response in responses:
+            if response.success and response.content:
+                try:
+                    data = json.loads(response.content)
+                    if "confidence" in data:
+                        confidences.append(float(data["confidence"]))
+                    if "reasoning" in data:
+                        reasoning_parts.append(f"[{response.model}] {data['reasoning']}")
+                    if "key_factors" in data:
+                        key_factors.extend(data["key_factors"])
+                    if "risks" in data:
+                        risks.extend(data["risks"])
+                except Exception:  # noqa: BLE001
+                    pass
+
+        # Use LLM-reported confidence if available, otherwise use calculated confidence
+        final_confidence = sum(confidences) / len(confidences) if confidences else base_confidence
+
+        reasoning = (
+            "\n\n".join(reasoning_parts) if reasoning_parts else "No detailed reasoning available"
+        )
+
+        logger.info(
+            f"Enhanced sentiment for {symbol}: {ensemble_score:.3f} "
+            f"(confidence: {final_confidence:.3f})"
+        )
+
+        return SentimentAnalysis(
+            score=ensemble_score,
+            confidence=final_confidence,
+            reasoning=reasoning,
+            individual_scores=individual_scores,
+            metadata={
+                "symbol": symbol,
+                "market_data": market_data,
+                "news_count": len(news),
+                "timestamp": time.time(),
+                "key_factors": list(set(key_factors))[:5],  # Dedupe, top 5
+                "risks": list(set(risks))[:3],  # Dedupe, top 3
+                "enhanced": True,  # Flag for enhanced analysis
+            },
+        )
+
+    async def analyze_two_pass(
+        self,
+        symbol: str,
+        market_data: dict[str, Any],
+        regime_state: Any | None = None,
+        recent_returns: dict[str, float] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Two-pass analysis: Feature extraction then prediction.
+
+        Implements the recommended pattern from MachineLearningMastery:
+        - Pass 1: Extract features from market data (patterns, anomalies)
+        - Pass 2: Make predictions based on extracted features
+
+        This approach improves prediction quality by separating
+        observation from inference.
+
+        Args:
+            symbol: Trading symbol
+            market_data: Dictionary containing market data and indicators
+            regime_state: Optional RegimeState from regime_detection
+            recent_returns: Optional dict with '1d', '5d', '20d' returns
+
+        Returns:
+            Dictionary with:
+                - extracted_features: Features from Pass 1
+                - prediction: Trading prediction from Pass 2
+                - confidence: Overall confidence
+                - recommendation: Trading recommendation
+        """
+        engineer = PromptEngineer()
+
+        # Build temporal context
+        temporal_ctx = engineer.get_temporal_context(
+            regime_state=regime_state,
+            recent_returns=recent_returns,
+        )
+        temporal_header = engineer.build_temporal_header(temporal_ctx)
+
+        # Build structured market data
+        schema = MarketDataSchema.from_market_data(symbol=symbol, market_data=market_data)
+
+        # === PASS 1: Feature Extraction ===
+        logger.info(f"Two-pass analysis for {symbol}: Starting Pass 1 (feature extraction)")
+
+        pass1_prompt, pass1_system = engineer.build_feature_extraction_prompt(
+            market_data=schema,
+            temporal_header=temporal_header,
+        )
+
+        # Use Claude Sonnet 4 for feature extraction (best reasoning)
+        pass1_response = await self._query_llm_async(
+            model=LLMModel.CLAUDE_SONNET_4,
+            prompt=pass1_prompt,
+            system_prompt=pass1_system,
+            temperature=0.2,  # Low temp for consistent extraction
+        )
+
+        extracted_features = {}
+        if pass1_response.success:
+            try:
+                extracted_features = json.loads(pass1_response.content)
+                logger.info(
+                    f"Pass 1 complete: Extracted {len(extracted_features)} feature categories"
+                )
+            except json.JSONDecodeError:
+                logger.warning("Pass 1 response not valid JSON, using raw content")
+                extracted_features = {"raw_analysis": pass1_response.content}
+        else:
+            logger.error(f"Pass 1 failed: {pass1_response.error}")
+            return {
+                "extracted_features": {},
+                "prediction": {},
+                "confidence": 0.0,
+                "recommendation": "hold",
+                "error": pass1_response.error,
+            }
+
+        # === PASS 2: Prediction ===
+        logger.info(f"Two-pass analysis for {symbol}: Starting Pass 2 (prediction)")
+
+        pass2_prompt, pass2_system = engineer.build_prediction_prompt(
+            market_data=schema,
+            temporal_header=temporal_header,
+            extracted_features=extracted_features,
+        )
+
+        # Query all LLMs for ensemble prediction
+        if self.use_async:
+            responses = await self._query_all_llms_async(
+                pass2_prompt, pass2_system, temperature=0.3
+            )
+        else:
+            responses = self._query_all_llms_sync(pass2_prompt, pass2_system, temperature=0.3)
+
+        # Aggregate predictions
+        sentiments = []
+        confidences = []
+        recommendations = []
+        all_reasoning = []
+
+        for response in responses:
+            if response.success and response.content:
+                try:
+                    data = json.loads(response.content)
+                    if "sentiment" in data:
+                        sentiments.append(float(data["sentiment"]))
+                    if "confidence" in data:
+                        confidences.append(float(data["confidence"]))
+                    if "recommendation" in data:
+                        recommendations.append(data["recommendation"])
+                    if "reasoning" in data:
+                        all_reasoning.append(f"[{response.model}] {data['reasoning']}")
+                except Exception:  # noqa: BLE001
+                    pass
+
+        # Calculate ensemble values
+        avg_sentiment = sum(sentiments) / len(sentiments) if sentiments else 0.0
+        avg_confidence = sum(confidences) / len(confidences) if confidences else 0.5
+
+        # Most common recommendation
+        if recommendations:
+            from collections import Counter
+
+            rec_counter = Counter(recommendations)
+            final_recommendation = rec_counter.most_common(1)[0][0]
+        else:
+            final_recommendation = "hold"
+
+        logger.info(
+            f"Two-pass complete for {symbol}: sentiment={avg_sentiment:.3f}, "
+            f"confidence={avg_confidence:.3f}, recommendation={final_recommendation}"
+        )
+
+        return {
+            "symbol": symbol,
+            "extracted_features": extracted_features,
+            "prediction": {
+                "sentiment": avg_sentiment,
+                "confidence": avg_confidence,
+                "recommendation": final_recommendation,
+                "reasoning": "\n\n".join(all_reasoning),
+            },
+            "confidence": avg_confidence,
+            "recommendation": final_recommendation,
+            "temporal_context": {
+                "session": temporal_ctx.market_session.value,
+                "day_type": temporal_ctx.day_type.value,
+                "volatility_regime": temporal_ctx.volatility_regime,
+                "trend_regime": temporal_ctx.trend_regime,
+            },
+            "timestamp": time.time(),
+        }
+
+    async def analyze(
+        self,
+        query: str,
+        system_prompt: str | None = None,
+        model: LLMModel | None = None,
+    ) -> LLMResponse:
+        """
+        Generic analysis using a specific or default model.
+
+        Args:
+            query: The analysis query/prompt
+            system_prompt: Optional system prompt
+            model: Optional model to use (defaults to Claude Sonnet 4)
+
+        Returns:
+            LLMResponse object
+        """
+        # Default to Claude Sonnet 4 for high-quality reasoning
+        target_model = model or LLMModel.CLAUDE_SONNET_4
+
+        return await self._query_llm_async(
+            model=target_model,
+            prompt=query,
+            system_prompt=system_prompt,
         )
 
     async def analyze_ipo(self, company_data: dict[str, Any]) -> dict[str, Any]:
@@ -748,9 +1145,14 @@ Format your response as JSON:
 }}
 """
 
-        system_prompt = """You are an expert IPO analyst with deep experience evaluating pre-IPO companies.
+        # Build system prompt with psychology context injection
+        base_prompt = """You are an expert IPO analyst with deep experience evaluating pre-IPO companies.
 Provide thorough, objective analysis considering market conditions, company fundamentals,
 valuation, competitive landscape, and risk factors."""
+
+        # Inject psychology context (bias mitigation, state awareness)
+        psychology_context = get_psychology_context() if PSYCHOLOGY_AVAILABLE else ""
+        system_prompt = base_prompt + psychology_context
 
         if self.use_async:
             responses = await self._query_all_llms_async(prompt, system_prompt, temperature=0.3)
@@ -799,7 +1201,7 @@ valuation, competitive landscape, and risk factors."""
             recommendation = "Avoid"
 
         # Determine risk level
-        risk_counts = {}
+        risk_counts: dict[str, int] = {}
         for risk in all_risk_levels:
             risk_counts[risk] = risk_counts.get(risk, 0) + 1
         risk_level = max(risk_counts.items(), key=lambda x: x[1])[0] if risk_counts else "Medium"
@@ -870,8 +1272,13 @@ Format your response as JSON:
 }}
 """
 
-        system_prompt = """You are an expert stock analyst with expertise in technical analysis,
+        # Build system prompt with psychology context injection
+        base_prompt = """You are an expert stock analyst with expertise in technical analysis,
 fundamental analysis, and market sentiment. Provide objective, actionable recommendations."""
+
+        # Inject psychology context (bias mitigation, state awareness)
+        psychology_context = get_psychology_context() if PSYCHOLOGY_AVAILABLE else ""
+        system_prompt = base_prompt + psychology_context
 
         if self.use_async:
             responses = await self._query_all_llms_async(prompt, system_prompt, temperature=0.3)
@@ -972,8 +1379,13 @@ Format your response as JSON:
 }
 """
 
-        system_prompt = """You are a senior market strategist with expertise in macroeconomic analysis,
+        # Build system prompt with psychology context injection
+        base_prompt = """You are a senior market strategist with expertise in macroeconomic analysis,
 market trends, and investment strategy. Provide comprehensive, balanced market outlook."""
+
+        # Inject psychology context (bias mitigation, state awareness)
+        psychology_context = get_psychology_context() if PSYCHOLOGY_AVAILABLE else ""
+        system_prompt = base_prompt + psychology_context
 
         if self.use_async:
             responses = await self._query_all_llms_async(prompt, system_prompt, temperature=0.5)
@@ -1060,12 +1472,12 @@ class LLMCouncilAnalyzer:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        council_models: Optional[list[LLMModel]] = None,
-        chairman_model: Optional[LLMModel] = None,
+        api_key: str | None = None,
+        council_models: list[LLMModel] | None = None,
+        chairman_model: LLMModel | None = None,
         max_retries: int = 3,
         timeout: int = 60,
-        rate_limit_delay: float = 0.5,
+        rate_limit_delay: float = 2.0,  # Increased from 1.0 to reduce 429/500 errors
         use_async: bool = True,
     ):
         """
@@ -1102,10 +1514,8 @@ class LLMCouncilAnalyzer:
         self.rate_limit_delay = rate_limit_delay
         self.use_async = use_async
 
-        # Initialize OpenAI client with OpenRouter base URL (wrapped with LangSmith if enabled)
-        base_url = "https://openrouter.ai/api/v1"
-
-        # Use LangSmith wrapper if available
+        # Initialize OpenAI client with OpenRouter (with Helicone + LangSmith observability if enabled)
+        # Use observability wrapper if available (handles Helicone gateway + LangSmith tracing)
         try:
             from src.utils.langsmith_wrapper import (
                 get_traced_async_openai_client,
@@ -1113,17 +1523,34 @@ class LLMCouncilAnalyzer:
             )
 
             if use_async:
-                self.client = get_traced_async_openai_client(
-                    api_key=self.api_key, base_url=base_url
+                # Wrapper auto-routes through Helicone if HELICONE_API_KEY is set
+                self.client = get_traced_async_openai_client(api_key=self.api_key)
+            else:
+                self.sync_client = get_traced_openai_client(api_key=self.api_key)
+        except ImportError:
+            # Fallback to regular client with Helicone support if wrapper not available
+            helicone_key = os.getenv("HELICONE_API_KEY")
+            if helicone_key:
+                base_url = "https://openrouter.helicone.ai/api/v1"
+                default_headers = {"Helicone-Auth": f"Bearer {helicone_key}"}
+            else:
+                base_url = "https://openrouter.ai/api/v1"
+                default_headers = None
+
+            if use_async:
+                self.client = AsyncOpenAI(
+                    api_key=self.api_key,
+                    base_url=base_url,
+                    timeout=timeout,
+                    default_headers=default_headers,
                 )
             else:
-                self.sync_client = get_traced_openai_client(api_key=self.api_key, base_url=base_url)
-        except ImportError:
-            # Fallback to regular client if wrapper not available
-            if use_async:
-                self.client = AsyncOpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
-            else:
-                self.sync_client = OpenAI(api_key=self.api_key, base_url=base_url, timeout=timeout)
+                self.sync_client = OpenAI(
+                    api_key=self.api_key,
+                    base_url=base_url,
+                    timeout=timeout,
+                    default_headers=default_headers,
+                )
 
         if deepseek_enabled:
             logger.info(
@@ -1140,7 +1567,7 @@ class LLMCouncilAnalyzer:
         self,
         model: LLMModel,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
     ) -> LLMResponse:
@@ -1177,9 +1604,20 @@ class LLMCouncilAnalyzer:
                 )
 
             except Exception as e:
-                logger.warning(
-                    f"Attempt {attempt + 1}/{self.max_retries} failed for {model.value}: {str(e)}"
-                )
+                # Enhanced error logging to identify specific failure patterns
+                error_type = type(e).__name__
+                error_msg = str(e)
+                status_code = getattr(e, "status_code", None)
+                if status_code:
+                    logger.warning(
+                        f"[Council] Attempt {attempt + 1}/{self.max_retries} failed for "
+                        f"{model.value}: HTTP {status_code} - {error_type}: {error_msg}"
+                    )
+                else:
+                    logger.warning(
+                        f"[Council] Attempt {attempt + 1}/{self.max_retries} failed for "
+                        f"{model.value}: {error_type}: {error_msg}"
+                    )
 
                 if attempt == self.max_retries - 1:
                     return LLMResponse(
@@ -1188,14 +1626,14 @@ class LLMCouncilAnalyzer:
                         tokens_used=0,
                         latency=0,
                         success=False,
-                        error=str(e),
+                        error=f"{error_type}: {error_msg}",
                     )
 
                 # Exponential backoff
                 await asyncio.sleep(2**attempt * self.rate_limit_delay)
 
     async def _stage1_first_opinions(
-        self, query: str, system_prompt: Optional[str] = None
+        self, query: str, system_prompt: str | None = None
     ) -> dict[str, LLMResponse]:
         """
         Stage 1: Get first opinions from all council members.
@@ -1209,15 +1647,22 @@ class LLMCouncilAnalyzer:
         """
         logger.info("Stage 1: Collecting first opinions from council members")
 
-        tasks = [
-            self._query_llm_async(
+        async def query_with_delay(model, delay: float):
+            """Query a model after a staggered delay to avoid rate limits."""
+            if delay > 0:
+                await asyncio.sleep(delay)
+            return await self._query_llm_async(
                 model=model,
                 prompt=query,
                 system_prompt=system_prompt,
                 temperature=0.7,
                 max_tokens=2000,
             )
-            for model in self.council_models
+
+        # Stagger requests to avoid 429 rate limit errors
+        tasks = [
+            query_with_delay(model, i * self.rate_limit_delay)
+            for i, model in enumerate(self.council_models)
         ]
 
         responses = await asyncio.gather(*tasks, return_exceptions=True)
@@ -1318,19 +1763,25 @@ Format your response as JSON:
 Evaluate responses objectively based on accuracy, insight, and reasoning quality.
 Be honest and critical in your assessment."""
 
-        # Each council member reviews (excluding themselves)
+        async def review_with_delay(model, delay: float):
+            """Query review with staggered delay to avoid rate limits."""
+            if delay > 0:
+                await asyncio.sleep(delay)
+            return await self._query_llm_async(
+                model=model,
+                prompt=review_prompt,
+                system_prompt=system_prompt_review,
+                temperature=0.5,
+                max_tokens=2000,
+            )
+
+        # Each council member reviews (excluding themselves) with staggered delays
         review_tasks = []
+        delay_idx = 0
         for model in self.council_models:
             if model.value in first_opinions and first_opinions[model.value].success:
-                review_tasks.append(
-                    self._query_llm_async(
-                        model=model,
-                        prompt=review_prompt,
-                        system_prompt=system_prompt_review,
-                        temperature=0.5,
-                        max_tokens=2000,
-                    )
-                )
+                review_tasks.append(review_with_delay(model, delay_idx * self.rate_limit_delay))
+                delay_idx += 1
             else:
                 review_tasks.append(None)
 
@@ -1468,7 +1919,7 @@ multiple expert opinions into a final, high-quality decision. Your role is to:
     async def query_council(
         self,
         query: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         include_reviews: bool = True,
     ) -> CouncilResponse:
         """
@@ -1537,7 +1988,7 @@ multiple expert opinions into a final, high-quality decision. Your role is to:
         self,
         symbol: str,
         market_data: dict[str, Any],
-        context: Optional[dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
     ) -> CouncilResponse:
         """
         Analyze a trading decision using the LLM Council.
@@ -1571,8 +2022,13 @@ Provide:
 6. Potential concerns or risks
 
 Format your response clearly with reasoning."""
-        system_prompt = """You are an expert trading analyst. Provide objective, data-driven
+        # Build system prompt with psychology context injection
+        base_prompt = """You are an expert trading analyst. Provide objective, data-driven
 trading recommendations based on technical analysis, market conditions, and risk management principles."""
+
+        # Inject psychology context (bias mitigation, state awareness)
+        psychology_context = get_psychology_context() if PSYCHOLOGY_AVAILABLE else ""
+        system_prompt = base_prompt + psychology_context
 
         return await self.query_council(query, system_prompt, include_reviews=True)
 
@@ -1584,7 +2040,7 @@ trading recommendations based on technical analysis, market conditions, and risk
 
 
 # Convenience functions for synchronous usage
-def create_analyzer(api_key: Optional[str] = None, use_async: bool = True) -> MultiLLMAnalyzer:
+def create_analyzer(api_key: str | None = None, use_async: bool = True) -> MultiLLMAnalyzer:
     """
     Create a MultiLLMAnalyzer instance.
 

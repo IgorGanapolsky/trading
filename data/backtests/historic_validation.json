@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-12-10T15:59:13.970070",
+  "symbols": [
+    "SPY",
+    "QQQ"
+  ],
+  "initial_capital": 100000,
+  "results": {
+    "bull_2024": {
+      "status": "FAILED",
+      "error": "No data available for backtest",
+      "regime": "2024 Bull Run"
+    }
+  },
+  "summary": {
+    "regimes_tested": 1,
+    "passed": 0,
+    "failed": 1,
+    "verdict": "NEEDS_IMPROVEMENT"
+  }
+}

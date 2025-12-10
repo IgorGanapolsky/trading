@@ -1,0 +1,29 @@
+{
+  "plan_id": "adaptive_20251205_151332",
+  "phases": {
+    "initialize": {
+      "phase": "initialize",
+      "status": "completed"
+    },
+    "data_collection": {
+      "phase": "data_collection"
+    },
+    "analysis": {
+      "phase": "analysis"
+    },
+    "risk_assessment": {
+      "phase": "risk_assessment"
+    },
+    "execution": {
+      "phase": "execution"
+    },
+    "audit": {
+      "phase": "audit"
+    }
+  },
+  "agent_results": [],
+  "final_decision": null,
+  "errors": [
+    "Audit: 'audit'"
+  ]
+}

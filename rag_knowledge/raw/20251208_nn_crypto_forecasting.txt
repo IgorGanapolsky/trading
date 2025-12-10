@@ -1,0 +1,506 @@
+Title: Neural Network Design Patterns for Cryptocurrency Forecasting
+URL: https://arxiv.org/pdf/2508.02356.pdf
+Citation: ArXiv (2025)
+Extracted: 2025-12-08T04:57:51.175417 UTC
+Neural Network-Based Algorithmic Trading Systems:
+Multi-Timeframe Analysis and High-Frequency Execution
+in Cryptocurrency Markets
+Zh¯ ang Wěi
+zhang@polar-tensor.com
+August 5, 2025
+Abstract
+This paper explores neural network-based approaches for algorithmic trading in cryptocurrency markets.
+Our approach combines multi-timeframe trend analysis with high-frequency direction prediction networks,
+achieving positive risk-adjusted returns through statistical modeling and systematic market exploitation. The
+system integrates diverse data sources including market data, on-chain metrics, and orderbook dynamics,
+translating these into unified buy/sell pressure signals. We demonstrate how machine learning models can
+effectively capture cross-timeframe relationships, enabling sub-second trading decisions with statistical confi-
+dence. The implementation addresses real-world challenges including data pipeline reliability, network latency,
+and operational risk management. Our results show consistent performance across various market conditions,
+with profit factor exceeding traditional approaches while maintaining manageable drawdown profiles.
+Keywords: Algorithmic Trading, Neural Networks, Cryptocurrency, High-Frequency Trading, Multi-
+Timeframe Analysis, Market Microstructure
+1 Introduction
+Cryptocurrency markets present unique opportunities
+for algorithmic trading due to their inherent volatil-
+ity, 24/7 operation, and rich on-chain data avail-
+ability. Unlike traditional financial markets, crypto
+markets provide unprecedented transparency through
+blockchaindata, enablingsophisticatedanalysisofnet-
+work activity, transaction flows, and market sentiment
+indicators.
+The evolution of neural network architectures has
+revolutionized quantitative trading approaches, mov-
+ing beyond traditional technical analysis toward
+deep learning models capable of processing multi-
+dimensional data streams in real-time LeCun et al.
+[2015], Sezer et al. [2020]. This paper describes a
+complete trading system that leverages these advances
+to achieve consistent profitability through systematic
+market exploitation.
+Our approach recognizes that successful algorithmic
+tradingrequiresmorethanaccuratepredictions—itde-
+mands robust data infrastructure, sophisticated risk
+management, and the ability to execute decisions
+within milliseconds of signal generation. The cryp-
+tocurrency market’s unique characteristics, including
+extremevolatilityandfragmentedliquidity, necessitate
+specialized techniques for both signal generation and
+execution.
+2 Objective
+Machine learning transforms trading from intuition-
+based decision making to systematic pattern recogni-tion across multiple data dimensions simultaneously
+Krauss et al. [2017], Heaton et al. [2017]. Statistical
+modeling provides the framework for quantifiable risk
+assessment and performance measurement, enabling
+traders to distinguish between skill and randomness
+in trading outcomes.
+The primary objective is developing a comprehen-
+sive trading system that achieves four critical goals.
+First, gathering sufficient data sources containing gen-
+uine alpha signals through integration of market data,
+on-chain analytics, and sentiment information. Sec-
+ond, developing robust methods to understand and
+model underlying market trends across multiple time-
+frames. Third, training neural networks capable of
+predicting probable price direction with quantifiable
+confidence levels. Finally, executing these predictions
+on the smallest possible timeframes to maximize trad-
+ing opportunities and minimize market exposure du-
+ration. This requires solving several interconnected
+problems: accurate trend identification across multiple
+timeframes, robust signal filtering to reduce false pos-
+itives, and efficient execution in volatile market condi-
+tions.
+Traditional approaches often fail because they rely
+on single-timeframe analysis or ignore the hierarchical
+nature of market movements. Our methodology ad-
+dresses these limitations by explicitly modeling rela-
+tionships between different temporal scales, from daily
+trends to sub-second orderbook dynamics. The under-
+lying intuition is that buy/sell pressure manifesting in
+larger timeframes creates more likely conditions for or-
+derbookdynamicstoreflectthispressurethroughmore
+granular and genuine order placement patterns. The
+1arXiv:2508.02356v1  [q-fin.CP]  4 Aug 2025
+
+Neural Network-Based Algorithmic Trading 2
+system’ssuccessdependsonitsabilitytosynthesizein-
+formation across these scales while maintaining com-
+putational efficiency required for high-frequency exe-
+cution.
+Statistical rigor underlies every component of the
+system, fromhypothesisformulationthroughbacktest-
+ing and live trading validation. This ensures that ob-
+served performance reflects genuine market inefficien-
+cies rather than data mining artifacts or overfitting to
+historical patterns.
+3 Data Processing
+The data pipeline integrates three primary informa-
+tion sources into a unified framework for trading sig-
+nal generation, utilizing historical data spanning from
+2018 to present with the largest timeframe being daily
+intervals. Market data provides traditional price and
+volume information across multiple timeframes, form-
+ing the foundation for trend analysis and momentum
+indicators. On-chain data offers unique insights into
+network activity, transaction patterns, and holder be-
+havior that can predict significant price movements or
+identify accumulation/distribution phases.
+Orderbook data captures real-time supply and de-
+mand dynamics, enabling detection of short-term pres-
+sure imbalances that precede price movements Has-
+brouck [1991], Cont et al. [2014]. This microstructural
+information proves particularly valuable for execution
+timing and short-term direction prediction.
+All data streams undergo careful normalization and
+synchronization to ensure consistent timing and scal-
+ing across different sources, with feature normaliza-
+tion performed using predetermined scaling parame-
+ters rather than dataset running statistics to prevent
+data snooping and ensure model stability.
+For single asset, the system integrates multiple data
+sources including on-chain analytics capturing network
+activity and transaction patterns, traditional market
+dataencompassingpriceandvolumeinformation,over-
+all economic indicators such as S&P 500 index move-
+ments, and sentiment data from GDELT datasets
+Leetaru and Schrodt [2013] providing 15-minute fre-
+quencysentimentdatafromglobalnewsandsocialme-
+dia sources. This comprehensive data integration of-
+fers context for major market movements, particularly
+those driven by external events rather than technical
+factors Tetlock [2007], Bollen et al. [2011]. The multi-
+source approach helps the system adapt to regime
+changes and avoid trading during periods of elevated
+external uncertainty.
+4 Trend Networks
+The trend prediction component employs relatively
+simple neural networks designed for computational ef-
+ficiency and interpretability. These networks process
+Bitcoin dominance metrics, network transaction vol-
+umes, and multi-timeframe moving averages to gener-ate trend assessments on a continuous scale from -1
+(strongly bearish) to +1 (strongly bullish).
+The architecture prioritizes stability over complex-
+ity, using regularization techniques to prevent over-
+fitting while maintaining sensitivity to genuine trend
+changes. Trainingdataspansmultiplemarketcyclesto
+ensure robustness across different market regimes, in-
+cluding bull markets, bear markets, and sideways con-
+solidation periods.
+Bitcoindominanceservesasaprimaryinputbecause
+of its strong correlation with overall cryptocurrency
+market sentiment. When Bitcoin dominance rises, alt-
+coins typically underperform, while declining domi-
+nance often signals risk-on behavior across the broader
+crypto ecosystem.
+Network transaction data provides insight into ac-
+tual usage and adoption trends, which often precede
+price movements by days or weeks. The models learn
+to distinguish between genuine adoption signals and
+temporary spikes caused by network congestion or ar-
+bitrage activities.
+Moving average analysis across daily, weekly, and
+monthly timeframes captures longer-term momentum
+while filtering out short-term noise. The neural net-
+works learn optimal combinations of these timeframes
+rather than relying on predetermined technical analy-
+sis rules.
+5 Direction Networks
+Directionpredictionutilizesasophisticatedmulti-head
+CNN architecture where each head specializes in pro-
+cessingdifferenttemporalpatternsforperformanceop-
+timization Borovykh et al. [2017], Tsantekidis et al.
+[2017]. The system employs three main CNN heads or-
+ganized by timeframe: minute-scale, hourly-scale, and
+daily-scale processing. Each head processes OHLCV
+data, selected technical indicators to minimize noise,
+sentiment data, and on-chain metrics. Additionally,
+the hourly and daily heads incorporate broader mar-
+ket context including S&P 500 index and Bitcoin dom-
+inance metrics for enhanced pattern recognition across
+multiple scales.
+Each CNN head consists of multiple convolutional
+layers designed to extract temporal patterns specific
+to its assigned timeframe. The minute-focused head
+processes high-frequency signals for immediate direc-
+tional changes, while hourly and daily heads capture
+medium to long-term trend patterns and incorporate
+S&P500andBitcoindominancemetricstounderstand
+broader market regime influences.
+Complementing the CNN processing, orderbook
+data undergoes specialized linear processing combined
+with running statistical analysis including metrics such
+as biggest order size and gap measurements in the last
+minute and hour to capture microstructural supply-
+demand imbalances. Sentiment data from GDELT’s
+15-minute global news feed, represented as the last ten
+values, feeds into each CNN head (daily, hourly, and
+minute-scale) for contextual weighting of market mood
+
+Neural Network-Based Algorithmic Trading 3
+Figure 1: Direction Networks Architecture: Multi-head CNN processing of timeframe-specific market data
+(minute, hourly, and daily OHLCV with technical indicators) and broader market context (S&P 500, Bitcoin
+dominance), combined with specialized linear processing of orderbook statistics, sentiment data, and on-chain
+metrics. Self-attention mechanism dynamically weights all feature inputs before final classification into direc-
+tional trading signals.
+and external event impacts. On-chain data such as
+transaction count and volume metrics are integrated
+into the CNN heads alongside other technical indica-
+tors for comprehensive pattern recognition.
+The soft attention mechanism serves as a dynamic
+selection network, adaptively weighting outputs from
+the three CNN heads and the orderbook linear proces-
+sor based on current market conditions Vaswani et al.
+[2017], Qin et al. [2017]. The intuition behind this ap-
+proach is to select features that are relevant, ideally
+allowing each head to contribute with certain weight
+based on the current market situation. Given feature
+representations from different processing heads, the at-
+tention weights are computed as:
+ei=fatt(xi, h) (1)
+αi=exp(ei)Pn
+j=1exp(ej)(2)
+c=nX
+i=1αixi (3)
+where fattrepresents the learned attention function,
+hcaptures current market context, αiare normalized
+attention weights, and cis the context-weighted rep-
+resentation. During volatile periods, the system in-
+creases weight on orderbook and minute-scale features,
+while trending markets emphasize daily patterns and
+sentiment indicators.
+The network training employs multi-class cross-
+entropy loss with L2 regularization to prevent over-
+fitting and improve generalization across the three di-
+rectional classes: buy, sell, and hold.The final classification layers process the attention-
+weighted features through dense neural networks to
+producecategoricaldirectionalpredictions. Thisarchi-
+tecture enables specialized pattern recognition across
+multiple data types while maintaining computational
+efficiency required for real-time trading applications.
+The direction networks are relatively compact with ap-
+proximately 520,000 parameters, optimizing for both
+performance and inference speed. Direction networks
+undergo periodic retraining as market regime shifts oc-
+cur, ensuring model relevance and preventing perfor-
+mance degradation over time.
+The architecture comparison demonstrates the crit-
+ical importance of the soft attention mechanism, with
+the CNN-only variant producing very low confidence
+scoresdespitesimilardirectionalaccuracy. TheLSTM-
+based approach, while functional, showed inferior per-
+formance and significantly slower inference times com-
+pared to the optimized CNN architecture.
+6 Inference
+The inference process dynamically selects appropriate
+direction networks based on current trend conditions
+identified by the trend networks. This two-stage ap-
+proach ensures that directional predictions come from
+models specifically trained for current market condi-
+tions, improving accuracy and confidence.
+Multiple direction networks evaluate each trading
+opportunity, generating an ensemble prediction with
+associated confidence scores. High-confidence unan-
+imous decisions trigger immediate trading actions,
+while lower-confidence or conflicting signals may result
+
+Neural Network-Based Algorithmic Trading 4
+Table 1: Network Architecture Performance Comparison
+Architecture Profit Factor Notes
+CNN + Soft Attention (Current) 1.15 Optimal performance
+LSTM (instead of CNN) 1.08 Slower inference
+CNN without Attention 0.98 Very low confidence scores
+LSTM without Attention 0.95 Poor performance & slow
+Algorithm 1 Real-time Inference Pipeline
+1:procedure InferenceStep (market_data,
+trend_networks ,direction _networks )
+2: trend_score←EvaluateTrend( market_data,
+trend_networks )
+3: selected_networks ←
+SelectNetworks( trend_score)
+4: predictions ←[]
+5: confidences ←[]
+6:foreach network inselected_networks do
+7: pred, conf ←
+network.Predict( market_data)
+8: predictions .append( pred)
+9: confidences .append( conf)
+10:end for
+11: ensemble _pred←WeightedVote( predictions ,
+confidences )
+12: consensus _score ←
+CalculateConsensus( predictions )
+13: final_confidence ←
+CombineScores( confidences ,consensus _score)
+14:iffinal_confidence > threshold highthen
+15: returnExecuteTrade( ensemble _pred, po-
+sition_size = large)
+16:else if final_confidence > threshold low
+then
+17: returnExecuteTrade( ensemble _pred, po-
+sition_size = small)
+18:else
+19: returnNoAction()
+20:end if
+21:end procedurein position sizing adjustments or trade abstention.
+The confidence scoring mechanism incorporates
+both individual network certainty and inter-network
+agreement. High individual certainty with strong con-
+sensus indicates ideal trading conditions, while high
+certainty with poor consensus suggests regime uncer-
+tainty requiring more conservative position sizing.
+Real-time evaluation occurs continuously as new
+data arrives, enabling the system to adapt quickly to
+changing market conditions. The inference pipeline
+achieves sub-50ms latency per prediction, with com-
+plete trade execution typically requiring 100-300ms in-
+cluding network latency and exchange processing time.
+7 Hypothesis
+Our core hypothesis rests on the hierarchical na-
+ture of market information flow across different time-
+frames. We posit that larger timeframes contain in-
+formation that constrains and influences shorter time-
+frame movements, while microstructural data provides
+early signals of direction changes that propagate up-
+ward through the timeframe hierarchy.
+Daily trends establish the primary market direction,
+creating a bias that influences hourly patterns despite
+higher-frequencynoise. Thisrelationshipenablesmod-
+els trained on longer timeframes to provide valuable
+context for shorter-term predictions, improving accu-
+racy and reducing false signals.
+Conversely, orderbook pressure imbalances often
+precede visible price changes, providing early warning
+signals that can be detected in real-time. These mi-
+crostructural patterns tend to cascade upward, influ-
+encing minute-by-minute price movements and even-
+tually affecting longer-term trends.
+The key insight is that information flows bidirec-
+tionally across timeframes. While longer timeframes
+provide directional bias, shorter timeframes reveal the
+timing and magnitude of moves. Optimal trading sys-
+tems must capture both dimensions simultaneously
+rather than analyzing them in isolation.
+This theoretical framework enables the system to
+maintain statistical edges across different market con-
+ditions. During strong trends, longer-timeframe sig-
+nalsdominate, whileinvolatileorrangingmarkets, mi-
+crostructural signals become more important for tim-
+ing entries and exits.
+
+Neural Network-Based Algorithmic Trading 5
+8 Trading
+The low parameter count of direction networks enables
+parallel inference across multiple trading opportunities
+simultaneously. Combined with pre-computed trend
+assessments, the system achieves sub-second decision-
+making capabilities essential for high-frequency trad-
+ing approaches. Predictions are made at the tick level,
+utilizing the smallest possible timeframes to capture
+immediate market movements and maximize the num-
+ber of independent trading opportunities.
+Trading execution occurs at the tick level, with the
+complete decision-to-execution cycle typically requir-
+ing 100-300ms including inference time, network la-
+tency, and exchange processing. Each trade follows a
+rapid cycle: identify opportunity, execute entry, mon-
+itor position, and execute exit based on either profit
+targets or stop conditions. This approach maximizes
+the number of independent trading opportunities while
+minimizing exposure duration.
+Position sizing adapts dynamically based on confi-
+dence scores and current market volatility. Higher-
+confidence signals with favorable trend alignment re-
+ceive larger allocations, while uncertain or counter-
+trend opportunities receive minimal position sizes or
+may be skipped entirely.
+The system maintains strict risk controls through-
+outtheexecutionprocess,includingmaximumposition
+limits, correlation-based exposure limits, and real-time
+drawdown monitoring. These controls operate inde-
+pendently of the signal generation process, providing
+multiple layers of protection against model failures or
+market disruptions.
+9 Testing
+Backtesting methodology emphasizes statistical rigor
+overoptimisticprojections, usingout-of-sampletesting
+to validate model performance. The testing framework
+simulates realistic trading conditions including 0.05%
+transaction costs and accounts for variance in slippage
+to ensure results reflect achievable performance.
+Metrics measured include maximum profit factor,
+sharpe, drawdown, win rate to provide comprehensive
+performance assessment.
+Multiple market regimes receive equal attention dur-
+ing testing to ensure robustness across different con-
+ditions. This includes bull markets, bear markets,
+high-volatilityperiods, andlow-volatilityconsolidation
+phases that challenge different aspects of the trading
+system.
+ThearchitecturecomparisonresultspresentedinTa-
+ble 1 demonstrate the superior performance of the pro-
+posed CNN with soft attention approach, achieving a
+profit factor of 1.15 compared to alternative config-
+urations. The LSTM-based approaches showed con-
+sistently lower performance, with LSTM without at-
+tention producing the worst results at 0.95 profit fac-
+tor. Notably, removing the attention mechanism from
+the CNN architecture resulted in very low confidencescores despite maintaining reasonable directional accu-
+racy, highlighting the critical role of attention in reli-
+able signal generation.
+10 Production Challenges
+Production deployment revealed significant opera-
+tional challenges beyond statistical modeling concerns.
+Websocket connection instability created data gaps
+that could trigger false signals or prevent proper risk
+management. Orderbook lag during high-volatility pe-
+riods introduced execution delays that eroded theoret-
+ical profits.
+Missing dataframes due to network issues or ex-
+change downtime created the highest risk scenarios, as
+the system could make decisions based on incomplete
+information. Implementing robust data validation and
+fallback mechanisms proved more critical than opti-
+mizing prediction accuracy.
+Latency issues compound rapidly in high-frequency
+trading environments, where millisecond delays can
+eliminate profitable opportunities. Network topology,
+server co-location, and optimized code paths became
+as important as model performance for overall system
+success.
+Theseoperationalrealitieshighlightthegapbetween
+backtesting environments and live trading conditions.
+While statistical models provide the foundation for
+profitable trading, robust engineering and operational
+procedures determine whether theoretical advantages
+translate into actual profits.
+11 Conclusion
+This paper demonstrates that neural network-based
+approaches can achieve consistent profitability in cryp-
+tocurrency markets through systematic exploitation of
+cross-timeframe relationships and microstructural pat-
+terns. The multi-stage architecture successfully com-
+bines trend analysis with high-frequency direction pre-
+diction, enabling robust performance across diverse
+market conditions.
+The integration of multiple data sources into uni-
+fied pressure indicators proves effective for captur-
+ing market dynamics that individual indicators might
+miss. The hierarchical timeframe approach provides
+both theoretical foundation and practical advantages
+for real-time trading systems.
+References
+Johan Bollen, Huina Mao, and Xiaojun Zeng. Twitter
+mood predicts the stock market. Journal of compu-
+tational science , 2(1):1–8, 2011.
+Anastasia Borovykh, Sander Bohte, and Cornelis W
+Oosterlee. Conditional time series forecasting with
+convolutional neural networks. arXiv preprint
+arXiv:1703.04691 , 2017.
+
+Neural Network-Based Algorithmic Trading 6
+RamaCont, ArseniyKukanov, andSashaStoikov. The
+price impact of order book events. Journal of finan-
+cial econometrics , 12(1):47–88, 2014.
+Joel Hasbrouck. Measuring the information content of
+stock trades. The Journal of Finance , 46(1):179–
+207, 1991.
+JBHeaton,NicholasGPolson,andJanHendrikWitte.
+Deep learning for finance: deep portfolios. Applied
+Stochastic Models in Business and Industry , 33(1):
+3–12, 2017.
+Christopher Krauss, Xuan Anh Do, and Nicolas Huck.
+Deep neural networks, gradient-boosted trees, ran-
+dom forests: Statistical arbitrage on the s&p 500.
+European Journal of Operational Research , 259(2):
+689–702, 2017.
+Yann LeCun, Yoshua Bengio, and Geoffrey Hinton.
+Deep learning. nature, 521(7553):436–444, 2015.
+Kalev Leetaru and Philip A Schrodt. Gdelt: Global
+data on events, location, and tone. ISA annual con-
+vention, 2(4):1–49, 2013.
+Yao Qin, Dongjin Song, Haifeng Chen, Wei Cheng,
+Guofei Jiang, and Garrison Cottrell. A dual-stage
+attention-based recurrent neural network for time
+series prediction. arXiv preprint arXiv:1704.02971 ,
+2017.
+Omer Berat Sezer, Murat Ugur Gudelek, and Ah-
+met Murat Ozbayoglu. Financial time series fore-
+casting with deep learning: A systematic literature
+review: 2005–2019. Applied Soft Computing , 90:
+106181, 2020.
+Paul C Tetlock. Giving content to investor sentiment:
+The role of media in the stock market. The Journal
+of finance , 62(3):1139–1168, 2007.
+Avraam Tsantekidis, Nikolaos Passalis, Anastasios
+Tefas, Juho Kanniainen, Moncef Gabbouj, and
+Alexandros Iosifidis. Forecasting stock prices from
+the limit order book using convolutional neural net-
+works.2017 IEEE 19th conference on business in-
+formatics (CBI) , 1:7–12, 2017.
+Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob
+Uszkoreit, Llion Jones, Aidan N Gomez, Łukasz
+Kaiser, and Illia Polosukhin. Attention is all you
+need.Advances in neural information processing sys-
+tems, 30, 2017.

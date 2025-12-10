@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Treasury Ladder Strategy
 
@@ -38,7 +40,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from src.core.alpaca_trader import AlpacaTrader
 from src.rag.collectors.fred_collector import FREDCollector
@@ -159,8 +161,8 @@ class TreasuryLadderStrategy:
 
         # Strategy state
         self.current_holdings: dict[str, float] = {}
-        self.last_rebalance_date: Optional[datetime] = None
-        self.current_regime: Optional[YieldCurveRegime] = None
+        self.last_rebalance_date: datetime | None = None
+        self.current_regime: YieldCurveRegime | None = None
 
         # Performance tracking
         self.total_invested: float = 0.0
@@ -289,33 +291,53 @@ class TreasuryLadderStrategy:
                 f"Error fetching yields: {e}, using default",
             )
 
-    def get_optimal_allocation(self) -> TreasuryAllocation:
+    def get_optimal_allocation(self, macro_context: dict | None = None) -> TreasuryAllocation:
         """
-        Determine optimal allocation based on current yield curve.
+        Determine optimal allocation based on current yield curve and macro context.
 
-        Analyzes the yield curve and returns target allocation percentages
-        for each treasury ETF in the ladder.
+        Analyzes the yield curve and then adjusts the allocation based on the
+        broader macroeconomic outlook (Dovish/Hawkish).
+
+        Args:
+            macro_context: Optional dictionary with macro state ('DOVISH', 'HAWKISH').
 
         Returns:
             TreasuryAllocation dataclass with allocation percentages and metadata
-
-        Example:
-            >>> strategy = TreasuryLadderStrategy()
-            >>> allocation = strategy.get_optimal_allocation()
-            >>> print(f"SHY: {allocation.shy_pct*100:.0f}%")
         """
         logger.info("Calculating optimal treasury allocation...")
 
-        # Analyze yield curve
+        # 1. Analyze yield curve to get base allocation
         regime, spread, rationale = self.analyze_yield_curve()
 
-        # Select allocation based on regime
         if regime == YieldCurveRegime.INVERTED:
             allocation_dict = self.ALLOCATION_INVERTED.copy()
         elif regime == YieldCurveRegime.FLAT:
             allocation_dict = self.ALLOCATION_FLAT.copy()
         else:  # NORMAL
             allocation_dict = self.ALLOCATION_NORMAL.copy()
+
+        # 2. Adjust allocation based on macro context
+        if macro_context and macro_context.get("state") in ["DOVISH", "HAWKISH"]:
+            macro_state = macro_context["state"]
+            shift_pct = 0.20  # Shift 20% of allocation
+            logger.info(f"Adjusting treasury allocation based on {macro_state} macro context.")
+
+            if macro_state == "DOVISH":
+                # Favor long-duration bonds (TLT) if rate cuts are expected
+                shift_from_shy = min(allocation_dict["SHY"], shift_pct)
+                allocation_dict["SHY"] -= shift_from_shy
+                allocation_dict["TLT"] += shift_from_shy
+                rationale += (
+                    f" Macro: DOVISH outlook shifts {shift_from_shy * 100:.0f}% to long-duration."
+                )
+            elif macro_state == "HAWKISH":
+                # Favor short-duration bonds (SHY) if rate hikes are expected
+                shift_from_tlt = min(allocation_dict["TLT"], shift_pct)
+                allocation_dict["TLT"] -= shift_from_tlt
+                allocation_dict["SHY"] += shift_from_tlt
+                rationale += (
+                    f" Macro: HAWKISH outlook shifts {shift_from_tlt * 100:.0f}% to short-duration."
+                )
 
         # Create allocation object
         allocation = TreasuryAllocation(
@@ -335,7 +357,9 @@ class TreasuryLadderStrategy:
 
         return allocation
 
-    def execute_daily(self, amount: Optional[float] = None) -> dict[str, Any]:
+    def execute_daily(
+        self, amount: float | None = None, macro_context: dict | None = None
+    ) -> dict[str, Any]:
         """
         Execute daily investment across treasury ladder.
 
@@ -344,6 +368,7 @@ class TreasuryLadderStrategy:
 
         Args:
             amount: Dollar amount to invest (default: self.daily_allocation)
+            macro_context: Optional dictionary with macro state for allocation adjustment.
 
         Returns:
             Dictionary containing execution results:
@@ -351,11 +376,6 @@ class TreasuryLadderStrategy:
                 - allocation: TreasuryAllocation used
                 - total_invested: Total amount invested
                 - success: Whether execution succeeded
-
-        Example:
-            >>> strategy = TreasuryLadderStrategy(daily_allocation=10.0)
-            >>> result = strategy.execute_daily()
-            >>> print(f"Invested ${result['total_invested']:.2f}")
         """
         amount = amount or self.daily_allocation
 
@@ -374,8 +394,8 @@ class TreasuryLadderStrategy:
             }
 
         try:
-            # Get optimal allocation
-            allocation = self.get_optimal_allocation()
+            # Get optimal allocation, now with macro context
+            allocation = self.get_optimal_allocation(macro_context=macro_context)
 
             # Calculate dollar amounts for each ETF
             shy_amount = amount * allocation.shy_pct
@@ -444,24 +464,18 @@ class TreasuryLadderStrategy:
                 "error": str(e),
             }
 
-    def rebalance_if_needed(self) -> Optional[RebalanceDecision]:
+    def rebalance_if_needed(self, macro_context: dict | None = None) -> RebalanceDecision | None:
         """
         Check if rebalancing is needed and execute if necessary.
 
         Compares current holdings to target allocation. If any position
         drifts more than rebalance_threshold (default 5%), triggers a rebalance.
 
+        Args:
+            macro_context: Optional dictionary with macro state for allocation adjustment.
+
         Returns:
             RebalanceDecision if rebalance was checked, None if skipped
-
-        Raises:
-            Exception: If critical rebalancing error occurs
-
-        Example:
-            >>> strategy = TreasuryLadderStrategy()
-            >>> decision = strategy.rebalance_if_needed()
-            >>> if decision and decision.should_rebalance:
-            ...     print(f"Rebalanced: {decision.reason}")
         """
         logger.info("Checking if rebalancing needed...")
 
@@ -503,8 +517,8 @@ class TreasuryLadderStrategy:
                 for symbol in self.etf_symbols
             }
 
-            # Get target allocation
-            target_alloc_obj = self.get_optimal_allocation()
+            # Get target allocation, now with macro context
+            target_alloc_obj = self.get_optimal_allocation(macro_context=macro_context)
             target_allocation = {
                 "SHY": target_alloc_obj.shy_pct,
                 "IEF": target_alloc_obj.ief_pct,

@@ -28,7 +28,6 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -41,8 +40,8 @@ class SecurityAlert:
     summary: str
     vulnerable_range: str
     manifest_path: str
-    current_version: Optional[str] = None
-    fixed_version: Optional[str] = None
+    current_version: str | None = None
+    fixed_version: str | None = None
 
 
 @dataclass
@@ -52,11 +51,11 @@ class FixResult:
     alert: SecurityAlert
     success: bool
     message: str
-    updated_version: Optional[str] = None
-    pr_url: Optional[str] = None
+    updated_version: str | None = None
+    pr_url: str | None = None
 
 
-def fetch_pypi_latest(package_name: str, timeout: int = 10) -> Optional[str]:
+def fetch_pypi_latest(package_name: str, timeout: int = 10) -> str | None:
     """Fetch latest version from PyPI"""
     url = f"https://pypi.org/pypi/{package_name}/json"
     try:
@@ -70,7 +69,7 @@ def fetch_pypi_latest(package_name: str, timeout: int = 10) -> Optional[str]:
 
 def parse_vulnerable_range(
     vulnerable_range: str,
-) -> tuple[Optional[str], Optional[str]]:
+) -> tuple[str | None, str | None]:
     """
     Parse vulnerable range like ">= 0, < 24.3.0" or ">= 1.0.0, < 1.2.0"
     Returns: (min_version, max_version_exclusive)
@@ -89,8 +88,8 @@ def parse_vulnerable_range(
 
 
 def find_safe_version(
-    package_name: str, vulnerable_range: str, current_version: Optional[str]
-) -> Optional[str]:
+    package_name: str, vulnerable_range: str, current_version: str | None
+) -> str | None:
     """
     Find a safe version that's outside the vulnerable range.
     Strategy:
@@ -297,7 +296,7 @@ def fix_security_alert(alert: SecurityAlert, req_file: Path, dry_run: bool = Fal
     )
 
 
-def create_pr(repo: str, token: str, branch: str, title: str, body: str) -> Optional[str]:
+def create_pr(repo: str, token: str, branch: str, title: str, body: str) -> str | None:
     """Create a GitHub PR"""
     # This is a simplified version - in production, use GitHub CLI or API properly
     print(f"   📝 Would create PR: {title}")

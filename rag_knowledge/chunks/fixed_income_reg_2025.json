@@ -1,0 +1,26 @@
+[
+  {
+    "source_type": "report",
+    "source_name": "SIFMA 2025 Fixed Income Market Structure Compendium",
+    "author": "SIFMA",
+    "chapter_or_section": "Treasury Market Structure",
+    "page_or_timestamp": "2025 edition",
+    "content": "Summarizes U.S. Treasury market structure: ~900B USD average daily volume, continued electronification, and migration to central clearing ahead of the September 2025 implementation deadline. Highlights data gaps in off-the-run liquidity and urges standardized post-trade transparency.",
+    "content_type": "concept",
+    "topics": ["treasuries", "market_structure", "clearing"],
+    "edge_category": "fixed_income",
+    "citation": "SIFMA (2025) Fixed Income Market Structure Compendium"
+  },
+  {
+    "source_type": "news",
+    "source_name": "SEC withdraws appeal on Treasury dealer rule",
+    "author": "Reuters",
+    "chapter_or_section": "Regulatory Update",
+    "page_or_timestamp": "2025-02-20",
+    "content": "Reuters reports the SEC dropped its appeal after a court vacated the expanded Treasury dealer registration rule. Outcome: proprietary trading firms avoid automatic dealer status for now, reducing near-term capital and reporting requirements but leaving potential for rewritten rules later.",
+    "content_type": "concept",
+    "topics": ["sec_rule", "treasury_dealers", "regulatory"],
+    "edge_category": "fixed_income",
+    "citation": "Reuters (2025-02-20) SEC withdraws appeal on Treasury dealer rule"
+  }
+]

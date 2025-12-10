@@ -241,13 +241,13 @@ RECOMMENDATION: [APPROVE/REJECT]
                 try:
                     size_str = line.split(":")[1].strip().replace("$", "").replace(",", "")
                     analysis["position_size"] = float(size_str)
-                except:
+                except Exception:
                     pass
             elif line.startswith("STOP_LOSS:"):
                 try:
                     sl_str = line.split(":")[1].strip().replace("%", "")
                     analysis["stop_loss"] = float(sl_str) / 100
-                except:
+                except Exception:
                     pass
             elif line.startswith("RISKS:"):
                 analysis["risks"] = line.split(":", 1)[1].strip()

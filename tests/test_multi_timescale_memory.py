@@ -158,6 +158,17 @@ class TestContextEngineMultiTimescale:
             timescale=MemoryTimescale.DAILY,
         )
 
+        # Register a blueprint first
+        from src.agent_framework.context_engine import SemanticBlueprint
+
+        blueprint = SemanticBlueprint(
+            agent_id="test_agent",
+            agent_name="Test Agent",
+            role="Tester",
+            description="Testing agent",
+        )
+        engine.register_blueprint(blueprint)
+
         context = engine.get_agent_context(agent_id="test_agent", use_multi_timescale=True)
 
         assert "memories" in context
@@ -169,9 +180,9 @@ class TestContextEngineMultiTimescale:
             agent_id="test_agent", content={"test": "memory"}, importance_score=0.5
         )
 
-        memory.update_importance(pl=100.0, max_pl=1000.0)
+        memory.update_importance(pl=800.0, max_pl=1000.0)
         assert memory.importance_score > 0.5
-        assert memory.outcome_pl == 100.0
+        assert memory.outcome_pl == 800.0
 
     def test_memory_statistics(self):
         """Test memory statistics"""

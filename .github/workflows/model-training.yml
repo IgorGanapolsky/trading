@@ -63,6 +63,7 @@ jobs:
           echo "🔍 Checking training data availability..."
 
           SYMBOLS="${{ github.event.inputs.symbols || 'SPY,QQQ,VOO' }}"
+          export SYMBOLS
 
           python3 << 'PYTHON_SCRIPT'
           import sys
@@ -70,36 +71,16 @@ jobs:
           import os
           from pathlib import Path
 
-          # Add project root to path
+          # Add paths
           project_root = Path.cwd()
           sys.path.insert(0, str(project_root))
+          sys.path.insert(0, str(project_root / ".claude" / "skills" / "model_trainer" / "scripts"))
 
-          # Use DataCollector directly instead of ModelTrainerSkill
-          from src.utils.data_collector import DataCollector
+          from model_trainer import ModelTrainerSkill
 
           symbols = [s.strip() for s in os.environ.get('SYMBOLS', 'SPY,QQQ,VOO').split(',')]
-          collector = DataCollector(data_dir=str(project_root / "data" / "historical"))
-
-          missing_symbols = []
-          data_summary = {}
-
-          for symbol in symbols:
-              hist_data = collector.load_historical_data(symbol)
-
-              if hist_data.empty:
-                  missing_symbols.append(symbol)
-                  data_summary[symbol] = {"available": False, "days": 0, "status": "no_data"}
-              elif len(hist_data) < 252:
-                  missing_symbols.append(symbol)
-                  data_summary[symbol] = {"available": False, "days": len(hist_data), "status": "insufficient"}
-              else:
-                  data_summary[symbol] = {"available": True, "days": len(hist_data), "status": "sufficient"}
-
-          result = {
-              "available": len(missing_symbols) == 0,
-              "missing_symbols": missing_symbols,
-              "data_summary": data_summary
-          }
+          skill = ModelTrainerSkill()
+          result = skill.check_training_data_availability(symbols, min_days=252)
 
           print(json.dumps(result, indent=2))
 
@@ -150,6 +131,28 @@ jobs:
             --lookback 252
 
           echo "✅ Data collection complete"
+
+      - name: Validate data quality and hygiene
+        id: data_hygiene_check_2
+        if: steps.check_data.outputs.data_available == 'true'
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
+        run: |
+          echo "🧹 Validating data quality and hygiene..."
+
+          SYMBOLS="${{ github.event.inputs.symbols || 'SPY,QQQ,VOO' }}"
+
+          python3 scripts/data_hygiene_check.py validate \
+            --symbols "$SYMBOLS" \
+            --min-days 252 || {
+              echo "⚠️  Data quality issues detected - will attempt to fix"
+              echo "data_quality_issues=true" >> $GITHUB_OUTPUT
+              exit 0  # Don't fail workflow, but flag issues
+            }
+
+          echo "data_quality_issues=false" >> $GITHUB_OUTPUT
 
       - name: Rotate old historical data
         if: steps.check_data.outputs.data_available == 'true'
@@ -366,4 +369,5 @@ jobs:
           echo "- RL agents updated with latest experience"
           echo "- Next training scheduled: Next Sunday at 2:00 AM UTC"
           echo "- Continuous RL training runs every 2 hours via rl-training-continuous.yml"
+
           echo "=========================================="

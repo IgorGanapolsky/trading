@@ -1,0 +1,134 @@
+name: Workflow Health Alert
+
+# Runs daily to detect silent failures in automated trading workflows
+# This workflow catches issues like "crypto trading hasn't run for 3 weeks"
+
+on:
+  schedule:
+    # Run daily at 11:00 AM ET (after both daily and weekend trading windows)
+    # EST: 16:00 UTC, EDT: 15:00 UTC
+    - cron: '0 15,16 * * *'
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Number of days to check"
+        required: false
+        default: "7"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-workflow-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run workflow health check
+        id: health_check
+        run: |
+          echo "🔍 Checking workflow health..."
+
+          # Run health monitor and capture output
+          python3 scripts/workflow_health_monitor.py --check --days ${{ github.event.inputs.days || '7' }} > health_report.txt 2>&1
+          EXIT_CODE=$?
+
+          # Display report
+          cat health_report.txt
+
+          # Save report to output
+          echo "report<<EOF" >> $GITHUB_OUTPUT
+          cat health_report.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Check if critical
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "health_status=CRITICAL" >> $GITHUB_OUTPUT
+            echo "❌ CRITICAL: One or more workflows have missed executions!"
+          else
+            echo "health_status=HEALTHY" >> $GITHUB_OUTPUT
+            echo "✅ All workflows are healthy"
+          fi
+
+          exit $EXIT_CODE
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🚨 Workflow Health Alert: Trading Automation Failures Detected';
+            const body = `## Automated Trading Health Check Failed
+
+            One or more critical trading workflows have missed their scheduled executions.
+
+            ### Health Report
+            \`\`\`
+            ${{ steps.health_check.outputs.report }}
+            \`\`\`
+
+            ### Action Required
+            1. Check GitHub Actions logs for failed workflow runs
+            2. Verify GitHub Secrets are configured correctly
+            3. Ensure workflows are enabled in repository settings
+
+            ### Affected Workflows
+            - **Daily Trading**: Should run Mon-Fri at 9:35 AM ET
+            - **Weekend Crypto Trading**: Should run Sat-Sun at 10:00 AM ET
+
+            ---
+            *This issue was automatically created by the Workflow Health Alert system.*
+            *Run ID: ${{ github.run_id }}*
+            `;
+
+            // Check if similar issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'workflow-health-alert'
+            });
+
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['workflow-health-alert', 'automation', 'critical']
+              });
+              console.log('Created new issue for workflow health alert');
+            } else {
+              // Comment on existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: `### Health Check Update\n\n\`\`\`\n${{ steps.health_check.outputs.report }}\n\`\`\`\n\n*Run ID: ${{ github.run_id }}*`
+              });
+              console.log('Updated existing issue');
+            }
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Workflow Health Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status**: ${{ steps.health_check.outputs.health_status || 'UNKNOWN' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Report" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat health_report.txt >> $GITHUB_STEP_SUMMARY || echo "No report generated" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

@@ -2,24 +2,24 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2025-11-25T15:15:53.925082",
+    "last_updated": "2025-12-09T09:00:00",
     "last_audit": "2025-11-17T09:00:00.000000",
-    "audit_notes": "Day 9 - Added Tier 5 crypto tracking (BTC/ETH weekend strategy)"
+    "audit_notes": "Day 31 - Corrected day counter (was stuck at 9)"
   },
   "challenge": {
     "start_date": "2025-10-29",
-    "current_day": 9,
+    "current_day": 31,
     "total_days": 90,
     "status": "active",
-    "phase": "Production Scaling - Month 2 (Days 31-60)"
+    "phase": "R&D Phase - Month 2 (Days 31-60)"
   },
   "account": {
     "starting_balance": 100000.0,
-    "current_equity": 100005.5,
-    "cash": 100005.5,
-    "positions_value": 0,
-    "total_pl": 5.5,
-    "total_pl_pct": 0.0055000000000000005
+    "current_equity": 100017.49,
+    "cash": 83285.42,
+    "positions_value": 16732.068537,
+    "total_pl": 17.49000000000524,
+    "total_pl_pct": 0.017490000000005237
   },
   "investments": {
     "total_invested": 1621.93,
@@ -32,21 +32,112 @@
   "performance": {
     "total_trades": 7,
     "winning_trades": 0,
-    "losing_trades": 0,
+    "losing_trades": 1,
     "win_rate": 0.0,
     "best_trade": {
-      "symbol": "NVDA",
-      "pl": -0.06,
-      "pl_pct": -3.09
+      "symbol": "ETHUSD",
+      "pl": -0.009490667219999579,
+      "pl_pct": -0.09706557614402507
     },
     "worst_trade": {
       "symbol": "SPY",
       "pl": -14.25,
       "pl_pct": -1.17
     },
-    "avg_return": -3.04,
-    "closed_trades": [],
-    "open_positions": []
+    "avg_return": -0.09706557614402507,
+    "closed_trades": [
+      {
+        "symbol": "ETHUSD",
+        "entry_price": 3384.31,
+        "exit_price": 3381.025,
+        "quantity": 0.002889092,
+        "entry_date": "2025-11-09T13:42:09.009396",
+        "exit_date": "2025-12-09T13:43:11.677771",
+        "pl": -0.009490667219999579,
+        "pl_pct": -0.09706557614402507,
+        "tier": "unknown"
+      }
+    ],
+    "open_positions": [
+      {
+        "symbol": "BIL",
+        "tier": "unknown",
+        "amount": 11998.568967,
+        "order_id": null,
+        "entry_date": "2025-12-07T18:16:23.571342",
+        "entry_price": 91.53,
+        "current_price": 91.52,
+        "quantity": 131.103244836,
+        "unrealized_pl": -1.3110324483606706,
+        "unrealized_pl_pct": -0.010925379656948668,
+        "last_updated": "2025-12-07T18:16:23.571354"
+      },
+      {
+        "symbol": "BTCUSD",
+        "tier": "unknown",
+        "amount": 19.677416,
+        "order_id": null,
+        "entry_date": "2025-12-07T18:16:23.571363",
+        "entry_price": 88915.401420298,
+        "current_price": 89518.89,
+        "quantity": 0.000219813,
+        "unrealized_pl": 0.13265463517003487,
+        "unrealized_pl_pct": 0.6787222124200285,
+        "last_updated": "2025-12-07T18:16:23.571366"
+      },
+      {
+        "symbol": "IEF",
+        "tier": "unknown",
+        "amount": 119.976634,
+        "order_id": null,
+        "entry_date": "2025-12-07T18:16:23.571369",
+        "entry_price": 96.472651,
+        "current_price": 96.47,
+        "quantity": 1.243667814,
+        "unrealized_pl": -0.003296963374914225,
+        "unrealized_pl_pct": -0.002747929047788042,
+        "last_updated": "2025-12-07T18:16:23.571371"
+      },
+      {
+        "symbol": "SHY",
+        "tier": "unknown",
+        "amount": 459.724132,
+        "order_id": null,
+        "entry_date": "2025-12-07T18:16:23.571374",
+        "entry_price": 82.781859,
+        "current_price": 82.77,
+        "quantity": 5.554236223,
+        "unrealized_pl": -0.06586768736856352,
+        "unrealized_pl_pct": -0.014325602424561611,
+        "last_updated": "2025-12-07T18:16:23.571376"
+      },
+      {
+        "symbol": "SPY",
+        "tier": "unknown",
+        "amount": 4114.14,
+        "order_id": null,
+        "entry_date": "2025-12-07T18:16:23.571379",
+        "entry_price": 686.381176,
+        "current_price": 685.69,
+        "quantity": 6.0,
+        "unrealized_pl": -4.147055999999566,
+        "unrealized_pl_pct": -0.10069856577767332,
+        "last_updated": "2025-12-07T18:16:23.571380"
+      },
+      {
+        "symbol": "TLT",
+        "tier": "unknown",
+        "amount": 19.981388,
+        "order_id": null,
+        "entry_date": "2025-12-07T18:16:23.571384",
+        "entry_price": 88.150671,
+        "current_price": 88.17,
+        "quantity": 0.226623435,
+        "unrealized_pl": 0.004380404375114783,
+        "unrealized_pl_pct": 0.021927229572647314,
+        "last_updated": "2025-12-07T18:16:23.571385"
+      }
+    ]
   },
   "strategies": {
     "tier1": {
@@ -87,20 +178,31 @@
       "status": "tracking"
     },
     "tier5": {
-      "name": "Crypto Weekend Strategy (BTC, ETH)",
+      "name": "Crypto Daily Strategy (BTC, ETH)",
       "allocation": 0.05,
-      "daily_amount": 0.5,
+      "daily_amount": 10.0,
       "coins": [
         "BTC/USD",
         "ETH/USD"
       ],
-      "trades_executed": 0,
-      "total_invested": 0.0,
+      "trades_executed": 2,
+      "total_invested": 19.67,
       "status": "active",
-      "execution_schedule": "Saturday & Sunday 10:00 AM ET",
-      "last_execution": null,
-      "next_execution": null
+      "enabled": true,
+      "execution_schedule": "Daily 10:00 AM ET",
+      "last_execution": "2025-12-07T20:07:08",
+      "next_execution": "2025-12-08T15:00:00Z",
+      "workflow_issue": "3 weekends with 0 executions - check GitHub Actions for errors"
     }
+  },
+  "backtest_reality": {
+    "last_comprehensive_test": "2025-12-02",
+    "scenarios_tested": 6,
+    "daily_win_rate_range": "38-52%",
+    "sharpe_ratio_range": "-7 to -72 (all negative)",
+    "status": "NEEDS_IMPROVEMENT",
+    "note": "62.2% claim from Nov 7 was single-scenario, not comprehensive. Full matrix shows strategy underperforms.",
+    "source": "data/backtests/latest_summary.json"
   },
   "heuristics": {
     "best_performing_etf": "SPY",
@@ -140,13 +242,14 @@
     "github_actions_enabled": true,
     "workflow_name": "Daily Trading Execution",
     "workflow_status": "OPERATIONAL",
-    "last_execution_attempt": "2025-11-11T21:11:00",
-    "last_successful_execution": "2025-11-11T21:11:00",
-    "execution_count": 1,
+    "last_execution_attempt": "2025-12-09T16:07:24.666526",
+    "last_successful_execution": "2025-12-09T16:07:24.666541",
+    "execution_count": 2,
     "failures": 0,
     "failure_reasons": [],
     "fix_applied": "2025-11-11: Upgraded protobuf to fix Python 3.14 compatibility, validated GitHub Actions workflow",
-    "next_scheduled_execution": "2025-11-12T09:35:00"
+    "next_scheduled_execution": "2025-12-11T15:55:00",
+    "execution_timing_note": "Dec 10, 2025: Changed from 9:35 AM to 3:55 PM ET (Market-on-Close) to avoid amateur hour volatility"
   },
   "video_analysis": {
     "enabled": true,
@@ -282,6 +385,27 @@
     "[2025-11-25 15:40] Analysis: Win rate (62%) is strong, but profit per trade ($0.28) is too low to hit $100/day goal",
     "[2025-11-25 15:40] Action: Increasing Daily Investment from $10 to $1,500 (150x scaling)",
     "[2025-11-25 15:40] New Allocation: Core Strategy $900/day, Growth Strategy $1,500/week ($300/day)",
-    "[2025-11-25 15:40] Expected Outcome: ~$100/day profit if 62% win rate holds"
-  ]
+    "[2025-11-25 15:40] Expected Outcome: ~$100/day profit if 62% win rate holds",
+    "[2025-12-09 13:43] Position closed: ETHUSD - Entry: $3384.31, Exit: $3381.03, P/L: $-0.01 (-0.10%)"
+  ],
+  "options": {
+    "last_theta_harvest": "2025-12-05T17:53:46.287290+00:00",
+    "account_equity": 100005.5,
+    "equity_gate": {
+      "account_equity": 100005.5,
+      "enabled_strategies": {
+        "poor_mans_covered_call": true,
+        "iron_condor": true,
+        "full_suite": true
+      },
+      "next_tier": null,
+      "gap_to_next_tier": 0,
+      "theta_enabled": true
+    },
+    "target_daily_premium": 10.0,
+    "total_estimated_premium": 30.0,
+    "premium_gap": 0,
+    "opportunities_count": 3,
+    "on_track": true
+  }
 }

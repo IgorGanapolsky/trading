@@ -1,0 +1,16 @@
+{
+  "memory_id": "2d240ccc-abdd-42c0-8b33-f4933e974401",
+  "agent_id": "test_agent",
+  "context_type": "ContextType.MEMORY_CONTEXT",
+  "content": {
+    "action": "BUY"
+  },
+  "tags": [],
+  "created_at": "2025-12-05T14:51:41.253337",
+  "accessed_at": "2025-12-05T14:51:41.253344",
+  "access_count": 0,
+  "ttl_days": null,
+  "timescale": "episodic",
+  "importance_score": 0.9,
+  "outcome_pl": null
+}

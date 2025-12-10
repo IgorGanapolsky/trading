@@ -7,14 +7,13 @@ Integrates with GitHub Actions, workflow failures, and runtime errors.
 
 import logging
 import os
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 _sentry_initialized = False
 
 
-def init_sentry(dsn: Optional[str] = None) -> bool:
+def init_sentry(dsn: str | None = None) -> bool:
     """
     Initialize Sentry error monitoring.
 
@@ -98,7 +97,7 @@ def _add_trading_context(event, hint):
     return event
 
 
-def _get_account_context() -> Optional[dict]:
+def _get_account_context() -> dict | None:
     """Get account context for Sentry events."""
     try:
         import json
@@ -119,7 +118,7 @@ def _get_account_context() -> Optional[dict]:
     return None
 
 
-def capture_workflow_failure(reason: str, context: Optional[dict] = None):
+def capture_workflow_failure(reason: str, context: dict | None = None):
     """Capture workflow failure in Sentry."""
     if not _sentry_initialized:
         return
@@ -141,7 +140,7 @@ def capture_workflow_failure(reason: str, context: Optional[dict] = None):
         logger.debug(f"Failed to capture workflow failure in Sentry: {e}")
 
 
-def capture_api_failure(api_name: str, error: Exception, context: Optional[dict] = None):
+def capture_api_failure(api_name: str, error: Exception, context: dict | None = None):
     """Capture API failure in Sentry."""
     if not _sentry_initialized:
         return

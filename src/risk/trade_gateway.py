@@ -29,9 +29,10 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from src.risk.capital_efficiency import get_capital_calculator
+from src.utils.market_hours import get_market_status, is_market_open
 
 logger = logging.getLogger(__name__)
 
@@ -60,17 +61,17 @@ class TradeRequest:
 
     symbol: str
     side: str  # 'buy' or 'sell'
-    quantity: Optional[float] = None
-    notional: Optional[float] = None
+    quantity: float | None = None
+    notional: float | None = None
     order_type: str = "market"
-    limit_price: Optional[float] = None
-    stop_price: Optional[float] = None
+    limit_price: float | None = None
+    stop_price: float | None = None
     request_time: datetime = field(default_factory=datetime.now)
     source: str = "ai_agent"  # Track where the request came from
-    strategy_type: Optional[str] = None  # e.g., 'iron_condor', 'vertical_spread'
-    iv_rank: Optional[float] = None  # Current IV Rank for the underlying
-    bid_price: Optional[float] = None  # Current bid price (for liquidity check)
-    ask_price: Optional[float] = None  # Current ask price (for liquidity check)
+    strategy_type: str | None = None  # e.g., 'iron_condor', 'vertical_spread'
+    iv_rank: float | None = None  # Current IV Rank for the underlying
+    bid_price: float | None = None  # Current bid price (for liquidity check)
+    ask_price: float | None = None  # Current ask price (for liquidity check)
     is_option: bool = False  # True if this is an options trade
 
 
@@ -83,8 +84,8 @@ class GatewayDecision:
     rejection_reasons: list[RejectionReason] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     risk_score: float = 0.0
-    adjusted_quantity: Optional[float] = None
-    adjusted_notional: Optional[float] = None
+    adjusted_quantity: float | None = None
+    adjusted_notional: float | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -114,7 +115,7 @@ class TradeGateway:
     MAX_SYMBOL_ALLOCATION_PCT = 0.15  # 15% max per symbol
     MAX_CORRELATION_THRESHOLD = 0.80  # 80% correlation threshold
     MAX_TRADES_PER_HOUR = 5  # Frequency limit
-    MIN_TRADE_BATCH = 200.0  # $200 minimum to reduce noise
+    MIN_TRADE_BATCH = 10.0  # $10 minimum - lowered from $200 to match daily investment
     MAX_DAILY_LOSS_PCT = 0.03  # 3% max daily loss
     MAX_DRAWDOWN_PCT = 0.10  # 10% max drawdown
     MAX_RISK_SCORE = 0.75  # Risk score threshold
@@ -145,27 +146,29 @@ class TradeGateway:
     # Liquidity check - options with wide spreads destroy alpha on fill
     MAX_BID_ASK_SPREAD_PCT = 0.05  # 5% maximum bid-ask spread
 
-    def __init__(self, executor=None, paper: bool = True):
+    def __init__(self, executor=None, paper: bool = True, skip_market_hours_check: bool = False):
         """
         Initialize the trade gateway.
 
         Args:
             executor: The broker executor (AlpacaExecutor). Gateway wraps this.
             paper: If True, paper trading mode
+            skip_market_hours_check: If True, skip market hours check (for testing only)
         """
         self.executor = executor
         self.paper = paper
+        self.skip_market_hours_check = skip_market_hours_check
 
         # Track recent trades for frequency limiting
         self.recent_trades: list[datetime] = []
 
         # Track accumulated cash for batching
         self.accumulated_cash = 0.0
-        self.last_accumulation_date: Optional[datetime] = None
+        self.last_accumulation_date: datetime | None = None
 
         # Daily P&L tracking
         self.daily_pnl = 0.0
-        self.daily_pnl_date: Optional[datetime] = None
+        self.daily_pnl_date: datetime | None = None
 
         # Capital efficiency calculator
         self.capital_calculator = get_capital_calculator(daily_deposit_rate=10.0)
@@ -228,6 +231,23 @@ class TradeGateway:
         warnings = []
         risk_score = 0.0
         metadata = {}
+
+        # ============================================================
+        # CHECK 0: Market Hours (FIRST CHECK - fail fast)
+        # ============================================================
+        # Allow extended hours via env var or for crypto proxies (BITO, etc.)
+        allow_extended = os.getenv("ALLOW_EXTENDED_HOURS", "false").lower() == "true"
+        _crypto_proxies = {"BITO", "GBTC", "ETHE", "COIN"}  # Trade during market hours only
+
+        if not self.skip_market_hours_check and not is_market_open(allow_extended=allow_extended):
+            market_status = get_market_status(allow_extended=allow_extended)
+            rejection_reasons.append(RejectionReason.MARKET_CLOSED)
+            logger.warning(
+                f"❌ REJECTED: {market_status.reason}. "
+                f"Next open: {market_status.next_open or 'Unknown'}"
+            )
+            metadata["market_session"] = market_status.session.value
+            metadata["next_open"] = market_status.next_open
 
         # Get account info
         account_equity = self._get_account_equity()
@@ -445,7 +465,7 @@ class TradeGateway:
 
         return decision
 
-    def execute(self, decision: GatewayDecision) -> Optional[dict[str, Any]]:
+    def execute(self, decision: GatewayDecision) -> dict[str, Any] | None:
         """
         Execute an approved trade.
 
@@ -472,19 +492,22 @@ class TradeGateway:
         request = decision.request
 
         try:
-            # Use adjusted notional if available (from batching)
-            notional = decision.adjusted_notional or request.notional
-
-            logger.info(
-                f"🚀 Gateway executing: {request.side.upper()} {request.symbol} ${notional:.2f}"
-            )
-
             # Execute through the broker
-            order = self.executor.place_order(
-                symbol=request.symbol,
-                notional=notional,
-                side=request.side,
-            )
+            # Prioritize quantity if available (critical for closing positions)
+            if request.quantity is not None:
+                order = self.executor.place_order(
+                    symbol=request.symbol,
+                    qty=request.quantity,
+                    side=request.side,
+                )
+            else:
+                # Use adjusted notional if available (from batching)
+                notional = decision.adjusted_notional or request.notional
+                order = self.executor.place_order(
+                    symbol=request.symbol,
+                    notional=notional,
+                    side=request.side,
+                )
 
             # Track the trade
             self.recent_trades.append(datetime.now())
@@ -565,7 +588,7 @@ class TradeGateway:
         if self.executor:
             try:
                 return float(self.executor.account_equity or 100000)
-            except:
+            except Exception:
                 pass
         return float(os.getenv("ACCOUNT_EQUITY", "100000"))
 
@@ -574,7 +597,7 @@ class TradeGateway:
         if self.executor:
             try:
                 return self.executor.get_positions() or []
-            except:
+            except Exception:
                 pass
         return []
 

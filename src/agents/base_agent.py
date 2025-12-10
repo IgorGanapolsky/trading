@@ -5,9 +5,10 @@ Base Agent Class - Foundation for all trading agents
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from anthropic import Anthropic
+
 from src.agent_framework.context_engine import (
     ContextMemory,
     MemoryTimescale,
@@ -59,7 +60,7 @@ class BaseAgent(ABC):
         pass
 
     @with_retry(max_attempts=3, backoff=2.0)
-    def reason_with_llm(self, prompt: str, tools: Optional[list[dict]] = None) -> dict[str, Any]:
+    def reason_with_llm(self, prompt: str, tools: list[dict] | None = None) -> dict[str, Any]:
         """
         Use LLM reasoning to make decisions.
 
@@ -121,7 +122,7 @@ class BaseAgent(ABC):
         self,
         decision_id: str,
         outcome: dict[str, Any],
-        timescale: Optional[MemoryTimescale] = None,
+        timescale: MemoryTimescale | None = None,
     ) -> None:
         """
         Learn from decision outcomes (reinforcement learning).
@@ -171,8 +172,8 @@ class BaseAgent(ABC):
     def get_memory_context(
         self,
         limit: int = 10,
-        use_multi_timescale: Optional[bool] = None,
-        timescales: Optional[list[MemoryTimescale]] = None,
+        use_multi_timescale: bool | None = None,
+        timescales: list[MemoryTimescale] | None = None,
     ) -> str:
         """
         Get memory context for LLM reasoning.

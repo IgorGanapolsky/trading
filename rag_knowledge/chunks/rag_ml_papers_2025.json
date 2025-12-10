@@ -1,0 +1,50 @@
+[
+  {
+    "source_type": "paper",
+    "source_name": "PipeRAG: Fast retrieval-augmented generation via adaptive pipeline parallelism",
+    "author": "Wenqi Jiang et al.",
+    "chapter_or_section": "Algorithm-System Co-design",
+    "page_or_timestamp": "KDD 2025",
+    "content": "PipeRAG overlaps retrieval and generation with pipeline parallelism, adjusts retrieval intervals dynamically, and uses a performance model to trade latency versus quality. Experiments report up to 2.6x end-to-end speedup while maintaining or improving answer quality on RAG workloads.",
+    "content_type": "concept",
+    "topics": ["latency", "pipeline_parallelism", "rag_systems"],
+    "edge_category": "ml",
+    "citation": "Jiang et al. (2025) PipeRAG, KDD 2025"
+  },
+  {
+    "source_type": "paper",
+    "source_name": "GeAR: Graph-enhanced Agent for Retrieval-augmented Generation",
+    "author": "Zhili Shen et al.",
+    "chapter_or_section": "Graph Expansion + Gist Memory",
+    "page_or_timestamp": "ACL Findings 2025",
+    "content": "GeAR starts with BM25 then expands a graph of triples to discover multi-hop evidence. A gist memory accumulates key facts across hops, reducing token usage and iterations. The paper reports >10% improvement on MuSiQue while using fewer tokens than prior multi-step retrievers.",
+    "content_type": "concept",
+    "topics": ["graph_retrieval", "multi_hop", "token_efficiency"],
+    "edge_category": "ml",
+    "citation": "Shen et al. (2025) GeAR, Findings ACL 2025"
+  },
+  {
+    "source_type": "paper",
+    "source_name": "Emulating RAG via Prompt Engineering for Enhanced Long Context Comprehension in LLMs",
+    "author": "Joon Park et al.",
+    "chapter_or_section": "Prompt-native Retrieval",
+    "page_or_timestamp": "arXiv:2502.12462 (2025)",
+    "content": "Instead of an external retriever, the model tags relevant spans inside a 100k-token prompt, then uses chain-of-thought steps to stitch evidence. On BABILong tasks this prompt-native RAG beats naive long-context baselines and rivals lightweight RAG setups without any external index.",
+    "content_type": "concept",
+    "topics": ["long_context", "prompt_engineering", "cot"],
+    "edge_category": "ml",
+    "citation": "Park et al. (2025) Emulating RAG via Prompt Engineering"
+  },
+  {
+    "source_type": "paper",
+    "source_name": "A Survey of Multimodal Retrieval-Augmented Generation",
+    "author": "Lang Mei et al.",
+    "chapter_or_section": "Survey Highlights",
+    "page_or_timestamp": "arXiv:2504.08748 (2025)",
+    "content": "Survey of multimodal RAG design covering text-image-video retrieval pipelines, alignment losses, fusion strategies, and benchmarks. Notes that multimodal grounding reduces hallucination on visually rich QA and recommends dual encoders with modality-specific rerankers for tables and charts.",
+    "content_type": "concept",
+    "topics": ["multimodal_rag", "fusion", "benchmarks"],
+    "edge_category": "ml",
+    "citation": "Mei et al. (2025) Multimodal RAG Survey"
+  }
+]

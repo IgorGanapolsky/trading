@@ -122,30 +122,9 @@ aws lambda add-permission \
   --source-arn arn:aws:events:REGION:ACCOUNT:rule/daily-trading
 ```
 
-#### 3. Create Lambda Handler
+#### 3. Lambda Handler
 
-Create `lambda_handler.py`:
-```python
-import os
-import sys
-sys.path.insert(0, '/var/task')
-
-from scripts.autonomous_trader import main
-
-def lambda_handler(event, context):
-    """AWS Lambda handler for trading execution."""
-    try:
-        main()
-        return {
-            'statusCode': 200,
-            'body': 'Trading execution completed successfully'
-        }
-    except Exception as e:
-        return {
-            'statusCode': 500,
-            'body': f'Error: {str(e)}'
-        }
-```
+The repository now ships with `lambda_handler.py`, so you can zip the repo without any extra scaffolding. The handler loads `.env`, defaults weekend proxies, and invokes `scripts/autonomous_trader.py` so that EventBridge + Lambda can act as a 24/7 failsafe when GitHub Actions are unavailable.
 
 ### Cost
 **~$0-5/month** (free tier: 1M requests/month)

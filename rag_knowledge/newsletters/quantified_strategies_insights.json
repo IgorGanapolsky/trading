@@ -1,0 +1,72 @@
+{
+  "source_id": "quantified_strategies",
+  "name": "Quantified Strategies",
+  "author": "Jesper Andreasson",
+  "url": "https://www.quantifiedstrategies.com/",
+  "focus": "200+ backtested strategies with code, mean reversion, trend following",
+  "insights": [
+    {
+      "title": "RSI(2) Mean Reversion Strategy",
+      "date": "2024",
+      "topics": ["mean_reversion", "rsi", "sp500"],
+      "content": "Buy SPY when RSI(2) < 10, sell when RSI(2) > 90. Backtested 1993-2024: Win rate 75%, Avg gain 0.8%, Max drawdown 25%. Enhancements: Add VIX filter (VIX > 20), add trend filter (price > 200 SMA). Implementation: Reduce size when RSI(2) > 5, full size only at extreme oversold. Holding period: 1-5 days.",
+      "key_takeaway": "RSI(2) < 10 on SPY has 75%+ win rate over 30 years. Works because short-term oversold reverts quickly.",
+      "code_snippet": "if rsi_2 < 10 and close > sma_200: buy; if rsi_2 > 90: sell",
+      "citation": "Quantified Strategies (2024), RSI(2) Mean Reversion"
+    },
+    {
+      "title": "Monthly Momentum Rotation",
+      "date": "2024",
+      "topics": ["momentum", "rotation", "etf"],
+      "content": "At month end: Rank universe by 12-1 month momentum, buy top 3-5 assets. Universe: SPY, QQQ, IWM, EFA, EEM, TLT, GLD. Hold 1 month. Backtested 2003-2024: CAGR 12.3%, Sharpe 0.85, Max DD 28%. Enhancement: Add cash filter (if all negative momentum, go to cash). This beats buy-and-hold by 3-4% annually with lower drawdowns.",
+      "key_takeaway": "Monthly rotation across asset classes captures momentum while providing diversification.",
+      "code_snippet": "monthly: rank by return_252 - return_21; buy top 3; if all negative, hold cash",
+      "citation": "Quantified Strategies (2024), Monthly Momentum Rotation"
+    },
+    {
+      "title": "VIX Mean Reversion Trade",
+      "date": "2024",
+      "topics": ["volatility", "vix", "mean_reversion"],
+      "content": "When VIX spikes (VIX > 1.2 * SMA(20)), buy SPY at close. Hold for 5 days. Backtested 1990-2024: Win rate 68%, Avg gain 1.2%. Rationale: VIX mean reverts, high VIX = high fear = buying opportunity. Enhancement: Scale position by VIX level (bigger position at VIX > 30). Caution: 2008/2020 drawdowns were severe - use stop loss at -5%.",
+      "key_takeaway": "VIX spikes create buying opportunities. VIX > 25 with SPY > 200 SMA has 70%+ win rate for 5-day holds.",
+      "code_snippet": "if vix > 1.2 * sma_vix_20 and spy > sma_spy_200: buy; sell after 5 days or if gain > 2%",
+      "citation": "Quantified Strategies (2024), VIX Mean Reversion"
+    },
+    {
+      "title": "End-of-Month Effect",
+      "date": "2024",
+      "topics": ["seasonality", "calendar", "anomaly"],
+      "content": "SPY outperforms from last trading day of month through day 3 of new month. Backtested 1960-2024: 70% of monthly gains come in these 4 days. Implementation: Buy SPY on last day of month, sell on day 4 of new month. Win rate 62%, Avg gain 0.5% per cycle. Best months: October-January. Avoid: September.",
+      "key_takeaway": "End-of-month seasonal effect persists due to pension fund flows and window dressing.",
+      "code_snippet": "if last_trading_day_of_month: buy; if trading_day_of_month == 4: sell",
+      "citation": "Quantified Strategies (2024), End-of-Month Effect"
+    },
+    {
+      "title": "Overnight Edge Strategy",
+      "date": "2024",
+      "topics": ["overnight", "gap", "intraday"],
+      "content": "Most S&P 500 returns come overnight (4pm-9:30am), not intraday. Strategy: Buy at close, sell at open. Backtested 1993-2024: Overnight-only captures 80% of buy-and-hold return with 50% less volatility. Enhancement: Only take overnight positions when RSI(5) < 50. This filters out overbought conditions.",
+      "key_takeaway": "Overnight returns are positive (avg +0.03%/day), intraday returns are near zero. Avoid holding intraday.",
+      "code_snippet": "buy_at_close; sell_at_open; filter: rsi_5 < 50",
+      "citation": "Quantified Strategies (2024), Overnight Edge"
+    },
+    {
+      "title": "Triple RSI Divergence",
+      "date": "2024",
+      "topics": ["divergence", "rsi", "technical_analysis"],
+      "content": "Look for bullish divergence: Price makes lower low, RSI makes higher low across 3 time frames (daily RSI(5), RSI(14), RSI(30)). When all 3 show divergence, strong buy signal. Backtested 2000-2024: Win rate 71%, Avg gain 2.1%, Holding period 5-15 days. Works because multi-timeframe divergence indicates exhaustion of selling pressure.",
+      "key_takeaway": "Multi-timeframe RSI divergence has higher reliability than single-timeframe signals.",
+      "code_snippet": "if price_low < prev_low and rsi_5_low > prev_rsi_5_low and rsi_14_low > prev_rsi_14_low: buy",
+      "citation": "Quantified Strategies (2024), Triple RSI Divergence"
+    },
+    {
+      "title": "Tuesday Reversal Strategy",
+      "date": "2024",
+      "topics": ["day_of_week", "seasonality", "reversal"],
+      "content": "If Monday is down > 0.5%, buy at Tuesday open, sell Wednesday open. Backtested 1993-2024: Win rate 59%, Avg gain 0.35%. Rationale: Monday selling is often emotional, Tuesday sees institutional buying. Enhancement: Require RSI(5) < 40 on Monday close for higher probability setup.",
+      "key_takeaway": "Monday drops followed by Tuesday reversals is a persistent microstructure edge.",
+      "code_snippet": "if monday_return < -0.5% and rsi_5 < 40: buy_tuesday_open; sell_wednesday_open",
+      "citation": "Quantified Strategies (2024), Tuesday Reversal"
+    }
+  ]
+}

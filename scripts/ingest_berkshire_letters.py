@@ -118,12 +118,18 @@ def ingest_berkshire_letters(force_reparse: bool = False) -> dict[str, Any]:
     parsed_dir = base_dir / "parsed"
     parsed_dir.mkdir(parents=True, exist_ok=True)
 
+    # Check for existing parsed files first
+    existing_parsed = list(parsed_dir.glob("*.txt"))
     pdf_files = list(raw_dir.glob("*.pdf"))
+
+    logger.info(f"Found {len(existing_parsed)} pre-parsed text files")
     logger.info(f"Found {len(pdf_files)} PDF files")
 
-    if not pdf_files:
-        logger.warning("No PDF files found. Run collector.download_all_letters() first.")
-        return {"status": "error", "message": "No PDF files found"}
+    if not pdf_files and not existing_parsed:
+        logger.warning(
+            "No PDF files or parsed texts found. Run collector.download_all_letters() first."
+        )
+        return {"status": "error", "message": "No PDF files or parsed texts found"}
 
     # Parse PDFs if not already parsed or if force_reparse
     parsed_count = 0

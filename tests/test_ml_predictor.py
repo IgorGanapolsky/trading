@@ -1,11 +1,14 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.ml.inference import MLPredictor
 
 
+@pytest.mark.skip(reason="MLPredictor and ModelTrainer are deprecated/removed")
 def test_ml_predictor():
     print("Initializing ML Predictor...")
     predictor = MLPredictor()

@@ -1,0 +1,179 @@
+{
+  "last_updated": "2025-12-03T11:46:08.249062",
+  "strategies": {
+    "core_momentum": {
+      "name": "core_momentum",
+      "description": "Core momentum-based ETF strategy with multi-timeframe analysis",
+      "status": "core",
+      "asset_class": "equity",
+      "metrics": {
+        "sharpe_ratio": 0.0,
+        "max_drawdown": 0.0,
+        "win_rate": 0.0,
+        "avg_daily_pnl": 0.0,
+        "total_return_pct": 0.0,
+        "total_trades": 0,
+        "backtest_date": "",
+        "backtest_period": "",
+        "hit_rate_100_day": 0.0
+      },
+      "config": {},
+      "version": "1.0.0",
+      "author": "Trading System",
+      "created_date": "2025-12-03",
+      "last_modified": "2025-12-03",
+      "source_file": "src/strategies/core_strategy.py",
+      "dependencies": [],
+      "tags": [
+        "momentum",
+        "etf",
+        "daily"
+      ]
+    },
+    "options_theta": {
+      "name": "options_theta",
+      "description": "Options premium capture via theta decay",
+      "status": "experimental",
+      "asset_class": "options",
+      "metrics": {
+        "sharpe_ratio": 0.0,
+        "max_drawdown": 0.0,
+        "win_rate": 0.0,
+        "avg_daily_pnl": 0.0,
+        "total_return_pct": 0.0,
+        "total_trades": 0,
+        "backtest_date": "",
+        "backtest_period": "",
+        "hit_rate_100_day": 0.0
+      },
+      "config": {},
+      "version": "1.0.0",
+      "author": "Trading System",
+      "created_date": "2025-12-03",
+      "last_modified": "2025-12-03",
+      "source_file": "src/strategies/options_strategy.py",
+      "dependencies": [],
+      "tags": [
+        "options",
+        "theta",
+        "income"
+      ]
+    },
+    "rule_one_options": {
+      "name": "rule_one_options",
+      "description": "Phil Town Rule #1 options strategy for value investing",
+      "status": "experimental",
+      "asset_class": "options",
+      "metrics": {
+        "sharpe_ratio": 0.0,
+        "max_drawdown": 0.0,
+        "win_rate": 0.0,
+        "avg_daily_pnl": 0.0,
+        "total_return_pct": 0.0,
+        "total_trades": 0,
+        "backtest_date": "",
+        "backtest_period": "",
+        "hit_rate_100_day": 0.0
+      },
+      "config": {},
+      "version": "1.0.0",
+      "author": "Trading System",
+      "created_date": "2025-12-03",
+      "last_modified": "2025-12-03",
+      "source_file": "src/strategies/rule_one_options.py",
+      "dependencies": [],
+      "tags": [
+        "options",
+        "value",
+        "rule1"
+      ]
+    },
+    "crypto_momentum": {
+      "name": "crypto_momentum",
+      "description": "Crypto momentum strategy for weekend trading",
+      "status": "experimental",
+      "asset_class": "crypto",
+      "metrics": {
+        "sharpe_ratio": 0.0,
+        "max_drawdown": 0.0,
+        "win_rate": 0.0,
+        "avg_daily_pnl": 0.0,
+        "total_return_pct": 0.0,
+        "total_trades": 0,
+        "backtest_date": "",
+        "backtest_period": "",
+        "hit_rate_100_day": 0.0
+      },
+      "config": {},
+      "version": "1.0.0",
+      "author": "Trading System",
+      "created_date": "2025-12-03",
+      "last_modified": "2025-12-03",
+      "source_file": "src/strategies/crypto_strategy.py",
+      "dependencies": [],
+      "tags": [
+        "crypto",
+        "momentum",
+        "weekend"
+      ]
+    },
+    "growth_portfolio": {
+      "name": "growth_portfolio",
+      "description": "Growth-focused equity portfolio strategy",
+      "status": "experimental",
+      "asset_class": "equity",
+      "metrics": {
+        "sharpe_ratio": 0.0,
+        "max_drawdown": 0.0,
+        "win_rate": 0.0,
+        "avg_daily_pnl": 0.0,
+        "total_return_pct": 0.0,
+        "total_trades": 0,
+        "backtest_date": "",
+        "backtest_period": "",
+        "hit_rate_100_day": 0.0
+      },
+      "config": {},
+      "version": "1.0.0",
+      "author": "Trading System",
+      "created_date": "2025-12-03",
+      "last_modified": "2025-12-03",
+      "source_file": "src/strategies/growth_strategy.py",
+      "dependencies": [],
+      "tags": [
+        "growth",
+        "equity",
+        "long-term"
+      ]
+    },
+    "treasury_ladder": {
+      "name": "treasury_ladder",
+      "description": "Treasury ladder for stable income",
+      "status": "experimental",
+      "asset_class": "equity",
+      "metrics": {
+        "sharpe_ratio": 0.0,
+        "max_drawdown": 0.0,
+        "win_rate": 0.0,
+        "avg_daily_pnl": 0.0,
+        "total_return_pct": 0.0,
+        "total_trades": 0,
+        "backtest_date": "",
+        "backtest_period": "",
+        "hit_rate_100_day": 0.0
+      },
+      "config": {},
+      "version": "1.0.0",
+      "author": "Trading System",
+      "created_date": "2025-12-03",
+      "last_modified": "2025-12-03",
+      "source_file": "src/strategies/treasury_ladder_strategy.py",
+      "dependencies": [],
+      "tags": [
+        "fixed-income",
+        "treasury",
+        "stable"
+      ]
+    }
+  }
+}

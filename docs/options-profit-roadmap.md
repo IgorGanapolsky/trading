@@ -1,7 +1,7 @@
 # 📈 Options Profit Roadmap – Targeting $10/Day
 
-**Date:** 2025-12-02  
-**Owner:** Claude CTO  
+**Date:** 2025-12-02
+**Owner:** Claude CTO
 **Scope:** Phil Town Rule #1 workflow + covered calls/puts stack
 
 ---
@@ -80,6 +80,15 @@
 
 ---
 
+## 5. Theta Harvest Automation (Dec 2025)
+
+- **Execution bridge**: `ThetaHarvestExecutor` now produces executable orders and streams them through `ExecutionAgent.submit_option_order()` once the equity gate hits **$5k+** (poor man's covered calls) or **$10k+** (iron condors).
+- **Contract selection**: Automatically pulls Alpaca option chains to target 20-delta weekly calls or 30-day condors; falls back to synthetic OCC symbols when data/APIs are unavailable so telemetry still records intent.
+- **Regime-aware gating**: `TradingOrchestrator` invokes theta execution after Gate 6 using the live `RegimeDetector` snapshot, so premium selling only fires in calm/defined-risk regimes.
+- **Telemetry**: Every theta plan/execution is recorded under `gate.theta` with opportunity counts, premium gap, and per-leg execution status → the CEO can now see how options are closing the $10/day gap in real time.
+
+---
+
 ## 5. Success Criteria
 
 - ✅ Planner JSON + console output present for every trading day.
@@ -88,3 +97,19 @@
 - 🎯 When planner states `gap_to_target <= 0` for 10 consecutive sessions, we have mathematically demonstrated a sustainable **$10/day** premium engine.
 
 Use this roadmap + tooling loop daily to convert theoretical Rule #1 signals into measurable, auditable income. Once the options planner shows consistent surplus, graduate to the Fibonacci scale-up plan for $30/day → $100/day targets.
+
+---
+
+## 6. Theta Harvest Simulator (NEW)
+
+- `OptionsLiveSimulator` (`src/analytics/options_live_sim.py`) stitches together:
+  - Account equity from `data/system_state.json`
+  - Latest premium pacing summary from `OptionsProfitPlanner`
+  - Theta Harvest plan (equity-gated, IV-aware) from `ThetaHarvestExecutor`
+- CLI: `PYTHONPATH=src python3 scripts/run_options_live_sim.py --symbols SPY,QQQ,IWM`
+  - Outputs console summary plus `data/options_signals/options_live_sim_latest.json`
+  - Flags for `--equity`, `--regime`, and `--dry-run` keep dev/test workflows deterministic.
+- This simulator is now the single source of truth for **Month 4 theta ramp readiness**:
+  - Shows the daily premium gap vs $10 target *and* how much theta can be deployed immediately.
+  - Enables dashboard automation to broadcast “theta on deck” opportunities without manual spreadsheet math.
+- Reporting loop: `scripts/report_options_theta.py` writes `data/backtests/options_theta_daily_pl.csv` and `reports/options_theta_strategy.md`, giving you diffable artifacts for CI/backtest review.

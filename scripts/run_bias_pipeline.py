@@ -8,10 +8,9 @@ from __future__ import annotations
 import argparse
 import logging
 import os
-from datetime import timedelta, timezone, datetime
+from datetime import datetime, timedelta, timezone
 
 from dotenv import load_dotenv
-
 from src.analyst.bias_store import BiasSnapshot, BiasStore
 from src.langchain_agents.analyst import LangChainSentimentAgent
 
@@ -61,7 +60,9 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    logging.basicConfig(level=args.log_level.upper(), format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=args.log_level.upper(), format="%(asctime)s %(levelname)s %(message)s"
+    )
     load_dotenv()
 
     tickers = _parse_tickers(args.tickers)

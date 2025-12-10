@@ -63,6 +63,7 @@ class RiskManager:
         current_price: float | None = None,
         hist: pd.DataFrame | None = None,
         market_regime: str | None = None,
+        allocation_cap: float | None = None,
     ) -> float:
         if account_equity <= 0:
             logger.warning("Account equity unknown; aborting trade.")
@@ -83,6 +84,10 @@ class RiskManager:
         notional = account_equity * min(max(kelly_frac, 0.0), self.kelly_cap, self.max_position_pct)
         if notional < baseline:
             notional = baseline
+
+        # Enforce the daily budget as a hard per-trade cap so a high Kelly fraction
+        # cannot overshoot small-budget scenarios (e.g., paper trading).
+        notional = min(notional, baseline)
 
         # Optional volatility-aware scaling using ATR if price history available
         scale = 1.0
@@ -105,6 +110,8 @@ class RiskManager:
 
         cap = account_equity * self.max_position_pct
         notional = min(notional, cap)
+        if allocation_cap is not None:
+            notional = min(notional, max(0.0, allocation_cap))
 
         if notional < self.min_notional:
             logger.info(

@@ -1,6 +1,6 @@
 # 🎯 Options Trading Acceleration Plan
 
-**Date**: December 1, 2025  
+**Date**: December 1, 2025
 **Goal**: Activate covered calls strategy by building eligible positions faster
 
 ---
@@ -61,7 +61,7 @@
 
 ### Option 3: Increase Daily Investment
 
-**Current:** $15/day  
+**Current:** $15/day
 **Proposed:** $50-100/day for options-focused accumulation
 
 **Impact:**
@@ -167,4 +167,3 @@ Assuming QQQ at $500/share, 50 shares = $25,000 position:
 **Expected Timeline:** 8-12 months to first covered call trade
 
 **Expected Income:** $200-400/month once active
-

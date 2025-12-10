@@ -1,0 +1,38 @@
+[
+  {
+    "source_type": "book_summary",
+    "source_name": "Getting Rich with REIT Investing",
+    "author": "Roman Sterling",
+    "chapter_or_section": "REIT basics",
+    "page_or_timestamp": "Audible/2023",
+    "content": "Explains Real Estate Investment Trusts as pooled securities that generate rental income and capital appreciation without physical ownership. Covers key metrics (FFO, AFFO, payout ratio, occupancy, leverage) and the importance of REIT-specific valuation, dividend discipline, and accessible buying through brokerage accounts.",
+    "content_type": "concept",
+    "topics": ["reit_basics", "income", "valuation"],
+    "edge_category": "income",
+    "citation": "Sterling (2023)"
+  },
+  {
+    "source_type": "book_summary",
+    "source_name": "Getting Rich with REIT Investing",
+    "author": "Roman Sterling",
+    "chapter_or_section": "Low-capital path",
+    "page_or_timestamp": "Audible/2023",
+    "content": "Advises using dollar-cost averaging via ETFs/mutual funds, reinvesting dividends, and keeping allocation between diversified core REITs plus niche sectors (industrial, data center, student housing). Emphasizes the tax-efficient treatment of REIT dividends and the need to monitor interest rates while shielding cost basis with depreciation pass-throughs.",
+    "content_type": "strategy",
+    "topics": ["reit_allocations", "dividend_reinvestment", "tax_efficiency"],
+    "edge_category": "income",
+    "citation": "Sterling (2023)"
+  },
+  {
+    "source_type": "book_summary",
+    "source_name": "Getting Rich with REIT Investing",
+    "author": "Roman Sterling",
+    "chapter_or_section": "Risk management",
+    "page_or_timestamp": "Audible/2023",
+    "content": "Highlights how to balance REIT exposure with bonds/cash to guard against rate shocks, use stress tests on occupancy and leverage, and favor REITs with strong sponsor alignment. Encourages running scenario analyses (interest rate spikes, rent caps) so the AI system can flag when a REIT bucket becomes overextended.",
+    "content_type": "practice",
+    "topics": ["reit_risk", "interest_rates", "scenario"],
+    "edge_category": "risk",
+    "citation": "Sterling (2023)"
+  }
+]

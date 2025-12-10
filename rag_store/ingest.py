@@ -100,6 +100,7 @@ def ingest_reddit_snapshot(snapshot: dict) -> None:
                 "created_at": created_at,
             }
         )
+        doc["metadata"]["created_at"] = created_at
         docs.append(doc)
 
     sqlite_store.bulk_upsert(sqlite_entries)
@@ -138,6 +139,7 @@ def ingest_news_snapshot(report: dict) -> None:
                 "created_at": created_at,
             }
         )
+        doc["metadata"]["created_at"] = created_at
         docs.append(doc)
 
     sqlite_store.bulk_upsert(sqlite_entries)

@@ -108,7 +108,7 @@ def is_market_hours():
     try:
         clock = api.get_clock()
         return clock.is_open
-    except:
+    except Exception:
         return False
 
 

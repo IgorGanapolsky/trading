@@ -99,6 +99,15 @@ if [ -f "scripts/pre_market_health_check.py" ]; then
     echo ""
 fi
 
+# Auto-download missing Berkshire letters (network permitting)
+if [ -f "scripts/auto_download_berkshire.py" ]; then
+    echo "📚 Checking Berkshire letter collection..."
+    python3 scripts/auto_download_berkshire.py 2>/dev/null || {
+        echo "⚠️  Could not check Berkshire letters (network may be restricted)"
+    }
+    echo ""
+fi
+
 # Check git status
 echo "📝 Checking git status..."
 if command -v git &> /dev/null; then

@@ -7,7 +7,7 @@ This ensures the RL agent optimizes for after-tax returns, not just gross return
 
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from src.utils.tax_optimization import (
     LONG_TERM_THRESHOLD_DAYS,
@@ -29,7 +29,7 @@ class TaxAwareRewardFunction:
     - Tax efficiency (reward tax-optimized trades)
     """
 
-    def __init__(self, tax_optimizer: Optional[TaxOptimizer] = None):
+    def __init__(self, tax_optimizer: TaxOptimizer | None = None):
         self.tax_optimizer = tax_optimizer or TaxOptimizer()
 
     def calculate_reward(

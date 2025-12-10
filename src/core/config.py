@@ -35,25 +35,50 @@ except Exception:  # noqa: BLE001
 
 OPTIMIZED_DAILY_INVESTMENT = 10.0  # Base daily investment amount
 
-# Optimized allocation percentages
+# Optimized allocation percentages (with enhanced treasury exposure)
+# Updated 2025-12-03: Increased treasury allocation for stable carry income
 OPTIMIZED_ALLOCATION = {
+    # Fixed GOVT core (intermediate treasury for stable 4.5% carry)
+    # Purpose: Cash-plus yield with near-zero credit risk
+    "treasury_core": 0.25,  # $2.50/day - GOVT ETF, bypasses all gates
     # Core momentum ETFs (SPY/QQQ selection based on technicals)
-    "core_etfs": 0.40,  # $4.00/day
-    # Bonds + Treasury ladder (BND + SHY/IEF/TLT)
-    # Purpose: Risk mitigation, interest income, recession hedge
-    "bonds_treasuries": 0.15,  # $1.50/day
+    # Reduced from 40% to make room for treasury core
+    "core_etfs": 0.35,  # $3.50/day
+    # Dynamic treasury ladder (SHY/IEF/TLT or ZROZ)
+    # Purpose: Yield curve positioning, steepener trades
+    "treasury_dynamic": 0.10,  # $1.00/day - subject to momentum gates
     # REITs (VNQ - Vanguard Real Estate ETF)
     # Purpose: Dividend income, real estate exposure, inflation hedge
-    "reits": 0.15,  # $1.50/day
+    "reits": 0.10,  # $1.00/day
     # Crypto (BTC/ETH weekend trading)
     # Purpose: 24/7 market access, volatility capture
-    "crypto": 0.10,  # $1.00/day
+    "crypto": 0.05,  # $0.50/day
     # Growth stocks (NVDA/GOOGL/AMZN)
     # Purpose: High-conviction tech exposure
-    "growth_stocks": 0.15,  # $1.50/day
+    "growth_stocks": 0.10,  # $1.00/day
     # Options premium reserve (for covered calls)
     # Purpose: Accumulate capital for yield generation strategy
     "options_reserve": 0.05,  # $0.50/day
+}
+
+# Treasury-specific configuration
+TREASURY_CONFIG = {
+    # Fixed core allocation - always invested regardless of signals
+    "govt_core_pct": 0.25,
+    "govt_ticker": "GOVT",
+    # Dynamic long ETF selection thresholds
+    "yield_10y_zroz_threshold": 4.05,  # Switch to ZROZ when 10Y < 4.05%
+    "default_long_etf": "TLT",
+    "low_yield_long_etf": "ZROZ",
+    # Steepener override (2s10s spread)
+    "steepener_threshold": 0.20,  # Trigger when spread < 0.2%
+    "steepener_extra_allocation": 0.15,  # Add 15% extra to long
+    # MOVE Index thresholds
+    "move_low_vol": 70,
+    "move_high_vol": 120,
+    # T-Bill ladder for idle cash
+    "tbill_ticker": "BIL",
+    "tbill_cash_reserve_pct": 0.05,  # Keep 5% as true cash
 }
 
 # Calculate dollar amounts for clarity

@@ -1,5 +1,8 @@
 name: Unit (Fast)
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ main ]

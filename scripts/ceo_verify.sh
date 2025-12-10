@@ -9,8 +9,10 @@ echo "Trust Nothing. Verify Everything."
 echo "========================================================================"
 echo ""
 
-# Navigate to trading directory
-cd /Users/igorganapolsky/workspace/git/apps/trading
+# Get script directory and navigate to project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
 
 echo "1. CHECKING SYSTEM STATE STALENESS"
 echo "------------------------------------------------------------------------"

@@ -19,6 +19,10 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import logging
 import signal
 from datetime import datetime
@@ -34,9 +38,15 @@ logger = logging.getLogger(__name__)
 ALPACA_KEY = os.getenv("ALPACA_API_KEY")
 ALPACA_SECRET = os.getenv("ALPACA_SECRET_KEY")
 ANTHROPIC_KEY = os.getenv("ANTHROPIC_API_KEY")
+GITHUB_OUTPUT = os.getenv("GITHUB_OUTPUT")
 
-if not ALPACA_KEY or not ALPACA_SECRET:
-    raise ValueError("ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set")
+
+def write_output(passed: bool) -> None:
+    """Write health_check_passed output for GitHub Actions."""
+    if not GITHUB_OUTPUT:
+        return
+    with open(GITHUB_OUTPUT, "a", encoding="utf-8") as handle:
+        handle.write(f"health_check_passed={'true' if passed else 'false'}\n")
 
 
 class TimeoutError(Exception):
@@ -307,6 +317,13 @@ def main():
     signal.alarm(30)
 
     try:
+        if not ALPACA_KEY or not ALPACA_SECRET:
+            print(
+                "⚠️  ALPACA_API_KEY/ALPACA_SECRET_KEY not set. Skipping trading execution for safety."
+            )
+            write_output(False)
+            return 0
+
         print("\n" + "=" * 70)
         print("🏥 PRE-MARKET HEALTH CHECK")
         print(f"📅 {datetime.now().strftime('%Y-%m-%d %I:%M %p')}")
@@ -329,27 +346,54 @@ def main():
         print("📊 HEALTH CHECK SUMMARY")
         print("=" * 70)
 
-        critical_passed = all(
-            [
-                checks["Dependencies"],
-                checks["Data Access"],
-                checks["Alpaca API"],
-                checks["Circuit Breakers"],
-            ]
-        )
+        # Classify checks as critical vs warning
+        critical_checks = [
+            "Dependencies",
+            "Data Access",
+            "Alpaca API",
+            "Circuit Breakers",
+        ]
 
-        for name, passed in checks.items():
-            status = "✅ PASS" if passed else "❌ FAIL"
-            print(f"{status} - {name}")
+        warning_checks = [
+            "Market Status",
+            "Anthropic API",
+            "Economic Calendar",
+            "Strategy Execution",
+        ]
+
+        critical_passed = all(checks[name] for name in critical_checks)
+        warning_issues = [name for name in warning_checks if not checks[name]]
+
+        # Display results with classification
+        print("🚨 CRITICAL CHECKS:")
+        for name in critical_checks:
+            status = "✅ PASS" if checks[name] else "❌ FAIL"
+            print(f"   {status} - {name}")
+
+        print("\n⚠️  WARNING CHECKS:")
+        for name in warning_checks:
+            status = "✅ PASS" if checks[name] else "⚠️  WARN"
+            print(f"   {status} - {name}")
 
         print("=" * 70)
 
         if critical_passed:
-            print("\n✅ HEALTH CHECK PASSED - System ready for trading\n")
+            if warning_issues:
+                print(f"\n✅ HEALTH CHECK PASSED (with {len(warning_issues)} warnings)")
+                print("   Critical systems ready - trading will proceed")
+                for issue in warning_issues:
+                    print(f"   ⚠️  {issue}: non-critical issue")
+            else:
+                print("\n✅ HEALTH CHECK PASSED - All systems ready for trading")
+            write_output(True)
             return 0
         else:
-            print("\n❌ HEALTH CHECK FAILED - Do NOT trade until issues resolved\n")
-            return 1
+            print("\n❌ HEALTH CHECK FAILED - Critical issues prevent trading")
+            failed_critical = [name for name in critical_checks if not checks[name]]
+            for issue in failed_critical:
+                print(f"   🚨 {issue}: CRITICAL FAILURE")
+            write_output(False)
+            return 1  # Return 1 for critical failures, 10 for warnings only
 
     except TimeoutError:
         signal.alarm(0)  # Cancel timeout
@@ -359,10 +403,12 @@ def main():
         print("❌ Health check exceeded maximum time - aborting")
         print("   This usually indicates an API is hanging")
         print("   Check Anthropic or Finnhub API connectivity\n")
+        write_output(False)
         return 1
     except Exception as e:
         signal.alarm(0)  # Cancel timeout
         print(f"\n❌ UNEXPECTED ERROR: {e}\n")
+        write_output(False)
         return 1
     finally:
         signal.alarm(0)  # Ensure timeout is always cancelled

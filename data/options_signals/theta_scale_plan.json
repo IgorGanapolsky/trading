@@ -1,0 +1,43 @@
+{
+  "generated_at": "2025-12-02T23:01:42.447940+00:00",
+  "account_equity": 6000,
+  "equity_gate": {
+    "account_equity": 6000,
+    "enabled_strategies": {
+      "poor_mans_covered_call": true,
+      "iron_condor": false,
+      "full_suite": false
+    },
+    "next_tier": "iron_condor",
+    "gap_to_next_tier": 4000.0,
+    "theta_enabled": true
+  },
+  "regime": "calm",
+  "target_daily_premium": 10.0,
+  "opportunities": [
+    {
+      "symbol": "SPY",
+      "strategy": "poor_mans_covered_call",
+      "contracts": 2,
+      "estimated_premium": 70.0,
+      "executed": false,
+      "reason": "Signal ready for poor_mans_covered_call",
+      "order_id": null,
+      "iv_percentile": 63.9
+    },
+    {
+      "symbol": "QQQ",
+      "strategy": "poor_mans_covered_call",
+      "contracts": 2,
+      "estimated_premium": 70.0,
+      "executed": false,
+      "reason": "Signal ready for poor_mans_covered_call",
+      "order_id": null,
+      "iv_percentile": 73.5
+    }
+  ],
+  "total_estimated_premium": 20.0,
+  "premium_gap": 0,
+  "on_track": true,
+  "summary": "Found 2 theta opportunities. Est. daily premium: $20.00 (gap: $0.00)"
+}

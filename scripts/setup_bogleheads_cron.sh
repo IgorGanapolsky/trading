@@ -54,4 +54,3 @@ echo "  - RAG store: data/rag/sentiment_rag.db"
 echo "  - Fallback JSON: data/rag/bogleheads_latest.json"
 echo "  - Logs: logs/cron_bogleheads.log"
 echo ""
-

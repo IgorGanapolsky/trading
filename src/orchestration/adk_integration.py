@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_SYMBOL_UNIVERSE = ("SPY", "QQQ", "VOO")
 
 
-@dataclass(slots=True)
+@dataclass
 class ADKDecision:
     """Structured response from the ADK orchestrator."""
 

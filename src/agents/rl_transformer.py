@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+
 from src.agents.rl_transformer_features import build_feature_matrix
 from src.utils.market_data import get_market_data_provider
 
@@ -226,7 +227,7 @@ if torch is not None and nn is not None:
             scores = avg_vector / total
             return {
                 name: round(float(score), 4)
-                for name, score in zip(self.FEATURE_NAMES, scores.tolist())
+                for name, score in zip(self.FEATURE_NAMES, scores.tolist(), strict=False)
             }
 
         def _classify_regime(self, engineered: np.ndarray | None) -> str:

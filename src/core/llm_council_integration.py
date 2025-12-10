@@ -3,16 +3,22 @@ LLM Council Integration for Trading Decisions
 
 This module provides easy integration of the LLM Council system into trading workflows.
 The council provides consensus-based decisions through peer review and chairman synthesis.
+
+Enhanced with PAL (Provider Abstraction Layer) integration for:
+- Adversarial validation (Challenge tool) - prevents groupthink
+- Decision audit logging - tracks accuracy over time
 """
 
 import json
 import logging
-from typing import Any, Optional
+import os
+from typing import Any
 
 from src.core.multi_llm_analysis import (
     LLMCouncilAnalyzer,
     LLMModel,
 )
+from src.core.pal_integration import PALIntegration, get_pal
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +36,12 @@ class TradingCouncil:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        council_models: Optional[list[LLMModel]] = None,
-        chairman_model: Optional[LLMModel] = None,
+        api_key: str | None = None,
+        council_models: list[LLMModel] | None = None,
+        chairman_model: LLMModel | None = None,
         enabled: bool = True,
+        pal_challenge_enabled: bool = True,
+        pal_challenge_threshold: float = 0.7,
     ):
         """
         Initialize Trading Council.
@@ -43,9 +51,16 @@ class TradingCouncil:
             council_models: List of models in council
             chairman_model: Chairman model
             enabled: Whether council is enabled (can disable for testing)
+            pal_challenge_enabled: Whether to run PAL challenge on approved trades
+            pal_challenge_threshold: Risk score threshold to block trades (0-1)
         """
         self.enabled = enabled
         self.council = None
+        self.pal_challenge_enabled = (
+            pal_challenge_enabled and os.getenv("PAL_CHALLENGE_ENABLED", "true").lower() == "true"
+        )
+        self.pal_challenge_threshold = pal_challenge_threshold
+        self._pal: PALIntegration | None = None
 
         if enabled:
             try:
@@ -61,12 +76,21 @@ class TradingCouncil:
         else:
             logger.info("Trading Council disabled")
 
+        # Initialize PAL integration for adversarial validation
+        if self.pal_challenge_enabled:
+            try:
+                self._pal = get_pal()
+                logger.info(f"PAL Challenge enabled (threshold={pal_challenge_threshold})")
+            except Exception as e:
+                logger.warning(f"PAL Challenge unavailable: {e}")
+                self.pal_challenge_enabled = False
+
     async def validate_trade(
         self,
         symbol: str,
         action: str,
         market_data: dict[str, Any],
-        context: Optional[dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Validate a trading decision using LLM Council consensus.
@@ -181,6 +205,61 @@ Be conservative - reject trades with ANY of:
                 and "decline" not in final_answer_lower
             )
 
+            # Extract individual votes for audit
+            individual_votes = {}
+            for model_name, response in council_response.individual_responses.items():
+                response_lower = response.lower()
+                if "approve" in response_lower or "buy" in response_lower:
+                    individual_votes[model_name] = "APPROVE"
+                elif "reject" in response_lower or "sell" in response_lower:
+                    individual_votes[model_name] = "REJECT"
+                else:
+                    individual_votes[model_name] = "HOLD"
+
+            # PAL Challenge: If council approved, run adversarial validation
+            challenge_result = None
+            final_decision = "APPROVED" if approved else "REJECTED"
+
+            if approved and self.pal_challenge_enabled and self._pal:
+                try:
+                    challenge_result = await self._pal.challenge_recommendation(
+                        symbol=symbol,
+                        action=action,
+                        council_reasoning=council_response.final_answer,
+                        market_data=market_data,
+                        context=context,
+                    )
+
+                    # If challenge identifies high risk, block the trade
+                    if challenge_result.risk_score > self.pal_challenge_threshold:
+                        logger.warning(
+                            f"PAL Challenge BLOCKED {action} {symbol}: "
+                            f"risk_score={challenge_result.risk_score:.2f} > "
+                            f"threshold={self.pal_challenge_threshold}"
+                        )
+                        approved = False
+                        final_decision = "BLOCKED"
+
+                    logger.info(
+                        f"PAL Challenge for {symbol}: risk={challenge_result.risk_score:.2f}, "
+                        f"proceed={challenge_result.should_proceed}, "
+                        f"concerns={len(challenge_result.concerns)}"
+                    )
+                except Exception as e:
+                    logger.warning(f"PAL Challenge failed (continuing): {e}")
+
+            # Record decision for audit (if PAL available)
+            if self._pal:
+                self._pal.record_decision(
+                    symbol=symbol,
+                    action=action,
+                    council_decision="APPROVED" if "approve" in final_answer_lower else "REJECTED",
+                    council_confidence=council_response.confidence,
+                    individual_votes=individual_votes,
+                    challenge_result=challenge_result,
+                    final_decision=final_decision,
+                )
+
             return {
                 "approved": approved,
                 "confidence": council_response.confidence,
@@ -188,6 +267,8 @@ Be conservative - reject trades with ANY of:
                 "council_response": council_response,
                 "individual_responses": council_response.individual_responses,
                 "reviews": council_response.reviews,
+                "challenge_result": challenge_result,
+                "final_decision": final_decision,
             }
 
         except Exception as e:
@@ -197,13 +278,15 @@ Be conservative - reject trades with ANY of:
                 "confidence": 0.0,
                 "reasoning": f"Council error: {str(e)}",
                 "council_response": None,
+                "challenge_result": None,
+                "final_decision": "ERROR",
             }
 
     async def get_trading_recommendation(
         self,
         symbol: str,
         market_data: dict[str, Any],
-        context: Optional[dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Get trading recommendation from LLM Council.
@@ -258,7 +341,7 @@ Be conservative - reject trades with ANY of:
         symbol: str,
         position_size: float,
         market_data: dict[str, Any],
-        portfolio_context: Optional[dict[str, Any]] = None,
+        portfolio_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Assess risk of a proposed position using LLM Council.
@@ -367,7 +450,7 @@ Be conservative - reject positions that:
 # Convenience function for easy integration
 def create_trading_council(
     enabled: bool = True,
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
 ) -> TradingCouncil:
     """
     Create a Trading Council instance.

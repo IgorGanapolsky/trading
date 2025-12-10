@@ -1,0 +1,145 @@
+{
+  "source": "Options as a Strategic Investment by Lawrence G. McMillan",
+  "category": "options_education",
+  "extracted_date": "2025-12-10",
+  "isbn": "978-0735204652",
+  "edition": "5th Edition",
+  "chunks": [
+    {
+      "id": "mcm_covered_call_writing_001",
+      "topic": "Covered Call Writing Fundamentals",
+      "content": "McMillan's covered call principles: The covered call writer is accepting a limited profit potential in return for reducing his risk by the amount of premium received. Key considerations: (1) Stock selection is paramount - write calls only on stocks you want to own. (2) Strike selection determines risk/reward profile. (3) ITM calls provide more downside protection but cap upside. (4) OTM calls allow more upside but less protection. (5) ATM calls balance protection and upside. Return calculations: Static return = Premium / (Stock Price - Premium). If-called return = (Strike - Stock + Premium) / (Stock Price - Premium). Annualized return = Return * (365 / Days to Expiration). McMillan recommends minimum 1% per month static return for worthwhile trades.",
+      "strategy_type": "covered_call",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "mcm_covered_call_writing_002",
+      "topic": "Covered Call Stock Selection Criteria",
+      "content": "McMillan's stock selection for covered writing: (1) Prefer stocks with moderate volatility - enough premium but not wild swings. (2) Avoid stocks with pending news/earnings if seeking stable income. (3) Prefer optionable stocks with good liquidity (tight bid-ask spreads). (4) Look for stocks trading near support levels for technical backing. (5) Dividend-paying stocks add extra income but watch ex-dividend assignment risk. (6) Avoid stocks in strong uptrends if reluctant to have shares called away. (7) Consider sector diversification across covered call positions. The ideal candidate: stable, liquid, moderate IV, slight upward bias, you'd be happy to own at current price.",
+      "strategy_type": "covered_call",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "mcm_naked_put_writing_001",
+      "topic": "Naked Put Writing Strategy",
+      "content": "McMillan on naked puts: Selling naked puts has approximately the same risk/reward profile as covered call writing but is more capital efficient. Key equivalence: Short put = Synthetic covered call. If assigned, you own stock at strike minus premium (lower cost basis). Advantages over covered calls: (1) No stock ownership required upfront. (2) Lower capital requirement. (3) Can earn interest on cash collateral. (4) No uptick rule for puts. Risks: (1) Substantial loss if stock crashes. (2) Margin requirements can increase during volatility. (3) Assignment uncertainty. Best practices: Only sell puts on stocks you want to own at strike price. Use margin of safety - sell puts 5-10% below current price.",
+      "strategy_type": "cash_secured_put",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "mcm_ratio_call_writing_001",
+      "topic": "Ratio Call Writing",
+      "content": "McMillan's ratio call writing: Sell more calls than you have stock to cover (e.g., own 100 shares, sell 2 calls). Construction: Long 100 shares + Short 2 OTM calls. Rationale: Collect more premium, profit if stock stays flat or declines moderately. Risk: Unlimited risk above upper breakeven. One call is covered, one is naked. Best scenario: Stock at short strike at expiration - maximum profit. Calculations: Lower breakeven = Stock price - Total premium. Upper breakeven = 2*Strike - Stock price + Total premium. McMillan warns: This is NOT for conservative investors. The naked call exposure creates substantial risk if stock surges. Use only with strict stops and on stocks unlikely to gap up significantly.",
+      "strategy_type": "ratio",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "mcm_bull_spread_001",
+      "topic": "Bull Call Spread Mechanics",
+      "content": "McMillan on bull spreads: A bull call spread is constructed by buying a call at a lower strike and selling a call at a higher strike. Characteristics: Limited risk (max loss = debit paid). Limited profit (max gain = spread width - debit). Profit if stock rises above lower strike. Max profit if stock above upper strike at expiration. Strike selection guidance: (1) Buy ITM or ATM call for high probability but lower leverage. (2) Buy OTM call for higher leverage but lower probability. (3) Sell call 1-2 strikes above purchased call. (4) Wider spread = higher max profit but higher cost. Break-even = Lower strike + Net debit. Use when: Moderately bullish, want defined risk, options are expensive (IV high).",
+      "strategy_type": "vertical_spread",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "mcm_bear_spread_001",
+      "topic": "Bear Put Spread Strategy",
+      "content": "McMillan's bear put spread: Buy put at higher strike, sell put at lower strike. Mirror image of bull call spread for bearish outlook. Characteristics: Limited risk (max loss = debit paid). Limited profit (max gain = spread width - debit). Profit if stock falls below upper strike. Max profit if stock below lower strike at expiration. Advantages over buying puts outright: (1) Lower cost (selling lower put offsets). (2) Less theta decay impact. (3) Can be profitable even if stock doesn't fall as much as expected. Strike selection: (1) Buy ATM or slightly ITM put for higher probability. (2) Sell put 1-3 strikes below purchased put. (3) Closer strikes = lower cost but narrower profit zone. Use when: Bearish but don't want unlimited risk exposure.",
+      "strategy_type": "vertical_spread",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "mcm_straddle_strategies_001",
+      "topic": "Straddle Buying and Selling",
+      "content": "McMillan on straddles: A straddle involves buying (or selling) both a call and put at the same strike. Long straddle: Buy ATM call + Buy ATM put. Profit from large move in either direction. Cost = Total premium. Breakevens = Strike +/- Total premium. Short straddle: Sell ATM call + Sell ATM put. Profit from range-bound movement. Max profit = Total premium received. Unlimited risk in both directions. McMillan's analysis: Long straddles are appropriate when implied volatility is LOW and you expect a large move. Short straddles have high probability of some profit but unbounded risk - only for experienced traders with strict risk management. Historical data shows ATM straddles are often overpriced - favoring sellers over time.",
+      "strategy_type": "straddle",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "mcm_strangle_strategies_001",
+      "topic": "Strangle Construction and Management",
+      "content": "McMillan's strangle strategies: A strangle uses OTM options instead of ATM. Long strangle: Buy OTM put + Buy OTM call. Cheaper than straddle but requires larger move to profit. Short strangle: Sell OTM put + Sell OTM call. Wider profit zone than straddle, lower premium. McMillan recommends short strangles over short straddles for most traders because: (1) Wider profit zone reduces adjustment frequency. (2) Lower premium = Lower gamma risk. (3) More forgiving of small directional moves. Management: Close at 50% profit. Roll untested side if one side tested. Never let both sides get threatened simultaneously - indicates poor strike selection.",
+      "strategy_type": "strangle",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "mcm_calendar_spread_001",
+      "topic": "Calendar Spread Deep Dive",
+      "content": "McMillan's calendar spread analysis: Profit from differential time decay between short-term and long-term options. The front-month option decays faster, benefiting the position. Key factors: (1) Works best when underlying stays near strike. (2) Long vega - benefits from IV increase. (3) Limited risk = Net debit paid. (4) Complex profit profile - max profit at strike at front expiration. Strike selection: Use ATM strike for maximum theta differential. Front month: 30 DTE or less. Back month: 60+ DTE. Management: Close before front-month expiration to avoid assignment risk. Adjust if underlying moves away from strike. McMillan warns: Calendars can be hurt by IV decrease or large underlying moves. Not a set-and-forget strategy.",
+      "strategy_type": "calendar",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "mcm_butterfly_spread_001",
+      "topic": "Butterfly Spread Construction",
+      "content": "McMillan on butterfly spreads: A butterfly is a limited-risk, limited-reward strategy with maximum profit at center strike. Long call butterfly: Buy 1 lower strike call, Sell 2 middle strike calls, Buy 1 higher strike call. All same expiration. Characteristics: Max profit at middle strike at expiration. Max loss = Net debit paid. Very low cost but very specific price target. Breakevens = Lower strike + Debit, Upper strike - Debit. Iron butterfly alternative: Sell ATM straddle + Buy OTM strangle for protection. Same profit profile, often for credit instead of debit. Use cases: (1) Expecting pinning action near specific price. (2) Very low-cost directional or neutral bet. (3) Expiration week plays. McMillan notes butterflies have low probability of max profit but excellent risk/reward ratio.",
+      "strategy_type": "butterfly",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "mcm_greeks_delta_001",
+      "topic": "Delta: The Foundation Greek",
+      "content": "McMillan's delta analysis: Delta measures option price change relative to underlying price change. Properties: (1) Call delta: 0 to 1 (positive - benefits from price increase). (2) Put delta: 0 to -1 (negative - benefits from price decrease). (3) ATM options have delta ~0.50. (4) Delta approximates probability of finishing ITM. (5) Deep ITM delta approaches 1.0 (or -1.0 for puts). (6) Far OTM delta approaches 0. Portfolio applications: Sum position deltas for net directional exposure. 100 delta = equivalent to owning 100 shares. Hedging: To delta-hedge, offset delta with stock or opposite options. A delta-neutral position profits from other factors (theta, vega) rather than direction.",
+      "strategy_type": "greeks",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "mcm_greeks_gamma_001",
+      "topic": "Gamma: Delta's Rate of Change",
+      "content": "McMillan's gamma analysis: Gamma measures how fast delta changes as underlying moves. Properties: (1) Gamma is highest for ATM options. (2) Gamma increases as expiration approaches. (3) Long options have positive gamma (delta moves in your favor). (4) Short options have negative gamma (delta moves against you). Implications for short premium sellers: Negative gamma means losses accelerate as position moves against you. Near expiration, gamma spikes make short ATM options extremely risky. Risk management: (1) Close positions before final week to avoid gamma spike. (2) Use defined risk strategies (spreads) to cap gamma exposure. (3) Avoid ATM strikes when selling with <7 DTE. McMillan emphasizes: Gamma is the most underappreciated risk for option sellers.",
+      "strategy_type": "greeks",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "mcm_greeks_theta_001",
+      "topic": "Theta: Time Decay Analysis",
+      "content": "McMillan's theta analysis: Theta measures daily time decay of option value. Properties: (1) ATM options have highest theta. (2) Theta increases as expiration approaches (non-linear decay). (3) Long options have negative theta (lose value daily). (4) Short options have positive theta (gain value daily). Time decay curve: Options lose approximately 1/3 of value in first 2/3 of life, and 2/3 of value in final 1/3 of life. Practical implications: (1) Sell options 30-45 DTE to capture steepest decay. (2) Buy options with 60+ DTE to minimize theta burn. (3) Weekend theta: Friday positions decay through weekend. (4) Theta is not constant - recalculates daily based on current parameters.",
+      "strategy_type": "greeks",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "mcm_greeks_vega_001",
+      "topic": "Vega: Volatility Sensitivity",
+      "content": "McMillan's vega analysis: Vega measures option price change relative to 1% change in implied volatility. Properties: (1) Vega is highest for ATM options. (2) Vega is highest for longer-dated options. (3) Long options have positive vega (benefit from IV increase). (4) Short options have negative vega (benefit from IV decrease). Trading implications: (1) Buy options when IV is low, sell when IV is high. (2) Calendars are long vega - benefit from IV increase. (3) Iron condors are short vega - benefit from IV contraction. (4) IV typically rises in market selloffs, falls in rallies. McMillan's IV strategy: Track IV percentile and IV rank. Sell premium when IV Rank > 50%. Buy premium when IV Rank < 20%. Volatility mean reverts - use this to your advantage.",
+      "strategy_type": "greeks",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "mcm_stop_loss_rules_001",
+      "topic": "Option Position Stop-Loss Guidelines",
+      "content": "McMillan's stop-loss framework for options: (1) Credit spreads: Close if loss reaches 2x credit received. Example: Collected $1.00 credit, close at $3.00 (loss = $2.00). (2) Debit spreads: Close if value drops to 50% of entry. Example: Paid $2.00, close at $1.00. (3) Short strangles/straddles: Close if either side reaches 2x original credit. (4) Covered calls: Let assignment happen or close entire position (stock + call) if stock breaks key support. (5) General rule: Never let a losing trade become a catastrophic loss. Cut losses at predetermined levels. McMillan emphasizes: The mark of a professional is not avoiding losses, but controlling them. A 50% loss requires 100% gain to recover. A 20% loss only requires 25% gain.",
+      "strategy_type": "risk_management",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "mcm_volatility_trading_001",
+      "topic": "Volatility as an Asset Class",
+      "content": "McMillan on volatility trading: Implied volatility itself can be traded as an asset class. Key concepts: (1) IV tends to mean-revert - extreme levels don't persist. (2) IV is usually higher than realized volatility (volatility risk premium). (3) VIX index measures S&P 500 implied volatility. (4) VIX futures and options allow direct volatility trading. Strategies: (1) Sell volatility when IV Rank > 75% (expect contraction). (2) Buy volatility when IV Rank < 25% (expect expansion). (3) Calendar spreads profit from volatility term structure. (4) Variance swaps for pure volatility exposure. McMillan's observation: Selling volatility has positive expected value due to volatility risk premium, but occasional large losses. Requires consistent application over many trades.",
+      "strategy_type": "volatility",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "mcm_earnings_trading_001",
+      "topic": "Earnings Event Strategies",
+      "content": "McMillan's earnings trading framework: Earnings create predictable volatility patterns. Pre-earnings: IV expands as uncertainty increases. Post-earnings: IV collapses regardless of direction (IV crush). Strategies: (1) SELL premium right before earnings to capture IV crush. Iron condors or short strangles centered at current price. Risk: Gap risk if move exceeds expected move. (2) BUY premium 2-3 weeks before earnings when IV is low. Sell before announcement to capture IV expansion without event risk. (3) POST-EARNINGS plays: Trade continuation or reversal patterns after initial reaction. McMillan caution: Earnings trading is not for beginners. Gaps can exceed expected move by 2-3x. Position size conservatively (1-2% of portfolio).",
+      "strategy_type": "earnings",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "mcm_exercise_assignment_001",
+      "topic": "Exercise and Assignment Mechanics",
+      "content": "McMillan on exercise and assignment: Exercise is the act of option holder invoking their right. Assignment is the corresponding obligation on the seller. American vs European: American options can be exercised anytime (most stock options). European options only at expiration (index options, VIX). Early exercise scenarios: (1) Deep ITM calls before ex-dividend if dividend > time value. (2) Deep ITM puts when time value < interest on proceeds. (3) Never exercise OTM options (let them expire worthless). Assignment timing: Can occur anytime for American options but most common: (1) At expiration if ITM. (2) Before ex-dividend for ITM calls. (3) Randomly assigned by OCC among all short positions. Preparation: Always have plan for assignment. Keep adequate capital. Don't be caught off guard.",
+      "strategy_type": "mechanics",
+      "difficulty": "intermediate"
+    }
+  ],
+  "key_principles": [
+    "Stock selection is more important than option selection",
+    "Never sell options on stocks you don't want to own",
+    "Position sizing prevents catastrophic losses",
+    "Cut losses at predetermined levels - no exceptions",
+    "Volatility mean reverts - trade accordingly",
+    "Time decay accelerates near expiration - manage gamma risk",
+    "Probability of profit matters more than magnitude of profit when selling",
+    "Diversify across positions, sectors, and strategies"
+  ]
+}

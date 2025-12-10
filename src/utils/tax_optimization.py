@@ -15,7 +15,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -275,7 +275,7 @@ class TaxOptimizer:
         }
 
     def calculate_after_tax_returns(
-        self, gross_returns: list[float], tax_events: Optional[list[TaxEvent]] = None
+        self, gross_returns: list[float], tax_events: list[TaxEvent] | None = None
     ) -> dict[str, Any]:
         """
         Calculate after-tax returns based on tax events.
@@ -478,3 +478,6 @@ class TaxOptimizer:
             "short_term_tax_rate": SHORT_TERM_TAX_RATE,
             "long_term_tax_rate": LONG_TERM_TAX_RATE,
         }
+
+
+# ruff: noqa: UP045

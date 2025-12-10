@@ -1,0 +1,133 @@
+{
+  "metadata": {
+    "title": "Trading System Lessons Learned",
+    "description": "Critical insights and architectural decisions learned during system development",
+    "created": "2025-12-10",
+    "last_updated": "2025-12-10"
+  },
+  "chunks": [
+    {
+      "id": "ll_001_llm_process_corruption",
+      "title": "LLM Process Corruption in Finance (Carlos Perez Critique)",
+      "source": "@IntuitMachine (Carlos E. Perez) - Twitter/X",
+      "date": "2025-12-06",
+      "category": "architecture",
+      "tags": ["llm", "backtesting", "rule-application", "anti-pattern", "process-corruption"],
+      "severity": "critical",
+      "content": "LLMs suffer from 'process corruption' when applying rules to long sequences. They 'think' and 'talk' simultaneously - for complex tasks, working memory overloads and the process corrupts silently. Example: Given 10-year backtest with rules 'buy if 50-day MA crosses 200-day, RSI < 70, not Friday' - LLM may correctly apply all rules for first few years, then silently 'forget' the RSI or Friday constraint. No error message. Output looks confident but is garbage.",
+      "key_insight": "The real danger in AI finance isn't hallucinated facts - it's corrupted process. Silent process failures produce invalid backtest results with no error message.",
+      "solution": "Separate LLM from rule execution: (1) LLMs for sentiment analysis, market outlook, qualitative judgment (2) Python/pandas for rule-based filtering, backtesting, technical indicators. Never let LLMs apply conditional logic to sequential data.",
+      "our_implementation": "Our system correctly separates: MultiLLMAnalyzer handles sentiment only. BacktestEngine uses deterministic Python. apply_technical_filters() uses pandas. Architecture notes added to growth_strategy.py:97-114 and backtest_engine.py:17-32.",
+      "referenced_files": [
+        "src/strategies/growth_strategy.py",
+        "src/backtesting/backtest_engine.py",
+        "src/core/multi_llm_analysis.py"
+      ],
+      "embedding_text": "LLM process corruption finance backtesting rule application anti-pattern. LLMs fail silently when applying rules to long sequences because working memory overloads. Never use LLMs for stock filtering, backtesting, or sequential condition checking. Use deterministic Python pandas numpy code instead. LLMs should only do sentiment analysis and qualitative judgment. Carlos Perez IntuitMachine critique."
+    },
+    {
+      "id": "ll_002_reasoning_mode_fix",
+      "title": "Reasoning Modes Fix LLM Process Corruption",
+      "source": "@IntuitMachine (Carlos E. Perez) - Twitter/X",
+      "date": "2025-12-06",
+      "category": "architecture",
+      "tags": ["llm", "reasoning-mode", "scratchpad", "future-capability"],
+      "severity": "informational",
+      "content": "Newer models (GPT-5, Claude 3.7+) with 'reasoning modes' achieve 100% accuracy on tasks that previously failed. These modes provide a private 'scratchpad' - the AI can think through the whole problem before writing the final answer. This separates deliberation from output.",
+      "key_insight": "Future LLM versions with extended thinking/reasoning modes may be suitable for rule application, but current production models should not be trusted for this purpose.",
+      "solution": "Monitor for reasoning mode availability in production LLMs. Until then, maintain deterministic code for all rule-based operations.",
+      "embedding_text": "LLM reasoning mode scratchpad extended thinking GPT-5 Claude 3.7 fix process corruption. Future capability for rule application but not ready for production yet. Continue using deterministic Python code for backtesting and filtering."
+    },
+    {
+      "id": "ll_003_credential_verification",
+      "title": "Always Verify Credential Sources Before Claiming Issues",
+      "source": "CTO Failure - Dec 10, 2025",
+      "date": "2025-12-10",
+      "category": "verification",
+      "tags": ["credentials", "github-secrets", "environment", "verification", "failure-analysis"],
+      "severity": "critical",
+      "content": "CTO (Claude) failed to check all credential sources before claiming Alpaca API credentials were missing. Checked only local .env file but not: (1) GitHub Secrets where credentials are actually stored, (2) GitHub Actions workflows that use secrets, (3) .github/local-secrets.env.example showing expected format. This caused unnecessary delay and frustrated CEO.",
+      "key_insight": "Always check ALL credential storage locations before claiming credentials are missing: local .env, environment variables, GitHub Secrets, workflow files, cloud secret managers.",
+      "solution": "Before claiming any credential issue: (1) Check local .env, (2) Check environment variables, (3) Check GitHub Actions workflows for secrets.* references, (4) Check GitHub Secrets via API if possible, (5) Only then report actual missing credentials with specific location needed.",
+      "our_implementation": "Updated verification checklist. Trading executes via GitHub Actions which has access to secrets. Local environment is sandboxed without network access to Alpaca.",
+      "referenced_files": [
+        ".github/workflows/daily-trading.yml",
+        ".github/local-secrets.env.example"
+      ],
+      "embedding_text": "credential verification failure GitHub secrets environment variables .env file always check all sources before claiming missing. GitHub Actions workflows use secrets.ALPACA_API_KEY. Local sandbox cannot access external APIs. Trading happens via CI/CD."
+    },
+    {
+      "id": "ll_004_sandbox_network_limitations",
+      "title": "Local Sandbox Has Network Restrictions",
+      "source": "CTO Discovery - Dec 10, 2025",
+      "date": "2025-12-10",
+      "category": "infrastructure",
+      "tags": ["sandbox", "network", "proxy", "github-actions", "limitations"],
+      "severity": "high",
+      "content": "The local development environment (Claude Code sandbox) has proxy restrictions that block direct API calls to Alpaca (403 Forbidden proxy error). All actual trading MUST happen through GitHub Actions workflows, which run in unrestricted GitHub-hosted runners with access to secrets.",
+      "key_insight": "Local sandbox is for code development only. Actual API calls to external services (Alpaca, brokers) happen through GitHub Actions CI/CD pipelines.",
+      "solution": "For immediate trading: trigger GitHub Actions workflow manually via workflow_dispatch. For testing: use mock data or ALPACA_SIMULATED=1 flag. Never promise local API execution.",
+      "our_implementation": "daily-trading.yml has workflow_dispatch trigger for manual execution. Options-trading.yml available for options. Crypto trading on weekends.",
+      "referenced_files": [
+        ".github/workflows/daily-trading.yml",
+        ".github/workflows/options-trading.yml"
+      ],
+      "embedding_text": "sandbox network proxy restrictions 403 forbidden cannot call external APIs locally. All trading via GitHub Actions CI/CD. Use workflow_dispatch to trigger manual trades. Local is development only."
+    },
+    {
+      "id": "ll_005_workflow_data_persistence",
+      "title": "GitHub Actions Must Commit Updated Data Files Back to Repo",
+      "source": "CTO Discovery - Dec 10, 2025",
+      "date": "2025-12-10",
+      "category": "infrastructure",
+      "tags": ["github-actions", "data-persistence", "workflows", "dashboard", "stale-data"],
+      "severity": "critical",
+      "content": "Dashboard showed stale Dec 9 data despite workflow running successfully. Root cause: dashboard-auto-update.yml fetched fresh Alpaca data and generated dashboard BUT never committed the updated performance_log.json back to the repo. The file was updated locally in the workflow runner but lost when workflow completed. Similarly, daily-trading.yml only checked system_state.json changes, missing new trade files in data/trades/.",
+      "key_insight": "Any workflow that updates data files must explicitly git add + git commit + git push those files back to the repo, otherwise changes are lost when workflow runner terminates.",
+      "solution": "Added 'Commit performance data to main repo' step in dashboard-auto-update.yml. Enhanced 'Check for state changes' in daily-trading.yml to detect new trade files, not just system_state.json changes. Both fixes ensure data persists across workflow runs.",
+      "our_implementation": "dashboard-auto-update.yml now commits performance_log.json before wiki update. daily-trading.yml checks all data/* files for changes including untracked trade files.",
+      "referenced_files": [
+        ".github/workflows/dashboard-auto-update.yml",
+        ".github/workflows/daily-trading.yml"
+      ],
+      "embedding_text": "GitHub Actions workflow data persistence commit push files stale dashboard. Workflows must git add commit push updated data files or changes are lost. performance_log.json trades_*.json system_state.json must be committed back to repo after update."
+    },
+    {
+      "id": "ll_006_read_rag_before_claims",
+      "title": "MANDATORY: Read RAG Lessons Before Making Infrastructure Claims",
+      "source": "CEO Directive - Dec 10, 2025",
+      "date": "2025-12-10",
+      "category": "process",
+      "tags": ["rag", "pre-flight", "verification", "anti-pattern", "session-start"],
+      "severity": "critical",
+      "content": "CTO (Claude) repeatedly made false claims about infrastructure (credentials missing, API unreachable, etc.) without first checking the lessons_learned RAG. This caused CEO frustration and wasted time rediscovering known issues. The anti-pattern was: Claim → Fail → Discover → Add to RAG. The correct pattern is: Read RAG → Make informed claim → Execute correctly.",
+      "key_insight": "ALWAYS read rag_knowledge/chunks/lessons_learned_2025.json at session start BEFORE making any claims about infrastructure, credentials, or system capabilities.",
+      "solution": "Added MANDATORY PRE-FLIGHT protocol to CLAUDE.md Session Start Protocol. Step 1 is now: Read lessons_learned_2025.json. Key lessons are summarized inline (ll_003: credentials in GitHub Secrets, ll_004: sandbox can't call APIs, ll_005: workflows must commit data).",
+      "our_implementation": "CLAUDE.md now includes mandatory pre-flight check with specific commands to run before making infrastructure claims.",
+      "referenced_files": [
+        ".claude/CLAUDE.md",
+        "rag_knowledge/chunks/lessons_learned_2025.json"
+      ],
+      "embedding_text": "read RAG lessons learned before making claims session start pre-flight mandatory protocol. Anti-pattern: claim fail discover add. Correct: read RAG first then claim. Check lessons_learned_2025.json before infrastructure claims."
+    },
+    {
+      "id": "ll_007_tradier_options_backup",
+      "title": "Tradier is Backup Broker for Options Trading",
+      "source": "CEO Directive - Dec 10, 2025",
+      "date": "2025-12-10",
+      "category": "infrastructure",
+      "tags": ["tradier", "options", "broker", "failover", "backup", "redundancy"],
+      "severity": "high",
+      "content": "Tradier is configured as a backup broker for options trading. GitHub Secrets contain TRADIER_SANDBOX_API_KEY and TRADIER_SANDBOX_ACCOUNT_NUMBER. Full multi-broker failover infrastructure exists: src/brokers/tradier_client.py, src/brokers/multi_broker.py. Failover priority: Alpaca (primary) → IBKR (secondary) → Tradier (tertiary). If Alpaca options trading fails, Tradier should be used as fallback.",
+      "key_insight": "Tradier has excellent options API and credentials are already configured. Use ENABLE_BROKER_FAILOVER=true to activate multi-broker redundancy for options trading.",
+      "solution": "When options trading fails on Alpaca: (1) Check if ENABLE_BROKER_FAILOVER=true is set, (2) Verify Tradier credentials in GitHub Secrets, (3) Use multi_broker.py for automatic failover. Tradier is API-first cloud brokerage designed for algorithmic trading.",
+      "our_implementation": "Multi-broker failover system implemented with circuit breakers. Tradier client supports market/limit orders, options chains, account status. Enable via environment variable.",
+      "referenced_files": [
+        "src/brokers/tradier_client.py",
+        "src/brokers/multi_broker.py",
+        "docs/BROKER_FAILOVER.md"
+      ],
+      "embedding_text": "Tradier backup broker options trading failover TRADIER_SANDBOX_API_KEY multi-broker redundancy. If Alpaca options fails use Tradier. ENABLE_BROKER_FAILOVER=true activates failover. Alpaca primary IBKR secondary Tradier tertiary. Circuit breakers protect against cascading failures."
+    }
+  ]
+}

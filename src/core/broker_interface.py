@@ -9,7 +9,7 @@ As CTO: Architecture decision for maintainability and vendor flexibility.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -21,11 +21,11 @@ class OrderResult:
     side: str  # 'buy' or 'sell'
     amount_usd: float
     status: str
-    filled_qty: Optional[float] = None
-    filled_avg_price: Optional[float] = None
-    submitted_at: Optional[str] = None
-    filled_at: Optional[str] = None
-    error: Optional[str] = None
+    filled_qty: float | None = None
+    filled_avg_price: float | None = None
+    submitted_at: str | None = None
+    filled_at: str | None = None
+    error: str | None = None
 
 
 @dataclass
@@ -100,7 +100,7 @@ class BrokerInterface(ABC):
         pass
 
     @abstractmethod
-    def get_orders(self, status: Optional[str] = None) -> list[dict[str, Any]]:
+    def get_orders(self, status: str | None = None) -> list[dict[str, Any]]:
         """
         Get order history.
 
