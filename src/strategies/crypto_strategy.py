@@ -128,10 +128,11 @@ class CryptoStrategy:
     # - Monad: Future watch (Layer 1, not launched yet)
     DEFAULT_CRYPTO_UNIVERSE = ["BTCUSD", "ETHUSD", "SOLUSD"]
 
-    # RSI parameters (tighter for crypto volatility)
+    # RSI parameters - LOOSENED Dec 10, 2025 for more trading opportunities
+    # CEO directive: "We need to trade, not sit on sidelines"
     RSI_PERIOD = 14
-    RSI_OVERSOLD = 40  # Tighter than stocks (30)
-    RSI_OVERBOUGHT = 60  # Tighter than stocks (70)
+    RSI_OVERSOLD = 35  # More aggressive entry (was 40)
+    RSI_OVERBOUGHT = 70  # Allow buying in stronger uptrends (was 60)
 
     # MACD parameters - OPTIMIZED FOR CRYPTO 24/7 TRADING
     # Stock defaults (12, 26, 9) lag by ~4x in crypto because:
