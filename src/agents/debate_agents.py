@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 # Psychology integration
 try:
     from src.coaching.mental_toughness_coach import (
-        get_prompt_context as get_psychology_context,
         get_position_size_modifier,
+        get_prompt_context as get_psychology_context,
     )
 
     PSYCHOLOGY_AVAILABLE = True
@@ -217,7 +217,7 @@ class BearAgent:
             arguments.append(f"Price ${price:.2f} below MA50 ${ma_50:.2f} - downtrend intact")
             conviction += 0.1
         elif price > ma_50 * 1.05:
-            arguments.append(f"Overextended: Price 5%+ above MA50 - mean reversion risk")
+            arguments.append("Overextended: Price 5%+ above MA50 - mean reversion risk")
             conviction += 0.05
 
         # RSI analysis (bearish perspective)

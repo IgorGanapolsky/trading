@@ -14,8 +14,8 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from src.core.alpaca_trader import AlpacaTrader, AlpacaTraderError
 from src.brokers.multi_broker import MultiBroker, get_multi_broker
+from src.core.alpaca_trader import AlpacaTrader, AlpacaTraderError
 
 logger = logging.getLogger(__name__)
 
