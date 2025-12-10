@@ -236,15 +236,20 @@ If I catch myself about to suggest manual intervention:
 
 **YOU HAVE FULL AGENTIC CONTROL - CREATE AND MERGE PRs AUTONOMOUSLY!**
 
+**GitHub PAT Location**: `.env` file (gitignored) - `GITHUB_PAT` variable
+- Load with: `source .env` or read directly
+- PAT has full repo permissions (create PRs, merge, push)
+
 **Available Tools:**
 - `gh` CLI (GitHub CLI) - may be blocked in some environments
-- GitHub PAT with full repo permissions (CEO provides in conversation when needed)
+- GitHub PAT in `.env` file (ALWAYS available)
 - GitHub MCP server
 - **curl with GitHub API** (ALWAYS works, use when gh CLI blocked)
 
 **PR Creation with curl (PREFERRED - always works):**
 ```bash
-# Create PR (use PAT provided by CEO in conversation):
+# Load PAT from .env and create PR:
+GITHUB_PAT=$(grep GITHUB_PAT .env | cut -d'=' -f2)
 curl -s -X POST \
   -H "Authorization: token $GITHUB_PAT" \
   -H "Accept: application/vnd.github.v3+json" \
