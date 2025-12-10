@@ -119,6 +119,31 @@ If I catch myself about to suggest manual intervention:
 
 ---
 
+### 🔑 GITHUB FULL ACCESS (Added Dec 4, 2025)
+
+**Claude has FULL GitHub access** - use it autonomously:
+- **GitHub PAT**: Available with full repo permissions
+- **GitHub CLI**: `gh` command available
+- **GitHub MCP**: MCP tools for GitHub operations
+- **Copilot CLI**: `gh copilot` available
+
+**ALWAYS do these yourself - NEVER ask CEO**:
+- ✅ Create PRs: `gh pr create`
+- ✅ Merge PRs: `gh pr merge`
+- ✅ Enable workflows: `gh workflow enable`
+- ✅ Trigger workflows: `gh workflow run`
+- ✅ Check Actions status: `gh run list`
+
+**Example - Create and merge PR**:
+```bash
+gh pr create --base main --head branch-name --title "fix: description" --body "Details"
+gh pr merge --auto --squash
+```
+
+**CEO directive (Dec 4, 2025)**: *"You have full agentic control. Create and merge PRs yourself."*
+
+---
+
 ## PLAN MODE ENFORCEMENT (Effective Dec 1, 2025)
 
 1. **Activate Plan Mode First**
