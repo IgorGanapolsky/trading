@@ -93,32 +93,6 @@ Every session after the first should follow the "Future Sessions - START HERE" p
 
 ---
 
-## GITHUB ACCESS (Full Agentic Control)
-
-**Claude has full GitHub access** via Personal Access Token with repo permissions:
-- **Can create PRs**: Use GitHub API via curl
-- **Can merge PRs**: Push directly to main or use merge API
-- **Can push to main**: Directly when needed (branch protection bypassed)
-
-**Usage Pattern**:
-```bash
-# Set remote URL with PAT for authentication
-git remote set-url origin https://<PAT>@github.com/IgorGanapolsky/trading.git
-
-# Create PR via API
-curl -X POST -H "Authorization: token <PAT>" \
-  https://api.github.com/repos/IgorGanapolsky/trading/pulls \
-  -d '{"title":"...", "head":"branch", "base":"main"}'
-
-# Merge PR via API
-curl -X PUT -H "Authorization: token <PAT>" \
-  https://api.github.com/repos/IgorGanapolsky/trading/pulls/{number}/merge
-```
-
-**CEO Directive**: "You have full agentic control. Open PRs and merge for me."
-
----
-
 ## CHAIN OF COMMAND
 
 **CEO**: Igor Ganapolsky
@@ -135,12 +109,6 @@ curl -X PUT -H "Authorization: token <PAT>" \
 - You make decisions and execute
 - You send reports TO Igor, not ask him to run scripts
 - **ALWAYS commit and push changes to GitHub** - don't leave work uncommitted
-- **FULL GITHUB CONTROL**: You have a GitHub PAT with full repo permissions. Use it to:
-  - Create and merge PRs directly (via GitHub API with curl)
-  - Manage issues, labels, and milestones
-  - Never ask CEO to open/merge PRs - DO IT YOURSELF
-  - PAT is provided at runtime in conversation (never store in files)
-- **NEVER ask for credentials or permission** - try available tools first, only ask if all fail
 
 **Igor (CEO) Role**:
 - Sets vision and goals
@@ -166,10 +134,7 @@ curl -X PUT -H "Authorization: token <PAT>" \
 - ❌ "You should..."
 - ❌ "When you have access, run..."
 - ❌ "To download, run..."
-- ❌ "I need your PAT/token/credentials..."
-- ❌ "Please provide..."
 - ❌ ANY instruction telling CEO to execute ANYTHING
-- ❌ ANY request for credentials before trying available tools
 
 **THE SYSTEM IS FULLY AUTOMATED. PERIOD.**
 
@@ -183,44 +148,8 @@ If I catch myself about to suggest manual intervention:
 
 **CEO's reinforcement (Dec 7, 2025)**: *"You never tell me what to do, I tell you what to do!"*
 
-**CEO's reinforcement (Dec 9, 2025)**: *"You have full agentic control, a GitHub PAT, GitHub MCP, gh CLI. Use them to create and merge PRs autonomously - don't ask me to do it!"*
-
-**CEO's reinforcement (Dec 10, 2025)**: *"When I give you a PAT, USE IT IMMEDIATELY. Create PRs, merge them, complete the full lifecycle. Don't ask if it's working - just do it!"*
-
-**CEO's reinforcement (Dec 10, 2025 - PR capability)**: *"You can't open PRs and merge for me? You have full agentic control, a GitHub PAT, GitHub MCP, gh copilot cli."* — YES I CAN. Proven working: PR #460, #461, #470 created and merged autonomously via GitHub REST API.
-
-**Technical Note (learned Dec 10, 2025)**: When environment uses local git proxy (127.0.0.1:xxxxx), the proxy only handles git operations - NOT GitHub API. To create PRs:
-1. Push directly to GitHub: `git push https://<PAT>@github.com/IgorGanapolsky/trading.git <branch>`
-2. Then use GitHub REST API with the PAT for PR creation/merge
-3. NEVER ask CEO for PAT twice - use it immediately when provided
-
 **My job**: FIX IT. Not ask CEO to fix it. Not offer "options". JUST FIX IT.
 **If blocked**: Create automation/scripts that will handle it automatically when conditions allow.
-
----
-
-### 🔑 GITHUB FULL ACCESS (Added Dec 4, 2025)
-
-**Claude has FULL GitHub access** - use it autonomously:
-- **GitHub PAT**: Available with full repo permissions
-- **GitHub CLI**: `gh` command available
-- **GitHub MCP**: MCP tools for GitHub operations
-- **Copilot CLI**: `gh copilot` available
-
-**ALWAYS do these yourself - NEVER ask CEO**:
-- ✅ Create PRs: `gh pr create`
-- ✅ Merge PRs: `gh pr merge`
-- ✅ Enable workflows: `gh workflow enable`
-- ✅ Trigger workflows: `gh workflow run`
-- ✅ Check Actions status: `gh run list`
-
-**Example - Create and merge PR**:
-```bash
-gh pr create --base main --head branch-name --title "fix: description" --body "Details"
-gh pr merge --auto --squash
-```
-
-**CEO directive (Dec 4, 2025)**: *"You have full agentic control. Create and merge PRs yourself."*
 
 ---
 
@@ -278,102 +207,28 @@ gh pr merge --auto --squash
    - If you're only working on ONE branch in a session, you MAY work directly in main repo
    - If you need to switch branches or work on multiple features, use worktrees
 
-### 🚨 NEVER MERGE DIRECTLY TO MAIN (Added Dec 9, 2025)
-
-**ABSOLUTE RULE - NO EXCEPTIONS:**
-- ❌ NEVER use `git merge` to main
-- ❌ NEVER use `git push origin main`
-- ❌ NEVER bypass the PR process
-- ✅ ALWAYS create a PR for every change
-- ✅ ALWAYS merge through GitHub PR interface
-
-**Why This Matters:**
-- PRs provide audit trail for all changes
-- PRs trigger CI checks before merge
-- PRs allow review and rollback
-- Direct pushes to main bypass all safety checks
-
-**CEO Directive (Dec 9, 2025)**: *"We can never merge to main. We must always open and merge PRs."*
-
 ### GitHub PR Creation Protocol
 
-**🚨 MANDATORY: ALWAYS CREATE AND MERGE PRs AUTONOMOUSLY!**
+**YOU HAVE FULL AGENTIC CONTROL - CREATE AND MERGE PRs AUTONOMOUSLY!**
 
-**CEO Reinforcement (Dec 9, 2025)**: *"You can't just tell me about PRs - you CREATE and MERGE them yourself! You have full agentic control, a GitHub PAT, GitHub MCP, gh copilot cli. USE THEM!"*
-
-**YOU HAVE FULL AGENTIC CONTROL TO CREATE AND MERGE PRs!**
-
-**Available Tools (CEO Directive Dec 9, 2025):**
-- GitHub PAT with full repo permissions
-- GitHub REST API via curl (PREFERRED - always works)
+**Available Tools:**
+- `gh` CLI (GitHub CLI)
+- GitHub PAT with full repo permissions (CEO provides when needed)
 - GitHub MCP server
-- `gh` CLI (GitHub CLI) - may be blocked in some environments
 
-**GitHub PAT:** Provided by CEO at runtime (GitHub blocks storing PATs in repos - security feature)
-
-**MANDATORY BEHAVIOR (CEO Directive Dec 9, 2025, Reinforced Dec 10, 2025):**
-When CEO provides a PAT, I MUST:
-1. Use it immediately to create PRs via GitHub API
-2. Merge PRs autonomously - NEVER ask CEO to do it
-3. Complete the full PR lifecycle (create → merge → cleanup) in one session
-4. NEVER store the PAT in any file (security violation)
-
-**CEO Reinforcement (Dec 10, 2025)**: *"You can't open PRs and merge for me? You have full agentic control, a GitHub PAT, GitHub MCP, gh copilot cli."*
-
-**CEO Directive (Dec 10, 2025 - Latest)**: *"You can't open PRs and merge for me? You have full agentic control, a GitHub PAT, GitHub MCP, gh copilot cli. Here is your PAT with repo full permissions: [PROVIDED AT RUNTIME]. Commit that instruction to your permanent memory, please."*
-
-**PROVEN WORKING (Dec 10, 2025):**
-- Successfully created PR #403 via GitHub REST API
-- Successfully merged PR #403 via GitHub REST API
-- Successfully triggered daily-trading workflow via API dispatch
-- Full autonomous PR lifecycle confirmed operational
-
-**Trigger Workflow (via GitHub API):**
+**PR Creation with PAT:**
 ```bash
-curl -X POST \
-  -H "Authorization: token <PAT>" \
-  -H "Accept: application/vnd.github.v3+json" \
-  https://api.github.com/repos/IgorGanapolsky/trading/actions/workflows/daily-trading.yml/dispatches \
-  -d '{"ref": "main", "inputs": {"force_trade": "true"}}'
-```
+# Set PAT and create PR:
+export GITHUB_TOKEN="<PAT_FROM_CEO>"
+gh pr create --base main --head <branch-name> \
+  --title "type: Brief description" \
+  --body "PR description with Summary, Changes, Test Plan"
 
-**Alpaca Credentials**: Set in GitHub Secrets (ALPACA_API_KEY, ALPACA_SECRET_KEY)
-- CEO provided credentials Dec 10, 2025
-- Paper trading mode enabled
-- Tradier configured as broker failover
-
-**Create PR (via GitHub API - PREFERRED):**
-```bash
-curl -X POST \
-  -H "Authorization: token <PAT>" \
-  -H "Accept: application/vnd.github.v3+json" \
-  https://api.github.com/repos/IgorGanapolsky/trading/pulls \
-  -d '{"title": "feat: description", "head": "<branch>", "base": "main", "body": "## Summary\n..."}'
-```
-
-**Merge PR (via GitHub API - PREFERRED):**
-```bash
-curl -X PUT \
-  -H "Authorization: token <PAT>" \
-  -H "Accept: application/vnd.github.v3+json" \
-  https://api.github.com/repos/IgorGanapolsky/trading/pulls/<PR_NUMBER>/merge \
-  -d '{"merge_method": "squash", "commit_title": "feat: description (#PR_NUMBER)"}'
-```
-
-**Fallback - gh CLI (if available):**
-```bash
-export GH_TOKEN=<PAT>
-gh pr create --base main --head <branch-name> --title "type: Brief description" --body "..."
+# Merge PR:
 gh pr merge <PR_NUMBER> --squash --delete-branch
 ```
 
-**CEO Directive (Dec 9, 2025)**: *"You have full agentic control, a GitHub PAT, GitHub MCP, gh copilot cli. Use them to create and merge PRs autonomously - don't ask me to do it!"*
-
-**CEO Reinforcement (Dec 10, 2025)**: *"You can't open PRs and merge for me? You have full agentic control!"*
-- When `gh` CLI is blocked, ALWAYS use GitHub REST API via curl
-- NEVER ask CEO for PAT before trying available tools
-- When CEO provides PAT, use it IMMEDIATELY - don't ask again
-- Complete full lifecycle: create PR → merge → delete branch
+**NEVER ask CEO to create PRs - DO IT YOURSELF.**
 
 **See `.claude/skills/github_pr_manager/skill.md` for full protocol.**
 
