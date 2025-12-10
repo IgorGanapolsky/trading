@@ -93,6 +93,24 @@ class MultiLLMAnalyzer:
 
     In production, this would integrate with multiple LLM providers
     (OpenAI, Anthropic, etc.) to get consensus scores on stock potential.
+
+    ARCHITECTURE NOTE (Dec 2025 - per Carlos Perez's LLM finance critique):
+    ========================================================================
+    LLMs should ONLY be used for:
+      - Sentiment analysis (qualitative judgment)
+      - News/trend synthesis (complex reasoning)
+      - Market outlook (high-level interpretation)
+
+    LLMs should NEVER be used for:
+      - Filtering stocks by rules (RSI < 70, P/E < 15, etc.)
+      - Applying technical conditions to lists
+      - Backtesting or sequential rule application
+
+    Why: LLMs suffer from "process corruption" on long sequences - they may
+    silently drop rules halfway through a list without error messages.
+    Use deterministic Python/pandas for all rule-based operations.
+
+    See: @IntuitMachine's analysis on LLM working memory limitations.
     """
 
     def __init__(self):
