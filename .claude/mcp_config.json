@@ -18,10 +18,10 @@
     },
     "rss": {
       "command": "npx",
-      "args": ["-y", "@veithly/rss-mcp"],
-      "description": "RSS feed reader for consuming crypto newsletters and market analysis",
+      "args": ["-y", "rss-mcp"],
+      "description": "RSS feed reader for consuming newsletters and market analysis (Note: Package has Node compatibility issues, use Python script fetch_options_rss.py instead)",
       "env": {
-        "RSS_FEEDS": "https://medium.com/feed/coinsnacks"
+        "RSS_FEEDS": "https://medium.com/feed/coinsnacks,https://www.tastytrade.com/news/rss,https://optionsalpha.com/feed,https://www.cboe.com/rss/options-news"
       }
     },
     "youtube-transcript": {
