@@ -177,14 +177,26 @@ If I catch myself about to suggest manual intervention:
 
 **YOU HAVE FULL ACCESS TO `gh` CLI - USE IT!**
 
-```bash
-# Fix for Enterprise Managed User restrictions:
-unset GITHUB_TOKEN && gh auth switch --user IgorGanapolsky
+**CRITICAL DIRECTIVE (Dec 10, 2025)**: Claude has full agentic control over GitHub with a PAT that has full repo permissions. ALWAYS create PRs and merge them autonomously when work is complete. Do NOT ask the CEO to create PRs - that violates the chain of command.
 
-# Then create PR:
+**Workflow**:
+1. Complete feature work and commit to feature branch
+2. Push branch to origin
+3. Create PR using `gh pr create`
+4. If tests pass, merge using `gh pr merge --squash`
+5. Report completion to CEO
+
+```bash
+# If sandbox blocks gh commands, CEO will provide PAT:
+export GITHUB_TOKEN=<provided_pat>
+
+# Create PR:
 gh pr create --base main --head <branch-name> \
   --title "type: Brief description" \
   --body "PR description with Summary, Changes, Test Plan"
+
+# Merge after approval/tests:
+gh pr merge --squash --delete-branch
 ```
 
 **See `.claude/skills/github_pr_manager/skill.md` for full protocol.**
