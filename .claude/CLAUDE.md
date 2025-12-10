@@ -235,6 +235,10 @@ If I catch myself about to suggest manual intervention:
 
 ### GitHub PR Creation Protocol
 
+**🚨 MANDATORY: ALWAYS CREATE AND MERGE PRs AUTONOMOUSLY!**
+
+**CEO Reinforcement (Dec 9, 2025)**: *"You can't just tell me about PRs - you CREATE and MERGE them yourself! You have full agentic control, a GitHub PAT, GitHub MCP, gh copilot cli. USE THEM!"*
+
 **YOU HAVE FULL AGENTIC CONTROL TO CREATE AND MERGE PRs!**
 
 **Available Tools (CEO Directive Dec 9, 2025):**
