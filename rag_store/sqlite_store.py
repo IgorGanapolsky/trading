@@ -4,7 +4,7 @@ import json
 import sqlite3
 from collections.abc import Iterable
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from .config import MIGRATIONS_PATH, SQLITE_PATH, ensure_directories
@@ -19,6 +19,19 @@ def _connection(path: Path):
         yield conn
     finally:
         conn.close()
+
+
+def _normalize_as_of(as_of: datetime | str) -> tuple[str, str]:
+    if isinstance(as_of, datetime):
+        aware = as_of if as_of.tzinfo else as_of.replace(tzinfo=timezone.utc)
+        return aware.date().isoformat(), aware.astimezone(timezone.utc).isoformat()
+    try:
+        parsed = datetime.fromisoformat(as_of)
+    except ValueError:
+        parsed = datetime.strptime(as_of, "%Y-%m-%d")
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.date().isoformat(), parsed.astimezone(timezone.utc).isoformat()
 
 
 class SentimentSQLiteStore:
@@ -150,19 +163,30 @@ class SentimentSQLiteStore:
         self,
         ticker: str,
         limit: int = 30,
+        as_of: datetime | str | None = None,
     ) -> Iterable[sqlite3.Row]:
-        """Fetch latest snapshots for a ticker."""
+        """Fetch latest snapshots for a ticker with optional point-in-time filter."""
+        filters = ["ticker = ?"]
+        params: list[str] = [ticker.upper()]
+        if as_of:
+            date_cutoff, ts_cutoff = _normalize_as_of(as_of)
+            filters.append("snapshot_date <= ?")
+            params.append(date_cutoff)
+            filters.append("created_at <= ?")
+            params.append(ts_cutoff)
+
+        where_clause = " AND ".join(filters)
+        query = "\n".join(
+            [
+                "SELECT *",
+                "FROM sentiment_snapshots",
+                "WHERE " + where_clause,
+                "ORDER BY snapshot_date DESC, created_at DESC",
+                "LIMIT ?",
+            ]
+        )
         with _connection(self.db_path) as conn:
-            cursor = conn.execute(
-                """
-                SELECT *
-                FROM sentiment_snapshots
-                WHERE ticker = ?
-                ORDER BY snapshot_date DESC
-                LIMIT ?
-                """,
-                (ticker, limit),
-            )
+            cursor = conn.execute(query, (*params, limit))
             return cursor.fetchall()
 
     def fetch_by_source_date(

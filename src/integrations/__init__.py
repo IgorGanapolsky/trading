@@ -1,3 +1,13 @@
 """Integrations module for third-party services."""
 
-__all__: list[str] = []
+from src.integrations.playwright_mcp import (
+    PlaywrightMCPClient,
+    SentimentScraper,
+    TradeVerifier,
+)
+
+__all__: list[str] = [
+    "PlaywrightMCPClient",
+    "SentimentScraper",
+    "TradeVerifier",
+]

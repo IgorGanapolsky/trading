@@ -26,6 +26,18 @@ scenarios:
       Simulates a fast drawdown + chop regime to validate drawdown control,
       ATR sizing, and halt triggers.
 
+  - name: sideways_chop_2023
+    label: "Sideways consolidation (Jul-Sep 2023)"
+    start_date: "2023-07-01"
+    end_date: "2023-09-30"
+    etf_universe: ["SPY", "QQQ", "VOO"]
+    daily_allocation: 10.0
+    description: >
+      Tests performance during low-trend, choppy sideways market.
+      Validates that momentum filters correctly reject false signals
+      and avoids over-trading during range-bound conditions.
+      Critical for proving the system doesn't lose money in neutral markets.
+
   - name: covid_whiplash_2020
     label: "High-volatility crash/rebound (Feb-May 2020)"
     start_date: "2020-02-03"
@@ -34,3 +46,105 @@ scenarios:
     description: >
       Stress test for historic volatility spike. Ensures ATR sizing and
       guardrails throttle exposure before we allow live promotion.
+
+  - name: weekend_crypto_proxy_2023
+    label: "Closed-market coverage (BITO proxy)"
+    start_date: "2023-06-01"
+    end_date: "2023-09-04"
+    etf_universe: ["BITO"]
+    description: >
+      Validates weekend/holiday coverage by routing the funnel through
+      a Bitcoin ETF proxy. Ensures thresholds and sizing logic remain
+      stable when traditional equity markets are unavailable.
+
+  - name: holiday_regime_2024
+    label: "Holiday/Weekend regime (BITO + TLT)"
+    start_date: "2024-01-01"
+    end_date: "2024-12-31"
+    etf_universe: ["BITO", "TLT"]
+    daily_allocation: 10.0
+    max_trades_per_day: 2
+    description: >
+      Tests full-year holiday/weekend trading with BTC proxy (BITO) and
+      treasury flight-to-safety (TLT). Validates regime detection switches
+      and looser RL thresholds for off-hours sessions.
+
+  - name: high_vol_2022_q4
+    label: "High volatility regime (Oct-Dec 2022)"
+    start_date: "2022-10-01"
+    end_date: "2022-12-30"
+    etf_universe: ["SPY", "QQQ", "TLT"]
+    daily_allocation: 8.0
+    description: >
+      Tests performance during elevated VIX and rate hike uncertainty.
+      Validates vol-scaled slippage and treasury allocation during stress.
+
+  # Bond-Specific Scenarios
+  - name: bond_bull_2020
+    label: "Treasury bull run (Mar-Aug 2020)"
+    start_date: "2020-03-01"
+    end_date: "2020-08-31"
+    etf_universe: ["TLT", "IEF", "SHY", "BND"]
+    daily_allocation: 10.0
+    description: >
+      Tests treasury ladder performance during flight-to-safety rally.
+      Validates duration rotation and yield curve strategy during crisis.
+
+  - name: bond_bear_2022
+    label: "Treasury crash (Jan-Oct 2022)"
+    start_date: "2022-01-03"
+    end_date: "2022-10-31"
+    etf_universe: ["TLT", "IEF", "SHY", "LQD", "JNK"]
+    daily_allocation: 10.0
+    description: >
+      Stress test for worst bond market in 40 years (rate hikes).
+      Validates duration-adjusted stops and short-duration rotation.
+
+  - name: yield_curve_inversion_2023
+    label: "Yield curve inversion regime (Jan-Dec 2023)"
+    start_date: "2023-01-01"
+    end_date: "2023-12-29"
+    etf_universe: ["SHY", "IEF", "TLT"]
+    daily_allocation: 10.0
+    description: >
+      Tests yield curve strategy during sustained inversion.
+      Validates short-duration preference and ladder rebalancing.
+
+  - name: credit_stress_2020
+    label: "Credit spread blowout (Feb-Apr 2020)"
+    start_date: "2020-02-01"
+    end_date: "2020-04-30"
+    etf_universe: ["LQD", "JNK", "HYG", "TLT"]
+    daily_allocation: 10.0
+    description: >
+      Tests corporate bond risk management during credit stress.
+      Validates high-yield limits and flight-to-quality rotation.
+
+  - name: bond_steepener_2021
+    label: "Yield curve steepening (Jan-Mar 2021)"
+    start_date: "2021-01-01"
+    end_date: "2021-03-31"
+    etf_universe: ["SHY", "TLT", "IEF"]
+    daily_allocation: 10.0
+    description: >
+      Tests barbell strategy during curve steepening.
+      Validates long-duration allocation during bullish steepener.
+
+  - name: mixed_asset_2024
+    label: "Mixed equity/bond allocation (Jan-Jun 2024)"
+    start_date: "2024-01-02"
+    end_date: "2024-06-28"
+    etf_universe: ["SPY", "QQQ", "TLT", "SHY", "LQD"]
+    daily_allocation: 10.0
+    description: >
+      Tests 60/40-style mixed allocation with bond ladder.
+      Validates correlation benefits and rebalancing triggers.
+  - name: theta_scale_2025
+    label: "Theta scaling unlock (Sep-Oct 2025)"
+    start_date: "2025-09-01"
+    end_date: "2025-10-31"
+    daily_allocation: 12.0
+    description: >
+      60-day verification window for the theta automation layer after the
+      fundamentals cache + execution tie-in. Validates that IV-gated covered
+      calls hold a 26% annualized pace with drawdowns capped near 2%.

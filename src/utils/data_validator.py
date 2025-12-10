@@ -10,7 +10,6 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +25,9 @@ class ValidationResult:
     is_valid: bool
     claim: str
     actual_value: float
-    claimed_value: Optional[float] = None
-    error_message: Optional[str] = None
-    source: Optional[str] = None
+    claimed_value: float | None = None
+    error_message: str | None = None
+    source: str | None = None
 
 
 class DataValidator:
@@ -76,7 +75,7 @@ class DataValidator:
     def validate_profit_claim(
         self,
         claimed_profit: float,
-        date: Optional[str] = None,
+        date: str | None = None,
         description: str = "profit",
     ) -> ValidationResult:
         """
@@ -131,7 +130,7 @@ class DataValidator:
             description="yesterday's profit",
         )
 
-    def get_profit_for_date(self, date: str) -> Optional[float]:
+    def get_profit_for_date(self, date: str) -> float | None:
         """Get profit for a specific date."""
         if not self.perf_log:
             return None
@@ -156,13 +155,13 @@ class DataValidator:
         latest = self.perf_log[-1]
         return latest.get("pl", 0.0)
 
-    def get_yesterday_profit(self) -> Optional[float]:
+    def get_yesterday_profit(self) -> float | None:
         """Get yesterday's profit."""
         yesterday = (datetime.now() - timedelta(days=1)).date().isoformat()
         return self.get_profit_for_date(yesterday)
 
     def validate_daily_profit_claim(
-        self, claimed_daily_profit: float, date: Optional[str] = None
+        self, claimed_daily_profit: float, date: str | None = None
     ) -> ValidationResult:
         """
         Validate a daily profit claim (change from previous day).

@@ -1,6 +1,7 @@
 {
   "performance": {
-    "win_rate": 0.66
+    "win_rate": 0.66,
+    "total_trades": 150
   },
   "heuristics": {
     "sharpe_ratio": 1.82,

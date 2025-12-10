@@ -1,0 +1,16 @@
+{
+  "memory_id": "7b22e0c6-daae-4f1a-b9a6-84087142df3b",
+  "agent_id": "test_agent",
+  "context_type": "ContextType.MEMORY_CONTEXT",
+  "content": {
+    "test": "episodic"
+  },
+  "tags": [],
+  "created_at": "2025-12-05T12:53:26.348072",
+  "accessed_at": "2025-12-05T12:53:26.348074",
+  "access_count": 0,
+  "ttl_days": null,
+  "timescale": "episodic",
+  "importance_score": 0.9,
+  "outcome_pl": null
+}

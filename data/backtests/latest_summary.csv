@@ -1,0 +1,7 @@
+scenario,label,start_date,end_date,trading_days,total_return_pct,cost_adjusted_return_pct,annualized_return_pct,cost_adjusted_annualized_return_pct,sharpe_ratio,max_drawdown_pct,win_rate_pct,profitable_days,longest_profitable_streak,final_capital,final_capital_after_costs,total_trades,status
+bull_run_2024,Bullish melt-up (Jan-Mar 2024),2024-01-02,2024-03-29,64,0.02,0.02,0.1,0.1,-72.351,0.01,51.56,33,6,100024.68,100023.46,64,needs_improvement
+inflation_shock_2022,Inflation drawdown (Apr-Jun 2022),2022-04-01,2022-06-30,65,-0.05,-0.05,-0.18,-0.19,-40.871,0.07,41.54,27,3,99952.56,99951.27,65,needs_improvement
+covid_whiplash_2020,High-volatility crash/rebound (Feb-May 2020),2020-02-03,2020-05-29,85,0.12,0.12,0.37,0.36,-13.817,0.11,52.94,45,6,100123.17,100120.57,85,needs_improvement
+weekend_crypto_proxy_2023,Closed-market coverage (BITO proxy),2023-06-01,2023-09-04,68,-0.09,-0.09,-0.34,-0.35,-28.516,0.12,38.24,26,4,99907.01,99905.24,68,needs_improvement
+holiday_regime_2024,Holiday/Weekend regime (BITO + TLT),2024-01-01,2024-12-31,262,-0.22,-0.22,-0.21,-0.22,-7.407,0.65,46.95,123,6,99782.73,99775.91,262,needs_improvement
+high_vol_2022_q4,High volatility regime (Oct-Dec 2022),2022-10-01,2022-12-30,65,-0.0,-0.01,-0.02,-0.02,-65.689,0.04,38.46,25,3,99995.73,99994.68,65,needs_improvement

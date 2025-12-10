@@ -23,7 +23,7 @@ if [ ! -f "requirements.txt" ]; then
 fi
 
 echo -e "${YELLOW}Step 1: Installing Python dependencies...${NC}"
-pip install youtube-transcript-api==0.6.2 yt-dlp==2024.10.7
+pip install youtube-transcript-api==0.6.2
 
 echo ""
 echo -e "${YELLOW}Step 2: Updating requirements.txt...${NC}"
@@ -32,10 +32,6 @@ if ! grep -q "youtube-transcript-api" requirements.txt; then
     echo -e "${GREEN}Added youtube-transcript-api to requirements.txt${NC}"
 fi
 
-if ! grep -q "yt-dlp" requirements.txt; then
-    echo "yt-dlp==2024.10.7" >> requirements.txt
-    echo -e "${GREEN}Added yt-dlp to requirements.txt${NC}"
-fi
 
 echo ""
 echo -e "${YELLOW}Step 3: Creating directory structure...${NC}"
@@ -77,8 +73,11 @@ echo -e "${GREEN}Created data/youtube_monitor_config.json${NC}"
 
 echo ""
 echo -e "${YELLOW}Step 5: Testing installation...${NC}"
-python3 << 'PYTHON_TEST'
+PYTHONPATH=. python3 <<'PYTHON_TEST'
 import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent.parent))
 
 try:
     from youtube_transcript_api import YouTubeTranscriptApi
@@ -88,10 +87,11 @@ except ImportError as e:
     sys.exit(1)
 
 try:
-    import yt_dlp
-    print("✓ yt-dlp installed successfully")
-except ImportError as e:
-    print(f"✗ Error importing yt-dlp: {e}")
+    from src.utils.ytdlp_cli import ensure_ytdlp_binary
+    path = ensure_ytdlp_binary()
+    print(f"✓ yt-dlp CLI ready at {path}")
+except Exception as e:
+    print(f"✗ Error preparing yt-dlp CLI: {e}")
     sys.exit(1)
 
 print("\nAll dependencies installed successfully!")

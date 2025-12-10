@@ -12,10 +12,11 @@ import os
 import re
 import time
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 import requests
 from dotenv import load_dotenv
+
 from src.rag.collectors.base_collector import BaseNewsCollector
 
 # Load environment variables
@@ -132,7 +133,7 @@ class TikTokCollector(BaseNewsCollector):
 
         logger.info("TikTok collector initialized")
 
-    def _get_access_token(self) -> Optional[str]:
+    def _get_access_token(self) -> str | None:
         """
         Get OAuth2 access token using client credentials flow.
 
@@ -141,7 +142,10 @@ class TikTokCollector(BaseNewsCollector):
         """
         # Check if we have a valid cached token
         if self.access_token and self.token_expires_at:
-            if datetime.now() < self.token_expires_at:
+            expires_at = self.token_expires_at
+            if isinstance(expires_at, (int, float)):
+                expires_at = datetime.fromtimestamp(expires_at)
+            if datetime.now() < expires_at:
                 return self.access_token
 
         if not self.client_key or not self.client_secret:
@@ -367,6 +371,7 @@ class TikTokCollector(BaseNewsCollector):
         try:
             articles = []
 
+            seen_ids = set()
             # Search financial hashtags for ticker mentions
             for hashtag in self.FINANCIAL_HASHTAGS[:3]:  # Limit to top 3 hashtags
                 videos = self._search_videos(query=hashtag, max_results=20, days_back=days_back)
@@ -374,6 +379,8 @@ class TikTokCollector(BaseNewsCollector):
                 for video in videos:
                     # Extract video metadata
                     video_id = video.get("id", "")
+                    if video_id in seen_ids:
+                        continue
                     caption = video.get("video_description", "")
                     create_time = video.get("create_time", 0)
 
@@ -413,6 +420,11 @@ class TikTokCollector(BaseNewsCollector):
                     article["hashtags"] = video.get("hashtag_names", [])
 
                     articles.append(article)
+                    seen_ids.add(video_id)
+
+                # If we already gathered videos for this ticker, stop after first hashtag batch
+                if articles:
+                    break
 
             # Sort by engagement score (most engaging first)
             articles.sort(key=lambda x: x.get("engagement_score", 0), reverse=True)

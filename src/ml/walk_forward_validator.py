@@ -1,6 +1,13 @@
 """
 Walk-Forward Validation for Trading ML Models
 
+WARNING: This module is DEPRECATED and BROKEN.
+The LSTM-PPO networks it depends on have been removed from production.
+
+Production system uses:
+- RLFilter (Gate 2) with TransformerRLPolicy
+- RLPolicyLearner (simple Q-learning)
+
 This module implements proper time-series cross-validation using the walk-forward
 methodology - essential for any trading system to prevent look-ahead bias and
 ensure models generalize to unseen market regimes.
@@ -19,6 +26,7 @@ This prevents:
 
 Author: Trading System
 Created: 2025-12-01
+DEPRECATED: 2025-12-04
 """
 
 import logging
@@ -140,12 +148,14 @@ class WalkForwardValidator:
         test_window: int = 63,
         step_size: int = 21,
         min_train_samples: int = 200,
+        embargo_pct: float = 0.01,  # AFML Ch. 7: Embargo period as % of data
         device: str = "cpu",
     ):
         self.train_window = train_window
         self.test_window = test_window
         self.step_size = step_size
         self.min_train_samples = min_train_samples
+        self.embargo_pct = embargo_pct  # López de Prado recommends 1% embargo
         self.device = torch.device(device)
 
         # Validation thresholds (from CLAUDE.md: 60% win rate, 1.5 Sharpe, <10% drawdown)
@@ -155,47 +165,65 @@ class WalkForwardValidator:
 
         logger.info(
             f"WalkForwardValidator initialized: "
-            f"train={train_window}d, test={test_window}d, step={step_size}d"
+            f"train={train_window}d, test={test_window}d, step={step_size}d, "
+            f"embargo={embargo_pct:.1%}"
         )
 
     def generate_folds(
         self, data_length: int, sequence_length: int = 60
-    ) -> list[tuple[tuple[int, int], tuple[int, int]]]:
+    ) -> list[tuple[tuple[int, int], tuple[int, int], int]]:
         """
-        Generate train/test indices for walk-forward validation.
+        Generate train/test indices for walk-forward validation with embargo.
+
+        Per López de Prado (AFML Ch. 7): Add embargo period between train and test
+        to prevent information leakage from labels near the boundary.
 
         Args:
             data_length: Total number of data points
             sequence_length: LSTM sequence length (need this many points before first prediction)
 
         Returns:
-            List of ((train_start, train_end), (test_start, test_end)) tuples
+            List of ((train_start, train_end), (test_start, test_end), embargo_size) tuples
         """
         folds = []
+
+        # Calculate embargo period (typically 1% of total data)
+        # Per AFML: T_embargo = pct_embargo * (max(t) - min(t))
+        embargo_size = max(1, int(data_length * self.embargo_pct))
 
         # Account for sequence length in usable data
         usable_start = sequence_length
         usable_length = data_length - sequence_length
 
-        if usable_length < self.train_window + self.test_window:
+        # Need room for train + embargo + test
+        min_required = self.train_window + embargo_size + self.test_window
+        if usable_length < min_required:
             logger.warning(
-                f"Insufficient data for walk-forward: {usable_length} < {self.train_window + self.test_window}"
+                f"Insufficient data for walk-forward with embargo: "
+                f"{usable_length} < {min_required} (train={self.train_window}, "
+                f"embargo={embargo_size}, test={self.test_window})"
             )
             return folds
 
         current_start = usable_start
 
-        while current_start + self.train_window + self.test_window <= data_length:
+        while current_start + min_required <= data_length:
             train_start = current_start
             train_end = current_start + self.train_window
-            test_start = train_end
+
+            # EMBARGO: Gap between train_end and test_start (AFML Ch. 7)
+            # This prevents information leakage from overlapping labels
+            test_start = train_end + embargo_size
             test_end = min(test_start + self.test_window, data_length)
 
-            folds.append(((train_start, train_end), (test_start, test_end)))
+            folds.append(((train_start, train_end), (test_start, test_end), embargo_size))
 
             current_start += self.step_size
 
-        logger.info(f"Generated {len(folds)} walk-forward folds")
+        logger.info(
+            f"Generated {len(folds)} walk-forward folds with {embargo_size}-sample embargo "
+            f"(AFML Ch. 7: prevents info leakage at fold boundaries)"
+        )
         return folds
 
     def validate(
@@ -262,10 +290,13 @@ class WalkForwardValidator:
         # Run validation for each fold
         fold_results = []
 
-        for fold_num, ((train_start, train_end), (test_start, test_end)) in enumerate(
+        for fold_num, ((train_start, train_end), (test_start, test_end), embargo_size) in enumerate(
             folds_indices, 1
         ):
-            logger.info(f"Processing fold {fold_num}/{len(folds_indices)}")
+            logger.info(
+                f"Processing fold {fold_num}/{len(folds_indices)} "
+                f"(embargo gap: {embargo_size} samples between train and test)"
+            )
 
             # Adjust indices for sequence offset
             adj_train_start = train_start - seq_len

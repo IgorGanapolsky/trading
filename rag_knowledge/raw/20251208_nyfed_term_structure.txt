@@ -1,0 +1,1121 @@
+Title: The Term Structure of U.S. Interest Rates and Treasury Risk
+URL: https://www.newyorkfed.org/medialibrary/media/research/staff_reports/sr1091.pdf
+Citation: New York Fed Staff Report 1091 (2025)
+Extracted: 2025-12-08T04:57:51.640291 UTC
+International Banking and  
+Nonbank Financial Intermediation:  
+Global Liquidity, Regulation, and 
+Implications  
+ 
+Claudia M. Buch  | Linda S. Goldberg  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ NO. 10 91  
+M ARCH  2 024 
+
+International Banking and Non bank Financial Intermediation:   
+Global Liquidity, Regulation, and Implications  
+Claudia M. Buch and Linda S. Goldberg  
+Federal Reserve Bank of New York Staff Reports , no. 1091  
+March 2024  
+https://doi.org/10.59576/sr. 1091  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Abstract  
+Global liquidity flows are largely channeled through banks and nonbank financial institutions.  The 
+common drivers of global liquidity flows include monetary policy in advanced economies and risk 
+conditions. At the same time, the sensitivities of liquidity flows to changes  in these drivers differ across 
+institutions and have been evolving over time. Microprudential regulation of banks plays a role, 
+influencing leverage and capitalization, changing sensitivities to  shocks , and also driving risk migration 
+from bank s to nonbank finan cial institutions. Risk  sensitivities and flightiness of global liquidity are now 
+strongest in more leveraged nonbank  financial  institutions, raising challenges in stress episodes. Current 
+policy initiatives target  linkages across different types of financial institutions and associated risks. 
+Meanwhile, significant gaps remain. This paper concludes by discussing policy options for addressing 
+systemic risk in banks and nonbanks.  
+ 
+JEL classification:  F3, G21, G23, G28  
+Key words : international bank, nonbank financial institution, global liquidity, regulation, prudential 
+policy  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+_________________  
+ 
+Goldberg: Federal Reserve Bank of New York (email: linda.goldberg @ny.frb.org). Buch : European 
+Central Bank (email : claudia. buch@ecb.europa.eu ). Buch  was employed by the Deutsche Bundesbank 
+when she contributed to this paper . The authors thank  Allen Berger,  Valentina Bruno, Tobias Etzel, 
+Leonardo Gambacorta, Phil Molyneux, Friederike Niepmann,  Matthias Weis , and John Wilson for their 
+most helpful input and feedback on an earlier version of this text.  
+ 
+This paper presents preliminary findings and is being distributed to economists and other interested 
+readers solely to stimulate discussion and elicit comments. The views expressed in this paper are those of 
+the author(s) and do not necessarily reflect the  position of the Federal Reserve Bank of New York , the 
+Federal Reserve System , or the European Central Bank . Any errors or omissions are the responsibility of 
+the author(s).  
+To view the authors’ disclosure statements, visit 
+https://www.newyorkfed.org/research/sta ff_reports/sr 1091 .html.  
+
+1 Motivation
+Global financial markets have grown over the past decades. In the early 2000s, global financial
+assets stood at about 400% of world GDP and the financial sector has expanded to more than
+600% of global GDP since then (Financial Stability Board 2022c.) Both bank and non-bank
+financial flows have increased rapidly over the past decades. Non-bank financial intermediation
+(NBFI) has gained ground in relative terms since the global financial crisis in 2008, not least
+because of the tighter regulation of banking activities. Today, non-bank financial intermediaries
+hold about 50% of global financial assets, increasing from 42% in 2008 (Financial Stability Board
+2022c).
+This chapter considers consequences of these changes in the structure of finance for global
+liquidity flows and for the associated policy agenda around banks and non-bank financial interme-
+diaries. This expansion of finance certainly has positive implications for the real economy. Global
+financial flows have expanded in parallel to the globalization of the real economy, thus facilitating
+the expansion of global value chains and insuring against associated risks. But financial markets
+are also prone to exuberance and fragility with regard to adverse shocks. Such fragilities can have
+severe negative implications for the real economy. Reversals of capital flows and high volatility
+can adversely affect investment and thus growth, as evidenced by a long history of financial crises
+in advanced and emerging market economies. Crisis identification has thus received considerable
+analytical attention, as surveyed by Sufi and Taylor (2021), as have the broad social and political
+ramifications that inevitably follow, often with policy regime shifts.
+The importance of having stronger prudential regulation and supervision of banks was among
+the many lessons of the global financial crisis of 2007 to 2008. Policymakers focused on tightening
+prudential regulation of banks, enhancing supervision, and closing gaps in the regulatory frame-
+work. Special attention has been paid to systemic risk in the banking sector: Banks that are
+too large and too connected to fail can take on excessive risks and impose negative externalities
+on the financial system. Similarly, exposure of many smaller financial institutions to the same
+macroeconomic risk factor can lead to systemic risk: there can be “too many” institutions that
+may fail if macroeconomic conditions take a negative turn, thus forcing authorities to intervene
+to support these institutions.
+Yet, the types of institutions engaging in international and domestic financial markets are
+much broader than banks. Nonbank financial institutions (NBFIs) have increased in importance
+and represent many distinct business models under sometimes distinct supervisory and regulatory
+frameworks. In addition to their domestic presence, these diverse institutions play significant
+and sometimes dominant roles in global liquidity flows, as discussed in this chapter. Types of
+institutions face distinct balance sheet constraints and funding needs, and each stress episode
+2
+
+highlights new forms of inter-connectedness, including with banks.
+Accordingly, the post global financial crisis (GFC) reforms have not just focused on banks and
+are far from being complete. The NBFI reform agenda has focused on mitigating spillovers be-
+tween banks and the NBFI sector, and on distinguishing entity- versus activity-based approaches
+to regulation. The regulatory reforms agenda of the past 15 years has aimed to address systemic
+risks while continued monitoring of reform effects and of newly emerging risks remain priorities.
+The debates on implications of the changing patterns of global finance ares characterized by
+two dichotomies. The first dichotomy is the distinction made between banks and non-banks. The
+channels through which systemic risk for the financial system can arise are very similar for banks
+and non-banks. Yet, regulations of banks and non-banks are often discussed separately, thus
+potentially overlooking important channels of interaction between bank and non-bank financial
+flows. As we discuss, recent evidence shows that tighter regulation of banks affects the market
+shares of non-banks, and shows that risks potentially migrate to other parts of the financial
+system (see Irani, Iyer, Meisenzahl, and Peydr´ o 2021, Financial Stability Board 2021a, Kim,
+Pence, Stanton, Walden, and Wallace 2022, Claessens, Cornelli, Gambacorta, Manaresi, and
+Shiina 2023, and Goldberg 2023). Moreover, different sectors of the financial system are closely
+related through balance sheet and contractual linkages as well as through exposure to similar
+funding and investment markets. Hence, we discuss the importance of a more a systemic approach
+that considers these linkages.
+The second dichotomy that characterizes many debates is that between the micro- and the
+macro-level insights that inform policy approaches to financial institution activities. Empirical
+research on the micro-level or on bank-specific effects of prudential regulation has flourished
+over the past decades. This body of analytics grew in parallel to methodological advances in
+empirical and macroeconomic modelling of bank activities. Increasingly, granular data on NBFIs
+is also available and used for policy insights. Meanwhile, macroeconomic and global factors,
+along with systemic considerations, are increasingly understood. Some considerations are the
+consequences of policies for domestic and international funding flows. However, bringing together
+the micro and the macro side of domestic and global liquidity flows, also in the context of
+understanding monetary policy transmission and financial stability challenges, remains difficult.
+Hence, this chapter highlights lessons from analyses using country-level series, as well as the rich
+evidence using bank- or loan- level data as conducted by researchers in the International Banking
+Research Network (IBRN) to analyse the implications of macroeconomic shocks and implications
+of prudential regulation.
+This chapter is structured to overview the research and policy agenda related to bank and non-
+bank financial intermediation in the international flows context. Section 2 starts with the topic of
+the role of banks and non-banks in global liquidity, providing insights on the drivers of flows and
+3
+
+magnitudes of responsiveness over time. Section 3 summarizes the regulatory approach taken with
+regard to bank and non-bank financial intermediation since the global financial crisis. Section 4
+discusses interlinkages between banks and non-banks using the examples of recent stress episodes
+on financial markets and describes current policy initiatives addressing associated risks. Section
+5 concludes. We emphasize that further research and policy work on linkages between bank- and
+non-bank financial flows can be very fruitful. Methodologies that have been applied to analyse
+the international activities of banks, their response to macroeconomic shocks, and the impact of
+prudential regulation can be a useful template to analyse non-bank financial flows. Still, when
+comparing banks and non-banks, the availability of banking data has improved significantly over
+the past decades, while the availability and quality of data on non-banks certainly lags behind.
+We also emphasize that regulating financial activities, addressing risks to financial stability, and
+acknowledging linkages of financial institutions remains a priority.
+2 Global Liquidity: Bank and Non-Bank Financial Flows
+Credit provision is a key function of many financial intermediaries, with some having a significant
+international focus. The Committee on the Global Financial System defines the concept of global
+liquidity as corresponding to the volumes of financial flows - largely intermediated through global
+banks and non-bank financial institutions – that can be reallocated at relatively high frequencies,
+such as intra-day or intra-month (CGFS 2011).1Such international flows through these institu-
+tions respond to both global drivers and to the more idiosyncratic or regional conditions in the
+destination countries that receive associated funding. Global factors behind these flows include
+the monetary policy of some advanced economies, particularly the United States, global risk sen-
+timent and uncertainty, and global growth conditions. Standard local drivers include country
+risk, political, and macroeconomic indicators.
+A basic schematic from Goldberg (2023), provided as Figure 1, shows the channels through
+which banks and NBFIs engage in global liquidity flows. This schematic also sets the stage for
+characterizing the changes over time in international banking flows and issuance of international
+debt securities. Global liquidity flows to borrowers in Country A can be intermediated through
+both bank and non-bank financial institutions located outside of its borders. Global banks engage
+in three categories of cross-border lending as shown by the arrowed lines in the left side of Figure 1.
+Inter-bank lending flows from foreign banks are transactions with the unrelated domestic banks,
+for example in the form of loans. The intra-bank lending flows are those with counterparties
+as the global bank’s branches and subsidiaries that are located in Country A. Also described
+1This section closely follows Linda S. Goldberg’s International Monetary Fund, 23rd Annual Mundell Fleming
+Lecture and the associated published article Goldberg (2023).
+4
+
+Figure 1: Bank and Non-bank Global Liquidity Channels
+Source: Goldberg (2023).
+as inter-office lending or internal capital market flows, these flows arise as global banks manage
+liquidity across the parts of their organizations located around the world. Along with loans to
+non-bank borrowers, these flows are subsumed within the broad category of cross-border bank
+loans ( XBL ) . The non-bank borrower group consists of non-bank financial firms, corporations
+and governments. Those that are issuers in the syndicated cross-border loan markets tend to be
+large non-financial corporations, exporting and importing firms, and leveraged non-bank financial
+firms.
+Foreign non-bank financial institutions (NBFI) also provide cross-border funding to domestic
+banks and to non-bank borrowers within Country A, as shown by the arrowed lines on the right
+side of Figure 1. Flows from non-bank financial institutions are sometimes described as market-
+based finance, and can be categorized as the purchases of the international debt securities (IDS)
+issued by banks or by non-banks. The NBFI entities that are purchasers of such securities tend
+to be pension funds, insurance companies, money market funds, and hedge funds.
+A historical perspective on the evolution of global liquidity is gained when the period from
+the early 1980s through 2020 is divided into three subperiods subsumed by Figure 1 (Goldberg
+(2023)). The early 1980s through the early 1990s corresponds to when banks were the dominant
+source of funds in the supply of global liquidity. The relevant arrows are concentrated on the left
+side of Figure 1. The next period, starting in the mid-1990s, is characterized by the expanded roles
+of global banks within host countries, in particular following financial liberalizations in countries
+that had experienced banking and or currency crises. Global banking expanded in those foreign
+5
+
+locations by establishing hosted branches and subsidiaries. Direct lending from these affiliated
+banks within the host country to other non-bank customers increased, as did their provision
+of other banking services. Supporting local claims by the affiliated banks, parent global banks
+provided cross-border intra-bank funding flows to affiliates and liquidity management across the
+global banks gained importance.
+The third period follows the GFC, when weaknesses in banking institutions and related exter-
+nalities were broadly displayed. Post-GFC efforts concentrated on international and systemically
+important banks, with the attention of regulators and supervisors focused on risk frameworks
+and risk absorbing capacities within the banking organizations. Substantial changes occurred in
+the risk-absorbing capacity of banks as reflected in generally higher levels of bank capitalization,
+reduced leverage, and improved liquidity management frameworks. Spurred also by technological
+developments, the post-GFC period saw a rapid expansion of global liquidity directly flowing to
+non-bank borrowers, an increasing role for NBFIs as global liquidity providers, and interconnect-
+edness with banks.
+The scope of the dramatic changes in the composition of players and flows is illustrated in
+Figure 2 using summed flows across countries using BIS data series and from the borrowing
+country’s perspective. The types of borrowers are banks (middle panels) and non-banks (right
+panels). This exhibit shows that banks both in advanced economies (upper row of graphics) and
+in emerging markets (lower row of graphics) have had relatively steady outstanding volumes of
+total global funding in recent years.
+Cross-border loans (represented in red) are the largest form of international funding for banks.
+About two-thirds of this bank-to-bank funding is associated with internal capital market transfers
+that are part of the liquidity management within global banks; the other one third represents the
+more typical interbank positions, with flows that are often short maturity and relatively volatile.
+The post-GFC period is characterized by some bank funding also in the form of international debt
+securities issuance. The most dramatic shifts in the composition of global liquidity are for non-
+bank borrowers within both advanced and emerging market economies. The relative size of the
+blue areas in the right panels of Figure 2 shows the now dominant positions in the total volumes of
+outstanding positions. Indeed, while banks have experienced moderate shifts in funding sources,
+nonbanks have tilted sharply toward market-based finance.
+2.1 Risk Sensitivity of Global Liquidity Subcomponents
+Policy frameworks covering prudential instruments and supervisory regimes benefit from a keen
+understanding of the interlinkages between institutions and their sensitivities to different shocks.
+Before turning to a detailed discussion of policy, this subsection presents specific evidence of
+sensitivities of global liquidity to risk sentiment, risk off shocks, and monetary policy, and the role
+6
+
+Advanced Economies
+Emerging Markets and Developing Economies
+Figure 2: Volumes of External Debt Flows – Amount Outstanding in Trillions of USD
+Source: Avdjiev, Gambacorta, Goldberg, and Schiaffi (2023) using BIS Locational Banking Statis-
+tics.
+7
+
+of institution-specific characteristics in influencing related outcomes. The subsequent subsection
+considers evidence on sensitivity to the policy toolkit. Advances in data availability and analytical
+studies have been critically important for generating insights, even as substantial gaps remain.
+Rey 2015 elevated the importance of a focus on the global factor in international flows. Yet,
+it also is evident that the sensitivities to risk and foreign monetary policy of different types
+of flows vis-a-vis specific borrower types have changed dramatically. Looking across a large
+sample of both advanced and emerging market economies using data through 2019, Avdjiev,
+Gambacorta, Goldberg, and Schiaffi (2020) estimate the respective effects for cross-border loans
+and market-based finance, also separating borrowers according to institutional type (total, banks,
+non-banks). Pre-GFC, interbank lending sensitivity was more volatile than cross border lending
+to nonbank borrowers. Post-GFC cross-border lending sensitivity to risk sentiment declined for all
+borrower types. Bank lending no longer contracts sharply on average as risk sentiment worsens.
+Having better capitalized banks in global liquidity flows reduced shock sensitivity. Moreover, part
+of the explanation may reside with the characteristics of borrowers. Risk migration occurred,
+with funding flows from global banks less likely to be to riskier categories of borrowers. Risk
+migration occurred on multiple levels, as the composition of lending changed to represent a larger
+share of interbank lending to affiliated branches and subsidiaries, with a smaller footprint of the
+interbank market in bank funding . Moreover, stronger capitalization and higher liquidity buffers
+in banks are associated with more stable international liquidity provision in the form of cross-
+border lending. The amplitude of risk transmission across borders is magnified through lower
+capitalized banks, and diminished when these banks lose market share. In the aftermath of the
+GFC, lower capitalized banks lost market share in providing global liquidity.
+New data makes it feasible to discuss the balance sheet features of both banks and NBFIs that
+influence sensitivities. For NBFIs, newly available data from the Financial Stability Board at the
+country-year level inform the leverage and liquidity transformation capacity of the types of NBFIs
+involved in country- and time-specific global liquidity flows. Avdjiev, Gambacorta, Goldberg,
+and Schiaffi (2023) establish that leverage - whether found in banks or in aggregate measures
+associated with NBFIs - serves as an amplifier of risk shocks for both types of institutions.
+Still, the types of NBFIs involved in flows differ substantially across countries and over time.
+Accordingly, this reduces the generality of some results, and the sensitivity of funding flows to
+finance banks’ issuance of international debt securities sometimes is not precisely estimated over
+time or across countries. Providers have distinct vulnerabilities and balance-sheet constraints
+that continue to be insufficiently understood.
+8
+
+2.2 Prudential Spillovers Using Bank-Specific Data
+More granular data analytics reinforce how prudential policy works in domestic markets and spills
+over across borders into global liquidity. Researchers working with either bank-specific, credit
+registry, or other transaction-type databases show drivers of prudential spillovers across borders,
+and interactions between prudential policies and monetary policy. Examples include the results
+of initiatives of the International Banking Research Network (IBRN), a network of researchers
+across about 30 central banks and international organizations. The core objectives of the IBRN
+are to conduct rigid policy relevant experiments based on micro-level banking data, to replicate
+and customize analyses and experiment design across countries, to draw broader lessons from
+these studies in overview papers and meta analyses.
+In one IBRN initiative summarized in Buch and Goldberg (2017) 15 country teams exam-
+ined the domestic effects and international spillovers of prudential instruments using confidential
+micro-banking data. Teams seeking evidence for international policy spillovers considered mul-
+tiple channels through banks. Inward transmission addresses how foreign regulations affect the
+domestic activities of domestic banks or foreign affiliates (bank branches or subsidiaries) located
+in the host country. Outward transmission to foreign economies addresses the effects of foreign
+policies on the foreign activities of a reporting country’s global banks. All country teams imple-
+mented the same baseline regression models for analyzing inward or outward transmission. In
+addition, country teams addressed issues specific to their banking markets or banks’ business mod-
+els. In some cases, teams differentiated the adjustment of lending by their global banks’ branches
+(which are subject to the capital requirements of their parents) versus subsidiaries (which are, in
+addition, subject to regulations in the host country).
+Some countries observe that specific prudential instruments spill over internationally and
+through banks via lending growth. Heterogeneity in spillovers through lending across countries,
+time, and prudential instruments is common. This heterogeneity is at the bank level, where the
+effects of prudential instruments on lending differ with the ex ante balance-sheet characteristics
+and business models of the banks participating in international lending. For example, foreign
+affiliates with higher shares of illiquid assets and with stronger reliance on deposit funding tend
+to have loan growth that responds more to loan-to-value ratio limits and sector-specific capital
+buffer changes in the foreign parent’s location. Degrees of internal liquidity management via
+internal capital markets can significantly differentiate how general capital requirements imposed
+in the parent’s country spill over into lending by affiliated banks in the host market. These same
+characteristics do not appear to be as important for the inward transmission of foreign policies
+into the domestic lending of global banks.
+The economic magnitudes of international spillovers of changes in prudential policy instru-
+9
+
+ments through the intensive margins of adjustment were not large on average. Yet the extensive
+margin of adjustment also kicked in. Banks with higher initial capital were poised to increase
+lending internationally, and sometimes pivoting from domestic loan growth, when foreign coun-
+tries tightened their capital requirements. For example, Dutch banks increased lending in coun-
+tries that tightened prudential regulation and decreased lending when regulation is relaxed, but
+to different degrees. The effects were more significant in larger banks, in lending to advanced
+economies, and in the post-crisis period. Changes in some prudential instruments may thus spur
+the repositioning of market share across banks and foreign countries.
+Studies using data from Germany and from the U.S. analyzed both inward and outward
+transmission of prudential policies through loan growth of global banks, and contrast inward
+transmission through domestic global banks and hosted foreign affiliates (Berrospide, Correa,
+Goldberg, and Niepmann, 2016; Ohls, Pramor, and Tonzer, 2016). When foreign capital require-
+ments tightened,global banks from both countries expanded loan growth at home. German global
+banks slso tended to contract loan growth externally.
+The outward transmission channel analyzed in studies using regulatory data for, respectively,
+Canada, France, Italy, and the Netherlands confirm positive prudential spillover effects: as do-
+mestic prudential instruments tightened, foreign lending growth tended to increase (Bussi` ere,
+Schmidt, and Vinas, 2016; Caccavaio, Carpinelli, and Marinelli, 2018; Damar and Mordel, 2016;
+Frost, de Haan, and Van Horen, 2017). In the case of Italy, inward transmission through hosted
+branches was observed specifically in response to changes in local reserve requirements and sector-
+specific capital buffers. United Kingdom evidence shows the specific ipacts of instruments may
+mainly appear in even more granular and sectorally disaggregated data (Hills, Reinhardt, Sower-
+butts, and Wieladek, 2018). For example, tighter LTV ratios in the home market of parent
+banks outside the U.K. increased lending to private non-financials and household borrowers in
+the U.K. However, when the home country tightened foreign reserve requirements, lending de-
+creased. In Korea, inward spillover effects were relatively weak, explained by low levels of foreign
+bank activity in the retail market and by regulations of cross-border capital flows (Park and Lee,
+2018).The issue of intensity of bilateral linkages was an important factor in the economic effects
+of spillovers for Mexico. The main banks from the U.S. and Canada were ethose with more
+significant spillovers of prudential policies into domestic retail lending (Levin-Konigsberg, Lopez,
+Lopez-Gallo, and Mart´ ınez-Jaramillo, 2018). In Turkey, prudential spillovers occurred both on
+lending and borrowing (Baskaya, Binici, and Kenc, 2018), with tightening abroad in loan-to-value
+limits leading to higher cross-border borrowing by banks in Turkey.
+This evidence shows the importance of heterogeneity and of the specific frictions in each
+country. There was no one-size-fits-all channel or even direction of transmission that domi-
+nated spillovers of changes across prudential policy instruments. Balance-sheet characteristics
+10
+
+and business models of banks matter. Almost all prudential instruments have been associated
+with positive and negative spillovers, within and across transmission channels.
+Prudential policies also interact with monetary policy in spillovers (Bussi` ere, Cao, de Haan,
+Hills, Lloyd, Meunier, Pedrono, Reinhardt, Sinha, Sowerbutts, and Styrin, 2021). Stress tests
+impacted the cross-border transmission of monetary policy via the U.S. banking sector and U.S.
+banks’ new loan originations (Niepmann, Schmidt-Eisenlohr, and Liu, 2021). The results are
+consistent with a more accommodative U.S. monetary policy stance during the zero-lower-bound
+period leading to more bank lending to emerging market economies. A truly novel finding is
+that the magnitude of this international spillover effect depends on how banks fared in the Fed-
+eral Reserve’s annual Comprehensive Capital Analysis and Review (CCAR). Only banks that
+comfortably passed the CCAR stress tests issued more loans to borrowers in emerging market
+economies. Banks also shifted their lending to safer borrowers within emerging markets in re-
+sponse to monetary easing, leaving the risk of their overall loan books unchanged. This type of
+evidence implies banks confront different constraints when hit by shocks and differentiate across
+borrowers.
+Bush, G´ omez, Jara, Moreno, Styrin, and Ushakova (2020) focus on three EMEs – Chile,
+Mexico, and Russia – to measure how macroprudential policy in these countries interacts with
+monetary shocks in core countries. The overall results were mixed, with some evidence that the
+strength of international monetary policy transmission into loans by foreign banks depends on
+the stance of the domestic macroprudential policy. A similar exercise using data for Norway
+and Sweden, by Cao, Dinger, Grodecka-Messi, Juelsrud, and Zhang (2021), found that domestic
+macroprudential policy helped mitigate the effects of foreign monetary surprises. Important
+differences reflect the structure of the banking sectors in the two countries. In Sweden, weak
+evidence of an international bank lending channel perhaps reflected foreign exchange mismatches,
+with a significant role for domestic macroprudential policies in shielding the economy against
+decreases in bank loan supply associated with foreign monetary surprises. In Norway, domestic
+monetary policy and accounting for foreign exchange differentials seem to be more important for
+understanding banks’ lending.
+Another study, using data from Ireland and the Netherlands, found that restrictive euro-area
+monetary policy shocks reduced the growth of mortgage lending (Everett, de Haan, Jansen, Mc-
+Quade, and Samarina, 2020). Stricter domestic prudential regulation mitigated this effect in
+Ireland, but not so in the Netherlands. Macroprudential policies in 12 Asia-Pacific economies,
+investigated by Bruno, Shim, and Shin (2017), were particularly effective when complementing
+monetary policy by reinforcing monetary tightening. ?evaluate the effectiveness of macropru-
+dential policies in five Asia-Pacific countries (Australia, Indonesia, New Zealand, the Philippines
+and Thailand) and find that a tightening in macroprudential policy has a stronger effect on house-
+11
+
+hold credit growth than an easing, that banks’ size and liquidity influence the effects, and that
+macroprudential policy is effective in reducing bank risk as measured by the non-performing loan
+ratio.
+Also relevant for global liquidity flows are the dynamics of internal capital market lending
+within global banks. Recall from the discussion of Figure 1 that global banks use their internal
+capital markets to move global liquidity to and from locations served by affiliates within their
+banking organizations. The affiliate locations engage in banking activities with local customers,
+and analytics show that flows of credit from such hosted banks are more insulated from global
+factors compared with cross-border lending. While this form of financing for activity could be
+preferable for local borrowers, at times host countries resist foreign entry out of concern for lost
+market share and reduced profitability of entrenched domestic financiers. Moreover, a darker
+side of such globalization is that multinational banks may also employ bank acquisitions and
+internal capital markets to avoid regulatory scrutiny or to exploit regulatory arbitrage, which
+could be problematic from financial stability perspective. Karolyi and Taboada (2015) find that
+acquisition flows involve acquirers from countries with stronger regulations than their targets.
+Houston, Lin, and Ma (2012) conclude that banks tend to transfer funds to markets with fewer
+regulations.
+Still, not all locations are treated analogously by foreign parent banks. Global banks may
+prioritize across affiliate locations when their balance sheets are shocked. When U.S. parent
+banks were hit by funding shocks in the Great Recession, Cetorelli and Goldberg (2012) showed
+that global bank reallocated liquidity in their organizations according to their own locational
+pecking order . Flows to affiliate locations that are core - that is, locations that are important
+for the specific parent bank’s revenue streams or funding - are relatively protected. Accordingly,
+despite the general message of the relative stability of local lending through global bank affiliates,
+locations that are overall less important to that global parent (periphery) nonetheless may ex-
+perience sharper changes in available local liquidity. In general, affiliate locations that are more
+peripheral are less protected from foreign shocks. The response of foreign banks to domestic
+shocks can provide more credit stability. De Haas and Van Lelyveld (2010) analyse the structure
+of internal capital markets and emphasising that, as a result of parental support, foreign bank
+subsidiaries may not have to cut credit supply during crisis times. Frey and Kerl (2015) argue
+that the more an affiliate located abroad relies on intra-bank funding during the crisis, the greater
+its dependence on its parent bank having a stable deposit base and long-term wholesale funding
+position.
+Combining such insights with the evidence about banks’ risk management and risk-absorption
+capacity emphasizes the importance of using granular data and recognizing the heterogeneity
+of experiences in understanding the consequences of changes in risk sentiment or in funding
+12
+
+conditions. Global liquidity responds more to risk shocks when banks are less well capitalized
+and have more binding restrictions on their balance sheets. These banks contract cross-border
+lending to a greater degree. At the same time, internal capital market flows vis-a-vis affiliates may
+respond to a greater degree for the foreign locations that are not part of the core business of the
+banking organization. In this case, more of the risk-sentiment shock would pass through into the
+lending to local borrowers by hosted foreign banks, even while we more generally observe relatively
+stable lending by the hosted foreign banks. The observations also underscore the importance of
+appropriate prudential policies, and hint at the challenges in crafting frameworks. Moreover,
+similar mechanisms are likely to be at play for non-banks – but this part of the financial system
+remains under-researched in comparison to global banks. Next, we turn to another area where
+banks and non-banks share similarity – their importance for the stability of the financial system.
+3 Financial Stability Regulation: The Role of Banks and Non-
+Banks
+The global financial crisis has been a watershed for the regulation of banking markets and for
+efforts to address financial stability risks beyond banking. This section starts with a brief de-
+scription of the post-global financial crisis reform agenda for banks and discusses the implications
+for non-banks.2The rationale underlying financial stability regulation is summarized and this
+reasoning is applied to banks and non-banks. Evidence gathered by the too-big-to-fail evalua-
+tion project of the Financial Stability Board on the implications of banking regulation for the
+evolution of NBFI also is overviewed.
+3.1 Why Regulate? The Post Financial Crisis Reform Agenda for Banks and
+Non-Banks
+It has long been understood that banks and financial markets need to be regulated. Banks provide
+important services by lending to the real economy and providing deposit services. Banks also
+take on risks, and small, uninformed depositors are insured against these risks through deposit
+insurance. As any insurance, this can lead to frictions like moral hazard and the exploitation
+of information asymmetries between banks and their customers. Banking regulation and, in
+particular, capital regulation can be seen as a direct response to these frictions (Dewatripont and
+Tirole, 1994).
+With the increasing integration of global banking markets and volumes of global liquidity
+flows that we have documented, however, national supervision is not sufficient to address banking
+2This section is partly based on Buch (2023).
+13
+
+risks. Historically, global coordination of banking regulation was indeed triggered by instabilities
+on global financial markets. The Basel Committee on Banking Supervision (BCBS) was founded
+in 1974 by the central bank governors of the 10 largest industrialized countries in response to
+the Herstatt crisis with the objective to strengthen global financial stability. Shortly before that,
+the German Herstatt bank had become insolvent as a result of speculation in foreign exchange
+markets (Bank for International Settlements, 2023).
+Coordination of international banking regulation took several steps. The Basel Concordat
+in 1975 provided a basic framework for internationally active banks. An 8% minimum capital
+requirement for these banks was established (Basel I) in 1988 and market risks were incorporated
+in 1996. In 2004, the framework was extended to a three-pillar approach (Basel II) with minimum
+capital requirements, a qualitative approach, and enhanced transparency and market discipline.
+This approach, however, did not sufficiently address excessive risk-taking and, in particular,
+did not address systemic risk. During the global financial crisis, it became clear that the use
+of banks’ internal models to calculate capital requirements created opportunities for banks to
+understate risks, including systemic risks. This contributed to an undercapitalization of the
+banking system and an excessive amplification of external shocks. This type of amplification is
+in line with the evidence that we have presented.
+Perhaps one of the most important innovations in the reform package passed after the global
+financial crisis has been the explicit acknowledgement of systemic risk. Owners and managers of
+banks with limited liability may lose sight of risks to the banks’ own depositors, but they may
+also take on too much risk that could negatively affect uninvolved parties. This might put the
+functioning of the financial system at risk and thereby have negative implications for the real
+economy. Following the global financial crisis, “financial stability” has thus been designated as
+an explicit policy objective.
+Contributing to financial stability has always been a core function of central banks and is,
+indeed, a key element of the Basel Core Principles for supervision. Yet, designated macropruden-
+tial functions and institutions have been established in many jurisdictions only after the financial
+crisis. In essence, the aim of financial stability policies is to protect the functioning of the financial
+system: to enable the safe investment of savings, the financing of investments and innovations,
+as well as the smooth processing of payment transactions. At the national level, macropruden-
+tial policy is typically the shared responsibility of central banks, microprudential supervisors,
+and Ministries of Finance, while the division of labor and the institutional set up varies across
+countries. International and supra-national institutions like the European Systemic Risk Board
+(ESRB) and the Financial Stability Board (FSB), which essentially comprises G20 jurisdictions
+and international organizations, have been established to coordinate macroprudential policy and
+analyse risks to financial stability.
+14
+
+Generally, the post-crisis reforms had four objectives.footnoteFinancial Stability Board (2020);
+Basel Committee on Banking Supervision (2017). This and the following section are partly based
+on Buch (2021). The first objective has been enhancing resilience by improving the capitalization
+of banks qualitatively and quantitatively. Higher capital requirements that address structural
+and cyclical risks not only strengthen individual banks but also have positive implications for
+financial stability. If individual banks experience losses but can absorb these losses by drawing
+down their capital buffers, they have to liquidate fewer assets. Price pressure on asset markets is
+mitigated which, in turn, reduces pressure on other financial institutions that have invested in the
+same types of assets. The “fire sale” channel of financial crises becomes less important, damping
+amplification and an important transmission channel also between banks and non-banks.
+The second and related objective of post crisis reforms has been to address the “too-big-to-
+fail” problem. Large, systemically important institutions have to meet higher capital requirements
+than small banks, whose failure would have more limited repercussions on the financial system.
+New regimes and institutions for the recovery and resolution of banks make it possible to deal
+with systemically important banks that become distressed. It addition, instruments to strengthen
+loss-absorption by private creditors were strengthened (the bail-in approach) in order to mitigate
+the burden imposed on taxpayers and society in case of widespread bank failures (Lewrick, Serena,
+and Turner, 2019).
+A third reform area addressed risks to financial stability beyond banking. Contagion effects
+during the global financial crisis were amplified by a high degree of opacity in derivative markets,
+which were largely organized “over-the-counter”. Also, governance mechanisms of contracts were
+deficient by allowing the originator of securitized assets to completely shift risks on to third
+parties, thereby creating disincentives to monitor risks. These issues have been addressed by
+the reforms. Incentives to centrally clear derivatives have been strengthened and incentives of
+originators and investors in securitized assets have become better aligned.
+A few short-term fixes were made in 2009 in response to the global financial crisis. The Basel
+Committee decided to fundamentally review the Basel framework by splitting this work into two
+packages. The first package was finalised and published in 2011. Among other things, it enhanced
+the quality and quantity of capital by introducing both a stricter definition of bank capital and
+capital buffers. These buffers reduce the pro-cyclicality of bank capital regulation and address
+systemic risks. New liquidity requirements also were introduced.
+The second package was finalized in 2017. It aims at increasing the comparability of risk-
+weighted assets among banks by amending and recalibrating the two approaches that are used to
+calculate risk weights – the standardised and the internal model approach. The output floor has
+been introduced to reduce differences between the two approaches. The European Union (EU)
+implemented the first package in 2014. The legislative parties in the EU agreed in June 2023 on
+15
+
+the final implementation of the second packages as well, with the new rules becoming effective
+on 1 January 2025 and including some transitional arrangements so that the full set of rules are
+applicable by the end of 2032.
+Finally, financial institutions outside the banking sector are today more tightly regulated
+and monitored. The FSB issues regular monitoring reports on NBFI (Financial Stability Board,
+2022c). This work started off by focusing on “shadow banking”, but was later on made more
+specific by differentiating between three measures of non-bank financial intermediaries, for which
+various risk metrics are collected and analysed.First, the entire NBFI sector consists of all financial
+institutions that are not central banks, banks, or public financial institutions, with total financial
+assets of this aggregate amounted to 239 trillion USD or 49% of total global financial assets at the
+end of 2021. A second measure of NBFI is the group of Other Financial Intermediaries (OFIs)
+that comprises all intermediaries that are not banks, central banks, insurance companies, pension
+funds, or financial auxiliaries. This group accounts for 64% of the NBFI sector and includes
+hedge funds, money market funds, other investment funds, central counterparties, broker-dealers,
+and structured financial vehicles, among others. Third, a narrow measure of NBFI accounts for
+about one quarter of the total NBFI sector and comprises credit-intermediation activities that
+can create similar risks as bank lending due to liquidity risk, maturity transformation, or leverage.
+3.2 Reform Evaluation
+Since the inception of these reforms, the financial system has been changing, market shares
+have shifted, and digitalization has been changing the way in which many financial services are
+provided. Hence, assessing the effects of the reforms and the implications for financial stability
+is an on-going process. In order to analyze the effects, including potential negative side effects of
+the reforms, in 2017 the Financial Stability Board (FSB) established a designated framework for
+reform evaluation (Financial Stability Board, 2017).
+Several reform elements have already been evaluated using this framework. By and large, the
+results of these evaluations are quite encouraging. Essentially, the reforms have achieved their
+objectives of making the financial system more resilient, without significant negative side effects.
+For example, one concern has been that higher capital requirements could have negative effects on
+the financing of relatively opaque firms such as small and medium-sized enterprises or that large
+investments into infrastructure finance could be affected negatively. Such unintended negative
+side effects of tighter regulation have not materialized (Financial Stability Board, 2018a, 2019).
+Meanwhile, reforms have increased the transparency of markets for derivatives through higher
+collateralisation and improvements in transparency and standardisation, thereby reducing sys-
+temic risk and expanding some protections against market abuse. In particular, central coun-
+terparty (CCP) clearing obligations as well as higher capital and margin requirements for non-
+16
+
+centrally cleared derivatives help to protect against counterparty credit risk. However, an increase
+in liquidity risk can occur as sudden large changes in margin requirements can be destabilising
+(Financial Stability Board, 2018b).
+As regards the “too-big-to-fail” issue, evaluations point to both important achievements, but
+also remaining gaps that still need to be closed (Financial Stability Board, 2021a). In terms
+of achievements, banks now have higher loss-absorbing capacity, resolution reforms have been
+implemented, and the pricing of different sources of bank funding better reflects the likelihood
+that certain financial instruments will contribute to covering losses of distressed banks. Progress is
+this area continues to be important, as demonstrated by bank strains in 2023. Resolution reforms
+that ensure dealing with banks in the gone concern case operate through the incentives in the
+going concern: The more likely it is that investors lose money in the gone concern, the higher
+the risk premium they demand in the going concern, and the better aligned are the incentives of
+bank managers to reduce risk. Prior to the TBTF reforms, the risk of failure was not properly
+priced. Bond holders could bet on fiscal support in times of distress, demand lower risk premia,
+and banks enjoyed “implicit funding subsidies”. These funding advantages compared to less
+systemically important banks have declined, but have not disappeared.
+The fact that implicit funding subsidies have not been eliminated points to the gaps in the
+TBTF reforms that reduce the credibility of resolution regimes. It is, for example, difficult to
+obtain transparent and consistent information on the investors that hold the total loss absorbing
+capital (TLAC) in banks. These investors are often non-banks, hence more transparency about
+these financial linkages between banks and non-banks are important to understand channels
+of spill-overs. Similarly, there is no internationally consistent information on the nature and
+regulation of domestic systemically important banks (D-SIBs) – although recent stress episodes
+in banking markets have shown that even stress of relatively small, regional banks may have
+broader market repercussions. Finally, resolution regimes in many countries remain complex,
+and not all reforms have been fully implemented.
+Overall, better regulation and tighter supervision of banks since the global financial crisis have
+been accompanied by an expansion of market share by non-banks. Risks may thus have been
+shifted to better-capitalized institutions – but the shift in market shares can also be destabilizing
+if it ultimately reflects arbitrage and the evasion of regulation (Goldberg, 2023). Indeed, there
+has been a large increase in nonbank incorporations in low regulation countries (Pogliani, von
+Peter, and Wooldridge, 2022). Within bank holding company structures, some evidence points
+to bank subsidiaries expanding internal dividends paid to the parent organisation regardless of
+their income stream while non-bank subsidiaries enjoy a protection from such pressures (Pogach
+and Unal, 2019).
+Summing up, this section has argued that reforms to the regulatory framework of banks
+17
+
+and non-banks cannot be seen in isolation. Tighter regulation of banks shifts, ceteris paribus,
+activities to non-banks who gain market shares. Non-banks provide funding to banks, andbanks
+and non-banks invest into similar assets and markets. This increases common exposure to risks.
+In the next section, recent stress episodes demonstrates some of the interlinkages between banks
+and non-banks.
+4 Feedback Channels between Banks and Non-Banks
+Banks and non-banks differ in terms of their role in the financial system. Banks have privileged
+access to liquidity through the central bank, they are an integral part of the process of money
+creation, and their liabilities are protected by deposit insurance. Thus, there is a fundamental
+societal interest in a functioning banking system – but also in limiting moral hazard and systemic
+risk. Non-banks provide funds to finance the real economy and perform important functions:
+they enable the intermediation of long-term risks and the diversification of investments. They
+are typically less dependent on very short-term debt financing than banks. Nonetheless, non-
+banks face significant liquidity risks as well.
+4.1 Structural change and the role of the financial sector
+Although the international reform agenda largely treats banks and non-banks as being distinct,
+the two sectors are closely interlinked. They are interlinked not only via balance sheet linkages
+and similar portfolios, but also because of complementarities when it comes to the provision
+of credit to the real economy. Both, bank and non-bank financial intermediation have specific
+roles to play in financing transitions in the real economy and in global liquidity provision. The
+need for such financing and for the risk sharing properties of flows are underscored by the rich
+pattern of structural changes underway. These can arise from changing patterns of globalization,
+the energy transition, demographic change, and digitalization, all of which require adjustment
+in the real economy and associated financial flows. External finance is particularly important
+for new market entrants and de novo firms that cannot finance their expansion from internal
+sources.Different forms of finance complement each other. Bank and other forms of debt finance
+may not be the most suitable forms of funding when it comes to investment projects with a
+long time horizon and subject to a high degree of uncertainty. Many investments will require
+types of equity finance provided through markets and start-up finance. In some instances, high
+uncertainty and externalities that are insufficiently internalized by the private sector may also
+require a combination of private and public funding. Hence, bank and non-bank, market-based
+finance both play their distinct roles in financing the real economy.
+18
+
+4.2 Banks and non-banks during stress episodes
+Apart from their roles in financing the real economy, non-banks have often come under pres-
+sure during periods of stress on international financial markets – with repercussions also on the
+banking sector. In March 2020, for example, at the start of the COVID-19 pandemic, stress
+and uncertainty abruptly increased in financial markets worldwide. The pandemic gave rise to
+a high degree of fundamental uncertainty (Lagarde, 2020). Prices of stocks and corporate bonds
+plummeted, demand for liquidity increased, investors fled to safer assets, and highly liquid as-
+sets were needed to meet margin calls on collateralized transactions. Effects were felt across
+many financial institutions and many attempted to liquidate securities simultaneously (Financial
+Stability Board, 2020). Some of the consequences were reflected in the Dash for Cash episode
+documented for US Treasuries (Barone, Chaboud, Copeland, Kavoussi, Keane, and Searls, 2022).
+Dollar funding market strains and potential contractionary effects on bank credit provision at
+home and abroad were partially addressed through the network of standing swap lines across
+central banks and temporary facilities that were activated (Goldberg and Ravazzolo, 2022).
+Beyond a litany of official sector interventions activated to address financial strains, across
+countries differences in business models across financial institutions provided both risk-sharing
+opportunities and some stabilizing effects on the financial system. In Germany, for example, well-
+capitalized life insurers, which tend to have long-term liabilities, tended to invest countercyclically
+by buying up bonds that had fallen in price. Less well-capitalized life insurers, however, acted
+procyclically (Deutsche Bundesbank, 2020, 2021). Across countries, sufficient liquidity and a
+good capitalization in the financial system were demonstrated to be crucial for the functioning
+of banks and non-banks alike in periods of stress (Financial Stability Board, 2020).
+In March 2021, another stress episode associated with the failure of the U.S.-based hedge
+fund Archegos Capital had repercussions quickly felt across many banks and non-banks (European
+Systemic Risk Board, 2022a). Using highly leveraged derivatives, Archegos had built up relatively
+large and concentrated positions based on a relatively weak capital position, exposing the fund
+to fluctuations of stock prices. The counterparts on many of these trades were internationally
+active banks (Federal Reserve Board, 2021). When share prices fell, Archegos was unable to meet
+its margin calls; several banks had to sell shares held to hedge their derivatives at substantial
+discounts. This resulted in high losses for the banks concerned. The applicable form and degree
+of supervision and regulation influenced this dynamic. As Archegos was registered as a family
+office in the USA, weaker reporting and disclosure requirements applied compared with those for
+some other market participants (Financial Stability Board, 2022b; Deutsche Bundesbank, 2021).
+In March 2022, the new structure for derivatives markets was tested when market participants
+on European power exchanges, especially energy suppliers, came under severe pressure following
+19
+
+the Russian invasion of Ukraine and emerging disruptions to energy markets. Energy suppliers
+were faced with higher margin requirements to satisfy their hedging transactions on the derivatives
+market. Several governments stepped in with guarantees and lending programs to ease bottlenecks
+in terms of liquidity (Deutsche Bundesbank, 2022). Stress clearly originated in the real economy
+and spilled into the financial system, despite improved robustness due to the central counterparties
+(CCPs) for derivatives which have grown in importance due to the reforms of the derivatives
+markets.
+Then, over the course of 2022, higher interest rates and a more volatile macroeconomic en-
+vironment contributed to tighter liquidity overall, with liquidity problems arising in some UK
+pension funds. A sudden increase in interest rates on UK government bonds led to a drop in the
+price of long-dated gilts and margin calls on interest rate derivatives. Pension funds had to post
+additional collateral related to their repo market activities and sold UK government bonds into
+an illiquid market, thereby triggering a self-reinforcing downward spiral. A purchase program
+launched by the Bank of England stopped the downward price spiral (Breeden, 2022; Deutsche
+Bundesbank, 2022). As liability-driven investments (LDI) have been an important amplifier of
+the initial shock, the Bank of England later published a review and regulatory recommendations
+for these markets (Bank of England, 2023).
+All these stress episodes differ in their causes and the channels of transmission between banks
+and non-banks. Yet, they have in common that tensions were triggered by unexpectedly large
+shocks. While both microprudential and macroprudential stress testing models for non-banks do
+exist, some models had not taken such large shocks into account. As early as in 2018, for example,
+the Bank of England’s Financial Policy Committee (FPC) had examined vulnerabilities in the
+pension fund sector. However, market volatility in the fall of 2022 far exceeded the assumptions
+of these models. For example, while a 100 basis point increase in gilt yields was assumed by the
+Bank of England in a stress scenario, the actual increase in the fall of 2022 was much higher
+at around 160 basis points (Bank of England, 2018). Moreover, existing macroprudential NBFI
+stress tests tended to focus on individual non-bank segments, rather than on system-wide demand
+and supply of liquidity (Aikman, Beale, Brinley Codd, Covi, H¨ user, and Lepore, 2023). More
+generally, while vulnerabilities in the financial system are often known before stress episodes
+actually happen. Yet, it is can be difficult to predict the diverse sources of shocks, assess the
+impact of risk events quantitatively, and take preventive action sufficiently fast and decisively.
+International policy fora are currently looking into the question of what conclusions can be drawn
+from past stress episodes and how the resilience of non-banks can be increased (Financial Stability
+Board, 2023b,c).
+20
+
+4.3 Exposure of Non-Banks to Liquidity Risk
+Liquidity risk is certainly one important area of attention. The global economy has gone through
+a long period of low interest rates and ample liquidity provision by central banks. This period was
+followed by a sometimes steep increases in interest rates and withdrawal of quantitative easing.
+Changing liquidity conditions affect banks and non-banks differently, reflecting differences in
+business models.
+Take the adjustment in the German financial system as an example. In Germany, insurers
+hold around 11% of financial assets and life insurers, in turn, account for a significant share
+of these assets.3Life-insurers typically have very long-term liabilities and invest a large part
+of their funds in long-term bonds. Rising interest rates thus generally improve the solvency of
+life-insurers. However, insurers are also exposed to liquidity risks in the form of lapse risks and
+margin calls from derivatives (European Systemic Risk Board, 2020). As long-term interest rates
+rise, alternative investments become more attractive from the customer’s perspective, and lapse
+risks may increase. Liquidity risks may also arise from interest rate derivatives, which life-insurers
+use to hedge against falling long-term interest rates (Deutsche Bundesbank, 2022).
+3In the third quarter of 2022, life insures accounted for around 50% of the balance sheet of the German insurance
+sector (Versicherungen |Deutsche Bundesbank).
+21
+
+Figure 3: German banks asset structure
+The possibility of fire sales shows that systemic risks of banks and non-banks cannot be
+considered in isolation. Liquidity risks at non-banks can lead to contagion effects throughout the
+financial system. Insurers and pension institutions are strongly intertwined directly with funds
+through their investments (Figure 4). If the value of fund shares falls, this is directly reflected in
+insurers’ balance sheets. However, contagion effects can also arise via indirect linkages. If banks,
+insurers and funds hold similar securities, forced asset sales by one intermediary can affect the
+balance sheets of other intermediaries.
+Open-ended investment funds account for 12% of financial assets in Germany. They issue
+fund shares and invest in a wide range of assets, including in securities such as shares or bonds.
+The duration of bonds held by funds increased markedly during the period of low interest rates.
+Rising interest rates such as those seen in 2022 therefore lead to significant losses in the valuation
+of bonds in the portfolios of investment funds. While this has not led to significant redemptions
+by fund investors, duration risk may amplify outflows in the presence of currency risk.
+Cross-border linkages harbor additional risks, in addition to the well-documented opportuni-
+ties (Buch and Goldberg, 2020). German banks, for example, are strongly linked internationally.
+Moreover, two-thirds of the claims of investment funds are held vis-` a-vis foreign counterparts
+(Figure 4). Globally, beyond the contributions to global liquidity increasing, the cross-border
+interlinkages of non-banks and banks have risen sharply worldwide in recent years (Aldasoro,
+22
+
+Huang, and Kemp, 2020). Hence, foreign exchange risks and geopolitical risks tend to rise as
+non-banks are increasingly investing outside the euro area (Deutsche Bundesbank, 2021). For ex-
+ample, investigating flows into emerging market bonds, Bertaut, Bruno, and Shin (2023) confirm
+that when the duration of bonds held by funds is high, the risk of procyclical behaviour by funds
+is exacerbated. When investors react to losses by abruptly redeeming fund shares, funds may be
+forced to sell assets. This may lead to further price declines, particularly in less liquid market
+segments. Sales of illiquid assets can then lead to spirals in which the liquidity of entire market
+segments declines, thus also affecting other financial institutions (Brunnermeier and Pedersen,
+2009).
+4.4 Systemic Risk and the Regulation of Non-Banks
+Systemic risks that may emanate from the NBFI sector require appropriate regulation. Like
+banks, non-banks need sufficient resilience to reduce the likelihood of distress and prevent the
+amplification of shocks domestically, and internationally through global liquidity flows and dis-
+ruptions of market functioning. Potential negative externalities weigh towards regulation that,
+similar to banks, looks not only at the individual institution but also at the financial system as
+a whole.
+As previously discussed, liquidation of assets held by investment funds can lead to a decline
+in asset prices that affects the entire financial system. From the perspective of an individual
+fund, it may make sense to sell securities as funds are being withdrawn. However, this can
+trigger negative price spirals and international spillovers. Buffers in the form of liquid assets
+or designated instruments that limit withdrawals can limit such systemic risks (Di Iasio and
+Kryczka, 2021; Chernenko and Sunderam, 2020).
+Contagion through increased liquidity demand due to margin calls should, in principle, be
+reduced with clearing via CCPs if trades are sufficiently collateralized. In exceptionally volatile
+market phases, however, collateral requirements may increase abruptly and unexpectedly, thus
+triggering destabilizing feedback effects among market participants. In the examples presented
+for Fall 2022, when margin calls led to a sudden need for liquidity among British pension funds,
+which in turn sold government bonds and withdrew funds from money market funds (Euro-
+pean Securities and Markets Authority, 2023b), the distress at money market funds spilled-over
+to money markets. In March 2020, investors withdrew funds from money market funds, thus
+severely impacting funding on money markets (Financial Stability Board, 2020). In both cases,
+central banks intervened and provided liquidity to markets. Such interventions may be needed in
+times of unexpected and extreme market stress, but they also create the risk of financial domi-
+nance (Brunnermeier, 2023). Hence, these episodes have also reinforced the urgency of discussions
+about the appropriate liquidity regulation of non-bank financial intermediaries that ensures suffi-
+23
+
+Figure 4: Structure of the German financial system
+24
+
+cient resilience.4These episodes also prompt an examination of the current regulatory approach
+that gives central counterparties a relatively large degree of freedom when calculating collateral
+requirements (Basel Committee on Banking Supervision and Committee on Payments and Mar-
+ket Infrastructures and Board of the International Organization of Securities Commissions, 2022).
+Regulatory discussions in Europe are focussing on the need to better mitigate the potential pro-
+cyclical effects of large scale margin changes as well as limit the spread of liquidity stress to other
+parts of the financial system (European Securities and Markets Authority, 2023a).
+A number of current international initiatives aim at improving the regulation of liquidity
+risks incurred by non-banks. For example, improvements of instruments for managing liquidity
+risks of open-ended investment funds are under discussion (Financial Stability Board, 2022a,b).
+Depending on their design, these instruments limit the redemption of fund shares (quantity-
+based) or vary the price of fund shares in such a way as to reduce the risk of sharp withdrawals
+by investors (price-based). For example, “Swing Pricing”, a price-based instrument, adjusts the
+pricing of fund shares such that the costs of outflows of liquidity will be allocated to those fund
+investors that trigger the costs (Deutsche Bundesbank, 2021). This mitigates externalities, makes
+distress sales less likely, and limits contagion effects.
+Recent empirical evidence looks at the effectiveness of instruments to manage liquidity risks.
+During the stress phase in March 2020, for example, Irish funds recorded large outflows. A study
+of Dunne, Emter, Fecht, Giuliana, and Peia (2022) shows that price-based liquidity management
+tools used by these funds helped limiting outflows. However, the availability and application of
+such instruments varies widely between jurisdictions. In Germany, fund managers have been able
+to use new instruments for liquidity management since 2020 (Bundesanstalt f¨ ur Finanzdienstleis-
+tungsaufsicht, 2023). However, the majority of fund managers have not yet applied price-based
+tools (Bundesanstalt f¨ ur Finanzdienstleistungsaufsicht, 2022). To ensure greater clarity on the
+redemption terms and to address systemic risks, funds could be divided into different groups
+depending on their liquidity (Financial Stability Board, 2022a, 2023a). Funds with low liquidity
+would then be subject to constraints with regard to the terms of fund share redemption or with
+regard to liquidity management instruments.
+Another regulatory response currently being discussed is introducing provisions regarding
+liquidity risks within the ongoing review of the EU insurance regulation (Solvency II).5Currently,
+Solvency II, does not contain any specific provisions on liquidity risk management. There are also
+no quantitative regulatory requirements under Solvency II to ensure that assets are sufficiently
+4See Financial Stability Board (2021b), European Systemic Risk Board (2022b), Letter to Members of the
+Council Working Party on the Solvency II Review and Liquidity Risk Management (europa.eu), and Letter to
+Members of the European Parliament on the Solvency II Review and Liquidity Risk Management (europa.eu).
+5See Letter to Members of the Council Working Party on the Solvency II Review and Liquidity Risk Management
+(europa.eu) and Letter to Members of the European Parliament on the Solvency II Review and Liquidity Risk
+Management (europa.eu)
+25
+
+liquid to meet the payment of surrender values and additional liquidity needs. An obligation for
+(re)insurers to conduct internal liquidity stress tests would be a clear improvement, e.g. within the
+framework of a mandatory liquidity risk management plan for insurance companies. Therefore,
+systematic reporting by insurers to supervisors could be introduced to better assess individual
+and systemic risks (European Commission, 2021).
+Ultimately, however, good management of liquidity risks requires both appropriate regulation
+and sound risk management of individual institutions. By holding a sufficient amount of highly
+liquid assets, market participants can increase their resilience with regard to high margin calls
+during stress periods. Increasing the transparency of the margin model used by central counter-
+parties, in turn, can help market participants in assessing the liquidity risk arising from central
+clearing. The EU Commission has published proposals how to enhance transparency (European
+Commission, 2022), and international regulators are also exploring how margin models can be
+made less procyclical (Basel Committee on Banking Supervision and Committee on Payments and
+Market Infrastructures and Board of the International Organization of Securities Commissions,
+2022).
+5 The Way Forward
+Banks and non-banks have distinct functions in the economy and take different risks according to
+their respective business models. The close linkages between these sectors and the migration of
+activities across sectors warrants a holistic view of the functioning and stability of the financial
+system. We have reviewed the rich literature on the evolution of bank- and non-bank financial
+flows, the rationale for regulation, the behaviour of markets in times of stress, and the on-going
+regulatory debate. Our review of the literature shows that these flows are important in global
+liquidity and have real consequences. Both bank and non-bank financial intermediaries engage in
+credit provision but also can generate systemic risk effects through common exposures, leverage,
+and liquidity risks.
+Our literature review also shows the advanced state of evidence on the response of banks to
+changes in the macroeconomic environment and to regulation. By contrast, the body of evidence
+on similar questions for non-bank financial intermediaries is newly emerging. One reason for this
+asymmetry has been differences in data availability and the higher degree of heterogeneity of the
+intermediaries in the non-bank financial sector. More work is needed in particular to understand
+the linkages between banks and non-banks. Understanding liquidity risk management within and
+across financial institutions is one priority. Also highly relevant is developing a better under-
+standing of the frictions and constraints that can induce procyclicalities, and sharp responses in
+financial flows and pricing. More granular data is rapidly being accessed by researchers to explore
+26
+
+the effects of shocks on specific institutions, financial markets, and interconnectedness. Meanwhile
+and internationally, policy frameworks are continuing to evolve, including around macropruden-
+tial instruments and regulation and supervision. This evolution aims to appropriately address
+risks while accounting for the different functions of intermediaries, the related constraints asso-
+ciated with their business models, and the tendencies for activity to migrate across institutions
+and locations.
+27
+
+References
+Aikman, David, Daniel Beale, Adam Brinley Codd, Giovanni Covi, Anne-Caroline
+H¨ user, and Caterina Lepore. 2023. “Macroprudential stress-test models: a survey.”
+Aldasoro, I˜ naki, Wenqian Huang, and Esti Kemp. 2020. “Cross-Border Links between
+Banks and Non-bank Financial Institutions.” BIS Quarterly Review 2020 (September): .
+Avdjiev, Stefan, Leonardo Gambacorta, Linda S. Goldberg, and Stefano Schiaffi.
+2020. “The Shifting Drivers of Global Liquidity.” Journal of International Economics 125
+103324.
+Avdjiev, Stefan, Leonardo Gambacorta, Linda S. Goldberg, and Stefano Schiaffi.
+2023. “Financial Regulation, Risk Migration, and Global Liquidity Flows.”
+Bank for International Settlements. 2023. “History of the Basel Committee.” Available at
+https://www.bis.org/bcbs/history.htm .
+Bank of England. 2018. Financial Stability Report 2018 .
+Bank of England. 2023. “LDI minimum resilience - recommendation and explainer..”
+Barone, Jordan, Alain P. Chaboud, Adam Copeland, Cullen Kavoussi, Frank M.
+Keane, and Seth Searls. 2022. “The Global Dash for Cash in March 2020.”Technical report,
+Federal Reserve Bank of New York.
+Basel Committee on Banking Supervision. 2017. “Basel III: Finalising Post-Crisis Re-
+forms.”
+Basel Committee on Banking Supervision and Committee on Payments and Market
+Infrastructures and Board of the International Organization of Securities Commis-
+sions. 2022. “Review of Margining Practices.” September.
+Baskaya, Yusuf Soner, Mahir Binici, and Turalay Kenc. 2018. “International banking
+and cross-border effects of regulation: lessons from Turkey.” International Journal of Central
+Banking (48): 379–403.
+Berrospide, Jose, Ricardo Correa, Linda S. Goldberg, and Friederike Niepmann.
+2016. “International banking and cross-border effects of regulation: Lessons from the United
+States.”Technical report, National Bureau of Economic Research.
+Bertaut, Carol, Valentina Bruno, and Hyun Song Shin. 2023. “Original sin redux: role
+of duration risk.”Technical report.
+28
+
+Breeden, Sarah. 2022. “Risks from leverage: how did a small corner of
+the pensions industry threaten financial stability?”, Speech given at ISDA &
+AIMA. Available at https://www.bankofengland.co.uk/speech/2022/november/
+sarah-breeden-speech-at-isda-aimi-boe-on-nbfi-and-leverage .
+Brunnermeier, Markus. 2023. Re-Thinking Monetary Policy in a Changing World . Princeton.
+Mimeo.
+Brunnermeier, Markus K., and Lasse Heje Pedersen. 2009. “Market Liquidity and Fund-
+ing Liquidity.” The Review of Financial Studies 22 (6): 2201–2238.
+Bruno, Valentina, Ilhyock Shim, and Hyun Song Shin. 2017. “Comparative assessment
+of macroprudential policies.” Journal of Financial Stability 28 183–202. https://doi.org/10.
+1016/j.jfs.2016.04.001.
+Buch, Claudia M. 2021. “10 Years after: Where Are We?”, Introductory remarks prepared for
+the policy panel at the high-level conference “EBA @ 10”. 26 October 2021. Paris.
+Buch, Claudia M. 2023. “Finanzstabilit¨ at in Zeiten des Strukturwandels.” Speech at the
+“Bankenabend” of the Bundesbank‘s Regional Office in Baden-W¨ urttemberg. 28 February 2023.
+Stuttgart.
+Buch, Claudia M., and Linda S. Goldberg. 2017. “Cross-Border Prudential Policy Spillovers:
+How Much? How Important? Evidence from the International Banking Research Network.”
+International Journal of Central Banking 48 505–558.
+Buch, Claudia M., and Linda S. Goldberg. 2020. “Global Banking: Toward an Assessment
+of Benefits and Costs.” Annual Review of Financial Economics 12 (1): 141–175.
+Bundesanstalt f¨ ur Finanzdienstleistungsaufsicht. 2022. “Investmentfonds: Liq-
+uidit¨ atsmanagementtools in der Praxis.” Available at https://www.bafin.de/
+SharedDocs/Veroeffentlichungen/DE/Fachartikel/2022/fa_bj_2212_Investmentfonds_
+Liquiditaetstools.html;jsessionid=A09AFE353550363165ECFD4E629D605B.1_cid500 .
+Bundesanstalt f¨ ur Finanzdienstleistungsaufsicht. 2023. “Liquidit¨ atstools f¨ ur Invest-
+mentfonds - Bessere Liquidit¨ atssteuerung bei Fonds.” Available at https://www.bafin.de/
+DE/Verbraucher/GeldanlageWertpapiere/Wertpapiergeschaefte/Liquiditaetstools/
+liquiditaetstools_artikel.html#: ~:text=Thema%20Verbraucherschutz%20Bessere%
+20Liquidit%C3%A4tssteuerung%20bei,offenen%20Investmentverm%C3%B6gen%20besser%
+20steuern%20k%C3%B6nnen .
+29
+
+Bush, Georgia, Tom´ as G´ omez, Alejandro Jara, David Moreno, Konstantin Styrin,
+and Yulia Ushakova. 2020. “Macroprudential policy and the inward transmission of monetary
+policy shocks: The case of Chile, M´ exico, and Russia.” Review of International Economics 29
+37–60.
+Bussi` ere, Matthieu, Jin Cao, Jakob de Haan, Robert Hills, Simon Lloyd, Baptiste
+Meunier, Justine Pedrono, Dennis Reinhardt, Sonalika Sinha, Rhiannon Sower-
+butts, and Konstantin Styrin. 2021. “The Interaction Between Macroprudential Policy
+and Monetary Policy: Overview.” Review of International Economics 29 (1): 1–19.
+Bussi` ere, Matthieu, Julia Schmidt, and Fr´ ed´ eric Vinas. 2016. “International banking and
+cross-border effects of regulation: Lessons from france.” DOCUMENT DE TRAVAIL (599): .
+Caccavaio, Marianna, Luisa Carpinelli, and Giuseppe Marinelli. 2018. “International
+banking and cross-border effects of regulation: Lessons from italy.” International Journal of
+Central Banking (48): 223–247.
+Cao, Jin, Valeriya Dinger, Anna Grodecka-Messi, Ragnar Juelsrud, and Xin Zhang.
+2021. “The interaction between macroprudential and monetary policies: The cases of Norway
+and Sweden.” Review of International Economics 29 87–116.
+Cetorelli, Nicola, and Linda S. Goldberg. 2012. “Liquidity Management of US Global
+Banks: Internal Capital Markets in the Great Recession.” Journal of International Economics
+88 (2): 299–311.
+CGFS. 2011. “Global Liquidity—Concept, Measurement and Policy Implications.” Committee
+on the Global Financial System .
+Chernenko, Sergey, and Adi Sunderam. 2020. “Do Fire Sales Create Externalities?” Journal
+of Financial Economics 135 (3): 602–628.
+Claessens, Stijn, Giulio Cornelli, Leonardo Gambacorta, Francesco Man-
+aresi, and Yasushi Shiina. 2023. “Do macroprudential policies affect non-
+bank financial intermediation?” International Journal of Central Banking ,
+https://www.ijcb.org/journal/ijcb23q5a5.pdf.
+Damar, H Evren, and Adi Mordel. 2016. “International banking and cross-border effects of
+regulation: lessons from Canada.” working paper, Bank of Canada.
+De Haas, Ralph, and Iman Van Lelyveld. 2010. “Internal capital markets and lending by
+multinational bank subsidiaries.” Journal of Financial Intermediation 19 (1): 1–25.
+30
+
+Deutsche Bundesbank. 2020. Financial Stability Review 2020 .
+Deutsche Bundesbank. 2021. Financial Stability Review 2021 .
+Deutsche Bundesbank. 2022. Financial Stability Review 2022 .
+Dewatripont, Mathias, and Jean Tirole. 1994. The Prudential Regulation of Banks . Cam-
+bridge, MA: The MIT Press.
+Di Iasio, Giovanni, and Dominika Kryczka. 2021. “Market Failures in Market-Based Fi-
+nance.” Working Paper 2545.
+Dunne, Peter G., Lorenz Emter, Falko Fecht, Raffaele Giuliana, and Oana Peia.
+2022. “Financial Fragility in Open-ended Mutual Funds: The Role of Liquidity Management
+Tools.”Technical report, Available at SSRN: https://papers.ssrn.com/sol3/papers.cfm?
+abstract_id=4282841 . Mimeo.
+European Commission. 2021. “Proposal for a Directive of the European Parliament and of
+the Council Amending Directive 2009/138/EC as Regards Proportionality, Quality of Supervi-
+sion, Reporting, Long-Term Guarantee Measures, Macroprudential Tools, Sustainability Risks,
+Group and Cross-border Supervision.”
+European Commission. 2022. “Proposal for a Regulation of the European Parliament and of
+the Council Amending Regulations (EU) No 648/2012, (EU) No 575/2013 and (EU) 2017/1131
+as Regards Measures to Mitigate Excessive Exposures to Third-country Central Counterparties
+and Improve the Efficiency of Union Clearing Markets.”
+European Securities and Markets Authority. 2023a. “Review of the RTS with respect to
+the procyclicality of CCP margin. Final report..”
+European Securities and Markets Authority. 2023b. “TRV Risk Monitor.” Report on
+Trends, Risks and Vulnerabilities 1.
+European Systemic Risk Board. 2020. “Enhancing the Macroprudential Dimension of Sol-
+vency II.”
+European Systemic Risk Board. 2022a. “EU Non-bank Financial Intermediation Risk Mon-
+itor 2022.”
+European Systemic Risk Board. 2022b. “Recommendation of the ESRB of 2 December 2021
+on the Reform of Money Market Funds.”Technical report.
+31
+
+Everett, Mary, Jakob de Haan, David-Jan Jansen, Peter McQuade, and Anna Sama-
+rina. 2020. “Mortgage lending, monetary policy, and prudential measures in small euro-area
+economies: Evidence from Ireland and the Netherlands.” Review of International Economics
+29 117–143.
+Federal Reserve Board. 2021. “Supervision and Regulation Report.” November.
+Financial Stability Board. 2017. “Framework for Post-Implementation Evaluation of the Ef-
+fects of the G20 Financial Regulatory Reforms.”
+Financial Stability Board. 2018a. “Evaluation of the effects of financial regulatory reforms on
+infrastructure finance.”
+Financial Stability Board. 2018b. “Incentives to centrally clear over-the-counter (OTC) deriva-
+tives.”
+Financial Stability Board. 2019. “Evaluation of the effects of financial regulatory reforms on
+small and medium-sized enterprise (SME) financing.” final report.
+Financial Stability Board. 2020. “Holistic Review of the March Market Turmoil.”
+Financial Stability Board. 2021a. “Evaluation of the Effects of Too-Big-To-Fail Reforms.”
+final report.
+Financial Stability Board. 2021b. “Policy Proposals to Enhance Money Market Fund Re-
+silience.” final report.
+Financial Stability Board. 2022a. “Assessment of the Effectiveness of the FSB’s 2017 Recom-
+mendations on Liquidity Mismatch in Open-Ended Funds.”
+Financial Stability Board. 2022b. “Enhancing the Resilience of Non-Bank Financial Interme-
+diation.” progress report.
+Financial Stability Board. 2022c. “Global Monitoring Report on Non-Bank Financial Inter-
+mediation 2022.”
+Financial Stability Board. 2023a. “Addressing Structural Vulnerabilities from Liquidity Mis-
+match in Open-Ended Funds – Revisions to the FSB’s 2017 Policy Recommendations.” con-
+sultation report.
+Financial Stability Board. 2023b. “Enhancing the Resilience of Non-Bank Financial Interme-
+diation.” progress report.
+32
+
+Financial Stability Board. 2023c. “The Financial Stability Implications of Leverage in Non-
+Bank Financial Intermediation.”
+Frey, R¨ udiger, and Cornelia Kerl. 2015. “Multinational banks in the crisis: Foreign affiliate
+lending as a mirror of funding pressure and competition on the internal capital market.” Journal
+of Banking & Finance 50 52–68.
+Frost, Jon, Jakob de Haan, and Neeltje Van Horen. 2017. “International banking and
+cross-border effects of regulation: lessons from the Netherlands.” International Journal of
+Central Banking (13(2)): 293–313.
+Goldberg, Linda S. 2023. “Global Liquidity: Drivers, Volatility and Toolkits.” IMF Economic
+Review forthcoming.
+Goldberg, Linda S., and Fabiola Ravazzolo. 2022. “The Fed’s International Dollar Liquidity
+Facilities: New Evidence on Effects.” Working Paper 29982, National Bureau of Economic
+Research.
+Hills, Robert, Dennis Reinhardt, Rhiannon Sowerbutts, and Tomasz Wieladek. 2018.
+“International banking and cross-border effects of regulation: lessons from the United King-
+dom.” International Journal of Central Banking (48): 405–433.
+Houston, Joel F., Chen Lin, and Yaya Ma. 2012. “Regulatory arbitrage and international
+bank flows.” The Journal of Finance 67 (5): 1845–1895.
+Irani, Rustom M, Rajkamal Iyer, Ralf R Meisenzahl, and Jos´ e-Luis Peydr´ o. 2021.
+“The Rise of Shadow Banking: Evidence from Capital Regulation.” The Review of Financial
+Studies 34 (5): 2181–2235.
+Karolyi, G. Andrew, and Andres G. Taboada. 2015. “Regulatory arbitrage and cross-border
+bank acquisitions.” The Journal of Finance 70 (6): 2395–2450.
+Kim, You Suk, Karen Pence, Richard Stanton, Johan Walden, and Nancy Wallace.
+2022. “Nonbanks and mortgage securitization.” Annual Review of Financial Economics 14
+137–166.
+Lagarde, Christine. 2020. “The path out of uncertainty.” Remarks by the President of the
+ECB at the inaugural session of the Italian National Consultation. Available at https://www.
+ecb.europa.eu/press/key/date/2020/html/ecb.sp200613 ~890270bad1.en.html .
+33
+
+Levin-Konigsberg, Gabriel, Calixto Lopez, Fabrizio Lopez-Gallo, and Seraf´ ın
+Mart´ ınez-Jaramillo. 2018. “International Banking and Cross-border effects of regulation:
+Lessons from Mexico.” International Journal of Central Banking (48): 249–271.
+Lewrick, Ulf, Jose Maria Serena, and Grant Turner. 2019. “Believing in bail-in? Market
+discipline and the pricing of bail-in bonds.” Working Paper 831, BIS Working Papers, BIS
+Working Paper 831.
+Niepmann, Friederike, Tim Schmidt-Eisenlohr, and Emily Liu. 2021. “The Effect of
+US Stress Tests on Monetary Policy Spillovers to Emerging Markets.” Review of International
+Economics 29 (1): 165–194.
+Ohls, Jana, Marcus Pramor, and Lena Tonzer. 2016. “International banking and cross-
+border effects of regulation: Lessons from Germany.”
+Park, Hyunggeun, and Jungyeoun Lee. 2018. “International Banking and Cross-border
+effects of regulation: Lessons from Korea.” International Journal of Central Banking (48):
+273–292.
+Pogach, Jonathan, and Haluk Unal. 2019. “The dark side of banks’ nonbank business:
+Internal dividends in bank holding companies.”Technical report, FDIC Center for Financial
+Research Paper.
+Pogliani, Pamela, Goetz von Peter, and Philip Wooldridge. 2022. “The Outsize Role of
+Cross-Border Financial Centres.” BIS Quarterly Review .
+Rey, H´ el` ene. 2015. “Dilemma Not Trilemma: The Global Financial Cycle and Monetary Policy
+Independence.”Technical report, National Bureau of Economic Research.
+Sufi, Amir, and Alan Taylor. 2021. “Financial Crises: A Survey.” NBER Working Paper
+29155.
+34

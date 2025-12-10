@@ -1,0 +1,138 @@
+{
+  "books": {
+    "afml": {
+      "title": "Advances in Financial Machine Learning",
+      "author": "Marcos López de Prado",
+      "chunks_file": "rag_knowledge/chunks/afml_chunks.json",
+      "chunk_count": 71,
+      "ingested_at": "2025-12-05T00:29:49.446068"
+    },
+    "systematic_trading": {
+      "title": "Systematic Trading",
+      "author": "Robert Carver",
+      "chunks_file": "rag_knowledge/chunks/systematic_trading_chunks.json",
+      "chunk_count": 66,
+      "ingested_at": "2025-12-05T00:29:49.449329"
+    },
+    "crypto_ai": {
+      "title": "Crypto AI Playbook",
+      "author": "Igor Ganapolsky (curated summary)",
+      "chunks_file": "rag_knowledge/chunks/crypto_ai_2025.json",
+      "chunk_count": 4,
+      "ingested_at": "2025-12-08T19:42:37.675000"
+    },
+    "crypto_trading_mastery": {
+      "title": "Master Options, Crypto, and Day Trading for Passive Income",
+      "author": "Jacob Ferriss",
+      "chunks_file": "rag_knowledge/chunks/crypto_trading_mastery_2025.json",
+      "chunk_count": 8,
+      "ingested_at": "2025-12-08T02:25:00.000000"
+    },
+    "mcmillan_options": {
+      "title": "Options as a Strategic Investment",
+      "author": "Lawrence G. McMillan",
+      "edition": "5th Edition",
+      "chunks_file": "rag_knowledge/chunks/mcmillan_options_strategic_investment_2025.json",
+      "chunk_count": 18,
+      "topics": ["covered_calls", "naked_puts", "spreads", "straddles", "strangles", "butterflies", "greeks", "volatility", "earnings"],
+      "ingested_at": "2025-12-10T05:00:00.000000"
+    },
+    "natenberg_volatility": {
+      "title": "Option Volatility and Pricing: Advanced Trading Strategies and Techniques",
+      "author": "Sheldon Natenberg",
+      "edition": "2nd Edition",
+      "isbn": "978-0071818773",
+      "chunks_file": "rag_knowledge/chunks/natenberg_option_volatility_pricing_2025.json",
+      "chunk_count": 23,
+      "topics": ["historical_volatility", "implied_volatility", "volatility_cones", "term_structure", "mean_reversion", "delta", "gamma", "theta", "vega", "rho", "black_scholes", "binomial_model", "put_call_parity", "volatility_skew", "straddles", "strangles", "iron_condors", "calendar_spreads", "position_sizing", "portfolio_greeks", "stress_testing", "rolling", "entry_criteria", "exit_rules", "stop_losses", "assignment", "professional_mindset"],
+      "description": "THE definitive guide to option volatility, pricing models, Greeks, and professional trading strategies. Considered the 'Bible' of options trading.",
+      "ingested_at": "2025-12-10T17:10:00.000000"
+    }
+  },
+  "papers": {},
+  "newsletters": {
+    "alpha_architect": {
+      "name": "Alpha Architect",
+      "chunks_file": "rag_knowledge/chunks/alpha_architect_chunks.json",
+      "chunk_count": 5,
+      "ingested_at": "2025-12-05T00:29:49.450674"
+    },
+    "quantified_strategies": {
+      "name": "Quantified Strategies",
+      "chunks_file": "rag_knowledge/chunks/quantified_strategies_chunks.json",
+      "chunk_count": 7,
+      "ingested_at": "2025-12-05T00:29:49.451816"
+    }
+  },
+  "youtube": {
+    "tfcdts_i2jU": {
+      "title": "Crypto to buy for 2026",
+      "channel": "ODES - All about crypto",
+      "insights_file": "rag_knowledge/youtube/insights/tfcdts_i2jU.json",
+      "picks": ["BTC", "SOL", "XRP", "ETH"],
+      "ingested_at": "2025-12-09T00:00:00.000000"
+    },
+    "options_education_sources": {
+      "title": "Options Trading YouTube Educators - Curated Knowledge",
+      "channels": ["tastytrade", "Option Alpha", "InTheMoney", "Sky View Trading", "ProjectFinance", "Adam Khoo"],
+      "insights_file": "rag_knowledge/youtube/insights/options_education_sources.json",
+      "topics": ["covered_calls", "iron_condors", "wheel_strategy", "greeks", "premium_selling"],
+      "ingested_at": "2025-12-10T05:00:00.000000"
+    }
+  },
+  "options_education": {
+    "tastytrade": {
+      "title": "TastyTrade Research & Education",
+      "chunks_file": "rag_knowledge/chunks/tastytrade_options_education_2025.json",
+      "chunk_count": 16,
+      "topics": ["covered_calls", "credit_spreads", "iron_condors", "wheel", "greeks", "IV_rank", "position_sizing", "rolling", "earnings"],
+      "ingested_at": "2025-12-10T05:00:00.000000"
+    },
+    "options_alpha": {
+      "title": "Options Alpha Research & Education",
+      "chunks_file": "rag_knowledge/chunks/options_alpha_education_2025.json",
+      "chunk_count": 14,
+      "topics": ["probability_trading", "portfolio_allocation", "strangles", "calendars", "diagonals", "butterflies", "psychology"],
+      "ingested_at": "2025-12-10T05:00:00.000000"
+    },
+    "advanced_strategies": {
+      "title": "Advanced Options Income Strategies",
+      "chunks_file": "rag_knowledge/chunks/advanced_options_income_strategies_2025.json",
+      "chunk_count": 14,
+      "topics": ["wheel", "PMCC", "jade_lizard", "ratio_spreads", "gamma_scalping", "VIX_strategies", "synthetics"],
+      "ingested_at": "2025-12-10T05:00:00.000000"
+    },
+    "cboe_official": {
+      "title": "CBOE Options Institute - Official Exchange Education",
+      "chunks_file": "rag_knowledge/chunks/cboe_options_education_2025.json",
+      "chunk_count": 27,
+      "topics": ["options_basics", "settlement", "order_types", "margin", "VIX", "index_options", "SPX_vs_SPY", "tax_treatment", "risk_disclosure", "assignment", "pin_risk", "liquidity", "greeks", "implied_volatility", "trading_hours", "intrinsic_extrinsic_value", "moneyness", "time_duration_orders", "position_limits", "dividend_risk", "corporate_actions"],
+      "regulatory": true,
+      "source": "Chicago Board Options Exchange",
+      "ingested_at": "2025-12-10T16:45:00.000000"
+    },
+    "web_research": {
+      "title": "Web-Sourced Options Research 2025",
+      "chunks_file": "rag_knowledge/chunks/web_sourced_options_research_2025.json",
+      "chunk_count": 9,
+      "topics": ["covered_calls", "iron_condors", "wheel", "theta_decay", "IV_rank", "greeks", "earnings", "credit_spreads", "kelly_criterion"],
+      "sources": ["tastytrade.com", "optionalpha.com", "projectfinance.com", "schwab.com", "barchart.com", "quantifiedstrategies.com", "SSRN academic papers"],
+      "ingested_at": "2025-12-10T17:30:00.000000"
+    }
+  },
+  "lessons_learned": {
+    "architecture_decisions": {
+      "title": "Trading System Lessons Learned & Architecture Decisions",
+      "chunks_file": "rag_knowledge/chunks/lessons_learned_2025.json",
+      "chunk_count": 2,
+      "topics": ["llm_limitations", "process_corruption", "deterministic_code", "backtesting", "rule_application"],
+      "severity_levels": ["critical", "informational"],
+      "ingested_at": "2025-12-10T16:00:00.000000"
+    }
+  },
+  "metadata": {
+    "total_chunks": 284,
+    "last_updated": "2025-12-10T17:30:00.000000",
+    "categories": ["books", "papers", "newsletters", "youtube", "options_education", "lessons_learned"]
+  }
+}

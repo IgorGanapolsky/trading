@@ -1,0 +1,16 @@
+{
+  "memory_id": "6016830f-f367-4f74-9bec-e963af9a200a",
+  "agent_id": "test_agent",
+  "context_type": "ContextType.MEMORY_CONTEXT",
+  "content": {
+    "test": "daily"
+  },
+  "tags": [],
+  "created_at": "2025-12-05T12:52:14.425100",
+  "accessed_at": "2025-12-05T12:52:14.425108",
+  "access_count": 0,
+  "ttl_days": null,
+  "timescale": "intraday",
+  "importance_score": 0.5,
+  "outcome_pl": null
+}

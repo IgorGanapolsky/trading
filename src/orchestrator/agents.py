@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import pandas as pd
 
-from agent_framework import AgentResult, RunContext, TradingAgent
+from src.agent_framework import AgentResult, RunContext, TradingAgent
 
 logger = logging.getLogger(__name__)
 

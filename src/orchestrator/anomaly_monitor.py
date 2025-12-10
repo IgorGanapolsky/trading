@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections import defaultdict, deque
 from statistics import median
-from typing import Any, Deque, Dict, Optional
+from typing import Any
 
 from src.orchestrator.telemetry import OrchestratorTelemetry
 
@@ -36,7 +36,7 @@ class AnomalyMonitor:
         self.min_events = min_events
         self.rejection_threshold = rejection_threshold
         self.confidence_floor = confidence_floor
-        self._history: Dict[str, Deque[dict[str, Any]]] = defaultdict(
+        self._history: dict[str, deque[dict[str, Any]]] = defaultdict(
             lambda: deque(maxlen=self.window)
         )
 
@@ -47,7 +47,7 @@ class AnomalyMonitor:
         ticker: str,
         status: str,
         metrics: dict[str, Any] | None = None,
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         bucket = self._history[gate]
         entry = {
             "status": status,
@@ -60,7 +60,7 @@ class AnomalyMonitor:
             return None
 
         rejection_rate = sum(1 for item in bucket if item["status"] == "reject") / len(bucket)
-        anomaly: Optional[dict[str, Any]] = None
+        anomaly: dict[str, Any] | None = None
 
         if rejection_rate >= self.rejection_threshold:
             anomaly = {

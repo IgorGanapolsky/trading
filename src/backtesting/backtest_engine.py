@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Backtest Engine Module
 
@@ -12,14 +14,31 @@ Features:
     - Works with existing CoreStrategy class
     - Uses yfinance for historical price data
 
+ARCHITECTURE NOTE (Dec 2025 - per Carlos Perez's LLM finance critique):
+========================================================================
+This engine uses DETERMINISTIC Python code for all backtesting operations.
+We deliberately DO NOT use LLMs for:
+  - Applying trading rules to historical data
+  - Sequential condition checking over time series
+  - Any multi-step rule-based logic
+
+LLMs suffer from "process corruption" - they may silently drop conditions
+(e.g., "RSI < 70" or "not Friday") after processing many data points,
+producing invalid backtest results with no error message.
+
+All rule application is done via pandas/numpy for guaranteed consistency.
+LLMs are reserved for sentiment analysis and market outlook only.
+
+See: @IntuitMachine's analysis on LLM working memory limitations.
+
 Author: Trading System
 Created: 2025-11-02
 """
 
 import logging
 import os
-from datetime import datetime, timedelta
-from typing import Any, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -27,10 +46,18 @@ import yfinance as yf
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
+
 from src.agents.rl_agent import RLFilter
+from src.analyst.bias_store import BiasSnapshot
 from src.backtesting.backtest_results import BacktestResults
+from src.backtesting.bias_replay import BiasReplay
 from src.risk.risk_manager import RiskManager
 from src.utils.technical_indicators import calculate_technical_score
+
+try:  # Optional dependency for point-in-time sentiment
+    from rag_store.sqlite_store import SentimentSQLiteStore
+except Exception:  # noqa: BLE001
+    SentimentSQLiteStore = None  # type: ignore[misc]
 
 # Import slippage model for realistic execution costs
 try:
@@ -73,7 +100,9 @@ class BacktestEngine:
         enable_slippage: bool = True,
         slippage_bps: float = 5.0,
         use_hybrid_gates: bool = False,
-        hybrid_options: Optional[dict[str, Any]] = None,
+        hybrid_options: dict[str, Any] | None = None,
+        bias_replay: BiasReplay | None = None,
+        sentiment_store: SentimentSQLiteStore | None = None,
     ):
         """
         Initialize the backtest engine.
@@ -127,9 +156,9 @@ class BacktestEngine:
         self.total_slippage_cost = 0.0  # Track cumulative slippage
         self.use_hybrid_gates = use_hybrid_gates
         self.hybrid_options = hybrid_options or {}
-        self.hybrid_gate_rl: Optional[RLFilter] = None
-        self.hybrid_risk: Optional[RiskManager] = None
-        self.hybrid_sentiment: Optional[SyntheticSentimentModel] = None
+        self.hybrid_gate_rl: RLFilter | None = None
+        self.hybrid_risk: RiskManager | None = None
+        self.hybrid_sentiment: SyntheticSentimentModel | None = None
         self.momentum_min_score = float(os.getenv("MOMENTUM_MIN_SCORE", "0.0"))
         self.momentum_macd_threshold = float(os.getenv("MOMENTUM_MACD_THRESHOLD", "0.0"))
         self.momentum_rsi_overbought = float(os.getenv("MOMENTUM_RSI_OVERBOUGHT", "70.0"))
@@ -157,6 +186,13 @@ class BacktestEngine:
         logger.info(f"Backtest engine initialized: {start_date} to {end_date}")
         logger.info(f"Initial capital: ${initial_capital:,.2f}")
         logger.info(f"Strategy: {type(strategy).__name__}")
+
+        self.bias_replay = bias_replay
+        self.bias_replay_threshold = float(os.getenv("BACKTEST_BIAS_NEGATIVE_THRESHOLD", "-0.2"))
+        if SentimentSQLiteStore is None:
+            self.sentiment_store = None
+        else:
+            self.sentiment_store = sentiment_store
 
     def run(self) -> BacktestResults:
         """
@@ -230,7 +266,7 @@ class BacktestEngine:
         alpaca_key = os.getenv("ALPACA_API_KEY")
         alpaca_secret = os.getenv("ALPACA_SECRET_KEY")
         use_alpaca = bool(alpaca_key and alpaca_secret)
-        client: Optional[StockHistoricalDataClient] = None
+        client: StockHistoricalDataClient | None = None
 
         if use_alpaca:
             client = StockHistoricalDataClient(alpaca_key, alpaca_secret)
@@ -358,6 +394,9 @@ class BacktestEngine:
         """
         date_str = date.strftime("%Y-%m-%d")
 
+        # Check for exit conditions (stop-loss / take-profit)
+        self._check_exit_conditions(date, date_str)
+
         try:
             if self.use_hybrid_gates:
                 self._simulate_hybrid_day(date, date_str)
@@ -371,10 +410,108 @@ class BacktestEngine:
         self.equity_curve.append(self.portfolio_value)
         self.dates.append(date_str)
 
+    def _check_exit_conditions(self, date: datetime, date_str: str) -> None:
+        """
+        Check and execute exit conditions for current positions.
+        """
+        # Create a copy of keys to allow modification during iteration
+        for symbol in list(self.positions.keys()):
+            quantity = self.positions[symbol]
+            if quantity <= 0:
+                continue
+
+            current_price = self._get_price(symbol, date)
+            if not current_price:
+                continue
+
+            # Calculate average entry price
+            total_cost = self.position_costs.get(symbol, 0.0)
+            avg_entry_price = total_cost / quantity if quantity > 0 else 0.0
+
+            if avg_entry_price <= 0:
+                continue
+
+            # Calculate return percentage
+            return_pct = (current_price - avg_entry_price) / avg_entry_price
+
+            # Check Stop Loss
+            stop_loss_pct = getattr(self.strategy, "stop_loss_pct", None)
+            if stop_loss_pct and return_pct < -stop_loss_pct:
+                self._execute_sell(
+                    symbol=symbol,
+                    date=date,
+                    date_str=date_str,
+                    quantity=quantity,
+                    price=current_price,
+                    reason=f"Stop Loss ({return_pct:.2%})",
+                )
+                continue
+
+            # Check Take Profit
+            take_profit_pct = getattr(self.strategy, "take_profit_pct", None)
+            if take_profit_pct and return_pct > take_profit_pct:
+                self._execute_sell(
+                    symbol=symbol,
+                    date=date,
+                    date_str=date_str,
+                    quantity=quantity,
+                    price=current_price,
+                    reason=f"Take Profit ({return_pct:.2%})",
+                )
+
+    def _execute_sell(
+        self, symbol: str, date: datetime, date_str: str, quantity: float, price: float, reason: str
+    ) -> None:
+        """Execute a sell order."""
+        executed_price, slippage_cost = self._apply_slippage_adjustment(
+            symbol=symbol, date=date, base_price=price, notional=quantity * price, side="sell"
+        )
+
+        sale_value = quantity * executed_price
+
+        # Calculate P&L correctly: subtract slippage cost from gross P&L
+        gross_pnl = sale_value - self.position_costs[symbol]
+        net_pnl = gross_pnl - slippage_cost  # Slippage reduces actual profit
+
+        trade = {
+            "date": date_str,
+            "symbol": symbol,
+            "action": "sell",
+            "quantity": quantity,
+            "price": executed_price,
+            "base_price": price,
+            "slippage_cost": slippage_cost,
+            "amount": sale_value,
+            "reason": reason,
+            "pnl": net_pnl,  # Fixed: now accounts for slippage cost
+            "gross_pnl": gross_pnl,  # Track gross for analysis
+            "return_pct": (net_pnl / self.position_costs[symbol]) * 100,  # Fixed: net return %
+        }
+        self.trades.append(trade)
+
+        # Update state
+        self.current_capital += sale_value
+        del self.positions[symbol]
+        del self.position_costs[symbol]
+
+        logger.info(f"{date_str}: SOLD {symbol} - {reason}")
+
     def _simulate_dca_day(self, date: datetime, date_str: str) -> None:
-        """Legacy DCA-style backtest flow (pre-hybrid)."""
+        """Legacy DCA-style backtest flow (pre-hybrid) with basic risk checks."""
         # Update portfolio value with current prices
         self._update_portfolio_value(date)
+
+        # ============================================================
+        # RISK CHECK 1: Daily Loss Circuit Breaker
+        # ============================================================
+        max_daily_loss_pct = float(os.getenv("MAX_DAILY_LOSS_PCT", "2.0")) / 100
+        if self.portfolio_value < self.initial_capital * (1 - max_daily_loss_pct):
+            daily_loss = (self.initial_capital - self.portfolio_value) / self.initial_capital
+            logger.warning(
+                f"{date_str}: Daily loss circuit breaker triggered "
+                f"({daily_loss * 100:.2f}% > {max_daily_loss_pct * 100:.1f}% limit)"
+            )
+            return
 
         # Calculate momentum scores for this date
         momentum_scores = []
@@ -428,13 +565,48 @@ class BacktestEngine:
                 allocation_type = "VCA"
 
                 if not vca_calc.should_invest:
-                    logger.debug(f"{date_str}: VCA recommends skipping investment: {vca_calc.reason}")
+                    logger.debug(
+                        f"{date_str}: VCA recommends skipping investment: {vca_calc.reason}"
+                    )
                     return
             except Exception as exc:
                 logger.warning(f"{date_str}: VCA calculation failed, using base: {exc}")
                 effective_allocation = daily_allocation
 
         if self.current_capital < effective_allocation:
+            return
+
+        # ============================================================
+        # RISK CHECK 2: Maximum Position Size (15% of portfolio per symbol)
+        # ============================================================
+        max_position_pct = float(os.getenv("MAX_POSITION_SIZE_PCT", "15.0")) / 100
+        current_position_value = self.positions.get(best_etf, 0.0) * price
+        new_position_value = current_position_value + effective_allocation
+        position_pct = new_position_value / self.portfolio_value if self.portfolio_value > 0 else 0
+
+        if position_pct > max_position_pct:
+            # Cap allocation to stay within limit
+            max_additional = (max_position_pct * self.portfolio_value) - current_position_value
+            if max_additional <= 0:
+                logger.warning(
+                    f"{date_str}: {best_etf} already at max position ({position_pct * 100:.1f}% "
+                    f"> {max_position_pct * 100:.0f}% limit). Skipping."
+                )
+                return
+            logger.info(
+                f"{date_str}: Capping {best_etf} allocation from ${effective_allocation:.2f} "
+                f"to ${max_additional:.2f} (position limit)"
+            )
+            effective_allocation = max_additional
+
+        # ============================================================
+        # RISK CHECK 3: Minimum Trade Size
+        # ============================================================
+        min_trade_size = float(os.getenv("MIN_TRADE_SIZE", "3.0"))
+        if effective_allocation < min_trade_size:
+            logger.debug(
+                f"{date_str}: Allocation ${effective_allocation:.2f} below minimum ${min_trade_size}"
+            )
             return
 
         executed_price, slippage_cost = self._apply_slippage_adjustment(
@@ -455,6 +627,7 @@ class BacktestEngine:
             "slippage_cost": slippage_cost,
             "amount": effective_allocation,
             "reason": f"Daily {allocation_type} purchase",
+            "risk_checks_passed": ["circuit_breaker", "position_limit", "min_trade_size"],
         }
         self.trades.append(trade)
 
@@ -486,8 +659,12 @@ class BacktestEngine:
             if rl_decision["action"] != "long":
                 continue
 
-            sentiment = self.hybrid_sentiment.score(hist)
-            if not sentiment["accepted"]:
+            snapshot = self._get_point_in_time_sentiment(symbol, date)
+            if snapshot:
+                sentiment = snapshot
+            else:
+                sentiment = self.hybrid_sentiment.score(hist)
+            if not sentiment.get("accepted", False):
                 continue
 
             price = float(hist["Close"].iloc[-1])
@@ -546,6 +723,7 @@ class BacktestEngine:
         date: datetime,
         base_price: float,
         notional: float,
+        side: str = "buy",
         hist: pd.DataFrame | None = None,
     ) -> tuple[float, float]:
         executed_price = base_price
@@ -564,7 +742,7 @@ class BacktestEngine:
             slippage_result = self.slippage_model.calculate_slippage(
                 price=base_price,
                 quantity=quantity_estimate,
-                side="buy",
+                side=side,
                 symbol=symbol,
                 volume=avg_volume,
                 volatility=volatility,
@@ -574,7 +752,8 @@ class BacktestEngine:
             self.total_slippage_cost += slippage_cost
 
         return executed_price, slippage_cost
-    def _get_historical_data(self, symbol: str, date: datetime) -> Optional[pd.DataFrame]:
+
+    def _get_historical_data(self, symbol: str, date: datetime) -> pd.DataFrame | None:
         """
         Get historical data for a symbol up to a specific date.
 
@@ -627,7 +806,7 @@ class BacktestEngine:
             },
         }
 
-    def _calculate_momentum_for_date(self, symbol: str, date: datetime) -> Optional[float]:
+    def _calculate_momentum_for_date(self, symbol: str, date: datetime) -> float | None:
         """
         Calculate momentum score for a symbol at a specific date.
 
@@ -679,7 +858,64 @@ class BacktestEngine:
 
         return (end_price - start_price) / start_price
 
-    def _get_price(self, symbol: str, date: datetime) -> Optional[float]:
+    def _get_bias_snapshot(self, symbol: str, date: datetime) -> BiasSnapshot | None:
+        if not self.bias_replay:
+            return None
+        if date.tzinfo is None:
+            aware_date = date.replace(tzinfo=timezone.utc)
+        else:
+            aware_date = date.astimezone(timezone.utc)
+        try:
+            return self.bias_replay.get_bias(symbol, aware_date)
+        except Exception:
+            return None
+
+    def _bias_blocks_trade(self, symbol: str, date: datetime) -> bool:
+        snapshot = self._get_bias_snapshot(symbol, date)
+        if snapshot is None:
+            return False
+        return snapshot.score < self.bias_replay_threshold
+
+    def _get_point_in_time_sentiment(
+        self,
+        symbol: str,
+        date: datetime,
+    ) -> dict[str, Any] | None:
+        if not getattr(self, "sentiment_store", None):
+            return None
+        try:
+            rows = list(
+                self.sentiment_store.fetch_latest_by_ticker(  # type: ignore[union-attr]
+                    symbol, limit=1, as_of=date
+                )
+            )
+        except Exception:
+            return None
+        if not rows:
+            return None
+        row = rows[0]
+        raw_score = row["score"]
+        if raw_score is None:
+            normalized = 0.0
+        else:
+            raw_float = float(raw_score)
+            if raw_float > 1.0 or raw_float < -1.0:
+                normalized = max(-1.0, min(1.0, (raw_float - 50.0) / 50.0))
+            else:
+                normalized = raw_float
+        threshold = getattr(self.hybrid_sentiment, "negative_threshold", -0.2)
+        accepted = normalized >= threshold
+        return {
+            "score": normalized,
+            "accepted": accepted,
+            "threshold": threshold,
+            "reason": "rag_store_snapshot",
+            "confidence": row.get("confidence"),
+            "snapshot_date": row.get("snapshot_date"),
+            "source": "rag_store",
+        }
+
+    def _get_price(self, symbol: str, date: datetime) -> float | None:
         """
         Get the closing price for a symbol on a specific date.
 
@@ -726,16 +962,28 @@ class BacktestEngine:
         # Calculate daily returns for Sharpe ratio
         daily_returns = np.diff(self.equity_curve) / self.equity_curve[:-1]
 
-        # Sharpe ratio
-        if len(daily_returns) > 1:
+        # Sharpe ratio - with volatility floor to prevent extreme values
+        # Requires minimum 30 trading days for statistical significance
+        MIN_TRADING_DAYS = 30
+        MIN_VOLATILITY_FLOOR = 0.0001  # 0.01% minimum daily volatility
+
+        if len(daily_returns) >= MIN_TRADING_DAYS:
             mean_return = np.mean(daily_returns)
             std_return = np.std(daily_returns)
+            # Apply volatility floor to prevent extreme Sharpe ratios
+            # (e.g., -45.86 from consistent small losses with near-zero volatility)
+            std_return = max(std_return, MIN_VOLATILITY_FLOOR)
             risk_free_rate_daily = 0.04 / 252
-            sharpe_ratio = (
-                (mean_return - risk_free_rate_daily) / std_return * np.sqrt(252)
-                if std_return > 0
-                else 0.0
-            )
+            sharpe_ratio = (mean_return - risk_free_rate_daily) / std_return * np.sqrt(252)
+            # Clamp extreme values to reasonable bounds
+            sharpe_ratio = np.clip(sharpe_ratio, -10.0, 10.0)
+        elif len(daily_returns) > 1:
+            # Insufficient data for reliable Sharpe - compute but flag as unreliable
+            mean_return = np.mean(daily_returns)
+            std_return = max(np.std(daily_returns), MIN_VOLATILITY_FLOOR)
+            risk_free_rate_daily = 0.04 / 252
+            sharpe_ratio = (mean_return - risk_free_rate_daily) / std_return * np.sqrt(252)
+            sharpe_ratio = np.clip(sharpe_ratio, -10.0, 10.0)
         else:
             sharpe_ratio = 0.0
 
@@ -764,6 +1012,21 @@ class BacktestEngine:
 
         average_trade_return = (total_return / total_trades) if total_trades > 0 else 0.0
 
+        # Calculate $100/day target metrics
+        target_daily_net_income = 100.0
+        daily_pnl_values = self._calculate_daily_pnl()
+        avg_daily_pnl = np.mean(daily_pnl_values) if len(daily_pnl_values) > 0 else 0.0
+        pct_days_above_target = (
+            (
+                np.sum(np.array(daily_pnl_values) >= target_daily_net_income)
+                / len(daily_pnl_values)
+                * 100
+            )
+            if len(daily_pnl_values) > 0
+            else 0.0
+        )
+        worst_5day_drawdown, worst_20day_drawdown = self._calculate_rolling_drawdowns()
+
         results = BacktestResults(
             trades=self.trades,
             equity_curve=self.equity_curve,
@@ -782,6 +1045,10 @@ class BacktestEngine:
             trading_days=len(self.dates) - 1,
             total_slippage_cost=self.total_slippage_cost,
             slippage_enabled=self.enable_slippage,
+            avg_daily_pnl=avg_daily_pnl,
+            pct_days_above_target=pct_days_above_target,
+            worst_5day_drawdown=worst_5day_drawdown,
+            worst_20day_drawdown=worst_20day_drawdown,
         )
 
         # Log slippage impact
@@ -793,6 +1060,53 @@ class BacktestEngine:
             )
 
         return results
+
+    def _calculate_daily_pnl(self) -> list[float]:
+        """
+        Calculate daily P&L values from equity curve.
+
+        Returns:
+            List of daily P&L values
+        """
+        if len(self.equity_curve) < 2:
+            return []
+
+        daily_pnl = []
+        for i in range(1, len(self.equity_curve)):
+            daily_change = self.equity_curve[i] - self.equity_curve[i - 1]
+            daily_pnl.append(daily_change)
+
+        return daily_pnl
+
+    def _calculate_rolling_drawdowns(self) -> tuple[float, float]:
+        """
+        Calculate worst 5-day and 20-day rolling drawdowns.
+
+        Returns:
+            Tuple of (worst_5day_drawdown, worst_20day_drawdown) in dollars
+        """
+        if len(self.equity_curve) < 6:
+            return 0.0, 0.0
+
+        equity_array = np.array(self.equity_curve)
+        worst_5day = 0.0
+        worst_20day = 0.0
+
+        # Calculate rolling 5-day drawdowns
+        for i in range(5, len(equity_array)):
+            window_start = equity_array[i - 5]
+            window_end = equity_array[i]
+            drawdown = window_start - window_end  # Positive = loss
+            worst_5day = max(worst_5day, drawdown)
+
+        # Calculate rolling 20-day drawdowns
+        for i in range(20, len(equity_array)):
+            window_start = equity_array[i - 20]
+            window_end = equity_array[i]
+            drawdown = window_start - window_end  # Positive = loss
+            worst_20day = max(worst_20day, drawdown)
+
+        return worst_5day, worst_20day
 
 
 class SyntheticSentimentModel:

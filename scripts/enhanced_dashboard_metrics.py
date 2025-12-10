@@ -150,7 +150,7 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
             dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
             hour = dt.hour
             return start_hour <= hour < end_hour
-        except:
+        except Exception:
             return False
 
     def _calculate_execution_metrics(self, all_trades: list[dict]) -> dict[str, Any]:
@@ -250,7 +250,7 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
             try:
                 latest_dt = datetime.fromisoformat(latest_date)
                 days_old = (datetime.now() - latest_dt.replace(tzinfo=None)).days
-            except:
+            except Exception:
                 days_old = 999
         else:
             days_old = 999
@@ -280,7 +280,7 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
             start_date_str = challenge_data.get("start_date", "2025-10-29")
             try:
                 start_date = datetime.fromisoformat(start_date_str).date()
-            except:
+            except Exception:
                 start_date = date.today() - timedelta(days=30)
         else:
             start_date = date.today() - timedelta(days=30)
@@ -461,7 +461,7 @@ class EnhancedMetricsCalculator(TradingMetricsCalculator):
                     pl = trade.get("pl", 0.0)
                     hourly_performance[hour]["pl"] += pl
                     hourly_performance[hour]["trades"] += 1
-                except:
+                except Exception:
                     pass
 
         # Find best/worst hours

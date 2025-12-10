@@ -5,14 +5,18 @@ Uses sentence-transformers for local, FREE text embeddings.
 """
 
 import logging
-from typing import Any, Optional
+import os
+from typing import Any
 
 import numpy as np
 
 logger = logging.getLogger(__name__)
 
+# Environment variable to disable RAG features (useful for CI or minimal environments)
+RAG_ENABLED = os.getenv("ENABLE_RAG_FEATURES", "true").lower() in {"1", "true", "yes", "on"}
+
 # Lazy import to avoid breaking crypto trading when RAG dependencies aren't installed
-_SentenceTransformer: Optional[type] = None
+_SentenceTransformer: type | None = None
 
 
 def _get_sentence_transformer():
@@ -84,6 +88,9 @@ class NewsEmbedder:
         except Exception as e:
             logger.error(f"Error embedding text: {e}")
             raise
+
+    # Alias for compatibility
+    embed_single = embed_text
 
     def embed_batch(self, texts: list[str], batch_size: int = 32) -> list[np.ndarray]:
         """
@@ -158,7 +165,7 @@ class NewsEmbedder:
 _embedder_instance = None
 
 
-def get_embedder(model_name: str = "all-MiniLM-L6-v2") -> NewsEmbedder:
+def get_embedder(model_name: str = "all-MiniLM-L6-v2") -> NewsEmbedder | None:
     """
     Get or create a NewsEmbedder instance (singleton pattern).
 
@@ -166,11 +173,20 @@ def get_embedder(model_name: str = "all-MiniLM-L6-v2") -> NewsEmbedder:
         model_name: HuggingFace model ID
 
     Returns:
-        NewsEmbedder instance
+        NewsEmbedder instance, or None if RAG is disabled or unavailable
     """
     global _embedder_instance
 
+    # Check if RAG is disabled via environment variable
+    if not RAG_ENABLED:
+        logger.info("RAG features disabled via ENABLE_RAG_FEATURES=false")
+        return None
+
     if _embedder_instance is None:
-        _embedder_instance = NewsEmbedder(model_name=model_name)
+        try:
+            _embedder_instance = NewsEmbedder(model_name=model_name)
+        except Exception as e:
+            logger.warning(f"Failed to create embedder (RAG will be disabled): {e}")
+            return None
 
     return _embedder_instance

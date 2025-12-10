@@ -2,7 +2,69 @@
 
 ## What This Does
 
-This MCP (Model Context Protocol) server enables Claude Desktop to read RSS feeds directly, allowing you to consume crypto newsletters (like CoinSnacks) and market analysis content during conversations.
+This MCP (Model Context Protocol) configuration enables Claude Desktop to:
+
+1. **Trade via Alpaca**: Execute stock/options orders, manage positions, get market data via the Alpaca MCP server
+2. **Read RSS Feeds**: Consume crypto newsletters (like CoinSnacks) and market analysis content
+
+## Available MCP Servers
+
+### 1. Alpaca Trading MCP Server (`@ideadesignmedia/alpaca-mcp`)
+
+Full trading and market data access via Alpaca APIs:
+
+**Trading Tools**:
+- `alpaca.create_order` - Place stock/options orders
+- `alpaca.list_positions` - View current positions
+- `alpaca.get_position` - Get specific position details
+- `alpaca.close_position` / `alpaca.close_all_positions` - Close positions
+- `alpaca.list_orders` / `alpaca.get_order` - View order status
+- `alpaca.cancel_order` / `alpaca.cancel_all_orders` - Cancel orders
+- `alpaca.get_account` / `alpaca.account_overview` - Account info
+- `alpaca.get_clock` / `alpaca.get_calendar` - Market hours
+- `alpaca.get_portfolio_history` - Historical performance
+
+**Market Data Tools**:
+- `alpaca.data.stocks.latest_bar` / `alpaca.data.stocks.latest_quote` - Real-time prices
+- `alpaca.data.stocks.bars` / `alpaca.data.stocks.quotes` - Historical data
+- `alpaca.data.options.chain` / `alpaca.data.options.snapshots` - Options data
+- `alpaca.data.news` - Market news
+- `alpaca.get_stock_info` - Comprehensive stock summary
+
+**Configuration**: Requires `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` environment variables.
+
+### 2. RSS Feed MCP Server (`@veithly/rss-mcp`)
+
+Read RSS feeds for crypto newsletters and market analysis.
+
+### 3. Microsoft Learn MCP Server (HTTP-based)
+
+Real-time access to official Microsoft documentation for .NET, Azure, C#, and more.
+
+**Available Tools**:
+- `microsoft_docs_search` - Semantic search across Microsoft Learn documentation
+- `microsoft_docs_fetch` - Retrieve and convert documentation pages to markdown
+- `microsoft_code_sample_search` - Find official code snippets with language filtering
+
+**Key Benefits**:
+- No API keys, logins, or sign-ups required - free service
+- Real-time documentation access (always up-to-date)
+- Only accesses official first-party Microsoft documentation
+- Great for .NET, Azure, C#, ASP.NET Core, and other Microsoft technologies
+
+**Configuration**: Uses HTTP transport (no local installation needed):
+```json
+"microsoft-learn": {
+  "type": "http",
+  "url": "https://learn.microsoft.com/api/mcp",
+  "description": "Microsoft Learn MCP Server - Real-time access to official Microsoft documentation"
+}
+```
+
+**Claude Code Installation** (alternative):
+```bash
+claude mcp add --transport http microsoft-learn https://learn.microsoft.com/api/mcp
+```
 
 ## Installation Steps
 
@@ -41,6 +103,16 @@ Example of merged config:
     "your-existing-server": {
       ...
     },
+    "alpaca": {
+      "command": "npx",
+      "args": ["-y", "@ideadesignmedia/alpaca-mcp", "--paper"],
+      "description": "Alpaca Trading MCP Server - stocks, options, and market data",
+      "env": {
+        "ALPACA_KEY_ID": "${ALPACA_API_KEY}",
+        "ALPACA_SECRET_KEY": "${ALPACA_SECRET_KEY}",
+        "ALPACA_PAPER": "true"
+      }
+    },
     "rss": {
       "command": "npx",
       "args": ["-y", "@veithly/rss-mcp"],
@@ -52,6 +124,8 @@ Example of merged config:
   }
 }
 ```
+
+**Important**: For live trading, remove `"--paper"` from args and set `"ALPACA_PAPER": "false"`.
 
 #### Option B: Fresh Installation
 
@@ -145,7 +219,14 @@ If not installed, download from: https://nodejs.org/
 
 ## Package Information
 
-**MCP Package**: `@veithly/rss-mcp`
+### Alpaca Trading MCP Server
+**Package**: `@ideadesignmedia/alpaca-mcp`
+**npm**: https://www.npmjs.com/package/@ideadesignmedia/alpaca-mcp
+**Features**: Trading v2 API, Market Data for stocks & options, news, corporate actions
+**License**: MIT
+
+### RSS Feed MCP Server
+**Package**: `@veithly/rss-mcp`
 **Repository**: https://github.com/veithly/rss-mcp
 **License**: MIT
 
@@ -160,10 +241,24 @@ If not installed, download from: https://nodejs.org/
 
 Once configured, you can:
 
+### Alpaca Trading Benefits
+1. **Execute Trades**: Place stock/options orders directly from Claude conversations
+2. **Portfolio Management**: View positions, account balances, and P/L in real-time
+3. **Market Data**: Get real-time quotes, historical bars, and options chains
+4. **News Integration**: Access market news alongside trading decisions
+5. **Account Overview**: Quick snapshot of account, open orders, and positions
+
+### RSS Feed Benefits
 1. **Daily Newsletter Digest**: Ask Claude to summarize today's CoinSnacks newsletter
 2. **Market Sentiment Analysis**: Extract key themes and sentiment from recent posts
 3. **Integration with Research**: Use newsletter insights during trading research phase
 4. **Automated Monitoring**: Schedule daily checks of new content (via Claude conversations)
+
+### Microsoft Learn Benefits
+1. **Up-to-date Documentation**: Access latest .NET, Azure, and C# docs during development
+2. **Code Samples**: Find official code snippets for implementing trading features
+3. **No Hallucination Risk**: AI responses backed by trusted Microsoft documentation
+4. **Zero Configuration**: Free service with no API keys or authentication required
 
 ## Next Steps
 

@@ -14,17 +14,6 @@
       }
     },
     {
-      "id": "alpaca-trading",
-      "display_name": "Alpaca Trading MCP Server",
-      "module": "mcp.servers.alpaca",
-      "tools": {
-        "submit_order": "submit_order",
-        "get_positions": "get_positions",
-        "get_clock": "get_clock",
-        "get_account": "get_account"
-      }
-    },
-    {
       "id": "mcp-trader",
       "display_name": "MCP Trader Analytics",
       "module": "mcp.servers.mcp_trader",
@@ -113,6 +102,13 @@
         "get_langsmith_stats": "get_langsmith_stats",
         "check_langsmith_health": "check_langsmith_health"
       }
+    },
+    {
+      "id": "alpaca",
+      "display_name": "Alpaca Official MCP Server",
+      "transport": "http",
+      "endpoint": "http://127.0.0.1:8801",
+      "tools": {}
     }
   ]
 }

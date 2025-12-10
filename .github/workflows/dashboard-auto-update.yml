@@ -43,6 +43,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Update performance log
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          PAPER_TRADING: 'true'
+        run: |
+          echo "📊 Updating performance log with current account data..."
+          python3 scripts/update_performance_log.py || echo "⚠️ Performance log update failed (non-fatal)"
+
       - name: Generate dashboard
         run: |
           echo "📊 Generating world-class progress dashboard..."
@@ -52,6 +61,39 @@ jobs:
         run: |
           echo "🧠 Generating RAG Knowledge Base wiki..."
           python3 scripts/generate_rag_wiki.py || echo "⚠️ RAG wiki generation failed (non-fatal)"
+
+      - name: Commit performance data to main repo
+        continue-on-error: true
+        run: |
+          echo "💾 Committing updated performance data to main repo..."
+
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+          # Stage performance data files
+          git add data/performance_log.json 2>/dev/null || true
+          git add wiki/Progress-Dashboard.md 2>/dev/null || true
+
+          # Check if there are changes to commit
+          if ! git diff --cached --quiet; then
+            echo "✅ Performance data updated, committing..."
+
+            git commit -m "chore: Update performance data - $(date -u +'%Y-%m-%d %H:%M:%S UTC')" || {
+              echo "::warning::Commit failed (may already be committed)"
+              exit 0
+            }
+
+            # Pull latest and push with retry
+            git pull --rebase origin main || true
+            git push origin main || {
+              echo "::warning::Push failed - will retry on next run"
+              exit 0
+            }
+
+            echo "✅ Performance data committed to main repo"
+          else
+            echo "ℹ️  No performance data changes to commit"
+          fi
 
       - name: Update GitHub Wiki
         env:

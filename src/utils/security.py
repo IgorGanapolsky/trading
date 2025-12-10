@@ -1,3 +1,4 @@
+# ruff: noqa: UP045
 """
 Security utilities for masking sensitive information in logs and output.
 
@@ -7,10 +8,9 @@ error messages.
 """
 
 import re
-from typing import Optional
 
 
-def mask_api_key(api_key: Optional[str], visible_chars: int = 4) -> str:
+def mask_api_key(api_key: str | None, visible_chars: int = 4) -> str:
     """
     Mask an API key, showing only the first few characters.
 
@@ -36,7 +36,7 @@ def mask_api_key(api_key: Optional[str], visible_chars: int = 4) -> str:
     return f"{api_key[:visible_chars]}***"
 
 
-def mask_secret(secret: Optional[str], visible_chars: int = 4) -> str:
+def mask_secret(secret: str | None, visible_chars: int = 4) -> str:
     """
     Mask a secret key, showing only the first few characters.
 

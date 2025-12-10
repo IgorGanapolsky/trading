@@ -29,7 +29,7 @@ class TestTradeGatewayLiquidityCheck:
 
     def test_illiquid_option_rejected_with_wide_spread(self):
         """Test that options with bid-ask spread > 5% are rejected."""
-        gateway = TradeGateway(executor=None, paper=True)
+        gateway = TradeGateway(executor=None, paper=True, skip_market_hours_check=True)
         gateway.executor = MockExecutor(account_equity=50000)
 
         # 15% spread = (2.00 - 1.70) / 2.00 = 0.15
@@ -49,7 +49,7 @@ class TestTradeGatewayLiquidityCheck:
 
     def test_liquid_option_approved_with_tight_spread(self):
         """Test that options with bid-ask spread < 5% are approved."""
-        gateway = TradeGateway(executor=None, paper=True)
+        gateway = TradeGateway(executor=None, paper=True, skip_market_hours_check=True)
         gateway.executor = MockExecutor(account_equity=50000)
 
         # 2% spread = (2.00 - 1.96) / 2.00 = 0.02
@@ -68,7 +68,7 @@ class TestTradeGatewayLiquidityCheck:
 
     def test_equity_trade_bypasses_liquidity_check(self):
         """Test that non-option trades skip liquidity check."""
-        gateway = TradeGateway(executor=None, paper=True)
+        gateway = TradeGateway(executor=None, paper=True, skip_market_hours_check=True)
         gateway.executor = MockExecutor(account_equity=50000)
 
         request = TradeRequest(
@@ -89,7 +89,7 @@ class TestTradeGatewayIVRankCheck:
 
     def test_low_iv_rejects_credit_strategy(self):
         """Test that IV Rank < 20 rejects credit strategies."""
-        gateway = TradeGateway(executor=None, paper=True)
+        gateway = TradeGateway(executor=None, paper=True, skip_market_hours_check=True)
         gateway.executor = MockExecutor(account_equity=50000)
 
         request = TradeRequest(
@@ -107,7 +107,7 @@ class TestTradeGatewayIVRankCheck:
 
     def test_high_iv_approves_credit_strategy(self):
         """Test that IV Rank >= 20 allows credit strategies."""
-        gateway = TradeGateway(executor=None, paper=True)
+        gateway = TradeGateway(executor=None, paper=True, skip_market_hours_check=True)
         gateway.executor = MockExecutor(account_equity=50000)
 
         request = TradeRequest(
@@ -128,7 +128,7 @@ class TestTradeGatewayCapitalEfficiency:
 
     def test_small_account_rejects_iron_condor(self):
         """Test that $5k account cannot trade iron condors (need $10k)."""
-        gateway = TradeGateway(executor=None, paper=True)
+        gateway = TradeGateway(executor=None, paper=True, skip_market_hours_check=True)
         gateway.executor = MockExecutor(account_equity=5000)
 
         request = TradeRequest(
@@ -146,7 +146,7 @@ class TestTradeGatewayCapitalEfficiency:
 
     def test_adequate_capital_allows_iron_condor(self):
         """Test that $50k account can trade iron condors."""
-        gateway = TradeGateway(executor=None, paper=True)
+        gateway = TradeGateway(executor=None, paper=True, skip_market_hours_check=True)
         gateway.executor = MockExecutor(account_equity=50000)
 
         request = TradeRequest(
@@ -167,7 +167,7 @@ class TestTradeGatewayAllocationLimits:
 
     def test_over_allocation_rejected(self):
         """Test that > 15% allocation to single symbol is rejected."""
-        gateway = TradeGateway(executor=None, paper=True)
+        gateway = TradeGateway(executor=None, paper=True, skip_market_hours_check=True)
         gateway.executor = MockExecutor(
             account_equity=10000,
             positions=[{"symbol": "TSLA", "market_value": 1400}],  # 14% already
@@ -187,7 +187,7 @@ class TestTradeGatewayAllocationLimits:
 
     def test_under_allocation_approved(self):
         """Test that < 15% allocation is approved."""
-        gateway = TradeGateway(executor=None, paper=True)
+        gateway = TradeGateway(executor=None, paper=True, skip_market_hours_check=True)
         gateway.executor = MockExecutor(
             account_equity=10000,
             positions=[{"symbol": "TSLA", "market_value": 500}],  # 5% already
@@ -211,7 +211,7 @@ class TestTradeGatewaySuicideCommand:
 
     def test_suicide_command_rejected(self):
         """Test that massive trades are rejected for multiple reasons."""
-        gateway = TradeGateway(executor=None, paper=True)
+        gateway = TradeGateway(executor=None, paper=True, skip_market_hours_check=True)
 
         request = TradeRequest(
             symbol="AMC",

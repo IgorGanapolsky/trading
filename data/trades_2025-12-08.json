@@ -1,0 +1,16 @@
+[
+    {
+        "symbol": "BTCUSD",
+        "action": "BUY",
+        "amount": 10.0,
+        "quantity": 0.0001015,
+        "price": 98500.00,
+        "timestamp": "2025-12-08T10:00:00.000000",
+        "status": "FILLED",
+        "strategy": "CryptoStrategy",
+        "agent_type": "momentum_heuristic",
+        "decision_maker": "Rules",
+        "reason": "Daily crypto purchase - scheduled execution",
+        "mode": "ANALYSIS"
+    }
+]

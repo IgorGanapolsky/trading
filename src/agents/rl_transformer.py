@@ -18,7 +18,7 @@ import logging
 import math
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -56,7 +56,6 @@ if torch is not None and nn is not None:
 
         def forward(self, x: torch.Tensor) -> torch.Tensor:  # pragma: no cover - tiny wrapper
             return x + self.pe[:, : x.size(1), :]
-
 
     class RLTransformerModel(nn.Module):  # type: ignore[misc]
         """Encoder-only transformer tailored for univariate time-series features."""
@@ -148,7 +147,9 @@ if torch is not None and nn is not None:
                     self.model.load_state_dict(state)
                     logger.info("Loaded transformer RL weights from %s", self.state_path)
                 except Exception as exc:  # pragma: no cover - defensive
-                    logger.warning("Failed to load transformer weights (%s). Using random init.", exc)
+                    logger.warning(
+                        "Failed to load transformer weights (%s). Using random init.", exc
+                    )
             else:
                 logger.warning(
                     "Transformer state file missing (%s). Using random init.", self.state_path
@@ -198,7 +199,7 @@ if torch is not None and nn is not None:
         # ------------------------------------------------------------------
         def _build_feature_tensor(
             self, symbol: str
-        ) -> tuple[Optional[torch.Tensor], Optional[np.ndarray]]:
+        ) -> tuple[torch.Tensor | None, np.ndarray | None]:
             result = self._provider.get_daily_bars(symbol, lookback_days=self.lookback_days)
             hist = result.data
             if hist is None or hist.empty or len(hist) < 40:
@@ -226,7 +227,7 @@ if torch is not None and nn is not None:
             scores = avg_vector / total
             return {
                 name: round(float(score), 4)
-                for name, score in zip(self.FEATURE_NAMES, scores.tolist())
+                for name, score in zip(self.FEATURE_NAMES, scores.tolist(), strict=False)
             }
 
         def _classify_regime(self, engineered: np.ndarray | None) -> str:
@@ -247,4 +248,3 @@ if torch is not None and nn is not None:
             if pct_return < -0.01:
                 return "pullback"
             return "neutral"
-

@@ -50,7 +50,7 @@ def get_existing_orders():
     """Get existing stop orders."""
     try:
         return make_request(f"{ALPACA_BASE_URL}/v2/orders?status=open")
-    except:
+    except Exception:
         return []
 
 

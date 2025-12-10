@@ -250,14 +250,17 @@ class TestAlpacaFallback:
         """Test successful Alpaca API fetch."""
         mock_api = MagicMock()
         mock_bar = Mock()
-        mock_bar.o = 100.0
-        mock_bar.h = 101.0
-        mock_bar.l = 99.0  # noqa: E741
-        mock_bar.c = 100.5
-        mock_bar.v = 1000
-        mock_bar.t = datetime(2025, 1, 1)
+        mock_bar.timestamp = datetime(2025, 1, 1)
+        # Mock attributes accessed via dot notation in _fetch_alpaca
+        mock_bar.open = 100.0
+        mock_bar.high = 101.0
+        mock_bar.low = 99.0
+        mock_bar.close = 100.5
+        mock_bar.volume = 1000
 
-        mock_api.get_bars.return_value = [mock_bar]
+        mock_response = Mock()
+        mock_response.data = {"SPY": [mock_bar]}
+        mock_api.get_stock_bars.return_value = mock_response
         mock_provider._alpaca_api = mock_api
 
         result = MarketDataResult(data=pd.DataFrame(), source=DataSource.UNKNOWN)
@@ -278,16 +281,20 @@ class TestAlpacaFallback:
             call_count += 1
             if call_count < 2:
                 raise ConnectionError("Timeout")
-            mock_bar = Mock()
-            mock_bar.o = 100.0
-            mock_bar.h = 101.0
-            mock_bar.l = 99.0  # noqa: E741
-            mock_bar.c = 100.5
-            mock_bar.v = 1000
-            mock_bar.t = datetime(2025, 1, 1)
-            return [mock_bar]
 
-        mock_api.get_bars.side_effect = mock_get_bars
+            mock_bar = Mock()
+            mock_bar.timestamp = datetime(2025, 1, 1)
+            mock_bar.open = 100.0
+            mock_bar.high = 101.0
+            mock_bar.low = 99.0
+            mock_bar.close = 100.5
+            mock_bar.volume = 1000
+
+            mock_response = Mock()
+            mock_response.data = {"SPY": [mock_bar]}
+            return mock_response
+
+        mock_api.get_stock_bars.side_effect = mock_get_bars
         mock_provider._alpaca_api = mock_api
 
         result = MarketDataResult(data=pd.DataFrame(), source=DataSource.UNKNOWN)
@@ -419,21 +426,24 @@ class TestFullFallbackChain:
             # Only yfinance should have been attempted
             assert all(a.source == DataSource.YFINANCE for a in result.attempts)
 
-    def test_fallback_chain_yfinance_fails_alpaca_succeeds(self, mock_provider):
-        """Test fallback from yfinance to Alpaca."""
+    def test_alpaca_priority_over_yfinance(self, mock_provider):
+        """Test that Alpaca is prioritized over yfinance."""
         # Mock Alpaca API
         mock_api = MagicMock()
         mock_bars = []
         for i in range(30):
             mock_bar = Mock()
-            mock_bar.o = 100.0
-            mock_bar.h = 101.0
-            mock_bar.l = 99.0  # noqa: E741
-            mock_bar.c = 100.5
-            mock_bar.v = 1000
-            mock_bar.t = datetime(2025, 1, 1) + timedelta(days=i)
+            mock_bar.timestamp = datetime(2025, 1, 1) + timedelta(days=i)
+            mock_bar.open = 100.0
+            mock_bar.high = 101.0
+            mock_bar.low = 99.0
+            mock_bar.close = 100.5
+            mock_bar.volume = 1000
             mock_bars.append(mock_bar)
-        mock_api.get_bars.return_value = mock_bars
+
+        mock_response = Mock()
+        mock_response.data = {"SPY": mock_bars}
+        mock_api.get_stock_bars.return_value = mock_response
         mock_provider._alpaca_api = mock_api
 
         with patch.object(
@@ -443,10 +453,10 @@ class TestFullFallbackChain:
 
             assert result.source == DataSource.ALPACA
             assert len(result.data) == 30
-            # Both sources should have been attempted
+            # Alpaca is prioritized, so yfinance should NOT be attempted if Alpaca succeeds
             sources = [a.source for a in result.attempts]
-            assert DataSource.YFINANCE in sources
             assert DataSource.ALPACA in sources
+            assert DataSource.YFINANCE not in sources
 
     def test_fallback_chain_all_fail(self, mock_provider):
         """Test complete failure when all sources are unavailable."""

@@ -146,6 +146,13 @@ def main():
         else:
             st.warning("⚠️ System State Not Available")
 
+        # Show recent trades (handles midnight rollover by checking yesterday too)
+        recent_trades = get_latest_trades()
+        if recent_trades:
+            st.info(f"✅ {len(recent_trades)} Recent Trades")
+        else:
+            st.caption("No recent trades")
+
         st.divider()
 
         st.header("🔧 Quick Actions")

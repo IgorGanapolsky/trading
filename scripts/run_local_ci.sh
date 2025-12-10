@@ -22,16 +22,28 @@ if ! command -v act &> /dev/null; then
     exit 1
 fi
 
-# 1. Run Pre-commit hooks
-echo -e "\n${YELLOW}1️⃣  Running Pre-commit Hooks...${NC}"
+# 1. Worktree hygiene (non-destructive)
+echo -e "\n${YELLOW}1️⃣  Checking worktree hygiene...${NC}"
+scripts/worktree_hygiene.sh || true
+
+# Optional strict gate: fail if detached worktrees exist
+if [[ "${STRICT_HYGIENE:-0}" == "1" ]]; then
+    if git worktree list --porcelain | grep -q '^detached'; then
+        echo -e "${RED}❌ Detached worktrees detected. Run scripts/worktree_hygiene.sh --remove-detached or set STRICT_HYGIENE=0 to bypass.${NC}"
+        exit 1
+    fi
+fi
+
+# 2. Run Pre-commit hooks
+echo -e "\n${YELLOW}2️⃣  Running Pre-commit Hooks...${NC}"
 pre-commit run --all-files || {
     echo -e "${RED}❌ Pre-commit hooks failed! Fix the issues above.${NC}"
     exit 1
 }
 echo -e "${GREEN}✅ Pre-commit hooks passed!${NC}"
 
-# 2. Run Critical CI Workflows with ACT
-echo -e "\n${YELLOW}2️⃣  Running GitHub Actions (Local via ACT)...${NC}"
+# 3. Run Critical CI Workflows with ACT
+echo -e "\n${YELLOW}3️⃣  Running GitHub Actions (Local via ACT)...${NC}"
 
 # Run Security Scan
 echo -e "\n${YELLOW}🛡️  Running Security Scan...${NC}"

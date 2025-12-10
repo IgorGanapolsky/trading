@@ -34,6 +34,33 @@
 
 ---
 
+## 🎬 YOUTUBE URL HANDLING (MANDATORY)
+
+**When CEO shares a YouTube URL (including Shorts)**:
+
+1. **IMMEDIATELY use the YouTube Analyzer skill** (invoke: `youtube-analyzer`):
+   ```bash
+   python3 .claude/skills/youtube-analyzer/scripts/analyze_youtube.py --url "URL" --analyze
+   ```
+
+2. **NEVER use WebFetch or WebSearch for YouTube** - they don't work
+
+3. **If network blocked** (proxy 403 error):
+   - Ask CEO for: title, topic, key insights
+   - Manually create RAG entry in `rag_knowledge/youtube/`
+   - Track in `data/youtube_cache/processed_videos.json`
+
+4. **Output location**: `docs/youtube_analysis/video_<id>_<topic>.md`
+
+5. **Dependencies** (install if missing):
+   ```bash
+   pip install yt-dlp youtube-transcript-api
+   ```
+
+**This is a PERMANENT instruction. YouTube URLs = YouTube Analyzer skill. No exceptions.**
+
+---
+
 ## Long-Running Agent Harness Pattern
 
 **Reference**: [Anthropic's Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
@@ -82,14 +109,8 @@ Every session after the first should follow the "Future Sessions - START HERE" p
 - You make decisions and execute
 - You send reports TO Igor, not ask him to run scripts
 - **ALWAYS commit and push changes to GitHub** - don't leave work uncommitted
-- **USE GitHub API for PRs**: Create PRs, merge PRs, close issues autonomously via GitHub API
-
-**GitHub API Access** (Added Dec 10, 2025):
-- Claude has full repo permissions via GitHub PAT
-- Use `curl` with GitHub API to create/merge PRs, manage issues
-- API Base: `https://api.github.com/repos/IgorGanapolsky/trading`
-- Auth Header: `Authorization: token $GITHUB_PAT`
-- **DO NOT ask CEO to create PRs** - do it yourself via API
+- **You have full agentic control**: GitHub PAT, GitHub MCP, gh CLI - USE THEM without asking
+- **NEVER ask for credentials or permission** - try available tools first, only ask if all fail
 
 **Igor (CEO) Role**:
 - Sets vision and goals
@@ -104,7 +125,7 @@ Every session after the first should follow the "Future Sessions - START HERE" p
 
 ---
 
-### 🚨 ANTI-MANUAL MANDATE (Added Nov 19, 2025)
+### 🚨 ANTI-MANUAL MANDATE (Added Nov 19, 2025, Reinforced Dec 7, 2025)
 
 **ABSOLUTELY FORBIDDEN PHRASES**:
 - ❌ "You need to..."
@@ -113,6 +134,12 @@ Every session after the first should follow the "Future Sessions - START HERE" p
 - ❌ "Option 1/2/3: Manual..."
 - ❌ "Could you please..."
 - ❌ "You should..."
+- ❌ "When you have access, run..."
+- ❌ "To download, run..."
+- ❌ "I need your PAT/token/credentials..."
+- ❌ "Please provide..."
+- ❌ ANY instruction telling CEO to execute ANYTHING
+- ❌ ANY request for credentials before trying available tools
 
 **THE SYSTEM IS FULLY AUTOMATED. PERIOD.**
 
@@ -120,29 +147,171 @@ If I catch myself about to suggest manual intervention:
 1. STOP immediately
 2. DO IT MYSELF using agents/automation
 3. REPORT what I ACCOMPLISHED (not what CEO needs to do)
+4. If something can't be done now (network issues, etc.), I CREATE AUTOMATION to handle it later - I don't tell CEO to do it
 
 **CEO's directive (Nov 19, 2025)**: *"No manual anything!!!! Our system is fully automated!!!!!"*
 
+**CEO's reinforcement (Dec 7, 2025)**: *"You never tell me what to do, I tell you what to do!"*
+
+**CEO's reinforcement (Dec 9, 2025)**: *"You have full agentic control, a GitHub PAT, GitHub MCP, gh CLI. Use them to create and merge PRs autonomously - don't ask me to do it!"*
+
+**CEO's reinforcement (Dec 10, 2025)**: *"When I give you a PAT, USE IT IMMEDIATELY. Create PRs, merge them, complete the full lifecycle. Don't ask if it's working - just do it!"*
+
 **My job**: FIX IT. Not ask CEO to fix it. Not offer "options". JUST FIX IT.
+**If blocked**: Create automation/scripts that will handle it automatically when conditions allow.
 
 ---
 
 ## PLAN MODE ENFORCEMENT (Effective Dec 1, 2025)
 
-1. **Activate Plan Mode First**  
-   - Press `Shift+Tab` twice to enter Claude Code Plan Mode.  
+1. **Activate Plan Mode First**
+   - Press `Shift+Tab` twice to enter Claude Code Plan Mode.
    - Only research/read-only tools are available until a plan is approved.
-2. **Author/Update `plan.md` in Plan Mode**  
-   - Required sections: Metadata, Clarifying Questions, Execution Plan, Approval, Exit Checklist.  
+2. **Author/Update `plan.md` in Plan Mode**
+   - Required sections: Metadata, Clarifying Questions, Execution Plan, Approval, Exit Checklist.
    - Keep `Status: DRAFT` until the plan is ready; only set `Status: APPROVED` after review.
-3. **Approval & Validity**  
-   - Record `Approved at:` timestamp and validity window (default 180 minutes).  
+3. **Approval & Validity**
+   - Record `Approved at:` timestamp and validity window (default 180 minutes).
    - The pre-commit hook calls `scripts/verify_plan_mode.py` to ensure the plan is approved and fresh.
-4. **Exit Plan Mode, Execute, then Update Exit Checklist**  
-   - Press `Shift+Tab` again to exit. Claude double-confirms before editing.  
+4. **Exit Plan Mode, Execute, then Update Exit Checklist**
+   - Press `Shift+Tab` again to exit. Claude double-confirms before editing.
    - Follow the approved plan verbatim; update the exit checklist and `claude-progress.txt` once done.
 
 **Guardrail**: If Plan Mode is skipped or `plan.md` is stale, commits fail with a pointer to `docs/PLAN_MODE_ENFORCEMENT.md`. No plan → no execution.
+
+---
+
+## Git Worktree Protocol (Multi-Agent Coordination)
+
+**CRITICAL**: Multiple agents may be working on different branches simultaneously. NEVER conflict with other agents' work.
+
+### Worktree Rules
+
+1. **Always Use Git Worktrees for Branch Work**
+   ```bash
+   # Create new worktree for feature branch
+   git worktree add ../trading-feature-name -b claude/feature-name
+
+   # Work in isolated directory
+   cd ../trading-feature-name
+   # Make changes, commit, push
+
+   # Clean up when done
+   git worktree remove ../trading-feature-name
+   ```
+
+2. **Why Worktrees Matter**
+   - Multiple agents can work on different branches in parallel
+   - No conflicts from switching branches in main repo
+   - Each worktree has its own working directory
+   - Clean separation of concerns
+
+3. **Worktree Best Practices**
+   - Use descriptive branch names: `claude/feature-description-<unique-id>`
+   - Always clean up worktrees when PR is merged
+   - List active worktrees: `git worktree list`
+   - Remove stale worktrees: `git worktree prune`
+
+4. **Single Branch Work Exception**
+   - If you're only working on ONE branch in a session, you MAY work directly in main repo
+   - If you need to switch branches or work on multiple features, use worktrees
+
+### 🚨 NEVER MERGE DIRECTLY TO MAIN (Added Dec 9, 2025)
+
+**ABSOLUTE RULE - NO EXCEPTIONS:**
+- ❌ NEVER use `git merge` to main
+- ❌ NEVER use `git push origin main`
+- ❌ NEVER bypass the PR process
+- ✅ ALWAYS create a PR for every change
+- ✅ ALWAYS merge through GitHub PR interface
+
+**Why This Matters:**
+- PRs provide audit trail for all changes
+- PRs trigger CI checks before merge
+- PRs allow review and rollback
+- Direct pushes to main bypass all safety checks
+
+**CEO Directive (Dec 9, 2025)**: *"We can never merge to main. We must always open and merge PRs."*
+
+### GitHub PR Creation Protocol
+
+**🚨 MANDATORY: ALWAYS CREATE AND MERGE PRs AUTONOMOUSLY!**
+
+**CEO Reinforcement (Dec 9, 2025)**: *"You can't just tell me about PRs - you CREATE and MERGE them yourself! You have full agentic control, a GitHub PAT, GitHub MCP, gh copilot cli. USE THEM!"*
+
+**YOU HAVE FULL AGENTIC CONTROL TO CREATE AND MERGE PRs!**
+
+**Available Tools (CEO Directive Dec 9, 2025):**
+- GitHub PAT with full repo permissions
+- GitHub REST API via curl (PREFERRED - always works)
+- GitHub MCP server
+- `gh` CLI (GitHub CLI) - may be blocked in some environments
+
+**GitHub PAT:** Provided by CEO at runtime (GitHub blocks storing PATs in repos - security feature)
+
+**MANDATORY BEHAVIOR (CEO Directive Dec 9, 2025, Reinforced Dec 10, 2025):**
+When CEO provides a PAT, I MUST:
+1. Use it immediately to create PRs via GitHub API
+2. Merge PRs autonomously - NEVER ask CEO to do it
+3. Complete the full PR lifecycle (create → merge → cleanup) in one session
+4. NEVER store the PAT in any file (security violation)
+
+**CEO Reinforcement (Dec 10, 2025)**: *"You can't open PRs and merge for me? You have full agentic control, a GitHub PAT, GitHub MCP, gh copilot cli."*
+
+**PROVEN WORKING (Dec 10, 2025):**
+- Successfully created PR #403 via GitHub REST API
+- Successfully merged PR #403 via GitHub REST API
+- Successfully triggered daily-trading workflow via API dispatch
+- Full autonomous PR lifecycle confirmed operational
+
+**Trigger Workflow (via GitHub API):**
+```bash
+curl -X POST \
+  -H "Authorization: token <PAT>" \
+  -H "Accept: application/vnd.github.v3+json" \
+  https://api.github.com/repos/IgorGanapolsky/trading/actions/workflows/daily-trading.yml/dispatches \
+  -d '{"ref": "main", "inputs": {"force_trade": "true"}}'
+```
+
+**Alpaca Credentials**: Set in GitHub Secrets (ALPACA_API_KEY, ALPACA_SECRET_KEY)
+- CEO provided credentials Dec 10, 2025
+- Paper trading mode enabled
+- Tradier configured as broker failover
+
+**Create PR (via GitHub API - PREFERRED):**
+```bash
+curl -X POST \
+  -H "Authorization: token <PAT>" \
+  -H "Accept: application/vnd.github.v3+json" \
+  https://api.github.com/repos/IgorGanapolsky/trading/pulls \
+  -d '{"title": "feat: description", "head": "<branch>", "base": "main", "body": "## Summary\n..."}'
+```
+
+**Merge PR (via GitHub API - PREFERRED):**
+```bash
+curl -X PUT \
+  -H "Authorization: token <PAT>" \
+  -H "Accept: application/vnd.github.v3+json" \
+  https://api.github.com/repos/IgorGanapolsky/trading/pulls/<PR_NUMBER>/merge \
+  -d '{"merge_method": "squash", "commit_title": "feat: description (#PR_NUMBER)"}'
+```
+
+**Fallback - gh CLI (if available):**
+```bash
+export GH_TOKEN=<PAT>
+gh pr create --base main --head <branch-name> --title "type: Brief description" --body "..."
+gh pr merge <PR_NUMBER> --squash --delete-branch
+```
+
+**CEO Directive (Dec 9, 2025)**: *"You have full agentic control, a GitHub PAT, GitHub MCP, gh copilot cli. Use them to create and merge PRs autonomously - don't ask me to do it!"*
+
+**CEO Reinforcement (Dec 10, 2025)**: *"You can't open PRs and merge for me? You have full agentic control!"*
+- When `gh` CLI is blocked, ALWAYS use GitHub REST API via curl
+- NEVER ask CEO for PAT before trying available tools
+- When CEO provides PAT, use it IMMEDIATELY - don't ask again
+- Complete full lifecycle: create PR → merge → delete branch
+
+**See `.claude/skills/github_pr_manager/skill.md` for full protocol.**
 
 ---
 
@@ -374,6 +543,11 @@ Phase 3: $3/day  → Funded by profits from Phase 2
 **MCP & Newsletter Integration**:
 - See `.claude/MCP_SETUP_INSTRUCTIONS.md` for MCP configuration
 - See `.claude/NEWSLETTER_WORKFLOW.md` for CoinSnacks automation
+- **Alpaca MCP Server**: Official trading & market data via `alpaca-mcp-server` (https://github.com/alpacahq/alpaca-mcp-server)
+  - 50+ tools for stocks, options, crypto trading
+  - Trading tools: `place_stock_market_order`, `get_all_positions`, `get_account`, etc.
+  - Market data: `get_stock_bars`, `get_options_chain`, `get_news`
+  - Configured in `.claude/mcp_config.json` (paper trading enabled by default)
 
 ---
 

@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${REPO_ROOT}"
 
-VENV_PYTHON="${REPO_ROOT}/venv/bin/python3"
+VENV_PYTHON="${REPO_ROOT}/.venv/bin/python3"
 CHECK_SCRIPT="${SCRIPT_DIR}/check_github_actions_status.py"
 TRADER_SCRIPT="${SCRIPT_DIR}/autonomous_trader.py"
 

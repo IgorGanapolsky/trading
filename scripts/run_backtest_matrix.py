@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from dataclasses import dataclass
 from datetime import datetime
@@ -43,6 +44,7 @@ PROMOTION_THRESHOLDS = {
     "sharpe_ratio": 1.5,
     "max_drawdown": 10.0,
 }
+FEE_RATE = float(os.getenv("BACKTEST_FEE_RATE", "0.0018"))
 
 
 @dataclass
@@ -140,6 +142,8 @@ def summarize_results(results: BacktestResults, scenario: dict[str, Any]) -> dic
     longest_streak = longest_positive_streak(daily_returns)
 
     status = evaluate_status(results, thresholds=PROMOTION_THRESHOLDS)
+    annualized_return = results.to_dict().get("annualized_return", 0.0)
+    costs = compute_execution_costs(results)
 
     return {
         "scenario": scenario["name"],
@@ -148,17 +152,23 @@ def summarize_results(results: BacktestResults, scenario: dict[str, Any]) -> dic
         "end_date": results.end_date,
         "trading_days": results.trading_days,
         "total_return_pct": round(results.total_return, 2),
-        "annualized_return_pct": round(results.to_dict().get("annualized_return", 0.0), 2),
+        "annualized_return_pct": round(annualized_return, 2),
         "sharpe_ratio": round(results.sharpe_ratio, 3),
         "max_drawdown_pct": round(results.max_drawdown, 2),
         "win_rate_pct": round(results.win_rate, 2),
         "profitable_days": profitable_days,
         "longest_profitable_streak": longest_streak,
         "final_capital": round(results.final_capital, 2),
+        "final_capital_after_costs": round(
+            results.final_capital - costs["total_execution_cost"], 2
+        ),
         "total_trades": results.total_trades,
         "status": status,
         "description": scenario.get("description"),
         "generated_at": datetime.utcnow().isoformat(),
+        "execution_costs": costs,
+        "cost_adjusted_return_pct": costs["cost_adjusted_total_return_pct"],
+        "cost_adjusted_annualized_return_pct": costs["cost_adjusted_annualized_return_pct"],
         "hybrid_gates": scenario.get("hybrid_gates", False),
     }
 
@@ -182,6 +192,34 @@ def evaluate_status(results: BacktestResults, thresholds: dict[str, float]) -> s
     ):
         return "pass"
     return "needs_improvement"
+
+
+def compute_execution_costs(
+    results: BacktestResults, fee_rate: float = FEE_RATE
+) -> dict[str, float]:
+    total_notional = sum(float(trade.get("amount", 0.0)) for trade in results.trades)
+    fee_cost = total_notional * fee_rate
+    slippage_cost = float(getattr(results, "total_slippage_cost", 0.0))
+    total_cost = fee_cost + slippage_cost
+    capital = float(results.initial_capital or 1.0)
+    cost_pct = (total_cost / capital) * 100
+
+    cost_adjusted_total_return = results.total_return - cost_pct
+    annualized_return = results.to_dict().get("annualized_return", 0.0)
+    cost_adjusted_annualized = annualized_return - cost_pct
+
+    return {
+        "fee_cost": round(fee_cost, 2),
+        "slippage_cost": round(slippage_cost, 2),
+        "total_execution_cost": round(total_cost, 2),
+        "cost_pct_of_capital": round(cost_pct, 4),
+        "cost_adjusted_total_return_pct": round(cost_adjusted_total_return, 2),
+        "cost_adjusted_annualized_return_pct": round(cost_adjusted_annualized, 2),
+        "assumptions": {
+            "fee_rate": fee_rate,
+            "slippage_model_enabled": bool(getattr(results, "slippage_enabled", False)),
+        },
+    }
 
 
 def save_artifacts(summary: dict[str, Any], results: BacktestResults, output_dir: Path) -> None:

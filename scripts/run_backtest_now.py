@@ -4,6 +4,7 @@ IMMEDIATE BACKTEST - Prove Strategy Profitability
 Tests momentum system (MACD + RSI + Volume) on 60 days of historical data
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -15,7 +16,9 @@ load_dotenv()
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
+from src.analyst.bias_store import BiasStore
 from src.backtesting.backtest_engine import BacktestEngine
+from src.backtesting.bias_replay import BiasReplay
 from src.strategies.core_strategy import CoreStrategy
 
 print("=" * 80)
@@ -50,11 +53,18 @@ print()
 print("🚀 Running backtest... (this may take 2-3 minutes)")
 print()
 
+bias_replay = None
+if os.getenv("BACKTEST_USE_BIAS_REPLAY", "false").lower() in {"1", "true", "yes"}:
+    bias_store = BiasStore(os.getenv("BIAS_DATA_DIR", "data/bias"))
+    bias_replay = BiasReplay.from_store(bias_store)
+    print("📼 Bias replay ENABLED - recorded analyst decisions will gate trades.")
+
 engine = BacktestEngine(
     strategy=strategy,
     start_date=start_date,
     end_date=end_date,
     initial_capital=100000.0,
+    bias_replay=bias_replay,
 )
 
 results = engine.run()

@@ -88,6 +88,32 @@ def load_json_file(filepath: Path) -> dict:
     return {}
 
 
+def get_recent_trades(days: int = 7) -> list[dict]:
+    """Get trades from the last N days for dashboard display."""
+    from datetime import timedelta
+
+    recent_trades = []
+    today = date.today()
+
+    for i in range(days):
+        trade_date = today - timedelta(days=i)
+        trades_file = DATA_DIR / f"trades_{trade_date.isoformat()}.json"
+        if trades_file.exists():
+            try:
+                with open(trades_file) as f:
+                    day_trades = json.load(f)
+                    if isinstance(day_trades, list):
+                        for trade in day_trades:
+                            trade["trade_date"] = trade_date.isoformat()
+                            recent_trades.append(trade)
+            except Exception:
+                continue
+
+    # Sort by timestamp (most recent first)
+    recent_trades.sort(key=lambda x: x.get("timestamp", x.get("trade_date", "")), reverse=True)
+    return recent_trades
+
+
 def get_rag_knowledge_stats() -> dict[str, Any]:
     """Get RAG Knowledge Base statistics for dashboard."""
     import sqlite3
@@ -321,7 +347,9 @@ def calculate_win_rate_from_trades(
     Returns:
         (win_rate_pct, winning_trades, total_closed_trades)
     """
-    closed_trades = [t for t in trades if t.get("status") == "filled" and t.get("pl") is not None]
+    closed_trades = [
+        t for t in trades if t.get("status", "").lower() == "filled" and t.get("pl") is not None
+    ]
 
     if not closed_trades:
         return 0.0, 0, 0
@@ -412,14 +440,18 @@ def calculate_ai_attribution_enhanced(trades: list[dict[str, Any]]) -> dict[str,
         else:
             # Fallback to agent_type field
             agent_type_raw = trade.get("agent_type", "unknown")
+            strategy = trade.get("strategy", "")
+
             if "rl" in agent_type_raw.lower() or "reinforcement" in agent_type_raw.lower():
                 agent_type = "rl_policy"
             elif "llm" in agent_type_raw.lower() or "claude" in agent_type_raw.lower():
                 agent_type = "llm_analyst"
             elif "heuristic" in agent_type_raw.lower():
-                agent_type = "heuristic"
+                agent_type = "momentum_heuristic"
             elif "fallback" in agent_type_raw.lower():
                 agent_type = "fallback"
+            elif strategy == "CryptoStrategy" or "Crypto" in strategy or "Strategy" in strategy:
+                agent_type = "momentum_heuristic"
             else:
                 agent_type = "unknown"
 
@@ -701,7 +733,7 @@ def calculate_market_regime() -> dict[str, Any]:
 
         # Get SPY and VIX data
         end_date = datetime.now()
-        start_date = end_date - timedelta(days=30)  # Get 30 days for 20-day calculation
+        start_date = end_date - timedelta(days=60)  # Get 60 days for 20-day calculation
 
         spy = yf.Ticker("SPY")
         spy_data = spy.history(start=start_date, end=end_date)
@@ -1151,11 +1183,13 @@ def generate_world_class_dashboard() -> str:
     current_day = challenge.get("current_day", 1)
     total_days = challenge.get("total_days", 90)
 
-    # Calculate today's performance metrics
-    today_str = date.today().isoformat()
-    today_trades_file = DATA_DIR / f"trades_{today_str}.json"
-    today_trades = load_json_file(today_trades_file)
-    today_trade_count = len(today_trades) if isinstance(today_trades, list) else 0
+    # Calculate today's performance metrics (Use NY time for trading day alignment)
+    from zoneinfo import ZoneInfo
+
+    ny_time = datetime.now(ZoneInfo("America/New_York"))
+    today_str = ny_time.date().isoformat()
+
+    today_trade_count = len([t for t in trades if t.get("timestamp", "").startswith(today_str)])
 
     today_perf = None
     today_equity = current_equity
@@ -1169,7 +1203,7 @@ def generate_world_class_dashboard() -> str:
                 today_perf = entry
                 today_equity = entry.get("equity", current_equity)
                 today_pl = entry.get("pl", 0.0)
-                today_pl_pct = entry.get("pl_pct", 0.0) * 100  # Convert to percentage
+                today_pl_pct = entry.get("pl_pct", 0.0)  # Already in percentage
                 break
 
         # If no entry for today, calculate from yesterday
@@ -1180,11 +1214,11 @@ def generate_world_class_dashboard() -> str:
             today_pl = current_equity - yesterday_equity
             today_pl_pct = ((today_pl / yesterday_equity) * 100) if yesterday_equity > 0 else 0.0
 
-    # Get today's date string for display
-    today_display = date.today().strftime("%Y-%m-%d (%A)")
+    # Get today's date string for display (aligned with trading day)
+    today_display = ny_time.strftime("%Y-%m-%d (%A)")
 
     # Generate dashboard
-    now = datetime.now()
+    now = datetime.now(ZoneInfo("America/New_York"))
 
     # Progress bar
     north_star_bars = 1 if total_pl > 0 and progress_pct < 5.0 else min(int(progress_pct / 5), 20)
@@ -1307,6 +1341,37 @@ def generate_world_class_dashboard() -> str:
             }
             pdt_status = {"status": "⚠️ Unable to calculate", "warnings": []}
 
+    # --- Current Holdings Section Calculation ---
+    holdings_section = ""
+    open_positions = system_state.get("performance", {}).get("open_positions", [])
+
+    if open_positions:
+        holdings_section += (
+            "| Symbol | Qty | Entry Price | Current Price | Value | Unrealized P/L |\n"
+        )
+        holdings_section += (
+            "|--------|-----|-------------|---------------|-------|----------------|\n"
+        )
+
+        for pos in open_positions:
+            symbol = pos.get("symbol", "UNKNOWN")
+            qty = pos.get("quantity", 0.0)
+            entry = pos.get("entry_price", 0.0)
+            current = pos.get("current_price", 0.0)
+            value = qty * current
+            unreal_pl = pos.get("unrealized_pl", 0.0)
+            unreal_pl_pct = pos.get("unrealized_pl_pct", 0.0) * 100
+
+            # Formatting
+            pl_emoji = "🟢" if unreal_pl >= 0 else "🔴"
+
+            holdings_section += (
+                f"| **{symbol}** | {qty:.4f} | ${entry:,.2f} | ${current:,.2f} | "
+                f"${value:,.2f} | {pl_emoji} ${unreal_pl:+.2f} ({unreal_pl_pct:+.2f}%) |\n"
+            )
+    else:
+        holdings_section = "*No active positions available.*"
+
     dashboard = f"""# 🌟 World-Class Trading Dashboard
 
 **Last Updated**: {now.strftime("%Y-%m-%d %I:%M %p ET")}
@@ -1334,11 +1399,11 @@ def generate_world_class_dashboard() -> str:
 ## 📅 Today's Performance
 
 **Date**: {today_display}
-
-| Metric | Value |
-|--------|-------|
+| **Metric** | **Value** |
+|------------|-----------|
 | **Equity** | ${today_equity:,.2f} |
-| **P/L** | ${today_pl:+,.2f} ({today_pl_pct:+.2f}%) |
+| **Total P/L** | ${total_pl:+,.2f} |
+| **Daily P/L** | ${today_pl:+,.2f} ({today_pl_pct:+.2f}%) |
 | **Trades Today** | {today_trade_count} |
 | **Status** | {system_health["emoji"]} {system_health["status"]} |
 
@@ -1357,6 +1422,12 @@ def generate_world_class_dashboard() -> str:
 
 **Regime-Specific Edge Notes**:
 {market_regime["edge_notes"]}
+
+---
+
+## 💼 Current Holdings
+
+{holdings_section}
 
 ---
 
@@ -1429,16 +1500,51 @@ def generate_world_class_dashboard() -> str:
 *This shows how close your average daily profit is to the $100/day target*
 
 ---
-
-## 📊 Performance Attribution
-
-### By Strategy
-
-{attribution_table}
-
-### 🤖 AI Attribution (Per-Agent P&L)
-
 """
+
+    # --- AI Cortex Status Section ---
+    ai_cortex = "## 🧠 AI Cortex Status\n\n"
+
+    # 1. Learned Patterns (The "Brain")
+    heuristics = system_state.get("heuristics", {})
+    patterns = heuristics.get("learned_patterns", [])
+    if patterns:
+        ai_cortex += "### 💡 Recently Learned Patterns\n"
+        for pattern in patterns[-5:]:  # Show last 5
+            ai_cortex += f"- 📝 {pattern}\n"
+        ai_cortex += "\n"
+
+    # 2. Video Analysis (The "Eyes")
+    video_analysis = system_state.get("video_analysis", {})
+    if video_analysis.get("enabled"):
+        ai_cortex += "### 👁️ Visual Intelligence (YouTube Monitor)\n"
+        last_analysis = video_analysis.get("last_analysis_date", "Unknown")
+        ai_cortex += f"**Last Scan**: {last_analysis}\n\n"
+
+        # Show decision log if available
+        decision_log = video_analysis.get("cto_decision_log", {})
+        if decision_log:
+            decision = decision_log.get("decision", "PENDING")
+            rationale = decision_log.get("rationale", "")
+            ai_cortex += f"**Latest Strategic Decision**: {decision}\n"
+            ai_cortex += f'> *"{rationale}"*\n\n'
+
+    # 3. Backtest Reality (The "Conscience")
+    backtest = system_state.get("backtest_reality", {})
+    if backtest:
+        status = backtest.get("status", "UNKNOWN")
+        note = backtest.get("note", "")
+        ai_cortex += "### ⚖️ Reality Check (Backtest Verification)\n"
+        ai_cortex += f"**Status**: `{status}`\n"
+        ai_cortex += f"**Note**: {note}\n"
+        ai_cortex += f"**Win Rate Range**: {backtest.get('daily_win_rate_range', 'N/A')}\n\n"
+
+    dashboard += ai_cortex
+
+    dashboard += "\n## 📊 Performance Attribution\n\n"
+    dashboard += "### By Strategy\n\n"
+    dashboard += str(attribution_table) + "\n\n"
+    dashboard += "### 🤖 AI Attribution (Per-Agent P&L)\n\n"
 
     # Add AI attribution section (investor-grade: "Who made the call?")
     # Calculate enhanced AI attribution with display names
@@ -1532,26 +1638,31 @@ def generate_world_class_dashboard() -> str:
     else:
         dashboard += "  (No asset performance data available)\n"
 
-    dashboard += f"""
----
+    # Calculate predictive metrics
+    exp_profit_7d = forecast_dict.get("expected_profit_7d", 0.0)
+    ci_lower = forecast_dict.get("confidence_interval_95_lower", 0.0)
+    ci_upper = forecast_dict.get("confidence_interval_95_upper", 0.0)
+    exp_profit_30d = forecast_dict.get("expected_profit_30d", 0.0)
+    edge_drift = forecast_dict.get("edge_drift_score", 0.0)
+    drawdown_prob = forecast_dict.get("drawdown_probability", 0.0)
 
-## 🔮 Predictive Analytics
+    drift_status = (
+        "✅ Improving" if edge_drift > 0.1 else "⚠️ Decaying" if edge_drift < -0.1 else "➡️ Stable"
+    )
 
-### Monte Carlo Forecast (10,000 simulations)
-
-| Horizon | Expected Profit | 95% Confidence Interval |
-|---------|----------------|-------------------------|
-| **7 Days** | ${forecast_dict.get("expected_profit_7d", 0.0):+,.2f} | ${forecast_dict.get("confidence_interval_95_lower", 0.0):+,.2f} to ${forecast_dict.get("confidence_interval_95_upper", 0.0):+,.2f} |
-| **30 Days** | ${forecast_dict.get("expected_profit_30d", 0.0):+,.2f} | See 7-day CI scaled |
-
-**Edge Drift Score**: {forecast_dict.get("edge_drift_score", 0.0):+.2f} ({"✅ Improving" if forecast_dict.get("edge_drift_score", 0.0) > 0.1 else "⚠️ Decaying" if forecast_dict.get("edge_drift_score", 0.0) < -0.1 else "➡️ Stable"})
-**Drawdown Probability (>5%)**: {forecast_dict.get("drawdown_probability", 0.0):.1f}%
-
----
-
-## ⚖️ Comprehensive Risk Metrics
-
-"""
+    dashboard += "\n---\n\n"
+    dashboard += "## 🔮 Predictive Analytics\n\n"
+    dashboard += "### Monte Carlo Forecast (10,000 simulations)\n\n"
+    dashboard += "| Horizon | Expected Profit | 95% Confidence Interval |\n"
+    dashboard += "|---------|----------------|-------------------------|\n"
+    dashboard += (
+        f"| **7 Days** | ${exp_profit_7d:+,.2f} | ${ci_lower:+,.2f} to ${ci_upper:+,.2f} |\n"
+    )
+    dashboard += f"| **30 Days** | ${exp_profit_30d:+,.2f} | See 7-day CI scaled |\n\n"
+    dashboard += f"**Edge Drift Score**: {edge_drift:+.2f} ({drift_status})\n"
+    dashboard += f"**Drawdown Probability (>5%)**: {drawdown_prob:.1f}%\n\n"
+    dashboard += "---\n\n"
+    dashboard += "## ⚖️ Comprehensive Risk Metrics\n\n"
 
     # Calculate thresholds and formatted values before f-string
     sharpe_threshold = STAT_THRESHOLDS["sharpe_sortino"]
@@ -1568,27 +1679,55 @@ def generate_world_class_dashboard() -> str:
         "{:.2f}",
     )
 
-    dashboard += f"""| Metric | Value | Status |
-|--------|-------|--------|
-| **Max Drawdown** | {risk_metrics_dict.get("max_drawdown_pct", 0.0):.2f}% | {"✅" if risk_metrics_dict.get("max_drawdown_pct", 0.0) < 5.0 else "⚠️" if risk_metrics_dict.get("max_drawdown_pct", 0.0) < 10.0 else "🚨"} |
-| **Ulcer Index** | {risk_metrics_dict.get("ulcer_index", 0.0):.2f} | {"✅" if risk_metrics_dict.get("ulcer_index", 0.0) < 5.0 else "⚠️"} |
-| **Sharpe Ratio** | {sharpe_display} | {"✅" if total_closed_trades >= sharpe_threshold and risk_metrics_dict.get("sharpe_ratio", 0.0) > 1.0 else "⚠️" if total_closed_trades >= sharpe_threshold and risk_metrics_dict.get("sharpe_ratio", 0.0) > 0.5 else ""} |
-| **Sortino Ratio** | {sortino_display} | {"✅" if total_closed_trades >= sharpe_threshold and risk_metrics_dict.get("sortino_ratio", 0.0) > 1.0 else ""} |
-| **Calmar Ratio** | {risk_metrics_dict.get("calmar_ratio", 0.0):.2f} | {"✅" if risk_metrics_dict.get("calmar_ratio", 0.0) > 1.0 else "⚠️"} |
-| **VaR (95%)** | {risk_metrics_dict.get("var_95", 0.0):.2f}% | Risk level |
-| **VaR (99%)** | {risk_metrics_dict.get("var_99", 0.0):.2f}% | Extreme risk |
-| **CVaR (95%)** | {risk_metrics_dict.get("cvar_95", 0.0):.2f}% | Expected tail loss |
-| **Volatility (Annualized)** | {risk_metrics_dict.get("volatility", 0.0):.2f}% | {"✅" if risk_metrics_dict.get("volatility", 0.0) < 20.0 else "⚠️"} |
+    # Calculate risk metrics for display
+    max_dd = risk_metrics_dict.get("max_drawdown_pct", 0.0)
+    ulcer = risk_metrics_dict.get("ulcer_index", 0.0)
+    calmar = risk_metrics_dict.get("calmar_ratio", 0.0)
+    var_95 = risk_metrics_dict.get("var_95", 0.0)
+    var_99 = risk_metrics_dict.get("var_99", 0.0)
+    sharpe_val = risk_metrics_dict.get("sharpe_ratio", 0.0)
+    sortino_val = risk_metrics_dict.get("sortino_ratio", 0.0)
 
-**Note**: Sharpe/Sortino ratios require ≥{sharpe_threshold} closed trades for statistical significance. Current: {total_closed_trades} trades.
+    # Status indicators
+    dd_status = "✅" if max_dd < 5.0 else "⚠️" if max_dd < 10.0 else "🚨"
+    ulcer_status = "✅" if ulcer < 5.0 else "⚠️"
+    calmar_status = "✅" if calmar > 1.0 else "⚠️"
 
-### Risk Heatmap
+    # Sharpe/Sortino status (conditional on sample size)
+    sharpe_status = ""
+    if total_closed_trades >= sharpe_threshold:
+        if sharpe_val > 1.0:
+            sharpe_status = "✅"
+        elif sharpe_val > 0.5:
+            sharpe_status = "⚠️"
 
-{generate_risk_heatmap(risk_metrics_dict)}
+    sortino_status = ""
+    if total_closed_trades >= sharpe_threshold and sortino_val > 1.0:
+        sortino_status = "✅"
 
-### 🚨 Risk Alerts
+    dashboard += "| Metric | Value | Status |\n"
+    dashboard += "|--------|-------|--------|\n"
+    dashboard += f"| **Max Drawdown** | {max_dd:.2f}% | {dd_status} |\n"
+    dashboard += f"| **Ulcer Index** | {ulcer:.2f} | {ulcer_status} |\n"
+    dashboard += f"| **Sharpe Ratio** | {sharpe_display} | {sharpe_status} |\n"
+    dashboard += f"| **Sortino Ratio** | {sortino_display} | {sortino_status} |\n"
+    dashboard += f"| **Calmar Ratio** | {calmar:.2f} | {calmar_status} |\n"
+    dashboard += f"| **VaR (95%)** | {var_95:.2f}% | Risk level |\n"
+    dashboard += f"| **VaR (99%)** | {var_99:.2f}% | Extreme risk |\n"
 
-"""
+    # Add remaining risk metrics
+    cvar_95 = risk_metrics_dict.get("cvar_95", 0.0)
+    volatility = risk_metrics_dict.get("volatility", 0.0)
+    vol_status = "✅" if volatility < 20.0 else "⚠️"
+
+    dashboard += f"| **CVaR (95%)** | {cvar_95:.2f}% | Expected tail loss |\n"
+    dashboard += f"| **Volatility (Annualized)** | {volatility:.2f}% | {vol_status} |\n\n"
+
+    dashboard += f"**Note**: Sharpe/Sortino ratios require ≥{sharpe_threshold} closed trades for statistical significance. Current: {total_closed_trades} trades.\n\n"
+
+    dashboard += "### Risk Heatmap\n\n"
+    dashboard += str(generate_risk_heatmap(risk_metrics_dict))
+    dashboard += "\n\n### 🚨 Risk Alerts\n\n"
 
     for alert in risk_alerts:
         dashboard += f"{alert}\n\n"
@@ -2103,6 +2242,48 @@ def generate_world_class_dashboard() -> str:
 | **Winning Trades** | {winning_trades} |
 | **Win Rate** | {win_rate:.1f}% |
 
+---
+
+## 📜 Recent Trades (Last 7 Days)
+
+"""
+
+    # Get recent trades
+    recent_trades_list = get_recent_trades(days=7)
+
+    if recent_trades_list:
+        dashboard += "| Date | Symbol | Side | Quantity | Price | Amount | Tier |\n"
+        dashboard += "|------|--------|------|----------|-------|--------|------|\n"
+
+        for trade in recent_trades_list[:15]:  # Show last 15 trades
+            trade_date = trade.get("trade_date", trade.get("timestamp", "N/A"))
+            if "T" in trade_date:  # If it's a timestamp, extract just the date
+                trade_date = trade_date.split("T")[0]
+            symbol = trade.get("symbol", "N/A")
+            # Handle different field names for side/action
+            side = trade.get("side", trade.get("action", "N/A")).upper()
+            # Handle different field names for quantity
+            qty = trade.get("qty", trade.get("quantity", 0))
+            # Handle different field names for price
+            price = trade.get("avg_price", trade.get("price", 0))
+            # Calculate amount from notional or amount field or qty*price
+            amount = trade.get("notional", trade.get("amount", qty * price if qty and price else 0))
+            # Handle tier/strategy
+            tier = trade.get("tier", trade.get("strategy", "N/A"))
+
+            # Format numbers
+            qty_str = f"{float(qty):.4f}" if qty else "N/A"
+            price_str = f"${float(price):,.2f}" if price else "N/A"
+            amount_str = f"${float(amount):,.2f}" if amount else "N/A"
+
+            dashboard += f"| {trade_date} | {symbol} | {side} | {qty_str} | {price_str} | {amount_str} | {tier} |\n"
+
+        if len(recent_trades_list) > 15:
+            dashboard += f"\n*Showing 15 of {len(recent_trades_list)} trades from last 7 days*\n"
+    else:
+        dashboard += "*No trades recorded in the last 7 days*\n"
+
+    dashboard += f"""
 ---
 
 ## 📊 90-Day R&D Challenge Progress

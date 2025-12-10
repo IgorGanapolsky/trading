@@ -17,7 +17,6 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 
@@ -40,8 +39,8 @@ CHARTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def generate_equity_curve_chart(
-    perf_log: list[dict], output_path: Optional[Path] = None
-) -> Optional[str]:
+    perf_log: list[dict], output_path: Path | None = None
+) -> str | None:
     """Generate equity curve chart."""
     if not MATPLOTLIB_AVAILABLE or not perf_log or len(perf_log) < 2:
         return None
@@ -57,7 +56,7 @@ def generate_equity_curve_chart(
                 dt = datetime.fromisoformat(date_str)
                 dates.append(dt)
                 equity_values.append(equity)
-            except:
+            except Exception:
                 pass
 
     if len(dates) < 2:
@@ -88,9 +87,7 @@ def generate_equity_curve_chart(
     return "charts/equity_curve.png"
 
 
-def generate_drawdown_chart(
-    perf_log: list[dict], output_path: Optional[Path] = None
-) -> Optional[str]:
+def generate_drawdown_chart(perf_log: list[dict], output_path: Path | None = None) -> str | None:
     """Generate drawdown chart."""
     if not MATPLOTLIB_AVAILABLE or not perf_log or len(perf_log) < 2:
         return None
@@ -106,7 +103,7 @@ def generate_drawdown_chart(
                 dt = datetime.fromisoformat(date_str)
                 dates.append(dt)
                 equity_values.append(equity)
-            except:
+            except Exception:
                 pass
 
     if len(dates) < 2:
@@ -146,9 +143,7 @@ def generate_drawdown_chart(
     return "charts/drawdown.png"
 
 
-def generate_daily_pl_chart(
-    perf_log: list[dict], output_path: Optional[Path] = None
-) -> Optional[str]:
+def generate_daily_pl_chart(perf_log: list[dict], output_path: Path | None = None) -> str | None:
     """Generate daily P/L bar chart."""
     if not MATPLOTLIB_AVAILABLE or not perf_log or len(perf_log) < 2:
         return None
@@ -164,7 +159,7 @@ def generate_daily_pl_chart(
                 dt = datetime.fromisoformat(date_str)
                 dates.append(dt)
                 pl_values.append(pl)
-            except:
+            except Exception:
                 pass
 
     if len(dates) < 2:
@@ -196,8 +191,8 @@ def generate_daily_pl_chart(
 
 
 def generate_rolling_sharpe_chart(
-    perf_log: list[dict], window: int = 7, output_path: Optional[Path] = None
-) -> Optional[str]:
+    perf_log: list[dict], window: int = 7, output_path: Path | None = None
+) -> str | None:
     """Generate rolling Sharpe ratio chart."""
     if not MATPLOTLIB_AVAILABLE or not perf_log or len(perf_log) < window + 1:
         return None
@@ -213,7 +208,7 @@ def generate_rolling_sharpe_chart(
                 dt = datetime.fromisoformat(date_str)
                 dates.append(dt)
                 equity_values.append(equity)
-            except:
+            except Exception:
                 pass
 
     if len(dates) < window + 1:
@@ -286,8 +281,8 @@ def generate_rolling_sharpe_chart(
 
 
 def generate_attribution_bar_chart(
-    strategy_data: dict[str, dict], output_path: Optional[Path] = None
-) -> Optional[str]:
+    strategy_data: dict[str, dict], output_path: Path | None = None
+) -> str | None:
     """Generate performance attribution bar chart by strategy."""
     if not MATPLOTLIB_AVAILABLE or not strategy_data:
         return None
@@ -340,9 +335,9 @@ def generate_attribution_bar_chart(
 
 def generate_regime_timeline_chart(
     perf_log: list[dict],
-    regime_data: Optional[dict] = None,
-    output_path: Optional[Path] = None,
-) -> Optional[str]:
+    regime_data: dict | None = None,
+    output_path: Path | None = None,
+) -> str | None:
     """Generate market regime timeline chart."""
     if not MATPLOTLIB_AVAILABLE or not perf_log or len(perf_log) < 2:
         return None
@@ -358,7 +353,7 @@ def generate_regime_timeline_chart(
                 dt = datetime.fromisoformat(date_str)
                 dates.append(dt)
                 equity_values.append(equity)
-            except:
+            except Exception:
                 pass
 
     if len(dates) < 2:
@@ -403,7 +398,7 @@ def generate_regime_timeline_chart(
     ax.plot(dates, equity_values, linewidth=2, color="#2563eb", alpha=0.3, label="Equity")
 
     # Color background by regime
-    for i, (date, regime) in enumerate(zip(regime_dates, regimes)):
+    for i, (date, regime) in enumerate(zip(regime_dates, regimes, strict=False)):
         if i < len(regime_dates) - 1:
             next_date = regime_dates[i + 1]
             color = regime_colors.get(regime, "#6b7280")
@@ -438,8 +433,8 @@ def generate_regime_timeline_chart(
 
 
 def generate_all_charts(
-    perf_log: list[dict], strategy_data: Optional[dict[str, dict]] = None
-) -> dict[str, Optional[str]]:
+    perf_log: list[dict], strategy_data: dict[str, dict] | None = None
+) -> dict[str, str | None]:
     """Generate all charts and return paths."""
     charts = {}
 

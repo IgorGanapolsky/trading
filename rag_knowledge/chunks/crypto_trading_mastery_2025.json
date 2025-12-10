@@ -1,0 +1,98 @@
+[
+  {
+    "source_type": "book_summary",
+    "source_name": "Master Options, Crypto, and Day Trading for Passive Income",
+    "author": "Jacob Ferriss",
+    "chapter_or_section": "Core Trading Philosophy",
+    "page_or_timestamp": "Audible/2025",
+    "content": "Ferriss emphasizes that successful crypto trading requires both technical skill AND psychological mastery. The psychological edge is as important as strategy—managing emotions, controlling risk, and maintaining discipline in unpredictable markets separates profitable traders from the rest. Build a winning mindset before placing trades. Key principle: passive income from trading comes from consistency, not home runs.",
+    "content_type": "framework",
+    "topics": ["psychology", "discipline", "passive_income", "mindset"],
+    "edge_category": "crypto",
+    "citation": "Ferriss (2024); Audible"
+  },
+  {
+    "source_type": "book_summary",
+    "source_name": "Master Options, Crypto, and Day Trading for Passive Income",
+    "author": "Jacob Ferriss",
+    "chapter_or_section": "Proven Crypto Strategies",
+    "page_or_timestamp": "Audible/2025",
+    "content": "Advanced trading tactics tested by professionals for consistent long-term passive income: (1) DCA with momentum overlay—buy more when RSI < 40, reduce when RSI > 60; (2) Trend-following with MACD confirmation—only enter when MACD histogram crosses above zero; (3) Volume-price divergence—watch for price making new highs on declining volume as exit signal; (4) Weekend accumulation strategy—crypto often consolidates on weekends, providing better entry points for Monday runs.",
+    "content_type": "strategy",
+    "topics": ["dca", "momentum", "macd", "volume", "weekend_trading"],
+    "edge_category": "crypto",
+    "citation": "Ferriss (2024)"
+  },
+  {
+    "source_type": "book_summary",
+    "source_name": "Master Options, Crypto, and Day Trading for Passive Income",
+    "author": "Jacob Ferriss",
+    "chapter_or_section": "Risk Management for Crypto",
+    "page_or_timestamp": "Audible/2025",
+    "content": "Crypto-specific risk management: (1) Never risk more than 2% of portfolio on single trade; (2) Use 7% stop-loss minimum for crypto volatility (vs 3% for stocks); (3) Take partial profits at +10%, let remainder ride with trailing stop; (4) Reduce position size during high-volatility events (halving, ETF decisions, regulatory news); (5) Keep 50% in BTC/ETH core, 50% for tactical trades. Avoid leverage until you have 100+ profitable paper trades.",
+    "content_type": "checklist",
+    "topics": ["risk_management", "position_sizing", "stop_loss", "volatility"],
+    "edge_category": "crypto",
+    "citation": "Ferriss (2024)"
+  },
+  {
+    "source_type": "book_summary",
+    "source_name": "Master Options, Crypto, and Day Trading for Passive Income",
+    "author": "Jacob Ferriss",
+    "chapter_or_section": "Reading Market Signals",
+    "page_or_timestamp": "Audible/2025",
+    "content": "Market signal identification for crypto: (1) Bitcoin dominance rising = altcoin weakness, focus on BTC; (2) Stablecoin supply increasing = dry powder ready, bullish signal; (3) Funding rates extremely positive = over-leveraged longs, correction likely; (4) Fear & Greed Index < 25 = accumulation zone; (5) On-chain: exchange outflows = holders moving to cold storage = bullish; (6) Social sentiment spikes often mark local tops—fade the hype.",
+    "content_type": "signals",
+    "topics": ["market_signals", "on_chain", "sentiment", "btc_dominance"],
+    "edge_category": "crypto",
+    "citation": "Ferriss (2024)"
+  },
+  {
+    "source_type": "strategy_guide",
+    "source_name": "Crypto Technical Analysis Patterns",
+    "author": "Trading Research Synthesis",
+    "chapter_or_section": "BTC/ETH Specific Patterns",
+    "page_or_timestamp": "2025",
+    "content": "Bitcoin-specific patterns: (1) 200-day MA is critical support/resistance—price above = bull market, below = bear; (2) Weekly RSI < 30 historically marks generational buying opportunities; (3) Halving cycles: accumulate 6-12 months before, peak 12-18 months after; (4) ETH/BTC ratio rising = risk-on altcoin season beginning; (5) BTC weekend moves often retrace 50% by Monday—wait for confirmation before chasing.",
+    "content_type": "patterns",
+    "topics": ["bitcoin", "ethereum", "technical_analysis", "cycles"],
+    "edge_category": "crypto",
+    "citation": "Multiple sources (2025)"
+  },
+  {
+    "source_type": "strategy_guide",
+    "source_name": "Crypto Momentum Trading",
+    "author": "Quantitative Research",
+    "chapter_or_section": "Weekend Crypto Strategy",
+    "page_or_timestamp": "2025",
+    "content": "Weekend crypto trading optimization: (1) Volume typically 30-50% lower on weekends—use tighter filters; (2) Best entry window: Saturday 8-10 AM ET after Asian session closes; (3) Avoid Sunday evening (4-8 PM ET)—often sees fake-outs before Monday open; (4) Weekend MACD crossovers less reliable—require additional confirmation from volume; (5) News-driven weekend moves often exaggerated—take smaller positions; (6) Prefer BTC over ETH on weekends (more liquid).",
+    "content_type": "strategy",
+    "topics": ["weekend_trading", "volume", "timing", "liquidity"],
+    "edge_category": "crypto",
+    "citation": "Quantitative analysis (2025)"
+  },
+  {
+    "source_type": "strategy_guide",
+    "source_name": "AI-Augmented Crypto Trading",
+    "author": "Modern Trading Stack",
+    "chapter_or_section": "LLM Integration for Crypto",
+    "page_or_timestamp": "2025",
+    "content": "Using AI/LLMs for crypto edge: (1) Sentiment analysis—feed social data to LLM, extract bullish/bearish ratio; (2) News summarization—have AI identify actionable events vs noise; (3) Pattern recognition—describe chart patterns in text, get probability assessments; (4) Risk scenario modeling—'what if BTC drops 20%' stress tests; (5) Trade journaling—AI reviews your trades, identifies emotional decisions; (6) Never let AI execute trades autonomously without human review of reasoning.",
+    "content_type": "framework",
+    "topics": ["ai", "llm", "sentiment", "automation"],
+    "edge_category": "crypto",
+    "citation": "Modern trading practices (2025)"
+  },
+  {
+    "source_type": "strategy_guide",
+    "source_name": "Crypto Entry and Exit Rules",
+    "author": "Professional Trading Systems",
+    "chapter_or_section": "Systematic Crypto Trading",
+    "page_or_timestamp": "2025",
+    "content": "Systematic entry rules for BTC/ETH: ENTER when (1) RSI 14-day between 40-60 (not overbought/oversold extremes), (2) MACD histogram > 0 or crossing above, (3) Price above 20-day EMA, (4) Volume > 0.8x 20-day average. EXIT when (1) RSI > 75 (take 50% profit), (2) MACD histogram turns negative, (3) Price closes below 20-day EMA on volume, (4) Stop-loss hit at 7%. Position sizing: allocate $10-50 per trade during R&D phase, scale with proven edge.",
+    "content_type": "rules",
+    "topics": ["entry_rules", "exit_rules", "systematic", "position_sizing"],
+    "edge_category": "crypto",
+    "citation": "Professional systems (2025)"
+  }
+]

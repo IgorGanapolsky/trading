@@ -41,9 +41,7 @@ def build_feature_matrix(frame: pd.DataFrame) -> np.ndarray:
     drawdown = (closes / closes.cummax()) - 1.0
 
     log_volume = np.log1p(volumes)
-    volume_z = (log_volume - log_volume.rolling(20).mean()) / (
-        log_volume.rolling(20).std() + 1e-6
-    )
+    volume_z = (log_volume - log_volume.rolling(20).mean()) / (log_volume.rolling(20).std() + 1e-6)
     volume_z = volume_z.fillna(0.0)
 
     rsi_series = _compute_rsi_series(closes)

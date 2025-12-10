@@ -1,0 +1,26 @@
+[
+  {
+    "source_type": "book_summary",
+    "source_name": "High-Yield Dividend Strategies",
+    "author": "J. R. Glenn",
+    "chapter_or_section": "Protecting yield",
+    "page_or_timestamp": "Audible/2025",
+    "content": "Defines risk controls for high-yield dividends: keep payout ratios below 85%, cap leverage, monitor interest coverage, and diversify across sectors that can pass through inflation (utilities, consumer staples, REITs). Emphasizes stress-testing each position for revenue declines and dividend cuts before allocation.",
+    "content_type": "rule",
+    "topics": ["dividend_risk", "payout_ratio", "stress_test"],
+    "edge_category": "risk",
+    "citation": "Glenn (2025)"
+  },
+  {
+    "source_type": "book_summary",
+    "source_name": "High-Yield Dividend Strategies",
+    "author": "J. R. Glenn",
+    "chapter_or_section": "Screening filters",
+    "page_or_timestamp": "Audible/2025",
+    "content": "Outlines a filter workflow for high-yield ideas: start with dividend growth >3% YoY, payout ratio <80%, free cash flow coverage, and strong insider ownership. Layer automation that rescans weekly and flags FH yield changes >20 basis points so the income desk can reassess positions quickly.",
+    "content_type": "workflow",
+    "topics": ["dividend_screening", "automation", "cash_flow"],
+    "edge_category": "income",
+    "citation": "Glenn (2025)"
+  }
+]

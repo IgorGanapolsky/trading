@@ -1,0 +1,26 @@
+[
+  {
+    "source_type": "book_summary",
+    "source_name": "How to Invest in REITs Using Free AI",
+    "author": "Ron Pekman",
+    "chapter_or_section": "AI screening workflow",
+    "page_or_timestamp": "Audible/2025",
+    "content": "Details a process where free AI tools gather REIT metrics (occupancy, debt, capex) from public filings, score them against dividend stability criteria, and surface anomalies for deeper analyst review. The blueprint emphasizes lightweight automations, open data, and human validation to keep costs low while expanding coverage.",
+    "content_type": "workflow",
+    "topics": ["ai_data", "reit_scoring", "automation"],
+    "edge_category": "operations",
+    "citation": "Pekman (2025)"
+  },
+  {
+    "source_type": "book_summary",
+    "source_name": "How to Invest in REITs Using Free AI",
+    "author": "Ron Pekman",
+    "chapter_or_section": "Dividend stability rules",
+    "page_or_timestamp": "Audible/2025",
+    "content": "Recommends focusing AI screening on FFO/AFFO growth, payout ratios below 90%, and rent coverage by tenants with 3+ year leases. Pair the model scores with manual checks for leverage and management alignment before trading to avoid relying solely on automation.",
+    "content_type": "rule",
+    "topics": ["dividend_rules", "reit_risk", "ai_review"],
+    "edge_category": "risk",
+    "citation": "Pekman (2025)"
+  }
+]

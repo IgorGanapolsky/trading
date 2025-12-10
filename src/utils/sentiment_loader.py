@@ -53,7 +53,7 @@ VERY_BULLISH_THRESHOLD = 70  # Above 70 = very bullish
 MAX_AGE_HOURS = 24
 
 
-def _load_source_from_sqlite(source: str, date_str: str) -> Optional[dict]:
+def _load_source_from_sqlite(source: str, date_str: str) -> dict | None:
     """
     Load sentiment snapshot from SQLite store when JSON cache is missing.
 
@@ -137,7 +137,7 @@ def normalize_sentiment_score(score: float, source: str) -> float:
         return max(0, min(100, score))
 
 
-def load_latest_sentiment(date: Optional[str] = None, fallback_days: int = 7) -> dict:
+def load_latest_sentiment(date: str | None = None, fallback_days: int = 7) -> dict:
     """
     Load the most recent sentiment data from cache files.
 
@@ -347,7 +347,7 @@ def load_latest_sentiment(date: Optional[str] = None, fallback_days: int = 7) ->
 
 def get_ticker_sentiment(
     ticker: str,
-    sentiment_data: Optional[dict] = None,
+    sentiment_data: dict | None = None,
     default_score: float = 50.0,
     default_confidence: str = "low",
 ) -> tuple[float, str, str]:
@@ -417,7 +417,7 @@ def is_sentiment_fresh(sentiment_data: dict, max_age_hours: int = MAX_AGE_HOURS)
     return hours_old <= max_age_hours
 
 
-def get_market_regime(sentiment_data: Optional[dict] = None) -> str:
+def get_market_regime(sentiment_data: dict | None = None) -> str:
     """
     Get overall market regime based on SPY sentiment.
 
@@ -442,7 +442,7 @@ def get_market_regime(sentiment_data: Optional[dict] = None) -> str:
     return spy_regime
 
 
-def get_sentiment_summary(sentiment_data: Optional[dict] = None) -> dict:
+def get_sentiment_summary(sentiment_data: dict | None = None) -> dict:
     """
     Get a human-readable summary of sentiment data.
 
@@ -484,7 +484,7 @@ def get_sentiment_summary(sentiment_data: Optional[dict] = None) -> dict:
     }
 
 
-def print_sentiment_summary(sentiment_data: Optional[dict] = None):
+def print_sentiment_summary(sentiment_data: dict | None = None):
     """
     Print a formatted summary of sentiment data.
 
@@ -501,16 +501,20 @@ def print_sentiment_summary(sentiment_data: Optional[dict] = None):
     print(f"Sources: {', '.join(summary['sources'])}")
     print(f"Market Regime: {summary['market_regime'].upper()}")
     print()
+    pct_bullish = (
+        (summary["bullish"] / summary["total_tickers"] * 100) if summary["total_tickers"] > 0 else 0
+    )
+    pct_neutral = (
+        (summary["neutral"] / summary["total_tickers"] * 100) if summary["total_tickers"] > 0 else 0
+    )
+    pct_bearish = (
+        (summary["bearish"] / summary["total_tickers"] * 100) if summary["total_tickers"] > 0 else 0
+    )
+
     print(f"Total Tickers: {summary['total_tickers']}")
-    print(
-        f"  Bullish:  {summary['bullish']} ({summary['bullish'] / summary['total_tickers'] * 100:.0f}%)"
-    )
-    print(
-        f"  Neutral:  {summary['neutral']} ({summary['neutral'] / summary['total_tickers'] * 100:.0f}%)"
-    )
-    print(
-        f"  Bearish:  {summary['bearish']} ({summary['bearish'] / summary['total_tickers'] * 100:.0f}%)"
-    )
+    print(f"  Bullish:  {summary['bullish']} ({pct_bullish:.0f}%)")
+    print(f"  Neutral:  {summary['neutral']} ({pct_neutral:.0f}%)")
+    print(f"  Bearish:  {summary['bearish']} ({pct_bearish:.0f}%)")
     print()
     print("Confidence Levels:")
     print(f"  High:   {summary['high_confidence']}")
@@ -521,7 +525,7 @@ def print_sentiment_summary(sentiment_data: Optional[dict] = None):
 
 def query_sentiment_rag(
     query: str,
-    ticker: Optional[str] = None,
+    ticker: str | None = None,
     top_k: int = 5,
 ) -> list[dict]:
     """
@@ -581,3 +585,4 @@ if __name__ == "__main__":
         for ticker in tickers:
             score, confidence, regime = get_ticker_sentiment(ticker.strip(), sentiment_data)
             print(f"{ticker}: score={score:.1f}, confidence={confidence}, regime={regime}")
+# ruff: noqa: UP045

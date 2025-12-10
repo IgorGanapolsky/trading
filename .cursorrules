@@ -26,6 +26,12 @@
 - Commit and push changes immediately after making them
 - **Always commit and push your changes. Don't wait for me.**
 
+## GITHUB ACCESS DIRECTIVE
+
+- Assume the provided GitHub token has full permissions for this repository.
+- If an operation fails, treat it as an automation issue to resolve yourself (e.g., re-auth, retry, adjust workflow) instead of asking the user.
+- Always re-attempt blocked actions with appropriate remediation steps until they succeed or you have definitive evidence the GitHub API is unreachable.
+
 ## PULL REQUEST & STATUS REPORTING DIRECTIVE
 
 - After every push, immediately create or update a GitHub Pull Request for the work in progress.

@@ -18,7 +18,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from src.agent_framework import agent_blueprints
 from src.agent_framework.context_engine import (
@@ -38,6 +38,8 @@ class PlanningPhase(Enum):
     ANALYSIS = "analysis"
     RISK_ASSESSMENT = "risk_assessment"
     EXECUTION = "execution"
+    THETA_HARVEST = "theta_harvest"  # Options income phase (Dec 9, 2025)
+    OPTIONS_ACCUMULATION = "options_accumulation"  # Share building for covered calls
     AUDIT = "audit"
 
 
@@ -63,7 +65,7 @@ class TradePlan:
     decisions: list[dict[str, Any]] = field(default_factory=list)
     context: dict[str, Any] = field(default_factory=dict)
     status: str = "planning"
-    git_commit: Optional[str] = None
+    git_commit: str | None = None
 
 
 @dataclass
@@ -89,18 +91,30 @@ class EliteOrchestrator:
     3. Context engineering: Persistent storage outside prompts
     4. Hybrid orchestration: Each agent type for its strengths
     5. Autonomous operation: Minimal human intervention
+    6. Adaptive organization: Dynamic agent reorganization (NEW)
     """
 
-    def __init__(self, paper: bool = True, enable_planning: bool = True):
+    def __init__(
+        self,
+        paper: bool = True,
+        enable_planning: bool = True,
+        enable_adaptive: bool | None = None,
+    ):
         """
         Initialize Elite Orchestrator
 
         Args:
             paper: Paper trading mode
             enable_planning: Enable planning-first flows
+            enable_adaptive: Enable adaptive agent organization (default: from env or True)
         """
         self.paper = paper
         self.enable_planning = enable_planning
+        self.enable_adaptive = (
+            enable_adaptive
+            if enable_adaptive is not None
+            else os.getenv("ENABLE_ADAPTIVE_ORCHESTRATOR", "true").lower() == "true"
+        )
 
         # Initialize all agent frameworks
         self.skills = get_skills()
@@ -144,8 +158,23 @@ class EliteOrchestrator:
 
         self._initialize_agents()
 
+        # Initialize Adaptive Orchestrator if enabled
+        self.adaptive_orchestrator = None
+        if self.enable_adaptive:
+            try:
+                from src.orchestration.adaptive_orchestrator import AdaptiveOrchestrator
+
+                self.adaptive_orchestrator = AdaptiveOrchestrator(
+                    paper=self.paper, enable_learning=True
+                )
+                logger.info("✅ Adaptive Orchestrator initialized")
+            except Exception as e:
+                logger.warning(f"⚠️ Adaptive Orchestrator unavailable: {e}")
+                self.adaptive_orchestrator = None
+
         logger.info("✅ Elite Orchestrator initialized")
         logger.info(f"   Planning: {'Enabled' if enable_planning else 'Disabled'}")
+        logger.info(f"   Adaptive: {'Enabled' if self.adaptive_orchestrator else 'Disabled'}")
         logger.info(f"   Mode: {'PAPER' if paper else 'LIVE'}")
 
         # Ensemble voting configuration and agent filters
@@ -334,18 +363,27 @@ class EliteOrchestrator:
         )
 
     def create_trade_plan(
-        self, symbols: list[str], context: Optional[dict[str, Any]] = None
+        self, symbols: list[str], context: dict[str, Any] | None = None
     ) -> TradePlan:
         """
-        Create a planning-first trade plan
+        Create a planning-first trade plan (with adaptive organization if enabled)
 
         Args:
             symbols: Symbols to trade
             context: Additional context
 
         Returns:
-            TradePlan with explicit planning phases
+            TradePlan with explicit planning phases (adaptive if enabled)
         """
+        # Use adaptive orchestrator if enabled
+        if self.enable_adaptive and self.adaptive_orchestrator:
+            logger.info("🔄 Using adaptive agent organization")
+            plan = self.adaptive_orchestrator.create_adaptive_plan(symbols, context)
+            self._save_plan(plan)
+            return plan
+
+        # Fallback to fixed organization
+        logger.info("📋 Using fixed agent organization")
         plan_id = f"plan_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
         plan = TradePlan(
@@ -355,7 +393,7 @@ class EliteOrchestrator:
             context=context or {},
         )
 
-        # Define planning phases
+        # Define planning phases (fixed structure)
         plan.phases = {
             PlanningPhase.INITIALIZE.value: {
                 "description": "Initialize trading cycle",
@@ -520,18 +558,107 @@ class EliteOrchestrator:
             logger.error(f"Phase 5 failed: {e}")
             results["errors"].append(f"Execution: {str(e)}")
 
-        # Phase 6: Audit
+        # Phase 6: Theta Harvest (Options Income) - Dec 9, 2025
+        if os.getenv("ENABLE_THETA_AUTOMATION", "true").lower() == "true":
+            try:
+                theta_result = self._execute_theta_harvest(plan)
+                results["phases"][PlanningPhase.THETA_HARVEST.value] = theta_result
+                if PlanningPhase.THETA_HARVEST.value in plan.phases:
+                    plan.phases[PlanningPhase.THETA_HARVEST.value]["status"] = "completed"
+                logger.info(f"✅ Theta Harvest: {theta_result.get('summary', 'completed')}")
+            except Exception as e:
+                logger.error(f"Theta Harvest phase failed: {e}")
+                results["errors"].append(f"Theta Harvest: {str(e)}")
+        else:
+            logger.info("⏭️ Theta Harvest skipped (ENABLE_THETA_AUTOMATION=false)")
+
+        # Phase 7: Options Accumulation (Share Building)
+        if os.getenv("OPTIONS_ACCUMULATION_ENABLED", "true").lower() == "true":
+            try:
+                accumulation_result = self._execute_options_accumulation(plan)
+                results["phases"][PlanningPhase.OPTIONS_ACCUMULATION.value] = accumulation_result
+                if PlanningPhase.OPTIONS_ACCUMULATION.value in plan.phases:
+                    plan.phases[PlanningPhase.OPTIONS_ACCUMULATION.value]["status"] = "completed"
+                logger.info(
+                    f"✅ Options Accumulation: {accumulation_result.get('summary', 'completed')}"
+                )
+            except Exception as e:
+                logger.error(f"Options Accumulation phase failed: {e}")
+                results["errors"].append(f"Options Accumulation: {str(e)}")
+        else:
+            logger.info("⏭️ Options Accumulation skipped (OPTIONS_ACCUMULATION_ENABLED=false)")
+
+        # Phase 8: Audit
         try:
             audit_result = self._execute_audit(plan, results)
             results["phases"][PlanningPhase.AUDIT.value] = audit_result
             plan.phases[PlanningPhase.AUDIT.value]["status"] = "completed"
         except Exception as e:
-            logger.error(f"Phase 6 failed: {e}")
+            logger.error(f"Audit phase failed: {e}")
             results["errors"].append(f"Audit: {str(e)}")
 
         plan.status = "completed"
         self._save_plan(plan)
         self._save_results(plan.plan_id, results)
+
+        # Record performance for adaptive learning
+        if self.enable_adaptive and self.adaptive_orchestrator:
+            try:
+                execution_time_ms = sum(
+                    phase.get("execution_time_ms", 0)
+                    for phase in results.get("phases", {}).values()
+                )
+                success = len(results.get("errors", [])) == 0
+                profit = results.get("final_decision", {}).get("profit", 0.0) or 0.0
+                confidence = (
+                    analysis_result.get("ensemble_vote", {})
+                    .get(list(plan.symbols)[0] if plan.symbols else "", {})
+                    .get("weighted_score", 0.0)
+                    if analysis_result
+                    else 0.0
+                )
+
+                # Get complexity and regime from plan context
+                complexity_str = plan.context.get("complexity", "moderate")
+                market_regime = plan.context.get("market_regime", "SIDEWAYS")
+
+                from src.orchestration.adaptive_orchestrator import (
+                    ComplexityAssessment,
+                    OrganizationPattern,
+                    TaskComplexity,
+                )
+
+                complexity = ComplexityAssessment(
+                    complexity=TaskComplexity(complexity_str),
+                    score=plan.context.get("complexity_score", 0.5),
+                    factors={},
+                )
+
+                organization_pattern = OrganizationPattern(
+                    plan.context.get("organization_pattern", "parallel")
+                )
+
+                # Create minimal organization for recording
+                from src.orchestration.adaptive_orchestrator import AgentOrganization
+
+                organization = AgentOrganization(
+                    pattern=organization_pattern,
+                    phases={},
+                    agent_assignments={},
+                    execution_order=[],
+                )
+
+                self.adaptive_orchestrator.record_performance(
+                    organization=organization,
+                    complexity=complexity,
+                    market_regime=market_regime,
+                    execution_time_ms=execution_time_ms,
+                    success=success,
+                    profit=profit,
+                    confidence=confidence,
+                )
+            except Exception as e:
+                logger.warning(f"Failed to record adaptive performance: {e}")
 
         logger.info(f"✅ Plan execution complete: {plan.plan_id}")
         return results
@@ -750,6 +877,7 @@ class EliteOrchestrator:
                     if use_ensemble:
                         try:
                             import torch  # noqa: F401
+
                             from src.ml.data_processor import DataProcessor
                             from src.ml.ensemble_rl import EnsembleRLAgent
 
@@ -1019,6 +1147,134 @@ class EliteOrchestrator:
                     timestamp=datetime.now().isoformat(),
                 )
                 order["anomaly_check"] = anomaly_result
+
+        return results
+
+    def _execute_theta_harvest(self, plan: TradePlan) -> dict[str, Any]:
+        """
+        Execute theta harvest phase - Options income generation (Dec 9, 2025)
+
+        This phase:
+        1. Runs the ThetaHarvestExecutor to find iron condor opportunities
+        2. Executes trades if auto_execution_enabled is True
+        3. Logs all opportunities for CEO visibility
+
+        Returns:
+            Dictionary with theta harvest results
+        """
+        results = {
+            "phase": PlanningPhase.THETA_HARVEST.value,
+            "opportunities": [],
+            "executed_trades": [],
+            "total_premium": 0.0,
+            "summary": "",
+        }
+
+        try:
+            from src.analytics.options_profit_planner import ThetaHarvestExecutor
+
+            # Initialize theta executor
+            theta_executor = ThetaHarvestExecutor(paper=self.paper)
+
+            # Generate theta harvest plan
+            theta_plan = theta_executor.generate_plan()
+
+            if theta_plan:
+                results["opportunities"] = theta_plan.get("opportunities", [])
+                results["total_estimated_premium"] = theta_plan.get("total_estimated_premium", 0.0)
+
+                # Execute if automation is enabled
+                if theta_plan.get("auto_execution_enabled", False):
+                    for opp in theta_plan.get("opportunities", []):
+                        if not opp.get("executed"):
+                            try:
+                                exec_result = theta_executor.execute_opportunity(opp)
+                                if exec_result.get("success"):
+                                    results["executed_trades"].append(exec_result)
+                                    results["total_premium"] += exec_result.get("premium", 0.0)
+                                    logger.info(
+                                        f"✅ Executed theta trade: {opp['symbol']} {opp['strategy']} "
+                                        f"for ${exec_result.get('premium', 0):.2f} premium"
+                                    )
+                            except Exception as e:
+                                logger.warning(f"Failed to execute theta opportunity: {e}")
+
+                results["summary"] = (
+                    f"Found {len(results['opportunities'])} opportunities, "
+                    f"executed {len(results['executed_trades'])} trades, "
+                    f"total premium: ${results['total_premium']:.2f}"
+                )
+            else:
+                results["summary"] = "No theta opportunities found"
+
+        except ImportError as e:
+            logger.warning(f"Theta harvest module not available: {e}")
+            results["summary"] = "Theta module not available"
+        except Exception as e:
+            logger.error(f"Theta harvest execution failed: {e}")
+            results["summary"] = f"Error: {str(e)}"
+
+        return results
+
+    def _execute_options_accumulation(self, plan: TradePlan) -> dict[str, Any]:
+        """
+        Execute options accumulation phase - Build share positions for covered calls (Dec 9, 2025)
+
+        This phase:
+        1. Runs the OptionsAccumulationStrategy to buy shares
+        2. Tracks progress toward 50-share threshold
+        3. Reports status for CEO visibility
+
+        Returns:
+            Dictionary with accumulation results
+        """
+        results = {
+            "phase": PlanningPhase.OPTIONS_ACCUMULATION.value,
+            "status": {},
+            "execution": None,
+            "summary": "",
+        }
+
+        try:
+            from src.strategies.options_accumulation_strategy import OptionsAccumulationStrategy
+
+            # Initialize accumulation strategy
+            accumulation = OptionsAccumulationStrategy(paper=self.paper)
+
+            # Get current status
+            status = accumulation.get_current_status()
+            results["status"] = status
+
+            if status.get("status") == "complete":
+                results["summary"] = (
+                    f"✅ Accumulation complete: {status['current_shares']:.1f} shares of {status['target_symbol']} "
+                    f"(ready for covered calls)"
+                )
+            elif status.get("status") == "accumulating":
+                # Execute daily purchase
+                exec_result = accumulation.execute_daily()
+                results["execution"] = exec_result
+
+                if exec_result and exec_result.get("action") == "purchased":
+                    results["summary"] = (
+                        f"Purchased {exec_result.get('shares_purchased', 0):.2f} shares of {status['target_symbol']}. "
+                        f"Progress: {status['progress_pct']:.1f}%, ~{status['days_to_target']:.0f} days remaining"
+                    )
+                elif exec_result and exec_result.get("action") == "complete":
+                    results["summary"] = f"Target reached: {status['current_shares']:.1f} shares"
+                else:
+                    results["summary"] = (
+                        f"Accumulation status: {exec_result.get('action', 'unknown')}"
+                    )
+            else:
+                results["summary"] = f"Accumulation error: {status.get('error', 'unknown')}"
+
+        except ImportError as e:
+            logger.warning(f"Options accumulation module not available: {e}")
+            results["summary"] = "Accumulation module not available"
+        except Exception as e:
+            logger.error(f"Options accumulation execution failed: {e}")
+            results["summary"] = f"Error: {str(e)}"
 
         return results
 

@@ -1,0 +1,289 @@
+{
+  "metadata": {
+    "source_type": "podcast_research",
+    "collection_date": "2025-12-10",
+    "description": "Options trading insights from leading podcast sources",
+    "version": "1.0"
+  },
+  "chunks": [
+    {
+      "id": "tastytrade_mm_001",
+      "source": "tastytrade Market Measures",
+      "topic": "Market Reversal Probabilities",
+      "insight": "The chance of a complete reversal in the market after a 2% or greater daily move in either direction is just 1% (over 20 years of data). The chance of a reversal after a selloff is twice as likely as a reversal after a rally of the same size.",
+      "trading_rule": "After large market moves (2%+), expect continuation rather than reversal. Reversals are rare (1%) and more likely after selloffs than rallies.",
+      "application": "Use this data to avoid premature position reversals after large moves. Consider mean-reversion trades more carefully after selloffs.",
+      "source_url": "https://podcasts.apple.com/ca/podcast/tastytrade-market-measures/id1494957308",
+      "confidence": "high",
+      "research_basis": "20+ years of historical market data"
+    },
+    {
+      "id": "tastytrade_mm_002",
+      "source": "tastytrade Market Measures",
+      "topic": "Outlier Rank (OR) for Risk Management",
+      "insight": "Outlier Rank (OR) is an effective way to estimate exposure to outlier risk at a given IV level. Research shows that trading 16Δ SPY strangles with low OR and high IVR increases average P/L and decreases P/L volatility.",
+      "trading_rule": "Favor trades with low Outlier Rank and high IV Rank when selling premium. This combination improves risk-adjusted returns.",
+      "application": "Filter strangle trades using OR < threshold and IVR > 50. Particularly effective for 16 delta SPY strangles.",
+      "source_url": "https://www.listennotes.com/podcasts/tastytrade-market-measures-tastytrade-xA5bZrnITis/",
+      "confidence": "high",
+      "research_basis": "Backtested on SPY strangles"
+    },
+    {
+      "id": "tastytrade_mm_003",
+      "source": "tastytrade Market Measures",
+      "topic": "ATM vs OTM Options Decay",
+      "insight": "Options decay differently depending on whether they are at-the-money or out-of-the-money. ATM options decay faster after the 21 DTE mark, but they have more gamma risk.",
+      "trading_rule": "ATM options are better for short-term trades (< 21 DTE) due to faster theta decay, but require careful gamma risk management. OTM options have more predictable decay patterns for longer-dated positions.",
+      "application": "Use ATM options for aggressive theta harvesting in the final 3 weeks before expiration. Use OTM for safer, longer-term positions with lower gamma exposure.",
+      "source_url": "https://open.spotify.com/episode/4WFTm6gDYaZzFsWZmQiPCN",
+      "confidence": "high",
+      "research_basis": "Options decay curve analysis"
+    },
+    {
+      "id": "tastytrade_mm_004",
+      "source": "tastytrade Market Measures",
+      "topic": "Zero-DTE Options Strategy",
+      "insight": "Recent episodes explore exit times and profit targets for zero-DTE options, and optimal profit targets for different delta strangles at 45 DTE.",
+      "trading_rule": "Zero-DTE options require specific profit targets and exit timing. 45 DTE delta strangles have optimal profit targets based on delta selection.",
+      "application": "Structure 0DTE trades with predetermined profit targets and time-based exits. For 45 DTE strangles, adjust profit targets based on chosen delta.",
+      "source_url": "https://podbay.fm/p/tastytrade-market-measures",
+      "confidence": "medium",
+      "research_basis": "Recent tastytrade research studies"
+    },
+    {
+      "id": "tastytrade_mm_005",
+      "source": "tastytrade Market Measures - Julia Spina",
+      "topic": "Educational Resources",
+      "insight": "Julia Spina, tastytrade research analyst and podcast host, authored 'The Unlucky Investor's Guide to Options Trading' combining physics, signal processing, and data analysis backgrounds with options strategy development.",
+      "trading_rule": "Apply quantitative methods and data-driven approaches to options strategy development rather than relying on intuition or luck.",
+      "application": "Use statistical analysis and backtesting to validate strategies before deployment. Treat options trading as a quantitative discipline.",
+      "source_url": "https://newsroom.wiley.com/press-releases/press-release-details/2022/tastytrade-podcast-host-and-research-analyst-Ms.-Julia-Spina-pens-The-Unlucky-Investors-Guide-to-Options-Trading/default.aspx",
+      "confidence": "high",
+      "research_basis": "Book by tastytrade research team"
+    },
+    {
+      "id": "option_alpha_001",
+      "source": "Option Alpha Podcast",
+      "topic": "Order Execution Mechanics",
+      "insight": "Episode 233 with Adam Cohn (TradeStation VP) covers order routing, execution factors, payment for order flow (PFOF), and market maker roles. Understanding these mechanics is critical for options traders.",
+      "trading_rule": "Understand that order fills are influenced by order routing, market maker incentives, and PFOF arrangements. Wide bid-ask spreads require more sophisticated order management.",
+      "application": "Use limit orders instead of market orders for options. Understand your broker's order routing to optimize fills. Be aware of market maker behavior around support/resistance.",
+      "source_url": "https://optionalpha.com/podcast",
+      "confidence": "high",
+      "research_basis": "Interview with TradeStation Head of Trading Operations"
+    },
+    {
+      "id": "option_alpha_002",
+      "source": "Option Alpha Podcast",
+      "topic": "0DTE Market Dominance",
+      "insight": "0DTE options now dominate SPX volumes. The options landscape has changed dramatically with 0DTE representing a major shift in market structure and creating new opportunities for retail traders.",
+      "trading_rule": "Adapt strategies to account for 0DTE volume impact on intraday volatility and price action. 0DTE creates unique risk/reward profiles requiring different management approaches.",
+      "application": "Monitor 0DTE option flow for intraday directional signals. Consider 0DTE strategies for quick theta capture but with strict risk management due to gamma exposure.",
+      "source_url": "https://podcasts.apple.com/us/podcast/the-option-alpha-podcast/id932492307",
+      "confidence": "high",
+      "research_basis": "Current market structure analysis"
+    },
+    {
+      "id": "option_alpha_003",
+      "source": "Option Alpha Podcast",
+      "topic": "Bid-Ask Spread Volatility",
+      "insight": "Episode on bid-ask spread volatility presents four case studies and discusses how to use automation to address pricing anomalies.",
+      "trading_rule": "Monitor bid-ask spreads for pricing inefficiencies. Wide spreads indicate illiquidity and require different trade management. Use automation to capture favorable pricing when spreads narrow.",
+      "application": "Set alerts for bid-ask spread width. Avoid trading during extreme spread volatility. Use limit orders positioned within the spread to improve fill prices.",
+      "source_url": "https://optionalpha.com/podcast",
+      "confidence": "medium",
+      "research_basis": "Case study analysis of bid-ask anomalies"
+    },
+    {
+      "id": "option_alpha_004",
+      "source": "Option Alpha Podcast",
+      "topic": "Options Expiration Management",
+      "insight": "Episode 232 covers 7 automated tips and tricks for navigating options expiration, especially critical with the rise of daily expirations.",
+      "trading_rule": "Have systematic expiration management protocols, especially for 0DTE. Automate expiration decisions to avoid emotional trading during high-gamma periods.",
+      "application": "Implement automated rules for closing positions before expiration. Set profit targets and stop losses that trigger before expiration day. Monitor pin risk for ATM positions.",
+      "source_url": "https://optionalpha.com/podcast",
+      "confidence": "high",
+      "research_basis": "Option Alpha automation platform best practices"
+    },
+    {
+      "id": "option_alpha_005",
+      "source": "Option Alpha Podcast",
+      "topic": "Market Sentiment Analysis",
+      "insight": "Interview with Jason Goepfert discusses investor psychology, managing risk exposure, and whether market sentiment analysis actually works.",
+      "trading_rule": "Use sentiment as a contrarian indicator when extreme. However, sentiment analysis requires careful interpretation and shouldn't be used in isolation.",
+      "application": "Track sentiment indicators (put/call ratio, VIX, investor surveys). Look for extremes that suggest market positioning is crowded. Fade extreme sentiment with defined risk strategies.",
+      "source_url": "https://optionalpha.com/podcast",
+      "confidence": "medium",
+      "research_basis": "Expert interview on sentiment analysis effectiveness"
+    },
+    {
+      "id": "theotrade_001",
+      "source": "TheoTrade - Don Kaufman",
+      "topic": "Premium Selling Framework",
+      "insight": "TheoTrade curriculum covers the logic behind selling premium, how to build an options inventory to spread risk across products and time, and professional capital allocation methods.",
+      "trading_rule": "Selling premium requires diversification across multiple underlyings and expiration dates. Risk should be spread through proper inventory management rather than concentrated in single positions.",
+      "application": "Build a portfolio of premium selling positions across different sectors, expiration cycles, and products. Use position sizing based on capital allocation rules rather than maximum theoretical positions.",
+      "source_url": "https://theotrade.com/",
+      "confidence": "high",
+      "research_basis": "Professional trading education with 15+ year experienced instructors"
+    },
+    {
+      "id": "theotrade_002",
+      "source": "TheoTrade",
+      "topic": "Vertical and Calendar Spreads",
+      "insight": "Options 201 curriculum focuses on vertical and calendar spreads essentials as foundational strategies for managing risk and directional exposure.",
+      "trading_rule": "Use vertical spreads to define risk in directional trades. Calendar spreads profit from time decay differentials and volatility changes. Both strategies offer better risk/reward than naked options.",
+      "application": "Deploy vertical spreads for directional conviction with capped risk. Use calendar spreads in range-bound markets to harvest theta while maintaining vega exposure for volatility expansion.",
+      "source_url": "https://theotrade.com/",
+      "confidence": "high",
+      "research_basis": "Core options strategy education"
+    },
+    {
+      "id": "theotrade_003",
+      "source": "TheoTrade",
+      "topic": "Volatility and Expected Move",
+      "insight": "Options 301 curriculum covers volatility analysis and expected move calculations as essential tools for trade sizing and probability assessment.",
+      "trading_rule": "Use implied volatility and expected move to size positions appropriately. Expected move defines the probability distribution for the underlying's price at expiration.",
+      "application": "Calculate expected move (EM) for each underlying before trade entry. Size positions so that breakeven points are outside the expected move for higher probability trades. Monitor IV percentile for entry timing.",
+      "source_url": "https://theotrade.com/",
+      "confidence": "high",
+      "research_basis": "Professional volatility analysis curriculum"
+    },
+    {
+      "id": "theotrade_004",
+      "source": "TheoTrade",
+      "topic": "High Probability In/Out Spreads",
+      "insight": "TheoTrade curriculum includes strategies for high probability trading using In/Out spreads, designed to maximize success rate while managing risk.",
+      "trading_rule": "In/Out spreads (likely referring to iron condors or similar strategies) can provide high probability returns by collecting premium outside expected move ranges.",
+      "application": "Structure In/Out spreads with short strikes outside 1 standard deviation expected move. Collect credit with 70%+ probability of profit. Manage early when profit target hit (typically 50% of max credit).",
+      "source_url": "https://theotrade.com/",
+      "confidence": "medium",
+      "research_basis": "High probability trading methodology"
+    },
+    {
+      "id": "general_001",
+      "source": "Options Boot Camp Podcast",
+      "topic": "Floor Trading Expertise",
+      "insight": "Hosted by bonafide options experts who worked on the floor of the Chicago Board Options Exchange as professional traders and market makers. They break down complex topics into easily digestible information.",
+      "trading_rule": "Learn from market makers' perspective to understand order flow, pricing dynamics, and how institutional traders view risk. Market maker knowledge provides edge in understanding options pricing inefficiencies.",
+      "application": "Study market maker behavior at key price levels. Understand how market makers hedge delta exposure. Use this knowledge to time entries when market makers are adjusting positions.",
+      "source_url": "https://podcasts.apple.com/us/podcast/options-boot-camp/id514144367",
+      "confidence": "high",
+      "research_basis": "CBOE floor trader expertise"
+    },
+    {
+      "id": "general_002",
+      "source": "Options Insider Radio",
+      "topic": "Industry Perspective",
+      "insight": "Options Insider Radio is the longest-running options podcast featuring interviews with thought leaders, icons, and movers who shape the options market.",
+      "trading_rule": "Stay informed about structural market changes, new products, and evolving regulations that impact options trading. Market structure knowledge is a competitive advantage.",
+      "application": "Follow interviews with market makers, exchange officials, and technology providers to understand upcoming changes in market structure. Adapt strategies based on industry evolution.",
+      "source_url": "https://podcast.feedspot.com/option_trading_podcasts/",
+      "confidence": "medium",
+      "research_basis": "Longest-running options podcast with industry leaders"
+    },
+    {
+      "id": "general_003",
+      "source": "The Weekly Option Podcast",
+      "topic": "Income-Focused Strategies",
+      "insight": "Hosted by ex-CBOE floor trader, focuses on practical trades with clear risk parameters (max loss, max gain, breakeven) for creating monthly income.",
+      "trading_rule": "Every options trade should have clearly defined risk parameters before entry. Income strategies require consistent application of trades with positive expectancy over time.",
+      "application": "Define max loss, max gain, and breakeven points before every trade. Size positions so max loss is acceptable. Focus on strategies with 60%+ win rate for consistent monthly income.",
+      "source_url": "https://podcast.feedspot.com/option_trading_podcasts/",
+      "confidence": "medium",
+      "research_basis": "CBOE floor trader practical experience"
+    },
+    {
+      "id": "general_004",
+      "source": "The Option Genius Podcast",
+      "topic": "Conservative Premium Selling",
+      "insight": "Focuses on earning consistent monthly income by selling options using conservative strategies with high probability trades. Covers covered calls, naked puts, credit spreads, iron condors, butterfly spreads, calendar spreads, strangles, and straddles.",
+      "trading_rule": "Conservative premium selling prioritizes consistency over large returns. Use high probability strategies (70%+ success rate) with defined risk. Monthly income approach requires regular trade deployment.",
+      "application": "Deploy multiple small premium selling positions rather than few large ones. Target 50-70% profit capture rather than holding to expiration. Use iron condors and credit spreads as core strategies with 30-45 DTE.",
+      "source_url": "https://podcasts.apple.com/us/podcast/the-option-genius-podcast-options-trading-for-income/id1307838447",
+      "confidence": "high",
+      "research_basis": "Systematic income generation approach"
+    },
+    {
+      "id": "general_005",
+      "source": "Stock Market Options Trading Podcast",
+      "topic": "Economic Event Analysis",
+      "insight": "Hosted by Eric O'Rourke, breaks down current SPX market setups heading into economic events like FOMC meetings, covering volatility, inflation data (CPI, PPI), and consumer sentiment.",
+      "trading_rule": "Anticipate volatility changes around major economic events. IV typically rises before events and crushes after. Position trades to benefit from predictable IV patterns.",
+      "application": "Sell premium before high-IV events (earnings, FOMC) when IV is elevated. Close or reduce positions before event if holding through is too risky. Use calendars to capture IV crush while maintaining vega exposure.",
+      "source_url": "https://podcasts.apple.com/us/podcast/stock-market-options-trading/id1501886993",
+      "confidence": "high",
+      "research_basis": "Current market analysis around economic events"
+    }
+  ],
+  "trading_principles": {
+    "risk_management": [
+      "Always define max loss before trade entry",
+      "Spread risk across multiple underlyings and expiration dates",
+      "Use position sizing based on account size and risk tolerance",
+      "Close positions at profit targets (typically 50-70% of max credit) rather than holding to expiration",
+      "Monitor gamma exposure, especially for ATM positions near expiration"
+    ],
+    "strategy_selection": [
+      "Use ATM options for < 21 DTE aggressive theta harvesting",
+      "Use OTM options for longer-term positions with lower gamma risk",
+      "Favor trades with low Outlier Rank and high IV Rank",
+      "Deploy vertical spreads for directional conviction with defined risk",
+      "Use iron condors and credit spreads for income in range-bound markets",
+      "Apply calendar spreads to capture theta while maintaining vega exposure"
+    ],
+    "market_structure": [
+      "0DTE options dominate SPX volume - adapt strategies accordingly",
+      "Understand order routing and PFOF impact on fills",
+      "Market reversals after 2%+ moves are rare (1%) - expect continuation",
+      "Reversals after selloffs are 2x more likely than after rallies",
+      "Monitor bid-ask spreads for liquidity and pricing efficiency"
+    ],
+    "execution_best_practices": [
+      "Use limit orders instead of market orders for options",
+      "Position limit orders within the bid-ask spread for better fills",
+      "Avoid trading during extreme spread volatility",
+      "Automate expiration management to avoid emotional decisions",
+      "Set alerts for key technical levels and spread width changes"
+    ],
+    "volatility_and_timing": [
+      "Sell premium when IV Rank is high (> 50th percentile)",
+      "Calculate expected move and place short strikes outside 1 SD",
+      "Anticipate IV crush after earnings and economic events",
+      "Use sentiment as contrarian indicator at extremes",
+      "Monitor VIX and put/call ratios for market positioning"
+    ]
+  },
+  "recommended_podcasts": [
+    {
+      "name": "tastytrade Market Measures",
+      "focus": "Data-driven research, probabilities, volatility analysis",
+      "url": "https://podcasts.apple.com/ca/podcast/tastytrade-market-measures/id1494957308",
+      "best_for": "Quantitative traders seeking backtested strategies"
+    },
+    {
+      "name": "Option Alpha Podcast",
+      "focus": "Market structure, automation, 0DTE strategies",
+      "url": "https://optionalpha.com/podcast",
+      "best_for": "Systematic traders building automated systems"
+    },
+    {
+      "name": "Options Boot Camp",
+      "focus": "Market maker perspective, CBOE floor trader insights",
+      "url": "https://podcasts.apple.com/us/podcast/options-boot-camp/id514144367",
+      "best_for": "Understanding institutional order flow and pricing"
+    },
+    {
+      "name": "The Option Genius Podcast",
+      "focus": "Conservative income strategies, high probability trades",
+      "url": "https://podcasts.apple.com/us/podcast/the-option-genius-podcast-options-trading-for-income/id1307838447",
+      "best_for": "Income-focused traders seeking consistency"
+    },
+    {
+      "name": "The Weekly Option Podcast",
+      "focus": "Practical trades with clear risk parameters",
+      "url": "https://podcast.feedspot.com/option_trading_podcasts/",
+      "best_for": "Traders wanting defined risk strategies for monthly income"
+    }
+  ]
+}
