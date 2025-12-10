@@ -102,7 +102,6 @@ class BacktestEngine:
         bias_replay: BiasReplay | None = None,
         use_hybrid_gates: bool = False,
         hybrid_options: dict[str, Any] | None = None,
-        bias_replay: BiasReplay | None = None,
         sentiment_store: SentimentSQLiteStore | None = None,
     ):
         """
