@@ -222,6 +222,54 @@ def find_optimal_put(options_client, symbol: str, target_delta: float = 0.25, mi
     return best
 
 
+def try_tradier_fallback(symbol: str, dry_run: bool = False) -> dict:
+    """
+    Try Tradier as fallback broker for options trading.
+
+    Per lesson ll_007: Tradier is configured as backup broker.
+    GitHub Secrets: TRADIER_SANDBOX_API_KEY, TRADIER_SANDBOX_ACCOUNT_NUMBER
+    """
+    logger.info("\n" + "=" * 60)
+    logger.info("🔄 ATTEMPTING TRADIER FALLBACK")
+    logger.info("=" * 60)
+
+    try:
+        from src.brokers.tradier_client import TradierClient
+
+        # Check for Tradier credentials
+        api_key = os.getenv("TRADIER_API_KEY") or os.getenv("TRADIER_SANDBOX_API_KEY")
+        account_num = os.getenv("TRADIER_ACCOUNT_NUMBER") or os.getenv("TRADIER_SANDBOX_ACCOUNT_NUMBER")
+
+        if not api_key or not account_num:
+            logger.warning("❌ Tradier credentials not configured")
+            logger.info("   Set TRADIER_API_KEY and TRADIER_ACCOUNT_NUMBER")
+            return {"status": "NO_FALLBACK", "reason": "Tradier not configured"}
+
+        # Initialize Tradier client
+        tradier = TradierClient(
+            account_number=account_num,
+            api_key=api_key,
+            paper=True,  # Always paper trading for safety
+        )
+
+        if not tradier.is_configured():
+            logger.warning("❌ Tradier client not properly configured")
+            return {"status": "NO_FALLBACK", "reason": "Tradier client misconfigured"}
+
+        logger.info("✅ Tradier client initialized for fallback")
+
+        # Execute via Tradier
+        result = tradier.execute_cash_secured_put(symbol, dry_run=dry_run)
+        return result
+
+    except ImportError as e:
+        logger.error(f"❌ Could not import Tradier client: {e}")
+        return {"status": "NO_FALLBACK", "reason": f"Import error: {e}"}
+    except Exception as e:
+        logger.error(f"❌ Tradier fallback failed: {e}")
+        return {"status": "ERROR", "error": str(e), "broker": "tradier"}
+
+
 def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_run: bool = False):
     """
     Execute a cash-secured put trade.
@@ -230,9 +278,12 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
     1. Find optimal OTM put (delta ~0.25, 30-45 DTE)
     2. Verify we have enough cash to cover assignment
     3. Sell 1 put contract
+
+    Failover (per lesson ll_007):
+    - If Alpaca fails, try Tradier as backup broker
     """
     logger.info("=" * 60)
-    logger.info("💰 CASH-SECURED PUT STRATEGY")
+    logger.info("💰 CASH-SECURED PUT STRATEGY (ALPACA)")
     logger.info("=" * 60)
 
     # Get account info
@@ -243,7 +294,8 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
     # Find optimal put
     put_option = find_optimal_put(options_client, symbol)
     if not put_option:
-        return {"status": "NO_TRADE", "reason": "No suitable options found"}
+        logger.warning("❌ No suitable options found on Alpaca, trying Tradier...")
+        return try_tradier_fallback(symbol, dry_run)
 
     # Calculate cash required for assignment (strike * 100 shares)
     cash_required = put_option["strike"] * 100
@@ -251,7 +303,7 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
 
     if account["cash"] < cash_required:
         logger.warning(f"❌ Insufficient cash! Need ${cash_required:,.2f}, have ${account['cash']:,.2f}")
-        return {"status": "NO_TRADE", "reason": "Insufficient cash"}
+        return {"status": "NO_TRADE", "reason": "Insufficient cash", "broker": "alpaca"}
 
     # Execute trade
     if dry_run:
@@ -261,6 +313,7 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
             "option": put_option,
             "cash_required": cash_required,
             "potential_premium": put_option["mid"] * 100,
+            "broker": "alpaca",
         }
 
     # Place the order
@@ -279,7 +332,7 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
         )
 
         order = trading_client.submit_order(order_request)
-        logger.info(f"\n✅ ORDER SUBMITTED!")
+        logger.info(f"\n✅ ALPACA ORDER SUBMITTED!")
         logger.info(f"   Order ID: {order.id}")
         logger.info(f"   Symbol: {put_option['symbol']}")
         logger.info(f"   Side: SELL TO OPEN")
@@ -292,11 +345,13 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
             "order_id": str(order.id),
             "option": put_option,
             "premium": put_option["bid"] * 100,
+            "broker": "alpaca",
         }
 
     except Exception as e:
-        logger.error(f"❌ Order failed: {e}")
-        return {"status": "ERROR", "error": str(e)}
+        logger.error(f"❌ Alpaca order failed: {e}")
+        logger.info("🔄 Attempting Tradier fallback...")
+        return try_tradier_fallback(symbol, dry_run)
 
 
 def execute_covered_call(trading_client, options_client, symbol: str, dry_run: bool = False):

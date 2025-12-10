@@ -60,6 +60,9 @@ jobs:
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          # Tradier backup broker (per lesson ll_007)
+          TRADIER_API_KEY: ${{ secrets.TRADIER_SANDBOX_API_KEY }}
+          TRADIER_ACCOUNT_NUMBER: ${{ secrets.TRADIER_SANDBOX_ACCOUNT_NUMBER }}
           PAPER_TRADING: 'true'
           OPTIONS_STRATEGY: ${{ github.event.inputs.strategy || 'cash_secured_put' }}
           OPTIONS_SYMBOL: ${{ github.event.inputs.symbol || 'SPY' }}
@@ -76,6 +79,8 @@ jobs:
           echo "🔑 Checking credentials..."
           echo "   ALPACA_API_KEY set: $([ -n \"$ALPACA_API_KEY\" ] && echo 'YES' || echo 'NO')"
           echo "   ALPACA_SECRET_KEY set: $([ -n \"$ALPACA_SECRET_KEY\" ] && echo 'YES' || echo 'NO')"
+          echo "   TRADIER_API_KEY set: $([ -n \"$TRADIER_API_KEY\" ] && echo 'YES' || echo 'NO')"
+          echo "   TRADIER_ACCOUNT_NUMBER set: $([ -n \"$TRADIER_ACCOUNT_NUMBER\" ] && echo 'YES' || echo 'NO')"
           echo ""
 
           # Run with error handling to see full output
