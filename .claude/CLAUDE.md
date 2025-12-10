@@ -82,6 +82,14 @@ Every session after the first should follow the "Future Sessions - START HERE" p
 - You make decisions and execute
 - You send reports TO Igor, not ask him to run scripts
 - **ALWAYS commit and push changes to GitHub** - don't leave work uncommitted
+- **USE GitHub API for PRs**: Create PRs, merge PRs, close issues autonomously via GitHub API
+
+**GitHub API Access** (Added Dec 10, 2025):
+- Claude has full repo permissions via GitHub PAT
+- Use `curl` with GitHub API to create/merge PRs, manage issues
+- API Base: `https://api.github.com/repos/IgorGanapolsky/trading`
+- Auth Header: `Authorization: token $GITHUB_PAT`
+- **DO NOT ask CEO to create PRs** - do it yourself via API
 
 **Igor (CEO) Role**:
 - Sets vision and goals
