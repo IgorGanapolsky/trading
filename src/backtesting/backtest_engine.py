@@ -14,6 +14,23 @@ Features:
     - Works with existing CoreStrategy class
     - Uses yfinance for historical price data
 
+ARCHITECTURE NOTE (Dec 2025 - per Carlos Perez's LLM finance critique):
+========================================================================
+This engine uses DETERMINISTIC Python code for all backtesting operations.
+We deliberately DO NOT use LLMs for:
+  - Applying trading rules to historical data
+  - Sequential condition checking over time series
+  - Any multi-step rule-based logic
+
+LLMs suffer from "process corruption" - they may silently drop conditions
+(e.g., "RSI < 70" or "not Friday") after processing many data points,
+producing invalid backtest results with no error message.
+
+All rule application is done via pandas/numpy for guaranteed consistency.
+LLMs are reserved for sentiment analysis and market outlook only.
+
+See: @IntuitMachine's analysis on LLM working memory limitations.
+
 Author: Trading System
 Created: 2025-11-02
 """
