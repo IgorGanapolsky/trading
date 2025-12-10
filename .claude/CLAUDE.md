@@ -26,6 +26,7 @@
 - `claude-progress.txt` - Agent progress log across sessions
 - `feature_list.json` - Structured feature tracking with pass/fail status
 - `init.sh` - Environment initialization script
+- **`.env` - Alpaca API credentials (NEVER ask CEO for these again - they're saved!)**
 
 **Memory Hierarchy** (per Anthropic guidelines):
 1. Enterprise policies (if applicable)
