@@ -618,7 +618,7 @@ class TradierClient:
         Returns:
             Best put option dict or None
         """
-        from datetime import date, timedelta
+        from datetime import date
 
         # Get current price
         quote = self.get_quote(symbol)
@@ -703,7 +703,7 @@ class TradierClient:
         candidates.sort(key=lambda x: abs(abs(x["delta"]) - target_delta))
 
         best = candidates[0]
-        logger.info(f"✅ Found optimal put via Tradier:")
+        logger.info("✅ Found optimal put via Tradier:")
         logger.info(f"   Symbol: {best['symbol']}")
         logger.info(f"   Strike: ${best['strike']:.2f} ({((current_price - best['strike']) / current_price * 100):.1f}% OTM)")
         logger.info(f"   Expiration: {best['expiration']} ({best['dte']} DTE)")
@@ -847,11 +847,11 @@ class TradierClient:
                 time_in_force="day",
             )
 
-            logger.info(f"\n✅ TRADIER ORDER SUBMITTED!")
+            logger.info("\n✅ TRADIER ORDER SUBMITTED!")
             logger.info(f"   Order ID: {order.id}")
             logger.info(f"   Symbol: {put_option['symbol']}")
-            logger.info(f"   Side: SELL TO OPEN")
-            logger.info(f"   Qty: 1 contract")
+            logger.info("   Side: SELL TO OPEN")
+            logger.info("   Qty: 1 contract")
             logger.info(f"   Limit Price: ${put_option['mid']:.2f}")
             logger.info(f"   Premium: ${put_option['mid'] * 100:.2f} (1 contract)")
 

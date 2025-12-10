@@ -527,7 +527,7 @@ class VIXMonitor:
         """Load VIX history from JSON file"""
         try:
             if os.path.exists(self.VIX_HISTORY_FILE):
-                with open(self.VIX_HISTORY_FILE, 'r') as f:
+                with open(self.VIX_HISTORY_FILE) as f:
                     history = json.load(f)
                     logger.info(f"Loaded VIX history: {len(history.get('daily_values', []))} days")
                     return history
