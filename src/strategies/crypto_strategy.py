@@ -881,27 +881,37 @@ class CryptoStrategy:
                 macd_value, macd_signal, macd_histogram = self._calculate_macd(hist["Close"])
                 volume_ratio = self._calculate_volume_ratio(hist)
 
-                # HARD FILTER 1: Reject strongly bearish MACD (allow slightly negative for less conservative approach)
-                # Changed from < 0 to < -50 to allow trades when MACD is recovering from bearish
-                macd_threshold = float(os.getenv("CRYPTO_MACD_THRESHOLD", "-50.0"))
-                if macd_histogram < macd_threshold:
-                    logger.warning(
-                        f"{symbol} REJECTED - Bearish MACD histogram ({macd_histogram:.4f} < {macd_threshold})"
-                    )
-                    continue
+                # Check if we should bypass hard filters (FORCE_TRADE mode)
+                bypass_filters = os.getenv("FORCE_TRADE", "").lower() in {"1", "true", "yes", "force"}
 
-                # HARD FILTER 2: Reject overbought RSI (>60 for crypto)
-                if rsi > self.RSI_OVERBOUGHT:
-                    logger.warning(
-                        f"{symbol} REJECTED - Overbought RSI ({rsi:.2f} > {self.RSI_OVERBOUGHT})"
-                    )
-                    continue
+                if bypass_filters:
+                    logger.info(f"{symbol}: FORCE_TRADE enabled - bypassing hard filters")
+                    logger.info(f"  RSI={rsi:.1f}, MACD={macd_histogram:.4f}, Vol={volume_ratio:.2f}")
+                else:
+                    # HARD FILTER 1: Reject strongly bearish MACD
+                    # Made more permissive: -200 threshold (was -50)
+                    macd_threshold = float(os.getenv("CRYPTO_MACD_THRESHOLD", "-200.0"))
+                    if macd_histogram < macd_threshold:
+                        logger.warning(
+                            f"{symbol} REJECTED - Bearish MACD histogram ({macd_histogram:.4f} < {macd_threshold})"
+                        )
+                        continue
 
-                # HARD FILTER 3: Require volume confirmation
-                # Note: Weekend volume is typically lower, so threshold is 0.3 (30% of avg)
-                if volume_ratio < 0.3:
-                    logger.warning(f"{symbol} REJECTED - Low volume ({volume_ratio:.2f} < 0.3)")
-                    continue
+                    # HARD FILTER 2: Reject overbought RSI
+                    # Made more permissive: 80 threshold (was 70)
+                    rsi_threshold = float(os.getenv("CRYPTO_RSI_THRESHOLD", "80.0"))
+                    if rsi > rsi_threshold:
+                        logger.warning(
+                            f"{symbol} REJECTED - Overbought RSI ({rsi:.2f} > {rsi_threshold})"
+                        )
+                        continue
+
+                    # HARD FILTER 3: Require volume confirmation
+                    # Made more permissive: 0.1 threshold (was 0.3)
+                    vol_threshold = float(os.getenv("CRYPTO_VOL_THRESHOLD", "0.1"))
+                    if volume_ratio < vol_threshold:
+                        logger.warning(f"{symbol} REJECTED - Low volume ({volume_ratio:.2f} < {vol_threshold})")
+                        continue
 
                 # Calculate composite score
                 score = self._calculate_score(
