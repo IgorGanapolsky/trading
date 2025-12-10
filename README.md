@@ -135,9 +135,27 @@ These documents contain critical protocols and context for understanding how the
 - ✅ Max Drawdown: **2.2%** (excellent)
 - ✅ Annualized Return: **26.16%**
 
-**Current Status**: Active 90-day R&D phase
-**Account**: $99,978.75 (paper trading)
+**Current Status**: Active 90-day R&D phase (Day 31 of 90)
+**Account**: ~$100,017 (paper trading)
 **Daily Investment**: $10/day (fixed)
+
+---
+
+## 💵 Capital Requirements (Honest Assessment)
+
+**Dec 10, 2025 Update** - See [docs/trading-bot-roadmap.md](docs/trading-bot-roadmap.md) for full analysis.
+
+| Strategy | Capital Needed | Expected Return | Path to $100/Day |
+|----------|---------------|-----------------|------------------|
+| **Stock Momentum (current)** | $250,000+ | 0.04% daily | Buy & hold appreciation |
+| **Options/Credit Spreads** | $25,000+ | 25-30% ROI/year | **Primary income path** |
+| **Crypto Weekend** | $20,000+ | Variable | Mean-reversion edge |
+
+**The Math**: To generate $100/day ($25,200/year) requires either:
+- **$250k in stocks** at 0.04% daily return, OR
+- **$25k in options** selling premium (theta decay)
+
+With current $100k paper account, realistic daily income via options: **$50-75/day**
 
 ---
 
@@ -160,7 +178,8 @@ These documents contain critical protocols and context for understanding how the
 ## ☁️ Cloud Deployment
 
 **GitHub Actions** (runs automatically):
-- Schedule: Weekdays at 9:35 AM EST
+- Schedule: Weekdays at 3:55 PM ET (Market-on-Close)
+- Dec 10, 2025: Changed from 9:35 AM to capture true daily trend
 - No Mac required
 - Free for public repos
 - Logs available in Actions → Artifacts

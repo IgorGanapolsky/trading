@@ -98,6 +98,18 @@ class UnifiedSentiment:
         "tiktok": 0.10,  # Viral trends and momentum
     }
 
+    # Dec 10, 2025: ETF BYPASS LIST
+    # These symbols move on macro data (CPI, Fed, yields), not social media sentiment.
+    # Reddit/YouTube sentiment for SPY is noise - professional analysts matter, retail doesn't.
+    # Sentiment gates are SKIPPED for these tickers, returning neutral with high confidence.
+    ETF_BYPASS_LIST = {
+        "SPY", "QQQ", "IWM", "DIA", "VOO", "VTI", "VEA", "VWO",  # Major equity ETFs
+        "TLT", "IEF", "SHY", "BND", "AGG", "LQD", "HYG",  # Bond ETFs
+        "GLD", "SLV", "IAU",  # Commodity ETFs
+        "XLF", "XLE", "XLK", "XLV", "XLI", "XLP", "XLU",  # Sector ETFs
+        "EEM", "EFA", "IEMG",  # International ETFs
+    }
+
     # Signal thresholds
     # Dec 9, 2025: Increased from 0.20 to 0.35 to reduce false positives from noise
     BULLISH_THRESHOLD = 0.35  # > 0.35 = bullish (was 0.20)
@@ -541,6 +553,37 @@ class UnifiedSentiment:
                 "cache_hit": False
             }
         """
+        # Dec 10, 2025: ETF BYPASS - Skip sentiment analysis for ETFs
+        # ETFs move on macro data (Fed, CPI, yields), not Reddit/YouTube noise.
+        # Return neutral sentiment with high confidence to let momentum/technical gates decide.
+        if symbol.upper() in self.ETF_BYPASS_LIST:
+            logger.info(
+                f"ETF BYPASS: Skipping social sentiment for {symbol} "
+                f"(moves on macro data, not Reddit/YouTube)"
+            )
+            bypass_result = UnifiedSentimentResult(
+                symbol=symbol,
+                overall_score=0.0,  # Neutral - let technical analysis decide
+                confidence=0.95,  # High confidence in neutrality
+                signal="NEUTRAL",
+                recommendation="HOLD",  # Don't block trades, but don't boost either
+                sources={
+                    source: SourceSentiment(
+                        source=source,
+                        score=0.0,
+                        confidence=0.0,
+                        raw_data={"reason": "ETF bypass - sentiment skipped"},
+                        timestamp=datetime.now().isoformat(),
+                        available=False,
+                        error="ETF bypass active - social sentiment not applicable",
+                    )
+                    for source in ["news", "reddit", "youtube", "linkedin", "tiktok"]
+                },
+                timestamp=datetime.now().isoformat(),
+                cache_hit=False,
+            )
+            return asdict(bypass_result)
+
         # Check cache first
         if use_cache:
             cached_result = self._load_from_cache(symbol)
