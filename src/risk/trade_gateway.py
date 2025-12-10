@@ -146,16 +146,18 @@ class TradeGateway:
     # Liquidity check - options with wide spreads destroy alpha on fill
     MAX_BID_ASK_SPREAD_PCT = 0.05  # 5% maximum bid-ask spread
 
-    def __init__(self, executor=None, paper: bool = True):
+    def __init__(self, executor=None, paper: bool = True, skip_market_hours_check: bool = False):
         """
         Initialize the trade gateway.
 
         Args:
             executor: The broker executor (AlpacaExecutor). Gateway wraps this.
             paper: If True, paper trading mode
+            skip_market_hours_check: If True, skip market hours check (for testing only)
         """
         self.executor = executor
         self.paper = paper
+        self.skip_market_hours_check = skip_market_hours_check
 
         # Track recent trades for frequency limiting
         self.recent_trades: list[datetime] = []
@@ -237,7 +239,7 @@ class TradeGateway:
         allow_extended = os.getenv("ALLOW_EXTENDED_HOURS", "false").lower() == "true"
         _crypto_proxies = {"BITO", "GBTC", "ETHE", "COIN"}  # Trade during market hours only
 
-        if not is_market_open(allow_extended=allow_extended):
+        if not self.skip_market_hours_check and not is_market_open(allow_extended=allow_extended):
             market_status = get_market_status(allow_extended=allow_extended)
             rejection_reasons.append(RejectionReason.MARKET_CLOSED)
             logger.warning(
