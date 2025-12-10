@@ -1,0 +1,116 @@
+{
+  "source": "Web Research - Options Trading Education",
+  "category": "options_education",
+  "extracted_date": "2025-12-10",
+  "methodology": "WebSearch aggregation with source citations",
+  "chunks": [
+    {
+      "id": "web_covered_call_tt_001",
+      "topic": "TastyTrade Covered Call Best Practices",
+      "content": "TastyTrade covered call strike selection guidelines: Sell options with delta 0.30 for optimal risk/reward. If expecting moderate price increase, selling calls with delta 0.20-0.30 provides 70-80% probability of profit. Use expiration closest to 45 DTE. Take profit when collecting 50% of premium. Roll forward at 21 DTE without changing strike to reduce gamma risk. Trade small and often. Sell options when IV is high, but don't blindly trade stocks just because of high IV. Warning: A short call sold below cost basis locks in losses if assigned. For dividend stocks, covered calls risk dividend forfeiture if shares called away before ex-dividend date. Best defense against overnight gaps is selling lower delta strikes.",
+      "sources": ["https://tastytrade.com/learn/trading-products/options/covered-call/", "https://haikhuu.com/blog/tastytrade-covered-call"],
+      "strategy_type": "covered_call",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "web_iron_condor_oa_001",
+      "topic": "Options Alpha Iron Condor Management",
+      "content": "Options Alpha iron condor rules: Close trades at 50% of max profit target to maximize win rate. If profit target not hit, let position go until expiration week with automatic close if challenged. Sell short strikes at 1 SD level (15% prob ITM) for approximately 70% success rate long-term. ADJUSTMENT RULES: When challenged, leave the tested side ALONE - don't roll the challenged side. Rolling challenged side guarantees a loss. Instead, move the UNTESTED side closer to collect more credit. This creates taller, narrower iron condor that reduces overall risk and widens breakeven points toward the threatened side. Any time before expiration, can close full position, exit one spread, or buy back only short options.",
+      "sources": ["https://optionalpha.com/strategies/iron-condor", "https://optionalpha.com/lessons/iron-condor-adjustments"],
+      "strategy_type": "iron_condor",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "web_wheel_strategy_001",
+      "topic": "Wheel Strategy Stock Selection Criteria",
+      "content": "Wheel strategy stock criteria: (1) Dividend yield 3-4% (KO, VZ) for extra income stream. (2) High liquidity with tight bid-ask spreads for smooth execution. (3) Balanced volatility - IV ≥30% for decent premiums but avoid wild swings. (4) Strong fundamentals - solid balance sheets, stable earnings, good market position. (5) Diversify across sectors. (6) Position sizing 2-5% max per stock. AVOID: Meme stocks (GME, AMC), penny stocks, anything dropping 20%+ overnight, unprofitable companies. Top picks: Microsoft (MSFT) - stable blue chip; Coca-Cola (KO) - 3% yield; Verizon (VZ) - 6.8% yield; Apple (AAPL) - high liquidity; Ford (F) - good for small accounts under $10. Delta target: -0.20 to -0.40 for puts. DTE: 30-45 days for optimal theta decay vs gamma risk.",
+      "sources": ["https://investorsobserver.com/learning-center/the-best-stocks-for-your-2024-wheel-strategy/", "https://blog.wisesheets.io/5-best-stocks-for-the-wheel-strategy/", "https://www.insiderfinance.io/resources/complete-guide-to-wheel-options-trading-strategy"],
+      "strategy_type": "wheel",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "web_theta_decay_001",
+      "topic": "45 DTE Theta Decay Research",
+      "content": "TastyTrade research on 45 DTE: Evidence suggests 45 is optimal DTE for short premium positions due to two factors: theta decay (options losing value over time) and 'time to be correct' (enough window for position to move favorable even if temporarily negative P/L). Theta decay is NON-LINEAR - accelerates dramatically. More than 40% of profit comes in final 14 days, 70%+ in final 3 weeks. Income traders sweet spot: 14-45 DTE. Sell options when theta is high AND gamma is low = 30-45 DTE window. TIMELINE: At 45 DTE enter trade (theta slow, stock moves matter more). At 21 DTE decide to roll or close (captured 60-70% of max profit, volatility spikes more likely). SPY WHEEL BACKTEST WARNING: Long underlying position accounts for 94-99% of total return. Option positions were inconsequential. None of 10 strategies outperformed simple buy/hold.",
+      "sources": ["https://luckboxmagazine.com/techniques/the-magic-of-45-optimal-short-options-trade-duration/", "https://www.daystoexpiry.com/blog/theta-decay-dte-guide", "https://spintwig.com/spy-wheel-45-dte-options-backtest/"],
+      "strategy_type": "theta",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "web_iv_rank_001",
+      "topic": "IV Rank and IV Percentile Trading",
+      "content": "IV RANK: Compares current IV to its 52-week range. Formula: (Current IV - 52wk Low) / (52wk High - 52wk Low) × 100. Range 0-100 indicating relative positioning. IV PERCENTILE: Percentage of time IV was LOWER than current level over past year. 75th percentile means IV was lower 75% of the time. KEY DIFFERENCE: IV Rank uses range, IV Percentile uses frequency distribution. TRADING ZONES: High IV Rank (>70%) - Options expensive, sell premium via strangles, iron condors, credit spreads. Mid IV Rank (30-70%) - Neutral zone, needs additional analysis. Low IV Rank (<30%) - Options cheap, buying strategies like long calls/puts. WHY SELLING WORKS: When IV Rank is high, stock unlikely to realize that volatility level. Wait for IV Rank near 100, sell options, collect high premiums that rarely realize. LIMITATION: If IV surges to abnormally high level, future IV Rank readings will be artificially low even if IV is still relatively high.",
+      "sources": ["https://www.schwab.com/learn/story/using-implied-volatility-percentiles", "https://www.projectfinance.com/iv-rank-percentile/", "https://www.barchart.com/education/iv_rank_vs_iv_percentile"],
+      "strategy_type": "volatility",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "web_greeks_practical_001",
+      "topic": "Options Greeks Practical Application",
+      "content": "THE BIG THREE: Delta, Theta, Vega have greatest impact on option prices. DELTA: Cents option rises/falls per $1 stock move. Also shows: share equivalent exposure, probability of ITM, directional risk. Ranges 0 (far OTM) to 1.00 (deep ITM). Hedging: Match delta with opposite shares. +500 delta = hedge with -500 shares for delta-neutral. GAMMA: Rate of change of delta - 'gas pedal'. Not constant. As stock rises, delta climbs from 0.50 to 0.60 to 0.70+. High gamma requires frequent hedge rebalancing. THETA: Dollar change per day of time. Option worth $0.72 with theta 0.04 = worth $0.68 tomorrow. Advantage for sellers, disadvantage for buyers. Shorter-dated = more gamma but faster decay. VEGA: Change per 1% IV move. If vega 0.06 and IV drops 1.5%, option loses $0.09. Higher volatility = higher prices. Vega declines as expiration approaches. PRACTICAL: Delta for directional trades, Theta for time decay profits, Vega for volatility plays.",
+      "sources": ["https://www.britannica.com/money/option-greeks-delta-theta-gamma-vega", "https://optionalpha.com/learn/options-greeks", "https://www.tradestation.com/insights/2024/05/12/memory-tricks-options-greeks-delta-gamma-theta-vega/"],
+      "strategy_type": "greeks",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "web_earnings_strategies_001",
+      "topic": "Earnings Options Strategy Backtest Results",
+      "content": "IV CRUSH: IV drops significantly after earnings regardless of direction. Buildup of uncertainty before, decline after = IV crush. LONG STRADDLE BACKTESTS: AAPL - 41% win rate, -1.31% avg return over 10 years. Facebook - 27% win rate, 0.70% annual return. Chipotle - 35% win rate, -2.59% annual return. Long options strategies do NOT perform as expected long-term. ORATS STUDY: Best strategy was long calendar, worst was long straddle in-sample and short calendar out-of-sample. Buy Straddle: 0.40% return in-sample. Sell Straddle: 1.18% return in-sample. 2024 ACADEMIC RESEARCH (17-year SP500 backtest): Advises AGAINST long straddles 30 days before earnings or short straddles around announcements for alpha generation. OTM strangles and iron condors may be viable alternatives. BEST APPROACH (SteadyOptions): Buy straddle few days BEFORE earnings to capture IV increase, ALWAYS close before earnings to avoid IV crush. 2024: 72.7% win rate, 116.7% compounded gain.",
+      "sources": ["https://optionalpha.com/blog/the-three-best-option-strategies-for-earnings", "https://orats.com/blog/earnings-options-strategies-backtest", "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4832160"],
+      "strategy_type": "earnings",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "web_credit_spreads_001",
+      "topic": "Credit Spread Delta Selection and Management",
+      "content": "CREDIT SPREAD BASICS: Sell higher premium option, buy lower premium option = net credit. Bear Call Spread: Sell lower strike call, buy higher strike call. Bull Put Spread: Sell higher strike put, buy lower strike put. DELTA SELECTION - Bear Call: Short call delta 0.30-0.40 (decent premium, manageable risk), long call delta 0.10-0.20 (cheap protection), delta spread 0.20-0.30. Bull Put: 20 delta short strike yields ~80% win rate historically. Many traders use 0.10 delta for 90% probability of expiring worthless. MANAGEMENT: Take profit at 50% of max profit (e.g., $240 credit = exit at $120 profit). HEDGING: If bull put under pressure, add bear call spread as hedge. When short strike delta increases (17 to 30), consider hedging. Sell hedge at same delta and expiration if >30 DTE, else sell at least 30 DTE. ROLLING: Roll out to later expiration for credit to extend breakeven. TIME DECAY: Sweet spot is 45 DTE entry. Shorter = no time to manage, longer = just waiting.",
+      "sources": ["https://datadrivenoptions.com/strategies-for-option-trading/favorite-strategies/credit-put-spread/", "https://optionalpha.com/strategies/bear-call-credit-spread", "https://optionstradingiq.com/how-to-adjust-a-losing-credit-spread/"],
+      "strategy_type": "credit_spread",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "web_kelly_criterion_001",
+      "topic": "Kelly Criterion for Options Position Sizing",
+      "content": "KELLY CRITERION: Formula to determine optimal bet/trade size. Developed by John Kelly Jr. at Bell Labs 1950s. Maximizes logarithmic growth of wealth over long term by allocating capital proportional to expected edge over odds. FORMULA: f = (bp - q) / b where f = fraction to allocate, b = net profit per unit risked, p = probability of success, q = probability of failure (1-p). OPTIONS APPLICATION: Provides systematic position sizing balancing probability vs potential losses. Critical for high-leverage options where misjudging size is easy. CHALLENGES: Requires accurate probability values. Overestimating win probability leads to suboptimal portfolios and risk of ruin. Sensitive to estimation errors. FRACTIONAL KELLY: Most Kelly supporters use 25-50% of calculated value to reduce volatility. Example: 60% win rate, 2:1 reward-risk = full Kelly suggests 20%, so use 5-10% per trade. PRACTICAL APPROACH: Use Kelly as MAX allocation for highest conviction plays, scale down 1% per confidence level giving 1-5% range. Kelly = upper bound of leverage, not target.",
+      "sources": ["https://www.quantifiedstrategies.com/kelly-criterion-position-sizing/", "https://optionshawk.com/position-sizing-using-the-kelly-criterion/", "https://www.environmentaltradingedge.com/trading-education/how-to-use-kelly-criterion-trading-options"],
+      "strategy_type": "risk_management",
+      "difficulty": "advanced"
+    }
+  ],
+  "trading_rules_summary": {
+    "covered_calls": {
+      "delta": "0.20-0.30",
+      "dte": "45",
+      "profit_target": "50%",
+      "management": "Roll at 21 DTE"
+    },
+    "iron_condors": {
+      "delta": "0.15-0.16 each side",
+      "dte": "45",
+      "profit_target": "50%",
+      "adjustment": "Move UNTESTED side when challenged"
+    },
+    "wheel": {
+      "put_delta": "-0.20 to -0.40",
+      "dte": "30-45",
+      "position_size": "2-5% max per stock",
+      "stock_criteria": "dividend 3-4%, IV ≥30%, strong fundamentals"
+    },
+    "credit_spreads": {
+      "delta": "0.10-0.20 for short strike",
+      "dte": "45",
+      "profit_target": "50%",
+      "hedge_trigger": "delta increases 50%+ from entry"
+    },
+    "earnings": {
+      "strategy": "Buy straddle BEFORE earnings for IV expansion",
+      "management": "ALWAYS close BEFORE announcement",
+      "avoid": "Holding long options through IV crush"
+    },
+    "position_sizing": {
+      "method": "Fractional Kelly (25-50% of calculated)",
+      "max_per_trade": "1-5% of portfolio",
+      "diversification": "10-20 positions minimum"
+    }
+  }
+}
