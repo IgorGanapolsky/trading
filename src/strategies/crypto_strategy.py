@@ -133,10 +133,18 @@ class CryptoStrategy:
     RSI_OVERSOLD = 40  # Tighter than stocks (30)
     RSI_OVERBOUGHT = 60  # Tighter than stocks (70)
 
-    # MACD parameters
-    MACD_FAST_PERIOD = 12
-    MACD_SLOW_PERIOD = 26
-    MACD_SIGNAL_PERIOD = 9
+    # MACD parameters - OPTIMIZED FOR CRYPTO 24/7 TRADING
+    # Stock defaults (12, 26, 9) lag by ~4x in crypto because:
+    # - Stocks: "Daily candle" = 6.5 hours of trading
+    # - Crypto: "Daily candle" = 24 hours of trading
+    #
+    # Faster settings (8, 17, 6) are better for crypto:
+    # - Responds faster to momentum shifts
+    # - Better suited for 24/7 volatile markets
+    # - Can be overridden via env vars for A/B testing
+    MACD_FAST_PERIOD = int(os.getenv("CRYPTO_MACD_FAST", "8"))  # Default: 8 (was 12)
+    MACD_SLOW_PERIOD = int(os.getenv("CRYPTO_MACD_SLOW", "17"))  # Default: 17 (was 26)
+    MACD_SIGNAL_PERIOD = int(os.getenv("CRYPTO_MACD_SIGNAL", "6"))  # Default: 6 (was 9)
 
     # Risk parameters (adapted for crypto)
     DEFAULT_STOP_LOSS_PCT = 0.07  # 7% (wider than stocks' 3-5%)

@@ -2,12 +2,24 @@ name: Weekend Crypto Trading
 
 on:
   schedule:
-    # Run on Saturdays and Sundays at 10:00 AM Eastern
-    # IMPORTANT: Update cron expression when DST changes (March/November)
-    # EST (Nov-Mar): UTC-5 -> 10:00 AM ET = 15:00 UTC
-    # EDT (Mar-Nov): UTC-4 -> 10:00 AM ET = 14:00 UTC
-    # Run: python3 scripts/get_utc_time.py 10 0 0,6
-    - cron: '0 15 * * 0,6'   # 10:00 AM Eastern (EST: Nov-Mar, update to 14:00 UTC in March)
+    # Run on Saturdays and Sundays MULTIPLE TIMES per day for 24/7 crypto coverage
+    # Crypto trades 24/7 - running once/day misses most moves
+    #
+    # Schedule: 6 AM, 12 PM, 6 PM, 12 AM Eastern (every 6 hours)
+    # IMPORTANT: Update cron expressions when DST changes (March/November)
+    # EST (Nov-Mar): UTC-5 | EDT (Mar-Nov): UTC-4
+    #
+    # Current times (EST - Dec 2025):
+    # - 6:00 AM ET = 11:00 UTC
+    # - 12:00 PM ET = 17:00 UTC
+    # - 6:00 PM ET = 23:00 UTC
+    # - 12:00 AM ET = 05:00 UTC (next day)
+    #
+    # Run: python3 scripts/get_utc_time.py <hour> 0 0,6
+    - cron: '0 5 * * 0,6'    # 12:00 AM Eastern (midnight)
+    - cron: '0 11 * * 0,6'   # 6:00 AM Eastern (pre-Asia close)
+    - cron: '0 17 * * 0,6'   # 12:00 PM Eastern (US session)
+    - cron: '0 23 * * 0,6'   # 6:00 PM Eastern (post-US, pre-Asia)
   workflow_dispatch:
     inputs:
       force_trade:
