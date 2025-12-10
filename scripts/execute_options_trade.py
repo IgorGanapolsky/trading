@@ -327,7 +327,7 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
             qty=1,
             side=OrderSide.SELL,
             type="limit",
-            limit_price=put_option["bid"],  # Sell at bid for faster fill
+            limit_price=put_option["mid"],  # Use mid price for realistic fills
             time_in_force=TimeInForce.DAY,
         )
 
@@ -337,14 +337,14 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
         logger.info(f"   Symbol: {put_option['symbol']}")
         logger.info(f"   Side: SELL TO OPEN")
         logger.info(f"   Qty: 1 contract")
-        logger.info(f"   Limit Price: ${put_option['bid']:.2f}")
-        logger.info(f"   Premium: ${put_option['bid'] * 100:.2f} (1 contract)")
+        logger.info(f"   Limit Price: ${put_option['mid']:.2f}")
+        logger.info(f"   Premium: ${put_option['mid'] * 100:.2f} (1 contract)")
 
         return {
             "status": "ORDER_SUBMITTED",
             "order_id": str(order.id),
             "option": put_option,
-            "premium": put_option["bid"] * 100,
+            "premium": put_option["mid"] * 100,
             "broker": "alpaca",
         }
 

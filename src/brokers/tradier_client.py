@@ -843,7 +843,7 @@ class TradierClient:
                 qty=1,
                 side="sell_to_open",
                 order_type="limit",
-                limit_price=put_option["bid"],  # Sell at bid for faster fill
+                limit_price=put_option["mid"],  # Use mid price for realistic fills
                 time_in_force="day",
             )
 
@@ -852,14 +852,14 @@ class TradierClient:
             logger.info(f"   Symbol: {put_option['symbol']}")
             logger.info(f"   Side: SELL TO OPEN")
             logger.info(f"   Qty: 1 contract")
-            logger.info(f"   Limit Price: ${put_option['bid']:.2f}")
-            logger.info(f"   Premium: ${put_option['bid'] * 100:.2f} (1 contract)")
+            logger.info(f"   Limit Price: ${put_option['mid']:.2f}")
+            logger.info(f"   Premium: ${put_option['mid'] * 100:.2f} (1 contract)")
 
             return {
                 "status": "ORDER_SUBMITTED",
                 "order_id": order.id,
                 "option": put_option,
-                "premium": put_option["bid"] * 100,
+                "premium": put_option["mid"] * 100,
                 "broker": "tradier",
             }
 
