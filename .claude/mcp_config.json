@@ -24,6 +24,14 @@
         "RSS_FEEDS": "https://medium.com/feed/coinsnacks,https://www.tastytrade.com/news/rss,https://optionsalpha.com/feed,https://www.cboe.com/rss/options-news"
       }
     },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "description": "GitHub MCP Server - PRs, issues, commits, and repo management",
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
     "youtube-transcript": {
       "command": "npx",
       "args": ["-y", "@sinco-lab/mcp-youtube-transcript"],

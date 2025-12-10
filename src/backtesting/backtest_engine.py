@@ -38,7 +38,7 @@ Created: 2025-11-02
 import logging
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -99,6 +99,7 @@ class BacktestEngine:
         initial_capital: float = 100000.0,
         enable_slippage: bool = True,
         slippage_bps: float = 5.0,
+        bias_replay: BiasReplay | None = None,
         use_hybrid_gates: bool = False,
         hybrid_options: dict[str, Any] | None = None,
         bias_replay: BiasReplay | None = None,
@@ -518,6 +519,14 @@ class BacktestEngine:
 
         for symbol in self.strategy.etf_universe:
             try:
+                # Check bias replay first (if enabled)
+                if self._bias_blocks_trade(symbol, date):
+                    logger.debug(
+                        "%s: Bias replay blocked %s due to negative sentiment.",
+                        date_str,
+                        symbol,
+                    )
+                    continue
                 hist = self._get_historical_data(symbol, date)
                 if hist is None:
                     logger.warning(f"{date_str}: No historical data for {symbol}")
