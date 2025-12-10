@@ -162,6 +162,10 @@ jobs:
       PYTHONPATH: ${{ github.workspace }}
       ENABLE_WEEKEND_PROXY: 'false'
       ALLOW_PROMOTION_OVERRIDE: '1'  # Temporary override to allow trading while metrics are repaired
+      # Multi-broker failover for resilience (Alpaca → Tradier)
+      ENABLE_BROKER_FAILOVER: 'true'
+      TRADIER_API_KEY: ${{ secrets.TRADIER_API_KEY }}
+      TRADIER_ACCOUNT_NUMBER: ${{ secrets.TRADIER_ACCOUNT_NUMBER }}
 
     steps:
       - name: Checkout repository
