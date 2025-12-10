@@ -373,11 +373,13 @@ class GrowthStrategy:
             use_intelligent_investor: Whether to use Intelligent Investor principles (default: True)
         """
         self.weekly_allocation = weekly_allocation
-        self.stop_loss_pct = 0.03  # 3% stop-loss
-        self.take_profit_pct = 0.10  # 10% take-profit
+        # Dec 10, 2025: Widened stop-loss from 3% to 8% for better risk/reward
+        # 3% was too tight - getting stopped out before trends develop
+        self.stop_loss_pct = 0.08  # 8% stop-loss (widened from 3%)
+        self.take_profit_pct = 0.12  # 12% take-profit (increased from 10%)
         self.max_positions = 2
         self.min_holding_weeks = 2
-        self.max_holding_weeks = 4
+        self.max_holding_weeks = 8  # Extended from 4 to 8 weeks for trend capture
         self.use_sentiment = use_sentiment
         self.use_intelligent_investor = use_intelligent_investor
 
