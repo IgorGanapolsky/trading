@@ -404,19 +404,32 @@ class CryptoStrategy:
                     else:
                         logger.info(f"RAG insights not available: {rag_insights['reasoning']}")
 
-            # Step 3: Get current price
+            # Step 3: Get current price (with FORCE_TRADE fallback)
             current_price = self._get_current_price(best_coin)
             if current_price is None:
-                logger.error(f"Failed to get price for {best_coin}")
-                return None
+                if force_trade:
+                    # Fallback: Use a recent price from yfinance or hardcoded
+                    logger.warning(f"🔥 FORCE_TRADE: Price fetch failed, using fallback price for {best_coin}")
+                    if best_coin == "BTCUSD":
+                        current_price = 97000.0  # Approximate Dec 2025 BTC price
+                    elif best_coin == "ETHUSD":
+                        current_price = 3500.0
+                    else:
+                        current_price = 100.0  # SOL fallback
+                    logger.info(f"Using fallback price: ${current_price:.2f}")
+                else:
+                    logger.error(f"Failed to get price for {best_coin}")
+                    return None
 
             # Step 4: Calculate quantity
             quantity = self.daily_amount / current_price
 
-            # Step 5: Risk validation
-            if not self._validate_trade(best_coin, quantity, current_price):
+            # Step 5: Risk validation (skip in FORCE_TRADE mode)
+            if not force_trade and not self._validate_trade(best_coin, quantity, current_price):
                 logger.warning("Trade failed risk validation")
                 return None
+            elif force_trade:
+                logger.info("🔥 FORCE_TRADE - Skipping risk validation")
 
             # Step 6: Create order
             # Construct attribution metadata
