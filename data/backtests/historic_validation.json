@@ -1,40 +1,21 @@
 {
-  "timestamp": "2025-12-10T15:38:58.267687",
+  "timestamp": "2025-12-10T15:59:13.970070",
   "symbols": [
-    "SPY"
+    "SPY",
+    "QQQ"
   ],
   "initial_capital": 100000,
   "results": {
-    "covid_crash": {
-      "status": "FAILED",
-      "error": "No data available for backtest",
-      "regime": "COVID Crash"
-    },
-    "bear_2022": {
-      "status": "FAILED",
-      "error": "No data available for backtest",
-      "regime": "2022 Bear Market"
-    },
     "bull_2024": {
       "status": "FAILED",
       "error": "No data available for backtest",
       "regime": "2024 Bull Run"
-    },
-    "volatility_2020": {
-      "status": "FAILED",
-      "error": "No data available for backtest",
-      "regime": "2020 Volatility"
-    },
-    "rate_hike_2022": {
-      "status": "FAILED",
-      "error": "No data available for backtest",
-      "regime": "Rate Hike Period"
     }
   },
   "summary": {
-    "regimes_tested": 5,
+    "regimes_tested": 1,
     "passed": 0,
-    "failed": 5,
+    "failed": 1,
     "verdict": "NEEDS_IMPROVEMENT"
   }
 }
