@@ -257,7 +257,9 @@ def create_win_rate_by_sentiment_bar(win_rate_data: pd.DataFrame) -> go.Figure:
                 marker_color=colors,
                 text=[
                     f"{wr:.1f}%<br>({tc} trades)"
-                    for wr, tc in zip(win_rate_data["win_rate"], win_rate_data["trade_count"])
+                    for wr, tc in zip(
+                        win_rate_data["win_rate"], win_rate_data["trade_count"], strict=False
+                    )
                 ],
                 textposition="outside",
                 textfont=dict(size=12, color=COLORS["text"]),

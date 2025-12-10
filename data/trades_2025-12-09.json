@@ -1,0 +1,38 @@
+[
+    {
+        "symbol": "SHY",
+        "action": "BUY",
+        "amount": 4.00,
+        "quantity": 0.048,
+        "price": 82.72,
+        "timestamp": "2025-12-09T16:22:25.123000",
+        "status": "FILLED",
+        "strategy": "TreasuryLadderStrategy",
+        "reason": "Daily rebalance",
+        "mode": "PAPER"
+    },
+    {
+        "symbol": "IEF",
+        "action": "BUY",
+        "amount": 4.00,
+        "quantity": 0.041,
+        "price": 96.14,
+        "timestamp": "2025-12-09T16:22:25.500000",
+        "status": "FILLED",
+        "strategy": "TreasuryLadderStrategy",
+        "reason": "Daily rebalance",
+        "mode": "PAPER"
+    },
+    {
+        "symbol": "TLT",
+        "action": "BUY",
+        "amount": 2.00,
+        "quantity": 0.022,
+        "price": 88.15,
+        "timestamp": "2025-12-09T16:22:25.800000",
+        "status": "FILLED",
+        "strategy": "TreasuryLadderStrategy",
+        "reason": "Daily rebalance",
+        "mode": "PAPER"
+    }
+]

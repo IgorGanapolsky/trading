@@ -11,6 +11,7 @@ import logging
 from datetime import datetime
 
 from langchain_core.tools import tool
+
 from src.utils.market_data import get_market_data_provider
 
 logger = logging.getLogger(__name__)
@@ -89,7 +90,7 @@ def query_sentiment(
 
     Args:
         query: Natural language query about market sentiment (e.g., "bullish momentum")
-        ticker: Optional ticker symbol to filter results
+        ticker:  ticker symbol to filter results
         limit: Maximum number of results to return (default: 5)
 
     Returns:

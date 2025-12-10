@@ -12,9 +12,9 @@ from typing import Any
 
 import pandas as pd
 
-from agent_framework import AgentResult, RunContext, TradingAgent
-from utils.data_collector import DataCollector
-from utils.market_data import get_market_data_provider
+from src.agent_framework import AgentResult, RunContext, TradingAgent
+from src.utils.data_collector import DataCollector
+from src.utils.market_data import get_market_data_provider
 
 logger = logging.getLogger(__name__)
 

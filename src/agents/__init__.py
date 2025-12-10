@@ -25,4 +25,11 @@ __all__ = [
     "WorkflowAgent",
     "ApprovalAgent",
     "NotificationAgent",
+    # Programmatic Tool Calling (PTC) - Anthropic advanced tool use
+    "PTCOrchestrator",
+    "PTCMetaAgent",
+    "execute_ptc_trade",
+    # OpenThinker Agent - Local reasoning specialist
+    "OpenThinkerAgent",
+    "create_openthinker_agent",
 ]

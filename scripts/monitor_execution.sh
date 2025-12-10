@@ -1,6 +1,10 @@
 #!/bin/bash
 # Real-time monitoring of autonomous trading execution
 
+# Get script directory and navigate to project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 echo "🔍 TRADING SYSTEM EXECUTION MONITOR"
 echo "===================================="
 echo ""
@@ -13,13 +17,13 @@ launchctl list | grep com.trading.autonomous || echo "⚠️  Job not loaded"
 echo ""
 
 echo "📁 Recent Log Files:"
-ls -lht /Users/igorganapolsky/workspace/git/apps/trading/logs/*.log 2>/dev/null | head -5 || echo "No logs yet"
+ls -lht "$PROJECT_ROOT/logs/"*.log 2>/dev/null | head -5 || echo "No logs yet"
 echo ""
 
 echo "💬 Tailing logs (CTRL+C to exit)..."
 echo "===================================="
-tail -f /Users/igorganapolsky/workspace/git/apps/trading/logs/workflow_stdout.log \
-        /Users/igorganapolsky/workspace/git/apps/trading/logs/workflow_stderr.log 2>/dev/null &
+tail -f "$PROJECT_ROOT/logs/workflow_stdout.log" \
+        "$PROJECT_ROOT/logs/workflow_stderr.log" 2>/dev/null &
 
 TAIL_PID=$!
 

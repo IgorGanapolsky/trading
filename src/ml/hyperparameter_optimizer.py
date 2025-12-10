@@ -6,9 +6,10 @@ Automated hyperparameter search using Bayesian optimization.
 import itertools
 import json
 import logging
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 import numpy as np
 
@@ -25,7 +26,7 @@ class HyperparameterOptimizer:
 
     def __init__(
         self,
-        search_space: Optional[dict[str, list[Any]]] = None,
+        search_space: dict[str, list[Any]] | None = None,
         optimization_metric: str = "sharpe_ratio",
         n_trials: int = 50,
         save_dir: str = "models/ml/hyperopt",
@@ -106,7 +107,7 @@ class HyperparameterOptimizer:
         logger.info(f"📊 Testing {len(combinations)} hyperparameter combinations...")
 
         for i, combination in enumerate(combinations):
-            params = dict(zip(param_names, combination))
+            params = dict(zip(param_names, combination, strict=False))
 
             logger.info(f"Trial {i + 1}/{len(combinations)}: {params}")
 
@@ -232,7 +233,7 @@ class HyperparameterOptimizer:
 
         logger.info(f"💾 Saved optimization results to {results_path}")
 
-    def load_results(self, symbol: str) -> Optional[dict[str, Any]]:
+    def load_results(self, symbol: str) -> dict[str, Any] | None:
         """Load previous optimization results."""
         results_path = self.save_dir / f"{symbol}_hyperopt_results.json"
 
@@ -246,7 +247,7 @@ class HyperparameterOptimizer:
 
         return None
 
-    def get_best_params(self) -> Optional[dict[str, Any]]:
+    def get_best_params(self) -> dict[str, Any] | None:
         """Get best hyperparameters found."""
         return self.best_params.copy() if self.best_params else None
 
@@ -256,7 +257,7 @@ def optimize_hyperparameters(
     symbol: str,
     train_fn: Callable,
     evaluate_fn: Callable,
-    search_space: Optional[dict[str, list[Any]]] = None,
+    search_space: dict[str, list[Any]] | None = None,
     n_trials: int = 50,
     metric: str = "sharpe_ratio",
 ) -> dict[str, Any]:

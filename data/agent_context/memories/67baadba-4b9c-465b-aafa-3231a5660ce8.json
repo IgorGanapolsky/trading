@@ -1,0 +1,31 @@
+{
+  "memory_id": "67baadba-4b9c-465b-aafa-3231a5660ce8",
+  "agent_id": "orchestrator",
+  "context_type": "ContextType.MEMORY_CONTEXT",
+  "content": {
+    "gate": "momentum",
+    "ticker": "QQQ",
+    "log_path": "data/audit_trail/failure_sandboxes/20251205T174136637279_momentum_QQQ.json",
+    "attempts": [
+      {
+        "attempt": 1,
+        "error": "ValueError('The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().')",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/ganapolsky_i/workspace/git/igor/trading/scripts/../src/orchestrator/failure_isolation.py\", line 94, in run\n    result = operation()\n             ^^^^^^^^^^^\n  File \"/Users/ganapolsky_i/workspace/git/igor/trading/scripts/../src/orchestrator/main.py\", line 457, in <lambda>\n    operation=lambda: self.momentum_agent.analyze(ticker),\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/ganapolsky_i/workspace/git/igor/trading/scripts/../src/agents/momentum_agent.py\", line 59, in analyze\n    strength = self._normalise_score(score)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/ganapolsky_i/workspace/git/igor/trading/scripts/../src/agents/momentum_agent.py\", line 82, in _normalise_score\n    if score <= 0:\n       ^^^^^^^^^^\n  File \"/Users/ganapolsky_i/workspace/git/igor/trading/.venv/lib/python3.11/site-packages/pandas/core/generic.py\", line 1580, in __nonzero__\n    raise ValueError(\nValueError: The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().\n",
+        "timestamp": "2025-12-05T17:41:36.637220"
+      }
+    ],
+    "metadata": {}
+  },
+  "tags": [
+    "gate.momentum",
+    "QQQ",
+    "failure"
+  ],
+  "created_at": "2025-12-05T12:41:36.638461",
+  "accessed_at": "2025-12-05T12:41:36.638484",
+  "access_count": 0,
+  "ttl_days": null,
+  "timescale": "intraday",
+  "importance_score": 0.3,
+  "outcome_pl": null
+}

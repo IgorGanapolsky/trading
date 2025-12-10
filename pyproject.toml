@@ -3,7 +3,7 @@ name = "trading"
 version = "1.0.0"
 description = "Validated profitable automated trading system with AI-powered decision making"
 readme = "README.md"
-requires-python = ">=3.9,<3.15"
+requires-python = ">=3.11,<3.12"  # CI uses Python 3.11
 license = {text = "MIT"}
 authors = [
     {name = "Igor Ganapolsky"}
@@ -14,6 +14,7 @@ dependencies = [
     # Trading APIs
     "alpaca-py>=0.43.2",
     "openai>=1.109.1",
+    "openai-agents>=0.6.2",
 
     # Data Processing
     "pandas>=2.3.3",
@@ -34,7 +35,6 @@ dependencies = [
 
     # YouTube Monitoring
     "youtube-transcript-api>=1.2.3",
-    "yt-dlp>=2024.10.22",
 
     # Configuration
     "python-dotenv>=1.2.1",
@@ -61,7 +61,7 @@ dependencies = [
     "langsmith>=0.1.0",
 
     # Dashboard
-    "streamlit>=1.29.0",
+    "streamlit>=1.40.0",
     "matplotlib>=3.7.0",
 ]
 
@@ -90,6 +90,11 @@ deepagents = [
     "deepagents>=0.2.5",
 ]
 
+xai = [
+    # X.ai SDK - optional due to packaging conflicts with streamlit
+    "xai-sdk>=1.5.0",
+]
+
 [project.urls]
 Homepage = "https://github.com/IgorGanapolsky/trading"
 Repository = "https://github.com/IgorGanapolsky/trading"
@@ -105,7 +110,7 @@ packages = ["src"]
 # Ruff - Fast Python linter and formatter (replaces black, flake8, isort)
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py310"
 src = ["src", "tests"]
 exclude = [
     ".git",
@@ -115,6 +120,7 @@ exclude = [
     "*.pyc",
     "data",
     "reports",
+    "research",  # Experimental code, not production
 ]
 
 [tool.ruff.lint]
@@ -152,6 +158,11 @@ ignore = [
     "SIM105", # contextlib.suppress (readability preference)
     "SIM108", # ternary operator (readability preference)
     "SIM117", # nested with statements (readability preference)
+    "UP035",  # prefer collections.abc imports (not yet migrated)
+    "UP045",  # pipe-style Optional annotations (not yet migrated)
+    "UP007",  # pipe unions (not yet migrated)
+    "B905",  # zip strict parameter (backlog)
+    "S108",  # tmp file/directory usage (intentional for sandboxing)
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -164,6 +175,7 @@ ignore = [
 # Init files that re-export
 "src/risk/__init__.py" = ["F401"]
 "src/rag/__init__.py" = ["F401"]
+"src/options/__init__.py" = ["F401"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -207,3 +219,7 @@ exclude_lines = [
     "raise NotImplementedError",
     "if __name__ == .__main__.:",
 ]
+
+# Poetry compatibility for workflows that still read tool.poetry
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"

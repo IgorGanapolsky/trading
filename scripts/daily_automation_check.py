@@ -45,7 +45,7 @@ def check_automation_health():
                     warnings.append(f"System state is {age_hours:.1f} hours old")
                 else:
                     print(f"✅ System state fresh: {age_hours:.1f} hours old")
-            except:
+            except Exception:
                 warnings.append("Could not parse last update time")
 
     # Check for today's trades

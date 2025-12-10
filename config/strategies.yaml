@@ -1,0 +1,24 @@
+strategies:
+  options_theta:
+    label: "Options Theta Planner"
+    description: "Theta harvest planning + execution using OptionsLiveSimulator."
+    stages:
+      report:
+        command: "env PYTHONPATH=/workspace python3 scripts/report_options_theta.py"
+        description: "Generate CSV + Markdown report for the theta strategy."
+      plan:
+        command: "env PYTHONPATH=/workspace python3 scripts/run_options_live_sim.py --dry-run"
+        description: "Run OptionsLiveSimulator in dry-run mode to inspect theta opportunities."
+      execute:
+        command: "env PYTHONPATH=/workspace python3 scripts/run_options_live_sim.py"
+        description: "Execute theta plan with persisted artifacts."
+  weekend_proxy_dca:
+    label: "Weekend Proxy DCA"
+    description: "Weekend crypto proxy flow that reuses the hybrid funnel."
+    stages:
+      backtest:
+        command: "python3 scripts/run_backtest_matrix.py --max-scenarios 1"
+        description: "Smoke-test strategy viability via the backtest matrix."
+      execute:
+        command: "python3 scripts/autonomous_trader.py --crypto-only"
+        description: "Run the orchestrator in crypto-only mode (weekend proxy)."

@@ -1,0 +1,13 @@
+{
+  "gate": "momentum",
+  "ticker": "SPY",
+  "attempts": [
+    {
+      "attempt": 1,
+      "error": "TypeError('unsupported format string passed to Series.__format__')",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/ganapolsky_i/workspace/git/igor/trading/scripts/../src/orchestrator/failure_isolation.py\", line 94, in run\n    result = operation()\n             ^^^^^^^^^^^\n  File \"/Users/ganapolsky_i/workspace/git/igor/trading/scripts/../src/orchestrator/main.py\", line 457, in <lambda>\n    operation=lambda: self.momentum_agent.analyze(ticker),\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/ganapolsky_i/workspace/git/igor/trading/scripts/../src/agents/momentum_agent.py\", line 55, in analyze\n    payload = self._calculator.evaluate(ticker)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/ganapolsky_i/workspace/git/igor/trading/scripts/../src/strategies/legacy_momentum.py\", line 58, in evaluate\n    score, indicators = calculate_technical_score(\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/ganapolsky_i/workspace/git/igor/trading/scripts/../src/utils/technical_indicators.py\", line 248, in calculate_technical_score\n    f\"{symbol}: Score {technical_score:.2f} | \"\nTypeError: unsupported format string passed to Series.__format__\n",
+      "timestamp": "2025-12-05T17:21:54.858888"
+    }
+  ],
+  "metadata": {}
+}

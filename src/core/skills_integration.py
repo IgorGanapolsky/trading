@@ -6,7 +6,7 @@ Wraps all Claude Skills for use in trading orchestrator
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -129,8 +129,8 @@ class SkillsIntegration:
 
     def get_performance_metrics(
         self,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
         benchmark_symbol: str = "SPY",
     ) -> dict[str, Any]:
         """Get performance metrics"""
@@ -154,7 +154,7 @@ class SkillsIntegration:
 
 
 # Global instance
-_skills_instance: Optional[SkillsIntegration] = None
+_skills_instance: SkillsIntegration | None = None
 
 
 def get_skills() -> SkillsIntegration:

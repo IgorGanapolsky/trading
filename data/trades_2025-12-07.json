@@ -1,0 +1,29 @@
+[
+    {
+        "symbol": "BTCUSD",
+        "action": "BUY",
+        "amount": 10.0,
+        "quantity": 0.00011217,
+        "price": 89150.54,
+        "timestamp": "2025-12-07T17:11:58",
+        "status": "FILLED",
+        "strategy": "CryptoStrategy",
+        "agent_type": "heuristic",
+        "decision_maker": "Rules",
+        "order_id": "5ac25926-865b-4d43-b6f6-fef6f00bbe49"
+    },
+    {
+        "symbol": "BTCUSD",
+        "action": "BUY",
+        "amount": 10.0,
+        "quantity": 0.00011050872345502761,
+        "price": 90490.59375,
+        "timestamp": "2025-12-07T20:07:08.964865",
+        "status": "FILLED",
+        "strategy": "CryptoStrategy",
+        "agent_type": "heuristic",
+        "decision_maker": "Rules",
+        "reason": "Daily crypto purchase - best momentum coin",
+        "mode": "ANALYSIS"
+    }
+]

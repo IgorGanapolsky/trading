@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import time
+from contextlib import suppress
 from functools import wraps
 from pathlib import Path
 from typing import Any, Callable
@@ -104,6 +105,76 @@ def with_retry(max_attempts: int = 3, backoff: float = 1.0, exceptions: tuple = 
     return decorator
 
 
+def _clear_sentiment_cache() -> bool:
+    """Clear the cached VADER analyzer if it exists."""
+    with suppress(ImportError):
+        from src.utils import sentiment
+
+        analyzer = getattr(sentiment, "_get_analyzer", None)
+        if analyzer and hasattr(analyzer, "cache_clear"):
+            analyzer.cache_clear()
+            return True
+    return False
+
+
+def _clear_pydantic_shim_cache() -> bool:
+    """Clear the cached BaseSettings shim if it exists."""
+    with suppress(ImportError):
+        from src.utils import pydantic_compat
+
+        shim = getattr(pydantic_compat, "ensure_pydantic_base_settings", None)
+        if shim and hasattr(shim, "cache_clear"):
+            shim.cache_clear()
+            return True
+    return False
+
+
+def _clear_mcp_cache(function_name: str) -> bool:
+    """Clear an MCP client cache given the factory name."""
+    try:
+        from mcp import client as mcp_client
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("Skipping MCP cache '%s': %s", function_name, exc)
+        return False
+
+    factory = getattr(mcp_client, function_name, None)
+    if factory and hasattr(factory, "cache_clear"):
+        factory.cache_clear()
+        return True
+    return False
+
+
+def _clear_multi_llm_cache() -> bool:
+    return _clear_mcp_cache("get_multi_llm_analyzer")
+
+
+def _clear_alpaca_trader_cache() -> bool:
+    return _clear_mcp_cache("get_alpaca_trader")
+
+
+_CACHE_CLEARERS: tuple[tuple[str, Callable[[], bool]], ...] = (
+    ("sentiment analyzer", _clear_sentiment_cache),
+    ("pydantic BaseSettings shim", _clear_pydantic_shim_cache),
+    ("multi-LLM analyzer", _clear_multi_llm_cache),
+    ("alpaca trader", _clear_alpaca_trader_cache),
+)
+
+
+def clear_cached_resources() -> list[str]:
+    """
+    Clear all known cached resources to prevent stale state across retries.
+    """
+
+    cleared: list[str] = []
+    for name, clearer in _CACHE_CLEARERS:
+        try:
+            if clearer():
+                cleared.append(name)
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("Failed clearing cache '%s': %s", name, exc)
+    return cleared
+
+
 def health_check(threshold: int = 5, window_seconds: int = 3600) -> bool:
     """
     Check agent health based on recent error count.
@@ -175,7 +246,11 @@ def self_heal() -> None:
         logger.info("✅ LLM client re-initialized successfully")
 
         # Action 2: Clear any stale caches (if implemented)
-        # TODO: Add cache clearing logic if needed
+        cleared_caches = clear_cached_resources()
+        if cleared_caches:
+            logger.info("✅ Cleared caches: %s", ", ".join(cleared_caches))
+        else:
+            logger.info("ℹ️ No caches required clearing")
 
         # Action 3: Reset memory structures
         # This is handled per-agent, but we can signal a reset
@@ -229,3 +304,6 @@ def get_error_summary(limit: int = 10) -> list[dict[str, Any]]:
     state = load_state()
     errors = state.get("errors", [])
     return errors[-limit:] if errors else []
+
+
+# ruff: noqa: UP035,UP045

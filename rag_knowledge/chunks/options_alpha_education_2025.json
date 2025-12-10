@@ -1,0 +1,105 @@
+{
+  "source": "Options Alpha Research & Education",
+  "category": "options_education",
+  "extracted_date": "2025-12-10",
+  "chunks": [
+    {
+      "id": "oa_probability_trading_001",
+      "topic": "Probability-Based Options Trading",
+      "content": "Options Alpha's core philosophy: Trade probabilities, not predictions. Key principles: (1) Sell premium to have time (theta) working for you. (2) Use probability of profit (POP) as primary metric, not P/L potential. (3) Small, consistent wins compound better than home runs. (4) Win rate matters more than win size when selling premium. Research basis: Over 10+ years of backtesting shows selling options with POP > 70% and managing at 50% profit generates consistent returns. The math: If you win 80% of trades at $50 profit and lose 20% at $150 loss, expected value = (0.80 * $50) - (0.20 * $150) = $40 - $30 = +$10 per trade. Volume and consistency beat magnitude.",
+      "strategy_type": "philosophy",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "oa_portfolio_allocation_001",
+      "topic": "Options Portfolio Allocation Model",
+      "content": "Options Alpha portfolio allocation framework: (1) CORE (60-70%): High-probability, defined-risk trades like iron condors and credit spreads on broad ETFs (SPY, IWM, QQQ). Low maintenance, consistent returns. (2) EXPLORE (20-30%): Individual stock plays, earnings trades, higher-risk strategies. Where you test new ideas. (3) INCOME (10-20%): Covered calls and cash-secured puts on stocks you own/want to own. True passive income layer. Rebalancing: Review allocation monthly. Move winning EXPLORE strategies to CORE. Cut losing EXPLORE strategies. Goal: Build a self-sustaining options portfolio generating 1-3% monthly returns.",
+      "strategy_type": "portfolio_management",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "oa_strangle_mechanics_001",
+      "topic": "Short Strangle Construction",
+      "content": "A short strangle sells both an OTM put and OTM call on the same underlying. Construction: Sell 1 OTM put (delta ~0.16). Sell 1 OTM call (delta ~0.16). Same expiration, typically 45 DTE. Profit zone: Between the two strikes minus premium. Max profit: Total credit received. Max loss: Unlimited (undefined risk strategy). Breakevens: Put strike - total credit, Call strike + total credit. Best conditions: IV Rank > 50%, range-bound expectation, liquid underlying. Management: Close at 50% profit or 21 DTE. If tested, roll untested side closer to collect more credit. Risk: Requires margin and risk tolerance for undefined risk. Position size smaller than spreads.",
+      "strategy_type": "strangle",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "oa_straddle_buying_001",
+      "topic": "Long Straddle Strategy",
+      "content": "A long straddle buys both an ATM call and ATM put, betting on a large move in either direction. Construction: Buy 1 ATM call. Buy 1 ATM put. Same strike (at or near current price), same expiration. Cost: Premium paid for both options (expensive). Profit: Unlimited in either direction if move exceeds total premium paid. Max loss: Total premium paid (if underlying stays at strike). Best conditions: IV Rank < 30% (options cheap), expected catalyst (earnings, FDA, etc.), expecting move larger than implied. Breakevens: Strike +/- total premium paid. Challenge: Must overcome time decay AND IV crush after event. Low probability of profit but asymmetric payoff. Use sparingly for high-conviction event plays.",
+      "strategy_type": "straddle",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "oa_calendar_spread_001",
+      "topic": "Calendar Spread Mechanics",
+      "content": "A calendar spread (horizontal spread) profits from time decay differential. Construction: Sell 1 near-term option. Buy 1 longer-term option. Same strike, different expirations. Example: Sell 30-DTE $50 call, Buy 60-DTE $50 call (same strike). How it works: Near-term option decays faster (higher theta). Long-term option retains value. Net position is long theta and long vega. Ideal conditions: Low IV (expect IV to rise), expecting underlying to stay near strike. Max profit: When underlying is exactly at strike at front-month expiration. Risk: Large move away from strike, IV decrease. Best for: Range-bound markets, pre-earnings IV expansion plays. Close before front-month expiration to avoid assignment risk.",
+      "strategy_type": "calendar",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "oa_diagonal_spread_001",
+      "topic": "Diagonal Spread Strategy",
+      "content": "A diagonal spread combines calendar and vertical spread characteristics. Construction: Sell 1 near-term OTM option. Buy 1 longer-term option (different strike). Example (Call Diagonal): Buy 60-DTE $50 call, Sell 30-DTE $55 call. Like a covered call but using a LEAPS instead of stock (poor man's covered call). Benefits: Lower capital requirement than covered calls. Defined risk. Profits from time decay of short option. Management: Roll short option monthly for ongoing income. Keep long option as 'base' position. Risks: If underlying moves significantly against long option, entire position loses. Best for: Bullish bias with income generation, capital-efficient covered call alternative. Close or roll when short option reaches 50% profit.",
+      "strategy_type": "diagonal",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "oa_butterfly_spread_001",
+      "topic": "Butterfly Spread Mechanics",
+      "content": "A butterfly spread is a limited-risk, limited-reward strategy betting on low volatility. Construction (Long Call Butterfly): Buy 1 ITM call (lower strike). Sell 2 ATM calls (middle strike). Buy 1 OTM call (higher strike). All same expiration. Profit zone: Narrow range around middle strike. Max profit: Width of wings minus debit paid. Max loss: Debit paid (very low). Best conditions: Expecting pinning action near a specific price, low volatility forecast. Use cases: Expiration plays on round numbers, earnings when expecting muted reaction. Cheap to enter, high reward-to-risk ratio but low probability of max profit. Requires precise price targeting.",
+      "strategy_type": "butterfly",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "oa_ratio_spreads_001",
+      "topic": "Ratio Spread Strategies",
+      "content": "Ratio spreads involve buying and selling different quantities of options. Example (Put Ratio Spread): Buy 1 ATM put. Sell 2 OTM puts. Creates a position that profits from moderate decline but has risk if underlying crashes. Front ratio spread (sell more than buy): Collects credit but has undefined downside risk. Back ratio spread (buy more than sell): Pays debit but profits from large moves. Use cases: Front ratios for income when expecting moderate moves. Back ratios for volatility plays when expecting extreme moves. Risk warning: Front ratio spreads have undefined risk - size appropriately. These are advanced strategies requiring active management.",
+      "strategy_type": "ratio",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "oa_risk_reversal_001",
+      "topic": "Risk Reversal Strategy",
+      "content": "A risk reversal expresses directional bias with minimal or zero cost. Construction (Bullish): Sell 1 OTM put. Buy 1 OTM call. Same expiration. Can be done for credit, debit, or even (zero cost). Profile: Synthetic long stock position with limited downside (to put strike). Profits if underlying rises (long call), loses if underlying falls below put strike. Use cases: Bullish conviction with capital efficiency. Hedging long stock positions. Expressing directional view without paying premium. Risk: Assigned on short put if underlying falls - must be prepared to own shares. Similar to wheel strategy entry but with upside call instead of covered call.",
+      "strategy_type": "risk_reversal",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "oa_jade_lizard_001",
+      "topic": "Jade Lizard Strategy",
+      "content": "A jade lizard is a short put combined with a call credit spread. Construction: Sell 1 OTM put. Sell 1 OTM call. Buy 1 further OTM call. Ensure total credit > call spread width. Unique feature: If structured correctly, NO UPSIDE RISK. Max profit = Total credit (if underlying between put and short call). Downside risk = Put strike - Total credit (put assignment). Upside risk = Zero (if credit > call spread width). Best conditions: Neutral to slightly bullish bias, high IV. The 'free' upside protection makes this attractive for volatile underlyings. Trade-off: Less credit than strangle but defined upside risk. Good for earnings when upside surprise expected but want downside protection.",
+      "strategy_type": "jade_lizard",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "oa_assignment_handling_001",
+      "topic": "Handling Option Assignment",
+      "content": "Assignment occurs when short option holder must fulfill obligation. For short puts: You buy 100 shares at strike price. For short calls: You sell/deliver 100 shares at strike price. Assignment triggers: ITM options at expiration (automatic). Early assignment (rare but possible, especially near ex-dividend). Handling assignment: (1) If assigned on put - now own shares, can sell covered calls (wheel). (2) If assigned on call with shares - shares sold, collect strike + original premium. (3) If assigned on naked call - must buy shares at market to deliver (dangerous). Prevention: Close positions before expiration. Roll ITM options out in time. Don't sell calls on stocks you don't own. Assignment is not failure - it's part of the strategy if you sized correctly.",
+      "strategy_type": "trade_management",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "oa_weekly_vs_monthly_001",
+      "topic": "Weekly vs Monthly Options",
+      "content": "Comparison of weekly (7 DTE) vs monthly (30-45 DTE) options: Weekly options: Higher theta decay rate (percentage). More gamma risk (larger delta swings). Must be more active in management. Higher frequency = more commissions. Good for quick income, event plays. Monthly options: Smoother theta decay curve. Lower gamma risk until final week. Set-and-forget friendly. Better for core portfolio positions. Options Alpha research shows: Monthly options (45 DTE) with management at 21 DTE or 50% profit outperform weeklies in risk-adjusted returns. Weeklies require more attention and have higher variance. Use weeklies for income acceleration, monthlies for core strategies.",
+      "strategy_type": "time_selection",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "oa_correlation_risk_001",
+      "topic": "Correlation Risk in Options Portfolios",
+      "content": "Correlation risk: Multiple positions moving against you simultaneously. Example: Selling puts on 10 different tech stocks - they all drop together in sector sell-off. Mitigation strategies: (1) Diversify across sectors (tech, healthcare, finance, energy, etc.). (2) Diversify across asset classes (stocks, ETFs, commodities). (3) Include uncorrelated underlyings (VIX products, bonds, gold). (4) Beta-weight portfolio to SPY to see true market exposure. (5) Keep position sizes small so no single trade dominates. (6) Include some long options positions as hedges. Stress testing: Ask 'what happens if market drops 10%?' If answer is 'I lose 30%+', you have correlation risk. Target portfolio beta-weighted delta near zero for neutral stance.",
+      "strategy_type": "risk_management",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "oa_mental_models_001",
+      "topic": "Mental Models for Options Success",
+      "content": "Key mental models for consistent profitability: (1) BE THE CASINO: Casinos have small edge but play infinite games. You are the house when selling premium. (2) PROCESS OVER OUTCOME: A losing trade with good process is better than winning trade with bad process. (3) BASE RATES: What is the historical probability? Don't override probability with emotion. (4) POSITION SIZING > STOCK PICKING: How much you risk matters more than what you trade. (5) MEAN REVERSION: IV, prices, and volatility all revert to mean. Trade accordingly. (6) ASYMMETRIC RISK: Small consistent gains beat occasional large gains (for sellers). (7) OPPORTUNITY COST: Cash has value - don't force trades in bad setups.",
+      "strategy_type": "psychology",
+      "difficulty": "beginner"
+    }
+  ]
+}

@@ -37,11 +37,12 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
 import yfinance as yf
+
 from src.agents.reinforcement_learning import RLPolicyLearner
 from src.core.alpaca_trader import AlpacaTrader
 
@@ -50,6 +51,10 @@ from src.core.multi_llm_analysis import MultiLLMAnalyzer
 from src.core.multi_llm_analysis_optimized import OptimizedMultiLLMAnalyzer
 from src.core.risk_manager import RiskManager
 from src.ml.forecasters.deep_momentum import DeepMomentumForecaster
+from src.risk.position_manager import (
+    ExitConditions,
+    get_position_manager,
+)
 from src.safety.graham_buffett_safety import get_global_safety_analyzer
 from src.utils.economic_guardrails import EconomicGuardrails
 from src.utils.sentiment_loader import (
@@ -68,6 +73,16 @@ try:
 except ImportError:
     LLM_COUNCIL_AVAILABLE = False
     TradingCouncil = None
+
+# Kalshi Oracle integration (prediction markets as leading indicators)
+try:
+    from src.signals.kalshi_oracle import KalshiOracle, get_kalshi_oracle
+
+    KALSHI_ORACLE_AVAILABLE = True
+except ImportError:
+    KALSHI_ORACLE_AVAILABLE = False
+    KalshiOracle = None
+    get_kalshi_oracle = None
 
 # VCA Strategy integration
 try:
@@ -121,9 +136,9 @@ class TradeOrder:
     action: str  # 'buy' or 'sell'
     quantity: float
     amount: float
-    price: Optional[float]
+    price: float | None
     order_type: str
-    stop_loss: Optional[float]
+    stop_loss: float | None
     timestamp: datetime
     reason: str
 
@@ -182,15 +197,23 @@ class CoreStrategy:
     MACD_SLOW_PERIOD = 26
     MACD_SIGNAL_PERIOD = 9
 
-    # Risk parameters
-    DEFAULT_STOP_LOSS_PCT = 0.05  # 5% trailing stop (fallback)
-    ATR_STOP_MULTIPLIER = 2.0  # ATR multiplier for dynamic stops
+    # Risk parameters - WIDENED for better risk/reward (Dec 10, 2025)
+    # Previous: 3% stop/profit was too tight - profit/trade ($0.39) < costs ($1.22)
+    # Analysis: Tight stops resulted in -7 to -2086 Sharpe ratios across all scenarios
+    # New: 7% stop / 10% profit allows capturing larger moves to overcome costs
+    DEFAULT_STOP_LOSS_PCT = 0.07  # 7% stop loss (wider for trend following)
+    ATR_STOP_MULTIPLIER = 2.5  # ATR multiplier for dynamic stops (increased)
     USE_ATR_STOPS = True  # Use ATR-based stops (more adaptive)
     REBALANCE_THRESHOLD = 0.05  # 5% deviation triggers rebalance (research-optimized)
     REBALANCE_FREQUENCY_DAYS = 90  # Quarterly rebalancing (research-optimized)
 
-    # Profit-taking parameters
-    TAKE_PROFIT_PCT = 0.05  # 5% profit target (conservative for Day 9 R&D)
+    # Profit-taking parameters - WIDENED to capture larger moves
+    # 10% target means avg profit/trade can exceed transaction costs
+    TAKE_PROFIT_PCT = 0.10  # 10% profit target (trend following)
+
+    # Time-based exit parameters (ADJUSTED Dec 10, 2025)
+    MAX_HOLDING_DAYS = 30  # Extended from 10 to 30 days for trend capture
+    ENABLE_MOMENTUM_EXIT = True  # Exit on MACD bearish crossover
 
     # Diversification allocation (guaranteed minimums)
     # 50% equity, 15% bonds, 15% REITs, 10% treasuries, 10% crypto proxy
@@ -211,14 +234,14 @@ class CoreStrategy:
     def __init__(
         self,
         daily_allocation: float = 900.0,
-        etf_universe: Optional[list[str]] = None,
+        etf_universe: list[str] | None = None,
         stop_loss_pct: float = DEFAULT_STOP_LOSS_PCT,
         take_profit_pct: float = TAKE_PROFIT_PCT,
         use_sentiment: bool = True,
         use_vca: bool = False,
-        vca_target_growth_rate: Optional[float] = None,
-        vca_max_adjustment: Optional[float] = None,
-        vca_min_adjustment: Optional[float] = None,
+        vca_target_growth_rate: float | None = None,
+        vca_max_adjustment: float | None = None,
+        vca_min_adjustment: float | None = None,
     ):
         """
         Initialize the Core Strategy.
@@ -248,7 +271,7 @@ class CoreStrategy:
         self.use_vca = use_vca and VCA_AVAILABLE
 
         # Initialize VCA strategy if enabled
-        self.vca_strategy: Optional[VCAStrategy] = None
+        self.vca_strategy: VCAStrategy | None = None
         if self.use_vca:
             try:
                 vca_config = {}
@@ -271,7 +294,7 @@ class CoreStrategy:
 
         # Strategy state
         self.current_holdings: dict[str, float] = {}
-        self.last_rebalance_date: Optional[datetime] = None
+        self.last_rebalance_date: datetime | None = None
         self.total_invested: float = 0.0
         self.total_value: float = 0.0
 
@@ -290,7 +313,7 @@ class CoreStrategy:
 
         # RL policy integration
         self.rl_enabled = os.getenv("ENABLE_RL_POLICY", "true").lower() == "true"
-        self.rl_learner: Optional[RLPolicyLearner] = None
+        self.rl_learner: RLPolicyLearner | None = None
         if self.rl_enabled:
             try:
                 self.rl_learner = RLPolicyLearner()
@@ -300,7 +323,7 @@ class CoreStrategy:
                 self.rl_enabled = False
 
         # Deep learning forecaster
-        self.deep_forecaster: Optional[DeepMomentumForecaster] = None
+        self.deep_forecaster: DeepMomentumForecaster | None = None
         try:
             self.deep_forecaster = DeepMomentumForecaster()
             logger.info("Deep momentum forecaster ready")
@@ -333,11 +356,27 @@ class CoreStrategy:
                 max_consecutive_losses=5,
             )
             logger.info("Successfully initialized core dependencies")
+
+            # Initialize Position Manager with tighter exit conditions (Dec 3, 2025)
+            # Previous 5% thresholds resulted in 0 closed trades
+            self.position_manager = get_position_manager(
+                conditions=ExitConditions(
+                    take_profit_pct=self.take_profit_pct,
+                    stop_loss_pct=self.stop_loss_pct,
+                    max_holding_days=self.MAX_HOLDING_DAYS,
+                    enable_momentum_exit=self.ENABLE_MOMENTUM_EXIT,
+                    enable_atr_stop=self.USE_ATR_STOPS,
+                    atr_multiplier=self.ATR_STOP_MULTIPLIER,
+                )
+            )
+            logger.info("Position Manager initialized with active trading conditions")
+
         except Exception as e:
             logger.warning(f"Failed to initialize some dependencies: {e}")
             self.llm_analyzer = None
             self.alpaca_trader = None
             self.risk_manager = None
+            self.position_manager = None
 
         # Initialize LLM Council (ENABLED BY DEFAULT per CEO directive Nov 24, 2025)
         # CEO directive: Enable all systems with $100/mo budget - move fast towards North Star
@@ -365,6 +404,20 @@ class CoreStrategy:
         else:
             self.safety_analyzer = None
 
+        # Initialize Kalshi Oracle (prediction markets as leading indicators)
+        # ENABLED BY DEFAULT per CEO directive - use prediction markets as data oracles
+        self.use_kalshi_oracle = os.getenv("USE_KALSHI_ORACLE", "true").lower() == "true"
+        self.kalshi_oracle = None
+        if self.use_kalshi_oracle and KALSHI_ORACLE_AVAILABLE and get_kalshi_oracle:
+            try:
+                self.kalshi_oracle = get_kalshi_oracle()
+                logger.info(
+                    "Kalshi Oracle initialized - using prediction markets as leading indicators"
+                )
+            except Exception as e:
+                logger.warning(f"Failed to initialize Kalshi Oracle: {e}")
+                self.kalshi_oracle = None
+
         allocation_mode = "VCA" if self.use_vca else "DCA"
         logger.info(
             f"CoreStrategy initialized: daily_allocation=${daily_allocation}, "
@@ -373,7 +426,7 @@ class CoreStrategy:
             f"take_profit={take_profit_pct * 100}%"
         )
 
-    def execute_daily(self) -> Optional[TradeOrder]:
+    def execute_daily(self) -> TradeOrder | None:
         """
         Execute the daily trading routine.
 
@@ -557,6 +610,35 @@ class CoreStrategy:
                     logger.warning(f"Gemini 3 validation error (proceeding): {e}")
                     # Fail-open: continue with trade if Gemini 3 unavailable
 
+            # Step 4.6: Kalshi Oracle Validation (prediction markets as leading indicators)
+            # Uses Kalshi odds to validate trade direction against macro signals
+            if self.use_kalshi_oracle and self.kalshi_oracle:
+                try:
+                    logger.info("Checking Kalshi Oracle for prediction market signals...")
+                    should_trade, kalshi_reason = self.kalshi_oracle.should_trade_symbol(
+                        symbol=best_etf, proposed_direction="buy"
+                    )
+
+                    if not should_trade:
+                        logger.warning(f"Kalshi Oracle contra-indicates trade: {kalshi_reason}")
+                        logger.info("SKIPPING TRADE - Prediction markets signal caution")
+                        _clear_pending_rl_state()
+                        return None
+                    else:
+                        logger.info(f"✅ Kalshi Oracle: {kalshi_reason}")
+
+                    # Also fetch any actionable signals for logging
+                    kalshi_signals = self.kalshi_oracle.get_all_signals()
+                    if kalshi_signals:
+                        for sig in kalshi_signals:
+                            logger.info(
+                                f"   Kalshi Signal: {sig.signal_type} → "
+                                f"{sig.direction.value} ({sig.confidence:.0%} confidence)"
+                            )
+                except Exception as e:
+                    logger.warning(f"Kalshi Oracle check error (proceeding): {e}")
+                    # Fail-open: continue with trade if Kalshi unavailable
+
             # Step 5: Get current price
             current_price = self._get_current_price(best_etf)
             if current_price is None:
@@ -565,8 +647,11 @@ class CoreStrategy:
                 return None
 
             # Step 5.5: Intelligent Investor Safety Check (Graham-Buffett principles)
+            # OPTIMIZATION (Dec 4, 2025): Skip for ETFs - they're inherently diversified and safe
             safety_analysis = None
-            if self.use_intelligent_investor and self.safety_analyzer:
+            is_etf = best_etf in ["SPY", "QQQ", "VOO", "BND", "VNQ", "BITO", "IEF", "TLT"]
+
+            if self.use_intelligent_investor and self.safety_analyzer and not is_etf:
                 try:
                     logger.info("=" * 80)
                     logger.info("Running Intelligent Investor Safety Analysis...")
@@ -627,6 +712,11 @@ class CoreStrategy:
                 except Exception as e:
                     logger.warning(f"Intelligent Investor safety check error (proceeding): {e}")
                     # Fail-open: continue with trade if safety check unavailable
+            elif is_etf:
+                logger.info(
+                    f"Skipping Intelligent Investor check for ETF {best_etf} (inherently safe)"
+                )
+                # ETFs are inherently diversified and don't need Graham-Buffett individual stock checks
 
             # Step 5.6: LLM Council Validation (if enabled) - After safety checks
             # Council incorporates Graham-Buffett principles and safety analysis
@@ -758,6 +848,9 @@ class CoreStrategy:
                     logger.info(
                         f"Momentum ETF: {executed_order['id']} - {best_etf} ${equity_amount:.2f}"
                     )
+                    # Track entry for time-based exits
+                    if hasattr(self, "position_manager") and self.position_manager:
+                        self.position_manager.track_entry(best_etf)
 
                     # 9b: BND - Bonds (15%)
                     # Alpaca minimum order size is $1.00 - orders below this will be rejected
@@ -788,6 +881,9 @@ class CoreStrategy:
                                     f"✅ Bond ETF order executed successfully: BND ${bond_amount:.2f} "
                                     f"(order_id: {bond_order.get('id', 'N/A')})"
                                 )
+                                # Track entry for time-based exits
+                                if hasattr(self, "position_manager") and self.position_manager:
+                                    self.position_manager.track_entry("BND")
                             except Exception as e:
                                 logger.error(
                                     f"❌ Bond order FAILED: BND ${bond_amount:.2f} - {type(e).__name__}: {e}",
@@ -821,6 +917,9 @@ class CoreStrategy:
                                     f"✅ REIT ETF order executed successfully: VNQ ${reit_amount:.2f} "
                                     f"(order_id: {reit_order.get('id', 'N/A')})"
                                 )
+                                # Track entry for time-based exits
+                                if hasattr(self, "position_manager") and self.position_manager:
+                                    self.position_manager.track_entry("VNQ")
                             except Exception as e:
                                 logger.error(
                                     f"❌ REIT order FAILED: VNQ ${reit_amount:.2f} - {type(e).__name__}: {e}",
@@ -942,6 +1041,7 @@ class CoreStrategy:
                 if self.USE_ATR_STOPS:
                     try:
                         import yfinance as yf
+
                         from src.utils.technical_indicators import (
                             calculate_atr,
                             calculate_atr_stop_loss,
@@ -1096,21 +1196,151 @@ class CoreStrategy:
                     except Exception as e:
                         logger.error(f"  ❌ Failed to close position {symbol}: {e}")
                 else:
+                    # Check additional exit conditions using Position Manager
+                    # TIME-BASED EXIT: Close positions held too long
+                    if hasattr(self, "position_manager") and self.position_manager:
+                        entry_date = self.position_manager.get_entry_date(symbol)
+                        if entry_date:
+                            days_held = (datetime.now() - entry_date).days
+                            if days_held >= self.MAX_HOLDING_DAYS:
+                                logger.info(
+                                    f"  ⏰ TIME-DECAY EXIT: Position held {days_held} days >= {self.MAX_HOLDING_DAYS} day limit"
+                                )
+                                try:
+                                    executed_order = self.alpaca_trader.execute_order(
+                                        symbol=symbol,
+                                        amount_usd=market_value,
+                                        side="sell",
+                                        tier="T1_CORE",
+                                    )
+                                    logger.info(
+                                        f"  ✅ Position closed: Order ID {executed_order['id']}"
+                                    )
+                                    exit_order = TradeOrder(
+                                        symbol=symbol,
+                                        action="sell",
+                                        quantity=qty,
+                                        amount=market_value,
+                                        price=current_price,
+                                        order_type="market",
+                                        stop_loss=None,
+                                        timestamp=datetime.now(),
+                                        reason=f"Time-decay exit after {days_held} days held",
+                                    )
+                                    closed_positions.append(exit_order)
+                                    self.trades_executed.append(exit_order)
+                                    self._update_holdings(symbol, -qty)
+                                    self._reward_rl(symbol, unrealized_plpc)
+                                    self.position_manager.clear_entry(symbol)
+                                    continue
+                                except Exception as e:
+                                    logger.error(f"  ❌ Failed to close position {symbol}: {e}")
+                            else:
+                                logger.info(f"  📅 Days held: {days_held}/{self.MAX_HOLDING_DAYS}")
+
+                    # MOMENTUM REVERSAL EXIT: Close on MACD bearish cross
+                    if self.ENABLE_MOMENTUM_EXIT:
+                        momentum_reversal = self._check_momentum_reversal_exit(symbol)
+                        if momentum_reversal:
+                            logger.info(
+                                f"  📉 MOMENTUM REVERSAL EXIT: MACD crossed bearish for {symbol}"
+                            )
+                            try:
+                                executed_order = self.alpaca_trader.execute_order(
+                                    symbol=symbol,
+                                    amount_usd=market_value,
+                                    side="sell",
+                                    tier="T1_CORE",
+                                )
+                                logger.info(
+                                    f"  ✅ Position closed: Order ID {executed_order['id']}"
+                                )
+                                exit_order = TradeOrder(
+                                    symbol=symbol,
+                                    action="sell",
+                                    quantity=qty,
+                                    amount=market_value,
+                                    price=current_price,
+                                    order_type="market",
+                                    stop_loss=None,
+                                    timestamp=datetime.now(),
+                                    reason="Momentum reversal - MACD bearish cross",
+                                )
+                                closed_positions.append(exit_order)
+                                self.trades_executed.append(exit_order)
+                                self._update_holdings(symbol, -qty)
+                                self._reward_rl(symbol, unrealized_plpc)
+                                if hasattr(self, "position_manager") and self.position_manager:
+                                    self.position_manager.clear_entry(symbol)
+                                continue
+                            except Exception as e:
+                                logger.error(f"  ❌ Failed to close position {symbol}: {e}")
+
                     logger.info(
                         f"  ✅ Holding position (P/L {unrealized_plpc * 100:.2f}% < target {self.take_profit_pct * 100:.1f}%)"
                     )
 
             logger.info("=" * 80)
             if closed_positions:
-                logger.info(f"Closed {len(closed_positions)} winning positions")
+                logger.info(
+                    f"Closed {len(closed_positions)} positions (take-profit, stop-loss, time-decay, or momentum)"
+                )
             else:
-                logger.info("No positions ready for take-profit exit")
+                logger.info("No positions ready for exit")
 
             return closed_positions
 
         except Exception as e:
             logger.error(f"Error managing positions: {str(e)}", exc_info=True)
             return closed_positions
+
+    def _check_momentum_reversal_exit(self, symbol: str) -> bool:
+        """
+        Check if MACD has crossed bearish (momentum reversal exit signal).
+
+        This method detects when momentum has turned against a position,
+        signaling it's time to exit even if other conditions aren't met.
+
+        Args:
+            symbol: Stock symbol to check
+
+        Returns:
+            True if MACD crossed bearish (should exit), False otherwise
+        """
+        try:
+            # Get recent price data
+            ticker = yf.Ticker(symbol)
+            hist = ticker.history(period="1mo")
+
+            if hist.empty or len(hist) < 26:  # Need enough data for MACD
+                logger.debug(f"Insufficient data for MACD calculation on {symbol}")
+                return False
+
+            # Calculate MACD
+            close = hist["Close"]
+            ema12 = close.ewm(span=self.MACD_FAST_PERIOD, adjust=False).mean()
+            ema26 = close.ewm(span=self.MACD_SLOW_PERIOD, adjust=False).mean()
+            macd_line = ema12 - ema26
+            signal_line = macd_line.ewm(span=self.MACD_SIGNAL_PERIOD, adjust=False).mean()
+            histogram = macd_line - signal_line
+
+            # Check for bearish crossover (MACD crossing below signal)
+            if len(histogram) >= 2:
+                current_hist = histogram.iloc[-1]
+                prev_hist = histogram.iloc[-2]
+
+                # Bearish cross: histogram went from positive to negative
+                if prev_hist > 0 and current_hist < 0:
+                    logger.info(f"  MACD bearish cross detected for {symbol}")
+                    logger.info(f"    Previous histogram: {prev_hist:.4f}")
+                    logger.info(f"    Current histogram: {current_hist:.4f}")
+                    return True
+
+            return False
+
+        except Exception as e:
+            logger.debug(f"Error checking momentum for {symbol}: {e}")
+            return False
 
     def calculate_momentum(self, symbol: str, relaxed_filters: bool = False) -> float:
         """
@@ -1345,7 +1575,7 @@ class CoreStrategy:
 
         return momentum_score
 
-    def select_best_etf(self, momentum_scores: Optional[list[MomentumScore]] = None) -> str:
+    def select_best_etf(self, momentum_scores: list[MomentumScore] | None = None) -> str:
         """
         Select the ETF with the highest momentum score.
 
@@ -2005,7 +2235,7 @@ class CoreStrategy:
 
         return thresholds
 
-    def _update_trend_snapshot(self, extra_symbols: Optional[list[str]] = None) -> None:
+    def _update_trend_snapshot(self, extra_symbols: list[str] | None = None) -> None:
         """Build and persist SMA snapshot for Tier 1/2 assets."""
         base_symbols = list(
             dict.fromkeys(list(self.etf_universe) + list(self.DIVERSIFICATION_SYMBOLS.values()))
@@ -2036,7 +2266,7 @@ class CoreStrategy:
         return filtered
 
     def _build_market_state(
-        self, symbol: str, momentum_score: Optional[MomentumScore] = None
+        self, symbol: str, momentum_score: MomentumScore | None = None
     ) -> dict[str, Any]:
         snapshot = self._trend_snapshot.get(symbol)
         hist = self._price_history_cache.get(symbol)
@@ -2081,7 +2311,7 @@ class CoreStrategy:
         reward = self.rl_learner.calculate_reward(trade_result, new_state)
         self.rl_learner.update_policy(prev_state["state"], "BUY", reward, new_state, done=True)
 
-    def _get_current_price(self, symbol: str) -> Optional[float]:
+    def _get_current_price(self, symbol: str) -> float | None:
         """
         Get current market price for symbol.
 
@@ -2301,8 +2531,8 @@ class CoreStrategy:
         symbol: str,
         quantity: float,
         price: float,
-        sentiment: Optional[MarketSentiment],
-        reason: Optional[str] = None,
+        sentiment: MarketSentiment | None,
+        reason: str | None = None,
     ) -> TradeOrder:
         """
         Create a buy order with stop-loss.

@@ -1,0 +1,230 @@
+[
+  {
+    "trade_id": "test_save",
+    "symbol": "QQQ",
+    "timestamp": "2025-12-05T12:38:59.301372",
+    "evaluation": {
+      "accuracy": {
+        "dimension": "accuracy",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "expected_amount": 6.0,
+          "actual_amount": 6.0,
+          "order_status": "filled"
+        },
+        "timestamp": "2025-12-05T12:38:59.301393"
+      },
+      "compliance": {
+        "dimension": "compliance",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "daily_allocation": 10.0,
+          "validated": true,
+          "preflight_passed": true
+        },
+        "timestamp": "2025-12-05T12:38:59.301396"
+      },
+      "reliability": {
+        "dimension": "reliability",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "system_state_age_hours": 1.0,
+          "data_source": "alpaca",
+          "api_errors": [],
+          "execution_time_ms": 500
+        },
+        "timestamp": "2025-12-05T12:38:59.301398"
+      },
+      "errors": {
+        "dimension": "errors",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "error_count": 0
+        },
+        "timestamp": "2025-12-05T12:38:59.301401"
+      }
+    },
+    "overall_score": 1.0,
+    "passed": true,
+    "critical_issues": []
+  },
+  {
+    "trade_id": "test_save",
+    "symbol": "QQQ",
+    "timestamp": "2025-12-05T12:42:37.634159",
+    "evaluation": {
+      "accuracy": {
+        "dimension": "accuracy",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "expected_amount": 6.0,
+          "actual_amount": 6.0,
+          "order_status": "filled"
+        },
+        "timestamp": "2025-12-05T12:42:37.634179"
+      },
+      "compliance": {
+        "dimension": "compliance",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "daily_allocation": 10.0,
+          "validated": true,
+          "preflight_passed": true
+        },
+        "timestamp": "2025-12-05T12:42:37.634181"
+      },
+      "reliability": {
+        "dimension": "reliability",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "system_state_age_hours": 1.0,
+          "data_source": "alpaca",
+          "api_errors": [],
+          "execution_time_ms": 500
+        },
+        "timestamp": "2025-12-05T12:42:37.634183"
+      },
+      "errors": {
+        "dimension": "errors",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "error_count": 0
+        },
+        "timestamp": "2025-12-05T12:42:37.634186"
+      }
+    },
+    "overall_score": 1.0,
+    "passed": true,
+    "critical_issues": []
+  },
+  {
+    "trade_id": "test_save",
+    "symbol": "QQQ",
+    "timestamp": "2025-12-05T12:45:35.535319",
+    "evaluation": {
+      "accuracy": {
+        "dimension": "accuracy",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "expected_amount": 6.0,
+          "actual_amount": 6.0,
+          "order_status": "filled"
+        },
+        "timestamp": "2025-12-05T12:45:35.535350"
+      },
+      "compliance": {
+        "dimension": "compliance",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "daily_allocation": 10.0,
+          "validated": true,
+          "preflight_passed": true
+        },
+        "timestamp": "2025-12-05T12:45:35.535353"
+      },
+      "reliability": {
+        "dimension": "reliability",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "system_state_age_hours": 1.0,
+          "data_source": "alpaca",
+          "api_errors": [],
+          "execution_time_ms": 500
+        },
+        "timestamp": "2025-12-05T12:45:35.535356"
+      },
+      "errors": {
+        "dimension": "errors",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "error_count": 0
+        },
+        "timestamp": "2025-12-05T12:45:35.535364"
+      }
+    },
+    "overall_score": 1.0,
+    "passed": true,
+    "critical_issues": []
+  },
+  {
+    "trade_id": "test_save",
+    "symbol": "QQQ",
+    "timestamp": "2025-12-05T12:48:29.305313",
+    "evaluation": {
+      "accuracy": {
+        "dimension": "accuracy",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "expected_amount": 6.0,
+          "actual_amount": 6.0,
+          "order_status": "filled"
+        },
+        "timestamp": "2025-12-05T12:48:29.305332"
+      },
+      "compliance": {
+        "dimension": "compliance",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "daily_allocation": 10.0,
+          "validated": true,
+          "preflight_passed": true
+        },
+        "timestamp": "2025-12-05T12:48:29.305334"
+      },
+      "reliability": {
+        "dimension": "reliability",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "system_state_age_hours": 1.0,
+          "data_source": "alpaca",
+          "api_errors": [],
+          "execution_time_ms": 500
+        },
+        "timestamp": "2025-12-05T12:48:29.305336"
+      },
+      "errors": {
+        "dimension": "errors",
+        "score": 1.0,
+        "passed": true,
+        "issues": [],
+        "metadata": {
+          "error_count": 0
+        },
+        "timestamp": "2025-12-05T12:48:29.305339"
+      }
+    },
+    "overall_score": 1.0,
+    "passed": true,
+    "critical_issues": []
+  }
+]

@@ -1,10 +1,36 @@
-# Sentiment RAG Dashboard
+# AI Trading Dashboard
 
-A comprehensive Streamlit dashboard for visualizing sentiment analysis data from multiple sources (Reddit, news, social media) used in the AI trading system.
+World-class trading dashboard with professional UI/UX, designed for efficiency and clarity.
 
-## Features
+## Quick Start
 
-### 1. Main Dashboard
+```bash
+# Launch the main dashboard
+./scripts/run_dashboard.sh
+
+# Or manually with streamlit
+streamlit run dashboard/main.py
+```
+
+Open http://localhost:8501 in your browser.
+
+---
+
+## Dashboards
+
+### 1. Main Dashboard (NEW - Recommended)
+**File:** `dashboard/main.py`
+
+The unified control center with:
+- **Hero Metrics** - Portfolio value, Daily P/L, Win Rate, Theta Income, R&D Progress
+- **Progress to $100/Day** - Visual progress bar with projection
+- **4 Clean Tabs** - Overview, Positions, Options, Performance
+- **Real-time Updates** - 30-second refresh with live Alpaca data
+- **Dark Theme** - Professional trading UI
+
+### 2. Sentiment Dashboard
+**File:** `dashboard/sentiment_dashboard.py`
+
 - **Real-time sentiment scores** with color-coded gauges (green/yellow/red)
 - **Market regime detection** (Risk On / Risk Off / Neutral)
 - **Top 5 tickers** by sentiment strength

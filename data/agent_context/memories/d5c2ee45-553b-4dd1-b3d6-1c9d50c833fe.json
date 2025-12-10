@@ -1,0 +1,26 @@
+{
+  "memory_id": "d5c2ee45-553b-4dd1-b3d6-1c9d50c833fe",
+  "agent_id": "research_agent",
+  "context_type": "ContextType.MEMORY_CONTEXT",
+  "content": {
+    "symbol": "SPY",
+    "sentiment": {
+      "score": 0.25,
+      "confidence": 0.8
+    },
+    "sentiment_score": 0.25,
+    "timestamp": "2025-12-05T15:16:21.761741"
+  },
+  "tags": [
+    "sentiment",
+    "research",
+    "SPY"
+  ],
+  "created_at": "2025-12-05T15:16:21.761766",
+  "accessed_at": "2025-12-05T15:16:21.761767",
+  "access_count": 0,
+  "ttl_days": null,
+  "timescale": "intraday",
+  "importance_score": 0.5,
+  "outcome_pl": null
+}

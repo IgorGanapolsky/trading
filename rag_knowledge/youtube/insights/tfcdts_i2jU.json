@@ -1,0 +1,45 @@
+{
+  "video_id": "tfcdts_i2jU",
+  "url": "https://www.youtube.com/watch?v=tfcdts_i2jU",
+  "title": "Crypto to buy for 2026 #crypto #bitcoin #bullrun #altseason",
+  "channel": "ODES - All about crypto",
+  "duration_seconds": 16,
+  "format": "YouTube Short",
+  "analyzed_at": "2025-12-09T00:00:00Z",
+  "content_type": "visual_list",
+  "note": "Recommendations shown as on-screen text with No/Yep gestures - audio only contains 'no yep no yep'",
+  "synthesized_picks_2026": [
+    {
+      "symbol": "BTC",
+      "name": "Bitcoin",
+      "recommendation": "BUY",
+      "rationale": "Digital gold standard, institutional adoption via ETFs, dominance expected to continue"
+    },
+    {
+      "symbol": "SOL",
+      "name": "Solana",
+      "recommendation": "BUY",
+      "rationale": "High transaction speed, low fees, strong DeFi ecosystem growth"
+    },
+    {
+      "symbol": "XRP",
+      "name": "Ripple",
+      "recommendation": "BUY",
+      "rationale": "Cross-border payments utility, legal clarity as growth factor"
+    },
+    {
+      "symbol": "ETH",
+      "name": "Ethereum",
+      "recommendation": "BUY",
+      "rationale": "Vast smart contract ecosystem, Layer 2 scaling improvements"
+    }
+  ],
+  "source_note": "Specific video picks were visual-only. These recommendations are synthesized from related 2026 forecasts and current market analysis.",
+  "trading_implications": {
+    "current_holdings": ["BTC"],
+    "consider_adding": ["SOL", "ETH"],
+    "not_yet_supported": ["XRP"]
+  },
+  "edge_category": "crypto",
+  "topics": ["2026_predictions", "altseason", "bullrun", "long_term_holds"]
+}

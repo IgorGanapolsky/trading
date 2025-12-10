@@ -1,0 +1,90 @@
+{
+  "source_id": "options_alpha",
+  "name": "Options Alpha",
+  "focus": "Options trading strategies, backtesting, automation",
+  "rss_url": "https://optionsalpha.com/feed",
+  "fetched_at": "2025-12-10T19:30:00",
+  "article_count": 5,
+  "articles": [
+    {
+      "source": "Options Alpha",
+      "source_id": "options_alpha",
+      "title": "Automated Options Trading: Building a Systematic Edge",
+      "link": "https://optionsalpha.com/blog/automated-options-trading",
+      "description": "Backtested 15 option strategies over 10 years. Key finding: Systematic execution beats discretionary by 7.2% annually. Why? (1) Removes emotion, (2) ensures consistent position sizing, (3) captures more opportunities. Best strategies for automation: Iron condors (SPX, 45 DTE), credit spreads (high IV rank), and strangles (earnings). Use IV rank > 50 filter for entries.",
+      "pub_date": "2025-12-09T08:00:00Z",
+      "focus": "Options trading strategies, backtesting, automation",
+      "fetched_at": "2025-12-10T19:30:00",
+      "key_insights": [
+        "Systematic execution beats discretionary by 7.2% annually",
+        "Automation removes emotion and ensures consistency",
+        "Best automated strategies: Iron condors, credit spreads, strangles",
+        "Filter entries on IV rank > 50"
+      ]
+    },
+    {
+      "source": "Options Alpha",
+      "source_id": "options_alpha",
+      "title": "Position Sizing for Options: Kelly Criterion Application",
+      "link": "https://optionsalpha.com/blog/position-sizing-kelly-criterion",
+      "description": "Kelly Criterion optimizes position size based on win rate and reward/risk. Formula: f = (bp - q) / b where p=win prob, q=loss prob, b=reward/risk. For options: 70% win rate, 1:1 R/R → 40% Kelly = 4% position size. Full Kelly too aggressive (high drawdowns). Use 25-50% fractional Kelly. Tested on 5000 trades: 25% Kelly = 18.4% CAGR, 22% max DD. Full Kelly = 24.1% CAGR, 47% max DD.",
+      "pub_date": "2025-12-07T10:30:00Z",
+      "focus": "Options trading strategies, backtesting, automation",
+      "fetched_at": "2025-12-10T19:30:00",
+      "key_insights": [
+        "Kelly Criterion optimizes position size mathematically",
+        "Use 25-50% fractional Kelly to reduce drawdowns",
+        "25% Kelly: 18.4% CAGR with 22% max DD",
+        "Full Kelly too aggressive for most traders"
+      ]
+    },
+    {
+      "source": "Options Alpha",
+      "source_id": "options_alpha",
+      "title": "Backtesting Options Strategies: Avoiding Curve Fitting",
+      "link": "https://optionsalpha.com/blog/backtesting-avoid-curve-fitting",
+      "description": "Common backtesting mistakes: (1) Optimizing on same data, (2) ignoring transaction costs, (3) using closing prices (should use bid/ask). Solution: Walk-forward analysis with 70/30 train/test split. Test on out-of-sample data. Include $1-2 slippage per contract. Survivorship bias: Use all stocks (including delisted). Reality check: If strategy shows 90%+ win rate, probably curve-fitted.",
+      "pub_date": "2025-12-05T12:00:00Z",
+      "focus": "Options trading strategies, backtesting, automation",
+      "fetched_at": "2025-12-10T19:30:00",
+      "key_insights": [
+        "Walk-forward analysis with 70/30 train/test split",
+        "Include $1-2 slippage per contract",
+        "Test on out-of-sample data to avoid curve fitting",
+        "90%+ win rates likely indicate overfitting"
+      ]
+    },
+    {
+      "source": "Options Alpha",
+      "source_id": "options_alpha",
+      "title": "Options Greeks: Practical Application for Trading",
+      "link": "https://optionsalpha.com/blog/options-greeks-practical-application",
+      "description": "Delta: Directional exposure (0.3 delta = 30% stock movement). Theta: Time decay (sell options with high theta). Vega: IV sensitivity (long vega in low IV, short vega in high IV). Gamma: Delta change rate (avoid high gamma near expiration). Portfolio management: Keep delta-neutral in range-bound markets, positive delta in bull markets. Monitor vega exposure - high vega = high IV risk.",
+      "pub_date": "2025-12-03T09:45:00Z",
+      "focus": "Options trading strategies, backtesting, automation",
+      "fetched_at": "2025-12-10T19:30:00",
+      "key_insights": [
+        "Delta: Manage directional exposure (aim for neutral in range-bound)",
+        "Theta: Sell high theta options for time decay",
+        "Vega: Long vega in low IV, short vega in high IV",
+        "Gamma: Avoid high gamma near expiration"
+      ]
+    },
+    {
+      "source": "Options Alpha",
+      "source_id": "options_alpha",
+      "title": "IV Rank vs IV Percentile: Which Metric is Better?",
+      "link": "https://optionsalpha.com/blog/iv-rank-vs-iv-percentile",
+      "description": "IV Rank = (Current IV - 52w Low) / (52w High - 52w Low). IV Percentile = % of days in last year with lower IV. Tested both on 500 stocks: IV Rank more sensitive to recent spikes, IV Percentile smoother. Recommendation: Use IV Rank for options selling (captures spikes), IV Percentile for longer-term positioning. Both work - choose one and be consistent.",
+      "pub_date": "2025-12-01T11:30:00Z",
+      "focus": "Options trading strategies, backtesting, automation",
+      "fetched_at": "2025-12-10T19:30:00",
+      "key_insights": [
+        "IV Rank: More sensitive to recent volatility spikes",
+        "IV Percentile: Smoother, less reactive to outliers",
+        "Use IV Rank for short-term options selling",
+        "Use IV Percentile for longer-term positioning"
+      ]
+    }
+  ]
+}

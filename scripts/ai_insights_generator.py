@@ -17,7 +17,7 @@ import sys
 from collections import defaultdict
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -134,7 +134,7 @@ class AIInsightsGenerator:
         try:
             dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
             return 9 <= dt.hour < 12
-        except:
+        except Exception:
             return False
 
     def _detect_anomalies(self, perf_log: list[dict], all_trades: list[dict]) -> list[str]:
@@ -174,7 +174,7 @@ class AIInsightsGenerator:
 
         return anomalies
 
-    def _detect_regime_shift(self, perf_log: list[dict]) -> Optional[str]:
+    def _detect_regime_shift(self, perf_log: list[dict]) -> str | None:
         """Detect market regime shifts."""
         if not perf_log or len(perf_log) < 10:
             return None

@@ -86,7 +86,7 @@ def create_test_data(tmpdir: Path):
     return data_dir
 
 
-def test_dashboard_has_required_sections(dashboard_content: str, script_name: str):
+def verify_dashboard_has_required_sections(dashboard_content: str, script_name: str):
     """Test that dashboard contains all required sections."""
     required_sections = [
         ("Today's Performance", "📅 Today's Performance"),
@@ -127,7 +127,7 @@ def test_world_class_dashboard():
             dashboard = generate_world_class_dashboard()
 
             # Validate required sections
-            test_dashboard_has_required_sections(dashboard, "generate_world_class_dashboard.py")
+            verify_dashboard_has_required_sections(dashboard, "generate_world_class_dashboard.py")
 
             print("✅ generate_world_class_dashboard.py: PASSED")
             return True
@@ -154,7 +154,7 @@ def test_world_class_dashboard_enhanced():
 
             dashboard = generate_world_class_dashboard()
 
-            test_dashboard_has_required_sections(
+            verify_dashboard_has_required_sections(
                 dashboard, "generate_world_class_dashboard_enhanced.py"
             )
 
@@ -181,7 +181,7 @@ def test_progress_dashboard():
 
             dashboard = generate_dashboard()
 
-            test_dashboard_has_required_sections(dashboard, "generate_progress_dashboard.py")
+            verify_dashboard_has_required_sections(dashboard, "generate_progress_dashboard.py")
 
             print("✅ generate_progress_dashboard.py: PASSED")
             return True

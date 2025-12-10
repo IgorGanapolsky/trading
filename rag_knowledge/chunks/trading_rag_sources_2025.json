@@ -1,0 +1,74 @@
+[
+  {
+    "source_type": "book",
+    "source_name": "Advances in Financial Machine Learning",
+    "author": "Marcos López de Prado",
+    "chapter_or_section": "Chapters 2-5",
+    "page_or_timestamp": "Wiley 2018",
+    "content": "Defines regime detection, combinatorial feature selection, and backtest integrity controls that help algorithmic strategies differentiate signal from overfitting. Key ideas: combinatorial purged k-fold CV, meta-labeling, and structural risk minimization via hierarchical clustering.",
+    "content_type": "concept",
+    "topics": ["algorithmic_trading", "backtest_integrity", "feature_selection"],
+    "edge_category": "trading",
+    "citation": "López de Prado (2018)"
+  },
+  {
+    "source_type": "book",
+    "source_name": "Options as a Strategic Investment",
+    "author": "Lawrence McMillan",
+    "chapter_or_section": "Strategy tables and strategy comparison",
+    "page_or_timestamp": "Revised edition 2020",
+    "content": "Compares spreads, calendars, condors, and covered-call structures, summarizing risk/reward, margin impact, and volatility assumptions. Lists how delta, vega, and time decay translate into entry filters and trade management rules.",
+    "content_type": "strategy",
+    "topics": ["options_strategies", "volatility", "risk_management"],
+    "edge_category": "trading",
+    "citation": "McMillan (2020)"
+  },
+  {
+    "source_type": "book",
+    "source_name": "The Single Best Investment",
+    "author": "Lowell Miller",
+    "chapter_or_section": "Dividend growth framework",
+    "page_or_timestamp": "Bloomberg Press 2013",
+    "content": "Ranks stocks by dividend history, payout ratio, valuation and growth, recommending a concentrated dividend-growth portfolio plus a buffer of high-quality REITs. Highlights how to combine cash flow stability with duration control for bonds and Treasuries.",
+    "content_type": "strategy",
+    "topics": ["dividend_investing", "reit_analysis", "fixed_income"],
+    "edge_category": "income",
+    "citation": "Miller (2013)"
+  },
+  {
+    "source_type": "report",
+    "source_name": "Chainalysis Crypto Crime Report",
+    "author": "Chainalysis Research",
+    "chapter_or_section": "2025 edition",
+    "page_or_timestamp": "2025",
+    "content": "Documents illicit/outflow volumes, compliance hotspots, and the evolving role of on-chain analytics. Provides context for sentiment signals tied to regulatory scrutiny, AML enforcement, and stablecoin redemption pressure.",
+    "content_type": "observation",
+    "topics": ["crypto_risk", "on_chain", "regulation"],
+    "edge_category": "crypto",
+    "citation": "Chainalysis (2025)"
+  },
+  {
+    "source_type": "doc",
+    "source_name": "Chroma + SentenceTransformers + BM25 hybrid notes",
+    "author": "Internal RAG team",
+    "chapter_or_section": "December 2025 stack guide",
+    "page_or_timestamp": "internal",
+    "content": "Use Sentence-Transformer bi-encoder for dense recall, fallback to BM25 keyword scoring, and rely on the chroma client shim (see src/utils/pydantic_compat.py) before importing BaseSettings. Sync the vector store via python3.11 with TMPDIR set to a workspace tmp/ directory on macOS.",
+    "content_type": "best_practice",
+    "topics": ["rag_pipeline", "hybrid_search", "chromadb"],
+    "edge_category": "operations",
+    "citation": "Internal (2025)"
+  },
+  {
+    "source_type": "doc",
+    "source_name": "Pydantic compatibility shim",
+    "author": "src/utils/pydantic_compat.py",
+    "chapter_or_section": "BaseSettings monkey patch",
+    "page_or_timestamp": "2025",
+    "content": "Ensures Pydantic < 2.0 disables the non-annotated attribute guard before Chroma imports, preventing the chroma_coordinator_host TypeError when chroma uses BaseSettings. Mentioned as an ingestion note so future updates know the patch order.",
+    "content_type": "implementation",
+    "topics": ["pydantic", "chromadb", "compatibility"],
+    "edge_category": "operations",
+    "citation": "pydantic_compat shim"
+  }
+]

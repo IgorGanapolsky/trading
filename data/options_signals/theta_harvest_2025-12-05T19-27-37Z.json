@@ -1,0 +1,72 @@
+{
+  "generated_at": "2025-12-05T19:27:36.324893+00:00",
+  "account_equity": 100005.5,
+  "equity_gate": {
+    "account_equity": 100005.5,
+    "enabled_strategies": {
+      "poor_mans_covered_call": true,
+      "iron_condor": true,
+      "full_suite": true
+    },
+    "next_tier": null,
+    "gap_to_next_tier": 0,
+    "theta_enabled": true
+  },
+  "regime": "calm",
+  "target_daily_premium": 10.0,
+  "opportunities": [
+    {
+      "symbol": "SPY",
+      "strategy": "iron_condor",
+      "contracts": 6,
+      "estimated_premium": 300.0,
+      "executed": false,
+      "reason": "Signal ready for iron_condor",
+      "order_id": null,
+      "iv_percentile": 53.2,
+      "option_symbol": null,
+      "expiration": null,
+      "strike": null,
+      "delta": null,
+      "limit_price": null,
+      "notes": null
+    },
+    {
+      "symbol": "QQQ",
+      "strategy": "iron_condor",
+      "contracts": 6,
+      "estimated_premium": 300.0,
+      "executed": false,
+      "reason": "Signal ready for iron_condor",
+      "order_id": null,
+      "iv_percentile": 51.9,
+      "option_symbol": null,
+      "expiration": null,
+      "strike": null,
+      "delta": null,
+      "limit_price": null,
+      "notes": null
+    },
+    {
+      "symbol": "IWM",
+      "strategy": "iron_condor",
+      "contracts": 6,
+      "estimated_premium": 300.0,
+      "executed": false,
+      "reason": "Signal ready for iron_condor",
+      "order_id": null,
+      "iv_percentile": 76.2,
+      "option_symbol": null,
+      "expiration": null,
+      "strike": null,
+      "delta": null,
+      "limit_price": null,
+      "notes": null
+    }
+  ],
+  "total_estimated_premium": 30.0,
+  "premium_gap": 0,
+  "auto_execution_enabled": false,
+  "on_track": true,
+  "summary": "Found 3 theta opportunities. Est. daily premium: $30.00 (gap: $0.00)"
+}

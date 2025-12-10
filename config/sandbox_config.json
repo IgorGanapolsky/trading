@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Claude Agent SDK Sandbox Configuration for Trading System",
+  "version": "1.0.0",
+  "sandbox": {
+    "enabled": true,
+    "mode": "native",
+    "network": {
+      "allowedDomains": [
+        "api.alpaca.markets",
+        "paper-api.alpaca.markets",
+        "data.alpaca.markets",
+        "stream.data.alpaca.markets",
+        "api.openrouter.ai",
+        "api.anthropic.com",
+        "generativelanguage.googleapis.com",
+        "api.coingecko.com",
+        "pro-api.coinmarketcap.com"
+      ],
+      "blockedDomains": [
+        "*.torrent.*",
+        "*.onion",
+        "pastebin.com"
+      ]
+    },
+    "filesystem": {
+      "allowedPaths": [
+        "./data",
+        "./reports",
+        "./logs",
+        "/tmp"
+      ],
+      "readOnlyPaths": [
+        "./src",
+        "./config",
+        "./mcp",
+        "./.claude"
+      ],
+      "blockedPaths": [
+        "~/.ssh",
+        "~/.gnupg",
+        "~/.aws/credentials",
+        "/etc/passwd",
+        "/etc/shadow"
+      ]
+    },
+    "commands": {
+      "excluded": [
+        "rm -rf /",
+        "rm -rf ~",
+        "curl | bash",
+        "wget | sh",
+        "sudo",
+        "chmod 777",
+        "dd if=/dev/zero",
+        "mkfs",
+        ":(){ :|:& };:",
+        "nc -e",
+        "bash -i"
+      ],
+      "allowed": [
+        "python",
+        "python3",
+        "pip",
+        "git",
+        "ls",
+        "cat",
+        "head",
+        "tail",
+        "grep",
+        "curl",
+        "jq"
+      ]
+    },
+    "resources": {
+      "memory": "4g",
+      "cpus": 2.0,
+      "pidsLimit": 200,
+      "timeoutSeconds": 600
+    }
+  },
+  "agents": {
+    "research_agent": {
+      "networkAccess": true,
+      "allowedDomains": ["*"],
+      "commandsAllowed": ["curl", "python", "jq"]
+    },
+    "execution_agent": {
+      "networkAccess": true,
+      "allowedDomains": ["api.alpaca.markets", "paper-api.alpaca.markets"],
+      "commandsAllowed": ["python"]
+    },
+    "rl_agent": {
+      "networkAccess": false,
+      "filesystemAccess": ["./data/rl_models", "./data/agent_context"],
+      "commandsAllowed": ["python"]
+    }
+  },
+  "security": {
+    "auditLogging": true,
+    "auditLogPath": "./logs/sandbox_audit.log",
+    "maxFileSize": "100MB",
+    "allowedFileExtensions": [".py", ".json", ".csv", ".txt", ".md", ".yaml", ".yml"],
+    "blockedFileExtensions": [".exe", ".sh", ".bat", ".ps1", ".dll", ".so"]
+  }
+}

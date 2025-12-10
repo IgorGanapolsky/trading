@@ -8,7 +8,7 @@ Validates historical data, rotates old data, and checks model staleness.
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -205,7 +205,7 @@ class DataHygieneChecker:
             "deleted_files": deleted_files[:20],  # Limit to first 20
         }
 
-    def check_model_staleness(self, model_path: Optional[str] = None) -> dict[str, Any]:
+    def check_model_staleness(self, model_path: str | None = None) -> dict[str, Any]:
         """
         Check if model is stale and needs retraining.
 
@@ -317,7 +317,7 @@ class DataHygieneChecker:
             "kept_latest": keep_latest,
         }
 
-    def run_full_hygiene_check(self, symbols: Optional[list[str]] = None) -> dict[str, Any]:
+    def run_full_hygiene_check(self, symbols: list[str] | None = None) -> dict[str, Any]:
         """
         Run comprehensive hygiene check on all data and models.
 

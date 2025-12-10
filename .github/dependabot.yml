@@ -4,10 +4,9 @@ updates:
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
       time: "09:00"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 50
     reviewers:
       - "IgorGanapolsky"
     labels:

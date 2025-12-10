@@ -1,0 +1,16 @@
+{
+  "current_daily_profit": 0.6111111111111112,
+  "projected_daily_profit": -0.4712,
+  "target_daily_profit": 100.0,
+  "target_gap": 100.4712,
+  "current_daily_budget": 15.5,
+  "recommended_daily_budget": null,
+  "scaling_factor": null,
+  "avg_return_pct": -3.04,
+  "win_rate": 0.0,
+  "recommended_allocations": {},
+  "actions": [
+    "Improve strategy edge before scaling capital: avg return is \u2264 0%. Run signal-quality diagnostics and tighten risk controls.",
+    "Collect five more profitable sessions before attempting capital scaling."
+  ]
+}

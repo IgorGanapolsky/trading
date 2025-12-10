@@ -2,12 +2,24 @@ name: Weekend Crypto Trading
 
 on:
   schedule:
-    # Run on Saturdays and Sundays at 10:00 AM Eastern
-    # IMPORTANT: Update cron expression when DST changes (March/November)
-    # EST (Nov-Mar): UTC-5 -> 10:00 AM ET = 15:00 UTC
-    # EDT (Mar-Nov): UTC-4 -> 10:00 AM ET = 14:00 UTC
-    # Run: python3 scripts/get_utc_time.py 10 0 0,6
-    - cron: '0 15 * * 0,6'   # 10:00 AM Eastern (EST: Nov-Mar, update to 14:00 UTC in March)
+    # Run on Saturdays and Sundays MULTIPLE TIMES per day for 24/7 crypto coverage
+    # Crypto trades 24/7 - running once/day misses most moves
+    #
+    # Schedule: 6 AM, 12 PM, 6 PM, 12 AM Eastern (every 6 hours)
+    # IMPORTANT: Update cron expressions when DST changes (March/November)
+    # EST (Nov-Mar): UTC-5 | EDT (Mar-Nov): UTC-4
+    #
+    # Current times (EST - Dec 2025):
+    # - 6:00 AM ET = 11:00 UTC
+    # - 12:00 PM ET = 17:00 UTC
+    # - 6:00 PM ET = 23:00 UTC
+    # - 12:00 AM ET = 05:00 UTC (next day)
+    #
+    # Run: python3 scripts/get_utc_time.py <hour> 0 0,6
+    - cron: '0 5 * * 0,6'    # 12:00 AM Eastern (midnight)
+    - cron: '0 11 * * 0,6'   # 6:00 AM Eastern (pre-Asia close)
+    - cron: '0 17 * * 0,6'   # 12:00 PM Eastern (US session)
+    - cron: '0 23 * * 0,6'   # 6:00 PM Eastern (post-US, pre-Asia)
   workflow_dispatch:
     inputs:
       force_trade:
@@ -124,6 +136,7 @@ jobs:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          HELICONE_API_KEY: ${{ secrets.HELICONE_API_KEY }}
           ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
           POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
@@ -134,9 +147,33 @@ jobs:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           LANGCHAIN_ENABLE_MCP: ${{ secrets.LANGCHAIN_ENABLE_MCP || 'true' }}
           LANGCHAIN_MODEL: ${{ secrets.LANGCHAIN_MODEL || 'claude-3-5-sonnet-20241022' }}
+          # CRITICAL: Pass FORCE_TRADE to Python so filter bypass works
+          FORCE_TRADE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_trade || 'false' }}
         run: |
           echo "🚀 Executing weekend crypto trading..."
+          echo "FORCE_TRADE=$FORCE_TRADE"
           python3 scripts/autonomous_trader.py --crypto-only
+
+      - name: Update performance log
+        if: steps.check_execution.outputs.skip != 'true' && steps.health_check.outputs.health_check_passed == 'true'
+        continue-on-error: true  # Non-fatal
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          PAPER_TRADING: 'true'
+        run: |
+          echo "📊 Updating performance log with current account data..."
+          python3 scripts/update_performance_log.py
+
+      - name: Record workflow execution
+        if: always()
+        run: |
+          echo "📊 Recording workflow execution for health monitoring..."
+          if [ "${{ job.status }}" == "success" ]; then
+            python3 scripts/workflow_health_monitor.py --record weekend-crypto-trading --status success
+          else
+            python3 scripts/workflow_health_monitor.py --record weekend-crypto-trading --status failure
+          fi
 
       - name: Check for state changes
         id: check_state_changes
@@ -159,8 +196,9 @@ jobs:
 
       - name: Commit system state updates
         if: steps.check_execution.outputs.skip != 'true' && steps.check_state_changes.outputs.state_changed == 'true'
+        continue-on-error: true  # Non-fatal - trading already succeeded
         run: |
-          echo "💾 Committing system_state.json updates..."
+          echo "💾 Committing trading data updates..."
 
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
@@ -168,42 +206,27 @@ jobs:
           # Pull latest changes to avoid conflicts
           git pull --rebase origin main || {
             echo "⚠️  Merge conflict detected - resolving..."
-
-            # Keep our version (trading execution takes precedence)
             git checkout --ours data/system_state.json
-            git add data/system_state.json
-            git rebase --continue
+            git checkout --ours data/performance_log.json 2>/dev/null || true
+            git add data/system_state.json data/performance_log.json 2>/dev/null || true
+            git rebase --continue || echo "::warning::Rebase continue failed"
           }
 
-          # Stage system_state.json
+          # Stage all trading data files
           git add data/system_state.json
+          git add data/performance_log.json 2>/dev/null || true
+          git add data/trades_*.json 2>/dev/null || true
 
-          # Create commit with trading execution details
-          git commit -m "$(cat <<'EOF'
-          chore: Update system state after weekend crypto trading
-
-          Weekend crypto trading execution completed and system state updated.
-
-          Execution details:
-          - Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
-          - Workflow: weekend-crypto-trading.yml
-          - Run ID: ${{ github.run_id }}
-
-          Changes:
-          - Updated account balances
-          - Recorded crypto trade execution results
-          - Updated performance metrics
-
-          🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-          Co-Authored-By: Claude <noreply@anthropic.com>
-          EOF
-          )"
+          # Commit with descriptive message
+          git commit -m "chore: Update trading data after weekend crypto (${{ github.run_id }})" || {
+            echo "::warning::No changes to commit or commit failed"
+            exit 0
+          }
 
           # Push changes
           git push origin main
 
-          echo "✅ System state changes committed and pushed"
+          echo "✅ Trading data changes committed and pushed"
 
       - name: Verify Crypto Trade Execution
         # Run smoke tests to verify trades executed correctly

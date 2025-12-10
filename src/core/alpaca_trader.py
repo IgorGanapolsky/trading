@@ -27,7 +27,7 @@ import os
 import sys
 import time
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from alpaca.common.exceptions import APIError
 from alpaca.data.historical import StockHistoricalDataClient
@@ -101,6 +101,7 @@ class AlpacaTrader:
         "T2_GROWTH": 0.20,  # 20% of daily investment
         "T3_IPO": 0.10,  # 10% of daily investment
         "T4_CROWD": 0.10,  # 10% of daily investment
+        "CRYPTO": 1.00,  # Crypto uses separate $10/day allocation (not from equity budget)
     }
 
     # Safety multiplier: reject orders >10x expected amount
@@ -164,7 +165,7 @@ class AlpacaTrader:
             logger.error(f"Failed to connect to Alpaca API: {e}")
             raise AlpacaTraderError(f"Initialization failed: {e}") from e
 
-    def get_current_quote(self, symbol: str) -> Optional[dict[str, float]]:
+    def get_current_quote(self, symbol: str) -> dict[str, float] | None:
         """
         Get current bid/ask prices for a symbol.
 
@@ -196,7 +197,7 @@ class AlpacaTrader:
             logger.warning(f"Could not fetch quote for {symbol}: {e}")
             return None
 
-    def validate_order_amount(self, symbol: str, amount: float, tier: Optional[str] = None) -> None:
+    def validate_order_amount(self, symbol: str, amount: float, tier: str | None = None) -> None:
         """
         Validate order amount is reasonable to prevent catastrophic errors.
 
@@ -331,12 +332,13 @@ class AlpacaTrader:
     def execute_order(
         self,
         symbol: str,
-        amount_usd: float,
+        amount_usd: float | None = None,
+        qty: float | None = None,
         side: str = "buy",
-        tier: Optional[str] = None,
+        tier: str | None = None,
     ) -> dict[str, Any]:
         """
-        Execute an order with fractional shares based on USD amount.
+        Execute an order with fractional shares (by USD amount) or share quantity.
         Uses limit orders by default (if configured) to reduce slippage, with
         automatic fallback to market orders if limit doesn't fill in time.
 
@@ -344,46 +346,39 @@ class AlpacaTrader:
 
         Args:
             symbol: Stock or ETF symbol (e.g., 'SPY', 'AAPL')
-            amount_usd: Dollar amount to trade (e.g., 100.0 for $100)
+            amount_usd: Dollar amount to trade (notional). One of amount_usd or qty is required.
+            qty: Quantity of shares to trade.
             side: Order side - 'buy' or 'sell'. Default is 'buy'.
             tier: Trading tier for validation (T1_CORE, T2_GROWTH, T3_IPO, T4_CROWD)
 
         Returns:
-            Dictionary containing order information with keys:
-                - id: Order ID
-                - symbol: Asset symbol
-                - notional: Dollar amount
-                - side: Buy or sell
-                - type: Order type (limit or market)
-                - status: Order status
-                - submitted_at: Submission timestamp
-                - filled_at: Fill timestamp (if filled)
-                - filled_avg_price: Average fill price
-                - limit_price: Limit price (if limit order)
-                - intended_price: Expected price from quote
-                - slippage_pct: Actual slippage percentage
-                - fallback_to_market: True if limit order was cancelled and retried as market
-
-        Raises:
-            OrderExecutionError: If order execution fails or validation fails.
-            ValueError: If parameters are invalid.
-
-        Example:
-            >>> trader = AlpacaTrader()
-            >>> order = trader.execute_order('SPY', 6.0, side='buy', tier='T1_CORE')
-            >>> print(f"Order {order['id']} submitted for ${order['notional']}")
+            Dictionary containing order information.
         """
         # Validate inputs
         if side not in ["buy", "sell"]:
             raise ValueError(f"Invalid side '{side}'. Must be 'buy' or 'sell'.")
 
-        if amount_usd <= 0:
-            raise ValueError(f"Amount must be positive. Got {amount_usd}")
+        if amount_usd is None and qty is None:
+            raise ValueError("Must provide either amount_usd or qty")
+
+        if amount_usd is not None and qty is not None:
+            raise ValueError("Cannot provide both amount_usd and qty")
 
         symbol = symbol.upper().strip()
 
-        # CRITICAL: Validate order amount before proceeding
-        self.validate_order_amount(symbol, amount_usd, tier)
+        # Handle Notional Rounding if using amount_usd
+        if amount_usd is not None:
+            if amount_usd <= 0:
+                raise ValueError(f"Amount must be positive. Got {amount_usd}")
+            amount_usd = round(amount_usd, 2)
+            # CRITICAL: Validate order amount before proceeding (only for buys/notional)
+            # We skip validation for sells (closing positions) or qty based orders for now
+            # as those are usually calculated from existing holdings.
+            if side == "buy":
+                self.validate_order_amount(symbol, amount_usd, tier)
+
+        if qty is not None and qty <= 0:
+            raise ValueError(f"Quantity must be positive. Got {qty}")
 
         try:
             # Check account status before placing order
@@ -392,7 +387,7 @@ class AlpacaTrader:
             if account.trading_blocked:
                 raise OrderExecutionError("Trading is blocked for this account")
 
-            if side == "buy" and float(account.buying_power) < amount_usd:
+            if side == "buy" and amount_usd and float(account.buying_power) < amount_usd:
                 raise OrderExecutionError(
                     f"Insufficient buying power. Available: ${account.buying_power}, "
                     f"Required: ${amount_usd}"
@@ -412,7 +407,32 @@ class AlpacaTrader:
             quote = self.get_current_quote(symbol)
             intended_price = None
             limit_price = None
+            # Only use limit orders for notional if supported (Alpaca doesn't support notional limit orders yet)
+            # But we can calculate qty from notional if we have a price.
+            # For qty-based orders, we can use limit.
             use_limit_order = self.config.USE_LIMIT_ORDERS and quote is not None
+
+            # ============================================================
+            # SPREAD VALIDATION: Reject orders with excessively wide spreads
+            # ============================================================
+            max_spread_pct = float(os.getenv("MAX_BID_ASK_SPREAD_PCT", "2.0")) / 100
+            if quote and quote["bid"] > 0:
+                spread = quote["ask"] - quote["bid"]
+                mid_price = (quote["ask"] + quote["bid"]) / 2
+                spread_pct = spread / mid_price if mid_price > 0 else 0
+
+                if spread_pct > max_spread_pct:
+                    raise OrderExecutionError(
+                        f"Spread too wide for {symbol}: {spread_pct * 100:.2f}% "
+                        f"(bid=${quote['bid']:.2f}, ask=${quote['ask']:.2f}). "
+                        f"Max allowed: {max_spread_pct * 100:.1f}%"
+                    )
+                elif spread_pct > max_spread_pct * 0.5:
+                    # Warn on moderately wide spreads (>1% if max is 2%)
+                    logger.warning(
+                        f"Moderately wide spread for {symbol}: {spread_pct * 100:.2f}% "
+                        f"(bid=${quote['bid']:.2f}, ask=${quote['ask']:.2f})"
+                    )
 
             if quote:
                 # Set intended price based on side
@@ -422,14 +442,14 @@ class AlpacaTrader:
                 if use_limit_order:
                     buffer_multiplier = 1 + (self.config.LIMIT_ORDER_BUFFER_PCT / 100)
                     if side == "buy":
-                        # For buys: limit at ask + buffer (willing to pay slightly more)
-                        limit_price = quote["ask"] * buffer_multiplier
+                        limit_price = round(quote["ask"] * buffer_multiplier, 2)
                     else:
-                        # For sells: limit at bid - buffer (willing to accept slightly less)
-                        limit_price = quote["bid"] / buffer_multiplier
+                        limit_price = round(quote["bid"] / buffer_multiplier, 2)
 
+                    # Format for log
+                    amount_str = f"${amount_usd:.2f}" if amount_usd else f"{qty} shares"
                     logger.info(
-                        f"Executing LIMIT {side} order: {symbol} for ${amount_usd:.2f} "
+                        f"Executing LIMIT {side} order: {symbol} for {amount_str} "
                         f"(limit: ${limit_price:.2f}, quote: ${intended_price:.2f})"
                     )
 
@@ -437,24 +457,36 @@ class AlpacaTrader:
             order = None
             fallback_to_market = False
 
-            if use_limit_order:
-                # Try limit order first
-                # Note: Alpaca doesn't support notional limit orders, so we need to calculate qty
-                # For now, we'll use market orders with notional, but log as if limit
-                # This is a known limitation - we'll implement qty-based limit orders
+            # Alpaca doesn't support Notional Limit Orders.
+            # If we have amount_usd, we MUST use Market Order (or calculate qty).
+            if amount_usd and use_limit_order:
                 logger.warning(
                     f"Limit order requested but Alpaca doesn't support notional limit orders. "
-                    f"Using market order for {symbol}. Consider implementing qty-based limit orders."
+                    f"Using market order for {symbol}."
                 )
                 use_limit_order = False
 
+            if use_limit_order:
+                # Qty based limit order
+                # We know qty is set because if amount_usd was set, we disabled limit order above.
+                req = LimitOrderRequest(
+                    symbol=symbol,
+                    qty=qty,
+                    side=OrderSide.BUY if side == "buy" else OrderSide.SELL,
+                    time_in_force=tif,
+                    limit_price=limit_price,
+                )
+                order = self.trading_client.submit_order(req)
+
             if not use_limit_order:
-                # Use market order (either configured or fallback)
-                logger.info(f"Executing MARKET {side} order: {symbol} for ${amount_usd:.2f}")
+                # Use market order
+                amount_str = f"${amount_usd:.2f}" if amount_usd else f"{qty} shares"
+                logger.info(f"Executing MARKET {side} order: {symbol} for {amount_str}")
 
                 req = MarketOrderRequest(
                     symbol=symbol,
                     notional=amount_usd,
+                    qty=qty,
                     side=OrderSide.BUY if side == "buy" else OrderSide.SELL,
                     time_in_force=tif,
                 )

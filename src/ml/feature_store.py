@@ -28,7 +28,7 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -93,7 +93,7 @@ class LRUCache:
         self.capacity = capacity
         self.cache: OrderedDict = OrderedDict()
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         if key in self.cache:
             self.cache.move_to_end(key)
             return self.cache[key]
@@ -195,9 +195,9 @@ class FeatureStore:
         self,
         symbol: str,
         features_df: pd.DataFrame,
-        feature_names: Optional[list[str]] = None,
-        normalization_params: Optional[dict[str, dict[str, float]]] = None,
-        extra_metadata: Optional[dict[str, Any]] = None,
+        feature_names: list[str] | None = None,
+        normalization_params: dict[str, dict[str, float]] | None = None,
+        extra_metadata: dict[str, Any] | None = None,
     ) -> FeatureMetadata:
         """
         Store a feature set with automatic versioning.
@@ -295,9 +295,9 @@ class FeatureStore:
     def get_features(
         self,
         symbol: str,
-        version: Optional[int] = None,
+        version: int | None = None,
         include_data: bool = True,
-    ) -> Optional[tuple[FeatureMetadata, Optional[pd.DataFrame]]]:
+    ) -> tuple[FeatureMetadata, pd.DataFrame | None] | None:
         """
         Retrieve a feature set by symbol and version.
 
@@ -367,7 +367,7 @@ class FeatureStore:
 
             return metadata, features_df
 
-    def get_normalization_params(self, symbol: str) -> Optional[dict[str, dict[str, float]]]:
+    def get_normalization_params(self, symbol: str) -> dict[str, dict[str, float]] | None:
         """
         Get normalization parameters for a symbol.
 
@@ -583,7 +583,7 @@ class FeatureStore:
     def _compute_hash(self, df: pd.DataFrame) -> str:
         """Compute hash of DataFrame for reproducibility."""
         content = df.to_json(date_format="iso")
-        return hashlib.md5(content.encode()).hexdigest()[:16]
+        return hashlib.sha256(content.encode()).hexdigest()[:16]
 
     def _compute_normalization_params(
         self, df: pd.DataFrame, feature_names: list[str]

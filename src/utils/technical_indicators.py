@@ -71,9 +71,14 @@ def calculate_macd(
 
     # Helper to safely get scalar float
     def get_scalar(val):
-        if isinstance(val, pd.Series):
-            val = val.iloc[0]
-        return float(val) if not pd.isna(val) else 0.0
+        try:
+            if hasattr(val, "item"):
+                return float(val.item())
+            if hasattr(val, "iloc") and len(val) > 0:
+                return get_scalar(val.iloc[0])
+            return float(val) if not pd.isna(val) else 0.0
+        except Exception:
+            return 0.0
 
     # Return most recent values
     return (
@@ -205,13 +210,30 @@ def calculate_technical_score(
         return (0.0, {})
 
     # Calculate indicators
-    macd_value, macd_signal, macd_histogram = calculate_macd(hist["Close"])
-    rsi_val = calculate_rsi(hist["Close"])
-    volume_ratio = calculate_volume_ratio(hist)
+    macd_value_raw, macd_signal_raw, macd_histogram_raw = calculate_macd(hist["Close"])
+    rsi_val_raw = calculate_rsi(hist["Close"])
+    volume_ratio_raw = calculate_volume_ratio(hist)
+
+    # Helper to ensure scalar float
+    def to_float(val):
+        try:
+            if hasattr(val, "item"):
+                return float(val.item())
+            if hasattr(val, "iloc") and len(val) > 0:
+                return to_float(val.iloc[0])
+            return float(val) if not pd.isna(val) else 0.0
+        except Exception:
+            return 0.0
+
+    # Convert all to scalars for safety
+    macd_value = to_float(macd_value_raw)
+    macd_signal = to_float(macd_signal_raw)
+    macd_histogram = to_float(macd_histogram_raw)
+    rsi_val = to_float(rsi_val_raw)
+    volume_ratio = to_float(volume_ratio_raw)
 
     price_raw = hist["Close"].iloc[-1]
-    if isinstance(price_raw, pd.Series):
-        price_raw = price_raw.iloc[-1]
+    current_price = to_float(price_raw)
 
     indicators = {
         "macd_value": macd_value,
@@ -219,7 +241,7 @@ def calculate_technical_score(
         "macd_histogram": macd_histogram,
         "rsi": rsi_val,
         "volume_ratio": volume_ratio,
-        "current_price": float(price_raw),
+        "current_price": current_price,
     }
 
     # HARD FILTERS - Reject entries that don't meet criteria
@@ -236,8 +258,9 @@ def calculate_technical_score(
         return (0.0, indicators)
 
     # Calculate composite score (price weighted by technical strength)
-    price = hist["Close"].iloc[-1]
-    technical_score = price * (1 + macd_histogram / 10) * (1 + (70 - rsi_val) / 100) * volume_ratio
+    technical_score = (
+        current_price * (1 + macd_histogram / 10) * (1 + (70 - rsi_val) / 100) * volume_ratio
+    )
 
     logger.info(
         f"{symbol}: Score {technical_score:.2f} | "

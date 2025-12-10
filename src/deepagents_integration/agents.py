@@ -160,7 +160,7 @@ def create_market_analysis_agent(
         model: Model name or instance (default: claude-sonnet-4-5-20250929)
         include_mcp_tools: Whether to include MCP trading tools
         temperature: Model temperature (default: 0.2 for more deterministic analysis)
-        subagents: Optional list of sub-agent configurations
+        subagents:  list of sub-agent configurations
 
     Returns:
         DeepAgent instance configured for market analysis

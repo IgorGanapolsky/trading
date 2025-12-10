@@ -1,0 +1,32 @@
+{
+  "message_id": "73fd2668-9c8d-420d-9811-457ad9d24b13",
+  "timestamp": "2025-12-05T14:59:55.680482",
+  "sender_agent": "research_agent",
+  "receiver_agent": "meta_agent",
+  "context_type": "ContextType.TASK_CONTEXT",
+  "payload": {
+    "symbol": "SPY",
+    "market_payload": {
+      "symbol": "SPY",
+      "price": 102.5,
+      "price_history": "                            Open   High    Low  Close   Volume\ntimestamp                                                     \n2025-11-03 00:00:00+00:00  100.0  102.0   99.0  101.0  1000000\n2025-11-04 00:00:00+00:00  101.0  103.0  100.5  102.5  1100000",
+      "volatility": NaN,
+      "trend_strength": 0.0,
+      "volume_ratio": 1.0,
+      "fundamentals": {},
+      "news": [],
+      "market_context": {
+        "sector": "Unknown",
+        "market_trend": "NEUTRAL",
+        "volatility": NaN
+      },
+      "portfolio_value": 10000.0,
+      "sentiment": 0.25
+    },
+    "sentiment": 0.25
+  },
+  "metadata": {
+    "symbol": "SPY"
+  },
+  "validation_hash": null
+}

@@ -20,7 +20,7 @@ import logging
 import math
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -509,7 +509,7 @@ class McMillanOptionsKnowledgeBase:
             ),
         }
 
-    def get_strategy_rules(self, strategy_name: str) -> Optional[dict[str, Any]]:
+    def get_strategy_rules(self, strategy_name: str) -> dict[str, Any] | None:
         """
         Get complete ruleset for an options strategy.
 

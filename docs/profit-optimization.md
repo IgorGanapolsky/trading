@@ -4,6 +4,22 @@ This document outlines the three key strategies for maximizing profitability and
 
 ---
 
+## Dynamic Budget & Tax Enhancements (Dec 2025)
+
+### Auto-Scaling Daily Input
+
+- `scripts/autonomous_trader.py` now inspects `data/system_state.json` (or `SIMULATED_EQUITY`) before the orchestrator spins up.
+- The new `calc_daily_input()` helper maps equity into a $10–$50/day deployment, adding extra basis points at the $2k / $5k / $10k gates while preserving the risk cap.
+- The resulting number is exported via `DAILY_INVESTMENT`, so every downstream component (tier budgets, risk manager, trade gateway) automatically receives the right daily budget without editing `.env`.
+
+### Tax Sweep Guidance
+
+- `scripts/generate_telemetry_report.py` now prints the latest equity/P&L plus a recommended tax sweep (default 28%) when cumulative profit is positive.
+- Use `--tax-rate` to align with your local marginal bracket; the recommendation is stored in the JSON output for dashboards/Slack pings.
+- This keeps the HYSA/tax bucket honest and enforces the “sweep 28% of realized gains quarterly” directive automatically.
+
+---
+
 ## 1. Alpaca High-Yield Cash (3.56% APY)
 
 **Discovered**: October 30, 2025 (Alpaca rate update email)
@@ -192,12 +208,186 @@ Based on [Agent Swarm Best Practices](https://adrianco.medium.com/vibe-coding-is
 
 ---
 
+---
+
+## 4. Auto-Input Scaling (Compounding Accelerator)
+
+**Added**: December 2, 2025 (theta-scale branch)
+
+### Overview
+
+Dynamic daily input scaling based on account equity to accelerate compounding:
+
+```python
+def calc_daily_input(equity: float) -> float:
+    base = 10.0  # Minimum daily input
+    if equity >= 10000:
+        base += 4.0 * ((equity - 10000) / 1000)  # +$4 per $1k above $10k
+        base += 4.0 + 0.4  # Tier bonuses
+    elif equity >= 5000:
+        base += 0.3 * ((equity - 5000) / 1000) * 10
+        base += 0.4
+    elif equity >= 2000:
+        base += 0.2 * ((equity - 2000) / 1000) * 10
+    return min(base, 50.0)  # Cap at $50/day
+```
+
+### Scaling Tiers
+
+| Equity Level | Daily Input | Monthly Total | Time Saved |
+|-------------|-------------|---------------|------------|
+| $0-$2k | $10 | $300 | Baseline |
+| $2k-$5k | $12-$14 | $360-$420 | 1 month |
+| $5k-$10k | $16-$20 | $480-$600 | 2 months |
+| $10k+ | $24-$50 | $720-$1500 | 3+ months |
+
+### Enabling Auto-Scale
+
+```bash
+# Via environment variable
+export ENABLE_AUTO_SCALE_INPUT=true
+
+# Via CLI flag
+python scripts/autonomous_trader.py --auto-scale
+```
+
+---
+
+## 5. Theta Harvest Execution (Options Premium)
+
+**Added**: December 2, 2025 (theta-scale branch)
+
+### Overview
+
+Automatic theta (time decay) harvesting through options premium selling when equity gates are met.
+
+### Equity Gates
+
+| Equity | Strategy | Target Premium | Risk Level |
+|--------|----------|----------------|------------|
+| $5k+ | Poor Man's Covered Calls | $5-7/day | Defined |
+| $10k+ | Iron Condors (calm regime) | $10-15/day | Defined |
+| $25k+ | Full Options Suite | $20-30/day | Mixed |
+
+### IV Percentile Filter
+
+Only sells premium when IV percentile > 50% (ensures we're selling expensive options).
+
+### Integration
+
+The `ThetaHarvestExecutor` in `options_profit_planner.py` now connects directly to Alpaca execution:
+
+```python
+# Automatically executed in orchestrator's Gate 7
+from src.analytics.options_profit_planner import ThetaHarvestExecutor
+
+executor = ThetaHarvestExecutor(paper=True)
+result = executor.evaluate_theta_opportunity(
+    symbol='SPY',
+    account_equity=5000,
+    regime_label='calm',
+)
+if result.strategy != 'none':
+    executor.execute_theta_order(result, alpaca_client)
+```
+
+---
+
+## 6. VIX-Triggered Trade Auditor
+
+**Added**: December 2, 2025 (theta-scale branch)
+
+### Overview
+
+Adaptive audit frequency based on market volatility (VIX) for continuous system improvement.
+
+### Audit Frequency Rules
+
+| VIX Level | Frequency | Rationale |
+|-----------|-----------|-----------|
+| < 25 | Weekly | Normal conditions, standard review |
+| 25-35 | Daily | Elevated vol, catch issues faster |
+| > 35 | Twice Daily | Crisis mode, maximize protection |
+
+### Features
+
+- Analyzes closed trades for win rate, profit factor, patterns
+- Queries RAG for McMillan theta loss patterns
+- Generates actionable recommendations
+- Logs to telemetry for continuous improvement
+
+### Usage
+
+```python
+from src.agent_framework.auditor import TradeAuditor
+
+auditor = TradeAuditor()
+result = auditor.run_audit(force=True)
+
+print(f"Win Rate: {result.win_rate}%")
+print(f"Recommendations: {result.recommendations}")
+```
+
+---
+
+## 7. Quarterly Profit Sweep (Tax Reserve)
+
+**Added**: December 2, 2025 (theta-scale branch)
+
+### Overview
+
+Automatic quarterly profit sweep to reserve funds for estimated tax payments.
+
+### Configuration
+
+```bash
+export TAX_RESERVE_PCT=28.0  # Short-term capital gains rate
+export QUARTERLY_SWEEP_ENABLED=true
+```
+
+### Quarter-End Dates
+
+- March 31 (Q1)
+- June 30 (Q2)
+- September 30 (Q3)
+- December 31 (Q4)
+
+### Calculation
+
+```python
+taxable_profit = end_equity - start_equity - deposits + withdrawals
+tax_reserve = taxable_profit * 0.28  # 28% to HYSA
+```
+
+### Integration
+
+Runs automatically as Gate 9 in the orchestrator on quarter-end dates:
+
+```python
+from src.orchestrator.telemetry import run_quarterly_sweep
+
+result = run_quarterly_sweep(
+    start_equity=100000,
+    end_equity=105000,
+    deposits=900,  # $10/day * 90 days
+    force=False,
+    dry_run=True,  # Set False for live execution
+)
+# Result: ~$1,148 to tax reserve (28% of $4,100 profit)
+```
+
+---
+
 ## Summary
 
-These three strategies work together to maximize system profitability:
+These seven strategies work together to maximize system profitability:
 
 1. **Alpaca High-Yield Cash**: Idle cash earns 3.56% APY passively
 2. **OpenRouter Multi-LLM**: Enable AI analysis when profit justifies cost (Month 4+)
 3. **Claude Batching**: Maximize development velocity through parallel agent execution
+4. **Auto-Input Scaling**: Accelerate compounding as equity grows (+2-3 months saved)
+5. **Theta Harvest**: Premium selling when equity gates met (+$5-30/day at scale)
+6. **VIX-Triggered Audit**: Adaptive critique frequency for continuous improvement
+7. **Quarterly Tax Sweep**: Automated 28% reserve for tax obligations
 
 **Key Principle**: Every optimization should pay for itself. Don't add costs until revenue justifies them.

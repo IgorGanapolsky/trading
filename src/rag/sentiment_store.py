@@ -14,7 +14,7 @@ import logging
 import sqlite3
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -50,7 +50,17 @@ class SentimentRAGStore:
         sentiment_dir: Path = DEFAULT_SENTIMENT_DIR,
     ):
         self.db_path = Path(db_path)
-        self.embedder = embedder or get_embedder()
+        # Handle missing sentence-transformers gracefully
+        if embedder is not None:
+            self.embedder = embedder
+        else:
+            try:
+                self.embedder = get_embedder()
+                if self.embedder is None:
+                    raise ImportError("RAG features disabled or embedder unavailable")
+            except ImportError as e:
+                logger.warning(f"Embedder unavailable (sentence-transformers not installed): {e}")
+                raise  # Re-raise to let caller handle it
         self.sentiment_dir = Path(sentiment_dir)
         self.connection = sqlite3.connect(self.db_path)
         self.connection.execute("PRAGMA journal_mode=WAL;")
@@ -91,11 +101,11 @@ class SentimentRAGStore:
             return 0
 
         embeddings = self.embedder.embed_batch([doc.text for doc in docs])
-        now = datetime.utcnow().isoformat()
 
         with self.connection:
-            for doc, embedding in zip(docs, embeddings):
+            for doc, embedding in zip(docs, embeddings, strict=False):
                 metadata = doc.metadata
+                created_at = _resolve_created_at(metadata)
                 payload = (
                     doc.document_id,
                     metadata.get("ticker"),
@@ -109,7 +119,7 @@ class SentimentRAGStore:
                     doc.text,
                     embedding.astype(np.float32).tobytes(),
                     len(embedding),
-                    now,
+                    created_at,
                 )
                 self.connection.execute(
                     """
@@ -155,9 +165,10 @@ class SentimentRAGStore:
         query: str,
         ticker: str | None = None,
         top_k: int = 5,
+        as_of: datetime | str | None = None,
     ) -> list[dict]:
         query_embedding = self.embedder.embed_single(query).astype(np.float32)
-        rows = self._fetch_rows(ticker=ticker)
+        rows = self._fetch_rows(ticker=ticker, as_of=as_of)
         if not rows:
             return []
 
@@ -178,8 +189,13 @@ class SentimentRAGStore:
             )
         return results
 
-    def get_ticker_history(self, ticker: str, limit: int = 10) -> list[dict]:
-        rows = self._fetch_rows(ticker=ticker, limit=limit, order_by_date=True)
+    def get_ticker_history(
+        self,
+        ticker: str,
+        limit: int = 10,
+        as_of: datetime | str | None = None,
+    ) -> list[dict]:
+        rows = self._fetch_rows(ticker=ticker, limit=limit, order_by_date=True, as_of=as_of)
         return [
             {
                 "id": row.id,
@@ -198,24 +214,33 @@ class SentimentRAGStore:
         ticker: str | None = None,
         limit: int | None = None,
         order_by_date: bool = False,
+        as_of: datetime | str | None = None,
     ) -> list[SentimentRow]:
         sql = """
             SELECT id, ticker, snapshot_date, sentiment_score, confidence,
                    market_regime, source_list, freshness, days_old,
-                   document, embedding, embedding_dim
+                   document, embedding, embedding_dim, created_at
             FROM sentiment_documents
         """
-        params: tuple = ()
+        params: list = []
         if ticker:
             sql += " WHERE ticker = ?"
-            params = (ticker.upper(),)
+            params.append(ticker.upper())
+        if as_of:
+            date_cutoff, ts_cutoff = _normalize_as_of(as_of)
+            clause = "snapshot_date <= ? AND created_at <= ?"
+            if "WHERE" in sql:
+                sql += f" AND {clause}"
+            else:
+                sql += f" WHERE {clause}"
+            params.extend([date_cutoff, ts_cutoff])
         if order_by_date:
             sql += " ORDER BY snapshot_date DESC"
         if limit:
             sql += " LIMIT ?"
-            params = params + (limit,) if params else (limit,)
+            params.append(limit)
 
-        cursor = self.connection.execute(sql, params)
+        cursor = self.connection.execute(sql, tuple(params))
         rows = [
             SentimentRow(
                 id=row[0],
@@ -230,6 +255,7 @@ class SentimentRAGStore:
                 document=row[9],
                 embedding=np.frombuffer(row[10], dtype=np.float32),
                 embedding_dim=row[11],
+                created_at=row[12],
             )
             for row in cursor.fetchall()
         ]
@@ -250,6 +276,7 @@ class SentimentRow:
     document: str
     embedding: np.ndarray
     embedding_dim: int
+    created_at: str
 
     def metadata_dict(self) -> dict[str, str | None]:
         return {
@@ -261,6 +288,7 @@ class SentimentRow:
             "source_list": self.source_list,
             "freshness": self.freshness,
             "days_old": self.days_old,
+            "created_at": self.created_at,
         }
 
 
@@ -359,3 +387,33 @@ def _normalize_date(date_str: str) -> str:
         return datetime.fromisoformat(date_str).date().isoformat()
     except ValueError:
         return date_str
+
+
+def _normalize_as_of(as_of: datetime | str) -> tuple[str, str]:
+    if isinstance(as_of, datetime):
+        aware = as_of if as_of.tzinfo else as_of.replace(tzinfo=timezone.utc)
+        return aware.date().isoformat(), aware.astimezone(timezone.utc).isoformat()
+    try:
+        parsed = datetime.fromisoformat(as_of)
+    except ValueError:
+        parsed = datetime.strptime(as_of, "%Y-%m-%d")
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.date().isoformat(), parsed.astimezone(timezone.utc).isoformat()
+
+
+def _resolve_created_at(metadata: dict[str, str]) -> str:
+    published = metadata.get("published_date")
+    if published:
+        try:
+            parsed = datetime.fromisoformat(published)
+        except ValueError:
+            try:
+                parsed = datetime.strptime(published, "%Y-%m-%d")
+            except ValueError:
+                parsed = None
+        if parsed:
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
+            return parsed.astimezone(timezone.utc).isoformat()
+    return datetime.now(timezone.utc).isoformat()

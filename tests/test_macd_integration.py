@@ -65,7 +65,8 @@ def test_macd_in_momentum_score():
     print(f"\nSPY Momentum Score: {momentum_score:.2f}/100")
 
     # Verify momentum score is calculated
-    assert 0 <= momentum_score <= 100, "Momentum score should be between 0-100"
+    # Note: calculate_momentum returns -1 if hard filters are triggered (e.g. bearish MACD)
+    assert -1 <= momentum_score <= 100, "Momentum score should be between 0-100 or -1 (filtered)"
 
     print("✓ MACD successfully integrated into momentum scoring")
 

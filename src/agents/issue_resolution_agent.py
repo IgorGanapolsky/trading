@@ -10,7 +10,7 @@ import logging
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -181,7 +181,7 @@ Format as JSON:
         issue_body: str,
         issue_labels: list[str],
         issue_created: str,
-    ) -> Optional[IssueDiagnosis]:
+    ) -> IssueDiagnosis | None:
         """
         Rule-based diagnosis for common trading failure patterns.
         This doesn't require AI agents and can auto-resolve many issues.

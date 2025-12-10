@@ -17,14 +17,15 @@ Based on:
 
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-from src.utils.technical_indicators import calculate_all_features
 from torch.utils.data import Dataset
+
+from src.utils.technical_indicators import calculate_all_features
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ logger = logging.getLogger(__name__)
 class MarketDataDataset(Dataset):
     """PyTorch Dataset for market data sequences."""
 
-    def __init__(self, sequences: np.ndarray, labels: Optional[np.ndarray] = None):
+    def __init__(self, sequences: np.ndarray, labels: np.ndarray | None = None):
         """
         Initialize dataset.
 
@@ -216,7 +217,7 @@ class LSTMPPOWrapper:
     instead of discrete state keys.
     """
 
-    def __init__(self, model_path: Optional[str] = None, device: str = "cpu"):
+    def __init__(self, model_path: str | None = None, device: str = "cpu"):
         """
         Initialize LSTM-PPO wrapper.
 

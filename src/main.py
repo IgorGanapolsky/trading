@@ -43,7 +43,7 @@ import time
 from datetime import date, datetime, timedelta
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pytz
 import schedule
@@ -192,7 +192,7 @@ class TradingOrchestrator:
         health_status: Dictionary containing health check information
     """
 
-    def __init__(self, mode: str = "paper", config: Optional[dict[str, Any]] = None):
+    def __init__(self, mode: str = "paper", config: dict[str, Any] | None = None):
         """
         Initialize the Trading Orchestrator.
 
@@ -221,13 +221,13 @@ class TradingOrchestrator:
         self.timezone = pytz.timezone("America/New_York")
 
         # Initialize components
-        self.adk_adapter: Optional[ADKTradeAdapter] = None
-        self.deepagents_adapter: Optional[Any] = None
+        self.adk_adapter: ADKTradeAdapter | None = None
+        self.deepagents_adapter: Any | None = None
         self.skills = get_skills()  # Initialize Claude Skills
 
         # Elite Orchestrator (planning-first multi-agent system)
         elite_enabled = os.getenv("ELITE_ORCHESTRATOR_ENABLED", "false").lower() == "true"
-        self.elite_orchestrator: Optional[EliteOrchestrator] = None
+        self.elite_orchestrator: EliteOrchestrator | None = None
 
         # Autonomous Meta-Agents
         self.trace_analysis_agent = None
@@ -300,7 +300,7 @@ class TradingOrchestrator:
 
         # Orchestrator state
         self.running = False
-        self.last_execution: dict[str, Optional[datetime]] = {
+        self.last_execution: dict[str, datetime | None] = {
             "core_strategy": None,
             "growth_strategy": None,
             "ipo_strategy": None,
@@ -1613,7 +1613,7 @@ Output your recommendation in JSON format for easy parsing."""
             "last_executions": self.last_execution,
         }
 
-    def run_once(self, strategy: Optional[str] = None) -> None:
+    def run_once(self, strategy: str | None = None) -> None:
         """
         Execute strategies once (for testing).
 

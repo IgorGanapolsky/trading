@@ -21,10 +21,10 @@ import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 import pandas as pd
 import yfinance as yf
+
 from src.rag.vector_db.chroma_client import get_rag_db
 from src.safety.graham_buffett_safety import get_global_safety_analyzer
 from src.utils.dcf_valuation import DCFValuationCalculator, get_global_dcf_calculator
@@ -34,6 +34,7 @@ from src.utils.sentiment_loader import (
     get_ticker_sentiment,
     load_latest_sentiment,
 )
+from src.utils.technical_indicators import calculate_adx, calculate_bollinger_bands
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -60,8 +61,8 @@ class Order:
     action: str  # 'buy' or 'sell'
     quantity: int
     order_type: str  # 'market', 'limit', 'stop'
-    limit_price: Optional[float] = None
-    stop_price: Optional[float] = None
+    limit_price: float | None = None
+    stop_price: float | None = None
     reason: str = ""
 
 
@@ -79,8 +80,8 @@ class CandidateStock:
     macd_signal: float
     macd_histogram: float
     volume_ratio: float
-    intrinsic_value: Optional[float] = None
-    dcf_discount: Optional[float] = None
+    intrinsic_value: float | None = None
+    dcf_discount: float | None = None
     sentiment_modifier: float = 0.0
     external_signal_score: float = 0.0
     external_signal_confidence: float = 0.0
@@ -92,6 +93,24 @@ class MultiLLMAnalyzer:
 
     In production, this would integrate with multiple LLM providers
     (OpenAI, Anthropic, etc.) to get consensus scores on stock potential.
+
+    ARCHITECTURE NOTE (Dec 2025 - per Carlos Perez's LLM finance critique):
+    ========================================================================
+    LLMs should ONLY be used for:
+      - Sentiment analysis (qualitative judgment)
+      - News/trend synthesis (complex reasoning)
+      - Market outlook (high-level interpretation)
+
+    LLMs should NEVER be used for:
+      - Filtering stocks by rules (RSI < 70, P/E < 15, etc.)
+      - Applying technical conditions to lists
+      - Backtesting or sequential rule application
+
+    Why: LLMs suffer from "process corruption" on long sequences - they may
+    silently drop rules halfway through a list without error messages.
+    Use deterministic Python/pandas for all rule-based operations.
+
+    See: @IntuitMachine's analysis on LLM working memory limitations.
     """
 
     def __init__(self):
@@ -170,7 +189,7 @@ class AlpacaTrader:
         # Mock implementation
         return True
 
-    def get_position(self, symbol: str) -> Optional[Position]:
+    def get_position(self, symbol: str) -> Position | None:
         """
         Get current position for a symbol.
 
@@ -372,11 +391,13 @@ class GrowthStrategy:
             use_intelligent_investor: Whether to use Intelligent Investor principles (default: True)
         """
         self.weekly_allocation = weekly_allocation
-        self.stop_loss_pct = 0.03  # 3% stop-loss
-        self.take_profit_pct = 0.10  # 10% take-profit
+        # Dec 10, 2025: Widened stop-loss from 3% to 8% for better risk/reward
+        # 3% was too tight - getting stopped out before trends develop
+        self.stop_loss_pct = 0.08  # 8% stop-loss (widened from 3%)
+        self.take_profit_pct = 0.12  # 12% take-profit (increased from 10%)
         self.max_positions = 2
         self.min_holding_weeks = 2
-        self.max_holding_weeks = 4
+        self.max_holding_weeks = 8  # Extended from 4 to 8 weeks for trend capture
         self.use_sentiment = use_sentiment
         self.use_intelligent_investor = use_intelligent_investor
 
@@ -406,10 +427,13 @@ class GrowthStrategy:
             logger.warning(f"Failed to initialize RAG Database: {e}")
             self.rag_db = None
 
+        # RELAXED MARGIN (Dec 4, 2025): Reduced from 0.15 to 0.05 for realistic bull market valuations
+        # Previous: 15% undervaluation required → rejected 60-70% of candidates
+        # New: 5% margin → accepts fairly valued stocks (appropriate for growth investing)
         try:
-            mos_env = float(os.getenv("DCF_MARGIN_OF_SAFETY", "0.15"))
+            mos_env = float(os.getenv("DCF_MARGIN_OF_SAFETY", "0.05"))
         except ValueError:
-            mos_env = 0.15
+            mos_env = 0.05
         self.required_margin_of_safety = max(0.0, min(0.5, mos_env))
 
         # Performance tracking
@@ -572,8 +596,39 @@ class GrowthStrategy:
                 macd_value, macd_signal, macd_histogram = self._calculate_macd(hist)
                 volume_ratio = self._calculate_volume_ratio(hist)
 
-                # Apply filters (MACD histogram > 0 = bullish momentum confirmation)
-                if momentum > 0 and 30 < rsi < 70 and volume_ratio > 1.2 and macd_histogram > 0:
+                # ADX REGIME FILTER (Dec 5, 2025): Calculate trend strength
+                adx_value, plus_di, minus_di = calculate_adx(hist)
+
+                # BOLLINGER BANDS (Dec 5, 2025): Calculate for mean-reversion signals
+                bb_upper, bb_middle, bb_lower = calculate_bollinger_bands(hist["Close"])
+                # BB position: 0 = at lower band (oversold), 1 = at upper band (overbought)
+                bb_position = (
+                    (current_price - bb_lower) / (bb_upper - bb_lower)
+                    if (bb_upper - bb_lower) > 0
+                    else 0.5
+                )
+
+                # HARD FILTER: Skip ranging markets (ADX < 20) to avoid whipsaws
+                if adx_value < 20.0:
+                    logger.debug(
+                        f"{symbol}: FILTERED OUT - ADX regime filter (ADX={adx_value:.1f} < 20). "
+                        "Market is ranging/trendless."
+                    )
+                    continue
+
+                # Apply filters - ENHANCED (Dec 5, 2025): "3 of 6" logic with ADX + Bollinger Bands
+                # Added: ADX trending check and Bollinger Bands position for confirmation
+                conditions = [
+                    momentum > -0.02,  # Allow slight negative momentum (consolidation)
+                    30 < rsi < 75,  # Wider RSI range (allow moderate overbought)
+                    volume_ratio > 0.8,  # Lower volume requirement (accept quiet periods)
+                    macd_histogram > -0.05,  # Allow near-crossover (not just bullish)
+                    adx_value >= 25.0,  # Moderate to strong trend (ADX 25+)
+                    bb_position < 0.7,  # Not overbought on Bollinger Bands (below upper band)
+                ]
+                conditions_met = sum(conditions)
+
+                if conditions_met >= 3:  # Need at least 3 of 6 conditions
                     candidate = CandidateStock(
                         symbol=symbol,
                         technical_score=score,
@@ -588,13 +643,17 @@ class GrowthStrategy:
                     )
                     filtered_stocks.append(candidate)
                     logger.debug(
-                        f"{symbol}: PASSED (momentum={momentum:.2f}, RSI={rsi:.1f}, "
-                        f"MACD={macd_histogram:.4f}, vol_ratio={volume_ratio:.2f})"
+                        f"{symbol}: PASSED {conditions_met}/6 conditions "
+                        f"(momentum={momentum:.2f}, RSI={rsi:.1f}, "
+                        f"MACD={macd_histogram:.4f}, vol_ratio={volume_ratio:.2f}, "
+                        f"ADX={adx_value:.1f}, BB_pos={bb_position:.2f})"
                     )
                 else:
                     logger.debug(
-                        f"{symbol}: FILTERED OUT (momentum={momentum:.2f}, RSI={rsi:.1f}, "
-                        f"MACD={macd_histogram:.4f}, vol_ratio={volume_ratio:.2f})"
+                        f"{symbol}: FILTERED OUT {conditions_met}/6 conditions "
+                        f"(momentum={momentum:.2f}, RSI={rsi:.1f}, "
+                        f"MACD={macd_histogram:.4f}, vol_ratio={volume_ratio:.2f}, "
+                        f"ADX={adx_value:.1f}, BB_pos={bb_position:.2f})"
                     )
 
             except Exception as e:

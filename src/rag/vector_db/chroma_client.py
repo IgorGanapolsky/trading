@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 ChromaDB Vector Database Client for Trading RAG System
 
@@ -5,8 +7,9 @@ Provides persistent vector storage for market news, sentiment, and research.
 """
 
 import logging
+import os
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from src.utils.pydantic_compat import ensure_pydantic_base_settings
 
@@ -14,13 +17,21 @@ logger = logging.getLogger(__name__)
 
 ensure_pydantic_base_settings()
 
-try:
-    from sentence_transformers import CrossEncoder, SentenceTransformer, util
+# Environment variable to disable RAG features (useful for CI or minimal environments)
+RAG_ENABLED = os.getenv("ENABLE_RAG_FEATURES", "true").lower() in {"1", "true", "yes", "on"}
 
-    SENTENCE_TRANSFORMERS_AVAILABLE = True
-except ImportError:
-    SENTENCE_TRANSFORMERS_AVAILABLE = False
-    logger.warning("sentence-transformers not found. InMemoryCollection will use dummy similarity.")
+SENTENCE_TRANSFORMERS_AVAILABLE = False
+if RAG_ENABLED:
+    try:
+        from sentence_transformers import CrossEncoder, SentenceTransformer, util
+
+        SENTENCE_TRANSFORMERS_AVAILABLE = True
+    except ImportError:
+        logger.warning(
+            "sentence-transformers not found. InMemoryCollection will use dummy similarity."
+        )
+else:
+    logger.info("RAG features disabled via ENABLE_RAG_FEATURES=false")
 
 try:
     from rank_bm25 import BM25Okapi
@@ -151,7 +162,7 @@ class InMemoryCollection:
     def query(self, query_texts: list[str], n_results: int = 5, where: dict | None = None):
         # Filter first
         indices = []
-        for i, (meta, _doc_id) in enumerate(zip(self.metadatas, self.ids)):
+        for i, (meta, _doc_id) in enumerate(zip(self.metadatas, self.ids, strict=False)):
             if where:
                 match = all(meta.get(k) == v for k, v in where.items())
                 if not match:
@@ -194,7 +205,9 @@ class InMemoryCollection:
 
             # Combine: 0.7 Semantic + 0.3 Keyword
             candidates = []
-            for idx, (sem_score, bm_score) in enumerate(zip(semantic_scores, bm25_scores)):
+            for idx, (sem_score, bm_score) in enumerate(
+                zip(semantic_scores, bm25_scores, strict=False)
+            ):
                 original_idx = indices[idx]
                 hybrid_score = (0.7 * float(sem_score)) + (0.3 * float(bm_score))
 
@@ -351,7 +364,7 @@ class TradingRAGDatabase:
         self,
         documents: list[str],
         metadatas: list[dict[str, Any]],
-        ids: Optional[list[str]] = None,
+        ids: list[str] | None = None,
     ) -> dict[str, Any]:
         """
         Add documents to the vector database.
@@ -402,7 +415,7 @@ class TradingRAGDatabase:
         self,
         query_text: str,
         n_results: int = 5,
-        where: Optional[dict[str, Any]] = None,
+        where: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Query the vector database with semantic search.
@@ -441,7 +454,7 @@ class TradingRAGDatabase:
             return {"status": "error", "message": str(e)}
 
     def get_ticker_news(
-        self, ticker: str, n_results: int = 20, date_filter: Optional[str] = None
+        self, ticker: str, n_results: int = 20, date_filter: str | None = None
     ) -> list[dict[str, Any]]:
         """
         Get all news for a specific ticker.
@@ -483,7 +496,7 @@ class TradingRAGDatabase:
 
         return articles
 
-    def get_by_id(self, doc_id: str) -> Optional[dict[str, Any]]:
+    def get_by_id(self, doc_id: str) -> dict[str, Any] | None:
         """
         Retrieve a document by its ID.
 
