@@ -110,6 +110,14 @@
       "regulatory": true,
       "source": "Chicago Board Options Exchange",
       "ingested_at": "2025-12-10T16:45:00.000000"
+    },
+    "web_research": {
+      "title": "Web-Sourced Options Research 2025",
+      "chunks_file": "rag_knowledge/chunks/web_sourced_options_research_2025.json",
+      "chunk_count": 9,
+      "topics": ["covered_calls", "iron_condors", "wheel", "theta_decay", "IV_rank", "greeks", "earnings", "credit_spreads", "kelly_criterion"],
+      "sources": ["tastytrade.com", "optionalpha.com", "projectfinance.com", "schwab.com", "barchart.com", "quantifiedstrategies.com", "SSRN academic papers"],
+      "ingested_at": "2025-12-10T17:30:00.000000"
     }
   },
   "lessons_learned": {
@@ -123,8 +131,8 @@
     }
   },
   "metadata": {
-    "total_chunks": 275,
-    "last_updated": "2025-12-10T17:10:00.000000",
+    "total_chunks": 284,
+    "last_updated": "2025-12-10T17:30:00.000000",
     "categories": ["books", "papers", "newsletters", "youtube", "options_education", "lessons_learned"]
   }
 }
