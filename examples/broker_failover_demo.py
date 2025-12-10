@@ -64,7 +64,7 @@ def demo_basic_order():
             side="buy"
         )
 
-        logger.info(f"✅ Order placed successfully!")
+        logger.info("✅ Order placed successfully!")
         logger.info(f"  Order ID: {order.get('id')}")
         logger.info(f"  Symbol: {order.get('symbol')}")
         logger.info(f"  Side: {order.get('side')}")
@@ -73,7 +73,7 @@ def demo_basic_order():
         if "broker" in order:
             logger.info(f"  Broker Used: {order['broker']} (via failover)")
         else:
-            logger.info(f"  Broker Used: Alpaca (direct)")
+            logger.info("  Broker Used: Alpaca (direct)")
 
     except Exception as e:
         logger.error(f"❌ Order failed: {e}")
@@ -99,7 +99,7 @@ def demo_order_with_stop_loss():
             stop_loss_pct=0.05,  # 5% stop-loss
         )
 
-        logger.info(f"✅ Order with stop-loss placed successfully!")
+        logger.info("✅ Order with stop-loss placed successfully!")
 
         if result["order"]:
             logger.info(f"  Main Order ID: {result['order'].get('id')}")
@@ -141,13 +141,13 @@ def demo_health_check():
             logger.info(f"  Status: {status.get('status', 'unknown')}")
 
             if status.get("status") == "healthy":
-                logger.info(f"  ✅ Available for trading")
+                logger.info("  ✅ Available for trading")
                 if "equity" in status:
                     logger.info(f"  Equity: ${status['equity']:,.2f}")
             elif status.get("status") == "not_configured":
-                logger.info(f"  ⚠️  Not configured (credentials missing)")
+                logger.info("  ⚠️  Not configured (credentials missing)")
             else:
-                logger.info(f"  ❌ Unhealthy")
+                logger.info("  ❌ Unhealthy")
                 if "error" in status:
                     logger.info(f"  Error: {status['error']}")
 

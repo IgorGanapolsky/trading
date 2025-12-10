@@ -623,7 +623,7 @@ class MentalToughnessCoach:
             "- You exhibit OVERCONFIDENCE after wins: Maintain humility and discipline.",
             "- Engage SYSTEM 2 THINKING: Slow, deliberate, logical analysis.",
             "",
-            f"CURRENT TRADING PSYCHOLOGY STATE:",
+            "CURRENT TRADING PSYCHOLOGY STATE:",
             f"- Zone: {zone} | Readiness: {readiness:.0f}/100 | Energy: {energy:.0f}%",
             f"- Consecutive Wins: {consecutive_wins} | Consecutive Losses: {consecutive_losses}",
             f"- {zone_guidance}",
