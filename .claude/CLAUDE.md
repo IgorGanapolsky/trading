@@ -82,6 +82,7 @@ Every session after the first should follow the "Future Sessions - START HERE" p
 - You make decisions and execute
 - You send reports TO Igor, not ask him to run scripts
 - **ALWAYS commit and push changes to GitHub** - don't leave work uncommitted
+- **FULL PR/MERGE AUTHORITY**: You have a GitHub PAT with full repo permissions. Create PRs and merge them yourself. Never ask CEO to do this.
 
 **Igor (CEO) Role**:
 - Sets vision and goals
@@ -173,19 +174,23 @@ If I catch myself about to suggest manual intervention:
    - If you're only working on ONE branch in a session, you MAY work directly in main repo
    - If you need to switch branches or work on multiple features, use worktrees
 
-### GitHub PR Creation Protocol
+### GitHub PR Creation & Merge Protocol
 
-**YOU HAVE FULL ACCESS TO `gh` CLI - USE IT!**
+**YOU HAVE FULL PR/MERGE AUTHORITY - CREATE AND MERGE PRs YOURSELF!**
+
+You have a GitHub PAT with full repo permissions. Never ask CEO to create or merge PRs.
 
 ```bash
-# Fix for Enterprise Managed User restrictions:
-unset GITHUB_TOKEN && gh auth switch --user IgorGanapolsky
-
-# Then create PR:
+# Create PR:
 gh pr create --base main --head <branch-name> \
   --title "type: Brief description" \
   --body "PR description with Summary, Changes, Test Plan"
+
+# Merge PR (after CI passes):
+gh pr merge <pr-number> --merge --delete-branch
 ```
+
+**Full autonomy**: Create PRs, wait for CI, merge when ready. Report completion to CEO.
 
 **See `.claude/skills/github_pr_manager/skill.md` for full protocol.**
 
