@@ -109,6 +109,25 @@
         "rag_knowledge/chunks/lessons_learned_2025.json"
       ],
       "embedding_text": "read RAG lessons learned before making claims session start pre-flight mandatory protocol. Anti-pattern: claim fail discover add. Correct: read RAG first then claim. Check lessons_learned_2025.json before infrastructure claims."
+    },
+    {
+      "id": "ll_007_tradier_options_backup",
+      "title": "Tradier is Backup Broker for Options Trading",
+      "source": "CEO Directive - Dec 10, 2025",
+      "date": "2025-12-10",
+      "category": "infrastructure",
+      "tags": ["tradier", "options", "broker", "failover", "backup", "redundancy"],
+      "severity": "high",
+      "content": "Tradier is configured as a backup broker for options trading. GitHub Secrets contain TRADIER_SANDBOX_API_KEY and TRADIER_SANDBOX_ACCOUNT_NUMBER. Full multi-broker failover infrastructure exists: src/brokers/tradier_client.py, src/brokers/multi_broker.py. Failover priority: Alpaca (primary) → IBKR (secondary) → Tradier (tertiary). If Alpaca options trading fails, Tradier should be used as fallback.",
+      "key_insight": "Tradier has excellent options API and credentials are already configured. Use ENABLE_BROKER_FAILOVER=true to activate multi-broker redundancy for options trading.",
+      "solution": "When options trading fails on Alpaca: (1) Check if ENABLE_BROKER_FAILOVER=true is set, (2) Verify Tradier credentials in GitHub Secrets, (3) Use multi_broker.py for automatic failover. Tradier is API-first cloud brokerage designed for algorithmic trading.",
+      "our_implementation": "Multi-broker failover system implemented with circuit breakers. Tradier client supports market/limit orders, options chains, account status. Enable via environment variable.",
+      "referenced_files": [
+        "src/brokers/tradier_client.py",
+        "src/brokers/multi_broker.py",
+        "docs/BROKER_FAILOVER.md"
+      ],
+      "embedding_text": "Tradier backup broker options trading failover TRADIER_SANDBOX_API_KEY multi-broker redundancy. If Alpaca options fails use Tradier. ENABLE_BROKER_FAILOVER=true activates failover. Alpaca primary IBKR secondary Tradier tertiary. Circuit breakers protect against cascading failures."
     }
   ]
 }
