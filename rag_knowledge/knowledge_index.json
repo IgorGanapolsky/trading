@@ -36,6 +36,17 @@
       "chunk_count": 18,
       "topics": ["covered_calls", "naked_puts", "spreads", "straddles", "strangles", "butterflies", "greeks", "volatility", "earnings"],
       "ingested_at": "2025-12-10T05:00:00.000000"
+    },
+    "natenberg_volatility": {
+      "title": "Option Volatility and Pricing: Advanced Trading Strategies and Techniques",
+      "author": "Sheldon Natenberg",
+      "edition": "2nd Edition",
+      "isbn": "978-0071818773",
+      "chunks_file": "rag_knowledge/chunks/natenberg_option_volatility_pricing_2025.json",
+      "chunk_count": 23,
+      "topics": ["historical_volatility", "implied_volatility", "volatility_cones", "term_structure", "mean_reversion", "delta", "gamma", "theta", "vega", "rho", "black_scholes", "binomial_model", "put_call_parity", "volatility_skew", "straddles", "strangles", "iron_condors", "calendar_spreads", "position_sizing", "portfolio_greeks", "stress_testing", "rolling", "entry_criteria", "exit_rules", "stop_losses", "assignment", "professional_mindset"],
+      "description": "THE definitive guide to option volatility, pricing models, Greeks, and professional trading strategies. Considered the 'Bible' of options trading.",
+      "ingested_at": "2025-12-10T17:10:00.000000"
     }
   },
   "papers": {},
@@ -90,6 +101,15 @@
       "chunk_count": 14,
       "topics": ["wheel", "PMCC", "jade_lizard", "ratio_spreads", "gamma_scalping", "VIX_strategies", "synthetics"],
       "ingested_at": "2025-12-10T05:00:00.000000"
+    },
+    "cboe_official": {
+      "title": "CBOE Options Institute - Official Exchange Education",
+      "chunks_file": "rag_knowledge/chunks/cboe_options_education_2025.json",
+      "chunk_count": 27,
+      "topics": ["options_basics", "settlement", "order_types", "margin", "VIX", "index_options", "SPX_vs_SPY", "tax_treatment", "risk_disclosure", "assignment", "pin_risk", "liquidity", "greeks", "implied_volatility", "trading_hours", "intrinsic_extrinsic_value", "moneyness", "time_duration_orders", "position_limits", "dividend_risk", "corporate_actions"],
+      "regulatory": true,
+      "source": "Chicago Board Options Exchange",
+      "ingested_at": "2025-12-10T16:45:00.000000"
     }
   },
   "lessons_learned": {
@@ -103,8 +123,8 @@
     }
   },
   "metadata": {
-    "total_chunks": 225,
-    "last_updated": "2025-12-10T16:00:00.000000",
+    "total_chunks": 275,
+    "last_updated": "2025-12-10T17:10:00.000000",
     "categories": ["books", "papers", "newsletters", "youtube", "options_education", "lessons_learned"]
   }
 }

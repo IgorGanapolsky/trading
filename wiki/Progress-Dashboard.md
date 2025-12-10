@@ -398,3 +398,48 @@ No trades executed yet. System is ready for trading.
 
 *This world-class dashboard is automatically updated daily by GitHub Actions with elite-level analytics.*
 *Dashboard improvements: Enhanced trade analysis, performance attribution, actionable risk alerts, and better visualizations.*
+
+---
+
+## 🎯 OPTIONS TRADING STATUS
+
+**Last Updated**: $(date -u +"%Y-%m-%d %H:%M UTC")
+
+### Options Infrastructure
+| Component | Status |
+|-----------|--------|
+| **RAG Knowledge Base** | ✅ 62 chunks (McMillan, TastyTrade, Options Alpha) |
+| **IV Signal Generator** | ✅ 5 regimes, McMillan rules |
+| **Execution Pipeline** | ✅ Covered calls, iron condors, credit spreads |
+| **Paper Trading** | ✅ Enabled in daily workflow |
+| **Broker Failover** | ✅ Alpaca → Tradier |
+
+### Options P/L
+| Metric | Value |
+|--------|-------|
+| **Options Trades Executed** | 0 |
+| **Options P/L** | $0.00 |
+| **Daily Premium Target** | $10.00 |
+| **Status** | 🔄 First trade executing NOW |
+
+### RAG Knowledge Sources
+- 📚 McMillan "Options as Strategic Investment" (18 chunks)
+- 📺 TastyTrade Education (16 chunks)
+- 🎓 Options Alpha (14 chunks)
+- 🔧 Advanced Income Strategies (14 chunks)
+
+---
+
+## 🔄 WORKFLOW STATUS
+
+**Current Workflow**: [View on GitHub](https://github.com/IgorGanapolsky/trading/actions)
+
+| Job | Status |
+|-----|--------|
+| validate-and-test | ✅ Success |
+| run-backtests | 🔄 Running |
+| execute-trading | 🔄 Running |
+
+**Last Successful Trade**: Dec 9, 2025
+**Next Scheduled**: Dec 11, 3:55 PM ET (Market-on-Close)
+
