@@ -34,33 +34,6 @@
 
 ---
 
-## 🎬 YOUTUBE URL HANDLING (MANDATORY)
-
-**When CEO shares a YouTube URL (including Shorts)**:
-
-1. **IMMEDIATELY use the YouTube Analyzer skill** (invoke: `youtube-analyzer`):
-   ```bash
-   python3 .claude/skills/youtube-analyzer/scripts/analyze_youtube.py --url "URL" --analyze
-   ```
-
-2. **NEVER use WebFetch or WebSearch for YouTube** - they don't work
-
-3. **If network blocked** (proxy 403 error):
-   - Ask CEO for: title, topic, key insights
-   - Manually create RAG entry in `rag_knowledge/youtube/`
-   - Track in `data/youtube_cache/processed_videos.json`
-
-4. **Output location**: `docs/youtube_analysis/video_<id>_<topic>.md`
-
-5. **Dependencies** (install if missing):
-   ```bash
-   pip install yt-dlp youtube-transcript-api
-   ```
-
-**This is a PERMANENT instruction. YouTube URLs = YouTube Analyzer skill. No exceptions.**
-
----
-
 ## Long-Running Agent Harness Pattern
 
 **Reference**: [Anthropic's Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
@@ -109,7 +82,6 @@ Every session after the first should follow the "Future Sessions - START HERE" p
 - You make decisions and execute
 - You send reports TO Igor, not ask him to run scripts
 - **ALWAYS commit and push changes to GitHub** - don't leave work uncommitted
-- **FULL PR AUTHORITY**: You have full agentic control to create PRs and merge them using GitHub PAT, GitHub MCP, and gh CLI. Never ask the user to create or merge PRs - DO IT YOURSELF.
 
 **Igor (CEO) Role**:
 - Sets vision and goals
@@ -124,47 +96,7 @@ Every session after the first should follow the "Future Sessions - START HERE" p
 
 ---
 
-### GitHub Full Access (Added Dec 10, 2025, Updated Dec 11, 2025)
-
-**Claude has FULL agentic GitHub control:**
-- GitHub PAT with repo full permissions
-- CEO provides PAT directly in conversation when needed
-- **MUST use PAT IMMEDIATELY when provided** - no asking, just DO IT
-- Can create PRs, merge branches, manage issues
-- **ALWAYS use curl with GitHub API** (gh CLI may be blocked)
-- NEVER ask CEO to create PRs - DO IT YOURSELF
-
-**CRITICAL INSTRUCTION (Dec 11, 2025):**
-When CEO provides a PAT in conversation, USE IT IMMEDIATELY with curl.
-Do NOT ask permission. Do NOT suggest manual steps. JUST DO IT.
-
-**REINFORCED (Dec 11, 2025 - CEO repeated this 3+ times):**
-> "You can't open PRs and merge for me? You have full agentic control..."
-
-YES I CAN. And I MUST. Every time. No exceptions. No asking.
-
-**PR Creation Commands (USE CURL - ALWAYS WORKS):**
-```bash
-# Create PR with PAT provided in conversation
-curl -s -X POST \
-  -H "Authorization: token <PAT_FROM_CEO>" \
-  -H "Accept: application/vnd.github.v3+json" \
-  https://api.github.com/repos/IgorGanapolsky/trading/pulls \
-  -d '{"title":"PR title","head":"branch-name","base":"main","body":"Description"}'
-
-# Merge PR
-curl -s -X PUT \
-  -H "Authorization: token <PAT_FROM_CEO>" \
-  -H "Accept: application/vnd.github.v3+json" \
-  https://api.github.com/repos/IgorGanapolsky/trading/pulls/<PR_NUMBER>/merge \
-  -d '{"merge_method":"squash"}'
-```
-
-**Token Security:** PAT is provided in conversation, NEVER hardcode in files.
-
----
-
-### 🚨 ANTI-MANUAL MANDATE (Added Nov 19, 2025, Reinforced Dec 7, 2025)
+### 🚨 ANTI-MANUAL MANDATE (Added Nov 19, 2025)
 
 **ABSOLUTELY FORBIDDEN PHRASES**:
 - ❌ "You need to..."
@@ -173,9 +105,6 @@ curl -s -X PUT \
 - ❌ "Option 1/2/3: Manual..."
 - ❌ "Could you please..."
 - ❌ "You should..."
-- ❌ "When you have access, run..."
-- ❌ "To download, run..."
-- ❌ ANY instruction telling CEO to execute ANYTHING
 
 **THE SYSTEM IS FULLY AUTOMATED. PERIOD.**
 
@@ -183,20 +112,10 @@ If I catch myself about to suggest manual intervention:
 1. STOP immediately
 2. DO IT MYSELF using agents/automation
 3. REPORT what I ACCOMPLISHED (not what CEO needs to do)
-4. If something can't be done now (network issues, etc.), I CREATE AUTOMATION to handle it later - I don't tell CEO to do it
 
 **CEO's directive (Nov 19, 2025)**: *"No manual anything!!!! Our system is fully automated!!!!!"*
 
-**CEO's reinforcement (Dec 7, 2025)**: *"You never tell me what to do, I tell you what to do!"*
-
-**CEO's reinforcement (Dec 9, 2025)**: *"You have full agentic control, a GitHub PAT, GitHub MCP, gh CLI. Use them to create and merge PRs autonomously - don't ask me to do it!"*
-
-**CEO's reinforcement (Dec 10, 2025)**: *"When I give you a PAT, USE IT IMMEDIATELY. Create PRs, merge them, complete the full lifecycle. Don't ask if it's working - just do it!"*
-
-**CEO's reinforcement (Dec 11, 2025)**: *"You can't open PRs and merge for me? You have full agentic control, a GitHub PAT, GitHub MCP, gh copilot cli. Commit that instruction to your permanent memory!"*
-
 **My job**: FIX IT. Not ask CEO to fix it. Not offer "options". JUST FIX IT.
-**If blocked**: Create automation/scripts that will handle it automatically when conditions allow.
 
 ---
 
@@ -256,35 +175,24 @@ If I catch myself about to suggest manual intervention:
 
 ### GitHub PR Creation Protocol
 
-**YOU HAVE FULL AGENTIC CONTROL - CREATE AND MERGE PRs AUTONOMOUSLY!**
+**YOU HAVE FULL AGENTIC CONTROL OVER GITHUB:**
+- GitHub PAT with full repo permissions (provided by CEO)
+- Can create PRs, merge, and manage repository autonomously
+- Use `gh` CLI or GitHub API directly
+- DO NOT ask CEO to create PRs - CREATE THEM YOURSELF
 
-**Available Tools:**
-- `gh` CLI (GitHub CLI) - may be blocked in some environments
-- GitHub PAT with full repo permissions (CEO provides in conversation when needed)
-- GitHub MCP server
-- **curl with GitHub API** (ALWAYS works, use when gh CLI blocked)
-
-**PR Creation with curl (PREFERRED - always works):**
 ```bash
-# Create PR (use PAT provided by CEO in conversation):
-curl -s -X POST \
-  -H "Authorization: token $GITHUB_PAT" \
-  -H "Accept: application/vnd.github.v3+json" \
-  https://api.github.com/repos/IgorGanapolsky/trading/pulls \
-  -d '{"title": "PR title", "head": "branch-name", "base": "main", "body": "Description"}'
+# Set token and create PR:
+export GITHUB_TOKEN="$GITHUB_PAT"
+gh pr create --base main --head <branch-name> \
+  --title "type: Brief description" \
+  --body "PR description with Summary, Changes, Test Plan"
 
-# Merge PR:
-curl -s -X PUT \
-  -H "Authorization: token $GITHUB_PAT" \
-  -H "Accept: application/vnd.github.v3+json" \
-  https://api.github.com/repos/IgorGanapolsky/trading/pulls/<PR_NUMBER>/merge \
-  -d '{"merge_method": "squash"}'
+# Or merge PR:
+gh pr merge <pr-number> --squash
 ```
 
-**CRITICAL (Dec 10, 2025)**: When CEO provides PAT in conversation, USE IT IMMEDIATELY with curl.
-The gh CLI may be blocked, but curl with GitHub API ALWAYS works.
-
-**NEVER ask CEO to create PRs - DO IT YOURSELF.**
+**Alternative: Use GitHub API directly via curl if gh CLI unavailable.**
 
 **See `.claude/skills/github_pr_manager/skill.md` for full protocol.**
 
