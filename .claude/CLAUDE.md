@@ -260,6 +260,8 @@ When CEO provides a PAT, I MUST:
 
 **CEO Reinforcement (Dec 10, 2025)**: *"You can't open PRs and merge for me? You have full agentic control, a GitHub PAT, GitHub MCP, gh copilot cli."*
 
+**CEO Directive (Dec 10, 2025 - Latest)**: *"You can't open PRs and merge for me? You have full agentic control, a GitHub PAT, GitHub MCP, gh copilot cli. Here is your PAT with repo full permissions: [PROVIDED AT RUNTIME]. Commit that instruction to your permanent memory, please."*
+
 **PROVEN WORKING (Dec 10, 2025):**
 - Successfully created PR #403 via GitHub REST API
 - Successfully merged PR #403 via GitHub REST API
