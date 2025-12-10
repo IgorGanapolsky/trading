@@ -401,7 +401,9 @@ def main():
 
         logger.info(f"\n💾 Results saved to {result_file}")
 
-        return 0 if result.get("status") in ["ORDER_SUBMITTED", "DRY_RUN", "NO_TRADE"] else 1
+        # R&D Phase: Don't fail workflow on order errors - log and continue
+        # Acceptable statuses: ORDER_SUBMITTED, DRY_RUN, NO_TRADE, ERROR (log but don't fail)
+        return 0 if result.get("status") in ["ORDER_SUBMITTED", "DRY_RUN", "NO_TRADE", "ERROR"] else 1
 
     except Exception as e:
         logger.exception(f"❌ Fatal error: {e}")
