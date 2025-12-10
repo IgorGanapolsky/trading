@@ -1,7 +1,7 @@
 name: Unified RAG Ingestion
 
 permissions:
-  contents: read
+  contents: write
 
 on:
   schedule:
