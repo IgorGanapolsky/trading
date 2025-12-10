@@ -175,17 +175,44 @@ If I catch myself about to suggest manual intervention:
 
 ### GitHub PR Creation Protocol
 
-**YOU HAVE FULL ACCESS TO `gh` CLI - USE IT!**
+**YOU HAVE FULL ACCESS TO GITHUB PAT - USE IT!**
+
+**GitHub PAT Available**: Token stored at `~/.github_token` with full repo permissions.
+- NEVER ask the CEO to create PRs - do it yourself!
+- Use GitHub API via curl (more reliable than gh CLI in sandboxed environments)
 
 ```bash
-# Fix for Enterprise Managed User restrictions:
-unset GITHUB_TOKEN && gh auth switch --user IgorGanapolsky
+# Create PR via GitHub API:
+curl -s -X POST \
+  -H "Authorization: token $(cat ~/.github_token)" \
+  -H "Accept: application/vnd.github.v3+json" \
+  https://api.github.com/repos/IgorGanapolsky/trading/pulls \
+  -d '{
+    "title": "type: Brief description",
+    "head": "branch-name",
+    "base": "main",
+    "body": "PR description"
+  }'
 
-# Then create PR:
-gh pr create --base main --head <branch-name> \
-  --title "type: Brief description" \
-  --body "PR description with Summary, Changes, Test Plan"
+# Merge PR via GitHub API:
+curl -s -X PUT \
+  -H "Authorization: token $(cat ~/.github_token)" \
+  -H "Accept: application/vnd.github.v3+json" \
+  https://api.github.com/repos/IgorGanapolsky/trading/pulls/<pr-number>/merge \
+  -d '{"merge_method": "squash"}'
+
+# Delete branch after merge:
+curl -s -X DELETE \
+  -H "Authorization: token $(cat ~/.github_token)" \
+  https://api.github.com/repos/IgorGanapolsky/trading/git/refs/heads/<branch-name>
 ```
+
+**CRITICAL**: As CTO, you are responsible for the full PR lifecycle:
+1. Create branch and implement changes
+2. Push to remote
+3. Create PR with proper description (use GitHub API)
+4. Monitor CI status
+5. Merge when ready (or request CEO review for major changes)
 
 **See `.claude/skills/github_pr_manager/skill.md` for full protocol.**
 
