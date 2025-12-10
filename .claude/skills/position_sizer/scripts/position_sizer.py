@@ -2,12 +2,18 @@
 """
 Position Sizer Skill - Implementation
 Advanced position sizing using multiple methodologies
+
+Supports:
+- Growth Mode: Kelly-based sizing for maximum returns
+- Income Mode: Fixed sizing for consistent daily income ($100/day target)
+- Multiple Kelly fractions: Full, Half, Quarter, Eighth
 """
 
 import argparse
 import json
 import os
 import sys
+from enum import Enum
 from typing import Any, Optional
 
 # Add project root to path
@@ -25,6 +31,27 @@ try:
 except ImportError:
     RISK_AVAILABLE = False
     print("Warning: RiskManager not available")
+
+try:
+    from src.risk.kelly import (
+        KellyMode,
+        calculate_income_position_size,
+        fractional_kelly,
+    )
+
+    KELLY_AVAILABLE = True
+except ImportError:
+    KELLY_AVAILABLE = False
+    print("Warning: Kelly module not available")
+
+
+class PositionSizingMode(Enum):
+    """Position sizing modes."""
+
+    GROWTH = "growth"  # Kelly-based, optimize total return
+    INCOME = "income"  # Fixed sizing, optimize daily income consistency
+    HALF_KELLY = "half_kelly"  # Balanced growth/volatility
+    QUARTER_KELLY = "quarter_kelly"  # Conservative (default)
 
 
 def error_response(error_msg: str, error_code: str = "ERROR") -> dict[str, Any]:
@@ -303,6 +330,106 @@ class PositionSizer:
         except Exception as e:
             return error_response(f"Error calculating Kelly: {str(e)}", "KELLY_ERROR")
 
+    def calculate_income_size(
+        self,
+        account_value: float,
+        target_daily_income: float = 100.0,
+        avg_premium_yield: float = 0.015,
+        trades_per_week: int = 5,
+    ) -> dict[str, Any]:
+        """
+        Calculate position size for consistent income generation.
+
+        Income Mode prioritizes consistent daily income over maximum growth.
+        Target: $100/day = $500/week = $2,000/month
+
+        Args:
+            account_value: Current account value
+            target_daily_income: Target daily income in dollars
+            avg_premium_yield: Expected premium yield per trade (0.015 = 1.5%)
+            trades_per_week: Number of trades per week
+
+        Returns:
+            Dict with income-based position sizing
+        """
+        try:
+            if account_value <= 0:
+                return error_response("Invalid account value", "INVALID_INPUT")
+
+            # Use the kelly module if available
+            if KELLY_AVAILABLE:
+                result = calculate_income_position_size(
+                    account_value=account_value,
+                    target_daily_income=target_daily_income,
+                    avg_premium_yield=avg_premium_yield,
+                    trades_per_week=trades_per_week,
+                )
+                return success_response(
+                    {
+                        "income_sizing": {
+                            "target_daily_income": result.target_daily_income,
+                            "achievable_daily_income": result.achievable_daily_income,
+                            "gap": round(
+                                result.target_daily_income - result.achievable_daily_income, 2
+                            ),
+                            "on_target": result.achievable_daily_income
+                            >= result.target_daily_income,
+                        },
+                        "position_sizing": {
+                            "required_notional_per_trade": result.required_notional_per_trade,
+                            "actual_notional": result.actual_notional,
+                            "position_pct": result.position_pct,
+                        },
+                        "capital_requirements": {
+                            "current_account": account_value,
+                            "minimum_for_target": result.minimum_account_for_target,
+                            "shortfall": max(0, result.minimum_account_for_target - account_value),
+                        },
+                        "assumptions": {
+                            "avg_premium_yield": f"{avg_premium_yield * 100:.1f}%",
+                            "trades_per_week": trades_per_week,
+                            "trading_days_per_week": 5,
+                        },
+                        "projections": {
+                            "weekly_income": round(result.achievable_daily_income * 5, 2),
+                            "monthly_income": round(result.achievable_daily_income * 21, 2),
+                            "annual_income": round(result.achievable_daily_income * 252, 2),
+                        },
+                    }
+                )
+
+            # Fallback calculation if kelly module not available
+            weekly_income = target_daily_income * 5
+            income_per_trade = weekly_income / trades_per_week
+            required_notional = income_per_trade / avg_premium_yield
+            max_notional = account_value * 0.10
+            actual_notional = min(required_notional, max_notional)
+            achievable_daily = (actual_notional * avg_premium_yield * trades_per_week) / 5
+
+            return success_response(
+                {
+                    "income_sizing": {
+                        "target_daily_income": target_daily_income,
+                        "achievable_daily_income": round(achievable_daily, 2),
+                        "gap": round(target_daily_income - achievable_daily, 2),
+                        "on_target": achievable_daily >= target_daily_income,
+                    },
+                    "position_sizing": {
+                        "required_notional_per_trade": round(required_notional, 2),
+                        "actual_notional": round(actual_notional, 2),
+                        "position_pct": round((actual_notional / account_value) * 100, 2),
+                    },
+                    "capital_requirements": {
+                        "current_account": account_value,
+                        "minimum_for_target": round(required_notional * 10, 2),
+                        "shortfall": max(0, round(required_notional * 10 - account_value, 2)),
+                    },
+                }
+            )
+
+        except Exception as e:
+            return error_response(f"Error calculating income size: {str(e)}", "INCOME_ERROR")
+
 
 def main():
     """CLI interface for the skill"""
@@ -345,7 +472,28 @@ def main():
         "--avg-win-loss-ratio", type=float, required=True, help="Avg win/loss ratio"
     )
     kelly_parser.add_argument(
-        "--kelly-multiplier", type=float, default=0.25, help="Kelly multiplier"
+        "--kelly-multiplier",
+        type=float,
+        default=0.25,
+        help="Kelly multiplier (0.25=quarter, 0.5=half, 1.0=full)",
+    )
+
+    # calculate_income_size command (NEW)
+    income_parser = subparsers.add_parser(
+        "calculate_income_size", help="Calculate position size for income mode ($100/day target)"
+    )
+    income_parser.add_argument("--account-value", type=float, required=True, help="Account value")
+    income_parser.add_argument(
+        "--target-daily-income", type=float, default=100.0, help="Target daily income"
+    )
+    income_parser.add_argument(
+        "--avg-premium-yield",
+        type=float,
+        default=0.015,
+        help="Average premium yield per trade (0.015 = 1.5%%)",
+    )
+    income_parser.add_argument(
+        "--trades-per-week", type=int, default=5, help="Number of trades per week"
     )
 
     args = parser.parse_args()
@@ -381,6 +529,13 @@ def main():
             win_rate=args.win_rate,
             avg_win_loss_ratio=args.avg_win_loss_ratio,
             kelly_multiplier=args.kelly_multiplier,
+        )
+    elif args.command == "calculate_income_size":
+        result = sizer.calculate_income_size(
+            account_value=args.account_value,
+            target_daily_income=args.target_daily_income,
+            avg_premium_yield=args.avg_premium_yield,
+            trades_per_week=args.trades_per_week,
         )
     else:
         print(f"Unknown command: {args.command}")
