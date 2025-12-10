@@ -211,7 +211,7 @@ class CapitalScaler:
 
 **Priority**: MEDIUM
 **Effort**: 4-5 hours
-**Status**: Not Started
+**Status**: ✅ COMPLETE
 
 ### Problem
 Walk-forward validation exists but doesn't compare backtest costs to live costs.
@@ -245,9 +245,9 @@ class CostValidator:
 **Integration**: Add to `.github/workflows/weekly-validation.yml`
 
 ### Acceptance Criteria
-- [ ] Weekly report compares live vs backtest costs
-- [ ] Alert if divergence > 2 bps
-- [ ] Automatic slippage model recalibration if divergence persists
+- [x] Weekly report compares live vs backtest costs
+- [x] Alert if divergence > 2 bps
+- [x] Automatic slippage model recalibration if divergence persists
 
 ---
 
@@ -255,7 +255,7 @@ class CostValidator:
 
 **Priority**: MEDIUM
 **Effort**: 3-4 hours
-**Status**: Not Started
+**Status**: ✅ COMPLETE
 
 ### Problem
 Pessimistic backtest exists (`src/backtesting/pessimistic_backtest.py`) but isn't automated before live deployment.
@@ -307,9 +307,9 @@ def validate(results_path: str, min_sharpe: float = 0.5):
 ```
 
 ### Acceptance Criteria
-- [ ] Every strategy change triggers stress test
-- [ ] Deployment blocked if pessimistic Sharpe < 0.5
-- [ ] Deployment blocked if max drawdown > 25%
+- [x] Every strategy change triggers stress test
+- [x] Deployment blocked if pessimistic Sharpe < 0.5
+- [x] Deployment blocked if max drawdown > 25%
 
 ---
 

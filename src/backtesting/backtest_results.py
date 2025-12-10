@@ -283,6 +283,9 @@ class BacktestResults:
     # Slippage tracking for realistic cost analysis
     total_slippage_cost: float = 0.0
     slippage_enabled: bool = False
+    # Commission tracking (SEC + FINRA fees)
+    total_commission_cost: float = 0.0
+    commissions_enabled: bool = False
     # $100/day target metrics
     avg_daily_pnl: float = 0.0
     pct_days_above_target: float = 0.0
@@ -340,6 +343,9 @@ class BacktestResults:
             f"Slippage Model:    {'Enabled' if self.slippage_enabled else 'Disabled (results may be optimistic)'}",
             f"Total Slippage:    ${self.total_slippage_cost:.2f}",
             f"Slippage % of PnL: {self._calculate_slippage_impact():.2f}%",
+            f"Commission Model:  {'Enabled (SEC+FINRA)' if self.commissions_enabled else 'Disabled'}",
+            f"Total Commissions: ${self.total_commission_cost:.2f}",
+            f"Total Exec Costs:  ${self.total_slippage_cost + self.total_commission_cost:.2f}",
             "",
             "$100/DAY TARGET METRICS",
             "-" * 80,

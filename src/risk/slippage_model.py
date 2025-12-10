@@ -351,6 +351,158 @@ class SlippageModel:
         return entry.slippage_pct + exit_slip.slippage_pct
 
 
+@dataclass
+class CommissionResult:
+    """Result of commission calculation."""
+
+    broker_fee: float
+    sec_fee: float
+    finra_taf: float
+    total_fee: float
+    fee_bps: float  # Total fee as basis points of trade value
+
+    @property
+    def regulatory_fees(self) -> float:
+        """Total regulatory fees (SEC + FINRA)."""
+        return self.sec_fee + self.finra_taf
+
+
+class CommissionModel:
+    """
+    Models realistic transaction fees for backtesting.
+
+    Alpaca Commission Structure (as of 2024):
+    - Stocks: $0 commission (but regulatory fees still apply)
+    - Options: $0.65/contract
+
+    Regulatory Fees (applied to all brokers):
+    - SEC Fee: $0.0000278 per dollar on SALES only
+    - FINRA TAF: $0.000166 per share (max $8.30 per trade)
+
+    Note: These fees are small but add up over many trades.
+    For a $1000 sell order of 20 shares:
+    - SEC: $1000 * 0.0000278 = $0.028
+    - FINRA: 20 * 0.000166 = $0.0033 (capped at $8.30)
+    - Total: ~$0.03 (~0.3 bps)
+
+    Author: Trading System
+    Created: 2025-12-05
+    """
+
+    # Regulatory fee rates (updated periodically by SEC/FINRA)
+    SEC_FEE_RATE = 0.0000278  # Per dollar on sales
+    FINRA_TAF_RATE = 0.000166  # Per share
+    FINRA_TAF_CAP = 8.30  # Maximum per trade
+
+    # Broker fees (Alpaca-specific)
+    STOCK_COMMISSION = 0.0  # $0 for stocks
+    OPTION_COMMISSION = 0.65  # Per contract
+
+    def __init__(
+        self,
+        include_regulatory: bool = True,
+        fee_multiplier: float = 1.0,
+    ):
+        """
+        Initialize commission model.
+
+        Args:
+            include_regulatory: Include SEC/FINRA fees (default: True)
+            fee_multiplier: Multiplier for stress testing (default: 1.0)
+        """
+        self.include_regulatory = include_regulatory
+        self.fee_multiplier = fee_multiplier
+
+        logger.info(
+            f"CommissionModel initialized: regulatory={include_regulatory}, "
+            f"multiplier={fee_multiplier}"
+        )
+
+    def calculate_commission(
+        self,
+        trade_value: float,
+        quantity: float,
+        side: str,
+        is_option: bool = False,
+        num_contracts: int = 0,
+    ) -> CommissionResult:
+        """
+        Calculate total commission and fees for a trade.
+
+        Args:
+            trade_value: Notional value of the trade
+            quantity: Number of shares (for FINRA TAF)
+            side: "buy" or "sell" (SEC fee only on sells)
+            is_option: Whether this is an options trade
+            num_contracts: Number of option contracts (if is_option)
+
+        Returns:
+            CommissionResult with fee breakdown
+        """
+        # Broker commission
+        if is_option:
+            contracts = num_contracts if num_contracts > 0 else max(1, int(quantity))
+            broker_fee = contracts * self.OPTION_COMMISSION
+        else:
+            broker_fee = self.STOCK_COMMISSION  # $0 for Alpaca stocks
+
+        # Regulatory fees
+        sec_fee = 0.0
+        finra_taf = 0.0
+
+        if self.include_regulatory:
+            # SEC fee only on SELLS
+            if side.lower() == "sell":
+                sec_fee = trade_value * self.SEC_FEE_RATE
+
+            # FINRA TAF on all trades (per share, capped)
+            finra_taf = min(quantity * self.FINRA_TAF_RATE, self.FINRA_TAF_CAP)
+
+        # Total with multiplier
+        total_fee = (broker_fee + sec_fee + finra_taf) * self.fee_multiplier
+
+        # Calculate as basis points
+        fee_bps = (total_fee / trade_value * 10000) if trade_value > 0 else 0.0
+
+        return CommissionResult(
+            broker_fee=broker_fee * self.fee_multiplier,
+            sec_fee=sec_fee * self.fee_multiplier,
+            finra_taf=finra_taf * self.fee_multiplier,
+            total_fee=total_fee,
+            fee_bps=fee_bps,
+        )
+
+    def estimate_round_trip_fees(
+        self,
+        trade_value: float,
+        quantity: float,
+        is_option: bool = False,
+    ) -> float:
+        """
+        Estimate total fees for a round-trip (buy + sell).
+
+        Args:
+            trade_value: Notional value of one leg
+            quantity: Number of shares
+            is_option: Whether options trade
+
+        Returns:
+            Total round-trip fee amount
+        """
+        buy_fees = self.calculate_commission(
+            trade_value, quantity, "buy", is_option
+        )
+        sell_fees = self.calculate_commission(
+            trade_value, quantity, "sell", is_option
+        )
+        return buy_fees.total_fee + sell_fees.total_fee
+
+
+def get_default_commission_model() -> CommissionModel:
+    """Get default commission model for backtesting."""
+    return CommissionModel(include_regulatory=True, fee_multiplier=1.0)
+
+
 # Convenience functions
 def get_default_slippage_model() -> SlippageModel:
     """Get default slippage model for backtesting."""
