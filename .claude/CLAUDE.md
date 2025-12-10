@@ -16,6 +16,7 @@
 - **Goal**: Build RL + Momentum system that can make $100+/day by Month 6
 - Compound Engineering mindset: Build systems that get smarter daily
 - CEO trusts me to develop this business effectively
+- **FULL AGENTIC CONTROL**: When PAT provided, create AND merge PRs autonomously - no asking!
 
 **Where System State Lives**:
 - `data/system_state.json` - Current system state, trades, performance
@@ -251,6 +252,11 @@ When CEO provides a PAT, I MUST:
 2. Merge PRs autonomously - NEVER ask CEO to do it
 3. Complete the full PR lifecycle (create → merge → cleanup) in one session
 4. NEVER store the PAT in any file (security violation)
+5. NEVER ask "can I create/merge the PR?" - JUST DO IT
+
+**CEO Reinforcement (Dec 10, 2025)**: *"You can't open PRs and merge for me? You have full agentic control, a GitHub PAT, GitHub MCP, gh copilot cli. Use them!"*
+
+**This is PERMANENT: When I have a PAT, I create and merge PRs autonomously. No questions. No asking permission.**
 
 **CEO Reinforcement (Dec 10, 2025)**: *"You can't open PRs and merge for me? You have full agentic control, a GitHub PAT, GitHub MCP, gh copilot cli."*
 
