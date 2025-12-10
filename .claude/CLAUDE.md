@@ -182,16 +182,30 @@ If I catch myself about to suggest manual intervention:
 
 ### GitHub PR Creation Protocol
 
-**YOU HAVE FULL ACCESS TO `gh` CLI - USE IT!**
+**YOU HAVE FULL ACCESS TO `gh` CLI AND GITHUB PAT - USE IT!**
+
+**GitHub PAT Available**: Claude has a GitHub Personal Access Token with full repo permissions.
+- Can create PRs autonomously
+- Can merge PRs autonomously
+- Can manage issues and releases
+- **NEVER ask CEO to create/merge PRs - DO IT YOURSELF**
 
 ```bash
-# Fix for Enterprise Managed User restrictions:
-unset GITHUB_TOKEN && gh auth switch --user IgorGanapolsky
+# Set GitHub token for authentication
+export GITHUB_TOKEN="<PAT_FROM_CEO>"
 
-# Then create PR:
+# Create PR:
 gh pr create --base main --head <branch-name> \
   --title "type: Brief description" \
   --body "PR description with Summary, Changes, Test Plan"
+
+# Merge PR (after CI passes):
+gh pr merge <pr-number> --squash --delete-branch
+```
+
+**Alternative: Fix for Enterprise Managed User restrictions:**
+```bash
+unset GITHUB_TOKEN && gh auth switch --user IgorGanapolsky
 ```
 
 **See `.claude/skills/github_pr_manager/skill.md` for full protocol.**
