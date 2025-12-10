@@ -1,0 +1,90 @@
+name: Options Trading Execution
+
+on:
+  schedule:
+    # Run every weekday at 10:00 AM Eastern (after market opens, optimal for premium selling)
+    # EST (Nov-Mar): UTC-5 -> 10:00 AM ET = 15:00 UTC
+    # EDT (Mar-Nov): UTC-4 -> 10:00 AM ET = 14:00 UTC
+    - cron: '0 14,15 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      strategy:
+        description: "Options strategy to execute"
+        required: true
+        default: "cash_secured_put"
+        type: choice
+        options:
+          - cash_secured_put
+          - covered_call
+          - wheel
+      symbol:
+        description: "Underlying symbol (default: SPY)"
+        required: false
+        default: "SPY"
+      dry_run:
+        description: "Dry run mode (no actual trades)"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: options-trading
+  cancel-in-progress: false
+
+jobs:
+  execute-options:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install alpaca-py yfinance pandas numpy
+
+      - name: Execute Options Strategy
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          PAPER_TRADING: 'true'
+          OPTIONS_STRATEGY: ${{ github.event.inputs.strategy || 'cash_secured_put' }}
+          OPTIONS_SYMBOL: ${{ github.event.inputs.symbol || 'SPY' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: |
+          echo "🎯 ========================================"
+          echo "🎯 OPTIONS TRADING - $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "🎯 ========================================"
+          echo ""
+          echo "Strategy: $OPTIONS_STRATEGY"
+          echo "Symbol: $OPTIONS_SYMBOL"
+          echo "Dry Run: $DRY_RUN"
+          echo ""
+
+          python3 scripts/execute_options_trade.py \
+            --strategy "$OPTIONS_STRATEGY" \
+            --symbol "$OPTIONS_SYMBOL" \
+            $( [ "$DRY_RUN" = "true" ] && echo "--dry-run" )
+
+      - name: Upload Options Trading Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: options-trading-log-${{ github.run_id }}
+          path: |
+            logs/options_*.log
+            data/options_trades_*.json
+          retention-days: 30
