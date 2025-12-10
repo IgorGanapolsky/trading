@@ -24,8 +24,7 @@ from src.execution.alpaca_executor import AlpacaExecutor
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
@@ -61,7 +60,7 @@ def demo_basic_order():
         order = executor.place_order(
             symbol="AAPL",
             notional=100.0,  # $100 worth of AAPL
-            side="buy"
+            side="buy",
         )
 
         logger.info("✅ Order placed successfully!")

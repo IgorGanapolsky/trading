@@ -113,7 +113,9 @@ class BullAgent:
             arguments.append(f"Price ${price:.2f} above MA50 ${ma_50:.2f} confirms uptrend")
             conviction += 0.1
         elif price < ma_50 * 0.95:
-            arguments.append(f"Oversold: Price ${price:.2f} is 5%+ below MA50 - reversion opportunity")
+            arguments.append(
+                f"Oversold: Price ${price:.2f} is 5%+ below MA50 - reversion opportunity"
+            )
             conviction += 0.05
 
         # RSI analysis (bullish perspective)
@@ -357,10 +359,16 @@ class DebateModerator:
         key_factors = []
         if winner == "BULL":
             key_factors.extend(bull_position.key_arguments[:2])
-            key_factors.append(f"Bear risk: {bear_position.risk_factors[0]}" if bear_position.risk_factors else "")
+            key_factors.append(
+                f"Bear risk: {bear_position.risk_factors[0]}" if bear_position.risk_factors else ""
+            )
         elif winner == "BEAR":
             key_factors.extend(bear_position.key_arguments[:2])
-            key_factors.append(f"Bull case: {bull_position.key_arguments[0]}" if bull_position.key_arguments else "")
+            key_factors.append(
+                f"Bull case: {bull_position.key_arguments[0]}"
+                if bull_position.key_arguments
+                else ""
+            )
         else:
             key_factors.extend(bull_position.key_arguments[:1])
             key_factors.extend(bear_position.key_arguments[:1])

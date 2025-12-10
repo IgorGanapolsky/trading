@@ -104,9 +104,7 @@ class ReflexionLoop:
             try:
                 with self.memory_path.open("r", encoding="utf-8") as f:
                     data = json.load(f)
-                    reflections = [
-                        TradeReflection(**r) for r in data.get("reflections", [])
-                    ]
+                    reflections = [TradeReflection(**r) for r in data.get("reflections", [])]
                     return ReflectionMemory(
                         reflections=reflections,
                         total_trades=data.get("total_trades", 0),
@@ -220,7 +218,9 @@ class ReflexionLoop:
                     what_failed.append("Low volume - move lacked conviction")
                     pattern_tags.append("low_volume_entry")
             if pre_trade_confidence > 0.7:
-                what_failed.append(f"Overconfident ({pre_trade_confidence:.0%}) - calibration needed")
+                what_failed.append(
+                    f"Overconfident ({pre_trade_confidence:.0%}) - calibration needed"
+                )
                 pattern_tags.append("overconfidence")
             if pre_trade_confidence < 0.5:
                 what_failed.append("Took trade despite low confidence - discipline issue")
@@ -292,7 +292,9 @@ class ReflexionLoop:
             self.memory.best_patterns = self.memory.best_patterns[-10:]
 
         self._save_memory()
-        logger.info(f"Stored reflection for {reflection.symbol}: {'WIN' if reflection.is_win else 'LOSS'}")
+        logger.info(
+            f"Stored reflection for {reflection.symbol}: {'WIN' if reflection.is_win else 'LOSS'}"
+        )
 
     def get_relevant_reflections(
         self, symbol: str | None = None, limit: int = 5
@@ -360,33 +362,37 @@ class ReflexionLoop:
         context_parts.append("RECENT LESSONS LEARNED:")
         for r in relevant[-3:]:
             outcome = "WIN" if r.is_win else "LOSS"
-            context_parts.append(
-                f"- [{outcome}] {r.symbol}: {r.lesson_learned}"
-            )
+            context_parts.append(f"- [{outcome}] {r.symbol}: {r.lesson_learned}")
 
         # Add common mistakes to avoid
         if self.memory.common_mistakes:
-            context_parts.extend([
-                "",
-                "MISTAKES TO AVOID (from recent losses):",
-            ])
+            context_parts.extend(
+                [
+                    "",
+                    "MISTAKES TO AVOID (from recent losses):",
+                ]
+            )
             for mistake in self.memory.common_mistakes[-3:]:
                 context_parts.append(f"- {mistake}")
 
         # Add best patterns to look for
         if self.memory.best_patterns:
-            context_parts.extend([
-                "",
-                "PATTERNS THAT WORK (from recent wins):",
-            ])
+            context_parts.extend(
+                [
+                    "",
+                    "PATTERNS THAT WORK (from recent wins):",
+                ]
+            )
             for pattern in self.memory.best_patterns[-3:]:
                 context_parts.append(f"- {pattern.replace('_', ' ').title()}")
 
-        context_parts.extend([
-            "",
-            "Apply these lessons to the current decision.",
-            "=" * 60,
-        ])
+        context_parts.extend(
+            [
+                "",
+                "Apply these lessons to the current decision.",
+                "=" * 60,
+            ]
+        )
 
         return "\n".join(context_parts)
 

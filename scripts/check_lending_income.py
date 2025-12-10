@@ -40,6 +40,7 @@ def main():
 
     if args.json:
         import json
+
         data = get_lending_income_for_report()
         print(json.dumps(data, indent=2))
     else:

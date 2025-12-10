@@ -168,16 +168,10 @@ class KalshiOracle:
             paper = os.getenv("KALSHI_PAPER", "true").lower() == "true"
 
             if email and password:
-                self.client = KalshiClient(
-                    email=email, password=password, paper=paper
-                )
-                logger.info(
-                    f"KalshiOracle initialized with {'paper' if paper else 'live'} client"
-                )
+                self.client = KalshiClient(email=email, password=password, paper=paper)
+                logger.info(f"KalshiOracle initialized with {'paper' if paper else 'live'} client")
             else:
-                logger.warning(
-                    "Kalshi credentials not found - oracle will return empty signals"
-                )
+                logger.warning("Kalshi credentials not found - oracle will return empty signals")
         except ImportError:
             logger.warning("KalshiClient not available - oracle disabled")
         except Exception as e:
@@ -245,9 +239,7 @@ class KalshiOracle:
                     break
         return matches
 
-    def generate_fed_signal(
-        self, markets: list[MarketOddsSnapshot]
-    ) -> Optional[KalshiSignal]:
+    def generate_fed_signal(self, markets: list[MarketOddsSnapshot]) -> Optional[KalshiSignal]:
         """
         Generate trading signal from Fed rate prediction markets.
 
@@ -312,7 +304,7 @@ class KalshiOracle:
                 confidence=0.6,
                 kalshi_odds=odds,
                 threshold_crossed=f"Rate hike odds {odds}% < {thresholds['bullish_bonds']}%",
-                reasoning=f"Moderate rate hold probability ({100-odds}%) - favorable for bonds.",
+                reasoning=f"Moderate rate hold probability ({100 - odds}%) - favorable for bonds.",
             )
 
         return KalshiSignal(
@@ -386,9 +378,7 @@ class KalshiOracle:
 
         return None  # No signal in neutral zone
 
-    def generate_crypto_signal(
-        self, markets: list[MarketOddsSnapshot]
-    ) -> Optional[KalshiSignal]:
+    def generate_crypto_signal(self, markets: list[MarketOddsSnapshot]) -> Optional[KalshiSignal]:
         """
         Generate crypto allocation signal from BTC price prediction markets.
         """

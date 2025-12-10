@@ -579,7 +579,9 @@ class EliteOrchestrator:
                 results["phases"][PlanningPhase.OPTIONS_ACCUMULATION.value] = accumulation_result
                 if PlanningPhase.OPTIONS_ACCUMULATION.value in plan.phases:
                     plan.phases[PlanningPhase.OPTIONS_ACCUMULATION.value]["status"] = "completed"
-                logger.info(f"✅ Options Accumulation: {accumulation_result.get('summary', 'completed')}")
+                logger.info(
+                    f"✅ Options Accumulation: {accumulation_result.get('summary', 'completed')}"
+                )
             except Exception as e:
                 logger.error(f"Options Accumulation phase failed: {e}")
                 results["errors"].append(f"Options Accumulation: {str(e)}")
@@ -1261,7 +1263,9 @@ class EliteOrchestrator:
                 elif exec_result and exec_result.get("action") == "complete":
                     results["summary"] = f"Target reached: {status['current_shares']:.1f} shares"
                 else:
-                    results["summary"] = f"Accumulation status: {exec_result.get('action', 'unknown')}"
+                    results["summary"] = (
+                        f"Accumulation status: {exec_result.get('action', 'unknown')}"
+                    )
             else:
                 results["summary"] = f"Accumulation error: {status.get('error', 'unknown')}"
 

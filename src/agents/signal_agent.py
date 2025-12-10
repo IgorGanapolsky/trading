@@ -30,6 +30,7 @@ except ImportError:
     def get_psychology_context() -> str:
         return ""  # No-op if coaching not available
 
+
 logger = logging.getLogger(__name__)
 
 

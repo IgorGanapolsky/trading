@@ -57,7 +57,9 @@ class MetricsCalculator:
         sharpe = (mean_return - risk_free_daily) / std_return * np.sqrt(252)
 
         # Clamp to reasonable bounds
-        return float(np.clip(sharpe, MetricsCalculator.SHARPE_CLAMP_MIN, MetricsCalculator.SHARPE_CLAMP_MAX))
+        return float(
+            np.clip(sharpe, MetricsCalculator.SHARPE_CLAMP_MIN, MetricsCalculator.SHARPE_CLAMP_MAX)
+        )
 
     @staticmethod
     def calculate_max_drawdown(equity_curve: list[float]) -> float:

@@ -631,22 +631,26 @@ class MentalToughnessCoach:
         ]
 
         if bias_warnings:
-            context_parts.extend([
-                "",
-                "ACTIVE BIAS ALERTS (detected in recent trading):",
-            ])
+            context_parts.extend(
+                [
+                    "",
+                    "ACTIVE BIAS ALERTS (detected in recent trading):",
+                ]
+            )
             context_parts.extend(bias_warnings)
 
-        context_parts.extend([
-            "",
-            "DECISION FRAMEWORK (apply to every recommendation):",
-            "1. What is the BEAR case? (always consider what could go wrong)",
-            "2. Am I chasing or waiting for my setup?",
-            "3. If this trade loses, will I regret the size?",
-            "4. Is my conviction based on analysis or emotion?",
-            "",
-            "=" * 60,
-        ])
+        context_parts.extend(
+            [
+                "",
+                "DECISION FRAMEWORK (apply to every recommendation):",
+                "1. What is the BEAR case? (always consider what could go wrong)",
+                "2. Am I chasing or waiting for my setup?",
+                "3. If this trade loses, will I regret the size?",
+                "4. Is my conviction based on analysis or emotion?",
+                "",
+                "=" * 60,
+            ]
+        )
 
         return "\n".join(context_parts)
 
