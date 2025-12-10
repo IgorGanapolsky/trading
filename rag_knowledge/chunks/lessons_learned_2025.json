@@ -128,6 +128,24 @@
         "docs/BROKER_FAILOVER.md"
       ],
       "embedding_text": "Tradier backup broker options trading failover TRADIER_SANDBOX_API_KEY multi-broker redundancy. If Alpaca options fails use Tradier. ENABLE_BROKER_FAILOVER=true activates failover. Alpaca primary IBKR secondary Tradier tertiary. Circuit breakers protect against cascading failures."
+    },
+    {
+      "id": "ll_008_pivot_to_etf_accumulation",
+      "title": "STRATEGIC PIVOT: Simple ETF Accumulation Over Complex Options",
+      "source": "CTO/CFO Decision - Dec 10, 2025",
+      "date": "2025-12-10",
+      "category": "strategy",
+      "tags": ["etf", "bogleheads", "pivot", "backtest-failure", "simplicity", "spy"],
+      "severity": "critical",
+      "content": "After 31 days of R&D phase: Portfolio $100,017.49 (+$17.49, 0.017%), Win Rate 0% live, Options backtest Sharpe ratios -7 to -72 (ALL NEGATIVE = losing money). Complex options strategies failed to generate returns. CTO/CFO decision: PIVOT to simple Bogleheads-style ETF accumulation. Buy $10/day SPY with market orders, hold forever. Historical SPY return ~10% annually. No timing risk, no options complexity, proven long-term returns.",
+      "key_insight": "When backtests show negative Sharpe ratios, the strategy loses money. Don't fight the data - pivot to proven approaches. Simple often beats complex.",
+      "solution": "Created scripts/simple_etf_accumulator.py and .github/workflows/etf-accumulator.yml. Daily 9:35 AM market order for SPY. Market orders guarantee fills (no limit order slippage). Focus on accumulation not speculation.",
+      "our_implementation": "ETF accumulator runs daily at 9:35 AM ET (market open + 5 min). Uses notional orders for exact dollar amounts. Trades logged to data/etf_trades_*.json. Warren Buffett approach: 'The stock market transfers money from the impatient to the patient.'",
+      "referenced_files": [
+        "scripts/simple_etf_accumulator.py",
+        ".github/workflows/etf-accumulator.yml"
+      ],
+      "embedding_text": "strategic pivot ETF accumulation bogleheads SPY simple strategy. Options backtest negative Sharpe -7 to -72 losing money. 31 days 0% win rate. Pivot to buy $10/day SPY market orders hold forever. Historical 10% annual return. Simple beats complex. Warren Buffett patience. No timing no options no complexity."
     }
   ]
 }
