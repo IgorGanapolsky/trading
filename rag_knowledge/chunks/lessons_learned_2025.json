@@ -146,6 +146,25 @@
         ".github/workflows/etf-accumulator.yml"
       ],
       "embedding_text": "strategic pivot ETF accumulation bogleheads SPY simple strategy. Options backtest negative Sharpe -7 to -72 losing money. 31 days 0% win rate. Pivot to buy $10/day SPY market orders hold forever. Historical 10% annual return. Simple beats complex. Warren Buffett patience. No timing no options no complexity."
+    },
+    {
+      "id": "ll_009_overly_restrictive_filters",
+      "title": "CRITICAL BUG: Overly Restrictive Filters Blocked All Trading",
+      "source": "CTO Audit - Dec 10, 2025",
+      "date": "2025-12-10",
+      "category": "architecture",
+      "tags": ["filters", "blocking", "catch-22", "promotion-gate", "delta", "dte", "premium"],
+      "severity": "critical",
+      "content": "System was broken for 31 days due to multiple blocking gates: (1) Options filters too restrictive: delta -0.15 to -0.40 (too narrow), DTE 30-45 days (too narrow), premium >0.5% (too high) - few options qualified. (2) Promotion gate required 60% win rate and 1.5 Sharpe BEFORE allowing trades. (3) Classic catch-22: Can't get good metrics without trades, can't trade without good metrics.",
+      "key_insight": "When building a trading system, start with RELAXED filters and tighten over time with data. Don't implement impossible-to-pass gates that require results before allowing the activity that produces results.",
+      "solution": "Relaxed filters: delta -0.10 to -0.50, DTE 20-60 days, premium >0.3%. Removed promotion gate from options-trading.yml. Keep IV percentile >50% as intelligent filter (backed by TastyTrade research). System can now actually execute trades.",
+      "our_implementation": "Updated execute_options_trade.py with relaxed filters. Options workflow has no promotion gate. IV percentile filter remains as quality control.",
+      "referenced_files": [
+        "scripts/execute_options_trade.py",
+        ".github/workflows/options-trading.yml",
+        "scripts/enforce_promotion_gate.py"
+      ],
+      "embedding_text": "overly restrictive filters blocked trading 31 days catch-22 impossible promotion gate. Filters too tight: delta DTE premium. Required 60% win rate before trading but can't get wins without trading. Solution: relax filters start loose tighten with data. Keep IV percentile as intelligent filter. Remove impossible gates."
     }
   ]
 }
