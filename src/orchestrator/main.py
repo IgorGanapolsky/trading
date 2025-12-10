@@ -575,6 +575,30 @@ class TradingOrchestrator:
                 f"(${pl:.2f}, {((exit_price - entry_price) / entry_price) * 100:.2f}%)"
             )
 
+            # Gate 2 RL Training: Record trade outcome for DiscoRL/DQN learning
+            # Dec 10, 2025: CEO mandate - no dead code, RL must learn from real trades!
+            try:
+                pl_pct = (exit_price - entry_price) / entry_price if entry_price > 0 else 0
+                # Scale reward: +-10% maps to +-1.0 reward
+                reward = pl_pct * 10.0
+                # Action: 1=BUY (we bought), outcome determines if it was good
+                action = 1  # BUY action that led to this trade
+                # Record to RL filter for online learning
+                rl_result = self.rl_filter.record_trade_outcome(
+                    entry_state={"symbol": symbol, "entry_price": entry_price},
+                    action=action,
+                    exit_state={"symbol": symbol, "exit_price": exit_price, "pl_pct": pl_pct},
+                    reward=reward,
+                    done=True,
+                )
+                if rl_result:
+                    logger.info(
+                        f"Gate 2 RL: Recorded trade outcome for {symbol} "
+                        f"(reward={reward:.3f}, action={action})"
+                    )
+            except Exception as rl_exc:
+                logger.debug(f"Gate 2 RL training update failed (non-critical): {rl_exc}")
+
             # Gate 0: Mental Toughness Coach - Process trade result for psychological state
             if self.mental_coach:
                 try:

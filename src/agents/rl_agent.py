@@ -89,12 +89,12 @@ class RLFilter:
                 logger.warning("Transformer RL initialisation failed: %s", exc)
 
         # DiscoRL-inspired DQN initialization (Dec 2025)
-        # Dec 9, 2025: Disabled by default until validated with real trades (0 closed trades so far)
-        # Domain transfer from Atari games to financial markets is unproven
+        # Dec 10, 2025: ENABLED by default - CEO mandate: no dead code!
+        # Will learn from real trades as they close
         disco_flag = (
             enable_disco_dqn
             if enable_disco_dqn is not None
-            else os.getenv("RL_USE_DISCO_DQN", "0").lower() in {"1", "true", "yes", "on"}
+            else os.getenv("RL_USE_DISCO_DQN", "1").lower() in {"1", "true", "yes", "on"}
         )
         if disco_flag and DISCO_DQN_AVAILABLE:
             try:
