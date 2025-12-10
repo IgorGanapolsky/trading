@@ -36,6 +36,11 @@ class TradierOrderSide(Enum):
     SELL = "sell"
     BUY_TO_COVER = "buy_to_cover"
     SELL_SHORT = "sell_short"
+    # Options-specific sides
+    BUY_TO_OPEN = "buy_to_open"
+    BUY_TO_CLOSE = "buy_to_close"
+    SELL_TO_OPEN = "sell_to_open"
+    SELL_TO_CLOSE = "sell_to_close"
 
 
 class TradierOrderType(Enum):
@@ -493,6 +498,374 @@ class TradierClient:
         except Exception as e:
             logger.warning(f"Failed to get history for {symbol}: {e}")
             return []
+
+    # ========== OPTIONS TRADING METHODS ==========
+
+    def get_option_expirations(self, symbol: str) -> list[str]:
+        """
+        Get available option expiration dates for a symbol.
+
+        Args:
+            symbol: Underlying stock symbol (e.g., 'SPY')
+
+        Returns:
+            List of expiration dates in 'YYYY-MM-DD' format
+        """
+        try:
+            response = self._request(
+                "GET",
+                "/markets/options/expirations",
+                params={"symbol": symbol.upper()},
+            )
+
+            expirations = response.get("expirations", {})
+            if not expirations or expirations == "null":
+                return []
+
+            date_list = expirations.get("date", [])
+            if isinstance(date_list, str):
+                date_list = [date_list]
+
+            return date_list
+        except Exception as e:
+            logger.warning(f"Failed to get option expirations for {symbol}: {e}")
+            return []
+
+    def get_option_chain(
+        self,
+        symbol: str,
+        expiration: Optional[str] = None,
+        option_type: Optional[str] = None,
+    ) -> list[dict]:
+        """
+        Get option chain for a symbol.
+
+        Args:
+            symbol: Underlying stock symbol (e.g., 'SPY')
+            expiration: Expiration date 'YYYY-MM-DD' (optional, returns nearest if not set)
+            option_type: 'call', 'put', or None for both
+
+        Returns:
+            List of option contracts with greeks and quotes
+        """
+        try:
+            params = {"symbol": symbol.upper(), "greeks": "true"}
+            if expiration:
+                params["expiration"] = expiration
+            if option_type:
+                params["option_type"] = option_type.lower()
+
+            response = self._request("GET", "/markets/options/chains", params=params)
+
+            options = response.get("options", {})
+            if not options or options == "null":
+                return []
+
+            option_list = options.get("option", [])
+            if isinstance(option_list, dict):
+                option_list = [option_list]
+
+            results = []
+            for opt in option_list:
+                greeks = opt.get("greeks", {}) or {}
+                results.append({
+                    "symbol": opt.get("symbol", ""),
+                    "underlying": opt.get("underlying", symbol),
+                    "strike": float(opt.get("strike", 0)),
+                    "expiration_date": opt.get("expiration_date", ""),
+                    "option_type": opt.get("option_type", ""),  # 'call' or 'put'
+                    "bid": float(opt.get("bid", 0) or 0),
+                    "ask": float(opt.get("ask", 0) or 0),
+                    "last": float(opt.get("last", 0) or 0),
+                    "volume": int(opt.get("volume", 0) or 0),
+                    "open_interest": int(opt.get("open_interest", 0) or 0),
+                    # Greeks
+                    "delta": float(greeks.get("delta", 0) or 0),
+                    "gamma": float(greeks.get("gamma", 0) or 0),
+                    "theta": float(greeks.get("theta", 0) or 0),
+                    "vega": float(greeks.get("vega", 0) or 0),
+                    "rho": float(greeks.get("rho", 0) or 0),
+                    "iv": float(greeks.get("mid_iv", 0) or greeks.get("smv_vol", 0) or 0),
+                })
+
+            return results
+        except Exception as e:
+            logger.warning(f"Failed to get option chain for {symbol}: {e}")
+            return []
+
+    def find_optimal_put(
+        self,
+        symbol: str,
+        target_delta: float = 0.25,
+        min_dte: int = 30,
+        max_dte: int = 45,
+    ) -> Optional[dict]:
+        """
+        Find optimal put option for cash-secured put strategy.
+
+        Criteria (McMillan/TastyTrade):
+        - OTM put (strike below current price)
+        - Delta between -0.15 and -0.40
+        - DTE between 30-45 days
+        - Decent premium (>0.5% of underlying)
+
+        Args:
+            symbol: Underlying symbol
+            target_delta: Target delta magnitude (default 0.25)
+            min_dte: Minimum days to expiration
+            max_dte: Maximum days to expiration
+
+        Returns:
+            Best put option dict or None
+        """
+        from datetime import date, timedelta
+
+        # Get current price
+        quote = self.get_quote(symbol)
+        current_price = quote.get("last", 0)
+        if current_price <= 0:
+            logger.warning(f"Could not get price for {symbol}")
+            return None
+
+        logger.info(f"🔍 Scanning Tradier option chain for {symbol}...")
+        logger.info(f"   Current {symbol} price: ${current_price:.2f}")
+
+        # Get expiration dates
+        expirations = self.get_option_expirations(symbol)
+        if not expirations:
+            logger.warning(f"No expirations found for {symbol}")
+            return None
+
+        # Filter expirations by DTE
+        target_expirations = []
+        today = date.today()
+        for exp_str in expirations:
+            try:
+                exp_date = datetime.strptime(exp_str, "%Y-%m-%d").date()
+                dte = (exp_date - today).days
+                if min_dte <= dte <= max_dte:
+                    target_expirations.append(exp_str)
+            except ValueError:
+                continue
+
+        if not target_expirations:
+            logger.warning(f"No expirations in {min_dte}-{max_dte} DTE range for {symbol}")
+            return None
+
+        # Scan each expiration for optimal puts
+        candidates = []
+        for expiration in target_expirations:
+            chain = self.get_option_chain(symbol, expiration=expiration, option_type="put")
+
+            for opt in chain:
+                strike = opt.get("strike", 0)
+                delta = opt.get("delta", 0)
+                bid = opt.get("bid", 0)
+                ask = opt.get("ask", 0)
+                mid = (bid + ask) / 2 if bid and ask else 0
+
+                # Skip ITM puts (strike >= current price)
+                if strike >= current_price:
+                    continue
+
+                # Check delta range (puts have negative delta)
+                if delta > -0.15 or delta < -0.40:
+                    continue
+
+                # Calculate premium as % of underlying
+                premium_pct = (mid / current_price) * 100 if current_price > 0 else 0
+
+                # Skip if premium too low
+                if premium_pct < 0.5:
+                    continue
+
+                exp_date = datetime.strptime(expiration, "%Y-%m-%d").date()
+                dte = (exp_date - today).days
+
+                candidates.append({
+                    "symbol": opt.get("symbol"),
+                    "strike": strike,
+                    "expiration": exp_date,
+                    "dte": dte,
+                    "delta": delta,
+                    "bid": bid,
+                    "ask": ask,
+                    "mid": mid,
+                    "premium_pct": premium_pct,
+                    "iv": opt.get("iv", 0),
+                })
+
+        if not candidates:
+            logger.warning(f"No suitable put options found for {symbol}")
+            return None
+
+        # Sort by delta closest to target
+        candidates.sort(key=lambda x: abs(abs(x["delta"]) - target_delta))
+
+        best = candidates[0]
+        logger.info(f"✅ Found optimal put via Tradier:")
+        logger.info(f"   Symbol: {best['symbol']}")
+        logger.info(f"   Strike: ${best['strike']:.2f} ({((current_price - best['strike']) / current_price * 100):.1f}% OTM)")
+        logger.info(f"   Expiration: {best['expiration']} ({best['dte']} DTE)")
+        logger.info(f"   Delta: {best['delta']:.3f}")
+        logger.info(f"   Premium: ${best['mid']:.2f} ({best['premium_pct']:.2f}%)")
+        if best['iv']:
+            logger.info(f"   IV: {best['iv']:.1%}")
+
+        return best
+
+    def submit_option_order(
+        self,
+        option_symbol: str,
+        qty: int,
+        side: str,
+        order_type: str = "limit",
+        limit_price: Optional[float] = None,
+        time_in_force: str = "day",
+    ) -> TradierOrder:
+        """
+        Submit an options order.
+
+        Args:
+            option_symbol: OCC option symbol (e.g., 'SPY251219P00580000')
+            qty: Number of contracts
+            side: 'buy_to_open', 'sell_to_open', 'buy_to_close', 'sell_to_close'
+            order_type: 'market' or 'limit'
+            limit_price: Limit price per contract (for limit orders)
+            time_in_force: 'day' or 'gtc'
+
+        Returns:
+            TradierOrder with order details
+        """
+        if not self.is_configured():
+            raise RuntimeError("Tradier client not configured")
+
+        order_data = {
+            "class": "option",
+            "symbol": option_symbol,
+            "side": side.lower(),
+            "quantity": str(int(qty)),
+            "type": order_type.lower(),
+            "duration": time_in_force.lower(),
+        }
+
+        if limit_price and order_type == "limit":
+            order_data["price"] = str(limit_price)
+
+        logger.info(f"📤 Submitting Tradier option order: {side} {qty}x {option_symbol}")
+
+        response = self._request(
+            "POST",
+            f"/accounts/{self.account_number}/orders",
+            data=order_data,
+        )
+
+        order_info = response.get("order", {})
+        order_id = str(order_info.get("id", ""))
+        status = order_info.get("status", "pending")
+
+        logger.info(f"✅ Tradier order submitted: ID={order_id}, status={status}")
+
+        return TradierOrder(
+            id=order_id,
+            symbol=option_symbol,
+            side=side,
+            quantity=float(qty),
+            filled_quantity=0.0,
+            price=limit_price,
+            avg_fill_price=None,
+            status=status,
+            created_at=datetime.now().isoformat(),
+            order_type=order_type,
+        )
+
+    def execute_cash_secured_put(
+        self,
+        symbol: str,
+        dry_run: bool = False,
+    ) -> dict:
+        """
+        Execute a cash-secured put trade via Tradier.
+
+        Strategy:
+        1. Find optimal OTM put (delta ~0.25, 30-45 DTE)
+        2. Verify cash for potential assignment
+        3. Sell 1 put contract
+
+        Args:
+            symbol: Underlying symbol (e.g., 'SPY')
+            dry_run: If True, don't actually execute
+
+        Returns:
+            Result dict with status and trade details
+        """
+        logger.info("=" * 60)
+        logger.info("💰 TRADIER CASH-SECURED PUT STRATEGY")
+        logger.info("=" * 60)
+
+        # Get account info
+        try:
+            account = self.get_account()
+            logger.info(f"Account cash: ${account.cash:,.2f}")
+            logger.info(f"Buying power: ${account.buying_power:,.2f}")
+        except Exception as e:
+            logger.error(f"Failed to get Tradier account: {e}")
+            return {"status": "ERROR", "error": f"Account error: {e}", "broker": "tradier"}
+
+        # Find optimal put
+        put_option = self.find_optimal_put(symbol)
+        if not put_option:
+            return {"status": "NO_TRADE", "reason": "No suitable options found", "broker": "tradier"}
+
+        # Calculate cash required for assignment
+        cash_required = put_option["strike"] * 100
+        logger.info(f"\n💵 Cash required for assignment: ${cash_required:,.2f}")
+
+        if account.cash < cash_required:
+            logger.warning(f"❌ Insufficient cash! Need ${cash_required:,.2f}, have ${account.cash:,.2f}")
+            return {"status": "NO_TRADE", "reason": "Insufficient cash", "broker": "tradier"}
+
+        # Execute trade
+        if dry_run:
+            logger.info("\n🔶 DRY RUN - No actual trade executed")
+            return {
+                "status": "DRY_RUN",
+                "option": put_option,
+                "cash_required": cash_required,
+                "potential_premium": put_option["mid"] * 100,
+                "broker": "tradier",
+            }
+
+        # Place the order
+        try:
+            order = self.submit_option_order(
+                option_symbol=put_option["symbol"],
+                qty=1,
+                side="sell_to_open",
+                order_type="limit",
+                limit_price=put_option["bid"],  # Sell at bid for faster fill
+                time_in_force="day",
+            )
+
+            logger.info(f"\n✅ TRADIER ORDER SUBMITTED!")
+            logger.info(f"   Order ID: {order.id}")
+            logger.info(f"   Symbol: {put_option['symbol']}")
+            logger.info(f"   Side: SELL TO OPEN")
+            logger.info(f"   Qty: 1 contract")
+            logger.info(f"   Limit Price: ${put_option['bid']:.2f}")
+            logger.info(f"   Premium: ${put_option['bid'] * 100:.2f} (1 contract)")
+
+            return {
+                "status": "ORDER_SUBMITTED",
+                "order_id": order.id,
+                "option": put_option,
+                "premium": put_option["bid"] * 100,
+                "broker": "tradier",
+            }
+
+        except Exception as e:
+            logger.error(f"❌ Tradier order failed: {e}")
+            return {"status": "ERROR", "error": str(e), "broker": "tradier"}
 
 
 # Singleton instance
