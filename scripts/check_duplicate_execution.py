@@ -53,6 +53,9 @@ def main():
                     # Support both ISO and "YYYY-MM-DD HH:MM:SS" formats
                     if "T" in last_updated:
                         last_dt = datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
+                        # Ensure timezone-aware (fix for naive datetime comparison)
+                        if last_dt.tzinfo is None:
+                            last_dt = last_dt.replace(tzinfo=timezone.utc)
                     else:
                         last_dt = datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S")
                         last_dt = last_dt.replace(tzinfo=timezone.utc)
