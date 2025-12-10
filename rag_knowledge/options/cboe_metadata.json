@@ -1,0 +1,365 @@
+{
+  "collection_name": "CBOE Options Trading Knowledge Base",
+  "description": "Comprehensive collection of Chicago Board Options Exchange (CBOE) education materials covering volatility products, trading strategies, market structure, and volatility indices",
+  "created_date": "2025-12-10",
+  "version": "1.0",
+  "total_files": 4,
+  "total_lines": 2800,
+  "source": "CBOE official methodologies, options market knowledge, and professional trading insights",
+  "files": [
+    {
+      "filename": "cboe_volatility_products.md",
+      "title": "CBOE Volatility Products - Comprehensive Guide",
+      "description": "Deep dive into VIX index methodology, VIX futures and options trading, term structure analysis (contango/backwardation), VVIX (volatility of volatility), VIX spikes and mean reversion patterns, and comparison between VIX products and SPY options",
+      "topics": [
+        "VIX Index Methodology",
+        "VIX Futures and Options",
+        "VIX Term Structure (Contango/Backwardation)",
+        "VVIX (Volatility of Volatility)",
+        "VIX Spikes and Mean Reversion",
+        "Trading VIX Products vs SPY Options"
+      ],
+      "line_count": 730,
+      "key_concepts": [
+        "VIX calculation formula",
+        "VIX futures pricing",
+        "Contango and backwardation dynamics",
+        "VVIX trading signals",
+        "Mean reversion strategies",
+        "VIX ETPs (VXX, UVXY, SVXY)",
+        "Term structure metrics",
+        "Portfolio hedging with VIX"
+      ],
+      "trading_strategies": [
+        "VIX call credit spreads for mean reversion",
+        "SPY bull put spreads during high VIX",
+        "Short VIX futures at extreme levels",
+        "Term structure arbitrage",
+        "Contango decay trades",
+        "Backwardation momentum trades"
+      ],
+      "difficulty_level": "Advanced",
+      "recommended_for": [
+        "Options traders",
+        "Portfolio hedgers",
+        "Volatility traders",
+        "Risk managers"
+      ]
+    },
+    {
+      "filename": "cboe_options_strategies.md",
+      "title": "CBOE Options Strategies - Comprehensive Guide",
+      "description": "Complete guide to CBOE benchmark strategies including covered calls (BXM), put-write (PUT), collars, iron condors, butterflies, and calendar/diagonal spreads with detailed mechanics, management rules, and real-world applications",
+      "topics": [
+        "CBOE Benchmark Strategies Overview",
+        "Covered Call Strategy (BXM)",
+        "Put-Write Strategy (PUT)",
+        "Collar Strategy",
+        "Iron Condor Mechanics",
+        "Butterfly Spreads",
+        "Calendar and Diagonal Spreads"
+      ],
+      "line_count": 1140,
+      "key_concepts": [
+        "BXM index methodology",
+        "PUT index performance",
+        "CLL collar index",
+        "CNDR iron condor index",
+        "Strike selection strategies",
+        "Greeks management",
+        "Risk/reward optimization",
+        "Portfolio income generation"
+      ],
+      "trading_strategies": [
+        "ATM vs OTM covered calls",
+        "Cash-secured put writing",
+        "Zero-cost collars",
+        "High-probability iron condors",
+        "50% profit target management",
+        "Call and put butterflies",
+        "LEAPS diagonal spreads",
+        "Rolling techniques"
+      ],
+      "performance_metrics": {
+        "BXM": {
+          "typical_annual_return": "8-12%",
+          "volatility": "10-12%",
+          "vs_SPX": "Similar returns, lower volatility"
+        },
+        "PUT": {
+          "typical_annual_return": "10-15%",
+          "volatility": "13-15%",
+          "vs_SPX": "Higher returns, similar volatility"
+        },
+        "CLL": {
+          "typical_annual_return": "6-10%",
+          "volatility": "8-10%",
+          "vs_SPX": "Lower returns, much lower volatility"
+        }
+      },
+      "difficulty_level": "Intermediate to Advanced",
+      "recommended_for": [
+        "Income traders",
+        "Covered call writers",
+        "Premium sellers",
+        "Portfolio managers",
+        "Risk-adjusted return seekers"
+      ]
+    },
+    {
+      "filename": "cboe_market_structure.md",
+      "title": "CBOE Market Structure - Comprehensive Guide",
+      "description": "In-depth exploration of options market mechanics, market maker roles, bid-ask spreads, open interest analysis, expiration dynamics including pin risk and gamma, and exercise/assignment procedures",
+      "topics": [
+        "Options Market Mechanics",
+        "Market Makers and Liquidity",
+        "Bid-Ask Spreads",
+        "Open Interest Analysis",
+        "Options Expiration Dynamics",
+        "Exercise and Assignment"
+      ],
+      "line_count": 620,
+      "key_concepts": [
+        "NBBO (National Best Bid/Offer)",
+        "Market maker obligations",
+        "Delta hedging by dealers",
+        "Payment for order flow (PFOF)",
+        "Open interest vs volume",
+        "Pin risk at expiration",
+        "Gamma risk management",
+        "OCC settlement process"
+      ],
+      "practical_applications": [
+        "Optimal order placement",
+        "Spread negotiation tactics",
+        "Liquidity timing (10am-3pm best)",
+        "OI support/resistance levels",
+        "Maximum pain theory",
+        "Pre-expiration position management",
+        "Early assignment avoidance",
+        "Dividend risk management"
+      ],
+      "market_maker_strategies": [
+        "Delta hedging",
+        "Volatility trading",
+        "Pin risk management",
+        "Gamma scalping"
+      ],
+      "difficulty_level": "Intermediate",
+      "recommended_for": [
+        "All options traders",
+        "Market makers",
+        "Liquidity providers",
+        "Trading system developers"
+      ]
+    },
+    {
+      "filename": "cboe_volatility_indices.md",
+      "title": "CBOE Volatility Indices - Comprehensive Guide",
+      "description": "Complete reference for CBOE volatility indices including detailed VIX calculation methodology, VIX9D (9-day), VIX3M (3-month), SKEW index for tail risk, correlation indices, and sector volatility indices (GVZ, OVX, single stocks)",
+      "topics": [
+        "VIX Calculation Methodology",
+        "VIX9D (9-Day VIX)",
+        "VIX3M (3-Month VIX)",
+        "SKEW Index",
+        "Correlation Indices",
+        "Sector Volatility Indices"
+      ],
+      "line_count": 710,
+      "key_concepts": [
+        "Model-free implied volatility",
+        "Variance swap replication",
+        "Term structure analysis",
+        "VIX/VIX3M ratio",
+        "SKEW tail risk measurement",
+        "Implied correlation (ICJ)",
+        "Dispersion trading",
+        "Sector relative volatility"
+      ],
+      "volatility_indices_covered": [
+        "VIX (30-day S&P 500)",
+        "VIX9D (9-day short-term)",
+        "VIX3M (3-month medium-term)",
+        "VVIX (volatility of VIX)",
+        "SKEW (tail risk)",
+        "GVZ (gold volatility)",
+        "OVX (oil volatility)",
+        "VXAPL (Apple)",
+        "VXAZN (Amazon)",
+        "VXGOG (Google)"
+      ],
+      "trading_signals": [
+        "VIX9D > VIX (short-term fear)",
+        "VIX > VIX3M (backwardation, stress)",
+        "SKEW > 135 (elevated tail risk)",
+        "High correlation (ICJ > 70, crisis mode)",
+        "OVX/VIX ratio for energy volatility",
+        "GVZ/VIX ratio for gold uncertainty"
+      ],
+      "mathematical_formulas": [
+        "VIX variance calculation",
+        "Interpolation to 30 days",
+        "SKEW skewness measure",
+        "Implied correlation calculation"
+      ],
+      "difficulty_level": "Advanced",
+      "recommended_for": [
+        "Volatility traders",
+        "Risk managers",
+        "Portfolio hedgers",
+        "Quantitative analysts",
+        "Macro traders"
+      ]
+    }
+  ],
+  "trading_applications": {
+    "portfolio_hedging": {
+      "relevant_files": [
+        "cboe_volatility_products.md",
+        "cboe_options_strategies.md"
+      ],
+      "key_strategies": [
+        "VIX calls for crash protection",
+        "Collar strategies for downside protection",
+        "Put-write for income with stock acquisition"
+      ]
+    },
+    "income_generation": {
+      "relevant_files": [
+        "cboe_options_strategies.md"
+      ],
+      "key_strategies": [
+        "Covered calls (BXM methodology)",
+        "Put-write (PUT methodology)",
+        "Iron condors in range-bound markets"
+      ]
+    },
+    "volatility_trading": {
+      "relevant_files": [
+        "cboe_volatility_products.md",
+        "cboe_volatility_indices.md"
+      ],
+      "key_strategies": [
+        "Term structure arbitrage",
+        "VIX mean reversion",
+        "Dispersion trading",
+        "Sector relative value"
+      ]
+    },
+    "risk_management": {
+      "relevant_files": [
+        "cboe_market_structure.md",
+        "cboe_volatility_indices.md"
+      ],
+      "key_strategies": [
+        "SKEW-based tail risk monitoring",
+        "Pin risk management at expiration",
+        "Early assignment avoidance",
+        "Position sizing via sector volatility"
+      ]
+    },
+    "market_timing": {
+      "relevant_files": [
+        "cboe_volatility_products.md",
+        "cboe_volatility_indices.md"
+      ],
+      "key_signals": [
+        "VIX spikes > 30 (mean reversion opportunity)",
+        "SKEW > 135 (elevated risk)",
+        "Backwardation (sell volatility)",
+        "High correlation (reduce stock picking)"
+      ]
+    }
+  },
+  "integration_with_rl_system": {
+    "signal_generation": [
+      "VIX level for market regime classification",
+      "VIX/VIX3M ratio for term structure state",
+      "SKEW for tail risk adjustment",
+      "OI analysis for support/resistance",
+      "Sector volatility for position sizing"
+    ],
+    "risk_management": [
+      "Reduce position size when VIX > 25",
+      "Avoid naked options when SKEW > 135",
+      "Close positions 1-3 days before expiration (gamma risk)",
+      "Scale out when VIX spikes > 2 standard deviations"
+    ],
+    "strategy_selection": [
+      "Use defined-risk strategies when VIX > 20",
+      "Iron condors when VIX < 15 and SKEW < 130",
+      "Butterflies when low volatility and high SKEW",
+      "Calendars when contango > 15%"
+    ],
+    "portfolio_allocation": [
+      "Increase hedges when SKEW rising + VIX low",
+      "Reduce exposure when correlation > 0.7",
+      "Add sector bets when correlation < 0.5",
+      "Scale equity exposure inversely to VIX3M"
+    ]
+  },
+  "key_learning_outcomes": [
+    "Understand VIX calculation and what it represents",
+    "Master term structure analysis for volatility trading",
+    "Apply CBOE benchmark strategies systematically",
+    "Interpret SKEW for tail risk management",
+    "Use open interest for support/resistance",
+    "Manage expiration week dynamics and pin risk",
+    "Trade sector volatility for relative value",
+    "Integrate volatility signals into trading system"
+  ],
+  "prerequisites": {
+    "knowledge": [
+      "Options basics (calls, puts, Greeks)",
+      "Options pricing fundamentals",
+      "Basic statistics and probability",
+      "Market mechanics"
+    ],
+    "experience": [
+      "3+ months options trading",
+      "Familiarity with options chains",
+      "Understanding of volatility concept",
+      "Basic risk management"
+    ]
+  },
+  "recommended_reading_order": [
+    "1. cboe_market_structure.md - Understand the foundation",
+    "2. cboe_options_strategies.md - Learn proven strategies",
+    "3. cboe_volatility_products.md - Master VIX products",
+    "4. cboe_volatility_indices.md - Advanced volatility analysis"
+  ],
+  "external_resources": {
+    "official_cboe": [
+      "https://www.cboe.com - CBOE official site",
+      "https://www.cboe.com/tradable_products/vix/ - VIX information",
+      "https://cdn.cboe.com/api/global/us_indices/governance/Volatility_Index_Methodology_Cboe_Volatility_Index.pdf - VIX White Paper"
+    ],
+    "options_clearing_corporation": [
+      "https://www.optionsclearing.com - OCC official site",
+      "https://www.theocc.com/Company-Information/Documents-and-Archives/Options-Disclosure-Document - Options Disclosure"
+    ],
+    "education": [
+      "https://www.optionseducation.org - Options Industry Council",
+      "https://www.investopedia.com/options-basics-tutorial-4583012 - Options basics"
+    ]
+  },
+  "update_frequency": "Quarterly or as CBOE methodologies change",
+  "maintainer": "AI Trading System - Options Knowledge RAG",
+  "license": "Educational use for trading system development",
+  "tags": [
+    "options",
+    "volatility",
+    "VIX",
+    "CBOE",
+    "market-structure",
+    "trading-strategies",
+    "risk-management",
+    "portfolio-hedging",
+    "income-generation",
+    "term-structure",
+    "Greeks",
+    "expiration",
+    "assignment",
+    "open-interest"
+  ]
+}
