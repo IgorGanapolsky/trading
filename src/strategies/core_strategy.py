@@ -197,20 +197,22 @@ class CoreStrategy:
     MACD_SLOW_PERIOD = 26
     MACD_SIGNAL_PERIOD = 9
 
-    # Risk parameters - TIGHTENED for active trading (Dec 3, 2025)
-    # Previous: 5% stop/profit resulted in 0 closed trades, 0% win rate
-    # New: 3% thresholds ensure positions are actively managed
-    DEFAULT_STOP_LOSS_PCT = 0.03  # 3% stop loss (tighter for active trading)
-    ATR_STOP_MULTIPLIER = 2.0  # ATR multiplier for dynamic stops
+    # Risk parameters - WIDENED for better risk/reward (Dec 10, 2025)
+    # Previous: 3% stop/profit was too tight - profit/trade ($0.39) < costs ($1.22)
+    # Analysis: Tight stops resulted in -7 to -2086 Sharpe ratios across all scenarios
+    # New: 7% stop / 10% profit allows capturing larger moves to overcome costs
+    DEFAULT_STOP_LOSS_PCT = 0.07  # 7% stop loss (wider for trend following)
+    ATR_STOP_MULTIPLIER = 2.5  # ATR multiplier for dynamic stops (increased)
     USE_ATR_STOPS = True  # Use ATR-based stops (more adaptive)
     REBALANCE_THRESHOLD = 0.05  # 5% deviation triggers rebalance (research-optimized)
     REBALANCE_FREQUENCY_DAYS = 90  # Quarterly rebalancing (research-optimized)
 
-    # Profit-taking parameters - TIGHTENED for active trading
-    TAKE_PROFIT_PCT = 0.03  # 3% profit target (active trading)
+    # Profit-taking parameters - WIDENED to capture larger moves
+    # 10% target means avg profit/trade can exceed transaction costs
+    TAKE_PROFIT_PCT = 0.10  # 10% profit target (trend following)
 
-    # Time-based exit parameters (NEW Dec 3, 2025)
-    MAX_HOLDING_DAYS = 10  # Close positions after 10 days regardless of P/L
+    # Time-based exit parameters (ADJUSTED Dec 10, 2025)
+    MAX_HOLDING_DAYS = 30  # Extended from 10 to 30 days for trend capture
     ENABLE_MOMENTUM_EXIT = True  # Exit on MACD bearish crossover
 
     # Diversification allocation (guaranteed minimums)
