@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 # Optional dependencies
 try:
     import yfinance as yf
+
     YFINANCE_AVAILABLE = True
 except ImportError:
     YFINANCE_AVAILABLE = False
@@ -39,6 +40,7 @@ try:
     from alpaca.data.historical import StockHistoricalDataClient
     from alpaca.data.requests import StockBarsRequest
     from alpaca.data.timeframe import TimeFrame
+
     ALPACA_AVAILABLE = True
 except ImportError:
     ALPACA_AVAILABLE = False
@@ -47,6 +49,7 @@ except ImportError:
 # ============================================================================
 # Black-Scholes Option Pricing
 # ============================================================================
+
 
 class BlackScholes:
     """
@@ -73,7 +76,7 @@ class BlackScholes:
         if T <= 0:
             return max(S - K, 0)
 
-        d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+        d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
         d2 = d1 - sigma * np.sqrt(T)
 
         call = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
@@ -97,7 +100,7 @@ class BlackScholes:
         if T <= 0:
             return max(K - S, 0)
 
-        d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+        d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
         d2 = d1 - sigma * np.sqrt(T)
 
         put = K * np.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
@@ -109,7 +112,7 @@ class BlackScholes:
         if T <= 0:
             return 1.0 if S > K else 0.0
 
-        d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+        d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
         return norm.cdf(d1)
 
     @staticmethod
@@ -118,11 +121,13 @@ class BlackScholes:
         if T <= 0:
             return -1.0 if S < K else 0.0
 
-        d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+        d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
         return norm.cdf(d1) - 1
 
     @staticmethod
-    def theta(S: float, K: float, T: float, r: float, sigma: float, option_type: str = "call") -> float:
+    def theta(
+        S: float, K: float, T: float, r: float, sigma: float, option_type: str = "call"
+    ) -> float:
         """
         Calculate option theta (time decay per day).
 
@@ -131,31 +136,24 @@ class BlackScholes:
         if T <= 0:
             return 0.0
 
-        d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+        d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
         d2 = d1 - sigma * np.sqrt(T)
 
         if option_type == "call":
-            theta = (
-                -S * norm.pdf(d1) * sigma / (2 * np.sqrt(T))
-                - r * K * np.exp(-r * T) * norm.cdf(d2)
-            )
+            theta = -S * norm.pdf(d1) * sigma / (2 * np.sqrt(T)) - r * K * np.exp(
+                -r * T
+            ) * norm.cdf(d2)
         else:  # put
-            theta = (
-                -S * norm.pdf(d1) * sigma / (2 * np.sqrt(T))
-                + r * K * np.exp(-r * T) * norm.cdf(-d2)
-            )
+            theta = -S * norm.pdf(d1) * sigma / (2 * np.sqrt(T)) + r * K * np.exp(
+                -r * T
+            ) * norm.cdf(-d2)
 
         # Convert annual theta to daily
         return theta / 365.0
 
     @staticmethod
     def find_strike_for_delta(
-        S: float,
-        target_delta: float,
-        T: float,
-        r: float,
-        sigma: float,
-        option_type: str = "call"
+        S: float, target_delta: float, T: float, r: float, sigma: float, option_type: str = "call"
     ) -> float:
         """
         Find strike price that produces target delta.
@@ -214,9 +212,11 @@ class BlackScholes:
 # Data Classes
 # ============================================================================
 
+
 @dataclass
 class OptionContract:
     """Represents an option contract."""
+
     symbol: str
     underlying: str
     strike: float
@@ -231,6 +231,7 @@ class OptionContract:
 @dataclass
 class Trade:
     """Represents a completed trade."""
+
     strategy: str
     symbol: str
     entry_date: datetime
@@ -253,6 +254,7 @@ class Trade:
 @dataclass
 class BacktestMetrics:
     """Comprehensive backtest performance metrics."""
+
     total_trades: int
     winning_trades: int
     losing_trades: int
@@ -277,6 +279,7 @@ class BacktestMetrics:
 # ============================================================================
 # Options Backtest Engine
 # ============================================================================
+
 
 class OptionsBacktestEngine:
     """
@@ -334,7 +337,9 @@ class OptionsBacktestEngine:
         self.vix_data: pd.DataFrame | None = None
 
         logger.info(f"Initialized OptionsBacktestEngine: {start_date} to {end_date}")
-        logger.info(f"Capital: ${initial_capital:,.2f} | Commission: ${commission_per_contract}/contract")
+        logger.info(
+            f"Capital: ${initial_capital:,.2f} | Commission: ${commission_per_contract}/contract"
+        )
 
     # ========================================================================
     # Data Loading
@@ -377,7 +382,7 @@ class OptionsBacktestEngine:
                     symbol,
                     start=start_buffer,
                     end=self.end_date + timedelta(days=1),
-                    progress=False
+                    progress=False,
                 )
 
                 if df.empty:
@@ -386,9 +391,9 @@ class OptionsBacktestEngine:
                     continue
 
                 # Calculate returns and historical volatility
-                df['Returns'] = df['Close'].pct_change()
-                df['HV_20'] = df['Returns'].rolling(20).std() * np.sqrt(252)
-                df['HV_30'] = df['Returns'].rolling(30).std() * np.sqrt(252)
+                df["Returns"] = df["Close"].pct_change()
+                df["HV_20"] = df["Returns"].rolling(20).std() * np.sqrt(252)
+                df["HV_30"] = df["Returns"].rolling(30).std() * np.sqrt(252)
 
                 self.price_data[symbol] = df
                 logger.info(f"Loaded {len(df)} bars for {symbol} from yfinance")
@@ -418,7 +423,7 @@ class OptionsBacktestEngine:
                     timeframe=TimeFrame.Day,
                     start=start_buffer,
                     end=self.end_date + timedelta(days=1),
-                    adjustment="all"
+                    adjustment="all",
                 )
 
                 bars = client.get_stock_bars(request).df
@@ -431,17 +436,19 @@ class OptionsBacktestEngine:
                 if "symbol" in bars.index.names:
                     bars = bars.droplevel("symbol")
 
-                df = bars.rename(columns={
-                    "open": "Open",
-                    "high": "High",
-                    "low": "Low",
-                    "close": "Close",
-                    "volume": "Volume"
-                })
+                df = bars.rename(
+                    columns={
+                        "open": "Open",
+                        "high": "High",
+                        "low": "Low",
+                        "close": "Close",
+                        "volume": "Volume",
+                    }
+                )
 
-                df['Returns'] = df['Close'].pct_change()
-                df['HV_20'] = df['Returns'].rolling(20).std() * np.sqrt(252)
-                df['HV_30'] = df['Returns'].rolling(30).std() * np.sqrt(252)
+                df["Returns"] = df["Close"].pct_change()
+                df["HV_20"] = df["Returns"].rolling(20).std() * np.sqrt(252)
+                df["HV_30"] = df["Returns"].rolling(30).std() * np.sqrt(252)
 
                 self.price_data[symbol] = df
                 logger.info(f"Loaded {len(df)} bars for {symbol} from Alpaca")
@@ -460,7 +467,7 @@ class OptionsBacktestEngine:
         }
 
         start_buffer = self.start_date - timedelta(days=365)
-        date_range = pd.date_range(start=start_buffer, end=self.end_date, freq='D')
+        date_range = pd.date_range(start=start_buffer, end=self.end_date, freq="D")
         date_range = date_range[date_range.weekday < 5]  # Weekdays only
 
         for symbol in symbols:
@@ -468,22 +475,25 @@ class OptionsBacktestEngine:
 
             np.random.seed(42)
             n_days = len(date_range)
-            dt = 1/252
+            dt = 1 / 252
 
             returns = np.random.normal(p["drift"] * dt, p["vol"] * np.sqrt(dt), n_days)
             prices = p["price"] * np.exp(np.cumsum(returns))
 
-            df = pd.DataFrame({
-                'Open': prices * (1 + np.random.normal(0, 0.002, n_days)),
-                'High': prices * (1 + abs(np.random.normal(0, 0.005, n_days))),
-                'Low': prices * (1 - abs(np.random.normal(0, 0.005, n_days))),
-                'Close': prices,
-                'Volume': np.random.uniform(50_000_000, 100_000_000, n_days),
-            }, index=date_range)
+            df = pd.DataFrame(
+                {
+                    "Open": prices * (1 + np.random.normal(0, 0.002, n_days)),
+                    "High": prices * (1 + abs(np.random.normal(0, 0.005, n_days))),
+                    "Low": prices * (1 - abs(np.random.normal(0, 0.005, n_days))),
+                    "Close": prices,
+                    "Volume": np.random.uniform(50_000_000, 100_000_000, n_days),
+                },
+                index=date_range,
+            )
 
-            df['Returns'] = df['Close'].pct_change()
-            df['HV_20'] = df['Returns'].rolling(20).std() * np.sqrt(252)
-            df['HV_30'] = df['Returns'].rolling(30).std() * np.sqrt(252)
+            df["Returns"] = df["Close"].pct_change()
+            df["HV_20"] = df["Returns"].rolling(20).std() * np.sqrt(252)
+            df["HV_30"] = df["Returns"].rolling(30).std() * np.sqrt(252)
 
             self.price_data[symbol] = df
             logger.info(f"Generated {len(df)} synthetic bars for {symbol}")
@@ -496,7 +506,9 @@ class OptionsBacktestEngine:
 
         try:
             start_buffer = self.start_date - timedelta(days=365)
-            vix = yf.download("^VIX", start=start_buffer, end=self.end_date + timedelta(days=1), progress=False)
+            vix = yf.download(
+                "^VIX", start=start_buffer, end=self.end_date + timedelta(days=1), progress=False
+            )
 
             if not vix.empty:
                 self.vix_data = vix
@@ -522,7 +534,7 @@ class OptionsBacktestEngine:
         """
         # Try VIX first
         if self.vix_data is not None and date in self.vix_data.index:
-            vix_level = float(self.vix_data.loc[date, 'Close'])
+            vix_level = float(self.vix_data.loc[date, "Close"])
             # Convert VIX to decimal (VIX 20 = 0.20 IV)
             return vix_level / 100.0
 
@@ -531,8 +543,8 @@ class OptionsBacktestEngine:
             df = self.price_data[symbol]
             hist = df[df.index <= date]
 
-            if len(hist) >= 30 and 'HV_30' in hist.columns:
-                hv = hist['HV_30'].iloc[-1]
+            if len(hist) >= 30 and "HV_30" in hist.columns:
+                hv = hist["HV_30"].iloc[-1]
                 if not pd.isna(hv) and hv > 0:
                     return float(hv)
 
@@ -549,7 +561,7 @@ class OptionsBacktestEngine:
         strike: float,
         expiration: datetime,
         option_type: str,
-        current_date: datetime
+        current_date: datetime,
     ) -> OptionContract | None:
         """
         Price an option contract using Black-Scholes.
@@ -573,7 +585,7 @@ class OptionsBacktestEngine:
         if len(hist) < 30:
             return None
 
-        current_price = float(hist['Close'].iloc[-1])
+        current_price = float(hist["Close"].iloc[-1])
         iv = self.get_iv_for_date(symbol, current_date)
 
         # Time to expiration in years
@@ -597,10 +609,12 @@ class OptionsBacktestEngine:
                 price = BlackScholes.put_price(current_price, strike, T, self.risk_free_rate, iv)
                 delta = BlackScholes.put_delta(current_price, strike, T, self.risk_free_rate, iv)
 
-            theta = BlackScholes.theta(current_price, strike, T, self.risk_free_rate, iv, option_type)
+            theta = BlackScholes.theta(
+                current_price, strike, T, self.risk_free_rate, iv, option_type
+            )
 
         return OptionContract(
-            symbol=f"{symbol}{expiration.strftime('%y%m%d')}{option_type[0].upper()}{int(strike*1000):08d}",
+            symbol=f"{symbol}{expiration.strftime('%y%m%d')}{option_type[0].upper()}{int(strike * 1000):08d}",
             underlying=symbol,
             strike=strike,
             expiration=expiration,
@@ -608,10 +622,12 @@ class OptionsBacktestEngine:
             price=price,
             delta=delta,
             theta=theta,
-            iv=iv
+            iv=iv,
         )
 
-    def apply_trading_costs(self, premium: float, contracts: int, side: str) -> tuple[float, float, float]:
+    def apply_trading_costs(
+        self, premium: float, contracts: int, side: str
+    ) -> tuple[float, float, float]:
         """
         Apply realistic trading costs.
 
@@ -644,9 +660,11 @@ class OptionsBacktestEngine:
 
     def backtest_strategy(
         self,
-        strategy_type: Literal["covered_call", "cash_secured_put", "iron_condor", "credit_spread", "wheel"],
+        strategy_type: Literal[
+            "covered_call", "cash_secured_put", "iron_condor", "credit_spread", "wheel"
+        ],
         symbol: str,
-        **kwargs
+        **kwargs,
     ) -> dict[str, Any]:
         """
         Backtest a specific options strategy.
@@ -685,7 +703,7 @@ class OptionsBacktestEngine:
         delta_target: float = 0.30,
         dte_min: int = 30,
         dte_max: int = 45,
-        position_size_pct: float = 0.05
+        position_size_pct: float = 0.05,
     ) -> dict[str, Any]:
         """
         Backtest covered call strategy.
@@ -699,7 +717,9 @@ class OptionsBacktestEngine:
             dte_max: Maximum days to expiration (default: 45)
             position_size_pct: Position size as % of portfolio (default: 5%)
         """
-        logger.info(f"Backtesting Covered Call: {symbol} (delta={delta_target}, DTE={dte_min}-{dte_max})")
+        logger.info(
+            f"Backtesting Covered Call: {symbol} (delta={delta_target}, DTE={dte_min}-{dte_max})"
+        )
 
         df = self.price_data[symbol]
         trades = []
@@ -722,7 +742,7 @@ class OptionsBacktestEngine:
                 current_date += timedelta(days=1)
                 continue
 
-            entry_price = float(hist['Close'].iloc[-1])
+            entry_price = float(hist["Close"].iloc[-1])
             iv = self.get_iv_for_date(symbol, current_date)
 
             # Calculate position size (how many lots of 100 shares)
@@ -767,7 +787,7 @@ class OptionsBacktestEngine:
                 current_date += timedelta(days=14)
                 continue
 
-            exit_price = float(df.loc[exit_date, 'Close'])
+            exit_price = float(df.loc[exit_date, "Close"])
 
             # P&L calculation
             if exit_price >= strike:
@@ -802,12 +822,7 @@ class OptionsBacktestEngine:
                 commission=commission,
                 slippage=slippage,
                 outcome="assigned" if assigned else "expired",
-                metadata={
-                    "strike": strike,
-                    "delta": option.delta,
-                    "iv": iv,
-                    "dte": dte
-                }
+                metadata={"strike": strike, "delta": option.delta, "iv": iv, "dte": dte},
             )
 
             trades.append(trade)
@@ -824,7 +839,7 @@ class OptionsBacktestEngine:
         delta_target: float = 0.30,
         dte_min: int = 30,
         dte_max: int = 45,
-        position_size_pct: float = 0.05
+        position_size_pct: float = 0.05,
     ) -> dict[str, Any]:
         """
         Backtest cash-secured put strategy.
@@ -838,7 +853,9 @@ class OptionsBacktestEngine:
             dte_max: Maximum DTE (default: 45)
             position_size_pct: Position size as % of portfolio (default: 5%)
         """
-        logger.info(f"Backtesting Cash-Secured Put: {symbol} (delta={delta_target}, DTE={dte_min}-{dte_max})")
+        logger.info(
+            f"Backtesting Cash-Secured Put: {symbol} (delta={delta_target}, DTE={dte_min}-{dte_max})"
+        )
 
         df = self.price_data[symbol]
         trades = []
@@ -859,7 +876,7 @@ class OptionsBacktestEngine:
                 current_date += timedelta(days=1)
                 continue
 
-            entry_price = float(hist['Close'].iloc[-1])
+            entry_price = float(hist["Close"].iloc[-1])
             iv = self.get_iv_for_date(symbol, current_date)
 
             # Calculate contracts (cash secured = need strike * 100 per contract)
@@ -902,7 +919,7 @@ class OptionsBacktestEngine:
                 current_date += timedelta(days=14)
                 continue
 
-            exit_price = float(df.loc[exit_date, 'Close'])
+            exit_price = float(df.loc[exit_date, "Close"])
 
             # P&L calculation
             if exit_price < strike:
@@ -936,12 +953,7 @@ class OptionsBacktestEngine:
                 commission=commission,
                 slippage=slippage,
                 outcome="assigned" if assigned else "expired",
-                metadata={
-                    "strike": strike,
-                    "delta": option.delta,
-                    "iv": iv,
-                    "dte": dte
-                }
+                metadata={"strike": strike, "delta": option.delta, "iv": iv, "dte": dte},
             )
 
             trades.append(trade)
@@ -950,11 +962,7 @@ class OptionsBacktestEngine:
         return self._calculate_metrics(trades, f"Cash-Secured Put - {symbol}")
 
     def _backtest_iron_condor(
-        self,
-        symbol: str,
-        wing_delta: float = 0.16,
-        dte: int = 45,
-        position_size_pct: float = 0.02
+        self, symbol: str, wing_delta: float = 0.16, dte: int = 45, position_size_pct: float = 0.02
     ) -> dict[str, Any]:
         """
         Backtest iron condor strategy.
@@ -988,7 +996,7 @@ class OptionsBacktestEngine:
                 current_date += timedelta(days=1)
                 continue
 
-            entry_price = float(hist['Close'].iloc[-1])
+            entry_price = float(hist["Close"].iloc[-1])
             iv = self.get_iv_for_date(symbol, current_date)
 
             T = dte / 365.0
@@ -1014,8 +1022,12 @@ class OptionsBacktestEngine:
             )
 
             # Price all legs
-            short_call = self.price_option(symbol, short_call_strike, expiration, "call", current_date)
-            long_call = self.price_option(symbol, long_call_strike, expiration, "call", current_date)
+            short_call = self.price_option(
+                symbol, short_call_strike, expiration, "call", current_date
+            )
+            long_call = self.price_option(
+                symbol, long_call_strike, expiration, "call", current_date
+            )
             short_put = self.price_option(symbol, short_put_strike, expiration, "put", current_date)
             long_put = self.price_option(symbol, long_put_strike, expiration, "put", current_date)
 
@@ -1026,8 +1038,7 @@ class OptionsBacktestEngine:
             # Calculate net credit per condor
             # We sell short strikes and buy long strikes
             credit_per_condor = (
-                (short_call.price - long_call.price) +
-                (short_put.price - long_put.price)
+                (short_call.price - long_call.price) + (short_put.price - long_put.price)
             ) * 100  # Convert to dollars
 
             # Max risk per condor = width of widest spread - net credit
@@ -1051,7 +1062,7 @@ class OptionsBacktestEngine:
                 current_date += timedelta(days=21)
                 continue
 
-            exit_price = float(df.loc[exit_date, 'Close'])
+            exit_price = float(df.loc[exit_date, "Close"])
 
             # P&L at expiration
             if short_put_strike <= exit_price <= short_call_strike:
@@ -1104,8 +1115,8 @@ class OptionsBacktestEngine:
                     "short_put_strike": short_put_strike,
                     "long_put_strike": long_put_strike,
                     "iv": iv,
-                    "dte": dte
-                }
+                    "dte": dte,
+                },
             )
 
             trades.append(trade)
@@ -1120,7 +1131,7 @@ class OptionsBacktestEngine:
         short_delta: float = 0.30,
         width: float = 5.0,
         dte: int = 30,
-        position_size_pct: float = 0.03
+        position_size_pct: float = 0.03,
     ) -> dict[str, Any]:
         """
         Backtest vertical credit spread strategy.
@@ -1156,7 +1167,7 @@ class OptionsBacktestEngine:
                 current_date += timedelta(days=1)
                 continue
 
-            entry_price = float(hist['Close'].iloc[-1])
+            entry_price = float(hist["Close"].iloc[-1])
             iv = self.get_iv_for_date(symbol, current_date)
 
             T = dte / 365.0
@@ -1173,8 +1184,12 @@ class OptionsBacktestEngine:
                 long_strike = short_strike + width
 
             # Price options
-            short_option = self.price_option(symbol, short_strike, expiration, spread_type, current_date)
-            long_option = self.price_option(symbol, long_strike, expiration, spread_type, current_date)
+            short_option = self.price_option(
+                symbol, short_strike, expiration, spread_type, current_date
+            )
+            long_option = self.price_option(
+                symbol, long_strike, expiration, spread_type, current_date
+            )
 
             if short_option is None or long_option is None:
                 current_date += timedelta(days=1)
@@ -1202,7 +1217,7 @@ class OptionsBacktestEngine:
                 current_date += timedelta(days=14)
                 continue
 
-            exit_price = float(df.loc[exit_date, 'Close'])
+            exit_price = float(df.loc[exit_date, "Close"])
 
             # P&L calculation
             if spread_type == "put":
@@ -1253,8 +1268,8 @@ class OptionsBacktestEngine:
                     "long_strike": long_strike,
                     "width": width,
                     "iv": iv,
-                    "dte": dte
-                }
+                    "dte": dte,
+                },
             )
 
             trades.append(trade)
@@ -1268,7 +1283,7 @@ class OptionsBacktestEngine:
         put_delta: float = 0.30,
         call_delta: float = 0.30,
         dte: int = 30,
-        position_size_pct: float = 0.05
+        position_size_pct: float = 0.05,
     ) -> dict[str, Any]:
         """
         Backtest wheel strategy.
@@ -1311,7 +1326,7 @@ class OptionsBacktestEngine:
                 current_date += timedelta(days=1)
                 continue
 
-            current_price = float(hist['Close'].iloc[-1])
+            current_price = float(hist["Close"].iloc[-1])
             iv = self.get_iv_for_date(symbol, current_date)
 
             T = dte / 365.0
@@ -1343,7 +1358,7 @@ class OptionsBacktestEngine:
                     current_date += timedelta(days=7)
                     continue
 
-                exit_price = float(df.loc[exit_date, 'Close'])
+                exit_price = float(df.loc[exit_date, "Close"])
 
                 if exit_price < strike:
                     # Assigned - now own stock
@@ -1375,7 +1390,7 @@ class OptionsBacktestEngine:
                     commission=commission,
                     slippage=slippage,
                     outcome=outcome,
-                    metadata={"strike": strike, "delta": put.delta, "iv": iv, "dte": dte}
+                    metadata={"strike": strike, "delta": put.delta, "iv": iv, "dte": dte},
                 )
 
                 trades.append(trade)
@@ -1405,7 +1420,7 @@ class OptionsBacktestEngine:
                     current_date += timedelta(days=7)
                     continue
 
-                exit_price = float(df.loc[exit_date, 'Close'])
+                exit_price = float(df.loc[exit_date, "Close"])
 
                 if exit_price >= strike:
                     # Called away - back to Phase 1
@@ -1436,12 +1451,14 @@ class OptionsBacktestEngine:
                     premium_paid=0.0,
                     stock_cost=stock_cost_basis * shares,
                     pnl=pnl,
-                    return_pct=(pnl / (stock_cost_basis * shares)) * 100 if stock_cost_basis > 0 else 0,
+                    return_pct=(pnl / (stock_cost_basis * shares)) * 100
+                    if stock_cost_basis > 0
+                    else 0,
                     max_risk=stock_cost_basis * shares,
                     commission=commission,
                     slippage=slippage,
                     outcome=outcome,
-                    metadata={"strike": strike, "delta": call.delta, "iv": iv, "dte": dte}
+                    metadata={"strike": strike, "delta": call.delta, "iv": iv, "dte": dte},
                 )
 
                 trades.append(trade)
@@ -1466,11 +1483,7 @@ class OptionsBacktestEngine:
         """
         if not trades:
             logger.warning(f"No trades for {strategy_name}")
-            return {
-                "strategy": strategy_name,
-                "error": "No trades executed",
-                "total_trades": 0
-            }
+            return {"strategy": strategy_name, "error": "No trades executed", "total_trades": 0}
 
         # Basic stats
         total_trades = len(trades)
@@ -1489,7 +1502,7 @@ class OptionsBacktestEngine:
         # Profit factor
         gross_profit = sum([t.pnl for t in winning_trades])
         gross_loss = abs(sum([t.pnl for t in losing_trades]))
-        profit_factor = gross_profit / gross_loss if gross_loss > 0 else float('inf')
+        profit_factor = gross_profit / gross_loss if gross_loss > 0 else float("inf")
 
         # Sharpe ratio
         returns = [t.pnl for t in trades]
@@ -1505,7 +1518,9 @@ class OptionsBacktestEngine:
         negative_returns = [r for r in returns if r < 0]
         if negative_returns and len(negative_returns) > 1:
             downside_std = np.std(negative_returns, ddof=1)
-            sortino = (np.mean(returns) / downside_std) * np.sqrt(252 / 30) if downside_std > 0 else 0
+            sortino = (
+                (np.mean(returns) / downside_std) * np.sqrt(252 / 30) if downside_std > 0 else 0
+            )
         else:
             sortino = 0.0
 
@@ -1514,7 +1529,9 @@ class OptionsBacktestEngine:
         running_max = np.maximum.accumulate(cumulative)
         drawdown = cumulative - running_max
         max_drawdown = abs(np.min(drawdown)) if len(drawdown) > 0 else 0
-        max_drawdown_pct = (max_drawdown / self.initial_capital * 100) if self.initial_capital > 0 else 0
+        max_drawdown_pct = (
+            (max_drawdown / self.initial_capital * 100) if self.initial_capital > 0 else 0
+        )
 
         # Total return
         total_return = (total_pnl / self.initial_capital * 100) if self.initial_capital > 0 else 0
@@ -1532,18 +1549,16 @@ class OptionsBacktestEngine:
         for trade in trades:
             strat = trade.strategy
             if strat not in strategy_types:
-                strategy_types[strat] = {
-                    "count": 0,
-                    "pnl": 0.0,
-                    "win_rate": 0.0
-                }
+                strategy_types[strat] = {"count": 0, "pnl": 0.0, "win_rate": 0.0}
             strategy_types[strat]["count"] += 1
             strategy_types[strat]["pnl"] += trade.pnl
 
         for strat in strategy_types:
             strat_trades = [t for t in trades if t.strategy == strat]
             strat_wins = [t for t in strat_trades if t.pnl > 0]
-            strategy_types[strat]["win_rate"] = len(strat_wins) / len(strat_trades) * 100 if strat_trades else 0
+            strategy_types[strat]["win_rate"] = (
+                len(strat_wins) / len(strat_trades) * 100 if strat_trades else 0
+            )
 
         # Build results
         return {
@@ -1551,7 +1566,7 @@ class OptionsBacktestEngine:
             "period": {
                 "start": self.start_date.strftime("%Y-%m-%d"),
                 "end": self.end_date.strftime("%Y-%m-%d"),
-                "days": trading_days
+                "days": trading_days,
             },
             "total_trades": total_trades,
             "winning_trades": len(winning_trades),
@@ -1585,10 +1600,10 @@ class OptionsBacktestEngine:
                     "pnl": round(t.pnl, 2),
                     "return_pct": round(t.return_pct, 2),
                     "outcome": t.outcome,
-                    "metadata": t.metadata
+                    "metadata": t.metadata,
                 }
                 for t in trades
-            ]
+            ],
         }
 
 
@@ -1596,20 +1611,18 @@ class OptionsBacktestEngine:
 # Main Execution
 # ============================================================================
 
+
 def main():
     """Example usage of OptionsBacktestEngine."""
     import json
 
     logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     # Initialize engine
     engine = OptionsBacktestEngine(
-        start_date="2024-01-01",
-        end_date="2024-12-01",
-        initial_capital=100000.0
+        start_date="2024-01-01", end_date="2024-12-01", initial_capital=100000.0
     )
 
     # Load data
@@ -1621,15 +1634,15 @@ def main():
         ("cash_secured_put", "SPY"),
         ("iron_condor", "SPY"),
         ("credit_spread", "SPY"),
-        ("wheel", "QQQ")
+        ("wheel", "QQQ"),
     ]
 
     results = {}
 
     for strategy, symbol in strategies:
-        logger.info(f"\n{'='*80}")
+        logger.info(f"\n{'=' * 80}")
         logger.info(f"Backtesting {strategy} on {symbol}")
-        logger.info('='*80)
+        logger.info("=" * 80)
 
         result = engine.backtest_strategy(strategy, symbol)
         results[f"{strategy}_{symbol}"] = result

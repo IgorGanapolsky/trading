@@ -118,8 +118,8 @@ class CryptoWeekendAgent:
         losses = [-d if d < 0 else 0 for d in deltas]
 
         # Calculate average gains and losses
-        avg_gain = sum(gains[-self.rsi_period:]) / self.rsi_period
-        avg_loss = sum(losses[-self.rsi_period:]) / self.rsi_period
+        avg_gain = sum(gains[-self.rsi_period :]) / self.rsi_period
+        avg_loss = sum(losses[-self.rsi_period :]) / self.rsi_period
 
         if avg_loss == 0:
             return 100.0
@@ -341,15 +341,9 @@ def main():
 
     parser = argparse.ArgumentParser(description="Crypto Weekend Agent")
     parser.add_argument(
-        "--symbol",
-        default="BTC/USD",
-        help="Crypto pair to analyze (default: BTC/USD)"
+        "--symbol", default="BTC/USD", help="Crypto pair to analyze (default: BTC/USD)"
     )
-    parser.add_argument(
-        "--scan",
-        action="store_true",
-        help="Scan all supported pairs"
-    )
+    parser.add_argument("--scan", action="store_true", help="Scan all supported pairs")
 
     args = parser.parse_args()
 

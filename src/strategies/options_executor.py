@@ -221,8 +221,12 @@ class OptionsExecutor:
         logger.info(f"📊 Iron Condor Order for {symbol}:")
         logger.info(f"   Price: ${current_price:.2f}")
         logger.info(f"   Expiration: {expiration} ({expiration_days} DTE)")
-        logger.info(f"   Call Spread: {strikes['short_call']}/{strikes['long_call']} ({call_spread_width_pct}% wide)")
-        logger.info(f"   Put Spread: {strikes['short_put']}/{strikes['long_put']} ({put_spread_width_pct}% wide)")
+        logger.info(
+            f"   Call Spread: {strikes['short_call']}/{strikes['long_call']} ({call_spread_width_pct}% wide)"
+        )
+        logger.info(
+            f"   Put Spread: {strikes['short_put']}/{strikes['long_put']} ({put_spread_width_pct}% wide)"
+        )
         logger.info(f"   Est. Credit: ${metrics['net_credit']:.2f}")
         logger.info(f"   Max Loss: ${metrics['max_loss']:.2f}")
         logger.info(f"   POP: {metrics['probability_of_profit']:.0%}")

@@ -49,8 +49,12 @@ class LegacyMomentumCalculator:
         # Previous (R&D data collection): macd=-0.1, rsi=75, volume=0.6, adx=5.0
         # Problem: 0% live win rate, negative Sharpe (-7 to -72), trades in ranging markets
         # New: Require confirmed bullish signals in trending markets only
-        self.macd_threshold = float(os.getenv("MOMENTUM_MACD_THRESHOLD", "0.0"))  # Confirmed bullish
-        self.rsi_overbought = float(os.getenv("MOMENTUM_RSI_OVERBOUGHT", "65.0"))  # Avoid overbought
+        self.macd_threshold = float(
+            os.getenv("MOMENTUM_MACD_THRESHOLD", "0.0")
+        )  # Confirmed bullish
+        self.rsi_overbought = float(
+            os.getenv("MOMENTUM_RSI_OVERBOUGHT", "65.0")
+        )  # Avoid overbought
         self.volume_min = float(os.getenv("MOMENTUM_VOLUME_MIN", "1.0"))  # Require avg+ volume
 
         # ADX REGIME FILTER (Dec 10, 2025): Only trade in trending markets

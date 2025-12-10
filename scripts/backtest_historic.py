@@ -28,20 +28,22 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import numpy as np
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class BacktestRegime:
     """Market regime configuration for backtesting."""
+
     name: str
     description: str
     start_date: str
@@ -61,7 +63,7 @@ MARKET_REGIMES = {
         pass_criteria={
             "max_drawdown": 0.20,  # Max 20% drawdown (market was -34%)
             "recovery_ratio": 0.5,  # Recover at least 50% by end of period
-        }
+        },
     ),
     "bear_2022": BacktestRegime(
         name="2022 Bear Market",
@@ -71,8 +73,8 @@ MARKET_REGIMES = {
         expected_behavior="Strategy should preserve capital during slow decline",
         pass_criteria={
             "max_drawdown": 0.15,  # Max 15% drawdown (market was -25%)
-            "sharpe_ratio": 0.0,   # At least break-even risk-adjusted
-        }
+            "sharpe_ratio": 0.0,  # At least break-even risk-adjusted
+        },
     ),
     "bull_2024": BacktestRegime(
         name="2024 Bull Run",
@@ -81,9 +83,9 @@ MARKET_REGIMES = {
         end_date="2024-12-01",
         expected_behavior="Strategy should capture upside momentum",
         pass_criteria={
-            "min_return": 0.10,   # Capture at least 10% of bull run
+            "min_return": 0.10,  # Capture at least 10% of bull run
             "sharpe_ratio": 0.5,  # Decent risk-adjusted returns
-        }
+        },
     ),
     "volatility_2020": BacktestRegime(
         name="2020 Volatility",
@@ -94,7 +96,7 @@ MARKET_REGIMES = {
         pass_criteria={
             "max_drawdown": 0.25,
             "annual_return": 0.05,  # At least 5% for the year
-        }
+        },
     ),
     "rate_hike_2022": BacktestRegime(
         name="Rate Hike Period",
@@ -105,7 +107,7 @@ MARKET_REGIMES = {
         pass_criteria={
             "max_drawdown": 0.15,
             "win_rate": 0.45,
-        }
+        },
     ),
 }
 
@@ -129,14 +131,16 @@ def fetch_historical_data(symbol: str, start_date: str, end_date: str) -> list[d
 
         data = []
         for idx, row in hist.iterrows():
-            data.append({
-                "date": idx.strftime("%Y-%m-%d"),
-                "open": float(row["Open"]),
-                "high": float(row["High"]),
-                "low": float(row["Low"]),
-                "close": float(row["Close"]),
-                "volume": int(row["Volume"]),
-            })
+            data.append(
+                {
+                    "date": idx.strftime("%Y-%m-%d"),
+                    "open": float(row["Open"]),
+                    "high": float(row["High"]),
+                    "low": float(row["Low"]),
+                    "close": float(row["Close"]),
+                    "volume": int(row["Volume"]),
+                }
+            )
 
         logger.info(f"Fetched {len(data)} days of data for {symbol}")
         return data
@@ -196,7 +200,7 @@ def _ema(data: "np.ndarray", period: int) -> "np.ndarray":
     multiplier = 2 / (period + 1)
 
     for i in range(1, len(data)):
-        ema[i] = (data[i] - ema[i-1]) * multiplier + ema[i-1]
+        ema[i] = (data[i] - ema[i - 1]) * multiplier + ema[i - 1]
 
     return ema
 
@@ -208,9 +212,9 @@ def _sma(data: "np.ndarray", period: int) -> "np.ndarray":
     sma = np.zeros_like(data)
     for i in range(len(data)):
         if i < period - 1:
-            sma[i] = np.mean(data[:i+1])
+            sma[i] = np.mean(data[: i + 1])
         else:
-            sma[i] = np.mean(data[i-period+1:i+1])
+            sma[i] = np.mean(data[i - period + 1 : i + 1])
 
     return sma
 
@@ -235,8 +239,8 @@ def _calculate_rsi(data: "np.ndarray", period: int = 14) -> "np.ndarray":
 
     # Smoothed averages
     for i in range(period + 1, len(data)):
-        avg_gain[i] = (avg_gain[i-1] * (period - 1) + gains[i-1]) / period
-        avg_loss[i] = (avg_loss[i-1] * (period - 1) + losses[i-1]) / period
+        avg_gain[i] = (avg_gain[i - 1] * (period - 1) + gains[i - 1]) / period
+        avg_loss[i] = (avg_loss[i - 1] * (period - 1) + losses[i - 1]) / period
 
     # RSI calculation
     for i in range(period, len(data)):
@@ -259,11 +263,11 @@ def run_backtest(
 
     Uses the same momentum strategy logic as the live system.
     """
-    logger.info(f"\n{'='*60}")
+    logger.info(f"\n{'=' * 60}")
     logger.info(f"BACKTEST: {regime.name}")
     logger.info(f"Period: {regime.start_date} to {regime.end_date}")
     logger.info(f"Description: {regime.description}")
-    logger.info(f"{'='*60}")
+    logger.info(f"{'=' * 60}")
 
     # Fetch and prepare data
     all_data = {}
@@ -332,15 +336,17 @@ def run_backtest(
             pl = proceeds - (position["shares"] * position["entry_price"])
             pl_pct = (close / position["entry_price"] - 1) * 100
 
-            trades.append({
-                "entry_date": position["entry_date"],
-                "exit_date": day["date"],
-                "entry_price": position["entry_price"],
-                "exit_price": close,
-                "shares": position["shares"],
-                "pl": pl,
-                "pl_pct": pl_pct,
-            })
+            trades.append(
+                {
+                    "entry_date": position["entry_date"],
+                    "exit_date": day["date"],
+                    "entry_price": position["entry_price"],
+                    "exit_price": close,
+                    "shares": position["shares"],
+                    "pl": pl,
+                    "pl_pct": pl_pct,
+                }
+            )
 
             capital += proceeds
             position = None
@@ -361,21 +367,23 @@ def run_backtest(
         final_close = data[-1]["close"]
         proceeds = position["shares"] * final_close
         pl = proceeds - (position["shares"] * position["entry_price"])
-        trades.append({
-            "entry_date": position["entry_date"],
-            "exit_date": data[-1]["date"],
-            "entry_price": position["entry_price"],
-            "exit_price": final_close,
-            "shares": position["shares"],
-            "pl": pl,
-            "pl_pct": (final_close / position["entry_price"] - 1) * 100,
-        })
+        trades.append(
+            {
+                "entry_date": position["entry_date"],
+                "exit_date": data[-1]["date"],
+                "entry_price": position["entry_price"],
+                "exit_price": final_close,
+                "shares": position["shares"],
+                "pl": pl,
+                "pl_pct": (final_close / position["entry_price"] - 1) * 100,
+            }
+        )
         capital += proceeds
         position = None
 
     # Calculate metrics
     final_equity = equity_curve[-1]
-    total_return = (final_equity / initial_capital - 1)
+    total_return = final_equity / initial_capital - 1
 
     winning_trades = [t for t in trades if t["pl"] > 0]
     losing_trades = [t for t in trades if t["pl"] <= 0]
@@ -383,6 +391,7 @@ def run_backtest(
 
     # Calculate Sharpe ratio (simplified, daily returns)
     import numpy as np
+
     returns = np.diff(equity_curve) / equity_curve[:-1]
     sharpe = (np.mean(returns) / np.std(returns)) * np.sqrt(252) if np.std(returns) > 0 else 0
 
@@ -411,28 +420,26 @@ def run_backtest(
         if max_drawdown > regime.pass_criteria["max_drawdown"]:
             passed = False
             failures.append(
-                f"Max Drawdown {max_drawdown*100:.1f}% > {regime.pass_criteria['max_drawdown']*100:.0f}%"
+                f"Max Drawdown {max_drawdown * 100:.1f}% > {regime.pass_criteria['max_drawdown'] * 100:.0f}%"
             )
 
     if "sharpe_ratio" in regime.pass_criteria:
         if sharpe < regime.pass_criteria["sharpe_ratio"]:
             passed = False
-            failures.append(
-                f"Sharpe Ratio {sharpe:.2f} < {regime.pass_criteria['sharpe_ratio']}"
-            )
+            failures.append(f"Sharpe Ratio {sharpe:.2f} < {regime.pass_criteria['sharpe_ratio']}")
 
     if "win_rate" in regime.pass_criteria:
         if win_rate < regime.pass_criteria["win_rate"]:
             passed = False
             failures.append(
-                f"Win Rate {win_rate*100:.1f}% < {regime.pass_criteria['win_rate']*100:.0f}%"
+                f"Win Rate {win_rate * 100:.1f}% < {regime.pass_criteria['win_rate'] * 100:.0f}%"
             )
 
     if "min_return" in regime.pass_criteria:
         if total_return < regime.pass_criteria["min_return"]:
             passed = False
             failures.append(
-                f"Return {total_return*100:.1f}% < {regime.pass_criteria['min_return']*100:.0f}%"
+                f"Return {total_return * 100:.1f}% < {regime.pass_criteria['min_return'] * 100:.0f}%"
             )
 
     results["passed"] = passed
@@ -443,23 +450,23 @@ def run_backtest(
 
 def print_results(results: dict):
     """Print backtest results in a formatted table."""
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"BACKTEST RESULTS: {results.get('regime', 'Unknown')}")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
 
     if results.get("status") == "FAILED":
         print(f"STATUS: FAILED - {results.get('error', 'Unknown error')}")
         return
 
     print(f"Period: {results.get('period', 'N/A')}")
-    print(f"\n--- Performance ---")
+    print("\n--- Performance ---")
     print(f"  Initial Capital:  ${results.get('initial_capital', 0):,.2f}")
     print(f"  Final Equity:     ${results.get('final_equity', 0):,.2f}")
     print(f"  Total Return:     {results.get('total_return', 0):+.2f}%")
     print(f"  Max Drawdown:     {results.get('max_drawdown', 0):.2f}%")
     print(f"  Sharpe Ratio:     {results.get('sharpe_ratio', 0):.2f}")
 
-    print(f"\n--- Trades ---")
+    print("\n--- Trades ---")
     print(f"  Total Trades:     {results.get('total_trades', 0)}")
     print(f"  Winning Trades:   {results.get('winning_trades', 0)}")
     print(f"  Losing Trades:    {results.get('losing_trades', 0)}")
@@ -467,7 +474,7 @@ def print_results(results: dict):
     print(f"  Avg Win:          ${results.get('avg_win', 0):,.2f}")
     print(f"  Avg Loss:         ${results.get('avg_loss', 0):,.2f}")
 
-    print(f"\n--- Pass/Fail ---")
+    print("\n--- Pass/Fail ---")
     if results.get("passed"):
         print("  STATUS: PASSED")
     else:
@@ -475,7 +482,7 @@ def print_results(results: dict):
         for failure in results.get("failures", []):
             print(f"  - {failure}")
 
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
 
 def main():
@@ -486,33 +493,28 @@ def main():
         "--regime",
         choices=list(MARKET_REGIMES.keys()) + ["all"],
         default="all",
-        help="Market regime to test (default: all)"
+        help="Market regime to test (default: all)",
     )
     parser.add_argument(
-        "--symbols",
-        default="SPY,QQQ",
-        help="Comma-separated list of symbols (default: SPY,QQQ)"
+        "--symbols", default="SPY,QQQ", help="Comma-separated list of symbols (default: SPY,QQQ)"
     )
     parser.add_argument(
-        "--capital",
-        type=float,
-        default=100000,
-        help="Initial capital (default: 100000)"
+        "--capital", type=float, default=100000, help="Initial capital (default: 100000)"
     )
     parser.add_argument(
         "--output",
         type=str,
         default="data/backtests/historic_validation.json",
-        help="Output file path"
+        help="Output file path",
     )
 
     args = parser.parse_args()
     symbols = [s.strip().upper() for s in args.symbols.split(",")]
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("HISTORIC BACKTEST VALIDATION")
     print("Testing strategy survival across multiple market regimes")
-    print("="*70)
+    print("=" * 70)
     print(f"\nSymbols: {', '.join(symbols)}")
     print(f"Capital: ${args.capital:,.2f}")
 
@@ -535,9 +537,9 @@ def main():
             failed_count += 1
 
     # Summary
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("VALIDATION SUMMARY")
-    print("="*70)
+    print("=" * 70)
     print(f"  Regimes Tested:  {len(regimes_to_test)}")
     print(f"  Passed:          {passed_count}")
     print(f"  Failed:          {failed_count}")
@@ -550,25 +552,29 @@ def main():
         print("\n  VERDICT: STRATEGY VALIDATED")
         print("  The strategy survives across tested market regimes.")
 
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
     # Save results
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(output_path, "w") as f:
-        json.dump({
-            "timestamp": datetime.now().isoformat(),
-            "symbols": symbols,
-            "initial_capital": args.capital,
-            "results": all_results,
-            "summary": {
-                "regimes_tested": len(regimes_to_test),
-                "passed": passed_count,
-                "failed": failed_count,
-                "verdict": "VALIDATED" if failed_count == 0 else "NEEDS_IMPROVEMENT",
-            }
-        }, f, indent=2)
+        json.dump(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "symbols": symbols,
+                "initial_capital": args.capital,
+                "results": all_results,
+                "summary": {
+                    "regimes_tested": len(regimes_to_test),
+                    "passed": passed_count,
+                    "failed": failed_count,
+                    "verdict": "VALIDATED" if failed_count == 0 else "NEEDS_IMPROVEMENT",
+                },
+            },
+            f,
+            indent=2,
+        )
 
     print(f"Results saved to: {output_path}")
 

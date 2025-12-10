@@ -568,25 +568,27 @@ class TradierClient:
             results = []
             for opt in option_list:
                 greeks = opt.get("greeks", {}) or {}
-                results.append({
-                    "symbol": opt.get("symbol", ""),
-                    "underlying": opt.get("underlying", symbol),
-                    "strike": float(opt.get("strike", 0)),
-                    "expiration_date": opt.get("expiration_date", ""),
-                    "option_type": opt.get("option_type", ""),  # 'call' or 'put'
-                    "bid": float(opt.get("bid", 0) or 0),
-                    "ask": float(opt.get("ask", 0) or 0),
-                    "last": float(opt.get("last", 0) or 0),
-                    "volume": int(opt.get("volume", 0) or 0),
-                    "open_interest": int(opt.get("open_interest", 0) or 0),
-                    # Greeks
-                    "delta": float(greeks.get("delta", 0) or 0),
-                    "gamma": float(greeks.get("gamma", 0) or 0),
-                    "theta": float(greeks.get("theta", 0) or 0),
-                    "vega": float(greeks.get("vega", 0) or 0),
-                    "rho": float(greeks.get("rho", 0) or 0),
-                    "iv": float(greeks.get("mid_iv", 0) or greeks.get("smv_vol", 0) or 0),
-                })
+                results.append(
+                    {
+                        "symbol": opt.get("symbol", ""),
+                        "underlying": opt.get("underlying", symbol),
+                        "strike": float(opt.get("strike", 0)),
+                        "expiration_date": opt.get("expiration_date", ""),
+                        "option_type": opt.get("option_type", ""),  # 'call' or 'put'
+                        "bid": float(opt.get("bid", 0) or 0),
+                        "ask": float(opt.get("ask", 0) or 0),
+                        "last": float(opt.get("last", 0) or 0),
+                        "volume": int(opt.get("volume", 0) or 0),
+                        "open_interest": int(opt.get("open_interest", 0) or 0),
+                        # Greeks
+                        "delta": float(greeks.get("delta", 0) or 0),
+                        "gamma": float(greeks.get("gamma", 0) or 0),
+                        "theta": float(greeks.get("theta", 0) or 0),
+                        "vega": float(greeks.get("vega", 0) or 0),
+                        "rho": float(greeks.get("rho", 0) or 0),
+                        "iv": float(greeks.get("mid_iv", 0) or greeks.get("smv_vol", 0) or 0),
+                    }
+                )
 
             return results
         except Exception as e:
@@ -682,18 +684,20 @@ class TradierClient:
                 exp_date = datetime.strptime(expiration, "%Y-%m-%d").date()
                 dte = (exp_date - today).days
 
-                candidates.append({
-                    "symbol": opt.get("symbol"),
-                    "strike": strike,
-                    "expiration": exp_date,
-                    "dte": dte,
-                    "delta": delta,
-                    "bid": bid,
-                    "ask": ask,
-                    "mid": mid,
-                    "premium_pct": premium_pct,
-                    "iv": opt.get("iv", 0),
-                })
+                candidates.append(
+                    {
+                        "symbol": opt.get("symbol"),
+                        "strike": strike,
+                        "expiration": exp_date,
+                        "dte": dte,
+                        "delta": delta,
+                        "bid": bid,
+                        "ask": ask,
+                        "mid": mid,
+                        "premium_pct": premium_pct,
+                        "iv": opt.get("iv", 0),
+                    }
+                )
 
         if not candidates:
             logger.warning(f"No suitable put options found for {symbol}")
@@ -705,11 +709,13 @@ class TradierClient:
         best = candidates[0]
         logger.info("✅ Found optimal put via Tradier:")
         logger.info(f"   Symbol: {best['symbol']}")
-        logger.info(f"   Strike: ${best['strike']:.2f} ({((current_price - best['strike']) / current_price * 100):.1f}% OTM)")
+        logger.info(
+            f"   Strike: ${best['strike']:.2f} ({((current_price - best['strike']) / current_price * 100):.1f}% OTM)"
+        )
         logger.info(f"   Expiration: {best['expiration']} ({best['dte']} DTE)")
         logger.info(f"   Delta: {best['delta']:.3f}")
         logger.info(f"   Premium: ${best['mid']:.2f} ({best['premium_pct']:.2f}%)")
-        if best['iv']:
+        if best["iv"]:
             logger.info(f"   IV: {best['iv']:.1%}")
 
         return best
@@ -815,14 +821,20 @@ class TradierClient:
         # Find optimal put
         put_option = self.find_optimal_put(symbol)
         if not put_option:
-            return {"status": "NO_TRADE", "reason": "No suitable options found", "broker": "tradier"}
+            return {
+                "status": "NO_TRADE",
+                "reason": "No suitable options found",
+                "broker": "tradier",
+            }
 
         # Calculate cash required for assignment
         cash_required = put_option["strike"] * 100
         logger.info(f"\n💵 Cash required for assignment: ${cash_required:,.2f}")
 
         if account.cash < cash_required:
-            logger.warning(f"❌ Insufficient cash! Need ${cash_required:,.2f}, have ${account.cash:,.2f}")
+            logger.warning(
+                f"❌ Insufficient cash! Need ${cash_required:,.2f}, have ${account.cash:,.2f}"
+            )
             return {"status": "NO_TRADE", "reason": "Insufficient cash", "broker": "tradier"}
 
         # Execute trade

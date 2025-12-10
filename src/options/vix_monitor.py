@@ -44,19 +44,21 @@ class VolatilityRegime(Enum):
     - HIGH: Buy volatility, hedge existing positions
     - EXTREME: Crisis mode, capital preservation priority
     """
-    EXTREME_LOW = "extreme_low"    # VIX < 12
-    LOW = "low"                    # VIX 12-15
-    NORMAL = "normal"              # VIX 15-20
-    ELEVATED = "elevated"          # VIX 20-25
-    HIGH = "high"                  # VIX 25-35
-    EXTREME = "extreme"            # VIX > 35
+
+    EXTREME_LOW = "extreme_low"  # VIX < 12
+    LOW = "low"  # VIX 12-15
+    NORMAL = "normal"  # VIX 15-20
+    ELEVATED = "elevated"  # VIX 20-25
+    HIGH = "high"  # VIX 25-35
+    EXTREME = "extreme"  # VIX > 35
 
 
 class TermStructureState(Enum):
     """VIX futures term structure state"""
-    CONTANGO = "contango"              # Normal: VX2 > VX1 (decay works in our favor)
-    BACKWARDATION = "backwardation"    # Fear: VX1 > VX2 (expect volatility spike)
-    FLAT = "flat"                      # Neutral
+
+    CONTANGO = "contango"  # Normal: VX2 > VX1 (decay works in our favor)
+    BACKWARDATION = "backwardation"  # Fear: VX1 > VX2 (expect volatility spike)
+    FLAT = "flat"  # Neutral
 
 
 class VIXMonitor:
@@ -97,8 +99,7 @@ class VIXMonitor:
 
                 if api_key and secret_key:
                     self.alpaca_client = StockHistoricalDataClient(
-                        api_key=api_key,
-                        secret_key=secret_key
+                        api_key=api_key, secret_key=secret_key
                     )
                     logger.info("Alpaca client initialized for VIX data")
                 else:
@@ -138,7 +139,7 @@ class VIXMonitor:
                         symbol_or_symbols="VIX",
                         timeframe=TimeFrame.Day,
                         start=datetime.now() - timedelta(days=2),
-                        end=datetime.now()
+                        end=datetime.now(),
                     )
                     bars = self.alpaca_client.get_stock_bars(request)
 
@@ -157,7 +158,7 @@ class VIXMonitor:
             if vix_data.empty:
                 raise RuntimeError("VIX data is empty from yfinance")
 
-            vix_value = float(vix_data['Close'].iloc[-1])
+            vix_value = float(vix_data["Close"].iloc[-1])
             logger.info(f"Current VIX (yfinance): {vix_value:.2f}")
 
             # Store in history
@@ -194,7 +195,7 @@ class VIXMonitor:
                 return 50.0  # Default to median
 
             # Calculate percentile
-            historical_closes = hist['Close'].values
+            historical_closes = hist["Close"].values
             percentile = (np.sum(historical_closes < current_vix) / len(historical_closes)) * 100
 
             logger.info(
@@ -232,8 +233,8 @@ class VIXMonitor:
             if vix_data.empty or vxv_data.empty:
                 raise RuntimeError("Unable to fetch VIX term structure data")
 
-            vix_30d = float(vix_data['Close'].iloc[-1])
-            vxv_3m = float(vxv_data['Close'].iloc[-1])
+            vix_30d = float(vix_data["Close"].iloc[-1])
+            vxv_3m = float(vxv_data["Close"].iloc[-1])
 
             # Approximate term structure
             # VX1 ≈ VIX, VX2 interpolated, VX3 ≈ VXV
@@ -355,7 +356,7 @@ class VIXMonitor:
                 logger.warning("VVIX data unavailable")
                 return 0.0
 
-            vvix_value = float(vvix_data['Close'].iloc[-1])
+            vvix_value = float(vvix_data["Close"].iloc[-1])
             logger.info(f"Current VVIX: {vvix_value:.2f}")
 
             return vvix_value
@@ -405,7 +406,7 @@ class VIXMonitor:
             if hist.empty:
                 raise RuntimeError("No VIX historical data available")
 
-            closes = hist['Close'].values
+            closes = hist["Close"].values
             current_vix = self.get_current_vix()
 
             stats = {
@@ -504,7 +505,7 @@ class VIXMonitor:
         reversion_prob = min(0.95, 0.5 + (z_score * 0.15))
 
         logger.info(
-            f"Mean reversion probability: {reversion_prob*100:.1f}% "
+            f"Mean reversion probability: {reversion_prob * 100:.1f}% "
             f"(VIX {current:.2f} vs Mean {mean:.2f}, Z={z_score:.2f})"
         )
 
@@ -541,7 +542,7 @@ class VIXMonitor:
             "metadata": {
                 "created": datetime.now().isoformat(),
                 "source": "vix_monitor",
-            }
+            },
         }
 
     def _update_vix_history(self, vix_value: float) -> None:
@@ -556,11 +557,13 @@ class VIXMonitor:
             daily_values = [v for v in daily_values if v.get("date") != today]
 
             # Add new value
-            daily_values.append({
-                "date": today,
-                "vix": vix_value,
-                "timestamp": datetime.now().isoformat(),
-            })
+            daily_values.append(
+                {
+                    "date": today,
+                    "vix": vix_value,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
             # Keep only last 2 years (504 trading days)
             if len(daily_values) > 504:
@@ -570,7 +573,7 @@ class VIXMonitor:
             self.vix_history["last_updated"] = datetime.now().isoformat()
 
             # Save to file
-            with open(self.VIX_HISTORY_FILE, 'w') as f:
+            with open(self.VIX_HISTORY_FILE, "w") as f:
                 json.dump(self.vix_history, f, indent=2)
 
             logger.debug(f"Updated VIX history: {vix_value:.2f} ({today})")
@@ -673,7 +676,9 @@ class VIXSignals:
             and reversion_prob > 0.6
         )
 
-        confidence = "HIGH" if reversion_prob > 0.75 else "MEDIUM" if reversion_prob > 0.6 else "LOW"
+        confidence = (
+            "HIGH" if reversion_prob > 0.75 else "MEDIUM" if reversion_prob > 0.6 else "LOW"
+        )
 
         recommendation = {
             "should_sell_premium": should_sell,
@@ -682,8 +687,12 @@ class VIXSignals:
             "regime": regime.value,
             "percentile": percentile,
             "reversion_probability": reversion_prob,
-            "rationale": self._build_sell_rationale(should_sell, current_vix, regime, percentile, reversion_prob),
-            "recommended_strategies": self._get_premium_selling_strategies(regime) if should_sell else [],
+            "rationale": self._build_sell_rationale(
+                should_sell, current_vix, regime, percentile, reversion_prob
+            ),
+            "recommended_strategies": self._get_premium_selling_strategies(regime)
+            if should_sell
+            else [],
         }
 
         logger.info(
@@ -729,8 +738,12 @@ class VIXSignals:
             "regime": regime.value,
             "percentile": percentile,
             "term_structure": term_state.value,
-            "rationale": self._build_buy_rationale(should_buy, current_vix, regime, percentile, term_state),
-            "recommended_strategies": self._get_premium_buying_strategies(regime) if should_buy else [],
+            "rationale": self._build_buy_rationale(
+                should_buy, current_vix, regime, percentile, term_state
+            ),
+            "recommended_strategies": self._get_premium_buying_strategies(regime)
+            if should_buy
+            else [],
         }
 
         logger.info(
@@ -755,12 +768,12 @@ class VIXSignals:
 
         # Position size multipliers by regime
         multipliers = {
-            VolatilityRegime.EXTREME_LOW: 1.5,   # 50% larger positions
-            VolatilityRegime.LOW: 1.25,          # 25% larger
-            VolatilityRegime.NORMAL: 1.0,        # Standard size
-            VolatilityRegime.ELEVATED: 0.75,     # 25% smaller
-            VolatilityRegime.HIGH: 0.5,          # 50% smaller
-            VolatilityRegime.EXTREME: 0.25,      # 75% smaller
+            VolatilityRegime.EXTREME_LOW: 1.5,  # 50% larger positions
+            VolatilityRegime.LOW: 1.25,  # 25% larger
+            VolatilityRegime.NORMAL: 1.0,  # Standard size
+            VolatilityRegime.ELEVATED: 0.75,  # 25% smaller
+            VolatilityRegime.HIGH: 0.5,  # 50% smaller
+            VolatilityRegime.EXTREME: 0.25,  # 75% smaller
         }
 
         base_multiplier = multipliers[regime]
@@ -812,7 +825,9 @@ class VIXSignals:
             "percentile": percentile,
             "term_structure": term_state.value,
             "position_size_multiplier": position_size["multiplier"],
-            "recommended_strategies": self._get_all_strategy_recommendations(regime, sell_signal, buy_signal),
+            "recommended_strategies": self._get_all_strategy_recommendations(
+                regime, sell_signal, buy_signal
+            ),
             "risk_level": self._get_risk_level(regime),
             "entry_rules": self._get_entry_rules(regime),
             "exit_rules": self._get_exit_rules(regime),
@@ -829,14 +844,18 @@ class VIXSignals:
     # ==================== Helper Methods ====================
 
     def _build_sell_rationale(
-        self, should_sell: bool, vix: float, regime: VolatilityRegime,
-        percentile: float, reversion_prob: float
+        self,
+        should_sell: bool,
+        vix: float,
+        regime: VolatilityRegime,
+        percentile: float,
+        reversion_prob: float,
     ) -> str:
         """Build rationale for premium selling recommendation"""
         if should_sell:
             return (
                 f"VIX at {vix:.2f} ({regime.value}, {percentile:.0f}th percentile) with "
-                f"{reversion_prob*100:.0f}% mean reversion probability. "
+                f"{reversion_prob * 100:.0f}% mean reversion probability. "
                 f"Options are expensive - SELL PREMIUM to collect high credit and benefit from VIX decay."
             )
         else:
@@ -846,8 +865,12 @@ class VIXSignals:
             )
 
     def _build_buy_rationale(
-        self, should_buy: bool, vix: float, regime: VolatilityRegime,
-        percentile: float, term_state: TermStructureState
+        self,
+        should_buy: bool,
+        vix: float,
+        regime: VolatilityRegime,
+        percentile: float,
+        term_state: TermStructureState,
     ) -> str:
         """Build rationale for premium buying recommendation"""
         if should_buy:
@@ -912,26 +935,30 @@ class VIXSignals:
 
         if sell_signal["should_sell_premium"]:
             for strat in sell_signal["recommended_strategies"]:
-                strategies.append({
-                    "strategy": strat,
-                    "action": "SELL",
-                    "priority": "HIGH" if regime in [VolatilityRegime.HIGH, VolatilityRegime.EXTREME] else "MEDIUM"
-                })
+                strategies.append(
+                    {
+                        "strategy": strat,
+                        "action": "SELL",
+                        "priority": "HIGH"
+                        if regime in [VolatilityRegime.HIGH, VolatilityRegime.EXTREME]
+                        else "MEDIUM",
+                    }
+                )
 
         if buy_signal["should_buy_premium"]:
             for strat in buy_signal["recommended_strategies"]:
-                strategies.append({
-                    "strategy": strat,
-                    "action": "BUY",
-                    "priority": "HIGH" if regime == VolatilityRegime.EXTREME_LOW else "MEDIUM"
-                })
+                strategies.append(
+                    {
+                        "strategy": strat,
+                        "action": "BUY",
+                        "priority": "HIGH" if regime == VolatilityRegime.EXTREME_LOW else "MEDIUM",
+                    }
+                )
 
         if not strategies:
-            strategies.append({
-                "strategy": "WAIT - No clear edge",
-                "action": "WAIT",
-                "priority": "N/A"
-            })
+            strategies.append(
+                {"strategy": "WAIT - No clear edge", "action": "WAIT", "priority": "N/A"}
+            )
 
         return strategies
 
@@ -1008,13 +1035,12 @@ if __name__ == "__main__":
     Example usage and testing.
     """
     logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("VIX MONITORING AND VOLATILITY REGIME DETECTION")
-    print("="*80)
+    print("=" * 80)
 
     # Initialize monitor
     monitor = VIXMonitor()
@@ -1059,11 +1085,11 @@ if __name__ == "__main__":
 
     print("\n--- Mean Reversion Analysis ---")
     reversion_prob = monitor.calculate_mean_reversion_probability()
-    print(f"Mean Reversion Probability: {reversion_prob*100:.1f}%")
+    print(f"Mean Reversion Probability: {reversion_prob * 100:.1f}%")
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("VIX TRADING SIGNALS")
-    print("="*80)
+    print("=" * 80)
 
     signals = VIXSignals(monitor)
 
@@ -1072,9 +1098,9 @@ if __name__ == "__main__":
     print(f"Should Sell Premium: {sell_signal['should_sell_premium']}")
     print(f"Confidence: {sell_signal['confidence']}")
     print(f"Rationale: {sell_signal['rationale']}")
-    if sell_signal['recommended_strategies']:
+    if sell_signal["recommended_strategies"]:
         print("Recommended Strategies:")
-        for strat in sell_signal['recommended_strategies']:
+        for strat in sell_signal["recommended_strategies"]:
             print(f"  - {strat}")
 
     print("\n--- Premium Buying Signal ---")
@@ -1082,9 +1108,9 @@ if __name__ == "__main__":
     print(f"Should Buy Premium: {buy_signal['should_buy_premium']}")
     print(f"Confidence: {buy_signal['confidence']}")
     print(f"Rationale: {buy_signal['rationale']}")
-    if buy_signal['recommended_strategies']:
+    if buy_signal["recommended_strategies"]:
         print("Recommended Strategies:")
-        for strat in buy_signal['recommended_strategies']:
+        for strat in buy_signal["recommended_strategies"]:
             print(f"  - {strat}")
 
     print("\n--- Position Sizing ---")
@@ -1099,20 +1125,20 @@ if __name__ == "__main__":
     print(f"Position Size Multiplier: {recommendation['position_size_multiplier']:.2f}x")
 
     print("\nRecommended Strategies:")
-    for strat in recommendation['recommended_strategies']:
+    for strat in recommendation["recommended_strategies"]:
         print(f"  - [{strat['priority']}] {strat['action']}: {strat['strategy']}")
 
     print("\nEntry Rules:")
-    for rule in recommendation['entry_rules']:
+    for rule in recommendation["entry_rules"]:
         print(f"  - {rule}")
 
     print("\nExit Rules:")
-    for rule in recommendation['exit_rules']:
+    for rule in recommendation["exit_rules"]:
         print(f"  - {rule}")
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("VIX MONITORING SYSTEM READY")
-    print("="*80)
+    print("=" * 80)
     print("\nExport state for system_state.json:")
     state = monitor.export_state()
     print(json.dumps(state, indent=2))

@@ -16,7 +16,7 @@ import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -35,7 +35,6 @@ from src.options.iv_data_integration import (
     VolatilitySurface,
     VolatilitySurfacePoint,
 )
-
 
 # ============================================================================
 # FIXTURES
@@ -288,7 +287,7 @@ class TestIVDataFetcher:
         assert len(term_structure) > 0
 
         # Keys should be DTEs (integers)
-        assert all(isinstance(k, int) for k in term_structure.keys())
+        assert all(isinstance(k, int) for k in term_structure)
         # Values should be IVs (floats)
         assert all(isinstance(v, float) for v in term_structure.values())
 
@@ -358,7 +357,7 @@ class TestIVDataFetcher:
         assert snapshot_file.exists()
 
         # Load and verify
-        with open(snapshot_file, "r") as f:
+        with open(snapshot_file) as f:
             data = json.load(f)
 
         assert len(data) == 1
@@ -368,7 +367,7 @@ class TestIVDataFetcher:
         # Save another snapshot
         fetcher.save_iv_snapshot("TEST", 0.27, 102.0)
 
-        with open(snapshot_file, "r") as f:
+        with open(snapshot_file) as f:
             data = json.load(f)
 
         assert len(data) == 2

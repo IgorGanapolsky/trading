@@ -13,19 +13,17 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
-
 from src.backtesting.options_backtest import (
     BacktestMetrics,
     BlackScholesPricer,
-    OptionType,
     OptionsBacktestEngine,
     OptionsLeg,
     OptionsPosition,
+    OptionType,
     StrategyType,
 )
 
@@ -49,15 +47,15 @@ class TestBlackScholesPricer:
         )
 
         # ATM call should have positive price
-        assert result['price'] > 0
+        assert result["price"] > 0
         # Delta should be around 0.5 for ATM call
-        assert 0.45 < result['delta'] < 0.55
+        assert 0.45 < result["delta"] < 0.55
         # Gamma should be positive
-        assert result['gamma'] > 0
+        assert result["gamma"] > 0
         # Theta should be negative (time decay)
-        assert result['theta'] < 0
+        assert result["theta"] < 0
         # Vega should be positive
-        assert result['vega'] > 0
+        assert result["vega"] > 0
 
     def test_otm_call_lower_price(self):
         """Test that OTM calls are cheaper than ATM calls."""
@@ -82,9 +80,9 @@ class TestBlackScholesPricer:
         )
 
         # OTM call should be cheaper than ATM
-        assert otm_result['price'] < atm_result['price']
+        assert otm_result["price"] < atm_result["price"]
         # OTM call should have lower delta
-        assert otm_result['delta'] < atm_result['delta']
+        assert otm_result["delta"] < atm_result["delta"]
 
     def test_put_call_parity(self):
         """Test put-call parity relationship."""
@@ -111,7 +109,7 @@ class TestBlackScholesPricer:
         # Put-call parity: C - P = S - K*e^(-rT)
         # For ATM: S = K, so C - P ≈ K(1 - e^(-rT))
         parity_value = 100 * (1 - np.exp(-0.05 * 1.0))
-        actual_diff = call['price'] - put['price']
+        actual_diff = call["price"] - put["price"]
 
         # Allow 1% tolerance
         assert abs(actual_diff - parity_value) < 1.0
@@ -131,7 +129,7 @@ class TestBlackScholesPricer:
         )
 
         # Should equal intrinsic value
-        assert abs(call['price'] - 5.0) < 0.01
+        assert abs(call["price"] - 5.0) < 0.01
 
         # OTM put at expiration
         put = pricer.calculate(
@@ -144,7 +142,7 @@ class TestBlackScholesPricer:
         )
 
         # Should be worthless
-        assert put['price'] < 0.01
+        assert put["price"] < 0.01
 
     def test_iv_estimation(self):
         """Test IV estimation from HV."""
@@ -349,25 +347,28 @@ class TestOptionsBacktestEngine:
     @pytest.fixture
     def sample_data(self):
         """Create sample historical data."""
-        dates = pd.date_range(start="2023-01-01", end="2024-12-31", freq='D')
+        dates = pd.date_range(start="2023-01-01", end="2024-12-31", freq="D")
         dates = dates[dates.weekday < 5]  # Weekdays only
 
         # Generate realistic price data
         np.random.seed(42)
         prices = 100 * np.exp(np.cumsum(np.random.normal(0.0005, 0.01, len(dates))))
 
-        df = pd.DataFrame({
-            'Open': prices * (1 + np.random.uniform(-0.002, 0.002, len(dates))),
-            'High': prices * (1 + np.random.uniform(0, 0.01, len(dates))),
-            'Low': prices * (1 - np.random.uniform(0, 0.01, len(dates))),
-            'Close': prices,
-            'Volume': np.random.uniform(50e6, 150e6, len(dates)),
-        }, index=dates)
+        df = pd.DataFrame(
+            {
+                "Open": prices * (1 + np.random.uniform(-0.002, 0.002, len(dates))),
+                "High": prices * (1 + np.random.uniform(0, 0.01, len(dates))),
+                "Low": prices * (1 - np.random.uniform(0, 0.01, len(dates))),
+                "Close": prices,
+                "Volume": np.random.uniform(50e6, 150e6, len(dates)),
+            },
+            index=dates,
+        )
 
-        df['Returns'] = df['Close'].pct_change()
-        df['HV_20'] = df['Returns'].rolling(20).std() * np.sqrt(252)
-        df['HV_30'] = df['Returns'].rolling(30).std() * np.sqrt(252)
-        df['IV_Est'] = df['HV_30'] * 1.2
+        df["Returns"] = df["Close"].pct_change()
+        df["HV_20"] = df["Returns"].rolling(20).std() * np.sqrt(252)
+        df["HV_30"] = df["Returns"].rolling(30).std() * np.sqrt(252)
+        df["IV_Est"] = df["HV_30"] * 1.2
 
         return df
 
@@ -380,6 +381,7 @@ class TestOptionsBacktestEngine:
 
     def test_data_loading(self, engine, sample_data, monkeypatch):
         """Test historical data loading."""
+
         # Mock yfinance
         class MockTicker:
             def history(self, start, end, auto_adjust=False):
@@ -389,14 +391,15 @@ class TestOptionsBacktestEngine:
             return MockTicker()
 
         import yfinance
+
         monkeypatch.setattr(yfinance, "Ticker", mock_ticker)
 
         # Load data
         hist = engine.load_historical_options_data("SPY")
 
         assert not hist.empty
-        assert 'HV_20' in hist.columns
-        assert 'IV_Est' in hist.columns
+        assert "HV_20" in hist.columns
+        assert "IV_Est" in hist.columns
 
     def test_covered_call_simulation(self, engine, sample_data):
         """Test covered call trade simulation."""
@@ -405,7 +408,9 @@ class TestOptionsBacktestEngine:
 
         # Create covered call position
         entry_date = datetime(2024, 1, 15)
-        entry_price = float(sample_data.loc[sample_data.index.date <= entry_date.date(), 'Close'].iloc[-1])
+        entry_price = float(
+            sample_data.loc[sample_data.index.date <= entry_date.date(), "Close"].iloc[-1]
+        )
 
         leg = OptionsLeg(
             option_type=OptionType.CALL,
@@ -439,7 +444,9 @@ class TestOptionsBacktestEngine:
         engine.price_data["SPY"] = sample_data
 
         entry_date = datetime(2024, 1, 15)
-        entry_price = float(sample_data.loc[sample_data.index.date <= entry_date.date(), 'Close'].iloc[-1])
+        entry_price = float(
+            sample_data.loc[sample_data.index.date <= entry_date.date(), "Close"].iloc[-1]
+        )
 
         # Iron condor: sell OTM put spread + sell OTM call spread
         legs = [
@@ -499,6 +506,7 @@ class TestOptionsBacktestEngine:
 
     def test_backtest_with_strategy(self, engine, sample_data, monkeypatch):
         """Test full backtest with simple strategy."""
+
         # Mock yfinance
         class MockTicker:
             def history(self, start, end, auto_adjust=False):
@@ -508,6 +516,7 @@ class TestOptionsBacktestEngine:
             return MockTicker()
 
         import yfinance
+
         monkeypatch.setattr(yfinance, "Ticker", mock_ticker)
 
         # Define simple covered call strategy
@@ -516,8 +525,8 @@ class TestOptionsBacktestEngine:
             if date.day not in [1, 15]:
                 return None
 
-            current_price = float(hist['Close'].iloc[-1])
-            iv = float(hist['IV_Est'].iloc[-1])
+            current_price = float(hist["Close"].iloc[-1])
+            iv = float(hist["IV_Est"].iloc[-1])
 
             if pd.isna(iv) or iv <= 0:
                 return None

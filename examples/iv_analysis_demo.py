@@ -35,7 +35,9 @@ from src.options.iv_data_integration import (
 )
 
 
-def analyze_symbol(symbol: str, fetcher: IVDataFetcher, alerts_system: IVAlerts, show_surface: bool = False):
+def analyze_symbol(
+    symbol: str, fetcher: IVDataFetcher, alerts_system: IVAlerts, show_surface: bool = False
+):
     """Comprehensive IV analysis for a single symbol"""
 
     print(f"\n{'=' * 80}")
@@ -90,7 +92,9 @@ def analyze_symbol(symbol: str, fetcher: IVDataFetcher, alerts_system: IVAlerts,
     if alerts:
         print("🚨 ACTIVE ALERTS:")
         for alert in alerts:
-            urgency_icon = {"LOW": "ℹ️", "MEDIUM": "⚠️", "HIGH": "🔥", "CRITICAL": "🚨"}.get(alert.urgency, "")
+            urgency_icon = {"LOW": "ℹ️", "MEDIUM": "⚠️", "HIGH": "🔥", "CRITICAL": "🚨"}.get(
+                alert.urgency, ""
+            )
             print(f"\n   {urgency_icon} [{alert.urgency}] {alert.alert_type}")
             print(f"   Message: {alert.message}")
             print(f"   Action: {alert.recommended_action}")
@@ -129,7 +133,9 @@ def analyze_symbol(symbol: str, fetcher: IVDataFetcher, alerts_system: IVAlerts,
             if opportunities:
                 print(f"\n⚡ Arbitrage Opportunities Found: {len(opportunities)}")
                 for opp in opportunities[:3]:
-                    print(f"   - {opp['type']}: Strike ${opp['strike']:.2f}, Severity {opp['severity']:.2%}")
+                    print(
+                        f"   - {opp['type']}: Strike ${opp['strike']:.2f}, Severity {opp['severity']:.2%}"
+                    )
             else:
                 print("\n✅ No arbitrage opportunities detected")
 
@@ -139,25 +145,11 @@ def analyze_symbol(symbol: str, fetcher: IVDataFetcher, alerts_system: IVAlerts,
 def main():
     """Main demo function"""
     parser = argparse.ArgumentParser(description="IV Analysis Demo")
+    parser.add_argument("--symbol", default="SPY", help="Symbol to analyze (default: SPY)")
+    parser.add_argument("--watchlist", help="Comma-separated list of symbols to analyze")
+    parser.add_argument("--surface", action="store_true", help="Show volatility surface analysis")
     parser.add_argument(
-        "--symbol",
-        default="SPY",
-        help="Symbol to analyze (default: SPY)"
-    )
-    parser.add_argument(
-        "--watchlist",
-        help="Comma-separated list of symbols to analyze"
-    )
-    parser.add_argument(
-        "--surface",
-        action="store_true",
-        help="Show volatility surface analysis"
-    )
-    parser.add_argument(
-        "--paper",
-        action="store_true",
-        default=True,
-        help="Use paper trading (default: True)"
+        "--paper", action="store_true", default=True, help="Use paper trading (default: True)"
     )
 
     args = parser.parse_args()
@@ -180,6 +172,7 @@ def main():
         except Exception as e:
             print(f"\n❌ Error analyzing {symbol}: {e}\n")
             import traceback
+
             traceback.print_exc()
 
     print("\n✅ Analysis complete!\n")

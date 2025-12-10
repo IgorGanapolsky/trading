@@ -15,7 +15,7 @@ Exit codes:
 import json
 import os
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 
 def is_weekend() -> bool:
@@ -82,9 +82,7 @@ def main():
                             skip = True
                             reason = f"Trading already executed today at {last_dt.isoformat()}"
                         else:
-                            reason = (
-                                f"Last execution was {last_dt.date()}, proceeding with today's trade"
-                            )
+                            reason = f"Last execution was {last_dt.date()}, proceeding with today's trade"
                 except ValueError as e:
                     reason = f"Could not parse last_updated timestamp: {e}"
         except json.JSONDecodeError as e:

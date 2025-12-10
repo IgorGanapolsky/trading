@@ -23,15 +23,17 @@ from typing import Optional
 
 class IVRegime(Enum):
     """Implied Volatility Regimes based on IV Rank"""
-    VERY_LOW = "very_low"      # IV Rank < 20
-    LOW = "low"                # IV Rank 20-30
-    NEUTRAL = "neutral"        # IV Rank 30-50
-    HIGH = "high"              # IV Rank 50-75
-    VERY_HIGH = "very_high"    # IV Rank > 75
+
+    VERY_LOW = "very_low"  # IV Rank < 20
+    LOW = "low"  # IV Rank 20-30
+    NEUTRAL = "neutral"  # IV Rank 30-50
+    HIGH = "high"  # IV Rank 50-75
+    VERY_HIGH = "very_high"  # IV Rank > 75
 
 
 class MarketOutlook(Enum):
     """Market directional bias"""
+
     STRONG_BULLISH = "strong_bullish"
     BULLISH = "bullish"
     NEUTRAL = "neutral"
@@ -42,6 +44,7 @@ class MarketOutlook(Enum):
 @dataclass
 class OptionsStrategy:
     """Options strategy recommendation"""
+
     name: str
     description: str
     max_profit: str
@@ -57,6 +60,7 @@ class OptionsStrategy:
 @dataclass
 class TradeSignal:
     """Actionable options trade signal"""
+
     ticker: str
     strategy: str
     action: str  # "BUY" or "SELL"
@@ -84,9 +88,13 @@ class OptionsIVSignalGenerator:
 
     def __init__(self, rag_base_path: str = "/home/user/trading/rag_knowledge/chunks"):
         self.rag_base_path = Path(rag_base_path)
-        self.mcmillan_chunks = self._load_rag_chunks("mcmillan_options_strategic_investment_2025.json")
+        self.mcmillan_chunks = self._load_rag_chunks(
+            "mcmillan_options_strategic_investment_2025.json"
+        )
         self.tastytrade_chunks = self._load_rag_chunks("tastytrade_options_education_2025.json")
-        self.all_chunks = self.mcmillan_chunks.get("chunks", []) + self.tastytrade_chunks.get("chunks", [])
+        self.all_chunks = self.mcmillan_chunks.get("chunks", []) + self.tastytrade_chunks.get(
+            "chunks", []
+        )
 
         # Cache strategy mappings
         self._strategy_cache = {}
@@ -117,7 +125,11 @@ class OptionsIVSignalGenerator:
     def _search_rag(self, keywords: list[str], strategy_type: Optional[str] = None) -> list[dict]:
         """Search RAG chunks by keywords and/or strategy type"""
         results = []
-        search_pool = self._strategy_cache.get(strategy_type, self.all_chunks) if strategy_type else self.all_chunks
+        search_pool = (
+            self._strategy_cache.get(strategy_type, self.all_chunks)
+            if strategy_type
+            else self.all_chunks
+        )
 
         for chunk in search_pool:
             content = chunk.get("content", "").lower()
@@ -158,10 +170,7 @@ class OptionsIVSignalGenerator:
             return IVRegime.VERY_HIGH.value
 
     def get_strategy_recommendation(
-        self,
-        iv_rank: float,
-        market_outlook: str,
-        iv_percentile: Optional[float] = None
+        self, iv_rank: float, market_outlook: str, iv_percentile: Optional[float] = None
     ) -> OptionsStrategy:
         """
         Get optimal strategy recommendation based on IV and market outlook.
@@ -180,7 +189,9 @@ class OptionsIVSignalGenerator:
             OptionsStrategy with detailed recommendation
         """
         iv_regime = self.get_iv_regime(iv_rank)
-        outlook = MarketOutlook(market_outlook) if isinstance(market_outlook, str) else market_outlook
+        outlook = (
+            MarketOutlook(market_outlook) if isinstance(market_outlook, str) else market_outlook
+        )
 
         # Strategy selection matrix
         strategy = None
@@ -204,9 +215,9 @@ class OptionsIVSignalGenerator:
                     management_rules={
                         "profit_target": "50% of max profit",
                         "stop_loss": "50% of debit (original investment)",
-                        "time_exit": "Close by 21 DTE or if underlying stalls"
+                        "time_exit": "Close by 21 DTE or if underlying stalls",
                     },
-                    rag_source=rag_sources
+                    rag_source=rag_sources,
                 )
 
             elif outlook == MarketOutlook.BULLISH:
@@ -224,9 +235,9 @@ class OptionsIVSignalGenerator:
                     management_rules={
                         "profit_target": "50% max profit",
                         "stop_loss": "50% of debit",
-                        "adjustment": "Roll out and up if needed"
+                        "adjustment": "Roll out and up if needed",
                     },
-                    rag_source=rag_sources
+                    rag_source=rag_sources,
                 )
 
             elif outlook == MarketOutlook.STRONG_BEARISH:
@@ -244,9 +255,9 @@ class OptionsIVSignalGenerator:
                     management_rules={
                         "profit_target": "50% max profit",
                         "stop_loss": "50% of debit",
-                        "time_exit": "Close by 21 DTE"
+                        "time_exit": "Close by 21 DTE",
                     },
-                    rag_source=rag_sources
+                    rag_source=rag_sources,
                 )
 
             elif outlook == MarketOutlook.NEUTRAL:
@@ -264,9 +275,9 @@ class OptionsIVSignalGenerator:
                     management_rules={
                         "profit_target": "100-200% return on debit",
                         "stop_loss": "50% of debit if IV contracts",
-                        "iv_exit": "Sell when IV Rank > 50%"
+                        "iv_exit": "Sell when IV Rank > 50%",
                     },
-                    rag_source=rag_sources
+                    rag_source=rag_sources,
                 )
 
         # LOW IV (20-30): STILL FAVOR BUYING
@@ -286,9 +297,9 @@ class OptionsIVSignalGenerator:
                     management_rules={
                         "profit_target": "50% max profit",
                         "stop_loss": "50% debit",
-                        "roll": "If underlying moves against, consider rolling"
+                        "roll": "If underlying moves against, consider rolling",
                     },
-                    rag_source=rag_sources
+                    rag_source=rag_sources,
                 )
             else:
                 # Neutral/bearish in low IV - wait or use calendars
@@ -306,9 +317,9 @@ class OptionsIVSignalGenerator:
                     management_rules={
                         "profit_target": "25-40% return on debit",
                         "stop_loss": "50% of debit",
-                        "iv_benefit": "Benefits from IV increase (long vega)"
+                        "iv_benefit": "Benefits from IV increase (long vega)",
                     },
-                    rag_source=rag_sources
+                    rag_source=rag_sources,
                 )
 
         # NEUTRAL IV (30-50): NEUTRAL STRATEGIES
@@ -328,9 +339,9 @@ class OptionsIVSignalGenerator:
                     management_rules={
                         "profit_target": "50% of max profit (TastyTrade research)",
                         "exit_dte": "Close by 21 DTE (avoid gamma spike)",
-                        "adjustment": "Roll tested side if breached"
+                        "adjustment": "Roll tested side if breached",
                     },
-                    rag_source=rag_sources
+                    rag_source=rag_sources,
                 )
             elif outlook == MarketOutlook.BULLISH:
                 chunks = self._search_rag(["bull put spread", "credit spread"], "credit_spread")
@@ -347,9 +358,9 @@ class OptionsIVSignalGenerator:
                     management_rules={
                         "profit_target": "50% credit",
                         "max_loss": "2× credit (McMillan rule)",
-                        "roll": "If tested, roll out and down for credit"
+                        "roll": "If tested, roll out and down for credit",
                     },
-                    rag_source=rag_sources
+                    rag_source=rag_sources,
                 )
             elif outlook == MarketOutlook.BEARISH:
                 chunks = self._search_rag(["bear call spread", "credit spread"], "credit_spread")
@@ -366,9 +377,9 @@ class OptionsIVSignalGenerator:
                     management_rules={
                         "profit_target": "50% credit",
                         "max_loss": "2× credit",
-                        "roll": "If tested, roll out and up for credit"
+                        "roll": "If tested, roll out and up for credit",
                     },
-                    rag_source=rag_sources
+                    rag_source=rag_sources,
                 )
             else:
                 # Slight directional bias - calendar or butterfly
@@ -386,9 +397,9 @@ class OptionsIVSignalGenerator:
                     management_rules={
                         "profit_target": "50-75% max profit",
                         "stop_loss": "50% debit",
-                        "use_case": "Pinning expectations, expiration plays"
+                        "use_case": "Pinning expectations, expiration plays",
                     },
-                    rag_source=rag_sources
+                    rag_source=rag_sources,
                 )
 
         # HIGH IV (50-75): SELL PREMIUM
@@ -408,9 +419,9 @@ class OptionsIVSignalGenerator:
                     management_rules={
                         "profit_target": "50% credit (critical in high IV)",
                         "exit_dte": "21 DTE maximum",
-                        "iv_benefit": "High IV = high credit, expect contraction"
+                        "iv_benefit": "High IV = high credit, expect contraction",
                     },
-                    rag_source=rag_sources
+                    rag_source=rag_sources,
                 )
             elif outlook == MarketOutlook.BULLISH:
                 chunks = self._search_rag(["cash secured put", "naked put"], "cash_secured_put")
@@ -427,9 +438,9 @@ class OptionsIVSignalGenerator:
                     management_rules={
                         "profit_target": "50% credit or hold to expiration",
                         "assignment": "If assigned, wheel into covered call",
-                        "stock_selection": "Only on stocks you want to own (McMillan rule)"
+                        "stock_selection": "Only on stocks you want to own (McMillan rule)",
                     },
-                    rag_source=rag_sources
+                    rag_source=rag_sources,
                 )
             elif outlook == MarketOutlook.BEARISH:
                 chunks = self._search_rag(["bear call spread"], "credit_spread")
@@ -446,9 +457,9 @@ class OptionsIVSignalGenerator:
                     management_rules={
                         "profit_target": "50% credit",
                         "max_loss": "2× credit (McMillan)",
-                        "roll": "Roll up and out for credit if tested"
+                        "roll": "Roll up and out for credit if tested",
                     },
-                    rag_source=rag_sources
+                    rag_source=rag_sources,
                 )
             else:
                 # Covered calls if holding stock
@@ -466,9 +477,9 @@ class OptionsIVSignalGenerator:
                     management_rules={
                         "profit_target": "50% of premium or let assign",
                         "adjustment": "Roll up and out if called away early",
-                        "stock_holding": "Must own or be willing to own stock"
+                        "stock_holding": "Must own or be willing to own stock",
                     },
-                    rag_source=rag_sources
+                    rag_source=rag_sources,
                 )
 
         # VERY HIGH IV (> 75): AGGRESSIVE PREMIUM SELLING
@@ -488,15 +499,19 @@ class OptionsIVSignalGenerator:
                     management_rules={
                         "profit_target": "50% credit (exit fast in extreme IV)",
                         "stop_loss": "2× credit per side (McMillan rule)",
-                        "iv_watch": "Exit if IV continues rising (trend following)"
+                        "iv_watch": "Exit if IV continues rising (trend following)",
                     },
-                    rag_source=rag_sources
+                    rag_source=rag_sources,
                 )
             else:
                 # Credit spreads in very high IV (defined risk preferred)
                 chunks = self._search_rag(["credit spread"], "credit_spread")
                 rag_sources = [c["id"] for c in chunks[:2]]
-                direction = "Put" if outlook in [MarketOutlook.BULLISH, MarketOutlook.STRONG_BULLISH] else "Call"
+                direction = (
+                    "Put"
+                    if outlook in [MarketOutlook.BULLISH, MarketOutlook.STRONG_BULLISH]
+                    else "Call"
+                )
                 strategy = OptionsStrategy(
                     name=f"{'Bull' if direction == 'Put' else 'Bear'} {direction} Spread (Extreme IV)",
                     description=f"Sell {direction.lower()} spreads in extreme IV. Defined risk, high premium.",
@@ -509,9 +524,9 @@ class OptionsIVSignalGenerator:
                     management_rules={
                         "profit_target": "50% credit (take profits quickly)",
                         "max_loss": "2× credit",
-                        "spread_width": "Wider spreads for better risk/reward"
+                        "spread_width": "Wider spreads for better risk/reward",
                     },
-                    rag_source=rag_sources
+                    rag_source=rag_sources,
                 )
 
         # Fallback if no strategy matched
@@ -525,8 +540,10 @@ class OptionsIVSignalGenerator:
                 probability_of_profit="N/A",
                 ideal_dte=(0, 0),
                 delta_range=None,
-                management_rules={"recommendation": "Wait for IV Rank < 20 or > 50 for clearer edge"},
-                rag_source=[]
+                management_rules={
+                    "recommendation": "Wait for IV Rank < 20 or > 50 for clearer edge"
+                },
+                rag_source=[],
             )
 
         return strategy
@@ -539,7 +556,7 @@ class OptionsIVSignalGenerator:
         stock_price: float,
         market_outlook: str = "neutral",
         portfolio_value: float = 10000.0,
-        options_chain: Optional[dict] = None
+        options_chain: Optional[dict] = None,
     ) -> TradeSignal:
         """
         Generate actionable options trade signal with specific strikes and sizing.
@@ -585,7 +602,7 @@ class OptionsIVSignalGenerator:
                     "strike": lower_strike,
                     "quantity": 1,
                     "premium": buy_premium,
-                    "dte": 45
+                    "dte": 45,
                 },
                 {
                     "action": "SELL",
@@ -593,8 +610,8 @@ class OptionsIVSignalGenerator:
                     "strike": upper_strike,
                     "quantity": 1,
                     "premium": sell_premium,
-                    "dte": 45
-                }
+                    "dte": 45,
+                },
             ]
 
             max_risk = net_debit * 100
@@ -616,7 +633,7 @@ class OptionsIVSignalGenerator:
                     "strike": upper_strike,
                     "quantity": 1,
                     "premium": buy_premium,
-                    "dte": 45
+                    "dte": 45,
                 },
                 {
                     "action": "SELL",
@@ -624,8 +641,8 @@ class OptionsIVSignalGenerator:
                     "strike": lower_strike,
                     "quantity": 1,
                     "premium": sell_premium,
-                    "dte": 45
-                }
+                    "dte": 45,
+                },
             ]
 
             max_risk = net_debit * 100
@@ -657,7 +674,7 @@ class OptionsIVSignalGenerator:
                     "strike": short_strike,
                     "quantity": 1,
                     "premium": short_premium,
-                    "dte": 40
+                    "dte": 40,
                 },
                 {
                     "action": "BUY",
@@ -665,8 +682,8 @@ class OptionsIVSignalGenerator:
                     "strike": long_strike,
                     "quantity": 1,
                     "premium": long_premium,
-                    "dte": 40
-                }
+                    "dte": 40,
+                },
             ]
 
             max_risk = (abs(short_strike - long_strike) - net_credit) * 100
@@ -688,10 +705,38 @@ class OptionsIVSignalGenerator:
             net_credit = (put_short_prem - put_long_prem) + (call_short_prem - call_long_prem)
 
             legs = [
-                {"action": "SELL", "option_type": "PUT", "strike": put_short, "quantity": 1, "premium": put_short_prem, "dte": 40},
-                {"action": "BUY", "option_type": "PUT", "strike": put_long, "quantity": 1, "premium": put_long_prem, "dte": 40},
-                {"action": "SELL", "option_type": "CALL", "strike": call_short, "quantity": 1, "premium": call_short_prem, "dte": 40},
-                {"action": "BUY", "option_type": "CALL", "strike": call_long, "quantity": 1, "premium": call_long_prem, "dte": 40}
+                {
+                    "action": "SELL",
+                    "option_type": "PUT",
+                    "strike": put_short,
+                    "quantity": 1,
+                    "premium": put_short_prem,
+                    "dte": 40,
+                },
+                {
+                    "action": "BUY",
+                    "option_type": "PUT",
+                    "strike": put_long,
+                    "quantity": 1,
+                    "premium": put_long_prem,
+                    "dte": 40,
+                },
+                {
+                    "action": "SELL",
+                    "option_type": "CALL",
+                    "strike": call_short,
+                    "quantity": 1,
+                    "premium": call_short_prem,
+                    "dte": 40,
+                },
+                {
+                    "action": "BUY",
+                    "option_type": "CALL",
+                    "strike": call_long,
+                    "quantity": 1,
+                    "premium": call_long_prem,
+                    "dte": 40,
+                },
             ]
 
             max_risk = (5 - net_credit) * 100  # $5 wide spreads
@@ -709,7 +754,7 @@ class OptionsIVSignalGenerator:
                     "strike": strike,
                     "quantity": 1,
                     "premium": premium,
-                    "dte": 40
+                    "dte": 40,
                 }
             ]
 
@@ -728,7 +773,7 @@ class OptionsIVSignalGenerator:
                     "strike": stock_price,
                     "quantity": 100,
                     "premium": 0,
-                    "dte": 0
+                    "dte": 0,
                 },
                 {
                     "action": "SELL",
@@ -736,8 +781,8 @@ class OptionsIVSignalGenerator:
                     "strike": strike,
                     "quantity": 1,
                     "premium": premium,
-                    "dte": 40
-                }
+                    "dte": 40,
+                },
             ]
 
             max_risk = stock_price * 100 - premium * 100  # Downside on stock
@@ -751,8 +796,22 @@ class OptionsIVSignalGenerator:
             total_premium = call_premium + put_premium
 
             legs = [
-                {"action": "BUY", "option_type": "CALL", "strike": strike, "quantity": 1, "premium": call_premium, "dte": 60},
-                {"action": "BUY", "option_type": "PUT", "strike": strike, "quantity": 1, "premium": put_premium, "dte": 60}
+                {
+                    "action": "BUY",
+                    "option_type": "CALL",
+                    "strike": strike,
+                    "quantity": 1,
+                    "premium": call_premium,
+                    "dte": 60,
+                },
+                {
+                    "action": "BUY",
+                    "option_type": "PUT",
+                    "strike": strike,
+                    "quantity": 1,
+                    "premium": put_premium,
+                    "dte": 60,
+                },
             ]
 
             max_risk = total_premium * 100
@@ -784,9 +843,13 @@ class OptionsIVSignalGenerator:
         if iv_rank < 20:
             rationale_parts.append("McMillan Rule: IV Rank < 20 → BUY premium (options cheap)")
         elif iv_rank > 50:
-            rationale_parts.append("McMillan/TastyTrade Rule: IV Rank > 50 → SELL premium (options expensive)")
+            rationale_parts.append(
+                "McMillan/TastyTrade Rule: IV Rank > 50 → SELL premium (options expensive)"
+            )
 
-        rationale_parts.append(f"Position Sizing: {position_size_pct*100:.1f}% of portfolio (TastyTrade max 3-5% per trade)")
+        rationale_parts.append(
+            f"Position Sizing: {position_size_pct * 100:.1f}% of portfolio (TastyTrade max 3-5% per trade)"
+        )
 
         rationale = " | ".join(rationale_parts)
 
@@ -809,7 +872,7 @@ class OptionsIVSignalGenerator:
             position_size_pct=position_size_pct,
             entry_dte=strategy.ideal_dte,
             exit_criteria=exit_criteria,
-            rag_citations=strategy.rag_source
+            rag_citations=strategy.rag_source,
         )
 
     def format_signal_report(self, signal: TradeSignal) -> str:
@@ -831,9 +894,9 @@ TRADE STRUCTURE:
 """
         for i, leg in enumerate(signal.legs, 1):
             report += f"  Leg {i}: {leg['action']} {leg['quantity']} {leg['option_type']} @ ${leg['strike']:.2f}"
-            if leg.get('premium', 0) > 0:
+            if leg.get("premium", 0) > 0:
                 report += f" for ${leg['premium']:.2f}"
-            if leg.get('dte', 0) > 0:
+            if leg.get("dte", 0) > 0:
                 report += f" ({leg['dte']} DTE)"
             report += "\n"
 
@@ -841,11 +904,11 @@ TRADE STRUCTURE:
 RISK/REWARD:
 - Max Profit: ${signal.expected_profit:.2f}
 - Max Risk: ${signal.max_risk:.2f}
-- Risk/Reward Ratio: {signal.expected_profit/signal.max_risk if signal.max_risk > 0 else 0:.2f}
-- Probability of Profit: {signal.probability_profit*100:.1f}%
+- Risk/Reward Ratio: {signal.expected_profit / signal.max_risk if signal.max_risk > 0 else 0:.2f}
+- Probability of Profit: {signal.probability_profit * 100:.1f}%
 
 POSITION SIZING:
-- Allocate: {signal.position_size_pct*100:.1f}% of portfolio
+- Allocate: {signal.position_size_pct * 100:.1f}% of portfolio
 
 MANAGEMENT RULES:
 """
@@ -883,7 +946,7 @@ if __name__ == "__main__":
         iv_percentile=70.0,
         stock_price=450.0,
         market_outlook="neutral",
-        portfolio_value=50000.0
+        portfolio_value=50000.0,
     )
     print(generator.format_signal_report(signal1))
 
@@ -896,7 +959,7 @@ if __name__ == "__main__":
         iv_percentile=15.0,
         stock_price=180.0,
         market_outlook="bullish",
-        portfolio_value=50000.0
+        portfolio_value=50000.0,
     )
     print(generator.format_signal_report(signal2))
 
@@ -909,7 +972,7 @@ if __name__ == "__main__":
         iv_percentile=88.0,
         stock_price=250.0,
         market_outlook="neutral",
-        portfolio_value=50000.0
+        portfolio_value=50000.0,
     )
     print(generator.format_signal_report(signal3))
 

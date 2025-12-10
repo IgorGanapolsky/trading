@@ -6,17 +6,15 @@ Demonstrates all functionality when live data is unavailable.
 
 import logging
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from monitoring.vix_monitor import VIXMonitor, VIXRegime, TermStructure
+from monitoring.vix_monitor import TermStructure, VIXMonitor
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
 def demo_vix_monitor_methods():
@@ -74,21 +72,21 @@ def demo_vix_monitor_methods():
         monitor._cached_vix3m = vix3m
         monitor._cache_timestamp = datetime.now()
 
-        print(f"\nMock Data:")
+        print("\nMock Data:")
         print(f"  VIX: {vix:.2f}")
         print(f"  VIX3M: {vix3m:.2f}")
         print(f"  Spread: {vix3m - vix:+.2f}")
 
         # Test all methods
-        print(f"\n1. get_volatility_regime():")
+        print("\n1. get_volatility_regime():")
         regime = monitor.get_volatility_regime()
         print(f"   → {regime.upper()}")
 
-        print(f"\n2. get_vix_regime() [Internal Enum]:")
+        print("\n2. get_vix_regime() [Internal Enum]:")
         vix_regime = monitor.get_vix_regime(vix)
         print(f"   → {vix_regime.value.upper()}")
 
-        print(f"\n3. get_vix_term_structure():")
+        print("\n3. get_vix_term_structure():")
         term_structure = monitor.get_vix_term_structure(vix, vix3m)
         print(f"   → {term_structure.value.upper()}")
         if term_structure == TermStructure.CONTANGO:
@@ -96,7 +94,7 @@ def demo_vix_monitor_methods():
         elif term_structure == TermStructure.BACKWARDATION:
             print("      (⚠️  WARNING: VIX > VIX3M, market expects near-term spike!)")
 
-        print(f"\n4. should_sell_premium():")
+        print("\n4. should_sell_premium():")
         sell = monitor.should_sell_premium()
         print(f"   → {sell}")
         if sell:
@@ -104,7 +102,7 @@ def demo_vix_monitor_methods():
         else:
             print("      ❌ NOT FAVORABLE: Wait for better premium")
 
-        print(f"\n5. should_buy_premium():")
+        print("\n5. should_buy_premium():")
         buy = monitor.should_buy_premium()
         print(f"   → {buy}")
         if buy:
@@ -112,16 +110,16 @@ def demo_vix_monitor_methods():
         else:
             print("      ❌ NOT FAVORABLE: Premium too expensive")
 
-        print(f"\n6. get_options_strategy_recommendation():")
+        print("\n6. get_options_strategy_recommendation():")
         recommendation = monitor.get_options_strategy_recommendation()
         print(f"   Regime: {recommendation['regime'].upper()}")
         print(f"   VIX Level: {recommendation['vix_level']:.2f}")
         print(f"   Sizing: {recommendation['sizing']:.1f}x")
         print(f"   Sell Premium: {recommendation['sell_premium']}")
         print(f"   Buy Premium: {recommendation['buy_premium']}")
-        print(f"\n   Recommendation:")
+        print("\n   Recommendation:")
         print(f"   {recommendation['recommendation']}")
-        print(f"\n   Suggested Strategies:")
+        print("\n   Suggested Strategies:")
         for strategy in recommendation["strategies"]:
             print(f"     • {strategy}")
 

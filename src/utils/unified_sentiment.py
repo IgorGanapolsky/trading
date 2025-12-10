@@ -103,11 +103,34 @@ class UnifiedSentiment:
     # Reddit/YouTube sentiment for SPY is noise - professional analysts matter, retail doesn't.
     # Sentiment gates are SKIPPED for these tickers, returning neutral with high confidence.
     ETF_BYPASS_LIST = {
-        "SPY", "QQQ", "IWM", "DIA", "VOO", "VTI", "VEA", "VWO",  # Major equity ETFs
-        "TLT", "IEF", "SHY", "BND", "AGG", "LQD", "HYG",  # Bond ETFs
-        "GLD", "SLV", "IAU",  # Commodity ETFs
-        "XLF", "XLE", "XLK", "XLV", "XLI", "XLP", "XLU",  # Sector ETFs
-        "EEM", "EFA", "IEMG",  # International ETFs
+        "SPY",
+        "QQQ",
+        "IWM",
+        "DIA",
+        "VOO",
+        "VTI",
+        "VEA",
+        "VWO",  # Major equity ETFs
+        "TLT",
+        "IEF",
+        "SHY",
+        "BND",
+        "AGG",
+        "LQD",
+        "HYG",  # Bond ETFs
+        "GLD",
+        "SLV",
+        "IAU",  # Commodity ETFs
+        "XLF",
+        "XLE",
+        "XLK",
+        "XLV",
+        "XLI",
+        "XLP",
+        "XLU",  # Sector ETFs
+        "EEM",
+        "EFA",
+        "IEMG",  # International ETFs
     }
 
     # Signal thresholds

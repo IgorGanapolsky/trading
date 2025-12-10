@@ -5,7 +5,6 @@ Validates that RAG knowledge is properly integrated into trading decisions.
 """
 
 import pytest
-
 from src.trading.rag_trade_advisor import RAGTradeAdvisor
 
 

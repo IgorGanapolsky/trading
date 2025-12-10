@@ -4,13 +4,13 @@ Fetch RSS feeds for options trading education content and save to RAG knowledge 
 """
 
 import json
-import requests
+import re
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Any
-import re
+from typing import Any
 
+import requests
 
 # Options trading RSS feeds
 RSS_FEEDS = {
@@ -18,32 +18,32 @@ RSS_FEEDS = {
         "name": "TastyTrade Blog",
         "url": "https://www.tastytrade.com/news/rss",
         "fallback_url": "https://www.tastytrade.com/blog/rss",
-        "focus": "Options trading strategies, volatility, premium selling"
+        "focus": "Options trading strategies, volatility, premium selling",
     },
     "cboe": {
         "name": "CBOE Options Institute",
         "url": "https://www.cboe.com/rss/options-news",
         "fallback_url": "https://www.cboe.com/us/options/education/",
-        "focus": "Options education, volatility indices, market structure"
+        "focus": "Options education, volatility indices, market structure",
     },
     "investopedia_options": {
         "name": "Investopedia Options Trading",
         "url": "https://www.investopedia.com/feedbuilder/feed/getfeed/?feedName=rss_options",
         "fallback_url": "https://www.investopedia.com/options-basics-tutorial-4583012",
-        "focus": "Options basics, strategies, tutorials"
+        "focus": "Options basics, strategies, tutorials",
     },
     "options_alpha": {
         "name": "Options Alpha",
         "url": "https://optionsalpha.com/feed",
         "fallback_url": "https://optionsalpha.com/blog",
-        "focus": "Options trading strategies, backtesting, automation"
+        "focus": "Options trading strategies, backtesting, automation",
     },
     "volatility_trading": {
         "name": "Volatility Trading & Analysis",
         "url": "https://volatiletradingresearch.com/feed/",
         "fallback_url": "https://vixcentral.com/",
-        "focus": "VIX analysis, volatility trading, term structure"
-    }
+        "focus": "VIX analysis, volatility trading, term structure",
+    },
 }
 
 
@@ -52,13 +52,13 @@ def clean_html(text: str) -> str:
     if not text:
         return ""
     # Remove HTML tags
-    clean = re.sub(r'<[^>]+>', '', text)
+    clean = re.sub(r"<[^>]+>", "", text)
     # Remove extra whitespace
-    clean = re.sub(r'\s+', ' ', clean)
+    clean = re.sub(r"\s+", " ", clean)
     return clean.strip()
 
 
-def fetch_rss_feed(feed_name: str, feed_config: Dict[str, str]) -> List[Dict[str, Any]]:
+def fetch_rss_feed(feed_name: str, feed_config: dict[str, str]) -> list[dict[str, Any]]:
     """
     Fetch and parse RSS feed.
 
@@ -75,9 +75,7 @@ def fetch_rss_feed(feed_name: str, feed_config: Dict[str, str]) -> List[Dict[str
     try:
         print(f"\n[{feed_name}] Fetching RSS feed from {url}")
 
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
         response = requests.get(url, headers=headers, timeout=15)
         response.raise_for_status()
@@ -86,7 +84,7 @@ def fetch_rss_feed(feed_name: str, feed_config: Dict[str, str]) -> List[Dict[str
         root = ET.fromstring(response.content)
 
         # Find channel items (RSS 2.0) or entries (Atom)
-        items = root.findall('.//item') or root.findall('.//{http://www.w3.org/2005/Atom}entry')
+        items = root.findall(".//item") or root.findall(".//{http://www.w3.org/2005/Atom}entry")
 
         if not items:
             print(f"[{feed_name}] No items found in feed")
@@ -97,10 +95,26 @@ def fetch_rss_feed(feed_name: str, feed_config: Dict[str, str]) -> List[Dict[str
         for item in items[:10]:  # Limit to 10 most recent
             try:
                 # RSS 2.0 format
-                title = item.findtext('title') or item.findtext('{http://www.w3.org/2005/Atom}title') or "No title"
-                link = item.findtext('link') or item.findtext('{http://www.w3.org/2005/Atom}link') or ""
-                description = item.findtext('description') or item.findtext('{http://www.w3.org/2005/Atom}summary') or ""
-                pub_date = item.findtext('pubDate') or item.findtext('{http://www.w3.org/2005/Atom}published') or ""
+                title = (
+                    item.findtext("title")
+                    or item.findtext("{http://www.w3.org/2005/Atom}title")
+                    or "No title"
+                )
+                link = (
+                    item.findtext("link")
+                    or item.findtext("{http://www.w3.org/2005/Atom}link")
+                    or ""
+                )
+                description = (
+                    item.findtext("description")
+                    or item.findtext("{http://www.w3.org/2005/Atom}summary")
+                    or ""
+                )
+                pub_date = (
+                    item.findtext("pubDate")
+                    or item.findtext("{http://www.w3.org/2005/Atom}published")
+                    or ""
+                )
 
                 # Clean HTML from description
                 description_clean = clean_html(description)
@@ -113,7 +127,7 @@ def fetch_rss_feed(feed_name: str, feed_config: Dict[str, str]) -> List[Dict[str
                     "description": description_clean[:500] if description_clean else "",
                     "pub_date": pub_date.strip(),
                     "focus": feed_config["focus"],
-                    "fetched_at": datetime.now().isoformat()
+                    "fetched_at": datetime.now().isoformat(),
                 }
 
                 articles.append(article)
@@ -135,7 +149,7 @@ def fetch_rss_feed(feed_name: str, feed_config: Dict[str, str]) -> List[Dict[str
         return []
 
 
-def save_to_rag(articles: List[Dict[str, Any]], output_dir: Path):
+def save_to_rag(articles: list[dict[str, Any]], output_dir: Path):
     """
     Save fetched articles to RAG knowledge base.
 
@@ -150,7 +164,7 @@ def save_to_rag(articles: List[Dict[str, Any]], output_dir: Path):
     # Group by source
     by_source = {}
     for article in articles:
-        source_id = article['source_id']
+        source_id = article["source_id"]
         if source_id not in by_source:
             by_source[source_id] = []
         by_source[source_id].append(article)
@@ -165,13 +179,15 @@ def save_to_rag(articles: List[Dict[str, Any]], output_dir: Path):
             "focus": source_articles[0]["focus"],
             "fetched_at": datetime.now().isoformat(),
             "article_count": len(source_articles),
-            "articles": source_articles
+            "articles": source_articles,
         }
 
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
-        print(f"\n✓ Saved {len(source_articles)} articles from {source_articles[0]['source']} to {output_file}")
+        print(
+            f"\n✓ Saved {len(source_articles)} articles from {source_articles[0]['source']} to {output_file}"
+        )
 
 
 def main():

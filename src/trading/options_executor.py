@@ -133,7 +133,9 @@ class OptionsExecutor:
         """
         target_delta = target_delta or self.COVERED_CALL_TARGET_DELTA
 
-        logger.info(f"Executing covered call: {ticker} ({shares} shares, {dte} DTE, Δ={target_delta})")
+        logger.info(
+            f"Executing covered call: {ticker} ({shares} shares, {dte} DTE, Δ={target_delta})"
+        )
 
         # 1. Validate we own the shares
         account = self.trader.get_account_info()
@@ -164,7 +166,8 @@ class OptionsExecutor:
             opt
             for opt in chain
             if self._parse_option_symbol(opt["symbol"])["type"] == "call"
-            and abs((self._parse_option_symbol(opt["symbol"])["expiration"] - target_expiry).days) <= 7
+            and abs((self._parse_option_symbol(opt["symbol"])["expiration"] - target_expiry).days)
+            <= 7
         ]
 
         if not call_options:
@@ -230,7 +233,9 @@ class OptionsExecutor:
             raise ValueError(f"Order validation failed: {validation['reason']}")
 
         # 8. Execute the trade
-        logger.info(f"Placing covered call: SELL {num_contracts} {option_symbol} @ ${mid_price:.2f}")
+        logger.info(
+            f"Placing covered call: SELL {num_contracts} {option_symbol} @ ${mid_price:.2f}"
+        )
 
         order = self.place_paper_order(
             option_symbol=option_symbol,
@@ -321,7 +326,7 @@ class OptionsExecutor:
 
         # 1. Get account info for position sizing
         account = self.trader.get_account_info()
-        equity = float(account["equity"])
+        float(account["equity"])
 
         # 2. Get option chain
         chain = self.options_client.get_option_chain(ticker)
@@ -332,13 +337,15 @@ class OptionsExecutor:
             opt
             for opt in chain
             if self._parse_option_symbol(opt["symbol"])["type"] == "put"
-            and abs((self._parse_option_symbol(opt["symbol"])["expiration"] - target_expiry).days) <= 7
+            and abs((self._parse_option_symbol(opt["symbol"])["expiration"] - target_expiry).days)
+            <= 7
         ]
         calls = [
             opt
             for opt in chain
             if self._parse_option_symbol(opt["symbol"])["type"] == "call"
-            and abs((self._parse_option_symbol(opt["symbol"])["expiration"] - target_expiry).days) <= 7
+            and abs((self._parse_option_symbol(opt["symbol"])["expiration"] - target_expiry).days)
+            <= 7
         ]
 
         if not puts or not calls:
@@ -371,10 +378,18 @@ class OptionsExecutor:
             raise RuntimeError(f"No call found at strike ${long_call_strike:.2f}")
 
         # 6. Calculate net premium and validate
-        short_put_premium = (short_put.get("latest_quote_bid", 0) + short_put.get("latest_quote_ask", 0)) / 2
-        long_put_premium = (long_put.get("latest_quote_bid", 0) + long_put.get("latest_quote_ask", 0)) / 2
-        short_call_premium = (short_call.get("latest_quote_bid", 0) + short_call.get("latest_quote_ask", 0)) / 2
-        long_call_premium = (long_call.get("latest_quote_bid", 0) + long_call.get("latest_quote_ask", 0)) / 2
+        short_put_premium = (
+            short_put.get("latest_quote_bid", 0) + short_put.get("latest_quote_ask", 0)
+        ) / 2
+        long_put_premium = (
+            long_put.get("latest_quote_bid", 0) + long_put.get("latest_quote_ask", 0)
+        ) / 2
+        short_call_premium = (
+            short_call.get("latest_quote_bid", 0) + short_call.get("latest_quote_ask", 0)
+        ) / 2
+        long_call_premium = (
+            long_call.get("latest_quote_bid", 0) + long_call.get("latest_quote_ask", 0)
+        ) / 2
 
         put_spread_credit = short_put_premium - long_put_premium
         call_spread_credit = short_call_premium - long_call_premium
@@ -461,12 +476,16 @@ class OptionsExecutor:
             raise ValueError(f"Order validation failed: {validation['reason']}")
 
         # 10. Execute all four legs
-        logger.info(f"Placing iron condor on {ticker}: {short_put_strike}/{long_put_strike} PUT, {short_call_strike}/{long_call_strike} CALL")
+        logger.info(
+            f"Placing iron condor on {ticker}: {short_put_strike}/{long_put_strike} PUT, {short_call_strike}/{long_call_strike} CALL"
+        )
 
         orders = []
         for leg in legs:
             side_map = {"sell": "sell_to_open", "buy": "buy_to_open"}
-            limit_price = leg.premium if leg.side == "buy" else leg.premium * 0.95  # Conservative pricing
+            limit_price = (
+                leg.premium if leg.side == "buy" else leg.premium * 0.95
+            )  # Conservative pricing
 
             order = self.place_paper_order(
                 option_symbol=leg.symbol,
@@ -552,9 +571,7 @@ class OptionsExecutor:
         width = width or self.SPREAD_WIDTH
         target_delta = target_delta or self.CREDIT_SPREAD_TARGET_DELTA
 
-        logger.info(
-            f"Executing {spread_type}: {ticker} ({width}w, {dte} DTE, Δ={target_delta})"
-        )
+        logger.info(f"Executing {spread_type}: {ticker} ({width}w, {dte} DTE, Δ={target_delta})")
 
         # 1. Get account info
         account = self.trader.get_account_info()
@@ -570,7 +587,8 @@ class OptionsExecutor:
             opt
             for opt in chain
             if self._parse_option_symbol(opt["symbol"])["type"] == option_type
-            and abs((self._parse_option_symbol(opt["symbol"])["expiration"] - target_expiry).days) <= 7
+            and abs((self._parse_option_symbol(opt["symbol"])["expiration"] - target_expiry).days)
+            <= 7
         ]
 
         if not options:
@@ -594,8 +612,12 @@ class OptionsExecutor:
             raise RuntimeError(f"No {option_type} found at strike ${long_strike:.2f}")
 
         # 5. Calculate net credit and validate
-        short_premium = (short_option.get("latest_quote_bid", 0) + short_option.get("latest_quote_ask", 0)) / 2
-        long_premium = (long_option.get("latest_quote_bid", 0) + long_option.get("latest_quote_ask", 0)) / 2
+        short_premium = (
+            short_option.get("latest_quote_bid", 0) + short_option.get("latest_quote_ask", 0)
+        ) / 2
+        long_premium = (
+            long_option.get("latest_quote_bid", 0) + long_option.get("latest_quote_ask", 0)
+        ) / 2
         net_credit = short_premium - long_premium
 
         if net_credit < self.MIN_PREMIUM_PER_CONTRACT:
@@ -710,7 +732,9 @@ class OptionsExecutor:
             "max_loss": max_loss,
             "breakeven": breakeven,
             "iv": iv,
-            "delta": short_option["greeks"]["delta"] if short_option.get("greeks") else target_delta,
+            "delta": short_option["greeks"]["delta"]
+            if short_option.get("greeks")
+            else target_delta,
             "orders": orders,
             "timestamp": datetime.now().isoformat(),
         }
@@ -740,11 +764,13 @@ class OptionsExecutor:
         if strategy.max_risk > max_allowed_risk:
             return {
                 "approved": False,
-                "reason": f"Max risk ${strategy.max_risk:.2f} exceeds {self.MAX_PORTFOLIO_RISK_PCT*100}% portfolio limit (${max_allowed_risk:.2f})",
+                "reason": f"Max risk ${strategy.max_risk:.2f} exceeds {self.MAX_PORTFOLIO_RISK_PCT * 100}% portfolio limit (${max_allowed_risk:.2f})",
             }
 
         # 2. Check minimum premium
-        premium_per_contract = strategy.total_premium / sum(leg.quantity for leg in strategy.legs if leg.side == "sell")
+        premium_per_contract = strategy.total_premium / sum(
+            leg.quantity for leg in strategy.legs if leg.side == "sell"
+        )
         if premium_per_contract < self.MIN_PREMIUM_PER_CONTRACT * 100:  # Convert to dollars
             return {
                 "approved": False,
@@ -807,7 +833,9 @@ class OptionsExecutor:
             RuntimeError: If order placement fails
         """
         try:
-            logger.info(f"Placing paper order: {side.upper()} {quantity} {option_symbol} @ ${limit_price:.2f}")
+            logger.info(
+                f"Placing paper order: {side.upper()} {quantity} {option_symbol} @ ${limit_price:.2f}"
+            )
 
             order = self.options_client.submit_option_order(
                 option_symbol=option_symbol,

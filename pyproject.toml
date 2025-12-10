@@ -162,6 +162,7 @@ ignore = [
     "UP045",  # pipe-style Optional annotations (not yet migrated)
     "UP007",  # pipe unions (not yet migrated)
     "B905",  # zip strict parameter (backlog)
+    "S108",  # tmp file/directory usage (intentional for sandboxing)
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -174,6 +175,7 @@ ignore = [
 # Init files that re-export
 "src/risk/__init__.py" = ["F401"]
 "src/rag/__init__.py" = ["F401"]
+"src/options/__init__.py" = ["F401"]
 
 [tool.ruff.format]
 quote-style = "double"

@@ -543,8 +543,7 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
         )
 
         logger.info(
-            "Options order submitted via ExecutionAgent: %s %s x%d @ %s (status=%s) | "
-            "RAG: %s",
+            "Options order submitted via ExecutionAgent: %s %s x%d @ %s (status=%s) | RAG: %s",
             side,
             option_symbol,
             qty,

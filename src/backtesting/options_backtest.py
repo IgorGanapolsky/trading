@@ -44,12 +44,14 @@ logger = logging.getLogger(__name__)
 
 class OptionType(Enum):
     """Option type enumeration."""
+
     CALL = "call"
     PUT = "put"
 
 
 class StrategyType(Enum):
     """Supported options strategy types."""
+
     COVERED_CALL = "covered_call"
     CASH_SECURED_PUT = "cash_secured_put"
     IRON_CONDOR = "iron_condor"
@@ -78,6 +80,7 @@ class OptionsLeg:
         vega: Vega at entry
         iv: Implied volatility at entry
     """
+
     option_type: OptionType
     strike: float
     expiration: datetime
@@ -107,6 +110,7 @@ class OptionsPosition:
 
     Tracks entry/exit, P/L, Greeks, and assignment status.
     """
+
     symbol: str
     strategy: StrategyType
     legs: list[OptionsLeg]
@@ -278,16 +282,14 @@ class BlackScholesPricer:
 
         # Calculate price
         if option_type == OptionType.CALL:
-            price = (
-                spot * np.exp(-dividend_yield * time_to_expiry) * stats.norm.cdf(d1)
-                - strike * np.exp(-risk_free_rate * time_to_expiry) * stats.norm.cdf(d2)
-            )
+            price = spot * np.exp(-dividend_yield * time_to_expiry) * stats.norm.cdf(
+                d1
+            ) - strike * np.exp(-risk_free_rate * time_to_expiry) * stats.norm.cdf(d2)
             delta = np.exp(-dividend_yield * time_to_expiry) * stats.norm.cdf(d1)
         else:  # PUT
-            price = (
-                strike * np.exp(-risk_free_rate * time_to_expiry) * stats.norm.cdf(-d2)
-                - spot * np.exp(-dividend_yield * time_to_expiry) * stats.norm.cdf(-d1)
-            )
+            price = strike * np.exp(-risk_free_rate * time_to_expiry) * stats.norm.cdf(
+                -d2
+            ) - spot * np.exp(-dividend_yield * time_to_expiry) * stats.norm.cdf(-d1)
             delta = -np.exp(-dividend_yield * time_to_expiry) * stats.norm.cdf(-d1)
 
         # Calculate Greeks
@@ -306,25 +308,49 @@ class BlackScholesPricer:
 
         if option_type == OptionType.CALL:
             theta = (
-                -spot * stats.norm.pdf(d1) * volatility * np.exp(-dividend_yield * time_to_expiry)
+                -spot
+                * stats.norm.pdf(d1)
+                * volatility
+                * np.exp(-dividend_yield * time_to_expiry)
                 / (2 * np.sqrt(time_to_expiry))
-                - risk_free_rate * strike * np.exp(-risk_free_rate * time_to_expiry) * stats.norm.cdf(d2)
-                + dividend_yield * spot * np.exp(-dividend_yield * time_to_expiry) * stats.norm.cdf(d1)
+                - risk_free_rate
+                * strike
+                * np.exp(-risk_free_rate * time_to_expiry)
+                * stats.norm.cdf(d2)
+                + dividend_yield
+                * spot
+                * np.exp(-dividend_yield * time_to_expiry)
+                * stats.norm.cdf(d1)
             ) / 365  # Daily theta
 
             rho = (
-                strike * time_to_expiry * np.exp(-risk_free_rate * time_to_expiry) * stats.norm.cdf(d2)
+                strike
+                * time_to_expiry
+                * np.exp(-risk_free_rate * time_to_expiry)
+                * stats.norm.cdf(d2)
             ) / 100  # Divide by 100 for 1% change
         else:  # PUT
             theta = (
-                -spot * stats.norm.pdf(d1) * volatility * np.exp(-dividend_yield * time_to_expiry)
+                -spot
+                * stats.norm.pdf(d1)
+                * volatility
+                * np.exp(-dividend_yield * time_to_expiry)
                 / (2 * np.sqrt(time_to_expiry))
-                + risk_free_rate * strike * np.exp(-risk_free_rate * time_to_expiry) * stats.norm.cdf(-d2)
-                - dividend_yield * spot * np.exp(-dividend_yield * time_to_expiry) * stats.norm.cdf(-d1)
+                + risk_free_rate
+                * strike
+                * np.exp(-risk_free_rate * time_to_expiry)
+                * stats.norm.cdf(-d2)
+                - dividend_yield
+                * spot
+                * np.exp(-dividend_yield * time_to_expiry)
+                * stats.norm.cdf(-d1)
             ) / 365  # Daily theta
 
             rho = (
-                -strike * time_to_expiry * np.exp(-risk_free_rate * time_to_expiry) * stats.norm.cdf(-d2)
+                -strike
+                * time_to_expiry
+                * np.exp(-risk_free_rate * time_to_expiry)
+                * stats.norm.cdf(-d2)
             ) / 100  # Divide by 100 for 1% change
 
         return {
@@ -363,6 +389,7 @@ class BacktestMetrics:
 
     Includes standard metrics plus options-specific analytics.
     """
+
     # Period
     start_date: str
     end_date: str
@@ -536,13 +563,13 @@ class OptionsBacktestEngine:
                 raise ValueError(f"No data available for {symbol}")
 
             # Calculate returns and volatility
-            hist['Returns'] = hist['Close'].pct_change()
-            hist['HV_20'] = hist['Returns'].rolling(20).std() * np.sqrt(252)
-            hist['HV_30'] = hist['Returns'].rolling(30).std() * np.sqrt(252)
-            hist['HV_60'] = hist['Returns'].rolling(60).std() * np.sqrt(252)
+            hist["Returns"] = hist["Close"].pct_change()
+            hist["HV_20"] = hist["Returns"].rolling(20).std() * np.sqrt(252)
+            hist["HV_30"] = hist["Returns"].rolling(30).std() * np.sqrt(252)
+            hist["HV_60"] = hist["Returns"].rolling(60).std() * np.sqrt(252)
 
             # Estimate IV from HV (IV typically 1.1-1.3x HV)
-            hist['IV_Est'] = hist['HV_30'] * 1.2
+            hist["IV_Est"] = hist["HV_30"] * 1.2
 
             self.price_data[symbol] = hist
             logger.info(f"Loaded {len(hist)} bars for {symbol}")
@@ -584,12 +611,12 @@ class OptionsBacktestEngine:
             raise ValueError(f"No data available for exit date {exit_date}")
 
         # Calculate exit premiums for each leg
-        exit_price = float(exit_data['Close'].iloc[-1])
+        exit_price = float(exit_data["Close"].iloc[-1])
         exit_premiums = []
 
         for leg in position.legs:
             time_to_expiry = max(0, (leg.expiration - exit_date).days / 365.0)
-            iv = float(exit_data['IV_Est'].iloc[-1])
+            iv = float(exit_data["IV_Est"].iloc[-1])
 
             if pd.isna(iv):
                 iv = 0.20  # Default IV
@@ -603,7 +630,7 @@ class OptionsBacktestEngine:
                 option_type=leg.option_type,
             )
 
-            exit_premiums.append(result['price'])
+            exit_premiums.append(result["price"])
 
         # Calculate P/L
         position.exit_date = exit_date
@@ -753,7 +780,11 @@ class OptionsBacktestEngine:
 
         # CAGR
         years = (self.end_date - self.start_date).days / 365.25
-        cagr = (((final_capital / self.initial_capital) ** (1 / years)) - 1) * 100 if years > 0 else 0.0
+        cagr = (
+            (((final_capital / self.initial_capital) ** (1 / years)) - 1) * 100
+            if years > 0
+            else 0.0
+        )
 
         # Daily returns for Sharpe/Sortino
         daily_returns = np.diff(self.equity_curve) / self.equity_curve[:-1]
@@ -765,7 +796,8 @@ class OptionsBacktestEngine:
             risk_free_daily = self.risk_free_rate / 252
             sharpe_ratio = (
                 (avg_daily_return - risk_free_daily) / std_return * np.sqrt(252)
-                if std_return > 0 else 0.0
+                if std_return > 0
+                else 0.0
             )
         else:
             sharpe_ratio = 0.0
@@ -777,7 +809,8 @@ class OptionsBacktestEngine:
             risk_free_daily = self.risk_free_rate / 252
             sortino_ratio = (
                 (avg_daily_return - risk_free_daily) / downside_std * np.sqrt(252)
-                if downside_std > 0 else 0.0
+                if downside_std > 0
+                else 0.0
             )
         else:
             sortino_ratio = 0.0
@@ -787,7 +820,11 @@ class OptionsBacktestEngine:
         running_max = np.maximum.accumulate(equity_array)
         drawdown = (equity_array - running_max) / running_max
         max_drawdown = abs(np.min(drawdown)) * 100
-        avg_drawdown = abs(np.mean([d for d in drawdown if d < 0])) * 100 if any(d < 0 for d in drawdown) else 0.0
+        avg_drawdown = (
+            abs(np.mean([d for d in drawdown if d < 0])) * 100
+            if any(d < 0 for d in drawdown)
+            else 0.0
+        )
 
         # Calmar ratio
         calmar_ratio = abs(cagr / max_drawdown) if max_drawdown > 0 else 0.0
@@ -924,19 +961,23 @@ class OptionsBacktestEngine:
 
         # Strategy breakdown
         if metrics.strategy_performance:
-            lines.extend([
-                "=" * 80,
-                "STRATEGY PERFORMANCE",
-                "=" * 80,
-            ])
+            lines.extend(
+                [
+                    "=" * 80,
+                    "STRATEGY PERFORMANCE",
+                    "=" * 80,
+                ]
+            )
             for strategy, perf in metrics.strategy_performance.items():
-                lines.extend([
-                    f"\n{strategy.upper()}:",
-                    f"  Trades: {perf['trades']}",
-                    f"  P/L: ${perf['pnl']:+.2f}",
-                    f"  Win Rate: {perf['win_rate']:.1f}%",
-                    f"  Avg P/L: ${perf['avg_pnl']:+.2f}",
-                ])
+                lines.extend(
+                    [
+                        f"\n{strategy.upper()}:",
+                        f"  Trades: {perf['trades']}",
+                        f"  P/L: ${perf['pnl']:+.2f}",
+                        f"  Win Rate: {perf['win_rate']:.1f}%",
+                        f"  Avg P/L: ${perf['avg_pnl']:+.2f}",
+                    ]
+                )
 
         lines.append("\n" + "=" * 80)
 
@@ -953,29 +994,28 @@ class OptionsBacktestEngine:
             fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
 
             # Equity curve
-            ax1.plot(self.equity_curve, linewidth=2, color='#2E86AB')
-            ax1.axhline(y=self.initial_capital, color='gray', linestyle='--', alpha=0.5)
-            ax1.set_title('Equity Curve', fontsize=14, fontweight='bold')
-            ax1.set_xlabel('Trading Days')
-            ax1.set_ylabel('Portfolio Value ($)')
+            ax1.plot(self.equity_curve, linewidth=2, color="#2E86AB")
+            ax1.axhline(y=self.initial_capital, color="gray", linestyle="--", alpha=0.5)
+            ax1.set_title("Equity Curve", fontsize=14, fontweight="bold")
+            ax1.set_xlabel("Trading Days")
+            ax1.set_ylabel("Portfolio Value ($)")
             ax1.grid(True, alpha=0.3)
-            ax1.ticklabel_format(style='plain', axis='y')
+            ax1.ticklabel_format(style="plain", axis="y")
 
             # Drawdown
             equity_array = np.array(self.equity_curve)
             running_max = np.maximum.accumulate(equity_array)
             drawdown = (equity_array - running_max) / running_max * 100
 
-            ax2.fill_between(range(len(drawdown)), drawdown, 0,
-                            color='#A23B72', alpha=0.5)
-            ax2.set_title('Drawdown', fontsize=14, fontweight='bold')
-            ax2.set_xlabel('Trading Days')
-            ax2.set_ylabel('Drawdown (%)')
+            ax2.fill_between(range(len(drawdown)), drawdown, 0, color="#A23B72", alpha=0.5)
+            ax2.set_title("Drawdown", fontsize=14, fontweight="bold")
+            ax2.set_xlabel("Trading Days")
+            ax2.set_ylabel("Drawdown (%)")
             ax2.grid(True, alpha=0.3)
 
             plt.tight_layout()
             chart_file = output_path / f"options_backtest_{timestamp}.png"
-            plt.savefig(chart_file, dpi=300, bbox_inches='tight')
+            plt.savefig(chart_file, dpi=300, bbox_inches="tight")
             plt.close()
 
             logger.info(f"Chart generated: {chart_file}")
