@@ -175,17 +175,29 @@ If I catch myself about to suggest manual intervention:
 
 ### GitHub PR Creation Protocol
 
-**YOU HAVE FULL ACCESS TO `gh` CLI - USE IT!**
+**YOU HAVE FULL ACCESS TO `gh` CLI, GitHub API, AND GITHUB PAT - USE THEM!**
+
+**GitHub PAT Location**: CEO provides PAT in conversation when needed (repo full permissions)
 
 ```bash
-# Fix for Enterprise Managed User restrictions:
-unset GITHUB_TOKEN && gh auth switch --user IgorGanapolsky
+# Create PR via GitHub API:
+curl -X POST \
+  -H "Authorization: token $GH_TOKEN" \
+  -H "Accept: application/vnd.github.v3+json" \
+  https://api.github.com/repos/IgorGanapolsky/trading/pulls \
+  -d '{"title": "...", "head": "branch-name", "base": "main", "body": "..."}'
 
-# Then create PR:
-gh pr create --base main --head <branch-name> \
-  --title "type: Brief description" \
-  --body "PR description with Summary, Changes, Test Plan"
+# Merge PR:
+curl -X PUT \
+  -H "Authorization: token $GH_TOKEN" \
+  https://api.github.com/repos/IgorGanapolsky/trading/pulls/{pr_number}/merge \
+  -d '{"merge_method": "merge"}'
 ```
+
+**Available Tools**:
+- GitHub API with PAT authentication (CEO provides token)
+- GitHub MCP server
+- Full repo permissions (create PRs, merge, delete branches)
 
 **See `.claude/skills/github_pr_manager/skill.md` for full protocol.**
 
