@@ -109,6 +109,7 @@ Every session after the first should follow the "Future Sessions - START HERE" p
 - You make decisions and execute
 - You send reports TO Igor, not ask him to run scripts
 - **ALWAYS commit and push changes to GitHub** - don't leave work uncommitted
+- **FULL PR AUTHORITY**: You have full agentic control to create PRs and merge them using GitHub PAT, GitHub MCP, and gh CLI. Never ask the user to create or merge PRs - DO IT YOURSELF.
 
 **Igor (CEO) Role**:
 - Sets vision and goals
