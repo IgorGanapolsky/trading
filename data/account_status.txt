@@ -1,0 +1,286 @@
+================================================================================
+ALPACA ACCOUNT STATUS - REAL-TIME DATA
+Environment: PAPER TRADING
+Query Time: 2025-12-10 18:31:02
+================================================================================
+
+📊 ACCOUNT OVERVIEW
+--------------------------------------------------------------------------------
+Account Status: ACTIVE
+Current Equity: $100,009.56
+Cash: $100,589.75
+Buying Power: $0.00
+Portfolio Value: $100,009.56
+Last Equity (Previous Close): $100,010.78
+Today's P/L: $-1.22 (-0.00%)
+
+📈 CURRENT POSITIONS
+--------------------------------------------------------------------------------
+
+BIL:
+  Quantity: 0.109223963
+  Avg Entry Price: $91.56
+  Current Price: $91.56
+  Market Value: $10.00
+  Cost Basis: $10.00
+  Unrealized P/L: $+0.00 (+0.00%)
+
+BTCUSD:
+  Quantity: 0.000529313
+  Avg Entry Price: $92418.11
+  Current Price: $92221.19
+  Market Value: $48.81
+  Cost Basis: $48.92
+  Unrealized P/L: $-0.10 (-0.21%)
+
+SPY260123P00660000:
+  Quantity: -1.0
+  Avg Entry Price: $6.38
+  Current Price: $6.39
+  Market Value: $-639.00
+  Cost Basis: $-638.00
+  Unrealized P/L: $-1.00 (-0.16%)
+
+TOTAL Position Value: $-580.19
+TOTAL Unrealized P/L: $-1.10
+
+📋 ORDER HISTORY (Since Oct 29, 2025)
+--------------------------------------------------------------------------------
+Found 229 orders since Oct 29
+
+2025-10-29 21:06:44 | FILLED     | BUY  | SPY    | Qty:   0.01 | Price: $ 683.84 | Total: $     5.99
+2025-10-29 21:08:35 | FILLED     | BUY  | SPY    | Qty:   0.01 | Price: $ 683.84 | Total: $     5.99
+2025-10-29 21:08:35 | FILLED     | BUY  | GOOGL  | Qty:   0.01 | Price: $ 291.18 | Total: $     1.99
+2025-10-30 13:35:04 | FILLED     | BUY  | SPY    | Qty:   0.01 | Price: $ 683.03 | Total: $     5.99
+2025-10-30 13:35:04 | FILLED     | BUY  | NVDA   | Qty:   0.01 | Price: $ 202.97 | Total: $     1.99
+2025-11-03 14:51:46 | FILLED     | BUY  | SPY    | Qty:   1.76 | Price: $ 682.74 | Total: $  1199.99
+2025-11-03 14:51:47 | FILLED     | BUY  | GOOGL  | Qty:   1.42 | Price: $ 282.35 | Total: $   399.99
+2025-11-06 13:28:15 | FILLED     | BUY  | SPY    | Qty:   0.01 | Price: $ 676.54 | Total: $     5.99
+2025-11-06 13:28:16 | FILLED     | BUY  | GOOGL  | Qty:   0.01 | Price: $ 285.14 | Total: $     1.99
+2025-11-06 14:49:21 | FILLED     | BUY  | SPY    | Qty:   0.01 | Price: $ 676.72 | Total: $     5.99
+2025-11-06 14:49:22 | FILLED     | BUY  | GOOGL  | Qty:   0.01 | Price: $ 287.97 | Total: $     1.99
+2025-11-09 22:15:48 | CANCELED   | BUY  | SPY    | Qty: None
+2025-11-09 22:16:33 | CANCELED   | BUY  | SPY    | Qty: None
+2025-11-09 22:16:59 | CANCELED   | BUY  | SPY    | Qty: None
+2025-11-11 21:11:11 | FILLED     | BUY  | SPY    | Qty:   0.01 | Price: $ 684.85 | Total: $     5.99
+2025-11-11 21:11:11 | FILLED     | BUY  | NVDA   | Qty:   0.01 | Price: $ 195.24 | Total: $     1.99
+2025-11-17 13:21:25 | FILLED     | SELL | NVDA   | Qty:   0.02 | Price: $ 185.87 | Total: $     3.72
+2025-11-20 21:05:51 | EXPIRED    | SELL | GOOGL  | Qty: 1.4373
+2025-11-20 21:05:59 | FILLED     | SELL | SPY    | Qty:   1.81 | Price: $ 654.87 | Total: $  1185.55
+2025-11-25 20:15:51 | FILLED     | SELL | GOOGL  | Qty:   1.44 | Price: $ 321.55 | Total: $   462.18
+2025-11-29 21:10:01 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $2993.52 | Total: $     9.80
+2025-11-30 15:04:04 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $91486.63 | Total: $     9.80
+2025-12-01 13:28:11 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $86018.82 | Total: $     9.80
+2025-12-01 13:52:23 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $85975.10 | Total: $     9.79
+2025-12-03 14:41:37 | FILLED     | BUY  | QQQ    | Qty:   3.17 | Price: $ 619.63 | Total: $  1962.85
+2025-12-03 22:26:35 | FILLED     | BUY  | SHY    | Qty:   0.02 | Price: $  82.84 | Total: $     1.99
+2025-12-03 22:27:36 | FILLED     | BUY  | IEF    | Qty:   0.02 | Price: $  96.82 | Total: $     1.99
+2025-12-03 22:28:36 | FILLED     | BUY  | TLT    | Qty:   0.01 | Price: $  88.92 | Total: $     0.99
+2025-12-03 22:55:56 | FILLED     | BUY  | SHY    | Qty:   0.02 | Price: $  82.84 | Total: $     1.99
+2025-12-03 22:56:56 | FILLED     | BUY  | IEF    | Qty:   0.02 | Price: $  96.82 | Total: $     1.99
+2025-12-03 22:57:57 | FILLED     | BUY  | TLT    | Qty:   0.01 | Price: $  88.92 | Total: $     0.99
+2025-12-03 23:08:10 | FILLED     | BUY  | SHY    | Qty:   0.02 | Price: $  82.84 | Total: $     1.99
+2025-12-03 23:09:11 | FILLED     | BUY  | IEF    | Qty:   0.02 | Price: $  96.82 | Total: $     1.99
+2025-12-03 23:10:11 | FILLED     | BUY  | TLT    | Qty:   0.01 | Price: $  88.92 | Total: $     0.99
+2025-12-04 13:55:32 | FILLED     | BUY  | SHY    | Qty:   0.02 | Price: $  82.84 | Total: $     1.99
+2025-12-04 13:56:33 | FILLED     | BUY  | IEF    | Qty:   0.02 | Price: $  96.82 | Total: $     1.99
+2025-12-04 13:57:34 | FILLED     | BUY  | TLT    | Qty:   0.01 | Price: $  88.92 | Total: $     0.99
+2025-12-04 14:51:13 | FILLED     | BUY  | SHY    | Qty:   0.02 | Price: $  82.83 | Total: $     1.99
+2025-12-04 14:52:14 | FILLED     | BUY  | IEF    | Qty:   0.02 | Price: $  96.77 | Total: $     1.99
+2025-12-04 14:53:14 | FILLED     | BUY  | TLT    | Qty:   0.01 | Price: $  88.77 | Total: $     0.99
+2025-12-04 15:20:35 | FILLED     | BUY  | SHY    | Qty:   0.02 | Price: $  82.82 | Total: $     1.99
+2025-12-04 15:21:35 | FILLED     | BUY  | IEF    | Qty:   0.02 | Price: $  96.72 | Total: $     1.99
+2025-12-04 15:22:35 | FILLED     | BUY  | TLT    | Qty:   0.01 | Price: $  88.70 | Total: $     0.99
+2025-12-04 15:34:20 | FILLED     | BUY  | SHY    | Qty:   0.02 | Price: $  82.82 | Total: $     1.99
+2025-12-04 15:35:20 | FILLED     | BUY  | IEF    | Qty:   0.02 | Price: $  96.75 | Total: $     1.99
+2025-12-04 15:36:25 | FILLED     | BUY  | TLT    | Qty:   0.01 | Price: $  88.73 | Total: $     0.99
+2025-12-04 16:09:58 | FILLED     | BUY  | SHY    | Qty:   0.02 | Price: $  82.82 | Total: $     1.99
+2025-12-04 16:10:58 | FILLED     | BUY  | IEF    | Qty:   0.02 | Price: $  96.70 | Total: $     1.99
+2025-12-04 16:11:59 | FILLED     | BUY  | TLT    | Qty:   0.01 | Price: $  88.61 | Total: $     0.99
+2025-12-04 20:57:29 | FILLED     | BUY  | SHY    | Qty:   0.02 | Price: $  82.81 | Total: $     1.99
+2025-12-04 20:58:30 | FILLED     | BUY  | IEF    | Qty:   0.02 | Price: $  96.68 | Total: $     1.99
+2025-12-04 20:59:31 | FILLED     | BUY  | TLT    | Qty:   0.01 | Price: $  88.60 | Total: $     0.99
+2025-12-04 21:21:56 | FILLED     | BUY  | SHY    | Qty:   0.02 | Price: $  82.82 | Total: $     1.99
+2025-12-04 21:22:57 | FILLED     | BUY  | IEF    | Qty:   0.02 | Price: $  96.70 | Total: $     1.99
+2025-12-04 21:23:57 | FILLED     | BUY  | TLT    | Qty:   0.01 | Price: $  88.55 | Total: $     0.99
+2025-12-05 17:11:39 | FILLED     | BUY  | BIL    | Qty:  10.93 | Price: $  91.53 | Total: $   999.99
+2025-12-05 17:12:42 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.79 | Total: $    39.99
+2025-12-05 17:13:45 | FILLED     | BUY  | IEF    | Qty:   0.41 | Price: $  96.54 | Total: $    39.99
+2025-12-05 17:14:47 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  88.25 | Total: $    19.99
+2025-12-05 17:18:45 | FILLED     | SELL | BTC/USD | Qty:   0.00 | Price: $88788.80 | Total: $     0.03
+2025-12-05 17:19:48 | FILLED     | SELL | ETH/USD | Qty:   0.00 | Price: $3013.56 | Total: $     0.34
+2025-12-05 17:20:51 | FILLED     | SELL | QQQ    | Qty:   0.51 | Price: $ 624.89 | Total: $   316.78
+2025-12-05 17:21:56 | FILLED     | BUY  | BIL    | Qty:  10.93 | Price: $  91.53 | Total: $   999.99
+2025-12-05 17:23:00 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.79 | Total: $    39.99
+2025-12-05 17:24:03 | FILLED     | BUY  | IEF    | Qty:   0.41 | Price: $  96.54 | Total: $    39.99
+2025-12-05 17:25:06 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  88.22 | Total: $    19.99
+2025-12-05 17:41:37 | FILLED     | BUY  | BIL    | Qty:  10.93 | Price: $  91.53 | Total: $   999.99
+2025-12-05 17:41:54 | FILLED     | BUY  | SPY    | Qty:   1.00 | Price: $ 685.10 | Total: $   685.10
+2025-12-05 17:42:41 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.78 | Total: $    39.99
+2025-12-05 17:43:44 | FILLED     | BUY  | IEF    | Qty:   0.41 | Price: $  96.46 | Total: $    39.99
+2025-12-05 17:44:09 | FILLED     | SELL | SPY    | Qty:   1.00 | Price: $ 685.19 | Total: $   685.19
+2025-12-05 17:44:47 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  88.11 | Total: $    19.99
+2025-12-05 17:47:19 | FILLED     | SELL | BTC/USD | Qty:   0.00 | Price: $89181.90 | Total: $    29.77
+2025-12-05 17:48:22 | FILLED     | SELL | ETH/USD | Qty:   0.00 | Price: $3021.60 | Total: $     9.52
+2025-12-05 17:49:31 | FILLED     | BUY  | BIL    | Qty:  10.93 | Price: $  91.53 | Total: $   999.99
+2025-12-05 17:50:34 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.78 | Total: $    39.99
+2025-12-05 17:51:37 | FILLED     | BUY  | IEF    | Qty:   0.41 | Price: $  96.43 | Total: $    39.99
+2025-12-05 17:52:40 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  88.10 | Total: $    19.99
+2025-12-05 17:52:49 | FILLED     | BUY  | SPY    | Qty:   1.00 | Price: $ 686.31 | Total: $   686.31
+2025-12-05 17:53:33 | FILLED     | BUY  | SPY    | Qty:   1.00 | Price: $ 686.29 | Total: $   686.29
+2025-12-05 17:54:30 | FILLED     | SELL | SPY    | Qty:   2.00 | Price: $ 686.33 | Total: $  1372.65
+2025-12-05 17:54:42 | FILLED     | SELL | SPY    | Qty:   2.00 | Price: $ 686.38 | Total: $  1372.76
+2025-12-05 17:54:58 | FILLED     | SELL | SPY    | Qty:   2.00 | Price: $ 686.35 | Total: $  1372.70
+2025-12-05 17:55:27 | FILLED     | SELL | SPY    | Qty:   2.00 | Price: $ 686.25 | Total: $  1372.50
+2025-12-05 17:55:44 | FILLED     | SELL | SPY    | Qty:   2.00 | Price: $ 686.23 | Total: $  1372.46
+2025-12-05 18:03:43 | FILLED     | BUY  | SPY    | Qty:   1.00 | Price: $ 686.39 | Total: $   686.39
+2025-12-05 18:03:53 | FILLED     | BUY  | SPY    | Qty:   1.00 | Price: $ 686.34 | Total: $   686.34
+2025-12-05 18:03:53 | FILLED     | BUY  | SPY    | Qty:   1.00 | Price: $ 686.34 | Total: $   686.34
+2025-12-05 18:11:56 | FILLED     | BUY  | SPY    | Qty:   5.00 | Price: $ 686.48 | Total: $  3432.41
+2025-12-05 18:12:43 | FILLED     | BUY  | SPY    | Qty:   3.00 | Price: $ 686.52 | Total: $  2059.56
+2025-12-05 18:12:52 | FILLED     | BUY  | SPY    | Qty:   3.00 | Price: $ 686.58 | Total: $  2059.74
+2025-12-05 18:15:18 | CANCELED   | SELL | SPY    | Qty: 6
+2025-12-05 18:20:15 | CANCELED   | SELL | SPY    | Qty: 6
+2025-12-05 18:21:26 | EXPIRED    | SELL | SPY    | Qty: 6
+2025-12-05 18:30:38 | FILLED     | BUY  | BIL    | Qty:  10.93 | Price: $  91.53 | Total: $   999.99
+2025-12-05 18:31:41 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.78 | Total: $    39.99
+2025-12-05 18:32:44 | FILLED     | BUY  | IEF    | Qty:   0.41 | Price: $  96.47 | Total: $    39.99
+2025-12-05 18:33:47 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  88.15 | Total: $    19.99
+2025-12-05 18:53:01 | FILLED     | BUY  | BIL    | Qty:  10.93 | Price: $  91.53 | Total: $   999.99
+2025-12-05 18:54:05 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.78 | Total: $    39.99
+2025-12-05 18:55:08 | FILLED     | BUY  | IEF    | Qty:   0.41 | Price: $  96.45 | Total: $    39.99
+2025-12-05 18:56:11 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  88.11 | Total: $    19.99
+2025-12-05 18:59:51 | FILLED     | BUY  | BIL    | Qty:  10.93 | Price: $  91.53 | Total: $   999.99
+2025-12-05 19:00:54 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.78 | Total: $    39.99
+2025-12-05 19:01:57 | FILLED     | BUY  | IEF    | Qty:   0.41 | Price: $  96.46 | Total: $    39.99
+2025-12-05 19:03:00 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  88.11 | Total: $    19.99
+2025-12-05 19:14:06 | FILLED     | SELL | TLT    | Qty:   1.70 | Price: $  88.13 | Total: $   149.73
+2025-12-05 19:15:09 | FILLED     | SELL | QQQ    | Qty:   2.66 | Price: $ 625.86 | Total: $  1665.31
+2025-12-05 19:16:18 | FILLED     | BUY  | BIL    | Qty:  10.93 | Price: $  91.53 | Total: $   999.99
+2025-12-05 19:17:22 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.78 | Total: $    39.99
+2025-12-05 19:18:25 | FILLED     | BUY  | IEF    | Qty:   0.41 | Price: $  96.46 | Total: $    39.99
+2025-12-05 19:19:28 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  88.13 | Total: $    19.99
+2025-12-05 19:21:56 | FILLED     | SELL | IEF    | Qty:   3.52 | Price: $  96.45 | Total: $   339.68
+2025-12-05 19:23:06 | FILLED     | BUY  | BIL    | Qty:  10.93 | Price: $  91.53 | Total: $   999.99
+2025-12-05 19:24:10 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.78 | Total: $    39.99
+2025-12-05 19:25:13 | FILLED     | BUY  | IEF    | Qty:   0.41 | Price: $  96.46 | Total: $    39.99
+2025-12-05 19:26:16 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  88.13 | Total: $    19.99
+2025-12-05 19:29:05 | FILLED     | BUY  | BIL    | Qty:  10.93 | Price: $  91.53 | Total: $   999.99
+2025-12-05 19:30:09 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.78 | Total: $    39.99
+2025-12-05 19:31:12 | FILLED     | BUY  | IEF    | Qty:   0.41 | Price: $  96.46 | Total: $    39.99
+2025-12-05 19:32:14 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  88.14 | Total: $    19.99
+2025-12-05 19:33:31 | FILLED     | BUY  | O      | Qty:   0.85 | Price: $  58.79 | Total: $    49.99
+2025-12-05 19:44:13 | FILLED     | SELL | TLT    | Qty:   0.68 | Price: $  88.22 | Total: $    60.03
+2025-12-05 19:45:17 | FILLED     | BUY  | BIL    | Qty:  10.93 | Price: $  91.53 | Total: $   999.99
+2025-12-05 19:46:20 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.78 | Total: $    39.99
+2025-12-05 19:47:23 | FILLED     | BUY  | IEF    | Qty:   0.41 | Price: $  96.48 | Total: $    39.99
+2025-12-05 19:48:26 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  88.21 | Total: $    19.99
+2025-12-05 19:50:54 | FILLED     | SELL | O      | Qty:   0.85 | Price: $  58.82 | Total: $    50.02
+2025-12-05 19:52:58 | FILLED     | BUY  | BIL    | Qty:  10.93 | Price: $  91.53 | Total: $   999.99
+2025-12-06 13:46:33 | FILLED     | BUY  | BIL    | Qty:  10.92 | Price: $  91.54 | Total: $   999.99
+2025-12-06 13:47:37 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.77 | Total: $    39.99
+2025-12-06 13:48:40 | FILLED     | BUY  | IEF    | Qty:   0.41 | Price: $  96.42 | Total: $    39.99
+2025-12-06 13:49:42 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  88.18 | Total: $    19.99
+2025-12-06 14:44:55 | FILLED     | BUY  | BIL    | Qty:  10.92 | Price: $  91.54 | Total: $   999.99
+2025-12-06 14:45:59 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.77 | Total: $    39.99
+2025-12-06 14:47:02 | FILLED     | BUY  | IEF    | Qty:   0.41 | Price: $  96.42 | Total: $    39.99
+2025-12-06 14:48:05 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  88.18 | Total: $    19.99
+2025-12-07 13:46:25 | FILLED     | BUY  | BIL    | Qty:  10.92 | Price: $  91.54 | Total: $   999.99
+2025-12-07 13:47:28 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.77 | Total: $    39.99
+2025-12-07 13:48:31 | FILLED     | BUY  | IEF    | Qty:   0.41 | Price: $  96.42 | Total: $    39.99
+2025-12-07 13:49:33 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  88.18 | Total: $    19.99
+2025-12-07 14:45:44 | FILLED     | BUY  | BIL    | Qty:  10.92 | Price: $  91.54 | Total: $   999.99
+2025-12-07 14:46:48 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.77 | Total: $    39.99
+2025-12-07 14:47:50 | FILLED     | BUY  | IEF    | Qty:   0.41 | Price: $  96.42 | Total: $    39.99
+2025-12-07 14:48:53 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  88.18 | Total: $    19.99
+2025-12-07 15:04:27 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $88256.80 | Total: $     9.80
+2025-12-07 22:10:57 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $89583.74 | Total: $     9.80
+2025-12-08 00:02:27 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $90349.50 | Total: $     9.80
+2025-12-08 00:06:12 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $90344.25 | Total: $     9.80
+2025-12-08 00:10:19 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $90205.20 | Total: $     9.80
+2025-12-08 00:13:15 | FILLED     | SELL | BTC/USD | Qty:   0.00 | Price: $90106.31 | Total: $    49.07
+2025-12-08 00:14:18 | FILLED     | BUY  | BIL    | Qty:  10.92 | Price: $  91.54 | Total: $   999.99
+2025-12-08 00:15:21 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.77 | Total: $    39.99
+2025-12-08 00:16:24 | FILLED     | BUY  | IEF    | Qty:   0.41 | Price: $  96.42 | Total: $    39.99
+2025-12-08 00:17:26 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  88.18 | Total: $    19.99
+2025-12-08 00:18:30 | FILLED     | BUY  | PSA    | Qty:   0.18 | Price: $ 271.13 | Total: $    49.99
+2025-12-08 00:19:33 | FILLED     | BUY  | AVB    | Qty:   0.28 | Price: $ 177.32 | Total: $    49.99
+2025-12-08 00:20:35 | FILLED     | BUY  | AMT    | Qty:   0.28 | Price: $ 178.54 | Total: $    49.99
+2025-12-08 00:21:58 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $90143.40 | Total: $     9.80
+2025-12-08 00:41:08 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $90484.60 | Total: $     9.80
+2025-12-08 00:44:36 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $90414.70 | Total: $     9.80
+2025-12-08 03:23:29 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $91368.53 | Total: $     9.80
+2025-12-08 13:22:39 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $91779.39 | Total: $     9.80
+2025-12-08 13:51:54 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3150.03 | Total: $     9.80
+2025-12-08 14:48:07 | FILLED     | SELL | BTC/USD | Qty:   0.00 | Price: $91435.65 | Total: $    49.21
+2025-12-08 14:49:10 | FILLED     | SELL | ETH/USD | Qty:   0.00 | Price: $3152.79 | Total: $     9.78
+2025-12-08 14:50:17 | FILLED     | BUY  | SHY    | Qty:   0.48 | Price: $  82.75 | Total: $    39.99
+2025-12-08 14:51:20 | FILLED     | BUY  | IEF    | Qty:   0.42 | Price: $  96.28 | Total: $    39.99
+2025-12-08 14:52:23 | FILLED     | BUY  | TLT    | Qty:   0.23 | Price: $  87.88 | Total: $    19.99
+2025-12-08 14:53:31 | FILLED     | BUY  | AMT    | Qty:   0.28 | Price: $ 177.46 | Total: $    49.99
+2025-12-08 14:54:34 | FILLED     | BUY  | DLR    | Qty:   0.31 | Price: $ 163.88 | Total: $    49.99
+2025-12-08 14:55:36 | FILLED     | BUY  | DLR    | Qty:   0.30 | Price: $ 163.91 | Total: $    49.99
+2025-12-08 23:46:16 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3125.88 | Total: $     9.81
+2025-12-09 00:06:15 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3129.72 | Total: $     9.81
+2025-12-09 00:13:06 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3131.51 | Total: $     9.81
+2025-12-09 00:20:17 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3141.90 | Total: $     9.80
+2025-12-09 00:30:01 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3137.45 | Total: $     9.81
+2025-12-09 00:40:08 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3127.02 | Total: $     9.80
+2025-12-09 00:57:26 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3121.11 | Total: $     9.80
+2025-12-09 01:08:54 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3114.37 | Total: $     9.81
+2025-12-09 01:18:06 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3119.82 | Total: $     9.80
+2025-12-09 01:40:42 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3114.80 | Total: $     9.81
+2025-12-09 01:55:12 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3108.60 | Total: $     9.81
+2025-12-09 02:06:04 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3116.35 | Total: $     9.81
+2025-12-09 02:19:05 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3112.90 | Total: $     9.81
+2025-12-09 02:36:35 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3109.90 | Total: $     9.81
+2025-12-09 02:45:39 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3110.40 | Total: $     9.81
+2025-12-09 02:52:42 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3109.70 | Total: $     9.80
+2025-12-09 02:59:29 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3100.20 | Total: $     9.80
+2025-12-09 03:07:13 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3102.77 | Total: $     9.81
+2025-12-09 03:18:26 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3099.30 | Total: $     9.80
+2025-12-09 03:28:01 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3102.89 | Total: $     9.81
+2025-12-09 03:36:28 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3117.40 | Total: $     9.81
+2025-12-09 03:47:47 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3119.80 | Total: $     9.81
+2025-12-09 03:55:25 | FILLED     | SELL | ETH/USD | Qty:   0.07 | Price: $3121.91 | Total: $   215.53
+2025-12-09 18:14:56 | FILLED     | SELL | AVB    | Qty:   0.28 | Price: $ 176.00 | Total: $    49.62
+2025-12-09 18:15:59 | FILLED     | SELL | DLR    | Qty:   0.61 | Price: $ 162.65 | Total: $    99.22
+2025-12-09 18:17:02 | FILLED     | SELL | IEF    | Qty:   3.73 | Price: $  96.20 | Total: $   359.10
+2025-12-09 18:18:04 | FILLED     | SELL | PSA    | Qty:   0.18 | Price: $ 266.21 | Total: $    49.08
+2025-12-09 18:19:07 | FILLED     | SELL | SHY    | Qty:   8.45 | Price: $  82.73 | Total: $   699.34
+2025-12-09 18:20:09 | FILLED     | SELL | SPY    | Qty:   6.00 | Price: $ 684.36 | Total: $  4106.16
+2025-12-09 18:21:12 | FILLED     | SELL | TLT    | Qty:   1.59 | Price: $  88.02 | Total: $   139.74
+2025-12-09 18:22:14 | FILLED     | SELL | AMT    | Qty:   0.56 | Price: $ 180.01 | Total: $   101.11
+2025-12-09 18:33:24 | FILLED     | BUY  | BIL    | Qty:   0.11 | Price: $  91.55 | Total: $    10.00
+2025-12-09 18:33:54 | FILLED     | BUY  | ETH/USD | Qty:   0.00 | Price: $3384.31 | Total: $     9.80
+2025-12-09 18:42:09 | FILLED     | SELL | ETH/USD | Qty:   0.00 | Price: $3374.80 | Total: $     9.75
+2025-12-09 18:47:04 | FILLED     | BUY  | SHY    | Qty:   0.01 | Price: $  82.73 | Total: $     0.99
+2025-12-09 18:48:06 | FILLED     | BUY  | IEF    | Qty:   0.01 | Price: $  96.16 | Total: $     0.99
+2025-12-09 18:52:29 | FILLED     | BUY  | SHY    | Qty:   0.01 | Price: $  82.73 | Total: $     0.99
+2025-12-09 18:53:32 | FILLED     | BUY  | IEF    | Qty:   0.01 | Price: $  96.16 | Total: $     0.99
+2025-12-09 18:59:49 | FILLED     | BUY  | SHY    | Qty:   0.05 | Price: $  82.73 | Total: $     3.99
+2025-12-09 19:00:52 | FILLED     | BUY  | IEF    | Qty:   0.04 | Price: $  96.14 | Total: $     3.99
+2025-12-09 19:01:54 | FILLED     | BUY  | TLT    | Qty:   0.02 | Price: $  87.91 | Total: $     1.99
+2025-12-09 21:05:55 | FILLED     | BUY  | SHY    | Qty:   0.07 | Price: $  82.72 | Total: $     5.99
+2025-12-09 21:06:58 | FILLED     | BUY  | IEF    | Qty:   0.06 | Price: $  96.09 | Total: $     5.99
+2025-12-09 21:08:01 | FILLED     | BUY  | TLT    | Qty:   0.03 | Price: $  87.99 | Total: $     2.99
+2025-12-09 21:22:25 | FILLED     | BUY  | SHY    | Qty:   0.05 | Price: $  82.72 | Total: $     3.99
+2025-12-10 16:24:47 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $92504.10 | Total: $     9.81
+2025-12-10 16:25:54 | FILLED     | SELL | BIL    | Qty: 185.83 | Price: $  91.55 | Total: $ 17013.00
+2025-12-10 16:25:54 | FILLED     | SELL | IEF    | Qty:   0.12 | Price: $  96.26 | Total: $    11.98
+2025-12-10 16:25:54 | FILLED     | SELL | SHY    | Qty:   0.19 | Price: $  82.74 | Total: $    15.95
+2025-12-10 16:25:54 | FILLED     | SELL | TLT    | Qty:   0.06 | Price: $  88.33 | Total: $     5.00
+2025-12-10 16:25:56 | FILLED     | BUY  | BIL    | Qty:   0.11 | Price: $  91.56 | Total: $    10.00
+2025-12-10 17:07:50 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $92257.60 | Total: $     9.81
+2025-12-10 17:09:05 | FILLED     | SELL | SPY260123P00660000 | Qty:   1.00 | Price: $   6.38 | Total: $     6.38
+2025-12-10 17:43:47 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $92451.16 | Total: $     9.81
+2025-12-10 17:55:13 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $92490.60 | Total: $     9.81
+2025-12-10 18:02:02 | FILLED     | BUY  | BTC/USD | Qty:   0.00 | Price: $92387.61 | Total: $     9.81
+2025-12-10 18:25:50 | NEW        | SELL | AMD260116P00200000 | Qty: 1
+
+Summary: 221 filled, 2 cancelled/rejected, 6 pending
+Total Invested (Filled Buy Orders): $34850.59
+
+================================================================================
+Query Complete
+================================================================================
