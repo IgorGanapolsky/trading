@@ -37,6 +37,42 @@
       "key_insight": "Future LLM versions with extended thinking/reasoning modes may be suitable for rule application, but current production models should not be trusted for this purpose.",
       "solution": "Monitor for reasoning mode availability in production LLMs. Until then, maintain deterministic code for all rule-based operations.",
       "embedding_text": "LLM reasoning mode scratchpad extended thinking GPT-5 Claude 3.7 fix process corruption. Future capability for rule application but not ready for production yet. Continue using deterministic Python code for backtesting and filtering."
+    },
+    {
+      "id": "ll_003_credential_verification",
+      "title": "Always Verify Credential Sources Before Claiming Issues",
+      "source": "CTO Failure - Dec 10, 2025",
+      "date": "2025-12-10",
+      "category": "verification",
+      "tags": ["credentials", "github-secrets", "environment", "verification", "failure-analysis"],
+      "severity": "critical",
+      "content": "CTO (Claude) failed to check all credential sources before claiming Alpaca API credentials were missing. Checked only local .env file but not: (1) GitHub Secrets where credentials are actually stored, (2) GitHub Actions workflows that use secrets, (3) .github/local-secrets.env.example showing expected format. This caused unnecessary delay and frustrated CEO.",
+      "key_insight": "Always check ALL credential storage locations before claiming credentials are missing: local .env, environment variables, GitHub Secrets, workflow files, cloud secret managers.",
+      "solution": "Before claiming any credential issue: (1) Check local .env, (2) Check environment variables, (3) Check GitHub Actions workflows for secrets.* references, (4) Check GitHub Secrets via API if possible, (5) Only then report actual missing credentials with specific location needed.",
+      "our_implementation": "Updated verification checklist. Trading executes via GitHub Actions which has access to secrets. Local environment is sandboxed without network access to Alpaca.",
+      "referenced_files": [
+        ".github/workflows/daily-trading.yml",
+        ".github/local-secrets.env.example"
+      ],
+      "embedding_text": "credential verification failure GitHub secrets environment variables .env file always check all sources before claiming missing. GitHub Actions workflows use secrets.ALPACA_API_KEY. Local sandbox cannot access external APIs. Trading happens via CI/CD."
+    },
+    {
+      "id": "ll_004_sandbox_network_limitations",
+      "title": "Local Sandbox Has Network Restrictions",
+      "source": "CTO Discovery - Dec 10, 2025",
+      "date": "2025-12-10",
+      "category": "infrastructure",
+      "tags": ["sandbox", "network", "proxy", "github-actions", "limitations"],
+      "severity": "high",
+      "content": "The local development environment (Claude Code sandbox) has proxy restrictions that block direct API calls to Alpaca (403 Forbidden proxy error). All actual trading MUST happen through GitHub Actions workflows, which run in unrestricted GitHub-hosted runners with access to secrets.",
+      "key_insight": "Local sandbox is for code development only. Actual API calls to external services (Alpaca, brokers) happen through GitHub Actions CI/CD pipelines.",
+      "solution": "For immediate trading: trigger GitHub Actions workflow manually via workflow_dispatch. For testing: use mock data or ALPACA_SIMULATED=1 flag. Never promise local API execution.",
+      "our_implementation": "daily-trading.yml has workflow_dispatch trigger for manual execution. Options-trading.yml available for options. Crypto trading on weekends.",
+      "referenced_files": [
+        ".github/workflows/daily-trading.yml",
+        ".github/workflows/options-trading.yml"
+      ],
+      "embedding_text": "sandbox network proxy restrictions 403 forbidden cannot call external APIs locally. All trading via GitHub Actions CI/CD. Use workflow_dispatch to trigger manual trades. Local is development only."
     }
   ]
 }
