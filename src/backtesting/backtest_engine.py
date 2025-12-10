@@ -587,7 +587,9 @@ class BacktestEngine:
         # ============================================================
         min_trade_size = float(os.getenv("MIN_TRADE_SIZE", "3.0"))
         if effective_allocation < min_trade_size:
-            logger.debug(f"{date_str}: Allocation ${effective_allocation:.2f} below minimum ${min_trade_size}")
+            logger.debug(
+                f"{date_str}: Allocation ${effective_allocation:.2f} below minimum ${min_trade_size}"
+            )
             return
 
         executed_price, slippage_cost = self._apply_slippage_adjustment(

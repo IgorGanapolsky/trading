@@ -596,12 +596,7 @@ class UnifiedSentiment:
         # reduce confidence - the signal is unreliable
         news_sent = source_sentiments.get("news")
         reddit_sent = source_sentiments.get("reddit")
-        if (
-            news_sent
-            and reddit_sent
-            and news_sent.available
-            and reddit_sent.available
-        ):
+        if news_sent and reddit_sent and news_sent.available and reddit_sent.available:
             # Check for significant disagreement (opposite directions with strong signals)
             news_score = news_sent.score
             reddit_score = reddit_sent.score

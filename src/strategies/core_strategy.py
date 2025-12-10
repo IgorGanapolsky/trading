@@ -404,14 +404,14 @@ class CoreStrategy:
 
         # Initialize Kalshi Oracle (prediction markets as leading indicators)
         # ENABLED BY DEFAULT per CEO directive - use prediction markets as data oracles
-        self.use_kalshi_oracle = (
-            os.getenv("USE_KALSHI_ORACLE", "true").lower() == "true"
-        )
+        self.use_kalshi_oracle = os.getenv("USE_KALSHI_ORACLE", "true").lower() == "true"
         self.kalshi_oracle = None
         if self.use_kalshi_oracle and KALSHI_ORACLE_AVAILABLE and get_kalshi_oracle:
             try:
                 self.kalshi_oracle = get_kalshi_oracle()
-                logger.info("Kalshi Oracle initialized - using prediction markets as leading indicators")
+                logger.info(
+                    "Kalshi Oracle initialized - using prediction markets as leading indicators"
+                )
             except Exception as e:
                 logger.warning(f"Failed to initialize Kalshi Oracle: {e}")
                 self.kalshi_oracle = None

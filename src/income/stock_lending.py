@@ -28,6 +28,7 @@ from typing import Optional
 # Load environment variables
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass
@@ -37,15 +38,29 @@ ALPACA_SECRET_KEY = os.getenv("ALPACA_SECRET_KEY")
 
 # Common high-demand stocks for lending (typically hard-to-borrow stocks)
 HIGH_DEMAND_TICKERS = {
-    "GME", "AMC", "TSLA", "RIVN", "LCID", "NVDA", "PLTR", "SOFI",
-    "COIN", "HOOD", "MARA", "RIOT", "BITO", "ARKK", "SQQQ", "TQQQ"
+    "GME",
+    "AMC",
+    "TSLA",
+    "RIVN",
+    "LCID",
+    "NVDA",
+    "PLTR",
+    "SOFI",
+    "COIN",
+    "HOOD",
+    "MARA",
+    "RIOT",
+    "BITO",
+    "ARKK",
+    "SQQQ",
+    "TQQQ",
 }
 
 # Estimated lending rates by demand tier (annual %)
 LENDING_RATES = {
-    "high_demand": 15.0,    # Hard-to-borrow stocks
-    "medium_demand": 5.0,   # Popular but available
-    "low_demand": 1.0,      # General stocks
+    "high_demand": 15.0,  # Hard-to-borrow stocks
+    "medium_demand": 5.0,  # Popular but available
+    "low_demand": 1.0,  # General stocks
 }
 
 # Alpaca revenue share (Elite: 50%, Standard: 20%)
@@ -56,6 +71,7 @@ ALPACA_STANDARD_SHARE = 0.20
 @dataclass
 class LendingPosition:
     """Represents a position available or currently on loan."""
+
     symbol: str
     quantity: float
     market_value: float
@@ -68,6 +84,7 @@ class LendingPosition:
 @dataclass
 class LendingIncomeSummary:
     """Summary of stock lending income potential and actuals."""
+
     total_lendable_value: float
     total_estimated_daily_income: float
     total_estimated_annual_income: float
@@ -116,11 +133,8 @@ class StockLendingTracker:
 
         try:
             from alpaca.trading.client import TradingClient
-            self.client = TradingClient(
-                ALPACA_API_KEY,
-                ALPACA_SECRET_KEY,
-                paper=self.paper_trading
-            )
+
+            self.client = TradingClient(ALPACA_API_KEY, ALPACA_SECRET_KEY, paper=self.paper_trading)
         except ImportError:
             print("Warning: alpaca-py not installed")
         except Exception as e:
@@ -139,7 +153,7 @@ class StockLendingTracker:
             "enrollment_date": None,
             "total_earned": 0.0,
             "payments": [],
-            "last_updated": None
+            "last_updated": None,
         }
 
     def _save_state(self) -> None:
@@ -195,15 +209,17 @@ class StockLendingTracker:
             estimated_annual = market_value * (effective_rate / 100)
             estimated_daily = estimated_annual / 365
 
-            lendable.append(LendingPosition(
-                symbol=symbol,
-                quantity=quantity,
-                market_value=market_value,
-                estimated_rate=effective_rate,
-                is_on_loan=False,  # Would need actual loan status from API
-                estimated_daily_income=estimated_daily,
-                estimated_annual_income=estimated_annual
-            ))
+            lendable.append(
+                LendingPosition(
+                    symbol=symbol,
+                    quantity=quantity,
+                    market_value=market_value,
+                    estimated_rate=effective_rate,
+                    is_on_loan=False,  # Would need actual loan status from API
+                    estimated_daily_income=estimated_daily,
+                    estimated_annual_income=estimated_annual,
+                )
+            )
 
         return lendable
 
@@ -253,7 +269,7 @@ class StockLendingTracker:
             enrollment_date=enrollment_date,
             total_earned_to_date=self.lending_state.get("total_earned", 0.0),
             last_payment_date=last_payment_date,
-            last_payment_amount=last_payment_amount
+            last_payment_amount=last_payment_amount,
         )
 
     def enroll_in_program(self) -> bool:
@@ -292,10 +308,7 @@ class StockLendingTracker:
         if date is None:
             date = datetime.now()
 
-        payment = {
-            "date": date.isoformat(),
-            "amount": amount
-        }
+        payment = {"date": date.isoformat(), "amount": amount}
 
         if "payments" not in self.lending_state:
             self.lending_state["payments"] = []
@@ -334,33 +347,41 @@ class StockLendingTracker:
         if summary.enrollment_date:
             lines.append(f"  Enrollment Date: {summary.enrollment_date.strftime('%Y-%m-%d')}")
 
-        lines.extend([
-            "",
-            "INCOME SUMMARY",
-            "-" * 40,
-            f"  Total Lendable Value: ${summary.total_lendable_value:,.2f}",
-            f"  Positions: {summary.positions_count}",
-            f"  High-Demand Stocks: {summary.high_demand_count}",
-            "",
-            f"  Estimated Daily Income: ${summary.total_estimated_daily_income:.2f}",
-            f"  Estimated Monthly Income: ${summary.total_estimated_daily_income * 30:.2f}",
-            f"  Estimated Annual Income: ${summary.total_estimated_annual_income:.2f}",
-            "",
-            f"  Total Earned to Date: ${summary.total_earned_to_date:.2f}",
-        ])
+        lines.extend(
+            [
+                "",
+                "INCOME SUMMARY",
+                "-" * 40,
+                f"  Total Lendable Value: ${summary.total_lendable_value:,.2f}",
+                f"  Positions: {summary.positions_count}",
+                f"  High-Demand Stocks: {summary.high_demand_count}",
+                "",
+                f"  Estimated Daily Income: ${summary.total_estimated_daily_income:.2f}",
+                f"  Estimated Monthly Income: ${summary.total_estimated_daily_income * 30:.2f}",
+                f"  Estimated Annual Income: ${summary.total_estimated_annual_income:.2f}",
+                "",
+                f"  Total Earned to Date: ${summary.total_earned_to_date:.2f}",
+            ]
+        )
 
         if summary.last_payment_date:
-            lines.append(f"  Last Payment: ${summary.last_payment_amount:.2f} on {summary.last_payment_date.strftime('%Y-%m-%d')}")
+            lines.append(
+                f"  Last Payment: ${summary.last_payment_amount:.2f} on {summary.last_payment_date.strftime('%Y-%m-%d')}"
+            )
 
         if positions:
-            lines.extend([
-                "",
-                "LENDABLE POSITIONS",
-                "-" * 40,
-                f"  {'Symbol':<8} {'Qty':>10} {'Value':>12} {'Rate':>8} {'Est. Annual':>12}",
-            ])
+            lines.extend(
+                [
+                    "",
+                    "LENDABLE POSITIONS",
+                    "-" * 40,
+                    f"  {'Symbol':<8} {'Qty':>10} {'Value':>12} {'Rate':>8} {'Est. Annual':>12}",
+                ]
+            )
 
-            for pos in sorted(positions, key=lambda p: p.estimated_annual_income, reverse=True)[:10]:
+            for pos in sorted(positions, key=lambda p: p.estimated_annual_income, reverse=True)[
+                :10
+            ]:
                 demand = "HD" if pos.symbol in HIGH_DEMAND_TICKERS else ""
                 lines.append(
                     f"  {pos.symbol:<8} {pos.quantity:>10.2f} ${pos.market_value:>10,.2f} "
@@ -368,11 +389,13 @@ class StockLendingTracker:
                 )
 
         if self.paper_trading:
-            lines.extend([
-                "",
-                "NOTE: Stock lending requires a live trading account.",
-                "Switch to live trading to earn passive income from your holdings.",
-            ])
+            lines.extend(
+                [
+                    "",
+                    "NOTE: Stock lending requires a live trading account.",
+                    "Switch to live trading to earn passive income from your holdings.",
+                ]
+            )
 
         lines.append("=" * 60)
 
@@ -396,7 +419,7 @@ def get_lending_income_for_report() -> dict:
         "total_earned": summary.total_earned_to_date,
         "positions_count": summary.positions_count,
         "high_demand_count": summary.high_demand_count,
-        "note": "Stock lending available when live trading enabled"
+        "note": "Stock lending available when live trading enabled",
     }
 
 

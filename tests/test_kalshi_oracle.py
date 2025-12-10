@@ -182,9 +182,7 @@ class TestKalshiOracle:
         assert len(fed_markets) == 1
         assert fed_markets[0].ticker == "KXFED-DEC25-HIKE"
 
-        crypto_markets = oracle_no_client._find_markets_by_pattern(
-            ["BTC", "BITCOIN"], mock_markets
-        )
+        crypto_markets = oracle_no_client._find_markets_by_pattern(["BTC", "BITCOIN"], mock_markets)
         assert len(crypto_markets) == 1
         assert crypto_markets[0].ticker == "KXBTC-100K-DEC25"
 

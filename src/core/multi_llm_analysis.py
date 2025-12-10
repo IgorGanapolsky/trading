@@ -45,6 +45,7 @@ except ImportError:
     def get_psychology_context() -> str:
         return ""  # No-op if coaching not available
 
+
 # OpenAI client - optional dependency (may use OpenRouter instead)
 try:
     from openai import AsyncOpenAI, OpenAI

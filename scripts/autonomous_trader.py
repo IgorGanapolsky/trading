@@ -236,10 +236,13 @@ def _parse_tickers() -> list[str]:
 
                 # Also include high-priority watchlist items (e.g., AMZN)
                 watchlist_items = watchlist_data.get("watchlist", [])
-                tier2_tickers.extend([
-                    w["ticker"] for w in watchlist_items
-                    if w.get("priority") == "high" and w.get("status") == "watchlist"
-                ])
+                tier2_tickers.extend(
+                    [
+                        w["ticker"]
+                        for w in watchlist_items
+                        if w.get("priority") == "high" and w.get("status") == "watchlist"
+                    ]
+                )
 
                 if tier2_tickers:
                     # Combine Tier 1 ETFs with Tier 2 growth stocks (deduplicate)
@@ -248,7 +251,7 @@ def _parse_tickers() -> list[str]:
                     logger.info(
                         "Loaded %d Tier 2 tickers from tier2_watchlist.json: %s",
                         len(tier2_tickers),
-                        ", ".join(tier2_tickers)
+                        ", ".join(tier2_tickers),
                     )
                     return combined
     except Exception as e:
@@ -401,7 +404,9 @@ def execute_crypto_trading() -> None:
         # Initialize dependencies - MUST have valid trader for crypto
         try:
             trader = AlpacaTrader(paper=True)
-            logger.info(f"✅ AlpacaTrader initialized in {'PAPER' if trader.paper else 'LIVE'} mode")
+            logger.info(
+                f"✅ AlpacaTrader initialized in {'PAPER' if trader.paper else 'LIVE'} mode"
+            )
         except Exception as e:
             logger.error(f"❌ Trading API unavailable - cannot execute crypto trades: {e}")
             logger.error("   -> Crypto trading requires valid Alpaca credentials")

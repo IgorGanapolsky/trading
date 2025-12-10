@@ -39,7 +39,8 @@ st.set_page_config(
 # =============================================================================
 # CUSTOM CSS - Professional dark theme
 # =============================================================================
-st.markdown("""
+st.markdown(
+    """
 <style>
     /* Dark theme base */
     .stApp {
@@ -168,7 +169,9 @@ st.markdown("""
     footer {visibility: hidden;}
     .stDeployButton {display: none;}
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 
 # =============================================================================
@@ -209,7 +212,9 @@ def get_account_data() -> dict | None:
             "equity": float(account.equity),
             "cash": float(account.cash),
             "buying_power": float(account.buying_power),
-            "last_equity": float(account.last_equity) if hasattr(account, "last_equity") else float(account.equity),
+            "last_equity": float(account.last_equity)
+            if hasattr(account, "last_equity")
+            else float(account.equity),
             "positions": [
                 {
                     "symbol": pos.symbol,
@@ -284,7 +289,9 @@ def get_options_data() -> dict:
 
         return {
             "wheel_positions": len(positions),
-            "wheel_premium_collected": sum(p.get("total_premium_collected", 0) for p in positions.values()),
+            "wheel_premium_collected": sum(
+                p.get("total_premium_collected", 0) for p in positions.values()
+            ),
             "estimated_daily_theta": total_theta,
             "theta_target": 10.0,  # $10/day target
             "profit_plan": latest_plan,
@@ -316,25 +323,34 @@ def calculate_win_rate(trades: list) -> tuple[float, int, int]:
 # DASHBOARD COMPONENTS
 # =============================================================================
 
-def render_hero_metric(label: str, value: str, delta: str = "", delta_type: str = "neutral", icon: str = ""):
+
+def render_hero_metric(
+    label: str, value: str, delta: str = "", delta_type: str = "neutral", icon: str = ""
+):
     """Render a hero metric card."""
-    value_class = "positive" if delta_type == "positive" else "negative" if delta_type == "negative" else ""
+    value_class = (
+        "positive" if delta_type == "positive" else "negative" if delta_type == "negative" else ""
+    )
     delta_class = f"delta-{delta_type}"
 
-    st.markdown(f"""
+    st.markdown(
+        f"""
         <div class="hero-metric">
             <p class="hero-value {value_class}">{icon} {value}</p>
             <p class="hero-label">{label}</p>
-            {f'<p class="hero-delta {delta_class}">{delta}</p>' if delta else ''}
+            {f'<p class="hero-delta {delta_class}">{delta}</p>' if delta else ""}
         </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_progress_to_goal(current: float, target: float = 100.0):
     """Render progress bar to $100/day goal."""
     pct = min(100, (current / target * 100)) if target > 0 else 0
 
-    st.markdown(f"""
+    st.markdown(
+        f"""
         <div class="progress-container">
             <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                 <span style="color: #f0f6fc; font-weight: 600;">🎯 Path to $100/Day</span>
@@ -347,21 +363,33 @@ def render_progress_to_goal(current: float, target: float = 100.0):
                 {pct:.1f}% Complete
             </div>
         </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_status_indicator(status: str, label: str):
     """Render a status indicator."""
-    color_class = "status-green" if status == "ok" else "status-yellow" if status == "warning" else "status-red"
-    st.markdown(f"""
+    color_class = (
+        "status-green"
+        if status == "ok"
+        else "status-yellow"
+        if status == "warning"
+        else "status-red"
+    )
+    st.markdown(
+        f"""
         <span class="status-dot {color_class}"></span>
         <span style="color: #f0f6fc;">{label}</span>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 # =============================================================================
 # MAIN DASHBOARD
 # =============================================================================
+
 
 def main():
     # Header with timestamp
@@ -369,14 +397,17 @@ def main():
     with col1:
         st.markdown("# 🎯 AI Trading System")
     with col2:
-        st.markdown(f"""
+        st.markdown(
+            f"""
             <div style="text-align: right; padding-top: 20px;">
                 <span style="color: #3fb950;">●</span>
                 <span style="color: #8b949e; font-size: 0.85rem;">
                     Live · {datetime.now().strftime("%H:%M:%S")}
                 </span>
             </div>
-        """, unsafe_allow_html=True)
+        """,
+            unsafe_allow_html=True,
+        )
 
     # Load all data
     account = get_account_data()
@@ -388,7 +419,9 @@ def main():
     if account:
         equity = account["equity"]
         daily_pl = equity - account["last_equity"]
-        daily_pl_pct = (daily_pl / account["last_equity"] * 100) if account["last_equity"] > 0 else 0
+        daily_pl_pct = (
+            (daily_pl / account["last_equity"] * 100) if account["last_equity"] > 0 else 0
+        )
         total_pl = equity - 100000  # Starting balance
     else:
         equity = 100000
@@ -412,7 +445,7 @@ def main():
             "Portfolio Value",
             f"${equity:,.0f}",
             f"${total_pl:+,.2f} total",
-            "positive" if total_pl >= 0 else "negative"
+            "positive" if total_pl >= 0 else "negative",
         )
 
     with cols[1]:
@@ -420,7 +453,7 @@ def main():
             "Daily P/L",
             f"${daily_pl:+,.2f}",
             f"{daily_pl_pct:+.2f}%",
-            "positive" if daily_pl >= 0 else "negative"
+            "positive" if daily_pl >= 0 else "negative",
         )
 
     with cols[2]:
@@ -428,7 +461,7 @@ def main():
             "Win Rate",
             f"{win_rate:.1f}%",
             f"{wins}/{total} trades" if total > 0 else "No trades yet",
-            "positive" if win_rate >= 55 else "negative" if win_rate < 45 else "neutral"
+            "positive" if win_rate >= 55 else "negative" if win_rate < 45 else "neutral",
         )
 
     with cols[3]:
@@ -437,16 +470,11 @@ def main():
             "Daily Theta",
             f"${theta:.2f}",
             f"Target: ${options_data['theta_target']:.0f}",
-            "positive" if theta >= options_data["theta_target"] else "neutral"
+            "positive" if theta >= options_data["theta_target"] else "neutral",
         )
 
     with cols[4]:
-        render_hero_metric(
-            "R&D Phase",
-            f"Day {rd_day}/90",
-            f"{rd_pct:.0f}% Complete",
-            "neutral"
-        )
+        render_hero_metric("R&D Phase", f"Day {rd_day}/90", f"{rd_pct:.0f}% Complete", "neutral")
 
     # ==========================================================================
     # PROGRESS TO $100/DAY
@@ -474,26 +502,38 @@ def main():
             with status_col1:
                 st.markdown('<div class="card">', unsafe_allow_html=True)
                 render_status_indicator("ok" if account else "error", "Alpaca API")
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
 
             with status_col2:
                 circuit_ok = daily_pl_pct > -2  # -2% daily loss limit
                 st.markdown('<div class="card">', unsafe_allow_html=True)
                 render_status_indicator("ok" if circuit_ok else "error", "Circuit Breaker")
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
 
             with status_col3:
                 market_open = datetime.now().weekday() < 5 and 9 <= datetime.now().hour < 16
                 st.markdown('<div class="card">', unsafe_allow_html=True)
-                render_status_indicator("ok" if market_open else "warning", "Market" + (" Open" if market_open else " Closed"))
-                st.markdown('</div>', unsafe_allow_html=True)
+                render_status_indicator(
+                    "ok" if market_open else "warning",
+                    "Market" + (" Open" if market_open else " Closed"),
+                )
+                st.markdown("</div>", unsafe_allow_html=True)
 
             # Quick stats
             st.markdown("### 📋 Today's Activity")
 
             act_col1, act_col2, act_col3, act_col4 = st.columns(4)
             with act_col1:
-                st.metric("Trades", len([t for t in trades if t.get("timestamp", "").startswith(str(datetime.now().date()))]))
+                st.metric(
+                    "Trades",
+                    len(
+                        [
+                            t
+                            for t in trades
+                            if t.get("timestamp", "").startswith(str(datetime.now().date()))
+                        ]
+                    ),
+                )
             with act_col2:
                 st.metric("Open Positions", len(account["positions"]) if account else 0)
             with act_col3:
@@ -504,15 +544,19 @@ def main():
 
         with col2:
             st.markdown("### ⏰ Next Actions")
-            st.markdown("""
+            st.markdown(
+                """
                 <div class="card">
                     <p style="color: #8b949e; margin: 0;">Next Trade Window</p>
                     <p style="color: #f0f6fc; font-size: 1.5rem; margin: 8px 0;">Dec 10, 9:35 AM ET</p>
                     <p style="color: #3fb950; margin: 0;">Momentum + RL Strategy</p>
                 </div>
-            """, unsafe_allow_html=True)
+            """,
+                unsafe_allow_html=True,
+            )
 
-            st.markdown("""
+            st.markdown(
+                """
                 <div class="card">
                     <p style="color: #8b949e; margin: 0;">Strategy Queue</p>
                     <p style="color: #f0f6fc; margin: 8px 0;">1. Momentum Scan</p>
@@ -520,7 +564,9 @@ def main():
                     <p style="color: #f0f6fc; margin: 4px 0;">3. Risk Check</p>
                     <p style="color: #f0f6fc; margin: 4px 0;">4. Execute</p>
                 </div>
-            """, unsafe_allow_html=True)
+            """,
+                unsafe_allow_html=True,
+            )
 
     # --------------------------------------------------------------------------
     # TAB 2: POSITIONS
@@ -539,15 +585,23 @@ def main():
 
             # Style the dataframe
             st.dataframe(
-                df[["symbol", "Qty", "entry_price", "current_price", "P/L", "P/L %", "Value"]].style.format({
-                    "entry_price": "${:.2f}",
-                    "current_price": "${:.2f}",
-                    "P/L": "${:+,.2f}",
-                    "P/L %": "{:+.2f}%",
-                    "Value": "${:,.2f}",
-                }).applymap(
-                    lambda x: "color: #3fb950" if isinstance(x, (int, float)) and x > 0 else "color: #f85149" if isinstance(x, (int, float)) and x < 0 else "",
-                    subset=["P/L", "P/L %"]
+                df[["symbol", "Qty", "entry_price", "current_price", "P/L", "P/L %", "Value"]]
+                .style.format(
+                    {
+                        "entry_price": "${:.2f}",
+                        "current_price": "${:.2f}",
+                        "P/L": "${:+,.2f}",
+                        "P/L %": "{:+.2f}%",
+                        "Value": "${:,.2f}",
+                    }
+                )
+                .applymap(
+                    lambda x: "color: #3fb950"
+                    if isinstance(x, (int, float)) and x > 0
+                    else "color: #f85149"
+                    if isinstance(x, (int, float)) and x < 0
+                    else "",
+                    subset=["P/L", "P/L %"],
                 ),
                 use_container_width=True,
                 hide_index=True,
@@ -560,7 +614,7 @@ def main():
             with col2:
                 st.metric("Total P/L", f"${df['P/L'].sum():,.2f}")
             with col3:
-                avg_return = df['P/L %'].mean()
+                avg_return = df["P/L %"].mean()
                 st.metric("Avg Return", f"{avg_return:+.2f}%")
         else:
             st.info("No open positions")
@@ -581,17 +635,19 @@ def main():
                 st.metric(
                     "Est. Daily Theta",
                     f"${options_data['estimated_daily_theta']:.2f}",
-                    f"Target: ${options_data['theta_target']:.0f}"
+                    f"Target: ${options_data['theta_target']:.0f}",
                 )
             with theta_col2:
                 st.metric(
                     "Premium Collected",
                     f"${options_data['wheel_premium_collected']:.2f}",
-                    "All time"
+                    "All time",
                 )
 
             # Theta progress
-            theta_pct = min(100, (options_data['estimated_daily_theta'] / options_data['theta_target'] * 100))
+            theta_pct = min(
+                100, (options_data["estimated_daily_theta"] / options_data["theta_target"] * 100)
+            )
             st.progress(theta_pct / 100)
             st.caption(f"{theta_pct:.1f}% of $10/day theta target")
 
@@ -615,12 +671,15 @@ def main():
             plan = options_data["profit_plan"]
             st.json(plan)
         else:
-            st.markdown("""
+            st.markdown(
+                """
                 <div class="card">
                     <p style="color: #8b949e;">No active options signals. Run the options scanner:</p>
                     <code style="color: #79c0ff;">python scripts/options_profit_planner.py --target-daily 10</code>
                 </div>
-            """, unsafe_allow_html=True)
+            """,
+                unsafe_allow_html=True,
+            )
 
     # --------------------------------------------------------------------------
     # TAB 4: PERFORMANCE
@@ -649,7 +708,9 @@ def main():
                 if "equity" in df.columns:
                     max_equity = df["equity"].max()
                     current_equity = df["equity"].iloc[-1]
-                    drawdown = ((max_equity - current_equity) / max_equity * 100) if max_equity > 0 else 0
+                    drawdown = (
+                        ((max_equity - current_equity) / max_equity * 100) if max_equity > 0 else 0
+                    )
                     st.metric("Max Drawdown", f"{drawdown:.2f}%")
 
             with col2:
