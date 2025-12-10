@@ -248,7 +248,8 @@
     "failures": 0,
     "failure_reasons": [],
     "fix_applied": "2025-11-11: Upgraded protobuf to fix Python 3.14 compatibility, validated GitHub Actions workflow",
-    "next_scheduled_execution": "2025-11-12T09:35:00"
+    "next_scheduled_execution": "2025-12-11T15:55:00",
+    "execution_timing_note": "Dec 10, 2025: Changed from 9:35 AM to 3:55 PM ET (Market-on-Close) to avoid amateur hour volatility"
   },
   "video_analysis": {
     "enabled": true,
