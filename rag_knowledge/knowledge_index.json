@@ -27,6 +27,15 @@
       "chunks_file": "rag_knowledge/chunks/crypto_trading_mastery_2025.json",
       "chunk_count": 8,
       "ingested_at": "2025-12-08T02:25:00.000000"
+    },
+    "mcmillan_options": {
+      "title": "Options as a Strategic Investment",
+      "author": "Lawrence G. McMillan",
+      "edition": "5th Edition",
+      "chunks_file": "rag_knowledge/chunks/mcmillan_options_strategic_investment_2025.json",
+      "chunk_count": 18,
+      "topics": ["covered_calls", "naked_puts", "spreads", "straddles", "strangles", "butterflies", "greeks", "volatility", "earnings"],
+      "ingested_at": "2025-12-10T05:00:00.000000"
     }
   },
   "papers": {},
@@ -51,6 +60,41 @@
       "insights_file": "rag_knowledge/youtube/insights/tfcdts_i2jU.json",
       "picks": ["BTC", "SOL", "XRP", "ETH"],
       "ingested_at": "2025-12-09T00:00:00.000000"
+    },
+    "options_education_sources": {
+      "title": "Options Trading YouTube Educators - Curated Knowledge",
+      "channels": ["tastytrade", "Option Alpha", "InTheMoney", "Sky View Trading", "ProjectFinance", "Adam Khoo"],
+      "insights_file": "rag_knowledge/youtube/insights/options_education_sources.json",
+      "topics": ["covered_calls", "iron_condors", "wheel_strategy", "greeks", "premium_selling"],
+      "ingested_at": "2025-12-10T05:00:00.000000"
     }
+  },
+  "options_education": {
+    "tastytrade": {
+      "title": "TastyTrade Research & Education",
+      "chunks_file": "rag_knowledge/chunks/tastytrade_options_education_2025.json",
+      "chunk_count": 16,
+      "topics": ["covered_calls", "credit_spreads", "iron_condors", "wheel", "greeks", "IV_rank", "position_sizing", "rolling", "earnings"],
+      "ingested_at": "2025-12-10T05:00:00.000000"
+    },
+    "options_alpha": {
+      "title": "Options Alpha Research & Education",
+      "chunks_file": "rag_knowledge/chunks/options_alpha_education_2025.json",
+      "chunk_count": 14,
+      "topics": ["probability_trading", "portfolio_allocation", "strangles", "calendars", "diagonals", "butterflies", "psychology"],
+      "ingested_at": "2025-12-10T05:00:00.000000"
+    },
+    "advanced_strategies": {
+      "title": "Advanced Options Income Strategies",
+      "chunks_file": "rag_knowledge/chunks/advanced_options_income_strategies_2025.json",
+      "chunk_count": 14,
+      "topics": ["wheel", "PMCC", "jade_lizard", "ratio_spreads", "gamma_scalping", "VIX_strategies", "synthetics"],
+      "ingested_at": "2025-12-10T05:00:00.000000"
+    }
+  },
+  "metadata": {
+    "total_chunks": 223,
+    "last_updated": "2025-12-10T05:10:00.000000",
+    "categories": ["books", "papers", "newsletters", "youtube", "options_education"]
   }
 }
