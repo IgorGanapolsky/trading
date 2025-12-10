@@ -105,8 +105,32 @@ class TradingOrchestrator:
         self.momentum_agent = MomentumAgent(
             min_score=float(_os.getenv("MOMENTUM_MIN_SCORE", "0.0"))
         )
-        self.rl_filter = RLFilter()
-        self.llm_agent = LangChainSentimentAgent()
+
+        # Dec 10, 2025: SIMPLIFICATION MODE
+        # Backtest Sharpe was -7 to -72 with complex gates.
+        # These gates are now DISABLED BY DEFAULT per Carver/López de Prado:
+        # "Simple rules beat complex ones" / "Beware of backtest overfitting"
+        self.rl_filter_enabled = _os.getenv("RL_FILTER_ENABLED", "false").lower() in {
+            "1", "true", "yes"
+        }
+        self.llm_sentiment_enabled = _os.getenv("LLM_SENTIMENT_ENABLED", "false").lower() in {
+            "1", "true", "yes"
+        }
+
+        # Only initialize if enabled (saves memory and API costs)
+        if self.rl_filter_enabled:
+            self.rl_filter = RLFilter()
+            logger.info("Gate 2: RLFilter ENABLED")
+        else:
+            self.rl_filter = None
+            logger.info("Gate 2: RLFilter DISABLED (simplification mode)")
+
+        if self.llm_sentiment_enabled:
+            self.llm_agent = LangChainSentimentAgent()
+            logger.info("Gate 3: LLM Sentiment ENABLED")
+        else:
+            self.llm_agent = None
+            logger.info("Gate 3: LLM Sentiment DISABLED (simplification mode)")
         # Playwright MCP for dynamic sentiment scraping and trade verification
         self.playwright_scraper = SentimentScraper()
         self.trade_verifier = TradeVerifier(paper_trading=paper)
@@ -932,52 +956,60 @@ class TradingOrchestrator:
             except Exception as debate_err:
                 logger.warning(f"Gate 1.5 (%s): Debate failed, continuing: {debate_err}", ticker)
 
-        # Gate 2: RL inference
-        rl_outcome = self.failure_manager.run(
-            gate="rl_filter",
-            ticker=ticker,
-            operation=lambda: self.rl_filter.predict(momentum_signal.indicators),
-        )
-        if not rl_outcome.ok:
-            logger.error(
-                "Gate 2 (%s): RL filter failed: %s",
+        # Gate 2: RL inference (SKIPPED if disabled - simplification mode)
+        if not self.rl_filter_enabled or self.rl_filter is None:
+            logger.info(
+                "Gate 2 (%s): SKIPPED - RL filter disabled (simplification mode)",
                 ticker,
-                rl_outcome.failure.error,
             )
-            self._track_gate_event(
+            rl_decision = {"action": "BUY", "confidence": 1.0, "skipped": True}
+            self.telemetry.gate_pass("rl_filter", ticker, {"skipped": True, "reason": "simplification_mode"})
+        else:
+            rl_outcome = self.failure_manager.run(
                 gate="rl_filter",
                 ticker=ticker,
-                status="error",
-                metrics={"confidence": 0.0},
+                operation=lambda: self.rl_filter.predict(momentum_signal.indicators),
             )
-            return
+            if not rl_outcome.ok:
+                logger.error(
+                    "Gate 2 (%s): RL filter failed: %s",
+                    ticker,
+                    rl_outcome.failure.error,
+                )
+                self._track_gate_event(
+                    gate="rl_filter",
+                    ticker=ticker,
+                    status="error",
+                    metrics={"confidence": 0.0},
+                )
+                return
 
-        rl_decision = rl_outcome.result
-        if rl_decision.get("confidence", 0.0) < rl_threshold:
+            rl_decision = rl_outcome.result
+            if rl_decision.get("confidence", 0.0) < rl_threshold:
+                logger.info(
+                    "Gate 2 (%s): REJECTED by RL filter (confidence=%.2f).",
+                    ticker,
+                    rl_decision.get("confidence", 0.0),
+                )
+                self.telemetry.gate_reject(
+                    "rl_filter",
+                    ticker,
+                    rl_decision,
+                )
+                self._track_gate_event(
+                    gate="rl_filter",
+                    ticker=ticker,
+                    status="reject",
+                    metrics={"confidence": rl_decision.get("confidence", 0.0)},
+                )
+                return
             logger.info(
-                "Gate 2 (%s): REJECTED by RL filter (confidence=%.2f).",
+                "Gate 2 (%s): PASSED (action=%s, confidence=%.2f).",
                 ticker,
+                rl_decision.get("action"),
                 rl_decision.get("confidence", 0.0),
             )
-            self.telemetry.gate_reject(
-                "rl_filter",
-                ticker,
-                rl_decision,
-            )
-            self._track_gate_event(
-                gate="rl_filter",
-                ticker=ticker,
-                status="reject",
-                metrics={"confidence": rl_decision.get("confidence", 0.0)},
-            )
-            return
-        logger.info(
-            "Gate 2 (%s): PASSED (action=%s, confidence=%.2f).",
-            ticker,
-            rl_decision.get("action"),
-            rl_decision.get("confidence", 0.0),
-        )
-        self.telemetry.gate_pass("rl_filter", ticker, rl_decision)
+            self.telemetry.gate_pass("rl_filter", ticker, rl_decision)
         self.telemetry.explainability_event(
             gate="rl_filter",
             ticker=ticker,
@@ -1044,17 +1076,28 @@ class TradingOrchestrator:
 
         # Gate 3: LLM sentiment (budget-aware, bias-cache first)
         # Enhanced with Playwright MCP for dynamic web scraping
+        # Dec 10, 2025: Can be SKIPPED in simplification mode
         sentiment_score = 0.0
         playwright_score = 0.0
-        llm_model = getattr(self.llm_agent, "model_name", None)
-        neg_threshold = float(os.getenv("LLM_NEGATIVE_SENTIMENT_THRESHOLD", "-0.2"))
-        session_type = (self.session_profile or {}).get("session_type")
-        if session_type == "off_hours_crypto_proxy":
-            neg_threshold = float(os.getenv("WEEKEND_SENTIMENT_FLOOR", "-0.1"))
-        bias_snapshot: BiasSnapshot | None = None
 
-        # Playwright MCP sentiment enhancement (async, non-blocking)
-        playwright_weight = float(os.getenv("PLAYWRIGHT_SENTIMENT_WEIGHT", "0.3"))
+        if not self.llm_sentiment_enabled or self.llm_agent is None:
+            logger.info(
+                "Gate 3 (%s): SKIPPED - LLM sentiment disabled (simplification mode)",
+                ticker,
+            )
+            self.telemetry.gate_pass("llm_sentiment", ticker, {"skipped": True, "reason": "simplification_mode"})
+            # Skip directly to Gate 4 (Risk)
+        else:
+            # Original Gate 3 logic (only runs if LLM sentiment enabled)
+            llm_model = getattr(self.llm_agent, "model_name", None)
+            neg_threshold = float(os.getenv("LLM_NEGATIVE_SENTIMENT_THRESHOLD", "-0.2"))
+            session_type = (self.session_profile or {}).get("session_type")
+            if session_type == "off_hours_crypto_proxy":
+                neg_threshold = float(os.getenv("WEEKEND_SENTIMENT_FLOOR", "-0.1"))
+            bias_snapshot: BiasSnapshot | None = None
+
+            # Playwright MCP sentiment enhancement (async, non-blocking)
+            playwright_weight = float(os.getenv("PLAYWRIGHT_SENTIMENT_WEIGHT", "0.3"))
         try:
             import asyncio
 
