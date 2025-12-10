@@ -73,11 +73,24 @@ jobs:
           echo "Symbol: $OPTIONS_SYMBOL"
           echo "Dry Run: $DRY_RUN"
           echo ""
+          echo "🔑 Checking credentials..."
+          echo "   ALPACA_API_KEY set: $([ -n \"$ALPACA_API_KEY\" ] && echo 'YES' || echo 'NO')"
+          echo "   ALPACA_SECRET_KEY set: $([ -n \"$ALPACA_SECRET_KEY\" ] && echo 'YES' || echo 'NO')"
+          echo ""
 
+          # Run with error handling to see full output
           python3 scripts/execute_options_trade.py \
             --strategy "$OPTIONS_STRATEGY" \
             --symbol "$OPTIONS_SYMBOL" \
-            $( [ "$DRY_RUN" = "true" ] && echo "--dry-run" )
+            $( [ "$DRY_RUN" = "true" ] && echo "--dry-run" ) 2>&1 || {
+            EXIT_CODE=$?
+            echo ""
+            echo "❌ Script exited with code: $EXIT_CODE"
+            echo "📋 Checking for any log files..."
+            ls -la logs/ 2>/dev/null || echo "   No logs directory"
+            cat logs/*.log 2>/dev/null || echo "   No log files found"
+            exit $EXIT_CODE
+          }
 
       - name: Upload Options Trading Log
         if: always()
