@@ -206,7 +206,7 @@ class TestMetricsSanity:
         # Any decline should produce non-zero drawdown
         with_decline = [100000, 100100, 100050, 100200]  # Small dip
         max_dd_decline = MetricsCalculator.calculate_max_drawdown(with_decline)
-        assert max_dd_decline > 0, f"Curve with decline should have non-zero drawdown"
+        assert max_dd_decline > 0, "Curve with decline should have non-zero drawdown"
 
     def test_drawdown_calculation_accuracy(self):
         """Verify drawdown calculation is accurate"""

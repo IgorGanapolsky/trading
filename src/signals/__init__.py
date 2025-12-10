@@ -12,12 +12,6 @@ Modules:
 - kalshi_oracle: Use prediction market odds as leading indicators
 """
 
-from src.signals.options_signal_enhancer import (
-    EnhancedSignal,
-    OptionsSignalEnhancer,
-    get_signal_enhancer,
-)
-
 from src.signals.kalshi_oracle import (
     AssetClass,
     KalshiOracle,
@@ -25,6 +19,11 @@ from src.signals.kalshi_oracle import (
     SignalDirection,
     get_kalshi_oracle,
     get_kalshi_signals,
+)
+from src.signals.options_signal_enhancer import (
+    EnhancedSignal,
+    OptionsSignalEnhancer,
+    get_signal_enhancer,
 )
 
 __all__ = [
