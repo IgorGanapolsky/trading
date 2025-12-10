@@ -38,6 +38,11 @@
         "PAL_ENABLED_TOOLS": "challenge,debug,chat",
         "PAL_DEFAULT_MODEL": "openrouter/anthropic/claude-sonnet-4"
       }
+    },
+    "microsoft-learn": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp",
+      "description": "Microsoft Learn MCP Server - Real-time access to official Microsoft documentation, .NET, Azure, and code samples. No API key required."
     }
   }
 }
