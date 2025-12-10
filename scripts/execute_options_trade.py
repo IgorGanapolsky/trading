@@ -182,16 +182,16 @@ MIN_IV_PERCENTILE_FOR_SELLING = 50
 
 
 def find_optimal_put(
-    options_client, symbol: str, target_delta: float = 0.25, min_dte: int = 30, max_dte: int = 45
+    options_client, symbol: str, target_delta: float = 0.25, min_dte: int = 20, max_dte: int = 60
 ):
     """
     Find optimal put option for cash-secured put strategy.
 
-    Criteria (from McMillan/TastyTrade):
+    Criteria (from McMillan/TastyTrade - RELAXED for more opportunities):
     - OTM put (strike below current price)
-    - Delta between -0.20 and -0.35
-    - DTE between 30-45 days
-    - Decent premium (>0.5% of underlying)
+    - Delta between -0.10 and -0.50 (wider range)
+    - DTE between 20-60 days (more flexibility)
+    - Decent premium (>0.3% of underlying)
     """
     from alpaca.data.requests import OptionChainRequest
 
@@ -237,9 +237,9 @@ def find_optimal_put(
         if dte < min_dte or dte > max_dte:
             continue
 
-        # Check delta (puts have negative delta)
+        # Check delta (puts have negative delta) - RELAXED for more opportunities
         delta = snapshot.greeks.delta
-        if delta > -0.15 or delta < -0.40:  # Want delta between -0.15 and -0.40
+        if delta > -0.10 or delta < -0.50:  # Want delta between -0.10 and -0.50
             continue
 
         # Check strike is OTM (below current price for puts)
@@ -254,8 +254,8 @@ def find_optimal_put(
         # Calculate premium as % of underlying
         premium_pct = (mid / current_price) * 100 if current_price > 0 else 0
 
-        # Skip if premium too low
-        if premium_pct < 0.5:
+        # Skip if premium too low - RELAXED for more opportunities
+        if premium_pct < 0.3:
             continue
 
         candidates.append(
