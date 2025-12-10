@@ -120,6 +120,67 @@ def get_underlying_price(symbol: str) -> float:
     return float(data["Close"].iloc[-1])
 
 
+def get_iv_percentile(symbol: str, lookback_days: int = 252) -> dict:
+    """
+    Calculate IV Percentile for a symbol.
+
+    IV Percentile = % of days in past year when IV was lower than current IV.
+    Per RAG knowledge (volatility_forecasting_2025.json):
+    - IV Percentile > 50%: Favor selling strategies (CSPs, covered calls)
+    - IV Percentile < 30%: Favor buying strategies or stay on sidelines
+
+    Returns dict with iv_percentile, current_iv, recommendation.
+    """
+    import yfinance as yf
+    import numpy as np
+
+    logger.info(f"📊 Calculating IV Percentile for {symbol}...")
+
+    try:
+        ticker = yf.Ticker(symbol)
+
+        # Get historical data for IV calculation (we'll use HV as proxy if IV not available)
+        hist = ticker.history(period="1y")
+        if len(hist) < 20:
+            logger.warning(f"   ⚠️ Insufficient history for {symbol}, defaulting to neutral")
+            return {"iv_percentile": 50, "current_iv": None, "recommendation": "NEUTRAL"}
+
+        # Calculate historical volatility (20-day rolling)
+        returns = np.log(hist['Close'] / hist['Close'].shift(1))
+        rolling_vol = returns.rolling(window=20).std() * np.sqrt(252) * 100  # Annualized %
+
+        current_hv = rolling_vol.iloc[-1]
+
+        # Calculate percentile
+        valid_vols = rolling_vol.dropna()
+        iv_percentile = (valid_vols < current_hv).sum() / len(valid_vols) * 100
+
+        # Determine recommendation per RAG knowledge
+        if iv_percentile >= 50:
+            recommendation = "SELL_PREMIUM"
+            logger.info(f"   ✅ IV Percentile: {iv_percentile:.1f}% - FAVORABLE for selling premium")
+        elif iv_percentile >= 30:
+            recommendation = "NEUTRAL"
+            logger.info(f"   ⚠️ IV Percentile: {iv_percentile:.1f}% - NEUTRAL conditions")
+        else:
+            recommendation = "AVOID_SELLING"
+            logger.info(f"   ❌ IV Percentile: {iv_percentile:.1f}% - UNFAVORABLE for selling")
+
+        return {
+            "iv_percentile": round(iv_percentile, 1),
+            "current_iv": round(current_hv, 2),
+            "recommendation": recommendation
+        }
+
+    except Exception as e:
+        logger.error(f"   ❌ IV calculation failed: {e}")
+        return {"iv_percentile": 50, "current_iv": None, "recommendation": "NEUTRAL"}
+
+
+# Minimum IV percentile threshold for selling options (from RAG: volatility_forecasting_2025.json)
+MIN_IV_PERCENTILE_FOR_SELLING = 50
+
+
 def find_optimal_put(
     options_client, symbol: str, target_delta: float = 0.25, min_dte: int = 30, max_dte: int = 45
 ):
@@ -288,9 +349,10 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
     Execute a cash-secured put trade.
 
     Strategy:
-    1. Find optimal OTM put (delta ~0.25, 30-45 DTE)
-    2. Verify we have enough cash to cover assignment
-    3. Sell 1 put contract
+    1. CHECK IV PERCENTILE (>50% required per RAG knowledge)
+    2. Find optimal OTM put (delta ~0.25, 30-45 DTE)
+    3. Verify we have enough cash to cover assignment
+    4. Sell 1 put contract
 
     Failover (per lesson ll_007):
     - If Alpaca fails, try Tradier as backup broker
@@ -298,6 +360,22 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
     logger.info("=" * 60)
     logger.info("💰 CASH-SECURED PUT STRATEGY (ALPACA)")
     logger.info("=" * 60)
+
+    # CRITICAL: Check IV Percentile FIRST (per RAG: volatility_forecasting_2025.json)
+    # "Only sell options when IV Percentile > 50%" - TastyTrade research
+    iv_data = get_iv_percentile(symbol)
+    if iv_data["recommendation"] == "AVOID_SELLING":
+        logger.warning(f"❌ IV Percentile {iv_data['iv_percentile']}% < {MIN_IV_PERCENTILE_FOR_SELLING}%")
+        logger.warning("   Per RAG knowledge: Avoid selling premium in low IV environment")
+        logger.warning("   Recommendation: Wait for higher IV or use ETF accumulation strategy")
+        return {
+            "status": "NO_TRADE",
+            "reason": f"IV Percentile too low ({iv_data['iv_percentile']}% < {MIN_IV_PERCENTILE_FOR_SELLING}%)",
+            "iv_data": iv_data,
+            "broker": "alpaca"
+        }
+
+    logger.info(f"✅ IV Check passed: {iv_data['iv_percentile']}% >= {MIN_IV_PERCENTILE_FOR_SELLING}%")
 
     # Get account info
     account = get_account_info(trading_client)
