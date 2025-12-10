@@ -501,12 +501,29 @@ jobs:
           ADK_BASE_URL: ${{ secrets.ADK_BASE_URL || 'http://127.0.0.1:8080/api' }}
           ADK_APP_NAME: ${{ secrets.ADK_APP_NAME || 'trading_orchestrator' }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          # Enable Langchain agents
-          LANGCHAIN_ENABLE_MCP: ${{ secrets.LANGCHAIN_ENABLE_MCP || 'true' }}
-          LANGCHAIN_MODEL: ${{ secrets.LANGCHAIN_MODEL || 'claude-3-5-sonnet-20241022' }}
-          # Enable all agent integrations (CEO directive Nov 24, 2025: $100/mo budget)
-          LLM_COUNCIL_ENABLED: ${{ secrets.LLM_COUNCIL_ENABLED || 'true' }}
-          DEEPAGENTS_ENABLED: ${{ secrets.DEEPAGENTS_ENABLED || 'true' }}
+          # ============================================================
+          # SIMPLIFICATION MODE (Dec 10, 2025)
+          # Backtest Sharpe was -7 to -72 (all negative) with complex gates.
+          # Disabling all complexity to run simple Momentum + Risk strategy.
+          # Per Carver: "Simple rules beat complex ones"
+          # Per López de Prado: "Beware of backtest overfitting"
+          # ============================================================
+          # DISABLED: LLM sentiment gates (adding noise, not signal)
+          LANGCHAIN_ENABLE_MCP: 'false'
+          LLM_COUNCIL_ENABLED: 'false'
+          # DISABLED: DeepAgents planning (over-engineering)
+          DEEPAGENTS_ENABLED: 'false'
+          # DISABLED: RL filter (overfitting on limited data)
+          RL_FILTER_ENABLED: 'false'
+          # DISABLED: Debate agents (complexity without proven alpha)
+          ENABLE_DEBATE_AGENTS: 'false'
+          # DISABLED: Psychology coach (not core to trading edge)
+          ENABLE_PSYCHOLOGY_COACH: 'false'
+          # ============================================================
+          # ENABLED: Only core momentum + risk gates
+          # Gate 1: MomentumAgent (MACD, RSI, Volume) - ENABLED
+          # Gate 4: RiskManager (position sizing, stops) - ENABLED
+          # ============================================================
           # RL feedback loop disabled by default (requires sklearn not in requirements-minimal.txt)
           ENABLE_RL_RETRAIN: ${{ secrets.ENABLE_RL_RETRAIN || 'false' }}
           # RAG features disabled by default in CI (sentence-transformers downloads from HuggingFace)
