@@ -16,7 +16,6 @@ from datetime import datetime, timezone
 from unittest.mock import patch
 
 import pytest
-
 from src.signals.kalshi_oracle import (
     AssetClass,
     KalshiOracle,

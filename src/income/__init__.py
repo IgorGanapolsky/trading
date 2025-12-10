@@ -8,9 +8,9 @@ Tracks various sources of passive income:
 """
 
 from src.income.stock_lending import (
-    StockLendingTracker,
     LendingIncomeSummary,
     LendingPosition,
+    StockLendingTracker,
     get_lending_income_for_report,
 )
 

@@ -23,8 +23,8 @@ logger = logging.getLogger(__name__)
 
 # Psychology integration
 try:
+    from src.coaching.mental_toughness_coach import get_position_size_modifier
     from src.coaching.mental_toughness_coach import (
-        get_position_size_modifier,
         get_prompt_context as get_psychology_context,
     )
 
