@@ -40,7 +40,7 @@ def test_rag_chunks_available():
     # Test trading rules present
     trading_rules = tastytrade_data.get("trading_rules", {})
     assert trading_rules, "TastyTrade trading rules missing"
-    print(f"✅ TastyTrade trading rules available")
+    print("✅ TastyTrade trading rules available")
 
     print("\n")
     return mcmillan_chunks, tastytrade_chunks, trading_rules
@@ -119,8 +119,7 @@ def test_mcmillan_rule_lookup(mcmillan_chunks):
     covered_call_chunks = [
         chunk
         for chunk in mcmillan_chunks
-        if "covered" in chunk.get("topic", "").lower()
-        and "call" in chunk.get("topic", "").lower()
+        if "covered" in chunk.get("topic", "").lower() and "call" in chunk.get("topic", "").lower()
     ]
 
     print(f"Found {len(covered_call_chunks)} covered call chunks")
@@ -143,7 +142,7 @@ def test_mcmillan_rule_lookup(mcmillan_chunks):
 
     print(f"Found {len(greeks_chunks)} greeks chunks")
     assert len(greeks_chunks) > 0, "No greeks chunks found"
-    print(f"✅ McMillan greeks rules available")
+    print("✅ McMillan greeks rules available")
 
     print("\n")
 
@@ -167,18 +166,18 @@ def test_tastytrade_rule_lookup(tastytrade_chunks, trading_rules):
     entry_criteria = trading_rules.get("entry_criteria", {})
     management_rules = trading_rules.get("management_rules", {})
 
-    print(f"\nEntry Criteria:")
+    print("\nEntry Criteria:")
     print(f"  - Min IV Rank: {entry_criteria.get('iv_rank_minimum')}%")
     print(f"  - Optimal DTE: {entry_criteria.get('dte_entry')}")
     print(f"  - Delta Range: {entry_criteria.get('delta_range_short_puts')}")
 
-    print(f"\nManagement Rules:")
+    print("\nManagement Rules:")
     print(f"  - Take Profit: {management_rules.get('take_profit_target_percent')}%")
     print(f"  - Close by: {management_rules.get('max_dte_before_close')} DTE")
 
     assert entry_criteria.get("iv_rank_minimum") == 30
     assert management_rules.get("take_profit_target_percent") == 50
-    print(f"✅ TastyTrade trading rules validated")
+    print("✅ TastyTrade trading rules validated")
 
     print("\n")
 
@@ -230,7 +229,7 @@ def test_trade_approval_logic():
         print("  FINAL SCORE: 0.0%")
         print("  ❌ TRADE REJECTED\n")
     else:
-        assert False, "Should have rejected"
+        raise AssertionError("Should have rejected")
 
     print("\n")
 
@@ -267,9 +266,9 @@ def main():
         print("RAG Integration Summary:")
         print(f"  • McMillan chunks: {len(mcmillan_chunks)}")
         print(f"  • TastyTrade chunks: {len(tastytrade_chunks)}")
-        print(f"  • IV regime validation: WORKING")
-        print(f"  • Rule lookup: WORKING")
-        print(f"  • Trade approval logic: WORKING")
+        print("  • IV regime validation: WORKING")
+        print("  • Rule lookup: WORKING")
+        print("  • Trade approval logic: WORKING")
         print()
         print("🚀 RAG knowledge is ready for live trading integration!")
         print()

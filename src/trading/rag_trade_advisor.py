@@ -400,9 +400,7 @@ class RAGTradeAdvisor:
         if not relevant_chunks:
             # Get generic TastyTrade rules
             relevant_chunks = [
-                chunk
-                for chunk in self.tastytrade_chunks
-                if "trading_rules" in chunk.get("id", "")
+                chunk for chunk in self.tastytrade_chunks if "trading_rules" in chunk.get("id", "")
             ]
 
         if not relevant_chunks:

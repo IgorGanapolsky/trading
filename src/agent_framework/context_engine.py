@@ -560,9 +560,7 @@ class ContextEngine:
                 max_tokens = sdk_config.get_agent_context_limit(agent_id)
                 if use_1m_context:
                     # Can use up to the allocated limit for this agent
-                    logger.debug(
-                        f"Using 1M context: {max_tokens:,} tokens for {agent_id}"
-                    )
+                    logger.debug(f"Using 1M context: {max_tokens:,} tokens for {agent_id}")
             except ImportError:
                 max_tokens = 50_000  # Default expanded limit
 

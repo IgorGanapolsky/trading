@@ -111,10 +111,14 @@ class TradingOrchestrator:
         # These gates are now DISABLED BY DEFAULT per Carver/López de Prado:
         # "Simple rules beat complex ones" / "Beware of backtest overfitting"
         self.rl_filter_enabled = _os.getenv("RL_FILTER_ENABLED", "false").lower() in {
-            "1", "true", "yes"
+            "1",
+            "true",
+            "yes",
         }
         self.llm_sentiment_enabled = _os.getenv("LLM_SENTIMENT_ENABLED", "false").lower() in {
-            "1", "true", "yes"
+            "1",
+            "true",
+            "yes",
         }
 
         # Only initialize if enabled (saves memory and API costs)
@@ -963,7 +967,9 @@ class TradingOrchestrator:
                 ticker,
             )
             rl_decision = {"action": "BUY", "confidence": 1.0, "skipped": True}
-            self.telemetry.gate_pass("rl_filter", ticker, {"skipped": True, "reason": "simplification_mode"})
+            self.telemetry.gate_pass(
+                "rl_filter", ticker, {"skipped": True, "reason": "simplification_mode"}
+            )
         else:
             rl_outcome = self.failure_manager.run(
                 gate="rl_filter",
@@ -1085,7 +1091,9 @@ class TradingOrchestrator:
                 "Gate 3 (%s): SKIPPED - LLM sentiment disabled (simplification mode)",
                 ticker,
             )
-            self.telemetry.gate_pass("llm_sentiment", ticker, {"skipped": True, "reason": "simplification_mode"})
+            self.telemetry.gate_pass(
+                "llm_sentiment", ticker, {"skipped": True, "reason": "simplification_mode"}
+            )
             # Skip directly to Gate 4 (Risk)
         else:
             # Original Gate 3 logic (only runs if LLM sentiment enabled)
@@ -2044,7 +2052,7 @@ class TradingOrchestrator:
             # Import and initialize the executor
             from src.trading.options_executor import OptionsExecutor
 
-            executor = OptionsExecutor(paper=self.paper)
+            OptionsExecutor(paper=self.paper)
             logger.info("Gate 7: OptionsExecutor initialized (paper=%s)", self.paper)
 
             # Get account equity for position sizing
@@ -2094,11 +2102,13 @@ class TradingOrchestrator:
                             },
                         )
 
-                        results["strategies"].append({
-                            "ticker": signal.ticker,
-                            "strategy": signal.strategy,
-                            "iv_regime": signal.iv_regime,
-                        })
+                        results["strategies"].append(
+                            {
+                                "ticker": signal.ticker,
+                                "strategy": signal.strategy,
+                                "iv_regime": signal.iv_regime,
+                            }
+                        )
 
                         # Execute based on strategy type
                         # Note: Actual execution requires options approval on Alpaca

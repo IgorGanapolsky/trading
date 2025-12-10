@@ -50,10 +50,7 @@ logger = logging.getLogger(__name__)
 def get_alpaca_clients():
     """Initialize Alpaca trading and options clients."""
     from alpaca.data.historical.option import OptionHistoricalDataClient
-    from alpaca.data.requests import OptionChainRequest
     from alpaca.trading.client import TradingClient
-    from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest
-    from alpaca.trading.enums import OrderSide, TimeInForce, OrderClass
 
     api_key = os.getenv("ALPACA_API_KEY")
     secret_key = os.getenv("ALPACA_SECRET_KEY")
@@ -61,7 +58,9 @@ def get_alpaca_clients():
 
     # Debug: show if keys are present (without revealing them)
     logger.info(f"   API Key present: {bool(api_key)} (length: {len(api_key) if api_key else 0})")
-    logger.info(f"   Secret Key present: {bool(secret_key)} (length: {len(secret_key) if secret_key else 0})")
+    logger.info(
+        f"   Secret Key present: {bool(secret_key)} (length: {len(secret_key) if secret_key else 0})"
+    )
     logger.info(f"   Paper trading: {paper}")
 
     if not api_key or not secret_key:
@@ -85,8 +84,12 @@ def get_alpaca_clients():
     try:
         account = trading_client.get_account()
         logger.info(f"   Account status: {account.status}")
-        logger.info(f"   Options trading approved: {getattr(account, 'options_trading_level', 'unknown')}")
-        logger.info(f"   Options approved level: {getattr(account, 'options_approved_level', 'unknown')}")
+        logger.info(
+            f"   Options trading approved: {getattr(account, 'options_trading_level', 'unknown')}"
+        )
+        logger.info(
+            f"   Options approved level: {getattr(account, 'options_approved_level', 'unknown')}"
+        )
     except Exception as e:
         logger.warning(f"   ⚠️ Account check failed: {e}")
 
@@ -100,7 +103,9 @@ def get_account_info(trading_client):
         "cash": float(account.cash),
         "buying_power": float(account.buying_power),
         "portfolio_value": float(account.portfolio_value),
-        "options_buying_power": float(getattr(account, "options_buying_power", account.buying_power)),
+        "options_buying_power": float(
+            getattr(account, "options_buying_power", account.buying_power)
+        ),
     }
 
 
@@ -115,7 +120,9 @@ def get_underlying_price(symbol: str) -> float:
     return float(data["Close"].iloc[-1])
 
 
-def find_optimal_put(options_client, symbol: str, target_delta: float = 0.25, min_dte: int = 30, max_dte: int = 45):
+def find_optimal_put(
+    options_client, symbol: str, target_delta: float = 0.25, min_dte: int = 30, max_dte: int = 45
+):
     """
     Find optimal put option for cash-secured put strategy.
 
@@ -133,8 +140,8 @@ def find_optimal_put(options_client, symbol: str, target_delta: float = 0.25, mi
     logger.info(f"   Current {symbol} price: ${current_price:.2f}")
 
     # Calculate target expiration range
-    min_exp = date.today() + timedelta(days=min_dte)
-    max_exp = date.today() + timedelta(days=max_dte)
+    date.today() + timedelta(days=min_dte)
+    date.today() + timedelta(days=max_dte)
 
     # Get option chain
     req = OptionChainRequest(underlying_symbol=symbol)
@@ -190,18 +197,20 @@ def find_optimal_put(options_client, symbol: str, target_delta: float = 0.25, mi
         if premium_pct < 0.5:
             continue
 
-        candidates.append({
-            "symbol": option_symbol,
-            "strike": strike,
-            "expiration": exp_date,
-            "dte": dte,
-            "delta": delta,
-            "bid": bid,
-            "ask": ask,
-            "mid": mid,
-            "premium_pct": premium_pct,
-            "iv": snapshot.implied_volatility,
-        })
+        candidates.append(
+            {
+                "symbol": option_symbol,
+                "strike": strike,
+                "expiration": exp_date,
+                "dte": dte,
+                "delta": delta,
+                "bid": bid,
+                "ask": ask,
+                "mid": mid,
+                "premium_pct": premium_pct,
+                "iv": snapshot.implied_volatility,
+            }
+        )
 
     if not candidates:
         logger.warning(f"❌ No suitable put options found for {symbol}")
@@ -211,13 +220,15 @@ def find_optimal_put(options_client, symbol: str, target_delta: float = 0.25, mi
     candidates.sort(key=lambda x: abs(abs(x["delta"]) - target_delta))
 
     best = candidates[0]
-    logger.info(f"✅ Found optimal put:")
+    logger.info("✅ Found optimal put:")
     logger.info(f"   Symbol: {best['symbol']}")
-    logger.info(f"   Strike: ${best['strike']:.2f} ({((current_price - best['strike']) / current_price * 100):.1f}% OTM)")
+    logger.info(
+        f"   Strike: ${best['strike']:.2f} ({((current_price - best['strike']) / current_price * 100):.1f}% OTM)"
+    )
     logger.info(f"   Expiration: {best['expiration']} ({best['dte']} DTE)")
     logger.info(f"   Delta: {best['delta']:.3f}")
     logger.info(f"   Premium: ${best['mid']:.2f} ({best['premium_pct']:.2f}%)")
-    logger.info(f"   IV: {best['iv']:.1%}" if best['iv'] else "   IV: N/A")
+    logger.info(f"   IV: {best['iv']:.1%}" if best["iv"] else "   IV: N/A")
 
     return best
 
@@ -238,7 +249,9 @@ def try_tradier_fallback(symbol: str, dry_run: bool = False) -> dict:
 
         # Check for Tradier credentials
         api_key = os.getenv("TRADIER_API_KEY") or os.getenv("TRADIER_SANDBOX_API_KEY")
-        account_num = os.getenv("TRADIER_ACCOUNT_NUMBER") or os.getenv("TRADIER_SANDBOX_ACCOUNT_NUMBER")
+        account_num = os.getenv("TRADIER_ACCOUNT_NUMBER") or os.getenv(
+            "TRADIER_SANDBOX_ACCOUNT_NUMBER"
+        )
 
         if not api_key or not account_num:
             logger.warning("❌ Tradier credentials not configured")
@@ -302,7 +315,9 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
     logger.info(f"\n💵 Cash required for assignment: ${cash_required:,.2f}")
 
     if account["cash"] < cash_required:
-        logger.warning(f"❌ Insufficient cash! Need ${cash_required:,.2f}, have ${account['cash']:,.2f}")
+        logger.warning(
+            f"❌ Insufficient cash! Need ${cash_required:,.2f}, have ${account['cash']:,.2f}"
+        )
         return {"status": "NO_TRADE", "reason": "Insufficient cash", "broker": "alpaca"}
 
     # Execute trade
@@ -318,8 +333,8 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
 
     # Place the order
     try:
-        from alpaca.trading.requests import LimitOrderRequest
         from alpaca.trading.enums import OrderSide, TimeInForce
+        from alpaca.trading.requests import LimitOrderRequest
 
         # Sell to open (write) the put
         order_request = LimitOrderRequest(
@@ -332,11 +347,11 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
         )
 
         order = trading_client.submit_order(order_request)
-        logger.info(f"\n✅ ALPACA ORDER SUBMITTED!")
+        logger.info("\n✅ ALPACA ORDER SUBMITTED!")
         logger.info(f"   Order ID: {order.id}")
         logger.info(f"   Symbol: {put_option['symbol']}")
-        logger.info(f"   Side: SELL TO OPEN")
-        logger.info(f"   Qty: 1 contract")
+        logger.info("   Side: SELL TO OPEN")
+        logger.info("   Qty: 1 contract")
         logger.info(f"   Limit Price: ${put_option['mid']:.2f}")
         logger.info(f"   Premium: ${put_option['mid'] * 100:.2f} (1 contract)")
 
@@ -418,9 +433,7 @@ def main():
                 trading_client, options_client, args.symbol, args.dry_run
             )
         elif args.strategy == "covered_call":
-            result = execute_covered_call(
-                trading_client, options_client, args.symbol, args.dry_run
-            )
+            result = execute_covered_call(trading_client, options_client, args.symbol, args.dry_run)
         elif args.strategy == "wheel":
             # Wheel = CSP first, then covered call if assigned
             result = execute_cash_secured_put(
@@ -444,12 +457,14 @@ def main():
             with open(result_file) as f:
                 trades = json.load(f)
 
-        trades.append({
-            "timestamp": datetime.now().isoformat(),
-            "strategy": args.strategy,
-            "symbol": args.symbol,
-            "result": result,
-        })
+        trades.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "strategy": args.strategy,
+                "symbol": args.symbol,
+                "result": result,
+            }
+        )
 
         with open(result_file, "w") as f:
             json.dump(trades, f, indent=2, default=str)
@@ -458,7 +473,9 @@ def main():
 
         # R&D Phase: Don't fail workflow on order errors - log and continue
         # Acceptable statuses: ORDER_SUBMITTED, DRY_RUN, NO_TRADE, ERROR (log but don't fail)
-        return 0 if result.get("status") in ["ORDER_SUBMITTED", "DRY_RUN", "NO_TRADE", "ERROR"] else 1
+        return (
+            0 if result.get("status") in ["ORDER_SUBMITTED", "DRY_RUN", "NO_TRADE", "ERROR"] else 1
+        )
 
     except Exception as e:
         logger.exception(f"❌ Fatal error: {e}")

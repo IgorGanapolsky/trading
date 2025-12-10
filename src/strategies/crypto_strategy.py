@@ -409,7 +409,9 @@ class CryptoStrategy:
             if current_price is None:
                 if force_trade:
                     # Fallback: Use a recent price from yfinance or hardcoded
-                    logger.warning(f"🔥 FORCE_TRADE: Price fetch failed, using fallback price for {best_coin}")
+                    logger.warning(
+                        f"🔥 FORCE_TRADE: Price fetch failed, using fallback price for {best_coin}"
+                    )
                     if best_coin == "BTCUSD":
                         current_price = 97000.0  # Approximate Dec 2025 BTC price
                     elif best_coin == "ETHUSD":
@@ -481,7 +483,9 @@ class CryptoStrategy:
                     # In FORCE_TRADE mode, still update system_state.json to record the attempt
                     # This ensures git diff detects changes and the workflow doesn't skip
                     if force_trade:
-                        logger.warning("🔥 FORCE_TRADE: Recording attempted trade to system_state.json")
+                        logger.warning(
+                            "🔥 FORCE_TRADE: Recording attempted trade to system_state.json"
+                        )
                         self._save_trade_to_daily_file(
                             symbol=best_coin,
                             action="BUY_ATTEMPTED",
@@ -937,11 +941,18 @@ class CryptoStrategy:
                 volume_ratio = self._calculate_volume_ratio(hist)
 
                 # Check if we should bypass hard filters (FORCE_TRADE mode)
-                bypass_filters = os.getenv("FORCE_TRADE", "").lower() in {"1", "true", "yes", "force"}
+                bypass_filters = os.getenv("FORCE_TRADE", "").lower() in {
+                    "1",
+                    "true",
+                    "yes",
+                    "force",
+                }
 
                 if bypass_filters:
                     logger.info(f"{symbol}: FORCE_TRADE enabled - bypassing hard filters")
-                    logger.info(f"  RSI={rsi:.1f}, MACD={macd_histogram:.4f}, Vol={volume_ratio:.2f}")
+                    logger.info(
+                        f"  RSI={rsi:.1f}, MACD={macd_histogram:.4f}, Vol={volume_ratio:.2f}"
+                    )
                 else:
                     # HARD FILTER 1: Reject strongly bearish MACD
                     # Made more permissive: -200 threshold (was -50)
@@ -965,7 +976,9 @@ class CryptoStrategy:
                     # Made more permissive: 0.1 threshold (was 0.3)
                     vol_threshold = float(os.getenv("CRYPTO_VOL_THRESHOLD", "0.1"))
                     if volume_ratio < vol_threshold:
-                        logger.warning(f"{symbol} REJECTED - Low volume ({volume_ratio:.2f} < {vol_threshold})")
+                        logger.warning(
+                            f"{symbol} REJECTED - Low volume ({volume_ratio:.2f} < {vol_threshold})"
+                        )
                         continue
 
                 # Calculate composite score

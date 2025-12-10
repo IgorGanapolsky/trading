@@ -50,34 +50,42 @@ class SandboxSettings:
 
     # Network isolation
     network_disabled: bool = True
-    allowed_domains: list[str] = field(default_factory=lambda: [
-        "api.alpaca.markets",  # Alpaca trading API
-        "paper-api.alpaca.markets",  # Paper trading
-        "data.alpaca.markets",  # Market data
-        "api.openrouter.ai",  # Multi-LLM
-        "api.anthropic.com",  # Claude API
-    ])
+    allowed_domains: list[str] = field(
+        default_factory=lambda: [
+            "api.alpaca.markets",  # Alpaca trading API
+            "paper-api.alpaca.markets",  # Paper trading
+            "data.alpaca.markets",  # Market data
+            "api.openrouter.ai",  # Multi-LLM
+            "api.anthropic.com",  # Claude API
+        ]
+    )
 
     # Filesystem isolation
-    allowed_paths: list[str] = field(default_factory=lambda: [
-        "/tmp",
-        str(Path.home() / "trading" / "data"),
-        str(Path.home() / "trading" / "reports"),
-    ])
-    read_only_paths: list[str] = field(default_factory=lambda: [
-        str(Path.home() / "trading" / "src"),
-        str(Path.home() / "trading" / "config"),
-    ])
+    allowed_paths: list[str] = field(
+        default_factory=lambda: [
+            "/tmp",
+            str(Path.home() / "trading" / "data"),
+            str(Path.home() / "trading" / "reports"),
+        ]
+    )
+    read_only_paths: list[str] = field(
+        default_factory=lambda: [
+            str(Path.home() / "trading" / "src"),
+            str(Path.home() / "trading" / "config"),
+        ]
+    )
 
     # Command restrictions
-    excluded_commands: list[str] = field(default_factory=lambda: [
-        "rm -rf",
-        "curl | bash",
-        "wget | sh",
-        "sudo",
-        "chmod 777",
-        "dd if=",
-    ])
+    excluded_commands: list[str] = field(
+        default_factory=lambda: [
+            "rm -rf",
+            "curl | bash",
+            "wget | sh",
+            "sudo",
+            "chmod 777",
+            "dd if=",
+        ]
+    )
 
     # Resource limits (Docker/gVisor)
     memory_limit: str = "2g"
@@ -87,14 +95,21 @@ class SandboxSettings:
     def to_docker_flags(self) -> list[str]:
         """Generate Docker run flags for sandboxed execution"""
         flags = [
-            "--cap-drop", "ALL",
-            "--security-opt", "no-new-privileges",
+            "--cap-drop",
+            "ALL",
+            "--security-opt",
+            "no-new-privileges",
             "--read-only",
-            "--tmpfs", "/tmp:rw,noexec,nosuid,size=100m",
-            "--memory", self.memory_limit,
-            "--cpus", str(self.cpu_limit),
-            "--pids-limit", str(self.pids_limit),
-            "--user", "1000:1000",
+            "--tmpfs",
+            "/tmp:rw,noexec,nosuid,size=100m",
+            "--memory",
+            self.memory_limit,
+            "--cpus",
+            str(self.cpu_limit),
+            "--pids-limit",
+            str(self.pids_limit),
+            "--user",
+            "1000:1000",
         ]
 
         if self.network_disabled:
@@ -120,9 +135,11 @@ class AgentSDKConfig:
     enable_context_compaction: bool = True  # Auto-summarize when approaching limit
 
     # Beta features
-    beta_features: list[str] = field(default_factory=lambda: [
-        "context-1m-2025-08-07",  # 1M context window
-    ])
+    beta_features: list[str] = field(
+        default_factory=lambda: [
+            "context-1m-2025-08-07",  # 1M context window
+        ]
+    )
 
     # Model configuration
     default_model: str = "claude-sonnet-4-5-20250929"  # Claude Sonnet 4.5
@@ -134,23 +151,23 @@ class AgentSDKConfig:
 
     # Agent-specific context allocations (tokens)
     # These are significantly increased with 1M context
-    agent_context_allocations: dict[str, int] = field(default_factory=lambda: {
-        # Core trading agents - expanded with 1M context
-        "research_agent": 200_000,  # Full market data + history
-        "signal_agent": 150_000,  # Technical indicators + patterns
-        "risk_agent": 100_000,  # Risk metrics + position data
-        "execution_agent": 50_000,  # Order execution context
-        "meta_agent": 400_000,  # Full coordination context
-
-        # Specialized agents
-        "momentum_agent": 100_000,
-        "rl_agent": 150_000,  # RL state + history
-        "gemini_agent": 100_000,
-        "debate_agents": 200_000,  # Multiple perspectives
-
-        # Default for unspecified agents
-        "default": 50_000,
-    })
+    agent_context_allocations: dict[str, int] = field(
+        default_factory=lambda: {
+            # Core trading agents - expanded with 1M context
+            "research_agent": 200_000,  # Full market data + history
+            "signal_agent": 150_000,  # Technical indicators + patterns
+            "risk_agent": 100_000,  # Risk metrics + position data
+            "execution_agent": 50_000,  # Order execution context
+            "meta_agent": 400_000,  # Full coordination context
+            # Specialized agents
+            "momentum_agent": 100_000,
+            "rl_agent": 150_000,  # RL state + history
+            "gemini_agent": 100_000,
+            "debate_agents": 200_000,  # Multiple perspectives
+            # Default for unspecified agents
+            "default": 50_000,
+        }
+    )
 
     # SDK settings
     max_retries: int = 3
@@ -197,8 +214,7 @@ class AgentSDKConfig:
     def get_agent_context_limit(self, agent_id: str) -> int:
         """Get context token limit for a specific agent"""
         return self.agent_context_allocations.get(
-            agent_id,
-            self.agent_context_allocations["default"]
+            agent_id, self.agent_context_allocations["default"]
         )
 
 

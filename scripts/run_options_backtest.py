@@ -39,6 +39,7 @@ try:
     from alpaca.data.historical import StockHistoricalDataClient
     from alpaca.data.requests import StockBarsRequest
     from alpaca.data.timeframe import TimeFrame
+
     ALPACA_AVAILABLE = True
 except ImportError:
     ALPACA_AVAILABLE = False
@@ -151,17 +152,19 @@ class OptionsBacktest:
                 if "symbol" in bars.index.names:
                     bars = bars.droplevel("symbol")
 
-                hist = bars.rename(columns={
-                    "open": "Open",
-                    "high": "High",
-                    "low": "Low",
-                    "close": "Close",
-                    "volume": "Volume",
-                })
+                hist = bars.rename(
+                    columns={
+                        "open": "Open",
+                        "high": "High",
+                        "low": "Low",
+                        "close": "Close",
+                        "volume": "Volume",
+                    }
+                )
 
-                hist['Returns'] = hist['Close'].pct_change()
-                hist['HV_20'] = hist['Returns'].rolling(20).std() * np.sqrt(252)
-                hist['HV_30'] = hist['Returns'].rolling(30).std() * np.sqrt(252)
+                hist["Returns"] = hist["Close"].pct_change()
+                hist["HV_20"] = hist["Returns"].rolling(20).std() * np.sqrt(252)
+                hist["HV_30"] = hist["Returns"].rolling(30).std() * np.sqrt(252)
 
                 self.price_data[symbol] = hist
                 logger.info(f"Loaded {len(hist)} bars for {symbol} from Alpaca")
@@ -187,44 +190,49 @@ class OptionsBacktest:
 
         # Generate date range
         start_buffered = self.start_date - timedelta(days=252)
-        date_range = pd.date_range(start=start_buffered, end=self.end_date, freq='D')
+        date_range = pd.date_range(start=start_buffered, end=self.end_date, freq="D")
         date_range = date_range[date_range.weekday < 5]  # Weekdays only
 
         for symbol in symbols:
-            params = symbol_params.get(symbol, {"start_price": 100.0, "annual_vol": 0.18, "drift": 0.08})
+            params = symbol_params.get(
+                symbol, {"start_price": 100.0, "annual_vol": 0.18, "drift": 0.08}
+            )
 
             # Generate geometric Brownian motion
             np.random.seed(42)  # Deterministic for testing
             n_days = len(date_range)
-            dt = 1/252  # Daily time step
+            dt = 1 / 252  # Daily time step
 
             # Daily returns following GBM
             returns = np.random.normal(
-                params["drift"] * dt,
-                params["annual_vol"] * np.sqrt(dt),
-                n_days
+                params["drift"] * dt, params["annual_vol"] * np.sqrt(dt), n_days
             )
 
             # Generate price path
             prices = params["start_price"] * np.exp(np.cumsum(returns))
 
             # Create DataFrame
-            hist = pd.DataFrame({
-                'Open': prices * (1 + np.random.normal(0, 0.002, n_days)),
-                'High': prices * (1 + abs(np.random.normal(0, 0.005, n_days))),
-                'Low': prices * (1 - abs(np.random.normal(0, 0.005, n_days))),
-                'Close': prices,
-                'Volume': np.random.uniform(50_000_000, 100_000_000, n_days),
-            }, index=date_range)
+            hist = pd.DataFrame(
+                {
+                    "Open": prices * (1 + np.random.normal(0, 0.002, n_days)),
+                    "High": prices * (1 + abs(np.random.normal(0, 0.005, n_days))),
+                    "Low": prices * (1 - abs(np.random.normal(0, 0.005, n_days))),
+                    "Close": prices,
+                    "Volume": np.random.uniform(50_000_000, 100_000_000, n_days),
+                },
+                index=date_range,
+            )
 
             # Calculate volatility
-            hist['Returns'] = hist['Close'].pct_change()
-            hist['HV_20'] = hist['Returns'].rolling(20).std() * np.sqrt(252)
-            hist['HV_30'] = hist['Returns'].rolling(30).std() * np.sqrt(252)
+            hist["Returns"] = hist["Close"].pct_change()
+            hist["HV_20"] = hist["Returns"].rolling(20).std() * np.sqrt(252)
+            hist["HV_30"] = hist["Returns"].rolling(30).std() * np.sqrt(252)
 
             self.price_data[symbol] = hist
-            logger.info(f"Generated {len(hist)} synthetic bars for {symbol} "
-                       f"(price range: ${hist['Close'].min():.2f} - ${hist['Close'].max():.2f})")
+            logger.info(
+                f"Generated {len(hist)} synthetic bars for {symbol} "
+                f"(price range: ${hist['Close'].min():.2f} - ${hist['Close'].max():.2f})"
+            )
 
     def estimate_option_premium(
         self,
@@ -276,7 +284,11 @@ class OptionsBacktest:
                 delta = -0.5 - 0.5 * (1 - np.exp(-abs(moneyness) * 2))
 
         # Premium approximation: Time value + intrinsic value
-        intrinsic = max(0, underlying_price - strike) if option_type == "call" else max(0, strike - underlying_price)
+        intrinsic = (
+            max(0, underlying_price - strike)
+            if option_type == "call"
+            else max(0, strike - underlying_price)
+        )
 
         # Time value based on IV, DTE, and delta
         time_value = abs(delta) * expected_move * 0.4  # Scaling factor
@@ -321,8 +333,8 @@ class OptionsBacktest:
         if len(hist_filtered) < 30:
             return None
 
-        current_price = float(hist_filtered['Close'].iloc[-1])
-        iv = float(hist_filtered['HV_30'].iloc[-1])
+        current_price = float(hist_filtered["Close"].iloc[-1])
+        iv = float(hist_filtered["HV_30"].iloc[-1])
 
         if pd.isna(iv) or iv <= 0:
             iv = 0.20  # Default IV if not available
@@ -332,7 +344,7 @@ class OptionsBacktest:
         # Target delta = 0.30 typically means strike ~5-10% OTM
 
         best_strike = None
-        best_delta_diff = float('inf')
+        best_delta_diff = float("inf")
 
         # Search strikes from 1% to 15% OTM
         for pct_otm in np.arange(0.01, 0.15, 0.005):
@@ -346,15 +358,15 @@ class OptionsBacktest:
                 option_type="call",
             )
 
-            delta_diff = abs(option_data['delta'] - self.covered_call_delta)
+            delta_diff = abs(option_data["delta"] - self.covered_call_delta)
 
             if delta_diff < best_delta_diff:
                 best_delta_diff = delta_diff
                 best_strike = {
                     "strike": strike,
-                    "premium": option_data['premium'],
-                    "delta": option_data['delta'],
-                    "theta": option_data['theta'],
+                    "premium": option_data["premium"],
+                    "delta": option_data["delta"],
+                    "theta": option_data["theta"],
                     "iv": iv,
                     "underlying_price": current_price,
                     "dte": dte,
@@ -386,7 +398,7 @@ class OptionsBacktest:
         if len(hist_entry) < 30:
             return None
 
-        entry_price = float(hist_entry['Close'].iloc[-1])
+        entry_price = float(hist_entry["Close"].iloc[-1])
 
         # Find strike
         dte = (exit_date - entry_date).days
@@ -395,15 +407,15 @@ class OptionsBacktest:
         if not strike_data:
             return None
 
-        strike = strike_data['strike']
-        premium_collected = strike_data['premium']
+        strike = strike_data["strike"]
+        premium_collected = strike_data["premium"]
 
         # Get exit data
         hist_exit = hist[hist.index <= exit_date]
         if len(hist_exit) == 0:
             return None
 
-        exit_price = float(hist_exit['Close'].iloc[-1])
+        exit_price = float(hist_exit["Close"].iloc[-1])
 
         # Calculate P&L
         # Covered call = Long stock + Short call
@@ -433,7 +445,7 @@ class OptionsBacktest:
             "strike": strike,
             "premium": premium_collected,
             "dte": dte,
-            "delta": strike_data['delta'],
+            "delta": strike_data["delta"],
             "assigned": assigned,
             "stock_pnl": final_stock_pnl,
             "option_pnl": call_pnl,
@@ -468,8 +480,8 @@ class OptionsBacktest:
         if len(hist_entry) < 30:
             return None
 
-        entry_price = float(hist_entry['Close'].iloc[-1])
-        iv = float(hist_entry['HV_30'].iloc[-1])
+        entry_price = float(hist_entry["Close"].iloc[-1])
+        iv = float(hist_entry["HV_30"].iloc[-1])
 
         if pd.isna(iv) or iv <= 0:
             iv = 0.20
@@ -498,16 +510,12 @@ class OptionsBacktest:
         long_call_data = self.estimate_option_premium(
             entry_price, long_call_strike, dte, iv, "call"
         )
-        short_put_data = self.estimate_option_premium(
-            entry_price, short_put_strike, dte, iv, "put"
-        )
-        long_put_data = self.estimate_option_premium(
-            entry_price, long_put_strike, dte, iv, "put"
-        )
+        short_put_data = self.estimate_option_premium(entry_price, short_put_strike, dte, iv, "put")
+        long_put_data = self.estimate_option_premium(entry_price, long_put_strike, dte, iv, "put")
 
         # Net credit = premium collected - premium paid
-        call_spread_credit = short_call_data['premium'] - long_call_data['premium']
-        put_spread_credit = short_put_data['premium'] - long_put_data['premium']
+        call_spread_credit = short_call_data["premium"] - long_call_data["premium"]
+        put_spread_credit = short_put_data["premium"] - long_put_data["premium"]
         total_credit = call_spread_credit + put_spread_credit
 
         # Get exit data
@@ -515,7 +523,7 @@ class OptionsBacktest:
         if len(hist_exit) == 0:
             return None
 
-        exit_price = float(hist_exit['Close'].iloc[-1])
+        exit_price = float(hist_exit["Close"].iloc[-1])
 
         # Calculate P&L at expiration
         # Win if price stays between short strikes
@@ -530,24 +538,24 @@ class OptionsBacktest:
             # Call spread tested
             if exit_price >= long_call_strike:
                 # Max loss on call spread
-                call_spread_loss = (long_call_strike - short_call_strike)
+                call_spread_loss = long_call_strike - short_call_strike
                 pnl = total_credit - call_spread_loss
                 outcome = "call_max_loss"
             else:
                 # Partial loss on call spread
-                call_spread_loss = (exit_price - short_call_strike)
+                call_spread_loss = exit_price - short_call_strike
                 pnl = total_credit - call_spread_loss
                 outcome = "call_tested"
         else:
             # Put spread tested
             if exit_price <= long_put_strike:
                 # Max loss on put spread
-                put_spread_loss = (short_put_strike - long_put_strike)
+                put_spread_loss = short_put_strike - long_put_strike
                 pnl = total_credit - put_spread_loss
                 outcome = "put_max_loss"
             else:
                 # Partial loss on put spread
-                put_spread_loss = (short_put_strike - exit_price)
+                put_spread_loss = short_put_strike - exit_price
                 pnl = total_credit - put_spread_loss
                 outcome = "put_tested"
 
@@ -569,7 +577,7 @@ class OptionsBacktest:
             "return_pct": (pnl / (long_call_strike - short_call_strike)) * 100,  # Return on risk
         }
 
-    def run_backtest(self, symbols: list[str] = ["SPY", "QQQ"]) -> dict:
+    def run_backtest(self, symbols: list[str] = None) -> dict:
         """
         Run comprehensive backtest for options strategies.
 
@@ -579,6 +587,8 @@ class OptionsBacktest:
         Returns:
             Backtest results dictionary
         """
+        if symbols is None:
+            symbols = ["SPY", "QQQ"]
         logger.info("=" * 80)
         logger.info("STARTING OPTIONS BACKTEST")
         logger.info("=" * 80)
@@ -627,7 +637,7 @@ class OptionsBacktest:
             return results
 
         # Log results
-        overall = results.get('overall_metrics', {})
+        overall = results.get("overall_metrics", {})
         logger.info(f"Total Trades: {overall.get('total_trades', 0)}")
         logger.info(f"Win Rate: {overall.get('win_rate', 0):.1f}%")
         logger.info(f"Total Return: {overall.get('total_return', 0):.2f}%")
@@ -648,9 +658,9 @@ class OptionsBacktest:
         total_trades = len(self.closed_trades)
 
         # Separate by strategy (filter out None trades)
-        valid_trades = [t for t in self.closed_trades if t is not None and 'pnl' in t]
-        cc_trades = [t for t in valid_trades if t.get('strategy') == 'covered_call']
-        ic_trades = [t for t in valid_trades if t.get('strategy') == 'iron_condor']
+        valid_trades = [t for t in self.closed_trades if t is not None and "pnl" in t]
+        cc_trades = [t for t in valid_trades if t.get("strategy") == "covered_call"]
+        ic_trades = [t for t in valid_trades if t.get("strategy") == "iron_condor"]
 
         if not valid_trades:
             logger.warning("No valid trades with P&L data")
@@ -661,15 +671,15 @@ class OptionsBacktest:
             }
 
         # Win rate
-        winning_trades = [t for t in valid_trades if t.get('pnl', 0) > 0]
+        winning_trades = [t for t in valid_trades if t.get("pnl", 0) > 0]
         win_rate = (len(winning_trades) / len(valid_trades) * 100) if valid_trades else 0
 
         # P&L
-        total_pnl = sum(t.get('pnl', 0) for t in valid_trades)
+        total_pnl = sum(t.get("pnl", 0) for t in valid_trades)
         avg_pnl = total_pnl / len(valid_trades) if valid_trades else 0
 
         # Calculate daily P&L for Sharpe
-        trade_returns = [t.get('pnl', 0) for t in valid_trades]
+        trade_returns = [t.get("pnl", 0) for t in valid_trades]
 
         # Sharpe ratio (simplified - using trade returns)
         if len(trade_returns) > 1:
@@ -684,17 +694,27 @@ class OptionsBacktest:
         running_max = np.maximum.accumulate(cumulative_pnl)
         drawdown = cumulative_pnl - running_max
         max_drawdown = abs(np.min(drawdown)) if len(drawdown) > 0 else 0
-        max_drawdown_pct = (max_drawdown / self.initial_capital * 100) if self.initial_capital > 0 else 0
+        max_drawdown_pct = (
+            (max_drawdown / self.initial_capital * 100) if self.initial_capital > 0 else 0
+        )
 
         # Total return
         total_return = (total_pnl / self.initial_capital * 100) if self.initial_capital > 0 else 0
 
         # Strategy-specific metrics
-        cc_win_rate = (len([t for t in cc_trades if t.get('pnl', 0) > 0]) / len(cc_trades) * 100) if cc_trades else 0
-        ic_win_rate = (len([t for t in ic_trades if t.get('pnl', 0) > 0]) / len(ic_trades) * 100) if ic_trades else 0
+        cc_win_rate = (
+            (len([t for t in cc_trades if t.get("pnl", 0) > 0]) / len(cc_trades) * 100)
+            if cc_trades
+            else 0
+        )
+        ic_win_rate = (
+            (len([t for t in ic_trades if t.get("pnl", 0) > 0]) / len(ic_trades) * 100)
+            if ic_trades
+            else 0
+        )
 
-        cc_avg_pnl = np.mean([t.get('pnl', 0) for t in cc_trades]) if cc_trades else 0
-        ic_avg_pnl = np.mean([t.get('pnl', 0) for t in ic_trades]) if ic_trades else 0
+        cc_avg_pnl = np.mean([t.get("pnl", 0) for t in cc_trades]) if cc_trades else 0
+        ic_avg_pnl = np.mean([t.get("pnl", 0) for t in ic_trades]) if ic_trades else 0
 
         # Daily metrics
         trading_days = (self.end_date - self.start_date).days
@@ -727,15 +747,17 @@ class OptionsBacktest:
                 "total_trades": len(cc_trades),
                 "win_rate": cc_win_rate,
                 "avg_pnl": cc_avg_pnl,
-                "total_pnl": sum(t.get('pnl', 0) for t in cc_trades),
-                "assignments": len([t for t in cc_trades if t.get('assigned', False)]),
+                "total_pnl": sum(t.get("pnl", 0) for t in cc_trades),
+                "assignments": len([t for t in cc_trades if t.get("assigned", False)]),
             },
             "iron_condors": {
                 "total_trades": len(ic_trades),
                 "win_rate": ic_win_rate,
                 "avg_pnl": ic_avg_pnl,
-                "total_pnl": sum(t.get('pnl', 0) for t in ic_trades),
-                "max_profit_outcomes": len([t for t in ic_trades if t.get('outcome') == 'max_profit']),
+                "total_pnl": sum(t.get("pnl", 0) for t in ic_trades),
+                "max_profit_outcomes": len(
+                    [t for t in ic_trades if t.get("outcome") == "max_profit"]
+                ),
             },
             "trades": valid_trades,
         }
@@ -780,13 +802,13 @@ def main():
     print(f"Max Drawdown: {results['overall_metrics']['max_drawdown']:.2f}%")
     print(f"Avg Daily P&L: ${results['overall_metrics']['avg_daily_pnl']:.2f}")
 
-    print(f"\nCovered Calls:")
+    print("\nCovered Calls:")
     print(f"  Trades: {results['covered_calls']['total_trades']}")
     print(f"  Win Rate: {results['covered_calls']['win_rate']:.1f}%")
     print(f"  Avg P&L: ${results['covered_calls']['avg_pnl']:.2f}")
     print(f"  Total P&L: ${results['covered_calls']['total_pnl']:.2f}")
 
-    print(f"\nIron Condors:")
+    print("\nIron Condors:")
     print(f"  Trades: {results['iron_condors']['total_trades']}")
     print(f"  Win Rate: {results['iron_condors']['win_rate']:.1f}%")
     print(f"  Avg P&L: ${results['iron_condors']['avg_pnl']:.2f}")

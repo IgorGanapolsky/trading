@@ -287,9 +287,7 @@ class IVDataFetcher:
     # OPTION CHAIN FETCHING
     # ------------------------------------------------------------------------
 
-    def get_option_chain(
-        self, symbol: str, use_cache: bool = True
-    ) -> list[dict[str, Any]]:
+    def get_option_chain(self, symbol: str, use_cache: bool = True) -> list[dict[str, Any]]:
         """
         Fetch full options chain from Alpaca with IV and Greeks.
 
@@ -325,7 +323,9 @@ class IVDataFetcher:
         if use_cache and symbol in self._option_chain_cache:
             cached_time, cached_data = self._option_chain_cache[symbol]
             if datetime.now() - cached_time < self.cache_ttl:
-                logger.info(f"Using cached option chain for {symbol} (age: {datetime.now() - cached_time})")
+                logger.info(
+                    f"Using cached option chain for {symbol} (age: {datetime.now() - cached_time})"
+                )
                 return cached_data
 
         logger.info(f"Fetching option chain for {symbol} from Alpaca...")
@@ -441,9 +441,7 @@ class IVDataFetcher:
     # IV PERCENTILE & RANK
     # ------------------------------------------------------------------------
 
-    def calculate_iv_percentile(
-        self, symbol: str, lookback_days: int = 252
-    ) -> float:
+    def calculate_iv_percentile(self, symbol: str, lookback_days: int = 252) -> float:
         """
         Calculate IV percentile rank over lookback period.
 
@@ -791,7 +789,9 @@ class IVDataFetcher:
             else:
                 regime = IVRegime.EXTREME_HIGH
 
-            logger.info(f"{symbol} IV Regime: {regime.value.upper()} (percentile: {percentile:.1f}%)")
+            logger.info(
+                f"{symbol} IV Regime: {regime.value.upper()} (percentile: {percentile:.1f}%)"
+            )
             return regime
 
         except Exception as e:
@@ -945,7 +945,10 @@ class IVDataFetcher:
         """Find expiration closest to target DTE"""
         closest_exp = min(
             expirations,
-            key=lambda exp: abs((datetime.strptime(exp, "%Y-%m-%d").date() - datetime.now().date()).days - target_dte),
+            key=lambda exp: abs(
+                (datetime.strptime(exp, "%Y-%m-%d").date() - datetime.now().date()).days
+                - target_dte
+            ),
         )
         return closest_exp
 
@@ -1052,8 +1055,7 @@ class VolatilitySurface:
                 return None
 
             logger.info(
-                f"Interpolated IV: {interp_iv:.4f} "
-                f"(strike=${target_strike:.2f}, dte={target_dte})"
+                f"Interpolated IV: {interp_iv:.4f} (strike=${target_strike:.2f}, dte={target_dte})"
             )
 
             return float(interp_iv)
@@ -1332,7 +1334,9 @@ if __name__ == "__main__":
         if arb_opps:
             print(f"  Arbitrage Opportunities: {len(arb_opps)}")
             for opp in arb_opps[:3]:  # Show top 3
-                print(f"    - {opp['type']}: Strike ${opp['strike']:.2f}, Severity {opp['severity']:.2%}")
+                print(
+                    f"    - {opp['type']}: Strike ${opp['strike']:.2f}, Severity {opp['severity']:.2%}"
+                )
         else:
             print("  No arbitrage opportunities detected.")
 

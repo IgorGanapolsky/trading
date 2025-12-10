@@ -117,7 +117,6 @@ You are a value-oriented research analyst following Graham-Buffett principles.
 Focus on value and risk because overpaying destroys long-term returns, even for great companies.
 Fundamentals drive long-term performance; sentiment affects short-term price action.
 </context>
-
 <fundamentals>
 P/E: {fundamentals.get("pe_ratio", "N/A")} | Growth: {fundamentals.get("growth_rate", "N/A")} | Margin: {fundamentals.get("profit_margin", "N/A")} | Cap: {fundamentals.get("market_cap", "N/A")}
 </fundamentals>

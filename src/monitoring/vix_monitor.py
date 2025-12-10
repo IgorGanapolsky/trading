@@ -384,7 +384,9 @@ class VIXMonitor:
         is_spike = change >= self.SPIKE_THRESHOLD
 
         if is_spike:
-            logger.warning(f"VIX SPIKE DETECTED: {recent_vix:.2f} → {current_vix:.2f} (+{change:.2f})")
+            logger.warning(
+                f"VIX SPIKE DETECTED: {recent_vix:.2f} → {current_vix:.2f} (+{change:.2f})"
+            )
 
         return is_spike
 
@@ -941,7 +943,9 @@ class VIXMonitor:
         report.append("=" * 70)
 
         report.append(f"\nTimestamp: {data.timestamp.strftime('%Y-%m-%d %H:%M:%S ET')}")
-        report.append(f"Last Update: {self.last_update.strftime('%Y-%m-%d %H:%M:%S ET') if self.last_update else 'N/A'}")
+        report.append(
+            f"Last Update: {self.last_update.strftime('%Y-%m-%d %H:%M:%S ET') if self.last_update else 'N/A'}"
+        )
 
         report.append("\n" + "-" * 70)
         report.append("CURRENT VIX LEVELS")
@@ -985,10 +989,14 @@ class VIXMonitor:
 
         report.append(f"\n{recommendation.recommendation}")
         report.append(f"\nAllowed Strategies:  {', '.join(recommendation.allowed_strategies)}")
-        report.append(f"Position Size:       {recommendation.position_size_multiplier:.1%} of normal")
+        report.append(
+            f"Position Size:       {recommendation.position_size_multiplier:.1%} of normal"
+        )
         report.append(f"Strike Width:        {recommendation.strike_width_adjustment}")
         report.append(f"Max Portfolio Theta: ${recommendation.max_portfolio_theta:.0f}/day")
-        report.append(f"Defensive Hedging:   {'YES - Required' if recommendation.defensive_hedging else 'No'}")
+        report.append(
+            f"Defensive Hedging:   {'YES - Required' if recommendation.defensive_hedging else 'No'}"
+        )
 
         # Recent alerts
         recent_alerts = self.get_recent_alerts(hours=24)
@@ -998,7 +1006,9 @@ class VIXMonitor:
             report.append("-" * 70)
 
             for alert in recent_alerts[-5:]:  # Last 5 alerts
-                report.append(f"\n  [{alert.alert_type.value.upper()}] {alert.timestamp.strftime('%H:%M')}")
+                report.append(
+                    f"\n  [{alert.alert_type.value.upper()}] {alert.timestamp.strftime('%H:%M')}"
+                )
                 report.append(f"    {alert.message}")
                 report.append(f"    → {alert.recommended_action}")
 

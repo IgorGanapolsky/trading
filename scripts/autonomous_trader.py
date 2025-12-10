@@ -423,9 +423,7 @@ def execute_crypto_trading() -> None:
                     )
                     logger.info(f"   Rationale: {signal.rationale}")
                 elif signal.is_sell:
-                    logger.info(
-                        f"📉 Weekend exit signal: {signal.symbol} RSI={signal.rsi:.1f}"
-                    )
+                    logger.info(f"📉 Weekend exit signal: {signal.symbol} RSI={signal.rsi:.1f}")
 
             if not opportunities:
                 logger.info("No weekend mean-reversion opportunities found")
@@ -596,12 +594,8 @@ def execute_options_trading() -> None:
 
         # Log plan summary
         logger.info(f"📋 Theta Plan Summary: {plan.get('summary', 'No summary')}")
-        logger.info(
-            f"   Opportunities found: {len(plan.get('opportunities', []))}"
-        )
-        logger.info(
-            f"   Est. daily premium: ${plan.get('total_estimated_premium', 0):.2f}"
-        )
+        logger.info(f"   Opportunities found: {len(plan.get('opportunities', []))}")
+        logger.info(f"   Est. daily premium: ${plan.get('total_estimated_premium', 0):.2f}")
         logger.info(f"   Premium gap to target: ${plan.get('premium_gap', 0):.2f}")
 
         # Execute theta trades if opportunities found

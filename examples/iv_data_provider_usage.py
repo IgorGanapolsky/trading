@@ -20,12 +20,11 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.data.iv_data_provider import IVDataProvider, get_iv_data_provider
+from src.data.iv_data_provider import get_iv_data_provider
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -155,11 +154,7 @@ def example_4_options_chain_with_greeks():
 
     # Fetch filtered options
     options = provider.get_options_chain_with_greeks(
-        symbol=symbol,
-        min_delta=0.20,
-        max_delta=0.40,
-        min_volume=10,
-        min_open_interest=50
+        symbol=symbol, min_delta=0.20, max_delta=0.40, min_volume=10, min_open_interest=50
     )
 
     if options:
@@ -240,16 +235,26 @@ def example_5_find_optimal_strikes():
             print(f"  Break Even: ${result['break_even']:.2f}")
 
         elif strategy == "iron_condor":
-            print(f"\n  Call Spread:")
-            print(f"    Short: ${result['short_call']['strike']:.2f} (delta {result['short_call']['delta']:.3f})")
-            print(f"    Long: ${result['long_call']['strike']:.2f} (delta {result['long_call']['delta']:.3f})")
-            print(f"\n  Put Spread:")
-            print(f"    Short: ${result['short_put']['strike']:.2f} (delta {result['short_put']['delta']:.3f})")
-            print(f"    Long: ${result['long_put']['strike']:.2f} (delta {result['long_put']['delta']:.3f})")
+            print("\n  Call Spread:")
+            print(
+                f"    Short: ${result['short_call']['strike']:.2f} (delta {result['short_call']['delta']:.3f})"
+            )
+            print(
+                f"    Long: ${result['long_call']['strike']:.2f} (delta {result['long_call']['delta']:.3f})"
+            )
+            print("\n  Put Spread:")
+            print(
+                f"    Short: ${result['short_put']['strike']:.2f} (delta {result['short_put']['delta']:.3f})"
+            )
+            print(
+                f"    Long: ${result['long_put']['strike']:.2f} (delta {result['long_put']['delta']:.3f})"
+            )
             print(f"\n  Credit: ${result['expected_credit']:.2f}")
             print(f"  Max Profit: ${result['max_profit']:.2f}")
             print(f"  Max Loss: ${result['max_loss']:.2f}")
-            print(f"  Break Even Range: ${result['break_even_low']:.2f} - ${result['break_even_high']:.2f}")
+            print(
+                f"  Break Even Range: ${result['break_even_low']:.2f} - ${result['break_even_high']:.2f}"
+            )
 
 
 def example_6_caching():
@@ -267,7 +272,7 @@ def example_6_caching():
     cached_data = provider.load_cached_iv(symbol, max_age_minutes=5)
 
     if cached_data:
-        print(f"   ✅ Found cached data:")
+        print("   ✅ Found cached data:")
         print(f"      Current IV: {cached_data['current_iv']:.4f}")
         print(f"      IV Rank: {cached_data['iv_rank']:.2f}")
         print(f"      Data Source: {cached_data['data_source']}")
@@ -280,7 +285,7 @@ def example_6_caching():
     print(f"   Current IV: {current_iv:.4f}")
 
     # Manually cache custom data
-    print(f"\n3. Manually caching custom IV data...")
+    print("\n3. Manually caching custom IV data...")
     custom_data = {
         "current_iv": 0.25,
         "iv_rank": 65.0,
@@ -292,10 +297,10 @@ def example_6_caching():
     print("   ✅ Data cached")
 
     # Verify cache works
-    print(f"\n4. Verifying cached data...")
+    print("\n4. Verifying cached data...")
     cached_data = provider.load_cached_iv(symbol, max_age_minutes=5)
     if cached_data:
-        print(f"   ✅ Cache verified:")
+        print("   ✅ Cache verified:")
         print(f"      Current IV: {cached_data['current_iv']:.4f}")
         print(f"      IV Rank: {cached_data['iv_rank']:.2f}")
 
@@ -306,7 +311,7 @@ def example_6_caching():
 
     # Verify cache is empty
     cached_data = provider.load_cached_iv(symbol, max_age_minutes=5)
-    print(f"\n6. Verify cache is empty...")
+    print("\n6. Verify cache is empty...")
     if cached_data:
         print("   ❌ Cache still has data (unexpected)")
     else:
@@ -334,6 +339,7 @@ def main():
     except Exception as e:
         logger.error(f"Error running examples: {e}")
         import traceback
+
         traceback.print_exc()
 
 

@@ -19,12 +19,11 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from src.options.vix_monitor import VIXMonitor, VIXSignals, VolatilityRegime
+from src.options.vix_monitor import VIXMonitor, VIXSignals
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -73,7 +72,7 @@ class VIXIntegratedTrading:
             return {
                 "success": False,
                 "error": str(e),
-                "recommendation": "WAIT - Unable to assess VIX regime"
+                "recommendation": "WAIT - Unable to assess VIX regime",
             }
 
         # 2. Check for VIX spikes (danger zone)
@@ -94,7 +93,7 @@ class VIXIntegratedTrading:
                     "regime": regime.value,
                     "spike_detected": True,
                     "recommendation": "HALT - Wait for VIX stabilization",
-                    "action": "WAIT"
+                    "action": "WAIT",
                 }
 
         # 3. Get trading signals
@@ -136,32 +135,30 @@ class VIXIntegratedTrading:
 
     def _log_recommendations(self, plan: dict) -> None:
         """Log trading recommendations"""
-        logger.info("\n" + "="*80)
+        logger.info("\n" + "=" * 80)
         logger.info("TRADING RECOMMENDATIONS")
-        logger.info("="*80)
+        logger.info("=" * 80)
 
         logger.info(f"Primary Action: {plan['primary_action']}")
         logger.info(f"Risk Level: {plan['risk_level']}")
         logger.info(f"Position Size: {plan['position_size_multiplier']:.2f}x normal")
 
-        if plan['spike_detected']:
+        if plan["spike_detected"]:
             logger.warning(f"⚠️ VIX Spike Detected: {plan['spike_severity'].upper()}")
 
         logger.info("\nRecommended Strategies:")
-        for strat in plan['recommended_strategies']:
-            logger.info(
-                f"  [{strat['priority']}] {strat['action']}: {strat['strategy']}"
-            )
+        for strat in plan["recommended_strategies"]:
+            logger.info(f"  [{strat['priority']}] {strat['action']}: {strat['strategy']}")
 
         logger.info("\nEntry Rules:")
-        for rule in plan['entry_rules']:
+        for rule in plan["entry_rules"]:
             logger.info(f"  - {rule}")
 
         logger.info("\nExit Rules:")
-        for rule in plan['exit_rules']:
+        for rule in plan["exit_rules"]:
             logger.info(f"  - {rule}")
 
-        logger.info("="*80 + "\n")
+        logger.info("=" * 80 + "\n")
 
     def execute_vix_based_strategy(self, ticker: str = "SPY") -> dict:
         """
@@ -186,13 +183,14 @@ class VIXIntegratedTrading:
         # Import executor only when needed (may not be available in all environments)
         try:
             from src.trading.options_executor import OptionsExecutor
+
             executor = OptionsExecutor(paper=self.paper)
         except ImportError:
             logger.warning("OptionsExecutor not available - simulation mode")
             return {
                 **plan,
                 "execution_status": "SIMULATED",
-                "message": "OptionsExecutor not available"
+                "message": "OptionsExecutor not available",
             }
 
         # Execute based on primary action
@@ -225,16 +223,10 @@ class VIXIntegratedTrading:
 
                 # Execute iron condor (best premium selling strategy)
                 result = executor.execute_iron_condor(
-                    ticker=ticker,
-                    width=width,
-                    target_delta=target_delta,
-                    dte=dte
+                    ticker=ticker, width=width, target_delta=target_delta, dte=dte
                 )
 
-                execution_results.append({
-                    "strategy": "iron_condor",
-                    "result": result
-                })
+                execution_results.append({"strategy": "iron_condor", "result": result})
 
             elif plan["primary_action"] == "BUY_PREMIUM":
                 logger.info("Executing PREMIUM BUYING strategy...")
@@ -245,27 +237,16 @@ class VIXIntegratedTrading:
                     spread_type="bull_put",  # Structured as debit
                     width=10.0,  # Wider spreads for better R/R
                     target_delta=0.40,  # More ITM for vol expansion
-                    dte=60  # Longer time for vol to expand
+                    dte=60,  # Longer time for vol to expand
                 )
 
-                execution_results.append({
-                    "strategy": "bull_put_spread",
-                    "result": result
-                })
+                execution_results.append({"strategy": "bull_put_spread", "result": result})
 
-            return {
-                **plan,
-                "execution_status": "SUCCESS",
-                "executions": execution_results
-            }
+            return {**plan, "execution_status": "SUCCESS", "executions": execution_results}
 
         except Exception as e:
             logger.error(f"Execution failed: {e}")
-            return {
-                **plan,
-                "execution_status": "FAILED",
-                "error": str(e)
-            }
+            return {**plan, "execution_status": "FAILED", "error": str(e)}
 
     def export_vix_state_to_system(self) -> None:
         """
@@ -279,7 +260,7 @@ class VIXIntegratedTrading:
             system_state_file = Path("data/system_state.json")
 
             if system_state_file.exists():
-                with open(system_state_file, 'r') as f:
+                with open(system_state_file) as f:
                     system_state = json.load(f)
             else:
                 system_state = {}
@@ -288,7 +269,7 @@ class VIXIntegratedTrading:
             system_state["vix_monitor"] = vix_state
 
             # Save
-            with open(system_state_file, 'w') as f:
+            with open(system_state_file, "w") as f:
                 json.dump(system_state, f, indent=2)
 
             logger.info(f"✅ VIX state exported to {system_state_file}")
@@ -301,9 +282,9 @@ def main():
     """
     Example usage of VIX-integrated trading system.
     """
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("VIX-INTEGRATED OPTIONS TRADING SYSTEM")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     # Initialize system
     trading_system = VIXIntegratedTrading(paper=True)
@@ -313,7 +294,7 @@ def main():
     plan = trading_system.run_daily_vix_check()
 
     if plan["success"]:
-        print(f"\n✅ VIX Analysis Complete")
+        print("\n✅ VIX Analysis Complete")
         print(f"Recommendation: {plan['primary_action']}")
         print(f"Position Size: {plan['position_size_multiplier']:.2f}x")
     else:
@@ -336,9 +317,9 @@ def main():
     print("\n--- Exporting VIX State ---\n")
     trading_system.export_vix_state_to_system()
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("VIX-INTEGRATED TRADING COMPLETE")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
 
 if __name__ == "__main__":
