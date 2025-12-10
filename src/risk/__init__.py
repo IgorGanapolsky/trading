@@ -47,6 +47,27 @@ with contextlib.suppress(ImportError):
         create_target_aligned_sizer,
     )
 
+with contextlib.suppress(ImportError):
+    from src.risk.vix_circuit_breaker import (
+        AlertLevel,
+        VIXCircuitBreaker,
+        VIXStatus,
+        check_vix_before_trade,
+        get_vix_circuit_breaker,
+    )
+
+with contextlib.suppress(ImportError):
+    from src.risk.position_manager import (
+        AssetClass,
+        ExitConditions,
+        ExitReason,
+        ExitSignal,
+        PositionInfo,
+        PositionManager,
+        get_asset_class,
+        get_position_manager,
+    )
+
 __all__ = [
     "RiskManager",
     "SlippageModel",
@@ -61,4 +82,18 @@ __all__ = [
     "DailyLossLimiter",
     "PositionSizeResult",
     "create_target_aligned_sizer",
+    "VIXCircuitBreaker",
+    "VIXStatus",
+    "AlertLevel",
+    "check_vix_before_trade",
+    "get_vix_circuit_breaker",
+    # Position Manager with asset-class-specific exits
+    "PositionManager",
+    "PositionInfo",
+    "ExitConditions",
+    "ExitSignal",
+    "ExitReason",
+    "AssetClass",
+    "get_asset_class",
+    "get_position_manager",
 ]

@@ -51,7 +51,7 @@ def calculate_basic_metrics():
             start_date = datetime.fromisoformat(start_date_str).date()
             today = date.today()
             days_elapsed = max((today - start_date).days + 1, 1)
-        except:
+        except Exception:
             days_elapsed = max(system_state.get("challenge", {}).get("current_day", 1), 1)
         starting_balance = 100000.0
 
@@ -145,6 +145,28 @@ def calculate_basic_metrics():
         "today_pl_pct": today_pl_pct,
         "today_perf_available": today_perf is not None,
     }
+
+
+def get_recent_trades(days: int = 7) -> list[dict]:
+    """Get trades from the last N days."""
+    from datetime import timedelta
+
+    recent_trades = []
+    today = date.today()
+
+    for i in range(days):
+        trade_date = today - timedelta(days=i)
+        trades_file = DATA_DIR / f"trades_{trade_date.isoformat()}.json"
+        if trades_file.exists():
+            day_trades = load_json_file(trades_file)
+            if isinstance(day_trades, list):
+                for trade in day_trades:
+                    trade["trade_date"] = trade_date.isoformat()
+                    recent_trades.append(trade)
+
+    # Sort by timestamp descending (most recent first)
+    recent_trades.sort(key=lambda x: x.get("timestamp", x.get("trade_date", "")), reverse=True)
+    return recent_trades
 
 
 def generate_world_class_dashboard() -> str:
@@ -307,6 +329,49 @@ def generate_world_class_dashboard() -> str:
     # Get today's date string for display
     today_display = date.today().strftime("%Y-%m-%d (%A)")
 
+    # Generate recent trades section
+    recent_trades = get_recent_trades(days=7)
+    if recent_trades:
+        recent_trades_rows = []
+        for trade in recent_trades[:15]:  # Limit to 15 most recent
+            trade_date = trade.get("trade_date", "")
+            symbol = trade.get("symbol", "UNKNOWN")
+            side = trade.get("side", trade.get("action", "BUY")).upper()
+            qty = trade.get("qty", trade.get("quantity", trade.get("notional", 0)))
+            price = trade.get("filled_avg_price", trade.get("price", 0))
+            status = trade.get("status", "FILLED").upper()
+
+            # Format quantity (could be shares or notional)
+            if isinstance(qty, (int, float)) and qty < 1:
+                qty_display = f"{qty:.6f}"
+            elif isinstance(qty, (int, float)):
+                qty_display = f"${qty:,.2f}" if trade.get("notional") else f"{qty}"
+            else:
+                qty_display = str(qty)
+
+            # Format price
+            if isinstance(price, (int, float)) and price > 0:
+                price_display = f"${price:,.2f}"
+            else:
+                price_display = "Market"
+
+            status_icon = (
+                "✅"
+                if status in ["FILLED", "COMPLETED", "SUCCESS"]
+                else "⏳"
+                if status == "PENDING"
+                else "❌"
+            )
+            recent_trades_rows.append(
+                f"| {trade_date} | **{symbol}** | {side} | {qty_display} | {price_display} | {status_icon} {status} |"
+            )
+
+        recent_trades_section = """| Date | Symbol | Action | Qty/Amount | Price | Status |
+|------|--------|--------|------------|-------|--------|
+""" + "\n".join(recent_trades_rows)
+    else:
+        recent_trades_section = "*No trades in the last 7 days*"
+
     # Build dashboard
     dashboard = f"""# 📊 World-Class Trading Dashboard
 
@@ -328,6 +393,12 @@ def generate_world_class_dashboard() -> str:
 | **Status** | {"✅ Active" if basic_metrics.get("today_trade_count", 0) > 0 or abs(basic_metrics.get("today_pl", 0)) > 0.01 else "⏸️ No activity yet"} |
 
 **Funnel Activity**: {order_count} orders, {stop_count} stops
+
+---
+
+## 📈 Recent Trades (Last 7 Days)
+
+{recent_trades_section}
 
 ---
 
@@ -631,50 +702,81 @@ def generate_world_class_dashboard() -> str:
 
 """
 
+    # Load today's trades for mode detection
+    today_trades_file = DATA_DIR / f"trades_{date.today().isoformat()}.json"
+    today_trades = load_json_file(today_trades_file)
+
     # Determine active strategy
     is_crypto_mode = False
-    try:
-        today_str = datetime.now().strftime("%Y-%m-%d")
-        log_files = [
-            Path("logs/trading_system.log"),
-            Path("logs/launchd_stdout.log"),
-            Path("logs/launchd_stderr.log"),
-        ]
 
-        for log_file in log_files:
-            if log_file.exists():
-                # Check last 1000 lines for today's execution mode
-                with open(log_file) as f:
-                    try:
-                        lines = f.readlines()[-1000:]
-                        for line in lines:
-                            if today_str in line and "CRYPTO STRATEGY - Daily Execution" in line:
-                                is_crypto_mode = True
-                                break
-                    except Exception:
-                        continue
-            if is_crypto_mode:
-                break
-    except Exception:
-        pass
+    # Check today's trades for crypto
+    today_crypto_trades_count = 0
+    today_crypto_invested = 0.0
+
+    if today_trades and isinstance(today_trades, list):
+        for trade in today_trades:
+            if trade.get("symbol", "").endswith("USD") or trade.get("strategy") == "CryptoStrategy":
+                is_crypto_mode = True
+                today_crypto_trades_count += 1
+                today_crypto_invested += float(trade.get("amount", 0.0))
+
+    if not is_crypto_mode:
+        try:
+            today_str = datetime.now().strftime("%Y-%m-%d")
+            log_files = [
+                Path("logs/trading_system.log"),
+                Path("logs/launchd_stdout.log"),
+                Path("logs/launchd_stderr.log"),
+            ]
+
+            for log_file in log_files:
+                if log_file.exists():
+                    # Check last 1000 lines for today's execution mode
+                    with open(log_file) as f:
+                        try:
+                            lines = f.readlines()[-1000:]
+                            for line in lines:
+                                if (
+                                    today_str in line
+                                    and "CRYPTO STRATEGY - Daily Execution" in line
+                                ):
+                                    is_crypto_mode = True
+                                    break
+                        except Exception:
+                            continue
+                if is_crypto_mode:
+                    break
+        except Exception:
+            pass
 
     dashboard += """
 **Current Strategy**:
 """
-    # Get crypto strategy info
+    # Get crypto strategy info from system state
     strategies = system_state.get("strategies", {})
     tier5 = strategies.get("tier5", {})
-    crypto_trades = tier5.get("trades_executed", 0)
-    crypto_invested = tier5.get("total_invested", 0.0)
+
+    # Use system state cumulative values, OR today's values if system state lags
+    crypto_trades_total = tier5.get("trades_executed", 0)
+    crypto_invested_total = tier5.get("total_invested", 0.0)
+
+    # If today has trades but state doesn't reflect them (common during day), add them
+    # This is a heuristic: if state total < today's total, assume state is stale
+    if crypto_trades_total < today_crypto_trades_count:
+        crypto_trades_total += today_crypto_trades_count
+        crypto_invested_total += today_crypto_invested
+
     crypto_last_execution = tier5.get("last_execution")
+    if is_crypto_mode and not crypto_last_execution:
+        crypto_last_execution = date.today().isoformat()
 
     if is_crypto_mode:
         dashboard += "- **MODE**: 🌐 CRYPTO (Weekend/Holiday)\n"
         dashboard += "- **Strategy**: Tier 5 - Cryptocurrency 24/7 (BTC/ETH)\n"
         dashboard += "- **Allocation**: $10/day fixed (Crypto only)\n"
-        dashboard += "- **Status**: ✅ Active (Monitoring BTC/ETH)\n"
-        dashboard += f"- **Crypto Trades Executed**: {crypto_trades}\n"
-        dashboard += f"- **Total Crypto Invested**: ${crypto_invested:.2f}\n"
+        dashboard += "- **Status**: ✅ Active (Executed Today)\n"
+        dashboard += f"- **Crypto Trades Executed**: {crypto_trades_total}\n"
+        dashboard += f"- **Total Crypto Invested**: ${crypto_invested_total:.2f}\n"
         if crypto_last_execution:
             dashboard += f"- **Last Crypto Execution**: {crypto_last_execution}\n"
     else:
@@ -682,7 +784,7 @@ def generate_world_class_dashboard() -> str:
         dashboard += "- **Strategy**: Momentum (MACD + RSI + Volume)\n"
         dashboard += "- **Allocation**: 70% Core ETFs (SPY/QQQ/VOO), 30% Growth (NVDA/GOOGL/AMZN)\n"
         dashboard += "- **Daily Investment**: $10/day fixed\n"
-        dashboard += f"- **Crypto Trades (Weekend)**: {crypto_trades} executed, ${crypto_invested:.2f} invested\n"
+        dashboard += f"- **Crypto Trades (Weekend)**: {crypto_trades_total} executed, ${crypto_invested_total:.2f} invested\n"
 
     dashboard += """
 ---

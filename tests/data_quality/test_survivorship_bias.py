@@ -4,7 +4,41 @@ Tests for survivorship bias.
 Ensures universe definition doesn't suffer from survivorship bias.
 """
 
+import numpy as np
 import pandas as pd
+import pytest
+
+
+@pytest.fixture
+def universe_fixture():
+    return ["SPY", "AAPL", "MSFT"]
+
+
+@pytest.fixture
+def data_fixture():
+    dates = pd.date_range("2023-01-02", periods=30, freq="B")
+    data = {}
+    for ticker in ["SPY", "AAPL", "MSFT"]:
+        close = np.linspace(100, 110, len(dates)) + np.random.normal(0, 0.1, len(dates))
+        data[ticker] = pd.DataFrame(
+            {"Close": close, "Volume": np.full(len(dates), 1_000_000)}, index=dates
+        )
+    return data
+
+
+@pytest.fixture(name="universe")
+def _universe_alias(universe_fixture):
+    return universe_fixture
+
+
+@pytest.fixture(name="data")
+def _data_alias(data_fixture):
+    return data_fixture
+
+
+@pytest.fixture(name="current_data")
+def _current_data_alias(data_fixture):
+    return data_fixture
 
 
 def test_universe_consistency(universe: list[str], data: dict[str, pd.DataFrame]) -> bool:

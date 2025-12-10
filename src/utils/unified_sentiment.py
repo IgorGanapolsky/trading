@@ -27,7 +27,7 @@ import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # Import existing sentiment modules
 try:
@@ -62,7 +62,7 @@ class SourceSentiment:
     raw_data: dict[str, Any]
     timestamp: str
     available: bool = True
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -88,22 +88,60 @@ class UnifiedSentiment:
     """
 
     # Source weights (must sum to 1.0)
+    # Dec 9, 2025: Reduced Reddit from 0.25 to 0.10 - meme forum noise outweighs signal
+    # Redistributed weight to news (professional analysts more reliable)
     SOURCE_WEIGHTS = {
-        "news": 0.30,  # Professional news and analyst sentiment
-        "reddit": 0.25,  # Retail investor sentiment
+        "news": 0.45,  # Professional news and analyst sentiment (increased from 0.30)
+        "reddit": 0.10,  # Retail investor sentiment (reduced from 0.25 - meme forum noise)
         "youtube": 0.20,  # Expert content creator analysis
         "linkedin": 0.15,  # Professional network sentiment
         "tiktok": 0.10,  # Viral trends and momentum
     }
 
+    # Dec 10, 2025: ETF BYPASS LIST
+    # These symbols move on macro data (CPI, Fed, yields), not social media sentiment.
+    # Reddit/YouTube sentiment for SPY is noise - professional analysts matter, retail doesn't.
+    # Sentiment gates are SKIPPED for these tickers, returning neutral with high confidence.
+    ETF_BYPASS_LIST = {
+        "SPY",
+        "QQQ",
+        "IWM",
+        "DIA",
+        "VOO",
+        "VTI",
+        "VEA",
+        "VWO",  # Major equity ETFs
+        "TLT",
+        "IEF",
+        "SHY",
+        "BND",
+        "AGG",
+        "LQD",
+        "HYG",  # Bond ETFs
+        "GLD",
+        "SLV",
+        "IAU",  # Commodity ETFs
+        "XLF",
+        "XLE",
+        "XLK",
+        "XLV",
+        "XLI",
+        "XLP",
+        "XLU",  # Sector ETFs
+        "EEM",
+        "EFA",
+        "IEMG",  # International ETFs
+    }
+
     # Signal thresholds
-    BULLISH_THRESHOLD = 0.20  # > 0.20 = bullish
-    BEARISH_THRESHOLD = -0.20  # < -0.20 = bearish
+    # Dec 9, 2025: Increased from 0.20 to 0.35 to reduce false positives from noise
+    BULLISH_THRESHOLD = 0.35  # > 0.35 = bullish (was 0.20)
+    BEARISH_THRESHOLD = -0.35  # < -0.35 = bearish (was -0.20)
 
     # Recommendation thresholds (more conservative)
-    BUY_THRESHOLD = 0.40  # > 0.40 + high confidence = BUY_SIGNAL
-    SELL_THRESHOLD = -0.40  # < -0.40 + high confidence = SELL_SIGNAL
-    MIN_CONFIDENCE_FOR_ACTION = 0.60  # Need 60%+ confidence for BUY/SELL
+    BUY_THRESHOLD = 0.50  # > 0.50 + high confidence = BUY_SIGNAL (was 0.40)
+    SELL_THRESHOLD = -0.50  # < -0.50 + high confidence = SELL_SIGNAL (was -0.40)
+    MIN_CONFIDENCE_FOR_ACTION = 0.75  # Need 75%+ confidence for BUY/SELL (was 0.60)
 
     # Cache settings
     CACHE_TTL_SECONDS = 3600  # 1 hour
@@ -194,7 +232,7 @@ class UnifiedSentiment:
         """Generate cache key for a symbol"""
         return f"unified_{symbol}_{datetime.now().strftime('%Y%m%d_%H')}"
 
-    def _load_from_cache(self, symbol: str) -> Optional[UnifiedSentimentResult]:
+    def _load_from_cache(self, symbol: str) -> UnifiedSentimentResult | None:
         """Load sentiment from cache if fresh enough"""
         cache_file = self.cache_dir / f"{self._get_cache_key(symbol)}.json"
 
@@ -538,6 +576,37 @@ class UnifiedSentiment:
                 "cache_hit": False
             }
         """
+        # Dec 10, 2025: ETF BYPASS - Skip sentiment analysis for ETFs
+        # ETFs move on macro data (Fed, CPI, yields), not Reddit/YouTube noise.
+        # Return neutral sentiment with high confidence to let momentum/technical gates decide.
+        if symbol.upper() in self.ETF_BYPASS_LIST:
+            logger.info(
+                f"ETF BYPASS: Skipping social sentiment for {symbol} "
+                f"(moves on macro data, not Reddit/YouTube)"
+            )
+            bypass_result = UnifiedSentimentResult(
+                symbol=symbol,
+                overall_score=0.0,  # Neutral - let technical analysis decide
+                confidence=0.95,  # High confidence in neutrality
+                signal="NEUTRAL",
+                recommendation="HOLD",  # Don't block trades, but don't boost either
+                sources={
+                    source: SourceSentiment(
+                        source=source,
+                        score=0.0,
+                        confidence=0.0,
+                        raw_data={"reason": "ETF bypass - sentiment skipped"},
+                        timestamp=datetime.now().isoformat(),
+                        available=False,
+                        error="ETF bypass active - social sentiment not applicable",
+                    )
+                    for source in ["news", "reddit", "youtube", "linkedin", "tiktok"]
+                },
+                timestamp=datetime.now().isoformat(),
+                cache_hit=False,
+            )
+            return asdict(bypass_result)
+
         # Check cache first
         if use_cache:
             cached_result = self._load_from_cache(symbol)
@@ -587,6 +656,29 @@ class UnifiedSentiment:
         overall_confidence = (
             sum(confidence_scores) / len(confidence_scores) if confidence_scores else 0.0
         )
+
+        # Dec 9, 2025: Source disagreement circuit breaker
+        # If professional sources (news) disagree significantly with retail (reddit),
+        # reduce confidence - the signal is unreliable
+        news_sent = source_sentiments.get("news")
+        reddit_sent = source_sentiments.get("reddit")
+        if news_sent and reddit_sent and news_sent.available and reddit_sent.available:
+            # Check for significant disagreement (opposite directions with strong signals)
+            news_score = news_sent.score
+            reddit_score = reddit_sent.score
+            DISAGREEMENT_THRESHOLD = 0.3  # Both need to be strongly opinionated
+
+            if (news_score > DISAGREEMENT_THRESHOLD and reddit_score < -DISAGREEMENT_THRESHOLD) or (
+                news_score < -DISAGREEMENT_THRESHOLD and reddit_score > DISAGREEMENT_THRESHOLD
+            ):
+                # Sources disagree significantly - reduce confidence by 50%
+                original_confidence = overall_confidence
+                overall_confidence *= 0.5
+                logger.warning(
+                    f"{symbol}: Source disagreement detected! "
+                    f"news={news_score:.2f}, reddit={reddit_score:.2f}. "
+                    f"Reducing confidence from {original_confidence:.2f} to {overall_confidence:.2f}"
+                )
 
         # Determine signal
         if overall_score > self.BULLISH_THRESHOLD:
@@ -755,3 +847,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+# ruff: noqa: UP045

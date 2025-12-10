@@ -17,7 +17,7 @@
     "total_trades": 64,
     "status": "needs_improvement",
     "description": "Tests performance when SPY/QQQ melt upward. Ensures system captures upside without blowing risk allocations.\n",
-    "generated_at": "2025-12-02T22:44:01.750674",
+    "generated_at": "2025-12-05T14:36:21.161907",
     "execution_costs": {
       "fee_cost": 1.15,
       "slippage_cost": 0.07,
@@ -892,6 +892,11 @@
     "performance_rating": "FAIR",
     "total_slippage_cost": 0.06963974145296642,
     "slippage_enabled": true,
-    "slippage_impact_pct": 0.2821826652327788
+    "slippage_impact_pct": 0.2821826652327788,
+    "avg_daily_pnl": 0.385608718843514,
+    "pct_days_above_target": 0.0,
+    "worst_5day_drawdown": 7.303600917381118,
+    "worst_20day_drawdown": 1.5587166885088664,
+    "trade_metrics": null
   }
 }

@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
@@ -78,27 +77,9 @@ class ExecutorAgent(TradingAgent):
         # Learning state
         self.learned_patterns: list[dict[str, Any]] = []
 
-        # Deep Q-Network for learning (optional)
+        # Deep Q-Network for learning - REMOVED
+        # DQN implementation has been removed as it was unused in production
         self.dqn_agent = None
-        self.use_dqn = os.getenv("EXECUTOR_USE_DQN", "false").lower() == "true"
-        if self.use_dqn:
-            try:
-                from src.ml.dqn_agent import DQNAgent
-                from src.ml.multi_step_learning import NStepDQNAgent
-
-                # State dimension based on task features
-                state_dim = 20  # Task features: difficulty, category, objectives count, etc.
-                dqn = DQNAgent(
-                    state_dim=state_dim,
-                    action_dim=len(self.available_tools) if self.available_tools else 3,
-                    use_dueling=True,
-                    use_double=True,
-                    use_prioritized_replay=True,
-                )
-                self.dqn_agent = NStepDQNAgent(dqn, n=3)
-                logger.info("✅ Executor Agent DQN initialized")
-            except Exception as e:
-                logger.warning(f"⚠️ Executor Agent DQN unavailable: {e}")
 
         # Initialize tools
         self._initialize_tools()

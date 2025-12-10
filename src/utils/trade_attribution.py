@@ -13,7 +13,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +34,10 @@ class TradeAttributionLogger:
         entry_reason: str,
         market_regime: str,
         hypothesis: str,
-        indicators: Optional[dict[str, float]] = None,
-        strategy: Optional[str] = None,
-        tier: Optional[str] = None,
+        indicators: dict[str, float] | None = None,
+        strategy: str | None = None,
+        tier: str | None = None,
+        gates_approved: dict[str, dict[str, Any]] | None = None,
     ) -> str:
         """
         Log trade entry with full attribution.
@@ -51,6 +52,14 @@ class TradeAttributionLogger:
             indicators: Technical indicators at entry
             strategy: Strategy name
             tier: Tier (T1_CORE, T2_GROWTH, etc.)
+            gates_approved: Dict of gates that approved this trade with their metrics
+                Example: {
+                    "momentum": {"score": 0.72, "signal": "buy"},
+                    "rl": {"confidence": 0.65, "action": "long"},
+                    "llm_sentiment": {"score": 0.3, "source": "bias_store"},
+                    "introspection": {"confidence": 0.8, "state": "INFORMED_GUESS"},
+                    "risk": {"position_size": 500, "atr_stop": 145.50}
+                }
 
         Returns:
             Trade ID for tracking
@@ -72,6 +81,7 @@ class TradeAttributionLogger:
                 "strategy": strategy,
                 "tier": tier,
             },
+            "gates_approved": gates_approved or {},
             "status": "open",
         }
 
@@ -97,7 +107,7 @@ class TradeAttributionLogger:
         pl_pct: float,
         actual_outcome: str,
         hypothesis_match: bool,
-        lessons_learned: Optional[str] = None,
+        lessons_learned: str | None = None,
     ) -> None:
         """
         Log trade exit with outcome analysis.
@@ -202,3 +212,129 @@ class TradeAttributionLogger:
             "by_exit_reason": by_exit_reason,
             "by_regime": by_regime,
         }
+
+    def get_pnl_by_gate(self) -> dict[str, dict[str, float]]:
+        """
+        Analyze P/L attribution by gate to identify which gates add value.
+
+        Returns:
+            Dict mapping gate name to performance metrics:
+            {
+                "momentum": {"total_pnl": 150.0, "trades": 10, "avg_pnl": 15.0, "win_rate": 0.6},
+                "rl": {"total_pnl": 120.0, "trades": 8, "avg_pnl": 15.0, "win_rate": 0.625},
+                ...
+            }
+        """
+        complete_trades = list(self.attribution_dir.glob("*_complete.json"))
+
+        if not complete_trades:
+            return {}
+
+        # Track metrics per gate
+        gate_metrics: dict[str, dict[str, Any]] = {}
+
+        for trade_file in complete_trades:
+            with open(trade_file) as f:
+                trade = json.load(f)
+
+            gates_approved = trade.get("gates_approved", {})
+            exit_data = trade.get("exit", {})
+            pl = exit_data.get("pl", 0.0)
+
+            for gate_name, gate_data in gates_approved.items():
+                if gate_name not in gate_metrics:
+                    gate_metrics[gate_name] = {
+                        "total_pnl": 0.0,
+                        "trades": 0,
+                        "wins": 0,
+                        "losses": 0,
+                        "pnl_list": [],
+                    }
+
+                gate_metrics[gate_name]["total_pnl"] += pl
+                gate_metrics[gate_name]["trades"] += 1
+                gate_metrics[gate_name]["pnl_list"].append(pl)
+
+                if pl > 0:
+                    gate_metrics[gate_name]["wins"] += 1
+                else:
+                    gate_metrics[gate_name]["losses"] += 1
+
+        # Calculate summary stats
+        result = {}
+        for gate_name, metrics in gate_metrics.items():
+            trades = metrics["trades"]
+            wins = metrics["wins"]
+            pnl_list = metrics["pnl_list"]
+
+            result[gate_name] = {
+                "total_pnl": metrics["total_pnl"],
+                "trades": trades,
+                "avg_pnl": metrics["total_pnl"] / trades if trades > 0 else 0.0,
+                "win_rate": wins / trades if trades > 0 else 0.0,
+                "max_win": max(pnl_list) if pnl_list else 0.0,
+                "max_loss": min(pnl_list) if pnl_list else 0.0,
+            }
+
+        return result
+
+    def generate_gate_contribution_report(self) -> str:
+        """Generate a markdown report of gate contributions to P/L."""
+        gate_pnl = self.get_pnl_by_gate()
+        summary = self.get_trade_attribution_summary()
+
+        lines = [
+            "# Trade Attribution Report",
+            "",
+            f"**Total Trades**: {summary['total_trades']}",
+            f"**Hypothesis Match Rate**: {summary['hypothesis_match_rate']:.1%}",
+            "",
+            "## P/L by Gate",
+            "",
+            "| Gate | Total P/L | Trades | Avg P/L | Win Rate |",
+            "|------|-----------|--------|---------|----------|",
+        ]
+
+        # Sort by total P/L descending
+        sorted_gates = sorted(gate_pnl.items(), key=lambda x: x[1]["total_pnl"], reverse=True)
+
+        for gate_name, metrics in sorted_gates:
+            lines.append(
+                f"| {gate_name} | ${metrics['total_pnl']:+.2f} | {metrics['trades']} | "
+                f"${metrics['avg_pnl']:+.2f} | {metrics['win_rate']:.1%} |"
+            )
+
+        lines.extend(
+            [
+                "",
+                "## By Entry Reason",
+                "",
+            ]
+        )
+        for reason, count in summary["by_entry_reason"].items():
+            lines.append(f"- {reason}: {count} trades")
+
+        lines.extend(
+            [
+                "",
+                "## By Exit Reason",
+                "",
+            ]
+        )
+        for reason, count in summary["by_exit_reason"].items():
+            lines.append(f"- {reason}: {count} trades")
+
+        lines.extend(
+            [
+                "",
+                "## By Market Regime",
+                "",
+            ]
+        )
+        for regime, count in summary["by_regime"].items():
+            lines.append(f"- {regime}: {count} trades")
+
+        return "\n".join(lines)
+
+
+# ruff: noqa: UP045

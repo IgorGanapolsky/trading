@@ -13,7 +13,7 @@ Date: December 2, 2025
 import logging
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +36,10 @@ class OptionsPosition:
     expiration_date: date
     strike: float
     opened_at: datetime
+    # Pin risk fields (added for expiration management)
+    probability_of_profit: float = 0.0
+    breakeven_upper: float | None = None
+    breakeven_lower: float | None = None
 
 
 class OptionsRiskMonitor:
@@ -63,6 +67,11 @@ class OptionsRiskMonitor:
     MAX_NET_DELTA = 60.0  # Rebalance if |delta| > this
     TARGET_NET_DELTA = 25.0  # Target after rebalancing
     DELTA_PER_SPY_SHARE = 1.0  # Each SPY share = 1 delta
+
+    # Pin risk thresholds
+    PIN_RISK_DTE_THRESHOLD = 2  # Days before expiration to check pin risk
+    PIN_RISK_STRIKE_PCT = 0.05  # Within 5% of strike = pin risk zone
+    PIN_RISK_CRITICAL_PCT = 0.02  # Within 2% = critical pin risk
 
     def __init__(self, paper: bool = True):
         """
@@ -110,7 +119,7 @@ class OptionsRiskMonitor:
 
         return exits
 
-    def _check_position_stop(self, position: OptionsPosition) -> Optional[dict[str, Any]]:
+    def _check_position_stop(self, position: OptionsPosition) -> dict[str, Any] | None:
         """
         Check if a single position has hit its stop-loss.
 
@@ -178,6 +187,88 @@ class OptionsRiskMonitor:
                 }
 
         return None
+
+    def check_pin_risk(self, current_prices: dict[str, float]) -> list[dict[str, Any]]:
+        """
+        Check all positions for pin risk near expiration.
+
+        Pin risk occurs when:
+        1. Position is within PIN_RISK_DTE_THRESHOLD days of expiration
+        2. Underlying price is within PIN_RISK_STRIKE_PCT of strike
+
+        Args:
+            current_prices: Current underlying prices (symbol -> price)
+
+        Returns:
+            List of pin risk signals with recommended actions
+        """
+        pin_risk_signals = []
+        today = date.today()
+
+        for symbol, position in self.positions.items():
+            # Calculate days to expiration
+            days_to_expiration = (position.expiration_date - today).days
+
+            # Skip if not near expiration
+            if days_to_expiration > self.PIN_RISK_DTE_THRESHOLD:
+                continue
+
+            # Get current underlying price
+            underlying_price = current_prices.get(position.underlying)
+            if underlying_price is None:
+                logger.warning(f"No price for underlying {position.underlying}")
+                continue
+
+            # Calculate distance from strike
+            distance_from_strike = abs(underlying_price - position.strike)
+            percent_from_strike = distance_from_strike / position.strike
+
+            # Check if in pin risk zone
+            if percent_from_strike <= self.PIN_RISK_STRIKE_PCT:
+                # Determine severity
+                if percent_from_strike <= self.PIN_RISK_CRITICAL_PCT:
+                    urgency = 5
+                    severity = "CRITICAL"
+                else:
+                    urgency = 4
+                    severity = "WARNING"
+
+                # Recommend action based on remaining value
+                if days_to_expiration <= 1:
+                    recommendation = "CLOSE"
+                    reason = "Expiration imminent, close to avoid assignment"
+                else:
+                    recommendation = "CLOSE_OR_ROLL"
+                    reason = "Consider closing or rolling to next month"
+
+                pin_risk_signal = {
+                    "action": recommendation,
+                    "symbol": symbol,
+                    "underlying": position.underlying,
+                    "position_type": position.position_type,
+                    "strike": position.strike,
+                    "current_price": underlying_price,
+                    "expiration_date": position.expiration_date.isoformat(),
+                    "days_to_expiration": days_to_expiration,
+                    "distance_from_strike": distance_from_strike,
+                    "percent_from_strike": percent_from_strike,
+                    "severity": severity,
+                    "urgency": urgency,
+                    "reason": f"PIN_RISK ({severity}): {reason}. "
+                    f"Underlying ${underlying_price:.2f} is {percent_from_strike:.1%} "
+                    f"from strike ${position.strike:.2f} with {days_to_expiration} DTE",
+                    "mcmillan_rule": "Close or roll positions 1-2 days before expiration "
+                    "when underlying is near strike to avoid pin risk",
+                }
+
+                pin_risk_signals.append(pin_risk_signal)
+                logger.warning(
+                    f"🎯 PIN RISK: {symbol} - {severity} - "
+                    f"${underlying_price:.2f} is {percent_from_strike:.1%} from "
+                    f"strike ${position.strike:.2f}, {days_to_expiration} DTE"
+                )
+
+        return pin_risk_signals
 
     def calculate_net_delta(self) -> dict[str, Any]:
         """
@@ -284,11 +375,37 @@ class OptionsRiskMonitor:
         results = {
             "timestamp": datetime.now().isoformat(),
             "positions_checked": len(self.positions),
+            "pin_risk_exits": [],
             "stop_loss_exits": [],
             "delta_analysis": None,
             "hedge_recommendation": None,
             "actions_taken": [],
         }
+
+        # 0. Check pin risk FIRST (highest priority)
+        pin_risk_exits = self.check_pin_risk(current_prices)
+        results["pin_risk_exits"] = pin_risk_exits
+
+        if pin_risk_exits:
+            logger.warning(f"🎯 {len(pin_risk_exits)} positions have PIN RISK!")
+            for pin_signal in pin_risk_exits:
+                logger.warning(f"  - {pin_signal['symbol']}: {pin_signal['reason']}")
+
+                if executor and pin_signal.get("urgency", 0) >= 5:
+                    try:
+                        # Execute the close for critical pin risk
+                        order = executor.close_position(pin_signal["symbol"])
+                        results["actions_taken"].append(
+                            {
+                                "type": "pin_risk_exit",
+                                "symbol": pin_signal["symbol"],
+                                "urgency": pin_signal["urgency"],
+                                "order": order,
+                            }
+                        )
+                        logger.info(f"✅ Closed {pin_signal['symbol']} due to PIN RISK")
+                    except Exception as e:
+                        logger.error(f"❌ Failed to close {pin_signal['symbol']}: {e}")
 
         # 1. Check stop-losses
         stop_exits = self.check_stop_losses(current_prices)

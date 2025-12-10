@@ -27,13 +27,34 @@ Slippage Model:    Enabled
 Total Slippage:    $0.31
 Slippage % of PnL: 0.25%
 
-TRADE STATISTICS
+$100/DAY TARGET METRICS
+--------------------------------------------------------------------------------
+Avg Daily P&L:     $1.45
+% Days ≥ $100:     0.0%
+Worst 5-Day DD:    $64.15
+Worst 20-Day DD:   $107.38
+
+TRADE STATISTICS (Daily-Based)
 --------------------------------------------------------------------------------
 Total Trades:      85
 Profitable Trades: 71
 Losing Trades:     14
-Win Rate:          52.94%
+Win Rate (Daily):  52.94%
 Avg Trade Return:  0.00%
+
+TRADE-BASED METRICS (More Accurate)
+--------------------------------------------------------------------------------
+Trade Win Rate:    0.0% (0W / 0L)
+Profit Factor:     0.00 (Total Wins / Total Losses)
+Expectancy:        $0.00 per trade
+Risk/Reward Ratio: 0.00
+Avg Win Amount:    $0.00
+Avg Loss Amount:   $0.00
+Largest Win:       $0.00
+Largest Loss:      $0.00
+Max Win Streak:    0
+Max Loss Streak:   0
+Avg Holding Days:  0.0
 
 PERFORMANCE SUMMARY
 --------------------------------------------------------------------------------

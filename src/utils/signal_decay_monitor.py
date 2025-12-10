@@ -8,7 +8,7 @@ import json
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -27,7 +27,7 @@ class SignalDecayMonitor:
         self,
         model_id: str,
         performance_metrics: dict[str, float],
-        baseline_metrics: Optional[dict[str, float]] = None,
+        baseline_metrics: dict[str, float] | None = None,
     ) -> None:
         """
         Record model performance for decay monitoring.
@@ -159,3 +159,6 @@ class SignalDecayMonitor:
             "alerts": decay_alerts,
             "lookback_days": lookback_days,
         }
+
+
+# ruff: noqa: UP045

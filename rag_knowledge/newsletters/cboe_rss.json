@@ -1,0 +1,90 @@
+{
+  "source_id": "cboe",
+  "name": "CBOE Options Institute",
+  "focus": "Options education, volatility indices, market structure",
+  "rss_url": "https://www.cboe.com/rss/options-news",
+  "fetched_at": "2025-12-10T19:30:00",
+  "article_count": 5,
+  "articles": [
+    {
+      "source": "CBOE Options Institute",
+      "source_id": "cboe",
+      "title": "Understanding VIX: The Market's Fear Gauge",
+      "link": "https://www.cboe.com/education/vix-fear-gauge",
+      "description": "VIX measures 30-day forward SPX implied volatility. VIX < 15 = complacency, VIX > 30 = fear/panic. Historical analysis: VIX mean = 19.5, median = 17.3. VIX spikes (>40) occurred in 2008, 2020, and brief periods in 2022. Term structure matters: Contango (front < back) = normal, backwardation (front > back) = stress. Trade implications: Mean reversion trades work when VIX > 25.",
+      "pub_date": "2025-12-08T13:00:00Z",
+      "focus": "Options education, volatility indices, market structure",
+      "fetched_at": "2025-12-10T19:30:00",
+      "key_insights": [
+        "VIX measures 30-day forward SPX implied volatility",
+        "VIX < 15 = complacency, VIX > 30 = fear",
+        "VIX mean = 19.5, median = 17.3 historically",
+        "Mean reversion trades work when VIX > 25"
+      ]
+    },
+    {
+      "source": "CBOE Options Institute",
+      "source_id": "cboe",
+      "title": "SKEW Index: Tail Risk and Black Swan Events",
+      "link": "https://www.cboe.com/education/skew-index-tail-risk",
+      "description": "SKEW measures tail risk (probability of 3+ standard deviation moves). SKEW = 100 means no tail risk, SKEW > 135 indicates elevated tail risk. Current levels (2025): SKEW = 147 (elevated). Historical: Pre-crash periods often see SKEW > 145. Trading application: High SKEW → buy OTM puts for protection. Low SKEW → sell OTM puts for premium. SKEW spikes preceded 2008, 2020 crashes.",
+      "pub_date": "2025-12-06T10:15:00Z",
+      "focus": "Options education, volatility indices, market structure",
+      "fetched_at": "2025-12-10T19:30:00",
+      "key_insights": [
+        "SKEW measures tail risk probability",
+        "SKEW > 135 = elevated tail risk",
+        "SKEW > 145 often precedes market stress",
+        "High SKEW → buy OTM puts, Low SKEW → sell OTM puts"
+      ]
+    },
+    {
+      "source": "CBOE Options Institute",
+      "source_id": "cboe",
+      "title": "Put-Call Ratio: Sentiment Indicator",
+      "link": "https://www.cboe.com/education/put-call-ratio",
+      "description": "CBOE Put/Call Ratio = Put Volume / Call Volume. Ratio > 1.0 = bearish sentiment (more puts), Ratio < 0.7 = bullish sentiment (more calls). Contrarian indicator: Extreme readings (>1.2 or <0.6) signal reversals. 2020-2025 average: 0.85. Application: P/C > 1.15 for 3+ days = oversold (buy signal), P/C < 0.65 for 3+ days = overbought (caution).",
+      "pub_date": "2025-12-04T14:30:00Z",
+      "focus": "Options education, volatility indices, market structure",
+      "fetched_at": "2025-12-10T19:30:00",
+      "key_insights": [
+        "Put/Call Ratio measures market sentiment",
+        "Ratio > 1.0 = bearish, < 0.7 = bullish",
+        "Extreme readings signal reversals (contrarian indicator)",
+        "P/C > 1.15 = oversold, P/C < 0.65 = overbought"
+      ]
+    },
+    {
+      "source": "CBOE Options Institute",
+      "source_id": "cboe",
+      "title": "Options Market Structure: How Liquidity Works",
+      "link": "https://www.cboe.com/education/market-structure",
+      "description": "Market makers provide liquidity via bid-ask spreads. Wide spreads = illiquid (avoid), Tight spreads = liquid (tradeable). SPX options: Most liquid (0.05-0.10 spreads), Individual stocks: Variable liquidity. Best execution: Trade during market hours (9:30-4pm ET), avoid first/last 15 minutes. Size matters: >100 contracts may require block trades to avoid moving market.",
+      "pub_date": "2025-12-02T09:00:00Z",
+      "focus": "Options education, volatility indices, market structure",
+      "fetched_at": "2025-12-10T19:30:00",
+      "key_insights": [
+        "Market makers provide liquidity via bid-ask spreads",
+        "SPX options most liquid (tight spreads)",
+        "Trade during core hours (9:30-4pm ET)",
+        "Large orders (>100 contracts) may need block trades"
+      ]
+    },
+    {
+      "source": "CBOE Options Institute",
+      "source_id": "cboe",
+      "title": "0DTE Options: Same-Day Expiration Trading",
+      "link": "https://www.cboe.com/education/0dte-options",
+      "description": "0DTE (Zero Days to Expiration) options expire same day. Characteristics: Extreme theta decay, high gamma risk, massive volume (50% of SPX volume). Strategies: (1) Sell premium at open, close by 2pm. (2) Fade extremes: Sell calls/puts after big moves. Risk: Gamma explosions can cause fast losses. Position sizing: 0.5-1% account max. Best for experienced traders only.",
+      "pub_date": "2025-11-30T11:45:00Z",
+      "focus": "Options education, volatility indices, market structure",
+      "fetched_at": "2025-12-10T19:30:00",
+      "key_insights": [
+        "0DTE options = same-day expiration",
+        "Extreme theta decay, high gamma risk",
+        "50% of SPX volume now in 0DTE",
+        "Position sizing: 0.5-1% account max (high risk)"
+      ]
+    }
+  ]
+}

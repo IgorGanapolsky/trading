@@ -15,4 +15,4 @@ def test_calc_daily_input_scales_up():
 
 
 def test_calc_daily_input_caps():
-    assert calc_daily_input(250_000) == 50.0
+    assert calc_daily_input(250_000) == 1000.0

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 TradingView Ideas Collector for RAG System
 
@@ -95,7 +97,9 @@ class TradingViewCollector(BaseNewsCollector):
                 ticker = self._extract_ticker(entry.title, entry.link)
 
                 # Analyze idea direction
-                direction, sentiment = self._analyze_idea_direction(entry.title, entry.get("summary", ""))
+                direction, sentiment = self._analyze_idea_direction(
+                    entry.title, entry.get("summary", "")
+                )
 
                 idea = self.normalize_article(
                     title=entry.title,
@@ -258,16 +262,41 @@ class TradingViewCollector(BaseNewsCollector):
 
         # Bullish indicators
         bullish_keywords = [
-            "long", "buy", "bullish", "upside", "breakout", "support",
-            "bounce", "rally", "accumulate", "targets", "moon", "going up",
-            "bottom", "reversal up", "higher", "ascending"
+            "long",
+            "buy",
+            "bullish",
+            "upside",
+            "breakout",
+            "support",
+            "bounce",
+            "rally",
+            "accumulate",
+            "targets",
+            "moon",
+            "going up",
+            "bottom",
+            "reversal up",
+            "higher",
+            "ascending",
         ]
 
         # Bearish indicators
         bearish_keywords = [
-            "short", "sell", "bearish", "downside", "breakdown", "resistance",
-            "dump", "crash", "distribute", "top", "reversal down", "lower",
-            "descending", "head and shoulders", "double top"
+            "short",
+            "sell",
+            "bearish",
+            "downside",
+            "breakdown",
+            "resistance",
+            "dump",
+            "crash",
+            "distribute",
+            "top",
+            "reversal down",
+            "lower",
+            "descending",
+            "head and shoulders",
+            "double top",
         ]
 
         bullish_count = sum(1 for kw in bullish_keywords if kw in text)

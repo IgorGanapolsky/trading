@@ -37,6 +37,35 @@ Full trading and market data access via Alpaca APIs:
 
 Read RSS feeds for crypto newsletters and market analysis.
 
+### 3. Microsoft Learn MCP Server (HTTP-based)
+
+Real-time access to official Microsoft documentation for .NET, Azure, C#, and more.
+
+**Available Tools**:
+- `microsoft_docs_search` - Semantic search across Microsoft Learn documentation
+- `microsoft_docs_fetch` - Retrieve and convert documentation pages to markdown
+- `microsoft_code_sample_search` - Find official code snippets with language filtering
+
+**Key Benefits**:
+- No API keys, logins, or sign-ups required - free service
+- Real-time documentation access (always up-to-date)
+- Only accesses official first-party Microsoft documentation
+- Great for .NET, Azure, C#, ASP.NET Core, and other Microsoft technologies
+
+**Configuration**: Uses HTTP transport (no local installation needed):
+```json
+"microsoft-learn": {
+  "type": "http",
+  "url": "https://learn.microsoft.com/api/mcp",
+  "description": "Microsoft Learn MCP Server - Real-time access to official Microsoft documentation"
+}
+```
+
+**Claude Code Installation** (alternative):
+```bash
+claude mcp add --transport http microsoft-learn https://learn.microsoft.com/api/mcp
+```
+
 ## Installation Steps
 
 ### 1. Locate Your Claude Desktop Config File
@@ -224,6 +253,12 @@ Once configured, you can:
 2. **Market Sentiment Analysis**: Extract key themes and sentiment from recent posts
 3. **Integration with Research**: Use newsletter insights during trading research phase
 4. **Automated Monitoring**: Schedule daily checks of new content (via Claude conversations)
+
+### Microsoft Learn Benefits
+1. **Up-to-date Documentation**: Access latest .NET, Azure, and C# docs during development
+2. **Code Samples**: Find official code snippets for implementing trading features
+3. **No Hallucination Risk**: AI responses backed by trusted Microsoft documentation
+4. **Zero Configuration**: Free service with no API keys or authentication required
 
 ## Next Steps
 

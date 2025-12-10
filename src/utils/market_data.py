@@ -18,7 +18,7 @@ import os
 import random
 import time
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
 
@@ -314,7 +314,7 @@ class MarketDataProvider:
                 )
                 return result
             else:
-                logger.warning(
+                logger.info(
                     "%s: Alpaca API returned insufficient data, trying cache/yfinance",
                     symbol,
                 )
@@ -759,10 +759,19 @@ class MarketDataProvider:
             from alpaca.data.timeframe import TimeFrame
 
             # Alpaca API: get_stock_bars returns BarSet
+            end_dt = datetime.now(timezone.utc)
+            # Request a generous window to ensure sufficient bars
+            start_dt = end_dt - timedelta(days=lookback_days + self.YFINANCE_LOOKBACK_BUFFER_DAYS)
+            feed = os.getenv("ALPACA_DATA_FEED", "iex")
+
             req = StockBarsRequest(
                 symbol_or_symbols=symbol,
                 timeframe=TimeFrame.Day,
-                limit=lookback_days + self.YFINANCE_LOOKBACK_BUFFER_DAYS,
+                start=start_dt,
+                end=end_dt,
+                limit=min(lookback_days + self.YFINANCE_LOOKBACK_BUFFER_DAYS, 5000),
+                feed=feed,
+                adjustment="raw",
             )
 
             barset = self._alpaca_api.get_stock_bars(req)

@@ -22,23 +22,18 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 try:
-    from src.risk.risk_manager import RiskManager as _SimpleRiskManager
-except Exception:  # pragma: no cover - defensive
-    _SimpleRiskManager = None  # type: ignore
-
-try:
     from src.core.risk_manager import RiskManager as _FullRiskManager
 except Exception:  # pragma: no cover - defensive
     _FullRiskManager = None  # type: ignore
 
 try:
     from src.risk.correlation_monitor import (
-        CrossStrategyCorrelationMonitor,
         CorrelationCheckResult,
+        CrossStrategyCorrelationMonitor,
     )
 except Exception:  # pragma: no cover - defensive
-    CrossStrategyCorrelationMonitor = None  # type: ignore
     CorrelationCheckResult = None  # type: ignore
+    CrossStrategyCorrelationMonitor = None  # type: ignore
 
 try:
     from src.risk.regime_aware_sizing import (
@@ -50,6 +45,11 @@ except Exception:  # pragma: no cover - defensive
     RegimeAwareSizer = None  # type: ignore
     RegimeAwareSizeResult = None  # type: ignore
     adjust_size_for_regime = None  # type: ignore
+
+try:
+    from src.risk.risk_manager import RiskManager as _SimpleRiskManager
+except Exception:  # pragma: no cover - defensive
+    _SimpleRiskManager = None  # type: ignore
 
 
 class UnifiedRiskManager:

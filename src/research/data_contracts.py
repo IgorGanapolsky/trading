@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -77,14 +77,14 @@ class FutureReturns:
 
     symbol: str
     timestamp: pd.Timestamp
-    returns_5m: Optional[float] = None
-    returns_1h: Optional[float] = None
-    returns_1d: Optional[float] = None
-    returns_1w: Optional[float] = None
-    returns_1mo: Optional[float] = None
-    returns_3mo: Optional[float] = None
-    realized_vol_1d: Optional[float] = None
-    realized_vol_1w: Optional[float] = None
+    returns_5m: float | None = None
+    returns_1h: float | None = None
+    returns_1d: float | None = None
+    returns_1w: float | None = None
+    returns_1mo: float | None = None
+    returns_3mo: float | None = None
+    realized_vol_1d: float | None = None
+    realized_vol_1w: float | None = None
     metadata: dict[str, Any] = None
 
     def __post_init__(self):
@@ -174,7 +174,7 @@ def create_signal_snapshot(
     timestamp: pd.Timestamp,
     symbol: str,
     features: pd.Series,
-    metadata: Optional[dict[str, Any]] = None,
+    metadata: dict[str, Any] | None = None,
 ) -> SignalSnapshot:
     """Convenience function to create a SignalSnapshot."""
     if metadata is None:
@@ -192,7 +192,7 @@ def create_future_returns(
     symbol: str,
     timestamp: pd.Timestamp,
     returns_data: dict[str, float],
-    metadata: Optional[dict[str, Any]] = None,
+    metadata: dict[str, Any] | None = None,
 ) -> FutureReturns:
     """Convenience function to create FutureReturns."""
     if metadata is None:
@@ -306,7 +306,7 @@ class DataValidator:
 
     def __init__(
         self,
-        schema: Optional[OHLCVSchema] = None,
+        schema: OHLCVSchema | None = None,
         max_gap_days: int = 5,
         max_price_change_pct: float = 50.0,
         min_volume: int = 1000,
@@ -735,7 +735,7 @@ class DataValidator:
 
     def _compute_hash(self, df: pd.DataFrame) -> str:
         content = df.to_json(date_format="iso")
-        return hashlib.md5(content.encode()).hexdigest()[:16]
+        return hashlib.sha256(content.encode()).hexdigest()[:16]
 
 
 class DataSnapshot:
@@ -752,10 +752,10 @@ class DataSnapshot:
         df: pd.DataFrame,
         symbol: str,
         description: str = "",
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        data_hash = hashlib.md5(df.to_json(date_format="iso").encode()).hexdigest()[:8]
+        data_hash = hashlib.sha256(df.to_json(date_format="iso").encode()).hexdigest()[:8]
         snapshot_id = f"{symbol}_{timestamp}_{data_hash}"
 
         snapshot_dir = self.storage_dir / snapshot_id
@@ -798,7 +798,7 @@ class DataSnapshot:
         logger.info(f"Loaded snapshot: {snapshot_id}")
         return df, manifest
 
-    def list_snapshots(self, symbol: Optional[str] = None) -> list[dict[str, Any]]:
+    def list_snapshots(self, symbol: str | None = None) -> list[dict[str, Any]]:
         snapshots = []
 
         for snapshot_dir in self.storage_dir.iterdir():

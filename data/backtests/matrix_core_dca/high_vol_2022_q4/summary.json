@@ -17,7 +17,7 @@
     "total_trades": 65,
     "status": "needs_improvement",
     "description": "Tests performance during elevated VIX and rate hike uncertainty. Validates vol-scaled slippage and treasury allocation during stress.\n",
-    "generated_at": "2025-12-02T22:44:04.339546",
+    "generated_at": "2025-12-05T14:36:24.850618",
     "execution_costs": {
       "fee_cost": 0.94,
       "slippage_cost": 0.11,
@@ -905,6 +905,11 @@
     "performance_rating": "NEEDS IMPROVEMENT",
     "total_slippage_cost": 0.11449869547977495,
     "slippage_enabled": true,
-    "slippage_impact_pct": 0.0
+    "slippage_impact_pct": 0.0,
+    "avg_daily_pnl": -0.0656381309988389,
+    "pct_days_above_target": 0.0,
+    "worst_5day_drawdown": 24.018756242861855,
+    "worst_20day_drawdown": 37.487171613480314,
+    "trade_metrics": null
   }
 }

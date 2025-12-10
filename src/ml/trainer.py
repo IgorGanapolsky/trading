@@ -2,23 +2,52 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from src.ml.data_processor import DataProcessor
-from src.ml.networks import LSTMPPO
+
+# NOTE: LSTMPPO networks have been removed - this trainer is for offline use only
+# from src.ml.networks import LSTMPPO
 
 logger = logging.getLogger(__name__)
+
+# WARNING: This trainer module is for OFFLINE model training only
+# The production system uses RLFilter (Gate 2) and TransformerRLPolicy
+# LSTM-PPO models and ensemble RL have been removed from production
+
+
+class LSTMPPO(nn.Module):
+    """Stub class for deprecated LSTMPPO network."""
+
+    def __init__(self, input_dim: int, hidden_dim: int, num_layers: int):
+        super().__init__()
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
+        self.num_layers = num_layers
+
+    def forward(self, x):
+        # Stub forward pass
+        batch_size = x.size(0)
+        action_probs = torch.zeros(batch_size, 3)
+        state_value = torch.zeros(batch_size, 1)
+        return action_probs, state_value, None
 
 
 class ModelTrainer:
     """
-    Handles training and retraining of the LSTM-PPO model.
-    Implements the 'Dynamic Retraining' pipeline.
+    DEPRECATED: Handles training and retraining of the LSTM-PPO model.
 
-    Supports both local training and cloud RL service integration (Vertex AI RL).
+    WARNING: This class is BROKEN and for OFFLINE use only.
+    The LSTM-PPO networks have been removed from production.
+
+    Production system uses:
+    - RLFilter (Gate 2) with TransformerRLPolicy
+    - RLPolicyLearner (simple Q-learning)
+
+    DO NOT USE THIS CLASS unless you restore the LSTM-PPO networks.
     """
 
     def __init__(
@@ -28,6 +57,10 @@ class ModelTrainer:
         use_cloud_rl: bool = False,
         rl_provider: str = "vertex_ai",
     ):
+        raise NotImplementedError(
+            "ModelTrainer is DEPRECATED. LSTM-PPO networks have been removed. "
+            "Use RLFilter or TransformerRLPolicy instead."
+        )
         self.models_dir = Path(models_dir)
         self.models_dir.mkdir(parents=True, exist_ok=True)
         self.device = torch.device(device)
@@ -59,7 +92,7 @@ class ModelTrainer:
         # Load optimized hyperparameters if available
         self._load_optimized_hyperparameters()
 
-    def train_supervised(self, symbol: str, use_cloud_rl: Optional[bool] = None) -> dict[str, Any]:
+    def train_supervised(self, symbol: str, use_cloud_rl: bool | None = None) -> dict[str, Any]:
         """
         Pre-train the model using supervised learning (predicting price direction).
         This stabilizes the LSTM features before RL fine-tuning.
@@ -127,27 +160,10 @@ class ModelTrainer:
         ensemble_model = None
 
         if use_ensemble:
-            try:
-                from src.ml.ensemble_rl import EnsembleRLAgent
-
-                ensemble_model = EnsembleRLAgent(
-                    input_dim=self.input_dim,
-                    hidden_dim=self.hidden_dim,
-                    num_layers=self.num_layers,
-                    device=str(self.device),
-                )
-                logger.info("✅ Using Ensemble RL Agent (PPO + A2C + SAC)")
-                # For ensemble, we'll train each model separately
-                # Use PPO model for supervised pre-training
-                model_to_train = ensemble_model.models.get("ppo")
-                if model_to_train is None:
-                    raise ValueError("PPO model not available in ensemble")
-            except Exception as e:
-                logger.warning(
-                    f"⚠️  Failed to initialize ensemble, falling back to single model: {e}"
-                )
-                use_ensemble = False
-                ensemble_model = None
+            # NOTE: Ensemble RL has been removed from production
+            logger.warning("⚠️ Ensemble RL has been removed. Falling back to single model.")
+            use_ensemble = False
+            ensemble_model = None
 
         if not use_ensemble:
             model_to_train = LSTMPPO(

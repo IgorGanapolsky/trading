@@ -1,272 +1,286 @@
 #!/usr/bin/env python3
 """
-Enhanced backtest matrix runner with caching support.
-Prevents timeout issues by reusing cached results when scenarios haven't changed.
+Run a matrix of historical backtests to validate promotion readiness.
+
+The script loads scenario definitions from config/backtest_scenarios.yaml,
+executes each scenario with a lightweight DCA momentum strategy, and writes
+structured summaries under data/backtests/<strategy>/<scenario>/.
+
+Outputs:
+    - Per-scenario JSON + Markdown reports
+    - Aggregate summary at data/backtests/latest_summary.json
 """
 
+from __future__ import annotations
+
 import argparse
-import hashlib
 import json
+import os
 import sys
-import time
-from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
+import yaml
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Ensure repo root is importable when script executed via `python scripts/...`
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
+if TYPE_CHECKING:  # pragma: no cover - for static typing only
+    from src.backtesting.backtest_results import BacktestResults
+
+DEFAULT_CONFIG = BASE_DIR / "config" / "backtest_scenarios.yaml"
+BACKTEST_ROOT = BASE_DIR / "data" / "backtests"
+SUMMARY_PATH = BACKTEST_ROOT / "latest_summary.json"
+
+# Promotion guard thresholds (align with docs/r-and-d-phase.md)
+PROMOTION_THRESHOLDS = {
+    "win_rate": 60.0,
+    "sharpe_ratio": 1.5,
+    "max_drawdown": 10.0,
+}
+FEE_RATE = float(os.getenv("BACKTEST_FEE_RATE", "0.0018"))
 
 
-def longest_positive_streak(series: Sequence[float]) -> int:
-    """Return the longest consecutive run of positive values.
+@dataclass
+class MatrixStrategy:
+    """Minimal strategy container required by BacktestEngine."""
 
-    The helper accepts any iterable convertible to a NumPy array, so callers can
-    pass lists or arrays from pandas/NumPy without extra ceremony.
-    """
-
-    arr = np.asarray(series, dtype=float)
-    best = 0
-    current = 0
-
-    for value in arr:
-        if value > 0:
-            current += 1
-            best = max(best, current)
-        else:
-            current = 0
-
-    return int(best)
+    etf_universe: list[str]
+    daily_allocation: float
+    use_vca: bool = False
+    vca_strategy: Any = None  # Not used but required by engine interface
 
 
-def aggregate_summary(summaries: Iterable[dict[str, Any]]) -> dict[str, Any]:
-    """Aggregate backtest scenario summaries for quick CI assertions.
-
-    Returns a dictionary with an ``aggregate_metrics`` block capturing the
-    minimum/maximum values needed by downstream tests and dashboards. If no
-    summaries are provided, metrics fall back to sensible defaults so the caller
-    can render an informative message instead of crashing.
-    """
-
-    summaries = list(summaries)
-    if not summaries:
-        return {
-            "aggregate_metrics": {
-                "min_win_rate": 0.0,
-                "min_sharpe_ratio": 0.0,
-                "max_drawdown": 0.0,
-                "min_profitable_streak": 0,
-                "passes": 0,
-            },
-            "scenarios": [],
-        }
-
-    win_rates = [s.get("win_rate_pct", 0.0) for s in summaries]
-    sharpe_ratios = [s.get("sharpe_ratio", 0.0) for s in summaries]
-    drawdowns = [s.get("max_drawdown_pct", 0.0) for s in summaries]
-    streaks = [s.get("longest_profitable_streak", 0) for s in summaries]
-    passes = sum(1 for s in summaries if s.get("status") == "pass")
-
-    aggregate_metrics = {
-        "min_win_rate": min(win_rates),
-        "min_sharpe_ratio": min(sharpe_ratios),
-        "max_drawdown": max(drawdowns),
-        "min_profitable_streak": min(streaks),
-        "passes": passes,
-    }
-
-    return {"aggregate_metrics": aggregate_metrics, "scenarios": summaries}
-
-
-def load_config(config_path: Path) -> dict[str, Any]:
-    """Load backtest configuration."""
-    if not config_path.exists():
-        print(f"❌ Config file not found: {config_path}")
-        sys.exit(1)
-
-    with open(config_path) as f:
-        if config_path.suffix == ".yaml":
-            import yaml
-
-            return yaml.safe_load(f)
-        else:
-            return json.load(f)
-
-
-def calculate_scenario_hash(scenario: dict[str, Any]) -> str:
-    """Calculate hash of scenario for caching."""
-    # Create deterministic hash of scenario parameters
-    scenario_str = json.dumps(scenario, sort_keys=True)
-    return hashlib.md5(scenario_str.encode()).hexdigest()[:12]
-
-
-def load_cache(cache_dir: Path) -> dict[str, dict[str, Any]]:
-    """Load cached backtest results."""
-    cache_file = cache_dir / "backtest_cache.json"
-    if not cache_file.exists():
-        return {}
-
-    try:
-        with open(cache_file) as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"⚠️  Could not load cache: {e}")
-        return {}
-
-
-def save_cache(cache_dir: Path, cache: dict[str, dict[str, Any]]):
-    """Save backtest cache."""
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    cache_file = cache_dir / "backtest_cache.json"
-
-    try:
-        with open(cache_file, "w") as f:
-            json.dump(cache, f, indent=2)
-    except Exception as e:
-        print(f"⚠️  Could not save cache: {e}")
-
-
-def run_scenario(scenario: dict[str, Any], output_dir: Path) -> dict[str, Any]:
-    """Run a single backtest scenario."""
-    print(f"   Running scenario: {scenario.get('name', 'Unnamed')}")
-
-    # Simulate backtest execution
-    # In real implementation, this would run your actual backtest
-    time.sleep(0.1)  # Simulate some processing time
-
-    # Generate mock results
-    result = {
-        "scenario": scenario.get("name", "unknown"),
-        "total_return": 0.05 + (hash(str(scenario)) % 100) / 1000,
-        "sharpe_ratio": 1.2 + (hash(str(scenario)) % 50) / 100,
-        "max_drawdown": -0.03 - (hash(str(scenario)) % 30) / 1000,
-        "trades": 45 + (hash(str(scenario)) % 20),
-        "execution_time": time.time(),
-    }
-
-    return result
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Run backtest scenario matrix")
-    parser.add_argument("--config", type=Path, required=True, help="Config file path")
-    parser.add_argument("--output-root", type=Path, required=True, help="Output directory")
-    parser.add_argument("--summary", type=Path, help="Summary file path")
-    parser.add_argument("--max-scenarios", type=int, default=50, help="Max scenarios to run")
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run configured backtest scenarios and persist structured summaries."
+    )
+    parser.add_argument(
+        "--config",
+        default=str(DEFAULT_CONFIG),
+        help="Path to backtest scenario YAML (default: config/backtest_scenarios.yaml).",
+    )
+    parser.add_argument(
+        "--output-root",
+        default=str(BACKTEST_ROOT),
+        help="Directory to store scenario artifacts (default: data/backtests).",
+    )
+    parser.add_argument(
+        "--summary",
+        default=str(SUMMARY_PATH),
+        help="Aggregate summary JSON path (default: data/backtests/latest_summary.json).",
+    )
+    parser.add_argument(
+        "--max-scenarios",
+        type=int,
+        default=0,
+        help="Optional cap on number of scenarios to execute (0 = all).",
+    )
     parser.add_argument(
         "--use-hybrid-gates",
         action="store_true",
-        help="Reserved flag for CI compatibility; currently a no-op.",
+        help="Replay the full hybrid funnel (momentum → RL → LLM proxy → risk) inside the backtest engine.",
+    )
+    return parser.parse_args()
+
+
+def load_config(config_path: Path) -> dict[str, Any]:
+    if not config_path.exists():
+        raise FileNotFoundError(f"Backtest config not found at {config_path}")
+    with config_path.open("r", encoding="utf-8") as handle:
+        data = yaml.safe_load(handle) or {}
+    if "scenarios" not in data:
+        raise ValueError("Scenario config must define a top-level 'scenarios' list.")
+    return data
+
+
+def run_backtest_for_scenario(
+    scenario: dict[str, Any],
+    defaults: dict[str, Any],
+    output_dir: Path,
+    *,
+    use_hybrid_gates: bool = False,
+) -> dict[str, Any]:
+    from src.backtesting.backtest_engine import (
+        BacktestEngine,  # local import to avoid heavy deps during tests
     )
 
-    args = parser.parse_args()
+    strategy = MatrixStrategy(
+        etf_universe=scenario.get("etf_universe", defaults.get("etf_universe", [])),
+        daily_allocation=float(
+            scenario.get("daily_allocation", defaults.get("daily_allocation", 10.0))
+        ),
+    )
 
-    print("📊 Starting backtest matrix execution...")
-    print(f"   Config: {args.config}")
-    print(f"   Output: {args.output_root}")
+    hybrid_options = {"max_trades_per_day": scenario.get("max_trades_per_day", 1)}
+    engine = BacktestEngine(
+        strategy=strategy,
+        start_date=scenario["start_date"],
+        end_date=scenario["end_date"],
+        initial_capital=float(
+            scenario.get("initial_capital", defaults.get("initial_capital", 100000.0))
+        ),
+        use_hybrid_gates=use_hybrid_gates,
+        hybrid_options=hybrid_options,
+    )
+    results = engine.run()
 
-    # Create output directories
-    args.output_root.mkdir(parents=True, exist_ok=True)
-    cache_dir = args.output_root / "cache"
-    cache_dir.mkdir(exist_ok=True)
+    summary = summarize_results(results, scenario)
+    save_artifacts(summary, results, output_dir)
+    return summary
 
-    # Load configuration
-    try:
-        config = load_config(args.config)
-    except Exception as e:
-        print(f"❌ Failed to load config: {e}")
-        # Create minimal config for testing
-        config = {
-            "scenarios": [
-                {"name": "conservative", "risk": "low"},
-                {"name": "balanced", "risk": "medium"},
-                {"name": "aggressive", "risk": "high"},
-            ]
-        }
 
-    scenarios = config.get("scenarios", [])
-    if not scenarios:
-        print("⚠️  No scenarios found in config")
-        scenarios = [{"name": "default", "risk": "medium"}]
+def summarize_results(results: BacktestResults, scenario: dict[str, Any]) -> dict[str, Any]:
+    daily_returns = np.diff(results.equity_curve) / results.equity_curve[:-1]
+    profitable_days = int(np.sum(daily_returns > 0))
+    longest_streak = longest_positive_streak(daily_returns)
 
-    # Limit scenarios to prevent timeouts
-    if len(scenarios) > args.max_scenarios:
-        print(f"⚠️  Limiting to {args.max_scenarios} scenarios (found {len(scenarios)})")
-        scenarios = scenarios[: args.max_scenarios]
+    status = evaluate_status(results, thresholds=PROMOTION_THRESHOLDS)
+    annualized_return = results.to_dict().get("annualized_return", 0.0)
+    costs = compute_execution_costs(results)
 
-    # Load cache
-    cache = load_cache(cache_dir)
-    print(f"📋 Loaded {len(cache)} cached results")
-
-    results = []
-    executed_count = 0
-    cached_count = 0
-
-    for i, scenario in enumerate(scenarios):
-        scenario_hash = calculate_scenario_hash(scenario)
-
-        # Check cache first
-        if scenario_hash in cache:
-            print(f"⚡ Using cached result for {scenario.get('name', f'scenario_{i}')}")
-            results.append(cache[scenario_hash])
-            cached_count += 1
-            continue
-
-        # Execute scenario
-        try:
-            result = run_scenario(scenario, args.output_root)
-            results.append(result)
-
-            # Update cache
-            cache[scenario_hash] = result
-            executed_count += 1
-
-        except Exception as e:
-            print(f"❌ Scenario {scenario.get('name', f'scenario_{i}')} failed: {e}")
-            # Don't fail entire matrix for one scenario failure
-            continue
-
-    # Save updated cache
-    save_cache(cache_dir, cache)
-
-    # Generate summary
-    summary = {
-        "execution_summary": {
-            "total_scenarios": len(scenarios),
-            "executed": executed_count,
-            "cached": cached_count,
-            "failed": len(scenarios) - len(results),
-            "execution_time": time.time(),
-        },
-        "results": results,
-        "top_performers": sorted(results, key=lambda x: x.get("total_return", 0), reverse=True)[:5],
+    return {
+        "scenario": scenario["name"],
+        "label": scenario.get("label"),
+        "start_date": results.start_date,
+        "end_date": results.end_date,
+        "trading_days": results.trading_days,
+        "total_return_pct": round(results.total_return, 2),
+        "annualized_return_pct": round(annualized_return, 2),
+        "sharpe_ratio": round(results.sharpe_ratio, 3),
+        "max_drawdown_pct": round(results.max_drawdown, 2),
+        "win_rate_pct": round(results.win_rate, 2),
+        "profitable_days": profitable_days,
+        "longest_profitable_streak": longest_streak,
+        "final_capital": round(results.final_capital, 2),
+        "final_capital_after_costs": round(
+            results.final_capital - costs["total_execution_cost"], 2
+        ),
+        "total_trades": results.total_trades,
+        "status": status,
+        "description": scenario.get("description"),
+        "generated_at": datetime.utcnow().isoformat(),
+        "execution_costs": costs,
+        "cost_adjusted_return_pct": costs["cost_adjusted_total_return_pct"],
+        "cost_adjusted_annualized_return_pct": costs["cost_adjusted_annualized_return_pct"],
+        "hybrid_gates": scenario.get("hybrid_gates", False),
     }
 
-    # Save summary
-    if args.summary:
-        with open(args.summary, "w") as f:
-            json.dump(summary, f, indent=2)
-        print(f"📄 Summary saved to {args.summary}")
 
-    # Print summary
-    print("\n" + "=" * 50)
-    print("📊 BACKTEST MATRIX SUMMARY")
-    print("=" * 50)
-    print(f"Total scenarios: {len(scenarios)}")
-    print(f"Executed: {executed_count}")
-    print(f"Cached: {cached_count}")
-    print(f"Failed: {len(scenarios) - len(results)}")
+def longest_positive_streak(daily_returns: np.ndarray) -> int:
+    streak = max_streak = 0
+    for positive in daily_returns > 0:
+        if positive:
+            streak += 1
+            max_streak = max(max_streak, streak)
+        else:
+            streak = 0
+    return int(max_streak)
 
-    if results:
-        avg_return = sum(r.get("total_return", 0) for r in results) / len(results)
-        print(f"Average return: {avg_return:.2%}")
 
-        best = max(results, key=lambda x: x.get("total_return", 0))
-        print(
-            f"Best performer: {best.get('scenario', 'Unknown')} ({best.get('total_return', 0):.2%})"
+def evaluate_status(results: BacktestResults, thresholds: dict[str, float]) -> str:
+    if (
+        results.win_rate >= thresholds["win_rate"]
+        and results.sharpe_ratio >= thresholds["sharpe_ratio"]
+        and results.max_drawdown <= thresholds["max_drawdown"]
+    ):
+        return "pass"
+    return "needs_improvement"
+
+
+def compute_execution_costs(
+    results: BacktestResults, fee_rate: float = FEE_RATE
+) -> dict[str, float]:
+    total_notional = sum(float(trade.get("amount", 0.0)) for trade in results.trades)
+    fee_cost = total_notional * fee_rate
+    slippage_cost = float(getattr(results, "total_slippage_cost", 0.0))
+    total_cost = fee_cost + slippage_cost
+    capital = float(results.initial_capital or 1.0)
+    cost_pct = (total_cost / capital) * 100
+
+    cost_adjusted_total_return = results.total_return - cost_pct
+    annualized_return = results.to_dict().get("annualized_return", 0.0)
+    cost_adjusted_annualized = annualized_return - cost_pct
+
+    return {
+        "fee_cost": round(fee_cost, 2),
+        "slippage_cost": round(slippage_cost, 2),
+        "total_execution_cost": round(total_cost, 2),
+        "cost_pct_of_capital": round(cost_pct, 4),
+        "cost_adjusted_total_return_pct": round(cost_adjusted_total_return, 2),
+        "cost_adjusted_annualized_return_pct": round(cost_adjusted_annualized, 2),
+        "assumptions": {
+            "fee_rate": fee_rate,
+            "slippage_model_enabled": bool(getattr(results, "slippage_enabled", False)),
+        },
+    }
+
+
+def save_artifacts(summary: dict[str, Any], results: BacktestResults, output_dir: Path) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    json_path = output_dir / "summary.json"
+    md_path = output_dir / "report.md"
+
+    with json_path.open("w", encoding="utf-8") as handle:
+        json.dump({"summary": summary, "raw_results": results.to_dict()}, handle, indent=2)
+
+    md_path.write_text(results.generate_report(), encoding="utf-8")
+
+
+def aggregate_summary(summaries: list[dict[str, Any]]) -> dict[str, Any]:
+    if not summaries:
+        raise ValueError("No scenario summaries were produced.")
+
+    aggregate = {
+        "generated_at": datetime.utcnow().isoformat(),
+        "scenario_count": len(summaries),
+        "scenarios": summaries,
+        "aggregate_metrics": {
+            "min_win_rate": min(item["win_rate_pct"] for item in summaries),
+            "min_sharpe_ratio": min(item["sharpe_ratio"] for item in summaries),
+            "max_drawdown": max(item["max_drawdown_pct"] for item in summaries),
+            "min_profitable_streak": min(item["longest_profitable_streak"] for item in summaries),
+            "passes": sum(1 for item in summaries if item["status"] == "pass"),
+        },
+    }
+    return aggregate
+
+
+def write_summary(summary: dict[str, Any], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        json.dump(summary, handle, indent=2)
+
+
+def main() -> None:
+    args = parse_args()
+    config = load_config(Path(args.config))
+    scenarios: list[dict[str, Any]] = config.get("scenarios", [])
+    defaults: dict[str, Any] = config.get("defaults", {})
+
+    if args.max_scenarios > 0:
+        scenarios = scenarios[: args.max_scenarios]
+
+    output_root = Path(args.output_root)
+    summaries: list[dict[str, Any]] = []
+    for scenario in scenarios:
+        scenario_dir = output_root / "matrix_core_dca" / scenario["name"]
+        scenario["hybrid_gates"] = args.use_hybrid_gates
+        summary = run_backtest_for_scenario(
+            scenario, defaults, scenario_dir, use_hybrid_gates=args.use_hybrid_gates
         )
+        summaries.append(summary)
 
-    print("✅ Backtest matrix completed successfully")
-    return 0
+    aggregate = aggregate_summary(summaries)
+    write_summary(aggregate, Path(args.summary))
+    print(f"✅ Backtest matrix complete. Summary written to {args.summary}")
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

@@ -24,7 +24,6 @@ Created: 2025-12-04
 """
 
 import logging
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -52,7 +51,7 @@ class EntropyFeatureSelector:
         self.min_samples_per_bin = min_samples_per_bin
         self._feature_scores: dict[str, dict] = {}
 
-    def _discretize(self, x: np.ndarray, n_bins: Optional[int] = None) -> np.ndarray:
+    def _discretize(self, x: np.ndarray, n_bins: int | None = None) -> np.ndarray:
         """
         Discretize continuous variable into bins.
 
@@ -74,19 +73,10 @@ class EntropyFeatureSelector:
 
         # Use quantile-based binning for robustness
         try:
-            result[valid_mask] = pd.qcut(
-                x[valid_mask],
-                q=n_bins,
-                labels=False,
-                duplicates='drop'
-            )
+            result[valid_mask] = pd.qcut(x[valid_mask], q=n_bins, labels=False, duplicates="drop")
         except ValueError:
             # Fall back to equal-width bins if quantiles fail
-            result[valid_mask] = pd.cut(
-                x[valid_mask],
-                bins=n_bins,
-                labels=False
-            )
+            result[valid_mask] = pd.cut(x[valid_mask], bins=n_bins, labels=False)
 
         return result
 
@@ -195,10 +185,7 @@ class EntropyFeatureSelector:
         return mi / h_x
 
     def score_feature(
-        self,
-        feature: np.ndarray,
-        target: np.ndarray,
-        feature_name: str = "feature"
+        self, feature: np.ndarray, target: np.ndarray, feature_name: str = "feature"
     ) -> dict:
         """
         Score a single feature's predictive power.
@@ -238,16 +225,13 @@ class EntropyFeatureSelector:
             "entropy_feature": h_x,
             "information_gain_ratio": igr,
             "uncertainty_reduction_pct": uncertainty_reduction,
-            "predictive_power": "high" if igr > 0.1 else "medium" if igr > 0.05 else "low"
+            "predictive_power": "high" if igr > 0.1 else "medium" if igr > 0.05 else "low",
         }
 
         return scores
 
     def get_feature_scores(
-        self,
-        df: pd.DataFrame,
-        target: str,
-        features: Optional[list[str]] = None
+        self, df: pd.DataFrame, target: str, features: list[str] | None = None
     ) -> pd.DataFrame:
         """
         Score all features in a dataframe.
@@ -268,11 +252,7 @@ class EntropyFeatureSelector:
         scores_list = []
         for feat in features:
             try:
-                scores = self.score_feature(
-                    df[feat].values,
-                    target_values,
-                    feature_name=feat
-                )
+                scores = self.score_feature(df[feat].values, target_values, feature_name=feat)
                 scores_list.append(scores)
                 self._feature_scores[feat] = scores
             except Exception as e:
@@ -287,9 +267,9 @@ class EntropyFeatureSelector:
         self,
         df: pd.DataFrame,
         target: str,
-        k: Optional[int] = None,
+        k: int | None = None,
         min_mi: float = 0.01,
-        features: Optional[list[str]] = None
+        features: list[str] | None = None,
     ) -> list[str]:
         """
         Select top-k features by mutual information.
@@ -325,11 +305,7 @@ class EntropyFeatureSelector:
         return selected
 
     def select_non_redundant_features(
-        self,
-        df: pd.DataFrame,
-        target: str,
-        k: int = 10,
-        redundancy_threshold: float = 0.7
+        self, df: pd.DataFrame, target: str, k: int = 10, redundancy_threshold: float = 0.7
     ) -> list[str]:
         """
         Select features that are informative but not redundant with each other.
@@ -457,7 +433,7 @@ class FeatureSelectionPipeline:
         n_features: int = 10,
         min_mi: float = 0.005,
         remove_redundant: bool = True,
-        redundancy_threshold: float = 0.7
+        redundancy_threshold: float = 0.7,
     ):
         """
         Initialize the feature selection pipeline.
@@ -474,7 +450,7 @@ class FeatureSelectionPipeline:
         self.redundancy_threshold = redundancy_threshold
         self.selector = EntropyFeatureSelector()
         self.selected_features: list[str] = []
-        self.feature_scores: Optional[pd.DataFrame] = None
+        self.feature_scores: pd.DataFrame | None = None
 
     def fit(self, df: pd.DataFrame, target: str = "target_direction") -> "FeatureSelectionPipeline":
         """
@@ -488,7 +464,19 @@ class FeatureSelectionPipeline:
             Self for chaining
         """
         # Get feature columns (exclude target and raw OHLCV)
-        exclude_cols = {target, "open", "high", "low", "close", "volume", "Open", "High", "Low", "Close", "Volume"}
+        exclude_cols = {
+            target,
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume",
+        }
         feature_cols = [c for c in df.columns if c not in exclude_cols]
 
         # Score all features
@@ -558,11 +546,13 @@ class FeatureSelectionPipeline:
                 f"Uncertainty↓={row['uncertainty_reduction_pct']:.2f}%"
             )
 
-        lines.extend([
-            "",
-            "Full Feature Rankings:",
-            "-" * 40,
-        ])
+        lines.extend(
+            [
+                "",
+                "Full Feature Rankings:",
+                "-" * 40,
+            ]
+        )
 
         for _, row in self.feature_scores.head(20).iterrows():
             selected = "✓" if row["feature_name"] in self.selected_features else " "
@@ -581,14 +571,18 @@ class FeatureSelectionPipeline:
 
         results = {
             "selected_features": self.selected_features,
-            "n_features_analyzed": len(self.feature_scores) if self.feature_scores is not None else 0,
-            "feature_scores": self.feature_scores.to_dict("records") if self.feature_scores is not None else [],
+            "n_features_analyzed": len(self.feature_scores)
+            if self.feature_scores is not None
+            else 0,
+            "feature_scores": self.feature_scores.to_dict("records")
+            if self.feature_scores is not None
+            else [],
             "config": {
                 "n_features": self.n_features,
                 "min_mi": self.min_mi,
                 "remove_redundant": self.remove_redundant,
-                "redundancy_threshold": self.redundancy_threshold
-            }
+                "redundancy_threshold": self.redundancy_threshold,
+            },
         }
 
         Path(filepath).parent.mkdir(parents=True, exist_ok=True)
@@ -599,9 +593,7 @@ class FeatureSelectionPipeline:
 
 
 def integrate_with_data_processor(
-    data_processor,
-    symbol: str = "SPY",
-    n_features: int = 10
+    data_processor, symbol: str = "SPY", n_features: int = 10
 ) -> list[str]:
     """
     Convenience function to integrate entropy feature selection with DataProcessor.
@@ -652,13 +644,15 @@ if __name__ == "__main__":
 
     # Create synthetic OHLCV data
     close = 100 + np.cumsum(np.random.randn(n_samples) * 0.5)
-    df = pd.DataFrame({
-        "open": close + np.random.randn(n_samples) * 0.1,
-        "high": close + np.abs(np.random.randn(n_samples) * 0.5),
-        "low": close - np.abs(np.random.randn(n_samples) * 0.5),
-        "close": close,
-        "volume": np.random.randint(1000000, 5000000, n_samples)
-    })
+    df = pd.DataFrame(
+        {
+            "open": close + np.random.randn(n_samples) * 0.1,
+            "high": close + np.abs(np.random.randn(n_samples) * 0.5),
+            "low": close - np.abs(np.random.randn(n_samples) * 0.5),
+            "close": close,
+            "volume": np.random.randint(1000000, 5000000, n_samples),
+        }
+    )
 
     # Create features
     df = create_trading_features(df)
@@ -667,11 +661,19 @@ if __name__ == "__main__":
     selector = EntropyFeatureSelector()
 
     # Get feature scores
-    feature_cols = [c for c in df.columns if c not in ["target_direction", "open", "high", "low", "close", "volume"]]
+    feature_cols = [
+        c
+        for c in df.columns
+        if c not in ["target_direction", "open", "high", "low", "close", "volume"]
+    ]
     scores = selector.get_feature_scores(df, "target_direction", feature_cols)
 
     print("\n=== Feature Scores by Mutual Information ===")
-    print(scores[["feature_name", "mutual_information", "uncertainty_reduction_pct", "predictive_power"]].to_string())
+    print(
+        scores[
+            ["feature_name", "mutual_information", "uncertainty_reduction_pct", "predictive_power"]
+        ].to_string()
+    )
 
     # Select best features
     print("\n=== Selected Features ===")

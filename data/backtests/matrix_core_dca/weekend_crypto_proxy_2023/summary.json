@@ -17,7 +17,7 @@
     "total_trades": 68,
     "status": "needs_improvement",
     "description": "Validates weekend/holiday coverage by routing the funnel through a Bitcoin ETF proxy. Ensures thresholds and sizing logic remain stable when traditional equity markets are unavailable.\n",
-    "generated_at": "2025-12-02T22:44:03.053569",
+    "generated_at": "2025-12-05T14:36:23.173701",
     "execution_costs": {
       "fee_cost": 1.22,
       "slippage_cost": 0.55,
@@ -944,6 +944,11 @@
     "performance_rating": "NEEDS IMPROVEMENT",
     "total_slippage_cost": 0.5489998116760963,
     "slippage_enabled": true,
-    "slippage_impact_pct": 0.0
+    "slippage_impact_pct": 0.0,
+    "avg_daily_pnl": -1.3674392766243888,
+    "pct_days_above_target": 0.0,
+    "worst_5day_drawdown": 64.6296006142511,
+    "worst_20day_drawdown": 82.72125894932833,
+    "trade_metrics": null
   }
 }

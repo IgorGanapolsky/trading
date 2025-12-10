@@ -10,7 +10,7 @@ import sys
 from datetime import date, datetime
 from pathlib import Path
 
-import alpaca_trade_api as tradeapi
+import alpaca.trading.client as trading_client
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -31,10 +31,9 @@ def get_account_summary():
         print("ERROR: Missing ALPACA_API_KEY or ALPACA_SECRET_KEY in .env")
         sys.exit(1)
 
-    base_url = "https://paper-api.alpaca.markets" if paper_trading else "https://api.alpaca.markets"
-    api = tradeapi.REST(api_key, secret_key, base_url, api_version="v2")
+    client = trading_client.TradingClient(api_key, secret_key, paper=paper_trading)
 
-    account = api.get_account()
+    account = client.get_account()
     starting_balance = 100000.0  # From challenge_start.json
 
     return {

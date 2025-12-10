@@ -5,8 +5,11 @@ Position sizing aligned with the $100/day profit target.
 This module computes position sizes that balance capital efficiency
 with risk constraints to maximize probability of hitting target.
 
+Includes slippage-aware adjustments to prevent over-sizing in illiquid assets.
+
 Author: Trading System
 Created: 2025-12-03
+Updated: 2025-12-04 - Added slippage model integration
 """
 
 from __future__ import annotations
@@ -15,6 +18,8 @@ import logging
 import os
 from dataclasses import dataclass
 from typing import Any
+
+from src.risk.slippage_model import SlippageModel, get_default_slippage_model
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +38,8 @@ class PositionSizeResult:
     sizing_method: str
     confidence: float
     notes: list[str]
+    slippage_cost_pct: float = 0.0  # Estimated round-trip slippage cost
+    slippage_adjusted: bool = False  # Whether size was reduced for slippage
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -46,6 +53,8 @@ class PositionSizeResult:
             "sizing_method": self.sizing_method,
             "confidence": round(self.confidence, 2),
             "notes": self.notes,
+            "slippage_cost_pct": round(self.slippage_cost_pct, 4),
+            "slippage_adjusted": self.slippage_adjusted,
         }
 
 
@@ -70,6 +79,8 @@ class TargetAlignedSizer:
         avg_trades_per_day: int = 1,
         target_win_rate: float = 0.55,
         avg_win_loss_ratio: float = 1.5,
+        slippage_model: SlippageModel | None = None,
+        max_slippage_pct: float = 1.0,  # Max acceptable round-trip slippage
     ):
         """
         Initialize the target-aligned sizer.
@@ -83,6 +94,8 @@ class TargetAlignedSizer:
             avg_trades_per_day: Expected trades per day
             target_win_rate: Target win rate (55%)
             avg_win_loss_ratio: Average win / average loss
+            slippage_model: SlippageModel instance for cost estimation
+            max_slippage_pct: Maximum acceptable slippage (reduces size above this)
         """
         self.capital = capital
         self.daily_target = daily_target
@@ -92,6 +105,11 @@ class TargetAlignedSizer:
         self.avg_trades_per_day = max(1, avg_trades_per_day)
         self.target_win_rate = target_win_rate
         self.avg_win_loss_ratio = avg_win_loss_ratio
+        self.max_slippage_pct = max_slippage_pct
+
+        # Initialize slippage model
+        self.slippage_model = slippage_model or get_default_slippage_model()
+        logger.info("Slippage model integrated into position sizing")
 
         # Daily tracking
         self._daily_exposure = 0.0
@@ -120,6 +138,7 @@ class TargetAlignedSizer:
         signal_strength: float = 0.5,
         rl_confidence: float = 0.5,
         sentiment_score: float = 0.0,
+        avg_daily_volume: float | None = None,
     ) -> PositionSizeResult:
         """
         Calculate optimal position size for a trade.
@@ -133,11 +152,14 @@ class TargetAlignedSizer:
             signal_strength: Signal strength from strategy (0-1)
             rl_confidence: RL model confidence (0-1)
             sentiment_score: Sentiment score (-1 to 1)
+            avg_daily_volume: Average daily volume for slippage calculation
 
         Returns:
-            PositionSizeResult with recommended sizing
+            PositionSizeResult with recommended sizing (slippage-adjusted)
         """
         notes = []
+        slippage_adjusted = False
+        slippage_cost_pct = 0.0
 
         if entry_price <= 0:
             return self._empty_result("Invalid entry price")
@@ -199,6 +221,35 @@ class TargetAlignedSizer:
             method = "risk_weighted"
             notes.append("Low confidence - conservative sizing")
 
+        # SLIPPAGE ADJUSTMENT (new Dec 2025)
+        # Estimate slippage and reduce position size if too costly
+        slippage_cost_pct = self.slippage_model.estimate_round_trip_cost(
+            price=entry_price,
+            quantity=shares,
+            symbol=symbol,
+            volume=avg_daily_volume,
+            volatility=volatility,
+        )
+
+        # If slippage exceeds threshold, reduce position size proportionally
+        if slippage_cost_pct > self.max_slippage_pct:
+            # Reduce position to bring slippage within acceptable range
+            reduction_factor = self.max_slippage_pct / slippage_cost_pct
+            original_shares = shares
+            shares = shares * reduction_factor
+            slippage_adjusted = True
+            notes.append(
+                f"Slippage-adjusted: {slippage_cost_pct:.2f}% > {self.max_slippage_pct}% max, "
+                f"reduced from {original_shares:.2f} to {shares:.2f} shares"
+            )
+            logger.info(
+                f"{symbol}: Position reduced {(1 - reduction_factor) * 100:.1f}% due to slippage "
+                f"({slippage_cost_pct:.2f}% estimated round-trip cost)"
+            )
+        elif slippage_cost_pct > 0.5:
+            # Warn about significant but acceptable slippage
+            notes.append(f"Slippage warning: {slippage_cost_pct:.2f}% round-trip cost")
+
         # Apply constraints
         notional = shares * entry_price
 
@@ -252,6 +303,8 @@ class TargetAlignedSizer:
             sizing_method=method,
             confidence=blended_confidence,
             notes=notes,
+            slippage_cost_pct=slippage_cost_pct,
+            slippage_adjusted=slippage_adjusted,
         )
 
     def _calculate_kelly(self, win_prob: float, win_loss_ratio: float) -> float:

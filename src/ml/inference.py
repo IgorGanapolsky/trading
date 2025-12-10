@@ -1,23 +1,53 @@
+"""
+ML Inference Engine
+
+Uses Medallion Architecture by default for data quality guarantees.
+Falls back to legacy DataProcessor if Medallion is disabled.
+"""
+
 import logging
+import os
 from typing import Any
 
 import torch
-from src.ml.data_processor import DataProcessor
-from src.ml.trainer import ModelTrainer
 
 logger = logging.getLogger(__name__)
 
 
 class MLPredictor:
     """
-    Inference engine for the LSTM-PPO model.
+    Inference engine for ML models.
     Provides a clean API for the Orchestrator to get trading signals.
+
+    Uses Medallion Architecture by default for data quality guarantees.
     """
 
     def __init__(self, models_dir: str = "models/ml"):
-        self.trainer = ModelTrainer(models_dir=models_dir)
-        self.data_processor = DataProcessor()
+        self.models_dir = models_dir
         self.models = {}  # Cache loaded models
+
+        # Use Medallion by default
+        self.use_medallion = os.getenv("USE_MEDALLION_ARCHITECTURE", "true").lower() == "true"
+
+        if self.use_medallion:
+            try:
+                from src.ml.medallion_trainer import MedallionMLPredictor
+
+                self._medallion_predictor = MedallionMLPredictor(models_dir=models_dir)
+                logger.info("MLPredictor using Medallion Architecture for data quality")
+            except Exception as e:
+                logger.warning(f"Failed to init Medallion predictor: {e}, using legacy")
+                self.use_medallion = False
+                self._init_legacy()
+        else:
+            self._init_legacy()
+
+    def _init_legacy(self):
+        """Initialize legacy components."""
+        from src.ml.data_processor import DataProcessor
+
+        self.data_processor = DataProcessor()
+        logger.info("MLPredictor using legacy DataProcessor")
 
     def get_signal(self, symbol: str) -> dict[str, Any]:
         """
@@ -29,15 +59,43 @@ class MLPredictor:
             - confidence: float (probability of the action)
             - value_estimate: float (critic's valuation of current state)
         """
+        # Use Medallion predictor if available
+        if self.use_medallion and hasattr(self, "_medallion_predictor"):
+            try:
+                return self._medallion_predictor.get_signal(symbol)
+            except Exception as e:
+                logger.warning(f"Medallion inference failed for {symbol}: {e}")
+                # Fall through to legacy
+
+        # Legacy path (fallback)
+        return self._get_signal_legacy(symbol)
+
+    def _get_signal_legacy(self, symbol: str) -> dict[str, Any]:
+        """Legacy signal generation using old DataProcessor."""
         # 1. Load Model (Lazy Loading)
         if symbol not in self.models:
-            self.models[symbol] = self.trainer.load_model(symbol)
-            self.models[symbol].eval()
+            try:
+                # Try to load medallion model first
+                from src.ml.medallion_trainer import MedallionTrainer
+
+                trainer = MedallionTrainer(models_dir=self.models_dir)
+                model = trainer.load_model(symbol)
+                if model is not None:
+                    self.models[symbol] = model
+                    logger.info(f"Loaded Medallion model for {symbol}")
+            except Exception:
+                pass
+
+            if symbol not in self.models:
+                logger.warning(f"No model available for {symbol}")
+                return {"action": "HOLD", "confidence": 0.0, "reason": "No model"}
 
         model = self.models[symbol]
 
         # 2. Prepare Data
-        # We need the most recent sequence of data
+        if not hasattr(self, "data_processor"):
+            self._init_legacy()
+
         input_tensor = self.data_processor.prepare_inference_data(symbol)
 
         if input_tensor is None:
@@ -46,15 +104,12 @@ class MLPredictor:
 
         # 3. Inference
         with torch.no_grad():
-            # action_probs: [1, 3] (Hold, Buy, Sell)
-            # state_value: [1, 1]
             action_probs, state_value, _ = model(input_tensor)
 
-        probs = action_probs.squeeze().tolist()  # [p_hold, p_buy, p_sell]
+        probs = action_probs.squeeze().tolist()
         value = state_value.item()
 
         # 4. Decode Action
-        # Index 0: Hold, 1: Buy, 2: Sell
         actions = ["HOLD", "BUY", "SELL"]
         best_action_idx = action_probs.argmax().item()
         best_action = actions[best_action_idx]

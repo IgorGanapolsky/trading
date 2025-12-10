@@ -16,7 +16,6 @@ Author: Claude (CTO)
 Date: December 2025
 """
 
-import importlib.util
 import json
 import logging
 import os
@@ -24,7 +23,6 @@ import sys
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -64,15 +62,17 @@ class YouTubeIngestion:
 
     def _check_whisper(self) -> bool:
         """Check if Whisper is available for transcription."""
-        if importlib.util.find_spec("whisper") is None:
+        try:
+            import whisper  # noqa: F401 - availability check
+
+            logger.info("Whisper is available for fallback transcription")
+            return True
+        except ImportError:
             logger.warning("Whisper not installed - will skip videos without captions")
             logger.info("Install with: pip install openai-whisper")
             return False
 
-        logger.info("Whisper is available for fallback transcription")
-        return True
-
-    def get_transcript_with_fallback(self, video_id: str, video_url: str) -> Optional[str]:
+    def get_transcript_with_fallback(self, video_id: str, video_url: str) -> str | None:
         """
         Get transcript using YouTube API first, then Whisper fallback.
 
@@ -101,7 +101,7 @@ class YouTubeIngestion:
 
         return self._transcribe_with_whisper(video_id, video_url)
 
-    def _transcribe_with_whisper(self, video_id: str, video_url: str) -> Optional[str]:
+    def _transcribe_with_whisper(self, video_id: str, video_url: str) -> str | None:
         """
         Download audio and transcribe with Whisper.
 
@@ -114,32 +114,19 @@ class YouTubeIngestion:
         """
         try:
             import whisper
-            import yt_dlp
+            from src.utils.ytdlp_cli import download_ytdlp_audio
 
             logger.info(f"Downloading audio for Whisper transcription: {video_id}")
 
-            # Download audio only
             with tempfile.TemporaryDirectory() as tmpdir:
                 audio_path = os.path.join(tmpdir, f"{video_id}.mp3")
 
-                ydl_opts = {
-                    "format": "bestaudio/best",
-                    "outtmpl": audio_path,
-                    "postprocessors": [
-                        {
-                            "key": "FFmpegExtractAudio",
-                            "preferredcodec": "mp3",
-                            "preferredquality": "192",
-                        }
-                    ],
-                    "quiet": True,
-                    "no_warnings": True,
-                }
+                download_ytdlp_audio(
+                    video_url,
+                    Path(audio_path),
+                    audio_quality="192K",
+                )
 
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    ydl.download([video_url])
-
-                # Find the actual output file (may have different extension)
                 audio_files = list(Path(tmpdir).glob(f"{video_id}.*"))
                 if not audio_files:
                     logger.error(f"No audio file found for {video_id}")
@@ -147,9 +134,8 @@ class YouTubeIngestion:
 
                 audio_file = str(audio_files[0])
 
-                # Transcribe with Whisper
                 logger.info(f"Transcribing with Whisper: {video_id}")
-                model = whisper.load_model("base")  # Use 'base' for balance of speed/accuracy
+                model = whisper.load_model("base")
                 result = model.transcribe(audio_file)
 
                 transcript = result["text"]
@@ -225,7 +211,7 @@ class RedditIngestion:
 
     def collect_sentiment(
         self,
-        subreddits: Optional[list[str]] = None,
+        subreddits: list[str] | None = None,
         limit_per_sub: int = 25,
     ) -> dict:
         """
@@ -347,18 +333,15 @@ class PodcastIngestion:
         self.cache_dir = CACHE_DIR / "podcasts"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
-        has_feedparser = importlib.util.find_spec("feedparser") is not None
-        has_whisper = importlib.util.find_spec("whisper") is not None
-        self.available = has_feedparser and has_whisper
+        try:
+            import feedparser  # noqa: F401 - availability check
+            import whisper  # noqa: F401 - availability check
 
-        if not self.available:
-            missing = []
-            if not has_feedparser:
-                missing.append("feedparser")
-            if not has_whisper:
-                missing.append("whisper")
-            logger.warning(f"Podcast ingestion dependencies missing: {', '.join(missing)}")
+            self.available = True
+        except ImportError as e:
+            logger.warning(f"Podcast ingestion dependencies missing: {e}")
             logger.info("Install with: pip install feedparser openai-whisper")
+            self.available = False
 
     def discover_episodes(self, feed_url: str, max_age_days: int = 7) -> list[dict]:
         """

@@ -13,15 +13,14 @@ import logging
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
-import yt_dlp
 from youtube_transcript_api import YouTubeTranscriptApi
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
 from src.core.multi_llm_analysis import MultiLLMAnalyzer
+from src.utils.ytdlp_cli import run_ytdlp_dump_json
 
 # Paths
 BASE_DIR = Path(__file__).parent.parent
@@ -167,78 +166,70 @@ class YouTubeMonitor:
             f"🔍 Checking channel {channel_id} for videos in last {lookback_hours} hours..."
         )
 
-        ydl_opts = {
-            "quiet": True,
-            "no_warnings": True,
-            "extract_flat": True,
-            "playlistend": 10,  # Check last 10 videos
-        }
-
         try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                # Get channel uploads - try multiple URL formats
-                # Try @handle format first, then channel ID
-                if channel_id.startswith("@"):
-                    url = f"https://www.youtube.com/{channel_id}/videos"
-                elif channel_id.startswith("UC"):
-                    url = f"https://www.youtube.com/channel/{channel_id}/videos"
-                else:
-                    url = f"https://www.youtube.com/@{channel_id}/videos"
+            if channel_id.startswith("@"):
+                url = f"https://www.youtube.com/{channel_id}/videos"
+            elif channel_id.startswith("UC"):
+                url = f"https://www.youtube.com/channel/{channel_id}/videos"
+            else:
+                url = f"https://www.youtube.com/@{channel_id}/videos"
 
-                info = ydl.extract_info(url, download=False)
+            info = run_ytdlp_dump_json(
+                url,
+                extract_flat=True,
+                playlistend=10,
+            )
 
-                if not info or "entries" not in info:
-                    logger.warning(f"⚠️  No videos found for channel {channel_id}")
-                    return []
+            if not info or "entries" not in info:
+                logger.warning(f"⚠️  No videos found for channel {channel_id}")
+                return []
 
-                # Filter for recent videos
-                cutoff_time = datetime.now() - timedelta(hours=lookback_hours)
-                recent_videos = []
+            # Filter for recent videos
+            cutoff_time = datetime.now() - timedelta(hours=lookback_hours)
+            recent_videos = []
 
-                for entry in info["entries"]:
-                    if not entry:
-                        continue
+            for entry in info["entries"]:
+                if not entry:
+                    continue
 
-                    # Get full video info
-                    video_id = entry.get("id")
-                    if not video_id:
-                        continue
+                # Get full video info
+                video_id = entry.get("id")
+                if not video_id:
+                    continue
 
-                    video_info = ydl.extract_info(
-                        f"https://www.youtube.com/watch?v={video_id}", download=False
-                    )
+                video_info = run_ytdlp_dump_json(f"https://www.youtube.com/watch?v={video_id}")
 
-                    # Check if already processed
-                    if video_id in self.processed_videos:
-                        logger.debug(f"⏭️  Skipping already processed: {video_id}")
-                        continue
+                # Check if already processed
+                if video_id in self.processed_videos:
+                    logger.debug(f"⏭️  Skipping already processed: {video_id}")
+                    continue
 
-                    # Parse upload date
-                    upload_date_str = video_info.get("upload_date", "")
-                    if upload_date_str:
-                        try:
-                            upload_date = datetime.strptime(upload_date_str, "%Y%m%d")
-                            if upload_date < cutoff_time:
-                                continue
-                        except ValueError:
-                            logger.warning(f"⚠️  Invalid date format: {upload_date_str}")
+                # Parse upload date
+                upload_date_str = video_info.get("upload_date", "")
+                if upload_date_str:
+                    try:
+                        upload_date = datetime.strptime(upload_date_str, "%Y%m%d")
+                        if upload_date < cutoff_time:
                             continue
+                    except ValueError:
+                        logger.warning(f"⚠️  Invalid date format: {upload_date_str}")
+                        continue
 
-                    recent_videos.append(
-                        {
-                            "video_id": video_id,
-                            "title": video_info.get("title", "Unknown"),
-                            "channel": video_info.get("channel", "Unknown"),
-                            "upload_date": upload_date_str,
-                            "duration": video_info.get("duration", 0),
-                            "view_count": video_info.get("view_count", 0),
-                            "description": video_info.get("description", ""),
-                            "url": f"https://www.youtube.com/watch?v={video_id}",
-                        }
-                    )
+                recent_videos.append(
+                    {
+                        "video_id": video_id,
+                        "title": video_info.get("title", "Unknown"),
+                        "channel": video_info.get("channel", "Unknown"),
+                        "upload_date": upload_date_str,
+                        "duration": video_info.get("duration", 0),
+                        "view_count": video_info.get("view_count", 0),
+                        "description": video_info.get("description", ""),
+                        "url": f"https://www.youtube.com/watch?v={video_id}",
+                    }
+                )
 
-                logger.info(f"✅ Found {len(recent_videos)} new videos")
-                return recent_videos
+            logger.info(f"✅ Found {len(recent_videos)} new videos")
+            return recent_videos
 
         except Exception as e:
             logger.error(f"❌ Error fetching videos: {e}")
@@ -276,7 +267,7 @@ class YouTubeMonitor:
 
         return False
 
-    def get_transcript(self, video_id: str) -> Optional[str]:
+    def get_transcript(self, video_id: str) -> str | None:
         """
         Get video transcript using youtube-transcript-api
 
@@ -299,7 +290,7 @@ class YouTubeMonitor:
             # Get English transcript (auto-generated or manual)
             try:
                 transcript_obj = transcript_list.find_transcript(["en"])
-            except:
+            except Exception:
                 # Try auto-generated
                 transcript_obj = transcript_list.find_generated_transcript(["en"])
 

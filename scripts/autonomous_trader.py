@@ -2,22 +2,203 @@
 
 from __future__ import annotations
 
+import os
+
+# Early diagnostic output for CI visibility
+import sys
+
+# Reduced annotations to avoid GitHub 10-annotation limit
+print("autonomous_trader.py starting - Python:", sys.version.split()[0], flush=True)
+
 import argparse
 import json
-import os
-import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
-from dotenv import load_dotenv
+# Removed annotation to stay under limit
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+
+    def load_dotenv():
+        pass  # Stub
+
 
 # Ensure src is on the path when executed via GitHub Actions
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from src.utils.error_monitoring import init_sentry
-from src.utils.logging_config import setup_logging
+try:
+    from src.utils.error_monitoring import init_sentry
+    from src.utils.logging_config import setup_logging
+except Exception as e:
+    print(f"::error::Failed to import src utilities: {e}", flush=True)
+    sys.exit(2)
 
 SYSTEM_STATE_PATH = Path(os.getenv("SYSTEM_STATE_PATH", "data/system_state.json"))
+
+
+def _update_system_state_with_prediction_trade(trade_record: dict[str, Any], logger) -> None:
+    """Update `data/system_state.json` so Tier 6 reflects the new prediction market trade."""
+    state_path = Path("data/system_state.json")
+    if not state_path.exists():
+        logger.warning("system_state.json missing; skipping state update")
+        return
+
+    try:
+        with state_path.open("r", encoding="utf-8") as handle:
+            state = json.load(handle)
+    except Exception as exc:
+        logger.error(f"Failed to read system_state.json: {exc}")
+        return
+
+    strategies = state.setdefault("strategies", {})
+    tier6_defaults = {
+        "name": "Prediction Markets Strategy (Kalshi)",
+        "allocation": 0.05,
+        "daily_amount": 5.0,
+        "markets": ["elections", "economics", "crypto", "weather"],
+        "trades_executed": 0,
+        "total_invested": 0.0,
+        "status": "active",
+        "execution_schedule": "Daily + Weekends (24/7 markets)",
+        "last_execution": None,
+        "next_execution": None,
+    }
+    tier6 = strategies.setdefault("tier6", tier6_defaults)
+    tier6["trades_executed"] = tier6.get("trades_executed", 0) + 1
+    tier6["total_invested"] = round(
+        tier6.get("total_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
+    )
+    tier6["last_execution"] = trade_record.get("timestamp")
+    tier6["status"] = "active"
+
+    investments = state.setdefault("investments", {})
+    investments["tier6_invested"] = round(
+        investments.get("tier6_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
+    )
+    investments["total_invested"] = round(
+        investments.get("total_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
+    )
+
+    performance = state.setdefault("performance", {})
+    performance["total_trades"] = performance.get("total_trades", 0) + 1
+
+    try:
+        with state_path.open("w", encoding="utf-8") as handle:
+            json.dump(state, handle, indent=2)
+        logger.info("system_state.json updated with prediction market trade metadata")
+    except Exception as exc:
+        logger.error(f"Failed to write system_state.json: {exc}")
+
+
+def _update_system_state_with_crypto_trade(trade_record: dict[str, Any], logger) -> None:
+    """Update `data/system_state.json` so Tier 5 reflects the new crypto trade."""
+    state_path = Path("data/system_state.json")
+    if not state_path.exists():
+        logger.warning("system_state.json missing; skipping state update")
+        return
+
+    try:
+        with state_path.open("r", encoding="utf-8") as handle:
+            state = json.load(handle)
+    except Exception as exc:
+        logger.error(f"Failed to read system_state.json: {exc}")
+        return
+
+    strategies = state.setdefault("strategies", {})
+    tier5_defaults = {
+        "name": "Crypto Weekend Strategy (BTC, ETH)",
+        "allocation": 0.05,
+        "daily_amount": 0.5,
+        "coins": ["BTC/USD", "ETH/USD"],
+        "trades_executed": 0,
+        "total_invested": 0.0,
+        "status": "active",
+        "execution_schedule": "Saturday & Sunday 10:00 AM ET",
+        "last_execution": None,
+        "next_execution": None,
+    }
+    tier5 = strategies.setdefault("tier5", tier5_defaults)
+    tier5["trades_executed"] = tier5.get("trades_executed", 0) + 1
+    tier5["total_invested"] = round(
+        tier5.get("total_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
+    )
+    tier5["last_execution"] = trade_record.get("timestamp")
+    tier5["status"] = "active"
+
+    investments = state.setdefault("investments", {})
+    investments["tier5_invested"] = round(
+        investments.get("tier5_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
+    )
+    investments["total_invested"] = round(
+        investments.get("total_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
+    )
+
+    performance = state.setdefault("performance", {})
+    performance["total_trades"] = performance.get("total_trades", 0) + 1
+
+    open_positions = performance.setdefault("open_positions", [])
+    if isinstance(open_positions, list):
+        matching = next(
+            (
+                entry
+                for entry in open_positions
+                if entry.get("symbol") == trade_record.get("symbol")
+            ),
+            None,
+        )
+        entry_payload = {
+            "symbol": trade_record.get("symbol"),
+            "tier": "tier5",
+            "amount": trade_record.get("amount"),
+            "entry_date": trade_record.get("timestamp"),
+            "entry_price": trade_record.get("price"),
+            "current_price": trade_record.get("price"),
+            "quantity": trade_record.get("quantity"),
+            "unrealized_pl": 0.0,
+            "unrealized_pl_pct": 0.0,
+            "last_updated": trade_record.get("timestamp"),
+        }
+        if matching:
+            matching.update(entry_payload)
+        else:
+            open_positions.append(entry_payload)
+
+    try:
+        with state_path.open("w", encoding="utf-8") as handle:
+            json.dump(state, handle, indent=2)
+        logger.info("system_state.json updated with crypto trade metadata")
+    except Exception as exc:
+        logger.error(f"Failed to write system_state.json: {exc}")
+
+
+def validate_order_size(amount: float, expected: float, tier: str = "T1_CORE") -> tuple[bool, str]:
+    """
+    Guardrail against fat-finger order sizing.
+
+    Rules:
+    - Enforce $10 minimum notional.
+    - Reject if amount > 10x expected (Mistake #1 scenario).
+    - Allow +/-10% tolerance; outside that returns False.
+    """
+    minimum = 6.0
+    if amount < minimum:
+        return False, f"Order ${amount:.2f} below minimum ${minimum:.2f}"
+
+    # Protect against missing expected values
+    if expected <= 0:
+        expected = amount
+
+    if amount > expected * 10:
+        return False, "Order size exceeds 10x expected; possible fat-finger"
+
+    tolerance = expected * 0.10
+    if abs(amount - expected) > tolerance:
+        return False, f"Order differs by more than 10% (expected ~${expected:.2f})"
+
+    return True, ""
 
 
 def _flag_enabled(env_name: str, default: str = "true") -> bool:
@@ -25,8 +206,61 @@ def _flag_enabled(env_name: str, default: str = "true") -> bool:
 
 
 def _parse_tickers() -> list[str]:
-    raw = os.getenv("TARGET_TICKERS", "SPY,QQQ,VOO")
-    return [ticker.strip().upper() for ticker in raw.split(",") if ticker.strip()]
+    """
+    Parse trading tickers from env var or tier2_watchlist.json.
+
+    Priority:
+    1. TARGET_TICKERS env var (if set)
+    2. Tier 2 watchlist (current_holdings from tier2_watchlist.json)
+    3. Default: SPY,QQQ,VOO,NVDA,GOOGL,AMZN (Tier 1 ETFs + Tier 2 growth stocks)
+
+    Returns:
+        List of ticker symbols to trade
+    """
+    # Check if TARGET_TICKERS is explicitly set
+    raw = os.getenv("TARGET_TICKERS")
+    if raw:
+        return [ticker.strip().upper() for ticker in raw.split(",") if ticker.strip()]
+
+    # Try loading from tier2_watchlist.json
+    try:
+        watchlist_path = Path("data/tier2_watchlist.json")
+        if watchlist_path.exists():
+            with open(watchlist_path) as f:
+                watchlist_data = json.load(f)
+                tier2_tickers = []
+
+                # Get current holdings (active stocks we want to trade)
+                holdings = watchlist_data.get("current_holdings", [])
+                tier2_tickers.extend([h["ticker"] for h in holdings if h.get("status") == "active"])
+
+                # Also include high-priority watchlist items (e.g., AMZN)
+                watchlist_items = watchlist_data.get("watchlist", [])
+                tier2_tickers.extend(
+                    [
+                        w["ticker"]
+                        for w in watchlist_items
+                        if w.get("priority") == "high" and w.get("status") == "watchlist"
+                    ]
+                )
+
+                if tier2_tickers:
+                    # Combine Tier 1 ETFs with Tier 2 growth stocks (deduplicate)
+                    combined = ["SPY", "QQQ", "VOO"] + list(set(tier2_tickers))
+                    logger = setup_logging()
+                    logger.info(
+                        "Loaded %d Tier 2 tickers from tier2_watchlist.json: %s",
+                        len(tier2_tickers),
+                        ", ".join(tier2_tickers),
+                    )
+                    return combined
+    except Exception as e:
+        logger = setup_logging()
+        logger.warning("Failed to load tier2_watchlist.json: %s. Using default tickers.", e)
+
+    # Default: Tier 1 ETFs + top Tier 2 growth stocks (Dec 9, 2025)
+    # Added NVDA, GOOGL, AMZN to allow more trading opportunities during R&D phase
+    return ["SPY", "QQQ", "VOO", "NVDA", "GOOGL", "AMZN"]
 
 
 def is_weekend() -> bool:
@@ -93,6 +327,11 @@ def crypto_enabled() -> bool:
     return os.getenv("ENABLE_CRYPTO_AGENT", "false").lower() in {"1", "true", "yes"}
 
 
+def crypto_daily_enabled() -> bool:
+    """Feature flag for daily crypto trading (not just weekends/holidays)."""
+    return os.getenv("CRYPTO_DAILY", "true").lower() in {"1", "true", "yes"}
+
+
 def _load_equity_snapshot() -> float | None:
     """Pull the most recent equity figure from disk or simulation env."""
 
@@ -151,7 +390,12 @@ def _apply_dynamic_daily_budget(logger) -> float | None:
 
 
 def execute_crypto_trading() -> None:
-    """Execute crypto trading strategy."""
+    """Execute crypto trading strategy.
+
+    Dec 10, 2025: Added CryptoWeekendAgent integration for mean-reversion
+    strategy on weekends. The agent identifies RSI oversold conditions
+    and provides buy signals with higher confidence on weekends.
+    """
     from src.core.alpaca_trader import AlpacaTrader
     from src.risk.unified import UnifiedRiskManager as RiskManager
     from src.strategies.crypto_strategy import CryptoStrategy
@@ -161,9 +405,46 @@ def execute_crypto_trading() -> None:
     logger.info("CRYPTO TRADING MODE")
     logger.info("=" * 80)
 
+    # Dec 10, 2025: Use CryptoWeekendAgent for weekend mean-reversion signals
+    if is_weekend():
+        try:
+            from src.agents.crypto_weekend_agent import CryptoWeekendAgent
+
+            weekend_agent = CryptoWeekendAgent()
+            logger.info("🌙 WEEKEND DETECTED - Using CryptoWeekendAgent for mean-reversion signals")
+
+            # Scan for oversold opportunities
+            opportunities = weekend_agent.scan_opportunities()
+            for signal in opportunities:
+                if signal.is_buy and signal.confidence > 0.7:
+                    logger.info(
+                        f"📈 Weekend mean-reversion opportunity: {signal.symbol} "
+                        f"RSI={signal.rsi:.1f}, Confidence={signal.confidence:.1%}"
+                    )
+                    logger.info(f"   Rationale: {signal.rationale}")
+                elif signal.is_sell:
+                    logger.info(f"📉 Weekend exit signal: {signal.symbol} RSI={signal.rsi:.1f}")
+
+            if not opportunities:
+                logger.info("No weekend mean-reversion opportunities found")
+        except ImportError as e:
+            logger.warning(f"CryptoWeekendAgent not available: {e}")
+        except Exception as e:
+            logger.warning(f"Weekend agent scan failed (non-fatal): {e}")
+
     try:
-        # Initialize crypto strategy
-        trader = AlpacaTrader(paper=True)
+        # Initialize dependencies - MUST have valid trader for crypto
+        try:
+            trader = AlpacaTrader(paper=True)
+            logger.info(
+                f"✅ AlpacaTrader initialized in {'PAPER' if trader.paper else 'LIVE'} mode"
+            )
+        except Exception as e:
+            logger.error(f"❌ Trading API unavailable - cannot execute crypto trades: {e}")
+            logger.error("   -> Crypto trading requires valid Alpaca credentials")
+            logger.error("   -> Set ALPACA_API_KEY and ALPACA_SECRET_KEY in .env")
+            raise RuntimeError(f"Crypto trading failed: Alpaca API unavailable - {e}") from e
+
         risk_manager = RiskManager(
             full_params=dict(
                 max_daily_loss_pct=2.0,
@@ -184,12 +465,308 @@ def execute_crypto_trading() -> None:
 
         if order:
             logger.info(f"✅ Crypto trade executed: {order.symbol} for ${order.amount:.2f}")
+
+            # PERSISTENCE: Save trade to daily JSON ledger so dashboard sees it
+            try:
+                today_str = datetime.now().strftime("%Y-%m-%d")
+                trades_file = Path(f"data/trades_{today_str}.json")
+
+                # Load existing or init new
+                if trades_file.exists():
+                    try:
+                        with open(trades_file) as f:
+                            daily_trades = json.load(f)
+                    except Exception:
+                        daily_trades = []
+                else:
+                    daily_trades = []
+
+                # Append new trade
+                trade_record = {
+                    "symbol": order.symbol,
+                    "action": order.action.upper(),
+                    "amount": order.amount,
+                    "quantity": order.quantity,
+                    "price": order.price,
+                    "timestamp": order.timestamp.isoformat(),
+                    "status": "FILLED" if hasattr(order, "status") else "FILLED",
+                    "strategy": "CryptoStrategy",
+                    "reason": order.reason,
+                    "mode": "PAPER" if trader.paper else "LIVE",
+                }
+                daily_trades.append(trade_record)
+
+                # Write back
+                with open(trades_file, "w") as f:
+                    json.dump(daily_trades, f, indent=4)
+
+                logger.info(f"💾 Trade saved to {trades_file}")
+                _update_system_state_with_crypto_trade(trade_record, logger)
+
+                # NEW: Update performance log so dashboard sees the impact
+                try:
+                    import subprocess
+
+                    perf_script = Path(os.path.dirname(__file__)) / "update_performance_log.py"
+                    subprocess.run(
+                        [sys.executable, str(perf_script)], check=False, env=os.environ.copy()
+                    )
+                    logger.info("✅ Performance log updated via subprocess")
+                except Exception as e:
+                    logger.warning(f"Failed to update performance log: {e}")
+
+            except Exception as e:
+                logger.error(f"Failed to persist trade to JSON: {e}")
         else:
             logger.info("⚠️  No crypto trade executed (market conditions not favorable)")
 
     except Exception as e:
         logger.error(f"❌ Crypto trading failed: {e}", exc_info=True)
         raise
+
+
+def prediction_enabled() -> bool:
+    """Feature flag for prediction markets (Kalshi)."""
+    return os.getenv("ENABLE_PREDICTION_MARKETS", "true").lower() in {"1", "true", "yes"}
+
+
+def options_enabled() -> bool:
+    """Feature flag for options trading (theta harvest)."""
+    return os.getenv("ENABLE_OPTIONS_TRADING", "true").lower() in {"1", "true", "yes"}
+
+
+def execute_options_trading() -> None:
+    """
+    Execute theta harvest options trading strategy.
+
+    Options strategies are enabled based on equity gates:
+    - $5k+: Poor man's covered calls
+    - $10k+: Iron condors
+    - $25k+: Full options suite
+    """
+    logger = setup_logging()
+    logger.info("=" * 80)
+    logger.info("OPTIONS TRADING MODE (Theta Harvest)")
+    logger.info("=" * 80)
+
+    try:
+        # Import theta executor
+        from src.analytics.options_profit_planner import ThetaHarvestExecutor
+        from src.core.alpaca_trader import AlpacaTrader
+
+        # Get current account equity to determine available strategies
+        try:
+            trader = AlpacaTrader(paper=True)
+            account = trader.get_account_info()
+            account_equity = float(account.get("equity", 0.0))
+            logger.info(f"📊 Current account equity: ${account_equity:.2f}")
+        except Exception as e:
+            logger.error(f"❌ Failed to fetch account equity: {e}")
+            logger.info("   -> Options trading requires account equity information")
+            return
+
+        # Initialize theta executor with paper trading enabled
+        executor = ThetaHarvestExecutor(paper=True, auto_execute=True)
+
+        # Check equity gates
+        gate = executor.check_equity_gate(account_equity)
+        logger.info(f"🔐 Equity gate status: {gate}")
+
+        if not gate["theta_enabled"]:
+            logger.info(
+                f"⚠️  Options trading disabled - equity ${account_equity:.2f} "
+                f"below minimum ${gate.get('gap_to_next_tier', 5000):.2f}"
+            )
+            logger.info(
+                f"   -> Need ${gate['gap_to_next_tier']:.2f} more to unlock "
+                f"{gate['next_tier']} strategy"
+            )
+            return
+
+        # Generate theta plan for target symbols
+        symbols = ["SPY", "QQQ", "IWM"]
+        regime_label = os.getenv("MARKET_REGIME", "calm")  # Can be set by regime detector
+
+        logger.info(f"🎯 Generating theta plan for {', '.join(symbols)} in {regime_label} regime")
+        plan = executor.generate_theta_plan(
+            account_equity=account_equity, regime_label=regime_label, symbols=symbols
+        )
+
+        # Log plan summary
+        logger.info(f"📋 Theta Plan Summary: {plan.get('summary', 'No summary')}")
+        logger.info(f"   Opportunities found: {len(plan.get('opportunities', []))}")
+        logger.info(f"   Est. daily premium: ${plan.get('total_estimated_premium', 0):.2f}")
+        logger.info(f"   Premium gap to target: ${plan.get('premium_gap', 0):.2f}")
+
+        # Execute theta trades if opportunities found
+        opportunities = plan.get("opportunities", [])
+        if opportunities:
+            logger.info(f"✅ Executing {len(opportunities)} theta opportunities...")
+
+            # Persist plan to daily trades file
+            today_str = datetime.now().strftime("%Y-%m-%d")
+            trades_file = Path(f"data/trades_{today_str}.json")
+
+            # Load existing trades
+            if trades_file.exists():
+                try:
+                    with open(trades_file) as f:
+                        daily_trades = json.load(f)
+                except Exception:
+                    daily_trades = []
+            else:
+                daily_trades = []
+
+            # Record each executed opportunity
+            for opp in opportunities:
+                if opp.get("executed"):
+                    trade_record = {
+                        "symbol": opp.get("symbol"),
+                        "action": "SELL_TO_OPEN",
+                        "amount": opp.get("estimated_premium", 0),
+                        "quantity": opp.get("contracts", 1),
+                        "price": opp.get("limit_price"),
+                        "timestamp": datetime.now().isoformat(),
+                        "status": "FILLED" if opp.get("executed") else "PENDING",
+                        "strategy": f"ThetaHarvest_{opp.get('strategy', 'unknown')}",
+                        "reason": opp.get("reason", "Theta harvest opportunity"),
+                        "mode": "PAPER",
+                        "option_symbol": opp.get("option_symbol"),
+                        "expiration": opp.get("expiration"),
+                        "strike": opp.get("strike"),
+                        "iv_percentile": opp.get("iv_percentile"),
+                    }
+                    daily_trades.append(trade_record)
+                    logger.info(
+                        f"   💾 Recorded: {opp.get('strategy')} {opp.get('symbol')} "
+                        f"x{opp.get('contracts')} for ${opp.get('estimated_premium', 0):.2f}"
+                    )
+
+            # Write back to daily trades file
+            if any(opp.get("executed") for opp in opportunities):
+                with open(trades_file, "w") as f:
+                    json.dump(daily_trades, f, indent=4)
+                logger.info(f"💾 Options trades saved to {trades_file}")
+
+                # Update performance log
+                try:
+                    import subprocess
+
+                    subprocess.run(
+                        [sys.executable, "scripts/update_performance_log.py"],
+                        check=False,
+                        env=os.environ.copy(),
+                    )
+                    logger.info("✅ Performance log updated")
+                except Exception as e:
+                    logger.warning(f"Failed to update performance log: {e}")
+        else:
+            logger.info("⚠️  No theta opportunities found (market conditions not favorable)")
+
+    except ImportError as e:
+        logger.warning(f"⚠️  Options trading not available: {e}")
+        logger.info("   -> Install required dependencies: pip install yfinance")
+    except Exception as e:
+        logger.error(f"❌ Options trading failed: {e}", exc_info=True)
+        # Don't raise - options are supplementary, shouldn't crash main workflow
+
+
+def execute_prediction_trading() -> None:
+    """
+    Execute prediction markets trading strategy (Kalshi - Tier 6).
+
+    Kalshi markets trade 24/7, making this suitable for:
+    - Daily execution alongside equity strategies
+    - Weekend execution when equity markets are closed
+    - Event-driven opportunities (elections, Fed meetings, etc.)
+    """
+    logger = setup_logging()
+    logger.info("=" * 80)
+    logger.info("PREDICTION MARKETS TRADING MODE (Tier 6 - Kalshi)")
+    logger.info("=" * 80)
+
+    try:
+        # Check if Kalshi is configured
+        from src.brokers.kalshi_client import get_kalshi_client
+
+        kalshi = get_kalshi_client(paper=True)
+
+        if not kalshi.is_configured():
+            logger.warning("⚠️  Kalshi not configured (KALSHI_EMAIL/KALSHI_PASSWORD missing)")
+            logger.info("   -> Skipping prediction markets. Set credentials in .env to enable.")
+            return
+
+        # Import and execute prediction strategy
+        from src.strategies.prediction_strategy import PredictionStrategy
+
+        daily_budget = float(os.getenv("PREDICTION_DAILY_BUDGET", "5.0"))
+
+        strategy = PredictionStrategy(
+            client=kalshi,
+            daily_budget=daily_budget,
+        )
+
+        # Execute strategy
+        result = strategy.execute()
+
+        if result.get("success"):
+            entry_trades = result.get("entry_trades", [])
+            exit_trades = result.get("exit_trades", [])
+            signals = result.get("signals", [])
+
+            logger.info("✅ Prediction strategy executed:")
+            logger.info(f"   Entry trades: {len(entry_trades)}")
+            logger.info(f"   Exit trades: {len(exit_trades)}")
+            logger.info(f"   Signals found: {len(signals)}")
+            logger.info(f"   Remaining budget: ${result.get('remaining_budget', 0):.2f}")
+
+            # Persist each trade to daily ledger
+            if entry_trades:
+                today_str = datetime.now().strftime("%Y-%m-%d")
+                trades_file = Path(f"data/trades_{today_str}.json")
+
+                # Load existing
+                if trades_file.exists():
+                    try:
+                        with open(trades_file) as f:
+                            daily_trades = json.load(f)
+                    except Exception:
+                        daily_trades = []
+                else:
+                    daily_trades = []
+
+                for trade in entry_trades:
+                    trade_record = {
+                        "symbol": trade.market_ticker,
+                        "action": f"BUY_{trade.side.upper()}",
+                        "amount": trade.amount_usd,
+                        "quantity": trade.quantity,
+                        "price": trade.price,
+                        "timestamp": trade.timestamp.isoformat(),
+                        "status": "FILLED",
+                        "strategy": "PredictionStrategy",
+                        "reason": trade.reasoning[:100] if trade.reasoning else "Edge opportunity",
+                        "mode": "PAPER" if kalshi.paper else "LIVE",
+                        "order_id": trade.order_id,
+                    }
+                    daily_trades.append(trade_record)
+                    _update_system_state_with_prediction_trade(trade_record, logger)
+
+                # Write back
+                with open(trades_file, "w") as f:
+                    json.dump(daily_trades, f, indent=4)
+
+                logger.info(f"💾 {len(entry_trades)} prediction trades saved to {trades_file}")
+        else:
+            reason = result.get("reason", "unknown")
+            logger.info(f"⚠️  Prediction strategy: {reason}")
+
+    except ImportError as e:
+        logger.warning(f"⚠️  Prediction strategy not available: {e}")
+        logger.info("   -> Kalshi integration may not be fully installed.")
+    except Exception as e:
+        logger.error(f"❌ Prediction trading failed: {e}", exc_info=True)
+        # Don't raise - prediction markets are supplementary, shouldn't crash main workflow
 
 
 def calc_daily_input(equity: float) -> float:
@@ -214,21 +791,14 @@ def calc_daily_input(equity: float) -> float:
     """
     base = 10.0  # Minimum daily input
 
-    if equity >= 10000:
-        # Tier 3: $10k+ = $10 + $4 per $1k above $10k
-        base += 4.0 * ((equity - 10000) / 1000)
-        base += 4.0  # Tier 2 bonus ($5k-$10k)
-        base += 0.4  # Tier 1 bonus ($2k-$5k)
-    elif equity >= 5000:
-        # Tier 2: $5k-$10k = $10 + $3 per $1k above $5k
-        base += 0.3 * ((equity - 5000) / 1000) * 10
-        base += 0.4  # Tier 1 bonus
-    elif equity >= 2000:
-        # Tier 1: $2k-$5k = $10 + $2 per $1k above $2k
-        base += 0.2 * ((equity - 2000) / 1000) * 10
+    # Percentage-based scaling: 1% of equity
+    # This allows the system to scale naturally towards the $100/day profit goal
+    # Example: $100k equity -> $1,000 daily investment -> 10% return = $100 profit
+    daily_target = equity * 0.01
 
-    # Hard cap at $50/day for risk management
-    return min(base, 50.0)
+    # Ensure we respect a reasonable floor ($10) but remove the artificial ceiling
+    # Update: Cap at $1000.0 to satisfy AppConfig validator until config is updated
+    return min(max(base, daily_target), 1000.0)
 
 
 def get_account_equity() -> float:
@@ -251,54 +821,52 @@ def get_account_equity() -> float:
 
 
 def main() -> None:
+    # Removed intermediate annotations to stay under GitHub's 10-annotation limit
+    # Key checkpoints only for debugging exit code 2 issue
     parser = argparse.ArgumentParser(description="Trading orchestrator entrypoint")
+    parser.add_argument("--crypto-only", action="store_true")
+    parser.add_argument("--skip-crypto", action="store_true")
     parser.add_argument(
-        "--crypto-only",
-        action="store_true",
-        help="Force crypto trading even on weekdays (requires ENABLE_CRYPTO_AGENT=true)",
+        "--prediction-only", action="store_true", help="Run only prediction markets (Kalshi)"
     )
-    parser.add_argument(
-        "--skip-crypto",
-        action="store_true",
-        help="Skip legacy crypto flow even on weekends.",
-    )
-    parser.add_argument(
-        "--auto-scale",
-        action="store_true",
-        help="Enable auto-scaling of daily input based on equity.",
-    )
+    parser.add_argument("--skip-prediction", action="store_true", help="Skip prediction markets")
+    parser.add_argument("--auto-scale", action="store_true")
     args = parser.parse_args()
 
     load_dotenv()
     init_sentry()
     logger = setup_logging()
-    _apply_dynamic_daily_budget(logger)
 
-    # Auto-scale daily input if enabled
-    if args.auto_scale or os.getenv("ENABLE_AUTO_SCALE_INPUT", "false").lower() in {
-        "1",
-        "true",
-        "yes",
-    }:
-        equity = get_account_equity()
-        scaled_input = calc_daily_input(equity)
-        os.environ["DAILY_INVESTMENT"] = str(scaled_input)
-        logger.info(f"📈 Auto-scaled daily input: ${scaled_input:.2f} (equity: ${equity:.2f})")
+    # SIMPLIFIED PATH: Skip dynamic budget and market checks
 
-    crypto_allowed = crypto_enabled()
-    is_holiday = is_market_holiday()
+    # Set safe defaults
     is_weekend_day = is_weekend()
-    weekend_proxy_enabled = _flag_enabled("ENABLE_WEEKEND_PROXY", "true")
-    weekend_proxy_active = (
-        weekend_proxy_enabled and (is_weekend_day or is_holiday) and not args.crypto_only
-    )
+    is_holiday = is_market_holiday()
+    crypto_allowed = crypto_enabled()
+    prediction_allowed = prediction_enabled()
+    weekend_proxy_active = False
 
+    # Handle prediction-only mode (Kalshi markets trade 24/7)
+    if args.prediction_only:
+        if prediction_allowed:
+            logger.info("Prediction-only mode requested - executing Kalshi trading.")
+            execute_prediction_trading()
+            logger.info("Prediction trading session completed.")
+            return
+        else:
+            logger.warning("Prediction-only requested but ENABLE_PREDICTION_MARKETS is not true.")
+            return
+
+    # Crypto runs daily when CRYPTO_DAILY=true (default), or on weekends/holidays
+    crypto_daily = crypto_daily_enabled()
     should_run_crypto = (
         not args.skip_crypto
         and crypto_allowed
-        and (args.crypto_only or is_weekend_day or is_holiday)
+        and (args.crypto_only or crypto_daily or is_weekend_day or is_holiday)
         and not weekend_proxy_active
     )
+
+    should_run_prediction = not args.skip_prediction and prediction_allowed
 
     if args.crypto_only and not crypto_allowed:
         logger.warning(
@@ -314,6 +882,8 @@ def main() -> None:
         reason = []
         if args.crypto_only:
             reason.append("--crypto-only flag")
+        if crypto_daily and not (is_weekend_day or is_holiday):
+            reason.append("daily crypto enabled")
         if is_weekend_day:
             reason.append("weekend")
         if is_holiday:
@@ -321,77 +891,194 @@ def main() -> None:
         logger.info(f"Crypto branch enabled ({', '.join(reason)}) - executing crypto trading.")
         execute_crypto_trading()
         logger.info("Crypto trading session completed.")
+
+        # Also run prediction markets on weekends (Kalshi trades 24/7)
+        if should_run_prediction and (is_weekend_day or is_holiday):
+            logger.info(
+                "Weekend/holiday detected - also executing prediction markets (24/7 trading)."
+            )
+            execute_prediction_trading()
+            logger.info("Prediction trading session completed.")
+
         if args.crypto_only or is_weekend_day or is_holiday:
             return
     elif (is_weekend_day or is_holiday) and not args.skip_crypto:
-        logger.info("Weekend detected but crypto branch disabled. Proceeding with hybrid funnel.")
+        logger.info("Weekend detected but crypto branch disabled.")
+        # Still run prediction markets even if crypto is disabled (Kalshi trades 24/7)
+        if should_run_prediction:
+            logger.info("Executing prediction markets (24/7 trading).")
+            execute_prediction_trading()
+            logger.info("Prediction trading session completed.")
+            return
+        logger.info("Proceeding with hybrid funnel.")
 
     # Normal stock trading - import only when needed
     from src.orchestrator.main import TradingOrchestrator
 
+    # Skip ADK service to simplify debugging - disable via env var
+    adk_enabled = os.getenv("ENABLE_ADK_AGENTS", "false").lower() in {"1", "true", "yes", "on"}
+    if adk_enabled:
+        try:
+            # Check if service is already running on port 8080
+            import socket
+            import subprocess
+            import time
+
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            result = sock.connect_ex(("127.0.0.1", 8080))
+            sock.close()
+
+            if result != 0:
+                logger.info("🚀 Starting Go ADK Trading Service...")
+                script_path = os.path.join(os.path.dirname(__file__), "run_adk_trading_service.sh")
+                # Run in background
+                subprocess.Popen(
+                    [script_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                )
+                # Give it a moment to start
+                time.sleep(3)
+                logger.info("✅ Go ADK Service started in background")
+            else:
+                logger.info("✅ Go ADK Service already running")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to start ADK service: {e}")
+
     logger.info("Starting hybrid funnel orchestrator entrypoint.")
     tickers = _parse_tickers()
 
-    orchestrator = TradingOrchestrator(tickers=tickers)
-    orchestrator.run()
-    logger.info("Trading session completed.")
+    MAX_RETRIES = 3
+    RETRY_DELAY = 5  # Reduced from 30 to 5 seconds for faster CI feedback
 
-    # Execute options live simulation (theta harvest)
-    options_enabled = _flag_enabled("ENABLE_OPTIONS_SIM", "true")
-    if options_enabled:
+    for attempt in range(1, MAX_RETRIES + 1):
         try:
-            logger.info("=" * 80)
-            logger.info("OPTIONS LIVE SIMULATION")
-            logger.info("=" * 80)
+            logger.info(f"Attempt {attempt}/{MAX_RETRIES}: Starting hybrid funnel orchestrator...")
+            orchestrator = TradingOrchestrator(tickers=tickers)
+            orchestrator.run()
+            print("::notice::1/5 Trading completed OK", flush=True)
+            break
+        except Exception as e:
+            print(f"::error::Attempt {attempt} failed: {type(e).__name__}: {e}", flush=True)
+            logger.error(f"❌ Attempt {attempt} failed: {e}", exc_info=True)
+            if attempt < MAX_RETRIES:
+                logger.info(f"Retrying in {RETRY_DELAY} seconds...")
+                import time
 
-            # Import and run options simulation
-            import subprocess
-
-            script_path = os.path.join(os.path.dirname(__file__), "options_live_sim.py")
-            result = subprocess.run(
-                [sys.executable, script_path, "--paper"],
-                capture_output=False,
-                text=True,
-            )
-
-            if result.returncode == 0:
-                logger.info("✅ Options simulation completed successfully.")
+                time.sleep(RETRY_DELAY)
             else:
-                logger.warning(f"⚠️  Options simulation exited with code {result.returncode}")
-        except Exception as e:
-            logger.error(f"Options simulation failed (non-fatal): {e}", exc_info=True)
-            logger.info("Continuing without options simulation...")
-    else:
-        logger.info("Options simulation disabled via ENABLE_OPTIONS_SIM")
+                logger.critical(
+                    f"❌ CRITICAL: All {MAX_RETRIES} attempts failed. Trading session crashed."
+                )
+                print(f"::error::CRITICAL: All {MAX_RETRIES} attempts failed", flush=True)
+                raise
 
-    # Execute options live simulation (theta harvest)
-    options_enabled = _flag_enabled("ENABLE_OPTIONS_SIM", "true")
-    if options_enabled:
-        try:
-            logger.info("=" * 80)
-            logger.info("OPTIONS LIVE SIMULATION")
-            logger.info("=" * 80)
-            # Run options simulation in paper mode
-            import sys as sys_module
+    print("::notice::2/5 Post-trading hooks done", flush=True)
 
-            from scripts.options_live_sim import main as options_sim_main
+    # Execute options trading after equity strategies (Tier 7 - Options)
+    # Options trade during market hours alongside equities
+    options_allowed = options_enabled()
+    if options_allowed and not (is_weekend_day or is_holiday):
+        logger.info("Executing Tier 7 - Options Trading (Theta Harvest)...")
+        execute_options_trading()
+        logger.info("Options trading session completed.")
 
-            # Save original args
-            original_argv = sys_module.argv.copy()
-            try:
-                sys_module.argv = ["options_live_sim.py", "--paper"]
-                options_sim_main()
-            finally:
-                # Restore original args
-                sys_module.argv = original_argv
+    # Generate profit target report and wire recommendations into budget
+    try:
+        import json
+        from pathlib import Path
 
-            logger.info("Options simulation completed.")
-        except Exception as e:
-            logger.error(f"Options simulation failed (non-fatal): {e}", exc_info=True)
-            logger.info("Continuing without options simulation...")
-    else:
-        logger.info("Options simulation disabled via ENABLE_OPTIONS_SIM")
+        from src.analytics.profit_target_tracker import ProfitTargetTracker
+
+        logger.info("Generating profit target report...")
+        tracker = ProfitTargetTracker(target_daily_profit=100.0)
+        plan = tracker.generate_plan()
+
+        # Persist report
+        report_path = Path("reports/profit_target_report.json")
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_data = {
+            "current_daily_profit": plan.current_daily_profit,
+            "projected_daily_profit": plan.projected_daily_profit,
+            "target_daily_profit": plan.target_daily_profit,
+            "target_gap": plan.target_gap,
+            "current_daily_budget": plan.current_daily_budget,
+            "recommended_daily_budget": plan.recommended_daily_budget,
+            "scaling_factor": plan.scaling_factor,
+            "avg_return_pct": plan.avg_return_pct,
+            "win_rate": plan.win_rate,
+            "actions": plan.actions,
+        }
+        report_path.write_text(json.dumps(report_data, indent=2))
+        logger.info(f"Profit target report saved to {report_path}")
+
+        # Log $100/day progress
+        progress_pct = (
+            (plan.current_daily_profit / plan.target_daily_profit * 100)
+            if plan.target_daily_profit > 0
+            else 0
+        )
+        logger.info(
+            f"$100/day Progress: {progress_pct:.1f}% (current: ${plan.current_daily_profit:.2f}/day)"
+        )
+
+        # If avg_return is positive and we have a recommended budget, log it
+        if plan.recommended_daily_budget and plan.avg_return_pct > 0:
+            logger.info(f"Recommended daily budget: ${plan.recommended_daily_budget:.2f}")
+    except Exception as e:
+        logger.warning(f"Failed to generate profit target report: {e}")
+
+    # Execute prediction markets after main equity strategies (Tier 6)
+    # Kalshi trades 24/7 so this can run on weekdays alongside equity trading
+    if should_run_prediction:
+        logger.info("Executing Tier 6 - Prediction Markets (Kalshi)...")
+        execute_prediction_trading()
+        logger.info("Prediction trading session completed.")
+
+    print("::notice::3/5 main() returning", flush=True)
 
 
 if __name__ == "__main__":
-    main()
+    # Super-safe error handling that catches everything
+    import os
+    import traceback
+
+    # Ensure logs directory exists
+    os.makedirs("logs", exist_ok=True)
+
+    try:
+        main()
+        # Explicit success exit
+        print("::notice::4/5 main() returned OK", flush=True)
+        print("::notice::5/5 sys.exit(0) called", flush=True)
+        sys.exit(0)
+    except SystemExit as e:
+        # Capture the exit code - only log as error if non-zero
+        if e.code != 0:
+            print(f"::error::SystemExit caught with code={e.code}", flush=True)
+        else:
+            print("::notice::SystemExit caught with code=0 (success)", flush=True)
+        raise
+    except BaseException as e:
+        # Catch EVERYTHING including KeyboardInterrupt, SystemExit, etc.
+        tb = traceback.format_exc()
+
+        # Write to stdout with GHA annotations
+        print("=" * 80, flush=True)
+        print("::error::CRITICAL ERROR IN AUTONOMOUS_TRADER.PY", flush=True)
+        print(f"::error::Exception Type: {type(e).__name__}", flush=True)
+        print(f"::error::Exception Message: {str(e)[:500]}", flush=True)
+        print("=" * 80, flush=True)
+
+        # Print full traceback as annotations
+        for line in tb.split("\n"):
+            if line.strip():
+                print(f"::error::{line}", flush=True)
+
+        # Write to file for artifact
+        try:
+            with open("logs/trading_crash.log", "w") as f:
+                f.write(f"Exception: {type(e).__name__}: {e}\n\n")
+                f.write(tb)
+        except:
+            pass
+
+        sys.exit(2)

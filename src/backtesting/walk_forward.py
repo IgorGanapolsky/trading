@@ -5,11 +5,13 @@ Provides time-aware train/test splits to avoid look-ahead bias and overfitting.
 """
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
+
 from src.backtesting.backtest_results import BacktestResults
 
 logger = logging.getLogger(__name__)
@@ -74,8 +76,8 @@ class WalkForwardValidator:
     def create_folds(
         self,
         data: pd.DataFrame,
-        start_date: Optional[pd.Timestamp] = None,
-        end_date: Optional[pd.Timestamp] = None,
+        start_date: pd.Timestamp | None = None,
+        end_date: pd.Timestamp | None = None,
     ) -> list[WalkForwardFold]:
         """
         Create walk-forward validation folds.
@@ -161,7 +163,7 @@ class WalkForwardValidator:
         self,
         model_class: type,
         data: pd.DataFrame,
-        strategy_factory: Optional[Callable] = None,
+        strategy_factory: Callable | None = None,
         **model_kwargs,
     ) -> WalkForwardResults:
         """
@@ -335,7 +337,9 @@ class WalkForwardValidator:
                 report.append(f"  {key}: {value}")
 
         report.append("\nFold Details:")
-        for i, (fold, fold_result) in enumerate(zip(results.folds, results.fold_results)):
+        for i, (fold, fold_result) in enumerate(
+            zip(results.folds, results.fold_results, strict=False)
+        ):
             report.append(f"\n  Fold {i + 1}:")
             report.append(f"    Train: {fold.train_start.date()} to {fold.train_end.date()}")
             report.append(f"    Test: {fold.test_start.date()} to {fold.test_end.date()}")

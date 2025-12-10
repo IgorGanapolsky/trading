@@ -25,7 +25,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -68,9 +68,9 @@ class LabelingResult:
 
     labels: pd.Series
     metadata: dict[str, Any]
-    barriers: Optional[pd.DataFrame] = None  # Barrier levels used
-    touch_times: Optional[pd.Series] = None  # When barrier was touched
-    returns: Optional[pd.Series] = None  # Returns at barrier touch
+    barriers: pd.DataFrame | None = None  # Barrier levels used
+    touch_times: pd.Series | None = None  # When barrier was touched
+    returns: pd.Series | None = None  # Returns at barrier touch
 
 
 class TripleBarrierLabeler:
@@ -91,13 +91,13 @@ class TripleBarrierLabeler:
         config: TripleBarrierConfig with labeling parameters
     """
 
-    def __init__(self, config: Optional[TripleBarrierConfig] = None):
+    def __init__(self, config: TripleBarrierConfig | None = None):
         self.config = config or TripleBarrierConfig()
 
     def fit_transform(
         self,
         df: pd.DataFrame,
-        events: Optional[pd.DatetimeIndex] = None,
+        events: pd.DatetimeIndex | None = None,
     ) -> LabelingResult:
         """
         Apply triple-barrier labeling to price data.

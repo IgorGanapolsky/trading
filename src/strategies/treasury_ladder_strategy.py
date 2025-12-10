@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Treasury Ladder Strategy
 
@@ -38,7 +40,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from src.core.alpaca_trader import AlpacaTrader
 from src.rag.collectors.fred_collector import FREDCollector
@@ -159,8 +161,8 @@ class TreasuryLadderStrategy:
 
         # Strategy state
         self.current_holdings: dict[str, float] = {}
-        self.last_rebalance_date: Optional[datetime] = None
-        self.current_regime: Optional[YieldCurveRegime] = None
+        self.last_rebalance_date: datetime | None = None
+        self.current_regime: YieldCurveRegime | None = None
 
         # Performance tracking
         self.total_invested: float = 0.0
@@ -356,7 +358,7 @@ class TreasuryLadderStrategy:
         return allocation
 
     def execute_daily(
-        self, amount: Optional[float] = None, macro_context: dict | None = None
+        self, amount: float | None = None, macro_context: dict | None = None
     ) -> dict[str, Any]:
         """
         Execute daily investment across treasury ladder.
@@ -462,7 +464,7 @@ class TreasuryLadderStrategy:
                 "error": str(e),
             }
 
-    def rebalance_if_needed(self, macro_context: dict | None = None) -> Optional[RebalanceDecision]:
+    def rebalance_if_needed(self, macro_context: dict | None = None) -> RebalanceDecision | None:
         """
         Check if rebalancing is needed and execute if necessary.
 

@@ -40,7 +40,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -76,8 +76,8 @@ class CreditSpread:
     width: float = 0.0  # Strike difference
 
     # Greeks
-    short_delta: Optional[float] = None
-    position_delta: Optional[float] = None
+    short_delta: float | None = None
+    position_delta: float | None = None
 
     # Status
     entry_date: datetime = field(default_factory=datetime.now)
@@ -136,8 +136,8 @@ class SpreadOpportunity:
     return_on_risk: float  # Credit / Max Loss
 
     # Quality metrics
-    iv_rank: Optional[float] = None
-    short_delta: Optional[float] = None
+    iv_rank: float | None = None
+    short_delta: float | None = None
     bid_ask_quality: float = 0.0  # 0-1, higher is better
 
     # Recommendation
@@ -156,6 +156,7 @@ class CreditSpreadsStrategy:
     # Strategy parameters (McMillan guidelines)
     MIN_IV_RANK = 30  # Minimum IV rank for premium selling
     OPTIMAL_IV_RANK = 50  # Prefer higher IV for better premiums
+    MIN_VIX = 13.0  # CRITICAL: Never sell premium when VIX < 13 (low vol = bad R/R)
     TARGET_DELTA = 0.25  # ~25% probability of being breached
     DELTA_TOLERANCE = 0.05
     MIN_DTE = 25
@@ -289,8 +290,8 @@ class CreditSpreadsStrategy:
     def find_spread_opportunity(
         self,
         symbol: str,
-        direction: Optional[SpreadDirection] = None,
-    ) -> Optional[SpreadOpportunity]:
+        direction: SpreadDirection | None = None,
+    ) -> SpreadOpportunity | None:
         """
         Find the best credit spread opportunity for a symbol.
 
@@ -303,6 +304,24 @@ class CreditSpreadsStrategy:
         """
         try:
             import yfinance as yf
+
+            # CRITICAL VIX FILTER (Added Dec 10, 2025 per CEO audit)
+            # Never sell premium when VIX < 13 - low volatility = bad risk/reward
+            try:
+                vix_ticker = yf.Ticker("^VIX")
+                vix_data = vix_ticker.history(period="1d")
+                if not vix_data.empty:
+                    current_vix = vix_data["Close"].iloc[-1]
+                    if current_vix < self.MIN_VIX:
+                        logger.warning(
+                            f"VIX FILTER: Rejecting {symbol} - VIX at {current_vix:.2f} "
+                            f"(below {self.MIN_VIX} threshold). "
+                            "Low volatility = picking up pennies in front of steamroller."
+                        )
+                        return None
+                    logger.debug(f"VIX check passed: {current_vix:.2f} >= {self.MIN_VIX}")
+            except Exception as vix_error:
+                logger.warning(f"Could not check VIX: {vix_error}. Proceeding with caution.")
 
             # Get current price
             ticker = yf.Ticker(symbol)
@@ -441,11 +460,23 @@ class CreditSpreadsStrategy:
                 logger.debug(f"{symbol}: Return on risk {return_on_risk:.1%} below minimum")
                 return None
 
-            # Probability of profit (based on delta)
-            if short_delta:
-                pop = 1 - abs(float(short_delta))
-            else:
-                pop = 0.70  # Estimate based on target delta
+            # Probability of profit using enhanced POP calculator
+            try:
+                from src.utils.options_pop_calculator import OptionsPOPCalculator
+
+                pop_result = OptionsPOPCalculator.pop_with_confidence(
+                    delta=float(short_delta) if short_delta else None,
+                    premium=net_credit,
+                    spread_width=actual_width,
+                    is_short=True,
+                )
+                pop = pop_result.probability
+            except ImportError:
+                # Fallback to simple delta-based calculation
+                if short_delta:
+                    pop = 1 - abs(float(short_delta))
+                else:
+                    pop = 0.70  # Estimate based on target delta
 
             # Bid-ask quality (tighter spreads = better)
             short_spread = (short_ask - short_bid) / short_bid if short_bid > 0 else 1
@@ -520,7 +551,7 @@ class CreditSpreadsStrategy:
 
     def execute_spread(
         self, opportunity: SpreadOpportunity, contracts: int = 1
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Execute a credit spread trade.
 

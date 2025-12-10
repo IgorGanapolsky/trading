@@ -8,7 +8,7 @@ openai==1.109.1
 
 # Data Processing
 pandas==2.3.3
-numpy==1.26.4
+numpy>=1.26.4
 yfinance==0.2.66
 alpha-vantage==2.3.1
 
@@ -22,18 +22,26 @@ feedparser==6.0.12
 
 # YouTube Monitoring
 youtube-transcript-api==1.2.3
-# Pin to a published stable version for CI reliability
-yt-dlp==2024.10.22
 
 # Configuration
 python-dotenv==1.2.1
 pydantic-settings==2.12.0
+
+# Market calendars
+holidays==0.86
 
 # Utilities
 python-dateutil==2.9.0.post0
 pytz==2023.3
 loguru==0.7.3
 anthropic>=0.73.0,<1.0.0  # Aligned with pyproject.toml
+vaderSentiment==3.3.2      # Sentiment scoring for macro/analyst agent
+# LLM orchestration (kept minimal but required for trading agent)
+langchain==0.3.27
+langchain-core==0.3.80
+langchain-anthropic==0.3.22
+langchain-community==0.3.31
+sentence-transformers==3.0.1   # Required for RAG embedder used by trading orchestrator
 
 # Testing (for CI)
 pytest>=7.0.0,<8.0.0

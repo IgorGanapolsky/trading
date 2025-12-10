@@ -7,6 +7,9 @@ Prevents wasted execution time on broken credentials.
 import argparse
 import os
 import sys
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def validate_secrets() -> tuple[bool, list[str]]:
@@ -49,13 +52,14 @@ def validate_secrets() -> tuple[bool, list[str]]:
     errors = []
 
     if missing_critical:
-        print(f"❌ CRITICAL: Missing required secrets: {', '.join(missing_critical)}")
+        print(f"❌ CRITICAL: Missing {len(missing_critical)} required secrets")
+        # Do not log specific secret names in CI logs for security
         errors.extend(missing_critical)
     else:
         print("✅ All critical secrets present")
 
     if missing_optional:
-        print(f"⚠️  WARNING: Missing optional secrets: {', '.join(missing_optional)}")
+        print(f"⚠️  WARNING: Missing {len(missing_optional)} optional secrets")
         print("   Some features may be limited")
 
     # Additional validation for specific formats
@@ -94,7 +98,7 @@ def main():
         print(f"❌ Secrets validation failed: {len(errors)} critical errors")
         print("   Please check GitHub repository secrets:")
         print("   Settings > Secrets and variables > Actions")
-        exit_code = 0  # fail-soft: don't break scheduled workflows
+        exit_code = 1  # fail-hard: invalid secrets MUST stop execution
 
     if args.gha_output and os.getenv("GITHUB_OUTPUT"):
         with open(os.getenv("GITHUB_OUTPUT"), "a", encoding="utf-8") as fh:

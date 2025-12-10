@@ -21,7 +21,7 @@ import time
 from collections import deque
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from src.core.multi_llm_analysis import (
     LLMModel,
@@ -67,8 +67,8 @@ class OptimizedMultiLLMAnalyzer(MultiLLMAnalyzer):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        models: Optional[list[LLMModel]] = None,
+        api_key: str | None = None,
+        models: list[LLMModel] | None = None,
         max_retries: int = 3,
         timeout: int = 60,
         rate_limit_delay: float = 0.5,
@@ -129,9 +129,7 @@ class OptimizedMultiLLMAnalyzer(MultiLLMAnalyzer):
             f"prioritization={enable_prioritization}"
         )
 
-    def _generate_cache_key(
-        self, prompt: str, system_prompt: Optional[str], model: LLMModel
-    ) -> str:
+    def _generate_cache_key(self, prompt: str, system_prompt: str | None, model: LLMModel) -> str:
         """
         Generate cache key for request.
 
@@ -146,7 +144,7 @@ class OptimizedMultiLLMAnalyzer(MultiLLMAnalyzer):
         content = f"{model.value}:{system_prompt or ''}:{prompt}"
         return hashlib.sha256(content.encode()).hexdigest()
 
-    def _get_cached_response(self, cache_key: str, model: LLMModel) -> Optional[LLMResponse]:
+    def _get_cached_response(self, cache_key: str, model: LLMModel) -> LLMResponse | None:
         """
         Retrieve cached response if available and valid.
 
@@ -242,7 +240,7 @@ class OptimizedMultiLLMAnalyzer(MultiLLMAnalyzer):
         self,
         model: LLMModel,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
         priority: RequestPriority = RequestPriority.MEDIUM,
@@ -440,7 +438,7 @@ Provide objective, data-driven sentiment scores based on technical indicators an
 
 # Convenience function
 def create_optimized_analyzer(
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
     enable_caching: bool = True,
     enable_prioritization: bool = True,
 ) -> OptimizedMultiLLMAnalyzer:

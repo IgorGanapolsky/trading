@@ -17,7 +17,7 @@
     "total_trades": 85,
     "status": "needs_improvement",
     "description": "Stress test for historic volatility spike. Ensures ATR sizing and guardrails throttle exposure before we allow live promotion.\n",
-    "generated_at": "2025-12-02T22:44:02.805145",
+    "generated_at": "2025-12-05T14:36:22.702390",
     "execution_costs": {
       "fee_cost": 2.29,
       "slippage_cost": 0.31,
@@ -1165,6 +1165,11 @@
     "performance_rating": "FAIR",
     "total_slippage_cost": 0.305986097243948,
     "slippage_enabled": true,
-    "slippage_impact_pct": 0.24841703194596523
+    "slippage_impact_pct": 0.24841703194596523,
+    "avg_daily_pnl": 1.4491101555979935,
+    "pct_days_above_target": 0.0,
+    "worst_5day_drawdown": 64.15461503404367,
+    "worst_20day_drawdown": 107.37973415720626,
+    "trade_metrics": null
   }
 }

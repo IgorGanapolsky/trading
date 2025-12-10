@@ -22,7 +22,7 @@ import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -59,10 +59,10 @@ class ExperimentRun:
     experiment_name: str
     config: ExperimentConfig
     start_time: str
-    end_time: Optional[str] = None
+    end_time: str | None = None
     status: str = "running"  # running, completed, failed
-    git_sha: Optional[str] = None
-    data_snapshot_id: Optional[str] = None
+    git_sha: str | None = None
+    data_snapshot_id: str | None = None
     metrics: dict[str, float] = field(default_factory=dict)
     artifacts: list[str] = field(default_factory=list)
     notes: str = ""
@@ -110,7 +110,7 @@ class ExperimentTracker:
         self.tracking_dir = Path(tracking_dir)
         self.tracking_dir.mkdir(parents=True, exist_ok=True)
         self.use_mlflow = use_mlflow
-        self.current_run: Optional[ExperimentRun] = None
+        self.current_run: ExperimentRun | None = None
 
         # Initialize MLflow if requested
         self._mlflow = None
@@ -141,7 +141,7 @@ class ExperimentTracker:
         with open(self._registry_path, "w") as f:
             json.dump(self._registry, f, indent=2)
 
-    def _get_git_sha(self) -> Optional[str]:
+    def _get_git_sha(self) -> str | None:
         """Get current Git commit SHA."""
         try:
             result = subprocess.run(
@@ -160,7 +160,7 @@ class ExperimentTracker:
         self,
         experiment_name: str,
         config: ExperimentConfig,
-        data_snapshot_id: Optional[str] = None,
+        data_snapshot_id: str | None = None,
     ) -> ExperimentRun:
         """
         Start a new experiment run.
@@ -175,7 +175,7 @@ class ExperimentTracker:
         """
         # Generate run ID
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        run_hash = hashlib.md5(
+        run_hash = hashlib.sha256(
             f"{experiment_name}{timestamp}{json.dumps(config.to_dict())}".encode()
         ).hexdigest()[:8]
         run_id = f"{experiment_name}_{timestamp}_{run_hash}"
@@ -215,7 +215,7 @@ class ExperimentTracker:
         self,
         name: str,
         value: float,
-        step: Optional[int] = None,
+        step: int | None = None,
     ) -> None:
         """
         Log a metric value.
@@ -236,7 +236,7 @@ class ExperimentTracker:
 
         logger.debug(f"Logged metric: {name}={value}")
 
-    def log_metrics(self, metrics: dict[str, float], step: Optional[int] = None) -> None:
+    def log_metrics(self, metrics: dict[str, float], step: int | None = None) -> None:
         """Log multiple metrics at once."""
         for name, value in metrics.items():
             self.log_metric(name, value, step)
@@ -245,7 +245,7 @@ class ExperimentTracker:
         self,
         model: Any,
         model_name: str,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """
         Save a trained model as an artifact.
@@ -285,7 +285,7 @@ class ExperimentTracker:
         logger.info(f"Saved model: {model_path}")
         return str(model_path)
 
-    def log_artifact(self, artifact_path: str, artifact_name: Optional[str] = None) -> None:
+    def log_artifact(self, artifact_path: str, artifact_name: str | None = None) -> None:
         """Log an arbitrary artifact file."""
         if self.current_run is None:
             raise RuntimeError("No active run. Call start_run() first.")
@@ -396,12 +396,12 @@ class ExperimentTracker:
         model_path = run_dir / "models" / f"{model_name}.pkl"
 
         with open(model_path, "rb") as f:
-            return pickle.load(f)  # noqa: S301 - Models are trusted internal artifacts
+            return pickle.load(f)  # nosec B301  # noqa: S301 - Models are trusted internal artifacts
 
     def list_runs(
         self,
-        experiment_name: Optional[str] = None,
-        status: Optional[str] = None,
+        experiment_name: str | None = None,
+        status: str | None = None,
     ) -> list[dict[str, Any]]:
         """List all runs, optionally filtered."""
         runs = self._registry.get("runs", [])
@@ -417,7 +417,7 @@ class ExperimentTracker:
     def compare_runs(
         self,
         run_ids: list[str],
-        metrics: Optional[list[str]] = None,
+        metrics: list[str] | None = None,
     ) -> pd.DataFrame:
         """
         Compare multiple runs.
@@ -459,7 +459,7 @@ class ExperimentTracker:
         experiment_name: str,
         metric: str = "sharpe",
         higher_is_better: bool = True,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Get the best run for an experiment by a metric.
 
@@ -591,7 +591,7 @@ class ModelRegistry:
         self._save_registry()
         logger.info(f"Promoted {model_name} {version} to production")
 
-    def get_production_model(self, model_name: str) -> Optional[str]:
+    def get_production_model(self, model_name: str) -> str | None:
         """Get path to production model."""
         if model_name not in self._registry["models"]:
             return None

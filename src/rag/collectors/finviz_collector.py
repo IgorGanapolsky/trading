@@ -5,6 +5,8 @@ Collects stock screener data, technical signals, and market insights from Finviz
 Free tier provides delayed data, suitable for end-of-day analysis.
 """
 
+from __future__ import annotations
+
 import logging
 import re
 from datetime import datetime

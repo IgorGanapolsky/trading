@@ -1,0 +1,57 @@
+name: Auto-Enable Workflows
+
+# This workflow runs on every push to main to ensure all workflows stay enabled
+# GitHub disables scheduled workflows after 60 days of inactivity
+# This workflow prevents that by triggering on push events
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  keep-alive:
+    name: Keep All Workflows Active
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable All Scheduled Workflows
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔄 Ensuring all workflows are enabled..."
+
+          # List all workflows
+          workflows=$(gh workflow list --all --json name,state,id)
+
+          echo "Current workflow states:"
+          echo "$workflows" | jq -r '.[] | "\(.state): \(.name)"'
+
+          # Enable any disabled workflows
+          disabled=$(echo "$workflows" | jq -r '.[] | select(.state == "disabled_inactivity" or .state == "disabled") | .id')
+
+          if [ -n "$disabled" ]; then
+            echo ""
+            echo "⚠️ Found disabled workflows - re-enabling..."
+            for id in $disabled; do
+              echo "  Enabling workflow ID: $id"
+              gh workflow enable $id || true
+            done
+            echo "✅ All workflows re-enabled!"
+          else
+            echo "✅ All workflows are already active"
+          fi
+
+          echo ""
+          echo "📅 Trading Schedule:"
+          echo "  - Weekdays 9:35 AM ET: Daily equity trading"
+          echo "  - Weekends 9:35 AM ET: Crypto proxy trading (BITO)"
+          echo "  - Daily 2:00 AM UTC: Heartbeat keepalive"

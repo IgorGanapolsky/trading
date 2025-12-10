@@ -11,6 +11,13 @@ repos:
         args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
 
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v1.2.0'
+    hooks:
+      - id: mypy
+        args: ["--config-file", "mypy.ini"]
+        additional_dependencies: [types-requests, types-PyYAML]
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
@@ -42,6 +49,13 @@ repos:
             'B101,B310,B113,B602,B603,B404,B614,B324,B301,B314',
           ]
         exclude: ^tests/|.pc-venv/
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: package.lock.json
 
   # Keep the custom hygiene script if needed, but ensure it works
   - repo: local
@@ -95,6 +109,17 @@ repos:
         additional_dependencies: [numpy, pyyaml]
         types: [python]
         files: '(scripts/|src/|tests/)'
+        pass_filenames: false
+        verbose: true
+        stages: [pre-commit]
+
+      - id: validate-workflow-secrets
+        name: Validate Workflow Secrets (Zero Tolerance)
+        entry: python3 scripts/validate_workflow_secrets.py
+        language: python
+        additional_dependencies: [pyyaml]
+        types: [yaml]
+        files: '\.github/workflows/.*\.yml$'
         pass_filenames: false
         verbose: true
         stages: [pre-commit]

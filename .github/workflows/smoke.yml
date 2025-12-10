@@ -26,6 +26,12 @@ jobs:
           PYTHONPATH: src
         run: |
           python scripts/validate_config.py
+
+      - name: Validate workflow secrets (Zero Tolerance)
+        run: |
+          echo "🛡️  Validating all required secrets are passed to workflows..."
+          python scripts/validate_workflow_secrets.py
+
       - name: Run smoke test
         env:
           PYTHONPATH: src
@@ -33,3 +39,9 @@ jobs:
           SIMULATED_EQUITY: '100000'
         run: |
           python tests/test_smoke.py
+
+      - name: Run deterministic backtest
+        env:
+          PYTHONPATH: .
+        run: |
+          python tests/test_deterministic_backtest.py

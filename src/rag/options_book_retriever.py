@@ -16,7 +16,7 @@ Integrates with:
 
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from src.rag.collectors.mcmillan_options_collector import McMillanOptionsKnowledgeBase
 from src.rag.collectors.options_book_collector import get_options_book_collector
@@ -221,7 +221,7 @@ class OptionsBookRetriever:
         query: str,
         iv_rank: float,
         top_k: int = 5,
-        content_types: Optional[list[str]] = None,
+        content_types: list[str] | None = None,
         include_structured: bool = True,
     ) -> dict[str, Any]:
         """
@@ -290,7 +290,7 @@ class OptionsBookRetriever:
         self,
         query: str,
         top_k: int = 5,
-        content_types: Optional[list[str]] = None,
+        content_types: list[str] | None = None,
         include_structured: bool = True,
     ) -> dict[str, Any]:
         """

@@ -18,6 +18,7 @@ def base_args() -> Namespace:
         required_sharpe=1.5,
         max_drawdown=10.0,
         min_profitable_days=30,
+        min_trades=100,
     )
 
 

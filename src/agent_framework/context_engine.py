@@ -4,6 +4,7 @@ Context Engine for Multi-Agent Systems
 Implements context engineering principles from:
 - "Context Engineering for Multi-Agent Systems" (Packt)
 - "Context Engineering for Multi-Agent LLM Code Assistants" (arXiv:2508.08322)
+- Claude Agent SDK 1M Context Windows (December 2025)
 
 Key Concepts:
 1. Semantic Blueprints: Structured definitions of agent roles, capabilities, and communication
@@ -11,6 +12,12 @@ Key Concepts:
 3. Context Validation: Ensuring context integrity and completeness
 4. Memory & Persistence: Long-term and short-term context storage
 5. Error Handling: Resilient context passing with fallbacks
+6. 1M Context Support: Extended context windows for full codebase/history awareness
+
+New in December 2025:
+- Support for 1M token context windows (5x increase)
+- Automatic context compaction when approaching limits
+- Agent SDK integration with beta features
 """
 
 from __future__ import annotations
@@ -80,7 +87,7 @@ class SemanticBlueprint:
     outputs: dict[str, dict[str, Any]] = field(default_factory=dict)  # Output schema
     communication_protocol: dict[str, Any] = field(default_factory=dict)
     dependencies: list[str] = field(default_factory=list)  # Other agents this depends on
-    context_window_size: int = 8000  # Estimated tokens needed
+    context_window_size: int = 50_000  # Default tokens (expanded with 1M context support)
     priority: ContextPriority = ContextPriority.HIGH
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
@@ -525,22 +532,38 @@ class ContextEngine:
     def get_agent_context(
         self,
         agent_id: str,
-        max_tokens: int = 8000,
+        max_tokens: int | None = None,
         use_multi_timescale: bool | None = None,
+        use_1m_context: bool = True,
     ) -> dict[str, Any]:
         """
         Get complete context for an agent, including blueprint and relevant memories.
 
         Enhanced with multi-timescale memory retrieval for nested learning.
+        Now supports 1M context windows via Claude Agent SDK (December 2025).
 
         Args:
             agent_id: Agent identifier
-            max_tokens: Maximum context window size
+            max_tokens: Maximum context window size (None = use SDK config)
             use_multi_timescale: Override multi-timescale setting (None = use default)
+            use_1m_context: Enable 1M context window support (default True)
 
         Returns:
             Complete context dictionary
         """
+        # Get context limit from SDK config if not specified
+        if max_tokens is None:
+            try:
+                from src.agent_framework.agent_sdk_config import get_agent_sdk_config
+
+                sdk_config = get_agent_sdk_config()
+                max_tokens = sdk_config.get_agent_context_limit(agent_id)
+                if use_1m_context:
+                    # Can use up to the allocated limit for this agent
+                    logger.debug(f"Using 1M context: {max_tokens:,} tokens for {agent_id}")
+            except ImportError:
+                max_tokens = 50_000  # Default expanded limit
+
         blueprint = self.blueprints.get(agent_id)
         if not blueprint:
             logger.warning(f"⚠️ No blueprint found for agent: {agent_id}")
@@ -582,7 +605,12 @@ class ContextEngine:
             # Add memories to context (prioritize by importance)
             token_count = len(json.dumps(context))
             for memory in memories:
-                memory_json = json.dumps(asdict(memory))
+                memory_json = json.dumps(
+                    asdict(memory),
+                    default=lambda o: list(o)
+                    if isinstance(o, set)
+                    else (getattr(o, "value", str(o))),
+                )
                 if token_count + len(memory_json) < max_tokens:
                     context["memories"].append(asdict(memory))
                     token_count += len(memory_json)
@@ -597,7 +625,12 @@ class ContextEngine:
 
             token_count = len(json.dumps(context))
             for memory in agent_memories[:10]:  # Limit to top 10 memories
-                memory_json = json.dumps(asdict(memory))
+                memory_json = json.dumps(
+                    asdict(memory),
+                    default=lambda o: list(o)
+                    if isinstance(o, set)
+                    else (getattr(o, "value", str(o))),
+                )
                 if token_count + len(memory_json) < max_tokens:
                     context["memories"].append(asdict(memory))
                     token_count += len(memory_json)

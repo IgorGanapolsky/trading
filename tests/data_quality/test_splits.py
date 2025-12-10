@@ -4,7 +4,32 @@ Tests for split and dividend adjustments.
 Verifies that split and dividend adjustments are correct.
 """
 
+import numpy as np
 import pandas as pd
+import pytest
+
+
+@pytest.fixture
+def data_fixture():
+    """Provide clean OHLCV data without splits or negatives."""
+    dates = pd.date_range("2023-01-02", periods=30, freq="B")
+    close = np.linspace(100, 110, len(dates))
+    data = pd.DataFrame(
+        {
+            "Open": close * 0.999,
+            "High": close * 1.001,
+            "Low": close * 0.998,
+            "Close": close,
+            "Volume": np.full(len(dates), 1_000_000),
+        },
+        index=dates,
+    )
+    return data
+
+
+@pytest.fixture(name="data")
+def _data_alias(data_fixture):
+    return data_fixture
 
 
 def test_no_negative_prices(data: pd.DataFrame) -> bool:
@@ -113,7 +138,7 @@ def test_split_adjustments(data: pd.DataFrame, threshold: float = 0.2) -> bool:
         jump_dates = data[large_jumps].index.tolist()
         jump_returns = returns[large_jumps]
         print(f"Found {large_jumps.sum()} potential splits (>{threshold * 100}% jumps)")
-        for date, ret in zip(jump_dates, jump_returns):
+        for date, ret in zip(jump_dates, jump_returns, strict=True):
             print(f"  {date}: {ret * 100:.2f}%")
         # This is informational - large jumps might be legitimate
         return True  # Don't fail, just warn

@@ -283,7 +283,9 @@ class RLWeightUpdater:
 
         return {
             "bias": round(intercept, 4),
-            "weights": {key: round(weight, 4) for key, weight in zip(FEATURE_KEYS, weights)},
+            "weights": {
+                key: round(weight, 4) for key, weight in zip(FEATURE_KEYS, weights, strict=False)
+            },
             "action_threshold": round(max(0.5, min(0.85, avg_probability)), 3),
             "base_multiplier": round(0.6 + avg_probability * 0.5, 3),
         }

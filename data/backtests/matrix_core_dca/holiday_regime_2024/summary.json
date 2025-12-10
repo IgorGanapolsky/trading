@@ -17,7 +17,7 @@
     "total_trades": 262,
     "status": "needs_improvement",
     "description": "Tests full-year holiday/weekend trading with BTC proxy (BITO) and treasury flight-to-safety (TLT). Validates regime detection switches and looser RL thresholds for off-hours sessions.\n",
-    "generated_at": "2025-12-02T22:44:03.790524",
+    "generated_at": "2025-12-05T14:36:24.158052",
     "execution_costs": {
       "fee_cost": 4.72,
       "slippage_cost": 2.1,
@@ -3466,6 +3466,11 @@
     "performance_rating": "NEEDS IMPROVEMENT",
     "total_slippage_cost": 2.0997572146771764,
     "slippage_enabled": true,
-    "slippage_impact_pct": 0.0
+    "slippage_impact_pct": 0.0,
+    "avg_daily_pnl": -0.8292672948179525,
+    "pct_days_above_target": 0.38167938931297707,
+    "worst_5day_drawdown": 300.904221674733,
+    "worst_20day_drawdown": 296.7352475779626,
+    "trade_metrics": null
   }
 }

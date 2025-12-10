@@ -16,7 +16,6 @@ import os
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import requests
 import yfinance as yf
@@ -65,8 +64,8 @@ class NewsSentimentAggregator:
 
     def __init__(
         self,
-        alpha_vantage_key: Optional[str] = None,
-        grok_api_key: Optional[str] = None,
+        alpha_vantage_key: str | None = None,
+        grok_api_key: str | None = None,
         output_dir: str = "data/sentiment",
     ):
         """
@@ -615,7 +614,7 @@ class NewsSentimentAggregator:
 
         return report
 
-    def save_report(self, report: SentimentReport, filename: Optional[str] = None) -> str:
+    def save_report(self, report: SentimentReport, filename: str | None = None) -> str:
         """
         Save sentiment report to JSON file.
 
@@ -647,7 +646,7 @@ class NewsSentimentAggregator:
         logger.info(f"Sentiment report saved to {filepath}")
         return str(filepath)
 
-    def load_report(self, filename: str) -> Optional[dict]:
+    def load_report(self, filename: str) -> dict | None:
         """
         Load a sentiment report from file.
 

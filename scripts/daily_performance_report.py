@@ -155,7 +155,7 @@ def main():
             print(f"   ⚠️  WARNING: System state is {age_hours:.1f} hours old")
         else:
             print(f"   ✅ System state is fresh ({age_hours:.1f} hours old)")
-    except:
+    except Exception:
         pass
     print()
 

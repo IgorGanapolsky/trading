@@ -5,8 +5,8 @@ Utility helpers for MCP-aware code execution.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Awaitable
-from typing import Any, Callable, TypeVar
+from collections.abc import Awaitable, Callable
+from typing import Any, TypeVar
 
 T = TypeVar("T")
 

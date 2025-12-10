@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Execution Agent: Order execution and timing optimization
 
@@ -13,7 +15,8 @@ Ensures best execution
 import builtins
 import contextlib
 import logging
-from typing import Any, Optional
+from datetime import datetime
+from typing import Any
 
 from alpaca.trading.client import TradingClient
 from alpaca.trading.enums import OrderSide, TimeInForce
@@ -24,7 +27,16 @@ try:
 except Exception:  # pragma: no cover - optional dependency in lightweight test envs
     AlpacaOptionsClient = None  # type: ignore[misc,assignment]
 
+from src.utils.market_data import MarketDataProvider
+from src.utils.technical_indicators import calculate_macd, calculate_rsi
+
 from .base_agent import BaseAgent
+
+# Import RAG Trade Advisor for options validation
+try:
+    from src.trading.rag_trade_advisor import RAGTradeAdvisor
+except Exception:  # pragma: no cover - optional dependency
+    RAGTradeAdvisor = None  # type: ignore[misc,assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -42,10 +54,11 @@ class ExecutionAgent(BaseAgent):
 
     def __init__(
         self,
-        alpaca_api: Optional[TradingClient] = None,
+        alpaca_api: TradingClient | None = None,
         *,
         paper: bool = True,
-        options_client: "AlpacaOptionsClient | None" = None,
+        options_client: AlpacaOptionsClient | None = None,
+        enable_rag_validation: bool = True,
     ):
         super().__init__(name="ExecutionAgent", role="Order execution and timing optimization")
         self.alpaca_api = alpaca_api
@@ -54,6 +67,18 @@ class ExecutionAgent(BaseAgent):
         self.execution_history: list = []
         # Lazily instantiated options client (False sentinel == permanently unavailable)
         self._options_client: AlpacaOptionsClient | None | bool = options_client
+        self.data_provider = MarketDataProvider()
+
+        # Initialize RAG Trade Advisor for options validation
+        self.enable_rag_validation = enable_rag_validation
+        self._rag_advisor: RAGTradeAdvisor | None = None
+        if enable_rag_validation and RAGTradeAdvisor is not None:
+            try:
+                self._rag_advisor = RAGTradeAdvisor()
+                logger.info("RAG validation ENABLED for options trades")
+            except Exception as e:
+                logger.warning(f"Failed to initialize RAG advisor: {e}")
+                self._rag_advisor = None
 
     def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
@@ -79,6 +104,19 @@ class ExecutionAgent(BaseAgent):
         # Check market status
         market_status = self._check_market_status()
 
+        # Fetch historical data and calculate technicals
+        macd_hist = 0.0
+        rsi = 50.0
+        try:
+            # Fetch 60 days of data to ensure enough for MACD/RSI
+            hist_result = self.data_provider.get_daily_bars(symbol, lookback_days=60)
+            if not hist_result.data.empty:
+                prices = hist_result.data["Close"]
+                _, _, macd_hist = calculate_macd(prices)
+                rsi = calculate_rsi(prices)
+        except Exception as e:
+            logger.warning(f"Failed to calculate technicals for {symbol}: {e}")
+
         # Build execution analysis prompt
         memory_context = self.get_memory_context(limit=3)
 
@@ -87,6 +125,7 @@ class ExecutionAgent(BaseAgent):
 
 ORDER: {action} {symbol} ${position_size:,.0f} (Market) | Status: {market_status["status"]}
 CONDITIONS: Spread {market_conditions.get("spread", "N/A")} | Vol {market_conditions.get("volume", "N/A")} | Volatility {market_conditions.get("volatility", "N/A")}
+TECHNICALS: MACD Hist {macd_hist:.3f} | RSI {rsi:.1f}
 
 {memory_context}
 
@@ -95,6 +134,10 @@ PRINCIPLES:
 - Low volume (<50% avg) = expect higher slippage, consider splitting
 - First/last 15 min of day = higher volatility, avoid if not urgent
 - Market closed = queue for open (unless overnight risk is acceptable)
+- RSI > 70 = Overbought, be cautious with BUYs (consider DELAY)
+- RSI < 30 = Oversold, potential bounce (good for BUYs)
+- MACD Hist < 0 = Bearish momentum (be cautious with BUYs)
+- MACD Hist > 0 = Bullish momentum
 
 EXAMPLES:
 Example 1 - Execute Now:
@@ -150,7 +193,7 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
     # ------------------------------------------------------------------ #
     # Options execution helpers
     # ------------------------------------------------------------------ #
-    def _get_options_client(self) -> "AlpacaOptionsClient | None":
+    def _get_options_client(self) -> AlpacaOptionsClient | None:
         """
         Lazily resolve an Alpaca options client if credentials are available.
 
@@ -360,7 +403,7 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
                 try:
                     slippage_str = line.split(":")[1].strip().replace("%", "")
                     analysis["slippage"] = float(slippage_str) / 100
-                except:
+                except Exception:
                     pass
             elif line.startswith("CONFIDENCE:"):
                 with contextlib.suppress(builtins.BaseException):
@@ -383,9 +426,18 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
         qty: int,
         order_type: str = "limit",
         limit_price: float | None = None,
+        ticker: str | None = None,
+        strategy: str | None = None,
+        iv_rank: float | None = None,
+        sentiment: str = "neutral",
+        dte: int | None = None,
+        stock_price: float | None = None,
+        current_iv: float | None = None,
     ) -> dict[str, Any]:
         """
         Submit an options order via the Alpaca options client.
+
+        NOW WITH RAG VALIDATION: Consults McMillan/TastyTrade knowledge before execution.
 
         Args:
             option_symbol: OCC-formatted option ticker (e.g., SPY250117C00450000)
@@ -393,10 +445,68 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
             qty: Number of contracts
             order_type: limit or market
             limit_price: Required for limit orders (per contract)
+            ticker: Underlying ticker (for RAG validation)
+            strategy: Strategy name (for RAG validation)
+            iv_rank: Current IV Rank 0-100 (for RAG validation)
+            sentiment: Market sentiment (for RAG validation)
+            dte: Days to expiration (for RAG validation)
+            stock_price: Current stock price (for expected move calc)
+            current_iv: Current IV as decimal (for expected move calc)
+
+        Returns:
+            Dict with order result plus RAG validation metadata
         """
         if not self.options_client:
             raise RuntimeError("Options client not configured for ExecutionAgent")
 
+        # RAG VALIDATION: Consult expert knowledge before execution
+        rag_advice = None
+        if self.enable_rag_validation and self._rag_advisor and ticker and strategy and iv_rank:
+            try:
+                logger.info(
+                    f"🔍 Consulting RAG before executing {strategy} on {ticker} "
+                    f"(IV Rank: {iv_rank:.0f}%)"
+                )
+
+                rag_advice = self._rag_advisor.get_trade_advice(
+                    ticker=ticker,
+                    strategy=strategy,
+                    iv_rank=iv_rank,
+                    sentiment=sentiment,
+                    dte=dte or 30,
+                    stock_price=stock_price,
+                    current_iv=current_iv,
+                )
+
+                # CRITICAL: If RAG rejects trade, abort execution
+                if not rag_advice["approved"]:
+                    logger.error(
+                        f"❌ RAG REJECTED trade: {ticker} {strategy} - "
+                        f"{rag_advice['rejection_reason']}"
+                    )
+                    return {
+                        "status": "REJECTED_BY_RAG",
+                        "rejection_reason": rag_advice["rejection_reason"],
+                        "rag_advice": rag_advice,
+                        "option_symbol": option_symbol,
+                        "side": side,
+                        "qty": qty,
+                    }
+
+                logger.info(
+                    f"✅ RAG APPROVED trade with {rag_advice['confidence']:.1%} confidence: "
+                    f"{rag_advice['recommendation']}"
+                )
+
+                # Log warnings if any
+                for warning in rag_advice.get("warnings", []):
+                    logger.warning(f"⚠️ RAG Warning: {warning}")
+
+            except Exception as e:
+                logger.error(f"RAG validation failed: {e} - Proceeding without validation")
+                rag_advice = {"error": str(e), "approved": True}  # Allow trade on error
+
+        # Execute the order
         result = self.options_client.submit_option_order(
             option_symbol=option_symbol,
             qty=qty,
@@ -404,23 +514,42 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
             order_type=order_type,
             limit_price=limit_price,
         )
+
+        # Add RAG metadata to result
+        if rag_advice:
+            result["rag_validation"] = {
+                "approved": rag_advice["approved"],
+                "confidence": rag_advice.get("confidence", 1.0),
+                "iv_regime": rag_advice.get("iv_regime", {}).get("regime", "unknown"),
+                "mcmillan_consulted": bool(rag_advice.get("mcmillan_guidance")),
+                "tastytrade_consulted": bool(rag_advice.get("tastytrade_guidance")),
+            }
+
+        # Track execution
         self.execution_history.append(
             {
                 "type": "options",
                 "symbol": option_symbol,
+                "ticker": ticker,
+                "strategy": strategy,
                 "side": side,
                 "qty": qty,
                 "order_type": order_type,
                 "limit_price": limit_price,
                 "result": result,
+                "rag_advice": rag_advice,
+                "timestamp": datetime.now().isoformat(),
             }
         )
+
         logger.info(
-            "Options order submitted via ExecutionAgent: %s %s x%d @ %s (status=%s)",
+            "Options order submitted via ExecutionAgent: %s %s x%d @ %s (status=%s) | RAG: %s",
             side,
             option_symbol,
             qty,
             f"${limit_price:.2f}" if limit_price else "mkt",
             result.get("status"),
+            "VALIDATED" if rag_advice and rag_advice.get("approved") else "SKIPPED",
         )
+
         return result

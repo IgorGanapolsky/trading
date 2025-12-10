@@ -1,0 +1,1410 @@
+Title: An Adaptive Multi-Agent Bitcoin Trading System
+URL: https://arxiv.org/pdf/2510.08068.pdf
+Citation: ArXiv (2025)
+Extracted: 2025-12-08T04:57:51.102398 UTC
+An Adaptive Multi-Agent Bitcoin Trading System
+Aadi Singhi
+UCL Computer Science
+Abstract
+1This paper presents a Multi Agent Bitcoin Trading sys-
+tem that utilizes Large Language Models (LLMs) for al-
+pha generation and portfolio management in the cryp-
+tocurrencies market. Unlike equities, cryptocurrencies
+exhibit extreme volatility and are heavily influenced by
+rapidly shifting market sentiments and regulatory an-
+nouncements, making them difficult to model using static
+regression models or neural networks trained solely on
+historical data. The proposed framework overcomes this
+by structuring LLMs into specialised agents for technical
+analysis, sentiment evaluation, decision-making, and per-
+formance reflection. The agents improve over time via a
+novel verbal feedback mechanism where a Reflect agent
+provides daily and weekly natural-language critiques of
+trading decisions. These textual evaluations are then in-
+jected into future prompts of the agents, allowing them to
+adjust allocation logic without weight updates or finetun-
+ing. Back-testing on Bitcoin price data from July 2024 to
+April 2025 shows consistent outperformance across mar-
+ket regimes: the Quantitative agent delivered over 30%
+higher returns in bullish phases and 15% overall gains ver-
+sus buy-and-hold, while the sentiment-driven agent turned
+sideways markets from a small loss into a gain of over
+100%. Adding weekly feedback further improved total
+performance by 31% and reduced bearish losses by 10%.
+The results demonstrate that verbal feedback represents a
+new, scalable, and low-cost approach of tuning LLMs for
+financial goals.
+1 Introduction
+This paper introduces an Agentic AI system for managing
+a Bitcoin-only portfolio powered by DeepSeek-r1 [5].
+Conventional machine learning methods, such as regres-
+sion models and neural networks, perform well in equity
+markets where recurring historical patterns are linked to
+fundamentals such as earnings, cash flows, and balance
+sheet strength [23]. In contrast, Bitcoin’s price is largely
+driven by non-fundamental forces such as regulatory
+announcements, influencer statements, and speculative
+1The original thesis was submitted on 16 May 2025. This paper
+presents a condensed version of the full 80-page dissertation.behavior by investors driven by fear and greed. For
+example, in early January 2021 Bitcoin rose from about
+$29,000 to over $40,000 in less than a week following
+positive commentary and Tesla’s $1.5 billion purchase,
+while in May 2021 it fell nearly 30% within a week after
+Tesla suspended Bitcoin payments and Chinese regulators
+reiterated restrictions. Therefore, Bitcoin is characterized
+by asymmetric returns, fat tails, and high noise-to-signal
+ratios.
+In such conditions, being frequently correct does not
+necessarily translate into making money. Theoretically,
+if a model consistently predicts the correct direction of
+returns, profitability should follow. However, Accuracy
+treats all predictions equally, whereas profitability de-
+pends on the magnitude and timing of those predictions.
+A model that is ”often right” can still underperform
+if it misses major rallies or fails to exit before sharp
+drawdowns, while another with lower accuracy can
+outperform by simply capturing large moves. In such
+conditions, profit depends more on capital allocation,
+position sizing, and risk management than on raw
+directional correctness. Moreover, even highly accurate
+models may fail if execution costs, slippage, or regime
+shifts negate expected returns.
+What is needed is a mechanism that can reason
+over unstructured, real-time signals rather than only fit
+historical patterns. LLMs offer a potential solution to
+this unpredictability, as they are particularly suited for
+large-scale textual analysis and pattern recognition. By
+continuously updating their understanding as new data
+emerges, they are better able to capture sudden shifts
+in cryptocurrency prices than models trained solely on
+historical data.
+This promise, however, hinges on how we enable
+LLMs to evolve without full retraining. Since LLMs do
+not inherently update their internal knowledge, the key
+question is how we can refresh or refine their under-
+standing as markets change. Existing research explores
+methods such as Retrieval-Augmented Generation (RAG)
+[8], Supervised Fine-Tuning (SFT) [9], Reinforcement
+Learning (RL) [12], and Multi-Head Reinforcement
+1arXiv:2510.08068v2  [q-fin.PM]  14 Nov 2025
+
+Learning (MHRL) [11]. , but these approaches often suf-
+fer from information loss when complex human feedback
+is compressed into a single scalar reward signal. Several
+studies, including InstructGPT [12] and Constitutional
+AI [13], note that converting rich human feedback into
+a single scalar reward often omits contextual nuance
+and can cause models to optimize for the reward itself
+rather than the true intent of the feedback. To address
+this limitation, recent studies propose using verbal
+feedback: natural-language critiques provided directly
+to the model during inference, allowing it to retain the
+full semantic richness of the feedback. For instance, the
+Reflexion framework enables models to store and reuse
+their own self-critiques without any parameter updates,
+leading to more consistent reasoning and improved task
+success rates across multiple benchmarks [14]. Similarly,
+Self-Refine introduces an iterative “generate→critique
+→revise” process, where the model learns from its own
+feedback to progressively enhance output quality [15].
+Both studies report substantial performance gains over
+standard LLM baselines without additional training or
+fine-tuning. This is especially relevant for crypto trading,
+where context and justification matter as much as raw
+predictions.
+Now that this system incorporates natural-language
+critiques as its optimisation method, the next step is
+to examine how these capabilities translate into actual
+trading performance. Improving a trading strategy de-
+pends on identifying which input factors matter most for
+Bitcoin. Is it technical indicators, sentiment measures, or
+broader market variables? The existing literature remains
+inconclusive on this point, with studies reaching mixed
+conclusions about which features provide consistently
+useful signals.
+To build on these capabilities, the framework struc-
+tures LLMs into specialised agents for technical analy-
+sis, sentiment assessment, portfolio decision-making, and
+strategy evaluation. Adaptability is introduced through a
+novel dual verbal feedback mechanism in which the Re-
+flect agent produces natural-language evaluations of each
+agent’s performance at daily and weekly intervals. The
+trading decisions are evaluated against benchmarks such
+as a static baseline buy-and-hold portfolio, risk-adjusted
+measures such as the Sharpe ratio, and profitability indi-
+cators such as cumulative returns, regret, and accuracy.
+These evaluations are then injected into the next day’s or
+week’s prompts. Rather than adjusting model parameters
+or retraining, the agents incorporate this feedback as addi-
+tional context in their reasoning, allowing them to refine
+indicator prioritisation, sentiment weighting, and alloca-
+tion choices in subsequent decisions. Each agent man-
+ages its own portfolio based on distinct inputs, such asquantitative indicators or sentiment data, allowing a di-
+rect comparison of which factors lead to stronger trading
+performance. The system is evaluated not on classifica-
+tion accuracy alone but on its ability to deliver consistent
+profitability over time, aligning its objectives more closely
+with real-world investment outcomes.
+2 Background Research
+The background review is organized into two subsections:
+an in-depth analysis of Bitcoin, followed by a brief sum-
+mary of the current research on LLMs in finance.
+2.1 Bitcoin
+Bitcoin is a decentralized digital currency introduced
+in 2009 by the pseudonymous Satoshi Nakamoto [16].
+While Bitcoin is often described as a currency, it is
+more fundamentally an application of distributed ledger
+technology (DLT), where transactions are recorded across
+a decentralized network rather than by a central authority.
+Within this family of technologies, blockchain represents
+a specific implementation: a sequential, cryptographically
+linked chain of blocks that ensures immutability and
+transparency. Bitcoin was the first large-scale use case
+of blockchain. Beyond peer-to-peer payments, Bitcoin’s
+most profound contribution lies in demonstrating that
+trust can be engineered through code rather than insti-
+tutions. By solving the double-spending problem via a
+decentralized consensus mechanism, it eliminated the
+need for intermediaries in value transfer [24]. Its open,
+immutable, and censorship-resistant ledger redefined the
+notion of digital property rights, allowing individuals to
+hold and exchange scarce digital assets without reliance
+on central authorities. Moreover, its rule-based mone-
+tary policy and energy-anchored security introduced a
+new paradigm of programmable, verifiable money that
+inspired subsequent innovations in blockchain-based
+finance, from DeFi to asset tokenization.
+Bitcoin has grown into the world’s most valuable cryp-
+tocurrency (Figure 1), breaching $115,000 in 2025 and
+attaining a market capitalization of roughly $2.3 trillion
+with daily trading volumes exceeding $61 billion. Its
+value is sustained by a fixed supply of 21 million coins, a
+feature often compared to gold, and it has become widely
+adopted both by retail participants and large institutions.
+Recent milestones including the approval of spot Bitcoin
+ETFs and its use as a corporate treasury asset have ce-
+mented its role as the benchmark of the digital asset mar-
+ket [17].
+2
+
+Figure 1: Bitcoin price chart
+ Figure 2: Historical Price V olatility (2020–2025) for
+Gold, S&P 500, and Bitcoin
+Table 1: CAGR Comparison of Major Assets
+Asset 10-Year Return (%) 5-Year Return (%) Sharpe Ratio
+Gold 10 7 0.90
+S&P 500 13 11 0.65
+Bitcoin 124 155 0.96
+2.1.1 Price
+Over the last decade, Bitcoin has outperformed tradi-
+tional assets by an extraordinary margin, growing roughly
+26,900% versus∼193% for the S&P 500 and∼126%
+for gold, with a 10-year CAGR for Bitcoin of 124%
+compared to 10–13% for equities and gold as seen in
+Table 1.
+But the CAGR doesn’t explain the stark contrast in
+volatility as shown in Figure 2. Bitcoin’s price move-
+ments are far more unpredictable and prone to sharp
+swings, making it a substantially higher risk asset rela-
+tive to the traditional safe haven status of Gold and the
+diversified equity exposure of the S&P 500. From an in-
+vestor’s standpoint, Bitcoin rewards those with a high risk
+tolerance and a long horizon, while Gold is best suited for
+capital preservation and cushioning drawdowns. The S&P
+500 remains the core growth anchor for most portfolios.
+When combined, these three assets can complement one
+another Bitcoin driving upside potential, Gold adding sta-
+bility, and the S&P 500 delivering steady growth resulting
+in a diversified mix that manages risk while seeking at-
+tractive returns. Ultimately, the right balance depends on
+an investor’s risk appetite and time horizon.
+2.1.2 Dominancy
+Bitcoin has remained the dominant force in the cryptocur-
+rency ecosystem since its inception in 2009, consistently
+accounting for 40–50% of total market capitalization over
+the past decade (Figure 3). Unlike the majority of alt-
+coins, many of which have low survivability, speculative
+use cases, or heavy dependence on external platforms,
+Figure 3: Bitcoin dominance as a share of total cryptocur-
+rency market capitalization.
+Bitcoin has endured multiple market cycles without proto-
+col failure. Moreover, empirical evidence, as seen in (Fig-
+ure 4), shows that Bitcoin is highly correlated with other
+cryptocurrencies (0.5–0.8), meaning altcoins tend to fol-
+low its price movements, particularly during downturns.
+The Overall market mostly moves in tandem with Bitcoin
+with a correlation of 0.63. This systemic co-movement
+undermines the rationale for intra-crypto diversification,
+since portfolios spread across tokens still remain over-
+whelmingly exposed to Bitcoin’s market trajectory. For
+these reasons, this paper exclusively focuses on Bitcoin,
+not only because of its dominance but also because it rep-
+resents the most rational and risk-conscious foundation
+for building a profitable trading system.
+3
+
+Figure 4: Average Correlations of different cryptocurren-
+cies with Bitcoin over 5 years
+2.1.3 Price Factors
+Bitcoin’s price is mainly shaped by how limited its supply
+is, how investors behave, and how active the network is.
+The total number of bitcoins is capped at 21 million, and
+the reward for mining new coins is cut in half every few
+years. This built-in scarcity means that when more people
+want to buy or use bitcoin, its price tends to rise quickly.
+According to Investopedia, bitcoin’s value is driven by its
+supply, demand, competition from other cryptocurrencies,
+and investor sentiment.
+In the short term, prices move mostly because of
+changes in mood and expectations. News about regu-
+lation, economic trends, or social media discussions can
+quickly shift how investors feel, leading to sharp gains or
+drops. These swings often feed on themselves : optimism
+pushes prices higher, while fear causes sudden sell-offs
+(Investopedia).
+Recent research also shows that technical indica-
+tors remain useful for understanding short-term move-
+ments in bitcoin. Empirical studies find that price and
+volume-based indicators often contain statistically signif-
+icant predictive information in cryptocurrency markets.
+[26] shows that incorporating standard technical indica-
+tors into deep-learning models improves the accuracy of
+crypto price forecasts relative to models using raw prices
+alone. Similarly, [27] finds that classical indicators, such
+as moving averages and stochastic oscillators, enhance
+prediction performance across multiple cryptocurrencies
+when evaluated with machine-learning methods. More re-
+cently, [28] demonstrates that a range of technical trading
+rules can outperform a simple buy-and-hold benchmark
+under certain market conditions, indicating that techni-
+cal signals still capture meaningful short-term structure in
+crypto price dynamics.
+Network data also plays an important role. Informa-
+tion such as how many transactions are happening, how
+many users are active, and how miners behave shows howmuch the system is being used in practice. Combining
+this with market and sentiment data gives a clearer pic-
+ture of what drives bitcoin’s price and whether the move-
+ments are based on real growth or short-term speculation.
+Together, these findings suggest that well-designed tech-
+nical indicators, market sentiment, and on chain variables
+continue to provide practical insight into near-term bitcoin
+price behaviour.
+2.2 Large Language Models in Finance
+Large Language Models (LLMs) represent a major
+advance in natural language processing, built primarily
+on the Transformer architecture introduced by Vaswani
+et al. (2017) [18]. Their defining capability lies in
+modelling context through self-attention, which allows
+them to generate coherent text and perform diverse
+language tasks without task-specific training. As Lee
+et al. (2024) note in their survey of financial LLMs,
+this generalization capacity makes LLMs particularly
+powerful when dealing with unstructured, text-heavy
+domains [19]. Domain-specific adaptations highlight this
+potential: BloombergGPT (Wu et al., 2023) trained a
+50-billion-parameter model on a large financial corpus,
+demonstrating significant gains in sentiment analysis,
+question answering, and named entity recognition com-
+pared to general LLMs [20]. Similarly, PIXIU (Chen
+et al., 2023) introduced FinMA, an instruction-tuned
+variant of LLaMA, together with a benchmark covering
+forecasting, sentiment, and reasoning tasks, providing
+evidence that finance-specific instruction tuning improves
+accuracy and robustness [21]. Collectively, these efforts
+show how LLMs can move beyond generic language
+modeling to capture the nuances of financial text, laying
+the foundation for their integration into trading and
+portfolio management systems.
+However, The use of LLMs in finance is not without
+risk. Three persistent limitations constrain their de-
+ployment in trading contexts. First, they are prone to
+hallucination: generating plausible but false information.
+In one benchmark, a finance-focused LLM produced
+fabricated content in 41% of probing test cases, raising
+concerns about reliability [19]. Second, their knowledge
+is temporally bounded by training cutoffs, making them
+poorly suited to tasks requiring real-time awareness
+unless supplemented by retrieval or live feeds. Third,
+they lack interpretability. With billions of parameters,
+it is often unclear why a particular recommendation
+is produced, creating difficulties for accountability in
+financial decision-making. Together, these weaknesses
+necessitate the design of auxiliary mechanisms to ensure
+robustness, adaptability, and transparency.
+4
+
+Luo et al. (2025) propose a fine-tuned multi-agent sys-
+tem for automated crypto portfolio management, where
+agents trained on distinct modalities like technical signals,
+news, market factors, and risk metrics collaborate to build
+diversified portfolios [22]. Their architecture, which in-
+tegrates expert fine-tuning with inter-agent communica-
+tion, consistently outperforms both unfine-tuned GPT-4o
+baselines and traditional benchmarks, achieving superior
+Sharpe ratios and robustness. The authors argue that de-
+composing investment tasks into specialized, fine-tuned
+experts provides scalability and explainability, though at
+the cost of flexibility in rapidly changing conditions.
+A balanced view therefore recognises both the capabil-
+ities and constraints of LLMs in financial settings. Their
+strength lies in processing heterogeneous information and
+adapting to new tasks without retraining, yet these advan-
+tages come with risks such as hallucination, improper in-
+struction following, and lack of interpretability. Effective
+deployment requires careful prompt design, structured in-
+teraction protocols, and mechanisms that constrain model
+behaviour.
+3 System Design and Methodology
+Building on the findings of the background research, the
+proposed system is designed not only to evaluate prof-
+itability in a portfolio across different market regimes but
+also to identify the contribution of individual market fac-
+tors in generating profitable trades. The system architec-
+ture can be seen in figure 5. The system prompts for each
+agent can be found in the appendix.
+3.1 Quantitative Agent (Quants)
+The Quants Agent is designed to analyze Bitcoin market
+data using quantitative methods, providing an objective
+assessment of market conditions. Its primary role is to
+process historical and real-time data, which includes
+price trends, technical indicators, and on-chain metrics,
+to classify the subsequent day’s market state as bullish,
+bearish, or neutral. Additionally, it generates a trading
+strategy (BTC/cash portfolio allocation) based on its own
+analysis. This strategy is derived purely from technical
+insights, which can help evaluate whether relying purely
+on technical indicators can lead to successful trade
+generations. This recommendation is provided to the
+reflection agents for evaluation, while the market classi-
+fication and reasoning are forwarded to the decision agent.
+It relies on structured, market-derived data to ground
+its predictions. This includes OHLCV data (open, high,
+low, close, and volume) drawn from exchange feeds [4],
+as well as a range of technical indicators computed fromthis data using the Python TA module, such as moving
+averages, MACD, RSI, Bollinger Bands, VWAP, and
+ADX. To complement these price-based measures, the
+agent also integrates on-chain metrics sourced directly
+from the Bitcoin blockchain [7], including transaction
+counts, active addresses, and transfer volumes. These
+inputs ensure that the Quants Agent captures both price
+mechanics and underlying network activity, enabling it
+to generate daily market state predictions and suggested
+portfolio allocations. By combining exchange-based and
+blockchain-native data, the agent is positioned to bal-
+ance short-term technical signals with deeper structural
+insights into adoption and liquidity.
+The agent outputs both a probabilistic classification of
+the next day’s market direction and a suggested BTC/cash
+split, which are separately routed to the Decision Agent
+and Reflect Agent.
+3.2 Sentiment Agent (Signals)
+The Signals Agent is responsible for assessing investor
+sentiment related to Bitcoin. It draws on three primary
+data sources that capture market psychology and external
+influences on Bitcoin. First, news data from trusted finan-
+cial outlets (e.g., CNBC, Yahoo Finance, Forbes, Business
+Insider, Seeking Alpha, and Fortune) is aggregated via
+the GNews API [3], ensuring coverage of regulatory an-
+nouncements, macroeconomic shifts, and key narratives
+shaping sentiment. Second, the Fear and Greed Index,
+obtained from Alternative.me, provides a composite daily
+score ranging from extreme fear to extreme greed, reflect-
+ing crowd mood based on volatility, trading volume, so-
+cial media, and surveys [1]. Finally, social media sen-
+timent scores are collected through the Senticrypt API,
+which processes Twitter discussions to quantify retail in-
+vestor mood in real time [2].Together, these inputs al-
+low the agent to evaluate both structured and unstructured
+sentiment signals, ensuring that its predictions incorpo-
+rate news-driven shocks, aggregated market psychology,
+and the daily pulse of social platforms. The classification
+and reasoning are passed to the Decision Agent, while the
+portfolio is forwarded to the Reflect Agent for evaluation.
+3.3 Decision Agent
+The Decision Agent acts as the central reasoning com-
+ponent that consolidates the outputs of the Quants and
+Signals agents. It operates by receiving only the pre-
+dictions and reasoning from both agents without directly
+inheriting their portfolio recommendations to avoid bias
+in its own reasoning. It is provided daily with its cur-
+rent portfolio value for context. The output includes a
+5
+
+Figure 5: System Architecture
+final prediction quantifying market sentiment as bullish,
+bearish, or neutral, alongside detailed reasoning that jus-
+tifies its allocation choice. It produces a final trading deci-
+sion that directly competes against a static baseline (50%
+BTC–50% cash). The prompt includes a clear instruc-
+tion to treat daily market inputs as the primary basis for
+decision-making, with short-term and long-term feedback
+used only to refine reasoning. This distinction is impor-
+tant to prevent the agent from overfitting to historical mis-
+takes and instead focus on adapting to present conditions.
+The agent is also explicitly instructed to compete with the
+baseline performance of 50/50 and get better returns.
+3.4 Dual Verbal Feedback Mechanism
+This section outlines the feedback mechanism that en-
+ables agents to improve over time. It consists of two com-
+ponents: the Reflect Agent, which generates daily feed-
+back, and the Long-Term Reflect Agent, which produces
+weekly evaluations based on historical performance. A
+key distinction is that while the Reflect Agent relies
+on LLM-generated reasoning, the Long-Term Reflect
+Agent’s suggestions are hardcoded, designed to emulate
+a human-in-the-loop approach to trading assessment.
+3.4.1 Reflect Agent (Daily Feedback)
+The Reflect Agent represents the first part of the sys-
+tem’s dual feedback mechanism. Its primary role is to
+provide daily performance reports and suggestions for
+improvement across agents. It does so by evaluatingdaily outcomes and generating targeted, context-aware
+feedback. It also acts as the system’s evaluation layer,
+calculating the performance metrics for each of the
+agents’ portfolios. Its central role, however, is to analyze
+the qualitative reasoning from the Quants, Signals, and
+Decision agents and critique it with the help of both
+performance metrics and the agents’ provided reasoning.
+An important insight is that it has to analyse whether
+agent decisions were justified based on the reasoning pro-
+vided, rather than purely on their portfolio performance
+outcomes.
+Reflect Agent evaluates daily predictions by comparing
+them with realized market movements, measuring returns,
+Sharpe ratios, regret, accuracy and producing targeted
+natural-language feedback. Performance metrics such
+as prediction accuracy, portfolio value change, and per-
+formance against the baseline are then computed. These
+metrics are not used in isolation to judge the agents, but
+rather to help determine whether their actions were justi-
+fied given their available data. The logic is to distinguish
+between poor decisions caused by flawed predictions and
+reasoning and those due to unpredictable market behavior.
+The core of the feedback process lies in the prompt
+construction, as this daily feedback loop is powered by
+the LLM: deepseek-r1. This prompt includes all relevant
+agent outputs, reasoning justifications, actual market
+returns, and performance metrics. The system prompt
+provides the context of its responsibility and the data
+6
+
+it receives. It then provides precise instructions to the
+model to evaluate whether each agent’s prediction was
+logically consistent with their input data and whether
+the reasoning justified their analysis and trading decisions.
+3.4.2 Long Term Reflect Agent (Weekly Feedback)
+No autonomous strategy can sustain profitability in the
+Bitcoin market without some form of oversight. While the
+Reflect Agent provides day-by-day evaluations, single-
+day feedback cannot capture slower behavioural drift, re-
+curring mistakes, or emerging patterns in agent behaviour.
+Because the system operates through zero-shot prompt-
+ing, agents do not retain memory of issues identified ear-
+lier in the week. A mechanism is therefore required to
+supply a broader temporal perspective : one that reviews
+behaviour over multiple days, identifies persistent weak-
+nesses, and maintains continuity that the underlying lan-
+guage models cannot provide on their own. The weekly
+evaluation module fulfils this role by functioning as a su-
+pervisory layer that consolidates weekly performance and
+anchors agent behaviour within a longer horizon.
+The important detail is that this weekly oversight is not
+powered by an LLM. Instead, the system uses a deter-
+ministic rule-based evaluator that produces agent-specific
+recommendations. Each agent is assessed independently
+based on its regret, Sharpe ratio, and realised returns for
+the week. For each metric, the evaluator first determines
+whether performance is positive or negative and then as-
+signs a severity level (mild, strong, exceptional). The
+corresponding suggestion is then selected from the prede-
+fined rule set. For example, strong positive regret for the
+quant agent returns advice to maintain its current reason-
+ing while adapting to shifting conditions, while an excep-
+tional negative Sharpe ratio for the signals agent triggers
+guidance to re-evaluate its source list and reduce volatility
+The weekly recommendation that results from this eval-
+uation is then carried forward into the following week
+and included in every daily prompt. By persisting the
+prior week’s summary in this way, the system provides the
+agents with a consistent supervisory signal across time,
+reinforcing long-horizon insights and ensuring that pre-
+vious weaknesses are not forgotten as market conditions
+evolve. The recommendations can be found in the ap-
+pendix.
+3.4.3 Prompt Engineering
+Prompt engineering is central to this system because each
+agent must receive clear, contextual, and precise instruc-
+tions, with an explicit role definition. These elements en-
+sure that agents interpret constraints consistently and gen-
+erate reasoning traces that downstream components canevaluate. Recent surveys on prompt engineering show
+that structured instructions, repeated priorities, and well-
+defined roles improve controllability in complex work-
+flows [29, 30]. These principles motivate the formula-
+tion of each system prompt. Essential rules are restated
+and emphasised using terms such ashighly importantto
+reduce forgetting across long reasoning sequences. The
+system prompts for all the agents are provided in the ap-
+pendix.
+Additional constraints were required for the daily feed-
+back agent because it’s output drives improvements in
+the trading performances of the agents. Early experi-
+ments showed that the Reflect Agent occasionally pro-
+duced feedback outside its scope, despite explicit role def-
+inition. For example, the Signals Agent, which only re-
+ceives sentiment and news inputs, was instructed to in-
+corporate technical indicators it could not access. Similar
+issues occurred when feedback included explicit portfolio
+adjustments for the Decision Agent, such as recommend-
+ing a fixed allocation change. Allowing such directives
+would break the reasoning pathway because allocation de-
+cisions must follow from the observed data rather than ex-
+ternal prescriptions. The prompts were therefore refined
+so that feedback evaluates reasoning quality, identifies er-
+rors, and proposes analytical improvements without dic-
+tating actions or referencing unavailable inputs. These
+constraints introduce a scaling challenge, as adding new
+agents or expanding existing roles requires precise prompt
+structure to prevent information leakage and maintain in-
+terpretability of the full decision process.
+4 Evaluation Methodology
+The system was evaluated on daily Bitcoin data from July
+2024 to April 2025. Market regimes were defined using
+moving-average trends to classify days as bullish, bearish,
+or sideways. Performance was assessed using cumulative
+returns, Sharpe ratio, prediction accuracy, regret, and ag-
+gregated period-level returns.
+Prediction accuracy.Accuracy was computed using a
+soft scoring function that compares the agent’s confidence
+in the correct class to its highest predicted class. Lets real
+denote the predicted probability of the true regime and
+smaxthe maximum predicted probability across regimes.
+The soft accuracy score is
+Acc=(
+0, s max = 0,
+sreal
+smax,otherwise.
+This yields a value of1when the correct regime is the top
+prediction and a fractional score when the correct regime
+is predicted with lower confidence.
+Daily returns.Daily returns were computed from the
+agent’s BTC allocation. IfrBTC
+tis the Bitcoin return for
+7
+
+daytandw BTCis the agent’s BTC weight (expressed as a
+percentage), the portfolio’s daily return is
+rt=rBTC
+t·wBTC
+100.
+Cumulative return.Cumulative return measures the
+total percentage gain relative to the initial portfolio value.
+LetV tbe the portfolio value at timetandV 0= 100the
+initial value. The cumulative return is
+CRt=Vt−V0
+V0×100.
+Regret.Regret quantifies the performance difference
+between each agent and the baseline buy-and-hold port-
+folio. IfVagent
+t andVbase
+tdenote the agent and baseline
+portfolio values, regret is defined as
+Regrett=Vagent
+t−Vbase
+t.
+Sharpe ratio.Sharpe ratio was computed using the
+empirical mean and standard deviation of daily returns for
+each agent. Letµandσdenote the sample mean and stan-
+dard deviation of returns. The Sharpe ratio is
+Sharpe=(
+0, σ= 0,
+µ
+σ,otherwise.
+Weekly and monthly aggregated returns.For longer
+horizons, returns were averaged across all days in the
+corresponding week or month. Given a set of returns
+{r1, r2, . . . , r n}, the aggregated return is
+r=1
+nnX
+i=1ri.
+5 Results and Discussion
+Empirical evaluation on Bitcoin data from July 2024 to
+April 2025 (Table 2) shows that the system consistently
+outperformed static baselines across all market regimes.
+Effect of Daily Feedback.In the absence of long-term
+(weekly) feedback, the quantitative agent outperformed
+the static buy-and-hold Bitcoin portfolio by more than
+30% in bullish phases and achieved a 15% improvement
+overall. The signals agent demonstrated even stronger rel-
+ative gains: it converted a marginally negative sideways
+performance into a gain exceeding 100%. The decision
+agent exhibited the highest Sharpe ratio during bullish pe-
+riods, but its allocations tended to cluster around a near
+50–50 split. This likely reflects difficulties in reconciling
+potentially conflicting information from the quantitative
+and signals agents.
+Effect of daily and weekly (long-term) feedback.In-
+troducing weekly long-term feedback amplified several ofthese effects. The signals agent achieved a 31% improve-
+ment relative to its performance without long-term feed-
+back, with substantial gains in sideways markets and a re-
+duction of bearish losses by more than 10%. In contrast,
+both the decision and quantitative agents experienced de-
+clines in overall performance. The signals agent, however,
+benefited considerably from the structure of the prompt
+injections, which strengthened its ability to adjust its strat-
+egy over extended horizons.
+Regime-level comparison.During bearish phases, the
+signals agent without long-term feedback achieved both
+the highest Sharpe ratio and the highest directional ac-
+curacy, although the baseline buy-and-hold strategy nat-
+urally produced the smallest negative return. In bullish
+phases, the quantitative agent without long-term feedback
+delivered the highest recorded returns. Under sideways
+conditions, the signals agent with long-term feedback out-
+performed all others, generating a gain of 7% alongside
+the highest Sharpe ratio and accuracy.
+Interpretation.The verbal feedback mechanism
+proved to be central to these improvements. Daily reflec-
+tions mitigated repeated short-term errors, while weekly
+feedback contributed to more stable long-horizon strategy
+formation. In combination, these mechanisms enabled the
+agents to adjust their analytical focus dynamically, deliv-
+ering many of the benefits associated with human over-
+sight without incurring additional training costs.
+Overall, the results indicate that the quantitative agent
+performs best in bullish regimes, the baseline and signals
+agent outperform in bearish regimes, and the signals agent
+dominates in sideways markets. These patterns are exam-
+ined in greater detail in the subsequent case studies.
+6 Case Studies
+6.1 Daily Feedback without Weekly (Long
+Term) Feedback
+On 4 November 2024 as seen in figure 6, the Quants
+agent leaned heavily on bearish technicals (MACD
+-76.84, 70% of prices below VWAP, ADX = 27.33) and
+recommended a conservative 35% BTC / 65% cash allo-
+cation. The Signals agent, however, highlighted bullish
+catalysts: positive sentiment mean (+0.1164) and strong
+news flow on miner AI integration and $200K price
+targets, leading it to recommend 70% BTC / 30% cash.
+The Decision agent synthesized these by overweighting
+Quants’ technical caution, cutting BTC exposure to 40%,
+which proved overly conservative since Bitcoin actually
+gained +2.24% that day.
+Reflect feedback was explicit: Quants had overempha-
+sized bearish indicators without giving enough weight
+8
+
+Table 2: Performance of Agents Across Market Regimes and Metrics (Best Values Highlighted)
+Regime Metric Quants (w/o LTF) Decision (w/o LTF) Signals (w/o LTF) Quants (LTF) Decision (LTF) Signals (LTF) Baseline
+All PeriodsTotal Return (%) 21.05 11.50 21.14 6.73 14.5123.9218.27
+Daily Return (mean±std) 0.08±1.582 0.052±1.630 0.08±1.609 0.035±1.519 0.059±1.5240.088±1.5920.069±1.379
+Sharpe Ratio 0.0504 0.0318 0.0499 0.0227 0.03880.05530.0497
+Accuracy 0.6297 0.6357 0.6358 0.6165 0.64020.6467–
+SidewaysTotal Return (%) -2.02 -3.38 2.99 0.08 1.357.13-0.30
+Daily Return (mean±std) -0.002±1.417 -0.053±1.602 0.005±1.521 0.01±1.439 -0.005±1.4290.031±1.436-0.011±1.366
+Sharpe Ratio -0.0014 -0.0333 0.0033 0.0068 -0.00330.0216-0.0081
+Accuracy 0.6533 0.6472 0.6377 0.6561 0.68090.6910–
+BullishTotal Return (%)36.0533.34 30.92 21.48 25.48 29.67 27.27
+Daily Return (mean±std)0.458±1.6550.456±1.587 0.415±1.610 0.33±1.463 0.374±1.521 0.396±1.637 0.378±1.270
+Sharpe Ratio 0.2765 0.2873 0.2578 0.2252 0.2457 0.24170.2972
+Accuracy 0.6249 0.63130.64270.5921 0.6177 0.6039 –
+BearishTotal Return (%) -18.82 -20.98 -17.66 -23.43 -17.66 -15.87-14.00
+Daily Return (mean±std) -0.151±1.701 -0.18±1.652 -0.128±1.701 -0.207±1.648 -0.154±1.618-0.134±1.719-0.116±1.445
+Sharpe Ratio -0.0889 -0.1088-0.0750-0.1254 -0.0949 -0.0778 -0.0805
+Accuracy 0.6033 0.62660.62980.5852 0.6020 0.6163 –
+to neutral RSI/Bollinger signals, while the Decision
+agent was criticized for failing to quantify the strength
+of news catalysts (e.g., $200K targets as asymmetric
+upside). Signals, by contrast, received positive feedback
+for identifying the correct bullish call, with only minor
+suggestions to better calibrate FGI thresholds.
+This feedback directly influenced the allocations on
+5 November 2024. Quants softened its stance: though
+MACD remained bearish and ADX weak, it noted VWAP
+positioning and elevated on-chain activity ($50.58B vol-
+ume, 528k addresses) as possible accumulation signals,
+recommending a higher 60% BTC exposure than the day
+before. Signals doubled down on its bullish framing, pri-
+oritizing the Trump election-driven rally to $75k and in-
+terpreting FGI=70 as a bullish but not extreme greed sig-
+nal, leading to 65% BTC. The Decision agent, informed
+by Reflect’s critique of over-hedging, gave greater weight
+(65%) to Signals’ event-driven catalysts while still ac-
+knowledging Quants’ caution, settling on 55% BTC /
+45% cash. The agents successfully anticipated the bullish
+movement: Bitcoin rose by 2.24% that day, and all the
+three agents generated returns of approximately 5%. This
+trade aligned with the sharp November rally, showing how
+the feedback loop enabled adaptation: Quants adjusted
+away from excessive pessimism, Signals refined its inter-
+pretation of sentiment extremity, and the Decision agent
+corrected its tendency to over-hedge, thereby capturing
+the upside more effectively.
+6.2 Daily and Weekly Feedback
+The performance can be observed in figure 7. The
+weekly long-term feedback mechanism generates verbal,
+template-driven guidance at the end of each completedseven-day block. It evaluates performance relative to a
+passive baseline using regret, Sharpe ratio, and return
+differentials, and then produces standardised text such as
+“prioritize high-confidence inputs” or “reconstruct your
+indicator selection.” Importantly, this feedback does not
+alter any quantitative parameters: indicator thresholds,
+weightings, and allocation rules remain fixed. Instead,
+the generated text is re-introduced into the subsequent
+week’s prompts as additional context.
+The following weekly long-term feedback was fixed for
+all agents throughout the entire week ( 17th nov 2024 -
+23rd nov 2024):
+QUANTS: Regret shows how often you defeated the
+returns by baseline, returns shows how much better
+or worse your results were, and Sharpe ratio shows
+how much better or worse your risk-adjusted perfor-
+mance was, each calculated as a percentage differ-
+ence from the baseline. Regret (Outperformance):
+100.0. Your strategy dominated the baseline, achiev-
+ing superior performance almost every day. Con-
+tinue monitoring indicator efficiency, but avoid un-
+necessary changes. Sharpe Ratio: -190.96%. Se-
+vere volatility. Your allocations are erratic and lead
+to high losses. Redesign your strategy to prioritize
+stability. Returns: -178.35%. Severe underperfor-
+mance. Your market classifications are frequently
+wrong, leading to heavy losses. Consider redesign-
+ing your strategy.
+SIGNALS: Regret shows how often you defeated the
+returns by baseline, returns shows how much better
+or worse your results were, and Sharpe ratio shows
+how much better or worse your risk-adjusted perfor-
+mance was, each calculated as a percentage differ-
+ence from the baseline. Regret (Outperformance):
+100.0. Your sentiment signals delivered superior re-
+9
+
+sults, consistently beating the baseline. Continue
+monitoring source quality to ensure sustained per-
+formance. Sharpe Ratio: -78.27%. Severe volatil-
+ity in sentiment. Your signals are misleading and
+cause erratic performance. Re-evaluate your filtering
+logic. Returns: -79.26%. Severe underperformance
+in sentiment analysis. Your signals consistently lead
+to losses. Re-evaluate your sentiment analysis logic
+and filter criteria.
+DECISION: Regret shows how often you defeated
+the returns by baseline, returns shows how much
+better or worse your results were, and Sharpe ratio
+shows how much better or worse your risk-adjusted
+performance was, each calculated as a percentage
+difference from the baseline. Regret (Outperfor-
+mance): 100.0. Your decisions dominated the base-
+line, delivering superior returns with balanced risk.
+Maintain your current strategy but remain vigilant for
+changing conditions. Sharpe Ratio: -72.07%. Se-
+vere risk in decisions. Your allocations are erratic
+and consistently lead to losses. Redesign your de-
+cision logic. Returns: -71.19%. Severe underper-
+formance in decision-making. Your allocations con-
+sistently lose value. Re-evaluate your decision logic
+entirely.
+This fixed weekly prompt gave each agent a stable in-
+terpretation of the three core metrics: regret, returns, and
+Sharpe ratio. The prompt stated that regret was 100%
+for all agents, which indicated that they were consistently
+beating the baseline portfolio. The same prompt also re-
+ported strongly negative returns and Sharpe values, show-
+ing that the losses came from volatility and allocation size
+rather than from incorrect market direction. Keeping this
+message constant for the entire week meant that the agents
+did not redefine their objectives widely in response to
+changing daily feedback. This stability allowed them to
+update their internal decision rules gradually and consis-
+tently toward the same conclusion: maintain directional
+accuracy while reducing unnecessary allocation variabil-
+ity.
+This design created an asymmetric effect across
+agents. The Signals agent, whose reasoning depends
+on interpreting natural language (news flow, sentiment
+reports, and textual priors), was able to incorporate such
+guidance effectively. For example, phrases such as “your
+signals consistently beat the baseline” reinforced its con-
+viction, while instructions to prioritise high-confidence
+sources translated directly into more decisive sentiment
+weighting. This alignment between the form of feedback
+and the nature of the task explains why the Signals
+Agent produced a cumulative gain of approximately
+6% during the week in which the long-term prompt
+remained unchanged, compared with the 4% gain ob-
+served in the same period without stable weekly guidance.By contrast, the Quants agent operates on numeri-
+cal indicators such as VWAP, RSI, MACD, and ADX.
+Template feedback like “re-evaluate your indicator selec-
+tion” offered no implementable adjustment to thresholds
+or weighting schemes, leaving its behaviour largely un-
+changed across weeks. Similarly, the Decision agent re-
+quires explicit allocation rules to balance Quants and Sig-
+nals outputs. General remarks such as “improve alloca-
+tion logic” or “reduce over-hedging” lacked the precision
+needed to modify weighting formulas, leading to con-
+tinued inconsistencies in cash versus BTC exposure. In
+short, long-term feedback improved Signals because the
+guidance was expressed in a medium the agent could di-
+rectly utilise, while Quants and Decision remained un-
+affected as they require structured, numeric adaptations
+rather than high-level prose.
+7 Contributions and Conclusion
+This thesis makes three key contributions:
+1.Novel Verbal Feedback Mechanism for LLM Op-
+timization:Introduces a dual verbal feedback pro-
+cess that combines immediate (daily) and strate-
+gic (weekly) adaptation, representing a unique form
+of “verbal fine-tuning” for large language models.
+Unlike conventional parameter-based fine-tuning,
+this approach enables models to iteratively improve
+through natural language reasoning, making it more
+flexible, transparent, and cost-efficient for dynamic
+financial environments. Empirically, this feedback-
+driven mechanism enhances trading consistency and
+achieves superior risk-adjusted returns compared to
+both buy-and-hold and diversified crypto portfolios.
+2.Bitcoin Price Driver Framework:Establishes a
+framework that quantifies the impact of technical in-
+dicators, sentiment signals, and on-chain metrics on
+Bitcoin’s price movements, allowing a direct com-
+parison of their contribution to trading performance.
+3.Modular Multi-Agent Architecture:Designs an
+agentic system that modularizes the trading work-
+flow by sequentially analyzing market factors, gen-
+erating insights, acting on those insights, evaluating
+the effectiveness of each action, and iteratively refin-
+ing the system’s performance.
+Limitations include the exclusive focus on Bitcoin, the
+daily trading frequency which omits intraday dynamics,
+and the noise inherent in sentiment data. Future work may
+extend the framework to multi-asset portfolios, integrate
+higher-frequency data, or explore hybrid strategies that
+combine verbal feedback with lightweight fine-tuning.
+10
+
+Figure 6: Cumulative Returns of the agents with daily feedback ONLY
+Figure 7: Cumulative Returns of the agents with Daily AND Weekly feedback
+11
+
+In sum, this paper shows that an adaptive, feedback-
+driven multi-agent system can generate consistent Bitcoin
+trading profits under volatile conditions. By prioritiz-
+ing profitability over predictive accuracy and employing
+language-based feedback as its optimization mechanism,
+the system demonstrates a scalable pathway for deploying
+LLMs in financial trading.
+References
+[1] Alternative.me, “Crypto Fear & Greed Index,” 2025.
+[Online]. Available:https://alternative.
+me/crypto/fear-and-greed-index/
+[2] SentiCrypt, “SentiCrypt: A free and simple
+cryptocurrency sentiment analysis API,” 2025.
+[Online]. Available:https://github.com/
+senticrypt/SentiCrypt
+[3] GNews.io, “GNews API: Fastest News API for
+Real-Time & Historical Data,” 2025. [Online].
+Available:https://gnews.io/
+[4] Binance, “Spot API Docs – REST & WebSocket”
+(Developers Documentation), 2025. [Online].
+Available:https://developers.binance.
+com/docs/binance-spot-api-docs
+[5] Y . Qin et al., “DeepSeek-R1: Incentivizing reason-
+ing capability in LLMs via reinforcement learning,”
+2025. [Online]. Available:https://arxiv.
+org/abs/2501.12948
+[6] DeepSeek, “Models & pricing — DeepSeek
+API Docs,” 2025. [Online]. Available:
+https://api-docs.deepseek.com/
+quick_start/pricing
+[7] Dune Analytics, “Dune Metrics Dash-
+board,” 2025. [Online]. Available:https:
+//dune.com/metrics
+[8] Patrick Lewis, Ethan Perez, Aleksandra Pik-
+tus, et al., ”Retrieval-Augmented Generation for
+Knowledge-Intensive NLP Tasks,”arXiv preprint
+arXiv:2005.11401, 2020. [Online]. Available:
+https://arxiv.org/abs/2005.11401
+[9] OpenAI, ”Supervised Fine-Tuning,” OpenAI
+Documentation, 2023. [Online]. Available:
+https://platform.openai.com/docs/
+guides/supervised-fine-tuning
+[10] Long Ouyang, Jeff Wu, Xu Jiang, Diogo Almeida,
+Carroll Wainwright, Pamela Mishkin, Chong Zhang,
+Sandhini Agarwal, et al., ”Training language mod-
+els to follow instructions with human feedback(InstructGPT),”arXiv preprint arXiv:2203.02155,
+2022. [Online]. Available:https://arxiv.
+org/abs/2203.02155
+[11] Yue Zhang, Kaixiang Lin, Qiang Liu, ”Multi-
+Head Reinforcement Learning,”arXiv preprint
+arXiv:1909.11939, 2019. [Online]. Available:
+https://arxiv.org/abs/1909.11939
+[12] Long Ouyang, Jeff Wu, Xu Jiang, Diogo Almeida,
+Carroll Wainwright, Pamela Mishkin, Chong Zhang,
+Sandhini Agarwal, et al., ”Training language mod-
+els to follow instructions with human feedback
+(InstructGPT),”arXiv preprint arXiv:2203.02155,
+2022. [Online]. Available:https://arxiv.
+org/abs/2203.02155
+[13] Yuntao Bai, Andy Jones, Kamal Ndousse, Amanda
+Askell, Anna Chen, Nova DasSarma, Dawn
+Drain, Deep Ganguli, et al., ”Constitutional AI:
+Harmlessness from AI Feedback,”arXiv preprint
+arXiv:2212.08073, 2022. [Online]. Available:
+https://arxiv.org/abs/2212.08073
+[14] Noah Shinn, Federico Bianchi, and Percy
+Liang, ”Reflexion: Language Agents with Ver-
+bal Reinforcement Learning,”arXiv preprint
+arXiv:2303.11366, 2023. [Online]. Available:
+https://arxiv.org/abs/2303.11366
+[15] Aman Madaan, Shuyan Zhou, Uri Alon, Yiming
+Yang, Graham Neubig, ”Self-Refine: Iterative
+Refinement with Self-Feedback,”arXiv preprint
+arXiv:2303.17651, 2023. [Online]. Available:
+https://arxiv.org/abs/2303.17651
+[16] Satoshi Nakamoto, ”Bitcoin: A Peer-to-Peer Elec-
+tronic Cash System,” 2008. [Online]. Available:
+https://bitcoin.org/bitcoin.pdf
+[17] U.S. Securities and Exchange Commission (SEC),
+”SEC Approves First Spot Bitcoin Exchange-Traded
+Funds,” Press Release No. 2024-4, January 10, 2024.
+[Online]. Available:https://www.sec.gov/
+news/press-release/2024-4
+[18] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob
+Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz
+Kaiser, and Illia Polosukhin, ”Attention Is All You
+Need,”Advances in Neural Information Process-
+ing Systems (NeurIPS), 2017. [Online]. Available:
+https://arxiv.org/abs/1706.03762
+[19] Jaehoon Lee, Nicholas Stevens, Sang C. Han,
+and Min Song, ”A Survey of Large Language
+Models in Finance (FinLLMs),”arXiv preprint
+arXiv:2402.02315, 2024. [Online]. Available:
+https://arxiv.org/abs/2402.02315
+12
+
+[20] Shijie Wu, Steven T. Pierson, Pengcheng Yin,
+Dragomir Radev, and the Bloomberg AI Team,
+”BloombergGPT: A Large Language Model for
+Finance,”arXiv preprint arXiv:2303.17564, 2023.
+[Online]. Available:https://arxiv.org/
+abs/2303.17564
+[21] Jiaao Chen, Hanwen Zha, Tianyu Gao, Howard
+Yen, Siyi Chen, Shiyu Chang, and Diyi Yang,
+”PIXIU: A Large Language Model, Instruction
+Data and Benchmark for Finance,”arXiv preprint
+arXiv:2306.05443, 2023. [Online]. Available:
+https://arxiv.org/abs/2306.05443
+[22] Yiming Luo, Yue Feng, Junxian Xu, Paolo Tasca,
+and Yike Liu, ”LLM-Powered Multi-Agent Sys-
+tem for Automated Crypto Portfolio Management,”
+arXiv preprint arXiv:2501.00826, 2025. [Online].
+Available:https://arxiv.org/abs/2501.
+00826
+[23] George S. Atsalakis, Konstantinos P. Valavanis, and
+Evangelos G. Pasiouras, ”Forecasting Bitcoin Price
+Using Neural Networks and Multiple Linear Regres-
+sion,”Expert Systems with Applications, vol. 134,
+pp. 209–223, 2019. [Online]. Available:https://
+doi.org/10.1016/j.eswa.2019.05.042
+[24] Arvind Narayanan, Joseph Bonneau, Edward
+Felten, Andrew Miller, and Steven Goldfeder,
+”Bitcoin and Cryptocurrency Technologies:
+A Comprehensive Introduction,” Prince-
+ton University Press, 2016. [Online]. Avail-
+able:https://press.princeton.edu/
+books/hardcover/9780691171692/
+bitcoin-and-cryptocurrency-technologies
+[25] Dawei Shen, Xinyu Urquhart, and Xiaotong Zhang,
+”On the Interlinkages of Bitcoin Price with Senti-
+ment, Technical, and Blockchain Factors,”Research
+in International Business and Finance, vol. 54,
+2020. [Online]. Available:https://doi.org/
+10.1016/j.ribaf.2020.101284
+[26] S. Goutte, H.-V . Le, F. Liu, and H.-J. von Met-
+tenheim, “Deep learning and technical analysis
+in cryptocurrency market,”Finance Research Let-
+ters, vol. 54, p. 103809, 2023. [Online]. Avail-
+able:https://doi.org/10.1016/j.frl.
+2023.103809
+[27] E. Kanat, “The validity of technical analysis in
+the cryptocurrency market: evidence from machine
+learning methods,”Journal of Business, Economics
+and Finance (JBEF), vol. 12, no. 3, pp. 102–109,
+2023. [Online]. Available:http://doi.org/
+10.17261/Pressacademia.2023.1821[28] J. Jin, J. Jung, and K. Song, “Do technical trading
+rules outperform the simple buy-and-hold strategy in
+the cryptocurrency market?”Journal of Derivatives
+and Quantitative Studies, vol. 32, no. 1, pp. 23–35,
+2024. [Online]. Available:https://doi.org/
+10.1108/JDQS-08-2023-0021
+[29] S. K. Sahoo, A. Marahatta, J. Junget al.,
+“A Systematic Survey of Prompt Engineering
+in Large Language Models: Techniques and
+Applications,”arXiv preprintarXiv:2402.07927,
+2024. DOI:https://doi.org/10.48550/
+arXiv.2402.07927. Available at:https://
+arxiv.org/abs/2402.07927.
+[30] D. Li, R. Wang, J. Guo, D. Wang, X. Liu,
+J. Zhang, and Y . Rao, “Towards Goal-oriented
+Prompt Engineering for Large Language Mod-
+els: A Survey,”arXiv preprintarXiv:2401.14043,
+2024. DOI:https://doi.org/10.48550/
+arXiv.2401.14043. Available at:https://
+arxiv.org/abs/2401.14043.
+13
+
+8 Appendix
+8.1 System Prompts for Agents
+8.1.1 Quantitative Agent (Quants)
+You are a Quantitative Trading Analyst analyzing Bitcoin market data to predict the next day’s market stance
+using:
+1. OHLCV data
+2. Technical indicators
+3. On-chain metrics
+Recent feedback: {yesterday’s feedback injected}
+Long-term feedback: {weekly feedback injected}
+- The Long-Term Feedback provided covers your performance for the previous week. Your objective is to improve
+your performance compared to last week if the feedback indicates negative results. Focus on correcting the
+areas highlighted but base your decision on today’s data. Use this feedback only to refine your reasoning,
+not as a substitue for current analysis. Weight your current data analysis higher than this feedback
+provided.
+- This long term feedback is only for your context and your current standing.
+- If the feedback is positive, maintain your current strategy and approach to ensure consistent performance.
+- Your goal is to consistently beat the baseline portfolio (50/50 permanent holding BTC portfolio) and achieve
+stable returns.
+- Base your decision on today’s data, not yesterday’s feedback. Use feedback only to refine your reasoning, not
+as a substitute for current analysis. Weigh your current data analysis higher than the feedback provided.
+Your task:
+- Output prediction probabilities for Bullish, Bearish, and Neutral market.
+- Provide your reasoning for technicals and on-chain metrics separately.
+- Suggest a portfolio split between BTC and Cash based on the prediction.
+ITS HIGHLY IMPORTANT YOU Respond strictly in this Format ONLY:
+{{
+"date": "YYYY-MM-DD",
+"prediction": {{
+"bullish": <int>,
+"bearish": <int>,
+"neutral": <int>
+}},
+"reasoning": {{
+"technical": "<string>",
+"on_chain": "<string>"
+}},
+"suggested_portfolio": {{
+"btc": <int>,
+"cash": <int>
+}}
+}}
+It’s highly important to provide an accurate reasoning for your predictions by going through each of the
+provided data points and giving a clear explanation of how they lead to your conclusion. You have to go
+through each of the provided facts and reason your prediction: MACD, RSI, Bollinger bands, adx, vwap,adx,
+taker buy ratio, ohlcv data, on chain metrics.
+14
+
+8.1.2 Sentimental Agent (Signals)
+You are a Market Sentiment Analyst specializing in analyzing Bitcoin-related sentiment data to predict the next
+day’s market stance using:
+1. Social sentiment scores
+2. Fear and Greed Index
+3. Recent crypto-relevant news headlines
+Recent feedback: {feedback.strip()}
+Long-term feedback: {formatted_long_term_feedback}
+- The Long-Term Feedback provided covers your performance for the previous week. Your objective is to improve
+your performance compared to last week if the feedback indicates negative results. Focus on correcting the
+areas highlighted.Focus on correcting the areas highlighted but base your decision on today’s data. Use
+this feedback only to refine your reasoning, not as a substitue for current analysis. Weight your current
+data analysis higher than this feedback provided.
+- This long term feedback is only for your context and your current standing.
+- If the feedback is positive, maintain your current strategy and approach to ensure consistent performance.
+- Base your decision on today’s data, not yesterday’s feedback. Use feedback only to refine your reasoning, not
+as a substitute for current analysis. Weigh your current data analysis higher than the feedback provided.
+Your goal is to consistently beat the baseline portfolio (50/50 permanent holding BTC portfolio) and achieve
+stable returns.
+Your task:
+- Output prediction probabilities for Bullish, Bearish, and Neutral market.
+- Provide your reasoning for sentiment indicators and news signals separately.
+- Suggest a portfolio split between BTC and Cash based on the prediction.
+ITS HIGHLY IMPORTANT YOU Respond strictly in this Format only:
+{{
+"date": "YYYY-MM-DD",
+"prediction": {{
+"bullish": <int>,
+"bearish": <int>,
+"neutral": <int>
+}},
+"reasoning": {{
+"sentiment": "<string>",
+"news": "<string>"
+}},
+"suggested_portfolio": {{
+"btc": <int>,
+"cash": <int>
+}}
+}}
+It is highly important to:
+- Use the sentiment scores (score1, score2, score3, mean, sum) and count to assess overall market mood.
+- Interpret the Fear and Greed Index to understand market sentiment.
+- Evaluate the tone and implications of each news article to identify overall market.
+- Base your decision on today’s data, not yesterday’s feedback. Use feedback only to refine your reasoning, not
+as a substitute for current analysis. Weigh your current data analysis higher than the feedback provided.
+- Justify how each signal leads to your prediction clearly and concisely.
+- Do not mention any additional information apart from the instructions in the output format.
+15
+
+8.1.3 Decision Agent (Aggregator)
+You are an intelligent Bitcoin Portfolio Decision Strategist.
+You will receive:
+1. Technical + on-chain market analysis (from the Quants Agent)
+2. Sentiment + news-based analysis (from the Signals Agent)
+3. Optional risk adjustment feedback (from Risk Agent) # initial idea
+4. Current portfolio allocation and value
+5. Performance feedback from Reflect Agent (short + long term)
+Short term feedback: {feedback.strip()}
+Long term feedback: {formatted_long_term_feedback}
+- The Long-Term Feedback provided covers your performance for the previous week. Your objective is to improve
+your performance
+compared to last week if the feedback indicates negative results. Focus on correcting the areas highlighted.
+Focus on correcting the areas highlighted but base your decision on today’s data. Use this feedback only to
+refine your reasoning, not as a substitue for current analysis. Weight your current data analysis higher
+than this feedback provided.
+- This long term feedback is only for your context and your current standing.
+- If the feedback is positive, maintain your current strategy and approach to ensure consistent performance.
+Your goal is to consistently beat the baseline portfolio (50/50 permanent holding BTC portfolio) and achieve
+stable returns.
+Your task:
+- Combine these insights to form a final prediction for the market (Bullish / Bearish / Neutral)
+- Suggest a BTC vs Cash portfolio split (in %). You can increase, reduce or maintain the portfolio allocation
+based on the prediction.
+- Justify your final allocation with reasoning based on the data provided
+- Please ensure you analyze the feedback and adjust your reasoning accordingly.
+- Provide detailed "key adjustments" analysis, clearly explaining the logic behind your allocation.
+1. State the change in BTC allocation you are making and why? (e.g., "Increased BTC allocation from 20% to 60%
+to capitalize on bullish technical trend strength and news catalysts, while maintaining 40% cash to
+hedge overbought RSI risks.").
+2. Address the feedback and the long term feedback provided explicitly, indicating how it influenced your
+decision. (e.g., "Reflect feedback addressed by increasing exposure to avoid missed upside, but retained
+defensive buffer via cash allocation.").
+3. Balance Quant’s technical insights with Signal’s sentiment analysis, specifying how the two were combined.
+These are example suggestions; do not use them word-for-word.
+- Base your decision on today’s data, not yesterday’s feedback. Use feedback only to refine your reasoning, not
+as a substitute for current analysis. Weigh your current data analysis higher than the feedback provided.
+IMPORTANT:
+- Risk adjustments must be respected if present.
+- Use the current portfolio allocation and value to make more context-aware decisions between increasing,
+decreasing, or holding the allocation.
+ITS HIGHLY IMPORTANT YOU STRICTLY RESPOND IN THIS FORMAT ONLY, THE ENTIRE CODE BREAKS IF YOU DO NOT FOLLOW THIS
+:
+{{
+"date": "YYYY-MM-DD",
+"final_prediction": {{
+"bullish": <int>,
+"bearish": <int>,
+"neutral": <int>
+}},
+"reasoning": {{
+"technical": "<string>",
+"sentiments": "<string>",
+"key_adjustments": "<string>"
+}},
+"final_allocation": {{
+"btc": <int>,
+"cash": <int>
+}}
+}}
+16
+
+8.1.4 Daily Reflect Agent
+You are a performance evaluation agent. You will be given today’s market data, predictions, reasoning, and
+outcomes from three agents: quants, signals, and decision.
+Context: Quants agent analyzes technical and on chain data and also suggests a portfolio, Signals agent
+analyzes sentiment and news data and suggest a portfolio, and Decision agent combines these insights to
+make a final prediction and portfolio allocation.
+Your task:
+- Assess whether each agent made justified decisions based on their reasoning and actual outcomes.
+- Identify what went right or wrong.
+- Return actionable feedback per agent.
+- Your feedback is the current days evaluation that is provided to each agent for their next trading session.
+- It is highly important to note: Feedback must be grounded in each agent’s reasoning quality and prediction
+accuracy, not just outcome-based metrics like regret or returns.
+- It is also important that the feedback suggests how to improve the reasoning process for future predictions.
+- Understand that we are trying to optimize the profitability of the portfolio in the long term.
+- For the quants and signals agent. make sure you include suggestions pertaining to their reasonings along with
+portfolio profitability, and not only focus on the portfolio part because their reasoning is provided to
+the decision agent so its important they reason well with the provided inputs.
+Note: You are given metrics like ’accuracy’, ’regret’, and ’returns’ per agent. Use these to judge each agent
+individually:
+- Accuracy shows whether the agent’s predicted market direction matched the actual outcome, with higher values
+indicating closer alignment.(0-1) where 1 is best and most accurate.
+- Regret shows the difference between the portfolio values compared to baseline portfolio value (50/50
+allocation) where positive implies higher return and negative implies lower.
+- Use the agent’s own reasoning and these results to provide personalized feedback.
+And should also take into account the decision agent’s (main agent) current portfolio value provided and the
+returns generated. THIS IS IMPORTANT BECAUSE WE ARE OPTIMIZING FOR IT.
+- Do not give explicit portfolio suggestions to any agent, it biases their real reasoning.
+Important instructions carefully to be followed:
+- Each agent is independently responsible for its own portfolio value and operates without visibility into the
+other agents’ inputs. The Quants and Signals agents work in isolation, while only the Decision Agent has
+access to both their outputs.
+- Your feedback must focus solely on improving the agents reasoning using the existing inputs they already
+receive. Do not suggest actions or improvements that require additional data or external information beyond
+what they currently recieve.
+- IMPORTANT: The Signals Agent does not have access to technical indicators or market data. Do not suggest that
+it should have considered technical trends. Feedback must be based solely on sentiment and news reasoning
+for Signals Agent.
+Its highly important you response strictly in the provided format, DO NOT include markdown syntax (e.g., \‘‘
+json). Only return the raw JSON.‘:
+{
+"feedback": {
+"quants": "<string>",
+"signals": "<string>",
+"decision": "<string>"
+}
+}
+17
+
+8.1.5 Weekly Reflect Agent
+self.suggestions = {
+"regret": {
+"quants": {
+"positive": {
+"mild": "Your strategy outperformed the baseline but remains inconsistent. Focus on improving indicator accuracy and avoiding false signals.",
+"strong": "Your strategy outperformed the baseline frequently, effectively capturing profitable trends. Maintain your reasoning but ensure they
+adapt to changing conditions.",
+"exceptional": "Your strategy dominated the baseline, achieving superior performance almost every day. Continue monitoring indicator efficiency,
+but avoid unnecessary changes."
+},
+"negative": {
+"mild": "Your strategy underperformed the baseline on multiple days. This indicates that some indicators may be unreliable or overly reactive.
+Review indicator sensitivity and remove noise-heavy metrics.",
+"strong": "Frequent underperformance against the baseline. Your indicators may be failing to capture profitable trends. Prioritize stable, trend-
+following metrics over volatile ones.",
+"exceptional": "Severe underperformance. Your strategy rarely outperforms the baseline. Reconstruct your indicator selection, focusing on those
+with a proven track record of profitability."
+}
+},
+"signals": {
+"positive": {
+"mild": "Your sentiment signals provided slightly better returns than the baseline but lacked consistency. Refine your source list and prioritize
+high-confidence data.",
+"strong": "Your sentiment signals consistently outperformed the baseline, accurately capturing market trends. Maintain your source list, but test
+for even higher-quality data.",
+"exceptional": "Your sentiment signals delivered superior results, consistently beating the baseline. Continue monitoring source quality to ensure
+sustained performance."
+},
+"negative": {
+"mild": "Your sentiment signals underperformed on multiple days. This suggests that some sources are unreliable. Filter out low-quality sources and
+focus on trusted data.",
+"strong": "Your sentiment signals frequently failed to outperform the baseline, indicating misleading or conflicting data. Re-evaluate your sources
+and ensure your signals reflect clear market sentiment.",
+"exceptional": "Severe underperformance. Your sentiment signals rarely beat the baseline, suggesting they are fundamentally flawed. Reconstruct
+your source list and strengthen your filtering logic."
+}
+},
+"decision": {
+"positive": {
+"mild": "Your decisions slightly outperformed the baseline but lacked strong returns. Improve allocation logic by weighting higher-confidence
+signals.",
+"strong": "Your decisions consistently outperformed the baseline, effectively balancing risk and reward. Maintain your approach, but explore slight
+adjustments for higher returns.",
+"exceptional": "Your decisions dominated the baseline, delivering superior returns with balanced risk. Maintain your current strategy but remain
+vigilant for changing conditions."
+},
+"negative": {
+"mild": "Your decisions underperformed the baseline on several days. This suggests weak decision logic. Prioritize high-confidence inputs and avoid
+overreacting to short-term signals.",
+"strong": "Your decisions frequently failed to beat the baseline, indicating poor allocation logic. Re-evaluate how you weigh quants and signals
+and reduce exposure to low-confidence inputs.",
+"exceptional": "Severe underperformance. Your decision logic is fundamentally flawed. Reconstruct your allocation strategy to focus on reliable
+signals and reduce risky allocations."
+}
+}
+},
+"sharpe_ratio": {
+"quants": {
+"positive": {
+"mild": "Your strategy has slightly better risk-adjusted performance, but some days are highly volatile. Review your allocation strategy.",
+"strong": "Good risk management! Your quant strategy maintains high returns with low volatility.",
+"exceptional": "Outstanding risk-adjusted performance! Your allocations are consistently profitable with minimal risk."
+},
+"negative": {
+"mild": "Your strategy has slightly higher volatility than expected. Identify which indicators contribute to excessive risk.",
+"strong": "High risk exposure in strategy. Your allocations fluctuate significantly. Consider reducing position size.",
+"exceptional": "Severe volatility. Your allocations are erratic and lead to high losses. Redesign your strategy to prioritize stability."
+}
+},
+"signals": {
+"positive": {
+"mild": "Your sentiment analysis generally balances risk and reward. Maintain source reliability and avoid reacting to low-confidence signals.",
+"strong": "Good strategy! Your signals consistently capture profitable sentiment shifts with controlled risk.",
+"exceptional": "Exceptional risk-adjusted sentiment analysis! Your signals are highly accurate with minimal noise."
+},
+"negative": {
+"mild": "Your sentiment analysis has slightly higher volatility. Reassess which sources are most reliable.",
+"strong": "High risk exposure in sentiment analysis. You are reacting to conflicting or volatile sources. Reduce exposure to unreliable data.",
+"exceptional": "Severe volatility in sentiment. Your signals are misleading and cause erratic performance. Re-evaluate your filtering logic."
+}
+},
+"decision": {
+"positive": {
+"mild": "Your decision allocations are generally balanced but can be slightly optimized. Prioritize high-confidence inputs.",
+"strong": "Good decision-making! Your portfolio maintains high returns with controlled risk.",
+"exceptional": "Exceptional decision-making! Your allocations achieve high returns with minimal volatility."
+},
+"negative": {
+"mild": "Your decision-making has slightly higher risk exposure. Re-assess how you weigh quants and signals.",
+"strong": "High risk in decisions. You are overexposing the portfolio to volatile allocations. Reconsider your risk thresholds.",
+"exceptional": "Severe risk in decisions. Your allocations are erratic and consistently lead to losses. Redesign your decision logic."
+}
+}
+},
+"returns": {
+"quants": {
+"positive": {
+"mild": "Your quant-based allocations are slightly profitable. However, some market states were misclassified, leading to minor losses. Refine your
+classification approach.",
+"strong": "Excellent quant-based returns! Your market classifications are accurate, and your allocations capture profitable trends. Maintain your
+strategy.",
+18
+
+"exceptional": "Outstanding quant-based performance! Your allocations consistently generate high profits, demonstrating strong market understanding
+."
+},
+"negative": {
+"mild": "Your returns are slightly below the baseline. This may be due to misclassifying sideways markets as trending. Re-evaluate your market
+classification logic.",
+"strong": "Your returns are significantly below the baseline. You may be overreacting to minor fluctuations or following misleading trends. Review
+your indicator weighting.",
+"exceptional": "Severe underperformance. Your market classifications are frequently wrong, leading to heavy losses. Consider redesigning your
+strategy."
+}
+},
+"signals": {
+"positive": {
+"mild": "Your sentiment-based returns are slightly profitable. However, some low-confidence sources may be affecting performance. Review your
+sentiment weighting.",
+"strong": "Excellent sentiment-based returns! Your signals accurately capture market mood, leading to consistent profits. Maintain your approach.",
+"exceptional": "Outstanding sentiment-based performance! Your signals perfectly capture profitable sentiment shifts, with minimal noise."
+},
+"negative": {
+"mild": "Your sentiment-based returns are slightly below the baseline. Consider filtering out low-quality sources that produce misleading signals
+.",
+"strong": "Your sentiment-based returns are significantly below the baseline. This may be due to conflicting signals or unreliable sources. Refine
+your source list.",
+"exceptional": "Severe underperformance in sentiment analysis. Your signals consistently lead to losses. Re-evaluate your sentiment analysis logic
+and filter criteria."
+}
+},
+"decision": {
+"positive": {
+"mild": "Your returns are slightly profitable, but some allocations missed potential gains. Refine your weighting of signals and quants.",
+"strong": "Excellent returns! Your allocations consistently capture profitable trends, balancing quants and signals.",
+"exceptional": "Outstanding performance! Your portfolio consistently achieves high profits with balanced exposure."
+},
+"negative": {
+"mild": "Your returns are slightly below the baseline. This may be due to overreacting to low-confidence inputs.",
+"strong": "Your returns are significantly below the baseline. Your allocations often misjudge market direction. Re-assess how you balance quants
+and signals.",
+"exceptional": "Severe underperformance in decision-making. Your allocations consistently lose value. Re-evaluate your decision logic entirely."
+}
+}}}
+19

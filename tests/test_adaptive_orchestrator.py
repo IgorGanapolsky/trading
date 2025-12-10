@@ -138,6 +138,9 @@ def test_performance_recording(adaptive_orchestrator):
         execution_order=[],
     )
 
+    # Enable learning for this test
+    adaptive_orchestrator.enable_learning = True
+
     # Record performance
     adaptive_orchestrator.record_performance(
         organization=org,

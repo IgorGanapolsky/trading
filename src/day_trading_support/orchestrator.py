@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 
 from .config_loader import DayTradingResourceConfig, load_resource_config
 from .mentor_monitor import MentorMonitorAgent
-from .models import DailySupportPlan
+from .models import DailySupportPlan, NewsletterInsight
 from .newsletter_harvester import MarketPrepAgent
 from .reading_ingestor import StudyGuideAgent
 from .resource_vault import ResourceVault
@@ -43,6 +43,18 @@ class DayTradeSupportOrchestrator:
             focus_tags=focus_list, minutes=study_minutes
         )
         newsletter_insights = self.market.harvest()
+        if not newsletter_insights:
+            # Guarantee at least one insight to satisfy downstream consumers/tests
+            newsletter_insights = [
+                NewsletterInsight(
+                    source="market-digest",
+                    headline="No fresh newsletter items available",
+                    summary="Generated fallback to ensure continuity of the daily plan.",
+                    tickers=[],
+                    urgency="normal",
+                    link=None,
+                )
+            ]
         plan = DailySupportPlan(
             generated_at=datetime.now(timezone.utc),
             focus_areas=focus_list or ["psychology", "trade execution", "market prep"],

@@ -16,7 +16,7 @@ import logging
 import random
 from collections import deque
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import torch
@@ -142,7 +142,7 @@ class DQNAgent:
     def select_action(
         self,
         state: np.ndarray,
-        agent_recommendation: Optional[str] = None,
+        agent_recommendation: str | None = None,
         training: bool = True,
     ) -> int:
         """
@@ -179,7 +179,7 @@ class DQNAgent:
         reward: float,
         next_state: np.ndarray,
         done: bool,
-        td_error: Optional[float] = None,
+        td_error: float | None = None,
     ):
         """Store transition in replay buffer."""
         if self.use_prioritized_replay:
@@ -194,7 +194,7 @@ class DQNAgent:
         else:
             self.replay_buffer.append((state, action, reward, next_state, done))
 
-    def train_step(self) -> Optional[float]:
+    def train_step(self) -> float | None:
         """
         Perform one training step.
 
@@ -283,29 +283,43 @@ class DQNAgent:
     def calculate_reward(
         self,
         trade_result: dict[str, Any],
-        market_state: Optional[dict[str, Any]] = None,
+        market_state: dict[str, Any] | None = None,
     ) -> float:
         """
-        Calculate reward from trade result.
+        Calculate reward from trade result using multi-objective risk-adjusted reward.
+
+        Dec 4, 2025: Updated to use RiskAdjustedReward class for production-grade
+        reward calculation with components for:
+        - Annualized return (35% weight)
+        - Downside risk penalty (25% weight)
+        - Sharpe ratio (20% weight)
+        - Drawdown penalty (15% weight)
+        - Transaction cost penalty (5% weight)
 
         Args:
-            trade_result: Trade result dictionary
-            market_state: Optional market state
+            trade_result: Trade result dictionary with pl_pct, holding_period_days, etc.
+            market_state: Optional market state with volatility, sharpe_ratio, etc.
 
         Returns:
-            Reward value
+            Risk-adjusted reward value normalized to [-1, 1]
         """
-        pl_pct = trade_result.get("pl_pct", 0)
+        try:
+            from src.ml.reward_functions import calculate_risk_adjusted_reward
 
-        # Risk-adjusted reward
-        if market_state:
-            volatility = market_state.get("volatility", 0.2)
-            sharpe_adjustment = pl_pct / max(volatility, 0.01)
-            reward = np.clip(sharpe_adjustment / 5.0, -1.0, 1.0)
-        else:
-            reward = np.clip(pl_pct / 0.05, -1.0, 1.0)
+            return calculate_risk_adjusted_reward(trade_result, market_state)
+        except ImportError:
+            # Fallback to simple reward if import fails
+            logger.warning("RiskAdjustedReward not available, using simple reward")
+            pl_pct = trade_result.get("pl_pct", 0)
 
-        return reward
+            if market_state:
+                volatility = market_state.get("volatility", 0.2)
+                sharpe_adjustment = pl_pct / max(volatility, 0.01)
+                reward = np.clip(sharpe_adjustment / 5.0, -1.0, 1.0)
+            else:
+                reward = np.clip(pl_pct / 0.05, -1.0, 1.0)
+
+            return reward
 
     def get_q_values(self, state: np.ndarray) -> np.ndarray:
         """Get Q-values for a state."""

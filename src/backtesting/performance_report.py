@@ -6,10 +6,11 @@ Provides detailed metrics, attribution analysis, and regime overlays.
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
+
 from src.backtesting.backtest_results import BacktestResults
 
 logger = logging.getLogger(__name__)
@@ -44,11 +45,11 @@ class PerformanceReport:
     turnover: float
 
     # Attribution (if available)
-    factor_exposures: Optional[dict[str, float]] = None
-    sector_exposures: Optional[dict[str, float]] = None
+    factor_exposures: dict[str, float] | None = None
+    sector_exposures: dict[str, float] | None = None
 
     # Regime analysis (if available)
-    regime_performance: Optional[dict[str, dict[str, float]]] = None
+    regime_performance: dict[str, dict[str, float]] | None = None
 
 
 class PerformanceReporter:
@@ -66,8 +67,8 @@ class PerformanceReporter:
     def generate_report(
         self,
         results: BacktestResults,
-        prices: Optional[pd.DataFrame] = None,
-        benchmark_returns: Optional[pd.Series] = None,
+        prices: pd.DataFrame | None = None,
+        benchmark_returns: pd.Series | None = None,
     ) -> PerformanceReport:
         """
         Generate comprehensive performance report.

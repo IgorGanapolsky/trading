@@ -1,6 +1,11 @@
 {
   "$schema": "https://schema.claudedesktop.com/mcp.json",
   "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest", "--headless"],
+      "description": "Playwright MCP for browser automation - sentiment scraping and trade verification"
+    },
     "alpaca": {
       "command": "uvx",
       "args": ["alpaca-mcp-server"],
@@ -13,16 +18,31 @@
     },
     "rss": {
       "command": "npx",
-      "args": ["-y", "@veithly/rss-mcp"],
-      "description": "RSS feed reader for consuming crypto newsletters and market analysis",
+      "args": ["-y", "rss-mcp"],
+      "description": "RSS feed reader for consuming newsletters and market analysis (Note: Package has Node compatibility issues, use Python script fetch_options_rss.py instead)",
       "env": {
-        "RSS_FEEDS": "https://medium.com/feed/coinsnacks"
+        "RSS_FEEDS": "https://medium.com/feed/coinsnacks,https://www.tastytrade.com/news/rss,https://optionsalpha.com/feed,https://www.cboe.com/rss/options-news"
       }
     },
     "youtube-transcript": {
       "command": "npx",
       "args": ["-y", "@sinco-lab/mcp-youtube-transcript"],
       "description": "YouTube transcript extractor - get transcripts and metadata from YouTube videos"
+    },
+    "pal": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/pal-mcp-server"],
+      "description": "PAL MCP Server - Provider Abstraction Layer for multi-model orchestration. Challenge tool for adversarial validation, Debug tool for systematic investigations",
+      "env": {
+        "OPENROUTER_API_KEY": "${OPENROUTER_API_KEY}",
+        "PAL_ENABLED_TOOLS": "challenge,debug,chat",
+        "PAL_DEFAULT_MODEL": "openrouter/anthropic/claude-sonnet-4"
+      }
+    },
+    "microsoft-learn": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp",
+      "description": "Microsoft Learn MCP Server - Real-time access to official Microsoft documentation, .NET, Azure, and code samples. No API key required."
     }
   }
 }

@@ -17,7 +17,6 @@ Created: 2025-12-02
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 import numpy as np
 
@@ -106,9 +105,9 @@ class SlippageModel:
         price: float,
         quantity: float,
         side: str,  # "buy" or "sell"
-        symbol: Optional[str] = None,
-        volume: Optional[float] = None,  # Average daily volume
-        volatility: Optional[float] = None,  # Daily volatility (e.g., 0.02 = 2%)
+        symbol: str | None = None,
+        volume: float | None = None,  # Average daily volume
+        volatility: float | None = None,  # Daily volatility (e.g., 0.02 = 2%)
         order_type: str = "market",
     ) -> SlippageResult:
         """
@@ -142,7 +141,7 @@ class SlippageModel:
         price: float,
         quantity: float,
         side: str,
-        symbol: Optional[str],
+        symbol: str | None,
     ) -> SlippageResult:
         """Fixed percentage slippage."""
         # Get symbol-specific spread or use default
@@ -169,8 +168,8 @@ class SlippageModel:
         price: float,
         quantity: float,
         side: str,
-        symbol: Optional[str],
-        volume: Optional[float],
+        symbol: str | None,
+        volume: float | None,
     ) -> SlippageResult:
         """Slippage that scales with order size relative to volume."""
         spread_bps = self._get_spread_bps(symbol)
@@ -211,8 +210,8 @@ class SlippageModel:
         price: float,
         quantity: float,
         side: str,
-        symbol: Optional[str],
-        volatility: Optional[float],
+        symbol: str | None,
+        volatility: float | None,
     ) -> SlippageResult:
         """Slippage that scales with volatility."""
         spread_bps = self._get_spread_bps(symbol)
@@ -250,9 +249,9 @@ class SlippageModel:
         price: float,
         quantity: float,
         side: str,
-        symbol: Optional[str],
-        volume: Optional[float],
-        volatility: Optional[float],
+        symbol: str | None,
+        volume: float | None,
+        volatility: float | None,
         order_type: str,
     ) -> SlippageResult:
         """
@@ -319,7 +318,7 @@ class SlippageModel:
             },
         )
 
-    def _get_spread_bps(self, symbol: Optional[str]) -> float:
+    def _get_spread_bps(self, symbol: str | None) -> float:
         """Get bid-ask spread for a symbol."""
         if symbol and symbol.upper() in self.ASSET_SPREADS:
             return self.ASSET_SPREADS[symbol.upper()]
@@ -329,9 +328,9 @@ class SlippageModel:
         self,
         price: float,
         quantity: float,
-        symbol: Optional[str] = None,
-        volume: Optional[float] = None,
-        volatility: Optional[float] = None,
+        symbol: str | None = None,
+        volume: float | None = None,
+        volatility: float | None = None,
     ) -> float:
         """
         Estimate total round-trip cost (entry + exit).
@@ -367,7 +366,7 @@ def apply_slippage(
     price: float,
     quantity: float,
     side: str,
-    symbol: Optional[str] = None,
+    symbol: str | None = None,
 ) -> float:
     """Quick slippage application for simple use cases."""
     model = get_default_slippage_model()

@@ -29,7 +29,6 @@ import re
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import praw
 from praw.exceptions import PRAWException
@@ -161,9 +160,9 @@ class RedditSentiment:
 
     def __init__(
         self,
-        client_id: Optional[str] = None,
-        client_secret: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        client_id: str | None = None,
+        client_secret: str | None = None,
+        user_agent: str | None = None,
         data_dir: str = "data/sentiment",
         cache_hours: int = 24,
     ):
@@ -431,7 +430,7 @@ class RedditSentiment:
 
     def collect_daily_sentiment(
         self,
-        subreddits: Optional[list[str]] = None,
+        subreddits: list[str] | None = None,
         limit_per_sub: int = 25,
         force_refresh: bool = False,
     ) -> dict:
@@ -535,7 +534,7 @@ class RedditSentiment:
 
     def get_top_tickers(
         self,
-        sentiment_data: Optional[dict] = None,
+        sentiment_data: dict | None = None,
         min_mentions: int = 5,
         min_confidence: str = "medium",
         limit: int = 10,
@@ -582,7 +581,7 @@ class RedditSentiment:
 
 
 def get_reddit_sentiment(
-    subreddits: Optional[list[str]] = None,
+    subreddits: list[str] | None = None,
     limit_per_sub: int = 25,
     force_refresh: bool = False,
 ) -> dict:

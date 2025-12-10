@@ -9,7 +9,7 @@ Run with: streamlit run dashboard/path_to_100_dashboard.py
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -26,6 +26,34 @@ st.set_page_config(
 # Data paths
 DATA_DIR = Path("data")
 TELEMETRY_DIR = DATA_DIR / "telemetry"
+
+
+def load_json_file(filepath: Path, default=None):
+    """Load JSON file safely."""
+    if filepath.exists():
+        try:
+            with open(filepath) as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return default if default is not None else []
+
+
+def get_recent_trades_count() -> int:
+    """Get count of trades from today or yesterday (handles midnight rollover)."""
+    today = datetime.now().date()
+
+    # Try today's file first
+    trade_file = DATA_DIR / f"trades_{today.isoformat()}.json"
+    trades = load_json_file(trade_file)
+
+    if not trades:
+        # Fallback to yesterday's file
+        yesterday = today - timedelta(days=1)
+        trade_file = DATA_DIR / f"trades_{yesterday.isoformat()}.json"
+        trades = load_json_file(trade_file)
+
+    return len(trades) if isinstance(trades, list) else 0
 
 
 def load_telemetry_data() -> pd.DataFrame:
@@ -239,6 +267,13 @@ def main():
         else:
             st.warning("⚠️ No telemetry data found")
             st.caption("Run trading system to generate data")
+
+        # Show recent trades (handles midnight rollover)
+        recent_trades = get_recent_trades_count()
+        if recent_trades > 0:
+            st.info(f"✅ {recent_trades} Recent Trades")
+        else:
+            st.caption("No recent trades")
 
         st.divider()
 

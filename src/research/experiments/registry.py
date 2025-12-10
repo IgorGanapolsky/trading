@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 class ModelStage(Enum):
@@ -28,11 +28,11 @@ class ModelVersion:
     version: int
     stage: ModelStage
     created_at: str
-    experiment_run_id: Optional[str] = None
+    experiment_run_id: str | None = None
     metrics: dict[str, float] = field(default_factory=dict)
     description: str = ""
     tags: list[str] = field(default_factory=list)
-    artifact_path: Optional[str] = None
+    artifact_path: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -101,10 +101,10 @@ class ModelRegistry:
         self,
         model_name: str,
         model: Any,
-        experiment_run_id: Optional[str] = None,
-        metrics: Optional[dict[str, float]] = None,
+        experiment_run_id: str | None = None,
+        metrics: dict[str, float] | None = None,
         description: str = "",
-        tags: Optional[list[str]] = None,
+        tags: list[str] | None = None,
     ) -> ModelVersion:
         """
         Register a new model version.
@@ -160,8 +160,8 @@ class ModelRegistry:
     def get_latest_version(
         self,
         model_name: str,
-        stage: Optional[ModelStage] = None,
-    ) -> Optional[ModelVersion]:
+        stage: ModelStage | None = None,
+    ) -> ModelVersion | None:
         """Get the latest version, optionally filtered by stage."""
         versions = self.get_model_versions(model_name)
 
@@ -195,8 +195,8 @@ class ModelRegistry:
     def load_model(
         self,
         model_name: str,
-        version: Optional[int] = None,
-        stage: Optional[ModelStage] = None,
+        version: int | None = None,
+        stage: ModelStage | None = None,
     ) -> Any:
         """
         Load a model from the registry.
@@ -219,7 +219,7 @@ class ModelRegistry:
             raise ValueError(f"No matching model found: {model_name}")
 
         with open(model_version.artifact_path, "rb") as f:
-            return pickle.load(f)  # noqa: S301 - Models are trusted internal artifacts
+            return pickle.load(f)  # nosec B301  # noqa: S301 - Models are trusted internal artifacts
 
     def list_models(self) -> list[str]:
         """List all registered model names."""

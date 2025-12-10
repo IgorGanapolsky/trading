@@ -15,7 +15,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +72,7 @@ class StrategyRecord:
     # Implementation
     module_path: str  # Python module path (e.g., "src.strategies.momentum")
     class_name: str  # Class name (e.g., "MomentumStrategy")
-    config_file: Optional[str] = None  # Path to config file if exists
+    config_file: str | None = None  # Path to config file if exists
 
     # Status
     status: StrategyStatus = StrategyStatus.CONCEPT
@@ -81,14 +80,14 @@ class StrategyRecord:
     last_modified: str = field(default_factory=lambda: datetime.now().isoformat())
 
     # Development tracking
-    branch: Optional[str] = None  # Git branch where it's being developed
-    pr_number: Optional[int] = None  # Associated PR number
-    assigned_to: Optional[str] = None  # Who's working on it
+    branch: str | None = None  # Git branch where it's being developed
+    pr_number: int | None = None  # Associated PR number
+    assigned_to: str | None = None  # Who's working on it
 
     # Performance
-    backtest_metrics: Optional[BacktestMetrics] = None
-    paper_trading_start: Optional[str] = None
-    live_trading_start: Optional[str] = None
+    backtest_metrics: BacktestMetrics | None = None
+    paper_trading_start: str | None = None
+    live_trading_start: str | None = None
 
     # Dependencies
     data_sources: list[str] = field(default_factory=list)  # Required data sources
@@ -285,7 +284,7 @@ class StrategyRegistry:
         return True
 
     def update_branch_info(
-        self, strategy_id: str, branch: str, pr_number: Optional[int] = None
+        self, strategy_id: str, branch: str, pr_number: int | None = None
     ) -> bool:
         """Update branch and PR information for a strategy."""
         if strategy_id not in self.strategies:
@@ -314,7 +313,7 @@ class StrategyRegistry:
 
     def get_best_by_metric(
         self, metric: str, min_status: StrategyStatus = StrategyStatus.BACKTESTED
-    ) -> Optional[StrategyRecord]:
+    ) -> StrategyRecord | None:
         """
         Get best performing strategy by a specific metric.
 
@@ -454,6 +453,24 @@ class StrategyRegistry:
             tags=["crypto", "weekend", "btc", "eth"],
         )
         self.register(crypto_v1)
+
+        # Mean reversion strategy (RSI-2 based)
+        mean_reversion_v1 = StrategyRecord(
+            strategy_id="mean_reversion_rsi2_v1",
+            name="RSI(2) Mean Reversion Strategy",
+            description="RSI(2) mean reversion for ranging markets (75% win rate, 30-year backtest)",
+            strategy_type=StrategyType.MEAN_REVERSION,
+            module_path="src.strategies.mean_reversion_strategy",
+            class_name="MeanReversionStrategy",
+            status=StrategyStatus.DEVELOPMENT,
+            data_sources=["yfinance"],
+            features=["rsi_2", "rsi_5", "sma_200", "vix_filter", "trend_filter"],
+            tags=["mean_reversion", "rsi", "etf", "quantified_strategies"],
+            notes="Based on Quantified Strategies research. Best for SIDEWAYS/ranging markets. "
+            "Complements momentum strategy which works in trending markets. "
+            "Expected: 75% win rate, 0.8% avg gain, 1-5 day holds.",
+        )
+        self.register(mean_reversion_v1)
 
         self._save()
         logger.info("Initialized registry with default strategies")

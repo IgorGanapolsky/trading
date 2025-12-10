@@ -48,7 +48,7 @@ def _build_ticker_index(mapping: dict[str, list[str]]) -> dict[str, str]:
     return index
 
 
-@dataclass(slots=True)
+@dataclass
 class AllocationPlan:
     ticker: str
     bucket: str
@@ -56,7 +56,7 @@ class AllocationPlan:
     confidence: float
 
 
-@dataclass(slots=True)
+@dataclass
 class SafeSweep:
     symbol: str
     amount: float

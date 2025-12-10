@@ -14,6 +14,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
+from src.brokers.multi_broker import MultiBroker, get_multi_broker
 from src.core.alpaca_trader import AlpacaTrader, AlpacaTraderError
 
 logger = logging.getLogger(__name__)
@@ -34,9 +35,19 @@ class AlpacaExecutor:
         self.simulated = os.getenv("ALPACA_SIMULATED", "false").lower() in {"1", "true"}
         self.paper = paper
 
+        # Multi-broker failover support (opt-in via env var)
+        self.enable_failover = os.getenv("ENABLE_BROKER_FAILOVER", "false").lower() in {"1", "true"}
+        self.multi_broker: MultiBroker | None = None
+
         if not self.simulated:
             try:
                 self.trader = AlpacaTrader(paper=paper)
+
+                # Initialize multi-broker if failover is enabled
+                if self.enable_failover:
+                    self.multi_broker = get_multi_broker()
+                    logger.info("Multi-broker failover ENABLED (Alpaca → IBKR → Tradier)")
+
             except AlpacaTraderError as exc:
                 if not allow_simulator:
                     raise
@@ -55,8 +66,13 @@ class AlpacaExecutor:
             self.account_snapshot = {"equity": equity, "mode": "simulated"}
             self.positions = []
         else:
-            self.account_snapshot = self.trader.get_account_info()
-            self.positions = self.trader.get_positions()
+            try:
+                self.account_snapshot = self.trader.get_account_info()
+                self.positions = self.trader.get_positions()
+            except Exception as e:
+                logger.error(f"Failed to sync portfolio state: {e}. Falling back to empty state.")
+                self.account_snapshot = {}
+                self.positions = []
 
         logger.info(
             "Synced %s Alpaca state | equity=$%.2f | positions=%d",
@@ -75,19 +91,50 @@ class AlpacaExecutor:
             or 0.0
         )
 
-    def place_order(self, symbol: str, notional: float, side: str = "buy") -> dict[str, Any]:
+    def get_positions(self) -> list[dict[str, Any]]:
+        """
+        Get current open positions from Alpaca.
+
+        Returns fresh position data from the broker, not cached data.
+
+        Returns:
+            List of position dictionaries with keys:
+            - symbol: str
+            - qty: float
+            - avg_entry_price: float
+            - current_price: float
+            - unrealized_pl: float
+            - unrealized_plpc: float (as decimal, e.g., 0.03 for 3%)
+            - market_value: float
+        """
+        if self.simulated:
+            return self.positions  # Return cached simulated positions
+
+        if self.trader:
+            return self.trader.get_positions()
+
+        return []
+
+    def place_order(
+        self,
+        symbol: str,
+        notional: float | None = None,
+        qty: float | None = None,
+        side: str = "buy",
+    ) -> dict[str, Any]:
         logger.debug(
-            "Submitting %s order via AlpacaExecutor: %s for $%.2f",
+            "Submitting %s order via AlpacaExecutor: %s for %s",
             side,
             symbol,
-            notional,
+            f"${notional:.2f}" if notional else f"{qty} shares",
         )
         if self.simulated:
             order = {
                 "id": str(uuid.uuid4()),
                 "symbol": symbol,
                 "side": side,
-                "notional": round(notional, 2),
+                "notional": round(notional, 2) if notional else None,
+                "qty": float(qty) if qty else None,
                 "status": "filled",
                 "filled_at": datetime.utcnow().isoformat(),
                 "mode": "simulated",
@@ -95,9 +142,45 @@ class AlpacaExecutor:
             self.simulated_orders.append(order)
             return order
 
+        # Use multi-broker failover if enabled
+        if self.enable_failover and self.multi_broker:
+            # Convert notional to qty if needed (MultiBroker expects qty)
+            if notional and not qty:
+                # Get current price to estimate qty
+                try:
+                    quote_data, _ = self.multi_broker.get_quote(symbol)
+                    price = quote_data.get("last", 0) or quote_data.get("ask", 0)
+                    if price > 0:
+                        qty = notional / price
+                except Exception as e:
+                    logger.warning(f"Failed to get quote for {symbol}, falling back to Alpaca: {e}")
+                    # Fall through to regular Alpaca order
+
+            if qty:
+                # Submit via MultiBroker with automatic failover
+                order_result = self.multi_broker.submit_order(
+                    symbol=symbol,
+                    qty=qty,
+                    side=side,
+                    order_type="market",
+                )
+
+                # Convert OrderResult to dict format expected by caller
+                return {
+                    "id": order_result.order_id,
+                    "symbol": order_result.symbol,
+                    "side": order_result.side,
+                    "qty": order_result.quantity,
+                    "status": order_result.status,
+                    "filled_avg_price": order_result.filled_price,
+                    "broker": order_result.broker.value,
+                }
+
+        # Standard Alpaca-only path (no failover)
         order = self.trader.execute_order(
             symbol=symbol,
             amount_usd=notional,
+            qty=qty,
             side=side,
             tier="T1_CORE",
         )
@@ -126,6 +209,30 @@ class AlpacaExecutor:
             self.simulated_orders.append(order)
             return order
 
+        # Use multi-broker failover if enabled
+        if self.enable_failover and self.multi_broker:
+            # Submit stop-loss via MultiBroker with automatic failover
+            order_result = self.multi_broker.submit_order(
+                symbol=symbol,
+                qty=qty,
+                side="sell",
+                order_type="limit",  # Use limit order with stop price
+                limit_price=stop_price,
+            )
+
+            # Convert OrderResult to dict format expected by caller
+            return {
+                "id": order_result.order_id,
+                "symbol": order_result.symbol,
+                "side": "sell",
+                "type": "stop",
+                "qty": order_result.quantity,
+                "stop_price": stop_price,
+                "status": order_result.status,
+                "broker": order_result.broker.value,
+            }
+
+        # Standard Alpaca-only path (no failover)
         return self.trader.set_stop_loss(symbol=symbol, qty=qty, stop_price=stop_price)
 
     def place_order_with_stop_loss(
@@ -185,8 +292,14 @@ class AlpacaExecutor:
         # Calculate entry price (estimated from notional / filled_qty or current price)
         entry_price = self._estimate_entry_price(symbol, notional, order)
         if entry_price <= 0:
-            logger.warning(f"Could not determine entry price for {symbol} - using 5% default stop")
-            stop_loss_pct = DEFAULT_STOP_LOSS_PCT
+            logger.error(f"Could not determine entry price for {symbol}. Stop-loss not placed.")
+            result["error"] = "Could not determine entry price for stop-loss."
+            # Order was placed but stop failed - this is a risk!
+            logger.critical(
+                f"[RISK] Position {symbol} opened WITHOUT stop-loss protection! "
+                f"Manual intervention required."
+            )
+            return result
 
         # Calculate stop-loss price
         if stop_loss_pct is not None:
@@ -222,7 +335,7 @@ class AlpacaExecutor:
             result["stop_loss"] = stop_order
             logger.info(
                 f"[PROTECTED] {symbol}: Entry=${entry_price:.2f}, "
-                f"Stop=${stop_price:.2f} ({actual_pct*100:.1f}%), "
+                f"Stop=${stop_price:.2f} ({actual_pct * 100:.1f}%), "
                 f"Qty={qty:.4f}"
             )
         except Exception as e:
@@ -236,9 +349,7 @@ class AlpacaExecutor:
 
         return result
 
-    def _estimate_entry_price(
-        self, symbol: str, notional: float, order: dict[str, Any]
-    ) -> float:
+    def _estimate_entry_price(self, symbol: str, notional: float, order: dict[str, Any]) -> float:
         """Estimate entry price from order or current market price."""
         # Try to get from order fill
         if order.get("filled_avg_price"):
@@ -301,9 +412,7 @@ class AlpacaExecutor:
         # Fallback to default
         return entry_price * (1 - DEFAULT_STOP_LOSS_PCT), DEFAULT_STOP_LOSS_PCT
 
-    def _get_order_qty(
-        self, order: dict[str, Any], notional: float, entry_price: float
-    ) -> float:
+    def _get_order_qty(self, order: dict[str, Any], notional: float, entry_price: float) -> float:
         """Get quantity from order or estimate from notional."""
         if order.get("filled_qty"):
             return float(order["filled_qty"])

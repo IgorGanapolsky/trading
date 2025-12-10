@@ -10,7 +10,7 @@ from typing import Any
 from langchain_community.chat_models import ChatAnthropic
 from src.utils.sentiment import blend_sentiment_scores, compute_lexical_sentiment
 
-from src.langchain_agents.agents import build_price_action_agent
+# from src.langchain_agents.agents import build_price_action_agent
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +37,7 @@ class LangChainSentimentAgent:
 
     def _get_executor(self):
         if self._executor is None:
-            llm = self._build_llm()
-            self._executor = build_price_action_agent(llm=llm)
+            self._executor = self._build_llm()
         return self._executor
 
     def analyze_news(self, symbol: str, indicators: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -74,8 +73,10 @@ Respond strictly as JSON:
         )
 
         executor = self._get_executor()
-        result = executor.invoke({"input": prompt})
-        raw_output = result.get("output", "") if isinstance(result, dict) else str(result)
+        # Direct LLM call since agent is removed
+        result = executor.invoke(prompt)
+        # ChatAnthropic returns an AIMessage, we need the content
+        raw_output = result.content if hasattr(result, "content") else str(result)
 
         try:
             parsed = json.loads(raw_output)

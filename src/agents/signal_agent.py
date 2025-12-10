@@ -19,6 +19,18 @@ import pandas as pd
 
 from .base_agent import BaseAgent
 
+# Psychology integration - inject bias mitigation into LLM prompts
+try:
+    from src.coaching.mental_toughness_coach import get_prompt_context as get_psychology_context
+
+    PSYCHOLOGY_AVAILABLE = True
+except ImportError:
+    PSYCHOLOGY_AVAILABLE = False
+
+    def get_psychology_context() -> str:
+        return ""  # No-op if coaching not available
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -103,6 +115,10 @@ CONFIDENCE: 0.45
 FACTORS: Mixed signals - MACD flat, RSI neutral at 52, below-average volume suggests no conviction
 </example>
 </examples>
+
+<psychology_context>
+{get_psychology_context() if PSYCHOLOGY_AVAILABLE else ""}
+</psychology_context>
 
 <task>
 Analyze {symbol} now and respond in this exact format:

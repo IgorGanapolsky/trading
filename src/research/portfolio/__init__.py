@@ -25,13 +25,26 @@ from src.research.portfolio.risk_parity import (
     calculate_risk_parity_weights,
 )
 
+
+# Placeholder result type for compatibility
+class PortfolioResult(dict):
+    """Placeholder portfolio result container."""
+
+
+def calculate_portfolio_stats(weights, returns=None):
+    """Placeholder portfolio statistics calculator."""
+    return {"weights": weights, "returns": returns}
+
+
 __all__ = [
     "PortfolioOptimizer",
     "OptimizationMethod",
     "PortfolioConstraints",
     "OptimizationResult",
+    "PortfolioResult",
     "calculate_risk_parity_weights",
     "calculate_equal_risk_contribution",
     "calculate_kelly_fraction",
     "calculate_half_kelly",
+    "calculate_portfolio_stats",
 ]

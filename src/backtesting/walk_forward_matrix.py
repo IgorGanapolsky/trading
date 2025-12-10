@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Walk-Forward Backtest Matrix Evaluation
 
@@ -22,7 +24,7 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -238,7 +240,7 @@ class WalkForwardMatrixValidator:
         start_date: str,
         end_date: str,
         initial_capital: float = 100000.0,
-        param_grid: Optional[dict[str, list]] = None,
+        param_grid: dict[str, list] | None = None,
     ) -> BacktestMatrixResults:
         """
         Run full walk-forward matrix evaluation.
@@ -379,7 +381,7 @@ class WalkForwardMatrixValidator:
         self,
         strategy_name: str,
         windows: list[WalkForwardWindow],
-        param_grid: Optional[dict[str, list]] = None,
+        param_grid: dict[str, list] | None = None,
     ) -> BacktestMatrixResults:
         """Aggregate window results into matrix results."""
 

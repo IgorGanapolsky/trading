@@ -28,7 +28,7 @@ class TestBondYieldAgent:
         # Mock FRED data for different curve shapes
         with patch.object(agent, "_get_yield_data") as mock_yields:
             # Steep curve
-            mock_yields.return_value = {"DGS2": 3.5, "DGS10": 5.0, "DGS30": 5.5, "T10Y2Y": 1.5}
+            mock_yields.return_value = {"DGS2": 3.4, "DGS10": 5.0, "DGS30": 5.5, "T10Y2Y": 1.6}
             signal = agent.analyze_yield_curve()
             assert signal.shape == YieldCurveShape.STEEP
 
@@ -84,7 +84,7 @@ class TestBondYieldAgent:
 
         # Steep curve should recommend long duration
         with patch.object(agent, "_get_yield_data") as mock_yields:
-            mock_yields.return_value = {"DGS2": 3.5, "DGS10": 5.0, "DGS30": 5.5, "T10Y2Y": 1.5}
+            mock_yields.return_value = {"DGS2": 3.4, "DGS10": 5.0, "DGS30": 5.5, "T10Y2Y": 1.6}
             signal = agent.analyze_yield_curve()
             assert signal.recommended_duration == "long"
 

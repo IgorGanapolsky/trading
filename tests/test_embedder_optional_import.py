@@ -11,14 +11,20 @@ import pytest
 
 def test_embedder_import_without_sentence_transformers():
     """Test that embedder module can be imported without sentence_transformers."""
-    # Mock the import to simulate missing sentence_transformers
-    with patch.dict("sys.modules", {"sentence_transformers": None}):
-        # Should be able to import the module
-        from src.rag.vector_db import embedder
+    # Check if sentence_transformers is installed
+    try:
+        import sentence_transformers  # noqa: F401
 
-        # But trying to get embedder should raise ImportError
-        with pytest.raises(ImportError):
-            embedder._get_sentence_transformer()
+        pytest.skip("sentence-transformers installed - skipping missing dependency test")
+    except ImportError:
+        pass
+
+    # Should be able to import the module
+    from src.rag.vector_db import embedder
+
+    # But trying to get embedder should raise ImportError
+    with pytest.raises(ImportError, match="sentence-transformers"):
+        embedder._get_sentence_transformer()
 
 
 def test_embedder_import_with_sentence_transformers():

@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ class ModelVersion:
     parameters: dict[str, Any]
     validation_results: dict[str, Any]
     is_active: bool = False
-    superseded_by: Optional[str] = None
+    superseded_by: str | None = None
     notes: str = ""
 
 
@@ -68,11 +68,11 @@ class OptimizationResult:
     frequency: str
     status: OptimizationStatus
     previous_version: str
-    new_version: Optional[str]
+    new_version: str | None
     validation_passed: bool
     validation_metrics: dict[str, Any]
     parameter_changes: dict[str, dict[str, float]]
-    rollback_reason: Optional[str] = None
+    rollback_reason: str | None = None
     duration_seconds: float = 0.0
 
 
@@ -105,7 +105,7 @@ class ReOptimizationScheduler:
 
     def __init__(
         self,
-        config: Optional[SchedulerConfig] = None,
+        config: SchedulerConfig | None = None,
         state_file: str = "data/reoptimization_state.json",
         versions_file: str = "data/model_versions.json",
     ):
@@ -323,7 +323,7 @@ class ReOptimizationScheduler:
             self._record_optimization(result)
             return result
 
-    def check_pending_confirmation(self) -> Optional[dict[str, Any]]:
+    def check_pending_confirmation(self) -> dict[str, Any] | None:
         """
         Check if there's a pending version awaiting confirmation.
 
@@ -452,7 +452,7 @@ class ReOptimizationScheduler:
         param_values = list(parameter_grid.values())
 
         for combo in itertools.product(*param_values):
-            params = dict(zip(param_names, combo))
+            params = dict(zip(param_names, combo, strict=False))
 
             try:
                 results = validator.run_matrix_evaluation(
@@ -560,14 +560,14 @@ class ReOptimizationScheduler:
         logger.info(f"Created model version {version_id}")
         return version
 
-    def _get_active_version(self) -> Optional[ModelVersion]:
+    def _get_active_version(self) -> ModelVersion | None:
         """Get currently active model version."""
         for version in self.versions.values():
             if version.is_active:
                 return version
         return None
 
-    def _get_version(self, version_id: str) -> Optional[ModelVersion]:
+    def _get_version(self, version_id: str) -> ModelVersion | None:
         """Get a specific version."""
         return self.versions.get(version_id)
 
@@ -595,7 +595,7 @@ class ReOptimizationScheduler:
         logger.warning(f"Rolled back version {version_id}: {reason}")
         return True
 
-    def _get_live_performance_metrics(self, version_id: str) -> Optional[dict[str, Any]]:
+    def _get_live_performance_metrics(self, version_id: str) -> dict[str, Any] | None:
         """Get live performance metrics for a version."""
         # In production, this would query actual trading results
         # For now, return placeholder

@@ -41,13 +41,16 @@ def exponential_retry(
         retryable_exceptions: List of exception types to retry on
         backoff_multiplier: Multiplier for exponential backoff
     """
+    _exceptions_to_retry: list[type[Exception]]
     if retryable_exceptions is None:
-        retryable_exceptions = [
+        _exceptions_to_retry = [
             RetryableError,
             TemporaryAPIError,
             ConnectionError,
             TimeoutError,
         ]
+    else:
+        _exceptions_to_retry = retryable_exceptions
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
@@ -65,7 +68,7 @@ def exponential_retry(
                     last_exception = e
 
                     # Check if this exception should be retried
-                    should_retry = any(isinstance(e, exc_type) for exc_type in retryable_exceptions)
+                    should_retry = any(isinstance(e, exc_type) for exc_type in _exceptions_to_retry)
 
                     if not should_retry or attempt == max_attempts - 1:
                         # Don't retry this exception type, or we've exhausted attempts
@@ -83,7 +86,9 @@ def exponential_retry(
                     time.sleep(delay)
 
             # Should never reach here, but just in case
-            raise last_exception
+            if last_exception:
+                raise last_exception
+            raise RuntimeError(f"{func.__name__} failed: Max attempts exceeded")
 
         return wrapper
 
@@ -166,3 +171,4 @@ if __name__ == "__main__":
         print(f"Result: {result}")
     except Exception as e:
         print(f"Final failure: {e}")
+# ruff: noqa: UP035,UP045

@@ -18,6 +18,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import pytest
+
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -35,6 +37,36 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+
+@pytest.fixture
+def sentiment_data():
+    """Provide mock sentiment data for integration tests."""
+    today = datetime.now().strftime("%Y-%m-%d")
+    return {
+        "meta": {"date": today, "timestamp": datetime.now().isoformat(), "sources": ["mock"]},
+        "sentiment_by_ticker": {
+            "SPY": {"score": 55.0, "confidence": "high", "market_regime": "neutral", "sources": {}},
+            "NVDA": {
+                "score": 85.0,
+                "confidence": "high",
+                "market_regime": "risk_on",
+                "sources": {},
+            },
+            "GOOGL": {
+                "score": 30.0,
+                "confidence": "medium",
+                "market_regime": "risk_off",
+                "sources": {},
+            },
+            "TSLA": {
+                "score": 50.0,
+                "confidence": "medium",
+                "market_regime": "neutral",
+                "sources": {},
+            },
+        },
+    }
 
 
 def create_mock_sentiment_data():
@@ -152,6 +184,9 @@ def create_mock_sentiment_data():
 
 def test_sentiment_loader():
     """Test sentiment loader functionality."""
+    # Ensure mock data exists
+    create_mock_sentiment_data()
+
     print("\n" + "=" * 80)
     print("TEST 1: SENTIMENT LOADER")
     print("=" * 80)

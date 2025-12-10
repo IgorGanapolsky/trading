@@ -11,7 +11,7 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import requests
 from bs4 import BeautifulSoup
@@ -116,7 +116,7 @@ class SimpleBerkshireCollector:
             logger.error(f"Error downloading letters: {e}")
             return 0
 
-    def _extract_year(self, url: str) -> Optional[int]:
+    def _extract_year(self, url: str) -> int | None:
         """Extract year from letter URL."""
         match = re.search(r"(19|20)\d{2}", url)
         if match:

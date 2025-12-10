@@ -1,0 +1,72 @@
+{
+  "plan_id": "adaptive_20251205_125034",
+  "timestamp": "2025-12-05T12:50:34.388510",
+  "symbols": [
+    "SPY",
+    "QQQ"
+  ],
+  "phases": {
+    "initialize": {
+      "description": "Initialize",
+      "agents": [
+        "claude_skills"
+      ],
+      "tasks": [
+        "Load portfolio state",
+        "Check market hours"
+      ],
+      "status": "completed"
+    },
+    "data_collection": {
+      "description": "Collect data",
+      "agents": [
+        "claude_skills"
+      ],
+      "tasks": [
+        "Fetch price data"
+      ],
+      "status": "completed"
+    },
+    "analysis": {
+      "description": "Analyze",
+      "agents": [
+        "ml_model"
+      ],
+      "tasks": [
+        "Generate signal"
+      ],
+      "status": "completed"
+    },
+    "risk_assessment": {
+      "description": "Assess risk",
+      "agents": [
+        "claude_skills"
+      ],
+      "tasks": [
+        "Position sizing",
+        "Stop-loss"
+      ],
+      "status": "completed"
+    },
+    "execution": {
+      "description": "Execute",
+      "agents": [
+        "mcp"
+      ],
+      "tasks": [
+        "Order placement"
+      ],
+      "status": "completed"
+    }
+  },
+  "decisions": [],
+  "context": {
+    "complexity": "simple",
+    "complexity_score": 0.26,
+    "market_regime": "SIDEWAYS",
+    "organization_pattern": "linear",
+    "organization_rationale": "Linear plan: Sequential execution for moderate complexity"
+  },
+  "status": "completed",
+  "git_commit": null
+}

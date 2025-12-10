@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -34,6 +35,82 @@ jobs:
       - name: Run Ruff formatter check
         run: ruff format --check .
 
+  tests:
+    name: Run All Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install --no-interaction
+      - name: Run unit tests
+        run: poetry run pytest -q
+
+  smoke:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install --no-interaction
+
+      - name: Run smoke backtest
+        run: |
+          mkdir -p out
+          poetry run ./scripts/run_smoke.sh tests/fixtures/fixture.csv 42 out/smoke.json
+      - name: Upload smoke artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-result
+          path: out/smoke.json
+
+  update-expected:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
+    runs-on: ubuntu-latest
+    needs: smoke
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # required to commit back
+          token: ${{ secrets.CI_WRITE_TOKEN }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install --no-interaction
+      - name: Get smoke result
+        uses: actions/download-artifact@v4
+        with:
+          name: smoke-result
+          path: out
+      - name: Update EXPECTED in test and push
+        env:
+          GIT_AUTHOR_NAME: ci-bot
+          GIT_AUTHOR_EMAIL: ci-bot@example.com
+        run: |
+          poetry run python scripts/update_expected.py out/smoke.json
+
   test:
     name: Test Suite
     runs-on: ubuntu-latest
@@ -62,6 +139,7 @@ jobs:
             tests/test_backtest_matrix_utils.py \
             tests/test_telemetry_summary.py \
             tests/test_trade_gateway.py \
+            tests/test_fred_collector.py \
             --timeout=120 \
             --timeout-method=thread \
             -v \
@@ -149,3 +227,30 @@ jobs:
             echo "::error::Metric degradation not accepted. Add 'ACCEPT_METRIC_DEGRADATION' to PR description."
             exit 1
           fi
+
+  workflow-integrity:
+    name: Workflow Integrity Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Run workflow integrity tests
+        run: |
+          echo "🔍 Checking workflow integrity..."
+          echo "   This catches silent failures BEFORE they break trading"
+          python3 tests/test_workflow_integrity.py
+
+      - name: Fail loudly if integrity compromised
+        if: failure()
+        run: |
+          echo "::error::WORKFLOW INTEGRITY COMPROMISED - Fix before merging!"
+          echo "::error::These tests catch bugs that cause silent trading failures."
+          exit 1
