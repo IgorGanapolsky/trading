@@ -18,6 +18,14 @@
       "env": {
         "RSS_FEEDS": "https://medium.com/feed/coinsnacks"
       }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "description": "GitHub MCP Server - PRs, issues, commits, and repo management",
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
     }
   }
 }

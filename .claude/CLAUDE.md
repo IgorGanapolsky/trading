@@ -82,6 +82,7 @@ Every session after the first should follow the "Future Sessions - START HERE" p
 - You make decisions and execute
 - You send reports TO Igor, not ask him to run scripts
 - **ALWAYS commit and push changes to GitHub** - don't leave work uncommitted
+- **ALWAYS use `gh` CLI to create/merge PRs** - you have full repo permissions via PAT
 
 **Igor (CEO) Role**:
 - Sets vision and goals
