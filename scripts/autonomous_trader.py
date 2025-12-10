@@ -390,7 +390,12 @@ def _apply_dynamic_daily_budget(logger) -> float | None:
 
 
 def execute_crypto_trading() -> None:
-    """Execute crypto trading strategy."""
+    """Execute crypto trading strategy.
+
+    Dec 10, 2025: Added CryptoWeekendAgent integration for mean-reversion
+    strategy on weekends. The agent identifies RSI oversold conditions
+    and provides buy signals with higher confidence on weekends.
+    """
     from src.core.alpaca_trader import AlpacaTrader
     from src.risk.unified import UnifiedRiskManager as RiskManager
     from src.strategies.crypto_strategy import CryptoStrategy
@@ -399,6 +404,35 @@ def execute_crypto_trading() -> None:
     logger.info("=" * 80)
     logger.info("CRYPTO TRADING MODE")
     logger.info("=" * 80)
+
+    # Dec 10, 2025: Use CryptoWeekendAgent for weekend mean-reversion signals
+    if is_weekend():
+        try:
+            from src.agents.crypto_weekend_agent import CryptoWeekendAgent
+
+            weekend_agent = CryptoWeekendAgent()
+            logger.info("🌙 WEEKEND DETECTED - Using CryptoWeekendAgent for mean-reversion signals")
+
+            # Scan for oversold opportunities
+            opportunities = weekend_agent.scan_opportunities()
+            for signal in opportunities:
+                if signal.is_buy and signal.confidence > 0.7:
+                    logger.info(
+                        f"📈 Weekend mean-reversion opportunity: {signal.symbol} "
+                        f"RSI={signal.rsi:.1f}, Confidence={signal.confidence:.1%}"
+                    )
+                    logger.info(f"   Rationale: {signal.rationale}")
+                elif signal.is_sell:
+                    logger.info(
+                        f"📉 Weekend exit signal: {signal.symbol} RSI={signal.rsi:.1f}"
+                    )
+
+            if not opportunities:
+                logger.info("No weekend mean-reversion opportunities found")
+        except ImportError as e:
+            logger.warning(f"CryptoWeekendAgent not available: {e}")
+        except Exception as e:
+            logger.warning(f"Weekend agent scan failed (non-fatal): {e}")
 
     try:
         # Initialize dependencies - MUST have valid trader for crypto
