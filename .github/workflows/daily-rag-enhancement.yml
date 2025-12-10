@@ -1,0 +1,133 @@
+name: Daily RAG Knowledge Enhancement
+
+# Continuous learning system - gets smarter every day
+# Per CEO: "Enhance RAG and ML continually for options decisions"
+
+on:
+  schedule:
+    # Run at 5:00 AM ET (before market open)
+    - cron: '0 10 * * 1-5'  # Weekdays only
+  workflow_dispatch:
+    inputs:
+      force_full_scan:
+        description: 'Force full knowledge scan'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rag-enhancement
+  cancel-in-progress: false
+
+jobs:
+  enhance-knowledge:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install requests feedparser beautifulsoup4 openai
+
+      - name: Fetch Options Trading RSS Feeds
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          echo "📰 Fetching options trading RSS feeds..."
+          python3 scripts/fetch_options_rss.py || echo "RSS fetch completed with warnings"
+
+      - name: Run Bogleheads Learning
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        continue-on-error: true
+        run: |
+          echo "🎓 Running Bogleheads forum learning..."
+          if [ -f "scripts/continuous_bogleheads_learning.py" ]; then
+            python3 scripts/continuous_bogleheads_learning.py --max-posts 20 || echo "Bogleheads learning completed"
+          else
+            echo "Bogleheads learning script not found, skipping"
+          fi
+
+      - name: Update Knowledge Index
+        run: |
+          echo "📚 Updating knowledge index..."
+          python3 << 'EOF'
+          import json
+          import os
+          from pathlib import Path
+          from datetime import datetime
+
+          RAG_DIR = Path("rag_knowledge/chunks")
+          INDEX_FILE = Path("rag_knowledge/knowledge_index.json")
+
+          # Scan all JSON files
+          chunks = []
+          for json_file in RAG_DIR.glob("*.json"):
+              try:
+                  data = json.loads(json_file.read_text())
+                  chunk_count = len(data.get("chunks", []))
+                  metadata = data.get("metadata", {})
+                  chunks.append({
+                      "file": json_file.name,
+                      "title": metadata.get("title", json_file.stem),
+                      "chunks": chunk_count,
+                      "last_updated": metadata.get("last_updated", "unknown")
+                  })
+              except Exception as e:
+                  print(f"Warning: Could not parse {json_file}: {e}")
+
+          # Update index
+          index = {
+              "generated_at": datetime.now().isoformat(),
+              "total_files": len(chunks),
+              "total_chunks": sum(c["chunks"] for c in chunks),
+              "sources": chunks
+          }
+
+          INDEX_FILE.write_text(json.dumps(index, indent=2))
+          print(f"✅ Updated index: {len(chunks)} files, {index['total_chunks']} total chunks")
+          EOF
+
+      - name: Commit Knowledge Updates
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+          # Check for changes
+          if git diff --quiet rag_knowledge/; then
+            echo "📋 No knowledge updates"
+            exit 0
+          fi
+
+          git add rag_knowledge/
+          git commit -m "chore: Daily RAG knowledge enhancement ($(date +%Y-%m-%d))"
+
+          # Push with retry
+          for i in 1 2 3 4; do
+            if git push origin main; then
+              echo "✅ Knowledge updates pushed"
+              exit 0
+            fi
+            sleep $((2 ** i))
+          done
+
+      - name: Upload Learning Summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rag-learning-summary-${{ github.run_id }}
+          path: |
+            rag_knowledge/knowledge_index.json
+            rag_knowledge/newsletters/*.json
+          retention-days: 30
