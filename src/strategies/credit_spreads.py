@@ -156,6 +156,7 @@ class CreditSpreadsStrategy:
     # Strategy parameters (McMillan guidelines)
     MIN_IV_RANK = 30  # Minimum IV rank for premium selling
     OPTIMAL_IV_RANK = 50  # Prefer higher IV for better premiums
+    MIN_VIX = 13.0  # CRITICAL: Never sell premium when VIX < 13 (low vol = bad R/R)
     TARGET_DELTA = 0.25  # ~25% probability of being breached
     DELTA_TOLERANCE = 0.05
     MIN_DTE = 25
@@ -303,6 +304,24 @@ class CreditSpreadsStrategy:
         """
         try:
             import yfinance as yf
+
+            # CRITICAL VIX FILTER (Added Dec 10, 2025 per CEO audit)
+            # Never sell premium when VIX < 13 - low volatility = bad risk/reward
+            try:
+                vix_ticker = yf.Ticker("^VIX")
+                vix_data = vix_ticker.history(period="1d")
+                if not vix_data.empty:
+                    current_vix = vix_data["Close"].iloc[-1]
+                    if current_vix < self.MIN_VIX:
+                        logger.warning(
+                            f"VIX FILTER: Rejecting {symbol} - VIX at {current_vix:.2f} "
+                            f"(below {self.MIN_VIX} threshold). "
+                            "Low volatility = picking up pennies in front of steamroller."
+                        )
+                        return None
+                    logger.debug(f"VIX check passed: {current_vix:.2f} >= {self.MIN_VIX}")
+            except Exception as vix_error:
+                logger.warning(f"Could not check VIX: {vix_error}. Proceeding with caution.")
 
             # Get current price
             ticker = yf.Ticker(symbol)
