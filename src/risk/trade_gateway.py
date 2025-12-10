@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import Any
 
 from src.risk.capital_efficiency import get_capital_calculator
-from src.utils.market_hours import is_market_open, get_market_status
+from src.utils.market_hours import get_market_status, is_market_open
 
 logger = logging.getLogger(__name__)
 
@@ -235,7 +235,7 @@ class TradeGateway:
         # ============================================================
         # Allow extended hours via env var or for crypto proxies (BITO, etc.)
         allow_extended = os.getenv("ALLOW_EXTENDED_HOURS", "false").lower() == "true"
-        crypto_proxies = {"BITO", "GBTC", "ETHE", "COIN"}  # Trade during market hours only
+        _crypto_proxies = {"BITO", "GBTC", "ETHE", "COIN"}  # Trade during market hours only
 
         if not is_market_open(allow_extended=allow_extended):
             market_status = get_market_status(allow_extended=allow_extended)

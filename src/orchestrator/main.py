@@ -41,7 +41,7 @@ except ImportError:
 # Bull/Bear Debate Agents - Multi-perspective analysis (Dec 2025)
 # Based on UCLA/MIT TradingAgents research showing 42% CAGR improvement
 try:
-    from src.agents.debate_agents import DebateModerator, quick_debate
+    from src.agents.debate_agents import DebateModerator
 
     DEBATE_AVAILABLE = True
 except ImportError:
@@ -50,10 +50,7 @@ except ImportError:
 # Reflexion Loop - Self-improving through trade reflection (Dec 2025)
 # Based on Reflexion framework research
 try:
-    from src.coaching.reflexion_loop import (
-        get_reflection_context,
-        reflect_and_store,
-    )
+    from src.coaching.reflexion_loop import reflect_and_store
 
     REFLEXION_AVAILABLE = True
 except ImportError:
