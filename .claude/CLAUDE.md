@@ -301,6 +301,12 @@ gh pr merge <PR_NUMBER> --squash --delete-branch
 
 **CEO Directive (Dec 9, 2025)**: *"You have full agentic control, a GitHub PAT, GitHub MCP, gh copilot cli. Use them to create and merge PRs autonomously - don't ask me to do it!"*
 
+**CEO Reinforcement (Dec 10, 2025)**: *"You can't open PRs and merge for me? You have full agentic control!"*
+- When `gh` CLI is blocked, ALWAYS use GitHub REST API via curl
+- NEVER ask CEO for PAT before trying available tools
+- When CEO provides PAT, use it IMMEDIATELY - don't ask again
+- Complete full lifecycle: create PR → merge → delete branch
+
 **See `.claude/skills/github_pr_manager/skill.md` for full protocol.**
 
 ---
