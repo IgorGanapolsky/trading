@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "title": "Trading System Lessons Learned",
+    "description": "Critical insights and architectural decisions learned during system development",
+    "created": "2025-12-10",
+    "last_updated": "2025-12-10"
+  },
+  "chunks": [
+    {
+      "id": "ll_001_llm_process_corruption",
+      "title": "LLM Process Corruption in Finance (Carlos Perez Critique)",
+      "source": "@IntuitMachine (Carlos E. Perez) - Twitter/X",
+      "date": "2025-12-06",
+      "category": "architecture",
+      "tags": ["llm", "backtesting", "rule-application", "anti-pattern", "process-corruption"],
+      "severity": "critical",
+      "content": "LLMs suffer from 'process corruption' when applying rules to long sequences. They 'think' and 'talk' simultaneously - for complex tasks, working memory overloads and the process corrupts silently. Example: Given 10-year backtest with rules 'buy if 50-day MA crosses 200-day, RSI < 70, not Friday' - LLM may correctly apply all rules for first few years, then silently 'forget' the RSI or Friday constraint. No error message. Output looks confident but is garbage.",
+      "key_insight": "The real danger in AI finance isn't hallucinated facts - it's corrupted process. Silent process failures produce invalid backtest results with no error message.",
+      "solution": "Separate LLM from rule execution: (1) LLMs for sentiment analysis, market outlook, qualitative judgment (2) Python/pandas for rule-based filtering, backtesting, technical indicators. Never let LLMs apply conditional logic to sequential data.",
+      "our_implementation": "Our system correctly separates: MultiLLMAnalyzer handles sentiment only. BacktestEngine uses deterministic Python. apply_technical_filters() uses pandas. Architecture notes added to growth_strategy.py:97-114 and backtest_engine.py:17-32.",
+      "referenced_files": [
+        "src/strategies/growth_strategy.py",
+        "src/backtesting/backtest_engine.py",
+        "src/core/multi_llm_analysis.py"
+      ],
+      "embedding_text": "LLM process corruption finance backtesting rule application anti-pattern. LLMs fail silently when applying rules to long sequences because working memory overloads. Never use LLMs for stock filtering, backtesting, or sequential condition checking. Use deterministic Python pandas numpy code instead. LLMs should only do sentiment analysis and qualitative judgment. Carlos Perez IntuitMachine critique."
+    },
+    {
+      "id": "ll_002_reasoning_mode_fix",
+      "title": "Reasoning Modes Fix LLM Process Corruption",
+      "source": "@IntuitMachine (Carlos E. Perez) - Twitter/X",
+      "date": "2025-12-06",
+      "category": "architecture",
+      "tags": ["llm", "reasoning-mode", "scratchpad", "future-capability"],
+      "severity": "informational",
+      "content": "Newer models (GPT-5, Claude 3.7+) with 'reasoning modes' achieve 100% accuracy on tasks that previously failed. These modes provide a private 'scratchpad' - the AI can think through the whole problem before writing the final answer. This separates deliberation from output.",
+      "key_insight": "Future LLM versions with extended thinking/reasoning modes may be suitable for rule application, but current production models should not be trusted for this purpose.",
+      "solution": "Monitor for reasoning mode availability in production LLMs. Until then, maintain deterministic code for all rule-based operations.",
+      "embedding_text": "LLM reasoning mode scratchpad extended thinking GPT-5 Claude 3.7 fix process corruption. Future capability for rule application but not ready for production yet. Continue using deterministic Python code for backtesting and filtering."
+    }
+  ]
+}

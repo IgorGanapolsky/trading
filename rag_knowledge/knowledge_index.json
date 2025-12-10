@@ -92,9 +92,19 @@
       "ingested_at": "2025-12-10T05:00:00.000000"
     }
   },
+  "lessons_learned": {
+    "architecture_decisions": {
+      "title": "Trading System Lessons Learned & Architecture Decisions",
+      "chunks_file": "rag_knowledge/chunks/lessons_learned_2025.json",
+      "chunk_count": 2,
+      "topics": ["llm_limitations", "process_corruption", "deterministic_code", "backtesting", "rule_application"],
+      "severity_levels": ["critical", "informational"],
+      "ingested_at": "2025-12-10T16:00:00.000000"
+    }
+  },
   "metadata": {
-    "total_chunks": 223,
-    "last_updated": "2025-12-10T05:10:00.000000",
-    "categories": ["books", "papers", "newsletters", "youtube", "options_education"]
+    "total_chunks": 225,
+    "last_updated": "2025-12-10T16:00:00.000000",
+    "categories": ["books", "papers", "newsletters", "youtube", "options_education", "lessons_learned"]
   }
 }
