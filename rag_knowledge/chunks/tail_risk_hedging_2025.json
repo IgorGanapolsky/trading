@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "title": "Tail Risk Hedging & Portfolio Protection",
+    "description": "Strategies for protecting portfolios against black swan events and market crashes",
+    "sources": ["Nassim Taleb - The Black Swan", "CBOE Put Protection Index", "Universa Investments Research"],
+    "created": "2025-12-10",
+    "last_updated": "2025-12-10"
+  },
+  "chunks": [
+    {
+      "id": "trh_001_what_is_tail_risk",
+      "topic": "What is Tail Risk?",
+      "content": "Tail risk refers to the probability of extreme market movements that lie in the 'tails' of a normal distribution - events that models predict should be rare but happen more frequently than expected. Examples: 1987 Black Monday (-22.6% in one day), 2008 Financial Crisis (-50% in 18 months), March 2020 COVID crash (-34% in 23 days). Nassim Taleb calls these 'Black Swan' events - rare, unpredictable, and devastating. Traditional risk models (VaR, standard deviation) dramatically underestimate tail risk because markets have 'fat tails' - extreme events occur 10-100x more often than normal distribution predicts.",
+      "key_insight": "Most portfolios are NOT prepared for tail risk. The market crash that 'should never happen' happens roughly once per decade.",
+      "embedding_text": "tail risk black swan extreme market movements fat tails normal distribution underestimate. 1987 Black Monday 2008 Financial Crisis COVID crash. Nassim Taleb rare unpredictable devastating. VaR standard deviation dramatically underestimate. Once per decade."
+    },
+    {
+      "id": "trh_002_protective_puts",
+      "topic": "Protective Puts - The Basic Hedge",
+      "content": "A protective put is buying a put option on a stock or ETF you own, creating a price floor. Example: Own 100 shares of SPY at $600. Buy 1 SPY put strike $550 for $8. Max loss is now limited to $5,800 ($50 drop + $8 premium) instead of unlimited downside. Cost: Typically 1-3% of portfolio value annually for at-the-money protection. Out-of-the-money puts (10-20% OTM) cost 0.2-0.8% annually but only protect against crashes, not corrections. The CBOE S&P 500 PutWrite Index shows consistent outperformance of simply holding SPY over 30+ years due to put premium collection.",
+      "key_insight": "Protective puts are expensive insurance. Most cost-effective when bought during low volatility periods (VIX < 15) for protection 3-6 months out.",
+      "embedding_text": "protective puts buy put option stock own price floor. SPY put strike limit max loss. Cost 1-3% portfolio annually ATM. OTM 10-20% cost 0.2-0.8%. CBOE PutWrite Index outperformance. Expensive insurance low volatility VIX under 15."
+    },
+    {
+      "id": "trh_003_collar_strategy",
+      "topic": "The Collar - Free or Low-Cost Protection",
+      "content": "A collar combines protective puts with covered calls: Own stock + Buy OTM put (protection) + Sell OTM call (funds the put). Example: Own SPY at $600. Buy $550 put for $8. Sell $650 call for $8. Net cost: $0 (zero-cost collar). Trade-off: You cap upside at $650 but eliminate downside below $550. This is Warren Buffett's preferred hedging method. Buffett: 'We've used zero-cost collars on our largest stock positions. It's like free insurance.' Variations: (1) Wide collar - more upside room, pays small debit. (2) Costless collar - exactly $0. (3) Credit collar - receive premium but tighter upside cap.",
+      "key_insight": "Collars let you stay invested while eliminating crash risk. Perfect for concentrated positions you can't or won't sell.",
+      "embedding_text": "collar protective puts covered calls own stock buy OTM put sell OTM call. Zero-cost collar net cost $0. Cap upside eliminate downside. Warren Buffett preferred hedging method. Free insurance. Wide collar costless collar credit collar."
+    },
+    {
+      "id": "trh_004_put_spreads_hedging",
+      "topic": "Put Spreads for Cost-Effective Hedging",
+      "content": "Bear put spreads provide cheaper crash protection than outright puts. Strategy: Buy higher strike put + Sell lower strike put. Example: SPY at $600. Buy $580 put for $12. Sell $540 put for $4. Net cost: $8. Protection zone: $580 to $540 (covers 7% to 10% crash). This is more capital efficient than buying $580 put outright ($12). Max protection: $40 per share ($4,000 per contract). Best for: Protecting against corrections (5-15% drops), not catastrophic crashes (30%+). For black swan protection, buy further OTM put spreads (20-30% below current price).",
+      "key_insight": "Put spreads cost 30-50% less than protective puts while covering the most likely crash scenarios.",
+      "embedding_text": "put spreads cost-effective hedging bear put spread buy higher strike sell lower strike. Net cost protection zone. Capital efficient. Max protection. Corrections 5-15% drops. Black swan protection further OTM 20-30% below."
+    },
+    {
+      "id": "trh_005_vix_calls_tail_hedge",
+      "topic": "VIX Calls - The Tail Risk Specialist",
+      "content": "VIX calls provide asymmetric protection: they explode in value during crashes when everything else falls. During 2008 crash, VIX went from 20 to 80 (4x). During March 2020, VIX went from 15 to 82 (5.5x). A portfolio with 1-2% in VIX calls would have offset significant losses. Strategy: Buy 10-15% OTM VIX calls 2-3 months out. Cost: 0.3-0.5% of portfolio quarterly. Expected return: -100% in normal markets, +500-1000% during crashes. The math works: If you lose 0.4% per quarter to VIX calls (1.6%/year) but make 800% once per decade, it's profitable long-term. IMPORTANT: VIX futures have contango drag. Only use VIX calls, not VXX or UVXY for hedging.",
+      "key_insight": "VIX calls are the purest crash insurance. They pay off exactly when you need them most.",
+      "embedding_text": "VIX calls tail risk specialist asymmetric protection explode value crashes. 2008 crash VIX 20 to 80. March 2020 VIX 15 to 82. 1-2% portfolio VIX calls offset losses. OTM VIX calls 2-3 months. Cost 0.3-0.5% quarterly. -100% normal +500-1000% crashes. Contango drag avoid VXX UVXY."
+    },
+    {
+      "id": "trh_006_universa_strategy",
+      "topic": "The Universa Strategy - Tail Risk Hedging at Scale",
+      "content": "Universa Investments (advised by Nassim Taleb) returned 4,144% in March 2020 while markets crashed. Their strategy: Allocate 96-97% to stocks/bonds, 3-4% to deep OTM puts on S&P 500. The puts are so far OTM (often 30-40% below market) that they cost very little in normal times but explode during crashes. Key principles: (1) Hedge convexity - small cost, massive payoff. (2) Never sell tail protection - let it expire worthless. (3) Size doesn't matter - 3% allocation can protect entire portfolio. (4) Stay invested - the hedge allows you to be fully long equities.",
+      "key_insight": "You don't need to time crashes. Keep cheap tail protection always on, stay fully invested, and let convexity work for you.",
+      "embedding_text": "Universa strategy Nassim Taleb 4144% March 2020 markets crashed. 96-97% stocks bonds 3-4% deep OTM puts S&P 500. 30-40% below market cost little explode crashes. Hedge convexity small cost massive payoff. Never sell tail protection. 3% allocation protect entire portfolio. Stay invested."
+    },
+    {
+      "id": "trh_007_practical_implementation",
+      "topic": "Practical Tail Risk Implementation",
+      "content": "A simple tail risk framework for individual investors: (1) Core holding: 95% in SPY or total market index. (2) Tail hedge: 5% in rolling 3-month puts 15-20% OTM on SPY. Expected annual cost: 1-2% of this 5% allocation = 0.05-0.1% drag on total portfolio. (3) Alternative: 2% in VIX calls 20-30% OTM, rolled quarterly. Rebalance rules: If hedge pays off big (3x+), take profits and re-hedge at new levels. If market drops 10% without triggering hedge, buy additional protection. DO NOT: Sell your hedges before expiration. Try to time when to hedge. Use leveraged products (VXX, UVXY) for hedging.",
+      "key_insight": "The best tail hedge is one you can maintain consistently through all market conditions without second-guessing.",
+      "embedding_text": "practical tail risk implementation individual investors. 95% SPY 5% rolling 3-month puts 15-20% OTM. Annual cost 1-2% of 5% = 0.05-0.1% drag. Alternative 2% VIX calls 20-30% OTM quarterly. Rebalance 3x profits re-hedge. Do not sell hedges before expiration time hedges use leveraged products."
+    },
+    {
+      "id": "trh_008_when_not_to_hedge",
+      "topic": "When NOT to Hedge",
+      "content": "Tail risk hedging is not always appropriate: (1) High VIX environment (>25): Protection is expensive, crash may have already happened. (2) Already defensive portfolio: Bonds, gold, cash act as natural hedges. (3) Long time horizon (20+ years): Market always recovers eventually. (4) Small portfolio (<$50k): Transaction costs eat into protection. (5) You can handle the drawdown: If you won't panic sell, you don't need hedges. Graham/Buffett approach: No hedging. Accept volatility as the price of returns. Hold cash for buying opportunities. Hedge selectively only when: (1) Concentrated position you can't sell, (2) Near retirement, (3) VIX < 15 makes protection cheap.",
+      "key_insight": "Most long-term investors don't need tail hedges. Hedging is for those who would otherwise panic sell or can't afford any drawdown.",
+      "embedding_text": "when not to hedge tail risk. High VIX over 25 expensive. Defensive portfolio bonds gold cash natural hedges. Long time horizon 20 plus years recovers. Small portfolio under 50k transaction costs. Handle drawdown won't panic sell. Graham Buffett no hedging accept volatility hold cash. Hedge only concentrated position near retirement VIX under 15 cheap."
+    }
+  ]
+}
