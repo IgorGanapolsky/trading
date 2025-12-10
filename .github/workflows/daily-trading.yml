@@ -2,13 +2,16 @@ name: Daily Trading Execution
 
 on:
   schedule:
-    # Run every weekday at 9:35 AM Eastern
+    # Run every weekday at 3:55 PM Eastern (Market-on-Close execution)
+    # Dec 10, 2025: Changed from 9:35 AM to 3:55 PM
+    # RATIONALE: First 30 minutes of trading = "amateur hour" with high volatility
+    # and fake-outs. MOC execution captures the true daily trend.
     # AUTOMATIC DST HANDLING: Runs at both times to cover EST/EDT transitions
-    # EST (Nov-Mar): UTC-5 -> 9:35 AM ET = 14:35 UTC
-    # EDT (Mar-Nov): UTC-4 -> 9:35 AM ET = 13:35 UTC
-    # Run: python3 scripts/get_utc_time.py 9 35 1-5
+    # EST (Nov-Mar): UTC-5 -> 3:55 PM ET = 20:55 UTC
+    # EDT (Mar-Nov): UTC-4 -> 3:55 PM ET = 19:55 UTC
+    # Run: python3 scripts/get_utc_time.py 15 55 1-5
     # NOTE: On market holidays, the script automatically switches to crypto trading mode
-    - cron: '35 13,14 * * 1-5'   # 9:35 AM Eastern (covers both EST and EDT)
+    - cron: '55 19,20 * * 1-5'   # 3:55 PM Eastern (covers both EST and EDT)
   workflow_dispatch:
     inputs:
       force_trade:
