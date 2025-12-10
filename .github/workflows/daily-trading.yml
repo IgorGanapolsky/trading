@@ -493,6 +493,9 @@ jobs:
           PAPER_TRADING: 'true'
           ENABLE_CRYPTO_AGENT: 'true'
           CRYPTO_DAILY_AMOUNT: ${{ secrets.CRYPTO_DAILY_AMOUNT || '10.00' }}
+          # FORCE_TRADE: Enable daily crypto DCA (bypass momentum filters)
+          # CEO directive Dec 10, 2025: Trade crypto every day, not just when signals align
+          FORCE_TRADE: 'true'
           # TURBO MODE: Enable ADK orchestrator
           ADK_ENABLED: ${{ secrets.ADK_ENABLED || '1' }}
           ADK_BASE_URL: ${{ secrets.ADK_BASE_URL || 'http://127.0.0.1:8080/api' }}
