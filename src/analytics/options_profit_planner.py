@@ -402,6 +402,7 @@ class ThetaHarvestExecutor:
     ) -> None:
         self.paper = paper
         self.planner = OptionsProfitPlanner()
+        self._options_client = None  # Lazy initialization for options client
         env_flag = os.getenv("ENABLE_THETA_AUTOMATION", "false").lower()
         self.auto_execute = (
             auto_execute
@@ -640,12 +641,21 @@ class ThetaHarvestExecutor:
         result.delta = contract["delta"]
         result.limit_price = contract["limit_price"]
         try:
+            # Pass RAG validation parameters to ExecutionAgent
             return self.execution_agent.execute_option_trade(
                 option_symbol=contract["option_symbol"],
                 side="sell_to_open",
                 qty=max(1, result.contracts),
                 order_type="limit",
                 limit_price=contract["limit_price"],
+                # RAG validation parameters
+                ticker=result.symbol,
+                strategy=result.strategy,
+                iv_rank=result.iv_percentile or 50.0,  # Use IV percentile as proxy for IV rank
+                sentiment=result.regime_label or "neutral",
+                dte=contract.get("dte", 30),
+                stock_price=contract.get("stock_price"),
+                current_iv=result.current_iv,
             )
         except Exception as exc:  # pragma: no cover - network dependent
             logger.warning("Theta auto execution failed for %s: %s", result.symbol, exc)
