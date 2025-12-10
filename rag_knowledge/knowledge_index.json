@@ -124,15 +124,64 @@
     "architecture_decisions": {
       "title": "Trading System Lessons Learned & Architecture Decisions",
       "chunks_file": "rag_knowledge/chunks/lessons_learned_2025.json",
-      "chunk_count": 2,
-      "topics": ["llm_limitations", "process_corruption", "deterministic_code", "backtesting", "rule_application"],
-      "severity_levels": ["critical", "informational"],
+      "chunk_count": 8,
+      "topics": ["llm_limitations", "process_corruption", "deterministic_code", "backtesting", "rule_application", "credential_verification", "sandbox_limitations", "workflow_persistence", "pre_flight_protocol", "tradier_backup", "etf_accumulation_pivot"],
+      "severity_levels": ["critical", "high", "informational"],
       "ingested_at": "2025-12-10T16:00:00.000000"
     }
   },
+  "value_investing": {
+    "benjamin_graham": {
+      "title": "Benjamin Graham - The Intelligent Investor",
+      "author": "Benjamin Graham",
+      "chunks_file": "rag_knowledge/chunks/benjamin_graham_intelligent_investor_2025.json",
+      "chunk_count": 8,
+      "topics": ["margin_of_safety", "mr_market", "investor_vs_speculator", "defensive_investor", "dollar_cost_averaging", "stock_selection", "market_fluctuations", "owner_mentality"],
+      "description": "Foundational value investing principles. Warren Buffett: 'By far the best book on investing ever written'",
+      "ingested_at": "2025-12-10T19:00:00.000000"
+    }
+  },
+  "risk_management": {
+    "tail_risk_hedging": {
+      "title": "Tail Risk Hedging & Portfolio Protection",
+      "chunks_file": "rag_knowledge/chunks/tail_risk_hedging_2025.json",
+      "chunk_count": 8,
+      "topics": ["black_swan", "protective_puts", "collars", "put_spreads", "VIX_calls", "universa_strategy", "when_not_to_hedge"],
+      "sources": ["Nassim Taleb - The Black Swan", "CBOE Put Protection Index", "Universa Investments Research"],
+      "ingested_at": "2025-12-10T19:30:00.000000"
+    }
+  },
+  "tax_and_compliance": {
+    "tax_optimization": {
+      "title": "Tax Optimization for Options Traders",
+      "chunks_file": "rag_knowledge/chunks/tax_optimization_options_2025.json",
+      "chunk_count": 8,
+      "topics": ["section_1256", "60_40_rule", "wash_sale_rule", "straddle_rules", "assignment_taxation", "tax_loss_harvesting", "trader_tax_status", "IRA_trading", "record_keeping"],
+      "sources": ["IRS Publication 550", "Tax Foundation Research", "Green Trader Tax"],
+      "ingested_at": "2025-12-10T20:00:00.000000"
+    }
+  },
+  "quantitative_methods": {
+    "volatility_forecasting": {
+      "title": "Volatility Forecasting for Options Trading",
+      "chunks_file": "rag_knowledge/chunks/volatility_forecasting_2025.json",
+      "chunk_count": 8,
+      "topics": ["IV_vs_RV", "GARCH", "EWMA", "VIX_term_structure", "IV_percentile", "IV_rank", "volatility_smile", "volatility_skew", "event_volatility", "forecasting_models"],
+      "sources": ["Options, Futures, and Other Derivatives - John Hull", "Volatility Trading - Euan Sinclair", "CBOE Research"],
+      "ingested_at": "2025-12-10T20:00:00.000000"
+    },
+    "statistical_arbitrage": {
+      "title": "Statistical Arbitrage with Options",
+      "chunks_file": "rag_knowledge/chunks/statistical_arbitrage_options_2025.json",
+      "chunk_count": 8,
+      "topics": ["pairs_trading", "cointegration", "dispersion_trading", "put_call_parity", "volatility_surface", "relative_value", "market_making", "edge_detection"],
+      "sources": ["Quantitative Trading - Ernest Chan", "Algorithmic Trading - Ernest Chan", "AQR Research"],
+      "ingested_at": "2025-12-10T20:00:00.000000"
+    }
+  },
   "metadata": {
-    "total_chunks": 284,
-    "last_updated": "2025-12-10T17:30:00.000000",
-    "categories": ["books", "papers", "newsletters", "youtube", "options_education", "lessons_learned"]
+    "total_chunks": 324,
+    "last_updated": "2025-12-10T20:00:00.000000",
+    "categories": ["books", "papers", "newsletters", "youtube", "options_education", "lessons_learned", "value_investing", "risk_management", "tax_and_compliance", "quantitative_methods"]
   }
 }
