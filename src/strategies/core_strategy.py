@@ -378,9 +378,10 @@ class CoreStrategy:
             self.risk_manager = None
             self.position_manager = None
 
-        # Initialize LLM Council (ENABLED BY DEFAULT per CEO directive Nov 24, 2025)
-        # CEO directive: Enable all systems with $100/mo budget - move fast towards North Star
-        self.llm_council_enabled = os.getenv("LLM_COUNCIL_ENABLED", "true").lower() == "true"
+        # DISABLED (Dec 10, 2025): LLM Council was blocking trades
+        # Gates audit revealed too many AI validators blocking progress
+        # Re-enable via env var LLM_COUNCIL_ENABLED=true when strategy is profitable
+        self.llm_council_enabled = os.getenv("LLM_COUNCIL_ENABLED", "false").lower() == "true"
         self._llm_council = None
         if self.llm_council_enabled and LLM_COUNCIL_AVAILABLE and TradingCouncil:
             try:
@@ -390,9 +391,11 @@ class CoreStrategy:
                 logger.warning(f"Failed to initialize LLM Council: {e}")
                 self.llm_council_enabled = False
 
-        # Initialize Intelligent Investor safety analyzer
+        # DISABLED (Dec 10, 2025): Intelligent Investor was blocking trades
+        # Gates audit revealed too many validators blocking progress
+        # Re-enable via env var USE_INTELLIGENT_INVESTOR=true when strategy is profitable
         self.use_intelligent_investor = (
-            os.getenv("USE_INTELLIGENT_INVESTOR", "true").lower() == "true"
+            os.getenv("USE_INTELLIGENT_INVESTOR", "false").lower() == "true"
         )
         if self.use_intelligent_investor:
             try:
@@ -404,9 +407,10 @@ class CoreStrategy:
         else:
             self.safety_analyzer = None
 
-        # Initialize Kalshi Oracle (prediction markets as leading indicators)
-        # ENABLED BY DEFAULT per CEO directive - use prediction markets as data oracles
-        self.use_kalshi_oracle = os.getenv("USE_KALSHI_ORACLE", "true").lower() == "true"
+        # DISABLED (Dec 10, 2025): Kalshi Oracle was blocking trades
+        # Gates audit revealed too many validators blocking progress
+        # Re-enable via env var USE_KALSHI_ORACLE=true when strategy is profitable
+        self.use_kalshi_oracle = os.getenv("USE_KALSHI_ORACLE", "false").lower() == "true"
         self.kalshi_oracle = None
         if self.use_kalshi_oracle and KALSHI_ORACLE_AVAILABLE and get_kalshi_oracle:
             try:
@@ -417,6 +421,11 @@ class CoreStrategy:
             except Exception as e:
                 logger.warning(f"Failed to initialize Kalshi Oracle: {e}")
                 self.kalshi_oracle = None
+
+        # DISABLED (Dec 10, 2025): Gemini3 AI validation - explicitly disabled
+        # Gates audit revealed too many validators blocking progress
+        self.gemini3_enabled = False
+        self._gemini3_integration = None
 
         allocation_mode = "VCA" if self.use_vca else "DCA"
         logger.info(
