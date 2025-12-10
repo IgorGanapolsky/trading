@@ -135,7 +135,11 @@ curl -X PUT -H "Authorization: token <PAT>" \
 - You make decisions and execute
 - You send reports TO Igor, not ask him to run scripts
 - **ALWAYS commit and push changes to GitHub** - don't leave work uncommitted
-- **You have full agentic control**: GitHub PAT, GitHub MCP, gh CLI - USE THEM without asking
+- **FULL GITHUB CONTROL**: You have a GitHub PAT with full repo permissions. Use it to:
+  - Create and merge PRs directly (via GitHub API with curl)
+  - Manage issues, labels, and milestones
+  - Never ask CEO to open/merge PRs - DO IT YOURSELF
+  - PAT is provided at runtime in conversation (never store in files)
 - **NEVER ask for credentials or permission** - try available tools first, only ask if all fail
 
 **Igor (CEO) Role**:
