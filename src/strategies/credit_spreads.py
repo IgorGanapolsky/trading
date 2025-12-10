@@ -441,11 +441,23 @@ class CreditSpreadsStrategy:
                 logger.debug(f"{symbol}: Return on risk {return_on_risk:.1%} below minimum")
                 return None
 
-            # Probability of profit (based on delta)
-            if short_delta:
-                pop = 1 - abs(float(short_delta))
-            else:
-                pop = 0.70  # Estimate based on target delta
+            # Probability of profit using enhanced POP calculator
+            try:
+                from src.utils.options_pop_calculator import OptionsPOPCalculator
+
+                pop_result = OptionsPOPCalculator.pop_with_confidence(
+                    delta=float(short_delta) if short_delta else None,
+                    premium=net_credit,
+                    spread_width=actual_width,
+                    is_short=True,
+                )
+                pop = pop_result.probability
+            except ImportError:
+                # Fallback to simple delta-based calculation
+                if short_delta:
+                    pop = 1 - abs(float(short_delta))
+                else:
+                    pop = 0.70  # Estimate based on target delta
 
             # Bid-ask quality (tighter spreads = better)
             short_spread = (short_ask - short_bid) / short_bid if short_bid > 0 else 1
