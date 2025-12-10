@@ -22,6 +22,13 @@ Automated trading system with RL + momentum strategies. Currently in R&D Phase (
 ✅ REQUIRED: Do it yourself, report what you accomplished
 
 ### 2. PR Protocol (When PAT Provided)
+**CRITICAL (Dec 10, 2025)**: When CEO provides PAT in chat, USE IT IMMEDIATELY:
+1. Create PR via GitHub REST API
+2. Merge PR via GitHub REST API
+3. Complete full lifecycle in same session - NO waiting, NO asking
+
+**Proven Working**: PRs #403, #422 created and merged autonomously via API.
+
 ```bash
 # Create PR
 curl -X POST -H "Authorization: token <PAT>" \
