@@ -141,10 +141,11 @@ class CryptoWeekendAgent:
             Dict with price data and current price
         """
         try:
+            import os
+
             from alpaca.data.historical import CryptoHistoricalDataClient
             from alpaca.data.requests import CryptoBarsRequest
             from alpaca.data.timeframe import TimeFrame
-            import os
 
             # Initialize client
             api_key = os.getenv("ALPACA_API_KEY")

@@ -28,11 +28,11 @@ import json
 import logging
 import os
 import sys
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
 from scipy.interpolate import griddata
@@ -86,7 +86,7 @@ class IVMetrics:
     put_call_iv_skew: float  # Negative = puts more expensive
     term_structure_slope: float  # Positive = normal, negative = inverted
     recommendation: str  # BUY_VOL, SELL_VOL, NEUTRAL
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -113,7 +113,7 @@ class IVAlert:
     trigger_value: float  # The threshold that was crossed
     recommended_action: str
     urgency: str  # LOW, MEDIUM, HIGH, CRITICAL
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 # ============================================================================
@@ -274,9 +274,9 @@ class IVDataFetcher:
         self.bs_calculator = BlackScholesIV()
 
         # In-memory caches
-        self._option_chain_cache: Dict[str, Tuple[datetime, List[Dict]]] = {}
-        self._iv_history_cache: Dict[str, Tuple[datetime, List[Dict]]] = {}
-        self._metrics_cache: Dict[str, Tuple[datetime, IVMetrics]] = {}
+        self._option_chain_cache: dict[str, tuple[datetime, list[dict]]] = {}
+        self._iv_history_cache: dict[str, tuple[datetime, list[dict]]] = {}
+        self._metrics_cache: dict[str, tuple[datetime, IVMetrics]] = {}
 
         logger.info(
             f"IVDataFetcher initialized (paper={paper}, cache_dir={self.cache_dir}, "
@@ -289,7 +289,7 @@ class IVDataFetcher:
 
     def get_option_chain(
         self, symbol: str, use_cache: bool = True
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Fetch full options chain from Alpaca with IV and Greeks.
 
@@ -389,7 +389,7 @@ class IVDataFetcher:
             # Return empty list on error (graceful degradation)
             return []
 
-    def _parse_option_symbol(self, symbol: str) -> Optional[Tuple[float, datetime.date, str]]:
+    def _parse_option_symbol(self, symbol: str) -> Optional[tuple[float, datetime.date, str]]:
         """
         Parse OCC option symbol format.
 
@@ -484,7 +484,7 @@ class IVDataFetcher:
             logger.error(f"Failed to calculate IV percentile for {symbol}: {e}")
             return 50.0
 
-    def _load_iv_history(self, symbol: str, lookback_days: int) -> List[Dict[str, Any]]:
+    def _load_iv_history(self, symbol: str, lookback_days: int) -> list[dict[str, Any]]:
         """
         Load historical IV data from cache/storage.
 
@@ -496,7 +496,7 @@ class IVDataFetcher:
         # Check if cache exists and is recent
         if cache_file.exists():
             try:
-                with open(cache_file, "r") as f:
+                with open(cache_file) as f:
                     data = json.load(f)
 
                 # Filter to lookback period
@@ -529,7 +529,7 @@ class IVDataFetcher:
         iv_history = []
         if cache_file.exists():
             try:
-                with open(cache_file, "r") as f:
+                with open(cache_file) as f:
                     iv_history = json.load(f)
             except Exception as e:
                 logger.warning(f"Failed to load existing IV history: {e}")
@@ -632,7 +632,7 @@ class IVDataFetcher:
     # TERM STRUCTURE
     # ------------------------------------------------------------------------
 
-    def get_term_structure(self, symbol: str) -> Dict[int, float]:
+    def get_term_structure(self, symbol: str) -> dict[int, float]:
         """
         Get IV term structure across different expirations.
 
@@ -681,7 +681,7 @@ class IVDataFetcher:
             logger.error(f"Failed to calculate term structure for {symbol}: {e}")
             return {}
 
-    def calculate_term_structure_slope(self, term_structure: Dict[int, float]) -> float:
+    def calculate_term_structure_slope(self, term_structure: dict[int, float]) -> float:
         """
         Calculate slope of term structure (linear regression).
 
@@ -928,7 +928,7 @@ class IVDataFetcher:
     # HELPER METHODS
     # ------------------------------------------------------------------------
 
-    def _estimate_underlying_price(self, chain: List[Dict]) -> float:
+    def _estimate_underlying_price(self, chain: list[dict]) -> float:
         """Estimate underlying price from option chain (midpoint of ATM straddle)"""
         if not chain:
             return 0.0
@@ -941,7 +941,7 @@ class IVDataFetcher:
         # Estimate price as middle strike (rough approximation)
         return strikes[len(strikes) // 2]
 
-    def _find_closest_expiration(self, expirations: List[str], target_dte: int) -> str:
+    def _find_closest_expiration(self, expirations: list[str], target_dte: int) -> str:
         """Find expiration closest to target DTE"""
         closest_exp = min(
             expirations,
@@ -976,7 +976,7 @@ class VolatilitySurface:
         self.fetcher = fetcher
         logger.info("VolatilitySurface initialized")
 
-    def build_surface(self, symbol: str) -> List[VolatilitySurfacePoint]:
+    def build_surface(self, symbol: str) -> list[VolatilitySurfacePoint]:
         """
         Build volatility surface from option chain.
 
@@ -1012,7 +1012,7 @@ class VolatilitySurface:
 
     def interpolate_iv(
         self,
-        surface_points: List[VolatilitySurfacePoint],
+        surface_points: list[VolatilitySurfacePoint],
         target_strike: float,
         target_dte: int,
         method: str = "linear",
@@ -1063,8 +1063,8 @@ class VolatilitySurface:
             return None
 
     def detect_arbitrage_opportunities(
-        self, surface_points: List[VolatilitySurfacePoint]
-    ) -> List[Dict[str, Any]]:
+        self, surface_points: list[VolatilitySurfacePoint]
+    ) -> list[dict[str, Any]]:
         """
         Detect potential arbitrage opportunities from surface anomalies.
 
@@ -1079,7 +1079,7 @@ class VolatilitySurface:
         opportunities = []
 
         # Group by strike
-        by_strike: Dict[float, List[VolatilitySurfacePoint]] = {}
+        by_strike: dict[float, list[VolatilitySurfacePoint]] = {}
         for point in surface_points:
             if point.strike not in by_strike:
                 by_strike[point.strike] = []
@@ -1139,10 +1139,10 @@ class IVAlerts:
             fetcher: IVDataFetcher instance
         """
         self.fetcher = fetcher
-        self.alert_history: List[IVAlert] = []
+        self.alert_history: list[IVAlert] = []
         logger.info("IVAlerts initialized")
 
-    def check_all_alerts(self, symbol: str) -> List[IVAlert]:
+    def check_all_alerts(self, symbol: str) -> list[IVAlert]:
         """
         Check all alert conditions for a symbol.
 
@@ -1242,7 +1242,7 @@ class IVAlerts:
 
         return alerts
 
-    def format_alert_report(self, alerts: List[IVAlert]) -> str:
+    def format_alert_report(self, alerts: list[IVAlert]) -> str:
         """Format alerts as human-readable report"""
         if not alerts:
             return "No IV alerts at this time."

@@ -91,9 +91,9 @@ class SandboxSettings:
             "--security-opt", "no-new-privileges",
             "--read-only",
             "--tmpfs", "/tmp:rw,noexec,nosuid,size=100m",
-            f"--memory", self.memory_limit,
-            f"--cpus", str(self.cpu_limit),
-            f"--pids-limit", str(self.pids_limit),
+            "--memory", self.memory_limit,
+            "--cpus", str(self.cpu_limit),
+            "--pids-limit", str(self.pids_limit),
             "--user", "1000:1000",
         ]
 
@@ -158,7 +158,7 @@ class AgentSDKConfig:
     enable_streaming: bool = True
 
     @classmethod
-    def from_env(cls) -> "AgentSDKConfig":
+    def from_env(cls) -> AgentSDKConfig:
         """Create config from environment variables"""
         config = cls()
 

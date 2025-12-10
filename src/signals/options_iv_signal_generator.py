@@ -15,11 +15,10 @@ Created: 2025-12-10
 """
 
 import json
-import os
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 
 class IVRegime(Enum):
@@ -49,10 +48,10 @@ class OptionsStrategy:
     max_loss: str
     breakeven: str
     probability_of_profit: str
-    ideal_dte: Tuple[int, int]
-    delta_range: Optional[Tuple[float, float]]
-    management_rules: Dict[str, str]
-    rag_source: List[str]  # RAG chunk IDs supporting this recommendation
+    ideal_dte: tuple[int, int]
+    delta_range: Optional[tuple[float, float]]
+    management_rules: dict[str, str]
+    rag_source: list[str]  # RAG chunk IDs supporting this recommendation
 
 
 @dataclass
@@ -61,7 +60,7 @@ class TradeSignal:
     ticker: str
     strategy: str
     action: str  # "BUY" or "SELL"
-    legs: List[Dict[str, any]]  # List of option legs
+    legs: list[dict[str, any]]  # List of option legs
     rationale: str
     iv_regime: str
     iv_rank: float
@@ -70,9 +69,9 @@ class TradeSignal:
     max_risk: float
     probability_profit: float
     position_size_pct: float  # % of portfolio to allocate
-    entry_dte: Tuple[int, int]
-    exit_criteria: Dict[str, str]
-    rag_citations: List[str]  # RAG chunks used for this signal
+    entry_dte: tuple[int, int]
+    exit_criteria: dict[str, str]
+    rag_citations: list[str]  # RAG chunks used for this signal
 
 
 class OptionsIVSignalGenerator:
@@ -93,11 +92,11 @@ class OptionsIVSignalGenerator:
         self._strategy_cache = {}
         self._build_strategy_mappings()
 
-    def _load_rag_chunks(self, filename: str) -> Dict:
+    def _load_rag_chunks(self, filename: str) -> dict:
         """Load RAG chunks from JSON file"""
         filepath = self.rag_base_path / filename
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath) as f:
                 return json.load(f)
         except FileNotFoundError:
             print(f"Warning: RAG file not found: {filepath}")
@@ -115,7 +114,7 @@ class OptionsIVSignalGenerator:
             if strategy_type:
                 self._strategy_cache[strategy_type].append(chunk)
 
-    def _search_rag(self, keywords: List[str], strategy_type: Optional[str] = None) -> List[Dict]:
+    def _search_rag(self, keywords: list[str], strategy_type: Optional[str] = None) -> list[dict]:
         """Search RAG chunks by keywords and/or strategy type"""
         results = []
         search_pool = self._strategy_cache.get(strategy_type, self.all_chunks) if strategy_type else self.all_chunks
@@ -540,7 +539,7 @@ class OptionsIVSignalGenerator:
         stock_price: float,
         market_outlook: str = "neutral",
         portfolio_value: float = 10000.0,
-        options_chain: Optional[Dict] = None
+        options_chain: Optional[dict] = None
     ) -> TradeSignal:
         """
         Generate actionable options trade signal with specific strikes and sizing.

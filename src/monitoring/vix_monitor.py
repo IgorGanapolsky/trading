@@ -25,13 +25,12 @@ Created: 2025-12-10
 
 import json
 import logging
-import os
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Optional, Tuple, List
+from typing import Any, Callable, Optional
 
 # Workaround for yfinance multitasking dependency issue
 try:
@@ -116,7 +115,7 @@ class StrategyRecommendation:
     """Volatility regime-based strategy recommendation."""
 
     regime: VIXRegime
-    allowed_strategies: List[str]
+    allowed_strategies: list[str]
     position_size_multiplier: float  # Scale from 1.0 (normal)
     strike_width_adjustment: str  # "wider", "normal", "tighter"
     max_portfolio_theta: float  # Maximum negative theta exposure
@@ -166,9 +165,9 @@ class VIXMonitor:
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
         self.alert_callback = alert_callback
-        self.alerts: List[VIXAlert] = []
+        self.alerts: list[VIXAlert] = []
         self.current_regime: Optional[VIXRegime] = None
-        self.vix_history: List[Tuple[datetime, float]] = []
+        self.vix_history: list[tuple[datetime, float]] = []
         self.last_update: Optional[datetime] = None
 
         # Caching for VIX data
@@ -861,7 +860,7 @@ class VIXMonitor:
             alert = VIXAlert(
                 alert_type=AlertType.TERM_STRUCTURE_INVERSION,
                 timestamp=now,
-                message=f"VIX term structure inverted (backwardation) - near-term fear",
+                message="VIX term structure inverted (backwardation) - near-term fear",
                 old_regime=None,
                 new_regime=regime,
                 vix_level=vix,
@@ -910,7 +909,7 @@ class VIXMonitor:
         if self.alert_callback:
             self.alert_callback(alert)
 
-    def get_recent_alerts(self, hours: int = 24) -> List[VIXAlert]:
+    def get_recent_alerts(self, hours: int = 24) -> list[VIXAlert]:
         """
         Get recent alerts.
 

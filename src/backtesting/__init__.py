@@ -19,15 +19,6 @@ Updated: 2025-12-10 - Added world-class options backtesting engine
 
 from src.backtesting.backtest_engine import BacktestEngine
 from src.backtesting.backtest_results import BacktestResults
-from src.backtesting.options_backtest import (
-    BacktestMetrics,
-    BlackScholesPricer,
-    OptionType,
-    OptionsBacktestEngine,
-    OptionsLeg,
-    OptionsPosition,
-    StrategyType,
-)
 from src.backtesting.benchmark_comparison import (
     BenchmarkComparator,
     BenchmarkComparisonResult,
@@ -45,6 +36,15 @@ from src.backtesting.monte_carlo import (
     MonteCarloResult,
     MonteCarloSimulator,
     run_monte_carlo_validation,
+)
+from src.backtesting.options_backtest import (
+    BacktestMetrics,
+    BlackScholesPricer,
+    OptionsBacktestEngine,
+    OptionsLeg,
+    OptionsPosition,
+    OptionType,
+    StrategyType,
 )
 from src.backtesting.performance_report import PerformanceReport, PerformanceReporter
 from src.backtesting.target_integration import (
