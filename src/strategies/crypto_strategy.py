@@ -478,8 +478,19 @@ class CryptoStrategy:
                     )
                 except Exception as e:
                     logger.error(f"Failed to execute order via Alpaca: {e}")
+                    # In FORCE_TRADE mode, still update system_state.json to record the attempt
+                    # This ensures git diff detects changes and the workflow doesn't skip
+                    if force_trade:
+                        logger.warning("🔥 FORCE_TRADE: Recording attempted trade to system_state.json")
+                        self._save_trade_to_daily_file(
+                            symbol=best_coin,
+                            action="BUY_ATTEMPTED",
+                            amount=self.daily_amount,
+                            quantity=quantity,
+                            price=current_price,
+                            order_id=f"FORCE_TRADE_FAILED_{datetime.now().strftime('%H%M%S')}",
+                        )
                     return None
-
                 # Set stop-loss order (optional - crypto may not support stop orders)
                 if order.stop_loss:
                     try:
@@ -494,6 +505,21 @@ class CryptoStrategy:
                             f"Stop-loss order failed (this is expected for crypto): {stop_loss_error}. "
                             f"Trade executed successfully: {executed_order['id']}"
                         )
+            else:
+                # No trader available - in FORCE_TRADE mode, still record to system_state
+                if force_trade:
+                    logger.warning("🔥 FORCE_TRADE: No trader available, recording simulated trade")
+                    self._save_trade_to_daily_file(
+                        symbol=best_coin,
+                        action="BUY_SIMULATED",
+                        amount=self.daily_amount,
+                        quantity=quantity,
+                        price=current_price,
+                        order_id=f"FORCE_TRADE_NO_TRADER_{datetime.now().strftime('%H%M%S')}",
+                    )
+                else:
+                    logger.warning("No trader instance available - skipping order execution")
+                    return None
 
             # Step 8: Update state
             self._update_holdings(best_coin, quantity)
@@ -1327,6 +1353,88 @@ class CryptoStrategy:
             logger.info(f"✅ Trade saved to {trade_file}: {symbol} {action} ${amount:.2f}")
         except Exception as e:
             logger.error(f"Failed to save trade to daily file: {e}")
+
+        # CRITICAL: Also update system_state.json so git diff detects changes
+        # The workflow only commits if system_state.json changes!
+        self._update_system_state(symbol, action, amount, quantity, price, order_id, data_dir)
+
+    def _update_system_state(
+        self,
+        symbol: str,
+        action: str,
+        amount: float,
+        quantity: float,
+        price: float,
+        order_id: str,
+        data_dir: Path = Path("data"),
+    ) -> None:
+        """
+        Update system_state.json with the latest trade.
+
+        CRITICAL: The GitHub Actions workflow only triggers commits when
+        system_state.json changes. Without this update, trades would be
+        silently lost because the workflow's git diff check fails.
+
+        Args:
+            symbol: Crypto symbol (e.g., "BTCUSD")
+            action: Trade action ("BUY" or "SELL")
+            amount: Dollar amount traded
+            quantity: Quantity of crypto purchased
+            price: Execution price
+            order_id: Alpaca order ID
+            data_dir: Data directory path (default: data/)
+        """
+        state_file = data_dir / "system_state.json"
+
+        try:
+            # Load existing state
+            state = {}
+            if state_file.exists():
+                try:
+                    with open(state_file) as f:
+                        state = json.load(f)
+                except Exception:
+                    state = {}
+
+            # Ensure structure exists
+            if "crypto" not in state:
+                state["crypto"] = {}
+            if "trades" not in state["crypto"]:
+                state["crypto"]["trades"] = []
+            if "meta" not in state:
+                state["meta"] = {}
+
+            # Add trade record
+            trade_record = {
+                "symbol": symbol,
+                "action": action,
+                "amount": round(amount, 2),
+                "quantity": quantity,
+                "price": round(price, 2),
+                "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                "order_id": order_id,
+            }
+            state["crypto"]["trades"].append(trade_record)
+
+            # Update last crypto trade info
+            state["crypto"]["last_trade"] = trade_record
+            state["crypto"]["last_execution"] = datetime.now().isoformat()
+
+            # Update meta timestamp (CRITICAL for git diff detection)
+            state["meta"]["last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            state["meta"]["last_crypto_trade"] = datetime.now().isoformat()
+
+            # Save updated state
+            data_dir.mkdir(parents=True, exist_ok=True)
+            with open(state_file, "w") as f:
+                json.dump(state, f, indent=2, default=str)
+
+            logger.info(f"✅ System state updated: {symbol} {action} ${amount:.2f}")
+            logger.info(f"   system_state.json last_updated: {state['meta']['last_updated']}")
+
+        except Exception as e:
+            logger.error(f"Failed to update system_state.json: {e}")
+            # Don't raise - trade already executed, this is just tracking
 
     def manage_positions(self) -> list[CryptoOrder]:
         """
