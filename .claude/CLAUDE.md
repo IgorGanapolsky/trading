@@ -124,6 +124,30 @@ Every session after the first should follow the "Future Sessions - START HERE" p
 
 ---
 
+### GitHub Full Access (Added Dec 10, 2025)
+
+**Claude has FULL agentic GitHub control:**
+- GitHub PAT with repo full permissions available via `$GITHUB_TOKEN` env var
+- CEO provided PAT on Dec 10, 2025 - use it for all GitHub operations
+- Can create PRs, merge branches, manage issues
+- Use `gh` CLI, GitHub API, or GitHub MCP tools
+- NEVER ask CEO to create PRs - DO IT YOURSELF
+
+**PR Creation Commands:**
+```bash
+# Create PR (GITHUB_TOKEN must be set in environment)
+gh pr create --base main --head <branch> --title "type: description" --body "..."
+
+# Or via API
+curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
+  https://api.github.com/repos/IgorGanapolsky/trading/pulls \
+  -d '{"title":"...","head":"...","base":"main","body":"..."}'
+```
+
+**Token Location:** CEO provides in conversation when needed. Never hardcode in files.
+
+---
+
 ### 🚨 ANTI-MANUAL MANDATE (Added Nov 19, 2025, Reinforced Dec 7, 2025)
 
 **ABSOLUTELY FORBIDDEN PHRASES**:
