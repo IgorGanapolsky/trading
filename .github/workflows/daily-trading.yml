@@ -700,19 +700,42 @@ jobs:
         id: check_state_changes
         if: steps.check_execution.outputs.skip != 'true'
         run: |
-          echo "🔍 Checking for system_state.json updates..."
+          echo "🔍 Checking for trading data updates..."
 
-          # Check if system_state.json changed during execution
-          if git diff --quiet data/system_state.json; then
-            echo "state_changed=false" >> $GITHUB_OUTPUT
-            echo "📋 No changes to system state"
-          else
+          CHANGES_FOUND=false
+
+          # Check if system_state.json changed
+          if ! git diff --quiet data/system_state.json 2>/dev/null; then
+            echo "  ✓ system_state.json changed"
+            CHANGES_FOUND=true
+          fi
+
+          # Check if performance_log.json changed
+          if ! git diff --quiet data/performance_log.json 2>/dev/null; then
+            echo "  ✓ performance_log.json changed"
+            CHANGES_FOUND=true
+          fi
+
+          # Check for NEW or modified trade files (untracked or modified)
+          if git status --short data/trades_*.json 2>/dev/null | grep -q .; then
+            echo "  ✓ Trade files detected"
+            CHANGES_FOUND=true
+          fi
+
+          # Check for any untracked files in data/ directory
+          if git status --short data/ 2>/dev/null | grep -q "^??"; then
+            echo "  ✓ New data files detected"
+            CHANGES_FOUND=true
+          fi
+
+          if [ "$CHANGES_FOUND" = "true" ]; then
             echo "state_changed=true" >> $GITHUB_OUTPUT
-            echo "✅ System state updated after trading"
-
-            # Show summary of changes
-            echo "Changes detected:"
-            git diff --stat data/system_state.json
+            echo "✅ Trading data updates detected"
+            echo "Changes summary:"
+            git status --short data/ 2>/dev/null || true
+          else
+            echo "state_changed=false" >> $GITHUB_OUTPUT
+            echo "📋 No trading data changes detected"
           fi
 
       - name: Commit system state updates
@@ -734,9 +757,15 @@ jobs:
           }
 
           # Stage all trading data files (system state, trades, performance log)
-          git add data/system_state.json
+          git add data/system_state.json 2>/dev/null || true
           git add data/performance_log.json 2>/dev/null || true
           git add data/trades_*.json 2>/dev/null || true
+          git add data/trades/*.json 2>/dev/null || true
+          git add data/last_run_status.json 2>/dev/null || true
+
+          # Show what's being committed
+          echo "📋 Files staged for commit:"
+          git diff --cached --name-only
 
           # Commit with descriptive message
           git commit -m "chore: Update trading data after execution (${{ github.run_id }})" || {

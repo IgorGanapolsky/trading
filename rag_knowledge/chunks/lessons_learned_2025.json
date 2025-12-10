@@ -73,6 +73,24 @@
         ".github/workflows/options-trading.yml"
       ],
       "embedding_text": "sandbox network proxy restrictions 403 forbidden cannot call external APIs locally. All trading via GitHub Actions CI/CD. Use workflow_dispatch to trigger manual trades. Local is development only."
+    },
+    {
+      "id": "ll_005_workflow_data_persistence",
+      "title": "GitHub Actions Must Commit Updated Data Files Back to Repo",
+      "source": "CTO Discovery - Dec 10, 2025",
+      "date": "2025-12-10",
+      "category": "infrastructure",
+      "tags": ["github-actions", "data-persistence", "workflows", "dashboard", "stale-data"],
+      "severity": "critical",
+      "content": "Dashboard showed stale Dec 9 data despite workflow running successfully. Root cause: dashboard-auto-update.yml fetched fresh Alpaca data and generated dashboard BUT never committed the updated performance_log.json back to the repo. The file was updated locally in the workflow runner but lost when workflow completed. Similarly, daily-trading.yml only checked system_state.json changes, missing new trade files in data/trades/.",
+      "key_insight": "Any workflow that updates data files must explicitly git add + git commit + git push those files back to the repo, otherwise changes are lost when workflow runner terminates.",
+      "solution": "Added 'Commit performance data to main repo' step in dashboard-auto-update.yml. Enhanced 'Check for state changes' in daily-trading.yml to detect new trade files, not just system_state.json changes. Both fixes ensure data persists across workflow runs.",
+      "our_implementation": "dashboard-auto-update.yml now commits performance_log.json before wiki update. daily-trading.yml checks all data/* files for changes including untracked trade files.",
+      "referenced_files": [
+        ".github/workflows/dashboard-auto-update.yml",
+        ".github/workflows/daily-trading.yml"
+      ],
+      "embedding_text": "GitHub Actions workflow data persistence commit push files stale dashboard. Workflows must git add commit push updated data files or changes are lost. performance_log.json trades_*.json system_state.json must be committed back to repo after update."
     }
   ]
 }
