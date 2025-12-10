@@ -31,6 +31,10 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+# Ensure directories exist BEFORE configuring logging
+Path("logs").mkdir(exist_ok=True)
+Path("data").mkdir(exist_ok=True)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -325,9 +329,6 @@ def main():
     logger.info(f"   Symbol: {args.symbol}")
     logger.info(f"   Dry Run: {args.dry_run}")
     logger.info("")
-
-    # Ensure logs directory exists
-    Path("logs").mkdir(exist_ok=True)
 
     try:
         trading_client, options_client = get_alpaca_clients()
