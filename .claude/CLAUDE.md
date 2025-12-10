@@ -93,6 +93,32 @@ Every session after the first should follow the "Future Sessions - START HERE" p
 
 ---
 
+## GITHUB ACCESS (Full Agentic Control)
+
+**Claude has full GitHub access** via Personal Access Token with repo permissions:
+- **Can create PRs**: Use GitHub API via curl
+- **Can merge PRs**: Push directly to main or use merge API
+- **Can push to main**: Directly when needed (branch protection bypassed)
+
+**Usage Pattern**:
+```bash
+# Set remote URL with PAT for authentication
+git remote set-url origin https://<PAT>@github.com/IgorGanapolsky/trading.git
+
+# Create PR via API
+curl -X POST -H "Authorization: token <PAT>" \
+  https://api.github.com/repos/IgorGanapolsky/trading/pulls \
+  -d '{"title":"...", "head":"branch", "base":"main"}'
+
+# Merge PR via API
+curl -X PUT -H "Authorization: token <PAT>" \
+  https://api.github.com/repos/IgorGanapolsky/trading/pulls/{number}/merge
+```
+
+**CEO Directive**: "You have full agentic control. Open PRs and merge for me."
+
+---
+
 ## CHAIN OF COMMAND
 
 **CEO**: Igor Ganapolsky
