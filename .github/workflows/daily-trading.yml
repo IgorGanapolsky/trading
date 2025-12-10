@@ -743,44 +743,73 @@ jobs:
 
       - name: Commit system state updates
         if: steps.check_execution.outputs.skip != 'true' && steps.check_state_changes.outputs.state_changed == 'true'
-        continue-on-error: true  # Non-fatal - trading already succeeded
         run: |
           echo "💾 Committing trading data updates..."
 
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 
-          # Pull latest changes to avoid conflicts
-          git pull --rebase origin main || {
-            echo "⚠️  Merge conflict detected - resolving..."
-            git checkout --ours data/system_state.json
-            git checkout --ours data/performance_log.json 2>/dev/null || true
-            git add data/system_state.json data/performance_log.json 2>/dev/null || true
-            git rebase --continue || echo "::warning::Rebase continue failed"
-          }
+          # Pull latest changes to avoid conflicts (with retry)
+          MAX_RETRIES=3
+          for i in $(seq 1 $MAX_RETRIES); do
+            if git pull --rebase origin main; then
+              echo "✅ Pull successful"
+              break
+            else
+              echo "⚠️  Pull attempt $i failed"
+              if [ $i -eq $MAX_RETRIES ]; then
+                echo "::error::Failed to pull after $MAX_RETRIES attempts"
+                # Try to abort rebase if stuck
+                git rebase --abort 2>/dev/null || true
+                git checkout main 2>/dev/null || true
+              fi
+              sleep 2
+            fi
+          done
 
-          # Stage all trading data files (system state, trades, performance log)
+          # Stage all trading data files
           git add data/system_state.json 2>/dev/null || true
           git add data/performance_log.json 2>/dev/null || true
           git add data/trades_*.json 2>/dev/null || true
           git add data/trades/*.json 2>/dev/null || true
           git add data/last_run_status.json 2>/dev/null || true
+          git add dashboard.md 2>/dev/null || true
 
           # Show what's being committed
           echo "📋 Files staged for commit:"
           git diff --cached --name-only
 
-          # Commit with descriptive message
-          git commit -m "chore: Update trading data after execution (${{ github.run_id }})" || {
-            echo "::warning::No changes to commit or commit failed"
+          # Check if there are changes to commit
+          if git diff --cached --quiet; then
+            echo "📋 No changes to commit"
             exit 0
-          }
+          fi
 
-          # Push changes
-          git push origin main || {
-            echo "::warning::Push failed - may need manual sync"
-            exit 0
-          }
+          # Commit with descriptive message
+          git commit -m "chore: Update trading data after execution (${{ github.run_id }})"
+
+          # Push changes with retry and exponential backoff
+          PUSH_SUCCESS=false
+          for i in 1 2 3 4; do
+            echo "🚀 Push attempt $i..."
+            if git push origin main; then
+              PUSH_SUCCESS=true
+              echo "✅ Push successful!"
+              break
+            else
+              echo "⚠️  Push attempt $i failed"
+              WAIT_TIME=$((2 ** i))
+              echo "   Waiting ${WAIT_TIME}s before retry..."
+              sleep $WAIT_TIME
+            fi
+          done
+
+          if [ "$PUSH_SUCCESS" = "false" ]; then
+            echo "::error::❌ CRITICAL: Failed to push trading data after 4 attempts!"
+            echo "::error::Data was committed locally but NOT pushed to remote."
+            echo "::error::Manual intervention required: git push origin main"
+            exit 1
+          fi
 
           echo "✅ System state changes committed and pushed"
 
