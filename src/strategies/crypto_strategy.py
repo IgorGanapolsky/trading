@@ -318,23 +318,37 @@ class CryptoStrategy:
         logger.info(f"Daily allocation: ${self.daily_amount}")
 
         try:
-            # Step 1: Calculate scores for all coins
-            scores = self._calculate_all_scores()
+            # Check FORCE_TRADE mode - bypass all filters and force buy first coin
+            force_trade = os.getenv("FORCE_TRADE", "").lower() in {"1", "true", "yes", "force"}
 
-            if not scores:
-                logger.warning("No valid crypto opportunities today")
-                return None
+            if force_trade:
+                logger.info("🔥 FORCE_TRADE MODE - Bypassing all analysis, buying first coin")
+                best_coin = self.crypto_universe[0]  # BTCUSD
+                logger.info(f"Forced selection: {best_coin}")
+            else:
+                # Step 1: Calculate scores for all coins
+                scores = self._calculate_all_scores()
 
-            # Step 2: Select best coin based on our algorithm
-            best_coin = self.select_crypto()
-            if not best_coin:
-                logger.warning("No crypto selected - all failed filters")
-                return None
+                if not scores:
+                    logger.warning("No valid crypto opportunities today")
+                    return None
 
-            logger.info(f"Selected crypto (algorithm): {best_coin}")
+                # Step 2: Select best coin based on our algorithm
+                best_coin = self.select_crypto()
+                if not best_coin:
+                    logger.warning("No crypto selected - all failed filters")
+                    return None
 
-            # Step 2.5: Validate against CoinSnacks newsletter
-            validation = self.get_newsletter_validation(best_coin)
+            logger.info(f"Selected crypto: {best_coin}")
+
+            # Skip validation steps in FORCE_TRADE mode
+            if force_trade:
+                logger.info("🔥 FORCE_TRADE - Skipping newsletter and RAG validation")
+                validation = {"available": False, "reasoning": "Skipped in FORCE_TRADE mode"}
+                rag_insights = {"available": False, "reasoning": "Skipped in FORCE_TRADE mode"}
+            else:
+                # Step 2.5: Validate against CoinSnacks newsletter
+                validation = self.get_newsletter_validation(best_coin)
 
             if validation["available"]:
                 logger.info(
@@ -358,35 +372,37 @@ class CryptoStrategy:
             else:
                 logger.info(f"Newsletter validation not available: {validation['reasoning']}")
 
-            # Step 2.6: Get RAG insights for the selected coin
-            best_score = next((s for s in scores if s.symbol == best_coin), None)
-            if best_score:
-                rag_metrics = {
-                    "rsi": best_score.rsi,
-                    "macd_histogram": best_score.macd_histogram,
-                    "volume_ratio": best_score.volume_ratio,
-                }
-                rag_insights = self.get_rag_insights(best_coin, rag_metrics)
+            # Step 2.6: Get RAG insights for the selected coin (skip in FORCE_TRADE)
+            best_score = None  # Initialize for FORCE_TRADE mode
+            if not force_trade:
+                best_score = next((s for s in scores if s.symbol == best_coin), None)
+                if best_score:
+                    rag_metrics = {
+                        "rsi": best_score.rsi,
+                        "macd_histogram": best_score.macd_histogram,
+                        "volume_ratio": best_score.volume_ratio,
+                    }
+                    rag_insights = self.get_rag_insights(best_coin, rag_metrics)
 
-                if rag_insights["available"]:
-                    logger.info(
-                        f"RAG Insights: recommendation={rag_insights['recommendation']}, "
-                        f"adjustment={rag_insights['confidence_adjustment']:+d}"
-                    )
-                    if rag_insights["insights"]:
-                        logger.info(f"  Top insight: {rag_insights['insights'][0][:100]}...")
-
-                    # Apply RAG adjustment to decision
-                    if (
-                        rag_insights["recommendation"] == "bearish"
-                        and rag_insights["confidence_adjustment"] < -5
-                    ):
-                        logger.warning(
-                            f"RAG recommends CAUTION for {best_coin}: {rag_insights['reasoning']}"
+                    if rag_insights["available"]:
+                        logger.info(
+                            f"RAG Insights: recommendation={rag_insights['recommendation']}, "
+                            f"adjustment={rag_insights['confidence_adjustment']:+d}"
                         )
-                        # Note: We still proceed but reduce position size could be implemented
-                else:
-                    logger.info(f"RAG insights not available: {rag_insights['reasoning']}")
+                        if rag_insights["insights"]:
+                            logger.info(f"  Top insight: {rag_insights['insights'][0][:100]}...")
+
+                        # Apply RAG adjustment to decision
+                        if (
+                            rag_insights["recommendation"] == "bearish"
+                            and rag_insights["confidence_adjustment"] < -5
+                        ):
+                            logger.warning(
+                                f"RAG recommends CAUTION for {best_coin}: {rag_insights['reasoning']}"
+                            )
+                            # Note: We still proceed but reduce position size could be implemented
+                    else:
+                        logger.info(f"RAG insights not available: {rag_insights['reasoning']}")
 
             # Step 3: Get current price
             current_price = self._get_current_price(best_coin)
