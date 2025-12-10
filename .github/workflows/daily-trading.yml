@@ -169,6 +169,17 @@ jobs:
       ENABLE_BROKER_FAILOVER: 'true'
       TRADIER_API_KEY: ${{ secrets.TRADIER_API_KEY }}
       TRADIER_ACCOUNT_NUMBER: ${{ secrets.TRADIER_ACCOUNT_NUMBER }}
+      # ============================================================
+      # STRATEGY ALLOCATION FIX (Dec 10, 2025)
+      # Problem: System was only trading Treasuries (SHY/IEF/TLT) during
+      # a bond bear market, resulting in negative Sharpe (-7 to -2086).
+      # Fix: Disable losing strategies, lower thresholds for equity trades.
+      # ============================================================
+      TREASURY_ALLOCATION_PCT: '0.0'      # Disable treasury ladder (bond bear market)
+      REIT_ALLOCATION_PCT: '0.0'          # Disable REITs (underperforming)
+      RL_CONFIDENCE_THRESHOLD: '0.30'     # Lower from 0.45 to allow more equity trades
+      MOMENTUM_MIN_SCORE: '-0.05'         # Allow slight negative momentum
+      LLM_NEGATIVE_SENTIMENT_THRESHOLD: '-0.3'  # More lenient sentiment filter
 
     steps:
       - name: Checkout repository
