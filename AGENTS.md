@@ -1,38 +1,204 @@
-Never tell the user to do any manual work. You as the ai agent can do all the work yourself.
+# AI Trading System - Universal Agent Instructions
 
-# STRICT INTEGRITY & VERIFICATION PROTOCOL
-**Goal: Prevent "Lying" (Hallucinating Success)**
+> AI-powered trading system using Alpaca API with multi-LLM consensus analysis.
+> Current Phase: R&D (Days 1-90) - Paper trading to build profitable edge.
 
-1.  **NEVER ASSUME SUCCESS**: You are FORBIDDEN from reporting that a command succeeded or a file was updated unless you have EXPLICITLY observed the evidence.
-    *   **Prohibited**: Running `git push` in background and immediately saying "Pushed successfully".
-    *   **Required**: Run `git push`, wait for exit code `0`, READ the output to ensure no auth errors, and ONLY THEN report success.
+## Quick Reference
 
-2.  **VERIFY ALL BACKGROUND COMMANDS**:
-    *   If you use `SafeToAutoRun=True` (background execution), you **MUST** use `command_status` to check the `ExitCode` and `Output` before responding to the user.
-    *   If a command fails (Exit Code != 0), you must report the FAILURE, not success.
+```bash
+# Setup
+pip install -r requirements.txt
 
-3.  **VERIFY FILE WRITES**:
-    *   After `write_to_file` or `replace_file_content`, if the operation is critical, you must briefly `view_file` or check the file size/existence to confirm the change persisted.
+# Run tests
+pytest tests/unit -v                    # Fast unit tests (~30s)
+pytest tests/safety -v                  # Safety tests (critical)
+pytest tests/ -v --ignore=tests/e2e     # All except E2E
 
-4.  **GIT OPERATION RULES**:
-    *   Always check `git status` after a commit to ensure the working tree is clean (meaning commit succeeded).
-    *   Always check the output of `git push` for "Everything up-to-date" or the specific hash range pushed.
-    *   Watch out for `credential` or `auth` errors in stdout/stderr.
+# Type checking
+mypy src/ --ignore-missing-imports
 
-5.  **HONESTY OVER SPEED**:
-    *   It is better to say "I am still waiting for the command to finish" than to prematurely claim it finished.
-    *   If you made a mistake, ADMIT IT immediately. Do not double down.
+# Syntax verification (MANDATORY before merge)
+find src -name "*.py" -exec python3 -m py_compile {} \;
+python3 -c "from src.orchestrator.main import TradingOrchestrator; print('OK')"
+```
 
-**Violation of these rules is a critical failure of your core objective.**
+## Tech Stack
 
-# GITHUB FULL ACCESS & AUTONOMY
-- The user is the CEO and I am the fully autonomous CTO.
-- I have a GitHub PAT with full permissions.
-- I must **create PRs autonomously**.
-- I must **merge PRs autonomously** (after ensuring passing tests/CI).
-- I must **never ask the user** to execute manual GitHub operations.
+| Component | Version | Purpose |
+|-----------|---------|---------|
+| Python | 3.11+ | Primary language |
+| Alpaca Trade API | 3.0.2 | Brokerage integration |
+| Pandas | 2.1.3+ | Data analysis |
+| Pydantic | 2.5.0+ | Validation & type safety |
+| pytest | 7.4.3+ | Testing framework |
+| yfinance | 0.2.66 | Market data (local wheel) |
 
-# LESSONS LEARNED & CONTINUOUS IMPROVEMENT
-- Before implementing complex logic or backtesting metrics, I must **CONSULT THE RAG SYSTEM** for "lessons learned" (e.g. `query: "lessons learned regarding backtesting"`).
-- When a mistake is found, I must **INGEST A NEW LESSON** into the RAG system to prevent recurrence.
-- Use `scripts/ingest_lesson.py` (or equivalent) to record critical bugs and architecture decisions.
+## Architecture Overview
+
+```
+src/
+├── orchestrator/       # Main trading orchestrator (entry point)
+├── strategies/         # Trading strategy implementations
+├── safety/            # Risk management & circuit breakers
+├── agents/            # Multi-agent system components
+├── ml/                # Machine learning models
+├── rag/               # RAG knowledge system
+├── analytics/         # Performance tracking
+├── backtesting/       # Strategy backtesting
+└── utils/             # Shared utilities
+
+data/                  # Runtime data (system_state.json, trades, etc.)
+tests/                 # Test suites mirroring src/ structure
+docs/                  # Human documentation
+rag_knowledge/         # Lessons learned, decisions
+scripts/               # Utility scripts
+```
+
+## Critical Business Rules
+
+**Risk Management (NEVER VIOLATE)**:
+- Max risk per trade: 2% of portfolio
+- Max position size: 5% of portfolio
+- Max concurrent positions: 5
+- Trading hours: 9:35 AM - 3:55 PM ET (5min buffer)
+- Daily budget: $10.50 (weekdays)
+
+**Trade Execution**:
+- All trades via Alpaca API (paper mode during R&D)
+- Validate all signals through safety checks before execution
+- Log all trades to `data/trades_YYYY-MM-DD.json`
+
+## Coding Standards
+
+### Python Style
+- PEP 8 compliance (Black formatter, 88 char lines)
+- Type hints REQUIRED for all function signatures
+- Google-style docstrings with Args, Returns, Raises
+- Pydantic models for data validation
+
+### Good Pattern
+```python
+from typing import Optional
+from decimal import Decimal
+
+def calculate_position_size(
+    equity: Decimal,
+    risk_percent: float,
+    entry_price: Decimal,
+    stop_loss: Decimal
+) -> int:
+    """Calculate position size using volatility-adjusted risk.
+
+    Args:
+        equity: Total account equity in USD
+        risk_percent: Maximum portfolio risk (0.01 = 1%)
+        entry_price: Planned entry price per share
+        stop_loss: Stop loss price per share
+
+    Returns:
+        Number of shares to purchase (integer)
+
+    Raises:
+        ValueError: If stop_loss >= entry_price
+    """
+    if stop_loss >= entry_price:
+        raise ValueError("Stop loss must be below entry price")
+    risk_per_share = entry_price - stop_loss
+    max_risk = equity * Decimal(str(risk_percent))
+    return int(max_risk / risk_per_share)
+```
+
+### Anti-Pattern (AVOID)
+```python
+# No types, no docstring, unclear naming
+def calc(e, r, p, s):
+    return int((e * r) / (p - s))
+```
+
+## Boundaries (NEVER TOUCH)
+
+- `data/` - Managed by system, never manually edit
+- `*.env*` - Environment files with secrets
+- `credentials*.json` - API credentials
+- `node_modules/`, `venv/`, `.venv/` - Dependencies
+- Production configs in `config/prod/`
+
+## Git Workflow
+
+- Branch naming: `claude/feature-description-<unique-id>`
+- Conventional Commits: `feat:`, `fix:`, `docs:`, `chore:`, `test:`
+- **NEVER push directly to main** - always use PRs
+- **NEVER merge without passing CI** - verify ALL jobs green
+- Pre-merge: Run `python3 scripts/pre_merge_gate.py`
+
+## Verification Protocol
+
+**Before claiming success, VERIFY**:
+1. Run command and check exit code = 0
+2. Read output for errors (not just "completed")
+3. For file writes, verify content persisted
+4. For git operations, check `git status`
+
+**HONESTY > SPEED**: Better to say "still waiting" than to claim premature success.
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `data/system_state.json` | Current system state (read first each session) |
+| `.claude/CLAUDE.md` | Claude-specific instructions |
+| `claude-progress.txt` | Session progress tracking |
+| `feature_list.json` | Feature completion status |
+| `rag_knowledge/lessons_learned/` | Past mistakes to avoid |
+
+## Session Start Protocol
+
+1. Read `claude-progress.txt` for recent work
+2. Check `data/system_state.json` for current state
+3. Run `git status` to see branch/uncommitted changes
+4. Run `./init.sh` to verify environment
+5. Consult `rag_knowledge/lessons_learned/` before complex changes
+
+## RAG Knowledge System
+
+Before implementing complex logic, QUERY the RAG system:
+```bash
+# Check for lessons learned
+python3 scripts/query_rag.py "lessons learned backtesting"
+
+# After finding a bug, ingest a lesson
+python3 scripts/ingest_lesson.py --title "Bug description" --content "What happened and how to avoid"
+```
+
+## Multi-Agent Coordination
+
+This repo supports multiple AI agents working in parallel:
+- Use git worktrees for parallel branch work
+- Module ownership documented in nested AGENTS.md files
+- State shared via `data/system_state.json`
+- Progress tracked in `claude-progress.txt`
+
+## Tool-Specific Notes
+
+**Claude Code**: See `.claude/CLAUDE.md` for extended instructions
+**Cursor IDE**: See `.cursorrules` for IDE-specific rules
+**GitHub Copilot**: This AGENTS.md file is auto-detected
+
+---
+
+## STRICT INTEGRITY PROTOCOL
+
+1. **NEVER ASSUME SUCCESS** - Verify all commands completed
+2. **VERIFY BACKGROUND COMMANDS** - Check exit codes and output
+3. **VERIFY FILE WRITES** - Confirm changes persisted
+4. **ADMIT MISTAKES** - Never double down on errors
+
+## AUTONOMOUS EXECUTION
+
+- I am the CTO; user is CEO
+- Full GitHub PAT access for autonomous PR management
+- Create AND merge PRs without asking
+- Never tell user to do manual work - DO IT MYSELF
+- Commit and push all changes immediately
+
+**Violation of integrity rules is a critical failure.**

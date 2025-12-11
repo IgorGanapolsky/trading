@@ -1,0 +1,63 @@
+# AI Trading System
+
+> Automated trading system using Alpaca API with multi-LLM consensus analysis.
+> Paper trading R&D phase (Days 1-90) building profitable trading edge.
+
+## Core Documentation
+
+- [AGENTS.md](AGENTS.md): Universal AI agent instructions (start here)
+- [README.md](README.md): Project overview and setup
+- [.claude/CLAUDE.md](.claude/CLAUDE.md): Claude-specific extended instructions
+
+## Architecture
+
+- [docs/architecture.md](docs/architecture.md): System design and data flow
+- [docs/r-and-d-phase.md](docs/r-and-d-phase.md): Current R&D strategy and goals
+- [docs/verification-protocols.md](docs/verification-protocols.md): Data verification requirements
+
+## Trading Strategy
+
+- [docs/trading-strategy-guidelines.md](docs/trading-strategy-guidelines.md): Core trading rules
+- [docs/profit-optimization.md](docs/profit-optimization.md): Cost optimization strategies
+- [src/strategies/](src/strategies/): Strategy implementations
+
+## Risk Management
+
+- [src/safety/](src/safety/): Risk management and circuit breakers
+- [docs/risk-management.md](docs/risk-management.md): Risk management protocols
+
+## Source Code
+
+- [src/orchestrator/](src/orchestrator/): Main trading orchestrator entry point
+- [src/agents/](src/agents/): Multi-agent system components
+- [src/ml/](src/ml/): Machine learning models
+- [src/rag/](src/rag/): RAG knowledge system
+- [src/backtesting/](src/backtesting/): Strategy backtesting
+
+## Tests
+
+- [tests/unit/](tests/unit/): Fast unit tests
+- [tests/safety/](tests/safety/): Safety and risk tests
+- [tests/integration/](tests/integration/): Integration tests
+
+## Knowledge Base
+
+- [rag_knowledge/lessons_learned/](rag_knowledge/lessons_learned/): Past mistakes and solutions
+- [rag_knowledge/decisions/](rag_knowledge/decisions/): Architecture decisions
+
+## Configuration
+
+- [config/](config/): Configuration files
+- [pyproject.toml](pyproject.toml): Python project configuration
+- [requirements.txt](requirements.txt): Python dependencies
+
+## State Files
+
+- [data/system_state.json](data/system_state.json): Current system state
+- [claude-progress.txt](claude-progress.txt): Session progress tracking
+- [feature_list.json](feature_list.json): Feature completion status
+
+## Optional
+
+- [CONTRIBUTING.md](CONTRIBUTING.md): Contribution guidelines
+- [docs/ai-agent-adaptation-plan.md](docs/ai-agent-adaptation-plan.md): AI agent improvement modes
