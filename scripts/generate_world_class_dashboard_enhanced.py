@@ -176,6 +176,15 @@ def generate_world_class_dashboard() -> str:
     calculator = EnhancedMetricsCalculator(DATA_DIR)
     all_metrics = calculator.calculate_all_metrics()
 
+    # Load profit target data (best-effort, graceful fallback)
+    profit_target_data = {}
+    profit_target_file = Path("reports/profit_target_report.json")
+    if profit_target_file.exists():
+        try:
+            profit_target_data = load_json_file(profit_target_file)
+        except Exception:
+            pass  # Fall back to empty dict if file can't be loaded
+
     # Load data for charts and insights
     perf_log = load_json_file(DATA_DIR / "performance_log.json")
     if not isinstance(perf_log, list):
@@ -417,6 +426,94 @@ def generate_world_class_dashboard() -> str:
 **Assessment**: {"✅ **ON TRACK**" if basic_metrics["total_pl"] > 0 and basic_metrics["win_rate"] >= 55 else "⚠️ **R&D PHASE** - Learning, not earning yet"}
 
 ---
+
+## 💡 $100/Day Progress & Capital Scaling Plan
+
+"""
+
+    # Add profit target section if data is available
+    if profit_target_data:
+        current_profit = profit_target_data.get("current_daily_profit", 0.0)
+        projected_profit = profit_target_data.get("projected_daily_profit", 0.0)
+        target_profit = profit_target_data.get("target_daily_profit", 100.0)
+        target_gap = profit_target_data.get("target_gap", 0.0)
+        current_budget = profit_target_data.get("current_daily_budget", 0.0)
+        recommended_budget = profit_target_data.get("recommended_daily_budget")
+        scaling_factor = profit_target_data.get("scaling_factor")
+        avg_return_pct = profit_target_data.get("avg_return_pct", 0.0)
+        actions = profit_target_data.get("actions", [])
+        allocations = profit_target_data.get("recommended_allocations", {})
+
+        # Calculate progress percentage
+        progress_to_target = (
+            (projected_profit / target_profit * 100) if target_profit > 0 else 0.0
+        )
+
+        # Progress bar for $100/day target
+        progress_bars_100 = max(0, min(int(progress_to_target / 5), 20))
+        progress_bar_100 = "█" * progress_bars_100 + "░" * (20 - progress_bars_100)
+
+        dashboard += f"""
+| Metric | Current | Target | Status |
+|--------|---------|--------|--------|
+| **Actual Daily Profit** | ${current_profit:+.2f}/day | ${target_profit:.2f}/day | {"✅" if current_profit >= target_profit else "⚠️"} |
+| **Projected Daily Profit** | ${projected_profit:+.2f}/day | ${target_profit:.2f}/day | {"✅" if projected_profit >= target_profit else "⚠️"} |
+| **Target Gap** | ${target_gap:+.2f}/day | $0.00/day | {"✅" if target_gap <= 0 else "⚠️"} |
+| **Current Daily Budget** | ${current_budget:.2f}/day | Variable | - |
+| **Avg Return %** | {avg_return_pct:+.2f}% | >0% | {"✅" if avg_return_pct > 0 else "⚠️"} |
+
+**Progress to $100/Day**: `{progress_bar_100}` ({progress_to_target:.1f}%)
+
+### Capital Scaling Recommendations
+
+"""
+
+        if recommended_budget is not None:
+            dashboard += f"""
+| Metric | Value |
+|--------|-------|
+| **Recommended Daily Budget** | ${recommended_budget:,.2f}/day |
+| **Scaling Factor** | {scaling_factor:.2f}x |
+| **Budget Increase Needed** | ${recommended_budget - current_budget:+,.2f}/day |
+
+"""
+            # Show recommended allocations
+            if allocations:
+                dashboard += """
+**Recommended Strategy Allocations**:
+
+| Strategy | Allocation |
+|----------|------------|
+"""
+                for strategy, amount in allocations.items():
+                    dashboard += f"| {strategy} | ${amount:.2f}/day |\n"
+                dashboard += "\n"
+        else:
+            dashboard += """
+*Recommended budget cannot be calculated yet. Need positive average return % first.*
+
+"""
+
+        # Add actionable recommendations
+        dashboard += """
+### Actionable Recommendations
+
+"""
+        if actions:
+            for action in actions:
+                dashboard += f"- {action}\n"
+        else:
+            dashboard += "- ✅ Stay the course - current strategy is on track.\n"
+
+        dashboard += "\n"
+    else:
+        # Fallback when profit target report is not available
+        dashboard += """
+*Profit target analysis not available. Run `python scripts/generate_profit_target_report.py` to generate detailed capital scaling recommendations.*
+
+"""
+
+    dashboard += """---
 
 ## 🛡️ Comprehensive Risk Metrics
 
