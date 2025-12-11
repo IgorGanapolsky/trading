@@ -64,30 +64,30 @@ baseline = max(budget_based, equity_based)  # Take larger of the two
 
 ---
 
-## Verified Bottleneck #2: Dynamic Budget Already Exists (But May Be Disabled)
+## Verified Bottleneck #2: Dynamic Budget Was Dead Code (NOW FIXED)
 
 ### The Discovery
 
-**File**: `scripts/autonomous_trader.py:305-332`
+**File**: `scripts/autonomous_trader.py:305-336`
 
-```python
-def _apply_dynamic_daily_budget(logger) -> float | None:
-    """
-    Adjust DAILY_INVESTMENT based on account equity before orchestrator loads.
-    """
-    # ... scales DAILY_INVESTMENT up to $50 based on equity
-```
+The function `_apply_dynamic_daily_budget()` existed but was **never called**!
 
-This function EXISTS but caps at $50 (line 327):
-```python
-new_amount = min(50.0, max(10.0, base * multiplier))  # $50 cap
-```
+Line 611 had: `# SIMPLIFIED PATH: Skip dynamic budget and market checks`
 
-### The Fix
+### The Fix (IMPLEMENTED Dec 11, 2025)
 
-1. **Verify it runs**: Check if `_apply_dynamic_daily_budget` is called in the trading workflow
-2. **Increase cap**: Change $50 cap to $100 or remove entirely for accounts >$50k
-3. **Add environment variable**: `DYNAMIC_BUDGET_CAP` to make configurable
+1. **Wired up the function**: Now called in `main()` after logger setup
+2. **Already uses 1% of equity**: `calc_daily_input()` at line 568 uses:
+   ```python
+   daily_target = equity * 0.01  # 1% of equity
+   return min(max(base, daily_target), 1000.0)  # $10 floor, $1000 cap
+   ```
+
+### Impact
+
+With $100k equity:
+- **Before**: $10/day (hard-coded)
+- **After**: $1000/day (1% of equity, capped at $1000)
 
 ---
 
@@ -173,28 +173,27 @@ Capital efficiency calculator is working correctly.
 
 ## Math: What's Actually Achievable?
 
-### Current State
-- Daily budget: $10
-- Max confidence: 1.0
+### Before This Fix
+- Daily budget: $10 (hard-coded, dynamic scaling was dead code)
 - Max trade: ~$12.50
 - Required return for $100/day: **800%** (impossible)
 
-### After Week 1 (Environment Changes)
-- Daily budget: $50
-- Max trade: ~$62.50
-- Required return for $100/day: **160%** (still unrealistic)
+### After This Fix (Dynamic Budget Wired Up)
+- Daily budget: $1000 (1% of $100k equity)
+- Max trade: $1000 × confidence × sentiment
+- Required return for $100/day: **10%** (achievable with options)
 
-### After Week 2 (Code Changes)
-- Base budget: $50
-- Confidence multiplier: 3x for high-confidence
-- Max trade: ~$187.50 equity + options theta
-- Options theta contribution: ~$30-50/day (at $100k equity)
-- Required equity return for remaining $50-70: **30-40%** (possible with options)
+### Breakdown at $100k Equity
+| Source | Daily Potential |
+|--------|-----------------|
+| Equity trades (10% of $1000) | $100 |
+| Options theta (at $100k) | $30-50 |
+| **Total possible** | $130-150/day |
 
-### Realistic Target
-- **Weeks 1-4**: $20-30/day (2x-3x sizing + theta)
-- **Weeks 5-8**: $40-60/day (validated strategies, increased risk budget)
-- **Weeks 9-12**: $80-100/day (scaled theta + leveraged ETFs if approved)
+### Realistic Target (Conservative)
+- **Weeks 1-4**: $30-50/day (dynamic budget + theta)
+- **Weeks 5-8**: $60-80/day (validated strategies, refined sizing)
+- **Weeks 9-12**: $100+/day (scaled theta + multi-strategy)
 
 ---
 

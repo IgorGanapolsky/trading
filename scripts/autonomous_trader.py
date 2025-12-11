@@ -544,21 +544,22 @@ def calc_daily_input(equity: float) -> float:
     """
     Calculate dynamic daily input based on account equity.
 
-    Auto-scaling logic to accelerate compounding:
-    - Base: $10/day (minimum safe amount)
-    - $2k+: Add $0.20 per $1k equity (e.g., $12 at $2k)
-    - $5k+: Add $0.30 per $1k equity (e.g., $16.50 at $5k)
-    - $10k+: Add $0.40 per $1k equity (e.g., $24 at $10k)
-    - Cap at $50/day to maintain risk discipline
+    Scaling Logic (1% of equity):
+    - $10k equity → $100/day budget
+    - $50k equity → $500/day budget
+    - $100k equity → $1000/day budget (max cap)
 
-    This shaves 2-3 months off the $100/day roadmap by
-    compounding faster once equity validates the system.
+    Floor: $10/day (minimum safe amount)
+    Ceiling: $1000/day (config validator limit)
+
+    This enables the system to scale towards $100/day profit goal.
+    With $100k equity: $1000 daily budget → 10% return = $100 profit
 
     Args:
         equity: Current account equity in USD
 
     Returns:
-        Daily input amount (capped at $50)
+        Daily input amount (1% of equity, min $10, max $1000)
     """
     base = 10.0  # Minimum daily input
 
@@ -608,7 +609,10 @@ def main() -> None:
     init_sentry()
     logger = setup_logging()
 
-    # SIMPLIFIED PATH: Skip dynamic budget and market checks
+    # Dynamic budget scaling: adjust DAILY_INVESTMENT based on account equity
+    # This enables the system to scale towards $100/day profit goal
+    # With $100k equity: $1000 daily investment → 10% return = $100 profit
+    _apply_dynamic_daily_budget(logger)
 
     # Set safe defaults
     is_weekend_day = is_weekend()
