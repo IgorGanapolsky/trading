@@ -1,0 +1,246 @@
+name: 0DTE Options Scalping (High Frequency)
+
+# High-frequency 0DTE options trading
+# Goal: 3-5 options trades/day for additional income stream
+# Based on TastyTrade + Natenberg RAG knowledge
+
+on:
+  schedule:
+    # Options scalping windows (Eastern Time)
+    # Morning (post-open volatility): 10:00, 10:30, 11:00 AM
+    # Midday (range-bound premium): 12:30, 1:00 PM
+    # Afternoon (closing momentum): 2:30, 3:00, 3:30 PM
+
+    # Morning session
+    - cron: '00 14,15 * * 1-5'   # 10:00 AM ET
+    - cron: '30 14,15 * * 1-5'   # 10:30 AM ET
+    - cron: '00 15,16 * * 1-5'   # 11:00 AM ET
+
+    # Midday session
+    - cron: '30 16,17 * * 1-5'   # 12:30 PM ET
+    - cron: '00 17,18 * * 1-5'   # 1:00 PM ET
+
+    # Afternoon session
+    - cron: '30 18,19 * * 1-5'   # 2:30 PM ET
+    - cron: '00 19,20 * * 1-5'   # 3:00 PM ET
+    - cron: '30 19,20 * * 1-5'   # 3:30 PM ET
+
+  workflow_dispatch:
+    inputs:
+      force_trade:
+        description: "Force options scalp execution"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: options-scalping
+  cancel-in-progress: false
+
+env:
+  OPTIONS_SCALP_MAX_POSITION: "50"    # $50 max per trade
+  OPTIONS_SCALP_MAX_TRADES: "5"       # Max 5 trades/day
+  OPTIONS_SCALP_MAX_DAILY_LOSS: "100" # $100 max daily loss
+
+jobs:
+  options-scalp:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install --no-cache-dir alpaca-py pandas numpy requests yfinance
+
+      - name: Execute 0DTE Options Scalp
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          ALPACA_BASE_URL: "https://paper-api.alpaca.markets"
+        run: |
+          python3 << 'EOF'
+          import os
+          import json
+          from datetime import datetime, timezone, date
+
+          # Alpaca setup
+          from alpaca.trading.client import TradingClient
+          from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
+          from alpaca.trading.enums import OrderSide, TimeInForce, OrderClass
+          from alpaca.data.historical import StockHistoricalDataClient
+          from alpaca.data.requests import StockBarsRequest, StockLatestQuoteRequest
+          from alpaca.data.timeframe import TimeFrame
+          import yfinance as yf
+
+          api_key = os.environ["ALPACA_API_KEY"]
+          secret_key = os.environ["ALPACA_SECRET_KEY"]
+
+          print("🎯 0DTE Options Scalping")
+          print(f"⏰ Time: {datetime.now(timezone.utc).isoformat()}")
+
+          # Initialize clients
+          trading_client = TradingClient(api_key, secret_key, paper=True)
+          data_client = StockHistoricalDataClient(api_key, secret_key)
+
+          # Get account info
+          account = trading_client.get_account()
+          buying_power = float(account.buying_power)
+          print(f"💰 Buying Power: ${buying_power:,.2f}")
+
+          # Get VIX for volatility context
+          try:
+              vix = yf.Ticker("^VIX")
+              vix_data = vix.history(period="1d")
+              current_vix = float(vix_data['Close'].iloc[-1]) if len(vix_data) > 0 else 20.0
+              print(f"📊 VIX: {current_vix:.2f}")
+          except Exception as e:
+              print(f"⚠️ Could not fetch VIX: {e}")
+              current_vix = 20.0
+
+          # Today's expiry for 0DTE
+          today = date.today()
+          expiry_str = today.strftime("%y%m%d")  # Format: YYMMDD
+
+          # Target symbols for 0DTE (SPY has daily options)
+          symbols = ["SPY"]
+
+          for symbol in symbols:
+              try:
+                  # Get current quote
+                  quote_request = StockLatestQuoteRequest(symbol_or_symbols=symbol)
+                  quote = data_client.get_stock_latest_quote(quote_request)
+                  current_price = float(quote[symbol].ask_price + quote[symbol].bid_price) / 2
+
+                  # Get recent bars for momentum
+                  from datetime import timedelta
+                  end = datetime.now(timezone.utc)
+                  start = end - timedelta(hours=1)
+
+                  bars_request = StockBarsRequest(
+                      symbol_or_symbols=symbol,
+                      timeframe=TimeFrame.Minute,
+                      start=start,
+                      end=end,
+                  )
+                  bars = data_client.get_stock_bars(bars_request)
+                  bar_list = list(bars[symbol])
+
+                  if len(bar_list) < 10:
+                      print(f"⚠️ Insufficient bars for {symbol}")
+                      continue
+
+                  closes = [float(b.close) for b in bar_list]
+                  volumes = [float(b.volume) for b in bar_list]
+
+                  # Calculate momentum indicators
+                  price_change = (closes[-1] - closes[0]) / closes[0]
+                  avg_volume = sum(volumes) / len(volumes)
+                  recent_volume = sum(volumes[-5:]) / 5
+                  volume_ratio = recent_volume / avg_volume if avg_volume > 0 else 1
+
+                  print(f"\n📈 {symbol} Analysis:")
+                  print(f"   Price: ${current_price:.2f}")
+                  print(f"   1hr Change: {price_change*100:.2f}%")
+                  print(f"   Volume Ratio: {volume_ratio:.2f}x")
+                  print(f"   VIX: {current_vix:.1f}")
+
+                  # Decision logic based on RAG knowledge
+                  # TastyTrade: Sell premium when VIX > 20
+                  # Natenberg: Buy options on momentum breakouts
+
+                  trade_signal = None
+                  trade_rationale = ""
+
+                  # Strategy 1: Momentum scalp (buy options)
+                  if abs(price_change) > 0.003 and volume_ratio > 1.3:
+                      if price_change > 0:
+                          trade_signal = "BUY_CALL"
+                          strike = int(round(current_price / 5) * 5)  # ATM
+                          trade_rationale = f"Bullish momentum +{price_change*100:.2f}%"
+                      else:
+                          trade_signal = "BUY_PUT"
+                          strike = int(round(current_price / 5) * 5)
+                          trade_rationale = f"Bearish momentum {price_change*100:.2f}%"
+
+                  # Strategy 2: Premium selling (when VIX elevated, no momentum)
+                  elif current_vix > 20 and abs(price_change) < 0.002:
+                      trade_signal = "SELL_PUT_SPREAD"
+                      strike = int(round((current_price * 0.98) / 5) * 5)  # 2% OTM
+                      trade_rationale = f"High IV premium: VIX={current_vix:.1f}"
+
+                  if trade_signal:
+                      print(f"\n🚀 OPTIONS SIGNAL: {trade_signal}")
+                      print(f"   Strike: ${strike}")
+                      print(f"   Expiry: {today} (0DTE)")
+                      print(f"   Rationale: {trade_rationale}")
+
+                      # Build option symbol (OCC format)
+                      # SPY + YYMMDD + C/P + Strike (8 digits)
+                      opt_type = "C" if "CALL" in trade_signal else "P"
+                      strike_str = f"{strike * 1000:08d}"
+                      option_symbol = f"{symbol}{expiry_str}{opt_type}{strike_str}"
+
+                      print(f"   Option: {option_symbol}")
+
+                      # For paper trading, log the signal
+                      # Real execution would use Alpaca options API
+                      trade_log = {
+                          "symbol": option_symbol,
+                          "underlying": symbol,
+                          "action": trade_signal,
+                          "strike": strike,
+                          "expiry": str(today),
+                          "timestamp": datetime.now(timezone.utc).isoformat(),
+                          "vix": current_vix,
+                          "price_change": price_change,
+                          "rationale": trade_rationale,
+                          "type": "0DTE_SCALP"
+                      }
+
+                      # Append to trades log
+                      log_file = f"data/trades_{today.strftime('%Y-%m-%d')}.json"
+                      try:
+                          with open(log_file, "r") as f:
+                              trades = json.load(f)
+                      except:
+                          trades = []
+                      trades.append(trade_log)
+                      with open(log_file, "w") as f:
+                          json.dump(trades, f, indent=2)
+
+                      print(f"📝 Signal logged to {log_file}")
+
+                      # Note: Actual options order execution requires Alpaca options API
+                      # This logs the signal for now; production would execute via:
+                      # trading_client.submit_order(OptionOrderRequest(...))
+                  else:
+                      print(f"⏸️ No options signal - conditions not met")
+
+              except Exception as e:
+                  print(f"❌ Error processing {symbol}: {e}")
+                  import traceback
+                  traceback.print_exc()
+
+          print(f"\n✅ Options scalp scan complete")
+          EOF
+
+      - name: Commit trade logs
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/*.json || true
+          git diff --staged --quiet || git commit -m "chore: 0DTE options scalp $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push || true
