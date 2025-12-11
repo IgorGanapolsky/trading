@@ -172,9 +172,16 @@ jobs:
       - name: Check promotion gate status
         id: gate-check
         continue-on-error: true
+        env:
+          DAILY_INVESTMENT: ${{ vars.DAILY_INVESTMENT || '10.0' }}
         run: |
-          # Run promotion gate in JSON mode
-          python3 scripts/enforce_promotion_gate.py --json > gate_output.json || true
+          # Run promotion gate in JSON mode with scaling plan emission
+          # Note: --emit-scaling-plan flag generates data/plan/next_capital_step.json
+          python3 scripts/enforce_promotion_gate.py \
+            --json \
+            --emit-scaling-plan \
+            --current-daily-investment "${DAILY_INVESTMENT}" \
+            > gate_output.json || true
 
           if [ -f gate_output.json ]; then
             echo "📊 Promotion Gate Status:"
@@ -185,6 +192,13 @@ jobs:
             # Extract status
             STATUS=$(cat gate_output.json | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', 'unknown'))")
             echo "status=$STATUS" >> $GITHUB_OUTPUT
+
+            # Check if scaling plan was generated
+            if [ -f data/plan/next_capital_step.json ]; then
+              echo ""
+              echo "📊 Capital Scaling Plan Generated:"
+              cat data/plan/next_capital_step.json | python3 -m json.tool
+            fi
           else
             echo "⚠️  Promotion gate check failed or no output"
             echo "status=unknown" >> $GITHUB_OUTPUT
