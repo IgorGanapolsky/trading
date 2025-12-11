@@ -38,6 +38,16 @@
         "PAL_ENABLED_TOOLS": "challenge,debug,chat",
         "PAL_DEFAULT_MODEL": "openrouter/anthropic/claude-sonnet-4"
       }
+    },
+    "vertex-ai": {
+      "command": "bunx",
+      "args": ["vertex-ai-mcp-server"],
+      "description": "Vertex AI MCP Server - Access Gemini models, manage training jobs, and enable web search grounding",
+      "env": {
+        "GOOGLE_CLOUD_PROJECT": "${GOOGLE_CLOUD_PROJECT}",
+        "GOOGLE_CLOUD_LOCATION": "us-central1",
+        "GOOGLE_APPLICATION_CREDENTIALS": "${GOOGLE_APPLICATION_CREDENTIALS}"
+      }
     }
   }
 }
