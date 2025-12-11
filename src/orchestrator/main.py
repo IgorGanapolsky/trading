@@ -524,7 +524,11 @@ class TradingOrchestrator:
                     )
                     results["trades_recorded"] += 1
 
-                    # Log telemetry
+                    # A2 Adaptation: Calculate actual return and prediction correctness
+                    actual_return_pct = position.unrealized_plpc * 100
+                    prediction_correct = actual_return_pct > 0  # True if profitable exit
+
+                    # Log telemetry with prediction outcome tracking
                     self.telemetry.record(
                         event_type="position.exit",
                         ticker=symbol,
@@ -533,8 +537,12 @@ class TradingOrchestrator:
                             "reason": reason,
                             "entry_price": position.entry_price,
                             "exit_price": position.current_price,
-                            "pl_pct": position.unrealized_plpc * 100,
+                            "pl_pct": actual_return_pct,
                             "order": order,
+                            # Prediction outcome tracking for A2 adaptation mode
+                            "actual_return": actual_return_pct,
+                            "prediction_correct": prediction_correct,
+                            "outcome_timestamp": datetime.now(timezone.utc).isoformat(),
                         },
                     )
 
@@ -1382,6 +1390,9 @@ class TradingOrchestrator:
             metrics={"confidence": rl_decision.get("confidence", 0.0)},
         )
         cost_estimate = self._estimate_execution_costs(order_size)
+
+        # A2 Adaptation: Track RL prediction for future confidence calibration
+        prediction_timestamp = datetime.now(timezone.utc).isoformat()
         self.telemetry.order_event(
             ticker,
             {
@@ -1389,6 +1400,10 @@ class TradingOrchestrator:
                 "rl": rl_decision,
                 "cost_estimate": cost_estimate,
                 "session_type": (self.session_profile or {}).get("session_type"),
+                # Prediction tracking for A2 adaptation mode
+                "predicted_confidence": rl_decision.get("confidence", 0.0),
+                "predicted_action": rl_decision.get("action", "unknown"),
+                "prediction_timestamp": prediction_timestamp,
             },
         )
         self.telemetry.record(
