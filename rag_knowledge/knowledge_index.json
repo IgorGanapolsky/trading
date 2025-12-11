@@ -128,6 +128,23 @@
       "topics": ["llm_limitations", "process_corruption", "deterministic_code", "backtesting", "rule_application", "credential_verification", "sandbox_limitations", "workflow_persistence", "pre_flight_protocol", "tradier_backup", "etf_accumulation_pivot"],
       "severity_levels": ["critical", "high", "informational"],
       "ingested_at": "2025-12-10T16:00:00.000000"
+    },
+    "over_engineering": {
+      "title": "Over-Engineering Trading System - Critical Lesson",
+      "markdown_file": "rag_knowledge/lessons_learned/over_engineering_trading_system.md",
+      "severity": "critical",
+      "topics": ["over_engineering", "complexity_creep", "validation_before_scaling", "fear_driven_development", "gate_pass_rate", "framework_sprawl", "minimal_viable_trading"],
+      "key_metrics": {
+        "live_win_rate": "0%",
+        "backtest_sharpe": "-7 to -72",
+        "entry_gates_before": "8-10",
+        "entry_gates_after": "1",
+        "lines_before": "50000+",
+        "lines_after": "400"
+      },
+      "prevention_rules": ["prove_edge_before_complexity", "one_change_at_a_time", "validation_gate_checklist", "complexity_budget", "weekly_complexity_audit"],
+      "verification_script": "scripts/verify_system_simplicity.py",
+      "ingested_at": "2025-12-11T00:00:00.000000"
     }
   },
   "value_investing": {
