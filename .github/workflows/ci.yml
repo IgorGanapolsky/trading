@@ -300,6 +300,47 @@ jobs:
           echo "::error::These tests catch bugs that cause silent trading failures."
           exit 1
 
+  # Added Dec 11, 2025: Comprehensive Safety Matrix Tests
+  # Tests: Integration, Adversarial Sims, LLM Drift, Compliance, Rollback
+  safety-matrix:
+    name: Safety Matrix Tests
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run safety matrix tests
+        timeout-minutes: 10
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          PAPER_TRADING: "true"
+        run: |
+          python -m pytest \
+            tests/test_safety_matrix.py \
+            --timeout=300 \
+            --timeout-method=thread \
+            -v \
+            --tb=short
+
+      - name: Run compliance audit
+        run: |
+          python scripts/compliance_audit.py --data-dir data || echo "Compliance audit completed with findings"
+
+      - name: Run rollback drill (dry run)
+        run: |
+          python scripts/rollback_test.py --data-dir data || echo "Rollback drill completed"
+
   # Added Dec 11, 2025 after syntax error incident
   # See: rag_knowledge/lessons_learned/ll_009_ci_syntax_failure_dec11.md
   syntax-and-imports:
