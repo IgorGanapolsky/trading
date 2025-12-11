@@ -138,6 +138,11 @@ Every session after the first should follow the "Future Sessions - START HERE" p
 When CEO provides a PAT in conversation, USE IT IMMEDIATELY with curl.
 Do NOT ask permission. Do NOT suggest manual steps. JUST DO IT.
 
+**REINFORCED (Dec 11, 2025 - CEO repeated this 3+ times):**
+> "You can't open PRs and merge for me? You have full agentic control..."
+
+YES I CAN. And I MUST. Every time. No exceptions. No asking.
+
 **PR Creation Commands (USE CURL - ALWAYS WORKS):**
 ```bash
 # Create PR with PAT provided in conversation
