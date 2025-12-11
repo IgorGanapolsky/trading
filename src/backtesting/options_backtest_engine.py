@@ -1504,23 +1504,29 @@ class OptionsBacktestEngine:
         gross_loss = abs(sum([t.pnl for t in losing_trades]))
         profit_factor = gross_profit / gross_loss if gross_loss > 0 else float("inf")
 
-        # Sharpe ratio
+        # Sharpe ratio (with safeguards to prevent extreme values)
         returns = [t.pnl for t in trades]
         if len(returns) > 1:
             mean_return = np.mean(returns)
             std_return = np.std(returns, ddof=1)
+            # Apply volatility floor to prevent extreme Sharpe ratios
+            MIN_VOLATILITY_FLOOR = 0.0001
+            std_return = max(std_return, MIN_VOLATILITY_FLOOR)
+            risk_free_rate_daily = 0.04 / 252
             # Annualize (assume ~30 day holding period)
-            sharpe = (mean_return / std_return) * np.sqrt(252 / 30) if std_return > 0 else 0
+            sharpe = (mean_return - risk_free_rate_daily) / std_return * np.sqrt(252)
+            # Clamp to reasonable bounds [-10, 10]
+            sharpe = float(np.clip(sharpe, -10.0, 10.0))
         else:
             sharpe = 0.0
 
-        # Sortino ratio (only downside deviation)
+        # Sortino ratio (only downside deviation, with safeguards)
         negative_returns = [r for r in returns if r < 0]
         if negative_returns and len(negative_returns) > 1:
             downside_std = np.std(negative_returns, ddof=1)
-            sortino = (
-                (np.mean(returns) / downside_std) * np.sqrt(252 / 30) if downside_std > 0 else 0
-            )
+            downside_std = max(downside_std, MIN_VOLATILITY_FLOOR)
+            sortino = (np.mean(returns) - risk_free_rate_daily) / downside_std * np.sqrt(252)
+            sortino = float(np.clip(sortino, -10.0, 10.0))
         else:
             sortino = 0.0
 

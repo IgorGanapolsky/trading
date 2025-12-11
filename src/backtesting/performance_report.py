@@ -242,13 +242,21 @@ class PerformanceReporter:
 
         regime_performance = {}
 
+        # Volatility floor and risk-free rate for Sharpe calculations
+        MIN_VOL_FLOOR = 0.0001
+        rf_daily = 0.04 / 252
+
+        def safe_sharpe(returns_arr):
+            """Calculate Sharpe with floor and clamp."""
+            std_val = max(float(np.std(returns_arr)), MIN_VOL_FLOOR)
+            sharpe = (float(np.mean(returns_arr)) - rf_daily) / std_val * np.sqrt(252)
+            return float(np.clip(sharpe, -10.0, 10.0))
+
         if np.any(bull_mask):
             bull_returns = strategy_returns[bull_mask]
             regime_performance["bull"] = {
                 "return": np.mean(bull_returns) * 252 * 100,
-                "sharpe": np.mean(bull_returns) / np.std(bull_returns) * np.sqrt(252)
-                if np.std(bull_returns) > 0
-                else 0.0,
+                "sharpe": safe_sharpe(bull_returns),
                 "days": int(np.sum(bull_mask)),
             }
 
@@ -256,9 +264,7 @@ class PerformanceReporter:
             bear_returns = strategy_returns[bear_mask]
             regime_performance["bear"] = {
                 "return": np.mean(bear_returns) * 252 * 100,
-                "sharpe": np.mean(bear_returns) / np.std(bear_returns) * np.sqrt(252)
-                if np.std(bear_returns) > 0
-                else 0.0,
+                "sharpe": safe_sharpe(bear_returns),
                 "days": int(np.sum(bear_mask)),
             }
 
@@ -266,9 +272,7 @@ class PerformanceReporter:
             choppy_returns = strategy_returns[choppy_mask]
             regime_performance["choppy"] = {
                 "return": np.mean(choppy_returns) * 252 * 100,
-                "sharpe": np.mean(choppy_returns) / np.std(choppy_returns) * np.sqrt(252)
-                if np.std(choppy_returns) > 0
-                else 0.0,
+                "sharpe": safe_sharpe(choppy_returns),
                 "days": int(np.sum(choppy_mask)),
             }
 

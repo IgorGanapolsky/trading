@@ -75,6 +75,17 @@ def parse_args() -> argparse.Namespace:
         default=float(os.getenv("PROMOTION_STALE_HOURS", DEFAULT_STALE_HOURS)),
         help="If system_state is older than this threshold, auto-bypass the gate so new data can refresh it.",
     )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output results in machine-parsable JSON format.",
+    )
+    parser.add_argument(
+        "--json-output",
+        type=str,
+        default=None,
+        help="Write JSON output to this file path.",
+    )
     return parser.parse_args()
 
 
@@ -171,6 +182,30 @@ def calculate_stale_hours(system_state: dict[str, Any]) -> float | None:
     return age_hours
 
 
+def build_json_result(
+    status: str,
+    deficits: list[str],
+    metrics: dict[str, Any],
+    thresholds: dict[str, Any],
+    override_active: bool = False,
+    stale_hours: float | None = None,
+) -> dict[str, Any]:
+    """Build machine-parsable JSON result."""
+    result = {
+        "status": status,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "override_active": override_active,
+        "stale_hours": stale_hours,
+        "metrics": metrics,
+        "thresholds": thresholds,
+        "deficits": [
+            {"description": d} for d in deficits
+        ],
+        "deficit_count": len(deficits),
+    }
+    return result
+
+
 def main() -> None:
     args = parse_args()
 
@@ -180,7 +215,8 @@ def main() -> None:
         system_state = load_json(Path(args.system_state))
     except FileNotFoundError as exc:
         if override_flag:
-            print(f"⚠️  Missing system_state.json but override is enabled: {exc}")
+            if not args.json:
+                print(f"⚠️  Missing system_state.json but override is enabled: {exc}")
             sys.exit(0)
         raise
 
@@ -188,18 +224,64 @@ def main() -> None:
         backtest_summary = load_json(Path(args.backtest_summary))
     except FileNotFoundError as exc:
         if override_flag:
-            print(f"⚠️  Missing backtest summary but override is enabled: {exc}")
+            if not args.json:
+                print(f"⚠️  Missing backtest summary but override is enabled: {exc}")
             sys.exit(0)
         raise
 
     stale_hours = calculate_stale_hours(system_state)
     stale_override = stale_hours is not None and stale_hours >= args.stale_threshold_hours
-    if stale_override:
+
+    deficits = evaluate_gate(system_state, backtest_summary, args)
+
+    # Collect metrics for JSON output
+    metrics = {
+        "win_rate": normalize_percent(
+            system_state.get("performance", {}).get("win_rate")
+            or system_state.get("heuristics", {}).get("win_rate")
+            or 0.0
+        ),
+        "sharpe_ratio": float(system_state.get("heuristics", {}).get("sharpe_ratio", 0.0)),
+        "max_drawdown": abs(float(system_state.get("heuristics", {}).get("max_drawdown", 0.0))),
+        "total_trades": int(
+            system_state.get("performance", {}).get("total_trades", 0)
+            or backtest_summary.get("aggregate_metrics", {}).get("total_trades", 0)
+        ),
+    }
+    thresholds = {
+        "win_rate": args.required_win_rate,
+        "sharpe_ratio": args.required_sharpe,
+        "max_drawdown": args.max_drawdown,
+        "min_trades": args.min_trades,
+        "min_profitable_days": args.min_profitable_days,
+    }
+
+    gate_passed = not deficits or override_flag or stale_override
+    status = "passed" if gate_passed else "blocked"
+
+    # JSON output mode
+    if args.json or args.json_output:
+        json_result = build_json_result(
+            status=status,
+            deficits=deficits,
+            metrics=metrics,
+            thresholds=thresholds,
+            override_active=override_flag or stale_override,
+            stale_hours=stale_hours,
+        )
+        json_str = json.dumps(json_result, indent=2)
+
+        if args.json_output:
+            Path(args.json_output).write_text(json_str)
+        if args.json:
+            print(json_str)
+            sys.exit(0 if gate_passed else 1)
+
+    # Human-readable output
+    if stale_override and not args.json:
         print(
             f"⚠️  Skipping promotion gate: system_state.json is {stale_hours:.1f}h old (threshold {args.stale_threshold_hours}h)."
         )
-
-    deficits = evaluate_gate(system_state, backtest_summary, args)
 
     if deficits and not (override_flag or stale_override):
         print("❌ Promotion gate failed. Reasons:")
