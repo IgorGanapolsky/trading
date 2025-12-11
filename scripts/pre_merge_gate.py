@@ -62,6 +62,18 @@ def main():
             "Critical Import: TradeGateway",
             f"cd {root} && python3 -c 'from src.risk.trade_gateway import TradeGateway'",
         ),
+        (
+            "Critical Import: Psychology Integration",
+            f"cd {root} && python3 -c 'from src.coaching.mental_toughness_coach import get_prompt_context, get_position_size_modifier'",
+        ),
+        (
+            "Critical Import: Debate Agents",
+            f"cd {root} && python3 -c 'from src.agents.debate_agents import DebateModerator, BullAgent, BearAgent'",
+        ),
+        (
+            "Critical Import: Reflexion Loop",
+            f"cd {root} && python3 -c 'from src.coaching.reflexion_loop import ReflexionLoop'",
+        ),
     ]
 
     failed = []
