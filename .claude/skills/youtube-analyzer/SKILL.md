@@ -66,9 +66,39 @@ The skill generates comprehensive markdown reports with:
 
 ## Integration with Trading System
 
-Analysis results can be:
-- Fed into Multi-LLM Analyzer for sentiment scoring
-- Used to inform Tier 2 Growth Strategy stock selection
+### IMPORTANT: YouTube is a BIAS FILTER, NOT a Trade Trigger
+
+**Dec 11, 2025 Clarification**: YouTube analysis is ONE OF FIVE sentiment sources
+weighted at only **20%** in the unified sentiment aggregation. It NEVER directly
+triggers trades.
+
+**Sentiment Source Weights** (from `src/utils/unified_sentiment.py`):
+- News: 30%
+- Reddit: 25%
+- **YouTube: 20%** (this skill)
+- LinkedIn: 15%
+- TikTok: 10%
+
+**Why This Matters**: By the time a YouTube video is published, processed, and
+transcribed, the market "alpha" is likely gone. YouTube insights are valuable
+for setting daily BIAS (long/short orientation), NOT for direct execution.
+
+**What YouTube CAN Inform**:
+- Daily market bias (bullish/bearish orientation)
+- Watchlist additions for further technical screening
+- Sentiment context for multi-LLM consensus
+
+**What YouTube CANNOT Do**:
+- Directly execute trades
+- Override technical signals (MACD, RSI, Volume)
+- Bypass risk management gates
+- Act as a standalone trading signal
+
+### Integration Flow
+
+Analysis results are used as follows:
+- Fed into Multi-LLM Analyzer for sentiment scoring (20% weight)
+- Used to inform Tier 2 Growth Strategy watchlist additions
 - Tracked over time for accuracy validation
 - Compared with actual market performance
 

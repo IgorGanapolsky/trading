@@ -2,7 +2,11 @@
 Pre-Trade Validation Hook
 
 A lightweight hook that MUST be called before any trade executes.
-Integrates verification framework, RAG lessons, and circuit breakers.
+Integrates verification framework, RAG lessons, circuit breakers,
+and enhanced volatility-adjusted safety checks.
+
+Enhanced Dec 11, 2025: Added ATR-based limits, drift detection,
+hourly heartbeat, and LLM hallucination checks based on Deep Research.
 
 Usage:
     from src.safety.pre_trade_hook import validate_before_trade
@@ -11,7 +15,9 @@ Usage:
         symbol="SPY",
         side="buy",
         amount=10.0,
-        portfolio_value=100000.0
+        portfolio_value=100000.0,
+        entry_price=500.0,  # For drift detection
+        llm_output={"ticker": "SPY", "side": "buy"}  # For hallucination check
     )
 
     if not result["approved"]:
@@ -22,6 +28,7 @@ Usage:
 
 Author: Trading System
 Created: 2025-12-11
+Enhanced: 2025-12-11 (ATR limits, drift, heartbeat, hallucination checks)
 """
 
 import logging
@@ -34,6 +41,7 @@ logger = logging.getLogger(__name__)
 _verifier = None
 _rag = None
 _circuit_breaker = None
+_volatility_safety = None  # Enhanced safety checks (Dec 11, 2025)
 
 
 def _get_verifier():
@@ -72,6 +80,18 @@ def _get_circuit_breaker():
     return _circuit_breaker
 
 
+def _get_volatility_safety():
+    """Lazy load volatility-adjusted safety checks (Dec 11, 2025 enhancement)."""
+    global _volatility_safety
+    if _volatility_safety is None:
+        try:
+            from src.safety import volatility_adjusted_safety
+            _volatility_safety = volatility_adjusted_safety
+        except ImportError:
+            logger.warning("Volatility-adjusted safety module not available")
+    return _volatility_safety
+
+
 def validate_before_trade(
     symbol: str,
     side: str,
@@ -80,12 +100,17 @@ def validate_before_trade(
     current_pl_today: float = 0.0,
     current_positions: Optional[dict] = None,
     bypass_checks: bool = False,
+    entry_price: Optional[float] = None,
+    llm_output: Optional[dict] = None,
 ) -> dict[str, Any]:
     """
     Validate a trade before execution.
 
     This function MUST be called before any trade executes.
     It runs all safety checks and returns approval status.
+
+    Enhanced Dec 11, 2025: Added ATR-based volatility limits, drift detection,
+    hourly loss heartbeat, and LLM hallucination checks.
 
     Args:
         symbol: Trading symbol
@@ -95,6 +120,8 @@ def validate_before_trade(
         current_pl_today: Today's P/L (for circuit breaker)
         current_positions: Current positions dict
         bypass_checks: Set True only in testing (not recommended!)
+        entry_price: Current market price (for drift detection)
+        llm_output: LLM output dict (for hallucination check)
 
     Returns:
         Dict with:
@@ -102,6 +129,7 @@ def validate_before_trade(
         - reason: str - Reason if not approved
         - warnings: list - Non-blocking warnings
         - context: dict - RAG context for the trade
+        - enhanced_checks: dict - Results from volatility-adjusted safety checks
     """
     if bypass_checks:
         logger.warning("⚠️ Pre-trade checks BYPASSED - not recommended!")
@@ -190,6 +218,37 @@ def validate_before_trade(
             "checks_run": result["checks_run"],
         }
 
+    # 5. Enhanced volatility-adjusted safety checks (Dec 11, 2025)
+    vol_safety = _get_volatility_safety()
+    if vol_safety and entry_price is not None:
+        try:
+            enhanced_results = vol_safety.run_all_safety_checks(
+                symbol=symbol,
+                entry_price=entry_price,
+                notional=amount,
+                account_equity=portfolio_value,
+                llm_output=llm_output,
+            )
+            result["enhanced_checks"] = enhanced_results["checks"]
+            result["checks_run"].append("volatility_adjusted_safety")
+
+            if not enhanced_results["approved"]:
+                return {
+                    "approved": False,
+                    "reason": "; ".join(enhanced_results["errors"]),
+                    "warnings": result["warnings"] + enhanced_results["warnings"],
+                    "context": result["context"],
+                    "checks_run": result["checks_run"],
+                    "enhanced_checks": enhanced_results["checks"],
+                }
+
+            # Add non-blocking warnings
+            result["warnings"].extend(enhanced_results["warnings"])
+
+        except Exception as e:
+            logger.warning(f"Enhanced safety checks failed (non-blocking): {e}")
+            result["warnings"].append(f"Enhanced safety checks unavailable: {e}")
+
     # Log result
     if result["approved"]:
         if result["warnings"]:
@@ -230,6 +289,56 @@ def quick_validate(
         return False, f"Amount ${amount:.2f} exceeds $50k safety limit"
 
     return True, "OK"
+
+
+def record_signal_price(symbol: str, price: float) -> None:
+    """
+    Record the signal price for drift detection.
+
+    Call this when a trading decision is made, BEFORE execution.
+    This enables the drift detector to compare signal price vs entry price.
+
+    Args:
+        symbol: Trading symbol
+        price: Price at time of signal
+    """
+    vol_safety = _get_volatility_safety()
+    if vol_safety:
+        try:
+            drift_detector = vol_safety.get_drift_detector()
+            drift_detector.record_signal(symbol, price)
+            logger.debug(f"Signal recorded for {symbol} at ${price:.2f}")
+        except Exception as e:
+            logger.warning(f"Could not record signal price: {e}")
+
+
+def record_trade_result_for_heartbeat(symbol: str, profit_loss: float) -> dict:
+    """
+    Record trade result for hourly heartbeat tracking.
+
+    Call this AFTER every trade completes to update the hourly loss tracker.
+
+    Args:
+        symbol: Trading symbol
+        profit_loss: Profit (+) or loss (-) from the trade
+
+    Returns:
+        Heartbeat status dict
+    """
+    vol_safety = _get_volatility_safety()
+    if vol_safety:
+        try:
+            heartbeat = vol_safety.get_hourly_heartbeat()
+            status = heartbeat.record_trade_result(symbol, profit_loss)
+            return {
+                "hourly_loss": status.current_hourly_loss,
+                "hourly_limit": status.hourly_limit,
+                "is_blocked": status.is_blocked,
+                "reason": status.reason,
+            }
+        except Exception as e:
+            logger.warning(f"Could not record trade result for heartbeat: {e}")
+    return {"is_blocked": False, "reason": "Heartbeat unavailable"}
 
 
 def log_trade_for_learning(
