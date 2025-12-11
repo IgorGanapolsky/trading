@@ -1,0 +1,56 @@
+{
+  "version": "1.0.0",
+  "description": "Machine-checkable criteria for live trading readiness",
+  "criteria": [
+    {
+      "id": "min_paper_days",
+      "description": "Minimum days of paper trading",
+      "check": "days_paper_trading >= 90",
+      "threshold": 90,
+      "current_value_source": "system_state.challenge.current_day"
+    },
+    {
+      "id": "min_win_rate",
+      "description": "Minimum win rate",
+      "check": "win_rate >= 55",
+      "threshold": 55,
+      "current_value_source": "system_state.performance.win_rate"
+    },
+    {
+      "id": "min_sharpe",
+      "description": "Minimum Sharpe ratio",
+      "check": "sharpe_ratio >= 1.2",
+      "threshold": 1.2,
+      "current_value_source": "system_state.heuristics.sharpe_ratio"
+    },
+    {
+      "id": "max_drawdown",
+      "description": "Maximum drawdown (absolute value)",
+      "check": "max_drawdown >= -10",
+      "threshold": -10,
+      "current_value_source": "system_state.heuristics.max_drawdown",
+      "note": "Drawdown stored as negative value. -10% max allowed (values worse than -10% fail)"
+    },
+    {
+      "id": "min_trades",
+      "description": "Minimum trades for statistical significance",
+      "check": "total_trades >= 100",
+      "threshold": 100,
+      "current_value_source": "system_state.performance.total_trades"
+    },
+    {
+      "id": "positive_pnl",
+      "description": "Positive overall P&L",
+      "check": "total_pnl > 0",
+      "threshold": 0,
+      "current_value_source": "system_state.account.total_pl"
+    },
+    {
+      "id": "no_critical_anomalies",
+      "description": "No critical anomalies in last 7 days",
+      "check": "critical_anomalies_7d == 0",
+      "threshold": 0,
+      "current_value_source": "anomaly_log.critical_count_7d"
+    }
+  ]
+}
