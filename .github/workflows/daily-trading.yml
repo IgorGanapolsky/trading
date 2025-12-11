@@ -539,10 +539,10 @@ jobs:
           # Gate 1: MomentumAgent (MACD, RSI, Volume) - ENABLED
           # Gate 4: RiskManager (position sizing, stops) - ENABLED
           # ============================================================
-          # RL feedback loop disabled by default (requires sklearn not in requirements-minimal.txt)
-          ENABLE_RL_RETRAIN: ${{ secrets.ENABLE_RL_RETRAIN || 'false' }}
-          # RAG features disabled by default in CI (sentence-transformers downloads from HuggingFace)
-          ENABLE_RAG_FEATURES: ${{ secrets.ENABLE_RAG_FEATURES || 'false' }}
+          # RL feedback loop - CEO directive Dec 11, 2025: Enable continuous learning
+          ENABLE_RL_RETRAIN: ${{ secrets.ENABLE_RL_RETRAIN || 'true' }}
+          # RAG features - Enable for strategy insights from books/videos
+          ENABLE_RAG_FEATURES: ${{ secrets.ENABLE_RAG_FEATURES || 'true' }}
         run: |
           echo "🚀 ========================================"
           echo "🚀 EXECUTING DAILY TRADING - $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
