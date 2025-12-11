@@ -27,34 +27,34 @@ jobs:
   execute-trading:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install --no-cache-dir -r requirements-minimal.txt || python3 -m pip install --no-cache-dir -r requirements.txt
-      
+
       - name: Validate Secrets
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
         run: |
           if [ -z "$ALPACA_API_KEY" ] || [ -z "$ALPACA_SECRET_KEY" ]; then
-            echo "❌ Missing Alpaca credentials"
+            echo "Missing Alpaca credentials"
             exit 1
           fi
-          echo "✅ Secrets validated"
-      
+          echo "Secrets validated"
+
       - name: Execute Trading
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
@@ -68,33 +68,33 @@ jobs:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           FORCE_TRADE: "true"
         run: |
-          echo "🚀 Starting manual trading execution..."
+          echo "Starting manual trading execution..."
           echo "Time: $(date -u)"
-          
+
           # Run the trading orchestrator
           python3 -m src.orchestrator.main --force || {
             echo "Main orchestrator failed, trying direct execution..."
-            python3 scripts/run_trading.py --force || python3 -c "
-from src.orchestrator.main import TradingOrchestrator
-orch = TradingOrchestrator()
-orch.run()
-"
+            python3 scripts/run_trading.py --force || python3 << 'PYTHON'
+          from src.orchestrator.main import TradingOrchestrator
+          orch = TradingOrchestrator()
+          orch.run()
+          PYTHON
           }
-          
-          echo "✅ Trading execution complete"
-      
+
+          echo "Trading execution complete"
+
       - name: Commit Trade Results
         if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           TODAY=$(date -u +%Y-%m-%d)
-          
+
           # Add any new trade files
           git add data/trades_*.json data/performance_*.json 2>/dev/null || true
           git add data/*.json 2>/dev/null || true
-          
+
           if git diff --staged --quiet; then
             echo "No trade data to commit"
           else

@@ -11,98 +11,99 @@ jobs:
   trade:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install minimal dependencies
         run: |
           pip install alpaca-py pandas numpy python-dotenv requests
-      
+
       - name: Execute Simple Trade
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
         run: |
           python3 << 'PYTHON'
-import os
-import json
-from datetime import datetime, timezone
+          import os
+          import json
+          from datetime import datetime, timezone
 
-print("🚀 Emergency Trading Execution")
-print(f"Time: {datetime.now(timezone.utc)}")
+          print("Emergency Trading Execution")
+          print(f"Time: {datetime.now(timezone.utc)}")
 
-try:
-    from alpaca.trading.client import TradingClient
-    from alpaca.trading.requests import MarketOrderRequest
-    from alpaca.trading.enums import OrderSide, TimeInForce
-    
-    api_key = os.environ.get("ALPACA_API_KEY")
-    secret_key = os.environ.get("ALPACA_SECRET_KEY")
-    
-    if not api_key or not secret_key:
-        print("❌ Missing credentials")
-        exit(1)
-    
-    client = TradingClient(api_key, secret_key, paper=True)
-    
-    # Get account info
-    account = client.get_account()
-    print(f"✅ Connected to Alpaca")
-    print(f"   Cash: ${float(account.cash):.2f}")
-    print(f"   Equity: ${float(account.equity):.2f}")
-    
-    # Execute a simple market order for a small ETF position
-    order_data = MarketOrderRequest(
-        symbol="SPY",
-        qty=1,
-        side=OrderSide.BUY,
-        time_in_force=TimeInForce.DAY
-    )
-    
-    order = client.submit_order(order_data)
-    print(f"✅ Order submitted: {order.id}")
-    print(f"   Symbol: {order.symbol}")
-    print(f"   Side: {order.side}")
-    print(f"   Status: {order.status}")
-    
-    # Save trade record
-    trade = {
-        "symbol": order.symbol,
-        "side": str(order.side),
-        "qty": str(order.qty),
-        "status": str(order.status),
-        "order_id": str(order.id),
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }
-    
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    trades_file = f"data/trades_{today}.json"
-    
-    try:
-        with open(trades_file) as f:
-            trades = json.load(f)
-    except:
-        trades = []
-    
-    trades.append(trade)
-    
-    with open(trades_file, "w") as f:
-        json.dump(trades, f, indent=2)
-    
-    print(f"✅ Trade saved to {trades_file}")
-    
-except Exception as e:
-    print(f"❌ Error: {e}")
-    import traceback
-    traceback.print_exc()
-PYTHON
-      
+          try:
+              from alpaca.trading.client import TradingClient
+              from alpaca.trading.requests import MarketOrderRequest
+              from alpaca.trading.enums import OrderSide, TimeInForce
+
+              api_key = os.environ.get("ALPACA_API_KEY")
+              secret_key = os.environ.get("ALPACA_SECRET_KEY")
+
+              if not api_key or not secret_key:
+                  print("Missing credentials")
+                  exit(1)
+
+              client = TradingClient(api_key, secret_key, paper=True)
+
+              # Get account info
+              account = client.get_account()
+              print(f"Connected to Alpaca")
+              print(f"   Cash: ${float(account.cash):.2f}")
+              print(f"   Equity: ${float(account.equity):.2f}")
+
+              # Execute a simple market order for a small ETF position
+              order_data = MarketOrderRequest(
+                  symbol="SPY",
+                  qty=1,
+                  side=OrderSide.BUY,
+                  time_in_force=TimeInForce.DAY
+              )
+
+              order = client.submit_order(order_data)
+              print(f"Order submitted: {order.id}")
+              print(f"   Symbol: {order.symbol}")
+              print(f"   Side: {order.side}")
+              print(f"   Status: {order.status}")
+
+              # Save trade record
+              trade = {
+                  "symbol": order.symbol,
+                  "side": str(order.side),
+                  "qty": str(order.qty),
+                  "status": str(order.status),
+                  "order_id": str(order.id),
+                  "timestamp": datetime.now(timezone.utc).isoformat(),
+              }
+
+              today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+              os.makedirs("data", exist_ok=True)
+              trades_file = f"data/trades_{today}.json"
+
+              try:
+                  with open(trades_file) as f:
+                      trades = json.load(f)
+              except:
+                  trades = []
+
+              trades.append(trade)
+
+              with open(trades_file, "w") as f:
+                  json.dump(trades, f, indent=2)
+
+              print(f"Trade saved to {trades_file}")
+
+          except Exception as e:
+              print(f"Error: {e}")
+              import traceback
+              traceback.print_exc()
+          PYTHON
+
       - name: Commit results
         if: always()
         run: |

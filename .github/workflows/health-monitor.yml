@@ -76,15 +76,15 @@ jobs:
             } catch (e) {
               healthData = {issues: [{type: 'unknown', message: 'Could not parse health data'}]};
             }
-            
+
             // Check for critical issues
             const criticalIssues = (healthData.issues || []).filter(i => i.severity === 'critical');
-            
+
             if (criticalIssues.length === 0) {
               console.log('No critical issues, skipping issue creation');
               return;
             }
-            
+
             // Check if similar issue already exists today
             const today = new Date().toISOString().split('T')[0];
             const existingIssues = await github.rest.issues.listForRepo({
@@ -94,59 +94,50 @@ jobs:
               state: 'open',
               per_page: 10,
             });
-            
-            const todayIssue = existingIssues.data.find(i => 
+
+            const todayIssue = existingIssues.data.find(i =>
               i.title.includes(today) && i.title.includes('Health Alert')
             );
-            
+
             if (todayIssue) {
               console.log(`Issue already exists for today: #${todayIssue.number}`);
-              
+
               // Add comment instead
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: todayIssue.number,
-                body: `## Health Check Update\n\n**Time:** ${new Date().toISOString()}\n\n**Issues:**\n${criticalIssues.map(i => `- ${i.type}: ${i.message}`).join('\n')}\n\n---\n*Automated health check*`,
+                body: '## Health Check Update\n\n' +
+                      'Time: ' + new Date().toISOString() + '\n\n' +
+                      'Issues:\n' + criticalIssues.map(i => '- ' + i.type + ': ' + i.message).join('\n') +
+                      '\n\n---\n*Automated health check*',
               });
               return;
             }
-            
+
             // Create new issue
-            const issueBody = `## 🚨 Trading System Health Alert
-            
-**Date:** ${today}
-**Time:** ${new Date().toISOString()}
+            const issueBody = '## Trading System Health Alert\n\n' +
+              'Date: ' + today + '\n' +
+              'Time: ' + new Date().toISOString() + '\n\n' +
+              '### Critical Issues Detected\n\n' +
+              criticalIssues.map(i => '- ' + i.type + ': ' + i.message).join('\n') + '\n\n' +
+              '### Health Check Data\n\n' +
+              '```json\n' + JSON.stringify(healthData, null, 2) + '\n```\n\n' +
+              '### Recommended Actions\n\n' +
+              '1. Check GitHub Actions workflow logs\n' +
+              '2. Run `python3 -m src.verification.pre_merge_verifier`\n' +
+              '3. Check `data/trades_' + today + '.json` exists\n' +
+              '4. See: `rag_knowledge/lessons_learned/ll_009_ci_syntax_failure_dec11.md`\n\n' +
+              '---\n*This issue was created automatically by the Health Monitor workflow.*';
 
-### Critical Issues Detected
-
-${criticalIssues.map(i => `- **${i.type}**: ${i.message}`).join('\n')}
-
-### Health Check Data
-
-\`\`\`json
-${JSON.stringify(healthData, null, 2)}
-\`\`\`
-
-### Recommended Actions
-
-1. Check GitHub Actions workflow logs
-2. Run \`python3 -m src.verification.pre_merge_verifier\`
-3. Check \`data/trades_${today}.json\` exists
-4. See: \`rag_knowledge/lessons_learned/ll_009_ci_syntax_failure_dec11.md\`
-
----
-*This issue was created automatically by the Health Monitor workflow.*
-`;
-            
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `🚨 Health Alert: ${today} - ${criticalIssues[0].type}`,
+              title: 'Health Alert: ' + today + ' - ' + criticalIssues[0].type,
               body: issueBody,
               labels: ['health-alert', 'automated', 'critical'],
             });
-            
+
             console.log('Created health alert issue');
 
   # Scheduled daemon run (less frequent, more thorough)

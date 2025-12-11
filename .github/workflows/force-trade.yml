@@ -12,88 +12,88 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install
         run: pip install alpaca-py
-      
+
       - name: Check Secrets and Trade
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
         run: |
           python3 << 'PYTHON'
-import os
-import sys
-import json
-from datetime import datetime, timezone
+          import os
+          import sys
+          import json
+          from datetime import datetime, timezone
 
-today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-result = {"timestamp": datetime.now(timezone.utc).isoformat(), "date": today}
+          today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+          result = {"timestamp": datetime.now(timezone.utc).isoformat(), "date": today}
 
-api_key = os.environ.get("ALPACA_API_KEY", "")
-secret = os.environ.get("ALPACA_SECRET_KEY", "")
+          api_key = os.environ.get("ALPACA_API_KEY", "")
+          secret = os.environ.get("ALPACA_SECRET_KEY", "")
 
-print(f"API Key present: {len(api_key) > 0}")
-print(f"API Key length: {len(api_key)}")
-print(f"Secret present: {len(secret) > 0}")
-print(f"Secret length: {len(secret)}")
+          print(f"API Key present: {len(api_key) > 0}")
+          print(f"API Key length: {len(api_key)}")
+          print(f"Secret present: {len(secret) > 0}")
+          print(f"Secret length: {len(secret)}")
 
-if not api_key or not secret:
-    result["error"] = "MISSING_SECRETS"
-    result["status"] = "FAILED"
-    print("ERROR: Alpaca secrets not configured!")
-    print("Go to: https://github.com/IgorGanapolsky/trading/settings/secrets/actions")
-    print("Add: ALPACA_API_KEY and ALPACA_SECRET_KEY")
-else:
-    try:
-        from alpaca.trading.client import TradingClient
-        from alpaca.trading.requests import MarketOrderRequest
-        from alpaca.trading.enums import OrderSide, TimeInForce
-        
-        print("Connecting to Alpaca Paper...")
-        client = TradingClient(api_key, secret, paper=True)
-        
-        account = client.get_account()
-        print(f"Connected! Cash: ${float(account.cash):,.2f}")
-        result["account_cash"] = float(account.cash)
-        
-        # Submit order
-        print("Submitting SPY order...")
-        order = client.submit_order(MarketOrderRequest(
-            symbol="SPY",
-            qty=1,
-            side=OrderSide.BUY,
-            time_in_force=TimeInForce.DAY
-        ))
-        
-        print(f"Order submitted: {order.id}")
-        print(f"Status: {order.status}")
-        
-        result["symbol"] = "SPY"
-        result["action"] = "BUY"
-        result["quantity"] = 1
-        result["order_id"] = str(order.id)
-        result["status"] = str(order.status)
-        
-    except Exception as e:
-        print(f"ERROR: {e}")
-        result["error"] = str(e)
-        result["status"] = "FAILED"
+          if not api_key or not secret:
+              result["error"] = "MISSING_SECRETS"
+              result["status"] = "FAILED"
+              print("ERROR: Alpaca secrets not configured!")
+              print("Go to: https://github.com/IgorGanapolsky/trading/settings/secrets/actions")
+              print("Add: ALPACA_API_KEY and ALPACA_SECRET_KEY")
+          else:
+              try:
+                  from alpaca.trading.client import TradingClient
+                  from alpaca.trading.requests import MarketOrderRequest
+                  from alpaca.trading.enums import OrderSide, TimeInForce
 
-# Always write result
-os.makedirs("data", exist_ok=True)
-with open(f"data/trades_{today}.json", "w") as f:
-    json.dump([result], f, indent=2)
+                  print("Connecting to Alpaca Paper...")
+                  client = TradingClient(api_key, secret, paper=True)
 
-print(f"\nWritten to data/trades_{today}.json:")
-print(json.dumps([result], indent=2))
-PYTHON
-      
+                  account = client.get_account()
+                  print(f"Connected! Cash: ${float(account.cash):,.2f}")
+                  result["account_cash"] = float(account.cash)
+
+                  # Submit order
+                  print("Submitting SPY order...")
+                  order = client.submit_order(MarketOrderRequest(
+                      symbol="SPY",
+                      qty=1,
+                      side=OrderSide.BUY,
+                      time_in_force=TimeInForce.DAY
+                  ))
+
+                  print(f"Order submitted: {order.id}")
+                  print(f"Status: {order.status}")
+
+                  result["symbol"] = "SPY"
+                  result["action"] = "BUY"
+                  result["quantity"] = 1
+                  result["order_id"] = str(order.id)
+                  result["status"] = str(order.status)
+
+              except Exception as e:
+                  print(f"ERROR: {e}")
+                  result["error"] = str(e)
+                  result["status"] = "FAILED"
+
+          # Always write result
+          os.makedirs("data", exist_ok=True)
+          with open(f"data/trades_{today}.json", "w") as f:
+              json.dump([result], f, indent=2)
+
+          print(f"\nWritten to data/trades_{today}.json:")
+          print(json.dumps([result], indent=2))
+          PYTHON
+
       - name: Commit Result
         run: |
           git config user.name "github-actions[bot]"
