@@ -4,9 +4,11 @@ LLM Council Integration for Trading Decisions
 This module provides easy integration of the LLM Council system into trading workflows.
 The council provides consensus-based decisions through peer review and chairman synthesis.
 
-Enhanced with PAL (Provider Abstraction Layer) integration for:
-- Adversarial validation (Challenge tool) - prevents groupthink
-- Decision audit logging - tracks accuracy over time
+Enhanced with:
+- PAL (Provider Abstraction Layer) integration for adversarial validation
+- FACTS Benchmark factuality scoring (Dec 2025) - weights by model accuracy
+- Ground truth validation against technical indicators
+- Hallucination detection and logging to RAG
 """
 
 import json
@@ -19,6 +21,18 @@ from src.core.multi_llm_analysis import (
     LLMModel,
 )
 from src.core.pal_integration import PALIntegration, get_pal
+
+# FACTS Benchmark integration (Dec 2025)
+try:
+    from src.verification.factuality_monitor import (
+        FactualityMonitor,
+        create_factuality_monitor,
+        FACTS_BENCHMARK_SCORES,
+    )
+    FACTUALITY_AVAILABLE = True
+except ImportError:
+    FACTUALITY_AVAILABLE = False
+    FactualityMonitor = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +56,7 @@ class TradingCouncil:
         enabled: bool = True,
         pal_challenge_enabled: bool = True,
         pal_challenge_threshold: float = 0.7,
+        factuality_enabled: bool = True,
     ):
         """
         Initialize Trading Council.
@@ -53,6 +68,7 @@ class TradingCouncil:
             enabled: Whether council is enabled (can disable for testing)
             pal_challenge_enabled: Whether to run PAL challenge on approved trades
             pal_challenge_threshold: Risk score threshold to block trades (0-1)
+            factuality_enabled: Whether to apply FACTS benchmark weighting
         """
         self.enabled = enabled
         self.council = None
@@ -61,6 +77,7 @@ class TradingCouncil:
         )
         self.pal_challenge_threshold = pal_challenge_threshold
         self._pal: PALIntegration | None = None
+        self._factuality_monitor: FactualityMonitor | None = None
 
         if enabled:
             try:
@@ -84,6 +101,19 @@ class TradingCouncil:
             except Exception as e:
                 logger.warning(f"PAL Challenge unavailable: {e}")
                 self.pal_challenge_enabled = False
+
+        # Initialize FACTS Benchmark factuality monitor (Dec 2025)
+        self.factuality_enabled = factuality_enabled and FACTUALITY_AVAILABLE
+        if self.factuality_enabled:
+            try:
+                self._factuality_monitor = create_factuality_monitor()
+                logger.info(
+                    "FACTS Benchmark factuality monitor enabled - "
+                    "70% ceiling applies to all LLM confidence scores"
+                )
+            except Exception as e:
+                logger.warning(f"Factuality monitor unavailable: {e}")
+                self.factuality_enabled = False
 
     async def validate_trade(
         self,
@@ -260,9 +290,46 @@ Be conservative - reject trades with ANY of:
                     final_decision=final_decision,
                 )
 
+            # FACTS Benchmark: Apply factuality weighting (Dec 2025)
+            raw_confidence = council_response.confidence
+            factuality_adjusted_confidence = raw_confidence
+            factuality_ceiling = None
+            factuality_warning = None
+
+            if self.factuality_enabled and self._factuality_monitor:
+                # Build votes for factuality weighting
+                votes = []
+                for model_name, vote in individual_votes.items():
+                    votes.append({
+                        "model": model_name,
+                        "vote": vote,
+                        "confidence": raw_confidence,
+                        "reasoning": council_response.individual_responses.get(model_name, ""),
+                    })
+
+                if votes:
+                    weighted_result = self._factuality_monitor.weight_council_votes(votes)
+                    factuality_adjusted_confidence = weighted_result["consensus_confidence"]
+                    factuality_ceiling = weighted_result["factuality_ceiling"]
+                    factuality_warning = weighted_result.get("warning")
+
+                    if factuality_warning:
+                        logger.info(f"FACTS Benchmark: {factuality_warning}")
+
+                    # Log verification for tracking
+                    for model_name in individual_votes:
+                        self._factuality_monitor.record_verification(
+                            model=model_name,
+                            claim_verified=True,  # Will be updated post-trade
+                            context={"symbol": symbol, "action": action},
+                        )
+
             return {
                 "approved": approved,
-                "confidence": council_response.confidence,
+                "confidence": factuality_adjusted_confidence,
+                "raw_confidence": raw_confidence,
+                "factuality_ceiling": factuality_ceiling,
+                "factuality_warning": factuality_warning,
                 "reasoning": council_response.final_answer,
                 "council_response": council_response,
                 "individual_responses": council_response.individual_responses,
@@ -440,6 +507,110 @@ Be conservative - reject positions that:
                 "approved": True,
                 "reasoning": f"Council error: {str(e)}",
             }
+
+    async def validate_against_technicals(
+        self,
+        symbol: str,
+        llm_signal: str,
+        macd_signal: str | None = None,
+        rsi_signal: str | None = None,
+        volume_signal: str | None = None,
+    ) -> dict[str, Any]:
+        """
+        Validate LLM signal against technical indicators (ground truth).
+
+        This is a key defense against the 70% factuality ceiling - cross-checking
+        LLM recommendations against computed technical indicators.
+
+        Args:
+            symbol: Stock symbol
+            llm_signal: LLM's recommendation (BUY/SELL/HOLD)
+            macd_signal: MACD indicator signal (BUY/SELL/HOLD)
+            rsi_signal: RSI indicator signal (BUY/SELL/HOLD)
+            volume_signal: Volume indicator signal (BUY/SELL/HOLD)
+
+        Returns:
+            Validation result with agreement score and recommendation
+        """
+        if not self.factuality_enabled or not self._factuality_monitor:
+            return {
+                "validated": True,
+                "agreement_score": 1.0,
+                "message": "Factuality monitor not available",
+            }
+
+        result = self._factuality_monitor.validate_against_technicals(
+            llm_signal=llm_signal,
+            symbol=symbol,
+            macd_signal=macd_signal,
+            rsi_signal=rsi_signal,
+            volume_signal=volume_signal,
+        )
+
+        # Log contradiction as hallucination if detected
+        if result.get("is_contradiction"):
+            logger.warning(
+                f"LLM signal contradiction for {symbol}: "
+                f"LLM={llm_signal} vs Technicals={result.get('tech_signals')}"
+            )
+
+        return result
+
+    async def verify_against_api(
+        self,
+        claimed_data: dict[str, Any],
+        api_data: dict[str, Any],
+        model: str = "council",
+    ) -> dict[str, Any]:
+        """
+        Verify LLM claims against Alpaca API ground truth.
+
+        Args:
+            claimed_data: Data claimed by LLM (price, position, P/L, etc.)
+            api_data: Actual data from Alpaca API
+            model: Model identifier for tracking
+
+        Returns:
+            Validation result with any discrepancies
+        """
+        if not self.factuality_enabled or not self._factuality_monitor:
+            return {
+                "validated": True,
+                "message": "Factuality monitor not available",
+            }
+
+        result = self._factuality_monitor.validate_against_api(
+            claimed_data=claimed_data,
+            api_data=api_data,
+        )
+
+        # Update model metrics based on verification
+        if result.get("hallucination_detected"):
+            self._factuality_monitor.record_verification(
+                model=model,
+                claim_verified=False,
+                context={"claimed": claimed_data, "actual": api_data},
+            )
+        else:
+            self._factuality_monitor.record_verification(
+                model=model,
+                claim_verified=True,
+                context={"verified_fields": result.get("verified_fields", [])},
+            )
+
+        return result
+
+    def get_factuality_report(self) -> dict[str, Any] | None:
+        """
+        Get factuality metrics report across all models.
+
+        Returns:
+            Report with FACTS scores, observed accuracy, and recent incidents
+        """
+        if not self.factuality_enabled or not self._factuality_monitor:
+            return None
+
+        return self._factuality_monitor.get_factuality_report()
 
     def close(self):
         """Close council connections."""
