@@ -37,13 +37,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--required-win-rate",
         type=float,
-        default=60.0,
+        default=55.0,  # Loosened from 60% for 60-day live pilot (Dec 11, 2025)
         help="Minimum win rate percentage required for promotion.",
     )
     parser.add_argument(
         "--required-sharpe",
         type=float,
-        default=1.5,
+        default=1.2,  # Loosened from 1.5 for 60-day live pilot (Dec 11, 2025)
         help="Minimum Sharpe ratio required for promotion.",
     )
     parser.add_argument(

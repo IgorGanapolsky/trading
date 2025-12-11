@@ -13,52 +13,47 @@ except Exception:  # noqa: BLE001
     from pydantic import BaseModel as BaseSettings  # type: ignore
 
 # =============================================================================
-# OPTIMIZED $10/DAY ALLOCATION CONFIGURATION
+# OPTIMIZED ALLOCATION CONFIGURATION - THETA PIVOT (Dec 11, 2025)
 # =============================================================================
-# Strategy: Maximize compound growth through diversified allocation
-# Target: Build foundation for $100+/day profitability by Month 6
+# Strategy: Pivot to options theta decay for path to $100/day North Star
+# Rationale: Momentum caps at 26% annualized; theta on SPY/QQQ iron condors
+#            yields 25-30% ROI with 80% win rate in range-bound markets
 #
-# Allocation Breakdown:
-# - Core ETFs (40%): Momentum-selected SPY/QQQ for stable growth
-# - Bonds + Treasuries (15%): Risk mitigation via BND + SHY/IEF/TLT ladder
-# - REITs (15%): Dividend income via VNQ
-# - Crypto (10%): Weekend BTC/ETH volatility capture
-# - Growth Stocks (15%): High-conviction NVDA/GOOGL/AMZN
-# - Options Reserve (5%): Premium accumulation for covered calls
+# Allocation Breakdown (60/30/10 Theta Pivot):
+# - Options Theta (60%): Iron condors, credit spreads on SPY/QQQ
+#   - SPY theta: 35% - Premium selling, 45-60 DTE OTM spreads
+#   - QQQ theta: 25% - Premium selling, higher vol = more premium
+# - Momentum ETFs (30%): MACD/RSI/Volume momentum core
+# - Crypto Weekend (10%): BTC/ETH weekend volatility capture
 #
-# Benefits over legacy allocation:
-# 1. Risk-adjusted: Bonds + REITs provide stability (30% defensive)
-# 2. Income-focused: REITs + future options generate cash flow
-# 3. Volatility capture: Crypto on weekends = 7-day trading
-# 4. Compound-ready: Options reserve builds for yield generation
+# Expected Returns:
+# - Theta: $50-75/day realistic on $25k allocation (25-30% ROI)
+# - Momentum: $15-20/day on $30k allocation (18-24% ROI)
+# - Crypto: $5-10/day on $10k allocation (18-36% ROI)
+# - Total path to $70-105/day → North Star achievable
+#
+# Risk Management:
+# - Iron condors: 2.0x credit stop-loss (McMillan)
+# - Max single position: 10% of capital
+# - Daily drawdown circuit: 2%
 # =============================================================================
 
 OPTIMIZED_DAILY_INVESTMENT = 10.0  # Base daily investment amount
 
-# Optimized allocation percentages (with enhanced treasury exposure)
-# Updated 2025-12-03: Increased treasury allocation for stable carry income
+# Theta-pivot allocation (Dec 11, 2025 strategic shift)
+# 60% theta, 30% momentum, 10% crypto for path to $100/day
 OPTIMIZED_ALLOCATION = {
-    # Fixed GOVT core (intermediate treasury for stable 4.5% carry)
-    # Purpose: Cash-plus yield with near-zero credit risk
-    "treasury_core": 0.25,  # $2.50/day - GOVT ETF, bypasses all gates
-    # Core momentum ETFs (SPY/QQQ selection based on technicals)
-    # Reduced from 40% to make room for treasury core
-    "core_etfs": 0.35,  # $3.50/day
-    # Dynamic treasury ladder (SHY/IEF/TLT or ZROZ)
-    # Purpose: Yield curve positioning, steepener trades
-    "treasury_dynamic": 0.10,  # $1.00/day - subject to momentum gates
-    # REITs (VNQ - Vanguard Real Estate ETF)
-    # Purpose: Dividend income, real estate exposure, inflation hedge
-    "reits": 0.10,  # $1.00/day
-    # Crypto (BTC/ETH weekend trading)
-    # Purpose: 24/7 market access, volatility capture
-    "crypto": 0.05,  # $0.50/day
-    # Growth stocks (NVDA/GOOGL/AMZN)
-    # Purpose: High-conviction tech exposure
-    "growth_stocks": 0.10,  # $1.00/day
-    # Options premium reserve (for covered calls)
-    # Purpose: Accumulate capital for yield generation strategy
-    "options_reserve": 0.05,  # $0.50/day
+    # Options theta strategies (60% total)
+    # SPY iron condors: Sell 20-delta wings, 45-60 DTE, collect theta
+    "theta_spy": 0.35,  # $3.50/day accumulation → SPY premium selling
+    # QQQ iron condors: Higher IV = more premium, same structure
+    "theta_qqq": 0.25,  # $2.50/day accumulation → QQQ premium selling
+    # Core momentum ETFs (30% total)
+    # SPY/QQQ/VTI selection based on MACD/RSI/Volume signals
+    "momentum_etfs": 0.30,  # $3.00/day - technical momentum plays
+    # Crypto weekend trading (10%)
+    # BTC/ETH volatility capture on weekends
+    "crypto": 0.10,  # $1.00/day - weekend BTC/ETH
 }
 
 # Treasury-specific configuration
