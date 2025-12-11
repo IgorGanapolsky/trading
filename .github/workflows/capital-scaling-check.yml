@@ -1,0 +1,311 @@
+name: Capital Scaling Check
+
+# This workflow verifies that the promotion gate's capital scaling recommendations
+# are reflected in the actual DAILY_INVESTMENT configuration.
+#
+# Purpose:
+# - Prevent situation where system is ready to scale but config is stale
+# - Ensure CEO is aware of scaling opportunities
+# - Validate capital scaler logic is working correctly
+#
+# Created: Dec 11, 2025
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    # Run daily at 9:00 AM UTC to check if scaling is recommended
+    - cron: '0 9 * * *'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check-scaling-recommendation:
+    name: Check Capital Scaling Recommendation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create data directories
+        run: |
+          mkdir -p data/plan
+          mkdir -p data
+
+      - name: Check capital scaler status
+        id: scaler-check
+        run: |
+          python3 << 'EOF'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          # Import capital scaler
+          sys.path.insert(0, str(Path.cwd()))
+          from src.risk.capital_scaler import CapitalScaler, FIBONACCI_SEQUENCE
+
+          # Get current DAILY_INVESTMENT from environment (default 10.0)
+          current_investment = float(os.getenv('DAILY_INVESTMENT', '10.0'))
+
+          # Initialize or load capital scaler state
+          scaler = CapitalScaler(initial_equity=100000.0)
+
+          # Get status and progress
+          status = scaler.get_status()
+          progress = status['progress']
+
+          # Determine if scaling is recommended
+          should_scale = progress.get('ready_to_scale', False)
+          current_level = status['current_level']
+          recommended_investment = status['daily_investment']
+
+          # Build output
+          output = {
+              "current_investment": current_investment,
+              "recommended_investment": recommended_investment,
+              "current_level": current_level,
+              "should_scale": should_scale,
+              "progress": progress,
+              "cumulative_profit": status['cumulative_profit'],
+              "decision": "SCALE_UP" if should_scale else "MAINTAIN"
+          }
+
+          # Save to file for next job
+          output_path = Path("data/plan/next_capital_step.json")
+          output_path.parent.mkdir(parents=True, exist_ok=True)
+          with open(output_path, 'w') as f:
+              json.dump(output, f, indent=2)
+
+          # Print for workflow output
+          print(json.dumps(output, indent=2))
+
+          # Set GitHub output variables
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"decision={output['decision']}\n")
+              f.write(f"current_investment={current_investment}\n")
+              f.write(f"recommended_investment={recommended_investment}\n")
+              f.write(f"should_scale={str(should_scale).lower()}\n")
+          EOF
+
+      - name: Display scaling recommendation
+        run: |
+          if [ -f data/plan/next_capital_step.json ]; then
+            echo "📊 Capital Scaling Analysis:"
+            echo "================================"
+            cat data/plan/next_capital_step.json | python3 -m json.tool
+            echo "================================"
+          else
+            echo "⚠️  No scaling plan file found"
+          fi
+
+      - name: Check for scaling mismatch
+        if: steps.scaler-check.outputs.should_scale == 'true'
+        run: |
+          CURRENT="${{ steps.scaler-check.outputs.current_investment }}"
+          RECOMMENDED="${{ steps.scaler-check.outputs.recommended_investment }}"
+
+          if (( $(echo "$CURRENT < $RECOMMENDED" | bc -l) )); then
+            echo "╔════════════════════════════════════════════════════════════╗"
+            echo "║                                                            ║"
+            echo "║              🚨 SCALING OPPORTUNITY DETECTED               ║"
+            echo "║                                                            ║"
+            echo "╚════════════════════════════════════════════════════════════╝"
+            echo ""
+            echo "The promotion gate recommends scaling up capital!"
+            echo ""
+            echo "  Current DAILY_INVESTMENT:     \$$CURRENT"
+            echo "  Recommended DAILY_INVESTMENT: \$$RECOMMENDED"
+            echo "  Action Required:              Update .env or GitHub Secrets"
+            echo ""
+            echo "⚠️  This is advisory only - workflow will not fail."
+            echo "⚠️  Review capital scaler metrics before scaling."
+            echo ""
+            echo "📖 See: docs/r-and-d-phase.md for scaling criteria"
+            echo "📊 Review: data/capital_scaler_state.json for full status"
+          else
+            echo "✅ DAILY_INVESTMENT is aligned with recommendations"
+            echo "   Current: \$$CURRENT"
+            echo "   Recommended: \$$RECOMMENDED"
+          fi
+
+      - name: Upload scaling plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: capital-scaling-plan
+          path: data/plan/next_capital_step.json
+          if-no-files-found: ignore
+
+  verify-go-live-readiness:
+    name: Verify Go-Live Readiness
+    runs-on: ubuntu-latest
+    needs: check-scaling-recommendation
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check promotion gate status
+        id: gate-check
+        continue-on-error: true
+        env:
+          DAILY_INVESTMENT: ${{ vars.DAILY_INVESTMENT || '10.0' }}
+        run: |
+          # Run promotion gate in JSON mode with scaling plan emission
+          # Note: --emit-scaling-plan flag generates data/plan/next_capital_step.json
+          python3 scripts/enforce_promotion_gate.py \
+            --json \
+            --emit-scaling-plan \
+            --current-daily-investment "${DAILY_INVESTMENT}" \
+            > gate_output.json || true
+
+          if [ -f gate_output.json ]; then
+            echo "📊 Promotion Gate Status:"
+            echo "================================"
+            cat gate_output.json | python3 -m json.tool
+            echo "================================"
+
+            # Extract status
+            STATUS=$(cat gate_output.json | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', 'unknown'))")
+            echo "status=$STATUS" >> $GITHUB_OUTPUT
+
+            # Check if scaling plan was generated
+            if [ -f data/plan/next_capital_step.json ]; then
+              echo ""
+              echo "📊 Capital Scaling Plan Generated:"
+              cat data/plan/next_capital_step.json | python3 -m json.tool
+            fi
+          else
+            echo "⚠️  Promotion gate check failed or no output"
+            echo "status=unknown" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Display readiness summary
+        run: |
+          echo "╔════════════════════════════════════════════════════════════╗"
+          echo "║                                                            ║"
+          echo "║              📊 GO-LIVE READINESS SUMMARY                  ║"
+          echo "║                                                            ║"
+          echo "╚════════════════════════════════════════════════════════════╝"
+          echo ""
+
+          if [ -f gate_output.json ]; then
+            python3 << 'EOF'
+          import json
+          from pathlib import Path
+
+          # Load gate output
+          gate = json.loads(Path("gate_output.json").read_text())
+
+          status = gate.get("status", "unknown")
+          metrics = gate.get("metrics", {})
+          thresholds = gate.get("thresholds", {})
+          deficits = gate.get("deficits", [])
+
+          print(f"Promotion Gate Status: {status.upper()}")
+          print("")
+          print("Current Metrics:")
+          print(f"  Win Rate:       {metrics.get('win_rate', 0):.2f}% (threshold: {thresholds.get('win_rate', 0):.1f}%)")
+          print(f"  Sharpe Ratio:   {metrics.get('sharpe_ratio', 0):.2f} (threshold: {thresholds.get('sharpe_ratio', 0):.2f})")
+          print(f"  Max Drawdown:   {metrics.get('max_drawdown', 0):.2f}% (threshold: {thresholds.get('max_drawdown', 0):.1f}%)")
+          print(f"  Total Trades:   {metrics.get('total_trades', 0)} (threshold: {thresholds.get('min_trades', 0)})")
+          print("")
+
+          if deficits:
+              print("❌ Deficits (blockers to go-live):")
+              for deficit in deficits:
+                  print(f"   - {deficit.get('description', 'Unknown')}")
+          else:
+              print("✅ All promotion criteria satisfied!")
+
+          print("")
+          print("This is informational only - does not block workflow.")
+          EOF
+          else
+            echo "⚠️  No promotion gate output available"
+            echo ""
+            echo "This is expected if:"
+            echo "  - system_state.json doesn't exist yet"
+            echo "  - backtest summary is missing"
+            echo "  - This is a new installation"
+          fi
+
+      - name: Upload gate output
+        uses: actions/upload-artifact@v4
+        with:
+          name: promotion-gate-output
+          path: gate_output.json
+          if-no-files-found: ignore
+
+  # Summary job - always runs and provides clear status
+  scaling-check-summary:
+    name: 📋 Scaling Check Summary
+    runs-on: ubuntu-latest
+    needs: [check-scaling-recommendation, verify-go-live-readiness]
+    if: always()
+    steps:
+      - name: Download scaling plan
+        uses: actions/download-artifact@v4
+        with:
+          name: capital-scaling-plan
+          path: ./
+        continue-on-error: true
+
+      - name: Download gate output
+        uses: actions/download-artifact@v4
+        with:
+          name: promotion-gate-output
+          path: ./
+        continue-on-error: true
+
+      - name: Display summary
+        run: |
+          echo "╔════════════════════════════════════════════════════════════╗"
+          echo "║                                                            ║"
+          echo "║           ✅ CAPITAL SCALING CHECK COMPLETE                ║"
+          echo "║                                                            ║"
+          echo "╚════════════════════════════════════════════════════════════╝"
+          echo ""
+          echo "Artifacts generated:"
+
+          if [ -f next_capital_step.json ]; then
+            echo "  ✅ Capital scaling plan (next_capital_step.json)"
+          else
+            echo "  ❌ Capital scaling plan (not generated)"
+          fi
+
+          if [ -f gate_output.json ]; then
+            echo "  ✅ Promotion gate output (gate_output.json)"
+          else
+            echo "  ⚠️  Promotion gate output (not available)"
+          fi
+
+          echo ""
+          echo "📖 For more information:"
+          echo "   - Review workflow artifacts above"
+          echo "   - Check data/capital_scaler_state.json"
+          echo "   - See docs/r-and-d-phase.md"

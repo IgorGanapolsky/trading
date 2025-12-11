@@ -7,9 +7,12 @@ Scans the codebase for potential dead code:
 3. Deprecated markers
 4. NotImplementedError patterns
 5. Disabled feature flags
+6. CRITICAL: Functions defined but never called (revenue-impacting)
 
 Run as: python scripts/detect_dead_code.py
 Or add to pre-commit: .pre-commit-config.yaml
+
+Reference: rag_knowledge/lessons_learned/ll_014_dead_code_dynamic_budget_dec11.md
 """
 
 import ast
@@ -18,6 +21,37 @@ import re
 import sys
 from collections import defaultdict
 from pathlib import Path
+from typing import NamedTuple
+
+
+class CriticalFunction(NamedTuple):
+    """A function that MUST be called somewhere in the codebase."""
+
+    file_path: str
+    function_name: str
+    description: str
+
+
+# CRITICAL: Functions that must have call sites or system loses revenue
+# Add new critical functions here when implementing revenue-impacting features
+CRITICAL_FUNCTIONS = [
+    CriticalFunction(
+        "scripts/autonomous_trader.py",
+        "_apply_dynamic_daily_budget",
+        "Scales DAILY_INVESTMENT based on equity - without this, system stuck at $10/day",
+    ),
+    CriticalFunction(
+        "src/analytics/options_profit_planner.py",
+        "evaluate_theta_opportunity",
+        "Evaluates theta harvest opportunities - core options revenue",
+    ),
+    CriticalFunction(
+        "src/risk/risk_manager.py",
+        "calculate_size",
+        "Position sizing - without this, no trades execute",
+    ),
+]
+
 
 # Directories to scan
 SCAN_DIRS = ["src", "scripts"]
@@ -154,6 +188,74 @@ def find_orphaned_files(base_path: str, files: list[Path]) -> list[Path]:
     return orphaned
 
 
+class FunctionCallVisitor(ast.NodeVisitor):
+    """AST visitor that counts calls to specific functions."""
+
+    def __init__(self, function_names: set[str]):
+        self.function_names = function_names
+        self.calls: dict[str, list[tuple[str, int]]] = {name: [] for name in function_names}
+        self.current_file = ""
+
+    def visit_Call(self, node: ast.Call):
+        func_name = None
+        if isinstance(node.func, ast.Name):
+            func_name = node.func.id
+        elif isinstance(node.func, ast.Attribute):
+            func_name = node.func.attr
+
+        if func_name and func_name in self.function_names:
+            self.calls[func_name].append((self.current_file, node.lineno))
+
+        self.generic_visit(node)
+
+
+def check_critical_function_coverage(base_path: str, files: list[Path]) -> list[CriticalFunction]:
+    """
+    Check that critical functions are actually called somewhere.
+
+    This catches the pattern where a developer:
+    1. Implements a function with great docstring
+    2. Forgets to wire it into execution flow
+    3. Feature silently never executes
+    4. System loses money
+
+    Returns list of dead critical functions.
+    """
+    function_names = {cf.function_name for cf in CRITICAL_FUNCTIONS}
+    visitor = FunctionCallVisitor(function_names)
+
+    # Scan all files for function calls
+    for py_file in files:
+        try:
+            source = py_file.read_text(encoding="utf-8")
+            tree = ast.parse(source)
+            visitor.current_file = str(py_file)
+            visitor.visit(tree)
+        except (SyntaxError, UnicodeDecodeError):
+            continue
+
+    # Check which critical functions have no call sites
+    dead_critical = []
+    for cf in CRITICAL_FUNCTIONS:
+        calls = visitor.calls.get(cf.function_name, [])
+        if len(calls) == 0:
+            # Verify function actually exists before flagging
+            func_file = Path(base_path) / cf.file_path
+            if func_file.exists():
+                try:
+                    source = func_file.read_text(encoding="utf-8")
+                    tree = ast.parse(source)
+                    for node in ast.walk(tree):
+                        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                            if node.name == cf.function_name:
+                                dead_critical.append(cf)
+                                break
+                except (SyntaxError, UnicodeDecodeError):
+                    pass
+
+    return dead_critical
+
+
 def main():
     """Run dead code detection."""
     base_path = os.getcwd()
@@ -165,6 +267,23 @@ def main():
     print(f"Scanning {len(files)} Python files...\n")
 
     issues = []
+    critical_dead = False
+
+    # CRITICAL CHECK: Revenue-impacting functions must have call sites
+    dead_critical_funcs = check_critical_function_coverage(base_path, files)
+    if dead_critical_funcs:
+        critical_dead = True
+        print("CRITICAL: Revenue-impacting functions with NO CALL SITES:")
+        for cf in dead_critical_funcs:
+            print(f"   {cf.function_name}")
+            print(f"      File: {cf.file_path}")
+            print(f"      Impact: {cf.description}")
+            issues.append(f"CRITICAL_DEAD: {cf.function_name}")
+        print()
+        print("   These functions are DEFINED but NEVER CALLED.")
+        print("   The system will silently fail to use these features.")
+        print("   See: rag_knowledge/lessons_learned/ll_014_dead_code_dynamic_budget_dec11.md")
+        print()
 
     # Check for deprecated markers
     deprecated = find_deprecated_markers(files)
@@ -201,10 +320,15 @@ def main():
 
     # Summary
     print("=" * 70)
-    if issues:
-        print(f"❌ Found {len(issues)} potential issues")
-        print("   Review and clean up dead code to maintain system health.")
+    if critical_dead:
+        print(f"COMMIT BLOCKED: {len(dead_critical_funcs)} critical functions are dead code")
+        print("   Fix: Wire these functions into the execution flow")
+        print("   These are revenue-impacting and MUST be called somewhere.")
         return 1
+    elif issues:
+        print(f"⚠️  Found {len(issues)} potential issues (non-blocking)")
+        print("   Review and clean up dead code to maintain system health.")
+        return 0  # Non-critical issues don't block
     else:
         print("✅ No dead code detected!")
         return 0

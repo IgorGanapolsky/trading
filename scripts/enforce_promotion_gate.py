@@ -20,6 +20,7 @@ DEFAULT_SYSTEM_STATE = Path("data/system_state.json")
 DEFAULT_BACKTEST_SUMMARY = Path("data/backtests/latest_summary.json")
 DEFAULT_MIN_PROFITABLE_DAYS = 30
 DEFAULT_STALE_HOURS = 48
+DEFAULT_SCALING_OUTPUT = Path("data/plan/next_capital_step.json")
 
 
 def parse_args() -> argparse.Namespace:
@@ -85,6 +86,18 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default=None,
         help="Write JSON output to this file path.",
+    )
+    parser.add_argument(
+        "--emit-scaling-plan",
+        action="store_true",
+        default=True,
+        help="Emit capital scaling plan to data/plan/next_capital_step.json when gate passes.",
+    )
+    parser.add_argument(
+        "--current-daily-investment",
+        type=float,
+        default=10.0,
+        help="Current daily investment amount (baseline for scaling recommendations).",
     )
     return parser.parse_args()
 
@@ -206,6 +219,66 @@ def build_json_result(
     return result
 
 
+def calculate_scaling_recommendation(
+    metrics: dict[str, Any],
+    thresholds: dict[str, Any],
+    current_investment: float,
+) -> dict[str, Any]:
+    """
+    Calculate capital scaling recommendation based on current metrics.
+
+    Returns a dict with decision, scaling factor, and confidence.
+    """
+    win_rate = metrics["win_rate"]
+    sharpe = metrics["sharpe_ratio"]
+    drawdown = metrics["max_drawdown"]
+
+    # Aggressive scaling criteria: Sharpe > 1.5, win_rate > 60%, drawdown < 5%
+    if sharpe > 1.5 and win_rate > 60.0 and drawdown < 5.0:
+        decision = "SCALE_UP"
+        scale_factor = 2.5
+        confidence = 0.9
+        justification = (
+            f"Strong performance: Sharpe {sharpe:.2f}, Win Rate {win_rate:.1f}%, "
+            f"Drawdown {drawdown:.1f}% - exceeds all targets for aggressive scaling"
+        )
+    # Conservative scaling: just meets thresholds
+    elif (
+        sharpe >= thresholds["sharpe_ratio"]
+        and win_rate >= thresholds["win_rate"]
+        and drawdown <= thresholds["max_drawdown"]
+    ):
+        decision = "PROMOTE"
+        scale_factor = 1.5
+        confidence = 0.75
+        justification = (
+            f"Meets promotion criteria: Sharpe {sharpe:.2f}, Win Rate {win_rate:.1f}%, "
+            f"Drawdown {drawdown:.1f}% - conservative scaling recommended"
+        )
+    # Borderline: passes but metrics are marginal
+    else:
+        decision = "HOLD"
+        scale_factor = 1.0
+        confidence = 0.5
+        justification = (
+            f"Borderline metrics: Sharpe {sharpe:.2f}, Win Rate {win_rate:.1f}%, "
+            f"Drawdown {drawdown:.1f}% - hold current capital until stronger performance"
+        )
+
+    to_investment = current_investment * scale_factor
+
+    return {
+        "decision": decision,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "from_daily_investment": current_investment,
+        "to_daily_investment": round(to_investment, 2),
+        "scale_factor": scale_factor,
+        "justification": justification,
+        "metrics": metrics,
+        "confidence": confidence,
+    }
+
+
 def main() -> None:
     args = parse_args()
 
@@ -296,6 +369,29 @@ def main() -> None:
     print("✅ Promotion gate satisfied. System may proceed to next stage.")
     if override_flag or stale_override:
         print("⚠️  Proceeding under manual override flag.")
+
+    # Emit capital scaling plan if gate passed (without overrides) and enabled
+    if args.emit_scaling_plan and not deficits and not (override_flag or stale_override):
+        scaling_plan = calculate_scaling_recommendation(
+            metrics=metrics,
+            thresholds=thresholds,
+            current_investment=args.current_daily_investment,
+        )
+
+        # Ensure output directory exists
+        output_path = DEFAULT_SCALING_OUTPUT
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Write scaling plan
+        with output_path.open("w", encoding="utf-8") as f:
+            json.dump(scaling_plan, f, indent=2)
+
+        if not args.json:
+            print(f"\n📊 Capital scaling recommendation: {scaling_plan['decision']}")
+            print(f"   Current: ${scaling_plan['from_daily_investment']:.2f}/day")
+            print(f"   Recommended: ${scaling_plan['to_daily_investment']:.2f}/day")
+            print(f"   Confidence: {scaling_plan['confidence']:.0%}")
+            print(f"   Plan saved to: {output_path}")
 
 
 if __name__ == "__main__":
