@@ -546,7 +546,57 @@ class TradingOrchestrator:
                         },
                     )
 
-                    # Clear entry tracking
+                    # DiscoRL online learning: Record trade outcome for continuous improvement
+                    if hasattr(self.rl_filter, "record_trade_outcome"):
+                        try:
+                            # Get entry features stored when position was opened
+                            entry_features = self.position_manager.get_entry_features(symbol)
+
+                            if entry_features:
+                                # Fetch current market features for exit state
+                                exit_features = {}
+                                try:
+                                    momentum_exit = self.momentum_agent.analyze(symbol)
+                                    if momentum_exit:
+                                        exit_features = momentum_exit.indicators
+                                except Exception as fetch_err:
+                                    logger.debug(f"Could not fetch exit features for {symbol}: {fetch_err}")
+                                    exit_features = entry_features  # Fallback to entry features
+
+                                # Calculate reward (P/L percentage)
+                                reward = position.unrealized_plpc  # Already a percentage (e.g., 0.03 for 3%)
+
+                                # Record the trade outcome for DiscoRL learning
+                                training_metrics = self.rl_filter.record_trade_outcome(
+                                    entry_state=entry_features,
+                                    action=1,  # 1 = BUY (long position)
+                                    exit_state=exit_features,
+                                    reward=reward,
+                                    done=True,
+                                )
+
+                                if training_metrics:
+                                    logger.info(
+                                        f"DiscoRL learned from {symbol} trade: "
+                                        f"reward={reward:.4f}, loss={training_metrics.get('total_loss', 0):.4f}"
+                                    )
+                                    self.telemetry.record(
+                                        event_type="rl.online_learning",
+                                        ticker=symbol,
+                                        status="trained",
+                                        payload={
+                                            "reward": reward,
+                                            "metrics": training_metrics,
+                                            "buffer_size": training_metrics.get("buffer_size", 0),
+                                        },
+                                    )
+                            else:
+                                logger.debug(f"No entry features found for {symbol}, skipping DiscoRL learning")
+
+                        except Exception as rl_err:
+                            logger.warning(f"DiscoRL online learning failed for {symbol}: {rl_err}")
+
+                    # Clear entry tracking (after DiscoRL uses the features)
                     self.position_manager.clear_entry(symbol)
 
                     logger.info(
@@ -1441,6 +1491,17 @@ class TradingOrchestrator:
                 )
         except Exception as exc:  # pragma: no cover - non-fatal
             logger.info("Stop-loss placement skipped for %s: %s", ticker, exc)
+
+        # Track position entry with features for DiscoRL online learning
+        try:
+            self.position_manager.track_entry(
+                symbol=ticker,
+                entry_date=datetime.now(),
+                entry_features=momentum_signal.indicators,
+            )
+            logger.debug(f"Tracked entry for {ticker} with features for DiscoRL online learning")
+        except Exception as exc:
+            logger.warning(f"Failed to track entry for {ticker}: {exc}")
 
         # Playwright MCP: Trade verification with screenshot audit trail
         verify_trades = os.getenv("ENABLE_TRADE_VERIFICATION", "true").lower() in {

@@ -188,8 +188,9 @@ class PositionManager:
         self.alpaca_trader = alpaca_trader
         self.state_file = state_file or DEFAULT_STATE_FILE
         self._position_entry_dates: dict[str, datetime] = {}
+        self._position_entry_features: dict[str, dict[str, Any]] = {}
 
-        # Load persisted entry dates on init
+        # Load persisted entry dates and features on init
         self._load_entry_dates()
 
         logger.info("Position Manager initialized with conditions:")
@@ -200,7 +201,9 @@ class PositionManager:
         logger.info(f"  ATR stop: {self.conditions.enable_atr_stop}")
         logger.info(f"  Loaded {len(self._position_entry_dates)} persisted entry dates")
 
-    def track_entry(self, symbol: str, entry_date: datetime | None = None) -> None:
+    def track_entry(
+        self, symbol: str, entry_date: datetime | None = None, entry_features: dict[str, Any] | None = None
+    ) -> None:
         """
         Track when a position was entered for time-based exits.
         Persists to system_state.json to survive restarts.
@@ -208,8 +211,11 @@ class PositionManager:
         Args:
             symbol: Stock symbol
             entry_date: Entry timestamp (defaults to now)
+            entry_features: Market features at entry time (for DiscoRL online learning)
         """
         self._position_entry_dates[symbol] = entry_date or datetime.now()
+        if entry_features:
+            self._position_entry_features[symbol] = entry_features
         logger.info(f"Tracking entry for {symbol} at {self._position_entry_dates[symbol]}")
         self._save_entry_dates()  # Persist immediately
 
@@ -217,15 +223,21 @@ class PositionManager:
         """Get the entry date for a position."""
         return self._position_entry_dates.get(symbol)
 
+    def get_entry_features(self, symbol: str) -> dict[str, Any] | None:
+        """Get the entry market features for a position (for DiscoRL online learning)."""
+        return self._position_entry_features.get(symbol)
+
     def clear_entry(self, symbol: str) -> None:
         """Clear entry tracking when position is closed. Persists change."""
         if symbol in self._position_entry_dates:
             del self._position_entry_dates[symbol]
-            logger.info(f"Cleared entry tracking for {symbol}")
-            self._save_entry_dates()  # Persist immediately
+        if symbol in self._position_entry_features:
+            del self._position_entry_features[symbol]
+        logger.info(f"Cleared entry tracking for {symbol}")
+        self._save_entry_dates()  # Persist immediately
 
     def _load_entry_dates(self) -> None:
-        """Load persisted entry dates from system_state.json."""
+        """Load persisted entry dates and features from system_state.json."""
         try:
             if not self.state_file.exists():
                 logger.debug(f"State file not found at {self.state_file}")
@@ -234,6 +246,7 @@ class PositionManager:
             with open(self.state_file, encoding="utf-8") as f:
                 state = json.load(f)
 
+            # Load entry dates
             position_entries = state.get("position_entries", {})
             for symbol, date_str in position_entries.items():
                 try:
@@ -241,14 +254,23 @@ class PositionManager:
                 except ValueError as e:
                     logger.warning(f"Invalid date format for {symbol}: {e}")
 
-            logger.info(f"Loaded {len(self._position_entry_dates)} position entry dates from state")
+            # Load entry features (for DiscoRL online learning)
+            position_entry_features = state.get("position_entry_features", {})
+            for symbol, features in position_entry_features.items():
+                if isinstance(features, dict):
+                    self._position_entry_features[symbol] = features
+
+            logger.info(
+                f"Loaded {len(self._position_entry_dates)} position entry dates, "
+                f"{len(self._position_entry_features)} entry features from state"
+            )
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse state file: {e}")
         except Exception as e:
             logger.error(f"Failed to load entry dates: {e}")
 
     def _save_entry_dates(self) -> None:
-        """Save entry dates to system_state.json."""
+        """Save entry dates and features to system_state.json."""
         try:
             # Load existing state
             if self.state_file.exists():
@@ -262,6 +284,9 @@ class PositionManager:
                 symbol: dt.isoformat() for symbol, dt in self._position_entry_dates.items()
             }
 
+            # Update position_entry_features section (for DiscoRL online learning)
+            state["position_entry_features"] = dict(self._position_entry_features)
+
             # Update meta timestamp
             if "meta" not in state:
                 state["meta"] = {}
@@ -273,7 +298,10 @@ class PositionManager:
                 json.dump(state, f, indent=2)
             temp_file.replace(self.state_file)
 
-            logger.debug(f"Saved {len(self._position_entry_dates)} position entry dates to state")
+            logger.debug(
+                f"Saved {len(self._position_entry_dates)} position entry dates, "
+                f"{len(self._position_entry_features)} entry features to state"
+            )
         except Exception as e:
             logger.error(f"Failed to save entry dates: {e}")
 

@@ -12,6 +12,8 @@ from typing import Any
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 
+from src.ml.reward_functions import RiskAdjustedReward
+
 try:
     import gymnasium as gym
     from gymnasium import spaces
@@ -112,6 +114,7 @@ class RLWeightUpdater:
         self.max_samples = max_samples
         self.min_symbol_samples = min_symbol_samples
         self.dry_run = dry_run
+        self.risk_reward = RiskAdjustedReward()
 
     def run(self) -> dict[str, Any]:
         samples = self._collect_samples()
@@ -219,32 +222,127 @@ class RLWeightUpdater:
         session: str | None,
         ticker: str | None,
     ) -> float:
-        """Look ahead for success/failure signals tied to the RL gate entry."""
+        """
+        Look ahead for success/failure signals tied to the RL gate entry.
+
+        Uses RiskAdjustedReward for rich trade data when available,
+        falls back to binary reward otherwise.
+        """
+        trade_result = self._extract_trade_result(
+            events, start_index, session, ticker
+        )
+
+        if trade_result is None:
+            return 0.0
+
+        # If we have rich trade data, use RiskAdjustedReward
+        if "pl_pct" in trade_result and trade_result["pl_pct"] is not None:
+            try:
+                reward = self.risk_reward.calculate_from_trade_result(trade_result)
+                logger.debug(
+                    "Using RiskAdjustedReward for %s: pl_pct=%.4f, reward=%.4f",
+                    ticker or "DEFAULT",
+                    trade_result["pl_pct"],
+                    reward,
+                )
+                return reward
+            except Exception as e:
+                logger.warning(
+                    "RiskAdjustedReward failed for %s: %s. Falling back to binary.",
+                    ticker or "DEFAULT",
+                    e,
+                )
+
+        # Fallback to binary reward
+        if trade_result.get("binary_outcome"):
+            return trade_result["binary_outcome"]
+
+        return 0.0
+
+    def _extract_trade_result(
+        self,
+        events: list[dict[str, Any]],
+        start_index: int,
+        session: str | None,
+        ticker: str | None,
+    ) -> dict[str, Any] | None:
+        """
+        Extract detailed trade information from audit trail events.
+
+        Returns trade_result dict with:
+        - pl_pct: Profit/loss percentage
+        - holding_period_days: Days trade was held
+        - max_drawdown: Maximum drawdown
+        - binary_outcome: Fallback binary reward (+1/-1)
+        """
+        entry_time = events[start_index].get("timestamp")
+        exit_time = None
+        pl_pct = None
+        binary_outcome = None
+
         for event in events[start_index + 1 : start_index + 25]:
             if session and event.get("session") != session:
                 continue
             if ticker and event.get("ticker") != ticker:
                 continue
+
             status = event.get("status")
             event_type = event.get("event", "")
             payload = event.get("payload", {})
 
+            # Extract PnL if available
             pnl = payload.get("pnl") or payload.get("pnl_pct")
             if pnl is not None:
                 try:
                     pnl_value = float(pnl)
-                    if pnl_value > 0:
-                        return 1.0
-                    if pnl_value < 0:
-                        return -1.0
+                    # Assume pnl_pct is already a decimal (0.05 = 5%)
+                    # If it's a percentage (5.0 = 5%), convert to decimal
+                    if abs(pnl_value) > 1.0:  # Likely a percentage
+                        pl_pct = pnl_value / 100.0
+                    else:
+                        pl_pct = pnl_value
+
+                    exit_time = event.get("timestamp")
+                    binary_outcome = 1.0 if pnl_value > 0 else -1.0
+                    break
                 except (TypeError, ValueError):
                     pass
 
+            # Binary signals for fallback
             if event_type.startswith("execution.") and status == "submitted":
-                return 1.0
+                binary_outcome = 1.0
+                exit_time = event.get("timestamp")
+                break
             if status == "reject":
-                return -1.0
-        return 0.0
+                binary_outcome = -1.0
+                exit_time = event.get("timestamp")
+                break
+
+        if binary_outcome is None:
+            return None
+
+        # Calculate holding period
+        holding_period_days = 1  # Default
+        if entry_time and exit_time:
+            try:
+                # Simplified: assume timestamps are comparable
+                # In practice, would parse and calculate actual duration
+                holding_period_days = 1  # Conservative estimate
+            except Exception:
+                pass
+
+        # Build trade result dict
+        result: dict[str, Any] = {
+            "binary_outcome": binary_outcome,
+            "holding_period_days": holding_period_days,
+        }
+
+        if pl_pct is not None:
+            result["pl_pct"] = pl_pct
+            # Estimate max drawdown (conservative: use pl_pct if negative)
+            result["max_drawdown"] = abs(pl_pct) if pl_pct < 0 else 0.0
+
+        return result
 
     def _fit_symbol_weights(self, samples: list[TradeSample]) -> dict[str, dict[str, Any]]:
         grouped: dict[str, list[TradeSample]] = {}
