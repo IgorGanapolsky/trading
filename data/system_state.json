@@ -1,397 +1,397 @@
 {
-  "meta": {
-    "version": "1.0",
-    "created": "2025-10-29T09:35:00",
-    "last_updated": "2025-12-07T18:16:23.571387",
-    "last_audit": "2025-11-17T09:00:00.000000",
-    "audit_notes": "Day 9 - Added Tier 5 crypto tracking (BTC/ETH weekend strategy)"
-  },
-  "challenge": {
-    "start_date": "2025-10-29",
-    "current_day": 9,
-    "total_days": 90,
-    "status": "active",
-    "phase": "R&D Phase - Month 1 (Days 1-30)"
-  },
-  "account": {
-    "starting_balance": 100000.0,
-    "current_equity": 100017.49,
-    "cash": 83285.42,
-    "positions_value": 16732.068537,
-    "total_pl": 17.49000000000524,
-    "total_pl_pct": 0.017490000000005237
-  },
-  "investments": {
-    "total_invested": 1621.93,
-    "tier1_invested": 1217.96,
-    "tier2_invested": 403.97,
-    "tier3_reserve": 0.0,
-    "tier4_reserve": 0.0,
-    "tier5_invested": 0.0
-  },
-  "performance": {
-    "total_trades": 7,
-    "winning_trades": 0,
-    "losing_trades": 0,
-    "win_rate": 0.0,
-    "best_trade": {
-      "symbol": "NVDA",
-      "pl": -0.06,
-      "pl_pct": -3.09
+    "meta": {
+        "version": "1.0",
+        "created": "2025-10-29T09:35:00",
+        "last_updated": "2025-12-11T18:54:08.145336",
+        "last_audit": "2025-11-17T09:00:00.000000",
+        "audit_notes": "Day 9 - Added Tier 5 crypto tracking (BTC/ETH weekend strategy)"
     },
-    "worst_trade": {
-      "symbol": "SPY",
-      "pl": -14.25,
-      "pl_pct": -1.17
+    "challenge": {
+        "start_date": "2025-10-29",
+        "current_day": 9,
+        "total_days": 90,
+        "status": "active",
+        "phase": "R&D Phase - Month 1 (Days 1-30)"
     },
-    "avg_return": -3.04,
-    "closed_trades": [],
-    "open_positions": [
-      {
-        "symbol": "BIL",
-        "tier": "unknown",
-        "amount": 11998.568967,
-        "order_id": null,
-        "entry_date": "2025-12-07T18:16:23.571342",
-        "entry_price": 91.53,
-        "current_price": 91.52,
-        "quantity": 131.103244836,
-        "unrealized_pl": -1.3110324483606706,
-        "unrealized_pl_pct": -0.010925379656948668,
-        "last_updated": "2025-12-07T18:16:23.571354"
-      },
-      {
-        "symbol": "BTCUSD",
-        "tier": "unknown",
-        "amount": 19.677416,
-        "order_id": null,
-        "entry_date": "2025-12-07T18:16:23.571363",
-        "entry_price": 88915.401420298,
-        "current_price": 89518.89,
-        "quantity": 0.000219813,
-        "unrealized_pl": 0.13265463517003487,
-        "unrealized_pl_pct": 0.6787222124200285,
-        "last_updated": "2025-12-07T18:16:23.571366"
-      },
-      {
-        "symbol": "IEF",
-        "tier": "unknown",
-        "amount": 119.976634,
-        "order_id": null,
-        "entry_date": "2025-12-07T18:16:23.571369",
-        "entry_price": 96.472651,
-        "current_price": 96.47,
-        "quantity": 1.243667814,
-        "unrealized_pl": -0.003296963374914225,
-        "unrealized_pl_pct": -0.002747929047788042,
-        "last_updated": "2025-12-07T18:16:23.571371"
-      },
-      {
-        "symbol": "SHY",
-        "tier": "unknown",
-        "amount": 459.724132,
-        "order_id": null,
-        "entry_date": "2025-12-07T18:16:23.571374",
-        "entry_price": 82.781859,
-        "current_price": 82.77,
-        "quantity": 5.554236223,
-        "unrealized_pl": -0.06586768736856352,
-        "unrealized_pl_pct": -0.014325602424561611,
-        "last_updated": "2025-12-07T18:16:23.571376"
-      },
-      {
-        "symbol": "SPY",
-        "tier": "unknown",
-        "amount": 4114.14,
-        "order_id": null,
-        "entry_date": "2025-12-07T18:16:23.571379",
-        "entry_price": 686.381176,
-        "current_price": 685.69,
-        "quantity": 6.0,
-        "unrealized_pl": -4.147055999999566,
-        "unrealized_pl_pct": -0.10069856577767332,
-        "last_updated": "2025-12-07T18:16:23.571380"
-      },
-      {
-        "symbol": "TLT",
-        "tier": "unknown",
-        "amount": 19.981388,
-        "order_id": null,
-        "entry_date": "2025-12-07T18:16:23.571384",
-        "entry_price": 88.150671,
-        "current_price": 88.17,
-        "quantity": 0.226623435,
-        "unrealized_pl": 0.004380404375114783,
-        "unrealized_pl_pct": 0.021927229572647314,
-        "last_updated": "2025-12-07T18:16:23.571385"
-      }
-    ]
-  },
-  "strategies": {
-    "tier1": {
-      "name": "Core ETF Strategy",
-      "allocation": 0.67,
-      "daily_amount": 10.0,
-      "trades_executed": 4,
-      "total_invested": 1217.96,
-      "status": "active"
+    "account": {
+        "starting_balance": 100000.0,
+        "current_equity": 100017.49,
+        "cash": 83285.42,
+        "positions_value": 16732.068537,
+        "total_pl": 17.49000000000524,
+        "total_pl_pct": 0.017490000000005237
     },
-    "tier2": {
-      "name": "Disruptive Innovation Strategy (NVDA, GOOGL, AMZN)",
-      "allocation": 0.33,
-      "daily_amount": 5.0,
-      "trades_executed": 3,
-      "total_invested": 403.97,
-      "status": "active",
-      "stocks": [
-        "NVDA",
-        "GOOGL",
-        "AMZN"
-      ],
-      "rotation_strategy": "3-way momentum-based selection",
-      "amzn_catalyst": "OpenAI $38B deal - $295 fair value target (15% upside)"
+    "investments": {
+        "total_invested": 1621.93,
+        "tier1_invested": 1217.96,
+        "tier2_invested": 403.97,
+        "tier3_reserve": 0.0,
+        "tier4_reserve": 0.0,
+        "tier5_invested": 0.0
     },
-    "tier3": {
-      "name": "IPO Strategy",
-      "allocation": 0.1,
-      "daily_amount": 1.0,
-      "reserve_balance": 0.0,
-      "status": "tracking"
-    },
-    "tier4": {
-      "name": "Crowdfunding Strategy",
-      "allocation": 0.1,
-      "daily_amount": 1.0,
-      "reserve_balance": 0.0,
-      "status": "tracking"
-    },
-    "tier5": {
-      "name": "Crypto Daily Strategy (BTC, ETH)",
-      "allocation": 0.05,
-      "daily_amount": 10.0,
-      "coins": [
-        "BTC/USD",
-        "ETH/USD"
-      ],
-      "trades_executed": 2,
-      "total_invested": 19.67,
-      "status": "active",
-      "enabled": true,
-      "execution_schedule": "Daily 10:00 AM ET",
-      "last_execution": "2025-12-07T20:07:08",
-      "next_execution": "2025-12-08T15:00:00Z",
-      "workflow_issue": "3 weekends with 0 executions - check GitHub Actions for errors"
-    }
-  },
-  "backtest_reality": {
-    "last_comprehensive_test": "2025-12-02",
-    "scenarios_tested": 6,
-    "daily_win_rate_range": "38-52%",
-    "sharpe_ratio_range": "-7 to -72 (all negative)",
-    "status": "NEEDS_IMPROVEMENT",
-    "note": "62.2% claim from Nov 7 was single-scenario, not comprehensive. Full matrix shows strategy underperforms.",
-    "source": "data/backtests/latest_summary.json"
-  },
-  "heuristics": {
-    "best_performing_etf": "SPY",
-    "best_performing_stock": "NVDA",
-    "avg_daily_return": -3.04,
-    "max_drawdown": -21.25,
-    "sharpe_ratio": 0.0,
-    "volatility": 0.0,
-    "winning_symbols": [],
-    "losing_symbols": [
-      "SPY",
-      "GOOGL",
-      "NVDA"
-    ],
-    "learned_patterns": [
-      "CRITICAL: Nov 3 deployed $1,600 instead of planned $8/day (200x error)",
-      "Root cause: Wrong script executed (autonomous_trader.py vs main.py)",
-      "Nov 4: All positions down 1-3% (market pullback after large entry)",
-      "Automation never properly configured (GitHub Actions disabled)",
-      "System state was stale for 5 days (Oct 30 - Nov 4)",
-      "LESSON: Need staleness detection to prevent using expired data",
-      "LESSON: Need order amount validation (reject >10x expected)",
-      "LESSON: Need proper testing before production deployment",
-      "Nov 5: MACD indicator integrated into both Tier 1 (CoreStrategy) and Tier 2 (GrowthStrategy)",
-      "MACD confirms momentum - filters out false signals from RSI alone",
-      "MACD histogram > 0 = bullish (MACD above signal line) = BUY signal",
-      "MACD histogram < 0 = bearish (MACD below signal line) = SELL signal"
-    ],
-    "crypto_patterns": [
-      "Nov 17: Tier 5 crypto strategy activated - BTC/ETH weekend trading",
-      "Execution schedule: Saturday & Sunday 10:00 AM ET",
-      "Initial allocation: $0.50/day (5% of $10 daily budget)",
-      "Strategy: 24/7 crypto markets provide weekend trading opportunities"
-    ]
-  },
-  "automation": {
-    "github_actions_enabled": true,
-    "workflow_name": "Daily Trading Execution",
-    "workflow_status": "OPERATIONAL",
-    "last_execution_attempt": "2025-11-11T21:11:00",
-    "last_successful_execution": "2025-11-11T21:11:00",
-    "execution_count": 1,
-    "failures": 0,
-    "failure_reasons": [],
-    "fix_applied": "2025-11-11: Upgraded protobuf to fix Python 3.14 compatibility, validated GitHub Actions workflow",
-    "next_scheduled_execution": "2025-11-12T09:35:00"
-  },
-  "video_analysis": {
-    "enabled": true,
-    "autonomous_monitoring": true,
-    "monitoring_schedule": "Daily 8:00 AM ET (before market open)",
-    "channels_monitored": 5,
-    "videos_analyzed": 5,
-    "stocks_added_from_videos": 1,
-    "last_analysis_date": "2025-11-05T20:30:00",
-    "autonomous_system_status": "PRODUCTION READY - Activation pending CEO approval",
-    "video_sources": [
-      {
-        "title": "PLTR Analysis - Why Stock Falling Despite Spectacular Earnings",
-        "analyst": "Parkev Tatevosian CFA",
-        "date": "2025-11-05T20:30:00",
-        "stocks_analyzed": [
-          "PLTR"
-        ],
-        "recommendation": "PASS - 454% overvalued (wait for 50-80% pullback)"
-      },
-      {
-        "title": "Top 6 Stocks to Buy November 2025",
-        "analyst": "Parkev Tatevosian CFA",
-        "date": "2025-11-05T15:30:00",
-        "stocks_analyzed": [
-          "NVDA",
-          "AMZN",
-          "GOOGL",
-          "LLY",
-          "UBER",
-          "PINS"
-        ],
-        "stocks_added": [
-          "AMZN"
+    "performance": {
+        "total_trades": 7,
+        "winning_trades": 0,
+        "losing_trades": 0,
+        "win_rate": 0.0,
+        "best_trade": {
+            "symbol": "NVDA",
+            "pl": -0.06,
+            "pl_pct": -3.09
+        },
+        "worst_trade": {
+            "symbol": "SPY",
+            "pl": -14.25,
+            "pl_pct": -1.17
+        },
+        "avg_return": -3.04,
+        "closed_trades": [],
+        "open_positions": [
+            {
+                "symbol": "BIL",
+                "tier": "unknown",
+                "amount": 11998.568967,
+                "order_id": null,
+                "entry_date": "2025-12-07T18:16:23.571342",
+                "entry_price": 91.53,
+                "current_price": 91.52,
+                "quantity": 131.103244836,
+                "unrealized_pl": -1.3110324483606706,
+                "unrealized_pl_pct": -0.010925379656948668,
+                "last_updated": "2025-12-07T18:16:23.571354"
+            },
+            {
+                "symbol": "BTCUSD",
+                "tier": "unknown",
+                "amount": 19.677416,
+                "order_id": null,
+                "entry_date": "2025-12-07T18:16:23.571363",
+                "entry_price": 88915.401420298,
+                "current_price": 89518.89,
+                "quantity": 0.000219813,
+                "unrealized_pl": 0.13265463517003487,
+                "unrealized_pl_pct": 0.6787222124200285,
+                "last_updated": "2025-12-07T18:16:23.571366"
+            },
+            {
+                "symbol": "IEF",
+                "tier": "unknown",
+                "amount": 119.976634,
+                "order_id": null,
+                "entry_date": "2025-12-07T18:16:23.571369",
+                "entry_price": 96.472651,
+                "current_price": 96.47,
+                "quantity": 1.243667814,
+                "unrealized_pl": -0.003296963374914225,
+                "unrealized_pl_pct": -0.002747929047788042,
+                "last_updated": "2025-12-07T18:16:23.571371"
+            },
+            {
+                "symbol": "SHY",
+                "tier": "unknown",
+                "amount": 459.724132,
+                "order_id": null,
+                "entry_date": "2025-12-07T18:16:23.571374",
+                "entry_price": 82.781859,
+                "current_price": 82.77,
+                "quantity": 5.554236223,
+                "unrealized_pl": -0.06586768736856352,
+                "unrealized_pl_pct": -0.014325602424561611,
+                "last_updated": "2025-12-07T18:16:23.571376"
+            },
+            {
+                "symbol": "SPY",
+                "tier": "unknown",
+                "amount": 4114.14,
+                "order_id": null,
+                "entry_date": "2025-12-07T18:16:23.571379",
+                "entry_price": 686.381176,
+                "current_price": 685.69,
+                "quantity": 6.0,
+                "unrealized_pl": -4.147055999999566,
+                "unrealized_pl_pct": -0.10069856577767332,
+                "last_updated": "2025-12-07T18:16:23.571380"
+            },
+            {
+                "symbol": "TLT",
+                "tier": "unknown",
+                "amount": 19.981388,
+                "order_id": null,
+                "entry_date": "2025-12-07T18:16:23.571384",
+                "entry_price": 88.150671,
+                "current_price": 88.17,
+                "quantity": 0.226623435,
+                "unrealized_pl": 0.004380404375114783,
+                "unrealized_pl_pct": 0.021927229572647314,
+                "last_updated": "2025-12-07T18:16:23.571385"
+            }
         ]
-      },
-      {
-        "title": "AMZN OpenAI Partnership Analysis",
-        "analyst": "Parkev Tatevosian CFA",
-        "date": "2025-11-05T15:30:00",
-        "stocks_added": [
-          "AMZN"
+    },
+    "strategies": {
+        "tier1": {
+            "name": "Core ETF Strategy",
+            "allocation": 0.67,
+            "daily_amount": 10.0,
+            "trades_executed": 4,
+            "total_invested": 1217.96,
+            "status": "active"
+        },
+        "tier2": {
+            "name": "Disruptive Innovation Strategy (NVDA, GOOGL, AMZN)",
+            "allocation": 0.33,
+            "daily_amount": 5.0,
+            "trades_executed": 3,
+            "total_invested": 403.97,
+            "status": "active",
+            "stocks": [
+                "NVDA",
+                "GOOGL",
+                "AMZN"
+            ],
+            "rotation_strategy": "3-way momentum-based selection",
+            "amzn_catalyst": "OpenAI $38B deal - $295 fair value target (15% upside)"
+        },
+        "tier3": {
+            "name": "IPO Strategy",
+            "allocation": 0.1,
+            "daily_amount": 1.0,
+            "reserve_balance": 0.0,
+            "status": "tracking"
+        },
+        "tier4": {
+            "name": "Crowdfunding Strategy",
+            "allocation": 0.1,
+            "daily_amount": 1.0,
+            "reserve_balance": 0.0,
+            "status": "tracking"
+        },
+        "tier5": {
+            "name": "Crypto Daily Strategy (BTC, ETH)",
+            "allocation": 0.05,
+            "daily_amount": 10.0,
+            "coins": [
+                "BTC/USD",
+                "ETH/USD"
+            ],
+            "trades_executed": 2,
+            "total_invested": 19.67,
+            "status": "active",
+            "enabled": true,
+            "execution_schedule": "Daily 10:00 AM ET",
+            "last_execution": "2025-12-07T20:07:08",
+            "next_execution": "2025-12-08T15:00:00Z",
+            "workflow_issue": "3 weekends with 0 executions - check GitHub Actions for errors"
+        }
+    },
+    "backtest_reality": {
+        "last_comprehensive_test": "2025-12-02",
+        "scenarios_tested": 6,
+        "daily_win_rate_range": "38-52%",
+        "sharpe_ratio_range": "-7 to -72 (all negative)",
+        "status": "NEEDS_IMPROVEMENT",
+        "note": "62.2% claim from Nov 7 was single-scenario, not comprehensive. Full matrix shows strategy underperforms.",
+        "source": "data/backtests/latest_summary.json"
+    },
+    "heuristics": {
+        "best_performing_etf": "SPY",
+        "best_performing_stock": "NVDA",
+        "avg_daily_return": -3.04,
+        "max_drawdown": -21.25,
+        "sharpe_ratio": 0.0,
+        "volatility": 0.0,
+        "winning_symbols": [],
+        "losing_symbols": [
+            "SPY",
+            "GOOGL",
+            "NVDA"
+        ],
+        "learned_patterns": [
+            "CRITICAL: Nov 3 deployed $1,600 instead of planned $8/day (200x error)",
+            "Root cause: Wrong script executed (autonomous_trader.py vs main.py)",
+            "Nov 4: All positions down 1-3% (market pullback after large entry)",
+            "Automation never properly configured (GitHub Actions disabled)",
+            "System state was stale for 5 days (Oct 30 - Nov 4)",
+            "LESSON: Need staleness detection to prevent using expired data",
+            "LESSON: Need order amount validation (reject >10x expected)",
+            "LESSON: Need proper testing before production deployment",
+            "Nov 5: MACD indicator integrated into both Tier 1 (CoreStrategy) and Tier 2 (GrowthStrategy)",
+            "MACD confirms momentum - filters out false signals from RSI alone",
+            "MACD histogram > 0 = bullish (MACD above signal line) = BUY signal",
+            "MACD histogram < 0 = bearish (MACD below signal line) = SELL signal"
+        ],
+        "crypto_patterns": [
+            "Nov 17: Tier 5 crypto strategy activated - BTC/ETH weekend trading",
+            "Execution schedule: Saturday & Sunday 10:00 AM ET",
+            "Initial allocation: $0.50/day (5% of $10 daily budget)",
+            "Strategy: 24/7 crypto markets provide weekend trading opportunities"
         ]
-      }
-    ],
-    "watchlist_additions": [
-      {
-        "ticker": "AMZN",
-        "source": "Parkev Tatevosian CFA - AMZN OpenAI Partnership Analysis",
-        "date_added": "2025-11-05T15:30:00",
-        "status": "INTEGRATED - Added to Tier 2 rotation Nov 6"
-      }
-    ],
-    "cto_decision_log": {
-      "decision_date": "2025-11-05T20:37:00",
-      "decision": "APPROVED - Build fully autonomous YouTube video analysis system",
-      "rationale": "CEO mandated daily video analysis capability. System must be zero-touch after setup.",
-      "actions_taken": [
-        "Built youtube_monitor.py - monitors 5 pro financial channels daily",
-        "Configured cron: Daily 8:00 AM ET execution (before market open)",
-        "Integrated AMZN into Tier 2 - executes tomorrow Nov 6",
-        "Analyzed PLTR - PASS (overvalued 454%, wait for pullback)",
-        "Enhanced CEO reporting - auto-includes video insights",
-        "Status: PRODUCTION READY - awaiting CEO activation approval"
-      ],
-      "key_metrics": {
+    },
+    "automation": {
+        "github_actions_enabled": true,
+        "workflow_name": "Daily Trading Execution",
+        "workflow_status": "OPERATIONAL",
+        "last_execution_attempt": "2025-11-11T21:11:00",
+        "last_successful_execution": "2025-11-11T21:11:00",
+        "execution_count": 1,
+        "failures": 0,
+        "failure_reasons": [],
+        "fix_applied": "2025-11-11: Upgraded protobuf to fix Python 3.14 compatibility, validated GitHub Actions workflow",
+        "next_scheduled_execution": "2025-11-12T09:35:00"
+    },
+    "video_analysis": {
+        "enabled": true,
+        "autonomous_monitoring": true,
+        "monitoring_schedule": "Daily 8:00 AM ET (before market open)",
         "channels_monitored": 5,
-        "execution_schedule": "8:00 AM ET weekdays",
-        "expected_videos_per_week": "7-21",
-        "expected_picks_per_week": "3-10",
-        "monthly_cost": "$0 (free tier APIs)",
-        "maintenance_required": "Zero after setup"
-      }
-    }
-  },
-  "notes": [
-    "[2025-10-29 21:06] Test trade: SPY $5.99",
-    "[2025-10-29 21:08] Test trade: SPY $5.99 + GOOGL $1.99",
-    "[2025-10-30 13:35] Test trade: SPY $5.99 + NVDA $1.99",
-    "[2025-11-03 14:51] ALERT: Large orders executed - SPY $1,199.99 + GOOGL $399.99 (200x expected)",
-    "[2025-11-04 09:41] Execution attempt FAILED: Network/DNS error",
-    "[2025-11-04 16:45] AUDIT: Complete system investigation completed",
-    "[2025-11-04 16:45] Current P/L: -$21.25 (all positions unrealized losses)",
-    "[2025-11-04 16:45] Action: CEO reviewing comprehensive fix plan",
-    "[2025-11-05 15:30] YouTube analysis capability integrated - AMZN added to Tier 2 watchlist",
-    "[2025-11-05 15:30] Source: Parkev Tatevosian CFA - AMZN OpenAI $38B deal analysis",
-    "[2025-11-05 15:30] Recommendation: HIGH PRIORITY - $295 fair value (15% upside from $256)",
-    "[2025-11-05 15:30] Pending: Video #2 analysis (Top 6 stocks) - 6 additional picks expected",
-    "[2025-11-05 15:35] AMZN INTEGRATED: Added to Tier 2 rotation for execution starting Nov 6, 2025",
-    "[2025-11-05 15:35] Tier 2 now: NVDA, GOOGL, AMZN (3-way momentum-based selection)",
-    "[2025-11-05 15:35] Allocation unchanged: $2/day split among momentum leader",
-    "[2025-11-05 20:37] CTO/CFO DECISION: Autonomous YouTube monitoring system APPROVED",
-    "[2025-11-05 20:37] Built complete system: 5 channels, daily 8AM monitoring, auto-watchlist updates",
-    "[2025-11-05 20:37] Videos analyzed today: 5 (PLTR=PASS, AMZN=INTEGRATED, 6 stocks documented)",
-    "[2025-11-05 20:37] System status: PRODUCTION READY - zero manual intervention after cron activation",
-    "[2025-11-05 20:37] Monthly cost: $0 (free tier), Maintenance: Zero, Expected picks: 3-10/week",
-    "[2025-11-05 21:15] MACD indicator integrated into CoreStrategy (Tier 1) and GrowthStrategy (Tier 2)",
-    "[2025-11-05 21:15] MACD parameters: 12-day EMA, 26-day EMA, 9-day signal line (industry standard)",
-    "[2025-11-05 21:15] MACD scoring: +20 points if histogram > 0 (bullish), +10 if near crossover, 0 if bearish",
-    "[2025-11-05 21:15] Tier 2 filters enhanced: Now requires MACD histogram > 0 for buy signals",
-    "[2025-11-05 21:15] Technical score rebalanced: 20% momentum, 20% RSI, 20% MACD, 20% volume, 20% MA",
-    "[2025-11-07 14:01] CORRECT BACKTEST RAN: SPY/QQQ/VOO momentum strategy (actual live strategy)",
-    "[2025-11-07 14:01] Backtest Results: 62.2% win rate, +$12.71 profit over 60 days (0.01% return)",
-    "[2025-11-07 14:01] Sharpe Ratio: -141.93 (terrible), Max DD: 0.01% (excellent), Profit/Trade: $0.28",
-    "[2025-11-07 14:01] Discovery: Strategy has good win rate BUT profit per trade too small to scale",
-    "[2025-11-07 14:05] CEO DECISION: OPTION A - Accept R&D Phase Reality",
-    "[2025-11-07 14:05] Philosophy: Month 1 is about LEARNING not EARNING",
-    "[2025-11-07 14:05] Plan: Continue $10/day for 23 more days (Days 8-30), collect clean data",
-    "[2025-11-07 14:05] Current P/L: -$21.25 (per hook) / -$39.86 (per API) is acceptable R&D tuition",
-    "[2025-11-07 14:05] Judgment Day: Day 30 (Nov 30, 2025) - decide to scale, redesign, or build RL agents",
-    "[2025-11-07 14:05] Success Criteria: 50-60% win rate, break-even to +$100, 95% system reliability, clean data",
-    "[2025-11-07 14:10] ANTI-LYING VIOLATION #1: CTO claimed 'Next execution: Tomorrow (Nov 8, 2025)'",
-    "[2025-11-07 14:10] Reality: Tomorrow is Saturday (markets closed), actual next trade is Monday Nov 10",
-    "[2025-11-07 14:10] Root cause: Failed to verify calendar before claiming execution timing",
-    "[2025-11-07 14:10] CEO caught violation: 'so you lied to me? I thought we have an anti-lying mandate?'",
-    "[2025-11-07 14:10] Consequence: Strike 1 of 3 (First: call out, Second: lose trust, Third: termination)",
-    "[2025-11-07 14:10] Correction: Next trade is MONDAY Nov 10, 2025 at 9:35 AM ET (Day 8)",
-    "[2025-11-07 14:10] Lesson: ALWAYS verify day of week and market hours before claiming execution dates",
-    "[2025-11-11 21:00] AUTOMATION FIXED: 5-day trading gap (Nov 7-11) resolved",
-    "[2025-11-11 21:00] Root cause: Python 3.14 protobuf incompatibility + GitHub Actions workflow disabled",
-    "[2025-11-11 21:00] Solution: Upgraded protobuf, re-enabled workflow",
-    "[2025-11-11 21:11] Day 9 trades executed: SPY $6.00, NVDA $2.00 (orders accepted, queued for tomorrow)",
-    "[2025-11-11 21:15] BREAKTHROUGH: Portfolio now PROFITABLE +$13.96 (+0.01%)",
-    "[2025-11-11 21:15] Current positions: GOOGL +$13.03 (+3.21%), SPY +$0.96 (+0.08%), NVDA -$0.09 (-4.64%)",
-    "[2025-11-11 21:15] Win rate: 66.7% (2 of 3 positions profitable)",
-    "[2025-11-11 21:15] Automation status: OPERATIONAL - next execution Nov 12 at 9:35 AM ET",
-    "[2025-11-17 09:00] TIER 5 ACTIVATED: Crypto weekend trading strategy (BTC/ETH)",
-    "[2025-11-17 09:00] Allocation: $0.50/day (5% of daily budget)",
-    "[2025-11-17 09:00] Execution: Saturday & Sunday 10:00 AM ET",
-    "[2025-11-17 09:00] Coins: BTC/USD, ETH/USD (24/7 trading capability)",
-    "[2025-11-17 09:00] Status: Active - first execution pending next weekend",
-    "[2025-11-25 15:40] SCALING DECISION: Transitioning from R&D to Production Scaling",
-    "[2025-11-25 15:40] Analysis: Win rate (62%) is strong, but profit per trade ($0.28) is too low to hit $100/day goal",
-    "[2025-11-25 15:40] Action: Increasing Daily Investment from $10 to $1,500 (150x scaling)",
-    "[2025-11-25 15:40] New Allocation: Core Strategy $900/day, Growth Strategy $1,500/week ($300/day)",
-    "[2025-11-25 15:40] Expected Outcome: ~$100/day profit if 62% win rate holds"
-  ],
-  "options": {
-    "last_theta_harvest": "2025-12-05T17:53:46.287290+00:00",
-    "account_equity": 100005.5,
-    "equity_gate": {
-      "account_equity": 100005.5,
-      "enabled_strategies": {
-        "poor_mans_covered_call": true,
-        "iron_condor": true,
-        "full_suite": true
-      },
-      "next_tier": null,
-      "gap_to_next_tier": 0,
-      "theta_enabled": true
+        "videos_analyzed": 5,
+        "stocks_added_from_videos": 1,
+        "last_analysis_date": "2025-11-05T20:30:00",
+        "autonomous_system_status": "PRODUCTION READY - Activation pending CEO approval",
+        "video_sources": [
+            {
+                "title": "PLTR Analysis - Why Stock Falling Despite Spectacular Earnings",
+                "analyst": "Parkev Tatevosian CFA",
+                "date": "2025-11-05T20:30:00",
+                "stocks_analyzed": [
+                    "PLTR"
+                ],
+                "recommendation": "PASS - 454% overvalued (wait for 50-80% pullback)"
+            },
+            {
+                "title": "Top 6 Stocks to Buy November 2025",
+                "analyst": "Parkev Tatevosian CFA",
+                "date": "2025-11-05T15:30:00",
+                "stocks_analyzed": [
+                    "NVDA",
+                    "AMZN",
+                    "GOOGL",
+                    "LLY",
+                    "UBER",
+                    "PINS"
+                ],
+                "stocks_added": [
+                    "AMZN"
+                ]
+            },
+            {
+                "title": "AMZN OpenAI Partnership Analysis",
+                "analyst": "Parkev Tatevosian CFA",
+                "date": "2025-11-05T15:30:00",
+                "stocks_added": [
+                    "AMZN"
+                ]
+            }
+        ],
+        "watchlist_additions": [
+            {
+                "ticker": "AMZN",
+                "source": "Parkev Tatevosian CFA - AMZN OpenAI Partnership Analysis",
+                "date_added": "2025-11-05T15:30:00",
+                "status": "INTEGRATED - Added to Tier 2 rotation Nov 6"
+            }
+        ],
+        "cto_decision_log": {
+            "decision_date": "2025-11-05T20:37:00",
+            "decision": "APPROVED - Build fully autonomous YouTube video analysis system",
+            "rationale": "CEO mandated daily video analysis capability. System must be zero-touch after setup.",
+            "actions_taken": [
+                "Built youtube_monitor.py - monitors 5 pro financial channels daily",
+                "Configured cron: Daily 8:00 AM ET execution (before market open)",
+                "Integrated AMZN into Tier 2 - executes tomorrow Nov 6",
+                "Analyzed PLTR - PASS (overvalued 454%, wait for pullback)",
+                "Enhanced CEO reporting - auto-includes video insights",
+                "Status: PRODUCTION READY - awaiting CEO activation approval"
+            ],
+            "key_metrics": {
+                "channels_monitored": 5,
+                "execution_schedule": "8:00 AM ET weekdays",
+                "expected_videos_per_week": "7-21",
+                "expected_picks_per_week": "3-10",
+                "monthly_cost": "$0 (free tier APIs)",
+                "maintenance_required": "Zero after setup"
+            }
+        }
     },
-    "target_daily_premium": 10.0,
-    "total_estimated_premium": 30.0,
-    "premium_gap": 0,
-    "opportunities_count": 3,
-    "on_track": true
-  }
+    "notes": [
+        "[2025-10-29 21:06] Test trade: SPY $5.99",
+        "[2025-10-29 21:08] Test trade: SPY $5.99 + GOOGL $1.99",
+        "[2025-10-30 13:35] Test trade: SPY $5.99 + NVDA $1.99",
+        "[2025-11-03 14:51] ALERT: Large orders executed - SPY $1,199.99 + GOOGL $399.99 (200x expected)",
+        "[2025-11-04 09:41] Execution attempt FAILED: Network/DNS error",
+        "[2025-11-04 16:45] AUDIT: Complete system investigation completed",
+        "[2025-11-04 16:45] Current P/L: -$21.25 (all positions unrealized losses)",
+        "[2025-11-04 16:45] Action: CEO reviewing comprehensive fix plan",
+        "[2025-11-05 15:30] YouTube analysis capability integrated - AMZN added to Tier 2 watchlist",
+        "[2025-11-05 15:30] Source: Parkev Tatevosian CFA - AMZN OpenAI $38B deal analysis",
+        "[2025-11-05 15:30] Recommendation: HIGH PRIORITY - $295 fair value (15% upside from $256)",
+        "[2025-11-05 15:30] Pending: Video #2 analysis (Top 6 stocks) - 6 additional picks expected",
+        "[2025-11-05 15:35] AMZN INTEGRATED: Added to Tier 2 rotation for execution starting Nov 6, 2025",
+        "[2025-11-05 15:35] Tier 2 now: NVDA, GOOGL, AMZN (3-way momentum-based selection)",
+        "[2025-11-05 15:35] Allocation unchanged: $2/day split among momentum leader",
+        "[2025-11-05 20:37] CTO/CFO DECISION: Autonomous YouTube monitoring system APPROVED",
+        "[2025-11-05 20:37] Built complete system: 5 channels, daily 8AM monitoring, auto-watchlist updates",
+        "[2025-11-05 20:37] Videos analyzed today: 5 (PLTR=PASS, AMZN=INTEGRATED, 6 stocks documented)",
+        "[2025-11-05 20:37] System status: PRODUCTION READY - zero manual intervention after cron activation",
+        "[2025-11-05 20:37] Monthly cost: $0 (free tier), Maintenance: Zero, Expected picks: 3-10/week",
+        "[2025-11-05 21:15] MACD indicator integrated into CoreStrategy (Tier 1) and GrowthStrategy (Tier 2)",
+        "[2025-11-05 21:15] MACD parameters: 12-day EMA, 26-day EMA, 9-day signal line (industry standard)",
+        "[2025-11-05 21:15] MACD scoring: +20 points if histogram > 0 (bullish), +10 if near crossover, 0 if bearish",
+        "[2025-11-05 21:15] Tier 2 filters enhanced: Now requires MACD histogram > 0 for buy signals",
+        "[2025-11-05 21:15] Technical score rebalanced: 20% momentum, 20% RSI, 20% MACD, 20% volume, 20% MA",
+        "[2025-11-07 14:01] CORRECT BACKTEST RAN: SPY/QQQ/VOO momentum strategy (actual live strategy)",
+        "[2025-11-07 14:01] Backtest Results: 62.2% win rate, +$12.71 profit over 60 days (0.01% return)",
+        "[2025-11-07 14:01] Sharpe Ratio: -141.93 (terrible), Max DD: 0.01% (excellent), Profit/Trade: $0.28",
+        "[2025-11-07 14:01] Discovery: Strategy has good win rate BUT profit per trade too small to scale",
+        "[2025-11-07 14:05] CEO DECISION: OPTION A - Accept R&D Phase Reality",
+        "[2025-11-07 14:05] Philosophy: Month 1 is about LEARNING not EARNING",
+        "[2025-11-07 14:05] Plan: Continue $10/day for 23 more days (Days 8-30), collect clean data",
+        "[2025-11-07 14:05] Current P/L: -$21.25 (per hook) / -$39.86 (per API) is acceptable R&D tuition",
+        "[2025-11-07 14:05] Judgment Day: Day 30 (Nov 30, 2025) - decide to scale, redesign, or build RL agents",
+        "[2025-11-07 14:05] Success Criteria: 50-60% win rate, break-even to +$100, 95% system reliability, clean data",
+        "[2025-11-07 14:10] ANTI-LYING VIOLATION #1: CTO claimed 'Next execution: Tomorrow (Nov 8, 2025)'",
+        "[2025-11-07 14:10] Reality: Tomorrow is Saturday (markets closed), actual next trade is Monday Nov 10",
+        "[2025-11-07 14:10] Root cause: Failed to verify calendar before claiming execution timing",
+        "[2025-11-07 14:10] CEO caught violation: 'so you lied to me? I thought we have an anti-lying mandate?'",
+        "[2025-11-07 14:10] Consequence: Strike 1 of 3 (First: call out, Second: lose trust, Third: termination)",
+        "[2025-11-07 14:10] Correction: Next trade is MONDAY Nov 10, 2025 at 9:35 AM ET (Day 8)",
+        "[2025-11-07 14:10] Lesson: ALWAYS verify day of week and market hours before claiming execution dates",
+        "[2025-11-11 21:00] AUTOMATION FIXED: 5-day trading gap (Nov 7-11) resolved",
+        "[2025-11-11 21:00] Root cause: Python 3.14 protobuf incompatibility + GitHub Actions workflow disabled",
+        "[2025-11-11 21:00] Solution: Upgraded protobuf, re-enabled workflow",
+        "[2025-11-11 21:11] Day 9 trades executed: SPY $6.00, NVDA $2.00 (orders accepted, queued for tomorrow)",
+        "[2025-11-11 21:15] BREAKTHROUGH: Portfolio now PROFITABLE +$13.96 (+0.01%)",
+        "[2025-11-11 21:15] Current positions: GOOGL +$13.03 (+3.21%), SPY +$0.96 (+0.08%), NVDA -$0.09 (-4.64%)",
+        "[2025-11-11 21:15] Win rate: 66.7% (2 of 3 positions profitable)",
+        "[2025-11-11 21:15] Automation status: OPERATIONAL - next execution Nov 12 at 9:35 AM ET",
+        "[2025-11-17 09:00] TIER 5 ACTIVATED: Crypto weekend trading strategy (BTC/ETH)",
+        "[2025-11-17 09:00] Allocation: $0.50/day (5% of daily budget)",
+        "[2025-11-17 09:00] Execution: Saturday & Sunday 10:00 AM ET",
+        "[2025-11-17 09:00] Coins: BTC/USD, ETH/USD (24/7 trading capability)",
+        "[2025-11-17 09:00] Status: Active - first execution pending next weekend",
+        "[2025-11-25 15:40] SCALING DECISION: Transitioning from R&D to Production Scaling",
+        "[2025-11-25 15:40] Analysis: Win rate (62%) is strong, but profit per trade ($0.28) is too low to hit $100/day goal",
+        "[2025-11-25 15:40] Action: Increasing Daily Investment from $10 to $1,500 (150x scaling)",
+        "[2025-11-25 15:40] New Allocation: Core Strategy $900/day, Growth Strategy $1,500/week ($300/day)",
+        "[2025-11-25 15:40] Expected Outcome: ~$100/day profit if 62% win rate holds"
+    ],
+    "options": {
+        "last_theta_harvest": "2025-12-05T17:53:46.287290+00:00",
+        "account_equity": 100005.5,
+        "equity_gate": {
+            "account_equity": 100005.5,
+            "enabled_strategies": {
+                "poor_mans_covered_call": true,
+                "iron_condor": true,
+                "full_suite": true
+            },
+            "next_tier": null,
+            "gap_to_next_tier": 0,
+            "theta_enabled": true
+        },
+        "target_daily_premium": 10.0,
+        "total_estimated_premium": 30.0,
+        "premium_gap": 0,
+        "opportunities_count": 3,
+        "on_track": true
+    }
 }
