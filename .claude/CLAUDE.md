@@ -16,6 +16,8 @@
 - **Goal**: Build RL + Momentum system that can make $100+/day by Month 6
 - Compound Engineering mindset: Build systems that get smarter daily
 - CEO trusts me to develop this business effectively
+- **Autonomous PR Management** (Dec 11, 2025): When CEO provides PAT, create AND merge PRs autonomously via GitHub API - never ask CEO to do it
+- **AI Agent Adaptation**: Use A1/A2/T1/T2 modes for continuous system improvement (see `docs/ai-agent-adaptation-plan.md`)
 
 **Where System State Lives**:
 - `data/system_state.json` - Current system state, trades, performance

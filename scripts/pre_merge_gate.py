@@ -74,6 +74,19 @@ def main():
             "Critical Import: Reflexion Loop",
             f"cd {root} && python3 -c 'from src.coaching.reflexion_loop import ReflexionLoop'",
         ),
+        # RL/ML Pipeline Checks (added Dec 11, 2025 per ll_011)
+        (
+            "Critical Import: RLFilter",
+            f"cd {root} && python3 -c 'from src.agents.rl_agent import RLFilter'",
+        ),
+        (
+            "Critical Import: RLWeightUpdater",
+            f"cd {root} && python3 -c 'from src.agents.rl_weight_updater import RLWeightUpdater'",
+        ),
+        (
+            "Critical Import: PositionManager",
+            f"cd {root} && python3 -c 'from src.risk.position_manager import PositionManager'",
+        ),
     ]
 
     failed = []
