@@ -1,0 +1,258 @@
+name: Intraday Scalping (Multiple Trades/Day)
+
+# THE ONE THING: Increase trade frequency from 1/day to 5-10/day
+# Goal: $2/trade x 50 trades = $100/day North Star
+
+on:
+  schedule:
+    # HIGH-VOLUME TRADING WINDOWS (Eastern Time)
+    # Morning session: 9:35, 9:50, 10:05, 10:20 AM
+    # Afternoon session: 3:00, 3:15, 3:30, 3:45 PM
+
+    # Morning session (EST: UTC-5, EDT: UTC-4)
+    - cron: '35 13,14 * * 1-5'   # 9:35 AM ET
+    - cron: '50 13,14 * * 1-5'   # 9:50 AM ET
+    - cron: '05 14,15 * * 1-5'   # 10:05 AM ET
+    - cron: '20 14,15 * * 1-5'   # 10:20 AM ET
+
+    # Afternoon session (EST: UTC-5, EDT: UTC-4)
+    - cron: '00 19,20 * * 1-5'   # 3:00 PM ET
+    - cron: '15 19,20 * * 1-5'   # 3:15 PM ET
+    - cron: '30 19,20 * * 1-5'   # 3:30 PM ET
+    - cron: '45 19,20 * * 1-5'   # 3:45 PM ET
+
+  workflow_dispatch:
+    inputs:
+      force_trade:
+        description: "Force scalp execution"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: intraday-scalping
+  cancel-in-progress: false
+
+env:
+  # Intraday scalping parameters
+  INTRADAY_TAKE_PROFIT_PCT: "0.005"   # 0.5% take profit
+  INTRADAY_STOP_LOSS_PCT: "0.003"     # 0.3% stop loss
+  INTRADAY_POSITION_SIZE: "20"        # $20 per trade
+  INTRADAY_MAX_TRADES: "10"           # Max 10 trades/day
+
+jobs:
+  scalp-trade:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install minimal dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install --no-cache-dir alpaca-py pandas numpy requests
+
+      - name: Check trading window
+        id: check_window
+        env:
+          TZ: America/New_York
+        run: |
+          HOUR=$(date +%H)
+          MIN=$(date +%M)
+          echo "Current ET time: $HOUR:$MIN"
+
+          # Morning window: 9:30-10:30
+          if [ "$HOUR" -eq 9 ] && [ "$MIN" -ge 30 ]; then
+            echo "window=morning" >> $GITHUB_OUTPUT
+            echo "can_trade=true" >> $GITHUB_OUTPUT
+          elif [ "$HOUR" -eq 10 ] && [ "$MIN" -le 30 ]; then
+            echo "window=morning" >> $GITHUB_OUTPUT
+            echo "can_trade=true" >> $GITHUB_OUTPUT
+          # Afternoon window: 15:00-15:55
+          elif [ "$HOUR" -eq 15 ] && [ "$MIN" -le 55 ]; then
+            echo "window=afternoon" >> $GITHUB_OUTPUT
+            echo "can_trade=true" >> $GITHUB_OUTPUT
+          else
+            echo "window=closed" >> $GITHUB_OUTPUT
+            echo "can_trade=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Execute intraday scalp
+        if: steps.check_window.outputs.can_trade == 'true' || github.event.inputs.force_trade == 'true'
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          ALPACA_BASE_URL: "https://paper-api.alpaca.markets"
+          TRADING_WINDOW: ${{ steps.check_window.outputs.window }}
+        run: |
+          python3 << 'EOF'
+          import os
+          import json
+          from datetime import datetime, timezone
+
+          # Alpaca setup
+          from alpaca.trading.client import TradingClient
+          from alpaca.trading.requests import MarketOrderRequest
+          from alpaca.trading.enums import OrderSide, TimeInForce
+          from alpaca.data.historical import StockHistoricalDataClient
+          from alpaca.data.requests import StockBarsRequest
+          from alpaca.data.timeframe import TimeFrame
+
+          api_key = os.environ["ALPACA_API_KEY"]
+          secret_key = os.environ["ALPACA_SECRET_KEY"]
+          window = os.environ.get("TRADING_WINDOW", "unknown")
+
+          print(f"🎯 Intraday Scalp - Window: {window}")
+          print(f"⏰ Time: {datetime.now(timezone.utc).isoformat()}")
+
+          # Initialize clients
+          trading_client = TradingClient(api_key, secret_key, paper=True)
+          data_client = StockHistoricalDataClient(api_key, secret_key)
+
+          # Get account info
+          account = trading_client.get_account()
+          print(f"💰 Buying Power: ${float(account.buying_power):,.2f}")
+
+          # Scalping targets (high-liquidity ETFs)
+          symbols = ["SPY", "QQQ"]
+
+          for symbol in symbols:
+              try:
+                  # Get 5-minute bars (last 2 hours = 24 bars)
+                  from datetime import timedelta
+                  end = datetime.now(timezone.utc)
+                  start = end - timedelta(hours=2)
+
+                  request = StockBarsRequest(
+                      symbol_or_symbols=symbol,
+                      timeframe=TimeFrame.Minute,
+                      start=start,
+                      end=end,
+                  )
+
+                  bars = data_client.get_stock_bars(request)
+                  bar_list = list(bars[symbol])
+
+                  if len(bar_list) < 20:
+                      print(f"⚠️ {symbol}: Insufficient bars ({len(bar_list)})")
+                      continue
+
+                  # Calculate quick indicators
+                  closes = [float(b.close) for b in bar_list]
+                  volumes = [float(b.volume) for b in bar_list]
+
+                  current_price = closes[-1]
+                  avg_volume = sum(volumes[-20:]) / 20
+                  volume_ratio = volumes[-1] / avg_volume if avg_volume > 0 else 1
+
+                  # Simple momentum check
+                  price_change = (closes[-1] - closes[-5]) / closes[-5]
+                  momentum_up = price_change > 0
+
+                  # RSI approximation
+                  gains = [max(0, closes[i] - closes[i-1]) for i in range(-14, 0)]
+                  losses = [max(0, closes[i-1] - closes[i]) for i in range(-14, 0)]
+                  avg_gain = sum(gains) / 14
+                  avg_loss = sum(losses) / 14
+                  rs = avg_gain / avg_loss if avg_loss > 0 else 100
+                  rsi = 100 - (100 / (1 + rs))
+
+                  print(f"\n📊 {symbol} Analysis:")
+                  print(f"   Price: ${current_price:.2f}")
+                  print(f"   RSI: {rsi:.1f}")
+                  print(f"   Volume Ratio: {volume_ratio:.2f}x")
+                  print(f"   5-bar Change: {price_change*100:.2f}%")
+
+                  # Scalp signal: RSI not overbought + volume surge + momentum
+                  should_buy = (
+                      rsi < 65 and           # Not overbought
+                      volume_ratio > 1.2 and  # Volume surge
+                      momentum_up            # Price moving up
+                  )
+
+                  if should_buy:
+                      # Calculate position size ($20)
+                      position_size = 20.0
+                      shares = int(position_size / current_price)
+
+                      if shares > 0:
+                          print(f"\n🚀 SCALP SIGNAL: BUY {shares} {symbol} @ ${current_price:.2f}")
+
+                          # Place market order
+                          order_request = MarketOrderRequest(
+                              symbol=symbol,
+                              qty=shares,
+                              side=OrderSide.BUY,
+                              time_in_force=TimeInForce.DAY
+                          )
+
+                          order = trading_client.submit_order(order_request)
+                          print(f"✅ Order submitted: {order.id}")
+
+                          # Log to file
+                          trade_log = {
+                              "symbol": symbol,
+                              "action": "BUY",
+                              "quantity": shares,
+                              "price": current_price,
+                              "timestamp": datetime.now(timezone.utc).isoformat(),
+                              "window": window,
+                              "rsi": rsi,
+                              "volume_ratio": volume_ratio,
+                              "type": "INTRADAY_SCALP"
+                          }
+
+                          log_file = f"data/trades_{datetime.now().strftime('%Y-%m-%d')}.json"
+                          try:
+                              with open(log_file, "r") as f:
+                                  trades = json.load(f)
+                          except:
+                              trades = []
+                          trades.append(trade_log)
+                          with open(log_file, "w") as f:
+                              json.dump(trades, f, indent=2)
+
+                          print(f"📝 Trade logged to {log_file}")
+                      else:
+                          print(f"⚠️ Position size too small for {symbol}")
+                  else:
+                      reasons = []
+                      if rsi >= 65:
+                          reasons.append(f"RSI overbought ({rsi:.1f})")
+                      if volume_ratio <= 1.2:
+                          reasons.append(f"Low volume ({volume_ratio:.2f}x)")
+                      if not momentum_up:
+                          reasons.append("Negative momentum")
+                      print(f"⏸️ No scalp signal: {', '.join(reasons)}")
+
+              except Exception as e:
+                  print(f"❌ Error processing {symbol}: {e}")
+
+          print(f"\n✅ Intraday scalp scan complete")
+          EOF
+
+      - name: Skip - Outside trading window
+        if: steps.check_window.outputs.can_trade == 'false' && github.event.inputs.force_trade != 'true'
+        run: |
+          echo "⏰ Outside trading window (${{ steps.check_window.outputs.window }})"
+          echo "Morning: 9:30-10:30 AM ET"
+          echo "Afternoon: 3:00-3:55 PM ET"
+
+      - name: Commit trade logs
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/*.json || true
+          git diff --staged --quiet || git commit -m "chore: intraday scalp log $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push || true
