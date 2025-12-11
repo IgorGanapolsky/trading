@@ -603,3 +603,114 @@ def is_ready_to_trade() -> tuple[bool, CoachingIntervention | None]:
 def get_affirmation() -> str:
     """Get daily affirmation."""
     return get_coach().get_daily_affirmation()
+
+
+def get_prompt_context() -> str:
+    """Get psychology context formatted for injection into LLM prompts.
+
+    This bridges the mental toughness coach to LLM decision-making by providing
+    real-time psychological state and bias awareness that can be injected into
+    system prompts.
+
+    Based on research showing LLMs exhibit cognitive biases (17-57% susceptibility)
+    and benefit from self-reflection prompts (Reflexion framework).
+
+    Returns:
+        Formatted string with psychology context for LLM prompt injection
+    """
+    coach = get_coach()
+    state = coach.state
+
+    # Build context sections
+    sections = []
+
+    # 1. Cognitive Bias Awareness
+    sections.append("""
+## Cognitive Bias Awareness (Kahneman + Siebold + Robbins)
+You are susceptible to cognitive biases. Before making ANY trading decision:
+- LOSS AVERSION: Losses feel 2x worse than equivalent gains. Don't let this distort your judgment.
+- RECENCY BIAS: Recent events feel more important. Consider the full picture.
+- CONFIRMATION BIAS: You seek data that confirms your beliefs. Actively look for disconfirming evidence.
+- OVERCONFIDENCE: After wins, you may underestimate risk. Stay humble.
+""")
+
+    # 2. Current Psychology State
+    zone = state.current_zone.value
+    readiness = state.get_readiness_score()
+    energy = state.mental_energy * 100
+
+    sections.append(f"""
+## Current Psychology State
+- Emotional Zone: {zone.upper()}
+- Readiness Score: {readiness:.0f}/100
+- Mental Energy: {energy:.0f}%
+- Consecutive Wins: {state.consecutive_wins}
+- Consecutive Losses: {state.consecutive_losses}
+""")
+
+    # 3. Active Bias Alerts
+    if state.active_biases:
+        bias_alerts = [f"  - {b.bias_type.value}: {b.trigger}" for b in state.active_biases]
+        sections.append(f"""
+## ⚠️ ACTIVE BIAS ALERTS
+{chr(10).join(bias_alerts)}
+Consider how these biases might be affecting your analysis.
+""")
+
+    # 4. Decision Framework
+    sections.append("""
+## Decision Framework (System 2 Activation)
+Before recommending any trade, answer these questions:
+1. Am I reacting emotionally or thinking logically?
+2. What would I recommend if I had NO prior positions?
+3. What evidence would DISPROVE my thesis?
+4. Is this trade size appropriate for current risk tolerance?
+""")
+
+    return "\n".join(sections)
+
+
+def get_position_size_modifier() -> float:
+    """Get a multiplier for position sizing based on psychology state.
+
+    Returns a value between 0.0 (don't trade) and 1.0 (full size).
+    Based on emotional zone, consecutive losses, and readiness score.
+
+    Returns:
+        Float between 0.0 and 1.0 to multiply against base position size
+    """
+    coach = get_coach()
+    state = coach.state
+
+    # Base modifier starts at 1.0 (full size)
+    modifier = 1.0
+
+    # Zone-based adjustments
+    zone_modifiers = {
+        EmotionalZone.FLOW: 1.0,       # Peak performance - full size
+        EmotionalZone.CHALLENGE: 0.9,  # Healthy stress - 90% size
+        EmotionalZone.CAUTION: 0.75,   # Reduced confidence - 75% size
+        EmotionalZone.DANGER: 0.5,     # High risk - 50% size
+        EmotionalZone.TILT: 0.0,       # DO NOT TRADE
+    }
+    modifier *= zone_modifiers.get(state.current_zone, 0.75)
+
+    # Consecutive loss adjustments
+    if state.consecutive_losses >= 4:
+        modifier *= 0.0  # Circuit breaker - no trading
+    elif state.consecutive_losses >= 3:
+        modifier *= 0.5  # Severe - half size
+    elif state.consecutive_losses >= 2:
+        modifier *= 0.75  # Moderate - 75% size
+
+    # Readiness score adjustment
+    readiness = state.get_readiness_score()
+    if readiness < 30:
+        modifier *= 0.0  # Too low - don't trade
+    elif readiness < 50:
+        modifier *= 0.5  # Low - half size
+    elif readiness < 70:
+        modifier *= 0.75  # Below optimal - 75% size
+
+    # Ensure we don't exceed 1.0 or go below 0.0
+    return max(0.0, min(1.0, modifier))
