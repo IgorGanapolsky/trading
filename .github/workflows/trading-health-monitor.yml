@@ -1,0 +1,272 @@
+name: Trading Health Monitor
+
+# Runs daily to verify trading system is operational
+# Catches issues like the 23-day gap (Nov 12 - Dec 4, 2025)
+
+on:
+  schedule:
+    # Run at 11:00 AM ET (after trading should have executed at 9:35 AM)
+    - cron: '0 16 * * 1-5'  # 16:00 UTC = 11:00 AM ET
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  health-check:
+    name: Verify Trading Execution
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check last execution
+        id: check_execution
+        run: |
+          echo "🔍 Checking trading execution health..."
+
+          # Read system state
+          if [ ! -f "data/system_state.json" ]; then
+            echo "❌ CRITICAL: system_state.json not found!"
+            echo "health_status=critical" >> $GITHUB_OUTPUT
+            echo "alert_message=system_state.json missing - trading system may be broken" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Extract last_updated timestamp
+          LAST_UPDATED=$(python3 -c "
+          import json
+          from datetime import datetime, timedelta
+
+          with open('data/system_state.json') as f:
+              state = json.load(f)
+
+          last_updated = state.get('meta', {}).get('last_updated', '')
+          print(last_updated)
+          ")
+
+          echo "Last updated: $LAST_UPDATED"
+
+          # Check if update is recent (within last 48 hours for weekends)
+          HEALTH_STATUS=$(python3 -c "
+          import json
+          from datetime import datetime, timedelta
+
+          with open('data/system_state.json') as f:
+              state = json.load(f)
+
+          last_updated_str = state.get('meta', {}).get('last_updated', '')
+          if not last_updated_str:
+              print('critical')
+              exit()
+
+          try:
+              # Handle various datetime formats
+              for fmt in ['%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d']:
+                  try:
+                      last_updated = datetime.fromisoformat(last_updated_str.replace('Z', '+00:00').split('+')[0])
+                      break
+                  except:
+                      continue
+              else:
+                  print('critical')
+                  exit()
+
+              now = datetime.now()
+              age = now - last_updated
+
+              if age > timedelta(hours=72):
+                  print('critical')
+              elif age > timedelta(hours=48):
+                  print('warning')
+              else:
+                  print('healthy')
+          except Exception as e:
+              print('critical')
+          ")
+
+          echo "Health status: $HEALTH_STATUS"
+          echo "health_status=$HEALTH_STATUS" >> $GITHUB_OUTPUT
+
+          # Get execution count
+          EXEC_COUNT=$(python3 -c "
+          import json
+          with open('data/system_state.json') as f:
+              state = json.load(f)
+          auto = state.get('automation', {})
+          print(auto.get('execution_count', 0))
+          ")
+          echo "Execution count: $EXEC_COUNT"
+          echo "exec_count=$EXEC_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Check for recent trades
+        id: check_trades
+        run: |
+          echo "📊 Checking recent trading activity..."
+
+          python3 << 'EOF'
+          import json
+          from datetime import datetime, timedelta
+          from pathlib import Path
+
+          # Check for recent daily reports
+          reports_dir = Path("reports")
+          if not reports_dir.exists():
+              print("⚠️ No reports directory")
+              exit()
+
+          reports = list(reports_dir.glob("daily_report_*.txt"))
+          recent_count = 0
+          cutoff = datetime.now() - timedelta(days=7)
+
+          for report in sorted(reports, reverse=True)[:10]:
+              try:
+                  date_str = report.stem.replace("daily_report_", "")
+                  report_date = datetime.strptime(date_str, "%Y-%m-%d")
+                  if report_date > cutoff:
+                      recent_count += 1
+                      print(f"  ✓ {report.name}")
+              except ValueError:
+                  continue
+
+          print(f"\n📈 Recent reports (last 7 days): {recent_count}")
+
+          # Should have ~5 reports for weekdays
+          if recent_count == 0:
+              print("❌ CRITICAL: No recent daily reports!")
+          elif recent_count < 3:
+              print("⚠️ WARNING: Fewer reports than expected")
+          else:
+              print("✅ Report generation healthy")
+          EOF
+
+      - name: Check workflow runs
+        id: check_workflows
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔄 Checking recent workflow runs..."
+
+          # Get recent daily-trading workflow runs
+          RUNS=$(gh run list --workflow=daily-trading.yml --limit=10 --json status,conclusion,createdAt,name 2>/dev/null || echo "[]")
+
+          if [ "$RUNS" = "[]" ]; then
+            echo "⚠️ Could not fetch workflow runs"
+            echo "workflow_health=unknown" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Analyze runs
+          python3 << EOF
+          import json
+          from datetime import datetime, timedelta
+
+          runs = json.loads('''$RUNS''')
+
+          if not runs:
+              print("❌ No recent workflow runs found!")
+              exit()
+
+          successful = 0
+          failed = 0
+          recent_runs = 0
+          cutoff = datetime.now() - timedelta(days=7)
+
+          for run in runs:
+              created = run.get('createdAt', '')
+              if created:
+                  try:
+                      run_date = datetime.fromisoformat(created.replace('Z', '+00:00').replace('+00:00', ''))
+                      if run_date > cutoff:
+                          recent_runs += 1
+                  except:
+                      pass
+
+              if run.get('conclusion') == 'success':
+                  successful += 1
+              elif run.get('conclusion') == 'failure':
+                  failed += 1
+
+          print(f"📊 Workflow Analysis (last 10 runs):")
+          print(f"   Successful: {successful}")
+          print(f"   Failed: {failed}")
+          print(f"   Recent (7 days): {recent_runs}")
+
+          if recent_runs == 0:
+              print("\n❌ CRITICAL: No workflow runs in last 7 days!")
+          elif failed > successful:
+              print("\n⚠️ WARNING: More failures than successes")
+          else:
+              print("\n✅ Workflow health looks good")
+          EOF
+
+      - name: Create alert if unhealthy
+        if: steps.check_execution.outputs.health_status == 'critical'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🚨 Creating alert issue..."
+
+          TITLE="🚨 TRADING ALERT: System may not be executing trades"
+          BODY="## Trading Health Check Failed
+
+          **Status**: CRITICAL
+          **Detected**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+
+          ### Issue
+          The trading system has not updated in over 48 hours. This may indicate:
+          - Workflows are disabled
+          - Secrets are invalid
+          - Execution is failing silently
+
+          ### Actions Required
+          1. Check [GitHub Actions](../../actions) for recent runs
+          2. Verify secrets are configured correctly
+          3. Review workflow logs for errors
+          4. Manually trigger a workflow run if needed
+
+          ### System State
+          - Last Updated: ${{ steps.check_execution.outputs.last_updated }}
+          - Execution Count: ${{ steps.check_execution.outputs.exec_count }}
+
+          ---
+          *This alert was generated automatically by the Trading Health Monitor.*"
+
+          # Check if similar issue exists
+          EXISTING=$(gh issue list --label "trading-alert" --state open --limit 1 --json number -q '.[0].number' 2>/dev/null || echo "")
+
+          if [ -z "$EXISTING" ]; then
+            gh issue create \
+              --title "$TITLE" \
+              --body "$BODY" \
+              --label "trading-alert,critical"
+            echo "✅ Alert issue created"
+          else
+            echo "ℹ️ Alert issue #$EXISTING already exists"
+          fi
+
+      - name: Summary
+        run: |
+          echo "## 🏥 Trading Health Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| System State | ${{ steps.check_execution.outputs.health_status }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Execution Count | ${{ steps.check_execution.outputs.exec_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.check_execution.outputs.health_status }}" = "healthy" ]; then
+            echo "✅ **Trading system is healthy**" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.check_execution.outputs.health_status }}" = "warning" ]; then
+            echo "⚠️ **Trading system needs attention**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "🚨 **CRITICAL: Trading system may not be running!**" >> $GITHUB_STEP_SUMMARY
+          fi
