@@ -112,9 +112,10 @@ PYTHONPATH=src python3 scripts/generate_profit_target_report.py --target 100
 **CRITICAL - Read These First**:
 - **[docs/verification-protocols.md](docs/verification-protocols.md)** - "Show, Don't Tell" protocol (MANDATORY reading for all agents and developers)
 - **[docs/r-and-d-phase.md](docs/r-and-d-phase.md)** - Current R&D phase strategy and status (90-day plan)
-- **[docs/define-success.md](docs/define-success.md)** - Anthropic “Define Success” scorecard adopted for every iteration
+- **[docs/define-success.md](docs/define-success.md)** - Anthropic "Define Success" scorecard adopted for every iteration
 - **[docs/AGENTS.md](docs/AGENTS.md)** - Agent coordination guidelines for autonomous operation
 - **[docs/PLAN_MODE_ENFORCEMENT.md](docs/PLAN_MODE_ENFORCEMENT.md)** - Mandatory Claude Code Plan Mode workflow + guardrails
+- **[rag_knowledge/lessons_learned/](rag_knowledge/lessons_learned/)** - Post-incident learnings (ll_009: CI syntax, ll_013: safety gaps)
 
 **Strategic Context**:
 - **[docs/research-findings.md](docs/research-findings.md)** - Future enhancement roadmap and researched capabilities
@@ -135,9 +136,10 @@ These documents contain critical protocols and context for understanding how the
 - ✅ Max Drawdown: **2.2%** (excellent)
 - ✅ Annualized Return: **26.16%**
 
-**Current Status**: Active 90-day R&D phase
-**Account**: $99,978.75 (paper trading)
+**Current Status**: Active 90-day R&D phase (Day 9/90)
+**Account**: $100,017.49 (paper trading) | P/L: +$17.49
 **Daily Investment**: $10/day (fixed)
+**Live Win Rate**: 66.7%
 
 ---
 
@@ -302,9 +304,57 @@ Set `HYBRID_LLM_MODEL=claude-3-5-haiku-20241022` (default) or `gpt-4o-mini` to c
 ## ✅ Promotion Gate & Telemetry
 
 - **Scenario Backtests**: `python3 scripts/run_backtest_matrix.py` executes the regime matrix defined in `config/backtest_scenarios.yaml` and persists structured metrics to `data/backtests/`. Pass `--use-hybrid-gates` to replay the full production funnel (momentum → transformer RL → LLM proxy → risk) inside CI-safe backtests.
-- **Automated Promotion Guard**: `python3 scripts/enforce_promotion_gate.py` blocks any live trading toggles until paper-trading + scenario metrics satisfy the R&D thresholds (win rate >60%, Sharpe >1.5, max drawdown <10%, ≥30-day profitable streak).
+- **Automated Promotion Guard**: `python3 scripts/enforce_promotion_gate.py` blocks any live trading toggles until paper-trading + scenario metrics satisfy the R&D thresholds (win rate >55%, Sharpe >1.2, max drawdown <10%, ≥100 trades).
 - **CI Integration**: `.github/workflows/daily-trading.yml` now runs the matrix + promotion guard before the orchestrator fires, so we cannot accidentally bypass the R&D phase.
 - **Telemetry Surfaces**: `scripts/generate_telemetry_report.py` and `dashboard/telemetry_app.py` read `data/audit_trail/hybrid_funnel_runs.jsonl` to expose gate pass/reject rates, top tickers, and recent errors for monitoring.
+
+---
+
+## 🛡️ Safety Testing Infrastructure (NEW Dec 2025)
+
+Multi-layer defense to prevent repeated CI failures and ensure safe deployments.
+
+### Unified Promotion Gate (`.github/workflows/promotion-gate.yml`)
+**Single source of truth** for deployment safety decisions with 11 jobs:
+1. `yaml-lint` - Validates all workflow YAML syntax
+2. `syntax-check` - Compiles all Python files
+3. `import-test` - Tests critical imports (TradingOrchestrator, etc.)
+4. `gate-sanity` - Runs promotion gate tests
+5. `dry-run-invariants` - Verifies position limits and risk budgets
+6. `ml-safety-check` - ML pattern detection for high-risk changes
+7. `rag-validation` - Queries lessons learned for similar failures
+8. `safety-gates` - Comprehensive stationarity/slippage tests
+9. `capital-scaling` - Tests capital scaling logic sanity
+10. `promotion-decision` - Final APPROVED/BLOCKED verdict
+
+### Safety Test Files
+| File | Purpose |
+|------|---------|
+| `tests/test_promotion_gate_sanity.py` | 9 tests: gate not always-accept/always-reject |
+| `tests/test_dry_run_invariants.py` | 14 tests: position limits ≤$100, risk ≤10% |
+| `tests/test_capital_scaling.py` | 11 tests: prevents $10/day rec for $100/day target |
+| `tests/test_ml_pipeline_safety.py` | ML pattern matching tests |
+| `scripts/fuzz_promotion_gate.py` | 50+ random configs, checks acceptance 5-60% |
+| `scripts/validate_workflows.py` | YAML syntax + structure validation |
+
+### ML/RAG Verification
+| Tool | Purpose |
+|------|---------|
+| `src/verification/ml_pipeline_safety_checker.py` | Learns failure patterns from lessons learned |
+| `src/verification/rag_premerge_validator.py` | Queries RAG before merges |
+| `src/verification/ml_anomaly_detector.py` | Statistical anomaly detection |
+
+### Usage
+```bash
+# Check files before merge
+python -m src.verification.ml_pipeline_safety_checker --files "src/orchestrator/main.py" --json
+
+# Validate workflow YAML
+python3 scripts/validate_workflows.py .github/workflows/*.yml
+
+# Run gate fuzzing
+python3 scripts/fuzz_promotion_gate.py --trials 100 --seed 42
+```
 
 ---
 
