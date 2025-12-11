@@ -315,34 +315,67 @@ class TestKalshiOracle:
                 fetched_at=now,
             ),
         ]
-        oracle_no_client._market_cache = {m.ticker: m for m in markets}
-        oracle_no_client._last_fetch = now
 
-        should_trade, reason = oracle_no_client.should_trade_symbol("TLT", "buy")
+        # Mock fetch_market_odds to return our test markets
+        with patch.object(oracle_no_client, "fetch_market_odds", return_value=markets):
+            should_trade, reason = oracle_no_client.should_trade_symbol("TLT", "buy")
 
         assert should_trade is True
-        assert "confirms" in reason.lower() or "proceed" in reason.lower()
+        assert "confirms" in reason.lower()
 
-    def test_should_trade_symbol_contra_indicates(self, oracle_no_client):
-        """Test trade validation when signal contra-indicates buy."""
+    def test_should_trade_symbol_confirms_bearish_target(self, oracle_no_client):
+        """Test that buying a bearish signal's target is confirmed.
+
+        When Fed hike odds are high (80%), bearish signal targets SHV (short duration).
+        Buying SHV should be CONFIRMED since the signal recommends it.
+        """
         now = datetime.now(timezone.utc)
         # Create markets that would generate bearish bond signal
         markets = [
             MarketOddsSnapshot(
                 ticker="KXFED-DEC25-HIKE",
                 title="Fed Rate Hike December 2025",
-                yes_odds=80.0,  # High hike odds = bearish bonds
+                yes_odds=80.0,  # High hike odds = bearish bonds, targets SHV
                 volume=100000,
                 category="economics",
                 fetched_at=now,
             ),
         ]
-        oracle_no_client._market_cache = {m.ticker: m for m in markets}
-        oracle_no_client._last_fetch = now
 
-        should_trade, reason = oracle_no_client.should_trade_symbol("TLT", "buy")
+        # Mock fetch_market_odds to return our test markets
+        with patch.object(oracle_no_client, "fetch_market_odds", return_value=markets):
+            # SHV is in the bearish targets, so buying it should be CONFIRMED
+            should_trade, reason = oracle_no_client.should_trade_symbol("SHV", "buy")
 
-        # TLT buy should be contra-indicated when Fed hiking odds are high
+        # Bearish signal with SHV as target - buying SHV should be CONFIRMED
+        assert should_trade is True
+        assert "confirms" in reason.lower()
+
+    def test_should_trade_symbol_contra_indicates_sell(self, oracle_no_client):
+        """Test trade validation when signal contra-indicates sell.
+
+        If a signal recommends buying TLT (bullish bonds), then trying to
+        SELL TLT should be contra-indicated.
+        """
+        now = datetime.now(timezone.utc)
+        # Create markets that would generate bullish bond signal
+        markets = [
+            MarketOddsSnapshot(
+                ticker="KXFED-DEC25-HIKE",
+                title="Fed Rate Hike December 2025",
+                yes_odds=20.0,  # Low hike odds = bullish bonds, targets TLT
+                volume=100000,
+                category="economics",
+                fetched_at=now,
+            ),
+        ]
+
+        # Mock fetch_market_odds to return our test markets
+        with patch.object(oracle_no_client, "fetch_market_odds", return_value=markets):
+            # TLT is in the bullish targets, so selling it should be contra-indicated
+            should_trade, reason = oracle_no_client.should_trade_symbol("TLT", "sell")
+
+        # Signal recommends buying TLT, so selling is contra-indicated
         assert should_trade is False
         assert "contra-indicates" in reason.lower()
 

@@ -480,6 +480,15 @@ class KalshiOracle:
         """
         Check if Kalshi signals support trading a symbol in a given direction.
 
+        The signal's target_symbols represent "what to buy given this market view".
+        For example:
+        - Bearish bonds signal targeting SHV means "buy SHV (short duration)"
+        - Bullish bonds signal targeting TLT means "buy TLT (long bonds)"
+
+        So if a symbol is in the signal's targets, buying it is CONFIRMED
+        regardless of whether the signal is bullish/bearish - the signal
+        already did the work of determining what to buy.
+
         Args:
             symbol: Symbol to trade
             proposed_direction: "buy" or "sell"
@@ -492,20 +501,13 @@ class KalshiOracle:
         if signal is None:
             return True, "No Kalshi signal - proceed with other indicators"
 
-        # Check alignment
-        bullish_directions = [SignalDirection.BULLISH, SignalDirection.STRONG_BULLISH]
-        bearish_directions = [SignalDirection.BEARISH, SignalDirection.STRONG_BEARISH]
-
+        # If symbol is in the signal's target_symbols, the signal is recommending it
         if proposed_direction == "buy":
-            if signal.direction in bullish_directions:
-                return True, f"Kalshi confirms buy: {signal.reasoning}"
-            elif signal.direction in bearish_directions:
-                return False, f"Kalshi contra-indicates buy: {signal.reasoning}"
+            # Signal recommends this symbol - confirm buy
+            return True, f"Kalshi confirms buy: {signal.reasoning}"
         elif proposed_direction == "sell":
-            if signal.direction in bearish_directions:
-                return True, f"Kalshi confirms sell: {signal.reasoning}"
-            elif signal.direction in bullish_directions:
-                return False, f"Kalshi contra-indicates sell: {signal.reasoning}"
+            # Signal recommends buying this symbol, so selling is contra-indicated
+            return False, f"Kalshi contra-indicates sell: {signal.reasoning}"
 
         return True, "Kalshi neutral - proceed with other indicators"
 
