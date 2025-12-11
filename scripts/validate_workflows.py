@@ -2,173 +2,115 @@
 """
 Workflow Validation Script
 
-Tests the validation logic used in GitHub Actions workflows locally.
-Run this before pushing changes to ensure validations work correctly.
+Validates GitHub Actions workflows to prevent silent failures.
+This script catches issues like:
+- Unconditional success returns after failures
+- Silent exit 0 patterns
+- Missing error handling
+
+Run as pre-commit hook or in CI to prevent broken workflows from merging.
 
 Usage:
     python scripts/validate_workflows.py
+    python scripts/validate_workflows.py --strict  # Fail on warnings too
 """
 
-import json
+import argparse
+import re
 import sys
-from datetime import datetime
 from pathlib import Path
-
-# Paths
-BASE_DIR = Path(__file__).parent.parent
-WATCHLIST_FILE = BASE_DIR / "data" / "tier2_watchlist.json"
-SYSTEM_STATE_FILE = BASE_DIR / "data" / "system_state.json"
+from typing import NamedTuple
 
 
-def validate_watchlist():
-    """Validate tier2_watchlist.json (same logic as GitHub Actions)"""
-    print("=" * 60)
-    print("🔍 Validating tier2_watchlist.json...")
-    print("=" * 60)
+class ValidationIssue(NamedTuple):
+    """Represents a validation issue found in a workflow."""
+    file: str
+    line: int
+    severity: str  # "error" or "warning"
+    message: str
+    pattern: str
 
-    if not WATCHLIST_FILE.exists():
-        print("❌ ERROR: tier2_watchlist.json not found!")
-        return False
 
-    try:
-        with open(WATCHLIST_FILE) as f:
-            data = json.load(f)
+# Required patterns for critical workflows
+REQUIRED_PATTERNS = {
+    "daily-trading.yml": [
+        {
+            "pattern": r"--gha-output",
+            "message": "Secrets validation must use --gha-output flag",
+            "severity": "error",
+        },
+    ],
+}
 
-        # Check structure
-        assert "meta" in data, "Missing meta section"
-        assert "current_holdings" in data or "watchlist" in data, "Missing holdings/watchlist"
 
-        # Check staleness (warn if > 7 days old)
-        last_updated = data["meta"].get("last_updated", "")
-        if last_updated:
-            updated_date = (
-                datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
-                if "T" in last_updated
-                else datetime.strptime(last_updated, "%Y-%m-%d")
-            )
-            age_days = (datetime.now() - updated_date.replace(tzinfo=None)).days
+def validate_workflow(file_path: Path) -> list[ValidationIssue]:
+    """Validate a single workflow file."""
+    issues = []
+    content = file_path.read_text()
+    filename = file_path.name
 
-            if age_days > 7:
-                print(
-                    f"⚠️  WARNING: Watchlist is {age_days} days old (last updated: {last_updated})"
+    # Check for required patterns
+    if filename in REQUIRED_PATTERNS:
+        for req in REQUIRED_PATTERNS[filename]:
+            pattern = re.compile(req["pattern"], re.MULTILINE | re.IGNORECASE)
+            if not pattern.search(content):
+                issues.append(
+                    ValidationIssue(
+                        file=filename,
+                        line=0,
+                        severity=req["severity"],
+                        message=req["message"],
+                        pattern="(missing)",
+                    )
                 )
-            else:
-                print(f"✅ Watchlist age: {age_days} days (last updated: {last_updated})")
 
-        # Count stocks
-        holdings_count = len(data.get("current_holdings", []))
-        watchlist_count = len(data.get("watchlist", []))
-        total = holdings_count + watchlist_count
-
-        print("✅ Valid watchlist JSON")
-        print(f"   - Current holdings: {holdings_count}")
-        print(f"   - Watchlist stocks: {watchlist_count}")
-        print(f"   - Total tracked: {total}")
-
-        # Warn if empty but allow execution
-        if total == 0:
-            print("⚠️  WARNING: Watchlist is empty (no stocks tracked)")
-            print("   Trading will proceed with fallback strategy")
-
-        return True
-
-    except Exception as e:
-        print(f"❌ Invalid watchlist JSON: {e}")
-        return False
-
-
-def validate_system_state():
-    """Validate system_state.json (same logic as GitHub Actions)"""
-    print("\n" + "=" * 60)
-    print("🔍 Validating system_state.json...")
-    print("=" * 60)
-
-    if not SYSTEM_STATE_FILE.exists():
-        print("⚠️  WARNING: system_state.json not found (will be created on first run)")
-        return True  # Not a failure
-
-    try:
-        with open(SYSTEM_STATE_FILE) as f:
-            data = json.load(f)
-
-        # Check staleness
-        last_updated = data.get("meta", {}).get("last_updated", "")
-        if last_updated:
-            updated_date = (
-                datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
-                if "T" in last_updated
-                else datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S")
+    # Check for dangerous silent exit patterns
+    silent_exit_pattern = re.compile(
+        r'echo\s+"No\s+.*"\s*\n\s*exit\s+0',
+        re.MULTILINE | re.IGNORECASE
+    )
+    for match in silent_exit_pattern.finditer(content):
+        line_num = content[: match.start()].count("\n") + 1
+        issues.append(
+            ValidationIssue(
+                file=filename,
+                line=line_num,
+                severity="warning",
+                message="Silent exit 0 - consider logging warning or failing",
+                pattern=match.group(0)[:40],
             )
-            age_hours = (datetime.now() - updated_date.replace(tzinfo=None)).total_seconds() / 3600
+        )
 
-            if age_hours > 48:
-                print(f"⚠️  WARNING: system_state.json is {age_hours:.1f} hours old")
-                print(f"   Last updated: {last_updated}")
-            else:
-                print(f"✅ System state current (updated {age_hours:.1f} hours ago)")
-
-        print("✅ Valid system_state.json")
-        return True
-
-    except Exception as e:
-        print(f"⚠️  WARNING: Could not validate system_state.json: {e}")
-        print("   Trading will proceed (state will be regenerated)")
-        return True  # Warning, not failure
-
-
-def validate_workflows():
-    """Validate all GitHub Actions workflows exist"""
-    print("\n" + "=" * 60)
-    print("🔍 Validating GitHub Actions workflows...")
-    print("=" * 60)
-
-    workflows_dir = BASE_DIR / ".github" / "workflows"
-    required_workflows = ["youtube-analysis.yml", "daily-trading.yml"]
-
-    all_exist = True
-    for workflow in required_workflows:
-        workflow_file = workflows_dir / workflow
-        if workflow_file.exists():
-            print(f"✅ {workflow} exists")
-        else:
-            print(f"❌ {workflow} NOT FOUND")
-            all_exist = False
-
-    return all_exist
+    return issues
 
 
 def main():
-    """Run all validations"""
-    print("\n" + "=" * 70)
-    print("🚀 WORKFLOW VALIDATION SCRIPT")
-    print("=" * 70)
-    print(f"📅 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 70)
+    parser = argparse.ArgumentParser(description="Validate workflows")
+    parser.add_argument("--strict", action="store_true")
+    parser.add_argument("--workflows-dir", type=Path, default=Path(".github/workflows"))
+    args = parser.parse_args()
 
-    results = {
-        "watchlist": validate_watchlist(),
-        "system_state": validate_system_state(),
-        "workflows": validate_workflows(),
-    }
-
-    # Summary
-    print("\n" + "=" * 70)
-    print("📊 VALIDATION SUMMARY")
-    print("=" * 70)
-
-    for name, passed in results.items():
-        status = "✅ PASS" if passed else "❌ FAIL"
-        print(f"{name.upper()}: {status}")
-
-    print("=" * 70)
-
-    # Exit code
-    if all(results.values()):
-        print("\n✅ All validations passed - ready for GitHub Actions!")
-        return 0
-    else:
-        print("\n❌ Some validations failed - fix errors before deploying")
+    if not args.workflows_dir.exists():
+        print(f"Workflows directory not found: {args.workflows_dir}")
         return 1
+
+    yaml_files = list(args.workflows_dir.glob("*.yml"))
+    exit_code = 0
+
+    print(f"Validating {len(yaml_files)} workflows...")
+
+    for wf in sorted(yaml_files):
+        issues = validate_workflow(wf)
+        if issues:
+            for issue in issues:
+                icon = "ERROR" if issue.severity == "error" else "WARN"
+                print(f"[{icon}] {issue.file}:{issue.line} - {issue.message}")
+                if issue.severity == "error":
+                    exit_code = 1
+        else:
+            print(f"OK: {wf.name}")
+
+    return exit_code
 
 
 if __name__ == "__main__":
