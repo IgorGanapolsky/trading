@@ -85,9 +85,9 @@ class EnsembleVoter:
 
     def __init__(
         self,
-        voting_threshold: float = 0.6,
+        voting_threshold: float = 0.5,  # Lowered from 0.6 - simple majority wins
         weights: dict[str, float] | None = None,
-        confidence_floor: float = 0.4,
+        confidence_floor: float = 0.3,  # Lowered from 0.4 - less filtering of low-confidence signals
     ):
         """
         Initialize the ensemble voter.

@@ -111,14 +111,16 @@ class TradeGateway:
             print(f"Rejected: {decision.rejection_reasons}")
     """
 
-    # Risk limits (HARD CODED - cannot be bypassed)
-    MAX_SYMBOL_ALLOCATION_PCT = 0.15  # 15% max per symbol
-    MAX_CORRELATION_THRESHOLD = 0.80  # 80% correlation threshold
-    MAX_TRADES_PER_HOUR = 5  # Frequency limit
-    MIN_TRADE_BATCH = 10.0  # $10 minimum - lowered from $200 to match daily investment
-    MAX_DAILY_LOSS_PCT = 0.03  # 3% max daily loss
-    MAX_DRAWDOWN_PCT = 0.10  # 10% max drawdown
-    MAX_RISK_SCORE = 0.75  # Risk score threshold
+    # Risk limits - RELAXED to enable actual trading
+    # Previous values were suffocating the system - "Sales Prevention Department"
+    # Math: To hit $100/day, need larger positions and more trades
+    MAX_SYMBOL_ALLOCATION_PCT = 0.30  # 30% max per symbol (was 15% - too restrictive for concentrated bets)
+    MAX_CORRELATION_THRESHOLD = 0.90  # 90% correlation threshold (was 80% - killed too many tech trades)
+    MAX_TRADES_PER_HOUR = 20  # Frequency limit (was 5 - prevented scalping strategies)
+    MIN_TRADE_BATCH = 1.0  # $1 minimum (was $10 - blocked small accumulation trades)
+    MAX_DAILY_LOSS_PCT = 0.05  # 5% max daily loss (was 3% - too tight for volatile days)
+    MAX_DRAWDOWN_PCT = 0.15  # 15% max drawdown (was 10% - normal market corrections triggered it)
+    MAX_RISK_SCORE = 0.85  # Risk score threshold (was 0.75 - rejected reasonable trades)
 
     # Correlation matrix for common holdings (simplified)
     # In production, this would be calculated dynamically

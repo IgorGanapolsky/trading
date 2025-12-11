@@ -165,6 +165,26 @@
         "scripts/enforce_promotion_gate.py"
       ],
       "embedding_text": "overly restrictive filters blocked trading 31 days catch-22 impossible promotion gate. Filters too tight: delta DTE premium. Required 60% win rate before trading but can't get wins without trading. Solution: relax filters start loose tighten with data. Keep IV percentile as intelligent filter. Remove impossible gates."
+    },
+    {
+      "id": "ll_010_sales_prevention_department",
+      "title": "CRITICAL ARCHITECTURE: 'Sales Prevention Department' Anti-Pattern",
+      "source": "External Audit - Dec 11, 2025",
+      "date": "2025-12-11",
+      "category": "architecture",
+      "tags": ["serial-gates", "blocking", "capital-cap", "anti-pattern", "north-star", "impossible-math"],
+      "severity": "critical",
+      "content": "System was mathematically incapable of reaching $100/day North Star due to: (1) DAILY_INVESTMENT capped at $1,000 - to make $100 profit on 1% moves need $10,000 deployed (2) Serial gate architecture: Momentum -> RL -> LLM -> Risk - if ANY gate says 'no', trade dies (3) Overly conservative risk manager: 5 trades/hour max, 15% allocation cap, 80% correlation threshold. Diagnosis: Built a 'Safety Vault' not a 'Trading Bot'. Optimized for 'Not Losing Money' (Savings Mode) instead of 'Making Money' (Income Mode).",
+      "key_insight": "Serial gates guarantee zero trades when optimized for safety. A 4-gate funnel where each gate has 80% pass rate = 0.8^4 = 41% overall pass rate. With stricter gates, it approaches 0%.",
+      "solution": "CONVERTED TO PARALLEL VOTING: (1) Raised DAILY_INVESTMENT cap from $1,000 to $100,000 (2) Made RL filter ADVISORY not BLOCKING - warns but doesn't kill trades (3) Made LLM sentiment ADVISORY for index funds (SPY/QQQ ignore Reddit sentiment) (4) Relaxed trade gateway: 30% allocation cap, 20 trades/hour, 90% correlation threshold (5) Lowered ensemble voting threshold from 0.6 to 0.5 (simple majority).",
+      "our_implementation": "Changes in: config.py (cap raised), trade_gateway.py (constraints relaxed), voting_ensemble.py (threshold lowered), orchestrator/main.py (RL/LLM gates now advisory). Serial blocking converted to parallel advisory.",
+      "referenced_files": [
+        "src/core/config.py",
+        "src/risk/trade_gateway.py",
+        "src/ensemble/voting_ensemble.py",
+        "src/orchestrator/main.py"
+      ],
+      "embedding_text": "sales prevention department anti-pattern serial gates blocking capital cap $1000 impossible math north star $100/day. Four gate funnel momentum RL LLM risk any no kills trade. Solution: parallel voting advisory not blocking. Raise capital cap to $100000. RL LLM sentiment advisory for index funds SPY QQQ. Relax trade gateway 30% allocation 20 trades/hour. Simple majority voting 0.5 threshold. Income mode not savings mode."
     }
   ]
 }

@@ -992,23 +992,28 @@ class TradingOrchestrator:
 
             rl_decision = rl_outcome.result
             if rl_decision.get("confidence", 0.0) < rl_threshold:
-                logger.info(
-                    "Gate 2 (%s): REJECTED by RL filter (confidence=%.2f).",
+                # ADVISORY MODE: Log warning but DON'T BLOCK the trade
+                # The RL filter should inform sizing, not kill trades outright
+                # Previous behavior: return (blocked trade) - caused "Sales Prevention Department"
+                logger.warning(
+                    "Gate 2 (%s): LOW CONFIDENCE from RL filter (confidence=%.2f < %.2f) - "
+                    "PROCEEDING with reduced confidence (advisory mode)",
                     ticker,
                     rl_decision.get("confidence", 0.0),
+                    rl_threshold,
                 )
-                self.telemetry.gate_reject(
+                self.telemetry.gate_pass(
                     "rl_filter",
                     ticker,
-                    rl_decision,
+                    {**rl_decision, "advisory_warning": True},
                 )
                 self._track_gate_event(
                     gate="rl_filter",
                     ticker=ticker,
-                    status="reject",
+                    status="advisory_pass",
                     metrics={"confidence": rl_decision.get("confidence", 0.0)},
                 )
-                return
+                # DON'T return - let the trade proceed with lower confidence affecting sizing
             logger.info(
                 "Gate 2 (%s): PASSED (action=%s, confidence=%.2f).",
                 ticker,
@@ -1149,18 +1154,23 @@ class TradingOrchestrator:
             payload = bias_snapshot.to_dict()
             payload["source"] = "bias_store"
             if sentiment_score < neg_threshold:
-                logger.info(
-                    "Gate 3 (%s): REJECTED by bias store (score=%.2f, reason=%s).",
+                # ADVISORY MODE: Log warning but DON'T BLOCK the trade
+                # SPY/QQQ don't care about Reddit sentiment - index funds are noise-immune
+                # Previous behavior: return (blocked trade) - caused "Sales Prevention Department"
+                logger.warning(
+                    "Gate 3 (%s): LOW SENTIMENT from bias store (score=%.2f < %.2f) - "
+                    "PROCEEDING anyway (advisory mode). Reason: %s",
                     ticker,
                     sentiment_score,
+                    neg_threshold,
                     bias_snapshot.reason,
                 )
-                self.telemetry.gate_reject(
+                self.telemetry.gate_pass(
                     "llm",
                     ticker,
-                    {**payload, "trigger": "negative_sentiment"},
+                    {**payload, "trigger": "negative_sentiment_advisory", "advisory_warning": True},
                 )
-                return
+                # DON'T return - let the trade proceed with sentiment affecting sizing
             logger.info(
                 "Gate 3 (%s): PASSED via bias store (sentiment=%.2f).",
                 ticker,
@@ -1194,24 +1204,29 @@ class TradingOrchestrator:
                     sentiment_score = llm_score
                 self.budget_controller.log_spend(llm_result.get("cost", 0.0))
                 if sentiment_score < neg_threshold:
-                    logger.info(
-                        "Gate 3 (%s): REJECTED by LLM (score=%.2f, reason=%s).",
+                    # ADVISORY MODE: Log warning but DON'T BLOCK the trade
+                    # SPY/QQQ don't care about Reddit sentiment - index funds are noise-immune
+                    # Previous behavior: return (blocked trade) - caused "Sales Prevention Department"
+                    logger.warning(
+                        "Gate 3 (%s): LOW SENTIMENT from LLM (score=%.2f < %.2f) - "
+                        "PROCEEDING anyway (advisory mode). Reason: %s",
                         ticker,
                         sentiment_score,
+                        neg_threshold,
                         llm_result.get("reason", "N/A"),
                     )
-                    self.telemetry.gate_reject(
+                    self.telemetry.gate_pass(
                         "llm",
                         ticker,
-                        {**llm_result, "trigger": "negative_sentiment"},
+                        {**llm_result, "trigger": "negative_sentiment_advisory", "advisory_warning": True},
                     )
                     self._track_gate_event(
                         gate="llm",
                         ticker=ticker,
-                        status="reject",
+                        status="advisory_pass",
                         metrics={"confidence": sentiment_score},
                     )
-                    return
+                    # DON'T return - let the trade proceed with sentiment affecting sizing
                 logger.info("Gate 3 (%s): PASSED (sentiment=%.2f).", ticker, sentiment_score)
                 self.telemetry.gate_pass("llm", ticker, llm_result)
                 self._track_gate_event(

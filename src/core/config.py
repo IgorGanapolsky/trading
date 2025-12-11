@@ -125,8 +125,11 @@ class AppConfig(BaseSettings):
     @field_validator("DAILY_INVESTMENT")
     @classmethod
     def _validate_budget(cls, v: float) -> float:
-        if v > 1000.0:
-            raise ValueError("DAILY_INVESTMENT too high for safety; cap at $1000")
+        # Raised cap from $1,000 to $100,000 to enable realistic position sizing
+        # Math: To make $100/day profit on 1% moves, need ~$10,000 capital deployed
+        # The $1,000 cap was mathematically preventing the North Star goal
+        if v > 100000.0:
+            raise ValueError("DAILY_INVESTMENT too high for safety; cap at $100,000")
         return v
 
     def get_tier_allocations(self) -> dict[str, float]:
