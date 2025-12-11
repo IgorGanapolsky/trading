@@ -58,6 +58,18 @@
       "notes": "Risk management fully operational"
     },
     {
+      "category": "risk_management",
+      "description": "Trailing stop loss for profit protection",
+      "steps": [
+        "Track peak price for each position",
+        "Calculate dynamic trailing stop level",
+        "Generate exit signals when trail is hit",
+        "Persist state across sessions"
+      ],
+      "passes": true,
+      "notes": "Implemented 2025-12-11 in src/risk/trailing_stop_manager.py. Supports percentage-based and ATR-based trailing."
+    },
+    {
       "category": "data",
       "description": "Multi-source market data provider with fallbacks",
       "steps": [
