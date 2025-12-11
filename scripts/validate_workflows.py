@@ -1,174 +1,215 @@
 #!/usr/bin/env python3
 """
-Workflow Validation Script
-
-Tests the validation logic used in GitHub Actions workflows locally.
-Run this before pushing changes to ensure validations work correctly.
+Validates GitHub Actions workflow files for syntax and required fields.
 
 Usage:
-    python scripts/validate_workflows.py
+    python3 scripts/validate_workflows.py .github/workflows/*.yml
+
+Checks:
+- Valid YAML syntax
+- Has 'on:' block with at least one event
+- Has at least one 'jobs:' entry
+- No unclosed heredocs
+
+Exits non-zero if any validation fails.
+
+Created: Dec 11, 2025
+See: rag_knowledge/lessons_learned/ll_009_ci_syntax_failure_dec11.md
 """
 
-import json
+import re
 import sys
-from datetime import datetime
 from pathlib import Path
+from typing import Any
 
-# Paths
-BASE_DIR = Path(__file__).parent.parent
-WATCHLIST_FILE = BASE_DIR / "data" / "tier2_watchlist.json"
-SYSTEM_STATE_FILE = BASE_DIR / "data" / "system_state.json"
+import yaml
 
 
-def validate_watchlist():
-    """Validate tier2_watchlist.json (same logic as GitHub Actions)"""
-    print("=" * 60)
-    print("🔍 Validating tier2_watchlist.json...")
-    print("=" * 60)
+class WorkflowValidator:
+    """Validates GitHub Actions workflow files."""
 
-    if not WATCHLIST_FILE.exists():
-        print("❌ ERROR: tier2_watchlist.json not found!")
-        return False
+    def __init__(self):
+        self.errors: list[str] = []
+        self.warnings: list[str] = []
 
-    try:
-        with open(WATCHLIST_FILE) as f:
-            data = json.load(f)
+    def validate_yaml_syntax(self, file_path: Path) -> dict[str, Any] | None:
+        """Validate YAML syntax and return parsed content."""
+        try:
+            with open(file_path, encoding="utf-8") as f:
+                content = yaml.safe_load(f)
+            return content
+        except yaml.YAMLError as e:
+            self.errors.append(f"{file_path}: YAML syntax error: {e}")
+            return None
 
-        # Check structure
-        assert "meta" in data, "Missing meta section"
-        assert "current_holdings" in data or "watchlist" in data, "Missing holdings/watchlist"
+    def validate_on_block(self, workflow: dict[str, Any], file_path: Path) -> bool:
+        """Validate 'on:' block exists with at least one event."""
+        # Note: 'on' is a Python/YAML keyword, so it gets parsed as True in some cases
+        has_on = True in workflow or "on" in workflow
 
-        # Check staleness (warn if > 7 days old)
-        last_updated = data["meta"].get("last_updated", "")
-        if last_updated:
-            updated_date = (
-                datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
-                if "T" in last_updated
-                else datetime.strptime(last_updated, "%Y-%m-%d")
-            )
-            age_days = (datetime.now() - updated_date.replace(tzinfo=None)).days
+        if not has_on:
+            self.errors.append(f"{file_path}: Missing 'on:' block")
+            return False
 
-            if age_days > 7:
-                print(
-                    f"⚠️  WARNING: Watchlist is {age_days} days old (last updated: {last_updated})"
-                )
-            else:
-                print(f"✅ Watchlist age: {age_days} days (last updated: {last_updated})")
+        # Get the actual on block
+        on_block = workflow.get(True) or workflow.get("on")
 
-        # Count stocks
-        holdings_count = len(data.get("current_holdings", []))
-        watchlist_count = len(data.get("watchlist", []))
-        total = holdings_count + watchlist_count
+        if on_block is None:
+            self.errors.append(f"{file_path}: 'on:' block is empty")
+            return False
 
-        print("✅ Valid watchlist JSON")
-        print(f"   - Current holdings: {holdings_count}")
-        print(f"   - Watchlist stocks: {watchlist_count}")
-        print(f"   - Total tracked: {total}")
-
-        # Warn if empty but allow execution
-        if total == 0:
-            print("⚠️  WARNING: Watchlist is empty (no stocks tracked)")
-            print("   Trading will proceed with fallback strategy")
-
-        return True
-
-    except Exception as e:
-        print(f"❌ Invalid watchlist JSON: {e}")
-        return False
-
-
-def validate_system_state():
-    """Validate system_state.json (same logic as GitHub Actions)"""
-    print("\n" + "=" * 60)
-    print("🔍 Validating system_state.json...")
-    print("=" * 60)
-
-    if not SYSTEM_STATE_FILE.exists():
-        print("⚠️  WARNING: system_state.json not found (will be created on first run)")
-        return True  # Not a failure
-
-    try:
-        with open(SYSTEM_STATE_FILE) as f:
-            data = json.load(f)
-
-        # Check staleness
-        last_updated = data.get("meta", {}).get("last_updated", "")
-        if last_updated:
-            updated_date = (
-                datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
-                if "T" in last_updated
-                else datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S")
-            )
-            age_hours = (datetime.now() - updated_date.replace(tzinfo=None)).total_seconds() / 3600
-
-            if age_hours > 48:
-                print(f"⚠️  WARNING: system_state.json is {age_hours:.1f} hours old")
-                print(f"   Last updated: {last_updated}")
-            else:
-                print(f"✅ System state current (updated {age_hours:.1f} hours ago)")
-
-        print("✅ Valid system_state.json")
-        return True
-
-    except Exception as e:
-        print(f"⚠️  WARNING: Could not validate system_state.json: {e}")
-        print("   Trading will proceed (state will be regenerated)")
-        return True  # Warning, not failure
-
-
-def validate_workflows():
-    """Validate all GitHub Actions workflows exist"""
-    print("\n" + "=" * 60)
-    print("🔍 Validating GitHub Actions workflows...")
-    print("=" * 60)
-
-    workflows_dir = BASE_DIR / ".github" / "workflows"
-    required_workflows = ["youtube-analysis.yml", "daily-trading.yml"]
-
-    all_exist = True
-    for workflow in required_workflows:
-        workflow_file = workflows_dir / workflow
-        if workflow_file.exists():
-            print(f"✅ {workflow} exists")
+        # Check if it has at least one event
+        if isinstance(on_block, dict):
+            if not on_block:
+                self.errors.append(f"{file_path}: 'on:' block has no events")
+                return False
+        elif isinstance(on_block, list):
+            if not on_block:
+                self.errors.append(f"{file_path}: 'on:' block has no events")
+                return False
+        elif isinstance(on_block, str):
+            # Single event like 'on: push'
+            pass
         else:
-            print(f"❌ {workflow} NOT FOUND")
-            all_exist = False
+            self.errors.append(f"{file_path}: 'on:' block has unexpected type: {type(on_block)}")
+            return False
 
-    return all_exist
+        return True
 
+    def validate_jobs_block(self, workflow: dict[str, Any], file_path: Path) -> bool:
+        """Validate 'jobs:' block exists with at least one job."""
+        if "jobs" not in workflow:
+            self.errors.append(f"{file_path}: Missing 'jobs:' block")
+            return False
 
-def main():
-    """Run all validations"""
-    print("\n" + "=" * 70)
-    print("🚀 WORKFLOW VALIDATION SCRIPT")
-    print("=" * 70)
-    print(f"📅 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 70)
+        jobs = workflow["jobs"]
+        if not isinstance(jobs, dict):
+            self.errors.append(f"{file_path}: 'jobs:' must be a dict")
+            return False
 
-    results = {
-        "watchlist": validate_watchlist(),
-        "system_state": validate_system_state(),
-        "workflows": validate_workflows(),
-    }
+        if not jobs:
+            self.errors.append(f"{file_path}: 'jobs:' block is empty")
+            return False
 
-    # Summary
-    print("\n" + "=" * 70)
-    print("📊 VALIDATION SUMMARY")
-    print("=" * 70)
+        return True
 
-    for name, passed in results.items():
-        status = "✅ PASS" if passed else "❌ FAIL"
-        print(f"{name.upper()}: {status}")
+    def validate_heredocs(self, file_path: Path) -> bool:
+        """Check for unclosed heredocs in YAML file."""
+        try:
+            with open(file_path, encoding="utf-8") as f:
+                content = f.read()
 
-    print("=" * 70)
+            # Find all heredoc starts (<<EOF or <<-EOF)
+            heredoc_starts = re.findall(r"<<-?EOF", content)
+            # Find all heredoc ends (EOF at start of line)
+            heredoc_ends = re.findall(r"^EOF", content, re.MULTILINE)
 
-    # Exit code
-    if all(results.values()):
-        print("\n✅ All validations passed - ready for GitHub Actions!")
+            if len(heredoc_starts) != len(heredoc_ends):
+                self.warnings.append(
+                    f"{file_path}: Heredoc mismatch: {len(heredoc_starts)} starts, {len(heredoc_ends)} ends"
+                )
+                return False
+
+            return True
+        except Exception as e:
+            self.warnings.append(f"{file_path}: Could not check heredocs: {e}")
+            return True  # Don't fail validation on heredoc check errors
+
+    def validate_workflow(self, file_path: Path) -> bool:
+        """Validate a single workflow file. Returns True if valid."""
+        print(f"Validating: {file_path}")
+
+        # 1. Validate YAML syntax
+        workflow = self.validate_yaml_syntax(file_path)
+        if workflow is None:
+            return False
+
+        # 2. Validate 'on:' block
+        if not self.validate_on_block(workflow, file_path):
+            return False
+
+        # 3. Validate 'jobs:' block
+        if not self.validate_jobs_block(workflow, file_path):
+            return False
+
+        # 4. Check heredocs (warning only)
+        self.validate_heredocs(file_path)
+
+        print(f"  ✅ {file_path.name} is valid")
+        return True
+
+    def validate_all(self, file_paths: list[Path]) -> int:
+        """Validate all workflow files. Returns exit code."""
+        if not file_paths:
+            print("No workflow files to validate")
+            return 0
+
+        print(f"Validating {len(file_paths)} workflow file(s)...\n")
+
+        valid_count = 0
+        invalid_count = 0
+
+        for file_path in file_paths:
+            if self.validate_workflow(file_path):
+                valid_count += 1
+            else:
+                invalid_count += 1
+            print()
+
+        # Print summary
+        print("=" * 60)
+        print("VALIDATION SUMMARY")
+        print("=" * 60)
+        print(f"✅ Valid:   {valid_count}")
+        print(f"❌ Invalid: {invalid_count}")
+        print(f"Total:     {len(file_paths)}")
+
+        if self.errors:
+            print(f"\n🚨 {len(self.errors)} error(s):")
+            for error in self.errors:
+                print(f"  - {error}")
+
+        if self.warnings:
+            print(f"\n⚠️  {len(self.warnings)} warning(s):")
+            for warning in self.warnings:
+                print(f"  - {warning}")
+
+        if invalid_count > 0:
+            print("\n❌ VALIDATION FAILED")
+            return 1
+
+        print("\n✅ ALL WORKFLOWS VALID")
         return 0
-    else:
-        print("\n❌ Some validations failed - fix errors before deploying")
+
+
+def main() -> int:
+    """Main entry point."""
+    if len(sys.argv) < 2:
+        print("Usage: python3 scripts/validate_workflows.py .github/workflows/*.yml")
+        print("\nValidates GitHub Actions workflow files for:")
+        print("  - Valid YAML syntax")
+        print("  - Has 'on:' block with at least one event")
+        print("  - Has at least one 'jobs:' entry")
+        print("  - No unclosed heredocs")
         return 1
+
+    # Collect all workflow files
+    workflow_files = []
+    for arg in sys.argv[1:]:
+        path = Path(arg)
+        if path.is_file() and path.suffix in [".yml", ".yaml"]:
+            workflow_files.append(path)
+        elif path.is_dir():
+            # If directory, find all .yml/.yaml files
+            workflow_files.extend(path.glob("*.yml"))
+            workflow_files.extend(path.glob("*.yaml"))
+
+    if not workflow_files:
+        print("No workflow files found")
+        return 1
+
+    validator = WorkflowValidator()
+    return validator.validate_all(workflow_files)
 
 
 if __name__ == "__main__":

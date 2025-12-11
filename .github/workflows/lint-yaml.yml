@@ -1,0 +1,45 @@
+name: YAML Lint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/*.yml'
+      - '.github/workflows/*.yaml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/*.yml'
+      - '.github/workflows/*.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-workflows:
+    name: Validate Workflow YAML
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Validate all workflow files
+        run: |
+          echo "Validating GitHub Actions workflow files..."
+          python3 scripts/validate_workflows.py .github/workflows/*.yml
+
+      - name: Fail loudly if invalid
+        if: failure()
+        run: |
+          echo "::error::YAML VALIDATION FAILED"
+          echo "::error::Fix workflow YAML errors before merging"
+          exit 1
