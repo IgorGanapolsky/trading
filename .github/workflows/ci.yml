@@ -328,10 +328,15 @@ jobs:
         run: |
           python -m pytest \
             tests/test_safety_matrix.py \
+            tests/test_rag_ml_safety.py \
             --timeout=300 \
             --timeout-method=thread \
             -v \
             --tb=short
+
+      - name: Generate regression tests from lessons learned
+        run: |
+          python scripts/generate_regression_tests.py --dry-run || echo "Regression test generation completed"
 
       - name: Run compliance audit
         run: |
