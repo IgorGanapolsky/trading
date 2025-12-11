@@ -50,8 +50,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry
           poetry install --no-interaction
-      - name: Run unit tests
-        run: poetry run pytest -q
+      - name: Run unit tests with coverage
+        run: poetry run pytest -q --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=30
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+        if: always()
 
   smoke:
     name: Smoke Test
