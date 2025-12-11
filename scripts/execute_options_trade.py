@@ -181,6 +181,79 @@ def get_iv_percentile(symbol: str, lookback_days: int = 252) -> dict:
 MIN_IV_PERCENTILE_FOR_SELLING = 50
 
 
+def get_trend_filter(symbol: str, lookback_days: int = 20) -> dict:
+    """
+    Check market trend to avoid selling puts in downtrending markets.
+
+    Per options_backtest_summary.md recommendations:
+    - All losses (5/5) came from positions entered in strong trends
+    - Add trend filter to avoid selling options in adverse conditions
+    - Use 20-day MA slope as trend indicator
+
+    For CASH-SECURED PUTS:
+    - Uptrend/Sideways: SAFE to sell puts (bullish bias helps)
+    - Strong Downtrend: AVOID selling puts (will get assigned at bad prices)
+
+    Returns dict with trend, slope, recommendation.
+    """
+    import yfinance as yf
+    import numpy as np
+
+    logger.info(f"📈 Checking trend filter for {symbol}...")
+
+    try:
+        ticker = yf.Ticker(symbol)
+        hist = ticker.history(period="2mo")
+
+        if len(hist) < lookback_days:
+            logger.warning(f"   ⚠️ Insufficient history for trend filter, defaulting to neutral")
+            return {"trend": "NEUTRAL", "slope": 0, "recommendation": "PROCEED"}
+
+        # Calculate 20-day moving average
+        ma_20 = hist['Close'].rolling(window=lookback_days).mean()
+
+        # Calculate slope over last 5 days (normalized as % per day)
+        recent_ma = ma_20.iloc[-5:]
+        slope = (recent_ma.iloc[-1] - recent_ma.iloc[0]) / recent_ma.iloc[0] * 100 / 5
+
+        # Also check if price is above or below MA
+        current_price = hist['Close'].iloc[-1]
+        ma_current = ma_20.iloc[-1]
+        price_vs_ma = (current_price - ma_current) / ma_current * 100
+
+        # Determine trend
+        # Strong downtrend: slope < -0.2% per day AND price below MA
+        # Moderate downtrend: slope < -0.1% per day
+        # Uptrend/Sideways: slope >= -0.1%
+
+        if slope < -0.2 and price_vs_ma < -2:
+            trend = "STRONG_DOWNTREND"
+            recommendation = "AVOID_PUTS"
+            logger.warning(f"   ❌ STRONG DOWNTREND detected!")
+            logger.warning(f"      MA slope: {slope:.3f}%/day, Price vs MA: {price_vs_ma:.1f}%")
+        elif slope < -0.1:
+            trend = "MODERATE_DOWNTREND"
+            recommendation = "CAUTION"
+            logger.info(f"   ⚠️ Moderate downtrend - proceed with caution")
+            logger.info(f"      MA slope: {slope:.3f}%/day, Price vs MA: {price_vs_ma:.1f}%")
+        else:
+            trend = "UPTREND_OR_SIDEWAYS"
+            recommendation = "PROCEED"
+            logger.info(f"   ✅ Trend FAVORABLE for selling puts")
+            logger.info(f"      MA slope: {slope:.3f}%/day, Price vs MA: {price_vs_ma:.1f}%")
+
+        return {
+            "trend": trend,
+            "slope": round(slope, 4),
+            "price_vs_ma": round(price_vs_ma, 2),
+            "recommendation": recommendation
+        }
+
+    except Exception as e:
+        logger.error(f"   ❌ Trend filter failed: {e}")
+        return {"trend": "UNKNOWN", "slope": 0, "recommendation": "PROCEED"}
+
+
 def find_optimal_put(
     options_client, symbol: str, target_delta: float = 0.25, min_dte: int = 20, max_dte: int = 60
 ):
@@ -377,6 +450,22 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
 
     logger.info(f"✅ IV Check passed: {iv_data['iv_percentile']}% >= {MIN_IV_PERCENTILE_FOR_SELLING}%")
 
+    # CRITICAL: Check trend filter (per options_backtest_summary.md recommendations)
+    # All 5 losses in backtest came from entering positions in strong trends
+    trend_data = get_trend_filter(symbol)
+    if trend_data["recommendation"] == "AVOID_PUTS":
+        logger.warning(f"❌ TREND FILTER BLOCKED: {trend_data['trend']}")
+        logger.warning("   Per backtest analysis: 100% of losses came from adverse trend entries")
+        logger.warning("   Recommendation: Wait for trend reversal or use hedged strategy")
+        return {
+            "status": "NO_TRADE",
+            "reason": f"Trend filter blocked: {trend_data['trend']} (slope: {trend_data['slope']}%/day)",
+            "trend_data": trend_data,
+            "broker": "alpaca"
+        }
+
+    logger.info(f"✅ Trend filter passed: {trend_data['trend']}")
+
     # Get account info
     account = get_account_info(trading_client)
     logger.info(f"Account cash: ${account['cash']:,.2f}")
@@ -425,19 +514,34 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
         )
 
         order = trading_client.submit_order(order_request)
+
+        # Calculate stop loss per backtest recommendation (50% of premium)
+        # If we collect $1.00 premium, close position if cost to buy back exceeds $1.50
+        premium = put_option["mid"]
+        stop_loss_price = premium * 1.5  # 50% max loss = buy back at 1.5x premium
+        max_loss_dollars = (stop_loss_price - premium) * 100  # Loss if stopped out
+
         logger.info("\n✅ ALPACA ORDER SUBMITTED!")
         logger.info(f"   Order ID: {order.id}")
         logger.info(f"   Symbol: {put_option['symbol']}")
         logger.info("   Side: SELL TO OPEN")
         logger.info("   Qty: 1 contract")
-        logger.info(f"   Limit Price: ${put_option['mid']:.2f}")
-        logger.info(f"   Premium: ${put_option['mid'] * 100:.2f} (1 contract)")
+        logger.info(f"   Limit Price: ${premium:.2f}")
+        logger.info(f"   Premium: ${premium * 100:.2f} (1 contract)")
+        logger.info("\n📊 RISK MANAGEMENT (per backtest recommendations):")
+        logger.info(f"   ⚠️ STOP LOSS: Close if bid exceeds ${stop_loss_price:.2f}")
+        logger.info(f"   📉 Max loss at stop: ${max_loss_dollars:.2f}")
+        logger.info(f"   💰 Max profit: ${premium * 100:.2f} (option expires worthless)")
+        logger.info(f"   📈 Risk/Reward: 1:{premium/0.5:.1f} (50% stop)")
 
         return {
             "status": "ORDER_SUBMITTED",
             "order_id": str(order.id),
             "option": put_option,
-            "premium": put_option["mid"] * 100,
+            "premium": premium * 100,
+            "stop_loss_price": stop_loss_price,
+            "max_loss": max_loss_dollars,
+            "risk_reward": f"1:{premium/0.5:.1f}",
             "broker": "alpaca",
         }
 
