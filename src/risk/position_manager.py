@@ -77,11 +77,11 @@ class ExitConditions:
     These are tighter than typical buy-and-hold strategies to ensure
     active position management and generate closed trade data for win rate.
 
-    Asset-class-specific thresholds (as of Dec 9, 2025):
-    - Treasuries: 0.5% (barely move, need tight thresholds)
+    Asset-class-specific thresholds (as of Dec 11, 2025):
+    - Treasuries: 0.1% (barely move, need very tight thresholds)
     - Bonds: 1.0% (moderate volatility)
-    - Equities: 3.0% (standard)
-    - Crypto: 5.0% (high volatility)
+    - Equities: 0.5% (tighter for active trading)
+    - Crypto: 3.0% (high volatility, tightened from 5%)
 
     Attributes:
         take_profit_pct: Profit target percentage (default: 3%)
@@ -92,25 +92,25 @@ class ExitConditions:
         atr_multiplier: ATR multiplier for dynamic stop calculation
     """
 
-    take_profit_pct: float = 0.01  # 1% profit target (tighter for active trading)
-    stop_loss_pct: float = 0.01  # 1% stop loss (tighter for active trading)
-    max_holding_days: int = 10  # Close after 10 days regardless
+    take_profit_pct: float = 0.005  # 0.5% profit target (tighter for active trading)
+    stop_loss_pct: float = 0.005  # 0.5% stop loss (tighter for active trading)
+    max_holding_days: int = 5  # Close after 5 days regardless
     enable_momentum_exit: bool = True  # Exit on MACD bearish cross
     enable_atr_stop: bool = True  # Use ATR-based stops
     atr_multiplier: float = 2.0  # 2x ATR for stop distance
 
     # Asset-class-specific overrides
-    treasury_take_profit_pct: float = 0.003  # 0.3% for treasuries (they move <0.5%)
-    treasury_stop_loss_pct: float = 0.003  # 0.3% for treasuries (they move <0.5%)
-    treasury_max_holding_days: int = 3  # 3 days for treasuries
+    treasury_take_profit_pct: float = 0.001  # 0.1% for treasuries (they move 0.02-0.05%/day)
+    treasury_stop_loss_pct: float = 0.001  # 0.1% for treasuries (they move 0.02-0.05%/day)
+    treasury_max_holding_days: int = 2  # 2 days for treasuries - force exits faster
 
     bond_take_profit_pct: float = 0.01  # 1.0% for bonds
     bond_stop_loss_pct: float = 0.01  # 1.0% for bonds
     bond_max_holding_days: int = 5  # 5 days for bonds
 
-    crypto_take_profit_pct: float = 0.05  # 5.0% for crypto
-    crypto_stop_loss_pct: float = 0.05  # 5.0% for crypto
-    crypto_max_holding_days: int = 7  # 7 days for crypto
+    crypto_take_profit_pct: float = 0.03  # 3.0% for crypto (tightened from 5%)
+    crypto_stop_loss_pct: float = 0.03  # 3.0% for crypto (tightened from 5%)
+    crypto_max_holding_days: int = 5  # 5 days for crypto (tightened from 7)
 
     def get_thresholds_for_asset(self, asset_class: AssetClass) -> tuple[float, float, int]:
         """
@@ -567,9 +567,9 @@ class PositionManager:
 # Default instance with tighter conditions for active trading
 DEFAULT_POSITION_MANAGER = PositionManager(
     conditions=ExitConditions(
-        take_profit_pct=0.01,  # 1% take-profit
-        stop_loss_pct=0.01,  # 1% stop-loss
-        max_holding_days=10,  # Max 10 days
+        take_profit_pct=0.005,  # 0.5% take-profit (tightened Dec 11, 2025)
+        stop_loss_pct=0.005,  # 0.5% stop-loss (tightened Dec 11, 2025)
+        max_holding_days=5,  # Max 5 days (tightened from 10)
         enable_momentum_exit=True,
         enable_atr_stop=True,
     )
