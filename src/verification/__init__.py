@@ -27,6 +27,11 @@ from .hallucination_prevention import (
     Prediction,
     HallucinationPattern,
 )
+from .llm_hallucination_rag_guard import (
+    LLMHallucinationGuard,
+    create_hallucination_guard,
+    Violation,
+)
 from .position_reconciler import PositionReconciler, ReconciliationResult
 from .model_circuit_breaker import ModelCircuitBreaker, CircuitState
 from .signal_backtester import SignalBacktester, BacktestResult
@@ -49,6 +54,10 @@ __all__ = [
     "create_hallucination_pipeline",
     "Prediction",
     "HallucinationPattern",
+    # LLM Hallucination Guard
+    "LLMHallucinationGuard",
+    "create_hallucination_guard",
+    "Violation",
     # Position reconciliation
     "PositionReconciler",
     "ReconciliationResult",

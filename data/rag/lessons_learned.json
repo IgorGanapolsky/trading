@@ -1,0 +1,90 @@
+[
+  {
+    "id": "lesson_20251211_225737_0",
+    "timestamp": "2025-12-11T22:57:37.121406",
+    "category": "size_error",
+    "title": "200x Position Size Bug (Nov 3, 2025)",
+    "description": "Trade executed at $1,600 instead of expected $8 due to unit confusion between shares and dollars",
+    "root_cause": "Code calculated position in shares but passed to API expecting dollars",
+    "prevention": "Always verify order size matches expected daily budget before submit. Add pre-trade size sanity check.",
+    "tags": [
+      "bug",
+      "critical",
+      "position_size",
+      "unit_conversion"
+    ],
+    "severity": "critical",
+    "financial_impact": 1592.0,
+    "symbol": null
+  },
+  {
+    "id": "lesson_20251211_225737_1",
+    "timestamp": "2025-12-11T22:57:37.122180",
+    "category": "execution",
+    "title": "Market Order Slippage Warning",
+    "description": "Large market orders can experience significant slippage during volatile periods",
+    "root_cause": "Market orders execute at best available price, which can vary widely",
+    "prevention": "Use limit orders for large positions. Add slippage tolerance checks.",
+    "tags": [
+      "execution",
+      "slippage",
+      "market_order"
+    ],
+    "severity": "medium",
+    "financial_impact": null,
+    "symbol": null
+  },
+  {
+    "id": "lesson_20251211_225737_2",
+    "timestamp": "2025-12-11T22:57:37.122968",
+    "category": "strategy",
+    "title": "Momentum Signal False Positive",
+    "description": "MACD crossover signals can be unreliable in low-volume conditions",
+    "root_cause": "Technical indicators assume sufficient volume for price discovery",
+    "prevention": "Add volume filter: only trade when volume > 80% of 20-day average",
+    "tags": [
+      "strategy",
+      "momentum",
+      "volume",
+      "macd"
+    ],
+    "severity": "low",
+    "financial_impact": null,
+    "symbol": null
+  },
+  {
+    "id": "lesson_20251211_225737_3",
+    "timestamp": "2025-12-11T22:57:37.123519",
+    "category": "data",
+    "title": "Stale Data Detection",
+    "description": "System used 24-hour old market data for trading decision",
+    "root_cause": "Data freshness check was not enforced before trading",
+    "prevention": "Verify data timestamp < 5 minutes before any trade. Block trading on stale data.",
+    "tags": [
+      "data",
+      "freshness",
+      "validation"
+    ],
+    "severity": "high",
+    "financial_impact": null,
+    "symbol": null
+  },
+  {
+    "id": "lesson_20251211_225945_4",
+    "timestamp": "2025-12-11T22:59:45.245156",
+    "category": "order_amount",
+    "title": "Anomaly: order_amount - Order amount $150.00 exceeds threshold $100.00",
+    "description": "Order amount $150.00 exceeds threshold $100.00\n\nDetails:\n- amount: 150.0\n- max_amount: 100.0\n- expected_daily: 10.0\n- multiplier: 15.0\n\nContext:\n- symbol: SPY\n- amount: 150.0\n- action: BUY\n\nDetected at: 2025-12-11T22:59:45.245053+00:00\nAnomaly ID: ANO-20251211225945-AMT",
+    "root_cause": "Order amount calculation error or unit conversion mistake (Amount was 15.0x expected)",
+    "prevention": "Add pre-trade validation: assert order_amount <= expected_daily * 2.0",
+    "tags": [
+      "anomaly",
+      "order_amount",
+      "auto_generated",
+      "detected_20251211"
+    ],
+    "severity": "medium",
+    "financial_impact": null,
+    "symbol": "SPY"
+  }
+]
