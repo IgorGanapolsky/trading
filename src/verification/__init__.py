@@ -6,6 +6,7 @@ Integrates with RAG, ML pipeline, and lessons learned.
 
 Created: Dec 11, 2025 (after syntax error incident)
 Updated: Dec 11, 2025 (added FACTS Benchmark factuality monitor)
+Updated: Dec 11, 2025 (added hallucination prevention pipeline)
 """
 
 from .pre_merge_verifier import PreMergeVerifier
@@ -19,6 +20,12 @@ from .factuality_monitor import (
     HallucinationType,
     VerificationSource,
 )
+from .hallucination_prevention import (
+    HallucinationPreventionPipeline,
+    create_hallucination_pipeline,
+    Prediction,
+    HallucinationPattern,
+)
 
 __all__ = [
     "PreMergeVerifier",
@@ -30,4 +37,8 @@ __all__ = [
     "FACTS_BENCHMARK_SCORES",
     "HallucinationType",
     "VerificationSource",
+    "HallucinationPreventionPipeline",
+    "create_hallucination_pipeline",
+    "Prediction",
+    "HallucinationPattern",
 ]
