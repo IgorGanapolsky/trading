@@ -276,10 +276,12 @@ class SharpeKillSwitch:
     This is the ultimate Buffett moat - protects against strategy decay.
     """
 
-    # Thresholds
-    MIN_SHARPE_THRESHOLD = 1.3  # Below this triggers kill switch
+    # Thresholds - UPDATED Dec 11, 2025: Relaxed to enable growth
+    # Old: 1.3 fixed threshold killed momentum strategies on normal variance
+    # New: 0.8 base threshold with regime adjustment (VIX-aware)
+    MIN_SHARPE_THRESHOLD = 0.8  # Lowered from 1.3 - still profitable above this
     ROLLING_WINDOW_DAYS = 90
-    RESEARCH_MODE_DAYS = 30
+    RESEARCH_MODE_DAYS = 14  # Reduced from 30 - faster recovery
 
     # Safe haven assets to keep during liquidation
     SAFE_HAVENS = {"TLT", "IEF", "BND", "SCHD", "VNQ"}

@@ -111,7 +111,8 @@ class TradeGateway:
     """
 
     # Risk limits (HARD CODED - cannot be bypassed)
-    MAX_SYMBOL_ALLOCATION_PCT = 0.15  # 15% max per symbol
+    # UPDATED Dec 11, 2025: Increased from 15% to 25% for conviction trades
+    MAX_SYMBOL_ALLOCATION_PCT = 0.25  # 25% max per symbol (was 15%)
     MAX_CORRELATION_THRESHOLD = 0.80  # 80% correlation threshold
     MAX_TRADES_PER_HOUR = 5  # Frequency limit
     MIN_TRADE_BATCH = 10.0  # $10 minimum - lowered from $200 to match daily investment

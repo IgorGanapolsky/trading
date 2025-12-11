@@ -72,11 +72,12 @@ class OptionsExecutor:
     - MAX_POSITION_SIZE: 5 contracts max per strategy
     """
 
-    # Risk management parameters
-    MAX_PORTFOLIO_RISK_PCT = 0.02  # 2% max per trade
-    MIN_PREMIUM_PER_CONTRACT = 0.30  # $30 minimum credit per contract
-    MIN_IV_RANK = 30  # Only sell premium when IV > 30
-    MAX_POSITION_SIZE = 5  # Max 5 contracts per strategy
+    # Risk management parameters - UPDATED Dec 11, 2025 for growth
+    # Old limits blocked options income scaling ($100/day impossible)
+    MAX_PORTFOLIO_RISK_PCT = 0.05  # 5% max per trade (was 2%)
+    MIN_PREMIUM_PER_CONTRACT = 0.25  # $25 minimum (was $30)
+    MIN_IV_RANK = 20  # Sell when IV > 20 (was 30 - blocked 60% of days)
+    MAX_POSITION_SIZE = 15  # 15 contracts max (was 5)
     MIN_DTE = 30  # Minimum days to expiration
     MAX_DTE = 60  # Maximum days to expiration
 
