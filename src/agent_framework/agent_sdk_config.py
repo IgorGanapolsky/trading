@@ -28,6 +28,66 @@ class ContextWindowSize(Enum):
     EXTENDED_1M = 1_000_000  # 1M context beta (requires Tier 4 or custom limits)
 
 
+class EffortLevel(Enum):
+    """
+    Effort levels for Claude Opus 4.5 optimization.
+
+    Based on Anthropic's effort parameter documentation:
+    - LOW: Quick lookups, simple classification, high-volume tasks
+    - MEDIUM: Standard analysis, balanced speed/quality (default)
+    - HIGH: Complex reasoning, architectural decisions, critical trades
+
+    Reference: https://platform.claude.com/docs/en/build-with-claude/effort
+    """
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
+@dataclass
+class EffortConfig:
+    """
+    Configuration for effort-based model selection and token limits.
+
+    Opus 4.5 uses 67% fewer tokens for the same work when effort is optimized.
+    """
+
+    level: EffortLevel = EffortLevel.MEDIUM
+
+    # Token limits per effort level
+    max_tokens: int = 2000
+
+    # Temperature (lower for deterministic, higher for creative)
+    temperature: float = 0.7
+
+    # Model selection based on effort (can be overridden)
+    # LOW -> Haiku, MEDIUM -> Sonnet, HIGH -> Opus
+    use_model_escalation: bool = True
+
+    @classmethod
+    def for_level(cls, level: EffortLevel) -> "EffortConfig":
+        """Create effort config for a specific level."""
+        configs = {
+            EffortLevel.LOW: cls(
+                level=EffortLevel.LOW,
+                max_tokens=500,
+                temperature=0.3,
+            ),
+            EffortLevel.MEDIUM: cls(
+                level=EffortLevel.MEDIUM,
+                max_tokens=2000,
+                temperature=0.5,
+            ),
+            EffortLevel.HIGH: cls(
+                level=EffortLevel.HIGH,
+                max_tokens=4096,
+                temperature=0.7,
+            ),
+        }
+        return configs.get(level, configs[EffortLevel.MEDIUM])
+
+
 class SandboxMode(Enum):
     """Sandbox execution modes"""
 
@@ -128,6 +188,7 @@ class AgentSDKConfig:
     - Beta feature flags
     - Sandboxing settings
     - Model selection
+    - Effort-based optimization (Opus 4.5)
     """
 
     # Context window settings
@@ -168,6 +229,34 @@ class AgentSDKConfig:
             "default": 50_000,
         }
     )
+
+    # Agent-specific effort levels (Opus 4.5 optimization)
+    # Maps agent_id to effort level for token/cost optimization
+    agent_effort_levels: dict[str, EffortLevel] = field(
+        default_factory=lambda: {
+            # Core trading agents
+            "research_agent": EffortLevel.HIGH,  # Deep analysis needed
+            "signal_agent": EffortLevel.MEDIUM,  # Standard technical analysis
+            "risk_agent": EffortLevel.MEDIUM,  # Risk calculations
+            "execution_agent": EffortLevel.LOW,  # Simple order execution
+            "meta_agent": EffortLevel.HIGH,  # Complex coordination
+            # Specialized agents
+            "momentum_agent": EffortLevel.MEDIUM,
+            "rl_agent": EffortLevel.HIGH,  # RL requires deep reasoning
+            "gemini_agent": EffortLevel.MEDIUM,
+            "debate_agents": EffortLevel.HIGH,  # Multi-perspective analysis
+            # Default for unspecified agents
+            "default": EffortLevel.MEDIUM,
+        }
+    )
+
+    # Confidence threshold for model escalation
+    # If initial analysis confidence < threshold, escalate to higher-tier model
+    confidence_escalation_threshold: float = 0.7
+
+    # Enable confidence-based model escalation
+    # If True, low-confidence Haiku responses escalate to Sonnet, etc.
+    enable_confidence_escalation: bool = True
 
     # SDK settings
     max_retries: int = 3
@@ -216,6 +305,81 @@ class AgentSDKConfig:
         return self.agent_context_allocations.get(
             agent_id, self.agent_context_allocations["default"]
         )
+
+    def get_agent_effort(self, agent_id: str) -> EffortLevel:
+        """Get effort level for a specific agent."""
+        return self.agent_effort_levels.get(
+            agent_id, self.agent_effort_levels["default"]
+        )
+
+    def get_agent_effort_config(self, agent_id: str) -> EffortConfig:
+        """Get full effort configuration for a specific agent."""
+        effort_level = self.get_agent_effort(agent_id)
+        return EffortConfig.for_level(effort_level)
+
+    def get_model_for_effort(self, effort_level: EffortLevel) -> str:
+        """
+        Get appropriate model based on effort level.
+
+        Opus 4.5 optimization: Use cheaper models for simpler tasks.
+        - LOW effort -> Haiku (fast, cheap)
+        - MEDIUM effort -> Sonnet (balanced)
+        - HIGH effort -> Opus (best quality)
+        """
+        model_map = {
+            EffortLevel.LOW: self.haiku_model,
+            EffortLevel.MEDIUM: self.default_model,  # Sonnet
+            EffortLevel.HIGH: self.opus_model,
+        }
+        return model_map.get(effort_level, self.default_model)
+
+    def get_model_for_agent(self, agent_id: str) -> str:
+        """
+        Get appropriate model for a specific agent based on its effort level.
+
+        This implements Opus 4.5's effort-based optimization:
+        - Execution agents use Haiku (simple tasks)
+        - Signal/risk agents use Sonnet (standard analysis)
+        - Research/RL agents use Opus (complex reasoning)
+        """
+        effort_level = self.get_agent_effort(agent_id)
+        return self.get_model_for_effort(effort_level)
+
+    def should_escalate_model(self, confidence: float, current_effort: EffortLevel) -> bool:
+        """
+        Determine if model should be escalated based on confidence.
+
+        If confidence is below threshold and we're not already at HIGH effort,
+        recommend escalating to a higher-tier model.
+
+        Args:
+            confidence: Confidence score from 0.0 to 1.0
+            current_effort: Current effort level
+
+        Returns:
+            True if should escalate, False otherwise
+        """
+        if not self.enable_confidence_escalation:
+            return False
+
+        if current_effort == EffortLevel.HIGH:
+            return False  # Already at highest level
+
+        return confidence < self.confidence_escalation_threshold
+
+    def get_escalated_model(self, current_effort: EffortLevel) -> tuple[str, EffortLevel]:
+        """
+        Get escalated model and effort level.
+
+        Returns:
+            Tuple of (model_name, new_effort_level)
+        """
+        escalation_map = {
+            EffortLevel.LOW: (self.default_model, EffortLevel.MEDIUM),
+            EffortLevel.MEDIUM: (self.opus_model, EffortLevel.HIGH),
+            EffortLevel.HIGH: (self.opus_model, EffortLevel.HIGH),  # No escalation
+        }
+        return escalation_map.get(current_effort, (self.opus_model, EffortLevel.HIGH))
 
 
 # Global configuration singleton

@@ -34,6 +34,20 @@ from src.core.prompt_engineering import (
     PromptEngineer,
 )
 
+# Import effort configuration for Opus 4.5 optimization
+try:
+    from src.agent_framework.agent_sdk_config import (
+        EffortConfig,
+        EffortLevel,
+        get_agent_sdk_config,
+    )
+    EFFORT_CONFIG_AVAILABLE = True
+except ImportError:
+    EFFORT_CONFIG_AVAILABLE = False
+    EffortConfig = None
+    EffortLevel = None
+    get_agent_sdk_config = None
+
 # OpenAI client - optional dependency (may use OpenRouter instead)
 try:
     from openai import AsyncOpenAI, OpenAI
@@ -1946,6 +1960,218 @@ multiple expert opinions into a final, high-quality decision. Your role is to:
                 "timestamp": time.time(),
             },
         )
+
+    async def quick_analysis(
+        self,
+        query: str,
+        system_prompt: str | None = None,
+        effort_level: str = "medium",
+    ) -> LLMResponse:
+        """
+        Fast-path single-model analysis for routine/simple queries.
+
+        Opus 4.5 optimization: Skip full council for high-confidence routine tasks.
+        Use this for:
+        - Routine signal checks
+        - Simple price queries
+        - Standard technical analysis
+
+        Args:
+            query: The analysis query
+            system_prompt: Optional system prompt
+            effort_level: "low", "medium", or "high" (determines model selection)
+
+        Returns:
+            LLMResponse from single model
+        """
+        # Select model based on effort level
+        if EFFORT_CONFIG_AVAILABLE:
+            sdk_config = get_agent_sdk_config()
+            effort_enum = EffortLevel(effort_level) if effort_level in ["low", "medium", "high"] else EffortLevel.MEDIUM
+            effort_config = EffortConfig.for_level(effort_enum)
+            model = LLMModel.CLAUDE_SONNET_4  # Default to Sonnet
+
+            if effort_level == "low":
+                # Use fastest model for simple tasks
+                model = LLMModel.GEMINI_2_FLASH
+                max_tokens = 500
+                temperature = 0.3
+            elif effort_level == "high":
+                model = LLMModel.CLAUDE_SONNET_4
+                max_tokens = 4096
+                temperature = 0.7
+            else:
+                max_tokens = effort_config.max_tokens
+                temperature = effort_config.temperature
+        else:
+            model = LLMModel.CLAUDE_SONNET_4
+            max_tokens = 2000
+            temperature = 0.5
+
+        logger.info(f"Quick analysis using {model.value} (effort: {effort_level})")
+
+        return await self._query_llm_async(
+            model=model,
+            prompt=query,
+            system_prompt=system_prompt,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+
+    async def analyze_with_escalation(
+        self,
+        query: str,
+        system_prompt: str | None = None,
+        initial_effort: str = "low",
+        confidence_threshold: float = 0.7,
+    ) -> tuple[LLMResponse, bool]:
+        """
+        Analyze with automatic model escalation based on confidence.
+
+        Opus 4.5 optimization: Start with cheaper model, escalate if uncertain.
+
+        Strategy:
+        1. Try quick analysis with low-effort model
+        2. If confidence < threshold, escalate to higher model
+        3. Return final response and whether escalation occurred
+
+        Args:
+            query: The analysis query
+            system_prompt: Optional system prompt
+            initial_effort: Starting effort level
+            confidence_threshold: Confidence below which to escalate
+
+        Returns:
+            Tuple of (final_response, was_escalated)
+        """
+        # First attempt with initial effort
+        response = await self.quick_analysis(query, system_prompt, initial_effort)
+
+        if not response.success:
+            # Failed, escalate immediately
+            logger.warning(f"Initial {initial_effort} analysis failed, escalating")
+            escalated = await self.quick_analysis(query, system_prompt, "high")
+            return escalated, True
+
+        # Try to extract confidence from response
+        confidence = self._extract_confidence(response.content)
+
+        if confidence is not None and confidence < confidence_threshold:
+            logger.info(
+                f"Confidence {confidence:.2f} < {confidence_threshold}, escalating model"
+            )
+            # Escalate to higher effort
+            next_effort = "medium" if initial_effort == "low" else "high"
+            escalated = await self.quick_analysis(query, system_prompt, next_effort)
+            return escalated, True
+
+        return response, False
+
+    def _extract_confidence(self, content: str) -> float | None:
+        """Extract confidence score from LLM response."""
+        try:
+            if content.strip().startswith("{"):
+                data = json.loads(content)
+                return data.get("confidence")
+
+            import re
+            match = re.search(r"confidence[:\s]+(\d*\.?\d+)", content.lower())
+            if match:
+                return float(match.group(1))
+        except Exception:
+            pass
+        return None
+
+    async def smart_council(
+        self,
+        query: str,
+        system_prompt: str | None = None,
+        trade_importance: str = "routine",
+    ) -> CouncilResponse:
+        """
+        Smart council: Adaptive council execution based on trade importance.
+
+        Opus 4.5 optimization: Full council only for critical decisions.
+
+        Trade importance levels:
+        - "routine": Quick single-model analysis (fastest, cheapest)
+        - "standard": Two-model consensus
+        - "critical": Full 3-stage council (most thorough)
+
+        Args:
+            query: Trading analysis query
+            system_prompt: Optional system prompt
+            trade_importance: "routine", "standard", or "critical"
+
+        Returns:
+            CouncilResponse (may be simplified for routine trades)
+        """
+        start_time = time.time()
+
+        if trade_importance == "routine":
+            # Fast path: single model, no review
+            logger.info("Smart council: ROUTINE trade - using fast path")
+            response = await self.quick_analysis(query, system_prompt, "medium")
+
+            return CouncilResponse(
+                final_answer=response.content,
+                confidence=0.7 if response.success else 0.0,
+                individual_responses={response.model: response.content} if response.success else {},
+                reviews={},
+                rankings={},
+                chairman_reasoning="Fast-path single model analysis (routine trade)",
+                metadata={
+                    "query": query,
+                    "mode": "fast_path",
+                    "trade_importance": trade_importance,
+                    "total_time": time.time() - start_time,
+                    "timestamp": time.time(),
+                },
+            )
+
+        elif trade_importance == "standard":
+            # Medium path: two models, no full review
+            logger.info("Smart council: STANDARD trade - using 2-model consensus")
+
+            # Query two models in parallel
+            models_to_use = [LLMModel.CLAUDE_SONNET_4, LLMModel.GEMINI_3_PRO]
+            tasks = [
+                self._query_llm_async(model, query, system_prompt, 0.5, 2000)
+                for model in models_to_use
+            ]
+            responses = await asyncio.gather(*tasks, return_exceptions=True)
+
+            individual_responses = {}
+            for i, resp in enumerate(responses):
+                if not isinstance(resp, Exception) and resp.success:
+                    individual_responses[models_to_use[i].value] = resp.content
+
+            # Simple consensus: combine insights
+            combined = "\n\n".join([
+                f"[{model}]: {content}"
+                for model, content in individual_responses.items()
+            ])
+
+            return CouncilResponse(
+                final_answer=combined,
+                confidence=len(individual_responses) / len(models_to_use),
+                individual_responses=individual_responses,
+                reviews={},
+                rankings={},
+                chairman_reasoning="2-model consensus (standard trade)",
+                metadata={
+                    "query": query,
+                    "mode": "2_model_consensus",
+                    "trade_importance": trade_importance,
+                    "total_time": time.time() - start_time,
+                    "timestamp": time.time(),
+                },
+            )
+
+        else:
+            # Critical: Full council with all stages
+            logger.info("Smart council: CRITICAL trade - using full 3-stage council")
+            return await self.query_council(query, system_prompt, include_reviews=True)
 
     async def analyze_trading_decision(
         self,
