@@ -36,6 +36,78 @@
 
 ---
 
+## 🧠 CLAUDE OPUS 4.5 BEST PRACTICES (Added Dec 12, 2025)
+
+**Reference**: [Anthropic's Claude Opus 4.5 Strengths Guide](https://support.claude.com/en/articles/12920969)
+
+This project runs on Claude Opus 4.5 and should leverage its unique capabilities:
+
+### Extended Thinking (Hybrid Reasoning)
+
+Opus 4.5 supports extended thinking for complex decisions. **Explicitly request deeper analysis** for:
+- High-stakes trade decisions (position sizing, entry/exit timing)
+- Risk assessment on volatile market conditions
+- Multi-factor analysis combining technical + sentiment + fundamentals
+
+**Trigger Phrases** (use when complexity warrants):
+- "Take extra time to reason through the risk/reward tradeoffs"
+- "Think step-by-step about potential failure modes"
+- "Analyze this decision thoroughly before acting"
+
+### Few-Shot Trading Examples
+
+Claude 4 models are highly sensitive to example quality. Use these patterns:
+
+**Good Trade Decision Example**:
+```
+Situation: SPY down 2%, RSI=28, MACD bullish crossover, VIX spike
+Analysis: Oversold bounce setup with momentum confirmation
+Decision: BUY 2 shares SPY at market open
+Rationale: Multiple indicators aligned, volatility creates opportunity
+Risk: Stop-loss at -3%, position size 2% of portfolio
+```
+
+**Bad Trade Decision Example (what to avoid)**:
+```
+Situation: Stock mentioned on Reddit, "feels like it will go up"
+Decision: YOLO all-in
+Why this fails: No technical analysis, no risk management, emotion-driven
+```
+
+### Context Motivation (The "Why" Behind Rules)
+
+Claude 4 models perform better when they understand motivation. Key rules with context:
+
+| Rule | Why It Matters |
+|------|----------------|
+| NEVER merge directly to main | Dec 11, 2025: Syntax error bypassed CI, caused 0 trades for entire day |
+| Always use PRs | Audit trail + CI checks + rollback capability |
+| Verify against CEO hook first | Hook shows LIVE data; files may be stale |
+| Use parallel agents | Opus 4.5 excels at multi-agent orchestration |
+| Extended thinking for trades | Complex decisions benefit from deliberate reasoning |
+
+### "Above and Beyond" is Opt-In
+
+Claude 4 models require **explicit requests** for proactive behavior (unlike earlier models):
+- ✅ DO explicitly request: "Proactively identify edge cases"
+- ✅ DO explicitly request: "Suggest improvements you notice"
+- ❌ DON'T assume Claude will volunteer unsolicited enhancements
+
+**This project's directives already handle this** via:
+- "You do EVERYTHING autonomously and agentically"
+- "You proactively manage, monitor, and report"
+- "TAKE CHARGE completely"
+
+### Opus 4.5 Sweet Spots (Use For These)
+
+1. **Long-horizon autonomous tasks** → Trading system orchestration
+2. **Multi-step reasoning + tool use** → Trade execution pipeline
+3. **Self-improving capabilities** → RAG learning from trades
+4. **Complex enterprise workflows** → PR lifecycle, CI/CD
+5. **Agentic file management** → State persistence across sessions
+
+---
+
 ## 🎬 YOUTUBE URL HANDLING (MANDATORY)
 
 **When CEO shares a YouTube URL (including Shorts)**:
@@ -225,11 +297,11 @@ If I catch myself about to suggest manual intervention:
 - ✅ ALWAYS create a PR for every change
 - ✅ ALWAYS merge through GitHub PR interface
 
-**Why This Matters:**
-- PRs provide audit trail for all changes
-- PRs trigger CI checks before merge
-- PRs allow review and rollback
-- Direct pushes to main bypass all safety checks
+**Why This Matters** (context for Opus 4.5):
+- PRs provide audit trail for all changes → enables debugging when things go wrong
+- PRs trigger CI checks before merge → Dec 11 syntax error would have been caught
+- PRs allow review and rollback → can revert bad changes in seconds
+- Direct pushes to main bypass all safety checks → caused 0 trades on Dec 11
 
 **CEO Directive (Dec 9, 2025)**: *"We can never merge to main. We must always open and merge PRs."*
 
@@ -297,23 +369,30 @@ This is THE MOST IMPORTANT rule in this entire document. CEO must trust CTO comp
 
 ### Ground Truth Sources (ALWAYS verify against these)
 
+**Why This Hierarchy Exists** (context for Opus 4.5):
+Claude 4 models benefit from understanding data reliability. This hierarchy exists because
+real-time sources are more trustworthy than cached files that may be hours or days old.
+
 **Priority 1 - CEO's User Hook** (highest authority):
 - Displayed at start of every conversation
 - Shows: Portfolio value, P/L, Win Rate, Next Trade time
 - Format: `[TRADING CONTEXT] Portfolio: $X | P/L: $Y | Day: Z/90`
 - **THIS IS THE TRUTH** - if my data conflicts, the hook is correct
+- *Why highest*: Hook pulls live data at conversation start
 
 **Priority 2 - Alpaca API** (real-time source):
 - Live account data via `api.get_account()`
 - Current positions via `api.list_positions()`
 - Order status via `api.get_order(order_id)`
 - **NEVER assume** - always query API before claiming results
+- *Why second*: API is real-time but requires explicit query
 
 **Priority 3 - System State Files** (may be stale):
 - `data/system_state.json` - check `last_updated` timestamp
 - `data/trades_YYYY-MM-DD.json` - daily trade logs
 - `reports/daily_report_YYYY-MM-DD.txt` - historical reports
 - **VERIFY FRESHNESS** - reject if >24 hours old without explicit warning
+- *Why lowest*: Files are snapshots that can become stale
 
 ### Verification Protocol
 
@@ -607,8 +686,8 @@ Phase 3: $3/day  → Funded by profits from Phase 2
 
 ---
 
-**Last Optimized**: November 23, 2025
-**File Size**: ~11k characters (73% reduction from 43.5k)
+**Last Optimized**: December 12, 2025
+**File Size**: ~14k characters (added Opus 4.5 best practices)
 
 ---
 
