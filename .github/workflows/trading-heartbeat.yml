@@ -1,0 +1,55 @@
+name: Trading Heartbeat Monitor
+
+on:
+  schedule:
+    # Run at 11 AM ET (16:00 UTC) - 90 min after daily trading should complete
+    - cron: '0 16 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  check-trading-health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check if daily trading ran today
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TODAY=$(date +%Y-%m-%d)
+          echo "🔍 Checking trading health for $TODAY..."
+
+          # Check 1: Did daily-trading workflow run today?
+          LAST_RUN=$(gh run list --workflow=daily-trading.yml --limit=1 --json createdAt,conclusion -q '.[0]')
+          LAST_RUN_DATE=$(echo "$LAST_RUN" | jq -r '.createdAt' | cut -d'T' -f1)
+          LAST_RUN_STATUS=$(echo "$LAST_RUN" | jq -r '.conclusion')
+
+          echo "   Last run: $LAST_RUN_DATE ($LAST_RUN_STATUS)"
+
+          if [[ "$LAST_RUN_DATE" != "$TODAY" ]]; then
+            echo "::error::🚨 CRITICAL: Daily trading did NOT run today!"
+            echo "::error::Last run was: $LAST_RUN_DATE"
+            FAILED=true
+          fi
+
+          # Check 2: Does today's trade file exist?
+          if [ ! -f "data/trades_${TODAY}.json" ]; then
+            echo "::warning::⚠️ No trade file for today: data/trades_${TODAY}.json"
+          fi
+
+          # Check 3: Was performance log updated today?
+          if [ -f "data/performance_log.json" ]; then
+            PERF_DATE=$(tail -1 data/performance_log.json | python3 -c "import sys,json; print(json.load(sys.stdin).get('date',''))" 2>/dev/null || echo "")
+            if [[ "$PERF_DATE" != "$TODAY" ]]; then
+              echo "::warning::⚠️ Performance log not updated today (last: $PERF_DATE)"
+            fi
+          fi
+
+          if [ "$FAILED" = "true" ]; then
+            echo ""
+            echo "🚨 TRADING SYSTEM MAY BE DEAD!"
+            echo "   Trigger manual run: gh workflow run daily-trading.yml"
+            exit 1
+          fi
+
+          echo "✅ Trading system healthy"
