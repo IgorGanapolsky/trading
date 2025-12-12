@@ -164,6 +164,42 @@ FRED_SERIES = {
         "frequency": "monthly",
         "impact": "medium",
     },
+    # Precious Metals (Added Dec 2025 for Tier 8 strategy)
+    "GOLDAMGBD228NLBM": {
+        "name": "Gold Fixing Price (London)",
+        "category": "commodities",
+        "frequency": "daily",
+        "impact": "medium",
+        "description": "London Bullion Market gold price in USD per troy ounce",
+    },
+    "SLVPRUSD": {
+        "name": "Silver Fixing Price",
+        "category": "commodities",
+        "frequency": "daily",
+        "impact": "medium",
+        "description": "Silver price in USD per troy ounce",
+    },
+    "DTWEXBGS": {
+        "name": "Trade Weighted US Dollar Index",
+        "category": "commodities",
+        "frequency": "daily",
+        "impact": "high",
+        "description": "Dollar strength index - inverse correlation with gold",
+    },
+    "T10YIE": {
+        "name": "10-Year Breakeven Inflation Rate",
+        "category": "inflation",
+        "frequency": "daily",
+        "impact": "high",
+        "description": "Market inflation expectations - drives precious metals demand",
+    },
+    "DFII10": {
+        "name": "10-Year Real Interest Rate",
+        "category": "interest_rates",
+        "frequency": "daily",
+        "impact": "high",
+        "description": "Real rates - key driver for gold (negative = bullish gold)",
+    },
 }
 
 
@@ -396,6 +432,7 @@ Historical Context:
             "market_stress": self._analyze_stress(series_id, value),
             "growth": self._analyze_growth(series_id, value),
             "consumer": self._analyze_consumer(series_id, value),
+            "commodities": self._analyze_commodities(series_id, value),
         }
 
         specific = category_analysis.get(config["category"], "")
@@ -484,6 +521,38 @@ Historical Context:
                 return "SIGNAL: Consumer sentiment HIGH - spending tailwind."
             else:
                 return "SIGNAL: Consumer sentiment neutral."
+        return ""
+
+    def _analyze_commodities(self, series_id: str, value: float) -> str:
+        """Analyze precious metals and commodity indicators."""
+        if series_id == "GOLDAMGBD228NLBM":
+            if value > 2000:
+                return "SIGNAL: Gold ELEVATED (>$2000/oz) - inflation/uncertainty hedge active. Consider profit-taking on GLD longs."
+            elif value < 1800:
+                return "SIGNAL: Gold SUPPRESSED (<$1800/oz) - potential accumulation opportunity for GLD."
+            else:
+                return "SIGNAL: Gold in normal range. Monitor real rates and dollar for direction."
+        elif series_id == "SLVPRUSD":
+            if value > 28:
+                return "SIGNAL: Silver ELEVATED - industrial demand strong or precious metals rally. Monitor GSR for mean reversion."
+            elif value < 22:
+                return "SIGNAL: Silver DEPRESSED - potential accumulation opportunity for SLV."
+            else:
+                return "SIGNAL: Silver in normal range."
+        elif series_id == "DTWEXBGS":
+            if value > 110:
+                return "SIGNAL: Dollar STRONG - headwind for gold/silver. GLD/SLV may underperform."
+            elif value < 100:
+                return "SIGNAL: Dollar WEAK - tailwind for precious metals. Overweight GLD/SLV."
+            else:
+                return "SIGNAL: Dollar neutral. Watch Fed policy for direction."
+        elif series_id == "DFII10":
+            if value < 0:
+                return "SIGNAL: NEGATIVE real rates - BULLISH for gold. Real rates below zero historically drive gold higher."
+            elif value > 2:
+                return "SIGNAL: HIGH real rates - headwind for gold. Opportunity cost makes bonds attractive vs gold."
+            else:
+                return "SIGNAL: Real rates neutral. Monitor for trend changes."
         return ""
 
     def _format_history(self, observations: list[dict]) -> str:

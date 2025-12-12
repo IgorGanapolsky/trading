@@ -27,6 +27,20 @@
       "chunks_file": "rag_knowledge/chunks/crypto_trading_mastery_2025.json",
       "chunk_count": 8,
       "ingested_at": "2025-12-08T02:25:00.000000"
+    },
+    "precious_metals_trading": {
+      "title": "Precious Metals Trading Knowledge",
+      "author": "Compiled from Jim Rickards, Mike Maloney, Kitco Research",
+      "chunks_file": "rag_knowledge/chunks/precious_metals_trading_2025.json",
+      "chunk_count": 8,
+      "ingested_at": "2025-12-12T18:30:00.000000"
+    },
+    "reit_cycles_valuation": {
+      "title": "REIT Cycles and Valuation Knowledge",
+      "author": "Compiled from Ralph Block, Brad Thomas, Nareit Research",
+      "chunks_file": "rag_knowledge/chunks/reit_cycles_valuation_2025.json",
+      "chunk_count": 8,
+      "ingested_at": "2025-12-12T18:30:00.000000"
     }
   },
   "papers": {},
