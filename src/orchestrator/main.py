@@ -55,6 +55,15 @@ try:
 except ImportError:
     RAG_AVAILABLE = False
 
+# Lessons Learned RAG - Learn from past mistakes (Dec 2025)
+# Query lessons before trading to avoid repeating errors
+try:
+    from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
+    LESSONS_RAG_AVAILABLE = True
+except ImportError:
+    LESSONS_RAG_AVAILABLE = False
+
 # Reflexion Loop - Self-improving through trade reflection (Dec 2025)
 # Based on Reflexion framework research
 try:
@@ -218,6 +227,23 @@ class TradingOrchestrator:
             except Exception as e:
                 logger.warning(f"RAG Retriever init failed: {e}")
 
+        # Lessons Learned RAG - Query past mistakes before trading (Dec 2025)
+        self.lessons_rag: LessonsLearnedRAG | None = None
+        enable_lessons = os.getenv("ENABLE_LESSONS_RAG", "true").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+        if enable_lessons and LESSONS_RAG_AVAILABLE:
+            try:
+                self.lessons_rag = LessonsLearnedRAG()
+                logger.info(
+                    "Lessons Learned RAG initialized (%d lessons loaded)",
+                    len(self.lessons_rag.lessons) if self.lessons_rag.lessons else 0,
+                )
+            except Exception as e:
+                logger.warning(f"Lessons Learned RAG init failed: {e}")
+
         bias_dir = os.getenv("BIAS_DATA_DIR", "data/bias")
         self.bias_store = BiasStore(bias_dir)
         # Position manager for active exit management
@@ -361,6 +387,9 @@ class TradingOrchestrator:
         # This ensures win/loss tracking works properly
         self._manage_open_positions()
 
+        # Query lessons learned RAG to avoid repeating past mistakes
+        self._query_lessons_learned(context="options momentum trading")
+
         # =================================================================
         # OPTIONS FIRST (Dec 12, 2025): Theta decay is proven profit maker
         # Evidence: +$327 profit today from AMD/SPY short puts
@@ -420,6 +449,49 @@ class TradingOrchestrator:
         # Save and print session summary (always, even with 0 trades)
         self.telemetry.save_session_decisions(self.session_profile)
         self.telemetry.print_session_summary()
+
+    def _query_lessons_learned(self, context: str = "trading session") -> None:
+        """
+        Query lessons learned RAG before trading to avoid repeating mistakes.
+
+        Logs warnings for any relevant lessons found based on current context.
+        """
+        if not self.lessons_rag:
+            return
+
+        try:
+            # Query for relevant lessons
+            results = self.lessons_rag.search(
+                query=f"trading {context} mistakes errors filters thresholds",
+                top_k=3,
+            )
+
+            if results:
+                logger.info("=" * 60)
+                logger.info("📚 LESSONS LEARNED (from RAG - don't repeat mistakes!):")
+                for lesson, score in results:
+                    if score > 0.1:  # Only show relevant matches
+                        logger.warning(
+                            "  ⚠️  [%s] %s: %s",
+                            lesson.severity.upper(),
+                            lesson.title,
+                            lesson.prevention[:100] + "..." if len(lesson.prevention) > 100 else lesson.prevention,
+                        )
+
+                # Log to telemetry
+                self.telemetry.record(
+                    event_type="lessons.queried",
+                    ticker="SYSTEM",
+                    status="info",
+                    payload={
+                        "lessons_found": len(results),
+                        "top_lesson": results[0][0].title if results else None,
+                    },
+                )
+                logger.info("=" * 60)
+
+        except Exception as e:
+            logger.debug(f"Lessons RAG query failed (non-fatal): {e}")
 
     def _format_momentum_rejection(self, indicators: dict) -> str:
         """Format a human-readable rejection reason from momentum indicators."""

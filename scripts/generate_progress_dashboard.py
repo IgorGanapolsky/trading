@@ -349,6 +349,29 @@ def format_ml_rag_status() -> str:
     psych_active = psych_path.exists() and psych_path.stat().st_size > 10
     coaching_active = coaching_log_path.exists() and coaching_log_path.stat().st_size > 10
 
+    # Load lessons learned for dashboard
+    lessons_table = "| ID | Date | Severity | Title |\n|-----|------|----------|-------|\n"
+    lessons_path = Path("data/rag/lessons_learned.json")
+    lessons_count = 0
+    if lessons_path.exists():
+        try:
+            import json
+            with open(lessons_path, "r") as f:
+                lessons_data = json.load(f)
+            lessons_count = len(lessons_data)
+            # Show last 5 lessons
+            for lesson in lessons_data[-5:]:
+                lid = lesson.get("metadata", {}).get("id", "?")[:10]
+                ldate = lesson.get("metadata", {}).get("date", "?")[:10]
+                lsev = lesson.get("metadata", {}).get("severity", "?")
+                ltitle = lesson.get("source", "").split("/")[-1].replace(".md", "")[:40]
+                lessons_table += f"| {lid} | {ldate} | {lsev} | {ltitle} |\n"
+        except Exception:
+            lessons_table += "| — | — | — | No lessons loaded |\n"
+    else:
+        lessons_table += "| — | — | — | No lessons file |\n"
+    lessons_table += f"\n**Total Lessons**: {lessons_count} | **RAG Integration**: ✅ Active"
+
     # Build source breakdown table
     source_rows = ""
     for src, count in source_breakdown.items():
@@ -406,6 +429,10 @@ def format_ml_rag_status() -> str:
 |-----------|--------|
 | **Psychology State** | {"✅ Active" if psych_active else "⚠️ No state file"} |
 | **Coaching Log** | {"✅ Logging" if coaching_active else "⚠️ No interventions logged"} |
+
+### 📝 Lessons Learned (RAG-Integrated)
+
+{lessons_table}
 
 **Honest Summary**: {"ML systems are scaffolded but not yet driving decisions. Trades are rule-based." if ml_decisions == 0 else f"ML is contributing to {ml_decisions} decisions."}
 
