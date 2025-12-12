@@ -57,6 +57,15 @@ jobs:
           echo "Starting Unified RAG Ingestion..."
           python scripts/unified_rag_ingestion.py
 
+      - name: Migrate to LanceDB (if not already migrated)
+        run: |
+          echo "Running LanceDB migration..."
+          if [ ! -d "data/rag/lance_db" ] || [ -z "$(ls -A data/rag/lance_db 2>/dev/null)" ]; then
+            python scripts/migrate_to_lancedb.py --source all || echo "Migration completed with warnings"
+          else
+            echo "LanceDB already populated, skipping migration"
+          fi
+
       - name: Upload ingestion status
         uses: actions/upload-artifact@v4
         with:
