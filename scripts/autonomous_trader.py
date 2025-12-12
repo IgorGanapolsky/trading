@@ -541,6 +541,67 @@ def _update_system_state_with_reit_trade(trade_record: dict[str, Any], logger) -
         logger.error(f"Failed to write system_state.json: {exc}")
 
 
+def _update_reit_daily_returns(logger) -> None:
+    """
+    Calculate and store REIT-specific daily returns in system_state.json.
+
+    This answers the CEO's question: "How much did we make from REITs today?"
+    """
+    state_path = Path("data/system_state.json")
+    if not state_path.exists():
+        return
+
+    try:
+        with state_path.open("r", encoding="utf-8") as handle:
+            state = json.load(handle)
+    except Exception:
+        return
+
+    # REIT symbols from our universe
+    reit_universe = {"AMT", "CCI", "DLR", "EQIX", "PLD", "O", "VICI", "PSA", "WELL", "AVB", "EQR", "INVH"}
+
+    # Calculate REIT P/L from open positions
+    open_positions = state.get("performance", {}).get("open_positions", [])
+    reit_unrealized = 0.0
+    reit_positions = []
+
+    for pos in open_positions:
+        symbol = pos.get("symbol", "")
+        if symbol in reit_universe:
+            pl = pos.get("unrealized_pl", 0.0)
+            reit_unrealized += pl
+            reit_positions.append({"symbol": symbol, "pl": pl})
+
+    # Calculate REIT P/L from closed trades today
+    closed_trades = state.get("performance", {}).get("closed_trades", [])
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    reit_realized = 0.0
+
+    for trade in closed_trades:
+        symbol = trade.get("symbol", "")
+        exit_date = trade.get("exit_date", "")
+        if symbol in reit_universe and today_str in exit_date:
+            reit_realized += trade.get("pl", 0.0)
+
+    # Store in strategies.tier7
+    tier7 = state.get("strategies", {}).get("tier7", {})
+    tier7["daily_returns"] = {
+        "date": today_str,
+        "realized_pl": round(reit_realized, 2),
+        "unrealized_pl": round(reit_unrealized, 2),
+        "total_pl": round(reit_realized + reit_unrealized, 2),
+        "positions": len(reit_positions),
+    }
+    state.setdefault("strategies", {})["tier7"] = tier7
+
+    try:
+        with state_path.open("w", encoding="utf-8") as handle:
+            json.dump(state, handle, indent=2)
+        logger.info(f"📊 REIT Daily Returns: ${reit_realized + reit_unrealized:.2f} ({len(reit_positions)} positions)")
+    except Exception:
+        pass
+
+
 def execute_reit_trading() -> None:
     """
     Execute REIT trading strategy (Tier 7).
@@ -628,6 +689,9 @@ def execute_reit_trading() -> None:
 
             logger.info(f"💾 REIT trades saved to {trades_file}")
             logger.info(f"✅ REIT strategy executed: {len(signals)} positions @ ${per_trade_amount:.2f} each")
+
+            # Update REIT daily returns in system_state for easy CEO visibility
+            _update_reit_daily_returns(logger)
         else:
             logger.info("📋 REIT Analysis complete (no trader - signals only)")
             for sig in signals:
