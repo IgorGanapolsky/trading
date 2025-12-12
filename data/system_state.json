@@ -28,7 +28,8 @@
     "tier3_reserve": 0.0,
     "tier4_reserve": 0.0,
     "tier5_invested": 0.0,
-    "tier7_invested": 0.0
+    "tier7_invested": 0.0,
+    "tier8_invested": 0.0
   },
   "performance": {
     "total_trades": 7,
@@ -287,6 +288,22 @@
       "regime": "Neutral",
       "strategy_notes": "Regime-based rotation: Rising Rates → Defensive REITs, Falling Rates → Growth REITs",
       "strategy_update": "2025-12-12: Activated REIT strategy per CEO priority"
+    },
+    "tier8": {
+      "name": "Precious Metals Strategy (GLD/SLV)",
+      "allocation": 0.05,
+      "daily_amount": 5.0,
+      "etfs": ["GLD", "SLV"],
+      "trades_executed": 0,
+      "total_invested": 0.0,
+      "status": "active",
+      "enabled": true,
+      "execution_schedule": "Daily 9:35 AM ET (market hours)",
+      "last_execution": null,
+      "next_execution": "2025-12-13T14:35:00Z",
+      "regime": "Neutral",
+      "strategy_notes": "Regime-based allocation: High GSR → Equal GLD/SLV, Fear → Heavy GLD, Normal → 70/30 GLD/SLV",
+      "strategy_update": "2025-12-12: Activated Precious Metals strategy per CEO approval"
     }
   },
   "backtest_reality": {
@@ -493,7 +510,11 @@
     "[2025-12-12 17:30] TIER 7 ACTIVATED: REIT Smart Income Strategy enabled per CEO priority",
     "[2025-12-12 17:30] REIT Universe: Growth (AMT, CCI, DLR, EQIX, PLD), Defensive (O, VICI, PSA, WELL), Residential (AVB, EQR, INVH)",
     "[2025-12-12 17:30] REIT Allocation: $10/day (10% of daily budget)",
-    "[2025-12-12 17:30] REIT Strategy: Regime-based sector rotation using Fed rate environment detection"
+    "[2025-12-12 17:30] REIT Strategy: Regime-based sector rotation using Fed rate environment detection",
+    "[2025-12-12 18:00] TIER 8 ACTIVATED: Precious Metals Strategy (GLD/SLV) enabled per CEO approval",
+    "[2025-12-12 18:00] Precious Metals Universe: GLD (Gold), SLV (Silver)",
+    "[2025-12-12 18:00] Precious Metals Allocation: $5/day (5% of daily budget)",
+    "[2025-12-12 18:00] Precious Metals Strategy: Regime-based allocation using Gold-Silver ratio"
   ],
   "options": {
     "last_theta_harvest": "2025-12-05T17:53:46.287290+00:00",

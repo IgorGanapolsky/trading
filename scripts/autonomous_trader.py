@@ -456,6 +456,11 @@ def reit_enabled() -> bool:
     return os.getenv("ENABLE_REIT_STRATEGY", "true").lower() in {"1", "true", "yes"}
 
 
+def precious_metals_enabled() -> bool:
+    """Feature flag for Precious Metals strategy (Tier 8 - GLD/SLV)."""
+    return os.getenv("ENABLE_PRECIOUS_METALS", "true").lower() in {"1", "true", "yes"}
+
+
 def _update_system_state_with_reit_trade(trade_record: dict[str, Any], logger) -> None:
     """Update `data/system_state.json` so Tier 7 reflects the new REIT trade."""
     state_path = Path("data/system_state.json")
@@ -600,6 +605,256 @@ def _update_reit_daily_returns(logger) -> None:
         logger.info(f"📊 REIT Daily Returns: ${reit_realized + reit_unrealized:.2f} ({len(reit_positions)} positions)")
     except Exception:
         pass
+
+
+def _update_system_state_with_precious_metals_trade(trade_record: dict[str, Any], logger) -> None:
+    """Update `data/system_state.json` so Tier 8 reflects the new precious metals trade."""
+    state_path = Path("data/system_state.json")
+    if not state_path.exists():
+        logger.warning("system_state.json missing; skipping state update")
+        return
+
+    try:
+        with state_path.open("r", encoding="utf-8") as handle:
+            state = json.load(handle)
+    except Exception as exc:
+        logger.error(f"Failed to read system_state.json: {exc}")
+        return
+
+    strategies = state.setdefault("strategies", {})
+    tier8_defaults = {
+        "name": "Precious Metals Strategy (GLD/SLV)",
+        "allocation": 0.05,
+        "daily_amount": 5.0,
+        "etfs": ["GLD", "SLV"],
+        "trades_executed": 0,
+        "total_invested": 0.0,
+        "status": "active",
+        "execution_schedule": "Daily 9:35 AM ET (market hours)",
+        "last_execution": None,
+        "next_execution": None,
+        "regime": "Neutral",
+    }
+    tier8 = strategies.setdefault("tier8", tier8_defaults)
+    tier8["trades_executed"] = tier8.get("trades_executed", 0) + 1
+    tier8["total_invested"] = round(
+        tier8.get("total_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
+    )
+    tier8["last_execution"] = trade_record.get("timestamp")
+    tier8["status"] = "active"
+    if trade_record.get("regime"):
+        tier8["regime"] = trade_record.get("regime")
+
+    investments = state.setdefault("investments", {})
+    investments["tier8_invested"] = round(
+        investments.get("tier8_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
+    )
+    investments["total_invested"] = round(
+        investments.get("total_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
+    )
+
+    performance = state.setdefault("performance", {})
+    performance["total_trades"] = performance.get("total_trades", 0) + 1
+
+    open_positions = performance.setdefault("open_positions", [])
+    if isinstance(open_positions, list):
+        matching = next(
+            (
+                entry
+                for entry in open_positions
+                if entry.get("symbol") == trade_record.get("symbol")
+            ),
+            None,
+        )
+        entry_payload = {
+            "symbol": trade_record.get("symbol"),
+            "tier": "tier8",
+            "amount": trade_record.get("amount"),
+            "entry_date": trade_record.get("timestamp"),
+            "entry_price": trade_record.get("price"),
+            "current_price": trade_record.get("price"),
+            "quantity": trade_record.get("quantity"),
+            "unrealized_pl": 0.0,
+            "unrealized_pl_pct": 0.0,
+            "last_updated": trade_record.get("timestamp"),
+        }
+        if matching:
+            matching.update(entry_payload)
+        else:
+            open_positions.append(entry_payload)
+
+    try:
+        with state_path.open("w", encoding="utf-8") as handle:
+            json.dump(state, handle, indent=2)
+        logger.info("system_state.json updated with precious metals trade metadata")
+    except Exception as exc:
+        logger.error(f"Failed to write system_state.json: {exc}")
+
+
+def _update_precious_metals_daily_returns(logger) -> None:
+    """
+    Calculate and store precious metals-specific daily returns in system_state.json.
+
+    This answers: "How much did we make from gold/silver today?"
+    """
+    state_path = Path("data/system_state.json")
+    if not state_path.exists():
+        return
+
+    try:
+        with state_path.open("r", encoding="utf-8") as handle:
+            state = json.load(handle)
+    except Exception:
+        return
+
+    # Precious metals symbols
+    metals_universe = {"GLD", "SLV"}
+
+    # Calculate P/L from open positions
+    open_positions = state.get("performance", {}).get("open_positions", [])
+    metals_unrealized = 0.0
+    metals_positions = []
+
+    for pos in open_positions:
+        symbol = pos.get("symbol", "")
+        if symbol in metals_universe:
+            pl = pos.get("unrealized_pl", 0.0)
+            metals_unrealized += pl
+            metals_positions.append({"symbol": symbol, "pl": pl})
+
+    # Calculate P/L from closed trades today
+    closed_trades = state.get("performance", {}).get("closed_trades", [])
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    metals_realized = 0.0
+
+    for trade in closed_trades:
+        symbol = trade.get("symbol", "")
+        exit_date = trade.get("exit_date", "")
+        if symbol in metals_universe and today_str in exit_date:
+            metals_realized += trade.get("pl", 0.0)
+
+    # Store in strategies.tier8
+    tier8 = state.get("strategies", {}).get("tier8", {})
+    tier8["daily_returns"] = {
+        "date": today_str,
+        "realized_pl": round(metals_realized, 2),
+        "unrealized_pl": round(metals_unrealized, 2),
+        "total_pl": round(metals_realized + metals_unrealized, 2),
+        "positions": len(metals_positions),
+    }
+    state.setdefault("strategies", {})["tier8"] = tier8
+
+    try:
+        with state_path.open("w", encoding="utf-8") as handle:
+            json.dump(state, handle, indent=2)
+        logger.info(f"Precious Metals Daily Returns: ${metals_realized + metals_unrealized:.2f} ({len(metals_positions)} positions)")
+    except Exception:
+        pass
+
+
+def execute_precious_metals_trading() -> None:
+    """
+    Execute Precious Metals trading strategy (Tier 8 - GLD/SLV).
+
+    Uses regime-based allocation to invest in gold and silver ETFs based on:
+    - Gold-Silver ratio for relative value
+    - Market fear indicators
+    - Dollar strength
+    """
+    logger = setup_logging()
+    logger.info("=" * 80)
+    logger.info("PRECIOUS METALS TRADING MODE (Tier 8 - GLD/SLV)")
+    logger.info("=" * 80)
+
+    try:
+        from src.core.alpaca_trader import AlpacaTrader
+        from src.strategies.precious_metals_strategy import PreciousMetalsStrategy
+
+        # Initialize trader
+        trader = None
+        try:
+            trader = AlpacaTrader(paper=True)
+        except Exception as e:
+            logger.warning(f"Trading API unavailable: {e}")
+            logger.warning("   -> Proceeding in ANALYSIS mode (no real trades).")
+            trader = None
+
+        # Initialize precious metals strategy
+        daily_amount = float(os.getenv("PRECIOUS_METALS_DAILY_ALLOCATION", "5.0"))
+        metals_strategy = PreciousMetalsStrategy(trader=trader, daily_allocation=daily_amount)
+
+        # Generate signals first to understand regime
+        logger.info("Analyzing precious metals market regime...")
+        signals = metals_strategy.generate_signals()
+
+        if not signals:
+            logger.info("No precious metals signals generated")
+            return
+
+        regime = signals[0].get("regime", "neutral") if signals else "neutral"
+        logger.info(f"Current metals regime: {regime}")
+        logger.info(f"Allocation: {[(s['symbol'], f\"{s['strength']*100:.0f}%\") for s in signals]}")
+
+        # Execute trades
+        if trader:
+            result = metals_strategy.execute_daily(amount=daily_amount)
+
+            if result.get("success"):
+                # Persist trades to daily JSON ledger
+                today_str = datetime.now().strftime("%Y-%m-%d")
+                trades_file = Path(f"data/trades_{today_str}.json")
+
+                # Load existing or init new
+                if trades_file.exists():
+                    try:
+                        with open(trades_file) as f:
+                            daily_trades = json.load(f)
+                    except Exception:
+                        daily_trades = []
+                else:
+                    daily_trades = []
+
+                # Record each signal as a trade
+                for sig in signals:
+                    trade_amount = daily_amount * sig.get("strength", 0)
+                    if trade_amount > 0:
+                        trade_record = {
+                            "symbol": sig["symbol"],
+                            "action": sig.get("action", "buy").upper(),
+                            "amount": trade_amount,
+                            "quantity": 0,  # Filled by execution
+                            "price": 0,  # Filled by execution
+                            "timestamp": datetime.now().isoformat(),
+                            "status": "SUBMITTED",
+                            "strategy": "PreciousMetalsStrategy",
+                            "reason": f"Regime: {regime}, Weight: {sig.get('strength', 0)*100:.0f}%",
+                            "mode": "PAPER",
+                            "regime": regime,
+                        }
+                        daily_trades.append(trade_record)
+                        _update_system_state_with_precious_metals_trade(trade_record, logger)
+
+                # Write back
+                with open(trades_file, "w") as f:
+                    json.dump(daily_trades, f, indent=4)
+
+                logger.info(f"Precious metals trades saved to {trades_file}")
+                logger.info(f"Precious metals strategy executed: ${daily_amount:.2f} allocated")
+
+                # Update daily returns
+                _update_precious_metals_daily_returns(logger)
+            else:
+                logger.warning(f"Precious metals execution failed: {result.get('error', 'unknown')}")
+        else:
+            logger.info("Precious Metals Analysis complete (no trader - signals only)")
+            for sig in signals:
+                logger.info(f"   {sig['symbol']}: {sig['action']} @ {sig['strength']*100:.0f}% weight")
+
+    except ImportError as e:
+        logger.warning(f"Precious metals strategy not available: {e}")
+        logger.info("   -> Check src/strategies/precious_metals_strategy.py imports.")
+    except Exception as e:
+        logger.error(f"Precious metals trading failed: {e}", exc_info=True)
 
 
 def execute_reit_trading() -> None:
@@ -1070,6 +1325,14 @@ def main() -> None:
         logger.info("Executing Tier 7 - REIT Smart Income Strategy...")
         execute_reit_trading()
         logger.info("REIT trading session completed.")
+
+    # Execute Precious Metals strategy (Tier 8) - runs daily during market hours
+    # Provides inflation hedge and portfolio diversification via GLD/SLV
+    should_run_metals = precious_metals_enabled() and not is_weekend_day and not is_holiday
+    if should_run_metals:
+        logger.info("Executing Tier 8 - Precious Metals Strategy (GLD/SLV)...")
+        execute_precious_metals_trading()
+        logger.info("Precious metals trading session completed.")
 
     print("::notice::3/5 main() returning", flush=True)
 

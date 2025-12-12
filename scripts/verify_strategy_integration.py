@@ -33,6 +33,7 @@ STRATEGY_EXECUTION_PATTERNS = {
     "tier5": ["crypto", "execute_crypto"],  # Crypto trading
     "tier6": ["prediction", "execute_prediction", "kalshi"],  # Prediction markets
     "tier7": ["reit", "execute_reit"],  # REIT strategy
+    "tier8": ["precious_metals", "execute_precious_metals", "gld", "slv"],  # Precious metals
 }
 
 
