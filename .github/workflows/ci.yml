@@ -400,3 +400,22 @@ jobs:
           
           print("\n✅ All critical imports successful")
           EOF
+
+  # Added Dec 12, 2025: Anti-Manual Mandate Verification
+  # See: rag_knowledge/lessons_learned/ll_017_anti_manual_violation_dec12.md
+  anti-manual-check:
+    name: Anti-Manual Mandate Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 20  # Check last 20 commits
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check for Anti-Manual Violations
+        run: |
+          python3 scripts/check_anti_manual_violations.py --check-commits 10 --ci
