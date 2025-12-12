@@ -361,6 +361,20 @@ class TradingOrchestrator:
         # This ensures win/loss tracking works properly
         self._manage_open_positions()
 
+        # =================================================================
+        # OPTIONS FIRST (Dec 12, 2025): Theta decay is proven profit maker
+        # Evidence: +$327 profit today from AMD/SPY short puts
+        # Running options FIRST ensures they get capital before momentum
+        # See: ll_019, deep research "options-primary-strategy"
+        # =================================================================
+        # Gate 6: Phil Town Rule #1 Options Strategy (MOVED UP - was last)
+        self.run_options_strategy()
+
+        # Gate 7: IV-Aware Options Execution (MOVED UP - was last)
+        # Integrates OptionsIVSignalGenerator + OptionsExecutor
+        self.run_iv_options_execution()
+
+        # THEN run momentum trading (30% of budget per config)
         for ticker in active_tickers:
             self._process_ticker(ticker, rl_threshold=session_profile["rl_threshold"])
 
@@ -372,13 +386,6 @@ class TradingOrchestrator:
 
         # Gate 5: Post-execution delta rebalancing
         self.run_delta_rebalancing()
-
-        # Gate 6: Phil Town Rule #1 Options Strategy
-        self.run_options_strategy()
-
-        # Gate 7: IV-Aware Options Execution (Dec 10, 2025 - CEO mandate: no dead code!)
-        # Integrates OptionsIVSignalGenerator + OptionsExecutor (~1850 lines activated)
-        self.run_iv_options_execution()
 
         # Gate 0: Mental Toughness Coach - End session with review
         if self.mental_coach:
