@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2025-12-12T09:37:01.887568",
+    "last_updated": "2025-12-12T17:30:00.000000",
     "last_audit": "2025-11-17T09:00:00.000000",
     "audit_notes": "Day 9 - Added Tier 5 crypto tracking (BTC/ETH weekend strategy)"
   },
@@ -27,7 +27,8 @@
     "tier2_invested": 403.97,
     "tier3_reserve": 0.0,
     "tier4_reserve": 0.0,
-    "tier5_invested": 0.0
+    "tier5_invested": 0.0,
+    "tier7_invested": 0.0
   },
   "performance": {
     "total_trades": 7,
@@ -265,6 +266,27 @@
         }
       ],
       "strategy_update": "2025-12-08: Added SOL per Luke Belmar recommendations"
+    },
+    "tier7": {
+      "name": "REIT Smart Income Strategy",
+      "allocation": 0.10,
+      "daily_amount": 10.0,
+      "sectors": ["Growth", "Defensive", "Residential"],
+      "universe": {
+        "Growth": ["AMT", "CCI", "DLR", "EQIX", "PLD"],
+        "Defensive": ["O", "VICI", "PSA", "WELL"],
+        "Residential": ["AVB", "EQR", "INVH"]
+      },
+      "trades_executed": 0,
+      "total_invested": 0.0,
+      "status": "active",
+      "enabled": true,
+      "execution_schedule": "Daily 9:35 AM ET (market hours)",
+      "last_execution": null,
+      "next_execution": "2025-12-13T14:35:00Z",
+      "regime": "Neutral",
+      "strategy_notes": "Regime-based rotation: Rising Rates → Defensive REITs, Falling Rates → Growth REITs",
+      "strategy_update": "2025-12-12: Activated REIT strategy per CEO priority"
     }
   },
   "backtest_reality": {
@@ -467,7 +489,11 @@
     "[2025-12-11 09:39] Position closed: BIL - Entry: $91.56, Exit: $91.56, P/L: $0.00 (+0.01%)",
     "[2025-12-11 09:39] Position closed: SPY260123P00660000 - Entry: $6.38, Exit: $5.56, P/L: $0.82 (-12.85%)",
     "[2025-12-12 09:37] Position closed: AMD260116P00200000 - Entry: $590.00, Exit: $460.00, P/L: $130.00 (-22.03%)",
-    "[2025-12-12 09:37] Position closed: SPY260123P00660000 - Entry: $638.00, Exit: $441.00, P/L: $197.00 (-30.88%)"
+    "[2025-12-12 09:37] Position closed: SPY260123P00660000 - Entry: $638.00, Exit: $441.00, P/L: $197.00 (-30.88%)",
+    "[2025-12-12 17:30] TIER 7 ACTIVATED: REIT Smart Income Strategy enabled per CEO priority",
+    "[2025-12-12 17:30] REIT Universe: Growth (AMT, CCI, DLR, EQIX, PLD), Defensive (O, VICI, PSA, WELL), Residential (AVB, EQR, INVH)",
+    "[2025-12-12 17:30] REIT Allocation: $10/day (10% of daily budget)",
+    "[2025-12-12 17:30] REIT Strategy: Regime-based sector rotation using Fed rate environment detection"
   ],
   "options": {
     "last_theta_harvest": "2025-12-05T17:53:46.287290+00:00",

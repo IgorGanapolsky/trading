@@ -174,6 +174,44 @@
         "treasury",
         "stable"
       ]
+    },
+    "reit_smart_income": {
+      "name": "reit_smart_income",
+      "description": "REIT strategy with regime-based sector rotation for income and growth",
+      "status": "paper_trading",
+      "asset_class": "equity",
+      "metrics": {
+        "sharpe_ratio": 0.0,
+        "max_drawdown": 0.0,
+        "win_rate": 0.0,
+        "avg_daily_pnl": 0.0,
+        "total_return_pct": 0.0,
+        "total_trades": 0,
+        "backtest_date": "",
+        "backtest_period": "",
+        "hit_rate_100_day": 0.0
+      },
+      "config": {
+        "daily_allocation": 10.0,
+        "min_yield": 0.03,
+        "momentum_window": 60
+      },
+      "version": "1.0.0",
+      "author": "Trading System",
+      "created_date": "2025-12-12",
+      "last_modified": "2025-12-12",
+      "source_file": "src/strategies/reit_strategy.py",
+      "dependencies": [
+        "FredCollector",
+        "market_data_provider"
+      ],
+      "tags": [
+        "reit",
+        "income",
+        "dividend",
+        "regime-rotation",
+        "real-estate"
+      ]
     }
   }
 }

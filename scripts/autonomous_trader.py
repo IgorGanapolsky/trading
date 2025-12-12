@@ -451,6 +451,196 @@ def prediction_enabled() -> bool:
     return os.getenv("ENABLE_PREDICTION_MARKETS", "true").lower() in {"1", "true", "yes"}
 
 
+def reit_enabled() -> bool:
+    """Feature flag for REIT strategy (Tier 7)."""
+    return os.getenv("ENABLE_REIT_STRATEGY", "true").lower() in {"1", "true", "yes"}
+
+
+def _update_system_state_with_reit_trade(trade_record: dict[str, Any], logger) -> None:
+    """Update `data/system_state.json` so Tier 7 reflects the new REIT trade."""
+    state_path = Path("data/system_state.json")
+    if not state_path.exists():
+        logger.warning("system_state.json missing; skipping state update")
+        return
+
+    try:
+        with state_path.open("r", encoding="utf-8") as handle:
+            state = json.load(handle)
+    except Exception as exc:
+        logger.error(f"Failed to read system_state.json: {exc}")
+        return
+
+    strategies = state.setdefault("strategies", {})
+    tier7_defaults = {
+        "name": "REIT Smart Income Strategy",
+        "allocation": 0.10,
+        "daily_amount": 10.0,
+        "sectors": ["Growth", "Defensive", "Residential"],
+        "universe": ["AMT", "CCI", "DLR", "EQIX", "PLD", "O", "VICI", "PSA", "WELL", "AVB", "EQR", "INVH"],
+        "trades_executed": 0,
+        "total_invested": 0.0,
+        "status": "active",
+        "execution_schedule": "Daily 9:35 AM ET (market hours)",
+        "last_execution": None,
+        "next_execution": None,
+        "regime": "Neutral",
+    }
+    tier7 = strategies.setdefault("tier7", tier7_defaults)
+    tier7["trades_executed"] = tier7.get("trades_executed", 0) + 1
+    tier7["total_invested"] = round(
+        tier7.get("total_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
+    )
+    tier7["last_execution"] = trade_record.get("timestamp")
+    tier7["status"] = "active"
+    if trade_record.get("regime"):
+        tier7["regime"] = trade_record.get("regime")
+
+    investments = state.setdefault("investments", {})
+    investments["tier7_invested"] = round(
+        investments.get("tier7_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
+    )
+    investments["total_invested"] = round(
+        investments.get("total_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
+    )
+
+    performance = state.setdefault("performance", {})
+    performance["total_trades"] = performance.get("total_trades", 0) + 1
+
+    open_positions = performance.setdefault("open_positions", [])
+    if isinstance(open_positions, list):
+        matching = next(
+            (
+                entry
+                for entry in open_positions
+                if entry.get("symbol") == trade_record.get("symbol")
+            ),
+            None,
+        )
+        entry_payload = {
+            "symbol": trade_record.get("symbol"),
+            "tier": "tier7",
+            "amount": trade_record.get("amount"),
+            "entry_date": trade_record.get("timestamp"),
+            "entry_price": trade_record.get("price"),
+            "current_price": trade_record.get("price"),
+            "quantity": trade_record.get("quantity"),
+            "unrealized_pl": 0.0,
+            "unrealized_pl_pct": 0.0,
+            "last_updated": trade_record.get("timestamp"),
+        }
+        if matching:
+            matching.update(entry_payload)
+        else:
+            open_positions.append(entry_payload)
+
+    try:
+        with state_path.open("w", encoding="utf-8") as handle:
+            json.dump(state, handle, indent=2)
+        logger.info("system_state.json updated with REIT trade metadata")
+    except Exception as exc:
+        logger.error(f"Failed to write system_state.json: {exc}")
+
+
+def execute_reit_trading() -> None:
+    """
+    Execute REIT trading strategy (Tier 7).
+
+    Uses regime-based sector rotation to select top REITs based on:
+    - Interest rate environment (rising/falling/neutral)
+    - Momentum signals
+    - Dividend yield
+    """
+    logger = setup_logging()
+    logger.info("=" * 80)
+    logger.info("REIT TRADING MODE (Tier 7 - Smart Income)")
+    logger.info("=" * 80)
+
+    try:
+        from src.core.alpaca_trader import AlpacaTrader
+        from src.strategies.reit_strategy import ReitStrategy
+
+        # Initialize trader
+        trader = None
+        try:
+            trader = AlpacaTrader(paper=True)
+        except Exception as e:
+            logger.warning(f"⚠️  Trading API unavailable: {e}")
+            logger.warning("   -> Proceeding in ANALYSIS mode (no real trades).")
+            trader = None
+
+        # Initialize REIT strategy
+        daily_amount = float(os.getenv("REIT_DAILY_ALLOCATION", "10.0"))
+        reit_strategy = ReitStrategy(trader=trader)
+
+        # Generate signals first to understand regime
+        logger.info("🔍 Analyzing REIT market regime and signals...")
+        signals = reit_strategy.generate_signals()
+
+        if not signals:
+            logger.info("⚠️  No REIT signals generated (market conditions not favorable)")
+            return
+
+        regime = signals[0].get("regime", "Neutral") if signals else "Neutral"
+        logger.info(f"📊 Current rate regime: {regime}")
+        logger.info(f"📈 Top {len(signals)} REIT picks: {[s['symbol'] for s in signals]}")
+
+        # Execute trades
+        if trader:
+            reit_strategy.execute_daily(amount=daily_amount)
+
+            # Persist trades to daily JSON ledger
+            today_str = datetime.now().strftime("%Y-%m-%d")
+            trades_file = Path(f"data/trades_{today_str}.json")
+
+            # Load existing or init new
+            if trades_file.exists():
+                try:
+                    with open(trades_file) as f:
+                        daily_trades = json.load(f)
+                except Exception:
+                    daily_trades = []
+            else:
+                daily_trades = []
+
+            # Record each signal as a trade attempt
+            per_trade_amount = daily_amount / len(signals)
+            for sig in signals:
+                if sig.get("strength", 0) > 0:
+                    trade_record = {
+                        "symbol": sig["symbol"],
+                        "action": sig.get("action", "buy").upper(),
+                        "amount": per_trade_amount,
+                        "quantity": 0,  # Will be filled by execution
+                        "price": 0,  # Will be filled by execution
+                        "timestamp": datetime.now().isoformat(),
+                        "status": "SUBMITTED",
+                        "strategy": "ReitStrategy",
+                        "reason": f"Regime: {regime}, Score: {sig.get('strength', 0):.2f}",
+                        "mode": "PAPER",
+                        "regime": regime,
+                    }
+                    daily_trades.append(trade_record)
+                    _update_system_state_with_reit_trade(trade_record, logger)
+
+            # Write back
+            with open(trades_file, "w") as f:
+                json.dump(daily_trades, f, indent=4)
+
+            logger.info(f"💾 REIT trades saved to {trades_file}")
+            logger.info(f"✅ REIT strategy executed: {len(signals)} positions @ ${per_trade_amount:.2f} each")
+        else:
+            logger.info("📋 REIT Analysis complete (no trader - signals only)")
+            for sig in signals:
+                logger.info(f"   {sig['symbol']}: {sig.get('action', 'hold')} (score: {sig.get('strength', 0):.2f})")
+
+    except ImportError as e:
+        logger.warning(f"⚠️  REIT strategy not available: {e}")
+        logger.info("   -> Check src/strategies/reit_strategy.py imports.")
+    except Exception as e:
+        logger.error(f"❌ REIT trading failed: {e}", exc_info=True)
+        # Don't raise - REIT is supplementary, shouldn't crash main workflow
+
+
 def execute_prediction_trading() -> None:
     """
     Execute prediction markets trading strategy (Kalshi - Tier 6).
@@ -808,6 +998,14 @@ def main() -> None:
         logger.info("Executing Tier 6 - Prediction Markets (Kalshi)...")
         execute_prediction_trading()
         logger.info("Prediction trading session completed.")
+
+    # Execute REIT strategy (Tier 7) - runs daily during market hours
+    # Uses regime-based sector rotation for income and growth
+    should_run_reit = reit_enabled() and not is_weekend_day and not is_holiday
+    if should_run_reit:
+        logger.info("Executing Tier 7 - REIT Smart Income Strategy...")
+        execute_reit_trading()
+        logger.info("REIT trading session completed.")
 
     print("::notice::3/5 main() returning", flush=True)
 
