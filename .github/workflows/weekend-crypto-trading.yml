@@ -127,7 +127,7 @@ jobs:
           HELICONE_API_KEY: ${{ secrets.HELICONE_API_KEY }}
           # LangSmith tracing (observability)
           LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
-          LANGCHAIN_PROJECT: 'claude-code-learning'
+          LANGCHAIN_PROJECT: 'ai-trading-system'
           LANGCHAIN_TRACING_V2: 'true'
           ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
           POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
