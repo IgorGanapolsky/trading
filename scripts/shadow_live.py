@@ -5,6 +5,10 @@ Live Shadowing Script - Compare Paper vs Live Trading
 Runs parallel paper/live comparison to quantify slippage gap.
 Use weekly: python scripts/shadow_live.py --duration 1d
 
+Dec 12, 2025: Added EV Drift Alert (CEO directive)
+- Rolling 14-day paper EV tracking
+- Auto-halt if EV < 0 (edge fade detection)
+
 Author: Trading System CTO
 Created: 2025-12-11
 """
@@ -14,7 +18,7 @@ import json
 import logging
 import os
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -24,6 +28,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
+# EV Drift Alert configuration (CEO directive Dec 12, 2025)
+EV_ROLLING_WINDOW_DAYS = 14
+EV_HALT_THRESHOLD = 0.0  # Halt if rolling EV drops below 0
 
 
 @dataclass
@@ -38,6 +46,215 @@ class ShadowResult:
     slippage_total: float
     deviation_pct: float
     passed: bool
+
+
+@dataclass
+class EVDriftAlert:
+    """
+    EV Drift Alert - Catches edge fade in real-time.
+
+    CEO Directive (Dec 12, 2025):
+    - Track rolling 14-day paper EV
+    - Halt trading if EV < 0 (edge has faded)
+    """
+
+    timestamp: str
+    rolling_ev: float
+    rolling_window_days: int
+    daily_evs: list[float] = field(default_factory=list)
+    trades_in_window: int = 0
+    should_halt: bool = False
+    halt_reason: str | None = None
+
+
+class EVDriftTracker:
+    """
+    Track rolling Expected Value from paper trading.
+
+    Catches edge fade before it destroys capital.
+    """
+
+    def __init__(
+        self,
+        window_days: int = EV_ROLLING_WINDOW_DAYS,
+        halt_threshold: float = EV_HALT_THRESHOLD,
+        data_dir: Path | None = None,
+    ):
+        self.window_days = window_days
+        self.halt_threshold = halt_threshold
+        self.data_dir = data_dir or Path("data/ev_tracking")
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        self.ev_log_path = self.data_dir / "ev_drift_log.jsonl"
+        self.halt_file = self.data_dir / "TRADING_HALTED"
+
+    def compute_rolling_ev(self) -> EVDriftAlert:
+        """
+        Compute rolling EV from paper trade history.
+
+        Returns:
+            EVDriftAlert with current status
+        """
+        # Load daily P/L data
+        daily_evs = self._load_daily_pnl(days=self.window_days)
+
+        if not daily_evs:
+            logger.warning("No paper trade data for EV calculation")
+            return EVDriftAlert(
+                timestamp=datetime.now().isoformat(),
+                rolling_ev=0.0,
+                rolling_window_days=self.window_days,
+                daily_evs=[],
+                trades_in_window=0,
+                should_halt=False,
+                halt_reason=None,
+            )
+
+        # Compute rolling EV (mean of daily P/L)
+        rolling_ev = sum(daily_evs) / len(daily_evs)
+        trades = self._count_trades_in_window(days=self.window_days)
+
+        # Check halt condition
+        should_halt = rolling_ev < self.halt_threshold
+        halt_reason = None
+
+        if should_halt:
+            halt_reason = (
+                f"Rolling {self.window_days}d EV = ${rolling_ev:.2f} < "
+                f"threshold ${self.halt_threshold:.2f}"
+            )
+            logger.critical("EV DRIFT ALERT: %s", halt_reason)
+            self._create_halt_file(halt_reason)
+
+        alert = EVDriftAlert(
+            timestamp=datetime.now().isoformat(),
+            rolling_ev=round(rolling_ev, 2),
+            rolling_window_days=self.window_days,
+            daily_evs=[round(ev, 2) for ev in daily_evs],
+            trades_in_window=trades,
+            should_halt=should_halt,
+            halt_reason=halt_reason,
+        )
+
+        # Log the alert
+        self._log_alert(alert)
+
+        return alert
+
+    def _load_daily_pnl(self, days: int) -> list[float]:
+        """Load daily P/L from paper trade logs."""
+        daily_pnl: dict[str, float] = {}
+        cutoff = datetime.now() - timedelta(days=days)
+
+        # Try to read from paper trades log
+        paper_log = Path("data/paper_trades.jsonl")
+        if paper_log.exists():
+            try:
+                with open(paper_log) as f:
+                    for line in f:
+                        trade = json.loads(line)
+                        ts = trade.get("timestamp", "")
+                        try:
+                            trade_time = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                        except (ValueError, TypeError):
+                            continue
+
+                        if trade_time >= cutoff:
+                            date_key = trade_time.strftime("%Y-%m-%d")
+                            pnl = float(trade.get("pnl", 0) or 0)
+                            daily_pnl[date_key] = daily_pnl.get(date_key, 0) + pnl
+            except Exception as e:
+                logger.warning("Error reading paper trades: %s", e)
+
+        # Also check system state for recent performance
+        system_state_path = Path("data/system_state.json")
+        if system_state_path.exists() and not daily_pnl:
+            try:
+                with open(system_state_path) as f:
+                    state = json.load(f)
+                    closed = state.get("performance", {}).get("closed_trades", [])
+                    for trade in closed:
+                        exit_date = trade.get("exit_date", "")
+                        try:
+                            trade_time = datetime.fromisoformat(exit_date.replace("Z", "+00:00"))
+                        except (ValueError, TypeError):
+                            continue
+
+                        if trade_time >= cutoff:
+                            date_key = trade_time.strftime("%Y-%m-%d")
+                            pnl = float(trade.get("pl", 0) or 0)
+                            daily_pnl[date_key] = daily_pnl.get(date_key, 0) + pnl
+            except Exception as e:
+                logger.warning("Error reading system state: %s", e)
+
+        # Sort by date and return values
+        sorted_dates = sorted(daily_pnl.keys())
+        return [daily_pnl[d] for d in sorted_dates]
+
+    def _count_trades_in_window(self, days: int) -> int:
+        """Count trades executed in rolling window."""
+        count = 0
+        cutoff = datetime.now() - timedelta(days=days)
+
+        paper_log = Path("data/paper_trades.jsonl")
+        if paper_log.exists():
+            try:
+                with open(paper_log) as f:
+                    for line in f:
+                        trade = json.loads(line)
+                        ts = trade.get("timestamp", "")
+                        try:
+                            trade_time = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                            if trade_time >= cutoff:
+                                count += 1
+                        except (ValueError, TypeError):
+                            continue
+            except Exception:
+                pass
+
+        return count
+
+    def _create_halt_file(self, reason: str) -> None:
+        """Create halt file to signal trading should stop."""
+        with open(self.halt_file, "w") as f:
+            json.dump(
+                {
+                    "halted_at": datetime.now().isoformat(),
+                    "reason": reason,
+                    "action": "Manual review required before resuming",
+                },
+                f,
+                indent=2,
+            )
+        logger.critical("TRADING HALTED - Created halt file at %s", self.halt_file)
+
+    def _log_alert(self, alert: EVDriftAlert) -> None:
+        """Append alert to log file."""
+        with open(self.ev_log_path, "a") as f:
+            f.write(
+                json.dumps(
+                    {
+                        "timestamp": alert.timestamp,
+                        "rolling_ev": alert.rolling_ev,
+                        "rolling_window_days": alert.rolling_window_days,
+                        "trades_in_window": alert.trades_in_window,
+                        "should_halt": alert.should_halt,
+                        "halt_reason": alert.halt_reason,
+                    }
+                )
+                + "\n"
+            )
+
+    def is_halted(self) -> bool:
+        """Check if trading is currently halted."""
+        return self.halt_file.exists()
+
+    def clear_halt(self) -> bool:
+        """Clear halt status (manual intervention)."""
+        if self.halt_file.exists():
+            self.halt_file.unlink()
+            logger.info("Trading halt cleared")
+            return True
+        return False
 
 
 class LiveShadowTracker:
@@ -247,9 +464,68 @@ def main():
         default="data/shadow_results",
         help="Output directory for results",
     )
+    parser.add_argument(
+        "--ev-check",
+        action="store_true",
+        help="Run EV drift check (14-day rolling, halt if <0)",
+    )
+    parser.add_argument(
+        "--ev-window",
+        type=int,
+        default=EV_ROLLING_WINDOW_DAYS,
+        help=f"EV rolling window in days (default: {EV_ROLLING_WINDOW_DAYS})",
+    )
+    parser.add_argument(
+        "--clear-halt",
+        action="store_true",
+        help="Clear trading halt status (manual intervention)",
+    )
     args = parser.parse_args()
 
-    # Parse duration
+    # Handle halt clearing
+    if args.clear_halt:
+        tracker = EVDriftTracker()
+        if tracker.clear_halt():
+            print("Trading halt CLEARED - trading can resume")
+            return 0
+        else:
+            print("No halt to clear")
+            return 0
+
+    # EV Drift Check (CEO directive Dec 12, 2025)
+    if args.ev_check:
+        ev_tracker = EVDriftTracker(window_days=args.ev_window)
+
+        # Check if already halted
+        if ev_tracker.is_halted():
+            print("\n" + "=" * 60)
+            print("⚠️  TRADING IS HALTED")
+            print("=" * 60)
+            print("Run with --clear-halt to resume after manual review")
+            print("=" * 60)
+            return 1
+
+        alert = ev_tracker.compute_rolling_ev()
+
+        print("\n" + "=" * 60)
+        print("EV DRIFT ALERT - ROLLING PERFORMANCE")
+        print("=" * 60)
+        print(f"Timestamp:       {alert.timestamp}")
+        print(f"Rolling Window:  {alert.rolling_window_days} days")
+        print(f"Rolling EV:      ${alert.rolling_ev:.2f}")
+        print(f"Trades in Window: {alert.trades_in_window}")
+        print(f"Daily EVs:       {alert.daily_evs}")
+        print(f"Should Halt:     {'YES ⛔' if alert.should_halt else 'NO ✅'}")
+        if alert.halt_reason:
+            print(f"Halt Reason:     {alert.halt_reason}")
+        print("=" * 60)
+
+        if alert.should_halt:
+            print("\n⚠️  TRADING HALTED - Edge has faded. Manual review required.")
+            return 1
+        return 0
+
+    # Parse duration for shadow comparison
     duration_str = args.duration.lower()
     if duration_str.endswith("d"):
         hours = int(duration_str[:-1]) * 24

@@ -148,3 +148,78 @@ scenarios:
       60-day verification window for the theta automation layer after the
       fundamentals cache + execution tie-in. Validates that IV-gated covered
       calls hold a 26% annualized pace with drawdowns capped near 2%.
+
+  # ============================================================
+  # CRASH REPLAY SCENARIOS (CEO directive Dec 12, 2025)
+  # Survival gate: >95% capital preservation required
+  # ============================================================
+
+  - name: crash_2008_lehman
+    label: "2008 Financial Crisis - Lehman collapse (Sep-Nov 2008)"
+    start_date: "2008-09-01"
+    end_date: "2008-11-30"
+    etf_universe: ["SPY", "QQQ", "TLT", "SHY"]
+    daily_allocation: 10.0
+    max_trades_per_day: 1
+    survival_gate: 0.95
+    description: >
+      CEO DIRECTIVE: Bear-proof the system. Replay 2008 Lehman collapse.
+      Requires >95% capital survival (max 5% drawdown allowed).
+      Tests flight-to-safety rotation (SPY→TLT/SHY) during credit crisis.
+      If system loses >5%, it fails promotion gate.
+
+  - name: crash_2008_bottom
+    label: "2008 Financial Crisis - Bear market bottom (Jan-Mar 2009)"
+    start_date: "2009-01-01"
+    end_date: "2009-03-31"
+    etf_universe: ["SPY", "QQQ", "TLT"]
+    daily_allocation: 10.0
+    max_trades_per_day: 1
+    survival_gate: 0.95
+    description: >
+      Replay the absolute bottom of 2008-2009 bear market.
+      SPY hit $67.10 on March 9, 2009 (down 57% from peak).
+      Tests: Can system survive capitulation without >5% loss?
+      Must prove drawdown controls work at maximum fear.
+
+  - name: crash_2020_covid_march
+    label: "2020 COVID Crash - Fastest bear market (Feb 19 - Mar 23, 2020)"
+    start_date: "2020-02-19"
+    end_date: "2020-03-23"
+    etf_universe: ["SPY", "QQQ", "VOO"]
+    daily_allocation: 10.0
+    max_trades_per_day: 1
+    survival_gate: 0.95
+    description: >
+      CEO DIRECTIVE: Bear-proof the system. Replay COVID crash.
+      SPY dropped 34% in 23 trading days - fastest bear ever.
+      VIX hit 82.69 on March 16, 2020.
+      Survival requirement: >95% capital (max 5% drawdown).
+      Tests ATR scaling, circuit breakers, and halt logic under historic vol.
+
+  - name: crash_2020_recovery
+    label: "2020 COVID Recovery - V-shaped bounce (Mar-Jun 2020)"
+    start_date: "2020-03-23"
+    end_date: "2020-06-30"
+    etf_universe: ["SPY", "QQQ", "VOO"]
+    daily_allocation: 10.0
+    max_trades_per_day: 2
+    description: >
+      Tests ability to capture V-shaped recovery after crash.
+      SPY gained 45% from March 23 low to June 30.
+      Validates that system doesn't stay too defensive after crash.
+      Should capture significant upside while maintaining risk controls.
+
+  - name: crash_2022_fed_tightening
+    label: "2022 Fed Tightening Crash (Jan-Oct 2022)"
+    start_date: "2022-01-03"
+    end_date: "2022-10-12"
+    etf_universe: ["SPY", "QQQ", "TLT"]
+    daily_allocation: 10.0
+    max_trades_per_day: 1
+    survival_gate: 0.95
+    description: >
+      Tests prolonged bear market (not sudden crash).
+      SPY down 27%, QQQ down 37%, TLT down 30% (worst bond year in 40 years).
+      Validates system behavior when BOTH stocks AND bonds fall.
+      No safe haven scenario - pure risk management test.

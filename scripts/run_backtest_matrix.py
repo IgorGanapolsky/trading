@@ -46,6 +46,10 @@ PROMOTION_THRESHOLDS = {
 }
 FEE_RATE = float(os.getenv("BACKTEST_FEE_RATE", "0.0018"))
 
+# Crash replay survival gate (CEO directive Dec 12, 2025)
+# Scenarios with survival_gate must preserve >X% of capital
+DEFAULT_SURVIVAL_GATE = 0.95  # 95% capital preservation required
+
 
 @dataclass
 class MatrixStrategy:
@@ -141,9 +145,14 @@ def summarize_results(results: BacktestResults, scenario: dict[str, Any]) -> dic
     profitable_days = int(np.sum(daily_returns > 0))
     longest_streak = longest_positive_streak(daily_returns)
 
-    status = evaluate_status(results, thresholds=PROMOTION_THRESHOLDS)
+    # Check for survival gate (crash replay scenarios)
+    survival_gate = scenario.get("survival_gate")
+    status = evaluate_status(results, thresholds=PROMOTION_THRESHOLDS, survival_gate=survival_gate)
     annualized_return = results.to_dict().get("annualized_return", 0.0)
     costs = compute_execution_costs(results)
+
+    # Calculate survival metrics for crash scenarios
+    capital_preserved_pct = (results.final_capital / results.initial_capital) * 100 if results.initial_capital > 0 else 0
 
     return {
         "scenario": scenario["name"],
@@ -170,6 +179,10 @@ def summarize_results(results: BacktestResults, scenario: dict[str, Any]) -> dic
         "cost_adjusted_return_pct": costs["cost_adjusted_total_return_pct"],
         "cost_adjusted_annualized_return_pct": costs["cost_adjusted_annualized_return_pct"],
         "hybrid_gates": scenario.get("hybrid_gates", False),
+        # Crash replay survival metrics (CEO directive Dec 12, 2025)
+        "survival_gate": survival_gate,
+        "capital_preserved_pct": round(capital_preserved_pct, 2),
+        "survival_passed": capital_preserved_pct >= (survival_gate * 100) if survival_gate else None,
     }
 
 
@@ -184,7 +197,29 @@ def longest_positive_streak(daily_returns: np.ndarray) -> int:
     return int(max_streak)
 
 
-def evaluate_status(results: BacktestResults, thresholds: dict[str, float]) -> str:
+def evaluate_status(
+    results: BacktestResults,
+    thresholds: dict[str, float],
+    survival_gate: float | None = None,
+) -> str:
+    """
+    Evaluate if backtest passes promotion criteria.
+
+    Args:
+        results: Backtest results
+        thresholds: Standard promotion thresholds
+        survival_gate: Optional survival gate for crash replay scenarios (e.g., 0.95 = 95%)
+
+    Returns:
+        "pass", "needs_improvement", or "survival_fail"
+    """
+    # Check survival gate first (crash replay scenarios)
+    if survival_gate is not None:
+        capital_preserved = results.final_capital / results.initial_capital
+        if capital_preserved < survival_gate:
+            return "survival_fail"
+
+    # Standard promotion criteria
     if (
         results.win_rate >= thresholds["win_rate"]
         and results.sharpe_ratio >= thresholds["sharpe_ratio"]

@@ -280,10 +280,13 @@ class RLFilter:
         """
         # Get weights from env (default: conservative until DiscoRL validated)
         # Dec 9, 2025: Reduced DiscoRL from 0.45 to 0.15 - needs validation (0 closed trades)
-        # Redistributed weight to proven transformer + heuristic models
-        heuristic_weight = float(os.getenv("RL_HEURISTIC_WEIGHT", "0.40"))
-        transformer_weight = float(os.getenv("RL_TRANSFORMER_WEIGHT", "0.45"))
-        disco_weight = float(os.getenv("RL_DISCO_WEIGHT", "0.15"))
+        # Dec 12, 2025: CEO directive - RL outputs capped at 10% total influence
+        # Redistributed: 90% momentum signal, 10% RL ensemble
+        # Within the 10% RL: heuristic 40%, transformer 45%, disco 15%
+        rl_total_weight = float(os.getenv("RL_TOTAL_WEIGHT", "0.10"))  # 10% RL influence
+        heuristic_weight = float(os.getenv("RL_HEURISTIC_WEIGHT", "0.40")) * rl_total_weight
+        transformer_weight = float(os.getenv("RL_TRANSFORMER_WEIGHT", "0.45")) * rl_total_weight
+        disco_weight = float(os.getenv("RL_DISCO_WEIGHT", "0.15")) * rl_total_weight
 
         # Accumulate weighted predictions
         total_weight = 0.0
