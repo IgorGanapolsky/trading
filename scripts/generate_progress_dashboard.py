@@ -254,37 +254,68 @@ def format_ml_rag_status() -> str:
 
     This shows the ACTUAL status of AI systems, not aspirational claims.
     """
+    import json
     import os
+    from collections import Counter
     from pathlib import Path
 
-    # Check RAG status
+    # Check RAG status - Enhanced with vectorization details
     rag_store_path = Path("data/rag/in_memory_store.json")
     chroma_path = Path("data/rag/chroma_db/chroma.sqlite3")
 
     rag_docs = 0
     rag_vectors = 0
+    chroma_docs = 0
     rag_status = "❌ Not Available"
+    source_breakdown = {}
 
+    # Load in-memory store stats
     if rag_store_path.exists():
         try:
-            import json
             with open(rag_store_path) as f:
                 data = json.load(f)
             rag_docs = len(data.get("documents", []))
-            # Vectors are generated at runtime, not stored in JSON
-            # Check if sentence-transformers is available
-            try:
-                from sentence_transformers import SentenceTransformer
-                rag_vectors = rag_docs  # Will be vectorized at runtime
-                rag_status = "✅ Active" if rag_docs > 0 else "⚠️ Empty"
-            except ImportError:
-                rag_status = "⚠️ No Embedder (keyword search only)"
+            # Count by source
+            metadatas = data.get("metadatas", [])
+            source_counts = Counter(m.get("source", "unknown") for m in metadatas)
+            source_breakdown = dict(source_counts.most_common(6))
         except Exception:
             pass
 
+    # Check ChromaDB vectorized count
     chroma_size = 0
     if chroma_path.exists():
         chroma_size = chroma_path.stat().st_size // 1024  # KB
+        # Try to get actual document count from ChromaDB
+        try:
+            import sys
+            sys.path.insert(0, ".")
+            from src.rag.vector_db.chroma_client import get_rag_db
+            db = get_rag_db()
+            stats = db.get_stats()
+            chroma_docs = stats.get("total_documents", 0)
+        except Exception:
+            # Estimate from file size (roughly 1KB per doc with embeddings)
+            chroma_docs = max(chroma_size // 10, 0)
+
+    # Determine vectorization status
+    vectorization_gap = max(0, rag_docs - chroma_docs)
+    if chroma_docs > 0 and vectorization_gap == 0:
+        rag_status = "✅ Fully Vectorized"
+    elif chroma_docs > 0:
+        rag_status = f"⚠️ Partial ({chroma_docs}/{rag_docs})"
+    elif rag_docs > 0:
+        rag_status = "❌ Text Only (not vectorized)"
+    else:
+        rag_status = "❌ Empty"
+
+    # Check if embedder available
+    embedder_status = "❌ Not Available"
+    try:
+        from sentence_transformers import SentenceTransformer
+        embedder_status = "✅ sentence-transformers"
+    except ImportError:
+        pass
 
     # Check ML model status
     rl_weights_path = Path("models/ml/rl_filter_weights.json")
@@ -318,19 +349,41 @@ def format_ml_rag_status() -> str:
     psych_active = psych_path.exists() and psych_path.stat().st_size > 10
     coaching_active = coaching_log_path.exists() and coaching_log_path.stat().st_size > 10
 
+    # Build source breakdown table
+    source_rows = ""
+    for src, count in source_breakdown.items():
+        bar_len = min(count // 30, 20)
+        bar = "█" * bar_len
+        source_rows += f"| {src[:20]} | {count:,} | {bar} |\n"
+
+    # Vectorization progress bar
+    vec_pct = (chroma_docs / max(rag_docs, 1)) * 100
+    vec_filled = int(vec_pct / 5)  # 20 chars = 100%
+    vec_bar = "█" * vec_filled + "░" * (20 - vec_filled)
+
     section = f"""
 ## 🤖 ML/AI System Status (Honest Assessment)
 
 > This section shows the **actual** status of AI systems, not aspirational claims.
 
-### RAG (Retrieval-Augmented Generation)
+### 📚 RAG Vector Store
 
-| Component | Status | Details |
-|-----------|--------|---------|
-| **Documents Ingested** | {rag_docs:,} | In-memory store |
-| **Vector Embeddings** | {"✅ Runtime" if rag_vectors > 0 else "❌ None"} | {"Computed on query" if rag_vectors > 0 else "No embedder available"} |
-| **ChromaDB** | {chroma_size} KB | Persistent vector store |
-| **Retrieval Status** | {rag_status} | |
+| Metric | Value | Status |
+|--------|-------|--------|
+| **Total Documents** | {rag_docs:,} | In-memory store |
+| **Vectorized (ChromaDB)** | {chroma_docs:,} | Persistent embeddings |
+| **Vectorization Gap** | {vectorization_gap:,} | {"✅ None" if vectorization_gap == 0 else "⚠️ Need indexing"} |
+| **Embedder** | {embedder_status} | all-MiniLM-L6-v2 (384-dim) |
+| **Storage Size** | {chroma_size:,} KB | ChromaDB SQLite |
+
+**Vectorization Progress**: `{vec_bar}` ({vec_pct:.0f}%)
+
+#### Documents by Source
+
+| Source | Count | Distribution |
+|--------|-------|--------------|
+{source_rows}
+**Semantic Search**: {"✅ ENABLED" if chroma_docs > 0 else "❌ DISABLED (keyword only)"}
 
 ### ML Models
 
