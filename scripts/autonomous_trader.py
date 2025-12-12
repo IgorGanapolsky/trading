@@ -206,7 +206,16 @@ def _flag_enabled(env_name: str, default: str = "true") -> bool:
 
 
 def _parse_tickers() -> list[str]:
-    raw = os.getenv("TARGET_TICKERS", "SPY,QQQ,VOO")
+    # EXPANDED (Dec 12, 2025): From 3 tickers to 20 for better trade opportunities
+    # Mix of: ETFs (SPY, QQQ, VOO, IWM, DIA), Tech (NVDA, AAPL, MSFT, GOOGL, META, AMD, AMZN),
+    # Energy (XLE), Finance (XLF), Healthcare (XLV), Momentum favorites (TSLA, COIN, PLTR)
+    default_tickers = (
+        "SPY,QQQ,VOO,IWM,DIA,"  # Major ETFs
+        "NVDA,AAPL,MSFT,GOOGL,META,AMD,AMZN,TSLA,"  # Big Tech
+        "XLE,XLF,XLV,"  # Sector ETFs
+        "COIN,PLTR,SOFI"  # High-momentum stocks
+    )
+    raw = os.getenv("TARGET_TICKERS", default_tickers)
     return [ticker.strip().upper() for ticker in raw.split(",") if ticker.strip()]
 
 

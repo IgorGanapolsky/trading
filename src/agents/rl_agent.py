@@ -66,7 +66,8 @@ class RLFilter:
     ) -> None:
         self.weights_path = Path(weights_path or "models/ml/rl_filter_weights.json")
         self.weights = self._load_weights()
-        self.default_threshold = float(os.getenv("RL_CONFIDENCE_THRESHOLD", "0.6"))
+        # RELAXED (Dec 12, 2025): Lowered from 0.6 to 0.35 to let more trades through R&D
+        self.default_threshold = float(os.getenv("RL_CONFIDENCE_THRESHOLD", "0.35"))
         self.transformer: TransformerRLPolicy | None = None
         self.disco_dqn: DiscoDQNAgent | None = None
 

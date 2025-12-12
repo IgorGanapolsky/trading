@@ -49,13 +49,15 @@ class LegacyMomentumCalculator:
         # Previous: macd=0.0 (bullish only), rsi=70, volume=0.8 → rejected 70-80% of candidates
         # New: macd=-0.1 (near-crossover OK), rsi=75, volume=0.6 → more permissive
         self.macd_threshold = float(os.getenv("MOMENTUM_MACD_THRESHOLD", "-0.1"))
-        self.rsi_overbought = float(os.getenv("MOMENTUM_RSI_OVERBOUGHT", "75.0"))
+        # RSI RELAXED (Dec 12, 2025): Allow overbought stocks through during R&D
+        # Previous: 75.0 rejected many momentum stocks. Raised to 85.0 to let more through
+        self.rsi_overbought = float(os.getenv("MOMENTUM_RSI_OVERBOUGHT", "85.0"))
         self.volume_min = float(os.getenv("MOMENTUM_VOLUME_MIN", "0.6"))
 
-        # ADX REGIME FILTER (Dec 5, 2025): Skip trades in ranging/trendless markets
-        # ADX < 10 indicates very weak trend - lowered from 20 to allow more trades during R&D
-        # ADX 20-40 = moderate trend, ADX > 40 = strong trend
-        self.adx_min = float(os.getenv("MOMENTUM_ADX_MIN", "10.0"))
+        # ADX REGIME FILTER (Dec 12, 2025): DISABLED during R&D to maximize trade flow
+        # Previous: ADX < 10 rejected trades. This was too strict - blocked 70%+ of candidates
+        # Set to 0.0 to let ALL tickers through Gate 1, rely on RL + risk gates instead
+        self.adx_min = float(os.getenv("MOMENTUM_ADX_MIN", "0.0"))
 
     def evaluate(self, symbol: str) -> MomentumPayload:
         result = self._provider.get_daily_bars(symbol, lookback_days=self.lookback_days)
