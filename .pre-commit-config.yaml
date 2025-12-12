@@ -132,3 +132,12 @@ repos:
         pass_filenames: false
         verbose: true
         stages: [pre-commit]
+
+      - id: verify-strategy-integration
+        name: Verify Strategy Integration (ll_012 Prevention)
+        entry: python3 scripts/verify_strategy_integration.py
+        language: system
+        files: '(data/system_state\.json|scripts/autonomous_trader\.py|config/strategy_registry\.json)'
+        pass_filenames: false
+        verbose: true
+        stages: [pre-commit]
