@@ -11,12 +11,19 @@ Key Features:
 3. Category-based filtering (size_error, execution, strategy, etc.)
 4. Integration with verification pipeline
 
+Embedding Strategy (Dec 2025):
+1. OpenAI API via OpenRouter (primary - fast, cheap, high quality)
+2. sentence-transformers local (fallback - no API needed)
+3. Keyword search (final fallback - no ML needed)
+
 Author: Trading System
 Created: 2025-12-11
+Updated: 2025-12-12 (API embeddings support)
 """
 
 import json
 import logging
+import os
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -26,13 +33,33 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-# Try to import sentence transformers for embeddings
+# Embedding availability flags
+OPENAI_EMBEDDINGS_AVAILABLE = False
+LOCAL_EMBEDDINGS_AVAILABLE = False
+
+# Try OpenAI/OpenRouter API first (preferred for 2025)
+try:
+    import httpx
+    OPENAI_EMBEDDINGS_AVAILABLE = bool(
+        os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
+    )
+    if OPENAI_EMBEDDINGS_AVAILABLE:
+        logger.info("OpenAI/OpenRouter embeddings available (API)")
+except ImportError:
+    pass
+
+# Try sentence-transformers as fallback
 try:
     from sentence_transformers import SentenceTransformer
-    EMBEDDINGS_AVAILABLE = True
+    LOCAL_EMBEDDINGS_AVAILABLE = True
+    logger.info("sentence-transformers available (local)")
 except ImportError:
-    EMBEDDINGS_AVAILABLE = False
-    logger.warning("sentence-transformers not installed. Using keyword search fallback.")
+    pass
+
+# Combined availability
+EMBEDDINGS_AVAILABLE = OPENAI_EMBEDDINGS_AVAILABLE or LOCAL_EMBEDDINGS_AVAILABLE
+if not EMBEDDINGS_AVAILABLE:
+    logger.warning("No embeddings available. Using keyword search fallback.")
 
 
 @dataclass
@@ -93,6 +120,11 @@ class LessonsLearnedRAG:
     - Trade context (symbol, side, amount)
     - Error type
     - Similar descriptions
+
+    Embedding Strategy (Dec 2025):
+    1. OpenAI text-embedding-3-small via OpenRouter (primary)
+    2. sentence-transformers all-MiniLM-L6-v2 (fallback)
+    3. Keyword search (final fallback)
     """
 
     def __init__(
@@ -105,18 +137,80 @@ class LessonsLearnedRAG:
         self.encoder = None
         self.lessons: list[Lesson] = []
         self.embeddings: Optional[np.ndarray] = None
+        self._embedding_method = "keyword"  # Default fallback
 
         # Load existing lessons
         self._load_db()
 
-        # Initialize encoder if available
-        if EMBEDDINGS_AVAILABLE:
+        # Initialize embedding method (API > Local > Keyword)
+        self._init_embeddings()
+
+    def _init_embeddings(self) -> None:
+        """Initialize embedding method based on available resources."""
+        # Priority 1: OpenAI/OpenRouter API (best quality, no local install)
+        if OPENAI_EMBEDDINGS_AVAILABLE:
+            self._embedding_method = "api"
+            logger.info("Using OpenAI API embeddings (text-embedding-3-small)")
+            return
+
+        # Priority 2: Local sentence-transformers
+        if LOCAL_EMBEDDINGS_AVAILABLE:
             try:
-                self.encoder = SentenceTransformer(model_name)
-                logger.info(f"Loaded embedding model: {model_name}")
+                self.encoder = SentenceTransformer(self.model_name)
+                self._embedding_method = "local"
+                logger.info(f"Using local embeddings ({self.model_name})")
                 self._compute_embeddings()
+                return
             except Exception as e:
-                logger.warning(f"Could not load embedding model: {e}")
+                logger.warning(f"Could not load local model: {e}")
+
+        # Priority 3: Keyword search fallback
+        self._embedding_method = "keyword"
+        logger.warning("Using keyword search (no embeddings available)")
+
+    def _get_api_embedding(self, text: str) -> Optional[list[float]]:
+        """Get embedding via OpenAI/OpenRouter API."""
+        api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            return None
+
+        try:
+            import httpx
+
+            # Use OpenRouter if available, else OpenAI
+            if os.getenv("OPENROUTER_API_KEY"):
+                url = "https://openrouter.ai/api/v1/embeddings"
+                headers = {
+                    "Authorization": f"Bearer {api_key}",
+                    "HTTP-Referer": "https://github.com/IgorGanapolsky/trading",
+                }
+                model = "openai/text-embedding-3-small"
+            else:
+                url = "https://api.openai.com/v1/embeddings"
+                headers = {"Authorization": f"Bearer {api_key}"}
+                model = "text-embedding-3-small"
+
+            response = httpx.post(
+                url,
+                headers=headers,
+                json={"input": text[:8000], "model": model},  # Truncate to avoid token limit
+                timeout=30.0,
+            )
+            response.raise_for_status()
+            data = response.json()
+            return data["data"][0]["embedding"]
+
+        except Exception as e:
+            logger.warning(f"API embedding failed: {e}")
+            return None
+
+    def _encode(self, text: str) -> Optional[list[float]]:
+        """Get embedding using current method."""
+        if self._embedding_method == "api":
+            return self._get_api_embedding(text)
+        elif self._embedding_method == "local" and self.encoder:
+            return self.encoder.encode(text).tolist()
+        return None
 
     def add_lesson(
         self,
@@ -163,10 +257,10 @@ class LessonsLearnedRAG:
             symbol=symbol,
         )
 
-        # Compute embedding if encoder available
-        if self.encoder:
+        # Compute embedding using current method
+        if self._embedding_method != "keyword":
             text = f"{title} {description} {root_cause} {prevention}"
-            lesson.embedding = self.encoder.encode(text).tolist()
+            lesson.embedding = self._encode(text)
 
         self.lessons.append(lesson)
         self._save_db()
@@ -206,34 +300,51 @@ class LessonsLearnedRAG:
         if not candidates:
             return []
 
-        # Semantic search if embeddings available
-        if self.encoder and all(l.embedding for l in candidates):
-            query_embedding = self.encoder.encode(query)
+        # Semantic search if embeddings available (API or local)
+        if self._embedding_method != "keyword":
+            # Get query embedding
+            query_embedding = self._encode(query)
 
-            scores = []
-            for lesson in candidates:
-                if lesson.embedding:
-                    similarity = self._cosine_similarity(query_embedding, lesson.embedding)
-                    scores.append((lesson, similarity))
+            if query_embedding:
+                scores = []
+                for lesson in candidates:
+                    if lesson.embedding:
+                        similarity = self._cosine_similarity(
+                            np.array(query_embedding), lesson.embedding
+                        )
+                        scores.append((lesson, similarity))
+                    else:
+                        # No embedding for lesson - compute on the fly if API available
+                        if self._embedding_method == "api":
+                            text = f"{lesson.title} {lesson.description} {lesson.root_cause}"
+                            lesson_embedding = self._encode(text)
+                            if lesson_embedding:
+                                lesson.embedding = lesson_embedding
+                                similarity = self._cosine_similarity(
+                                    np.array(query_embedding), lesson_embedding
+                                )
+                                scores.append((lesson, similarity))
+                                continue
+                        # Fallback to keyword match for this lesson
+                        scores.append((lesson, 0.1))
 
-            # Sort by similarity
-            scores.sort(key=lambda x: x[1], reverse=True)
-            return scores[:top_k]
+                # Sort by similarity
+                scores.sort(key=lambda x: x[1], reverse=True)
+                return scores[:top_k]
 
-        else:
-            # Fallback to keyword search
-            query_words = set(query.lower().split())
+        # Fallback to keyword search
+        query_words = set(query.lower().split())
 
-            scores = []
-            for lesson in candidates:
-                text = f"{lesson.title} {lesson.description} {lesson.root_cause}".lower()
-                text_words = set(text.split())
-                overlap = len(query_words & text_words)
-                score = overlap / len(query_words) if query_words else 0
-                scores.append((lesson, score))
+        scores = []
+        for lesson in candidates:
+            text = f"{lesson.title} {lesson.description} {lesson.root_cause}".lower()
+            text_words = set(text.split())
+            overlap = len(query_words & text_words)
+            score = overlap / len(query_words) if query_words else 0
+            scores.append((lesson, score))
 
-            scores.sort(key=lambda x: x[1], reverse=True)
-            return scores[:top_k]
+        scores.sort(key=lambda x: x[1], reverse=True)
+        return scores[:top_k]
 
     def get_prevention_checklist(
         self,
@@ -330,18 +441,21 @@ class LessonsLearnedRAG:
 
     def _compute_embeddings(self) -> None:
         """Compute embeddings for lessons without them."""
-        if not self.encoder:
+        if self._embedding_method == "keyword":
             return
 
         updated = False
         for lesson in self.lessons:
             if not lesson.embedding:
                 text = f"{lesson.title} {lesson.description} {lesson.root_cause} {lesson.prevention}"
-                lesson.embedding = self.encoder.encode(text).tolist()
-                updated = True
+                embedding = self._encode(text)
+                if embedding:
+                    lesson.embedding = embedding
+                    updated = True
 
         if updated:
             self._save_db()
+            logger.info(f"Computed embeddings for {sum(1 for l in self.lessons if l.embedding)} lessons")
 
     def _load_db(self) -> None:
         """Load lessons from database file."""
