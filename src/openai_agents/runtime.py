@@ -10,6 +10,7 @@ Goals:
 from __future__ import annotations
 
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,16 @@ from agents.tool import function_tool
 from src.utils.market_data import DataSource, get_market_data_provider
 
 logger = logging.getLogger(__name__)
+
+# Model selection (Dec 2025): Use GPT-5.2 for SOTA performance if enabled
+_USE_GPT52 = os.getenv("OPENAI_AGENTS_USE_GPT52", "false").lower() in {"1", "true", "yes"}
+_AGENT_MODEL = "gpt-5.2" if _USE_GPT52 else "gpt-4.1-mini"
+_SUPERVISOR_MODEL = "gpt-5.2" if _USE_GPT52 else "gpt-4.1"
+
+if _USE_GPT52:
+    logger.info("OpenAI Agents: Using GPT-5.2 (SOTA coding/tool-calling)")
+else:
+    logger.debug("OpenAI Agents: Using GPT-4.1/4.1-mini (set OPENAI_AGENTS_USE_GPT52=true to upgrade)")
 
 
 @output_guardrail(name="summary_presence_guard")
@@ -145,7 +156,7 @@ def create_trading_agents() -> dict[str, Agent]:
             "Describe which tools you used and why. Keep the first modal statement brief so risk/execution agents can parse the JSON easily."
         ),
         tools=[fetch_last_close, quick_signal],
-        model="gpt-4.1-mini",
+        model=_AGENT_MODEL,
         output_guardrails=[_summary_presence_guard],
     )
 
@@ -157,7 +168,7 @@ def create_trading_agents() -> dict[str, Agent]:
             "Highlight change_pct >5% or volatility_pct >10%. Reference the research JSON so the handoff stays explicit."
         ),
         tools=[fetch_last_close],
-        model="gpt-4.1-mini",
+        model=_AGENT_MODEL,
         output_guardrails=[_summary_presence_guard],
     )
 
@@ -169,7 +180,7 @@ def create_trading_agents() -> dict[str, Agent]:
             "Call plan_execution for notional math and cite the risk JSON verbatim so the supervisor can trust the handoff."
         ),
         tools=[plan_execution],
-        model="gpt-4.1-mini",
+        model=_AGENT_MODEL,
         output_guardrails=[_summary_presence_guard],
     )
 
@@ -182,7 +193,7 @@ def create_trading_agents() -> dict[str, Agent]:
             '"bias", "risk_flags", and "execution_plan" so downstream orchestrators can parse it without extra parsing logic.'
         ),
         handoffs=[research_agent, risk_agent, execution_agent],
-        model="gpt-4.1",
+        model=_SUPERVISOR_MODEL,
         output_guardrails=[_summary_presence_guard],
     )
 

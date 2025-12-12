@@ -71,6 +71,7 @@ class LLMModel(Enum):
     GEMINI_3_PRO = "google/gemini-3-pro-preview"  # Latest Gemini 3 Pro
     CLAUDE_SONNET_4 = "anthropic/claude-sonnet-4"  # Latest Claude Sonnet
     GPT4O = "openai/gpt-4o"  # GPT-4o
+    GPT52 = "openai/gpt-5.2"  # GPT-5.2 (Dec 2025) - SOTA coding/tool-calling
     GEMINI_2_FLASH = "google/gemini-2.5-flash"  # Fallback Gemini model
     DEEPSEEK_R1 = "deepseek/deepseek-r1"  # DeepSeek reasoning model (via OpenRouter)
 
@@ -194,6 +195,16 @@ class MultiLLMAnalyzer:
         deepseek_enabled = deepseek_enabled_env not in {"0", "false", "off", "no"}
         if deepseek_enabled and LLMModel.DEEPSEEK_R1 not in self.models:
             self.models.append(LLMModel.DEEPSEEK_R1)
+
+        # GPT-5.2 (Dec 2025) - SOTA on coding/tool-calling, 40% more expensive
+        gpt52_enabled_env = os.getenv("OPENROUTER_ENABLE_GPT52", "false").lower()
+        gpt52_enabled = gpt52_enabled_env not in {"0", "false", "off", "no"}
+        if gpt52_enabled and LLMModel.GPT52 not in self.models:
+            # Replace GPT-4o with GPT-5.2 for better performance
+            if LLMModel.GPT4O in self.models:
+                self.models.remove(LLMModel.GPT4O)
+            self.models.append(LLMModel.GPT52)
+
         self.max_retries = max_retries
         self.timeout = timeout
         self.rate_limit_delay = rate_limit_delay
@@ -241,6 +252,12 @@ class MultiLLMAnalyzer:
             logger.info(
                 "DeepSeek (model=%s) enabled via OPENROUTER_ENABLE_DEEPSEEK",
                 LLMModel.DEEPSEEK_R1.value,
+            )
+
+        if gpt52_enabled:
+            logger.info(
+                "GPT-5.2 (model=%s) enabled via OPENROUTER_ENABLE_GPT52 - SOTA coding/tool-calling",
+                LLMModel.GPT52.value,
             )
 
         logger.info(f"Initialized MultiLLMAnalyzer with models: {[m.value for m in self.models]}")
@@ -1485,6 +1502,15 @@ class LLMCouncilAnalyzer:
         if deepseek_enabled and LLMModel.DEEPSEEK_R1 not in self.council_models:
             self.council_models.append(LLMModel.DEEPSEEK_R1)
 
+        # GPT-5.2 (Dec 2025) - SOTA on coding/tool-calling, 40% more expensive
+        gpt52_enabled_env = os.getenv("OPENROUTER_ENABLE_GPT52", "false").lower()
+        gpt52_enabled = gpt52_enabled_env not in {"0", "false", "off", "no"}
+        if gpt52_enabled and LLMModel.GPT52 not in self.council_models:
+            # Replace GPT-4o with GPT-5.2 in council for better performance
+            if LLMModel.GPT4O in self.council_models:
+                self.council_models.remove(LLMModel.GPT4O)
+            self.council_models.append(LLMModel.GPT52)
+
         self.chairman_model = chairman_model or LLMModel.GEMINI_3_PRO
         self.max_retries = max_retries
         self.timeout = timeout
@@ -1533,6 +1559,12 @@ class LLMCouncilAnalyzer:
             logger.info(
                 "LLM Council: DeepSeek (model=%s) enabled via OPENROUTER_ENABLE_DEEPSEEK",
                 LLMModel.DEEPSEEK_R1.value,
+            )
+
+        if gpt52_enabled:
+            logger.info(
+                "LLM Council: GPT-5.2 (model=%s) enabled via OPENROUTER_ENABLE_GPT52 - SOTA coding/tool-calling",
+                LLMModel.GPT52.value,
             )
 
         logger.info(
