@@ -98,6 +98,7 @@ class RAGHygieneVerifier:
         self._check_vector_store_health()
         self._check_document_count()
         self._check_knowledge_graph()
+        self._check_vectorization_gap()  # CRITICAL: Added Dec 12, 2025 after CEO audit
 
         # Category 4: Dec 2025 Best Practices
         self._check_hybrid_search()
@@ -441,6 +442,94 @@ class RAGHygieneVerifier:
                     category="Data Quality",
                     status="WARN",
                     message="No knowledge graph found",
+                )
+            )
+
+    def _check_vectorization_gap(self) -> None:
+        """CRITICAL: Check if all documents are actually vectorized.
+
+        Added Dec 12, 2025 after CEO discovered 87% of docs were NOT vectorized.
+        This is the most important RAG health check - without vectors, semantic search fails.
+        """
+        in_memory_path = self.data_dir / "in_memory_store.json"
+        chroma_path = self.data_dir / "chroma_db" / "chroma.sqlite3"
+
+        in_mem_count = 0
+        chroma_count = 0
+
+        # Get in-memory document count
+        if in_memory_path.exists():
+            try:
+                with open(in_memory_path) as f:
+                    data = json.load(f)
+                in_mem_count = len(data.get("documents", []))
+            except Exception:
+                pass
+
+        # Get ChromaDB vectorized count
+        if chroma_path.exists():
+            try:
+                from src.rag.vector_db.chroma_client import get_rag_db
+
+                db = get_rag_db()
+                stats = db.get_stats()
+                chroma_count = stats.get("total_documents", 0)
+            except Exception:
+                # Fallback: estimate from file size
+                chroma_count = 0
+
+        # Calculate gap
+        gap = max(0, in_mem_count - chroma_count)
+
+        if in_mem_count == 0:
+            self.checks.append(
+                HygieneCheck(
+                    name="Vectorization Gap",
+                    category="Data Quality",
+                    status="WARN",
+                    message="No documents in RAG store",
+                    details={"in_memory": 0, "vectorized": 0, "gap": 0},
+                )
+            )
+        elif gap == 0:
+            self.checks.append(
+                HygieneCheck(
+                    name="Vectorization Gap",
+                    category="Data Quality",
+                    status="PASS",
+                    message=f"All {in_mem_count} documents are vectorized",
+                    details={
+                        "in_memory": in_mem_count,
+                        "vectorized": chroma_count,
+                        "gap": 0,
+                        "percentage": 100.0,
+                    },
+                )
+            )
+        else:
+            pct_vectorized = (chroma_count / in_mem_count) * 100
+            pct_gap = (gap / in_mem_count) * 100
+
+            # FAIL if >10% unvectorized, WARN if any gap
+            if pct_gap > 10:
+                status = "FAIL"
+                message = f"CRITICAL: {gap} docs ({pct_gap:.0f}%) NOT vectorized - semantic search broken!"
+            else:
+                status = "WARN"
+                message = f"{gap} docs ({pct_gap:.0f}%) not vectorized"
+
+            self.checks.append(
+                HygieneCheck(
+                    name="Vectorization Gap",
+                    category="Data Quality",
+                    status=status,
+                    message=message,
+                    details={
+                        "in_memory": in_mem_count,
+                        "vectorized": chroma_count,
+                        "gap": gap,
+                        "percentage": pct_vectorized,
+                    },
                 )
             )
 
