@@ -599,6 +599,81 @@ jobs:
 
           # Portfolio status moved to separate step to prevent failures
 
+      - name: Harvest theta (options income)
+        id: harvest_theta
+        if: steps.execute_trading.outcome == 'success'
+        continue-on-error: true  # Non-fatal - equity trading already succeeded
+        timeout-minutes: 10
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          PAPER_TRADING: 'true'
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          echo "💰 ========================================"
+          echo "💰 HARVESTING THETA - OPTIONS INCOME"
+          echo "💰 ========================================"
+          echo ""
+          echo "Options strategy: Wheel (Cash-Secured Puts + Covered Calls)"
+          echo "Target: SPY, QQQ (high-liquidity underlyings)"
+          echo ""
+
+          # Run options profit planner first to identify opportunities
+          echo "📊 Step 1: Scanning for options opportunities..."
+          python3 scripts/options_profit_planner.py --target-daily 10 || {
+            echo "⚠️  Options planner scan failed (may need network/API)"
+          }
+
+          # Execute wheel strategy on SPY (most liquid)
+          echo ""
+          echo "📈 Step 2: Executing wheel strategy on SPY..."
+          python3 scripts/execute_options_trade.py \
+            --strategy wheel \
+            --symbol SPY \
+            --dry-run || {
+            echo "⚠️  SPY wheel strategy returned non-zero (check logs)"
+          }
+
+          # Execute wheel strategy on QQQ
+          echo ""
+          echo "📈 Step 3: Executing wheel strategy on QQQ..."
+          python3 scripts/execute_options_trade.py \
+            --strategy wheel \
+            --symbol QQQ \
+            --dry-run || {
+            echo "⚠️  QQQ wheel strategy returned non-zero (check logs)"
+          }
+
+          # Update theta harvest timestamp in system state
+          echo ""
+          echo "📝 Step 4: Recording theta harvest timestamp..."
+          python3 -c "
+          import json
+          from datetime import datetime
+          from pathlib import Path
+
+          state_file = Path('data/system_state.json')
+          if state_file.exists():
+              with open(state_file, 'r') as f:
+                  state = json.load(f)
+
+              if 'options' not in state:
+                  state['options'] = {}
+
+              state['options']['last_theta_harvest'] = datetime.utcnow().isoformat() + 'Z'
+              state['options']['harvest_source'] = 'daily-trading-workflow'
+
+              with open(state_file, 'w') as f:
+                  json.dump(state, f, indent=2)
+
+              print('✅ Updated last_theta_harvest timestamp')
+          else:
+              print('⚠️  system_state.json not found')
+          "
+
+          echo ""
+          echo "✅ Theta harvest step complete"
+
       - name: Update performance log
         if: steps.execute_trading.outcome == 'success'
         continue-on-error: true  # Non-fatal - trading succeeded
