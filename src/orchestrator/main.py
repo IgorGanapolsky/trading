@@ -410,6 +410,29 @@ class TradingOrchestrator:
             except Exception as e:
                 logger.warning(f"Gate 0: Session end coaching failed: {e}")
 
+        # Save and print session summary (always, even with 0 trades)
+        self.telemetry.save_session_decisions(self.session_profile)
+        self.telemetry.print_session_summary()
+
+    def _format_momentum_rejection(self, indicators: dict) -> str:
+        """Format a human-readable rejection reason from momentum indicators."""
+        reasons = []
+        adx = indicators.get("adx", 0)
+        macd = indicators.get("macd_hist", indicators.get("macd", 0))
+        rsi = indicators.get("rsi", 50)
+        vol = indicators.get("volume_ratio", 1.0)
+
+        if adx < 10:
+            reasons.append(f"ADX={adx:.1f} (weak trend)")
+        if macd < 0:
+            reasons.append(f"MACD={macd:.2f} (bearish)")
+        if rsi > 70:
+            reasons.append(f"RSI={rsi:.1f} (overbought)")
+        if vol < 0.6:
+            reasons.append(f"Vol={vol:.1f}x (low)")
+
+        return "; ".join(reasons) if reasons else "Score below threshold"
+
     def _run_portfolio_strategies(self) -> None:
         """Run strategies that operate on the portfolio level."""
         logger.info("--- Running Portfolio-Level Strategies ---")
@@ -886,6 +909,9 @@ class TradingOrchestrator:
     def _process_ticker(self, ticker: str, rl_threshold: float) -> None:
         logger.info("--- Processing %s ---", ticker)
 
+        # Initialize decision tracking for this ticker
+        self.telemetry.start_ticker_decision(ticker)
+
         # Gate 0: Pre-trade psychological readiness check
         if self.mental_coach:
             try:
@@ -948,6 +974,14 @@ class TradingOrchestrator:
         momentum_signal = momentum_outcome.result
         if not momentum_signal.is_buy:
             logger.info("Gate 1 (%s): REJECTED by momentum filter.", ticker)
+            # Track rejection with indicator details
+            ind = momentum_signal.indicators
+            rejection_reason = self._format_momentum_rejection(ind)
+            self.telemetry.update_ticker_decision(
+                ticker, gate=1, status="REJECT",
+                indicators=ind,
+                rejection_reason=rejection_reason,
+            )
             self.telemetry.gate_reject(
                 "momentum",
                 ticker,

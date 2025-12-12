@@ -54,15 +54,37 @@ class MomentumAgent:
     def analyze(self, ticker: str) -> MomentumSignal:
         payload = self._calculator.evaluate(ticker)
         score = payload.score
+        ind = payload.indicators
 
         is_buy = score > self._min_score
         strength = self._normalise_score(score)
 
-        logger.debug(
-            "MomentumAgent | %s | score=%.4f | buy=%s | strength=%.3f",
+        # Detailed logging - show ALL indicator values vs thresholds
+        adx = ind.get("adx", 0)
+        macd = ind.get("macd_hist", ind.get("macd", 0))
+        rsi = ind.get("rsi", 50)
+        vol_ratio = ind.get("volume_ratio", 1.0)
+
+        # Thresholds (from calculator)
+        adx_thresh = getattr(self._calculator, "adx_threshold", 10.0)
+        macd_thresh = self._calculator.macd_threshold
+        rsi_thresh = self._calculator.rsi_overbought
+        vol_thresh = self._calculator.volume_min
+
+        # Build detailed analysis log
+        checks = []
+        checks.append(f"ADX: {adx:.1f} >= {adx_thresh} {'✓' if adx >= adx_thresh else '✗ (weak trend)'}")
+        checks.append(f"MACD: {macd:.3f} >= {macd_thresh} {'✓' if macd >= macd_thresh else '✗ (bearish)'}")
+        checks.append(f"RSI: {rsi:.1f} <= {rsi_thresh} {'✓' if rsi <= rsi_thresh else '✗ (overbought)'}")
+        checks.append(f"Volume: {vol_ratio:.2f}x >= {vol_thresh}x {'✓' if vol_ratio >= vol_thresh else '✗ (low volume)'}")
+        checks.append(f"Score: {score:.2f} > {self._min_score} {'✓' if is_buy else '✗'}")
+
+        decision = "BUY" if is_buy else "REJECT"
+        logger.info(
+            "Gate 1 (%s): Momentum Analysis\n  %s\n  DECISION: %s (strength=%.2f)",
             ticker,
-            score,
-            is_buy,
+            "\n  ".join(checks),
+            decision,
             strength,
         )
 

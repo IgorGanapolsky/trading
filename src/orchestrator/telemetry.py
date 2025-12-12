@@ -30,6 +30,123 @@ class OrchestratorTelemetry:
         self.session_id = datetime.utcnow().strftime("%Y%m%dT%H%M%S")
         self.run_id = os.getenv("GITHUB_RUN_ID") or os.getenv("RUN_ID")
 
+        # Session decision tracking
+        self.session_start_time = datetime.now(timezone.utc)
+        self.session_decisions: dict[str, dict[str, Any]] = {}
+        self.orders_placed = 0
+
+    def start_ticker_decision(self, ticker: str) -> None:
+        """Initialize tracking for a ticker evaluation."""
+        self.session_decisions[ticker] = {
+            "ticker": ticker,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "gate_reached": 0,
+            "decision": "PENDING",
+            "rejection_reason": None,
+            "indicators": {},
+            "order_details": None,
+        }
+
+    def update_ticker_decision(
+        self,
+        ticker: str,
+        gate: int | str,
+        status: str,
+        indicators: dict[str, Any] | None = None,
+        rejection_reason: str | None = None,
+        order_details: dict[str, Any] | None = None,
+    ) -> None:
+        """Update the decision record for a ticker."""
+        if ticker not in self.session_decisions:
+            self.start_ticker_decision(ticker)
+
+        rec = self.session_decisions[ticker]
+        gate_num = int(gate) if isinstance(gate, (int, float)) else hash(gate) % 10
+        rec["gate_reached"] = max(rec["gate_reached"], gate_num)
+
+        if status.upper() == "REJECT":
+            rec["decision"] = "REJECTED"
+            rec["rejection_reason"] = rejection_reason
+        elif status.upper() == "EXECUTED":
+            rec["decision"] = "EXECUTED"
+            rec["order_details"] = order_details
+            self.orders_placed += 1
+
+        if indicators:
+            rec["indicators"].update(indicators)
+
+    def save_session_decisions(self, session_profile: dict[str, Any] | None = None) -> None:
+        """Save all session decisions to a JSON file."""
+        end_time = datetime.now(timezone.utc)
+        duration = (end_time - self.session_start_time).total_seconds()
+
+        output = {
+            "session": {
+                "date": end_time.strftime("%Y-%m-%d"),
+                "session_id": self.session_id,
+                "start_time": self.session_start_time.strftime("%H:%M:%S"),
+                "end_time": end_time.strftime("%H:%M:%S"),
+                "duration_seconds": round(duration, 1),
+                "tickers_processed": len(self.session_decisions),
+                "orders_placed": self.orders_placed,
+            },
+            "decisions": list(self.session_decisions.values()),
+        }
+
+        if session_profile:
+            output["session"]["session_type"] = session_profile.get("session_type")
+            output["session"]["is_market_day"] = session_profile.get("is_market_day")
+
+        output_path = Path(f"data/session_decisions_{end_time.strftime('%Y-%m-%d')}.json")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        try:
+            with output_path.open("w", encoding="utf-8") as f:
+                json.dump(output, f, indent=2, default=str)
+            logger.info("Session decisions saved to %s", output_path)
+        except Exception as e:
+            logger.warning("Failed to save session decisions: %s", e)
+
+    def print_session_summary(self) -> None:
+        """Print a formatted summary of all trading decisions."""
+        end_time = datetime.now(timezone.utc)
+        duration = (end_time - self.session_start_time).total_seconds()
+
+        rejected = sum(1 for d in self.session_decisions.values() if d["decision"] == "REJECTED")
+        executed = sum(1 for d in self.session_decisions.values() if d["decision"] == "EXECUTED")
+
+        print("\n" + "=" * 70)
+        print(f"TRADING SESSION SUMMARY - {end_time.strftime('%Y-%m-%d %H:%M:%S')} UTC")
+        print("=" * 70)
+        print(f"Tickers Processed: {len(self.session_decisions)}")
+        print(f"Orders Placed: {executed}")
+        print(f"Orders Rejected: {rejected}")
+        print(f"Duration: {duration:.1f}s")
+        print()
+        print("DECISION LOG:")
+
+        for ticker, rec in self.session_decisions.items():
+            decision = rec["decision"]
+            if decision == "EXECUTED":
+                details = rec.get("order_details", {})
+                notional = details.get("notional", "?")
+                print(f"  {ticker:6} | EXECUTED | ${notional}")
+            elif decision == "REJECTED":
+                gate = f"Gate {rec['gate_reached']}"
+                reason = rec.get("rejection_reason", "Unknown")[:40]
+                print(f"  {ticker:6} | REJECTED | {gate:15} | {reason}")
+            else:
+                print(f"  {ticker:6} | {decision}")
+
+        print()
+        if executed > 0:
+            print(f"RECOMMENDATION: {executed} trade(s) executed successfully.")
+        elif rejected > 0:
+            print("RECOMMENDATION: Market conditions unfavorable. All stocks rejected.")
+        else:
+            print("RECOMMENDATION: No tickers processed.")
+        print("=" * 70 + "\n")
+
     def record(self, event_type: str, ticker: str, status: str, payload: dict[str, Any]) -> None:
         entry = {
             "ts": datetime.utcnow().isoformat(),
