@@ -506,6 +506,9 @@ jobs:
           ENABLE_RL_RETRAIN: ${{ secrets.ENABLE_RL_RETRAIN || 'false' }}
           # RAG features now use OpenAI API embeddings (Dec 2025) - no large downloads needed
           ENABLE_RAG_FEATURES: ${{ secrets.ENABLE_RAG_FEATURES || 'true' }}
+          # GPT-5.2 (Dec 2025) - SOTA coding/tool-calling, enable for advanced trading analysis
+          OPENROUTER_ENABLE_GPT52: ${{ secrets.OPENROUTER_ENABLE_GPT52 || 'true' }}
+          OPENAI_AGENTS_USE_GPT52: ${{ secrets.OPENAI_AGENTS_USE_GPT52 || 'true' }}
         run: |
           echo "🚀 ========================================"
           echo "🚀 EXECUTING DAILY TRADING - $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
