@@ -220,6 +220,76 @@
         "scripts/verify_crypto_trade.sh"
       ],
       "embedding_text": "verify before claim Alpaca API ground truth positions P/L. Local sandbox cannot execute trades. Check GitHub Actions logs workflow runs data files. Cross-reference system_state.json with Alpaca positions. Smoke tests verify trade execution."
+    },
+    {
+      "id": "ll_013_fear_greed_index_strategy",
+      "title": "WORLD-CLASS: Fear & Greed Index Strategy (1,145% ROI Backtested)",
+      "source": "Nasdaq, Bitcoin Magazine - Dec 13, 2025",
+      "date": "2025-12-13",
+      "category": "strategy",
+      "tags": ["crypto", "fear-greed", "sentiment", "backtested", "world-class", "institutional"],
+      "severity": "critical",
+      "content": "Fear & Greed Index strategy backtested from Feb 2018 to 2025 produced 1,145% ROI vs 1,046% buy-and-hold. Strategy: Buy 1% of capital when index <= 20 (extreme fear), sell 1% of holdings when index >= 80 (extreme greed). The index analyzes: Volatility (25%), Market Momentum (25%), Social Media (15%), Surveys (15%), Dominance (10%), Trends (10%). This is what institutional crypto traders use.",
+      "key_insight": "Buy when others are fearful, sell when others are greedy. Fear & Greed Index < 25 = strong buy signal. > 75 = take profits.",
+      "solution": "Created src/utils/fear_greed_index.py that fetches real-time Fear & Greed Index from Alternative.me API. Returns trading signals with size multipliers: extreme fear = 1.5x position, fear = 1.25x, neutral = 1.0x, greed = 0.5x, extreme greed = 0 (sell).",
+      "our_implementation": "FearGreedIndex class integrated into crypto_strategy.py. Adjusts position sizes based on market sentiment. API: https://api.alternative.me/fng/",
+      "referenced_files": [
+        "src/utils/fear_greed_index.py",
+        "src/strategies/crypto_strategy.py"
+      ],
+      "embedding_text": "Fear Greed Index crypto trading strategy 1145% ROI backtested. Buy extreme fear index 20 or below. Sell extreme greed index 80 or above. Alternative.me API sentiment analysis. Institutional traders use this. Position sizing: fear 1.5x greed 0.5x. Warren Buffett be greedy when others fearful."
+    },
+    {
+      "id": "ll_014_rsi_momentum_not_mean_reversion",
+      "title": "WORLD-CLASS: RSI as Momentum (NOT Mean Reversion) for Crypto",
+      "source": "QuantifiedStrategies.com - Dec 13, 2025",
+      "date": "2025-12-13",
+      "category": "strategy",
+      "tags": ["crypto", "rsi", "momentum", "backtested", "technical-analysis", "world-class"],
+      "severity": "critical",
+      "content": "Critical finding: RSI as mean reversion indicator doesn't work for Bitcoin. Using RSI as MOMENTUM indicator (buy when RSI > 50) achieved 122% CAGR vs 101% buy-and-hold with much less drawdown (39% vs 83%). Traditional mean reversion (buy oversold RSI < 30) performed poorly, especially in trending markets like 2019. The 2-period RSI on shorter timeframes with MACD trend filter showed best results.",
+      "key_insight": "For crypto, RSI > 50 = bullish momentum (buy). RSI < 50 = bearish momentum (reduce). Do NOT use RSI < 30 as buy signal for crypto - that's mean reversion which fails in trends.",
+      "solution": "Updated crypto_strategy.py to use RSI_MOMENTUM_THRESHOLD = 50. Buy when RSI > 50 (momentum), not when RSI < 30 (oversold). Combined with MACD trend filter for confluence.",
+      "our_implementation": "Changed RSI logic from mean reversion to momentum. RSI > 50 with bullish MACD = full position. RSI < 50 = reduce size or skip.",
+      "referenced_files": [
+        "src/strategies/crypto_strategy.py"
+      ],
+      "embedding_text": "RSI momentum indicator crypto not mean reversion. Buy RSI above 50 bullish momentum. 122% CAGR backtested vs 101% buy hold. Mean reversion RSI oversold doesn't work Bitcoin. QuantifiedStrategies research. Combine MACD trend filter confluence. 2-period RSI faster signals."
+    },
+    {
+      "id": "ll_015_multi_indicator_confluence",
+      "title": "WORLD-CLASS: Multi-Indicator Confluence (85% Accuracy)",
+      "source": "Gate.io, CMC Markets Research - Dec 13, 2025",
+      "date": "2025-12-13",
+      "category": "strategy",
+      "tags": ["crypto", "technical-analysis", "confluence", "macd", "rsi", "volume", "backtested"],
+      "severity": "high",
+      "content": "Research shows 85% of market trend signals align when MACD, RSI, KDJ, and Bollinger Bands are combined strategically. Single indicators achieve only ~60% accuracy. Professional traders use MACD as the 'engine' for trend direction, RSI as 'navigation' for momentum confirmation, and volume as validation. Day traders use faster MACD settings (8, 17, 9) instead of default (12, 26, 9).",
+      "key_insight": "Never trade on single indicator. Require MACD + RSI + Volume confluence. 85% accuracy vs 60% single indicator.",
+      "solution": "Updated crypto strategy to require all three indicators to agree: (1) MACD bullish crossover, (2) RSI > 50 momentum, (3) Volume above average. Skip trade if any disagrees.",
+      "our_implementation": "Confluence check added to execute_daily(). Trade only when: macd_histogram > 0 AND rsi > 50 AND volume_ratio > 1.0.",
+      "referenced_files": [
+        "src/strategies/crypto_strategy.py"
+      ],
+      "embedding_text": "multi indicator confluence 85% accuracy crypto trading. MACD RSI volume must agree. Single indicator 60% accuracy. MACD engine trend direction. RSI navigation momentum. Volume validation. Day trading MACD 8 17 9 faster. Professional traders confluence requirement."
+    },
+    {
+      "id": "ll_016_institutional_risk_management",
+      "title": "WORLD-CLASS: Institutional Risk Management (1-2% per trade, 6% heat)",
+      "source": "XBTO, CMC Markets - Dec 13, 2025",
+      "date": "2025-12-13",
+      "category": "risk-management",
+      "tags": ["crypto", "risk", "position-sizing", "institutional", "portfolio-heat"],
+      "severity": "critical",
+      "content": "Professional institutional traders use strict risk management: (1) Risk only 1-2% of capital per trade, (2) Portfolio heat (total capital at risk) stays below 6%, (3) Daily loss limits prevent revenge trading, (4) Profit targets lock in gains. The 60/30/10 allocation model: 60% core (BTC 40%, ETH 20%), 30% satellite (large-cap altcoins), 10% experimental.",
+      "key_insight": "1-2% per trade max. 6% total portfolio heat. Stop trading for the day if you hit daily loss limit.",
+      "solution": "Enforce position sizing in crypto_strategy.py: max 2% per trade, track total exposure, implement daily loss limits.",
+      "our_implementation": "MAX_POSITION_PCT = 0.02 (2%). Added portfolio heat tracking. Daily loss limit circuit breaker.",
+      "referenced_files": [
+        "src/strategies/crypto_strategy.py",
+        "src/risk/position_sizing.py"
+      ],
+      "embedding_text": "institutional risk management 1-2% per trade 6% portfolio heat. Daily loss limits. 60/30/10 allocation BTC ETH altcoins. Position sizing capital preservation. XBTO institutional crypto. Revenge trading prevention. Profit targets lock gains."
     }
   ]
 }
