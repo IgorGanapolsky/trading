@@ -3,7 +3,7 @@
     "title": "Trading System Lessons Learned",
     "description": "Critical insights and architectural decisions learned during system development",
     "created": "2025-12-10",
-    "last_updated": "2025-12-10"
+    "last_updated": "2025-12-13"
   },
   "chunks": [
     {
@@ -165,6 +165,61 @@
         "scripts/enforce_promotion_gate.py"
       ],
       "embedding_text": "overly restrictive filters blocked trading 31 days catch-22 impossible promotion gate. Filters too tight: delta DTE premium. Required 60% win rate before trading but can't get wins without trading. Solution: relax filters start loose tighten with data. Keep IV percentile as intelligent filter. Remove impossible gates."
+    },
+    {
+      "id": "ll_010_crypto_loss_analysis",
+      "title": "CRYPTO LOSSES: All 3 Positions Closed at Loss (-$0.43)",
+      "source": "CTO Analysis - Dec 13, 2025",
+      "date": "2025-12-13",
+      "category": "trading",
+      "tags": ["crypto", "btc", "eth", "sol", "loss", "timing", "momentum", "weekend"],
+      "severity": "high",
+      "content": "All three crypto positions closed at a loss: ETHUSD -$0.01 (-0.10%), BTCUSD -$0.41 (-4.18%), SOLUSD -$0.01 (-0.09%). Total crypto P/L: -$0.43 on $19.67 invested (-2.2%). Root causes: (1) Bought during price peaks instead of dips (2) BTC dropped from $94K to $90K during holding period (3) Weekend volume filters were too restrictive, preventing better entry points.",
+      "key_insight": "Crypto trading needs momentum-based entry timing. Buy on 5-day momentum winners, not during pullbacks. Weekend filters must be relaxed since crypto volume is naturally lower on weekends.",
+      "solution": "Created force-crypto-trade.yml workflow that: (1) Analyzes BTC, ETH, SOL 5-day momentum (2) Selects best performer (3) Uses FORCE_TRADE mode to bypass restrictive weekend filters (4) Executes $10 trade via Alpaca. Trigger by updating .github/FORCE_CRYPTO file.",
+      "our_implementation": "Added force-crypto-trade.yml workflow with momentum scoring. Relaxed filters: RSI_OVERBOUGHT=85, VOLUME_THRESHOLD=0.05. Push to FORCE_CRYPTO triggers immediate execution.",
+      "referenced_files": [
+        ".github/workflows/force-crypto-trade.yml",
+        ".github/FORCE_CRYPTO",
+        "src/strategies/crypto_strategy.py"
+      ],
+      "embedding_text": "crypto loss BTC ETH SOL -$0.43 all positions negative. Bought peaks not dips. Bitcoin dropped $94K to $90K. Solution: momentum-based entry select 5-day winners. FORCE_TRADE mode bypass weekend filters. force-crypto-trade.yml workflow for immediate execution. Relax RSI overbought to 85 volume threshold to 0.05."
+    },
+    {
+      "id": "ll_011_weekend_crypto_execution",
+      "title": "Weekend Crypto: Use Force Trade for Immediate Execution",
+      "source": "CTO Implementation - Dec 13, 2025",
+      "date": "2025-12-13",
+      "category": "infrastructure",
+      "tags": ["crypto", "weekend", "github-actions", "force-trade", "trigger"],
+      "severity": "high",
+      "content": "Crypto markets are 24/7 but scheduled weekend-crypto-trading.yml only runs at 10 AM ET on weekends. For immediate crypto trades: (1) Update .github/FORCE_CRYPTO file with timestamp (2) Push to any branch (3) force-crypto-trade.yml triggers automatically (4) Trade executes within 2-3 minutes via GitHub Actions.",
+      "key_insight": "Don't wait for scheduled workflow. Use push-triggered workflow for immediate crypto execution. FORCE_CRYPTO file acts as manual trigger.",
+      "solution": "force-crypto-trade.yml listens for pushes to .github/FORCE_CRYPTO on any branch. Workflow uses momentum scoring to pick best crypto, bypasses filters with CRYPTO_FORCE_TRADE=true, executes $10 trade.",
+      "our_implementation": "Similar to force-trade.yml pattern for stocks. Echo timestamp to .github/FORCE_CRYPTO, git add, git commit, git push = instant crypto trade.",
+      "referenced_files": [
+        ".github/workflows/force-crypto-trade.yml",
+        ".github/FORCE_CRYPTO"
+      ],
+      "embedding_text": "weekend crypto immediate execution force trade push trigger FORCE_CRYPTO file. Don't wait for scheduled 10 AM workflow. Push any change to .github/FORCE_CRYPTO triggers instant trade. Momentum scoring selects best crypto. CRYPTO_FORCE_TRADE=true bypasses filters."
+    },
+    {
+      "id": "ll_012_verify_before_claim",
+      "title": "VERIFY: Check Alpaca Positions Before Claiming P/L",
+      "source": "CEO Directive - Dec 13, 2025",
+      "date": "2025-12-13",
+      "category": "verification",
+      "tags": ["verification", "alpaca", "positions", "ground-truth", "api"],
+      "severity": "critical",
+      "content": "System state file may be stale. Before claiming portfolio P/L or position status: (1) Check if workflow ran recently via GitHub Actions tab (2) Verify positions via Alpaca API in workflow logs (3) Check data/trades_YYYY-MM-DD.json for today's trades (4) Cross-reference with closed_trades in system_state.json.",
+      "key_insight": "Ground truth is Alpaca API, not local files. Workflows execute trades, local sandbox cannot. Always verify via workflow logs or trigger fresh workflow.",
+      "solution": "Added smoke tests in tests/test_crypto_trade_verification.py: test_alpaca_connection(), test_crypto_positions_match_state(), test_recent_crypto_orders_exist(). These run post-trade to verify execution.",
+      "our_implementation": "weekend-crypto-trading.yml runs verification smoke tests after trade execution. Results in workflow logs.",
+      "referenced_files": [
+        "tests/test_crypto_trade_verification.py",
+        "scripts/verify_crypto_trade.sh"
+      ],
+      "embedding_text": "verify before claim Alpaca API ground truth positions P/L. Local sandbox cannot execute trades. Check GitHub Actions logs workflow runs data files. Cross-reference system_state.json with Alpaca positions. Smoke tests verify trade execution."
     }
   ]
 }

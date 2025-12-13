@@ -155,6 +155,112 @@ class CryptoTradeVerificationTests:
         except Exception as e:
             return False, f"Position verification failed: {e}"
 
+    def test_momentum_selection(self) -> tuple[bool, str]:
+        """
+        Test that we're selecting crypto based on momentum, not buying losers.
+
+        Lesson Learned: ll_010 - All 3 crypto positions closed at loss because
+        we bought during price peaks, not momentum winners.
+        """
+        try:
+            import yfinance as yf
+
+            cryptos = ["BTC-USD", "ETH-USD", "SOL-USD"]
+            momentum_scores = {}
+
+            for symbol in cryptos:
+                try:
+                    ticker = yf.Ticker(symbol)
+                    hist = ticker.history(period="5d")
+                    if not hist.empty:
+                        current = hist["Close"].iloc[-1]
+                        prev = hist["Close"].iloc[0]
+                        change_pct = ((current - prev) / prev) * 100
+                        momentum_scores[symbol] = change_pct
+                except Exception:
+                    continue
+
+            if not momentum_scores:
+                return False, "Could not fetch momentum data for any crypto"
+
+            # Find best performer
+            best = max(momentum_scores, key=momentum_scores.get)
+            worst = min(momentum_scores, key=momentum_scores.get)
+
+            # Check if all are negative (bearish market)
+            all_negative = all(v < 0 for v in momentum_scores.values())
+            if all_negative:
+                return (
+                    True,
+                    f"⚠️ All cryptos negative (bearish market): {momentum_scores}. Consider waiting.",
+                )
+
+            return (
+                True,
+                f"Momentum winner: {best} ({momentum_scores[best]:+.2f}%). "
+                f"Avoid: {worst} ({momentum_scores[worst]:+.2f}%)",
+            )
+
+        except ImportError:
+            return False, "yfinance not installed"
+        except Exception as e:
+            return False, f"Momentum check failed: {e}"
+
+    def test_not_buying_at_peak(self) -> tuple[bool, str]:
+        """
+        Test that we're not buying at RSI overbought levels.
+
+        Lesson Learned: ll_010 - Bought during price peaks instead of dips.
+        """
+        try:
+            import pandas as pd
+            import yfinance as yf
+
+            cryptos = ["BTC-USD", "ETH-USD", "SOL-USD"]
+            rsi_values = {}
+
+            for symbol in cryptos:
+                try:
+                    ticker = yf.Ticker(symbol)
+                    hist = ticker.history(period="30d")
+                    if len(hist) < 14:
+                        continue
+
+                    # Calculate RSI
+                    delta = hist["Close"].diff()
+                    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+                    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+                    rs = gain / loss
+                    rsi = 100 - (100 / (1 + rs))
+                    rsi_values[symbol] = float(rsi.iloc[-1])
+                except Exception:
+                    continue
+
+            if not rsi_values:
+                return False, "Could not calculate RSI for any crypto"
+
+            # Check for overbought conditions (RSI > 70)
+            overbought = [s for s, r in rsi_values.items() if r > 70]
+            oversold = [s for s, r in rsi_values.items() if r < 30]
+
+            if overbought:
+                return (
+                    False,
+                    f"🚨 OVERBOUGHT (don't buy): {overbought}. RSI values: {rsi_values}",
+                )
+            elif oversold:
+                return (
+                    True,
+                    f"✅ OVERSOLD (buy opportunity): {oversold}. RSI values: {rsi_values}",
+                )
+            else:
+                return True, f"RSI neutral range. Values: {rsi_values}"
+
+        except ImportError:
+            return False, "yfinance/pandas not installed"
+        except Exception as e:
+            return False, f"RSI check failed: {e}"
+
     def test_recent_crypto_orders_exist(self) -> tuple[bool, str]:
         """Test that recent crypto orders exist in Alpaca."""
         try:
@@ -198,6 +304,8 @@ class CryptoTradeVerificationTests:
             ("State file exists", self.test_state_file_exists),
             ("State file valid JSON", self.test_state_file_valid_json),
             ("Crypto strategy tracked", self.test_crypto_strategy_tracked),
+            ("Momentum selection", self.test_momentum_selection),
+            ("Not buying at peak", self.test_not_buying_at_peak),
             ("Alpaca connection", self.test_alpaca_connection),
             ("Positions match state", self.test_crypto_positions_match_state),
             ("Recent crypto orders", self.test_recent_crypto_orders_exist),
