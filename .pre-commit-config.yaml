@@ -142,6 +142,15 @@ repos:
         verbose: true
         stages: [pre-commit]
 
+      - id: validate-config-enums
+        name: Validate Config Enum Values (ll_033 Prevention)
+        entry: python3 scripts/validate_config_enums.py
+        language: system
+        files: '(config/.*\.json|src/strategies/registry\.py)'
+        pass_filenames: false
+        verbose: true
+        stages: [pre-commit]
+
       - id: validate-trading-script-syntax
         name: Validate Critical Trading Scripts Syntax (ll_024 Prevention)
         entry: python3 -c "import sys, subprocess; scripts=['scripts/autonomous_trader.py','src/strategies/crypto_strategy.py']; [subprocess.run([sys.executable,'-m','py_compile',s],check=True) for s in scripts if __import__('pathlib').Path(s).exists()]"
