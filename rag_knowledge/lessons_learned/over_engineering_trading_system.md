@@ -1,5 +1,6 @@
 # Lesson Learned: Over-Engineering Trading System
 
+**ID**: ll_034
 **Date**: December 11, 2025
 **Severity**: CRITICAL
 **Category**: System Architecture, Trading Strategy
@@ -170,8 +171,8 @@ def test_complexity_within_budget():
 
 ## Related Lessons
 
-- See: `rag_knowledge/lessons_learned/fear_driven_development.md` (to be created)
-- See: `rag_knowledge/lessons_learned/validation_before_scaling.md` (to be created)
+- `ll_001_over_engineering_trading_system.md` - Over-filtering / too many gates
+- `ll_019_system_dead_2_days_overly_strict_filters_dec12.md` - Overly strict filters stalled system
 
 ## Tags
 

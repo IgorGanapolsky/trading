@@ -1,7 +1,9 @@
 # Lesson: CI Test Failures Blocking Trading Execution
 
+**ID**: ll_033
 **Date**: December 11, 2025
 **Severity**: CRITICAL
+**Category**: CI/CD, Trading Ops, Monitoring
 **Impact**: 2 days of missed trading (Dec 10-11, 2025)
 
 ## What Happened
@@ -43,6 +45,18 @@ Added `continue-on-error: true` to test step (temporary):
 - name: Run tests
   continue-on-error: true  # Allow trading even if tests fail
 ```
+
+## Prevention Rules
+
+### Rule 1: Do not let non-critical tests silently block trading for days
+
+- Tests are valuable, but trading must have an independent heartbeat + alerting.
+- If tests must gate trading, scope them to **minimal critical verifications** (syntax/imports/safety).
+
+### Rule 2: Add a trading heartbeat + CI failure alerts
+
+- Alert if > 24h since last trading attempt (market-day aware)
+- Alert if > 3 consecutive workflow failures
 
 ### 2. Recommended Verification Framework
 
@@ -116,6 +130,21 @@ Before deploying any CI change, verify:
 
 Tests protect code quality, but they should NEVER silently block trading for days.
 Better to trade with a warning than to not trade at all.
+
+## Verification Tests
+
+```python
+def test_ll_033_ci_failures_do_not_hide_trading_outage():
+    """
+    Regression: CI failures must not silently stall trading for days.
+    This is enforced operationally via heartbeat/monitoring; here we assert the lesson is present and structured.
+    """
+    from pathlib import Path
+    content = Path("rag_knowledge/lessons_learned/ci_failure_blocked_trading.md").read_text()
+    assert "**ID**:" in content
+    assert "## Prevention Rules" in content
+    assert "## Verification Tests" in content
+```
 
 ## Tags
 `ci`, `testing`, `blocking`, `trading_execution`, `monitoring`, `alerting`

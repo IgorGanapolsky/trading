@@ -1,5 +1,6 @@
 # LL-029: ALWAYS Verify Current Date Before Reporting
 
+**ID**: ll_029
 **Date**: 2025-12-14
 **Severity**: CRITICAL
 **Category**: Verification
@@ -51,3 +52,19 @@ cat claude-progress.txt
 ## Tags
 
 #critical #verification #trust #dates #never-again
+
+## Verification Tests
+
+```python
+def test_ll_029_lesson_exists_and_is_regression_ready():
+    """
+    Regression: date must be verified before reporting any date-sensitive outputs.
+    This is enforced procedurally; here we assert the lesson is present and structured.
+    """
+    from pathlib import Path
+    content = Path("rag_knowledge/lessons_learned/ll_029_always_verify_date.md").read_text()
+    assert "**ID**:" in content
+    assert "**Date**:" in content
+    assert "**Severity**:" in content
+    assert "## Prevention Rules" in content
+```

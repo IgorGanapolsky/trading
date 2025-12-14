@@ -135,7 +135,7 @@ jobs:
       - name: Check 5 - Verification Tests
         run: |
           echo "🔍 Running verification tests..."
-          pytest tests/test_verification_system.py -v --timeout=60
+          pytest tests/test_verification_system.py tests/test_lessons_contract.py -v --timeout=60
           echo "✅ Verification tests complete"
 
       - name: Summary

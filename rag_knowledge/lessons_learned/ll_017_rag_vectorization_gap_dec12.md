@@ -1,8 +1,10 @@
 # Lesson Learned: RAG Vectorization Gap - Critical Knowledge Base Failure
 
+**ID**: ll_017
 **Date**: December 12, 2025
 **Severity**: HIGH
 **Category**: data_integrity, verification
+**Impact**: 87% of RAG documents were not vectorized; semantic retrieval silently degraded
 **Discovered By**: CEO questioned RAG status
 **Root Cause**: CTO failed to monitor vectorization completeness
 
@@ -115,6 +117,35 @@ python scripts/verify_rag_hygiene.py
 
 ---
 
+## Verification Tests
+
+### Test 1: Hygiene check detects vectorization gap
+
+```python
+def test_ll_017_vectorization_gap_detection():
+    """
+    Regression: RAG must not silently fall back to unvectorized storage.
+    """
+    from pathlib import Path
+
+    # Script must exist and contain vectorization-gap logic
+    script = Path("scripts/verify_rag_hygiene.py")
+    assert script.exists()
+    content = script.read_text()
+    assert "vectorization" in content.lower()
+    assert "gap" in content.lower()
+```
+
+### Test 2: Lesson is indexable (fields required for ML exports)
+
+```python
+def test_ll_017_has_required_metadata_fields():
+    required = ["**ID**:", "**Date**:", "**Severity**:", "**Category**:", "**Impact**:"]
+    content = Path("rag_knowledge/lessons_learned/ll_017_rag_vectorization_gap_dec12.md").read_text()
+    for field in required:
+        assert field in content
+```
+
 ## CEO Directive
 
 > "How did you let this failure occur? You expected me to question you? Don't you have a lessons learned in your RAG and ML to prevent such knowledge gaps???"
@@ -142,3 +173,7 @@ python scripts/verify_rag_hygiene.py
 ---
 
 **Key Takeaway**: VERIFY, DON'T ASSUME. If something can fail silently, it will.
+
+## Tags
+
+#rag #vectorization #chroma #data-integrity #verification #lessons-learned

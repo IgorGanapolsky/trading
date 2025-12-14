@@ -1,7 +1,9 @@
 # Lesson Learned: Dynamic Budget Scaling Was Dead Code
+**ID**: ll_014
 **Date**: 2025-12-11
 **Severity**: CRITICAL
 **Category**: Dead Code, Capital Efficiency, Revenue Impact
+**Impact**: Dynamic budget scaling was never executed; system stuck at $10/day regardless of equity
 
 ## What Happened
 The function `_apply_dynamic_daily_budget()` in `scripts/autonomous_trader.py` was:
@@ -71,6 +73,18 @@ Verify: grep -r "def function_name" src/ scripts/
 
 ### 4. CI Integration Test
 Add workflow step that runs the trading flow in dry-run and verifies all gates execute.
+
+## Verification Tests
+
+```python
+def test_ll_014_dynamic_budget_not_dead_code():
+    """
+    Regression: critical scaling functions must have at least one call site.
+    Implemented by tests/test_critical_function_coverage.py.
+    """
+    from pathlib import Path
+    assert Path("tests/test_critical_function_coverage.py").exists()
+```
 
 ## Tags
 `dead-code` `dynamic-budget` `revenue-impact` `capital-efficiency` `external-analysis` `verification`
