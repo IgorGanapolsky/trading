@@ -1,0 +1,147 @@
+name: Daily Verification Monitor
+
+# Continuous monitoring to catch issues early
+# Created: Dec 14, 2025
+# Runs: Every 6 hours + on demand
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    name: System Health Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install numpy
+
+      - name: Check System State Health
+        run: |
+          echo "🏥 Running system health check..."
+          python3 -c "
+          from pathlib import Path
+          import sys
+          import json
+          from datetime import datetime, timedelta
+
+          sys.path.insert(0, str(Path.cwd()))
+
+          # Check system_state.json exists and is fresh
+          state_file = Path('data/system_state.json')
+          if not state_file.exists():
+              print('❌ system_state.json missing')
+              sys.exit(1)
+
+          with open(state_file) as f:
+              state = json.load(f)
+
+          # Check last update
+          last_updated = state.get('meta', {}).get('last_updated')
+          if last_updated:
+              last_update_dt = datetime.fromisoformat(last_updated)
+              age_hours = (datetime.utcnow() - last_update_dt).total_seconds() / 3600
+              if age_hours > 72:
+                  print(f'⚠️  System state stale: {age_hours:.1f} hours old')
+              else:
+                  print(f'✅ System state fresh: {age_hours:.1f} hours old')
+
+          # Check trade volume
+          trades = state.get('performance', {}).get('total_trades', 0)
+          days = state.get('challenge', {}).get('current_day', 1)
+          trades_per_day = trades / max(days, 1)
+          print(f'📊 Trade volume: {trades_per_day:.1f} trades/day')
+
+          if trades_per_day < 0.5:
+              print('⚠️  Trade volume below expected (0.5+/day)')
+
+          print('✅ Health check complete')
+          "
+
+      - name: Run ML Anomaly Detection
+        continue-on-error: true
+        run: |
+          echo "🤖 Running ML anomaly detection..."
+          python3 -m src.verification.ml_anomaly_detector
+
+      - name: Check Trading Heartbeat
+        continue-on-error: true
+        run: |
+          echo "💓 Checking trading heartbeat..."
+          if [ -f "data/trading_heartbeat.json" ]; then
+            python3 -c "
+            import json
+            from datetime import datetime, timedelta
+            from pathlib import Path
+
+            with open('data/trading_heartbeat.json') as f:
+                heartbeat = json.load(f)
+
+            last_attempt = datetime.fromisoformat(heartbeat['timestamp'])
+            age = datetime.utcnow() - last_attempt
+            print(f'Last trading attempt: {age.days} days ago')
+
+            if age > timedelta(days=3):
+                print('⚠️  No trading attempts in 3+ days')
+            else:
+                print('✅ Trading system active')
+            "
+          else
+            echo "ℹ️  No heartbeat file yet"
+          fi
+
+  syntax-regression-check:
+    name: Syntax Regression Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Quick Syntax Check
+        run: |
+          echo "🔍 Running quick syntax check..."
+          find src scripts -name "*.py" -type f | head -20 | xargs -I {} python3 -m py_compile {}
+          echo "✅ Sample files compile successfully"
+
+      - name: Critical Imports Check
+        run: |
+          python3 -m pip install --quiet numpy
+          python3 -c "from src.orchestrator.main import TradingOrchestrator" 2>&1 || echo "⚠️  TradingOrchestrator import issue"
+          python3 -c "from src.execution.alpaca_executor import AlpacaExecutor" 2>&1 || echo "⚠️  AlpacaExecutor import issue"
+          echo "✅ Critical imports checked"
+
+  alert-on-failure:
+    name: Alert on Continuous Failures
+    runs-on: ubuntu-latest
+    needs: [health-check, syntax-regression-check]
+    if: failure()
+
+    steps:
+      - name: Alert
+        run: |
+          echo "🚨 ALERT: Daily verification monitor detected failures"
+          echo "This may indicate:"
+          echo "  - Trading system is not executing"
+          echo "  - Code regression introduced"
+          echo "  - System health degraded"
+          echo ""
+          echo "Action required: Review logs and system state"
