@@ -18,9 +18,29 @@ from datetime import datetime
 from pathlib import Path
 
 import requests
-import yfinance as yf
-from alpha_vantage.timeseries import TimeSeries
 from dotenv import load_dotenv
+
+# Optional imports - make dependencies optional
+try:
+    import yfinance as yf
+    YFINANCE_AVAILABLE = True
+except ImportError:
+    yf = None
+    YFINANCE_AVAILABLE = False
+
+try:
+    from alpha_vantage.timeseries import TimeSeries
+    ALPHA_VANTAGE_AVAILABLE = True
+except ImportError:
+    TimeSeries = None
+    ALPHA_VANTAGE_AVAILABLE = False
+
+try:
+    from bs4 import BeautifulSoup
+    BEAUTIFULSOUP_AVAILABLE = True
+except ImportError:
+    BeautifulSoup = None
+    BEAUTIFULSOUP_AVAILABLE = False
 
 from .retry_decorator import retry_with_backoff
 
@@ -83,14 +103,16 @@ class NewsSentimentAggregator:
 
         # Initialize Alpha Vantage client if key available
         self.av_client = None
-        if self.alpha_vantage_key:
+        if self.alpha_vantage_key and ALPHA_VANTAGE_AVAILABLE:
             try:
                 self.av_client = TimeSeries(key=self.alpha_vantage_key, output_format="json")
                 logger.info("Alpha Vantage client initialized")
             except Exception as e:
                 logger.warning(f"Failed to initialize Alpha Vantage: {e}")
+        elif not ALPHA_VANTAGE_AVAILABLE:
+            logger.info("Alpha Vantage library not installed - using free sources only")
         else:
-            logger.warning("No Alpha Vantage API key found - sentiment will be limited")
+            logger.info("No Alpha Vantage API key - using free sources only")
 
         # Initialize Grok client for Twitter/X sentiment if key available
         self.grok_client = None
@@ -120,10 +142,72 @@ class NewsSentimentAggregator:
 
         logger.info(f"NewsSentimentAggregator initialized: {self.output_dir}")
 
+    def _scrape_yahoo_news(self, ticker: str) -> list[dict]:
+        """
+        Scrape Yahoo Finance news as fallback when yfinance is unavailable.
+
+        Args:
+            ticker: Stock ticker symbol
+
+        Returns:
+            List of news articles with titles
+        """
+        if not BEAUTIFULSOUP_AVAILABLE:
+            logger.warning("BeautifulSoup not available - cannot scrape news")
+            return []
+
+        try:
+            url = f"https://finance.yahoo.com/quote/{ticker}/news"
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            }
+
+            # Disable proxy if it's causing issues
+            proxies = {"http": None, "https": None}
+
+            response = requests.get(url, headers=headers, timeout=10, proxies=proxies)
+            response.raise_for_status()
+
+            soup = BeautifulSoup(response.text, "lxml")
+
+            # Find news articles - Yahoo Finance uses various div structures
+            news_items = []
+
+            # Try multiple selectors (Yahoo's HTML structure changes frequently)
+            selectors = [
+                "h3",  # Common headline tag
+                "[data-test-locator='mega']",  # Yahoo's test locator
+                ".js-stream-content h3",  # Stream content
+            ]
+
+            for selector in selectors:
+                elements = soup.select(selector)
+                if elements:
+                    for elem in elements[:20]:  # Limit to 20 articles
+                        text = elem.get_text(strip=True)
+                        if text and len(text) > 10:  # Filter out junk
+                            news_items.append({"title": text})
+                    if news_items:
+                        break
+
+            logger.info(f"Scraped {len(news_items)} news items for {ticker}")
+            return news_items
+
+        except requests.exceptions.ProxyError as e:
+            logger.warning(f"Proxy error scraping Yahoo news for {ticker}: {e}")
+            return []
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Network error scraping Yahoo news for {ticker}: {e}")
+            return []
+        except Exception as e:
+            logger.warning(f"Failed to scrape Yahoo news for {ticker}: {e}")
+            return []
+
     @retry_with_backoff(max_retries=3, initial_delay=1.0)
     def get_yahoo_sentiment(self, ticker: str) -> dict:
         """
         Get news sentiment from Yahoo Finance.
+        Uses yfinance API if available, falls back to web scraping.
 
         Args:
             ticker: Stock ticker symbol
@@ -131,29 +215,36 @@ class NewsSentimentAggregator:
         Returns:
             Dict with score, articles count, and details
         """
-        try:
-            stock = yf.Ticker(ticker)
+        news = []
 
-            # Try to get news - handle potential API changes
+        # Try yfinance API first
+        if YFINANCE_AVAILABLE:
             try:
-                news = stock.news
-            except (AttributeError, TypeError):
-                # Fallback: try alternative method
+                stock = yf.Ticker(ticker)
+
+                # Try to get news - handle potential API changes
                 try:
-                    news = stock.get_news()
-                except Exception:
-                    logger.warning(f"Could not fetch Yahoo news for {ticker}")
-                    return {
-                        "score": 0,
-                        "articles": 0,
-                        "confidence": "low",
-                        "error": "api_unavailable",
-                    }
+                    news = stock.news
+                except (AttributeError, TypeError):
+                    # Fallback: try alternative method
+                    try:
+                        news = stock.get_news()
+                    except Exception:
+                        logger.info(f"yfinance API unavailable for {ticker}, trying web scraping")
+                        news = []
+            except Exception as e:
+                logger.warning(f"yfinance failed for {ticker}: {e}, trying web scraping")
+                news = []
 
-            if not news or len(news) == 0:
-                logger.warning(f"No Yahoo news found for {ticker}")
-                return {"score": 0, "articles": 0, "confidence": "low"}
+        # Fallback to web scraping if yfinance didn't work
+        if not news:
+            news = self._scrape_yahoo_news(ticker)
 
+        if not news or len(news) == 0:
+            logger.warning(f"No Yahoo news found for {ticker}")
+            return {"score": 0, "articles": 0, "confidence": "low", "method": "none"}
+
+        try:
             # Simple keyword-based sentiment analysis
             bullish_keywords = [
                 "surge",
@@ -169,6 +260,8 @@ class NewsSentimentAggregator:
                 "rise",
                 "outperform",
                 "buy",
+                "soar",
+                "jump",
             ]
             bearish_keywords = [
                 "drop",
@@ -183,6 +276,8 @@ class NewsSentimentAggregator:
                 "crash",
                 "underperform",
                 "sell",
+                "plunge",
+                "tumble",
             ]
 
             sentiment_score = 0
@@ -213,15 +308,18 @@ class NewsSentimentAggregator:
                 "high" if articles_analyzed >= 10 else "medium" if articles_analyzed >= 5 else "low"
             )
 
+            method = "yfinance" if YFINANCE_AVAILABLE and news else "scraping"
+
             return {
                 "score": round(normalized_score, 2),
                 "articles": articles_analyzed,
                 "confidence": confidence,
                 "raw_sentiment": sentiment_score,
+                "method": method,
             }
 
         except Exception as e:
-            logger.error(f"Error getting Yahoo sentiment for {ticker}: {e}")
+            logger.error(f"Error analyzing Yahoo sentiment for {ticker}: {e}")
             return {"score": 0, "articles": 0, "confidence": "low", "error": str(e)}
 
     @retry_with_backoff(max_retries=3, initial_delay=1.0)
@@ -237,7 +335,9 @@ class NewsSentimentAggregator:
         """
         try:
             url = f"{self.STOCKTWITS_BASE_URL}/streams/symbol/{ticker}.json"
-            response = requests.get(url, timeout=10)
+            # Disable proxy if it's causing issues
+            proxies = {"http": None, "https": None}
+            response = requests.get(url, timeout=10, proxies=proxies)
             response.raise_for_status()
 
             data = response.json()
@@ -289,6 +389,14 @@ class NewsSentimentAggregator:
                 "confidence": confidence,
             }
 
+        except requests.exceptions.ProxyError as e:
+            logger.warning(f"Proxy error getting Stocktwits sentiment for {ticker}")
+            return {
+                "score": 0,
+                "messages": 0,
+                "confidence": "low",
+                "error": "proxy_error",
+            }
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 404:
                 logger.warning(f"Ticker {ticker} not found on Stocktwits")
@@ -301,6 +409,14 @@ class NewsSentimentAggregator:
             else:
                 logger.error(f"HTTP error getting Stocktwits sentiment for {ticker}: {e}")
                 return {"score": 0, "messages": 0, "confidence": "low", "error": str(e)}
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Network error getting Stocktwits sentiment for {ticker}")
+            return {
+                "score": 0,
+                "messages": 0,
+                "confidence": "low",
+                "error": "network_error",
+            }
         except Exception as e:
             logger.error(f"Error getting Stocktwits sentiment for {ticker}: {e}")
             return {"score": 0, "messages": 0, "confidence": "low", "error": str(e)}
@@ -335,7 +451,9 @@ class NewsSentimentAggregator:
                 "limit": 50,  # Analyze up to 50 articles
             }
 
-            response = requests.get(url, params=params, timeout=15)
+            # Disable proxy if it's causing issues
+            proxies = {"http": None, "https": None}
+            response = requests.get(url, params=params, timeout=15, proxies=proxies)
             response.raise_for_status()
 
             data = response.json()

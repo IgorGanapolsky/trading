@@ -385,16 +385,33 @@ class UnifiedSentiment:
         # Look for recent analysis files mentioning this ticker
         try:
             youtube_dir = Path("docs/youtube_analysis")
-            if not youtube_dir.exists():
-                return SourceSentiment(
-                    source="youtube",
-                    score=0.0,
-                    confidence=0.0,
-                    raw_data={},
-                    timestamp=datetime.now().isoformat(),
-                    available=False,
-                    error="YouTube analysis directory not found",
-                )
+            youtube_cache_dir = Path("data/youtube_cache")
+
+            # Create analysis directory if it doesn't exist
+            youtube_dir.mkdir(parents=True, exist_ok=True)
+
+            # Map ticker symbols to company names for better matching
+            ticker_to_company = {
+                "NVDA": ["nvidia", "nvda"],
+                "TSLA": ["tesla", "tsla"],
+                "AAPL": ["apple", "aapl"],
+                "AMZN": ["amazon", "amzn"],
+                "GOOGL": ["google", "alphabet", "googl", "goog"],
+                "GOOG": ["google", "alphabet", "googl", "goog"],
+                "META": ["meta", "facebook", "meta platforms"],
+                "MSFT": ["microsoft", "msft"],
+                "SPY": ["spy", "s&p 500", "s&p500", "sp500"],
+                "QQQ": ["qqq", "nasdaq", "nasdaq-100"],
+                "PLTR": ["palantir", "palanteer", "pltr"],
+                "UBER": ["uber"],
+                "AMD": ["amd", "advanced micro devices"],
+                "ORCL": ["oracle", "orcl"],
+                "LLY": ["eli lilly", "lilly", "lly"],
+                "PINS": ["pinterest", "pins"],
+            }
+
+            # Get search terms for this symbol
+            search_terms = ticker_to_company.get(symbol.upper(), [symbol.lower()])
 
             # Find recent analysis files (last 7 days)
             cutoff_time = datetime.now() - timedelta(days=7)
@@ -405,56 +422,107 @@ class UnifiedSentiment:
                     continue
 
                 # Read file and check if it mentions the ticker
-                content = analysis_file.read_text()
-                if symbol in content.upper():
-                    recent_analyses.append(content)
+                try:
+                    content = analysis_file.read_text()
+                    content_lower = content.lower()
+                    # Look for any matching search term
+                    if any(term in content_lower for term in search_terms):
+                        recent_analyses.append(content)
+                except Exception as e:
+                    logger.debug(f"Error reading {analysis_file}: {e}")
+                    continue
+
+            # Fallback: Check cached transcripts if no analysis files found
+            if not recent_analyses and youtube_cache_dir.exists():
+                logger.debug(f"No analysis files for {symbol}, checking cached transcripts...")
+                for transcript_file in youtube_cache_dir.glob("*_transcript.txt"):
+                    if transcript_file.stat().st_mtime < cutoff_time.timestamp():
+                        continue
+
+                    try:
+                        content = transcript_file.read_text()
+                        content_lower = content.lower()
+                        # Check for any matching search term
+                        if any(term in content_lower for term in search_terms):
+                            recent_analyses.append(content)
+                    except Exception as e:
+                        logger.debug(f"Error reading {transcript_file}: {e}")
+                        continue
 
             if not recent_analyses:
+                logger.debug(f"No recent YouTube data for {symbol}")
                 return SourceSentiment(
                     source="youtube",
                     score=0.0,
                     confidence=0.0,
-                    raw_data={},
+                    raw_data={
+                        "analyses_found": 0,
+                        "transcripts_checked": len(list(youtube_cache_dir.glob("*_transcript.txt"))) if youtube_cache_dir.exists() else 0,
+                    },
                     timestamp=datetime.now().isoformat(),
                     available=True,
-                    error="No recent YouTube analysis for ticker",
+                    error=f"No recent YouTube content mentioning {symbol}",
                 )
 
-            # Simple sentiment extraction (can be enhanced with LLM analysis)
+            # Enhanced sentiment extraction with more keywords
             bullish_keywords = [
-                "bullish",
-                "buy",
-                "long",
-                "positive",
-                "upgrade",
-                "growth",
+                "bullish", "buy", "long", "positive", "upgrade", "growth",
+                "strong buy", "overweight", "outperform", "recommend buying",
+                "undervalued", "opportunity", "upside", "rally", "breakout",
+                "momentum", "trending up", "support", "accumulate"
             ]
             bearish_keywords = [
-                "bearish",
-                "sell",
-                "short",
-                "negative",
-                "downgrade",
-                "decline",
+                "bearish", "sell", "short", "negative", "downgrade", "decline",
+                "strong sell", "underweight", "underperform", "avoid",
+                "overvalued", "risk", "downside", "pullback", "resistance",
+                "weakness", "trending down", "dump", "exit"
             ]
+
+            # Context-aware keywords (need ticker nearby)
+            strong_bullish = ["recommend", "pick", "favorite", "top choice", "best"]
+            strong_bearish = ["warning", "caution", "concern", "problem", "risk"]
 
             bullish_count = 0
             bearish_count = 0
+            strong_signals = 0
 
             for content_lower in [c.lower() for c in recent_analyses]:
-                bullish_count += sum(1 for kw in bullish_keywords if kw in content_lower)
-                bearish_count += sum(1 for kw in bearish_keywords if kw in content_lower)
+                # Count regular keywords
+                bullish_count += sum(content_lower.count(kw) for kw in bullish_keywords)
+                bearish_count += sum(content_lower.count(kw) for kw in bearish_keywords)
 
-            # Normalize score
+                # Check for strong signals near ticker symbol
+                symbol_positions = [i for i in range(len(content_lower))
+                                   if content_lower[i:i+len(symbol)] == symbol.lower()]
+
+                for pos in symbol_positions:
+                    # Look 100 chars before and after ticker
+                    context = content_lower[max(0, pos-100):min(len(content_lower), pos+100)]
+
+                    for kw in strong_bullish:
+                        if kw in context:
+                            bullish_count += 3  # Weight strong signals higher
+                            strong_signals += 1
+
+                    for kw in strong_bearish:
+                        if kw in context:
+                            bearish_count += 3
+                            strong_signals += 1
+
+            # Normalize score with asymmetric scaling
             total_keywords = bullish_count + bearish_count
             if total_keywords > 0:
+                # Calculate raw sentiment
                 normalized_score = (bullish_count - bearish_count) / total_keywords
-                confidence = min(
-                    0.9, 0.3 + (total_keywords / 20.0)
-                )  # More keywords = higher confidence
+
+                # Apply confidence based on volume and strong signals
+                base_confidence = min(0.7, 0.2 + (total_keywords / 30.0))
+                strong_signal_boost = min(0.2, strong_signals * 0.05)
+                confidence = min(0.9, base_confidence + strong_signal_boost)
             else:
+                # Ticker mentioned but no sentiment keywords = neutral with low confidence
                 normalized_score = 0.0
-                confidence = 0.1
+                confidence = 0.15
 
             return SourceSentiment(
                 source="youtube",
@@ -464,6 +532,8 @@ class UnifiedSentiment:
                     "analyses_found": len(recent_analyses),
                     "bullish_keywords": bullish_count,
                     "bearish_keywords": bearish_count,
+                    "strong_signals": strong_signals,
+                    "total_keywords": total_keywords,
                 },
                 timestamp=datetime.now().isoformat(),
                 available=True,
