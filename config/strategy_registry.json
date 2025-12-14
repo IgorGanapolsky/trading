@@ -217,7 +217,7 @@
       "name": "precious_metals",
       "description": "Precious metals ETF strategy (GLD/SLV) with regime-based allocation for inflation hedging and diversification",
       "status": "paper_trading",
-      "asset_class": "commodity",
+      "asset_class": "equity",
       "metrics": {
         "sharpe_ratio": 0.0,
         "max_drawdown": 0.0,
