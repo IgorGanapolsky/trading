@@ -186,16 +186,6 @@ def get_collector_status() -> list[dict[str, Any]]:
             "source": "Seeking Alpha RSS",
         },
         {
-            "name": "LinkedIn",
-            "file": "linkedin_collector.py",
-            "source": "LinkedIn Posts API",
-        },
-        {
-            "name": "TikTok",
-            "file": "tiktok_collector.py",
-            "source": "TikTok Research API",
-        },
-        {
             "name": "Berkshire Letters",
             "file": "berkshire_collector.py",
             "source": "berkshirehathaway.com",
@@ -388,9 +378,7 @@ data/
 │ • Reddit        │     │ • Parse         │     │ • Embeddings    │
 │ • YouTube       │     │ • Extract       │     │ • Vector Index  │
 │ • Seeking Alpha │     │ • Normalize     │     │ • SQLite Cache  │
-│ • LinkedIn      │     │ • Score         │     │                 │
-│ • TikTok        │     │                 │     │                 │
-│ • Bogleheads    │     │                 │     │                 │
+│ • Bogleheads    │     │ • Score         │     │                 │
 │ • Berkshire     │     │                 │     │                 │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
                                                         │

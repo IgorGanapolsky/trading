@@ -20,7 +20,6 @@ from src.rag.collectors.options_flow_collector import OptionsFlowCollector
 from src.rag.collectors.reddit_collector import RedditCollector
 from src.rag.collectors.seekingalpha_collector import SeekingAlphaCollector
 from src.rag.collectors.stocktwits_collector import StockTwitsCollector
-from src.rag.collectors.tiktok_collector import TikTokCollector
 from src.rag.collectors.tradingview_collector import TradingViewCollector
 from src.rag.collectors.yahoo_collector import YahooFinanceCollector
 
@@ -52,7 +51,6 @@ class NewsOrchestrator:
     - Yahoo Finance (yfinance API)
     - Reddit (praw API)
     - Alpha Vantage (sentiment API)
-    - TikTok (Research API)
     - Seeking Alpha (RSS feeds)
     - Stocktwits (social trading platform)
     - Bogleheads (forum insights)
@@ -72,7 +70,6 @@ class NewsOrchestrator:
             "yahoo": YahooFinanceCollector(),
             "reddit": RedditCollector(),
             "alphavantage": AlphaVantageCollector(),
-            "tiktok": TikTokCollector(),
             "seekingalpha": SeekingAlphaCollector(),
             "stocktwits": StockTwitsCollector(),
             "bogleheads": BogleheadsCollector(),
