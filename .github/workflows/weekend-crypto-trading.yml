@@ -147,7 +147,7 @@ jobs:
           LANGCHAIN_MODEL: ${{ secrets.LANGCHAIN_MODEL || 'claude-3-5-sonnet-20241022' }}
         run: |
           echo "🚀 Executing weekend crypto trading..."
-          python3 scripts/autonomous_trader.py --strategy crypto
+          python3 scripts/autonomous_trader.py --crypto-only
 
       - name: Update performance log
         if: steps.check_execution.outputs.skip != 'true' && steps.health_check.outputs.health_check_passed == 'true'
