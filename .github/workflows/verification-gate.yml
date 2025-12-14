@@ -39,7 +39,7 @@ jobs:
         run: |
           echo "🔍 Checking all Python files for syntax errors..."
           find src -name "*.py" -exec python3 -m py_compile {} \;
-          find scripts -name "*.py" -exec python3 -m py_compile {} \; || true
+          find scripts -name "*.py" -exec python3 -m py_compile {} \;
           echo "✅ All Python files have valid syntax"
 
       - name: Check 2 - Critical Import Verification
@@ -129,13 +129,13 @@ jobs:
       - name: Check 4 - Ruff Lint (Critical Errors Only)
         run: |
           echo "🔍 Running lint check for critical errors..."
-          ruff check src/ --select=E9,F63,F7,F82 --output-format=github || true
+          ruff check src/ scripts/ --select=E9,F63,F7,F82 --output-format=github
           echo "✅ Lint check complete"
 
       - name: Check 5 - Verification Tests
         run: |
           echo "🔍 Running verification tests..."
-          pytest tests/test_verification_system.py -v --timeout=60 || true
+          pytest tests/test_verification_system.py -v --timeout=60
           echo "✅ Verification tests complete"
 
       - name: Summary
