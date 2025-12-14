@@ -41,6 +41,16 @@ except ImportError:
     RedditSentiment = None
 
 try:
+    from src.utils.tiktok_sentiment import TikTokSentiment
+except ImportError:
+    TikTokSentiment = None
+
+try:
+    from src.utils.linkedin_sentiment import LinkedInSentiment
+except ImportError:
+    LinkedInSentiment = None
+
+try:
     from src.utils.sentiment_loader import (
         load_latest_sentiment,
         normalize_sentiment_score,
@@ -114,8 +124,8 @@ class UnifiedSentiment:
         enable_news: bool = True,
         enable_reddit: bool = True,
         enable_youtube: bool = True,
-        enable_linkedin: bool = False,  # Not implemented yet
-        enable_tiktok: bool = False,  # Not implemented yet
+        enable_linkedin: bool = True,  # Now implemented via web scraping
+        enable_tiktok: bool = False,  # Implemented via web scraping (disabled by default)
     ):
         """
         Initialize unified sentiment analyzer.
@@ -125,8 +135,8 @@ class UnifiedSentiment:
             enable_news: Enable news sentiment (Yahoo, Stocktwits, Alpha Vantage)
             enable_reddit: Enable Reddit sentiment
             enable_youtube: Enable YouTube sentiment
-            enable_linkedin: Enable LinkedIn sentiment (placeholder)
-            enable_tiktok: Enable TikTok sentiment (placeholder)
+            enable_linkedin: Enable LinkedIn sentiment (web scraping)
+            enable_tiktok: Enable TikTok sentiment (web scraping, no API key required)
         """
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -142,7 +152,9 @@ class UnifiedSentiment:
 
         # Initialize source analyzers
         self.news_analyzer = None
+        self.linkedin_analyzer = None
         self.reddit_analyzer = None
+        self.tiktok_analyzer = None
 
         if enable_news and NewsSentimentAggregator:
             try:
@@ -159,6 +171,24 @@ class UnifiedSentiment:
             except Exception as e:
                 logger.warning(f"Failed to initialize Reddit analyzer: {e}")
                 self.enabled_sources["reddit"] = False
+
+        if enable_linkedin and LinkedInSentiment:
+            try:
+                linkedin_cache_dir = self.cache_dir / "linkedin"
+                self.linkedin_analyzer = LinkedInSentiment(data_dir=str(linkedin_cache_dir))
+                logger.info("LinkedIn sentiment analyzer initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize LinkedIn analyzer: {e}")
+                self.enabled_sources["linkedin"] = False
+
+
+        if enable_tiktok and TikTokSentiment:
+            try:
+                self.tiktok_analyzer = TikTokSentiment(data_dir=str(self.cache_dir))
+                logger.info("TikTok sentiment analyzer initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize TikTok analyzer: {e}")
+                self.enabled_sources["tiktok"] = False
 
         # Calculate active source weights (normalize to 1.0)
         self._normalize_weights()
@@ -552,34 +582,153 @@ class UnifiedSentiment:
             )
 
     def _get_linkedin_sentiment(self, symbol: str) -> SourceSentiment:
-        """Get sentiment from LinkedIn (placeholder for future implementation)"""
-        # TODO: Implement LinkedIn sentiment scraping
-        # Potential approach: Use LinkedIn API or web scraping to analyze posts
-        # about the ticker from finance professionals
-        return SourceSentiment(
-            source="linkedin",
-            score=0.0,
-            confidence=0.0,
-            raw_data={},
-            timestamp=datetime.now().isoformat(),
-            available=False,
-            error="LinkedIn sentiment not yet implemented",
-        )
+        """Get sentiment from LinkedIn professional posts"""
+        if not self.enabled_sources.get("linkedin") or not self.linkedin_analyzer:
+            return SourceSentiment(
+                source="linkedin",
+                score=0.0,
+                confidence=0.0,
+                raw_data={},
+                timestamp=datetime.now().isoformat(),
+                available=False,
+                error="LinkedIn source disabled or unavailable",
+            )
+
+        try:
+            # Map common tickers to company names for better search results
+            ticker_to_company = {
+                "NVDA": "Nvidia",
+                "TSLA": "Tesla",
+                "AAPL": "Apple",
+                "AMZN": "Amazon",
+                "GOOGL": "Google",
+                "GOOG": "Google",
+                "META": "Meta",
+                "MSFT": "Microsoft",
+                "SPY": "S&P 500",
+                "QQQ": "Nasdaq",
+                "PLTR": "Palantir",
+                "UBER": "Uber",
+                "AMD": "AMD",
+                "ORCL": "Oracle",
+                "LLY": "Eli Lilly",
+                "PINS": "Pinterest",
+            }
+
+            company_name = ticker_to_company.get(symbol.upper())
+
+            # Get LinkedIn sentiment
+            linkedin_data = self.linkedin_analyzer.get_ticker_sentiment(
+                symbol,
+                company_name=company_name,
+                force_refresh=False,
+            )
+
+            # Check if there was an error
+            if linkedin_data.get("error") and linkedin_data.get("mentions_analyzed", 0) == 0:
+                logger.debug(f"LinkedIn error for {symbol}: {linkedin_data['error']}")
+                return SourceSentiment(
+                    source="linkedin",
+                    score=0.0,
+                    confidence=0.0,
+                    raw_data=linkedin_data,
+                    timestamp=linkedin_data.get("timestamp", datetime.now().isoformat()),
+                    available=True,
+                    error=linkedin_data["error"],
+                )
+
+            # Normalize score from -100..100 to -1..1
+            normalized_score = linkedin_data.get("score", 0) / 100.0
+
+            # Map confidence to 0..1 scale
+            confidence_map = {"low": 0.3, "medium": 0.6, "high": 0.9}
+            confidence = confidence_map.get(linkedin_data.get("confidence", "low"), 0.5)
+
+            return SourceSentiment(
+                source="linkedin",
+                score=normalized_score,
+                confidence=confidence,
+                raw_data={
+                    "mentions_analyzed": linkedin_data.get("mentions_analyzed", 0),
+                    "total_snippets": linkedin_data.get("total_snippets", 0),
+                    "bullish_keywords": linkedin_data.get("bullish_keywords", 0),
+                    "bearish_keywords": linkedin_data.get("bearish_keywords", 0),
+                    "sentiment": linkedin_data.get("sentiment", "neutral"),
+                },
+                timestamp=linkedin_data.get("timestamp", datetime.now().isoformat()),
+                available=True,
+            )
+
+        except Exception as e:
+            logger.error(f"Error getting LinkedIn sentiment for {symbol}: {e}")
+            return SourceSentiment(
+                source="linkedin",
+                score=0.0,
+                confidence=0.0,
+                raw_data={},
+                timestamp=datetime.now().isoformat(),
+                available=False,
+                error=str(e),
+            )
 
     def _get_tiktok_sentiment(self, symbol: str) -> SourceSentiment:
-        """Get sentiment from TikTok (placeholder for future implementation)"""
-        # TODO: Implement TikTok sentiment analysis
-        # Potential approach: Use TikTok API to analyze hashtags and trending videos
-        # mentioning the ticker
-        return SourceSentiment(
-            source="tiktok",
-            score=0.0,
-            confidence=0.0,
-            raw_data={},
-            timestamp=datetime.now().isoformat(),
-            available=False,
-            error="TikTok sentiment not yet implemented",
-        )
+        """Get sentiment from TikTok"""
+        if not self.enabled_sources.get("tiktok") or not self.tiktok_analyzer:
+            return SourceSentiment(
+                source="tiktok",
+                score=0.0,
+                confidence=0.0,
+                raw_data={},
+                timestamp=datetime.now().isoformat(),
+                available=False,
+                error="TikTok source disabled or unavailable",
+            )
+
+        try:
+            # Get TikTok sentiment data
+            tiktok_data = self.tiktok_analyzer.get_ticker_sentiment(symbol, use_cache=True)
+
+            if tiktok_data.get("error") and tiktok_data["videos_analyzed"] == 0:
+                logger.debug(f"No TikTok data for {symbol}: {tiktok_data.get('error')}")
+                return SourceSentiment(
+                    source="tiktok",
+                    score=0.0,
+                    confidence=0.0,
+                    raw_data=tiktok_data,
+                    timestamp=tiktok_data.get("timestamp", datetime.now().isoformat()),
+                    available=True,
+                    error=tiktok_data.get("error"),
+                )
+
+            # TikTok scores are already normalized to -1.0 to 1.0
+            normalized_score = tiktok_data.get("score", 0.0)
+            confidence = tiktok_data.get("confidence", 0.0)
+
+            return SourceSentiment(
+                source="tiktok",
+                score=normalized_score,
+                confidence=confidence,
+                raw_data={
+                    "videos_analyzed": tiktok_data.get("videos_analyzed", 0),
+                    "bullish_count": tiktok_data.get("bullish_count", 0),
+                    "bearish_count": tiktok_data.get("bearish_count", 0),
+                    "total_engagement": tiktok_data.get("total_engagement", 0),
+                },
+                timestamp=tiktok_data.get("timestamp", datetime.now().isoformat()),
+                available=True,
+            )
+
+        except Exception as e:
+            logger.error(f"Error getting TikTok sentiment for {symbol}: {e}")
+            return SourceSentiment(
+                source="tiktok",
+                score=0.0,
+                confidence=0.0,
+                raw_data={},
+                timestamp=datetime.now().isoformat(),
+                available=False,
+                error=str(e),
+            )
 
     def get_ticker_sentiment(self, symbol: str, use_cache: bool = True) -> dict:
         """
@@ -776,9 +925,25 @@ class UnifiedSentiment:
             elif source_name == "youtube":
                 analyses = raw_data.get("analyses_found", 0)
                 print(f"  Details: {analyses} recent video analyses")
+            elif source_name == "tiktok":
+                videos = raw_data.get("videos_analyzed", 0)
+                bullish = raw_data.get("bullish_count", 0)
+                bearish = raw_data.get("bearish_count", 0)
+                engagement = raw_data.get("total_engagement", 0)
+                print(
+                    f"  Details: {videos} videos, {bullish} bullish, {bearish} bearish, "
+                    f"{engagement:,} total engagement"
+                )
             elif source_name == "news":
                 sources_used = list(raw_data.keys())
                 print(f"  Details: {', '.join(sources_used)}")
+            elif source_name == "linkedin":
+                snippets = raw_data.get("total_snippets", 0)
+                mentions = raw_data.get("mentions_analyzed", 0)
+                print(f"  Details: {snippets} snippets found, {mentions} mentions analyzed")
+            elif source_name == "tiktok":
+                videos = raw_data.get("videos_analyzed", 0)
+                print(f"  Details: {videos} videos analyzed")
 
         print("\n" + "=" * 80 + "\n")
 
@@ -799,6 +964,7 @@ def main():
     parser.add_argument("--disable-news", action="store_true", help="Disable news sentiment")
     parser.add_argument("--disable-reddit", action="store_true", help="Disable Reddit sentiment")
     parser.add_argument("--disable-youtube", action="store_true", help="Disable YouTube sentiment")
+    parser.add_argument("--enable-tiktok", action="store_true", help="Enable TikTok sentiment (default: disabled)")
 
     args = parser.parse_args()
 
@@ -816,6 +982,7 @@ def main():
         enable_news=not args.disable_news,
         enable_reddit=not args.disable_reddit,
         enable_youtube=not args.disable_youtube,
+        enable_tiktok=args.enable_tiktok,
     )
 
     # Analyze each symbol
