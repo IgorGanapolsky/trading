@@ -1,0 +1,81 @@
+[
+  {
+    "pattern_id": "PAT-001",
+    "category": "syntax_error",
+    "signature": "SyntaxError:.*alpaca_executor",
+    "occurrences": 1,
+    "last_seen": "2025-12-11T00:00:00+00:00",
+    "files_affected": [
+      "src/execution/alpaca_executor.py"
+    ],
+    "prevention": "Run python3 -m py_compile on all changed files before merge",
+    "risk_level": "critical",
+    "confidence": 0.95
+  },
+  {
+    "pattern_id": "PAT-002",
+    "category": "trading_logic",
+    "signature": "200x.*error|position.*size.*10x",
+    "occurrences": 1,
+    "last_seen": "2025-11-03T00:00:00+00:00",
+    "files_affected": [
+      "scripts/autonomous_trader.py"
+    ],
+    "prevention": "Validate order amount < 10x expected daily budget before execution",
+    "risk_level": "critical",
+    "confidence": 0.9
+  },
+  {
+    "pattern_id": "PAT-003",
+    "category": "import_error",
+    "signature": "cannot import name.*TradingOrchestrator",
+    "occurrences": 2,
+    "last_seen": "2025-12-11T00:00:00+00:00",
+    "files_affected": [
+      "src/orchestrator/main.py"
+    ],
+    "prevention": "Verify critical imports after any change to orchestrator",
+    "risk_level": "critical",
+    "confidence": 0.88
+  },
+  {
+    "pattern_id": "PAT-004",
+    "category": "ci_cd",
+    "signature": "workflow.*failed|CI.*blocked",
+    "occurrences": 3,
+    "last_seen": "2025-12-11T00:00:00+00:00",
+    "files_affected": [
+      ".github/workflows/*.yml"
+    ],
+    "prevention": "Require CI to pass before merge (branch protection)",
+    "risk_level": "high",
+    "confidence": 0.85
+  },
+  {
+    "pattern_id": "PAT-005",
+    "category": "data_quality",
+    "signature": "stale.*data|data.*old|freshness",
+    "occurrences": 2,
+    "last_seen": "2025-11-04T00:00:00+00:00",
+    "files_affected": [
+      "src/data/*.py"
+    ],
+    "prevention": "Verify data timestamp < 5 minutes before trading",
+    "risk_level": "high",
+    "confidence": 0.82
+  },
+  {
+    "pattern_id": "PAT-006",
+    "category": "configuration",
+    "signature": "missing.*env|environment.*variable|API.*key",
+    "occurrences": 2,
+    "last_seen": "2025-12-12T00:00:00+00:00",
+    "files_affected": [
+      "config/*.py",
+      "src/**/*.py"
+    ],
+    "prevention": "Check all required env vars are set before deployment",
+    "risk_level": "medium",
+    "confidence": 0.78
+  }
+]

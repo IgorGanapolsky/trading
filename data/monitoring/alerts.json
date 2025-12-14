@@ -1,0 +1,31 @@
+[
+  {
+    "alert_id": "ALT-20251214224238-0",
+    "monitor_type": "code_quality",
+    "severity": "critical",
+    "title": "Critical Import Failure",
+    "message": "2 critical imports failed",
+    "details": {
+      "failed": [
+        "from src.orchestrator.main import TradingOrchestrator",
+        "from src.execution.alpaca_executor import AlpacaExecutor"
+      ]
+    },
+    "timestamp": "2025-12-14T22:42:38.751626+00:00",
+    "resolved": false,
+    "resolution": null
+  },
+  {
+    "alert_id": "ALT-20251214224238-1",
+    "monitor_type": "ml_model_health",
+    "severity": "warning",
+    "title": "RAG System Issue",
+    "message": "RAG check failed: No module named 'src'",
+    "details": {
+      "error": "No module named 'src'"
+    },
+    "timestamp": "2025-12-14T22:42:38.752193+00:00",
+    "resolved": false,
+    "resolution": null
+  }
+]
