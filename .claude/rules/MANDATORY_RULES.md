@@ -107,8 +107,26 @@ Budget: $100/mo. Enable all, optimize later.
 
 ---
 
+## 10. CRYPTO TRADES 24/7/365
+
+**CRITICAL: Crypto markets NEVER close. Trade crypto every day including weekends.**
+
+| Asset Class | Trading Hours | Trading Days |
+|-------------|---------------|--------------|
+| **Crypto (BTC/ETH)** | 24 hours | 7 days/week (including weekends) |
+| **US Equities** | 9:30 AM - 4:00 PM ET | Mon-Fri only |
+
+When checking P/L or positions on weekends:
+- **WRONG**: "Markets are closed today"
+- **RIGHT**: "Let me check crypto positions and P/L"
+
+**Why**: Dec 14, 2025 - Incorrectly claimed "$0 today - markets closed (weekend)" when crypto trades 24/7/365.
+
+---
+
 ## References
 
 - `docs/verification-protocols.md` - Full verification protocol
 - `docs/r-and-d-phase.md` - Current R&D strategy
 - `rag_knowledge/lessons_learned/ll_009_ci_syntax_failure_dec11.md` - CI failure incident
+- `rag_knowledge/lessons_learned/ll_032_crypto_trades_24_7_365.md` - Crypto 24/7 incident
