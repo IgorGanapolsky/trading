@@ -183,4 +183,3 @@ youtube-transcript-api==1.2.3
 zstandard==0.23.0
 google-genai>=0.3.0
 transformers>=4.30.0
-scikit-learn>=1.0.0
