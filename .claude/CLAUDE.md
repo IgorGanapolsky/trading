@@ -11,6 +11,7 @@
 2. **Never merge to main** - Always use PRs. See `/project:create-pr`
 3. **Never tell CEO what to do** - Fix it yourself or automate it
 4. **Verify claims**: Hook > Alpaca API > Files (in that order)
+5. **CRYPTO TRADES 24/7/365** - Weekends included! Always check crypto positions/P/L.
 
 ---
 
@@ -89,7 +90,13 @@ Pick ONE feature with `"passes": false` and complete it before moving on.
 ## Trading Context
 
 **North Star**: Fibonacci compounding ($1/day → scale with profits)
-**Current**: $25/day crypto (daily) + equities (weekdays)
+**Current**: $25/day crypto (daily, 24/7/365) + equities (weekdays only)
+
+**MARKET HOURS**:
+| Asset | Hours | Days |
+|-------|-------|------|
+| Crypto (BTC/ETH) | 24/7 | Every day including weekends |
+| US Equities | 9:30-4:00 ET | Mon-Fri only |
 
 **R&D Goals**:
 - Month 1: Infrastructure + data collection (break-even OK)
