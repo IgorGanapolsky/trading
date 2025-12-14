@@ -218,8 +218,39 @@ jobs:
               if amt < 1: amt = 1
               print(f"💰 BUY ${amt:.2f} {best} (momentum: {momentum:+.2f}%)")
               order = client.submit_order(MarketOrderRequest(symbol=best, notional=amt, side=OrderSide.BUY, time_in_force=TimeInForce.GTC))
-              result.update({"symbol":best,"action":"BUY","notional":amt,"price":price,"order_id":str(order.id),"status":str(order.status),"size_multiplier":mult})
-              print(f"✅ Order: {order.id}")
+              print(f"📤 Order submitted: {order.id} (status: {order.status})")
+
+              # CRITICAL FIX (LL-034): Wait for fill confirmation
+              import time
+              fill_timeout = 30
+              start = time.time()
+              filled_price = None
+              while time.time() - start < fill_timeout:
+                  order = client.get_order_by_id(order.id)
+                  print(f"   Checking: {order.status}")
+                  if str(order.status) == "OrderStatus.FILLED":
+                      filled_price = float(order.filled_avg_price) if order.filled_avg_price else price
+                      print(f"✅ FILLED at ${filled_price:.2f}")
+                      break
+                  elif str(order.status) in ["OrderStatus.CANCELLED", "OrderStatus.REJECTED", "OrderStatus.EXPIRED"]:
+                      print(f"❌ Order {order.status}")
+                      break
+                  time.sleep(2)
+
+              final_status = str(order.status)
+              result.update({
+                  "symbol": best,
+                  "action": "BUY",
+                  "notional": amt,
+                  "price": price,
+                  "filled_price": filled_price,
+                  "filled_qty": float(order.filled_qty) if order.filled_qty else 0,
+                  "order_id": str(order.id),
+                  "status": final_status,
+                  "size_multiplier": mult,
+                  "verified_fill": final_status == "OrderStatus.FILLED"
+              })
+              print(f"✅ Order: {order.id} - Final: {final_status}")
           except Exception as e:
               print(f"❌ {e}")
               traceback.print_exc()

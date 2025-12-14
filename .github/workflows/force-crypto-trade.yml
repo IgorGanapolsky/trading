@@ -216,15 +216,37 @@ jobs:
                   time_in_force=TimeInForce.GTC
               ))
 
-              print(f"✅ Order submitted: {order.id}")
-              print(f"📋 Status: {order.status}")
+              print(f"📤 Order submitted: {order.id} (status: {order.status})")
+
+              # CRITICAL FIX (LL-034): Wait for fill confirmation
+              import time
+              fill_timeout = 30
+              start = time.time()
+              filled_price = None
+              while time.time() - start < fill_timeout:
+                  order = client.get_order_by_id(order.id)
+                  print(f"   Checking: {order.status}")
+                  if str(order.status) == "OrderStatus.FILLED":
+                      filled_price = float(order.filled_avg_price) if order.filled_avg_price else best_price
+                      print(f"✅ FILLED at ${filled_price:.2f}")
+                      break
+                  elif str(order.status) in ["OrderStatus.CANCELLED", "OrderStatus.REJECTED", "OrderStatus.EXPIRED"]:
+                      print(f"❌ Order {order.status}")
+                      break
+                  time.sleep(2)
+
+              final_status = str(order.status)
+              print(f"📋 Final Status: {final_status}")
 
               result["symbol"] = best_symbol
               result["action"] = "BUY"
               result["notional"] = final_amount
               result["price"] = best_price
+              result["filled_price"] = filled_price
+              result["filled_qty"] = float(order.filled_qty) if order.filled_qty else 0
               result["order_id"] = str(order.id)
-              result["status"] = str(order.status)
+              result["status"] = final_status
+              result["verified_fill"] = final_status == "OrderStatus.FILLED"
 
           except Exception as e:
               print(f"\n❌ ERROR: {e}")
