@@ -175,16 +175,23 @@ jobs:
                       best_momentum = best[1]["change_7d"]
                       result["crypto_analysis"] = analysis
 
-                      # CRITICAL FIX: Skip if all cryptos have negative momentum
+                      # MOMENTUM FILTER with EXTREME FEAR OVERRIDE
+                      # In Extreme Fear (<=25), we BUY anyway - contrarian strategy
                       if best_momentum < 0:
-                          print(f"\n   ⛔ SKIP: Best performer {best_symbol} has negative momentum ({best_momentum:+.2f}%)")
-                          print("   All cryptos in downtrend - waiting for positive momentum")
-                          result["action"] = "SKIP"
-                          result["skip_reason"] = f"Negative momentum: {best_symbol} at {best_momentum:+.2f}%"
-                          save_result()
-                          sys.exit(0)
+                          if result.get("fear_greed_index", 50) <= 25:
+                              print(f"\n   🔥 EXTREME FEAR OVERRIDE: Buying despite negative momentum!")
+                              print(f"   Fear & Greed = {result.get('fear_greed_index')} (Extreme Fear = contrarian BUY)")
+                              print(f"   {best_symbol} at {best_momentum:+.2f}% - historically oversold")
+                              result["contrarian_buy"] = True
+                          else:
+                              print(f"\n   ⛔ SKIP: Best performer {best_symbol} has negative momentum ({best_momentum:+.2f}%)")
+                              print("   All cryptos in downtrend - waiting for positive momentum")
+                              result["action"] = "SKIP"
+                              result["skip_reason"] = f"Negative momentum: {best_symbol} at {best_momentum:+.2f}%"
+                              save_result()
+                              sys.exit(0)
 
-                      print(f"\n   🎯 Selected: {best_symbol} (best 7d momentum: {best_momentum:+.2f}%)")
+                      print(f"\n   🎯 Selected: {best_symbol} (7d momentum: {best_momentum:+.2f}%)")
               except Exception as e:
                   print(f"   ⚠️ yfinance failed: {e}")
                   print("   Defaulting to BTCUSD")

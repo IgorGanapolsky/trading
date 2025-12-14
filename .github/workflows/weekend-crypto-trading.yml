@@ -202,12 +202,16 @@ jobs:
                       b = max(a.items(), key=lambda x:x[1]["change_7d"])
                       best, price, momentum = b[0].replace("-USD","USD"), b[1]["price"], b[1]["change_7d"]
                       result["crypto_analysis"] = a
-                      # CRITICAL FIX: Skip if all cryptos have negative momentum
+                      # MOMENTUM FILTER with EXTREME FEAR OVERRIDE
                       if momentum < 0:
-                          print(f"⛔ SKIP: {best} has negative momentum ({momentum:+.2f}%)")
-                          result["action"], result["skip_reason"] = "SKIP", f"Negative momentum: {momentum:+.2f}%"
-                          save()
-                          sys.exit(0)
+                          if result.get("fear_greed_index", 50) <= 25:
+                              print(f"🔥 EXTREME FEAR OVERRIDE: Buying {best} despite {momentum:+.2f}% momentum!")
+                              result["contrarian_buy"] = True
+                          else:
+                              print(f"⛔ SKIP: {best} has negative momentum ({momentum:+.2f}%)")
+                              result["action"], result["skip_reason"] = "SKIP", f"Negative momentum: {momentum:+.2f}%"
+                              save()
+                              sys.exit(0)
               except: pass
               base = float(os.environ.get("CRYPTO_DAILY_AMOUNT","10.0"))
               amt = min(base * mult, result["account_value"] * 0.02)
