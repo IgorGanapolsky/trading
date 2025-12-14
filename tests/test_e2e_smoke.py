@@ -12,27 +12,26 @@ Test Coverage:
 3. test_gates_disabled_allows_passthrough - With gates off, signals flow through
 4. test_no_silent_rejection - Verify trades aren't silently rejected without logging
 """
+
 import os
 import sys
 from datetime import datetime
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 # Mock problematic imports before importing our modules
-sys.modules['yfinance'] = MagicMock()
-sys.modules['ta'] = MagicMock()
-sys.modules['alpaca'] = MagicMock()
-sys.modules['alpaca.trading'] = MagicMock()
-sys.modules['alpaca.trading.client'] = MagicMock()
-sys.modules['alpaca.data'] = MagicMock()
+sys.modules["yfinance"] = MagicMock()
+sys.modules["ta"] = MagicMock()
+sys.modules["alpaca"] = MagicMock()
+sys.modules["alpaca.trading"] = MagicMock()
+sys.modules["alpaca.trading.client"] = MagicMock()
+sys.modules["alpaca.data"] = MagicMock()
 
 # Now we can import pandas and our modules
 import pandas as pd
-
 from src.agents.momentum_agent import MomentumSignal
 from src.orchestrator.main import TradingOrchestrator
-
 
 # ============================================================================
 # FIXTURES - Mock Components
@@ -200,12 +199,13 @@ def test_funnel_produces_trade_with_buy_signal(
     If this test fails, it means gates are silently blocking all trades.
     """
     # Patch dependencies
-    with patch("src.orchestrator.main.MacroeconomicAgent") as MockMacro, \
-         patch("src.orchestrator.main.MomentumAgent") as MockMomentum, \
-         patch("src.orchestrator.main.AlpacaExecutor") as MockExecutor, \
-         patch("src.orchestrator.main.TradeGateway") as MockGateway, \
-         patch("src.utils.market_data.MarketDataFetcher") as MockMarketData:
-
+    with (
+        patch("src.orchestrator.main.MacroeconomicAgent") as MockMacro,
+        patch("src.orchestrator.main.MomentumAgent") as MockMomentum,
+        patch("src.orchestrator.main.AlpacaExecutor") as MockExecutor,
+        patch("src.orchestrator.main.TradeGateway") as MockGateway,
+        patch("src.utils.market_data.MarketDataFetcher") as MockMarketData,
+    ):
         # Configure mocks
         mock_macro_instance = MockMacro.return_value
         mock_macro_instance.get_macro_context.return_value = mock_macro_bullish
@@ -234,9 +234,7 @@ def test_funnel_produces_trade_with_buy_signal(
 
         # Mock market data
         mock_market_data_instance = MockMarketData.return_value
-        mock_market_data_instance.get_daily_bars.return_value = MagicMock(
-            data=mock_market_data
-        )
+        mock_market_data_instance.get_daily_bars.return_value = MagicMock(data=mock_market_data)
 
         # Create orchestrator and run
         orchestrator = TradingOrchestrator(tickers=["SPY"], paper=True)
@@ -276,11 +274,12 @@ def test_funnel_respects_sell_signal(
 
     This ensures Gate 1 (Momentum) is working properly.
     """
-    with patch("src.orchestrator.main.MacroeconomicAgent") as MockMacro, \
-         patch("src.orchestrator.main.MomentumAgent") as MockMomentum, \
-         patch("src.orchestrator.main.AlpacaExecutor") as MockExecutor, \
-         patch("src.orchestrator.main.TradeGateway") as MockGateway:
-
+    with (
+        patch("src.orchestrator.main.MacroeconomicAgent") as MockMacro,
+        patch("src.orchestrator.main.MomentumAgent") as MockMomentum,
+        patch("src.orchestrator.main.AlpacaExecutor") as MockExecutor,
+        patch("src.orchestrator.main.TradeGateway") as MockGateway,
+    ):
         # Configure mocks
         mock_macro_instance = MockMacro.return_value
         mock_macro_instance.get_macro_context.return_value = mock_macro_bullish
@@ -322,12 +321,13 @@ def test_gates_disabled_allows_passthrough(
     monkeypatch.setenv("RL_FILTER_ENABLED", "false")
     monkeypatch.setenv("LLM_SENTIMENT_ENABLED", "false")
 
-    with patch("src.orchestrator.main.MacroeconomicAgent") as MockMacro, \
-         patch("src.orchestrator.main.MomentumAgent") as MockMomentum, \
-         patch("src.orchestrator.main.AlpacaExecutor") as MockExecutor, \
-         patch("src.orchestrator.main.TradeGateway") as MockGateway, \
-         patch("src.utils.market_data.MarketDataFetcher") as MockMarketData:
-
+    with (
+        patch("src.orchestrator.main.MacroeconomicAgent") as MockMacro,
+        patch("src.orchestrator.main.MomentumAgent") as MockMomentum,
+        patch("src.orchestrator.main.AlpacaExecutor") as MockExecutor,
+        patch("src.orchestrator.main.TradeGateway") as MockGateway,
+        patch("src.utils.market_data.MarketDataFetcher") as MockMarketData,
+    ):
         # Configure mocks
         mock_macro_instance = MockMacro.return_value
         mock_macro_instance.get_macro_context.return_value = mock_macro_bullish
@@ -354,9 +354,7 @@ def test_gates_disabled_allows_passthrough(
 
         # Mock market data
         mock_market_data_instance = MockMarketData.return_value
-        mock_market_data_instance.get_daily_bars.return_value = MagicMock(
-            data=mock_market_data
-        )
+        mock_market_data_instance.get_daily_bars.return_value = MagicMock(data=mock_market_data)
 
         # Create orchestrator and run
         orchestrator = TradingOrchestrator(tickers=["SPY"], paper=True)
@@ -383,11 +381,12 @@ def test_no_silent_rejection(
 
     Silent rejections are dangerous - they make debugging impossible.
     """
-    with patch("src.orchestrator.main.MacroeconomicAgent") as MockMacro, \
-         patch("src.orchestrator.main.MomentumAgent") as MockMomentum, \
-         patch("src.orchestrator.main.AlpacaExecutor") as MockExecutor, \
-         patch("src.orchestrator.main.TradeGateway") as MockGateway:
-
+    with (
+        patch("src.orchestrator.main.MacroeconomicAgent") as MockMacro,
+        patch("src.orchestrator.main.MomentumAgent") as MockMomentum,
+        patch("src.orchestrator.main.AlpacaExecutor") as MockExecutor,
+        patch("src.orchestrator.main.TradeGateway") as MockGateway,
+    ):
         # Configure mocks
         mock_macro_instance = MockMacro.return_value
         mock_macro_instance.get_macro_context.return_value = mock_macro_bullish
@@ -413,16 +412,11 @@ def test_no_silent_rejection(
         orchestrator.run()
 
         # Verify execute was NOT called (trade rejected)
-        assert not mock_gateway_instance.execute.called, (
-            "Trade should have been rejected"
-        )
+        assert not mock_gateway_instance.execute.called, "Trade should have been rejected"
 
         # CRITICAL: Verify rejection was LOGGED
         log_text = caplog.text.lower()
-        assert any(
-            keyword in log_text
-            for keyword in ["reject", "blocked", "skip", "warning"]
-        ), (
+        assert any(keyword in log_text for keyword in ["reject", "blocked", "skip", "warning"]), (
             "FAILED: Trade was rejected but no rejection logged! "
             "Silent rejections make debugging impossible."
         )
@@ -441,11 +435,12 @@ def test_orchestrator_runs_without_exceptions(
 
     This is the absolute minimum - system must not crash.
     """
-    with patch("src.orchestrator.main.MacroeconomicAgent") as MockMacro, \
-         patch("src.orchestrator.main.MomentumAgent") as MockMomentum, \
-         patch("src.orchestrator.main.AlpacaExecutor") as MockExecutor, \
-         patch("src.orchestrator.main.TradeGateway"):
-
+    with (
+        patch("src.orchestrator.main.MacroeconomicAgent") as MockMacro,
+        patch("src.orchestrator.main.MomentumAgent") as MockMomentum,
+        patch("src.orchestrator.main.AlpacaExecutor") as MockExecutor,
+        patch("src.orchestrator.main.TradeGateway"),
+    ):
         # Configure mocks
         mock_macro_instance = MockMacro.return_value
         mock_macro_instance.get_macro_context.return_value = mock_macro_bullish

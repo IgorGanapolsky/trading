@@ -5,10 +5,10 @@ Contains machine learning models, anomaly detection, and training utilities.
 """
 
 from .anomaly_detector import (
-    TradingAnomalyDetector,
-    AnomalyType,
     AlertLevel,
     Anomaly,
+    AnomalyType,
+    TradingAnomalyDetector,
     validate_order,
 )
 

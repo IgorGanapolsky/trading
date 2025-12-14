@@ -19,20 +19,20 @@ from pathlib import Path
 
 def check_execution_gap(state_file: Path = Path("data/system_state.json")) -> int:
     """Check for execution gaps and return appropriate exit code."""
-    
+
     if not state_file.exists():
         print("CRITICAL: system_state.json not found!")
         return 2
-    
+
     with open(state_file) as f:
         state = json.load(f)
-    
+
     last_updated_str = state.get("meta", {}).get("last_updated", "")
-    
+
     if not last_updated_str:
         print("CRITICAL: No last_updated timestamp in system state!")
         return 2
-    
+
     # Parse timestamp
     try:
         # Handle various datetime formats
@@ -50,20 +50,20 @@ def check_execution_gap(state_file: Path = Path("data/system_state.json")) -> in
     except Exception as e:
         print(f"CRITICAL: Error parsing timestamp: {e}")
         return 2
-    
+
     now = datetime.now()
     gap = now - last_updated
-    
+
     # Get additional stats
     exec_count = state.get("automation", {}).get("execution_count", 0)
     total_trades = state.get("performance", {}).get("total_trades", 0)
-    
+
     print(f"Last Updated: {last_updated_str}")
     print(f"Gap: {gap}")
     print(f"Execution Count: {exec_count}")
     print(f"Total Trades: {total_trades}")
     print()
-    
+
     # Determine status
     if gap > timedelta(hours=72):
         print("STATUS: CRITICAL - No execution in 72+ hours!")
@@ -83,15 +83,16 @@ def check_execution_gap(state_file: Path = Path("data/system_state.json")) -> in
 
 def main():
     import argparse
+
     parser = argparse.ArgumentParser(description="Check for trading execution gaps")
     parser.add_argument(
         "--state-file",
         type=Path,
         default=Path("data/system_state.json"),
-        help="Path to system_state.json"
+        help="Path to system_state.json",
     )
     args = parser.parse_args()
-    
+
     exit_code = check_execution_gap(args.state_file)
     sys.exit(exit_code)
 

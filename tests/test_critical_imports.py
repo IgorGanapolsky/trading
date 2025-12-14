@@ -27,8 +27,8 @@ class TestCriticalImports:
         If they don't exist, the entire trading system crashes at startup.
         """
         from src.coaching.mental_toughness_coach import (
-            get_prompt_context,
             get_position_size_modifier,
+            get_prompt_context,
         )
 
         # Verify functions are callable

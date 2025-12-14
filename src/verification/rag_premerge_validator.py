@@ -25,6 +25,7 @@ from typing import Any
 @dataclass
 class LessonMatch:
     """A match between a change and a lesson learned."""
+
     lesson_id: str
     lesson_file: str
     match_reason: str
@@ -35,6 +36,7 @@ class LessonMatch:
 @dataclass
 class ValidationResult:
     """Result of RAG pre-merge validation."""
+
     passed: bool
     warnings: list[str] = field(default_factory=list)
     blockers: list[str] = field(default_factory=list)
@@ -151,11 +153,9 @@ class RAGPreMergeValidator:
         for file_path in files:
             # Check against high-risk files
             if file_path in self.HIGH_RISK_FILES:
-                result.warnings.append(
-                    f"HIGH RISK: {file_path} is a critical system file"
-                )
+                result.warnings.append(f"HIGH RISK: {file_path} is a critical system file")
                 result.recommendations.append(
-                    f"Run: python3 -c \"from {file_path.replace('/', '.').replace('.py', '')} import *\""
+                    f'Run: python3 -c "from {file_path.replace("/", ".").replace(".py", "")} import *"'
                 )
 
             # Check against failure patterns
@@ -285,7 +285,15 @@ def main() -> None:
     if args.query:
         lessons = validator.query_lessons(args.query)
         if args.json:
-            print(json.dumps([{"file": l["file"], "id": l["id"], "severity": l["severity"]} for l in lessons], indent=2))
+            print(
+                json.dumps(
+                    [
+                        {"file": l["file"], "id": l["id"], "severity": l["severity"]}
+                        for l in lessons
+                    ],
+                    indent=2,
+                )
+            )
         else:
             print(f"Found {len(lessons)} matching lessons:")
             for lesson in lessons:

@@ -8,16 +8,10 @@ Tests the FACTS Benchmark integration including:
 """
 
 import pytest
-from unittest.mock import Mock, patch
-from datetime import datetime, timezone
-
 from src.verification.factuality_monitor import (
-    FactualityMonitor,
     FACTS_BENCHMARK_SCORES,
+    FactualityMonitor,
     HallucinationType,
-    VerificationSource,
-    HallucinationIncident,
-    FactualityMetrics,
 )
 
 
@@ -87,8 +81,18 @@ class TestFactualityMonitor:
     def test_weight_council_votes_multiple_votes(self, monitor):
         """Test weighting multiple council votes with consensus."""
         votes = [
-            {"model": "google/gemini-3-pro-preview", "vote": "BUY", "confidence": 0.8, "reasoning": ""},
-            {"model": "anthropic/claude-sonnet-4", "vote": "BUY", "confidence": 0.75, "reasoning": ""},
+            {
+                "model": "google/gemini-3-pro-preview",
+                "vote": "BUY",
+                "confidence": 0.8,
+                "reasoning": "",
+            },
+            {
+                "model": "anthropic/claude-sonnet-4",
+                "vote": "BUY",
+                "confidence": 0.75,
+                "reasoning": "",
+            },
             {"model": "openai/gpt-4o", "vote": "HOLD", "confidence": 0.6, "reasoning": ""},
         ]
 
@@ -102,8 +106,18 @@ class TestFactualityMonitor:
     def test_weight_council_votes_tie(self, monitor):
         """Test handling vote ties."""
         votes = [
-            {"model": "google/gemini-3-pro-preview", "vote": "BUY", "confidence": 0.8, "reasoning": ""},
-            {"model": "anthropic/claude-sonnet-4", "vote": "SELL", "confidence": 0.8, "reasoning": ""},
+            {
+                "model": "google/gemini-3-pro-preview",
+                "vote": "BUY",
+                "confidence": 0.8,
+                "reasoning": "",
+            },
+            {
+                "model": "anthropic/claude-sonnet-4",
+                "vote": "SELL",
+                "confidence": 0.8,
+                "reasoning": "",
+            },
         ]
 
         result = monitor.weight_council_votes(votes)
@@ -114,7 +128,12 @@ class TestFactualityMonitor:
     def test_factuality_ceiling_warning(self, monitor):
         """Test that high confidence triggers factuality ceiling warning."""
         votes = [
-            {"model": "google/gemini-3-pro-preview", "vote": "BUY", "confidence": 0.95, "reasoning": ""},
+            {
+                "model": "google/gemini-3-pro-preview",
+                "vote": "BUY",
+                "confidence": 0.95,
+                "reasoning": "",
+            },
         ]
 
         result = monitor.weight_council_votes(votes)
@@ -308,12 +327,8 @@ class TestFactualityReport:
         total_hallucinations = sum(
             m.get("hallucinations", 0) for m in report["model_metrics"].values()
         )
-        total_claims = sum(
-            m.get("total_claims", 0) for m in report["model_metrics"].values()
-        )
-        verified_claims = sum(
-            m.get("verified_claims", 0) for m in report["model_metrics"].values()
-        )
+        total_claims = sum(m.get("total_claims", 0) for m in report["model_metrics"].values())
+        verified_claims = sum(m.get("verified_claims", 0) for m in report["model_metrics"].values())
 
         assert total_hallucinations == 1
         assert total_claims == 3

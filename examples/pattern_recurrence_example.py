@@ -25,7 +25,7 @@ def example_basic_usage():
     # Create detector
     detector = PatternRecurrenceDetector(
         recurrence_threshold=3,  # Flag patterns with 3+ occurrences
-        window_days=7,           # Look back 7 days
+        window_days=7,  # Look back 7 days
         clustering_threshold_days=5,  # Flag patterns recurring every 5 days
     )
 
@@ -39,13 +39,13 @@ def example_basic_usage():
     print(f"Critical Patterns: {len(report['critical_patterns'])}")
 
     # Print each pattern
-    for pattern in report['recurring_patterns']:
+    for pattern in report["recurring_patterns"]:
         print(f"\nPattern: {pattern['pattern_type']}")
         print(f"  Count: {pattern['count']}")
         print(f"  Severity: {pattern['severity']}")
         print(f"  Frequency: Every {pattern['frequency_days']:.1f} days")
         print(f"  Trend: {pattern['trend']}")
-        if pattern['prevention']:
+        if pattern["prevention"]:
             print(f"  Prevention: {pattern['prevention']}")
 
 
@@ -80,7 +80,7 @@ def example_escalate_pattern():
     # Find a pattern to escalate
     if detector.patterns:
         target = detector.patterns[0]
-        print(f"\nBefore escalation:")
+        print("\nBefore escalation:")
         print(f"  {target.pattern_type}: {target.severity}")
 
         # Escalate
@@ -89,7 +89,7 @@ def example_escalate_pattern():
         # Check result
         for pattern in detector.patterns:
             if pattern.pattern_type == target.pattern_type:
-                print(f"\nAfter escalation:")
+                print("\nAfter escalation:")
                 print(f"  {pattern.pattern_type}: {pattern.severity}")
                 break
 
@@ -118,7 +118,7 @@ def example_create_github_issue():
             if url:
                 print(f"  GitHub Issue: {url}")
             else:
-                print(f"  (GitHub issue creation skipped - gh CLI not available)")
+                print("  (GitHub issue creation skipped - gh CLI not available)")
     else:
         print("\nNo critical patterns found (good!)")
 
@@ -137,15 +137,15 @@ def example_daily_cron_job():
         auto_create_issues=False,  # Set to True to auto-create issues
     )
 
-    print(f"\nDaily Report:")
+    print("\nDaily Report:")
     print(f"  Total Anomalies: {report['total_anomalies']}")
     print(f"  Recurring Patterns: {len(report['recurring_patterns'])}")
     print(f"  Critical Patterns: {len(report['critical_patterns'])}")
 
     # Print critical patterns
-    if report['critical_patterns']:
+    if report["critical_patterns"]:
         print("\n  CRITICAL PATTERNS REQUIRING ATTENTION:")
-        for pattern in report['critical_patterns']:
+        for pattern in report["critical_patterns"]:
             print(f"    - {pattern['pattern_type']}: {pattern['count']} occurrences")
 
 
@@ -163,8 +163,8 @@ def example_clustering_detection():
     report = detector.analyze_patterns()
 
     print("\nChecking for clustered patterns (recurring every 2-5 days):")
-    for pattern in report['recurring_patterns']:
-        if 0 < pattern['frequency_days'] <= 5:
+    for pattern in report["recurring_patterns"]:
+        if 0 < pattern["frequency_days"] <= 5:
             print(f"\n  ⚠️  CLUSTERING DETECTED: {pattern['pattern_type']}")
             print(f"      Recurring every {pattern['frequency_days']:.1f} days")
             print(f"      Count: {pattern['count']}")
@@ -186,9 +186,11 @@ if __name__ == "__main__":
         print("=" * 60)
         print("\nReport saved to: data/pattern_recurrence_report.json")
         print("\nCron job setup:")
-        print("  0 8 * * * cd /home/user/trading && python3 -c \"from src.verification.pattern_recurrence_detector import run_daily_pattern_analysis; run_daily_pattern_analysis()\"")
+        print(
+            '  0 8 * * * cd /home/user/trading && python3 -c "from src.verification.pattern_recurrence_detector import run_daily_pattern_analysis; run_daily_pattern_analysis()"'
+        )
         print()
 
     except Exception as e:
-        print(f"\nNote: Examples may show warnings if anomaly log is empty")
+        print("\nNote: Examples may show warnings if anomaly log is empty")
         print(f"Error: {e}")

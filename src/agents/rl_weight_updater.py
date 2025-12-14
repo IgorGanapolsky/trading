@@ -228,9 +228,7 @@ class RLWeightUpdater:
         Uses RiskAdjustedReward for rich trade data when available,
         falls back to binary reward otherwise.
         """
-        trade_result = self._extract_trade_result(
-            events, start_index, session, ticker
-        )
+        trade_result = self._extract_trade_result(events, start_index, session, ticker)
 
         if trade_result is None:
             return 0.0

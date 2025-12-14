@@ -25,6 +25,7 @@ RECONCILIATION_LOG_PATH = Path("data/position_reconciliation.json")
 @dataclass
 class ReconciliationResult:
     """Result of a position reconciliation check."""
+
     timestamp: str
     is_reconciled: bool
     discrepancies: list[dict[str, Any]]
@@ -88,16 +89,18 @@ class PositionReconciler:
 
             if symbol not in actual_positions:
                 # Phantom position - claimed but doesn't exist!
-                discrepancies.append({
-                    "type": "phantom_position",
-                    "symbol": symbol,
-                    "severity": "critical",
-                    "claimed_qty": claimed_qty,
-                    "actual_qty": 0,
-                    "claimed_value": claimed_value,
-                    "actual_value": 0,
-                    "message": f"PHANTOM: Claimed position in {symbol} does not exist!",
-                })
+                discrepancies.append(
+                    {
+                        "type": "phantom_position",
+                        "symbol": symbol,
+                        "severity": "critical",
+                        "claimed_qty": claimed_qty,
+                        "actual_qty": 0,
+                        "claimed_value": claimed_value,
+                        "actual_value": 0,
+                        "message": f"PHANTOM: Claimed position in {symbol} does not exist!",
+                    }
+                )
             else:
                 actual = actual_positions[symbol]
                 actual_qty = float(actual.get("qty", 0))
@@ -107,50 +110,55 @@ class PositionReconciler:
                 # Check quantity
                 qty_diff = abs(claimed_qty - actual_qty)
                 if actual_qty > 0 and qty_diff / actual_qty > self.qty_tolerance:
-                    discrepancies.append({
-                        "type": "quantity_mismatch",
-                        "symbol": symbol,
-                        "severity": "high",
-                        "claimed_qty": claimed_qty,
-                        "actual_qty": actual_qty,
-                        "difference": qty_diff,
-                        "message": f"QTY MISMATCH: {symbol} claimed {claimed_qty}, actual {actual_qty}",
-                    })
+                    discrepancies.append(
+                        {
+                            "type": "quantity_mismatch",
+                            "symbol": symbol,
+                            "severity": "high",
+                            "claimed_qty": claimed_qty,
+                            "actual_qty": actual_qty,
+                            "difference": qty_diff,
+                            "message": f"QTY MISMATCH: {symbol} claimed {claimed_qty}, actual {actual_qty}",
+                        }
+                    )
 
                 # Check value
                 if actual_value > 0:
                     value_diff_pct = abs(claimed_value - actual_value) / actual_value
                     if value_diff_pct > self.value_tolerance_pct:
-                        discrepancies.append({
-                            "type": "value_mismatch",
-                            "symbol": symbol,
-                            "severity": "medium",
-                            "claimed_value": claimed_value,
-                            "actual_value": actual_value,
-                            "difference_pct": value_diff_pct,
-                            "message": f"VALUE MISMATCH: {symbol} claimed ${claimed_value:.2f}, actual ${actual_value:.2f}",
-                        })
+                        discrepancies.append(
+                            {
+                                "type": "value_mismatch",
+                                "symbol": symbol,
+                                "severity": "medium",
+                                "claimed_value": claimed_value,
+                                "actual_value": actual_value,
+                                "difference_pct": value_diff_pct,
+                                "message": f"VALUE MISMATCH: {symbol} claimed ${claimed_value:.2f}, actual ${actual_value:.2f}",
+                            }
+                        )
 
         # Check for positions we have but weren't claimed (missing positions)
         for symbol, actual in actual_positions.items():
             if symbol not in claimed_positions:
                 actual_value = float(actual.get("market_value", 0))
                 total_actual_value += actual_value
-                discrepancies.append({
-                    "type": "missing_position",
-                    "symbol": symbol,
-                    "severity": "high",
-                    "claimed_qty": 0,
-                    "actual_qty": float(actual.get("qty", 0)),
-                    "actual_value": actual_value,
-                    "message": f"MISSING: Position in {symbol} exists but wasn't claimed!",
-                })
+                discrepancies.append(
+                    {
+                        "type": "missing_position",
+                        "symbol": symbol,
+                        "severity": "high",
+                        "claimed_qty": 0,
+                        "actual_qty": float(actual.get("qty", 0)),
+                        "actual_value": actual_value,
+                        "message": f"MISSING: Position in {symbol} exists but wasn't claimed!",
+                    }
+                )
 
         # Calculate overall value difference
         value_difference = total_claimed_value - total_actual_value
         value_difference_pct = (
-            abs(value_difference) / total_actual_value
-            if total_actual_value > 0 else 0
+            abs(value_difference) / total_actual_value if total_actual_value > 0 else 0
         )
 
         result = ReconciliationResult(
@@ -227,7 +235,9 @@ class PositionReconciler:
                 "timestamp": recent[-1].timestamp,
                 "is_reconciled": recent[-1].is_reconciled,
                 "value_difference": recent[-1].value_difference,
-            } if recent else None,
+            }
+            if recent
+            else None,
         }
 
     def _load_history(self) -> None:

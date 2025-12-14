@@ -52,7 +52,7 @@ class TestClaudeMdBestPractices:
         for i, block in enumerate(code_blocks):
             lines = block.count("\n")
             assert lines <= 10, (
-                f"Code block {i+1} has {lines} lines. "
+                f"Code block {i + 1} has {lines} lines. "
                 f"Move to .claude/commands/ as a slash command."
             )
 
@@ -61,8 +61,7 @@ class TestClaudeMdBestPractices:
         has_curl = "curl -X" in claude_md_content or "curl -s" in claude_md_content
 
         assert not has_curl, (
-            "CLAUDE.md contains curl commands. "
-            "Move to .claude/commands/create-pr.md or similar."
+            "CLAUDE.md contains curl commands. Move to .claude/commands/create-pr.md or similar."
         )
 
     def test_has_required_sections(self, claude_md_content: str):
@@ -74,30 +73,22 @@ class TestClaudeMdBestPractices:
         ]
 
         for section in required_sections:
-            assert section in claude_md_content, (
-                f"CLAUDE.md missing required section: {section}"
-            )
+            assert section in claude_md_content, f"CLAUDE.md missing required section: {section}"
 
     def test_uses_pointers_not_copies(self, claude_md_content: str):
         """CLAUDE.md should point to docs, not copy them."""
         # Should reference docs/ directory
         has_doc_refs = "docs/" in claude_md_content
 
-        assert has_doc_refs, (
-            "CLAUDE.md should reference docs/ for detailed documentation"
-        )
+        assert has_doc_refs, "CLAUDE.md should reference docs/ for detailed documentation"
 
     def test_rules_in_separate_file(self):
         """Critical rules should be in .claude/rules/."""
         rules_dir = PROJECT_ROOT / ".claude" / "rules"
-        assert rules_dir.exists(), (
-            ".claude/rules/ directory should exist for rule files"
-        )
+        assert rules_dir.exists(), ".claude/rules/ directory should exist for rule files"
 
         rules_files = list(rules_dir.glob("*.md"))
-        assert len(rules_files) >= 1, (
-            "Should have at least one rules file in .claude/rules/"
-        )
+        assert len(rules_files) >= 1, "Should have at least one rules file in .claude/rules/"
 
 
 class TestMandatoryRulesIntegrity:
@@ -154,9 +145,7 @@ class TestSlashCommandsExist:
     def test_create_pr_command_exists(self, commands_dir: Path):
         """PR creation command should exist."""
         pr_command = commands_dir / "create-pr.md"
-        assert pr_command.exists(), (
-            "create-pr.md should exist for PR creation procedure"
-        )
+        assert pr_command.exists(), "create-pr.md should exist for PR creation procedure"
 
 
 class TestRAGLessonsIntegration:
@@ -169,9 +158,7 @@ class TestRAGLessonsIntegration:
     def test_ll_017_exists(self, lessons_dir: Path):
         """ll_017 (CLAUDE.md bloat) lesson should exist."""
         ll_017 = lessons_dir / "ll_017_claude_md_bloat_antipattern_dec12.md"
-        assert ll_017.exists(), (
-            "ll_017 lesson about CLAUDE.md bloat should exist"
-        )
+        assert ll_017.exists(), "ll_017 lesson about CLAUDE.md bloat should exist"
 
     def test_lessons_have_actionable_fixes(self, lessons_dir: Path):
         """Lessons should have actionable prevention rules."""
@@ -180,13 +167,10 @@ class TestRAGLessonsIntegration:
 
             # Should have either Prevention, Fix, or Action section
             has_action = any(
-                keyword in content
-                for keyword in ["Prevention", "Fix", "Action", "Rule"]
+                keyword in content for keyword in ["Prevention", "Fix", "Action", "Rule"]
             )
 
-            assert has_action, (
-                f"{lesson.name} should have actionable prevention rules"
-            )
+            assert has_action, f"{lesson.name} should have actionable prevention rules"
 
 
 class TestTokenBudgetCompliance:

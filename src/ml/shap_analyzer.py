@@ -26,13 +26,13 @@ from pathlib import Path
 from typing import Any, Optional
 
 import numpy as np
-import pandas as pd
 
 logger = logging.getLogger(__name__)
 
 # Try to import SHAP (optional dependency)
 try:
     import shap
+
     SHAP_AVAILABLE = True
 except ImportError:
     SHAP_AVAILABLE = False
@@ -84,18 +84,35 @@ class SHAPAnalyzer:
 
     # Features that indicate potential overfitting if highly important
     SUSPICIOUS_FEATURES = {
-        "day_of_week", "dayofweek", "weekday",
-        "hour", "hour_of_day", "time_of_day",
-        "month", "quarter", "year",
-        "day_of_month", "day_of_year",
-        "minute", "second",
+        "day_of_week",
+        "dayofweek",
+        "weekday",
+        "hour",
+        "hour_of_day",
+        "time_of_day",
+        "month",
+        "quarter",
+        "year",
+        "day_of_month",
+        "day_of_year",
+        "minute",
+        "second",
     }
 
     # Features that SHOULD be important for a valid trading model
     EXPECTED_IMPORTANT = {
-        "returns", "rsi", "macd", "signal", "volatility",
-        "volume", "momentum", "trend", "sentiment",
-        "close", "price", "spread",
+        "returns",
+        "rsi",
+        "macd",
+        "signal",
+        "volatility",
+        "volume",
+        "momentum",
+        "trend",
+        "sentiment",
+        "close",
+        "price",
+        "spread",
     }
 
     def __init__(
@@ -154,10 +171,7 @@ class SHAPAnalyzer:
 
         else:  # neural or unknown - use KernelExplainer
             background = shap.sample(X, min(background_samples, len(X)))
-            self.explainer = shap.KernelExplainer(
-                self._model_predict,
-                background
-            )
+            self.explainer = shap.KernelExplainer(self._model_predict, background)
             self.shap_values = self.explainer.shap_values(X[:100])  # Limit for speed
 
         # Handle multi-output models
@@ -188,6 +202,7 @@ class SHAPAnalyzer:
         else:
             # PyTorch model
             import torch
+
             with torch.no_grad():
                 tensor = torch.FloatTensor(X)
                 return self.model(tensor).numpy()
@@ -261,8 +276,7 @@ class SHAPAnalyzer:
         # Check for expected important features
         top_features_lower = {f.lower() for f, _ in ranking[:10]}
         expected_found = sum(
-            1 for exp in self.EXPECTED_IMPORTANT
-            if any(exp in f for f in top_features_lower)
+            1 for exp in self.EXPECTED_IMPORTANT if any(exp in f for f in top_features_lower)
         )
 
         if expected_found < 3:
@@ -285,9 +299,7 @@ class SHAPAnalyzer:
                 "Review feature engineering - consider removing or transforming "
                 "highly suspicious features"
             )
-            recommendations.append(
-                "Run walk-forward validation to check for temporal overfitting"
-            )
+            recommendations.append("Run walk-forward validation to check for temporal overfitting")
         else:
             recommendations.append(
                 "Feature importance looks healthy - model appears to learn "
@@ -344,10 +356,7 @@ def analyze_model_features(
         FeatureImportanceReport
     """
     analyzer = SHAPAnalyzer(model, feature_names)
-    return analyzer.analyze(
-        X,
-        output_dir=Path(output_dir) if output_dir else None
-    )
+    return analyzer.analyze(X, output_dir=Path(output_dir) if output_dir else None)
 
 
 def quick_importance_check(
@@ -365,11 +374,7 @@ def quick_importance_check(
     warnings = []
 
     # Sort by importance
-    sorted_features = sorted(
-        importance_scores.items(),
-        key=lambda x: x[1],
-        reverse=True
-    )
+    sorted_features = sorted(importance_scores.items(), key=lambda x: x[1], reverse=True)
 
     # Check top features
     for feature, score in sorted_features[:5]:
@@ -421,9 +426,9 @@ if __name__ == "__main__":
 
         print(f"\nHealth Check: {'✅ HEALTHY' if result['healthy'] else '⚠️ WARNINGS'}")
 
-        if result['warnings']:
+        if result["warnings"]:
             print("\nWarnings:")
-            for w in result['warnings']:
+            for w in result["warnings"]:
                 print(f"  - {w}")
     else:
         # Full demo with sklearn model
@@ -434,8 +439,14 @@ if __name__ == "__main__":
         n_samples = 500
 
         feature_names = [
-            "RSI", "MACD", "Volatility", "Returns", "Volume",
-            "Sentiment", "day_of_week", "hour"
+            "RSI",
+            "MACD",
+            "Volatility",
+            "Returns",
+            "Volume",
+            "Sentiment",
+            "day_of_week",
+            "hour",
         ]
 
         X = np.random.randn(n_samples, len(feature_names))
@@ -458,6 +469,6 @@ if __name__ == "__main__":
         for w in report.warnings:
             print(f"  {w}")
 
-        print(f"\nRecommendations:")
+        print("\nRecommendations:")
         for r in report.recommendations:
             print(f"  - {r}")

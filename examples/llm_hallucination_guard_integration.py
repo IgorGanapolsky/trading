@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 # Example 1: Signal Agent Integration
 # ============================================================================
 
+
 def validate_signal_agent_output(signal_output: dict[str, Any]) -> dict[str, Any]:
     """
     Validate signal agent output before passing to RL agent.
@@ -38,8 +39,7 @@ def validate_signal_agent_output(signal_output: dict[str, Any]) -> dict[str, Any
     """
     # Create guard with approved tickers
     guard = create_hallucination_guard(
-        valid_tickers=["SPY", "QQQ", "AAPL", "NVDA", "TSLA"],
-        max_position_pct=0.10
+        valid_tickers=["SPY", "QQQ", "AAPL", "NVDA", "TSLA"], max_position_pct=0.10
     )
 
     # Map signal output to guard's expected format
@@ -61,7 +61,7 @@ def validate_signal_agent_output(signal_output: dict[str, Any]) -> dict[str, Any
         logger.warning(
             "Signal agent output validation FAILED: %d violations, risk score: %.2f",
             len(result["violations"]),
-            result["risk_score"]
+            result["risk_score"],
         )
 
         # Log critical violations
@@ -72,7 +72,7 @@ def validate_signal_agent_output(signal_output: dict[str, Any]) -> dict[str, Any
                 violation["field"],
                 violation["message"],
                 violation["actual_value"],
-                violation["expected_format"]
+                violation["expected_format"],
             )
 
         # Log prevention steps from RAG
@@ -87,6 +87,7 @@ def validate_signal_agent_output(signal_output: dict[str, Any]) -> dict[str, Any
 # ============================================================================
 # Example 2: RL Agent Integration
 # ============================================================================
+
 
 def validate_rl_agent_output(rl_output: dict[str, Any]) -> dict[str, Any]:
     """
@@ -116,8 +117,7 @@ def validate_rl_agent_output(rl_output: dict[str, Any]) -> dict[str, Any]:
 
     if not result["valid"]:
         logger.warning(
-            "RL agent output validation FAILED: %d violations",
-            len(result["violations"])
+            "RL agent output validation FAILED: %d violations", len(result["violations"])
         )
 
     return result
@@ -127,13 +127,9 @@ def validate_rl_agent_output(rl_output: dict[str, Any]) -> dict[str, Any]:
 # Example 3: Pre-Trade Validation Pipeline
 # ============================================================================
 
+
 def validate_trade_before_execution(
-    symbol: str,
-    side: str,
-    amount: float,
-    confidence: float,
-    reasoning: str,
-    portfolio_value: float
+    symbol: str, side: str, amount: float, confidence: float, reasoning: str, portfolio_value: float
 ) -> tuple[bool, str]:
     """
     Final validation gate before submitting trade to Alpaca.
@@ -150,8 +146,7 @@ def validate_trade_before_execution(
         (approved: bool, message: str)
     """
     guard = create_hallucination_guard(
-        valid_tickers=["SPY", "QQQ", "AAPL", "NVDA", "TSLA", "IWM", "VTI"],
-        max_position_pct=0.10
+        valid_tickers=["SPY", "QQQ", "AAPL", "NVDA", "TSLA", "IWM", "VTI"], max_position_pct=0.10
     )
 
     trade_output = {
@@ -169,24 +164,15 @@ def validate_trade_before_execution(
         return True, "✅ Trade validated, ready for execution"
 
     # Build detailed error message
-    critical_violations = [
-        v for v in result["violations"]
-        if v["severity"] == "critical"
-    ]
+    critical_violations = [v for v in result["violations"] if v["severity"] == "critical"]
 
     if critical_violations:
-        errors = [
-            f"{v['field']}: {v['message']}"
-            for v in critical_violations
-        ]
+        errors = [f"{v['field']}: {v['message']}" for v in critical_violations]
         message = f"❌ Trade BLOCKED: {', '.join(errors)}"
         return False, message
 
     # Warnings only - allow but log
-    warnings = [
-        v for v in result["violations"]
-        if v["severity"] == "warning"
-    ]
+    warnings = [v for v in result["violations"] if v["severity"] == "warning"]
     warning_msgs = [f"{v['field']}: {v['message']}" for v in warnings]
     message = f"⚠️  Trade approved with warnings: {', '.join(warning_msgs)}"
 
@@ -196,6 +182,7 @@ def validate_trade_before_execution(
 # ============================================================================
 # Example 4: Batch Validation for Multi-LLM Council
 # ============================================================================
+
 
 def validate_llm_council_votes(votes: list[dict[str, Any]]) -> dict[str, Any]:
     """
@@ -220,12 +207,14 @@ def validate_llm_council_votes(votes: list[dict[str, Any]]) -> dict[str, Any]:
     for i, vote in enumerate(votes):
         model_name = vote.get("model", f"model_{i}")
 
-        validation = guard.validate_output({
-            "symbol": vote.get("symbol", ""),
-            "action": vote.get("vote", "HOLD"),
-            "confidence": vote.get("confidence", 0.5),
-            "reasoning": vote.get("reasoning", ""),
-        })
+        validation = guard.validate_output(
+            {
+                "symbol": vote.get("symbol", ""),
+                "action": vote.get("vote", "HOLD"),
+                "confidence": vote.get("confidence", 0.5),
+                "reasoning": vote.get("reasoning", ""),
+            }
+        )
 
         if validation["valid"]:
             results["valid_votes"] += 1
@@ -233,21 +222,20 @@ def validate_llm_council_votes(votes: list[dict[str, Any]]) -> dict[str, Any]:
             results["invalid_votes"] += 1
             results["violations_by_model"][model_name] = validation["violations"]
 
-        results["risk_scores"].append({
-            "model": model_name,
-            "risk_score": validation["risk_score"]
-        })
+        results["risk_scores"].append({"model": model_name, "risk_score": validation["risk_score"]})
 
     # Calculate summary stats
     if results["risk_scores"]:
-        avg_risk = sum(r["risk_score"] for r in results["risk_scores"]) / len(results["risk_scores"])
+        avg_risk = sum(r["risk_score"] for r in results["risk_scores"]) / len(
+            results["risk_scores"]
+        )
         results["average_risk_score"] = round(avg_risk, 3)
 
     logger.info(
         "LLM Council validation: %d/%d votes valid, avg risk: %.3f",
         results["valid_votes"],
         results["total_votes"],
-        results.get("average_risk_score", 0)
+        results.get("average_risk_score", 0),
     )
 
     return results
@@ -302,7 +290,7 @@ if __name__ == "__main__":
         amount=8.50,
         confidence=0.65,
         reasoning="MACD positive, RSI oversold recovery, volume confirms",
-        portfolio_value=100000.0
+        portfolio_value=100000.0,
     )
     print(message)
     print()
@@ -316,22 +304,22 @@ if __name__ == "__main__":
             "symbol": "SPY",
             "vote": "BUY",
             "confidence": 0.68,
-            "reasoning": "Technical indicators strong"
+            "reasoning": "Technical indicators strong",
         },
         {
             "model": "gpt-4o",
             "symbol": "SPY",
             "vote": "BUY",
             "confidence": 0.72,  # Exceeds FACTS ceiling
-            "reasoning": "Momentum positive"
+            "reasoning": "Momentum positive",
         },
         {
             "model": "gemini-pro",
             "symbol": "UNKNOWN",  # Invalid
             "vote": "BUY",
             "confidence": 0.65,
-            "reasoning": "Market conditions favorable"
-        }
+            "reasoning": "Market conditions favorable",
+        },
     ]
     council_result = validate_llm_council_votes(council_votes)
     print(f"Valid votes: {council_result['valid_votes']}/{council_result['total_votes']}")

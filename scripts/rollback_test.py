@@ -290,7 +290,12 @@ class RollbackDrill:
 
             except ImportError:
                 # Check if file exists with HALT tier
-                cb_path = Path(__file__).parent.parent / "src" / "safety" / "multi_tier_circuit_breaker.py"
+                cb_path = (
+                    Path(__file__).parent.parent
+                    / "src"
+                    / "safety"
+                    / "multi_tier_circuit_breaker.py"
+                )
                 if cb_path.exists():
                     content = cb_path.read_text()
                     if "HALT" in content:
@@ -343,9 +348,9 @@ class RollbackDrill:
 
             # Verify liquidation logic exists in executor
             try:
-                from src.execution.alpaca_executor import AlpacaExecutor
-
                 import inspect
+
+                from src.execution.alpaca_executor import AlpacaExecutor
 
                 source = inspect.getsource(AlpacaExecutor)
                 has_liquidation = (
@@ -457,7 +462,9 @@ class RollbackDrill:
         output_dir = self.data_dir / "rollback_drills"
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        output_path = output_path or output_dir / f"drill_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        output_path = (
+            output_path or output_dir / f"drill_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
 
         with open(output_path, "w") as f:
             json.dump(report.to_dict(), f, indent=2)

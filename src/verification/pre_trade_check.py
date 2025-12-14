@@ -20,26 +20,25 @@ Usage:
 """
 
 import json
-from datetime import datetime
-from pathlib import Path
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass, field
-from enum import Enum
 import sys
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.core.unified_domain_model import (
-    Signal, Trade, TradeAction, DomainValidator, AssetClass
-)
-
+from src.core.unified_domain_model import AssetClass, DomainValidator, Signal, TradeAction
 
 # =============================================================================
 # VERIFICATION RESULT
 # =============================================================================
 
+
 class BlockReason(str, Enum):
     """Reasons a trade might be blocked"""
+
     VALIDATION_FAILED = "validation_failed"
     LESSONS_LEARNED_WARNING = "lessons_learned_warning"
     ANOMALY_DETECTED = "anomaly_detected"
@@ -52,15 +51,16 @@ class BlockReason(str, Enum):
 @dataclass
 class VerificationResult:
     """Result of pre-trade verification"""
+
     approved: bool
     signal: Signal
-    reasons: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    lessons_found: List[Dict] = field(default_factory=list)
-    checks_passed: List[str] = field(default_factory=list)
+    reasons: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    lessons_found: list[dict] = field(default_factory=list)
+    checks_passed: list[str] = field(default_factory=list)
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "approved": self.approved,
             "signal": self.signal.to_dict() if self.signal else None,
@@ -76,6 +76,7 @@ class VerificationResult:
 # RAG LESSONS LEARNED SEARCHER
 # =============================================================================
 
+
 class LessonsLearnedRAG:
     """
     Simple RAG system for searching lessons learned.
@@ -85,7 +86,7 @@ class LessonsLearnedRAG:
 
     def __init__(self, lessons_dir: str = "rag_knowledge/lessons_learned"):
         self.lessons_dir = Path(lessons_dir)
-        self.lessons_cache: List[Dict] = []
+        self.lessons_cache: list[dict] = []
         self._load_lessons()
 
     def _load_lessons(self):
@@ -124,12 +125,13 @@ class LessonsLearnedRAG:
                 return line.split(":")[-1].strip()
         return ""
 
-    def _extract_tags(self, content: str) -> List[str]:
+    def _extract_tags(self, content: str) -> list[str]:
         """Extract hashtags from content"""
         import re
+
         return re.findall(r"#(\w+)", content)
 
-    def search(self, query: str, context: Dict = None, max_results: int = 5) -> List[Dict]:
+    def search(self, query: str, context: dict = None, max_results: int = 5) -> list[dict]:
         """
         Search lessons learned for relevant entries.
         Returns lessons that might be relevant to the current situation.
@@ -165,20 +167,22 @@ class LessonsLearnedRAG:
                 score += 2
 
             if score > 0:
-                results.append({
-                    "score": score,
-                    "title": lesson["title"],
-                    "file": lesson["file"],
-                    "severity": lesson["severity"],
-                    "tags": lesson["tags"],
-                    "summary": lesson["content"][:300] + "...",
-                })
+                results.append(
+                    {
+                        "score": score,
+                        "title": lesson["title"],
+                        "file": lesson["file"],
+                        "severity": lesson["severity"],
+                        "tags": lesson["tags"],
+                        "summary": lesson["content"][:300] + "...",
+                    }
+                )
 
         # Sort by score and return top results
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:max_results]
 
-    def get_critical_lessons(self) -> List[Dict]:
+    def get_critical_lessons(self) -> list[dict]:
         """Get all HIGH/CRITICAL severity lessons"""
         return [
             {
@@ -195,6 +199,7 @@ class LessonsLearnedRAG:
 # CIRCUIT BREAKERS
 # =============================================================================
 
+
 class CircuitBreakers:
     """
     Hard limits based on historical lessons and risk management.
@@ -203,10 +208,10 @@ class CircuitBreakers:
 
     # Maximum position sizes by asset class
     MAX_NOTIONAL = {
-        AssetClass.CRYPTO: 50.0,    # $50 max per crypto trade
-        AssetClass.EQUITY: 100.0,   # $100 max per equity trade
-        AssetClass.OPTION: 50.0,    # $50 max per options trade
-        AssetClass.ETF: 100.0,      # $100 max per ETF trade
+        AssetClass.CRYPTO: 50.0,  # $50 max per crypto trade
+        AssetClass.EQUITY: 100.0,  # $100 max per equity trade
+        AssetClass.OPTION: 50.0,  # $50 max per options trade
+        AssetClass.ETF: 100.0,  # $100 max per ETF trade
     }
 
     # Minimum confidence by action
@@ -223,7 +228,7 @@ class CircuitBreakers:
     SYMBOL_COOLDOWN_MINUTES = 30
 
     @classmethod
-    def check_all(cls, signal: Signal, trade_history: List[Dict] = None) -> List[str]:
+    def check_all(cls, signal: Signal, trade_history: list[dict] = None) -> list[str]:
         """Run all circuit breaker checks, return list of violations"""
         violations = []
         trade_history = trade_history or []
@@ -242,10 +247,7 @@ class CircuitBreakers:
             violations.append(f"Daily trade limit reached ({cls.MAX_DAILY_TRADES})")
 
         # Check symbol cooldown
-        symbol_trades = [
-            t for t in trade_history
-            if t.get("symbol") == signal.symbol.ticker
-        ]
+        symbol_trades = [t for t in trade_history if t.get("symbol") == signal.symbol.ticker]
         if symbol_trades:
             last_trade = max(symbol_trades, key=lambda x: x.get("timestamp", ""))
             last_time = datetime.fromisoformat(last_trade.get("timestamp", "2000-01-01"))
@@ -262,6 +264,7 @@ class CircuitBreakers:
 # ANOMALY DETECTOR
 # =============================================================================
 
+
 class AnomalyDetector:
     """
     Simple anomaly detection based on historical patterns.
@@ -269,14 +272,16 @@ class AnomalyDetector:
     """
 
     @staticmethod
-    def check(signal: Signal, market_data: Dict = None) -> List[str]:
+    def check(signal: Signal, market_data: dict = None) -> list[str]:
         """Check for anomalies, return list of warnings"""
         warnings = []
         market_data = market_data or {}
 
         # Check for extreme confidence (might indicate overfitting)
         if signal.confidence > 0.95:
-            warnings.append(f"Unusually high confidence ({signal.confidence:.0%}) - verify signal source")
+            warnings.append(
+                f"Unusually high confidence ({signal.confidence:.0%}) - verify signal source"
+            )
 
         # Check for weekend trading (crypto OK, equities not)
         now = datetime.utcnow()
@@ -297,6 +302,7 @@ class AnomalyDetector:
 # PRE-TRADE VERIFIER (Main Class)
 # =============================================================================
 
+
 class PreTradeVerifier:
     """
     Main verification system that combines all checks.
@@ -305,7 +311,7 @@ class PreTradeVerifier:
 
     def __init__(self, lessons_dir: str = "rag_knowledge/lessons_learned"):
         self.rag = LessonsLearnedRAG(lessons_dir)
-        self.trade_history: List[Dict] = []
+        self.trade_history: list[dict] = []
         self._load_trade_history()
 
     def _load_trade_history(self):
@@ -321,7 +327,7 @@ class PreTradeVerifier:
             except Exception:
                 self.trade_history = []
 
-    def verify(self, signal: Signal, extra_context: Dict = None) -> VerificationResult:
+    def verify(self, signal: Signal, extra_context: dict = None) -> VerificationResult:
         """
         Run all verification checks on a signal.
         Returns VerificationResult with approval status and details.
@@ -333,10 +339,9 @@ class PreTradeVerifier:
         validation = DomainValidator.validate(signal)
         if not validation.is_valid:
             result.approved = False
-            result.reasons.extend([
-                f"Validation failed: {e.field} - {e.message}"
-                for e in validation.errors
-            ])
+            result.reasons.extend(
+                [f"Validation failed: {e.field} - {e.message}" for e in validation.errors]
+            )
         else:
             result.checks_passed.append("UDM validation")
 
@@ -407,7 +412,7 @@ class PreTradeVerifier:
 # =============================================================================
 
 if __name__ == "__main__":
-    from src.core.unified_domain_model import factory, TradeAction
+    from src.core.unified_domain_model import TradeAction, factory
 
     print("=" * 60)
     print("PRE-TRADE VERIFICATION SYSTEM TEST")
@@ -427,10 +432,7 @@ if __name__ == "__main__":
 
     btc = factory.create_crypto_symbol("BTCUSD")
     signal = factory.create_signal(
-        symbol=btc,
-        action=TradeAction.BUY,
-        confidence=0.75,
-        source="test_strategy"
+        symbol=btc, action=TradeAction.BUY, confidence=0.75, source="test_strategy"
     )
 
     result = verifier.verify(signal)
@@ -449,14 +451,13 @@ if __name__ == "__main__":
     print("-" * 40)
 
     weak_signal = factory.create_signal(
-        symbol=btc,
-        action=TradeAction.BUY,
-        confidence=0.45,
-        source="test_strategy"
+        symbol=btc, action=TradeAction.BUY, confidence=0.45, source="test_strategy"
     )
 
     result = verifier.verify(weak_signal)
-    print(f"Signal: {weak_signal.action.value} {weak_signal.symbol.ticker} @ {weak_signal.confidence:.0%}")
+    print(
+        f"Signal: {weak_signal.action.value} {weak_signal.symbol.ticker} @ {weak_signal.confidence:.0%}"
+    )
     print(f"Approved: {result.approved}")
     print(f"Block reasons: {result.reasons}")
 

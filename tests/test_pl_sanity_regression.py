@@ -17,17 +17,17 @@ Purpose: Prevent silent trading failures like the 30-day zero-trade incident
 """
 
 import json
-import os
-import pytest
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-import sys
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Mock alpaca imports BEFORE importing verify_pl_sanity
-sys.modules['alpaca'] = MagicMock()
-sys.modules['alpaca.trading'] = MagicMock()
-sys.modules['alpaca.trading.client'] = MagicMock()
+sys.modules["alpaca"] = MagicMock()
+sys.modules["alpaca.trading"] = MagicMock()
+sys.modules["alpaca.trading.client"] = MagicMock()
 
 # Import the P/L sanity checker
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -107,21 +107,25 @@ class TestStuckEquityDetection:
             # Skip weekends
             if date.weekday() >= 5:
                 continue
-            entries.append({
-                "date": date.date().isoformat(),
-                "timestamp": date.isoformat(),
-                "equity": 100000.0,  # STUCK - no change
-                "pl": 0.0
-            })
+            entries.append(
+                {
+                    "date": date.date().isoformat(),
+                    "timestamp": date.isoformat(),
+                    "equity": 100000.0,  # STUCK - no change
+                    "pl": 0.0,
+                }
+            )
 
         # Add today's entry
         today = base_date + timedelta(days=5)
-        entries.append({
-            "date": today.date().isoformat(),
-            "timestamp": today.isoformat(),
-            "equity": 100000.0,
-            "pl": 0.0
-        })
+        entries.append(
+            {
+                "date": today.date().isoformat(),
+                "timestamp": today.isoformat(),
+                "equity": 100000.0,
+                "pl": 0.0,
+            }
+        )
 
         create_performance_log(temp_data_dir, entries)
 
@@ -132,7 +136,10 @@ class TestStuckEquityDetection:
 
         # Run sanity check with patched paths
         with patch("scripts.verify_pl_sanity.DATA_DIR", temp_data_dir):
-            with patch("scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE", temp_data_dir / "performance_log.json"):
+            with patch(
+                "scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE",
+                temp_data_dir / "performance_log.json",
+            ):
                 with patch("scripts.verify_pl_sanity.TRADES_DIR", temp_data_dir):
                     checker = PLSanityChecker(verbose=True)
                     checker.api = mock_alpaca_api
@@ -153,7 +160,6 @@ class TestStuckEquityDetection:
                     assert stuck_alerts[0]["level"] == "CRITICAL"
                     assert stuck_alerts[0]["days_stuck"] >= 3
 
-
     def test_varying_equity_not_detected(self, temp_data_dir, mock_alpaca_api):
         """Verify that normal equity changes don't trigger stuck alert."""
         base_date = datetime(2025, 12, 1)
@@ -165,17 +171,22 @@ class TestStuckEquityDetection:
             date = base_date + timedelta(days=i)
             if date.weekday() >= 5:
                 continue
-            entries.append({
-                "date": date.date().isoformat(),
-                "timestamp": date.isoformat(),
-                "equity": equity,
-                "pl": equity - 100000.0
-            })
+            entries.append(
+                {
+                    "date": date.date().isoformat(),
+                    "timestamp": date.isoformat(),
+                    "equity": equity,
+                    "pl": equity - 100000.0,
+                }
+            )
 
         create_performance_log(temp_data_dir, entries)
 
         with patch("scripts.verify_pl_sanity.DATA_DIR", temp_data_dir):
-            with patch("scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE", temp_data_dir / "performance_log.json"):
+            with patch(
+                "scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE",
+                temp_data_dir / "performance_log.json",
+            ):
                 checker = PLSanityChecker(verbose=True)
                 checker.api = mock_alpaca_api
 
@@ -230,15 +241,15 @@ class TestNoTradesDetection:
                     "quantity": 1,
                     "price": 450.0,
                     "timestamp": date.isoformat(),
-                    "action": "BUY"
+                    "action": "BUY",
                 },
                 {
                     "symbol": "QQQ",
                     "quantity": 1,
                     "price": 380.0,
                     "timestamp": date.isoformat(),
-                    "action": "BUY"
-                }
+                    "action": "BUY",
+                },
             ]
             create_trades_file(temp_data_dir, date, trades)
 
@@ -264,17 +275,22 @@ class TestZeroPLDetection:
             date = base_date + timedelta(days=i)
             if date.weekday() >= 5:
                 continue
-            entries.append({
-                "date": date.date().isoformat(),
-                "timestamp": date.isoformat(),
-                "equity": 100000.0,
-                "pl": 0.0  # Exactly zero
-            })
+            entries.append(
+                {
+                    "date": date.date().isoformat(),
+                    "timestamp": date.isoformat(),
+                    "equity": 100000.0,
+                    "pl": 0.0,  # Exactly zero
+                }
+            )
 
         create_performance_log(temp_data_dir, entries)
 
         with patch("scripts.verify_pl_sanity.DATA_DIR", temp_data_dir):
-            with patch("scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE", temp_data_dir / "performance_log.json"):
+            with patch(
+                "scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE",
+                temp_data_dir / "performance_log.json",
+            ):
                 checker = PLSanityChecker(verbose=True)
                 checker.api = mock_alpaca_api
 
@@ -300,17 +316,22 @@ class TestZeroPLDetection:
             date = base_date + timedelta(days=i)
             if date.weekday() >= 5:
                 continue
-            entries.append({
-                "date": date.date().isoformat(),
-                "timestamp": date.isoformat(),
-                "equity": 100000.0 + pl,
-                "pl": pl
-            })
+            entries.append(
+                {
+                    "date": date.date().isoformat(),
+                    "timestamp": date.isoformat(),
+                    "equity": 100000.0 + pl,
+                    "pl": pl,
+                }
+            )
 
         create_performance_log(temp_data_dir, entries)
 
         with patch("scripts.verify_pl_sanity.DATA_DIR", temp_data_dir):
-            with patch("scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE", temp_data_dir / "performance_log.json"):
+            with patch(
+                "scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE",
+                temp_data_dir / "performance_log.json",
+            ):
                 checker = PLSanityChecker(verbose=True)
                 checker.api = mock_alpaca_api
 
@@ -330,41 +351,52 @@ class TestAnomalousChangeDetection:
 
         # Create normal days, then a 10% jump
         # Need at least 4 entries for the check to work properly
-        entries.append({
-            "date": base_date.date().isoformat(),
-            "timestamp": base_date.isoformat(),
-            "equity": 100000.0,
-            "pl": 0.0
-        })
+        entries.append(
+            {
+                "date": base_date.date().isoformat(),
+                "timestamp": base_date.isoformat(),
+                "equity": 100000.0,
+                "pl": 0.0,
+            }
+        )
 
         day2 = base_date + timedelta(days=1)
-        entries.append({
-            "date": day2.date().isoformat(),
-            "timestamp": day2.isoformat(),
-            "equity": 100100.0,  # +0.1%
-            "pl": 100.0
-        })
+        entries.append(
+            {
+                "date": day2.date().isoformat(),
+                "timestamp": day2.isoformat(),
+                "equity": 100100.0,  # +0.1%
+                "pl": 100.0,
+            }
+        )
 
         day3 = base_date + timedelta(days=2)
-        entries.append({
-            "date": day3.date().isoformat(),
-            "timestamp": day3.isoformat(),
-            "equity": 110110.0,  # +10% from day2 - ANOMALOUS
-            "pl": 10110.0
-        })
+        entries.append(
+            {
+                "date": day3.date().isoformat(),
+                "timestamp": day3.isoformat(),
+                "equity": 110110.0,  # +10% from day2 - ANOMALOUS
+                "pl": 10110.0,
+            }
+        )
 
         day4 = base_date + timedelta(days=3)
-        entries.append({
-            "date": day4.date().isoformat(),
-            "timestamp": day4.isoformat(),
-            "equity": 110200.0,  # Small change after anomaly
-            "pl": 10200.0
-        })
+        entries.append(
+            {
+                "date": day4.date().isoformat(),
+                "timestamp": day4.isoformat(),
+                "equity": 110200.0,  # Small change after anomaly
+                "pl": 10200.0,
+            }
+        )
 
         create_performance_log(temp_data_dir, entries)
 
         with patch("scripts.verify_pl_sanity.DATA_DIR", temp_data_dir):
-            with patch("scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE", temp_data_dir / "performance_log.json"):
+            with patch(
+                "scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE",
+                temp_data_dir / "performance_log.json",
+            ):
                 checker = PLSanityChecker(verbose=True)
                 checker.api = mock_alpaca_api
 
@@ -388,17 +420,22 @@ class TestAnomalousChangeDetection:
         equities = [100000.0, 100300.0, 100150.0, 100400.0]  # All <1% daily change
         for i, equity in enumerate(equities):
             date = base_date + timedelta(days=i)
-            entries.append({
-                "date": date.date().isoformat(),
-                "timestamp": date.isoformat(),
-                "equity": equity,
-                "pl": equity - 100000.0
-            })
+            entries.append(
+                {
+                    "date": date.date().isoformat(),
+                    "timestamp": date.isoformat(),
+                    "equity": equity,
+                    "pl": equity - 100000.0,
+                }
+            )
 
         create_performance_log(temp_data_dir, entries)
 
         with patch("scripts.verify_pl_sanity.DATA_DIR", temp_data_dir):
-            with patch("scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE", temp_data_dir / "performance_log.json"):
+            with patch(
+                "scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE",
+                temp_data_dir / "performance_log.json",
+            ):
                 checker = PLSanityChecker(verbose=True)
                 checker.api = mock_alpaca_api
 
@@ -420,17 +457,22 @@ class TestDrawdownDetection:
         equities = [100000.0, 105000.0, 110000.0, 98000.0]  # Peak: 110k, Current: 98k = 10.9% DD
         for i, equity in enumerate(equities):
             date = base_date + timedelta(days=i)
-            entries.append({
-                "date": date.date().isoformat(),
-                "timestamp": date.isoformat(),
-                "equity": equity,
-                "pl": equity - 100000.0
-            })
+            entries.append(
+                {
+                    "date": date.date().isoformat(),
+                    "timestamp": date.isoformat(),
+                    "equity": equity,
+                    "pl": equity - 100000.0,
+                }
+            )
 
         create_performance_log(temp_data_dir, entries)
 
         with patch("scripts.verify_pl_sanity.DATA_DIR", temp_data_dir):
-            with patch("scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE", temp_data_dir / "performance_log.json"):
+            with patch(
+                "scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE",
+                temp_data_dir / "performance_log.json",
+            ):
                 checker = PLSanityChecker(verbose=True)
                 checker.api = mock_alpaca_api
 
@@ -455,17 +497,22 @@ class TestDrawdownDetection:
         equities = [100000.0, 105000.0, 110000.0, 102000.0]  # Peak: 110k, Current: 102k = 7.3% DD
         for i, equity in enumerate(equities):
             date = base_date + timedelta(days=i)
-            entries.append({
-                "date": date.date().isoformat(),
-                "timestamp": date.isoformat(),
-                "equity": equity,
-                "pl": equity - 100000.0
-            })
+            entries.append(
+                {
+                    "date": date.date().isoformat(),
+                    "timestamp": date.isoformat(),
+                    "equity": equity,
+                    "pl": equity - 100000.0,
+                }
+            )
 
         create_performance_log(temp_data_dir, entries)
 
         with patch("scripts.verify_pl_sanity.DATA_DIR", temp_data_dir):
-            with patch("scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE", temp_data_dir / "performance_log.json"):
+            with patch(
+                "scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE",
+                temp_data_dir / "performance_log.json",
+            ):
                 checker = PLSanityChecker(verbose=True)
                 checker.api = mock_alpaca_api
 
@@ -494,12 +541,14 @@ class TestHealthySystemValidation:
             date = base_date + timedelta(days=i)
             if date.weekday() >= 5:  # Skip weekends
                 continue
-            entries.append({
-                "date": date.date().isoformat(),
-                "timestamp": date.isoformat(),
-                "equity": equity,
-                "pl": equity - 100000.0
-            })
+            entries.append(
+                {
+                    "date": date.date().isoformat(),
+                    "timestamp": date.isoformat(),
+                    "equity": equity,
+                    "pl": equity - 100000.0,
+                }
+            )
 
         create_performance_log(temp_data_dir, entries)
 
@@ -512,23 +561,28 @@ class TestHealthySystemValidation:
                     "quantity": 1,
                     "price": 450.0,
                     "timestamp": date.isoformat(),
-                    "action": "BUY"
+                    "action": "BUY",
                 }
             ]
             create_trades_file(temp_data_dir, date, trades)
 
         with patch("scripts.verify_pl_sanity.DATA_DIR", temp_data_dir):
-            with patch("scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE", temp_data_dir / "performance_log.json"):
+            with patch(
+                "scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE",
+                temp_data_dir / "performance_log.json",
+            ):
                 with patch("scripts.verify_pl_sanity.TRADES_DIR", temp_data_dir):
                     checker = PLSanityChecker(verbose=True)
                     checker.api = mock_alpaca_api
 
                     # Mock get_current_equity
-                    with patch.object(checker, 'get_current_equity', return_value=100320.0):
+                    with patch.object(checker, "get_current_equity", return_value=100320.0):
                         is_healthy = checker.run_all_checks()
 
                     # Healthy system should pass all checks
-                    assert is_healthy is True, f"Healthy system should pass, but got alerts: {checker.alerts}"
+                    assert is_healthy is True, (
+                        f"Healthy system should pass, but got alerts: {checker.alerts}"
+                    )
                     assert len(checker.alerts) == 0, "Healthy system should have no alerts"
 
     def test_multiple_failures_detected(self, temp_data_dir, mock_alpaca_api):
@@ -544,12 +598,14 @@ class TestHealthySystemValidation:
             date = base_date + timedelta(days=i)
             if date.weekday() >= 5:
                 continue
-            entries.append({
-                "date": date.date().isoformat(),
-                "timestamp": date.isoformat(),
-                "equity": 100000.0,  # STUCK
-                "pl": 0.0  # ZERO
-            })
+            entries.append(
+                {
+                    "date": date.date().isoformat(),
+                    "timestamp": date.isoformat(),
+                    "equity": 100000.0,  # STUCK
+                    "pl": 0.0,  # ZERO
+                }
+            )
 
         create_performance_log(temp_data_dir, entries)
 
@@ -559,17 +615,22 @@ class TestHealthySystemValidation:
             create_trades_file(temp_data_dir, date, [])
 
         with patch("scripts.verify_pl_sanity.DATA_DIR", temp_data_dir):
-            with patch("scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE", temp_data_dir / "performance_log.json"):
+            with patch(
+                "scripts.verify_pl_sanity.PERFORMANCE_LOG_FILE",
+                temp_data_dir / "performance_log.json",
+            ):
                 with patch("scripts.verify_pl_sanity.TRADES_DIR", temp_data_dir):
                     checker = PLSanityChecker(verbose=True)
                     checker.api = mock_alpaca_api
 
-                    with patch.object(checker, 'get_current_equity', return_value=100000.0):
+                    with patch.object(checker, "get_current_equity", return_value=100000.0):
                         is_healthy = checker.run_all_checks()
 
                     # Should fail with multiple alerts
                     assert is_healthy is False, "Unhealthy system should fail"
-                    assert len(checker.alerts) >= 3, f"Should detect multiple failures, got {len(checker.alerts)}"
+                    assert len(checker.alerts) >= 3, (
+                        f"Should detect multiple failures, got {len(checker.alerts)}"
+                    )
 
                     # Verify all expected alert types are present
                     alert_types = {a["type"] for a in checker.alerts}

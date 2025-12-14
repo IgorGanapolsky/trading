@@ -249,7 +249,9 @@ def print_report(
     print("=" * 70)
 
     print(f"\nValidation Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Backtest Period: {pessimistic_results.get('start_date', 'N/A')} to {pessimistic_results.get('end_date', 'N/A')}")
+    print(
+        f"Backtest Period: {pessimistic_results.get('start_date', 'N/A')} to {pessimistic_results.get('end_date', 'N/A')}"
+    )
 
     print("\n" + "-" * 70)
     print("COMPARISON: Normal vs Pessimistic")
@@ -262,39 +264,47 @@ def print_report(
     if normal_results and "error" not in normal_results:
         normal_sharpe = normal_results.get("sharpe_ratio", 0)
         pess_sharpe = pessimistic_results.get("sharpe_ratio", 0)
-        rows.append([
-            "Sharpe Ratio",
-            f"{normal_sharpe:.2f}",
-            f"{pess_sharpe:.2f}",
-            f"{pess_sharpe - normal_sharpe:+.2f}",
-        ])
+        rows.append(
+            [
+                "Sharpe Ratio",
+                f"{normal_sharpe:.2f}",
+                f"{pess_sharpe:.2f}",
+                f"{pess_sharpe - normal_sharpe:+.2f}",
+            ]
+        )
 
         normal_dd = normal_results.get("max_drawdown", 0)
         pess_dd = pessimistic_results.get("max_drawdown", 0)
-        rows.append([
-            "Max Drawdown",
-            f"{normal_dd:.1f}%",
-            f"{pess_dd:.1f}%",
-            f"{pess_dd - normal_dd:+.1f}pp",
-        ])
+        rows.append(
+            [
+                "Max Drawdown",
+                f"{normal_dd:.1f}%",
+                f"{pess_dd:.1f}%",
+                f"{pess_dd - normal_dd:+.1f}pp",
+            ]
+        )
 
         normal_pnl = normal_results.get("total_pnl", 0)
         pess_pnl = pessimistic_results.get("total_pnl", 0)
-        rows.append([
-            "P/L",
-            f"${normal_pnl:,.0f}",
-            f"${pess_pnl:,.0f}",
-            f"${pess_pnl - normal_pnl:,.0f}",
-        ])
+        rows.append(
+            [
+                "P/L",
+                f"${normal_pnl:,.0f}",
+                f"${pess_pnl:,.0f}",
+                f"${pess_pnl - normal_pnl:,.0f}",
+            ]
+        )
 
         normal_wr = normal_results.get("win_rate", 0)
         pess_wr = pessimistic_results.get("win_rate", 0)
-        rows.append([
-            "Win Rate",
-            f"{normal_wr:.1f}%",
-            f"{pess_wr:.1f}%",
-            f"{pess_wr - normal_wr:+.1f}pp",
-        ])
+        rows.append(
+            [
+                "Win Rate",
+                f"{normal_wr:.1f}%",
+                f"{pess_wr:.1f}%",
+                f"{pess_wr - normal_wr:+.1f}pp",
+            ]
+        )
 
     # Print table
     col_widths = [20, 15, 15, 15]
@@ -399,7 +409,7 @@ def main() -> int:
     start_date = (datetime.now() - timedelta(days=args.period)).strftime("%Y-%m-%d")
 
     if not args.json_output:
-        print(f"\n🔬 Running stress test validation...")
+        print("\n🔬 Running stress test validation...")
         print(f"   Symbols: {', '.join(symbols)}")
         print(f"   Period: {start_date} to {end_date} ({args.period} days)")
         print(f"   Capital: ${args.capital:,.0f}")

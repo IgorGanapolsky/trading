@@ -12,11 +12,11 @@ Tests cover:
 """
 
 import json
-import os
-import pytest
 from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestPositionManagementWiring:
@@ -34,21 +34,15 @@ class TestPositionManagementWiring:
                 with patch("src.orchestrator.main.RLFilter"):
                     with patch("src.orchestrator.main.LangChainSentimentAgent"):
                         with patch("src.orchestrator.main.BiasStore"):
-                            orchestrator = TradingOrchestrator(
-                                tickers=["SPY"], paper=True
-                            )
+                            orchestrator = TradingOrchestrator(tickers=["SPY"], paper=True)
                             assert hasattr(orchestrator, "position_manager")
-                            assert isinstance(
-                                orchestrator.position_manager, PositionManager
-                            )
+                            assert isinstance(orchestrator.position_manager, PositionManager)
 
     def test_orchestrator_calls_manage_positions(self):
         """Verify run() calls _manage_open_positions() before processing tickers."""
         from src.orchestrator.main import TradingOrchestrator
 
-        with patch.object(
-            TradingOrchestrator, "__init__", lambda self, **kwargs: None
-        ):
+        with patch.object(TradingOrchestrator, "__init__", lambda self, **kwargs: None):
             orchestrator = TradingOrchestrator.__new__(TradingOrchestrator)
             orchestrator.tickers = ["SPY"]
             orchestrator._manage_open_positions = MagicMock(return_value={})
@@ -105,9 +99,7 @@ class TestClosedTradeRecording:
             from src.orchestrator.main import TradingOrchestrator
 
             # Create minimal orchestrator instance
-            with patch.object(
-                TradingOrchestrator, "__init__", lambda self, **kwargs: None
-            ):
+            with patch.object(TradingOrchestrator, "__init__", lambda self, **kwargs: None):
                 orchestrator = TradingOrchestrator.__new__(TradingOrchestrator)
 
                 # Call the method
@@ -179,14 +171,12 @@ class TestWorkflowConfiguration:
             # Pattern that caused secrets validation bypass
             ('echo "secrets_valid=true"', "unconditional success"),
             # Silent MCP failure pattern
-            ('exit 0\n          fi\n          nohup uvx', "silent MCP skip"),
+            ("exit 0\n          fi\n          nohup uvx", "silent MCP skip"),
         ]
 
         for pattern, description in dangerous_patterns:
             if pattern in content:
-                pytest.fail(
-                    f"Found dangerous pattern ({description}): {pattern[:50]}..."
-                )
+                pytest.fail(f"Found dangerous pattern ({description}): {pattern[:50]}...")
 
     def test_secrets_validation_uses_gha_output(self, workflow_path):
         """Verify secrets validation properly sets GitHub output."""
@@ -197,9 +187,7 @@ class TestWorkflowConfiguration:
         content = daily_trading.read_text()
 
         # Should use --gha-output flag
-        assert (
-            "--gha-output" in content
-        ), "Secrets validation must use --gha-output flag"
+        assert "--gha-output" in content, "Secrets validation must use --gha-output flag"
 
     def test_mcp_failure_is_fatal(self, workflow_path):
         """Verify MCP server failure stops the workflow."""
@@ -210,9 +198,9 @@ class TestWorkflowConfiguration:
         content = daily_trading.read_text()
 
         # Should exit 1 when credentials missing, not exit 0
-        assert (
-            "exit 1" in content and "ALPACA_API_KEY" in content
-        ), "MCP failure must be fatal when credentials missing"
+        assert "exit 1" in content and "ALPACA_API_KEY" in content, (
+            "MCP failure must be fatal when credentials missing"
+        )
 
 
 class TestExecutionTracking:
@@ -285,12 +273,13 @@ class TestPositionManager:
 
     def test_position_manager_evaluates_exits(self):
         """Verify PositionManager evaluates positions for exits."""
+        from datetime import datetime
+
         from src.risk.position_manager import (
-            PositionManager,
             ExitConditions,
             PositionInfo,
+            PositionManager,
         )
-        from datetime import datetime, timedelta
 
         manager = PositionManager(
             conditions=ExitConditions(
@@ -318,16 +307,15 @@ class TestPositionManager:
 
     def test_stop_loss_triggers(self):
         """Verify stop-loss triggers correctly."""
-        from src.risk.position_manager import (
-            PositionManager,
-            ExitConditions,
-            PositionInfo,
-        )
         from datetime import datetime
 
-        manager = PositionManager(
-            conditions=ExitConditions(stop_loss_pct=0.03)
+        from src.risk.position_manager import (
+            ExitConditions,
+            PositionInfo,
+            PositionManager,
         )
+
+        manager = PositionManager(conditions=ExitConditions(stop_loss_pct=0.03))
 
         losing_position = PositionInfo(
             symbol="SPY",

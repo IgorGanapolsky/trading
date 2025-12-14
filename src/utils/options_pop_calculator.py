@@ -489,7 +489,5 @@ if __name__ == "__main__":
 
     # Example 5: Strategy convenience function
     print("\n5. Bull Put Spread via convenience function")
-    result = calculate_pop_for_strategy(
-        "bull_put", short_delta=-0.20, net_credit=0.85, width=5.00
-    )
+    result = calculate_pop_for_strategy("bull_put", short_delta=-0.20, net_credit=0.85, width=5.00)
     print(f"   POP: {result.probability:.1%}")

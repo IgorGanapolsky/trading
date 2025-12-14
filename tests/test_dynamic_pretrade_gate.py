@@ -12,7 +12,6 @@ Created: Dec 11, 2025
 """
 
 import pytest
-
 from src.verification.dynamic_pretrade_risk_gate import (
     DynamicPreTradeGate,
     ValidationResult,
@@ -98,9 +97,9 @@ class TestDynamicPreTradeGate:
         # With minimal gate (other checks disabled), position_validation weight is 0.15
         # So risk score will be: 30 (position score) * 0.15 / 1.0 = 4.5
         # This is actually correct - skipped checks count as 0 risk
-        assert any(
-            "exceeds" in str(w).lower() for w in result.prevention_checklist
-        ), "Should warn about oversized position"
+        assert any("exceeds" in str(w).lower() for w in result.prevention_checklist), (
+            "Should warn about oversized position"
+        )
 
     def test_validate_invalid_symbol(self, gate_minimal):
         """Test that invalid symbols are caught."""
@@ -192,6 +191,7 @@ class TestDynamicPreTradeGate:
 
     def test_decision_logic_approve(self, gate, monkeypatch):
         """Test decision logic - approve scenario."""
+
         # Mock all checks to pass with low risk
         def mock_check(*args, **kwargs):
             from src.verification.dynamic_pretrade_risk_gate import RiskCheckResult

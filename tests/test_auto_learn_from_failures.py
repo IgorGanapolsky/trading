@@ -23,7 +23,6 @@ Created: 2025-12-11
 """
 
 import ast
-import json
 import re
 import sys
 from pathlib import Path
@@ -115,9 +114,7 @@ class LessonParser:
         imports = []
 
         # Look for import statements in code blocks
-        import_matches = re.findall(
-            r"(?:from|import)\s+([\w.]+)(?:\s+import\s+(\w+))?", content
-        )
+        import_matches = re.findall(r"(?:from|import)\s+([\w.]+)(?:\s+import\s+(\w+))?", content)
         for module, name in import_matches:
             if name:
                 imports.append(f"from {module} import {name}")
@@ -188,14 +185,10 @@ class TestAutoLearnFromFailures:
 
         for lesson in critical:
             has_patterns = (
-                lesson["file_patterns"]
-                or lesson["import_checks"]
-                or lesson["code_patterns"]
+                lesson["file_patterns"] or lesson["import_checks"] or lesson["code_patterns"]
             )
             if not has_patterns:
-                pytest.skip(
-                    f"CRITICAL lesson {lesson['id']} should have testable patterns"
-                )
+                pytest.skip(f"CRITICAL lesson {lesson['id']} should have testable patterns")
 
     def test_file_patterns_exist(self, lessons):
         """Files mentioned in lessons should exist."""
@@ -223,9 +216,7 @@ class TestAutoLearnFromFailures:
                 try:
                     ast.parse(import_stmt)
                 except SyntaxError as e:
-                    pytest.fail(
-                        f"Lesson {lesson['id']} has invalid import: {import_stmt}: {e}"
-                    )
+                    pytest.fail(f"Lesson {lesson['id']} has invalid import: {import_stmt}: {e}")
 
 
 # =============================================================================
@@ -241,9 +232,7 @@ def pytest_generate_tests(metafunc):
             parser = LessonParser(lessons_dir)
             lessons = parser.parse_all()
             critical = [l for l in lessons if l["severity"] == "CRITICAL"]
-            metafunc.parametrize(
-                "critical_lesson", critical, ids=[l["id"] for l in critical]
-            )
+            metafunc.parametrize("critical_lesson", critical, ids=[l["id"] for l in critical])
 
 
 class TestCriticalLessonRegressions:
@@ -261,9 +250,7 @@ class TestCriticalLessonRegressions:
                 # Import may not exist anymore - that's OK
                 pass
             except SyntaxError as e:
-                pytest.fail(
-                    f"REGRESSION {critical_lesson['id']}: Import syntax error: {e}"
-                )
+                pytest.fail(f"REGRESSION {critical_lesson['id']}: Import syntax error: {e}")
 
     def test_critical_files_compile(self, critical_lesson):
         """Test that files from critical lessons compile."""
@@ -306,7 +293,7 @@ class TestLearningLoopIntegrity:
 
     def test_recent_lessons_exist(self):
         """Recent lessons should exist (system is actively learning)."""
-        from datetime import datetime, timedelta
+        from datetime import datetime
 
         lessons_dir = Path(__file__).parent.parent / "rag_knowledge" / "lessons_learned"
         if not lessons_dir.exists():
@@ -317,9 +304,7 @@ class TestLearningLoopIntegrity:
         recent_files = [f for f in lessons_dir.glob("*.md") if f.stat().st_mtime > cutoff]
 
         # Should have at least some recent lessons
-        assert (
-            len(recent_files) > 0
-        ), "No recent lessons learned - system may not be learning"
+        assert len(recent_files) > 0, "No recent lessons learned - system may not be learning"
 
     def test_lessons_follow_format(self):
         """Lessons should follow the standard format for parseability."""

@@ -8,11 +8,9 @@ Created: Dec 11, 2025
 Purpose: Prevent future incidents by learning from past mistakes
 """
 
-import json
-import os
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+
 import pytest
 
 # Add project root to path
@@ -69,6 +67,7 @@ class TestRAGSafetyChecker:
         """RAG safety checker module should be importable."""
         try:
             from src.verification.rag_safety_checker import RAGSafetyChecker
+
             assert RAGSafetyChecker is not None
         except ImportError as e:
             pytest.skip(f"RAGSafetyChecker not available: {e}")
@@ -77,6 +76,7 @@ class TestRAGSafetyChecker:
         """Dangerous patterns must be defined for detection."""
         try:
             from src.verification.rag_safety_checker import RAGSafetyChecker
+
             checker = RAGSafetyChecker()
 
             # Should have dangerous patterns
@@ -88,6 +88,7 @@ class TestRAGSafetyChecker:
         """Should detect large PRs as risky."""
         try:
             from src.verification.rag_safety_checker import RAGSafetyChecker
+
             checker = RAGSafetyChecker()
 
             # 50 changed files should trigger warning
@@ -95,10 +96,9 @@ class TestRAGSafetyChecker:
             result = checker.check_merge_safety(large_pr_files, "feat: large change")
 
             # Should return warnings or not be approved
-            assert (
-                not result.get("approved", True) or
-                len(result.get("warnings", [])) > 0
-            ), "Large PR (50 files) should trigger warning"
+            assert not result.get("approved", True) or len(result.get("warnings", [])) > 0, (
+                "Large PR (50 files) should trigger warning"
+            )
         except ImportError:
             pytest.skip("RAGSafetyChecker not available")
         except Exception as e:
@@ -129,6 +129,7 @@ class TestPreMergeVerification:
         """Pre-merge verifier should be importable."""
         try:
             from src.verification.pre_merge_verifier import PreMergeVerifier
+
             assert PreMergeVerifier is not None
         except ImportError as e:
             pytest.skip(f"PreMergeVerifier not available: {e}")
@@ -137,6 +138,7 @@ class TestPreMergeVerification:
         """Critical imports list must be defined."""
         try:
             from src.verification.pre_merge_verifier import PreMergeVerifier
+
             verifier = PreMergeVerifier()
 
             assert hasattr(verifier, "CRITICAL_IMPORTS")
@@ -189,6 +191,7 @@ class TestMLAnomalyDetection:
         """ML anomaly detector should be importable."""
         try:
             from src.verification.ml_anomaly_detector import MLAnomalyDetector
+
             assert MLAnomalyDetector is not None
         except ImportError:
             pytest.skip("MLAnomalyDetector not available")
@@ -197,6 +200,7 @@ class TestMLAnomalyDetection:
         """Anomaly detection baselines must be defined."""
         try:
             from src.verification.ml_anomaly_detector import MLAnomalyDetector
+
             detector = MLAnomalyDetector()
 
             assert hasattr(detector, "BASELINES") or hasattr(detector, "baselines")
@@ -205,6 +209,7 @@ class TestMLAnomalyDetection:
 
     def test_code_complexity_detection(self):
         """Should detect overly complex code."""
+
         # Simple heuristic: function with too many lines
         def count_function_lines(code: str) -> int:
             lines = code.strip().split("\n")
@@ -225,6 +230,7 @@ class TestContinuousVerification:
         """Continuous verifier should be importable."""
         try:
             from src.verification.continuous_verifier import ContinuousVerifier
+
             assert ContinuousVerifier is not None
         except ImportError:
             pytest.skip("ContinuousVerifier not available")
@@ -233,6 +239,7 @@ class TestContinuousVerification:
         """Verification thresholds must be defined."""
         try:
             from src.verification.continuous_verifier import ContinuousVerifier
+
             verifier = ContinuousVerifier()
 
             assert hasattr(verifier, "THRESHOLDS") or hasattr(verifier, "thresholds")
@@ -256,6 +263,7 @@ class TestLessonsLearnedStore:
         """Lessons learned store should be importable."""
         try:
             from src.rag.lessons_learned_store import LessonsLearnedStore
+
             assert LessonsLearnedStore is not None
         except ImportError:
             pytest.skip("LessonsLearnedStore not available")
@@ -264,6 +272,7 @@ class TestLessonsLearnedStore:
         """Should be able to search lessons by keyword."""
         try:
             from src.rag.lessons_learned_store import LessonsLearnedStore
+
             store = LessonsLearnedStore()
 
             # Search for syntax error lessons
@@ -279,6 +288,7 @@ class TestLessonsLearnedStore:
         """Should be able to retrieve critical lessons."""
         try:
             from src.rag.lessons_learned_store import LessonsLearnedStore
+
             store = LessonsLearnedStore()
 
             critical = store.get_critical_lessons()
@@ -297,6 +307,7 @@ class TestVectorStoreIntegration:
         """Embedder should be importable."""
         try:
             from src.rag.vector_db.embedder import NewsEmbedder
+
             assert NewsEmbedder is not None
         except ImportError:
             pytest.skip("NewsEmbedder not available")
@@ -305,6 +316,7 @@ class TestVectorStoreIntegration:
         """ChromaDB client should be importable."""
         try:
             from src.rag.vector_db.chroma_client import InMemoryCollection
+
             assert InMemoryCollection is not None
         except ImportError:
             pytest.skip("ChromaDB client not available")
@@ -315,6 +327,7 @@ class TestVectorStoreIntegration:
 
         try:
             from src.rag.vector_db.config import RAGConfig
+
             config = RAGConfig()
             assert config.embedding_dim == expected_dims
         except ImportError:
@@ -334,6 +347,7 @@ class TestHallucinationPrevention:
         """Hallucination prevention pipeline should be importable."""
         try:
             from src.verification.hallucination_prevention import HallucinationPreventionPipeline
+
             assert HallucinationPreventionPipeline is not None
         except ImportError:
             pytest.skip("HallucinationPreventionPipeline not available")
@@ -342,6 +356,7 @@ class TestHallucinationPrevention:
         """Factuality monitor should be importable."""
         try:
             from src.verification.factuality_monitor import FactualityMonitor
+
             assert FactualityMonitor is not None
         except ImportError:
             pytest.skip("FactualityMonitor not available")
@@ -376,15 +391,14 @@ class TestRegressionPrevention:
             except SyntaxError as e:
                 syntax_errors.append(f"{py_file}: {e}")
 
-        assert len(syntax_errors) == 0, (
-            f"REGRESSION ll_009: Syntax errors found: {syntax_errors}"
-        )
+        assert len(syntax_errors) == 0, f"REGRESSION ll_009: Syntax errors found: {syntax_errors}"
 
     def test_ll_009_critical_imports_work(self):
         """ll_009: Critical imports must not fail."""
         # This is the exact check that would have prevented ll_009
         try:
             from src.orchestrator.main import TradingOrchestrator
+
             assert TradingOrchestrator is not None, "TradingOrchestrator import failed"
         except Exception as e:
             pytest.fail(f"REGRESSION ll_009: TradingOrchestrator import failed: {e}")
@@ -393,7 +407,9 @@ class TestRegressionPrevention:
         """Large PRs (>10 files) need human review per ll_009."""
         # This is a documentation test - actual enforcement is in CI
         # Verify the rule is documented
-        lesson_path = PROJECT_ROOT / "rag_knowledge" / "lessons_learned" / "ll_009_ci_syntax_failure_dec11.md"
+        lesson_path = (
+            PROJECT_ROOT / "rag_knowledge" / "lessons_learned" / "ll_009_ci_syntax_failure_dec11.md"
+        )
 
         if lesson_path.exists():
             content = lesson_path.read_text()
@@ -437,6 +453,7 @@ class TestPatternDetection:
 
     def test_confidence_scoring(self):
         """Pattern matches should have confidence scores."""
+
         # Simple confidence scoring based on indicator matches
         def calculate_confidence(error_text: str, indicators: list[str]) -> float:
             matches = sum(1 for ind in indicators if ind.lower() in error_text.lower())
@@ -478,6 +495,7 @@ class TestLearningLoop:
         """Lessons should be exportable for ML training."""
         try:
             from src.rag.lessons_learned_store import LessonsLearnedStore
+
             store = LessonsLearnedStore()
 
             # Should have export method

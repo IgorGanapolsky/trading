@@ -13,9 +13,7 @@ Tests verify that:
 from __future__ import annotations
 
 import argparse
-import json
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 from typing import Any
@@ -96,7 +94,7 @@ class TestPromotionGateSanity(unittest.TestCase):
         """
         system_state = create_system_state(
             win_rate=35.0,  # Way below 55% threshold
-            sharpe=-0.5,    # Negative (losing money consistently)
+            sharpe=-0.5,  # Negative (losing money consistently)
             drawdown=25.0,  # Massive drawdown (>20%)
             total_trades=150,
         )
@@ -113,8 +111,9 @@ class TestPromotionGateSanity(unittest.TestCase):
 
         # Should have MULTIPLE deficits (not just one)
         self.assertGreaterEqual(
-            len(deficits), 4,
-            f"Clearly bad metrics should trigger multiple deficits, got {len(deficits)}: {deficits}"
+            len(deficits),
+            4,
+            f"Clearly bad metrics should trigger multiple deficits, got {len(deficits)}: {deficits}",
         )
 
         # Verify specific deficits are present
@@ -131,8 +130,8 @@ class TestPromotionGateSanity(unittest.TestCase):
         """
         system_state = create_system_state(
             win_rate=65.0,  # Well above 55% threshold
-            sharpe=2.5,     # Excellent Sharpe ratio
-            drawdown=3.5,   # Very low drawdown
+            sharpe=2.5,  # Excellent Sharpe ratio
+            drawdown=3.5,  # Very low drawdown
             total_trades=200,
         )
         backtest_summary = create_backtest_summary(
@@ -148,8 +147,9 @@ class TestPromotionGateSanity(unittest.TestCase):
 
         # Should have NO deficits
         self.assertEqual(
-            len(deficits), 0,
-            f"Clearly good metrics should have zero deficits, got {len(deficits)}: {deficits}"
+            len(deficits),
+            0,
+            f"Clearly good metrics should have zero deficits, got {len(deficits)}: {deficits}",
         )
 
     def test_borderline_metrics_handled_appropriately(self):
@@ -164,8 +164,8 @@ class TestPromotionGateSanity(unittest.TestCase):
         # Just barely passing all thresholds
         system_state_passing = create_system_state(
             win_rate=56.0,  # Just above 55%
-            sharpe=1.25,    # Just above 1.2
-            drawdown=9.5,   # Just below 10%
+            sharpe=1.25,  # Just above 1.2
+            drawdown=9.5,  # Just below 10%
             total_trades=105,
         )
         backtest_summary_passing = create_backtest_summary(
@@ -179,7 +179,7 @@ class TestPromotionGateSanity(unittest.TestCase):
         # Just barely failing multiple thresholds
         system_state_failing = create_system_state(
             win_rate=54.0,  # Just below 55%
-            sharpe=1.15,    # Just below 1.2
+            sharpe=1.15,  # Just below 1.2
             drawdown=10.5,  # Just above 10%
             total_trades=95,
         )
@@ -198,14 +198,16 @@ class TestPromotionGateSanity(unittest.TestCase):
 
         # Passing borderline should have zero or very few deficits
         self.assertEqual(
-            len(deficits_passing), 0,
-            f"Borderline passing metrics should have zero deficits, got {len(deficits_passing)}: {deficits_passing}"
+            len(deficits_passing),
+            0,
+            f"Borderline passing metrics should have zero deficits, got {len(deficits_passing)}: {deficits_passing}",
         )
 
         # Failing borderline should have several deficits with clear explanations
         self.assertGreaterEqual(
-            len(deficits_failing), 3,
-            f"Borderline failing metrics should have multiple deficits, got {len(deficits_failing)}: {deficits_failing}"
+            len(deficits_failing),
+            3,
+            f"Borderline failing metrics should have multiple deficits, got {len(deficits_failing)}: {deficits_failing}",
         )
 
     def test_gate_monotonicity_improving_metrics(self):
@@ -243,8 +245,7 @@ class TestPromotionGateSanity(unittest.TestCase):
         )
         improved_deficits_wr = evaluate_gate(improved_state_wr, baseline_backtest, args)
         self.assertEqual(
-            len(improved_deficits_wr), 0,
-            "Improving win rate should not cause rejection"
+            len(improved_deficits_wr), 0, "Improving win rate should not cause rejection"
         )
 
         # Test 2: Improve Sharpe only
@@ -256,8 +257,7 @@ class TestPromotionGateSanity(unittest.TestCase):
         )
         improved_deficits_sharpe = evaluate_gate(improved_state_sharpe, baseline_backtest, args)
         self.assertEqual(
-            len(improved_deficits_sharpe), 0,
-            "Improving Sharpe should not cause rejection"
+            len(improved_deficits_sharpe), 0, "Improving Sharpe should not cause rejection"
         )
 
         # Test 3: Reduce drawdown (improve)
@@ -269,28 +269,28 @@ class TestPromotionGateSanity(unittest.TestCase):
         )
         improved_deficits_dd = evaluate_gate(improved_state_dd, baseline_backtest, args)
         self.assertEqual(
-            len(improved_deficits_dd), 0,
-            "Reducing drawdown should not cause rejection"
+            len(improved_deficits_dd), 0, "Reducing drawdown should not cause rejection"
         )
 
         # Test 4: Improve ALL metrics together
         improved_state_all = create_system_state(
             win_rate=65.0,  # IMPROVED
-            sharpe=2.0,     # IMPROVED
-            drawdown=4.0,   # IMPROVED
+            sharpe=2.0,  # IMPROVED
+            drawdown=4.0,  # IMPROVED
             total_trades=200,  # IMPROVED
         )
         improved_backtest_all = create_backtest_summary(
             min_win_rate=62.0,  # IMPROVED
-            min_sharpe=1.8,     # IMPROVED
-            max_drawdown=5.0,   # IMPROVED
+            min_sharpe=1.8,  # IMPROVED
+            max_drawdown=5.0,  # IMPROVED
             min_profitable_streak=45,  # IMPROVED
             total_trades=200,
         )
         improved_deficits_all = evaluate_gate(improved_state_all, improved_backtest_all, args)
         self.assertEqual(
-            len(improved_deficits_all), 0,
-            "Improving all metrics should definitely not cause rejection"
+            len(improved_deficits_all),
+            0,
+            "Improving all metrics should definitely not cause rejection",
         )
 
     def test_gate_not_degenerate_all_accept(self):
@@ -326,8 +326,9 @@ class TestPromotionGateSanity(unittest.TestCase):
                 rejections += 1
 
         self.assertEqual(
-            rejections, len(bad_scenarios),
-            f"Gate should reject ALL clearly bad scenarios, but only rejected {rejections}/{len(bad_scenarios)}"
+            rejections,
+            len(bad_scenarios),
+            f"Gate should reject ALL clearly bad scenarios, but only rejected {rejections}/{len(bad_scenarios)}",
         )
 
     def test_gate_not_degenerate_all_reject(self):
@@ -363,8 +364,9 @@ class TestPromotionGateSanity(unittest.TestCase):
                 acceptances += 1
 
         self.assertEqual(
-            acceptances, len(good_scenarios),
-            f"Gate should accept ALL clearly good scenarios, but only accepted {acceptances}/{len(good_scenarios)}"
+            acceptances,
+            len(good_scenarios),
+            f"Gate should accept ALL clearly good scenarios, but only accepted {acceptances}/{len(good_scenarios)}",
         )
 
     def test_edge_case_exactly_at_thresholds(self):
@@ -374,7 +376,7 @@ class TestPromotionGateSanity(unittest.TestCase):
         """
         system_state = create_system_state(
             win_rate=55.0,  # Exactly at threshold
-            sharpe=1.2,     # Exactly at threshold
+            sharpe=1.2,  # Exactly at threshold
             drawdown=10.0,  # Exactly at threshold
             total_trades=100,  # Exactly at threshold
         )
@@ -391,8 +393,7 @@ class TestPromotionGateSanity(unittest.TestCase):
 
         # At exact thresholds should pass (inclusive boundaries)
         self.assertEqual(
-            len(deficits), 0,
-            f"Metrics exactly at thresholds should pass, got deficits: {deficits}"
+            len(deficits), 0, f"Metrics exactly at thresholds should pass, got deficits: {deficits}"
         )
 
     def test_insufficient_trades_rejected(self):
@@ -421,7 +422,7 @@ class TestPromotionGateSanity(unittest.TestCase):
         deficit_text = " ".join(deficits).lower()
         self.assertTrue(
             "trades" in deficit_text or "statistical significance" in deficit_text,
-            f"Should mention insufficient trades, got: {deficits}"
+            f"Should mention insufficient trades, got: {deficits}",
         )
 
     def test_normalize_percent_utility(self):

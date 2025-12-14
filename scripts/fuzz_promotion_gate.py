@@ -161,13 +161,15 @@ def run_fuzz_test(
 
         if verbose:
             status = "✅ PASS" if passed else "❌ FAIL"
-            print(f"Trial {trial + 1:3d}: {status} | "
-                  f"WR={trial_result['metrics']['win_rate']:.1f}% "
-                  f"Sharpe={trial_result['metrics']['sharpe']:.2f} "
-                  f"DD={trial_result['metrics']['drawdown']:.1f}% "
-                  f"Trades={trial_result['metrics']['trades']} "
-                  f"Streak={trial_result['metrics']['streak']}d | "
-                  f"Deficits={len(deficits)}")
+            print(
+                f"Trial {trial + 1:3d}: {status} | "
+                f"WR={trial_result['metrics']['win_rate']:.1f}% "
+                f"Sharpe={trial_result['metrics']['sharpe']:.2f} "
+                f"DD={trial_result['metrics']['drawdown']:.1f}% "
+                f"Trades={trial_result['metrics']['trades']} "
+                f"Streak={trial_result['metrics']['streak']}d | "
+                f"Deficits={len(deficits)}"
+            )
 
     accept_rate = accepts / num_trials
     reject_rate = rejects / num_trials

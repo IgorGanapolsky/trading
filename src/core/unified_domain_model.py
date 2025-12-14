@@ -16,21 +16,22 @@ References:
 - W3C SHACL: w3.org/TR/shacl/ (validation patterns)
 """
 
-from dataclasses import dataclass, field, asdict, fields
-from typing import Optional, List, Dict, Any, Literal, Type, get_type_hints, Union
-from datetime import datetime
-from enum import Enum
-from abc import ABC, abstractmethod
 import json
 import re
-
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field, fields
+from datetime import datetime
+from enum import Enum
+from typing import Any, Optional, get_type_hints
 
 # =============================================================================
 # VALIDATION FRAMEWORK (SHACL-inspired)
 # =============================================================================
 
+
 class ValidationError(Exception):
     """Raised when domain object validation fails"""
+
     def __init__(self, entity: str, field: str, message: str):
         self.entity = entity
         self.field = field
@@ -40,8 +41,9 @@ class ValidationError(Exception):
 
 class ValidationResult:
     """Result of validation with all errors collected"""
+
     def __init__(self):
-        self.errors: List[ValidationError] = []
+        self.errors: list[ValidationError] = []
 
     def add_error(self, entity: str, field: str, message: str):
         self.errors.append(ValidationError(entity, field, message))
@@ -55,12 +57,13 @@ class ValidationResult:
             raise ValidationError(
                 self.errors[0].entity,
                 self.errors[0].field,
-                "; ".join(e.message for e in self.errors)
+                "; ".join(e.message for e in self.errors),
             )
 
 
 class Validator(ABC):
     """Base validator interface (SHACL constraint pattern)"""
+
     @abstractmethod
     def validate(self, value: Any, field_name: str, entity_name: str) -> Optional[str]:
         """Returns error message if invalid, None if valid"""
@@ -69,6 +72,7 @@ class Validator(ABC):
 
 class RangeValidator(Validator):
     """Validates numeric ranges"""
+
     def __init__(self, min_val: float = None, max_val: float = None):
         self.min_val = min_val
         self.max_val = max_val
@@ -85,6 +89,7 @@ class RangeValidator(Validator):
 
 class PatternValidator(Validator):
     """Validates string patterns (regex)"""
+
     def __init__(self, pattern: str, description: str = "pattern"):
         self.pattern = re.compile(pattern)
         self.description = description
@@ -99,6 +104,7 @@ class PatternValidator(Validator):
 
 class NotEmptyValidator(Validator):
     """Validates non-empty strings"""
+
     def validate(self, value: Any, field_name: str, entity_name: str) -> Optional[str]:
         if value is None or (isinstance(value, str) and not value.strip()):
             return "cannot be empty"
@@ -107,7 +113,8 @@ class NotEmptyValidator(Validator):
 
 class EnumValidator(Validator):
     """Validates enum membership"""
-    def __init__(self, enum_class: Type[Enum]):
+
+    def __init__(self, enum_class: type[Enum]):
         self.enum_class = enum_class
 
     def validate(self, value: Any, field_name: str, entity_name: str) -> Optional[str]:
@@ -124,7 +131,7 @@ class EnumValidator(Validator):
 
 
 # Validation rules registry (SHACL shapes catalog)
-VALIDATION_RULES: Dict[str, Dict[str, List[Validator]]] = {
+VALIDATION_RULES: dict[str, dict[str, list[Validator]]] = {
     "Symbol": {
         "ticker": [NotEmptyValidator(), PatternValidator(r"^[A-Z0-9/]{1,10}$", "ticker format")],
     },
@@ -155,8 +162,10 @@ VALIDATION_RULES: Dict[str, Dict[str, List[Validator]]] = {
 # CORE DOMAIN ENUMS (Single Source of Truth)
 # =============================================================================
 
+
 class AssetClass(str, Enum):
     """All supported asset classes"""
+
     EQUITY = "equity"
     CRYPTO = "crypto"
     OPTION = "option"
@@ -166,6 +175,7 @@ class AssetClass(str, Enum):
 
 class TradeAction(str, Enum):
     """Trade action types"""
+
     BUY = "BUY"
     SELL = "SELL"
     HOLD = "HOLD"
@@ -173,6 +183,7 @@ class TradeAction(str, Enum):
 
 class OrderStatus(str, Enum):
     """Order status states"""
+
     PENDING = "pending"
     SUBMITTED = "submitted"
     FILLED = "filled"
@@ -183,6 +194,7 @@ class OrderStatus(str, Enum):
 
 class SignalStrength(str, Enum):
     """Signal confidence levels"""
+
     STRONG_BUY = "strong_buy"
     BUY = "buy"
     HOLD = "hold"
@@ -192,15 +204,17 @@ class SignalStrength(str, Enum):
 
 class StrategyTier(str, Enum):
     """Trading strategy tiers"""
-    TIER1_SAFE = "tier1_safe"           # Low risk, high probability
-    TIER2_MOMENTUM = "tier2_momentum"   # Momentum plays
-    TIER3_SWING = "tier3_swing"         # Swing trades
-    TIER4_OPTIONS = "tier4_options"     # Options strategies
-    TIER5_CRYPTO = "tier5_crypto"       # Crypto trading
+
+    TIER1_SAFE = "tier1_safe"  # Low risk, high probability
+    TIER2_MOMENTUM = "tier2_momentum"  # Momentum plays
+    TIER3_SWING = "tier3_swing"  # Swing trades
+    TIER4_OPTIONS = "tier4_options"  # Options strategies
+    TIER5_CRYPTO = "tier5_crypto"  # Crypto trading
 
 
 class DataSource(str, Enum):
     """Data source identifiers"""
+
     ALPACA = "alpaca"
     POLYGON = "polygon"
     YFINANCE = "yfinance"
@@ -214,20 +228,22 @@ class DataSource(str, Enum):
 # CORE DOMAIN MODELS (Netflix Upper Pattern)
 # =============================================================================
 
+
 @dataclass
 class Symbol:
     """Unified symbol representation"""
-    ticker: str                          # e.g., "BTCUSD", "AAPL"
+
+    ticker: str  # e.g., "BTCUSD", "AAPL"
     asset_class: AssetClass
-    exchange: Optional[str] = None       # e.g., "NASDAQ", "CRYPTO"
-    name: Optional[str] = None           # e.g., "Bitcoin", "Apple Inc."
-    
+    exchange: Optional[str] = None  # e.g., "NASDAQ", "CRYPTO"
+    name: Optional[str] = None  # e.g., "Bitcoin", "Apple Inc."
+
     def to_alpaca(self) -> str:
         """Project to Alpaca format"""
         if self.asset_class == AssetClass.CRYPTO:
             return self.ticker.replace("/", "")
         return self.ticker
-    
+
     def to_yfinance(self) -> str:
         """Project to yfinance format"""
         if self.asset_class == AssetClass.CRYPTO:
@@ -238,32 +254,34 @@ class Symbol:
 @dataclass
 class Price:
     """Unified price representation"""
+
     value: float
     currency: str = "USD"
     timestamp: Optional[datetime] = None
     source: Optional[DataSource] = None
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "value": self.value,
             "currency": self.currency,
             "timestamp": self.timestamp.isoformat() if self.timestamp else None,
-            "source": self.source.value if self.source else None
+            "source": self.source.value if self.source else None,
         }
 
 
 @dataclass
 class Signal:
     """Unified trading signal"""
+
     symbol: Symbol
     action: TradeAction
     strength: SignalStrength
-    confidence: float                    # 0.0 - 1.0
-    source: str                          # Strategy or model that generated it
+    confidence: float  # 0.0 - 1.0
+    source: str  # Strategy or model that generated it
     timestamp: datetime = field(default_factory=datetime.utcnow)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
-    def to_dict(self) -> Dict[str, Any]:
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "symbol": self.symbol.ticker,
             "asset_class": self.symbol.asset_class.value,
@@ -272,34 +290,32 @@ class Signal:
             "confidence": self.confidence,
             "source": self.source,
             "timestamp": self.timestamp.isoformat(),
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
-    
+
     def is_actionable(self, min_confidence: float = 0.6) -> bool:
         """Check if signal meets minimum confidence threshold"""
-        return (
-            self.action != TradeAction.HOLD and 
-            self.confidence >= min_confidence
-        )
+        return self.action != TradeAction.HOLD and self.confidence >= min_confidence
 
 
 @dataclass
 class Trade:
     """Unified trade representation (the core domain object)"""
-    id: str                              # Unique trade ID
+
+    id: str  # Unique trade ID
     symbol: Symbol
     action: TradeAction
     quantity: float
     price: Price
-    notional: float                      # Dollar amount
+    notional: float  # Dollar amount
     strategy: StrategyTier
     timestamp: datetime = field(default_factory=datetime.utcnow)
     status: OrderStatus = OrderStatus.PENDING
-    order_id: Optional[str] = None       # Broker order ID
-    signal: Optional[Signal] = None      # Original signal
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
-    def to_dict(self) -> Dict[str, Any]:
+    order_id: Optional[str] = None  # Broker order ID
+    signal: Optional[Signal] = None  # Original signal
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary (for JSON storage)"""
         return {
             "id": self.id,
@@ -313,20 +329,20 @@ class Trade:
             "timestamp": self.timestamp.isoformat(),
             "status": self.status.value,
             "order_id": self.order_id,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
-    
-    def to_alpaca_order(self) -> Dict[str, Any]:
+
+    def to_alpaca_order(self) -> dict[str, Any]:
         """Project to Alpaca order format"""
         return {
             "symbol": self.symbol.to_alpaca(),
             "side": self.action.value.lower(),
             "type": "market",
             "notional": str(self.notional),
-            "time_in_force": "day"
+            "time_in_force": "day",
         }
-    
-    def to_performance_record(self) -> Dict[str, Any]:
+
+    def to_performance_record(self) -> dict[str, Any]:
         """Project to performance log format"""
         return {
             "date": self.timestamp.strftime("%Y-%m-%d"),
@@ -336,13 +352,14 @@ class Trade:
             "notional": self.notional,
             "price": self.price.value,
             "strategy": self.strategy.value,
-            "status": self.status.value
+            "status": self.status.value,
         }
 
 
 @dataclass
 class Position:
     """Unified position representation"""
+
     symbol: Symbol
     quantity: float
     avg_entry_price: Price
@@ -350,8 +367,8 @@ class Position:
     market_value: float
     unrealized_pnl: float
     unrealized_pnl_pct: float
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "symbol": self.symbol.ticker,
             "asset_class": self.symbol.asset_class.value,
@@ -360,28 +377,29 @@ class Position:
             "current_price": self.current_price.value,
             "market_value": self.market_value,
             "unrealized_pnl": self.unrealized_pnl,
-            "unrealized_pnl_pct": self.unrealized_pnl_pct
+            "unrealized_pnl_pct": self.unrealized_pnl_pct,
         }
 
 
 @dataclass
 class Portfolio:
     """Unified portfolio state"""
+
     equity: float
     cash: float
     buying_power: float
-    positions: List[Position] = field(default_factory=list)
+    positions: list[Position] = field(default_factory=list)
     timestamp: datetime = field(default_factory=datetime.utcnow)
-    
+
     @property
     def total_pnl(self) -> float:
         return sum(p.unrealized_pnl for p in self.positions)
-    
+
     @property
     def position_count(self) -> int:
         return len(self.positions)
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "equity": self.equity,
             "cash": self.cash,
@@ -389,7 +407,7 @@ class Portfolio:
             "total_pnl": self.total_pnl,
             "position_count": self.position_count,
             "positions": [p.to_dict() for p in self.positions],
-            "timestamp": self.timestamp.isoformat()
+            "timestamp": self.timestamp.isoformat(),
         }
 
 
@@ -397,19 +415,22 @@ class Portfolio:
 # RELATIONSHIP MODELING (Entity Graph - Netflix Upper Pattern)
 # =============================================================================
 
+
 class RelationType(str, Enum):
     """Types of relationships between entities"""
-    GENERATES = "generates"      # Signal generates Trade
-    AFFECTS = "affects"          # Trade affects Position
-    BELONGS_TO = "belongs_to"    # Position belongs to Portfolio
-    REFERENCES = "references"    # Trade references Signal
-    CONTAINS = "contains"        # Portfolio contains Position
+
+    GENERATES = "generates"  # Signal generates Trade
+    AFFECTS = "affects"  # Trade affects Position
+    BELONGS_TO = "belongs_to"  # Position belongs to Portfolio
+    REFERENCES = "references"  # Trade references Signal
+    CONTAINS = "contains"  # Portfolio contains Position
     DERIVES_FROM = "derives_from"  # Price derives from DataSource
 
 
 @dataclass
 class Relationship:
     """Represents a relationship between two entity types"""
+
     source_type: str
     relation: RelationType
     target_type: str
@@ -424,36 +445,74 @@ class DomainGraph:
     """
 
     # Define all relationships in the trading domain
-    RELATIONSHIPS: List[Relationship] = [
-        Relationship("Signal", RelationType.GENERATES, "Trade", "one_to_one",
-                     "A signal generates a trade decision"),
-        Relationship("Trade", RelationType.REFERENCES, "Signal", "one_to_one",
-                     "A trade references its originating signal"),
-        Relationship("Trade", RelationType.AFFECTS, "Position", "many_to_one",
-                     "Multiple trades affect a single position"),
-        Relationship("Position", RelationType.BELONGS_TO, "Portfolio", "many_to_one",
-                     "Multiple positions belong to one portfolio"),
-        Relationship("Portfolio", RelationType.CONTAINS, "Position", "one_to_many",
-                     "A portfolio contains multiple positions"),
-        Relationship("Price", RelationType.DERIVES_FROM, "DataSource", "many_to_one",
-                     "Prices derive from data sources"),
-        Relationship("Symbol", RelationType.BELONGS_TO, "AssetClass", "many_to_one",
-                     "Symbols belong to asset classes"),
+    RELATIONSHIPS: list[Relationship] = [
+        Relationship(
+            "Signal",
+            RelationType.GENERATES,
+            "Trade",
+            "one_to_one",
+            "A signal generates a trade decision",
+        ),
+        Relationship(
+            "Trade",
+            RelationType.REFERENCES,
+            "Signal",
+            "one_to_one",
+            "A trade references its originating signal",
+        ),
+        Relationship(
+            "Trade",
+            RelationType.AFFECTS,
+            "Position",
+            "many_to_one",
+            "Multiple trades affect a single position",
+        ),
+        Relationship(
+            "Position",
+            RelationType.BELONGS_TO,
+            "Portfolio",
+            "many_to_one",
+            "Multiple positions belong to one portfolio",
+        ),
+        Relationship(
+            "Portfolio",
+            RelationType.CONTAINS,
+            "Position",
+            "one_to_many",
+            "A portfolio contains multiple positions",
+        ),
+        Relationship(
+            "Price",
+            RelationType.DERIVES_FROM,
+            "DataSource",
+            "many_to_one",
+            "Prices derive from data sources",
+        ),
+        Relationship(
+            "Symbol",
+            RelationType.BELONGS_TO,
+            "AssetClass",
+            "many_to_one",
+            "Symbols belong to asset classes",
+        ),
     ]
 
     @classmethod
-    def get_relationships_for(cls, entity_type: str) -> List[Relationship]:
+    def get_relationships_for(cls, entity_type: str) -> list[Relationship]:
         """Get all relationships where entity is source or target"""
-        return [r for r in cls.RELATIONSHIPS
-                if r.source_type == entity_type or r.target_type == entity_type]
+        return [
+            r
+            for r in cls.RELATIONSHIPS
+            if r.source_type == entity_type or r.target_type == entity_type
+        ]
 
     @classmethod
-    def get_outgoing(cls, entity_type: str) -> List[Relationship]:
+    def get_outgoing(cls, entity_type: str) -> list[Relationship]:
         """Get relationships where entity is the source"""
         return [r for r in cls.RELATIONSHIPS if r.source_type == entity_type]
 
     @classmethod
-    def get_incoming(cls, entity_type: str) -> List[Relationship]:
+    def get_incoming(cls, entity_type: str) -> list[Relationship]:
         """Get relationships where entity is the target"""
         return [r for r in cls.RELATIONSHIPS if r.target_type == entity_type]
 
@@ -466,7 +525,7 @@ class DomainGraph:
         return "\n".join(lines)
 
     @classmethod
-    def to_dict(cls) -> Dict[str, Any]:
+    def to_dict(cls) -> dict[str, Any]:
         """Export domain graph as dictionary"""
         return {
             "entities": ["Symbol", "Price", "Signal", "Trade", "Position", "Portfolio"],
@@ -475,10 +534,10 @@ class DomainGraph:
                     "source": r.source_type,
                     "relation": r.relation.value,
                     "target": r.target_type,
-                    "cardinality": r.cardinality
+                    "cardinality": r.cardinality,
                 }
                 for r in cls.RELATIONSHIPS
-            ]
+            ],
         }
 
 
@@ -487,7 +546,7 @@ class DomainGraph:
 # =============================================================================
 
 # Python type to JSON Schema type mapping
-PYTHON_TO_JSON_SCHEMA: Dict[str, str] = {
+PYTHON_TO_JSON_SCHEMA: dict[str, str] = {
     "str": "string",
     "int": "integer",
     "float": "number",
@@ -501,7 +560,7 @@ PYTHON_TO_JSON_SCHEMA: Dict[str, str] = {
 }
 
 # Python type to Avro type mapping
-PYTHON_TO_AVRO: Dict[str, str] = {
+PYTHON_TO_AVRO: dict[str, str] = {
     "str": "string",
     "int": "long",
     "float": "double",
@@ -510,7 +569,7 @@ PYTHON_TO_AVRO: Dict[str, str] = {
 }
 
 # Python type to SQL type mapping
-PYTHON_TO_SQL: Dict[str, str] = {
+PYTHON_TO_SQL: dict[str, str] = {
     "str": "VARCHAR(255)",
     "int": "INTEGER",
     "float": "DECIMAL(18, 8)",
@@ -545,7 +604,7 @@ class SchemaGenerator:
         return type_str.split(".")[-1]
 
     @classmethod
-    def to_json_schema(cls, model_class) -> Dict[str, Any]:
+    def to_json_schema(cls, model_class) -> dict[str, Any]:
         """Generate JSON Schema from dataclass"""
         properties = {}
         required = []
@@ -585,7 +644,7 @@ class SchemaGenerator:
         }
 
     @classmethod
-    def to_avro_schema(cls, model_class) -> Dict[str, Any]:
+    def to_avro_schema(cls, model_class) -> dict[str, Any]:
         """Generate Avro schema for Kafka/streaming"""
         avro_fields = []
 
@@ -605,10 +664,12 @@ class SchemaGenerator:
             if is_optional:
                 avro_type = ["null", avro_type]
 
-            avro_fields.append({
-                "name": f.name,
-                "type": avro_type,
-            })
+            avro_fields.append(
+                {
+                    "name": f.name,
+                    "type": avro_type,
+                }
+            )
 
         return {
             "type": "record",
@@ -686,7 +747,7 @@ class SchemaGenerator:
         return f"type {type_name} {{\n" + "\n".join(gql_fields) + "\n}"
 
     @classmethod
-    def generate_all(cls, model_class) -> Dict[str, Any]:
+    def generate_all(cls, model_class) -> dict[str, Any]:
         """Generate all schema representations at once"""
         return {
             "json_schema": cls.to_json_schema(model_class),
@@ -699,6 +760,7 @@ class SchemaGenerator:
 # =============================================================================
 # DOMAIN VALIDATOR (SHACL-style validation)
 # =============================================================================
+
 
 class DomainValidator:
     """
@@ -739,41 +801,33 @@ class DomainValidator:
 # DOMAIN FACTORY (Consistent Object Creation)
 # =============================================================================
 
+
 class DomainFactory:
     """
     Factory for creating domain objects with validation.
     Ensures all objects conform to unified model.
     """
-    
+
     @staticmethod
     def create_crypto_symbol(ticker: str) -> Symbol:
         """Create a crypto symbol"""
-        return Symbol(
-            ticker=ticker,
-            asset_class=AssetClass.CRYPTO,
-            exchange="CRYPTO"
-        )
-    
+        return Symbol(ticker=ticker, asset_class=AssetClass.CRYPTO, exchange="CRYPTO")
+
     @staticmethod
     def create_equity_symbol(ticker: str, exchange: str = "NASDAQ") -> Symbol:
         """Create an equity symbol"""
-        return Symbol(
-            ticker=ticker,
-            asset_class=AssetClass.EQUITY,
-            exchange=exchange
-        )
-    
+        return Symbol(ticker=ticker, asset_class=AssetClass.EQUITY, exchange=exchange)
+
     @staticmethod
-    def create_trade_from_alpaca(alpaca_order: Dict, strategy: StrategyTier) -> Trade:
+    def create_trade_from_alpaca(alpaca_order: dict, strategy: StrategyTier) -> Trade:
         """Create Trade from Alpaca order response"""
         symbol_str = alpaca_order.get("symbol", "")
         is_crypto = "USD" in symbol_str and len(symbol_str) > 4
-        
+
         symbol = Symbol(
-            ticker=symbol_str,
-            asset_class=AssetClass.CRYPTO if is_crypto else AssetClass.EQUITY
+            ticker=symbol_str, asset_class=AssetClass.CRYPTO if is_crypto else AssetClass.EQUITY
         )
-        
+
         return Trade(
             id=alpaca_order.get("id", ""),
             symbol=symbol,
@@ -782,31 +836,30 @@ class DomainFactory:
             price=Price(value=float(alpaca_order.get("filled_avg_price", 0))),
             notional=float(alpaca_order.get("notional", 0)),
             strategy=strategy,
-            status=OrderStatus.FILLED if alpaca_order.get("status") == "filled" else OrderStatus.PENDING,
-            order_id=alpaca_order.get("id")
+            status=OrderStatus.FILLED
+            if alpaca_order.get("status") == "filled"
+            else OrderStatus.PENDING,
+            order_id=alpaca_order.get("id"),
         )
-    
+
     @staticmethod
     def create_signal(
-        symbol: Symbol,
-        action: TradeAction,
-        confidence: float,
-        source: str
+        symbol: Symbol, action: TradeAction, confidence: float, source: str
     ) -> Signal:
         """Create a trading signal"""
         if confidence >= 0.8:
-            strength = SignalStrength.STRONG_BUY if action == TradeAction.BUY else SignalStrength.STRONG_SELL
+            strength = (
+                SignalStrength.STRONG_BUY
+                if action == TradeAction.BUY
+                else SignalStrength.STRONG_SELL
+            )
         elif confidence >= 0.6:
             strength = SignalStrength.BUY if action == TradeAction.BUY else SignalStrength.SELL
         else:
             strength = SignalStrength.HOLD
-        
+
         return Signal(
-            symbol=symbol,
-            action=action,
-            strength=strength,
-            confidence=confidence,
-            source=source
+            symbol=symbol, action=action, strength=strength, confidence=confidence, source=source
         )
 
 
@@ -830,10 +883,7 @@ if __name__ == "__main__":
     print(f"  yfinance format: {btc.to_yfinance()}")
 
     signal = factory.create_signal(
-        symbol=btc,
-        action=TradeAction.BUY,
-        confidence=0.85,
-        source="text_analyzer"
+        symbol=btc, action=TradeAction.BUY, confidence=0.85, source="text_analyzer"
     )
     print(f"\nSignal: {signal.action.value}")
     print(f"  Strength: {signal.strength.value}")
@@ -847,7 +897,7 @@ if __name__ == "__main__":
         price=Price(value=90125.56),
         notional=10.0,
         strategy=StrategyTier.TIER5_CRYPTO,
-        signal=signal
+        signal=signal,
     )
     print(f"\nTrade: {trade.id} - {trade.action.value} {trade.symbol.ticker}")
 
@@ -867,7 +917,7 @@ if __name__ == "__main__":
         quantity=-1,  # Negative - should fail
         price=Price(value=90125.56),
         notional=-10.0,  # Negative - should fail
-        strategy=StrategyTier.TIER5_CRYPTO
+        strategy=StrategyTier.TIER5_CRYPTO,
     )
     result = DomainValidator.validate(bad_trade)
     print(f"Bad trade validation: {'PASS' if result.is_valid else 'FAIL'}")

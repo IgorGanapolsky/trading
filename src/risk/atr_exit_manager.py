@@ -60,22 +60,20 @@ class ATRExitManager:
     # Default ATR values for common assets (14-day estimates)
     DEFAULT_ATR = {
         # Equity ETFs
-        'SPY': 8.50,    # S&P 500 (~1.2% daily)
-        'QQQ': 12.00,   # Nasdaq (~2% daily)
-        'IWM': 4.50,    # Russell 2000
-        'VOO': 8.50,    # Vanguard S&P 500
-        'VTI': 5.50,    # Total Market
-
+        "SPY": 8.50,  # S&P 500 (~1.2% daily)
+        "QQQ": 12.00,  # Nasdaq (~2% daily)
+        "IWM": 4.50,  # Russell 2000
+        "VOO": 8.50,  # Vanguard S&P 500
+        "VTI": 5.50,  # Total Market
         # Bond ETFs (lower volatility)
-        'BIL': 0.02,    # T-Bills (very stable)
-        'SHY': 0.08,    # Short-term treasuries
-        'IEF': 0.45,    # Intermediate treasuries
-        'TLT': 1.20,    # Long-term treasuries
-        'BND': 0.35,    # Total Bond
-
+        "BIL": 0.02,  # T-Bills (very stable)
+        "SHY": 0.08,  # Short-term treasuries
+        "IEF": 0.45,  # Intermediate treasuries
+        "TLT": 1.20,  # Long-term treasuries
+        "BND": 0.35,  # Total Bond
         # Crypto (high volatility)
-        'BTCUSD': 3500.00,  # Bitcoin (~4% daily)
-        'ETHUSD': 150.00,   # Ethereum (~5% daily)
+        "BTCUSD": 3500.00,  # Bitcoin (~4% daily)
+        "ETHUSD": 150.00,  # Ethereum (~5% daily)
     }
 
     def __init__(
@@ -134,9 +132,9 @@ class ATRExitManager:
 
     def _calculate_atr(self, hist: pd.DataFrame, period: int = 14) -> float:
         """Calculate Average True Range from OHLC data."""
-        high = hist['High'].values
-        low = hist['Low'].values
-        close = hist['Close'].values
+        high = hist["High"].values
+        low = hist["Low"].values
+        close = hist["Close"].values
 
         # True Range components
         tr1 = high - low
@@ -155,7 +153,7 @@ class ATRExitManager:
         self,
         symbol: str,
         entry_price: float,
-        side: str = 'long',
+        side: str = "long",
         hist: pd.DataFrame | None = None,
     ) -> dict[str, float]:
         """
@@ -172,7 +170,7 @@ class ATRExitManager:
         """
         atr = self.get_atr(symbol, hist)
 
-        if side.lower() == 'long':
+        if side.lower() == "long":
             stop_loss = entry_price - (self.stop_loss_mult * atr)
             take_profit = entry_price + (self.take_profit_mult * atr)
         else:  # short
@@ -180,11 +178,11 @@ class ATRExitManager:
             take_profit = entry_price - (self.take_profit_mult * atr)
 
         return {
-            'stop_loss': stop_loss,
-            'take_profit': take_profit,
-            'atr': atr,
-            'stop_distance_pct': (self.stop_loss_mult * atr / entry_price) * 100,
-            'target_distance_pct': (self.take_profit_mult * atr / entry_price) * 100,
+            "stop_loss": stop_loss,
+            "take_profit": take_profit,
+            "atr": atr,
+            "stop_distance_pct": (self.stop_loss_mult * atr / entry_price) * 100,
+            "target_distance_pct": (self.take_profit_mult * atr / entry_price) * 100,
         }
 
     def check_exit(
@@ -193,7 +191,7 @@ class ATRExitManager:
         entry_price: float,
         current_price: float,
         entry_date: datetime | str,
-        side: str = 'long',
+        side: str = "long",
         hist: pd.DataFrame | None = None,
     ) -> ExitSignal:
         """
@@ -213,7 +211,7 @@ class ATRExitManager:
         # Parse entry date
         if isinstance(entry_date, str):
             try:
-                entry_date = datetime.fromisoformat(entry_date.replace('Z', '+00:00'))
+                entry_date = datetime.fromisoformat(entry_date.replace("Z", "+00:00"))
                 if entry_date.tzinfo:
                     entry_date = entry_date.replace(tzinfo=None)
             except Exception:
@@ -224,12 +222,12 @@ class ATRExitManager:
 
         # Calculate exit levels
         levels = self.calculate_exit_levels(symbol, entry_price, side, hist)
-        stop_loss = levels['stop_loss']
-        take_profit = levels['take_profit']
-        atr = levels['atr']
+        stop_loss = levels["stop_loss"]
+        take_profit = levels["take_profit"]
+        atr = levels["atr"]
 
         # Calculate P/L
-        if side.lower() == 'long':
+        if side.lower() == "long":
             pnl_pct = ((current_price - entry_price) / entry_price) * 100
         else:
             pnl_pct = ((entry_price - current_price) / entry_price) * 100
@@ -237,11 +235,16 @@ class ATRExitManager:
         # Check exit conditions (in priority order)
 
         # 1. Stop Loss
-        if side.lower() == 'long' and current_price <= stop_loss:
+        if (
+            side.lower() == "long"
+            and current_price <= stop_loss
+            or side.lower() == "short"
+            and current_price >= stop_loss
+        ):
             return ExitSignal(
                 symbol=symbol,
                 should_exit=True,
-                exit_type='stop_loss',
+                exit_type="stop_loss",
                 reason=f"Price ${current_price:.2f} hit stop loss ${stop_loss:.2f} (2×ATR)",
                 entry_price=entry_price,
                 current_price=current_price,
@@ -249,29 +252,20 @@ class ATRExitManager:
                 take_profit_price=take_profit,
                 days_held=days_held,
                 pnl_pct=pnl_pct,
-                urgency='immediate',
-            )
-        elif side.lower() == 'short' and current_price >= stop_loss:
-            return ExitSignal(
-                symbol=symbol,
-                should_exit=True,
-                exit_type='stop_loss',
-                reason=f"Price ${current_price:.2f} hit stop loss ${stop_loss:.2f} (2×ATR)",
-                entry_price=entry_price,
-                current_price=current_price,
-                stop_loss_price=stop_loss,
-                take_profit_price=take_profit,
-                days_held=days_held,
-                pnl_pct=pnl_pct,
-                urgency='immediate',
+                urgency="immediate",
             )
 
         # 2. Take Profit
-        if side.lower() == 'long' and current_price >= take_profit:
+        if (
+            side.lower() == "long"
+            and current_price >= take_profit
+            or side.lower() == "short"
+            and current_price <= take_profit
+        ):
             return ExitSignal(
                 symbol=symbol,
                 should_exit=True,
-                exit_type='take_profit',
+                exit_type="take_profit",
                 reason=f"Price ${current_price:.2f} hit take profit ${take_profit:.2f} (3×ATR)",
                 entry_price=entry_price,
                 current_price=current_price,
@@ -279,21 +273,7 @@ class ATRExitManager:
                 take_profit_price=take_profit,
                 days_held=days_held,
                 pnl_pct=pnl_pct,
-                urgency='immediate',
-            )
-        elif side.lower() == 'short' and current_price <= take_profit:
-            return ExitSignal(
-                symbol=symbol,
-                should_exit=True,
-                exit_type='take_profit',
-                reason=f"Price ${current_price:.2f} hit take profit ${take_profit:.2f} (3×ATR)",
-                entry_price=entry_price,
-                current_price=current_price,
-                stop_loss_price=stop_loss,
-                take_profit_price=take_profit,
-                days_held=days_held,
-                pnl_pct=pnl_pct,
-                urgency='immediate',
+                urgency="immediate",
             )
 
         # 3. Time Limit
@@ -301,7 +281,7 @@ class ATRExitManager:
             return ExitSignal(
                 symbol=symbol,
                 should_exit=True,
-                exit_type='time_limit',
+                exit_type="time_limit",
                 reason=f"Position held {days_held} days (max {self.max_holding_days})",
                 entry_price=entry_price,
                 current_price=current_price,
@@ -309,14 +289,14 @@ class ATRExitManager:
                 take_profit_price=take_profit,
                 days_held=days_held,
                 pnl_pct=pnl_pct,
-                urgency='end_of_day',
+                urgency="end_of_day",
             )
 
         # 4. Hold
         return ExitSignal(
             symbol=symbol,
             should_exit=False,
-            exit_type='hold',
+            exit_type="hold",
             reason=f"Within targets (SL: ${stop_loss:.2f}, TP: ${take_profit:.2f}, Days: {days_held}/{self.max_holding_days})",
             entry_price=entry_price,
             current_price=current_price,
@@ -324,7 +304,7 @@ class ATRExitManager:
             take_profit_price=take_profit,
             days_held=days_held,
             pnl_pct=pnl_pct,
-            urgency='none',
+            urgency="none",
         )
 
     def check_all_positions(
@@ -345,11 +325,11 @@ class ATRExitManager:
 
         for pos in positions:
             signal = self.check_exit(
-                symbol=pos['symbol'],
-                entry_price=pos.get('entry_price', pos.get('avg_cost', 0)),
-                current_price=pos['current_price'],
-                entry_date=pos.get('entry_date', datetime.now()),
-                side=pos.get('side', 'long'),
+                symbol=pos["symbol"],
+                entry_price=pos.get("entry_price", pos.get("avg_cost", 0)),
+                current_price=pos["current_price"],
+                entry_date=pos.get("entry_date", datetime.now()),
+                side=pos.get("side", "long"),
             )
             signals.append(signal)
 
@@ -376,7 +356,13 @@ class ATRExitManager:
             report.append("-" * 70)
 
             for s in exits_needed:
-                emoji = "🔴" if s.exit_type == 'stop_loss' else "🟢" if s.exit_type == 'take_profit' else "⏰"
+                emoji = (
+                    "🔴"
+                    if s.exit_type == "stop_loss"
+                    else "🟢"
+                    if s.exit_type == "take_profit"
+                    else "⏰"
+                )
                 report.append(f"\n{emoji} {s.symbol} - {s.exit_type.upper()}")
                 report.append(f"   Reason: {s.reason}")
                 report.append(f"   P/L: {s.pnl_pct:+.2f}%")
@@ -391,7 +377,9 @@ class ATRExitManager:
                 report.append(f"\n{s.symbol}:")
                 report.append(f"   Days: {s.days_held}/{self.max_holding_days}")
                 report.append(f"   P/L: {s.pnl_pct:+.2f}%")
-                report.append(f"   Stop: ${s.stop_loss_price:.2f} | Target: ${s.take_profit_price:.2f}")
+                report.append(
+                    f"   Stop: ${s.stop_loss_price:.2f} | Target: ${s.take_profit_price:.2f}"
+                )
 
         report.append("\n" + "=" * 70)
 
@@ -416,22 +404,22 @@ if __name__ == "__main__":
     # Sample positions from system state
     positions = [
         {
-            'symbol': 'SPY',
-            'entry_price': 686.38,
-            'current_price': 685.69,
-            'entry_date': '2025-12-07T18:16:23',
+            "symbol": "SPY",
+            "entry_price": 686.38,
+            "current_price": 685.69,
+            "entry_date": "2025-12-07T18:16:23",
         },
         {
-            'symbol': 'BTCUSD',
-            'entry_price': 88915.40,
-            'current_price': 89518.89,
-            'entry_date': '2025-12-07T18:16:23',
+            "symbol": "BTCUSD",
+            "entry_price": 88915.40,
+            "current_price": 89518.89,
+            "entry_date": "2025-12-07T18:16:23",
         },
         {
-            'symbol': 'BIL',
-            'entry_price': 91.53,
-            'current_price': 91.52,
-            'entry_date': '2025-12-07T18:16:23',
+            "symbol": "BIL",
+            "entry_price": 91.53,
+            "current_price": 91.52,
+            "entry_date": "2025-12-07T18:16:23",
         },
     ]
 

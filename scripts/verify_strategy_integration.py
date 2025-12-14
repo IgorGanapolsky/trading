@@ -19,10 +19,8 @@ Returns:
 from __future__ import annotations
 
 import json
-import re
 import sys
 from pathlib import Path
-
 
 # Map strategy tiers to expected function patterns
 STRATEGY_EXECUTION_PATTERNS = {
@@ -63,18 +61,13 @@ def get_active_strategies(state: dict) -> list[tuple[str, dict]]:
     active = []
     for tier, config in strategies.items():
         # Strategy is active if status is "active" or enabled is True
-        is_active = (
-            config.get("status") == "active"
-            or config.get("enabled", False)
-        )
+        is_active = config.get("status") == "active" or config.get("enabled", False)
         if is_active:
             active.append((tier, config))
     return active
 
 
-def verify_strategy_integrated(
-    tier: str, config: dict, trader_code: str
-) -> tuple[bool, str]:
+def verify_strategy_integrated(tier: str, config: dict, trader_code: str) -> tuple[bool, str]:
     """Verify a strategy is integrated in autonomous_trader.py."""
     patterns = STRATEGY_EXECUTION_PATTERNS.get(tier, [])
 

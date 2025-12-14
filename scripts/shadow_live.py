@@ -331,7 +331,9 @@ class LiveShadowTracker:
                         "symbol": order.symbol,
                         "side": order.side.value,
                         "qty": float(order.qty),
-                        "filled_avg_price": float(order.filled_avg_price) if order.filled_avg_price else 0,
+                        "filled_avg_price": float(order.filled_avg_price)
+                        if order.filled_avg_price
+                        else 0,
                         "timestamp": order.filled_at.isoformat() if order.filled_at else None,
                     }
                 )

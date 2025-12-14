@@ -63,9 +63,7 @@ def check_text(text: str, source: str = "input") -> list[dict]:
             end = min(len(text), match.end() + 50)
             context = text[start:end]
 
-            is_allowed = any(
-                re.search(allowed, context) for allowed in ALLOWED_CONTEXTS
-            )
+            is_allowed = any(re.search(allowed, context) for allowed in ALLOWED_CONTEXTS)
 
             if not is_allowed:
                 violations.append(
@@ -124,9 +122,7 @@ def check_file(filepath: Path) -> list[dict]:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Detect anti-manual mandate violations"
-    )
+    parser = argparse.ArgumentParser(description="Detect anti-manual mandate violations")
     parser.add_argument("--file", "-f", type=Path, help="File to check")
     parser.add_argument(
         "--check-commits",
@@ -135,9 +131,7 @@ def main():
         default=0,
         help="Check last N commits",
     )
-    parser.add_argument(
-        "--ci", action="store_true", help="CI mode - exit 1 on violations"
-    )
+    parser.add_argument("--ci", action="store_true", help="CI mode - exit 1 on violations")
 
     args = parser.parse_args()
 
@@ -158,7 +152,7 @@ def main():
         print(f"\n🚨 Found {len(all_violations)} Anti-Manual Violations:\n")
         for v in all_violations:
             print(f"  Source: {v['source']}")
-            print(f"  Match: \"{v['match']}\"")
+            print(f'  Match: "{v["match"]}"')
             print(f"  Context: ...{v['context']}...")
             print()
 

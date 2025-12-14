@@ -14,10 +14,9 @@ import logging
 import math
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from src.experiments.experiment_runner import (
-    ExperimentRunner,
     ExperimentResult,
     HyperparameterGrid,
 )
@@ -28,6 +27,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MockOHLCV:
     """Mock OHLCV data for testing."""
+
     timestamp: datetime
     open: float
     high: float
@@ -36,7 +36,7 @@ class MockOHLCV:
     volume: float
 
 
-def generate_mock_data(n_bars: int = 1000, volatility: float = 0.02) -> List[Dict[str, float]]:
+def generate_mock_data(n_bars: int = 1000, volatility: float = 0.02) -> list[dict[str, float]]:
     """Generate mock price data for backtesting."""
     import random
 
@@ -46,24 +46,26 @@ def generate_mock_data(n_bars: int = 1000, volatility: float = 0.02) -> List[Dic
     for i in range(n_bars):
         # Random walk with drift
         change = random.gauss(0.0001, volatility)
-        price *= (1 + change)
+        price *= 1 + change
 
-        high = price * (1 + abs(random.gauss(0, volatility/2)))
-        low = price * (1 - abs(random.gauss(0, volatility/2)))
+        high = price * (1 + abs(random.gauss(0, volatility / 2)))
+        low = price * (1 - abs(random.gauss(0, volatility / 2)))
 
-        data.append({
-            "timestamp": i,
-            "open": price * (1 + random.gauss(0, volatility/4)),
-            "high": high,
-            "low": low,
-            "close": price,
-            "volume": random.uniform(1000, 10000),
-        })
+        data.append(
+            {
+                "timestamp": i,
+                "open": price * (1 + random.gauss(0, volatility / 4)),
+                "high": high,
+                "low": low,
+                "close": price,
+                "volume": random.uniform(1000, 10000),
+            }
+        )
 
     return data
 
 
-def calculate_rsi(prices: List[float], period: int = 14) -> List[float]:
+def calculate_rsi(prices: list[float], period: int = 14) -> list[float]:
     """Calculate RSI indicator."""
     if len(prices) < period + 1:
         return [50.0] * len(prices)
@@ -74,7 +76,7 @@ def calculate_rsi(prices: List[float], period: int = 14) -> List[float]:
     losses = []
 
     for i in range(1, len(prices)):
-        change = prices[i] - prices[i-1]
+        change = prices[i] - prices[i - 1]
         gains.append(max(0, change))
         losses.append(max(0, -change))
 
@@ -84,8 +86,8 @@ def calculate_rsi(prices: List[float], period: int = 14) -> List[float]:
 
     for i in range(period, len(prices)):
         if i > period:
-            avg_gain = (avg_gain * (period - 1) + gains[i-1]) / period
-            avg_loss = (avg_loss * (period - 1) + losses[i-1]) / period
+            avg_gain = (avg_gain * (period - 1) + gains[i - 1]) / period
+            avg_loss = (avg_loss * (period - 1) + losses[i - 1]) / period
 
         if avg_loss == 0:
             rsi = 100.0
@@ -99,13 +101,14 @@ def calculate_rsi(prices: List[float], period: int = 14) -> List[float]:
 
 
 def calculate_macd(
-    prices: List[float],
+    prices: list[float],
     fast_period: int = 12,
     slow_period: int = 26,
     signal_period: int = 9,
-) -> Tuple[List[float], List[float], List[float]]:
+) -> tuple[list[float], list[float], list[float]]:
     """Calculate MACD indicator."""
-    def ema(data: List[float], period: int) -> List[float]:
+
+    def ema(data: list[float], period: int) -> list[float]:
         result = []
         multiplier = 2 / (period + 1)
 
@@ -132,7 +135,9 @@ def calculate_macd(
     return macd_line, signal_line, histogram
 
 
-def rsi_strategy_backtest(params: Dict[str, Any], data: Optional[List[Dict]] = None) -> Dict[str, float]:
+def rsi_strategy_backtest(
+    params: dict[str, Any], data: Optional[list[dict]] = None
+) -> dict[str, float]:
     """
     Backtest RSI-based strategy.
 
@@ -160,7 +165,7 @@ def rsi_strategy_backtest(params: Dict[str, Any], data: Optional[List[Dict]] = N
     for i in range(1, len(data)):
         if position is None:
             # Check for entry
-            if rsi[i] < oversold and rsi[i-1] >= oversold:
+            if rsi[i] < oversold and rsi[i - 1] >= oversold:
                 position = (prices[i], i)
         else:
             entry_price, entry_idx = position
@@ -177,27 +182,33 @@ def rsi_strategy_backtest(params: Dict[str, Any], data: Optional[List[Dict]] = N
                 exit_reason = "signal"
 
             if exit_reason:
-                trades.append({
-                    "pnl_pct": pnl_pct,
-                    "bars_held": i - entry_idx,
-                    "exit_reason": exit_reason,
-                })
+                trades.append(
+                    {
+                        "pnl_pct": pnl_pct,
+                        "bars_held": i - entry_idx,
+                        "exit_reason": exit_reason,
+                    }
+                )
                 position = None
 
     # Close any open position
     if position:
         entry_price, entry_idx = position
         pnl_pct = (prices[-1] - entry_price) / entry_price * 100
-        trades.append({
-            "pnl_pct": pnl_pct,
-            "bars_held": len(data) - entry_idx,
-            "exit_reason": "end",
-        })
+        trades.append(
+            {
+                "pnl_pct": pnl_pct,
+                "bars_held": len(data) - entry_idx,
+                "exit_reason": "end",
+            }
+        )
 
     return calculate_backtest_metrics(trades)
 
 
-def macd_strategy_backtest(params: Dict[str, Any], data: Optional[List[Dict]] = None) -> Dict[str, float]:
+def macd_strategy_backtest(
+    params: dict[str, Any], data: Optional[list[dict]] = None
+) -> dict[str, float]:
     """
     Backtest MACD-based strategy.
 
@@ -226,7 +237,7 @@ def macd_strategy_backtest(params: Dict[str, Any], data: Optional[List[Dict]] = 
     for i in range(1, len(data)):
         if position is None:
             # Buy on MACD crossover
-            if histogram[i] > 0 and histogram[i-1] <= 0:
+            if histogram[i] > 0 and histogram[i - 1] <= 0:
                 position = (prices[i], i)
         else:
             entry_price, entry_idx = position
@@ -237,30 +248,36 @@ def macd_strategy_backtest(params: Dict[str, Any], data: Optional[List[Dict]] = 
             exit_reason = None
             if pnl_pct <= -stop_loss_pct:
                 exit_reason = "stop_loss"
-            elif histogram[i] < 0 and histogram[i-1] >= 0:
+            elif histogram[i] < 0 and histogram[i - 1] >= 0:
                 exit_reason = "signal"
 
             if exit_reason:
-                trades.append({
-                    "pnl_pct": pnl_pct,
-                    "bars_held": i - entry_idx,
-                    "exit_reason": exit_reason,
-                })
+                trades.append(
+                    {
+                        "pnl_pct": pnl_pct,
+                        "bars_held": i - entry_idx,
+                        "exit_reason": exit_reason,
+                    }
+                )
                 position = None
 
     if position:
         entry_price, entry_idx = position
         pnl_pct = (prices[-1] - entry_price) / entry_price * 100
-        trades.append({
-            "pnl_pct": pnl_pct,
-            "bars_held": len(data) - entry_idx,
-            "exit_reason": "end",
-        })
+        trades.append(
+            {
+                "pnl_pct": pnl_pct,
+                "bars_held": len(data) - entry_idx,
+                "exit_reason": "end",
+            }
+        )
 
     return calculate_backtest_metrics(trades)
 
 
-def combined_strategy_backtest(params: Dict[str, Any], data: Optional[List[Dict]] = None) -> Dict[str, float]:
+def combined_strategy_backtest(
+    params: dict[str, Any], data: Optional[list[dict]] = None
+) -> dict[str, float]:
     """
     Backtest combined RSI + MACD strategy.
 
@@ -310,30 +327,34 @@ def combined_strategy_backtest(params: Dict[str, Any], data: Optional[List[Dict]
                 exit_reason = "take_profit"
             elif rsi[i] > overbought:
                 exit_reason = "rsi_overbought"
-            elif histogram[i] < 0 and histogram[i-1] >= 0:
+            elif histogram[i] < 0 and histogram[i - 1] >= 0:
                 exit_reason = "macd_bearish"
 
             if exit_reason:
-                trades.append({
-                    "pnl_pct": pnl_pct,
-                    "bars_held": i - entry_idx,
-                    "exit_reason": exit_reason,
-                })
+                trades.append(
+                    {
+                        "pnl_pct": pnl_pct,
+                        "bars_held": i - entry_idx,
+                        "exit_reason": exit_reason,
+                    }
+                )
                 position = None
 
     if position:
         entry_price, entry_idx = position
         pnl_pct = (prices[-1] - entry_price) / entry_price * 100
-        trades.append({
-            "pnl_pct": pnl_pct,
-            "bars_held": len(data) - entry_idx,
-            "exit_reason": "end",
-        })
+        trades.append(
+            {
+                "pnl_pct": pnl_pct,
+                "bars_held": len(data) - entry_idx,
+                "exit_reason": "end",
+            }
+        )
 
     return calculate_backtest_metrics(trades)
 
 
-def calculate_backtest_metrics(trades: List[Dict]) -> Dict[str, float]:
+def calculate_backtest_metrics(trades: list[dict]) -> dict[str, float]:
     """Calculate standard backtest metrics from trades."""
     if not trades:
         return {
@@ -360,12 +381,18 @@ def calculate_backtest_metrics(trades: List[Dict]) -> Dict[str, float]:
 
     # Sharpe ratio (assuming daily returns, annualized)
     avg_return = total_return / len(trades)
-    std_return = math.sqrt(sum((p - avg_return) ** 2 for p in pnls) / len(pnls)) if len(pnls) > 1 else 1
+    std_return = (
+        math.sqrt(sum((p - avg_return) ** 2 for p in pnls) / len(pnls)) if len(pnls) > 1 else 1
+    )
     sharpe_ratio = (avg_return / std_return) * math.sqrt(252) if std_return > 0 else 0
 
     # Sortino ratio (only downside deviation)
     negative_returns = [p for p in pnls if p < 0]
-    downside_std = math.sqrt(sum(p ** 2 for p in negative_returns) / len(negative_returns)) if negative_returns else 1
+    downside_std = (
+        math.sqrt(sum(p**2 for p in negative_returns) / len(negative_returns))
+        if negative_returns
+        else 1
+    )
     sortino_ratio = (avg_return / downside_std) * math.sqrt(252) if downside_std > 0 else 0
 
     # Profit factor
@@ -402,37 +429,43 @@ def calculate_backtest_metrics(trades: List[Dict]) -> Dict[str, float]:
 
 # Pre-defined parameter grids
 
-RSI_PARAMETER_GRID = HyperparameterGrid({
-    "rsi_period": [7, 10, 14, 21],
-    "oversold": [20, 25, 30, 35],
-    "overbought": [65, 70, 75, 80],
-    "stop_loss_pct": [1.5, 2.0, 2.5, 3.0],
-    "take_profit_pct": [3.0, 4.0, 5.0, 6.0],
-})
+RSI_PARAMETER_GRID = HyperparameterGrid(
+    {
+        "rsi_period": [7, 10, 14, 21],
+        "oversold": [20, 25, 30, 35],
+        "overbought": [65, 70, 75, 80],
+        "stop_loss_pct": [1.5, 2.0, 2.5, 3.0],
+        "take_profit_pct": [3.0, 4.0, 5.0, 6.0],
+    }
+)
 
-MACD_PARAMETER_GRID = HyperparameterGrid({
-    "macd_fast": [8, 10, 12, 14],
-    "macd_slow": [21, 26, 30],
-    "macd_signal": [7, 9, 11],
-    "stop_loss_pct": [1.5, 2.0, 2.5, 3.0],
-})
+MACD_PARAMETER_GRID = HyperparameterGrid(
+    {
+        "macd_fast": [8, 10, 12, 14],
+        "macd_slow": [21, 26, 30],
+        "macd_signal": [7, 9, 11],
+        "stop_loss_pct": [1.5, 2.0, 2.5, 3.0],
+    }
+)
 
-COMBINED_PARAMETER_GRID = HyperparameterGrid({
-    "rsi_period": [10, 14, 21],
-    "oversold": [25, 30, 35],
-    "overbought": [65, 70, 75],
-    "macd_fast": [10, 12, 14],
-    "macd_slow": [24, 26, 28],
-    "macd_signal": [8, 9, 10],
-    "stop_loss_pct": [1.5, 2.0, 2.5],
-    "take_profit_pct": [4.0, 5.0, 6.0],
-})
+COMBINED_PARAMETER_GRID = HyperparameterGrid(
+    {
+        "rsi_period": [10, 14, 21],
+        "oversold": [25, 30, 35],
+        "overbought": [65, 70, 75],
+        "macd_fast": [10, 12, 14],
+        "macd_slow": [24, 26, 28],
+        "macd_signal": [8, 9, 10],
+        "stop_loss_pct": [1.5, 2.0, 2.5],
+        "take_profit_pct": [4.0, 5.0, 6.0],
+    }
+)
 
 
 async def run_rsi_optimization(
     max_experiments: int = 100,
     parallel: bool = True,
-) -> Tuple[List[ExperimentResult], str]:
+) -> tuple[list[ExperimentResult], str]:
     """Run RSI strategy optimization."""
     from src.experiments import run_experiment_sweep
 
@@ -453,7 +486,7 @@ async def run_rsi_optimization(
 async def run_macd_optimization(
     max_experiments: int = 100,
     parallel: bool = True,
-) -> Tuple[List[ExperimentResult], str]:
+) -> tuple[list[ExperimentResult], str]:
     """Run MACD strategy optimization."""
     from src.experiments import run_experiment_sweep
 
@@ -473,7 +506,7 @@ async def run_macd_optimization(
 async def run_full_optimization(
     max_experiments: int = 500,
     parallel: bool = True,
-) -> Tuple[List[ExperimentResult], str]:
+) -> tuple[list[ExperimentResult], str]:
     """Run combined strategy optimization."""
     from src.experiments import run_experiment_sweep
 

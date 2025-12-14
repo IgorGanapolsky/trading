@@ -4,10 +4,8 @@ import json
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
-
 from src.observability.langsmith_tracer import (
     CostMetrics,
     EvaluationDataset,
@@ -15,7 +13,6 @@ from src.observability.langsmith_tracer import (
     Trace,
     TraceSpan,
     TraceType,
-    get_tracer,
     traceable_decision,
 )
 from src.observability.trade_evaluator import (

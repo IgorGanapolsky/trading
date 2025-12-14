@@ -23,7 +23,6 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 import pandas as pd
 
@@ -129,12 +128,8 @@ class RegimeDetector:
 
         # Smoothed averages (Wilder's smoothing)
         atr = tr.ewm(span=self.lookback_period, adjust=False).mean()
-        plus_di = 100 * (
-            plus_dm.ewm(span=self.lookback_period, adjust=False).mean() / atr
-        )
-        minus_di = 100 * (
-            minus_dm.ewm(span=self.lookback_period, adjust=False).mean() / atr
-        )
+        plus_di = 100 * (plus_dm.ewm(span=self.lookback_period, adjust=False).mean() / atr)
+        minus_di = 100 * (minus_dm.ewm(span=self.lookback_period, adjust=False).mean() / atr)
 
         # Calculate DX and ADX
         di_diff = abs(plus_di - minus_di)
@@ -145,9 +140,7 @@ class RegimeDetector:
         # Get latest values
         adx_val = float(adx.iloc[-1]) if not pd.isna(adx.iloc[-1]) else 0.0
         plus_di_val = float(plus_di.iloc[-1]) if not pd.isna(plus_di.iloc[-1]) else 0.0
-        minus_di_val = (
-            float(minus_di.iloc[-1]) if not pd.isna(minus_di.iloc[-1]) else 0.0
-        )
+        minus_di_val = float(minus_di.iloc[-1]) if not pd.isna(minus_di.iloc[-1]) else 0.0
 
         return (adx_val, plus_di_val, minus_di_val)
 
@@ -181,9 +174,7 @@ class RegimeDetector:
         if len(historical_widths) == 0 or pd.isna(current_width):
             return 50.0
 
-        percentile = (historical_widths < current_width).sum() / len(
-            historical_widths
-        ) * 100
+        percentile = (historical_widths < current_width).sum() / len(historical_widths) * 100
 
         return float(percentile)
 
@@ -301,9 +292,7 @@ class RegimeDetector:
             },
         )
 
-    def get_strategy_weights(
-        self, hist: pd.DataFrame
-    ) -> tuple[float, float, MarketRegime]:
+    def get_strategy_weights(self, hist: pd.DataFrame) -> tuple[float, float, MarketRegime]:
         """
         Get recommended strategy weights based on regime.
 

@@ -15,13 +15,14 @@ Usage:
 import asyncio
 import json
 import os
-import aiohttp
-from datetime import datetime
-from pathlib import Path
-from typing import Optional, List, Dict, Any
-from dataclasses import dataclass, asdict
-from enum import Enum
 import sys
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any, Optional
+
+import aiohttp
 
 # Add project root
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -29,29 +30,27 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 # Load environment variables
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass
 
-from src.core.unified_domain_model import (
-    Symbol, Signal, TradeAction, SignalStrength, AssetClass,
-    DomainValidator, factory
-)
-
+from src.core.unified_domain_model import DomainValidator, Signal, TradeAction, factory
 
 # =============================================================================
 # CONFIGURATION
 # =============================================================================
 
+
 class ScanMode(str, Enum):
-    QUICK = "quick"       # Fast scan - headlines only
-    STANDARD = "standard" # Normal - news + sentiment
-    DEEP = "deep"         # Comprehensive research
+    QUICK = "quick"  # Fast scan - headlines only
+    STANDARD = "standard"  # Normal - news + sentiment
+    DEEP = "deep"  # Comprehensive research
 
 
 @dataclass
 class ScannerConfig:
-    symbols: List[str]
+    symbols: list[str]
     mode: ScanMode = ScanMode.STANDARD
     model: str = "anthropic/claude-sonnet-4"
     min_confidence: float = 0.6
@@ -61,6 +60,7 @@ class ScannerConfig:
 # =============================================================================
 # OPENROUTER CLIENT
 # =============================================================================
+
 
 class OpenRouterClient:
     """Simple async OpenRouter client"""
@@ -74,7 +74,7 @@ class OpenRouterClient:
         if not self.api_key:
             raise ValueError("OPENROUTER_API_KEY not set")
 
-    async def chat(self, messages: List[Dict], temperature: float = 0.7) -> str:
+    async def chat(self, messages: list[dict], temperature: float = 0.7) -> str:
         """Send chat completion request"""
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -102,7 +102,8 @@ class OpenRouterClient:
 # WEB SEARCH (using DuckDuckGo - no API key needed)
 # =============================================================================
 
-async def search_news(query: str, max_results: int = 5) -> List[Dict[str, str]]:
+
+async def search_news(query: str, max_results: int = 5) -> list[dict[str, str]]:
     """Search for news using DuckDuckGo HTML (no API needed)"""
     try:
         from duckduckgo_search import DDGS
@@ -134,6 +135,7 @@ async def search_news(query: str, max_results: int = 5) -> List[Dict[str, str]]:
 # MARKET SCANNER
 # =============================================================================
 
+
 class MarketScanner:
     """Lightweight autonomous market scanner"""
 
@@ -141,12 +143,13 @@ class MarketScanner:
         self.config = config
         self.client = OpenRouterClient(model=config.model)
 
-    def _get_scan_prompt(self, symbol: str, news: List[Dict]) -> str:
+    def _get_scan_prompt(self, symbol: str, news: list[dict]) -> str:
         """Build analysis prompt"""
-        news_text = "\n".join([
-            f"- {n['title']}: {n['body'][:200]}..."
-            for n in news[:5]
-        ]) if news else "No recent news found."
+        news_text = (
+            "\n".join([f"- {n['title']}: {n['body'][:200]}..." for n in news[:5]])
+            if news
+            else "No recent news found."
+        )
 
         mode_depth = {
             ScanMode.QUICK: "Brief analysis based on headlines.",
@@ -179,7 +182,7 @@ If uncertain, output HOLD.
 Return ONLY the JSON, no other text.
 """
 
-    async def scan_symbol(self, symbol: str) -> Optional[Dict[str, Any]]:
+    async def scan_symbol(self, symbol: str) -> Optional[dict[str, Any]]:
         """Scan a single symbol"""
         print(f"  Scanning {symbol}...")
 
@@ -218,7 +221,7 @@ Return ONLY the JSON, no other text.
             print(f"  Error scanning {symbol}: {e}")
             return {"symbol": symbol, "error": str(e)}
 
-    def _create_signal(self, symbol: str, analysis: Dict) -> Optional[Signal]:
+    def _create_signal(self, symbol: str, analysis: dict) -> Optional[Signal]:
         """Create UDM-validated signal"""
         try:
             # Determine asset class
@@ -229,14 +232,18 @@ Return ONLY the JSON, no other text.
             else:
                 sym = factory.create_equity_symbol(symbol.upper())
 
-            action_map = {"BUY": TradeAction.BUY, "SELL": TradeAction.SELL, "HOLD": TradeAction.HOLD}
+            action_map = {
+                "BUY": TradeAction.BUY,
+                "SELL": TradeAction.SELL,
+                "HOLD": TradeAction.HOLD,
+            }
             action = action_map.get(analysis.get("action", "HOLD").upper(), TradeAction.HOLD)
 
             signal = factory.create_signal(
                 symbol=sym,
                 action=action,
                 confidence=analysis.get("confidence", 0.5),
-                source="market_scanner"
+                source="market_scanner",
             )
 
             signal.metadata = {
@@ -257,12 +264,14 @@ Return ONLY the JSON, no other text.
             print(f"  Error creating signal: {e}")
             return None
 
-    def _save_signal(self, signal: Signal, analysis: Dict):
+    def _save_signal(self, signal: Signal, analysis: dict):
         """Save signal to disk"""
         signals_dir = Path("./data/scanner_signals")
         signals_dir.mkdir(parents=True, exist_ok=True)
 
-        filename = f"signal_{signal.symbol.ticker}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+        filename = (
+            f"signal_{signal.symbol.ticker}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+        )
         filepath = signals_dir / filename
 
         data = {
@@ -274,7 +283,7 @@ Return ONLY the JSON, no other text.
         filepath.write_text(json.dumps(data, indent=2))
         print(f"  Signal saved: {filepath}")
 
-    async def scan_all(self) -> List[Dict]:
+    async def scan_all(self) -> list[dict]:
         """Scan all configured symbols"""
         results = []
         for symbol in self.config.symbols:
@@ -289,21 +298,24 @@ Return ONLY the JSON, no other text.
 # CONTINUOUS MONITORING
 # =============================================================================
 
-async def run_continuous(symbols: List[str], interval_minutes: int = 60, mode: ScanMode = ScanMode.STANDARD):
+
+async def run_continuous(
+    symbols: list[str], interval_minutes: int = 60, mode: ScanMode = ScanMode.STANDARD
+):
     """Run scanner continuously"""
     config = ScannerConfig(symbols=symbols, mode=mode)
     scanner = MarketScanner(config)
 
-    print(f"Starting continuous scanner")
+    print("Starting continuous scanner")
     print(f"  Symbols: {symbols}")
     print(f"  Interval: {interval_minutes} min")
     print(f"  Mode: {mode.value}")
     print()
 
     while True:
-        print(f"{'='*50}")
+        print(f"{'=' * 50}")
         print(f"Scan at {datetime.utcnow().isoformat()}")
-        print(f"{'='*50}")
+        print(f"{'=' * 50}")
 
         results = await scanner.scan_all()
 
@@ -322,6 +334,7 @@ async def run_continuous(symbols: List[str], interval_minutes: int = 60, mode: S
 # CLI
 # =============================================================================
 
+
 async def main():
     import argparse
 
@@ -334,7 +347,11 @@ async def main():
 
     args = parser.parse_args()
 
-    symbols = [s.strip().upper() for s in args.symbols.split(",")] if args.symbols else [args.symbol.upper()]
+    symbols = (
+        [s.strip().upper() for s in args.symbols.split(",")]
+        if args.symbols
+        else [args.symbol.upper()]
+    )
     mode = ScanMode(args.mode)
 
     if args.continuous:
@@ -346,18 +363,22 @@ async def main():
         print(f"Scanning {symbols} in {mode.value} mode...")
         results = await scanner.scan_all()
 
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print("SCAN RESULTS")
-        print(f"{'='*50}")
+        print(f"{'=' * 50}")
         for r in results:
             if "error" in r:
                 print(f"  {r['symbol']}: ERROR - {r['error']}")
             elif r.get("signal"):
                 s = r["signal"]
-                print(f"  {r['symbol']}: {s['action']} @ {s['confidence']:.0%} - {r['analysis'].get('reasoning', '')[:50]}")
+                print(
+                    f"  {r['symbol']}: {s['action']} @ {s['confidence']:.0%} - {r['analysis'].get('reasoning', '')[:50]}"
+                )
             else:
                 a = r.get("analysis", {})
-                print(f"  {r['symbol']}: {a.get('action', 'N/A')} @ {a.get('confidence', 0):.0%} (below threshold)")
+                print(
+                    f"  {r['symbol']}: {a.get('action', 'N/A')} @ {a.get('confidence', 0):.0%} (below threshold)"
+                )
 
 
 if __name__ == "__main__":

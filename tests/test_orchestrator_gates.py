@@ -15,9 +15,8 @@ Purpose:
     - Respect environment variable configuration
 """
 
-import os
 import sys
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
@@ -32,30 +31,30 @@ def mock_all_imports(monkeypatch):
     # Mock holidays module (Python package for holiday calculations)
     mock_holidays = MagicMock()
     mock_holidays.US = MagicMock(return_value={})  # Return empty dict (no holidays)
-    sys.modules['holidays'] = mock_holidays
+    sys.modules["holidays"] = mock_holidays
 
     # Create mock modules
     mock_modules = {
-        'src.agents.macro_agent': MagicMock(),
-        'src.agents.momentum_agent': MagicMock(),
-        'src.agents.rl_agent': MagicMock(),
-        'src.analyst.bias_store': MagicMock(),
-        'src.execution.alpaca_executor': MagicMock(),
-        'src.integrations.playwright_mcp': MagicMock(),
-        'src.langchain_agents.analyst': MagicMock(),
-        'src.orchestrator.anomaly_monitor': MagicMock(),
-        'src.orchestrator.budget': MagicMock(),
-        'src.orchestrator.failure_isolation': MagicMock(),
-        'src.orchestrator.smart_dca': MagicMock(),
-        'src.orchestrator.telemetry': MagicMock(),
-        'src.risk.capital_efficiency': MagicMock(),
-        'src.risk.options_risk_monitor': MagicMock(),
-        'src.risk.position_manager': MagicMock(),
-        'src.risk.risk_manager': MagicMock(),
-        'src.risk.trade_gateway': MagicMock(),
-        'src.signals.microstructure_features': MagicMock(),
-        'src.strategies.treasury_ladder_strategy': MagicMock(),
-        'src.utils.regime_detector': MagicMock(),
+        "src.agents.macro_agent": MagicMock(),
+        "src.agents.momentum_agent": MagicMock(),
+        "src.agents.rl_agent": MagicMock(),
+        "src.analyst.bias_store": MagicMock(),
+        "src.execution.alpaca_executor": MagicMock(),
+        "src.integrations.playwright_mcp": MagicMock(),
+        "src.langchain_agents.analyst": MagicMock(),
+        "src.orchestrator.anomaly_monitor": MagicMock(),
+        "src.orchestrator.budget": MagicMock(),
+        "src.orchestrator.failure_isolation": MagicMock(),
+        "src.orchestrator.smart_dca": MagicMock(),
+        "src.orchestrator.telemetry": MagicMock(),
+        "src.risk.capital_efficiency": MagicMock(),
+        "src.risk.options_risk_monitor": MagicMock(),
+        "src.risk.position_manager": MagicMock(),
+        "src.risk.risk_manager": MagicMock(),
+        "src.risk.trade_gateway": MagicMock(),
+        "src.signals.microstructure_features": MagicMock(),
+        "src.strategies.treasury_ladder_strategy": MagicMock(),
+        "src.utils.regime_detector": MagicMock(),
     }
 
     # Install mocks
@@ -65,8 +64,8 @@ def mock_all_imports(monkeypatch):
     yield
 
     # Clean up - remove mocks
-    if 'holidays' in sys.modules:
-        del sys.modules['holidays']
+    if "holidays" in sys.modules:
+        del sys.modules["holidays"]
     for module_name in mock_modules:
         if module_name in sys.modules:
             del sys.modules[module_name]
@@ -98,9 +97,7 @@ class TestGatesDisabledByDefault:
         orch = TradingOrchestrator(tickers=["SPY"], paper=True)
 
         # Verify LLM sentiment is disabled
-        assert (
-            orch.llm_sentiment_enabled is False
-        ), "LLM sentiment should be disabled by default"
+        assert orch.llm_sentiment_enabled is False, "LLM sentiment should be disabled by default"
         assert orch.llm_agent is None, "llm_agent should be None when disabled"
 
     def test_both_gates_disabled_by_default(self, monkeypatch):
@@ -235,8 +232,7 @@ class TestDisabledGatesDontMakeCalls:
         # Verify telemetry recorded the skip
         gate_pass_calls = [call for call in orch.telemetry.gate_pass.call_args_list]
         rl_skip = any(
-            call[0][0] == "rl_filter"
-            and call[0][2].get("skipped") is True
+            call[0][0] == "rl_filter" and call[0][2].get("skipped") is True
             for call in gate_pass_calls
         )
         assert rl_skip, "Should record RL gate skip in telemetry"
@@ -283,7 +279,9 @@ class TestDisabledGatesDontMakeCalls:
             orch._process_ticker("SPY", rl_threshold=0.5)
         except Exception as e:
             # If there's an exception, it should NOT be related to missing LLM agent
-            assert "llm_agent" not in str(e).lower(), f"LLM gate should not cause errors when disabled: {e}"
+            assert "llm_agent" not in str(e).lower(), (
+                f"LLM gate should not cause errors when disabled: {e}"
+            )
             # Other errors are acceptable (like missing microstructure data, etc.)
             pass
 
@@ -396,19 +394,19 @@ class TestRegressionProtection:
         orch = TradingOrchestrator(tickers=["SPY"], paper=True)
 
         # CRITICAL ASSERTIONS - DO NOT REMOVE
-        assert (
-            orch.rl_filter_enabled is False
-        ), "REGRESSION: RL filter must default to disabled (Dec 10, 2025 decision)"
-        assert (
-            orch.llm_sentiment_enabled is False
-        ), "REGRESSION: LLM sentiment must default to disabled (Dec 10, 2025 decision)"
+        assert orch.rl_filter_enabled is False, (
+            "REGRESSION: RL filter must default to disabled (Dec 10, 2025 decision)"
+        )
+        assert orch.llm_sentiment_enabled is False, (
+            "REGRESSION: LLM sentiment must default to disabled (Dec 10, 2025 decision)"
+        )
 
-        assert (
-            orch.rl_filter is None
-        ), "REGRESSION: rl_filter must be None when disabled (memory optimization)"
-        assert (
-            orch.llm_agent is None
-        ), "REGRESSION: llm_agent must be None when disabled (memory optimization)"
+        assert orch.rl_filter is None, (
+            "REGRESSION: rl_filter must be None when disabled (memory optimization)"
+        )
+        assert orch.llm_agent is None, (
+            "REGRESSION: llm_agent must be None when disabled (memory optimization)"
+        )
 
     def test_env_var_names_unchanged(self, monkeypatch):
         """
@@ -452,12 +450,10 @@ class TestRegressionProtection:
 
             orch = TradingOrchestrator(tickers=["SPY"], paper=True)
 
-            assert (
-                orch.rl_filter_enabled is False
-            ), f"'{false_value}' should disable RL filter"
-            assert (
-                orch.llm_sentiment_enabled is False
-            ), f"'{false_value}' should disable LLM sentiment"
+            assert orch.rl_filter_enabled is False, f"'{false_value}' should disable RL filter"
+            assert orch.llm_sentiment_enabled is False, (
+                f"'{false_value}' should disable LLM sentiment"
+            )
 
     def test_true_string_values_recognized(self, monkeypatch):
         """
@@ -483,6 +479,4 @@ class TestRegressionProtection:
             orch = TradingOrchestrator(tickers=["SPY"], paper=True)
 
             assert orch.rl_filter_enabled is True, f"'{true_value}' should enable RL filter"
-            assert (
-                orch.llm_sentiment_enabled is True
-            ), f"'{true_value}' should enable LLM sentiment"
+            assert orch.llm_sentiment_enabled is True, f"'{true_value}' should enable LLM sentiment"

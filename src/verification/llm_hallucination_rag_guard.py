@@ -25,7 +25,6 @@ import math
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -37,8 +36,18 @@ ACTION_PATTERN = re.compile(r"^(BUY|SELL|HOLD)$", re.IGNORECASE)
 
 # Known invalid values that LLMs sometimes hallucinate
 INVALID_STRINGS = {
-    "nan", "null", "undefined", "none", "infinity", "inf", "-inf",
-    "n/a", "unknown", "error", "invalid", "missing"
+    "nan",
+    "null",
+    "undefined",
+    "none",
+    "infinity",
+    "inf",
+    "-inf",
+    "n/a",
+    "unknown",
+    "error",
+    "invalid",
+    "missing",
 }
 
 
@@ -108,7 +117,7 @@ class LLMHallucinationGuard:
         logger.info(
             "LLMHallucinationGuard initialized (max_position=%.1f%%, rag=%s)",
             max_position_pct * 100,
-            "enabled" if rag_system else "disabled"
+            "enabled" if rag_system else "disabled",
         )
 
     def validate_output(self, llm_output: dict[str, Any]) -> dict[str, Any]:
@@ -187,12 +196,14 @@ class LLMHallucinationGuard:
         # Check each known pattern
         for pattern in self.patterns.values():
             if self._matches_hallucination_pattern(output, pattern):
-                matches.append({
-                    "type_id": pattern.type_id,
-                    "description": pattern.description,
-                    "frequency": pattern.frequency,
-                    "prevention_steps": pattern.prevention_steps,
-                })
+                matches.append(
+                    {
+                        "type_id": pattern.type_id,
+                        "description": pattern.description,
+                        "frequency": pattern.frequency,
+                        "prevention_steps": pattern.prevention_steps,
+                    }
+                )
 
         return matches
 
@@ -207,44 +218,52 @@ class LLMHallucinationGuard:
         for key, value in output.items():
             # Check for None/null
             if value is None:
-                violations.append(Violation(
-                    field=key,
-                    severity="critical",
-                    message=f"Field '{key}' is None/null",
-                    actual_value=value,
-                    expected_format="non-null value"
-                ))
+                violations.append(
+                    Violation(
+                        field=key,
+                        severity="critical",
+                        message=f"Field '{key}' is None/null",
+                        actual_value=value,
+                        expected_format="non-null value",
+                    )
+                )
                 continue
 
             # Check for NaN/infinity in numeric fields
             if isinstance(value, float):
                 if math.isnan(value):
-                    violations.append(Violation(
-                        field=key,
-                        severity="critical",
-                        message=f"Field '{key}' is NaN",
-                        actual_value=value,
-                        expected_format="valid number"
-                    ))
+                    violations.append(
+                        Violation(
+                            field=key,
+                            severity="critical",
+                            message=f"Field '{key}' is NaN",
+                            actual_value=value,
+                            expected_format="valid number",
+                        )
+                    )
                 elif math.isinf(value):
-                    violations.append(Violation(
-                        field=key,
-                        severity="critical",
-                        message=f"Field '{key}' is infinity",
-                        actual_value=value,
-                        expected_format="finite number"
-                    ))
+                    violations.append(
+                        Violation(
+                            field=key,
+                            severity="critical",
+                            message=f"Field '{key}' is infinity",
+                            actual_value=value,
+                            expected_format="finite number",
+                        )
+                    )
 
             # Check for invalid string values
             if isinstance(value, str):
                 if value.lower().strip() in INVALID_STRINGS:
-                    violations.append(Violation(
-                        field=key,
-                        severity="critical",
-                        message=f"Field '{key}' contains invalid string: '{value}'",
-                        actual_value=value,
-                        expected_format="valid string (not NaN/null/undefined)"
-                    ))
+                    violations.append(
+                        Violation(
+                            field=key,
+                            severity="critical",
+                            message=f"Field '{key}' contains invalid string: '{value}'",
+                            actual_value=value,
+                            expected_format="valid string (not NaN/null/undefined)",
+                        )
+                    )
 
         return violations
 
@@ -256,21 +275,25 @@ class LLMHallucinationGuard:
         if "symbol" in output:
             symbol = str(output["symbol"]).strip().upper()
             if not TICKER_PATTERN.match(symbol):
-                violations.append(Violation(
-                    field="symbol",
-                    severity="critical",
-                    message=f"Invalid ticker format: '{symbol}'",
-                    actual_value=symbol,
-                    expected_format="1-5 uppercase letters (e.g., AAPL, SPY)"
-                ))
+                violations.append(
+                    Violation(
+                        field="symbol",
+                        severity="critical",
+                        message=f"Invalid ticker format: '{symbol}'",
+                        actual_value=symbol,
+                        expected_format="1-5 uppercase letters (e.g., AAPL, SPY)",
+                    )
+                )
             elif self.valid_tickers and symbol not in self.valid_tickers:
-                violations.append(Violation(
-                    field="symbol",
-                    severity="warning",
-                    message=f"Ticker '{symbol}' not in approved list",
-                    actual_value=symbol,
-                    expected_format=f"one of: {', '.join(sorted(self.valid_tickers)[:10])}"
-                ))
+                violations.append(
+                    Violation(
+                        field="symbol",
+                        severity="warning",
+                        message=f"Ticker '{symbol}' not in approved list",
+                        actual_value=symbol,
+                        expected_format=f"one of: {', '.join(sorted(self.valid_tickers)[:10])}",
+                    )
+                )
 
         # Side/Action validation
         for field_name in ["side", "action", "recommendation"]:
@@ -278,13 +301,15 @@ class LLMHallucinationGuard:
                 value = str(output[field_name]).strip()
                 pattern = ACTION_PATTERN if field_name == "action" else SIDE_PATTERN
                 if not pattern.match(value):
-                    violations.append(Violation(
-                        field=field_name,
-                        severity="critical",
-                        message=f"Invalid {field_name}: '{value}'",
-                        actual_value=value,
-                        expected_format="buy/sell/hold or long/short/neutral"
-                    ))
+                    violations.append(
+                        Violation(
+                            field=field_name,
+                            severity="critical",
+                            message=f"Invalid {field_name}: '{value}'",
+                            actual_value=value,
+                            expected_format="buy/sell/hold or long/short/neutral",
+                        )
+                    )
 
         return violations
 
@@ -297,80 +322,96 @@ class LLMHallucinationGuard:
             try:
                 sentiment = float(output["sentiment"])
                 if not -1.0 <= sentiment <= 1.0:
-                    violations.append(Violation(
+                    violations.append(
+                        Violation(
+                            field="sentiment",
+                            severity="critical",
+                            message=f"Sentiment out of range: {sentiment}",
+                            actual_value=sentiment,
+                            expected_format="[-1.0, 1.0]",
+                        )
+                    )
+            except (TypeError, ValueError):
+                violations.append(
+                    Violation(
                         field="sentiment",
                         severity="critical",
-                        message=f"Sentiment out of range: {sentiment}",
-                        actual_value=sentiment,
-                        expected_format="[-1.0, 1.0]"
-                    ))
-            except (TypeError, ValueError):
-                violations.append(Violation(
-                    field="sentiment",
-                    severity="critical",
-                    message=f"Sentiment not a number: {output['sentiment']}",
-                    actual_value=output["sentiment"],
-                    expected_format="float in [-1.0, 1.0]"
-                ))
+                        message=f"Sentiment not a number: {output['sentiment']}",
+                        actual_value=output["sentiment"],
+                        expected_format="float in [-1.0, 1.0]",
+                    )
+                )
 
         # Confidence must be in [0, 1]
         if "confidence" in output:
             try:
                 confidence = float(output["confidence"])
                 if not 0.0 <= confidence <= 1.0:
-                    violations.append(Violation(
-                        field="confidence",
-                        severity="critical",
-                        message=f"Confidence out of range: {confidence}",
-                        actual_value=confidence,
-                        expected_format="[0.0, 1.0]"
-                    ))
+                    violations.append(
+                        Violation(
+                            field="confidence",
+                            severity="critical",
+                            message=f"Confidence out of range: {confidence}",
+                            actual_value=confidence,
+                            expected_format="[0.0, 1.0]",
+                        )
+                    )
                 # FACTS Benchmark: No model >70% factuality
                 elif confidence > 0.70:
-                    violations.append(Violation(
-                        field="confidence",
-                        severity="warning",
-                        message=f"Confidence {confidence:.2f} exceeds FACTS ceiling (0.70)",
-                        actual_value=confidence,
-                        expected_format="[0.0, 0.70] per FACTS Benchmark"
-                    ))
+                    violations.append(
+                        Violation(
+                            field="confidence",
+                            severity="warning",
+                            message=f"Confidence {confidence:.2f} exceeds FACTS ceiling (0.70)",
+                            actual_value=confidence,
+                            expected_format="[0.0, 0.70] per FACTS Benchmark",
+                        )
+                    )
             except (TypeError, ValueError):
-                violations.append(Violation(
-                    field="confidence",
-                    severity="critical",
-                    message=f"Confidence not a number: {output['confidence']}",
-                    actual_value=output["confidence"],
-                    expected_format="float in [0.0, 1.0]"
-                ))
+                violations.append(
+                    Violation(
+                        field="confidence",
+                        severity="critical",
+                        message=f"Confidence not a number: {output['confidence']}",
+                        actual_value=output["confidence"],
+                        expected_format="float in [0.0, 1.0]",
+                    )
+                )
 
         # Amount must be positive
         if "amount" in output:
             try:
                 amount = float(output["amount"])
                 if amount < 0:
-                    violations.append(Violation(
+                    violations.append(
+                        Violation(
+                            field="amount",
+                            severity="critical",
+                            message=f"Negative amount: ${amount}",
+                            actual_value=amount,
+                            expected_format="positive number",
+                        )
+                    )
+                elif amount == 0:
+                    violations.append(
+                        Violation(
+                            field="amount",
+                            severity="warning",
+                            message="Amount is zero",
+                            actual_value=amount,
+                            expected_format="positive number",
+                        )
+                    )
+            except (TypeError, ValueError):
+                violations.append(
+                    Violation(
                         field="amount",
                         severity="critical",
-                        message=f"Negative amount: ${amount}",
-                        actual_value=amount,
-                        expected_format="positive number"
-                    ))
-                elif amount == 0:
-                    violations.append(Violation(
-                        field="amount",
-                        severity="warning",
-                        message="Amount is zero",
-                        actual_value=amount,
-                        expected_format="positive number"
-                    ))
-            except (TypeError, ValueError):
-                violations.append(Violation(
-                    field="amount",
-                    severity="critical",
-                    message=f"Amount not a number: {output['amount']}",
-                    actual_value=output["amount"],
-                    expected_format="positive float"
-                ))
+                        message=f"Amount not a number: {output['amount']}",
+                        actual_value=output["amount"],
+                        expected_format="positive float",
+                    )
+                )
 
         return violations
 
@@ -387,13 +428,15 @@ class LLMHallucinationGuard:
                 if portfolio > 0:
                     position_pct = amount / portfolio
                     if position_pct > self.max_position_pct:
-                        violations.append(Violation(
-                            field="amount",
-                            severity="critical",
-                            message=f"Position size {position_pct:.1%} exceeds max {self.max_position_pct:.1%}",
-                            actual_value=amount,
-                            expected_format=f"<= ${portfolio * self.max_position_pct:.2f}"
-                        ))
+                        violations.append(
+                            Violation(
+                                field="amount",
+                                severity="critical",
+                                message=f"Position size {position_pct:.1%} exceeds max {self.max_position_pct:.1%}",
+                                actual_value=amount,
+                                expected_format=f"<= ${portfolio * self.max_position_pct:.2f}",
+                            )
+                        )
             except (TypeError, ValueError) as e:
                 logger.warning(f"Could not validate position size: {e}")
 
@@ -401,13 +444,15 @@ class LLMHallucinationGuard:
         if "reasoning" in output:
             reasoning = str(output["reasoning"]).strip()
             if not reasoning or len(reasoning) < 10:
-                violations.append(Violation(
-                    field="reasoning",
-                    severity="warning",
-                    message="Reasoning too short or empty",
-                    actual_value=reasoning,
-                    expected_format="detailed explanation (>10 chars)"
-                ))
+                violations.append(
+                    Violation(
+                        field="reasoning",
+                        severity="warning",
+                        message="Reasoning too short or empty",
+                        actual_value=reasoning,
+                        expected_format="detailed explanation (>10 chars)",
+                    )
+                )
 
         return violations
 
@@ -416,9 +461,7 @@ class LLMHallucinationGuard:
     # =========================================================================
 
     def _query_rag_for_patterns(
-        self,
-        output: dict[str, Any],
-        violations: list[Violation]
+        self, output: dict[str, Any], violations: list[Violation]
     ) -> tuple[list[dict[str, Any]], list[str]]:
         """
         Query RAG for similar past hallucinations.
@@ -444,14 +487,16 @@ class LLMHallucinationGuard:
 
                 for lesson, score in results:
                     if score > 0.5:  # Relevance threshold
-                        similar.append({
-                            "id": lesson.id,
-                            "title": lesson.title,
-                            "description": lesson.description,
-                            "prevention": lesson.prevention,
-                            "severity": lesson.severity,
-                            "relevance": round(score, 3),
-                        })
+                        similar.append(
+                            {
+                                "id": lesson.id,
+                                "title": lesson.title,
+                                "description": lesson.description,
+                                "prevention": lesson.prevention,
+                                "severity": lesson.severity,
+                                "relevance": round(score, 3),
+                            }
+                        )
 
                         # Extract prevention steps
                         if lesson.prevention:
@@ -463,9 +508,7 @@ class LLMHallucinationGuard:
         return similar, list(prevention_steps)
 
     def _matches_hallucination_pattern(
-        self,
-        output: dict[str, Any],
-        pattern: HallucinationType
+        self, output: dict[str, Any], pattern: HallucinationType
     ) -> bool:
         """Check if output matches a known hallucination pattern."""
         # Simple keyword matching for now
@@ -494,8 +537,8 @@ class LLMHallucinationGuard:
                 prevention_steps=[
                     "Validate ticker with regex ^[A-Z]{1,5}$",
                     "Cross-check against approved ticker list",
-                    "Query Alpaca API for ticker validation"
-                ]
+                    "Query Alpaca API for ticker validation",
+                ],
             ),
             HallucinationType(
                 type_id="confidence_overestimation",
@@ -505,8 +548,8 @@ class LLMHallucinationGuard:
                 prevention_steps=[
                     "Cap confidence at model's FACTS score (~0.68)",
                     "Warn when confidence >0.70",
-                    "Require additional validation for high-confidence claims"
-                ]
+                    "Require additional validation for high-confidence claims",
+                ],
             ),
             HallucinationType(
                 type_id="nan_values",
@@ -516,8 +559,8 @@ class LLMHallucinationGuard:
                 prevention_steps=[
                     "Check all numeric fields with math.isnan()",
                     "Reject any None/null values",
-                    "Add type hints and validation decorators"
-                ]
+                    "Add type hints and validation decorators",
+                ],
             ),
             HallucinationType(
                 type_id="negative_amounts",
@@ -527,8 +570,8 @@ class LLMHallucinationGuard:
                 prevention_steps=[
                     "Validate amount > 0",
                     "Check for sign errors in LLM reasoning",
-                    "Use absolute values if direction is separate"
-                ]
+                    "Use absolute values if direction is separate",
+                ],
             ),
             HallucinationType(
                 type_id="sentiment_out_of_range",
@@ -538,8 +581,8 @@ class LLMHallucinationGuard:
                 prevention_steps=[
                     "Clamp sentiment to [-1.0, 1.0]",
                     "Validate with regex or range check",
-                    "Normalize before using in calculations"
-                ]
+                    "Normalize before using in calculations",
+                ],
             ),
             HallucinationType(
                 type_id="fabricated_prices",
@@ -549,8 +592,8 @@ class LLMHallucinationGuard:
                 prevention_steps=[
                     "Always fetch real-time price from Alpaca API",
                     "Never trust LLM price claims",
-                    "Flag keywords: 'exactly', 'precisely' in price context"
-                ]
+                    "Flag keywords: 'exactly', 'precisely' in price context",
+                ],
             ),
         ]
 
@@ -578,10 +621,7 @@ class LLMHallucinationGuard:
             "info": 0.1,
         }
 
-        total_risk = sum(
-            severity_weights.get(v.severity, 0.1)
-            for v in violations
-        )
+        total_risk = sum(severity_weights.get(v.severity, 0.1) for v in violations)
 
         # Cap at 1.0
         return min(1.0, total_risk)
@@ -608,7 +648,7 @@ class LLMHallucinationGuard:
                     "prevention_steps": len(p.prevention_steps),
                 }
                 for p in self.patterns.values()
-            ]
+            ],
         }
 
 
@@ -631,6 +671,7 @@ def create_hallucination_guard(
     # Try to load RAG system
     try:
         from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
         rag_system = LessonsLearnedRAG()
         logger.info("RAG system loaded for hallucination guard")
     except Exception as e:
@@ -646,8 +687,7 @@ def create_hallucination_guard(
 if __name__ == "__main__":
     # Example usage
     guard = create_hallucination_guard(
-        valid_tickers=["SPY", "QQQ", "AAPL", "NVDA"],
-        max_position_pct=0.10
+        valid_tickers=["SPY", "QQQ", "AAPL", "NVDA"], max_position_pct=0.10
     )
 
     # Test valid output
@@ -658,7 +698,7 @@ if __name__ == "__main__":
         "confidence": 0.65,
         "sentiment": 0.3,
         "reasoning": "Strong uptrend with MACD crossover and volume confirmation",
-        "portfolio_value": 100000.0
+        "portfolio_value": 100000.0,
     }
 
     result = guard.validate_output(valid_output)
@@ -674,7 +714,7 @@ if __name__ == "__main__":
         "confidence": 0.95,  # Exceeds FACTS ceiling
         "sentiment": 2.5,  # Out of range
         "reasoning": "Buy",  # Too short
-        "portfolio_value": 100000.0
+        "portfolio_value": 100000.0,
     }
 
     result = guard.validate_output(invalid_output)

@@ -25,8 +25,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-import numpy as np
-
 logger = logging.getLogger(__name__)
 
 PREDICTION_LOG_PATH = Path("data/predictions_log.json")
@@ -36,6 +34,7 @@ HALLUCINATION_PATTERNS_PATH = Path("data/hallucination_patterns.json")
 @dataclass
 class Prediction:
     """A recorded prediction for later verification."""
+
     prediction_id: str
     timestamp: str
     model: str
@@ -55,6 +54,7 @@ class Prediction:
 @dataclass
 class HallucinationPattern:
     """A learned pattern of hallucination behavior."""
+
     pattern_id: str
     description: str
     trigger_conditions: dict[str, Any]
@@ -139,14 +139,16 @@ class HallucinationPreventionPipeline:
                 results = self.rag_system.search(query, top_k=3)
                 for lesson, score in results:
                     if score > 0.6:  # Relevance threshold
-                        similar_mistakes.append({
-                            "id": lesson.id,
-                            "title": lesson.title,
-                            "description": lesson.description,
-                            "prevention": lesson.prevention,
-                            "severity": lesson.severity,
-                            "relevance": score,
-                        })
+                        similar_mistakes.append(
+                            {
+                                "id": lesson.id,
+                                "title": lesson.title,
+                                "description": lesson.description,
+                                "prevention": lesson.prevention,
+                                "severity": lesson.severity,
+                                "relevance": score,
+                            }
+                        )
                         risk_score += 0.2 * score  # Add to risk
                         warnings.append(f"Similar past mistake found: {lesson.title}")
             except Exception as e:
@@ -165,12 +167,14 @@ class HallucinationPreventionPipeline:
         pattern_matches = []
         for pattern in self.patterns:
             if self._matches_pattern(pattern, symbol, action, model, reasoning):
-                pattern_matches.append({
-                    "pattern_id": pattern.pattern_id,
-                    "description": pattern.description,
-                    "severity": pattern.severity,
-                    "mitigation": pattern.mitigation,
-                })
+                pattern_matches.append(
+                    {
+                        "pattern_id": pattern.pattern_id,
+                        "description": pattern.description,
+                        "severity": pattern.severity,
+                        "mitigation": pattern.mitigation,
+                    }
+                )
                 risk_score += 0.15 if pattern.severity == "high" else 0.1
                 warnings.append(f"Hallucination pattern match: {pattern.description}")
 
@@ -178,9 +182,7 @@ class HallucinationPreventionPipeline:
         model_accuracy = self._get_model_symbol_accuracy(model, symbol)
         if model_accuracy is not None and model_accuracy < 0.5:
             risk_score += 0.25
-            warnings.append(
-                f"Model {model} has {model_accuracy:.0%} accuracy on {symbol}"
-            )
+            warnings.append(f"Model {model} has {model_accuracy:.0%} accuracy on {symbol}")
 
         # Final decision
         risk_score = min(1.0, risk_score)  # Cap at 1.0
@@ -270,10 +272,10 @@ class HallucinationPreventionPipeline:
 
             # Tolerance based on claim type
             tolerances = {
-                "price": 0.01,        # 1% for prices
-                "position": 0.001,    # 0.1% for positions
-                "pnl": 0.05,          # 5% for P/L
-                "sentiment": 0.2,     # 20% for sentiment scores
+                "price": 0.01,  # 1% for prices
+                "position": 0.001,  # 0.1% for positions
+                "pnl": 0.05,  # 5% for P/L
+                "sentiment": 0.2,  # 20% for sentiment scores
             }
             tolerance = tolerances.get(claim_type, 0.05)
             is_valid = deviation <= tolerance
@@ -453,29 +455,28 @@ class HallucinationPreventionPipeline:
         # Find or create pattern
         pattern_key = f"{model}_{claim_type}"
 
-        existing = next(
-            (p for p in self.patterns if p.pattern_id == pattern_key),
-            None
-        )
+        existing = next((p for p in self.patterns if p.pattern_id == pattern_key), None)
 
         if existing:
             existing.frequency += 1
             existing.examples.append(f"Claimed {claimed}, actual {actual}")
             existing.examples = existing.examples[-10:]  # Keep last 10
         else:
-            self.patterns.append(HallucinationPattern(
-                pattern_id=pattern_key,
-                description=f"{model} frequently hallucinates {claim_type} values",
-                trigger_conditions={
-                    "model": model,
-                    "claim_type": claim_type,
-                },
-                frequency=1,
-                models_affected=[model],
-                severity="medium",
-                mitigation=f"Always verify {claim_type} claims from {model} against API",
-                examples=[f"Claimed {claimed}, actual {actual}"],
-            ))
+            self.patterns.append(
+                HallucinationPattern(
+                    pattern_id=pattern_key,
+                    description=f"{model} frequently hallucinates {claim_type} values",
+                    trigger_conditions={
+                        "model": model,
+                        "claim_type": claim_type,
+                    },
+                    frequency=1,
+                    models_affected=[model],
+                    severity="medium",
+                    mitigation=f"Always verify {claim_type} claims from {model} against API",
+                    examples=[f"Claimed {claimed}, actual {actual}"],
+                )
+            )
 
         self._save_patterns()
 
@@ -588,7 +589,8 @@ class HallucinationPreventionPipeline:
     def _get_model_symbol_accuracy(self, model: str, symbol: str) -> Optional[float]:
         """Get historical accuracy for a model on a specific symbol."""
         relevant = [
-            p for p in self.predictions.values()
+            p
+            for p in self.predictions.values()
             if p.model == model and p.symbol == symbol and p.was_correct is not None
         ]
 
@@ -601,8 +603,7 @@ class HallucinationPreventionPipeline:
     def _calculate_model_accuracy(self, model: str) -> float:
         """Calculate overall accuracy for a model."""
         verified = [
-            p for p in self.predictions.values()
-            if p.model == model and p.was_correct is not None
+            p for p in self.predictions.values() if p.model == model and p.was_correct is not None
         ]
 
         if not verified:
@@ -646,11 +647,7 @@ class HallucinationPreventionPipeline:
         PREDICTION_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
         # Keep only last 1000 predictions
-        recent = sorted(
-            self.predictions.values(),
-            key=lambda p: p.timestamp,
-            reverse=True
-        )[:1000]
+        recent = sorted(self.predictions.values(), key=lambda p: p.timestamp, reverse=True)[:1000]
 
         data = {
             "predictions": [
@@ -738,18 +735,21 @@ def create_hallucination_pipeline() -> HallucinationPreventionPipeline:
 
     try:
         from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
         rag_system = LessonsLearnedRAG()
     except Exception as e:
         logger.warning(f"Could not initialize RAG: {e}")
 
     try:
         from src.verification.factuality_monitor import create_factuality_monitor
+
         factuality_monitor = create_factuality_monitor()
     except Exception as e:
         logger.warning(f"Could not initialize factuality monitor: {e}")
 
     try:
         from src.ml.anomaly_detector import TradingAnomalyDetector
+
         anomaly_detector = TradingAnomalyDetector()
     except Exception as e:
         logger.warning(f"Could not initialize anomaly detector: {e}")

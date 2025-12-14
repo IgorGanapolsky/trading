@@ -17,18 +17,19 @@ Usage:
 import asyncio
 import json
 import os
+from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
-from typing import Optional, List, Dict, Any
-from dataclasses import dataclass, asdict
 from enum import Enum
+from pathlib import Path
+from typing import Any, Optional
 
 # Stirrup imports (requires: pip install stirrup)
 try:
+    from pydantic import BaseModel, Field
     from stirrup import Agent, Tool, ToolResult, ToolUseCountMetadata
     from stirrup.clients.chat_completions_client import ChatCompletionsClient
     from stirrup.tools import DEFAULT_TOOLS
-    from pydantic import BaseModel, Field
+
     STIRRUP_AVAILABLE = True
 except ImportError:
     STIRRUP_AVAILABLE = False
@@ -36,29 +37,29 @@ except ImportError:
 
 # Local imports - UDM integration
 import sys
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.core.unified_domain_model import (
-    Symbol, Signal, TradeAction, SignalStrength, AssetClass,
-    DomainValidator, factory
-)
-
+from src.core.unified_domain_model import DomainValidator, TradeAction, factory
 
 # =============================================================================
 # SCANNER CONFIGURATION
 # =============================================================================
 
+
 class ScanMode(str, Enum):
     """Market scanning modes"""
-    QUICK = "quick"           # Fast scan, 2-3 sources
-    STANDARD = "standard"     # Normal scan, 5-7 sources
-    DEEP = "deep"             # Deep research, 10+ sources
+
+    QUICK = "quick"  # Fast scan, 2-3 sources
+    STANDARD = "standard"  # Normal scan, 5-7 sources
+    DEEP = "deep"  # Deep research, 10+ sources
 
 
 @dataclass
 class ScannerConfig:
     """Configuration for market scanner"""
-    symbols: List[str]
+
+    symbols: list[str]
     mode: ScanMode = ScanMode.STANDARD
     model: str = "anthropic/claude-sonnet-4"  # Cost-effective for scanning
     max_turns: int = 10
@@ -77,11 +78,12 @@ if STIRRUP_AVAILABLE:
 
     class GenerateSignalParams(BaseModel):
         """Parameters for signal generation tool"""
+
         symbol: str = Field(description="Trading symbol (e.g., BTCUSD, AAPL)")
         action: str = Field(description="Trade action: BUY, SELL, or HOLD")
         confidence: float = Field(ge=0.0, le=1.0, description="Confidence 0.0-1.0")
         reasoning: str = Field(description="Brief explanation of the signal")
-        sources: List[str] = Field(default=[], description="Source URLs/references")
+        sources: list[str] = Field(default=[], description="Source URLs/references")
 
     def generate_signal(params: GenerateSignalParams) -> ToolResult[ToolUseCountMetadata]:
         """
@@ -90,7 +92,9 @@ if STIRRUP_AVAILABLE:
         """
         try:
             # Determine asset class from symbol
-            is_crypto = any(c in params.symbol.upper() for c in ["BTC", "ETH", "USD", "DOGE", "SOL"])
+            is_crypto = any(
+                c in params.symbol.upper() for c in ["BTC", "ETH", "USD", "DOGE", "SOL"]
+            )
 
             # Create symbol using UDM factory
             if is_crypto:
@@ -108,10 +112,7 @@ if STIRRUP_AVAILABLE:
 
             # Create signal using UDM factory
             signal = factory.create_signal(
-                symbol=symbol,
-                action=action,
-                confidence=params.confidence,
-                source="stirrup_scanner"
+                symbol=symbol, action=action, confidence=params.confidence, source="stirrup_scanner"
             )
 
             # Add metadata
@@ -119,7 +120,7 @@ if STIRRUP_AVAILABLE:
                 "reasoning": params.reasoning,
                 "sources": params.sources,
                 "generated_at": datetime.utcnow().isoformat(),
-                "scanner_version": "1.0.0"
+                "scanner_version": "1.0.0",
             }
 
             # Validate the signal
@@ -127,25 +128,27 @@ if STIRRUP_AVAILABLE:
                 result = DomainValidator.validate(signal)
                 return ToolResult(
                     content=f"Signal validation failed: {[e.message for e in result.errors]}",
-                    metadata=ToolUseCountMetadata()
+                    metadata=ToolUseCountMetadata(),
                 )
 
             # Save signal to file for main system to consume
-            signal_file = Path("./data/scanner_signals") / f"signal_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+            signal_file = (
+                Path("./data/scanner_signals")
+                / f"signal_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+            )
             signal_file.parent.mkdir(parents=True, exist_ok=True)
             signal_file.write_text(json.dumps(signal.to_dict(), indent=2))
 
             return ToolResult(
                 content=f"Signal generated: {action.value} {params.symbol} (confidence: {params.confidence:.0%})\n"
-                        f"Reasoning: {params.reasoning}\n"
-                        f"Saved to: {signal_file}",
-                metadata=ToolUseCountMetadata()
+                f"Reasoning: {params.reasoning}\n"
+                f"Saved to: {signal_file}",
+                metadata=ToolUseCountMetadata(),
             )
 
         except Exception as e:
             return ToolResult(
-                content=f"Error generating signal: {str(e)}",
-                metadata=ToolUseCountMetadata()
+                content=f"Error generating signal: {str(e)}", metadata=ToolUseCountMetadata()
             )
 
     GENERATE_SIGNAL_TOOL = Tool(
@@ -161,19 +164,20 @@ if STIRRUP_AVAILABLE:
 
     class CheckMarketStatusParams(BaseModel):
         """Parameters for market status check"""
+
         market: str = Field(default="US", description="Market to check: US, CRYPTO")
 
     def check_market_status(params: CheckMarketStatusParams) -> ToolResult[ToolUseCountMetadata]:
         """Check if markets are open"""
         from datetime import datetime
+
         import pytz
 
-        now = datetime.now(pytz.timezone('US/Eastern'))
+        now = datetime.now(pytz.timezone("US/Eastern"))
 
         if params.market.upper() == "CRYPTO":
             return ToolResult(
-                content="CRYPTO markets are OPEN 24/7",
-                metadata=ToolUseCountMetadata()
+                content="CRYPTO markets are OPEN 24/7", metadata=ToolUseCountMetadata()
             )
 
         # US stock market hours
@@ -187,7 +191,7 @@ if STIRRUP_AVAILABLE:
 
         return ToolResult(
             content=f"US markets are {status}. Current time: {now.strftime('%Y-%m-%d %H:%M:%S ET')}",
-            metadata=ToolUseCountMetadata()
+            metadata=ToolUseCountMetadata(),
         )
 
     CHECK_MARKET_TOOL = Tool(
@@ -201,6 +205,7 @@ if STIRRUP_AVAILABLE:
 # =============================================================================
 # MARKET SCANNER AGENT
 # =============================================================================
+
 
 class MarketScanner:
     """
@@ -268,9 +273,11 @@ Analyze {symbol} and generate a trading signal.
 Begin your analysis. Use web search to gather current market data.
 """
 
-    async def scan_symbol(self, symbol: str) -> Optional[Dict[str, Any]]:
+    async def scan_symbol(self, symbol: str) -> Optional[dict[str, Any]]:
         """Scan a single symbol and generate signal"""
-        output_dir = Path(self.config.output_dir) / symbol / datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        output_dir = (
+            Path(self.config.output_dir) / symbol / datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        )
         output_dir.mkdir(parents=True, exist_ok=True)
 
         prompt = self._build_scan_prompt(symbol)
@@ -288,9 +295,7 @@ Begin your analysis. Use web search to gather current market data.
                     "output_dir": str(output_dir),
                 }
 
-                (output_dir / "scan_results.json").write_text(
-                    json.dumps(results, indent=2)
-                )
+                (output_dir / "scan_results.json").write_text(json.dumps(results, indent=2))
 
                 return results
 
@@ -298,7 +303,7 @@ Begin your analysis. Use web search to gather current market data.
             print(f"Error scanning {symbol}: {e}")
             return None
 
-    async def scan_all(self) -> List[Dict[str, Any]]:
+    async def scan_all(self) -> list[dict[str, Any]]:
         """Scan all configured symbols"""
         results = []
         for symbol in self.config.symbols:
@@ -313,8 +318,9 @@ Begin your analysis. Use web search to gather current market data.
 # CONTINUOUS MONITORING MODE
 # =============================================================================
 
+
 async def run_continuous_scanner(
-    symbols: List[str],
+    symbols: list[str],
     interval_minutes: int = 60,
     mode: ScanMode = ScanMode.STANDARD,
 ):
@@ -332,9 +338,9 @@ async def run_continuous_scanner(
     print(f"Interval: {interval_minutes} minutes, Mode: {mode.value}")
 
     while True:
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"Scan starting at {datetime.utcnow().isoformat()}")
-        print(f"{'='*50}")
+        print(f"{'=' * 50}")
 
         results = await scanner.scan_all()
 
@@ -348,6 +354,7 @@ async def run_continuous_scanner(
 # CLI INTERFACE
 # =============================================================================
 
+
 async def main():
     """CLI entry point"""
     import argparse
@@ -355,12 +362,13 @@ async def main():
     parser = argparse.ArgumentParser(description="Stirrup Market Scanner")
     parser.add_argument("--symbol", "-s", type=str, default="BTCUSD", help="Symbol to scan")
     parser.add_argument("--symbols", type=str, help="Comma-separated symbols")
-    parser.add_argument("--mode", "-m", type=str, default="standard",
-                        choices=["quick", "standard", "deep"])
-    parser.add_argument("--continuous", "-c", action="store_true",
-                        help="Run in continuous mode")
-    parser.add_argument("--interval", "-i", type=int, default=60,
-                        help="Scan interval in minutes (continuous mode)")
+    parser.add_argument(
+        "--mode", "-m", type=str, default="standard", choices=["quick", "standard", "deep"]
+    )
+    parser.add_argument("--continuous", "-c", action="store_true", help="Run in continuous mode")
+    parser.add_argument(
+        "--interval", "-i", type=int, default=60, help="Scan interval in minutes (continuous mode)"
+    )
 
     args = parser.parse_args()
 

@@ -32,7 +32,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +92,7 @@ class TradeDecisionRecord:
     quality: Optional[DecisionQuality] = None
     evaluator_notes: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "record_id": self.record_id,
             "timestamp": self.timestamp.isoformat(),
@@ -116,7 +116,7 @@ class TradeDecisionRecord:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TradeDecisionRecord":
+    def from_dict(cls, data: dict[str, Any]) -> TradeDecisionRecord:
         return cls(
             record_id=data["record_id"],
             timestamp=datetime.fromisoformat(data["timestamp"]),
@@ -134,7 +134,9 @@ class TradeDecisionRecord:
             outcome=DecisionOutcome(data.get("outcome", "pending")),
             profit_pct=data.get("profit_pct"),
             price_at_exit=data.get("price_at_exit"),
-            exit_timestamp=datetime.fromisoformat(data["exit_timestamp"]) if data.get("exit_timestamp") else None,
+            exit_timestamp=datetime.fromisoformat(data["exit_timestamp"])
+            if data.get("exit_timestamp")
+            else None,
             quality=DecisionQuality(data["quality"]) if data.get("quality") else None,
             evaluator_notes=data.get("evaluator_notes", ""),
         )
@@ -168,10 +170,10 @@ class EvaluationMetrics:
     calibration_error: float = 0.0  # Diff between confidence and actual accuracy
 
     # By strategy/model
-    by_strategy: Dict[str, Dict[str, float]] = field(default_factory=dict)
-    by_model: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    by_strategy: dict[str, dict[str, float]] = field(default_factory=dict)
+    by_model: dict[str, dict[str, float]] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "total_decisions": self.total_decisions,
             "resolved_decisions": self.resolved_decisions,
@@ -219,11 +221,11 @@ class TradeEvaluator:
         self.pending_file = self.storage_path / "pending_decisions.json"
 
         # Load pending decisions (awaiting outcome)
-        self._pending: Dict[str, TradeDecisionRecord] = self._load_pending()
+        self._pending: dict[str, TradeDecisionRecord] = self._load_pending()
 
         logger.info(f"TradeEvaluator initialized with {len(self._pending)} pending decisions")
 
-    def _load_pending(self) -> Dict[str, TradeDecisionRecord]:
+    def _load_pending(self) -> dict[str, TradeDecisionRecord]:
         """Load pending decisions from file."""
         if not self.pending_file.exists():
             return {}
@@ -312,9 +314,13 @@ class TradeEvaluator:
         # Calculate profit if not provided
         if profit_pct is None:
             if record.decision == "BUY":
-                profit_pct = ((exit_price - record.price_at_decision) / record.price_at_decision) * 100
+                profit_pct = (
+                    (exit_price - record.price_at_decision) / record.price_at_decision
+                ) * 100
             elif record.decision == "SELL":
-                profit_pct = ((record.price_at_decision - exit_price) / record.price_at_decision) * 100
+                profit_pct = (
+                    (record.price_at_decision - exit_price) / record.price_at_decision
+                ) * 100
             else:
                 profit_pct = 0.0
 
@@ -330,9 +336,9 @@ class TradeEvaluator:
 
         # Evaluate quality (simplified heuristic)
         correct_direction = (
-            (record.decision == "BUY" and profit_pct > 0) or
-            (record.decision == "SELL" and profit_pct > 0) or
-            (record.decision == "HOLD" and abs(profit_pct) < 1)
+            (record.decision == "BUY" and profit_pct > 0)
+            or (record.decision == "SELL" and profit_pct > 0)
+            or (record.decision == "HOLD" and abs(profit_pct) < 1)
         )
 
         high_confidence = record.confidence > 0.7
@@ -382,7 +388,9 @@ class TradeEvaluator:
 
         # Classify
         if abs(potential_profit) < 1:
-            outcome = DecisionOutcome.AVOIDED_LOSS if potential_profit < 0 else DecisionOutcome.BREAKEVEN
+            outcome = (
+                DecisionOutcome.AVOIDED_LOSS if potential_profit < 0 else DecisionOutcome.BREAKEVEN
+            )
         elif potential_profit > 2:
             outcome = DecisionOutcome.MISSED_GAIN
         else:
@@ -427,7 +435,7 @@ class TradeEvaluator:
         metrics = EvaluationMetrics()
 
         cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-        records: List[TradeDecisionRecord] = []
+        records: list[TradeDecisionRecord] = []
 
         if self.records_file.exists():
             with open(self.records_file) as f:
@@ -515,7 +523,7 @@ class TradeEvaluator:
 
         return metrics
 
-    def get_worst_decisions(self, limit: int = 10) -> List[TradeDecisionRecord]:
+    def get_worst_decisions(self, limit: int = 10) -> list[TradeDecisionRecord]:
         """Get the worst decisions for learning."""
         records = []
 
@@ -549,23 +557,23 @@ class TradeEvaluator:
                             "messages": [
                                 {
                                     "role": "system",
-                                    "content": "You are a trading analyst. Analyze the market data and make a trading decision."
+                                    "content": "You are a trading analyst. Analyze the market data and make a trading decision.",
                                 },
                                 {
                                     "role": "user",
                                     "content": f"Symbol: {record.symbol}\n"
-                                              f"Price: ${record.price_at_decision:.2f}\n"
-                                              f"Momentum Score: {record.momentum_score:.2f}\n"
-                                              f"Sentiment Score: {record.sentiment_score:.2f}\n"
-                                              f"Regime: {record.regime}\n\n"
-                                              f"What is your trading decision?"
+                                    f"Price: ${record.price_at_decision:.2f}\n"
+                                    f"Momentum Score: {record.momentum_score:.2f}\n"
+                                    f"Sentiment Score: {record.sentiment_score:.2f}\n"
+                                    f"Regime: {record.regime}\n\n"
+                                    f"What is your trading decision?",
                                 },
                                 {
                                     "role": "assistant",
                                     "content": f"Decision: {record.decision}\n"
-                                              f"Confidence: {record.confidence:.1%}\n"
-                                              f"Reasoning: {record.reasoning}"
-                                }
+                                    f"Confidence: {record.confidence:.1%}\n"
+                                    f"Reasoning: {record.reasoning}",
+                                },
                             ]
                         }
                         examples.append(example)

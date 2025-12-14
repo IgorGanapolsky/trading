@@ -51,8 +51,9 @@ logger = logging.getLogger(__name__)
 
 # RL Model integration (trained DiscoRL-inspired agent)
 try:
-    from src.ml.disco_dqn_agent import DiscoDQNAgent
     import torch
+
+    from src.ml.disco_dqn_agent import DiscoDQNAgent
 
     RL_MODEL_PATH = Path("models/ml/rl_transformer_state.pt")
     RL_WEIGHTS_PATH = Path("models/ml/rl_filter_weights.json")
@@ -300,7 +301,9 @@ class CryptoStrategy:
             f"crypto_universe={self.crypto_universe}, stop_loss={stop_loss_pct * 100}%"
         )
 
-    def get_rl_confirmation(self, symbol: str, rsi: float, macd: float, volume_ratio: float) -> dict:
+    def get_rl_confirmation(
+        self, symbol: str, rsi: float, macd: float, volume_ratio: float
+    ) -> dict:
         """
         Get RL model confirmation for trade decision.
 
@@ -327,10 +330,10 @@ class CryptoStrategy:
 
             # Calculate weighted score
             score = (
-                bias +
-                w.get("rsi_gap", 0.8) * rsi_gap +
-                w.get("momentum", 1.1) * momentum_score +
-                w.get("volume_premium", 0.6) * volume_score
+                bias
+                + w.get("rsi_gap", 0.8) * rsi_gap
+                + w.get("momentum", 1.1) * momentum_score
+                + w.get("volume_premium", 0.6) * volume_score
             )
 
             # Sigmoid to get probability
@@ -470,7 +473,9 @@ class CryptoStrategy:
 
             if not scores:
                 # Dec 14, 2025: Always fallback to BTC - never skip trading
-                logger.warning("No valid crypto opportunities (all failed filters) - using BTC fallback")
+                logger.warning(
+                    "No valid crypto opportunities (all failed filters) - using BTC fallback"
+                )
                 logger.info(f"RSI_OVERBOUGHT threshold: {self.RSI_OVERBOUGHT}")
                 best_coin = "BTCUSD"
             else:
@@ -559,13 +564,19 @@ class CryptoStrategy:
                     if rl_confirmation["recommendation"] == "strong_buy":
                         # RL is confident - increase position by 25%
                         self.daily_amount *= 1.25
-                        logger.info(f"RL strong_buy: Increased position to ${self.daily_amount:.2f}")
+                        logger.info(
+                            f"RL strong_buy: Increased position to ${self.daily_amount:.2f}"
+                        )
                     elif rl_confirmation["recommendation"] == "avoid":
                         # RL says avoid - reduce position by 50% but still trade
                         self.daily_amount *= 0.5
-                        logger.warning(f"RL avoid signal: Reduced position to ${self.daily_amount:.2f}")
+                        logger.warning(
+                            f"RL avoid signal: Reduced position to ${self.daily_amount:.2f}"
+                        )
                 else:
-                    logger.info(f"RL confirmation not available: {rl_confirmation.get('reason', 'unknown')}")
+                    logger.info(
+                        f"RL confirmation not available: {rl_confirmation.get('reason', 'unknown')}"
+                    )
 
             # Step 3: Get current price
             logger.info(f"[DEBUG] Fetching price for {best_coin}...")
@@ -658,7 +669,7 @@ class CryptoStrategy:
 
             logger.info(f"[SUCCESS] Order executed: {order}")
             logger.info(f"[DEBUG] Total invested to date: ${self.total_invested:.2f}")
-            logger.info(f"[DEBUG] Returning order object (not None)")
+            logger.info("[DEBUG] Returning order object (not None)")
 
             # Reset daily_amount to original for next execution
             self.daily_amount = original_amount
@@ -670,7 +681,7 @@ class CryptoStrategy:
             raise
         finally:
             # Always reset daily_amount even if exception occurs
-            if 'original_amount' in locals():
+            if "original_amount" in locals():
                 self.daily_amount = original_amount
 
     def get_rag_insights(self, symbol: str, metrics: dict) -> dict:
@@ -1126,9 +1137,13 @@ class CryptoStrategy:
 
                 # HARD FILTER 3: Require volume confirmation (relaxed for weekends)
                 # Weekend volume is typically 10-30% of weekday average
-                volume_threshold = float(os.getenv("CRYPTO_VOLUME_THRESHOLD", "0.1"))  # Relaxed from 0.3 to 0.1
+                volume_threshold = float(
+                    os.getenv("CRYPTO_VOLUME_THRESHOLD", "0.1")
+                )  # Relaxed from 0.3 to 0.1
                 if volume_ratio < volume_threshold:
-                    logger.warning(f"{symbol} REJECTED - Low volume ({volume_ratio:.2f} < {volume_threshold})")
+                    logger.warning(
+                        f"{symbol} REJECTED - Low volume ({volume_ratio:.2f} < {volume_threshold})"
+                    )
                     continue
 
                 # Calculate composite score

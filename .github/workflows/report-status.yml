@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Report Status
         run: |
           echo "=== WORKFLOW STATUS REPORT ===" > status_report.txt
@@ -21,7 +21,7 @@ jobs:
           echo "Run ID: ${{ github.event.workflow_run.id }}" >> status_report.txt
           echo "URL: ${{ github.event.workflow_run.html_url }}" >> status_report.txt
           cat status_report.txt
-      
+
       - name: Commit Status Report
         run: |
           git config user.name "github-actions[bot]"

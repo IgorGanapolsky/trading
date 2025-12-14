@@ -18,9 +18,9 @@ Exit codes:
 import argparse
 import json
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 
 class GoLiveReadinessChecker:
@@ -32,9 +32,9 @@ class GoLiveReadinessChecker:
         self.system_state_path = project_root / "data" / "system_state.json"
         self.anomaly_log_path = project_root / "data" / "anomaly_log.json"
 
-        self.config: Optional[Dict] = None
-        self.system_state: Optional[Dict] = None
-        self.anomaly_log: Optional[Dict] = None
+        self.config: Optional[dict] = None
+        self.system_state: Optional[dict] = None
+        self.anomaly_log: Optional[dict] = None
 
     def load_data(self) -> bool:
         """Load all required data files. Returns True if successful."""
@@ -44,27 +44,26 @@ class GoLiveReadinessChecker:
                 print(f"ERROR: Config file not found: {self.config_path}", file=sys.stderr)
                 return False
 
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path) as f:
                 self.config = json.load(f)
 
             # Load system state
             if not self.system_state_path.exists():
-                print(f"ERROR: System state file not found: {self.system_state_path}", file=sys.stderr)
+                print(
+                    f"ERROR: System state file not found: {self.system_state_path}", file=sys.stderr
+                )
                 return False
 
-            with open(self.system_state_path, 'r') as f:
+            with open(self.system_state_path) as f:
                 self.system_state = json.load(f)
 
             # Load anomaly log (optional - create empty if missing)
             if self.anomaly_log_path.exists():
-                with open(self.anomaly_log_path, 'r') as f:
+                with open(self.anomaly_log_path) as f:
                     self.anomaly_log = json.load(f)
             else:
                 # Default to zero anomalies if log doesn't exist
-                self.anomaly_log = {
-                    "critical_count_7d": 0,
-                    "anomalies": []
-                }
+                self.anomaly_log = {"critical_count_7d": 0, "anomalies": []}
 
             return True
 
@@ -75,7 +74,7 @@ class GoLiveReadinessChecker:
             print(f"ERROR: Failed to load data files: {e}", file=sys.stderr)
             return False
 
-    def get_nested_value(self, data: Dict, path: str) -> Any:
+    def get_nested_value(self, data: dict, path: str) -> Any:
         """
         Extract value from nested dictionary using dot notation.
 
@@ -103,7 +102,7 @@ class GoLiveReadinessChecker:
 
         return value
 
-    def evaluate_criterion(self, criterion: Dict) -> Tuple[bool, Any, str]:
+    def evaluate_criterion(self, criterion: dict) -> tuple[bool, Any, str]:
         """
         Evaluate a single criterion.
 
@@ -156,14 +155,16 @@ class GoLiveReadinessChecker:
             if passed:
                 message = f"✓ PASS: {description} ({current_value} meets threshold {threshold})"
             else:
-                message = f"✗ FAIL: {description} ({current_value} does not meet threshold {threshold})"
+                message = (
+                    f"✗ FAIL: {description} ({current_value} does not meet threshold {threshold})"
+                )
 
             return passed, current_value, message
 
         except Exception as e:
             return False, current_value, f"Error evaluating criterion: {e}"
 
-    def check_readiness(self) -> Dict[str, Any]:
+    def check_readiness(self) -> dict[str, Any]:
         """
         Check all go-live criteria.
 
@@ -171,36 +172,33 @@ class GoLiveReadinessChecker:
             Dict with detailed results for each criterion and overall status
         """
         if not self.config or not self.system_state:
-            return {
-                "error": "Data not loaded. Call load_data() first.",
-                "ready_for_go_live": False
-            }
+            return {"error": "Data not loaded. Call load_data() first.", "ready_for_go_live": False}
 
         results = {
             "timestamp": datetime.now().isoformat(),
             "config_version": self.config.get("version", "unknown"),
-            "system_state_updated": self.system_state.get("meta", {}).get("last_updated", "unknown"),
+            "system_state_updated": self.system_state.get("meta", {}).get(
+                "last_updated", "unknown"
+            ),
             "criteria_results": [],
-            "summary": {
-                "total_criteria": 0,
-                "passed": 0,
-                "failed": 0
-            },
-            "ready_for_go_live": False
+            "summary": {"total_criteria": 0, "passed": 0, "failed": 0},
+            "ready_for_go_live": False,
         }
 
         # Evaluate each criterion
         for criterion in self.config["criteria"]:
             passed, current_value, message = self.evaluate_criterion(criterion)
 
-            results["criteria_results"].append({
-                "id": criterion["id"],
-                "description": criterion["description"],
-                "threshold": criterion["threshold"],
-                "current_value": current_value,
-                "passed": passed,
-                "message": message
-            })
+            results["criteria_results"].append(
+                {
+                    "id": criterion["id"],
+                    "description": criterion["description"],
+                    "threshold": criterion["threshold"],
+                    "current_value": current_value,
+                    "passed": passed,
+                    "message": message,
+                }
+            )
 
             results["summary"]["total_criteria"] += 1
             if passed:
@@ -213,7 +211,7 @@ class GoLiveReadinessChecker:
 
         return results
 
-    def print_human_readable_report(self, results: Dict[str, Any]) -> None:
+    def print_human_readable_report(self, results: dict[str, Any]) -> None:
         """Print a human-readable report to stdout."""
         print("=" * 80)
         print("GO-LIVE READINESS REPORT")
@@ -264,12 +262,10 @@ def main():
 Examples:
   python3 scripts/check_go_live_readiness.py          # Human-readable report
   python3 scripts/check_go_live_readiness.py --json   # JSON output for automation
-        """
+        """,
     )
     parser.add_argument(
-        "--json",
-        action="store_true",
-        help="Output results as JSON for machine parsing"
+        "--json", action="store_true", help="Output results as JSON for machine parsing"
     )
 
     args = parser.parse_args()

@@ -314,9 +314,7 @@ class CapitalScalingPolicy:
         # Check 1: Promotion gate must pass WITHOUT override
         if not gate_passed:
             scaling_approved = False
-            reasons.append(
-                f"❌ Promotion gate FAILED with {len(gate_deficits)} deficits:"
-            )
+            reasons.append(f"❌ Promotion gate FAILED with {len(gate_deficits)} deficits:")
             for deficit in gate_deficits[:3]:  # Show first 3
                 reasons.append(f"   • {deficit.get('description', 'Unknown deficit')}")
 
@@ -333,9 +331,7 @@ class CapitalScalingPolicy:
         # Check 2: P/L sanity must be healthy (no critical alerts)
         if not sanity_healthy:
             scaling_approved = False
-            reasons.append(
-                f"❌ P/L sanity check FAILED with {len(sanity_alerts)} critical alerts:"
-            )
+            reasons.append(f"❌ P/L sanity check FAILED with {len(sanity_alerts)} critical alerts:")
             for alert in sanity_alerts[:3]:
                 reasons.append(f"   • {alert}")
 
@@ -349,14 +345,10 @@ class CapitalScalingPolicy:
                 f"❌ Strategy not profitable yet (avg return: {avg_return_pct:.2f}%) - "
                 "cannot calculate recommended budget"
             )
-            reasons.append(
-                "   Wait for 5+ profitable sessions before scaling"
-            )
+            reasons.append("   Wait for 5+ profitable sessions before scaling")
 
         else:
-            reasons.append(
-                f"✅ Strategy profitable (avg return: {avg_return_pct:.2f}%)"
-            )
+            reasons.append(f"✅ Strategy profitable (avg return: {avg_return_pct:.2f}%)")
 
         # Check 4: Scaling factor must be reasonable (conservative scaling)
         if scaling_factor is not None and scaling_factor > self.max_scale_factor:
@@ -385,22 +377,19 @@ class CapitalScalingPolicy:
 
         else:
             reasons.append(
-                f"✅ Drawdown {drawdown_pct:.2f}% within "
-                f"max {self.max_drawdown_pct:.2f}% limit"
+                f"✅ Drawdown {drawdown_pct:.2f}% within max {self.max_drawdown_pct:.2f}% limit"
             )
 
         # Check 6: Win rate must meet minimum
         if win_rate < self.min_win_rate:
             scaling_approved = False
             reasons.append(
-                f"❌ Win rate {win_rate:.1f}% below "
-                f"min {self.min_win_rate:.1f}% threshold"
+                f"❌ Win rate {win_rate:.1f}% below min {self.min_win_rate:.1f}% threshold"
             )
 
         else:
             reasons.append(
-                f"✅ Win rate {win_rate:.1f}% exceeds "
-                f"min {self.min_win_rate:.1f}% threshold"
+                f"✅ Win rate {win_rate:.1f}% exceeds min {self.min_win_rate:.1f}% threshold"
             )
 
         # Calculate recommended new budget
@@ -411,7 +400,9 @@ class CapitalScalingPolicy:
             conservative_max = current_budget * self.max_scale_factor
             recommended_new_budget = min(conservative_max, recommended_budget)
 
-            actual_scale_factor = recommended_new_budget / current_budget if current_budget > 0 else 1.0
+            actual_scale_factor = (
+                recommended_new_budget / current_budget if current_budget > 0 else 1.0
+            )
 
             reasons.append("")
             reasons.append(
@@ -433,9 +424,7 @@ class CapitalScalingPolicy:
             )
 
         # Calculate next review date
-        next_review_date = (
-            datetime.now() + timedelta(days=self.review_days)
-        ).date().isoformat()
+        next_review_date = (datetime.now() + timedelta(days=self.review_days)).date().isoformat()
 
         return ScalingDecision(
             timestamp=datetime.now().isoformat(),
@@ -462,9 +451,7 @@ class CapitalScalingPolicy:
             },
         )
 
-    def apply_scaling_to_system_state(
-        self, decision: ScalingDecision
-    ) -> None:
+    def apply_scaling_to_system_state(self, decision: ScalingDecision) -> None:
         """
         Apply scaling decision to system_state.json.
 
@@ -478,9 +465,7 @@ class CapitalScalingPolicy:
             FileNotFoundError: If system_state.json not found
         """
         if not decision.scaling_approved:
-            logger.warning(
-                "Scaling NOT approved - skipping system_state.json update"
-            )
+            logger.warning("Scaling NOT approved - skipping system_state.json update")
             return
 
         logger.info(f"Applying scaling to {SYSTEM_STATE_FILE}...")
@@ -493,10 +478,7 @@ class CapitalScalingPolicy:
         new_budget = decision.recommended_new_budget
         scale_factor = new_budget / old_budget if old_budget > 0 else 1.0
 
-        logger.info(
-            f"Scaling budget: ${old_budget:.2f} → ${new_budget:.2f} "
-            f"({scale_factor:.2f}x)"
-        )
+        logger.info(f"Scaling budget: ${old_budget:.2f} → ${new_budget:.2f} ({scale_factor:.2f}x)")
 
         # Update each active strategy's daily_amount
         strategies = state.get("strategies", {})
@@ -513,9 +495,7 @@ class CapitalScalingPolicy:
                 strategy_data["daily_amount"] = round(new_amount, 2)
                 updated_count += 1
 
-                logger.info(
-                    f"  {strategy_name}: ${old_amount:.2f} → ${new_amount:.2f}"
-                )
+                logger.info(f"  {strategy_name}: ${old_amount:.2f} → ${new_amount:.2f}")
 
         # Update metadata
         if "meta" not in state:
@@ -531,9 +511,7 @@ class CapitalScalingPolicy:
         # Save updated state
         self._save_json(SYSTEM_STATE_FILE, state)
 
-        logger.info(
-            f"✅ Successfully scaled {updated_count} strategies in system_state.json"
-        )
+        logger.info(f"✅ Successfully scaled {updated_count} strategies in system_state.json")
 
     def generate_report(self, decision: ScalingDecision) -> str:
         """
@@ -591,9 +569,7 @@ class CapitalScalingPolicy:
             )
         else:
             lines.append("   Status: ❌ DENIED")
-            lines.append(
-                f"   Maintain: ${decision.current_daily_budget:.2f}/day (no change)"
-            )
+            lines.append(f"   Maintain: ${decision.current_daily_budget:.2f}/day (no change)")
 
         lines.append(f"   Next Review: {decision.next_review_date}")
         lines.append("")
@@ -608,9 +584,7 @@ class CapitalScalingPolicy:
 
         return "\n".join(lines)
 
-    def run(
-        self, apply: bool = False, json_output: bool = False
-    ) -> ScalingDecision:
+    def run(self, apply: bool = False, json_output: bool = False) -> ScalingDecision:
         """
         Execute complete capital scaling policy workflow.
 
@@ -640,9 +614,7 @@ class CapitalScalingPolicy:
         sanity_status = self.check_pl_sanity()
 
         # Step 4: Calculate scaling decision
-        decision = self.calculate_scaling_decision(
-            profit_report, gate_status, sanity_status
-        )
+        decision = self.calculate_scaling_decision(profit_report, gate_status, sanity_status)
 
         # Step 5: Apply if requested
         if apply:

@@ -5,12 +5,12 @@ Verifies that the detector correctly identifies trades similar to past failures
 and blocks high-risk trades while allowing safe ones.
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, MagicMock, patch
 from src.verification.semantic_trade_anomaly import (
     SemanticTradeAnomalyDetector,
     TradeContext,
-    AnomalyResult,
 )
 
 
@@ -90,12 +90,14 @@ class TestSemanticTradeAnomalyDetector:
     def test_check_trade_invalid_context(self, detector):
         """Test check_trade with invalid context."""
         # Missing required field
-        result = detector.check_trade({
-            "symbol": "SPY",
-            "side": "buy",
-            # missing "amount"
-            "strategy": "momentum",
-        })
+        result = detector.check_trade(
+            {
+                "symbol": "SPY",
+                "side": "buy",
+                # missing "amount"
+                "strategy": "momentum",
+            }
+        )
 
         assert result["safe"]  # Fail open on errors
         assert "ERROR" in result["recommendation"]
@@ -106,12 +108,14 @@ class TestSemanticTradeAnomalyDetector:
         with patch("src.rag.lessons_learned_rag.LessonsLearnedRAG", side_effect=ImportError):
             detector = SemanticTradeAnomalyDetector()
 
-            result = detector.check_trade({
-                "symbol": "AAPL",
-                "side": "buy",
-                "amount": 100.0,
-                "strategy": "momentum",
-            })
+            result = detector.check_trade(
+                {
+                    "symbol": "AAPL",
+                    "side": "buy",
+                    "amount": 100.0,
+                    "strategy": "momentum",
+                }
+            )
 
             assert result["safe"]
             assert not result["rag_available"]
@@ -123,12 +127,14 @@ class TestSemanticTradeAnomalyDetector:
         with patch("src.rag.lessons_learned_rag.LessonsLearnedRAG", side_effect=ImportError):
             detector = SemanticTradeAnomalyDetector()
 
-            result = detector.check_trade({
-                "symbol": "SPY",
-                "side": "buy",
-                "amount": 3000.0,  # Over $2000 limit
-                "strategy": "momentum",
-            })
+            result = detector.check_trade(
+                {
+                    "symbol": "SPY",
+                    "side": "buy",
+                    "amount": 3000.0,  # Over $2000 limit
+                    "strategy": "momentum",
+                }
+            )
 
             assert not result["safe"]
             assert result["risk_score"] > 0.5
@@ -140,12 +146,14 @@ class TestSemanticTradeAnomalyDetector:
         with patch("src.rag.lessons_learned_rag.LessonsLearnedRAG", side_effect=ImportError):
             detector = SemanticTradeAnomalyDetector()
 
-            result = detector.check_trade({
-                "symbol": "AAPL",
-                "side": "buy",
-                "amount": 0.50,  # Below $1 minimum
-                "strategy": "test",
-            })
+            result = detector.check_trade(
+                {
+                    "symbol": "AAPL",
+                    "side": "buy",
+                    "amount": 0.50,  # Below $1 minimum
+                    "strategy": "test",
+                }
+            )
 
             assert not result["safe"]
             assert "WARNING" in result["recommendation"]
@@ -161,12 +169,14 @@ class TestSemanticTradeAnomalyDetector:
         with patch("src.rag.lessons_learned_rag.LessonsLearnedRAG", return_value=mock_rag):
             detector = SemanticTradeAnomalyDetector()
 
-            result = detector.check_trade({
-                "symbol": "MSFT",
-                "side": "buy",
-                "amount": 50.0,
-                "strategy": "momentum",
-            })
+            result = detector.check_trade(
+                {
+                    "symbol": "MSFT",
+                    "side": "buy",
+                    "amount": 50.0,
+                    "strategy": "momentum",
+                }
+            )
 
             assert result["safe"]
             assert result["rag_available"]
@@ -195,12 +205,14 @@ class TestSemanticTradeAnomalyDetector:
         with patch("src.rag.lessons_learned_rag.LessonsLearnedRAG", return_value=mock_rag):
             detector = SemanticTradeAnomalyDetector(similarity_threshold=0.7)
 
-            result = detector.check_trade({
-                "symbol": "NVDA",
-                "side": "buy",
-                "amount": 75.0,
-                "strategy": "growth",
-            })
+            result = detector.check_trade(
+                {
+                    "symbol": "NVDA",
+                    "side": "buy",
+                    "amount": 75.0,
+                    "strategy": "growth",
+                }
+            )
 
             assert result["safe"]
             assert result["risk_score"] < 0.4
@@ -230,12 +242,14 @@ class TestSemanticTradeAnomalyDetector:
                 financial_impact_threshold=100,
             )
 
-            result = detector.check_trade({
-                "symbol": "SPY",
-                "side": "buy",
-                "amount": 1600.0,
-                "strategy": "momentum",
-            })
+            result = detector.check_trade(
+                {
+                    "symbol": "SPY",
+                    "side": "buy",
+                    "amount": 1600.0,
+                    "strategy": "momentum",
+                }
+            )
 
             assert not result["safe"]  # Should be blocked
             assert result["risk_score"] > 0.7
@@ -265,12 +279,14 @@ class TestSemanticTradeAnomalyDetector:
         with patch("src.rag.lessons_learned_rag.LessonsLearnedRAG", return_value=mock_rag):
             detector = SemanticTradeAnomalyDetector()
 
-            result = detector.check_trade({
-                "symbol": "TSLA",
-                "side": "sell",
-                "amount": 200.0,
-                "strategy": "momentum",
-            })
+            result = detector.check_trade(
+                {
+                    "symbol": "TSLA",
+                    "side": "sell",
+                    "amount": 200.0,
+                    "strategy": "momentum",
+                }
+            )
 
             # Should pass but with warning
             assert result["safe"]
@@ -313,12 +329,14 @@ class TestSemanticTradeAnomalyDetector:
         with patch("src.rag.lessons_learned_rag.LessonsLearnedRAG", return_value=mock_rag):
             detector = SemanticTradeAnomalyDetector()
 
-            result = detector.check_trade({
-                "symbol": "AAPL",
-                "side": "buy",
-                "amount": 100.0,
-                "strategy": "momentum",
-            })
+            result = detector.check_trade(
+                {
+                    "symbol": "AAPL",
+                    "side": "buy",
+                    "amount": 100.0,
+                    "strategy": "momentum",
+                }
+            )
 
             # Note: This may fail in slow environments, but should pass in production
             # We allow up to 100ms for test environments
@@ -348,12 +366,14 @@ class TestSemanticTradeAnomalyDetector:
         with patch("src.rag.lessons_learned_rag.LessonsLearnedRAG", return_value=mock_rag):
             detector = SemanticTradeAnomalyDetector()
 
-            result = detector.check_trade({
-                "symbol": "SPY",
-                "side": "buy",
-                "amount": 100.0,
-                "strategy": "momentum",
-            })
+            result = detector.check_trade(
+                {
+                    "symbol": "SPY",
+                    "side": "buy",
+                    "amount": 100.0,
+                    "strategy": "momentum",
+                }
+            )
 
             # Should fail open (allow trade) on errors
             assert result["safe"], "REGRESSION ll_009: Detector should fail open on errors"
@@ -387,12 +407,14 @@ class TestSemanticTradeAnomalyDetector:
             )
 
             # Try to execute similar large trade
-            result = detector.check_trade({
-                "symbol": "QQQ",
-                "side": "buy",
-                "amount": 1500.0,  # Similar to the $1,600 incident
-                "strategy": "autonomous",
-            })
+            result = detector.check_trade(
+                {
+                    "symbol": "QQQ",
+                    "side": "buy",
+                    "amount": 1500.0,  # Similar to the $1,600 incident
+                    "strategy": "autonomous",
+                }
+            )
 
             assert not result["safe"], "Should block trade similar to 200x bug"
             assert result["risk_score"] > 0.7
@@ -421,12 +443,14 @@ class TestSemanticTradeAnomalyDetector:
         with patch("src.rag.lessons_learned_rag.LessonsLearnedRAG", return_value=mock_rag):
             detector = SemanticTradeAnomalyDetector(top_k=5)
 
-            result = detector.check_trade({
-                "symbol": "AAPL",
-                "side": "buy",
-                "amount": 100.0,
-                "strategy": "test",
-            })
+            result = detector.check_trade(
+                {
+                    "symbol": "AAPL",
+                    "side": "buy",
+                    "amount": 100.0,
+                    "strategy": "test",
+                }
+            )
 
             # Should return exactly 5 incidents
             assert len(result["similar_incidents"]) == 5
@@ -450,16 +474,18 @@ class TestSemanticTradeAnomalyDetector:
         with patch("src.rag.lessons_learned_rag.LessonsLearnedRAG", return_value=mock_rag):
             detector = SemanticTradeAnomalyDetector()
 
-            result = detector.check_trade({
-                "symbol": "BTCUSD",
-                "side": "buy",
-                "amount": 0.5,
-                "strategy": "momentum_crypto",
-                "additional_context": {
-                    "macd": -5.0,
-                    "signal": "consolidation",
-                },
-            })
+            result = detector.check_trade(
+                {
+                    "symbol": "BTCUSD",
+                    "side": "buy",
+                    "amount": 0.5,
+                    "strategy": "momentum_crypto",
+                    "additional_context": {
+                        "macd": -5.0,
+                        "signal": "consolidation",
+                    },
+                }
+            )
 
             # Should pass (low financial impact) but include warning
             assert result["safe"]

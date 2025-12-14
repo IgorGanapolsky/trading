@@ -154,7 +154,9 @@ class MinimalTrader:
         if sma_20 > sma_50 and price > sma_20:
             action = "BUY"
             confidence = min((sma_20 - sma_50) / sma_50 * 10, 1.0)  # Scale to 0-1
-            reason = f"Uptrend: SMA20 ({sma_20:.2f}) > SMA50 ({sma_50:.2f}), Price ({price:.2f}) > SMA20"
+            reason = (
+                f"Uptrend: SMA20 ({sma_20:.2f}) > SMA50 ({sma_50:.2f}), Price ({price:.2f}) > SMA20"
+            )
         elif sma_20 < sma_50:
             action = "SELL"
             confidence = min((sma_50 - sma_20) / sma_50 * 10, 1.0)

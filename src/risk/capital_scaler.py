@@ -206,9 +206,7 @@ class CapitalScaler:
         self.state.cumulative_profit += pnl
         self._save_state()
 
-        logger.info(
-            f"Daily P&L: ${pnl:.2f}, Cumulative: ${self.state.cumulative_profit:.2f}"
-        )
+        logger.info(f"Daily P&L: ${pnl:.2f}, Cumulative: ${self.state.cumulative_profit:.2f}")
 
     def check_circuit_breakers(
         self, daily_pnl: float, account_value: Optional[float] = None
@@ -230,9 +228,7 @@ class CapitalScaler:
 
         # Calculate daily P&L as percentage
         daily_pnl_pct = (
-            (daily_pnl / self.state.current_equity * 100)
-            if self.state.current_equity > 0
-            else 0.0
+            (daily_pnl / self.state.current_equity * 100) if self.state.current_equity > 0 else 0.0
         )
 
         # Check circuit breakers in order of severity
@@ -319,14 +315,16 @@ class CapitalScaler:
         self.state.last_scale_date = datetime.now().strftime("%Y-%m-%d")
 
         # Record in history
-        self.state.scale_history.append({
-            "date": self.state.last_scale_date,
-            "from_level": old_level,
-            "to_level": self.state.current_level,
-            "from_daily": old_daily,
-            "to_daily": self.state.daily_investment,
-            "cumulative_profit_at_scale": self.state.cumulative_profit,
-        })
+        self.state.scale_history.append(
+            {
+                "date": self.state.last_scale_date,
+                "from_level": old_level,
+                "to_level": self.state.current_level,
+                "from_daily": old_daily,
+                "to_daily": self.state.daily_investment,
+                "cumulative_profit_at_scale": self.state.cumulative_profit,
+            }
+        )
 
         self._save_state()
 
@@ -375,15 +373,17 @@ class CapitalScaler:
         self.state.last_scale_date = datetime.now().strftime("%Y-%m-%d")
 
         # Record in history
-        self.state.scale_history.append({
-            "date": self.state.last_scale_date,
-            "from_level": old_level,
-            "to_level": self.state.current_level,
-            "from_daily": old_daily,
-            "to_daily": self.state.daily_investment,
-            "cumulative_profit_at_scale": self.state.cumulative_profit,
-            "reason": "drawdown_scale_down",
-        })
+        self.state.scale_history.append(
+            {
+                "date": self.state.last_scale_date,
+                "from_level": old_level,
+                "to_level": self.state.current_level,
+                "from_daily": old_daily,
+                "to_daily": self.state.daily_investment,
+                "cumulative_profit_at_scale": self.state.cumulative_profit,
+                "reason": "drawdown_scale_down",
+            }
+        )
 
         self._save_state()
 

@@ -351,9 +351,7 @@ class CostValidator:
 
         # Calculate divergence percentage
         divergence_pct = (
-            (abs_divergence / backtest_avg_slippage * 100)
-            if backtest_avg_slippage > 0
-            else 0.0
+            (abs_divergence / backtest_avg_slippage * 100) if backtest_avg_slippage > 0 else 0.0
         )
 
         # Calculate trend from history
@@ -431,9 +429,7 @@ class CostValidator:
                 "for tighter backtest estimates."
             )
 
-    def _calculate_trend(
-        self, current_divergence: float
-    ) -> tuple[Optional[float], Optional[str]]:
+    def _calculate_trend(self, current_divergence: float) -> tuple[Optional[float], Optional[str]]:
         """Calculate rolling divergence and trend from history."""
         if len(self.validation_history) < 2:
             return None, None
@@ -444,7 +440,11 @@ class CostValidator:
 
         # Compare current to rolling average
         if len(self.validation_history) >= 4:
-            older = self.validation_history[-8:-4] if len(self.validation_history) >= 8 else self.validation_history[:4]
+            older = (
+                self.validation_history[-8:-4]
+                if len(self.validation_history) >= 8
+                else self.validation_history[:4]
+            )
             older_avg = sum(v.divergence_bps for v in older) / len(older)
 
             diff = rolling_avg - older_avg
@@ -500,8 +500,7 @@ class CostValidator:
             "sample_size": len(fills),
             "confidence": round(confidence, 2),
             "symbol_breakdown": {
-                sym: round(sum(slips) / len(slips), 1)
-                for sym, slips in symbol_slippages.items()
+                sym: round(sum(slips) / len(slips), 1) for sym, slips in symbol_slippages.items()
             },
             "recommendation": (
                 f"Based on {len(fills)} live fills, suggest base_spread_bps = "

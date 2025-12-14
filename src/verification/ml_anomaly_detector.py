@@ -32,13 +32,13 @@ logger = logging.getLogger(__name__)
 # Historical baselines from lessons learned
 BASELINES = {
     "avg_file_complexity": 15.0,  # Cyclomatic complexity
-    "max_function_length": 50,     # Lines per function
-    "min_test_coverage": 0.60,     # 60% coverage baseline
-    "max_import_count": 25,        # Imports per file
-    "avg_daily_trades": 5,         # Expected trades per day
-    "max_consecutive_losses": 3,   # Risk threshold
+    "max_function_length": 50,  # Lines per function
+    "min_test_coverage": 0.60,  # 60% coverage baseline
+    "max_import_count": 25,  # Imports per file
+    "avg_daily_trades": 5,  # Expected trades per day
+    "max_consecutive_losses": 3,  # Risk threshold
     "normal_win_rate_range": (0.45, 0.70),  # Expected win rate
-    "normal_sharpe_range": (0.5, 2.5),       # Expected Sharpe
+    "normal_sharpe_range": (0.5, 2.5),  # Expected Sharpe
 }
 
 
@@ -107,7 +107,11 @@ class MLAnomalyDetector:
         function_lines = self._extract_function_lengths(content)
         for func_name, length in function_lines.items():
             if length > self.baselines["max_function_length"]:
-                deviation = (length - self.baselines["max_function_length"]) / self.baselines["max_function_length"] * 100
+                deviation = (
+                    (length - self.baselines["max_function_length"])
+                    / self.baselines["max_function_length"]
+                    * 100
+                )
                 anomalies.append(
                     Anomaly(
                         category="code",
@@ -124,7 +128,11 @@ class MLAnomalyDetector:
         # Check import count
         import_count = len(re.findall(r"^(?:from|import)\s+", content, re.MULTILINE))
         if import_count > self.baselines["max_import_count"]:
-            deviation = (import_count - self.baselines["max_import_count"]) / self.baselines["max_import_count"] * 100
+            deviation = (
+                (import_count - self.baselines["max_import_count"])
+                / self.baselines["max_import_count"]
+                * 100
+            )
             anomalies.append(
                 Anomaly(
                     category="code",
@@ -233,7 +241,9 @@ class MLAnomalyDetector:
                     metric_name="consecutive_losses",
                     expected_value=self.baselines["max_consecutive_losses"],
                     actual_value=consecutive_losses,
-                    deviation_pct=(consecutive_losses - self.baselines["max_consecutive_losses"]) / self.baselines["max_consecutive_losses"] * 100,
+                    deviation_pct=(consecutive_losses - self.baselines["max_consecutive_losses"])
+                    / self.baselines["max_consecutive_losses"]
+                    * 100,
                     recommendation="Trigger circuit breaker - pause trading for review",
                 )
             )
@@ -280,7 +290,9 @@ class MLAnomalyDetector:
 
         for line in lines:
             stripped = line.lstrip()
-            if stripped.startswith(("if ", "for ", "while ", "with ", "try:", "else:", "elif ", "except")):
+            if stripped.startswith(
+                ("if ", "for ", "while ", "with ", "try:", "else:", "elif ", "except")
+            ):
                 indent = len(line) - len(stripped)
                 depth = indent // 4  # Assuming 4-space indentation
                 current_depth = depth + 1
@@ -436,4 +448,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

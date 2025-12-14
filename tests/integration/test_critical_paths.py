@@ -6,9 +6,10 @@ not just that they exist. This prevents the "manage_positions() never called" bu
 Run with: pytest tests/integration/test_critical_paths.py -v
 """
 
-import pytest
-from unittest.mock import MagicMock, patch, call
 import os
+from unittest.mock import patch
+
+import pytest
 
 # Set paper trading mode
 os.environ["PAPER_TRADING"] = "true"
@@ -51,10 +52,12 @@ class TestCryptoStrategyIntegration:
 
             # Verify the method exists and has exit condition logic
             import inspect
+
             source = inspect.getsource(strategy.manage_positions)
 
-            assert "stop_loss" in source.lower() or "take_profit" in source.lower(), \
+            assert "stop_loss" in source.lower() or "take_profit" in source.lower(), (
                 "manage_positions() doesn't check exit conditions!"
+            )
 
 
 class TestOrchestratorIntegration:
@@ -63,9 +66,10 @@ class TestOrchestratorIntegration:
     def test_mental_coach_called_in_run(self):
         """CRITICAL: Verify mental toughness coach is called during run()."""
         # This test verifies the mental coach integration added Dec 8, 2025
+        import inspect
+
         from src.orchestrator.main import TradingOrchestrator
 
-        import inspect
         source = inspect.getsource(TradingOrchestrator.run)
 
         # Check that mental_coach methods are called
@@ -75,9 +79,10 @@ class TestOrchestratorIntegration:
 
     def test_manage_open_positions_called_first(self):
         """CRITICAL: Verify positions are managed BEFORE new entries."""
+        import inspect
+
         from src.orchestrator.main import TradingOrchestrator
 
-        import inspect
         source = inspect.getsource(TradingOrchestrator.run)
 
         # Find positions of key calls
@@ -85,8 +90,9 @@ class TestOrchestratorIntegration:
         process_ticker = source.find("_process_ticker")
 
         assert manage_pos != -1, "_manage_open_positions not called in run()!"
-        assert manage_pos < process_ticker, \
+        assert manage_pos < process_ticker, (
             "_manage_open_positions must be called BEFORE _process_ticker!"
+        )
 
 
 class TestFeatureFlags:
@@ -97,24 +103,27 @@ class TestFeatureFlags:
         # Clear any existing env var
         os.environ.pop("ENABLE_MENTAL_COACHING", None)
 
-        from src.orchestrator.main import TradingOrchestrator
         import inspect
+
+        from src.orchestrator.main import TradingOrchestrator
+
         source = inspect.getsource(TradingOrchestrator.__init__)
 
         # Check default value
-        assert '"true"' in source.lower() or "'true'" in source.lower(), \
+        assert '"true"' in source.lower() or "'true'" in source.lower(), (
             "ENABLE_MENTAL_COACHING should default to true!"
+        )
 
     def test_growth_strategy_rag_enabled(self):
         """Verify GrowthStrategy initializes RAG by default."""
+        import inspect
+
         from src.strategies.growth_strategy import GrowthStrategy
 
-        import inspect
         source = inspect.getsource(GrowthStrategy.__init__)
 
         # Check RAG initialization
-        assert "rag_db" in source or "get_rag_db" in source, \
-            "GrowthStrategy should initialize RAG!"
+        assert "rag_db" in source or "get_rag_db" in source, "GrowthStrategy should initialize RAG!"
 
 
 class TestRAGIntegration:
@@ -122,19 +131,20 @@ class TestRAGIntegration:
 
     def test_growth_strategy_uses_rag_for_sentiment(self):
         """Verify GrowthStrategy queries RAG for sentiment."""
+        import inspect
+
         from src.strategies.growth_strategy import GrowthStrategy
 
-        import inspect
         # Check the _rank_candidates or similar method
         try:
             source = inspect.getsource(GrowthStrategy._rank_candidates)
-            assert "rag" in source.lower() or "get_ticker_news" in source, \
+            assert "rag" in source.lower() or "get_ticker_news" in source, (
                 "GrowthStrategy should use RAG for sentiment!"
+            )
         except AttributeError:
             # Method might have different name
             source = inspect.getsource(GrowthStrategy)
-            assert "get_ticker_news" in source, \
-                "GrowthStrategy should call get_ticker_news!"
+            assert "get_ticker_news" in source, "GrowthStrategy should call get_ticker_news!"
 
 
 class TestNoDeadCode:
@@ -152,12 +162,15 @@ class TestNoDeadCode:
             try:
                 module = __import__(module_path, fromlist=[""])
                 import inspect
+
                 source = inspect.getsource(module)
 
                 # NotImplementedError in __init__ is a red flag
-                assert "raise NotImplementedError" not in source or \
-                       "__init__" not in source.split("raise NotImplementedError")[0].split("\n")[-10:], \
-                       f"{module_path} has NotImplementedError in critical path!"
+                assert (
+                    "raise NotImplementedError" not in source
+                    or "__init__"
+                    not in source.split("raise NotImplementedError")[0].split("\n")[-10:]
+                ), f"{module_path} has NotImplementedError in critical path!"
             except ImportError:
                 pass  # Module might not be importable without dependencies
 

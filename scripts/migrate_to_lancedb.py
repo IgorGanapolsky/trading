@@ -319,9 +319,7 @@ class LanceDBMigrator:
         print("=" * 60)
 
         if self.stats["final_docs"] > 0:
-            dedup_rate = (
-                self.stats["duplicates_removed"] / self.stats["total_before_dedup"] * 100
-            )
+            dedup_rate = self.stats["duplicates_removed"] / self.stats["total_before_dedup"] * 100
             print(f"Deduplication rate:           {dedup_rate:.1f}%")
             print("=" * 60)
 

@@ -14,14 +14,13 @@ Usage:
 
 from __future__ import annotations
 
-import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
-from src.observability.langsmith_tracer import LangSmithTracer, TraceType, get_tracer
+from src.observability.langsmith_tracer import LangSmithTracer, get_tracer
 from src.observability.trade_evaluator import TradeEvaluator
 
 logger = logging.getLogger(__name__)
@@ -59,7 +58,7 @@ class ObservabilityDashboard:
         self.tracer = tracer or get_tracer()
         self.evaluator = evaluator or TradeEvaluator()
 
-    def get_daily_metrics(self, days: int = 7) -> List[DailyMetrics]:
+    def get_daily_metrics(self, days: int = 7) -> list[DailyMetrics]:
         """Get metrics for each of the past N days."""
         trace_summary = self.tracer.get_trace_summary(days=days)
         eval_metrics = self.evaluator.get_metrics(days=days)
@@ -84,7 +83,7 @@ class ObservabilityDashboard:
 
         return metrics
 
-    def get_cost_breakdown(self, days: int = 30) -> Dict[str, Any]:
+    def get_cost_breakdown(self, days: int = 30) -> dict[str, Any]:
         """Get cost breakdown by trace type and model."""
         trace_summary = self.tracer.get_trace_summary(days=days)
 
@@ -96,16 +95,16 @@ class ObservabilityDashboard:
             "budget_remaining": 100.0 - trace_summary.get("total_cost_usd", 0.0),  # $100/mo budget
         }
 
-    def get_decision_quality_breakdown(self) -> Dict[str, Any]:
+    def get_decision_quality_breakdown(self) -> dict[str, Any]:
         """Get breakdown of decision quality."""
         metrics = self.evaluator.get_metrics(days=30)
 
         total_quality = (
-            metrics.excellent_count +
-            metrics.good_count +
-            metrics.lucky_count +
-            metrics.unlucky_count +
-            metrics.poor_count
+            metrics.excellent_count
+            + metrics.good_count
+            + metrics.lucky_count
+            + metrics.unlucky_count
+            + metrics.poor_count
         )
 
         if total_quality == 0:
@@ -126,7 +125,7 @@ class ObservabilityDashboard:
             "calibration_error": metrics.calibration_error,
         }
 
-    def get_strategy_comparison(self) -> Dict[str, Dict[str, float]]:
+    def get_strategy_comparison(self) -> dict[str, dict[str, float]]:
         """Compare performance across strategies."""
         metrics = self.evaluator.get_metrics(days=30)
 
@@ -142,7 +141,7 @@ class ObservabilityDashboard:
 
         return comparison
 
-    def get_model_comparison(self) -> Dict[str, Dict[str, float]]:
+    def get_model_comparison(self) -> dict[str, dict[str, float]]:
         """Compare performance across LLM models."""
         metrics = self.evaluator.get_metrics(days=30)
 
@@ -214,10 +213,12 @@ class ObservabilityDashboard:
         # Add trace type breakdown
         by_type = trace_summary.get("by_type", {})
         if by_type:
-            lines.extend([
-                "TRACES BY TYPE",
-                "-" * 40,
-            ])
+            lines.extend(
+                [
+                    "TRACES BY TYPE",
+                    "-" * 40,
+                ]
+            )
             for trace_type, count in sorted(by_type.items(), key=lambda x: -x[1]):
                 lines.append(f"  {trace_type:15} {count:5}")
             lines.append("")
@@ -225,10 +226,12 @@ class ObservabilityDashboard:
         # Add strategy comparison
         strategy_comp = self.get_strategy_comparison()
         if strategy_comp:
-            lines.extend([
-                "STRATEGY COMPARISON",
-                "-" * 40,
-            ])
+            lines.extend(
+                [
+                    "STRATEGY COMPARISON",
+                    "-" * 40,
+                ]
+            )
             for strategy, data in strategy_comp.items():
                 lines.append(
                     f"  {strategy:10} | "
@@ -241,16 +244,14 @@ class ObservabilityDashboard:
         # Add model comparison
         model_comp = self.get_model_comparison()
         if model_comp:
-            lines.extend([
-                "MODEL COMPARISON",
-                "-" * 40,
-            ])
+            lines.extend(
+                [
+                    "MODEL COMPARISON",
+                    "-" * 40,
+                ]
+            )
             for model, data in model_comp.items():
-                lines.append(
-                    f"  {model:20} | "
-                    f"N={data['count']:3} | "
-                    f"Win={data['win_rate']:.1%}"
-                )
+                lines.append(f"  {model:20} | N={data['count']:3} | Win={data['win_rate']:.1%}")
             lines.append("")
 
         lines.append("=" * 60)
@@ -296,7 +297,10 @@ class ObservabilityDashboard:
 
     def save_report(self, output_path: Optional[Path] = None):
         """Save report to file."""
-        output_path = output_path or Path("reports") / f"observability_{datetime.now().strftime('%Y-%m-%d')}.txt"
+        output_path = (
+            output_path
+            or Path("reports") / f"observability_{datetime.now().strftime('%Y-%m-%d')}.txt"
+        )
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         report = self.generate_report()

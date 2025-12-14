@@ -122,8 +122,7 @@ class LightweightRAG:
                 self.table = self.db.open_table(self.table_name)
                 doc_count = len(self.table)
                 logger.info(
-                    f"LanceDB initialized at {persist_directory} "
-                    f"with {doc_count} documents"
+                    f"LanceDB initialized at {persist_directory} with {doc_count} documents"
                 )
             except Exception:
                 # Table doesn't exist yet - will be created on first add
@@ -433,9 +432,7 @@ class LightweightRAG:
             logger.error(f"Error getting stats: {e}")
             return {"error": str(e), "mode": "lancedb"}
 
-    def get_latest_insights(
-        self, ticker: str | None = None, n: int = 5
-    ) -> list[dict[str, Any]]:
+    def get_latest_insights(self, ticker: str | None = None, n: int = 5) -> list[dict[str, Any]]:
         """
         Get latest insights from RAG knowledge used for trading.
 
@@ -523,8 +520,7 @@ class LightweightRAG:
                 )
 
             logger.info(
-                f"Retrieved {len(insights)} latest insights"
-                + (f" for {ticker}" if ticker else "")
+                f"Retrieved {len(insights)} latest insights" + (f" for {ticker}" if ticker else "")
             )
             return insights
 

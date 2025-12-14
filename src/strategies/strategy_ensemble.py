@@ -119,9 +119,7 @@ class StrategyEnsemble:
             f"momentum_min={momentum_min_score}, mr_min={mean_reversion_min_strength}"
         )
 
-    def _get_momentum_signal(
-        self, symbol: str, hist: pd.DataFrame
-    ) -> dict[str, Any]:
+    def _get_momentum_signal(self, symbol: str, hist: pd.DataFrame) -> dict[str, Any]:
         """
         Generate momentum signal using technical indicators.
 
@@ -168,9 +166,7 @@ class StrategyEnsemble:
             "reason": f"Momentum score={score:.1f}",
         }
 
-    def generate_ensemble_signal(
-        self, symbol: str, hist: pd.DataFrame
-    ) -> EnsembleSignal:
+    def generate_ensemble_signal(self, symbol: str, hist: pd.DataFrame) -> EnsembleSignal:
         """
         Generate combined signal from both strategies.
 
@@ -317,9 +313,7 @@ class StrategyEnsemble:
             # Equal weights and disagreement = hold
             return ("hold", 0.0, f"Conflicting signals, holding ({regime.value})")
 
-    def generate_all_signals(
-        self, data: dict[str, pd.DataFrame]
-    ) -> list[EnsembleSignal]:
+    def generate_all_signals(self, data: dict[str, pd.DataFrame]) -> list[EnsembleSignal]:
         """
         Generate ensemble signals for all symbols.
 
@@ -337,9 +331,7 @@ class StrategyEnsemble:
                 signals.append(signal)
         return signals
 
-    def select_best_signal(
-        self, signals: list[EnsembleSignal]
-    ) -> Optional[EnsembleSignal]:
+    def select_best_signal(self, signals: list[EnsembleSignal]) -> Optional[EnsembleSignal]:
         """
         Select the best signal for trading.
 
@@ -349,10 +341,7 @@ class StrategyEnsemble:
         Returns:
             Best signal or None if no actionable signals
         """
-        actionable = [
-            s for s in signals
-            if s.action != "hold" and s.combined_strength >= 0.3
-        ]
+        actionable = [s for s in signals if s.action != "hold" and s.combined_strength >= 0.3]
 
         if not actionable:
             return None

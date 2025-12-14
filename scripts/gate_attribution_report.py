@@ -30,6 +30,7 @@ DEFAULT_OUTPUT_PATH = Path("reports/gate_attribution_report.json")
 @dataclass
 class GateStats:
     """Statistics for a single gate."""
+
     name: str
     total_candidates: int = 0
     rejected: int = 0
@@ -183,13 +184,17 @@ def analyze_gate_attribution(entries: list[dict[str, Any]]) -> dict[str, GateSta
     return gates
 
 
-def run_ablation_analysis(entries: list[dict[str, Any]], gates: dict[str, GateStats]) -> dict[str, Any]:
+def run_ablation_analysis(
+    entries: list[dict[str, Any]], gates: dict[str, GateStats]
+) -> dict[str, Any]:
     """Run what-if scenarios with gates enabled/disabled."""
     scenarios = {}
 
     # Baseline: all gates enabled
     baseline_trades = sum(1 for e in entries if e.get("final_decision") == "EXECUTE")
-    baseline_pnl = sum(e.get("realized_pnl", 0) for e in entries if e.get("final_decision") == "EXECUTE")
+    baseline_pnl = sum(
+        e.get("realized_pnl", 0) for e in entries if e.get("final_decision") == "EXECUTE"
+    )
 
     scenarios["baseline_all_gates"] = {
         "trades": baseline_trades,
@@ -230,17 +235,21 @@ def generate_report(
     # Add recommendations based on data
     for gate_key, stats in gates.items():
         if stats.rejection_rate > 0.5:
-            report["recommendations"].append({
-                "gate": stats.name,
-                "issue": f"High rejection rate ({stats.rejection_rate*100:.1f}%)",
-                "action": "Consider loosening threshold or investigating data quality",
-            })
+            report["recommendations"].append(
+                {
+                    "gate": stats.name,
+                    "issue": f"High rejection rate ({stats.rejection_rate * 100:.1f}%)",
+                    "action": "Consider loosening threshold or investigating data quality",
+                }
+            )
         if stats.total_candidates > 0 and stats.passed == 0:
-            report["recommendations"].append({
-                "gate": stats.name,
-                "issue": "Zero passes - gate is blocking ALL candidates",
-                "action": "CRITICAL: Review gate configuration immediately",
-            })
+            report["recommendations"].append(
+                {
+                    "gate": stats.name,
+                    "issue": "Zero passes - gate is blocking ALL candidates",
+                    "action": "CRITICAL: Review gate configuration immediately",
+                }
+            )
 
     if ablation:
         report["ablation_analysis"] = ablation

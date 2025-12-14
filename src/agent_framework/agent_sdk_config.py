@@ -66,7 +66,7 @@ class EffortConfig:
     use_model_escalation: bool = True
 
     @classmethod
-    def for_level(cls, level: EffortLevel) -> "EffortConfig":
+    def for_level(cls, level: EffortLevel) -> EffortConfig:
         """Create effort config for a specific level."""
         configs = {
             EffortLevel.LOW: cls(
@@ -308,9 +308,7 @@ class AgentSDKConfig:
 
     def get_agent_effort(self, agent_id: str) -> EffortLevel:
         """Get effort level for a specific agent."""
-        return self.agent_effort_levels.get(
-            agent_id, self.agent_effort_levels["default"]
-        )
+        return self.agent_effort_levels.get(agent_id, self.agent_effort_levels["default"])
 
     def get_agent_effort_config(self, agent_id: str) -> EffortConfig:
         """Get full effort configuration for a specific agent."""

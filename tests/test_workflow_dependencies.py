@@ -137,8 +137,7 @@ def test_requirements_dashboard_has_essential_packages():
 
     if not req_path.exists():
         pytest.fail(
-            "requirements-dashboard.txt not found! "
-            "Create it with: alpaca-py, python-dotenv, numpy"
+            "requirements-dashboard.txt not found! Create it with: alpaca-py, python-dotenv, numpy"
         )
 
     with open(req_path) as f:
@@ -177,8 +176,7 @@ def test_workflow_python_versions():
         for version in python_versions:
             major, minor = map(int, version.split("."))
             assert major == 3 and minor >= 9, (
-                f"{workflow_path.name} uses Python {version}. "
-                f"Minimum supported is 3.9."
+                f"{workflow_path.name} uses Python {version}. Minimum supported is 3.9."
             )
             assert major == 3 and minor < 14, (
                 f"{workflow_path.name} uses Python {version}. "

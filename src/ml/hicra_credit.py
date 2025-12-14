@@ -26,22 +26,22 @@ Usage:
     )
 """
 
-from dataclasses import dataclass
-from typing import List, Dict, Any, Optional
-from enum import Enum
 import re
-import math
-
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
 
 # =============================================================================
 # STRATEGIC GRAMS FOR TRADING
 # =============================================================================
 
+
 class DecisionType(str, Enum):
     """Types of trading decisions (mirrors HICRA's planning vs execution)"""
-    STRATEGIC = "strategic"      # High-level decisions (2x reward weight)
-    TACTICAL = "tactical"        # Mid-level adjustments (1.5x reward weight)
-    PROCEDURAL = "procedural"    # Routine calculations (0.5x reward weight)
+
+    STRATEGIC = "strategic"  # High-level decisions (2x reward weight)
+    TACTICAL = "tactical"  # Mid-level adjustments (1.5x reward weight)
+    PROCEDURAL = "procedural"  # Routine calculations (0.5x reward weight)
 
 
 @dataclass
@@ -53,6 +53,7 @@ class TradingStrategicGram:
     "let's try a different approach", these are phrases/patterns
     that indicate strategic thinking in trading.
     """
+
     pattern: str
     decision_type: DecisionType
     weight_multiplier: float
@@ -69,117 +70,117 @@ class TradingStrategicGrams:
 
     # Strategic decisions (highest weight - 2.0x)
     # These represent major shifts in trading approach
-    STRATEGIC_PATTERNS: List[TradingStrategicGram] = [
+    STRATEGIC_PATTERNS: list[TradingStrategicGram] = [
         TradingStrategicGram(
             pattern=r"regime\s*(change|shift|pivot)",
             decision_type=DecisionType.STRATEGIC,
             weight_multiplier=2.0,
-            description="Market regime change detected"
+            description="Market regime change detected",
         ),
         TradingStrategicGram(
             pattern=r"switch.*(bullish|bearish|neutral)",
             decision_type=DecisionType.STRATEGIC,
             weight_multiplier=2.0,
-            description="Directional bias switch"
+            description="Directional bias switch",
         ),
         TradingStrategicGram(
             pattern=r"exit\s*(all|position|signal)",
             decision_type=DecisionType.STRATEGIC,
             weight_multiplier=2.0,
-            description="Exit decision"
+            description="Exit decision",
         ),
         TradingStrategicGram(
             pattern=r"risk\s*(too high|exceeded|limit)",
             decision_type=DecisionType.STRATEGIC,
             weight_multiplier=2.5,
-            description="Risk threshold triggered"
+            description="Risk threshold triggered",
         ),
         TradingStrategicGram(
             pattern=r"stop\s*loss|take\s*profit",
             decision_type=DecisionType.STRATEGIC,
             weight_multiplier=2.0,
-            description="Stop/profit decision"
+            description="Stop/profit decision",
         ),
         TradingStrategicGram(
             pattern=r"market\s*(closed|weekend|holiday)",
             decision_type=DecisionType.STRATEGIC,
             weight_multiplier=1.8,
-            description="Market hours awareness"
+            description="Market hours awareness",
         ),
         TradingStrategicGram(
             pattern=r"confidence\s*(too low|insufficient|below)",
             decision_type=DecisionType.STRATEGIC,
             weight_multiplier=2.0,
-            description="Confidence threshold decision"
+            description="Confidence threshold decision",
         ),
     ]
 
     # Tactical decisions (medium weight - 1.5x)
     # Position adjustments and timing decisions
-    TACTICAL_PATTERNS: List[TradingStrategicGram] = [
+    TACTICAL_PATTERNS: list[TradingStrategicGram] = [
         TradingStrategicGram(
             pattern=r"(increase|decrease)\s*position",
             decision_type=DecisionType.TACTICAL,
             weight_multiplier=1.5,
-            description="Position size adjustment"
+            description="Position size adjustment",
         ),
         TradingStrategicGram(
             pattern=r"scale\s*(in|out)",
             decision_type=DecisionType.TACTICAL,
             weight_multiplier=1.5,
-            description="Scaling decision"
+            description="Scaling decision",
         ),
         TradingStrategicGram(
             pattern=r"wait\s*(for|until)",
             decision_type=DecisionType.TACTICAL,
             weight_multiplier=1.4,
-            description="Timing decision"
+            description="Timing decision",
         ),
         TradingStrategicGram(
             pattern=r"momentum\s*(strong|weak|fading)",
             decision_type=DecisionType.TACTICAL,
             weight_multiplier=1.3,
-            description="Momentum assessment"
+            description="Momentum assessment",
         ),
         TradingStrategicGram(
             pattern=r"volatility\s*(high|low|spiking)",
             decision_type=DecisionType.TACTICAL,
             weight_multiplier=1.4,
-            description="Volatility assessment"
+            description="Volatility assessment",
         ),
         TradingStrategicGram(
             pattern=r"support|resistance\s*(at|near|broken)",
             decision_type=DecisionType.TACTICAL,
             weight_multiplier=1.5,
-            description="Key level analysis"
+            description="Key level analysis",
         ),
     ]
 
     # Procedural (low weight - 0.5x)
     # Routine calculations that don't drive decisions
-    PROCEDURAL_PATTERNS: List[TradingStrategicGram] = [
+    PROCEDURAL_PATTERNS: list[TradingStrategicGram] = [
         TradingStrategicGram(
             pattern=r"calculating|computed|fetching",
             decision_type=DecisionType.PROCEDURAL,
             weight_multiplier=0.5,
-            description="Routine calculation"
+            description="Routine calculation",
         ),
         TradingStrategicGram(
             pattern=r"rsi\s*=|macd\s*=|sma\s*=",
             decision_type=DecisionType.PROCEDURAL,
             weight_multiplier=0.5,
-            description="Indicator computation"
+            description="Indicator computation",
         ),
         TradingStrategicGram(
             pattern=r"price\s*=|volume\s*=",
             decision_type=DecisionType.PROCEDURAL,
             weight_multiplier=0.5,
-            description="Data retrieval"
+            description="Data retrieval",
         ),
     ]
 
     @classmethod
-    def get_all_patterns(cls) -> List[TradingStrategicGram]:
+    def get_all_patterns(cls) -> list[TradingStrategicGram]:
         """Get all strategic grams"""
         return cls.STRATEGIC_PATTERNS + cls.TACTICAL_PATTERNS + cls.PROCEDURAL_PATTERNS
 
@@ -216,6 +217,7 @@ class TradingStrategicGrams:
 # HICRA REWARD SHAPER
 # =============================================================================
 
+
 class HICRARewardShaper:
     """
     Hierarchy-Aware Credit Assignment for trading rewards.
@@ -246,7 +248,7 @@ class HICRARewardShaper:
         self.use_confidence_scaling = use_confidence_scaling
 
         # Track decision type distribution for analysis
-        self.decision_counts: Dict[DecisionType, int] = {
+        self.decision_counts: dict[DecisionType, int] = {
             DecisionType.STRATEGIC: 0,
             DecisionType.TACTICAL: 0,
             DecisionType.PROCEDURAL: 0,
@@ -255,10 +257,10 @@ class HICRARewardShaper:
     def compute_weighted_reward(
         self,
         base_reward: float,
-        decision_context: Dict[str, Any],
+        decision_context: dict[str, Any],
         action: str,
         confidence: float = 1.0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Compute HICRA-weighted reward.
 
@@ -299,7 +301,7 @@ class HICRARewardShaper:
             "action": action,
         }
 
-    def _extract_reasoning(self, context: Dict[str, Any]) -> str:
+    def _extract_reasoning(self, context: dict[str, Any]) -> str:
         """Extract reasoning text from decision context"""
         # Check common keys for reasoning
         reasoning_keys = ["reasoning", "rationale", "explanation", "analysis", "source"]
@@ -349,7 +351,7 @@ class HICRARewardShaper:
 
         return round(weight, 3)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get decision type distribution stats"""
         total = sum(self.decision_counts.values())
         if total == 0:
@@ -371,6 +373,7 @@ class HICRARewardShaper:
 # =============================================================================
 # INTEGRATION WITH RL AGENT
 # =============================================================================
+
 
 class HICRATradingRewardWrapper:
     """
@@ -396,7 +399,7 @@ class HICRATradingRewardWrapper:
         self,
         raw_pnl: float,
         signal: Any,  # Signal from UDM
-        market_context: Dict[str, Any],
+        market_context: dict[str, Any],
     ) -> float:
         """
         Shape reward using HICRA principles.
@@ -412,19 +415,19 @@ class HICRATradingRewardWrapper:
         # Build decision context
         context = {}
 
-        if hasattr(signal, 'metadata'):
+        if hasattr(signal, "metadata"):
             context.update(signal.metadata)
 
-        if hasattr(signal, 'source'):
-            context['source'] = signal.source
+        if hasattr(signal, "source"):
+            context["source"] = signal.source
 
         context.update(market_context)
 
         # Get action
-        action = signal.action.value if hasattr(signal, 'action') else "HOLD"
+        action = signal.action.value if hasattr(signal, "action") else "HOLD"
 
         # Get confidence
-        confidence = signal.confidence if hasattr(signal, 'confidence') else 0.5
+        confidence = signal.confidence if hasattr(signal, "confidence") else 0.5
 
         # Compute weighted reward
         result = self.shaper.compute_weighted_reward(
@@ -436,7 +439,7 @@ class HICRATradingRewardWrapper:
 
         return result["weighted_reward"]
 
-    def get_analysis(self) -> Dict[str, Any]:
+    def get_analysis(self) -> dict[str, Any]:
         """Get HICRA analysis stats"""
         return {
             "hicra_stats": self.shaper.get_stats(),
@@ -463,7 +466,7 @@ if __name__ == "__main__":
         action="SELL",
         confidence=0.85,
     )
-    print(f"\nStrategic decision:")
+    print("\nStrategic decision:")
     print(f"  Base reward: ${result['base_reward']}")
     print(f"  Weighted reward: ${result['weighted_reward']:.2f}")
     print(f"  Weight multiplier: {result['weight_multiplier']}x")
@@ -476,7 +479,7 @@ if __name__ == "__main__":
         action="BUY",
         confidence=0.75,
     )
-    print(f"\nTactical decision:")
+    print("\nTactical decision:")
     print(f"  Base reward: ${result['base_reward']}")
     print(f"  Weighted reward: ${result['weighted_reward']:.2f}")
     print(f"  Weight multiplier: {result['weight_multiplier']}x")
@@ -489,7 +492,7 @@ if __name__ == "__main__":
         action="HOLD",
         confidence=0.5,
     )
-    print(f"\nProcedural decision:")
+    print("\nProcedural decision:")
     print(f"  Base reward: ${result['base_reward']}")
     print(f"  Weighted reward: ${result['weighted_reward']:.2f}")
     print(f"  Weight multiplier: {result['weight_multiplier']}x")

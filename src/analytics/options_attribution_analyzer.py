@@ -268,7 +268,9 @@ class OptionsAttributionAnalyzer:
 
             # Create entry snapshot from position data
             entry_snapshot = GreeksSnapshot(
-                timestamp=datetime.fromisoformat(position.get("entry_time", datetime.now().isoformat())),
+                timestamp=datetime.fromisoformat(
+                    position.get("entry_time", datetime.now().isoformat())
+                ),
                 symbol=symbol,
                 underlying_price=position.get("entry_underlying_price", 0),
                 option_price=position.get("entry_price", 0),
@@ -282,7 +284,9 @@ class OptionsAttributionAnalyzer:
 
             # Create current snapshot
             underlying = position.get("underlying", symbol[:4])  # Extract underlying from OCC
-            current_underlying_price = current_prices.get(underlying, entry_snapshot.underlying_price)
+            current_underlying_price = current_prices.get(
+                underlying, entry_snapshot.underlying_price
+            )
 
             exit_snapshot = GreeksSnapshot(
                 timestamp=datetime.now(),
@@ -293,7 +297,9 @@ class OptionsAttributionAnalyzer:
                 gamma=greeks.get("gamma", entry_snapshot.gamma),
                 theta=greeks.get("theta", entry_snapshot.theta),
                 vega=greeks.get("vega", entry_snapshot.vega),
-                implied_volatility=greeks.get("implied_volatility", entry_snapshot.implied_volatility),
+                implied_volatility=greeks.get(
+                    "implied_volatility", entry_snapshot.implied_volatility
+                ),
                 days_to_expiration=greeks.get("dte", entry_snapshot.days_to_expiration - 1),
             )
 
@@ -383,11 +389,11 @@ class OptionsAttributionAnalyzer:
             "",
             "| Component | P/L | % of Total |",
             "|-----------|-----|------------|",
-            f"| Delta (Directional) | ${total_delta:+,.2f} | {total_delta/total_pnl*100 if total_pnl else 0:.1f}% |",
-            f"| Gamma (Convexity) | ${total_gamma:+,.2f} | {total_gamma/total_pnl*100 if total_pnl else 0:.1f}% |",
-            f"| Theta (Time Decay) | ${total_theta:+,.2f} | {total_theta/total_pnl*100 if total_pnl else 0:.1f}% |",
-            f"| Vega (Volatility) | ${total_vega:+,.2f} | {total_vega/total_pnl*100 if total_pnl else 0:.1f}% |",
-            f"| Unexplained | ${total_unexplained:+,.2f} | {total_unexplained/total_pnl*100 if total_pnl else 0:.1f}% |",
+            f"| Delta (Directional) | ${total_delta:+,.2f} | {total_delta / total_pnl * 100 if total_pnl else 0:.1f}% |",
+            f"| Gamma (Convexity) | ${total_gamma:+,.2f} | {total_gamma / total_pnl * 100 if total_pnl else 0:.1f}% |",
+            f"| Theta (Time Decay) | ${total_theta:+,.2f} | {total_theta / total_pnl * 100 if total_pnl else 0:.1f}% |",
+            f"| Vega (Volatility) | ${total_vega:+,.2f} | {total_vega / total_pnl * 100 if total_pnl else 0:.1f}% |",
+            f"| Unexplained | ${total_unexplained:+,.2f} | {total_unexplained / total_pnl * 100 if total_pnl else 0:.1f}% |",
             "",
             "## Daily Breakdown",
             "",
@@ -413,17 +419,25 @@ class OptionsAttributionAnalyzer:
         )
 
         if total_theta > 0:
-            lines.append(f"- **Theta Positive**: Earning ${total_theta:.2f} from time decay (good for premium selling)")
+            lines.append(
+                f"- **Theta Positive**: Earning ${total_theta:.2f} from time decay (good for premium selling)"
+            )
         else:
-            lines.append(f"- **Theta Negative**: Losing ${abs(total_theta):.2f} to time decay (review position sizing)")
+            lines.append(
+                f"- **Theta Negative**: Losing ${abs(total_theta):.2f} to time decay (review position sizing)"
+            )
 
         if abs(total_delta) > abs(total_theta):
-            lines.append("- **Delta Dominant**: Directional moves driving most P/L (consider hedging)")
+            lines.append(
+                "- **Delta Dominant**: Directional moves driving most P/L (consider hedging)"
+            )
         else:
             lines.append("- **Theta Dominant**: Time decay driving P/L (theta strategy working)")
 
         if abs(total_unexplained) > abs(total_pnl) * 0.2:
-            lines.append("- **High Unexplained**: Review Greeks data quality or consider other factors")
+            lines.append(
+                "- **High Unexplained**: Review Greeks data quality or consider other factors"
+            )
 
         return "\n".join(lines)
 

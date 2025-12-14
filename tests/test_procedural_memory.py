@@ -1,11 +1,9 @@
 """Tests for Procedural Memory module."""
 
 import tempfile
-from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
-
 from src.memory.procedural_memory import (
     MarketRegime,
     ProceduralMemory,
@@ -348,16 +346,20 @@ class TestSkillLibrary:
         with tempfile.TemporaryDirectory() as tmpdir:
             library = SkillLibrary(storage_path=Path(tmpdir))
 
-            library.add_skill(TradingSkill(
-                name="Entry Skill",
-                skill_type=SkillType.ENTRY,
-                outcome=SkillOutcome(uses=5, wins=3),
-            ))
-            library.add_skill(TradingSkill(
-                name="Exit Skill",
-                skill_type=SkillType.EXIT,
-                outcome=SkillOutcome(uses=3, wins=2),
-            ))
+            library.add_skill(
+                TradingSkill(
+                    name="Entry Skill",
+                    skill_type=SkillType.ENTRY,
+                    outcome=SkillOutcome(uses=5, wins=3),
+                )
+            )
+            library.add_skill(
+                TradingSkill(
+                    name="Exit Skill",
+                    skill_type=SkillType.EXIT,
+                    outcome=SkillOutcome(uses=3, wins=2),
+                )
+            )
 
             report = library.get_skill_report()
 

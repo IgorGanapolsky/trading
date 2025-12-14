@@ -20,7 +20,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -93,9 +93,7 @@ class DynamicPreTradeGate:
         # Initialize sub-systems
         self._init_subsystems()
 
-        logger.info(
-            f"DynamicPreTradeGate initialized (portfolio=${portfolio_value:,.2f})"
-        )
+        logger.info(f"DynamicPreTradeGate initialized (portfolio=${portfolio_value:,.2f})")
 
     def _init_subsystems(self) -> None:
         """Initialize all verification subsystems."""
@@ -180,8 +178,7 @@ class DynamicPreTradeGate:
         quantity = trade.get("quantity", 0.0)
 
         logger.info(
-            f"Validating trade: {side.upper()} {symbol} "
-            f"(notional=${notional:.2f}, qty={quantity})"
+            f"Validating trade: {side.upper()} {symbol} (notional=${notional:.2f}, qty={quantity})"
         )
 
         # Run all checks
@@ -213,9 +210,7 @@ class DynamicPreTradeGate:
             prevention_checklist.extend(result.warnings)
 
         # Make decision
-        safe_to_trade, recommendation = self._make_decision(
-            risk_score, check_results
-        )
+        safe_to_trade, recommendation = self._make_decision(risk_score, check_results)
 
         # Format output
         checks_dict = {
@@ -240,9 +235,7 @@ class DynamicPreTradeGate:
 
         # Log result
         status = "✅ APPROVED" if safe_to_trade else "🚫 BLOCKED"
-        logger.info(
-            f"{status} - {symbol} (risk_score={risk_score:.1f}/100): {recommendation}"
-        )
+        logger.info(f"{status} - {symbol} (risk_score={risk_score:.1f}/100): {recommendation}")
 
         return result
 
@@ -409,7 +402,7 @@ class DynamicPreTradeGate:
             warnings = []
             if result.final_multiplier < 0.7:
                 warnings.append(
-                    f"Regime {result.regime_label} reduces size by {(1-result.final_multiplier)*100:.0f}%"
+                    f"Regime {result.regime_label} reduces size by {(1 - result.final_multiplier) * 100:.0f}%"
                 )
 
             return RiskCheckResult(
@@ -471,9 +464,7 @@ class DynamicPreTradeGate:
 
             violations = []
             if check_result["similar_mistakes"]:
-                violations.append(
-                    f"{len(check_result['similar_mistakes'])} similar past mistakes"
-                )
+                violations.append(f"{len(check_result['similar_mistakes'])} similar past mistakes")
             if check_result["pattern_matches"]:
                 violations.append(
                     f"{len(check_result['pattern_matches'])} hallucination pattern matches"
@@ -657,9 +648,7 @@ class DynamicPreTradeGate:
             Tuple of (safe_to_trade, recommendation)
         """
         # Count failures
-        failed_checks = [
-            name for name, result in check_results.items() if not result.passed
-        ]
+        failed_checks = [name for name, result in check_results.items() if not result.passed]
 
         if risk_score < 30:
             # Low risk - approve
@@ -694,9 +683,7 @@ def create_pretrade_gate(portfolio_value: float) -> DynamicPreTradeGate:
     return DynamicPreTradeGate(portfolio_value=portfolio_value)
 
 
-def validate_trade(
-    trade: dict[str, Any], portfolio_value: float
-) -> ValidationResult:
+def validate_trade(trade: dict[str, Any], portfolio_value: float) -> ValidationResult:
     """
     Quick validation function for one-off checks.
 

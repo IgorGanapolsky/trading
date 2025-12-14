@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -30,12 +30,12 @@ logger = logging.getLogger(__name__)
 FACTS_BENCHMARK_SCORES = {
     # Model identifier -> FACTS score (0.0 to 1.0)
     "google/gemini-3-pro-preview": 0.688,  # Leads at 68.8%
-    "google/gemini-2.5-flash": 0.652,      # Estimated from family
-    "anthropic/claude-sonnet-4": 0.665,    # Estimated ~66.5%
-    "anthropic/claude-opus-4": 0.670,      # Estimated ~67%
-    "openai/gpt-4o": 0.658,                # Estimated ~65.8%
-    "openai/gpt-4-turbo": 0.645,           # Estimated ~64.5%
-    "deepseek/deepseek-r1": 0.640,         # Estimated ~64%
+    "google/gemini-2.5-flash": 0.652,  # Estimated from family
+    "anthropic/claude-sonnet-4": 0.665,  # Estimated ~66.5%
+    "anthropic/claude-opus-4": 0.670,  # Estimated ~67%
+    "openai/gpt-4o": 0.658,  # Estimated ~65.8%
+    "openai/gpt-4-turbo": 0.645,  # Estimated ~64.5%
+    "deepseek/deepseek-r1": 0.640,  # Estimated ~64%
     # Default for unknown models
     "default": 0.600,
 }
@@ -46,16 +46,18 @@ FACTUALITY_METRICS_PATH = Path("data/factuality_metrics.json")
 
 class HallucinationType(Enum):
     """Types of hallucinations detected."""
-    PRICE_MISMATCH = "price_mismatch"           # LLM price != API price
-    POSITION_MISMATCH = "position_mismatch"     # Claimed position doesn't exist
+
+    PRICE_MISMATCH = "price_mismatch"  # LLM price != API price
+    POSITION_MISMATCH = "position_mismatch"  # Claimed position doesn't exist
     SIGNAL_CONTRADICTION = "signal_contradiction"  # LLM signal contradicts technicals
-    DATA_FABRICATION = "data_fabrication"       # LLM invented non-existent data
-    STALE_REFERENCE = "stale_reference"         # LLM used outdated information
+    DATA_FABRICATION = "data_fabrication"  # LLM invented non-existent data
+    STALE_REFERENCE = "stale_reference"  # LLM used outdated information
     CONFIDENCE_OVERESTIMATE = "confidence_overestimate"  # High confidence, wrong answer
 
 
 class VerificationSource(Enum):
     """Ground truth sources for verification."""
+
     ALPACA_API = "alpaca_api"
     TECHNICAL_INDICATORS = "technical_indicators"
     USER_HOOK = "user_hook"
@@ -65,6 +67,7 @@ class VerificationSource(Enum):
 @dataclass
 class HallucinationIncident:
     """Records a detected hallucination incident."""
+
     incident_id: str
     timestamp: str
     model: str
@@ -92,6 +95,7 @@ class HallucinationIncident:
 @dataclass
 class FactualityMetrics:
     """Tracks factuality metrics over time for each model."""
+
     model: str
     total_claims: int = 0
     verified_claims: int = 0
@@ -121,6 +125,7 @@ class FactualityMetrics:
 @dataclass
 class FactualityWeightedVote:
     """A vote weighted by factuality score."""
+
     model: str
     vote: str  # "BUY", "SELL", "HOLD"
     confidence: float
@@ -216,14 +221,16 @@ class FactualityMonitor:
             # Low factuality models get dampened
             adjusted_confidence = raw_confidence * facts_weight
 
-            weighted_votes.append(FactualityWeightedVote(
-                model=model,
-                vote=vote.get("vote", "HOLD"),
-                confidence=raw_confidence,
-                facts_weight=facts_weight,
-                weighted_score=adjusted_confidence,
-                reasoning=vote.get("reasoning", ""),
-            ))
+            weighted_votes.append(
+                FactualityWeightedVote(
+                    model=model,
+                    vote=vote.get("vote", "HOLD"),
+                    confidence=raw_confidence,
+                    facts_weight=facts_weight,
+                    weighted_score=adjusted_confidence,
+                    reasoning=vote.get("reasoning", ""),
+                )
+            )
 
         # Calculate weighted consensus
         vote_scores = {"BUY": 0.0, "SELL": 0.0, "HOLD": 0.0}
@@ -269,7 +276,9 @@ class FactualityMonitor:
                 }
                 for wv in weighted_votes
             ],
-            "warning": "70% factuality ceiling applies - all LLMs have <70% accuracy" if consensus_confidence > 0.5 else None,
+            "warning": "70% factuality ceiling applies - all LLMs have <70% accuracy"
+            if consensus_confidence > 0.5
+            else None,
         }
 
     def validate_against_technicals(
@@ -337,7 +346,8 @@ class FactualityMonitor:
             "tech_signals": {k: v for k, v in signals.items() if k != "llm"},
             "is_contradiction": is_contradiction,
             "recommendation": (
-                "PROCEED" if agreement_score >= 0.5
+                "PROCEED"
+                if agreement_score >= 0.5
                 else "REVIEW - LLM contradicts technical analysis"
             ),
         }
@@ -376,22 +386,26 @@ class FactualityMonitor:
                     deviation = abs(claimed_value - actual_value)
 
                 if deviation > tolerance:
-                    discrepancies.append({
-                        "field": key,
-                        "claimed": claimed_value,
-                        "actual": actual_value,
-                        "deviation": deviation,
-                    })
+                    discrepancies.append(
+                        {
+                            "field": key,
+                            "claimed": claimed_value,
+                            "actual": actual_value,
+                            "deviation": deviation,
+                        }
+                    )
                 else:
                     verified.append(key)
             # Handle string comparison
             elif str(claimed_value).lower() != str(actual_value).lower():
-                discrepancies.append({
-                    "field": key,
-                    "claimed": claimed_value,
-                    "actual": actual_value,
-                    "deviation": None,
-                })
+                discrepancies.append(
+                    {
+                        "field": key,
+                        "claimed": claimed_value,
+                        "actual": actual_value,
+                        "deviation": None,
+                    }
+                )
             else:
                 verified.append(key)
 
@@ -400,9 +414,11 @@ class FactualityMonitor:
         if has_hallucination:
             for disc in discrepancies:
                 self._record_hallucination(
-                    hallucination_type=HallucinationType.PRICE_MISMATCH if "price" in disc["field"].lower()
-                        else HallucinationType.POSITION_MISMATCH if "position" in disc["field"].lower()
-                        else HallucinationType.DATA_FABRICATION,
+                    hallucination_type=HallucinationType.PRICE_MISMATCH
+                    if "price" in disc["field"].lower()
+                    else HallucinationType.POSITION_MISMATCH
+                    if "position" in disc["field"].lower()
+                    else HallucinationType.DATA_FABRICATION,
                     model="unknown",  # Would need to track which model made claim
                     claimed_value=disc["claimed"],
                     actual_value=disc["actual"],
@@ -453,8 +469,9 @@ class FactualityMonitor:
         # Log to anomaly detector if available
         if not claim_verified and self.anomaly_detector:
             try:
-                from src.ml.anomaly_detector import AnomalyType, AlertLevel, Anomaly
                 import uuid
+
+                from src.ml.anomaly_detector import AlertLevel, Anomaly, AnomalyType
 
                 anomaly = Anomaly(
                     anomaly_id=f"hallucination_{uuid.uuid4().hex[:8]}",
@@ -499,17 +516,19 @@ class FactualityMonitor:
         # Store in RAG for pattern learning
         if self.rag_system:
             try:
-                self.rag_system.add_lesson({
-                    "id": incident.incident_id,
-                    "timestamp": incident.timestamp,
-                    "category": "hallucination",
-                    "title": f"LLM Hallucination: {hallucination_type.value}",
-                    "description": f"Model {model} claimed {claimed_value} but actual was {actual_value}",
-                    "root_cause": "LLM factuality limitation (<70% accuracy per FACTS benchmark)",
-                    "prevention": "Always verify LLM claims against API ground truth",
-                    "tags": ["hallucination", hallucination_type.value, model],
-                    "severity": incident.severity,
-                })
+                self.rag_system.add_lesson(
+                    {
+                        "id": incident.incident_id,
+                        "timestamp": incident.timestamp,
+                        "category": "hallucination",
+                        "title": f"LLM Hallucination: {hallucination_type.value}",
+                        "description": f"Model {model} claimed {claimed_value} but actual was {actual_value}",
+                        "root_cause": "LLM factuality limitation (<70% accuracy per FACTS benchmark)",
+                        "prevention": "Always verify LLM claims against API ground truth",
+                        "tags": ["hallucination", hallucination_type.value, model],
+                        "severity": incident.severity,
+                    }
+                )
             except Exception as e:
                 logger.warning(f"Failed to store hallucination in RAG: {e}")
 
@@ -542,7 +561,10 @@ class FactualityMonitor:
     ) -> str:
         """Assess severity of a hallucination."""
         # Price/position mismatches are more severe
-        if hallucination_type in (HallucinationType.PRICE_MISMATCH, HallucinationType.POSITION_MISMATCH):
+        if hallucination_type in (
+            HallucinationType.PRICE_MISMATCH,
+            HallucinationType.POSITION_MISMATCH,
+        ):
             try:
                 claimed_num = float(claimed)
                 actual_num = float(actual)
@@ -590,7 +612,9 @@ class FactualityMonitor:
                             total_claims=metrics_dict.get("total_claims", 0),
                             verified_claims=metrics_dict.get("verified_claims", 0),
                             hallucinations=metrics_dict.get("hallucinations", 0),
-                            facts_score=metrics_dict.get("facts_score", self.get_facts_score(model)),
+                            facts_score=metrics_dict.get(
+                                "facts_score", self.get_facts_score(model)
+                            ),
                             last_updated=metrics_dict.get("last_updated", ""),
                         )
             except Exception as e:
@@ -620,8 +644,8 @@ class FactualityMonitor:
             "model_metrics": {model: metrics.to_dict() for model, metrics in self.metrics.items()},
             "total_hallucinations": sum(m.hallucinations for m in self.metrics.values()),
             "overall_accuracy": (
-                sum(m.verified_claims for m in self.metrics.values()) /
-                max(1, sum(m.total_claims for m in self.metrics.values()))
+                sum(m.verified_claims for m in self.metrics.values())
+                / max(1, sum(m.total_claims for m in self.metrics.values()))
             ),
             "recent_incidents": [i.to_dict() for i in self.incidents[-10:]],
             "factuality_ceiling_warning": (
@@ -639,12 +663,14 @@ def create_factuality_monitor() -> FactualityMonitor:
 
     try:
         from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
         rag_system = LessonsLearnedRAG()
     except Exception as e:
         logger.warning(f"Could not initialize RAG system: {e}")
 
     try:
         from src.ml.anomaly_detector import TradingAnomalyDetector
+
         anomaly_detector = TradingAnomalyDetector()
     except Exception as e:
         logger.warning(f"Could not initialize anomaly detector: {e}")

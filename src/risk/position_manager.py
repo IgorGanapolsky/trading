@@ -202,7 +202,10 @@ class PositionManager:
         logger.info(f"  Loaded {len(self._position_entry_dates)} persisted entry dates")
 
     def track_entry(
-        self, symbol: str, entry_date: datetime | None = None, entry_features: dict[str, Any] | None = None
+        self,
+        symbol: str,
+        entry_date: datetime | None = None,
+        entry_features: dict[str, Any] | None = None,
     ) -> None:
         """
         Track when a position was entered for time-based exits.

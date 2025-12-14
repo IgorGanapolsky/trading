@@ -9,7 +9,6 @@ Reference: rag_knowledge/lessons_learned/ll_019_system_dead_2_days_overly_strict
 from __future__ import annotations
 
 import os
-import pytest
 
 
 class TestTickerUniverse:
@@ -80,7 +79,6 @@ class TestRLFilterThresholds:
 
     def test_rl_confidence_threshold_relaxed(self):
         """RL confidence threshold should be <= 0.4 during R&D."""
-        from src.agents.rl_agent import RLFilter
 
         # Don't actually initialize the filter (needs weights), just check default
         default_threshold = float(os.getenv("RL_CONFIDENCE_THRESHOLD", "0.35"))
@@ -95,7 +93,6 @@ class TestTradeFlowMonitoring:
 
     def test_session_decisions_file_created(self):
         """Telemetry should export session decisions for debugging."""
-        from pathlib import Path
 
         # This test verifies the capability exists, not that a file exists now
         from src.orchestrator.telemetry import OrchestratorTelemetry
@@ -130,7 +127,9 @@ class TestLessonsLearnedIntegration:
         """ll_019 (dead system) lesson should be documented."""
         from pathlib import Path
 
-        ll_path = Path("rag_knowledge/lessons_learned/ll_019_system_dead_2_days_overly_strict_filters_dec12.md")
+        ll_path = Path(
+            "rag_knowledge/lessons_learned/ll_019_system_dead_2_days_overly_strict_filters_dec12.md"
+        )
         assert ll_path.exists(), (
             "Missing ll_019 lesson learned document. "
             "This documents why the system was dead for 2 days."
@@ -140,7 +139,9 @@ class TestLessonsLearnedIntegration:
         """ll_019 should contain actionable prevention rules."""
         from pathlib import Path
 
-        ll_path = Path("rag_knowledge/lessons_learned/ll_019_system_dead_2_days_overly_strict_filters_dec12.md")
+        ll_path = Path(
+            "rag_knowledge/lessons_learned/ll_019_system_dead_2_days_overly_strict_filters_dec12.md"
+        )
         if ll_path.exists():
             content = ll_path.read_text()
             assert "Prevention Rules" in content, "ll_019 missing Prevention Rules section"

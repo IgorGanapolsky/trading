@@ -687,11 +687,11 @@ def get_position_size_modifier() -> float:
 
     # Zone-based adjustments
     zone_modifiers = {
-        EmotionalZone.FLOW: 1.0,       # Peak performance - full size
+        EmotionalZone.FLOW: 1.0,  # Peak performance - full size
         EmotionalZone.CHALLENGE: 0.9,  # Healthy stress - 90% size
-        EmotionalZone.CAUTION: 0.75,   # Reduced confidence - 75% size
-        EmotionalZone.DANGER: 0.5,     # High risk - 50% size
-        EmotionalZone.TILT: 0.0,       # DO NOT TRADE
+        EmotionalZone.CAUTION: 0.75,  # Reduced confidence - 75% size
+        EmotionalZone.DANGER: 0.5,  # High risk - 50% size
+        EmotionalZone.TILT: 0.0,  # DO NOT TRADE
     }
     modifier *= zone_modifiers.get(state.current_zone, 0.75)
 

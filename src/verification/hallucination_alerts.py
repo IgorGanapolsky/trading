@@ -28,6 +28,7 @@ ALERT_LOG_PATH = Path("data/alert_log.json")
 @dataclass
 class Alert:
     """Represents an alert to be sent."""
+
     alert_id: str
     timestamp: str
     severity: str  # "info", "warning", "critical"
@@ -220,10 +221,7 @@ class HallucinationAlertSystem:
             severity="warning",
             alert_type="backtest_failure",
             title=f"Backtest Failed: {signal_direction} {symbol}",
-            message=(
-                f"Signal from {model} failed backtest validation.\n"
-                f"Reason: {reason}"
-            ),
+            message=(f"Signal from {model} failed backtest validation.\nReason: {reason}"),
             context={
                 "symbol": symbol,
                 "signal_direction": signal_direction,
@@ -236,18 +234,16 @@ class HallucinationAlertSystem:
         """Check if severity meets Slack threshold."""
         if not self.slack_webhook_url:
             return False
-        return (
-            self._severity_levels.get(severity, 0) >=
-            self._severity_levels.get(self.min_severity_slack, 1)
+        return self._severity_levels.get(severity, 0) >= self._severity_levels.get(
+            self.min_severity_slack, 1
         )
 
     def _should_send_email(self, severity: str) -> bool:
         """Check if severity meets email threshold."""
         if not self.email_config.get("sender_email"):
             return False
-        return (
-            self._severity_levels.get(severity, 0) >=
-            self._severity_levels.get(self.min_severity_email, 2)
+        return self._severity_levels.get(severity, 0) >= self._severity_levels.get(
+            self.min_severity_email, 2
         )
 
     def _send_slack(self, alert: Alert) -> bool:
@@ -303,11 +299,13 @@ class HallucinationAlertSystem:
         """Send alert via email."""
         try:
             config = self.email_config
-            if not all([
-                config.get("sender_email"),
-                config.get("sender_password"),
-                config.get("recipient_email"),
-            ]):
+            if not all(
+                [
+                    config.get("sender_email"),
+                    config.get("sender_password"),
+                    config.get("recipient_email"),
+                ]
+            ):
                 logger.warning("Email config incomplete - skipping email alert")
                 return False
 

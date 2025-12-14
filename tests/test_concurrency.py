@@ -16,7 +16,7 @@ import asyncio
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from unittest.mock import MagicMock, patch
+
 import pytest
 
 
@@ -31,17 +31,13 @@ class TestConcurrentOrderSubmission:
         def submit_order(order_id: int, symbol: str, quantity: float):
             # Simulate order submission with lock
             with lock:
-                orders_submitted.append(
-                    {"id": order_id, "symbol": symbol, "quantity": quantity}
-                )
+                orders_submitted.append({"id": order_id, "symbol": symbol, "quantity": quantity})
             time.sleep(0.01)  # Simulate API latency
             return True
 
         # Submit 5 concurrent orders for SPY
         with ThreadPoolExecutor(max_workers=5) as executor:
-            futures = [
-                executor.submit(submit_order, i, "SPY", 10.0) for i in range(5)
-            ]
+            futures = [executor.submit(submit_order, i, "SPY", 10.0) for i in range(5)]
             results = [f.result() for f in as_completed(futures)]
 
         assert len(results) == 5, "All orders should complete"

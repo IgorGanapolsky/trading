@@ -8,14 +8,13 @@ Tests:
 - Hallucination Alerts
 """
 
-import pytest
-from unittest.mock import Mock, patch
-from datetime import datetime, timezone
+from unittest.mock import Mock
 
-from src.verification.position_reconciler import PositionReconciler
-from src.verification.model_circuit_breaker import ModelCircuitBreaker, CircuitState
-from src.verification.signal_backtester import SignalBacktester
+import pytest
 from src.verification.hallucination_alerts import HallucinationAlertSystem
+from src.verification.model_circuit_breaker import ModelCircuitBreaker
+from src.verification.position_reconciler import PositionReconciler
+from src.verification.signal_backtester import SignalBacktester
 
 
 class TestPositionReconciler:
@@ -28,57 +27,73 @@ class TestPositionReconciler:
     def test_reconcile_matching_positions(self, reconciler):
         """Test reconciliation when positions match."""
         # Mock the actual positions
-        reconciler._fetch_actual_positions = Mock(return_value={
-            "SPY": {"qty": 10, "market_value": 5000},
-            "QQQ": {"qty": 5, "market_value": 2500},
-        })
+        reconciler._fetch_actual_positions = Mock(
+            return_value={
+                "SPY": {"qty": 10, "market_value": 5000},
+                "QQQ": {"qty": 5, "market_value": 2500},
+            }
+        )
 
-        result = reconciler.reconcile({
-            "SPY": {"qty": 10, "market_value": 5000},
-            "QQQ": {"qty": 5, "market_value": 2500},
-        })
+        result = reconciler.reconcile(
+            {
+                "SPY": {"qty": 10, "market_value": 5000},
+                "QQQ": {"qty": 5, "market_value": 2500},
+            }
+        )
 
         assert result.is_reconciled is True
         assert len(result.discrepancies) == 0
 
     def test_reconcile_phantom_position(self, reconciler):
         """Test detection of phantom position (claimed but doesn't exist)."""
-        reconciler._fetch_actual_positions = Mock(return_value={
-            "SPY": {"qty": 10, "market_value": 5000},
-        })
+        reconciler._fetch_actual_positions = Mock(
+            return_value={
+                "SPY": {"qty": 10, "market_value": 5000},
+            }
+        )
 
-        result = reconciler.reconcile({
-            "SPY": {"qty": 10, "market_value": 5000},
-            "FAKE": {"qty": 100, "market_value": 10000},  # Phantom!
-        })
+        result = reconciler.reconcile(
+            {
+                "SPY": {"qty": 10, "market_value": 5000},
+                "FAKE": {"qty": 100, "market_value": 10000},  # Phantom!
+            }
+        )
 
         assert result.is_reconciled is False
         assert any(d["type"] == "phantom_position" for d in result.discrepancies)
 
     def test_reconcile_quantity_mismatch(self, reconciler):
         """Test detection of quantity mismatch."""
-        reconciler._fetch_actual_positions = Mock(return_value={
-            "SPY": {"qty": 10, "market_value": 5000},
-        })
+        reconciler._fetch_actual_positions = Mock(
+            return_value={
+                "SPY": {"qty": 10, "market_value": 5000},
+            }
+        )
 
-        result = reconciler.reconcile({
-            "SPY": {"qty": 100, "market_value": 5000},  # Wrong qty!
-        })
+        result = reconciler.reconcile(
+            {
+                "SPY": {"qty": 100, "market_value": 5000},  # Wrong qty!
+            }
+        )
 
         assert result.is_reconciled is False
         assert any(d["type"] == "quantity_mismatch" for d in result.discrepancies)
 
     def test_reconcile_missing_position(self, reconciler):
         """Test detection of missing position (exists but not claimed)."""
-        reconciler._fetch_actual_positions = Mock(return_value={
-            "SPY": {"qty": 10, "market_value": 5000},
-            "QQQ": {"qty": 5, "market_value": 2500},
-        })
+        reconciler._fetch_actual_positions = Mock(
+            return_value={
+                "SPY": {"qty": 10, "market_value": 5000},
+                "QQQ": {"qty": 5, "market_value": 2500},
+            }
+        )
 
-        result = reconciler.reconcile({
-            "SPY": {"qty": 10, "market_value": 5000},
-            # Missing QQQ!
-        })
+        result = reconciler.reconcile(
+            {
+                "SPY": {"qty": 10, "market_value": 5000},
+                # Missing QQQ!
+            }
+        )
 
         assert result.is_reconciled is False
         assert any(d["type"] == "missing_position" for d in result.discrepancies)

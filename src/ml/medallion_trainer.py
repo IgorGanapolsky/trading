@@ -19,6 +19,7 @@ from typing import Any
 import torch
 import torch.nn as nn
 import torch.optim as optim
+
 from src.medallion.gold import DEFAULT_CONTRACT
 from src.medallion.pipeline import get_medallion_pipeline
 

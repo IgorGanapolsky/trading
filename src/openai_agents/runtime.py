@@ -29,7 +29,9 @@ _SUPERVISOR_MODEL = "gpt-5.2" if _USE_GPT52 else "gpt-4.1"
 if _USE_GPT52:
     logger.info("OpenAI Agents: Using GPT-5.2 (SOTA coding/tool-calling)")
 else:
-    logger.debug("OpenAI Agents: Using GPT-4.1/4.1-mini (set OPENAI_AGENTS_USE_GPT52=true to upgrade)")
+    logger.debug(
+        "OpenAI Agents: Using GPT-4.1/4.1-mini (set OPENAI_AGENTS_USE_GPT52=true to upgrade)"
+    )
 
 
 @output_guardrail(name="summary_presence_guard")

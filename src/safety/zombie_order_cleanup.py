@@ -68,8 +68,8 @@ def get_alpaca_client():
 def get_pending_orders(client) -> list[dict[str, Any]]:
     """Get all pending/open orders from Alpaca."""
     try:
-        from alpaca.trading.requests import GetOrdersRequest
         from alpaca.trading.enums import QueryOrderStatus
+        from alpaca.trading.requests import GetOrdersRequest
 
         request = GetOrdersRequest(status=QueryOrderStatus.OPEN)
         orders = client.get_orders(request)
@@ -78,17 +78,21 @@ def get_pending_orders(client) -> list[dict[str, Any]]:
         for order in orders:
             status = str(order.status).lower()
             if status in PENDING_STATUSES:
-                pending.append({
-                    "id": str(order.id),
-                    "symbol": order.symbol,
-                    "side": str(order.side),
-                    "qty": str(order.qty),
-                    "order_type": str(order.type),
-                    "status": status,
-                    "submitted_at": order.submitted_at.isoformat() if order.submitted_at else None,
-                    "created_at": order.created_at.isoformat() if order.created_at else None,
-                    "time_in_force": str(order.time_in_force),
-                })
+                pending.append(
+                    {
+                        "id": str(order.id),
+                        "symbol": order.symbol,
+                        "side": str(order.side),
+                        "qty": str(order.qty),
+                        "order_type": str(order.type),
+                        "status": status,
+                        "submitted_at": order.submitted_at.isoformat()
+                        if order.submitted_at
+                        else None,
+                        "created_at": order.created_at.isoformat() if order.created_at else None,
+                        "time_in_force": str(order.time_in_force),
+                    }
+                )
         return pending
 
     except Exception as e:
@@ -220,10 +224,12 @@ def cleanup_zombie_orders(
         age = calculate_order_age(order)
 
         if age > max_age_delta:
-            zombies_found.append({
-                **order,
-                "age_seconds": age.total_seconds(),
-            })
+            zombies_found.append(
+                {
+                    **order,
+                    "age_seconds": age.total_seconds(),
+                }
+            )
 
             logger.warning(
                 f"Zombie order detected: {order['symbol']} {order['side']} "
@@ -233,20 +239,24 @@ def cleanup_zombie_orders(
             if not dry_run:
                 if cancel_order(client, order["id"]):
                     result["cancelled_count"] += 1
-                    result["cancelled_orders"].append({
-                        "id": order["id"],
-                        "symbol": order["symbol"],
-                        "side": order["side"],
-                        "qty": order["qty"],
-                        "age_seconds": age.total_seconds(),
-                        "cancelled_at": datetime.now().isoformat(),
-                    })
+                    result["cancelled_orders"].append(
+                        {
+                            "id": order["id"],
+                            "symbol": order["symbol"],
+                            "side": order["side"],
+                            "qty": order["qty"],
+                            "age_seconds": age.total_seconds(),
+                            "cancelled_at": datetime.now().isoformat(),
+                        }
+                    )
                     state["total_cancelled"] = state.get("total_cancelled", 0) + 1
-                    state["cancelled_orders"].append({
-                        "id": order["id"],
-                        "symbol": order["symbol"],
-                        "cancelled_at": datetime.now().isoformat(),
-                    })
+                    state["cancelled_orders"].append(
+                        {
+                            "id": order["id"],
+                            "symbol": order["symbol"],
+                            "cancelled_at": datetime.now().isoformat(),
+                        }
+                    )
                 else:
                     result["errors"].append(f"Failed to cancel order {order['id']}")
 
@@ -257,7 +267,9 @@ def cleanup_zombie_orders(
         result["message"] = f"Would cancel {len(zombies_found)} zombie orders"
     else:
         result["status"] = "ok"
-        result["message"] = f"Cancelled {result['cancelled_count']} of {len(zombies_found)} zombie orders"
+        result["message"] = (
+            f"Cancelled {result['cancelled_count']} of {len(zombies_found)} zombie orders"
+        )
         state["last_cleanup"] = datetime.now().isoformat()
         save_state(state)
 

@@ -255,7 +255,6 @@ def format_ml_rag_status() -> str:
     This shows the ACTUAL status of AI systems, not aspirational claims.
     """
     import json
-    import os
     from collections import Counter
     from pathlib import Path
 
@@ -289,8 +288,10 @@ def format_ml_rag_status() -> str:
         # Try to get actual document count from ChromaDB
         try:
             import sys
+
             sys.path.insert(0, ".")
             from src.rag.vector_db.chroma_client import get_rag_db
+
             db = get_rag_db()
             stats = db.get_stats()
             chroma_docs = stats.get("total_documents", 0)
@@ -313,6 +314,7 @@ def format_ml_rag_status() -> str:
     embedder_status = "❌ Not Available"
     try:
         from sentence_transformers import SentenceTransformer
+
         embedder_status = "✅ sentence-transformers"
     except ImportError:
         pass
@@ -335,6 +337,7 @@ def format_ml_rag_status() -> str:
             lines = runs_path.read_text().splitlines()[-20:]  # Last 20 runs
             for line in lines:
                 import json
+
                 run = json.loads(line)
                 if run.get("ml_decision"):
                     ml_decisions += 1
@@ -356,7 +359,8 @@ def format_ml_rag_status() -> str:
     if lessons_path.exists():
         try:
             import json
-            with open(lessons_path, "r") as f:
+
+            with open(lessons_path) as f:
                 lessons_data = json.load(f)
             lessons_count = len(lessons_data)
             # Show last 5 lessons

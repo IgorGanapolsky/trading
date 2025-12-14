@@ -62,7 +62,7 @@ class TestAssumptionValidation:
         # Simulate regime data
         np.random.seed(42)
         normal_vol = np.random.normal(0, 0.015, 50)  # 1.5% daily vol
-        high_vol = np.random.normal(0, 0.045, 50)    # 4.5% daily vol (3x)
+        high_vol = np.random.normal(0, 0.045, 50)  # 4.5% daily vol (3x)
 
         combined = np.concatenate([normal_vol, high_vol])
 
@@ -70,7 +70,7 @@ class TestAssumptionValidation:
         window = 20
         rolling_vol = []
         for i in range(window, len(combined)):
-            rolling_vol.append(np.std(combined[i-window:i]))
+            rolling_vol.append(np.std(combined[i - window : i]))
 
         # Detect if vol regime changed >2x
         if len(rolling_vol) > 0:
@@ -121,7 +121,9 @@ class TestSlippageSimulation:
         # Should be within 5% variance threshold
         assert avg_variance < 0.05, f"Average slippage variance {avg_variance:.2%} > 5% threshold"
         # Max should be within 10% (extreme case)
-        assert max_variance < 0.15, f"Max slippage variance {max_variance:.2%} > 15% extreme threshold"
+        assert max_variance < 0.15, (
+            f"Max slippage variance {max_variance:.2%} > 15% extreme threshold"
+        )
 
 
 class TestGateStress:
@@ -132,7 +134,11 @@ class TestGateStress:
         """Generate sample trading signals."""
         np.random.seed(42)
         return [
-            {"symbol": "SPY", "rsi": np.random.uniform(30, 70), "macd": np.random.uniform(-0.5, 0.5)}
+            {
+                "symbol": "SPY",
+                "rsi": np.random.uniform(30, 70),
+                "macd": np.random.uniform(-0.5, 0.5),
+            }
             for _ in range(100)
         ]
 
@@ -150,7 +156,9 @@ class TestGateStress:
         if max_rejects > 0:
             reject_variance = (max_rejects - min_rejects) / max_rejects
             # Rejects should not vary more than 50% across reasonable threshold range
-            assert reject_variance < 0.50, f"RSI threshold too sensitive: {reject_variance:.2%} variance"
+            assert reject_variance < 0.50, (
+                f"RSI threshold too sensitive: {reject_variance:.2%} variance"
+            )
 
     def test_macd_threshold_sensitivity(self, sample_signals):
         """Test MACD gate rejects vary <20% across reasonable threshold range."""
@@ -166,7 +174,9 @@ class TestGateStress:
         if max_rejects > 0:
             reject_variance = (max_rejects - min_rejects) / max_rejects
             # Log the sensitivity for monitoring
-            assert reject_variance <= 1.0, f"MACD threshold analysis: {reject_variance:.2%} variance"
+            assert reject_variance <= 1.0, (
+                f"MACD threshold analysis: {reject_variance:.2%} variance"
+            )
 
     def test_composite_gate_reject_rate(self, sample_signals):
         """Verify composite gate rejects <40% of valid signals."""
@@ -246,11 +256,11 @@ class TestDrawdownCircuit:
         starting_equity = 100000
         equity_curve = [
             starting_equity,
-            99000,   # -1%
-            97000,   # -3%
-            95000,   # -5%
-            93500,   # -6.5% (should trigger halt)
-            93000,   # should not reach here
+            99000,  # -1%
+            97000,  # -3%
+            95000,  # -5%
+            93500,  # -6.5% (should trigger halt)
+            93000,  # should not reach here
         ]
 
         # Drawdown circuit breaker threshold
@@ -278,9 +288,9 @@ class TestDrawdownCircuit:
         # Simulate drawdown and recovery
         equity_curve = [
             100000,  # Start
-            94000,   # -6% (halt)
-            95000,   # -5% (still halted)
-            97500,   # -2.5% (can resume)
+            94000,  # -6% (halt)
+            95000,  # -5% (still halted)
+            97500,  # -2.5% (can resume)
         ]
 
         halted = False
@@ -357,7 +367,9 @@ class TestTelemetryAudit:
             # No single gate should account for >80% of all rejects
             if gate_1_rejects + gate_2_rejects > 0:
                 gate_1_proportion = gate_1_rejects / (gate_1_rejects + gate_2_rejects)
-                assert gate_1_proportion < 0.80, f"Gate 1 accounts for {gate_1_proportion:.0%} of rejects"
+                assert gate_1_proportion < 0.80, (
+                    f"Gate 1 accounts for {gate_1_proportion:.0%} of rejects"
+                )
 
 
 class TestPromotionGateIntegration:

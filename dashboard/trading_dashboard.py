@@ -86,7 +86,7 @@ def get_account_summary():
 
         api_key = os.getenv("ALPACA_API_KEY")
         api_secret = os.getenv("ALPACA_SECRET_KEY")
-        
+
         # Check mode (default to Paper if not specified or explicit 'true')
         is_paper = os.getenv("ALPACA_PAPER", "true").lower() in ("true", "1", "yes", "on")
         base_url = "https://paper-api.alpaca.markets" if is_paper else "https://api.alpaca.markets"
@@ -99,7 +99,7 @@ def get_account_summary():
             account_data["equity"] = float(account.equity)
             account_data["cash"] = float(account.cash)
             account_data["buying_power"] = float(account.buying_power)
-            
+
             # Use portfolio_value if available, else equity
             if hasattr(account, "portfolio_value"):
                 account_data["portfolio_value"] = float(account.portfolio_value)
@@ -111,7 +111,7 @@ def get_account_summary():
                 if hasattr(account, "last_equity")
                 else float(account.equity)
             )
-            
+
             account_data["daytrade_count"] = getattr(
                 account, "daytrade_count", getattr(account, "day_trade_count", 0)
             )
@@ -123,33 +123,35 @@ def get_account_summary():
                 # Determine asset class
                 asset_class = pos.asset_class if hasattr(pos, "asset_class") else "Unknown"
                 if asset_class == "us_equity":
-                    # Simple heuristic: ETFs often not tagged explicitly in all APIs, 
+                    # Simple heuristic: ETFs often not tagged explicitly in all APIs,
                     # but we can label them generally as Equity/ETF
                     asset_class = "Equity/ETF"
                 elif asset_class == "crypto":
                     asset_class = "Crypto"
 
-                account_data["positions"].append({
-                    "symbol": pos.symbol,
-                    "qty": float(pos.qty),
-                    "entry_price": float(pos.avg_entry_price),
-                    "current_price": float(pos.current_price),
-                    "unrealized_pl": float(pos.unrealized_pl),
-                    "unrealized_plpc": float(pos.unrealized_plpc) * 100,
-                    "asset_class": asset_class,
-                    "source": "Alpaca"
-                })
+                account_data["positions"].append(
+                    {
+                        "symbol": pos.symbol,
+                        "qty": float(pos.qty),
+                        "entry_price": float(pos.avg_entry_price),
+                        "current_price": float(pos.current_price),
+                        "unrealized_pl": float(pos.unrealized_pl),
+                        "unrealized_plpc": float(pos.unrealized_plpc) * 100,
+                        "asset_class": asset_class,
+                        "source": "Alpaca",
+                    }
+                )
     except Exception as e:
         st.error(f"Error fetching Alpaca data: {e}")
 
     # 2. Kalshi (Prediction Markets)
     try:
         from src.brokers.kalshi_client import get_kalshi_client
-        
+
         # Check mode for Kalshi (can be independent, but using same env var pattern)
         is_kalshi_paper = os.getenv("KALSHI_PAPER", "true").lower() in ("true", "1", "yes", "on")
         kalshi = get_kalshi_client(paper=is_kalshi_paper)
-        
+
         if kalshi.is_configured():
             try:
                 # Add Kalshi balance to cash/equity
@@ -157,7 +159,7 @@ def get_account_summary():
                 account_data["cash"] += k_account.balance
                 account_data["equity"] += k_account.portfolio_value
                 account_data["portfolio_value"] += k_account.portfolio_value
-                
+
                 # We assume Kalshi doesn't have "margin" same as Alpaca, so buying power += balance
                 account_data["buying_power"] += k_account.balance
 
@@ -165,26 +167,34 @@ def get_account_summary():
                 for k_pos in k_positions:
                     # Kalshi positions: Side (Yes/No) is important
                     symbol_display = f"{k_pos.market_ticker} ({k_pos.side.upper()})"
-                    
-                    # Calculate P/L %
-                    pl_pct = (k_pos.unrealized_pl / k_pos.cost_basis * 100) if k_pos.cost_basis > 0 else 0.0
 
-                    account_data["positions"].append({
-                        "symbol": symbol_display,
-                        "qty": float(k_pos.quantity),
-                        "entry_price": k_pos.avg_price / 100.0, # Cents to Dollars
-                        "current_price": (k_pos.market_value / k_pos.quantity) if k_pos.quantity > 0 else 0.0,
-                        "unrealized_pl": k_pos.unrealized_pl,
-                        "unrealized_plpc": pl_pct,
-                        "asset_class": "Prediction",
-                        "source": "Kalshi"
-                    })
+                    # Calculate P/L %
+                    pl_pct = (
+                        (k_pos.unrealized_pl / k_pos.cost_basis * 100)
+                        if k_pos.cost_basis > 0
+                        else 0.0
+                    )
+
+                    account_data["positions"].append(
+                        {
+                            "symbol": symbol_display,
+                            "qty": float(k_pos.quantity),
+                            "entry_price": k_pos.avg_price / 100.0,  # Cents to Dollars
+                            "current_price": (k_pos.market_value / k_pos.quantity)
+                            if k_pos.quantity > 0
+                            else 0.0,
+                            "unrealized_pl": k_pos.unrealized_pl,
+                            "unrealized_plpc": pl_pct,
+                            "asset_class": "Prediction",
+                            "source": "Kalshi",
+                        }
+                    )
             except Exception as ke:
                 # Log but don't crash if just Kalshi fails
                 print(f"Kalshi fetch error: {ke}")
-                
+
     except ImportError:
-        pass # Kalshi module not found
+        pass  # Kalshi module not found
     except Exception as e:
         st.error(f"Error fetching Kalshi data: {e}")
 
@@ -251,7 +261,14 @@ def main():
 
     # Main dashboard
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
-        ["📈 Performance", "💼 Positions", "🛡️ Risk", "📋 Trades", "🚀 Sentiment Boost", "🧠 RAG Insights"]
+        [
+            "📈 Performance",
+            "💼 Positions",
+            "🛡️ Risk",
+            "📋 Trades",
+            "🚀 Sentiment Boost",
+            "🧠 RAG Insights",
+        ]
     )
 
     # Tab 1: Performance
@@ -340,7 +357,9 @@ def main():
             display_df["Source"] = display_df.get("source", "Unknown")
 
             st.dataframe(
-                display_df[["symbol", "Class", "Entry", "Current", "P/L", "P/L %", "Qty", "Source"]],
+                display_df[
+                    ["symbol", "Class", "Entry", "Current", "P/L", "P/L %", "Qty", "Source"]
+                ],
                 use_container_width=True,
                 hide_index=True,
             )
@@ -521,16 +540,17 @@ def main():
 
         # Try to load RAG insights
         rag_available = False
-        insights = []
 
         try:
             from src.rag.lightweight_rag import LightweightRAG
+
             rag = LightweightRAG()
             rag_available = True
             rag_stats = rag.get_stats()
         except ImportError:
             try:
                 from src.rag.vector_db.chroma_client import TradingRAGDatabase
+
                 rag = TradingRAGDatabase()
                 rag_available = True
                 rag_stats = rag.get_stats()
@@ -564,18 +584,24 @@ def main():
             for ticker in current_tickers[:5]:  # Limit to 5 tickers
                 try:
                     # Try get_latest_insights if available (LightweightRAG)
-                    if hasattr(rag, 'get_latest_insights'):
+                    if hasattr(rag, "get_latest_insights"):
                         ticker_insights = rag.get_latest_insights(ticker=ticker, n=3)
                     else:
                         # Fallback to query
                         ticker_insights = rag.query(f"{ticker} trading analysis", n_results=3)
 
                     if ticker_insights:
-                        with st.expander(f"📊 {ticker} - {len(ticker_insights)} insights", expanded=False):
+                        with st.expander(
+                            f"📊 {ticker} - {len(ticker_insights)} insights", expanded=False
+                        ):
                             for i, insight in enumerate(ticker_insights, 1):
                                 content = insight.get("content", insight.get("document", ""))[:300]
-                                source = insight.get("metadata", {}).get("source", insight.get("source", "unknown"))
-                                date = insight.get("metadata", {}).get("date", insight.get("date", ""))
+                                source = insight.get("metadata", {}).get(
+                                    "source", insight.get("source", "unknown")
+                                )
+                                date = insight.get("metadata", {}).get(
+                                    "date", insight.get("date", "")
+                                )
 
                                 st.markdown(f"**{i}. [{source}]** {date}")
                                 st.info(content + "..." if len(content) >= 300 else content)
@@ -593,7 +619,7 @@ def main():
         if rag_available:
             try:
                 # Get general market insights
-                if hasattr(rag, 'get_latest_insights'):
+                if hasattr(rag, "get_latest_insights"):
                     market_insights = rag.get_latest_insights(n=5)
                 else:
                     market_insights = rag.query("market analysis trading strategy", n_results=5)
@@ -601,7 +627,9 @@ def main():
                 if market_insights:
                     for insight in market_insights:
                         content = insight.get("content", insight.get("document", ""))[:200]
-                        source = insight.get("metadata", {}).get("source", insight.get("source", "RAG"))
+                        source = insight.get("metadata", {}).get(
+                            "source", insight.get("source", "RAG")
+                        )
                         ticker = insight.get("metadata", {}).get("ticker", "")
 
                         ticker_badge = f"**[{ticker}]**" if ticker else ""
@@ -620,6 +648,7 @@ def main():
 
         try:
             from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
             ll_rag = LessonsLearnedRAG()
 
             # Get recent lessons
@@ -627,9 +656,16 @@ def main():
             if recent_lessons:
                 for lesson in recent_lessons:
                     severity = lesson.get("severity", "medium")
-                    severity_color = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}.get(severity, "⚪")
+                    severity_color = {
+                        "critical": "🔴",
+                        "high": "🟠",
+                        "medium": "🟡",
+                        "low": "🟢",
+                    }.get(severity, "⚪")
 
-                    with st.expander(f"{severity_color} {lesson.get('title', 'Lesson')}", expanded=False):
+                    with st.expander(
+                        f"{severity_color} {lesson.get('title', 'Lesson')}", expanded=False
+                    ):
                         st.write(lesson.get("description", lesson.get("content", "")))
                         if lesson.get("prevention"):
                             st.success(f"**Prevention**: {lesson['prevention']}")
@@ -666,8 +702,15 @@ Storage: data/rag/lance_db/
                 st.rerun()
             if st.button("📊 Run RAG Health Check"):
                 try:
-                    result = os.popen("python3 scripts/rag_health_check.py 2>&1").read()
-                    st.code(result[:1000])
+                    import subprocess
+
+                    result = subprocess.run(
+                        ["python3", "scripts/rag_health_check.py"],
+                        capture_output=True,
+                        text=True,
+                        timeout=30,
+                    )
+                    st.code((result.stdout + result.stderr)[:1000])
                 except Exception as e:
                     st.error(f"Health check failed: {e}")
 

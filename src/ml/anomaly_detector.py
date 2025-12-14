@@ -21,8 +21,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-
 logger = logging.getLogger(__name__)
 
 ANOMALY_LOG_PATH = Path("data/anomaly_log.json")
@@ -30,28 +28,31 @@ ANOMALY_LOG_PATH = Path("data/anomaly_log.json")
 
 class AnomalyType(Enum):
     """Types of anomalies that can be detected."""
-    ORDER_AMOUNT = "order_amount"           # Unusual order size
-    ORDER_FREQUENCY = "order_frequency"     # Too many/few orders
-    PRICE_DEVIATION = "price_deviation"     # Price far from expected
-    DATA_STALENESS = "data_staleness"       # Old data being used
-    EXECUTION_FAILURE = "execution_failure" # Trade execution issues
-    SYMBOL_UNKNOWN = "symbol_unknown"       # Unknown trading symbol
-    MARKET_HOURS = "market_hours"           # Trading outside hours
-    POSITION_SIZE = "position_size"         # Position too large
-    VOLATILITY_SPIKE = "volatility_spike"   # Unusual market volatility
+
+    ORDER_AMOUNT = "order_amount"  # Unusual order size
+    ORDER_FREQUENCY = "order_frequency"  # Too many/few orders
+    PRICE_DEVIATION = "price_deviation"  # Price far from expected
+    DATA_STALENESS = "data_staleness"  # Old data being used
+    EXECUTION_FAILURE = "execution_failure"  # Trade execution issues
+    SYMBOL_UNKNOWN = "symbol_unknown"  # Unknown trading symbol
+    MARKET_HOURS = "market_hours"  # Trading outside hours
+    POSITION_SIZE = "position_size"  # Position too large
+    VOLATILITY_SPIKE = "volatility_spike"  # Unusual market volatility
 
 
 class AlertLevel(Enum):
     """Alert severity levels."""
-    INFO = "info"           # Informational, no action needed
-    WARNING = "warning"     # Review recommended
-    CRITICAL = "critical"   # Immediate attention required
-    BLOCK = "block"         # Action should be blocked
+
+    INFO = "info"  # Informational, no action needed
+    WARNING = "warning"  # Review recommended
+    CRITICAL = "critical"  # Immediate attention required
+    BLOCK = "block"  # Action should be blocked
 
 
 @dataclass
 class Anomaly:
     """Represents a detected anomaly."""
+
     anomaly_id: str
     anomaly_type: AnomalyType
     alert_level: AlertLevel
@@ -69,7 +70,7 @@ class Anomaly:
             "message": self.message,
             "details": self.details,
             "detected_at": self.detected_at.isoformat(),
-            "context": self.context
+            "context": self.context,
         }
 
 
@@ -99,13 +100,13 @@ class TradingAnomalyDetector:
 
     # Default thresholds (can be overridden)
     DEFAULT_THRESHOLDS = {
-        "max_order_amount": 100.0,       # Maximum single order $
+        "max_order_amount": 100.0,  # Maximum single order $
         "order_amount_multiplier": 10.0,  # Alert if order > 10x expected
-        "max_position_pct": 5.0,          # Max position as % of portfolio
-        "data_staleness_hours": 24,       # Max hours for data freshness
-        "min_daily_orders": 0,            # Minimum expected daily orders
-        "max_daily_orders": 10,           # Maximum expected daily orders
-        "price_deviation_pct": 5.0,       # Max price deviation from expected
+        "max_position_pct": 5.0,  # Max position as % of portfolio
+        "data_staleness_hours": 24,  # Max hours for data freshness
+        "min_daily_orders": 0,  # Minimum expected daily orders
+        "max_daily_orders": 10,  # Maximum expected daily orders
+        "price_deviation_pct": 5.0,  # Max price deviation from expected
         "volatility_zscore_threshold": 3.0,  # Z-score for volatility alert
     }
 
@@ -119,7 +120,7 @@ class TradingAnomalyDetector:
         self,
         thresholds: dict[str, float] | None = None,
         expected_daily_amount: float = 10.0,
-        portfolio_value: float = 100000.0
+        portfolio_value: float = 100000.0,
     ):
         """
         Initialize the anomaly detector.
@@ -175,7 +176,7 @@ class TradingAnomalyDetector:
         amount: float,
         action: str,
         expected_price: float | None = None,
-        actual_price: float | None = None
+        actual_price: float | None = None,
     ) -> list[Anomaly]:
         """
         Validate a proposed trade for anomalies.
@@ -196,7 +197,7 @@ class TradingAnomalyDetector:
             "amount": amount,
             "action": action,
             "expected_price": expected_price,
-            "actual_price": actual_price
+            "actual_price": actual_price,
         }
 
         # 1. Check for unknown symbol
@@ -209,7 +210,7 @@ class TradingAnomalyDetector:
                 message=f"Unknown symbol: {symbol}",
                 details={"symbol": symbol, "valid_symbols": all_symbols},
                 detected_at=datetime.now(timezone.utc),
-                context=context
+                context=context,
             )
             anomalies.append(anomaly)
             self._save_anomaly(anomaly)
@@ -232,10 +233,12 @@ class TradingAnomalyDetector:
                     "amount": amount,
                     "max_amount": max_amount,
                     "expected_daily": self.expected_daily_amount,
-                    "multiplier": amount / self.expected_daily_amount if self.expected_daily_amount > 0 else 0
+                    "multiplier": amount / self.expected_daily_amount
+                    if self.expected_daily_amount > 0
+                    else 0,
                 },
                 detected_at=datetime.now(timezone.utc),
-                context=context
+                context=context,
             )
             anomalies.append(anomaly)
             self._save_anomaly(anomaly)
@@ -252,10 +255,10 @@ class TradingAnomalyDetector:
                     "position_pct": position_pct,
                     "max_pct": self.thresholds["max_position_pct"],
                     "amount": amount,
-                    "portfolio_value": self.portfolio_value
+                    "portfolio_value": self.portfolio_value,
                 },
                 detected_at=datetime.now(timezone.utc),
-                context=context
+                context=context,
             )
             anomalies.append(anomaly)
             self._save_anomaly(anomaly)
@@ -272,28 +275,28 @@ class TradingAnomalyDetector:
                     details={
                         "expected_price": expected_price,
                         "actual_price": actual_price,
-                        "deviation_pct": deviation_pct
+                        "deviation_pct": deviation_pct,
                     },
                     detected_at=datetime.now(timezone.utc),
-                    context=context
+                    context=context,
                 )
                 anomalies.append(anomaly)
                 self._save_anomaly(anomaly)
 
         # Record order for frequency tracking
-        self._order_history.append({
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "symbol": symbol,
-            "amount": amount,
-            "action": action
-        })
+        self._order_history.append(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "symbol": symbol,
+                "amount": amount,
+                "action": action,
+            }
+        )
 
         return anomalies
 
     def check_data_freshness(
-        self,
-        data_timestamp: datetime | str,
-        data_source: str = "unknown"
+        self, data_timestamp: datetime | str, data_source: str = "unknown"
     ) -> list[Anomaly]:
         """
         Check if data is fresh enough for trading decisions.
@@ -330,10 +333,10 @@ class TradingAnomalyDetector:
                     "data_timestamp": data_timestamp.isoformat(),
                     "age_hours": age_hours,
                     "threshold_hours": self.thresholds["data_staleness_hours"],
-                    "data_source": data_source
+                    "data_source": data_source,
                 },
                 detected_at=datetime.now(timezone.utc),
-                context={"data_source": data_source}
+                context={"data_source": data_source},
             )
             anomalies.append(anomaly)
             self._save_anomaly(anomaly)
@@ -341,9 +344,7 @@ class TradingAnomalyDetector:
         return anomalies
 
     def check_market_hours(
-        self,
-        symbol: str,
-        execution_time: datetime | None = None
+        self, symbol: str, execution_time: datetime | None = None
     ) -> list[Anomaly]:
         """
         Check if trading is happening during appropriate market hours.
@@ -378,10 +379,10 @@ class TradingAnomalyDetector:
                 details={
                     "symbol": symbol,
                     "weekday": weekday,
-                    "execution_time": execution_time.isoformat()
+                    "execution_time": execution_time.isoformat(),
                 },
                 detected_at=datetime.now(timezone.utc),
-                context={"symbol": symbol}
+                context={"symbol": symbol},
             )
             anomalies.append(anomaly)
             self._save_anomaly(anomaly)
@@ -392,7 +393,7 @@ class TradingAnomalyDetector:
         self,
         anomaly_type: AnomalyType | None = None,
         alert_level: AlertLevel | None = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> list[Anomaly]:
         """
         Get historical anomalies with optional filtering.
@@ -426,7 +427,7 @@ def validate_order(
     amount: float,
     action: str,
     expected_daily: float = 10.0,
-    portfolio_value: float = 100000.0
+    portfolio_value: float = 100000.0,
 ) -> tuple[bool, list[str]]:
     """
     Validate an order before execution.
@@ -442,8 +443,7 @@ def validate_order(
         (is_valid, list of warning messages)
     """
     detector = TradingAnomalyDetector(
-        expected_daily_amount=expected_daily,
-        portfolio_value=portfolio_value
+        expected_daily_amount=expected_daily, portfolio_value=portfolio_value
     )
 
     anomalies = detector.validate_trade(symbol, amount, action)

@@ -118,7 +118,7 @@ def example_3_multi_query():
 
     # Cache stats
     stats = query.get_cache_stats()
-    print(f"\n📊 Cache Stats:")
+    print("\n📊 Cache Stats:")
     print(f"   Entries: {stats['entries']}")
     print(f"   TTL: {stats['ttl_seconds']}s")
     print(f"   Oldest entry age: {stats['oldest_entry_age']:.1f}s")
@@ -160,7 +160,7 @@ def example_4_risk_assessment():
             # Show highest severity
             highest_severity = max(
                 result["matched_lessons"],
-                key=lambda l: {"critical": 3, "high": 2, "medium": 1, "low": 0}[l["severity"]]
+                key=lambda l: {"critical": 3, "high": 2, "medium": 1, "low": 0}[l["severity"]],
             )
             print(f"  Highest severity: {highest_severity['severity'].upper()}")
 
@@ -185,7 +185,7 @@ def example_5_dict_context():
 
     result = query.query_for_trade(context_dict)
 
-    print(f"\n✅ Query with dict context successful")
+    print("\n✅ Query with dict context successful")
     print(f"   Query time: {result['query_time_ms']:.1f}ms")
     print(f"   Matched lessons: {len(result['matched_lessons'])}")
 

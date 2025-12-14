@@ -64,12 +64,14 @@ class TestCapitalScalingLogic:
         # This is obviously too high for a small trader, but the math is correct.
         # The key test: recommended budget should NOT be $10 or anywhere close.
 
-        assert recommended_budget is not None, "Should provide a recommendation with positive returns"
+        assert recommended_budget is not None, (
+            "Should provide a recommendation with positive returns"
+        )
         assert recommended_budget > 100, (
             f"Capital recommendation ({recommended_budget:.2f}) should be >> $10 "
             f"to achieve $100/day profit with realistic returns. "
             f"Got ${recommended_budget:.2f}/day, which implies "
-            f"{100/recommended_budget*100:.1f}% daily returns - unrealistic!"
+            f"{100 / recommended_budget * 100:.1f}% daily returns - unrealistic!"
         )
 
         # More realistic check: should be at least 20x the target profit
@@ -134,7 +136,7 @@ class TestCapitalScalingLogic:
                 f"Capital should scale linearly with target. "
                 f"Target ratio: {expected_ratio:.2f}x, "
                 f"Capital ratio: {actual_ratio:.2f}x "
-                f"(diff: {ratio_diff*100:.1f}%)"
+                f"(diff: {ratio_diff * 100:.1f}%)"
             )
 
     def test_zero_returns_should_not_recommend_capital(self):
@@ -398,8 +400,7 @@ class TestCapitalScalingEdgeCases:
         # Current daily budget should only count active strategies
         current_budget = tracker._current_daily_budget()
         assert current_budget == 10.0, (
-            f"Only active strategies should be counted. "
-            f"Expected $10, got ${current_budget:.2f}"
+            f"Only active strategies should be counted. Expected $10, got ${current_budget:.2f}"
         )
 
     def test_very_high_returns_should_recommend_lower_capital(self):

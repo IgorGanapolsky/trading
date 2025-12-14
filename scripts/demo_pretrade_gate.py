@@ -12,7 +12,6 @@ import logging
 from datetime import datetime
 
 from src.verification.dynamic_pretrade_risk_gate import (
-    DynamicPreTradeGate,
     create_pretrade_gate,
 )
 
@@ -83,7 +82,7 @@ def demo_oversized_trade():
     result = gate.validate_trade(trade)
 
     print(f"\nTrade: {trade['side'].upper()} ${trade['notional']:,.2f} of {trade['symbol']}")
-    print(f"Portfolio: $100,000 → Trade is {trade['notional']/100000*100:.0f}% of portfolio")
+    print(f"Portfolio: $100,000 → Trade is {trade['notional'] / 100000 * 100:.0f}% of portfolio")
 
     print(f"\nRisk Score: {result.risk_score:.1f}/100")
     print(f"Decision: {'✅ APPROVED' if result.safe_to_trade else '🚫 BLOCKED'}")
@@ -213,9 +212,7 @@ def demo_comparison():
     for trade in trades:
         result = gate.validate_trade(trade)
         decision = "✅ APPROVED" if result.safe_to_trade else "🚫 BLOCKED"
-        print(
-            f"{trade['name']:<20} {result.risk_score:>5.1f}/100     {decision}"
-        )
+        print(f"{trade['name']:<20} {result.risk_score:>5.1f}/100     {decision}")
 
 
 if __name__ == "__main__":

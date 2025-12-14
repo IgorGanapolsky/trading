@@ -211,9 +211,7 @@ def build_json_result(
         "stale_hours": stale_hours,
         "metrics": metrics,
         "thresholds": thresholds,
-        "deficits": [
-            {"description": d} for d in deficits
-        ],
+        "deficits": [{"description": d} for d in deficits],
         "deficit_count": len(deficits),
     }
     return result

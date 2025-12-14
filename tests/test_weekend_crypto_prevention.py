@@ -11,7 +11,6 @@ This test suite ensures these issues never happen again.
 """
 
 import ast
-import os
 import subprocess
 import sys
 from datetime import datetime
@@ -60,7 +59,7 @@ class TestPythonSyntaxValidation:
             if not full_path.exists():
                 continue
 
-            with open(full_path, "r") as f:
+            with open(full_path) as f:
                 content = f.read()
 
             # Check for backslash in f-string pattern: f"...{...\"...}..."
@@ -72,9 +71,7 @@ class TestPythonSyntaxValidation:
                     # If parsing succeeds, the syntax is valid
                 except SyntaxError as e:
                     if "f-string" in str(e).lower():
-                        pytest.fail(
-                            f"{file_path} has f-string syntax error: {e}"
-                        )
+                        pytest.fail(f"{file_path} has f-string syntax error: {e}")
 
 
 class TestWorkflowValidation:
@@ -103,7 +100,9 @@ class TestWorkflowValidation:
 
     def test_weekend_crypto_has_pythonpath(self):
         """Ensure weekend crypto workflow has PYTHONPATH set (ll_024 fix)."""
-        workflow_path = Path(__file__).parent.parent / ".github/workflows/weekend-crypto-trading.yml"
+        workflow_path = (
+            Path(__file__).parent.parent / ".github/workflows/weekend-crypto-trading.yml"
+        )
         if not workflow_path.exists():
             pytest.skip("weekend-crypto-trading.yml not found")
 
@@ -117,7 +116,9 @@ class TestWorkflowValidation:
 
     def test_weekend_crypto_has_force_trade(self):
         """Ensure CRYPTO_FORCE_TRADE is enabled in weekend workflow."""
-        workflow_path = Path(__file__).parent.parent / ".github/workflows/weekend-crypto-trading.yml"
+        workflow_path = (
+            Path(__file__).parent.parent / ".github/workflows/weekend-crypto-trading.yml"
+        )
         if not workflow_path.exists():
             pytest.skip("weekend-crypto-trading.yml not found")
 
@@ -153,9 +154,7 @@ class TestCryptoStrategyConfig:
         assert "CRYPTO_FORCE_TRADE" in content, (
             "crypto_strategy.py missing CRYPTO_FORCE_TRADE implementation"
         )
-        assert "force_trade" in content, (
-            "crypto_strategy.py missing force_trade variable"
-        )
+        assert "force_trade" in content, "crypto_strategy.py missing force_trade variable"
 
 
 class TestSystemStateStaleness:
@@ -168,6 +167,7 @@ class TestSystemStateStaleness:
             pytest.skip("system_state.json not found")
 
         import json
+
         with open(state_path) as f:
             state = json.load(f)
 
@@ -229,8 +229,7 @@ class TestLessonsLearnedRAG:
         for lesson_id in self.EXPECTED_LESSONS:
             matching = [f for f in existing_files if lesson_id in f]
             assert matching, (
-                f"Lesson {lesson_id} not found in RAG. "
-                f"Available: {existing_files[:10]}"
+                f"Lesson {lesson_id} not found in RAG. Available: {existing_files[:10]}"
             )
 
 

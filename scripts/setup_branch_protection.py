@@ -38,7 +38,7 @@ def setup_branch_protection():
     branch = "main"
 
     url = f"https://api.github.com/repos/{owner}/{repo}/branches/{branch}/protection"
-    
+
     headers = {
         "Authorization": f"token {token}",
         "Accept": "application/vnd.github.v3+json",

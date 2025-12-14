@@ -19,9 +19,8 @@ import json
 import os
 import sys
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -67,11 +66,11 @@ class TestOrchestratorFunnelIntegration:
             },
         ):
             try:
-                from src.orchestrator.main import TradingOrchestrator
-
                 # Verify orchestrator can be instantiated
                 # (Full execution requires live API, but structure test passes)
                 import inspect
+
+                from src.orchestrator.main import TradingOrchestrator
 
                 source = inspect.getsource(TradingOrchestrator.run)
 
@@ -88,17 +87,17 @@ class TestOrchestratorFunnelIntegration:
     def test_momentum_to_rl_handoff(self):
         """Verify momentum signals are passed to RL agent for validation."""
         try:
-            from src.agents.rl_agent import RLTradingAgent
-
             # Check that RL agent accepts momentum signals
             import inspect
+
+            from src.agents.rl_agent import RLTradingAgent
 
             source = inspect.getsource(RLTradingAgent)
 
             # RL should process signals with technical indicators
-            assert "macd" in source.lower() or "rsi" in source.lower() or "signal" in source.lower(), (
-                "RL agent should process technical signals"
-            )
+            assert (
+                "macd" in source.lower() or "rsi" in source.lower() or "signal" in source.lower()
+            ), "RL agent should process technical signals"
 
         except ImportError:
             pytest.skip("RL agent not available")
@@ -106,9 +105,9 @@ class TestOrchestratorFunnelIntegration:
     def test_rl_to_llm_validation(self):
         """Verify RL decisions are validated by LLM sentiment before execution."""
         try:
-            from src.strategies.growth_strategy import GrowthStrategy
-
             import inspect
+
+            from src.strategies.growth_strategy import GrowthStrategy
 
             source = inspect.getsource(GrowthStrategy)
 
@@ -196,9 +195,9 @@ class TestAdversarialSimulations:
         with patch("time.sleep") as mock_sleep:
             # System should have timeouts
             try:
-                from src.execution.alpaca_executor import AlpacaExecutor
-
                 import inspect
+
+                from src.execution.alpaca_executor import AlpacaExecutor
 
                 source = inspect.getsource(AlpacaExecutor)
 
@@ -219,16 +218,14 @@ class TestAdversarialSimulations:
     def test_data_gap_handling(self):
         """Test system handles missing market data gracefully."""
         try:
-            from src.strategies.core_strategy import CoreStrategy
-
             import inspect
+
+            from src.strategies.core_strategy import CoreStrategy
 
             source = inspect.getsource(CoreStrategy)
 
             # Strategy should handle None/missing data
-            has_none_check = (
-                "None" in source or "is not None" in source or "if not" in source
-            )
+            has_none_check = "None" in source or "is not None" in source or "if not" in source
             has_fallback = "fallback" in source.lower() or "default" in source.lower()
 
             assert has_none_check or has_fallback, (
@@ -302,7 +299,11 @@ class TestLLMDriftCheck:
             {"ticker": "TSLA", "news": "Tesla recalls vehicles", "expected_sentiment": "bearish"},
             {"ticker": "SPY", "news": "Market closes flat", "expected_sentiment": "neutral"},
             {"ticker": "NVDA", "news": "NVIDIA AI demand surges", "expected_sentiment": "bullish"},
-            {"ticker": "META", "news": "Meta faces antitrust probe", "expected_sentiment": "bearish"},
+            {
+                "ticker": "META",
+                "news": "Meta faces antitrust probe",
+                "expected_sentiment": "bearish",
+            },
         ]
 
     def test_sentiment_output_consistency(self, golden_sentiment_dataset):
@@ -382,9 +383,24 @@ class TestComplianceAudit:
         """Create sample trade log for compliance testing."""
         log_file = tmp_path / "trades.jsonl"
         trades = [
-            {"timestamp": "2025-12-11T09:35:00", "ticker": "SPY", "qty": 10, "kelly_fraction": 0.02},
-            {"timestamp": "2025-12-11T10:00:00", "ticker": "QQQ", "qty": 5, "kelly_fraction": 0.015},
-            {"timestamp": "2025-12-11T10:30:00", "ticker": "AAPL", "qty": 100, "kelly_fraction": 0.25},  # Violation!
+            {
+                "timestamp": "2025-12-11T09:35:00",
+                "ticker": "SPY",
+                "qty": 10,
+                "kelly_fraction": 0.02,
+            },
+            {
+                "timestamp": "2025-12-11T10:00:00",
+                "ticker": "QQQ",
+                "qty": 5,
+                "kelly_fraction": 0.015,
+            },
+            {
+                "timestamp": "2025-12-11T10:30:00",
+                "ticker": "AAPL",
+                "qty": 100,
+                "kelly_fraction": 0.25,
+            },  # Violation!
         ]
         with open(log_file, "w") as f:
             for trade in trades:
@@ -458,8 +474,10 @@ class TestComplianceAudit:
 
         violations = []
         for trade in trades:
-            hour = datetime.fromisoformat(trade["timestamp"]).hour + \
-                   datetime.fromisoformat(trade["timestamp"]).minute / 60
+            hour = (
+                datetime.fromisoformat(trade["timestamp"]).hour
+                + datetime.fromisoformat(trade["timestamp"]).minute / 60
+            )
             if hour < allowed_start or hour >= allowed_end:
                 violations.append(trade)
 
@@ -569,7 +587,9 @@ class TestRollbackDrill:
 
         except ImportError:
             # Check via string inspection if module not importable
-            cb_path = Path(__file__).parent.parent / "src" / "safety" / "multi_tier_circuit_breaker.py"
+            cb_path = (
+                Path(__file__).parent.parent / "src" / "safety" / "multi_tier_circuit_breaker.py"
+            )
             if cb_path.exists():
                 content = cb_path.read_text()
                 assert "HALT" in content, "Circuit breaker should have HALT tier"
@@ -587,7 +607,9 @@ class TestLiveShadowing:
 
     def test_shadow_tracker_exists(self):
         """Verify live vs backtest tracker module exists."""
-        tracker_path = Path(__file__).parent.parent / "src" / "analytics" / "live_vs_backtest_tracker.py"
+        tracker_path = (
+            Path(__file__).parent.parent / "src" / "analytics" / "live_vs_backtest_tracker.py"
+        )
         assert tracker_path.exists(), "Live shadowing tracker should exist"
 
     def test_shadow_comparison_structure(self):

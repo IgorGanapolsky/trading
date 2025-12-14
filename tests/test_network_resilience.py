@@ -14,7 +14,8 @@ Tests:
 
 import asyncio
 import time
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import patch
+
 import pytest
 
 # Network failure scenarios to test

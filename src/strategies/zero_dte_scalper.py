@@ -24,8 +24,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass
-from datetime import datetime, date, timezone, timedelta
-from typing import Any
+from datetime import date, datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +41,7 @@ class OptionsScalpSignal:
     delta: float
     contracts: int
     take_profit_pct: float  # e.g., 0.50 = 50% profit
-    stop_loss_pct: float    # e.g., 1.0 = 100% loss
+    stop_loss_pct: float  # e.g., 1.0 = 100% loss
     rationale: str
 
 
@@ -51,24 +50,24 @@ class OptionsScalpConfig:
     """Configuration for 0DTE scalping."""
 
     # Position sizing
-    max_position_usd: float = 50.0      # $50 max per trade
-    max_daily_loss_usd: float = 100.0   # $100 max daily loss
-    max_daily_trades: int = 5           # Max 5 options trades/day
+    max_position_usd: float = 50.0  # $50 max per trade
+    max_daily_loss_usd: float = 100.0  # $100 max daily loss
+    max_daily_trades: int = 5  # Max 5 options trades/day
 
     # Entry criteria
-    min_vix: float = 15.0               # Only trade when VIX > 15
-    max_vix: float = 35.0               # Avoid extreme volatility
-    min_delta: float = 0.30             # Min delta for directional
-    max_delta: float = 0.50             # Max delta (ATM)
+    min_vix: float = 15.0  # Only trade when VIX > 15
+    max_vix: float = 35.0  # Avoid extreme volatility
+    min_delta: float = 0.30  # Min delta for directional
+    max_delta: float = 0.50  # Max delta (ATM)
 
     # Exit criteria
-    take_profit_pct: float = 0.50       # 50% profit target
-    stop_loss_pct: float = 1.0          # 100% stop loss
-    max_hold_minutes: int = 60          # Max 1 hour hold
+    take_profit_pct: float = 0.50  # 50% profit target
+    stop_loss_pct: float = 1.0  # 100% stop loss
+    max_hold_minutes: int = 60  # Max 1 hour hold
 
     # Spread parameters
-    spread_width: int = 5               # $5 wide spreads
-    min_credit: float = 0.50            # Min $0.50 credit
+    spread_width: int = 5  # $5 wide spreads
+    min_credit: float = 0.50  # Min $0.50 credit
 
 
 class ZeroDTEScalper:
@@ -158,12 +157,12 @@ class ZeroDTEScalper:
             # ATM or slightly OTM call
             strike = round(current_price / 5) * 5  # Round to nearest $5
             delta = 0.45  # Approximate ATM delta
-            rationale = f"Bullish momentum: +{price_change_pct*100:.2f}%, Vol {volume_ratio:.1f}x"
+            rationale = f"Bullish momentum: +{price_change_pct * 100:.2f}%, Vol {volume_ratio:.1f}x"
         elif price_change_pct < -0.003:  # Bearish momentum
             action = "BUY_PUT"
             strike = round(current_price / 5) * 5
             delta = -0.45
-            rationale = f"Bearish momentum: {price_change_pct*100:.2f}%, Vol {volume_ratio:.1f}x"
+            rationale = f"Bearish momentum: {price_change_pct * 100:.2f}%, Vol {volume_ratio:.1f}x"
         else:
             return None
 
@@ -243,18 +242,22 @@ class ZeroDTEScalper:
             delta=delta,
             contracts=1,  # Single contract for spreads
             take_profit_pct=0.50,  # Manage at 50% profit (TastyTrade)
-            stop_loss_pct=2.0,     # 2x credit stop
+            stop_loss_pct=2.0,  # 2x credit stop
             rationale=rationale,
         )
 
-        logger.info(f"Credit Spread Signal: {action} {symbol} {short_strike}/{long_strike} - {rationale}")
+        logger.info(
+            f"Credit Spread Signal: {action} {symbol} {short_strike}/{long_strike} - {rationale}"
+        )
         return signal
 
     def record_trade(self, pnl: float) -> None:
         """Record completed trade."""
         self._daily_trades += 1
         self._daily_pnl += pnl
-        logger.info(f"Options trade #{self._daily_trades}: P/L ${pnl:.2f}, Daily P/L: ${self._daily_pnl:.2f}")
+        logger.info(
+            f"Options trade #{self._daily_trades}: P/L ${pnl:.2f}, Daily P/L: ${self._daily_pnl:.2f}"
+        )
 
 
 def get_0dte_scalper() -> ZeroDTEScalper:

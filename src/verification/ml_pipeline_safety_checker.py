@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class FailurePattern:
     """A learned failure pattern from lessons learned."""
+
     pattern_id: str
     regex: str
     lesson_id: str
@@ -49,6 +50,7 @@ class FailurePattern:
 @dataclass
 class SafetyCheckResult:
     """Result of ML pipeline safety check."""
+
     passed: bool
     confidence: float  # 0.0 to 1.0
     risk_score: float  # 0.0 to 100.0
@@ -173,9 +175,7 @@ class MLPipelineSafetyChecker:
             try:
                 with open(self.PATTERNS_FILE) as f:
                     data = json.load(f)
-                    return [
-                        FailurePattern(**p) for p in data.get("patterns", [])
-                    ]
+                    return [FailurePattern(**p) for p in data.get("patterns", [])]
             except Exception as e:
                 logger.warning(f"Failed to load patterns: {e}")
         return self.DEFAULT_PATTERNS.copy()
@@ -282,7 +282,7 @@ class MLPipelineSafetyChecker:
             if file_path in high_risk_files:
                 result.warnings.append(f"HIGH RISK FILE: {file_path}")
                 result.recommendations.append(
-                    f"Run: python3 -c \"from {file_path.replace('/', '.').replace('.py', '')} import *\""
+                    f'Run: python3 -c "from {file_path.replace("/", ".").replace(".py", "")} import *"'
                 )
                 result.risk_score += 15
 
@@ -302,16 +302,16 @@ class MLPipelineSafetyChecker:
             avg_confidence = sum(p.confidence for p in result.matched_patterns) / len(
                 result.matched_patterns
             )
-            result.confidence = 1.0 - (avg_confidence * 0.5)  # Higher match = lower confidence in safety
+            result.confidence = 1.0 - (
+                avg_confidence * 0.5
+            )  # Higher match = lower confidence in safety
 
         # Clamp risk score
         result.risk_score = min(100.0, result.risk_score)
 
         # File count warning (ll_009)
         if len(files) > 10:
-            result.warnings.append(
-                f"Large change: {len(files)} files (threshold: 10 from ll_009)"
-            )
+            result.warnings.append(f"Large change: {len(files)} files (threshold: 10 from ll_009)")
             result.recommendations.append("Consider splitting into smaller PRs")
 
         return result
@@ -349,22 +349,17 @@ class MLPipelineSafetyChecker:
 
                         if pattern.severity == "CRITICAL":
                             result.warnings.append(
-                                f"DIFF PATTERN: {pattern.description} "
-                                f"(lesson: {pattern.lesson_id})"
+                                f"DIFF PATTERN: {pattern.description} (lesson: {pattern.lesson_id})"
                             )
                             result.risk_score += 25 * pattern.confidence
                         elif pattern.severity == "HIGH":
-                            result.warnings.append(
-                                f"DIFF PATTERN: {pattern.description}"
-                            )
+                            result.warnings.append(f"DIFF PATTERN: {pattern.description}")
                             result.risk_score += 15 * pattern.confidence
 
         # Check for large deletions
         deletions = len(re.findall(r"^-[^-]", diff_content, re.MULTILINE))
         if deletions > 100:
-            result.warnings.append(
-                f"Large deletion: {deletions} lines (review for regressions)"
-            )
+            result.warnings.append(f"Large deletion: {deletions} lines (review for regressions)")
             result.risk_score += 10
 
         # Check for YAML heredoc issues (ll_009 specific)
@@ -415,14 +410,16 @@ class MLPipelineSafetyChecker:
             matches = sum(1 for kw in keywords if kw.lower() in lesson_text)
 
             if matches >= 2 or lesson["severity"] == "CRITICAL":
-                relevant_lessons.append({
-                    "id": lesson["id"],
-                    "file": lesson["file"],
-                    "severity": lesson["severity"],
-                    "category": lesson["category"],
-                    "prevention": lesson["prevention"],
-                    "relevance_score": matches,
-                })
+                relevant_lessons.append(
+                    {
+                        "id": lesson["id"],
+                        "file": lesson["file"],
+                        "severity": lesson["severity"],
+                        "category": lesson["category"],
+                        "prevention": lesson["prevention"],
+                        "relevance_score": matches,
+                    }
+                )
 
         # Sort by relevance and severity
         relevant_lessons.sort(
@@ -469,9 +466,7 @@ class MLPipelineSafetyChecker:
         logger.info(f"Learned new pattern: {pattern_id} - {failure_description[:50]}")
         return new_pattern
 
-    def update_pattern_confidence(
-        self, pattern_id: str, was_true_positive: bool
-    ) -> None:
+    def update_pattern_confidence(self, pattern_id: str, was_true_positive: bool) -> None:
         """Update pattern confidence based on feedback."""
         for pattern in self.patterns:
             if pattern.pattern_id == pattern_id:
@@ -481,9 +476,7 @@ class MLPipelineSafetyChecker:
                     pattern.false_positive_rate *= 0.9
                 else:
                     pattern.confidence *= 0.9
-                    pattern.false_positive_rate = min(
-                        0.5, pattern.false_positive_rate + 0.1
-                    )
+                    pattern.false_positive_rate = min(0.5, pattern.false_positive_rate + 0.1)
 
                 self._save_patterns()
                 break
@@ -556,9 +549,13 @@ def main() -> int:
         print("=" * 60)
 
         if result.passed:
-            print(f"\n[PASSED] Confidence: {result.confidence:.0%}, Risk: {result.risk_score:.0f}/100\n")
+            print(
+                f"\n[PASSED] Confidence: {result.confidence:.0%}, Risk: {result.risk_score:.0f}/100\n"
+            )
         else:
-            print(f"\n[BLOCKED] Confidence: {result.confidence:.0%}, Risk: {result.risk_score:.0f}/100\n")
+            print(
+                f"\n[BLOCKED] Confidence: {result.confidence:.0%}, Risk: {result.risk_score:.0f}/100\n"
+            )
 
         if result.blockers:
             print("BLOCKERS:")

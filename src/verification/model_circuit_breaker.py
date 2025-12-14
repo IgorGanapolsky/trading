@@ -30,14 +30,16 @@ CIRCUIT_BREAKER_STATE_PATH = Path("data/circuit_breaker_state.json")
 
 class CircuitState(Enum):
     """Circuit breaker states."""
-    CLOSED = "closed"      # Normal operation - model is enabled
-    OPEN = "open"          # Tripped - model is disabled
+
+    CLOSED = "closed"  # Normal operation - model is enabled
+    OPEN = "open"  # Tripped - model is disabled
     HALF_OPEN = "half_open"  # Testing - allowing limited requests
 
 
 @dataclass
 class ModelCircuitState:
     """State of a single model's circuit breaker."""
+
     model: str
     state: CircuitState = CircuitState.CLOSED
     accuracy: float = 1.0
@@ -163,8 +165,13 @@ class ModelCircuitBreaker:
 
             # If in half-open and doing well, close the circuit
             if state.state == CircuitState.HALF_OPEN:
-                if state.consecutive_failures == 0 and state.total_predictions >= self.half_open_test_count:
-                    recent_accuracy = self._calculate_recent_accuracy(state, self.half_open_test_count)
+                if (
+                    state.consecutive_failures == 0
+                    and state.total_predictions >= self.half_open_test_count
+                ):
+                    recent_accuracy = self._calculate_recent_accuracy(
+                        state, self.half_open_test_count
+                    )
                     if recent_accuracy >= self.accuracy_threshold:
                         state.state = CircuitState.CLOSED
                         logger.info(f"Circuit breaker for {model} CLOSED - recovered")
@@ -175,7 +182,8 @@ class ModelCircuitBreaker:
         # Update accuracy
         state.accuracy = (
             state.correct_predictions / state.total_predictions
-            if state.total_predictions > 0 else 1.0
+            if state.total_predictions > 0
+            else 1.0
         )
 
         # Check if we should trip the circuit
@@ -259,19 +267,14 @@ class ModelCircuitBreaker:
                 "consecutive_failure_limit": self.consecutive_failure_limit,
                 "cooldown_minutes": self.cooldown_minutes,
             },
-            "models": {
-                model: state.to_dict()
-                for model, state in self.model_states.items()
-            },
+            "models": {model: state.to_dict() for model, state in self.model_states.items()},
             "summary": {
                 "total_models": len(self.model_states),
                 "enabled": sum(
-                    1 for s in self.model_states.values()
-                    if s.state != CircuitState.OPEN
+                    1 for s in self.model_states.values() if s.state != CircuitState.OPEN
                 ),
                 "disabled": sum(
-                    1 for s in self.model_states.values()
-                    if s.state == CircuitState.OPEN
+                    1 for s in self.model_states.values() if s.state == CircuitState.OPEN
                 ),
                 "total_trips": sum(s.trip_count for s in self.model_states.values()),
             },
@@ -280,8 +283,7 @@ class ModelCircuitBreaker:
     def get_disabled_models(self) -> list[str]:
         """Get list of currently disabled models."""
         return [
-            model for model, state in self.model_states.items()
-            if state.state == CircuitState.OPEN
+            model for model, state in self.model_states.items() if state.state == CircuitState.OPEN
         ]
 
     def _load_state(self) -> None:
@@ -312,10 +314,7 @@ class ModelCircuitBreaker:
         CIRCUIT_BREAKER_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
 
         data = {
-            "models": {
-                model: state.to_dict()
-                for model, state in self.model_states.items()
-            },
+            "models": {model: state.to_dict() for model, state in self.model_states.items()},
             "last_updated": datetime.now(timezone.utc).isoformat(),
         }
 

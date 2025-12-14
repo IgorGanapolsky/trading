@@ -19,19 +19,19 @@ jobs:
       GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       PYTHONPATH: ${{ github.workspace }}
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: |
           pip install google-genai yfinance pandas
-      
+
       - name: Run Pre-Trade Research
         run: |
           python3 << 'PYEOF'
@@ -42,11 +42,11 @@ from datetime import datetime
 # Simple research without full dependency
 try:
     from google import genai
-    
+
     client = genai.Client()
-    
+
     symbol = os.getenv('INPUT_SYMBOL', 'BTC')
-    
+
     query = f"""
     Analyze {symbol} for today's trading decision:
     1. Current price action and trend
@@ -54,18 +54,18 @@ try:
     3. Market sentiment (bullish/bearish/neutral)
     4. Risk factors
     5. Trading recommendation: BUY, SELL, or HOLD
-    
+
     Be concise and actionable for a day trader.
     """
-    
+
     print(f"🔍 Researching {symbol}...")
-    
+
     interaction = client.interactions.create(
         input=query,
         agent='deep-research-pro-preview-12-2025',
         background=True
     )
-    
+
     import time
     for _ in range(30):  # 5 min timeout
         interaction = client.interactions.get(interaction.id)
@@ -74,7 +74,7 @@ try:
             print(f"DEEP RESEARCH: {symbol}")
             print("=" * 60)
             print(interaction.outputs[-1].text)
-            
+
             # Save to file
             with open(f'data/research_{symbol}_{datetime.now().strftime("%Y%m%d")}.json', 'w') as f:
                 json.dump({
@@ -87,14 +87,14 @@ try:
             print(f"❌ Research failed: {interaction.error}")
             break
         time.sleep(10)
-    
+
 except ImportError:
     print("⚠️ google-genai not available")
 except Exception as e:
     print(f"⚠️ Research error: {e}")
     print("Continuing without deep research...")
 PYEOF
-      
+
       - name: Commit Research Results
         if: always()
         run: |

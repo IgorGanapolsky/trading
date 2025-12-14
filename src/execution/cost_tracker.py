@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -268,9 +267,7 @@ class ExecutionCostTracker:
         start_date = end_date - timedelta(days=7)
 
         week_fills = [
-            f
-            for f in self.fills
-            if start_date.isoformat() <= f.timestamp <= end_date.isoformat()
+            f for f in self.fills if start_date.isoformat() <= f.timestamp <= end_date.isoformat()
         ]
 
         if not week_fills:

@@ -65,7 +65,7 @@ def main():
     # Query with ticker filter
     print("\n4. Ticker-specific query...")
     results = db.query(query_text="latest news", n_results=5, where={"ticker": "NVDA"})
-    print(f"   Ticker: NVDA")
+    print("   Ticker: NVDA")
     print(f"   Found: {len(results['documents'])} documents")
     if results["documents"]:
         print(f"   Content: {results['documents'][0][:80]}...")
@@ -78,9 +78,7 @@ def main():
     print(f"   Tickers: {', '.join(stats['tickers'][:5])}")
     print(f"   Sources: {', '.join(stats['sources'])}")
     if stats.get("date_range"):
-        print(
-            f"   Date range: {stats['date_range']['start']} to {stats['date_range']['end']}"
-        )
+        print(f"   Date range: {stats['date_range']['start']} to {stats['date_range']['end']}")
     print(f"   Mode: {stats.get('mode', 'unknown')}")
 
     # Get latest insights (new feature!)
@@ -88,7 +86,9 @@ def main():
     insights = db.get_latest_insights(n=3)
     print(f"   Retrieved: {len(insights)} latest insights")
     for i, insight in enumerate(insights, 1):
-        print(f"\n   {i}. [{insight['metadata'].get('ticker')}] - {insight['metadata'].get('date')}")
+        print(
+            f"\n   {i}. [{insight['metadata'].get('ticker')}] - {insight['metadata'].get('date')}"
+        )
         print(f"      {insight['content'][:70]}...")
 
     # Get ticker-specific insights

@@ -23,7 +23,6 @@ import argparse
 import sys
 from pathlib import Path
 
-
 # Workflows that make LLM calls
 LLM_WORKFLOWS = [
     ".github/workflows/daily-trading.yml",
@@ -105,12 +104,8 @@ def print_fix_suggestion(missing_stack: str, missing_vars: list) -> str:
 
 def main():
     parser = argparse.ArgumentParser(description="Verify workflow observability config")
-    parser.add_argument(
-        "--fix", action="store_true", help="Show YAML snippets to fix issues"
-    )
-    parser.add_argument(
-        "--ci", action="store_true", help="Exit with code 1 if any issues found"
-    )
+    parser.add_argument("--fix", action="store_true", help="Show YAML snippets to fix issues")
+    parser.add_argument("--ci", action="store_true", help="Exit with code 1 if any issues found")
     args = parser.parse_args()
 
     project_root = Path(__file__).parent.parent
@@ -130,17 +125,17 @@ def main():
         result = check_workflow(workflow_path)
 
         if not result["exists"]:
-            print(f"  ⚠️  File not found (skipping)")
+            print("  ⚠️  File not found (skipping)")
             print()
             continue
 
         if not result["missing"]:
-            print(f"  ✅ All observability vars present")
+            print("  ✅ All observability vars present")
             for stack, vars_list in result["present"].items():
                 print(f"     {stack}: {', '.join(vars_list)}")
         else:
             all_passed = False
-            print(f"  ❌ Missing configuration:")
+            print("  ❌ Missing configuration:")
             for stack_name, info in result["missing"].items():
                 print(f"     {stack_name}: {', '.join(info['vars'])}")
                 print(f"        ({info['description']})")
@@ -148,7 +143,7 @@ def main():
 
                 if args.fix:
                     print()
-                    print(f"     FIX: Add to workflow env: section:")
+                    print("     FIX: Add to workflow env: section:")
                     print(print_fix_suggestion(stack_name, info["vars"]))
 
         print()

@@ -9,8 +9,8 @@ Enables running 100s-1000s of ML experiments automatically:
 
 from src.experiments.experiment_runner import (
     Experiment,
-    ExperimentRunner,
     ExperimentResult,
+    ExperimentRunner,
     HyperparameterGrid,
     run_experiment_sweep,
 )

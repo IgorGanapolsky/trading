@@ -14,7 +14,6 @@ import json
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -49,8 +48,12 @@ class TestFailurePatternMatching:
 
         # Should match the workflow pattern
         matched_ids = [p.pattern_id for p in result.matched_patterns]
-        assert any("fp_005" in pid or "workflow" in str(result.warnings).lower() for pid in matched_ids) or \
-               len(result.matched_patterns) > 0
+        assert (
+            any(
+                "fp_005" in pid or "workflow" in str(result.warnings).lower() for pid in matched_ids
+            )
+            or len(result.matched_patterns) > 0
+        )
 
     def test_safety_system_change_is_critical(self, checker):
         """Changes to CircuitBreaker/KillSwitch should be CRITICAL."""
@@ -82,9 +85,11 @@ class TestFailurePatternMatching:
         result = checker.check_diff(diff_content)
 
         # Should warn about heredoc
-        assert any("heredoc" in w.lower() for w in result.warnings) or \
-               any("yaml" in w.lower() for w in result.warnings) or \
-               result.risk_score > 0
+        assert (
+            any("heredoc" in w.lower() for w in result.warnings)
+            or any("yaml" in w.lower() for w in result.warnings)
+            or result.risk_score > 0
+        )
 
 
 class TestRiskScoreCalculation:
@@ -158,10 +163,12 @@ class TestRAGIntegration:
     def test_rag_context_retrieved(self, checker):
         """RAG should provide context for high-risk changes."""
         # Files that should trigger RAG lookup
-        result = checker.check_files([
-            "src/orchestrator/main.py",
-            "src/execution/alpaca_executor.py",
-        ])
+        result = checker.check_files(
+            [
+                "src/orchestrator/main.py",
+                "src/execution/alpaca_executor.py",
+            ]
+        )
 
         # Should have some RAG context (if lessons exist)
         # This is a soft check - depends on lessons_learned directory
@@ -169,9 +176,11 @@ class TestRAGIntegration:
 
     def test_recommendations_from_rag(self, checker):
         """RAG context should generate recommendations."""
-        result = checker.check_files([
-            "src/orchestrator/main.py",
-        ])
+        result = checker.check_files(
+            [
+                "src/orchestrator/main.py",
+            ]
+        )
 
         # Should have recommendations (import verification, etc.)
         assert len(result.recommendations) > 0
@@ -329,10 +338,12 @@ class TestOutputFormats:
 
     def test_result_json_serializable(self, checker):
         """Result dict should be JSON serializable."""
-        result = checker.check_files([
-            "src/orchestrator/main.py",
-            "src/safety/circuit_breakers.py",
-        ])
+        result = checker.check_files(
+            [
+                "src/orchestrator/main.py",
+                "src/safety/circuit_breakers.py",
+            ]
+        )
 
         result_dict = result.to_dict()
 

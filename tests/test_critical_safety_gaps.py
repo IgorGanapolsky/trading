@@ -15,18 +15,15 @@ Missing Test Categories (from research):
 Reference: docs/post-r-and-d-scaling-architecture.md
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime, timedelta
-from dataclasses import dataclass
-from typing import List, Dict, Any
-import json
 
+import pytest
 
 # =============================================================================
 # TEST 1: MULTI-STRATEGY CONFLICT DETECTION
 # Gap: Two strategies trying to use same capital simultaneously
 # =============================================================================
+
 
 class TestMultiStrategyConflicts:
     """Prevent simultaneous capital allocation conflicts between strategies."""
@@ -38,13 +35,13 @@ class TestMultiStrategyConflicts:
             "strategy": "momentum",
             "symbol": "SPY",
             "allocation_pct": 0.50,
-            "side": "buy"
+            "side": "buy",
         }
         strategy_b_request = {
             "strategy": "mean_reversion",
             "symbol": "SPY",
             "allocation_pct": 0.50,
-            "side": "buy"
+            "side": "buy",
         }
 
         # Should detect conflict and either:
@@ -93,17 +90,19 @@ class TestMultiStrategyConflicts:
             f"CRITICAL: Capital oversubscribed! Total allocation {total_allocation:.0%} > 100%"
         )
 
-    def _detect_allocation_conflict(self, requests: List[Dict]) -> bool:
+    def _detect_allocation_conflict(self, requests: list[dict]) -> bool:
         """Detect if multiple requests conflict on same symbol."""
         symbol_allocations = {}
         for req in requests:
             symbol = req.get("symbol")
             if symbol:
-                symbol_allocations[symbol] = symbol_allocations.get(symbol, 0) + req["allocation_pct"]
+                symbol_allocations[symbol] = (
+                    symbol_allocations.get(symbol, 0) + req["allocation_pct"]
+                )
 
         return any(alloc > 0.50 for alloc in symbol_allocations.values())
 
-    def _calculate_sector_exposure(self, requests: List[Dict]) -> Dict[str, float]:
+    def _calculate_sector_exposure(self, requests: list[dict]) -> dict[str, float]:
         """Calculate total exposure per sector."""
         sector_exposure = {}
         for req in requests:
@@ -116,6 +115,7 @@ class TestMultiStrategyConflicts:
 # TEST 2: POSITION SIZING EDGE CASES
 # Gap: Sizing algorithm receives extreme/edge values
 # =============================================================================
+
 
 class TestPositionSizingEdgeCases:
     """Verify position sizing handles edge cases without blowing up."""
@@ -143,7 +143,7 @@ class TestPositionSizingEdgeCases:
         spike_size = self._calculate_atr_position_size(spike_atr, price, account_equity)
 
         assert spike_size < normal_size * 0.50, (
-            f"Position should shrink >50% on vol spike, got {spike_size/normal_size:.0%}"
+            f"Position should shrink >50% on vol spike, got {spike_size / normal_size:.0%}"
         )
 
     def test_kelly_extreme_values_capped(self):
@@ -163,9 +163,7 @@ class TestPositionSizingEdgeCases:
         total_allocated = 0
         for i in range(num_positions):
             size = self._calculate_position_size(
-                symbol=f"STOCK_{i}",
-                account_equity=account_equity,
-                existing_positions=i
+                symbol=f"STOCK_{i}", account_equity=account_equity, existing_positions=i
             )
             total_allocated += size
 
@@ -187,7 +185,9 @@ class TestPositionSizingEdgeCases:
         kelly = win_rate - ((1 - win_rate) / win_loss_ratio)
         return min(max(kelly, 0), 0.25)  # Cap at 25%
 
-    def _calculate_position_size(self, symbol: str, account_equity: float, existing_positions: int) -> float:
+    def _calculate_position_size(
+        self, symbol: str, account_equity: float, existing_positions: int
+    ) -> float:
         """Simple position sizing with diminishing allocation."""
         base_allocation = account_equity * 0.15  # 15% max per position
         # Reduce allocation as positions increase
@@ -199,6 +199,7 @@ class TestPositionSizingEdgeCases:
 # TEST 3: P/L RECONCILIATION WITH ALPACA API
 # Gap: Internal P/L calculations diverging from broker reality
 # =============================================================================
+
 
 class TestPLReconciliation:
     """Verify P/L calculations match Alpaca API within tolerance."""
@@ -260,6 +261,7 @@ class TestPLReconciliation:
 # Gap: Order state machine not fully validated
 # =============================================================================
 
+
 class TestOrderFillVerification:
     """Verify complete order lifecycle and fill accuracy."""
 
@@ -280,9 +282,11 @@ class TestOrderFillVerification:
         current_state = "new"
         invalid_next = "filled"  # Can't go directly from new to filled
 
-        assert invalid_next in valid_transitions.get(current_state, []) or \
-               invalid_next not in valid_transitions.get(current_state, []), \
-               f"Invalid state transition: {current_state} -> {invalid_next}"
+        assert invalid_next in valid_transitions.get(
+            current_state, []
+        ) or invalid_next not in valid_transitions.get(current_state, []), (
+            f"Invalid state transition: {current_state} -> {invalid_next}"
+        )
 
     def test_fill_price_within_slippage_tolerance(self):
         """Fill price should be within expected slippage of order price."""
@@ -298,12 +302,7 @@ class TestOrderFillVerification:
 
     def test_partial_fill_tracking(self):
         """Partial fills should be properly tracked and reconciled."""
-        order = {
-            "id": "test-123",
-            "requested_qty": 100,
-            "filled_qty": 0,
-            "fills": []
-        }
+        order = {"id": "test-123", "requested_qty": 100, "filled_qty": 0, "fills": []}
 
         # Simulate partial fills
         fills = [
@@ -329,9 +328,7 @@ class TestOrderFillVerification:
         api_check_time = submission_time + timedelta(seconds=2)
         order_found = self._mock_order_lookup(order_id)
 
-        assert order_found, (
-            f"Order {order_id} not found in API within 2 seconds of submission"
-        )
+        assert order_found, f"Order {order_id} not found in API within 2 seconds of submission"
 
     def _mock_order_lookup(self, order_id: str) -> bool:
         """Mock order lookup in Alpaca API."""
@@ -343,6 +340,7 @@ class TestOrderFillVerification:
 # Gap: Stale orders not being cancelled
 # =============================================================================
 
+
 class TestZombieOrderCleanup:
     """Verify stale/zombie orders are properly detected and cancelled."""
 
@@ -352,14 +350,12 @@ class TestZombieOrderCleanup:
             "id": "stale-123",
             "created_at": datetime.now() - timedelta(seconds=61),
             "status": "pending_new",
-            "filled_qty": 0
+            "filled_qty": 0,
         }
 
         is_zombie = self._is_zombie_order(order)
 
-        assert is_zombie, (
-            "Order older than 60 seconds without fill should be flagged as zombie"
-        )
+        assert is_zombie, "Order older than 60 seconds without fill should be flagged as zombie"
 
     def test_order_at_59s_not_flagged(self):
         """Orders at 59 seconds should NOT be flagged yet."""
@@ -367,7 +363,7 @@ class TestZombieOrderCleanup:
             "id": "fresh-123",
             "created_at": datetime.now() - timedelta(seconds=59),
             "status": "pending_new",
-            "filled_qty": 0
+            "filled_qty": 0,
         }
 
         is_zombie = self._is_zombie_order(order)
@@ -396,7 +392,7 @@ class TestZombieOrderCleanup:
             "requested_qty": 100,
             "filled_qty": 30,
             "created_at": datetime.now() - timedelta(seconds=120),
-            "status": "partially_filled"
+            "status": "partially_filled",
         }
 
         # Should keep 30 shares, cancel remaining 70
@@ -405,20 +401,20 @@ class TestZombieOrderCleanup:
         assert result["kept_qty"] == 30, "Should keep filled quantity"
         assert result["cancelled_qty"] == 70, "Should cancel unfilled quantity"
 
-    def _is_zombie_order(self, order: Dict) -> bool:
+    def _is_zombie_order(self, order: dict) -> bool:
         """Check if order is a zombie (stale without fill)."""
         age = datetime.now() - order["created_at"]
         return (
-            age.total_seconds() > 60 and
-            order["status"] in ["pending_new", "accepted"] and
-            order["filled_qty"] == 0
+            age.total_seconds() > 60
+            and order["status"] in ["pending_new", "accepted"]
+            and order["filled_qty"] == 0
         )
 
-    def _handle_zombie_order(self, order: Dict) -> Dict:
+    def _handle_zombie_order(self, order: dict) -> dict:
         """Handle zombie order - keep filled, cancel rest."""
         return {
             "kept_qty": order["filled_qty"],
-            "cancelled_qty": order["requested_qty"] - order["filled_qty"]
+            "cancelled_qty": order["requested_qty"] - order["filled_qty"],
         }
 
 
@@ -426,6 +422,7 @@ class TestZombieOrderCleanup:
 # TEST 6: RAG/ML LESSONS LEARNED INTEGRATION
 # Gap: System not learning from past failures
 # =============================================================================
+
 
 class TestRAGLessonsLearnedIntegration:
     """Verify RAG/ML pipeline captures and applies lessons learned."""
@@ -437,11 +434,7 @@ class TestRAGLessonsLearnedIntegration:
             "symbol": "NVDA",
             "loss_pct": -5.0,
             "timestamp": datetime.now().isoformat(),
-            "conditions": {
-                "vix": 25,
-                "regime": "high_volatility",
-                "signal_strength": 0.6
-            }
+            "conditions": {"vix": 25, "regime": "high_volatility", "signal_strength": 0.6},
         }
 
         # Should be stored in RAG
@@ -451,11 +444,7 @@ class TestRAGLessonsLearnedIntegration:
 
     def test_similar_pattern_retrieval(self):
         """RAG should retrieve similar past failures when conditions match."""
-        current_conditions = {
-            "vix": 26,
-            "regime": "high_volatility",
-            "signal_strength": 0.65
-        }
+        current_conditions = {"vix": 26, "regime": "high_volatility", "signal_strength": 0.65}
 
         # Should retrieve past failures with similar conditions
         similar_failures = self._retrieve_similar_lessons(current_conditions)
@@ -468,7 +457,7 @@ class TestRAGLessonsLearnedIntegration:
             "symbol": "NVDA",
             "size_pct": 0.15,
             "vix": 35,  # High volatility
-            "signal": 0.55  # Weak signal
+            "signal": 0.55,  # Weak signal
         }
 
         # ML should flag this as risky based on past patterns
@@ -483,45 +472,35 @@ class TestRAGLessonsLearnedIntegration:
         lesson = {
             "condition": "symbol == 'NVDA' and vix > 30 and signal < 0.6",
             "action": "reject",
-            "reason": "ll_014: High loss pattern detected"
+            "reason": "ll_014: High loss pattern detected",
         }
 
-        new_trade = {
-            "symbol": "NVDA",
-            "vix": 32,
-            "signal": 0.55
-        }
+        new_trade = {"symbol": "NVDA", "vix": 32, "signal": 0.55}
 
         should_reject = self._apply_lesson(lesson, new_trade)
 
-        assert should_reject, (
-            "Trade matching past failure pattern should be rejected"
-        )
+        assert should_reject, "Trade matching past failure pattern should be rejected"
 
-    def _store_lesson_learned(self, event: Dict) -> bool:
+    def _store_lesson_learned(self, event: dict) -> bool:
         """Store lesson in RAG (mock)."""
         # In real implementation, would use ChromaDB
         return True
 
-    def _retrieve_similar_lessons(self, conditions: Dict) -> List[Dict]:
+    def _retrieve_similar_lessons(self, conditions: dict) -> list[dict]:
         """Retrieve similar lessons from RAG (mock)."""
         return []
 
-    def _calculate_anomaly_score(self, trade: Dict) -> float:
+    def _calculate_anomaly_score(self, trade: dict) -> float:
         """Calculate anomaly score using ML (mock)."""
         # High VIX + weak signal = more anomalous
         vix_factor = min(trade["vix"] / 50, 1.0)
         signal_factor = 1 - trade["signal"]
         return (vix_factor + signal_factor) / 2
 
-    def _apply_lesson(self, lesson: Dict, trade: Dict) -> bool:
+    def _apply_lesson(self, lesson: dict, trade: dict) -> bool:
         """Check if lesson applies to trade."""
         # Simple pattern matching
-        return (
-            trade["symbol"] == "NVDA" and
-            trade["vix"] > 30 and
-            trade["signal"] < 0.6
-        )
+        return trade["symbol"] == "NVDA" and trade["vix"] > 30 and trade["signal"] < 0.6
 
 
 # =============================================================================

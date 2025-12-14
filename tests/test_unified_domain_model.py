@@ -10,9 +10,11 @@ Tests cover:
 
 try:
     import pytest
+
     HAS_PYTEST = True
 except ImportError:
     HAS_PYTEST = False
+
     # Mock pytest.raises for running without pytest
     class MockPytest:
         @staticmethod
@@ -20,14 +22,16 @@ except ImportError:
             class RaisesContext:
                 def __enter__(self):
                     return self
+
                 def __exit__(self, exc_type_actual, exc_val, exc_tb):
                     if exc_val is not None:
                         return True  # Suppress the exception
                     raise AssertionError(f"Expected {exc_type} to be raised")
+
             return RaisesContext()
+
     pytest = MockPytest()
 
-from datetime import datetime
 import sys
 from pathlib import Path
 
@@ -36,18 +40,32 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.core.unified_domain_model import (
     # Enums
-    AssetClass, TradeAction, OrderStatus, SignalStrength, StrategyTier, DataSource,
-    # Domain objects
-    Symbol, Price, Signal, Trade, Position, Portfolio,
-    # Validation
-    ValidationError, ValidationResult, DomainValidator,
-    RangeValidator, PatternValidator, NotEmptyValidator,
+    AssetClass,
+    DataSource,
+    DomainGraph,
+    DomainValidator,
+    NotEmptyValidator,
+    OrderStatus,
+    PatternValidator,
+    Portfolio,
+    Position,
+    Price,
+    RangeValidator,
     # Relationships
-    RelationType, Relationship, DomainGraph,
+    RelationType,
     # Schema generation
     SchemaGenerator,
+    Signal,
+    SignalStrength,
+    StrategyTier,
+    # Domain objects
+    Symbol,
+    Trade,
+    TradeAction,
+    # Validation
+    ValidationError,
     # Factory
-    DomainFactory, factory,
+    factory,
 )
 
 
@@ -78,7 +96,7 @@ class TestDomainObjects:
             action=TradeAction.BUY,
             strength=SignalStrength.STRONG_BUY,
             confidence=0.85,
-            source="test"
+            source="test",
         )
         assert signal.is_actionable() is True
         assert signal.is_actionable(min_confidence=0.9) is False
@@ -90,7 +108,7 @@ class TestDomainObjects:
             action=TradeAction.HOLD,
             strength=SignalStrength.HOLD,
             confidence=0.95,
-            source="test"
+            source="test",
         )
         assert signal.is_actionable() is False
 
@@ -103,7 +121,7 @@ class TestDomainObjects:
             quantity=0.001,
             price=Price(value=90000.0),
             notional=25.0,
-            strategy=StrategyTier.TIER5_CRYPTO
+            strategy=StrategyTier.TIER5_CRYPTO,
         )
         order = trade.to_alpaca_order()
         assert order["symbol"] == "BTCUSD"
@@ -120,7 +138,7 @@ class TestDomainObjects:
             quantity=10,
             price=Price(value=150.0),
             notional=1500.0,
-            strategy=StrategyTier.TIER1_SAFE
+            strategy=StrategyTier.TIER1_SAFE,
         )
         record = trade.to_performance_record()
         assert record["symbol"] == "AAPL"
@@ -136,7 +154,7 @@ class TestDomainObjects:
                 current_price=Price(value=160.0),
                 market_value=1600.0,
                 unrealized_pnl=100.0,
-                unrealized_pnl_pct=6.67
+                unrealized_pnl_pct=6.67,
             ),
             Position(
                 symbol=Symbol(ticker="GOOGL", asset_class=AssetClass.EQUITY),
@@ -145,14 +163,11 @@ class TestDomainObjects:
                 current_price=Price(value=135.0),
                 market_value=675.0,
                 unrealized_pnl=-25.0,
-                unrealized_pnl_pct=-3.57
+                unrealized_pnl_pct=-3.57,
             ),
         ]
         portfolio = Portfolio(
-            equity=100000.0,
-            cash=97725.0,
-            buying_power=195450.0,
-            positions=positions
+            equity=100000.0, cash=97725.0, buying_power=195450.0, positions=positions
         )
         assert portfolio.total_pnl == 75.0  # 100 - 25
         assert portfolio.position_count == 2
@@ -197,7 +212,7 @@ class TestValidation:
             quantity=1.0,
             price=Price(value=90000.0),
             notional=100.0,
-            strategy=StrategyTier.TIER5_CRYPTO
+            strategy=StrategyTier.TIER5_CRYPTO,
         )
         assert DomainValidator.is_valid(trade) is True
 
@@ -210,7 +225,7 @@ class TestValidation:
             quantity=-1,  # Negative
             price=Price(value=90000.0),
             notional=-100.0,  # Negative
-            strategy=StrategyTier.TIER5_CRYPTO
+            strategy=StrategyTier.TIER5_CRYPTO,
         )
         result = DomainValidator.validate(trade)
         assert result.is_valid is False
@@ -225,7 +240,7 @@ class TestValidation:
             quantity=1,
             price=Price(value=90000.0),
             notional=100.0,
-            strategy=StrategyTier.TIER5_CRYPTO
+            strategy=StrategyTier.TIER5_CRYPTO,
         )
         with pytest.raises(ValidationError):
             DomainValidator.validate_or_raise(trade)
@@ -334,7 +349,7 @@ class TestDomainFactory:
             "qty": "0.001",
             "filled_avg_price": "90000.00",
             "notional": "90.00",
-            "status": "filled"
+            "status": "filled",
         }
         trade = factory.create_trade_from_alpaca(alpaca_response, StrategyTier.TIER5_CRYPTO)
         assert trade.id == "abc123"

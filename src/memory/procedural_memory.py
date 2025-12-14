@@ -34,15 +34,14 @@ References:
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
-import uuid
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +72,7 @@ class SkillConditions:
     """Conditions under which a skill is applicable."""
 
     # Technical conditions
-    rsi_range: Tuple[float, float] = (0, 100)
+    rsi_range: tuple[float, float] = (0, 100)
     macd_signal: Optional[str] = None  # "bullish", "bearish", "neutral"
     trend: Optional[str] = None  # "up", "down", "sideways"
     volume_condition: Optional[str] = None  # "high", "normal", "low"
@@ -87,12 +86,12 @@ class SkillConditions:
 
     # Asset conditions
     asset_class: Optional[str] = None  # "crypto", "equity"
-    volatility_percentile: Optional[Tuple[float, float]] = None
+    volatility_percentile: Optional[tuple[float, float]] = None
 
     # Custom conditions (flexible key-value)
-    custom: Dict[str, Any] = field(default_factory=dict)
+    custom: dict[str, Any] = field(default_factory=dict)
 
-    def matches(self, context: Dict[str, Any]) -> Tuple[bool, float]:
+    def matches(self, context: dict[str, Any]) -> tuple[bool, float]:
         """
         Check if conditions match the given context.
 
@@ -151,7 +150,7 @@ class SkillConditions:
 
         return matches, match_score
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "rsi_range": list(self.rsi_range),
             "macd_signal": self.macd_signal,
@@ -161,12 +160,14 @@ class SkillConditions:
             "time_of_day": self.time_of_day,
             "day_of_week": self.day_of_week,
             "asset_class": self.asset_class,
-            "volatility_percentile": list(self.volatility_percentile) if self.volatility_percentile else None,
+            "volatility_percentile": list(self.volatility_percentile)
+            if self.volatility_percentile
+            else None,
             "custom": self.custom,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SkillConditions":
+    def from_dict(cls, data: dict[str, Any]) -> SkillConditions:
         return cls(
             rsi_range=tuple(data.get("rsi_range", [0, 100])),
             macd_signal=data.get("macd_signal"),
@@ -176,7 +177,9 @@ class SkillConditions:
             time_of_day=data.get("time_of_day"),
             day_of_week=data.get("day_of_week"),
             asset_class=data.get("asset_class"),
-            volatility_percentile=tuple(data["volatility_percentile"]) if data.get("volatility_percentile") else None,
+            volatility_percentile=tuple(data["volatility_percentile"])
+            if data.get("volatility_percentile")
+            else None,
             custom=data.get("custom", {}),
         )
 
@@ -186,7 +189,7 @@ class SkillAction:
     """Action to take when skill is triggered."""
 
     action_type: str  # "buy", "sell", "hold", "scale_in", "scale_out"
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    parameters: dict[str, Any] = field(default_factory=dict)
 
     # Position sizing
     size_method: str = "fixed"  # "fixed", "volatility_adjusted", "kelly"
@@ -201,7 +204,7 @@ class SkillAction:
     take_profit_pct: Optional[float] = None
     trailing_stop_pct: Optional[float] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "action_type": self.action_type,
             "parameters": self.parameters,
@@ -215,7 +218,7 @@ class SkillAction:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SkillAction":
+    def from_dict(cls, data: dict[str, Any]) -> SkillAction:
         return cls(
             action_type=data["action_type"],
             parameters=data.get("parameters", {}),
@@ -263,9 +266,13 @@ class SkillOutcome:
 
         # Update expected values (exponential moving average)
         alpha = 0.3
-        self.expected_win_rate = alpha * (1 if profit_pct > 0 else 0) + (1 - alpha) * self.expected_win_rate
+        self.expected_win_rate = (
+            alpha * (1 if profit_pct > 0 else 0) + (1 - alpha) * self.expected_win_rate
+        )
         self.expected_profit_pct = alpha * profit_pct + (1 - alpha) * self.expected_profit_pct
-        self.expected_duration_minutes = alpha * duration_minutes + (1 - alpha) * self.expected_duration_minutes
+        self.expected_duration_minutes = (
+            alpha * duration_minutes + (1 - alpha) * self.expected_duration_minutes
+        )
 
         # Update confidence (increases with uses, weighted by success)
         win_rate = self.wins / self.uses if self.uses > 0 else 0.5
@@ -275,7 +282,7 @@ class SkillOutcome:
         if profit_pct < self.max_drawdown_pct:
             self.max_drawdown_pct = profit_pct
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "uses": self.uses,
             "wins": self.wins,
@@ -290,7 +297,7 @@ class SkillOutcome:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SkillOutcome":
+    def from_dict(cls, data: dict[str, Any]) -> SkillOutcome:
         return cls(
             uses=data.get("uses", 0),
             wins=data.get("wins", 0),
@@ -329,13 +336,13 @@ class TradingSkill:
     # Metadata
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    source_trades: List[str] = field(default_factory=list)  # Trade IDs this skill was learned from
+    source_trades: list[str] = field(default_factory=list)  # Trade IDs this skill was learned from
 
     # Embedding for semantic retrieval
-    embedding: Optional[List[float]] = None
+    embedding: Optional[list[float]] = None
 
     # Tags for filtering
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
     # Active flag
     active: bool = True
@@ -361,11 +368,11 @@ class TradingSkill:
 
         return " | ".join(parts)
 
-    def matches_context(self, context: Dict[str, Any]) -> Tuple[bool, float]:
+    def matches_context(self, context: dict[str, Any]) -> tuple[bool, float]:
         """Check if this skill applies to the given context."""
         return self.conditions.matches(context)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "skill_id": self.skill_id,
             "name": self.name,
@@ -383,7 +390,7 @@ class TradingSkill:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TradingSkill":
+    def from_dict(cls, data: dict[str, Any]) -> TradingSkill:
         return cls(
             skill_id=data["skill_id"],
             name=data["name"],
@@ -416,7 +423,7 @@ class SkillLibrary:
         self.storage_path.mkdir(parents=True, exist_ok=True)
 
         self.skills_file = self.storage_path / "skill_library.json"
-        self.skills: Dict[str, TradingSkill] = {}
+        self.skills: dict[str, TradingSkill] = {}
 
         self._load_skills()
         self._init_embedder()
@@ -457,7 +464,7 @@ class SkillLibrary:
         with open(self.skills_file, "w") as f:
             json.dump(data, f, indent=2)
 
-    def _compute_embedding(self, text: str) -> Optional[List[float]]:
+    def _compute_embedding(self, text: str) -> Optional[list[float]]:
         """Compute embedding for text."""
         if self._embedder is None:
             return None
@@ -487,11 +494,11 @@ class SkillLibrary:
 
     def retrieve_skills(
         self,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         skill_type: Optional[SkillType] = None,
         min_confidence: float = 0.3,
         top_k: int = 5,
-    ) -> List[Tuple[TradingSkill, float]]:
+    ) -> list[tuple[TradingSkill, float]]:
         """
         Retrieve relevant skills for the given context.
 
@@ -525,7 +532,7 @@ class SkillLibrary:
         query: str,
         skill_type: Optional[SkillType] = None,
         top_k: int = 5,
-    ) -> List[Tuple[TradingSkill, float]]:
+    ) -> list[tuple[TradingSkill, float]]:
         """Retrieve skills by semantic similarity to query."""
         if self._embedder is None:
             logger.warning("No embedder available for similarity search")
@@ -553,7 +560,7 @@ class SkillLibrary:
         candidates.sort(key=lambda x: x[1], reverse=True)
         return candidates[:top_k]
 
-    def _cosine_similarity(self, a: List[float], b: List[float]) -> float:
+    def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         """Compute cosine similarity between two vectors."""
         import math
 
@@ -568,7 +575,7 @@ class SkillLibrary:
 
     def extract_skill_from_trade(
         self,
-        trade_record: Dict[str, Any],
+        trade_record: dict[str, Any],
         name: Optional[str] = None,
     ) -> Optional[TradingSkill]:
         """
@@ -672,15 +679,14 @@ class SkillLibrary:
 
             # Check conditions similarity
             if (
-                existing.conditions.trend == skill.conditions.trend and
-                existing.conditions.regime == skill.conditions.regime and
-                existing.action.action_type == skill.action.action_type
+                existing.conditions.trend == skill.conditions.trend
+                and existing.conditions.regime == skill.conditions.regime
+                and existing.action.action_type == skill.action.action_type
             ):
                 # RSI range overlap
-                rsi_overlap = (
-                    max(existing.conditions.rsi_range[0], skill.conditions.rsi_range[0]) <=
-                    min(existing.conditions.rsi_range[1], skill.conditions.rsi_range[1])
-                )
+                rsi_overlap = max(
+                    existing.conditions.rsi_range[0], skill.conditions.rsi_range[0]
+                ) <= min(existing.conditions.rsi_range[1], skill.conditions.rsi_range[1])
                 if rsi_overlap:
                     return existing
 
@@ -690,7 +696,7 @@ class SkillLibrary:
         self,
         existing: TradingSkill,
         new: TradingSkill,
-        trade_record: Dict[str, Any],
+        trade_record: dict[str, Any],
     ):
         """Merge a new skill observation into an existing skill."""
         # Update outcome stats
@@ -733,7 +739,7 @@ class SkillLibrary:
         skill_type: Optional[SkillType] = None,
         min_uses: int = 3,
         top_k: int = 10,
-    ) -> List[TradingSkill]:
+    ) -> list[TradingSkill]:
         """Get the best performing skills."""
         candidates = []
 
@@ -749,9 +755,9 @@ class SkillLibrary:
 
             # Score = win_rate * avg_profit * confidence
             score = (
-                skill.outcome.expected_win_rate *
-                max(0, skill.outcome.avg_profit_pct + 1) *
-                skill.outcome.confidence
+                skill.outcome.expected_win_rate
+                * max(0, skill.outcome.avg_profit_pct + 1)
+                * skill.outcome.confidence
             )
             candidates.append((skill, score))
 
@@ -779,7 +785,7 @@ class SkillLibrary:
         ]
 
         # Group by type
-        by_type: Dict[SkillType, List[TradingSkill]] = {}
+        by_type: dict[SkillType, list[TradingSkill]] = {}
         for skill in self.skills.values():
             if skill.skill_type not in by_type:
                 by_type[skill.skill_type] = []
@@ -791,9 +797,7 @@ class SkillLibrary:
 
             for skill in sorted(skills, key=lambda s: s.outcome.confidence, reverse=True):
                 status = "ACTIVE" if skill.active else "INACTIVE"
-                lines.append(
-                    f"  [{status}] {skill.name}"
-                )
+                lines.append(f"  [{status}] {skill.name}")
                 lines.append(
                     f"    Uses: {skill.outcome.uses} | "
                     f"Win Rate: {skill.outcome.expected_win_rate:.0%} | "
@@ -817,17 +821,17 @@ class ProceduralMemory:
 
     def __init__(self, library: Optional[SkillLibrary] = None):
         self.library = library or SkillLibrary()
-        self._active_skills: Dict[str, str] = {}  # trade_id -> skill_id
+        self._active_skills: dict[str, str] = {}  # trade_id -> skill_id
 
-    def learn_from_trade(self, trade_record: Dict[str, Any]) -> Optional[TradingSkill]:
+    def learn_from_trade(self, trade_record: dict[str, Any]) -> Optional[TradingSkill]:
         """Learn a skill from a completed trade."""
         return self.library.extract_skill_from_trade(trade_record)
 
     def suggest_action(
         self,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         skill_type: Optional[SkillType] = None,
-    ) -> Optional[Tuple[TradingSkill, SkillAction, float]]:
+    ) -> Optional[tuple[TradingSkill, SkillAction, float]]:
         """
         Suggest an action based on matching skills.
 

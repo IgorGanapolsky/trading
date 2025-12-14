@@ -17,7 +17,6 @@ Created: 2025-12-11
 import logging
 import time
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -199,16 +198,14 @@ class SemanticTradeAnomalyDetector:
             risk_score = self._calculate_risk_score(incidents, context)
 
             # Determine if trade is safe
-            safe, recommendation = self._evaluate_safety(
-                risk_score, incidents, context
-            )
+            safe, recommendation = self._evaluate_safety(risk_score, incidents, context)
 
             latency_ms = (time.time() - start_time) * 1000
 
             return {
                 "safe": safe,
                 "risk_score": risk_score,
-                "similar_incidents": incidents[:self.top_k],
+                "similar_incidents": incidents[: self.top_k],
                 "recommendation": recommendation,
                 "latency_ms": latency_ms,
                 "rag_available": True,
@@ -228,18 +225,20 @@ class SemanticTradeAnomalyDetector:
         # Add results from semantic search
         for lesson, similarity in similar_lessons:
             if lesson.id not in seen_ids:
-                incidents.append({
-                    "lesson_id": lesson.id,
-                    "title": lesson.title,
-                    "category": lesson.category,
-                    "severity": lesson.severity,
-                    "description": lesson.description,
-                    "root_cause": lesson.root_cause,
-                    "prevention": lesson.prevention,
-                    "financial_impact": lesson.financial_impact or 0.0,
-                    "similarity": float(similarity),
-                    "tags": lesson.tags,
-                })
+                incidents.append(
+                    {
+                        "lesson_id": lesson.id,
+                        "title": lesson.title,
+                        "category": lesson.category,
+                        "severity": lesson.severity,
+                        "description": lesson.description,
+                        "root_cause": lesson.root_cause,
+                        "prevention": lesson.prevention,
+                        "financial_impact": lesson.financial_impact or 0.0,
+                        "similarity": float(similarity),
+                        "tags": lesson.tags,
+                    }
+                )
                 seen_ids.add(lesson.id)
 
         # Add warnings from trade-specific context
@@ -247,18 +246,20 @@ class SemanticTradeAnomalyDetector:
             lesson_title = warning.get("title", "")
             # Simple deduplication by title
             if not any(inc["title"] == lesson_title for inc in incidents):
-                incidents.append({
-                    "lesson_id": f"warning_{len(incidents)}",
-                    "title": lesson_title,
-                    "category": "trade_specific",
-                    "severity": warning.get("severity", "medium"),
-                    "description": warning.get("prevention", ""),
-                    "root_cause": "Similar to past incident",
-                    "prevention": warning.get("prevention", ""),
-                    "financial_impact": 0.0,
-                    "similarity": float(warning.get("relevance", 0.0)),
-                    "tags": [],
-                })
+                incidents.append(
+                    {
+                        "lesson_id": f"warning_{len(incidents)}",
+                        "title": lesson_title,
+                        "category": "trade_specific",
+                        "severity": warning.get("severity", "medium"),
+                        "description": warning.get("prevention", ""),
+                        "root_cause": "Similar to past incident",
+                        "prevention": warning.get("prevention", ""),
+                        "financial_impact": 0.0,
+                        "similarity": float(warning.get("relevance", 0.0)),
+                        "tags": [],
+                    }
+                )
 
         # Sort by similarity
         incidents.sort(key=lambda x: x["similarity"], reverse=True)
@@ -295,9 +296,7 @@ class SemanticTradeAnomalyDetector:
             "high": 0.75,
             "critical": 1.0,
         }
-        max_severity = max(
-            severity_weights.get(inc["severity"], 0.5) for inc in incidents
-        )
+        max_severity = max(severity_weights.get(inc["severity"], 0.5) for inc in incidents)
         severity_score = max_severity
 
         # Factor 4: Number of incidents
@@ -376,9 +375,7 @@ class SemanticTradeAnomalyDetector:
 
         return True, recommendation
 
-    def _fallback_check(
-        self, context: TradeContext, start_time: float
-    ) -> dict[str, Any]:
+    def _fallback_check(self, context: TradeContext, start_time: float) -> dict[str, Any]:
         """
         Fallback check when RAG unavailable.
 
@@ -469,12 +466,14 @@ if __name__ == "__main__":
     print("TEST 1: Large Position ($1600 - similar to 200x bug)")
     print("=" * 80)
 
-    result = detector.check_trade({
-        "symbol": "SPY",
-        "side": "buy",
-        "amount": 1600.0,
-        "strategy": "momentum",
-    })
+    result = detector.check_trade(
+        {
+            "symbol": "SPY",
+            "side": "buy",
+            "amount": 1600.0,
+            "strategy": "momentum",
+        }
+    )
 
     print(f"\nSafe: {result['safe']}")
     print(f"Risk Score: {result['risk_score']:.2f}")
@@ -491,12 +490,14 @@ if __name__ == "__main__":
     print("TEST 2: Normal Trade ($10)")
     print("=" * 80)
 
-    result = detector.check_trade({
-        "symbol": "AAPL",
-        "side": "buy",
-        "amount": 10.0,
-        "strategy": "momentum",
-    })
+    result = detector.check_trade(
+        {
+            "symbol": "AAPL",
+            "side": "buy",
+            "amount": 10.0,
+            "strategy": "momentum",
+        }
+    )
 
     print(f"\nSafe: {result['safe']}")
     print(f"Risk Score: {result['risk_score']:.2f}")
@@ -508,23 +509,25 @@ if __name__ == "__main__":
     print("TEST 3: Crypto Trade with MACD context")
     print("=" * 80)
 
-    result = detector.check_trade({
-        "symbol": "BTCUSD",
-        "side": "buy",
-        "amount": 0.5,
-        "strategy": "momentum_crypto",
-        "additional_context": {
-            "macd": -5.0,
-            "signal": "consolidation",
-        },
-    })
+    result = detector.check_trade(
+        {
+            "symbol": "BTCUSD",
+            "side": "buy",
+            "amount": 0.5,
+            "strategy": "momentum_crypto",
+            "additional_context": {
+                "macd": -5.0,
+                "signal": "consolidation",
+            },
+        }
+    )
 
     print(f"\nSafe: {result['safe']}")
     print(f"Risk Score: {result['risk_score']:.2f}")
     print(f"Latency: {result['latency_ms']:.2f}ms")
     print(f"Recommendation: {result['recommendation']}")
     if result["similar_incidents"]:
-        print(f"\nSimilar Incidents:")
+        print("\nSimilar Incidents:")
         for inc in result["similar_incidents"][:3]:
             print(f"  [{inc['similarity']:.2f}] {inc['title']}")
 

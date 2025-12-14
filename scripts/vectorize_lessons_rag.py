@@ -15,10 +15,8 @@ Reference: December 2025 - RAG vectorization fix
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
-import os
 import re
 import sys
 from datetime import datetime
@@ -31,6 +29,7 @@ logger = logging.getLogger(__name__)
 # Try to import sentence transformers for embeddings
 try:
     from sentence_transformers import SentenceTransformer
+
     EMBEDDINGS_AVAILABLE = True
 except ImportError:
     EMBEDDINGS_AVAILABLE = False
@@ -80,8 +79,14 @@ def parse_lesson_file(filepath: Path) -> Optional[dict]:
         problem = extract_section(content, "The Problem.*") or extract_section(content, "Problem")
         evidence = extract_section(content, "The Evidence") or extract_section(content, "Evidence")
         root_cause = extract_section(content, "Root Cause.*") or extract_section(content, "Why.*")
-        fix = extract_section(content, "The Fix") or extract_section(content, "Fix") or extract_section(content, "Solution")
-        prevention = extract_section(content, "Prevention.*") or extract_section(content, "Key Takeaway.*")
+        fix = (
+            extract_section(content, "The Fix")
+            or extract_section(content, "Fix")
+            or extract_section(content, "Solution")
+        )
+        prevention = extract_section(content, "Prevention.*") or extract_section(
+            content, "Key Takeaway.*"
+        )
 
         # Build description from available sections
         description_parts = []
@@ -104,7 +109,8 @@ def parse_lesson_file(filepath: Path) -> Optional[dict]:
         lesson = {
             "id": metadata["id"] or f"lesson_{filepath.stem}",
             "timestamp": metadata["date"] or datetime.now().isoformat(),
-            "category": metadata["category"].lower().replace(" ", "_").replace(",", "_") or "general",
+            "category": metadata["category"].lower().replace(" ", "_").replace(",", "_")
+            or "general",
             "title": title[:200],
             "description": description[:2000],
             "root_cause": (root_cause or problem)[:1000],
@@ -125,7 +131,9 @@ def parse_lesson_file(filepath: Path) -> Optional[dict]:
 
 def compute_embedding(encoder, lesson: dict) -> list[float]:
     """Compute embedding for a lesson."""
-    text = f"{lesson['title']} {lesson['description']} {lesson['root_cause']} {lesson['prevention']}"
+    text = (
+        f"{lesson['title']} {lesson['description']} {lesson['root_cause']} {lesson['prevention']}"
+    )
     return encoder.encode(text).tolist()
 
 

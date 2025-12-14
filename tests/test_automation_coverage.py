@@ -31,9 +31,9 @@ class TestAutomationCoverage:
             r"TradingOrchestrator",
             r"Execute daily trading",
         ]
-        assert any(
-            re.search(p, daily_workflow, re.IGNORECASE) for p in patterns
-        ), "Equity DCA trading not found in daily workflow"
+        assert any(re.search(p, daily_workflow, re.IGNORECASE) for p in patterns), (
+            "Equity DCA trading not found in daily workflow"
+        )
 
     def test_options_theta_automated(self, daily_workflow):
         """Options theta harvesting must be in daily workflow."""
@@ -44,9 +44,7 @@ class TestAutomationCoverage:
             r"wheel.*strategy",
             r"Harvest.*theta",
         ]
-        assert any(
-            re.search(p, daily_workflow, re.IGNORECASE) for p in patterns
-        ), (
+        assert any(re.search(p, daily_workflow, re.IGNORECASE) for p in patterns), (
             "Options theta harvesting not found in daily workflow. "
             "Options generate 100x more profit than DCA - this MUST be automated. "
             "See: ll_022_options_not_automated_dec12.md"
@@ -60,9 +58,9 @@ class TestAutomationCoverage:
             r"tier.?5",
             r"weekend.*trad",
         ]
-        assert any(
-            re.search(p, daily_workflow, re.IGNORECASE) for p in patterns
-        ), "Crypto trading not found in daily workflow"
+        assert any(re.search(p, daily_workflow, re.IGNORECASE) for p in patterns), (
+            "Crypto trading not found in daily workflow"
+        )
 
     def test_no_manual_only_strategies(self, daily_workflow):
         """
@@ -75,13 +73,13 @@ class TestAutomationCoverage:
             pytest.skip("system_state.json not found")
 
         import json
+
         with open(state_file) as f:
             state = json.load(f)
 
         strategies = state.get("strategies", {})
         active_strategies = [
-            name for name, config in strategies.items()
-            if config.get("status") == "active"
+            name for name, config in strategies.items() if config.get("status") == "active"
         ]
 
         # Map strategy names to workflow patterns
@@ -95,16 +93,13 @@ class TestAutomationCoverage:
             if strategy in strategy_patterns:
                 pattern = strategy_patterns[strategy]
                 assert re.search(pattern, daily_workflow, re.IGNORECASE), (
-                    f"Active strategy '{strategy}' not found in workflow. "
-                    f"Pattern: {pattern}"
+                    f"Active strategy '{strategy}' not found in workflow. Pattern: {pattern}"
                 )
 
     def test_workflow_has_error_handling(self, daily_workflow):
         """Workflow should have continue-on-error for non-critical steps."""
         # Count steps with continue-on-error
-        error_handling_count = len(
-            re.findall(r"continue-on-error:\s*true", daily_workflow)
-        )
+        error_handling_count = len(re.findall(r"continue-on-error:\s*true", daily_workflow))
 
         # Should have at least 3 non-critical steps with error handling
         assert error_handling_count >= 3, (
@@ -119,9 +114,9 @@ class TestAutomationCoverage:
             r"Commit.*trading.*data",
             r"git.*push",
         ]
-        assert any(
-            re.search(p, daily_workflow, re.IGNORECASE) for p in patterns
-        ), "Workflow does not commit trading data - state may be lost"
+        assert any(re.search(p, daily_workflow, re.IGNORECASE) for p in patterns), (
+            "Workflow does not commit trading data - state may be lost"
+        )
 
 
 class TestTimestampStaleness:
@@ -142,6 +137,7 @@ class TestTimestampStaleness:
             pytest.skip("system_state.json not found")
 
         import json
+
         with open(state_file) as f:
             state = json.load(f)
 

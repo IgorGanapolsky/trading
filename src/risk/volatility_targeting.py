@@ -23,7 +23,6 @@ Reference: Carver, R. (2015). Systematic Trading. Harriman House.
 import logging
 import math
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Any
 
 import numpy as np
@@ -225,9 +224,7 @@ class VolatilityTargeter:
             VolatilityTargetedPosition with sizing details
         """
         # Get instrument volatility
-        instrument_vol, vol_source = get_instrument_volatility(
-            symbol, price_history, self.config
-        )
+        instrument_vol, vol_source = get_instrument_volatility(symbol, price_history, self.config)
 
         # Carver's formula: position = (target_vol × capital) / (instrument_vol × price)
         # Adjusted for number of positions (diversification)

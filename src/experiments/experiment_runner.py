@@ -36,21 +36,19 @@ import hashlib
 import itertools
 import json
 import logging
-import os
-import time
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-import uuid
+from typing import Any, Callable, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class ExperimentStatus(Enum):
     """Status of an experiment."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -69,10 +67,10 @@ class HyperparameterGrid:
     - Custom parameter dependencies
     """
 
-    params: Dict[str, List[Any]]
-    dependencies: Dict[str, Callable[[Dict], List[Any]]] = field(default_factory=dict)
+    params: dict[str, list[Any]]
+    dependencies: dict[str, Callable[[dict], list[Any]]] = field(default_factory=dict)
 
-    def get_combinations(self, mode: str = "grid", n_samples: int = 100) -> List[Dict[str, Any]]:
+    def get_combinations(self, mode: str = "grid", n_samples: int = 100) -> list[dict[str, Any]]:
         """
         Generate parameter combinations.
 
@@ -87,7 +85,7 @@ class HyperparameterGrid:
         else:
             raise ValueError(f"Unknown mode: {mode}")
 
-    def _grid_combinations(self) -> List[Dict[str, Any]]:
+    def _grid_combinations(self) -> list[dict[str, Any]]:
         """Generate all grid combinations."""
         keys = list(self.params.keys())
         values = list(self.params.values())
@@ -104,7 +102,7 @@ class HyperparameterGrid:
 
         return combinations
 
-    def _random_combinations(self, n_samples: int) -> List[Dict[str, Any]]:
+    def _random_combinations(self, n_samples: int) -> list[dict[str, Any]]:
         """Generate random combinations."""
         import random
 
@@ -136,8 +134,8 @@ class ExperimentResult:
     """Result of a single experiment."""
 
     experiment_id: str
-    params: Dict[str, Any]
-    metrics: Dict[str, float]
+    params: dict[str, Any]
+    metrics: dict[str, float]
     status: ExperimentStatus
 
     # Timing
@@ -147,10 +145,10 @@ class ExperimentResult:
 
     # Metadata
     error: Optional[str] = None
-    artifacts: Dict[str, str] = field(default_factory=dict)  # path to saved files
-    tags: List[str] = field(default_factory=list)
+    artifacts: dict[str, str] = field(default_factory=dict)  # path to saved files
+    tags: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "experiment_id": self.experiment_id,
             "params": self.params,
@@ -165,13 +163,15 @@ class ExperimentResult:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ExperimentResult":
+    def from_dict(cls, data: dict[str, Any]) -> ExperimentResult:
         return cls(
             experiment_id=data["experiment_id"],
             params=data["params"],
             metrics=data["metrics"],
             status=ExperimentStatus(data["status"]),
-            start_time=datetime.fromisoformat(data["start_time"]) if data.get("start_time") else None,
+            start_time=datetime.fromisoformat(data["start_time"])
+            if data.get("start_time")
+            else None,
             end_time=datetime.fromisoformat(data["end_time"]) if data.get("end_time") else None,
             duration_seconds=data.get("duration_seconds", 0.0),
             error=data.get("error"),
@@ -186,11 +186,11 @@ class Experiment:
 
     experiment_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
     name: str = ""
-    params: Dict[str, Any] = field(default_factory=dict)
+    params: dict[str, Any] = field(default_factory=dict)
 
     # Experiment function
     fn: Optional[Callable] = None
-    fn_args: Dict[str, Any] = field(default_factory=dict)
+    fn_args: dict[str, Any] = field(default_factory=dict)
 
     # Caching
     cache_key: Optional[str] = None
@@ -231,7 +231,7 @@ class ExperimentRunner:
         self.checkpoint_every = checkpoint_every
 
         self.results_file = self.storage_path / "experiment_results.jsonl"
-        self.cache: Dict[str, ExperimentResult] = {}
+        self.cache: dict[str, ExperimentResult] = {}
 
         self._load_cache()
 
@@ -322,9 +322,9 @@ class ExperimentRunner:
         n_samples: int = 100,
         parallel: bool = True,
         max_workers: int = 4,
-        fn_args: Optional[Dict[str, Any]] = None,
+        fn_args: Optional[dict[str, Any]] = None,
         progress_callback: Optional[Callable[[int, int], None]] = None,
-    ) -> List[ExperimentResult]:
+    ) -> list[ExperimentResult]:
         """
         Run a hyperparameter sweep.
 
@@ -394,12 +394,14 @@ class ExperimentRunner:
 
     def get_best_result(
         self,
-        results: List[ExperimentResult],
+        results: list[ExperimentResult],
         metric: str,
         maximize: bool = True,
     ) -> Optional[ExperimentResult]:
         """Get the best result by a specific metric."""
-        valid_results = [r for r in results if r.status == ExperimentStatus.COMPLETED and metric in r.metrics]
+        valid_results = [
+            r for r in results if r.status == ExperimentStatus.COMPLETED and metric in r.metrics
+        ]
 
         if not valid_results:
             return None
@@ -411,13 +413,15 @@ class ExperimentRunner:
 
     def get_top_results(
         self,
-        results: List[ExperimentResult],
+        results: list[ExperimentResult],
         metric: str,
         n: int = 10,
         maximize: bool = True,
-    ) -> List[ExperimentResult]:
+    ) -> list[ExperimentResult]:
         """Get top N results by a specific metric."""
-        valid_results = [r for r in results if r.status == ExperimentStatus.COMPLETED and metric in r.metrics]
+        valid_results = [
+            r for r in results if r.status == ExperimentStatus.COMPLETED and metric in r.metrics
+        ]
 
         sorted_results = sorted(
             valid_results,
@@ -429,15 +433,17 @@ class ExperimentRunner:
 
     def analyze_param_importance(
         self,
-        results: List[ExperimentResult],
+        results: list[ExperimentResult],
         metric: str,
-    ) -> Dict[str, Dict[str, float]]:
+    ) -> dict[str, dict[str, float]]:
         """
         Analyze which parameters have the most impact on a metric.
 
         Returns dict mapping param -> {value -> avg_metric}
         """
-        valid_results = [r for r in results if r.status == ExperimentStatus.COMPLETED and metric in r.metrics]
+        valid_results = [
+            r for r in results if r.status == ExperimentStatus.COMPLETED and metric in r.metrics
+        ]
 
         if not valid_results:
             return {}
@@ -451,7 +457,7 @@ class ExperimentRunner:
             all_params.update(r.params.keys())
 
         for param_key in all_params:
-            value_metrics: Dict[Any, List[float]] = {}
+            value_metrics: dict[Any, list[float]] = {}
 
             for r in valid_results:
                 value = r.params.get(param_key)
@@ -462,15 +468,14 @@ class ExperimentRunner:
 
             # Calculate averages
             param_analysis[param_key] = {
-                str(v): sum(metrics) / len(metrics)
-                for v, metrics in value_metrics.items()
+                str(v): sum(metrics) / len(metrics) for v, metrics in value_metrics.items()
             }
 
         return param_analysis
 
     def generate_report(
         self,
-        results: List[ExperimentResult],
+        results: list[ExperimentResult],
         primary_metric: str = "sharpe_ratio",
     ) -> str:
         """Generate a text report of experiment results."""
@@ -499,17 +504,19 @@ class ExperimentRunner:
             for r in completed:
                 all_metrics.update(r.metrics.keys())
 
-            lines.extend([
-                "METRIC RANGES",
-                "-" * 40,
-            ])
+            lines.extend(
+                [
+                    "METRIC RANGES",
+                    "-" * 40,
+                ]
+            )
 
             for metric in sorted(all_metrics):
                 values = [r.metrics[metric] for r in completed if metric in r.metrics]
                 if values:
                     lines.append(
                         f"  {metric:20} min={min(values):.4f}  max={max(values):.4f}  "
-                        f"avg={sum(values)/len(values):.4f}"
+                        f"avg={sum(values) / len(values):.4f}"
                     )
 
             lines.append("")
@@ -517,10 +524,12 @@ class ExperimentRunner:
             # Top results
             top = self.get_top_results(completed, primary_metric, n=5)
             if top:
-                lines.extend([
-                    f"TOP 5 BY {primary_metric.upper()}",
-                    "-" * 40,
-                ])
+                lines.extend(
+                    [
+                        f"TOP 5 BY {primary_metric.upper()}",
+                        "-" * 40,
+                    ]
+                )
 
                 for i, r in enumerate(top, 1):
                     metric_val = r.metrics.get(primary_metric, 0)
@@ -532,10 +541,12 @@ class ExperimentRunner:
             # Parameter importance
             importance = self.analyze_param_importance(completed, primary_metric)
             if importance:
-                lines.extend([
-                    "PARAMETER IMPACT",
-                    "-" * 40,
-                ])
+                lines.extend(
+                    [
+                        "PARAMETER IMPACT",
+                        "-" * 40,
+                    ]
+                )
 
                 for param, values in importance.items():
                     if len(values) > 1:
@@ -551,10 +562,12 @@ class ExperimentRunner:
                 lines.append("")
 
         if failed:
-            lines.extend([
-                "FAILED EXPERIMENTS",
-                "-" * 40,
-            ])
+            lines.extend(
+                [
+                    "FAILED EXPERIMENTS",
+                    "-" * 40,
+                ]
+            )
             for r in failed[:5]:
                 lines.append(f"  {r.experiment_id}: {r.error[:50]}...")
             if len(failed) > 5:
@@ -565,21 +578,23 @@ class ExperimentRunner:
         total_time = sum(r.duration_seconds for r in results if r.duration_seconds)
         avg_time = total_time / len(completed) if completed else 0
 
-        lines.extend([
-            "TIMING",
-            "-" * 40,
-            f"  Total Time: {total_time:.1f}s ({total_time/60:.1f}m)",
-            f"  Avg per Experiment: {avg_time:.2f}s",
-            f"  Throughput: {len(completed)/max(total_time, 1)*60:.1f} experiments/min",
-            "",
-            "=" * 70,
-        ])
+        lines.extend(
+            [
+                "TIMING",
+                "-" * 40,
+                f"  Total Time: {total_time:.1f}s ({total_time / 60:.1f}m)",
+                f"  Avg per Experiment: {avg_time:.2f}s",
+                f"  Throughput: {len(completed) / max(total_time, 1) * 60:.1f} experiments/min",
+                "",
+                "=" * 70,
+            ]
+        )
 
         return "\n".join(lines)
 
     def export_results(
         self,
-        results: List[ExperimentResult],
+        results: list[ExperimentResult],
         output_path: Path,
         format: str = "json",
     ):
@@ -615,12 +630,12 @@ class ExperimentRunner:
 
 async def run_experiment_sweep(
     experiment_fn: Callable,
-    params: Dict[str, List[Any]],
+    params: dict[str, list[Any]],
     mode: str = "grid",
     n_samples: int = 100,
     parallel: bool = True,
     max_workers: int = 4,
-) -> Tuple[List[ExperimentResult], str]:
+) -> tuple[list[ExperimentResult], str]:
     """
     Convenience function to run a sweep and get report.
 
@@ -645,6 +660,7 @@ async def run_experiment_sweep(
 
 # Trading-specific experiment functions
 
+
 def create_backtest_experiment(
     strategy_class: Any,
     data_loader: Callable,
@@ -657,7 +673,7 @@ def create_backtest_experiment(
     Returns a function that takes params and returns metrics.
     """
 
-    def run_backtest(params: Dict[str, Any]) -> Dict[str, float]:
+    def run_backtest(params: dict[str, Any]) -> dict[str, float]:
         """Run backtest with given parameters."""
         # Load data
         data = data_loader(start_date, end_date)
@@ -696,7 +712,11 @@ def create_backtest_experiment(
         total_return = sum(trades)
         win_rate = len([t for t in trades if t > 0]) / len(trades)
         avg_return = total_return / len(trades)
-        std_return = math.sqrt(sum((t - avg_return) ** 2 for t in trades) / len(trades)) if len(trades) > 1 else 1
+        std_return = (
+            math.sqrt(sum((t - avg_return) ** 2 for t in trades) / len(trades))
+            if len(trades) > 1
+            else 1
+        )
         sharpe_ratio = avg_return / std_return if std_return > 0 else 0
 
         # Max drawdown

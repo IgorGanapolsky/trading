@@ -26,6 +26,7 @@ BACKTEST_RESULTS_PATH = Path("data/backtest_results.json")
 @dataclass
 class BacktestResult:
     """Result of a signal backtest."""
+
     signal_id: str
     symbol: str
     signal_direction: str  # BUY/SELL
@@ -74,8 +75,7 @@ class SignalBacktester:
         self.results_cache: dict[str, BacktestResult] = {}
 
         logger.info(
-            f"SignalBacktester initialized: "
-            f"min_win_rate={min_win_rate}, min_sharpe={min_sharpe}"
+            f"SignalBacktester initialized: min_win_rate={min_win_rate}, min_sharpe={min_sharpe}"
         )
 
     def backtest_signal(
@@ -181,9 +181,7 @@ class SignalBacktester:
                 f"win_rate={win_rate:.1%}, sharpe={sharpe_ratio:.2f}"
             )
         else:
-            logger.warning(
-                f"Backtest FAILED for {signal_direction} {symbol}: {validation_message}"
-            )
+            logger.warning(f"Backtest FAILED for {signal_direction} {symbol}: {validation_message}")
 
         return result
 

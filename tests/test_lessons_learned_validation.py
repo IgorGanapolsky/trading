@@ -8,16 +8,16 @@ These tests ensure that:
 4. Semantic search finds relevant lessons
 """
 
-import pytest
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-import tempfile
 
+import pytest
 from src.rag.lessons_learned_store import (
-    LessonsLearnedStore,
     Lesson,
-    LessonSeverity,
     LessonCategory,
+    LessonSeverity,
+    LessonsLearnedStore,
     seed_initial_lessons,
     validate_trade_against_lessons,
 )
@@ -52,7 +52,7 @@ def sample_lesson():
         impact_description="Could deploy excessive capital",
         financial_impact=1000.0,
         related_files=["scripts/autonomous_trader.py"],
-        tags=["order-validation", "capital-protection"]
+        tags=["order-validation", "capital-protection"],
     )
 
 
@@ -81,16 +81,10 @@ class TestLessonsLearnedStore:
         """Test filtering lessons by category."""
         store.add_lesson(sample_lesson)
 
-        results = store.search_lessons(
-            "validation",
-            category=LessonCategory.TRADING_LOGIC
-        )
+        results = store.search_lessons("validation", category=LessonCategory.TRADING_LOGIC)
         assert len(results) > 0
 
-        results = store.search_lessons(
-            "validation",
-            category=LessonCategory.AUTOMATION
-        )
+        results = store.search_lessons("validation", category=LessonCategory.AUTOMATION)
         assert len(results) == 0
 
     def test_search_lessons_by_severity(self, store, sample_lesson):
@@ -98,10 +92,7 @@ class TestLessonsLearnedStore:
         store.add_lesson(sample_lesson)
 
         # Should find critical lessons
-        results = store.search_lessons(
-            "order",
-            min_severity=LessonSeverity.CRITICAL
-        )
+        results = store.search_lessons("order", min_severity=LessonSeverity.CRITICAL)
         assert len(results) > 0
 
         # Add a low severity lesson
@@ -115,15 +106,12 @@ class TestLessonsLearnedStore:
             severity=LessonSeverity.LOW,
             category=LessonCategory.CODE_QUALITY,
             date_learned=datetime.now(timezone.utc),
-            tags=["style"]
+            tags=["style"],
         )
         store.add_lesson(low_lesson)
 
         # Critical filter should not return low severity
-        results = store.search_lessons(
-            "style",
-            min_severity=LessonSeverity.CRITICAL
-        )
+        results = store.search_lessons("style", min_severity=LessonSeverity.CRITICAL)
         assert len(results) == 0
 
     def test_get_critical_lessons(self, store, sample_lesson):
@@ -138,10 +126,7 @@ class TestLessonsLearnedStore:
         """Test validating actions against lessons."""
         store.add_lesson(sample_lesson)
 
-        warnings = store.validate_action(
-            "execute large order",
-            {"symbol": "SPY", "amount": 5000}
-        )
+        warnings = store.validate_action("execute large order", {"symbol": "SPY", "amount": 5000})
 
         # Should return warnings for order-related lessons
         assert isinstance(warnings, list)
@@ -155,10 +140,7 @@ class TestTradeValidation:
         store.add_lesson(sample_lesson)
 
         is_valid, warnings = validate_trade_against_lessons(
-            symbol="SPY",
-            amount=100.0,
-            action="BUY",
-            store=store
+            symbol="SPY", amount=100.0, action="BUY", store=store
         )
 
         assert isinstance(is_valid, bool)
@@ -209,7 +191,7 @@ class TestLessonDataclass:
             prevention="Test",
             severity=LessonSeverity.LOW,
             category=LessonCategory.CODE_QUALITY,
-            date_learned=datetime.now(timezone.utc)
+            date_learned=datetime.now(timezone.utc),
         )
 
         assert lesson.financial_impact == 0.0
@@ -258,8 +240,7 @@ class TestOrderValidationLessons:
         seed_initial_lessons(store)
 
         warnings = store.validate_action(
-            "execute order $1600 SPY",
-            {"amount": 1600, "symbol": "SPY"}
+            "execute order $1600 SPY", {"amount": 1600, "symbol": "SPY"}
         )
 
         # Should have at least one warning about order validation

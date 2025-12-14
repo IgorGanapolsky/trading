@@ -21,7 +21,6 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -61,18 +60,18 @@ class RegimeAwarePositionChecker:
 
     # Regime thresholds based on ATR as % of price
     REGIME_THRESHOLDS = {
-        'CALM': (0.0, 1.0),        # < 1% ATR
-        'NORMAL': (1.0, 2.0),       # 1-2% ATR
-        'VOLATILE': (2.0, 5.0),     # 2-5% ATR
-        'EXTREME': (5.0, float('inf')),  # > 5% ATR
+        "CALM": (0.0, 1.0),  # < 1% ATR
+        "NORMAL": (1.0, 2.0),  # 1-2% ATR
+        "VOLATILE": (2.0, 5.0),  # 2-5% ATR
+        "EXTREME": (5.0, float("inf")),  # > 5% ATR
     }
 
     # Maximum position size as % of portfolio for each regime
     MAX_POSITION_PCT = {
-        'CALM': 0.08,      # 8% in calm markets (lower vol = can size up)
-        'NORMAL': 0.05,    # 5% in normal markets (standard risk)
-        'VOLATILE': 0.03,  # 3% in volatile markets (reduce exposure)
-        'EXTREME': 0.01,   # 1% in extreme markets (survival mode)
+        "CALM": 0.08,  # 8% in calm markets (lower vol = can size up)
+        "NORMAL": 0.05,  # 5% in normal markets (standard risk)
+        "VOLATILE": 0.03,  # 3% in volatile markets (reduce exposure)
+        "EXTREME": 0.01,  # 1% in extreme markets (survival mode)
     }
 
     def __init__(
@@ -117,7 +116,7 @@ class RegimeAwarePositionChecker:
                 return regime
 
         # Fallback to EXTREME if somehow not matched
-        return 'EXTREME'
+        return "EXTREME"
 
     def get_max_position_pct(self, regime: str) -> float:
         """
@@ -172,13 +171,13 @@ class RegimeAwarePositionChecker:
 
         # Determine violation severity
         if risk_score < 30:
-            violation_severity = 'none'
+            violation_severity = "none"
         elif risk_score < 50:
-            violation_severity = 'minor'
+            violation_severity = "minor"
         elif risk_score < 75:
-            violation_severity = 'major'
+            violation_severity = "major"
         else:
-            violation_severity = 'critical'
+            violation_severity = "critical"
 
         # Generate recommendation
         recommendation = self._generate_recommendation(
@@ -219,8 +218,8 @@ class RegimeAwarePositionChecker:
         """Generate human-readable recommendation."""
         if safe:
             return (
-                f"✅ SAFE: {symbol} position {actual_pct*100:.1f}% is within "
-                f"{max_allowed_pct*100:.1f}% limit for {regime} regime (ATR: {atr_pct:.1f}%)"
+                f"✅ SAFE: {symbol} position {actual_pct * 100:.1f}% is within "
+                f"{max_allowed_pct * 100:.1f}% limit for {regime} regime (ATR: {atr_pct:.1f}%)"
             )
 
         # Violation
@@ -233,14 +232,14 @@ class RegimeAwarePositionChecker:
             reduction_pct = 0.0
 
         severity_emoji = {
-            'minor': '⚠️',
-            'major': '🚨',
-            'critical': '🔴',
-        }.get('critical' if risk_score >= 75 else 'major' if risk_score >= 50 else 'minor', '⚠️')
+            "minor": "⚠️",
+            "major": "🚨",
+            "critical": "🔴",
+        }.get("critical" if risk_score >= 75 else "major" if risk_score >= 50 else "minor", "⚠️")
 
         return (
-            f"{severity_emoji} VIOLATION: {symbol} position {actual_pct*100:.1f}% exceeds "
-            f"{max_allowed_pct*100:.1f}% limit for {regime} regime (ATR: {atr_pct:.1f}%). "
+            f"{severity_emoji} VIOLATION: {symbol} position {actual_pct * 100:.1f}% exceeds "
+            f"{max_allowed_pct * 100:.1f}% limit for {regime} regime (ATR: {atr_pct:.1f}%). "
             f"Reduce position by ${overage:,.2f} ({reduction_pct:.1f}%) to comply. "
             f"Risk score: {risk_score:.0f}/100"
         )
@@ -282,7 +281,9 @@ class RegimeAwarePositionChecker:
                 )
                 # Log key findings
                 for result in results:
-                    logger.info(f"  - {result.get('title', 'Unknown')}: {result.get('summary', '')[:100]}")
+                    logger.info(
+                        f"  - {result.get('title', 'Unknown')}: {result.get('summary', '')[:100]}"
+                    )
 
             return results
 
@@ -317,9 +318,9 @@ class RegimeAwarePositionChecker:
 
         for pos in positions:
             result = self.check_position(
-                symbol=pos['symbol'],
-                amount=pos['amount'],
-                atr_pct=pos['atr_pct'],
+                symbol=pos["symbol"],
+                amount=pos["amount"],
+                atr_pct=pos["atr_pct"],
             )
             results.append(result)
 
@@ -331,34 +332,34 @@ class RegimeAwarePositionChecker:
         passed = len(violations) == 0
 
         return {
-            'timestamp': datetime.now().isoformat(),
-            'total_positions': len(positions),
-            'safe_count': len(results) - len(violations),
-            'violation_count': len(violations),
-            'violations': [
+            "timestamp": datetime.now().isoformat(),
+            "total_positions": len(positions),
+            "safe_count": len(results) - len(violations),
+            "violation_count": len(violations),
+            "violations": [
                 {
-                    'symbol': v.recommendation.split()[2],  # Extract symbol
-                    'regime': v.regime,
-                    'risk_score': v.risk_score,
-                    'recommendation': v.recommendation,
+                    "symbol": v.recommendation.split()[2],  # Extract symbol
+                    "regime": v.regime,
+                    "risk_score": v.risk_score,
+                    "recommendation": v.recommendation,
                 }
                 for v in violations
             ],
-            'total_risk_score': round(total_risk_score, 2),
-            'passed': passed,
+            "total_risk_score": round(total_risk_score, 2),
+            "passed": passed,
         }
 
     def to_dict(self, result: PositionAnomalyResult) -> dict[str, Any]:
         """Convert result to dictionary for serialization."""
         return {
-            'safe': result.safe,
-            'risk_score': round(result.risk_score, 2),
-            'regime': result.regime,
-            'max_allowed_pct': round(result.max_allowed * 100, 2),
-            'actual_pct': round(result.actual_pct * 100, 2),
-            'recommendation': result.recommendation,
-            'atr_pct': round(result.atr_pct, 2),
-            'violation_severity': result.violation_severity,
+            "safe": result.safe,
+            "risk_score": round(result.risk_score, 2),
+            "regime": result.regime,
+            "max_allowed_pct": round(result.max_allowed * 100, 2),
+            "actual_pct": round(result.actual_pct * 100, 2),
+            "recommendation": result.recommendation,
+            "atr_pct": round(result.atr_pct, 2),
+            "violation_severity": result.violation_severity,
         }
 
 
@@ -391,10 +392,10 @@ if __name__ == "__main__":
 
     # Test scenarios
     test_positions = [
-        {'symbol': 'SPY', 'amount': 500, 'atr_pct': 0.8},   # CALM regime, safe
-        {'symbol': 'QQQ', 'amount': 700, 'atr_pct': 1.5},   # NORMAL regime, safe
-        {'symbol': 'TSLA', 'amount': 1000, 'atr_pct': 4.0}, # VOLATILE regime, VIOLATION
-        {'symbol': 'GME', 'amount': 1500, 'atr_pct': 8.0},  # EXTREME regime, VIOLATION
+        {"symbol": "SPY", "amount": 500, "atr_pct": 0.8},  # CALM regime, safe
+        {"symbol": "QQQ", "amount": 700, "atr_pct": 1.5},  # NORMAL regime, safe
+        {"symbol": "TSLA", "amount": 1000, "atr_pct": 4.0},  # VOLATILE regime, VIOLATION
+        {"symbol": "GME", "amount": 1500, "atr_pct": 8.0},  # EXTREME regime, VIOLATION
     ]
 
     print("=" * 70)
@@ -403,9 +404,9 @@ if __name__ == "__main__":
 
     for pos in test_positions:
         result = checker.check_position(
-            symbol=pos['symbol'],
-            amount=pos['amount'],
-            atr_pct=pos['atr_pct'],
+            symbol=pos["symbol"],
+            amount=pos["amount"],
+            atr_pct=pos["atr_pct"],
         )
 
         print(f"\n{pos['symbol']}:")

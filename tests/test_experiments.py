@@ -1,11 +1,9 @@
 """Tests for ML Experiment Runner."""
 
-import asyncio
 import tempfile
 from pathlib import Path
 
 import pytest
-
 from src.experiments.experiment_runner import (
     Experiment,
     ExperimentResult,
@@ -30,10 +28,12 @@ class TestHyperparameterGrid:
 
     def test_grid_combinations(self):
         """Test full grid generation."""
-        grid = HyperparameterGrid({
-            "a": [1, 2],
-            "b": ["x", "y"],
-        })
+        grid = HyperparameterGrid(
+            {
+                "a": [1, 2],
+                "b": ["x", "y"],
+            }
+        )
 
         combos = grid.get_combinations(mode="grid")
 
@@ -43,10 +43,12 @@ class TestHyperparameterGrid:
 
     def test_random_combinations(self):
         """Test random sampling."""
-        grid = HyperparameterGrid({
-            "a": [1, 2, 3, 4, 5],
-            "b": [10, 20, 30, 40, 50],
-        })
+        grid = HyperparameterGrid(
+            {
+                "a": [1, 2, 3, 4, 5],
+                "b": [10, 20, 30, 40, 50],
+            }
+        )
 
         combos = grid.get_combinations(mode="random", n_samples=10)
 
@@ -57,11 +59,13 @@ class TestHyperparameterGrid:
 
     def test_total_combinations(self):
         """Test combination count."""
-        grid = HyperparameterGrid({
-            "a": [1, 2, 3],
-            "b": [1, 2],
-            "c": [1, 2, 3, 4],
-        })
+        grid = HyperparameterGrid(
+            {
+                "a": [1, 2, 3],
+                "b": [1, 2],
+                "c": [1, 2, 3, 4],
+            }
+        )
 
         assert grid.total_combinations == 24  # 3 * 2 * 4
 
@@ -130,10 +134,12 @@ class TestExperimentRunner:
             def multiply_fn(params):
                 return {"product": params["a"] * params["b"]}
 
-            grid = HyperparameterGrid({
-                "a": [1, 2],
-                "b": [10, 20],
-            })
+            grid = HyperparameterGrid(
+                {
+                    "a": [1, 2],
+                    "b": [10, 20],
+                }
+            )
 
             results = await runner.run_sweep(
                 experiment_fn=multiply_fn,
@@ -205,10 +211,12 @@ class TestExperimentRunner:
                 # 'a' has strong impact, 'b' has weak impact
                 return {"score": params["a"] * 10 + params["b"]}
 
-            grid = HyperparameterGrid({
-                "a": [1, 2, 3],
-                "b": [0, 1],
-            })
+            grid = HyperparameterGrid(
+                {
+                    "a": [1, 2, 3],
+                    "b": [0, 1],
+                }
+            )
 
             results = await runner.run_sweep(
                 experiment_fn=deterministic_fn,
@@ -219,8 +227,12 @@ class TestExperimentRunner:
             importance = runner.analyze_param_importance(results, "score")
 
             # 'a' should show bigger range than 'b'
-            a_range = max(float(v) for v in importance["a"].values()) - min(float(v) for v in importance["a"].values())
-            b_range = max(float(v) for v in importance["b"].values()) - min(float(v) for v in importance["b"].values())
+            a_range = max(float(v) for v in importance["a"].values()) - min(
+                float(v) for v in importance["a"].values()
+            )
+            b_range = max(float(v) for v in importance["b"].values()) - min(
+                float(v) for v in importance["b"].values()
+            )
 
             assert a_range > b_range
 
@@ -356,6 +368,7 @@ class TestConvenienceFunction:
     @pytest.mark.asyncio
     async def test_run_experiment_sweep(self):
         """Test the convenience sweep function."""
+
         def simple_fn(params):
             return {"value": params["x"] ** 2}
 

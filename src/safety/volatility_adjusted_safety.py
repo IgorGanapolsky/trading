@@ -20,7 +20,7 @@ import json
 import logging
 import re
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -65,10 +65,10 @@ class ATRBasedLimits:
 
     # ATR thresholds for regime detection
     ATR_THRESHOLDS = {
-        "calm": 0.01,      # < 1% ATR = calm
-        "normal": 0.02,    # 1-2% ATR = normal
+        "calm": 0.01,  # < 1% ATR = calm
+        "normal": 0.02,  # 1-2% ATR = normal
         "volatile": 0.03,  # 2-3% ATR = volatile
-        "extreme": 0.05,   # > 5% ATR = extreme
+        "extreme": 0.05,  # > 5% ATR = extreme
     }
 
     # Limit adjustments by regime
@@ -180,6 +180,7 @@ class ATRBasedLimits:
         # Try to fetch live ATR
         try:
             from src.agents.momentum_agent import get_atr_for_symbol
+
             atr_value = get_atr_for_symbol(symbol, self.lookback_days)
         except Exception as e:
             logger.warning(f"Could not fetch ATR for {symbol}: {e}")
@@ -225,7 +226,7 @@ class DriftDetector:
 
     # Thresholds
     WARNING_DRIFT_PCT = 0.001  # 0.1% - warn
-    ABORT_DRIFT_PCT = 0.005    # 0.5% - abort trade
+    ABORT_DRIFT_PCT = 0.005  # 0.5% - abort trade
 
     def __init__(
         self,
@@ -311,7 +312,9 @@ class DriftDetector:
         if drift_pct > self.abort_threshold:
             is_excessive = True
             should_abort = True
-            recommendation = f"ABORT: Drift {drift_pct:.2%} exceeds {self.abort_threshold:.2%} threshold"
+            recommendation = (
+                f"ABORT: Drift {drift_pct:.2%} exceeds {self.abort_threshold:.2%} threshold"
+            )
         elif drift_pct > self.warning_threshold:
             is_excessive = True
             should_abort = False
@@ -476,7 +479,8 @@ class HourlyLossHeartbeat:
             else:
                 time_remaining = (
                     self._blocked_until - datetime.now()
-                    if self._blocked_until else timedelta(hours=1)
+                    if self._blocked_until
+                    else timedelta(hours=1)
                 )
                 return HeartbeatStatus(
                     current_hourly_loss=self._hourly_loss,
@@ -525,11 +529,13 @@ class HourlyLossHeartbeat:
             self._reset_hour(current_hour)
 
         # Record trade
-        self._hourly_trades.append({
-            "timestamp": datetime.now().isoformat(),
-            "symbol": symbol,
-            "profit_loss": profit_loss,
-        })
+        self._hourly_trades.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "symbol": symbol,
+                "profit_loss": profit_loss,
+            }
+        )
 
         # Update hourly loss (only count losses, not gains)
         if profit_loss < 0:
@@ -653,8 +659,17 @@ class LLMHallucinationChecker:
 
     # Suspicious values that indicate hallucination
     SUSPICIOUS_VALUES = {
-        "nan", "null", "none", "undefined", "infinity",
-        "inf", "-inf", "n/a", "na", "error", "unknown",
+        "nan",
+        "null",
+        "none",
+        "undefined",
+        "infinity",
+        "inf",
+        "-inf",
+        "n/a",
+        "na",
+        "error",
+        "unknown",
     }
 
     # Max reasonable quantity for any single trade
@@ -744,7 +759,9 @@ class LLMHallucinationChecker:
                 errors.append(f"Invalid quantity format: '{qty}'")
 
         # Validate notional/amount
-        notional = parsed_data.get("notional") or parsed_data.get("amount") or parsed_data.get("value")
+        notional = (
+            parsed_data.get("notional") or parsed_data.get("amount") or parsed_data.get("value")
+        )
         if notional is not None:
             try:
                 notional_float = float(notional)
@@ -763,7 +780,9 @@ class LLMHallucinationChecker:
             try:
                 sent_float = float(sentiment)
                 if sent_float < self.SENTIMENT_MIN or sent_float > self.SENTIMENT_MAX:
-                    warnings.append(f"Sentiment {sent_float} outside range [{self.SENTIMENT_MIN}, {self.SENTIMENT_MAX}]")
+                    warnings.append(
+                        f"Sentiment {sent_float} outside range [{self.SENTIMENT_MIN}, {self.SENTIMENT_MAX}]"
+                    )
                 if sent_float != sent_float:  # NaN check
                     errors.append("Sentiment is NaN")
             except (ValueError, TypeError):
@@ -819,10 +838,7 @@ class LLMHallucinationChecker:
         if result.parsed_data:
             # Ensure required sentiment fields exist
             required_fields = ["score", "sentiment", "confidence"]
-            has_any = any(
-                result.parsed_data.get(f) is not None
-                for f in required_fields
-            )
+            has_any = any(result.parsed_data.get(f) is not None for f in required_fields)
             if not has_any:
                 result.warnings.append("Missing sentiment score/confidence fields")
 
@@ -978,9 +994,9 @@ if __name__ == "__main__":
 
     atr = ATRBasedLimits()
     for symbol, price, atr_val in [
-        ("SPY", 500, 5),    # 1% ATR - calm
+        ("SPY", 500, 5),  # 1% ATR - calm
         ("NVDA", 500, 15),  # 3% ATR - volatile
-        ("GME", 20, 2),     # 10% ATR - extreme
+        ("GME", 20, 2),  # 10% ATR - extreme
     ]:
         result = atr.calculate_position_limit(symbol, price, atr_val)
         print(f"  {symbol}: {result.reason}")

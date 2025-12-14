@@ -221,9 +221,7 @@ class TradingOrchestrator:
         if enable_rag and RAG_AVAILABLE:
             try:
                 self.rag_retriever = get_retriever()
-                logger.info(
-                    "RAG Retriever initialized (historical context for trading decisions)"
-                )
+                logger.info("RAG Retriever initialized (historical context for trading decisions)")
             except Exception as e:
                 logger.warning(f"RAG Retriever init failed: {e}")
 
@@ -475,7 +473,9 @@ class TradingOrchestrator:
                             "  ⚠️  [%s] %s: %s",
                             lesson.severity.upper(),
                             lesson.title,
-                            lesson.prevention[:100] + "..." if len(lesson.prevention) > 100 else lesson.prevention,
+                            lesson.prevention[:100] + "..."
+                            if len(lesson.prevention) > 100
+                            else lesson.prevention,
                         )
 
                 # Log to telemetry
@@ -674,11 +674,15 @@ class TradingOrchestrator:
                                     if momentum_exit:
                                         exit_features = momentum_exit.indicators
                                 except Exception as fetch_err:
-                                    logger.debug(f"Could not fetch exit features for {symbol}: {fetch_err}")
+                                    logger.debug(
+                                        f"Could not fetch exit features for {symbol}: {fetch_err}"
+                                    )
                                     exit_features = entry_features  # Fallback to entry features
 
                                 # Calculate reward (P/L percentage)
-                                reward = position.unrealized_plpc  # Already a percentage (e.g., 0.03 for 3%)
+                                reward = (
+                                    position.unrealized_plpc
+                                )  # Already a percentage (e.g., 0.03 for 3%)
 
                                 # Record the trade outcome for DiscoRL learning
                                 training_metrics = self.rl_filter.record_trade_outcome(
@@ -705,7 +709,9 @@ class TradingOrchestrator:
                                         },
                                     )
                             else:
-                                logger.debug(f"No entry features found for {symbol}, skipping DiscoRL learning")
+                                logger.debug(
+                                    f"No entry features found for {symbol}, skipping DiscoRL learning"
+                                )
 
                         except Exception as rl_err:
                             logger.warning(f"DiscoRL online learning failed for {symbol}: {rl_err}")
@@ -1057,7 +1063,9 @@ class TradingOrchestrator:
             ind = momentum_signal.indicators
             rejection_reason = self._format_momentum_rejection(ind)
             self.telemetry.update_ticker_decision(
-                ticker, gate=1, status="REJECT",
+                ticker,
+                gate=1,
+                status="REJECT",
                 indicators=ind,
                 rejection_reason=rejection_reason,
             )

@@ -50,6 +50,7 @@ def _get_verifier():
     if _verifier is None:
         try:
             from src.safety.verification_framework import PreTradeVerifier
+
             _verifier = PreTradeVerifier()
         except ImportError:
             logger.warning("PreTradeVerifier not available")
@@ -62,6 +63,7 @@ def _get_rag():
     if _rag is None:
         try:
             from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
             _rag = LessonsLearnedRAG()
         except ImportError:
             logger.warning("LessonsLearnedRAG not available")
@@ -74,6 +76,7 @@ def _get_circuit_breaker():
     if _circuit_breaker is None:
         try:
             from src.safety.circuit_breakers import CircuitBreaker
+
             _circuit_breaker = CircuitBreaker()
         except ImportError:
             logger.warning("CircuitBreaker not available")
@@ -86,6 +89,7 @@ def _get_volatility_safety():
     if _volatility_safety is None:
         try:
             from src.safety import volatility_adjusted_safety
+
             _volatility_safety = volatility_adjusted_safety
         except ImportError:
             logger.warning("Volatility-adjusted safety module not available")
@@ -203,9 +207,7 @@ def validate_before_trade(
         # Add RAG warnings
         for warning in context.get("warnings", []):
             if warning.get("severity") in ["high", "critical"]:
-                result["warnings"].append(
-                    f"[RAG] {warning['title']}: {warning['prevention']}"
-                )
+                result["warnings"].append(f"[RAG] {warning['title']}: {warning['prevention']}")
 
     # 4. Final size sanity check (critical safety net)
     HARD_MAX_TRADE = 50000  # $50k absolute max per trade
@@ -280,7 +282,10 @@ def quick_validate(
     """
     # Check for obvious bugs
     if amount > daily_budget * 100:
-        return False, f"Amount ${amount:.2f} is {amount/daily_budget:.0f}x daily budget - likely bug"
+        return (
+            False,
+            f"Amount ${amount:.2f} is {amount / daily_budget:.0f}x daily budget - likely bug",
+        )
 
     if amount < 0:
         return False, "Amount cannot be negative"
@@ -370,6 +375,7 @@ def log_trade_for_learning(
         # Size anomaly detected - add lesson
         if rag:
             from src.rag.lessons_learned_rag import ingest_trade_anomaly
+
             ingest_trade_anomaly(
                 rag=rag,
                 anomaly_type="size_discrepancy",
@@ -406,6 +412,7 @@ def require_validation(func):
             # Trade logic here
             pass
     """
+
     def wrapper(symbol: str, side: str, amount: float, portfolio_value: float, **kwargs):
         # Validate first
         validation = validate_before_trade(
@@ -441,7 +448,7 @@ if __name__ == "__main__":
     ]
 
     for test in tests:
-        print(f"\n{'-'*60}")
+        print(f"\n{'-' * 60}")
         print(f"Testing: {test['symbol']} {test['side']} ${test['amount']:.2f}")
 
         result = validate_before_trade(
@@ -463,7 +470,7 @@ if __name__ == "__main__":
                 print(f"  ⚠️ {w}")
 
     # Quick validate test
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("QUICK VALIDATE TEST")
     print("=" * 80)
 

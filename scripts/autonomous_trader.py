@@ -454,6 +454,7 @@ def execute_crypto_trading() -> None:
                 # Try to get BTC price for the simulation
                 try:
                     import yfinance as yf
+
                     ticker = yf.Ticker("BTC-USD")
                     hist = ticker.history(period="1d")
                     btc_price = float(hist["Close"].iloc[-1]) if not hist.empty else 100000.0
@@ -534,7 +535,20 @@ def _update_system_state_with_reit_trade(trade_record: dict[str, Any], logger) -
         "allocation": 0.10,
         "daily_amount": 10.0,
         "sectors": ["Growth", "Defensive", "Residential"],
-        "universe": ["AMT", "CCI", "DLR", "EQIX", "PLD", "O", "VICI", "PSA", "WELL", "AVB", "EQR", "INVH"],
+        "universe": [
+            "AMT",
+            "CCI",
+            "DLR",
+            "EQIX",
+            "PLD",
+            "O",
+            "VICI",
+            "PSA",
+            "WELL",
+            "AVB",
+            "EQR",
+            "INVH",
+        ],
         "trades_executed": 0,
         "total_invested": 0.0,
         "status": "active",
@@ -616,7 +630,20 @@ def _update_reit_daily_returns(logger) -> None:
         return
 
     # REIT symbols from our universe
-    reit_universe = {"AMT", "CCI", "DLR", "EQIX", "PLD", "O", "VICI", "PSA", "WELL", "AVB", "EQR", "INVH"}
+    reit_universe = {
+        "AMT",
+        "CCI",
+        "DLR",
+        "EQIX",
+        "PLD",
+        "O",
+        "VICI",
+        "PSA",
+        "WELL",
+        "AVB",
+        "EQR",
+        "INVH",
+    }
 
     # Calculate REIT P/L from open positions
     open_positions = state.get("performance", {}).get("open_positions", [])
@@ -655,7 +682,9 @@ def _update_reit_daily_returns(logger) -> None:
     try:
         with state_path.open("w", encoding="utf-8") as handle:
             json.dump(state, handle, indent=2)
-        logger.info(f"📊 REIT Daily Returns: ${reit_realized + reit_unrealized:.2f} ({len(reit_positions)} positions)")
+        logger.info(
+            f"📊 REIT Daily Returns: ${reit_realized + reit_unrealized:.2f} ({len(reit_positions)} positions)"
+        )
     except Exception:
         pass
 
@@ -800,7 +829,9 @@ def _update_precious_metals_daily_returns(logger) -> None:
     try:
         with state_path.open("w", encoding="utf-8") as handle:
             json.dump(state, handle, indent=2)
-        logger.info(f"Precious Metals Daily Returns: ${metals_realized + metals_unrealized:.2f} ({len(metals_positions)} positions)")
+        logger.info(
+            f"Precious Metals Daily Returns: ${metals_realized + metals_unrealized:.2f} ({len(metals_positions)} positions)"
+        )
     except Exception:
         pass
 
@@ -846,7 +877,7 @@ def execute_precious_metals_trading() -> None:
 
         regime = signals[0].get("regime", "neutral") if signals else "neutral"
         logger.info(f"Current metals regime: {regime}")
-        allocation_str = [(s['symbol'], f"{s['strength']*100:.0f}%") for s in signals]
+        allocation_str = [(s["symbol"], f"{s['strength'] * 100:.0f}%") for s in signals]
         logger.info(f"Allocation: {allocation_str}")
 
         # Execute trades
@@ -881,7 +912,7 @@ def execute_precious_metals_trading() -> None:
                             "timestamp": datetime.now().isoformat(),
                             "status": "SUBMITTED",
                             "strategy": "PreciousMetalsStrategy",
-                            "reason": f"Regime: {regime}, Weight: {sig.get('strength', 0)*100:.0f}%",
+                            "reason": f"Regime: {regime}, Weight: {sig.get('strength', 0) * 100:.0f}%",
                             "mode": "PAPER",
                             "regime": regime,
                         }
@@ -898,11 +929,15 @@ def execute_precious_metals_trading() -> None:
                 # Update daily returns
                 _update_precious_metals_daily_returns(logger)
             else:
-                logger.warning(f"Precious metals execution failed: {result.get('error', 'unknown')}")
+                logger.warning(
+                    f"Precious metals execution failed: {result.get('error', 'unknown')}"
+                )
         else:
             logger.info("Precious Metals Analysis complete (no trader - signals only)")
             for sig in signals:
-                logger.info(f"   {sig['symbol']}: {sig['action']} @ {sig['strength']*100:.0f}% weight")
+                logger.info(
+                    f"   {sig['symbol']}: {sig['action']} @ {sig['strength'] * 100:.0f}% weight"
+                )
 
     except ImportError as e:
         logger.warning(f"Precious metals strategy not available: {e}")
@@ -997,14 +1032,18 @@ def execute_reit_trading() -> None:
                 json.dump(daily_trades, f, indent=4)
 
             logger.info(f"💾 REIT trades saved to {trades_file}")
-            logger.info(f"✅ REIT strategy executed: {len(signals)} positions @ ${per_trade_amount:.2f} each")
+            logger.info(
+                f"✅ REIT strategy executed: {len(signals)} positions @ ${per_trade_amount:.2f} each"
+            )
 
             # Update REIT daily returns in system_state for easy CEO visibility
             _update_reit_daily_returns(logger)
         else:
             logger.info("📋 REIT Analysis complete (no trader - signals only)")
             for sig in signals:
-                logger.info(f"   {sig['symbol']}: {sig.get('action', 'hold')} (score: {sig.get('strength', 0):.2f})")
+                logger.info(
+                    f"   {sig['symbol']}: {sig.get('action', 'hold')} (score: {sig.get('strength', 0):.2f})"
+                )
 
     except ImportError as e:
         logger.warning(f"⚠️  REIT strategy not available: {e}")

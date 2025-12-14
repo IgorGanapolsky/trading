@@ -15,7 +15,6 @@ Exit codes:
 from __future__ import annotations
 
 import json
-import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -98,10 +97,14 @@ def check_session_decisions() -> tuple[bool, str, dict]:
         }
 
         if rejection_rate >= 0.95 and total >= 5:
-            return False, (
-                f"CRITICAL: {rejection_rate:.0%} rejection rate ({rejected}/{total}). "
-                "Filters may be too strict!"
-            ), stats
+            return (
+                False,
+                (
+                    f"CRITICAL: {rejection_rate:.0%} rejection rate ({rejected}/{total}). "
+                    "Filters may be too strict!"
+                ),
+                stats,
+            )
 
         return True, f"Analyzed {total} tickers, executed {executed}, rejected {rejected}", stats
 

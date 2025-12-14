@@ -14,10 +14,10 @@ Tests:
 """
 
 import time
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+
 import pytest
 
 
@@ -170,11 +170,13 @@ class TestOrderRejectionRecovery:
         callbacks_executed = []
 
         def on_rejection(order: MockOrder):
-            callbacks_executed.append({
-                "order_id": order.id,
-                "reason": order.reject_reason,
-                "time": time.time(),
-            })
+            callbacks_executed.append(
+                {
+                    "order_id": order.id,
+                    "reason": order.reject_reason,
+                    "time": time.time(),
+                }
+            )
 
         order = MockOrder(
             id="ORD003",
@@ -197,8 +199,12 @@ class TestOrphanedPositionDetection:
     def test_detect_orphaned_position(self):
         """Detect position without corresponding order."""
         orders = {
-            "ORD001": MockOrder(id="ORD001", symbol="SPY", side="buy", qty=100, status=OrderStatus.FILLED),
-            "ORD002": MockOrder(id="ORD002", symbol="QQQ", side="buy", qty=50, status=OrderStatus.FILLED),
+            "ORD001": MockOrder(
+                id="ORD001", symbol="SPY", side="buy", qty=100, status=OrderStatus.FILLED
+            ),
+            "ORD002": MockOrder(
+                id="ORD002", symbol="QQQ", side="buy", qty=50, status=OrderStatus.FILLED
+            ),
         }
 
         positions = {
@@ -209,9 +215,7 @@ class TestOrphanedPositionDetection:
 
         orphaned = []
         for symbol, pos in positions.items():
-            if pos.get("source_order") is None:
-                orphaned.append(symbol)
-            elif pos["source_order"] not in orders:
+            if pos.get("source_order") is None or pos["source_order"] not in orders:
                 orphaned.append(symbol)
 
         assert "AAPL" in orphaned, "Should detect orphaned AAPL position"
@@ -236,12 +240,14 @@ class TestOrphanedPositionDetection:
         for symbol, local_qty in local_positions.items():
             broker_qty = broker_positions.get(symbol, 0)
             if local_qty != broker_qty:
-                discrepancies.append({
-                    "symbol": symbol,
-                    "local": local_qty,
-                    "broker": broker_qty,
-                    "diff": local_qty - broker_qty,
-                })
+                discrepancies.append(
+                    {
+                        "symbol": symbol,
+                        "local": local_qty,
+                        "broker": broker_qty,
+                        "diff": local_qty - broker_qty,
+                    }
+                )
 
         assert len(discrepancies) == 2, "Should find 2 discrepancies"
         assert any(d["symbol"] == "QQQ" for d in discrepancies)
@@ -254,15 +260,24 @@ class TestOrderStateReconciliation:
     def test_stale_order_detection(self):
         """Detect orders with stale status."""
         orders = [
-            {"id": "ORD001", "status": "submitted", "submitted_at": time.time() - 3600},  # 1 hour old
+            {
+                "id": "ORD001",
+                "status": "submitted",
+                "submitted_at": time.time() - 3600,
+            },  # 1 hour old
             {"id": "ORD002", "status": "submitted", "submitted_at": time.time() - 60},  # 1 min old
-            {"id": "ORD003", "status": "filled", "submitted_at": time.time() - 3600},  # Old but filled
+            {
+                "id": "ORD003",
+                "status": "filled",
+                "submitted_at": time.time() - 3600,
+            },  # Old but filled
         ]
 
         stale_threshold_seconds = 300  # 5 minutes
 
         stale_orders = [
-            o for o in orders
+            o
+            for o in orders
             if o["status"] == "submitted"
             and (time.time() - o["submitted_at"]) > stale_threshold_seconds
         ]
@@ -273,8 +288,18 @@ class TestOrderStateReconciliation:
     def test_order_status_transition_validation(self):
         """Validate order status transitions are valid."""
         valid_transitions = {
-            OrderStatus.PENDING: {OrderStatus.SUBMITTED, OrderStatus.REJECTED, OrderStatus.CANCELLED},
-            OrderStatus.SUBMITTED: {OrderStatus.PARTIALLY_FILLED, OrderStatus.FILLED, OrderStatus.REJECTED, OrderStatus.CANCELLED, OrderStatus.EXPIRED},
+            OrderStatus.PENDING: {
+                OrderStatus.SUBMITTED,
+                OrderStatus.REJECTED,
+                OrderStatus.CANCELLED,
+            },
+            OrderStatus.SUBMITTED: {
+                OrderStatus.PARTIALLY_FILLED,
+                OrderStatus.FILLED,
+                OrderStatus.REJECTED,
+                OrderStatus.CANCELLED,
+                OrderStatus.EXPIRED,
+            },
             OrderStatus.PARTIALLY_FILLED: {OrderStatus.FILLED, OrderStatus.CANCELLED},
             OrderStatus.FILLED: set(),  # Terminal state
             OrderStatus.REJECTED: set(),  # Terminal state
@@ -371,15 +396,15 @@ class TestMarketHoursEdgeCases:
     def test_market_holiday_handling(self):
         """Handle orders on market holidays."""
         holidays_2025 = [
-            datetime(2025, 1, 1),   # New Year's
+            datetime(2025, 1, 1),  # New Year's
             datetime(2025, 1, 20),  # MLK Day
             datetime(2025, 2, 17),  # Presidents Day
             datetime(2025, 4, 18),  # Good Friday
             datetime(2025, 5, 26),  # Memorial Day
-            datetime(2025, 7, 4),   # Independence Day
-            datetime(2025, 9, 1),   # Labor Day
-            datetime(2025, 11, 27), # Thanksgiving
-            datetime(2025, 12, 25), # Christmas
+            datetime(2025, 7, 4),  # Independence Day
+            datetime(2025, 9, 1),  # Labor Day
+            datetime(2025, 11, 27),  # Thanksgiving
+            datetime(2025, 12, 25),  # Christmas
         ]
 
         def is_holiday(date: datetime) -> bool:

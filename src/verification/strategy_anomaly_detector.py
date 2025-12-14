@@ -205,7 +205,10 @@ class StrategyAnomalyDetector:
         # Check for unregistered strategy files
         for py_file in strategies_dir.glob("*_strategy.py"):
             relative_path = str(py_file)
-            if relative_path not in registered_files and "src/strategies/" + py_file.name not in registered_files:
+            if (
+                relative_path not in registered_files
+                and "src/strategies/" + py_file.name not in registered_files
+            ):
                 # Skip base classes and utilities
                 if py_file.name in ["base_strategy.py", "__init__.py"]:
                     continue

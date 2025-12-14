@@ -8,14 +8,14 @@ Tests the multi-stage verification including:
 - Pattern learning
 """
 
-import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime, timezone
+from unittest.mock import Mock
 
+import pytest
 from src.verification.hallucination_prevention import (
+    HallucinationPattern,
     HallucinationPreventionPipeline,
     Prediction,
-    HallucinationPattern,
 )
 
 
@@ -280,10 +280,7 @@ class TestPatternLearning:
         assert len(pipeline.patterns) > initial_patterns
 
         # Find the pattern
-        pattern = next(
-            (p for p in pipeline.patterns if "test/model" in p.pattern_id),
-            None
-        )
+        pattern = next((p for p in pipeline.patterns if "test/model" in p.pattern_id), None)
         assert pattern is not None
         assert pattern.frequency == 3
 
@@ -317,15 +314,11 @@ class TestPatternMatching:
 
         # Should match
         assert pipeline._matches_pattern(
-            pattern, "SPY", "BUY", "model",
-            "This is guaranteed to work"
+            pattern, "SPY", "BUY", "model", "This is guaranteed to work"
         )
 
         # Should not match
-        assert not pipeline._matches_pattern(
-            pattern, "SPY", "BUY", "model",
-            "This might work"
-        )
+        assert not pipeline._matches_pattern(pattern, "SPY", "BUY", "model", "This might work")
 
     def test_matches_model_pattern(self, pipeline):
         """Test model-specific pattern matching."""
@@ -340,16 +333,10 @@ class TestPatternMatching:
         )
 
         # Should match specific model
-        assert pipeline._matches_pattern(
-            pattern, "SPY", "BUY", "bad/model",
-            "Some reasoning"
-        )
+        assert pipeline._matches_pattern(pattern, "SPY", "BUY", "bad/model", "Some reasoning")
 
         # Should not match other models
-        assert not pipeline._matches_pattern(
-            pattern, "SPY", "BUY", "good/model",
-            "Some reasoning"
-        )
+        assert not pipeline._matches_pattern(pattern, "SPY", "BUY", "good/model", "Some reasoning")
 
 
 class TestAccuracyCalculation:

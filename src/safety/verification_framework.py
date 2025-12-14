@@ -19,9 +19,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
-
-import numpy as np
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +174,7 @@ class PreTradeVerifier:
                 check_name="size_sanity",
                 passed=True,
                 severity="WARNING",
-                message=f"Trade size ${amount:.2f} is {amount/self.daily_budget:.1f}x daily budget",
+                message=f"Trade size ${amount:.2f} is {amount / self.daily_budget:.1f}x daily budget",
                 details={"amount": amount, "daily_budget": self.daily_budget},
             )
 
@@ -194,8 +192,12 @@ class PreTradeVerifier:
                 check_name="daily_budget",
                 passed=False,
                 severity="CRITICAL",
-                message=f"Trade ${amount:.2f} is {amount/self.daily_budget:.0f}x daily budget - LIKELY BUG",
-                details={"amount": amount, "daily_budget": self.daily_budget, "multiplier": amount/self.daily_budget},
+                message=f"Trade ${amount:.2f} is {amount / self.daily_budget:.0f}x daily budget - LIKELY BUG",
+                details={
+                    "amount": amount,
+                    "daily_budget": self.daily_budget,
+                    "multiplier": amount / self.daily_budget,
+                },
                 suggested_action="Check for unit conversion error (shares vs dollars)",
             )
 
@@ -203,7 +205,7 @@ class PreTradeVerifier:
             check_name="daily_budget",
             passed=True,
             severity="INFO",
-            message=f"Trade within expected budget range",
+            message="Trade within expected budget range",
         )
 
     def _check_concentration(
@@ -227,7 +229,11 @@ class PreTradeVerifier:
                 passed=False,
                 severity="ERROR",
                 message=f"{symbol} would be {exposure_pct:.1%} of portfolio (max {self.max_position_pct:.1%})",
-                details={"symbol": symbol, "exposure_pct": exposure_pct, "max_pct": self.max_position_pct},
+                details={
+                    "symbol": symbol,
+                    "exposure_pct": exposure_pct,
+                    "max_pct": self.max_position_pct,
+                },
                 suggested_action="Reduce position size or diversify",
             )
 
@@ -417,22 +423,28 @@ class PostTradeAuditor:
 
         # Check for size discrepancy
         if actual_amount > expected_amount * 1.5:
-            anomalies.append({
-                "type": "size_discrepancy",
-                "message": f"Actual ${actual_amount:.2f} >> expected ${expected_amount:.2f}",
-            })
-            lessons.append({
-                "category": "size_error",
-                "lesson": f"Trade executed at {actual_amount/expected_amount:.1f}x expected size",
-                "threshold": expected_amount,
-            })
+            anomalies.append(
+                {
+                    "type": "size_discrepancy",
+                    "message": f"Actual ${actual_amount:.2f} >> expected ${expected_amount:.2f}",
+                }
+            )
+            lessons.append(
+                {
+                    "category": "size_error",
+                    "lesson": f"Trade executed at {actual_amount / expected_amount:.1f}x expected size",
+                    "threshold": expected_amount,
+                }
+            )
 
         # Check for high slippage
         if slippage_pct > 1.0:
-            anomalies.append({
-                "type": "high_slippage",
-                "message": f"Slippage {slippage_pct:.2f}% exceeds 1% threshold",
-            })
+            anomalies.append(
+                {
+                    "type": "high_slippage",
+                    "message": f"Slippage {slippage_pct:.2f}% exceeds 1% threshold",
+                }
+            )
 
         # Generate audit report
         report = {
@@ -525,8 +537,18 @@ if __name__ == "__main__":
     scenarios = [
         {"symbol": "SPY", "side": "buy", "amount": 8.0, "portfolio": 100000},
         {"symbol": "SPY", "side": "buy", "amount": 100.0, "portfolio": 100000},
-        {"symbol": "SPY", "side": "buy", "amount": 1600.0, "portfolio": 100000},  # Nov 3 bug scenario
-        {"symbol": "NVDA", "side": "buy", "amount": 20000.0, "portfolio": 100000},  # 20% of portfolio
+        {
+            "symbol": "SPY",
+            "side": "buy",
+            "amount": 1600.0,
+            "portfolio": 100000,
+        },  # Nov 3 bug scenario
+        {
+            "symbol": "NVDA",
+            "side": "buy",
+            "amount": 20000.0,
+            "portfolio": 100000,
+        },  # 20% of portfolio
     ]
 
     print("\nPre-Trade Verification Tests:")

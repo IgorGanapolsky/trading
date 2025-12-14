@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class VerificationResult:
     """Result of pre-merge verification."""
-    
+
     passed: bool
     checks_run: int
     checks_passed: int
@@ -29,10 +29,10 @@ class VerificationResult:
     failures: list[dict] = field(default_factory=list)
     warnings: list[dict] = field(default_factory=list)
     rag_check: Optional[dict] = None
-    
+
     def __bool__(self):
         return self.passed
-    
+
     def summary(self) -> str:
         status = "✅ PASSED" if self.passed else "❌ FAILED"
         return (
@@ -45,7 +45,7 @@ class VerificationResult:
 class PreMergeVerifier:
     """
     Multi-layer pre-merge verification system.
-    
+
     Checks:
     1. Syntax validation (all Python files compile)
     2. Critical import verification
@@ -53,14 +53,14 @@ class PreMergeVerifier:
     4. Lint check (ruff)
     5. Type check (mypy) - optional
     6. Test execution - optional
-    
+
     Usage:
         verifier = PreMergeVerifier()
         result = verifier.verify_all(changed_files)
         if not result.passed:
             print("MERGE BLOCKED:", result.failures)
     """
-    
+
     # Critical imports that MUST work for trading to function
     CRITICAL_IMPORTS = [
         ("TradingOrchestrator", "from src.orchestrator.main import TradingOrchestrator"),
@@ -69,11 +69,11 @@ class PreMergeVerifier:
         ("CoreStrategy", "from src.strategies.core_strategy import CoreStrategy"),
         ("CryptoStrategy", "from src.strategies.crypto_strategy import CryptoStrategy"),
     ]
-    
+
     def __init__(self, project_root: Optional[Path] = None):
         self.project_root = project_root or Path(__file__).parent.parent.parent
         self.results: list[dict] = []
-        
+
     def verify_all(
         self,
         changed_files: Optional[list[str]] = None,
@@ -82,12 +82,12 @@ class PreMergeVerifier:
     ) -> VerificationResult:
         """
         Run all verification checks.
-        
+
         Args:
             changed_files: Optional list of changed files (for targeted checks)
             run_tests: Whether to run pytest
             run_typecheck: Whether to run mypy
-            
+
         Returns:
             VerificationResult with pass/fail status and details
         """
@@ -95,7 +95,7 @@ class PreMergeVerifier:
         checks_passed = 0
         failures = []
         warnings = []
-        
+
         # Check 1: Syntax Validation
         checks_run += 1
         syntax_result = self.check_syntax()
@@ -105,7 +105,7 @@ class PreMergeVerifier:
         else:
             failures.append(syntax_result)
             logger.error(f"❌ Syntax check failed: {syntax_result['errors']}")
-        
+
         # Check 2: Critical Imports
         checks_run += 1
         import_result = self.check_critical_imports()
@@ -115,7 +115,7 @@ class PreMergeVerifier:
         else:
             failures.append(import_result)
             logger.error(f"❌ Critical imports failed: {import_result['errors']}")
-        
+
         # Check 3: RAG Safety Check
         checks_run += 1
         rag_result = self.check_rag_safety(changed_files or [])
@@ -130,7 +130,7 @@ class PreMergeVerifier:
                 checks_passed += 1
                 warnings.append(rag_result)
                 logger.warning(f"⚠️ RAG safety warnings: {rag_result['warnings']}")
-        
+
         # Check 4: Lint Check
         checks_run += 1
         lint_result = self.check_lint()
@@ -142,7 +142,7 @@ class PreMergeVerifier:
             checks_passed += 1
             warnings.append(lint_result)
             logger.warning(f"⚠️ Lint issues: {lint_result.get('issues', 'unknown')}")
-        
+
         # Check 5: Type Check (optional)
         if run_typecheck:
             checks_run += 1
@@ -153,7 +153,7 @@ class PreMergeVerifier:
             else:
                 warnings.append(type_result)
                 logger.warning(f"⚠️ Type issues: {type_result.get('issues', 'unknown')}")
-        
+
         # Check 6: Tests (optional)
         if run_tests:
             checks_run += 1
@@ -164,7 +164,7 @@ class PreMergeVerifier:
             else:
                 failures.append(test_result)
                 logger.error(f"❌ Tests failed: {test_result.get('output', 'unknown')}")
-        
+
         return VerificationResult(
             passed=len(failures) == 0,
             checks_run=checks_run,
@@ -174,12 +174,12 @@ class PreMergeVerifier:
             warnings=warnings,
             rag_check=rag_result,
         )
-    
+
     def check_syntax(self) -> dict:
         """Verify all Python files have valid syntax."""
         errors = []
         files_checked = 0
-        
+
         for py_file in self.project_root.glob("src/**/*.py"):
             files_checked += 1
             try:
@@ -187,29 +187,31 @@ class PreMergeVerifier:
                     source = f.read()
                 ast.parse(source)
             except SyntaxError as e:
-                errors.append({
-                    "file": str(py_file),
-                    "line": e.lineno,
-                    "message": str(e.msg),
-                })
-        
+                errors.append(
+                    {
+                        "file": str(py_file),
+                        "line": e.lineno,
+                        "message": str(e.msg),
+                    }
+                )
+
         return {
             "check": "syntax",
             "passed": len(errors) == 0,
             "files_checked": files_checked,
             "errors": errors,
         }
-    
+
     def check_critical_imports(self) -> dict:
         """Verify critical trading system imports work."""
         errors = []
-        
+
         # We check by parsing, not importing (to avoid dependency issues)
         for name, import_stmt in self.CRITICAL_IMPORTS:
             try:
                 # Parse the import statement
                 tree = ast.parse(import_stmt)
-                
+
                 # Extract the module path
                 node = tree.body[0]
                 if isinstance(node, ast.ImportFrom):
@@ -224,7 +226,7 @@ class PreMergeVerifier:
                             init_file = parent / "__init__.py"
                             if init_file.exists():
                                 continue
-                    
+
                     # Try actual import in subprocess to catch runtime errors
                     result = subprocess.run(
                         [sys.executable, "-c", import_stmt],
@@ -236,38 +238,42 @@ class PreMergeVerifier:
                     if result.returncode != 0:
                         # Check if it's just a missing dependency vs syntax error
                         if "SyntaxError" in result.stderr:
-                            errors.append({
-                                "name": name,
-                                "import": import_stmt,
-                                "error": result.stderr.strip(),
-                                "type": "syntax_error",
-                            })
-                            
+                            errors.append(
+                                {
+                                    "name": name,
+                                    "import": import_stmt,
+                                    "error": result.stderr.strip(),
+                                    "type": "syntax_error",
+                                }
+                            )
+
             except Exception as e:
-                errors.append({
-                    "name": name,
-                    "import": import_stmt,
-                    "error": str(e),
-                })
-        
+                errors.append(
+                    {
+                        "name": name,
+                        "import": import_stmt,
+                        "error": str(e),
+                    }
+                )
+
         return {
             "check": "critical_imports",
             "passed": len(errors) == 0,
             "imports_checked": len(self.CRITICAL_IMPORTS),
             "errors": errors,
         }
-    
+
     def check_rag_safety(self, changed_files: list[str]) -> dict:
         """Check RAG for similar past incidents."""
         try:
             from .rag_safety_checker import RAGSafetyChecker
-            
+
             checker = RAGSafetyChecker()
             result = checker.check_merge_safety(
                 changed_files=changed_files,
                 commit_message="",
             )
-            
+
             return {
                 "check": "rag_safety",
                 "passed": result.safe or len(result.blocking_reasons) == 0,
@@ -277,14 +283,14 @@ class PreMergeVerifier:
                 "similar_incidents": result.similar_incidents,
                 "confidence": result.confidence,
             }
-            
+
         except ImportError:
             return {
                 "check": "rag_safety",
                 "passed": True,
                 "warnings": ["RAG safety checker not available"],
             }
-    
+
     def check_lint(self) -> dict:
         """Run ruff linter."""
         try:
@@ -295,13 +301,13 @@ class PreMergeVerifier:
                 cwd=str(self.project_root),
                 timeout=60,
             )
-            
+
             return {
                 "check": "lint",
                 "passed": result.returncode == 0,
                 "issues": result.stdout.strip() if result.stdout else None,
             }
-            
+
         except FileNotFoundError:
             return {
                 "check": "lint",
@@ -314,7 +320,7 @@ class PreMergeVerifier:
                 "passed": False,
                 "issues": "lint check timed out",
             }
-    
+
     def check_types(self) -> dict:
         """Run mypy type checker."""
         try:
@@ -325,20 +331,20 @@ class PreMergeVerifier:
                 cwd=str(self.project_root),
                 timeout=120,
             )
-            
+
             return {
                 "check": "types",
                 "passed": result.returncode == 0,
                 "issues": result.stdout.strip() if result.stdout else None,
             }
-            
+
         except FileNotFoundError:
             return {
                 "check": "types",
                 "passed": True,
                 "issues": "mypy not installed",
             }
-    
+
     def check_tests(self) -> dict:
         """Run pytest."""
         try:
@@ -349,13 +355,13 @@ class PreMergeVerifier:
                 cwd=str(self.project_root),
                 timeout=300,
             )
-            
+
             return {
                 "check": "tests",
                 "passed": result.returncode == 0,
                 "output": result.stdout.strip() if result.stdout else None,
             }
-            
+
         except FileNotFoundError:
             return {
                 "check": "tests",
@@ -367,35 +373,35 @@ class PreMergeVerifier:
 def main():
     """CLI entry point."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Pre-merge verification")
     parser.add_argument("--tests", action="store_true", help="Run tests")
     parser.add_argument("--types", action="store_true", help="Run type check")
     parser.add_argument("--files", nargs="*", help="Changed files")
     args = parser.parse_args()
-    
+
     verifier = PreMergeVerifier()
     result = verifier.verify_all(
         changed_files=args.files,
         run_tests=args.tests,
         run_typecheck=args.types,
     )
-    
+
     print("\n" + "=" * 60)
     print("PRE-MERGE VERIFICATION RESULTS")
     print("=" * 60)
     print(result.summary())
-    
+
     if result.failures:
         print("\nFAILURES:")
         for f in result.failures:
             print(f"  - {f['check']}: {f.get('errors') or f.get('reasons')}")
-    
+
     if result.warnings:
         print("\nWARNINGS:")
         for w in result.warnings:
             print(f"  - {w['check']}: {w.get('warnings') or w.get('issues')}")
-    
+
     sys.exit(0 if result.passed else 1)
 
 

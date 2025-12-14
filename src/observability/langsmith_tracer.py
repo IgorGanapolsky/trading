@@ -32,14 +32,13 @@ import functools
 import json
 import logging
 import os
-import time
 import uuid
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
+from typing import Any, Callable, Optional, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -103,9 +102,9 @@ class TraceSpan:
     duration_ms: float = 0.0
 
     # Input/Output
-    inputs: Dict[str, Any] = field(default_factory=dict)
-    outputs: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    inputs: dict[str, Any] = field(default_factory=dict)
+    outputs: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     # Cost tracking
     cost: CostMetrics = field(default_factory=CostMetrics)
@@ -114,7 +113,7 @@ class TraceSpan:
     status: str = "running"  # running, success, error
     error: Optional[str] = None
 
-    def complete(self, outputs: Optional[Dict[str, Any]] = None, error: Optional[str] = None):
+    def complete(self, outputs: Optional[dict[str, Any]] = None, error: Optional[str] = None):
         """Mark span as complete."""
         self.end_time = datetime.now(timezone.utc)
         self.duration_ms = (self.end_time - self.start_time).total_seconds() * 1000
@@ -128,7 +127,7 @@ class TraceSpan:
         else:
             self.status = "success"
 
-    def add_metadata(self, metadata: Dict[str, Any]):
+    def add_metadata(self, metadata: dict[str, Any]):
         """Add metadata to the span."""
         self.metadata.update(metadata)
 
@@ -145,7 +144,7 @@ class TraceSpan:
         )
         self.cost.calculate_cost()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "span_id": self.span_id,
@@ -170,7 +169,7 @@ class Trace:
 
     trace_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     name: str = ""
-    spans: List[TraceSpan] = field(default_factory=list)
+    spans: list[TraceSpan] = field(default_factory=list)
     start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     end_time: Optional[datetime] = None
 
@@ -182,7 +181,7 @@ class Trace:
     # Context
     session_id: Optional[str] = None
     user_id: Optional[str] = None
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
     def add_span(self, span: TraceSpan):
         """Add a span to the trace."""
@@ -198,7 +197,7 @@ class Trace:
             self.total_cost_usd += span.cost.estimated_cost_usd
             self.total_tokens += span.cost.input_tokens + span.cost.output_tokens
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "trace_id": self.trace_id,
@@ -224,10 +223,10 @@ class EvaluationDataset:
 
     def add_example(
         self,
-        inputs: Dict[str, Any],
+        inputs: dict[str, Any],
         expected_output: Any,
         actual_output: Any,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ):
         """Add an evaluation example."""
         example = {
@@ -260,7 +259,7 @@ class EvaluationDataset:
 
         return matches / total if total > 0 else 0.0
 
-    def get_examples(self, limit: int = 100) -> List[Dict[str, Any]]:
+    def get_examples(self, limit: int = 100) -> list[dict[str, Any]]:
         """Get recent examples from the dataset."""
         if not self.storage_path.exists():
             return []
@@ -283,7 +282,7 @@ class LangSmithTracer:
     Integrates with LangSmith API when LANGCHAIN_API_KEY is set.
     """
 
-    _instance: Optional["LangSmithTracer"] = None
+    _instance: Optional[LangSmithTracer] = None
 
     def __init__(
         self,
@@ -296,7 +295,7 @@ class LangSmithTracer:
 
         # Current trace context (thread-local in production)
         self._current_trace: Optional[Trace] = None
-        self._span_stack: List[TraceSpan] = []
+        self._span_stack: list[TraceSpan] = []
 
         # LangSmith client (if API key available)
         self._langsmith_client = None
@@ -304,10 +303,10 @@ class LangSmithTracer:
         self._init_langsmith()
 
         # Evaluation datasets
-        self._eval_datasets: Dict[str, EvaluationDataset] = {}
+        self._eval_datasets: dict[str, EvaluationDataset] = {}
 
         # Daily cost tracking
-        self._daily_costs: Dict[str, float] = {}  # date -> total_cost
+        self._daily_costs: dict[str, float] = {}  # date -> total_cost
         self._daily_budget = float(os.getenv("DAILY_LLM_BUDGET", "3.33"))  # $100/30 days
 
         logger.info(
@@ -332,7 +331,7 @@ class LangSmithTracer:
                 logger.warning(f"Failed to initialize LangSmith client: {e}")
 
     @classmethod
-    def get_instance(cls, **kwargs) -> "LangSmithTracer":
+    def get_instance(cls, **kwargs) -> LangSmithTracer:
         """Get singleton instance."""
         if cls._instance is None:
             cls._instance = cls(**kwargs)
@@ -429,7 +428,7 @@ class LangSmithTracer:
             )
         return self._eval_datasets[name]
 
-    def get_trace_summary(self, days: int = 7) -> Dict[str, Any]:
+    def get_trace_summary(self, days: int = 7) -> dict[str, Any]:
         """Get summary of traces for the past N days."""
         summary = {
             "total_traces": 0,

@@ -46,8 +46,8 @@ Created: 2025-12-11
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any, Optional
+from datetime import datetime
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +148,7 @@ class LessonsKnowledgeGraphQuery:
         """Initialize the RAG system."""
         try:
             from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
             self.rag = LessonsLearnedRAG()
             logger.info("Initialized lessons learned RAG system")
         except Exception as e:
@@ -195,7 +196,7 @@ class LessonsKnowledgeGraphQuery:
                         query=query["text"],
                         category=query.get("category"),
                         symbol=query.get("symbol"),
-                        top_k=5
+                        top_k=5,
                     )
                     all_results.extend(results)
                 except Exception as e:
@@ -242,45 +243,49 @@ class LessonsKnowledgeGraphQuery:
         queries = []
 
         # Query 1: Direct match (highest weight)
-        queries.append({
-            "text": f"{context.symbol} {context.side} {context.strategy}",
-            "category": None,
-            "symbol": context.symbol,
-            "weight": 1.0,
-        })
+        queries.append(
+            {
+                "text": f"{context.symbol} {context.side} {context.strategy}",
+                "category": None,
+                "symbol": context.symbol,
+                "weight": 1.0,
+            }
+        )
 
         # Query 2: Category match (trading logic)
-        queries.append({
-            "text": f"trading_logic {context.strategy} {context.side} decision",
-            "category": "trading_logic",
-            "symbol": None,
-            "weight": 0.8,
-        })
+        queries.append(
+            {
+                "text": f"trading_logic {context.strategy} {context.side} decision",
+                "category": "trading_logic",
+                "symbol": None,
+                "weight": 0.8,
+            }
+        )
 
         # Query 3: Risk-based (position size + regime)
         position_descriptor = self._get_position_size_descriptor(context.position_size_pct)
-        queries.append({
-            "text": f"{position_descriptor} position {context.regime} market risk",
-            "category": "risk_management",
-            "symbol": None,
-            "weight": 0.7,
-        })
+        queries.append(
+            {
+                "text": f"{position_descriptor} position {context.regime} market risk",
+                "category": "risk_management",
+                "symbol": None,
+                "weight": 0.7,
+            }
+        )
 
         # Query 4: Historical (symbol-specific)
-        queries.append({
-            "text": f"{context.symbol} trades recent history",
-            "category": None,
-            "symbol": context.symbol,
-            "weight": 0.6,
-        })
+        queries.append(
+            {
+                "text": f"{context.symbol} trades recent history",
+                "category": None,
+                "symbol": context.symbol,
+                "weight": 0.6,
+            }
+        )
 
         return queries
 
-    def aggregate_lessons(
-        self,
-        results: list[tuple],
-        context: TradeContext
-    ) -> dict:
+    def aggregate_lessons(self, results: list[tuple], context: TradeContext) -> dict:
         """
         Aggregate lessons from multi-query results.
 
@@ -304,23 +309,23 @@ class LessonsKnowledgeGraphQuery:
         # Convert to MatchedLesson objects
         matched_lessons = []
         for lesson, score in lesson_map.values():
-            matched_lessons.append(MatchedLesson(
-                lesson_id=lesson.id,
-                title=lesson.title,
-                description=lesson.description,
-                prevention=lesson.prevention,
-                severity=lesson.severity,
-                category=lesson.category,
-                relevance=score,
-                financial_impact=lesson.financial_impact,
-                tags=lesson.tags,
-            ))
+            matched_lessons.append(
+                MatchedLesson(
+                    lesson_id=lesson.id,
+                    title=lesson.title,
+                    description=lesson.description,
+                    prevention=lesson.prevention,
+                    severity=lesson.severity,
+                    category=lesson.category,
+                    relevance=score,
+                    financial_impact=lesson.financial_impact,
+                    tags=lesson.tags,
+                )
+            )
 
         # Sort by severity (critical first) then relevance
         severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-        matched_lessons.sort(
-            key=lambda l: (severity_order.get(l.severity, 4), -l.relevance)
-        )
+        matched_lessons.sort(key=lambda l: (severity_order.get(l.severity, 4), -l.relevance))
 
         # Build prevention checklist
         prevention_checklist = []
@@ -352,11 +357,7 @@ class LessonsKnowledgeGraphQuery:
         else:
             return "tiny"
 
-    def _build_risk_narrative(
-        self,
-        lessons: list[MatchedLesson],
-        context: TradeContext
-    ) -> str:
+    def _build_risk_narrative(self, lessons: list[MatchedLesson], context: TradeContext) -> str:
         """
         Build human-readable risk narrative.
 
@@ -375,34 +376,23 @@ class LessonsKnowledgeGraphQuery:
         high_count = sum(1 for l in lessons if l.severity == "high")
 
         # Calculate total financial impact
-        total_impact = sum(
-            l.financial_impact for l in lessons
-            if l.financial_impact is not None
-        )
+        total_impact = sum(l.financial_impact for l in lessons if l.financial_impact is not None)
 
         # Build narrative
         narrative_parts = []
 
         # Severity summary
         if critical_count > 0:
-            narrative_parts.append(
-                f"⚠️  CRITICAL: {critical_count} critical past failure(s) found."
-            )
+            narrative_parts.append(f"⚠️  CRITICAL: {critical_count} critical past failure(s) found.")
         if high_count > 0:
-            narrative_parts.append(
-                f"⚠️  {high_count} high-severity issue(s) found."
-            )
+            narrative_parts.append(f"⚠️  {high_count} high-severity issue(s) found.")
 
         # Financial impact
         if total_impact > 0:
-            narrative_parts.append(
-                f"💰 Past similar trades had ${total_impact:,.2f} in losses."
-            )
+            narrative_parts.append(f"💰 Past similar trades had ${total_impact:,.2f} in losses.")
 
         # Top lessons
-        narrative_parts.append(
-            f"📚 {len(lessons)} relevant lesson(s) from past trading:"
-        )
+        narrative_parts.append(f"📚 {len(lessons)} relevant lesson(s) from past trading:")
 
         for i, lesson in enumerate(lessons[:3], 1):  # Top 3
             narrative_parts.append(
@@ -416,13 +406,9 @@ class LessonsKnowledgeGraphQuery:
                 "\n🛑 RECOMMENDATION: Review prevention checklist before proceeding."
             )
         elif high_count > 0:
-            narrative_parts.append(
-                "\n⚠️  RECOMMENDATION: Verify prevention steps are satisfied."
-            )
+            narrative_parts.append("\n⚠️  RECOMMENDATION: Verify prevention steps are satisfied.")
         else:
-            narrative_parts.append(
-                "\n✅ RECOMMENDATION: Proceed with caution, monitor closely."
-            )
+            narrative_parts.append("\n✅ RECOMMENDATION: Proceed with caution, monitor closely.")
 
         return "\n".join(narrative_parts)
 
@@ -465,11 +451,7 @@ class LessonsKnowledgeGraphQuery:
 
 # Convenience function for quick queries
 def query_lessons_for_trade(
-    symbol: str,
-    side: str,
-    amount: float,
-    strategy: str = "momentum",
-    **kwargs
+    symbol: str, side: str, amount: float, strategy: str = "momentum", **kwargs
 ) -> dict:
     """
     Quick query for lessons learned.
@@ -499,20 +481,13 @@ def query_lessons_for_trade(
     """
     query = LessonsKnowledgeGraphQuery()
 
-    context = TradeContext(
-        symbol=symbol,
-        side=side,
-        amount=amount,
-        strategy=strategy,
-        **kwargs
-    )
+    context = TradeContext(symbol=symbol, side=side, amount=amount, strategy=strategy, **kwargs)
 
     return query.query_for_trade(context)
 
 
 if __name__ == "__main__":
     """Demo the knowledge graph query system."""
-    import json
 
     logging.basicConfig(level=logging.INFO)
 
@@ -533,7 +508,7 @@ if __name__ == "__main__":
         regime="volatile",
     )
 
-    print(f"\nQuerying for trade:")
+    print("\nQuerying for trade:")
     print(f"  Symbol: {context.symbol}")
     print(f"  Side: {context.side}")
     print(f"  Amount: ${context.amount:,.2f}")
@@ -561,7 +536,7 @@ if __name__ == "__main__":
             print(f"\n[{lesson['severity'].upper()}] {lesson['title']}")
             print(f"  Category: {lesson['category']}")
             print(f"  Relevance: {lesson['relevance']:.1%}")
-            if lesson['financial_impact']:
+            if lesson["financial_impact"]:
                 print(f"  Financial Impact: ${lesson['financial_impact']:,.2f}")
             print(f"  Prevention: {lesson['prevention']}")
 

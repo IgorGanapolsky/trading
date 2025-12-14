@@ -14,7 +14,6 @@ from __future__ import annotations
 import json
 import re
 import sys
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -64,9 +63,9 @@ class TestLessonsLearnedRegression:
         critical_lessons = [l for l in lessons if l["severity"] == "CRITICAL"]
 
         for lesson in critical_lessons:
-            assert "Prevention Rules" in lesson["content"] or "## Prevention" in lesson["content"], (
-                f"CRITICAL lesson {lesson['file']} missing Prevention Rules section"
-            )
+            assert (
+                "Prevention Rules" in lesson["content"] or "## Prevention" in lesson["content"]
+            ), f"CRITICAL lesson {lesson['file']} missing Prevention Rules section"
 
     def test_lessons_have_verification_tests(self, lessons):
         """Lessons should reference verification tests."""
@@ -91,6 +90,7 @@ class TestLL009CISyntaxFailure:
         try:
             from src.orchestrator.main import TradingOrchestrator
             from src.risk.trade_gateway import TradeGateway
+
             assert True
         except ImportError as e:
             pytest.fail(f"REGRESSION ll_009: Critical import failed: {e}")
@@ -112,7 +112,7 @@ class TestLL009CISyntaxFailure:
             except SyntaxError as e:
                 errors.append(f"{py_file}: {e}")
 
-        assert not errors, f"REGRESSION ll_009: Syntax errors found:\n" + "\n".join(errors)
+        assert not errors, "REGRESSION ll_009: Syntax errors found:\n" + "\n".join(errors)
 
     def test_large_pr_warning(self):
         """PRs with >10 files should trigger warning (ll_009 recommendation)."""
@@ -221,10 +221,10 @@ class TestMLPipelineIntegration:
 
         # Test with various return scenarios
         test_cases = [
-            [0.0001] * 30,           # Near-zero volatility
-            [-0.001] * 30,           # Consistent losses
-            [0.01, -0.01] * 15,      # Alternating
-            [0.02] * 30,             # Consistent gains
+            [0.0001] * 30,  # Near-zero volatility
+            [-0.001] * 30,  # Consistent losses
+            [0.01, -0.01] * 15,  # Alternating
+            [0.02] * 30,  # Consistent gains
         ]
 
         for returns in test_cases:
@@ -252,8 +252,8 @@ class TestMLPipelineIntegration:
             "sharpe_min": -10.0,
             "sharpe_max": 10.0,
             "max_daily_loss_pct": 0.03,  # 3%
-            "max_drawdown_pct": 0.10,    # 10%
-            "min_trades_per_day": 0,     # Alert on 0 trades
+            "max_drawdown_pct": 0.10,  # 10%
+            "min_trades_per_day": 0,  # Alert on 0 trades
         }
 
         for name, value in thresholds.items():
@@ -288,8 +288,16 @@ class TestPreMergeRAGCheck:
     def test_block_on_known_failure_pattern(self):
         """Pre-merge should block if change matches known failure pattern."""
         known_patterns = [
-            {"pattern": "import.*from.*typing.*import", "lesson": "ll_009", "reason": "Import structure change"},
-            {"pattern": "def\\s+__init__.*\\):", "lesson": "ll_009", "reason": "Constructor change in critical file"},
+            {
+                "pattern": "import.*from.*typing.*import",
+                "lesson": "ll_009",
+                "reason": "Import structure change",
+            },
+            {
+                "pattern": "def\\s+__init__.*\\):",
+                "lesson": "ll_009",
+                "reason": "Constructor change in critical file",
+            },
         ]
 
         # Simulate checking a diff

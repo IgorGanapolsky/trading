@@ -13,16 +13,11 @@ Author: Trading System
 Created: 2025-12-11
 """
 
-import json
-import math
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-
 from src.verification.llm_hallucination_rag_guard import (
-    INVALID_STRINGS,
     LLMHallucinationGuard,
-    Violation,
     create_hallucination_guard,
 )
 
@@ -123,7 +118,8 @@ class TestFormatValidation:
             result = guard.validate_output(output)
             # Should not have critical ticker violations
             ticker_critical = [
-                v for v in result["violations"]
+                v
+                for v in result["violations"]
                 if v["field"] == "symbol" and v["severity"] == "critical"
             ]
             assert len(ticker_critical) == 0, f"Ticker '{ticker}' should be valid"
@@ -145,8 +141,7 @@ class TestFormatValidation:
             result = guard.validate_output(output)
             assert result["valid"] is False, f"Should reject '{ticker}'"
             assert any(
-                v["field"] == "symbol" and v["severity"] == "critical"
-                for v in result["violations"]
+                v["field"] == "symbol" and v["severity"] == "critical" for v in result["violations"]
             ), f"Should have critical violation for '{ticker}'"
 
     def test_ticker_whitelist(self):
@@ -160,8 +155,7 @@ class TestFormatValidation:
         # Should pass (no critical violation) but have warning
         assert result["valid"] is True  # No critical violations
         assert any(
-            v["field"] == "symbol" and v["severity"] == "warning"
-            for v in result["violations"]
+            v["field"] == "symbol" and v["severity"] == "warning" for v in result["violations"]
         )
 
     def test_valid_action_formats(self):
@@ -175,7 +169,8 @@ class TestFormatValidation:
             output = {"symbol": "SPY", "action": action}
             result = guard.validate_output(output)
             action_violations = [
-                v for v in result["violations"]
+                v
+                for v in result["violations"]
                 if v["field"] == "action" and v["severity"] == "critical"
             ]
             assert len(action_violations) == 0, f"Action '{action}' should be valid"
@@ -184,7 +179,8 @@ class TestFormatValidation:
             output = {"symbol": "SPY", "side": side}
             result = guard.validate_output(output)
             side_violations = [
-                v for v in result["violations"]
+                v
+                for v in result["violations"]
                 if v["field"] == "side" and v["severity"] == "critical"
             ]
             assert len(side_violations) == 0, f"Side '{side}' should be valid"
@@ -200,8 +196,7 @@ class TestFormatValidation:
             result = guard.validate_output(output)
             assert result["valid"] is False
             assert any(
-                v["field"] == "action" and v["severity"] == "critical"
-                for v in result["violations"]
+                v["field"] == "action" and v["severity"] == "critical" for v in result["violations"]
             ), f"Should reject action '{action}'"
 
 
@@ -216,7 +211,8 @@ class TestRangeValidation:
             output = {"symbol": "SPY", "sentiment": sentiment}
             result = guard.validate_output(output)
             sentiment_violations = [
-                v for v in result["violations"]
+                v
+                for v in result["violations"]
                 if v["field"] == "sentiment" and v["severity"] == "critical"
             ]
             assert len(sentiment_violations) == 0, f"Sentiment {sentiment} should be valid"
@@ -242,7 +238,8 @@ class TestRangeValidation:
             output = {"symbol": "SPY", "confidence": confidence}
             result = guard.validate_output(output)
             confidence_critical = [
-                v for v in result["violations"]
+                v
+                for v in result["violations"]
                 if v["field"] == "confidence" and v["severity"] == "critical"
             ]
             assert len(confidence_critical) == 0, f"Confidence {confidence} should be valid"
@@ -259,9 +256,7 @@ class TestRangeValidation:
 
         # Should have warning about FACTS ceiling
         assert any(
-            v["field"] == "confidence" and
-            v["severity"] == "warning" and
-            "FACTS" in v["message"]
+            v["field"] == "confidence" and v["severity"] == "warning" and "FACTS" in v["message"]
             for v in result["violations"]
         )
 
@@ -286,7 +281,8 @@ class TestRangeValidation:
             output = {"symbol": "SPY", "amount": amount}
             result = guard.validate_output(output)
             amount_critical = [
-                v for v in result["violations"]
+                v
+                for v in result["violations"]
                 if v["field"] == "amount" and v["severity"] == "critical"
             ]
             assert len(amount_critical) == 0, f"Amount {amount} should be valid"
@@ -300,8 +296,7 @@ class TestRangeValidation:
             result = guard.validate_output(output)
             assert result["valid"] is False
             assert any(
-                v["field"] == "amount" and "Negative" in v["message"]
-                for v in result["violations"]
+                v["field"] == "amount" and "Negative" in v["message"] for v in result["violations"]
             ), f"Should reject negative amount {amount}"
 
     def test_zero_amount_warning(self):
@@ -314,8 +309,7 @@ class TestRangeValidation:
         # Valid but with warning
         assert result["valid"] is True
         assert any(
-            v["field"] == "amount" and v["severity"] == "warning"
-            for v in result["violations"]
+            v["field"] == "amount" and v["severity"] == "warning" for v in result["violations"]
         )
 
 
@@ -334,7 +328,8 @@ class TestBusinessLogic:
 
         result = guard.validate_output(output)
         position_violations = [
-            v for v in result["violations"]
+            v
+            for v in result["violations"]
             if v["field"] == "amount" and "exceeds max" in v["message"]
         ]
         assert len(position_violations) == 0
@@ -352,8 +347,7 @@ class TestBusinessLogic:
         result = guard.validate_output(output)
         assert result["valid"] is False
         assert any(
-            v["field"] == "amount" and "exceeds max" in v["message"]
-            for v in result["violations"]
+            v["field"] == "amount" and "exceeds max" in v["message"] for v in result["violations"]
         )
 
     def test_empty_reasoning(self):
@@ -376,14 +370,11 @@ class TestBusinessLogic:
 
         output = {
             "symbol": "SPY",
-            "reasoning": "Strong uptrend with MACD crossover and volume confirmation"
+            "reasoning": "Strong uptrend with MACD crossover and volume confirmation",
         }
 
         result = guard.validate_output(output)
-        reasoning_violations = [
-            v for v in result["violations"]
-            if v["field"] == "reasoning"
-        ]
+        reasoning_violations = [v for v in result["violations"] if v["field"] == "reasoning"]
         assert len(reasoning_violations) == 0
 
 
@@ -547,10 +538,7 @@ class TestFactoryFunction:
         mock_rag = MagicMock()
         mock_rag_class.return_value = mock_rag
 
-        guard = create_hallucination_guard(
-            valid_tickers=["SPY", "QQQ"],
-            max_position_pct=0.15
-        )
+        guard = create_hallucination_guard(valid_tickers=["SPY", "QQQ"], max_position_pct=0.15)
 
         assert guard is not None
         assert guard.valid_tickers == {"SPY", "QQQ"}
@@ -573,10 +561,7 @@ class TestComplexScenarios:
 
     def test_multiple_violations_scenario(self):
         """Test output with multiple violations."""
-        guard = LLMHallucinationGuard(
-            valid_tickers=["SPY", "QQQ"],
-            max_position_pct=0.10
-        )
+        guard = LLMHallucinationGuard(valid_tickers=["SPY", "QQQ"], max_position_pct=0.10)
 
         output = {
             "symbol": "APPL",  # Typo (critical)
@@ -585,7 +570,7 @@ class TestComplexScenarios:
             "confidence": 0.95,  # Exceeds FACTS (warning)
             "sentiment": 2.5,  # Out of range (critical)
             "reasoning": "Buy",  # Too short (warning)
-            "portfolio_value": 100000.0
+            "portfolio_value": 100000.0,
         }
 
         result = guard.validate_output(output)
@@ -615,11 +600,13 @@ class TestComplexScenarios:
 
         # Sentiment and amount should be valid
         sentiment_critical = [
-            v for v in result["violations"]
+            v
+            for v in result["violations"]
             if v["field"] == "sentiment" and v["severity"] == "critical"
         ]
         amount_critical = [
-            v for v in result["violations"]
+            v
+            for v in result["violations"]
             if v["field"] == "amount" and v["severity"] == "critical"
         ]
 
@@ -641,11 +628,7 @@ class TestComplexScenarios:
             "amount": 8.50,
             "reasoning": "MACD histogram positive crossover, RSI recovering from 28, volume 1.8x confirms breakout",
             "portfolio_value": 100000.0,
-            "indicators": {
-                "macd_histogram": 0.0234,
-                "rsi": 32.5,
-                "volume_ratio": 1.8
-            }
+            "indicators": {"macd_histogram": 0.0234, "rsi": 32.5, "volume_ratio": 1.8},
         }
 
         result = guard.validate_output(output)

@@ -23,13 +23,11 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import os
 import re
 import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -319,8 +317,7 @@ def check_component_validation() -> list[ValidationStatus]:
                         trades_validated=data.get("trades", 0),
                         win_rate=data.get("win_rate"),
                         sharpe_ratio=data.get("sharpe"),
-                        is_validated=data.get("trades", 0) >= 20
-                        and data.get("sharpe", -1) > 0,
+                        is_validated=data.get("trades", 0) >= 20 and data.get("sharpe", -1) > 0,
                     )
                 )
             except Exception:
@@ -401,7 +398,9 @@ def verify_system(stage: str = CURRENT_STAGE) -> VerificationResult:
     unvalidated = [v for v in validations if not v.is_validated]
     if unvalidated:
         for v in unvalidated:
-            warnings.append(f"Component '{v.component_name}' not validated (trades: {v.trades_validated})")
+            warnings.append(
+                f"Component '{v.component_name}' not validated (trades: {v.trades_validated})"
+            )
         recommendations.append("Run 20+ trades through each component before adding more")
 
     passed = len(violations) == 0

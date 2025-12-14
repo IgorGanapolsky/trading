@@ -17,45 +17,45 @@ jobs:
   pre-merge-verification:
     name: Pre-Merge Verification Gate
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Need full history for diff
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
-      
+
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install ruff pytest pyyaml numpy
           pip install -e . || true  # Best effort install
-      
+
       - name: Check 1 - Python Syntax Validation
         run: |
           echo "🔍 Checking all Python files for syntax errors..."
           find src -name "*.py" -exec python3 -m py_compile {} \;
           find scripts -name "*.py" -exec python3 -m py_compile {} \; || true
           echo "✅ All Python files have valid syntax"
-      
+
       - name: Check 2 - Critical Import Verification
         run: |
           echo "🔍 Verifying critical trading system imports..."
           python3 << 'EOF'
           import ast
           from pathlib import Path
-          
+
           critical_files = [
               "src/execution/alpaca_executor.py",
               "src/orchestrator/main.py",
               "src/risk/trade_gateway.py",
               "src/strategies/core_strategy.py",
           ]
-          
+
           failed = []
           for filepath in critical_files:
               path = Path(filepath)
@@ -69,15 +69,15 @@ jobs:
                       failed.append(filepath)
               else:
                   print(f"⚠️ {filepath}: not found")
-          
+
           if failed:
               print(f"\n🚨 CRITICAL: {len(failed)} file(s) have syntax errors!")
               print("This would break trading. Merge blocked.")
               exit(1)
-          
+
           print("\n✅ All critical files have valid syntax")
           EOF
-      
+
       - name: Check 3 - RAG Safety Check
         run: |
           echo "🔍 Checking for similar past incidents..."
@@ -85,10 +85,10 @@ jobs:
           # Get changed files
           import subprocess
           import os
-          
+
           # Get base branch
           base = os.environ.get("GITHUB_BASE_REF", "main")
-          
+
           try:
               result = subprocess.run(
                   ["git", "diff", "--name-only", f"origin/{base}...HEAD"],
@@ -97,26 +97,26 @@ jobs:
               changed_files = result.stdout.strip().split('\n') if result.stdout.strip() else []
           except:
               changed_files = []
-          
+
           print(f"Changed files: {len(changed_files)}")
-          
+
           # Check for dangerous patterns
           dangerous_patterns = {
               "alpaca_executor": "Execution layer changes (ll_009)",
               "trade_gateway": "Trade gateway changes",
               "orchestrator/main": "Orchestrator changes",
           }
-          
+
           warnings = []
           for f in changed_files:
               for pattern, desc in dangerous_patterns.items():
                   if pattern in f.lower():
                       warnings.append(f"⚠️ {f}: {desc}")
-          
+
           # Large PR warning
           if len(changed_files) > 10:
               warnings.append(f"⚠️ Large PR ({len(changed_files)} files) - requires extra review")
-          
+
           if warnings:
               print("\n⚠️ RAG SAFETY WARNINGS:")
               for w in warnings:
@@ -125,19 +125,19 @@ jobs:
           else:
               print("✅ No dangerous patterns detected")
           EOF
-      
+
       - name: Check 4 - Ruff Lint (Critical Errors Only)
         run: |
           echo "🔍 Running lint check for critical errors..."
           ruff check src/ --select=E9,F63,F7,F82 --output-format=github || true
           echo "✅ Lint check complete"
-      
+
       - name: Check 5 - Verification Tests
         run: |
           echo "🔍 Running verification tests..."
           pytest tests/test_verification_system.py -v --timeout=60 || true
           echo "✅ Verification tests complete"
-      
+
       - name: Summary
         if: always()
         run: |
@@ -156,28 +156,28 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: pre-merge-verification
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Verify Trading System Health
         run: |
           echo "🏥 Running post-merge health check..."
           python3 << 'EOF'
           import ast
           from pathlib import Path
-          
+
           # Quick health check
           critical = [
               "src/orchestrator/main.py",
               "src/execution/alpaca_executor.py",
           ]
-          
+
           healthy = True
           for f in critical:
               path = Path(f)
@@ -189,7 +189,7 @@ jobs:
                   except SyntaxError as e:
                       print(f"❌ {f}: {e}")
                       healthy = False
-          
+
           if healthy:
               print("\n✅ Trading system is healthy after merge")
           else:

@@ -29,7 +29,6 @@ Created: 2025-12-11
 """
 
 import argparse
-import ast
 import json
 import py_compile
 import re
@@ -38,7 +37,6 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 # Add project root
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -55,6 +53,7 @@ BOLD = "\033[1m"
 @dataclass
 class CheckResult:
     """Result of a pre-merge check."""
+
     name: str
     passed: bool
     message: str
@@ -176,7 +175,7 @@ class RAGPreMergeChecker:
                 errors.append(f"{import_stmt}: {e}")
             except SyntaxError as e:
                 errors.append(f"SYNTAX ERROR: {import_stmt}: {e}")
-            except Exception as e:
+            except Exception:
                 # Other errors (missing env vars, etc) are OK
                 pass
 
@@ -216,9 +215,7 @@ class RAGPreMergeChecker:
             for pattern in lesson.get("file_patterns", []):
                 for changed in changed_files:
                     if pattern in changed or changed in pattern:
-                        warnings.append(
-                            f"[{lesson['id']}] File '{changed}' matches lesson pattern"
-                        )
+                        warnings.append(f"[{lesson['id']}] File '{changed}' matches lesson pattern")
 
         result = CheckResult(
             name="RAG Lessons",

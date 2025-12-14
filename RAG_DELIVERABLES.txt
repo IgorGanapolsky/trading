@@ -269,4 +269,3 @@ After RAG:
 - Full auditability
 
 Result: Smarter, safer options trading backed by 40+ years of expertise.
-

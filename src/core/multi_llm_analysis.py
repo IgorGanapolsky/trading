@@ -1186,7 +1186,9 @@ valuation, competitive landscape, and risk factors."""
         )
 
         # Filter successful results
-        valid_results = [(model_name, result) for model_name, result in results if result is not None]
+        valid_results = [
+            (model_name, result) for model_name, result in results if result is not None
+        ]
 
         if not valid_results:
             logger.error("All LLM queries failed for IPO analysis")
@@ -1318,7 +1320,9 @@ fundamental analysis, and market sentiment. Provide objective, actionable recomm
         )
 
         # Filter successful results
-        valid_results = [(model_name, result) for model_name, result in results if result is not None]
+        valid_results = [
+            (model_name, result) for model_name, result in results if result is not None
+        ]
 
         if not valid_results:
             logger.error(f"All LLM queries failed for stock analysis: {symbol}")
@@ -1360,7 +1364,9 @@ fundamental analysis, and market sentiment. Provide objective, actionable recomm
         target_variance = sum((p - avg_target_price) ** 2 for p in target_prices) / len(
             target_prices
         )
-        variance_coefficient = target_variance / (avg_target_price**2) if avg_target_price > 0 else 1
+        variance_coefficient = (
+            target_variance / (avg_target_price**2) if avg_target_price > 0 else 1
+        )
         confidence_penalty = max(0.0, min(0.3, variance_coefficient))
         final_confidence = max(0.0, min(1.0, avg_confidence - confidence_penalty))
 

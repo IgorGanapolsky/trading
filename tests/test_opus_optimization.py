@@ -11,8 +11,6 @@ Tests verify:
 Reference: rag_knowledge/lessons_learned/ll_011_opus_45_optimization_dec11.md
 """
 
-import pytest
-
 
 class TestEffortLevelConfig:
     """Tests for EffortLevel and EffortConfig."""
@@ -223,7 +221,6 @@ class TestEffortConfigIntegration:
     def test_full_effort_workflow(self):
         """Test complete effort configuration workflow."""
         from src.agent_framework.agent_sdk_config import (
-            EffortConfig,
             EffortLevel,
             get_agent_sdk_config,
         )

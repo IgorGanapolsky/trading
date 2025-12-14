@@ -40,6 +40,7 @@ LOCAL_EMBEDDINGS_AVAILABLE = False
 # Try OpenAI/OpenRouter API first (preferred for 2025)
 try:
     import httpx
+
     OPENAI_EMBEDDINGS_AVAILABLE = bool(
         os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
     )
@@ -51,6 +52,7 @@ except ImportError:
 # Try sentence-transformers as fallback
 try:
     from sentence_transformers import SentenceTransformer
+
     LOCAL_EMBEDDINGS_AVAILABLE = True
     logger.info("sentence-transformers available (local)")
 except ImportError:
@@ -417,12 +419,14 @@ class LessonsLearnedRAG:
 
         for lesson, score in sorted_results:
             if score > 0.3:  # Relevance threshold
-                warnings.append({
-                    "title": lesson.title,
-                    "severity": lesson.severity,
-                    "prevention": lesson.prevention,
-                    "relevance": score,
-                })
+                warnings.append(
+                    {
+                        "title": lesson.title,
+                        "severity": lesson.severity,
+                        "prevention": lesson.prevention,
+                        "relevance": score,
+                    }
+                )
                 prevention_steps.append(lesson.prevention)
 
         return {
@@ -447,7 +451,9 @@ class LessonsLearnedRAG:
         updated = False
         for lesson in self.lessons:
             if not lesson.embedding:
-                text = f"{lesson.title} {lesson.description} {lesson.root_cause} {lesson.prevention}"
+                text = (
+                    f"{lesson.title} {lesson.description} {lesson.root_cause} {lesson.prevention}"
+                )
                 embedding = self._encode(text)
                 if embedding:
                     lesson.embedding = embedding
@@ -455,7 +461,9 @@ class LessonsLearnedRAG:
 
         if updated:
             self._save_db()
-            logger.info(f"Computed embeddings for {sum(1 for l in self.lessons if l.embedding)} lessons")
+            logger.info(
+                f"Computed embeddings for {sum(1 for l in self.lessons if l.embedding)} lessons"
+            )
 
     def _load_db(self) -> None:
         """Load lessons from database file."""
@@ -601,9 +609,9 @@ if __name__ == "__main__":
     context = rag.get_context_for_trade("SPY", "buy", 1500.0)
     print(f"\nRelevant lessons: {context['relevant_lessons']}")
 
-    if context['warnings']:
+    if context["warnings"]:
         print("\nWarnings:")
-        for w in context['warnings']:
+        for w in context["warnings"]:
             print(f"  [{w['severity'].upper()}] {w['title']}")
             print(f"    Prevention: {w['prevention']}")
 

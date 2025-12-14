@@ -445,9 +445,7 @@ def generate_world_class_dashboard() -> str:
         allocations = profit_target_data.get("recommended_allocations", {})
 
         # Calculate progress percentage
-        progress_to_target = (
-            (projected_profit / target_profit * 100) if target_profit > 0 else 0.0
-        )
+        progress_to_target = (projected_profit / target_profit * 100) if target_profit > 0 else 0.0
 
         # Progress bar for $100/day target
         progress_bars_100 = max(0, min(int(progress_to_target / 5), 20))

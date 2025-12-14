@@ -5,12 +5,11 @@ Handles authentication and session management for the Dialogflow CX agent.
 """
 
 import os
-import uuid
 from typing import Optional
 
+from google.api_core.client_options import ClientOptions
 from google.cloud.dialogflowcx_v3.services.sessions import SessionsClient
 from google.cloud.dialogflowcx_v3.types import DetectIntentRequest, QueryInput, TextInput
-from google.api_core.client_options import ClientOptions
 
 
 class DialogflowClient:
@@ -67,13 +66,13 @@ class DialogflowClient:
         )
 
         response = self.client.detect_intent(request=request)
-        
+
         # Extract the text response
         response_messages = response.query_result.response_messages
         response_text = ""
-        
+
         for message in response_messages:
             if message.text:
                 response_text += "".join(message.text.text) + "\n"
-                
+
         return response_text.strip()

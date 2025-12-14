@@ -39,19 +39,13 @@ def mock_dry_run_output():
             "risk_checks": {
                 "portfolio_health": {"success": True},
                 "SPY_position": {
-                    "recommendations": {
-                        "primary_method": {"position_size_dollars": 95.0}
-                    }
+                    "recommendations": {"primary_method": {"position_size_dollars": 95.0}}
                 },
                 "QQQ_position": {
-                    "recommendations": {
-                        "primary_method": {"position_size_dollars": 0.0}
-                    }
+                    "recommendations": {"primary_method": {"position_size_dollars": 0.0}}
                 },
                 "VOO_position": {
-                    "recommendations": {
-                        "primary_method": {"position_size_dollars": 98.0}
-                    }
+                    "recommendations": {"primary_method": {"position_size_dollars": 98.0}}
                 },
             }
         },
@@ -81,17 +75,17 @@ class TestDryRunPositionLimits:
                     .get("primary_method", {})
                     .get("position_size_dollars", 0)
                 )
-                assert (
-                    position_size <= MAX_POSITION_SIZE
-                ), f"{symbol} position ${position_size} exceeds ${MAX_POSITION_SIZE}"
+                assert position_size <= MAX_POSITION_SIZE, (
+                    f"{symbol} position ${position_size} exceeds ${MAX_POSITION_SIZE}"
+                )
 
         # Check execution orders
         for order in mock_dry_run_output.get("execution", {}).get("orders", []):
             notional = order.get("notional", 0)
             symbol = order.get("symbol", "UNKNOWN")
-            assert (
-                notional <= MAX_POSITION_SIZE
-            ), f"{symbol} order ${notional} exceeds ${MAX_POSITION_SIZE}"
+            assert notional <= MAX_POSITION_SIZE, (
+                f"{symbol} order ${notional} exceeds ${MAX_POSITION_SIZE}"
+            )
 
     def test_oversized_position_rejected(self):
         """Test that oversized positions are rejected."""
@@ -103,7 +97,9 @@ class TestDryRunPositionLimits:
         # Validate
         notional = oversized_order.get("notional", 0)
         with pytest.raises(AssertionError, match="exceeds"):
-            assert notional <= MAX_POSITION_SIZE, f"Position ${notional} exceeds ${MAX_POSITION_SIZE}"
+            assert notional <= MAX_POSITION_SIZE, (
+                f"Position ${notional} exceeds ${MAX_POSITION_SIZE}"
+            )
 
 
 class TestDryRunRiskExposure:
@@ -123,9 +119,9 @@ class TestDryRunRiskExposure:
 
         total_exposure = sum(order.get("notional", 0) for order in orders)
 
-        assert (
-            total_exposure <= MAX_EXPOSURE_DOLLARS
-        ), f"Total exposure ${total_exposure} exceeds ${MAX_EXPOSURE_DOLLARS} (10% of ${PORTFOLIO_VALUE})"
+        assert total_exposure <= MAX_EXPOSURE_DOLLARS, (
+            f"Total exposure ${total_exposure} exceeds ${MAX_EXPOSURE_DOLLARS} (10% of ${PORTFOLIO_VALUE})"
+        )
 
     def test_excessive_exposure_blocked(self):
         """Test that excessive exposure is blocked."""
@@ -142,15 +138,13 @@ class TestDryRunRiskExposure:
         total_exposure = sum(order.get("notional", 0) for order in orders)
 
         with pytest.raises(AssertionError, match="Excessive exposure"):
-            assert (
-                total_exposure <= MAX_EXPOSURE_DOLLARS
-            ), f"Excessive exposure: ${total_exposure} > ${MAX_EXPOSURE_DOLLARS}"
+            assert total_exposure <= MAX_EXPOSURE_DOLLARS, (
+                f"Excessive exposure: ${total_exposure} > ${MAX_EXPOSURE_DOLLARS}"
+            )
 
     def test_portfolio_health_check_present(self, mock_dry_run_output):
         """Portfolio health check must be present in risk assessment."""
-        risk_checks = (
-            mock_dry_run_output.get("risk", {}).get("risk_checks", {})
-        )
+        risk_checks = mock_dry_run_output.get("risk", {}).get("risk_checks", {})
         assert "portfolio_health" in risk_checks, "Missing portfolio_health check"
 
         portfolio_health = risk_checks["portfolio_health"]
@@ -195,9 +189,9 @@ class TestDryRunCollateral:
         ]
 
         total_cost = sum(order.get("notional", 0) for order in orders)
-        assert (
-            total_cost <= buying_power
-        ), f"Insufficient buying power: ${total_cost} > ${buying_power}"
+        assert total_cost <= buying_power, (
+            f"Insufficient buying power: ${total_cost} > ${buying_power}"
+        )
 
 
 class TestDryRunRequiredFields:
@@ -255,9 +249,9 @@ class TestDryRunSymbolConsistency:
         ensemble_symbols = set(mock_dry_run_output.get("ensemble_vote", {}).keys())
 
         # Ensemble vote may have fewer symbols (filtered), but all must be in original list
-        assert ensemble_symbols.issubset(
-            symbols
-        ), f"Ensemble symbols {ensemble_symbols} not in symbols {symbols}"
+        assert ensemble_symbols.issubset(symbols), (
+            f"Ensemble symbols {ensemble_symbols} not in symbols {symbols}"
+        )
 
     def test_execution_symbols_valid(self, mock_dry_run_output):
         """Execution symbols must be in the original symbols list."""
@@ -270,9 +264,9 @@ class TestDryRunSymbolConsistency:
             for order in mock_dry_run_output.get("execution", {}).get("orders", [])
         )
 
-        assert execution_symbols.issubset(
-            symbols
-        ), f"Execution symbols {execution_symbols} not in symbols {symbols}"
+        assert execution_symbols.issubset(symbols), (
+            f"Execution symbols {execution_symbols} not in symbols {symbols}"
+        )
 
 
 class TestDryRunIntegration:
@@ -322,14 +316,10 @@ class TestDryRunIntegration:
                 "risk_checks": {
                     "portfolio_health": {"success": True},
                     "SPY_position": {
-                        "recommendations": {
-                            "primary_method": {"position_size_dollars": 95.0}
-                        }
+                        "recommendations": {"primary_method": {"position_size_dollars": 95.0}}
                     },
                     "QQQ_position": {
-                        "recommendations": {
-                            "primary_method": {"position_size_dollars": 0.0}
-                        }
+                        "recommendations": {"primary_method": {"position_size_dollars": 0.0}}
                     },
                 }
             }

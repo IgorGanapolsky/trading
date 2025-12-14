@@ -10,12 +10,9 @@ Created: 2025-12-11
 
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-
-from src.ml.anomaly_detector import AlertLevel, Anomaly, AnomalyType
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.verification.anomaly_learning_feedback_loop import (
     AnomalyLearningLoop,
@@ -47,11 +44,11 @@ def learning_loop(mock_rag, temp_data_dir, monkeypatch):
     # Patch file paths to use temp directory
     monkeypatch.setattr(
         "src.verification.anomaly_learning_feedback_loop.RECURRENCE_DB_PATH",
-        temp_data_dir / "data" / "anomaly_recurrence.json"
+        temp_data_dir / "data" / "anomaly_recurrence.json",
     )
     monkeypatch.setattr(
         "src.verification.anomaly_learning_feedback_loop.DAILY_REPORT_PATH",
-        temp_data_dir / "reports" / "anomaly_reports"
+        temp_data_dir / "reports" / "anomaly_reports",
     )
 
     loop = AnomalyLearningLoop(rag=mock_rag)
@@ -251,8 +248,7 @@ class TestAnomalyLearningLoop:
         """Test creating GitHub issue for critical anomaly."""
         # Mock successful gh CLI call
         mock_run.return_value = Mock(
-            returncode=0,
-            stdout="https://github.com/user/repo/issues/123\n"
+            returncode=0, stdout="https://github.com/user/repo/issues/123\n"
         )
 
         # Process anomaly 7 times to trigger CRITICAL
@@ -277,8 +273,7 @@ class TestAnomalyLearningLoop:
     def test_create_github_issue_only_once(self, mock_run, learning_loop, sample_anomaly):
         """Test GitHub issue is only created once per pattern."""
         mock_run.return_value = Mock(
-            returncode=0,
-            stdout="https://github.com/user/repo/issues/123\n"
+            returncode=0, stdout="https://github.com/user/repo/issues/123\n"
         )
 
         # Process anomaly 10 times
@@ -293,10 +288,7 @@ class TestAnomalyLearningLoop:
     def test_create_github_issue_failure(self, mock_run, learning_loop, sample_anomaly):
         """Test handling GitHub issue creation failure."""
         # Mock failed gh CLI call
-        mock_run.return_value = Mock(
-            returncode=1,
-            stderr="Error: gh not configured"
-        )
+        mock_run.return_value = Mock(returncode=1, stderr="Error: gh not configured")
 
         # Process anomaly 7 times
         for i in range(7):
@@ -349,8 +341,7 @@ class TestAnomalyLearningLoop:
 
         # Patch file paths
         monkeypatch.setattr(
-            "src.verification.anomaly_learning_feedback_loop.RECURRENCE_DB_PATH",
-            db_path
+            "src.verification.anomaly_learning_feedback_loop.RECURRENCE_DB_PATH", db_path
         )
 
         # Create new loop - should load existing data
@@ -407,9 +398,18 @@ class TestAnomalyLearningLoop:
             assert prevention is not None
             assert len(prevention) > 0
             # Prevention should contain some validation/check/prevention keyword
-            assert any(keyword in prevention.lower() for keyword in [
-                "valid", "check", "prevent", "enforce", "add", "implement", "monitor"
-            ])
+            assert any(
+                keyword in prevention.lower()
+                for keyword in [
+                    "valid",
+                    "check",
+                    "prevent",
+                    "enforce",
+                    "add",
+                    "implement",
+                    "monitor",
+                ]
+            )
 
     def test_root_cause_inference(self, learning_loop):
         """Test root cause inference for different anomaly types."""
@@ -449,13 +449,15 @@ class TestAnomalyLearningLoop:
                 "detected_at": datetime.now(timezone.utc).isoformat(),
                 "context": {},
             }
-            for i, anomaly_type in enumerate([
-                "order_amount",
-                "data_staleness",
-                "execution_failure",
-                "order_amount",  # Duplicate
-                "data_staleness",  # Duplicate
-            ])
+            for i, anomaly_type in enumerate(
+                [
+                    "order_amount",
+                    "data_staleness",
+                    "execution_failure",
+                    "order_amount",  # Duplicate
+                    "data_staleness",  # Duplicate
+                ]
+            )
         ]
 
         for anomaly in anomalies:

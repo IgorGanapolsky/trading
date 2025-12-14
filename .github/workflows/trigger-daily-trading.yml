@@ -19,7 +19,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             console.log('🚀 Triggering daily-trading workflow...');
-            
+
             try {
               await github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
@@ -33,7 +33,7 @@ jobs:
               console.log('✅ Daily trading workflow triggered successfully!');
             } catch (error) {
               console.log('❌ Failed to trigger:', error.message);
-              
+
               // Fallback: Try to get workflow runs to verify
               const runs = await github.rest.actions.listWorkflowRuns({
                 owner: context.repo.owner,
@@ -41,7 +41,7 @@ jobs:
                 workflow_id: 'daily-trading.yml',
                 per_page: 5
               });
-              
+
               console.log('Recent runs:', runs.data.workflow_runs.map(r => ({
                 id: r.id,
                 status: r.status,

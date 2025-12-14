@@ -58,10 +58,11 @@ def get_current_price(symbol: str) -> float:
     """Get current price for symbol."""
     try:
         import yfinance as yf
+
         ticker = yf.Ticker(symbol)
         data = ticker.history(period="1d")
         if not data.empty:
-            return float(data['Close'].iloc[-1])
+            return float(data["Close"].iloc[-1])
     except Exception as e:
         logger.warning(f"yfinance failed: {e}")
 
@@ -102,7 +103,7 @@ def execute_etf_buy(symbol: str = "SPY", amount: float = 10.0, dry_run: bool = F
     logger.info("=" * 60)
     logger.info(f"   Symbol: {symbol}")
     logger.info(f"   Amount: ${amount:.2f}")
-    logger.info(f"   Strategy: Buy and Hold (Bogleheads)")
+    logger.info("   Strategy: Buy and Hold (Bogleheads)")
     logger.info("")
 
     # Get current price
@@ -148,8 +149,8 @@ def execute_etf_buy(symbol: str = "SPY", amount: float = 10.0, dry_run: bool = F
 
     # Submit market order (notional for exact dollar amount)
     try:
-        from alpaca.trading.requests import MarketOrderRequest
         from alpaca.trading.enums import OrderSide, TimeInForce
+        from alpaca.trading.requests import MarketOrderRequest
 
         order_request = MarketOrderRequest(
             symbol=symbol,
@@ -163,9 +164,9 @@ def execute_etf_buy(symbol: str = "SPY", amount: float = 10.0, dry_run: bool = F
         logger.info("\n✅ ORDER SUBMITTED!")
         logger.info(f"   Order ID: {order.id}")
         logger.info(f"   Symbol: {symbol}")
-        logger.info(f"   Side: BUY")
+        logger.info("   Side: BUY")
         logger.info(f"   Amount: ${amount:.2f}")
-        logger.info(f"   Type: MARKET (guaranteed fill)")
+        logger.info("   Type: MARKET (guaranteed fill)")
         logger.info(f"   Status: {order.status}")
 
         # Record trade

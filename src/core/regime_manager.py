@@ -70,7 +70,7 @@ class MarketRegime:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "MarketRegime":
+    def from_dict(cls, data: dict[str, Any]) -> MarketRegime:
         return cls(
             bias=data.get("bias", "NEUTRAL"),
             confidence=data.get("confidence", 0.5),
@@ -392,7 +392,6 @@ def run_preflight_checks(max_latency_ms: float = 100.0) -> PreFlightResult:
     # Check 4: Volatility safety module
     try:
         from src.safety.volatility_adjusted_safety import (
-            get_hallucination_checker,
             get_hourly_heartbeat,
         )
 
@@ -411,7 +410,9 @@ def run_preflight_checks(max_latency_ms: float = 100.0) -> PreFlightResult:
 
     # Overall result
     total_latency = sum(
-        c.get("latency_ms", 0) for c in checks.values() if isinstance(c.get("latency_ms"), int | float)
+        c.get("latency_ms", 0)
+        for c in checks.values()
+        if isinstance(c.get("latency_ms"), int | float)
     )
     passed = len(errors) == 0
 

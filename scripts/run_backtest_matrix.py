@@ -152,7 +152,11 @@ def summarize_results(results: BacktestResults, scenario: dict[str, Any]) -> dic
     costs = compute_execution_costs(results)
 
     # Calculate survival metrics for crash scenarios
-    capital_preserved_pct = (results.final_capital / results.initial_capital) * 100 if results.initial_capital > 0 else 0
+    capital_preserved_pct = (
+        (results.final_capital / results.initial_capital) * 100
+        if results.initial_capital > 0
+        else 0
+    )
 
     return {
         "scenario": scenario["name"],
@@ -182,7 +186,9 @@ def summarize_results(results: BacktestResults, scenario: dict[str, Any]) -> dic
         # Crash replay survival metrics (CEO directive Dec 12, 2025)
         "survival_gate": survival_gate,
         "capital_preserved_pct": round(capital_preserved_pct, 2),
-        "survival_passed": capital_preserved_pct >= (survival_gate * 100) if survival_gate else None,
+        "survival_passed": capital_preserved_pct >= (survival_gate * 100)
+        if survival_gate
+        else None,
     }
 
 

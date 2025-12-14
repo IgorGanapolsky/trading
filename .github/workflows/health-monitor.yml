@@ -14,25 +14,25 @@ jobs:
   health-check:
     name: Trading System Health Check
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Run Health Monitor
         id: health
         run: |
           echo "=== TRADING SYSTEM HEALTH CHECK ==="
           echo "Time: $(date -u)"
           echo ""
-          
+
           python3 -m src.monitoring.health_monitor > health_result.json 2>&1 || true
           cat health_result.json
-          
+
           # Check if healthy
           if python3 -c "import json; d=json.load(open('health_result.json')); exit(0 if d.get('healthy') else 1)" 2>/dev/null; then
             echo "✅ System is healthy"
@@ -41,7 +41,7 @@ jobs:
             echo "❌ System has issues!"
             echo "healthy=false" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Check for No Trades Alert
         if: steps.health.outputs.healthy == 'false'
         run: |
@@ -53,17 +53,17 @@ jobs:
           echo "3. Trading workflow failed"
           echo ""
           echo "See: rag_knowledge/lessons_learned/ll_009_ci_syntax_failure_dec11.md"
-          
+
           # Don't fail the workflow, just alert
           # exit 1
-      
+
       - name: Run Continuous Verifier
         if: steps.health.outputs.healthy == 'false'
         continue-on-error: true
         run: |
           pip install numpy -q
           python3 -m src.verification.continuous_verifier || true
-      
+
       - name: Create Alert Issue (if critical)
         if: steps.health.outputs.healthy == 'false'
         uses: actions/github-script@v7
@@ -145,18 +145,18 @@ jobs:
     name: Full Daemon Check
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule'
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install Dependencies
         run: pip install numpy -q
-      
+
       - name: Run Trading Daemon (Single Check)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

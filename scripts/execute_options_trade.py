@@ -131,8 +131,8 @@ def get_iv_percentile(symbol: str, lookback_days: int = 252) -> dict:
 
     Returns dict with iv_percentile, current_iv, recommendation.
     """
-    import yfinance as yf
     import numpy as np
+    import yfinance as yf
 
     logger.info(f"📊 Calculating IV Percentile for {symbol}...")
 
@@ -146,7 +146,7 @@ def get_iv_percentile(symbol: str, lookback_days: int = 252) -> dict:
             return {"iv_percentile": 50, "current_iv": None, "recommendation": "NEUTRAL"}
 
         # Calculate historical volatility (20-day rolling)
-        returns = np.log(hist['Close'] / hist['Close'].shift(1))
+        returns = np.log(hist["Close"] / hist["Close"].shift(1))
         rolling_vol = returns.rolling(window=20).std() * np.sqrt(252) * 100  # Annualized %
 
         current_hv = rolling_vol.iloc[-1]
@@ -158,7 +158,9 @@ def get_iv_percentile(symbol: str, lookback_days: int = 252) -> dict:
         # Determine recommendation per RAG knowledge
         if iv_percentile >= 50:
             recommendation = "SELL_PREMIUM"
-            logger.info(f"   ✅ IV Percentile: {iv_percentile:.1f}% - FAVORABLE for selling premium")
+            logger.info(
+                f"   ✅ IV Percentile: {iv_percentile:.1f}% - FAVORABLE for selling premium"
+            )
         elif iv_percentile >= 30:
             recommendation = "NEUTRAL"
             logger.info(f"   ⚠️ IV Percentile: {iv_percentile:.1f}% - NEUTRAL conditions")
@@ -169,7 +171,7 @@ def get_iv_percentile(symbol: str, lookback_days: int = 252) -> dict:
         return {
             "iv_percentile": round(iv_percentile, 1),
             "current_iv": round(current_hv, 2),
-            "recommendation": recommendation
+            "recommendation": recommendation,
         }
 
     except Exception as e:
@@ -197,7 +199,6 @@ def get_trend_filter(symbol: str, lookback_days: int = 20) -> dict:
     Returns dict with trend, slope, recommendation.
     """
     import yfinance as yf
-    import numpy as np
 
     logger.info(f"📈 Checking trend filter for {symbol}...")
 
@@ -206,18 +207,18 @@ def get_trend_filter(symbol: str, lookback_days: int = 20) -> dict:
         hist = ticker.history(period="2mo")
 
         if len(hist) < lookback_days:
-            logger.warning(f"   ⚠️ Insufficient history for trend filter, defaulting to neutral")
+            logger.warning("   ⚠️ Insufficient history for trend filter, defaulting to neutral")
             return {"trend": "NEUTRAL", "slope": 0, "recommendation": "PROCEED"}
 
         # Calculate 20-day moving average
-        ma_20 = hist['Close'].rolling(window=lookback_days).mean()
+        ma_20 = hist["Close"].rolling(window=lookback_days).mean()
 
         # Calculate slope over last 5 days (normalized as % per day)
         recent_ma = ma_20.iloc[-5:]
         slope = (recent_ma.iloc[-1] - recent_ma.iloc[0]) / recent_ma.iloc[0] * 100 / 5
 
         # Also check if price is above or below MA
-        current_price = hist['Close'].iloc[-1]
+        current_price = hist["Close"].iloc[-1]
         ma_current = ma_20.iloc[-1]
         price_vs_ma = (current_price - ma_current) / ma_current * 100
 
@@ -229,24 +230,24 @@ def get_trend_filter(symbol: str, lookback_days: int = 20) -> dict:
         if slope < -0.2 and price_vs_ma < -2:
             trend = "STRONG_DOWNTREND"
             recommendation = "AVOID_PUTS"
-            logger.warning(f"   ❌ STRONG DOWNTREND detected!")
+            logger.warning("   ❌ STRONG DOWNTREND detected!")
             logger.warning(f"      MA slope: {slope:.3f}%/day, Price vs MA: {price_vs_ma:.1f}%")
         elif slope < -0.1:
             trend = "MODERATE_DOWNTREND"
             recommendation = "CAUTION"
-            logger.info(f"   ⚠️ Moderate downtrend - proceed with caution")
+            logger.info("   ⚠️ Moderate downtrend - proceed with caution")
             logger.info(f"      MA slope: {slope:.3f}%/day, Price vs MA: {price_vs_ma:.1f}%")
         else:
             trend = "UPTREND_OR_SIDEWAYS"
             recommendation = "PROCEED"
-            logger.info(f"   ✅ Trend FAVORABLE for selling puts")
+            logger.info("   ✅ Trend FAVORABLE for selling puts")
             logger.info(f"      MA slope: {slope:.3f}%/day, Price vs MA: {price_vs_ma:.1f}%")
 
         return {
             "trend": trend,
             "slope": round(slope, 4),
             "price_vs_ma": round(price_vs_ma, 2),
-            "recommendation": recommendation
+            "recommendation": recommendation,
         }
 
     except Exception as e:
@@ -438,17 +439,21 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
     # "Only sell options when IV Percentile > 50%" - TastyTrade research
     iv_data = get_iv_percentile(symbol)
     if iv_data["recommendation"] == "AVOID_SELLING":
-        logger.warning(f"❌ IV Percentile {iv_data['iv_percentile']}% < {MIN_IV_PERCENTILE_FOR_SELLING}%")
+        logger.warning(
+            f"❌ IV Percentile {iv_data['iv_percentile']}% < {MIN_IV_PERCENTILE_FOR_SELLING}%"
+        )
         logger.warning("   Per RAG knowledge: Avoid selling premium in low IV environment")
         logger.warning("   Recommendation: Wait for higher IV or use ETF accumulation strategy")
         return {
             "status": "NO_TRADE",
             "reason": f"IV Percentile too low ({iv_data['iv_percentile']}% < {MIN_IV_PERCENTILE_FOR_SELLING}%)",
             "iv_data": iv_data,
-            "broker": "alpaca"
+            "broker": "alpaca",
         }
 
-    logger.info(f"✅ IV Check passed: {iv_data['iv_percentile']}% >= {MIN_IV_PERCENTILE_FOR_SELLING}%")
+    logger.info(
+        f"✅ IV Check passed: {iv_data['iv_percentile']}% >= {MIN_IV_PERCENTILE_FOR_SELLING}%"
+    )
 
     # CRITICAL: Check trend filter (per options_backtest_summary.md recommendations)
     # All 5 losses in backtest came from entering positions in strong trends
@@ -461,7 +466,7 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
             "status": "NO_TRADE",
             "reason": f"Trend filter blocked: {trend_data['trend']} (slope: {trend_data['slope']}%/day)",
             "trend_data": trend_data,
-            "broker": "alpaca"
+            "broker": "alpaca",
         }
 
     logger.info(f"✅ Trend filter passed: {trend_data['trend']}")
@@ -532,7 +537,7 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
         logger.info(f"   ⚠️ STOP LOSS: Close if bid exceeds ${stop_loss_price:.2f}")
         logger.info(f"   📉 Max loss at stop: ${max_loss_dollars:.2f}")
         logger.info(f"   💰 Max profit: ${premium * 100:.2f} (option expires worthless)")
-        logger.info(f"   📈 Risk/Reward: 1:{premium/0.5:.1f} (50% stop)")
+        logger.info(f"   📈 Risk/Reward: 1:{premium / 0.5:.1f} (50% stop)")
 
         return {
             "status": "ORDER_SUBMITTED",
@@ -541,7 +546,7 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
             "premium": premium * 100,
             "stop_loss_price": stop_loss_price,
             "max_loss": max_loss_dollars,
-            "risk_reward": f"1:{premium/0.5:.1f}",
+            "risk_reward": f"1:{premium / 0.5:.1f}",
             "broker": "alpaca",
         }
 

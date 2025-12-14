@@ -26,10 +26,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -172,30 +169,22 @@ def validate_results(
     # Check net profit
     net_profit = results.get("net_profit", 0)
     if net_profit < min_profit:
-        failures.append(
-            f"Net profit ${net_profit:.2f} below threshold ${min_profit:.2f}"
-        )
+        failures.append(f"Net profit ${net_profit:.2f} below threshold ${min_profit:.2f}")
 
     # Check max drawdown
     max_dd = results.get("max_drawdown", 100)
     if max_dd > max_drawdown:
-        failures.append(
-            f"Max drawdown {max_dd:.1f}% exceeds threshold {max_drawdown:.1f}%"
-        )
+        failures.append(f"Max drawdown {max_dd:.1f}% exceeds threshold {max_drawdown:.1f}%")
 
     # Check win rate
     win_rate = results.get("win_rate", 0)
     if win_rate < min_win_rate:
-        failures.append(
-            f"Win rate {win_rate:.1f}% below threshold {min_win_rate:.1f}%"
-        )
+        failures.append(f"Win rate {win_rate:.1f}% below threshold {min_win_rate:.1f}%")
 
     # Check Sharpe ratio
     sharpe = results.get("sharpe_ratio", 0)
     if sharpe < min_sharpe:
-        failures.append(
-            f"Sharpe ratio {sharpe:.2f} below threshold {min_sharpe:.2f}"
-        )
+        failures.append(f"Sharpe ratio {sharpe:.2f} below threshold {min_sharpe:.2f}")
 
     return len(failures) == 0, failures
 
@@ -204,45 +193,36 @@ def main():
     parser = argparse.ArgumentParser(description="CI Backtest Quality Gate")
 
     parser.add_argument(
-        "--min-profit",
-        type=float,
-        default=0.0,
-        help="Minimum net profit required (default: 0)"
+        "--min-profit", type=float, default=0.0, help="Minimum net profit required (default: 0)"
     )
     parser.add_argument(
         "--max-drawdown",
         type=float,
         default=10.0,
-        help="Maximum drawdown allowed in %% (default: 10)"
+        help="Maximum drawdown allowed in %% (default: 10)",
     )
     parser.add_argument(
         "--min-win-rate",
         type=float,
         default=50.0,
-        help="Minimum win rate required in %% (default: 50)"
+        help="Minimum win rate required in %% (default: 50)",
     )
     parser.add_argument(
-        "--min-sharpe",
-        type=float,
-        default=0.5,
-        help="Minimum Sharpe ratio required (default: 0.5)"
+        "--min-sharpe", type=float, default=0.5, help="Minimum Sharpe ratio required (default: 0.5)"
     )
     parser.add_argument(
         "--pessimistic",
         action="store_true",
-        help="Use pessimistic assumptions (2x spread, 3x fees)"
+        help="Use pessimistic assumptions (2x spread, 3x fees)",
     )
     parser.add_argument(
-        "--days",
-        type=int,
-        default=90,
-        help="Number of days to backtest (default: 90)"
+        "--days", type=int, default=90, help="Number of days to backtest (default: 90)"
     )
     parser.add_argument(
         "--output",
         type=str,
         default="backtest_results.json",
-        help="Output file for results (default: backtest_results.json)"
+        help="Output file for results (default: backtest_results.json)",
     )
 
     args = parser.parse_args()
@@ -256,7 +236,7 @@ def main():
     logger.info("=" * 60)
     logger.info(f"Mode: {'PESSIMISTIC' if args.pessimistic else 'NORMAL'}")
     logger.info(f"Period: {start_date} to {end_date} ({args.days} days)")
-    logger.info(f"Thresholds:")
+    logger.info("Thresholds:")
     logger.info(f"  Min Profit: ${args.min_profit:.2f}")
     logger.info(f"  Max Drawdown: {args.max_drawdown:.1f}%")
     logger.info(f"  Min Win Rate: {args.min_win_rate:.1f}%")

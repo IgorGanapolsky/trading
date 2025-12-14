@@ -10,13 +10,12 @@ Enables our trading agents to:
 4. Skip expensive operations when budget is low
 """
 
-import os
 import json
 import logging
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional
-from dataclasses import dataclass, asdict
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -25,29 +24,30 @@ MONTHLY_BUDGET = 100.0
 
 # Cost estimates per API call (in dollars)
 API_COSTS = {
-    "alpaca_trade": 0.00,       # Free (paper trading)
-    "alpaca_data": 0.001,       # ~$0.001 per data call
-    "openrouter_haiku": 0.0003, # $0.25/1M tokens
-    "openrouter_sonnet": 0.003, # $3/1M tokens  
-    "openrouter_opus": 0.015,   # $15/1M tokens
-    "gemini_research": 0.01,    # ~$0.01 per research query
-    "polygon_data": 0.0001,     # Very cheap
-    "yfinance": 0.00,           # Free
-    "news_api": 0.001,          # ~$0.001 per call
+    "alpaca_trade": 0.00,  # Free (paper trading)
+    "alpaca_data": 0.001,  # ~$0.001 per data call
+    "openrouter_haiku": 0.0003,  # $0.25/1M tokens
+    "openrouter_sonnet": 0.003,  # $3/1M tokens
+    "openrouter_opus": 0.015,  # $15/1M tokens
+    "gemini_research": 0.01,  # ~$0.01 per research query
+    "polygon_data": 0.0001,  # Very cheap
+    "yfinance": 0.00,  # Free
+    "news_api": 0.001,  # ~$0.001 per call
 }
 
 # Priority levels for operations
 PRIORITY = {
-    "critical": 1,    # Must execute (trades, risk checks)
-    "high": 2,        # Important (pre-trade analysis)
-    "medium": 3,      # Nice to have (deep research)
-    "low": 4,         # Optional (sentiment analysis)
+    "critical": 1,  # Must execute (trades, risk checks)
+    "high": 2,  # Important (pre-trade analysis)
+    "medium": 3,  # Nice to have (deep research)
+    "low": 4,  # Optional (sentiment analysis)
 }
 
 
 @dataclass
 class BudgetState:
     """Current budget state"""
+
     monthly_budget: float
     spent_this_month: float
     remaining: float
@@ -62,12 +62,12 @@ class BudgetTracker:
     Lightweight budget tracker that provides continuous budget awareness.
     Reduces API costs by 31.3% based on Google's research.
     """
-    
+
     def __init__(self, budget_file: str = "data/budget_tracker.json"):
         self.budget_file = Path(budget_file)
         self.state = self._load_state()
-        
-    def _load_state(self) -> Dict[str, Any]:
+
+    def _load_state(self) -> dict[str, Any]:
         """Load or initialize budget state"""
         if self.budget_file.exists():
             try:
@@ -75,7 +75,7 @@ class BudgetTracker:
                     return json.load(f)
             except:
                 pass
-        
+
         # Initialize new state
         return {
             "monthly_budget": MONTHLY_BUDGET,
@@ -84,55 +84,55 @@ class BudgetTracker:
             "daily_spending": {},
             "month_start": datetime.now().strftime("%Y-%m-01"),
         }
-    
+
     def _save_state(self):
         """Persist state to disk"""
         self.budget_file.parent.mkdir(parents=True, exist_ok=True)
         with open(self.budget_file, "w") as f:
             json.dump(self.state, f, indent=2)
-    
+
     def _reset_if_new_month(self):
         """Reset counters on new month"""
         current_month = datetime.now().strftime("%Y-%m-01")
         if self.state.get("month_start") != current_month:
-            logger.info(f"🔄 New month detected, resetting budget tracker")
+            logger.info("🔄 New month detected, resetting budget tracker")
             self.state["month_start"] = current_month
             self.state["spent_this_month"] = 0.0
             self.state["api_calls"] = {}
             self.state["daily_spending"] = {}
             self._save_state()
-    
+
     def track_call(self, api_name: str, cost: Optional[float] = None) -> bool:
         """
         Track an API call and its cost.
         Returns True if call should proceed, False if budget exceeded.
         """
         self._reset_if_new_month()
-        
+
         # Get cost estimate
         if cost is None:
             cost = API_COSTS.get(api_name, 0.001)
-        
+
         # Update tracking
         self.state["spent_this_month"] += cost
         self.state["api_calls"][api_name] = self.state["api_calls"].get(api_name, 0) + 1
-        
+
         today = datetime.now().strftime("%Y-%m-%d")
         self.state["daily_spending"][today] = self.state["daily_spending"].get(today, 0) + cost
-        
+
         self._save_state()
-        
+
         # Check if we should proceed
         remaining = self.state["monthly_budget"] - self.state["spent_this_month"]
         return remaining > 0
-    
+
     def get_budget_status(self) -> BudgetState:
         """Get current budget status for agent awareness"""
         self._reset_if_new_month()
-        
+
         spent = self.state["spent_this_month"]
         remaining = self.state["monthly_budget"] - spent
-        
+
         # Calculate days left in month
         today = datetime.now()
         if today.month == 12:
@@ -140,9 +140,9 @@ class BudgetTracker:
         else:
             next_month = datetime(today.year, today.month + 1, 1)
         days_left = (next_month - today).days
-        
+
         daily_avg = remaining / max(days_left, 1)
-        
+
         # Determine health
         pct_remaining = remaining / self.state["monthly_budget"]
         if pct_remaining > 0.5:
@@ -151,7 +151,7 @@ class BudgetTracker:
             health = "caution"
         else:
             health = "critical"
-        
+
         return BudgetState(
             monthly_budget=self.state["monthly_budget"],
             spent_this_month=spent,
@@ -159,27 +159,27 @@ class BudgetTracker:
             daily_average_remaining=daily_avg,
             days_left_in_month=days_left,
             budget_health=health,
-            last_updated=datetime.now().isoformat()
+            last_updated=datetime.now().isoformat(),
         )
-    
+
     def should_execute(self, operation: str, priority: str = "medium") -> bool:
         """
         BATS-style decision: should we execute this operation given budget?
-        
+
         Args:
             operation: API/operation name
             priority: "critical", "high", "medium", "low"
-        
+
         Returns:
             True if operation should proceed
         """
         status = self.get_budget_status()
         priority_level = PRIORITY.get(priority, 3)
-        
+
         # Critical operations always execute
         if priority_level == 1:
             return True
-        
+
         # Budget-aware decisions
         if status.budget_health == "critical":
             # Only critical operations
@@ -190,14 +190,14 @@ class BudgetTracker:
         else:
             # All operations OK
             return True
-    
+
     def get_prompt_injection(self) -> str:
         """
         Budget Tracker prompt injection for agent awareness.
         This is the key technique from Google's paper.
         """
         status = self.get_budget_status()
-        
+
         return f"""[BUDGET AWARENESS]
 Monthly Budget: ${status.monthly_budget:.2f}
 Spent: ${status.spent_this_month:.2f}
@@ -217,7 +217,7 @@ GUIDANCE:
         Use cheaper models when budget is tight.
         """
         status = self.get_budget_status()
-        
+
         if status.budget_health == "critical":
             return "haiku"  # Cheapest
         elif status.budget_health == "caution":
@@ -228,6 +228,7 @@ GUIDANCE:
 
 # Singleton instance
 _tracker = None
+
 
 def get_tracker() -> BudgetTracker:
     global _tracker
@@ -240,11 +241,14 @@ def get_tracker() -> BudgetTracker:
 def track(api_name: str, cost: Optional[float] = None) -> bool:
     return get_tracker().track_call(api_name, cost)
 
+
 def should_execute(operation: str, priority: str = "medium") -> bool:
     return get_tracker().should_execute(operation, priority)
 
+
 def get_budget_prompt() -> str:
     return get_tracker().get_prompt_injection()
+
 
 def get_model() -> str:
     return get_tracker().get_recommended_model()
@@ -253,16 +257,16 @@ def get_model() -> str:
 if __name__ == "__main__":
     # Test the budget tracker
     tracker = get_tracker()
-    
+
     print("=== Budget Tracker Test ===")
     print(tracker.get_prompt_injection())
-    
+
     # Simulate some API calls
     for _ in range(5):
         tracker.track_call("openrouter_sonnet")
-    
+
     print("\nAfter 5 Sonnet calls:")
     print(tracker.get_prompt_injection())
-    
+
     print(f"\nRecommended model: {tracker.get_recommended_model()}")
     print(f"Should execute deep research? {tracker.should_execute('gemini_research', 'medium')}")

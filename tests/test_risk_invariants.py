@@ -32,10 +32,10 @@ class TestDailyLossLimit:
 
         # Simulate trades with cumulative loss tracking
         trades = [
-            {"pnl": -500},   # -0.5%
-            {"pnl": -800},   # -0.8%
-            {"pnl": -600},   # -0.6% -> total -1.9%, still OK
-            {"pnl": -300},   # Would push to -2.2% -> BLOCKED
+            {"pnl": -500},  # -0.5%
+            {"pnl": -800},  # -0.8%
+            {"pnl": -600},  # -0.6% -> total -1.9%, still OK
+            {"pnl": -300},  # Would push to -2.2% -> BLOCKED
         ]
 
         cumulative_loss = 0
@@ -51,12 +51,14 @@ class TestDailyLossLimit:
             trades_executed += 1
 
         assert blocked_at == 3, f"Should block at trade 3, got {blocked_at}"
-        assert cumulative_loss <= max_loss_dollars, f"Loss ${cumulative_loss} exceeds ${max_loss_dollars}"
+        assert cumulative_loss <= max_loss_dollars, (
+            f"Loss ${cumulative_loss} exceeds ${max_loss_dollars}"
+        )
 
     def test_daily_loss_resets_daily(self):
         """Loss counter should reset at start of new trading day."""
         day1_losses = [-500, -500, -500]  # -1.5%
-        day2_losses = [-500, -500]        # -1.0% (reset)
+        day2_losses = [-500, -500]  # -1.0% (reset)
 
         equity = 100000
         max_loss = equity * 0.02
@@ -164,21 +166,21 @@ class TestPromotionGate:
     @pytest.fixture
     def passing_metrics(self):
         return {
-            "win_rate": 56.0,      # > 55%
-            "sharpe_ratio": 1.3,   # > 1.2
-            "max_drawdown": 8.0,   # < 10%
-            "profitable_days": 35, # > 30
-            "total_trades": 150,   # > 100
+            "win_rate": 56.0,  # > 55%
+            "sharpe_ratio": 1.3,  # > 1.2
+            "max_drawdown": 8.0,  # < 10%
+            "profitable_days": 35,  # > 30
+            "total_trades": 150,  # > 100
         }
 
     @pytest.fixture
     def failing_metrics(self):
         return {
-            "win_rate": 52.0,      # < 55%
-            "sharpe_ratio": -45.86,# < 1.2 (the real bug)
-            "max_drawdown": 0.0,   # suspicious
+            "win_rate": 52.0,  # < 55%
+            "sharpe_ratio": -45.86,  # < 1.2 (the real bug)
+            "max_drawdown": 0.0,  # suspicious
             "profitable_days": 5,  # < 30
-            "total_trades": 50,    # < 100
+            "total_trades": 50,  # < 100
         }
 
     def test_gate_passes_valid_metrics(self, passing_metrics):
@@ -230,11 +232,13 @@ class TestPromotionGate:
         }
 
         if failing_metrics["sharpe_ratio"] < 1.2:
-            result["deficits"].append({
-                "metric": "sharpe",
-                "actual": failing_metrics["sharpe_ratio"],
-                "required": 1.2,
-            })
+            result["deficits"].append(
+                {
+                    "metric": "sharpe",
+                    "actual": failing_metrics["sharpe_ratio"],
+                    "required": 1.2,
+                }
+            )
 
         # Verify JSON serializable
         json_str = json.dumps(result)
@@ -271,7 +275,7 @@ class TestSharpeCalculation:
         mean_return = np.mean(returns)
         std_return = 0.00001  # Artificially tiny std
 
-        raw_sharpe = (mean_return - 0.04/252) / std_return * np.sqrt(252)
+        raw_sharpe = (mean_return - 0.04 / 252) / std_return * np.sqrt(252)
 
         # Without clamping this could be -45000+
         clamped_sharpe = np.clip(raw_sharpe, -10.0, 10.0)
@@ -285,7 +289,7 @@ class TestSharpeCalculation:
 
         mean_return = np.mean(returns)
         std_return = max(np.std(returns), 0.0001)
-        sharpe = (mean_return - 0.04/252) / std_return * np.sqrt(252)
+        sharpe = (mean_return - 0.04 / 252) / std_return * np.sqrt(252)
         sharpe = np.clip(sharpe, -10.0, 10.0)
 
         # Mild negative is OK

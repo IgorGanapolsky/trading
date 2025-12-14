@@ -9,7 +9,6 @@ Created: 2025-12-11
 """
 
 import logging
-from datetime import datetime, timezone
 
 from src.ml.anomaly_detector import TradingAnomalyDetector
 from src.verification.anomaly_learning_feedback_loop import AnomalyLearningLoop
@@ -74,7 +73,7 @@ def main():
 
             # Check if trade should be blocked
             if anomaly.alert_level.value == "block":
-                print(f"    ⛔ TRADE BLOCKED - too risky!")
+                print("    ⛔ TRADE BLOCKED - too risky!")
 
     # Example 3: Simulate recurring pattern
     print("\n" + "=" * 80)
@@ -94,9 +93,7 @@ def main():
 
             if i == 0:
                 print(f"  Occurrence {i + 1}: Severity {result['severity']}")
-            elif i == 2:
-                print(f"  Occurrence {i + 1}: Severity {result['severity']} (escalated!)")
-            elif i == 4:
+            elif i == 2 or i == 4:
                 print(f"  Occurrence {i + 1}: Severity {result['severity']} (escalated!)")
 
     # Example 4: Daily report
@@ -111,13 +108,13 @@ def main():
     print(f"  New patterns: {report['new_patterns']}")
     print(f"  Recurring patterns: {report['recurring_patterns']}")
     print(f"  Lessons created: {report['lessons_created']}")
-    print(f"\n  By Type:")
-    for anomaly_type, count in report['by_type'].items():
+    print("\n  By Type:")
+    for anomaly_type, count in report["by_type"].items():
         print(f"    - {anomaly_type}: {count}")
 
-    if report['critical_issues']:
-        print(f"\n  🚨 Critical Issues:")
-        for issue in report['critical_issues']:
+    if report["critical_issues"]:
+        print("\n  🚨 Critical Issues:")
+        for issue in report["critical_issues"]:
             print(f"    - {issue['type']}: {issue['message']} (count: {issue['count']})")
 
     # Example 5: Query lessons learned
@@ -126,10 +123,7 @@ def main():
     print("=" * 80)
 
     # Search for relevant lessons before trading
-    results = learning_loop.rag.search(
-        "large position size order amount",
-        top_k=3
-    )
+    results = learning_loop.rag.search("large position size order amount", top_k=3)
 
     print("📚 Relevant lessons from past anomalies:")
     for lesson, score in results:

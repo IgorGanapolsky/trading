@@ -154,9 +154,7 @@ class PatternRecurrenceDetector:
         filtered = []
         for anomaly in anomalies:
             try:
-                detected_at = datetime.fromisoformat(
-                    anomaly["detected_at"].replace("Z", "+00:00")
-                )
+                detected_at = datetime.fromisoformat(anomaly["detected_at"].replace("Z", "+00:00"))
                 if detected_at >= cutoff:
                     filtered.append(anomaly)
             except Exception as e:
@@ -181,9 +179,7 @@ class PatternRecurrenceDetector:
         timestamps = []
         for occ in occurrences:
             try:
-                ts = datetime.fromisoformat(
-                    occ["detected_at"].replace("Z", "+00:00")
-                )
+                ts = datetime.fromisoformat(occ["detected_at"].replace("Z", "+00:00"))
                 timestamps.append(ts)
             except Exception:
                 continue
@@ -197,7 +193,7 @@ class PatternRecurrenceDetector:
         # Calculate time deltas
         deltas = []
         for i in range(1, len(timestamps)):
-            delta = (timestamps[i] - timestamps[i-1]).total_seconds() / 86400  # days
+            delta = (timestamps[i] - timestamps[i - 1]).total_seconds() / 86400  # days
             deltas.append(delta)
 
         # Return average
@@ -226,7 +222,7 @@ class PatternRecurrenceDetector:
         # Sort by timestamp
         sorted_occs = sorted(
             occurrences,
-            key=lambda x: datetime.fromisoformat(x["detected_at"].replace("Z", "+00:00"))
+            key=lambda x: datetime.fromisoformat(x["detected_at"].replace("Z", "+00:00")),
         )
 
         # Split in half
@@ -354,19 +350,14 @@ class PatternRecurrenceDetector:
 
         # Sort by severity then count
         severity_order = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
-        self.patterns.sort(
-            key=lambda p: (severity_order.get(p.severity, 0), p.count),
-            reverse=True
-        )
+        self.patterns.sort(key=lambda p: (severity_order.get(p.severity, 0), p.count), reverse=True)
 
         # Generate report
         report = {
             "recurring_patterns": [p.to_dict() for p in self.patterns],
             "total_anomalies": len(windowed),
             "unique_types": len(groups),
-            "critical_patterns": [
-                p.to_dict() for p in self.patterns if p.severity == "CRITICAL"
-            ],
+            "critical_patterns": [p.to_dict() for p in self.patterns if p.severity == "CRITICAL"],
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "window_days": self.window_days,
             "recurrence_threshold": self.recurrence_threshold,
@@ -422,16 +413,13 @@ class PatternRecurrenceDetector:
                 elif current == "HIGH":
                     pattern.severity = "CRITICAL"
 
-                logger.warning(
-                    f"ESCALATED: {pattern_type} from {current} to {pattern.severity}"
-                )
+                logger.warning(f"ESCALATED: {pattern_type} from {current} to {pattern.severity}")
 
                 # Re-save report with updated severity (don't re-analyze)
                 # Re-sort patterns by severity
                 severity_order = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
                 self.patterns.sort(
-                    key=lambda p: (severity_order.get(p.severity, 0), p.count),
-                    reverse=True
+                    key=lambda p: (severity_order.get(p.severity, 0), p.count), reverse=True
                 )
 
                 # Generate and save updated report
@@ -473,7 +461,9 @@ class PatternRecurrenceDetector:
             return None
 
         # Build issue title and body
-        title = f"[CRITICAL] Recurring Pattern: {pattern.pattern_type} ({pattern.count} occurrences)"
+        title = (
+            f"[CRITICAL] Recurring Pattern: {pattern.pattern_type} ({pattern.count} occurrences)"
+        )
 
         body = f"""## Critical Recurring Pattern Detected
 
@@ -505,11 +495,17 @@ Review the anomaly log and implement preventive measures immediately.
         try:
             result = subprocess.run(
                 [
-                    "gh", "issue", "create",
-                    "--repo", repo,
-                    "--title", title,
-                    "--body", body,
-                    "--label", "bug,critical,automated",
+                    "gh",
+                    "issue",
+                    "create",
+                    "--repo",
+                    repo,
+                    "--title",
+                    title,
+                    "--body",
+                    body,
+                    "--label",
+                    "bug,critical,automated",
                 ],
                 capture_output=True,
                 text=True,
@@ -560,7 +556,7 @@ def run_daily_pattern_analysis(
     report = detector.analyze_patterns()
 
     # Log summary
-    logger.info(f"Pattern Analysis Summary:")
+    logger.info("Pattern Analysis Summary:")
     logger.info(f"  Total Anomalies: {report['total_anomalies']}")
     logger.info(f"  Recurring Patterns: {len(report['recurring_patterns'])}")
     logger.info(f"  Critical Patterns: {len(report['critical_patterns'])}")

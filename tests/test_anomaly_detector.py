@@ -8,13 +8,13 @@ Tests ensure that:
 4. Market hours violations are detected
 """
 
-import pytest
 from datetime import datetime, timedelta, timezone
 
+import pytest
 from src.ml.anomaly_detector import (
-    TradingAnomalyDetector,
-    AnomalyType,
     AlertLevel,
+    AnomalyType,
+    TradingAnomalyDetector,
     validate_order,
 )
 
@@ -22,10 +22,7 @@ from src.ml.anomaly_detector import (
 @pytest.fixture
 def detector():
     """Create a detector with test settings."""
-    return TradingAnomalyDetector(
-        expected_daily_amount=10.0,
-        portfolio_value=100000.0
-    )
+    return TradingAnomalyDetector(expected_daily_amount=10.0, portfolio_value=100000.0)
 
 
 class TestOrderAmountValidation:
@@ -33,11 +30,7 @@ class TestOrderAmountValidation:
 
     def test_normal_order_no_anomaly(self, detector):
         """Test that normal orders don't trigger anomalies."""
-        anomalies = detector.validate_trade(
-            symbol="SPY",
-            amount=10.0,
-            action="BUY"
-        )
+        anomalies = detector.validate_trade(symbol="SPY", amount=10.0, action="BUY")
         # Should have no blocking anomalies
         blocking = [a for a in anomalies if a.alert_level == AlertLevel.BLOCK]
         assert len(blocking) == 0
@@ -47,7 +40,7 @@ class TestOrderAmountValidation:
         anomalies = detector.validate_trade(
             symbol="SPY",
             amount=500.0,  # 50x expected
-            action="BUY"
+            action="BUY",
         )
         assert len(anomalies) > 0
         amount_anomalies = [a for a in anomalies if a.anomaly_type == AnomalyType.ORDER_AMOUNT]
@@ -58,7 +51,7 @@ class TestOrderAmountValidation:
         anomalies = detector.validate_trade(
             symbol="SPY",
             amount=2000.0,  # 200x expected $10
-            action="BUY"
+            action="BUY",
         )
         blocking = [a for a in anomalies if a.alert_level == AlertLevel.BLOCK]
         assert len(blocking) > 0
@@ -69,7 +62,7 @@ class TestOrderAmountValidation:
         anomalies = detector.validate_trade(
             symbol="SPY",
             amount=150.0,  # 15x expected $10
-            action="BUY"
+            action="BUY",
         )
         blocking = [a for a in anomalies if a.alert_level == AlertLevel.BLOCK]
         assert len(blocking) > 0
@@ -160,11 +153,7 @@ class TestConvenienceFunction:
 
     def test_valid_order(self):
         """Test that valid orders return True."""
-        is_valid, warnings = validate_order(
-            symbol="SPY",
-            amount=10.0,
-            action="BUY"
-        )
+        is_valid, warnings = validate_order(symbol="SPY", amount=10.0, action="BUY")
         # Should be valid with no blocking warnings
         assert is_valid is True or len([w for w in warnings if "exceeds" in w.lower()]) == 0
 
@@ -174,7 +163,7 @@ class TestConvenienceFunction:
             symbol="SPY",
             amount=2000.0,  # Way over expected
             action="BUY",
-            expected_daily=10.0
+            expected_daily=10.0,
         )
         # Should be blocked due to amount
         assert is_valid is False
@@ -198,16 +187,12 @@ class TestAnomalyHistory:
         detector.validate_trade("FAKESYMBOL", 10.0, "BUY")  # Unknown symbol
         detector.validate_trade("SPY", 2000.0, "BUY")  # Large amount
 
-        symbol_history = detector.get_anomaly_history(
-            anomaly_type=AnomalyType.SYMBOL_UNKNOWN
-        )
+        symbol_history = detector.get_anomaly_history(anomaly_type=AnomalyType.SYMBOL_UNKNOWN)
         assert all(a.anomaly_type == AnomalyType.SYMBOL_UNKNOWN for a in symbol_history)
 
     def test_filter_by_level(self, detector):
         """Test filtering history by alert level."""
         detector.validate_trade("SPY", 2000.0, "BUY")  # Should trigger BLOCK
 
-        blocking_history = detector.get_anomaly_history(
-            alert_level=AlertLevel.BLOCK
-        )
+        blocking_history = detector.get_anomaly_history(alert_level=AlertLevel.BLOCK)
         assert all(a.alert_level == AlertLevel.BLOCK for a in blocking_history)

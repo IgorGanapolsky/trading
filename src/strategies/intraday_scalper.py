@@ -44,19 +44,19 @@ class IntradayConfig:
 
     # Exit thresholds (tighter than swing trading)
     take_profit_pct: float = 0.005  # 0.5% take profit (quick scalp)
-    stop_loss_pct: float = 0.003    # 0.3% stop loss (tight risk)
-    max_hold_minutes: int = 30      # Max 30 min hold (no overnight)
+    stop_loss_pct: float = 0.003  # 0.3% stop loss (tight risk)
+    max_hold_minutes: int = 30  # Max 30 min hold (no overnight)
 
     # Position sizing
     position_size_usd: float = 20.0  # $20 per scalp trade
-    max_daily_trades: int = 10       # Max 10 trades per day
-    max_concurrent: int = 2          # Max 2 open scalp positions
+    max_daily_trades: int = 10  # Max 10 trades per day
+    max_concurrent: int = 2  # Max 2 open scalp positions
 
     # Indicator thresholds for 5-min bars
-    rsi_oversold: float = 35.0       # Buy when RSI < 35
-    rsi_overbought: float = 65.0     # Don't buy when RSI > 65
-    macd_threshold: float = 0.0      # MACD must be positive/crossing up
-    volume_surge: float = 1.5        # Volume must be 1.5x average
+    rsi_oversold: float = 35.0  # Buy when RSI < 35
+    rsi_overbought: float = 65.0  # Don't buy when RSI > 65
+    macd_threshold: float = 0.0  # MACD must be positive/crossing up
+    volume_surge: float = 1.5  # Volume must be 1.5x average
 
 
 class IntradayScalper:
@@ -209,7 +209,7 @@ class IntradayScalper:
         if len(closes) < period + 1:
             return 50.0  # Neutral default
 
-        deltas = [closes[i] - closes[i-1] for i in range(1, len(closes))]
+        deltas = [closes[i] - closes[i - 1] for i in range(1, len(closes))]
         gains = [d if d > 0 else 0 for d in deltas[-period:]]
         losses = [-d if d < 0 else 0 for d in deltas[-period:]]
 
@@ -223,9 +223,7 @@ class IntradayScalper:
         rsi = 100 - (100 / (1 + rs))
         return rsi
 
-    def _calculate_macd(
-        self, closes: list[float]
-    ) -> tuple[float, float, float]:
+    def _calculate_macd(self, closes: list[float]) -> tuple[float, float, float]:
         """Calculate MACD, Signal, and Histogram."""
         if len(closes) < 26:
             return 0.0, 0.0, 0.0
@@ -292,12 +290,16 @@ class IntradayScalper:
     def record_trade(self, symbol: str, entry_price: float) -> None:
         """Record a new trade."""
         self._daily_trade_count += 1
-        self._open_positions.append({
-            "symbol": symbol,
-            "entry_price": entry_price,
-            "entry_time": datetime.now(timezone.utc).isoformat(),
-        })
-        logger.info(f"Recorded scalp trade #{self._daily_trade_count}: {symbol} @ ${entry_price:.2f}")
+        self._open_positions.append(
+            {
+                "symbol": symbol,
+                "entry_price": entry_price,
+                "entry_time": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+        logger.info(
+            f"Recorded scalp trade #{self._daily_trade_count}: {symbol} @ ${entry_price:.2f}"
+        )
 
     def close_position(self, symbol: str) -> None:
         """Remove position from tracking."""

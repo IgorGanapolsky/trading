@@ -60,8 +60,8 @@ class TestWorkflowObservability:
                     missing_vars.append(f"{workflow_path}: missing {var}")
 
         assert not missing_vars, (
-            f"REGRESSION ll_017: LangSmith env vars missing from workflows!\n"
-            f"Missing:\n" + "\n".join(f"  - {m}" for m in missing_vars)
+            "REGRESSION ll_017: LangSmith env vars missing from workflows!\n"
+            "Missing:\n" + "\n".join(f"  - {m}" for m in missing_vars)
         )
 
     def test_workflows_have_helicone_vars(self, project_root: Path):
@@ -80,8 +80,8 @@ class TestWorkflowObservability:
                     missing_vars.append(f"{workflow_path}: missing {var}")
 
         assert not missing_vars, (
-            f"Helicone env vars missing from workflows!\n"
-            f"Missing:\n" + "\n".join(f"  - {m}" for m in missing_vars)
+            "Helicone env vars missing from workflows!\n"
+            "Missing:\n" + "\n".join(f"  - {m}" for m in missing_vars)
         )
 
     def test_workflows_have_openrouter_key(self, project_root: Path):
@@ -92,9 +92,7 @@ class TestWorkflowObservability:
                 continue
 
             content = full_path.read_text()
-            assert "OPENROUTER_API_KEY" in content, (
-                f"Missing OPENROUTER_API_KEY in {workflow_path}"
-            )
+            assert "OPENROUTER_API_KEY" in content, f"Missing OPENROUTER_API_KEY in {workflow_path}"
 
     def test_langsmith_wrapper_configuration(self):
         """Test that langsmith wrapper properly checks for API key."""

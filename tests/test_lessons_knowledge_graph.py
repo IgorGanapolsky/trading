@@ -15,13 +15,9 @@ Author: Trading System
 Created: 2025-12-11
 """
 
-import json
 import time
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
 
 import pytest
-
 from src.verification.lessons_knowledge_graph_query import (
     LessonsKnowledgeGraphQuery,
     MatchedLesson,

@@ -132,9 +132,7 @@ class TrailingStopManager:
         try:
             self.state_file.parent.mkdir(parents=True, exist_ok=True)
             data = {
-                "positions": {
-                    symbol: asdict(state) for symbol, state in self.positions.items()
-                },
+                "positions": {symbol: asdict(state) for symbol, state in self.positions.items()},
                 "last_updated": datetime.now().isoformat(),
             }
             with open(self.state_file, "w") as f:
@@ -198,8 +196,7 @@ class TrailingStopManager:
         self._save_state()
 
         logger.info(
-            f"Added trailing stop for {symbol}: "
-            f"entry=${entry_price:.2f}, stop=${trailing_stop:.2f}"
+            f"Added trailing stop for {symbol}: entry=${entry_price:.2f}, stop=${trailing_stop:.2f}"
         )
 
         return state
@@ -283,14 +280,10 @@ class TrailingStopManager:
         # Calculate P/L metrics
         if state.side == "long":
             pnl_pct = ((current_price - state.entry_price) / state.entry_price) * 100
-            pnl_from_peak_pct = (
-                (current_price - state.peak_price) / state.peak_price
-            ) * 100
+            pnl_from_peak_pct = ((current_price - state.peak_price) / state.peak_price) * 100
         else:
             pnl_pct = ((state.entry_price - current_price) / state.entry_price) * 100
-            pnl_from_peak_pct = (
-                (state.peak_price - current_price) / state.peak_price
-            ) * 100
+            pnl_from_peak_pct = ((state.peak_price - current_price) / state.peak_price) * 100
 
         trail_distance_pct = abs(
             (state.trailing_stop_price - state.peak_price) / state.peak_price * 100
@@ -458,9 +451,7 @@ class TrailingStopManager:
 
             for s in holds:
                 report.append(f"\n{s.symbol}:")
-                report.append(
-                    f"   Entry: ${s.entry_price:.2f} -> Peak: ${s.peak_price:.2f}"
-                )
+                report.append(f"   Entry: ${s.entry_price:.2f} -> Peak: ${s.peak_price:.2f}")
                 report.append(f"   Current: ${s.current_price:.2f}")
                 report.append(f"   Trail Stop: ${s.trailing_stop_price:.2f}")
                 report.append(
@@ -503,9 +494,7 @@ if __name__ == "__main__":
 
     print("\n--- Price drops to $640 (still above stop) ---")
     signal = manager.update("SPY", current_price=640.00)
-    print(
-        f"Should exit: {signal.should_exit}, Stop: ${signal.trailing_stop_price:.2f}"
-    )
+    print(f"Should exit: {signal.should_exit}, Stop: ${signal.trailing_stop_price:.2f}")
 
     print("\n--- Price drops to $635 (hits 2% trail from $650) ---")
     signal = manager.update("SPY", current_price=635.00)

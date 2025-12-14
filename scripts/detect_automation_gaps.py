@@ -83,8 +83,8 @@ def check_staleness(system_state: dict, staleness_key: str, max_hours: int) -> t
 
         age = datetime.now() - timestamp
         if age > timedelta(hours=max_hours):
-            return True, f"Last run {age.days}d {age.seconds//3600}h ago (max: {max_hours}h)"
-        return False, f"Last run {age.days}d {age.seconds//3600}h ago (OK)"
+            return True, f"Last run {age.days}d {age.seconds // 3600}h ago (max: {max_hours}h)"
+        return False, f"Last run {age.days}d {age.seconds // 3600}h ago (OK)"
     except Exception as e:
         return True, f"Cannot parse timestamp: {e}"
 
@@ -111,37 +111,32 @@ def main():
         print(f"  Description: {config['description']}")
 
         # Check workflow coverage
-        has_coverage = check_workflow_coverage(
-            config["workflow_file"],
-            config["workflow_pattern"]
-        )
+        has_coverage = check_workflow_coverage(config["workflow_file"], config["workflow_pattern"])
 
         if not has_coverage:
             gap = f"  [GAP] Not in workflow: {config['workflow_file']}"
             print(gap)
-            gaps_found.append({
-                "automation": automation_name,
-                "issue": "missing_workflow_coverage",
-                "detail": f"Pattern '{config['workflow_pattern']}' not found in {config['workflow_file']}"
-            })
+            gaps_found.append(
+                {
+                    "automation": automation_name,
+                    "issue": "missing_workflow_coverage",
+                    "detail": f"Pattern '{config['workflow_pattern']}' not found in {config['workflow_file']}",
+                }
+            )
         else:
-            print(f"  [OK] Workflow coverage found")
+            print("  [OK] Workflow coverage found")
 
         # Check staleness
         is_stale, staleness_msg = check_staleness(
-            system_state,
-            config["staleness_key"],
-            config["max_staleness_hours"]
+            system_state, config["staleness_key"], config["max_staleness_hours"]
         )
 
         if is_stale:
             gap = f"  [STALE] {staleness_msg}"
             print(gap)
-            gaps_found.append({
-                "automation": automation_name,
-                "issue": "stale_execution",
-                "detail": staleness_msg
-            })
+            gaps_found.append(
+                {"automation": automation_name, "issue": "stale_execution", "detail": staleness_msg}
+            )
         else:
             print(f"  [OK] {staleness_msg}")
 

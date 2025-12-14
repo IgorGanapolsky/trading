@@ -20,7 +20,6 @@ Created: 2025-12-11
 """
 
 import argparse
-import json
 import re
 import sys
 from datetime import datetime
@@ -35,7 +34,9 @@ class LessonParser:
     """Parse lessons learned markdown files."""
 
     def __init__(self, lessons_dir: Path | None = None):
-        self.lessons_dir = lessons_dir or Path(__file__).parent.parent / "rag_knowledge" / "lessons_learned"
+        self.lessons_dir = (
+            lessons_dir or Path(__file__).parent.parent / "rag_knowledge" / "lessons_learned"
+        )
 
     def parse_lesson(self, file_path: Path) -> dict[str, Any]:
         """Parse a single lesson learned file."""
@@ -142,7 +143,9 @@ def test_{test_id}_{test_name}():
 '''
 
     def __init__(self, output_path: Path | None = None):
-        self.output_path = output_path or Path(__file__).parent.parent / "tests" / "test_auto_regression.py"
+        self.output_path = (
+            output_path or Path(__file__).parent.parent / "tests" / "test_auto_regression.py"
+        )
 
     def generate_test_from_lesson(self, lesson: dict[str, Any]) -> str:
         """Generate test code from a parsed lesson."""

@@ -69,9 +69,7 @@ class AuditReport:
     @property
     def passed(self) -> bool:
         """Audit passes if no high/critical violations."""
-        critical_count = sum(
-            1 for v in self.violations if v.severity in ["high", "critical"]
-        )
+        critical_count = sum(1 for v in self.violations if v.severity in ["high", "critical"])
         return critical_count == 0
 
 
@@ -111,9 +109,7 @@ class ComplianceAuditor:
                     data = json.load(f)
                     trades = data if isinstance(data, list) else [data]
                     for trade in trades:
-                        violations.extend(
-                            self._check_trade_compliance(trade, str(log_file), None)
-                        )
+                        violations.extend(self._check_trade_compliance(trade, str(log_file), None))
             except Exception as e:
                 self.warnings.append(f"Error reading {log_file}: {e}")
 
@@ -257,7 +253,10 @@ class ComplianceAuditor:
                             )
 
                         # Check for consecutive losses
-                        if event.get("consecutive_losses", 0) >= THRESHOLDS["max_consecutive_losses"]:
+                        if (
+                            event.get("consecutive_losses", 0)
+                            >= THRESHOLDS["max_consecutive_losses"]
+                        ):
                             violations.append(
                                 Violation(
                                     category="consecutive_losses",
@@ -343,13 +342,20 @@ class ComplianceAuditor:
             summary=summary,
         )
 
-        logger.info(f"Audit complete: {self.files_scanned} files scanned, {len(self.violations)} violations found")
+        logger.info(
+            f"Audit complete: {self.files_scanned} files scanned, {len(self.violations)} violations found"
+        )
 
         return report
 
     def save_report(self, report: AuditReport, output_path: Path | None = None):
         """Save audit report to file."""
-        output_path = output_path or self.data_dir / "audit_reports" / f"audit_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        output_path = (
+            output_path
+            or self.data_dir
+            / "audit_reports"
+            / f"audit_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         report_dict = {
@@ -423,7 +429,9 @@ def main():
     if report.violations:
         print("\nVIOLATIONS:")
         for v in report.violations:
-            severity_icon = {"critical": "!!!", "high": "!!", "medium": "!", "low": "."}.get(v.severity, "?")
+            severity_icon = {"critical": "!!!", "high": "!!", "medium": "!", "low": "."}.get(
+                v.severity, "?"
+            )
             print(f"\n  [{severity_icon}] {v.category.upper()}: {v.details}")
             print(f"      Source: {v.file_source}" + (f":{v.line_number}" if v.line_number else ""))
             print(f"      Action: {v.recommended_action}")

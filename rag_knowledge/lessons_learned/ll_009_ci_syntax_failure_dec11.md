@@ -47,7 +47,7 @@ critical gaps in our CI/CD safety gates.
 ### The Cascade of Failures
 
 ```
-Large PR Created 
+Large PR Created
     → CI Runs (but not required to pass)
     → Agent Auto-Merges
     → Syntax Error in Main
@@ -155,10 +155,10 @@ Alerts on:
 def test_ll_009_syntax_error_prevention():
     """Ensure no syntax errors exist in critical files."""
     from src.verification.pre_merge_verifier import PreMergeVerifier
-    
+
     verifier = PreMergeVerifier()
     result = verifier.check_syntax()
-    
+
     assert result["passed"], f"REGRESSION: See ll_009. Errors: {result['errors']}"
 ```
 
@@ -168,7 +168,7 @@ def test_pre_merge_gate_catches_syntax_errors():
     """Pre-merge gate must catch syntax errors."""
     # Create file with syntax error
     bad_code = "def broken(\n"  # Missing closing paren
-    
+
     # Gate should fail
     import ast
     with pytest.raises(SyntaxError):
@@ -221,8 +221,8 @@ ContinuousVerifier uses statistical methods:
 
 ### 3. Learning Loop
 ```
-Incident Occurs 
-    → Record to RAG 
+Incident Occurs
+    → Record to RAG
     → Update Pattern Database
     → Train Anomaly Detector
     → Check Before Future Actions

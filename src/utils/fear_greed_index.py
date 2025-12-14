@@ -18,7 +18,6 @@ Usage:
 """
 
 import logging
-import os
 from datetime import datetime
 from typing import Any
 
@@ -80,9 +79,7 @@ class FearGreedIndex:
                 self.last_classification = fng_data["value_classification"]
                 self.last_update = datetime.now()
 
-                logger.info(
-                    f"Fear & Greed Index: {self.last_value} ({self.last_classification})"
-                )
+                logger.info(f"Fear & Greed Index: {self.last_value} ({self.last_classification})")
 
                 return {
                     "value": self.last_value,
@@ -188,10 +185,7 @@ class FearGreedIndex:
             List of historical values
         """
         try:
-            response = requests.get(
-                f"{self.API_URL}?limit={min(days, 100)}",
-                timeout=10
-            )
+            response = requests.get(f"{self.API_URL}?limit={min(days, 100)}", timeout=10)
             response.raise_for_status()
             data = response.json()
 

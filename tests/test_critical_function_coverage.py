@@ -14,7 +14,6 @@ Reference: rag_knowledge/lessons_learned/ll_014_dead_code_dynamic_budget_dec11.m
 """
 
 import ast
-import os
 from pathlib import Path
 from typing import NamedTuple
 
@@ -66,12 +65,12 @@ class FunctionCallVisitor(ast.NodeVisitor):
     def visit_Call(self, node: ast.Call):
         """Visit function call nodes."""
         # Handle simple function calls: func_name()
-        if isinstance(node.func, ast.Name) and node.func.id == self.function_name:
-            self.call_count += 1
-            self.call_locations.append((self.current_file, node.lineno))
-
-        # Handle method calls: self.func_name() or obj.func_name()
-        elif isinstance(node.func, ast.Attribute) and node.func.attr == self.function_name:
+        if (
+            isinstance(node.func, ast.Name)
+            and node.func.id == self.function_name
+            or isinstance(node.func, ast.Attribute)
+            and node.func.attr == self.function_name
+        ):
             self.call_count += 1
             self.call_locations.append((self.current_file, node.lineno))
 
@@ -172,9 +171,9 @@ class TestCriticalFunctionCoverage:
         4. System loses money because critical code is dead
         """
         # First, verify the function exists
-        assert verify_function_is_defined(
-            critical_func.file_path, critical_func.function_name
-        ), f"Function {critical_func.function_name} not found in {critical_func.file_path}"
+        assert verify_function_is_defined(critical_func.file_path, critical_func.function_name), (
+            f"Function {critical_func.function_name} not found in {critical_func.file_path}"
+        )
 
         # Find all call sites (excluding the definition file to avoid counting internal calls only)
         call_sites = count_function_calls_in_codebase(

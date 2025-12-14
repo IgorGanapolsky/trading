@@ -9,7 +9,6 @@ Reference: ll_020_options_primary_strategy_dec12.md
 
 from __future__ import annotations
 
-import ast
 import inspect
 
 
@@ -34,12 +33,12 @@ class TestOptionsExecutionPriority:
         iv_options_line = None
         process_ticker_line = None
 
-        for i, line in enumerate(source.split('\n')):
-            if 'run_options_strategy()' in line and not line.strip().startswith('#'):
+        for i, line in enumerate(source.split("\n")):
+            if "run_options_strategy()" in line and not line.strip().startswith("#"):
                 options_strategy_line = i
-            if 'run_iv_options_execution()' in line and not line.strip().startswith('#'):
+            if "run_iv_options_execution()" in line and not line.strip().startswith("#"):
                 iv_options_line = i
-            if '_process_ticker(' in line and not line.strip().startswith('#'):
+            if "_process_ticker(" in line and not line.strip().startswith("#"):
                 process_ticker_line = i
 
         assert options_strategy_line is not None, (
@@ -69,10 +68,12 @@ class TestOptionsExecutionPriority:
         """Config should allocate 60% to theta strategies."""
         from src.core.config import OPTIMIZED_ALLOCATION
 
-        theta_total = OPTIMIZED_ALLOCATION.get("theta_spy", 0) + OPTIMIZED_ALLOCATION.get("theta_qqq", 0)
+        theta_total = OPTIMIZED_ALLOCATION.get("theta_spy", 0) + OPTIMIZED_ALLOCATION.get(
+            "theta_qqq", 0
+        )
 
         assert theta_total >= 0.5, (
-            f"Theta allocation is {theta_total*100:.0f}%, should be >= 50%. "
+            f"Theta allocation is {theta_total * 100:.0f}%, should be >= 50%. "
             "Options theta is the proven profit strategy."
         )
 
@@ -83,7 +84,7 @@ class TestOptionsExecutionPriority:
         momentum_total = OPTIMIZED_ALLOCATION.get("momentum_etfs", 0)
 
         assert momentum_total <= 0.4, (
-            f"Momentum allocation is {momentum_total*100:.0f}%, should be <= 40%. "
+            f"Momentum allocation is {momentum_total * 100:.0f}%, should be <= 40%. "
             "Options theta should be primary strategy."
         )
 
@@ -95,7 +96,7 @@ class TestOptionsStrategyExists:
         """TradingOrchestrator must have run_options_strategy method."""
         from src.orchestrator.main import TradingOrchestrator
 
-        assert hasattr(TradingOrchestrator, 'run_options_strategy'), (
+        assert hasattr(TradingOrchestrator, "run_options_strategy"), (
             "TradingOrchestrator missing run_options_strategy method"
         )
 
@@ -103,6 +104,6 @@ class TestOptionsStrategyExists:
         """TradingOrchestrator must have run_iv_options_execution method."""
         from src.orchestrator.main import TradingOrchestrator
 
-        assert hasattr(TradingOrchestrator, 'run_iv_options_execution'), (
+        assert hasattr(TradingOrchestrator, "run_iv_options_execution"), (
             "TradingOrchestrator missing run_iv_options_execution method"
         )

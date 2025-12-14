@@ -100,7 +100,7 @@ def enable_observability(
         orchestrator._observability_tracer = tracer
         orchestrator._observability_evaluator = evaluator
 
-        logger.info(f"Observability enabled for orchestrator instance")
+        logger.info("Observability enabled for orchestrator instance")
     else:
         # Monkey-patch the class
         try:

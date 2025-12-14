@@ -26,9 +26,8 @@ Usage:
 
 from __future__ import annotations
 
-import functools
 import logging
-from typing import Any, Callable, Dict, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar
 
 from src.memory.procedural_memory import (
     ProceduralMemory,
@@ -61,14 +60,14 @@ class SkillLearningHook:
         self.auto_suggest = auto_suggest
 
         # Track active trades
-        self._trade_contexts: Dict[str, Dict[str, Any]] = {}
+        self._trade_contexts: dict[str, dict[str, Any]] = {}
 
     def on_trade_enter(
         self,
         trade_id: str,
         symbol: str,
         action: str,
-        context: Dict[str, Any],
+        context: dict[str, Any],
     ):
         """Called when entering a trade. Records context for later learning."""
         self._trade_contexts[trade_id] = {
@@ -89,7 +88,7 @@ class SkillLearningHook:
         self,
         trade_id: str,
         profit_pct: float,
-        exit_context: Dict[str, Any],
+        exit_context: dict[str, Any],
     ):
         """Called when exiting a trade. Learns skill if profitable."""
         entry_context = self._trade_contexts.pop(trade_id, None)
@@ -123,9 +122,9 @@ class SkillLearningHook:
 
     def suggest_for_context(
         self,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         skill_type: Optional[SkillType] = None,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         """
         Get skill suggestion for the current context.
 
@@ -179,14 +178,13 @@ def enable_skill_learning(
     orchestrator._skill_hook = hook
 
     # Add method to get skill suggestions
-    def get_skill_suggestion(context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def get_skill_suggestion(context: dict[str, Any]) -> Optional[dict[str, Any]]:
         return hook.suggest_for_context(context)
 
     orchestrator.get_skill_suggestion = get_skill_suggestion
 
     logger.info(
-        f"Skill learning enabled: min_profit={min_profit_pct}%, "
-        f"auto_suggest={auto_suggest}"
+        f"Skill learning enabled: min_profit={min_profit_pct}%, auto_suggest={auto_suggest}"
     )
 
     return hook
@@ -205,7 +203,6 @@ def create_initial_skills() -> SkillLibrary:
         SkillConditions,
         SkillOutcome,
         SkillType,
-        TradingSkill,
     )
 
     library = get_skill_library()

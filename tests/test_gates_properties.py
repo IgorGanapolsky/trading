@@ -30,6 +30,7 @@ class TestGateMonotonicity:
 
     def test_momentum_score_monotonicity(self, sample_momentum_data):
         """Lower threshold -> more passes (never fewer)."""
+
         def count_passes(threshold):
             return sum(1 for s in sample_momentum_data if s["score"] > threshold)
 
@@ -38,7 +39,9 @@ class TestGateMonotonicity:
 
         for i in range(len(thresholds) - 1):
             lo, hi = thresholds[i], thresholds[i + 1]
-            assert passes[lo] >= passes[hi], f"Monotonicity violation: {lo}->{passes[lo]}, {hi}->{passes[hi]}"
+            assert passes[lo] >= passes[hi], (
+                f"Monotonicity violation: {lo}->{passes[lo]}, {hi}->{passes[hi]}"
+            )
 
     def test_rl_confidence_monotonicity(self):
         """Lower RL threshold -> more passes."""
@@ -50,7 +53,7 @@ class TestGateMonotonicity:
 
         for i in range(len(thresholds) - 1):
             lo, hi = thresholds[i], thresholds[i + 1]
-            assert passes[lo] >= passes[hi], f"RL monotonicity violation"
+            assert passes[lo] >= passes[hi], "RL monotonicity violation"
 
     def test_sentiment_threshold_monotonicity(self):
         """More negative threshold -> more passes."""
@@ -62,7 +65,7 @@ class TestGateMonotonicity:
 
         for i in range(len(thresholds) - 1):
             lo, hi = thresholds[i], thresholds[i + 1]
-            assert passes[lo] >= passes[hi], f"Sentiment monotonicity violation"
+            assert passes[lo] >= passes[hi], "Sentiment monotonicity violation"
 
 
 class TestNoTradeDetection:
@@ -72,7 +75,11 @@ class TestNoTradeDetection:
         """With valid signals, some trades MUST pass."""
         np.random.seed(42)
         signals = [
-            {"momentum": np.random.uniform(0.4, 0.9), "rl": np.random.uniform(0.5, 0.9), "sentiment": np.random.uniform(0.0, 0.5)}
+            {
+                "momentum": np.random.uniform(0.4, 0.9),
+                "rl": np.random.uniform(0.5, 0.9),
+                "sentiment": np.random.uniform(0.0, 0.5),
+            }
             for _ in range(50)
         ]
 
@@ -86,7 +93,14 @@ class TestNoTradeDetection:
     def test_gate_elimination_attribution(self):
         """Track which gate rejected each signal."""
         np.random.seed(42)
-        signals = [{"momentum": np.random.uniform(0, 1), "rl": np.random.uniform(0, 1), "sentiment": np.random.uniform(-0.5, 0.5)} for _ in range(100)]
+        signals = [
+            {
+                "momentum": np.random.uniform(0, 1),
+                "rl": np.random.uniform(0, 1),
+                "sentiment": np.random.uniform(-0.5, 0.5),
+            }
+            for _ in range(100)
+        ]
 
         rejections = {"momentum": 0, "rl": 0, "sentiment": 0, "passed": 0}
         for s in signals:
@@ -135,7 +149,7 @@ class TestGateComposition:
         cases = [
             {"momentum": 0.1, "rl": 0.9, "sentiment": 0.9},  # fail momentum
             {"momentum": 0.9, "rl": 0.1, "sentiment": 0.9},  # fail rl
-            {"momentum": 0.9, "rl": 0.9, "sentiment": -0.9}, # fail sentiment
+            {"momentum": 0.9, "rl": 0.9, "sentiment": -0.9},  # fail sentiment
         ]
         for c in cases:
             passed = c["momentum"] >= 0.3 and c["rl"] >= 0.45 and c["sentiment"] >= -0.2

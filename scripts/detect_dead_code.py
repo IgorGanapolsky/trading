@@ -19,7 +19,6 @@ import ast
 import os
 import re
 import sys
-from collections import defaultdict
 from pathlib import Path
 from typing import NamedTuple
 
@@ -136,7 +135,7 @@ def find_disabled_features(files: list[Path]) -> list[tuple[Path, int, str]]:
     results = []
     patterns = [
         r'os\.getenv\(["\'][A-Z_]+["\'],\s*["\']false["\']',
-        r'ENABLED.*=.*False',
+        r"ENABLED.*=.*False",
         r'ENABLE.*"false"',
     ]
     for file_path in files:

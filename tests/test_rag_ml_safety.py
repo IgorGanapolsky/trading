@@ -23,7 +23,6 @@ import sys
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -128,7 +127,9 @@ class TestRAGLessonsLearned:
 
         except ImportError:
             # Verify the module at least exists
-            safety_path = Path(__file__).parent.parent / "src" / "safety" / "volatility_adjusted_safety.py"
+            safety_path = (
+                Path(__file__).parent.parent / "src" / "safety" / "volatility_adjusted_safety.py"
+            )
             if safety_path.exists():
                 content = safety_path.read_text()
                 assert "ATRBasedLimits" in content or "atr" in content.lower(), (
@@ -166,7 +167,9 @@ class TestRAGLessonsLearned:
 
         except ImportError:
             # Check implementation exists
-            safety_path = Path(__file__).parent.parent / "src" / "safety" / "volatility_adjusted_safety.py"
+            safety_path = (
+                Path(__file__).parent.parent / "src" / "safety" / "volatility_adjusted_safety.py"
+            )
             if safety_path.exists():
                 content = safety_path.read_text()
                 assert "hallucination" in content.lower() or "LLMHallucination" in content, (
@@ -197,12 +200,14 @@ class TestRAGLessonsLearned:
             impact_match = re.search(r"\*\*Impact\*\*:\s*([^\n]+)", content)
             impact = impact_match.group(1) if impact_match else "UNKNOWN"
 
-            patterns_found.append({
-                "file": md_file.name,
-                "severity": severity,
-                "category": category,
-                "impact": impact,
-            })
+            patterns_found.append(
+                {
+                    "file": md_file.name,
+                    "severity": severity,
+                    "category": category,
+                    "impact": impact,
+                }
+            )
 
         # We should have at least some critical lessons
         critical_lessons = [p for p in patterns_found if p["severity"] == "CRITICAL"]
@@ -253,9 +258,7 @@ class TestMLAnomalyDetection:
         # This should trigger a warning
         anomalies = detector.validate_trade("NVDA", 10000.0, "BUY")
 
-        position_warnings = [
-            a for a in anomalies if a.anomaly_type.value == "position_size"
-        ]
+        position_warnings = [a for a in anomalies if a.anomaly_type.value == "position_size"]
         assert len(position_warnings) >= 1, "Position concentration not detected"
 
     def test_unknown_symbol_detection(self, detector):
@@ -263,9 +266,7 @@ class TestMLAnomalyDetection:
         # Invalid symbol
         anomalies = detector.validate_trade("FAKESYMBOL123", 10.0, "BUY")
 
-        symbol_warnings = [
-            a for a in anomalies if a.anomaly_type.value == "symbol_unknown"
-        ]
+        symbol_warnings = [a for a in anomalies if a.anomaly_type.value == "symbol_unknown"]
         assert len(symbol_warnings) >= 1, "Unknown symbol not detected"
 
     def test_price_deviation_detection(self, detector):
@@ -279,9 +280,7 @@ class TestMLAnomalyDetection:
             actual_price=550.0,  # 10% higher
         )
 
-        price_warnings = [
-            a for a in anomalies if a.anomaly_type.value == "price_deviation"
-        ]
+        price_warnings = [a for a in anomalies if a.anomaly_type.value == "price_deviation"]
         assert len(price_warnings) >= 1, "Price deviation not detected"
 
     def test_data_staleness_detection(self, detector):
@@ -291,9 +290,7 @@ class TestMLAnomalyDetection:
 
         anomalies = detector.check_data_freshness(old_timestamp, "market_data")
 
-        stale_warnings = [
-            a for a in anomalies if a.anomaly_type.value == "data_staleness"
-        ]
+        stale_warnings = [a for a in anomalies if a.anomaly_type.value == "data_staleness"]
         assert len(stale_warnings) >= 1, "Stale data not detected"
 
 
@@ -328,7 +325,11 @@ class TestVectorStoreSimilarity:
             for py_file in (Path(__file__).parent.parent / "src").rglob("*.py"):
                 try:
                     content = py_file.read_text()
-                    if "chromadb" in content or "faiss" in content or "vectorstore" in content.lower():
+                    if (
+                        "chromadb" in content
+                        or "faiss" in content
+                        or "vectorstore" in content.lower()
+                    ):
                         found = True
                         break
                 except Exception:
@@ -346,7 +347,9 @@ class TestVectorStoreSimilarity:
             checker = RAGSafetyChecker()
 
             # Query for syntax error related incidents
-            results = checker.search_similar_incidents("syntax error in Python file causing import failure")
+            results = checker.search_similar_incidents(
+                "syntax error in Python file causing import failure"
+            )
 
             # Should find ll_009 or similar
             assert len(results) >= 1 or True, "Similar incident search works"
@@ -399,7 +402,7 @@ class TestLearningLoop:
     def test_anomaly_log_persistence(self):
         """Test that anomalies are persisted to disk."""
         try:
-            from src.ml.anomaly_detector import TradingAnomalyDetector, ANOMALY_LOG_PATH
+            from src.ml.anomaly_detector import ANOMALY_LOG_PATH, TradingAnomalyDetector
 
             with tempfile.TemporaryDirectory() as tmpdir:
                 # Override log path for test
@@ -536,7 +539,6 @@ class TestRegimePivotSafety:
         Single-point RL failure = one bad model = bad trade.
         Cap RL influence at 10% max.
         """
-        import os
 
         # Check default is 10%
         rl_weight = float(os.getenv("RL_TOTAL_WEIGHT", "0.10"))
@@ -576,9 +578,7 @@ class TestRegimePivotSafety:
         assert "cosine_similarity" in content or "cosine_sim" in content, (
             "REGRESSION ll_016: Cosine similarity veto not implemented"
         )
-        assert "0.7" in content, (
-            "REGRESSION ll_016: 0.7 threshold not found"
-        )
+        assert "0.7" in content, "REGRESSION ll_016: 0.7 threshold not found"
 
     def test_ll_016_sentiment_fact_check_rejects_disagreement(self):
         """
@@ -621,9 +621,7 @@ class TestRegimePivotSafety:
         assert "rolling_ev" in content or "rolling_window" in content, (
             "REGRESSION ll_016: Rolling EV calculation missing"
         )
-        assert "halt" in content.lower(), (
-            "REGRESSION ll_016: Halt mechanism not implemented"
-        )
+        assert "halt" in content.lower(), "REGRESSION ll_016: Halt mechanism not implemented"
 
     def test_ll_016_ev_drift_halts_on_negative(self):
         """
@@ -631,17 +629,16 @@ class TestRegimePivotSafety:
         """
         try:
             import sys
+
             sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
-            from shadow_live import EVDriftTracker, EVDriftAlert
+            from shadow_live import EVDriftAlert, EVDriftTracker
 
             # Test that negative EV triggers halt
             # We can't test live data, but we can test the logic
 
             # Verify halt threshold is 0
             tracker = EVDriftTracker(halt_threshold=0.0)
-            assert tracker.halt_threshold == 0.0, (
-                "REGRESSION ll_016: Halt threshold should be 0"
-            )
+            assert tracker.halt_threshold == 0.0, "REGRESSION ll_016: Halt threshold should be 0"
 
         except ImportError:
             pytest.skip("EV drift tracker not available")
@@ -672,9 +669,7 @@ class TestRegimePivotSafety:
         ]
 
         for crash in required_crashes:
-            assert crash in scenario_names, (
-                f"REGRESSION ll_016: Crash scenario '{crash}' missing"
-            )
+            assert crash in scenario_names, f"REGRESSION ll_016: Crash scenario '{crash}' missing"
 
         # Check survival gates
         crash_scenarios = [s for s in scenarios if s["name"].startswith("crash_")]
@@ -706,9 +701,7 @@ class TestRegimePivotSafety:
         assert "survival_fail" in content or "survival_passed" in content, (
             "REGRESSION ll_016: Survival gate evaluation not implemented"
         )
-        assert "0.95" in content or "95" in content, (
-            "REGRESSION ll_016: 95% threshold not found"
-        )
+        assert "0.95" in content or "95" in content, "REGRESSION ll_016: 95% threshold not found"
 
 
 class TestRegimePivotPatterns:
@@ -751,9 +744,7 @@ class TestRegimePivotPatterns:
 
         # Check ll_016 exists
         ll_016_files = list(lessons_dir.glob("ll_016*.md"))
-        assert len(ll_016_files) >= 1, (
-            "REGRESSION: ll_016 lesson learned not found"
-        )
+        assert len(ll_016_files) >= 1, "REGRESSION: ll_016 lesson learned not found"
 
         # Verify content mentions all patterns
         content = ll_016_files[0].read_text()
@@ -761,9 +752,7 @@ class TestRegimePivotPatterns:
         for pattern in self.REGIME_PIVOT_PATTERNS:
             key_terms = pattern["name"].split("_")
             found = any(term in content.lower() for term in key_terms)
-            assert found or True, (
-                f"Pattern {pattern['name']} not documented in ll_016"
-            )
+            assert found or True, f"Pattern {pattern['name']} not documented in ll_016"
 
 
 # =============================================================================

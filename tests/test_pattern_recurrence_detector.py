@@ -10,13 +10,10 @@ Tests cover:
 """
 
 import json
-import tempfile
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from src.verification.pattern_recurrence_detector import (
     PatternRecurrenceDetector,
     RecurringPattern,
@@ -40,64 +37,74 @@ def sample_anomalies():
 
     # Create pattern 1: order_amount (recurring every 2 days, CRITICAL)
     for i in range(12):
-        anomalies.append({
-            "anomaly_id": f"ANO-{i:04d}-AMT",
-            "type": "order_amount",
-            "level": "warning",
-            "message": f"Order amount exceeds threshold",
-            "details": {"amount": 100.0},
-            "detected_at": (now - timedelta(days=i*2)).isoformat(),
-            "context": {"symbol": "SPY"},
-        })
+        anomalies.append(
+            {
+                "anomaly_id": f"ANO-{i:04d}-AMT",
+                "type": "order_amount",
+                "level": "warning",
+                "message": "Order amount exceeds threshold",
+                "details": {"amount": 100.0},
+                "detected_at": (now - timedelta(days=i * 2)).isoformat(),
+                "context": {"symbol": "SPY"},
+            }
+        )
 
     # Create pattern 2: data_staleness (recurring every 3 days, MEDIUM)
     for i in range(5):
-        anomalies.append({
-            "anomaly_id": f"ANO-{i:04d}-STL",
-            "type": "data_staleness",
-            "level": "warning",
-            "message": f"Data is stale",
-            "details": {"age_hours": 48},
-            "detected_at": (now - timedelta(days=i*3)).isoformat(),
-            "context": {"source": "market_data"},
-        })
+        anomalies.append(
+            {
+                "anomaly_id": f"ANO-{i:04d}-STL",
+                "type": "data_staleness",
+                "level": "warning",
+                "message": "Data is stale",
+                "details": {"age_hours": 48},
+                "detected_at": (now - timedelta(days=i * 3)).isoformat(),
+                "context": {"source": "market_data"},
+            }
+        )
 
     # Create pattern 3: symbol_unknown (only 2 occurrences, below threshold)
     for i in range(2):
-        anomalies.append({
-            "anomaly_id": f"ANO-{i:04d}-SYM",
-            "type": "symbol_unknown",
-            "level": "warning",
-            "message": f"Unknown symbol",
-            "details": {"symbol": "INVALID"},
-            "detected_at": (now - timedelta(days=i*5)).isoformat(),
-            "context": {},
-        })
+        anomalies.append(
+            {
+                "anomaly_id": f"ANO-{i:04d}-SYM",
+                "type": "symbol_unknown",
+                "level": "warning",
+                "message": "Unknown symbol",
+                "details": {"symbol": "INVALID"},
+                "detected_at": (now - timedelta(days=i * 5)).isoformat(),
+                "context": {},
+            }
+        )
 
     # Create pattern 4: price_deviation (increasing trend)
     # First half: 2 occurrences over 7 days
     for i in range(2):
-        anomalies.append({
-            "anomaly_id": f"ANO-{i:04d}-PRC-1",
-            "type": "price_deviation",
-            "level": "warning",
-            "message": "Price deviation",
-            "details": {"deviation_pct": 5.5},
-            "detected_at": (now - timedelta(days=14-i*3)).isoformat(),
-            "context": {"symbol": "NVDA"},
-        })
+        anomalies.append(
+            {
+                "anomaly_id": f"ANO-{i:04d}-PRC-1",
+                "type": "price_deviation",
+                "level": "warning",
+                "message": "Price deviation",
+                "details": {"deviation_pct": 5.5},
+                "detected_at": (now - timedelta(days=14 - i * 3)).isoformat(),
+                "context": {"symbol": "NVDA"},
+            }
+        )
 
     # Second half: 4 occurrences over 7 days (increasing trend)
     for i in range(4):
-        anomalies.append({
-            "anomaly_id": f"ANO-{i:04d}-PRC-2",
-            "type": "price_deviation",
-            "level": "warning",
-            "message": "Price deviation",
-            "details": {"deviation_pct": 5.5},
-            "detected_at": (now - timedelta(days=7-i*1.5)).isoformat(),
-            "context": {"symbol": "NVDA"},
-        })
+        anomalies.append(
+            {
+                "anomaly_id": f"ANO-{i:04d}-PRC-2",
+                "type": "price_deviation",
+                "level": "warning",
+                "message": "Price deviation",
+                "details": {"deviation_pct": 5.5},
+                "detected_at": (now - timedelta(days=7 - i * 1.5)).isoformat(),
+                "context": {"symbol": "NVDA"},
+            }
+        )
 
     return anomalies
 
@@ -160,20 +167,27 @@ class TestPatternRecurrenceDetector:
 
     def test_init_no_anomaly_log(self, tmp_path):
         """Test initialization when no anomaly log exists."""
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', tmp_path / "missing.json"):
+        with patch(
+            "src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH",
+            tmp_path / "missing.json",
+        ):
             detector = PatternRecurrenceDetector()
             assert detector.anomalies == []
 
     def test_load_anomalies(self, populated_anomaly_log):
         """Test loading anomalies from log."""
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', populated_anomaly_log):
+        with patch(
+            "src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", populated_anomaly_log
+        ):
             detector = PatternRecurrenceDetector()
             assert len(detector.anomalies) > 0
             assert detector.anomalies[0]["type"] == "order_amount"
 
     def test_filter_by_window(self, populated_anomaly_log):
         """Test filtering anomalies by time window."""
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', populated_anomaly_log):
+        with patch(
+            "src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", populated_anomaly_log
+        ):
             detector = PatternRecurrenceDetector(window_days=7)
 
             # All anomalies
@@ -187,7 +201,9 @@ class TestPatternRecurrenceDetector:
 
     def test_group_by_type(self, populated_anomaly_log):
         """Test grouping anomalies by type."""
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', populated_anomaly_log):
+        with patch(
+            "src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", populated_anomaly_log
+        ):
             detector = PatternRecurrenceDetector()
 
             groups = detector._group_by_type(detector.anomalies)
@@ -215,9 +231,7 @@ class TestPatternRecurrenceDetector:
         detector = PatternRecurrenceDetector()
 
         # Single occurrence
-        occurrences = [{
-            "detected_at": datetime.now(timezone.utc).isoformat()
-        }]
+        occurrences = [{"detected_at": datetime.now(timezone.utc).isoformat()}]
 
         frequency = detector._calculate_frequency(occurrences)
         assert frequency == 0.0
@@ -269,7 +283,10 @@ class TestPatternRecurrenceDetector:
 
     def test_get_prevention_suggestion_no_rag(self, tmp_path):
         """Test prevention suggestion when RAG not available."""
-        with patch('src.verification.pattern_recurrence_detector.RAG_LESSONS_PATH', tmp_path / "missing.json"):
+        with patch(
+            "src.verification.pattern_recurrence_detector.RAG_LESSONS_PATH",
+            tmp_path / "missing.json",
+        ):
             detector = PatternRecurrenceDetector()
             suggestion = detector._get_prevention_suggestion("order_amount")
             assert suggestion is None
@@ -295,7 +312,7 @@ class TestPatternRecurrenceDetector:
         with open(rag_path, "w") as f:
             json.dump(rag_data, f)
 
-        with patch('src.verification.pattern_recurrence_detector.RAG_LESSONS_PATH', rag_path):
+        with patch("src.verification.pattern_recurrence_detector.RAG_LESSONS_PATH", rag_path):
             detector = PatternRecurrenceDetector()
             suggestion = detector._get_prevention_suggestion("order_amount")
             assert "circuit breakers" in suggestion
@@ -304,8 +321,12 @@ class TestPatternRecurrenceDetector:
         """Test full pattern analysis."""
         report_path = tmp_path / "pattern_recurrence_report.json"
 
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', populated_anomaly_log):
-            with patch('src.verification.pattern_recurrence_detector.PATTERN_REPORT_PATH', report_path):
+        with patch(
+            "src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", populated_anomaly_log
+        ):
+            with patch(
+                "src.verification.pattern_recurrence_detector.PATTERN_REPORT_PATH", report_path
+            ):
                 detector = PatternRecurrenceDetector(
                     recurrence_threshold=3,
                     window_days=30,
@@ -332,7 +353,9 @@ class TestPatternRecurrenceDetector:
 
     def test_analyze_patterns_respects_threshold(self, populated_anomaly_log):
         """Test that recurrence threshold is respected."""
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', populated_anomaly_log):
+        with patch(
+            "src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", populated_anomaly_log
+        ):
             detector = PatternRecurrenceDetector(
                 recurrence_threshold=10,  # High threshold
                 window_days=30,
@@ -346,7 +369,9 @@ class TestPatternRecurrenceDetector:
 
     def test_get_recurring_patterns(self, populated_anomaly_log):
         """Test getting recurring patterns."""
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', populated_anomaly_log):
+        with patch(
+            "src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", populated_anomaly_log
+        ):
             detector = PatternRecurrenceDetector(window_days=30)
 
             patterns = detector.get_recurring_patterns()
@@ -361,8 +386,13 @@ class TestPatternRecurrenceDetector:
 
     def test_escalate_pattern(self, populated_anomaly_log, tmp_path):
         """Test pattern escalation."""
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', populated_anomaly_log):
-            with patch('src.verification.pattern_recurrence_detector.PATTERN_REPORT_PATH', tmp_path / "report.json"):
+        with patch(
+            "src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", populated_anomaly_log
+        ):
+            with patch(
+                "src.verification.pattern_recurrence_detector.PATTERN_REPORT_PATH",
+                tmp_path / "report.json",
+            ):
                 detector = PatternRecurrenceDetector(window_days=30)
                 detector.analyze_patterns()
 
@@ -387,17 +417,21 @@ class TestPatternRecurrenceDetector:
 
     def test_escalate_pattern_not_found(self, populated_anomaly_log):
         """Test escalating non-existent pattern."""
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', populated_anomaly_log):
+        with patch(
+            "src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", populated_anomaly_log
+        ):
             detector = PatternRecurrenceDetector()
             detector.analyze_patterns()
 
             # Should not raise exception
             detector.escalate_pattern("nonexistent_pattern")
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_create_github_issue_success(self, mock_run, populated_anomaly_log):
         """Test GitHub issue creation for critical pattern."""
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', populated_anomaly_log):
+        with patch(
+            "src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", populated_anomaly_log
+        ):
             detector = PatternRecurrenceDetector(window_days=30)
             detector.analyze_patterns()
 
@@ -411,8 +445,7 @@ class TestPatternRecurrenceDetector:
             if critical_pattern:
                 # Mock successful issue creation
                 mock_run.return_value = MagicMock(
-                    returncode=0,
-                    stdout="https://github.com/IgorGanapolsky/trading/issues/123\n"
+                    returncode=0, stdout="https://github.com/IgorGanapolsky/trading/issues/123\n"
                 )
 
                 url = detector.create_github_issue(critical_pattern)
@@ -422,7 +455,9 @@ class TestPatternRecurrenceDetector:
 
     def test_create_github_issue_not_critical(self, populated_anomaly_log):
         """Test that GitHub issue is not created for non-critical patterns."""
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', populated_anomaly_log):
+        with patch(
+            "src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", populated_anomaly_log
+        ):
             detector = PatternRecurrenceDetector(window_days=30)
             detector.analyze_patterns()
 
@@ -433,10 +468,12 @@ class TestPatternRecurrenceDetector:
                     assert url is None
                     break
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_create_github_issue_gh_cli_not_available(self, mock_run, populated_anomaly_log):
         """Test GitHub issue creation when gh CLI not available."""
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', populated_anomaly_log):
+        with patch(
+            "src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", populated_anomaly_log
+        ):
             detector = PatternRecurrenceDetector(window_days=30)
             detector.analyze_patterns()
 
@@ -456,8 +493,13 @@ class TestConvenienceFunction:
 
     def test_run_daily_pattern_analysis(self, populated_anomaly_log, tmp_path):
         """Test daily pattern analysis run."""
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', populated_anomaly_log):
-            with patch('src.verification.pattern_recurrence_detector.PATTERN_REPORT_PATH', tmp_path / "report.json"):
+        with patch(
+            "src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", populated_anomaly_log
+        ):
+            with patch(
+                "src.verification.pattern_recurrence_detector.PATTERN_REPORT_PATH",
+                tmp_path / "report.json",
+            ):
                 report = run_daily_pattern_analysis(
                     recurrence_threshold=3,
                     window_days=30,
@@ -469,15 +511,21 @@ class TestConvenienceFunction:
                 assert "total_anomalies" in report
                 assert len(report["recurring_patterns"]) > 0
 
-    @patch('subprocess.run')
-    def test_run_daily_pattern_analysis_with_auto_issues(self, mock_run, populated_anomaly_log, tmp_path):
+    @patch("subprocess.run")
+    def test_run_daily_pattern_analysis_with_auto_issues(
+        self, mock_run, populated_anomaly_log, tmp_path
+    ):
         """Test daily analysis with auto issue creation."""
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', populated_anomaly_log):
-            with patch('src.verification.pattern_recurrence_detector.PATTERN_REPORT_PATH', tmp_path / "report.json"):
+        with patch(
+            "src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", populated_anomaly_log
+        ):
+            with patch(
+                "src.verification.pattern_recurrence_detector.PATTERN_REPORT_PATH",
+                tmp_path / "report.json",
+            ):
                 # Mock successful issue creation
                 mock_run.return_value = MagicMock(
-                    returncode=0,
-                    stdout="https://github.com/IgorGanapolsky/trading/issues/123\n"
+                    returncode=0, stdout="https://github.com/IgorGanapolsky/trading/issues/123\n"
                 )
 
                 report = run_daily_pattern_analysis(
@@ -500,7 +548,7 @@ class TestEdgeCases:
         with open(log_path, "w") as f:
             json.dump({"anomalies": []}, f)
 
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', log_path):
+        with patch("src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", log_path):
             detector = PatternRecurrenceDetector()
             report = detector.analyze_patterns()
 
@@ -513,7 +561,7 @@ class TestEdgeCases:
         with open(log_path, "w") as f:
             f.write("{invalid json")
 
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', log_path):
+        with patch("src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", log_path):
             detector = PatternRecurrenceDetector()
             assert detector.anomalies == []
 
@@ -528,7 +576,7 @@ class TestEdgeCases:
         with open(log_path, "w") as f:
             json.dump({"anomalies": anomalies}, f)
 
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', log_path):
+        with patch("src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", log_path):
             detector = PatternRecurrenceDetector()
             report = detector.analyze_patterns()
 
@@ -537,7 +585,9 @@ class TestEdgeCases:
 
     def test_window_days_zero(self, populated_anomaly_log):
         """Test with zero window days."""
-        with patch('src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH', populated_anomaly_log):
+        with patch(
+            "src.verification.pattern_recurrence_detector.ANOMALY_LOG_PATH", populated_anomaly_log
+        ):
             detector = PatternRecurrenceDetector(window_days=0)
             report = detector.analyze_patterns()
 

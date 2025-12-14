@@ -12,14 +12,13 @@ Tests:
 5. Graceful degradation under overload
 """
 
-import asyncio
 import gc
-import sys
-import time
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Any
+
 import pytest
 
 
@@ -93,7 +92,9 @@ class TestHighFrequencyOrders:
         actual_rps = len(orders_submitted) / elapsed
 
         assert len(orders_submitted) == total_orders, "All orders should be submitted"
-        assert actual_rps >= target_rps * 0.8, f"Should achieve 80% of target RPS, got {actual_rps:.1f}"
+        assert actual_rps >= target_rps * 0.8, (
+            f"Should achieve 80% of target RPS, got {actual_rps:.1f}"
+        )
 
     def test_burst_order_handling(self):
         """Handle burst of 50 orders in 100ms."""
@@ -203,7 +204,9 @@ class TestThroughputBenchmarks:
         # Benchmarks
         assert throughput > 100, f"Throughput should exceed 100/s, got {throughput:.1f}"
         assert avg_latency < 10, f"Avg latency should be <10ms, got {avg_latency:.2f}ms"
-        print(f"Throughput: {throughput:.1f}/s, Avg latency: {avg_latency:.2f}ms, P95: {p95_latency:.2f}ms")
+        print(
+            f"Throughput: {throughput:.1f}/s, Avg latency: {avg_latency:.2f}ms, P95: {p95_latency:.2f}ms"
+        )
 
     def test_parallel_throughput(self):
         """Measure parallel processing throughput."""
@@ -229,16 +232,16 @@ class TestThroughputBenchmarks:
         start_time = time.time()
 
         with ThreadPoolExecutor(max_workers=worker_count) as executor:
-            futures = [
-                executor.submit(process_batch, i, batch_size) for i in range(worker_count)
-            ]
+            futures = [executor.submit(process_batch, i, batch_size) for i in range(worker_count)]
             for f in as_completed(futures):
                 f.result()
 
         total_time = time.time() - start_time
         parallel_throughput = order_count / total_time
 
-        assert parallel_throughput > 500, f"Parallel throughput should exceed 500/s, got {parallel_throughput:.1f}"
+        assert parallel_throughput > 500, (
+            f"Parallel throughput should exceed 500/s, got {parallel_throughput:.1f}"
+        )
 
 
 class TestResourceExhaustion:
@@ -300,7 +303,7 @@ class TestResourceExhaustion:
         try:
             for i in range(100):
                 # Properly close files after use
-                with open("/dev/null", "r") as f:
+                with open("/dev/null") as f:
                     pass  # File automatically closed
 
             # All files should be closed
@@ -467,9 +470,11 @@ class TestSustainedLoad:
         error_rate = error_count[0] / total_requests if total_requests > 0 else 0
         avg_latency = sum(latencies) / len(latencies) if latencies else 0
 
-        assert error_rate < 0.01, f"Error rate should be <1%, got {error_rate*100:.2f}%"
+        assert error_rate < 0.01, f"Error rate should be <1%, got {error_rate * 100:.2f}%"
         assert total_requests > 0, "Should process some requests"
-        print(f"Sustained load: {total_requests} requests, {error_rate*100:.2f}% errors, {avg_latency:.2f}ms avg latency")
+        print(
+            f"Sustained load: {total_requests} requests, {error_rate * 100:.2f}% errors, {avg_latency:.2f}ms avg latency"
+        )
 
 
 class TestLoadTestingFramework:
@@ -574,7 +579,9 @@ class TestLoadTestingFramework:
         assert result.total_requests > 0
         assert result.successful_requests > 0
         assert result.avg_latency_ms > 0
-        print(f"Framework test: {result.requests_per_second:.1f} RPS, {result.avg_latency_ms:.2f}ms avg")
+        print(
+            f"Framework test: {result.requests_per_second:.1f} RPS, {result.avg_latency_ms:.2f}ms avg"
+        )
 
 
 if __name__ == "__main__":

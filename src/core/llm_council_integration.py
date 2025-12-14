@@ -25,10 +25,11 @@ from src.core.pal_integration import PALIntegration, get_pal
 # FACTS Benchmark integration (Dec 2025)
 try:
     from src.verification.factuality_monitor import (
+        FACTS_BENCHMARK_SCORES,
         FactualityMonitor,
         create_factuality_monitor,
-        FACTS_BENCHMARK_SCORES,
     )
+
     FACTUALITY_AVAILABLE = True
 except ImportError:
     FACTUALITY_AVAILABLE = False
@@ -300,12 +301,14 @@ Be conservative - reject trades with ANY of:
                 # Build votes for factuality weighting
                 votes = []
                 for model_name, vote in individual_votes.items():
-                    votes.append({
-                        "model": model_name,
-                        "vote": vote,
-                        "confidence": raw_confidence,
-                        "reasoning": council_response.individual_responses.get(model_name, ""),
-                    })
+                    votes.append(
+                        {
+                            "model": model_name,
+                            "vote": vote,
+                            "confidence": raw_confidence,
+                            "reasoning": council_response.individual_responses.get(model_name, ""),
+                        }
+                    )
 
                 if votes:
                     weighted_result = self._factuality_monitor.weight_council_votes(votes)
