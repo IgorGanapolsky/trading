@@ -251,13 +251,28 @@ jobs:
           exit 1
 
       - name: Verify Crypto Trade Execution
-        # Run smoke tests to verify trades executed correctly
+        # HARD FAILURE if no trade executed - Dec 14, 2025 fix
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
         run: |
-          echo "🔍 Running crypto trade verification smoke tests..."
-          python3 tests/test_crypto_trade_verification.py || echo "⚠️  Verification tests failed (check logs)"
+          echo "🔍 Verifying crypto trade was executed..."
+          TODAY=$(date +%Y-%m-%d)
+          TRADE_FILE="data/trades_${TODAY}.json"
+
+          if [ ! -f "$TRADE_FILE" ]; then
+            echo "❌ CRITICAL: No trade file created today ($TRADE_FILE)"
+            echo "❌ The system MUST execute a trade every day. This is a hard failure."
+            exit 1
+          fi
+
+          TRADE_COUNT=$(python3 -c "import json; print(len(json.load(open('$TRADE_FILE'))))" 2>/dev/null || echo "0")
+          if [ "$TRADE_COUNT" -eq "0" ]; then
+            echo "❌ CRITICAL: Trade file exists but contains 0 trades"
+            exit 1
+          fi
+
+          echo "✅ Trade verification passed: $TRADE_COUNT trade(s) in $TRADE_FILE"
 
       - name: Update Progress Dashboard Wiki
         # Always update dashboard, even if trading was skipped

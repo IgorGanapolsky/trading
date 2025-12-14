@@ -356,24 +356,16 @@ class CryptoStrategy:
                 )
                 logger.info("=" * 80)
             elif btc_change >= 5.0:
-                # BTC is up >5%, reduce or skip to avoid buying at peak
-                if btc_change >= 10.0:
-                    logger.info("=" * 80)
-                    logger.info(
-                        f"⚠️  BTC PUMP ({btc_change:+.2f}%): "
-                        f"Skipping trade to avoid buying at peak"
-                    )
-                    logger.info("=" * 80)
-                    return None
-                else:
-                    # Reduce position by 50%
-                    self.daily_amount = original_amount * 0.5
-                    logger.info("=" * 80)
-                    logger.info(
-                        f"⚠️  BTC UP ({btc_change:+.2f}%): "
-                        f"Reducing position from ${original_amount:.2f} to ${self.daily_amount:.2f} (0.5x)"
-                    )
-                    logger.info("=" * 80)
+                # BTC is up >5%, reduce position but NEVER skip
+                # Dec 14, 2025: Removed skip logic - system went 7+ days without trades
+                multiplier = 0.5 if btc_change < 10.0 else 0.25
+                self.daily_amount = original_amount * multiplier
+                logger.info("=" * 80)
+                logger.info(
+                    f"⚠️  BTC UP ({btc_change:+.2f}%): "
+                    f"Reducing position to ${self.daily_amount:.2f} ({multiplier}x) - STILL TRADING"
+                )
+                logger.info("=" * 80)
             else:
                 logger.info(f"BTC 24h change: {btc_change:+.2f}% - Using normal position size")
 
@@ -381,25 +373,17 @@ class CryptoStrategy:
             scores = self._calculate_all_scores()
 
             if not scores:
-                logger.warning("No valid crypto opportunities today (all failed filters)")
+                # Dec 14, 2025: Always fallback to BTC - never skip trading
+                logger.warning("No valid crypto opportunities (all failed filters) - using BTC fallback")
                 logger.info(f"RSI_OVERBOUGHT threshold: {self.RSI_OVERBOUGHT}")
-                logger.info(f"Force trade mode: {force_trade}")
-
-                if force_trade:
-                    logger.warning("FORCE_TRADE enabled - selecting BTC as fallback")
-                    best_coin = "BTCUSD"
-                else:
-                    return None
+                best_coin = "BTCUSD"
             else:
                 # Step 2: Select best coin based on our algorithm
                 best_coin = self.select_crypto()
                 if not best_coin:
-                    logger.warning("No crypto selected - select_crypto() returned None")
-                    if force_trade:
-                        logger.warning("FORCE_TRADE enabled - using BTC as fallback")
-                        best_coin = "BTCUSD"
-                    else:
-                        return None
+                    # Dec 14, 2025: Always fallback to BTC - never skip trading
+                    logger.warning("select_crypto() returned None - using BTC fallback")
+                    best_coin = "BTCUSD"
 
             logger.info(f"Selected crypto (algorithm): {best_coin}")
 
