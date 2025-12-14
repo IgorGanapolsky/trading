@@ -30,69 +30,76 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install google-genai yfinance pandas
+          python3 -m pip install --upgrade pip
+          python3 -m pip install google-genai yfinance pandas
 
       - name: Run Pre-Trade Research
         run: |
           python3 << 'PYEOF'
-import os
-import json
-from datetime import datetime
+          import json
+          import os
+          import time
+          from datetime import datetime
 
-# Simple research without full dependency
-try:
-    from google import genai
+          # Simple research without full dependency
+          try:
+              from google import genai
 
-    client = genai.Client()
+              client = genai.Client()
 
-    symbol = os.getenv('INPUT_SYMBOL', 'BTC')
+              symbol = os.getenv("INPUT_SYMBOL", "BTC")
 
-    query = f"""
-    Analyze {symbol} for today's trading decision:
-    1. Current price action and trend
-    2. Key news in last 24 hours
-    3. Market sentiment (bullish/bearish/neutral)
-    4. Risk factors
-    5. Trading recommendation: BUY, SELL, or HOLD
+              query = f"""
+              Analyze {symbol} for today's trading decision:
+              1. Current price action and trend
+              2. Key news in last 24 hours
+              3. Market sentiment (bullish/bearish/neutral)
+              4. Risk factors
+              5. Trading recommendation: BUY, SELL, or HOLD
 
-    Be concise and actionable for a day trader.
-    """
+              Be concise and actionable for a day trader.
+              """
 
-    print(f"🔍 Researching {symbol}...")
+              print(f"🔍 Researching {symbol}...")
 
-    interaction = client.interactions.create(
-        input=query,
-        agent='deep-research-pro-preview-12-2025',
-        background=True
-    )
+              interaction = client.interactions.create(
+                  input=query,
+                  agent="deep-research-pro-preview-12-2025",
+                  background=True,
+              )
 
-    import time
-    for _ in range(30):  # 5 min timeout
-        interaction = client.interactions.get(interaction.id)
-        if interaction.status == "completed":
-            print("=" * 60)
-            print(f"DEEP RESEARCH: {symbol}")
-            print("=" * 60)
-            print(interaction.outputs[-1].text)
+              for _ in range(30):  # 5 min timeout
+                  interaction = client.interactions.get(interaction.id)
+                  if interaction.status == "completed":
+                      print("=" * 60)
+                      print(f"DEEP RESEARCH: {symbol}")
+                      print("=" * 60)
+                      print(interaction.outputs[-1].text)
 
-            # Save to file
-            with open(f'data/research_{symbol}_{datetime.now().strftime("%Y%m%d")}.json', 'w') as f:
-                json.dump({
-                    "symbol": symbol,
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "research": interaction.outputs[-1].text
-                }, f, indent=2)
-            break
-        elif interaction.status == "failed":
-            print(f"❌ Research failed: {interaction.error}")
-            break
-        time.sleep(10)
+                      # Save to file
+                      with open(
+                          f"data/research_{symbol}_{datetime.now().strftime('%Y%m%d')}.json", "w"
+                      ) as f:
+                          json.dump(
+                              {
+                                  "symbol": symbol,
+                                  "timestamp": datetime.utcnow().isoformat(),
+                                  "research": interaction.outputs[-1].text,
+                              },
+                              f,
+                              indent=2,
+                          )
+                      break
+                  if interaction.status == "failed":
+                      print(f"❌ Research failed: {interaction.error}")
+                      break
+                  time.sleep(10)
 
-except ImportError:
-    print("⚠️ google-genai not available")
-except Exception as e:
-    print(f"⚠️ Research error: {e}")
-    print("Continuing without deep research...")
+          except ImportError:
+              print("⚠️ google-genai not available")
+          except Exception as e:
+              print(f"⚠️ Research error: {e}")
+              print("Continuing without deep research...")
 PYEOF
 
       - name: Commit Research Results
