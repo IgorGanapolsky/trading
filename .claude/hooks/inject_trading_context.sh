@@ -61,21 +61,27 @@ if [[ ! -f "$TRADE_FILE" ]]; then
     TRADE_WARNING="⚠️ NO TRADES TODAY"
 fi
 
-# Check if markets are open (Mon-Fri, 9:30 AM - 4:00 PM ET)
+# Check market status - CRITICAL: Crypto trades 24/7/365!
 CURRENT_TIME=$(TZ=America/New_York date +%H:%M)
 CURRENT_DAY_OF_WEEK=$(date +%u)  # 1=Monday, 7=Sunday
+
+# Crypto is ALWAYS open - this is Critical Rule #5
+CRYPTO_STATUS="OPEN 24/7"
 
 if [[ $CURRENT_DAY_OF_WEEK -ge 1 && $CURRENT_DAY_OF_WEEK -le 5 ]]; then
     # Weekday
     if [[ "$CURRENT_TIME" > "09:30" && "$CURRENT_TIME" < "16:00" ]]; then
-        MARKET_STATUS="OPEN"
+        EQUITY_STATUS="OPEN"
     else
-        MARKET_STATUS="CLOSED (opens 9:30 AM ET)"
+        EQUITY_STATUS="CLOSED (opens 9:30 AM ET)"
     fi
 else
-    # Weekend
-    MARKET_STATUS="CLOSED (weekend)"
+    # Weekend - equities closed but CRYPTO IS ALWAYS OPEN
+    EQUITY_STATUS="CLOSED (weekend)"
 fi
+
+# Combined status showing both markets
+MARKET_STATUS="Equities: $EQUITY_STATUS | Crypto: $CRYPTO_STATUS"
 
 # Next automated trade time
 NEXT_TRADE=$(TZ=America/New_York date -v +1d '+%b %d, 9:35 AM ET' 2>/dev/null || date -d '+1 day' '+%b %d, 9:35 AM ET' 2>/dev/null || echo "Tomorrow 9:35 AM ET")
