@@ -298,12 +298,106 @@ class CryptoTradeVerificationTests:
         except Exception as e:
             return False, f"Order check failed: {e}"
 
+    def test_win_rate_calculation_accurate(self) -> tuple[bool, str]:
+        """
+        Test that win rate calculation matches closed_trades array.
+
+        Lesson Learned: LL-033 - Win rate showed 100% with 4 losses due to
+        incorrect calculation (winning_trades > total_trades).
+        """
+        try:
+            with open(self.state_file) as f:
+                state = json.load(f)
+
+            perf = state.get("performance", {})
+            closed_trades = perf.get("closed_trades", [])
+            reported_win_rate = perf.get("win_rate", 0)
+            reported_wins = perf.get("winning_trades", 0)
+            reported_losses = perf.get("losing_trades", 0)
+            reported_total = perf.get("total_trades", 0)
+
+            if not closed_trades:
+                return True, "No closed trades to verify"
+
+            # Calculate actual metrics from closed_trades
+            actual_wins = sum(1 for t in closed_trades if t.get("pl", 0) > 0)
+            actual_losses = sum(1 for t in closed_trades if t.get("pl", 0) <= 0)
+            actual_total = len(closed_trades)
+            actual_win_rate = (actual_wins / actual_total * 100) if actual_total > 0 else 0
+
+            # Check for inconsistencies
+            issues = []
+
+            if reported_wins != actual_wins:
+                issues.append(f"Wins mismatch: reported {reported_wins}, actual {actual_wins}")
+
+            if reported_losses != actual_losses:
+                issues.append(f"Losses mismatch: reported {reported_losses}, actual {actual_losses}")
+
+            if reported_total != actual_total:
+                issues.append(f"Total mismatch: reported {reported_total}, actual {actual_total}")
+
+            if abs(reported_win_rate - actual_win_rate) > 1:  # Allow 1% tolerance
+                issues.append(f"Win rate mismatch: reported {reported_win_rate}%, actual {actual_win_rate:.1f}%")
+
+            # Sanity check: wins + losses should equal total
+            if reported_wins + reported_losses != reported_total and reported_total > 0:
+                issues.append(f"Math error: {reported_wins} wins + {reported_losses} losses != {reported_total} total")
+
+            if issues:
+                return False, f"Win rate calculation errors: {'; '.join(issues)}"
+
+            return True, f"Win rate accurate: {actual_win_rate:.1f}% ({actual_wins}/{actual_total})"
+
+        except Exception as e:
+            return False, f"Win rate verification failed: {e}"
+
+    def test_negative_momentum_filter_active(self) -> tuple[bool, str]:
+        """
+        Test that we skip trading when all cryptos have negative momentum.
+
+        Lesson Learned: LL-033 - System bought ETH at -1.54% because it was
+        the "best" of all negative performers. Should SKIP instead.
+        """
+        try:
+            # Check recent trades for contrarian_buy flag or skip_reason
+            trades_dir = Path("data")
+            trade_files = sorted(trades_dir.glob("trades_*.json"), reverse=True)[:3]
+
+            for trade_file in trade_files:
+                with open(trade_file) as f:
+                    trades = json.load(f)
+
+                for trade in trades:
+                    analysis = trade.get("crypto_analysis", {})
+                    if not analysis:
+                        continue
+
+                    # Check if all cryptos were negative
+                    momentums = [v.get("change_7d", 0) for v in analysis.values()]
+                    all_negative = all(m < 0 for m in momentums)
+
+                    if all_negative:
+                        # Should have either skipped or used contrarian_buy
+                        if trade.get("action") == "BUY" and not trade.get("contrarian_buy"):
+                            return False, (
+                                f"⚠️ LL-033 VIOLATION: Bought {trade.get('symbol')} despite all "
+                                f"negative momentum without contrarian_buy flag"
+                            )
+
+            return True, "Negative momentum filter active (or no recent all-negative scenarios)"
+
+        except Exception as e:
+            return False, f"Momentum filter check failed: {e}"
+
     def run_all_tests(self) -> dict[str, Any]:
         """Run all verification tests."""
         tests = [
             ("State file exists", self.test_state_file_exists),
             ("State file valid JSON", self.test_state_file_valid_json),
             ("Crypto strategy tracked", self.test_crypto_strategy_tracked),
+            ("Win rate calculation accurate", self.test_win_rate_calculation_accurate),
+            ("Negative momentum filter", self.test_negative_momentum_filter_active),
             ("Momentum selection", self.test_momentum_selection),
             ("Not buying at peak", self.test_not_buying_at_peak),
             ("Alpaca connection", self.test_alpaca_connection),
