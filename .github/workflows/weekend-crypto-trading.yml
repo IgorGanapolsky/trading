@@ -200,13 +200,19 @@ jobs:
                       except: pass
                   if a:
                       b = max(a.items(), key=lambda x:x[1]["change_7d"])
-                      best, price = b[0].replace("-USD","USD"), b[1]["price"]
+                      best, price, momentum = b[0].replace("-USD","USD"), b[1]["price"], b[1]["change_7d"]
                       result["crypto_analysis"] = a
+                      # CRITICAL FIX: Skip if all cryptos have negative momentum
+                      if momentum < 0:
+                          print(f"⛔ SKIP: {best} has negative momentum ({momentum:+.2f}%)")
+                          result["action"], result["skip_reason"] = "SKIP", f"Negative momentum: {momentum:+.2f}%"
+                          save()
+                          sys.exit(0)
               except: pass
               base = float(os.environ.get("CRYPTO_DAILY_AMOUNT","10.0"))
               amt = min(base * mult, result["account_value"] * 0.02)
               if amt < 1: amt = 1
-              print(f"💰 BUY ${amt:.2f} {best}")
+              print(f"💰 BUY ${amt:.2f} {best} (momentum: {momentum:+.2f}%)")
               order = client.submit_order(MarketOrderRequest(symbol=best, notional=amt, side=OrderSide.BUY, time_in_force=TimeInForce.GTC))
               result.update({"symbol":best,"action":"BUY","notional":amt,"price":price,"order_id":str(order.id),"status":str(order.status),"size_multiplier":mult})
               print(f"✅ Order: {order.id}")

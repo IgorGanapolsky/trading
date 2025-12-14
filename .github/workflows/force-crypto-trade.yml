@@ -172,8 +172,19 @@ jobs:
                       best = max(analysis.items(), key=lambda x: x[1]["change_7d"])
                       best_symbol = best[0].replace("-USD", "USD")
                       best_price = best[1]["price"]
+                      best_momentum = best[1]["change_7d"]
                       result["crypto_analysis"] = analysis
-                      print(f"\n   🎯 Selected: {best_symbol} (best 7d momentum)")
+
+                      # CRITICAL FIX: Skip if all cryptos have negative momentum
+                      if best_momentum < 0:
+                          print(f"\n   ⛔ SKIP: Best performer {best_symbol} has negative momentum ({best_momentum:+.2f}%)")
+                          print("   All cryptos in downtrend - waiting for positive momentum")
+                          result["action"] = "SKIP"
+                          result["skip_reason"] = f"Negative momentum: {best_symbol} at {best_momentum:+.2f}%"
+                          save_result()
+                          sys.exit(0)
+
+                      print(f"\n   🎯 Selected: {best_symbol} (best 7d momentum: {best_momentum:+.2f}%)")
               except Exception as e:
                   print(f"   ⚠️ yfinance failed: {e}")
                   print("   Defaulting to BTCUSD")

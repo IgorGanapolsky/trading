@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2025-12-12T17:30:00.000000",
+    "last_updated": "2025-12-14T22:30:00.000000",
     "last_audit": "2025-11-17T09:00:00.000000",
     "audit_notes": "Day 9 - Added Tier 5 crypto tracking (BTC/ETH weekend strategy)"
   },
@@ -32,10 +32,10 @@
     "tier8_invested": 0.0
   },
   "performance": {
-    "total_trades": 7,
-    "winning_trades": 8,
-    "losing_trades": 7,
-    "win_rate": 100.0,
+    "total_trades": 8,
+    "winning_trades": 4,
+    "losing_trades": 4,
+    "win_rate": 50.0,
     "best_trade": {
       "symbol": "SPY260123P00660000",
       "pl": 197.0,
