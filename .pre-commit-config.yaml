@@ -133,6 +133,15 @@ repos:
         verbose: true
         stages: [pre-commit]
 
+      - id: detect-placeholder-features
+        name: Detect Placeholder Features (LL-034 Prevention)
+        entry: python3 scripts/detect_placeholders.py
+        language: system
+        types: [python]
+        pass_filenames: false
+        verbose: true
+        stages: [pre-commit]
+
       - id: verify-strategy-integration
         name: Verify Strategy Integration (ll_012 Prevention)
         entry: python3 scripts/verify_strategy_integration.py
