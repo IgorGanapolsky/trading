@@ -49,6 +49,20 @@ from src.core.risk_manager import RiskManager
 # Configure logging
 logger = logging.getLogger(__name__)
 
+# RL Model integration (trained DiscoRL-inspired agent)
+try:
+    from src.ml.disco_dqn_agent import DiscoDQNAgent
+    import torch
+
+    RL_MODEL_PATH = Path("models/ml/rl_transformer_state.pt")
+    RL_WEIGHTS_PATH = Path("models/ml/rl_filter_weights.json")
+    RL_AVAILABLE = RL_MODEL_PATH.exists()
+    if RL_AVAILABLE:
+        logger.info("RL model available - will use for trade confirmation")
+except ImportError:
+    RL_AVAILABLE = False
+    logger.info("RL model not available - using rule-based signals only")
+
 # Newsletter integration (optional)
 try:
     from src.utils.newsletter_analyzer import NewsletterAnalyzer
@@ -271,10 +285,92 @@ class CryptoStrategy:
                 logger.warning(f"Failed to initialize CryptoLearnerAgent: {e}")
                 self.rag_learner = None
 
+        # Initialize RL model for trade confirmation
+        self.rl_weights = None
+        if RL_AVAILABLE:
+            try:
+                with open(RL_WEIGHTS_PATH) as f:
+                    self.rl_weights = json.load(f)
+                logger.info("RL weights loaded for trade confirmation")
+            except Exception as e:
+                logger.warning(f"Failed to load RL weights: {e}")
+
         logger.info(
             f"CryptoStrategy initialized: daily_amount=${daily_amount}, "
             f"crypto_universe={self.crypto_universe}, stop_loss={stop_loss_pct * 100}%"
         )
+
+    def get_rl_confirmation(self, symbol: str, rsi: float, macd: float, volume_ratio: float) -> dict:
+        """
+        Get RL model confirmation for trade decision.
+
+        Uses trained RL weights to score the trade opportunity.
+        Returns recommendation and confidence adjustment.
+        """
+        if not self.rl_weights:
+            return {"available": False, "reason": "RL weights not loaded"}
+
+        try:
+            # Use default weights (or symbol-specific if available)
+            weights = self.rl_weights.get(symbol, self.rl_weights.get("default", {}))
+            w = weights.get("weights", {})
+            bias = weights.get("bias", 0)
+            threshold = weights.get("action_threshold", 0.5)
+
+            # Calculate RL score based on features
+            # RSI gap: distance from neutral (50)
+            rsi_gap = (50 - rsi) / 50  # Positive when RSI < 50 (bullish for momentum)
+
+            # Normalize features
+            momentum_score = 1.0 if macd > 0 else -1.0
+            volume_score = min(volume_ratio, 2.0) / 2.0  # Cap at 2x average
+
+            # Calculate weighted score
+            score = (
+                bias +
+                w.get("rsi_gap", 0.8) * rsi_gap +
+                w.get("momentum", 1.1) * momentum_score +
+                w.get("volume_premium", 0.6) * volume_score
+            )
+
+            # Sigmoid to get probability
+            probability = 1 / (1 + np.exp(-score))
+
+            # Determine recommendation
+            if probability > threshold + 0.1:
+                recommendation = "strong_buy"
+                confidence_adjustment = 20
+            elif probability > threshold:
+                recommendation = "buy"
+                confidence_adjustment = 10
+            elif probability < threshold - 0.1:
+                recommendation = "avoid"
+                confidence_adjustment = -20
+            else:
+                recommendation = "neutral"
+                confidence_adjustment = 0
+
+            logger.info(
+                f"RL Confirmation for {symbol}: score={score:.3f}, prob={probability:.3f}, "
+                f"rec={recommendation}"
+            )
+
+            return {
+                "available": True,
+                "score": score,
+                "probability": probability,
+                "recommendation": recommendation,
+                "confidence_adjustment": confidence_adjustment,
+                "features": {
+                    "rsi_gap": rsi_gap,
+                    "momentum": momentum_score,
+                    "volume": volume_score,
+                },
+            }
+
+        except Exception as e:
+            logger.warning(f"RL confirmation failed: {e}")
+            return {"available": False, "reason": str(e)}
 
     def execute(self) -> dict:
         """
@@ -442,6 +538,35 @@ class CryptoStrategy:
                 else:
                     logger.info(f"RAG insights not available: {rag_insights['reasoning']}")
 
+            # Step 2.7: Get RL model confirmation (Dec 14, 2025 - wiring ML into trading)
+            rl_confirmation = {"available": False}
+            if best_score:
+                rl_confirmation = self.get_rl_confirmation(
+                    symbol=best_coin,
+                    rsi=best_score.rsi,
+                    macd=best_score.macd_histogram,
+                    volume_ratio=best_score.volume_ratio,
+                )
+
+                if rl_confirmation["available"]:
+                    logger.info(
+                        f"RL Model: recommendation={rl_confirmation['recommendation']}, "
+                        f"probability={rl_confirmation['probability']:.2f}, "
+                        f"adjustment={rl_confirmation['confidence_adjustment']:+d}"
+                    )
+
+                    # Apply RL adjustment to position size
+                    if rl_confirmation["recommendation"] == "strong_buy":
+                        # RL is confident - increase position by 25%
+                        self.daily_amount *= 1.25
+                        logger.info(f"RL strong_buy: Increased position to ${self.daily_amount:.2f}")
+                    elif rl_confirmation["recommendation"] == "avoid":
+                        # RL says avoid - reduce position by 50% but still trade
+                        self.daily_amount *= 0.5
+                        logger.warning(f"RL avoid signal: Reduced position to ${self.daily_amount:.2f}")
+                else:
+                    logger.info(f"RL confirmation not available: {rl_confirmation.get('reason', 'unknown')}")
+
             # Step 3: Get current price
             logger.info(f"[DEBUG] Fetching price for {best_coin}...")
             current_price = self._get_current_price(best_coin)
@@ -473,6 +598,9 @@ class CryptoStrategy:
                 else None,
                 "gate3_newsletter": validation
                 if validation and validation.get("available")
+                else None,
+                "gate4_rl": rl_confirmation
+                if rl_confirmation and rl_confirmation.get("available")
                 else None,
             }
 
