@@ -36,6 +36,8 @@ from .post_deploy_verifier import PostDeployVerifier
 from .pre_merge_verifier import PreMergeVerifier
 from .rag_safety_checker import RAGSafetyChecker
 from .signal_backtester import BacktestResult, SignalBacktester
+from .automated_lesson_ingestion import AutomatedLessonIngestion, FailureEvent
+from .ml_rag_integrated_verifier import MLRAGIntegratedVerifier, VerificationResult
 
 __all__ = [
     # Core verifiers
@@ -43,6 +45,12 @@ __all__ = [
     "PostDeployVerifier",
     "ContinuousVerifier",
     "RAGSafetyChecker",
+    # Automated lesson ingestion
+    "AutomatedLessonIngestion",
+    "FailureEvent",
+    # ML+RAG integrated verification
+    "MLRAGIntegratedVerifier",
+    "VerificationResult",
     # FACTS Benchmark
     "FactualityMonitor",
     "create_factuality_monitor",

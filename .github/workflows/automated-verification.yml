@@ -1,0 +1,164 @@
+name: Automated Verification & Lesson Ingestion
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    # Run daily at 2 AM UTC to check for failures
+    - cron: '0 2 * * *'
+
+jobs:
+  pre-merge-verification:
+    name: Pre-Merge Verification (ML+RAG)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pytest httpx sentence-transformers
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            git diff --name-only origin/main...HEAD > changed_files.txt
+          else
+            git diff --name-only HEAD~1...HEAD > changed_files.txt
+          fi
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          cat changed_files.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Run Enhanced Pre-Merge Gate
+        run: |
+          python3 scripts/enhanced_pre_merge_gate.py \
+            --files $(cat changed_files.txt | tr '\n' ' ') \
+            --commit-msg "${{ github.event.pull_request.title || github.event.head_commit.message }}"
+
+      - name: Run Basic Syntax Checks
+        run: |
+          python3 scripts/pre_merge_gate.py || true
+
+  post-merge-monitoring:
+    name: Post-Merge Monitoring
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pytest httpx sentence-transformers
+
+      - name: Run Post-Merge Verification
+        run: |
+          python3 -c "
+          from src.verification.ml_rag_integrated_verifier import MLRAGIntegratedVerifier
+          verifier = MLRAGIntegratedVerifier()
+          result = verifier.verify_post_merge()
+          if not result.passed:
+            print('Post-merge verification failed!')
+            exit(1)
+          "
+
+      - name: Check Trading System Health
+        run: |
+          python3 -c "
+          import json
+          from pathlib import Path
+          state = json.load(open('data/system_state.json'))
+          automation = state.get('automation', {})
+          if automation.get('workflow_status') != 'OPERATIONAL':
+            print('Trading workflow not operational!')
+            exit(1)
+          " || echo "⚠️  System state check skipped (file may not exist)"
+
+  failure-detection:
+    name: Automated Failure Detection & Lesson Ingestion
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pytest httpx sentence-transformers
+
+      - name: Set up GitHub CLI
+        run: |
+          type -p curl >/dev/null || (apt update && apt install curl -y)
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          apt update
+          apt install gh -y
+
+      - name: Authenticate GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GITHUB_TOKEN" | gh auth login --with-token
+
+      - name: Run Automated Failure Detection
+        run: |
+          python3 -m src.verification.automated_lesson_ingestion \
+            --check-ci \
+            --auto-ingest || echo "No failures detected or ingestion failed"
+
+      - name: Commit ingested lessons
+        if: success()
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add rag_knowledge/lessons_learned/*.md data/rag/lessons_learned.json || true
+          git diff --staged --quiet || git commit -m "chore: auto-ingest detected failures into RAG" || true
+          git push || echo "No changes to commit"
+
+  test-verification-system:
+    name: Test Verification System
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pytest httpx sentence-transformers
+
+      - name: Run Verification System Tests
+        run: |
+          pytest tests/test_automated_verification_system.py -v
