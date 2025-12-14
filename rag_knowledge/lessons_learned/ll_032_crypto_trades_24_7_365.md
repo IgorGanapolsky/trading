@@ -66,6 +66,13 @@ Today's weekend crypto trading workflow ran at 15:00:58 UTC but **failed** at th
 2. **On weekends**: Explicitly check crypto positions via Alpaca API
 3. **Default assumption**: There is ALWAYS something trading (crypto never stops)
 
+## Additional Violation (Same Incident)
+
+Also violated Critical Rule #3 by telling CEO to "run the hook manually" instead of running it myself.
+
+**Forbidden**: "Run this command...", "Test it now - run..."
+**Required**: Execute all commands autonomously, report results.
+
 ## Tags
 
-#crypto #market-hours #weekend #critical-rule #trading-fundamentals
+#crypto #market-hours #weekend #critical-rule #trading-fundamentals #autonomous-execution
