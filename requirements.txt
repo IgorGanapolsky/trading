@@ -79,7 +79,7 @@ langgraph==1.0.4
 langgraph-checkpoint==3.0.1
 langgraph-prebuilt==1.0.5
 langgraph-sdk==0.2.14
-langsmith==0.4.56
+langsmith==0.4.59
 loguru==0.7.3
 lxml==6.0.2
 markupsafe==3.0.3
@@ -180,5 +180,3 @@ yarl==1.22.0
 yfinance==0.2.58
 youtube-transcript-api==1.2.3
 zstandard==0.23.0
-google-genai>=0.3.0
-transformers>=4.30.0
