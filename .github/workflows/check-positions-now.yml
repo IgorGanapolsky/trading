@@ -1,0 +1,118 @@
+name: Check Positions NOW
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/CHECK_POSITIONS'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py
+
+      - name: Check Alpaca Positions
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+        run: |
+          python3 << 'EOF'
+          import os
+          import json
+          from datetime import datetime
+          from alpaca.trading.client import TradingClient
+          from alpaca.trading.requests import GetOrdersRequest
+
+          client = TradingClient(
+              os.environ['ALPACA_API_KEY'],
+              os.environ['ALPACA_SECRET_KEY'],
+              paper=True
+          )
+
+          # Get account
+          account = client.get_account()
+          equity = float(account.equity)
+          cash = float(account.cash)
+
+          print("=" * 60)
+          print("💰 ALPACA LIVE STATUS")
+          print("=" * 60)
+          print(f"Equity: ${equity:,.2f}")
+          print(f"Cash: ${cash:,.2f}")
+          print(f"P/L: ${equity - 100000:+,.2f}")
+
+          # Get positions
+          positions = client.get_all_positions()
+
+          result = {
+              "timestamp": datetime.utcnow().isoformat(),
+              "account": {
+                  "equity": equity,
+                  "cash": cash,
+                  "pl": equity - 100000
+              },
+              "positions": [],
+              "crypto_pl": 0,
+              "equity_pl": 0
+          }
+
+          print("\n📊 POSITIONS:")
+          print("=" * 60)
+
+          for p in positions:
+              pl = float(p.unrealized_pl)
+              pct = float(p.unrealized_plpc) * 100
+              pos_data = {
+                  "symbol": p.symbol,
+                  "qty": str(p.qty),
+                  "entry_price": float(p.avg_entry_price),
+                  "current_price": float(p.current_price),
+                  "market_value": float(p.market_value),
+                  "unrealized_pl": pl,
+                  "unrealized_pl_pct": pct
+              }
+              result["positions"].append(pos_data)
+
+              if p.symbol.endswith("USD"):
+                  result["crypto_pl"] += pl
+                  emoji = "🪙"
+              else:
+                  result["equity_pl"] += pl
+                  emoji = "📈"
+
+              pl_emoji = "🟢" if pl >= 0 else "🔴"
+              print(f"{emoji} {p.symbol}:")
+              print(f"   Qty: {p.qty} @ ${float(p.avg_entry_price):,.2f}")
+              print(f"   Current: ${float(p.current_price):,.2f}")
+              print(f"   P/L: {pl_emoji} ${pl:+,.2f} ({pct:+.2f}%)")
+              print()
+
+          print("=" * 60)
+          print(f"CRYPTO P/L: ${result['crypto_pl']:+,.2f}")
+          print(f"EQUITY P/L: ${result['equity_pl']:+,.2f}")
+          print(f"TOTAL P/L:  ${result['crypto_pl'] + result['equity_pl']:+,.2f}")
+          print("=" * 60)
+
+          # Save to file
+          with open("data/live_positions.json", "w") as f:
+              json.dump(result, f, indent=2)
+
+          print("\n✅ Saved to data/live_positions.json")
+          EOF
+
+      - name: Commit results
+        run: |
+          git config user.name "Claude CTO"
+          git config user.email "claude@trading.ai"
+          git add data/live_positions.json
+          git diff --staged --quiet || git commit -m "chore: Update live positions $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push
