@@ -68,16 +68,14 @@ The skill generates comprehensive markdown reports with:
 
 ### IMPORTANT: YouTube is a BIAS FILTER, NOT a Trade Trigger
 
-**Dec 11, 2025 Clarification**: YouTube analysis is ONE OF FIVE sentiment sources
-weighted at only **20%** in the unified sentiment aggregation. It NEVER directly
+**Dec 11, 2025 Clarification**: YouTube analysis is ONE OF THREE sentiment sources
+weighted at **25%** in the unified sentiment aggregation. It NEVER directly
 triggers trades.
 
 **Sentiment Source Weights** (from `src/utils/unified_sentiment.py`):
-- News: 30%
-- Reddit: 25%
-- **YouTube: 20%** (this skill)
-- LinkedIn: 15%
-- TikTok: 10%
+- News: 40%
+- Reddit: 35%
+- **YouTube: 25%** (this skill)
 
 **Why This Matters**: By the time a YouTube video is published, processed, and
 transcribed, the market "alpha" is likely gone. YouTube insights are valuable

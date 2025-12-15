@@ -35,121 +35,116 @@ jobs:
         run: |
           python3 << 'PYTHON'
           """
-          World-Class Crypto Trading Strategy v3.0
-          - Robust error handling - NEVER crashes
-          - Always saves results
-          - Falls back to simple BTC buy if analysis fails
+          World-Class Crypto Trading Strategy v4.0 (Trend-Aware)
+
+          RESEARCH-BACKED:
+          - Only buy when price > 50-day MA (5x better returns per Coinbase)
+          - Fear & Greed for SIZING only, not timing
+          - Stop catching falling knives
           """
-          import os
-          import sys
-          import json
-          import traceback
+          import os, sys, json, traceback, requests
           from datetime import datetime, timezone
 
           today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-          result = {
-              "timestamp": datetime.now(timezone.utc).isoformat(),
-              "date": today,
-              "strategy": "WorldClassCrypto",
-              "strategy_version": "3.0"
-          }
+          result = {"timestamp": datetime.now(timezone.utc).isoformat(), "date": today, "strategy": "WorldClassCrypto", "strategy_version": "4.0"}
 
-          def save_result():
-              """Always save results, even on error."""
-              try:
-                  os.makedirs("data", exist_ok=True)
-                  trades_file = f"data/trades_{today}.json"
-                  trades = []
-                  if os.path.exists(trades_file):
-                      try:
-                          with open(trades_file) as f:
-                              trades = json.load(f)
-                              if not isinstance(trades, list):
-                                  trades = [trades]
-                      except:
-                          trades = []
-                  trades.append(result)
-                  with open(trades_file, "w") as f:
-                      json.dump(trades, f, indent=2)
-                  print(f"✅ Results saved to {trades_file}")
-              except Exception as e:
-                  print(f"❌ Failed to save results: {e}")
+          def save():
+              os.makedirs("data", exist_ok=True)
+              f = f"data/trades_{today}.json"
+              t = json.load(open(f)) if os.path.exists(f) else []
+              if not isinstance(t, list): t = [t]
+              t.append(result)
+              json.dump(t, open(f, "w"), indent=2)
+              print(f"✅ Saved to {f}")
 
-          # Get API credentials
-          api_key = os.environ.get("ALPACA_API_KEY", "")
-          secret = os.environ.get("ALPACA_SECRET_KEY", "")
-
+          api_key, secret = os.environ.get("ALPACA_API_KEY",""), os.environ.get("ALPACA_SECRET_KEY","")
           print("=" * 60)
-          print("🌍 WORLD-CLASS CRYPTO TRADING STRATEGY v3.0")
+          print("🌍 WORLD-CLASS CRYPTO STRATEGY v4.0 (Trend-Aware)")
+          print("   Only buy when price > 50-day MA")
           print("=" * 60)
-          print(f"🔐 API Key present: {bool(api_key)}")
-          print(f"🔐 Secret present: {bool(secret)}")
 
           if not api_key or not secret:
-              result["error"] = "MISSING_SECRETS"
-              result["status"] = "FAILED"
-              print("❌ Alpaca secrets not configured!")
-              save_result()
-              sys.exit(0)  # Exit cleanly so workflow doesn't fail
+              result["error"], result["status"] = "MISSING_SECRETS", "FAILED"
+              save()
+              sys.exit(0)
 
           try:
               from alpaca.trading.client import TradingClient
               from alpaca.trading.requests import MarketOrderRequest
               from alpaca.trading.enums import OrderSide, TimeInForce
+              import yfinance as yf
 
-              # Connect to Alpaca
-              print("\n📡 Connecting to Alpaca...")
               client = TradingClient(api_key, secret, paper=True)
-              account = client.get_account()
-              account_value = float(account.equity)
-              print(f"✅ Connected! Account: ${account_value:,.2f}")
-              result["account_value"] = account_value
+              acct = client.get_account()
+              result["account_value"] = float(acct.equity)
+              print(f"✅ Account: ${result['account_value']:,.2f}")
 
-              # Get Fear & Greed Index
-              print("\n📊 Checking Fear & Greed Index...")
-              size_multiplier = 1.0
+              # STEP 1: TREND CHECK (50-day MA)
+              print("\n📊 STEP 1: Trend Check (50-day MA)")
+              print("-" * 40)
+              trend_data = {}
+              for s in ["BTC-USD","ETH-USD","SOL-USD"]:
+                  try:
+                      h = yf.Ticker(s).history(period="60d")
+                      if len(h) >= 50:
+                          price = float(h["Close"].iloc[-1])
+                          ma50 = float(h["Close"].rolling(50).mean().iloc[-1])
+                          above = price > ma50
+                          pct = ((price - ma50) / ma50) * 100
+                          chg = ((h["Close"].iloc[-1] - h["Close"].iloc[-7]) / h["Close"].iloc[-7]) * 100
+                          trend_data[s] = {"price":price,"ma50":ma50,"above":above,"pct":pct,"chg7d":chg}
+                          st = "✅ ABOVE" if above else "❌ BELOW"
+                          print(f"   {s}: ${price:,.0f} | MA50: ${ma50:,.0f} | {st} ({pct:+.1f}%)")
+                  except Exception as e:
+                      print(f"   {s}: Error - {e}")
+
+              result["trend_analysis"] = trend_data
+              above_ma = {k:v for k,v in trend_data.items() if v.get("above")}
+
+              if not above_ma:
+                  print("\n⛔ ALL CRYPTOS BELOW 50-DAY MA - SKIPPING")
+                  print("   Research: Buying below MA = catching falling knife")
+                  result["action"] = "SKIP"
+                  result["skip_reason"] = "All below 50-day MA - waiting for trend"
+                  result["status"] = "WAITING_FOR_TREND"
+                  save()
+                  sys.exit(0)
+
+              # STEP 2: Fear & Greed (for sizing only)
+              print("\n📊 STEP 2: Fear & Greed (sizing only)")
+              mult = 1.0
               try:
-                  import requests
-                  fng_resp = requests.get("https://api.alternative.me/fng/", timeout=10)
-                  fng_data = fng_resp.json()
-                  fng_value = int(fng_data["data"][0]["value"])
-                  fng_class = fng_data["data"][0]["value_classification"]
-                  print(f"   Value: {fng_value} ({fng_class})")
-                  result["fear_greed_index"] = fng_value
-                  result["fear_greed_class"] = fng_class
-
-                  if fng_value <= 25:
-                      size_multiplier = 1.5
-                      print("   🟢 EXTREME FEAR - 1.5x position")
-                  elif fng_value <= 40:
-                      size_multiplier = 1.25
-                      print("   🟢 FEAR - 1.25x position")
-                  elif fng_value <= 60:
-                      size_multiplier = 1.0
-                      print("   🟡 NEUTRAL - 1.0x position")
-                  elif fng_value <= 75:
-                      size_multiplier = 0.75
-                      print("   🟠 GREED - 0.75x position")
+                  fng = requests.get("https://api.alternative.me/fng/", timeout=10).json()
+                  fv = int(fng["data"][0]["value"])
+                  result["fear_greed_index"] = fv
+                  fc = fng["data"][0]["value_classification"]
+                  result["fear_greed_class"] = fc
+                  print(f"   Value: {fv} ({fc})")
+                  if fv <= 25: mult = 1.5; print("   🟢 EXTREME FEAR + TREND = 1.5x")
+                  elif fv <= 40: mult = 1.25; print("   🟢 FEAR + TREND = 1.25x")
+                  elif fv <= 60: mult = 1.0; print("   🟡 NEUTRAL + TREND = 1.0x")
+                  elif fv <= 75: mult = 0.75; print("   🟠 GREED + TREND = 0.75x")
                   else:
-                      size_multiplier = 0.0
-                      print("   🔴 EXTREME GREED - skip buy")
-                      result["action"] = "SKIP"
-                      result["skip_reason"] = "Extreme greed"
-                      save_result()
-                      print("\n✅ Workflow completed (skipped due to extreme greed)")
+                      print("   🔴 EXTREME GREED - Skip")
+                      result["action"], result["skip_reason"] = "SKIP", "Extreme greed"
+                      save()
                       sys.exit(0)
-              except Exception as e:
-                  print(f"   ⚠️ Fear & Greed API failed: {e}")
-                  print("   Using default 1.0x multiplier")
-                  result["fng_error"] = str(e)
+              except: pass
 
-              result["size_multiplier"] = size_multiplier
+              # STEP 3: Select best (above MA only)
+              print("\n🎯 STEP 3: Select Best (above MA)")
+              best_item = max(above_ma.items(), key=lambda x: x[1]["chg7d"])
+              best, best_data = best_item[0].replace("-USD","USD"), best_item[1]
+              print(f"   Selected: {best} (+{best_data['pct']:.1f}% above MA)")
 
-              # Analyze cryptos
-              print("\n📈 Analyzing cryptos...")
-              best_symbol = "BTCUSD"
-              best_price = 100000.0
+              # STEP 4: Execute
+              print("\n💰 STEP 4: Execute Trade")
+              base = 10.0
+              amt = min(base * mult, result["account_value"] * 0.02)
+              if amt < 1: amt = 1
+              print(f"   Amount: ${amt:.2f} (base ${base} × {mult}x)")
 
+<<<<<<< HEAD
               try:
                   import yfinance as yf
                   cryptos = ["BTC-USD", "ETH-USD", "SOL-USD"]
@@ -209,43 +204,34 @@ jobs:
 
               # Execute trade
               print(f"\n📈 Submitting: BUY ${final_amount:.2f} {best_symbol}")
+=======
+>>>>>>> origin/main
               order = client.submit_order(MarketOrderRequest(
-                  symbol=best_symbol,
-                  notional=final_amount,
-                  side=OrderSide.BUY,
-                  time_in_force=TimeInForce.GTC
-              ))
+                  symbol=best, notional=amt, side=OrderSide.BUY, time_in_force=TimeInForce.GTC))
+              print(f"   ✅ Order: {order.id}")
 
-              print(f"✅ Order submitted: {order.id}")
-              print(f"📋 Status: {order.status}")
-
-              result["symbol"] = best_symbol
-              result["action"] = "BUY"
-              result["notional"] = final_amount
-              result["price"] = best_price
-              result["order_id"] = str(order.id)
-              result["status"] = str(order.status)
+              result.update({
+                  "symbol": best, "action": "BUY", "notional": amt,
+                  "price": best_data["price"], "order_id": str(order.id),
+                  "status": str(order.status), "size_multiplier": mult,
+                  "trend_confirmed": True, "pct_above_ma": best_data["pct"]
+              })
 
           except Exception as e:
               print(f"\n❌ ERROR: {e}")
               traceback.print_exc()
-              result["error"] = str(e)
-              result["status"] = "FAILED"
+              result["error"], result["status"] = str(e), "FAILED"
 
-          # Always save results
-          save_result()
-
+          save()
           print("\n" + "=" * 60)
-          print("Trade Summary:")
-          print(json.dumps({k: v for k, v in result.items() if k != "crypto_analysis"}, indent=2))
-          print("=" * 60)
+          print(json.dumps({k:v for k,v in result.items() if k != "trend_analysis"}, indent=2))
           PYTHON
 
       - name: Commit trade data
         if: always()
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "trade: world-class crypto v3.0 [skip ci]"
+          commit_message: "trade: crypto v4.0 (trend-aware) [skip ci]"
           file_pattern: "data/trades_*.json"
           commit_user_name: "GitHub Actions Bot"
           commit_user_email: "actions@github.com"

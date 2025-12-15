@@ -5,7 +5,9 @@ Check your current positions and orders
 
 import os
 
-import alpaca_trade_api as tradeapi
+from alpaca.trading.client import TradingClient
+from alpaca.trading.enums import QueryOrderStatus
+from alpaca.trading.requests import GetOrdersRequest
 
 ALPACA_KEY = os.getenv("ALPACA_API_KEY")
 ALPACA_SECRET = os.getenv("ALPACA_SECRET_KEY")
@@ -13,10 +15,10 @@ ALPACA_SECRET = os.getenv("ALPACA_SECRET_KEY")
 if not ALPACA_KEY or not ALPACA_SECRET:
     raise ValueError("ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables must be set")
 
-api = tradeapi.REST(
-    ALPACA_KEY,
-    ALPACA_SECRET,
-    "https://paper-api.alpaca.markets",
+api = TradingClient(
+    api_key=ALPACA_KEY,
+    secret_key=ALPACA_SECRET,
+    paper=True,
 )
 
 print("=" * 70)
@@ -35,7 +37,7 @@ print(f"P/L: ${float(account.equity) - 100000:.2f}")
 # Positions
 print("\n📈 CURRENT POSITIONS")
 print("-" * 70)
-positions = api.list_positions()
+positions = api.get_all_positions()
 
 if positions:
     for pos in positions:
@@ -53,7 +55,8 @@ else:
 # Recent Orders
 print("\n📝 RECENT ORDERS (Last 10)")
 print("-" * 70)
-orders = api.list_orders(status="all", limit=10)
+request = GetOrdersRequest(status=QueryOrderStatus.ALL, limit=10)
+orders = api.get_orders(filter=request)
 
 if orders:
     for order in orders:

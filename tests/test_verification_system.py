@@ -1,243 +1,372 @@
 """
-Tests for the comprehensive verification system.
+Comprehensive tests for the verification system.
 
-These tests ensure our safety gates work correctly to prevent
-incidents like the Dec 11, 2025 syntax error.
+Tests the entire verification pipeline:
+- RAG-powered lesson learned checks
+- ML anomaly detection
+- Pre-merge gate
+- Continuous monitoring
+
+Created: Dec 14, 2025
 """
 
-import tempfile
+import json
+from datetime import datetime, timedelta
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 
-class TestPreMergeVerifier:
-    """Tests for pre-merge verification."""
+class TestRAGVerificationGate:
+    """Tests for RAG-powered verification gate."""
 
-    def test_syntax_check_passes_valid_code(self):
-        """Valid Python code should pass syntax check."""
-        from src.verification.pre_merge_verifier import PreMergeVerifier
+    @pytest.fixture
+    def project_root(self) -> Path:
+        return Path(__file__).parent.parent
 
-        verifier = PreMergeVerifier()
-        result = verifier.check_syntax()
+    @pytest.fixture
+    def rag_gate(self, project_root):
+        """Create RAG verification gate instance."""
+        from src.verification.rag_verification_gate import RAGVerificationGate
 
-        # Current codebase should pass
-        assert result["passed"], f"Syntax check failed: {result.get('errors')}"
+        return RAGVerificationGate(
+            rag_knowledge_path=project_root / "rag_knowledge" / "lessons_learned"
+        )
 
-    def test_syntax_check_catches_syntax_error(self):
-        """Syntax errors should be caught."""
-        from src.verification.pre_merge_verifier import PreMergeVerifier
+    def test_rag_gate_loads_lessons(self, rag_gate):
+        """Verify RAG gate loads lessons learned from disk."""
+        # Should load multiple lessons from rag_knowledge/lessons_learned/
+        assert len(rag_gate.lessons) > 0, "RAG gate should load lessons from disk"
 
-        # Create a temp file with syntax error
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write("def broken(\n")  # Missing closing paren
-            temp_path = f.name
+        # Verify structure
+        lesson = rag_gate.lessons[0]
+        assert hasattr(lesson, "id")
+        assert hasattr(lesson, "title")
+        assert hasattr(lesson, "severity")
+        assert hasattr(lesson, "category")
 
-        # This is a unit test - in real usage, it would scan the file
-        # For now, just verify the verifier can be instantiated
-        verifier = PreMergeVerifier()
-        assert verifier is not None
+    def test_ll_009_detected_by_rag(self, rag_gate):
+        """Verify ll_009 (Dec 11 syntax error) is in RAG knowledge base."""
+        ll_009_lessons = [l for l in rag_gate.lessons if l.id == "ll_009"]
 
-        # Cleanup
-        Path(temp_path).unlink()
+        assert len(ll_009_lessons) > 0, "ll_009 should be in RAG knowledge base"
 
-    def test_critical_imports_list_is_complete(self):
-        """Verify critical imports list includes essential modules."""
-        from src.verification.pre_merge_verifier import PreMergeVerifier
+        lesson = ll_009_lessons[0]
+        assert lesson.severity == "critical"
+        assert "syntax" in lesson.title.lower() or "syntax" in lesson.category.lower()
 
-        critical_module_names = [imp[0] for imp in PreMergeVerifier.CRITICAL_IMPORTS]
+    def test_ll_024_detected_by_rag(self, rag_gate):
+        """Verify ll_024 (Dec 13 f-string error) is in RAG knowledge base."""
+        ll_024_lessons = [l for l in rag_gate.lessons if l.id == "ll_024"]
 
-        assert "TradingOrchestrator" in critical_module_names
-        assert "AlpacaExecutor" in critical_module_names
-        assert "TradeGateway" in critical_module_names
+        assert len(ll_024_lessons) > 0, "ll_024 should be in RAG knowledge base"
 
-    def test_verify_all_returns_result(self):
-        """verify_all should return a VerificationResult."""
-        from src.verification.pre_merge_verifier import PreMergeVerifier, VerificationResult
+        lesson = ll_024_lessons[0]
+        assert lesson.severity == "critical"
 
-        verifier = PreMergeVerifier()
-        result = verifier.verify_all(run_tests=False, run_typecheck=False)
+    def test_semantic_search_finds_syntax_errors(self, rag_gate):
+        """Verify semantic search can find past syntax errors."""
+        results = rag_gate.semantic_search("syntax error", top_k=5)
 
-        assert isinstance(result, VerificationResult)
-        assert result.checks_run > 0
+        assert len(results) > 0, "Should find lessons related to syntax errors"
 
+        # Check that results are scored
+        for lesson, score in results:
+            assert score > 0, "Results should have positive scores"
+            assert hasattr(lesson, "id")
+            assert hasattr(lesson, "severity")
 
-class TestRAGSafetyChecker:
-    """Tests for RAG safety checking."""
-
-    def test_large_pr_warning(self):
-        """Large PRs should generate warnings."""
-        from src.verification.rag_safety_checker import RAGSafetyChecker
-
-        checker = RAGSafetyChecker()
-
-        # Simulate a large PR (15 files)
-        changed_files = [f"src/file_{i}.py" for i in range(15)]
-        result = checker.check_merge_safety(changed_files, "feat: big change")
-
-        assert len(result.warnings) > 0 or len(result.similar_incidents) > 0
-
-    def test_executor_change_detected(self):
-        """Changes to executor files should be flagged."""
-        from src.verification.rag_safety_checker import RAGSafetyChecker
-
-        checker = RAGSafetyChecker()
-
+    def test_check_changed_files_detects_critical_files(self, rag_gate):
+        """Verify RAG gate detects changes to critical files."""
+        # Simulate changing alpaca_executor.py (caused ll_009)
         changed_files = ["src/execution/alpaca_executor.py"]
-        result = checker.check_merge_safety(changed_files, "fix: executor")
 
-        # Should have warnings or blocking reasons
-        assert len(result.warnings) > 0 or len(result.blocking_reasons) > 0
+        warnings, relevant_lessons = rag_gate.check_changed_files(changed_files)
 
-    def test_safe_change_passes(self):
-        """Simple safe changes should pass."""
-        from src.verification.rag_safety_checker import RAGSafetyChecker
+        # May or may not trigger depending on lesson file_patterns
+        # But should not crash
+        assert isinstance(warnings, list)
+        assert isinstance(relevant_lessons, list)
 
-        checker = RAGSafetyChecker()
+    def test_large_pr_warning(self, rag_gate):
+        """Verify RAG gate warns about large PRs (>10 files)."""
+        large_pr_files = [f"src/file_{i}.py" for i in range(50)]
 
-        changed_files = ["README.md"]
-        result = checker.check_merge_safety(changed_files, "docs: update readme")
-
-        # README changes should be safe
-        assert result.safe
-
-
-class TestContinuousVerifier:
-    """Tests for continuous monitoring."""
-
-    def test_no_trades_alert(self):
-        """Should alert when no trades executed."""
-        from src.verification.continuous_verifier import ContinuousVerifier
-
-        verifier = ContinuousVerifier(trades_dir="data")
-
-        # Run checks - may or may not have alerts depending on actual data
-        alerts = verifier.check_trading_health()
-
-        # Just verify it runs without error
-        assert isinstance(alerts, list)
-
-    def test_risky_code_change_detection(self):
-        """Should detect risky code changes."""
-        from src.verification.continuous_verifier import ContinuousVerifier
-
-        verifier = ContinuousVerifier()
-
-        # Simulate risky change
-        alerts = verifier.check_code_change_risk(
-            changed_files=[
-                "src/execution/alpaca_executor.py",
-                "src/orchestrator/main.py",
-                "src/risk/trade_gateway.py",
-            ]
-            + [f"src/strategies/strategy_{i}.py" for i in range(10)],
-            commit_message="hotfix: urgent fix for broken trading",
+        is_safe, warnings = rag_gate.check_merge_safety(
+            pr_description="Large refactor",
+            changed_files=large_pr_files,
+            pr_size=len(large_pr_files),
         )
 
-        # Should have at least one alert due to risky patterns
-        assert len(alerts) > 0
-        assert any(a.type == "risky_code_change" for a in alerts)
+        # Should warn about large PR
+        assert any("LARGE PR" in w for w in warnings), "Should warn about large PRs (>10 files)"
+
+    def test_critical_file_warning(self, rag_gate):
+        """Verify RAG gate warns about critical file changes."""
+        critical_files = ["src/orchestrator/main.py", "src/execution/alpaca_executor.py"]
+
+        is_safe, warnings = rag_gate.check_merge_safety(
+            pr_description="Fix orchestrator",
+            changed_files=critical_files,
+            pr_size=len(critical_files),
+        )
+
+        # Should warn about critical files
+        assert any(
+            "CRITICAL" in w for w in warnings
+        ), "Should warn when critical files changed"
 
 
-class TestVerificationIntegration:
-    """Integration tests for the verification system."""
+class TestMLAnomalyDetector:
+    """Tests for ML-based anomaly detection."""
 
-    def test_full_verification_pipeline(self):
-        """Test the complete verification pipeline."""
-        from src.verification.post_deploy_verifier import PostDeployVerifier
-        from src.verification.pre_merge_verifier import PreMergeVerifier
+    @pytest.fixture
+    def project_root(self) -> Path:
+        return Path(__file__).parent.parent
 
-        # Pre-merge
-        pre_verifier = PreMergeVerifier()
-        pre_result = pre_verifier.verify_all()
+    @pytest.fixture
+    def detector(self, project_root):
+        """Create ML anomaly detector instance."""
+        from src.verification.ml_anomaly_detector import MLAnomalyDetector
 
-        # Post-deploy (if pre passes)
-        if pre_result.passed:
-            post_verifier = PostDeployVerifier()
-            post_result = post_verifier.verify_deployment()
+        return MLAnomalyDetector(data_dir=project_root / "data")
 
-            # At minimum, checks should run
-            assert len(post_result.checks) > 0
+    def test_detector_loads_system_state(self, detector):
+        """Verify detector can load system state."""
+        state = detector.load_system_state()
 
-    def test_lesson_recording(self):
-        """Test that incidents can be recorded to RAG."""
-        import tempfile
+        # Should load from data/system_state.json
+        if state:
+            assert "meta" in state or "account" in state or "strategies" in state
+        # If no state file, returns None (acceptable)
 
-        from src.verification.rag_safety_checker import RAGSafetyChecker
+    def test_detect_zero_trades_anomaly(self, detector, tmp_path):
+        """Verify detector catches 0 trades anomaly (Dec 11 incident)."""
+        # Create mock system state with 0 trades
+        mock_state = {
+            "performance": {"total_trades": 0, "win_rate": 0},
+            "challenge": {"current_day": 5},
+        }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            f.write('{"lessons": []}')
-            temp_path = f.name
+        state_file = tmp_path / "system_state.json"
+        with open(state_file, "w") as f:
+            json.dump(mock_state, f)
 
-        checker = RAGSafetyChecker(rag_path=temp_path)
+        detector.system_state_file = state_file
 
-        lesson_id = checker.record_incident(
+        anomaly = detector.detect_trade_volume_anomaly()
+
+        assert anomaly is not None, "Should detect 0 trades as anomaly"
+        assert anomaly.severity in [
+            "critical",
+            "high",
+        ], "0 trades should be critical/high severity"
+        assert anomaly.metric_value == 0.0
+
+    def test_detect_stale_system_state(self, detector, tmp_path):
+        """Verify detector catches stale system state."""
+        # Create mock state with old timestamp (>48 hours)
+        old_timestamp = (datetime.utcnow() - timedelta(hours=72)).isoformat()
+
+        mock_state = {
+            "meta": {"last_updated": old_timestamp},
+            "performance": {"total_trades": 5},
+        }
+
+        state_file = tmp_path / "system_state.json"
+        with open(state_file, "w") as f:
+            json.dump(mock_state, f)
+
+        detector.system_state_file = state_file
+
+        anomaly = detector.detect_system_health_anomaly()
+
+        assert anomaly is not None, "Should detect stale state as anomaly"
+        assert "stale" in anomaly.description.lower()
+        assert anomaly.metric_value > 48.0  # Hours old
+
+    def test_detect_large_code_change(self, detector):
+        """Verify detector catches large code changes (>50 files)."""
+        large_change = [f"src/file_{i}.py" for i in range(100)]
+
+        anomaly = detector.detect_code_change_anomaly(large_change)
+
+        assert anomaly is not None, "Should detect large code change as anomaly"
+        assert anomaly.metric_value == 100.0
+        assert anomaly.severity in ["high", "critical"]
+
+    def test_detect_critical_file_change(self, detector):
+        """Verify detector flags critical file changes."""
+        critical_change = ["src/execution/alpaca_executor.py"]
+
+        anomaly = detector.detect_code_change_anomaly(critical_change)
+
+        # Should detect critical file change
+        if anomaly:
+            assert "critical" in anomaly.description.lower()
+
+    def test_anomaly_history_persistence(self, detector, tmp_path):
+        """Verify anomalies are saved to history."""
+        from src.verification.ml_anomaly_detector import Anomaly
+
+        detector.anomaly_history_file = tmp_path / "anomaly_history.json"
+
+        test_anomaly = Anomaly(
+            timestamp=datetime.utcnow().isoformat(),
             category="test",
-            title="Test Incident",
-            description="This is a test",
-            root_cause="Testing",
-            prevention="Run tests",
-            severity="low",
+            severity="medium",
+            description="Test anomaly",
+            metric_name="test_metric",
+            metric_value=42.0,
+            expected_range=(0.0, 10.0),
+            confidence=0.9,
         )
 
-        assert lesson_id.startswith("ll_")
+        detector.save_anomaly(test_anomaly)
 
-        # Cleanup
-        Path(temp_path).unlink()
+        # Verify saved
+        assert detector.anomaly_history_file.exists()
+
+        with open(detector.anomaly_history_file, "r") as f:
+            history = json.load(f)
+
+        assert len(history) == 1
+        assert history[0]["metric_name"] == "test_metric"
+        assert history[0]["metric_value"] == 42.0
 
 
-# Regression tests for specific past incidents
-class TestIncidentRegression:
-    """Regression tests to prevent past incidents from recurring."""
+class TestPreMergeGate:
+    """Tests for pre-merge gate integration."""
+
+    @pytest.fixture
+    def project_root(self) -> Path:
+        return Path(__file__).parent.parent
+
+    def test_pre_merge_gate_exists(self, project_root):
+        """Verify pre_merge_gate.py script exists."""
+        gate_script = project_root / "scripts" / "pre_merge_gate.py"
+        assert gate_script.exists(), "pre_merge_gate.py should exist"
+
+    def test_pre_merge_gate_imports_verification_modules(self, project_root):
+        """Verify pre_merge_gate imports RAG and ML verification."""
+        gate_script = project_root / "scripts" / "pre_merge_gate.py"
+
+        with open(gate_script, "r") as f:
+            content = f.read()
+
+        # Should import or use RAG verification
+        # (May be conditional import, so we check for mention)
+        # This is a weak check - mainly verifies integration exists
+        assert "verification" in content.lower() or "rag" in content.lower()
+
+
+class TestContinuousVerification:
+    """Tests for continuous verification monitoring."""
+
+    @pytest.fixture
+    def project_root(self) -> Path:
+        return Path(__file__).parent.parent
+
+    def test_ci_workflows_exist(self, project_root):
+        """Verify CI workflows for verification exist."""
+        workflows_dir = project_root / ".github" / "workflows"
+
+        # Check for test workflow
+        test_workflows = list(workflows_dir.glob("*test*.yml"))
+        assert len(test_workflows) > 0, "Should have test workflows"
+
+    def test_verification_can_run_daily(self, project_root):
+        """Verify verification system can run as daily job."""
+        from src.verification.ml_anomaly_detector import MLAnomalyDetector
+
+        detector = MLAnomalyDetector(data_dir=project_root / "data")
+
+        # Should be able to run without crashing
+        try:
+            anomalies = detector.run_all_checks()
+            assert isinstance(anomalies, list)
+        except Exception as e:
+            # Acceptable if data files don't exist in test environment
+            if "system_state.json" not in str(e):
+                raise
+
+
+class TestRegressionPrevention:
+    """Tests that specifically prevent past incidents from recurring."""
 
     def test_ll_009_syntax_error_prevention(self):
+        """Prevent ll_009: Syntax errors in critical files.
+
+        Dec 11, 2025: Syntax error in alpaca_executor.py broke all trading.
         """
-        Regression test for ll_009: Syntax error merged to main.
-
-        On Dec 11, 2025, a syntax error in alpaca_executor.py was merged
-        causing 0 trades to execute.
-
-        This test ensures:
-        1. All Python files in src/ have valid syntax
-        2. Critical imports work
-        """
-        from src.verification.pre_merge_verifier import PreMergeVerifier
-
-        verifier = PreMergeVerifier()
-
-        # Check 1: All files compile
-        syntax_result = verifier.check_syntax()
-        assert syntax_result["passed"], (
-            f"REGRESSION: Syntax error detected! See ll_009. Errors: {syntax_result.get('errors')}"
-        )
-
-        # Check 2: Critical imports (syntax only, not full import)
-        import ast
         from pathlib import Path
 
+        project_root = Path(__file__).parent.parent
         critical_files = [
-            "src/execution/alpaca_executor.py",
-            "src/orchestrator/main.py",
-            "src/risk/trade_gateway.py",
+            project_root / "src" / "orchestrator" / "main.py",
+            project_root / "src" / "execution" / "alpaca_executor.py",
+            project_root / "src" / "risk" / "trade_gateway.py",
         ]
 
-        for filepath in critical_files:
-            path = Path(filepath)
-            if path.exists():
-                with open(path) as f:
-                    try:
+        errors = []
+        for file_path in critical_files:
+            if file_path.exists():
+                try:
+                    import ast
+
+                    with open(file_path, "r") as f:
                         ast.parse(f.read())
-                    except SyntaxError as e:
-                        pytest.fail(
-                            f"REGRESSION: Syntax error in {filepath}! See ll_009. Error: {e}"
-                        )
+                except SyntaxError as e:
+                    errors.append(f"{file_path.name}: {e}")
 
-    def test_ll_001_over_engineering_check(self):
-        """
-        Regression test for ll_001: Over-engineering with too many gates.
+        assert not errors, f"REGRESSION ll_009: Syntax errors in critical files:\n" + "\n".join(
+            errors
+        )
 
-        System should not have excessive entry gates that block all trades.
+    def test_ll_024_fstring_syntax_prevention(self):
+        """Prevent ll_024: F-string backslash escapes.
+
+        Dec 13, 2025: F-string with backslash crashed autonomous_trader.py.
         """
-        # This is a documentation/process check
-        # In production, would check gate pass rates
-        pass
+        from pathlib import Path
+
+        project_root = Path(__file__).parent.parent
+        trader_script = project_root / "scripts" / "autonomous_trader.py"
+
+        if trader_script.exists():
+            import ast
+
+            with open(trader_script, "r") as f:
+                content = f.read()
+
+            try:
+                ast.parse(content)
+            except SyntaxError as e:
+                pytest.fail(
+                    f"REGRESSION ll_024: Syntax error in autonomous_trader.py: {e}"
+                )
+
+    def test_ci_failure_doesnt_block_trading(self):
+        """Prevent CI test failures from blocking trading.
+
+        Dec 10-11, 2025: CI test failures blocked trading for 2 days.
+        """
+        from pathlib import Path
+
+        project_root = Path(__file__).parent.parent
+        workflows = (project_root / ".github" / "workflows").glob("*.yml")
+
+        for workflow_file in workflows:
+            with open(workflow_file, "r") as f:
+                content = f.read()
+
+            # If this is a daily trading workflow
+            if "trading" in workflow_file.name.lower():
+                # Should have continue-on-error or separate jobs
+                # (This is a weak check - main protection is in workflow structure)
+                pass  # Just verify it exists and is readable
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

@@ -161,8 +161,6 @@ def example_6_custom_weights():
         enable_news=True,
         enable_reddit=False,  # Disable Reddit
         enable_youtube=True,
-        enable_linkedin=False,
-        enable_tiktok=False,
     )
 
     print("\nAnalyzer Configuration:")

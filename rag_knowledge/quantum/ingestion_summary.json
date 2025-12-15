@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-12-15T11:33:03.527380",
+  "total_documents": 28,
+  "categories": {
+    "books": 4,
+    "papers": 4,
+    "youtube_channels": 6,
+    "blogs": 7,
+    "concepts": 5,
+    "markdown_docs": 2
+  },
+  "status": "success"
+}

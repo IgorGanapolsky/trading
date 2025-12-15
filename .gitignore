@@ -42,6 +42,11 @@ data/cache/
 # Docker
 *.pid
 
+# Core dumps (prevent accidental commits from crashes)
+core
+core.*
+*.core
+
 # Secrets
 *_secret*
 *_key*

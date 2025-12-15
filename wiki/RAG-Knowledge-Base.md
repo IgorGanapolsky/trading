@@ -104,8 +104,6 @@ apple_wisdom = collector.get_stock_mentions("AAPL")
 | **Yahoo Finance** | Yahoo Finance API | ✅ Installed |
 | **Alpha Vantage** | Alpha Vantage News API | ✅ Installed |
 | **Seeking Alpha** | Seeking Alpha RSS | ✅ Installed |
-| **LinkedIn** | LinkedIn Posts API | ✅ Installed |
-| **TikTok** | TikTok Research API | ✅ Installed |
 | **Berkshire Letters** | berkshirehathaway.com | ✅ Installed |
 
 ---
@@ -141,9 +139,7 @@ data/
 │ • Reddit        │     │ • Parse         │     │ • Embeddings    │
 │ • YouTube       │     │ • Extract       │     │ • Vector Index  │
 │ • Seeking Alpha │     │ • Normalize     │     │ • SQLite Cache  │
-│ • LinkedIn      │     │ • Score         │     │                 │
-│ • TikTok        │     │                 │     │                 │
-│ • Bogleheads    │     │                 │     │                 │
+│ • Bogleheads    │     │ • Score         │     │                 │
 │ • Berkshire     │     │                 │     │                 │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
                                                         │

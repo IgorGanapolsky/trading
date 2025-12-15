@@ -34,31 +34,47 @@ def run_check(name: str, cmd: str) -> bool:
     return True
 
 
-def run_rag_check(root: Path) -> bool:
-    """Query RAG for similar past failures."""
+def run_rag_check(root: Path, changed_files: list = None) -> bool:
+    """Query RAG for similar past failures using new verification gate."""
     print("Running: RAG Safety Check (lessons learned)...")
     try:
         sys.path.insert(0, str(root))
-        from src.rag.lessons_learned_rag import LessonsLearnedRAG
+        from src.verification.rag_verification_gate import RAGVerificationGate
 
-        rag = LessonsLearnedRAG()
+        gate = RAGVerificationGate()
 
-        # Query for merge-related failures
-        results = rag.search("merge syntax error import failure CI", top_k=3)
+        # If we have changed files, check them
+        if changed_files:
+            is_safe, warnings = gate.check_merge_safety(
+                pr_description="Pre-merge verification",
+                changed_files=changed_files,
+                pr_size=len(changed_files),
+            )
 
-        warnings = []
-        for lesson, score in results:
-            if score > 0.5 and lesson.severity in ["critical", "high"]:
-                warnings.append(f"[{lesson.severity.upper()}] {lesson.title}: {lesson.prevention}")
+            if warnings:
+                print("⚠️  RAG Safety Check: Found relevant warnings")
+                for w in warnings:
+                    print(f"   {w}")
+            else:
+                print("✅ RAG Safety Check passed (no warnings)")
 
-        if warnings:
-            print("⚠️  RAG Safety Check: Found relevant warnings")
-            for w in warnings:
-                print(f"   {w}")
+            return True  # Warnings only, don't block
+
         else:
-            print("✅ RAG Safety Check passed (no high-severity matches)")
+            # Fallback: semantic search for common failure patterns
+            results = gate.semantic_search("merge syntax error import failure CI", top_k=3)
 
-        return True  # Warnings only, don't block
+            if results:
+                print("⚠️  RAG Safety Check: Found relevant past incidents")
+                for lesson, score in results[:3]:
+                    print(
+                        f"   [{lesson.severity.upper()}] {lesson.id}: {lesson.title} (score: {score:.1f})"
+                    )
+            else:
+                print("✅ RAG Safety Check passed (no relevant history)")
+
+            return True  # Warnings only, don't block
+
     except Exception as e:
         print(f"⚠️  RAG Safety Check: Could not query ({e})")
         return True  # Don't block if RAG unavailable
@@ -158,16 +174,60 @@ def main():
             failed.append(name)
 
     # Enhanced checks (Dec 11, 2025 - Deep Research improvements)
+    # Updated Dec 14, 2025 - Added ML anomaly detection
     print()
     print("-" * 60)
-    print("ENHANCED CHECKS (Deep Research Dec 11, 2025)")
+    print("ENHANCED CHECKS (Deep Research + ML)")
     print("-" * 60)
+
+    # Get changed files using git
+    try:
+        import subprocess
+
+        result = subprocess.run(
+            ["git", "diff", "--name-only", "HEAD"],
+            capture_output=True,
+            text=True,
+            cwd=root,
+        )
+        changed_files = [f for f in result.stdout.strip().split("\n") if f]
+    except Exception:
+        changed_files = []
 
     if not run_volatility_safety_check(root):
         failed.append("Volatility Safety Module")
 
-    if not run_rag_check(root):
+    if not run_rag_check(root, changed_files=changed_files):
         failed.append("RAG Safety Check")
+
+    # ML Anomaly Detection (Dec 14, 2025)
+    print("Running: ML Anomaly Detection...")
+    try:
+        sys.path.insert(0, str(root))
+        from src.verification.ml_anomaly_detector import MLAnomalyDetector
+
+        detector = MLAnomalyDetector()
+        anomalies = detector.run_all_checks(files_changed=changed_files)
+
+        if anomalies:
+            critical_anomalies = [a for a in anomalies if a.severity == "critical"]
+            high_anomalies = [a for a in anomalies if a.severity == "high"]
+
+            if critical_anomalies:
+                print(f"🚨 ML Anomaly Detection: {len(critical_anomalies)} CRITICAL anomalies")
+                for a in critical_anomalies[:3]:
+                    print(f"   {a.description}")
+            elif high_anomalies:
+                print(f"⚠️  ML Anomaly Detection: {len(high_anomalies)} HIGH severity anomalies")
+                for a in high_anomalies[:2]:
+                    print(f"   {a.description}")
+            else:
+                print(f"ℹ️  ML Anomaly Detection: {len(anomalies)} minor anomalies (warnings only)")
+        else:
+            print("✅ ML Anomaly Detection passed (no anomalies)")
+
+    except Exception as e:
+        print(f"⚠️  ML Anomaly Detection: Could not run ({e})")
 
     print()
     print("=" * 60)

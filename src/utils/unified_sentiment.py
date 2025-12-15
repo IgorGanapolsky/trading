@@ -1,15 +1,13 @@
 """
 Unified Sentiment Synthesizer
 
-Aggregates sentiment from ALL sources (Reddit, YouTube, LinkedIn, TikTok, News)
+Aggregates sentiment from all sources (Reddit, YouTube, News)
 with appropriate weighting and provides a single API for trading strategies.
 
 Source Weights:
-    - News: 0.30 (most reliable - professional analysts, financial news)
-    - Reddit: 0.25 (high volume retail sentiment, meme stock detector)
-    - YouTube: 0.20 (expert analysis from financial content creators)
-    - LinkedIn: 0.15 (professional sentiment, insider perspectives)
-    - TikTok: 0.10 (trending/momentum indicator, viral sentiment)
+    - News: 0.40 (most reliable - professional analysts, financial news)
+    - Reddit: 0.35 (high volume retail sentiment, meme stock detector)
+    - YouTube: 0.25 (expert analysis from financial content creators)
 
 Usage:
     from src.utils.unified_sentiment import UnifiedSentiment
@@ -89,11 +87,9 @@ class UnifiedSentiment:
 
     # Source weights (must sum to 1.0)
     SOURCE_WEIGHTS = {
-        "news": 0.30,  # Professional news and analyst sentiment
-        "reddit": 0.25,  # Retail investor sentiment
-        "youtube": 0.20,  # Expert content creator analysis
-        "linkedin": 0.15,  # Professional network sentiment
-        "tiktok": 0.10,  # Viral trends and momentum
+        "news": 0.40,  # Professional news and analyst sentiment
+        "reddit": 0.35,  # Retail investor sentiment
+        "youtube": 0.25,  # Expert content creator analysis
     }
 
     # Signal thresholds
@@ -114,8 +110,6 @@ class UnifiedSentiment:
         enable_news: bool = True,
         enable_reddit: bool = True,
         enable_youtube: bool = True,
-        enable_linkedin: bool = False,  # Not implemented yet
-        enable_tiktok: bool = False,  # Not implemented yet
     ):
         """
         Initialize unified sentiment analyzer.
@@ -125,8 +119,6 @@ class UnifiedSentiment:
             enable_news: Enable news sentiment (Yahoo, Stocktwits, Alpha Vantage)
             enable_reddit: Enable Reddit sentiment
             enable_youtube: Enable YouTube sentiment
-            enable_linkedin: Enable LinkedIn sentiment (placeholder)
-            enable_tiktok: Enable TikTok sentiment (placeholder)
         """
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -136,8 +128,6 @@ class UnifiedSentiment:
             "news": enable_news,
             "reddit": enable_reddit,
             "youtube": enable_youtube,
-            "linkedin": enable_linkedin,
-            "tiktok": enable_tiktok,
         }
 
         # Initialize source analyzers
@@ -481,36 +471,6 @@ class UnifiedSentiment:
                 error=str(e),
             )
 
-    def _get_linkedin_sentiment(self, symbol: str) -> SourceSentiment:
-        """Get sentiment from LinkedIn (placeholder for future implementation)"""
-        # TODO: Implement LinkedIn sentiment scraping
-        # Potential approach: Use LinkedIn API or web scraping to analyze posts
-        # about the ticker from finance professionals
-        return SourceSentiment(
-            source="linkedin",
-            score=0.0,
-            confidence=0.0,
-            raw_data={},
-            timestamp=datetime.now().isoformat(),
-            available=False,
-            error="LinkedIn sentiment not yet implemented",
-        )
-
-    def _get_tiktok_sentiment(self, symbol: str) -> SourceSentiment:
-        """Get sentiment from TikTok (placeholder for future implementation)"""
-        # TODO: Implement TikTok sentiment analysis
-        # Potential approach: Use TikTok API to analyze hashtags and trending videos
-        # mentioning the ticker
-        return SourceSentiment(
-            source="tiktok",
-            score=0.0,
-            confidence=0.0,
-            raw_data={},
-            timestamp=datetime.now().isoformat(),
-            available=False,
-            error="TikTok sentiment not yet implemented",
-        )
-
     def get_ticker_sentiment(self, symbol: str, use_cache: bool = True) -> dict:
         """
         Get aggregated sentiment for a ticker from all sources.
@@ -530,9 +490,7 @@ class UnifiedSentiment:
                 "sources": {
                     "news": {...},
                     "reddit": {...},
-                    "youtube": {...},
-                    "linkedin": {...},
-                    "tiktok": {...}
+                    "youtube": {...}
                 },
                 "timestamp": "2025-11-29T10:30:00",
                 "cache_hit": False
@@ -551,8 +509,6 @@ class UnifiedSentiment:
             "news": self._get_news_sentiment(symbol),
             "reddit": self._get_reddit_sentiment(symbol),
             "youtube": self._get_youtube_sentiment(symbol),
-            "linkedin": self._get_linkedin_sentiment(symbol),
-            "tiktok": self._get_tiktok_sentiment(symbol),
         }
 
         # Calculate weighted average score
