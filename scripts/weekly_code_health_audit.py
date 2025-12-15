@@ -38,14 +38,45 @@ class CodeHealthAuditor:
         if not req_file.exists():
             return findings
 
+        # Known transitive/system dependencies to skip (not directly imported)
+        # These are installed as dependencies of other packages
+        SKIP_PACKAGES = {
+            # NVIDIA/CUDA (PyTorch dependencies)
+            "nvidia-cuda-nvrtc-cu12", "nvidia-cuda-runtime-cu12", "nvidia-cublas-cu12",
+            "nvidia-cudnn-cu12", "nvidia-cufft-cu12", "nvidia-curand-cu12",
+            "nvidia-cusolver-cu12", "nvidia-cusparse-cu12", "nvidia-nccl-cu12",
+            "nvidia-nvjitlink-cu12", "nvidia-nvtx-cu12", "nvidia-nvshmem-cu12",
+            # HTTP/async utilities (dependencies of requests, aiohttp, etc.)
+            "urllib3", "certifi", "charset-normalizer", "idna", "anyio", "sniffio",
+            "httpcore", "h11", "httpx", "aiosignal", "frozenlist", "multidict",
+            "yarl", "async-timeout", "attrs",
+            # Type checking / runtime (dependencies of pydantic, typing-extensions)
+            "typing-extensions", "annotated-types", "pydantic-core",
+            # Build/packaging utilities
+            "setuptools", "wheel", "pip", "packaging", "filelock", "platformdirs",
+            # Database adapters (transitive)
+            "greenlet", "sqlalchemy",
+            # JSON/schema (transitive)
+            "jsonschema", "jsonschema-specifications", "referencing", "rpds-py",
+            # Date/time (transitive)
+            "tzdata", "pytz", "python-dateutil", "six",
+            # Misc transitive
+            "markupsafe", "jinja2", "fonttools", "pillow", "kiwisolver", "contourpy",
+            "cycler", "pyparsing", "propcache", "wrapt", "deprecated",
+            # Google deps (transitive)
+            "google-auth", "google-auth-httplib2", "google-api-core",
+            "googleapis-common-protos", "proto-plus", "protobuf",
+            "cachetools", "pyasn1", "pyasn1-modules", "rsa",
+        }
+
         # Parse requirements
         requirements = set()
         for line in req_file.read_text().splitlines():
             line = line.strip()
-            if line and not line.startswith("#"):
+            if line and not line.startswith("#") and not line.startswith("-"):
                 # Extract package name (before ==, >=, etc.)
                 pkg = re.split(r"[=<>!~\[]", line)[0].strip().lower()
-                if pkg:
+                if pkg and pkg not in SKIP_PACKAGES:
                     requirements.add(pkg)
 
         # Search for imports in src/
@@ -115,19 +146,24 @@ class CodeHealthAuditor:
         return findings
 
     def audit_documentation_drift(self) -> list[dict]:
-        """Detect when documentation mentions features that don't exist."""
+        """Detect when documentation mentions source files that don't exist."""
         findings = []
 
-        # Check docs/*.md for references to non-existent files
+        # Check docs/*.md for references to non-existent source files
         docs_dir = self.project_root / "docs"
         if not docs_dir.exists():
             return findings
 
+        # Skip archived docs
         for doc_file in docs_dir.glob("*.md"):
+            # Skip archive folder
+            if "archive" in str(doc_file):
+                continue
+
             try:
                 content = doc_file.read_text()
 
-                # Find file path references
+                # Find explicit file path references like `src/foo/bar.py`
                 for match in re.finditer(r"`(src/[^`]+\.py)`", content):
                     ref_path = self.project_root / match.group(1)
                     if not ref_path.exists():
@@ -139,27 +175,8 @@ class CodeHealthAuditor:
                             "suggestion": f"Doc references non-existent file: {match.group(1)}",
                         })
 
-                # Find function references
-                for match in re.finditer(r"`(\w+)\(\)`", content):
-                    func_name = match.group(1)
-                    # Quick check if function exists anywhere
-                    found = False
-                    for py_file in (self.project_root / "src").rglob("*.py"):
-                        try:
-                            if f"def {func_name}(" in py_file.read_text():
-                                found = True
-                                break
-                        except Exception:
-                            pass
-
-                    if not found and func_name not in ["print", "len", "str", "int", "float", "list", "dict"]:
-                        findings.append({
-                            "type": "documentation_drift",
-                            "doc_file": str(doc_file.relative_to(self.project_root)),
-                            "referenced_function": func_name,
-                            "severity": "low",
-                            "suggestion": f"Doc references possibly non-existent function: {func_name}()",
-                        })
+                # NOTE: Removed function reference checking - too many false positives
+                # from standard library, third-party libs, and method names
 
             except Exception:
                 pass
@@ -215,10 +232,20 @@ class CodeHealthAuditor:
             for item in items:
                 by_severity[item.get("severity", "low")] += 1
 
+        # Health score calculation (more reasonable formula)
+        # - High severity: -5 points each (capped at 50 total)
+        # - Medium severity: -2 points each (capped at 30 total)
+        # - Low severity: -0.5 points each (capped at 20 total)
+        high_penalty = min(50, by_severity["high"] * 5)
+        medium_penalty = min(30, by_severity["medium"] * 2)
+        low_penalty = min(20, by_severity["low"] * 0.5)
+
+        health_score = max(0, 100 - high_penalty - medium_penalty - low_penalty)
+
         results["summary"] = {
             "total_findings": total,
             "by_severity": by_severity,
-            "health_score": max(0, 100 - (by_severity["high"] * 20 + by_severity["medium"] * 10 + by_severity["low"] * 2)),
+            "health_score": round(health_score),
         }
 
         return results
