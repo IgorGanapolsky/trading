@@ -254,6 +254,10 @@ class TradingOrchestrator:
                     "Lessons Learned RAG initialized (%d lessons loaded)",
                     len(self.lessons_rag.lessons) if self.lessons_rag.lessons else 0,
                 )
+                # Connect anomaly monitor to RAG for feedback loop
+                # Anomalies → Lessons → RAG → Future Trade Decisions
+                self.anomaly_monitor.lessons_rag = self.lessons_rag
+                logger.info("Anomaly→Lesson feedback loop connected")
             except Exception as e:
                 logger.warning(f"Lessons Learned RAG init failed: {e}")
 
