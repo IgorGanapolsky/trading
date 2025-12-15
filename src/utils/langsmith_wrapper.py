@@ -189,7 +189,7 @@ def get_observability_status() -> dict:
         },
         "langsmith": {
             "enabled": LANGSMITH_ENABLED,
-            "project": os.getenv("LANGCHAIN_PROJECT", "trading-rl-training")
+            "project": os.getenv("LANGCHAIN_PROJECT", "igor-trading-system")
             if LANGSMITH_ENABLED
             else None,
             "dashboard": "https://smith.langchain.com" if LANGSMITH_ENABLED else None,

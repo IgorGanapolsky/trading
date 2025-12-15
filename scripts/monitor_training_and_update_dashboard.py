@@ -235,12 +235,12 @@ class TrainingMonitor:
             if self.langsmith_monitor:
                 try:
                     langsmith_stats = self.langsmith_monitor.get_project_stats(
-                        "trading-rl-training", days=7
+                        "igor-trading-system", days=7
                     )
                     if langsmith_stats.get("success"):
                         stats = langsmith_stats
                         training_section += "\n### LangSmith Monitoring\n\n"
-                        training_section += "**Project**: trading-rl-training\n"
+                        training_section += "**Project**: igor-trading-system\n"
                         training_section += (
                             f"**Total Runs** (7 days): {stats.get('total_runs', 0)}\n"
                         )
@@ -314,7 +314,7 @@ class TrainingMonitor:
                         )
 
                     langsmith_stats = self.langsmith_monitor.get_project_stats(
-                        "trading-rl-training", days=7
+                        "igor-trading-system", days=7
                     )
                     if langsmith_stats.get("success"):
                         stats = langsmith_stats

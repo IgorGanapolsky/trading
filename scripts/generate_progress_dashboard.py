@@ -2003,20 +2003,20 @@ def generate_dashboard() -> str:
                 health = monitor.monitor_health()
 
                 if health.get("success"):
-                    stats = monitor.get_project_stats("trading-rl-training", days=7)
+                    stats = monitor.get_project_stats("igor-trading-system", days=7)
                     if stats.get("success"):
                         dashboard += "| **Status** | ✅ Healthy |\n"
                         dashboard += f"| **Total Runs** (7d) | {stats.get('total_runs', 0)} |\n"
                         dashboard += f"| **Success Rate** | {stats.get('success_rate', 0):.1f}% |\n"
                         dashboard += f"| **Avg Duration** | {stats.get('average_duration_seconds', 0):.1f}s |\n"
-                        dashboard += "| **Project Dashboard** | [trading-rl-training →](https://smith.langchain.com/o/bb00a62e-c62a-4c42-9031-43e1f74bb5b3/projects/p/04fa554e-f155-4039-bb7f-e866f082103b) |\n"
+                        dashboard += "| **Project Dashboard** | [igor-trading-system →](https://smith.langchain.com/o/bb00a62e-c62a-4c42-9031-43e1f74bb5b3/projects/p/04fa554e-f155-4039-bb7f-e866f082103b) |\n"
                     else:
                         dashboard += "| **Status** | ✅ Healthy (no stats available) |\n"
-                        dashboard += "| **Project Dashboard** | [trading-rl-training →](https://smith.langchain.com/o/bb00a62e-c62a-4c42-9031-43e1f74bb5b3/projects/p/04fa554e-f155-4039-bb7f-e866f082103b) |\n"
+                        dashboard += "| **Project Dashboard** | [igor-trading-system →](https://smith.langchain.com/o/bb00a62e-c62a-4c42-9031-43e1f74bb5b3/projects/p/04fa554e-f155-4039-bb7f-e866f082103b) |\n"
                 else:
                     error_msg = health.get("error", "Unknown error")
                     dashboard += f"| **Status** | ⚠️ {error_msg} |\n"
-                    dashboard += "| **Project Dashboard** | [trading-rl-training →](https://smith.langchain.com/o/bb00a62e-c62a-4c42-9031-43e1f74bb5b3/projects/p/04fa554e-f155-4039-bb7f-e866f082103b) |\n"
+                    dashboard += "| **Project Dashboard** | [igor-trading-system →](https://smith.langchain.com/o/bb00a62e-c62a-4c42-9031-43e1f74bb5b3/projects/p/04fa554e-f155-4039-bb7f-e866f082103b) |\n"
         else:
             dashboard += "| **Status** | ⚠️ LangSmith monitor script not found |\n"
     except Exception as e:

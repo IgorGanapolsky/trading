@@ -976,7 +976,7 @@ def generate_world_class_dashboard() -> str:
         health = monitor.monitor_health()
 
         if health.get("success"):
-            stats = monitor.get_project_stats("trading-rl-training", days=7)
+            stats = monitor.get_project_stats("igor-trading-system", days=7)
             if stats.get("success"):
                 dashboard += "| **Status** | ✅ Healthy |\n"
                 dashboard += f"| **Total Runs** (7d) | {stats.get('total_runs', 0)} |\n"
@@ -984,16 +984,16 @@ def generate_world_class_dashboard() -> str:
                 dashboard += (
                     f"| **Avg Duration** | {stats.get('average_duration_seconds', 0):.1f}s |\n"
                 )
-                dashboard += f"| **Project Dashboard** | [trading-rl-training →]({project_url}) |\n"
+                dashboard += f"| **Project Dashboard** | [igor-trading-system →]({project_url}) |\n"
             else:
                 dashboard += "| **Status** | ✅ Healthy (no stats available) |\n"
-                dashboard += f"| **Project Dashboard** | [trading-rl-training →]({project_url}) |\n"
+                dashboard += f"| **Project Dashboard** | [igor-trading-system →]({project_url}) |\n"
         else:
             dashboard += f"| **Status** | ⚠️ {health.get('error', 'Unknown error')} |\n"
-            dashboard += f"| **Project Dashboard** | [trading-rl-training →]({project_url}) |\n"
+            dashboard += f"| **Project Dashboard** | [igor-trading-system →]({project_url}) |\n"
     except Exception:
         dashboard += "| **Status** | ⚠️ LangSmith monitor unavailable |\n"
-        dashboard += f"| **Project Dashboard** | [trading-rl-training →]({project_url}) |\n"
+        dashboard += f"| **Project Dashboard** | [igor-trading-system →]({project_url}) |\n"
 
     dashboard += f"""
 ---

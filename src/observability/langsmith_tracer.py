@@ -286,7 +286,7 @@ class LangSmithTracer:
 
     def __init__(
         self,
-        project_name: str = "ai-trading-system",
+        project_name: str = "igor-trading-system",
         storage_path: Optional[Path] = None,
     ):
         self.project_name = project_name

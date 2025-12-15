@@ -232,3 +232,20 @@ repos:
         pass_filenames: false
         verbose: true
         stages: [pre-commit]
+
+      - id: config-consistency-check
+        name: Configuration Consistency (ll_047 Prevention)
+        entry: python3 src/verification/config_consistency.py
+        language: system
+        pass_filenames: false
+        verbose: true
+        stages: [pre-commit]
+
+      - id: langsmith-project-check
+        name: LangSmith Project Name Check (ll_047 Quick)
+        entry: >
+          bash -c 'grep -r "LANGCHAIN_PROJECT" .github/workflows/*.yml src/utils/langsmith_wrapper.py scripts/rl_training_orchestrator.py .env.example 2>/dev/null | grep -v "igor-trading-system" | grep -v "^Binary" && echo "ERROR: LangSmith project name mismatch!" && exit 1 || exit 0'
+        language: system
+        pass_filenames: false
+        verbose: true
+        stages: [pre-commit]

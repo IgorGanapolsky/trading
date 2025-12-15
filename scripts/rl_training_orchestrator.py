@@ -241,7 +241,7 @@ class RLTrainingOrchestrator:
 
             # Initialize clients
             rl_client = RLServiceClient(provider="vertex_ai", enable_langsmith=True)
-            experiment_tracker = RLExperimentTracker(project_name="trading-rl-training")
+            experiment_tracker = RLExperimentTracker(project_name="igor-trading-system")
 
             # Create experiment in LangSmith
             experiment_name = (

@@ -90,7 +90,7 @@ def print_fix_suggestion(missing_stack: str, missing_vars: list) -> str:
     suggestions = {
         "LANGCHAIN_API_KEY": "          LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}",
         "LANGCHAIN_TRACING_V2": "          LANGCHAIN_TRACING_V2: 'true'",
-        "LANGCHAIN_PROJECT": "          LANGCHAIN_PROJECT: 'trading-rl-training'",
+        "LANGCHAIN_PROJECT": "          LANGCHAIN_PROJECT: 'igor-trading-system'",
         "HELICONE_API_KEY": "          HELICONE_API_KEY: ${{ secrets.HELICONE_API_KEY }}",
         "OPENROUTER_API_KEY": "          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}",
     }
