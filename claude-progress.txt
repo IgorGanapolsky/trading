@@ -629,3 +629,75 @@ Next Steps:
 Status: Infrastructure READY, execution PENDING environment setup
 
 ---
+
+---
+
+2025-12-15 - Claude Opus 4 (CTO) - OPTIONS-FIRST PIVOT & DOCUMENTATION HYGIENE
+
+Summary:
+- CRITICAL PIVOT: Options identified as 100% of profits, increased allocation 5% → 37%
+- REMOVED CRYPTO: 0% win rate, -$0.43 total P/L, 3 consecutive losses
+- DOCUMENTATION AUDIT: Found all docs were stale/inaccurate, fixed everything
+- RAG FAILURE: Discovered RAG dependencies not installed (sentence-transformers, chromadb)
+
+Performance Analysis (Day 9/90):
+| Strategy | P/L | Win Rate | Status |
+|----------|-----|----------|--------|
+| OPTIONS  | +$327.82 | 75% | PRIMARY |
+| Crypto   | -$0.43 | 0% | REMOVED |
+| Bonds    | $0.00 | 100% | Hedge |
+
+Key Decisions Made:
+1. Options allocation: 5% → 37% (primary profit driver)
+2. Crypto: 2% → 0% (removed entirely)
+3. Daily budget: $10 → $50 (5x increase)
+4. Options daily: $27/day (54% of budget)
+
+Documentation Fixed:
+- README.md: Updated strategy, performance, allocation
+- dashboard.md: Complete rewrite with current data
+- portfolio_allocation.yaml: Options-first configuration
+- system_state.json: Crypto disabled, options enabled
+- claude-progress.txt: This entry
+
+Lessons Learned Created:
+- LL_043: Crypto removed - simplify and focus
+- LL_044: Documentation hygiene mandate
+
+RAG System Issues Identified:
+- sentence-transformers: NOT INSTALLED
+- chromadb: NOT INSTALLED
+- LanceDB: Also present (duplicate systems)
+- Result: RAG queries return keyword-only, not semantic
+
+Account Status:
+- Equity: $100,085.10
+- Today's P/L: +$183.07
+- Total P/L: +$85.10
+- Win Rate (Options): 75%
+
+Files Changed:
+- config/portfolio_allocation.yaml (options-first)
+- data/system_state.json (crypto disabled)
+- README.md (current strategy)
+- dashboard.md (complete rewrite)
+- rag_knowledge/lessons_learned/ll_043_*.md
+- rag_knowledge/lessons_learned/ll_044_*.md
+
+Next Session Priority:
+1. Fix RAG system (install dependencies, pick one DB)
+2. Create doc freshness checker script
+3. Add pre-commit hooks for doc hygiene
+4. Monitor options strategy performance
+
+North Star Status:
+- Day 9/90 of R&D Phase
+- Options: 75% win rate (target: >60%) ✅
+- Daily profit: $36.42 avg (target: $100) 36.4%
+- Strategy: Simplified to 7 tiers (was 8)
+
+CEO Directive Implemented:
+"Remove crypto, focus on options, clean documentation"
+✅ All items completed and committed
+
+---
