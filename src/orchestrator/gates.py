@@ -97,6 +97,75 @@ class TradeContext:
     session_profile: dict[str, Any] = field(default_factory=dict)
 
 
+class RAGPreTradeQuery:
+    """
+    Query lessons learned RAG before each trade decision.
+
+    Retrieves relevant lessons, past mistakes, and context for the specific
+    ticker and market conditions.
+    """
+
+    def __init__(self, lessons_rag: Any, telemetry: Any):
+        self.lessons_rag = lessons_rag
+        self.telemetry = telemetry
+
+    def query(self, ticker: str, ctx: TradeContext) -> dict[str, Any]:
+        """
+        Query RAG for relevant lessons before trading this ticker.
+
+        Returns:
+            Dict with lessons and any warnings
+        """
+        if not self.lessons_rag:
+            return {"available": False, "lessons": [], "warnings": []}
+
+        try:
+            # Build context-aware query
+            momentum_label = "bullish" if ctx.momentum_strength > 0.5 else "bearish"
+            regime = ctx.regime_snapshot.get("label", "unknown")
+            query = f"{ticker} {momentum_label} {regime} trading mistakes errors lessons"
+
+            results = self.lessons_rag.search(query=query, top_k=3)
+
+            lessons = []
+            warnings = []
+            for lesson, score in results or []:
+                if score > 0.15:  # Relevance threshold
+                    lessons.append({
+                        "id": getattr(lesson, "id", "unknown"),
+                        "title": lesson.title,
+                        "severity": lesson.severity,
+                        "prevention": lesson.prevention[:200],
+                        "score": score,
+                    })
+                    if lesson.severity.upper() in ("HIGH", "CRITICAL"):
+                        warnings.append(f"[{lesson.severity}] {lesson.title}: {lesson.prevention[:100]}")
+
+            if lessons:
+                logger.info("RAG Query (%s): Found %d relevant lessons", ticker, len(lessons))
+                self.telemetry.record(
+                    event_type="rag.pre_trade",
+                    ticker=ticker,
+                    status="queried",
+                    payload={
+                        "lessons_found": len(lessons),
+                        "top_lesson": lessons[0]["title"] if lessons else None,
+                        "warnings": len(warnings),
+                    },
+                )
+
+            return {
+                "available": True,
+                "lessons": lessons,
+                "warnings": warnings,
+                "query": query,
+            }
+
+        except Exception as e:
+            logger.debug("RAG query failed for %s: %s", ticker, e)
+            return {"available": True, "lessons": [], "warnings": [], "error": str(e)}
+
+
 class Gate0Psychology:
     """
     Gate 0: Pre-trade psychological readiness check.

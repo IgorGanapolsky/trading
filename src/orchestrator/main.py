@@ -23,6 +23,7 @@ from src.orchestrator.gates import (
     Gate5Execution,
     GateResult,
     GateStatus,
+    RAGPreTradeQuery,
     TradeContext,
     TradingGatePipeline,
 )
@@ -374,6 +375,11 @@ class TradingOrchestrator:
             gate3=self.gate3,
             gate35=self.gate35,
             gate4=self.gate4,
+        )
+        # RAG pre-trade query - queries lessons before each trade decision
+        self.rag_query = RAGPreTradeQuery(
+            lessons_rag=self.lessons_rag,
+            telemetry=self.telemetry,
         )
         logger.info("Gate pipeline initialized (866→~50 lines per method)")
 
@@ -2012,6 +2018,14 @@ class TradingOrchestrator:
         if allocation_plan.cap <= 0:
             logger.info("Smart DCA: allocation exhausted post-gates for %s", ticker)
             return
+
+        # RAG pre-trade query: Get relevant lessons BEFORE execution
+        rag_result = self.rag_query.query(ticker, ctx)
+        ctx.rag_context = rag_result
+        if rag_result.get("warnings"):
+            logger.warning("⚠️  RAG Warnings for %s:", ticker)
+            for warning in rag_result["warnings"]:
+                logger.warning("    %s", warning)
 
         # Fetch price and history for risk calculation
         try:
