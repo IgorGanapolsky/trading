@@ -39,7 +39,7 @@ cat <<EOF >&2
 Portfolio: \$$CURRENT_EQUITY | P/L: \$$TOTAL_PL | Day: $CURRENT_DAY/90
 Automation: $AUTOMATION_STATUS
 Last Updated: $LAST_UPDATED
-Validated Performance: 62.2% win rate | 2.18 Sharpe | 26.16% annual return
+Backtest Reality: 0/13 pass | Sharpe: -7 to -2086 | NO EDGE YET
 ================================================================================
 
 EOF
