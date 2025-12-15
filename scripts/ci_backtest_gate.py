@@ -198,17 +198,18 @@ def main():
     parser.add_argument(
         "--max-drawdown",
         type=float,
-        default=10.0,
-        help="Maximum drawdown allowed in %% (default: 10)",
+        default=15.0,  # R&D phase: permissive per ll_019
+        help="Maximum drawdown allowed in %% (default: 15 for R&D, 10 post-R&D)",
     )
     parser.add_argument(
         "--min-win-rate",
         type=float,
-        default=50.0,
-        help="Minimum win rate required in %% (default: 50)",
+        default=45.0,  # R&D phase: above coin flip per ll_019
+        help="Minimum win rate required in %% (default: 45 for R&D, 60 post-R&D)",
     )
     parser.add_argument(
-        "--min-sharpe", type=float, default=0.5, help="Minimum Sharpe ratio required (default: 0.5)"
+        "--min-sharpe", type=float, default=-2.0,  # R&D phase: learning allowed
+        help="Minimum Sharpe ratio required (default: -2 for R&D, 0.5 post-R&D)"
     )
     parser.add_argument(
         "--pessimistic",

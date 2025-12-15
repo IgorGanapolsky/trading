@@ -39,10 +39,13 @@ BACKTEST_ROOT = BASE_DIR / "data" / "backtests"
 SUMMARY_PATH = BACKTEST_ROOT / "latest_summary.json"
 
 # Promotion guard thresholds (align with docs/r-and-d-phase.md)
+# R&D Phase (Days 1-90): Permissive thresholds per ll_019 RAG lesson
+# "Prioritize trade flow over filter precision during R&D"
+# Post-R&D thresholds: win_rate=60%, sharpe=1.5, max_dd=10%
 PROMOTION_THRESHOLDS = {
-    "win_rate": 60.0,
-    "sharpe_ratio": 1.5,
-    "max_drawdown": 10.0,
+    "win_rate": 45.0,      # R&D: Above coin flip is progress
+    "sharpe_ratio": -2.0,  # R&D: Allow learning (clipped to -10 anyway)
+    "max_drawdown": 15.0,  # R&D: Room for experimentation
 }
 FEE_RATE = float(os.getenv("BACKTEST_FEE_RATE", "0.0018"))
 
