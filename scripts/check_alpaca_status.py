@@ -8,7 +8,9 @@ import os
 import sys
 from datetime import datetime
 
-import alpaca_trade_api as tradeapi
+from alpaca.trading.client import TradingClient
+from alpaca.trading.enums import QueryOrderStatus
+from alpaca.trading.requests import GetOrdersRequest
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -26,8 +28,7 @@ def main():
         sys.exit(1)
 
     # Initialize API
-    base_url = "https://paper-api.alpaca.markets" if paper_trading else "https://api.alpaca.markets"
-    api = tradeapi.REST(api_key, secret_key, base_url, api_version="v2")
+    api = TradingClient(api_key=api_key, secret_key=secret_key, paper=paper_trading)
 
     print("=" * 80)
     print("ALPACA ACCOUNT STATUS - REAL-TIME DATA")
@@ -64,7 +65,7 @@ def main():
         # Get current positions
         print("📈 CURRENT POSITIONS")
         print("-" * 80)
-        positions = api.list_positions()
+        positions = api.get_all_positions()
 
         if not positions:
             print("No open positions")
@@ -103,7 +104,8 @@ def main():
         print("-" * 80)
 
         # Get all orders (last 500)
-        orders = api.list_orders(status="all", limit=500, nested=True)
+        request = GetOrdersRequest(status=QueryOrderStatus.ALL, limit=500, nested=True)
+        orders = api.get_orders(filter=request)
 
         # Filter orders since Oct 29
         start_date = datetime(2025, 10, 29)

@@ -42,7 +42,7 @@ class RiskManager:
     ) -> None:
         self.max_position_pct = max_position_pct
         self.min_notional = min_notional
-        self.daily_budget = float(os.getenv("DAILY_INVESTMENT", "10.0"))
+        self.daily_budget = float(os.getenv("DAILY_INVESTMENT", "50.0"))
         # Allow env override; default on for robustness
         if use_atr_scaling is None:
             env_flag = os.getenv("RISK_USE_ATR_SCALING", "1").lower() in {"1", "true", "yes"}

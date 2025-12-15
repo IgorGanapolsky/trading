@@ -43,7 +43,7 @@ jobs:
       - name: Install dependencies
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          uv pip sync requirements-dashboard.txt
+          uv pip sync --system requirements-dashboard.txt
 
       - name: Update performance log
         env:

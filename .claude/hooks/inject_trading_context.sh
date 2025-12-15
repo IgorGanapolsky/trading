@@ -90,7 +90,7 @@ NEXT_TRADE=$(TZ=America/New_York date -v +1d '+%b %d, 9:35 AM ET' 2>/dev/null ||
 cat <<EOF
 [TRADING CONTEXT]
 Portfolio: \$$CURRENT_EQUITY | P/L: \$$TOTAL_PL ($TOTAL_PL_PCT%) | Day: $CURRENT_DAY/90
-Win Rate: $WIN_RATE% (live) | Backtest: 62.2% win rate, 2.18 Sharpe
+Win Rate: $WIN_RATE% (live) | Backtest: 0/13 scenarios pass (Sharpe all negative)
 Next Trade: $NEXT_TRADE
 Markets: $MARKET_STATUS
 EOF

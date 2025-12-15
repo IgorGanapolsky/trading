@@ -12,11 +12,9 @@ The system uses a weighted aggregation model where each source contributes based
 
 | Source | Weight | Rationale |
 |--------|--------|-----------|
-| News | 30% | Most reliable - professional analysts, financial news outlets |
-| Reddit | 25% | High volume retail sentiment, meme stock detection |
-| YouTube | 20% | Expert analysis from financial content creators |
-| LinkedIn | 15% | Professional sentiment, insider perspectives |
-| TikTok | 10% | Trending/momentum indicator, viral sentiment |
+| News | 40% | Most reliable - professional analysts, financial news outlets |
+| Reddit | 35% | High volume retail sentiment, meme stock detection |
+| YouTube | 25% | Expert analysis from financial content creators |
 
 **Total**: 100%
 
@@ -24,33 +22,23 @@ When sources are unavailable, weights are automatically normalized across active
 
 ### Integration Points
 
-#### News Sentiment (30%)
+#### News Sentiment (40%)
 - **Module**: `src/utils/news_sentiment.py`
 - **Sources**: Yahoo Finance, Stocktwits, Alpha Vantage, Grok/Twitter
 - **Updates**: Real-time via API calls
 - **Cache**: 24 hours
 
-#### Reddit Sentiment (25%)
+#### Reddit Sentiment (35%)
 - **Module**: `src/utils/reddit_sentiment.py`
 - **Sources**: r/wallstreetbets, r/stocks, r/investing, r/options
 - **Updates**: Daily pre-market (9:00 AM ET)
 - **Cache**: 24 hours
 
-#### YouTube Sentiment (20%)
+#### YouTube Sentiment (25%)
 - **Module**: `scripts/youtube_monitor.py`
 - **Sources**: Financial YouTube channels (configurable)
 - **Updates**: Daily at 8:00 AM ET
 - **Cache**: 7 days (rolling window)
-
-#### LinkedIn Sentiment (15%)
-- **Status**: Placeholder - not yet implemented
-- **Planned**: Scrape LinkedIn posts from finance professionals
-- **Integration**: Future enhancement
-
-#### TikTok Sentiment (10%)
-- **Status**: Placeholder - not yet implemented
-- **Planned**: Analyze trending hashtags and viral videos
-- **Integration**: Future enhancement
 
 ## API Reference
 
@@ -67,9 +55,7 @@ analyzer = UnifiedSentiment(
     cache_dir="data/sentiment",
     enable_news=True,
     enable_reddit=True,
-    enable_youtube=True,
-    enable_linkedin=False,  # Not implemented
-    enable_tiktok=False     # Not implemented
+    enable_youtube=True
 )
 ```
 
@@ -90,9 +76,7 @@ Get aggregated sentiment for a single ticker.
     "sources": {
         "news": {...},
         "reddit": {...},
-        "youtube": {...},
-        "linkedin": {...},
-        "tiktok": {...}
+        "youtube": {...}
     },
     "timestamp": "2025-11-29T10:30:00",
     "cache_hit": False
@@ -310,11 +294,9 @@ To adjust source weights, modify `SOURCE_WEIGHTS` in `unified_sentiment.py`:
 
 ```python
 SOURCE_WEIGHTS = {
-    "news": 0.40,      # Increase news weight
-    "reddit": 0.20,    # Decrease Reddit weight
+    "news": 0.50,      # Increase news weight
+    "reddit": 0.30,    # Decrease Reddit weight
     "youtube": 0.20,
-    "linkedin": 0.15,
-    "tiktok": 0.05,    # Decrease TikTok weight
 }
 ```
 
@@ -428,17 +410,7 @@ for source_name, source_data in result['sources'].items():
 
 ### Planned Features
 
-1. **LinkedIn Integration**
-   - Scrape posts from finance professionals
-   - Analyze company updates and insider sentiment
-   - Weight: 15%
-
-2. **TikTok Integration**
-   - Monitor trending financial hashtags
-   - Track viral stock mentions
-   - Weight: 10%
-
-3. **Advanced Weighting**
+1. **Advanced Weighting**
    - Dynamic weights based on source reliability
    - Time-decay for stale data
    - Adaptive weighting based on historical accuracy

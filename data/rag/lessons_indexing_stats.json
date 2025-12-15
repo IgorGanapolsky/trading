@@ -1,0 +1,8 @@
+{
+  "total_files": 48,
+  "total_chunks": 498,
+  "indexed_at": "2025-12-15T12:03:21.153910",
+  "using_fastembed": false,
+  "using_lancedb": false,
+  "using_tfidf": true
+}

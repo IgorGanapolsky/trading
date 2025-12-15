@@ -1,0 +1,41 @@
+[
+  {
+    "anomaly_id": "DEMO-001",
+    "anomaly_type": "order_amount",
+    "timestamp": "2025-12-15T16:01:01.972102",
+    "features": {
+      "anomaly_amount": 150.0,
+      "anomaly_threshold": 100.0,
+      "symbol_SPY": 1.0,
+      "anomaly_type_order_amount": 1.0,
+      "hour_of_day": 0.6666666666666666,
+      "day_of_week": 0.0
+    },
+    "negative_reward": -0.7,
+    "context": {
+      "symbol": "SPY",
+      "severity": "HIGH",
+      "message": "Order amount exceeds threshold"
+    },
+    "used_in_training": false
+  },
+  {
+    "anomaly_id": "DEMO-002",
+    "anomaly_type": "trade_loss",
+    "timestamp": "2025-12-15T16:01:01.972131",
+    "features": {
+      "anomaly_pnl": -75.5,
+      "symbol_NVDA": 1.0,
+      "anomaly_type_trade_loss": 1.0,
+      "hour_of_day": 0.6666666666666666,
+      "day_of_week": 0.0
+    },
+    "negative_reward": -0.755,
+    "context": {
+      "symbol": "NVDA",
+      "severity": "HIGH",
+      "message": "Significant trade loss"
+    },
+    "used_in_training": false
+  }
+]

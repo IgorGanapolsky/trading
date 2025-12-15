@@ -1,15 +1,13 @@
 """
 Unified Sentiment Synthesizer
 
-Aggregates sentiment from ALL sources (Reddit, YouTube, LinkedIn, TikTok, News)
+Aggregates sentiment from all sources (Reddit, YouTube, News)
 with appropriate weighting and provides a single API for trading strategies.
 
 Source Weights:
-    - News: 0.30 (most reliable - professional analysts, financial news)
-    - Reddit: 0.25 (high volume retail sentiment, meme stock detector)
-    - YouTube: 0.20 (expert analysis from financial content creators)
-    - LinkedIn: 0.15 (professional sentiment, insider perspectives)
-    - TikTok: 0.10 (trending/momentum indicator, viral sentiment)
+    - News: 0.40 (most reliable - professional analysts, financial news)
+    - Reddit: 0.35 (high volume retail sentiment, meme stock detector)
+    - YouTube: 0.25 (expert analysis from financial content creators)
 
 Usage:
     from src.utils.unified_sentiment import UnifiedSentiment
@@ -99,11 +97,9 @@ class UnifiedSentiment:
 
     # Source weights (must sum to 1.0)
     SOURCE_WEIGHTS = {
-        "news": 0.30,  # Professional news and analyst sentiment
-        "reddit": 0.25,  # Retail investor sentiment
-        "youtube": 0.20,  # Expert content creator analysis
-        "linkedin": 0.15,  # Professional network sentiment
-        "tiktok": 0.10,  # Viral trends and momentum
+        "news": 0.40,  # Professional news and analyst sentiment
+        "reddit": 0.35,  # Retail investor sentiment
+        "youtube": 0.25,  # Expert content creator analysis
     }
 
     # Signal thresholds
@@ -146,8 +142,6 @@ class UnifiedSentiment:
             "news": enable_news,
             "reddit": enable_reddit,
             "youtube": enable_youtube,
-            "linkedin": enable_linkedin,
-            "tiktok": enable_tiktok,
         }
 
         # Initialize source analyzers
@@ -749,9 +743,7 @@ class UnifiedSentiment:
                 "sources": {
                     "news": {...},
                     "reddit": {...},
-                    "youtube": {...},
-                    "linkedin": {...},
-                    "tiktok": {...}
+                    "youtube": {...}
                 },
                 "timestamp": "2025-11-29T10:30:00",
                 "cache_hit": False
@@ -770,8 +762,6 @@ class UnifiedSentiment:
             "news": self._get_news_sentiment(symbol),
             "reddit": self._get_reddit_sentiment(symbol),
             "youtube": self._get_youtube_sentiment(symbol),
-            "linkedin": self._get_linkedin_sentiment(symbol),
-            "tiktok": self._get_tiktok_sentiment(symbol),
         }
 
         # Calculate weighted average score

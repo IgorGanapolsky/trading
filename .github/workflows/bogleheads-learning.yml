@@ -34,7 +34,7 @@ jobs:
       - name: Install dependencies
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          uv pip sync requirements.txt
+          uv pip sync --system requirements.txt
           uv pip install requests beautifulsoup4 lxml feedparser  # For forum scraping
 
       - name: Monitor Bogleheads Forum

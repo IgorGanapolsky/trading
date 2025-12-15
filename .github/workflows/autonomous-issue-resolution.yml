@@ -39,7 +39,7 @@ jobs:
       - name: Install dependencies
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          uv pip sync requirements.txt
+          uv pip sync --system requirements.txt
           uv pip install requests  # For GitHub API
 
       - name: Resolve issues autonomously

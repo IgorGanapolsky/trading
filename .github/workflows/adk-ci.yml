@@ -41,7 +41,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          uv pip sync requirements.txt
+          uv pip sync --system requirements.txt
 
       - name: Run targeted pytest suite
         run: |

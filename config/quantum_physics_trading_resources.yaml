@@ -1,0 +1,490 @@
+quantum_physics_books:
+  - title: "Quantum Finance: Path Integrals and Hamiltonians for Options and Interest Rates"
+    author: Belal E. Baaquie
+    difficulty: advanced
+    summary: |
+      Academic treatment of quantum mechanics applied to financial derivatives.
+      Uses path integrals and Hamiltonian formalism for option pricing.
+    focus_tags: ["quantum_mechanics", "derivatives", "path_integrals", "mathematical_finance"]
+    isbn: "978-0521714785"
+    publisher: Cambridge University Press
+    year: 2004
+    lessons:
+      - title: Quantum Path Integral Option Pricing
+        trigger: When modeling complex derivatives
+        actions:
+          - Map option payoffs to quantum mechanical wavefunctions
+          - Use Feynman path integrals for pricing exotic options
+          - Apply Hamiltonian formalism for interest rate models
+      - title: Quantum Superposition in Portfolio Theory
+        trigger: Portfolio optimization
+        actions:
+          - Model portfolio states as quantum superpositions
+          - Apply quantum entanglement concepts to correlation structures
+    reading_plan:
+      - label: Chapters 1-3 (Quantum Mechanics Review)
+        goal: Understand operators, wavefunctions, path integrals
+        minutes: 120
+        difficulty: advanced
+      - label: Chapters 8-10 (Option Pricing)
+        goal: Apply quantum formalism to Black-Scholes
+        minutes: 150
+        difficulty: advanced
+
+  - title: "Quantum Computing and Finance: Theory and Applications"
+    author: Jack D. Hidary
+    difficulty: intermediate
+    summary: |
+      Practical introduction to quantum computing for finance professionals.
+      Covers quantum algorithms for portfolio optimization, risk management, and derivatives pricing.
+    focus_tags: ["quantum_computing", "algorithms", "portfolio_optimization", "practical"]
+    isbn: "978-3030918972"
+    publisher: Springer
+    year: 2021
+    lessons:
+      - title: QAOA for Portfolio Optimization
+        trigger: Portfolio rebalancing decisions
+        actions:
+          - Formulate portfolio optimization as QUBO problem
+          - Use Quantum Approximate Optimization Algorithm
+          - Compare with classical solvers (Gurobi, CPLEX)
+      - title: Grover's Algorithm for Trade Pattern Search
+        trigger: Historical pattern recognition
+        actions:
+          - Encode trading patterns in quantum states
+          - Apply Grover search for quadratic speedup
+    reading_plan:
+      - label: Chapters 1-4 (Quantum Computing Basics)
+        goal: Master qubits, gates, circuits
+        minutes: 90
+        difficulty: intermediate
+      - label: Chapters 7-9 (Finance Applications)
+        goal: Implement quantum portfolio optimizer
+        minutes: 120
+        difficulty: advanced
+
+  - title: "An Introduction to Quantum Finance"
+    author: Franҫois Dubois
+    difficulty: intermediate
+    summary: |
+      Bridge between quantum physics concepts and financial modeling.
+      Focus on stochastic processes and quantum probability theory.
+    focus_tags: ["stochastic_processes", "quantum_probability", "financial_modeling"]
+    year: 2016
+    lessons:
+      - title: Quantum Probability in Risk Models
+        trigger: Risk assessment and VaR calculations
+        actions:
+          - Apply non-commutative probability theory
+          - Model market regime changes as quantum measurements
+      - title: Quantum Random Walks for Price Dynamics
+        trigger: Price modeling beyond geometric Brownian motion
+        actions:
+          - Implement quantum random walk models
+          - Capture fat tails and volatility clustering
+
+  - title: "The Physics of Finance: Predicting the Unpredictable"
+    author: James Owen Weatherall
+    difficulty: beginner
+    summary: |
+      Accessible introduction to physics-inspired approaches in finance.
+      Covers econophysics, complexity theory, and quantum-inspired models.
+    focus_tags: ["econophysics", "complexity", "accessible_introduction"]
+    isbn: "978-0547317274"
+    publisher: Mariner Books
+    year: 2013
+    reading_plan:
+      - label: Chapters 3-4 (Quantum Mechanics in Markets)
+        goal: Understand basic quantum analogies in trading
+        minutes: 45
+        difficulty: beginner
+
+quantum_trading_papers:
+  - title: "Quantum-Inspired Algorithms for Portfolio Optimization"
+    authors: ["Samuel Fernández-Lorenzo", "Diego Porras"]
+    journal: Physical Review Research
+    year: 2023
+    url: "https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.5.013158"
+    focus_tags: ["portfolio_optimization", "quantum_annealing", "QAOA"]
+    summary: |
+      Demonstrates quantum-inspired algorithms achieving practical speedups
+      in portfolio optimization compared to classical methods.
+    key_findings:
+      - QAOA achieves 10-100x speedup for constrained portfolios
+      - Quantum annealing effective for discrete asset allocation
+      - Hybrid quantum-classical approaches most practical today
+
+  - title: "Quantum Machine Learning for Finance"
+    authors: ["Román Orús", "Samuel Mugel", "Enrique Lizaso"]
+    journal: Reviews in Physics
+    year: 2019
+    url: "https://www.sciencedirect.com/science/article/pii/S2405428318300571"
+    focus_tags: ["quantum_ml", "credit_scoring", "fraud_detection"]
+    summary: |
+      Comprehensive review of quantum machine learning applications in finance.
+      Covers quantum neural networks, quantum support vector machines, and quantum sampling.
+
+  - title: "Application of Quantum Computing to Option Pricing"
+    authors: ["Nikitas Stamatopoulos", "et al."]
+    journal: Nature Computational Science
+    year: 2020
+    url: "https://arxiv.org/abs/1905.02666"
+    focus_tags: ["option_pricing", "amplitude_estimation", "monte_carlo"]
+    summary: |
+      IBM demonstrates quadratic speedup in option pricing using quantum amplitude estimation.
+      Practical implementation on IBM quantum hardware.
+
+  - title: "Quantum Speed-Up for Unsupervised Learning"
+    authors: ["Esma Aïmeur", "Gilles Brassard", "Sébastien Gambs"]
+    journal: Machine Learning
+    year: 2013
+    url: "https://link.springer.com/article/10.1007/s10994-012-5316-5"
+    focus_tags: ["unsupervised_learning", "clustering", "k_means"]
+    summary: |
+      Quantum k-means and quantum PCA algorithms for market regime detection.
+      Exponential speedup for high-dimensional financial data.
+
+youtube_channels:
+  - name: QuantumComputingForFinance
+    url: "https://www.youtube.com/@QuantumComputingForFinance"
+    focus: ["quantum_computing", "finance_applications", "tutorials"]
+    quality: high
+    recommended_videos:
+      - title: "Quantum Portfolio Optimization - Full Tutorial"
+        video_id: "qhQMPpXfqjk"
+        duration_minutes: 45
+        difficulty: intermediate
+        key_topics: ["QAOA", "portfolio_optimization", "qiskit"]
+      - title: "Quantum Machine Learning for Trading"
+        video_id: "qXaFcEIXJFw"
+        duration_minutes: 32
+        difficulty: advanced
+        key_topics: ["quantum_neural_networks", "pattern_recognition"]
+
+  - name: Qiskit (IBM Quantum)
+    url: "https://www.youtube.com/@qiskit"
+    focus: ["quantum_computing", "qiskit_framework", "tutorials"]
+    quality: high
+    recommended_videos:
+      - title: "Quantum Optimization for Finance"
+        video_id: "Qbv6YY0xxZQ"
+        duration_minutes: 55
+        difficulty: intermediate
+        key_topics: ["quantum_optimization", "finance_use_cases"]
+      - title: "Quantum Machine Learning Course"
+        playlist: "PLOFEBzvs-Vvp2xg9-POLJhQwtVktlYGbY"
+        difficulty: intermediate
+        key_topics: ["quantum_ml", "variational_algorithms"]
+
+  - name: PBS Space Time
+    url: "https://www.youtube.com/@pbsspacetime"
+    focus: ["quantum_mechanics", "physics_fundamentals", "accessible"]
+    quality: high
+    recommended_videos:
+      - title: "Quantum Field Theory Explained"
+        video_id: "zNVQfWC_evg"
+        duration_minutes: 18
+        difficulty: intermediate
+        key_topics: ["quantum_fields", "fundamental_physics"]
+      - title: "What Is Quantum Entanglement Really?"
+        video_id: "qGJ4h6TXWKg"
+        duration_minutes: 15
+        difficulty: beginner
+        key_topics: ["entanglement", "correlations"]
+
+  - name: MinutePhysics
+    url: "https://www.youtube.com/@MinutePhysics"
+    focus: ["quantum_mechanics", "intuitive_explanations", "short_videos"]
+    quality: high
+    recommended_videos:
+      - title: "Quantum Computing Explained"
+        video_id: "JhHMJCUmq28"
+        duration_minutes: 5
+        difficulty: beginner
+        key_topics: ["qubits", "superposition", "measurement"]
+
+  - name: Veritasium
+    url: "https://www.youtube.com/@veritasium"
+    focus: ["physics", "quantum_mechanics", "high_production"]
+    quality: high
+    recommended_videos:
+      - title: "How Quantum Computers Break Encryption"
+        video_id: "-UrdExQW0cs"
+        duration_minutes: 22
+        difficulty: intermediate
+        key_topics: ["shor_algorithm", "cryptography", "factoring"]
+      - title: "The Quantum Conspiracy: What Popularizers of QM Don't Want You to Know"
+        video_id: "bXpFdIsHnyg"
+        duration_minutes: 25
+        difficulty: advanced
+        key_topics: ["interpretations", "measurement_problem"]
+
+  - name: Looking Glass Universe
+    url: "https://www.youtube.com/@LookingGlassUniverse"
+    focus: ["quantum_physics", "mathematical_intuition", "accessible"]
+    quality: high
+    recommended_videos:
+      - title: "Quantum Mechanics Visual Intuition"
+        video_id: "p7xvlHtIlEw"
+        duration_minutes: 12
+        difficulty: beginner
+        key_topics: ["wavefunctions", "probability_amplitudes"]
+
+blogs_and_websites:
+  - name: Quantum Finance News
+    url: "https://quantumfinancenews.com"
+    focus: ["industry_news", "quantum_applications", "research_updates"]
+    update_frequency: weekly
+    quality: high
+
+  - name: Q-Ctrl Blog - Finance Applications
+    url: "https://q-ctrl.com/blog/category/finance"
+    focus: ["quantum_error_correction", "practical_applications", "case_studies"]
+    update_frequency: monthly
+    quality: high
+
+  - name: Pennylane Blog (Xanadu)
+    url: "https://pennylane.ai/blog"
+    focus: ["quantum_ml", "variational_algorithms", "code_tutorials"]
+    update_frequency: bi-weekly
+    quality: high
+    key_articles:
+      - title: "Quantum Natural Gradient Descent for Portfolio Optimization"
+        url: "https://pennylane.ai/qml/demos/tutorial_quantum_natural_gradient.html"
+        tags: ["optimization", "gradients", "portfolio"]
+
+  - name: IBM Quantum Computing Blog
+    url: "https://www.ibm.com/quantum/blog"
+    focus: ["quantum_hardware", "algorithms", "finance_applications"]
+    update_frequency: monthly
+    quality: high
+
+  - name: Quantopian Archive / QuantConnect Community
+    url: "https://www.quantconnect.com/forum"
+    focus: ["algorithmic_trading", "quant_strategies", "community"]
+    update_frequency: daily
+    quality: medium
+    notes: |
+      While not quantum-specific, discussions on advanced mathematical
+      trading strategies that could benefit from quantum computing.
+
+  - name: Quantum Algorithm Zoo
+    url: "https://quantumalgorithmzoo.org"
+    focus: ["algorithm_catalog", "finance_section", "academic"]
+    update_frequency: quarterly
+    quality: high
+    notes: |
+      Comprehensive catalog of quantum algorithms including finance applications.
+      Essential reference for understanding available quantum techniques.
+
+  - name: Scott Aaronson's Blog (Shtetl-Optimized)
+    url: "https://scottaaronson.blog"
+    focus: ["quantum_computing_theory", "complexity", "skepticism"]
+    update_frequency: weekly
+    quality: high
+    notes: |
+      Critical perspective on quantum computing hype. Important for
+      understanding realistic limitations and avoiding over-promising.
+
+online_courses:
+  - name: "Quantum Computing for Finance - edX (Purdue)"
+    url: "https://www.edx.org/learn/quantum-computing/purdue-university-quantum-computing"
+    platform: edX
+    duration_hours: 40
+    difficulty: intermediate
+    cost: free_audit
+    focus_tags: ["portfolio_optimization", "option_pricing", "quantum_algorithms"]
+    learning_outcomes:
+      - Implement QAOA for portfolio optimization
+      - Price options using quantum amplitude estimation
+      - Understand quantum machine learning for credit risk
+
+  - name: "Quantum Machine Learning - Coursera (University of Toronto)"
+    url: "https://www.coursera.org/learn/practical-introduction-to-quantum-machine-learning"
+    platform: Coursera
+    duration_hours: 20
+    difficulty: intermediate
+    cost: free_audit
+    focus_tags: ["quantum_ml", "variational_algorithms", "qiskit"]
+
+  - name: "MIT OpenCourseWare - Quantum Mechanics"
+    url: "https://ocw.mit.edu/courses/8-04-quantum-physics-i-spring-2016/"
+    platform: MIT OCW
+    duration_hours: 120
+    difficulty: advanced
+    cost: free
+    focus_tags: ["quantum_foundations", "mathematical_rigor"]
+    notes: |
+      Essential foundation for understanding quantum finance papers.
+      Start here if you need strong quantum mechanics background.
+
+quantum_computing_platforms:
+  - name: IBM Quantum Experience
+    url: "https://quantum-computing.ibm.com"
+    access: free_tier
+    hardware: superconducting_qubits
+    max_qubits: 127
+    focus_tags: ["qiskit", "hands_on", "real_hardware"]
+    finance_tutorials:
+      - "Portfolio Optimization with QAOA"
+      - "Option Pricing with Amplitude Estimation"
+      - "Credit Risk Analysis with Quantum ML"
+
+  - name: Amazon Braket
+    url: "https://aws.amazon.com/braket"
+    access: pay_per_use
+    hardware: multiple_backends
+    focus_tags: ["hybrid_algorithms", "production_ready"]
+
+  - name: Google Quantum AI
+    url: "https://quantumai.google"
+    access: limited
+    hardware: sycamore_processor
+    focus_tags: ["cirq", "research", "cutting_edge"]
+
+  - name: D-Wave Leap
+    url: "https://cloud.dwavesys.com/leap"
+    access: free_tier
+    hardware: quantum_annealing
+    max_qubits: 5000
+    focus_tags: ["optimization", "annealing", "portfolio_optimization"]
+    notes: |
+      Best for discrete optimization problems like portfolio selection.
+      Different paradigm from gate-based quantum computing.
+
+key_quantum_finance_concepts:
+  - concept: Quantum Annealing for Portfolio Optimization
+    description: |
+      Map portfolio optimization to Ising model. Quantum annealer finds
+      ground state = optimal portfolio. Works well for discrete constraints.
+    practical_use: Portfolio rebalancing with discrete lots
+    tools: ["D-Wave", "PyQUBO"]
+    
+  - concept: Quantum Amplitude Estimation
+    description: |
+      Quadratic speedup over Monte Carlo for expectation values.
+      Key for option pricing and VaR calculations.
+    practical_use: Fast option pricing, risk metrics
+    tools: ["Qiskit Finance", "Cirq"]
+    
+  - concept: Quantum Machine Learning
+    description: |
+      Variational quantum circuits as neural networks.
+      Potential for pattern recognition in high-dimensional market data.
+    practical_use: Market regime detection, signal generation
+    tools: ["PennyLane", "TensorFlow Quantum"]
+    
+  - concept: Quantum Random Access Memory (QRAM)
+    description: |
+      Enable quantum algorithms to access classical data efficiently.
+      Critical bottleneck for practical quantum finance.
+    practical_use: Loading historical market data into quantum states
+    tools: ["Research stage"]
+    
+  - concept: Variational Quantum Eigensolver (VQE)
+    description: |
+      Hybrid quantum-classical algorithm for finding eigenvalues.
+      Application to correlation matrices and covariance estimation.
+    practical_use: Risk factor analysis, correlation trading
+    tools: ["Qiskit", "Cirq", "PennyLane"]
+
+implementation_roadmap:
+  phase_1_foundation:
+    duration: "2-4 weeks"
+    goals:
+      - Understand basic quantum mechanics (superposition, entanglement, measurement)
+      - Learn quantum computing fundamentals (qubits, gates, circuits)
+      - Set up quantum development environment (Qiskit or Cirq)
+    resources:
+      - "MIT OCW Quantum Mechanics (first 6 lectures)"
+      - "Qiskit Textbook chapters 1-3"
+      - "MinutePhysics quantum computing videos"
+    
+  phase_2_algorithms:
+    duration: "4-8 weeks"
+    goals:
+      - Master QAOA for optimization problems
+      - Understand quantum amplitude estimation
+      - Learn variational quantum algorithms
+    resources:
+      - "Qiskit Finance tutorials"
+      - "Quantum Computing for Finance edX course"
+      - "PennyLane optimization tutorials"
+    
+  phase_3_applications:
+    duration: "8-12 weeks"
+    goals:
+      - Implement portfolio optimizer on quantum hardware
+      - Compare quantum vs classical performance
+      - Integrate quantum signals into trading system
+    resources:
+      - "IBM Quantum Experience finance templates"
+      - "D-Wave portfolio optimization examples"
+      - Custom implementation using existing codebase
+    
+  phase_4_research:
+    duration: ongoing
+    goals:
+      - Track latest quantum finance research
+      - Experiment with novel quantum algorithms
+      - Contribute to open-source quantum finance tools
+    resources:
+      - "arXiv quant-ph and q-fin sections"
+      - "Quantum Finance News blog"
+      - "Qiskit community forum"
+
+realistic_expectations:
+  current_state_2025: |
+    Quantum computers are NISQ (Noisy Intermediate-Scale Quantum) era.
+    - 100-1000 qubits available
+    - High error rates (1-2% per gate)
+    - Limited coherence time (microseconds)
+    - Quantum advantage only for specific problems
+    
+  practical_today:
+    - Quantum-inspired classical algorithms (tensor networks, simulated annealing)
+    - Hybrid quantum-classical optimization (QAOA, VQE)
+    - Quantum annealing for discrete optimization (D-Wave)
+    - Research and prototype development
+    
+  not_practical_yet:
+    - Real-time trading decisions on quantum hardware
+    - Fault-tolerant quantum algorithms (need error correction)
+    - Large-scale portfolio optimization (>100 assets)
+    - Grover search for trading patterns (need too many qubits)
+    
+  timeline_estimates:
+    2025_2027: "Hybrid algorithms show consistent small advantages"
+    2027_2030: "Error-corrected qubits enable larger problems"
+    2030_plus: "Fault-tolerant quantum computers for complex finance"
+  
+  recommended_approach: |
+    1. Learn quantum computing fundamentals NOW
+    2. Experiment with quantum-inspired CLASSICAL algorithms
+    3. Prototype quantum algorithms in simulation
+    4. Test on small problems with real quantum hardware
+    5. Stay ready to scale when hardware improves
+    
+    DON'T: Expect quantum computers to magically solve trading
+    DO: Build quantum literacy for when the technology matures
+
+integration_with_existing_system:
+  rag_ingestion:
+    priority: high
+    action: Ingest all YouTube transcripts, papers, and book summaries
+    tools: ["scripts/ingest_youtube_transcripts.py", "src/rag/ingestion_pipeline.py"]
+    
+  research_phase:
+    priority: medium
+    action: Dedicate 2-3 hours/week to quantum finance learning
+    budget: No additional cost (free resources)
+    
+  experimentation:
+    priority: low
+    action: Set up Qiskit environment and run portfolio optimization examples
+    timeline: After current trading system stabilizes
+    
+  knowledge_capture:
+    priority: high
+    action: Create lessons_learned entries for key quantum concepts
+    format: "ll_quantum_[topic]_[date].md"

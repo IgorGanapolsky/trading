@@ -156,6 +156,10 @@ jobs:
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
           PAPER_TRADING: 'true'
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          # LangSmith observability (optional but recommended)
+          LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+          LANGCHAIN_TRACING_V2: 'true'
+          LANGCHAIN_PROJECT: 'trading-system'
         run: |
           echo "========================================"
           echo "OPTIONS TRADING - $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
@@ -170,7 +174,7 @@ jobs:
           import sys
           sys.path.insert(0, '.')
 
-          from src.strategies.options_iv_signal import OptionsIVSignalGenerator, get_iv_signal_generator
+          from src.strategies.options_iv_signal import OptionsIVSignalGenerator, get_options_signal_generator
           from src.strategies.options_executor import OptionsExecutor, get_options_executor
           import yfinance as yf
           import json
@@ -224,7 +228,7 @@ jobs:
           print()
 
           # Generate signal
-          signal_gen = get_iv_signal_generator()
+          signal_gen = get_options_signal_generator()
           signal = signal_gen.generate_signal(
               symbol='SPY',
               current_iv=iv_current,
