@@ -186,7 +186,7 @@ class RLTrainingOrchestrator:
 
             # Set up LangSmith tracing
             os.environ["LANGCHAIN_TRACING_V2"] = "true"
-            os.environ["LANGCHAIN_PROJECT"] = "trading-rl-training"
+            os.environ["LANGCHAIN_PROJECT"] = "igor-trading-system"
 
             from langsmith import Client
 
