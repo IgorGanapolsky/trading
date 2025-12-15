@@ -438,31 +438,34 @@ class CryptoStrategy:
             # Check for force-trade mode (bypass all filters for debugging)
             force_trade = os.getenv("CRYPTO_FORCE_TRADE", "false").lower() in ("true", "1", "yes")
 
-            # Step 0: BUY THE DIP - Check BTC price movement and adjust position size
+            # Step 0: Check BTC price movement - BUT DO NOT SCALE UP
+            # Dec 15, 2025: DISABLED "buy the dip" multiplier
+            # Reality check: Pyramid buying during Dec 13-15 fear destroyed $96 in 5 days
+            # The 2x multiplier during dips was catching falling knives with 0% win rate
             btc_change = self._get_btc_24h_change()
             original_amount = self.daily_amount
 
             if btc_change <= -2.0:
-                # BTC is down >2%, buy more (scale up to 2x based on dip size)
-                # Larger dips = bigger position (max 2x at -10% or more)
-                multiplier = min(2.0, 1.0 + abs(btc_change) / 10)
+                # BTC is down >2% - DO NOT buy more, wait for reversal
+                # Dec 15, 2025: Changed from 2x multiplier to 0.5x (REDUCE exposure)
+                multiplier = 0.5  # REDUCE position during downtrend, don't increase
                 self.daily_amount = original_amount * multiplier
                 logger.info("=" * 80)
                 logger.info(
-                    f"🎯 BTC DIP DETECTED ({btc_change:+.2f}%): "
-                    f"Increasing position from ${original_amount:.2f} to ${self.daily_amount:.2f} "
-                    f"({multiplier:.2f}x)"
+                    f"⚠️  BTC DIP DETECTED ({btc_change:+.2f}%): "
+                    f"REDUCING position from ${original_amount:.2f} to ${self.daily_amount:.2f} "
+                    f"({multiplier:.2f}x) - DON'T CATCH FALLING KNIVES"
                 )
                 logger.info("=" * 80)
             elif btc_change >= 5.0:
-                # BTC is up >5%, reduce position but NEVER skip
-                # Dec 14, 2025: Removed skip logic - system went 7+ days without trades
-                multiplier = 0.5 if btc_change < 10.0 else 0.25
+                # BTC is up >5%, this is actually a BETTER time to buy (trend following)
+                # Dec 15, 2025: Reversed logic - buy strength, not weakness
+                multiplier = 1.0  # Normal size during uptrends
                 self.daily_amount = original_amount * multiplier
                 logger.info("=" * 80)
                 logger.info(
-                    f"⚠️  BTC UP ({btc_change:+.2f}%): "
-                    f"Reducing position to ${self.daily_amount:.2f} ({multiplier}x) - STILL TRADING"
+                    f"✅ BTC UP ({btc_change:+.2f}%): "
+                    f"Trend following - normal position ${self.daily_amount:.2f}"
                 )
                 logger.info("=" * 80)
             else:

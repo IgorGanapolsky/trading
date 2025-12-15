@@ -130,19 +130,21 @@ class FearGreedIndex:
 
         # Determine action and size based on thresholds
         if value <= self.EXTREME_FEAR_THRESHOLD:
-            # EXTREME FEAR = Strong buy signal
-            # Backtested: This is when you want maximum exposure
-            action = "BUY"
-            size_multiplier = 1.5  # Buy 50% more than normal
-            confidence = 0.9
-            reasoning = f"Extreme Fear ({value}) - Historical buying opportunity. Backtest shows 1,145% ROI."
+            # EXTREME FEAR = DO NOT increase size
+            # Dec 15, 2025: Changed from 1.5x to 1.0x
+            # Reality check: Pyramid buying during fear destroyed $96 in 5 days
+            # The "1,145% ROI" claim was cherry-picked - real results show 0% win rate
+            action = "HOLD"  # Changed from BUY - wait for trend confirmation
+            size_multiplier = 1.0  # Changed from 1.5 - no size increase during fear
+            confidence = 0.3  # Low confidence - fear can continue
+            reasoning = f"Extreme Fear ({value}) - WAITING for trend confirmation. Fear can persist."
 
         elif value <= self.FEAR_THRESHOLD:
-            # FEAR = Mild buy signal
-            action = "BUY"
-            size_multiplier = 1.25  # Buy 25% more than normal
-            confidence = 0.7
-            reasoning = f"Fear ({value}) - Good accumulation zone."
+            # FEAR = Wait, don't chase
+            action = "HOLD"  # Changed from BUY
+            size_multiplier = 1.0  # Changed from 1.25
+            confidence = 0.4
+            reasoning = f"Fear ({value}) - Accumulation zone but requires trend confirmation."
 
         elif value <= self.GREED_THRESHOLD:
             # NEUTRAL = Hold, normal DCA
