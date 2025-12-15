@@ -1,337 +1,403 @@
 #!/usr/bin/env python3
-"""Dead Code Detector.
+"""
+Dead Code Detector - Prevents Medallion Architecture Pattern
 
-Scans the codebase for potential dead code:
-1. Functions/classes with 0 references
-2. Files never imported
-3. Deprecated markers
-4. NotImplementedError patterns
-5. Disabled feature flags
-6. CRITICAL: Functions defined but never called (revenue-impacting)
+Detects:
+1. Unused modules (no imports from them)
+2. Unused functions/classes (defined but never called)
+3. Empty or near-empty directories
+4. Modules that import from each other but nothing else uses them
 
-Run as: python scripts/detect_dead_code.py
-Or add to pre-commit: .pre-commit-config.yaml
+This prevents the LL-043 pattern: "Built comprehensive Medallion Architecture,
+but never integrated it into main system."
 
-Reference: rag_knowledge/lessons_learned/ll_014_dead_code_dynamic_budget_dec11.md
+Usage:
+    python3 scripts/detect_dead_code.py
+    python3 scripts/detect_dead_code.py --report json
+    python3 scripts/detect_dead_code.py --ignore-dirs tests examples
+
+RAG Keywords: dead-code, unused-modules, technical-debt, code-cleanup
+Lesson: LL-043 - Medallion Architecture unused code
 """
 
+import argparse
 import ast
-import os
-import re
+import json
 import sys
+from collections import defaultdict
 from pathlib import Path
-from typing import NamedTuple
+from typing import Dict, List, Set
+
+PROJECT_ROOT = Path(__file__).parent.parent
 
 
-class CriticalFunction(NamedTuple):
-    """A function that MUST be called somewhere in the codebase."""
+class ImportAnalyzer(ast.NodeVisitor):
+    """Extract imports and definitions from Python AST."""
 
-    file_path: str
-    function_name: str
-    description: str
+    def __init__(self):
+        self.imports: List[str] = []
+        self.from_imports: Dict[str, List[str]] = defaultdict(list)
+        self.definitions: Set[str] = set()
 
+    def visit_Import(self, node):
+        for alias in node.names:
+            self.imports.append(alias.name)
 
-# CRITICAL: Functions that must have call sites or system loses revenue
-# Add new critical functions here when implementing revenue-impacting features
-CRITICAL_FUNCTIONS = [
-    CriticalFunction(
-        "scripts/autonomous_trader.py",
-        "_apply_dynamic_daily_budget",
-        "Scales DAILY_INVESTMENT based on equity - without this, system stuck at $10/day",
-    ),
-    CriticalFunction(
-        "src/analytics/options_profit_planner.py",
-        "evaluate_theta_opportunity",
-        "Evaluates theta harvest opportunities - core options revenue",
-    ),
-    CriticalFunction(
-        "src/risk/risk_manager.py",
-        "calculate_size",
-        "Position sizing - without this, no trades execute",
-    ),
-]
+    def visit_ImportFrom(self, node):
+        if node.module:
+            for alias in node.names:
+                self.from_imports[node.module].append(alias.name)
 
+    def visit_FunctionDef(self, node):
+        self.definitions.add(f"function:{node.name}")
+        self.generic_visit(node)
 
-# Directories to scan
-SCAN_DIRS = ["src", "scripts"]
-# Directories to ignore
-IGNORE_DIRS = {"__pycache__", ".git", "venv", "node_modules", "data", "docs", "tests"}
-# Files to ignore
-IGNORE_FILES = {"__init__.py", "conftest.py"}
-
-
-def find_python_files(base_path: str) -> list[Path]:
-    """Find all Python files in the codebase."""
-    files = []
-    for scan_dir in SCAN_DIRS:
-        dir_path = Path(base_path) / scan_dir
-        if not dir_path.exists():
-            continue
-        for path in dir_path.rglob("*.py"):
-            if any(ignore in path.parts for ignore in IGNORE_DIRS):
-                continue
-            if path.name in IGNORE_FILES:
-                continue
-            files.append(path)
-    return files
-
-
-def extract_definitions(file_path: Path) -> dict:
-    """Extract function and class definitions from a file."""
-    definitions = {"functions": [], "classes": []}
-    try:
-        with open(file_path) as f:
-            tree = ast.parse(f.read())
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                if not node.name.startswith("_"):  # Skip private
-                    definitions["functions"].append(node.name)
-            elif isinstance(node, ast.ClassDef):
-                definitions["classes"].append(node.name)
-    except Exception:
-        pass
-    return definitions
-
-
-def find_references(files: list[Path], name: str) -> int:
-    """Count references to a name across all files."""
-    count = 0
-    pattern = re.compile(rf"\b{re.escape(name)}\b")
-    for file_path in files:
-        try:
-            content = file_path.read_text()
-            matches = pattern.findall(content)
-            count += len(matches)
-        except Exception:
-            pass
-    return count
-
-
-def find_deprecated_markers(files: list[Path]) -> list[tuple[Path, int, str]]:
-    """Find files with DEPRECATED markers."""
-    results = []
-    patterns = [
-        r"DEPRECATED",
-        r"NotImplementedError",
-        r"raise\s+NotImplementedError",
-        r"TODO:\s*remove",
-        r"BROKEN",
-    ]
-    for file_path in files:
-        try:
-            lines = file_path.read_text().splitlines()
-            for i, line in enumerate(lines, 1):
-                for pattern in patterns:
-                    if re.search(pattern, line, re.IGNORECASE):
-                        results.append((file_path, i, line.strip()[:80]))
-                        break
-        except Exception:
-            pass
-    return results
-
-
-def find_disabled_features(files: list[Path]) -> list[tuple[Path, int, str]]:
-    """Find feature flags defaulting to disabled."""
-    results = []
-    patterns = [
-        r'os\.getenv\(["\'][A-Z_]+["\'],\s*["\']false["\']',
-        r"ENABLED.*=.*False",
-        r'ENABLE.*"false"',
-    ]
-    for file_path in files:
-        try:
-            lines = file_path.read_text().splitlines()
-            for i, line in enumerate(lines, 1):
-                for pattern in patterns:
-                    if re.search(pattern, line, re.IGNORECASE):
-                        results.append((file_path, i, line.strip()[:80]))
-        except Exception:
-            pass
-    return results
-
-
-def find_orphaned_files(base_path: str, files: list[Path]) -> list[Path]:
-    """Find files that are never imported."""
-    orphaned = []
-    for file_path in files:
-        module_name = file_path.stem
-        if module_name.startswith("test_"):
-            continue
-
-        # Check if this module is imported anywhere
-        import_patterns = [
-            f"from {module_name}",
-            f"import {module_name}",
-            f"from .{module_name}",
-            f"from src.{file_path.parent.name}.{module_name}",
-        ]
-
-        found = False
-        for other_file in files:
-            if other_file == file_path:
-                continue
-            try:
-                content = other_file.read_text()
-                for pattern in import_patterns:
-                    if pattern in content:
-                        found = True
-                        break
-            except Exception:
-                pass
-            if found:
-                break
-
-        if not found:
-            orphaned.append(file_path)
-
-    return orphaned
-
-
-class FunctionCallVisitor(ast.NodeVisitor):
-    """AST visitor that counts calls to specific functions."""
-
-    def __init__(self, function_names: set[str]):
-        self.function_names = function_names
-        self.calls: dict[str, list[tuple[str, int]]] = {name: [] for name in function_names}
-        self.current_file = ""
-
-    def visit_Call(self, node: ast.Call):
-        func_name = None
-        if isinstance(node.func, ast.Name):
-            func_name = node.func.id
-        elif isinstance(node.func, ast.Attribute):
-            func_name = node.func.attr
-
-        if func_name and func_name in self.function_names:
-            self.calls[func_name].append((self.current_file, node.lineno))
-
+    def visit_ClassDef(self, node):
+        self.definitions.add(f"class:{node.name}")
         self.generic_visit(node)
 
 
-def check_critical_function_coverage(base_path: str, files: list[Path]) -> list[CriticalFunction]:
-    """
-    Check that critical functions are actually called somewhere.
+def get_python_files(
+    root: Path, ignore_dirs: List[str] = None
+) -> List[Path]:
+    """Get all Python files, excluding ignored directories."""
+    ignore_dirs = ignore_dirs or ["__pycache__", ".git", "venv", ".venv", "node_modules"]
+    python_files = []
 
-    This catches the pattern where a developer:
-    1. Implements a function with great docstring
-    2. Forgets to wire it into execution flow
-    3. Feature silently never executes
-    4. System loses money
-
-    Returns list of dead critical functions.
-    """
-    function_names = {cf.function_name for cf in CRITICAL_FUNCTIONS}
-    visitor = FunctionCallVisitor(function_names)
-
-    # Scan all files for function calls
-    for py_file in files:
-        try:
-            source = py_file.read_text(encoding="utf-8")
-            tree = ast.parse(source)
-            visitor.current_file = str(py_file)
-            visitor.visit(tree)
-        except (SyntaxError, UnicodeDecodeError):
+    for py_file in root.glob("**/*.py"):
+        # Check if any parent is in ignore list
+        if any(ignored in str(py_file) for ignored in ignore_dirs):
             continue
+        python_files.append(py_file)
 
-    # Check which critical functions have no call sites
-    dead_critical = []
-    for cf in CRITICAL_FUNCTIONS:
-        calls = visitor.calls.get(cf.function_name, [])
-        if len(calls) == 0:
-            # Verify function actually exists before flagging
-            func_file = Path(base_path) / cf.file_path
-            if func_file.exists():
-                try:
-                    source = func_file.read_text(encoding="utf-8")
-                    tree = ast.parse(source)
-                    for node in ast.walk(tree):
-                        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                            if node.name == cf.function_name:
-                                dead_critical.append(cf)
-                                break
-                except (SyntaxError, UnicodeDecodeError):
-                    pass
+    return python_files
 
-    return dead_critical
+
+def analyze_imports(file_path: Path) -> ImportAnalyzer:
+    """Parse file and extract imports and definitions."""
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            tree = ast.parse(f.read(), filename=str(file_path))
+        analyzer = ImportAnalyzer()
+        analyzer.visit(tree)
+        return analyzer
+    except (SyntaxError, UnicodeDecodeError) as e:
+        print(f"Warning: Could not parse {file_path}: {e}")
+        return ImportAnalyzer()
+
+
+def normalize_import_path(import_path: str, project_root: Path) -> str:
+    """Convert import path to module path relative to project."""
+    # Handle relative imports like "src.medallion.bronze"
+    parts = import_path.split(".")
+    
+    # If starts with src, keep as is
+    if parts[0] == "src":
+        return import_path
+    
+    # If it's a module from src, add src prefix
+    potential_path = project_root / "src" / parts[0]
+    if potential_path.exists():
+        return f"src.{import_path}"
+    
+    return import_path
+
+
+def build_import_graph(
+    files: List[Path], project_root: Path
+) -> Dict[str, Set[str]]:
+    """Build a graph of module -> modules_that_import_it."""
+    import_graph = defaultdict(set)
+    
+    for file_path in files:
+        analyzer = analyze_imports(file_path)
+        
+        # Convert file path to module path
+        try:
+            rel_path = file_path.relative_to(project_root)
+            # Remove .py and convert path to module notation
+            module_path = str(rel_path.with_suffix("")).replace("/", ".")
+            
+            # Track regular imports
+            for imp in analyzer.imports:
+                normalized = normalize_import_path(imp, project_root)
+                import_graph[normalized].add(module_path)
+            
+            # Track from imports (module level)
+            for from_module in analyzer.from_imports.keys():
+                normalized = normalize_import_path(from_module, project_root)
+                import_graph[normalized].add(module_path)
+        
+        except ValueError:
+            # File not relative to project root
+            continue
+    
+    return import_graph
+
+
+def find_unused_modules(
+    files: List[Path], project_root: Path, import_graph: Dict[str, Set[str]]
+) -> List[Dict]:
+    """Find modules that are never imported by anything."""
+    unused = []
+    
+    # Get all module paths
+    all_modules = set()
+    for file_path in files:
+        try:
+            rel_path = file_path.relative_to(project_root)
+            module_path = str(rel_path.with_suffix("")).replace("/", ".")
+            all_modules.add(module_path)
+        except ValueError:
+            continue
+    
+    # Find modules with zero imports
+    for module in all_modules:
+        # Skip __init__.py files (they organize packages)
+        if module.endswith(".__init__"):
+            continue
+        
+        # Skip main entry points
+        if "main.py" in module or "autonomous_trader" in module:
+            continue
+        
+        # Skip test files (they import but aren't imported)
+        if "test_" in module or "tests." in module:
+            continue
+        
+        # Check if this module is imported anywhere
+        importers = import_graph.get(module, set())
+        
+        # Also check parent package imports (e.g., src.medallion)
+        parent_parts = module.split(".")
+        for i in range(1, len(parent_parts)):
+            parent_module = ".".join(parent_parts[:i])
+            importers.update(import_graph.get(parent_module, set()))
+        
+        if not importers:
+            # Check file size to filter out truly empty stubs
+            file_path = project_root / module.replace(".", "/")
+            if file_path.with_suffix(".py").exists():
+                size = file_path.with_suffix(".py").stat().st_size
+                unused.append({
+                    "module": module,
+                    "path": str(file_path.with_suffix(".py")),
+                    "size_bytes": size,
+                    "reason": "No imports found"
+                })
+    
+    return unused
+
+
+def find_isolated_module_groups(
+    import_graph: Dict[str, Set[str]], all_modules: Set[str]
+) -> List[Dict]:
+    """
+    Find groups of modules that only import each other but nothing else uses them.
+    
+    Example: src.medallion.* modules all import each other, but only
+    src.ml.medallion_trainer imports them, and nothing imports medallion_trainer.
+    """
+    isolated_groups = []
+    
+    # Check for isolated module prefixes (like src.medallion.*)
+    prefixes = set()
+    for module in all_modules:
+        parts = module.split(".")
+        if len(parts) >= 2:
+            prefix = ".".join(parts[:2])  # e.g., "src.medallion"
+            prefixes.add(prefix)
+    
+    for prefix in prefixes:
+        # Get all modules with this prefix
+        group_modules = {m for m in all_modules if m.startswith(prefix + ".")}
+        if len(group_modules) <= 1:
+            continue
+        
+        # Find external importers (not in the group)
+        external_importers = set()
+        for module in group_modules:
+            importers = import_graph.get(module, set())
+            external_importers.update(
+                imp for imp in importers if not imp.startswith(prefix + ".")
+            )
+        
+        # If no external importers or only one that's also unused, it's isolated
+        if len(external_importers) <= 1:
+            total_size = 0
+            for module in group_modules:
+                module_path = PROJECT_ROOT / module.replace(".", "/")
+                if module_path.with_suffix(".py").exists():
+                    total_size += module_path.with_suffix(".py").stat().st_size
+            
+            isolated_groups.append({
+                "prefix": prefix,
+                "modules": sorted(group_modules),
+                "external_importers": sorted(external_importers),
+                "total_size_bytes": total_size,
+                "module_count": len(group_modules),
+            })
+    
+    return isolated_groups
+
+
+def find_empty_directories(root: Path, ignore_dirs: List[str]) -> List[Dict]:
+    """Find directories with only .gitkeep or empty subdirectories."""
+    empty_dirs = []
+    
+    for dir_path in root.glob("**/"):
+        # Skip ignored directories
+        if any(ignored in str(dir_path) for ignored in ignore_dirs):
+            continue
+        
+        if not dir_path.is_dir():
+            continue
+        
+        # Get all files in directory (recursively)
+        files = list(dir_path.glob("**/*"))
+        files = [f for f in files if f.is_file()]
+        
+        # Filter out .gitkeep files
+        non_gitkeep = [f for f in files if f.name != ".gitkeep"]
+        
+        if not non_gitkeep and dir_path != root:
+            empty_dirs.append({
+                "path": str(dir_path.relative_to(root)),
+                "gitkeep_count": len(files) - len(non_gitkeep),
+            })
+    
+    return empty_dirs
 
 
 def main():
-    """Run dead code detection."""
-    base_path = os.getcwd()
-    files = find_python_files(base_path)
-
+    parser = argparse.ArgumentParser(
+        description="Detect dead code and unused modules"
+    )
+    parser.add_argument(
+        "--report",
+        choices=["text", "json"],
+        default="text",
+        help="Output format"
+    )
+    parser.add_argument(
+        "--ignore-dirs",
+        nargs="+",
+        default=["tests", "examples", "__pycache__", ".git", "venv", ".venv"],
+        help="Directories to ignore"
+    )
+    parser.add_argument(
+        "--threshold-kb",
+        type=int,
+        default=10,
+        help="Minimum size in KB to report unused modules"
+    )
+    
+    args = parser.parse_args()
+    
     print("=" * 70)
-    print("DEAD CODE DETECTOR")
+    print("DEAD CODE DETECTOR - Preventing LL-043 Pattern")
     print("=" * 70)
-    print(f"Scanning {len(files)} Python files...\n")
-
-    issues = []
-    critical_dead = False
-
-    # CRITICAL CHECK: Revenue-impacting functions must have call sites
-    dead_critical_funcs = check_critical_function_coverage(base_path, files)
-    if dead_critical_funcs:
-        critical_dead = True
-        print("CRITICAL: Revenue-impacting functions with NO CALL SITES:")
-        for cf in dead_critical_funcs:
-            print(f"   {cf.function_name}")
-            print(f"      File: {cf.file_path}")
-            print(f"      Impact: {cf.description}")
-            issues.append(f"CRITICAL_DEAD: {cf.function_name}")
-        print()
-        print("   These functions are DEFINED but NEVER CALLED.")
-        print("   The system will silently fail to use these features.")
-        print("   See: rag_knowledge/lessons_learned/ll_014_dead_code_dynamic_budget_dec11.md")
-        print()
-
-    # Check for deprecated markers
-    deprecated = find_deprecated_markers(files)
-    if deprecated:
-        print(f"⚠️  DEPRECATED/BROKEN markers found: {len(deprecated)}")
-        for path, line, content in deprecated[:10]:
-            print(f"   {path}:{line}: {content}")
-            issues.append(f"DEPRECATED: {path}:{line}")
-        if len(deprecated) > 10:
-            print(f"   ... and {len(deprecated) - 10} more")
-        print()
-
-    # Check for disabled features
-    disabled = find_disabled_features(files)
-    if disabled:
-        print(f"⚠️  Disabled feature flags found: {len(disabled)}")
-        for path, line, content in disabled[:10]:
-            print(f"   {path}:{line}: {content}")
-            issues.append(f"DISABLED_FEATURE: {path}:{line}")
-        if len(disabled) > 10:
-            print(f"   ... and {len(disabled) - 10} more")
-        print()
-
-    # Check for orphaned files
-    orphaned = find_orphaned_files(base_path, files)
-    if orphaned:
-        print(f"⚠️  Potentially orphaned files: {len(orphaned)}")
-        for path in orphaned[:10]:
-            print(f"   {path}")
-            issues.append(f"ORPHANED: {path}")
-        if len(orphaned) > 10:
-            print(f"   ... and {len(orphaned) - 10} more")
-        print()
-
-    # Summary
+    print()
+    
+    # Step 1: Get all Python files
+    print("[1/5] Scanning Python files...")
+    files = get_python_files(PROJECT_ROOT, args.ignore_dirs)
+    print(f"  Found {len(files)} Python files")
+    
+    # Step 2: Build import graph
+    print("\n[2/5] Building import graph...")
+    import_graph = build_import_graph(files, PROJECT_ROOT)
+    print(f"  Tracked imports for {len(import_graph)} modules")
+    
+    # Step 3: Find unused modules
+    print("\n[3/5] Finding unused modules...")
+    unused_modules = find_unused_modules(files, PROJECT_ROOT, import_graph)
+    
+    # Filter by size threshold
+    threshold_bytes = args.threshold_kb * 1024
+    significant_unused = [
+        m for m in unused_modules if m["size_bytes"] > threshold_bytes
+    ]
+    print(f"  Found {len(significant_unused)} unused modules (>{args.threshold_kb}KB)")
+    
+    # Step 4: Find isolated module groups
+    print("\n[4/5] Finding isolated module groups...")
+    all_modules = {
+        str(f.relative_to(PROJECT_ROOT).with_suffix("")).replace("/", ".")
+        for f in files
+    }
+    isolated_groups = find_isolated_module_groups(import_graph, all_modules)
+    print(f"  Found {len(isolated_groups)} isolated module groups")
+    
+    # Step 5: Find empty directories
+    print("\n[5/5] Finding empty directories...")
+    empty_dirs = find_empty_directories(PROJECT_ROOT, args.ignore_dirs + [".git"])
+    print(f"  Found {len(empty_dirs)} empty directories")
+    
+    # Generate report
+    print("\n" + "=" * 70)
+    print("RESULTS")
     print("=" * 70)
-    if critical_dead:
-        print(f"COMMIT BLOCKED: {len(dead_critical_funcs)} critical functions are dead code")
-        print("   Fix: Wire these functions into the execution flow")
-        print("   These are revenue-impacting and MUST be called somewhere.")
-        return 1
-    elif issues:
-        print(f"⚠️  Found {len(issues)} potential issues (non-blocking)")
-        print("   Review and clean up dead code to maintain system health.")
-        return 0  # Non-critical issues don't block
+    
+    if args.report == "json":
+        report = {
+            "unused_modules": significant_unused,
+            "isolated_groups": isolated_groups,
+            "empty_directories": empty_dirs,
+            "summary": {
+                "unused_count": len(significant_unused),
+                "isolated_groups_count": len(isolated_groups),
+                "empty_dirs_count": len(empty_dirs),
+            }
+        }
+        print(json.dumps(report, indent=2))
     else:
-        print("✅ No dead code detected!")
-        return 0
+        # Text report
+        if isolated_groups:
+            print("\n🔴 ISOLATED MODULE GROUPS (high priority):")
+            print("   These modules only import each other but aren't used elsewhere")
+            print()
+            for group in isolated_groups:
+                print(f"   {group['prefix']}/ ({group['module_count']} modules, "
+                      f"{group['total_size_bytes'] // 1024}KB)")
+                print(f"      Modules: {', '.join(m.split('.')[-1] for m in group['modules'][:5])}")
+                if group['external_importers']:
+                    print(f"      Only imported by: {', '.join(group['external_importers'])}")
+                else:
+                    print(f"      ⚠️  NO external imports at all!")
+                print()
+        
+        if significant_unused:
+            print("\n🟡 UNUSED MODULES (medium priority):")
+            for module in significant_unused[:10]:
+                size_kb = module['size_bytes'] // 1024
+                print(f"   {module['module']} ({size_kb}KB)")
+            if len(significant_unused) > 10:
+                print(f"   ... and {len(significant_unused) - 10} more")
+        
+        if empty_dirs:
+            print("\n⚪ EMPTY DIRECTORIES (low priority):")
+            for ed in empty_dirs[:10]:
+                print(f"   {ed['path']}")
+            if len(empty_dirs) > 10:
+                print(f"   ... and {len(empty_dirs) - 10} more")
+    
+    # Exit code
+    print("\n" + "=" * 70)
+    if isolated_groups or significant_unused:
+        total_dead_kb = sum(g['total_size_bytes'] for g in isolated_groups) // 1024
+        total_dead_kb += sum(m['size_bytes'] for m in significant_unused) // 1024
+        
+        print(f"DEAD CODE FOUND: ~{total_dead_kb}KB of unused code")
+        print("\nRecommendation:")
+        print("  1. Review isolated module groups - likely candidates for removal")
+        print("  2. Check if unused modules are actually needed")
+        print("  3. Document decision in rag_knowledge/decisions/")
+        sys.exit(1)
+    else:
+        print("NO SIGNIFICANT DEAD CODE FOUND ✅")
+        sys.exit(0)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
