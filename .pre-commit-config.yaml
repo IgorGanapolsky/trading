@@ -199,3 +199,12 @@ repos:
         pass_filenames: false
         verbose: true
         stages: [pre-commit]
+
+      - id: validate-python-syntax
+        name: Enhanced Python Syntax Validation (ll_024 Prevention)
+        entry: python3 tests/test_syntax_validation.py
+        language: system
+        types: [python]
+        pass_filenames: false
+        verbose: true
+        stages: [pre-commit]
