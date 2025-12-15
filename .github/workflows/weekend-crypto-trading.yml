@@ -146,13 +146,13 @@ jobs:
           LANGCHAIN_ENABLE_MCP: ${{ secrets.LANGCHAIN_ENABLE_MCP || 'true' }}
           LANGCHAIN_MODEL: ${{ secrets.LANGCHAIN_MODEL || 'claude-3-5-sonnet-20241022' }}
         run: |
-          echo "🚀 World-Class Crypto Strategy v4.0 (Trend-Aware)"
+          echo "🚀 World-Class Crypto Strategy v4.1 (Trend + Momentum)"
           python3 << 'PYTHON'
-          """v4.0: Only buy when price > 50-day MA (5x better returns per Coinbase Research)"""
+          """v4.1: Buy when price > 50-day MA AND RSI > 50 (trend + momentum confirmation)"""
           import os, sys, json, requests, traceback
           from datetime import datetime, timezone
           today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-          result = {"timestamp": datetime.now(timezone.utc).isoformat(), "date": today, "strategy": "WorldClassCrypto", "strategy_version": "4.0"}
+          result = {"timestamp": datetime.now(timezone.utc).isoformat(), "date": today, "strategy": "WorldClassCrypto", "strategy_version": "4.1"}
           def save():
               os.makedirs("data", exist_ok=True)
               f = f"data/trades_{today}.json"
@@ -176,8 +176,17 @@ jobs:
               result["account_value"] = float(acct.equity)
               print(f"✅ Account: ${result['account_value']:,.2f}")
 
-              # STEP 1: TREND CHECK (50-day MA) - THE KEY FILTER
-              print("\n📊 STEP 1: Trend Check (50-day MA)")
+              # STEP 1: TREND + MOMENTUM CHECK (50-day MA + RSI)
+              print("\n📊 STEP 1: Trend + Momentum Check")
+
+              def calc_rsi(prices, period=14):
+                  """Calculate RSI (Relative Strength Index)"""
+                  delta = prices.diff()
+                  gain = delta.where(delta > 0, 0).rolling(window=period).mean()
+                  loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+                  rs = gain / loss
+                  return 100 - (100 / (1 + rs))
+
               trend_data = {}
               for s in ["BTC-USD","ETH-USD","SOL-USD"]:
                   try:
@@ -185,19 +194,34 @@ jobs:
                       if len(h) >= 50:
                           price = float(h["Close"].iloc[-1])
                           ma50 = float(h["Close"].rolling(50).mean().iloc[-1])
-                          above = price > ma50
+                          rsi = float(calc_rsi(h["Close"]).iloc[-1])
+                          above_ma = price > ma50
+                          rsi_bullish = rsi > 50
                           pct = ((price - ma50) / ma50) * 100
                           chg = ((h["Close"].iloc[-1] - h["Close"].iloc[-7]) / h["Close"].iloc[-7]) * 100
-                          trend_data[s] = {"price":price,"ma50":ma50,"above":above,"pct":pct,"chg7d":chg}
-                          st = "✅ ABOVE" if above else "❌ BELOW"
-                          print(f"   {s}: ${price:,.0f} | MA50: ${ma50:,.0f} | {st} ({pct:+.1f}%)")
+                          trend_data[s] = {
+                              "price": price, "ma50": ma50, "above_ma": above_ma,
+                              "rsi": rsi, "rsi_bullish": rsi_bullish,
+                              "pct": pct, "chg7d": chg,
+                              "valid": above_ma and rsi_bullish
+                          }
+                          ma_st = "✅" if above_ma else "❌"
+                          rsi_st = "✅" if rsi_bullish else "❌"
+                          print(f"   {s}: ${price:,.0f} | MA50 {ma_st} ({pct:+.1f}%) | RSI {rsi:.0f} {rsi_st}")
                   except: pass
 
-              above_ma = {k:v for k,v in trend_data.items() if v.get("above")}
-              if not above_ma:
-                  print("\n⛔ ALL BELOW 50-MA - SKIP (waiting for trend)")
-                  result["action"], result["skip_reason"] = "SKIP", "All below 50-day MA"
-                  result["status"] = "WAITING_FOR_TREND"
+              valid_cryptos = {k:v for k,v in trend_data.items() if v.get("valid")}
+              if not valid_cryptos:
+                  above_ma_only = [k for k,v in trend_data.items() if v.get("above_ma")]
+                  if not above_ma_only:
+                      skip_reason = "All below 50-day MA"
+                  elif not [k for k,v in trend_data.items() if v.get("rsi_bullish")]:
+                      skip_reason = "All RSI below 50"
+                  else:
+                      skip_reason = "No trend+momentum alignment"
+                  print(f"\n⛔ SKIP: {skip_reason}")
+                  result["action"], result["skip_reason"] = "SKIP", skip_reason
+                  result["status"] = "WAITING_FOR_SIGNAL"
                   save()
                   sys.exit(0)
 
@@ -216,12 +240,12 @@ jobs:
                       sys.exit(0)
               except: pass
 
-              # STEP 3: Select best crypto (above MA only)
-              best_item = max(above_ma.items(), key=lambda x: x[1]["chg7d"])
+              # STEP 3: Select best crypto (trend + momentum confirmed)
+              best_item = max(valid_cryptos.items(), key=lambda x: x[1]["chg7d"])
               best, best_data = best_item[0].replace("-USD","USD"), best_item[1]
               price = best_data["price"]
               momentum = best_data["chg7d"]
-              print(f"\n🎯 Selected: {best} (above MA by {best_data['pct']:+.1f}%)")
+              print(f"\n🎯 Selected: {best} (MA +{best_data['pct']:.1f}%, RSI {best_data['rsi']:.0f})")
 
               base = float(os.environ.get("CRYPTO_DAILY_AMOUNT","10.0"))
               amt = min(base * mult, result["account_value"] * 0.02)
@@ -258,7 +282,11 @@ jobs:
                   "order_id": str(order.id),
                   "status": final_status,
                   "size_multiplier": mult,
-                  "verified_fill": final_status == "OrderStatus.FILLED"
+                  "verified_fill": final_status == "OrderStatus.FILLED",
+                  "rsi": best_data["rsi"],
+                  "pct_above_ma": best_data["pct"],
+                  "trend_confirmed": True,
+                  "momentum_confirmed": True
               })
               print(f"✅ Order: {order.id} - Final: {final_status}")
           except Exception as e:

@@ -35,10 +35,11 @@ jobs:
         run: |
           python3 << 'PYTHON'
           """
-          World-Class Crypto Trading Strategy v4.0 (Trend-Aware)
+          World-Class Crypto Trading Strategy v4.1 (Trend + Momentum)
 
           RESEARCH-BACKED:
           - Only buy when price > 50-day MA (5x better returns per Coinbase)
+          - RSI > 50 confirms momentum is bullish
           - Fear & Greed for SIZING only, not timing
           - Stop catching falling knives
           """
@@ -46,7 +47,7 @@ jobs:
           from datetime import datetime, timezone
 
           today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-          result = {"timestamp": datetime.now(timezone.utc).isoformat(), "date": today, "strategy": "WorldClassCrypto", "strategy_version": "4.0"}
+          result = {"timestamp": datetime.now(timezone.utc).isoformat(), "date": today, "strategy": "WorldClassCrypto", "strategy_version": "4.1"}
 
           def save():
               os.makedirs("data", exist_ok=True)
@@ -59,8 +60,8 @@ jobs:
 
           api_key, secret = os.environ.get("ALPACA_API_KEY",""), os.environ.get("ALPACA_SECRET_KEY","")
           print("=" * 60)
-          print("🌍 WORLD-CLASS CRYPTO STRATEGY v4.0 (Trend-Aware)")
-          print("   Only buy when price > 50-day MA")
+          print("🌍 WORLD-CLASS CRYPTO STRATEGY v4.1 (Trend + Momentum)")
+          print("   Only buy when price > 50-day MA AND RSI > 50")
           print("=" * 60)
 
           if not api_key or not secret:
@@ -79,9 +80,18 @@ jobs:
               result["account_value"] = float(acct.equity)
               print(f"✅ Account: ${result['account_value']:,.2f}")
 
-              # STEP 1: TREND CHECK (50-day MA)
-              print("\n📊 STEP 1: Trend Check (50-day MA)")
+              # STEP 1: TREND + MOMENTUM CHECK (50-day MA + RSI)
+              print("\n📊 STEP 1: Trend + Momentum Check")
               print("-" * 40)
+
+              def calc_rsi(prices, period=14):
+                  """Calculate RSI (Relative Strength Index)"""
+                  delta = prices.diff()
+                  gain = delta.where(delta > 0, 0).rolling(window=period).mean()
+                  loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+                  rs = gain / loss
+                  return 100 - (100 / (1 + rs))
+
               trend_data = {}
               for s in ["BTC-USD","ETH-USD","SOL-USD"]:
                   try:
@@ -89,24 +99,49 @@ jobs:
                       if len(h) >= 50:
                           price = float(h["Close"].iloc[-1])
                           ma50 = float(h["Close"].rolling(50).mean().iloc[-1])
-                          above = price > ma50
+                          rsi = float(calc_rsi(h["Close"]).iloc[-1])
+                          above_ma = price > ma50
+                          rsi_bullish = rsi > 50
                           pct = ((price - ma50) / ma50) * 100
                           chg = ((h["Close"].iloc[-1] - h["Close"].iloc[-7]) / h["Close"].iloc[-7]) * 100
-                          trend_data[s] = {"price":price,"ma50":ma50,"above":above,"pct":pct,"chg7d":chg}
-                          st = "✅ ABOVE" if above else "❌ BELOW"
-                          print(f"   {s}: ${price:,.0f} | MA50: ${ma50:,.0f} | {st} ({pct:+.1f}%)")
+
+                          trend_data[s] = {
+                              "price": price, "ma50": ma50, "above_ma": above_ma,
+                              "rsi": rsi, "rsi_bullish": rsi_bullish,
+                              "pct": pct, "chg7d": chg,
+                              "valid": above_ma and rsi_bullish  # Both conditions must be true
+                          }
+
+                          ma_st = "✅" if above_ma else "❌"
+                          rsi_st = "✅" if rsi_bullish else "❌"
+                          print(f"   {s}: ${price:,.0f}")
+                          print(f"      MA50: ${ma50:,.0f} {ma_st} ({pct:+.1f}%)")
+                          print(f"      RSI:  {rsi:.1f} {rsi_st} (>50 = bullish)")
                   except Exception as e:
                       print(f"   {s}: Error - {e}")
 
               result["trend_analysis"] = trend_data
-              above_ma = {k:v for k,v in trend_data.items() if v.get("above")}
+              valid_cryptos = {k:v for k,v in trend_data.items() if v.get("valid")}
 
-              if not above_ma:
-                  print("\n⛔ ALL CRYPTOS BELOW 50-DAY MA - SKIPPING")
-                  print("   Research: Buying below MA = catching falling knife")
+              if not valid_cryptos:
+                  # Check why we're skipping
+                  above_ma_only = [k for k,v in trend_data.items() if v.get("above_ma")]
+                  rsi_only = [k for k,v in trend_data.items() if v.get("rsi_bullish")]
+
+                  print("\n⛔ NO VALID ENTRIES - SKIPPING")
+                  if not above_ma_only:
+                      print("   ❌ All below 50-day MA (no trend)")
+                      skip_reason = "All below 50-day MA"
+                  elif not rsi_only:
+                      print("   ❌ All RSI < 50 (weak momentum)")
+                      skip_reason = "All RSI below 50"
+                  else:
+                      print("   ❌ No crypto has BOTH trend + momentum")
+                      skip_reason = "No trend+momentum alignment"
+
                   result["action"] = "SKIP"
-                  result["skip_reason"] = "All below 50-day MA - waiting for trend"
-                  result["status"] = "WAITING_FOR_TREND"
+                  result["skip_reason"] = skip_reason
+                  result["status"] = "WAITING_FOR_SIGNAL"
                   save()
                   sys.exit(0)
 
@@ -131,11 +166,12 @@ jobs:
                       sys.exit(0)
               except: pass
 
-              # STEP 3: Select best (above MA only)
-              print("\n🎯 STEP 3: Select Best (above MA)")
-              best_item = max(above_ma.items(), key=lambda x: x[1]["chg7d"])
+              # STEP 3: Select best (valid cryptos only)
+              print("\n🎯 STEP 3: Select Best (trend + momentum confirmed)")
+              best_item = max(valid_cryptos.items(), key=lambda x: x[1]["chg7d"])
               best, best_data = best_item[0].replace("-USD","USD"), best_item[1]
-              print(f"   Selected: {best} (+{best_data['pct']:.1f}% above MA)")
+              print(f"   Selected: {best}")
+              print(f"   📈 {best_data['pct']:+.1f}% above MA, RSI {best_data['rsi']:.1f}")
 
               # STEP 4: Execute
               print("\n💰 STEP 4: Execute Trade")
@@ -152,7 +188,8 @@ jobs:
                   "symbol": best, "action": "BUY", "notional": amt,
                   "price": best_data["price"], "order_id": str(order.id),
                   "status": str(order.status), "size_multiplier": mult,
-                  "trend_confirmed": True, "pct_above_ma": best_data["pct"]
+                  "trend_confirmed": True, "pct_above_ma": best_data["pct"],
+                  "rsi": best_data["rsi"], "momentum_confirmed": True
               })
 
           except Exception as e:
@@ -169,7 +206,7 @@ jobs:
         if: always()
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "trade: crypto v4.0 (trend-aware) [skip ci]"
+          commit_message: "trade: crypto v4.1 (trend+momentum) [skip ci]"
           file_pattern: "data/trades_*.json"
           commit_user_name: "GitHub Actions Bot"
           commit_user_email: "actions@github.com"
