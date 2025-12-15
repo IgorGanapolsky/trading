@@ -1,8 +1,8 @@
 # 🤖 AI-Powered Automated Trading System
 
-![Status](https://img.shields.io/badge/status-production_ready-brightgreen.svg)
-![Win Rate](https://img.shields.io/badge/win_rate-62.2%25-success.svg)
-![Sharpe Ratio](https://img.shields.io/badge/sharpe-2.18-success.svg)
+![Status](https://img.shields.io/badge/status-R%26D_Phase-yellow.svg)
+![Options Win Rate](https://img.shields.io/badge/options_win_rate-75%25-success.svg)
+![Total P/L](https://img.shields.io/badge/total_P%2FL-%2B%24327-success.svg)
 [![Progress Dashboard](https://img.shields.io/badge/Progress-Dashboard-success)](https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard)
 ![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
 [![Automated Dry Run](https://img.shields.io/badge/Automated%20Dry%20Run-View%20Latest-blue)](https://github.com/IgorGanapolsky/trading/wiki/Automated-Dry-Run)
@@ -128,34 +128,42 @@ These documents contain critical protocols and context for understanding how the
 
 ---
 
-## 💰 Performance (Validated)
+## 💰 Performance (Live Results - Dec 15, 2025)
 
-**60-Day Backtest** (Sept-Oct 2025):
-- ✅ Win Rate: **62.2%** (target: >55%)
-- ✅ Sharpe Ratio: **2.18** (world-class)
-- ✅ Max Drawdown: **2.2%** (excellent)
-- ✅ Annualized Return: **26.16%**
+**Options Strategy (PRIMARY - 75% Win Rate)**:
+- ✅ Win Rate: **75%** (3 wins / 1 loss)
+- ✅ Total Profit: **+$327.82**
+- ✅ Strategy: Cash-secured puts on SPY/AMD
+
+**Other Strategies**:
+- ❌ Crypto: **REMOVED** (0% win rate, -$0.43)
+- ➖ Bonds: Break-even (+$0.00)
 
 **Current Status**: Active 90-day R&D phase (Day 9/90)
-**Account**: $100,017.49 (paper trading) | P/L: +$17.49
-**Daily Investment**: $10/day (fixed)
-**Live Win Rate**: 66.7%
+**Account**: $100,085 (paper trading) | P/L: +$85
+**Daily Investment**: $50/day (options-focused)
+**Options Allocation**: 37% of portfolio
 
 ---
 
-## 🎯 Strategy
+## 🎯 Strategy (Options-First - Updated Dec 15, 2025)
 
-**Momentum-based trading** with technical indicators:
-- MACD (trend confirmation)
-- RSI (overbought/oversold detection)
-- Volume analysis (signal strength)
-- Multi-period returns (1m/3m/6m)
+**Primary Strategy: Options Premium Selling (37%)**
+- Cash-secured puts on quality stocks (SPY, QQQ, AMD, NVDA)
+- Target: 2% monthly premium
+- 30-45 DTE, 15-20 delta puts
+- **Proven: 75% win rate, +$327 profit**
 
-**Four-tier allocation**:
-- Tier 1 (60%): Index ETFs (SPY, QQQ, VOO)
-- Tier 2 (20%): Growth stocks (NVDA, GOOGL, AMZN)
-- Tier 3 (10%): IPO opportunities (manual)
-- Tier 4 (10%): Crowdfunding (manual)
+**Portfolio Allocation**:
+- 🏆 Options Premium: **37%** (PRIMARY - proven winner)
+- 📈 Core ETFs (SPY/QQQ): **25%**
+- 🏦 Treasuries: **15%** (hedge)
+- 📊 Growth Stocks: **10%**
+- 🏢 REITs: **5%** (testing)
+- 🥇 Precious Metals: **3%** (testing)
+- ~~Crypto~~: **REMOVED** (0% win rate)
+
+**Key Insight**: Options generate 100% of profits. Focus capital on winners.
 
 ---
 
