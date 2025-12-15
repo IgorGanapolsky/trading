@@ -318,3 +318,75 @@ idle_cash_sweep:
   keep_liquid: 5000             # Always keep $5k in cash
   frequency: "daily"            # Check daily
   description: "Auto-sweep idle cash to T-Bills to earn ~5% vs 0%"
+
+# =============================================================================
+# TAX OPTIMIZATION STRATEGY (Dec 15, 2025)
+# =============================================================================
+# Goal: Minimize tax liability while staying compliant
+tax_strategy:
+  enabled: true
+  
+  # Tax Rates (update for your bracket)
+  rates:
+    federal_short_term: 0.32    # Your marginal bracket (10-37%)
+    federal_long_term: 0.15     # Long-term cap gains (0-20%)
+    state: 0.05                 # State tax rate
+    combined_short_term: 0.37   # Total short-term rate
+    combined_long_term: 0.20    # Total long-term rate
+  
+  # Quarterly Estimated Payments
+  estimated_payments:
+    enabled: false              # Enable when profits > $3,000
+    threshold: 3000             # IRS requires if tax > $1,000
+    q1_due: "2025-04-15"
+    q2_due: "2025-06-15"
+    q3_due: "2025-09-15"
+    q4_due: "2026-01-15"
+  
+  # Wash Sale Prevention
+  wash_sale_tracking:
+    enabled: true
+    window_days: 30             # 30 days before and after
+    alert_on_violation: true
+    blocked_symbols: []         # Auto-populated with loss sales
+  
+  # Tax-Loss Harvesting
+  tax_loss_harvesting:
+    enabled: true
+    harvest_before: "2025-12-31"  # Year-end deadline
+    min_loss_to_harvest: 100    # Only harvest if loss > $100
+    max_annual_deduction: 3000  # IRS limit against ordinary income
+  
+  # Long-Term Holding Strategy
+  long_term_strategy:
+    enabled: true
+    prefer_assignment: true     # Accept assignment for long-term hold
+    min_hold_days: 366          # Hold > 1 year for LTCG rate
+    target_symbols: ["SPY", "QQQ", "NVDA"]  # Stocks worth holding
+  
+  # Record Keeping
+  records:
+    track_cost_basis: true
+    track_holding_period: true
+    export_for_tax_prep: true
+    export_format: "csv"        # For importing to tax software
+
+# =============================================================================
+# WASH SALE BLACKLIST (Auto-Updated)
+# =============================================================================
+# Symbols sold at a loss - DO NOT repurchase within 30 days!
+wash_sale_blacklist:
+  last_updated: "2025-12-15"
+  symbols:
+    - symbol: "BTCUSD"
+      loss_date: "2025-12-11"
+      safe_to_buy_after: "2026-01-10"
+    - symbol: "ETHUSD"
+      loss_date: "2025-12-09"
+      safe_to_buy_after: "2026-01-08"
+    - symbol: "SOLUSD"
+      loss_date: "2025-12-11"
+      safe_to_buy_after: "2026-01-10"
+    - symbol: "AMD260116P00200000"
+      loss_date: "2025-12-11"
+      safe_to_buy_after: "2026-01-10"
