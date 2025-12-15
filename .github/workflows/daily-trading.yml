@@ -983,6 +983,13 @@ jobs:
         run: |
           python3 scripts/generate_progress_dashboard.py || true
 
+      - name: Run health check
+        if: always()
+        continue-on-error: true  # Non-blocking check
+        run: |
+          echo "🏥 Running post-execution health check..."
+          python3 scripts/health_monitor.py || echo "⚠️  Health check detected issues (see health-alert workflow)"
+
       - name: Upload execution logs
         if: always()
         continue-on-error: true  # Don't fail workflow if log upload fails
