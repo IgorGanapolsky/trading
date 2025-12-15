@@ -14,24 +14,117 @@ Part of P1: Integration Test Suite from SYSTEMIC_FAILURE_PREVENTION_PLAN.md
 import json
 import os
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 
 import pytest
 
 
+class TestCryptoStrategyIntegration:
+    """Integration tests for crypto trading strategy."""
+
+    def test_crypto_strategy_dry_run(self):
+        """Test crypto strategy executes successfully in dry-run mode."""
+        env = os.environ.copy()
+        env["DRY_RUN"] = "true"
+        env["PYTHONPATH"] = str(Path.cwd())
+
+        result = subprocess.run(
+            ["python3", "scripts/autonomous_trader.py", "--crypto-only"],
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=60,
+        )
+
+        # Should exit successfully (even if no trades)
+        assert result.returncode == 0, f"Crypto strategy failed: {result.stderr}"
+
+        # Output should mention crypto processing
+        output = result.stdout + result.stderr
+        assert any(
+            keyword in output.lower()
+            for keyword in ["crypto", "btc", "eth", "bitcoin", "ethereum"]
+        ), "No crypto processing detected in output"
+
+    def test_crypto_strategy_imports(self):
+        """Verify crypto strategy can be imported without errors."""
+        try:
+            from src.strategies.crypto_strategy import CryptoStrategy
+
+            # Basic instantiation test
+            strategy = CryptoStrategy()
+            assert strategy is not None
+
+            # CryptoStrategy should have trading-related methods
+            # Check for common method names
+            has_methods = any(
+                hasattr(strategy, method)
+                for method in [
+                    "execute",
+                    "run",
+                    "trade",
+                    "analyze_crypto",
+                    "get_signals",
+                    "generate_trade",
+                ]
+            )
+
+            assert has_methods, "CryptoStrategy missing expected trading methods"
+
+        except ImportError as e:
+            pytest.fail(f"Failed to import CryptoStrategy: {e}")
+        except Exception as e:
+            pytest.fail(f"Failed to instantiate CryptoStrategy: {e}")
+
+    def test_crypto_fear_greed_integration(self):
+        """Test Fear & Greed Index integration for crypto."""
+        try:
+            from src.utils.fear_greed_index import get_fear_greed_index
+
+            index = get_fear_greed_index()
+
+            # Should return valid index or None (if API fails)
+            if index is not None:
+                assert isinstance(index, (int, float))
+                assert 0 <= index <= 100, f"Invalid Fear & Greed index: {index}"
+
+        except ImportError:
+            pytest.skip("Fear & Greed module not available")
+        except Exception as e:
+            # Non-critical - API might be unavailable
+            pytest.skip(f"Fear & Greed API unavailable: {e}")
+
+
 class TestEquityStrategyIntegration:
     """Integration tests for equity trading strategies."""
 
     @pytest.mark.slow
-    @pytest.mark.skip(reason="Test incomplete - command argument was never defined")
     def test_equity_strategy_dry_run(self):
         """Test equity strategy executes successfully in dry-run mode.
 
-        Note: This test is incomplete and missing the command to execute.
-        TODO: Define the equity strategy command and re-enable this test.
+        Note: This test can be slow (2-3 minutes) due to market data fetching.
+        Mark as @pytest.mark.slow to skip in fast CI runs.
         """
-        pass  # Skip until test is properly implemented
+        # Skip in CI if explicitly disabled
+        if os.getenv("SKIP_SLOW_TESTS") == "true":
+            pytest.skip("Skipping slow equity strategy test in CI")
+
+        env = os.environ.copy()
+        env["DRY_RUN"] = "true"
+        env["PYTHONPATH"] = str(Path.cwd())
+
+        result = subprocess.run(
+            ["python3", "scripts/autonomous_trader.py", "--skip-crypto"],
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=180,  # Increased to 3 minutes
+        )
+
+        # Should exit successfully
+        assert result.returncode == 0, f"Equity strategy failed: {result.stderr}"
 
     def test_momentum_indicators_integration(self):
         """Test technical indicator integration (MACD, RSI, Volume)."""
@@ -169,7 +262,9 @@ class TestSystemIntegration:
             text=True,
         )
 
-        assert result.returncode == 0, f"autonomous_trader.py syntax error: {result.stderr}"
+        assert (
+            result.returncode == 0
+        ), f"autonomous_trader.py syntax error: {result.stderr}"
 
     def test_required_dependencies(self):
         """Test critical dependencies are importable."""
