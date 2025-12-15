@@ -129,6 +129,12 @@ jobs:
           pytest tests/test_verification_system.py -v --tb=short
           echo "✅ Verification system tests passed"
 
+      - name: Run Lessons Learned Regression Tests
+        run: |
+          echo "🔍 Running regression tests for ALL lessons learned..."
+          pytest tests/test_lessons_learned_regression.py -v --tb=short
+          echo "✅ Lessons learned regression tests passed"
+
   pre-merge-gate:
     name: Pre-Merge Gate (MANDATORY)
     runs-on: ubuntu-latest

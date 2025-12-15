@@ -61,12 +61,12 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "chore: Update enhanced dashboard [skip ci]
-
-- Updated category P/L breakdowns
-- Regenerated graphs
-- Checked alerts
-- $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+            git commit -m "chore: Update enhanced dashboard [skip ci]" \
+                       -m "- Updated category P/L breakdowns" \
+                       -m "- Regenerated graphs" \
+                       -m "- Checked alerts" \
+                       -m "- ${TIMESTAMP}"
             git push
             echo "✅ Dashboard updated and pushed"
           fi

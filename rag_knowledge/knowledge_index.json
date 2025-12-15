@@ -43,7 +43,45 @@
       "ingested_at": "2025-12-12T18:30:00.000000"
     }
   },
-  "papers": {},
+  "papers": {
+    "quantum_finance_papers": {
+      "title": "Key Research Papers in Quantum Finance",
+      "file": "rag_knowledge/quantum/quantum_finance_papers.json",
+      "paper_count": 10,
+      "topics": ["option_pricing", "portfolio_optimization", "risk_analysis", "quantum_ml"],
+      "ingested_at": "2024-12-15T00:00:00.000000"
+    }
+  },
+  "quantum": {
+    "quantum_finance_resources": {
+      "title": "Quantum Physics & Quantum Financial Trading Resources",
+      "file": "rag_knowledge/quantum/quantum_finance_resources.md",
+      "type": "comprehensive_guide",
+      "topics": ["quantum_computing", "quantum_finance", "quantum_ml", "econophysics"],
+      "ingested_at": "2024-12-15T00:00:00.000000"
+    },
+    "quantum_finance_books": {
+      "title": "Quantum Finance Books Collection",
+      "file": "rag_knowledge/quantum/quantum_finance_books.json",
+      "book_count": 10,
+      "topics": ["quantum_mechanics", "path_integrals", "econophysics", "quantum_ml"],
+      "ingested_at": "2024-12-15T00:00:00.000000"
+    },
+    "quantum_finance_youtube": {
+      "title": "Quantum Finance YouTube Educators",
+      "file": "rag_knowledge/quantum/quantum_finance_youtube.json",
+      "channel_count": 8,
+      "topics": ["qiskit", "pennylane", "quantum_annealing", "finance_applications"],
+      "ingested_at": "2024-12-15T00:00:00.000000"
+    },
+    "quantum_finance_blogs": {
+      "title": "Quantum Finance Blogs & Newsletters",
+      "file": "rag_knowledge/quantum/quantum_finance_blogs.json",
+      "source_count": 15,
+      "topics": ["industry_news", "tutorials", "research"],
+      "ingested_at": "2024-12-15T00:00:00.000000"
+    }
+  },
   "newsletters": {
     "alpha_architect": {
       "name": "Alpha Architect",

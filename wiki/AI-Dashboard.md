@@ -29,9 +29,6 @@
 | **P/L** | $+0.00 (+0.00%) |
 | **Status** | ⏸️ No activity yet |
 
-
-| **Funnel Activity** | 0 orders, 0 stops |
-
 ---
 
 ## 🎯 North Star Goal

@@ -1,0 +1,257 @@
+{
+  "source": "Quantum Computing & Finance YouTube Educators - Curated Knowledge",
+  "category": "youtube_quantum_finance",
+  "extracted_date": "2024-12-15",
+  "channels": [
+    {
+      "channel_name": "IBM Qiskit",
+      "channel_url": "youtube.com/@qiskit",
+      "topics_covered": ["quantum basics", "qiskit tutorials", "quantum ML", "finance applications"],
+      "key_videos": [
+        {
+          "title": "Quantum Computing for Finance",
+          "type": "series",
+          "parts": 3,
+          "topics": ["portfolio optimization", "option pricing", "risk analysis"]
+        },
+        {
+          "title": "Qiskit Global Summer School 2023",
+          "type": "course",
+          "lectures": 20,
+          "topics": ["quantum fundamentals", "algorithms", "applications"]
+        },
+        {
+          "title": "QAOA for Portfolio Optimization",
+          "type": "tutorial",
+          "duration_mins": 45,
+          "code_included": true
+        }
+      ],
+      "key_insights": [
+        "QAOA converts portfolio optimization to QUBO form solvable on quantum hardware",
+        "Amplitude estimation achieves quadratic speedup for Monte Carlo simulations",
+        "VQE is most practical near-term algorithm for finance optimization",
+        "Quantum kernels can be used with classical SVM for trading signals",
+        "Current Qiskit Finance library has production-ready finance primitives"
+      ],
+      "relevance_to_trading": "High - direct implementation guidance with code"
+    },
+    {
+      "channel_name": "PennyLane (Xanadu)",
+      "channel_url": "youtube.com/@XanaduAI",
+      "topics_covered": ["quantum ML", "variational algorithms", "photonic quantum", "hybrid systems"],
+      "key_videos": [
+        {
+          "title": "Quantum Machine Learning Fundamentals",
+          "type": "series",
+          "parts": 10,
+          "topics": ["variational circuits", "quantum gradients", "classifiers"]
+        },
+        {
+          "title": "Quantum Kernels for Classification",
+          "type": "tutorial",
+          "duration_mins": 30,
+          "topics": ["feature maps", "kernel methods", "quantum advantage"]
+        }
+      ],
+      "key_insights": [
+        "PennyLane integrates with PyTorch and TensorFlow for hybrid models",
+        "Quantum feature maps can capture non-linear patterns in price data",
+        "Hardware-agnostic framework allows testing on multiple quantum backends",
+        "Parameter-shift rule enables gradient-based optimization of quantum circuits",
+        "Quantum neural networks can learn complex trading patterns"
+      ],
+      "relevance_to_trading": "High - ML focus directly applicable to signal generation"
+    },
+    {
+      "channel_name": "Chicago Quantum Exchange",
+      "channel_url": "youtube.com/@ChicagoQuantum",
+      "topics_covered": ["academic seminars", "industry talks", "quantum finance research"],
+      "key_videos": [
+        {
+          "title": "Quantum Advantage in Finance (Goldman Sachs)",
+          "type": "seminar",
+          "duration_mins": 60,
+          "speaker": "Will Zeng",
+          "topics": ["option pricing", "risk calculation", "production roadmap"]
+        },
+        {
+          "title": "Quantum Computing for Financial Services",
+          "type": "panel",
+          "duration_mins": 90,
+          "panelists": ["JP Morgan", "Goldman Sachs", "CME Group"]
+        }
+      ],
+      "key_insights": [
+        "Goldman Sachs targets 2027-2030 for quantum advantage in derivative pricing",
+        "JP Morgan focusing on quantum optimization for risk management",
+        "CME Group exploring quantum for market simulation",
+        "Error mitigation techniques enabling useful results on current hardware",
+        "Quantum annealing (D-Wave) showing promise for combinatorial optimization"
+      ],
+      "relevance_to_trading": "Medium - strategic insights, less code"
+    },
+    {
+      "channel_name": "Sabine Hossenfelder",
+      "channel_url": "youtube.com/@SabineHossenfelder",
+      "topics_covered": ["physics explanations", "quantum computing reality", "hype debunking"],
+      "key_videos": [
+        {
+          "title": "What Quantum Computing Can (and Can't) Do",
+          "type": "explainer",
+          "duration_mins": 20,
+          "topics": ["realistic expectations", "quantum limitations"]
+        },
+        {
+          "title": "Is the Stock Market Quantum Mechanical?",
+          "type": "analysis",
+          "duration_mins": 15,
+          "topics": ["market physics", "quantum analogies"]
+        }
+      ],
+      "key_insights": [
+        "Most quantum computing marketing is overhyped",
+        "Quantum advantage requires specific problem structures",
+        "Current quantum computers are noisy and error-prone",
+        "Theoretical speedups don't always translate to practical advantage",
+        "Understanding limitations is crucial before investing in quantum"
+      ],
+      "relevance_to_trading": "Critical - prevents wasted effort on hype"
+    },
+    {
+      "channel_name": "Microsoft Quantum",
+      "channel_url": "youtube.com/@MicrosoftQuantum",
+      "topics_covered": ["Azure Quantum", "quantum development", "enterprise applications"],
+      "key_videos": [
+        {
+          "title": "Quantum Computing for Computer Scientists",
+          "type": "course",
+          "lectures": 8,
+          "topics": ["linear algebra", "quantum gates", "algorithms"]
+        },
+        {
+          "title": "Azure Quantum for Finance",
+          "type": "demo",
+          "duration_mins": 45,
+          "topics": ["cloud quantum", "portfolio optimization"]
+        }
+      ],
+      "key_insights": [
+        "Azure Quantum provides access to multiple quantum hardware providers",
+        "Q# language designed for quantum algorithm development",
+        "Microsoft focusing on topological qubits for error correction",
+        "Resource estimation tools help plan quantum algorithm requirements",
+        "Enterprise-grade security for financial applications"
+      ],
+      "relevance_to_trading": "Medium - cloud platform option"
+    },
+    {
+      "channel_name": "3Blue1Brown",
+      "channel_url": "youtube.com/@3blue1brown",
+      "topics_covered": ["mathematical intuition", "linear algebra", "Fourier transform"],
+      "key_videos": [
+        {
+          "title": "Essence of Linear Algebra",
+          "type": "series",
+          "parts": 16,
+          "topics": ["vectors", "matrices", "eigenvalues", "transformations"]
+        },
+        {
+          "title": "But what is the Fourier Transform?",
+          "type": "explainer",
+          "duration_mins": 20,
+          "topics": ["frequency analysis", "signal processing"]
+        }
+      ],
+      "key_insights": [
+        "Linear algebra is prerequisite for understanding quantum computing",
+        "Quantum states are vectors in complex Hilbert space",
+        "Quantum gates are unitary matrix operations",
+        "Fourier transform is foundation of many quantum algorithms",
+        "Visual intuition helps grasp abstract quantum concepts"
+      ],
+      "relevance_to_trading": "Foundation - prerequisites for quantum understanding"
+    },
+    {
+      "channel_name": "Quantum Computing UK",
+      "channel_url": "youtube.com/@QuantumComputingUK",
+      "topics_covered": ["UK quantum industry", "tutorials", "news"],
+      "key_videos": [
+        {
+          "title": "Quantum Computing Finance Applications",
+          "type": "overview",
+          "duration_mins": 25,
+          "topics": ["banks using quantum", "use cases", "timeline"]
+        }
+      ],
+      "key_insights": [
+        "HSBC, Barclays, and NatWest exploring quantum applications",
+        "UK government investing £2.5B in quantum technologies",
+        "Cambridge Quantum (now Quantinuum) leading finance quantum research",
+        "Financial services expected to be first major quantum adopter"
+      ],
+      "relevance_to_trading": "Low - industry overview"
+    },
+    {
+      "channel_name": "D-Wave Systems",
+      "channel_url": "youtube.com/@dwaboratory",
+      "topics_covered": ["quantum annealing", "optimization", "real-world applications"],
+      "key_videos": [
+        {
+          "title": "Portfolio Optimization with Quantum Annealing",
+          "type": "tutorial",
+          "duration_mins": 40,
+          "topics": ["QUBO formulation", "real portfolio examples"]
+        },
+        {
+          "title": "Hybrid Solver Service for Finance",
+          "type": "demo",
+          "duration_mins": 30,
+          "topics": ["large-scale optimization", "hybrid quantum-classical"]
+        }
+      ],
+      "key_insights": [
+        "Quantum annealing is different from gate-based quantum computing",
+        "D-Wave specializes in optimization problems (ideal for portfolio allocation)",
+        "Hybrid solvers combine classical and quantum for large problems",
+        "Currently most mature quantum platform for combinatorial optimization",
+        "Real companies using D-Wave for production optimization today"
+      ],
+      "relevance_to_trading": "High - portfolio optimization is core use case"
+    }
+  ],
+  "recommended_video_topics": [
+    "QAOA tutorial for portfolio optimization",
+    "Amplitude estimation for Monte Carlo speedup",
+    "VQE for constrained optimization problems",
+    "Quantum machine learning for pattern recognition",
+    "Qiskit Finance library walkthrough",
+    "Quantum kernel methods for classification",
+    "Error mitigation on NISQ devices",
+    "D-Wave quantum annealing for QUBO problems",
+    "Linear algebra essentials for quantum computing",
+    "Realistic quantum computing expectations"
+  ],
+  "learning_path": [
+    {
+      "week": 1,
+      "focus": "Foundations",
+      "videos": ["3Blue1Brown Linear Algebra", "IBM Qiskit Basics"]
+    },
+    {
+      "week": 2,
+      "focus": "Quantum Algorithms",
+      "videos": ["Qiskit Summer School Lectures 1-5", "Microsoft QC for CS"]
+    },
+    {
+      "week": 3,
+      "focus": "Finance Applications",
+      "videos": ["IBM Quantum Computing for Finance Series", "D-Wave Portfolio Optimization"]
+    },
+    {
+      "week": 4,
+      "focus": "Implementation",
+      "videos": ["PennyLane QML Tutorials", "Qiskit Finance Library"]
+    }
+  ]
+}

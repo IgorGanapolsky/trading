@@ -39,6 +39,41 @@ except Exception as e:
 SYSTEM_STATE_PATH = Path(os.getenv("SYSTEM_STATE_PATH", "data/system_state.json"))
 
 
+def _refresh_account_data(logger) -> None:
+    """Fetch latest account data from Alpaca and update system_state.json."""
+    try:
+        from src.core.alpaca_trader import AlpacaTrader
+
+        trader = AlpacaTrader(paper=True)
+        account = trader.get_account_info()
+
+        equity = float(account.get("equity") or 0.0)
+        cash = float(account.get("cash") or 0.0)
+        buying_power = float(account.get("buying_power") or 0.0)
+
+        if equity > 0:
+            state_path = Path("data/system_state.json")
+            if state_path.exists():
+                with state_path.open("r", encoding="utf-8") as handle:
+                    state = json.load(handle)
+
+                state.setdefault("account", {})
+                state["account"]["current_equity"] = equity
+                state["account"]["cash"] = cash
+                # Update buying_power if available
+                state["account"]["buying_power"] = buying_power
+
+                # Update timestamp
+                state.setdefault("meta", {})
+                state["meta"]["last_updated"] = datetime.now().isoformat()
+
+                with state_path.open("w", encoding="utf-8") as handle:
+                    json.dump(state, handle, indent=2)
+                logger.info(f"System state refreshed: Equity=${equity:.2f}")
+    except Exception as e:
+        logger.warning(f"Failed to refresh account data: {e}")
+
+
 def _update_system_state_with_prediction_trade(trade_record: dict[str, Any], logger) -> None:
     """Update `data/system_state.json` so Tier 6 reflects the new prediction market trade."""
     state_path = Path("data/system_state.json")
@@ -1223,6 +1258,8 @@ def main() -> None:
     # Dynamic budget scaling: adjust DAILY_INVESTMENT based on account equity
     # This enables the system to scale towards $100/day profit goal
     # With $100k equity: $1000 daily investment → 10% return = $100 profit
+    _refresh_account_data(logger)
+
     _apply_dynamic_daily_budget(logger)
 
     # Set safe defaults

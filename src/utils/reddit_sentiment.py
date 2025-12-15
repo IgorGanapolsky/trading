@@ -9,16 +9,27 @@ Features:
 - Extracts ticker mentions and sentiment indicators
 - Scores sentiment using weighted algorithm
 - Caches results for 24 hours
-- FREE tier: 100 requests/minute (no API key needed for read-only)
+- **NO API KEY REQUIRED**: Uses public JSON API by default (free, no auth needed)
+- OPTIONAL: Use PRAW with API credentials for higher rate limits
+
+Fallback Mechanism:
+- If REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET are set in .env: Uses PRAW (authenticated, higher rate limits)
+- If not set: Uses public JSON API (no auth, ~60 requests/hour per IP)
 
 Usage:
-    # Command line
+    # Command line (works without API credentials)
     python reddit_sentiment.py --subreddits wallstreetbets,stocks --limit 25
 
-    # Programmatic
+    # Programmatic (works without API credentials)
     from reddit_sentiment import RedditSentiment
     scraper = RedditSentiment()
     data = scraper.collect_daily_sentiment()
+
+    # Optional: Use with PRAW credentials for higher rate limits
+    scraper = RedditSentiment(
+        client_id="your_client_id",
+        client_secret="your_client_secret"
+    )
 """
 
 import argparse
@@ -26,12 +37,21 @@ import json
 import logging
 import os
 import re
+import time
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-import praw
-from praw.exceptions import PRAWException
+import requests
+
+try:
+    import praw
+    from praw.exceptions import PRAWException
+    PRAW_AVAILABLE = True
+except ImportError:
+    PRAW_AVAILABLE = False
+    PRAWException = Exception
+
 from src.utils.retry_decorator import retry_with_backoff
 
 logger = logging.getLogger(__name__)
@@ -170,7 +190,7 @@ class RedditSentiment:
         Initialize Reddit sentiment scraper.
 
         Args:
-            client_id: Reddit API client ID (optional - can use read-only mode)
+            client_id: Reddit API client ID (optional - will use public API if not provided)
             client_secret: Reddit API client secret (optional)
             user_agent: Reddit API user agent (optional)
             data_dir: Directory to save sentiment data
@@ -179,54 +199,45 @@ class RedditSentiment:
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.cache_hours = cache_hours
+        self.reddit = None
+        self.use_praw = False
 
-        # Initialize Reddit API
-        # For read-only access, we need to create a Reddit app at:
-        # https://www.reddit.com/prefs/apps
-        # Click "create app" -> select "script" -> fill in details
-        # This gives us client_id and client_secret for read-only access
+        # Check environment variables first
+        if not client_id:
+            client_id = os.getenv("REDDIT_CLIENT_ID")
+        if not client_secret:
+            client_secret = os.getenv("REDDIT_CLIENT_SECRET")
+        if not user_agent:
+            user_agent = os.getenv("REDDIT_USER_AGENT", "TradingBot/1.0 by AutomatedTrader")
 
-        try:
-            # Check environment variables first
-            if not client_id:
-                client_id = os.getenv("REDDIT_CLIENT_ID")
-            if not client_secret:
-                client_secret = os.getenv("REDDIT_CLIENT_SECRET")
-            if not user_agent:
-                user_agent = os.getenv("REDDIT_USER_AGENT", "TradingBot/1.0 by AutomatedTrader")
-
-            if client_id and client_secret:
+        # Try to initialize PRAW if credentials are available
+        if client_id and client_secret and PRAW_AVAILABLE:
+            try:
                 self.reddit = praw.Reddit(
                     client_id=client_id,
                     client_secret=client_secret,
                     user_agent=user_agent,
                 )
-                logger.info("Initialized Reddit API with credentials")
-            else:
-                # Use dummy credentials for demonstration
-                # In production, you MUST provide real credentials
-                logger.warning("No Reddit API credentials provided!")
-                logger.warning("To use this scraper, create a Reddit app at:")
-                logger.warning("https://www.reddit.com/prefs/apps")
-                logger.warning("Then set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET in .env")
+                self.use_praw = True
+                logger.info("Initialized Reddit API with PRAW credentials")
+            except Exception as e:
+                logger.warning(f"Failed to initialize PRAW: {e}. Falling back to public JSON API")
+                self.use_praw = False
+        else:
+            logger.info("No Reddit API credentials provided. Using public JSON API (no auth required)")
+            self.use_praw = False
 
-                # This will fail but provides clear error message
-                raise ValueError(
-                    "Reddit API credentials required. "
-                    "Set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET in .env file. "
-                    "Create app at: https://www.reddit.com/prefs/apps"
-                )
-
-        except Exception as e:
-            logger.error(f"Failed to initialize Reddit API: {e}")
-            raise
+        # Set up user agent for public API requests
+        self.user_agent = user_agent
+        self.session = requests.Session()
+        self.session.headers.update({"User-Agent": self.user_agent})
 
     @retry_with_backoff(max_retries=3, initial_delay=2.0)
-    def scrape_subreddit(
+    def _scrape_subreddit_json(
         self, subreddit_name: str, limit: int = 25, time_filter: str = "day"
     ) -> list[dict]:
         """
-        Scrape posts from a subreddit.
+        Scrape posts from a subreddit using public JSON API (no auth required).
 
         Args:
             subreddit_name: Name of subreddit (without r/)
@@ -236,7 +247,75 @@ class RedditSentiment:
         Returns:
             List of post dictionaries with metadata
         """
-        logger.info(f"Scraping r/{subreddit_name} (limit={limit}, filter={time_filter})")
+        logger.info(f"Scraping r/{subreddit_name} via public JSON API (limit={limit}, filter={time_filter})")
+
+        # Reddit's public JSON endpoint
+        url = f"https://www.reddit.com/r/{subreddit_name}/hot.json"
+        params = {"limit": limit}
+
+        try:
+            # Add delay to respect rate limits (2 requests per second max)
+            time.sleep(0.5)
+
+            response = self.session.get(url, params=params, timeout=10)
+            response.raise_for_status()
+
+            data = response.json()
+            posts = []
+
+            # Parse JSON response
+            for child in data.get("data", {}).get("children", []):
+                post_data = child.get("data", {})
+
+                # Skip if older than time filter
+                created_utc = post_data.get("created_utc", 0)
+                post_age_hours = (datetime.utcnow() - datetime.utcfromtimestamp(created_utc)).total_seconds() / 3600
+
+                time_filter_hours = {"day": 24, "week": 168, "month": 720}
+                max_hours = time_filter_hours.get(time_filter, 24)
+
+                if post_age_hours > max_hours:
+                    continue
+
+                posts.append(
+                    {
+                        "id": post_data.get("id", ""),
+                        "title": post_data.get("title", ""),
+                        "text": post_data.get("selftext", ""),
+                        "author": post_data.get("author", "[deleted]"),
+                        "created_utc": created_utc,
+                        "score": post_data.get("score", 0),
+                        "upvote_ratio": post_data.get("upvote_ratio", 0.5),
+                        "num_comments": post_data.get("num_comments", 0),
+                        "flair": post_data.get("link_flair_text", ""),
+                        "url": post_data.get("url", ""),
+                        "permalink": f"https://reddit.com{post_data.get('permalink', '')}",
+                    }
+                )
+
+            logger.info(f"Scraped {len(posts)} posts from r/{subreddit_name} via JSON API")
+            return posts
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error scraping r/{subreddit_name} via JSON API: {e}")
+            raise
+
+    @retry_with_backoff(max_retries=3, initial_delay=2.0)
+    def _scrape_subreddit_praw(
+        self, subreddit_name: str, limit: int = 25, time_filter: str = "day"
+    ) -> list[dict]:
+        """
+        Scrape posts from a subreddit using PRAW (requires auth).
+
+        Args:
+            subreddit_name: Name of subreddit (without r/)
+            limit: Number of posts to fetch (default: 25)
+            time_filter: Time filter - 'day', 'week', 'month' (default: 'day')
+
+        Returns:
+            List of post dictionaries with metadata
+        """
+        logger.info(f"Scraping r/{subreddit_name} via PRAW (limit={limit}, filter={time_filter})")
 
         try:
             subreddit = self.reddit.subreddit(subreddit_name)
@@ -273,12 +352,33 @@ class RedditSentiment:
                     }
                 )
 
-            logger.info(f"Scraped {len(posts)} posts from r/{subreddit_name}")
+            logger.info(f"Scraped {len(posts)} posts from r/{subreddit_name} via PRAW")
             return posts
 
         except PRAWException as e:
-            logger.error(f"Error scraping r/{subreddit_name}: {e}")
+            logger.error(f"Error scraping r/{subreddit_name} via PRAW: {e}")
             raise
+
+    def scrape_subreddit(
+        self, subreddit_name: str, limit: int = 25, time_filter: str = "day"
+    ) -> list[dict]:
+        """
+        Scrape posts from a subreddit.
+
+        Uses PRAW if credentials are available, otherwise falls back to public JSON API.
+
+        Args:
+            subreddit_name: Name of subreddit (without r/)
+            limit: Number of posts to fetch (default: 25)
+            time_filter: Time filter - 'day', 'week', 'month' (default: 'day')
+
+        Returns:
+            List of post dictionaries with metadata
+        """
+        if self.use_praw:
+            return self._scrape_subreddit_praw(subreddit_name, limit, time_filter)
+        else:
+            return self._scrape_subreddit_json(subreddit_name, limit, time_filter)
 
     def extract_tickers(self, text: str) -> list[str]:
         """

@@ -39,6 +39,16 @@ except ImportError:
     RedditSentiment = None
 
 try:
+    from src.utils.tiktok_sentiment import TikTokSentiment
+except ImportError:
+    TikTokSentiment = None
+
+try:
+    from src.utils.linkedin_sentiment import LinkedInSentiment
+except ImportError:
+    LinkedInSentiment = None
+
+try:
     from src.utils.sentiment_loader import (
         load_latest_sentiment,
         normalize_sentiment_score,
@@ -110,6 +120,8 @@ class UnifiedSentiment:
         enable_news: bool = True,
         enable_reddit: bool = True,
         enable_youtube: bool = True,
+        enable_linkedin: bool = True,  # Now implemented via web scraping
+        enable_tiktok: bool = False,  # Implemented via web scraping (disabled by default)
     ):
         """
         Initialize unified sentiment analyzer.
@@ -119,6 +131,8 @@ class UnifiedSentiment:
             enable_news: Enable news sentiment (Yahoo, Stocktwits, Alpha Vantage)
             enable_reddit: Enable Reddit sentiment
             enable_youtube: Enable YouTube sentiment
+            enable_linkedin: Enable LinkedIn sentiment (web scraping)
+            enable_tiktok: Enable TikTok sentiment (web scraping, no API key required)
         """
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -132,7 +146,9 @@ class UnifiedSentiment:
 
         # Initialize source analyzers
         self.news_analyzer = None
+        self.linkedin_analyzer = None
         self.reddit_analyzer = None
+        self.tiktok_analyzer = None
 
         if enable_news and NewsSentimentAggregator:
             try:
@@ -149,6 +165,24 @@ class UnifiedSentiment:
             except Exception as e:
                 logger.warning(f"Failed to initialize Reddit analyzer: {e}")
                 self.enabled_sources["reddit"] = False
+
+        if enable_linkedin and LinkedInSentiment:
+            try:
+                linkedin_cache_dir = self.cache_dir / "linkedin"
+                self.linkedin_analyzer = LinkedInSentiment(data_dir=str(linkedin_cache_dir))
+                logger.info("LinkedIn sentiment analyzer initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize LinkedIn analyzer: {e}")
+                self.enabled_sources["linkedin"] = False
+
+
+        if enable_tiktok and TikTokSentiment:
+            try:
+                self.tiktok_analyzer = TikTokSentiment(data_dir=str(self.cache_dir))
+                logger.info("TikTok sentiment analyzer initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize TikTok analyzer: {e}")
+                self.enabled_sources["tiktok"] = False
 
         # Calculate active source weights (normalize to 1.0)
         self._normalize_weights()
@@ -375,16 +409,33 @@ class UnifiedSentiment:
         # Look for recent analysis files mentioning this ticker
         try:
             youtube_dir = Path("docs/youtube_analysis")
-            if not youtube_dir.exists():
-                return SourceSentiment(
-                    source="youtube",
-                    score=0.0,
-                    confidence=0.0,
-                    raw_data={},
-                    timestamp=datetime.now().isoformat(),
-                    available=False,
-                    error="YouTube analysis directory not found",
-                )
+            youtube_cache_dir = Path("data/youtube_cache")
+
+            # Create analysis directory if it doesn't exist
+            youtube_dir.mkdir(parents=True, exist_ok=True)
+
+            # Map ticker symbols to company names for better matching
+            ticker_to_company = {
+                "NVDA": ["nvidia", "nvda"],
+                "TSLA": ["tesla", "tsla"],
+                "AAPL": ["apple", "aapl"],
+                "AMZN": ["amazon", "amzn"],
+                "GOOGL": ["google", "alphabet", "googl", "goog"],
+                "GOOG": ["google", "alphabet", "googl", "goog"],
+                "META": ["meta", "facebook", "meta platforms"],
+                "MSFT": ["microsoft", "msft"],
+                "SPY": ["spy", "s&p 500", "s&p500", "sp500"],
+                "QQQ": ["qqq", "nasdaq", "nasdaq-100"],
+                "PLTR": ["palantir", "palanteer", "pltr"],
+                "UBER": ["uber"],
+                "AMD": ["amd", "advanced micro devices"],
+                "ORCL": ["oracle", "orcl"],
+                "LLY": ["eli lilly", "lilly", "lly"],
+                "PINS": ["pinterest", "pins"],
+            }
+
+            # Get search terms for this symbol
+            search_terms = ticker_to_company.get(symbol.upper(), [symbol.lower()])
 
             # Find recent analysis files (last 7 days)
             cutoff_time = datetime.now() - timedelta(days=7)
@@ -395,56 +446,107 @@ class UnifiedSentiment:
                     continue
 
                 # Read file and check if it mentions the ticker
-                content = analysis_file.read_text()
-                if symbol in content.upper():
-                    recent_analyses.append(content)
+                try:
+                    content = analysis_file.read_text()
+                    content_lower = content.lower()
+                    # Look for any matching search term
+                    if any(term in content_lower for term in search_terms):
+                        recent_analyses.append(content)
+                except Exception as e:
+                    logger.debug(f"Error reading {analysis_file}: {e}")
+                    continue
+
+            # Fallback: Check cached transcripts if no analysis files found
+            if not recent_analyses and youtube_cache_dir.exists():
+                logger.debug(f"No analysis files for {symbol}, checking cached transcripts...")
+                for transcript_file in youtube_cache_dir.glob("*_transcript.txt"):
+                    if transcript_file.stat().st_mtime < cutoff_time.timestamp():
+                        continue
+
+                    try:
+                        content = transcript_file.read_text()
+                        content_lower = content.lower()
+                        # Check for any matching search term
+                        if any(term in content_lower for term in search_terms):
+                            recent_analyses.append(content)
+                    except Exception as e:
+                        logger.debug(f"Error reading {transcript_file}: {e}")
+                        continue
 
             if not recent_analyses:
+                logger.debug(f"No recent YouTube data for {symbol}")
                 return SourceSentiment(
                     source="youtube",
                     score=0.0,
                     confidence=0.0,
-                    raw_data={},
+                    raw_data={
+                        "analyses_found": 0,
+                        "transcripts_checked": len(list(youtube_cache_dir.glob("*_transcript.txt"))) if youtube_cache_dir.exists() else 0,
+                    },
                     timestamp=datetime.now().isoformat(),
                     available=True,
-                    error="No recent YouTube analysis for ticker",
+                    error=f"No recent YouTube content mentioning {symbol}",
                 )
 
-            # Simple sentiment extraction (can be enhanced with LLM analysis)
+            # Enhanced sentiment extraction with more keywords
             bullish_keywords = [
-                "bullish",
-                "buy",
-                "long",
-                "positive",
-                "upgrade",
-                "growth",
+                "bullish", "buy", "long", "positive", "upgrade", "growth",
+                "strong buy", "overweight", "outperform", "recommend buying",
+                "undervalued", "opportunity", "upside", "rally", "breakout",
+                "momentum", "trending up", "support", "accumulate"
             ]
             bearish_keywords = [
-                "bearish",
-                "sell",
-                "short",
-                "negative",
-                "downgrade",
-                "decline",
+                "bearish", "sell", "short", "negative", "downgrade", "decline",
+                "strong sell", "underweight", "underperform", "avoid",
+                "overvalued", "risk", "downside", "pullback", "resistance",
+                "weakness", "trending down", "dump", "exit"
             ]
+
+            # Context-aware keywords (need ticker nearby)
+            strong_bullish = ["recommend", "pick", "favorite", "top choice", "best"]
+            strong_bearish = ["warning", "caution", "concern", "problem", "risk"]
 
             bullish_count = 0
             bearish_count = 0
+            strong_signals = 0
 
             for content_lower in [c.lower() for c in recent_analyses]:
-                bullish_count += sum(1 for kw in bullish_keywords if kw in content_lower)
-                bearish_count += sum(1 for kw in bearish_keywords if kw in content_lower)
+                # Count regular keywords
+                bullish_count += sum(content_lower.count(kw) for kw in bullish_keywords)
+                bearish_count += sum(content_lower.count(kw) for kw in bearish_keywords)
 
-            # Normalize score
+                # Check for strong signals near ticker symbol
+                symbol_positions = [i for i in range(len(content_lower))
+                                   if content_lower[i:i+len(symbol)] == symbol.lower()]
+
+                for pos in symbol_positions:
+                    # Look 100 chars before and after ticker
+                    context = content_lower[max(0, pos-100):min(len(content_lower), pos+100)]
+
+                    for kw in strong_bullish:
+                        if kw in context:
+                            bullish_count += 3  # Weight strong signals higher
+                            strong_signals += 1
+
+                    for kw in strong_bearish:
+                        if kw in context:
+                            bearish_count += 3
+                            strong_signals += 1
+
+            # Normalize score with asymmetric scaling
             total_keywords = bullish_count + bearish_count
             if total_keywords > 0:
+                # Calculate raw sentiment
                 normalized_score = (bullish_count - bearish_count) / total_keywords
-                confidence = min(
-                    0.9, 0.3 + (total_keywords / 20.0)
-                )  # More keywords = higher confidence
+
+                # Apply confidence based on volume and strong signals
+                base_confidence = min(0.7, 0.2 + (total_keywords / 30.0))
+                strong_signal_boost = min(0.2, strong_signals * 0.05)
+                confidence = min(0.9, base_confidence + strong_signal_boost)
             else:
+                # Ticker mentioned but no sentiment keywords = neutral with low confidence
                 normalized_score = 0.0
-                confidence = 0.1
+                confidence = 0.15
 
             return SourceSentiment(
                 source="youtube",
@@ -454,6 +556,8 @@ class UnifiedSentiment:
                     "analyses_found": len(recent_analyses),
                     "bullish_keywords": bullish_count,
                     "bearish_keywords": bearish_count,
+                    "strong_signals": strong_signals,
+                    "total_keywords": total_keywords,
                 },
                 timestamp=datetime.now().isoformat(),
                 available=True,
@@ -463,6 +567,155 @@ class UnifiedSentiment:
             logger.error(f"Error getting YouTube sentiment for {symbol}: {e}")
             return SourceSentiment(
                 source="youtube",
+                score=0.0,
+                confidence=0.0,
+                raw_data={},
+                timestamp=datetime.now().isoformat(),
+                available=False,
+                error=str(e),
+            )
+
+    def _get_linkedin_sentiment(self, symbol: str) -> SourceSentiment:
+        """Get sentiment from LinkedIn professional posts"""
+        if not self.enabled_sources.get("linkedin") or not self.linkedin_analyzer:
+            return SourceSentiment(
+                source="linkedin",
+                score=0.0,
+                confidence=0.0,
+                raw_data={},
+                timestamp=datetime.now().isoformat(),
+                available=False,
+                error="LinkedIn source disabled or unavailable",
+            )
+
+        try:
+            # Map common tickers to company names for better search results
+            ticker_to_company = {
+                "NVDA": "Nvidia",
+                "TSLA": "Tesla",
+                "AAPL": "Apple",
+                "AMZN": "Amazon",
+                "GOOGL": "Google",
+                "GOOG": "Google",
+                "META": "Meta",
+                "MSFT": "Microsoft",
+                "SPY": "S&P 500",
+                "QQQ": "Nasdaq",
+                "PLTR": "Palantir",
+                "UBER": "Uber",
+                "AMD": "AMD",
+                "ORCL": "Oracle",
+                "LLY": "Eli Lilly",
+                "PINS": "Pinterest",
+            }
+
+            company_name = ticker_to_company.get(symbol.upper())
+
+            # Get LinkedIn sentiment
+            linkedin_data = self.linkedin_analyzer.get_ticker_sentiment(
+                symbol,
+                company_name=company_name,
+                force_refresh=False,
+            )
+
+            # Check if there was an error
+            if linkedin_data.get("error") and linkedin_data.get("mentions_analyzed", 0) == 0:
+                logger.debug(f"LinkedIn error for {symbol}: {linkedin_data['error']}")
+                return SourceSentiment(
+                    source="linkedin",
+                    score=0.0,
+                    confidence=0.0,
+                    raw_data=linkedin_data,
+                    timestamp=linkedin_data.get("timestamp", datetime.now().isoformat()),
+                    available=True,
+                    error=linkedin_data["error"],
+                )
+
+            # Normalize score from -100..100 to -1..1
+            normalized_score = linkedin_data.get("score", 0) / 100.0
+
+            # Map confidence to 0..1 scale
+            confidence_map = {"low": 0.3, "medium": 0.6, "high": 0.9}
+            confidence = confidence_map.get(linkedin_data.get("confidence", "low"), 0.5)
+
+            return SourceSentiment(
+                source="linkedin",
+                score=normalized_score,
+                confidence=confidence,
+                raw_data={
+                    "mentions_analyzed": linkedin_data.get("mentions_analyzed", 0),
+                    "total_snippets": linkedin_data.get("total_snippets", 0),
+                    "bullish_keywords": linkedin_data.get("bullish_keywords", 0),
+                    "bearish_keywords": linkedin_data.get("bearish_keywords", 0),
+                    "sentiment": linkedin_data.get("sentiment", "neutral"),
+                },
+                timestamp=linkedin_data.get("timestamp", datetime.now().isoformat()),
+                available=True,
+            )
+
+        except Exception as e:
+            logger.error(f"Error getting LinkedIn sentiment for {symbol}: {e}")
+            return SourceSentiment(
+                source="linkedin",
+                score=0.0,
+                confidence=0.0,
+                raw_data={},
+                timestamp=datetime.now().isoformat(),
+                available=False,
+                error=str(e),
+            )
+
+    def _get_tiktok_sentiment(self, symbol: str) -> SourceSentiment:
+        """Get sentiment from TikTok"""
+        if not self.enabled_sources.get("tiktok") or not self.tiktok_analyzer:
+            return SourceSentiment(
+                source="tiktok",
+                score=0.0,
+                confidence=0.0,
+                raw_data={},
+                timestamp=datetime.now().isoformat(),
+                available=False,
+                error="TikTok source disabled or unavailable",
+            )
+
+        try:
+            # Get TikTok sentiment data
+            tiktok_data = self.tiktok_analyzer.get_ticker_sentiment(symbol, use_cache=True)
+
+            if tiktok_data.get("error") and tiktok_data["videos_analyzed"] == 0:
+                logger.debug(f"No TikTok data for {symbol}: {tiktok_data.get('error')}")
+                return SourceSentiment(
+                    source="tiktok",
+                    score=0.0,
+                    confidence=0.0,
+                    raw_data=tiktok_data,
+                    timestamp=tiktok_data.get("timestamp", datetime.now().isoformat()),
+                    available=True,
+                    error=tiktok_data.get("error"),
+                )
+
+            # TikTok scores are already normalized to -1.0 to 1.0
+            normalized_score = tiktok_data.get("score", 0.0)
+            confidence = tiktok_data.get("confidence", 0.0)
+
+            return SourceSentiment(
+                source="tiktok",
+                score=normalized_score,
+                confidence=confidence,
+                raw_data={
+                    "videos_analyzed": tiktok_data.get("videos_analyzed", 0),
+                    "bullish_count": tiktok_data.get("bullish_count", 0),
+                    "bearish_count": tiktok_data.get("bearish_count", 0),
+                    "total_engagement": tiktok_data.get("total_engagement", 0),
+                },
+                timestamp=tiktok_data.get("timestamp", datetime.now().isoformat()),
+                available=True,
+            )
+
+        except Exception as e:
+            logger.error(f"Error getting TikTok sentiment for {symbol}: {e}")
+            return SourceSentiment(
+                source="tiktok",
                 score=0.0,
                 confidence=0.0,
                 raw_data={},
@@ -662,9 +915,25 @@ class UnifiedSentiment:
             elif source_name == "youtube":
                 analyses = raw_data.get("analyses_found", 0)
                 print(f"  Details: {analyses} recent video analyses")
+            elif source_name == "tiktok":
+                videos = raw_data.get("videos_analyzed", 0)
+                bullish = raw_data.get("bullish_count", 0)
+                bearish = raw_data.get("bearish_count", 0)
+                engagement = raw_data.get("total_engagement", 0)
+                print(
+                    f"  Details: {videos} videos, {bullish} bullish, {bearish} bearish, "
+                    f"{engagement:,} total engagement"
+                )
             elif source_name == "news":
                 sources_used = list(raw_data.keys())
                 print(f"  Details: {', '.join(sources_used)}")
+            elif source_name == "linkedin":
+                snippets = raw_data.get("total_snippets", 0)
+                mentions = raw_data.get("mentions_analyzed", 0)
+                print(f"  Details: {snippets} snippets found, {mentions} mentions analyzed")
+            elif source_name == "tiktok":
+                videos = raw_data.get("videos_analyzed", 0)
+                print(f"  Details: {videos} videos analyzed")
 
         print("\n" + "=" * 80 + "\n")
 
@@ -685,6 +954,7 @@ def main():
     parser.add_argument("--disable-news", action="store_true", help="Disable news sentiment")
     parser.add_argument("--disable-reddit", action="store_true", help="Disable Reddit sentiment")
     parser.add_argument("--disable-youtube", action="store_true", help="Disable YouTube sentiment")
+    parser.add_argument("--enable-tiktok", action="store_true", help="Enable TikTok sentiment (default: disabled)")
 
     args = parser.parse_args()
 
@@ -702,6 +972,7 @@ def main():
         enable_news=not args.disable_news,
         enable_reddit=not args.disable_reddit,
         enable_youtube=not args.disable_youtube,
+        enable_tiktok=args.enable_tiktok,
     )
 
     # Analyze each symbol

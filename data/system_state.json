@@ -362,7 +362,12 @@
       "Nov 5: MACD indicator integrated into both Tier 1 (CoreStrategy) and Tier 2 (GrowthStrategy)",
       "MACD confirms momentum - filters out false signals from RSI alone",
       "MACD histogram > 0 = bullish (MACD above signal line) = BUY signal",
-      "MACD histogram < 0 = bearish (MACD below signal line) = SELL signal"
+      "MACD histogram < 0 = bearish (MACD below signal line) = SELL signal",
+      "Dec 15 2025: CTO ANALYSIS - Short options (SPY/AMD) = 75% win rate, +$327 - PRIMARY STRATEGY",
+      "Dec 15 2025: CTO ANALYSIS - Crypto spot DCA into downtrends = 0% win rate - STOP THIS PATTERN",
+      "Dec 15 2025: CTO ANALYSIS - 62.2% backtest was cherry-picked, actual range is 38-52%",
+      "Dec 15 2025: PARAMETER CHANGE - Profit target: 1% → 3%, Stop loss: 1% → 2%",
+      "Dec 15 2025: PARAMETER CHANGE - Daily investment: $10 → $50 (5x increase)"
     ],
     "crypto_patterns": [
       "Nov 17: Tier 5 crypto strategy activated - BTC/ETH weekend trading",
