@@ -59,6 +59,9 @@ pytest-timeout>=2.0.0
 # scikit-learn==1.5.0            # Never imported - ML models not implemented
 # python-crontab==3.0.0          # Never imported - using schedule instead
 
-# CONDITIONALLY REMOVED (see REQUIREMENTS_AUDIT_REPORT.md):
-# chromadb==0.4.22               # Only used in RAG test scripts (not production)
-# sentence-transformers==3.0.1   # Only used in RAG embeddings (not production)
+# RAG Vector Databases (Required for trading - Dec 15, 2025)
+# Both are used in production: ChromaDB for legacy, LanceDB for new code
+chromadb==0.6.3
+lancedb>=0.4.0
+
+# NOTE: sentence-transformers already included above (line 45)
