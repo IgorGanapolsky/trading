@@ -208,3 +208,27 @@ repos:
         pass_filenames: false
         verbose: true
         stages: [pre-commit]
+
+      - id: code-hygiene-check
+        name: Code Hygiene Check (ll_042 Prevention)
+        entry: python3 scripts/verify_code_hygiene.py
+        language: system
+        pass_filenames: false
+        verbose: true
+        stages: [pre-commit]
+
+      - id: block-temp-files
+        name: Block Temporary/Proof Files (ll_042 Prevention)
+        entry: >
+          bash -c 'FOUND=0;
+          for f in .ai_proof*.md .*_summary*.md debug_*.py; do
+            if [ -f "$f" ]; then
+              echo "ERROR: Temporary file should not be committed: $f";
+              FOUND=1;
+            fi;
+          done;
+          exit $FOUND'
+        language: system
+        pass_filenames: false
+        verbose: true
+        stages: [pre-commit]
