@@ -47,6 +47,26 @@ class OptionsSignal:
     put_spread_width: float  # Percentage width for put spread
     confidence: float  # 0-1
     reasoning: str
+    
+    @property
+    def is_actionable(self) -> bool:
+        """Check if signal is actionable (not a skip)."""
+        return self.strategy != "skip"
+    
+    @property
+    def call_spread_width_pct(self) -> float:
+        """Alias for call_spread_width (for backward compatibility)."""
+        return self.call_spread_width
+    
+    @property
+    def put_spread_width_pct(self) -> float:
+        """Alias for put_spread_width (for backward compatibility)."""
+        return self.put_spread_width
+    
+    @property
+    def reason(self) -> str:
+        """Alias for reasoning (for backward compatibility)."""
+        return self.reasoning
 
 
 class OptionsIVSignalGenerator:
