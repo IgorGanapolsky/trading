@@ -278,6 +278,19 @@ class DashboardGenerator:
             with open(self.system_state_file) as f:
                 system_state = json.load(f)
         
+        # Load tracker for weekly/monthly summaries
+        import sys
+        sys.path.insert(0, str(self.data_dir.parent / 'scripts'))
+        try:
+            from enhanced_performance_tracker import EnhancedPerformanceTracker
+            tracker = EnhancedPerformanceTracker()
+            weekly = tracker.get_weekly_summary()
+            monthly = tracker.get_monthly_summary()
+        except Exception as e:
+            print(f"Warning: Could not load weekly/monthly summaries: {e}")
+            weekly = None
+            monthly = None
+        
         # Generate graphs
         print("📊 Generating allocation pie chart...")
         allocation_graph = self.generate_allocation_pie_chart(snapshot)
@@ -296,13 +309,63 @@ class DashboardGenerator:
         md.append("# 📊 Trading Performance Dashboard")
         md.append(f"\n*Last Updated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC*\n")
         
-        # Summary section
+        # Summary section with weekly/monthly
         md.append("## 🎯 Performance Summary\n")
+        md.append("### Today's Performance\n")
         md.append(f"**Total Equity:** ${snapshot.get('total_equity', 0):,.2f}")
         md.append(f"**Total P/L:** ${snapshot.get('total_pl', 0):+,.2f} ({snapshot.get('total_pl_pct', 0):+.2f}%)")
         md.append(f"**Total Trades:** {snapshot.get('total_trades', 0)}")
         md.append(f"**Win Rate:** {snapshot.get('overall_win_rate', 0):.1f}%")
         md.append(f"**Date:** {snapshot.get('date', 'N/A')}\n")
+        
+        # Weekly summary
+        if weekly:
+            md.append("### 📅 Weekly Summary (Last 7 Days)\n")
+            md.append(f"**Total P/L:** ${weekly['total_pl']:+,.2f}")
+            md.append(f"**Total Trades:** {weekly['total_trades']}")
+            md.append("")
+            md.append("| Category | P/L | Trades | Win Rate |")
+            md.append("|----------|-----|--------|----------|")
+            for cat in ['Crypto', 'Equities', 'Options', 'Bonds']:
+                cat_key = cat.lower()
+                cat_data = weekly[cat_key]
+                pl_emoji = "🟢" if cat_data['total_pl'] > 0 else "🔴" if cat_data['total_pl'] < 0 else "⚪"
+                md.append(f"| {pl_emoji} **{cat}** | ${cat_data['total_pl']:+,.2f} | {cat_data['trades']} | {cat_data['win_rate']:.1f}% |")
+            md.append("")
+        
+        # Monthly summary
+        if monthly:
+            md.append("### 📆 Monthly Summary (Last 30 Days)\n")
+            md.append(f"**Total P/L:** ${monthly['total_pl']:+,.2f}")
+            md.append(f"**Total Trades:** {monthly['total_trades']}")
+            md.append("")
+            md.append("| Category | P/L | Trades | Win Rate |")
+            md.append("|----------|-----|--------|----------|")
+            for cat in ['Crypto', 'Equities', 'Options', 'Bonds']:
+                cat_key = cat.lower()
+                cat_data = monthly[cat_key]
+                pl_emoji = "🟢" if cat_data['total_pl'] > 0 else "🔴" if cat_data['total_pl'] < 0 else "⚪"
+                md.append(f"| {pl_emoji} **{cat}** | ${cat_data['total_pl']:+,.2f} | {cat_data['trades']} | {cat_data['win_rate']:.1f}% |")
+            md.append("")
+        
+        # Alerts section
+        try:
+            from category_alerts import CategoryAlerts
+            monitor = CategoryAlerts()
+            recent_alerts = monitor.get_recent_alerts(hours=24)
+            
+            if recent_alerts:
+                md.append("## 🚨 Recent Alerts (Last 24 Hours)\n")
+                for alert in recent_alerts:
+                    severity_emoji = {
+                        'info': '🎉',
+                        'warning': '⚠️',
+                        'critical': '🚨'
+                    }.get(alert['severity'], '📢')
+                    md.append(f"- {severity_emoji} **{alert['message']}**")
+                md.append("")
+        except Exception as e:
+            print(f"Warning: Could not load alerts: {e}")
         
         # Graphs
         md.append("## 📈 Visual Analytics\n")

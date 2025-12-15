@@ -1,14 +1,44 @@
 # 📊 Trading Performance Dashboard
 
-*Last Updated: 2025-12-15 16:58:03 UTC*
+*Last Updated: 2025-12-15 17:02:17 UTC*
 
 ## 🎯 Performance Summary
+
+### Today's Performance
 
 **Total Equity:** $4,713.82
 **Total P/L:** $+322.33 (+6.84%)
 **Total Trades:** 8
 **Win Rate:** 0.0%
 **Date:** 2025-12-15
+
+### 📅 Weekly Summary (Last 7 Days)
+
+**Total P/L:** $+644.66
+**Total Trades:** 18
+
+| Category | P/L | Trades | Win Rate |
+|----------|-----|--------|----------|
+| 🔴 **Crypto** | $-0.86 | 8 | 0.0% |
+| 🔴 **Equities** | $-8.29 | 0 | 0.0% |
+| 🟢 **Options** | $+653.94 | 8 | 75.0% |
+| 🔴 **Bonds** | $-0.13 | 2 | 100.0% |
+
+### 📆 Monthly Summary (Last 30 Days)
+
+**Total P/L:** $+644.66
+**Total Trades:** 18
+
+| Category | P/L | Trades | Win Rate |
+|----------|-----|--------|----------|
+| 🔴 **Crypto** | $-0.86 | 8 | 0.0% |
+| 🔴 **Equities** | $-8.29 | 0 | 0.0% |
+| 🟢 **Options** | $+653.94 | 8 | 75.0% |
+| 🔴 **Bonds** | $-0.13 | 2 | 100.0% |
+
+## 🚨 Recent Alerts (Last 24 Hours)
+
+- 🎉 **🎉 OPTIONS hit profit target! P/L: $+326.97**
 
 ## 📈 Visual Analytics
 

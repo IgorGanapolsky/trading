@@ -376,15 +376,140 @@ class EnhancedPerformanceTracker:
         return snapshot_dict
 
 
+    def get_weekly_summary(self) -> Dict:
+        """Get weekly rollup of category performance."""
+        if not self.performance_file.exists():
+            return {}
+        
+        with open(self.performance_file) as f:
+            log = json.load(f)
+        
+        # Get last 7 days
+        from datetime import datetime, timedelta
+        week_ago = datetime.now(timezone.utc) - timedelta(days=7)
+        
+        weekly_data = []
+        for entry in log:
+            entry_date = datetime.fromisoformat(entry['timestamp'].replace('Z', '+00:00'))
+            if entry_date >= week_ago:
+                weekly_data.append(entry)
+        
+        if not weekly_data:
+            return {}
+        
+        # Calculate weekly totals
+        weekly = {
+            'crypto': {'total_pl': 0, 'trades': 0, 'wins': 0},
+            'equities': {'total_pl': 0, 'trades': 0, 'wins': 0},
+            'options': {'total_pl': 0, 'trades': 0, 'wins': 0},
+            'bonds': {'total_pl': 0, 'trades': 0, 'wins': 0},
+            'total_pl': 0,
+            'total_trades': 0
+        }
+        
+        for entry in weekly_data:
+            for cat in ['crypto', 'equities', 'options', 'bonds']:
+                cat_data = entry.get(cat, {})
+                weekly[cat]['total_pl'] += cat_data.get('total_pl', 0)
+                weekly[cat]['trades'] += cat_data.get('trades_count', 0)
+                # Estimate wins from win_rate
+                win_rate = cat_data.get('win_rate', 0) / 100
+                weekly[cat]['wins'] += int(cat_data.get('trades_count', 0) * win_rate)
+            
+            weekly['total_pl'] += entry.get('total_pl', 0)
+            weekly['total_trades'] += entry.get('total_trades', 0)
+        
+        # Calculate win rates
+        for cat in ['crypto', 'equities', 'options', 'bonds']:
+            if weekly[cat]['trades'] > 0:
+                weekly[cat]['win_rate'] = (weekly[cat]['wins'] / weekly[cat]['trades']) * 100
+            else:
+                weekly[cat]['win_rate'] = 0
+        
+        return weekly
+    
+    def get_monthly_summary(self) -> Dict:
+        """Get monthly rollup of category performance."""
+        if not self.performance_file.exists():
+            return {}
+        
+        with open(self.performance_file) as f:
+            log = json.load(f)
+        
+        # Get last 30 days
+        from datetime import datetime, timedelta
+        month_ago = datetime.now(timezone.utc) - timedelta(days=30)
+        
+        monthly_data = []
+        for entry in log:
+            entry_date = datetime.fromisoformat(entry['timestamp'].replace('Z', '+00:00'))
+            if entry_date >= month_ago:
+                monthly_data.append(entry)
+        
+        if not monthly_data:
+            return {}
+        
+        # Calculate monthly totals
+        monthly = {
+            'crypto': {'total_pl': 0, 'trades': 0, 'wins': 0},
+            'equities': {'total_pl': 0, 'trades': 0, 'wins': 0},
+            'options': {'total_pl': 0, 'trades': 0, 'wins': 0},
+            'bonds': {'total_pl': 0, 'trades': 0, 'wins': 0},
+            'total_pl': 0,
+            'total_trades': 0
+        }
+        
+        for entry in monthly_data:
+            for cat in ['crypto', 'equities', 'options', 'bonds']:
+                cat_data = entry.get(cat, {})
+                monthly[cat]['total_pl'] += cat_data.get('total_pl', 0)
+                monthly[cat]['trades'] += cat_data.get('trades_count', 0)
+                # Estimate wins from win_rate
+                win_rate = cat_data.get('win_rate', 0) / 100
+                monthly[cat]['wins'] += int(cat_data.get('trades_count', 0) * win_rate)
+            
+            monthly['total_pl'] += entry.get('total_pl', 0)
+            monthly['total_trades'] += entry.get('total_trades', 0)
+        
+        # Calculate win rates
+        for cat in ['crypto', 'equities', 'options', 'bonds']:
+            if monthly[cat]['trades'] > 0:
+                monthly[cat]['win_rate'] = (monthly[cat]['wins'] / monthly[cat]['trades']) * 100
+            else:
+                monthly[cat]['win_rate'] = 0
+        
+        return monthly
+
+
 if __name__ == '__main__':
     tracker = EnhancedPerformanceTracker()
     snapshot = tracker.generate_snapshot()
     tracker.save_snapshot(snapshot)
     
     print()
-    print("Category Performance:")
+    print("Category Performance (Today):")
     print(f"  Crypto:    ${snapshot.crypto.total_pl:+.2f} ({snapshot.crypto.allocation_pct:.1f}%)")
     print(f"  Equities:  ${snapshot.equities.total_pl:+.2f} ({snapshot.equities.allocation_pct:.1f}%)")
     print(f"  Options:   ${snapshot.options.total_pl:+.2f} ({snapshot.options.allocation_pct:.1f}%)")
     print(f"  Bonds:     ${snapshot.bonds.total_pl:+.2f} ({snapshot.bonds.allocation_pct:.1f}%)")
     print(f"  Total:     ${snapshot.total_pl:+.2f}")
+    
+    # Show weekly summary
+    weekly = tracker.get_weekly_summary()
+    if weekly:
+        print()
+        print("Weekly Summary (Last 7 Days):")
+        print(f"  Total P/L:    ${weekly['total_pl']:+.2f}")
+        print(f"  Total Trades: {weekly['total_trades']}")
+        for cat in ['crypto', 'equities', 'options', 'bonds']:
+            print(f"  {cat.capitalize():10} ${weekly[cat]['total_pl']:+8.2f} ({weekly[cat]['trades']} trades, {weekly[cat]['win_rate']:.0f}% win rate)")
+    
+    # Show monthly summary
+    monthly = tracker.get_monthly_summary()
+    if monthly:
+        print()
+        print("Monthly Summary (Last 30 Days):")
+        print(f"  Total P/L:    ${monthly['total_pl']:+.2f}")
+        print(f"  Total Trades: {monthly['total_trades']}")
+        for cat in ['crypto', 'equities', 'options', 'bonds']:
+            print(f"  {cat.capitalize():10} ${monthly[cat]['total_pl']:+8.2f} ({monthly[cat]['trades']} trades, {monthly[cat]['win_rate']:.0f}% win rate)")
