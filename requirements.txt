@@ -142,7 +142,7 @@ requests-toolbelt==1.0.0
 rpds-py==0.30.0
 rsa==4.9.1
 schedule==1.2.0
-scikit-learn==1.7.2
+scikit-learn==1.8.0
 scipy==1.16.3
 sgmllib3k==1.0.0
 six==1.17.0
@@ -180,5 +180,3 @@ yarl==1.22.0
 yfinance==0.2.58
 youtube-transcript-api==1.2.3
 zstandard==0.23.0
-google-genai>=0.3.0
-transformers>=4.30.0
