@@ -421,5 +421,70 @@ class TestTraceDecisionRecord:
         assert restored.confidence == record.confidence
 
 
+class TestLangSmithConfiguration:
+    """Tests to prevent configuration drift - LL_047."""
+
+    EXPECTED_PROJECT = "igor-trading-system"
+    FILES_TO_CHECK = [
+        ".github/workflows/daily-trading.yml",
+        ".github/workflows/weekend-crypto-trading.yml",
+        ".github/workflows/rl-training-continuous.yml",
+        ".github/workflows/model-training.yml",
+        ".github/workflows/combined-trading.yml",
+        ".env.example",
+        "src/utils/langsmith_wrapper.py",
+        "scripts/rl_training_orchestrator.py",
+    ]
+
+    def test_ll_047_langsmith_project_consistency(self):
+        """REGRESSION LL_047: All LangSmith configs must use 'igor-trading-system'.
+
+        This test prevents the silent configuration drift that caused the
+        LangSmith dashboard to appear broken on Dec 15, 2025.
+        """
+        import re
+
+        mismatches = []
+
+        for filepath in self.FILES_TO_CHECK:
+            path = Path(filepath)
+            if not path.exists():
+                continue
+
+            content = path.read_text()
+
+            # Check LANGCHAIN_PROJECT patterns
+            patterns = [
+                r"LANGCHAIN_PROJECT[=:]\s*['\"]([^'\"]+)['\"]",
+                r'LANGCHAIN_PROJECT[=:]\s*["\']([^"\']+)["\']',
+                r"LANGCHAIN_PROJECT\",\s*\"([^\"]+)\"",
+            ]
+
+            for pattern in patterns:
+                matches = re.findall(pattern, content)
+                for match in matches:
+                    if match != self.EXPECTED_PROJECT:
+                        mismatches.append(f"{filepath}: found '{match}'")
+
+        assert not mismatches, (
+            f"REGRESSION LL_047: LangSmith project name inconsistency!\n"
+            f"Expected: '{self.EXPECTED_PROJECT}'\n"
+            f"Mismatches:\n  " + "\n  ".join(mismatches)
+        )
+
+    def test_langsmith_wrapper_default_project(self):
+        """Verify langsmith_wrapper uses correct default project."""
+        from src.utils.langsmith_wrapper import LANGSMITH_ENABLED
+        import os
+
+        # Check the default in the module
+        wrapper_path = Path("src/utils/langsmith_wrapper.py")
+        content = wrapper_path.read_text()
+
+        assert self.EXPECTED_PROJECT in content, (
+            f"langsmith_wrapper.py must reference '{self.EXPECTED_PROJECT}'"
+        )
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
