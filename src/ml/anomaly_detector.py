@@ -368,7 +368,6 @@ class TradingAnomalyDetector:
         # Stock market hours (simplified: 9:30 AM - 4:00 PM ET, Mon-Fri)
         # Note: This is simplified, real implementation should use proper timezone handling
         weekday = execution_time.weekday()
-        hour = execution_time.hour
 
         if weekday >= 5:  # Saturday or Sunday
             anomaly = Anomaly(

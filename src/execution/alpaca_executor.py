@@ -270,7 +270,7 @@ class AlpacaExecutor:
         # Use MultiBroker for stop loss
         if self.broker:
             try:
-                order_result = self.broker.submit_order(
+                self.broker.submit_order(
                     symbol=symbol,
                     qty=qty,
                     side="sell",  # Stop loss is always a sell (to close)

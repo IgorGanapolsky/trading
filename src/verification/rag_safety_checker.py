@@ -167,7 +167,7 @@ class RAGSafetyChecker:
                             break
 
         # Check 3: Query RAG for semantic similarity
-        lessons = self._load_lessons()
+        self._load_lessons()
         # (In production, this would use vector similarity search)
 
         # Check 4: Diff stats warnings

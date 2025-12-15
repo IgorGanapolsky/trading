@@ -140,7 +140,7 @@ class ATRBasedLimits:
         # Get regime-specific limits
         regime_config = self.REGIME_LIMITS[regime]
         adjusted_limit_pct = regime_config["max_position_pct"]
-        multiplier = regime_config["multiplier"]
+        regime_config["multiplier"]
 
         # Dynamic adjustment based on actual ATR%
         # Formula: base_limit * (normal_atr / actual_atr)

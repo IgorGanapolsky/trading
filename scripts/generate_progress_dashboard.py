@@ -263,9 +263,7 @@ def format_ml_rag_status() -> str:
     chroma_path = Path("data/rag/chroma_db/chroma.sqlite3")
 
     rag_docs = 0
-    rag_vectors = 0
     chroma_docs = 0
-    rag_status = "❌ Not Available"
     source_breakdown = {}
 
     # Load in-memory store stats
@@ -302,13 +300,13 @@ def format_ml_rag_status() -> str:
     # Determine vectorization status
     vectorization_gap = max(0, rag_docs - chroma_docs)
     if chroma_docs > 0 and vectorization_gap == 0:
-        rag_status = "✅ Fully Vectorized"
+        pass
     elif chroma_docs > 0:
-        rag_status = f"⚠️ Partial ({chroma_docs}/{rag_docs})"
+        pass
     elif rag_docs > 0:
-        rag_status = "❌ Text Only (not vectorized)"
+        pass
     else:
-        rag_status = "❌ Empty"
+        pass
 
     # Check if embedder available
     embedder_status = "❌ Not Available"

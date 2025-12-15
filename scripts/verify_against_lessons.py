@@ -15,7 +15,7 @@ import logging
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Dict, Any, Set
+from typing import List, Dict, Any
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -71,7 +71,7 @@ def query_lessons(query: str, limit: int = 3) -> List[Dict[str, Any]]:
             return cleaned_results
     except ImportError:
         pass
-    except Exception as e:
+    except Exception:
         pass # Fallback
 
     # Fallback: Keyword search

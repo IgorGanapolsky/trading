@@ -857,7 +857,7 @@ class GrowthStrategy:
                     logger.info(f"  -> EXECUTING SELL for {symbol}: {reason}")
 
                     # Execute SELL
-                    order_info = self.trader.execute_order(
+                    self.trader.execute_order(
                         symbol=symbol,
                         amount_usd=0,  # Sell all shares? execute_order might expect amount or qty
                         # AlpacaTrader.execute_order signature:

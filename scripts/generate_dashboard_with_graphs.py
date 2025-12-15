@@ -14,10 +14,9 @@ import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Any
-import sys
+from typing import Dict, List
 
 # Set style
 plt.style.use('seaborn-v0_8-darkgrid')

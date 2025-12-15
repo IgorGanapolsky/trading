@@ -61,7 +61,7 @@ def check_ci_health() -> tuple[bool, str]:
 
         # Check last 5 runs
         failures = sum(1 for r in runs if r.get("conclusion") == "failure")
-        successes = sum(1 for r in runs if r.get("conclusion") == "success")
+        sum(1 for r in runs if r.get("conclusion") == "success")
 
         if failures >= 3:
             return False, f"CI unhealthy: {failures}/5 recent runs failed"

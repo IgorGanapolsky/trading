@@ -109,7 +109,7 @@ class GoLiveReadinessChecker:
         Returns:
             Tuple of (passed: bool, current_value: Any, message: str)
         """
-        criterion_id = criterion["id"]
+        criterion["id"]
         description = criterion["description"]
         check_expr = criterion["check"]
         threshold = criterion["threshold"]

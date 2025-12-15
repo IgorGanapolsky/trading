@@ -160,7 +160,7 @@ def test_{test_id}_{test_name}():
                 # Clean up the test code
                 test_code = self._clean_test_code(test_code)
 
-                test_name = f"{lesson_id.lower()}_verification_{i + 1}"
+                f"{lesson_id.lower()}_verification_{i + 1}"
                 tests.append(
                     self.TEST_TEMPLATE.format(
                         test_id=lesson_id.lower(),

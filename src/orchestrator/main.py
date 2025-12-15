@@ -1539,7 +1539,6 @@ class TradingOrchestrator:
                 logger.warning("Gate 3.5 (%s): Introspection failed, continuing: %s", ticker, e)
 
         # RAG Context - Query historical knowledge for this ticker (Dec 2025)
-        rag_context = None
         rag_sentiment = None
         if self.rag_retriever:
             try:
@@ -1548,7 +1547,7 @@ class TradingOrchestrator:
                     ticker=ticker,
                     days_back=7,
                 )
-                rag_context = self.rag_retriever.get_ticker_context(
+                self.rag_retriever.get_ticker_context(
                     ticker=ticker,
                     n_results=5,
                     days_back=7,

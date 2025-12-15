@@ -482,7 +482,6 @@ class LightweightRAG:
 
         try:
             # Build filter for ticker if provided
-            filter_str = f"ticker = '{ticker}'" if ticker else None
 
             # Query with timestamp sorting
             query = self.table.to_pandas()

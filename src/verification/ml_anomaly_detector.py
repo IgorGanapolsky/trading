@@ -18,7 +18,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-import numpy as np
 
 
 @dataclass

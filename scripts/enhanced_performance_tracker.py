@@ -14,9 +14,8 @@ Generates data for dashboard visualization.
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List
 from dataclasses import dataclass, asdict
-from decimal import Decimal
 
 
 @dataclass
@@ -130,7 +129,7 @@ class EnhancedPerformanceTracker:
         
         realized_pl = 0.0
         unrealized_pl = 0.0
-        trades_count = len([t for t in trades if t.get('action') != 'SKIP'])
+        len([t for t in trades if t.get('action') != 'SKIP'])
         winning_trades = 0
         current_value = 0.0
         
@@ -153,7 +152,7 @@ class EnhancedPerformanceTracker:
         if closed_trades:
             for closed_trade in closed_trades:
                 symbol = closed_trade.get('symbol', '')
-                category = self.categorize_symbol(symbol)
+                self.categorize_symbol(symbol)
                 
                 # Only count if this closed trade belongs to this category
                 # (caller will filter, but adding check here too)

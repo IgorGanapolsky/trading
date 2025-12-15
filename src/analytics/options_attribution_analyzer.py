@@ -159,7 +159,7 @@ class OptionsAttributionAnalyzer:
 
         # Calculate changes
         delta_s = exit_snapshot.underlying_price - entry_snapshot.underlying_price
-        delta_t = (exit_snapshot.timestamp - entry_snapshot.timestamp).days / 365.0
+        (exit_snapshot.timestamp - entry_snapshot.timestamp).days / 365.0
         delta_iv = exit_snapshot.implied_volatility - entry_snapshot.implied_volatility
 
         # Use average Greeks for attribution (more accurate than just entry)

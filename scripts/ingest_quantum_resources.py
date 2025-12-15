@@ -179,7 +179,7 @@ def ingest_resources():
 
     # Initialize RAG database
     db = get_rag_db()
-    embedder = get_embedder()
+    get_embedder()
 
     # Load resources
     resources = load_yaml_resources()

@@ -299,7 +299,7 @@ def generate_world_class_dashboard() -> str:
     # Extract metrics
     risk = all_metrics.get("risk_metrics", {})
     all_metrics.get("performance_metrics", {})
-    enhanced_risk = all_metrics.get("enhanced_risk_metrics", {})
+    all_metrics.get("enhanced_risk_metrics", {})
     attribution = all_metrics.get("performance_attribution", {})
     execution = all_metrics.get("execution_metrics", {})
     data_completeness = all_metrics.get("data_completeness", {})

@@ -19,9 +19,7 @@ Target: Positive Sharpe ratio, 55%+ win rate
 """
 
 from dataclasses import dataclass
-from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 # Strategy Constants - PROVEN TO WORK
 DAILY_ALLOCATION = 12.0  # $12/day (Theta Scale model)
@@ -219,7 +217,7 @@ class SimpleEdgeStrategy:
             should, reason = self.should_buy(symbol, score, regime)
 
             if should:
-                size = self.calculate_position_size(
+                self.calculate_position_size(
                     symbol,
                     portfolio_value,
                     data.get("price", 100),

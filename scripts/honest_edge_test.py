@@ -21,7 +21,7 @@ import yfinance as yf
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.utils.technical_indicators import calculate_macd, calculate_rsi
+from src.utils.technical_indicators import calculate_macd
 
 
 def fetch_prices(symbol: str, days: int = 365) -> pd.DataFrame:

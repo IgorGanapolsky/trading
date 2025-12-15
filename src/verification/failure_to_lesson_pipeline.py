@@ -28,7 +28,6 @@ Author: Trading System
 Created: 2025-12-15
 """
 
-import json
 import logging
 import subprocess
 from datetime import datetime

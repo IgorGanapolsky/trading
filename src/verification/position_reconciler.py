@@ -245,7 +245,7 @@ class PositionReconciler:
         if RECONCILIATION_LOG_PATH.exists():
             try:
                 with open(RECONCILIATION_LOG_PATH) as f:
-                    data = json.load(f)
+                    json.load(f)
                     # Just keep last 100 for memory efficiency
                     self.reconciliation_history = []
             except Exception as e:

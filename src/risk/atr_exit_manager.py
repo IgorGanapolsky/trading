@@ -224,7 +224,7 @@ class ATRExitManager:
         levels = self.calculate_exit_levels(symbol, entry_price, side, hist)
         stop_loss = levels["stop_loss"]
         take_profit = levels["take_profit"]
-        atr = levels["atr"]
+        levels["atr"]
 
         # Calculate P/L
         if side.lower() == "long":

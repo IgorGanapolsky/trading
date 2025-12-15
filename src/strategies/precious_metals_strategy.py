@@ -163,7 +163,6 @@ class PreciousMetalsStrategy:
 
         # Default values if data unavailable
         gsr = 80.0  # Gold-silver ratio (historical average ~80)
-        vix = 15.0  # VIX level
 
         try:
             # Try to get real market data

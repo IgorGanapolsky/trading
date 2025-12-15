@@ -8,14 +8,12 @@ Created: Dec 14, 2025
 Purpose: Learn from history to prevent future failures
 """
 
-import json
 import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-import numpy as np
 
 
 @dataclass
