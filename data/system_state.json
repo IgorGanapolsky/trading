@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2025-12-14T22:30:00.000000",
+    "last_updated": "2025-12-15T16:00:02.588150",
     "last_audit": "2025-11-17T09:00:00.000000",
     "audit_notes": "Day 9 - Added Tier 5 crypto tracking (BTC/ETH weekend strategy)"
   },
@@ -270,13 +270,32 @@
     },
     "tier7": {
       "name": "REIT Smart Income Strategy",
-      "allocation": 0.10,
+      "allocation": 0.1,
       "daily_amount": 10.0,
-      "sectors": ["Growth", "Defensive", "Residential"],
+      "sectors": [
+        "Growth",
+        "Defensive",
+        "Residential"
+      ],
       "universe": {
-        "Growth": ["AMT", "CCI", "DLR", "EQIX", "PLD"],
-        "Defensive": ["O", "VICI", "PSA", "WELL"],
-        "Residential": ["AVB", "EQR", "INVH"]
+        "Growth": [
+          "AMT",
+          "CCI",
+          "DLR",
+          "EQIX",
+          "PLD"
+        ],
+        "Defensive": [
+          "O",
+          "VICI",
+          "PSA",
+          "WELL"
+        ],
+        "Residential": [
+          "AVB",
+          "EQR",
+          "INVH"
+        ]
       },
       "trades_executed": 0,
       "total_invested": 0.0,
@@ -286,14 +305,17 @@
       "last_execution": null,
       "next_execution": "2025-12-13T14:35:00Z",
       "regime": "Neutral",
-      "strategy_notes": "Regime-based rotation: Rising Rates → Defensive REITs, Falling Rates → Growth REITs",
+      "strategy_notes": "Regime-based rotation: Rising Rates \u2192 Defensive REITs, Falling Rates \u2192 Growth REITs",
       "strategy_update": "2025-12-12: Activated REIT strategy per CEO priority"
     },
     "tier8": {
       "name": "Precious Metals Strategy (GLD/SLV)",
       "allocation": 0.05,
       "daily_amount": 5.0,
-      "etfs": ["GLD", "SLV"],
+      "etfs": [
+        "GLD",
+        "SLV"
+      ],
       "trades_executed": 0,
       "total_invested": 0.0,
       "status": "active",
@@ -302,7 +324,7 @@
       "last_execution": null,
       "next_execution": "2025-12-13T14:35:00Z",
       "regime": "Neutral",
-      "strategy_notes": "Regime-based allocation: High GSR → Equal GLD/SLV, Fear → Heavy GLD, Normal → 70/30 GLD/SLV",
+      "strategy_notes": "Regime-based allocation: High GSR \u2192 Equal GLD/SLV, Fear \u2192 Heavy GLD, Normal \u2192 70/30 GLD/SLV",
       "strategy_update": "2025-12-12: Activated Precious Metals strategy per CEO approval"
     }
   },

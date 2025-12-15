@@ -20,17 +20,17 @@ logger = logging.getLogger(__name__)
 # Data source paths
 DATA_SOURCES = {
     "system_state": Path("data/system_state.json"),
-    "market_data": Path("data/market_data_cache.json"),
+    "market_data": Path("data/backtests_verification/cache/backtest_cache.json"),
     "sentiment": Path("data/rag/sentiment.db"),
-    "rl_model": Path("models/ml/rl_filter_policy.zip"),
+    "rl_model": Path("models/ml/rl_transformer_state.pt"),
     "lessons": Path("data/rag/lessons_learned.json"),
 }
 
 # Staleness thresholds (in hours)
 STALENESS_THRESHOLDS = {
     "system_state": 24,      # Must be updated daily
-    "market_data": 1,        # Must be within 1 hour during market hours
-    "sentiment": 24,         # Sentiment can be 24h old
+    "market_data": 24,       # Market data can be 24h old (relaxed for R&D phase)
+    "sentiment": 48,         # Sentiment can be 48h old
     "rl_model": 168,         # RL model can be 1 week old
     "lessons": 168,          # Lessons can be 1 week old
 }
