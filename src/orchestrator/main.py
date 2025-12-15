@@ -247,8 +247,8 @@ class TradingOrchestrator:
         # Position manager for active exit management
         self.position_manager = PositionManager(
             conditions=ExitConditions(
-                take_profit_pct=float(os.getenv("TAKE_PROFIT_PCT", "0.01")),
-                stop_loss_pct=float(os.getenv("STOP_LOSS_PCT", "0.01")),
+                take_profit_pct=float(os.getenv("TAKE_PROFIT_PCT", "0.03")),
+                stop_loss_pct=float(os.getenv("STOP_LOSS_PCT", "0.02")),
                 max_holding_days=int(os.getenv("MAX_HOLDING_DAYS", "10")),
                 enable_momentum_exit=os.getenv("ENABLE_MOMENTUM_EXIT", "true").lower()
                 in {"1", "true"},
@@ -524,7 +524,7 @@ class TradingOrchestrator:
         # --- Treasury Ladder Strategy ---
         try:
             treasury_alloc_pct = float(os.getenv("TREASURY_ALLOCATION_PCT", "0.10"))
-            daily_investment = float(os.getenv("DAILY_INVESTMENT", "10.0"))
+            daily_investment = float(os.getenv("DAILY_INVESTMENT", "50.0"))
             treasury_amount = daily_investment * treasury_alloc_pct
 
             if treasury_amount >= 1.0:  # Alpaca minimum is $1
@@ -544,7 +544,7 @@ class TradingOrchestrator:
             reit_strategy = ReitStrategy(trader=self.executor.trader)
 
             reit_alloc_pct = float(os.getenv("REIT_ALLOCATION_PCT", "0.15"))
-            daily_investment = float(os.getenv("DAILY_INVESTMENT", "10.0"))
+            daily_investment = float(os.getenv("DAILY_INVESTMENT", "50.0"))
             reit_amount = daily_investment * reit_alloc_pct
 
             if reit_amount >= 1.0:
