@@ -1,0 +1,69 @@
+name: Weekly Code Health Audit
+
+on:
+  schedule:
+    # Every Sunday at 6:00 AM ET
+    - cron: '0 11 * * 0'
+  workflow_dispatch:  # Manual trigger
+
+env:
+  PYTHONPATH: ${{ github.workspace }}
+
+jobs:
+  code-health-audit:
+    runs-on: ubuntu-latest
+    name: Code Health Audit
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Code Health Audit
+        id: audit
+        run: |
+          python scripts/weekly_code_health_audit.py --store-rag
+
+      - name: Commit Audit Results to RAG
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add rag_knowledge/code_audits/
+          git diff --staged --quiet || git commit -m "chore: Weekly code health audit $(date +%Y-%m-%d)"
+          git push || echo "Nothing to push"
+
+      - name: Create Issue on High Severity Findings
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            // Find latest audit file
+            const auditDir = 'rag_knowledge/code_audits';
+            const files = fs.readdirSync(auditDir).filter(f => f.startsWith('audit_'));
+            const latest = files.sort().pop();
+
+            if (latest) {
+              const audit = JSON.parse(fs.readFileSync(path.join(auditDir, latest)));
+              const high = audit.summary.by_severity.high;
+
+              if (high > 0) {
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: `🚨 Code Health Alert: ${high} High Severity Findings`,
+                  body: `## Weekly Code Audit Found Issues\n\n` +
+                        `**Health Score**: ${audit.summary.health_score}/100\n` +
+                        `**High Severity**: ${high}\n\n` +
+                        `See: \`rag_knowledge/code_audits/${latest}\``,
+                  labels: ['code-health', 'automated']
+                });
+              }
+            }

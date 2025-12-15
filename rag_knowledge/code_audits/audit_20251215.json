@@ -1,0 +1,1451 @@
+{
+  "audit_date": "2025-12-15T03:18:32.829260",
+  "project": "/home/user/trading",
+  "findings": {
+    "unused_dependencies": [
+      {
+        "type": "unused_dependency",
+        "package": "peewee",
+        "severity": "low",
+        "suggestion": "Consider removing 'peewee' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "nvidia-cuda-nvrtc-cu12",
+        "severity": "low",
+        "suggestion": "Consider removing 'nvidia-cuda-nvrtc-cu12' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "sqlalchemy",
+        "severity": "low",
+        "suggestion": "Consider removing 'sqlalchemy' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "tzdata",
+        "severity": "low",
+        "suggestion": "Consider removing 'tzdata' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "nvidia-nvshmem-cu12",
+        "severity": "low",
+        "suggestion": "Consider removing 'nvidia-nvshmem-cu12' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "anyio",
+        "severity": "low",
+        "suggestion": "Consider removing 'anyio' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "nvidia-cublas-cu12",
+        "severity": "low",
+        "suggestion": "Consider removing 'nvidia-cublas-cu12' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "urllib3",
+        "severity": "low",
+        "suggestion": "Consider removing 'urllib3' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "google-auth-httplib2",
+        "severity": "low",
+        "suggestion": "Consider removing 'google-auth-httplib2' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "sniffio",
+        "severity": "low",
+        "suggestion": "Consider removing 'sniffio' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "hmmlearn",
+        "severity": "low",
+        "suggestion": "Consider removing 'hmmlearn' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "greenlet",
+        "severity": "low",
+        "suggestion": "Consider removing 'greenlet' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "deepagents",
+        "severity": "low",
+        "suggestion": "Consider removing 'deepagents' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "fonttools",
+        "severity": "low",
+        "suggestion": "Consider removing 'fonttools' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "propcache",
+        "severity": "low",
+        "suggestion": "Consider removing 'propcache' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "jsonschema",
+        "severity": "low",
+        "suggestion": "Consider removing 'jsonschema' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "slack-sdk",
+        "severity": "low",
+        "suggestion": "Consider removing 'slack-sdk' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "pydantic-core",
+        "severity": "low",
+        "suggestion": "Consider removing 'pydantic-core' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "jinja2",
+        "severity": "low",
+        "suggestion": "Consider removing 'jinja2' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "frozenlist",
+        "severity": "low",
+        "suggestion": "Consider removing 'frozenlist' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "google-generativeai",
+        "severity": "low",
+        "suggestion": "Consider removing 'google-generativeai' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "certifi",
+        "severity": "low",
+        "suggestion": "Consider removing 'certifi' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "google-genai",
+        "severity": "low",
+        "suggestion": "Consider removing 'google-genai' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "nvidia-curand-cu12",
+        "severity": "low",
+        "suggestion": "Consider removing 'nvidia-curand-cu12' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "cachetools",
+        "severity": "low",
+        "suggestion": "Consider removing 'cachetools' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "idna",
+        "severity": "low",
+        "suggestion": "Consider removing 'idna' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "jsonpatch",
+        "severity": "low",
+        "suggestion": "Consider removing 'jsonpatch' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "xxhash",
+        "severity": "low",
+        "suggestion": "Consider removing 'xxhash' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "docstring-parser",
+        "severity": "low",
+        "suggestion": "Consider removing 'docstring-parser' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "orjson",
+        "severity": "low",
+        "suggestion": "Consider removing 'orjson' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "pydantic-settings",
+        "severity": "low",
+        "suggestion": "Consider removing 'pydantic-settings' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "dataclasses-json",
+        "severity": "low",
+        "suggestion": "Consider removing 'dataclasses-json' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "cycler",
+        "severity": "low",
+        "suggestion": "Consider removing 'cycler' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "prawcore",
+        "severity": "low",
+        "suggestion": "Consider removing 'prawcore' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "pyarrow",
+        "severity": "low",
+        "suggestion": "Consider removing 'pyarrow' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "gymnasium",
+        "severity": "low",
+        "suggestion": "Consider removing 'gymnasium' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "oauthlib",
+        "severity": "low",
+        "suggestion": "Consider removing 'oauthlib' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "aiohappyeyeballs",
+        "severity": "low",
+        "suggestion": "Consider removing 'aiohappyeyeballs' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "nvidia-cuda-runtime-cu12",
+        "severity": "low",
+        "suggestion": "Consider removing 'nvidia-cuda-runtime-cu12' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "bracex",
+        "severity": "low",
+        "suggestion": "Consider removing 'bracex' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "stable-baselines3",
+        "severity": "low",
+        "suggestion": "Consider removing 'stable-baselines3' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "nvidia-cusparse-cu12",
+        "severity": "low",
+        "suggestion": "Consider removing 'nvidia-cusparse-cu12' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "nvidia-nccl-cu12",
+        "severity": "low",
+        "suggestion": "Consider removing 'nvidia-nccl-cu12' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "googleapis-common-protos",
+        "severity": "low",
+        "suggestion": "Consider removing 'googleapis-common-protos' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "alpaca-py",
+        "severity": "low",
+        "suggestion": "Consider removing 'alpaca-py' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "google-ai-generativelanguage",
+        "severity": "low",
+        "suggestion": "Consider removing 'google-ai-generativelanguage' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "narwhals",
+        "severity": "low",
+        "suggestion": "Consider removing 'narwhals' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "platformdirs",
+        "severity": "low",
+        "suggestion": "Consider removing 'platformdirs' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "gspread",
+        "severity": "low",
+        "suggestion": "Consider removing 'gspread' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "tenacity",
+        "severity": "low",
+        "suggestion": "Consider removing 'tenacity' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "uuid-utils",
+        "severity": "low",
+        "suggestion": "Consider removing 'uuid-utils' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "requests-oauthlib",
+        "severity": "low",
+        "suggestion": "Consider removing 'requests-oauthlib' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "langchain",
+        "severity": "low",
+        "suggestion": "Consider removing 'langchain' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "pydeck",
+        "severity": "low",
+        "suggestion": "Consider removing 'pydeck' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "sympy",
+        "severity": "low",
+        "suggestion": "Consider removing 'sympy' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "nvidia-cuda-cupti-cu12",
+        "severity": "low",
+        "suggestion": "Consider removing 'nvidia-cuda-cupti-cu12' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "protobuf",
+        "severity": "low",
+        "suggestion": "Consider removing 'protobuf' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "jsonschema-specifications",
+        "severity": "low",
+        "suggestion": "Consider removing 'jsonschema-specifications' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "jsonpointer",
+        "severity": "low",
+        "suggestion": "Consider removing 'jsonpointer' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "cffi",
+        "severity": "low",
+        "suggestion": "Consider removing 'cffi' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "kiwisolver",
+        "severity": "low",
+        "suggestion": "Consider removing 'kiwisolver' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "yarl",
+        "severity": "low",
+        "suggestion": "Consider removing 'yarl' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "annotated-types",
+        "severity": "low",
+        "suggestion": "Consider removing 'annotated-types' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "lxml",
+        "severity": "low",
+        "suggestion": "Consider removing 'lxml' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "loguru",
+        "severity": "low",
+        "suggestion": "Consider removing 'loguru' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "proto-plus",
+        "severity": "low",
+        "suggestion": "Consider removing 'proto-plus' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "nvidia-cusparselt-cu12",
+        "severity": "low",
+        "suggestion": "Consider removing 'nvidia-cusparselt-cu12' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "nvidia-cufft-cu12",
+        "severity": "low",
+        "suggestion": "Consider removing 'nvidia-cufft-cu12' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "transformers",
+        "severity": "low",
+        "suggestion": "Consider removing 'transformers' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "aiosignal",
+        "severity": "low",
+        "suggestion": "Consider removing 'aiosignal' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "wcmatch",
+        "severity": "low",
+        "suggestion": "Consider removing 'wcmatch' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "typing-inspection",
+        "severity": "low",
+        "suggestion": "Consider removing 'typing-inspection' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "mpmath",
+        "severity": "low",
+        "suggestion": "Consider removing 'mpmath' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "httpx-sse",
+        "severity": "low",
+        "suggestion": "Consider removing 'httpx-sse' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "langgraph-checkpoint",
+        "severity": "low",
+        "suggestion": "Consider removing 'langgraph-checkpoint' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "marshmallow",
+        "severity": "low",
+        "suggestion": "Consider removing 'marshmallow' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "jiter",
+        "severity": "low",
+        "suggestion": "Consider removing 'jiter' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "google-auth",
+        "severity": "low",
+        "suggestion": "Consider removing 'google-auth' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "pycparser",
+        "severity": "low",
+        "suggestion": "Consider removing 'pycparser' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "langgraph-sdk",
+        "severity": "low",
+        "suggestion": "Consider removing 'langgraph-sdk' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "tqdm",
+        "severity": "low",
+        "suggestion": "Consider removing 'tqdm' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "pyasn1",
+        "severity": "low",
+        "suggestion": "Consider removing 'pyasn1' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "blinker",
+        "severity": "low",
+        "suggestion": "Consider removing 'blinker' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "streamlit",
+        "severity": "low",
+        "suggestion": "Consider removing 'streamlit' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "google-api-python-client",
+        "severity": "low",
+        "suggestion": "Consider removing 'google-api-python-client' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "google-auth-oauthlib",
+        "severity": "low",
+        "suggestion": "Consider removing 'google-auth-oauthlib' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "multidict",
+        "severity": "low",
+        "suggestion": "Consider removing 'multidict' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "pyasn1-modules",
+        "severity": "low",
+        "suggestion": "Consider removing 'pyasn1-modules' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "rpds-py",
+        "severity": "low",
+        "suggestion": "Consider removing 'rpds-py' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "soupsieve",
+        "severity": "low",
+        "suggestion": "Consider removing 'soupsieve' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "websocket-client",
+        "severity": "low",
+        "suggestion": "Consider removing 'websocket-client' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "zstandard",
+        "severity": "low",
+        "suggestion": "Consider removing 'zstandard' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "cloudpickle",
+        "severity": "low",
+        "suggestion": "Consider removing 'cloudpickle' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "joblib",
+        "severity": "low",
+        "suggestion": "Consider removing 'joblib' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "langsmith",
+        "severity": "low",
+        "suggestion": "Consider removing 'langsmith' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "distro",
+        "severity": "low",
+        "suggestion": "Consider removing 'distro' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "markupsafe",
+        "severity": "low",
+        "suggestion": "Consider removing 'markupsafe' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "multitasking",
+        "severity": "low",
+        "suggestion": "Consider removing 'multitasking' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "mypy-extensions",
+        "severity": "low",
+        "suggestion": "Consider removing 'mypy-extensions' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "nvidia-nvtx-cu12",
+        "severity": "low",
+        "suggestion": "Consider removing 'nvidia-nvtx-cu12' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "toml",
+        "severity": "low",
+        "suggestion": "Consider removing 'toml' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "triton",
+        "severity": "low",
+        "suggestion": "Consider removing 'triton' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "curl-cffi",
+        "severity": "low",
+        "suggestion": "Consider removing 'curl-cffi' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "langgraph-prebuilt",
+        "severity": "low",
+        "suggestion": "Consider removing 'langgraph-prebuilt' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "watchdog",
+        "severity": "low",
+        "suggestion": "Consider removing 'watchdog' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "gitpython",
+        "severity": "low",
+        "suggestion": "Consider removing 'gitpython' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "pillow",
+        "severity": "low",
+        "suggestion": "Consider removing 'pillow' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "youtube-transcript-api",
+        "severity": "low",
+        "suggestion": "Consider removing 'youtube-transcript-api' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "nvidia-cufile-cu12",
+        "severity": "low",
+        "suggestion": "Consider removing 'nvidia-cufile-cu12' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "langgraph",
+        "severity": "low",
+        "suggestion": "Consider removing 'langgraph' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "fsspec",
+        "severity": "low",
+        "suggestion": "Consider removing 'fsspec' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "langchain-anthropic",
+        "severity": "low",
+        "suggestion": "Consider removing 'langchain-anthropic' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "matplotlib",
+        "severity": "low",
+        "suggestion": "Consider removing 'matplotlib' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "python-dateutil",
+        "severity": "low",
+        "suggestion": "Consider removing 'python-dateutil' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "grpcio",
+        "severity": "low",
+        "suggestion": "Consider removing 'grpcio' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "grpcio-status",
+        "severity": "low",
+        "suggestion": "Consider removing 'grpcio-status' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "referencing",
+        "severity": "low",
+        "suggestion": "Consider removing 'referencing' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "threadpoolctl",
+        "severity": "low",
+        "suggestion": "Consider removing 'threadpoolctl' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "attrs",
+        "severity": "low",
+        "suggestion": "Consider removing 'attrs' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "pyparsing",
+        "severity": "low",
+        "suggestion": "Consider removing 'pyparsing' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "contourpy",
+        "severity": "low",
+        "suggestion": "Consider removing 'contourpy' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "requests-toolbelt",
+        "severity": "low",
+        "suggestion": "Consider removing 'requests-toolbelt' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "tornado",
+        "severity": "low",
+        "suggestion": "Consider removing 'tornado' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "charset-normalizer",
+        "severity": "low",
+        "suggestion": "Consider removing 'charset-normalizer' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "typing-inspect",
+        "severity": "low",
+        "suggestion": "Consider removing 'typing-inspect' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "langchain-classic",
+        "severity": "low",
+        "suggestion": "Consider removing 'langchain-classic' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "h11",
+        "severity": "low",
+        "suggestion": "Consider removing 'h11' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "nvidia-nvjitlink-cu12",
+        "severity": "low",
+        "suggestion": "Consider removing 'nvidia-nvjitlink-cu12' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "frozendict",
+        "severity": "low",
+        "suggestion": "Consider removing 'frozendict' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "typing-extensions",
+        "severity": "low",
+        "suggestion": "Consider removing 'typing-extensions' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "filelock",
+        "severity": "low",
+        "suggestion": "Consider removing 'filelock' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "google-api-core",
+        "severity": "low",
+        "suggestion": "Consider removing 'google-api-core' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "nvidia-cudnn-cu12",
+        "severity": "low",
+        "suggestion": "Consider removing 'nvidia-cudnn-cu12' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "altair",
+        "severity": "low",
+        "suggestion": "Consider removing 'altair' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "msgpack",
+        "severity": "low",
+        "suggestion": "Consider removing 'msgpack' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "gitdb",
+        "severity": "low",
+        "suggestion": "Consider removing 'gitdb' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "langchain-text-splitters",
+        "severity": "low",
+        "suggestion": "Consider removing 'langchain-text-splitters' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "click",
+        "severity": "low",
+        "suggestion": "Consider removing 'click' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "update-checker",
+        "severity": "low",
+        "suggestion": "Consider removing 'update-checker' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "uritemplate",
+        "severity": "low",
+        "suggestion": "Consider removing 'uritemplate' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "httplib2",
+        "severity": "low",
+        "suggestion": "Consider removing 'httplib2' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "nvidia-cusolver-cu12",
+        "severity": "low",
+        "suggestion": "Consider removing 'nvidia-cusolver-cu12' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "smmap",
+        "severity": "low",
+        "suggestion": "Consider removing 'smmap' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "google-cloud-dialogflow-cx",
+        "severity": "low",
+        "suggestion": "Consider removing 'google-cloud-dialogflow-cx' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "websockets",
+        "severity": "low",
+        "suggestion": "Consider removing 'websockets' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "ormsgpack",
+        "severity": "low",
+        "suggestion": "Consider removing 'ormsgpack' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "sgmllib3k",
+        "severity": "low",
+        "suggestion": "Consider removing 'sgmllib3k' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "httpcore",
+        "severity": "low",
+        "suggestion": "Consider removing 'httpcore' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "sseclient-py",
+        "severity": "low",
+        "suggestion": "Consider removing 'sseclient-py' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "farama-notifications",
+        "severity": "low",
+        "suggestion": "Consider removing 'farama-notifications' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "rsa",
+        "severity": "low",
+        "suggestion": "Consider removing 'rsa' from requirements.txt if unused"
+      },
+      {
+        "type": "unused_dependency",
+        "package": "six",
+        "severity": "low",
+        "suggestion": "Consider removing 'six' from requirements.txt if unused"
+      }
+    ],
+    "missing_implementations": [],
+    "documentation_drift": [
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/PHASE2_IMPLEMENTATION_SUMMARY.md",
+        "referenced_path": "src/models/interfaces.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/models/interfaces.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/PHASE2_IMPLEMENTATION_SUMMARY.md",
+        "referenced_path": "src/experiments/tracker.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/experiments/tracker.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/PHASE2_IMPLEMENTATION_SUMMARY.md",
+        "referenced_path": "src/models/registry.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/models/registry.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/north-star-improvements-summary.md",
+        "referenced_path": "src/strategies/strategy_registry.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/strategies/strategy_registry.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/north-star-improvements-summary.md",
+        "referenced_path": "src/strategies/core_strategy_frozen.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/strategies/core_strategy_frozen.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/north-star-improvements-summary.md",
+        "referenced_path": "src/strategies/strategy_registry.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/strategies/strategy_registry.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/north-star-improvements-summary.md",
+        "referenced_path": "src/strategies/core_strategy_frozen.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/strategies/core_strategy_frozen.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/UNUSED_FILE_DETECTION.md",
+        "referenced_path": "src/removed_feature.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/removed_feature.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/verified-action-plan-100-day.md",
+        "referenced_function": "_apply_dynamic_daily_budget",
+        "severity": "low",
+        "suggestion": "Doc references possibly non-existent function: _apply_dynamic_daily_budget()"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/verified-action-plan-100-day.md",
+        "referenced_function": "calc_daily_input",
+        "severity": "low",
+        "suggestion": "Doc references possibly non-existent function: calc_daily_input()"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/optimized-allocation-guide.md",
+        "referenced_path": "src/strategies/bond_strategy.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/strategies/bond_strategy.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/scaling-roadmap-v2.md",
+        "referenced_path": "src/ml/walk_forward_validator.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/walk_forward_validator.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/scaling-roadmap-v2.md",
+        "referenced_path": "src/ml/meta_labeler.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/meta_labeler.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/scaling-roadmap-v2.md",
+        "referenced_path": "src/ml/walk_forward_validator.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/walk_forward_validator.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/ops-runbook.md",
+        "referenced_path": "src/strategies/strategy_registry.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/strategies/strategy_registry.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/live_deployment_proposal_dec2025.md",
+        "referenced_path": "src/agents/llm_veto_agent.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/agents/llm_veto_agent.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/WORLD_CLASS_AI_TRADING_GAP_ANALYSIS.md",
+        "referenced_path": "src/models/interfaces.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/models/interfaces.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/WORLD_CLASS_AI_TRADING_GAP_ANALYSIS.md",
+        "referenced_path": "src/models/registry.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/models/registry.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/WORLD_CLASS_AI_TRADING_GAP_ANALYSIS.md",
+        "referenced_path": "src/models/interfaces.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/models/interfaces.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/WORLD_CLASS_AI_TRADING_GAP_ANALYSIS.md",
+        "referenced_path": "src/experiments/tracker.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/experiments/tracker.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/WORLD_CLASS_AI_TRADING_GAP_ANALYSIS.md",
+        "referenced_path": "src/models/registry.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/models/registry.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/WORLD_CLASS_AI_TRADING_GAP_ANALYSIS.md",
+        "referenced_path": "src/portfolio/construction.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/portfolio/construction.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/WORLD_CLASS_AI_TRADING_GAP_ANALYSIS.md",
+        "referenced_path": "src/risk/attribution.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/risk/attribution.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/disco_rl_integration_analysis.md",
+        "referenced_path": "src/ml/dqn_agent.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/dqn_agent.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RL_INTEGRATION_GUIDE.md",
+        "referenced_path": "src/ml/trainer.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/trainer.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RL_INTEGRATION_GUIDE.md",
+        "referenced_path": "src/ml/position_sizing_rl.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/position_sizing_rl.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RAG_LIGHTWEIGHT_ALTERNATIVES_2025.md",
+        "referenced_path": "src/rag/vector_db/lance_client.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/rag/vector_db/lance_client.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/QUANT_RESEARCH_FRAMEWORK.md",
+        "referenced_path": "src/research/alpha.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/research/alpha.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/QUANT_RESEARCH_FRAMEWORK.md",
+        "referenced_path": "src/research/baselines.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/research/baselines.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/CRYPTO_PROBLEM_DIAGNOSIS.md",
+        "referenced_function": "get_crypto_bars",
+        "severity": "low",
+        "suggestion": "Doc references possibly non-existent function: get_crypto_bars()"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/CRYPTO_PROBLEM_DIAGNOSIS.md",
+        "referenced_function": "get_bars",
+        "severity": "low",
+        "suggestion": "Doc references possibly non-existent function: get_bars()"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/DEPENDENCY_CONFLICT_ANALYSIS.md",
+        "referenced_path": "src/agents/gemini3_langgraph_agent.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/agents/gemini3_langgraph_agent.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/DEPENDENCY_CONFLICT_ANALYSIS.md",
+        "referenced_path": "src/agents/gemini3_langgraph_agent.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/agents/gemini3_langgraph_agent.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/analysis-validation-2025-12-09.md",
+        "referenced_path": "src/strategies/wheel_strategy.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/strategies/wheel_strategy.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/PHASE1_IMPLEMENTATION_SUMMARY.md",
+        "referenced_function": "run_research_experiment",
+        "severity": "low",
+        "suggestion": "Doc references possibly non-existent function: run_research_experiment()"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RL_OPTIMIZATIONS_COMPLETE.md",
+        "referenced_path": "src/ml/ensemble_rl.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/ensemble_rl.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RL_OPTIMIZATIONS_COMPLETE.md",
+        "referenced_path": "src/ml/position_sizing_rl.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/position_sizing_rl.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/roadmap-to-100-day.md",
+        "referenced_path": "src/strategies/mean_reversion_strategy.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/strategies/mean_reversion_strategy.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/target-model-and-strategy-pipeline.md",
+        "referenced_path": "src/strategies/strategy_registry.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/strategies/strategy_registry.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/kalshi-enhancement-plan.md",
+        "referenced_path": "src/strategies/kalshi_market_maker.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/strategies/kalshi_market_maker.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/STRATEGIES.md",
+        "referenced_function": "execute_tier1",
+        "severity": "low",
+        "suggestion": "Doc references possibly non-existent function: execute_tier1()"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/STRATEGIES.md",
+        "referenced_function": "execute_tier2",
+        "severity": "low",
+        "suggestion": "Doc references possibly non-existent function: execute_tier2()"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/STRATEGIES.md",
+        "referenced_function": "get_momentum_score",
+        "severity": "low",
+        "suggestion": "Doc references possibly non-existent function: get_momentum_score()"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/AGENT_USAGE_ANALYSIS.md",
+        "referenced_path": "src/agents/gemini3_langgraph_agent.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/agents/gemini3_langgraph_agent.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RAG_TRADING_INTEGRATION.md",
+        "referenced_path": "src/trading/rag_trade_advisor.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/trading/rag_trade_advisor.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RAG_TRADING_INTEGRATION.md",
+        "referenced_path": "src/trading/rag_trade_advisor.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/trading/rag_trade_advisor.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/DEEP_LEARNING_RL_ENHANCEMENTS.md",
+        "referenced_path": "src/ml/dqn_agent.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/dqn_agent.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RL_ARCHITECTURE_SIMPLIFIED.md",
+        "referenced_path": "src/ml/dqn_agent.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/dqn_agent.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RL_ARCHITECTURE_SIMPLIFIED.md",
+        "referenced_path": "src/ml/multi_step_learning.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/multi_step_learning.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RL_ARCHITECTURE_SIMPLIFIED.md",
+        "referenced_path": "src/ml/enhanced_ppo.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/enhanced_ppo.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RL_ARCHITECTURE_SIMPLIFIED.md",
+        "referenced_path": "src/ml/networks.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/networks.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RL_ARCHITECTURE_SIMPLIFIED.md",
+        "referenced_path": "src/ml/ensemble_rl.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/ensemble_rl.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RL_ARCHITECTURE_SIMPLIFIED.md",
+        "referenced_path": "src/ml/position_sizing_rl.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/position_sizing_rl.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RL_ARCHITECTURE_SIMPLIFIED.md",
+        "referenced_path": "src/ml/trainer.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/trainer.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RL_ARCHITECTURE_SIMPLIFIED.md",
+        "referenced_path": "src/ml/walk_forward_validator.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/walk_forward_validator.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RL_ARCHITECTURE_SIMPLIFIED.md",
+        "referenced_path": "src/ml/trainer.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/trainer.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RL_ARCHITECTURE_SIMPLIFIED.md",
+        "referenced_path": "src/ml/trainer.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/trainer.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/RL_ARCHITECTURE_SIMPLIFIED.md",
+        "referenced_path": "src/ml/walk_forward_validator.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/walk_forward_validator.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/advanced-ai-syllabus.md",
+        "referenced_path": "src/ml/models/time_mixer.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/models/time_mixer.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/OPTIONS_STRATEGY_ROADMAP.md",
+        "referenced_function": "calculate_income_mode_size",
+        "severity": "low",
+        "suggestion": "Doc references possibly non-existent function: calculate_income_mode_size()"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/OPTIONS_STRATEGY_ROADMAP.md",
+        "referenced_function": "check_gamma_risk",
+        "severity": "low",
+        "suggestion": "Doc references possibly non-existent function: check_gamma_risk()"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/rss_newsletter_setup.md",
+        "referenced_path": "src/agents/strategy_generator.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/agents/strategy_generator.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/rss_newsletter_setup.md",
+        "referenced_path": "src/risk_management.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/risk_management.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/rss_newsletter_setup.md",
+        "referenced_path": "src/agents/signal_generator.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/agents/signal_generator.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/NORTH_STAR_ACTION_PLAN.md",
+        "referenced_path": "src/strategies/bond_strategy.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/strategies/bond_strategy.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/NORTH_STAR_ACTION_PLAN.md",
+        "referenced_path": "src/strategies/bond_strategy.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/strategies/bond_strategy.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/NEXT_STEPS.md",
+        "referenced_path": "src/ml/trainer.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/ml/trainer.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/ARCHITECTURE_INTEGRATION.md",
+        "referenced_function": "build_mcp_tool",
+        "severity": "low",
+        "suggestion": "Doc references possibly non-existent function: build_mcp_tool()"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/profit-optimization.md",
+        "referenced_function": "calc_daily_input",
+        "severity": "low",
+        "suggestion": "Doc references possibly non-existent function: calc_daily_input()"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/GEMINI_AGENT_ANALYSIS.md",
+        "referenced_function": "generate_content",
+        "severity": "low",
+        "suggestion": "Doc references possibly non-existent function: generate_content()"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/GEMINI_AGENT_ANALYSIS.md",
+        "referenced_function": "start_chat",
+        "severity": "low",
+        "suggestion": "Doc references possibly non-existent function: start_chat()"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/trading-bot-roadmap.md",
+        "referenced_path": "src/strategies/credit_spreads.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/strategies/credit_spreads.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/trading-bot-roadmap.md",
+        "referenced_path": "src/strategies/credit_spreads.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/strategies/credit_spreads.py"
+      },
+      {
+        "type": "documentation_drift",
+        "doc_file": "docs/anthropic-agent-patterns.md",
+        "referenced_path": "src/agents/gateway_integration.py",
+        "severity": "medium",
+        "suggestion": "Doc references non-existent file: src/agents/gateway_integration.py"
+      }
+    ],
+    "disabled_features": []
+  },
+  "summary": {
+    "total_findings": 226,
+    "by_severity": {
+      "high": 0,
+      "medium": 60,
+      "low": 166
+    },
+    "health_score": 0
+  }
+}
