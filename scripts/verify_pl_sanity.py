@@ -24,7 +24,16 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+
+    def load_dotenv():
+        pass
+
+
 from pathlib import Path
 from typing import Any
 
@@ -190,7 +199,12 @@ class PLSanityChecker:
     def count_recent_trades(self, days: int = 3) -> int:
         """Count trades executed in last N trading days."""
         trade_count = 0
-        cutoff_date = datetime.now() - timedelta(days=days)
+        current_time = datetime.now()
+        # Make timezone-aware if not already (assuming UTC for system consistency)
+        if current_time.tzinfo is None:
+            current_time = current_time.replace(tzinfo=timezone.utc)
+
+        cutoff_date = current_time - timedelta(days=days)
 
         # Check all trades_*.json files
         for trade_file in TRADES_DIR.glob("trades_*.json"):
@@ -205,9 +219,26 @@ class PLSanityChecker:
                         continue
 
                     try:
-                        trade_date = datetime.fromisoformat(trade_date_str.replace("Z", "+00:00"))
-                        if trade_date >= cutoff_date:
-                            trade_count += 1
+                        try:
+                            # Parse string, ensure offset-aware
+                            if "T" in trade_date_str:
+                                trade_date = datetime.fromisoformat(
+                                    trade_date_str.replace("Z", "+00:00")
+                                )
+                            else:
+                                # Fallback for YYYY-MM-DD
+                                trade_date = datetime.strptime(trade_date_str, "%Y-%m-%d").replace(
+                                    tzinfo=timezone.utc
+                                )
+
+                            # Ensure trade_date has timezone
+                            if trade_date.tzinfo is None:
+                                trade_date = trade_date.replace(tzinfo=timezone.utc)
+
+                            if trade_date >= cutoff_date:
+                                trade_count += 1
+                        except ValueError:
+                            continue
                     except ValueError:
                         continue
             except Exception as e:
@@ -489,6 +520,8 @@ def main():
         help="Enable verbose debug logging",
     )
     args = parser.parse_args()
+
+    load_dotenv()
 
     checker = PLSanityChecker(verbose=args.verbose)
 
