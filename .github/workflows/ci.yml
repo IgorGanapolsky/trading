@@ -182,6 +182,7 @@ jobs:
             tests/test_telemetry_summary.py \
             tests/test_trade_gateway.py \
             tests/test_fred_collector.py \
+            tests/integration/test_crypto_strategy_v41.py \
             --timeout=120 \
             --timeout-method=thread \
             -v \
