@@ -174,7 +174,7 @@ jobs:
           import sys
           sys.path.insert(0, '.')
 
-          from src.strategies.options_iv_signal import OptionsIVSignalGenerator, get_iv_signal_generator
+          from src.strategies.options_iv_signal import OptionsIVSignalGenerator, get_options_signal_generator
           from src.strategies.options_executor import OptionsExecutor, get_options_executor
           import yfinance as yf
           import json
@@ -228,7 +228,7 @@ jobs:
           print()
 
           # Generate signal
-          signal_gen = get_iv_signal_generator()
+          signal_gen = get_options_signal_generator()
           signal = signal_gen.generate_signal(
               symbol='SPY',
               current_iv=iv_current,

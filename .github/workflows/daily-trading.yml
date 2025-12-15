@@ -57,9 +57,10 @@ jobs:
         run: |
           sudo rm -rf /tmp/pip-* /tmp/pipcache ~/.cache/pip ~/.cache/torch || true
           df -h .
-          export PATH="$HOME/.local/bin:$PATH"
-          # UV is 6-18x faster than pip and handles caching automatically
-          uv pip sync --system --no-cache requirements-minimal.txt
+          # Use standard pip to avoid UV flag conflicts
+          python3 -m pip install --upgrade pip
+          python3 -m pip install --no-build-isolation multitasking || python3 -m pip install multitasking==0.0.11
+          python3 -m pip install --no-cache-dir -r requirements-minimal.txt
 
       - name: Install full deps for unit gates (optional)
         if: ${{ false }}  # enable only if additional tests need full stack
