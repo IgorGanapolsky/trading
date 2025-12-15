@@ -12,6 +12,20 @@ import holidays
 from src.agents.macro_agent import MacroeconomicAgent
 from src.agents.momentum_agent import MomentumAgent
 from src.agents.rl_agent import RLFilter
+from src.orchestrator.gates import (
+    Gate0Psychology,
+    Gate1Momentum,
+    Gate15Debate,
+    Gate2RLFilter,
+    Gate3Sentiment,
+    Gate35Introspection,
+    Gate4Risk,
+    Gate5Execution,
+    GateResult,
+    GateStatus,
+    TradeContext,
+    TradingGatePipeline,
+)
 from src.analyst.bias_store import BiasProvider, BiasSnapshot, BiasStore
 from src.execution.alpaca_executor import AlpacaExecutor
 from src.integrations.playwright_mcp import SentimentScraper, TradeVerifier
@@ -294,6 +308,74 @@ class TradingOrchestrator:
                 logger.info("Gate 3.5: IntrospectiveCouncil initialized (Dec 2025 best practice)")
             except Exception as e:
                 logger.warning(f"IntrospectiveCouncil init failed: {e}")
+
+        # Initialize LLM-friendly gate pipeline (Dec 2025 refactor)
+        # Each gate is <150 lines, independently testable
+        self._init_gate_pipeline()
+
+    def _init_gate_pipeline(self) -> None:
+        """Initialize the decomposed trading gate pipeline."""
+        self.gate0 = Gate0Psychology(
+            mental_coach=self.mental_coach,
+            telemetry=self.telemetry,
+        )
+        self.gate1 = Gate1Momentum(
+            momentum_agent=self.momentum_agent,
+            failure_manager=self.failure_manager,
+            telemetry=self.telemetry,
+        )
+        self.gate15 = Gate15Debate(
+            debate_moderator=self.debate_moderator,
+            telemetry=self.telemetry,
+            debate_available=DEBATE_AVAILABLE,
+        )
+        self.gate2 = Gate2RLFilter(
+            rl_filter=self.rl_filter,
+            failure_manager=self.failure_manager,
+            telemetry=self.telemetry,
+            rl_filter_enabled=self.rl_filter_enabled,
+        )
+        self.gate3 = Gate3Sentiment(
+            llm_agent=self.llm_agent,
+            bias_provider=self.bias_provider,
+            budget_controller=self.budget_controller,
+            playwright_scraper=self.playwright_scraper,
+            failure_manager=self.failure_manager,
+            telemetry=self.telemetry,
+            llm_sentiment_enabled=self.llm_sentiment_enabled,
+        )
+        self.gate35 = Gate35Introspection(
+            introspective_council=self.introspective_council,
+            uncertainty_tracker=self.uncertainty_tracker,
+            telemetry=self.telemetry,
+            introspection_available=INTROSPECTION_AVAILABLE,
+        )
+        self.gate4 = Gate4Risk(
+            risk_manager=self.risk_manager,
+            executor=self.executor,
+            failure_manager=self.failure_manager,
+            telemetry=self.telemetry,
+        )
+        self.gate5 = Gate5Execution(
+            trade_gateway=self.trade_gateway,
+            smart_dca=self.smart_dca,
+            executor=self.executor,
+            risk_manager=self.risk_manager,
+            position_manager=self.position_manager,
+            trade_verifier=self.trade_verifier,
+            failure_manager=self.failure_manager,
+            telemetry=self.telemetry,
+        )
+        self.gate_pipeline = TradingGatePipeline(
+            gate0=self.gate0,
+            gate1=self.gate1,
+            gate15=self.gate15,
+            gate2=self.gate2,
+            gate3=self.gate3,
+            gate35=self.gate35,
+            gate4=self.gate4,
+        )
+        logger.info("Gate pipeline initialized (866→~50 lines per method)")
 
     def run(self) -> None:
         session_profile = self._build_session_profile()
@@ -992,6 +1074,11 @@ class TradingOrchestrator:
             logger.debug("Anomaly monitor tracking failed for %s: %s", gate, exc)
 
     def _process_ticker(self, ticker: str, rl_threshold: float) -> None:
+        # Dec 2025: Use v2 pipeline if enabled (LLM-friendly, ~100 lines vs 866)
+        use_v2 = os.getenv("USE_PIPELINE_V2", "false").lower() in {"1", "true", "yes"}
+        if use_v2:
+            return self._process_ticker_v2(ticker, rl_threshold)
+
         logger.info("--- Processing %s ---", ticker)
 
         # Initialize decision tracking for this ticker
@@ -1855,6 +1942,141 @@ class TradingOrchestrator:
                     )
             except Exception as verify_exc:
                 logger.warning("Trade verification skipped for %s: %s", ticker, verify_exc)
+
+    def _process_ticker_v2(self, ticker: str, rl_threshold: float) -> None:
+        """
+        LLM-friendly ticker processing using the gate pipeline.
+
+        This is the refactored version (Dec 2025) that replaces the 866-line
+        monolithic method with a ~100-line orchestrator calling modular gates.
+
+        Each gate is <150 lines and independently testable.
+        """
+        logger.info("--- Processing %s (v2 pipeline) ---", ticker)
+        self.telemetry.start_ticker_decision(ticker)
+
+        # Pre-flight: Get allocation plan
+        pre_plan = self.smart_dca.plan_allocation(
+            ticker=ticker,
+            momentum_strength=0.0,  # Will update after Gate 1
+            rl_confidence=0.0,
+            sentiment_score=0.0,
+        )
+
+        if pre_plan.cap <= 0:
+            logger.info("Smart DCA: bucket %s exhausted, skipping %s", pre_plan.bucket, ticker)
+            self.telemetry.record(
+                event_type="dca.skip",
+                ticker=ticker,
+                status="exhausted",
+                payload={"bucket": pre_plan.bucket},
+            )
+            return
+
+        # Run the gate pipeline (Gates 0-4)
+        success, ctx, gate_results = self.gate_pipeline.run(
+            ticker=ticker,
+            rl_threshold=rl_threshold,
+            session_profile=self.session_profile,
+            allocation_cap=pre_plan.cap,
+        )
+
+        # Log all gate results for observability
+        for result in gate_results:
+            self._track_gate_event(
+                gate=result.gate_name,
+                ticker=ticker,
+                status="pass" if result.passed else "reject",
+                metrics={"confidence": result.confidence},
+            )
+
+        if not success:
+            last_result = gate_results[-1] if gate_results else None
+            logger.info(
+                "Pipeline rejected %s at gate %s: %s",
+                ticker,
+                last_result.gate_name if last_result else "unknown",
+                last_result.reason if last_result else "no results",
+            )
+            return
+
+        # Re-plan allocation with actual momentum/RL data
+        allocation_plan = self.smart_dca.plan_allocation(
+            ticker=ticker,
+            momentum_strength=ctx.momentum_strength,
+            rl_confidence=ctx.rl_decision.get("confidence", 0.0),
+            sentiment_score=ctx.sentiment_score,
+        )
+        ctx.allocation_plan = allocation_plan
+
+        if allocation_plan.cap <= 0:
+            logger.info("Smart DCA: allocation exhausted post-gates for %s", ticker)
+            return
+
+        # Fetch price and history for risk calculation
+        try:
+            price_data = self.executor.get_current_price(ticker)
+            ctx.current_price = price_data.get("price")
+            ctx.hist = self.momentum_agent._fetch_history(ticker)
+            if ctx.hist is not None and len(ctx.hist) >= 14:
+                import pandas as pd
+                atr = self.risk_manager._calculate_atr(ctx.hist, period=14)
+                ctx.atr_pct = (atr / ctx.current_price * 100) if ctx.current_price else None
+        except Exception as e:
+            logger.warning("Failed to fetch price/history for %s: %s", ticker, e)
+
+        # Microstructure features and regime detection
+        try:
+            micro_features = self.microstructure.extract(ticker)
+            if "microstructure_error" not in micro_features:
+                if ctx.momentum_signal:
+                    ctx.momentum_signal.indicators.update(micro_features)
+                ctx.regime_snapshot = self.regime_detector.detect(micro_features)
+        except Exception as e:
+            logger.debug("Microstructure extraction failed for %s: %s", ticker, e)
+
+        # Gate 4: Risk sizing (using pipeline result)
+        risk_result = self.gate4.evaluate(ticker, ctx, allocation_plan.cap)
+        if not risk_result.passed:
+            logger.info("Gate 4 (%s): REJECTED - %s", ticker, risk_result.reason)
+            return
+
+        order_size = risk_result.data.get("order_size", 0.0)
+        if order_size <= 0:
+            logger.info("Gate 4 (%s): Order size is 0, skipping", ticker)
+            return
+
+        ctx.order_size = order_size
+
+        # Gate 5: Execution
+        exec_result = self.gate5.execute(ticker, ctx, order_size)
+        if not exec_result.passed:
+            logger.warning("Gate 5 (%s): Execution failed - %s", ticker, exec_result.reason)
+            return
+
+        # Record successful execution
+        order = exec_result.data.get("order", {})
+        self.telemetry.order_event(
+            ticker,
+            {
+                "order": order,
+                "rl": ctx.rl_decision,
+                "session_type": (self.session_profile or {}).get("session_type"),
+                "predicted_confidence": ctx.rl_decision.get("confidence", 0.0),
+            },
+        )
+        self.telemetry.record(
+            event_type="dca.allocate",
+            ticker=ticker,
+            status="allocated",
+            payload={
+                "bucket": allocation_plan.bucket,
+                "notional": order_size,
+                "cap": allocation_plan.cap,
+            },
+        )
+
+        logger.info("✅ %s processed successfully via v2 pipeline", ticker)
 
     def _deploy_safe_reserve(self) -> None:
         sweep = self.smart_dca.drain_to_safe()
