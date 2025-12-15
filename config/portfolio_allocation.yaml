@@ -1,7 +1,7 @@
 # =============================================================================
-# PORTFOLIO ALLOCATION CONFIGURATION v2.0
+# PORTFOLIO ALLOCATION CONFIGURATION v2.1
 # =============================================================================
-# UPDATED: 2025-12-15 - Options-First Strategy
+# UPDATED: 2025-12-15 - Options-First Strategy + Profit Reinvestment
 # Based on Day 9 performance data:
 #   - Options (Short Puts): +$327, 75% win rate → PRIMARY STRATEGY
 #   - Crypto DCA: -$0.43, 0% win rate → MINIMIZE
@@ -262,3 +262,59 @@ projections:
   daily_income: 42.74       # $100k * 15.6% / 365
   monthly_options_target: 700  # $700/month options premium
   notes: "Options-first model based on proven 75% win rate"
+
+# =============================================================================
+# PROFIT REINVESTMENT STRATEGY (NEW - Dec 15, 2025)
+# =============================================================================
+# Problem: $83k sitting in cash earning 0% = $4,164/year opportunity cost
+# Solution: Hybrid reinvestment strategy balancing safety and growth
+profit_reinvestment:
+  enabled: true
+  strategy: "hybrid"  # Options: "tbills", "options_collateral", "hybrid", "compound"
+  
+  # Hybrid Strategy Allocation (RECOMMENDED)
+  hybrid_allocation:
+    tbills:
+      weight: 0.50              # 50% of idle cash → T-Bills
+      vehicle: "BIL"            # SPDR 1-3 Month T-Bill ETF
+      expected_yield: 0.05      # ~5% APY
+      description: "Safe yield on idle cash"
+    
+    options_collateral:
+      weight: 0.40              # 40% of idle cash → Options collateral
+      expected_yield: 0.24      # ~24% APY (2% monthly premium)
+      description: "Fuel the winning options strategy"
+    
+    cash_reserve:
+      weight: 0.10              # 10% of idle cash → Emergency reserve
+      min_amount: 5000          # Always keep at least $5k liquid
+      description: "Emergency buffer"
+  
+  # Reinvestment Rules
+  rules:
+    min_cash_threshold: 10000   # Only reinvest if cash > $10k
+    reinvest_frequency: "weekly"  # Check weekly for rebalancing
+    reinvest_day: "monday"      # Reinvest on Mondays
+    compound_profits: true      # Reinvest realized profits
+    
+  # Expected Returns (Hybrid)
+  projections:
+    idle_cash: 83000
+    tbill_allocation: 41500     # 50%
+    options_allocation: 33200   # 40%
+    cash_reserve: 8300          # 10%
+    annual_tbill_return: 2075   # $41.5k × 5%
+    annual_options_return: 7968 # $33.2k × 24%
+    total_annual_return: 10043  # ~$27.50/day passive
+    daily_passive_income: 27.52
+
+# =============================================================================
+# IDLE CASH SWEEP (Automated)
+# =============================================================================
+idle_cash_sweep:
+  enabled: true
+  vehicle: "BIL"                # Sweep to T-Bills
+  threshold: 10000              # Sweep when cash > $10k
+  keep_liquid: 5000             # Always keep $5k in cash
+  frequency: "daily"            # Check daily
+  description: "Auto-sweep idle cash to T-Bills to earn ~5% vs 0%"
