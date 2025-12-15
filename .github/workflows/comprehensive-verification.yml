@@ -135,6 +135,53 @@ jobs:
           pytest tests/test_lessons_learned_regression.py -v --tb=short
           echo "✅ Lessons learned regression tests passed"
 
+  pipeline-verification:
+    name: E2E Pipeline Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements.in pytest pytest-asyncio numpy chromadb lancedb
+
+      - name: Run Pipeline E2E Tests
+        run: |
+          echo "🔍 Running E2E pipeline verification tests..."
+          pytest tests/test_pipeline_verification_e2e.py -v --tb=short -x
+          echo "✅ Pipeline E2E tests passed"
+
+      - name: Run Pattern Recurrence Tests
+        run: |
+          echo "🔍 Running pattern recurrence detection tests..."
+          pytest tests/test_pattern_recurrence_integration.py -v --tb=short -x
+          echo "✅ Pattern recurrence tests passed"
+
+      - name: Verify RAG Lessons Searchable
+        run: |
+          echo "🔍 Verifying RAG lessons are searchable..."
+          python3 -c "
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, str(Path.cwd()))
+          from src.verification.rag_verification_gate import RAGVerificationGate
+          gate = RAGVerificationGate()
+          # Test search functionality
+          results = gate.semantic_search('position size error', top_k=3)
+          print(f'✅ RAG search working: found {len(results)} results')
+          for lesson, score in results:
+              print(f'  [{score:.2f}] {lesson.title}')
+          "
+          echo "✅ RAG search verification passed"
+
   pre-merge-gate:
     name: Pre-Merge Gate (MANDATORY)
     runs-on: ubuntu-latest
@@ -165,7 +212,7 @@ jobs:
   summary:
     name: Verification Summary
     runs-on: ubuntu-latest
-    needs: [syntax-verification, rag-ml-verification, test-verification-suite, pre-merge-gate]
+    needs: [syntax-verification, rag-ml-verification, test-verification-suite, pipeline-verification, pre-merge-gate]
     if: always()
 
     steps:
@@ -175,10 +222,16 @@ jobs:
           echo "  Syntax Verification: ${{ needs.syntax-verification.result }}"
           echo "  RAG/ML Verification: ${{ needs.rag-ml-verification.result }}"
           echo "  Test Suite: ${{ needs.test-verification-suite.result }}"
+          echo "  Pipeline Verification: ${{ needs.pipeline-verification.result }}"
           echo "  Pre-Merge Gate: ${{ needs.pre-merge-gate.result }}"
 
           if [ "${{ needs.syntax-verification.result }}" != "success" ]; then
             echo "❌ SYNTAX VERIFICATION FAILED - DO NOT MERGE"
+            exit 1
+          fi
+
+          if [ "${{ needs.pipeline-verification.result }}" != "success" ]; then
+            echo "❌ PIPELINE VERIFICATION FAILED - DO NOT MERGE"
             exit 1
           fi
 
