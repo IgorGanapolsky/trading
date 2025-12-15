@@ -26,7 +26,7 @@ jobs:
       - name: Install minimal deps
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          if [ -f requirements-minimal.txt ]; then uv pip sync requirements-minimal.txt; fi
+          if [ -f requirements-minimal.txt ]; then uv pip sync --system requirements-minimal.txt; fi
           uv pip install beautifulsoup4 lxml requests pyyaml
 
       - name: Run Bogleheads ingestion once
