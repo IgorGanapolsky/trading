@@ -751,7 +751,7 @@ def save_results(result_v3: BacktestResult, result_v4: BacktestResult, output_di
             indent=2,
         )
 
-    print(f"\n💾 Results saved:")
+    print("\n💾 Results saved:")
     print(f"   - {v3_file}")
     print(f"   - {v4_file}")
 
@@ -771,7 +771,7 @@ def main():
         take_profit_pct=0.10,
     )
 
-    print(f"\n⚙️  Configuration:")
+    print("\n⚙️  Configuration:")
     print(f"   - Initial Capital: ${config.initial_capital:,.2f}")
     print(f"   - Daily Amount: ${config.daily_amount:,.2f}")
     print(f"   - Lookback Period: {config.lookback_days} days")

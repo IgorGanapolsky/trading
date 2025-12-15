@@ -299,11 +299,7 @@ def format_ml_rag_status() -> str:
 
     # Determine vectorization status
     vectorization_gap = max(0, rag_docs - chroma_docs)
-    if chroma_docs > 0 and vectorization_gap == 0:
-        pass
-    elif chroma_docs > 0:
-        pass
-    elif rag_docs > 0:
+    if chroma_docs > 0 and vectorization_gap == 0 or chroma_docs > 0 or rag_docs > 0:
         pass
     else:
         pass

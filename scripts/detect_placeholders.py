@@ -53,10 +53,7 @@ SKIP_PATTERNS = [
 
 def should_skip(filepath: str) -> bool:
     """Check if file should be skipped."""
-    for pattern in SKIP_PATTERNS:
-        if re.search(pattern, filepath):
-            return True
-    return False
+    return any(re.search(pattern, filepath) for pattern in SKIP_PATTERNS)
 
 
 def scan_file(filepath: Path) -> list[tuple[int, str, str]]:

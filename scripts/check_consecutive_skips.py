@@ -8,10 +8,10 @@ import json
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 
-def load_trades_for_date(date_str: str, data_dir: Path) -> Optional[List[Dict]]:
+def load_trades_for_date(date_str: str, data_dir: Path) -> Optional[list[dict]]:
     """Load trade data for a specific date."""
     trade_file = data_dir / f"trades_{date_str}.json"
 
@@ -19,19 +19,19 @@ def load_trades_for_date(date_str: str, data_dir: Path) -> Optional[List[Dict]]:
         return None
 
     try:
-        with open(trade_file, 'r') as f:
+        with open(trade_file) as f:
             data = json.load(f)
             # Ensure it's a list
             if not isinstance(data, list):
                 print(f"Warning: {trade_file} does not contain a list", file=sys.stderr)
                 return None
             return data
-    except (json.JSONDecodeError, IOError) as e:
+    except (OSError, json.JSONDecodeError) as e:
         print(f"Error loading {trade_file}: {e}", file=sys.stderr)
         return None
 
 
-def check_for_skips(trades: List[Dict]) -> Dict:
+def check_for_skips(trades: list[dict]) -> dict:
     """
     Check if any trades in the list are SKIPs.
     Returns dict with skip info or None if no skips found.
@@ -61,7 +61,7 @@ def check_for_skips(trades: List[Dict]) -> Dict:
     return None
 
 
-def format_ma_distance(trend_data: Dict) -> str:
+def format_ma_distance(trend_data: dict) -> str:
     """Format MA distance information for a single crypto."""
     if not trend_data:
         return "N/A"
@@ -75,7 +75,7 @@ def format_ma_distance(trend_data: Dict) -> str:
     return f"${price:.2f} ({pct:+.2f}% {status} MA50 ${ma50:.2f})"
 
 
-def format_issue_body(skip_days: List[Dict]) -> str:
+def format_issue_body(skip_days: list[dict]) -> str:
     """Format GitHub issue body with skip information."""
     body_lines = [
         "## Trade Skip Alert",

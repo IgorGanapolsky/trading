@@ -12,8 +12,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Tuple
-
+from typing import Optional
 
 
 @dataclass
@@ -26,9 +25,9 @@ class LessonLearned:
     severity: str  # critical, high, medium, low
     category: str
     impact: str
-    prevention_rules: List[str]
-    test_requirements: List[str]
-    file_patterns: List[str]  # Files commonly involved in this type of failure
+    prevention_rules: list[str]
+    test_requirements: list[str]
+    file_patterns: list[str]  # Files commonly involved in this type of failure
 
 
 class RAGVerificationGate:
@@ -52,7 +51,7 @@ class RAGVerificationGate:
             rag_knowledge_path = project_root / "rag_knowledge" / "lessons_learned"
 
         self.rag_path = rag_knowledge_path
-        self.lessons: List[LessonLearned] = []
+        self.lessons: list[LessonLearned] = []
         self._load_lessons()
 
     def _load_lessons(self):
@@ -79,7 +78,7 @@ class RAGVerificationGate:
         Returns:
             LessonLearned object or None if parsing fails
         """
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         # Extract metadata from markdown front matter
@@ -159,8 +158,8 @@ class RAGVerificationGate:
         )
 
     def check_changed_files(
-        self, changed_files: List[str]
-    ) -> Tuple[List[str], List[LessonLearned]]:
+        self, changed_files: list[str]
+    ) -> tuple[list[str], list[LessonLearned]]:
         """Check changed files against lessons learned.
 
         Args:
@@ -189,7 +188,7 @@ class RAGVerificationGate:
 
     def semantic_search(
         self, query: str, top_k: int = 5
-    ) -> List[Tuple[LessonLearned, float]]:
+    ) -> list[tuple[LessonLearned, float]]:
         """Semantic search over lessons learned.
 
         Uses simple keyword matching (can be upgraded to embeddings later).
@@ -241,8 +240,8 @@ class RAGVerificationGate:
         return scored_lessons[:top_k]
 
     def check_merge_safety(
-        self, pr_description: str, changed_files: List[str], pr_size: int
-    ) -> Tuple[bool, List[str]]:
+        self, pr_description: str, changed_files: list[str], pr_size: int
+    ) -> tuple[bool, list[str]]:
         """Comprehensive merge safety check.
 
         Args:
@@ -307,8 +306,8 @@ class RAGVerificationGate:
         severity: str,
         category: str,
         impact: str,
-        prevention_rules: List[str],
-        file_patterns: List[str],
+        prevention_rules: list[str],
+        file_patterns: list[str],
     ) -> Path:
         """Ingest a new lesson learned into RAG knowledge base.
 

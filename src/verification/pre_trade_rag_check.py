@@ -588,12 +588,12 @@ if __name__ == "__main__":
         print(f"📝 Reason: {result.reason}")
 
         if result.similar_failures:
-            print(f"\n⚠️  Similar past failures:")
+            print("\n⚠️  Similar past failures:")
             for failure in result.similar_failures[:3]:
                 print(f"   - {failure['id']}: {failure['title']}")
 
         if result.recommendations:
-            print(f"\n💡 Recommendations:")
+            print("\n💡 Recommendations:")
             for rec in result.recommendations:
                 print(f"   - {rec}")
 

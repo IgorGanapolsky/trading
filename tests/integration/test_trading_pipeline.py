@@ -14,7 +14,6 @@ Part of P1: Integration Test Suite from SYSTEMIC_FAILURE_PREVENTION_PLAN.md
 import json
 import os
 import subprocess
-import sys
 from datetime import datetime
 from pathlib import Path
 

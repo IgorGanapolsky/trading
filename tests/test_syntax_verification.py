@@ -13,7 +13,6 @@ import ast
 import subprocess
 import sys
 from pathlib import Path
-from typing import List
 
 import pytest
 
@@ -27,7 +26,7 @@ class TestSyntaxVerification:
         return Path(__file__).parent.parent
 
     @pytest.fixture
-    def critical_files(self, project_root: Path) -> List[Path]:
+    def critical_files(self, project_root: Path) -> list[Path]:
         """Critical files that must always be syntactically valid."""
         return [
             project_root / "src" / "orchestrator" / "main.py",
@@ -38,7 +37,7 @@ class TestSyntaxVerification:
         ]
 
     def test_ll_009_no_syntax_errors_in_critical_files(
-        self, critical_files: List[Path]
+        self, critical_files: list[Path]
     ):
         """Prevent ll_009: Syntax errors in critical trading files.
 
@@ -52,13 +51,13 @@ class TestSyntaxVerification:
                 continue
 
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     code = f.read()
                 ast.parse(code)
             except SyntaxError as e:
                 errors.append(f"{file_path}: Line {e.lineno}: {e.msg}")
 
-        assert not errors, f"REGRESSION ll_009: Syntax errors found:\n" + "\n".join(
+        assert not errors, "REGRESSION ll_009: Syntax errors found:\n" + "\n".join(
             errors
         )
 
@@ -76,7 +75,7 @@ class TestSyntaxVerification:
         for directory in [scripts_dir, src_dir]:
             for py_file in directory.rglob("*.py"):
                 try:
-                    with open(py_file, "r", encoding="utf-8") as f:
+                    with open(py_file, encoding="utf-8") as f:
                         content = f.read()
 
                     # Simplified check: Look for f-strings with escaped quotes inside expressions
@@ -114,7 +113,7 @@ class TestSyntaxVerification:
 
         assert (
             not dangerous_patterns
-        ), f"REGRESSION ll_024: F-string backslash escapes found:\n" + "\n".join(
+        ), "REGRESSION ll_024: F-string backslash escapes found:\n" + "\n".join(
             dangerous_patterns
         )
 
@@ -144,7 +143,7 @@ class TestSyntaxVerification:
                 if result.returncode != 0:
                     errors.append(f"{py_file.relative_to(project_root)}: {result.stderr}")
 
-        assert not errors, f"Compilation errors found:\n" + "\n".join(errors)
+        assert not errors, "Compilation errors found:\n" + "\n".join(errors)
 
     def test_critical_imports_work(self, project_root: Path):
         """Verify critical imports don't raise ImportError or SyntaxError.
@@ -171,7 +170,7 @@ class TestSyntaxVerification:
 
         assert (
             not errors
-        ), f"Critical import errors found:\n" + "\n".join(errors)
+        ), "Critical import errors found:\n" + "\n".join(errors)
 
 
 class TestRuntimeVerification:
@@ -251,7 +250,7 @@ class TestContinuousVerification:
         import json
 
         try:
-            with open(state_file, "r") as f:
+            with open(state_file) as f:
                 state = json.load(f)
 
             # Basic structure checks
@@ -274,7 +273,7 @@ class TestContinuousVerification:
             import json
             from datetime import datetime, timedelta
 
-            with open(heartbeat_file, "r") as f:
+            with open(heartbeat_file) as f:
                 heartbeat = json.load(f)
 
             last_attempt = datetime.fromisoformat(heartbeat["timestamp"])

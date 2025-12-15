@@ -15,7 +15,7 @@ import logging
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -25,7 +25,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("verify_lessons")
 
-def get_changed_files() -> List[str]:
+def get_changed_files() -> list[str]:
     """Get list of changed files (staged + unstaged)."""
     try:
         # Staged
@@ -51,15 +51,15 @@ def get_keywords_from_path(file_path: str) -> str:
         keywords += " python"
     return keywords
 
-def query_lessons(query: str, limit: int = 3) -> List[Dict[str, Any]]:
+def query_lessons(query: str, limit: int = 3) -> list[dict[str, Any]]:
     """Query lessons learned (RAG or Fallback)."""
     # Try UnifiedRAG
     try:
-        from src.rag.unified_rag import UnifiedRAG, CHROMA_AVAILABLE
+        from src.rag.unified_rag import CHROMA_AVAILABLE, UnifiedRAG
         if CHROMA_AVAILABLE:
             rag = UnifiedRAG()
             results = rag.query_lessons(query, n_results=limit)
-            
+
             cleaned_results = []
             if results["documents"]:
                 for i, doc in enumerate(results["documents"][0]):
@@ -81,13 +81,13 @@ def query_lessons(query: str, limit: int = 3) -> List[Dict[str, Any]]:
 
     results = []
     query_terms = query.lower().split()
-    
+
     for md_file in lessons_dir.glob("*.md"):
         try:
             content = md_file.read_text(errors="replace")
             content_lower = content.lower()
             score = sum(1 for term in query_terms if term in content_lower)
-            
+
             if score > 0:
                 results.append({
                     "content": content,
@@ -96,7 +96,7 @@ def query_lessons(query: str, limit: int = 3) -> List[Dict[str, Any]]:
                 })
         except:
             pass
-            
+
     results.sort(key=lambda x: x.get("score", 0), reverse=True)
     return results[:limit]
 
@@ -116,30 +116,30 @@ def main():
         return 0
 
     logger.info(f"Checking {len(files)} files against RAG Lessons Learned...")
-    
+
     found_issues = False
-    
+
     for file_path in files:
         if not Path(file_path).exists():
             continue
-            
+
         # Skip some files
         if file_path.endswith(".md") or file_path.endswith(".json") or "test" in file_path:
             continue
 
         keywords = get_keywords_from_path(file_path)
         lessons = query_lessons(keywords, limit=2)
-        
+
         if lessons:
             print(f"\n📂 {file_path} (Keywords: {keywords})")
             for lesson in lessons:
                 severity = lesson["metadata"].get("severity", "medium").lower()
                 icon = "🔴" if severity in ["high", "critical"] else "⚠️"
                 source = lesson["metadata"].get("source", "unknown")
-                
+
                 print(f"  {icon} [{severity.upper()}] {source}")
                 print(f"     {lesson['content'][:150].replace(chr(10), ' ')}...")
-                
+
                 if severity in ["high", "critical"]:
                     found_issues = True
 

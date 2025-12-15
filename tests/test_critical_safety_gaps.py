@@ -325,7 +325,7 @@ class TestOrderFillVerification:
         submission_time = datetime.now()
 
         # Mock API check
-        api_check_time = submission_time + timedelta(seconds=2)
+        submission_time + timedelta(seconds=2)
         order_found = self._mock_order_lookup(order_id)
 
         assert order_found, f"Order {order_id} not found in API within 2 seconds of submission"

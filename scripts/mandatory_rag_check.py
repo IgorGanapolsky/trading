@@ -34,7 +34,7 @@ def load_lessons_simple() -> list[dict]:
 
     for md_file in lessons_dir.glob("*.md"):
         try:
-            with open(md_file, "r") as f:
+            with open(md_file) as f:
                 content = f.read()
 
             # Extract metadata

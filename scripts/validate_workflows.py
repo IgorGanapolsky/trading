@@ -59,7 +59,7 @@ class WorkflowValidator:
             return False
 
         # Check if it has at least one event
-        if isinstance(on_block, dict) or isinstance(on_block, list):
+        if isinstance(on_block, (dict, list)):
             if not on_block:
                 self.errors.append(f"{file_path}: 'on:' block has no events")
                 return False

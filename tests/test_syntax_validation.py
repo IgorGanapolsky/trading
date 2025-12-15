@@ -14,10 +14,9 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Tuple
 
 
-def find_python_files() -> List[Path]:
+def find_python_files() -> list[Path]:
     """Find all Python files in src/ and scripts/."""
     files = []
     for directory in ["src", "scripts"]:
@@ -26,7 +25,7 @@ def find_python_files() -> List[Path]:
     return sorted(files)
 
 
-def validate_python_syntax(file_path: Path) -> Tuple[bool, str]:
+def validate_python_syntax(file_path: Path) -> tuple[bool, str]:
     """Validate Python syntax by compiling the file."""
     try:
         # First try: compile using py_compile
@@ -52,7 +51,7 @@ def validate_python_syntax(file_path: Path) -> Tuple[bool, str]:
         return False, f"Unexpected error: {e}"
 
 
-def check_nested_fstrings(file_path: Path) -> Tuple[bool, List[str]]:
+def check_nested_fstrings(file_path: Path) -> tuple[bool, list[str]]:
     """Check for problematic nested f-string patterns.
 
     Only catches truly problematic patterns:
@@ -86,7 +85,7 @@ def check_nested_fstrings(file_path: Path) -> Tuple[bool, List[str]]:
     return len(issues) == 0, issues
 
 
-def check_common_pitfalls(file_path: Path) -> Tuple[bool, List[str]]:
+def check_common_pitfalls(file_path: Path) -> tuple[bool, list[str]]:
     """Check for common Python pitfalls that break in production."""
     content = file_path.read_text(encoding="utf-8")
     issues = []
@@ -171,7 +170,7 @@ def main():
                 print(f"⚠️  {file_path}: {issue}")
 
     if pitfall_warnings == 0:
-        print(f"✅ No common pitfalls detected")
+        print("✅ No common pitfalls detected")
     else:
         print(f"\n⚠️  Found {pitfall_warnings} potential issues (non-blocking)")
 
@@ -189,7 +188,7 @@ def main():
         print("=" * 70)
         sys.exit(1)
     else:
-        print(f"✅ ALL VALIDATION CHECKS PASSED")
+        print("✅ ALL VALIDATION CHECKS PASSED")
         print(f"   {len(files)} files validated successfully")
         print("=" * 70)
         sys.exit(0)

@@ -389,7 +389,7 @@ class NewsSentimentAggregator:
                 "confidence": confidence,
             }
 
-        except requests.exceptions.ProxyError as e:
+        except requests.exceptions.ProxyError:
             logger.warning(f"Proxy error getting Stocktwits sentiment for {ticker}")
             return {
                 "score": 0,
@@ -409,7 +409,7 @@ class NewsSentimentAggregator:
             else:
                 logger.error(f"HTTP error getting Stocktwits sentiment for {ticker}: {e}")
                 return {"score": 0, "messages": 0, "confidence": "low", "error": str(e)}
-        except requests.exceptions.RequestException as e:
+        except requests.exceptions.RequestException:
             logger.warning(f"Network error getting Stocktwits sentiment for {ticker}")
             return {
                 "score": 0,

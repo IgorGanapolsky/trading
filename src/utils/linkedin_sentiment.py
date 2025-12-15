@@ -31,8 +31,7 @@ import json
 import logging
 import re
 import time
-from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote_plus

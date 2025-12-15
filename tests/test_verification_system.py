@@ -13,7 +13,6 @@ Created: Dec 14, 2025
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -228,7 +227,7 @@ class TestMLAnomalyDetector:
         # Verify saved
         assert detector.anomaly_history_file.exists()
 
-        with open(detector.anomaly_history_file, "r") as f:
+        with open(detector.anomaly_history_file) as f:
             history = json.load(f)
 
         assert len(history) == 1
@@ -252,7 +251,7 @@ class TestPreMergeGate:
         """Verify pre_merge_gate imports RAG and ML verification."""
         gate_script = project_root / "scripts" / "pre_merge_gate.py"
 
-        with open(gate_script, "r") as f:
+        with open(gate_script) as f:
             content = f.read()
 
         # Should import or use RAG verification
@@ -315,12 +314,12 @@ class TestRegressionPrevention:
                 try:
                     import ast
 
-                    with open(file_path, "r") as f:
+                    with open(file_path) as f:
                         ast.parse(f.read())
                 except SyntaxError as e:
                     errors.append(f"{file_path.name}: {e}")
 
-        assert not errors, f"REGRESSION ll_009: Syntax errors in critical files:\n" + "\n".join(
+        assert not errors, "REGRESSION ll_009: Syntax errors in critical files:\n" + "\n".join(
             errors
         )
 
@@ -337,7 +336,7 @@ class TestRegressionPrevention:
         if trader_script.exists():
             import ast
 
-            with open(trader_script, "r") as f:
+            with open(trader_script) as f:
                 content = f.read()
 
             try:
@@ -358,8 +357,8 @@ class TestRegressionPrevention:
         workflows = (project_root / ".github" / "workflows").glob("*.yml")
 
         for workflow_file in workflows:
-            with open(workflow_file, "r") as f:
-                content = f.read()
+            with open(workflow_file) as f:
+                f.read()
 
             # If this is a daily trading workflow
             if "trading" in workflow_file.name.lower():

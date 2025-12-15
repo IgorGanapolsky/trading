@@ -9,10 +9,7 @@ Verifies that all components are properly wired together:
 Created: Dec 15, 2025
 """
 
-import json
-from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -107,7 +104,7 @@ class TestPreTradeRAGCheck:
             )
 
             # Initialize the loop
-            loop = initialize_learning_loop()
+            initialize_learning_loop()
 
             # Query with fear context
             result = pre_trade_check(

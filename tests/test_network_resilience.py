@@ -38,7 +38,7 @@ class TestTimeoutHandling:
         try:
             from src.execution.alpaca_executor import AlpacaExecutor
 
-            executor = AlpacaExecutor.__new__(AlpacaExecutor)
+            AlpacaExecutor.__new__(AlpacaExecutor)
             # Should have timeout attribute or use requests with timeout
             # This is a structural test - verifies timeout is considered
             assert True  # Placeholder - actual timeout check depends on implementation
@@ -95,7 +95,7 @@ class TestRetryLogic:
 
         for attempt in range(max_retries):
             try:
-                result = mock_api_call()
+                mock_api_call()
                 break
             except ConnectionError:
                 if attempt < max_retries - 1:
@@ -444,7 +444,6 @@ class TestNetworkMonitoring:
 
     def test_error_rate_tracking(self):
         """Track error rate for circuit breaker decisions."""
-        window_size = 10
         errors = [False, False, True, False, True, True, False, False, True, False]
 
         error_rate = sum(errors) / len(errors)

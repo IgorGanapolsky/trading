@@ -86,7 +86,7 @@ class TestHighFrequencyOrders:
         start_time = time.time()
         with ThreadPoolExecutor(max_workers=20) as executor:
             futures = [executor.submit(submit_mock_order, i) for i in range(total_orders)]
-            results = [f.result() for f in as_completed(futures)]
+            [f.result() for f in as_completed(futures)]
 
         elapsed = time.time() - start_time
         actual_rps = len(orders_submitted) / elapsed
@@ -99,7 +99,6 @@ class TestHighFrequencyOrders:
     def test_burst_order_handling(self):
         """Handle burst of 50 orders in 100ms."""
         burst_size = 50
-        max_duration_ms = 100
 
         submitted = []
         lock = threading.Lock()
@@ -114,7 +113,7 @@ class TestHighFrequencyOrders:
             futures = [executor.submit(quick_submit, i) for i in range(burst_size)]
             for f in as_completed(futures):
                 f.result()
-        elapsed_ms = (time.time() - start) * 1000
+        (time.time() - start) * 1000
 
         assert len(submitted) == burst_size, "All burst orders should complete"
         # Note: In real test, elapsed time might exceed 100ms due to thread overhead
@@ -133,7 +132,7 @@ class TestMemoryStability:
         for i in range(iterations):
             # Create temporary objects (simulating order processing)
             order = {"id": i, "symbol": "SPY", "quantity": 100, "data": "x" * 1000}
-            result = {"order_id": order["id"], "status": "filled"}
+            {"order_id": order["id"], "status": "filled"}
             # Objects should be garbage collected
 
             if i % 100 == 0:
@@ -185,9 +184,7 @@ class TestThroughputBenchmarks:
             # Validate
             assert order["symbol"] in ["SPY", "QQQ", "AAPL"]
             # Risk check
-            risk_score = 0.5
             # Submit
-            result = {"filled": True}
             latency_ms = (time.time() - start) * 1000
             return latency_ms
 
@@ -298,12 +295,11 @@ class TestResourceExhaustion:
 
     def test_file_handle_limits(self):
         """Should not exhaust file handles."""
-        files_opened = []
 
         try:
             for i in range(100):
                 # Properly close files after use
-                with open("/dev/null") as f:
+                with open("/dev/null"):
                     pass  # File automatically closed
 
             # All files should be closed
@@ -432,7 +428,6 @@ class TestSustainedLoad:
     def test_5_minute_sustained_load(self):
         """Simulate 5 seconds of sustained load (shortened for unit test)."""
         duration_seconds = 1  # Shortened from 300 for unit test
-        target_rps = 50
 
         success_count = [0]
         error_count = [0]

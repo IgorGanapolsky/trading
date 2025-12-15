@@ -12,8 +12,8 @@ These tests validate that:
 Run with: pytest tests/test_lesson_backtests.py -v
 """
 
+
 import pytest
-from datetime import datetime
 
 # Import backtest framework
 try:

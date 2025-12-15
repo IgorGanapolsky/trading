@@ -33,14 +33,12 @@ import json
 import logging
 import re
 import time
-from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import requests
 from bs4 import BeautifulSoup
-
 from src.utils.retry_decorator import retry_with_backoff
 
 logger = logging.getLogger(__name__)
@@ -267,10 +265,7 @@ class TikTokSentiment:
 
         # Look for ticker as standalone word
         pattern = r'\b' + re.escape(ticker_upper) + r'\b'
-        if re.search(pattern, text_upper):
-            return True
-
-        return False
+        return bool(re.search(pattern, text_upper))
 
     def _calculate_sentiment_score(
         self, text: str, stats: dict[str, Any], ticker: str

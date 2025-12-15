@@ -215,7 +215,6 @@ class TestLockContentionAndDeadlocks:
         """Consistent lock ordering prevents deadlocks."""
         lock_a = threading.Lock()
         lock_b = threading.Lock()
-        deadlock_detected = [False]
         completed = [0]
 
         def operation_1():
@@ -286,8 +285,8 @@ class TestAsyncTaskCoordination:
             return order_id
 
         # Order 2 depends on Order 1
-        result1 = await execute_order(1)
-        result2 = await execute_order(2, depends_on=1)
+        await execute_order(1)
+        await execute_order(2, depends_on=1)
 
         assert execution_order == [1, 2], "Should execute in dependency order"
 

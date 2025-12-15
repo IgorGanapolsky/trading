@@ -237,11 +237,11 @@ class LessonToBacktest:
         Returns:
             Python test code as string
         """
-        test_code = '''"""
+        test_code = f'''"""
 Auto-generated backtest tests from lessons learned.
 
-Generated: {timestamp}
-Scenarios: {count}
+Generated: {datetime.now().isoformat()}
+Scenarios: {len(scenarios)}
 
 These tests validate that:
 1. Known failure conditions are detected
@@ -270,10 +270,7 @@ def backtest_engine():
     return BacktestEngine()
 
 
-'''.format(
-            timestamp=datetime.now().isoformat(),
-            count=len(scenarios),
-        )
+'''
 
         # Generate test for each scenario
         for i, scenario in enumerate(scenarios):

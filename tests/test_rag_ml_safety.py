@@ -512,7 +512,7 @@ class TestPatternDatabase:
         critical_patterns = [p for p in self.KNOWN_FAILURE_PATTERNS if p["lesson_id"]]
 
         for pattern in critical_patterns:
-            lesson_file = lessons_dir / f"{pattern['lesson_id']}*.md"
+            lessons_dir / f"{pattern['lesson_id']}*.md"
             matches = list(lessons_dir.glob(f"{pattern['lesson_id']}*.md"))
             assert len(matches) >= 1, (
                 f"Pattern '{pattern['name']}' claims lesson {pattern['lesson_id']} but file not found"
@@ -751,8 +751,8 @@ class TestRegimePivotPatterns:
 
         for pattern in self.REGIME_PIVOT_PATTERNS:
             key_terms = pattern["name"].split("_")
-            found = any(term in content.lower() for term in key_terms)
-            assert found or True, f"Pattern {pattern['name']} not documented in ll_016"
+            any(term in content.lower() for term in key_terms)
+            assert True, f"Pattern {pattern['name']} not documented in ll_016"
 
 
 # =============================================================================

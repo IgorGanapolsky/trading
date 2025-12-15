@@ -210,20 +210,20 @@ def print_results(results: dict) -> None:
     print("RESULTS")
     print(f"{'='*60}")
 
-    print(f"\n📊 PERFORMANCE:")
+    print("\n📊 PERFORMANCE:")
     print(f"   Initial:      ${results['initial_capital']:,.2f}")
     print(f"   Final:        ${results['final_equity']:,.2f}")
     print(f"   Return:       {results['total_return_pct']:+.2f}%")
     print(f"   Buy & Hold:   {results['buy_hold_return_pct']:+.2f}%")
     print(f"   Alpha:        {results['alpha_vs_hold']:+.2f}% {'✅' if results['alpha_vs_hold'] > 0 else '❌'}")
 
-    print(f"\n📈 TRADE STATS:")
+    print("\n📈 TRADE STATS:")
     print(f"   Total Trades: {results['total_trades']}")
     print(f"   Wins:         {results['wins']}")
     print(f"   Losses:       {results['losses']}")
     print(f"   Win Rate:     {results['win_rate_pct']:.1f}%")
 
-    print(f"\n⚠️  RISK:")
+    print("\n⚠️  RISK:")
     print(f"   Max Drawdown: {results['max_drawdown_pct']:.2f}%")
     print(f"   Sharpe Ratio: {results['sharpe_ratio']:.2f}")
 
@@ -238,7 +238,7 @@ def print_results(results: dict) -> None:
     print(f"{'='*60}")
 
     # Show trades
-    print(f"\n📝 TRADE LOG:")
+    print("\n📝 TRADE LOG:")
     for t in results['trades']:
         action = t['action']
         if 'pnl' in t:

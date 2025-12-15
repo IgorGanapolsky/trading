@@ -192,7 +192,7 @@ class TestAdversarialSimulations:
         start = time.time()
 
         # Simulate delayed response
-        with patch("time.sleep") as mock_sleep:
+        with patch("time.sleep"):
             # System should have timeouts
             try:
                 import inspect
@@ -316,14 +316,13 @@ class TestLLMDriftCheck:
                 pytest.skip("RAG database not available")
 
             # Test each golden sample
-            matches = 0
             for sample in golden_sentiment_dataset:
                 # This would query the RAG and compare
                 # For now, verify RAG structure exists
                 pass
 
             # Structure validation (actual cosine sim would require embeddings)
-            assert rag_db is not None or True, "RAG validation placeholder"
+            assert True, "RAG validation placeholder"
 
         except ImportError:
             pytest.skip("RAG module not available")

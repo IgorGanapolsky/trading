@@ -67,7 +67,7 @@ class TestPythonSyntaxValidation:
             if 'f"' in content and '\\"' in content:
                 # Parse AST to find actual f-strings with issues
                 try:
-                    tree = ast.parse(content)
+                    ast.parse(content)
                     # If parsing succeeds, the syntax is valid
                 except SyntaxError as e:
                     if "f-string" in str(e).lower():

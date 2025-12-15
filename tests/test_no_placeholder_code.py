@@ -37,10 +37,7 @@ EXCLUDE_PATTERNS = [
 
 def should_exclude(filepath: str) -> bool:
     """Check if file should be excluded from scanning."""
-    for pattern in EXCLUDE_PATTERNS:
-        if re.search(pattern, str(filepath)):
-            return True
-    return False
+    return any(re.search(pattern, str(filepath)) for pattern in EXCLUDE_PATTERNS)
 
 
 def find_dead_code_patterns(content: str) -> list[tuple[int, str, str]]:
@@ -124,7 +121,7 @@ class TestNoPlaceholderCode:
         for source in declared_sources:
             method_name = f"_get_{source}_sentiment"
             if hasattr(analyzer, method_name):
-                method = getattr(analyzer, method_name)
+                getattr(analyzer, method_name)
                 # Check it doesn't just return "not implemented"
                 # We can't easily call it without side effects, so just verify it exists
                 implemented_sources.add(source)

@@ -342,7 +342,7 @@ class AnomalyToTrainingBridge:
         # Count which features appear in anomalies
         feature_counts = Counter()
         for example in self.training_queue:
-            for feature_name in example.features.keys():
+            for feature_name in example.features:
                 feature_counts[feature_name] += 1
 
         total = len(self.training_queue) or 1

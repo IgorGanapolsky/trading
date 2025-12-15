@@ -154,13 +154,9 @@ class TestOrderRejectionRecovery:
     def test_rejection_retry_logic(self):
         """Test retry logic for recoverable rejections."""
         retryable_reasons = {"market_closed", "insufficient_liquidity", "timeout"}
-        non_retryable_reasons = {"insufficient_buying_power", "invalid_symbol", "pdt"}
 
         def should_retry(reject_reason: str) -> bool:
-            for retryable in retryable_reasons:
-                if retryable in reject_reason.lower():
-                    return True
-            return False
+            return any(retryable in reject_reason.lower() for retryable in retryable_reasons)
 
         assert should_retry("market_closed"), "Should retry market_closed"
         assert not should_retry("insufficient_buying_power"), "Should not retry insufficient funds"

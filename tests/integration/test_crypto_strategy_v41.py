@@ -4,10 +4,10 @@ Test Crypto Strategy v4.1 - Trend + Momentum Confirmation
 Tests to prevent catching falling knives (LL-040).
 """
 
-import pytest
-import pandas as pd
+
 import numpy as np
-from datetime import datetime, timedelta
+import pandas as pd
+import pytest
 
 
 def calc_rsi(prices: pd.Series, period: int = 14) -> pd.Series:
@@ -63,10 +63,10 @@ class TestEntryLogic:
     def test_both_conditions_required(self):
         """Entry requires BOTH MA above AND RSI bullish"""
         # All combinations
-        assert is_valid_entry(price=100, ma50=90, rsi=55) == True   # Both true
-        assert is_valid_entry(price=100, ma50=110, rsi=55) == False  # MA false
-        assert is_valid_entry(price=100, ma50=90, rsi=45) == False   # RSI false
-        assert is_valid_entry(price=100, ma50=110, rsi=45) == False  # Both false
+        assert is_valid_entry(price=100, ma50=90, rsi=55)   # Both true
+        assert not is_valid_entry(price=100, ma50=110, rsi=55)  # MA false
+        assert not is_valid_entry(price=100, ma50=90, rsi=45)   # RSI false
+        assert not is_valid_entry(price=100, ma50=110, rsi=45)  # Both false
 
     def test_falling_knife_rejected(self):
         """Should NOT buy in downtrend (LL-040)"""
@@ -75,7 +75,7 @@ class TestEntryLogic:
         ma50 = 96000   # Price below MA
         rsi = 42       # Bearish momentum
 
-        assert is_valid_entry(price, ma50, rsi) == False, \
+        assert not is_valid_entry(price, ma50, rsi), \
             "Should reject falling knife (below MA + weak RSI)"
 
     def test_weak_rally_rejected(self):
@@ -84,7 +84,7 @@ class TestEntryLogic:
         ma50 = 95    # Price above MA
         rsi = 48     # Weak momentum
 
-        assert is_valid_entry(price, ma50, rsi) == False, \
+        assert not is_valid_entry(price, ma50, rsi), \
             "Should reject weak rally (RSI < 50 even if above MA)"
 
     def test_confirmed_uptrend_accepted(self):
@@ -93,7 +93,7 @@ class TestEntryLogic:
         ma50 = 95000   # Price above MA
         rsi = 58       # Bullish momentum
 
-        assert is_valid_entry(price, ma50, rsi) == True, \
+        assert is_valid_entry(price, ma50, rsi), \
             "Should accept confirmed uptrend"
 
 
@@ -178,7 +178,7 @@ class TestFearGreedSizing:
         can_enter = is_valid_entry(price, ma50, rsi)
 
         assert size_mult == 1.5, "Should have 1.5x size in extreme fear"
-        assert can_enter == False, "Should NOT enter despite fear (below MA + weak RSI)"
+        assert not can_enter, "Should NOT enter despite fear (below MA + weak RSI)"
 
 
 if __name__ == "__main__":

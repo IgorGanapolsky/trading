@@ -16,8 +16,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-
+from typing import Optional
 
 
 @dataclass
@@ -30,7 +29,7 @@ class Anomaly:
     description: str
     metric_name: str
     metric_value: float
-    expected_range: Tuple[float, float]
+    expected_range: tuple[float, float]
     confidence: float  # 0.0 to 1.0
 
 
@@ -67,19 +66,19 @@ class MLAnomalyDetector:
             "code_change_size": 50,  # >50 files changed
         }
 
-    def load_system_state(self) -> Optional[Dict]:
+    def load_system_state(self) -> Optional[dict]:
         """Load current system state."""
         if not self.system_state_file.exists():
             return None
 
-        with open(self.system_state_file, "r") as f:
+        with open(self.system_state_file) as f:
             return json.load(f)
 
     def save_anomaly(self, anomaly: Anomaly):
         """Save detected anomaly to history."""
         history = []
         if self.anomaly_history_file.exists():
-            with open(self.anomaly_history_file, "r") as f:
+            with open(self.anomaly_history_file) as f:
                 history = json.load(f)
 
         history.append(
@@ -250,7 +249,7 @@ class MLAnomalyDetector:
 
         return None
 
-    def detect_code_change_anomaly(self, files_changed: List[str]) -> Optional[Anomaly]:
+    def detect_code_change_anomaly(self, files_changed: list[str]) -> Optional[Anomaly]:
         """Detect risky code changes.
 
         Args:
@@ -299,8 +298,8 @@ class MLAnomalyDetector:
         return None
 
     def run_all_checks(
-        self, files_changed: Optional[List[str]] = None
-    ) -> List[Anomaly]:
+        self, files_changed: Optional[list[str]] = None
+    ) -> list[Anomaly]:
         """Run all anomaly detection checks.
 
         Args:
@@ -337,7 +336,7 @@ class MLAnomalyDetector:
 
         return anomalies
 
-    def get_recent_anomalies(self, hours: int = 24) -> List[Dict]:
+    def get_recent_anomalies(self, hours: int = 24) -> list[dict]:
         """Get anomalies from last N hours.
 
         Args:
@@ -349,7 +348,7 @@ class MLAnomalyDetector:
         if not self.anomaly_history_file.exists():
             return []
 
-        with open(self.anomaly_history_file, "r") as f:
+        with open(self.anomaly_history_file) as f:
             history = json.load(f)
 
         cutoff = datetime.utcnow() - timedelta(hours=hours)

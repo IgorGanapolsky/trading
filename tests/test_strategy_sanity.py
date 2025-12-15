@@ -11,7 +11,6 @@ Run with: pytest tests/test_strategy_sanity.py -v
 """
 
 import json
-import os
 import re
 from pathlib import Path
 

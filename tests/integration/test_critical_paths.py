@@ -37,7 +37,7 @@ class TestCryptoStrategyIntegration:
                     strategy.execute_daily = mock_daily
 
                     # Execute
-                    result = strategy.execute()
+                    strategy.execute()
 
                     # CRITICAL: manage_positions MUST be called
                     assert mock_manage.called, "manage_positions() was NOT called during execute()!"

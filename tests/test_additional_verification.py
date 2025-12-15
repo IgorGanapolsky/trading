@@ -135,7 +135,7 @@ class TestModelCircuitBreaker:
         for _ in range(2):
             breaker.record_prediction(model, was_correct=True)
         for _ in range(4):
-            result = breaker.record_prediction(model, was_correct=False)
+            breaker.record_prediction(model, was_correct=False)
 
         assert breaker.model_states[model].accuracy < 0.50
 

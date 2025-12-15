@@ -15,8 +15,6 @@ import json
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -45,12 +43,12 @@ class TestLL009SyntaxErrors:
             file_path = project_root / rel_path
             if file_path.exists():
                 try:
-                    with open(file_path, "r") as f:
+                    with open(file_path) as f:
                         ast.parse(f.read())
                 except SyntaxError as e:
                     errors.append(f"{rel_path}: line {e.lineno}: {e.msg}")
 
-        assert not errors, f"REGRESSION LL-009: Syntax errors found:\n" + "\n".join(errors)
+        assert not errors, "REGRESSION LL-009: Syntax errors found:\n" + "\n".join(errors)
 
 
 class TestLL020FearMultiplier:
@@ -71,7 +69,7 @@ class TestLL020FearMultiplier:
         if not fear_greed_file.exists():
             pytest.skip("fear_greed_index.py not found")
 
-        with open(fear_greed_file, "r") as f:
+        with open(fear_greed_file) as f:
             content = f.read()
 
         # Check for dangerous patterns: size_multiplier > 1.0 during fear
@@ -106,7 +104,7 @@ class TestLL020FearMultiplier:
         for rel_path in hook_files:
             hook_file = project_root / rel_path
             if hook_file.exists():
-                with open(hook_file, "r") as f:
+                with open(hook_file) as f:
                     content = f.read()
 
                 for fake_metric in fake_metrics:
@@ -123,7 +121,7 @@ class TestLL020FearMultiplier:
         if not crypto_strategy_file.exists():
             pytest.skip("crypto_strategy.py not found")
 
-        with open(crypto_strategy_file, "r") as f:
+        with open(crypto_strategy_file) as f:
             content = f.read()
 
         # Check for dangerous pattern: increasing multiplier during dips
@@ -131,9 +129,9 @@ class TestLL020FearMultiplier:
         match = re.search(dangerous_pattern, content)
 
         assert match is None, (
-            f"REGRESSION LL-020: Buy-the-dip is increasing position during downtrends!\n"
-            f"  WRONG: multiplier = 2.0 during dips (catching falling knives)\n"
-            f"  RIGHT: multiplier = 0.5 during dips (reduce exposure)"
+            "REGRESSION LL-020: Buy-the-dip is increasing position during downtrends!\n"
+            "  WRONG: multiplier = 2.0 during dips (catching falling knives)\n"
+            "  RIGHT: multiplier = 0.5 during dips (reduce exposure)"
         )
 
 
@@ -151,7 +149,7 @@ class TestLL024FStringSyntax:
         if not trader_script.exists():
             pytest.skip("autonomous_trader.py not found")
 
-        with open(trader_script, "r") as f:
+        with open(trader_script) as f:
             content = f.read()
 
         try:
@@ -170,7 +168,7 @@ class TestLL024FStringSyntax:
 
         for py_file in python_files[:50]:  # Limit to avoid timeout
             try:
-                with open(py_file, "r") as f:
+                with open(py_file) as f:
                     content = f.read()
 
                 if re.search(pattern, content):
@@ -179,7 +177,7 @@ class TestLL024FStringSyntax:
                 continue
 
         assert not issues, (
-            f"REGRESSION LL-024: Backslash in f-string expressions:\n"
+            "REGRESSION LL-024: Backslash in f-string expressions:\n"
             + "\n".join(f"  - {f}" for f in issues)
         )
 
@@ -210,7 +208,7 @@ class TestLL034CryptoFillVerification:
         for rel_path in workflows:
             workflow_file = project_root / rel_path
             if workflow_file.exists():
-                with open(workflow_file, "r") as f:
+                with open(workflow_file) as f:
                     content = f.read()
 
                 for pattern in required_patterns:
@@ -228,7 +226,7 @@ class TestLL034CryptoFillVerification:
         # Check most recent trade file
         most_recent = max(trade_files, key=lambda f: f.stat().st_mtime)
 
-        with open(most_recent, "r") as f:
+        with open(most_recent) as f:
             try:
                 trades = json.load(f)
             except json.JSONDecodeError:
@@ -292,7 +290,7 @@ class TestLL035RAGUsageEnforcement:
         if not claude_md.exists():
             pytest.skip("CLAUDE.md not found")
 
-        with open(claude_md, "r") as f:
+        with open(claude_md) as f:
             content = f.read()
 
         required_steps = [
@@ -340,7 +338,7 @@ class TestLL040TrendConfirmation:
         for rel_path in workflows:
             workflow_file = project_root / rel_path
             if workflow_file.exists():
-                with open(workflow_file, "r") as f:
+                with open(workflow_file) as f:
                     content = f.read().lower()
 
                 has_trend_filter = any(ind.lower() in content for ind in trend_indicators)
@@ -361,7 +359,7 @@ class TestLL040TrendConfirmation:
         for rel_path in workflows:
             workflow_file = project_root / rel_path
             if workflow_file.exists():
-                with open(workflow_file, "r") as f:
+                with open(workflow_file) as f:
                     content = f.read()
 
                 if "crypto" in content.lower() and "buy" in content.lower():
@@ -424,7 +422,7 @@ class TestRAGVerificationGate:
 
             if results:
                 result_ids = [r[0].id.lower() for r in results]
-                found = any(exp.lower() in str(result_ids) for exp in expected_ids)
+                any(exp.lower() in str(result_ids) for exp in expected_ids)
                 # Just verify search works, exact matches depend on implementation
                 assert len(results) > 0, f"No results for query: {query}"
 
@@ -517,7 +515,7 @@ class TestCIIntegration:
                 pytest.skip("No test workflow found")
             test_workflow = test_workflows[0]
 
-        with open(test_workflow, "r") as f:
+        with open(test_workflow) as f:
             content = f.read()
 
         # Should run pytest
@@ -548,7 +546,7 @@ class TestBacktestMetricValidation:
         hook_files = list((project_root / ".claude" / "hooks").glob("*.sh"))
 
         for hook_file in hook_files:
-            with open(hook_file, "r") as f:
+            with open(hook_file) as f:
                 content = f.read()
 
             # Check for suspiciously precise hardcoded metrics

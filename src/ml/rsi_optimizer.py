@@ -380,7 +380,7 @@ class RSIOptimizer:
         }
 
         logger.info("=" * 80)
-        logger.info(f"OPTIMIZATION COMPLETE")
+        logger.info("OPTIMIZATION COMPLETE")
         logger.info(f"Best RSI Threshold: {best_result.threshold}")
         logger.info(f"Sharpe Ratio: {best_result.sharpe_ratio:.3f}")
         logger.info(f"Win Rate: {best_result.win_rate:.2f}%")

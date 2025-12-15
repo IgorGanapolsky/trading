@@ -27,7 +27,7 @@ class TestFeatureCompleteness:
 
         analyzer = UnifiedSentiment()
 
-        for source_name in analyzer.SOURCE_WEIGHTS.keys():
+        for source_name in analyzer.SOURCE_WEIGHTS:
             method_name = f"_get_{source_name}_sentiment"
             assert hasattr(analyzer, method_name), (
                 f"SOURCE_WEIGHTS declares '{source_name}' but "
