@@ -1,0 +1,139 @@
+name: Crypto Take-Profit Monitor
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run every 15 minutes 24/7 for crypto
+    - cron: '*/15 * * * *'
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py
+
+      - name: Check Positions & Take Profit
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+        run: |
+          python3 << 'EOF'
+          import os
+          import json
+          from datetime import datetime
+          from alpaca.trading.client import TradingClient
+          from alpaca.trading.requests import MarketOrderRequest
+          from alpaca.trading.enums import OrderSide, TimeInForce
+
+          TAKE_PROFIT_PCT = 5.0   # Sell at +5%
+          STOP_LOSS_PCT = -7.0    # Sell at -7%
+
+          client = TradingClient(
+              os.environ['ALPACA_API_KEY'],
+              os.environ['ALPACA_SECRET_KEY'],
+              paper=True
+          )
+
+          # Get account
+          account = client.get_account()
+          print("=" * 60)
+          print(f"💰 ACCOUNT: ${float(account.equity):,.2f}")
+          print("=" * 60)
+
+          # Get positions
+          positions = client.get_all_positions()
+          crypto = [p for p in positions if p.symbol.endswith('USD')]
+
+          result = {
+              "timestamp": datetime.utcnow().isoformat(),
+              "account_equity": float(account.equity),
+              "positions_checked": len(crypto),
+              "actions": []
+          }
+
+          print(f"\n🪙 CRYPTO POSITIONS: {len(crypto)}")
+          print("-" * 60)
+
+          for p in crypto:
+              symbol = p.symbol
+              qty = float(p.qty)
+              entry = float(p.avg_entry_price)
+              current = float(p.current_price)
+              pl = float(p.unrealized_pl)
+              pl_pct = float(p.unrealized_plpc) * 100
+
+              emoji = "🟢" if pl >= 0 else "🔴"
+              print(f"\n{emoji} {symbol}:")
+              print(f"   Qty: {qty}")
+              print(f"   Entry: ${entry:,.2f}")
+              print(f"   Current: ${current:,.2f}")
+              print(f"   P/L: ${pl:+,.2f} ({pl_pct:+.2f}%)")
+
+              action = None
+
+              # Check take-profit
+              if pl_pct >= TAKE_PROFIT_PCT:
+                  print(f"   🎯 TAKE PROFIT TRIGGERED! (+{pl_pct:.2f}% >= +{TAKE_PROFIT_PCT}%)")
+                  action = "SELL_PROFIT"
+
+              # Check stop-loss
+              elif pl_pct <= STOP_LOSS_PCT:
+                  print(f"   🛑 STOP LOSS TRIGGERED! ({pl_pct:.2f}% <= {STOP_LOSS_PCT}%)")
+                  action = "SELL_LOSS"
+
+              else:
+                  print(f"   ⏳ HOLD (target: +{TAKE_PROFIT_PCT}%, stop: {STOP_LOSS_PCT}%)")
+
+              if action:
+                  try:
+                      order = client.submit_order(
+                          MarketOrderRequest(
+                              symbol=symbol,
+                              qty=qty,
+                              side=OrderSide.SELL,
+                              time_in_force=TimeInForce.GTC
+                          )
+                      )
+                      print(f"   ✅ SELL ORDER SUBMITTED: {order.id}")
+                      result["actions"].append({
+                          "symbol": symbol,
+                          "action": action,
+                          "qty": qty,
+                          "pl_pct": pl_pct,
+                          "order_id": str(order.id)
+                      })
+                  except Exception as e:
+                      print(f"   ❌ SELL FAILED: {e}")
+                      result["actions"].append({
+                          "symbol": symbol,
+                          "action": "FAILED",
+                          "error": str(e)
+                      })
+
+          # Summary
+          print("\n" + "=" * 60)
+          print("SUMMARY:")
+          print(f"  Positions checked: {len(crypto)}")
+          print(f"  Actions taken: {len(result['actions'])}")
+          print("=" * 60)
+
+          # Save result
+          with open("data/take_profit_check.json", "w") as f:
+              json.dump(result, f, indent=2)
+          EOF
+
+      - name: Commit if changes
+        run: |
+          git config user.name "Claude CTO"
+          git config user.email "claude@trading.ai"
+          git add data/take_profit_check.json 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "chore: Take-profit check $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push || true
