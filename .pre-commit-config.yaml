@@ -177,3 +177,16 @@ repos:
         pass_filenames: false
         verbose: true
         stages: [pre-commit]
+
+      - id: check-deprecated-alpaca-imports
+        name: Check for Deprecated Alpaca SDK Imports (ll_025 Prevention)
+        entry: >
+          bash -c 'if grep -r "alpaca_trade_api" src/ scripts/ --include="*.py" 2>/dev/null; then
+          echo "ERROR: Deprecated alpaca_trade_api found. Use alpaca-py SDK instead";
+          echo "  from alpaca.trading.client import TradingClient";
+          exit 1; fi'
+        language: system
+        types: [python]
+        pass_filenames: false
+        verbose: true
+        stages: [pre-commit]
