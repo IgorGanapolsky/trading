@@ -47,7 +47,7 @@ jobs:
         env:
           LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
           LANGCHAIN_TRACING_V2: ${{ github.event.inputs.use_langsmith == 'true' && 'true' || '' }}
-          LANGCHAIN_PROJECT: trading-rl-training
+          LANGCHAIN_PROJECT: 'trading-system'
         run: |
           echo "🤖 Training RL Agents..."
           echo "=========================================="
