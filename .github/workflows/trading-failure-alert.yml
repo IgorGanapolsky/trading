@@ -1,0 +1,98 @@
+name: Trading Failure Alert
+
+on:
+  schedule:
+    # Check every hour during trading hours (9 AM - 5 PM ET = 14:00-22:00 UTC)
+    - cron: '0 14-22 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  check-trading-health:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - name: Check Trading Workflow Status
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Checking last 3 trading workflow runs..."
+          
+          # Check daily-trading
+          DAILY_FAILS=$(gh run list --repo ${{ github.repository }} \
+            --workflow daily-trading.yml --limit 3 --json conclusion \
+            | jq '[.[] | select(.conclusion == "failure")] | length')
+          
+          # Check combined-trading  
+          COMBINED_FAILS=$(gh run list --repo ${{ github.repository }} \
+            --workflow combined-trading.yml --limit 3 --json conclusion \
+            | jq '[.[] | select(.conclusion == "failure")] | length')
+          
+          # Check weekend-crypto
+          CRYPTO_FAILS=$(gh run list --repo ${{ github.repository }} \
+            --workflow weekend-crypto-trading.yml --limit 3 --json conclusion \
+            | jq '[.[] | select(.conclusion == "failure")] | length')
+          
+          echo "daily_fails=$DAILY_FAILS" >> $GITHUB_OUTPUT
+          echo "combined_fails=$COMBINED_FAILS" >> $GITHUB_OUTPUT
+          echo "crypto_fails=$CRYPTO_FAILS" >> $GITHUB_OUTPUT
+          
+          TOTAL_FAILS=$((DAILY_FAILS + COMBINED_FAILS + CRYPTO_FAILS))
+          echo "total_fails=$TOTAL_FAILS" >> $GITHUB_OUTPUT
+          
+          echo "Failures: Daily=$DAILY_FAILS, Combined=$COMBINED_FAILS, Crypto=$CRYPTO_FAILS"
+          
+          if [ $TOTAL_FAILS -ge 2 ]; then
+            echo "🚨 CRITICAL: Multiple trading workflows failing"
+            echo "alert_needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Trading workflows healthy"
+            echo "alert_needed=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create Alert Issue
+        if: steps.check.outputs.alert_needed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Check if alert already exists
+          EXISTING=$(gh issue list --repo ${{ github.repository }} \
+            --label "trading-failure" --state open --limit 1 --json number \
+            | jq -r '.[0].number // empty')
+          
+          if [ -z "$EXISTING" ]; then
+            gh issue create \
+              --repo ${{ github.repository }} \
+              --title "🚨 CRITICAL: Trading Workflows Failing" \
+              --label "trading-failure,P0" \
+              --body "## Trading System Down
+
+**Detected**: $(date -u)
+**Failures**: ${{ steps.check.outputs.total_fails }} workflows
+
+**Failed Workflows:**
+- Daily Trading: ${{ steps.check.outputs.daily_fails }}/3 runs
+- Combined Trading: ${{ steps.check.outputs.combined_fails }}/3 runs  
+- Crypto Trading: ${{ steps.check.outputs.crypto_fails }}/3 runs
+
+**Impact:**
+- No options trades executing
+- No equity trades executing
+- Lost trading opportunities
+
+**Action Required:**
+1. Check workflow logs: \`gh run list --workflow daily-trading.yml\`
+2. Fix root cause immediately
+3. Verify fix with manual run
+4. Close this issue when resolved
+
+**This is a P0 incident - trading revenue at risk.**"
+            
+            echo "🚨 Alert issue created"
+          else
+            echo "ℹ️  Alert issue already exists (#$EXISTING)"
+          fi
