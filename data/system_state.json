@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2025-12-15T16:00:02.588150",
+    "last_updated": "2025-12-15T18:13:30.711843",
     "last_audit": "2025-11-17T09:00:00.000000",
     "audit_notes": "Day 9 - Added Tier 5 crypto tracking (BTC/ETH weekend strategy)"
   },
@@ -232,8 +232,8 @@
     },
     "tier5": {
       "name": "Crypto Daily Strategy (BTC, ETH, SOL)",
-      "allocation": 0.05,
-      "daily_amount": 25.0,
+      "allocation": 0.02,
+      "daily_amount": 1.0,
       "coins": [
         "BTC/USD",
         "ETH/USD",
@@ -266,7 +266,9 @@
           "reason": "Layer 1 - await mainnet launch"
         }
       ],
-      "strategy_update": "2025-12-08: Added SOL per Luke Belmar recommendations"
+      "strategy_update": "2025-12-08: Added SOL per Luke Belmar recommendations",
+      "strategy_notes": "MINIMIZED: Trend-following only, no DCA into downtrends",
+      "trend_filter": true
     },
     "tier7": {
       "name": "REIT Smart Income Strategy",
@@ -326,6 +328,23 @@
       "regime": "Neutral",
       "strategy_notes": "Regime-based allocation: High GSR \u2192 Equal GLD/SLV, Fear \u2192 Heavy GLD, Normal \u2192 70/30 GLD/SLV",
       "strategy_update": "2025-12-12: Activated Precious Metals strategy per CEO approval"
+    },
+    "options": {
+      "name": "Options Premium Strategy (Cash-Secured Puts)",
+      "allocation": 0.35,
+      "daily_amount": 25.0,
+      "status": "active",
+      "enabled": true,
+      "win_rate": 75.0,
+      "total_profit": 327.82,
+      "trades_executed": 4,
+      "strategy_notes": "Primary profit driver - sell puts on SPY/QQQ/AMD/NVDA",
+      "risk_rules": {
+        "max_delta": 30,
+        "preferred_dte": "30-45",
+        "profit_target": "50%",
+        "stop_loss": "200%"
+      }
     }
   },
   "backtest_reality": {
@@ -366,8 +385,12 @@
       "Dec 15 2025: CTO ANALYSIS - Short options (SPY/AMD) = 75% win rate, +$327 - PRIMARY STRATEGY",
       "Dec 15 2025: CTO ANALYSIS - Crypto spot DCA into downtrends = 0% win rate - STOP THIS PATTERN",
       "Dec 15 2025: CTO ANALYSIS - 62.2% backtest was cherry-picked, actual range is 38-52%",
-      "Dec 15 2025: PARAMETER CHANGE - Profit target: 1% → 3%, Stop loss: 1% → 2%",
-      "Dec 15 2025: PARAMETER CHANGE - Daily investment: $10 → $50 (5x increase)"
+      "Dec 15 2025: PARAMETER CHANGE - Profit target: 1% \u2192 3%, Stop loss: 1% \u2192 2%",
+      "Dec 15 2025: PARAMETER CHANGE - Daily investment: $10 \u2192 $50 (5x increase)",
+      "Dec 15 2025: STRATEGIC PIVOT - Options-first allocation approved by CEO",
+      "Dec 15 2025: Options = 100% of profits, increase allocation 5% \u2192 35%",
+      "Dec 15 2025: KEEP core holdings (SPY, bonds) for stability and collateral",
+      "Dec 15 2025: MINIMIZE crypto (2%) - only trend-following, no DCA"
     ],
     "crypto_patterns": [
       "Nov 17: Tier 5 crypto strategy activated - BTC/ETH weekend trading",
@@ -541,7 +564,13 @@
     "[2025-12-12 18:00] TIER 8 ACTIVATED: Precious Metals Strategy (GLD/SLV) enabled per CEO approval",
     "[2025-12-12 18:00] Precious Metals Universe: GLD (Gold), SLV (Silver)",
     "[2025-12-12 18:00] Precious Metals Allocation: $5/day (5% of daily budget)",
-    "[2025-12-12 18:00] Precious Metals Strategy: Regime-based allocation using Gold-Silver ratio"
+    "[2025-12-12 18:00] Precious Metals Strategy: Regime-based allocation using Gold-Silver ratio",
+    "[2025-12-15 18:13] \ud83d\udd04 STRATEGIC PIVOT: Options-First Portfolio Allocation v2.0",
+    "[2025-12-15 18:13] CEO APPROVED: Increase options allocation from 5% \u2192 35%",
+    "[2025-12-15 18:13] RATIONALE: Options = 100% of profits ($327), 75% win rate",
+    "[2025-12-15 18:13] KEEP: SPY (core), IEF/SHY (hedge) - these provide stability",
+    "[2025-12-15 18:13] LIQUIDATE: TLT ($20 too small), crypto spots (0% win rate)",
+    "[2025-12-15 18:13] NEW DAILY BUDGET: $50/day ($25 options, $12.50 equities, $7.50 bonds)"
   ],
   "options": {
     "last_theta_harvest": "2025-12-05T17:53:46.287290+00:00",
