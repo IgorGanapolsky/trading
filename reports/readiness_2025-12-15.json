@@ -1,0 +1,59 @@
+{
+  "timestamp": "2025-12-15T19:31:01.506651",
+  "date": "2025-12-15",
+  "readiness_score": 48.8,
+  "phase": "EARLY",
+  "signal": "\ud83d\udd34 KEEP LEARNING",
+  "criteria_passed": 3,
+  "criteria_total": 9,
+  "deployment_phase": "Phase 0: Paper Only",
+  "real_money_allowed_pct": 0,
+  "real_money_max": 0,
+  "criteria_details": {
+    "paper_days": {
+      "current": 9,
+      "required": 90,
+      "passed": false
+    },
+    "total_trades": {
+      "current": 8,
+      "required": 100,
+      "passed": false
+    },
+    "options_trades": {
+      "current": 4,
+      "required": 50,
+      "passed": false
+    },
+    "options_win_rate": {
+      "current": 75.0,
+      "required": 60,
+      "passed": true
+    },
+    "overall_win_rate": {
+      "current": 50.0,
+      "required": 55,
+      "passed": false
+    },
+    "positive_pl": {
+      "current": 17.49,
+      "required": 0,
+      "passed": true
+    },
+    "max_drawdown": {
+      "current": 21.25,
+      "required": 10,
+      "passed": false
+    },
+    "options_profit": {
+      "current": 326.97,
+      "required": 500,
+      "passed": false
+    },
+    "consecutive_wins": {
+      "current": 0,
+      "required": 0,
+      "passed": true
+    }
+  }
+}

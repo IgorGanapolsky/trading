@@ -1,0 +1,263 @@
+{
+  "version": "1.0.0",
+  "description": "Gradual capital deployment plan from paper to real trading",
+  "created": "2025-12-15",
+  "updated": "2025-12-15",
+  
+  "current_status": {
+    "mode": "paper_trading",
+    "phase": 0,
+    "real_money_deployed": 0,
+    "paper_trading_start": "2025-10-29",
+    "earliest_go_live": "2026-01-28",
+    "notes": "Depositing daily to Alpaca while paper trading"
+  },
+
+  "deposit_strategy": {
+    "frequency": "daily",
+    "target_monthly": 1000,
+    "target_by_day_90": 3000,
+    "purpose": "Build capital while gaining experience",
+    "rules": [
+      "Deposit consistently regardless of paper performance",
+      "Don't touch deposits until Phase 1 approved",
+      "Consider high-yield savings or T-Bills for uninvested deposits"
+    ]
+  },
+
+  "phases": [
+    {
+      "phase": 0,
+      "name": "Paper Only",
+      "status": "ACTIVE",
+      "day_range": [1, 29],
+      "readiness_score_required": 0,
+      "real_money_pct": 0,
+      "max_real_capital": 0,
+      "max_contracts": 0,
+      "description": "Pure paper trading - learn without risk",
+      "entry_criteria": [
+        "Started paper trading"
+      ],
+      "exit_criteria": [
+        "Day 30 reached",
+        "≥30 total trades completed",
+        "Options win rate ≥55%",
+        "Positive total P/L"
+      ],
+      "allowed_actions": [
+        "Paper trade all strategies",
+        "Deposit real money to Alpaca",
+        "Keep deposits in T-Bills (BIL) or cash"
+      ],
+      "prohibited_actions": [
+        "NO real money trades",
+        "NO options with real money"
+      ]
+    },
+    {
+      "phase": 1,
+      "name": "Micro-Test",
+      "status": "LOCKED",
+      "day_range": [30, 59],
+      "readiness_score_required": 50,
+      "real_money_pct": 5,
+      "max_real_capital": 5000,
+      "max_contracts": 1,
+      "description": "Test real execution with minimal risk",
+      "entry_criteria": [
+        "Day 30 reached",
+        "≥30 total trades",
+        "Options win rate ≥55%",
+        "Positive total P/L",
+        "CEO approval"
+      ],
+      "exit_criteria": [
+        "Day 60 reached",
+        "≥60 total trades",
+        "Options win rate ≥60%",
+        "≥$200 total profit",
+        "Real trades match paper performance"
+      ],
+      "allowed_actions": [
+        "Trade up to $5,000 real money",
+        "Maximum 1 options contract per trade",
+        "Continue paper trading in parallel"
+      ],
+      "prohibited_actions": [
+        "NO trades over $5,000",
+        "NO more than 1 contract",
+        "NO scaling up without Day 60 review"
+      ],
+      "purpose": "Validate paper results translate to real execution"
+    },
+    {
+      "phase": 2,
+      "name": "Small Scale",
+      "status": "LOCKED",
+      "day_range": [60, 89],
+      "readiness_score_required": 70,
+      "real_money_pct": 15,
+      "max_real_capital": 15000,
+      "max_contracts": 3,
+      "description": "Cautious scaling with proven strategy",
+      "entry_criteria": [
+        "Day 60 reached",
+        "≥60 total trades",
+        "Options win rate ≥60%",
+        "≥$200 total profit",
+        "Phase 1 real trades profitable",
+        "CEO approval"
+      ],
+      "exit_criteria": [
+        "Day 90 reached",
+        "≥100 total trades",
+        "All go-live checklist criteria met",
+        "2+ consecutive profitable months"
+      ],
+      "allowed_actions": [
+        "Trade up to $15,000 real money",
+        "Maximum 3 options contracts per trade",
+        "Multiple positions allowed"
+      ],
+      "prohibited_actions": [
+        "NO trades over $15,000",
+        "NO more than 3 contracts per underlying",
+        "NO new strategies (stick to what works)"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Full Deployment",
+      "status": "LOCKED",
+      "day_range": [90, 180],
+      "readiness_score_required": 90,
+      "real_money_pct": 50,
+      "max_real_capital": 50000,
+      "max_contracts": 10,
+      "description": "Confident trading with proven edge",
+      "entry_criteria": [
+        "Day 90 reached",
+        "Readiness score ≥90%",
+        "All go-live checklist criteria met",
+        "2+ consecutive profitable months",
+        "CEO approval"
+      ],
+      "exit_criteria": [
+        "Day 180 reached",
+        "Consistent profitability proven",
+        "Ready for Phase 4 scaling"
+      ],
+      "allowed_actions": [
+        "Trade up to 50% of portfolio",
+        "Full options strategy deployment",
+        "Scale position sizes"
+      ],
+      "prohibited_actions": [
+        "NO deploying more than 50% initially",
+        "NO ignoring risk management rules"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Scale Up",
+      "status": "LOCKED",
+      "day_range": [180, 365],
+      "readiness_score_required": 95,
+      "real_money_pct": 80,
+      "max_real_capital": 80000,
+      "max_contracts": 20,
+      "description": "Full confidence, maximum deployment",
+      "entry_criteria": [
+        "6+ months of profitable real trading",
+        "Sharpe ratio > 1.0",
+        "Max drawdown < 10%",
+        "CEO approval"
+      ],
+      "allowed_actions": [
+        "Deploy up to 80% of portfolio",
+        "Larger position sizes",
+        "Consider additional strategies"
+      ]
+    }
+  ],
+
+  "safety_rules": {
+    "hard_stops": [
+      {
+        "rule": "daily_loss_limit",
+        "threshold_pct": 3,
+        "action": "Stop all trading for the day"
+      },
+      {
+        "rule": "weekly_loss_limit",
+        "threshold_pct": 5,
+        "action": "Pause trading, CEO review required"
+      },
+      {
+        "rule": "drawdown_limit",
+        "threshold_pct": 10,
+        "action": "Return to previous phase"
+      },
+      {
+        "rule": "consecutive_losses",
+        "threshold": 3,
+        "action": "Pause options trading for 1 week"
+      }
+    ],
+    "phase_demotion_triggers": [
+      "Max drawdown exceeded",
+      "3+ consecutive losing weeks",
+      "Win rate drops below 45%",
+      "Major system failure causing losses"
+    ]
+  },
+
+  "milestones": {
+    "day_30": {
+      "date": "2025-11-28",
+      "review_items": [
+        "Total trades ≥30",
+        "Options win rate ≥55%",
+        "Positive P/L",
+        "System reliability ≥95%"
+      ],
+      "decision": "Approve Phase 1 or extend Phase 0",
+      "unlocks": "Phase 1: Micro-Test ($5k real)"
+    },
+    "day_60": {
+      "date": "2025-12-28",
+      "review_items": [
+        "Total trades ≥60",
+        "Options win rate ≥60%",
+        "Profit ≥$200",
+        "Real trades match paper"
+      ],
+      "decision": "Approve Phase 2 or extend Phase 1",
+      "unlocks": "Phase 2: Small Scale ($15k real)"
+    },
+    "day_90": {
+      "date": "2026-01-27",
+      "review_items": [
+        "All go-live checklist criteria",
+        "2+ profitable months",
+        "Consistent execution"
+      ],
+      "decision": "Full go-live or extend Phase 2",
+      "unlocks": "Phase 3: Full Deployment (50% real)"
+    }
+  },
+
+  "tracking": {
+    "metrics_to_monitor": [
+      "readiness_score",
+      "options_win_rate",
+      "total_pl",
+      "max_drawdown",
+      "trade_count",
+      "days_paper_trading"
+    ],
+    "reporting_frequency": "daily",
+    "report_location": "reports/readiness_*.json"
+  }
+}

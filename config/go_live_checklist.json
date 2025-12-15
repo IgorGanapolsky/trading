@@ -1,56 +1,211 @@
 {
-  "version": "1.0.0",
-  "description": "Machine-checkable criteria for live trading readiness",
-  "criteria": [
+  "version": "2.0.0",
+  "description": "Machine-checkable criteria for live trading readiness with phased deployment",
+  "created": "2025-12-01",
+  "updated": "2025-12-15",
+
+  "philosophy": {
+    "principle": "Preserve capital first, grow it second",
+    "approach": "Gradual deployment with clear gates",
+    "mantra": "Paper trading is free tuition - real losses are not"
+  },
+
+  "current_status": {
+    "mode": "paper_trading",
+    "phase": 0,
+    "phase_name": "Paper Only",
+    "can_trade_real": false,
+    "last_checked": null
+  },
+
+  "core_criteria": [
     {
       "id": "min_paper_days",
       "description": "Minimum days of paper trading",
       "check": "days_paper_trading >= 90",
       "threshold": 90,
-      "current_value_source": "system_state.challenge.current_day"
+      "current_value_source": "system_state.challenge.current_day",
+      "priority": "CRITICAL",
+      "rationale": "Need to experience different market conditions (earnings, Fed meetings, etc.)"
     },
     {
       "id": "min_win_rate",
-      "description": "Minimum win rate",
+      "description": "Minimum overall win rate",
       "check": "win_rate >= 55",
       "threshold": 55,
-      "current_value_source": "system_state.performance.win_rate"
+      "current_value_source": "system_state.performance.win_rate",
+      "priority": "HIGH",
+      "rationale": "Below 55% win rate with typical R:R means negative expectancy"
+    },
+    {
+      "id": "min_options_win_rate",
+      "description": "Options strategy win rate (primary strategy)",
+      "check": "options_win_rate >= 60",
+      "threshold": 60,
+      "current_value_source": "calculated from closed_trades",
+      "priority": "CRITICAL",
+      "rationale": "Options is our edge - must be consistently profitable"
     },
     {
       "id": "min_sharpe",
-      "description": "Minimum Sharpe ratio",
-      "check": "sharpe_ratio >= 1.2",
-      "threshold": 1.2,
-      "current_value_source": "system_state.heuristics.sharpe_ratio"
+      "description": "Minimum Sharpe ratio (risk-adjusted returns)",
+      "check": "sharpe_ratio >= 1.0",
+      "threshold": 1.0,
+      "current_value_source": "system_state.heuristics.sharpe_ratio",
+      "priority": "MEDIUM",
+      "rationale": "Sharpe < 1.0 means returns don't justify the risk",
+      "note": "Requires sufficient trade history to calculate meaningfully"
     },
     {
       "id": "max_drawdown",
-      "description": "Maximum drawdown (absolute value)",
+      "description": "Maximum drawdown control",
       "check": "max_drawdown >= -10",
       "threshold": -10,
       "current_value_source": "system_state.heuristics.max_drawdown",
-      "note": "Drawdown stored as negative value. -10% max allowed (values worse than -10% fail)"
+      "priority": "HIGH",
+      "rationale": "Large drawdowns destroy compounding and psychology"
     },
     {
       "id": "min_trades",
       "description": "Minimum trades for statistical significance",
       "check": "total_trades >= 100",
       "threshold": 100,
-      "current_value_source": "system_state.performance.total_trades"
+      "current_value_source": "system_state.performance.total_trades",
+      "priority": "CRITICAL",
+      "rationale": "Need 100+ trades to trust win rate statistics"
+    },
+    {
+      "id": "min_options_trades",
+      "description": "Minimum options trades (primary strategy validation)",
+      "check": "options_trades >= 50",
+      "threshold": 50,
+      "current_value_source": "calculated from closed_trades",
+      "priority": "HIGH",
+      "rationale": "Options is our primary strategy - need significant sample"
     },
     {
       "id": "positive_pnl",
       "description": "Positive overall P&L",
       "check": "total_pnl > 0",
       "threshold": 0,
-      "current_value_source": "system_state.account.total_pl"
+      "current_value_source": "system_state.account.total_pl",
+      "priority": "CRITICAL",
+      "rationale": "Can't go live if paper trading is losing money"
+    },
+    {
+      "id": "min_profit",
+      "description": "Minimum total profit (demonstrates edge)",
+      "check": "total_pnl >= 500",
+      "threshold": 500,
+      "current_value_source": "system_state.account.total_pl",
+      "priority": "MEDIUM",
+      "rationale": "Small positive P/L might be luck - want meaningful profit"
     },
     {
       "id": "no_critical_anomalies",
-      "description": "No critical anomalies in last 7 days",
+      "description": "No critical system failures in last 7 days",
       "check": "critical_anomalies_7d == 0",
       "threshold": 0,
-      "current_value_source": "anomaly_log.critical_count_7d"
+      "current_value_source": "anomaly_log.critical_count_7d",
+      "priority": "HIGH",
+      "rationale": "System must be stable before risking real money"
     }
-  ]
+  ],
+
+  "phase_gates": {
+    "phase_0_to_1": {
+      "name": "Paper to Micro-Test",
+      "minimum_day": 30,
+      "criteria": [
+        {"id": "min_trades_30", "check": "total_trades >= 30"},
+        {"id": "options_wr_55", "check": "options_win_rate >= 55"},
+        {"id": "positive_pl", "check": "total_pnl > 0"},
+        {"id": "system_stable", "check": "no_failures_7d"}
+      ],
+      "unlocks": {
+        "max_real_capital": 5000,
+        "max_contracts": 1,
+        "allowed_strategies": ["cash_secured_puts"]
+      },
+      "ceo_approval_required": true
+    },
+    "phase_1_to_2": {
+      "name": "Micro-Test to Small Scale",
+      "minimum_day": 60,
+      "criteria": [
+        {"id": "min_trades_60", "check": "total_trades >= 60"},
+        {"id": "options_wr_60", "check": "options_win_rate >= 60"},
+        {"id": "profit_200", "check": "total_pnl >= 200"},
+        {"id": "real_matches_paper", "check": "real_performance >= paper_performance * 0.8"}
+      ],
+      "unlocks": {
+        "max_real_capital": 15000,
+        "max_contracts": 3,
+        "allowed_strategies": ["cash_secured_puts", "credit_spreads"]
+      },
+      "ceo_approval_required": true
+    },
+    "phase_2_to_3": {
+      "name": "Small Scale to Full Deployment",
+      "minimum_day": 90,
+      "criteria": [
+        {"id": "all_core_criteria", "check": "all core_criteria passed"},
+        {"id": "two_profitable_months", "check": "consecutive_profitable_months >= 2"},
+        {"id": "consistent_execution", "check": "execution_reliability >= 95"}
+      ],
+      "unlocks": {
+        "max_real_capital": 50000,
+        "max_contracts": 10,
+        "allowed_strategies": "all"
+      },
+      "ceo_approval_required": true
+    }
+  },
+
+  "red_flags": {
+    "description": "Conditions that should delay or reverse go-live",
+    "immediate_halt": [
+      "Daily loss > 3% of portfolio",
+      "Weekly loss > 5% of portfolio",
+      "Max drawdown > 10%",
+      "3+ consecutive losing weeks",
+      "System failure causing unintended trades"
+    ],
+    "phase_demotion": [
+      "Real trading performance significantly worse than paper",
+      "Win rate drops below 45%",
+      "Emotional/revenge trading detected",
+      "Risk management rules violated"
+    ],
+    "warning_signs": [
+      "Win rate trending down for 2+ weeks",
+      "Increasing position sizes after losses",
+      "Trading outside defined strategy",
+      "Ignoring stop losses"
+    ]
+  },
+
+  "deposit_guidance": {
+    "current_strategy": "Deposit daily while paper trading",
+    "recommendations": [
+      "Continue regular deposits regardless of paper performance",
+      "Keep deposits in T-Bills (BIL) or high-yield savings until Phase 1",
+      "Target deposit amount by Day 90: $3,000-$5,000 minimum",
+      "Don't feel pressure to rush - the money will be there when ready"
+    ],
+    "optimal_starting_capital": {
+      "minimum": 5000,
+      "recommended": 10000,
+      "comfortable": 25000,
+      "rationale": "Need enough to sell 1 SPY put (~$65k notional, but only ~$5k margin)"
+    }
+  },
+
+  "automation": {
+    "daily_check_script": "scripts/go_live_readiness.py",
+    "milestone_script": "scripts/milestone_alerts.py",
+    "health_script": "scripts/daily_health_alert.py",
+    "run_schedule": "Daily after market close",
+    "alert_channels": ["console", "reports/"]
+  }
 }

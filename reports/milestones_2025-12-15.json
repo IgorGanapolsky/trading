@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-12-15T19:31:02.332880",
+  "date": "2025-12-15",
+  "current_day": 9,
+  "milestones": [
+    {
+      "day": 30,
+      "status": "OVERDUE",
+      "ready": false,
+      "progress_pct": 66.66666666666666,
+      "days_until": 0
+    },
+    {
+      "day": 60,
+      "status": "APPROACHING",
+      "ready": false,
+      "progress_pct": 33.33333333333333,
+      "days_until": 12
+    },
+    {
+      "day": 90,
+      "status": "UPCOMING",
+      "ready": false,
+      "progress_pct": 25.0,
+      "days_until": 42
+    }
+  ]
+}
