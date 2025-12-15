@@ -146,12 +146,13 @@ jobs:
           LANGCHAIN_ENABLE_MCP: ${{ secrets.LANGCHAIN_ENABLE_MCP || 'true' }}
           LANGCHAIN_MODEL: ${{ secrets.LANGCHAIN_MODEL || 'claude-3-5-sonnet-20241022' }}
         run: |
-          echo "🚀 World-Class Crypto Strategy v3.0"
+          echo "🚀 World-Class Crypto Strategy v4.0 (Trend-Aware)"
           python3 << 'PYTHON'
+          """v4.0: Only buy when price > 50-day MA (5x better returns per Coinbase Research)"""
           import os, sys, json, requests, traceback
           from datetime import datetime, timezone
           today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-          result = {"timestamp": datetime.now(timezone.utc).isoformat(), "date": today, "strategy": "WorldClassCrypto", "strategy_version": "3.0"}
+          result = {"timestamp": datetime.now(timezone.utc).isoformat(), "date": today, "strategy": "WorldClassCrypto", "strategy_version": "4.0"}
           def save():
               os.makedirs("data", exist_ok=True)
               f = f"data/trades_{today}.json"
@@ -174,12 +175,39 @@ jobs:
               acct = client.get_account()
               result["account_value"] = float(acct.equity)
               print(f"✅ Account: ${result['account_value']:,.2f}")
+
+              # STEP 1: TREND CHECK (50-day MA) - THE KEY FILTER
+              print("\n📊 STEP 1: Trend Check (50-day MA)")
+              trend_data = {}
+              for s in ["BTC-USD","ETH-USD","SOL-USD"]:
+                  try:
+                      h = yf.Ticker(s).history(period="60d")
+                      if len(h) >= 50:
+                          price = float(h["Close"].iloc[-1])
+                          ma50 = float(h["Close"].rolling(50).mean().iloc[-1])
+                          above = price > ma50
+                          pct = ((price - ma50) / ma50) * 100
+                          chg = ((h["Close"].iloc[-1] - h["Close"].iloc[-7]) / h["Close"].iloc[-7]) * 100
+                          trend_data[s] = {"price":price,"ma50":ma50,"above":above,"pct":pct,"chg7d":chg}
+                          st = "✅ ABOVE" if above else "❌ BELOW"
+                          print(f"   {s}: ${price:,.0f} | MA50: ${ma50:,.0f} | {st} ({pct:+.1f}%)")
+                  except: pass
+
+              above_ma = {k:v for k,v in trend_data.items() if v.get("above")}
+              if not above_ma:
+                  print("\n⛔ ALL BELOW 50-MA - SKIP (waiting for trend)")
+                  result["action"], result["skip_reason"] = "SKIP", "All below 50-day MA"
+                  result["status"] = "WAITING_FOR_TREND"
+                  save()
+                  sys.exit(0)
+
+              # STEP 2: Fear & Greed (for sizing only)
               mult = 1.0
               try:
                   fng = requests.get("https://api.alternative.me/fng/", timeout=10).json()
                   fv = int(fng["data"][0]["value"])
                   result["fear_greed_index"] = fv
-                  print(f"📊 Fear & Greed: {fv}")
+                  print(f"\n📊 Fear & Greed: {fv}")
                   if fv <= 25: mult = 1.5
                   elif fv <= 40: mult = 1.25
                   elif fv >= 75:
@@ -187,36 +215,18 @@ jobs:
                       save()
                       sys.exit(0)
               except: pass
-              best, price = "BTCUSD", 100000.0
-              try:
-                  a = {}
-                  for s in ["BTC-USD","ETH-USD","SOL-USD"]:
-                      try:
-                          h = yf.Ticker(s).history(period="7d")
-                          if not h.empty:
-                              p, c = float(h["Close"].iloc[-1]), ((h["Close"].iloc[-1]-h["Close"].iloc[0])/h["Close"].iloc[0])*100
-                              a[s] = {"price":p,"change_7d":c}
-                              print(f"   {s}: ${p:,.2f} ({c:+.2f}%)")
-                      except: pass
-                  if a:
-                      b = max(a.items(), key=lambda x:x[1]["change_7d"])
-                      best, price, momentum = b[0].replace("-USD","USD"), b[1]["price"], b[1]["change_7d"]
-                      result["crypto_analysis"] = a
-                      # MOMENTUM FILTER with EXTREME FEAR OVERRIDE
-                      if momentum < 0:
-                          if result.get("fear_greed_index", 50) <= 25:
-                              print(f"🔥 EXTREME FEAR OVERRIDE: Buying {best} despite {momentum:+.2f}% momentum!")
-                              result["contrarian_buy"] = True
-                          else:
-                              print(f"⛔ SKIP: {best} has negative momentum ({momentum:+.2f}%)")
-                              result["action"], result["skip_reason"] = "SKIP", f"Negative momentum: {momentum:+.2f}%"
-                              save()
-                              sys.exit(0)
-              except: pass
+
+              # STEP 3: Select best crypto (above MA only)
+              best_item = max(above_ma.items(), key=lambda x: x[1]["chg7d"])
+              best, best_data = best_item[0].replace("-USD","USD"), best_item[1]
+              price = best_data["price"]
+              momentum = best_data["chg7d"]
+              print(f"\n🎯 Selected: {best} (above MA by {best_data['pct']:+.1f}%)")
+
               base = float(os.environ.get("CRYPTO_DAILY_AMOUNT","10.0"))
               amt = min(base * mult, result["account_value"] * 0.02)
               if amt < 1: amt = 1
-              print(f"💰 BUY ${amt:.2f} {best} (momentum: {momentum:+.2f}%)")
+              print(f"💰 BUY ${amt:.2f} {best} (trend confirmed)")
               order = client.submit_order(MarketOrderRequest(symbol=best, notional=amt, side=OrderSide.BUY, time_in_force=TimeInForce.GTC))
               print(f"📤 Order submitted: {order.id} (status: {order.status})")
 
