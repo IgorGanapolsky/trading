@@ -190,3 +190,12 @@ repos:
         pass_filenames: false
         verbose: true
         stages: [pre-commit]
+
+      - id: validate-workflow-cli-flags
+        name: Validate Workflow CLI Flags (ll_025 Prevention)
+        entry: python3 tests/test_workflow_contracts.py
+        language: system
+        files: '\.github/workflows/.*\.yml$|scripts/autonomous_trader\.py'
+        pass_filenames: false
+        verbose: true
+        stages: [pre-commit]

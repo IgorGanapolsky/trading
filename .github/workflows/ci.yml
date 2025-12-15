@@ -56,6 +56,10 @@ jobs:
         run: |
           python -m pytest tests/test_workflow_dependencies.py -v --tb=short
 
+      - name: Validate workflow CLI contracts (ll_025 Prevention)
+        run: |
+          python3 tests/test_workflow_contracts.py
+
       - name: RAG pre-deployment check
         run: |
           python scripts/rag_pre_deployment_check.py --check-workflows
