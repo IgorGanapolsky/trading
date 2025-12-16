@@ -1,5 +1,8 @@
 # Lesson Learned #032: ML Experiment Automation for Trading Research
 
+**ID**: LL-032
+**Impact**: Identified through automated analysis
+
 **Date**: December 14, 2025
 **Category**: ML / Infrastructure
 **Severity**: HIGH (enables systematic strategy optimization)

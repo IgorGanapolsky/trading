@@ -7,6 +7,9 @@ tags: ["autonomous", "protocol", "error-correction"]
 
 # Lesson: Always Execute Commands Autonomously
 
+**ID**: LL-AUTO-001
+**Impact**: Identified through automated analysis
+
 ## Context
 The agent (CTO) asked the user (CEO) to run a command manually (`streamlit run dashboard/trading_dashboard.py`) to verify a fix. This violates the core directive that the autonomous agent should execute all necessary commands itself.
 

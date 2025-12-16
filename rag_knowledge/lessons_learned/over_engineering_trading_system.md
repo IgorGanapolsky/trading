@@ -1,5 +1,7 @@
 # Lesson Learned: Over-Engineering Trading System
 
+**ID**: LL-OVERENG-001
+
 **Date**: December 11, 2025
 **Severity**: CRITICAL
 **Category**: System Architecture, Trading Strategy

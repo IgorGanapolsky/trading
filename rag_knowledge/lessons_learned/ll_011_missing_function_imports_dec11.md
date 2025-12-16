@@ -1,9 +1,13 @@
 # Lesson Learned 011: Missing Function Imports Blocked Trading (Dec 11, 2025)
 
+**ID**: LL-011
+**Date**: December 11, 2025
+**Severity**: CRITICAL
+**Category**: CI/CD, Imports
+**Impact**: 0 scheduled trades executed for the entire day
+
 ## Incident Summary
 
-**Date**: December 11, 2025
-**Impact**: 0 scheduled trades executed for the entire day
 **Root Cause**: Missing functions in `mental_toughness_coach.py` that were imported by `debate_agents.py`
 **Resolution Time**: ~2 hours (discovered late in trading day)
 
@@ -96,6 +100,13 @@ Static analysis tool that:
 - force push
 - rebase
 - consolidate
+
+
+## Prevention Rules
+
+1. Apply lessons learned from this incident
+2. Add automated checks to prevent recurrence
+3. Update RAG knowledge base
 
 ## Related Incidents
 

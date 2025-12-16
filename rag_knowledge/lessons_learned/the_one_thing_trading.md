@@ -1,5 +1,8 @@
 # The ONE Thing - Applied to Trading Systems
 
+**ID**: LL-ONE-001
+**Impact**: Identified through automated analysis
+
 **Source**: "The ONE Thing" by Gary Keller and Jay Papasan (4.1/5 Goodreads, 3M+ copies sold)
 
 ## Core Philosophy

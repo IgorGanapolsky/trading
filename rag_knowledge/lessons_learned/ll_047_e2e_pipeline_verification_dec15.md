@@ -4,6 +4,7 @@
 **Date**: 2025-12-15
 **Severity**: HIGH
 **Category**: Testing/Verification
+**Impact**: No E2E tests proving system learns from mistakes
 **Tags**: testing, rag, ml, pipeline, e2e, verification
 
 ## Incident Summary

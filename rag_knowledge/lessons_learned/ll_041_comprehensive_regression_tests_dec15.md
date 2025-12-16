@@ -1,5 +1,8 @@
 # Lesson Learned 041: Comprehensive Regression Tests for All Lessons
 
+**ID**: LL-041
+**Impact**: Identified through automated analysis
+
 **Date**: December 15, 2025
 **Severity**: HIGH
 **Category**: Testing, Verification, Prevention

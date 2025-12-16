@@ -1,5 +1,8 @@
 # Lesson Learned: CLAUDE.md Bloat Anti-Pattern
 
+**ID**: LL-017
+**Impact**: Identified through automated analysis
+
 **Date**: December 12, 2025
 **Category**: Agent Optimization
 **Severity**: High (wastes 3-4k tokens every conversation)
@@ -110,3 +113,10 @@ curl -X POST \
 > "CLAUDE.md should contain **facts** (what exists, architecture). Slash commands should contain **procedures** (how to do things). Rules files should contain **constraints** (what not to do)."
 
 **Token budget rule of thumb**: CLAUDE.md should use <2% of your context window (~4k tokens max for 200k window).
+
+
+## Prevention Rules
+
+1. Apply lessons learned from this incident
+2. Add automated checks to prevent recurrence
+3. Update RAG knowledge base

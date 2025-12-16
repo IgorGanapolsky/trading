@@ -1,5 +1,8 @@
 # LL-040: Catching Falling Knives - Trend Confirmation Required
 
+**ID**: LL-040
+**Impact**: Identified through automated analysis
+
 **Date**: December 15, 2025
 **Severity**: HIGH
 **Category**: Trading Strategy

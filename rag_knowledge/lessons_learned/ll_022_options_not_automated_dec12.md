@@ -1,5 +1,8 @@
 # Lesson Learned #022: Options Income Not Automated Despite Being Primary Profit Source
 
+**ID**: LL-022
+**Impact**: Identified through automated analysis
+
 **Date**: December 12, 2025
 **Severity**: HIGH (Revenue Impact)
 **Category**: Automation Gap

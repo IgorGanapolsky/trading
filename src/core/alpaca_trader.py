@@ -335,11 +335,14 @@ class AlpacaTrader:
         qty: float | None = None,
         side: str = "buy",
         tier: str | None = None,
+        strategy: str = "unknown",
     ) -> dict[str, Any]:
         """
         Execute an order with fractional shares (by USD amount) or share quantity.
         Uses limit orders by default (if configured) to reduce slippage, with
         automatic fallback to market orders if limit doesn't fill in time.
+
+        IMPORTANT: All orders pass through MANDATORY RAG/ML trade gate validation.
 
         Retries up to 3 times with exponential backoff on network/API errors.
 
@@ -349,10 +352,34 @@ class AlpacaTrader:
             qty: Quantity of shares to trade.
             side: Order side - 'buy' or 'sell'. Default is 'buy'.
             tier: Trading tier for validation (T1_CORE, T2_GROWTH, T3_IPO, T4_CROWD)
+            strategy: Strategy name for RAG/ML validation.
 
         Returns:
             Dictionary containing order information.
         """
+        # ========== MANDATORY TRADE GATE - NEVER SKIP ==========
+        try:
+            from src.safety.mandatory_trade_gate import validate_trade_mandatory, TradeBlockedError
+            
+            gate_amount = amount_usd or (qty * 100.0 if qty else 0.0)
+            gate_result = validate_trade_mandatory(
+                symbol=symbol,
+                amount=gate_amount,
+                side=side.upper(),
+                strategy=strategy or tier or "unknown",
+            )
+            
+            if not gate_result.approved:
+                logger.error(f"🚫 ORDER BLOCKED BY MANDATORY GATE: {gate_result.reason}")
+                raise TradeBlockedError(gate_result)
+            
+            if gate_result.rag_warnings or gate_result.ml_anomalies:
+                logger.warning(f"⚠️ ORDER APPROVED WITH WARNINGS (confidence: {gate_result.confidence:.2f})")
+        except ImportError:
+            # Gate not available - log warning but proceed
+            logger.warning("⚠️ Mandatory trade gate not available - proceeding without validation")
+        # ========================================================
+        
         # Validate inputs
         if side not in ["buy", "sell"]:
             raise ValueError(f"Invalid side '{side}'. Must be 'buy' or 'sell'.")

@@ -1,5 +1,8 @@
 # Lesson Learned: Dashboard Workflow Failed Due to GPU Requirements (Dec 12, 2025)
 
+**ID**: LL-021
+**Impact**: Identified through automated analysis
+
 ## Incident ID: LL-021
 ## Severity: HIGH
 ## Category: workflow_bug, ci_cd, dependencies

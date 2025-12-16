@@ -1,7 +1,10 @@
 # Lesson Learned: Dead Code and Dormant Systems
+
+**ID**: LL-010
 **Date**: 2025-12-11
 **Severity**: HIGH
 **Category**: Code Quality, System Integration
+**Impact**: 0% win rate due to dormant systems and dead code
 
 ## What Happened
 The trading system had ~22% dead code (5,376 lines) including:
@@ -31,7 +34,7 @@ Additionally, critical functions like `manage_positions()` existed but were NEVE
 4. Added `manage_positions()` call to crypto strategy
 5. Re-enabled GrowthStrategy with RAG in orchestrator
 
-## Prevention Measures
+## Prevention Rules
 1. **Pre-commit Hook**: Dead code detector script
 2. **CI Check**: Verify all registered functions are called
 3. **RAG Lessons Learned**: Store this knowledge for future reference

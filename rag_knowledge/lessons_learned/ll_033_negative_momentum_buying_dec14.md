@@ -1,5 +1,8 @@
 # LL-033: Stop Buying Crypto in Downtrends
 
+**ID**: LL-033
+**Impact**: - **Crypto P/L**: -$0.43 (3 trades, all losses)
+
 **Date**: 2025-12-14
 **Severity**: HIGH
 **Category**: Strategy Bug

@@ -1,5 +1,7 @@
 # LL-029: HICRA - Hierarchy-Aware Credit Assignment for RL
 
+**ID**: LL-029
+
 **Date**: 2025-12-14
 **Severity**: HIGH
 **Category**: ML/RL

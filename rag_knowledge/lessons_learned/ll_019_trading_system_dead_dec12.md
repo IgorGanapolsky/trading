@@ -1,5 +1,8 @@
 # Lesson Learned: Trading System Dead for 2 Days (Dec 12, 2025)
 
+**ID**: LL-019
+**Impact**: Identified through automated analysis
+
 ## Incident ID: LL-019
 ## Severity: CRITICAL
 ## Category: system_failure, monitoring_gap
@@ -99,6 +102,13 @@ Triggering manual workflow now...
 2. **P/L verification** - Are the numbers real?
 3. **Bug fixes** - Anything blocking trading
 4. **Feature work** - RAG, dashboard, etc. (ONLY after 1-3 pass)
+
+
+## Prevention Rules
+
+1. Apply lessons learned from this incident
+2. Add automated checks to prevent recurrence
+3. Update RAG knowledge base
 
 ## Tags
 `critical` `trading` `monitoring` `workflow` `zombie-mode` `system-failure`

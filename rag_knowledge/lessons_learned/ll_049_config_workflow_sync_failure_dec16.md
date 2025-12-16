@@ -1,9 +1,17 @@
 # Lesson Learned #049: Config-Workflow Sync Failure - Disabled Features Still Running
 
+**ID**: LL-049
 **Date**: December 16, 2025
 **Severity**: CRITICAL
 **Category**: Configuration Management, Automation, Verification
+**Impact**: Disabled features still running in production
 **Decision By**: CTO (Claude)
+
+## Prevention Rules
+
+1. **Config-Workflow Sync Validation**: Always validate config matches workflow files
+2. **Single Source of Truth**: Use one config file, not multiple
+3. **Pre-Commit Check**: Add pre-commit hook to verify sync
 
 ---
 

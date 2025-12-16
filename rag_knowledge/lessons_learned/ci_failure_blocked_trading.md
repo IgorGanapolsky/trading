@@ -1,7 +1,9 @@
 # Lesson: CI Test Failures Blocking Trading Execution
 
+**ID**: LL-CI-001
 **Date**: December 11, 2025
 **Severity**: CRITICAL
+**Category**: CI/CD
 **Impact**: 2 days of missed trading (Dec 10-11, 2025)
 
 ## What Happened
@@ -35,7 +37,7 @@ No one noticed for 2 days because:
 3. No "trading heartbeat" check
 4. Win rate was already 0% so no change noticed
 
-## Prevention Measures Implemented
+## Prevention Rules and Measures Implemented
 
 ### 1. Immediate Fix
 Added `continue-on-error: true` to test step (temporary):

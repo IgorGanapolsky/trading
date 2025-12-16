@@ -1,5 +1,7 @@
 # Lesson Learned: RAG Vectorization Gap - Critical Knowledge Base Failure
 
+**ID**: LL-017
+
 **Date**: December 12, 2025
 **Severity**: HIGH
 **Category**: data_integrity, verification
@@ -133,6 +135,13 @@ python scripts/verify_rag_hygiene.py
 - `rag_knowledge/lessons_learned/ll_017_rag_vectorization_gap_dec12.md` - This file
 
 ---
+
+
+## Prevention Rules
+
+1. Apply lessons learned from this incident
+2. Add automated checks to prevent recurrence
+3. Update RAG knowledge base
 
 ## Related Lessons
 

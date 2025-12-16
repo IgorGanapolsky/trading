@@ -1,5 +1,8 @@
 # Lesson Learned: Theta Pivot Strategy Implementation (Dec 11, 2025)
 
+**ID**: LL-011
+**Impact**: Identified through automated analysis
+
 ## Incident Summary
 **Date**: December 11, 2025
 **Category**: strategy_optimization

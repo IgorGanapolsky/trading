@@ -1,5 +1,8 @@
 # LL-034: Placeholder Code Antipattern
 
+**ID**: LL-034
+**Impact**: Identified through automated analysis
+
 **Date**: December 14, 2025
 **Category**: Code Quality / Technical Debt
 **Severity**: Medium

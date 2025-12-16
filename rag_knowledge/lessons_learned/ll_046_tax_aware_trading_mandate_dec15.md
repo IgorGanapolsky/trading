@@ -1,5 +1,8 @@
 # Lesson Learned #046: Tax-Aware Trading Mandate
 
+**ID**: LL-046
+**Impact**: Identified through automated analysis
+
 **Date**: December 15, 2025
 **Severity**: HIGH
 **Category**: Tax Strategy, Trading Philosophy, Risk Management

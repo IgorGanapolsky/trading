@@ -3,6 +3,9 @@
 **Severity**: MEDIUM
 **Category**: Code Quality, CI/CD, Prevention
 
+**ID**: LL-042
+**Impact**: - Repo bloat (+13k lines of useless code)
+
 ## What Happened
 During sandbox cleanup, discovered 13,149 lines of dead code accumulated:
 - 4 temporary proof/summary files in repo root (`.ai_proof_*.md`)

@@ -1,5 +1,8 @@
 # Lesson Learned #030: LangSmith Deep Agent Observability
 
+**ID**: LL-030
+**Impact**: Identified through automated analysis
+
 **Date**: December 14, 2025
 **Category**: Infrastructure / Monitoring
 **Severity**: HIGH (critical for debugging and optimization)
@@ -183,6 +186,13 @@ LANGSMITH_API_KEY=your-api-key
 # Daily budget limit (default: $3.33 = $100/30)
 DAILY_LLM_BUDGET=3.33
 ```
+
+
+## Prevention Rules
+
+1. Apply lessons learned from this incident
+2. Add automated checks to prevent recurrence
+3. Update RAG knowledge base
 
 ## Tags
 

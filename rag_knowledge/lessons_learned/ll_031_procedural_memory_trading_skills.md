@@ -1,5 +1,8 @@
 # Lesson Learned #031: Procedural Memory for Trading Skills
 
+**ID**: LL-031
+**Impact**: Identified through automated analysis
+
 **Date**: December 14, 2025
 **Category**: ML / Architecture
 **Severity**: HIGH (enables skill reuse and continuous improvement)

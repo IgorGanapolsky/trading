@@ -60,6 +60,30 @@ class AlpacaExecutor:
             self.trader = None
             self.broker = None
 
+    def _record_trade_for_tracking(self, order: dict[str, Any], strategy: str) -> None:
+        """Record trade for daily performance tracking."""
+        try:
+            from src.analytics.daily_performance_tracker import record_trade_pnl
+            
+            trade_record = {
+                "id": order.get("id"),
+                "symbol": order.get("symbol"),
+                "side": order.get("side"),
+                "qty": order.get("filled_qty") or order.get("qty"),
+                "price": order.get("filled_avg_price"),
+                "notional": order.get("notional"),
+                "status": order.get("status"),
+                "strategy": strategy,
+                "pnl": 0.0,  # Will be calculated on close
+                "commission": order.get("commission", 0),
+                "timestamp": order.get("filled_at") or order.get("submitted_at"),
+            }
+            
+            record_trade_pnl(trade_record)
+            logger.debug(f"Trade recorded for performance tracking: {order.get('symbol')}")
+        except Exception as e:
+            logger.warning(f"Failed to record trade for tracking: {e}")
+    
     def sync_portfolio_state(self) -> None:
         if self.simulated:
             equity = float(os.getenv("SIMULATED_EQUITY", "100000"))
@@ -148,7 +172,38 @@ class AlpacaExecutor:
         notional: float | None = None,
         qty: float | None = None,
         side: str = "buy",
+        strategy: str = "unknown",
     ) -> dict[str, Any]:
+        """
+        Place an order with MANDATORY RAG/ML gate validation.
+        
+        This method ALWAYS validates through the trade gate before execution.
+        """
+        # ========== MANDATORY TRADE GATE - NEVER SKIP ==========
+        from src.safety.mandatory_trade_gate import validate_trade_mandatory, TradeBlockedError
+        
+        amount = notional or (qty * 100.0 if qty else 0.0)  # Estimate for qty-based orders
+        gate_result = validate_trade_mandatory(
+            symbol=symbol,
+            amount=amount,
+            side=side.upper(),
+            strategy=strategy,
+        )
+        
+        if not gate_result.approved:
+            logger.error(f"🚫 ORDER BLOCKED BY MANDATORY GATE: {gate_result.reason}")
+            logger.error(f"   RAG Warnings: {gate_result.rag_warnings}")
+            logger.error(f"   ML Anomalies: {gate_result.ml_anomalies}")
+            raise TradeBlockedError(gate_result)
+        
+        if gate_result.rag_warnings or gate_result.ml_anomalies:
+            logger.warning(f"⚠️ ORDER APPROVED WITH WARNINGS:")
+            for w in gate_result.rag_warnings:
+                logger.warning(f"   RAG: {w}")
+            for a in gate_result.ml_anomalies:
+                logger.warning(f"   ML: {a}")
+        # ========================================================
+        
         logger.debug(
             "Submitting %s order via AlpacaExecutor: %s for %s",
             side,
@@ -202,6 +257,10 @@ class AlpacaExecutor:
                 f"SIMULATED FILL: {side} {symbol} {filled_qty} @ {fill_price} "
                 f"(Slippage: ${order['slippage_impact']}, Comm: ${order['commission']})"
             )
+            
+            # Record trade for daily performance tracking
+            self._record_trade_for_tracking(order, strategy)
+            
             return order
 
         # Execution via MultiBroker with Failover
@@ -213,7 +272,7 @@ class AlpacaExecutor:
             )
 
             # Convert OrderResult back to dict for compatibility
-            return {
+            order = {
                 "id": order_result.order_id,
                 "symbol": order_result.symbol,
                 "side": order_result.side,
@@ -223,6 +282,11 @@ class AlpacaExecutor:
                 "broker": order_result.broker.value,
                 "submitted_at": order_result.timestamp,
             }
+            
+            # Record trade for daily performance tracking
+            self._record_trade_for_tracking(order, strategy)
+            
+            return order
         except Exception as e:
             # Fallback for notional logic if MultiBroker lacks it,
             # or if we need to calc qty from notional

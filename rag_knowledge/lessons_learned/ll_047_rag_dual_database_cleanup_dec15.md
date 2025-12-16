@@ -1,5 +1,8 @@
 # Lesson Learned #047: RAG Dual Database Cleanup Needed
 
+**ID**: LL-047
+**Impact**: Identified through automated analysis
+
 **Date**: December 15, 2025
 **Severity**: MEDIUM
 **Category**: Technical Debt, RAG, Infrastructure

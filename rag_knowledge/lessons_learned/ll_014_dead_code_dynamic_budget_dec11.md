@@ -3,6 +3,9 @@
 **Severity**: CRITICAL
 **Category**: Dead Code, Capital Efficiency, Revenue Impact
 
+**ID**: LL-014
+**Impact**: - **Revenue loss**: $100/day potential → $10/day actual (90% loss)
+
 ## What Happened
 The function `_apply_dynamic_daily_budget()` in `scripts/autonomous_trader.py` was:
 - **Defined** at line 305-336
@@ -71,6 +74,13 @@ Verify: grep -r "def function_name" src/ scripts/
 
 ### 4. CI Integration Test
 Add workflow step that runs the trading flow in dry-run and verifies all gates execute.
+
+
+## Prevention Rules
+
+1. Apply lessons learned from this incident
+2. Add automated checks to prevent recurrence
+3. Update RAG knowledge base
 
 ## Tags
 `dead-code` `dynamic-budget` `revenue-impact` `capital-efficiency` `external-analysis` `verification`

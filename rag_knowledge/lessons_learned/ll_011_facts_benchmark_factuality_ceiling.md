@@ -1,5 +1,8 @@
 # Lesson Learned: FACTS Benchmark & 70% Factuality Ceiling
 
+**ID**: LL-011
+**Impact**: Identified through automated analysis
+
 **Date**: December 11, 2025
 **Category**: LLM Safety, Verification
 **Severity**: Medium

@@ -95,7 +95,7 @@ Win Rate: $WIN_RATE% (live) | Backtest: 0/13 scenarios pass (Sharpe all negative
 Backtest Reality: 0/13 pass | Sharpe: -7 to -2086 | NO EDGE YET
 ```
 
-## Prevention: Tests and Guardrails
+## Prevention Rules: Tests and Guardrails
 
 ### 1. Backtest Metric Validation Test
 

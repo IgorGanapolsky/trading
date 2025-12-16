@@ -1,5 +1,7 @@
 # Lesson Learned 035: Failed to Use RAG Despite Building It (Dec 15, 2025)
 
+**ID**: LL-035
+
 ## Incident Summary
 
 **Date**: December 15, 2025
@@ -225,6 +227,13 @@ If you spend 6 hours building a knowledge base and 0 seconds reading it, you've 
 - [ ] Include: What happened, why it happened, how to prevent
 - [ ] Tag with RAG query keywords
 - [ ] Commit lesson so future AIs can learn from it
+
+
+## Prevention Rules
+
+1. Apply lessons learned from this incident
+2. Add automated checks to prevent recurrence
+3. Update RAG knowledge base
 
 ## Related Incidents
 

@@ -1,5 +1,8 @@
 # Lesson Learned: Anti-Manual Mandate Violation (Dec 12, 2025)
 
+**ID**: LL-017
+**Impact**: - CEO had to remind CTO of directives
+
 ## Incident ID: LL-017
 ## Severity: HIGH
 ## Category: process_violation
@@ -60,6 +63,13 @@ When completing a task:
 ## Verification Test
 
 Add test to CI that scans Claude's responses for forbidden phrases in commit messages and PR descriptions.
+
+
+## Prevention Rules
+
+1. Apply lessons learned from this incident
+2. Add automated checks to prevent recurrence
+3. Update RAG knowledge base
 
 ## Related Lessons
 - LL-009: CI Syntax Failure (autonomy failure)

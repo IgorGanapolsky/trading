@@ -1,5 +1,7 @@
 # LL-028: Netflix Upper Metamodel - Unified Domain Model
 
+**ID**: LL-028
+
 **Date**: 2025-12-13 (Updated)
 **Severity**: HIGH
 **Category**: Architecture

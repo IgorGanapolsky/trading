@@ -1,8 +1,16 @@
 # Lesson Learned: Trade Files Not Committed to Repo (Dec 12, 2025)
 
-## Incident ID: LL-020
-## Severity: HIGH
-## Category: workflow_bug, data_loss
+**ID**: LL-020
+**Date**: December 12, 2025
+**Severity**: HIGH
+**Category**: Workflow, Data Loss
+**Impact**: Confusion about whether trades were executing; data not persisted
+
+## Prevention Rules
+
+1. Always commit all trading data files (trades_*.json, system_state.json, performance_log.json)
+2. Add explicit git add commands for all data files in workflows
+3. Verify commits contain expected files before marking workflow as successful
 
 ## What Happened
 

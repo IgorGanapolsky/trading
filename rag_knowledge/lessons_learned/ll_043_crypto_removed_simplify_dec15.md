@@ -1,5 +1,8 @@
 # Lesson Learned #043: Crypto Strategy Removed - Simplify and Focus
 
+**ID**: LL-043
+**Impact**: Identified through automated analysis
+
 **Date**: December 15, 2025
 **Severity**: HIGH
 **Category**: Strategy, Capital Allocation, Simplification
