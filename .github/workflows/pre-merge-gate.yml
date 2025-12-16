@@ -13,24 +13,24 @@ jobs:
     name: 🔒 Verify No Breaking Changes
     runs-on: ubuntu-22.04
     timeout-minutes: 10
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
-      
+
       - name: 🔒 RUN VERIFICATION GATE
         run: |
           python3 scripts/pre_merge_verification_gate.py
-      
+
       - name: ❌ Block on failure
         if: failure()
         run: |
@@ -70,12 +70,12 @@ jobs:
           python3 -m pip install python-dotenv langsmith openai
 
       - name: Verify LangSmith wrapper imports
-        run: |
+        run: |  # pragma: allowlist secret
           echo "🔍 Verifying LangSmith wrapper imports correctly..."
           python3 -c "
           import os
-          # Set test env vars to simulate production
-          os.environ['LANGCHAIN_API_KEY'] = 'test-key'
+          # Set test env vars to simulate production (not real secrets)
+          os.environ['LANGCHAIN_API_KEY'] = 'test-key'  # pragma: allowlist secret
           os.environ['LANGCHAIN_PROJECT'] = 'test-project'
 
           # Force reload the module with env vars set
@@ -103,7 +103,7 @@ jobs:
           "
 
       - name: Verify env var fallback (LANGSMITH_* names)
-        run: |
+        run: |  # pragma: allowlist secret
           echo "🔍 Verifying LANGSMITH_* env var names work..."
           python3 -c "
           import os
@@ -113,8 +113,8 @@ jobs:
           os.environ.pop('LANGCHAIN_API_KEY', None)
           os.environ.pop('LANGCHAIN_PROJECT', None)
 
-          # Set LANGSMITH_* variants (alternative naming)
-          os.environ['LANGSMITH_API_KEY'] = 'test-key-alt'
+          # Set LANGSMITH_* variants (alternative naming, not real secrets)
+          os.environ['LANGSMITH_API_KEY'] = 'test-key-alt'  # pragma: allowlist secret
           os.environ['LANGSMITH_PROJECT'] = 'test-project-alt'
 
           # Force reimport

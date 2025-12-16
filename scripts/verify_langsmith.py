@@ -92,7 +92,7 @@ def check_langsmith_sdk():
         # Try to create a client
         try:
             client = Client()
-            print(f"  Client initialized: True")
+            print("  Client initialized: True")
             print(f"  API URL: {client.api_url}")
             return True
         except Exception as e:

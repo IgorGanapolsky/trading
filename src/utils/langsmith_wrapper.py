@@ -35,7 +35,9 @@ load_dotenv()
 # Support BOTH naming conventions: LANGSMITH_* and LANGCHAIN_*
 # LangChain SDK uses LANGCHAIN_* but users may set LANGSMITH_* (more intuitive)
 _langsmith_api_key = os.getenv("LANGCHAIN_API_KEY") or os.getenv("LANGSMITH_API_KEY")
-_langsmith_project = os.getenv("LANGCHAIN_PROJECT") or os.getenv("LANGSMITH_PROJECT") or "trading-system"
+_langsmith_project = (
+    os.getenv("LANGCHAIN_PROJECT") or os.getenv("LANGSMITH_PROJECT") or "trading-system"
+)
 
 if _langsmith_api_key:
     # Set the official LangChain env vars that the SDK expects
@@ -59,7 +61,7 @@ HELICONE_OPENROUTER_URL = "https://openrouter.helicone.ai/api/v1"
 
 def _get_openrouter_config(
     api_key: str | None = None, base_url: str | None = None
-) -> tuple[str, str, dict]:
+) -> tuple[str | None, str | None, dict[str, str]]:
     """
     Get OpenRouter configuration with optional Helicone gateway.
 
