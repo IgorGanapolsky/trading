@@ -509,12 +509,14 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
         from alpaca.trading.requests import LimitOrderRequest
 
         # Sell to open (write) the put
+        # Round limit price to 2 decimal places (Alpaca requirement)
+        limit_price = round(put_option["mid"], 2)
         order_request = LimitOrderRequest(
             symbol=put_option["symbol"],
             qty=1,
             side=OrderSide.SELL,
             type="limit",
-            limit_price=put_option["mid"],  # Use mid price for realistic fills
+            limit_price=limit_price,
             time_in_force=TimeInForce.DAY,
         )
 
