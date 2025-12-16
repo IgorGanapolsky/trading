@@ -31,6 +31,36 @@ from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
+# LangSmith tracing for gate observability
+try:
+    from src.observability.langsmith_tracer import TraceType, get_tracer
+    LANGSMITH_AVAILABLE = True
+    logger.info("LangSmith tracing enabled for trading gates")
+except ImportError:
+    LANGSMITH_AVAILABLE = False
+    logger.warning("LangSmith not available - gate decisions will only be logged locally")
+
+
+def _trace_gate(gate_name: str, ticker: str, inputs: dict, result: "GateResult") -> None:
+    """Trace a gate decision to LangSmith for observability."""
+    if not LANGSMITH_AVAILABLE:
+        return
+    try:
+        tracer = get_tracer()
+        with tracer.trace(
+            name=f"gate_{gate_name}_{ticker}",
+            trace_type=TraceType.DECISION,
+            symbol=ticker,
+        ) as span:
+            span.inputs = inputs
+            span.add_output("status", result.status.value)
+            span.add_output("reason", result.reason)
+            span.add_output("confidence", result.confidence)
+            if result.metadata:
+                span.add_output("metadata", result.metadata)
+    except Exception as e:
+        logger.debug("Gate tracing failed: %s", e)
+
 
 class GateStatus(Enum):
     """Gate evaluation result status."""
@@ -904,42 +934,49 @@ class TradingGatePipeline:
         # Gate 0: Psychology
         result = self.gate0.evaluate(ticker)
         results.append(result)
+        _trace_gate("psychology", ticker, {"gate": 0}, result)
         if result.rejected:
             return False, ctx, results
 
         # Gate 1: Momentum
         result = self.gate1.evaluate(ticker, ctx)
         results.append(result)
+        _trace_gate("momentum", ticker, {"gate": 1, "has_macd": ctx.macd_signal is not None}, result)
         if result.rejected or result.status == GateStatus.ERROR:
             return False, ctx, results
 
         # Gate 1.5: Debate
         result = self.gate15.evaluate(ticker, ctx)
         results.append(result)
+        _trace_gate("debate", ticker, {"gate": 1.5}, result)
         if result.rejected:
             return False, ctx, results
 
         # Gate 2: RL Filter
         result = self.gate2.evaluate(ticker, ctx, rl_threshold)
         results.append(result)
+        _trace_gate("rl_filter", ticker, {"gate": 2, "rl_threshold": rl_threshold}, result)
         if result.rejected or result.status == GateStatus.ERROR:
             return False, ctx, results
 
         # Gate 3: Sentiment
         result = self.gate3.evaluate(ticker, ctx, session_profile)
         results.append(result)
+        _trace_gate("sentiment", ticker, {"gate": 3, "has_session": session_profile is not None}, result)
         if result.rejected:
             return False, ctx, results
 
         # Gate 3.5: Introspection
         result = self.gate35.evaluate(ticker, ctx)
         results.append(result)
+        _trace_gate("introspection", ticker, {"gate": 3.5}, result)
         if result.rejected:
             return False, ctx, results
 
         # Gate 4: Risk
         result = self.gate4.evaluate(ticker, ctx, allocation_cap)
         results.append(result)
+        _trace_gate("risk", ticker, {"gate": 4, "allocation_cap": allocation_cap}, result)
         if result.rejected or result.status == GateStatus.ERROR:
             return False, ctx, results
 
