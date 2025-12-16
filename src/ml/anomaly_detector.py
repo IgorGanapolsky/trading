@@ -113,6 +113,7 @@ class TradingAnomalyDetector:
     # Known valid symbols
     VALID_SYMBOLS = {
         "stocks": ["SPY", "QQQ", "VOO", "NVDA", "GOOGL", "AMZN", "BIL", "SHY", "IEF", "TLT"],
+        "crypto": ["BTCUSD", "ETHUSD", "BTC/USD", "ETH/USD"],
     }
 
     def __init__(

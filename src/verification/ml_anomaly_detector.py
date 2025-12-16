@@ -66,6 +66,10 @@ class MLAnomalyDetector:
             "code_change_size": 50,  # >50 files changed
         }
 
+        # Baselines alias for test compatibility
+        self.baselines = self.thresholds
+        self.BASELINES = self.thresholds
+
     def load_system_state(self) -> Optional[dict]:
         """Load current system state."""
         if not self.system_state_file.exists():
