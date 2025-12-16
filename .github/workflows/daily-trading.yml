@@ -617,7 +617,7 @@ jobs:
           echo "💰 ========================================"
           echo ""
           echo "Options strategy: Wheel (Cash-Secured Puts + Covered Calls)"
-          echo "Target: SPY, QQQ (high-liquidity underlyings)"
+          echo "Using RAG-based ticker selection (Dec 16 upgrade)"
           echo ""
 
           # Run options profit planner first to identify opportunities
@@ -626,74 +626,65 @@ jobs:
             echo "⚠️  Options planner scan failed (may need network/API)"
           }
 
-          # Execute wheel strategy on SPY (most liquid)
+          # Step 2: RAG-based ticker selection (replaces hardcoded list)
           echo ""
-          echo "📈 Step 2: Executing wheel strategy on SPY..."
-          python3 scripts/execute_options_trade.py \
-            --strategy wheel \
-            --symbol SPY || {
-            echo "⚠️  SPY wheel strategy returned non-zero (check logs)"
-          }
+          echo "🧠 Step 2: RAG-based ticker screening..."
+          echo "   Criteria: IV Percentile, Trend, Sentiment, Collateral"
 
-          # Execute wheel strategy on QQQ
-          echo ""
-          echo "📈 Step 3: Executing wheel strategy on QQQ..."
-          python3 scripts/execute_options_trade.py \
-            --strategy wheel \
-            --symbol QQQ || {
-            echo "⚠️  QQQ wheel strategy returned non-zero (check logs)"
-          }
+          # Get buying power for collateral check
+          BUYING_POWER=$(python3 -c "
+          import os
+          from alpaca.trading.client import TradingClient
+          try:
+              client = TradingClient(
+                  os.getenv('ALPACA_API_KEY'),
+                  os.getenv('ALPACA_SECRET_KEY'),
+                  paper=True
+              )
+              account = client.get_account()
+              print(float(account.options_buying_power or account.buying_power))
+          except Exception as e:
+              print(10000)  # Default if API fails
+          " 2>/dev/null || echo "10000")
 
-          # Execute wheel strategy on smaller underlyings (lower collateral requirement)
-          # PLTR ~$75 = $7,500 collateral, SOFI ~$16 = $1,600 collateral
-          echo ""
-          echo "📈 Step 4: Executing wheel strategy on PLTR (lower collateral)..."
-          python3 scripts/execute_options_trade.py \
-            --strategy wheel \
-            --symbol PLTR || {
-            echo "⚠️  PLTR wheel strategy returned non-zero (check logs)"
-          }
+          echo "   Available buying power: \$${BUYING_POWER}"
 
-          echo ""
-          echo "📈 Step 5: Executing wheel strategy on SOFI (lowest collateral)..."
-          python3 scripts/execute_options_trade.py \
-            --strategy wheel \
-            --symbol SOFI || {
-            echo "⚠️  SOFI wheel strategy returned non-zero (check logs)"
-          }
+          # Run RAG screener to get best tickers
+          SELECTED_TICKERS=$(python3 scripts/rag_ticker_screener.py \
+            --buying-power ${BUYING_POWER} \
+            --max-tickers 6 \
+            --output json 2>/dev/null | python3 -c "
+          import sys, json
+          try:
+              data = json.load(sys.stdin)
+              tickers = [t['ticker'] for t in data]
+              print(','.join(tickers))
+          except:
+              # Fallback to safe defaults if RAG fails
+              print('SOFI,PLTR,F,BAC')
+          " 2>/dev/null || echo "SOFI,PLTR,F,BAC")
 
-          # Additional tickers for more opportunities (Dec 16 expansion)
-          echo ""
-          echo "📈 Step 6: Executing wheel strategy on AMD..."
-          python3 scripts/execute_options_trade.py \
-            --strategy wheel \
-            --symbol AMD || {
-            echo "⚠️  AMD wheel strategy returned non-zero"
-          }
+          echo "   🏆 RAG-selected tickers: ${SELECTED_TICKERS}"
 
+          # Step 3: Execute options on RAG-selected tickers
           echo ""
-          echo "📈 Step 7: Executing wheel strategy on IWM..."
-          python3 scripts/execute_options_trade.py \
-            --strategy wheel \
-            --symbol IWM || {
-            echo "⚠️  IWM wheel strategy returned non-zero"
-          }
+          echo "📈 Step 3: Executing wheel strategy on RAG-selected tickers..."
 
-          echo ""
-          echo "📈 Step 8: Executing wheel strategy on AAPL..."
-          python3 scripts/execute_options_trade.py \
-            --strategy wheel \
-            --symbol AAPL || {
-            echo "⚠️  AAPL wheel strategy returned non-zero"
-          }
+          TICKER_NUM=0
+          IFS=',' read -ra TICKER_ARRAY <<< "${SELECTED_TICKERS}"
+          for TICKER in "${TICKER_ARRAY[@]}"; do
+            TICKER_NUM=$((TICKER_NUM + 1))
+            echo ""
+            echo "   [${TICKER_NUM}/${#TICKER_ARRAY[@]}] Executing wheel on ${TICKER}..."
+            python3 scripts/execute_options_trade.py \
+              --strategy wheel \
+              --symbol "${TICKER}" || {
+              echo "   ⚠️  ${TICKER} wheel strategy returned non-zero (check logs)"
+            }
+          done
 
           echo ""
-          echo "📈 Step 9: Executing wheel strategy on NVDA..."
-          python3 scripts/execute_options_trade.py \
-            --strategy wheel \
-            --symbol NVDA || {
-            echo "⚠️  NVDA wheel strategy returned non-zero"
-          }
+          echo "✅ Executed on ${TICKER_NUM} RAG-selected tickers"
 
           # Update theta harvest timestamp in system state
           echo ""
@@ -701,6 +692,7 @@ jobs:
           python3 -c "
           import json
           import glob
+          import os
           from datetime import datetime
           from pathlib import Path
 
@@ -716,6 +708,11 @@ jobs:
               state['options']['last_theta_harvest'] = datetime.utcnow().isoformat() + 'Z'
               state['options']['harvest_source'] = 'daily-trading-workflow'
               state['options']['execution_date'] = datetime.utcnow().strftime('%Y-%m-%d')
+              state['options']['selection_method'] = 'RAG-based'  # New: track we use RAG
+
+              # Track which tickers were selected by RAG
+              selected_tickers = os.environ.get('SELECTED_TICKERS', '').split(',')
+              state['options']['rag_selected_tickers'] = [t.strip() for t in selected_tickers if t.strip()]
 
               # Count today's options logs to verify execution
               today = datetime.utcnow().strftime('%Y%m%d')
@@ -725,11 +722,16 @@ jobs:
               # Check for submitted orders in trades file
               trades_file = Path(f'data/options_trades_{today}.json')
               orders_submitted = 0
+              tickers_with_orders = []
               if trades_file.exists():
                   with open(trades_file, 'r') as f:
                       trades = json.load(f)
-                      orders_submitted = sum(1 for t in trades if t.get('status') == 'ORDER_SUBMITTED')
+                      for t in trades:
+                          if t.get('result', {}).get('status') == 'ORDER_SUBMITTED':
+                              orders_submitted += 1
+                              tickers_with_orders.append(t.get('symbol', 'unknown'))
               state['options']['orders_submitted_today'] = orders_submitted
+              state['options']['tickers_with_orders'] = tickers_with_orders
 
               # Update meta timestamp
               if 'meta' not in state:
@@ -740,11 +742,13 @@ jobs:
                   json.dump(state, f, indent=2)
 
               print(f'✅ Options execution recorded:')
+              print(f'   Selection method: RAG-based')
+              print(f'   RAG-selected tickers: {state[\"options\"][\"rag_selected_tickers\"]}')
               print(f'   Tickers scanned: {len(log_files)}')
               print(f'   Orders submitted: {orders_submitted}')
           else:
               print('⚠️  system_state.json not found')
-          "
+          " SELECTED_TICKERS="${SELECTED_TICKERS}"
 
           echo ""
           echo "✅ Theta harvest step complete"
