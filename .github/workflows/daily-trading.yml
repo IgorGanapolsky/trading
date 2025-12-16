@@ -604,8 +604,8 @@ jobs:
       - name: Harvest theta (options income)
         id: harvest_theta
         if: steps.execute_trading.outcome == 'success'
-        continue-on-error: true  # Non-fatal - equity trading already succeeded
-        timeout-minutes: 10
+        continue-on-error: false  # CRITICAL: Options failures must be visible (Dec 16 fix)
+        timeout-minutes: 15
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
@@ -697,9 +697,10 @@ jobs:
 
           # Update theta harvest timestamp in system state
           echo ""
-          echo "📝 Step 4: Recording theta harvest timestamp..."
+          echo "📝 Recording options execution status..."
           python3 -c "
           import json
+          import glob
           from datetime import datetime
           from pathlib import Path
 
@@ -711,13 +712,36 @@ jobs:
               if 'options' not in state:
                   state['options'] = {}
 
+              # Track execution details
               state['options']['last_theta_harvest'] = datetime.utcnow().isoformat() + 'Z'
               state['options']['harvest_source'] = 'daily-trading-workflow'
+              state['options']['execution_date'] = datetime.utcnow().strftime('%Y-%m-%d')
+
+              # Count today's options logs to verify execution
+              today = datetime.utcnow().strftime('%Y%m%d')
+              log_files = glob.glob(f'logs/options_{today}_*.log')
+              state['options']['tickers_scanned'] = len(log_files)
+
+              # Check for submitted orders in trades file
+              trades_file = Path(f'data/options_trades_{today}.json')
+              orders_submitted = 0
+              if trades_file.exists():
+                  with open(trades_file, 'r') as f:
+                      trades = json.load(f)
+                      orders_submitted = sum(1 for t in trades if t.get('status') == 'ORDER_SUBMITTED')
+              state['options']['orders_submitted_today'] = orders_submitted
+
+              # Update meta timestamp
+              if 'meta' not in state:
+                  state['meta'] = {}
+              state['meta']['last_updated'] = datetime.utcnow().isoformat() + 'Z'
 
               with open(state_file, 'w') as f:
                   json.dump(state, f, indent=2)
 
-              print('✅ Updated last_theta_harvest timestamp')
+              print(f'✅ Options execution recorded:')
+              print(f'   Tickers scanned: {len(log_files)}')
+              print(f'   Orders submitted: {orders_submitted}')
           else:
               print('⚠️  system_state.json not found')
           "
