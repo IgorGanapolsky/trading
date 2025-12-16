@@ -128,85 +128,7 @@ def _update_system_state_with_prediction_trade(trade_record: dict[str, Any], log
         logger.error(f"Failed to write system_state.json: {exc}")
 
 
-def _update_system_state_with_crypto_trade(trade_record: dict[str, Any], logger) -> None:
-    """Update `data/system_state.json` so Tier 5 reflects the new crypto trade."""
-    state_path = Path("data/system_state.json")
-    if not state_path.exists():
-        logger.warning("system_state.json missing; skipping state update")
-        return
-
-    try:
-        with state_path.open("r", encoding="utf-8") as handle:
-            state = json.load(handle)
-    except Exception as exc:
-        logger.error(f"Failed to read system_state.json: {exc}")
-        return
-
-    strategies = state.setdefault("strategies", {})
-    tier5_defaults = {
-        "name": "Crypto Daily Strategy (BTC, ETH, SOL)",
-        "allocation": 0.05,
-        "daily_amount": 25.0,
-        "coins": ["BTC/USD", "ETH/USD", "SOL/USD"],
-        "trades_executed": 0,
-        "total_invested": 0.0,
-        "status": "active",
-        "execution_schedule": "Daily (Mon-Sun) - Weekdays 9:35 AM ET, Weekends 10:00 AM ET",
-        "last_execution": None,
-        "next_execution": None,
-    }
-    tier5 = strategies.setdefault("tier5", tier5_defaults)
-    tier5["trades_executed"] = tier5.get("trades_executed", 0) + 1
-    tier5["total_invested"] = round(
-        tier5.get("total_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
-    )
-    tier5["last_execution"] = trade_record.get("timestamp")
-    tier5["status"] = "active"
-
-    investments = state.setdefault("investments", {})
-    investments["tier5_invested"] = round(
-        investments.get("tier5_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
-    )
-    investments["total_invested"] = round(
-        investments.get("total_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
-    )
-
-    performance = state.setdefault("performance", {})
-    performance["total_trades"] = performance.get("total_trades", 0) + 1
-
-    open_positions = performance.setdefault("open_positions", [])
-    if isinstance(open_positions, list):
-        matching = next(
-            (
-                entry
-                for entry in open_positions
-                if entry.get("symbol") == trade_record.get("symbol")
-            ),
-            None,
-        )
-        entry_payload = {
-            "symbol": trade_record.get("symbol"),
-            "tier": "tier5",
-            "amount": trade_record.get("amount"),
-            "entry_date": trade_record.get("timestamp"),
-            "entry_price": trade_record.get("price"),
-            "current_price": trade_record.get("price"),
-            "quantity": trade_record.get("quantity"),
-            "unrealized_pl": 0.0,
-            "unrealized_pl_pct": 0.0,
-            "last_updated": trade_record.get("timestamp"),
-        }
-        if matching:
-            matching.update(entry_payload)
-        else:
-            open_positions.append(entry_payload)
-
-    try:
-        with state_path.open("w", encoding="utf-8") as handle:
-            json.dump(state, handle, indent=2)
-        logger.info("system_state.json updated with crypto trade metadata")
-    except Exception as exc:
-        logger.error(f"Failed to write system_state.json: {exc}")
+# _update_system_state_with_crypto_trade REMOVED - CEO directive Dec 16, 2025
 
 
 def validate_order_size(amount: float, expected: float, tier: str = "T1_CORE") -> tuple[bool, str]:
@@ -313,14 +235,8 @@ def _apply_daily_input_scaling(logger) -> None:
     )
 
 
-def crypto_enabled() -> bool:
-    """Feature flag for the legacy crypto branch."""
-    return os.getenv("ENABLE_CRYPTO_AGENT", "true").lower() in {"1", "true", "yes"}
-
-
-def crypto_daily_enabled() -> bool:
-    """Feature flag for daily crypto trading (not just weekends/holidays)."""
-    return os.getenv("CRYPTO_DAILY", "true").lower() in {"1", "true", "yes"}
+# CRYPTO REMOVED - CEO directive Dec 16, 2025 (0% win rate, focus on options)
+# See rag_knowledge/lessons_learned/ll_049_config_workflow_sync_failure_dec16.md
 
 
 def _load_equity_snapshot() -> float | None:
@@ -380,159 +296,8 @@ def _apply_dynamic_daily_budget(logger) -> float | None:
     return new_amount
 
 
-def execute_crypto_trading() -> None:
-    """Execute crypto trading strategy."""
-    from src.core.alpaca_trader import AlpacaTrader
-    from src.risk.unified import UnifiedRiskManager as RiskManager
-    from src.strategies.crypto_strategy import CryptoStrategy
-
-    logger = setup_logging()
-    logger.info("=" * 80)
-    logger.info("CRYPTO TRADING MODE")
-    logger.info("=" * 80)
-
-    try:
-        # Initialize dependencies
-        trader = None
-        try:
-            trader = AlpacaTrader(paper=True)
-        except Exception as e:
-            logger.warning(f"⚠️  Trading API unavailable (Missing Keys?): {e}")
-            logger.warning("   -> Proceeding in ANALYSIS/INTERNAL SIMULATION mode.")
-            trader = None
-
-        risk_manager = RiskManager(
-            full_params=dict(
-                max_daily_loss_pct=2.0,
-                max_position_size_pct=CryptoStrategy.MAX_POSITION_PCT * 100,
-                max_drawdown_pct=15.0,
-                max_consecutive_losses=3,
-            )
-        )
-
-        crypto_strategy = CryptoStrategy(
-            trader=trader,
-            risk_manager=risk_manager,
-            daily_amount=float(os.getenv("CRYPTO_DAILY_AMOUNT", "0.50")),
-        )
-
-        # Execute crypto trading
-        logger.info("[DEBUG] Calling crypto_strategy.execute_daily()...")
-        order = crypto_strategy.execute_daily()
-        logger.info(f"[DEBUG] execute_daily() returned: {order}")
-
-        if order:
-            logger.info(f"✅ Crypto trade executed: {order.symbol} for ${order.amount:.2f}")
-
-            # PERSISTENCE: Save trade to daily JSON ledger so dashboard sees it
-            try:
-                today_str = datetime.now().strftime("%Y-%m-%d")
-                trades_file = Path(f"data/trades_{today_str}.json")
-
-                # Load existing or init new
-                if trades_file.exists():
-                    try:
-                        with open(trades_file) as f:
-                            daily_trades = json.load(f)
-                    except Exception:
-                        daily_trades = []
-                else:
-                    daily_trades = []
-
-                # Append new trade
-                trade_record = {
-                    "symbol": order.symbol,
-                    "action": order.action.upper(),
-                    "amount": order.amount,
-                    "quantity": order.quantity,
-                    "price": order.price,
-                    "timestamp": order.timestamp.isoformat(),
-                    "status": "FILLED" if hasattr(order, "status") else "FILLED",
-                    "strategy": "CryptoStrategy",
-                    "reason": order.reason,
-                    "mode": "ANALYSIS" if trader is None else "LIVE",
-                }
-                daily_trades.append(trade_record)
-
-                # Write back
-                with open(trades_file, "w") as f:
-                    json.dump(daily_trades, f, indent=4)
-
-                logger.info(f"💾 Trade saved to {trades_file}")
-                _update_system_state_with_crypto_trade(trade_record, logger)
-
-                # NEW: Update performance log so dashboard sees the impact
-                try:
-                    import subprocess
-
-                    perf_script = Path(os.path.dirname(__file__)) / "update_performance_log.py"
-                    subprocess.run(
-                        [sys.executable, str(perf_script)], check=False, env=os.environ.copy()
-                    )
-                    logger.info("✅ Performance log updated via subprocess")
-                except Exception as e:
-                    logger.warning(f"Failed to update performance log: {e}")
-
-            except Exception as e:
-                logger.error(f"Failed to persist trade to JSON: {e}")
-        else:
-            logger.warning("⚠️  No crypto trade executed (order=None)")
-            logger.info("[DEBUG] Checking FORCE_TRADE fallback...")
-
-            # FORCE_TRADE fallback: Create a simulated BTC trade for tracking
-            force_trade = os.getenv("CRYPTO_FORCE_TRADE", "false").lower() in ("true", "1", "yes")
-            if force_trade:
-                logger.warning("FORCE_TRADE enabled - creating simulated BTC trade for tracking")
-                today_str = datetime.now().strftime("%Y-%m-%d")
-                trades_file = Path(f"data/trades_{today_str}.json")
-
-                # Try to get BTC price for the simulation
-                try:
-                    import yfinance as yf
-
-                    ticker = yf.Ticker("BTC-USD")
-                    hist = ticker.history(period="1d")
-                    btc_price = float(hist["Close"].iloc[-1]) if not hist.empty else 100000.0
-                except Exception:
-                    btc_price = 100000.0  # Fallback price
-
-                daily_amount = float(os.getenv("CRYPTO_DAILY_AMOUNT", "25.00"))
-                quantity = daily_amount / btc_price
-
-                simulated_trade = {
-                    "symbol": "BTCUSD",
-                    "action": "BUY",
-                    "amount": daily_amount,
-                    "quantity": quantity,
-                    "price": btc_price,
-                    "timestamp": datetime.now().isoformat(),
-                    "status": "SIMULATED",
-                    "strategy": "CryptoStrategy",
-                    "reason": "FORCE_TRADE fallback - all filters failed",
-                    "mode": "SIMULATION",
-                }
-
-                # Load existing trades or init new list
-                daily_trades = []
-                if trades_file.exists():
-                    try:
-                        with open(trades_file) as f:
-                            daily_trades = json.load(f)
-                    except Exception:
-                        pass
-
-                daily_trades.append(simulated_trade)
-                with open(trades_file, "w") as f:
-                    json.dump(daily_trades, f, indent=4)
-
-                logger.info(f"💾 Simulated trade saved to {trades_file}")
-
-                # Also update system_state.json
-                _update_system_state_with_crypto_trade(simulated_trade, logger)
-
-    except Exception as e:
-        logger.error(f"❌ Crypto trading failed: {e}", exc_info=True)
-        raise
+# execute_crypto_trading REMOVED - CEO directive Dec 16, 2025
+# See rag_knowledge/lessons_learned/ll_049_config_workflow_sync_failure_dec16.md
 
 
 def prediction_enabled() -> bool:
@@ -1242,8 +1007,7 @@ def main() -> None:
     # Removed intermediate annotations to stay under GitHub's 10-annotation limit
     # Key checkpoints only for debugging exit code 2 issue
     parser = argparse.ArgumentParser(description="Trading orchestrator entrypoint")
-    parser.add_argument("--crypto-only", action="store_true")
-    parser.add_argument("--skip-crypto", action="store_true")
+    # CRYPTO REMOVED - CEO directive Dec 16, 2025
     parser.add_argument(
         "--prediction-only", action="store_true", help="Run only prediction markets (Kalshi)"
     )
@@ -1265,9 +1029,7 @@ def main() -> None:
     # Set safe defaults
     is_weekend_day = is_weekend()
     is_holiday = is_market_holiday()
-    crypto_allowed = crypto_enabled()
     prediction_allowed = prediction_enabled()
-    weekend_proxy_active = False
 
     # Handle prediction-only mode (Kalshi markets trade 24/7)
     if args.prediction_only:
@@ -1280,60 +1042,17 @@ def main() -> None:
             logger.warning("Prediction-only requested but ENABLE_PREDICTION_MARKETS is not true.")
             return
 
-    # Crypto runs daily when CRYPTO_DAILY=true (default), or on weekends/holidays
-    crypto_daily = crypto_daily_enabled()
-    should_run_crypto = (
-        not args.skip_crypto
-        and crypto_allowed
-        and (args.crypto_only or crypto_daily or is_weekend_day or is_holiday)
-        and not weekend_proxy_active
-    )
-
     should_run_prediction = not args.skip_prediction and prediction_allowed
 
-    if args.crypto_only and not crypto_allowed:
-        logger.warning(
-            "Crypto-only requested but ENABLE_CRYPTO_AGENT is not true. Skipping crypto branch."
-        )
-
-    if weekend_proxy_active:
-        logger.info(
-            "Weekend proxy mode enabled (%s) - routing funnel through ETF proxies.",
-            "holiday" if is_holiday and not is_weekend_day else "weekend",
-        )
-    elif should_run_crypto:
-        reason = []
-        if args.crypto_only:
-            reason.append("--crypto-only flag")
-        if crypto_daily and not (is_weekend_day or is_holiday):
-            reason.append("daily crypto enabled")
-        if is_weekend_day:
-            reason.append("weekend")
-        if is_holiday:
-            reason.append("market holiday")
-        logger.info(f"Crypto branch enabled ({', '.join(reason)}) - executing crypto trading.")
-        execute_crypto_trading()
-        logger.info("Crypto trading session completed.")
-
-        # Also run prediction markets on weekends (Kalshi trades 24/7)
-        if should_run_prediction and (is_weekend_day or is_holiday):
-            logger.info(
-                "Weekend/holiday detected - also executing prediction markets (24/7 trading)."
-            )
-            execute_prediction_trading()
-            logger.info("Prediction trading session completed.")
-
-        if args.crypto_only or is_weekend_day or is_holiday:
-            return
-    elif (is_weekend_day or is_holiday) and not args.skip_crypto:
-        logger.info("Weekend detected but crypto branch disabled.")
-        # Still run prediction markets even if crypto is disabled (Kalshi trades 24/7)
+    # Weekend/holiday handling - run prediction markets (Kalshi trades 24/7)
+    if is_weekend_day or is_holiday:
+        logger.info("Weekend/holiday detected.")
         if should_run_prediction:
             logger.info("Executing prediction markets (24/7 trading).")
             execute_prediction_trading()
             logger.info("Prediction trading session completed.")
-            return
-        logger.info("Proceeding with hybrid funnel.")
+        logger.info("Markets closed - skipping equity trading.")
+        return
 
     # Normal stock trading - import only when needed
     from src.orchestrator.main import TradingOrchestrator
