@@ -140,17 +140,19 @@ class RLFilter:
             "RL weights file missing (%s). Falling back to default heuristics.",
             self.weights_path,
         )
+        # R&D Phase (Dec 2025): Lowered threshold from 0.6 to 0.35 to allow more trades
+        # This enables data collection for ML training. Revert to 0.6 post-R&D.
         return {
             "default": {
-                "bias": -0.1,
+                "bias": 0.0,  # Neutral start (was -0.1)
                 "weights": {
                     "strength": 2.0,
-                    "momentum": 1.2,
+                    "momentum": 1.5,  # Increased from 1.2
                     "rsi_gap": 0.7,
                     "volume_premium": 0.5,
                     "sma_ratio": 1.3,
                 },
-                "action_threshold": 0.6,
+                "action_threshold": 0.35,  # R&D threshold (was 0.6)
                 "base_multiplier": 0.75,
             }
         }

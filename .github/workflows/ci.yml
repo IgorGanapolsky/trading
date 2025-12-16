@@ -481,3 +481,23 @@ jobs:
       - name: Check for Anti-Manual Violations
         run: |
           python3 scripts/check_anti_manual_violations.py --check-commits 10 --ci
+
+  # Added Dec 16, 2025: Config-Workflow Sync Validation
+  # Prevents disabled strategies from still running in workflows (LL_049)
+  config-workflow-sync:
+    name: Config-Workflow Sync Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Verify config-workflow sync
+        run: |
+          python3 scripts/verify_config_workflow_sync.py --strict
