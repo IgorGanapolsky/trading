@@ -70,6 +70,8 @@ jobs:
           python3 -m pip install python-dotenv langsmith openai
 
       - name: Verify LangSmith wrapper imports
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: |  # pragma: allowlist secret
           echo "🔍 Verifying LangSmith wrapper imports correctly..."
           python3 -c "
@@ -103,6 +105,8 @@ jobs:
           "
 
       - name: Verify env var fallback (LANGSMITH_* names)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: |  # pragma: allowlist secret
           echo "🔍 Verifying LANGSMITH_* env var names work..."
           python3 -c "
