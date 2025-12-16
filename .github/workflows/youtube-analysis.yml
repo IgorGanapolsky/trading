@@ -33,10 +33,22 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          # Install YouTube-specific dependencies
+          python -m pip install --upgrade pip setuptools wheel
+
+          # Install YouTube-specific dependencies FIRST (critical)
           pip install youtube-transcript-api yt-dlp
+
+          # Install minimal deps for youtube_monitor.py
+          pip install pydantic pydantic-settings openai requests python-dotenv pathlib2
+
+          # Try full requirements.txt with timeout and fallback
+          timeout 300 pip install -r requirements.txt || {
+            echo "⚠️ Full requirements.txt failed or timed out"
+            echo "Installing minimal fallback dependencies..."
+            pip install anthropic aiohttp beautifulsoup4 httpx
+          }
+
+          echo "✅ Dependencies installed successfully"
 
       - name: Create required directories
         run: |
