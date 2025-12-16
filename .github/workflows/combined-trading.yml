@@ -157,9 +157,9 @@ jobs:
           PAPER_TRADING: 'true'
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           # LangSmith observability (optional but recommended)
-          LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+          LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
           LANGCHAIN_TRACING_V2: 'true'
-          LANGCHAIN_PROJECT: 'trading-system'
+          LANGCHAIN_PROJECT: 'igor-trading-system'
         run: |
           echo "========================================"
           echo "OPTIONS TRADING - $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
