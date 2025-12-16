@@ -4,6 +4,10 @@ Dec 3, 2025 Enhancement:
 - Added place_order_with_stop_loss() for integrated order + stop-loss execution
 - ATR-based stop-loss calculation wired to order placement
 - Automatic stop-loss on every new position
+
+Dec 16, 2025 Enhancement:
+- Added LangSmith tracing for all trade executions
+- Every order is traced for observability
 """
 
 from __future__ import annotations
@@ -18,6 +22,13 @@ from src.brokers.multi_broker import get_multi_broker
 from src.core.alpaca_trader import AlpacaTrader
 
 logger = logging.getLogger(__name__)
+
+# LangSmith tracing for trade execution
+try:
+    from src.observability.langsmith_tracer import TraceType, get_tracer
+    LANGSMITH_AVAILABLE = True
+except ImportError:
+    LANGSMITH_AVAILABLE = False
 
 # Default stop-loss configuration
 DEFAULT_STOP_LOSS_PCT = 0.05  # 5% default if ATR unavailable
@@ -61,7 +72,7 @@ class AlpacaExecutor:
             self.broker = None
 
     def _record_trade_for_tracking(self, order: dict[str, Any], strategy: str) -> None:
-        """Record trade for daily performance tracking."""
+        """Record trade for daily performance tracking and trace to LangSmith."""
         try:
             from src.analytics.daily_performance_tracker import record_trade_pnl
             
@@ -81,8 +92,52 @@ class AlpacaExecutor:
             
             record_trade_pnl(trade_record)
             logger.debug(f"Trade recorded for performance tracking: {order.get('symbol')}")
+            
+            # Trace to LangSmith
+            self._trace_trade_execution(order, strategy)
         except Exception as e:
             logger.warning(f"Failed to record trade for tracking: {e}")
+    
+    def _trace_trade_execution(self, order: dict[str, Any], strategy: str) -> None:
+        """Trace trade execution to LangSmith for observability."""
+        if not LANGSMITH_AVAILABLE:
+            return
+            
+        try:
+            tracer = get_tracer()
+            symbol = order.get("symbol", "UNKNOWN")
+            side = order.get("side", "UNKNOWN")
+            
+            with tracer.trace(
+                name=f"trade_execution_{symbol}_{side}",
+                trace_type=TraceType.TRADE,
+                symbol=symbol,
+                side=side,
+                strategy=strategy,
+            ) as span:
+                span.inputs = {
+                    "symbol": symbol,
+                    "side": side,
+                    "qty": order.get("qty") or order.get("filled_qty"),
+                    "notional": order.get("notional"),
+                    "strategy": strategy,
+                }
+                
+                span.add_output("order_id", order.get("id"))
+                span.add_output("filled_qty", order.get("filled_qty"))
+                span.add_output("filled_price", order.get("filled_avg_price"))
+                span.add_output("status", order.get("status"))
+                span.add_output("commission", order.get("commission", 0))
+                
+                span.add_metadata({
+                    "broker": order.get("broker", "alpaca"),
+                    "mode": order.get("mode", "paper"),
+                    "slippage_impact": order.get("slippage_impact", 0),
+                })
+                
+            logger.debug(f"📊 Trade execution traced to LangSmith: {symbol} {side}")
+        except Exception as e:
+            logger.warning(f"Failed to trace trade to LangSmith: {e}")
     
     def sync_portfolio_state(self) -> None:
         if self.simulated:

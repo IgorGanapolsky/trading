@@ -167,6 +167,11 @@ jobs:
       PYTHONPATH: ${{ github.workspace }}
       ENABLE_WEEKEND_PROXY: 'false'
       ALLOW_PROMOTION_OVERRIDE: '1'  # Temporary override to allow trading while metrics are repaired
+      # LangSmith observability - traces every trade gate decision
+      LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+      LANGCHAIN_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+      LANGCHAIN_PROJECT: 'ai-trading-system'
+      LANGCHAIN_TRACING_V2: 'true'
 
     steps:
       - name: Checkout repository

@@ -5,8 +5,10 @@ This gate MUST be called before ANY trade execution. It:
 1. Queries RAG for relevant lessons learned
 2. Runs ML anomaly detection on the order
 3. BLOCKS the trade if either check fails
+4. TRACES every decision to LangSmith for observability
 
 Created: Dec 16, 2025
+Updated: Dec 16, 2025 - Added LangSmith tracing
 Purpose: Prevent repeated mistakes by learning from RAG and ML
 
 NEVER BYPASS THIS GATE. If you need to bypass, add a lesson learned first.
@@ -23,6 +25,15 @@ from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+# LangSmith tracing - import the observability module
+try:
+    from src.observability.langsmith_tracer import TraceType, get_tracer
+    LANGSMITH_AVAILABLE = True
+    logger.info("LangSmith tracing available for trade gate")
+except ImportError:
+    LANGSMITH_AVAILABLE = False
+    logger.warning("LangSmith not available - gate decisions will only be logged locally")
 
 # Gate configuration
 GATE_ENABLED = os.getenv("MANDATORY_TRADE_GATE", "true").lower() in {"1", "true", "yes"}
@@ -223,6 +234,8 @@ class MandatoryTradeGate:
     ) -> GateResult:
         """
         MANDATORY validation before ANY trade.
+        
+        ALL gate decisions are traced to LangSmith for observability.
 
         Args:
             symbol: Trading symbol (e.g., "SPY", "BTCUSD")
@@ -243,66 +256,134 @@ class MandatoryTradeGate:
             "bypass_reason": bypass_reason,
         }
 
-        # Check if gate is disabled (NOT RECOMMENDED)
-        if not GATE_ENABLED:
-            logger.warning("⚠️ MANDATORY TRADE GATE IS DISABLED - This is dangerous!")
-            return GateResult(
-                approved=True,
-                reason="Gate disabled (NOT RECOMMENDED)",
-                rag_warnings=[],
-                ml_anomalies=[],
-                confidence=0.0,
+        # ========== LANGSMITH TRACING ==========
+        # Every gate decision is traced for observability
+        tracer = None
+        span = None
+        if LANGSMITH_AVAILABLE:
+            try:
+                tracer = get_tracer()
+                # Start trace with VERIFICATION type
+                span = tracer.trace(
+                    name=f"trade_gate_{symbol}_{side}",
+                    trace_type=TraceType.VERIFICATION,
+                    symbol=symbol,
+                    amount=amount,
+                    side=side,
+                    strategy=strategy,
+                )
+                span.__enter__()
+                span.inputs = trade_context
+            except Exception as e:
+                logger.warning(f"LangSmith tracing failed to start: {e}")
+                span = None
+        # ========================================
+
+        try:
+            # Check if gate is disabled (NOT RECOMMENDED)
+            if not GATE_ENABLED:
+                logger.warning("⚠️ MANDATORY TRADE GATE IS DISABLED - This is dangerous!")
+                result = GateResult(
+                    approved=True,
+                    reason="Gate disabled (NOT RECOMMENDED)",
+                    rag_warnings=[],
+                    ml_anomalies=[],
+                    confidence=0.0,
+                    timestamp=timestamp,
+                )
+                self._trace_result(span, result, trade_context)
+                return result
+
+            logger.info(f"🚦 MANDATORY GATE: Validating {side} {symbol} ${amount:.2f} ({strategy})")
+
+            # 1. Query RAG for lessons learned
+            rag_warnings = self._query_rag_for_lessons(symbol, strategy, side)
+
+            # 2. Run ML anomaly detection
+            ml_anomalies = self._run_ml_anomaly_check(symbol, amount, side)
+
+            # 3. Determine if trade should be blocked
+            blocked = False
+            block_reasons = []
+
+            # Check for blocking ML anomalies
+            blocking_anomalies = [a for a in ml_anomalies if "[BLOCK]" in a.upper()]
+            if blocking_anomalies and BLOCK_ON_ML_ANOMALY:
+                blocked = True
+                block_reasons.extend(blocking_anomalies)
+
+            # Check for critical RAG warnings
+            critical_warnings = [w for w in rag_warnings if "CRITICAL" in w.upper()]
+            if critical_warnings and BLOCK_ON_RAG_WARNING:
+                blocked = True
+                block_reasons.extend(critical_warnings)
+
+            # Calculate confidence (lower if warnings/anomalies exist)
+            total_issues = len(rag_warnings) + len(ml_anomalies)
+            confidence = max(0.0, 1.0 - (total_issues * 0.1))
+
+            if blocked:
+                reason = f"BLOCKED: {'; '.join(block_reasons)}"
+                logger.error(f"🚫 TRADE BLOCKED: {reason}")
+            else:
+                reason = "APPROVED" if total_issues == 0 else f"APPROVED with {total_issues} warnings"
+                logger.info(f"✅ TRADE {reason}")
+
+            result = GateResult(
+                approved=not blocked,
+                reason=reason,
+                rag_warnings=rag_warnings,
+                ml_anomalies=ml_anomalies,
+                confidence=confidence,
                 timestamp=timestamp,
             )
 
-        logger.info(f"🚦 MANDATORY GATE: Validating {side} {symbol} ${amount:.2f} ({strategy})")
+            # Log the decision locally
+            self._log_gate_decision(result, trade_context)
+            
+            # Trace to LangSmith
+            self._trace_result(span, result, trade_context)
 
-        # 1. Query RAG for lessons learned
-        rag_warnings = self._query_rag_for_lessons(symbol, strategy, side)
-
-        # 2. Run ML anomaly detection
-        ml_anomalies = self._run_ml_anomaly_check(symbol, amount, side)
-
-        # 3. Determine if trade should be blocked
-        blocked = False
-        block_reasons = []
-
-        # Check for blocking ML anomalies
-        blocking_anomalies = [a for a in ml_anomalies if "[BLOCK]" in a.upper()]
-        if blocking_anomalies and BLOCK_ON_ML_ANOMALY:
-            blocked = True
-            block_reasons.extend(blocking_anomalies)
-
-        # Check for critical RAG warnings
-        critical_warnings = [w for w in rag_warnings if "CRITICAL" in w.upper()]
-        if critical_warnings and BLOCK_ON_RAG_WARNING:
-            blocked = True
-            block_reasons.extend(critical_warnings)
-
-        # Calculate confidence (lower if warnings/anomalies exist)
-        total_issues = len(rag_warnings) + len(ml_anomalies)
-        confidence = max(0.0, 1.0 - (total_issues * 0.1))
-
-        if blocked:
-            reason = f"BLOCKED: {'; '.join(block_reasons)}"
-            logger.error(f"🚫 TRADE BLOCKED: {reason}")
-        else:
-            reason = "APPROVED" if total_issues == 0 else f"APPROVED with {total_issues} warnings"
-            logger.info(f"✅ TRADE {reason}")
-
-        result = GateResult(
-            approved=not blocked,
-            reason=reason,
-            rag_warnings=rag_warnings,
-            ml_anomalies=ml_anomalies,
-            confidence=confidence,
-            timestamp=timestamp,
-        )
-
-        # Log the decision
-        self._log_gate_decision(result, trade_context)
-
-        return result
+            return result
+            
+        except Exception as e:
+            # Make sure we close the span even on error
+            if span:
+                try:
+                    span.complete(error=str(e))
+                    span.__exit__(type(e), e, e.__traceback__)
+                except Exception:
+                    pass
+            raise
+    
+    def _trace_result(self, span, result: GateResult, trade_context: dict) -> None:
+        """Trace the gate result to LangSmith."""
+        if span is None:
+            return
+            
+        try:
+            # Add outputs to span
+            span.add_output("approved", result.approved)
+            span.add_output("reason", result.reason)
+            span.add_output("confidence", result.confidence)
+            span.add_output("rag_warnings_count", len(result.rag_warnings))
+            span.add_output("ml_anomalies_count", len(result.ml_anomalies))
+            
+            # Add metadata
+            span.add_metadata({
+                "gate_decision": "APPROVED" if result.approved else "BLOCKED",
+                "symbol": trade_context.get("symbol"),
+                "amount": trade_context.get("amount"),
+                "strategy": trade_context.get("strategy"),
+            })
+            
+            # Complete the span
+            span.complete(outputs=result.to_dict())
+            span.__exit__(None, None, None)
+            
+            logger.debug(f"📊 Gate decision traced to LangSmith: {result.reason}")
+        except Exception as e:
+            logger.warning(f"Failed to trace result to LangSmith: {e}")
 
 
 # Global singleton for easy access
