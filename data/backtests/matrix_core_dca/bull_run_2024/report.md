@@ -17,7 +17,7 @@ Annualized Return: 0.10%
 
 RISK METRICS
 --------------------------------------------------------------------------------
-Sharpe Ratio:      -72.35
+Sharpe Ratio:      -10.00
 Max Drawdown:      0.01%
 Volatility:        0.05%
 

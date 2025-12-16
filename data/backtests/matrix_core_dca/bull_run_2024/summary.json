@@ -7,7 +7,7 @@
     "trading_days": 64,
     "total_return_pct": 0.02,
     "annualized_return_pct": 0.1,
-    "sharpe_ratio": -72.351,
+    "sharpe_ratio": -10.0,
     "max_drawdown_pct": 0.01,
     "win_rate_pct": 51.56,
     "profitable_days": 33,
@@ -17,7 +17,7 @@
     "total_trades": 64,
     "status": "needs_improvement",
     "description": "Tests performance when SPY/QQQ melt upward. Ensures system captures upside without blowing risk allocations.\n",
-    "generated_at": "2025-12-05T14:36:21.161907",
+    "generated_at": "2025-12-16T17:49:55.108585",
     "execution_costs": {
       "fee_cost": 1.15,
       "slippage_cost": 0.07,
@@ -32,7 +32,10 @@
     },
     "cost_adjusted_return_pct": 0.02,
     "cost_adjusted_annualized_return_pct": 0.1,
-    "hybrid_gates": false
+    "hybrid_gates": false,
+    "survival_gate": null,
+    "capital_preserved_pct": 100.02,
+    "survival_passed": null
   },
   "raw_results": {
     "trades": [
@@ -876,7 +879,7 @@
       "2024-03-29"
     ],
     "total_return": 0.024678958005984897,
-    "sharpe_ratio": -72.35099139818138,
+    "sharpe_ratio": -10.0,
     "max_drawdown": 0.013663847719387572,
     "win_rate": 51.5625,
     "total_trades": 64,
