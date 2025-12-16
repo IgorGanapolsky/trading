@@ -3,7 +3,6 @@
 Enhanced Performance Tracker with Category Breakdowns
 
 Tracks P/L by category:
-- Crypto (BTC, ETH, etc.)
 - Equities (stocks)
 - Options (calls, puts, spreads)
 - Bonds/Treasuries (TLT, IEF, BIL, SHY)
@@ -42,7 +41,6 @@ class PerformanceSnapshot:
     total_pl_pct: float
 
     # Category breakdowns
-    crypto: CategoryPerformance
     equities: CategoryPerformance
     options: CategoryPerformance
     bonds: CategoryPerformance
@@ -57,7 +55,6 @@ class PerformanceSnapshot:
 class EnhancedPerformanceTracker:
     """Tracks performance with detailed category breakdowns."""
 
-    CRYPTO_SYMBOLS = ['BTC', 'ETH', 'SOL', 'BTCUSD', 'ETHUSD', 'SOLUSD']
     BOND_SYMBOLS = ['TLT', 'IEF', 'BIL', 'SHY', 'AGG']
 
     def __init__(self):
@@ -68,11 +65,6 @@ class EnhancedPerformanceTracker:
     def categorize_symbol(self, symbol: str) -> str:
         """Determine category for a symbol."""
         symbol_upper = symbol.upper()
-
-        # Check crypto
-        for crypto in self.CRYPTO_SYMBOLS:
-            if crypto in symbol_upper:
-                return 'crypto'
 
         # Check bonds
         if symbol_upper in self.BOND_SYMBOLS:
@@ -94,7 +86,6 @@ class EnhancedPerformanceTracker:
 
         if not trades_file.exists():
             return {
-                'crypto': [],
                 'equities': [],
                 'options': [],
                 'bonds': []
@@ -104,7 +95,6 @@ class EnhancedPerformanceTracker:
             trades = json.load(f)
 
         categorized = {
-            'crypto': [],
             'equities': [],
             'options': [],
             'bonds': []
@@ -196,7 +186,6 @@ class EnhancedPerformanceTracker:
         system_state_file = self.data_dir / 'system_state.json'
         if not system_state_file.exists():
             return {
-                'crypto': {},
                 'equities': {},
                 'options': {},
                 'bonds': {}
@@ -209,7 +198,6 @@ class EnhancedPerformanceTracker:
         open_positions = state.get('performance', {}).get('open_positions', [])
 
         categorized = {
-            'crypto': {},
             'equities': {},
             'options': {},
             'bonds': {}
@@ -240,7 +228,6 @@ class EnhancedPerformanceTracker:
 
         # Categorize closed trades
         closed_by_cat = {
-            'crypto': [],
             'equities': [],
             'options': [],
             'bonds': []
@@ -252,13 +239,6 @@ class EnhancedPerformanceTracker:
                 closed_by_cat[category].append(trade)
 
         # Calculate performance for each category
-        crypto_perf = self.calculate_category_performance(
-            categorized_trades['crypto'],
-            holdings_by_cat['crypto'],
-            closed_by_cat['crypto']
-        )
-        crypto_perf.category = 'crypto'
-
         equities_perf = self.calculate_category_performance(
             categorized_trades['equities'],
             holdings_by_cat['equities'],
@@ -282,21 +262,18 @@ class EnhancedPerformanceTracker:
 
         # Calculate totals
         total_equity = sum([
-            crypto_perf.current_value,
             equities_perf.current_value,
             options_perf.current_value,
             bonds_perf.current_value
         ])
 
         total_pl = sum([
-            crypto_perf.total_pl,
             equities_perf.total_pl,
             options_perf.total_pl,
             bonds_perf.total_pl
         ])
 
         total_trades = sum([
-            crypto_perf.trades_count,
             equities_perf.trades_count,
             options_perf.trades_count,
             bonds_perf.trades_count
@@ -304,7 +281,6 @@ class EnhancedPerformanceTracker:
 
         # Calculate allocation percentages
         if total_equity > 0:
-            crypto_perf.allocation_pct = (crypto_perf.current_value / total_equity) * 100
             equities_perf.allocation_pct = (equities_perf.current_value / total_equity) * 100
             options_perf.allocation_pct = (options_perf.current_value / total_equity) * 100
             bonds_perf.allocation_pct = (bonds_perf.current_value / total_equity) * 100
@@ -328,7 +304,6 @@ class EnhancedPerformanceTracker:
             total_equity=total_equity,
             total_pl=total_pl,
             total_pl_pct=total_pl_pct,
-            crypto=crypto_perf,
             equities=equities_perf,
             options=options_perf,
             bonds=bonds_perf,
@@ -353,7 +328,6 @@ class EnhancedPerformanceTracker:
             'total_equity': snapshot.total_equity,
             'total_pl': snapshot.total_pl,
             'total_pl_pct': snapshot.total_pl_pct,
-            'crypto': asdict(snapshot.crypto),
             'equities': asdict(snapshot.equities),
             'options': asdict(snapshot.options),
             'bonds': asdict(snapshot.bonds),
@@ -397,7 +371,6 @@ class EnhancedPerformanceTracker:
 
         # Calculate weekly totals
         weekly = {
-            'crypto': {'total_pl': 0, 'trades': 0, 'wins': 0},
             'equities': {'total_pl': 0, 'trades': 0, 'wins': 0},
             'options': {'total_pl': 0, 'trades': 0, 'wins': 0},
             'bonds': {'total_pl': 0, 'trades': 0, 'wins': 0},
@@ -406,7 +379,7 @@ class EnhancedPerformanceTracker:
         }
 
         for entry in weekly_data:
-            for cat in ['crypto', 'equities', 'options', 'bonds']:
+            for cat in ['equities', 'options', 'bonds']:
                 cat_data = entry.get(cat, {})
                 weekly[cat]['total_pl'] += cat_data.get('total_pl', 0)
                 weekly[cat]['trades'] += cat_data.get('trades_count', 0)
@@ -418,7 +391,7 @@ class EnhancedPerformanceTracker:
             weekly['total_trades'] += entry.get('total_trades', 0)
 
         # Calculate win rates
-        for cat in ['crypto', 'equities', 'options', 'bonds']:
+        for cat in ['equities', 'options', 'bonds']:
             if weekly[cat]['trades'] > 0:
                 weekly[cat]['win_rate'] = (weekly[cat]['wins'] / weekly[cat]['trades']) * 100
             else:
@@ -449,7 +422,6 @@ class EnhancedPerformanceTracker:
 
         # Calculate monthly totals
         monthly = {
-            'crypto': {'total_pl': 0, 'trades': 0, 'wins': 0},
             'equities': {'total_pl': 0, 'trades': 0, 'wins': 0},
             'options': {'total_pl': 0, 'trades': 0, 'wins': 0},
             'bonds': {'total_pl': 0, 'trades': 0, 'wins': 0},
@@ -458,7 +430,7 @@ class EnhancedPerformanceTracker:
         }
 
         for entry in monthly_data:
-            for cat in ['crypto', 'equities', 'options', 'bonds']:
+            for cat in ['equities', 'options', 'bonds']:
                 cat_data = entry.get(cat, {})
                 monthly[cat]['total_pl'] += cat_data.get('total_pl', 0)
                 monthly[cat]['trades'] += cat_data.get('trades_count', 0)
@@ -470,7 +442,7 @@ class EnhancedPerformanceTracker:
             monthly['total_trades'] += entry.get('total_trades', 0)
 
         # Calculate win rates
-        for cat in ['crypto', 'equities', 'options', 'bonds']:
+        for cat in ['equities', 'options', 'bonds']:
             if monthly[cat]['trades'] > 0:
                 monthly[cat]['win_rate'] = (monthly[cat]['wins'] / monthly[cat]['trades']) * 100
             else:
@@ -486,7 +458,6 @@ if __name__ == '__main__':
 
     print()
     print("Category Performance (Today):")
-    print(f"  Crypto:    ${snapshot.crypto.total_pl:+.2f} ({snapshot.crypto.allocation_pct:.1f}%)")
     print(f"  Equities:  ${snapshot.equities.total_pl:+.2f} ({snapshot.equities.allocation_pct:.1f}%)")
     print(f"  Options:   ${snapshot.options.total_pl:+.2f} ({snapshot.options.allocation_pct:.1f}%)")
     print(f"  Bonds:     ${snapshot.bonds.total_pl:+.2f} ({snapshot.bonds.allocation_pct:.1f}%)")
@@ -499,7 +470,7 @@ if __name__ == '__main__':
         print("Weekly Summary (Last 7 Days):")
         print(f"  Total P/L:    ${weekly['total_pl']:+.2f}")
         print(f"  Total Trades: {weekly['total_trades']}")
-        for cat in ['crypto', 'equities', 'options', 'bonds']:
+        for cat in ['equities', 'options', 'bonds']:
             print(f"  {cat.capitalize():10} ${weekly[cat]['total_pl']:+8.2f} ({weekly[cat]['trades']} trades, {weekly[cat]['win_rate']:.0f}% win rate)")
 
     # Show monthly summary
@@ -509,5 +480,5 @@ if __name__ == '__main__':
         print("Monthly Summary (Last 30 Days):")
         print(f"  Total P/L:    ${monthly['total_pl']:+.2f}")
         print(f"  Total Trades: {monthly['total_trades']}")
-        for cat in ['crypto', 'equities', 'options', 'bonds']:
+        for cat in ['equities', 'options', 'bonds']:
             print(f"  {cat.capitalize():10} ${monthly[cat]['total_pl']:+8.2f} ({monthly[cat]['trades']} trades, {monthly[cat]['win_rate']:.0f}% win rate)")

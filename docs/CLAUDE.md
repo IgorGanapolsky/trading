@@ -167,8 +167,6 @@ Optional:
 
 - **Weekdays 9:35 AM ET**: Execute equity trades (Tier 1 + 2)
 - **Weekdays 10:00 AM ET**: Generate daily CEO report
-- **Weekends 8:00 AM ET**: Fetch CoinSnacks newsletter via MCP
-- **Weekends 10:00 AM ET**: Execute crypto trades (Tier 5)
 
 All automation via GitHub Actions workflows.
 

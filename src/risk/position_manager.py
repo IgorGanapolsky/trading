@@ -32,7 +32,6 @@ DEFAULT_STATE_FILE = Path(__file__).parent.parent.parent / "data" / "system_stat
 
 # Asset class definitions for exit threshold tuning
 TREASURY_ETFS = {"BIL", "SHY", "IEF", "TLT", "GOVT", "ZROZ", "VGSH", "VGIT", "VGLT", "SCHO", "SCHR"}
-CRYPTO_ASSETS = {"BTCUSD", "ETHUSD", "BTC", "ETH", "BITO", "GBTC", "ETHE"}
 BOND_ETFS = {"AGG", "BND", "LQD", "HYG", "JNK", "TIP", "VCSH", "VCIT"}
 
 
@@ -41,7 +40,6 @@ class AssetClass(Enum):
 
     TREASURY = "treasury"
     BOND = "bond"
-    CRYPTO = "crypto"
     EQUITY = "equity"
 
 
@@ -50,8 +48,6 @@ def get_asset_class(symbol: str) -> AssetClass:
     symbol_upper = symbol.upper()
     if symbol_upper in TREASURY_ETFS:
         return AssetClass.TREASURY
-    if symbol_upper in CRYPTO_ASSETS:
-        return AssetClass.CRYPTO
     if symbol_upper in BOND_ETFS:
         return AssetClass.BOND
     return AssetClass.EQUITY
@@ -81,7 +77,6 @@ class ExitConditions:
     - Treasuries: 0.5% (barely move, need tight thresholds)
     - Bonds: 1.0% (moderate volatility)
     - Equities: 3.0% (standard)
-    - Crypto: 5.0% (high volatility)
 
     Attributes:
         take_profit_pct: Profit target percentage (default: 3%)
@@ -108,10 +103,6 @@ class ExitConditions:
     bond_stop_loss_pct: float = 0.01  # 1.0% for bonds
     bond_max_holding_days: int = 5  # 5 days for bonds
 
-    crypto_take_profit_pct: float = 0.05  # 5.0% for crypto
-    crypto_stop_loss_pct: float = 0.05  # 5.0% for crypto
-    crypto_max_holding_days: int = 7  # 7 days for crypto
-
     def get_thresholds_for_asset(self, asset_class: AssetClass) -> tuple[float, float, int]:
         """
         Get take_profit, stop_loss, and max_holding_days for an asset class.
@@ -127,12 +118,6 @@ class ExitConditions:
             )
         if asset_class == AssetClass.BOND:
             return (self.bond_take_profit_pct, self.bond_stop_loss_pct, self.bond_max_holding_days)
-        if asset_class == AssetClass.CRYPTO:
-            return (
-                self.crypto_take_profit_pct,
-                self.crypto_stop_loss_pct,
-                self.crypto_max_holding_days,
-            )
         # Default: equity
         return (self.take_profit_pct, self.stop_loss_pct, self.max_holding_days)
 
@@ -318,7 +303,6 @@ class PositionManager:
         Uses ASSET-CLASS-SPECIFIC thresholds:
         - Treasuries (BIL, SHY, IEF, TLT): 0.5% thresholds, 3 day max hold
         - Bonds (AGG, BND, etc.): 1.0% thresholds, 5 day max hold
-        - Crypto (BTCUSD, ETHUSD): 5.0% thresholds, 7 day max hold
         - Equities (SPY, QQQ, etc.): 3.0% thresholds, 10 day max hold
 
         Args:

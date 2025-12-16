@@ -67,12 +67,6 @@ jobs:
             exit 1
           fi
 
-          # Ensure buy-the-dip doesn't use 2x multiplier
-          if grep -E "min\(2\.0.*btc_change" src/strategies/crypto_strategy.py 2>/dev/null; then
-            echo "::error::CRITICAL: Buy-the-dip 2x multiplier still present. Never increase position during dips."
-            exit 1
-          fi
-
           echo "Fear multiplier checks passed."
 
       - name: Validate backtest metrics

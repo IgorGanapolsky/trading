@@ -79,9 +79,6 @@ SECTOR_MAP = {
     "GOVT": "bonds",
     "BND": "bonds",
     "ZROZ": "bonds",
-    # Crypto proxies
-    "BITO": "crypto",
-    "GBTC": "crypto",
     # Safe havens
     "GLD": "safe_haven",
     "SLV": "safe_haven",

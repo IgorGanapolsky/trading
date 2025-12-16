@@ -14,20 +14,6 @@
       "chunk_count": 66,
       "ingested_at": "2025-12-05T00:29:49.449329"
     },
-    "crypto_ai": {
-      "title": "Crypto AI Playbook",
-      "author": "Igor Ganapolsky (curated summary)",
-      "chunks_file": "rag_knowledge/chunks/crypto_ai_2025.json",
-      "chunk_count": 4,
-      "ingested_at": "2025-12-08T19:42:37.675000"
-    },
-    "crypto_trading_mastery": {
-      "title": "Master Options, Crypto, and Day Trading for Passive Income",
-      "author": "Jacob Ferriss",
-      "chunks_file": "rag_knowledge/chunks/crypto_trading_mastery_2025.json",
-      "chunk_count": 8,
-      "ingested_at": "2025-12-08T02:25:00.000000"
-    },
     "precious_metals_trading": {
       "title": "Precious Metals Trading Knowledge",
       "author": "Compiled from Jim Rickards, Mike Maloney, Kitco Research",
@@ -96,29 +82,18 @@
       "ingested_at": "2025-12-05T00:29:49.451816"
     }
   },
-  "youtube": {
-    "tfcdts_i2jU": {
-      "title": "Crypto to buy for 2026",
-      "channel": "ODES - All about crypto",
-      "insights_file": "rag_knowledge/youtube/insights/tfcdts_i2jU.json",
-      "picks": ["BTC", "SOL", "XRP", "ETH"],
-      "ingested_at": "2025-12-09T00:00:00.000000"
-    }
-  },
   "lessons_learned": {
     "lessons_learned_2025": {
       "title": "Trading System Lessons Learned (Consolidated)",
       "severity": "CRITICAL",
       "file": "rag_knowledge/chunks/lessons_learned_2025.json",
-      "tags": ["infrastructure", "architecture", "strategy", "verification", "ml", "crypto"],
-      "chunk_count": 21,
+      "tags": ["infrastructure", "architecture", "strategy", "verification", "ml"],
+      "chunk_count": 17,
       "date": "2025-12-13",
       "latest_additions": [
         "ll_017: BATS Budget Framework",
         "ll_018: Text Feature Engineering",
-        "ll_019: Gemini Deep Research",
-        "ll_020: Weekend Crypto Force Trade",
-        "ll_021: Buy-the-Dip Strategy"
+        "ll_019: Gemini Deep Research"
       ]
     },
     "ll_009": {

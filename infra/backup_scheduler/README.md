@@ -43,9 +43,6 @@ crontab -e
 # Add these lines:
 # Weekday trading backup (every 30 mins, 9:30 AM - 4 PM ET)
 */30 9-16 * * 1-5 cd /path/to/trading && /path/to/venv/bin/python infra/backup_scheduler/backup_scheduler.py >> logs/backup_scheduler.log 2>&1
-
-# Weekend crypto backup (every 4 hours)
-0 */4 * * 0,6 cd /path/to/trading && /path/to/venv/bin/python infra/backup_scheduler/backup_scheduler.py --force >> logs/backup_scheduler.log 2>&1
 ```
 
 **Cost**: Free

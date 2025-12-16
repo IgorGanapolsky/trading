@@ -283,11 +283,11 @@ class AnomalyDetector:
                 f"Unusually high confidence ({signal.confidence:.0%}) - verify signal source"
             )
 
-        # Check for weekend trading (crypto OK, equities not)
+        # Check for weekend trading (not allowed for equities)
         now = datetime.utcnow()
         is_weekend = now.weekday() >= 5
-        if is_weekend and signal.symbol.asset_class != AssetClass.CRYPTO:
-            warnings.append("Weekend trading detected for non-crypto asset")
+        if is_weekend:
+            warnings.append("Weekend trading detected - markets closed")
 
         # Check for after-hours equity trading
         if signal.symbol.asset_class == AssetClass.EQUITY:
@@ -430,9 +430,9 @@ if __name__ == "__main__":
     print("\n[2] TESTING VALID SIGNAL")
     print("-" * 40)
 
-    btc = factory.create_crypto_symbol("BTCUSD")
+    spy = factory.create_equity_symbol("SPY")
     signal = factory.create_signal(
-        symbol=btc, action=TradeAction.BUY, confidence=0.75, source="test_strategy"
+        symbol=spy, action=TradeAction.BUY, confidence=0.75, source="test_strategy"
     )
 
     result = verifier.verify(signal)

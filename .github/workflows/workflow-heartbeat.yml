@@ -28,7 +28,6 @@ jobs:
           echo ""
           echo "Active workflows:"
           echo "  - Daily Trading Execution (9:35 AM ET weekdays)"
-          echo "  - Weekend Crypto Trading"
           echo "  - YouTube Analysis"
           echo "  - All other scheduled workflows"
           echo ""

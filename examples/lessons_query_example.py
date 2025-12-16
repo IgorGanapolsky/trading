@@ -91,9 +91,9 @@ def example_3_multi_query():
     query = LessonsKnowledgeGraphQuery()
 
     context = TradeContext(
-        symbol="BTC",
+        symbol="AAPL",
         side="buy",
-        amount=50.0,
+        amount=500.0,
         strategy="momentum",
     )
 
@@ -107,9 +107,9 @@ def example_3_multi_query():
 
     # Different context - cache miss
     context2 = TradeContext(
-        symbol="ETH",  # Different symbol
+        symbol="NVDA",  # Different symbol
         side="buy",
-        amount=50.0,
+        amount=500.0,
         strategy="momentum",
     )
 

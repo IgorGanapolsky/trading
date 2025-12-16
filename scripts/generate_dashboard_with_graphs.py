@@ -61,9 +61,8 @@ class DashboardGenerator:
     def generate_allocation_pie_chart(self, snapshot: dict) -> str:
         """Generate allocation pie chart by category."""
 
-        categories = ['Crypto', 'Equities', 'Options', 'Bonds']
+        categories = ['Equities', 'Options', 'Bonds']
         values = [
-            snapshot.get('crypto', {}).get('current_value', 0),
             snapshot.get('equities', {}).get('current_value', 0),
             snapshot.get('options', {}).get('current_value', 0),
             snapshot.get('bonds', {}).get('current_value', 0)
@@ -115,15 +114,13 @@ class DashboardGenerator:
     def generate_category_pl_bar_chart(self, snapshot: dict) -> str:
         """Generate P/L bar chart by category."""
 
-        categories = ['Crypto', 'Equities', 'Options', 'Bonds']
+        categories = ['Equities', 'Options', 'Bonds']
         realized = [
-            snapshot.get('crypto', {}).get('realized_pl', 0),
             snapshot.get('equities', {}).get('realized_pl', 0),
             snapshot.get('options', {}).get('realized_pl', 0),
             snapshot.get('bonds', {}).get('realized_pl', 0)
         ]
         unrealized = [
-            snapshot.get('crypto', {}).get('unrealized_pl', 0),
             snapshot.get('equities', {}).get('unrealized_pl', 0),
             snapshot.get('options', {}).get('unrealized_pl', 0),
             snapshot.get('bonds', {}).get('unrealized_pl', 0)
@@ -218,7 +215,6 @@ class DashboardGenerator:
             return None
 
         dates = []
-        crypto_pl = []
         equities_pl = []
         options_pl = []
         bonds_pl = []
@@ -228,7 +224,6 @@ class DashboardGenerator:
             if date_str:
                 try:
                     dates.append(datetime.fromisoformat(date_str.replace('Z', '+00:00')))
-                    crypto_pl.append(entry.get('crypto', {}).get('total_pl', 0))
                     equities_pl.append(entry.get('equities', {}).get('total_pl', 0))
                     options_pl.append(entry.get('options', {}).get('total_pl', 0))
                     bonds_pl.append(entry.get('bonds', {}).get('total_pl', 0))
@@ -241,7 +236,6 @@ class DashboardGenerator:
         # Create multi-line plot
         fig, ax = plt.subplots(figsize=(14, 8))
 
-        ax.plot(dates, crypto_pl, marker='o', label='Crypto', linewidth=2, color='#FF6B6B')
         ax.plot(dates, equities_pl, marker='s', label='Equities', linewidth=2, color='#4ECDC4')
         ax.plot(dates, options_pl, marker='^', label='Options', linewidth=2, color='#45B7D1')
         ax.plot(dates, bonds_pl, marker='d', label='Bonds', linewidth=2, color='#FFA07A')
@@ -327,7 +321,7 @@ class DashboardGenerator:
             md.append("")
             md.append("| Category | P/L | Trades | Win Rate |")
             md.append("|----------|-----|--------|----------|")
-            for cat in ['Crypto', 'Equities', 'Options', 'Bonds']:
+            for cat in ['Equities', 'Options', 'Bonds']:
                 cat_key = cat.lower()
                 cat_data = weekly[cat_key]
                 pl_emoji = "🟢" if cat_data['total_pl'] > 0 else "🔴" if cat_data['total_pl'] < 0 else "⚪"
@@ -342,7 +336,7 @@ class DashboardGenerator:
             md.append("")
             md.append("| Category | P/L | Trades | Win Rate |")
             md.append("|----------|-----|--------|----------|")
-            for cat in ['Crypto', 'Equities', 'Options', 'Bonds']:
+            for cat in ['Equities', 'Options', 'Bonds']:
                 cat_key = cat.lower()
                 cat_data = monthly[cat_key]
                 pl_emoji = "🟢" if cat_data['total_pl'] > 0 else "🔴" if cat_data['total_pl'] < 0 else "⚪"
@@ -390,7 +384,7 @@ class DashboardGenerator:
         # Category breakdowns (collapsible)
         md.append("## 💼 Category Breakdowns\n")
 
-        for cat_name in ['Crypto', 'Equities', 'Options', 'Bonds']:
+        for cat_name in ['Equities', 'Options', 'Bonds']:
             cat_key = cat_name.lower()
             cat_data = snapshot.get(cat_key, {})
 

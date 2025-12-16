@@ -32,7 +32,6 @@ class TestLL009SyntaxErrors:
             "src/orchestrator/main.py",
             "src/execution/alpaca_executor.py",
             "src/risk/trade_gateway.py",
-            "src/strategies/crypto_strategy.py",
             "src/strategies/options_iv_signal.py",
             "src/core/alpaca_trader.py",
             "scripts/autonomous_trader.py",
@@ -114,27 +113,6 @@ class TestLL020FearMultiplier:
                         f"  Metrics must be dynamically loaded from actual data!"
                     )
 
-    def test_buy_dip_reduces_position(self, project_root):
-        """Ensure buy-the-dip logic REDUCES position during downtrends."""
-        crypto_strategy_file = project_root / "src" / "strategies" / "crypto_strategy.py"
-
-        if not crypto_strategy_file.exists():
-            pytest.skip("crypto_strategy.py not found")
-
-        with open(crypto_strategy_file) as f:
-            content = f.read()
-
-        # Check for dangerous pattern: increasing multiplier during dips
-        dangerous_pattern = r"btc_change\s*<=.*-\d.*multiplier\s*=\s*(1\.[5-9]|2|min\(2)"
-        match = re.search(dangerous_pattern, content)
-
-        assert match is None, (
-            "REGRESSION LL-020: Buy-the-dip is increasing position during downtrends!\n"
-            "  WRONG: multiplier = 2.0 during dips (catching falling knives)\n"
-            "  RIGHT: multiplier = 0.5 during dips (reduce exposure)"
-        )
-
-
 class TestLL024FStringSyntax:
     """Prevent LL-024: F-string syntax errors (backslash in expressions)."""
 
@@ -180,66 +158,6 @@ class TestLL024FStringSyntax:
             "REGRESSION LL-024: Backslash in f-string expressions:\n"
             + "\n".join(f"  - {f}" for f in issues)
         )
-
-
-class TestLL034CryptoFillVerification:
-    """Prevent LL-034: Crypto orders logged without fill confirmation.
-
-    Dec 14, 2025: Orders were logged with PENDING_NEW status, not FILLED.
-    This caused inaccurate P/L tracking.
-    """
-
-    @pytest.fixture
-    def project_root(self) -> Path:
-        return Path(__file__).parent.parent
-
-    def test_workflow_waits_for_fill(self, project_root):
-        """Ensure crypto workflows wait for fill confirmation."""
-        workflows = [
-            ".github/workflows/weekend-crypto-trading.yml",
-            ".github/workflows/force-crypto-trade.yml",
-        ]
-
-        required_patterns = [
-            "OrderStatus.FILLED",  # Must check for filled status
-            "filled_price",        # Must capture fill price
-        ]
-
-        for rel_path in workflows:
-            workflow_file = project_root / rel_path
-            if workflow_file.exists():
-                with open(workflow_file) as f:
-                    content = f.read()
-
-                for pattern in required_patterns:
-                    # Relaxed check - pattern should exist somewhere
-                    if pattern not in content:
-                        pytest.skip(f"Pattern {pattern} not in {rel_path} - may be inline Python")
-
-    def test_trade_logging_includes_fill_status(self, project_root):
-        """Ensure trade records include verified_fill field."""
-        trade_files = list((project_root / "data").glob("trades_*.json"))
-
-        if not trade_files:
-            pytest.skip("No trade files found")
-
-        # Check most recent trade file
-        most_recent = max(trade_files, key=lambda f: f.stat().st_mtime)
-
-        with open(most_recent) as f:
-            try:
-                trades = json.load(f)
-            except json.JSONDecodeError:
-                pytest.skip(f"Invalid JSON in {most_recent}")
-
-        # Check if recent trades have fill verification
-        if isinstance(trades, list) and trades:
-            latest_trade = trades[-1]
-            # Just verify structure exists - not all trades may have this field yet
-            if "verified_fill" in latest_trade:
-                assert latest_trade["verified_fill"] in [True, False], (
-                    "REGRESSION LL-034: verified_fill should be boolean"
-                )
 
 
 class TestLL035RAGUsageEnforcement:
@@ -308,69 +226,6 @@ class TestLL035RAGUsageEnforcement:
         )
 
 
-class TestLL040TrendConfirmation:
-    """Prevent LL-040: Buying without trend confirmation (catching falling knives).
-
-    Dec 15, 2025: Crypto strategy bought based on Fear & Greed alone,
-    without checking if price was in uptrend. Result: -$96.
-    """
-
-    @pytest.fixture
-    def project_root(self) -> Path:
-        return Path(__file__).parent.parent
-
-    def test_crypto_workflow_has_ma_filter(self, project_root):
-        """Ensure crypto strategy checks moving average before buying."""
-        workflows = [
-            ".github/workflows/weekend-crypto-trading.yml",
-            ".github/workflows/force-crypto-trade.yml",
-        ]
-
-        trend_indicators = [
-            "ma50",
-            "moving_average",
-            "MA",
-            "sma",
-            "rolling",
-            "mean()",
-        ]
-
-        for rel_path in workflows:
-            workflow_file = project_root / rel_path
-            if workflow_file.exists():
-                with open(workflow_file) as f:
-                    content = f.read().lower()
-
-                has_trend_filter = any(ind.lower() in content for ind in trend_indicators)
-
-                if "crypto" in content and "buy" in content:
-                    assert has_trend_filter, (
-                        f"REGRESSION LL-040: {rel_path} buys crypto without trend filter!\n"
-                        f"  Must check: price > 50-day MA before buying"
-                    )
-
-    def test_crypto_workflow_has_rsi_confirmation(self, project_root):
-        """Ensure crypto strategy checks RSI before buying."""
-        workflows = [
-            ".github/workflows/weekend-crypto-trading.yml",
-            ".github/workflows/force-crypto-trade.yml",
-        ]
-
-        for rel_path in workflows:
-            workflow_file = project_root / rel_path
-            if workflow_file.exists():
-                with open(workflow_file) as f:
-                    content = f.read()
-
-                if "crypto" in content.lower() and "buy" in content.lower():
-                    has_rsi = "rsi" in content.lower() or "RSI" in content
-
-                    assert has_rsi, (
-                        f"REGRESSION LL-040: {rel_path} missing RSI momentum filter!\n"
-                        f"  Must check: RSI > 50 before buying (bullish momentum)"
-                    )
-
-
 class TestRAGVerificationGate:
     """Tests for RAG-powered verification gate integration."""
 
@@ -414,7 +269,6 @@ class TestRAGVerificationGate:
         queries = [
             ("syntax error", ["ll_009", "ll_024"]),
             ("fear multiplier", ["ll_020"]),
-            ("crypto order fill", ["ll_034"]),
         ]
 
         for query, expected_ids in queries:

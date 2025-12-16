@@ -5,11 +5,11 @@ Works without Stirrup dependency - uses OpenRouter directly.
 Purpose:
 - Autonomous market scanning using OpenRouter multi-LLM
 - Generates UDM-validated trading signals
-- Designed for 24/7 background operation
+- Designed for regular market hours operation
 
 Usage:
-    python -m src.agents.market_scanner --symbol BTCUSD --mode quick
-    python -m src.agents.market_scanner --symbols "BTCUSD,AAPL" --continuous
+    python -m src.agents.market_scanner --symbol AAPL --mode quick
+    python -m src.agents.market_scanner --symbols "AAPL,GOOGL" --continuous
 """
 
 import asyncio
@@ -187,7 +187,7 @@ Return ONLY the JSON, no other text.
         print(f"  Scanning {symbol}...")
 
         # 1. Search for news
-        news = await search_news(f"{symbol} stock crypto market news today")
+        news = await search_news(f"{symbol} stock market news today")
 
         # 2. Get LLM analysis
         prompt = self._get_scan_prompt(symbol, news)
@@ -224,13 +224,8 @@ Return ONLY the JSON, no other text.
     def _create_signal(self, symbol: str, analysis: dict) -> Optional[Signal]:
         """Create UDM-validated signal"""
         try:
-            # Determine asset class
-            is_crypto = any(c in symbol.upper() for c in ["BTC", "ETH", "USD", "DOGE", "SOL"])
-
-            if is_crypto:
-                sym = factory.create_crypto_symbol(symbol.upper())
-            else:
-                sym = factory.create_equity_symbol(symbol.upper())
+            # Create equity symbol
+            sym = factory.create_equity_symbol(symbol.upper())
 
             action_map = {
                 "BUY": TradeAction.BUY,
@@ -339,7 +334,7 @@ async def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Market Scanner")
-    parser.add_argument("--symbol", "-s", default="BTCUSD", help="Symbol to scan")
+    parser.add_argument("--symbol", "-s", default="AAPL", help="Symbol to scan")
     parser.add_argument("--symbols", help="Comma-separated symbols")
     parser.add_argument("--mode", "-m", default="quick", choices=["quick", "standard", "deep"])
     parser.add_argument("--continuous", "-c", action="store_true", help="Run continuously")

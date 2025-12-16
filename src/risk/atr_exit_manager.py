@@ -71,9 +71,6 @@ class ATRExitManager:
         "IEF": 0.45,  # Intermediate treasuries
         "TLT": 1.20,  # Long-term treasuries
         "BND": 0.35,  # Total Bond
-        # Crypto (high volatility)
-        "BTCUSD": 3500.00,  # Bitcoin (~4% daily)
-        "ETHUSD": 150.00,  # Ethereum (~5% daily)
     }
 
     def __init__(
@@ -407,12 +404,6 @@ if __name__ == "__main__":
             "symbol": "SPY",
             "entry_price": 686.38,
             "current_price": 685.69,
-            "entry_date": "2025-12-07T18:16:23",
-        },
-        {
-            "symbol": "BTCUSD",
-            "entry_price": 88915.40,
-            "current_price": 89518.89,
             "entry_date": "2025-12-07T18:16:23",
         },
         {

@@ -7,7 +7,6 @@ on:
     # EST (Nov-Mar): UTC-5 -> 9:35 AM ET = 14:35 UTC
     # EDT (Mar-Nov): UTC-4 -> 9:35 AM ET = 13:35 UTC
     # Run: python3 scripts/get_utc_time.py 9 35 1-5
-    # NOTE: Executes both equity trades AND $25 crypto trade daily (crypto trades 24/7)
     - cron: '35 13,14 * * 1-5'   # 9:35 AM Eastern (covers both EST and EDT)
   workflow_dispatch:
     inputs:
@@ -494,10 +493,6 @@ jobs:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           DAILY_INVESTMENT: ${{ secrets.DAILY_INVESTMENT || '10.0' }}
           PAPER_TRADING: 'true'
-          # CRYPTO DISABLED - CEO directive Dec 16, 2025
-          ENABLE_CRYPTO_AGENT: 'false'
-          CRYPTO_DAILY: 'false'
-          CRYPTO_DAILY_AMOUNT: '0'
           # TURBO MODE: Enable ADK orchestrator
           ADK_ENABLED: ${{ secrets.ADK_ENABLED || '1' }}
           ADK_BASE_URL: ${{ secrets.ADK_BASE_URL || 'http://127.0.0.1:8080/api' }}

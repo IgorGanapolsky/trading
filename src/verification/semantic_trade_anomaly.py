@@ -504,17 +504,17 @@ if __name__ == "__main__":
     print(f"Latency: {result['latency_ms']:.2f}ms")
     print(f"Recommendation: {result['recommendation']}")
 
-    # Test Case 3: Crypto trade
+    # Test Case 3: High volatility equity trade
     print("\n" + "=" * 80)
-    print("TEST 3: Crypto Trade with MACD context")
+    print("TEST 3: High Volatility Trade with MACD context")
     print("=" * 80)
 
     result = detector.check_trade(
         {
-            "symbol": "BTCUSD",
+            "symbol": "NVDA",
             "side": "buy",
-            "amount": 0.5,
-            "strategy": "momentum_crypto",
+            "amount": 10,
+            "strategy": "momentum_equity",
             "additional_context": {
                 "macd": -5.0,
                 "signal": "consolidation",

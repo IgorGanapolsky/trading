@@ -305,8 +305,8 @@ if __name__ == "__main__":
         print(f"  {key}: {value}")
 
     # Test pre-trade check
-    print("\nTesting pre-trade check for BTCUSD BUY during fear...")
-    result = pre_trade_check("BTCUSD", "BUY", {"fear_greed": 20, "regime": "bear"})
+    print("\nTesting pre-trade check for SPY BUY during fear...")
+    result = pre_trade_check("SPY", "BUY", {"fear_greed": 20, "regime": "bear"})
     print(f"  Allowed: {result['allowed']}")
     print(f"  Warnings: {len(result['warnings'])}")
     for w in result["warnings"][:3]:

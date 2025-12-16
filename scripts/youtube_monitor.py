@@ -114,12 +114,8 @@ class YouTubeMonitor:
                 "opportunity",
             ],
             "exclude_keywords": [
-                "crypto",
-                "cryptocurrency",
-                "bitcoin",
                 "forex",
                 "day trading",
-                "options",
                 "futures",
             ],
             "analysis_parameters": {

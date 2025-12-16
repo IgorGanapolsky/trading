@@ -43,12 +43,6 @@ WORKFLOW_SCHEDULES = {
         "time_et": "09:35",
         "critical": True,
     },
-    "weekend-crypto-trading": {
-        "name": "Weekend Crypto Trading",
-        "schedule": "weekends",  # Sat-Sun
-        "time_et": "10:00",
-        "critical": True,
-    },
     "dashboard-update": {
         "name": "Dashboard Update",
         "schedule": "daily",

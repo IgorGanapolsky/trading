@@ -1,11 +1,10 @@
 name: Workflow Health Alert
 
 # Runs daily to detect silent failures in automated trading workflows
-# This workflow catches issues like "crypto trading hasn't run for 3 weeks"
 
 on:
   schedule:
-    # Run daily at 11:00 AM ET (after both daily and weekend trading windows)
+    # Run daily at 11:00 AM ET (after daily trading window)
     # EST: 16:00 UTC, EDT: 15:00 UTC
     - cron: '0 15,16 * * *'
   workflow_dispatch:
@@ -86,7 +85,6 @@ jobs:
 
             ### Affected Workflows
             - **Daily Trading**: Should run Mon-Fri at 9:35 AM ET
-            - **Weekend Crypto Trading**: Should run Sat-Sun at 10:00 AM ET
 
             ---
             *This issue was automatically created by the Workflow Health Alert system.*

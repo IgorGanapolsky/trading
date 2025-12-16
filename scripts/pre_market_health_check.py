@@ -280,15 +280,8 @@ def check_strategy_execution() -> bool:
 
             # Only check 'active' strategies
             if status == "active":
-                # Crypto strategy (tier5) should have executed on weekends
-                if tier_id == "tier5":
-                    # Check if it's been active for more than 1 week without trades
-                    # (weekends happen weekly, so should have at least 1-2 trades)
-                    if trades_executed == 0:
-                        issues.append(f"{name}: 0 trades executed (should execute weekends)")
-
                 # Stock strategies (tier1, tier2) should have executed on weekdays
-                elif tier_id in ["tier1", "tier2"]:
+                if tier_id in ["tier1", "tier2"]:
                     # Check if it's been active for more than 3 days without trades
                     # (should execute daily on weekdays)
                     if trades_executed == 0:

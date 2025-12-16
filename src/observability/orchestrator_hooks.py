@@ -11,7 +11,7 @@ Usage:
     enable_observability()
 
     # Or for a specific instance
-    orchestrator = TradingOrchestrator(tickers=["BTCUSD"])
+    orchestrator = TradingOrchestrator(tickers=["SPY"])
     enable_observability(orchestrator)
 """
 
@@ -140,7 +140,7 @@ def create_traced_orchestrator(
     Factory function to create an orchestrator with observability enabled.
 
     Usage:
-        orchestrator = create_traced_orchestrator(["BTCUSD", "ETHUSD"])
+        orchestrator = create_traced_orchestrator(["SPY", "QQQ"])
         orchestrator.run()  # All methods automatically traced
     """
     from src.orchestrator.main import TradingOrchestrator
@@ -165,7 +165,7 @@ class ObservabilityMiddleware:
             ...
 
         # Or use as context manager
-        with middleware.span("analysis", symbol="BTCUSD") as span:
+        with middleware.span("analysis", symbol="SPY") as span:
             result = analyze_market()
             span.add_output("result", result)
     """

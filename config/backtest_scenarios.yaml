@@ -47,27 +47,26 @@ scenarios:
       Stress test for historic volatility spike. Ensures ATR sizing and
       guardrails throttle exposure before we allow live promotion.
 
-  - name: weekend_crypto_proxy_2023
-    label: "Closed-market coverage (BITO proxy)"
+  - name: weekend_proxy_2023
+    label: "Closed-market coverage (Bond proxy)"
     start_date: "2023-06-01"
     end_date: "2023-09-04"
-    etf_universe: ["BITO"]
+    etf_universe: ["TLT", "SHY"]
     description: >
       Validates weekend/holiday coverage by routing the funnel through
-      a Bitcoin ETF proxy. Ensures thresholds and sizing logic remain
+      treasury ETFs. Ensures thresholds and sizing logic remain
       stable when traditional equity markets are unavailable.
 
   - name: holiday_regime_2024
-    label: "Holiday/Weekend regime (BITO + TLT)"
+    label: "Holiday/Weekend regime (TLT + Equities)"
     start_date: "2024-01-01"
     end_date: "2024-12-31"
-    etf_universe: ["BITO", "TLT"]
+    etf_universe: ["SPY", "TLT"]
     daily_allocation: 10.0
     max_trades_per_day: 2
     description: >
-      Tests full-year holiday/weekend trading with BTC proxy (BITO) and
-      treasury flight-to-safety (TLT). Validates regime detection switches
-      and looser RL thresholds for off-hours sessions.
+      Tests full-year holiday/weekend trading with treasury flight-to-safety (TLT)
+      and equity exposure. Validates regime detection switches during off-hours sessions.
 
   - name: high_vol_2022_q4
     label: "High volatility regime (Oct-Dec 2022)"

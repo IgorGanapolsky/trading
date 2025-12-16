@@ -160,12 +160,11 @@ class CoreStrategy:
     """
 
     # Default ETF universe for Tier 1 strategy
-    # Includes equity ETFs (SPY, QQQ, VOO), bond ETF (BND), REIT ETF (VNQ), and crypto proxy (BITO)
+    # Includes equity ETFs (SPY, QQQ, VOO), bond ETF (BND), and REIT ETF (VNQ)
     # BND: Vanguard Total Bond Market ETF - provides bond exposure per Graham's defensive investor principles
     # VNQ: Vanguard Real Estate Index Fund ETF - provides real estate exposure for diversification and income
-    # BITO: ProShares Bitcoin Strategy ETF - provides BTC exposure via futures, trades like regular stock
     # IEF: iShares 7-10 Year Treasury Bond ETF - shorter duration treasury for rate sensitivity diversification
-    DEFAULT_ETF_UNIVERSE = ["SPY", "QQQ", "VOO", "BND", "VNQ", "BITO", "IEF"]
+    DEFAULT_ETF_UNIVERSE = ["SPY", "QQQ", "VOO", "BND", "VNQ", "IEF"]
 
     # Momentum calculation periods (in days)
     LOOKBACK_PERIODS = {"1month": 21, "3month": 63, "6month": 126}
@@ -204,19 +203,17 @@ class CoreStrategy:
     ENABLE_MOMENTUM_EXIT = True  # Exit on MACD bearish crossover
 
     # Diversification allocation (guaranteed minimums)
-    # 50% equity, 15% bonds, 15% REITs, 10% treasuries, 10% crypto proxy
+    # 55% equity, 20% bonds, 15% REITs, 10% treasuries
     # This allocation targets $100/day profit goal via diversified compounding
-    EQUITY_ALLOCATION_PCT = 0.50  # SPY/QQQ/VOO (momentum-selected)
-    BOND_ALLOCATION_PCT = 0.15  # BND (Vanguard Total Bond Market)
+    EQUITY_ALLOCATION_PCT = 0.55  # SPY/QQQ/VOO (momentum-selected)
+    BOND_ALLOCATION_PCT = 0.20  # BND (Vanguard Total Bond Market)
     REIT_ALLOCATION_PCT = 0.15  # VNQ (Vanguard Real Estate)
     TREASURY_ALLOCATION_PCT = 0.10  # TLT/IEF (Treasury ladder)
-    CRYPTO_PROXY_ALLOCATION_PCT = 0.10  # BITO (Bitcoin ETF proxy for BTC exposure)
     DIVERSIFICATION_SYMBOLS = {
         "bond": "BND",
         "reit": "VNQ",
         "treasury": "TLT",
         "treasury_short": "IEF",
-        "crypto_proxy": "BITO",
     }
 
     def __init__(

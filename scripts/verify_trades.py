@@ -40,12 +40,9 @@ def verify_account(client: TradingClient) -> dict:
     }
 
 
-def verify_positions(client: TradingClient, crypto_only: bool = False) -> list:
+def verify_positions(client: TradingClient) -> list:
     """Get current positions with P&L."""
     positions = client.get_all_positions()
-
-    if crypto_only:
-        positions = [p for p in positions if "BTC" in p.symbol or "ETH" in p.symbol]
 
     results = []
     total_pnl = 0
@@ -70,14 +67,11 @@ def verify_positions(client: TradingClient, crypto_only: bool = False) -> list:
     return results, total_pnl
 
 
-def verify_orders(client: TradingClient, date: str = None, crypto_only: bool = False) -> list:
+def verify_orders(client: TradingClient, date: str = None) -> list:
     """Get recent orders for a specific date."""
     request = GetOrdersRequest(status=QueryOrderStatus.ALL, limit=100)
 
     orders = client.get_orders(filter=request)
-
-    if crypto_only:
-        orders = [o for o in orders if "BTC" in o.symbol or "ETH" in o.symbol]
 
     if date:
         target_date = datetime.strptime(date, "%Y-%m-%d").date()
@@ -106,9 +100,6 @@ def verify_orders(client: TradingClient, date: str = None, crypto_only: bool = F
 
 def main():
     parser = argparse.ArgumentParser(description="Verify trades and account status")
-    parser.add_argument(
-        "--crypto-only", action="store_true", help="Show only crypto positions/orders"
-    )
     parser.add_argument("--date", type=str, help="Filter orders by date (YYYY-MM-DD)")
     parser.add_argument("--json", action="store_true", help="Output as JSON")
     args = parser.parse_args()
@@ -125,8 +116,8 @@ def main():
         import json
 
         account = verify_account(client)
-        positions, total_pnl = verify_positions(client, args.crypto_only)
-        orders = verify_orders(client, args.date, args.crypto_only)
+        positions, total_pnl = verify_positions(client)
+        orders = verify_orders(client, args.date)
 
         print(
             json.dumps(
@@ -152,9 +143,9 @@ def main():
     print()
 
     # Positions
-    print("📊 POSITIONS" + (" (CRYPTO ONLY)" if args.crypto_only else ""))
+    print("📊 POSITIONS")
     print("=" * 60)
-    positions, total_pnl = verify_positions(client, args.crypto_only)
+    positions, total_pnl = verify_positions(client)
 
     if positions:
         for pos in positions:
@@ -176,9 +167,9 @@ def main():
 
     # Orders
     date_str = f" ({args.date})" if args.date else ""
-    print("📝 ORDERS" + (" (CRYPTO ONLY)" if args.crypto_only else "") + date_str)
+    print("📝 ORDERS" + date_str)
     print("=" * 60)
-    orders = verify_orders(client, args.date, args.crypto_only)
+    orders = verify_orders(client, args.date)
 
     if orders:
         for order in orders[:20]:  # Show first 20

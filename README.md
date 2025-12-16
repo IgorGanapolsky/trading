@@ -20,8 +20,8 @@ Most trading bots fail because they:
 - ❌ Don't learn from mistakes
 
 **This system is different:**
-- ✅ **Data-driven strategy selection** - We tried 8 strategies, kept what works (options: 75% win rate)
-- ✅ **Removed what doesn't work** - Crypto had 0% win rate, so we removed it
+- ✅ **Data-driven strategy selection** - We tried multiple strategies, kept what works (options: 75% win rate)
+- ✅ **Focused on proven strategies** - Removed underperforming approaches to focus on what generates returns
 - ✅ **RAG-powered learning** - 50+ lessons learned indexed and queried before every decision
 - ✅ **Multi-agent verification** - No single point of failure
 
@@ -32,7 +32,6 @@ Most trading bots fail because they:
 | Strategy | P/L | Win Rate | Status |
 |----------|-----|----------|--------|
 | **🏆 Options (Cash-Secured Puts)** | **+$327.82** | **75%** | ✅ PRIMARY |
-| ~~Crypto~~ | -$0.43 | 0% | ❌ Removed |
 | Bonds | $0.00 | 100% | ✅ Hedge |
 | Core ETFs | -$4.15 | N/A | ✅ Active |
 

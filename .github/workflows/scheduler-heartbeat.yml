@@ -4,7 +4,6 @@ on:
   schedule:
     # Run every 30 minutes during trading hours
     - cron: '*/30 13-21 * * 1-5'  # Weekdays (covers EST/EDT)
-    - cron: '0 */4 * * 0,6'        # Weekends (crypto)
   workflow_dispatch:
 
 permissions:

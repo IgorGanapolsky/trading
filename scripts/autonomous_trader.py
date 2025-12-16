@@ -128,7 +128,6 @@ def _update_system_state_with_prediction_trade(trade_record: dict[str, Any], log
         logger.error(f"Failed to write system_state.json: {exc}")
 
 
-# _update_system_state_with_crypto_trade REMOVED - CEO directive Dec 16, 2025
 
 
 def validate_order_size(amount: float, expected: float, tier: str = "T1_CORE") -> tuple[bool, str]:
@@ -296,8 +295,6 @@ def _apply_dynamic_daily_budget(logger) -> float | None:
     return new_amount
 
 
-# execute_crypto_trading REMOVED - CEO directive Dec 16, 2025
-# See rag_knowledge/lessons_learned/ll_049_config_workflow_sync_failure_dec16.md
 
 
 def prediction_enabled() -> bool:
@@ -1007,7 +1004,6 @@ def main() -> None:
     # Removed intermediate annotations to stay under GitHub's 10-annotation limit
     # Key checkpoints only for debugging exit code 2 issue
     parser = argparse.ArgumentParser(description="Trading orchestrator entrypoint")
-    # CRYPTO REMOVED - CEO directive Dec 16, 2025
     parser.add_argument(
         "--prediction-only", action="store_true", help="Run only prediction markets (Kalshi)"
     )

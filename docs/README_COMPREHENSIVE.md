@@ -2512,14 +2512,6 @@ models = [
 ]
 ```
 
-**Q: Can I trade other assets (crypto, forex)?**
-
-Currently supports stocks and ETFs only. To add crypto:
-1. Need exchange API (Coinbase, Binance)
-2. Modify `alpaca_trader.py` for crypto exchange
-3. Adjust strategies for 24/7 trading
-4. Update risk management for higher volatility
-
 ---
 
 ### Troubleshooting FAQ

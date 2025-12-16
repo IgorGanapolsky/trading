@@ -15,7 +15,7 @@ Strategy Overview:
 Key Features:
 - Markets pay $1 if outcome occurs, $0 otherwise
 - Prices quoted in cents (0-100) representing probability
-- 24/7 trading with no market hours restriction
+- Extended trading hours on Kalshi platform
 - Lower correlation to equity markets (alpha source)
 
 Target: Uncorrelated returns from event-driven opportunities

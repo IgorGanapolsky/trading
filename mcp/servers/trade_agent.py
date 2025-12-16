@@ -44,25 +44,6 @@ def place_equity_order(
     return _client(client).call_tool(SERVER_ID, "place_equity_order", payload)
 
 
-def place_crypto_order(
-    *,
-    symbol: str,
-    side: str,
-    notional: float,
-    order_type: str = "market",
-    client: MCPClient | None = None,
-    **kwargs: Any,
-) -> dict[str, Any]:
-    payload = {
-        "symbol": symbol,
-        "side": side,
-        "notional": notional,
-        "order_type": order_type,
-        **kwargs,
-    }
-    return _client(client).call_tool(SERVER_ID, "place_crypto_order", payload)
-
-
 def cancel_order(
     *,
     order_id: str,

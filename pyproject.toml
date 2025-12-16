@@ -8,7 +8,7 @@ license = {text = "MIT"}
 authors = [
     {name = "Igor Ganapolsky"}
 ]
-keywords = ["trading", "alpaca", "ai", "automation", "stocks", "crypto"]
+keywords = ["trading", "alpaca", "ai", "automation", "stocks", "options"]
 
 dependencies = [
     # Trading APIs
@@ -143,7 +143,7 @@ ignore = [
     "S106",   # hardcoded password (false positives)
     "S110",   # try-except-pass (legitimate error suppression in trading)
     "S112",   # try-except-continue (legitimate in data processing)
-    "S311",   # pseudo-random not cryptographic (trading doesn't need crypto-random)
+    "S311",   # pseudo-random not cryptographic (trading doesn't need secure random)
     "S113",   # requests timeout (handled at application level)
     "S310",   # URL scheme audit (internal URLs only)
     "S324",   # md5 usage (used for checksums, not security)
@@ -168,7 +168,6 @@ ignore = [
 "tests/*" = ["S101", "S105", "S106"]
 # Files that check library availability via import
 "scripts/check_alpaca_minimum_orders.py" = ["F401"]
-"scripts/test_crypto_imports.py" = ["F401"]
 "scripts/test_langsmith.py" = ["F401"]
 ".claude/skills/*/scripts/*.py" = ["F401"]
 # Init files that re-export

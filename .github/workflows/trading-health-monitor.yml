@@ -55,7 +55,7 @@ jobs:
 
           echo "Last updated: $LAST_UPDATED"
 
-          # Check if update is recent (within last 48 hours for weekends)
+          # Check if update is recent
           HEALTH_STATUS=$(python3 -c "
           import json
           from datetime import datetime, timedelta

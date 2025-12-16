@@ -88,35 +88,6 @@
         "rule1"
       ]
     },
-    "crypto_momentum": {
-      "name": "crypto_momentum",
-      "description": "Crypto momentum strategy for weekend trading",
-      "status": "experimental",
-      "asset_class": "crypto",
-      "metrics": {
-        "sharpe_ratio": 0.0,
-        "max_drawdown": 0.0,
-        "win_rate": 0.0,
-        "avg_daily_pnl": 0.0,
-        "total_return_pct": 0.0,
-        "total_trades": 0,
-        "backtest_date": "",
-        "backtest_period": "",
-        "hit_rate_100_day": 0.0
-      },
-      "config": {},
-      "version": "1.0.0",
-      "author": "Trading System",
-      "created_date": "2025-12-03",
-      "last_modified": "2025-12-03",
-      "source_file": "src/strategies/crypto_strategy.py",
-      "dependencies": [],
-      "tags": [
-        "crypto",
-        "momentum",
-        "weekend"
-      ]
-    },
     "growth_portfolio": {
       "name": "growth_portfolio",
       "description": "Growth-focused equity portfolio strategy",

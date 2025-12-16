@@ -80,7 +80,7 @@ def get_account_summary():
         "pattern_day_trader": False,
     }
 
-    # 1. Alpaca (Equities, ETFs, Crypto)
+    # 1. Alpaca (Equities, ETFs, Options)
     try:
         import alpaca_trade_api as tradeapi
 
@@ -126,8 +126,6 @@ def get_account_summary():
                     # Simple heuristic: ETFs often not tagged explicitly in all APIs,
                     # but we can label them generally as Equity/ETF
                     asset_class = "Equity/ETF"
-                elif asset_class == "crypto":
-                    asset_class = "Crypto"
 
                 account_data["positions"].append(
                     {

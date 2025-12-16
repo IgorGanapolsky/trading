@@ -4,7 +4,7 @@
     "description": "Critical insights and architectural decisions learned during system development",
     "created": "2025-12-10",
     "last_updated": "2025-12-13",
-    "total_chunks": 21
+    "total_chunks": 17
   },
   "chunks": [
     {
@@ -168,43 +168,6 @@
       "embedding_text": "overly restrictive filters blocked trading 31 days catch-22 impossible promotion gate. Filters too tight: delta DTE premium. Required 60% win rate before trading but can't get wins without trading. Solution: relax filters start loose tighten with data. Keep IV percentile as intelligent filter. Remove impossible gates."
     },
     {
-      "id": "ll_010_crypto_loss_analysis",
-      "title": "CRYPTO LOSSES: All 3 Positions Closed at Loss (-$0.43)",
-      "source": "CTO Analysis - Dec 13, 2025",
-      "date": "2025-12-13",
-      "category": "trading",
-      "tags": ["crypto", "btc", "eth", "sol", "loss", "timing", "momentum", "weekend"],
-      "severity": "high",
-      "content": "All three crypto positions closed at a loss: ETHUSD -$0.01 (-0.10%), BTCUSD -$0.41 (-4.18%), SOLUSD -$0.01 (-0.09%). Total crypto P/L: -$0.43 on $19.67 invested (-2.2%). Root causes: (1) Bought during price peaks instead of dips (2) BTC dropped from $94K to $90K during holding period (3) Weekend volume filters were too restrictive, preventing better entry points.",
-      "key_insight": "Crypto trading needs momentum-based entry timing. Buy on 5-day momentum winners, not during pullbacks. Weekend filters must be relaxed since crypto volume is naturally lower on weekends.",
-      "solution": "Created force-crypto-trade.yml workflow that: (1) Analyzes BTC, ETH, SOL 5-day momentum (2) Selects best performer (3) Uses FORCE_TRADE mode to bypass restrictive weekend filters (4) Executes $10 trade via Alpaca. Trigger by updating .github/FORCE_CRYPTO file.",
-      "our_implementation": "Added force-crypto-trade.yml workflow with momentum scoring. Relaxed filters: RSI_OVERBOUGHT=85, VOLUME_THRESHOLD=0.05. Push to FORCE_CRYPTO triggers immediate execution.",
-      "referenced_files": [
-        ".github/workflows/force-crypto-trade.yml",
-        ".github/FORCE_CRYPTO",
-        "src/strategies/crypto_strategy.py"
-      ],
-      "embedding_text": "crypto loss BTC ETH SOL -$0.43 all positions negative. Bought peaks not dips. Bitcoin dropped $94K to $90K. Solution: momentum-based entry select 5-day winners. FORCE_TRADE mode bypass weekend filters. force-crypto-trade.yml workflow for immediate execution. Relax RSI overbought to 85 volume threshold to 0.05."
-    },
-    {
-      "id": "ll_011_weekend_crypto_execution",
-      "title": "Weekend Crypto: Use Force Trade for Immediate Execution",
-      "source": "CTO Implementation - Dec 13, 2025",
-      "date": "2025-12-13",
-      "category": "infrastructure",
-      "tags": ["crypto", "weekend", "github-actions", "force-trade", "trigger"],
-      "severity": "high",
-      "content": "Crypto markets are 24/7 but scheduled weekend-crypto-trading.yml only runs at 10 AM ET on weekends. For immediate crypto trades: (1) Update .github/FORCE_CRYPTO file with timestamp (2) Push to any branch (3) force-crypto-trade.yml triggers automatically (4) Trade executes within 2-3 minutes via GitHub Actions.",
-      "key_insight": "Don't wait for scheduled workflow. Use push-triggered workflow for immediate crypto execution. FORCE_CRYPTO file acts as manual trigger.",
-      "solution": "force-crypto-trade.yml listens for pushes to .github/FORCE_CRYPTO on any branch. Workflow uses momentum scoring to pick best crypto, bypasses filters with CRYPTO_FORCE_TRADE=true, executes $10 trade.",
-      "our_implementation": "Similar to force-trade.yml pattern for stocks. Echo timestamp to .github/FORCE_CRYPTO, git add, git commit, git push = instant crypto trade.",
-      "referenced_files": [
-        ".github/workflows/force-crypto-trade.yml",
-        ".github/FORCE_CRYPTO"
-      ],
-      "embedding_text": "weekend crypto immediate execution force trade push trigger FORCE_CRYPTO file. Don't wait for scheduled 10 AM workflow. Push any change to .github/FORCE_CRYPTO triggers instant trade. Momentum scoring selects best crypto. CRYPTO_FORCE_TRADE=true bypasses filters."
-    },
-    {
       "id": "ll_012_verify_before_claim",
       "title": "VERIFY: Check Alpaca Positions Before Claiming P/L",
       "source": "CEO Directive - Dec 13, 2025",
@@ -344,43 +307,6 @@
         ".github/workflows/pre-trade-research.yml"
       ],
       "embedding_text": "Gemini Deep Research autonomous agent pre-trade analysis. Google Interactions API market research news sentiment technicals. 30 minutes before trading 9:05 AM. Fear Greed index whale movements ETF events earnings. BUY SELL HOLD recommendations confidence levels. Saves research_*.json automated intelligence gathering."
-    },
-    {
-      "id": "ll_020_weekend_crypto_force_trade",
-      "title": "Force Crypto Trade Workflow for Immediate Weekend Execution",
-      "source": "CTO Implementation - Dec 13, 2025",
-      "date": "2025-12-13",
-      "category": "infrastructure",
-      "tags": ["crypto", "weekend", "force-trade", "github-actions", "workflow", "instant"],
-      "severity": "high",
-      "content": "Weekend crypto markets are 24/7 but scheduled workflow only runs 10 AM ET. For immediate crypto execution: Update .github/FORCE_CRYPTO file with timestamp → Push to any branch → force-crypto-trade.yml triggers automatically → Trade executes within 2-3 minutes. Workflow implements World-Class Strategy v3.0: (1) Analyzes BTC, ETH, SOL 5-day momentum, (2) Selects best performer, (3) Uses CRYPTO_FORCE_TRADE=true to bypass restrictive weekend volume filters, (4) Robust error handling - never crashes, always saves results, (5) Falls back to simple BTC buy if analysis fails. Relaxed filters: RSI_OVERBOUGHT=85, VOLUME_THRESHOLD=0.05 (crypto naturally has lower weekend volume).",
-      "key_insight": "Don't wait for scheduled workflows when markets move. Push-triggered workflows enable instant execution. FORCE_CRYPTO file acts as manual trigger button.",
-      "solution": "Created .github/workflows/force-crypto-trade.yml that listens for pushes to .github/FORCE_CRYPTO on any branch. Momentum scoring picks strongest crypto. Bypass filters with force mode. Echo timestamp to FORCE_CRYPTO, commit, push = instant trade.",
-      "our_implementation": "Similar to force-trade.yml pattern for stocks. World-Class Strategy v3.0 with robust error handling. Always saves trade logs even on failure. Weekend volume filters relaxed appropriately.",
-      "referenced_files": [
-        ".github/workflows/force-crypto-trade.yml",
-        ".github/FORCE_CRYPTO"
-      ],
-      "embedding_text": "weekend crypto force trade instant execution push trigger. FORCE_CRYPTO file manual trigger button 2-3 minutes. World-Class Strategy v3.0 momentum scoring BTC ETH SOL. Bypass weekend volume filters CRYPTO_FORCE_TRADE=true. Robust error handling never crashes always saves results. RSI 85 volume 0.05 relaxed filters."
-    },
-    {
-      "id": "ll_021_buy_the_dip_strategy",
-      "title": "Buy-the-Dip Strategy: 2.5x Position on >2% Drops (15-30% Expected Boost)",
-      "source": "CTO Implementation - Dec 13, 2025",
-      "date": "2025-12-13",
-      "category": "strategy",
-      "tags": ["crypto", "buy-the-dip", "momentum", "position-sizing", "btc", "contrarian"],
-      "severity": "critical",
-      "content": "Strategic pivot to accelerate North Star ($1/day profit): Increased daily crypto investment from $10 → $25 (2.5x). Enabled crypto trading EVERY day (not just weekends). Implemented buy-the-dip strategy: (1) When BTC down >2% from recent high: Increase position size up to 2x (max $50), (2) When BTC up >10% from recent low: Skip trade to avoid buying peaks, (3) Normal market: Standard $25 position. Expected impact: Daily $25 vs $10 = 2.5x more capital deployed. Weekly $175 crypto investment (was $20 weekends only). Returns: +15-30% improvement from contrarian dip buying. North Star target now achievable with $25/day @ 4% average return = $1/day profit.",
-      "key_insight": "Buy-the-dip is proven contrarian strategy. When BTC drops >2%, market fear creates opportunity. Warren Buffett: 'Be greedy when others are fearful.' Avoid buying parabolic moves (>10% up).",
-      "solution": "Updated src/strategies/crypto_strategy.py with dynamic position sizing based on BTC price momentum. Check 5-day price change: >2% drop = increase position, >10% gain = skip. Changed CRYPTO_DAILY_AMOUNT from $10 to $25 in workflows. Enabled CRYPTO_DAILY=true for daily execution (not just weekends).",
-      "our_implementation": "Daily crypto trades execute at 9:35 AM ET via daily-trading.yml. Buy-the-dip logic in crypto_strategy.py. 2x position size on dips (up to $50 max). Skip on euphoric rallies. Combines with Fear & Greed index for confluence.",
-      "referenced_files": [
-        "src/strategies/crypto_strategy.py",
-        ".github/workflows/daily-trading.yml",
-        ".github/workflows/weekend-crypto-trading.yml"
-      ],
-      "embedding_text": "buy the dip strategy crypto 2.5x position sizing BTC down 2% increase to $50. Skip trade BTC up 10% avoid buying peaks. Daily $25 crypto not just weekends. Weekly $175 investment. 15-30% expected improvement contrarian Warren Buffett be greedy when fearful. North Star $1/day achievable 4% return. CRYPTO_DAILY=true every day."
     },
     {
       "id": "ll_025_bats_budget_framework",

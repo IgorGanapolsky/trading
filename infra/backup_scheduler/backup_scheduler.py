@@ -107,8 +107,7 @@ def is_trading_hours() -> bool:
 
     # Check weekend
     if now_et.weekday() >= 5:  # Saturday = 5, Sunday = 6
-        # But crypto trades 24/7
-        return True  # Allow for crypto
+        return False  # No trading on weekends
 
     # Check market hours (9:30 AM - 4:00 PM ET)
     market_open = now_et.replace(hour=9, minute=30, second=0, microsecond=0)

@@ -67,14 +67,6 @@ repos:
         pass_filenames: false
         verbose: true
 
-      - id: test-crypto-imports
-        name: Test Crypto Trading Imports (No RAG)
-        entry: bash scripts/pre_commit_test_crypto_imports.sh
-        language: system
-        types: [python]
-        files: '(src/rag/|src/deepagents_integration/|src/strategies/crypto_strategy\.py|scripts/autonomous_trader\.py)'
-        pass_filenames: false
-
       - id: test-dashboard-metrics
         name: Test Dashboard Metrics Completeness
         entry: python3 tests/test_dashboard_metrics.py
@@ -162,18 +154,9 @@ repos:
 
       - id: validate-trading-script-syntax
         name: Validate Critical Trading Scripts Syntax (ll_024 Prevention)
-        entry: python3 -c "import sys, subprocess; scripts=['scripts/autonomous_trader.py','src/strategies/crypto_strategy.py']; [subprocess.run([sys.executable,'-m','py_compile',s],check=True) for s in scripts if __import__('pathlib').Path(s).exists()]"
+        entry: python3 -c "import sys, subprocess; scripts=['scripts/autonomous_trader.py']; [subprocess.run([sys.executable,'-m','py_compile',s],check=True) for s in scripts if __import__('pathlib').Path(s).exists()]"
         language: system
-        files: '(scripts/autonomous_trader\.py|src/strategies/crypto_strategy\.py)'
-        pass_filenames: false
-        verbose: true
-        stages: [pre-commit]
-
-      - id: weekend-crypto-workflow-check
-        name: Weekend Crypto Workflow Validation
-        entry: python3 -c "import yaml; f=open('.github/workflows/weekend-crypto-trading.yml'); d=yaml.safe_load(f); assert 'PYTHONPATH' in str(d), 'Missing PYTHONPATH'; assert 'CRYPTO_FORCE_TRADE' in str(d), 'Missing CRYPTO_FORCE_TRADE'"
-        language: system
-        files: '\.github/workflows/weekend-crypto-trading\.yml$'
+        files: 'scripts/autonomous_trader\.py'
         pass_filenames: false
         verbose: true
         stages: [pre-commit]

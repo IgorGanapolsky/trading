@@ -34,13 +34,6 @@ REQUIRED_AUTOMATIONS = {
         "max_staleness_hours": 48,
         "description": "Options theta harvesting (wheel strategy)",
     },
-    "crypto_trading": {
-        "workflow_pattern": r"crypto|BTCUSD|ETHUSD|SOLUSD",
-        "workflow_file": ".github/workflows/daily-trading.yml",
-        "staleness_key": "strategies.tier5.last_execution",
-        "max_staleness_hours": 72,  # Weekend trading
-        "description": "Crypto weekend trading",
-    },
 }
 
 

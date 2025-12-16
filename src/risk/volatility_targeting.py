@@ -47,10 +47,6 @@ DEFAULT_VOLATILITY = {
     "BND": 0.05,  # Total bond ~5%
     "LQD": 0.08,  # Investment grade corp ~8%
     "HYG": 0.10,  # High yield ~10%
-    # Crypto (high volatility)
-    "BTCUSD": 0.60,  # Bitcoin ~60% annual vol
-    "ETHUSD": 0.80,  # Ethereum ~80% annual vol
-    "BITO": 0.65,  # Bitcoin futures ETF ~65%
 }
 
 # Asset class default volatilities
@@ -58,7 +54,6 @@ ASSET_CLASS_VOLATILITY = {
     "treasury": 0.05,
     "bond": 0.07,
     "equity": 0.18,
-    "crypto": 0.70,
 }
 
 
@@ -177,8 +172,6 @@ def get_instrument_volatility(
         return ASSET_CLASS_VOLATILITY["treasury"], "asset_class"
     if symbol_upper in {"AGG", "BND", "LQD", "HYG", "JNK", "TIP", "VCSH", "VCIT"}:
         return ASSET_CLASS_VOLATILITY["bond"], "asset_class"
-    if symbol_upper in {"BTCUSD", "ETHUSD", "BTC", "ETH", "BITO", "GBTC", "ETHE"}:
-        return ASSET_CLASS_VOLATILITY["crypto"], "asset_class"
 
     # Default to equity
     return ASSET_CLASS_VOLATILITY["equity"], "asset_class"

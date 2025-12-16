@@ -7,7 +7,6 @@
       "module": "mcp.servers.trade_agent",
       "tools": {
         "place_equity_order": "place_equity_order",
-        "place_crypto_order": "place_crypto_order",
         "get_positions": "get_positions",
         "get_account_overview": "get_account_overview",
         "cancel_order": "cancel_order"

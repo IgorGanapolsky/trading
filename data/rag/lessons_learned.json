@@ -867,20 +867,6 @@
     "source_file": "rag_knowledge/lessons_learned/ll_009_ci_syntax_failure_dec11.md"
   },
   {
-    "id": "lesson_ll_010_dead_code_and_dormant_systems_dec11",
-    "timestamp": "2025-12-11",
-    "category": "code_quality__system_integration",
-    "title": "Lesson Learned: Dead Code and Dormant Systems",
-    "description": "# Lesson Learned: Dead Code and Dormant Systems\n**Date**: 2025-12-11\n**Severity**: HIGH\n**Category**: Code Quality, System Integration\n\n## What Happened\nThe trading system had ~22% dead code (5,376 lines) including:\n- **ML Pipeline**: trainer.py, inference.py, dqn_agent.py all broken (missing dependencies, NotImplementedError)\n- **Unused Strategies**: credit_spreads, mean_reversion, wheel (0 production references)\n- **Orphaned Agents**: crypto_learner, safety_orchestrator (never instantiated)\n- **Dormant Features**: 6 major systems disabled by default (DeepAgents, Elite Orchestrator, etc.)\n\nAdditionally, critical functions like `manage_positions()` existed but were NEVER CALLED in execution flow.\n\n## Root Cause\n1. **No Dead Code Detection**: No automated check for unused code\n2. **No Integration Testing**: Functions existed but weren't tested in actual flow\n3. **Conservative Defaults**: Features defaulted to disabled without clear enablement path\n4. **Architectural Drift**: New orchest",
-    "root_cause": "",
-    "prevention": "",
-    "tags": [],
-    "severity": "high",
-    "financial_impact": null,
-    "symbol": null,
-    "source_file": "rag_knowledge/lessons_learned/ll_010_dead_code_and_dormant_systems_dec11.md"
-  },
-  {
     "id": "ll_011",
     "timestamp": "December 11, 2025",
     "category": "ml_pipeline__rl_feedback_loops__system_architecture",
@@ -919,20 +905,6 @@
     "source_file": "rag_knowledge/lessons_learned/ll_011_facts_benchmark_factuality_ceiling.md"
   },
   {
-    "id": "lesson_ll_011_missing_function_imports_dec11",
-    "timestamp": "December 11, 2025",
-    "category": "general",
-    "title": "Lesson Learned 011: Missing Function Imports Blocked Trading (Dec 11, 2025)",
-    "description": "# Lesson Learned 011: Missing Function Imports Blocked Trading (Dec 11, 2025)\n\n## Incident Summary\n\n**Date**: December 11, 2025\n**Impact**: 0 scheduled trades executed for the entire day\n**Root Cause**: Missing functions in `mental_toughness_coach.py` that were imported by `debate_agents.py`\n**Resolution Time**: ~2 hours (discovered late in trading day)\n\n## What Happened\n\n1. PR #384 added psychology integration including `debate_agents.py` which imports:\n   - `get_prompt_context()` from `mental_toughness_coach.py`\n   - `get_position_size_modifier()` from `mental_toughness_coach.py`\n\n2. A force push (`b6d46345 feat: consolidate valuable changes`) overwrote main and lost the functions\n\n3. The scheduled trading workflow ran but failed at \"Execute daily trading\" step with ImportError\n\n4. Because `debate_agents.py` was imported during orchestrator initialization, the entire trading script crashed\n\n## Technical Details\n\n```python\n# debate_agents.py imports (lines 24-26):\nfrom src.coaching.me",
-    "root_cause": "",
-    "prevention": "",
-    "tags": [],
-    "severity": "medium",
-    "financial_impact": null,
-    "symbol": null,
-    "source_file": "rag_knowledge/lessons_learned/ll_011_missing_function_imports_dec11.md"
-  },
-  {
     "id": "ll_011",
     "timestamp": "December 11, 2025",
     "category": "ai/ml__cost_optimization__model_selection",
@@ -954,20 +926,6 @@
     "financial_impact": null,
     "symbol": null,
     "source_file": "rag_knowledge/lessons_learned/ll_011_opus_45_optimization_dec11.md"
-  },
-  {
-    "id": "lesson_ll_011_theta_pivot_dec11",
-    "timestamp": "December 11, 2025",
-    "category": "strategy_optimization",
-    "title": "Lesson Learned: Theta Pivot Strategy Implementation (Dec 11, 2025)",
-    "description": "# Lesson Learned: Theta Pivot Strategy Implementation (Dec 11, 2025)\n\n## Incident Summary\n**Date**: December 11, 2025\n**Category**: strategy_optimization\n**Severity**: informational\n**Related PRs**: #531\n\n## Context\n\nAfter 9 days of R&D phase with $17.49 P/L (0.017%), analysis revealed that:\n1. Current momentum-only strategy caps at ~26% annualized returns\n2. Promotion gates (60% win rate, 1.5 Sharpe) were blocking live testing\n3. No path to $100/day North Star with current allocation\n\n## Changes Implemented\n\n### 1. Promotion Gate Loosening\n- **Win Rate**: 60% \u2192 55%\n- **Sharpe Ratio**: 1.5 \u2192 1.2\n- **Rationale**: Enable 60-day live pilot while maintaining safety margins\n\n### 2. Allocation Pivot (60/30/10 Theta Strategy)\n```\nPrevious:\n- treasury_core: 25%\n- core_etfs: 35%\n- treasury_dynamic: 10%\n- reits: 10%\n- crypto: 5%\n- growth_stocks: 10%\n- options_reserve: 5%\n\nNew (Theta Pivot):\n- theta_spy: 35%      # SPY iron condors, 45-60 DTE\n- theta_qqq: 25%      # QQQ iron condors\n- momentum_et",
-    "root_cause": "",
-    "prevention": "",
-    "tags": [],
-    "severity": "informational",
-    "financial_impact": null,
-    "symbol": null,
-    "source_file": "rag_knowledge/lessons_learned/ll_011_theta_pivot_dec11.md"
   },
   {
     "id": "ll_012",
@@ -1100,34 +1058,6 @@
     "source_file": "rag_knowledge/lessons_learned/ll_016_regime_pivot_safety_gates_dec12.md"
   },
   {
-    "id": "lesson_ll_017_anti_manual_violation_dec12",
-    "timestamp": "2025-12-14T22:28:29.635659",
-    "category": "general",
-    "title": "Lesson Learned: Anti-Manual Mandate Violation (Dec 12, 2025)",
-    "description": "# Lesson Learned: Anti-Manual Mandate Violation (Dec 12, 2025)\n\n## Incident ID: LL-017\n## Severity: HIGH\n## Category: process_violation\n\n## What Happened\n\nOn December 12, 2025, Claude (CTO) violated the Anti-Manual Mandate by telling the CEO to:\n1. \"Run migration\" with a bash command\n2. \"View dashboard\" with a streamlit command\n3. \"Create PR\" manually\n\nThis directly contradicts the CLAUDE.md directive: **\"You NEVER tell Igor what to do\"**\n\n## Root Cause\n\n- Habitual response pattern from training data\n- Forgot to check CLAUDE.md directives before providing \"next steps\"\n- Did not internalize that ALL actions must be autonomous\n\n## Impact\n\n- CEO had to remind CTO of directives\n- Wasted CEO's time\n- Demonstrated lack of full autonomy\n\n## Prevention Measures\n\n### 1. Pre-Response Checklist (Mental)\nBefore providing any response with \"next steps\":\n- [ ] Am I telling CEO to do something? \u2192 DON'T\n- [ ] Can I do this myself? \u2192 DO IT\n- [ ] Is this a manual instruction? \u2192 AUTOMATE IT\n\n### 2. Forbi",
-    "root_cause": "",
-    "prevention": "",
-    "tags": [],
-    "severity": "medium",
-    "financial_impact": null,
-    "symbol": null,
-    "source_file": "rag_knowledge/lessons_learned/ll_017_anti_manual_violation_dec12.md"
-  },
-  {
-    "id": "lesson_ll_017_claude_md_bloat_antipattern_dec12",
-    "timestamp": "December 12, 2025",
-    "category": "agent_optimization",
-    "title": "Lesson Learned: CLAUDE.md Bloat Anti-Pattern",
-    "description": "# Lesson Learned: CLAUDE.md Bloat Anti-Pattern\n\n**Date**: December 12, 2025\n**Category**: Agent Optimization\n**Severity**: High (wastes 3-4k tokens every conversation)\n\n## The Problem\n\nOur CLAUDE.md grew to ~700 lines / ~14k characters - approximately **7x larger than best practices recommend**.\n\n### What We Had Wrong\n\n| Anti-Pattern | Example | Impact |\n|--------------|---------|--------|\n| **Token bloat** | 700 lines vs recommended 100-300 | Wastes ~3-4k tokens before work begins |\n| **Procedures in CLAUDE.md** | GitHub API curl examples inline | Should be in `.claude/commands/` |\n| **Mixed concerns** | Memory + Rules + Procedures together | Violates separation of concerns |\n| **Code snippets** | Full curl commands for PR creation | Becomes stale, duplicates scripts |\n| **Historical rationale** | \"CEO Directive Dec 9, 2025...\" | Belongs in `docs/decisions/` |\n| **Verbose chain of command** | Multiple paragraphs on CEO/CTO roles | Should be 1-2 lines max |\n\n## Best Practices (Per Anth",
-    "root_cause": "",
-    "prevention": "### Before (Anti-Pattern)\n```markdown",
-    "tags": [],
-    "severity": "high (wastes 3-4k tokens every conversation)",
-    "financial_impact": null,
-    "symbol": null,
-    "source_file": "rag_knowledge/lessons_learned/ll_017_claude_md_bloat_antipattern_dec12.md"
-  },
-  {
     "id": "ll_017",
     "timestamp": "December 12, 2025",
     "category": "observability__ci/cd__environment_configuration",
@@ -1236,41 +1166,6 @@
     "source_file": "rag_knowledge/lessons_learned/ll_019_trading_system_dead_dec12.md"
   },
   {
-    "id": "ll_020",
-    "timestamp": "December 12, 2025",
-    "category": "strategy__capital_allocation__execution_flow",
-    "title": "Lesson Learned: Options Theta Must Be Primary Strategy (Dec 12, 2025)",
-    "description": "Deep research revealed that options theta decay (selling puts) is the **proven profit maker** in our system, but it was being treated as a secondary \"leftover\" strategy that ran last in the execution flow.\n\nEvidence: ### Today's P/L (Dec 12, 2025)\n\n| Strategy | P/L | Status |\n|----------|-----|--------|\n| Options (AMD short put) | **+$130** | Closed at profit |\n| Options (SPY short put) | **+$197** | Closed at profit |\n| **Total Options** | **+$327** | Primary profit source |\n| Momentum equities | ~break-even | Secondary |\n\n### The Problem: Execution Order\n\n**Before (Options Last):**\n```python\n# src/orchestrator/main.py - run() method\n1. _manage_open_positions()      # Close old positions\n2. for ticker: _pro",
-    "root_cause": "",
-    "prevention": "**File Changed**: `src/orchestrator/main.py`\n\n```python\n# Lines 364-388 - Reordered execution\n# OPTIONS FIRST (Dec 12, 2025): Theta decay is proven profit maker\n# Evidence: +$327 profit today from AMD/SPY short puts\nself.run_options_strategy()\nself.run_iv_options_execution()\n\n# THEN run momentum trading (30% of budget per config)\nfor ticker in active_tickers:\n    self._process_ticker(ticker, rl_threshold=session_profile[\"rl_threshold\"])\n```",
-    "tags": [
-      "options",
-      "theta",
-      "execution-order",
-      "capital-allocation",
-      "strategy",
-      "lessons-learned"
-    ],
-    "severity": "high",
-    "financial_impact": null,
-    "symbol": null,
-    "source_file": "rag_knowledge/lessons_learned/ll_020_options_primary_strategy_dec12.md"
-  },
-  {
-    "id": "lesson_ll_020_trade_files_not_committed_dec12",
-    "timestamp": "2025-12-14T22:28:29.638851",
-    "category": "general",
-    "title": "Lesson Learned: Trade Files Not Committed to Repo (Dec 12, 2025)",
-    "description": "# Lesson Learned: Trade Files Not Committed to Repo (Dec 12, 2025)\n\n## Incident ID: LL-020\n## Severity: HIGH\n## Category: workflow_bug, data_loss\n\n## What Happened\n\nTrade files (`data/trades_YYYY-MM-DD.json`) were being created during workflow execution but NOT committed to the repository. This caused confusion about whether trades were actually executing.\n\n**Timeline:**\n- Dec 10: Last trade file in repo: `trades_2025-12-10.json`\n- Dec 12 14:37: Daily trading workflow ran successfully (all steps passed)\n- Dec 12 14:55: Artifacts contain trade data, but no `trades_2025-12-12.json` in repo\n\n**Evidence:**\n- Workflow artifacts show `trading-logs-20170130041` (17,883 bytes)\n- Execute daily trading step: SUCCESS\n- Update performance log step: SUCCESS\n- Verify Positions step: SUCCESS\n- P/L Sanity Check step: SUCCESS\n- BUT: No `trades_2025-12-12.json` committed to repo\n\n## Root Cause\n\nThe \"Commit system state updates\" step only staged `system_state.json`:\n\n```yaml\n# WRONG - Only commits system",
-    "root_cause": "",
-    "prevention": "",
-    "tags": [],
-    "severity": "medium",
-    "financial_impact": null,
-    "symbol": null,
-    "source_file": "rag_knowledge/lessons_learned/ll_020_trade_files_not_committed_dec12.md"
-  },
-  {
     "id": "lesson_ll_021_dashboard_gpu_requirements_dec12",
     "timestamp": "2025-12-14T22:28:29.639163",
     "category": "general",
@@ -1297,50 +1192,6 @@
     "financial_impact": null,
     "symbol": null,
     "source_file": "rag_knowledge/lessons_learned/ll_022_options_not_automated_dec12.md"
-  },
-  {
-    "id": "ll_023",
-    "timestamp": "December 13, 2025",
-    "category": "agent_protocol__session_management__rag_pipeline",
-    "title": "Lesson Learned: Session Start Checklist Violation (Dec 13, 2025)",
-    "description": "Claude (CTO) started the session by answering \"How much money we made today?\" with \"No money made today - markets are closed for the weekend\" - **WITHOUT checking system_state.json first**, which clearly shows Tier 5 Crypto is configured for weekend trading.",
-    "root_cause": "",
-    "prevention": "",
-    "tags": [
-      "session-start",
-      "checklist",
-      "crypto",
-      "weekend-trading",
-      "rag-pipeline",
-      "lessons-learned",
-      "high-severity"
-    ],
-    "severity": "high",
-    "financial_impact": null,
-    "symbol": null,
-    "source_file": "rag_knowledge/lessons_learned/ll_023_session_start_checklist_violation_dec13.md"
-  },
-  {
-    "id": "ll_024",
-    "timestamp": "December 13, 2025",
-    "category": "python_syntax__ci/cd__weekend_trading",
-    "title": "Lesson Learned: F-String Syntax Error Crash (Dec 13, 2025)",
-    "description": "A Python 3.12+ incompatible f-string syntax on line 796 of `autonomous_trader.py` caused the script to crash immediately (0 seconds execution), breaking weekend crypto trading for nearly a week.",
-    "root_cause": "",
-    "prevention": "```python\n# FIXED - Pre-compute the string outside the f-string:\nallocation_str = [(s['symbol'], f\"{s['strength']*100:.0f}%\") for s in signals]\nlogger.info(f\"Allocation: {allocation_str}\")\n```",
-    "tags": [
-      "python-syntax",
-      "f-string",
-      "python-312",
-      "ci-cd",
-      "weekend-trading",
-      "critical",
-      "lessons-learned"
-    ],
-    "severity": "critical",
-    "financial_impact": null,
-    "symbol": null,
-    "source_file": "rag_knowledge/lessons_learned/ll_024_fstring_syntax_error_dec13.md"
   },
   {
     "id": "ll_025",
@@ -1390,29 +1241,6 @@
     "source_file": "rag_knowledge/lessons_learned/ll_026_text_feature_engineering.md"
   },
   {
-    "id": "ll_027",
-    "timestamp": "December 13, 2025",
-    "category": "ai_agents__research_automation__trade_validation",
-    "title": "Lesson Learned: Gemini Deep Research for Pre-Trade Analysis (Dec 13, 2025)",
-    "description": "Integrated Google's Gemini Deep Research agent to autonomously research stocks, crypto, and market conditions before trading. The agent formulates research questions, searches the web, synthesizes findings, and produces actionable trading insights.",
-    "root_cause": "",
-    "prevention": "",
-    "tags": [
-      "gemini",
-      "deep-research",
-      "ai-agents",
-      "autonomous",
-      "pre-trade-analysis",
-      "risk-awareness",
-      "market-research",
-      "lessons-learned"
-    ],
-    "severity": "medium",
-    "financial_impact": null,
-    "symbol": null,
-    "source_file": "rag_knowledge/lessons_learned/ll_027_gemini_deep_research.md"
-  },
-  {
     "id": "lesson_ll_028_unified_domain_model",
     "timestamp": "2025-12-13 (Updated)",
     "category": "architecture",
@@ -1433,26 +1261,6 @@
     "financial_impact": null,
     "symbol": null,
     "source_file": "rag_knowledge/lessons_learned/ll_028_unified_domain_model.md"
-  },
-  {
-    "id": "lesson_ll_029_always_verify_date",
-    "timestamp": "2025-12-14",
-    "category": "verification",
-    "title": "LL-029: ALWAYS Verify Current Date Before Reporting",
-    "description": "# LL-029: ALWAYS Verify Current Date Before Reporting\n\n**Date**: 2025-12-14\n**Severity**: CRITICAL\n**Category**: Verification\n**Impact**: User trust, data accuracy\n\n## The Failure\n\nClaude reported Saturday's (Dec 13) trades as \"today\" when it was actually Sunday (Dec 14). This caused:\n1. Incorrect P/L reporting\n2. User frustration and loss of trust\n3. Missed that today's scheduled trade didn't execute\n\n## Root Cause\n\n1. Did not check actual system date before answering\n2. Assumed file dates matched current date\n3. Did not verify hook output (\"Next Trade: Dec 15\" was wrong)\n\n## Prevention Rules\n\n### Before ANY date-related statement:\n```bash\n# ALWAYS run this first\necho \"Today is: $(date '+%A, %B %d, %Y')\"\n```\n\n### Check trade dates match:\n```bash\n# Verify trades file is for TODAY\nls data/trades_$(date +%Y-%m-%d).json\n```\n\n### Verify hook output makes sense:\n- If today is Sunday, next trade should be TODAY (weekend crypto)\n- If today is Saturday, next trade should be TODAY (weekend cryp",
-    "root_cause": "",
-    "prevention": "",
-    "tags": [
-      "critical",
-      "verification",
-      "trust",
-      "dates",
-      "never-again"
-    ],
-    "severity": "critical",
-    "financial_impact": null,
-    "symbol": null,
-    "source_file": "rag_knowledge/lessons_learned/ll_029_always_verify_date.md"
   },
   {
     "id": "lesson_ll_029_hicra_rl_credit_assignment",
@@ -1517,27 +1325,6 @@
     "financial_impact": null,
     "symbol": null,
     "source_file": "rag_knowledge/lessons_learned/ll_031_procedural_memory_trading_skills.md"
-  },
-  {
-    "id": "lesson_ll_032_crypto_trades_24_7_365",
-    "timestamp": "December 14, 2025",
-    "category": "trading_/_operational",
-    "title": "Lesson Learned #032: Crypto Markets Trade 24/7/365",
-    "description": "Critical error: Claimed \"markets closed (weekend)\" when crypto trades 24/7/365 including weekends. This misconception must NEVER be repeated.\n\nProblem: On December 14, 2025 (Saturday), when asked \"how much money did we make today?\", the response was:\n\n> \"$0 today - markets are closed (weekend)\"\n\nThis is **WRONG**. Crypto markets (BTC, ETH, etc.) trade 24 hours a day, 7 days a week, 365 days a year. Weekends are NOT closed for crypto.",
-    "root_cause": "On December 14, 2025 (Saturday), when asked \"how much money did we make today?\", the response was:\n\n> \"$0 today - markets are closed (weekend)\"\n\nThis is **WRONG**. Crypto markets (BTC, ETH, etc.) trade 24 hours a day, 7 days a week, 365 days a year. Weekends are NOT closed for crypto.",
-    "prevention": "1. **Added Critical Rule #5** to CLAUDE.md:\n   ```markdown\n   5. **CRYPTO TRADES 24/7/365** - Weekends included! Always check crypto positions/P/L.\n   ```\n\n2. **Added Rule #10** to MANDATORY_RULES.md with detailed table\n\n3. **Created this lesson learned** for RAG retrieval",
-    "tags": [
-      "crypto",
-      "market-hours",
-      "weekend",
-      "critical-rule",
-      "trading-fundamentals",
-      "autonomous-execution"
-    ],
-    "severity": "critical (causes missed trading opportunities)",
-    "financial_impact": null,
-    "symbol": null,
-    "source_file": "rag_knowledge/lessons_learned/ll_032_crypto_trades_24_7_365.md"
   },
   {
     "id": "lesson_ll_032_ml_experiment_automation",

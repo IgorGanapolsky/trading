@@ -32,7 +32,6 @@ jobs:
 
             const criticalWorkflows = [
               'daily-trading.yml',
-              'weekend-crypto-trading.yml',
               'youtube-analysis.yml',
               'notify-on-failure.yml',
               'workflow-health-check.yml',

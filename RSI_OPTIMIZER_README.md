@@ -3,7 +3,7 @@
 
 ## Overview
 
-This ML pipeline optimizes RSI thresholds for crypto entry signals using historical backtesting and grid search optimization. The system tests multiple RSI thresholds, simulates trades, and identifies the optimal threshold based on risk-adjusted returns (Sharpe ratio).
+This ML pipeline optimizes RSI thresholds for equity entry signals using historical backtesting and grid search optimization. The system tests multiple RSI thresholds, simulates trades, and identifies the optimal threshold based on risk-adjusted returns (Sharpe ratio).
 
 ## Files Created
 
@@ -29,10 +29,10 @@ This ML pipeline optimizes RSI thresholds for crypto entry signals using histori
 ## Features
 
 ### Data Loading
-- Fetches 90+ days of historical crypto data via yfinance
+- Fetches 90+ days of historical equity data via yfinance
 - Validates data completeness and quality
 - Configurable lookback period
-- Supports all yfinance-compatible symbols (BTC-USD, ETH-USD, etc.)
+- Supports all yfinance-compatible symbols (SPY, QQQ, AAPL, etc.)
 
 ### Indicator Calculation
 - **RSI (Relative Strength Index)**: 14-period momentum oscillator
@@ -58,7 +58,7 @@ For each threshold, calculates:
 Results saved to JSON:
 ```json
 {
-  "symbol": "BTC-USD",
+  "symbol": "SPY",
   "lookback_days": 90,
   "optimization_date": "2025-12-15T12:00:00",
   "best_threshold": 50,
@@ -76,14 +76,14 @@ Results saved to JSON:
 
 #### Basic Usage
 ```bash
-# Optimize BTC and ETH with default settings (90 days)
+# Optimize SPY and QQQ with default settings (90 days)
 python scripts/train_rsi_model.py
 ```
 
 #### Advanced Usage
 ```bash
-# Multiple cryptos
-python scripts/train_rsi_model.py --symbols BTC-USD ETH-USD SOL-USD
+# Multiple equities
+python scripts/train_rsi_model.py --symbols SPY QQQ AAPL NVDA
 
 # Longer historical period
 python scripts/train_rsi_model.py --lookback 180
@@ -110,7 +110,7 @@ from src.ml.rsi_optimizer import RSIOptimizer
 
 # Create optimizer
 optimizer = RSIOptimizer(
-    symbol="BTC-USD",
+    symbol="SPY",
     lookback_days=90,
     thresholds=[40, 45, 50, 55, 60],
 )
@@ -128,9 +128,9 @@ print(f"Total Return: {results['best_total_return']:.2f}%")
 optimizer.save_results(results, "data/rsi_optimization_results.json")
 ```
 
-## Integration with Crypto Strategy
+## Integration with Trading Strategy
 
-### Update RSI Threshold in crypto_strategy.py
+### Update RSI Threshold in core_strategy.py
 
 ```python
 import json
@@ -141,9 +141,9 @@ results_path = Path("data/rsi_optimization_results.json")
 if results_path.exists():
     with open(results_path) as f:
         optimization_results = json.load(f)
-    
+
     # Use optimized threshold
-    RSI_MOMENTUM_THRESHOLD = optimization_results["BTC-USD"]["best_threshold"]
+    RSI_MOMENTUM_THRESHOLD = optimization_results["SPY"]["best_threshold"]
     print(f"Using optimized RSI threshold: {RSI_MOMENTUM_THRESHOLD}")
 else:
     # Fallback to default
@@ -269,17 +269,17 @@ RSI OPTIMIZATION COMPLETE
 
 RESULTS BY SYMBOL:
 --------------------------------------------------------------------------------
-BTC-USD    | RSI >   50 | Sharpe:  1.234 | Win Rate:  58.5% | Return:  12.45%
-ETH-USD    | RSI >   55 | Sharpe:  1.156 | Win Rate:  56.2% | Return:  10.80%
+SPY        | RSI >   50 | Sharpe:  1.234 | Win Rate:  58.5% | Return:  12.45%
+QQQ        | RSI >   55 | Sharpe:  1.156 | Win Rate:  56.2% | Return:  10.80%
 
 ================================================================================
 RECOMMENDATION (Best Risk-Adjusted Performance):
 --------------------------------------------------------------------------------
-Symbol: BTC-USD
+Symbol: SPY
 Optimal RSI Threshold: 50
 Sharpe Ratio: 1.234
 
-BTC-USD with RSI > 50 has the highest Sharpe ratio (1.23)
+SPY with RSI > 50 has the highest Sharpe ratio (1.23)
 ================================================================================
 
 Full results saved to: data/rsi_optimization_results.json
@@ -317,7 +317,7 @@ print("✅ Import successful")
 
 ### Quick Test
 ```bash
-python scripts/train_rsi_model.py --symbols BTC-USD --lookback 30 --verbose
+python scripts/train_rsi_model.py --symbols SPY --lookback 30 --verbose
 ```
 
 ## Troubleshooting
@@ -329,7 +329,7 @@ pip install numpy pandas yfinance
 
 ### Insufficient Data Error
 - Increase lookback period: `--lookback 120`
-- Check symbol format (use "BTC-USD" not "BTCUSD")
+- Check symbol format (use "SPY" not "S&P500")
 - Verify internet connection
 
 ### No Trades Generated

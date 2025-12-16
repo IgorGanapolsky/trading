@@ -473,14 +473,6 @@ def initialize_registry() -> None:
             "tags": ["options", "value", "rule1"],
         },
         {
-            "name": "crypto_momentum",
-            "description": "Crypto momentum strategy for weekend trading",
-            "status": StrategyStatus.EXPERIMENTAL,
-            "asset_class": AssetClass.CRYPTO,
-            "source_file": "src/strategies/crypto_strategy.py",
-            "tags": ["crypto", "momentum", "weekend"],
-        },
-        {
             "name": "growth_portfolio",
             "description": "Growth-focused equity portfolio strategy",
             "status": StrategyStatus.EXPERIMENTAL,

@@ -204,13 +204,13 @@ DAILY_INVESTMENT=1000.0  # 100x scale
 ### 5. ENABLE OPTIMIZED ALLOCATION 💎 MEDIUM PRIORITY
 
 **Current**: Legacy allocation (60% ETFs, 20% Growth, 10% IPO, 10% Crowdfunding)
-**Target**: Optimized allocation (40% ETFs, 15% Bonds, 15% REITs, 10% Crypto, 15% Growth, 5% Options)
+**Target**: Optimized allocation (40% ETFs, 15% Bonds, 15% REITs, 20% Growth, 5% Options, 5% IPO)
 
 **Benefits**:
 - 30% defensive allocation (bonds + REITs)
 - Dividend income from REITs
-- Weekend crypto trading (7-day market access)
 - Options reserve for premium income
+- Increased growth allocation for higher returns
 
 **Immediate Actions**:
 1. **Enable Optimized Allocation**:
@@ -222,7 +222,6 @@ DAILY_INVESTMENT=1000.0  # 100x scale
 2. **Verify Strategies Exist**:
    - Bond strategy: Check `src/strategies/bond_strategy.py`
    - REIT strategy: Check `src/strategies/reit_strategy.py`
-   - Crypto strategy: Already exists (`src/strategies/crypto_strategy.py`)
 
 3. **Test Allocation**:
    ```python

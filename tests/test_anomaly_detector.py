@@ -101,12 +101,6 @@ class TestSymbolValidation:
         symbol_anomalies = [a for a in anomalies if a.anomaly_type == AnomalyType.SYMBOL_UNKNOWN]
         assert len(symbol_anomalies) == 0
 
-    def test_valid_crypto_symbol(self, detector):
-        """Test that valid crypto symbols pass."""
-        anomalies = detector.validate_trade("BTCUSD", 10.0, "BUY")
-        symbol_anomalies = [a for a in anomalies if a.anomaly_type == AnomalyType.SYMBOL_UNKNOWN]
-        assert len(symbol_anomalies) == 0
-
     def test_unknown_symbol_detected(self, detector):
         """Test that unknown symbols are flagged."""
         anomalies = detector.validate_trade("FAKESYMBOL", 10.0, "BUY")
@@ -116,13 +110,6 @@ class TestSymbolValidation:
 
 class TestMarketHoursValidation:
     """Test market hours validation."""
-
-    def test_crypto_anytime(self, detector):
-        """Test that crypto can trade anytime."""
-        # Create a weekend time
-        saturday = datetime(2025, 12, 13, 12, 0, 0, tzinfo=timezone.utc)  # Saturday
-        anomalies = detector.check_market_hours("BTCUSD", saturday)
-        assert len(anomalies) == 0  # Crypto trades 24/7
 
     def test_stock_weekend_warning(self, detector):
         """Test that stock trading on weekend is flagged."""

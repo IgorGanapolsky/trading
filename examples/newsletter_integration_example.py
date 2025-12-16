@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Newsletter Integration Example - How to use CoinSnacks signals in trading
+Newsletter Integration Example - How to use newsletter signals in trading
 
 This example demonstrates:
-1. Fetching latest crypto signals
+1. Fetching latest signals from financial newsletters
 2. Validating signal quality
 3. Using signals in trading decisions
 4. Risk management with newsletter targets
@@ -16,21 +16,17 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.utils.newsletter_analyzer import (
-    NewsletterAnalyzer,
-    get_btc_signal,
-    get_eth_signal,
-)
+from src.utils.newsletter_analyzer import NewsletterAnalyzer
 
 
-def should_trade_crypto(
+def should_trade_equity(
     ticker: str, min_confidence: float = 0.7, max_signal_age_days: int = 7
 ) -> tuple[bool, str]:
     """
-    Determine if we should trade a crypto based on newsletter signals.
+    Determine if we should trade an equity based on newsletter signals.
 
     Args:
-        ticker: Crypto ticker (BTC or ETH)
+        ticker: Equity ticker (e.g., SPY, QQQ)
         min_confidence: Minimum confidence threshold (0.0-1.0)
         max_signal_age_days: Maximum age of signal in days
 
@@ -38,12 +34,11 @@ def should_trade_crypto(
         Tuple of (should_trade, reason)
     """
     # Get signal for ticker
-    if ticker == "BTC":
-        signal = get_btc_signal(max_age_days=max_signal_age_days)
-    elif ticker == "ETH":
-        signal = get_eth_signal(max_age_days=max_signal_age_days)
-    else:
-        return False, f"Unsupported ticker: {ticker}"
+    analyzer = NewsletterAnalyzer()
+    signal = analyzer.get_signal_for_ticker(ticker, max_age_days=max_signal_age_days)
+
+    if not signal:
+        return False, f"Unsupported ticker or no signal: {ticker}"
 
     # Check if signal exists
     if not signal:
@@ -76,18 +71,14 @@ def get_trading_parameters(ticker: str) -> dict:
     Get trading parameters from newsletter signal.
 
     Args:
-        ticker: Crypto ticker (BTC or ETH)
+        ticker: Equity ticker
 
     Returns:
         Dictionary with entry_price, target_price, stop_loss
     """
     # Get signal
-    if ticker == "BTC":
-        signal = get_btc_signal()
-    elif ticker == "ETH":
-        signal = get_eth_signal()
-    else:
-        return {}
+    analyzer = NewsletterAnalyzer()
+    signal = analyzer.get_signal_for_ticker(ticker)
 
     if not signal:
         return {}
@@ -113,7 +104,7 @@ def calculate_position_size_with_newsletter(
     Calculate position size using newsletter stop-loss.
 
     Args:
-        ticker: Crypto ticker
+        ticker: Equity ticker
         account_value: Total account value
         max_risk_pct: Maximum risk as percentage of account
 
@@ -150,21 +141,21 @@ def example_daily_trading_workflow():
 
     # Example account parameters
     account_value = 100000  # $100k
-    cryptos_to_check = ["BTC", "ETH"]
+    equities_to_check = ["SPY", "QQQ"]
 
     print(f"\nAccount Value: ${account_value:,.0f}")
-    print(f"Cryptos to Check: {', '.join(cryptos_to_check)}")
+    print(f"Equities to Check: {', '.join(equities_to_check)}")
     print(f"Max Risk per Trade: 2% (${account_value * 0.02:,.0f})")
 
     print("\n" + "-" * 80)
     print("CHECKING NEWSLETTER SIGNALS")
     print("-" * 80)
 
-    for ticker in cryptos_to_check:
+    for ticker in equities_to_check:
         print(f"\n{ticker}:")
 
         # Check if we should trade
-        should_trade, reason = should_trade_crypto(ticker, min_confidence=0.7)
+        should_trade, reason = should_trade_equity(ticker, min_confidence=0.7)
         print(f"  Should Trade: {should_trade}")
         print(f"  Reason: {reason}")
 
@@ -262,15 +253,13 @@ def example_signal_monitoring():
     NewsletterAnalyzer()
 
     # Check signal freshness
-    for ticker in ["BTC", "ETH"]:
+    analyzer = NewsletterAnalyzer()
+    for ticker in ["SPY", "QQQ"]:
         print(f"\n{ticker} Signal Status:")
 
         # Try different age thresholds
         for max_age in [1, 3, 7, 14]:
-            if ticker == "BTC":
-                signal = get_btc_signal(max_age_days=max_age)
-            else:
-                signal = get_eth_signal(max_age_days=max_age)
+            signal = analyzer.get_signal_for_ticker(ticker, max_age_days=max_age)
 
             if signal:
                 age = (datetime.now(signal.source_date.tzinfo) - signal.source_date).days

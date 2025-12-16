@@ -372,8 +372,6 @@ Format as JSON:
 
         if "Daily Trading Execution" in issue_title:
             workflow = "daily-trading.yml"
-        elif "Crypto" in issue_title:
-            workflow = "weekend-crypto-trading.yml"
         else:
             workflow = None
 

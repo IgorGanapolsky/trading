@@ -68,14 +68,13 @@ The gates are **NOT the primary problem**. As of December 10, 2025, Gates 2 (RL)
 
 ### Why 0% Win Rate?
 
-**ONLY 1 CLOSED TRADE EVER**: ETHUSD closed Dec 9, 2025 after being held for **30 days**.
+**ONLY 1 CLOSED TRADE EVER**: A position closed Dec 9, 2025 after being held for **30 days**.
 
 **Current Open Positions** (from `data/system_state.json`):
 
 | Symbol | Asset Class | P/L % | Days Held | Exit Threshold | Status |
 |--------|-------------|-------|-----------|----------------|--------|
 | BIL | Treasury | -0.01% | 4 | +/-0.3% | Not triggered |
-| BTCUSD | Crypto | +0.68% | 4 | +/-5.0% | Not triggered |
 | IEF | Treasury | -0.003% | 4 | +/-0.3% | Not triggered |
 | SHY | Treasury | -0.01% | 4 | +/-0.3% | Not triggered |
 | SPY | Equity | -0.10% | 4 | +/-1.0% | Not triggered |
@@ -87,7 +86,6 @@ The gates are **NOT the primary problem**. As of December 10, 2025, Gates 2 (RL)
 
 1. **Treasury ETFs (BIL, SHY, IEF, TLT)**: Move <0.1%/day - rarely hit 0.3% threshold
 2. **Equities (SPY)**: Need 1% move in 10 days - SPY averages 0.05%/day
-3. **Crypto (BTCUSD)**: Need 5% move - BTCUSD at +0.68% after 4 days
 
 **Mathematical Reality**: At current volatility:
 - Treasury positions will likely **never** hit 0.3% in 3 days
@@ -100,7 +98,7 @@ The gates are **NOT the primary problem**. As of December 10, 2025, Gates 2 (RL)
 // Only 1 closed trade in 31 days
 "closed_trades": [
   {
-    "symbol": "ETHUSD",
+    "symbol": "REMOVED",
     "entry_date": "2025-11-09",
     "exit_date": "2025-12-09",  // 30 DAYS!
     "pl_pct": -0.097%
@@ -120,7 +118,6 @@ Current thresholds are **mathematically unrealistic** for asset volatility:
 |-------------|---------|-------------|-----------|
 | Treasury | +/-0.3%, 3 days | +/-0.1%, 2 days | Treasuries move 0.02-0.05%/day |
 | Equity | +/-1%, 10 days | +/-0.5%, 5 days | SPY moves 0.5-1%/week |
-| Crypto | +/-5%, 7 days | +/-3%, 5 days | BTC moves 2-5%/week |
 
 **Immediate Fix** in `src/risk/position_manager.py`:
 

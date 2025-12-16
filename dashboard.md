@@ -57,7 +57,7 @@ Target:   $100/day
 | Testing | 8% | REITs, Metals |
 | Cash | 5% | Reserve |
 
-**Removed**: Crypto (0% win rate)
+**Focus**: Options-first allocation strategy
 
 ---
 
@@ -69,10 +69,7 @@ Target:   $100/day
 | Tax (37%) | $120.82 |
 | **After-Tax** | **$205.72** |
 
-**Wash Sale Blacklist** (no buy until date):
-- BTCUSD → Jan 10
-- ETHUSD → Jan 8
-- SOLUSD → Jan 10
+**Wash Sale Monitoring**: Active for all asset classes
 
 ---
 

@@ -11,7 +11,7 @@
 2. **Never merge to main** - Always use PRs. See `/project:create-pr`
 3. **Never tell CEO what to do** - Fix it yourself or automate it
 4. **Verify claims**: Hook > Alpaca API > Files (in that order)
-5. **CRYPTO TRADES 24/7/365** - Weekends included! Always check crypto positions/P/L.
+5. **Equity market hours matter** - US equities trade Mon-Fri 9:30-4:00 ET only.
 
 ---
 
@@ -90,18 +90,18 @@ Pick ONE feature with `"passes": false` and complete it before moving on.
 ## Trading Context
 
 **North Star**: Fibonacci compounding ($1/day → scale with profits)
-**Current**: $25/day crypto (daily, 24/7/365) + equities (weekdays only)
+**Current**: Options-focused strategy with systematic risk management
 
 **MARKET HOURS**:
 | Asset | Hours | Days |
 |-------|-------|------|
-| Crypto (BTC/ETH) | 24/7 | Every day including weekends |
 | US Equities | 9:30-4:00 ET | Mon-Fri only |
+| Options | Same as underlying | Mon-Fri only |
 
 **R&D Goals**:
 - Month 1: Infrastructure + data collection (break-even OK)
 - Month 2: MACD + RSI + RL system (win rate >55%)
-- Month 3: Validate + optimize (win rate >60%, $3-5/day)
+- Month 3: Validate + optimize (win rate >60%, consistent daily profits)
 
 **Integrations**: LLM Council, DeepAgents, Multi-LLM, Intelligent Investor, Gemini Deep Research
 

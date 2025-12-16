@@ -17,7 +17,6 @@ _DEFAULT_BUCKET_TICKERS = {
     "growth_stocks": ["NVDA", "TSLA", "AMZN", "GOOGL", "MSFT"],
     "bonds_treasuries": ["BIL", "BND", "SHY", "IEF", "TLT"],
     "reits": ["VNQ", "SCHH"],
-    "crypto": ["BTCUSD", "ETHUSD", "BTC", "ETH", "BITO"],
     "options_reserve": [],
 }
 

@@ -21,7 +21,7 @@ Usage:
     # Or use context manager
     tracer = get_tracer()
     with tracer.trace("market_analysis") as span:
-        span.add_metadata({"symbol": "BTCUSD"})
+        span.add_metadata({"symbol": "SPY"})
         result = await analyze_market()
         span.add_output(result)
 """

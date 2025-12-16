@@ -166,12 +166,6 @@ def main():
             "Critical Import: PositionManager",
             f"cd {root} && python3 -c 'from src.risk.position_manager import PositionManager'",
         ),
-        # Crypto Strategy v4.1 Tests (added Dec 15, 2025)
-        # Tests RSI momentum confirmation to prevent catching falling knives (ll_040)
-        (
-            "Crypto Strategy v4.1 Tests",
-            f"cd {root} && python3 -m pytest tests/integration/test_crypto_strategy_v41.py -v --tb=short",
-        ),
     ]
 
     failed = []

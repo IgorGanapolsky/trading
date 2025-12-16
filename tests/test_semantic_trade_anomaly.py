@@ -455,43 +455,5 @@ class TestSemanticTradeAnomalyDetector:
             # Should return exactly 5 incidents
             assert len(result["similar_incidents"]) == 5
 
-    def test_crypto_specific_context(self, mock_rag):
-        """Test detector works with crypto-specific context."""
-        mock_lesson = Mock()
-        mock_lesson.id = "LESSON-005"
-        mock_lesson.title = "Crypto MACD Threshold Too Conservative"
-        mock_lesson.category = "crypto_specific"
-        mock_lesson.severity = "medium"
-        mock_lesson.description = "MACD < 0 rejected valid crypto trades"
-        mock_lesson.root_cause = "Stock thresholds applied to crypto"
-        mock_lesson.prevention = "Crypto needs wider thresholds"
-        mock_lesson.financial_impact = 0.0
-        mock_lesson.tags = ["crypto", "macd"]
-
-        mock_rag.search.return_value = [(mock_lesson, 0.7)]
-        mock_rag.get_context_for_trade.return_value = {"warnings": []}
-
-        with patch("src.rag.lessons_learned_rag.LessonsLearnedRAG", return_value=mock_rag):
-            detector = SemanticTradeAnomalyDetector()
-
-            result = detector.check_trade(
-                {
-                    "symbol": "BTCUSD",
-                    "side": "buy",
-                    "amount": 0.5,
-                    "strategy": "momentum_crypto",
-                    "additional_context": {
-                        "macd": -5.0,
-                        "signal": "consolidation",
-                    },
-                }
-            )
-
-            # Should pass (low financial impact) but include warning
-            assert result["safe"]
-            assert len(result["similar_incidents"]) > 0
-            assert any("MACD" in inc["title"] for inc in result["similar_incidents"])
-
-
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

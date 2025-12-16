@@ -53,5 +53,4 @@ jobs:
           echo ""
           echo "📅 Trading Schedule:"
           echo "  - Weekdays 9:35 AM ET: Daily equity trading"
-          echo "  - Weekends 9:35 AM ET: Crypto proxy trading (BITO)"
           echo "  - Daily 2:00 AM UTC: Heartbeat keepalive"

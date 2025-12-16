@@ -113,7 +113,6 @@ class TradingAnomalyDetector:
     # Known valid symbols
     VALID_SYMBOLS = {
         "stocks": ["SPY", "QQQ", "VOO", "NVDA", "GOOGL", "AMZN", "BIL", "SHY", "IEF", "TLT"],
-        "crypto": ["BTCUSD", "ETHUSD", "SOLUSD"],
     }
 
     def __init__(
@@ -360,10 +359,6 @@ class TradingAnomalyDetector:
 
         if execution_time is None:
             execution_time = datetime.now(timezone.utc)
-
-        # Crypto trades 24/7
-        if symbol in self.VALID_SYMBOLS["crypto"]:
-            return anomalies
 
         # Stock market hours (simplified: 9:30 AM - 4:00 PM ET, Mon-Fri)
         # Note: This is simplified, real implementation should use proper timezone handling

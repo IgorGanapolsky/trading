@@ -85,15 +85,13 @@ def load_recent_performance() -> dict:
     for trade in closed_trades:
         symbol = trade.get("symbol", "")
         pl = trade.get("pl", 0)
-        
+
         # Categorize
         if "P0" in symbol or "C0" in symbol:
             cat = "OPTIONS"
-        elif symbol.endswith("USD"):
-            cat = "CRYPTO"
         else:
-            cat = "OTHER"
-        
+            cat = "EQUITIES"
+
         if cat not in strategy_pl:
             strategy_pl[cat] = {"pl": 0, "trades": 0, "wins": 0}
         strategy_pl[cat]["pl"] += pl

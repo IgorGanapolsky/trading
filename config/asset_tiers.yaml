@@ -44,18 +44,6 @@ core_assets:
       - safe_haven
       - negative_beta
 
-  - symbol: BITO
-    name: "ProShares Bitcoin Strategy ETF"
-    tier: 2
-    base_allocation: 0.05
-    regimes: [0, 1]  # Risk-on only
-    min_equity: 1000
-    weekend_trading: true
-    characteristics:
-      - crypto_exposure
-      - high_volatility
-      - momentum_sensitive
-
 # Expansion assets - added for diversification alpha
 expansion_assets:
   - symbol: IJR

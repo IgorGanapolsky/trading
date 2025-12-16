@@ -201,7 +201,6 @@ curl -X DELETE \
 |-------------|----------------|---------------|
 | Equity/ETF | 20% | 10 |
 | Options | 5% | 5 |
-| Crypto | 10% | 3 |
 
 ---
 
@@ -272,7 +271,7 @@ python scripts/close_all_positions.py --confirm
 | Monday | Strategy performance review |
 | Wednesday | Risk parameter check |
 | Friday | Weekly P&L report |
-| Saturday | Crypto trades, RL model update |
+| Saturday | RL model update |
 | Sunday | System maintenance window |
 
 ### Monthly Schedule

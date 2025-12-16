@@ -2,15 +2,14 @@ name: Pre-Trade Deep Research
 
 on:
   schedule:
-    # Run 30 minutes before trading (9:05 AM ET weekdays, 9:30 AM ET weekends)
+    # Run 30 minutes before trading (9:05 AM ET weekdays)
     - cron: '5 14 * * 1-5'   # Weekday pre-market research
-    - cron: '30 14 * * 0,6'  # Weekend crypto research
   workflow_dispatch:
     inputs:
       symbol:
-        description: 'Symbol to research (e.g., BTC, ETH, SPY)'
+        description: 'Symbol to research (e.g., SPY, QQQ, AAPL)'
         required: false
-        default: 'BTC'
+        default: 'SPY'
 
 jobs:
   deep-research:
@@ -45,7 +44,7 @@ try:
 
     client = genai.Client()
 
-    symbol = os.getenv('INPUT_SYMBOL', 'BTC')
+    symbol = os.getenv('INPUT_SYMBOL', 'SPY')
 
     query = f"""
     Analyze {symbol} for today's trading decision:

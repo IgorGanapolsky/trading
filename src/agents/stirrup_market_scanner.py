@@ -3,15 +3,15 @@ Stirrup Market Scanner Agent
 Lightweight autonomous market monitoring using Artificial Analysis' Stirrup framework.
 
 Purpose:
-- Run 24/7 market scanning without active Claude Code session
+- Run market scanning during regular market hours
 - Generate trading signals using web search + sentiment analysis
 - Feed signals to main trading system via UDM
 
 Based on: https://github.com/ArtificialAnalysis/Stirrup
 
 Usage:
-    python -m src.agents.stirrup_market_scanner --symbol BTCUSD --mode scan
-    python -m src.agents.stirrup_market_scanner --symbol AAPL --mode research
+    python -m src.agents.stirrup_market_scanner --symbol AAPL --mode scan
+    python -m src.agents.stirrup_market_scanner --symbol GOOGL --mode research
 """
 
 import asyncio
@@ -79,7 +79,7 @@ if STIRRUP_AVAILABLE:
     class GenerateSignalParams(BaseModel):
         """Parameters for signal generation tool"""
 
-        symbol: str = Field(description="Trading symbol (e.g., BTCUSD, AAPL)")
+        symbol: str = Field(description="Trading symbol (e.g., AAPL, GOOGL)")
         action: str = Field(description="Trade action: BUY, SELL, or HOLD")
         confidence: float = Field(ge=0.0, le=1.0, description="Confidence 0.0-1.0")
         reasoning: str = Field(description="Brief explanation of the signal")
@@ -91,16 +91,8 @@ if STIRRUP_AVAILABLE:
         This tool creates validated signals that integrate with our trading system.
         """
         try:
-            # Determine asset class from symbol
-            is_crypto = any(
-                c in params.symbol.upper() for c in ["BTC", "ETH", "USD", "DOGE", "SOL"]
-            )
-
-            # Create symbol using UDM factory
-            if is_crypto:
-                symbol = factory.create_crypto_symbol(params.symbol.upper())
-            else:
-                symbol = factory.create_equity_symbol(params.symbol.upper())
+            # Create equity symbol using UDM factory
+            symbol = factory.create_equity_symbol(params.symbol.upper())
 
             # Map action string to enum
             action_map = {
@@ -174,11 +166,6 @@ if STIRRUP_AVAILABLE:
         import pytz
 
         now = datetime.now(pytz.timezone("US/Eastern"))
-
-        if params.market.upper() == "CRYPTO":
-            return ToolResult(
-                content="CRYPTO markets are OPEN 24/7", metadata=ToolUseCountMetadata()
-            )
 
         # US stock market hours
         is_weekday = now.weekday() < 5
@@ -360,7 +347,7 @@ async def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Stirrup Market Scanner")
-    parser.add_argument("--symbol", "-s", type=str, default="BTCUSD", help="Symbol to scan")
+    parser.add_argument("--symbol", "-s", type=str, default="AAPL", help="Symbol to scan")
     parser.add_argument("--symbols", type=str, help="Comma-separated symbols")
     parser.add_argument(
         "--mode", "-m", type=str, default="standard", choices=["quick", "standard", "deep"]

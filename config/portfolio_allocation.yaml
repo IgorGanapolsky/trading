@@ -1,20 +1,19 @@
 # =============================================================================
-# PORTFOLIO ALLOCATION CONFIGURATION v2.1
+# PORTFOLIO ALLOCATION CONFIGURATION v2.2
 # =============================================================================
-# UPDATED: 2025-12-15 - Options-First Strategy + Profit Reinvestment
+# UPDATED: 2025-12-16 - Equities-Only Strategy
 # Based on Day 9 performance data:
 #   - Options (Short Puts): +$327, 75% win rate → PRIMARY STRATEGY
-#   - Crypto DCA: -$0.43, 0% win rate → MINIMIZE
 #   - Bonds: Break-even → KEEP AS HEDGE
 #
 # Key Changes:
-# - Options allocation: 5% → 35% (PRIMARY PROFIT DRIVER)
-# - Crypto allocation: 5% → 2% (trend-following only, no DCA)
-# - Treasury allocation: 35% → 15% (capital preservation hedge)
-# - Core equities: 35% → 25% (keep SPY exposure)
+# - Options allocation: 37% (PRIMARY PROFIT DRIVER)
+# - Treasury allocation: 15% (capital preservation hedge)
+# - Core equities: 25% (keep SPY exposure)
+# - All crypto removed - equities-only focus
 #
 # Created: 2025-12-03
-# Updated: 2025-12-15 (Options-First Pivot)
+# Updated: 2025-12-16 (Equities-Only)
 # =============================================================================
 
 version: "2.0"
@@ -29,9 +28,8 @@ allocations:
   # ==========================================================================
   # PROVEN WINNER: 75% win rate, +$327 profit in 9 days
   # Strategy: Sell cash-secured puts on quality stocks
-  # Updated Dec 15: +2% from removed crypto allocation
   options_premium:
-    weight: 0.37  # 37% allocation (was 35%, +2% from crypto removal)
+    weight: 0.37  # 37% allocation
     active: true  # ACTIVATED
     strategies:
       - name: "Cash-Secured Puts"
@@ -105,19 +103,6 @@ allocations:
     rebalance: monthly
     bypass_gates: false
     description: "Real estate exposure and dividend income - test period"
-
-  # ==========================================================================
-  # DISABLED: CRYPTO (0%) - Removed Dec 15, 2025
-  # ==========================================================================
-  # REMOVED: 0% win rate, 3 consecutive losses, -$0.43 total P/L
-  # Capital redirected to OPTIONS (proven 75% win rate)
-  crypto:
-    tickers: []
-    weight: 0.00  # DISABLED
-    enabled: false
-    disabled_date: "2025-12-15"
-    disabled_reason: "0% win rate, focus on options"
-    description: "REMOVED - was losing money, complexity not worth it"
 
   # ==========================================================================
   # RESERVE: PRECIOUS METALS (3%)
@@ -199,15 +184,9 @@ position_rules:
       reason: "Position too small ($20), not moving needle"
       action: "sell_market"
       priority: "low"
-    - symbol: "*USD"  # Any crypto spot positions
-      reason: "0% win rate, losing strategy"
-      action: "sell_at_breakeven_or_small_loss"
-      priority: "medium"
-  
+
   # What to AVOID going forward
   avoid:
-    - pattern: "crypto_dca"
-      reason: "DCA into downtrends = 0% win rate"
     - pattern: "tiny_positions"
       reason: "Positions < $100 don't move the needle"
 
@@ -218,12 +197,11 @@ daily_deployment:
   total_daily_budget: 50.00  # $50/day (was $10)
   
   allocation:
-    options_premium: 27.00   # 54% to options ($27/day) - increased from crypto removal
+    options_premium: 27.00   # 54% to options ($27/day)
     core_etfs: 12.50         # 25% to SPY/QQQ ($12.50/day)
     treasuries: 7.50         # 15% to bonds ($7.50/day)
     growth_stocks: 3.00      # 6% to growth ($3/day)
     reits: 0.00              # Paused until data collected
-    crypto: 0.00             # REMOVED - 0% win rate, capital redirected to options
   
   options_deployment:
     strategy: "weekly_premium"
@@ -257,7 +235,6 @@ projections:
     treasuries: 0.045       # 4.5% carry
     growth_stocks: 0.18     # 18% growth
     reits: 0.08             # 8% with dividends
-    crypto: 0.00            # Assume 0 (minimized)
   blended_return: 0.156     # ~15.6% blended
   daily_income: 42.74       # $100k * 15.6% / 365
   monthly_options_target: 700  # $700/month options premium
@@ -376,17 +353,8 @@ tax_strategy:
 # =============================================================================
 # Symbols sold at a loss - DO NOT repurchase within 30 days!
 wash_sale_blacklist:
-  last_updated: "2025-12-15"
+  last_updated: "2025-12-16"
   symbols:
-    - symbol: "BTCUSD"
-      loss_date: "2025-12-11"
-      safe_to_buy_after: "2026-01-10"
-    - symbol: "ETHUSD"
-      loss_date: "2025-12-09"
-      safe_to_buy_after: "2026-01-08"
-    - symbol: "SOLUSD"
-      loss_date: "2025-12-11"
-      safe_to_buy_after: "2026-01-10"
     - symbol: "AMD260116P00200000"
       loss_date: "2025-12-11"
       safe_to_buy_after: "2026-01-10"

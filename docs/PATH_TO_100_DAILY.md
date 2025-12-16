@@ -117,7 +117,6 @@ To reach $100/day net income with current performance:
 **Currently Active:**
 - ✅ Tier 1: Core ETF momentum ($900/day per new allocation)
 - ✅ Tier 2: Growth stock rotation ($300/day)
-- ❌ Tier 5: Crypto weekends (planned, not executed)
 - ❌ Options strategy (built, not deployed)
 - ❌ Reddit sentiment (researched, not integrated)
 - ❌ YouTube analysis (infrastructure ready, not automated)
@@ -129,12 +128,7 @@ Each additional uncorrelated strategy compounds returns:
 - 6 strategies at 62% win rate = 3x opportunities
 
 **Actions Required:**
-1. ✅ Activate Tier 5 (Crypto weekends):
-   - Execute BTC/ETH trades Saturdays/Sundays
-   - $50/day allocation (start conservative)
-   - Track weekend-only performance
-
-2. ✅ Deploy Reddit sentiment integration:
+1. ✅ Deploy Reddit sentiment integration:
    - Already researched (see `research-findings.md`)
    - Monitor r/wallstreetbets, r/stocks, r/investing
    - Use for Tier 2 stock selection + risk-off signals
@@ -250,7 +244,6 @@ if (
 ### Week 2 (Dec 9-15): Multi-Strategy Activation
 
 **Priority 1: Deploy Remaining Strategies**
-- [ ] Activate Tier 5 crypto (BTC/ETH weekends)
 - [ ] Integrate Reddit sentiment (r/wallstreetbets)
 - [ ] Automate YouTube analysis cron
 
@@ -289,7 +282,6 @@ if (
 
 **Priority 1: Holiday Trading**
 - [ ] Reduced hours (early closes)
-- [ ] Crypto strategy for closed days
 - [ ] Year-end tax-loss harvesting (if live)
 
 **Priority 2: Month 1 Review (Day 30)**
@@ -311,20 +303,18 @@ if (
 **Month 1 (Dec 2025):**
 - Equity momentum: $15/day (improved entry/exit)
 - Options premium: $5/day (learning phase)
-- Crypto weekends: $2/day
+- Multi-strategy: $2/day
 - **Total: $22/day** (22% of goal)
 
 **Month 2 (Jan 2026):**
-- Equity momentum: $30/day (optimized sizing)
+- Equity momentum: $35/day (optimized sizing)
 - Options premium: $15/day (3-5 active positions)
-- Crypto weekends: $5/day
 - Multi-strategy: $10/day
 - **Total: $60/day** (60% of goal)
 
 **Month 3 (Feb 2026):**
-- Equity momentum: $40/day (live trading, larger size)
+- Equity momentum: $50/day (live trading, larger size)
 - Options premium: $30/day (10+ active contracts)
-- Crypto weekends: $10/day
 - Multi-strategy: $20/day
 - **Total: $100/day** ✅ (GOAL ACHIEVED)
 
@@ -426,9 +416,8 @@ if (
 3. ✅ Automate YouTube analysis cron
 
 **Thursday Dec 5:**
-1. ✅ Activate Tier 5 crypto (test BTC trade)
-2. ✅ Optimize entry timing (wait for pullbacks)
-3. ✅ Build profit-scaling system
+1. ✅ Optimize entry timing (wait for pullbacks)
+2. ✅ Build profit-scaling system
 
 **Friday Dec 6:**
 1. ✅ Week 1 review: measure daily P/L improvement

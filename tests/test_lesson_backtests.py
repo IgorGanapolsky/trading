@@ -32,42 +32,6 @@ def backtest_engine():
 
 
 
-class TestLl_032_Crypto_Trades_24_7_365:
-    """Tests for ll_032_crypto_trades_24_7_365"""
-
-    @pytest.mark.backtest
-    def test_negative_lesson_learned_032_crypto_markets_trade_2_0(self, backtest_engine):
-        """
-        Reproduce failure conditions from ll_032_crypto_trades_24_7_365
-
-        Scenario Type: negative
-        Expected: Trade should be blocked or flagged
-        """
-        scenario = {
-            "name": "Negative: Lesson Learned #032: Crypto Markets Trade 24/7/365",
-            "lesson_id": "ll_032_crypto_trades_24_7_365",
-            "type": "negative",
-            "parameters": {'symbols': ['BTC', 'UTC', 'ETH', 'AM', 'L'], 'strategies': ['crypto', 'missed', 'something']},
-            "market_conditions": {'volume': 'elevated', 'time': 'elevated', 'news': 'elevated'},
-        }
-
-        result = backtest_engine.run_scenario(scenario)
-
-        # Validate based on scenario type
-        if scenario["type"] == "negative":
-            # Negative scenarios should be blocked or show loss
-            assert result.get("blocked") or result.get("pnl", 0) < 0, \
-                f"Negative scenario should fail: {result}"
-        elif scenario["type"] == "positive":
-            # Positive scenarios should succeed
-            assert not result.get("blocked"), \
-                f"Positive scenario should succeed: {result}"
-        else:
-            # Edge cases should not crash
-            assert "error" not in result, \
-                f"Edge case should handle gracefully: {result}"
-
-
 class TestLl_009_Ci_Syntax_Failure_Dec11:
     """Tests for ll_009_ci_syntax_failure_dec11"""
 
@@ -752,42 +716,6 @@ class TestLl_017_Claude_Md_Bloat_Antipattern_Dec12:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_023_Session_Start_Checklist_Violation_Dec13:
-    """Tests for ll_023_session_start_checklist_violation_dec13"""
-
-    @pytest.mark.backtest
-    def test_negative_session_start_checklist_violation_dec_13__20(self, backtest_engine):
-        """
-        Reproduce failure conditions from ll_023_session_start_checklist_violation_dec13
-
-        Scenario Type: negative
-        Expected: Trade should be blocked or flagged
-        """
-        scenario = {
-            "name": "Negative: Session Start Checklist Violation (Dec 13, 2025)",
-            "lesson_id": "ll_023_session_start_checklist_violation_dec13",
-            "type": "negative",
-            "parameters": {'symbols': ['BTC', 'ETH', 'CEO', 'AM', 'SOL'], 'strategies': ['24', 'weekend', 'activated']},
-            "market_conditions": {'trend': 'elevated', 'time': 'elevated', 'news': 'elevated'},
-        }
-
-        result = backtest_engine.run_scenario(scenario)
-
-        # Validate based on scenario type
-        if scenario["type"] == "negative":
-            # Negative scenarios should be blocked or show loss
-            assert result.get("blocked") or result.get("pnl", 0) < 0, \
-                f"Negative scenario should fail: {result}"
-        elif scenario["type"] == "positive":
-            # Positive scenarios should succeed
-            assert not result.get("blocked"), \
-                f"Positive scenario should succeed: {result}"
-        else:
-            # Edge cases should not crash
-            assert "error" not in result, \
-                f"Edge case should handle gracefully: {result}"
-
-
 class TestLl_020_Options_Primary_Strategy_Dec12:
     """Tests for ll_020_options_primary_strategy_dec12"""
 
@@ -803,7 +731,7 @@ class TestLl_020_Options_Primary_Strategy_Dec12:
             "name": "Negative: Options Theta Must Be Primary Strategy (Dec 12, 2025)",
             "lesson_id": "ll_020_options_primary_strategy_dec12",
             "type": "negative",
-            "parameters": {'symbols': ['BTC', 'THEN', 'L', 'MACD', 'ETH'], 'strategies': ['a', 'p', 'proves']},
+            "parameters": {'symbols': ['SPY', 'QQQ', 'IWM', 'MACD', 'DIA'], 'strategies': ['a', 'p', 'proves']},
             "market_conditions": {'trend': 'elevated', 'time': 'elevated'},
         }
 
@@ -949,78 +877,6 @@ class TestLl_014_Dead_Code_Dynamic_Budget_Dec11:
             "type": "negative",
             "parameters": {'symbols': ['AST', 'PATH', 'CODE', 'DEAD'], 'strategies': ['critical', 'the', 'not']},
             "market_conditions": {'news': 'elevated'},
-        }
-
-        result = backtest_engine.run_scenario(scenario)
-
-        # Validate based on scenario type
-        if scenario["type"] == "negative":
-            # Negative scenarios should be blocked or show loss
-            assert result.get("blocked") or result.get("pnl", 0) < 0, \
-                f"Negative scenario should fail: {result}"
-        elif scenario["type"] == "positive":
-            # Positive scenarios should succeed
-            assert not result.get("blocked"), \
-                f"Positive scenario should succeed: {result}"
-        else:
-            # Edge cases should not crash
-            assert "error" not in result, \
-                f"Edge case should handle gracefully: {result}"
-
-
-class TestLl_033_Negative_Momentum_Buying_Dec14:
-    """Tests for ll_033_negative_momentum_buying_dec14"""
-
-    @pytest.mark.backtest
-    def test_negative_ll_033_stop_buying_crypto_in_downtrends_26(self, backtest_engine):
-        """
-        Reproduce failure conditions from ll_033_negative_momentum_buying_dec14
-
-        Scenario Type: negative
-        Expected: Trade should be blocked or flagged
-        """
-        scenario = {
-            "name": "Negative: LL-033: Stop Buying Crypto in Downtrends",
-            "lesson_id": "ll_033_negative_momentum_buying_dec14",
-            "type": "negative",
-            "parameters": {'symbols': ['BTC', 'FEAR', 'SKIP', 'ETH', 'L'], 'strategies': ['dead', 'contrarian', 'selected']},
-            "market_conditions": {'trend': 'elevated', 'time': 'elevated', 'news': 'elevated'},
-        }
-
-        result = backtest_engine.run_scenario(scenario)
-
-        # Validate based on scenario type
-        if scenario["type"] == "negative":
-            # Negative scenarios should be blocked or show loss
-            assert result.get("blocked") or result.get("pnl", 0) < 0, \
-                f"Negative scenario should fail: {result}"
-        elif scenario["type"] == "positive":
-            # Positive scenarios should succeed
-            assert not result.get("blocked"), \
-                f"Positive scenario should succeed: {result}"
-        else:
-            # Edge cases should not crash
-            assert "error" not in result, \
-                f"Edge case should handle gracefully: {result}"
-
-
-class TestLl_033_Negative_Momentum_Buying_Dec14:
-    """Tests for ll_033_negative_momentum_buying_dec14"""
-
-    @pytest.mark.backtest
-    def test_edge_negative_values_27(self, backtest_engine):
-        """
-        Test with negative values
-
-        Scenario Type: edge
-        Expected: Should handle gracefully
-        """
-        scenario = {
-            "name": "Edge: Negative values",
-            "lesson_id": "ll_033_negative_momentum_buying_dec14",
-            "type": "edge",
-            "parameters": {'quantity': -1, 'price': -100},
-            "market_conditions": {},
         }
 
         result = backtest_engine.run_scenario(scenario)
@@ -1201,114 +1057,6 @@ class TestLl_030_Langsmith_Deep_Agent_Observability:
             "type": "negative",
             "parameters": {'symbols': ['RL', 'A', 'B', 'GPT', 'LLM'], 'strategies': ['our', 'using', 'selection']},
             "market_conditions": {'volume': 'elevated', 'trend': 'elevated'},
-        }
-
-        result = backtest_engine.run_scenario(scenario)
-
-        # Validate based on scenario type
-        if scenario["type"] == "negative":
-            # Negative scenarios should be blocked or show loss
-            assert result.get("blocked") or result.get("pnl", 0) < 0, \
-                f"Negative scenario should fail: {result}"
-        elif scenario["type"] == "positive":
-            # Positive scenarios should succeed
-            assert not result.get("blocked"), \
-                f"Positive scenario should succeed: {result}"
-        else:
-            # Edge cases should not crash
-            assert "error" not in result, \
-                f"Edge case should handle gracefully: {result}"
-
-
-class TestLl_034_Crypto_Order_Fill_Verification:
-    """Tests for ll_034_crypto_order_fill_verification"""
-
-    @pytest.mark.backtest
-    def test_negative_ll_034_always_verify_crypto_order_fills_33(self, backtest_engine):
-        """
-        Reproduce failure conditions from ll_034_crypto_order_fill_verification
-
-        Scenario Type: negative
-        Expected: Trade should be blocked or flagged
-        """
-        scenario = {
-            "name": "Negative: LL-034: Always Verify Crypto Order Fills",
-            "lesson_id": "ll_034_crypto_order_fill_verification",
-            "type": "negative",
-            "parameters": {'symbols': ['L', 'LL', 'GTC', 'P', 'US'], 'strategies': ['reported', 'showed']},
-            "market_conditions": {'time': 'elevated', 'news': 'elevated'},
-        }
-
-        result = backtest_engine.run_scenario(scenario)
-
-        # Validate based on scenario type
-        if scenario["type"] == "negative":
-            # Negative scenarios should be blocked or show loss
-            assert result.get("blocked") or result.get("pnl", 0) < 0, \
-                f"Negative scenario should fail: {result}"
-        elif scenario["type"] == "positive":
-            # Positive scenarios should succeed
-            assert not result.get("blocked"), \
-                f"Positive scenario should succeed: {result}"
-        else:
-            # Edge cases should not crash
-            assert "error" not in result, \
-                f"Edge case should handle gracefully: {result}"
-
-
-class TestLl_034_Crypto_Order_Fill_Verification:
-    """Tests for ll_034_crypto_order_fill_verification"""
-
-    @pytest.mark.backtest
-    def test_edge_null_handling_34(self, backtest_engine):
-        """
-        Test with null/None values
-
-        Scenario Type: edge
-        Expected: Should handle gracefully
-        """
-        scenario = {
-            "name": "Edge: Null handling",
-            "lesson_id": "ll_034_crypto_order_fill_verification",
-            "type": "edge",
-            "parameters": {'symbol': None},
-            "market_conditions": {},
-        }
-
-        result = backtest_engine.run_scenario(scenario)
-
-        # Validate based on scenario type
-        if scenario["type"] == "negative":
-            # Negative scenarios should be blocked or show loss
-            assert result.get("blocked") or result.get("pnl", 0) < 0, \
-                f"Negative scenario should fail: {result}"
-        elif scenario["type"] == "positive":
-            # Positive scenarios should succeed
-            assert not result.get("blocked"), \
-                f"Positive scenario should succeed: {result}"
-        else:
-            # Edge cases should not crash
-            assert "error" not in result, \
-                f"Edge case should handle gracefully: {result}"
-
-
-class TestLl_034_Crypto_Order_Fill_Verification:
-    """Tests for ll_034_crypto_order_fill_verification"""
-
-    @pytest.mark.backtest
-    def test_edge_timeout_handling_35(self, backtest_engine):
-        """
-        Test timeout scenarios
-
-        Scenario Type: edge
-        Expected: Should handle gracefully
-        """
-        scenario = {
-            "name": "Edge: Timeout handling",
-            "lesson_id": "ll_034_crypto_order_fill_verification",
-            "type": "edge",
-            "parameters": {},
-            "market_conditions": {'api_delay': 30},
         }
 
         result = backtest_engine.run_scenario(scenario)
