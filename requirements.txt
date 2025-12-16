@@ -33,7 +33,7 @@ distro==1.9.0
 docstring-parser==0.17.0
 farama-notifications==0.0.4
 feedparser==6.0.10
-filelock==3.20.0
+filelock==3.20.1
 fonttools==4.61.0
 frozendict==2.4.7
 frozenlist==1.8.0
@@ -180,13 +180,3 @@ yarl==1.22.0
 yfinance==0.2.58
 youtube-transcript-api==1.2.3
 zstandard==0.23.0
-
-# === RAG ML Dependencies (Added Dec 15, 2025) ===
-# Full vectorized RAG with semantic search
-chromadb==0.6.3
-sentence-transformers==3.4.1
-rank_bm25==0.2.2
-lancedb>=0.4.0
-fastembed>=0.2.0
-pyarrow>=14.0.0
-tqdm>=4.66.0
