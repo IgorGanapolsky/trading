@@ -804,7 +804,7 @@ jobs:
           fi
 
       - name: Commit trading data updates
-        if: steps.check_execution.outputs.skip != 'true'
+        if: steps.check_execution.outputs.skip != 'true' && steps.execute_trading.outcome == 'success'
         continue-on-error: true  # Non-fatal - trading already succeeded
         run: |
           echo "💾 Committing trading data updates..."

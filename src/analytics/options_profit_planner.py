@@ -38,18 +38,20 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     TradingClient = None  # type: ignore[assignment]
 
-from src.agents.execution_agent import ExecutionAgent
-from src.core.options_client import AlpacaOptionsClient
+try:  # Optional - execution agent requires alpaca SDK
+    from src.agents.execution_agent import ExecutionAgent
+except Exception:  # pragma: no cover - alpaca may not be installed in CI
+    ExecutionAgent = None  # type: ignore[assignment,misc]
+
+try:  # Optional - options client requires alpaca SDK
+    from src.core.options_client import AlpacaOptionsClient
+except Exception:  # pragma: no cover - alpaca may not be installed in CI
+    AlpacaOptionsClient = None  # type: ignore[assignment,misc]
 
 try:  # Optional import for runtime typing; not required for JSON snapshots
     from src.strategies.rule_one_options import RuleOneOptionsSignal  # type: ignore
 except Exception:  # pragma: no cover - fallback for test environments without full deps
     RuleOneOptionsSignal = Any  # type: ignore
-
-try:  # Optional - only needed when executing theta orders live
-    from src.core.options_client import AlpacaOptionsClient
-except Exception:  # pragma: no cover - dependency may be missing locally
-    AlpacaOptionsClient = None  # type: ignore[misc,assignment]
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from src.agents.execution_agent import ExecutionAgent

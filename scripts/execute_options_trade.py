@@ -658,11 +658,14 @@ def main():
 
         logger.info(f"\n💾 Results saved to {result_file}")
 
-        # R&D Phase: Don't fail workflow on order errors - log and continue
-        # Acceptable statuses: ORDER_SUBMITTED, DRY_RUN, NO_TRADE, ERROR (log but don't fail)
-        return (
-            0 if result.get("status") in ["ORDER_SUBMITTED", "DRY_RUN", "NO_TRADE", "ERROR"] else 1
-        )
+        # R&D Phase: Acceptable statuses that indicate success or no-action
+        # ERROR status should fail workflow so CI shows accurate status
+        status = result.get("status")
+        if status in ["ORDER_SUBMITTED", "DRY_RUN", "NO_TRADE"]:
+            return 0
+        else:
+            logger.error(f"❌ Options execution failed with status: {status}")
+            return 1
 
     except Exception as e:
         logger.exception(f"❌ Fatal error: {e}")
