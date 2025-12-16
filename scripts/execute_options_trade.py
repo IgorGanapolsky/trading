@@ -223,19 +223,20 @@ def get_trend_filter(symbol: str, lookback_days: int = 20) -> dict:
         price_vs_ma = (current_price - ma_current) / ma_current * 100
 
         # Determine trend
-        # Strong downtrend: slope < -0.2% per day AND price below MA
-        # Moderate downtrend: slope < -0.1% per day
-        # Uptrend/Sideways: slope >= -0.1%
+        # RELAXED thresholds to allow more trades (Dec 16 fix)
+        # Strong downtrend: slope < -0.5% per day AND price below MA by 5%+
+        # Moderate downtrend: slope < -0.3% per day
+        # Uptrend/Sideways: slope >= -0.3%
 
-        if slope < -0.2 and price_vs_ma < -2:
+        if slope < -0.5 and price_vs_ma < -5:
             trend = "STRONG_DOWNTREND"
             recommendation = "AVOID_PUTS"
             logger.warning("   ❌ STRONG DOWNTREND detected!")
             logger.warning(f"      MA slope: {slope:.3f}%/day, Price vs MA: {price_vs_ma:.1f}%")
-        elif slope < -0.1:
+        elif slope < -0.3:
             trend = "MODERATE_DOWNTREND"
-            recommendation = "CAUTION"
-            logger.info("   ⚠️ Moderate downtrend - proceed with caution")
+            recommendation = "CAUTION_BUT_PROCEED"
+            logger.info("   ⚠️ Moderate downtrend - proceeding with caution")
             logger.info(f"      MA slope: {slope:.3f}%/day, Price vs MA: {price_vs_ma:.1f}%")
         else:
             trend = "UPTREND_OR_SIDEWAYS"

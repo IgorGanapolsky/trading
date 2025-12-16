@@ -662,6 +662,39 @@ jobs:
             echo "⚠️  SOFI wheel strategy returned non-zero (check logs)"
           }
 
+          # Additional tickers for more opportunities (Dec 16 expansion)
+          echo ""
+          echo "📈 Step 6: Executing wheel strategy on AMD..."
+          python3 scripts/execute_options_trade.py \
+            --strategy wheel \
+            --symbol AMD || {
+            echo "⚠️  AMD wheel strategy returned non-zero"
+          }
+
+          echo ""
+          echo "📈 Step 7: Executing wheel strategy on IWM..."
+          python3 scripts/execute_options_trade.py \
+            --strategy wheel \
+            --symbol IWM || {
+            echo "⚠️  IWM wheel strategy returned non-zero"
+          }
+
+          echo ""
+          echo "📈 Step 8: Executing wheel strategy on AAPL..."
+          python3 scripts/execute_options_trade.py \
+            --strategy wheel \
+            --symbol AAPL || {
+            echo "⚠️  AAPL wheel strategy returned non-zero"
+          }
+
+          echo ""
+          echo "📈 Step 9: Executing wheel strategy on NVDA..."
+          python3 scripts/execute_options_trade.py \
+            --strategy wheel \
+            --symbol NVDA || {
+            echo "⚠️  NVDA wheel strategy returned non-zero"
+          }
+
           # Update theta harvest timestamp in system state
           echo ""
           echo "📝 Step 4: Recording theta harvest timestamp..."
