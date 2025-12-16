@@ -649,6 +649,24 @@ jobs:
             echo "⚠️  QQQ wheel strategy returned non-zero (check logs)"
           }
 
+          # Execute wheel strategy on smaller underlyings (lower collateral requirement)
+          # PLTR ~$75 = $7,500 collateral, SOFI ~$16 = $1,600 collateral
+          echo ""
+          echo "📈 Step 4: Executing wheel strategy on PLTR (lower collateral)..."
+          python3 scripts/execute_options_trade.py \
+            --strategy wheel \
+            --symbol PLTR || {
+            echo "⚠️  PLTR wheel strategy returned non-zero (check logs)"
+          }
+
+          echo ""
+          echo "📈 Step 5: Executing wheel strategy on SOFI (lowest collateral)..."
+          python3 scripts/execute_options_trade.py \
+            --strategy wheel \
+            --symbol SOFI || {
+            echo "⚠️  SOFI wheel strategy returned non-zero (check logs)"
+          }
+
           # Update theta harvest timestamp in system state
           echo ""
           echo "📝 Step 4: Recording theta harvest timestamp..."
