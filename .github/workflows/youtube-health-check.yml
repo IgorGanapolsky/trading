@@ -1,0 +1,104 @@
+name: YouTube Integration Health Check
+
+on:
+  # Run daily at 7 AM ET (before market open)
+  schedule:
+    - cron: '0 12 * * 1-5'  # 12:00 UTC = 7:00 AM ET
+  # Run on push to relevant files
+  push:
+    paths:
+      - '.claude/skills/youtube-analyzer/**'
+      - 'scripts/youtube_monitor.py'
+      - 'scripts/youtube_channels.json'
+      - 'scripts/verify_youtube_health.py'
+      - '.github/workflows/youtube-health-check.yml'
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install yt-dlp youtube-transcript-api openai pydantic
+
+      - name: Run YouTube Health Check
+        id: health
+        run: |
+          python3 scripts/verify_youtube_health.py --verbose
+        continue-on-error: true
+
+      - name: Test YouTube Transcript Fetch
+        id: transcript
+        run: |
+          python3 -c "
+          from youtube_transcript_api import YouTubeTranscriptApi
+          api = YouTubeTranscriptApi()
+          # Test with a short, well-known video
+          transcript = api.fetch('jNQXAC9IVRw', languages=['en'])
+          print(f'Transcript fetched: {len(transcript.snippets)} snippets')
+          print('YouTube API: WORKING')
+          "
+        continue-on-error: true
+
+      - name: Verify MCP Config
+        run: |
+          echo "Checking MCP configuration..."
+          python3 -c "
+          import json
+          config = json.load(open('.claude/mcp_config.json'))
+          servers = config.get('mcpServers', {})
+          if 'youtube-transcript' in servers:
+              print('✓ youtube-transcript MCP server configured')
+              print(f'  Command: {servers[\"youtube-transcript\"].get(\"command\")}')
+          else:
+              print('✗ youtube-transcript MCP server NOT configured')
+              exit(1)
+          "
+
+      - name: Verify Channel Config
+        run: |
+          echo "Checking channel configuration..."
+          python3 -c "
+          import json
+          config = json.load(open('scripts/youtube_channels.json'))
+          channels = config.get('channels', [])
+          print(f'✓ {len(channels)} channels configured:')
+          for ch in channels:
+              print(f'  - {ch.get(\"name\", \"unknown\")} ({ch.get(\"channel_id\", \"no-id\")})')
+          "
+
+      - name: Report Status
+        if: always()
+        run: |
+          echo "========================================="
+          echo "YOUTUBE INTEGRATION STATUS"
+          echo "========================================="
+          if [ "${{ steps.health.outcome }}" == "success" ]; then
+            echo "✅ Health Check: PASSED"
+          else
+            echo "⚠️ Health Check: ISSUES FOUND"
+          fi
+          if [ "${{ steps.transcript.outcome }}" == "success" ]; then
+            echo "✅ YouTube API: ACCESSIBLE"
+          else
+            echo "⚠️ YouTube API: LIMITED (may be rate-limited or blocked)"
+          fi
+          echo "========================================="
+
+      - name: Fail if critical issues
+        if: steps.health.outcome == 'failure' && steps.transcript.outcome == 'failure'
+        run: |
+          echo "Both health check and API test failed - critical issue!"
+          exit 1
