@@ -35,6 +35,15 @@ except ImportError:
     LANGSMITH_AVAILABLE = False
     logger.warning("LangSmith not available - gate decisions will only be logged locally")
 
+# Hindsight Agentic Memory - 91% accuracy on LongMemEval (Dec 2025)
+# Provides: retain/recall/reflect API with confidence-scored opinions
+try:
+    from src.rag.hindsight_adapter import HindsightAdapter, is_hindsight_available
+    HINDSIGHT_AVAILABLE = True
+except ImportError:
+    HINDSIGHT_AVAILABLE = False
+    HindsightAdapter = None  # type: ignore
+
 # Gate configuration
 GATE_ENABLED = os.getenv("MANDATORY_TRADE_GATE", "true").lower() in {"1", "true", "yes"}
 BLOCK_ON_RAG_WARNING = os.getenv("BLOCK_ON_RAG_WARNING", "true").lower() in {"1", "true", "yes"}
@@ -121,6 +130,19 @@ class MandatoryTradeGate:
         except Exception as e:
             logger.warning(f"ML anomaly detector not available: {e}")
 
+        # Initialize Hindsight Agentic Memory (graceful fallback to local RAG)
+        self.hindsight_adapter = None
+        self.hindsight_available = False
+        if HINDSIGHT_AVAILABLE:
+            try:
+                self.hindsight_adapter = HindsightAdapter()
+                health = self.hindsight_adapter.check_health()
+                self.hindsight_available = True
+                mode = "full" if health.should_use_hindsight else "degraded"
+                logger.info(f"Hindsight memory initialized for trade gate (mode: {mode})")
+            except Exception as e:
+                logger.debug(f"Hindsight adapter not available: {e}")
+
     def _verify_tracing_health(self) -> None:
         """Verify LangSmith tracing is operational."""
         try:
@@ -191,6 +213,40 @@ class MandatoryTradeGate:
         except Exception as e:
             logger.error(f"RAG query failed: {e}")
             warnings.append(f"RAG query error: {e}")
+
+        return warnings
+
+    def _query_hindsight_memory(self, symbol: str, strategy: str) -> list[str]:
+        """Query Hindsight agentic memory for relevant trade warnings."""
+        warnings = []
+
+        if not self.hindsight_available or not self.hindsight_adapter:
+            return []
+
+        try:
+            # Check for similar past trades
+            result = self.hindsight_adapter.check_similar_trades(
+                symbol=symbol,
+                strategy=strategy,
+                n_results=3,
+            )
+
+            if result.success and result.data:
+                # Look for negative outcomes in similar trades
+                for memory in (result.data if isinstance(result.data, list) else [result.data]):
+                    memory_str = str(memory).lower()
+                    if "loss" in memory_str or "failed" in memory_str:
+                        warnings.append(f"HINDSIGHT: Similar {symbol} trades had losses - review before proceeding")
+                        break
+
+            # Get ticker opinion with confidence
+            opinion = self.hindsight_adapter.get_ticker_opinion(symbol)
+            if opinion.success and opinion.confidence is not None:
+                if opinion.confidence < 0.3:
+                    warnings.append(f"HINDSIGHT: Low conviction on {symbol} ({opinion.confidence:.0%})")
+
+        except Exception as e:
+            logger.debug(f"Hindsight memory query failed: {e}")
 
         return warnings
 
@@ -301,6 +357,11 @@ class MandatoryTradeGate:
         # 1. Query RAG for lessons learned
         rag_warnings = self._query_rag_for_lessons(symbol, strategy, side)
 
+        # 1.5. Query Hindsight agentic memory (auto-fallback to local RAG)
+        hindsight_warnings = self._query_hindsight_memory(symbol, strategy)
+        if hindsight_warnings:
+            logger.info(f"📚 HINDSIGHT: {len(hindsight_warnings)} memory warning(s)")
+
         # 2. Run ML anomaly detection
         ml_anomalies = self._run_ml_anomaly_check(symbol, amount, side)
 
@@ -314,14 +375,15 @@ class MandatoryTradeGate:
             blocked = True
             block_reasons.extend(blocking_anomalies)
 
-        # Check for critical RAG warnings
-        critical_warnings = [w for w in rag_warnings if "CRITICAL" in w.upper()]
+        # Check for critical RAG warnings (includes Hindsight warnings)
+        all_rag_warnings = rag_warnings + hindsight_warnings
+        critical_warnings = [w for w in all_rag_warnings if "CRITICAL" in w.upper()]
         if critical_warnings and BLOCK_ON_RAG_WARNING:
             blocked = True
             block_reasons.extend(critical_warnings)
 
         # Calculate confidence (lower if warnings/anomalies exist)
-        total_issues = len(rag_warnings) + len(ml_anomalies)
+        total_issues = len(all_rag_warnings) + len(ml_anomalies)
         confidence = max(0.0, 1.0 - (total_issues * 0.1))
 
         if blocked:
@@ -334,7 +396,7 @@ class MandatoryTradeGate:
         result = GateResult(
             approved=not blocked,
             reason=reason,
-            rag_warnings=rag_warnings,
+            rag_warnings=all_rag_warnings,  # Includes Hindsight + local RAG warnings
             ml_anomalies=ml_anomalies,
             confidence=confidence,
             timestamp=timestamp,

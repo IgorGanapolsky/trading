@@ -79,6 +79,15 @@ try:
 except ImportError:
     LESSONS_RAG_AVAILABLE = False
 
+# Hindsight Agentic Memory - 91% accuracy on LongMemEval (Dec 2025)
+# Auto-learns from trades, provides confidence-scored opinions
+try:
+    from src.rag.hindsight_adapter import HindsightAdapter, get_hindsight_adapter
+
+    HINDSIGHT_AVAILABLE = True
+except ImportError:
+    HINDSIGHT_AVAILABLE = False
+
 # Reflexion Loop - Self-improving through trade reflection (Dec 2025)
 # Based on Reflexion framework research
 try:

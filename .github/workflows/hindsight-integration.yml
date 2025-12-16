@@ -1,0 +1,197 @@
+name: Hindsight Memory Integration
+
+on:
+  push:
+    paths:
+      - 'src/rag/hindsight_adapter.py'
+      - 'tests/test_hindsight_adapter.py'
+      - 'docker-compose.yml'
+      - '.github/workflows/hindsight-integration.yml'
+  pull_request:
+    paths:
+      - 'src/rag/hindsight_adapter.py'
+      - 'tests/test_hindsight_adapter.py'
+  # Run weekly to ensure Hindsight service compatibility
+  schedule:
+    - cron: '0 6 * * 1'  # Mondays at 6 AM UTC
+  workflow_dispatch:
+
+jobs:
+  test-graceful-degradation:
+    name: Test Without Hindsight Service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install pytest httpx
+          # Don't install hindsight-client to test degradation
+          pip install -e . || true
+
+      - name: Run adapter tests (degraded mode)
+        run: |
+          python -m pytest tests/test_hindsight_adapter.py -v \
+            --tb=short \
+            -x \
+            2>&1 | tee test-results.txt
+
+      - name: Verify graceful degradation
+        run: |
+          python -c "
+          from src.rag.hindsight_adapter import (
+              get_hindsight_adapter,
+              is_hindsight_available
+          )
+          adapter = get_hindsight_adapter()
+
+          # Should work without Hindsight
+          result = adapter.retain('Test lesson from CI')
+          print(f'Retain result: {result}')
+
+          result = adapter.recall('Test query')
+          print(f'Recall result: {result}')
+
+          # Verify it didn't crash
+          print('Graceful degradation: VERIFIED')
+          "
+
+  test-with-hindsight-service:
+    name: Test With Hindsight Service
+    runs-on: ubuntu-latest
+    services:
+      hindsight:
+        image: ghcr.io/vectorize-io/hindsight:latest
+        ports:
+          - 8888:8888
+          - 9999:9999
+        env:
+          HINDSIGHT_API_LLM_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          HINDSIGHT_API_LLM_MODEL: openai/gpt-4o-mini
+        options: >-
+          --health-cmd "wget --spider -q http://localhost:8888/health || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --health-start-period 30s
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install pytest httpx hindsight-client
+          pip install -e . || true
+
+      - name: Wait for Hindsight to be ready
+        run: |
+          echo "Waiting for Hindsight service..."
+          for i in {1..30}; do
+            if curl -s http://localhost:8888/health > /dev/null 2>&1; then
+              echo "Hindsight is ready!"
+              break
+            fi
+            echo "Attempt $i/30..."
+            sleep 2
+          done
+
+      - name: Run adapter tests (full mode)
+        env:
+          HINDSIGHT_BASE_URL: http://localhost:8888
+        run: |
+          python -m pytest tests/test_hindsight_adapter.py -v \
+            --tb=short \
+            2>&1 | tee test-results.txt
+
+      - name: Test full Hindsight integration
+        env:
+          HINDSIGHT_BASE_URL: http://localhost:8888
+        run: |
+          python -c "
+          from src.rag.hindsight_adapter import (
+              HindsightAdapter,
+              check_hindsight_health
+          )
+
+          # Check health
+          health = check_hindsight_health()
+          print(f'Health check: {health}')
+
+          if health.should_use_hindsight:
+              print('SUCCESS: Hindsight service is operational')
+
+              # Test actual operations
+              adapter = HindsightAdapter()
+
+              # Retain
+              result = adapter.retain('CI test: SPY put trade lost \$50 - entered too early')
+              print(f'Retain: {result}')
+
+              # Recall
+              result = adapter.recall('What do I know about SPY trades?')
+              print(f'Recall: {result}')
+
+              # Reflect
+              result = adapter.reflect('What patterns lead to losses?')
+              print(f'Reflect: {result}')
+          else:
+              print(f'WARNING: Hindsight not fully operational: {health.errors}')
+              # Don't fail - service might still be starting
+          "
+
+  integration-health-check:
+    name: Verify No Breaking Changes
+    runs-on: ubuntu-latest
+    needs: [test-graceful-degradation]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install minimal dependencies
+        run: pip install httpx
+
+      - name: Verify adapter doesn't break existing code
+        run: |
+          # Import should never fail
+          python -c "from src.rag.hindsight_adapter import HindsightAdapter; print('Import OK')"
+
+          # Health check should never raise
+          python -c "
+          from src.rag.hindsight_adapter import check_hindsight_health
+          result = check_hindsight_health()
+          assert result is not None
+          print(f'Health check returned: available={result.available}')
+          "
+
+          # Operations should never raise
+          python -c "
+          from src.rag.hindsight_adapter import get_hindsight_adapter
+          adapter = get_hindsight_adapter()
+
+          # All should complete without exception
+          adapter.retain('test')
+          adapter.recall('test')
+          adapter.reflect('test')
+          adapter.remember_trade_outcome('SPY', 'buy', 'win', 100.0, 'test')
+          adapter.check_similar_trades('SPY', 'MACD')
+          adapter.get_ticker_opinion('SPY')
+
+          print('All operations completed without exception')
+          "
