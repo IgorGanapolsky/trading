@@ -97,6 +97,13 @@ try:
 except ImportError:
     INTROSPECTION_AVAILABLE = False
 
+# LangSmith tracing for session observability (Dec 2025)
+try:
+    from src.observability.langsmith_tracer import TraceType, get_tracer
+    LANGSMITH_AVAILABLE = True
+except ImportError:
+    LANGSMITH_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 _US_HOLIDAYS_CACHE: dict[int, holidays.HolidayBase] = {}
@@ -392,6 +399,25 @@ class TradingOrchestrator:
         active_tickers = session_profile["tickers"]
         self.session_profile = session_profile
         self.smart_dca.reset_session(active_tickers)
+
+        # Trace entire trading session to LangSmith
+        session_span = None
+        if LANGSMITH_AVAILABLE:
+            try:
+                tracer = get_tracer()
+                session_span = tracer.trace(
+                    name=f"trading_session_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M')}",
+                    trace_type=TraceType.ANALYSIS,
+                    symbol="SESSION",
+                )
+                session_span.__enter__()
+                session_span.inputs = {
+                    "tickers": active_tickers,
+                    "num_tickers": len(active_tickers),
+                    "session_time": datetime.now(timezone.utc).isoformat(),
+                }
+            except Exception as e:
+                logger.debug(f"Session tracing init failed: {e}")
 
         # Gate 0: Mental Toughness Coach - Start session and check readiness
         coaching_intervention = None
