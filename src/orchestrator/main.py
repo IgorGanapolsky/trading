@@ -699,10 +699,12 @@ class TradingOrchestrator:
                     logger.info(f"Executing exit for {symbol}: {reason}")
 
                     # Create sell request through trade gateway
+                    # Use abs() because short options have negative qty (e.g., -1.0)
+                    # but we need positive qty for the sell order
                     trade_request = TradeRequest(
                         symbol=symbol,
                         side="sell",
-                        quantity=position.quantity,
+                        quantity=abs(position.quantity),
                         source=f"position_manager.{reason}",
                     )
 
