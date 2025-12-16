@@ -32,12 +32,21 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # Set up LangSmith tracing if API key is available
-if os.getenv("LANGCHAIN_API_KEY"):
+# Support BOTH naming conventions: LANGSMITH_* and LANGCHAIN_*
+# LangChain SDK uses LANGCHAIN_* but users may set LANGSMITH_* (more intuitive)
+_langsmith_api_key = os.getenv("LANGCHAIN_API_KEY") or os.getenv("LANGSMITH_API_KEY")
+_langsmith_project = os.getenv("LANGCHAIN_PROJECT") or os.getenv("LANGSMITH_PROJECT") or "trading-system"
+
+if _langsmith_api_key:
+    # Set the official LangChain env vars that the SDK expects
+    os.environ["LANGCHAIN_API_KEY"] = _langsmith_api_key
     os.environ["LANGCHAIN_TRACING_V2"] = "true"
-    os.environ["LANGCHAIN_PROJECT"] = os.getenv("LANGCHAIN_PROJECT", "trading-system")
+    os.environ["LANGCHAIN_PROJECT"] = _langsmith_project
     LANGSMITH_ENABLED = True
+    logger.info(f"LangSmith tracing enabled for project: {_langsmith_project}")
 else:
     LANGSMITH_ENABLED = False
+    logger.debug("LangSmith tracing disabled - no API key found")
 
 # Helicone configuration
 HELICONE_API_KEY = os.getenv("HELICONE_API_KEY")
@@ -166,7 +175,9 @@ def get_traced_async_openai_client(api_key: str | None = None, base_url: str | N
 
 def is_langsmith_enabled() -> bool:
     """Check if LangSmith tracing is enabled."""
-    return LANGSMITH_ENABLED and os.getenv("LANGCHAIN_API_KEY") is not None
+    return LANGSMITH_ENABLED and (
+        os.getenv("LANGCHAIN_API_KEY") is not None or os.getenv("LANGSMITH_API_KEY") is not None
+    )
 
 
 def is_helicone_enabled() -> bool:
