@@ -453,9 +453,15 @@ class BenchmarkComparator:
             else:
                 return 0.0
 
+        # Apply volatility floor to prevent extreme Sharpe ratios
+        MIN_VOLATILITY_FLOOR = 0.001
+        std_return = max(std_return, MIN_VOLATILITY_FLOOR)
+
         daily_rf = self.risk_free_rate / 252
         sharpe = (mean_return - daily_rf) / std_return * np.sqrt(252)
-        return float(sharpe)
+        # Clamp to reasonable bounds [-10, 10]
+        sharpe = float(np.clip(sharpe, -10.0, 10.0))
+        return sharpe
 
     def _calculate_max_drawdown(self, values: list[float]) -> float:
         """Calculate maximum drawdown percentage."""

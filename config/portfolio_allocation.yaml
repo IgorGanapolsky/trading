@@ -1,35 +1,38 @@
 # =============================================================================
-# PORTFOLIO ALLOCATION CONFIGURATION v2.2
+# PORTFOLIO ALLOCATION CONFIGURATION v2.3
 # =============================================================================
-# UPDATED: 2025-12-16 - Equities-Only Strategy
+# UPDATED: 2025-12-16 - Options-Dominant Strategy (60% Allocation)
 # Based on Day 9 performance data:
-#   - Options (Short Puts): +$327, 75% win rate → PRIMARY STRATEGY
+#   - Options (Short Puts): +$327, 75% win rate → DOMINANT STRATEGY
 #   - Bonds: Break-even → KEEP AS HEDGE
 #
-# Key Changes:
-# - Options allocation: 37% (PRIMARY PROFIT DRIVER)
-# - Treasury allocation: 15% (capital preservation hedge)
-# - Core equities: 25% (keep SPY exposure)
+# Key Changes (v2.3):
+# - Options allocation: 60% (INCREASED from 37%) - PRIMARY PROFIT DRIVER
+# - Core equities: 25% (SPY/QQQ exposure and options collateral)
+# - Treasury allocation: 15% (10% core + 5% dynamic - capital preservation)
+# - Growth stocks: 0% (DISABLED - reallocated to options)
+# - REITs: 0% (DISABLED - reallocated to options)
+# - Precious metals: 0% (DISABLED - reallocated to options)
 # - All crypto removed - equities-only focus
 #
 # Created: 2025-12-03
-# Updated: 2025-12-16 (Equities-Only)
+# Updated: 2025-12-16 (Options-Dominant v2.3)
 # =============================================================================
 
-version: "2.0"
-description: "Options-first portfolio - maximizing proven profit drivers"
+version: "2.3"
+description: "Options-dominant portfolio (60%) - maximizing proven profit drivers"
 
 # =============================================================================
 # CORE ALLOCATION BUCKETS (Rebalanced for Options-First)
 # =============================================================================
 allocations:
   # ==========================================================================
-  # 🏆 PRIMARY: OPTIONS PREMIUM SELLING (37%)
+  # 🏆 PRIMARY: OPTIONS PREMIUM SELLING (60%)
   # ==========================================================================
   # PROVEN WINNER: 75% win rate, +$327 profit in 9 days
   # Strategy: Sell cash-secured puts on quality stocks
   options_premium:
-    weight: 0.37  # 37% allocation
+    weight: 0.60  # 60% allocation - INCREASED from 37%
     active: true  # ACTIVATED
     strategies:
       - name: "Cash-Secured Puts"
@@ -83,36 +86,36 @@ allocations:
     description: "Long-duration treasuries for rate sensitivity"
 
   # ==========================================================================
-  # GROWTH: INDIVIDUAL STOCKS (10%)
+  # GROWTH: INDIVIDUAL STOCKS (0% - DISABLED)
   # ==========================================================================
   growth_stocks:
     tickers: ["NVDA", "GOOGL", "AMZN", "MSFT"]
-    weight: 0.10  # 10% allocation (unchanged)
+    weight: 0.00  # 0% allocation - DISABLED to increase options allocation
     selection: momentum
     rebalance: daily
     bypass_gates: false
-    description: "High-conviction tech growth exposure"
+    description: "High-conviction tech growth exposure - PAUSED"
 
   # ==========================================================================
-  # INCOME: REITs (5%)
+  # INCOME: REITs (0% - DISABLED)
   # ==========================================================================
   # Test period - collecting data
   reits:
     ticker: VNQ
-    weight: 0.05  # 5% allocation (was 10%)
+    weight: 0.00  # 0% allocation - DISABLED to increase options allocation
     rebalance: monthly
     bypass_gates: false
-    description: "Real estate exposure and dividend income - test period"
+    description: "Real estate exposure and dividend income - PAUSED"
 
   # ==========================================================================
-  # RESERVE: PRECIOUS METALS (3%)
+  # RESERVE: PRECIOUS METALS (0% - DISABLED)
   # ==========================================================================
   precious_metals:
     tickers: ["GLD", "SLV"]
-    weight: 0.03  # 3% allocation
+    weight: 0.00  # 0% allocation - DISABLED to increase options allocation
     rebalance: monthly
     bypass_gates: false
-    description: "Inflation hedge and portfolio diversification"
+    description: "Inflation hedge and portfolio diversification - PAUSED"
 
 # =============================================================================
 # OPTIONS STRATEGY CONFIGURATION
@@ -195,13 +198,13 @@ position_rules:
 # =============================================================================
 daily_deployment:
   total_daily_budget: 50.00  # $50/day (was $10)
-  
+
   allocation:
-    options_premium: 27.00   # 54% to options ($27/day)
+    options_premium: 30.00   # 60% to options ($30/day) - INCREASED from $27
     core_etfs: 12.50         # 25% to SPY/QQQ ($12.50/day)
     treasuries: 7.50         # 15% to bonds ($7.50/day)
-    growth_stocks: 3.00      # 6% to growth ($3/day)
-    reits: 0.00              # Paused until data collected
+    growth_stocks: 0.00      # 0% - DISABLED to fund options increase
+    reits: 0.00              # 0% - DISABLED to fund options increase
   
   options_deployment:
     strategy: "weekly_premium"
@@ -214,7 +217,7 @@ daily_deployment:
 # =============================================================================
 risk:
   max_single_position: 0.15
-  max_options_allocation: 0.40  # Cap options at 40% to avoid overconcentration
+  max_options_allocation: 0.65  # Cap options at 65% (was 40%) - allows 60% target
   max_treasury_allocation: 0.30
   max_equity_drawdown: 0.10
   safe_havens: ["TLT", "IEF", "BND", "GOVT", "SHY", "BIL"]
@@ -233,12 +236,12 @@ projections:
     options_premium: 0.24   # 24% (2% monthly * 12)
     core_etfs: 0.12         # 12% average
     treasuries: 0.045       # 4.5% carry
-    growth_stocks: 0.18     # 18% growth
-    reits: 0.08             # 8% with dividends
-  blended_return: 0.156     # ~15.6% blended
-  daily_income: 42.74       # $100k * 15.6% / 365
-  monthly_options_target: 700  # $700/month options premium
-  notes: "Options-first model based on proven 75% win rate"
+    growth_stocks: 0.00     # 0% (disabled)
+    reits: 0.00             # 0% (disabled)
+  blended_return: 0.185     # ~18.5% blended (60%*24% + 25%*12% + 15%*4.5%)
+  daily_income: 50.68       # $100k * 18.5% / 365
+  monthly_options_target: 1200  # $1,200/month options premium (60% of $100k @ 2%/mo)
+  notes: "Options-dominant model (60% allocation) based on proven 75% win rate"
 
 # =============================================================================
 # PROFIT REINVESTMENT STRATEGY (NEW - Dec 15, 2025)

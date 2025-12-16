@@ -291,12 +291,15 @@ class RSIOptimizer:
         total_return = (capital - self.initial_capital) / self.initial_capital
 
         # Sharpe ratio (annualized, assuming ~252 trading days)
+        # Apply volatility floor to prevent extreme Sharpe ratios
+        MIN_VOLATILITY_FLOOR = 0.001  # Increased from 0.0001 to prevent extreme ratios
         if returns and len(returns) > 1:
             std_return = np.std(returns, ddof=1)
-            if std_return > 0:
-                sharpe_ratio = (avg_return / std_return) * np.sqrt(252)
-            else:
-                sharpe_ratio = 0.0
+            # Apply volatility floor
+            std_return = max(std_return, MIN_VOLATILITY_FLOOR)
+            sharpe_ratio = (avg_return / std_return) * np.sqrt(252)
+            # Clamp to reasonable bounds [-10, 10]
+            sharpe_ratio = np.clip(sharpe_ratio, -10.0, 10.0)
         else:
             sharpe_ratio = 0.0
 

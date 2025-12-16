@@ -35,7 +35,7 @@ class RiskManager:
     def __init__(
         self,
         max_position_pct: float = 0.05,
-        min_notional: float = 3.0,
+        min_notional: float = 50.0,
         use_atr_scaling: bool | None = None,
         atr_period: int = 14,
         kelly_cap: float = 0.05,

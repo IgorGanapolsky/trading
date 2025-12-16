@@ -72,7 +72,7 @@ class VolatilityTargetConfig:
 
     # Position limits
     max_position_pct: float = 0.20  # Max 20% of capital in single position
-    min_position_dollars: float = 10.0  # Minimum $10 position
+    min_position_dollars: float = 50.0  # Minimum $50 position - ensures profit after 0.18% fees
 
 
 @dataclass

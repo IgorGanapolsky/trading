@@ -141,7 +141,7 @@ Tier 4 (Crowd Reserve): $1.00 (10%)
 ```
 
 ### Risk Parameters
-- **Minimum Position Size**: $10 (Alpaca requirement)
+- **Minimum Position Size**: $50 (ensures profit after 0.18% trading fees)
 - **Maximum Position Size**: 5% of portfolio
 - **Stop-Loss (Tier 2)**: 3% below entry
 - **Take-Profit (Tier 2)**: 10% above entry

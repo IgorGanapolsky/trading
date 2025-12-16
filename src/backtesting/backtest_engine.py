@@ -899,7 +899,7 @@ class BacktestEngine:
         # Sharpe ratio - with volatility floor to prevent extreme values
         # Requires minimum 30 trading days for statistical significance
         MIN_TRADING_DAYS = 30
-        MIN_VOLATILITY_FLOOR = 0.0001  # 0.01% minimum daily volatility
+        MIN_VOLATILITY_FLOOR = 0.001  # 0.1% minimum daily volatility (increased to prevent extreme ratios)
 
         if len(daily_returns) >= MIN_TRADING_DAYS:
             mean_return = np.mean(daily_returns)

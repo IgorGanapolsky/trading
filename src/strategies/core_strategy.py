@@ -188,19 +188,19 @@ class CoreStrategy:
 
     # Risk parameters - TIGHTENED for active trading (Dec 3, 2025)
     # Previous: 5% stop/profit resulted in 0 closed trades, 0% win rate
-    # New: 3% thresholds ensure positions are actively managed
-    DEFAULT_STOP_LOSS_PCT = 0.03  # 3% stop loss (tighter for active trading)
+    # Updated Dec 16: 5% thresholds to allow positions to close (3% was too tight)
+    DEFAULT_STOP_LOSS_PCT = 0.05  # 5% stop loss (tighter for active trading)
     ATR_STOP_MULTIPLIER = 2.0  # ATR multiplier for dynamic stops
     USE_ATR_STOPS = True  # Use ATR-based stops (more adaptive)
     REBALANCE_THRESHOLD = 0.05  # 5% deviation triggers rebalance (research-optimized)
     REBALANCE_FREQUENCY_DAYS = 90  # Quarterly rebalancing (research-optimized)
 
     # Profit-taking parameters - TIGHTENED for active trading
-    TAKE_PROFIT_PCT = 0.03  # 3% profit target (active trading)
+    TAKE_PROFIT_PCT = 0.05  # 5% profit target (active trading)
 
     # Time-based exit parameters (NEW Dec 3, 2025)
-    MAX_HOLDING_DAYS = 10  # Close positions after 10 days regardless of P/L
-    ENABLE_MOMENTUM_EXIT = True  # Exit on MACD bearish crossover
+    MAX_HOLDING_DAYS = 14  # Close positions after 14 days regardless of P/L
+    ENABLE_MOMENTUM_EXIT = False  # DISABLED: MACD reversal causes 5-10% false exits in sideways markets
 
     # Diversification allocation (guaranteed minimums)
     # 55% equity, 20% bonds, 15% REITs, 10% treasuries

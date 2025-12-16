@@ -273,11 +273,11 @@ class TradingOrchestrator:
         # Position manager for active exit management
         self.position_manager = PositionManager(
             conditions=ExitConditions(
-                take_profit_pct=float(os.getenv("TAKE_PROFIT_PCT", "0.03")),
-                stop_loss_pct=float(os.getenv("STOP_LOSS_PCT", "0.02")),
-                max_holding_days=int(os.getenv("MAX_HOLDING_DAYS", "10")),
-                enable_momentum_exit=os.getenv("ENABLE_MOMENTUM_EXIT", "true").lower()
-                in {"1", "true"},
+                take_profit_pct=float(os.getenv("TAKE_PROFIT_PCT", "0.05")),
+                stop_loss_pct=float(os.getenv("STOP_LOSS_PCT", "0.05")),
+                max_holding_days=int(os.getenv("MAX_HOLDING_DAYS", "14")),
+                enable_momentum_exit=os.getenv("ENABLE_MOMENTUM_EXIT", "false").lower()
+                in {"1", "true"},  # DISABLED: MACD reversal causes false exits in sideways markets
                 enable_atr_stop=os.getenv("ENABLE_ATR_STOP", "true").lower() in {"1", "true"},
             )
         )
@@ -920,24 +920,43 @@ class TradingOrchestrator:
             # Gate 2 RL Training: Record trade outcome for DiscoRL/DQN learning
             # Dec 10, 2025: CEO mandate - no dead code, RL must learn from real trades!
             try:
-                pl_pct = (exit_price - entry_price) / entry_price if entry_price > 0 else 0
-                # Scale reward: +-10% maps to +-1.0 reward
-                reward = pl_pct * 10.0
-                # Action: 1=BUY (we bought), outcome determines if it was good
-                action = 1  # BUY action that led to this trade
-                # Record to RL filter for online learning
-                rl_result = self.rl_filter.record_trade_outcome(
-                    entry_state={"symbol": symbol, "entry_price": entry_price},
-                    action=action,
-                    exit_state={"symbol": symbol, "exit_price": exit_price, "pl_pct": pl_pct},
-                    reward=reward,
-                    done=True,
-                )
-                if rl_result:
-                    logger.info(
-                        f"Gate 2 RL: Recorded trade outcome for {symbol} "
-                        f"(reward={reward:.3f}, action={action})"
+                # Get entry features stored when position was opened
+                entry_features = self.position_manager.get_entry_features(symbol)
+
+                if entry_features:
+                    # Fetch current market features for exit state
+                    exit_features = {}
+                    try:
+                        momentum_exit = self.momentum_agent.analyze(symbol)
+                        if momentum_exit:
+                            exit_features = momentum_exit.indicators
+                    except Exception as fetch_err:
+                        logger.debug(
+                            f"Could not fetch exit features for {symbol}: {fetch_err}"
+                        )
+                        exit_features = entry_features  # Fallback to entry features
+
+                    pl_pct = (exit_price - entry_price) / entry_price if entry_price > 0 else 0
+                    # Scale reward: +-10% maps to +-1.0 reward
+                    reward = pl_pct * 10.0
+                    # Action: 1=BUY (we bought), outcome determines if it was good
+                    action = 1  # BUY action that led to this trade
+
+                    # Record to RL filter for online learning with proper market states
+                    rl_result = self.rl_filter.record_trade_outcome(
+                        entry_state=entry_features,
+                        action=action,
+                        exit_state=exit_features,
+                        reward=reward,
+                        done=True,
                     )
+                    if rl_result:
+                        logger.info(
+                            f"Gate 2 RL: Recorded trade outcome for {symbol} "
+                            f"(reward={reward:.3f}, action={action})"
+                        )
+                else:
+                    logger.debug(f"No entry features stored for {symbol}, skipping RL training")
             except Exception as rl_exc:
                 logger.debug(f"Gate 2 RL training update failed (non-critical): {rl_exc}")
 

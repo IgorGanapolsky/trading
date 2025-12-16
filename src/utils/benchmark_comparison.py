@@ -61,9 +61,13 @@ class BenchmarkComparator:
             if len(daily_returns) > 1:
                 mean_return = daily_returns.mean()
                 std_return = daily_returns.std()
-                if std_return > 0:
-                    risk_free_daily = self.risk_free_rate / 252
-                    sharpe = (mean_return - risk_free_daily) / std_return * np.sqrt(252)
+                # Apply volatility floor to prevent extreme Sharpe ratios
+                MIN_VOLATILITY_FLOOR = 0.001
+                std_return = max(std_return, MIN_VOLATILITY_FLOOR)
+                risk_free_daily = self.risk_free_rate / 252
+                sharpe = (mean_return - risk_free_daily) / std_return * np.sqrt(252)
+                # Clamp to reasonable bounds [-10, 10]
+                sharpe = float(np.clip(sharpe, -10.0, 10.0))
 
             return {
                 "strategy": "Buy-and-Hold SPY",
@@ -132,9 +136,13 @@ class BenchmarkComparator:
             if len(daily_returns) > 1:
                 mean_return = daily_returns.mean()
                 std_return = daily_returns.std()
-                if std_return > 0:
-                    risk_free_daily = self.risk_free_rate / 252
-                    sharpe = (mean_return - risk_free_daily) / std_return * np.sqrt(252)
+                # Apply volatility floor to prevent extreme Sharpe ratios
+                MIN_VOLATILITY_FLOOR = 0.001
+                std_return = max(std_return, MIN_VOLATILITY_FLOOR)
+                risk_free_daily = self.risk_free_rate / 252
+                sharpe = (mean_return - risk_free_daily) / std_return * np.sqrt(252)
+                # Clamp to reasonable bounds [-10, 10]
+                sharpe = float(np.clip(sharpe, -10.0, 10.0))
 
             return {
                 "strategy": "60/40 Portfolio (SPY/BND)",

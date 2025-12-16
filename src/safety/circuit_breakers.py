@@ -328,11 +328,14 @@ class SharpeKillSwitch:
         mean_return = np.mean(recent_returns)
         std_return = np.std(recent_returns)
 
-        if std_return == 0:
-            sharpe = 0.0
-        else:
-            # Annualized Sharpe = daily_mean / daily_std * sqrt(252)
-            sharpe = (mean_return / std_return) * np.sqrt(252)
+        # Apply volatility floor to prevent extreme Sharpe ratios
+        MIN_VOLATILITY_FLOOR = 0.001
+        std_return = max(std_return, MIN_VOLATILITY_FLOOR)
+
+        # Annualized Sharpe = daily_mean / daily_std * sqrt(252)
+        sharpe = (mean_return / std_return) * np.sqrt(252)
+        # Clamp to reasonable bounds [-10, 10]
+        sharpe = float(np.clip(sharpe, -10.0, 10.0))
 
         # Check if below threshold
         if sharpe < self.min_sharpe:

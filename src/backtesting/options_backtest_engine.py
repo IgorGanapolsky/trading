@@ -1510,7 +1510,7 @@ class OptionsBacktestEngine:
             mean_return = np.mean(returns)
             std_return = np.std(returns, ddof=1)
             # Apply volatility floor to prevent extreme Sharpe ratios
-            MIN_VOLATILITY_FLOOR = 0.0001
+            MIN_VOLATILITY_FLOOR = 0.001  # Increased from 0.0001 to prevent extreme ratios
             std_return = max(std_return, MIN_VOLATILITY_FLOOR)
             risk_free_rate_daily = 0.04 / 252
             # Annualize (assume ~30 day holding period)

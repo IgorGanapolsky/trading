@@ -26,7 +26,7 @@ class PositionSizingConfig:
     max_daily_exposure_pct: float = 20.0  # Max 20% total exposure
     volatility_scaling: bool = True
     kelly_fraction: float = 0.25  # Use 25% of Kelly criterion
-    min_position_size: float = 10.0  # Minimum $10 position
+    min_position_size: float = 50.0  # Minimum $50 position - ensures profit after 0.18% fees
 
 
 @dataclass

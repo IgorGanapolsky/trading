@@ -380,11 +380,17 @@ def calculate_backtest_metrics(trades: list[dict]) -> dict[str, float]:
     avg_loss = sum(losses) / len(losses) if losses else 0
 
     # Sharpe ratio (assuming daily returns, annualized)
+    # Apply volatility floor to prevent extreme Sharpe ratios
+    MIN_VOLATILITY_FLOOR = 0.001  # Increased from 0.0001 to prevent extreme ratios
     avg_return = total_return / len(trades)
     std_return = (
         math.sqrt(sum((p - avg_return) ** 2 for p in pnls) / len(pnls)) if len(pnls) > 1 else 1
     )
-    sharpe_ratio = (avg_return / std_return) * math.sqrt(252) if std_return > 0 else 0
+    # Apply volatility floor and calculate
+    std_return = max(std_return, MIN_VOLATILITY_FLOOR)
+    sharpe_ratio = (avg_return / std_return) * math.sqrt(252)
+    # Clamp to reasonable bounds [-10, 10]
+    sharpe_ratio = max(-10.0, min(10.0, sharpe_ratio))
 
     # Sortino ratio (only downside deviation)
     negative_returns = [p for p in pnls if p < 0]
@@ -393,7 +399,11 @@ def calculate_backtest_metrics(trades: list[dict]) -> dict[str, float]:
         if negative_returns
         else 1
     )
-    sortino_ratio = (avg_return / downside_std) * math.sqrt(252) if downside_std > 0 else 0
+    # Apply volatility floor and calculate
+    downside_std = max(downside_std, MIN_VOLATILITY_FLOOR)
+    sortino_ratio = (avg_return / downside_std) * math.sqrt(252)
+    # Clamp to reasonable bounds [-10, 10]
+    sortino_ratio = max(-10.0, min(10.0, sortino_ratio))
 
     # Profit factor
     gross_profit = sum(wins) if wins else 0

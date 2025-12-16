@@ -122,7 +122,7 @@ class TradeGateway:
     MAX_SYMBOL_ALLOCATION_PCT = 0.25  # 25% max per symbol (was 15%)
     MAX_CORRELATION_THRESHOLD = 0.80  # 80% correlation threshold
     MAX_TRADES_PER_HOUR = 5  # Frequency limit
-    MIN_TRADE_BATCH = 10.0  # $10 minimum - lowered from $200 to match daily investment
+    MIN_TRADE_BATCH = 50.0  # $50 minimum - ensures positions large enough to overcome 0.18% fees
     MAX_DAILY_LOSS_PCT = 0.03  # 3% max daily loss
     MAX_DRAWDOWN_PCT = 0.10  # 10% max drawdown
     MAX_RISK_PER_TRADE_PCT = 0.01  # 1% max risk to equity per trade (NEW)
@@ -299,7 +299,7 @@ class TradeGateway:
             risk_score += 0.2
 
         # ============================================================
-        # CHECK 5: Minimum Trade Batch ($200)
+        # CHECK 5: Minimum Trade Batch ($50)
         # ============================================================
         if request.side == "buy" and trade_value < self.MIN_TRADE_BATCH:
             # Don't reject immediately - check if we should accumulate

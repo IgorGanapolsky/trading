@@ -6,15 +6,15 @@ actively closed rather than held indefinitely. It addresses the core problem
 of positions never being closed (win rate = 0%).
 
 Exit Conditions:
-1. Take-Profit: Close when profit target reached (default: 3%)
-2. Stop-Loss: Close when loss limit breached (default: 3%)
-3. Time-Decay: Close after max holding period (default: 10 days)
-4. Momentum Reversal: Close when MACD crosses bearish
+1. Take-Profit: Close when profit target reached (default: 5%)
+2. Stop-Loss: Close when loss limit breached (default: 5%)
+3. Time-Decay: Close after max holding period (default: 14 days)
+4. Momentum Reversal: DISABLED (caused 5-10% false exits in sideways markets)
 5. ATR Stop: Dynamic stop based on volatility
 
 Author: Claude CTO
 Created: 2025-12-03
-Updated: 2025-12-04 - Added persistence for position entry dates
+Updated: 2025-12-16 - Disabled MACD momentum reversal exit (false signals in sideways markets)
 """
 
 import json
@@ -73,35 +73,35 @@ class ExitConditions:
     These are tighter than typical buy-and-hold strategies to ensure
     active position management and generate closed trade data for win rate.
 
-    Asset-class-specific thresholds (as of Dec 9, 2025):
-    - Treasuries: 0.5% (barely move, need tight thresholds)
-    - Bonds: 1.0% (moderate volatility)
-    - Equities: 3.0% (standard)
+    Asset-class-specific thresholds (as of Dec 16, 2025):
+    - Treasuries: 0.15% (barely move, need tight thresholds)
+    - Bonds: 0.5% (moderate volatility)
+    - Equities: 5.0% (standard)
 
     Attributes:
-        take_profit_pct: Profit target percentage (default: 3%)
-        stop_loss_pct: Maximum loss percentage (default: 3%)
-        max_holding_days: Maximum days to hold position (default: 10)
+        take_profit_pct: Profit target percentage (default: 5%)
+        stop_loss_pct: Maximum loss percentage (default: 5%)
+        max_holding_days: Maximum days to hold position (default: 14)
         enable_momentum_exit: Whether to exit on MACD bearish cross
         enable_atr_stop: Whether to use ATR-based dynamic stops
         atr_multiplier: ATR multiplier for dynamic stop calculation
     """
 
-    take_profit_pct: float = 0.03  # 3% profit target (tighter for active trading)
-    stop_loss_pct: float = 0.03  # 3% stop loss (tighter for active trading)
-    max_holding_days: int = 10  # Close after 10 days regardless
-    enable_momentum_exit: bool = True  # Exit on MACD bearish cross
+    take_profit_pct: float = 0.05  # 5% profit target (tighter for active trading)
+    stop_loss_pct: float = 0.05  # 5% stop loss (tighter for active trading)
+    max_holding_days: int = 14  # Close after 14 days regardless
+    enable_momentum_exit: bool = False  # DISABLED: Exit on MACD bearish cross (causes 5-10% false exits in sideways markets)
     enable_atr_stop: bool = True  # Use ATR-based stops
     atr_multiplier: float = 2.0  # 2x ATR for stop distance
 
     # Asset-class-specific overrides
-    treasury_take_profit_pct: float = 0.005  # 0.5% for treasuries
-    treasury_stop_loss_pct: float = 0.005  # 0.5% for treasuries
-    treasury_max_holding_days: int = 3  # 3 days for treasuries
+    treasury_take_profit_pct: float = 0.0015  # 0.15% for treasuries
+    treasury_stop_loss_pct: float = 0.0015  # 0.15% for treasuries
+    treasury_max_holding_days: int = 5  # 5 days for treasuries
 
-    bond_take_profit_pct: float = 0.01  # 1.0% for bonds
-    bond_stop_loss_pct: float = 0.01  # 1.0% for bonds
-    bond_max_holding_days: int = 5  # 5 days for bonds
+    bond_take_profit_pct: float = 0.005  # 0.5% for bonds
+    bond_stop_loss_pct: float = 0.005  # 0.5% for bonds
+    bond_max_holding_days: int = 7  # 7 days for bonds
 
     def get_thresholds_for_asset(self, asset_class: AssetClass) -> tuple[float, float, int]:
         """
@@ -301,9 +301,9 @@ class PositionManager:
         and why. It checks all exit conditions in priority order.
 
         Uses ASSET-CLASS-SPECIFIC thresholds:
-        - Treasuries (BIL, SHY, IEF, TLT): 0.5% thresholds, 3 day max hold
-        - Bonds (AGG, BND, etc.): 1.0% thresholds, 5 day max hold
-        - Equities (SPY, QQQ, etc.): 3.0% thresholds, 10 day max hold
+        - Treasuries (BIL, SHY, IEF, TLT): 0.15% thresholds, 5 day max hold
+        - Bonds (AGG, BND, etc.): 0.5% thresholds, 7 day max hold
+        - Equities (SPY, QQQ, etc.): 5.0% thresholds, 14 day max hold
 
         Args:
             position: Position information to evaluate
@@ -582,10 +582,10 @@ class PositionManager:
 # Default instance with tighter conditions for active trading
 DEFAULT_POSITION_MANAGER = PositionManager(
     conditions=ExitConditions(
-        take_profit_pct=0.03,  # 3% take-profit
-        stop_loss_pct=0.03,  # 3% stop-loss
-        max_holding_days=10,  # Max 10 days
-        enable_momentum_exit=True,
+        take_profit_pct=0.05,  # 5% take-profit
+        stop_loss_pct=0.05,  # 5% stop-loss
+        max_holding_days=14,  # Max 14 days
+        enable_momentum_exit=False,  # DISABLED: MACD reversal causes false exits in sideways markets
         enable_atr_stop=True,
     )
 )

@@ -203,18 +203,19 @@
     },
     "tier2": {
       "name": "Disruptive Innovation Strategy (NVDA, GOOGL, AMZN)",
-      "allocation": 0.33,
-      "daily_amount": 5.0,
+      "allocation": 0.00,
+      "daily_amount": 0.0,
       "trades_executed": 3,
       "total_invested": 403.97,
-      "status": "active",
+      "status": "disabled",
       "stocks": [
         "NVDA",
         "GOOGL",
         "AMZN"
       ],
       "rotation_strategy": "3-way momentum-based selection",
-      "amzn_catalyst": "OpenAI $38B deal - $295 fair value target (15% upside)"
+      "amzn_catalyst": "OpenAI $38B deal - $295 fair value target (15% upside)",
+      "disabled_reason": "Allocation shifted to options (60% allocation) - Dec 16, 2025"
     },
     "tier3": {
       "name": "IPO Strategy",
@@ -242,8 +243,8 @@
     },
     "tier7": {
       "name": "REIT Smart Income Strategy",
-      "allocation": 0.1,
-      "daily_amount": 10.0,
+      "allocation": 0.00,
+      "daily_amount": 0.0,
       "sectors": [
         "Growth",
         "Defensive",
@@ -271,44 +272,46 @@
       },
       "trades_executed": 0,
       "total_invested": 0.0,
-      "status": "active",
-      "enabled": true,
+      "status": "disabled",
+      "enabled": false,
       "execution_schedule": "Daily 9:35 AM ET (market hours)",
       "last_execution": null,
-      "next_execution": "2025-12-13T14:35:00Z",
+      "next_execution": null,
       "regime": "Neutral",
       "strategy_notes": "Regime-based rotation: Rising Rates \u2192 Defensive REITs, Falling Rates \u2192 Growth REITs",
-      "strategy_update": "2025-12-12: Activated REIT strategy per CEO priority"
+      "strategy_update": "2025-12-16: DISABLED - allocation shifted to options (60% allocation)",
+      "disabled_reason": "Allocation shifted to options (60% allocation) - Dec 16, 2025"
     },
     "tier8": {
       "name": "Precious Metals Strategy (GLD/SLV)",
-      "allocation": 0.05,
-      "daily_amount": 5.0,
+      "allocation": 0.00,
+      "daily_amount": 0.0,
       "etfs": [
         "GLD",
         "SLV"
       ],
       "trades_executed": 0,
       "total_invested": 0.0,
-      "status": "active",
-      "enabled": true,
+      "status": "disabled",
+      "enabled": false,
       "execution_schedule": "Daily 9:35 AM ET (market hours)",
       "last_execution": null,
-      "next_execution": "2025-12-13T14:35:00Z",
+      "next_execution": null,
       "regime": "Neutral",
       "strategy_notes": "Regime-based allocation: High GSR \u2192 Equal GLD/SLV, Fear \u2192 Heavy GLD, Normal \u2192 70/30 GLD/SLV",
-      "strategy_update": "2025-12-12: Activated Precious Metals strategy per CEO approval"
+      "strategy_update": "2025-12-16: DISABLED - allocation shifted to options (60% allocation)",
+      "disabled_reason": "Allocation shifted to options (60% allocation) - Dec 16, 2025"
     },
     "options": {
       "name": "Options Premium Strategy (Cash-Secured Puts)",
-      "allocation": 0.37,
-      "daily_amount": 27.0,
+      "allocation": 0.60,
+      "daily_amount": 30.0,
       "status": "active",
       "enabled": true,
       "win_rate": 75.0,
       "total_profit": 327.82,
       "trades_executed": 4,
-      "strategy_notes": "Primary profit driver - sell puts on SPY/QQQ/AMD/NVDA",
+      "strategy_notes": "Primary profit driver (60% allocation) - sell puts on SPY/QQQ/AMD/NVDA",
       "risk_rules": {
         "max_delta": 30,
         "preferred_dte": "30-45",
