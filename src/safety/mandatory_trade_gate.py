@@ -68,9 +68,11 @@ class MandatoryTradeGate:
     MANDATORY gate that MUST be called before every trade.
 
     This gate:
-    1. Queries RAG for lessons learned relevant to this trade
-    2. Runs ML anomaly detection on the order parameters
-    3. Returns APPROVED or BLOCKED with reasons
+    1. Verifies tracing is healthy (LangSmith operational)
+    2. Queries RAG for lessons learned relevant to this trade
+    3. Runs ML anomaly detection on the order parameters
+    4. Returns APPROVED or BLOCKED with reasons
+    5. Traces every decision to LangSmith
 
     Usage:
         gate = MandatoryTradeGate()
@@ -89,6 +91,10 @@ class MandatoryTradeGate:
     def __init__(self):
         self.gate_log_path = Path("data/trade_gate_log.json")
         self.gate_log_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Verify tracing health on initialization
+        self.tracing_healthy = False
+        self._verify_tracing_health()
 
         # Initialize RAG
         self.rag_available = False
@@ -114,6 +120,26 @@ class MandatoryTradeGate:
             logger.info("ML anomaly detector initialized for trade gate")
         except Exception as e:
             logger.warning(f"ML anomaly detector not available: {e}")
+
+    def _verify_tracing_health(self) -> None:
+        """Verify LangSmith tracing is operational."""
+        try:
+            from src.observability.tracing_health_check import verify_tracing_health
+
+            result = verify_tracing_health(block_on_failure=False)
+            self.tracing_healthy = result.healthy
+
+            if result.healthy:
+                logger.info("✅ Tracing health verified - LangSmith operational")
+            else:
+                logger.warning(f"⚠️ Tracing health check failed: {result.errors}")
+                logger.warning("   Trades will execute but may not be traced!")
+        except ImportError:
+            logger.warning("Tracing health check module not available")
+            self.tracing_healthy = False
+        except Exception as e:
+            logger.warning(f"Tracing health check failed: {e}")
+            self.tracing_healthy = False
 
     def _query_rag_for_lessons(self, symbol: str, strategy: str, side: str) -> list[str]:
         """Query RAG for relevant lessons learned."""

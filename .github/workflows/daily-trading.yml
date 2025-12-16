@@ -520,6 +520,29 @@ jobs:
           echo "🚀 EXECUTING DAILY TRADING - $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
           echo "🚀 ========================================"
 
+          # ========== PRE-FLIGHT: VERIFY OBSERVABILITY ==========
+          echo "🔍 Verifying LangSmith tracing is operational..."
+          python3 -c "
+          import sys
+          sys.path.insert(0, '.')
+          try:
+              from src.observability.tracing_health_check import verify_tracing_health
+              result = verify_tracing_health()
+              print(f'LangSmith Configured: {result.langsmith_configured}')
+              print(f'LangSmith Reachable: {result.langsmith_reachable}')
+              print(f'Tracer Initialized: {result.tracer_initialized}')
+              print(f'Test Trace Sent: {result.test_trace_sent}')
+              if result.healthy:
+                  print('✅ TRACING HEALTH CHECK PASSED')
+              else:
+                  print(f'⚠️ TRACING HEALTH CHECK FAILED: {result.errors}')
+                  print('   Trading will proceed but may not be fully traced!')
+          except Exception as e:
+              print(f'⚠️ Tracing health check error: {e}')
+              print('   Trading will proceed without guaranteed tracing')
+          " || echo "⚠️ Tracing health check script failed - proceeding anyway"
+          # ======================================================
+
           # Track execution start
           EXEC_START=$(date +%s)
 
