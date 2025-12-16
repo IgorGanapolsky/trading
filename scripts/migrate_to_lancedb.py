@@ -83,7 +83,7 @@ class LanceDBMigrator:
         """Read all documents from ChromaDB."""
         try:
             import chromadb
-            from chromadb.config import Settings
+            from chromadb.config import Settings  # noqa: F401
         except ImportError:
             logger.error("ChromaDB not installed. Install with: pip install chromadb")
             return []

@@ -122,10 +122,26 @@ class LinkedInSentiment:
 
     # Common false positives to exclude
     EXCLUDED_TICKERS = {
-        "CEO", "CFO", "CTO", "CIO", "COO",
-        "MBA", "PhD", "IPO", "ETF", "ESG",
-        "USA", "UK", "EU", "AI", "ML",
-        "IT", "HR", "PR", "IR", "VP",
+        "CEO",
+        "CFO",
+        "CTO",
+        "CIO",
+        "COO",
+        "MBA",
+        "PhD",
+        "IPO",
+        "ETF",
+        "ESG",
+        "USA",
+        "UK",
+        "EU",
+        "AI",
+        "ML",
+        "IT",
+        "HR",
+        "PR",
+        "IR",
+        "VP",
     }
 
     # User-Agent to mimic a browser
@@ -155,15 +171,17 @@ class LinkedInSentiment:
 
         # Session with browser-like headers
         self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": self.USER_AGENT,
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.5",
-            "Accept-Encoding": "gzip, deflate, br",
-            "DNT": "1",
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-        })
+        self.session.headers.update(
+            {
+                "User-Agent": self.USER_AGENT,
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Accept-Encoding": "gzip, deflate, br",
+                "DNT": "1",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1",
+            }
+        )
 
         logger.info(f"LinkedInSentiment initialized. Cache: {self.data_dir}")
 
@@ -205,7 +223,9 @@ class LinkedInSentiment:
         except Exception as e:
             logger.warning(f"Error saving cache for {ticker}: {e}")
 
-    def _search_google_for_linkedin_posts(self, ticker: str, company_name: str | None = None) -> list[str]:
+    def _search_google_for_linkedin_posts(
+        self, ticker: str, company_name: str | None = None
+    ) -> list[str]:
         """
         Use Google to find LinkedIn posts about a ticker.
 
@@ -254,7 +274,9 @@ class LinkedInSentiment:
             logger.warning(f"Error searching Google for {ticker} LinkedIn posts: {e}")
             return []
 
-    def _extract_text_from_snippets(self, ticker: str, company_name: str | None = None) -> list[str]:
+    def _extract_text_from_snippets(
+        self, ticker: str, company_name: str | None = None
+    ) -> list[str]:
         """
         Extract text snippets from Google search results about the ticker.
 
@@ -288,7 +310,9 @@ class LinkedInSentiment:
             snippets = []
 
             # Google uses various div classes for snippets
-            for snippet_div in soup.find_all(["div", "span"], class_=["VwiC3b", "yXK7lf", "MUxGbd", "yDYNvb"]):
+            for snippet_div in soup.find_all(
+                ["div", "span"], class_=["VwiC3b", "yXK7lf", "MUxGbd", "yDYNvb"]
+            ):
                 text = snippet_div.get_text(strip=True)
                 if len(text) > 30 and ticker.upper() in text.upper():
                     snippets.append(text)
@@ -556,7 +580,7 @@ def main():
     print(f"Timestamp: {result['timestamp']}")
     print(f"Cache Hit: {result.get('cache_hit', False)}")
 
-    if result.get('error'):
+    if result.get("error"):
         print(f"Error: {result['error']}")
 
     print("=" * 60 + "\n")

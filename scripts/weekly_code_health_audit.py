@@ -41,31 +41,81 @@ class CodeHealthAuditor:
         # These are installed as dependencies of other packages
         SKIP_PACKAGES = {
             # NVIDIA/CUDA (PyTorch dependencies)
-            "nvidia-cuda-nvrtc-cu12", "nvidia-cuda-runtime-cu12", "nvidia-cublas-cu12",
-            "nvidia-cudnn-cu12", "nvidia-cufft-cu12", "nvidia-curand-cu12",
-            "nvidia-cusolver-cu12", "nvidia-cusparse-cu12", "nvidia-nccl-cu12",
-            "nvidia-nvjitlink-cu12", "nvidia-nvtx-cu12", "nvidia-nvshmem-cu12",
+            "nvidia-cuda-nvrtc-cu12",
+            "nvidia-cuda-runtime-cu12",
+            "nvidia-cublas-cu12",
+            "nvidia-cudnn-cu12",
+            "nvidia-cufft-cu12",
+            "nvidia-curand-cu12",
+            "nvidia-cusolver-cu12",
+            "nvidia-cusparse-cu12",
+            "nvidia-nccl-cu12",
+            "nvidia-nvjitlink-cu12",
+            "nvidia-nvtx-cu12",
+            "nvidia-nvshmem-cu12",
             # HTTP/async utilities (dependencies of requests, aiohttp, etc.)
-            "urllib3", "certifi", "charset-normalizer", "idna", "anyio", "sniffio",
-            "httpcore", "h11", "httpx", "aiosignal", "frozenlist", "multidict",
-            "yarl", "async-timeout", "attrs",
+            "urllib3",
+            "certifi",
+            "charset-normalizer",
+            "idna",
+            "anyio",
+            "sniffio",
+            "httpcore",
+            "h11",
+            "httpx",
+            "aiosignal",
+            "frozenlist",
+            "multidict",
+            "yarl",
+            "async-timeout",
+            "attrs",
             # Type checking / runtime (dependencies of pydantic, typing-extensions)
-            "typing-extensions", "annotated-types", "pydantic-core",
+            "typing-extensions",
+            "annotated-types",
+            "pydantic-core",
             # Build/packaging utilities
-            "setuptools", "wheel", "pip", "packaging", "filelock", "platformdirs",
+            "setuptools",
+            "wheel",
+            "pip",
+            "packaging",
+            "filelock",
+            "platformdirs",
             # Database adapters (transitive)
-            "greenlet", "sqlalchemy",
+            "greenlet",
+            "sqlalchemy",
             # JSON/schema (transitive)
-            "jsonschema", "jsonschema-specifications", "referencing", "rpds-py",
+            "jsonschema",
+            "jsonschema-specifications",
+            "referencing",
+            "rpds-py",
             # Date/time (transitive)
-            "tzdata", "pytz", "python-dateutil", "six",
+            "tzdata",
+            "pytz",
+            "python-dateutil",
+            "six",
             # Misc transitive
-            "markupsafe", "jinja2", "fonttools", "pillow", "kiwisolver", "contourpy",
-            "cycler", "pyparsing", "propcache", "wrapt", "deprecated",
+            "markupsafe",
+            "jinja2",
+            "fonttools",
+            "pillow",
+            "kiwisolver",
+            "contourpy",
+            "cycler",
+            "pyparsing",
+            "propcache",
+            "wrapt",
+            "deprecated",
             # Google deps (transitive)
-            "google-auth", "google-auth-httplib2", "google-api-core",
-            "googleapis-common-protos", "proto-plus", "protobuf",
-            "cachetools", "pyasn1", "pyasn1-modules", "rsa",
+            "google-auth",
+            "google-auth-httplib2",
+            "google-api-core",
+            "googleapis-common-protos",
+            "proto-plus",
+            "protobuf",
+            "cachetools",
+            "pyasn1",
+            "pyasn1-modules",
+            "rsa",
         }
 
         # Parse requirements
@@ -101,12 +151,14 @@ class CodeHealthAuditor:
         for pkg in requirements:
             import_name = name_map.get(pkg, pkg.replace("-", "_"))
             if import_name not in imported and pkg not in imported:
-                findings.append({
-                    "type": "unused_dependency",
-                    "package": pkg,
-                    "severity": "low",
-                    "suggestion": f"Consider removing '{pkg}' from requirements.txt if unused",
-                })
+                findings.append(
+                    {
+                        "type": "unused_dependency",
+                        "package": pkg,
+                        "severity": "low",
+                        "suggestion": f"Consider removing '{pkg}' from requirements.txt if unused",
+                    }
+                )
 
         return findings
 
@@ -133,12 +185,14 @@ class CodeHealthAuditor:
                                 break
 
                         if not found:
-                            findings.append({
-                                "type": "missing_implementation",
-                                "feature": feature,
-                                "severity": "high",
-                                "suggestion": f"Feature '{feature}' is enabled but no implementation found",
-                            })
+                            findings.append(
+                                {
+                                    "type": "missing_implementation",
+                                    "feature": feature,
+                                    "severity": "high",
+                                    "suggestion": f"Feature '{feature}' is enabled but no implementation found",
+                                }
+                            )
             except Exception:
                 pass
 
@@ -166,13 +220,15 @@ class CodeHealthAuditor:
                 for match in re.finditer(r"`(src/[^`]+\.py)`", content):
                     ref_path = self.project_root / match.group(1)
                     if not ref_path.exists():
-                        findings.append({
-                            "type": "documentation_drift",
-                            "doc_file": str(doc_file.relative_to(self.project_root)),
-                            "referenced_path": match.group(1),
-                            "severity": "medium",
-                            "suggestion": f"Doc references non-existent file: {match.group(1)}",
-                        })
+                        findings.append(
+                            {
+                                "type": "documentation_drift",
+                                "doc_file": str(doc_file.relative_to(self.project_root)),
+                                "referenced_path": match.group(1),
+                                "severity": "medium",
+                                "suggestion": f"Doc references non-existent file: {match.group(1)}",
+                            }
+                        )
 
                 # NOTE: Removed function reference checking - too many false positives
                 # from standard library, third-party libs, and method names
@@ -193,15 +249,19 @@ class CodeHealthAuditor:
 
                 for i, line in enumerate(lines, 1):
                     # Pattern: enable_xxx = False  # not implemented
-                    if re.search(r"enable_\w+\s*=\s*False.*#.*not\s+implemented", line, re.IGNORECASE):
-                        findings.append({
-                            "type": "disabled_feature",
-                            "file": str(py_file.relative_to(self.project_root)),
-                            "line": i,
-                            "content": line.strip(),
-                            "severity": "medium",
-                            "suggestion": "Remove disabled feature flag or implement it",
-                        })
+                    if re.search(
+                        r"enable_\w+\s*=\s*False.*#.*not\s+implemented", line, re.IGNORECASE
+                    ):
+                        findings.append(
+                            {
+                                "type": "disabled_feature",
+                                "file": str(py_file.relative_to(self.project_root)),
+                                "line": i,
+                                "content": line.strip(),
+                                "severity": "medium",
+                                "suggestion": "Remove disabled feature flag or implement it",
+                            }
+                        )
 
             except Exception:
                 pass

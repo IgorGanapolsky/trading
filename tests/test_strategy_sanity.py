@@ -80,9 +80,7 @@ class TestFearGreedSanity:
 
             # The get_trading_signal method should not return multiplier > 1.0
             # during fear conditions
-            signal_code = Path(
-                PROJECT_ROOT / "src/utils/fear_greed_index.py"
-            ).read_text()
+            signal_code = Path(PROJECT_ROOT / "src/utils/fear_greed_index.py").read_text()
 
             # Check that extreme fear doesn't multiply size
             # Look for the pattern where EXTREME_FEAR leads to multiplier > 1
@@ -129,6 +127,44 @@ class TestFearGreedSanity:
                 )
 
 
+class TestCryptoStrategy:
+    """Ensure crypto strategy doesn't catch falling knives."""
+
+    def test_no_dip_buying_multiplier(self):
+        """BTC dips should NOT increase position size."""
+        crypto_path = PROJECT_ROOT / "src/strategies/crypto_strategy.py"
+
+        if crypto_path.exists():
+            content = crypto_path.read_text()
+
+            # The old logic: multiplier = min(2.0, 1.0 + abs(btc_change) / 10)
+            # This should be gone
+            assert "min(2.0, 1.0 + abs(btc_change)" not in content, (
+                "CRITICAL: 'Buy the dip' 2x multiplier still present. "
+                "This destroyed $96 in Dec 2025 by catching falling knives."
+            )
+
+            # Check for any scaling UP during dips
+            dip_section = re.search(
+                r"if btc_change <= -2\.0:.*?logger\.info",
+                content,
+                re.DOTALL,
+            )
+
+            if dip_section:
+                section = dip_section.group()
+                # During dips, multiplier should be <= 1.0
+                if "multiplier = " in section:
+                    # Extract multiplier value
+                    mult_match = re.search(r"multiplier = (\d+\.?\d*)", section)
+                    if mult_match:
+                        multiplier = float(mult_match.group(1))
+                        assert multiplier <= 1.0, (
+                            f"CRITICAL: Dip multiplier is {multiplier}, should be <= 1.0. "
+                            "Never increase position during downtrends."
+                        )
+
+
 class TestBacktestIntegrity:
     """Ensure backtest data is honest and not cherry-picked."""
 
@@ -154,9 +190,7 @@ class TestBacktestIntegrity:
             if passes == 0:
                 # Verify this is communicated honestly
                 min_sharpe = aggregate.get("min_sharpe_ratio", 0)
-                assert min_sharpe < 0, (
-                    "If 0 scenarios pass, min Sharpe should be negative"
-                )
+                assert min_sharpe < 0, "If 0 scenarios pass, min Sharpe should be negative"
 
     def test_no_scenario_has_fabricated_sharpe(self):
         """No scenario should have the fabricated 2.18 Sharpe."""

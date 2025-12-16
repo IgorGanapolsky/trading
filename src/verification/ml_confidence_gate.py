@@ -22,6 +22,7 @@ CONFIDENCE_LOG = Path("data/audit_trail/ml_confidence_blocks.jsonl")
 @dataclass
 class ConfidenceResult:
     """Result of ML confidence check."""
+
     passed: bool
     confidence: float
     threshold: float
@@ -43,10 +44,10 @@ class MLConfidenceGate:
 
     # Default thresholds
     DEFAULT_THRESHOLDS = {
-        "rl_policy": 0.6,        # 60% confidence minimum
-        "sentiment": 0.7,        # 70% for sentiment
-        "ensemble": 0.65,        # 65% ensemble agreement
-        "regret_adjusted": 0.55, # Lower threshold if low-risk trade
+        "rl_policy": 0.6,  # 60% confidence minimum
+        "sentiment": 0.7,  # 70% for sentiment
+        "ensemble": 0.65,  # 65% ensemble agreement
+        "regret_adjusted": 0.55,  # Lower threshold if low-risk trade
     }
 
     def __init__(
@@ -161,6 +162,7 @@ class MLConfidenceGate:
 
         # Count votes
         from collections import Counter
+
         votes = Counter(model_predictions.values())
         majority_pred, majority_count = votes.most_common(1)[0]
 
@@ -277,8 +279,7 @@ class MLConfidenceGate:
             f.write(json.dumps(entry) + "\n")
 
         logger.warning(
-            f"Trade blocked due to low ML confidence: "
-            f"{result['symbol']} {result['action']}"
+            f"Trade blocked due to low ML confidence: {result['symbol']} {result['action']}"
         )
 
 
@@ -293,8 +294,7 @@ def integrate_with_orchestrator():
             return
 
         original_execute = getattr(
-            TradingOrchestrator, "_original_execute_trade",
-            TradingOrchestrator.execute_trade
+            TradingOrchestrator, "_original_execute_trade", TradingOrchestrator.execute_trade
         )
 
         def confident_execute_trade(self, symbol, action, quantity, **kwargs):

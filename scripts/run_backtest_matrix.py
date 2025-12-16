@@ -43,7 +43,7 @@ SUMMARY_PATH = BACKTEST_ROOT / "latest_summary.json"
 # "Prioritize trade flow over filter precision during R&D"
 # Post-R&D thresholds: win_rate=60%, sharpe=1.5, max_dd=10%
 PROMOTION_THRESHOLDS = {
-    "win_rate": 45.0,      # R&D: Above coin flip is progress
+    "win_rate": 45.0,  # R&D: Above coin flip is progress
     "sharpe_ratio": -2.0,  # R&D: Allow learning (clipped to -10 anyway)
     "max_drawdown": 15.0,  # R&D: Room for experimentation
 }

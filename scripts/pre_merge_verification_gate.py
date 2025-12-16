@@ -101,10 +101,7 @@ class MergeVerificationGate:
 
         failed = []
         for module in critical:
-            result = subprocess.run(
-                [sys.executable, "-c", f"import {module}"],
-                capture_output=True
-            )
+            result = subprocess.run([sys.executable, "-c", f"import {module}"], capture_output=True)
             if result.returncode != 0:
                 failed.append(f"Cannot import {module}")
 
@@ -117,12 +114,9 @@ class MergeVerificationGate:
     def verify_orchestrator(self) -> bool:
         """Verify TradingOrchestrator can be imported."""
         result = subprocess.run(
-            [
-                sys.executable, "-c",
-                "from src.orchestrator.main import TradingOrchestrator"
-            ],
+            [sys.executable, "-c", "from src.orchestrator.main import TradingOrchestrator"],
             capture_output=True,
-            cwd=self.workspace
+            cwd=self.workspace,
         )
 
         if result.returncode != 0:
@@ -140,9 +134,7 @@ class MergeVerificationGate:
 
         for check in checks:
             result = subprocess.run(
-                [sys.executable, "-c", check],
-                capture_output=True,
-                cwd=self.workspace
+                [sys.executable, "-c", check], capture_output=True, cwd=self.workspace
             )
             if result.returncode != 0:
                 self.errors.append(f"Safety check failed: {check}")

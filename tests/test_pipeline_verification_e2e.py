@@ -12,13 +12,12 @@ Created: 2025-12-15
 Purpose: Verify RAG/ML pipeline prevents repeated mistakes
 """
 
-import json
 import os
 import shutil
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -83,7 +82,7 @@ class TestFailureToLessonToPreventionFlow:
 
         # Create lesson from anomaly
         pipeline = FailureToLessonPipeline(lessons_dir=temp_lessons_dir)
-        lesson_path = pipeline.create_lesson_from_anomaly(sample_anomaly)
+        pipeline.create_lesson_from_anomaly(sample_anomaly)
 
         # Now search using RAG
         gate = RAGVerificationGate(rag_knowledge_path=temp_lessons_dir)
@@ -96,8 +95,9 @@ class TestFailureToLessonToPreventionFlow:
 
         # Verify the found lesson matches
         found_lesson, score = results[0]
-        assert "order" in found_lesson.title.lower() or "amount" in found_lesson.title.lower(), \
+        assert "order" in found_lesson.title.lower() or "amount" in found_lesson.title.lower(), (
             f"Found lesson should be relevant: {found_lesson.title}"
+        )
         assert score > 0, "Relevance score should be positive"
 
     def test_similar_action_triggers_warning(self, temp_lessons_dir, sample_anomaly):
@@ -162,8 +162,9 @@ class TestFailureToLessonToPreventionFlow:
         if len(results) >= 2:
             # Critical should rank higher
             top_lesson, top_score = results[0]
-            assert top_lesson.severity == "critical", \
+            assert top_lesson.severity == "critical", (
                 f"Critical lessons should rank higher, got: {top_lesson.severity}"
+            )
 
 
 class TestRAGSearchAccuracy:
@@ -217,8 +218,9 @@ class TestRAGSearchAccuracy:
 
         assert len(results) > 0, "Should find results"
         top_lesson, score = results[0]
-        assert top_lesson.category == "size_error", \
+        assert top_lesson.category == "size_error", (
             f"Top result should be size_error, got: {top_lesson.category}"
+        )
 
     def test_query_api_error_finds_execution(self, rag_with_lessons):
         """Query about API errors should find execution lesson."""
@@ -226,8 +228,9 @@ class TestRAGSearchAccuracy:
 
         assert len(results) > 0, "Should find results"
         top_lesson, score = results[0]
-        assert top_lesson.category == "execution", \
+        assert top_lesson.category == "execution", (
             f"Top result should be execution, got: {top_lesson.category}"
+        )
 
     def test_query_macd_signal_finds_strategy(self, rag_with_lessons):
         """Query about MACD should find strategy lesson."""
@@ -235,19 +238,19 @@ class TestRAGSearchAccuracy:
 
         assert len(results) > 0, "Should find results"
         top_lesson, score = results[0]
-        assert top_lesson.category == "strategy", \
+        assert top_lesson.category == "strategy", (
             f"Top result should be strategy, got: {top_lesson.category}"
+        )
 
     def test_category_filter_works(self, rag_with_lessons):
         """Category filter should restrict results."""
         # Search with category filter
-        results = rag_with_lessons.search(
-            "error problem issue", category="size_error", top_k=5
-        )
+        results = rag_with_lessons.search("error problem issue", category="size_error", top_k=5)
 
         for lesson, score in results:
-            assert lesson.category == "size_error", \
+            assert lesson.category == "size_error", (
                 f"All results should be size_error, got: {lesson.category}"
+            )
 
     def test_trade_context_returns_warnings(self, rag_with_lessons):
         """Trade context should return relevant warnings for large orders."""
@@ -266,8 +269,9 @@ class TestRAGSearchAccuracy:
 
         assert len(checklist) > 0, "Should return prevention steps"
         # The first item should come from critical lesson
-        assert "size" in checklist[0].lower() or "sanity" in checklist[0].lower(), \
+        assert "size" in checklist[0].lower() or "sanity" in checklist[0].lower(), (
             "Critical prevention should be first"
+        )
 
 
 class TestFeedbackLoopIntegration:
@@ -452,17 +456,19 @@ class TestLessonPreventsMistakeE2E:
         # The search should return our critical lesson
         if search_results:
             top_lesson, score = search_results[0]
-            assert "64" in top_lesson.title or "size" in top_lesson.title.lower() or \
-                   "order" in top_lesson.title.lower(), \
-                f"Top result should be relevant: {top_lesson.title}"
+            assert (
+                "64" in top_lesson.title
+                or "size" in top_lesson.title.lower()
+                or "order" in top_lesson.title.lower()
+            ), f"Top result should be relevant: {top_lesson.title}"
 
         assert trade_context["relevant_lessons"] >= 0, "Trade context should work"
 
         # Final proof: Prevention checklist should include our lesson
         checklist = rag.get_prevention_checklist("size_error")
-        assert any("size" in step.lower() or "validation" in step.lower()
-                   for step in checklist), \
+        assert any("size" in step.lower() or "validation" in step.lower() for step in checklist), (
             f"Prevention checklist should include size validation: {checklist}"
+        )
 
 
 class TestMultiEmbeddingFallback:
@@ -492,8 +498,9 @@ class TestMultiEmbeddingFallback:
 
             assert len(results) > 0, "Keyword search should find results"
             top_lesson, score = results[0]
-            assert "position" in top_lesson.title.lower(), \
+            assert "position" in top_lesson.title.lower(), (
                 "Should find relevant lesson via keywords"
+            )
 
 
 class TestCIIntegrationVerification:
@@ -502,8 +509,7 @@ class TestCIIntegrationVerification:
     def test_lessons_dir_exists(self):
         """Verify lessons learned directory exists."""
         lessons_dir = Path("rag_knowledge/lessons_learned")
-        assert lessons_dir.exists(), \
-            f"Lessons directory should exist: {lessons_dir}"
+        assert lessons_dir.exists(), f"Lessons directory should exist: {lessons_dir}"
 
     def test_lessons_have_required_fields(self):
         """Verify lesson files have required metadata fields."""
@@ -538,11 +544,10 @@ class TestCIIntegrationVerification:
         gate = RAGVerificationGate()
 
         # Should have loaded lessons
-        assert len(gate.lessons) > 0, \
-            f"RAG gate should load lessons. Found: {len(gate.lessons)}"
+        assert len(gate.lessons) > 0, f"RAG gate should load lessons. Found: {len(gate.lessons)}"
 
         # Should have critical lessons
-        critical_lessons = [l for l in gate.lessons if l.severity == "critical"]
+        critical_lessons = [lesson for lesson in gate.lessons if lesson.severity == "critical"]
         assert len(critical_lessons) >= 0, "Should parse severity correctly"
 
     def test_failure_pipeline_importable(self):

@@ -297,9 +297,7 @@ class MLAnomalyDetector:
 
         return None
 
-    def run_all_checks(
-        self, files_changed: Optional[list[str]] = None
-    ) -> list[Anomaly]:
+    def run_all_checks(self, files_changed: Optional[list[str]] = None) -> list[Anomaly]:
         """Run all anomaly detection checks.
 
         Args:
@@ -404,9 +402,7 @@ def cli_run_checks():
                 )
                 print(f"{icon} [{anomaly.severity.upper()}] {anomaly.category}")
                 print(f"  {anomaly.description}")
-                print(
-                    f"  Value: {anomaly.metric_value:.2f}, Expected: {anomaly.expected_range}"
-                )
+                print(f"  Value: {anomaly.metric_value:.2f}, Expected: {anomaly.expected_range}")
                 print(f"  Confidence: {anomaly.confidence:.1%}\n")
 
         # Exit with error if critical anomalies found

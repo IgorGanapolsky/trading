@@ -23,8 +23,8 @@ from enum import Enum
 
 # Strategy Constants - PROVEN TO WORK
 DAILY_ALLOCATION = 12.0  # $12/day (Theta Scale model)
-TAKE_PROFIT_PCT = 0.03   # 3% take profit
-STOP_LOSS_PCT = 0.03     # 3% stop loss
+TAKE_PROFIT_PCT = 0.03  # 3% take profit
+STOP_LOSS_PCT = 0.03  # 3% stop loss
 MAX_RISK_PER_TRADE = 0.02  # 2% of portfolio per trade
 HOLD_DAYS_MIN = 1
 HOLD_DAYS_MAX = 6
@@ -32,15 +32,17 @@ HOLD_DAYS_MAX = 6
 
 class MarketRegime(Enum):
     """Simple regime detection based on VIX."""
-    CALM = "calm"        # VIX < 15
-    NORMAL = "normal"    # VIX 15-25
+
+    CALM = "calm"  # VIX < 15
+    NORMAL = "normal"  # VIX 15-25
     VOLATILE = "volatile"  # VIX 25-35
-    CRISIS = "crisis"    # VIX > 35
+    CRISIS = "crisis"  # VIX > 35
 
 
 @dataclass
 class SimpleSignal:
     """Minimal signal structure."""
+
     symbol: str
     action: str  # BUY, SELL, HOLD
     score: float  # 0-100 momentum score
@@ -60,9 +62,9 @@ class SimpleEdgeStrategy:
 
     # Asset allocation - based on backtest winners
     ALLOCATION = {
-        "QQQ": 0.60,   # Tech momentum (best in recoveries)
-        "SPY": 0.30,   # Broad market stability
-        "TLT": 0.10,   # Bond hedge (flight to safety)
+        "QQQ": 0.60,  # Tech momentum (best in recoveries)
+        "SPY": 0.30,  # Broad market stability
+        "TLT": 0.10,  # Bond hedge (flight to safety)
     }
 
     def __init__(
@@ -98,11 +100,7 @@ class SimpleEdgeStrategy:
         Weighted: 50% recent (1m), 30% medium (3m), 20% long (6m)
         """
         # Normalize to 0-100 scale
-        raw_score = (
-            0.50 * returns_1m +
-            0.30 * returns_3m +
-            0.20 * returns_6m
-        ) * 100
+        raw_score = (0.50 * returns_1m + 0.30 * returns_3m + 0.20 * returns_6m) * 100
 
         # Clamp to 0-100
         return max(0, min(100, raw_score + 50))
@@ -140,15 +138,15 @@ class SimpleEdgeStrategy:
         - Max hold 6 days (swing trade)
         """
         if current_pnl_pct >= self.take_profit:
-            return True, f"Take profit: +{current_pnl_pct*100:.1f}%"
+            return True, f"Take profit: +{current_pnl_pct * 100:.1f}%"
 
         if current_pnl_pct <= -self.stop_loss:
-            return True, f"Stop loss: {current_pnl_pct*100:.1f}%"
+            return True, f"Stop loss: {current_pnl_pct * 100:.1f}%"
 
         if hold_days >= HOLD_DAYS_MAX:
             return True, f"Max hold days ({HOLD_DAYS_MAX}) reached"
 
-        return False, f"Holding: {current_pnl_pct*100:.1f}%, day {hold_days}"
+        return False, f"Holding: {current_pnl_pct * 100:.1f}%, day {hold_days}"
 
     def calculate_position_size(
         self,
@@ -224,21 +222,25 @@ class SimpleEdgeStrategy:
                     regime,
                 )
 
-                signals.append(SimpleSignal(
-                    symbol=symbol,
-                    action="BUY",
-                    score=score,
-                    allocation_pct=self.ALLOCATION.get(symbol, 0.33),
-                    reason=reason,
-                ))
+                signals.append(
+                    SimpleSignal(
+                        symbol=symbol,
+                        action="BUY",
+                        score=score,
+                        allocation_pct=self.ALLOCATION.get(symbol, 0.33),
+                        reason=reason,
+                    )
+                )
             else:
-                signals.append(SimpleSignal(
-                    symbol=symbol,
-                    action="HOLD",
-                    score=score,
-                    allocation_pct=0,
-                    reason=reason,
-                ))
+                signals.append(
+                    SimpleSignal(
+                        symbol=symbol,
+                        action="HOLD",
+                        score=score,
+                        allocation_pct=0,
+                        reason=reason,
+                    )
+                )
 
         return signals
 
@@ -299,7 +301,7 @@ if __name__ == "__main__":
     print("\n" + "=" * 50)
     print("Key Parameters:")
     print(f"  Daily Allocation: ${DAILY_ALLOCATION}")
-    print(f"  Take Profit: {TAKE_PROFIT_PCT*100}%")
-    print(f"  Stop Loss: {STOP_LOSS_PCT*100}%")
-    print(f"  Max Risk/Trade: {MAX_RISK_PER_TRADE*100}%")
+    print(f"  Take Profit: {TAKE_PROFIT_PCT * 100}%")
+    print(f"  Stop Loss: {STOP_LOSS_PCT * 100}%")
+    print(f"  Max Risk/Trade: {MAX_RISK_PER_TRADE * 100}%")
     print(f"  Hold Days: {HOLD_DAYS_MIN}-{HOLD_DAYS_MAX}")

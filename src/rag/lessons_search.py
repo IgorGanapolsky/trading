@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 # Import numpy only if needed
 try:
     import numpy as np
+
     NUMPY_AVAILABLE = True
 except ImportError:
     NUMPY_AVAILABLE = False
@@ -47,12 +48,14 @@ SKLEARN_AVAILABLE = False
 
 try:
     from fastembed import TextEmbedding
+
     FASTEMBED_AVAILABLE = True
 except ImportError:
     logger.warning("fastembed not installed - will use TF-IDF fallback")
 
 try:
     import lancedb
+
     LANCEDB_AVAILABLE = True
 except ImportError:
     logger.warning("lancedb not installed - will use JSON fallback")
@@ -60,6 +63,7 @@ except ImportError:
 try:
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.metrics.pairwise import cosine_similarity
+
     SKLEARN_AVAILABLE = True
 except ImportError:
     logger.warning("scikit-learn not installed - limited search capabilities")
@@ -172,7 +176,8 @@ class LessonsSearch:
         if vectorizer_path.exists():
             try:
                 import pickle
-                with open(vectorizer_path, 'rb') as f:
+
+                with open(vectorizer_path, "rb") as f:
                     self.tfidf_vectorizer = pickle.load(f)
                 logger.info("Loaded pre-fitted TF-IDF vectorizer from indexing")
                 return
@@ -182,7 +187,7 @@ class LessonsSearch:
         # Fallback: create and fit on existing corpus
         self.tfidf_vectorizer = TfidfVectorizer(
             max_features=384,
-            stop_words='english',
+            stop_words="english",
             ngram_range=(1, 2),
             min_df=1,
             max_df=0.95,
@@ -284,14 +289,16 @@ class LessonsSearch:
                 if filters and not self._matches_filters(metadata, filters):
                     continue
 
-                search_results.append(SearchResult(
-                    lesson_file=result.get("lesson_file", "unknown"),
-                    section_title=result.get("section_title", ""),
-                    content=result.get("content", ""),
-                    score=1.0 - result.get("_distance", 0.0),  # Convert distance to similarity
-                    metadata=metadata,
-                    chunk_index=result.get("chunk_index", 0),
-                ))
+                search_results.append(
+                    SearchResult(
+                        lesson_file=result.get("lesson_file", "unknown"),
+                        section_title=result.get("section_title", ""),
+                        content=result.get("content", ""),
+                        score=1.0 - result.get("_distance", 0.0),  # Convert distance to similarity
+                        metadata=metadata,
+                        chunk_index=result.get("chunk_index", 0),
+                    )
+                )
 
             logger.info(f"Found {len(search_results)} results from LanceDB")
             return search_results
@@ -341,8 +348,8 @@ class LessonsSearch:
                 else:
                     # Pure Python fallback
                     dot_product = sum(a * b for a, b in zip(query_vector, item_vector))
-                    norm_query = sum(a ** 2 for a in query_vector) ** 0.5
-                    norm_item = sum(b ** 2 for b in item_vector) ** 0.5
+                    norm_query = sum(a**2 for a in query_vector) ** 0.5
+                    norm_item = sum(b**2 for b in item_vector) ** 0.5
                     similarity = dot_product / (norm_query * norm_item + 1e-8)
 
                 results_with_scores.append((similarity, item, metadata))
@@ -354,14 +361,16 @@ class LessonsSearch:
             # Convert to SearchResult objects
             search_results = []
             for score, item, metadata in top_results:
-                search_results.append(SearchResult(
-                    lesson_file=item.get("lesson_file", "unknown"),
-                    section_title=item.get("section_title", ""),
-                    content=item.get("content", ""),
-                    score=float(score),
-                    metadata=metadata,
-                    chunk_index=item.get("chunk_index", 0),
-                ))
+                search_results.append(
+                    SearchResult(
+                        lesson_file=item.get("lesson_file", "unknown"),
+                        section_title=item.get("section_title", ""),
+                        content=item.get("content", ""),
+                        score=float(score),
+                        metadata=metadata,
+                        chunk_index=item.get("chunk_index", 0),
+                    )
+                )
 
             logger.info(f"Found {len(search_results)} results from JSON fallback")
             return search_results

@@ -85,7 +85,7 @@ def run_volatility_safety_check(root: Path) -> bool:
     print("Running: Volatility Safety Module Check...")
     try:
         sys.path.insert(0, str(root))
-        from src.safety.volatility_adjusted_safety import (
+        from src.safety.volatility_adjusted_safety import (  # noqa: F401
             ATRBasedLimits,
             DriftDetector,
             HourlyLossHeartbeat,

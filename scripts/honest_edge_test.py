@@ -51,13 +51,13 @@ def run_pure_macd_backtest(
 
     No other filters. No complexity. Just the signal.
     """
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"HONEST EDGE TEST: {symbol}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Fetch data
     df = fetch_prices(symbol, days)
-    prices = df['Close']
+    prices = df["Close"]
     print(f"Data: {len(prices)} days from {prices.index[0].date()} to {prices.index[-1].date()}")
 
     # Need at least 35 days for MACD (26 slow + 9 signal)
@@ -77,21 +77,23 @@ def run_pure_macd_backtest(
     # Walk through each day starting from day 35
     for i in range(35, len(prices)):
         current_price = prices.iloc[i]
-        price_series = prices.iloc[:i+1]
+        price_series = prices.iloc[: i + 1]
 
         # Calculate MACD
         macd_val, signal_line, histogram = calculate_macd(price_series)
 
         # Track equity
         equity = capital + (position * current_price)
-        equity_curve.append({
-            'date': prices.index[i],
-            'equity': equity,
-            'price': current_price,
-            'macd': macd_val,
-            'signal': signal_line,
-            'histogram': histogram,
-        })
+        equity_curve.append(
+            {
+                "date": prices.index[i],
+                "equity": equity,
+                "price": current_price,
+                "macd": macd_val,
+                "signal": signal_line,
+                "histogram": histogram,
+            }
+        )
 
         # Trading logic - pure MACD crossover
         if prev_histogram is not None:
@@ -103,13 +105,15 @@ def run_pure_macd_backtest(
                     capital -= cost
                     position = shares_to_buy
                     entry_price = current_price
-                    trades.append({
-                        'date': prices.index[i],
-                        'action': 'BUY',
-                        'price': current_price,
-                        'shares': shares_to_buy,
-                        'histogram': histogram,
-                    })
+                    trades.append(
+                        {
+                            "date": prices.index[i],
+                            "action": "BUY",
+                            "price": current_price,
+                            "shares": shares_to_buy,
+                            "histogram": histogram,
+                        }
+                    )
 
             # SELL signal: histogram crosses from positive to negative
             elif prev_histogram >= 0 and histogram < 0 and position > 0:
@@ -117,15 +121,17 @@ def run_pure_macd_backtest(
                 pnl = (current_price - entry_price) * position
                 pnl_pct = (current_price - entry_price) / entry_price * 100
                 capital += proceeds
-                trades.append({
-                    'date': prices.index[i],
-                    'action': 'SELL',
-                    'price': current_price,
-                    'shares': position,
-                    'pnl': pnl,
-                    'pnl_pct': pnl_pct,
-                    'histogram': histogram,
-                })
+                trades.append(
+                    {
+                        "date": prices.index[i],
+                        "action": "SELL",
+                        "price": current_price,
+                        "shares": position,
+                        "pnl": pnl,
+                        "pnl_pct": pnl_pct,
+                        "histogram": histogram,
+                    }
+                )
                 position = 0
                 entry_price = 0.0
 
@@ -138,14 +144,16 @@ def run_pure_macd_backtest(
         pnl = (final_price - entry_price) * position
         pnl_pct = (final_price - entry_price) / entry_price * 100
         capital += proceeds
-        trades.append({
-            'date': prices.index[-1],
-            'action': 'SELL (END)',
-            'price': final_price,
-            'shares': position,
-            'pnl': pnl,
-            'pnl_pct': pnl_pct,
-        })
+        trades.append(
+            {
+                "date": prices.index[-1],
+                "action": "SELL (END)",
+                "price": final_price,
+                "shares": position,
+                "pnl": pnl,
+                "pnl_pct": pnl_pct,
+            }
+        )
         position = 0
 
     # Calculate metrics
@@ -158,13 +166,13 @@ def run_pure_macd_backtest(
     buy_hold_return = (buy_hold_final - initial_capital) / initial_capital * 100
 
     # Win/loss stats
-    sell_trades = [t for t in trades if t['action'].startswith('SELL')]
-    wins = [t for t in sell_trades if t.get('pnl', 0) > 0]
-    losses = [t for t in sell_trades if t.get('pnl', 0) <= 0]
+    sell_trades = [t for t in trades if t["action"].startswith("SELL")]
+    wins = [t for t in sell_trades if t.get("pnl", 0) > 0]
+    losses = [t for t in sell_trades if t.get("pnl", 0) <= 0]
     win_rate = len(wins) / len(sell_trades) * 100 if sell_trades else 0
 
     # Max drawdown
-    equity_values = [e['equity'] for e in equity_curve]
+    equity_values = [e["equity"] for e in equity_curve]
     peak = equity_values[0]
     max_dd = 0
     for eq in equity_values:
@@ -176,29 +184,32 @@ def run_pure_macd_backtest(
 
     # Sharpe ratio (simplified - daily returns)
     if len(equity_curve) > 1:
-        returns = pd.Series([
-            (equity_curve[i]['equity'] - equity_curve[i-1]['equity']) / equity_curve[i-1]['equity']
-            for i in range(1, len(equity_curve))
-        ])
-        sharpe = (returns.mean() / returns.std()) * (252 ** 0.5) if returns.std() > 0 else 0
+        returns = pd.Series(
+            [
+                (equity_curve[i]["equity"] - equity_curve[i - 1]["equity"])
+                / equity_curve[i - 1]["equity"]
+                for i in range(1, len(equity_curve))
+            ]
+        )
+        sharpe = (returns.mean() / returns.std()) * (252**0.5) if returns.std() > 0 else 0
     else:
         sharpe = 0
 
     results = {
-        'symbol': symbol,
-        'initial_capital': initial_capital,
-        'final_equity': final_equity,
-        'total_return_pct': total_return,
-        'buy_hold_return_pct': buy_hold_return,
-        'alpha_vs_hold': total_return - buy_hold_return,
-        'total_trades': len(sell_trades),
-        'wins': len(wins),
-        'losses': len(losses),
-        'win_rate_pct': win_rate,
-        'max_drawdown_pct': max_dd,
-        'sharpe_ratio': sharpe,
-        'trades': trades,
-        'equity_curve': equity_curve,
+        "symbol": symbol,
+        "initial_capital": initial_capital,
+        "final_equity": final_equity,
+        "total_return_pct": total_return,
+        "buy_hold_return_pct": buy_hold_return,
+        "alpha_vs_hold": total_return - buy_hold_return,
+        "total_trades": len(sell_trades),
+        "wins": len(wins),
+        "losses": len(losses),
+        "win_rate_pct": win_rate,
+        "max_drawdown_pct": max_dd,
+        "sharpe_ratio": sharpe,
+        "trades": trades,
+        "equity_curve": equity_curve,
     }
 
     return results
@@ -206,16 +217,18 @@ def run_pure_macd_backtest(
 
 def print_results(results: dict) -> None:
     """Print formatted results."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("RESULTS")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     print("\n📊 PERFORMANCE:")
     print(f"   Initial:      ${results['initial_capital']:,.2f}")
     print(f"   Final:        ${results['final_equity']:,.2f}")
     print(f"   Return:       {results['total_return_pct']:+.2f}%")
     print(f"   Buy & Hold:   {results['buy_hold_return_pct']:+.2f}%")
-    print(f"   Alpha:        {results['alpha_vs_hold']:+.2f}% {'✅' if results['alpha_vs_hold'] > 0 else '❌'}")
+    print(
+        f"   Alpha:        {results['alpha_vs_hold']:+.2f}% {'✅' if results['alpha_vs_hold'] > 0 else '❌'}"
+    )
 
     print("\n📈 TRADE STATS:")
     print(f"   Total Trades: {results['total_trades']}")
@@ -228,41 +241,43 @@ def print_results(results: dict) -> None:
     print(f"   Sharpe Ratio: {results['sharpe_ratio']:.2f}")
 
     # Verdict
-    print(f"\n{'='*60}")
-    if results['alpha_vs_hold'] > 0 and results['sharpe_ratio'] > 0.5:
+    print(f"\n{'=' * 60}")
+    if results["alpha_vs_hold"] > 0 and results["sharpe_ratio"] > 0.5:
         print("✅ EDGE EXISTS - Strategy beats buy & hold with acceptable risk")
-    elif results['total_return_pct'] > 0:
+    elif results["total_return_pct"] > 0:
         print("⚠️  MARGINAL - Profitable but doesn't beat buy & hold")
     else:
         print("❌ NO EDGE - Strategy loses money. Base signal is broken.")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Show trades
     print("\n📝 TRADE LOG:")
-    for t in results['trades']:
-        action = t['action']
-        if 'pnl' in t:
+    for t in results["trades"]:
+        action = t["action"]
+        if "pnl" in t:
             pnl_str = f"P/L: ${t['pnl']:+.2f} ({t['pnl_pct']:+.1f}%)"
         else:
             pnl_str = ""
-        print(f"   {t['date'].date()} | {action:10} | ${t['price']:.2f} x {t['shares']} | {pnl_str}")
+        print(
+            f"   {t['date'].date()} | {action:10} | ${t['price']:.2f} x {t['shares']} | {pnl_str}"
+        )
 
 
 def main():
     """Run honest edge tests on multiple assets."""
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🔬 HONEST EDGE TEST - Finding if ANY edge exists")
-    print("="*60)
+    print("=" * 60)
     print("\nStrategy: Pure MACD crossover (12/26/9)")
     print("Rules:    BUY when histogram > 0, SELL when histogram < 0")
     print("Filters:  NONE (no RL, no sentiment, no gates)")
-    print("="*60)
+    print("=" * 60)
 
     # Test multiple assets
     test_assets = [
-        ("SPY", 365),      # S&P 500 ETF - 1 year
-        ("QQQ", 365),      # Nasdaq ETF - 1 year
+        ("SPY", 365),  # S&P 500 ETF - 1 year
+        ("QQQ", 365),  # Nasdaq ETF - 1 year
         ("BTC-USD", 365),  # Bitcoin - 1 year (24/7 market)
         ("ETH-USD", 365),  # Ethereum - 1 year (24/7 market)
     ]
@@ -283,28 +298,32 @@ def main():
             print(f"\n❌ Error testing {symbol}: {e}")
 
     # Summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📊 SUMMARY - DOES ANY EDGE EXIST?")
-    print("="*60)
+    print("=" * 60)
 
-    print(f"\n{'Symbol':<10} {'Return':>10} {'vs Hold':>10} {'Win Rate':>10} {'Sharpe':>10} {'Verdict':>10}")
+    print(
+        f"\n{'Symbol':<10} {'Return':>10} {'vs Hold':>10} {'Win Rate':>10} {'Sharpe':>10} {'Verdict':>10}"
+    )
     print("-" * 60)
 
     any_edge = False
     for r in all_results:
-        verdict = "✅ EDGE" if r['alpha_vs_hold'] > 0 and r['sharpe_ratio'] > 0.5 else "❌ NONE"
+        verdict = "✅ EDGE" if r["alpha_vs_hold"] > 0 and r["sharpe_ratio"] > 0.5 else "❌ NONE"
         if verdict == "✅ EDGE":
             any_edge = True
-        print(f"{r['symbol']:<10} {r['total_return_pct']:>+9.1f}% {r['alpha_vs_hold']:>+9.1f}% {r['win_rate_pct']:>9.1f}% {r['sharpe_ratio']:>10.2f} {verdict:>10}")
+        print(
+            f"{r['symbol']:<10} {r['total_return_pct']:>+9.1f}% {r['alpha_vs_hold']:>+9.1f}% {r['win_rate_pct']:>9.1f}% {r['sharpe_ratio']:>10.2f} {verdict:>10}"
+        )
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     if any_edge:
         print("✅ EDGE FOUND - At least one asset shows profitable alpha")
         print("   → Focus strategy on winning assets")
     else:
         print("❌ NO EDGE FOUND - Pure MACD crossover has no alpha")
         print("   → Need different signal or parameters")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     return all_results
 

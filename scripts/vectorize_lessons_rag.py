@@ -213,7 +213,7 @@ def main():
         json.dump(all_lessons, f, indent=2)
 
     # Summary
-    with_embeddings = sum(1 for l in all_lessons if l.get("embedding"))
+    with_embeddings = sum(1 for lesson in all_lessons if lesson.get("embedding"))
     logger.info("-" * 60)
     logger.info(f"Total lessons: {len(all_lessons)}")
     logger.info(f"With embeddings: {with_embeddings}")

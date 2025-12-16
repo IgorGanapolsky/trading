@@ -57,10 +57,7 @@ def should_scan_file(file_path: Path, exclude_dirs: list, exclude_files: list) -
             return False
 
     # Check if excluded file
-    if file_path.name in exclude_files:
-        return False
-
-    return True
+    return file_path.name not in exclude_files
 
 
 def scan_file(file_path: Path, patterns: list) -> list:
@@ -72,9 +69,14 @@ def scan_file(file_path: Path, patterns: list) -> list:
             for pattern in patterns:
                 if re.search(pattern, line, re.IGNORECASE):
                     matches.append(
-                        {"file": str(file_path), "line": i, "content": line.strip()[:100], "pattern": pattern}
+                        {
+                            "file": str(file_path),
+                            "line": i,
+                            "content": line.strip()[:100],
+                            "pattern": pattern,
+                        }
                     )
-    except Exception as e:
+    except Exception:
         pass  # Skip files that can't be read
     return matches
 

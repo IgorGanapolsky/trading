@@ -23,9 +23,7 @@ class TestMLLearningLoopInitialization:
 
     def test_integration_module_exists(self, project_root):
         """Verify the integration module exists and imports."""
-        integration_file = (
-            project_root / "src" / "verification" / "ml_learning_loop_integration.py"
-        )
+        integration_file = project_root / "src" / "verification" / "ml_learning_loop_integration.py"
         assert integration_file.exists(), "ml_learning_loop_integration.py must exist"
 
     def test_can_import_integration(self):
@@ -107,9 +105,7 @@ class TestPreTradeRAGCheck:
             initialize_learning_loop()
 
             # Query with fear context
-            result = pre_trade_check(
-                "BTCUSD", "BUY", {"fear_greed": 15, "regime": "bear"}
-            )
+            result = pre_trade_check("BTCUSD", "BUY", {"fear_greed": 15, "regime": "bear"})
 
             # Should find some warnings (we have LL-020, LL-040 about fear)
             # Note: May return empty if RAG not fully initialized
@@ -128,19 +124,12 @@ class TestAnomalyToLessonPipeline:
 
     def test_failure_pipeline_exists(self, project_root):
         """Verify failure-to-lesson pipeline exists."""
-        pipeline_file = (
-            project_root / "src" / "verification" / "failure_to_lesson_pipeline.py"
-        )
+        pipeline_file = project_root / "src" / "verification" / "failure_to_lesson_pipeline.py"
         assert pipeline_file.exists(), "failure_to_lesson_pipeline.py must exist"
 
     def test_anomaly_loop_exists(self, project_root):
         """Verify anomaly learning loop exists."""
-        loop_file = (
-            project_root
-            / "src"
-            / "verification"
-            / "anomaly_learning_feedback_loop.py"
-        )
+        loop_file = project_root / "src" / "verification" / "anomaly_learning_feedback_loop.py"
         assert loop_file.exists(), "anomaly_learning_feedback_loop.py must exist"
 
     def test_lessons_directory_has_content(self, project_root):
@@ -271,9 +260,7 @@ class TestRegressionPreventionIntegration:
             loop = initialize_learning_loop()
 
             if loop.rag_gate:
-                results = loop.rag_gate.semantic_search(
-                    "crypto order fill verification", top_k=5
-                )
+                results = loop.rag_gate.semantic_search("crypto order fill verification", top_k=5)
 
                 # Should find relevant lessons about crypto fills
                 assert len(results) >= 1, "Should find lessons about crypto fills"

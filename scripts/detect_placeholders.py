@@ -26,28 +26,31 @@ PLACEHOLDER_PATTERNS = [
     # Error messages about not implemented - dead feature
     (r'error=["\'].*not\s+(?:yet\s+)?implemented', "Not implemented error message"),
     # Disabled feature flags with "not implemented" comment
-    (r'enable_\w+\s*[=:]\s*False\s*,?\s*#\s*[Nn]ot\s+(?:yet\s+)?implemented', "Disabled feature flag (not implemented)"),
+    (
+        r"enable_\w+\s*[=:]\s*False\s*,?\s*#\s*[Nn]ot\s+(?:yet\s+)?implemented",
+        "Disabled feature flag (not implemented)",
+    ),
     # Module-level "not yet implemented" in docstrings (indicates stub module)
     (r'^"""[^"]*[Nn]ot\s+(?:yet\s+)?implemented[^"]*"""$', "Module stub docstring"),
 ]
 
 # Files/directories to skip
 SKIP_PATTERNS = [
-    r'\.git/',
-    r'__pycache__/',
-    r'\.pyc$',
-    r'node_modules/',
-    r'\.env',
-    r'venv/',
-    r'\.venv/',
-    r'migrations/',
+    r"\.git/",
+    r"__pycache__/",
+    r"\.pyc$",
+    r"node_modules/",
+    r"\.env",
+    r"venv/",
+    r"\.venv/",
+    r"migrations/",
     # Allow in test files (mocking is OK)
-    r'test_.*\.py$',
-    r'conftest\.py$',
+    r"test_.*\.py$",
+    r"conftest\.py$",
     # Allow in this script itself
-    r'detect_placeholders\.py$',
+    r"detect_placeholders\.py$",
     # Allow in lessons learned (documenting the pattern)
-    r'lessons_learned/',
+    r"lessons_learned/",
 ]
 
 
@@ -66,8 +69,8 @@ def scan_file(filepath: Path) -> list[tuple[int, str, str]]:
     findings = []
 
     try:
-        content = filepath.read_text(encoding='utf-8', errors='ignore')
-        lines = content.split('\n')
+        content = filepath.read_text(encoding="utf-8", errors="ignore")
+        lines = content.split("\n")
 
         for line_num, line in enumerate(lines, 1):
             for pattern, description in PLACEHOLDER_PATTERNS:
@@ -92,10 +95,10 @@ def main(files: list[str] = None) -> int:
         Exit code (0 = clean, 1 = findings)
     """
     if files:
-        file_list = [Path(f) for f in files if f.endswith('.py')]
+        file_list = [Path(f) for f in files if f.endswith(".py")]
     else:
         # Scan entire src/ directory
-        file_list = list(Path('src').rglob('*.py'))
+        file_list = list(Path("src").rglob("*.py"))
 
     all_findings = []
 

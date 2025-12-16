@@ -28,17 +28,18 @@ DATA_SOURCES = {
 
 # Staleness thresholds (in hours)
 STALENESS_THRESHOLDS = {
-    "system_state": 24,      # Must be updated daily
-    "market_data": 24,       # Market data can be 24h old (relaxed for R&D phase)
-    "sentiment": 48,         # Sentiment can be 48h old
-    "rl_model": 168,         # RL model can be 1 week old
-    "lessons": 168,          # Lessons can be 1 week old
+    "system_state": 24,  # Must be updated daily
+    "market_data": 24,  # Market data can be 24h old (relaxed for R&D phase)
+    "sentiment": 48,  # Sentiment can be 48h old
+    "rl_model": 168,  # RL model can be 1 week old
+    "lessons": 168,  # Lessons can be 1 week old
 }
 
 
 @dataclass
 class FreshnessResult:
     """Result of data freshness check."""
+
     source: str
     is_fresh: bool
     last_updated: Optional[datetime]
@@ -195,8 +196,7 @@ def integrate_with_orchestrator():
             return
 
         original_execute = getattr(
-            TradingOrchestrator, "_original_execute_trade",
-            TradingOrchestrator.execute_trade
+            TradingOrchestrator, "_original_execute_trade", TradingOrchestrator.execute_trade
         )
 
         def fresh_execute_trade(self, symbol, action, quantity, **kwargs):

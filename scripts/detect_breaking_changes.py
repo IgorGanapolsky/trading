@@ -44,7 +44,7 @@ class BreakingChangeDetector:
             ["git", "log", f"-{num_commits}", "--oneline"],
             capture_output=True,
             text=True,
-            cwd=self.workspace
+            cwd=self.workspace,
         )
 
         print("\nRecent commits:")
@@ -70,45 +70,41 @@ class BreakingChangeDetector:
 
         # Check existence
         if not full_path.exists():
-            self.issues.append({
-                "severity": "CRITICAL",
-                "file": file_path,
-                "issue": "File missing!"
-            })
+            self.issues.append(
+                {"severity": "CRITICAL", "file": file_path, "issue": "File missing!"}
+            )
             print(f"❌ CRITICAL: {file_path} is MISSING")
             return False
 
         # Check syntax for Python files
-        if file_path.endswith('.py'):
+        if file_path.endswith(".py"):
             try:
                 with open(full_path) as f:
                     import ast
+
                     ast.parse(f.read(), filename=str(full_path))
                 print(f"✅ {file_path} - OK")
                 return True
             except SyntaxError as e:
-                self.issues.append({
-                    "severity": "CRITICAL",
-                    "file": file_path,
-                    "issue": f"Syntax error: {e}"
-                })
+                self.issues.append(
+                    {"severity": "CRITICAL", "file": file_path, "issue": f"Syntax error: {e}"}
+                )
                 print(f"❌ CRITICAL: {file_path} - SYNTAX ERROR")
                 return False
 
         # Check JSON validity
-        if file_path.endswith('.json'):
+        if file_path.endswith(".json"):
             try:
                 import json
+
                 with open(full_path) as f:
                     json.load(f)
                 print(f"✅ {file_path} - OK")
                 return True
             except json.JSONDecodeError as e:
-                self.issues.append({
-                    "severity": "CRITICAL",
-                    "file": file_path,
-                    "issue": f"Invalid JSON: {e}"
-                })
+                self.issues.append(
+                    {"severity": "CRITICAL", "file": file_path, "issue": f"Invalid JSON: {e}"}
+                )
                 print(f"❌ CRITICAL: {file_path} - INVALID JSON")
                 return False
 
@@ -119,21 +115,23 @@ class BreakingChangeDetector:
         """Test if TradingOrchestrator can be imported."""
         result = subprocess.run(
             [
-                sys.executable, "-c",
-                "from src.orchestrator.main import TradingOrchestrator; "
-                "print('OK')"
+                sys.executable,
+                "-c",
+                "from src.orchestrator.main import TradingOrchestrator; print('OK')",
             ],
             capture_output=True,
             text=True,
-            cwd=self.workspace
+            cwd=self.workspace,
         )
 
         if result.returncode != 0:
-            self.issues.append({
-                "severity": "CRITICAL",
-                "file": "src/orchestrator/main.py",
-                "issue": "Cannot import TradingOrchestrator"
-            })
+            self.issues.append(
+                {
+                    "severity": "CRITICAL",
+                    "file": "src/orchestrator/main.py",
+                    "issue": "Cannot import TradingOrchestrator",
+                }
+            )
             print("❌ CRITICAL: TradingOrchestrator import FAILED")
             return False
 

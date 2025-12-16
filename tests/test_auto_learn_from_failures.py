@@ -181,7 +181,7 @@ class TestAutoLearnFromFailures:
 
     def test_critical_lessons_have_file_patterns(self, lessons):
         """Critical lessons should reference specific files to check."""
-        critical = [l for l in lessons if l["severity"] == "CRITICAL"]
+        critical = [lesson for lesson in lessons if lesson["severity"] == "CRITICAL"]
 
         for lesson in critical:
             has_patterns = (
@@ -231,8 +231,8 @@ def pytest_generate_tests(metafunc):
         if lessons_dir.exists():
             parser = LessonParser(lessons_dir)
             lessons = parser.parse_all()
-            critical = [l for l in lessons if l["severity"] == "CRITICAL"]
-            metafunc.parametrize("critical_lesson", critical, ids=[l["id"] for l in critical])
+            critical = [lesson for lesson in lessons if lesson["severity"] == "CRITICAL"]
+            metafunc.parametrize("critical_lesson", critical, ids=[lesson["id"] for lesson in critical])
 
 
 class TestCriticalLessonRegressions:

@@ -25,6 +25,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("verify_lessons")
 
+
 def get_changed_files() -> list[str]:
     """Get list of changed files (staged + unstaged)."""
     try:
@@ -33,13 +34,12 @@ def get_changed_files() -> list[str]:
             ["git", "diff", "--name-only", "--cached"], text=True
         ).splitlines()
         # Unstaged
-        unstaged = subprocess.check_output(
-            ["git", "diff", "--name-only"], text=True
-        ).splitlines()
+        unstaged = subprocess.check_output(["git", "diff", "--name-only"], text=True).splitlines()
         return list(set(staged + unstaged))
     except subprocess.CalledProcessError:
         logger.warning("Not a git repository or git error.")
         return []
+
 
 def get_keywords_from_path(file_path: str) -> str:
     """Extract search keywords from file path."""
@@ -51,11 +51,13 @@ def get_keywords_from_path(file_path: str) -> str:
         keywords += " python"
     return keywords
 
+
 def query_lessons(query: str, limit: int = 3) -> list[dict[str, Any]]:
     """Query lessons learned (RAG or Fallback)."""
     # Try UnifiedRAG
     try:
         from src.rag.unified_rag import CHROMA_AVAILABLE, UnifiedRAG
+
         if CHROMA_AVAILABLE:
             rag = UnifiedRAG()
             results = rag.query_lessons(query, n_results=limit)
@@ -63,16 +65,18 @@ def query_lessons(query: str, limit: int = 3) -> list[dict[str, Any]]:
             cleaned_results = []
             if results["documents"]:
                 for i, doc in enumerate(results["documents"][0]):
-                    cleaned_results.append({
-                        "content": doc,
-                        "metadata": results["metadatas"][0][i],
-                        "id": results["ids"][0][i]
-                    })
+                    cleaned_results.append(
+                        {
+                            "content": doc,
+                            "metadata": results["metadatas"][0][i],
+                            "id": results["ids"][0][i],
+                        }
+                    )
             return cleaned_results
     except ImportError:
         pass
     except Exception:
-        pass # Fallback
+        pass  # Fallback
 
     # Fallback: Keyword search
     lessons_dir = PROJECT_ROOT / "rag_knowledge" / "lessons_learned"
@@ -89,16 +93,19 @@ def query_lessons(query: str, limit: int = 3) -> list[dict[str, Any]]:
             score = sum(1 for term in query_terms if term in content_lower)
 
             if score > 0:
-                results.append({
-                    "content": content,
-                    "metadata": {"source": md_file.name, "severity": "unknown"},
-                    "score": score
-                })
+                results.append(
+                    {
+                        "content": content,
+                        "metadata": {"source": md_file.name, "severity": "unknown"},
+                        "score": score,
+                    }
+                )
         except:
             pass
 
     results.sort(key=lambda x: x.get("score", 0), reverse=True)
     return results[:limit]
+
 
 def main():
     parser = argparse.ArgumentParser(description="Verify changes against Lessons Learned")
@@ -152,6 +159,7 @@ def main():
         logger.info("✅ No critical lessons found for these changes.")
 
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -25,9 +25,10 @@ sys.path.insert(0, str(PROJECT_ROOT))
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stderr)]  # Log to stderr to keep stdout clean for results
+    handlers=[logging.StreamHandler(sys.stderr)],  # Log to stderr to keep stdout clean for results
 )
 logger = logging.getLogger("query_rag")
+
 
 def keyword_search(query: str, lessons_dir: Path) -> list[dict[str, Any]]:
     """Fallback: Search markdown files for keywords."""
@@ -47,17 +48,16 @@ def keyword_search(query: str, lessons_dir: Path) -> list[dict[str, Any]]:
             score = sum(1 for term in query_terms if term in content_lower)
 
             if score > 0:
-                results.append({
-                    "document": content,
-                    "metadata": {"source": md_file.name},
-                    "score": score
-                })
+                results.append(
+                    {"document": content, "metadata": {"source": md_file.name}, "score": score}
+                )
         except Exception as e:
             logger.error(f"Error reading {md_file}: {e}")
 
     # Sort by score descending
     results.sort(key=lambda x: x["score"], reverse=True)
     return results[:5]
+
 
 def main():
     parser = argparse.ArgumentParser(description="Query RAG Lessons Learned")
@@ -78,9 +78,9 @@ def main():
             print(f"\nFound {len(results['documents'][0])} lessons for: '{args.query}'\n")
             for i, doc in enumerate(results["documents"][0]):
                 meta = results["metadatas"][0][i]
-                print(f"--- Lesson {i+1} ---")
+                print(f"--- Lesson {i + 1} ---")
                 print(f"File: {meta.get('source', 'Unknown')}")
-                print(f"Content: {doc[:300]}...") # Truncate for readability
+                print(f"Content: {doc[:300]}...")  # Truncate for readability
                 print("-" * 40)
             return 0
         else:
@@ -102,12 +102,13 @@ def main():
 
     print(f"\n[Fallback] Found {len(results)} lessons for: '{args.query}'\n")
     for i, res in enumerate(results):
-        print(f"--- Lesson {i+1} ---")
+        print(f"--- Lesson {i + 1} ---")
         print(f"File: {res['metadata']['source']}")
         print(f"Content: {res['document'][:300]}...")
         print("-" * 40)
 
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -30,8 +30,7 @@ class TestFeatureCompleteness:
         for source_name in analyzer.SOURCE_WEIGHTS:
             method_name = f"_get_{source_name}_sentiment"
             assert hasattr(analyzer, method_name), (
-                f"SOURCE_WEIGHTS declares '{source_name}' but "
-                f"'{method_name}' method doesn't exist"
+                f"SOURCE_WEIGHTS declares '{source_name}' but '{method_name}' method doesn't exist"
             )
 
     def test_enabled_sources_flag_consistency(self):
@@ -118,9 +117,7 @@ class TestFeatureCompleteness:
                 # Skill declares tools but has no scripts - potential issue
                 # Allow if it references external modules
                 if "src/" not in skill_content:
-                    pytest.fail(
-                        f"Skill '{skill_dir.name}' declares tools but has no scripts"
-                    )
+                    pytest.fail(f"Skill '{skill_dir.name}' declares tools but has no scripts")
 
     def test_env_example_matches_actual_usage(self):
         """
@@ -145,7 +142,11 @@ class TestFeatureCompleteness:
             try:
                 content = py_file.read_text()
                 for var in env_vars:
-                    if f'"{var}"' in content or f"'{var}'" in content or f"os.getenv('{var}" in content:
+                    if (
+                        f'"{var}"' in content
+                        or f"'{var}'" in content
+                        or f"os.getenv('{var}" in content
+                    ):
                         used_vars.add(var)
             except Exception:
                 pass
@@ -198,7 +199,9 @@ class TestNoPhantomConfigs:
         strategies_dir = PROJECT_ROOT / "src" / "strategies"
 
         for strategy in active_strategies:
-            strategy_name = strategy.get("name", strategy) if isinstance(strategy, dict) else strategy
+            strategy_name = (
+                strategy.get("name", strategy) if isinstance(strategy, dict) else strategy
+            )
 
             # Normalize name
             normalized = strategy_name.lower().replace(" ", "_").replace("-", "_")
@@ -219,6 +222,7 @@ class TestNoPhantomConfigs:
                 for py_file in strategies_dir.glob("*.py"):
                     try:
                         import re
+
                         if re.search(class_pattern, py_file.read_text(), re.IGNORECASE):
                             found_class = True
                             break
@@ -226,6 +230,5 @@ class TestNoPhantomConfigs:
                         pass
 
                 assert found_class, (
-                    f"Strategy '{strategy_name}' in system_state.json "
-                    f"has no implementation"
+                    f"Strategy '{strategy_name}' in system_state.json has no implementation"
                 )

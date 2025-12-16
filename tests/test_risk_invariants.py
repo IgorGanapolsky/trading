@@ -64,11 +64,11 @@ class TestDailyLossLimit:
         max_loss = equity * 0.02
 
         # Day 1
-        day1_total = sum(abs(l) for l in day1_losses)
+        day1_total = sum(abs(loss) for loss in day1_losses)
         assert day1_total <= max_loss, "Day 1 within limit"
 
         # Day 2 - counter resets
-        day2_total = sum(abs(l) for l in day2_losses)
+        day2_total = sum(abs(loss) for loss in day2_losses)
         assert day2_total <= max_loss, "Day 2 within limit after reset"
 
 

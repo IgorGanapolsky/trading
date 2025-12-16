@@ -109,17 +109,17 @@ if __name__ == "__main__":
 '''
 
     output_file = Path(__file__).parent / "report_to_datadog.py"
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         f.write(script_content)
 
-    os.chmod(output_file, 0o755)
+    os.chmod(output_file, 0o755)  # noqa: S103
     print(f"✅ Created {output_file}")
 
 
 def create_workflow_integration():
     """Show how to integrate with workflows."""
 
-    integration_example = '''
+    integration_example = """
 # Add this to your trading workflows:
 
       - name: Report to Datadog
@@ -132,7 +132,7 @@ def create_workflow_integration():
             --profit $PROFIT \\
             --status ${{ job.status }} \\
             --win-rate $WIN_RATE
-'''
+"""
 
     print("\n" + "=" * 60)
     print("WORKFLOW INTEGRATION")
@@ -152,7 +152,7 @@ def main():
     print("   https://app.datadoghq.com/organization-settings/api-keys")
 
     print("\n3. Set GitHub secret:")
-    print("   gh secret set DD_API_KEY --body \"your-api-key\"")
+    print('   gh secret set DD_API_KEY --body "your-api-key"')
 
     print("\n4. Creating integration script...")
     create_datadog_integration()

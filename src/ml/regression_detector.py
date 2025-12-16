@@ -98,16 +98,18 @@ class RegressionDetector:
                 if p.get("embedding"):
                     embedding = np.array(p["embedding"])
 
-                self.patterns.append(RegressionPattern(
-                    pattern_id=p["pattern_id"],
-                    description=p["description"],
-                    embedding=embedding,
-                    severity=p["severity"],
-                    category=p["category"],
-                    occurrences=p.get("occurrences", 1),
-                    last_seen=p.get("last_seen", ""),
-                    prevention=p.get("prevention", ""),
-                ))
+                self.patterns.append(
+                    RegressionPattern(
+                        pattern_id=p["pattern_id"],
+                        description=p["description"],
+                        embedding=embedding,
+                        severity=p["severity"],
+                        category=p["category"],
+                        occurrences=p.get("occurrences", 1),
+                        last_seen=p.get("last_seen", ""),
+                        prevention=p.get("prevention", ""),
+                    )
+                )
 
             logger.info(f"Loaded {len(self.patterns)} regression patterns")
 
@@ -234,14 +236,16 @@ class RegressionDetector:
 
             similarity = self._cosine_similarity(embedding, pattern.embedding)
             if similarity >= self.similarity_threshold:
-                alerts.append(RegressionAlert(
-                    pattern_id=pattern.pattern_id,
-                    similarity=similarity,
-                    description=pattern.description,
-                    severity=pattern.severity,
-                    prevention=pattern.prevention,
-                    context={"category": pattern.category, "occurrences": pattern.occurrences},
-                ))
+                alerts.append(
+                    RegressionAlert(
+                        pattern_id=pattern.pattern_id,
+                        similarity=similarity,
+                        description=pattern.description,
+                        severity=pattern.severity,
+                        prevention=pattern.prevention,
+                        context={"category": pattern.category, "occurrences": pattern.occurrences},
+                    )
+                )
 
         # Sort by similarity
         alerts.sort(key=lambda x: x.similarity, reverse=True)
@@ -264,14 +268,16 @@ class RegressionDetector:
             if len(common) >= 3:  # At least 3 common words
                 similarity = len(common) / max(len(desc_words), 1)
                 if similarity >= 0.3:
-                    alerts.append(RegressionAlert(
-                        pattern_id=pattern.pattern_id,
-                        similarity=similarity,
-                        description=pattern.description,
-                        severity=pattern.severity,
-                        prevention=pattern.prevention,
-                        context={"category": pattern.category, "match_type": "keyword"},
-                    ))
+                    alerts.append(
+                        RegressionAlert(
+                            pattern_id=pattern.pattern_id,
+                            similarity=similarity,
+                            description=pattern.description,
+                            severity=pattern.severity,
+                            prevention=pattern.prevention,
+                            context={"category": pattern.category, "match_type": "keyword"},
+                        )
+                    )
 
         alerts.sort(key=lambda x: x.similarity, reverse=True)
         return alerts[:5]
@@ -290,7 +296,9 @@ class RegressionDetector:
         """Check if performance degradation matches known patterns."""
         degradation = (expected_value - current_value) / max(expected_value, 1e-6)
         if degradation > 0.1:  # >10% degradation
-            context = f"Performance regression in {metric_name}: {degradation*100:.1f}% degradation"
+            context = (
+                f"Performance regression in {metric_name}: {degradation * 100:.1f}% degradation"
+            )
             return self.check_for_regression(context, category="performance")
         return []
 

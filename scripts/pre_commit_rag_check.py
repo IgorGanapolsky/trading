@@ -83,12 +83,14 @@ def query_rag(keywords: list[str]) -> list[dict]:
         lessons = []
         for lesson, score in results or []:
             if score > 0.2:  # Higher threshold for pre-commit
-                lessons.append({
-                    "title": lesson.title,
-                    "severity": lesson.severity,
-                    "prevention": lesson.prevention[:150],
-                    "score": score,
-                })
+                lessons.append(
+                    {
+                        "title": lesson.title,
+                        "severity": lesson.severity,
+                        "prevention": lesson.prevention[:150],
+                        "score": score,
+                    }
+                )
         return lessons
 
     except Exception as e:

@@ -20,9 +20,9 @@ DEAD_CODE_PATTERNS = [
     # Functions that return "not implemented"
     (r'return\s+["\'].*not.*implemented', "Returns 'not implemented'"),
     # Placeholder comments in production code
-    (r'#\s*[Pp]laceholder\s*(?:for|:|-)', "Placeholder comment"),
+    (r"#\s*[Pp]laceholder\s*(?:for|:|-)", "Placeholder comment"),
     # Not yet implemented errors without real implementation
-    (r'error.*not\s+(?:yet\s+)?implemented', "Not implemented error message"),
+    (r"error.*not\s+(?:yet\s+)?implemented", "Not implemented error message"),
 ]
 
 # Files to exclude from scanning
@@ -82,10 +82,12 @@ class TestNoPlaceholderCode:
                     file_findings = find_dead_code_patterns(content)
 
                     if file_findings:
-                        findings.extend([
-                            (filepath, line_num, line, name)
-                            for line_num, line, name in file_findings
-                        ])
+                        findings.extend(
+                            [
+                                (filepath, line_num, line, name)
+                                for line_num, line, name in file_findings
+                            ]
+                        )
                 except Exception:
                     pass  # Skip unreadable files
 
@@ -98,7 +100,9 @@ class TestNoPlaceholderCode:
             if len(findings) > 10:
                 msg_parts.append(f"\n  ... and {len(findings) - 10} more")
 
-            msg_parts.append("\n\nSee: rag_knowledge/lessons_learned/ll_034_placeholder_code_antipattern.md")
+            msg_parts.append(
+                "\n\nSee: rag_knowledge/lessons_learned/ll_034_placeholder_code_antipattern.md"
+            )
 
             pytest.fail("\n".join(msg_parts))
 

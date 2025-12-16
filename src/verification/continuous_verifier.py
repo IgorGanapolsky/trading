@@ -240,7 +240,7 @@ class ContinuousVerifier:
                     confidence=min(risk_score, 0.95),
                     timestamp=datetime.utcnow().isoformat(),
                     recommended_action="Run full pre-merge verification. Consider manual review.",
-                    similar_past_incidents=[l.get("id") for l in lessons[:3]],
+                    similar_past_incidents=[lesson.get("id") for lesson in lessons[:3]],
                 )
             )
 

@@ -175,7 +175,6 @@ class UnifiedSentiment:
                 logger.warning(f"Failed to initialize LinkedIn analyzer: {e}")
                 self.enabled_sources["linkedin"] = False
 
-
         if enable_tiktok and TikTokSentiment:
             try:
                 self.tiktok_analyzer = TikTokSentiment(data_dir=str(self.cache_dir))
@@ -481,7 +480,9 @@ class UnifiedSentiment:
                     confidence=0.0,
                     raw_data={
                         "analyses_found": 0,
-                        "transcripts_checked": len(list(youtube_cache_dir.glob("*_transcript.txt"))) if youtube_cache_dir.exists() else 0,
+                        "transcripts_checked": len(list(youtube_cache_dir.glob("*_transcript.txt")))
+                        if youtube_cache_dir.exists()
+                        else 0,
                     },
                     timestamp=datetime.now().isoformat(),
                     available=True,
@@ -490,16 +491,46 @@ class UnifiedSentiment:
 
             # Enhanced sentiment extraction with more keywords
             bullish_keywords = [
-                "bullish", "buy", "long", "positive", "upgrade", "growth",
-                "strong buy", "overweight", "outperform", "recommend buying",
-                "undervalued", "opportunity", "upside", "rally", "breakout",
-                "momentum", "trending up", "support", "accumulate"
+                "bullish",
+                "buy",
+                "long",
+                "positive",
+                "upgrade",
+                "growth",
+                "strong buy",
+                "overweight",
+                "outperform",
+                "recommend buying",
+                "undervalued",
+                "opportunity",
+                "upside",
+                "rally",
+                "breakout",
+                "momentum",
+                "trending up",
+                "support",
+                "accumulate",
             ]
             bearish_keywords = [
-                "bearish", "sell", "short", "negative", "downgrade", "decline",
-                "strong sell", "underweight", "underperform", "avoid",
-                "overvalued", "risk", "downside", "pullback", "resistance",
-                "weakness", "trending down", "dump", "exit"
+                "bearish",
+                "sell",
+                "short",
+                "negative",
+                "downgrade",
+                "decline",
+                "strong sell",
+                "underweight",
+                "underperform",
+                "avoid",
+                "overvalued",
+                "risk",
+                "downside",
+                "pullback",
+                "resistance",
+                "weakness",
+                "trending down",
+                "dump",
+                "exit",
             ]
 
             # Context-aware keywords (need ticker nearby)
@@ -516,12 +547,15 @@ class UnifiedSentiment:
                 bearish_count += sum(content_lower.count(kw) for kw in bearish_keywords)
 
                 # Check for strong signals near ticker symbol
-                symbol_positions = [i for i in range(len(content_lower))
-                                   if content_lower[i:i+len(symbol)] == symbol.lower()]
+                symbol_positions = [
+                    i
+                    for i in range(len(content_lower))
+                    if content_lower[i : i + len(symbol)] == symbol.lower()
+                ]
 
                 for pos in symbol_positions:
                     # Look 100 chars before and after ticker
-                    context = content_lower[max(0, pos-100):min(len(content_lower), pos+100)]
+                    context = content_lower[max(0, pos - 100) : min(len(content_lower), pos + 100)]
 
                     for kw in strong_bullish:
                         if kw in context:
@@ -954,7 +988,9 @@ def main():
     parser.add_argument("--disable-news", action="store_true", help="Disable news sentiment")
     parser.add_argument("--disable-reddit", action="store_true", help="Disable Reddit sentiment")
     parser.add_argument("--disable-youtube", action="store_true", help="Disable YouTube sentiment")
-    parser.add_argument("--enable-tiktok", action="store_true", help="Enable TikTok sentiment (default: disabled)")
+    parser.add_argument(
+        "--enable-tiktok", action="store_true", help="Enable TikTok sentiment (default: disabled)"
+    )
 
     args = parser.parse_args()
 

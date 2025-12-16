@@ -60,7 +60,13 @@ def test_all_cli_flags_exist():
     help_text = result.stdout
 
     # Check expected flags exist in CLI
-    expected_flags = ["--crypto-only", "--skip-crypto", "--prediction-only", "--skip-prediction", "--auto-scale"]
+    expected_flags = [
+        "--crypto-only",
+        "--skip-crypto",
+        "--prediction-only",
+        "--skip-prediction",
+        "--auto-scale",
+    ]
     for flag in expected_flags:
         if flag in help_text:
             print(f"✅ Flag '{flag}' exists in CLI")

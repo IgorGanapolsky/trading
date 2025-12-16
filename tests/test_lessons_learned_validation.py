@@ -120,7 +120,7 @@ class TestLessonsLearnedStore:
 
         critical = store.get_critical_lessons()
         assert len(critical) > 0
-        assert all(l["severity"] == "critical" for l in critical)
+        assert all(lesson["severity"] == "critical" for lesson in critical)
 
     def test_validate_action(self, store, sample_lesson):
         """Test validating actions against lessons."""

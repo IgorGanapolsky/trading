@@ -37,6 +37,7 @@ SKLEARN_AVAILABLE = False
 
 try:
     from fastembed import TextEmbedding
+
     FASTEMBED_AVAILABLE = True
     logger.info("FastEmbed available for lessons indexing")
 except ImportError:
@@ -44,6 +45,7 @@ except ImportError:
 
 try:
     import lancedb
+
     LANCEDB_AVAILABLE = True
     logger.info("LanceDB available for lessons storage")
 except ImportError:
@@ -51,6 +53,7 @@ except ImportError:
 
 try:
     from sklearn.feature_extraction.text import TfidfVectorizer
+
     SKLEARN_AVAILABLE = True
     logger.info("scikit-learn available for TF-IDF fallback")
 except ImportError:
@@ -164,7 +167,7 @@ class LessonsIndexer:
         self.use_tfidf = True
         self.tfidf_vectorizer = TfidfVectorizer(
             max_features=384,  # Match FastEmbed dimension
-            stop_words='english',
+            stop_words="english",
             ngram_range=(1, 2),
             min_df=1,
             max_df=0.95,
@@ -184,9 +187,9 @@ class LessonsIndexer:
         metadata = {}
 
         # Extract frontmatter-style metadata
-        lines = content.split('\n')
+        lines = content.split("\n")
         for line in lines[:20]:  # Check first 20 lines
-            if match := re.match(r'\*\*(\w+)\*\*:\s*(.+)', line):
+            if match := re.match(r"\*\*(\w+)\*\*:\s*(.+)", line):
                 key, value = match.groups()
                 metadata[key.lower()] = value.strip()
 
@@ -209,7 +212,7 @@ class LessonsIndexer:
         metadata = self._extract_metadata(content)
 
         # Split by ## headers
-        sections = re.split(r'\n## ', content)
+        sections = re.split(r"\n## ", content)
 
         for idx, section in enumerate(sections):
             section = section.strip()
@@ -217,12 +220,12 @@ class LessonsIndexer:
                 continue
 
             # Extract section title
-            lines = section.split('\n', 1)
+            lines = section.split("\n", 1)
             if len(lines) == 1:
                 title = "Introduction"
                 section_content = lines[0]
             else:
-                title = lines[0].replace('#', '').strip()
+                title = lines[0].replace("#", "").strip()
                 section_content = lines[1] if len(lines) > 1 else ""
 
             # Skip empty sections
@@ -264,7 +267,7 @@ class LessonsIndexer:
             try:
                 # For TF-IDF, we fit on ALL texts at once, not per file
                 # This is handled in index_all_lessons
-                if hasattr(self, '_all_texts'):
+                if hasattr(self, "_all_texts"):
                     # Transform using fitted model
                     tfidf_matrix = self.tfidf_vectorizer.transform(texts)
                 else:
@@ -293,7 +296,7 @@ class LessonsIndexer:
         logger.info(f"Indexing {filepath.name}...")
 
         try:
-            content = filepath.read_text(encoding='utf-8')
+            content = filepath.read_text(encoding="utf-8")
         except Exception as e:
             logger.error(f"Failed to read {filepath}: {e}")
             return 0
@@ -347,10 +350,7 @@ class LessonsIndexer:
         existing.extend(records)
 
         try:
-            self.fallback_index_path.write_text(
-                json.dumps(existing, indent=2),
-                encoding='utf-8'
-            )
+            self.fallback_index_path.write_text(json.dumps(existing, indent=2), encoding="utf-8")
             logger.info(f"Stored {len(records)} chunks in JSON fallback")
         except Exception as e:
             logger.error(f"JSON fallback storage failed: {e}")
@@ -376,7 +376,7 @@ class LessonsIndexer:
             logger.info("Collecting all texts for TF-IDF fitting...")
             all_chunks = []
             for filepath in lesson_files:
-                content = filepath.read_text(encoding='utf-8')
+                content = filepath.read_text(encoding="utf-8")
                 chunks = self._chunk_by_sections(content, filepath.name)
                 all_chunks.extend(chunks)
 
@@ -390,9 +390,10 @@ class LessonsIndexer:
 
                 # Save the vectorizer for later use
                 import pickle
+
                 vectorizer_path = Path("data/rag/tfidf_vectorizer.pkl")
                 vectorizer_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(vectorizer_path, 'wb') as f:
+                with open(vectorizer_path, "wb") as f:
                     pickle.dump(self.tfidf_vectorizer, f)
                 logger.info(f"Saved TF-IDF vectorizer to {vectorizer_path}")
             except Exception as e:

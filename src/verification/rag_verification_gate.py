@@ -186,9 +186,7 @@ class RAGVerificationGate:
 
         return warnings, relevant_lessons
 
-    def semantic_search(
-        self, query: str, top_k: int = 5
-    ) -> list[tuple[LessonLearned, float]]:
+    def semantic_search(self, query: str, top_k: int = 5) -> list[tuple[LessonLearned, float]]:
         """Semantic search over lessons learned.
 
         Uses simple keyword matching (can be upgraded to embeddings later).
@@ -364,7 +362,7 @@ def test_{lesson_id}_regression():
 
 ## Tags
 
-#{category.lower().replace('/', '-')} #lessons-learned #automated
+#{category.lower().replace("/", "-")} #lessons-learned #automated
 
 ## Change Log
 

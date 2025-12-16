@@ -33,12 +33,12 @@ def check_trades_file(date_str: str) -> tuple[bool, str]:
     if not trades:
         return False, f"❌ trades_{date_str}.json is EMPTY (no trades)"
 
-    filled_trades = [t for t in trades if t.get('status') in ['FILLED', 'OrderStatus.FILLED']]
+    filled_trades = [t for t in trades if t.get("status") in ["FILLED", "OrderStatus.FILLED"]]
 
     if not filled_trades:
         return False, f"❌ NO FILLED trades in {len(trades)} total orders"
 
-    total_pl = sum(t.get('pnl', 0) for t in filled_trades if 'pnl' in t)
+    total_pl = sum(t.get("pnl", 0) for t in filled_trades if "pnl" in t)
 
     return True, f"✅ {len(filled_trades)} FILLED trades, P/L: ${total_pl:.2f}"
 
@@ -56,8 +56,8 @@ def check_system_state(date_str: str) -> tuple[bool, str]:
     except Exception as e:
         return False, f"❌ system_state.json is CORRUPT: {e}"
 
-    last_trade = state.get('last_trade_date', 'NEVER')
-    account_value = state.get('account_value', 0)
+    last_trade = state.get("last_trade_date", "NEVER")
+    account_value = state.get("account_value", 0)
 
     if last_trade != date_str:
         return False, f"❌ last_trade_date is {last_trade}, expected {date_str}"
@@ -72,7 +72,7 @@ def verify_trading_success(date_str: str = None) -> bool:
     Returns True if all checks pass, False otherwise.
     """
     if date_str is None:
-        date_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     print("=" * 70)
     print(f"TRADING VERIFICATION - {date_str}")
@@ -116,11 +116,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Verify trading execution success")
-    parser.add_argument(
-        "--date",
-        help="Date to check (YYYY-MM-DD). Default: today",
-        default=None
-    )
+    parser.add_argument("--date", help="Date to check (YYYY-MM-DD). Default: today", default=None)
 
     args = parser.parse_args()
 

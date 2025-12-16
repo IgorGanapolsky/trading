@@ -225,17 +225,10 @@ class RSIOptimizer:
             price = row["Close"]
 
             # Entry signal: RSI > threshold, MACD bullish, Volume confirmation
-            entry_signal = (
-                rsi > threshold
-                and macd_hist > 0
-                and volume_ratio > 0.8
-            )
+            entry_signal = rsi > threshold and macd_hist > 0 and volume_ratio > 0.8
 
             # Exit signal: RSI drops back below threshold OR MACD turns bearish
-            exit_signal = (
-                rsi <= threshold
-                or macd_hist < 0
-            )
+            exit_signal = rsi <= threshold or macd_hist < 0
 
             # Enter position
             if position == 0 and entry_signal:
@@ -253,19 +246,20 @@ class RSIOptimizer:
                 profit = position * (exit_price - entry_price)
                 capital += profit
 
-                trades.append({
-                    "entry_date": data.index[i - 1].strftime("%Y-%m-%d"),
-                    "exit_date": data.index[i].strftime("%Y-%m-%d"),
-                    "entry_price": round(entry_price, 2),
-                    "exit_price": round(exit_price, 2),
-                    "return": round(trade_return * 100, 2),
-                    "profit": round(profit, 2),
-                    "rsi_at_entry": round(rsi, 1),
-                })
+                trades.append(
+                    {
+                        "entry_date": data.index[i - 1].strftime("%Y-%m-%d"),
+                        "exit_date": data.index[i].strftime("%Y-%m-%d"),
+                        "entry_price": round(entry_price, 2),
+                        "exit_price": round(exit_price, 2),
+                        "return": round(trade_return * 100, 2),
+                        "profit": round(profit, 2),
+                        "rsi_at_entry": round(rsi, 1),
+                    }
+                )
 
                 logger.debug(
-                    f"EXIT: {data.index[i].date()} @ ${price:.2f}, "
-                    f"Return={trade_return * 100:.2f}%"
+                    f"EXIT: {data.index[i].date()} @ ${price:.2f}, Return={trade_return * 100:.2f}%"
                 )
 
                 position = 0.0

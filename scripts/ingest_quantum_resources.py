@@ -93,7 +93,9 @@ def format_book_entry(book: dict[str, Any]) -> str:
     if "reading_plan" in book:
         text += "## Reading Plan\n\n"
         for plan in book["reading_plan"]:
-            text += f"- {plan['label']}: {plan['goal']} ({plan['minutes']} min, {plan['difficulty']})\n"
+            text += (
+                f"- {plan['label']}: {plan['goal']} ({plan['minutes']} min, {plan['difficulty']})\n"
+            )
 
     return text
 
@@ -263,9 +265,7 @@ def ingest_resources():
         )
         ids.append(f"QUANTUM_blog_{timestamp}_{i}")
 
-    logger.info(
-        f"✅ Processed {len(resources.get('blogs_and_websites', []))} blogs/websites"
-    )
+    logger.info(f"✅ Processed {len(resources.get('blogs_and_websites', []))} blogs/websites")
 
     # Process quantum concepts
     logger.info("\n🔬 Processing quantum finance concepts...")
@@ -283,9 +283,7 @@ def ingest_resources():
         )
         ids.append(f"QUANTUM_concept_{timestamp}_{i}")
 
-    logger.info(
-        f"✅ Processed {len(resources.get('key_quantum_finance_concepts', []))} concepts"
-    )
+    logger.info(f"✅ Processed {len(resources.get('key_quantum_finance_concepts', []))} concepts")
 
     # Process markdown files
     logger.info("\n📄 Processing markdown documentation...")
@@ -377,7 +375,7 @@ def test_query():
             for i, (doc, metadata) in enumerate(
                 zip(results["documents"][0], results["metadatas"][0])
             ):
-                logger.info(f"\n  Result {i+1}:")
+                logger.info(f"\n  Result {i + 1}:")
                 logger.info(f"    Source: {metadata.get('source', 'N/A')}")
                 logger.info(f"    Category: {metadata.get('category', 'N/A')}")
                 logger.info(f"    Preview: {doc[:150]}...")

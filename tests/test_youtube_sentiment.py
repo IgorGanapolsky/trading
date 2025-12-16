@@ -22,9 +22,7 @@ def test_youtube_sentiment():
     print("=" * 80)
 
     # Initialize with only YouTube enabled
-    analyzer = UnifiedSentiment(
-        enable_news=False, enable_reddit=False, enable_youtube=True
-    )
+    analyzer = UnifiedSentiment(enable_news=False, enable_reddit=False, enable_youtube=True)
 
     # Test stocks that should be in cached transcripts
     test_stocks = ["NVDA", "AMZN", "PLTR", "UBER", "TSLA", "AAPL"]
@@ -47,7 +45,9 @@ def test_youtube_sentiment():
         )
 
     # Print results
-    print(f"\n{'Symbol':<10} {'Available':<12} {'Score':<10} {'Confidence':<12} {'Signal':<12} {'Sources'}")
+    print(
+        f"\n{'Symbol':<10} {'Available':<12} {'Score':<10} {'Confidence':<12} {'Signal':<12} {'Sources'}"
+    )
     print("-" * 80)
 
     for r in results:

@@ -88,12 +88,7 @@ def check_unused_imports(root: Path, fix: bool = False) -> list[str]:
     cmd.extend(["src/", "scripts/"])
 
     try:
-        result = subprocess.run(
-            cmd,
-            cwd=root,
-            capture_output=True,
-            text=True
-        )
+        result = subprocess.run(cmd, cwd=root, capture_output=True, text=True)
         if result.returncode != 0 and result.stdout:
             for line in result.stdout.strip().split("\n"):
                 if line and not line.startswith("Found"):
@@ -148,7 +143,9 @@ def main():
         print("  PASS")
 
     # Check 3: Unused imports
-    print(f"\n[3/4] Checking for unused imports (ruff F401, F841){'... fixing' if fix_mode else ''}...")
+    print(
+        f"\n[3/4] Checking for unused imports (ruff F401, F841){'... fixing' if fix_mode else ''}..."
+    )
     issues = check_unused_imports(root, fix=fix_mode)
     if not fix_mode:
         all_issues.extend(issues)

@@ -99,9 +99,7 @@ class AnomalyMonitor:
 
         return None
 
-    def _create_lesson_from_anomaly(
-        self, gate: str, ticker: str, anomaly: dict[str, Any]
-    ) -> None:
+    def _create_lesson_from_anomaly(self, gate: str, ticker: str, anomaly: dict[str, Any]) -> None:
         """
         Automatically create a lesson learned entry when an anomaly is detected.
 
@@ -125,7 +123,7 @@ class AnomalyMonitor:
             if anomaly_type == "rejection_spike":
                 title = f"Gate {gate} rejection spike detected"
                 description = (
-                    f"The {gate} gate rejected {anomaly.get('rejection_rate', 0)*100:.1f}% "
+                    f"The {gate} gate rejected {anomaly.get('rejection_rate', 0) * 100:.1f}% "
                     f"of trades over a {anomaly.get('window', 0)} trade window. "
                     f"Last ticker affected: {ticker}"
                 )
@@ -145,7 +143,7 @@ class AnomalyMonitor:
                 title = f"Gate {gate} confidence deterioration"
                 description = (
                     f"Median confidence at {gate} gate dropped to "
-                    f"{anomaly.get('median_confidence', 0)*100:.1f}% "
+                    f"{anomaly.get('median_confidence', 0) * 100:.1f}% "
                     f"over {anomaly.get('window', 0)} trades. Last ticker: {ticker}"
                 )
                 root_cause = (
@@ -187,4 +185,5 @@ class AnomalyMonitor:
         except Exception as e:
             # Non-fatal - don't break trading for lesson creation failures
             import logging
+
             logging.getLogger(__name__).debug(f"Failed to create lesson from anomaly: {e}")

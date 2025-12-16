@@ -13,7 +13,9 @@ class TestLessonsCompliance:
 
     def test_keywords_extraction(self):
         """Test that keywords are correctly extracted from paths."""
-        assert "alpaca_executor execution python" in get_keywords_from_path("src/execution/alpaca_executor.py")
+        assert "alpaca_executor execution python" in get_keywords_from_path(
+            "src/execution/alpaca_executor.py"
+        )
         assert "main orchestrator python" in get_keywords_from_path("src/orchestrator/main.py")
 
     def test_query_lessons_rag(self):
@@ -28,7 +30,7 @@ class TestLessonsCompliance:
         mock_instance.query_lessons.return_value = {
             "documents": [["Don't divide by zero in Sharpe ratio"]],
             "metadatas": [[{"severity": "critical", "source": "ll_001.md"}]],
-            "ids": [["123"]]
+            "ids": [["123"]],
         }
 
         # Apply the patch to sys.modules
@@ -49,9 +51,13 @@ class TestLessonsCompliance:
         # Run the script on itself (safe test)
         # We need to use sys.executable to ensure we use the same python env
         result = subprocess.run(
-            [sys.executable, "scripts/verify_against_lessons.py", "scripts/verify_against_lessons.py"],
+            [
+                sys.executable,
+                "scripts/verify_against_lessons.py",
+                "scripts/verify_against_lessons.py",
+            ],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         assert result.returncode == 0

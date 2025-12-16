@@ -36,9 +36,7 @@ class TestSyntaxVerification:
             project_root / "scripts" / "pre_merge_gate.py",
         ]
 
-    def test_ll_009_no_syntax_errors_in_critical_files(
-        self, critical_files: list[Path]
-    ):
+    def test_ll_009_no_syntax_errors_in_critical_files(self, critical_files: list[Path]):
         """Prevent ll_009: Syntax errors in critical trading files.
 
         Dec 11, 2025: Syntax error in alpaca_executor.py broke all trading.
@@ -57,9 +55,7 @@ class TestSyntaxVerification:
             except SyntaxError as e:
                 errors.append(f"{file_path}: Line {e.lineno}: {e.msg}")
 
-        assert not errors, "REGRESSION ll_009: Syntax errors found:\n" + "\n".join(
-            errors
-        )
+        assert not errors, "REGRESSION ll_009: Syntax errors found:\n" + "\n".join(errors)
 
     def test_ll_024_no_fstring_backslash_escapes(self, project_root: Path):
         """Prevent ll_024: F-string backslash escapes (Python 3.12+ incompatible).
@@ -82,15 +78,20 @@ class TestSyntaxVerification:
                     # Pattern: f"...{...\"...}..."
                     lines = content.split("\n")
                     for line_num, line in enumerate(lines, 1):
-                        if "f\"" in line or "f'" in line:
+                        if 'f"' in line or "f'" in line:
                             # Check if there's a backslash inside curly braces
                             in_fstring = False
                             brace_depth = 0
                             for i, char in enumerate(line):
-                                if char == "f" and i + 1 < len(line) and line[i + 1] in [
-                                    '"',
-                                    "'",
-                                ]:
+                                if (
+                                    char == "f"
+                                    and i + 1 < len(line)
+                                    and line[i + 1]
+                                    in [
+                                        '"',
+                                        "'",
+                                    ]
+                                ):
                                     in_fstring = True
                                 if in_fstring and char == "{":
                                     brace_depth += 1
@@ -111,10 +112,8 @@ class TestSyntaxVerification:
                     # Skip files that can't be read
                     pass
 
-        assert (
-            not dangerous_patterns
-        ), "REGRESSION ll_024: F-string backslash escapes found:\n" + "\n".join(
-            dangerous_patterns
+        assert not dangerous_patterns, (
+            "REGRESSION ll_024: F-string backslash escapes found:\n" + "\n".join(dangerous_patterns)
         )
 
     def test_all_python_files_compile(self, project_root: Path):
@@ -168,9 +167,7 @@ class TestSyntaxVerification:
             except (ImportError, SyntaxError, AttributeError) as e:
                 errors.append(f"{module_name}.{class_name}: {type(e).__name__}: {e}")
 
-        assert (
-            not errors
-        ), "Critical import errors found:\n" + "\n".join(errors)
+        assert not errors, "Critical import errors found:\n" + "\n".join(errors)
 
 
 class TestRuntimeVerification:
@@ -207,9 +204,9 @@ class TestRuntimeVerification:
                 _ = TradingOrchestrator()
             except Exception as e:
                 # Expected to fail without env vars, but should be a clean error
-                assert "ALPACA_API_KEY" in str(e) or "environment" in str(
-                    e
-                ).lower(), f"Unexpected error during instantiation: {e}"
+                assert "ALPACA_API_KEY" in str(e) or "environment" in str(e).lower(), (
+                    f"Unexpected error during instantiation: {e}"
+                )
         except SyntaxError as e:
             pytest.fail(f"TradingOrchestrator has syntax error: {e}")
 
@@ -226,9 +223,7 @@ class TestRuntimeVerification:
             # Verify class has expected methods
             expected_methods = ["submit_order", "get_positions", "close_position"]
             for method in expected_methods:
-                assert hasattr(
-                    AlpacaExecutor, method
-                ), f"AlpacaExecutor missing method: {method}"
+                assert hasattr(AlpacaExecutor, method), f"AlpacaExecutor missing method: {method}"
 
         except SyntaxError as e:
             pytest.fail(f"REGRESSION ll_009: AlpacaExecutor has syntax error: {e}")
@@ -280,6 +275,6 @@ class TestContinuousVerification:
             age = datetime.utcnow() - last_attempt
 
             # Alert if no trading attempt in 3 days (accounting for weekends)
-            assert age < timedelta(
-                days=3
-            ), f"Trading heartbeat stale: {age.days} days old (last: {last_attempt})"
+            assert age < timedelta(days=3), (
+                f"Trading heartbeat stale: {age.days} days old (last: {last_attempt})"
+            )

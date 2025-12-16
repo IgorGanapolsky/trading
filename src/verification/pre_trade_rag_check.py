@@ -115,48 +115,44 @@ class PreTradeRAGCheck:
         market_conditions = market_conditions or {}
 
         # Check 1: Symbol-specific lessons
-        symbol_lessons = self._search_lessons(
-            query=symbol,
-            filters={"symbol": symbol}
-        )
+        symbol_lessons = self._search_lessons(query=symbol, filters={"symbol": symbol})
         if symbol_lessons:
             checks["symbol_check"] = {
                 "passed": len(symbol_lessons) == 0,
-                "lessons": [l["id"] for l in symbol_lessons[:3]],
+                "lessons": [lesson["id"] for lesson in symbol_lessons[:3]],
             }
             for lesson in symbol_lessons:
-                cumulative_risk += self.SEVERITY_WEIGHTS.get(
-                    lesson.get("severity", "LOW"), 0.2
+                cumulative_risk += self.SEVERITY_WEIGHTS.get(lesson.get("severity", "LOW"), 0.2)
+                similar_failures.append(
+                    {
+                        "id": lesson["id"],
+                        "title": lesson.get("title", ""),
+                        "severity": lesson.get("severity", ""),
+                        "match_type": "symbol",
+                    }
                 )
-                similar_failures.append({
-                    "id": lesson["id"],
-                    "title": lesson.get("title", ""),
-                    "severity": lesson.get("severity", ""),
-                    "match_type": "symbol",
-                })
         else:
             checks["symbol_check"] = {"passed": True, "lessons": []}
 
         # Check 2: Strategy-specific lessons
-        strategy_lessons = self._search_lessons(
-            query=strategy,
-            filters={"strategy": strategy}
-        )
+        strategy_lessons = self._search_lessons(query=strategy, filters={"strategy": strategy})
         if strategy_lessons:
             checks["strategy_check"] = {
                 "passed": len(strategy_lessons) == 0,
-                "lessons": [l["id"] for l in strategy_lessons[:3]],
+                "lessons": [lesson["id"] for lesson in strategy_lessons[:3]],
             }
             for lesson in strategy_lessons:
-                cumulative_risk += self.SEVERITY_WEIGHTS.get(
-                    lesson.get("severity", "LOW"), 0.2
-                ) * 0.8  # Slightly lower weight for strategy
-                similar_failures.append({
-                    "id": lesson["id"],
-                    "title": lesson.get("title", ""),
-                    "severity": lesson.get("severity", ""),
-                    "match_type": "strategy",
-                })
+                cumulative_risk += (
+                    self.SEVERITY_WEIGHTS.get(lesson.get("severity", "LOW"), 0.2) * 0.8
+                )  # Slightly lower weight for strategy
+                similar_failures.append(
+                    {
+                        "id": lesson["id"],
+                        "title": lesson.get("title", ""),
+                        "severity": lesson.get("severity", ""),
+                        "match_type": "strategy",
+                    }
+                )
         else:
             checks["strategy_check"] = {"passed": True, "lessons": []}
 
@@ -165,30 +161,30 @@ class PreTradeRAGCheck:
             condition_lessons = self._check_market_conditions(market_conditions)
             checks["market_conditions"] = {
                 "passed": len(condition_lessons) == 0,
-                "lessons": [l["id"] for l in condition_lessons[:3]],
+                "lessons": [lesson["id"] for lesson in condition_lessons[:3]],
             }
             for lesson in condition_lessons:
-                cumulative_risk += self.SEVERITY_WEIGHTS.get(
-                    lesson.get("severity", "LOW"), 0.2
+                cumulative_risk += self.SEVERITY_WEIGHTS.get(lesson.get("severity", "LOW"), 0.2)
+                similar_failures.append(
+                    {
+                        "id": lesson["id"],
+                        "title": lesson.get("title", ""),
+                        "severity": lesson.get("severity", ""),
+                        "match_type": "market_condition",
+                    }
                 )
-                similar_failures.append({
-                    "id": lesson["id"],
-                    "title": lesson.get("title", ""),
-                    "severity": lesson.get("severity", ""),
-                    "match_type": "market_condition",
-                })
 
         # Check 4: Time-based lessons (market open, close, etc.)
         time_lessons = self._check_time_based_risks()
         if time_lessons:
             checks["time_check"] = {
                 "passed": len(time_lessons) == 0,
-                "lessons": [l["id"] for l in time_lessons[:2]],
+                "lessons": [lesson["id"] for lesson in time_lessons[:2]],
             }
             for lesson in time_lessons:
-                cumulative_risk += self.SEVERITY_WEIGHTS.get(
-                    lesson.get("severity", "LOW"), 0.2
-                ) * 0.5  # Lower weight for time
+                cumulative_risk += (
+                    self.SEVERITY_WEIGHTS.get(lesson.get("severity", "LOW"), 0.2) * 0.5
+                )  # Lower weight for time
 
         # Check 5: Recent failures on this symbol
         recent = self._check_recent_failures(symbol)
@@ -235,14 +231,10 @@ class PreTradeRAGCheck:
         # Generate recommendations
         if similar_failures:
             most_relevant = similar_failures[0]
-            recommendations.append(
-                f"Review lesson {most_relevant['id']}: {most_relevant['title']}"
-            )
+            recommendations.append(f"Review lesson {most_relevant['id']}: {most_relevant['title']}")
 
         if cumulative_risk > 0.5 and is_safe:
-            recommendations.append(
-                "Consider reducing position size due to elevated risk score"
-            )
+            recommendations.append("Consider reducing position size due to elevated risk score")
 
         result = TradeVerificationResult(
             safe=is_safe,
@@ -373,7 +365,8 @@ class PreTradeRAGCheck:
         """Check for recent failures on this symbol."""
         cutoff = datetime.now() - timedelta(days=7)
         recent = [
-            f for f in self.recent_failures
+            f
+            for f in self.recent_failures
             if f.get("symbol") == symbol
             and datetime.fromisoformat(f.get("timestamp", "2000-01-01")) > cutoff
         ]
@@ -542,9 +535,7 @@ def integrate_with_orchestrator():
 
             # Log warnings even for passed trades
             if result.recommendations:
-                logger.warning(
-                    f"Trade proceeding with warnings: {result.recommendations}"
-                )
+                logger.warning(f"Trade proceeding with warnings: {result.recommendations}")
 
             # Execute original trade
             return original_execute(self, symbol, action, quantity, **kwargs)
@@ -576,7 +567,7 @@ if __name__ == "__main__":
     ]
 
     for trade in trades:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Checking: {trade['action']} {trade['quantity']} {trade['symbol']}")
         print(f"Strategy: {trade['strategy']}")
         print("=" * 60)

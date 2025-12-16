@@ -109,9 +109,7 @@ def main():
         type=str,
         help="What you're trying to fix/change (e.g., 'workflow failures', 'crypto fills')",
     )
-    parser.add_argument(
-        "--top-k", type=int, default=5, help="Number of results to show"
-    )
+    parser.add_argument("--top-k", type=int, default=5, help="Number of results to show")
     parser.add_argument(
         "--require-ack",
         action="store_true",
@@ -157,7 +155,7 @@ def main():
             print()
 
         # Show critical lessons' key points
-        critical_lessons = [l for l, s in results if l["severity"] == "critical"]
+        critical_lessons = [lesson for lesson, s in results if lesson["severity"] == "critical"]
         if critical_lessons:
             print("\n" + "=" * 70)
             print("CRITICAL LESSONS - READ THESE FIRST:")

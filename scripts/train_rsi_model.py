@@ -179,20 +179,20 @@ def main():
     }
 
     # Add comparison summary
-    successful_results = {
-        k: v for k, v in all_results.items() if "error" not in v
-    }
+    successful_results = {k: v for k, v in all_results.items() if "error" not in v}
 
     if successful_results:
         comparison = []
         for symbol, result in successful_results.items():
-            comparison.append({
-                "symbol": symbol,
-                "best_threshold": result["best_threshold"],
-                "sharpe_ratio": result["best_sharpe"],
-                "win_rate": result["best_win_rate"],
-                "total_return": result["best_total_return"],
-            })
+            comparison.append(
+                {
+                    "symbol": symbol,
+                    "best_threshold": result["best_threshold"],
+                    "sharpe_ratio": result["best_sharpe"],
+                    "win_rate": result["best_win_rate"],
+                    "total_return": result["best_total_return"],
+                }
+            )
 
         # Sort by Sharpe ratio
         comparison.sort(key=lambda x: x["sharpe_ratio"], reverse=True)
@@ -227,10 +227,12 @@ def main():
         print("\nRESULTS BY SYMBOL:")
         print("-" * 80)
         for result in comparison:
-            print(f"{result['symbol']:10s} | RSI > {result['best_threshold']:4.0f} | "
-                  f"Sharpe: {result['sharpe_ratio']:6.3f} | "
-                  f"Win Rate: {result['win_rate']:5.1f}% | "
-                  f"Return: {result['total_return']:6.2f}%")
+            print(
+                f"{result['symbol']:10s} | RSI > {result['best_threshold']:4.0f} | "
+                f"Sharpe: {result['sharpe_ratio']:6.3f} | "
+                f"Win Rate: {result['win_rate']:5.1f}% | "
+                f"Return: {result['total_return']:6.2f}%"
+            )
 
         print("\n" + "=" * 80)
         print("RECOMMENDATION (Best Risk-Adjusted Performance):")

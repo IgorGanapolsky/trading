@@ -160,10 +160,7 @@ class AnomalyToTrainingBridge:
         self.training_queue.append(example)
         self._save_data()
 
-        logger.info(
-            f"Recorded anomaly for training: {example.anomaly_id} "
-            f"(penalty: {penalty:.2f})"
-        )
+        logger.info(f"Recorded anomaly for training: {example.anomaly_id} (penalty: {penalty:.2f})")
 
         return example
 
@@ -239,18 +236,20 @@ class AnomalyToTrainingBridge:
             examples = [e for e in self.training_queue if not e.used_in_training]
 
         # Sort by severity (critical first)
-        examples.sort(key=lambda e: self.SEVERITY_PENALTIES.get(
-            e.context.get("severity", "LOW"), -0.2
-        ))
+        examples.sort(
+            key=lambda e: self.SEVERITY_PENALTIES.get(e.context.get("severity", "LOW"), -0.2)
+        )
 
         batch = []
         for example in examples[:max_examples]:
-            batch.append({
-                "features": example.features,
-                "reward": example.negative_reward,
-                "anomaly_type": example.anomaly_type,
-                "context": example.context,
-            })
+            batch.append(
+                {
+                    "features": example.features,
+                    "reward": example.negative_reward,
+                    "anomaly_type": example.anomaly_type,
+                    "context": example.context,
+                }
+            )
 
         return batch
 
@@ -306,15 +305,12 @@ class AnomalyToTrainingBridge:
                 from scripts.rl_daily_retrain import retrain_rl_model
 
                 # Add anomaly examples as negative samples
-                retrain_result = retrain_rl_model(
-                    additional_negative_examples=batch
-                )
+                retrain_result = retrain_rl_model(additional_negative_examples=batch)
                 result["retrain_result"] = retrain_result
 
                 # Mark examples as used
-                anomaly_ids = [e.anomaly_id for e in self.training_queue
-                              if not e.used_in_training]
-                self.mark_batch_used(anomaly_ids[:len(batch)])
+                anomaly_ids = [e.anomaly_id for e in self.training_queue if not e.used_in_training]
+                self.mark_batch_used(anomaly_ids[: len(batch)])
 
             except ImportError:
                 logger.warning("rl_daily_retrain not available, queueing examples")
@@ -370,8 +366,15 @@ class AnomalyToTrainingBridge:
         features = {}
 
         # Numeric features
-        numeric_keys = ["amount", "price", "pnl", "multiplier", "threshold",
-                       "volatility", "deviation"]
+        numeric_keys = [
+            "amount",
+            "price",
+            "pnl",
+            "multiplier",
+            "threshold",
+            "volatility",
+            "deviation",
+        ]
         for key in numeric_keys:
             if key in details:
                 features[f"anomaly_{key}"] = float(details[key])
@@ -425,9 +428,7 @@ class AnomalyToTrainingBridge:
             try:
                 with open(self.training_db_path) as f:
                     data = json.load(f)
-                self.training_queue = [
-                    AnomalyTrainingExample.from_dict(e) for e in data
-                ]
+                self.training_queue = [AnomalyTrainingExample.from_dict(e) for e in data]
                 logger.info(f"Loaded {len(self.training_queue)} training examples")
             except Exception as e:
                 logger.error(f"Failed to load training queue: {e}")

@@ -391,23 +391,51 @@ class Test{scenario.lesson_id.replace("-", "_").title()}:
     def _extract_symbols(self, content: str) -> list:
         """Extract trading symbols from lesson content."""
         # Common stock symbols pattern
-        symbols = re.findall(r'\b([A-Z]{1,5})\b', content)
+        symbols = re.findall(r"\b([A-Z]{1,5})\b", content)
 
         # Filter out common words
         common_words = {
-            "THE", "AND", "FOR", "NOT", "BUT", "ARE", "WAS", "HAS", "HAD",
-            "LOW", "HIGH", "BUY", "SELL", "API", "RAG", "ML", "CI", "CD",
+            "THE",
+            "AND",
+            "FOR",
+            "NOT",
+            "BUT",
+            "ARE",
+            "WAS",
+            "HAS",
+            "HAD",
+            "LOW",
+            "HIGH",
+            "BUY",
+            "SELL",
+            "API",
+            "RAG",
+            "ML",
+            "CI",
+            "CD",
         }
 
         # Known trading symbols
         known_symbols = {
-            "SPY", "QQQ", "NVDA", "AAPL", "GOOGL", "MSFT", "AMZN", "META",
-            "TSLA", "AMD", "INTC", "GLD", "SLV", "BTC", "ETH",
+            "SPY",
+            "QQQ",
+            "NVDA",
+            "AAPL",
+            "GOOGL",
+            "MSFT",
+            "AMZN",
+            "META",
+            "TSLA",
+            "AMD",
+            "INTC",
+            "GLD",
+            "SLV",
+            "BTC",
+            "ETH",
         }
 
         valid_symbols = [
-            s for s in symbols
-            if s not in common_words and (s in known_symbols or len(s) <= 4)
+            s for s in symbols if s not in common_words and (s in known_symbols or len(s) <= 4)
         ]
 
         return list(set(valid_symbols))[:5]  # Limit to 5
@@ -419,8 +447,15 @@ class Test{scenario.lesson_id.replace("-", "_").title()}:
 
         # Known strategies
         known_strategies = [
-            "momentum", "mean_reversion", "breakout", "trend_following",
-            "macd", "rsi", "bollinger", "scalping", "swing",
+            "momentum",
+            "mean_reversion",
+            "breakout",
+            "trend_following",
+            "macd",
+            "rsi",
+            "bollinger",
+            "scalping",
+            "swing",
         ]
 
         for strategy in known_strategies:
@@ -441,39 +476,49 @@ class Test{scenario.lesson_id.replace("-", "_").title()}:
 
         # Common edge cases based on content
         if "zero" in content_lower or "empty" in content_lower:
-            edge_cases.append({
-                "name": "Zero/empty values",
-                "description": "Test with zero or empty values",
-                "parameters": {"quantity": 0, "price": 0},
-            })
+            edge_cases.append(
+                {
+                    "name": "Zero/empty values",
+                    "description": "Test with zero or empty values",
+                    "parameters": {"quantity": 0, "price": 0},
+                }
+            )
 
         if "null" in content_lower or "none" in content_lower:
-            edge_cases.append({
-                "name": "Null handling",
-                "description": "Test with null/None values",
-                "parameters": {"symbol": None},
-            })
+            edge_cases.append(
+                {
+                    "name": "Null handling",
+                    "description": "Test with null/None values",
+                    "parameters": {"symbol": None},
+                }
+            )
 
         if "negative" in content_lower:
-            edge_cases.append({
-                "name": "Negative values",
-                "description": "Test with negative values",
-                "parameters": {"quantity": -1, "price": -100},
-            })
+            edge_cases.append(
+                {
+                    "name": "Negative values",
+                    "description": "Test with negative values",
+                    "parameters": {"quantity": -1, "price": -100},
+                }
+            )
 
         if "large" in content_lower or "exceed" in content_lower:
-            edge_cases.append({
-                "name": "Large values",
-                "description": "Test with very large values",
-                "parameters": {"quantity": 1000000, "price": 99999},
-            })
+            edge_cases.append(
+                {
+                    "name": "Large values",
+                    "description": "Test with very large values",
+                    "parameters": {"quantity": 1000000, "price": 99999},
+                }
+            )
 
         if "timeout" in content_lower or "slow" in content_lower:
-            edge_cases.append({
-                "name": "Timeout handling",
-                "description": "Test timeout scenarios",
-                "conditions": {"api_delay": 30},
-            })
+            edge_cases.append(
+                {
+                    "name": "Timeout handling",
+                    "description": "Test timeout scenarios",
+                    "conditions": {"api_delay": 30},
+                }
+            )
 
         return edge_cases
 

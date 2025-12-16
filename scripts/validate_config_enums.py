@@ -63,9 +63,7 @@ def validate_strategy_registry():
         # Check status
         status = strategy.get("status")
         if status and status not in valid_statuses:
-            errors.append(
-                f"Strategy '{name}': invalid status '{status}'. " f"Valid: {valid_statuses}"
-            )
+            errors.append(f"Strategy '{name}': invalid status '{status}'. Valid: {valid_statuses}")
 
     return errors
 

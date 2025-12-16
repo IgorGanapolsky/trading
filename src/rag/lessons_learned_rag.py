@@ -295,9 +295,9 @@ class LessonsLearnedRAG:
         # Filter by category/symbol first
         candidates = self.lessons
         if category:
-            candidates = [l for l in candidates if l.category == category]
+            candidates = [c for c in candidates if c.category == category]
         if symbol:
-            candidates = [l for l in candidates if l.symbol == symbol or l.symbol is None]
+            candidates = [c for c in candidates if c.symbol == symbol or c.symbol is None]
 
         if not candidates:
             return []
@@ -363,11 +363,11 @@ class LessonsLearnedRAG:
         """
         lessons = self.lessons
         if category:
-            lessons = [l for l in lessons if l.category == category]
+            lessons = [lesson for lesson in lessons if lesson.category == category]
 
         # Extract unique prevention steps, prioritize by severity
         severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-        sorted_lessons = sorted(lessons, key=lambda l: severity_order.get(l.severity, 4))
+        sorted_lessons = sorted(lessons, key=lambda les: severity_order.get(les.severity, 4))
 
         checklist = []
         seen = set()
@@ -462,7 +462,7 @@ class LessonsLearnedRAG:
         if updated:
             self._save_db()
             logger.info(
-                f"Computed embeddings for {sum(1 for l in self.lessons if l.embedding)} lessons"
+                f"Computed embeddings for {sum(1 for lesson in self.lessons if lesson.embedding)} lessons"
             )
 
     def _load_db(self) -> None:
@@ -474,7 +474,7 @@ class LessonsLearnedRAG:
         try:
             with open(self.db_path) as f:
                 data = json.load(f)
-            self.lessons = [Lesson.from_dict(l) for l in data]
+            self.lessons = [Lesson.from_dict(lesson) for lesson in data]
             logger.info(f"Loaded {len(self.lessons)} lessons from {self.db_path}")
         except Exception as e:
             logger.error(f"Error loading lessons DB: {e}")

@@ -186,12 +186,12 @@ class LessonsLearnedRAG:
         """Get all HIGH/CRITICAL severity lessons"""
         return [
             {
-                "title": l["title"],
-                "severity": l["severity"],
-                "tags": l["tags"],
+                "title": lesson["title"],
+                "severity": lesson["severity"],
+                "tags": lesson["tags"],
             }
-            for l in self.lessons_cache
-            if l.get("severity", "").upper() in ["HIGH", "CRITICAL"]
+            for lesson in self.lessons_cache
+            if lesson.get("severity", "").upper() in ["HIGH", "CRITICAL"]
         ]
 
 
@@ -444,7 +444,7 @@ if __name__ == "__main__":
     if result.reasons:
         print(f"Block reasons: {result.reasons}")
     if result.lessons_found:
-        print(f"Relevant lessons: {[l['title'] for l in result.lessons_found]}")
+        print(f"Relevant lessons: {[lesson['title'] for lesson in result.lessons_found]}")
 
     # Test with invalid signal (low confidence)
     print("\n[3] TESTING LOW CONFIDENCE SIGNAL")

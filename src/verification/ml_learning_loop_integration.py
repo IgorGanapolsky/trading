@@ -97,9 +97,7 @@ class MLLearningLoopIntegration:
 
         self.initialized = True
         success_count = 4 - len(self._init_errors)
-        logger.info(
-            f"ML Learning Loop Integration complete: {success_count}/4 components active"
-        )
+        logger.info(f"ML Learning Loop Integration complete: {success_count}/4 components active")
 
         return len(self._init_errors) == 0
 
@@ -115,9 +113,7 @@ class MLLearningLoopIntegration:
                 # If this is a new pattern, create a lesson
                 if result.get("is_new_pattern", False):
                     try:
-                        lesson = self.failure_pipeline.create_lesson_from_anomaly(
-                            anomaly
-                        )
+                        lesson = self.failure_pipeline.create_lesson_from_anomaly(anomaly)
                         result["lesson_created"] = lesson
                         logger.info(
                             f"Auto-created lesson from anomaly: {anomaly.get('anomaly_id')}"
@@ -134,10 +130,9 @@ class MLLearningLoopIntegration:
         """Wire lesson creation to vector store indexing."""
         if self.failure_pipeline and self.lessons_indexer:
             # Patch the lesson pipeline to index new lessons
-            original_create = getattr(
-                self.failure_pipeline, "create_lesson_from_anomaly", None
-            )
+            original_create = getattr(self.failure_pipeline, "create_lesson_from_anomaly", None)
             if original_create:
+
                 def enhanced_create(anomaly: dict) -> str:
                     lesson_path = original_create(anomaly)
 
@@ -211,18 +206,14 @@ class MLLearningLoopIntegration:
                     )
 
             if warnings:
-                logger.info(
-                    f"Pre-trade RAG check for {symbol}: {len(warnings)} relevant lessons"
-                )
+                logger.info(f"Pre-trade RAG check for {symbol}: {len(warnings)} relevant lessons")
 
             return warnings
         except Exception as e:
             logger.warning(f"Pre-trade RAG check failed: {e}")
             return []
 
-    def record_trade_outcome(
-        self, trade_id: str, symbol: str, outcome: str, pnl: float
-    ):
+    def record_trade_outcome(self, trade_id: str, symbol: str, outcome: str, pnl: float):
         """
         Record trade outcome for learning feedback.
 

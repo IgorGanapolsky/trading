@@ -122,9 +122,7 @@ def validate_strategy(strategy_name: str, mapping: dict, state: dict) -> list:
         # Check that dedicated workflow files don't exist
         for wf in mapping.get("workflow_files", []):
             if check_workflow_exists(wf):
-                errors.append(
-                    f"MISMATCH: {strategy_name} disabled but workflow {wf} still exists"
-                )
+                errors.append(f"MISMATCH: {strategy_name} disabled but workflow {wf} still exists")
 
         # Check that strategy code files don't exist
         for code_file in mapping.get("code_files", []):
@@ -137,20 +135,14 @@ def validate_strategy(strategy_name: str, mapping: dict, state: dict) -> list:
         # Strategy is ENABLED - verify it can actually run
 
         # Check that at least one workflow file exists
-        workflow_exists = any(
-            check_workflow_exists(wf) for wf in mapping.get("workflow_files", [])
-        )
+        workflow_exists = any(check_workflow_exists(wf) for wf in mapping.get("workflow_files", []))
         if mapping.get("workflow_files") and not workflow_exists:
-            errors.append(
-                f"MISMATCH: {strategy_name} enabled but no workflow files exist"
-            )
+            errors.append(f"MISMATCH: {strategy_name} enabled but no workflow files exist")
 
         # Check that code files exist
         for code_file in mapping.get("code_files", []):
             if not check_code_exists(code_file):
-                errors.append(
-                    f"MISMATCH: {strategy_name} enabled but code {code_file} missing"
-                )
+                errors.append(f"MISMATCH: {strategy_name} enabled but code {code_file} missing")
 
     return errors
 

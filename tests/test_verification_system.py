@@ -47,7 +47,7 @@ class TestRAGVerificationGate:
 
     def test_ll_009_detected_by_rag(self, rag_gate):
         """Verify ll_009 (Dec 11 syntax error) is in RAG knowledge base."""
-        ll_009_lessons = [l for l in rag_gate.lessons if l.id == "ll_009"]
+        ll_009_lessons = [lesson for lesson in rag_gate.lessons if lesson.id == "ll_009"]
 
         assert len(ll_009_lessons) > 0, "ll_009 should be in RAG knowledge base"
 
@@ -57,7 +57,7 @@ class TestRAGVerificationGate:
 
     def test_ll_024_detected_by_rag(self, rag_gate):
         """Verify ll_024 (Dec 13 f-string error) is in RAG knowledge base."""
-        ll_024_lessons = [l for l in rag_gate.lessons if l.id == "ll_024"]
+        ll_024_lessons = [lesson for lesson in rag_gate.lessons if lesson.id == "ll_024"]
 
         assert len(ll_024_lessons) > 0, "ll_024 should be in RAG knowledge base"
 
@@ -112,9 +112,7 @@ class TestRAGVerificationGate:
         )
 
         # Should warn about critical files
-        assert any(
-            "CRITICAL" in w for w in warnings
-        ), "Should warn when critical files changed"
+        assert any("CRITICAL" in w for w in warnings), "Should warn when critical files changed"
 
 
 class TestMLAnomalyDetector:
@@ -342,9 +340,7 @@ class TestRegressionPrevention:
             try:
                 ast.parse(content)
             except SyntaxError as e:
-                pytest.fail(
-                    f"REGRESSION ll_024: Syntax error in autonomous_trader.py: {e}"
-                )
+                pytest.fail(f"REGRESSION ll_024: Syntax error in autonomous_trader.py: {e}")
 
     def test_ci_failure_doesnt_block_trading(self):
         """Prevent CI test failures from blocking trading.

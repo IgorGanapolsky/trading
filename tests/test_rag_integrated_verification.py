@@ -60,7 +60,7 @@ class TestLessonsLearnedRegression:
 
     def test_critical_lessons_have_prevention_rules(self, lessons):
         """All CRITICAL lessons must have Prevention Rules section."""
-        critical_lessons = [l for l in lessons if l["severity"] == "CRITICAL"]
+        critical_lessons = [lesson for lesson in lessons if lesson["severity"] == "CRITICAL"]
 
         for lesson in critical_lessons:
             assert (
@@ -69,7 +69,7 @@ class TestLessonsLearnedRegression:
 
     def test_lessons_have_verification_tests(self, lessons):
         """Lessons should reference verification tests."""
-        lessons_needing_tests = [l for l in lessons if l["severity"] in ("CRITICAL", "HIGH")]
+        lessons_needing_tests = [lesson for lesson in lessons if lesson["severity"] in ("CRITICAL", "HIGH")]
 
         for lesson in lessons_needing_tests:
             has_test_reference = (
@@ -88,8 +88,8 @@ class TestLL009CISyntaxFailure:
     def test_critical_imports_work(self):
         """CI must verify critical imports work (ll_009 root cause)."""
         try:
-            from src.orchestrator.main import TradingOrchestrator
-            from src.risk.trade_gateway import TradeGateway
+            from src.orchestrator.main import TradingOrchestrator  # noqa: F401
+            from src.risk.trade_gateway import TradeGateway  # noqa: F401
 
             assert True
         except ImportError as e:

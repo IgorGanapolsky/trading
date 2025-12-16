@@ -70,7 +70,7 @@ class TestOrchestratorFunnelIntegration:
                 # (Full execution requires live API, but structure test passes)
                 import inspect
 
-                from src.orchestrator.main import TradingOrchestrator
+                from src.orchestrator.main import TradingOrchestrator  # noqa: F401
 
                 source = inspect.getsource(TradingOrchestrator.run)
 
@@ -121,7 +121,7 @@ class TestOrchestratorFunnelIntegration:
     def test_execution_gate_integration(self):
         """Verify trade gateway blocks invalid trades."""
         try:
-            from src.risk.trade_gateway import TradeGateway
+            from src.risk.trade_gateway import TradeGateway  # noqa: F401
 
             gateway = TradeGateway()
 
@@ -309,7 +309,7 @@ class TestLLMDriftCheck:
     def test_sentiment_output_consistency(self, golden_sentiment_dataset):
         """Verify sentiment outputs match golden dataset (cosine sim > 0.85)."""
         try:
-            from src.sentiment.rag_db import get_rag_db
+            from src.sentiment.rag_db import get_rag_db  # noqa: F401
 
             rag_db = get_rag_db()
             if rag_db is None:
@@ -337,7 +337,7 @@ class TestLLMDriftCheck:
 
         # Validate schema is enforced
         try:
-            from src.sentiment.rag_db import get_rag_db
+            from src.sentiment.rag_db import get_rag_db  # noqa: F401
 
             # Check RAG returns properly formatted data
             # Placeholder for actual validation
@@ -351,7 +351,7 @@ class TestLLMDriftCheck:
         fake_tickers = ["AAAA", "ZZZZ", "FAKE123", "NOTREAL"]
 
         try:
-            from src.sentiment.rag_db import get_rag_db
+            from src.sentiment.rag_db import get_rag_db  # noqa: F401
 
             rag_db = get_rag_db()
             if rag_db is None:

@@ -208,8 +208,10 @@ def main():
         help="Minimum win rate required in %% (default: 45 for R&D, 60 post-R&D)",
     )
     parser.add_argument(
-        "--min-sharpe", type=float, default=-2.0,  # R&D phase: learning allowed
-        help="Minimum Sharpe ratio required (default: -2 for R&D, 0.5 post-R&D)"
+        "--min-sharpe",
+        type=float,
+        default=-2.0,  # R&D phase: learning allowed
+        help="Minimum Sharpe ratio required (default: -2 for R&D, 0.5 post-R&D)",
     )
     parser.add_argument(
         "--pessimistic",
