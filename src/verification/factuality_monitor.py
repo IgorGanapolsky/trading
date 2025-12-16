@@ -36,6 +36,11 @@ FACTS_BENCHMARK_SCORES = {
     "openai/gpt-4o": 0.658,  # Estimated ~65.8%
     "openai/gpt-4-turbo": 0.645,  # Estimated ~64.5%
     "deepseek/deepseek-r1": 0.640,  # Estimated ~64%
+    # Kimi K2 - Moonshot AI's 1T param MoE (Dec 2025)
+    # Strong on coding/agentic benchmarks, estimated factuality
+    "moonshotai/kimi-k2": 0.620,  # Estimated ~62%
+    "moonshotai/kimi-k2-0905": 0.625,  # Estimated ~62.5% (improved version)
+    "moonshotai/kimi-k2-thinking": 0.635,  # Estimated ~63.5% (reasoning model)
     # Default for unknown models
     "default": 0.600,
 }

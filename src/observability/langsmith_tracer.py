@@ -77,6 +77,11 @@ class CostMetrics:
         "claude-3-haiku": {"input": 0.00025, "output": 0.00125},
         "gemini-2.0-flash": {"input": 0.0001, "output": 0.0004},
         "deepseek-chat": {"input": 0.00014, "output": 0.00028},
+        # Kimi K2 - Budget-friendly 1T param MoE model (Dec 2025)
+        # moonshotai/kimi-k2-0905: 256K context, excellent for agentic tasks
+        "kimi-k2": {"input": 0.00039, "output": 0.0019},
+        "kimi-k2-0905": {"input": 0.00039, "output": 0.0019},
+        "kimi-k2-thinking": {"input": 0.00045, "output": 0.00235},
         "default": {"input": 0.001, "output": 0.002},
     }
 

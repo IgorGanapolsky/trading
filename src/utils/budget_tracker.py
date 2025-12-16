@@ -29,6 +29,11 @@ API_COSTS = {
     "openrouter_haiku": 0.0003,  # $0.25/1M tokens
     "openrouter_sonnet": 0.003,  # $3/1M tokens
     "openrouter_opus": 0.015,  # $15/1M tokens
+    # Kimi K2 - Budget-friendly alternative (Dec 2025)
+    # moonshotai/kimi-k2-0905: $0.39/M input, $1.90/M output
+    "openrouter_kimi_k2": 0.0004,  # ~$0.40/1M tokens avg - 7.5x cheaper than Sonnet
+    "openrouter_kimi_k2_thinking": 0.0005,  # ~$0.45/M input, $2.35/M output
+    "openrouter_kimi_k2_free": 0.00,  # Free tier available
     "gemini_research": 0.01,  # ~$0.01 per research query
     "polygon_data": 0.0001,  # Very cheap
     "yfinance": 0.00,  # Free
