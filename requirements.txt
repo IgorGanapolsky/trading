@@ -190,3 +190,10 @@ lancedb>=0.4.0
 fastembed>=0.2.0
 pyarrow>=14.0.0
 tqdm>=4.66.0
+
+# === Hindsight Agentic Memory (Added Dec 16, 2025) ===
+# Open-source memory system for AI agents - 91% accuracy on LongMemEval
+# Provides: retain/recall/reflect API, confidence-scored opinions, temporal reasoning
+# Optional: Only used when Hindsight service is running (graceful degradation)
+# See: https://github.com/vectorize-io/hindsight
+hindsight-client>=0.1.0

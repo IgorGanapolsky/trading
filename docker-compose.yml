@@ -162,16 +162,75 @@ services:
     networks:
       - trading-network
 
+# Hindsight Memory Service (Optional - Agentic Memory for Trade Learning)
+  # See: https://github.com/vectorize-io/hindsight
+  hindsight:
+    image: ghcr.io/vectorize-io/hindsight:latest
+    container_name: hindsight-memory
+
+    # Environment configuration
+    environment:
+      # Uses OpenRouter API key (same as trading system)
+      - HINDSIGHT_API_LLM_API_KEY=${OPENROUTER_API_KEY}
+      - HINDSIGHT_API_LLM_MODEL=openai/gpt-4o-mini
+
+    # Expose API and UI ports
+    ports:
+      - "8888:8888"  # API
+      - "9999:9999"  # UI
+
+    # Persistent storage for memory banks
+    volumes:
+      - hindsight_data:/home/hindsight/.pg0
+
+    # Resource limits (memory system is lightweight)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+    # Health check - verify API is responding
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8888/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Network configuration
+    networks:
+      - trading-network
+
+    # Profile: only start when explicitly requested
+    # Use: docker compose --profile memory up
+    profiles:
+      - memory
+
 # Define networks
 networks:
   trading-network:
     driver: bridge
     name: trading-network
 
-# Define named volumes (optional - using bind mounts above)
-# Uncomment to use Docker-managed volumes instead of local directories
-# volumes:
-#   trading_data:
-#     driver: local
-#   trading_logs:
-#     driver: local
+# Named volumes for persistent data
+volumes:
+  hindsight_data:
+    driver: local
+  # trading_data:
+  #   driver: local
+  # trading_logs:
+  #   driver: local
