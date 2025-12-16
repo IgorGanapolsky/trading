@@ -31,6 +31,20 @@ from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
+# Pipeline checkpointing for fault tolerance (Dec 2025)
+try:
+    from src.orchestrator.checkpoint import (
+        CHECKPOINT_GATES,
+        PipelineCheckpointer,
+        get_checkpointer,
+        should_checkpoint,
+    )
+    CHECKPOINTING_AVAILABLE = True
+    logger.info("Pipeline checkpointing enabled")
+except ImportError:
+    CHECKPOINTING_AVAILABLE = False
+    logger.warning("Checkpointing not available - pipeline will not be resumable")
+
 # LangSmith tracing for gate observability
 try:
     from src.observability.langsmith_tracer import TraceType, get_tracer
@@ -906,6 +920,7 @@ class TradingGatePipeline:
         gate3: Gate3Sentiment,
         gate35: Gate35Introspection,
         gate4: Gate4Risk,
+        checkpointer: Any | None = None,
     ):
         self.gate0 = gate0
         self.gate1 = gate1
@@ -914,6 +929,41 @@ class TradingGatePipeline:
         self.gate3 = gate3
         self.gate35 = gate35
         self.gate4 = gate4
+        # Checkpointing for fault tolerance
+        self.checkpointer = checkpointer
+        if CHECKPOINTING_AVAILABLE and checkpointer is None:
+            try:
+                self.checkpointer = get_checkpointer()
+            except Exception as e:
+                logger.warning("Failed to initialize checkpointer: %s", e)
+
+    def _checkpoint(
+        self,
+        thread_id: str | None,
+        gate_index: float,
+        gate_name: str,
+        ticker: str,
+        ctx: "TradeContext",
+        results: list["GateResult"],
+        status: str = "success",
+    ) -> None:
+        """Save checkpoint if checkpointing is enabled and gate is critical."""
+        if not thread_id or not self.checkpointer:
+            return
+        if not should_checkpoint(gate_index):
+            return
+        try:
+            self.checkpointer.save_checkpoint(
+                thread_id=thread_id,
+                gate_index=gate_index,
+                gate_name=gate_name,
+                ticker=ticker,
+                context=ctx,
+                results=results,
+                status=status,
+            )
+        except Exception as e:
+            logger.warning("Checkpoint save failed: %s", e)
 
     def run(
         self,
@@ -921,6 +971,7 @@ class TradingGatePipeline:
         rl_threshold: float,
         session_profile: dict | None = None,
         allocation_cap: float = 0.0,
+        thread_id: str | None = None,
     ) -> tuple[bool, TradeContext, list[GateResult]]:
         """
         Run the full gate pipeline for a ticker.
@@ -942,6 +993,7 @@ class TradingGatePipeline:
         result = self.gate1.evaluate(ticker, ctx)
         results.append(result)
         _trace_gate("momentum", ticker, {"gate": 1, "has_macd": ctx.macd_signal is not None}, result)
+        self._checkpoint(thread_id, 1, "momentum", ticker, ctx, results)
         if result.rejected or result.status == GateStatus.ERROR:
             return False, ctx, results
 
@@ -963,6 +1015,7 @@ class TradingGatePipeline:
         result = self.gate3.evaluate(ticker, ctx, session_profile)
         results.append(result)
         _trace_gate("sentiment", ticker, {"gate": 3, "has_session": session_profile is not None}, result)
+        self._checkpoint(thread_id, 3, "sentiment", ticker, ctx, results)
         if result.rejected:
             return False, ctx, results
 
@@ -977,6 +1030,7 @@ class TradingGatePipeline:
         result = self.gate4.evaluate(ticker, ctx, allocation_cap)
         results.append(result)
         _trace_gate("risk", ticker, {"gate": 4, "allocation_cap": allocation_cap}, result)
+        self._checkpoint(thread_id, 4, "risk", ticker, ctx, results)
         if result.rejected or result.status == GateStatus.ERROR:
             return False, ctx, results
 
