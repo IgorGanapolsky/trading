@@ -28,71 +28,12 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          pip install google-genai yfinance pandas
+        run: pip install google-genai yfinance pandas
 
       - name: Run Pre-Trade Research
-        run: |
-          python3 << 'PYEOF'
-import os
-import json
-from datetime import datetime
-
-# Simple research without full dependency
-try:
-    from google import genai
-
-    client = genai.Client()
-
-    symbol = os.getenv('INPUT_SYMBOL', 'SPY')
-
-    query = f"""
-    Analyze {symbol} for today's trading decision:
-    1. Current price action and trend
-    2. Key news in last 24 hours
-    3. Market sentiment (bullish/bearish/neutral)
-    4. Risk factors
-    5. Trading recommendation: BUY, SELL, or HOLD
-
-    Be concise and actionable for a day trader.
-    """
-
-    print(f"🔍 Researching {symbol}...")
-
-    interaction = client.interactions.create(
-        input=query,
-        agent='deep-research-pro-preview-12-2025',
-        background=True
-    )
-
-    import time
-    for _ in range(30):  # 5 min timeout
-        interaction = client.interactions.get(interaction.id)
-        if interaction.status == "completed":
-            print("=" * 60)
-            print(f"DEEP RESEARCH: {symbol}")
-            print("=" * 60)
-            print(interaction.outputs[-1].text)
-
-            # Save to file
-            with open(f'data/research_{symbol}_{datetime.now().strftime("%Y%m%d")}.json', 'w') as f:
-                json.dump({
-                    "symbol": symbol,
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "research": interaction.outputs[-1].text
-                }, f, indent=2)
-            break
-        elif interaction.status == "failed":
-            print(f"❌ Research failed: {interaction.error}")
-            break
-        time.sleep(10)
-
-except ImportError:
-    print("⚠️ google-genai not available")
-except Exception as e:
-    print(f"⚠️ Research error: {e}")
-    print("Continuing without deep research...")
-PYEOF
+        env:
+          INPUT_SYMBOL: ${{ github.event.inputs.symbol || 'SPY' }}
+        run: python3 scripts/pre_trade_research.py
 
       - name: Commit Research Results
         if: always()
