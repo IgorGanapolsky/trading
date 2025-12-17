@@ -186,21 +186,29 @@ class CoreStrategy:
     MACD_SLOW_PERIOD = 26
     MACD_SIGNAL_PERIOD = 9
 
-    # Risk parameters - TIGHTENED for active trading (Dec 3, 2025)
-    # Previous: 5% stop/profit resulted in 0 closed trades, 0% win rate
-    # Updated Dec 16: 5% thresholds to allow positions to close (3% was too tight)
-    DEFAULT_STOP_LOSS_PCT = 0.05  # 5% stop loss (tighter for active trading)
-    ATR_STOP_MULTIPLIER = 2.0  # ATR multiplier for dynamic stops
-    USE_ATR_STOPS = True  # Use ATR-based stops (more adaptive)
+    # Risk parameters - RELAXED for trend capture (Dec 17, 2025)
+    # Previous: 5% stop/profit resulted in positions closing before trends developed
+    # Research finding: Options 75% win rate but 7x larger losses when calls tested
+    # Fix: Let winners run with 15% target, use ATR-based stops
+    DEFAULT_STOP_LOSS_PCT = 0.08  # 8% stop loss (wider to avoid noise exits)
+    ATR_STOP_MULTIPLIER = 2.5  # ATR multiplier for dynamic stops (was 2.0)
+    USE_ATR_STOPS = True  # Use ATR-based stops (more adaptive to volatility)
     REBALANCE_THRESHOLD = 0.05  # 5% deviation triggers rebalance (research-optimized)
     REBALANCE_FREQUENCY_DAYS = 90  # Quarterly rebalancing (research-optimized)
 
-    # Profit-taking parameters - TIGHTENED for active trading
-    TAKE_PROFIT_PCT = 0.05  # 5% profit target (active trading)
+    # Profit-taking parameters - RELAXED to capture larger moves (Dec 17, 2025)
+    # Previous 5% target was hit by normal weekly swings, missing 10-20% trends
+    TAKE_PROFIT_PCT = 0.15  # 15% profit target (let winners run)
 
-    # Time-based exit parameters (NEW Dec 3, 2025)
-    MAX_HOLDING_DAYS = 14  # Close positions after 14 days regardless of P/L
+    # Time-based exit parameters - EXTENDED (Dec 17, 2025)
+    # Previous 14-day limit killed trending positions on day 15
+    MAX_HOLDING_DAYS = 30  # Allow trends to develop over full month
     ENABLE_MOMENTUM_EXIT = False  # DISABLED: MACD reversal causes 5-10% false exits in sideways markets
+
+    # Volatility filter - NEW (Dec 17, 2025)
+    # Skip trading when VIX is extreme (learned from options strategy success)
+    VIX_HIGH_THRESHOLD = 35  # Don't buy equities when VIX > 35 (panic mode)
+    VIX_POSITION_SCALE = True  # Scale position size by inverse VIX
 
     # Diversification allocation (guaranteed minimums)
     # 55% equity, 20% bonds, 15% REITs, 10% treasuries

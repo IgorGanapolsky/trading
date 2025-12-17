@@ -276,15 +276,17 @@ class TradingOrchestrator:
 
         bias_dir = os.getenv("BIAS_DATA_DIR", "data/bias")
         self.bias_store = BiasStore(bias_dir)
-        # Position manager for active exit management
+        # Position manager for active exit management (Updated Dec 17, 2025)
+        # Research: 5% targets too tight, positions closed before trends developed
         self.position_manager = PositionManager(
             conditions=ExitConditions(
-                take_profit_pct=float(os.getenv("TAKE_PROFIT_PCT", "0.05")),
-                stop_loss_pct=float(os.getenv("STOP_LOSS_PCT", "0.05")),
-                max_holding_days=int(os.getenv("MAX_HOLDING_DAYS", "14")),
+                take_profit_pct=float(os.getenv("TAKE_PROFIT_PCT", "0.15")),  # 15% (was 5%)
+                stop_loss_pct=float(os.getenv("STOP_LOSS_PCT", "0.08")),  # 8% (was 5%)
+                max_holding_days=int(os.getenv("MAX_HOLDING_DAYS", "30")),  # 30 days (was 14)
                 enable_momentum_exit=os.getenv("ENABLE_MOMENTUM_EXIT", "false").lower()
                 in {"1", "true"},  # DISABLED: MACD reversal causes false exits in sideways markets
                 enable_atr_stop=os.getenv("ENABLE_ATR_STOP", "true").lower() in {"1", "true"},
+                atr_multiplier=float(os.getenv("ATR_MULTIPLIER", "2.5")),  # 2.5x ATR (was 2.0)
             )
         )
         self.bias_fresh_minutes = int(os.getenv("BIAS_FRESHNESS_MINUTES", "90"))

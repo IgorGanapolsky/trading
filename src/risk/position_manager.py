@@ -73,26 +73,31 @@ class ExitConditions:
     These are tighter than typical buy-and-hold strategies to ensure
     active position management and generate closed trade data for win rate.
 
-    Asset-class-specific thresholds (as of Dec 16, 2025):
+    Asset-class-specific thresholds (as of Dec 17, 2025):
     - Treasuries: 0.15% (barely move, need tight thresholds)
     - Bonds: 0.5% (moderate volatility)
-    - Equities: 5.0% (standard)
+    - Equities: 15% take profit, 8% stop (let winners run)
+
+    Updated Dec 17, 2025: Research showed 5% targets were too tight
+    - Positions closed before trends developed
+    - Options showed 75% win rate but 7x larger losses = net negative
+    - Fix: 15% take profit, 8% stop loss, 30-day max hold
 
     Attributes:
-        take_profit_pct: Profit target percentage (default: 5%)
-        stop_loss_pct: Maximum loss percentage (default: 5%)
-        max_holding_days: Maximum days to hold position (default: 14)
+        take_profit_pct: Profit target percentage (default: 15%)
+        stop_loss_pct: Maximum loss percentage (default: 8%)
+        max_holding_days: Maximum days to hold position (default: 30)
         enable_momentum_exit: Whether to exit on MACD bearish cross
         enable_atr_stop: Whether to use ATR-based dynamic stops
         atr_multiplier: ATR multiplier for dynamic stop calculation
     """
 
-    take_profit_pct: float = 0.05  # 5% profit target (tighter for active trading)
-    stop_loss_pct: float = 0.05  # 5% stop loss (tighter for active trading)
-    max_holding_days: int = 14  # Close after 14 days regardless
+    take_profit_pct: float = 0.15  # 15% profit target (let winners run - Dec 17, 2025)
+    stop_loss_pct: float = 0.08  # 8% stop loss (wider to avoid noise - Dec 17, 2025)
+    max_holding_days: int = 30  # Allow trends to develop (was 14 - Dec 17, 2025)
     enable_momentum_exit: bool = False  # DISABLED: Exit on MACD bearish cross (causes 5-10% false exits in sideways markets)
     enable_atr_stop: bool = True  # Use ATR-based stops
-    atr_multiplier: float = 2.0  # 2x ATR for stop distance
+    atr_multiplier: float = 2.5  # 2.5x ATR for stop distance (was 2.0 - Dec 17, 2025)
 
     # Asset-class-specific overrides
     treasury_take_profit_pct: float = 0.0015  # 0.15% for treasuries
@@ -579,14 +584,16 @@ class PositionManager:
         return exits_to_execute
 
 
-# Default instance with tighter conditions for active trading
+# Default instance with relaxed conditions for trend capture (Dec 17, 2025)
+# Research finding: 5% targets were too tight, positions closed before trends developed
 DEFAULT_POSITION_MANAGER = PositionManager(
     conditions=ExitConditions(
-        take_profit_pct=0.05,  # 5% take-profit
-        stop_loss_pct=0.05,  # 5% stop-loss
-        max_holding_days=14,  # Max 14 days
+        take_profit_pct=0.15,  # 15% take-profit (let winners run)
+        stop_loss_pct=0.08,  # 8% stop-loss (wider to avoid noise)
+        max_holding_days=30,  # Max 30 days (allow trends to develop)
         enable_momentum_exit=False,  # DISABLED: MACD reversal causes false exits in sideways markets
         enable_atr_stop=True,
+        atr_multiplier=2.5,  # 2.5x ATR for dynamic stops
     )
 )
 
