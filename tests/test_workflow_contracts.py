@@ -12,7 +12,8 @@ from pathlib import Path
 import yaml
 
 
-
+def check_workflow_commands(workflow_path: Path):
+    """Check workflow commands for valid CLI flags."""
     if not workflow_path.exists():
         print(f"⚠️  Workflow not found: {workflow_path}")
         return

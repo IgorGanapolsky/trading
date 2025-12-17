@@ -53,6 +53,7 @@ class CategoryAlerts:
         alerts = []
 
         # Check each category
+        for cat_name in ['equities', 'options']:
             cat_data = latest.get(cat_name, {})
             total_pl = cat_data.get('total_pl', 0)
 
@@ -82,6 +83,7 @@ class CategoryAlerts:
 
         # Check win/loss streaks (requires historical data)
         if len(log) >= 5:
+            for cat_name in ['equities', 'options']:
                 streak_alerts = self._check_streaks(log[-5:], cat_name)
                 alerts.extend(streak_alerts)
 

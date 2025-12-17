@@ -590,8 +590,6 @@ class TradingOrchestrator:
         schedule.every().wednesday.at("10:00").do(self._check_ipo_opportunities).tag("ipo_check")
         self.logger.info("Scheduled: IPO opportunity check - Wednesdays at 10:00 AM ET")
 
-        )
-
         # Options Accumulation Strategy: Daily at 9:40 AM ET (before options strategy)
         if self.options_accumulation_strategy:
             schedule.every().day.at("09:40").do(self._execute_options_accumulation).tag(
@@ -1230,59 +1228,6 @@ Output your recommendation in JSON format for easy parsing."""
                 {
                     "timestamp": datetime.now().isoformat(),
                     "strategy": "options_accumulation",
-                    "error": str(e),
-                }
-            )
-
-        finally:
-            self.logger.info("=" * 80)
-
-        self.logger.info("=" * 80)
-        self.logger.info("=" * 80)
-
-        try:
-                try:
-
-                        trader=self.alpaca_trader,
-                    )
-                except Exception as e:
-                    return
-
-            # Manage positions
-
-            if closed_positions:
-
-                # Record closed trades in system state
-                try:
-                    from scripts.state_manager import StateManager
-
-                    state_manager = StateManager()
-
-                    for pos in closed_positions:
-                        # Get entry price from position (would need to track this)
-                        # For now, use a placeholder - in production should track entry prices
-                        entry_price = pos.price * 0.93  # Estimate (7% stop-loss)
-                        exit_price = pos.price
-
-                        state_manager.record_closed_trade(
-                            symbol=pos.symbol,
-                            entry_price=entry_price,
-                            exit_price=exit_price,
-                            quantity=pos.quantity,
-                            entry_date=pos.timestamp.isoformat(),
-                            exit_date=datetime.now().isoformat(),
-                        )
-
-                    self.logger.info("✅ Closed trades recorded in system state")
-                except Exception as e:
-                    self.logger.warning(f"Failed to record closed trades: {e}")
-            else:
-
-
-        except Exception as e:
-            self.health_status["errors"].append(
-                {
-                    "timestamp": datetime.now().isoformat(),
                     "error": str(e),
                 }
             )

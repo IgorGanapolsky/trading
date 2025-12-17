@@ -719,7 +719,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     sample_research = {
-        "research_name": _market_research",
+        "research_name": "market_research",
         "recommendation": "BUY",
         "confidence": 0.75,
         "sentiment": "bullish",

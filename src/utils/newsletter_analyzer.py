@@ -39,8 +39,11 @@ COINSNACKS_RSS_URL = "https://medium.com/feed/coinsnacks"
 
 
 @dataclass
+class NewsletterSignal:
+    """Represents a trading signal extracted from newsletter."""
 
-    ticker: str  # or sentiment: str  # bullish, bearish, neutral
+    ticker: str
+    sentiment: str  # bullish, bearish, neutral
     confidence: float  # 0.0 - 1.0
     entry_price: float | None = None
     target_price: float | None = None
@@ -64,6 +67,7 @@ COINSNACKS_RSS_URL = "https://medium.com/feed/coinsnacks"
         }
 
     @classmethod
+    def from_dict(cls, data: dict) -> "NewsletterSignal":
         """Create signal from dictionary"""
         return cls(
             ticker=data["ticker"],
@@ -275,13 +279,15 @@ class NewsletterAnalyzer:
 
     def parse_article(
         self, article_text: str, source_date: datetime | None = None
-        """
+    ) -> dict:
+        """Parse article text and extract trading signals.
 
         Args:
             article_text: Full article text (title + content)
             source_date: Date of article publication
 
         Returns:
+            Dictionary of signals by ticker
         """
         signals = {}
         article_lower = article_text.lower()
@@ -310,6 +316,7 @@ class NewsletterAnalyzer:
             reasoning = self._extract_reasoning(article_text, ticker)
 
             # Create signal
+            signals[ticker] = NewsletterSignal(
                 ticker=ticker,
                 sentiment=sentiment,
                 confidence=confidence,

@@ -20,14 +20,7 @@ from pathlib import Path
 
 # Forbidden patterns with explanations
 FORBIDDEN_PATTERNS = {
-        "patterns": [
-            r"\b\b",
-            r"\b\b",
-            r"\b\b",
-        ],
-        "exclude_dirs": ["rag_knowledge", "docs", "data"],  # Allow in docs/lessons
-        "exclude_files": ["detect_forbidden_patterns.py"],  # Allow in this file
-    },
+    # Empty - all forbidden patterns were crypto-related and have been removed
 }
 
 # File extensions to scan

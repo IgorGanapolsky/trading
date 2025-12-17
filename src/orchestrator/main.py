@@ -1454,6 +1454,7 @@ class TradingOrchestrator:
             llm_model = getattr(self.llm_agent, "model_name", None)
             neg_threshold = float(os.getenv("LLM_NEGATIVE_SENTIMENT_THRESHOLD", "-0.2"))
             session_type = (self.session_profile or {}).get("session_type")
+            if session_type == "weekend":
                 neg_threshold = float(os.getenv("WEEKEND_SENTIMENT_FLOOR", "-0.1"))
             bias_snapshot: BiasSnapshot | None = None
 

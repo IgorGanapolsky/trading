@@ -373,38 +373,6 @@ class KalshiOracle:
 
         return None  # No signal in neutral zone
 
-        """
-        """
-        config = self.SIGNAL_THRESHOLDS["btc_price"]
-
-            return None
-
-        # Find bullish price target markets (e.g., > $100K by end of year")
-        odds = primary_market.yes_odds
-
-        thresholds = config["thresholds"]
-
-        if odds >= thresholds["bullish"]:
-            return KalshiSignal(
-                signal_type="btc_price",
-                direction=SignalDirection.BULLISH,
-                confidence=min(odds / 100, 0.85),
-                kalshi_odds=odds,
-                threshold_crossed=ftarget odds {odds}% > {thresholds['bullish']}%",
-                reasoning=f"High probability ({odds}%) of hitting price target - "
-            )
-        elif odds <= thresholds["bearish"]:
-            return KalshiSignal(
-                signal_type="btc_price",
-                direction=SignalDirection.BEARISH,
-                confidence=min((100 - odds) / 100, 0.75),
-                kalshi_odds=odds,
-                threshold_crossed=ftarget odds {odds}% < {thresholds['bearish']}%",
-                reasoning=f"Low probability ({odds}%) of hitting target - "
-            )
-
-        return None
-
     def get_all_signals(self, force_refresh: bool = False) -> list[KalshiSignal]:
         """
         Generate all available signals from current Kalshi markets.

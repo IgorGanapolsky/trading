@@ -195,7 +195,8 @@ class TestRAGMLNeverSkipped:
         gate = MandatoryTradeGate()
 
         result = gate.validate_trade(
-            symbol=amount=1000.0,
+            symbol="AAPL",
+            amount=1000.0,
             side="BUY",
         )
 

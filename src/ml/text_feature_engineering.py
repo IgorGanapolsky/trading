@@ -85,21 +85,6 @@ UNCERTAINTY_TERMS = [
     "unclear",
 ]
 
-    "btc",
-    "ethereum",
-    "eth",
-    "blockchain",
-    "defi",
-    "nft",
-    "halving",
-    "whale",
-    "hodl",
-    "moon",
-    "fud",
-    "fomo",
-    "altcoin",
-]
-
 
 @dataclass
 class TextFeatures:
@@ -390,7 +375,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     test_headlines = [
-        "Ethereum breaks out to new highs, analysts bullish on "Market selloff continues as fear grips investors",
+        "Stock market breaks out to new highs, analysts bullish",
+        "Market selloff continues as fear grips investors",
     ]
 
     engineer = get_engineer()

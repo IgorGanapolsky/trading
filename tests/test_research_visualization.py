@@ -22,7 +22,7 @@ class TestResearchOutput:
         from src.ml.gemini_deep_research import ResearchOutput
 
         output = ResearchOutput(
-            research_name=_test",
+            research_name="market_test",
             timestamp="20251216_120000",
             text_content={"recommendation": "BUY", "confidence": 0.8},
             visual_outputs=[
@@ -31,7 +31,7 @@ class TestResearchOutput:
             sources=["https://example.com"],
         )
 
-        assert output.research_name == _test"
+        assert output.research_name == "market_test"
         assert output.has_visuals is True
         assert output.text_content["recommendation"] == "BUY"
 
@@ -123,7 +123,7 @@ class TestGeminiDeepResearchVisuals:
                 researcher = GeminiDeepResearch(output_dir=output_dir)
 
             research_output = ResearchOutput(
-                research_name=_test",
+                research_name="market_test",
                 timestamp="20251216_120000",
                 text_content={"recommendation": "HOLD"},
             )
@@ -133,7 +133,7 @@ class TestGeminiDeepResearchVisuals:
             assert filepath.exists()
             with open(filepath) as f:
                 saved_data = json.load(f)
-            assert saved_data["research_name"] == _test"
+            assert saved_data["research_name"] == "market_test"
 
     @patch("src.ml.gemini_deep_research.GEMINI_AVAILABLE", True)
     def test_get_latest_research_none(self):
@@ -155,7 +155,7 @@ class TestResearchVisualizer:
     def sample_research_data(self):
         """Sample research data for testing."""
         return {
-            "research_name": _market_research",
+            "research_name": "market_research",
             "recommendation": "BUY",
             "confidence": 0.75,
             "sentiment": "bullish",

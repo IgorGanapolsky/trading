@@ -159,9 +159,10 @@ class TestKalshiOracle:
                 fetched_at=now,
             ),
             MarketOddsSnapshot(
-                ticker="KX-100K-DEC25",
-                title=Above $100K by Dec 2025",
-                yes_odds=70.0,  # Bullish volume=50000,
+                ticker="KX-SPY-DEC25",
+                title="SPY Above $600 by Dec 2025",
+                yes_odds=70.0,
+                volume=50000,
                 fetched_at=now,
             ),
         ]
@@ -247,13 +248,13 @@ class TestKalshiOracle:
         assert signal is not None
         assert signal.signal_type == "btc_price"
         assert signal.direction == SignalDirection.BULLISH
-        assert in signal.target_symbols
+        assert "SPY" in signal.target_symbols
 
         now = datetime.now(timezone.utc)
         markets = [
             MarketOddsSnapshot(
-                ticker="KX-100K-DEC25",
-                title=Above $100K by Dec 2025",
+                ticker="KX-SPY-DEC25",
+                title="SPY Above $600 by Dec 2025",
                 yes_odds=30.0,  # Low odds
                 volume=50000,
                 fetched_at=now,

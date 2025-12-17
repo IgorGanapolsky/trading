@@ -794,11 +794,7 @@ def generate_world_class_dashboard() -> str:
     today_trades = load_json_file(today_trades_file)
 
     # Determine active strategy
-
-
     if today_trades and isinstance(today_trades, list):
-        for trade in today_trades:
-
         try:
             today_str = datetime.now().strftime("%Y-%m-%d")
             log_files = [
@@ -834,8 +830,7 @@ def generate_world_class_dashboard() -> str:
 
     # If today has trades but state doesn't reflect them (common during day), add them
     # This is a heuristic: if state total < today's total, assume state is stale
-
-
+    if today_trades:
         dashboard += "- **Status**: ✅ Active (Executed Today)\n"
     else:
         dashboard += "- **MODE**: 📈 STANDARD (Weekday)\n"
