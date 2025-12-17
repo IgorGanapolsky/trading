@@ -24,7 +24,14 @@ from pathlib import Path
 
 import pandas as pd
 import requests
-import yfinance as yf
+
+# Optional import - yfinance may not be installed in all environments
+try:
+    import yfinance as yf
+    YFINANCE_AVAILABLE = True
+except ImportError:
+    yf = None  # type: ignore
+    YFINANCE_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 

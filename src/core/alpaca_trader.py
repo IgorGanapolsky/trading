@@ -29,17 +29,34 @@ import time
 from datetime import datetime
 from typing import Any
 
-from alpaca.common.exceptions import APIError
-from alpaca.data.historical import StockHistoricalDataClient
-from alpaca.data.requests import StockBarsRequest, StockLatestQuoteRequest
-from alpaca.data.timeframe import TimeFrame
-from alpaca.trading.client import TradingClient
-from alpaca.trading.enums import OrderSide, TimeInForce
-from alpaca.trading.requests import (
-    LimitOrderRequest,
-    MarketOrderRequest,
-    StopOrderRequest,
-)
+# Optional import - alpaca-py may not be installed in all environments
+try:
+    from alpaca.common.exceptions import APIError
+    from alpaca.data.historical import StockHistoricalDataClient
+    from alpaca.data.requests import StockBarsRequest, StockLatestQuoteRequest
+    from alpaca.data.timeframe import TimeFrame
+    from alpaca.trading.client import TradingClient
+    from alpaca.trading.enums import OrderSide, TimeInForce
+    from alpaca.trading.requests import (
+        LimitOrderRequest,
+        MarketOrderRequest,
+        StopOrderRequest,
+    )
+    ALPACA_AVAILABLE = True
+except ImportError:
+    # Create placeholder types for when alpaca is not installed
+    APIError = Exception  # type: ignore
+    StockHistoricalDataClient = None  # type: ignore
+    StockBarsRequest = None  # type: ignore
+    StockLatestQuoteRequest = None  # type: ignore
+    TimeFrame = None  # type: ignore
+    TradingClient = None  # type: ignore
+    OrderSide = None  # type: ignore
+    TimeInForce = None  # type: ignore
+    LimitOrderRequest = None  # type: ignore
+    MarketOrderRequest = None  # type: ignore
+    StopOrderRequest = None  # type: ignore
+    ALPACA_AVAILABLE = False
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 from src.core.config import load_config

@@ -10,27 +10,46 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from sklearn.linear_model import LogisticRegression
+
+# Optional import - sklearn may not be installed in all environments
+try:
+    from sklearn.linear_model import LogisticRegression
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    LogisticRegression = None  # type: ignore
+    SKLEARN_AVAILABLE = False
 
 from src.ml.reward_functions import RiskAdjustedReward
 
+# Optional imports - defer error to runtime when actually used
 try:
     import gymnasium as gym
     from gymnasium import spaces
-except ImportError as exc:  # pragma: no cover - surfaced via CLI
-    raise ImportError(
-        "gymnasium is required for RL weight updates. Install gymnasium>=0.29."
-    ) from exc
+    GYMNASIUM_AVAILABLE = True
+except ImportError:
+    gym = None  # type: ignore
+    spaces = None  # type: ignore
+    GYMNASIUM_AVAILABLE = False
 
 try:
     from stable_baselines3 import PPO
-except ImportError as exc:  # pragma: no cover - surfaced via CLI
-    raise ImportError(
-        "stable-baselines3 is required for RL weight updates. Install stable-baselines3>=2.0."
-    ) from exc
+    SB3_AVAILABLE = True
+except ImportError:
+    PPO = None  # type: ignore
+    SB3_AVAILABLE = False
 
 FEATURE_KEYS = ["strength", "momentum", "rsi_gap", "volume_premium", "sma_ratio"]
 logger = logging.getLogger(__name__)
+
+# Create base class for when gymnasium is not available
+if GYMNASIUM_AVAILABLE:
+    _GymEnvBase = gym.Env
+else:
+    class _GymEnvBase:  # type: ignore
+        """Placeholder base class when gymnasium is not installed."""
+        metadata: dict = {}
+        def reset(self, **kwargs): raise NotImplementedError("gymnasium not installed")
+        def step(self, action): raise NotImplementedError("gymnasium not installed")
 
 
 @dataclass
@@ -41,12 +60,14 @@ class TradeSample:
     session: str | None = None
 
 
-class TradeReplayEnv(gym.Env):
+class TradeReplayEnv(_GymEnvBase):
     """Simple finite replay buffer environment for PPO fine-tuning."""
 
     metadata = {"render_modes": []}
 
     def __init__(self, samples: list[TradeSample]) -> None:
+        if not GYMNASIUM_AVAILABLE:
+            raise ImportError("gymnasium is required for TradeReplayEnv. Install gymnasium>=0.29.")
         if not samples:
             raise ValueError("Replay environment requires at least one sample.")
         self.samples = samples

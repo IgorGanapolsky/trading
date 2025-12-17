@@ -21,7 +21,14 @@ from pathlib import Path
 from typing import Any
 
 import requests
-from bs4 import BeautifulSoup
+
+# Optional imports - may not be installed in all environments
+try:
+    from bs4 import BeautifulSoup
+    BS4_AVAILABLE = True
+except ImportError:
+    BeautifulSoup = None  # type: ignore
+    BS4_AVAILABLE = False
 
 try:
     import PyPDF2
