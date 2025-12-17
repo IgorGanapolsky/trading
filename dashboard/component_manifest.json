@@ -1,0 +1,280 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "AI Trading Dashboard Design System",
+  "version": "1.0.0",
+  "description": "Component manifest for AI-assisted Streamlit dashboard development",
+  "framework": "streamlit",
+  "lastUpdated": "2025-12-17",
+
+  "designTokens": {
+    "colors": {
+      "bullish": {"value": "#00ff88", "description": "Green for positive values, gains, buy signals"},
+      "bearish": {"value": "#ff4444", "description": "Red for negative values, losses, sell signals"},
+      "neutral": {"value": "#ffd700", "description": "Gold for neutral/hold states"},
+      "background": {"value": "#0e1117", "description": "Primary dark background"},
+      "backgroundGradientStart": {"value": "#0d1117", "description": "Gradient start"},
+      "backgroundGradientEnd": {"value": "#161b22", "description": "Gradient end"},
+      "cardBackground": {"value": "#161b22", "description": "Card/panel background"},
+      "cardBackgroundHover": {"value": "#21262d", "description": "Card hover state"},
+      "border": {"value": "#30363d", "description": "Border/divider color"},
+      "grid": {"value": "#262730", "description": "Grid lines, table backgrounds"},
+      "text": {"value": "#fafafa", "description": "Primary text color"},
+      "textSecondary": {"value": "#8b949e", "description": "Secondary/muted text"},
+      "textHighlight": {"value": "#f0f6fc", "description": "Emphasized text"},
+      "accentBlue": {"value": "#58a6ff", "description": "Primary accent, links"},
+      "accentBlueBright": {"value": "#79c0ff", "description": "Bright accent variant"},
+      "statusGreen": {"value": "#3fb950", "description": "Active/OK status"},
+      "statusYellow": {"value": "#d29922", "description": "Warning status"},
+      "statusRed": {"value": "#f85149", "description": "Error/critical status"}
+    },
+    "gradients": {
+      "positive": "linear-gradient(135deg, #3fb950 0%, #56d364 100%)",
+      "negative": "linear-gradient(135deg, #f85149 0%, #ff7b72 100%)",
+      "accent": "linear-gradient(135deg, #58a6ff 0%, #79c0ff 100%)",
+      "card": "linear-gradient(135deg, #21262d 0%, #161b22 100%)",
+      "progressBar": "linear-gradient(90deg, #238636 0%, #3fb950 50%, #56d364 100%)"
+    },
+    "typography": {
+      "fontFamily": "Arial, sans-serif",
+      "heroValue": {"fontSize": "2.5rem", "fontWeight": "700"},
+      "heroLabel": {"fontSize": "0.9rem", "textTransform": "uppercase", "letterSpacing": "1px"},
+      "cardHeader": {"fontSize": "1.1rem", "fontWeight": "600"},
+      "metric": {"fontSize": "1.8rem"}
+    },
+    "spacing": {
+      "cardPadding": "20px",
+      "heroPadding": "24px",
+      "progressPadding": "20px",
+      "margin": "10px"
+    },
+    "borderRadius": {
+      "small": "8px",
+      "medium": "12px",
+      "large": "16px"
+    }
+  },
+
+  "components": {
+    "heroMetric": {
+      "name": "Hero Metric Card",
+      "description": "Large metric display with label, value, delta, and optional icon",
+      "file": "dashboard/main.py",
+      "function": "render_hero_metric",
+      "props": {
+        "label": {"type": "string", "required": true, "description": "Metric label (e.g., 'Portfolio Value')"},
+        "value": {"type": "string", "required": true, "description": "Formatted value (e.g., '$100,000')"},
+        "delta": {"type": "string", "required": false, "description": "Change indicator (e.g., '+$500 total')"},
+        "delta_type": {"type": "string", "enum": ["positive", "negative", "neutral"], "default": "neutral"},
+        "icon": {"type": "string", "required": false, "description": "Optional emoji/icon"}
+      },
+      "examples": [
+        {"label": "Portfolio Value", "value": "$99,897", "delta": "-$102.44 total", "delta_type": "negative"},
+        {"label": "Win Rate", "value": "50.0%", "delta": "2/4 trades", "delta_type": "neutral"},
+        {"label": "Daily Theta", "value": "$5.00", "delta": "Target: $10", "delta_type": "neutral"}
+      ],
+      "cssClasses": ["hero-metric", "hero-value", "hero-label", "hero-delta"]
+    },
+
+    "progressBar": {
+      "name": "Progress to Goal",
+      "description": "Animated progress bar showing progress toward a target (e.g., $100/day)",
+      "file": "dashboard/main.py",
+      "function": "render_progress_to_goal",
+      "props": {
+        "current": {"type": "float", "required": true, "description": "Current value"},
+        "target": {"type": "float", "default": 100.0, "description": "Target value"}
+      },
+      "examples": [
+        {"current": 25.50, "target": 100.0},
+        {"current": 80.0, "target": 100.0}
+      ],
+      "cssClasses": ["progress-container", "progress-bar", "progress-fill"]
+    },
+
+    "statusIndicator": {
+      "name": "Status Indicator",
+      "description": "Colored dot with label showing system status",
+      "file": "dashboard/main.py",
+      "function": "render_status_indicator",
+      "props": {
+        "status": {"type": "string", "enum": ["ok", "warning", "error"], "required": true},
+        "label": {"type": "string", "required": true, "description": "Status label"}
+      },
+      "examples": [
+        {"status": "ok", "label": "Alpaca API"},
+        {"status": "warning", "label": "Market Closed"},
+        {"status": "error", "label": "Circuit Breaker Triggered"}
+      ],
+      "cssClasses": ["status-dot", "status-green", "status-yellow", "status-red"]
+    },
+
+    "card": {
+      "name": "Card Container",
+      "description": "Dark themed card container for grouping content",
+      "cssOnly": true,
+      "cssClasses": ["card", "card-header"],
+      "usage": "st.markdown('<div class=\"card\">Content</div>', unsafe_allow_html=True)"
+    },
+
+    "sentimentGauge": {
+      "name": "Sentiment Gauge",
+      "description": "Plotly gauge chart showing sentiment score (-100 to 100)",
+      "file": "dashboard/utils/chart_builders.py",
+      "function": "create_sentiment_gauge",
+      "props": {
+        "ticker": {"type": "string", "required": true, "description": "Stock ticker symbol"},
+        "score": {"type": "float", "required": true, "description": "Sentiment score (-100 to 100)"},
+        "confidence": {"type": "string", "enum": ["low", "medium", "high"], "default": "medium"}
+      },
+      "examples": [
+        {"ticker": "AAPL", "score": 45.0, "confidence": "high"},
+        {"ticker": "TSLA", "score": -25.0, "confidence": "medium"}
+      ],
+      "returnType": "plotly.graph_objects.Figure"
+    },
+
+    "sentimentTimeline": {
+      "name": "Sentiment Timeline",
+      "description": "Multi-line chart showing sentiment trends over 30 days",
+      "file": "dashboard/utils/chart_builders.py",
+      "function": "create_sentiment_timeline",
+      "props": {
+        "df": {"type": "pandas.DataFrame", "required": true, "description": "DataFrame with columns ['date', 'ticker', 'score']"},
+        "tickers": {"type": "list[str]", "required": true, "description": "List of ticker symbols to display"}
+      },
+      "returnType": "plotly.graph_objects.Figure"
+    },
+
+    "correlationHeatmap": {
+      "name": "Correlation Heatmap",
+      "description": "Heatmap showing correlation between sentiment and returns",
+      "file": "dashboard/utils/chart_builders.py",
+      "function": "create_correlation_heatmap",
+      "props": {
+        "correlation_df": {"type": "pandas.DataFrame", "required": true, "description": "Correlation matrix"}
+      },
+      "returnType": "plotly.graph_objects.Figure"
+    },
+
+    "sourceBreakdownPie": {
+      "name": "Source Breakdown Pie",
+      "description": "Donut chart showing data source distribution",
+      "file": "dashboard/utils/chart_builders.py",
+      "function": "create_source_breakdown_pie",
+      "props": {
+        "source_data": {"type": "dict[str, int]", "required": true, "description": "Source name to count mapping"}
+      },
+      "examples": [
+        {"source_data": {"Reddit": 150, "News": 80, "StockTwits": 45, "Alpha Vantage": 25}}
+      ],
+      "returnType": "plotly.graph_objects.Figure"
+    },
+
+    "winRateBar": {
+      "name": "Win Rate by Sentiment Bar",
+      "description": "Bar chart showing win rate breakdown by sentiment level",
+      "file": "dashboard/utils/chart_builders.py",
+      "function": "create_win_rate_by_sentiment_bar",
+      "props": {
+        "win_rate_data": {"type": "pandas.DataFrame", "required": true, "description": "DataFrame with columns ['sentiment_range', 'win_rate', 'trade_count']"}
+      },
+      "returnType": "plotly.graph_objects.Figure"
+    },
+
+    "performanceTable": {
+      "name": "Performance Comparison Table",
+      "description": "Styled table comparing trades with vs without sentiment",
+      "file": "dashboard/utils/chart_builders.py",
+      "function": "create_performance_comparison_table",
+      "props": {
+        "comparison_data": {"type": "pandas.DataFrame", "required": true, "description": "Performance metrics DataFrame"}
+      },
+      "returnType": "plotly.graph_objects.Figure"
+    },
+
+    "mentionsTimeline": {
+      "name": "Mentions Timeline",
+      "description": "Stacked area chart showing mention volume over time by source",
+      "file": "dashboard/utils/chart_builders.py",
+      "function": "create_mentions_timeline",
+      "props": {
+        "df": {"type": "pandas.DataFrame", "required": true, "description": "DataFrame with columns ['date', 'source', 'mentions']"}
+      },
+      "returnType": "plotly.graph_objects.Figure"
+    },
+
+    "roiWaterfall": {
+      "name": "ROI Attribution Waterfall",
+      "description": "Waterfall chart showing ROI contribution by component",
+      "file": "dashboard/utils/chart_builders.py",
+      "function": "create_roi_attribution_waterfall",
+      "props": {
+        "attribution_data": {"type": "dict[str, float]", "required": true, "description": "Component to ROI contribution mapping"}
+      },
+      "examples": [
+        {"attribution_data": {"Base Return": 2.5, "Sentiment Alpha": 1.2, "Risk Adjustment": -0.5, "Total": 3.2}}
+      ],
+      "returnType": "plotly.graph_objects.Figure"
+    }
+  },
+
+  "patterns": {
+    "pageConfig": {
+      "description": "Standard page configuration for trading dashboards",
+      "code": "st.set_page_config(\n    page_title=\"Dashboard Title\",\n    page_icon=\"emoji\",\n    layout=\"wide\",\n    initial_sidebar_state=\"collapsed\"\n)"
+    },
+    "dataLoading": {
+      "description": "Cached data loading with TTL",
+      "code": "@st.cache_data(ttl=30)\ndef load_data():\n    # Load and return data\n    pass"
+    },
+    "colorByValue": {
+      "description": "Get color based on sentiment/PL value",
+      "code": "def get_color(value: float) -> str:\n    if value >= 20:\n        return COLORS['bullish']\n    elif value <= -20:\n        return COLORS['bearish']\n    return COLORS['neutral']"
+    },
+    "tabLayout": {
+      "description": "Multi-tab layout for dashboard sections",
+      "code": "tabs = st.tabs(['Tab 1', 'Tab 2', 'Tab 3'])\nwith tabs[0]:\n    # Tab 1 content\n    pass"
+    },
+    "heroMetricsRow": {
+      "description": "5-column row of hero metrics",
+      "code": "cols = st.columns(5)\nfor i, (label, value, delta, delta_type) in enumerate(metrics):\n    with cols[i]:\n        render_hero_metric(label, value, delta, delta_type)"
+    },
+    "styledDataframe": {
+      "description": "Styled DataFrame with trading colors",
+      "code": "st.dataframe(\n    df.style.format({'P/L': '${:+,.2f}', 'P/L %': '{:+.2f}%'})\n    .applymap(lambda x: 'color: #3fb950' if x > 0 else 'color: #f85149' if x < 0 else '', subset=['P/L'])\n)"
+    }
+  },
+
+  "utilities": {
+    "getSentimentColor": {
+      "file": "dashboard/utils/chart_builders.py",
+      "function": "get_sentiment_color",
+      "description": "Returns color based on sentiment score (-100 to 100)",
+      "signature": "def get_sentiment_color(score: float) -> str"
+    },
+    "calculateWinRate": {
+      "file": "dashboard/main.py",
+      "function": "calculate_win_rate",
+      "description": "Calculate win rate from list of trades",
+      "signature": "def calculate_win_rate(trades: list) -> tuple[float, int, int]"
+    }
+  },
+
+  "conventions": {
+    "formatting": {
+      "currency": "${value:,.2f} or ${value:+,.2f} for signed",
+      "percentage": "{value:.1f}% or {value:+.2f}% for signed",
+      "large_numbers": "Use comma separators: 100,000"
+    },
+    "naming": {
+      "functions": "snake_case (render_hero_metric, create_sentiment_gauge)",
+      "variables": "snake_case (daily_pl, win_rate)",
+      "constants": "UPPER_SNAKE (COLORS, DATA_DIR)"
+    },
+    "layout": {
+      "columns": "Use st.columns() for horizontal layouts",
+      "tabs": "Use st.tabs() for section organization",
+      "cards": "Wrap related content in card CSS class"
+    }
+  }
+}

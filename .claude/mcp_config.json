@@ -1,6 +1,12 @@
 {
   "$schema": "https://schema.claudedesktop.com/mcp.json",
   "mcpServers": {
+    "trading-ui": {
+      "command": "python",
+      "args": ["dashboard/mcp_server.py", "--port", "8765"],
+      "description": "Trading Dashboard Component Manifest - exposes design tokens, components, and patterns for AI-assisted UI development",
+      "cwd": "${CLAUDE_PROJECT_DIR}"
+    },
     "playwright": {
       "command": "npx",
       "args": ["@playwright/mcp@latest", "--headless"],
