@@ -16,48 +16,48 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install matplotlib numpy
-      
+
       - name: Track performance
         run: |
           echo "📊 Tracking category performance..."
           python3 scripts/enhanced_performance_tracker.py
-      
+
       - name: Check alerts
         run: |
           echo "🚨 Checking for alerts..."
           python3 scripts/category_alerts.py
-      
+
       - name: Generate dashboard
         run: |
           echo "📈 Generating enhanced dashboard..."
           python3 scripts/generate_dashboard_with_graphs.py
-      
+
       - name: Commit changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          
+
           git add wiki/Progress-Dashboard.md
           git add wiki/graphs/*.png
           git add data/enhanced_performance_log.json
           git add data/category_alerts.json
-          
+
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
