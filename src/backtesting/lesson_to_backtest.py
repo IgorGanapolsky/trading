@@ -399,10 +399,10 @@ class Test{scenario.lesson_id.replace("-", "_").title()}:
             "LOW", "HIGH", "BUY", "SELL", "API", "RAG", "ML", "CI", "CD",
         }
 
-        # Known trading symbols
+        # Known trading symbols (crypto removed Dec 15, 2025)
         known_symbols = {
             "SPY", "QQQ", "NVDA", "AAPL", "GOOGL", "MSFT", "AMZN", "META",
-            "TSLA", "AMD", "INTC", "GLD", "SLV", "BTC", "ETH",
+            "TSLA", "AMD", "INTC", "GLD", "SLV",
         }
 
         valid_symbols = [
