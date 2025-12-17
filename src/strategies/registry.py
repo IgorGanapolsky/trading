@@ -46,7 +46,6 @@ class AssetClass(Enum):
 
     EQUITY = "equity"
     OPTIONS = "options"
-    CRYPTO = "crypto"
     MIXED = "mixed"
 
 

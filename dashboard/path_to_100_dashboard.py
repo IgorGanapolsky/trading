@@ -481,7 +481,6 @@ def main():
         - **Collar Hedging**: Caps drawdown to 1.5%
         - **VIX Triggers**: Auto-hedge at VIX > 20
         - **Regime Detection**: Adapt allocation dynamically
-        - **Weekend Crypto**: +$0.40/day drift via BITO
         """
         )
 

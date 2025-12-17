@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 # Environment variable to disable RAG features (useful for CI or minimal environments)
 RAG_ENABLED = os.getenv("ENABLE_RAG_FEATURES", "true").lower() in {"1", "true", "yes", "on"}
 
-# Lazy import to avoid breaking crypto trading when RAG dependencies aren't installed
 _SentenceTransformer: type | None = None
 
 

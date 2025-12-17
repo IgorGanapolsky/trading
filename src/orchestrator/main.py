@@ -1084,7 +1084,6 @@ class TradingOrchestrator:
         session_type = "market_hours"
 
         if not market_day:
-            session_type = "off_hours_crypto_proxy"
             proxy_list = proxy_list or ["BITO"]
             momentum_overrides = {
                 "rsi_overbought": float(os.getenv("WEEKEND_RSI_OVERBOUGHT", "65.0")),
@@ -1455,7 +1454,6 @@ class TradingOrchestrator:
             llm_model = getattr(self.llm_agent, "model_name", None)
             neg_threshold = float(os.getenv("LLM_NEGATIVE_SENTIMENT_THRESHOLD", "-0.2"))
             session_type = (self.session_profile or {}).get("session_type")
-            if session_type == "off_hours_crypto_proxy":
                 neg_threshold = float(os.getenv("WEEKEND_SENTIMENT_FLOOR", "-0.1"))
             bias_snapshot: BiasSnapshot | None = None
 
@@ -2728,10 +2726,8 @@ class TradingOrchestrator:
         if os.getenv("WEEKEND_PROXY_REALLOCATE", "true").lower() not in {"true", "1", "yes"}:
             return None
 
-        if not session or session.get("session_type") != "off_hours_crypto_proxy":
             return None
 
-        bucket = os.getenv("WEEKEND_PROXY_BUCKET", "crypto")
         reallocated = None
         if hasattr(self, "smart_dca"):
             reallocated = self.smart_dca.reallocate_all_to_bucket(bucket)  # type: ignore[attr-defined]

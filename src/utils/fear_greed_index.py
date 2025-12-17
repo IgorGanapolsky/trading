@@ -1,10 +1,8 @@
 """
-Crypto Fear & Greed Index Integration
 
 This module fetches the Fear & Greed Index from Alternative.me API
 and provides trading signals based on backtested strategies.
 
-BACKTEST RESULTS (Source: Nasdaq, Bitcoin Magazine):
 - Fear & Greed Strategy: 1,145% ROI
 - Buy & Hold: 1,046% ROI
 - Strategy: Buy when index < 25 (extreme fear), sell when > 75 (extreme greed)
@@ -28,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 class FearGreedIndex:
     """
-    Crypto Fear & Greed Index from Alternative.me
 
     The index analyzes emotions and sentiments from different sources:
     - Volatility (25%)
@@ -103,7 +100,6 @@ class FearGreedIndex:
         """
         Get trading signal based on Fear & Greed Index.
 
-        Based on backtested strategy from Nasdaq/Bitcoin Magazine:
         - Buy 1% of capital when index <= 20
         - Sell 1% of holdings when index >= 80
 

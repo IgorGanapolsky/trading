@@ -490,7 +490,6 @@ class ResearchVisualizer:
 
         color_map = {
             "stocks": COLORS["bullish"],
-            "crypto": "#8844ff",
             "cash": COLORS["neutral"],
             "bonds": "#4488ff",
         }
@@ -720,14 +719,12 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     sample_research = {
-        "research_name": "BTC_market_research",
+        "research_name": _market_research",
         "recommendation": "BUY",
         "confidence": 0.75,
         "sentiment": "bullish",
         "key_levels": {"support": [95000, 92000], "resistance": [100000, 105000]},
-        "allocation": {"crypto": 30, "stocks": 50, "cash": 20},
         "risk_level": "medium",
-        "key_risks": ["Fed policy", "Geopolitical tensions", "Crypto regulation"],
     }
 
     result = visualize_research_output(sample_research)

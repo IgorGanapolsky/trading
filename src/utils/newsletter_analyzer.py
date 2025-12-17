@@ -1,11 +1,10 @@
 """
-CoinSnacks Newsletter Analyzer - Autonomous Crypto Signal Extraction
 
 This module provides a hybrid approach to consuming CoinSnacks newsletter:
 1. Primary: Read from MCP-populated JSON files (data/newsletter_signals_YYYY-MM-DD.json)
 2. Fallback: Direct RSS parsing from CoinSnacks Medium feed
 
-Extracts actionable trading signals for BTC and ETH including:
+Extracts actionable trading signals for and including:
 - Bullish/Bearish sentiment
 - Entry points and price targets
 - Technical analysis signals
@@ -40,11 +39,8 @@ COINSNACKS_RSS_URL = "https://medium.com/feed/coinsnacks"
 
 
 @dataclass
-class CryptoSignal:
-    """Structured crypto trading signal extracted from newsletter"""
 
-    ticker: str  # BTC or ETH
-    sentiment: str  # bullish, bearish, neutral
+    ticker: str  # or sentiment: str  # bullish, bearish, neutral
     confidence: float  # 0.0 - 1.0
     entry_price: float | None = None
     target_price: float | None = None
@@ -68,7 +64,6 @@ class CryptoSignal:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> CryptoSignal:
         """Create signal from dictionary"""
         return cls(
             ticker=data["ticker"],
@@ -87,7 +82,7 @@ class CryptoSignal:
 
 class NewsletterAnalyzer:
     """
-    Analyzes CoinSnacks newsletter for BTC/ETH trading signals.
+    Analyzes CoinSnacks newsletter for /trading signals.
 
     Uses hybrid approach:
     1. Reads MCP-populated JSON files (preferred)
@@ -154,15 +149,13 @@ class NewsletterAnalyzer:
             "trendline",
         ]
 
-    def get_latest_signals(self, max_age_days: int = 7) -> dict[str, CryptoSignal]:
         """
-        Get latest BTC/ETH signals from newsletter.
+        Get latest /signals from newsletter.
 
         Args:
             max_age_days: Maximum age of signals to consider (default: 7 days)
 
         Returns:
-            Dictionary mapping ticker (BTC/ETH) to CryptoSignal
         """
         # Try reading from MCP-populated JSON first
         signals = self._read_mcp_signals(max_age_days)
@@ -183,7 +176,6 @@ class NewsletterAnalyzer:
         logger.warning("No newsletter signals available from any source")
         return {}
 
-    def _read_mcp_signals(self, max_age_days: int) -> dict[str, CryptoSignal]:
         """
         Read newsletter signals from MCP-populated JSON files.
 
@@ -213,12 +205,10 @@ class NewsletterAnalyzer:
                 with signal_file.open("r") as f:
                     data = json.load(f)
 
-                # Parse signals for BTC and ETH
-                for ticker in ["BTC", "ETH"]:
+                # Parse signals for and for ticker in []:
                     if ticker in data:
                         signal_data = data[ticker]
                         signal_data["source_date"] = file_date.isoformat()
-                        signals[ticker] = CryptoSignal.from_dict(signal_data)
                         logger.info(f"Loaded {ticker} signal from {signal_file.name}")
 
             except Exception as e:
@@ -227,7 +217,6 @@ class NewsletterAnalyzer:
 
         return signals
 
-    def _parse_rss_feed(self, max_age_days: int) -> dict[str, CryptoSignal]:
         """
         Parse CoinSnacks RSS feed directly for trading signals.
 
@@ -263,7 +252,7 @@ class NewsletterAnalyzer:
                     content = entry.get("summary", "") or entry.get("description", "")
                     title = entry.get("title", "")
 
-                    # Parse article for BTC and ETH signals
+                    # Parse article for and signals
                     article_signals = self.parse_article(title + "\n\n" + content, entry_date)
 
                     # Update signals dictionary (newer signals override older ones)
@@ -286,28 +275,24 @@ class NewsletterAnalyzer:
 
     def parse_article(
         self, article_text: str, source_date: datetime | None = None
-    ) -> dict[str, CryptoSignal]:
         """
-        Extract crypto recommendations from article text.
 
         Args:
             article_text: Full article text (title + content)
             source_date: Date of article publication
 
         Returns:
-            Dictionary mapping ticker (BTC/ETH) to CryptoSignal
         """
         signals = {}
         article_lower = article_text.lower()
 
-        # Analyze BTC and ETH separately
-        for ticker in ["BTC", "ETH"]:
+        # Analyze and separately
+        for ticker in []:
             ticker_lower = ticker.lower()
 
             # Check if ticker is mentioned
             if (
                 ticker_lower not in article_lower
-                and "bitcoin" not in article_lower
                 and "ethereum" not in article_lower
             ):
                 continue
@@ -325,7 +310,6 @@ class NewsletterAnalyzer:
             reasoning = self._extract_reasoning(article_text, ticker)
 
             # Create signal
-            signal = CryptoSignal(
                 ticker=ticker,
                 sentiment=sentiment,
                 confidence=confidence,
@@ -469,7 +453,6 @@ class NewsletterAnalyzer:
         paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
 
         ticker_lower = ticker.lower()
-        ticker_names = {"BTC": ["btc", "bitcoin"], "ETH": ["eth", "ethereum"]}
 
         # Find first paragraph mentioning the ticker
         for paragraph in paragraphs:
@@ -482,12 +465,10 @@ class NewsletterAnalyzer:
 
         return None
 
-    def save_signals(self, signals: dict[str, CryptoSignal], date: datetime | None = None) -> Path:
         """
         Save extracted signals to JSON file (for MCP to populate or manual caching).
 
         Args:
-            signals: Dictionary of ticker -> CryptoSignal
             date: Date for the signals (default: today)
 
         Returns:
@@ -509,16 +490,13 @@ class NewsletterAnalyzer:
         logger.info(f"Saved {len(signals)} newsletter signals to {file_path}")
         return file_path
 
-    def get_signal_for_ticker(self, ticker: str, max_age_days: int = 7) -> CryptoSignal | None:
         """
-        Get signal for specific ticker (BTC or ETH).
+        Get signal for specific ticker (or ).
 
         Args:
-            ticker: Crypto ticker (BTC or ETH)
             max_age_days: Maximum age of signal to consider
 
         Returns:
-            CryptoSignal if available, None otherwise
         """
         signals = self.get_latest_signals(max_age_days)
         return signals.get(ticker.upper())
@@ -527,20 +505,16 @@ class NewsletterAnalyzer:
 # Convenience functions for quick access
 
 
-def get_btc_signal(max_age_days: int = 7) -> CryptoSignal | None:
-    """Get latest BTC trading signal from newsletter"""
+    """Get latest trading signal from newsletter"""
     analyzer = NewsletterAnalyzer()
-    return analyzer.get_signal_for_ticker("BTC", max_age_days)
+    return analyzer.get_signal_for_ticker(max_age_days)
 
 
-def get_eth_signal(max_age_days: int = 7) -> CryptoSignal | None:
-    """Get latest ETH trading signal from newsletter"""
+    """Get latest trading signal from newsletter"""
     analyzer = NewsletterAnalyzer()
-    return analyzer.get_signal_for_ticker("ETH", max_age_days)
+    return analyzer.get_signal_for_ticker(max_age_days)
 
 
-def get_all_signals(max_age_days: int = 7) -> dict[str, CryptoSignal]:
-    """Get all latest crypto trading signals from newsletter"""
     analyzer = NewsletterAnalyzer()
     return analyzer.get_latest_signals(max_age_days)
 
@@ -553,9 +527,8 @@ if __name__ == "__main__":
 
     # Test with sample article
     sample_article = """
-    Bitcoin Bullish Breakout Imminent
 
-    BTC is showing strong momentum above $45,000 support level.
+    is showing strong momentum above $45,000 support level.
     RSI indicates oversold conditions and MACD is crossing bullish.
 
     Entry: $45,500

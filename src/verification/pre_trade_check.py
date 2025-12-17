@@ -208,7 +208,6 @@ class CircuitBreakers:
 
     # Maximum position sizes by asset class
     MAX_NOTIONAL = {
-        AssetClass.CRYPTO: 50.0,  # $50 max per crypto trade
         AssetClass.EQUITY: 100.0,  # $100 max per equity trade
         AssetClass.OPTION: 50.0,  # $50 max per options trade
         AssetClass.ETF: 100.0,  # $100 max per ETF trade

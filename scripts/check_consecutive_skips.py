@@ -62,7 +62,6 @@ def check_for_skips(trades: list[dict]) -> dict:
 
 
 def format_ma_distance(trend_data: dict) -> str:
-    """Format MA distance information for a single crypto."""
     if not trend_data:
         return "N/A"
 

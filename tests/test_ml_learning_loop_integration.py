@@ -82,7 +82,7 @@ class TestPreTradeRAGCheck:
         try:
             from src.verification.ml_learning_loop_integration import pre_trade_check
 
-            result = pre_trade_check("BTCUSD", "BUY", {"fear_greed": 20})
+            result = pre_trade_check("BUY", {"fear_greed": 20})
 
             assert "allowed" in result
             assert "warnings" in result
@@ -108,7 +108,7 @@ class TestPreTradeRAGCheck:
 
             # Query with fear context
             result = pre_trade_check(
-                "BTCUSD", "BUY", {"fear_greed": 15, "regime": "bear"}
+                "BUY", {"fear_greed": 15, "regime": "bear"}
             )
 
             # Should find some warnings (we have LL-020, LL-040 about fear)
@@ -261,8 +261,6 @@ class TestRegressionPreventionIntegration:
         except ImportError as e:
             pytest.skip(f"Could not import: {e}")
 
-    def test_ll034_crypto_fill_detectable_via_rag(self):
-        """Verify LL-034 (crypto fills) is detectable via RAG query."""
         try:
             from src.verification.ml_learning_loop_integration import (
                 initialize_learning_loop,
@@ -272,11 +270,8 @@ class TestRegressionPreventionIntegration:
 
             if loop.rag_gate:
                 results = loop.rag_gate.semantic_search(
-                    "crypto order fill verification", top_k=5
                 )
 
-                # Should find relevant lessons about crypto fills
-                assert len(results) >= 1, "Should find lessons about crypto fills"
 
         except ImportError as e:
             pytest.skip(f"Could not import: {e}")

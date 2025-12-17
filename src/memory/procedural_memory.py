@@ -85,7 +85,6 @@ class SkillConditions:
     day_of_week: Optional[str] = None
 
     # Asset conditions
-    asset_class: Optional[str] = None  # "crypto", "equity"
     volatility_percentile: Optional[tuple[float, float]] = None
 
     # Custom conditions (flexible key-value)

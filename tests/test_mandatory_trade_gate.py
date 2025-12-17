@@ -194,17 +194,10 @@ class TestRAGMLNeverSkipped:
 
         gate = MandatoryTradeGate()
 
-        # Test with a known blocked pattern (crypto disabled)
         result = gate.validate_trade(
-            symbol="BTCUSD",
-            amount=1000.0,
+            symbol=amount=1000.0,
             side="BUY",
-            strategy="crypto",
         )
 
-        # Should have warnings about crypto being disabled
         all_messages = result.rag_warnings + result.ml_anomalies
-        has_crypto_warning = any("crypto" in msg.lower() for msg in all_messages)
 
-        # Either has warning about crypto OR is blocked
-        assert has_crypto_warning or not result.approved or result.confidence < 1.0

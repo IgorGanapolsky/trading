@@ -81,7 +81,6 @@ class TestMultiStrategyConflicts:
             {"strategy": "tier1", "allocation_pct": 0.60},
             {"strategy": "tier2", "allocation_pct": 0.25},
             {"strategy": "options", "allocation_pct": 0.15},
-            {"strategy": "crypto", "allocation_pct": 0.10},
         ]
 
         total_allocation = sum(r["allocation_pct"] for r in requests)

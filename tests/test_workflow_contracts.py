@@ -12,9 +12,6 @@ from pathlib import Path
 import yaml
 
 
-def test_weekend_crypto_workflow_uses_valid_flags():
-    """Verify weekend-crypto-trading.yml doesn't use deprecated autonomous_trader.py patterns."""
-    workflow_path = Path(".github/workflows/weekend-crypto-trading.yml")
 
     if not workflow_path.exists():
         print(f"⚠️  Workflow not found: {workflow_path}")
@@ -60,7 +57,6 @@ def test_all_cli_flags_exist():
     help_text = result.stdout
 
     # Check expected flags exist in CLI
-    expected_flags = ["--crypto-only", "--skip-crypto", "--prediction-only", "--skip-prediction", "--auto-scale"]
     for flag in expected_flags:
         if flag in help_text:
             print(f"✅ Flag '{flag}' exists in CLI")
@@ -100,9 +96,7 @@ if __name__ == "__main__":
     print("=" * 70)
     print()
 
-    print("Test 1: Weekend Crypto Workflow CLI Flags")
     print("-" * 70)
-    test_weekend_crypto_workflow_uses_valid_flags()
     print()
 
     print("Test 2: All CLI Flags Exist in autonomous_trader.py")

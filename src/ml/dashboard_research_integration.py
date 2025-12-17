@@ -268,7 +268,6 @@ if __name__ == "__main__":
             "risk_level": "medium",
             "market_regime": "sideways",
             "key_levels": {"support": [95000], "resistance": [100000]},
-            "allocation": {"stocks": 40, "crypto": 20, "cash": 40},
             "key_risks": ["Fed policy uncertainty", "Geopolitical tensions"],
         },
     }

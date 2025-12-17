@@ -212,7 +212,6 @@ youtube_channels:
         video_id: "-UrdExQW0cs"
         duration_minutes: 22
         difficulty: intermediate
-        key_topics: ["shor_algorithm", "cryptography", "factoring"]
       - title: "The Quantum Conspiracy: What Popularizers of QM Don't Want You to Know"
         video_id: "bXpFdIsHnyg"
         duration_minutes: 25

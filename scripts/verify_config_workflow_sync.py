@@ -2,7 +2,6 @@
 """
 Config-Workflow Sync Validator
 
-Prevents the Dec 16, 2025 incident where crypto was "disabled" in config
 but still running in workflows.
 
 This script verifies that:
@@ -23,17 +22,10 @@ from pathlib import Path
 
 # Strategy to workflow mapping
 STRATEGY_WORKFLOW_MAPPING = {
-    "crypto": {
         "config_path": "strategies.tier5.enabled",
-        "workflow_vars": ["ENABLE_CRYPTO_AGENT", "CRYPTO_DAILY"],
         "workflow_files": [
-            "weekend-crypto-trading.yml",
-            "force-crypto-trade.yml",
-            "crypto-take-profit.yml",
         ],
         "code_files": [
-            "src/strategies/crypto_strategy.py",
-            "src/agents/crypto_weekend_agent.py",
         ],
     },
     "options": {
@@ -75,7 +67,6 @@ def parse_workflow_env_vars(workflow_path: Path) -> dict:
     content = workflow_path.read_text()
     env_vars = {}
 
-    # Match env var patterns like: ENABLE_CRYPTO_AGENT: 'true'
     pattern = r"(\w+):\s*['\"]?(\w+)['\"]?"
     for match in re.finditer(pattern, content):
         env_vars[match.group(1)] = match.group(2)

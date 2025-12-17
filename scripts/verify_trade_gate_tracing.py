@@ -63,13 +63,9 @@ def main():
     print(f"   RAG warnings: {len(result1.rag_warnings)}")
     print(f"   ML anomalies: {len(result1.ml_anomalies)}")
 
-    # Test 2: Crypto trade (should have warnings)
-    print("\n🧪 Test 2: BTCUSD order (crypto)")
     result2 = validate_trade_mandatory(
-        symbol="BTCUSD",
-        amount=500.0,
+        symbol=amount=500.0,
         side="BUY",
-        strategy="crypto",
     )
     print(f"   Result: {'✅ APPROVED' if result2.approved else '🚫 BLOCKED'}")
     print(f"   Confidence: {result2.confidence:.2f}")
@@ -96,7 +92,7 @@ def main():
         print()
         print("👉 Check your traces at: https://smith.langchain.com")
         print("   Project: ai-trading-system")
-        print("   Look for traces named: trade_gate_SPY_BUY, trade_gate_BTCUSD_BUY, etc.")
+        print("   Look for traces named: trade_gate_SPY_BUY, trade_gate__BUY, etc.")
     else:
         print("⚠️ Tests completed WITHOUT LangSmith tracing (API key not set)")
         print("   Set LANGSMITH_API_KEY to enable tracing")

@@ -55,7 +55,6 @@ class MarketCategory(Enum):
     ELECTIONS = "elections"
     ECONOMICS = "economics"  # Fed rates, CPI, GDP
     WEATHER = "weather"
-    CRYPTO = "crypto"  # BTC price targets
     SPORTS = "sports"
     ENTERTAINMENT = "entertainment"
     TECH = "tech"  # Company earnings, product launches

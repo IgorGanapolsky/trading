@@ -2,7 +2,6 @@
 Kalshi Prediction Markets Client - Event-based trading integration.
 
 Kalshi is a CFTC-regulated prediction market platform allowing trading on
-binary outcomes for events like elections, weather, crypto, sports, etc.
 
 This client implements the Kalshi REST API for:
 - Account management (balance, positions)
@@ -145,7 +144,6 @@ class KalshiClient:
     - Elections and politics
     - Economic indicators (Fed rates, inflation)
     - Weather and climate
-    - Crypto prices
     - Sports and entertainment
 
     Each contract pays $1 if the outcome occurs, $0 otherwise.

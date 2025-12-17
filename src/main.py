@@ -307,7 +307,6 @@ class TradingOrchestrator:
             "ipo_strategy": None,
             "options_strategy": None,
             "options_accumulation": None,
-            "crypto_position_management": None,
         }
         self.health_status: dict[str, Any] = {
             "status": "initialized",
@@ -591,11 +590,7 @@ class TradingOrchestrator:
         schedule.every().wednesday.at("10:00").do(self._check_ipo_opportunities).tag("ipo_check")
         self.logger.info("Scheduled: IPO opportunity check - Wednesdays at 10:00 AM ET")
 
-        # Crypto Position Management: Daily at 9:38 AM ET (before core strategy)
-        schedule.every().day.at("09:38").do(self._manage_crypto_positions).tag(
-            "crypto_position_management"
         )
-        self.logger.info("Scheduled: Crypto position management - Daily at 9:38 AM ET")
 
         # Options Accumulation Strategy: Daily at 9:40 AM ET (before options strategy)
         if self.options_accumulation_strategy:
@@ -1242,32 +1237,20 @@ Output your recommendation in JSON format for easy parsing."""
         finally:
             self.logger.info("=" * 80)
 
-    def _manage_crypto_positions(self) -> None:
-        """Manage crypto positions - check stop-losses and take-profits."""
         self.logger.info("=" * 80)
-        self.logger.info("MANAGING CRYPTO POSITIONS")
         self.logger.info("=" * 80)
 
         try:
-            # Initialize crypto strategy if not already done
-            if not hasattr(self, "crypto_strategy") or self.crypto_strategy is None:
                 try:
-                    from src.strategies.crypto_strategy import CryptoStrategy
 
-                    self.crypto_strategy = CryptoStrategy(
                         trader=self.alpaca_trader,
-                        daily_amount=float(os.getenv("CRYPTO_DAILY_AMOUNT", "0.5")),
                     )
-                    self.logger.info("Crypto strategy initialized for position management")
                 except Exception as e:
-                    self.logger.warning(f"Failed to initialize crypto strategy: {e}")
                     return
 
             # Manage positions
-            closed_positions = self.crypto_strategy.manage_positions()
 
             if closed_positions:
-                self.logger.info(f"✅ Closed {len(closed_positions)} crypto positions")
 
                 # Record closed trades in system state
                 try:
@@ -1294,17 +1277,12 @@ Output your recommendation in JSON format for easy parsing."""
                 except Exception as e:
                     self.logger.warning(f"Failed to record closed trades: {e}")
             else:
-                self.logger.info("No crypto positions needed closing")
 
-            self.last_execution["crypto_position_management"] = datetime.now()
-            self.health_status["last_crypto_management"] = datetime.now().isoformat()
 
         except Exception as e:
-            self.logger.error(f"Error managing crypto positions: {e}", exc_info=True)
             self.health_status["errors"].append(
                 {
                     "timestamp": datetime.now().isoformat(),
-                    "strategy": "crypto_position_management",
                     "error": str(e),
                 }
             )

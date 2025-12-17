@@ -2,12 +2,10 @@
 """
 RSI Optimization Training Script
 
-This script trains the RSI threshold optimizer for crypto trading.
-It runs optimization for multiple crypto assets and saves the results.
 
 Usage:
     python scripts/train_rsi_model.py
-    python scripts/train_rsi_model.py --symbols BTC-USD ETH-USD
+    python scripts/train_rsi_model.py --symbols -USD -USD
     python scripts/train_rsi_model.py --lookback 180 --output data/rsi_results.json
 """
 
@@ -41,15 +39,13 @@ def setup_logging(verbose: bool = False) -> None:
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
-        description="Train RSI threshold optimizer for crypto trading",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Optimize BTC with default settings
+  # Optimize with default settings
   python scripts/train_rsi_model.py
 
-  # Optimize multiple cryptos
-  python scripts/train_rsi_model.py --symbols BTC-USD ETH-USD SOL-USD
+  python scripts/train_rsi_model.py --symbols -USD -USD -USD
 
   # Use longer historical period
   python scripts/train_rsi_model.py --lookback 180
@@ -65,8 +61,7 @@ Examples:
     parser.add_argument(
         "--symbols",
         nargs="+",
-        default=["BTC-USD", "ETH-USD"],
-        help="Crypto symbols to optimize (default: BTC-USD ETH-USD)",
+        default=[-USD", -USD"],
     )
 
     parser.add_argument(
@@ -110,7 +105,6 @@ def optimize_symbol(
     Optimize RSI threshold for a single symbol.
 
     Args:
-        symbol: Crypto symbol (e.g., "BTC-USD")
         lookback_days: Days of historical data
         thresholds: RSI thresholds to test
 

@@ -153,7 +153,6 @@ class SmartDCAAllocator:
         """
         Move the entire session budget into a single bucket.
 
-        Used for weekend/holiday sessions where only a subset of tickers (e.g. crypto proxies)
         are tradable. Returns the reallocated budget for diagnostics.
         """
         normalized = bucket.strip().lower()

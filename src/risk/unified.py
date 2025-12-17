@@ -2,7 +2,6 @@
 
 Provides a single interface that exposes:
 - Simple sizing for the hybrid funnel (calculate_size)
-- Full safeguards for legacy/crypto flows (validate_trade, can_trade, calculate_position_size)
 - Cross-strategy correlation monitoring (Dec 3, 2025 enhancement)
 
 This allows consumers to depend on one class while the underlying implementations
@@ -103,7 +102,6 @@ class UnifiedRiskManager:
             market_regime=market_regime,
         )
 
-    # --- Full safeguards used by legacy/crypto flows ---
     def can_trade(
         self,
         account_value: float,

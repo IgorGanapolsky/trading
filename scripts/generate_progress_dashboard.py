@@ -1180,8 +1180,6 @@ def generate_dashboard() -> str:
             "pct_of_portfolio": ((amount / total_exposure * 100) if total_exposure > 0 else 0.0),
         }
 
-    # Show asset classes: Crypto, Equities, Bonds
-    for asset_class in ["Crypto", "Equities", "Bonds"]:
         if asset_class in asset_class_totals:
             data = asset_class_totals[asset_class]
             dashboard += f"| **{asset_class}** | ${data['exposure']:,.2f} | {data['pct_of_equity']:.2f}% | {data['pct_of_portfolio']:.2f}% |\n"
@@ -1190,7 +1188,6 @@ def generate_dashboard() -> str:
 
     # Add strategy breakdown by asset class
     strategies = system_state.get("strategies", {})
-    crypto_invested = strategies.get("tier5", {}).get("total_invested", 0.0)
     equities_invested = strategies.get("tier1", {}).get("total_invested", 0.0) + strategies.get(
         "tier2", {}
     ).get("total_invested", 0.0)
@@ -1217,12 +1214,10 @@ def generate_dashboard() -> str:
     equities_trades = strategies.get("tier1", {}).get("trades_executed", 0) + strategies.get(
         "tier2", {}
     ).get("trades_executed", 0)
-    crypto_trades = strategies.get("tier5", {}).get("trades_executed", 0)
 
     # Format investment values
     equities_invested_str = f"{equities_invested:,.2f}"
     bonds_invested_str = f"{bonds_invested:,.2f}"
-    crypto_invested_str = f"{crypto_invested:,.2f}"
 
     dashboard += f"""
 ### Investment by Asset Class (Total Invested)
@@ -1231,7 +1226,6 @@ def generate_dashboard() -> str:
 |-------------|----------------|-----------------|
 | **Equities** | ${equities_invested_str} | {equities_trades} |
 | **Bonds** | ${bonds_invested_str} | {bonds_trades} |
-| **Crypto** | ${crypto_invested_str} | {crypto_trades} |
 
 ---
 

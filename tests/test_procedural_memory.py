@@ -247,8 +247,7 @@ class TestSkillLibrary:
 
             trade_record = {
                 "trade_id": "test123",
-                "symbol": "BTCUSD",
-                "action": "buy",
+                "symbol": "action": "buy",
                 "profit_pct": 3.5,
                 "rsi": 28,
                 "trend": "up",
@@ -261,7 +260,7 @@ class TestSkillLibrary:
             assert skill is not None
             assert skill.outcome.wins == 1
             assert skill.conditions.trend == "up"
-            assert "BTCUSD" in skill.tags
+            assert in skill.tags
 
     def test_skill_merging(self):
         """Test that similar skills are merged."""
@@ -270,16 +269,14 @@ class TestSkillLibrary:
 
             trade1 = {
                 "trade_id": "t1",
-                "symbol": "BTCUSD",
-                "action": "buy",
+                "symbol": "action": "buy",
                 "profit_pct": 2.0,
                 "rsi": 30,
                 "trend": "up",
             }
             trade2 = {
                 "trade_id": "t2",
-                "symbol": "ETHUSD",
-                "action": "buy",
+                "symbol": "action": "buy",
                 "profit_pct": 3.0,
                 "rsi": 32,
                 "trend": "up",
@@ -379,8 +376,7 @@ class TestProceduralMemory:
 
             trade = {
                 "trade_id": "test",
-                "symbol": "BTCUSD",
-                "action": "buy",
+                "symbol": "action": "buy",
                 "profit_pct": 2.5,
                 "rsi": 35,
                 "trend": "up",

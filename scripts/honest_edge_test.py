@@ -263,7 +263,6 @@ def main():
     test_assets = [
         ("SPY", 365),      # S&P 500 ETF - 1 year
         ("QQQ", 365),      # Nasdaq ETF - 1 year
-        ("BTC-USD", 365),  # Bitcoin - 1 year (24/7 market)
         ("ETH-USD", 365),  # Ethereum - 1 year (24/7 market)
     ]
 

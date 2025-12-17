@@ -18,7 +18,6 @@ class TestWorkflowObservability:
     # Workflows that make LLM calls and need full observability
     LLM_WORKFLOWS = [
         ".github/workflows/daily-trading.yml",
-        ".github/workflows/weekend-crypto-trading.yml",
     ]
 
     # Required env vars for LangSmith tracing

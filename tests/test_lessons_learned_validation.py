@@ -199,25 +199,17 @@ class TestLessonDataclass:
         assert lesson.tags == []
 
 
-class TestCryptoLessonsIntegration:
-    """Test crypto-specific lessons."""
 
-    def test_crypto_macd_lesson(self, store):
-        """Test that crypto MACD lesson is searchable."""
         seed_initial_lessons(store)
 
-        results = store.search_lessons("crypto MACD threshold")
         assert len(results) > 0
 
         # Find the MACD lesson
         macd_lessons = [r for r in results if "MACD" in r["title"]]
         assert len(macd_lessons) > 0
 
-    def test_crypto_stop_loss_lesson(self, store):
-        """Test that crypto stop-loss lesson is searchable."""
         seed_initial_lessons(store)
 
-        results = store.search_lessons("Alpaca crypto stop-loss")
         assert len(results) > 0
 
 

@@ -1163,7 +1163,6 @@ class TestLl_024_Fstring_Syntax_Error_Dec13:
             "name": "Negative: F-String Syntax Error Crash (Dec 13, 2025)",
             "lesson_id": "ll_024_fstring_syntax_error_dec13",
             "type": "negative",
-            "parameters": {'symbols': ['CEO', 'F', 'A', 'CTO', 'ID'], 'strategies': ['crypto', 'rsi', 'metals']},
             "market_conditions": {'time': 'elevated', 'news': 'elevated'},
         }
 

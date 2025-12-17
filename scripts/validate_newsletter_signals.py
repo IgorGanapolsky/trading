@@ -11,12 +11,9 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.utils.newsletter_analyzer import CryptoSignal, NewsletterAnalyzer
 
 
-def validate_signal(ticker: str, signal: CryptoSignal) -> list[str]:
     """
-    Validate a single crypto signal for data quality issues
 
     Returns:
         List of validation errors (empty if valid)

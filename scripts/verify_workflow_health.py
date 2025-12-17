@@ -63,7 +63,6 @@ def check_system_state_freshness(max_age_hours: int = 48) -> tuple[bool, str]:
 
 
 def check_tier5_execution() -> tuple[bool, str]:
-    """Check if Tier 5 (crypto) has ever executed.
 
     Returns:
         Tuple of (has_executed, message)
@@ -82,7 +81,6 @@ def check_tier5_execution() -> tuple[bool, str]:
         last_execution = tier5.get("last_execution")
 
         if trades_executed == 0:
-            return False, "Tier 5 (crypto) has NEVER executed - 0 trades"
 
         return True, f"Tier 5 has {trades_executed} trades, last: {last_execution}"
 
@@ -154,12 +152,9 @@ def main():
     if not fresh:
         all_healthy = False
 
-    # Check 2: Tier 5 (crypto) execution
-    print("\n2. Crypto Trading (Tier 5)")
     executed, msg = check_tier5_execution()
     print(f"   {'✅' if executed else '⚠️'} {msg}")
     if not executed:
-        print("   → Weekend crypto trading has never executed!")
         print("   → This may indicate workflow is disabled or misconfigured")
 
     # Check 3: Automation status
@@ -178,7 +173,6 @@ def main():
         print("\nRecommended Actions:")
         print("1. Go to GitHub repo → Actions tab")
         print("2. Check if 'Daily Trading Execution' is enabled")
-        print("3. Check if 'Weekend Crypto Trading' is enabled")
         print("4. If disabled, click 'Enable workflow' button")
         print("5. Manually trigger a workflow run to test")
 

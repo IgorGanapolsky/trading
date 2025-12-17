@@ -39,7 +39,6 @@ class TestEquityStrategyIntegration:
         env["PYTHONPATH"] = str(Path.cwd())
 
         result = subprocess.run(
-            ["python3", "scripts/autonomous_trader.py", "--skip-crypto"],
             capture_output=True,
             text=True,
             env=env,

@@ -134,7 +134,6 @@ class TradeGateway:
         "semiconductors": ["NVDA", "AMD", "INTC", "TSM", "AVGO", "QCOM", "MU"],
         "mega_tech": ["AAPL", "MSFT", "GOOGL", "GOOG", "META", "AMZN"],
         "ev_auto": ["TSLA", "RIVN", "LCID", "F", "GM"],
-        "crypto_adjacent": ["COIN", "MSTR", "SQ", "PYPL"],
         "ai_plays": ["NVDA", "AMD", "MSFT", "GOOGL", "META", "CRM", "PLTR"],
     }
 
@@ -633,7 +632,7 @@ class TradeGateway:
         return decision
 
     # ============================================================
-    # HELPER METHODS
+    # HELPER MODS
     # ============================================================
 
     def _get_account_equity(self) -> float:
