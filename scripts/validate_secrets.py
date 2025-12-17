@@ -32,8 +32,14 @@ def validate_secrets() -> tuple[bool, list[str]]:
         "GOOGLE_API_KEY",
     ]
 
+    # Observability secrets - critical for debugging and compliance
+    observability_secrets = [
+        "LANGCHAIN_API_KEY",  # LangSmith tracing - REQUIRED for trade decision audit
+    ]
+
     missing_critical = []
     missing_optional = []
+    missing_observability = []
 
     # Check critical secrets
     for secret in required_secrets:
@@ -49,6 +55,14 @@ def validate_secrets() -> tuple[bool, list[str]]:
         if not value or value.strip() == "":
             missing_optional.append(secret)
 
+    # Check observability secrets (treat as CRITICAL - trading blind is unacceptable)
+    for secret in observability_secrets:
+        value = os.getenv(secret)
+        if not value or value.strip() == "":
+            missing_observability.append(secret)
+        elif len(value) < 10:
+            missing_observability.append(f"{secret} (too short)")
+
     # Report results
     errors = []
 
@@ -63,6 +77,13 @@ def validate_secrets() -> tuple[bool, list[str]]:
         print(f"⚠️  WARNING: Missing {len(missing_optional)} optional secrets")
         print("   Some features may be limited")
 
+    if missing_observability:
+        print(f"❌ OBSERVABILITY: Missing {len(missing_observability)} tracing secrets")
+        print("   Trading without observability is FORBIDDEN - CEO cannot debug blind trades!")
+        errors.extend(missing_observability)
+    else:
+        print("✅ Observability secrets present (LangSmith tracing enabled)")
+
     # Additional validation for specific formats
     alpaca_key = os.getenv("ALPACA_API_KEY", "")
     if alpaca_key and not alpaca_key.startswith("PK"):
@@ -72,7 +93,8 @@ def validate_secrets() -> tuple[bool, list[str]]:
     if alpaca_secret and len(alpaca_secret) < 30:
         print("⚠️  WARNING: ALPACA_SECRET_KEY seems too short for a valid secret")
 
-    return len(missing_critical) == 0, errors
+    # Both critical AND observability secrets must be present
+    return len(missing_critical) == 0 and len(missing_observability) == 0, errors
 
 
 def main():

@@ -78,6 +78,8 @@ jobs:
           POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          # LangSmith observability - REQUIRED for trade decision audit
+          LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
         run: |
           echo "🔑 Validating required secrets..."
           # CRITICAL: Use --gha-output flag so script sets secrets_valid properly
@@ -535,12 +537,15 @@ jobs:
               if result.healthy:
                   print('✅ TRACING HEALTH CHECK PASSED')
               else:
-                  print(f'⚠️ TRACING HEALTH CHECK FAILED: {result.errors}')
-                  print('   Trading will proceed but may not be fully traced!')
+                  print(f'❌ TRACING HEALTH CHECK FAILED: {result.errors}')
+                  print('   CEO MANDATE: Trading WITHOUT observability is FORBIDDEN!')
+                  print('   Fix: Ensure LANGCHAIN_API_KEY secret exists in GitHub')
+                  sys.exit(1)
           except Exception as e:
-              print(f'⚠️ Tracing health check error: {e}')
-              print('   Trading will proceed without guaranteed tracing')
-          " || echo "⚠️ Tracing health check script failed - proceeding anyway"
+              print(f'❌ Tracing health check error: {e}')
+              print('   CEO MANDATE: Cannot trade blind - add LANGCHAIN_API_KEY to secrets!')
+              sys.exit(1)
+          "
           # ======================================================
 
           # ========== MANDATORY: PRE-TRADE SMOKE TESTS ==========
