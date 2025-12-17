@@ -8,7 +8,6 @@ Tests both:
 
 import json
 import tempfile
-import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -27,7 +26,7 @@ class TestResearchOutput:
             timestamp="20251216_120000",
             text_content={"recommendation": "BUY", "confidence": 0.8},
             visual_outputs=[
-                {"type": "image", "path": "/tmp/chart.png", "mime_type": "image/png"}
+                {"type": "image", "path": "chart.png", "mime_type": "image/png"}  # noqa: S108
             ],
             sources=["https://example.com"],
         )
@@ -79,7 +78,7 @@ class TestGeminiDeepResearchVisuals:
 
             # Patch environment to avoid real API init
             with patch.dict("os.environ", {}, clear=True):
-                researcher = GeminiDeepResearch(output_dir=output_dir)
+                _researcher = GeminiDeepResearch(output_dir=output_dir)
 
             assert output_dir.exists()
             assert (output_dir / "visuals").exists()

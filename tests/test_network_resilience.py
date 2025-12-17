@@ -65,7 +65,7 @@ class TestTimeoutHandling:
     def test_openrouter_llm_timeout(self):
         """Test LLM calls have timeout protection."""
         try:
-            from src.langchain_agents.analyst import SentimentAnalyst
+            from src.langchain_agents.analyst import SentimentAnalyst  # noqa: F401
         except ImportError:
             pytest.skip("SentimentAnalyst not available")
 
@@ -461,7 +461,7 @@ class TestTradingSystemNetworkResilience:
     def test_orchestrator_handles_api_failure(self):
         """TradingOrchestrator should handle API failures gracefully."""
         try:
-            from src.orchestrator.main import TradingOrchestrator
+            from src.orchestrator.main import TradingOrchestrator  # noqa: F401
         except ImportError:
             pytest.skip("TradingOrchestrator not available")
 
@@ -471,7 +471,7 @@ class TestTradingSystemNetworkResilience:
     def test_trade_gateway_network_error(self):
         """TradeGateway should handle network errors in risk checks."""
         try:
-            from src.risk.trade_gateway import TradeGateway
+            from src.risk.trade_gateway import TradeGateway  # noqa: F401
         except ImportError:
             pytest.skip("TradeGateway not available")
 

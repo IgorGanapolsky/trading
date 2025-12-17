@@ -181,7 +181,7 @@ class TestAutoLearnFromFailures:
 
     def test_critical_lessons_have_file_patterns(self, lessons):
         """Critical lessons should reference specific files to check."""
-        critical = [l for l in lessons if l["severity"] == "CRITICAL"]
+        critical = [lesson for lesson in lessons if lesson["severity"] == "CRITICAL"]
 
         for lesson in critical:
             has_patterns = (
@@ -231,8 +231,8 @@ def pytest_generate_tests(metafunc):
         if lessons_dir.exists():
             parser = LessonParser(lessons_dir)
             lessons = parser.parse_all()
-            critical = [l for l in lessons if l["severity"] == "CRITICAL"]
-            metafunc.parametrize("critical_lesson", critical, ids=[l["id"] for l in critical])
+            critical = [lesson for lesson in lessons if lesson["severity"] == "CRITICAL"]
+            metafunc.parametrize("critical_lesson", critical, ids=[lesson["id"] for lesson in critical])
 
 
 class TestCriticalLessonRegressions:
@@ -244,11 +244,9 @@ class TestCriticalLessonRegressions:
             pytest.skip(f"No imports to check for {critical_lesson['id']}")
 
         for import_stmt in critical_lesson["import_checks"]:
+            # Validate syntax only (don't execute for security)
             try:
-                exec(import_stmt)
-            except ImportError:
-                # Import may not exist anymore - that's OK
-                pass
+                ast.parse(import_stmt)
             except SyntaxError as e:
                 pytest.fail(f"REGRESSION {critical_lesson['id']}: Import syntax error: {e}")
 

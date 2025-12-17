@@ -82,7 +82,7 @@ class TestFailureToLessonToPreventionFlow:
 
         # Create lesson from anomaly
         pipeline = FailureToLessonPipeline(lessons_dir=temp_lessons_dir)
-        lesson_path = pipeline.create_lesson_from_anomaly(sample_anomaly)
+        _lesson_path = pipeline.create_lesson_from_anomaly(sample_anomaly)
 
         # Now search using RAG
         gate = RAGVerificationGate(rag_knowledge_path=temp_lessons_dir)
@@ -541,7 +541,7 @@ class TestCIIntegrationVerification:
             f"RAG gate should load lessons. Found: {len(gate.lessons)}"
 
         # Should have critical lessons
-        critical_lessons = [l for l in gate.lessons if l.severity == "critical"]
+        critical_lessons = [lesson for lesson in gate.lessons if lesson.severity == "critical"]
         assert len(critical_lessons) >= 0, "Should parse severity correctly"
 
     def test_failure_pipeline_importable(self):

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -279,70 +280,76 @@ class TestDryRunIntegration:
         # Mark as slow so it can be skipped in fast CI runs
         from scripts.dry_run import dry_run
 
-        # Mock args
-        class Args:
-            symbols = ["SPY", "QQQ"]
-            include_agents = None
-            exclude_agents = None
-            weight_mcp = None
-            weight_langchain = None
-            weight_gemini = None
-            weight_ml = None
-            weight_grok = None
-            buy_threshold = None
-            sell_threshold = None
-            execute = False
-            export_json = "/tmp/test_dry_run.json"
-            export_md = None
+        # Create secure temp file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp_file:
+            temp_json_path = tmp_file.name
 
-        args = Args()
+        try:
+            # Mock args
+            class Args:
+                symbols = ["SPY", "QQQ"]
+                include_agents = None
+                exclude_agents = None
+                weight_mcp = None
+                weight_langchain = None
+                weight_gemini = None
+                weight_ml = None
+                weight_grok = None
+                buy_threshold = None
+                sell_threshold = None
+                execute = False
+                export_json = temp_json_path
+                export_md = None
 
-        # Run dry_run and capture output
-        with patch("src.orchestration.elite_orchestrator.EliteOrchestrator") as mock_eo:
-            # Mock the orchestrator to return test data
-            mock_instance = MagicMock()
-            mock_eo.return_value = mock_instance
+            args = Args()
 
-            mock_instance.create_trade_plan.return_value = MagicMock(plan_id="test-123")
-            mock_instance._execute_data_collection.return_value = {}
-            mock_instance._execute_analysis.return_value = {
-                "ensemble_vote": {
-                    "SPY": {"consensus": "BUY", "weighted_score": 0.25},
-                    "QQQ": {"consensus": "HOLD", "weighted_score": 0.05},
-                },
-                "agent_results": [],
-            }
-            mock_instance._execute_risk_assessment.return_value = {
-                "risk_checks": {
-                    "portfolio_health": {"success": True},
-                    "SPY_position": {
-                        "recommendations": {"primary_method": {"position_size_dollars": 95.0}}
+            # Run dry_run and capture output
+            with patch("src.orchestration.elite_orchestrator.EliteOrchestrator") as mock_eo:
+                # Mock the orchestrator to return test data
+                mock_instance = MagicMock()
+                mock_eo.return_value = mock_instance
+
+                mock_instance.create_trade_plan.return_value = MagicMock(plan_id="test-123")
+                mock_instance._execute_data_collection.return_value = {}
+                mock_instance._execute_analysis.return_value = {
+                    "ensemble_vote": {
+                        "SPY": {"consensus": "BUY", "weighted_score": 0.25},
+                        "QQQ": {"consensus": "HOLD", "weighted_score": 0.05},
                     },
-                    "QQQ_position": {
-                        "recommendations": {"primary_method": {"position_size_dollars": 0.0}}
-                    },
+                    "agent_results": [],
                 }
-            }
+                mock_instance._execute_risk_assessment.return_value = {
+                    "risk_checks": {
+                        "portfolio_health": {"success": True},
+                        "SPY_position": {
+                            "recommendations": {"primary_method": {"position_size_dollars": 95.0}}
+                        },
+                        "QQQ_position": {
+                            "recommendations": {"primary_method": {"position_size_dollars": 0.0}}
+                        },
+                    }
+                }
 
-            # Run
-            exit_code = dry_run(args.symbols, args)
-            assert exit_code == 0, "dry_run should succeed"
+                # Run
+                exit_code = dry_run(args.symbols, args)
+                assert exit_code == 0, "dry_run should succeed"
 
-            # Verify output file
-            output_path = Path(args.export_json)
-            assert output_path.exists(), f"Output file not created: {output_path}"
+                # Verify output file
+                output_path = Path(args.export_json)
+                assert output_path.exists(), f"Output file not created: {output_path}"
 
-            with open(output_path) as f:
-                output = json.load(f)
+                with open(output_path) as f:
+                    output = json.load(f)
 
-            # Validate output structure
-            assert "plan_id" in output
-            assert "symbols" in output
-            assert "ensemble_vote" in output
-            assert "risk" in output
+                # Validate output structure
+                assert "plan_id" in output
+                assert "symbols" in output
+                assert "ensemble_vote" in output
+                assert "risk" in output
 
-            # Cleanup
-            output_path.unlink()
+        finally:
+            # Cleanup temp file
+            Path(temp_json_path).unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

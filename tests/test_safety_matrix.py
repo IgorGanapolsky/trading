@@ -337,7 +337,7 @@ class TestLLMDriftCheck:
 
         # Validate schema is enforced
         try:
-            from src.sentiment.rag_db import get_rag_db
+            from src.sentiment.rag_db import get_rag_db  # noqa: F401
 
             # Check RAG returns properly formatted data
             # Placeholder for actual validation

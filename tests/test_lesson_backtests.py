@@ -68,7 +68,7 @@ class TestLl_009_Ci_Syntax_Failure_Dec11:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_009_Ci_Syntax_Failure_Dec11:
+class TestLl_009_Ci_Syntax_Failure_Dec11_EdgeCases:
     """Tests for ll_009_ci_syntax_failure_dec11"""
 
     @pytest.mark.backtest
@@ -140,7 +140,7 @@ class TestLl_025_Bats_Budget_Framework:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_025_Bats_Budget_Framework:
+class TestLl_025_Bats_Budget_Framework_EdgeCases:
     """Tests for ll_025_bats_budget_framework"""
 
     @pytest.mark.backtest
@@ -212,7 +212,7 @@ class TestLl_029_Hicra_Rl_Credit_Assignment:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_029_Hicra_Rl_Credit_Assignment:
+class TestLl_029_Hicra_Rl_Credit_Assignment_EdgeCases:
     """Tests for ll_029_hicra_rl_credit_assignment"""
 
     @pytest.mark.backtest
@@ -284,7 +284,7 @@ class TestLl_016_Regime_Pivot_Safety_Gates_Dec12:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_016_Regime_Pivot_Safety_Gates_Dec12:
+class TestLl_016_Regime_Pivot_Safety_Gates_Dec12_NullHandling:
     """Tests for ll_016_regime_pivot_safety_gates_dec12"""
 
     @pytest.mark.backtest
@@ -320,7 +320,7 @@ class TestLl_016_Regime_Pivot_Safety_Gates_Dec12:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_016_Regime_Pivot_Safety_Gates_Dec12:
+class TestLl_016_Regime_Pivot_Safety_Gates_Dec12_NegativeValues:
     """Tests for ll_016_regime_pivot_safety_gates_dec12"""
 
     @pytest.mark.backtest
@@ -356,7 +356,7 @@ class TestLl_016_Regime_Pivot_Safety_Gates_Dec12:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_016_Regime_Pivot_Safety_Gates_Dec12:
+class TestLl_016_Regime_Pivot_Safety_Gates_Dec12_TimeoutHandling:
     """Tests for ll_016_regime_pivot_safety_gates_dec12"""
 
     @pytest.mark.backtest
@@ -500,7 +500,7 @@ class TestLl_028_Unified_Domain_Model:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_028_Unified_Domain_Model:
+class TestLl_028_Unified_Domain_Model_EdgeCases:
     """Tests for ll_028_unified_domain_model"""
 
     @pytest.mark.backtest
@@ -644,7 +644,7 @@ class TestLl_017_Claude_Md_Bloat_Antipattern_Dec12:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_017_Claude_Md_Bloat_Antipattern_Dec12:
+class TestLl_017_Claude_Md_Bloat_Antipattern_Dec12_ZeroValues:
     """Tests for ll_017_claude_md_bloat_antipattern_dec12"""
 
     @pytest.mark.backtest
@@ -680,7 +680,7 @@ class TestLl_017_Claude_Md_Bloat_Antipattern_Dec12:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_017_Claude_Md_Bloat_Antipattern_Dec12:
+class TestLl_017_Claude_Md_Bloat_Antipattern_Dec12_LargeValues:
     """Tests for ll_017_claude_md_bloat_antipattern_dec12"""
 
     @pytest.mark.backtest
@@ -788,7 +788,7 @@ class TestLl_033_Comprehensive_Verification_System_Dec14:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_033_Comprehensive_Verification_System_Dec14:
+class TestLl_033_Comprehensive_Verification_System_Dec14_ZeroValues:
     """Tests for ll_033_comprehensive_verification_system_dec14"""
 
     @pytest.mark.backtest
@@ -824,7 +824,7 @@ class TestLl_033_Comprehensive_Verification_System_Dec14:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_033_Comprehensive_Verification_System_Dec14:
+class TestLl_033_Comprehensive_Verification_System_Dec14_LargeValues:
     """Tests for ll_033_comprehensive_verification_system_dec14"""
 
     @pytest.mark.backtest
@@ -968,7 +968,7 @@ class TestLl_032_Ml_Experiment_Automation:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_032_Ml_Experiment_Automation:
+class TestLl_032_Ml_Experiment_Automation_LargeValues:
     """Tests for ll_032_ml_experiment_automation"""
 
     @pytest.mark.backtest
@@ -1004,7 +1004,7 @@ class TestLl_032_Ml_Experiment_Automation:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_032_Ml_Experiment_Automation:
+class TestLl_032_Ml_Experiment_Automation_TimeoutHandling:
     """Tests for ll_032_ml_experiment_automation"""
 
     @pytest.mark.backtest
@@ -1112,7 +1112,7 @@ class TestLl_017_Rag_Vectorization_Gap_Dec12:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_017_Rag_Vectorization_Gap_Dec12:
+class TestLl_017_Rag_Vectorization_Gap_Dec12_NullHandling:
     """Tests for ll_017_rag_vectorization_gap_dec12"""
 
     @pytest.mark.backtest
@@ -1220,7 +1220,7 @@ class TestLl_019_System_Dead_2_Days_Overly_Strict_Filters_Dec12:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_019_System_Dead_2_Days_Overly_Strict_Filters_Dec12:
+class TestLl_019_System_Dead_2_Days_Overly_Strict_Filters_Dec12_EdgeCases:
     """Tests for ll_019_system_dead_2_days_overly_strict_filters_dec12"""
 
     @pytest.mark.backtest
@@ -1292,7 +1292,7 @@ class TestLl_012_Deep_Research_Safety_Improvements_Dec11:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_012_Deep_Research_Safety_Improvements_Dec11:
+class TestLl_012_Deep_Research_Safety_Improvements_Dec11_NullHandling:
     """Tests for ll_012_deep_research_safety_improvements_dec11"""
 
     @pytest.mark.backtest
@@ -1328,7 +1328,7 @@ class TestLl_012_Deep_Research_Safety_Improvements_Dec11:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_012_Deep_Research_Safety_Improvements_Dec11:
+class TestLl_012_Deep_Research_Safety_Improvements_Dec11_NegativeValues:
     """Tests for ll_012_deep_research_safety_improvements_dec11"""
 
     @pytest.mark.backtest
@@ -1364,7 +1364,7 @@ class TestLl_012_Deep_Research_Safety_Improvements_Dec11:
                 f"Edge case should handle gracefully: {result}"
 
 
-class TestLl_012_Deep_Research_Safety_Improvements_Dec11:
+class TestLl_012_Deep_Research_Safety_Improvements_Dec11_LargeValues:
     """Tests for ll_012_deep_research_safety_improvements_dec11"""
 
     @pytest.mark.backtest

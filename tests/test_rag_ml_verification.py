@@ -213,7 +213,7 @@ class TestMLAnomalyDetection:
         # Simple heuristic: function with too many lines
         def count_function_lines(code: str) -> int:
             lines = code.strip().split("\n")
-            return len([l for l in lines if l.strip()])
+            return len([line for line in lines if line.strip()])
 
         short_function = "def add(a, b):\n    return a + b"
         long_function = "\n".join([f"    line_{i} = {i}" for i in range(100)])

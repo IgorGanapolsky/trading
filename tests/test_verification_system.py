@@ -47,7 +47,7 @@ class TestRAGVerificationGate:
 
     def test_ll_009_detected_by_rag(self, rag_gate):
         """Verify ll_009 (Dec 11 syntax error) is in RAG knowledge base."""
-        ll_009_lessons = [l for l in rag_gate.lessons if l.id == "ll_009"]
+        ll_009_lessons = [lesson for lesson in rag_gate.lessons if lesson.id == "ll_009"]
 
         assert len(ll_009_lessons) > 0, "ll_009 should be in RAG knowledge base"
 
@@ -57,7 +57,7 @@ class TestRAGVerificationGate:
 
     def test_ll_024_detected_by_rag(self, rag_gate):
         """Verify ll_024 (Dec 13 f-string error) is in RAG knowledge base."""
-        ll_024_lessons = [l for l in rag_gate.lessons if l.id == "ll_024"]
+        ll_024_lessons = [lesson for lesson in rag_gate.lessons if lesson.id == "ll_024"]
 
         assert len(ll_024_lessons) > 0, "ll_024 should be in RAG knowledge base"
 

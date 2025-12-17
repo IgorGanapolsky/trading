@@ -382,9 +382,7 @@ class TestMarketHoursEdgeCases:
             return 16 <= current_hour < 20
 
         def should_queue_for_open(submit_hour: int, order_type: str) -> bool:
-            if is_after_hours(submit_hour) and order_type == "market":
-                return True  # Queue market orders for next open
-            return False
+            return is_after_hours(submit_hour) and order_type == "market"
 
         assert should_queue_for_open(17, "market"), "Market order at 5 PM should queue"
         assert not should_queue_for_open(17, "limit"), "Limit order at 5 PM can execute"

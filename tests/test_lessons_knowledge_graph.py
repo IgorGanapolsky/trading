@@ -696,7 +696,7 @@ class TestIntegration:
     def test_with_real_rag_system(self):
         """Test with actual RAG system (if available)."""
         try:
-            from src.rag.lessons_learned_rag import LessonsLearnedRAG
+            from src.rag.lessons_learned_rag import LessonsLearnedRAG  # noqa: F401
 
             query_system = LessonsKnowledgeGraphQuery()
 
