@@ -2,7 +2,6 @@
 """
 EMERGENCY: Stop the bleeding positions.
 
-Crypto and REITs are dragging us down while options are making money.
 This script identifies and optionally closes bleeding positions.
 """
 
@@ -13,10 +12,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 BLEEDERS = {
-    # Crypto - volatile, unpredictable, LOSING
-    "ETHUSD": "Crypto - down 6.70%",
-    "SOLUSD": "Crypto - down 3.44%", 
-    "BTCUSD": "Crypto - down 2.64%",
     # REITs - all losing
     "DLR": "REIT - down 2.53%",
     "EQIX": "REIT - down 1.15%",

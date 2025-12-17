@@ -113,7 +113,6 @@ class TradingAnomalyDetector:
     # Known valid symbols
     VALID_SYMBOLS = {
         "stocks": ["SPY", "QQQ", "VOO", "NVDA", "GOOGL", "AMZN", "BIL", "SHY", "IEF", "TLT"],
-        "crypto": ["BTCUSD", "ETHUSD", "BTC/USD", "ETH/USD"],
     }
 
     def __init__(
@@ -201,7 +200,6 @@ class TradingAnomalyDetector:
         }
 
         # 1. Check for unknown symbol
-        all_symbols = self.VALID_SYMBOLS["stocks"] + self.VALID_SYMBOLS["crypto"]
         if symbol not in all_symbols:
             anomaly = Anomaly(
                 anomaly_id=f"ANO-{datetime.now().strftime('%Y%m%d%H%M%S')}-SYM",

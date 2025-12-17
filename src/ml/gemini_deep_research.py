@@ -103,16 +103,13 @@ class GeminiDeepResearch:
         (self.output_dir / "visuals").mkdir(exist_ok=True)
         (self.output_dir / "json").mkdir(exist_ok=True)
 
-    def research_crypto_market(self, symbol: str = "BTC") -> Optional[dict[str, Any]]:
         """
-        Deep research on crypto market conditions before trading.
         Returns sentiment, key news, and trading recommendation.
         """
         if not self.client:
             return None
 
         query = f"""
-        Research current {symbol} cryptocurrency market conditions for trading:
 
         1. Latest news and developments (last 24-48 hours)
         2. Market sentiment from social media and news
@@ -167,7 +164,6 @@ class GeminiDeepResearch:
         5. Sector rotation trends
         6. Risk-on vs Risk-off sentiment
 
-        Recommend portfolio allocation: % stocks, % crypto, % cash
         Format as JSON with keys: market_regime, vix_analysis, allocation, risk_level, key_risks
         """
 
@@ -365,7 +361,6 @@ class GeminiDeepResearch:
             status=data.get("status", "completed"),
         )
 
-    def get_pre_trade_analysis(self, symbol: str, asset_type: str = "crypto") -> dict[str, Any]:
         """
         Get comprehensive pre-trade analysis before executing a trade.
         """
@@ -381,8 +376,6 @@ class GeminiDeepResearch:
             logger.warning("Gemini not available, using default analysis")
             return result
 
-        if asset_type == "crypto":
-            research = self.research_crypto_market(symbol.replace("USD", "").replace("/", ""))
         else:
             research = self.research_stock(symbol)
 
@@ -412,5 +405,4 @@ if __name__ == "__main__":
     researcher = get_researcher()
 
     print("Testing Gemini Deep Research for Trading...")
-    result = researcher.research_crypto_market("BTC")
     print(json.dumps(result, indent=2) if result else "No result (API key needed)")

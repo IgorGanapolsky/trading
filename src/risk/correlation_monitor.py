@@ -117,7 +117,6 @@ class CrossStrategyCorrelationMonitor:
     Monitors correlation across all strategy tiers to prevent hidden concentration.
 
     The Dec 3 analysis identified this as critical gap:
-    - Each tier (Core, Growth, IPO, Options, Crypto) operates independently
     - No check if "Core" MACD buy + "Growth" momentum buy on same underlying
     - Could build 2x concentrated positions without detection
 

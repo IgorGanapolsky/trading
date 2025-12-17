@@ -64,9 +64,6 @@ def categorize_trade(trade: dict) -> str:
     if "P0" in symbol or "C0" in symbol or "options" in strategy.lower():
         return "OPTIONS"
 
-    # Crypto
-    if symbol.endswith("USD") or "crypto" in strategy.lower():
-        return "CRYPTO"
 
     # Bonds
     if symbol in ["BIL", "SHY", "IEF", "TLT", "GOVT", "ZROZ"]:

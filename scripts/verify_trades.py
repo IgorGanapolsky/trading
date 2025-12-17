@@ -4,7 +4,6 @@ Quick verification script for checking account status, positions, and P&L.
 
 Usage:
     python3 scripts/verify_trades.py
-    python3 scripts/verify_trades.py --crypto-only
     python3 scripts/verify_trades.py --date 2025-12-13
 """
 

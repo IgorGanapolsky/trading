@@ -170,7 +170,6 @@ class WorkflowIntegrityTests:
         self.workflows_dir = Path(__file__).parent.parent / ".github" / "workflows"
         self.critical_workflows = [
             "daily-trading.yml",
-            "weekend-crypto-trading.yml",
             "ci.yml",
         ]
 
@@ -225,7 +224,6 @@ class WorkflowIntegrityTests:
 
         critical_step_patterns = [
             r"Execute.*trading",
-            r"Execute.*crypto",
             r"Validate secrets",
             r"Pre-market health check",
             r"Run tests",
@@ -276,7 +274,6 @@ class WorkflowIntegrityTests:
         """
         errors = []
 
-        for workflow_name in ["daily-trading.yml", "weekend-crypto-trading.yml"]:
             workflow_path = self.workflows_dir / workflow_name
             if not workflow_path.exists():
                 continue
@@ -284,9 +281,7 @@ class WorkflowIntegrityTests:
             content = workflow_path.read_text()
 
             # Find the Execute trading step condition
-            # Match "Execute daily trading" or "Execute weekend crypto trading"
             match = re.search(
-                r"name:\s*Execute\s+(?:daily\s+|weekend\s+crypto\s+)?trading.*\n\s+(?:id:.*\n\s+)?if:\s*(.+)",
                 content,
                 re.IGNORECASE,
             )

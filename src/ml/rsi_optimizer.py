@@ -1,11 +1,8 @@
 """
-RSI Threshold Optimizer for Crypto Trading
 
-This module optimizes the RSI threshold for crypto entry signals using historical data.
 It backtests different RSI thresholds and calculates performance metrics to find the optimal value.
 
 Key Features:
-- Load historical crypto data (90+ days)
 - Grid search over RSI thresholds (40, 45, 50, 55, 60)
 - Calculate win rate, average return, Sharpe ratio
 - Generate actionable insights
@@ -14,7 +11,7 @@ Key Features:
 Usage:
     from src.ml.rsi_optimizer import RSIOptimizer
 
-    optimizer = RSIOptimizer(symbol="BTC-USD", lookback_days=90)
+    optimizer = RSIOptimizer(symbol=-USD", lookback_days=90)
     results = optimizer.optimize()
     print(f"Optimal RSI: {results['best_threshold']}")
 """
@@ -54,13 +51,11 @@ class BacktestResult:
 
 class RSIOptimizer:
     """
-    Optimize RSI threshold for crypto trading using historical backtesting.
 
     This class implements a grid search over different RSI thresholds and
     evaluates trading performance to find the optimal entry signal.
 
     Attributes:
-        symbol: Crypto symbol to optimize (e.g., "BTC-USD")
         lookback_days: Number of historical days to use for optimization
         thresholds: List of RSI thresholds to test
         initial_capital: Starting capital for backtesting
@@ -72,7 +67,7 @@ class RSIOptimizer:
 
     def __init__(
         self,
-        symbol: str = "BTC-USD",
+        symbol: str = -USD",
         lookback_days: int = 90,
         thresholds: list[float] | None = None,
         initial_capital: float = 10000.0,
@@ -82,7 +77,6 @@ class RSIOptimizer:
         Initialize RSI Optimizer.
 
         Args:
-            symbol: Crypto symbol (e.g., "BTC-USD", "ETH-USD")
             lookback_days: Days of historical data to use (default: 90)
             thresholds: RSI thresholds to test (default: [40, 45, 50, 55, 60])
             initial_capital: Starting capital for backtesting
@@ -104,7 +98,6 @@ class RSIOptimizer:
 
     def load_data(self) -> pd.DataFrame:
         """
-        Load historical crypto data from yfinance.
 
         Returns:
             DataFrame with OHLCV data
@@ -441,8 +434,8 @@ if __name__ == "__main__":
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
-    # Optimize BTC RSI threshold
-    optimizer = RSIOptimizer(symbol="BTC-USD", lookback_days=90)
+    # Optimize RSI threshold
+    optimizer = RSIOptimizer(symbol=-USD", lookback_days=90)
     results = optimizer.optimize()
 
     # Save results

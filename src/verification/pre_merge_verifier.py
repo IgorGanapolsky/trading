@@ -67,7 +67,6 @@ class PreMergeVerifier:
         ("AlpacaExecutor", "from src.execution.alpaca_executor import AlpacaExecutor"),
         ("TradeGateway", "from src.risk.trade_gateway import TradeGateway"),
         ("CoreStrategy", "from src.strategies.core_strategy import CoreStrategy"),
-        ("CryptoStrategy", "from src.strategies.crypto_strategy import CryptoStrategy"),
     ]
 
     def __init__(self, project_root: Optional[Path] = None):

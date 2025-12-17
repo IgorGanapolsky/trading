@@ -6,7 +6,6 @@ Scans codebase for patterns that should NOT exist based on CEO directives.
 Runs as pre-commit hook and CI gate.
 
 Forbidden Patterns (Dec 16, 2025):
-- Crypto trading code (BTCUSD, ETHUSD, crypto_strategy, etc.)
 - Disabled features that haven't been removed
 
 Usage:
@@ -21,18 +20,11 @@ from pathlib import Path
 
 # Forbidden patterns with explanations
 FORBIDDEN_PATTERNS = {
-    "crypto_trading": {
         "patterns": [
-            r"\bBTCUSD\b",
-            r"\bETHUSD\b",
-            r"\bSOLUSD\b",
-            r"\bcrypto_strategy\b",
-            r"\bCryptoStrategy\b",
-            r"\bcrypto_weekend_agent\b",
-            r"\bENABLE_CRYPTO_AGENT\s*[=:]\s*['\"]?true['\"]?",
-            r"\bCRYPTO_DAILY\s*[=:]\s*['\"]?true['\"]?",
+            r"\b\b",
+            r"\b\b",
+            r"\b\b",
         ],
-        "reason": "Crypto removed per CEO directive Dec 16, 2025 (0% win rate)",
         "exclude_dirs": ["rag_knowledge", "docs", "data"],  # Allow in docs/lessons
         "exclude_files": ["detect_forbidden_patterns.py"],  # Allow in this file
     },

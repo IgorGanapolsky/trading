@@ -7,7 +7,6 @@ relevant lessons learned are consulted first.
 
 Usage:
     python3 scripts/mandatory_rag_check.py "workflow failures"
-    python3 scripts/mandatory_rag_check.py "crypto order fill"
     python3 scripts/mandatory_rag_check.py "import errors"
 
 Created: Dec 15, 2025
@@ -107,7 +106,6 @@ def main():
     parser.add_argument(
         "query",
         type=str,
-        help="What you're trying to fix/change (e.g., 'workflow failures', 'crypto fills')",
     )
     parser.add_argument(
         "--top-k", type=int, default=5, help="Number of results to show"

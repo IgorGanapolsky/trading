@@ -4,7 +4,7 @@
     "created": "2025-10-29T09:35:00",
     "last_updated": "2025-12-16T19:27:30.000000",
     "last_audit": "2025-11-17T09:00:00.000000",
-    "audit_notes": "Day 9 - Added Tier 5 crypto tracking (BTC/ETH weekend strategy)"
+    "audit_notes": ""
   },
   "challenge": {
     "start_date": "2025-10-29",
@@ -49,17 +49,6 @@
     "avg_return": -6.96522974230833,
     "closed_trades": [
       {
-        "symbol": "ETHUSD",
-        "entry_price": 3384.31,
-        "exit_price": 3381.025,
-        "quantity": 0.002889092,
-        "entry_date": "2025-11-09T13:42:09.009396",
-        "exit_date": "2025-12-09T13:43:11.677771",
-        "pl": -0.009490667219999579,
-        "pl_pct": -0.09706557614402507,
-        "tier": "unknown"
-      },
-      {
         "symbol": "AMD260116P00200000",
         "entry_price": 5.9,
         "exit_price": 6.75,
@@ -68,28 +57,6 @@
         "exit_date": "2025-12-11T09:36:33.652262",
         "pl": -0.8499999999999996,
         "pl_pct": 14.406779661016941,
-        "tier": "unknown"
-      },
-      {
-        "symbol": "BTCUSD",
-        "entry_price": 94125.628,
-        "exit_price": 90188.2,
-        "quantity": 0.000103949,
-        "entry_date": "2025-11-11T09:36:32.906462",
-        "exit_date": "2025-12-11T09:37:36.563197",
-        "pl": -0.409291703172,
-        "pl_pct": -4.183162528275509,
-        "tier": "unknown"
-      },
-      {
-        "symbol": "SOLUSD",
-        "entry_price": 130.82,
-        "exit_price": 130.7,
-        "quantity": 0.074595054,
-        "entry_date": "2025-11-11T09:36:32.906597",
-        "exit_date": "2025-12-11T09:38:39.691435",
-        "pl": -0.008951406480000338,
-        "pl_pct": -0.09172909341079694,
         "tier": "unknown"
       },
       {
@@ -203,7 +170,7 @@
     },
     "tier2": {
       "name": "Disruptive Innovation Strategy (NVDA, GOOGL, AMZN)",
-      "allocation": 0.00,
+      "allocation": 0.0,
       "daily_amount": 0.0,
       "trades_executed": 3,
       "total_invested": 403.97,
@@ -232,7 +199,7 @@
       "status": "tracking"
     },
     "tier5": {
-      "name": "Crypto Strategy (DISABLED)",
+      "name": "",
       "allocation": 0.0,
       "daily_amount": 0.0,
       "status": "disabled",
@@ -243,7 +210,7 @@
     },
     "tier7": {
       "name": "REIT Smart Income Strategy",
-      "allocation": 0.00,
+      "allocation": 0.0,
       "daily_amount": 0.0,
       "sectors": [
         "Growth",
@@ -284,7 +251,7 @@
     },
     "tier8": {
       "name": "Precious Metals Strategy (GLD/SLV)",
-      "allocation": 0.00,
+      "allocation": 0.0,
       "daily_amount": 0.0,
       "etfs": [
         "GLD",
@@ -304,7 +271,7 @@
     },
     "options": {
       "name": "Options Premium Strategy (Cash-Secured Puts)",
-      "allocation": 0.60,
+      "allocation": 0.6,
       "daily_amount": 30.0,
       "status": "active",
       "enabled": true,
@@ -361,8 +328,7 @@
       "Dec 15 2025: PARAMETER CHANGE - Daily investment: $10 \u2192 $50 (5x increase)",
       "Dec 15 2025: STRATEGIC PIVOT - Options-first allocation approved by CEO",
       "Dec 15 2025: Options = 100% of profits, increase allocation 5% \u2192 35%",
-      "Dec 15 2025: KEEP core holdings (SPY, bonds) for stability and collateral",
-      "Dec 15 2025: REMOVED CRYPTO - 0% win rate, focus on options (75% win rate)"
+      "Dec 15 2025: KEEP core holdings (SPY, bonds) for stability and collateral"
     ]
   },
   "automation": {
@@ -524,9 +490,7 @@
     "[2025-12-15 18:13] CEO APPROVED: Increase options allocation from 5% \u2192 35%",
     "[2025-12-15 18:13] RATIONALE: Options = 100% of profits ($327), 75% win rate",
     "[2025-12-15 18:13] KEEP: SPY (core), IEF/SHY (hedge) - these provide stability",
-    "[2025-12-15 18:13] LIQUIDATE: TLT ($20 too small), crypto spots (0% win rate)",
-    "[2025-12-15 18:13] NEW DAILY BUDGET: $50/day ($25 options, $12.50 equities, $7.50 bonds)",
-    "[2025-12-15 18:18] \ud83d\udeab CRYPTO REMOVED: 0% win rate, redirecting capital to options"
+    "[2025-12-15 18:13] NEW DAILY BUDGET: $50/day ($25 options, $12.50 equities, $7.50 bonds)"
   ],
   "options": {
     "last_theta_harvest": "2025-12-05T17:53:46.287290+00:00",

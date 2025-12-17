@@ -9,7 +9,6 @@ Signal Mappings:
 - Fed Rate odds → Bond/Treasury trades (TLT, SHY, BND)
 - Election odds → Sector trades (XLE, XLF, XLV)
 - Recession odds → Volatility trades (VIX, defensive sectors)
-- BTC price odds → Crypto allocation adjustments
 
 Author: Trading System
 Created: 2025-12-09
@@ -40,7 +39,6 @@ class AssetClass(Enum):
 
     EQUITY = "equity"
     BOND = "bond"
-    CRYPTO = "crypto"
     SECTOR = "sector"
     VOLATILITY = "volatility"
 
@@ -128,15 +126,12 @@ class KalshiOracle:
                 "risk_on": ["QQQ", "SPY", "IWM"],  # Growth
             },
         },
-        # Crypto price targets
         "btc_price": {
-            "pattern": ["BTC", "BITCOIN"],
             "thresholds": {
                 "bullish": 60,  # >60% odds of hitting target
                 "bearish": 40,
             },
             "targets": {
-                "crypto": ["BTC", "ETH"],  # Via Alpaca crypto
             },
         },
     }
@@ -378,19 +373,13 @@ class KalshiOracle:
 
         return None  # No signal in neutral zone
 
-    def generate_crypto_signal(self, markets: list[MarketOddsSnapshot]) -> Optional[KalshiSignal]:
         """
-        Generate crypto allocation signal from BTC price prediction markets.
         """
         config = self.SIGNAL_THRESHOLDS["btc_price"]
-        crypto_markets = self._find_markets_by_pattern(config["pattern"], markets)
 
-        if not crypto_markets:
             return None
 
-        # Find bullish price target markets (e.g., "BTC > $100K by end of year")
-        crypto_markets.sort(key=lambda m: m.volume, reverse=True)
-        primary_market = crypto_markets[0]
+        # Find bullish price target markets (e.g., > $100K by end of year")
         odds = primary_market.yes_odds
 
         thresholds = config["thresholds"]
@@ -399,25 +388,19 @@ class KalshiOracle:
             return KalshiSignal(
                 signal_type="btc_price",
                 direction=SignalDirection.BULLISH,
-                asset_class=AssetClass.CRYPTO,
-                target_symbols=config["targets"]["crypto"],
                 confidence=min(odds / 100, 0.85),
                 kalshi_odds=odds,
-                threshold_crossed=f"BTC target odds {odds}% > {thresholds['bullish']}%",
-                reasoning=f"High probability ({odds}%) of BTC hitting price target - "
-                "increase crypto allocation.",
+                threshold_crossed=ftarget odds {odds}% > {thresholds['bullish']}%",
+                reasoning=f"High probability ({odds}%) of hitting price target - "
             )
         elif odds <= thresholds["bearish"]:
             return KalshiSignal(
                 signal_type="btc_price",
                 direction=SignalDirection.BEARISH,
-                asset_class=AssetClass.CRYPTO,
-                target_symbols=config["targets"]["crypto"],
                 confidence=min((100 - odds) / 100, 0.75),
                 kalshi_odds=odds,
-                threshold_crossed=f"BTC target odds {odds}% < {thresholds['bearish']}%",
-                reasoning=f"Low probability ({odds}%) of BTC hitting target - "
-                "reduce crypto exposure.",
+                threshold_crossed=ftarget odds {odds}% < {thresholds['bearish']}%",
+                reasoning=f"Low probability ({odds}%) of hitting target - "
             )
 
         return None
@@ -441,7 +424,6 @@ class KalshiOracle:
         signal_generators = [
             self.generate_fed_signal,
             self.generate_recession_signal,
-            self.generate_crypto_signal,
         ]
 
         for generator in signal_generators:
@@ -463,7 +445,7 @@ class KalshiOracle:
         Get any Kalshi-derived signal relevant to a specific symbol.
 
         Args:
-            symbol: The trading symbol to check (e.g., "TLT", "SPY", "BTC")
+            symbol: The trading symbol to check (e.g., "TLT", "SPY", )
 
         Returns:
             KalshiSignal if there's a relevant signal, None otherwise

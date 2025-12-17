@@ -87,10 +87,9 @@ class TestTraceSpan:
     def test_span_metadata(self):
         """Test adding metadata to span."""
         span = TraceSpan(name="test_span")
-        span.add_metadata({"symbol": "BTCUSD", "confidence": 0.85})
+        span.add_metadata({"symbol": "confidence": 0.85})
 
-        assert span.metadata["symbol"] == "BTCUSD"
-        assert span.metadata["confidence"] == 0.85
+        assert span.metadata["symbol"] == assert span.metadata["confidence"] == 0.85
 
     def test_span_cost_tracking(self):
         """Test setting cost on span."""
@@ -104,15 +103,14 @@ class TestTraceSpan:
     def test_span_serialization(self):
         """Test span to_dict."""
         span = TraceSpan(name="test_span", trace_type=TraceType.TRADE)
-        span.add_metadata({"symbol": "ETHUSD"})
+        span.add_metadata({"symbol": })
         span.complete()
 
         data = span.to_dict()
 
         assert data["name"] == "test_span"
         assert data["trace_type"] == "trade"
-        assert data["metadata"]["symbol"] == "ETHUSD"
-        assert data["status"] == "success"
+        assert data["metadata"]["symbol"] == assert data["status"] == "success"
 
 
 class TestTrace:
@@ -225,13 +223,13 @@ class TestEvaluationDataset:
             dataset = EvaluationDataset(name="test", storage_path=Path(tmpdir))
 
             dataset.add_example(
-                inputs={"symbol": "BTCUSD", "price": 50000},
+                inputs={"symbol": "price": 50000},
                 expected_output="BUY",
                 actual_output="BUY",
             )
 
             dataset.add_example(
-                inputs={"symbol": "ETHUSD", "price": 3000},
+                inputs={"symbol": "price": 3000},
                 expected_output="SELL",
                 actual_output="HOLD",
             )
@@ -264,8 +262,7 @@ class TestTradeEvaluator:
             evaluator = TradeEvaluator(storage_path=Path(tmpdir))
 
             record_id = evaluator.record_decision(
-                symbol="BTCUSD",
-                decision="BUY",
+                symbol=decision="BUY",
                 confidence=0.85,
                 reasoning="Strong momentum signal",
                 price=50000.0,
@@ -282,8 +279,7 @@ class TestTradeEvaluator:
 
             # Record decision
             record_id = evaluator.record_decision(
-                symbol="BTCUSD",
-                decision="BUY",
+                symbol=decision="BUY",
                 confidence=0.85,
                 reasoning="Strong momentum signal",
                 price=50000.0,
@@ -306,8 +302,7 @@ class TestTradeEvaluator:
             evaluator = TradeEvaluator(storage_path=Path(tmpdir))
 
             record_id = evaluator.record_decision(
-                symbol="BTCUSD",
-                decision="BUY",
+                symbol=decision="BUY",
                 confidence=0.9,
                 reasoning="Expected breakout",
                 price=50000.0,
@@ -329,8 +324,7 @@ class TestTradeEvaluator:
             # Record multiple decisions
             for i in range(5):
                 record_id = evaluator.record_decision(
-                    symbol="BTCUSD",
-                    decision="BUY",
+                    symbol=decision="BUY",
                     confidence=0.7,
                     reasoning="Test",
                     price=50000.0,
@@ -366,7 +360,7 @@ class TestTraceableDecorator:
             def make_decision(symbol: str, price: float) -> str:
                 return "BUY"
 
-            result = make_decision("BTCUSD", 50000.0)
+            result = make_decision(50000.0)
 
             assert result == "BUY"
 
@@ -386,7 +380,7 @@ class TestTraceableDecorator:
             async def async_make_decision(symbol: str) -> str:
                 return "SELL"
 
-            result = await async_make_decision("ETHUSD")
+            result = await async_make_decision()
 
             assert result == "SELL"
 
@@ -399,8 +393,7 @@ class TestTraceDecisionRecord:
         record = TradeDecisionRecord(
             record_id="abc123",
             timestamp=datetime.now(timezone.utc),
-            symbol="BTCUSD",
-            decision="BUY",
+            symbol=decision="BUY",
             confidence=0.85,
             reasoning="Strong momentum",
             price_at_decision=50000.0,

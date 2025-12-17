@@ -85,12 +85,9 @@ UNCERTAINTY_TERMS = [
     "unclear",
 ]
 
-CRYPTO_TERMS = [
-    "bitcoin",
     "btc",
     "ethereum",
     "eth",
-    "crypto",
     "blockchain",
     "defi",
     "nft",
@@ -120,7 +117,6 @@ class TextFeatures:
     net_sentiment: float  # bullish - bearish
 
     # Domain-specific
-    crypto_relevance: float
     financial_density: float  # % of financial terms
 
     # TF-IDF top terms
@@ -138,7 +134,6 @@ class TextFeatures:
             "bearish_score": self.bearish_score,
             "uncertainty_score": self.uncertainty_score,
             "net_sentiment": self.net_sentiment,
-            "crypto_relevance": self.crypto_relevance,
             "financial_density": self.financial_density,
             "top_terms": self.top_terms,
         }
@@ -300,7 +295,6 @@ class TextFeatureEngineer:
         bullish_count = self._count_terms(words, BULLISH_TERMS)
         bearish_count = self._count_terms(words, BEARISH_TERMS)
         uncertainty_count = self._count_terms(words, UNCERTAINTY_TERMS)
-        crypto_count = self._count_terms(words, CRYPTO_TERMS)
 
         total_financial = bullish_count + bearish_count + uncertainty_count
 
@@ -309,7 +303,6 @@ class TextFeatureEngineer:
             "bearish_score": bearish_count / word_count,
             "uncertainty_score": uncertainty_count / word_count,
             "net_sentiment": (bullish_count - bearish_count) / max(word_count, 1),
-            "crypto_relevance": crypto_count / word_count,
             "financial_density": total_financial / word_count,
         }
 
@@ -328,7 +321,6 @@ class TextFeatureEngineer:
             bearish_score=financial["bearish_score"],
             uncertainty_score=financial["uncertainty_score"],
             net_sentiment=financial["net_sentiment"],
-            crypto_relevance=financial["crypto_relevance"],
             financial_density=financial["financial_density"],
             top_terms=tfidf[:5],
             embedding=embedding,
@@ -398,10 +390,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     test_headlines = [
-        "Bitcoin surges past $100,000 as institutional buying continues",
-        "Crypto market faces uncertainty amid regulatory concerns",
-        "Ethereum breaks out to new highs, analysts bullish on ETH",
-        "Market selloff continues as fear grips investors",
+        "Ethereum breaks out to new highs, analysts bullish on "Market selloff continues as fear grips investors",
     ]
 
     engineer = get_engineer()
@@ -412,7 +401,6 @@ if __name__ == "__main__":
         print(f"\n'{headline[:50]}...'")
         print(f"  Signal: {features.get_signal()}")
         print(f"  Net Sentiment: {features.net_sentiment:.4f}")
-        print(f"  Crypto Relevance: {features.crypto_relevance:.4f}")
 
     print("\n=== Batch Analysis ===")
     result = engineer.analyze_news_batch(test_headlines)

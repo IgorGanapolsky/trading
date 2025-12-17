@@ -46,7 +46,6 @@ class TestAssetClass:
         """Test that all expected asset classes are defined."""
         assert AssetClass.EQUITY.value == "equity"
         assert AssetClass.BOND.value == "bond"
-        assert AssetClass.CRYPTO.value == "crypto"
         assert AssetClass.SECTOR.value == "sector"
         assert AssetClass.VOLATILITY.value == "volatility"
 
@@ -160,11 +159,9 @@ class TestKalshiOracle:
                 fetched_at=now,
             ),
             MarketOddsSnapshot(
-                ticker="KXBTC-100K-DEC25",
-                title="BTC Above $100K by Dec 2025",
-                yes_odds=70.0,  # Bullish BTC
-                volume=50000,
-                category="crypto",
+                ticker="KX-100K-DEC25",
+                title=Above $100K by Dec 2025",
+                yes_odds=70.0,  # Bullish volume=50000,
                 fetched_at=now,
             ),
         ]
@@ -182,9 +179,6 @@ class TestKalshiOracle:
         assert len(fed_markets) == 1
         assert fed_markets[0].ticker == "KXFED-DEC25-HIKE"
 
-        crypto_markets = oracle_no_client._find_markets_by_pattern(["BTC", "BITCOIN"], mock_markets)
-        assert len(crypto_markets) == 1
-        assert crypto_markets[0].ticker == "KXBTC-100K-DEC25"
 
     def test_generate_fed_signal_bearish(self, oracle_no_client, mock_markets):
         """Test Fed signal generation with high hike odds (bearish bonds)."""
@@ -249,31 +243,23 @@ class TestKalshiOracle:
         # Should recommend risk-on assets
         assert any(sym in signal.target_symbols for sym in ["QQQ", "SPY", "IWM"])
 
-    def test_generate_crypto_signal_bullish(self, oracle_no_client, mock_markets):
-        """Test crypto signal with high probability of hitting target."""
-        signal = oracle_no_client.generate_crypto_signal(mock_markets)
 
         assert signal is not None
         assert signal.signal_type == "btc_price"
         assert signal.direction == SignalDirection.BULLISH
-        assert signal.asset_class == AssetClass.CRYPTO
-        assert "BTC" in signal.target_symbols
+        assert in signal.target_symbols
 
-    def test_generate_crypto_signal_bearish(self, oracle_no_client):
-        """Test crypto signal with low probability of hitting target."""
         now = datetime.now(timezone.utc)
         markets = [
             MarketOddsSnapshot(
-                ticker="KXBTC-100K-DEC25",
-                title="BTC Above $100K by Dec 2025",
+                ticker="KX-100K-DEC25",
+                title=Above $100K by Dec 2025",
                 yes_odds=30.0,  # Low odds
                 volume=50000,
-                category="crypto",
                 fetched_at=now,
             ),
         ]
 
-        signal = oracle_no_client.generate_crypto_signal(markets)
 
         assert signal is not None
         assert signal.direction == SignalDirection.BEARISH

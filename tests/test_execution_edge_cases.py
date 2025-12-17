@@ -467,7 +467,6 @@ class TestPriceEdgeCases:
             return round(price / tick_size) * tick_size
 
         assert validate_price_precision(450.123) == 450.12
-        assert validate_price_precision(0.0001, 0.0001) == 0.0001  # Crypto precision
 
     def test_limit_price_reasonableness(self):
         """Check limit prices are reasonable."""

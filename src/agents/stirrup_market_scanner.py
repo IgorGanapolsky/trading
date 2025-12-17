@@ -157,7 +157,6 @@ if STIRRUP_AVAILABLE:
     class CheckMarketStatusParams(BaseModel):
         """Parameters for market status check"""
 
-        market: str = Field(default="US", description="Market to check: US, CRYPTO")
 
     def check_market_status(params: CheckMarketStatusParams) -> ToolResult[ToolUseCountMetadata]:
         """Check if markets are open"""
@@ -183,7 +182,6 @@ if STIRRUP_AVAILABLE:
 
     CHECK_MARKET_TOOL = Tool(
         name="check_market_status",
-        description="Check if stock/crypto markets are currently open for trading",
         parameters=CheckMarketStatusParams,
         executor=check_market_status,
     )

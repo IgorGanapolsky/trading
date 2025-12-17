@@ -6,7 +6,6 @@ This script monitors whether scheduled GitHub Actions workflows are actually run
 It tracks expected executions vs actual executions and alerts on gaps.
 
 Problem Solved:
-- Crypto trading was supposed to run every weekend for 3 weeks but had 0 executions
 - No one noticed because there was no monitoring of workflow execution
 
 How it works:

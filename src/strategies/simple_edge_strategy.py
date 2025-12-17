@@ -5,7 +5,6 @@ Simple Edge Strategy - What Actually Works
 Based on comprehensive analysis:
 1. Academic research: 97% of day traders lose, swing trading wins
 2. Backtest data: Mixed asset DCA with 62% win rate works
-3. Live trades: Options selling was 100% win rate, crypto buying 0%
 
 This strategy:
 - Swing trades (1-6 day holds)

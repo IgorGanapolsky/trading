@@ -1,155 +1,51 @@
 {
   "version": "2.0",
   "last_updated": "2025-12-09",
-  "description": "YouTube channel monitoring configuration for autonomous stock AND crypto pick discovery",
   "use_llm_analysis": true,
   "lookback_hours": 24,
-  "channels": [
-    {
-      "name": "Parkev Tatevosian, CFA",
-      "channel_id": "@parkevtatevosiancfa9544",
-      "handle": "@parkevtatevosiancfa9544",
-      "focus": "Stock picks, value investing, dividend stocks, long-term investing",
-      "priority": "high",
-      "keywords": [
-        "stock", "stocks", "investing", "investment", "buy",
-        "dividend", "analysis", "portfolio", "recommendation",
-        "pick", "growth", "value", "earnings", "revenue"
-      ],
-      "notes": "CFA charterholder, focuses on long-term stock picks with detailed analysis"
-    },
-    {
-      "name": "Joseph Carlson",
-      "channel_id": "@josephcarlsonshow",
-      "handle": "@josephcarlsonshow",
-      "focus": "Index investing, dividend growth, portfolio reviews",
-      "priority": "medium",
-      "keywords": [
-        "dividend", "index", "vti", "spy", "portfolio",
-        "investing", "passive income", "growth", "review"
-      ],
-      "notes": "Daily portfolio updates, dividend growth strategy, transparent performance tracking"
-    },
-    {
-      "name": "Let's Talk Money! with Joseph Hogue",
-      "channel_id": "@LetsTalkMoneywithJosephHogue",
-      "handle": "@LetsTalkMoneywithJosephHogue",
-      "focus": "Stock analysis, dividend investing, financial planning",
-      "priority": "medium",
-      "keywords": [
-        "dividend", "stock analysis", "investing", "portfolio",
-        "passive income", "growth stocks", "value investing"
-      ],
-      "notes": "Former equity analyst, focuses on dividend stocks and portfolio building"
-    },
-    {
-      "name": "Financial Education",
-      "channel_id": "@FinancialEducation2",
-      "handle": "@FinancialEducation2",
-      "focus": "Growth stocks, market analysis, Tesla/tech focus",
-      "priority": "medium",
-      "keywords": [
-        "growth stock", "market", "tesla", "tech stocks",
-        "analysis", "opportunity", "investing", "portfolio"
-      ],
-      "notes": "High-growth tech focus, daily market commentary, large following"
-    },
-    {
-      "name": "Everything Money",
-      "channel_id": "@EverythingMoney",
-      "handle": "@EverythingMoney",
-      "focus": "Stock picking, market analysis, value investing",
-      "priority": "medium",
-      "keywords": [
-        "stock", "value", "investing", "opportunity",
-        "analysis", "market", "undervalued", "pick"
-      ],
-      "notes": "Deep value analysis, contrarian picks, detailed research"
-    },
-    {
-      "name": "Coin Bureau",
-      "channel_id": "@CoinBureau",
-      "handle": "@CoinBureau",
-      "focus": "Crypto analysis, market predictions, altcoin reviews, regulatory updates",
-      "priority": "high",
-      "asset_class": "crypto",
-      "keywords": [
-        "bitcoin", "ethereum", "crypto", "altcoin", "defi",
-        "2026", "prediction", "analysis", "bullrun", "altseason"
-      ],
-      "notes": "Top crypto analysis channel, institutional-grade research, 2M+ subscribers"
-    },
-    {
-      "name": "Benjamin Cowen",
-      "channel_id": "@intothecryptoverse",
-      "handle": "@intothecryptoverse",
-      "focus": "Crypto macro analysis, Bitcoin cycles, risk management",
-      "priority": "high",
-      "asset_class": "crypto",
-      "keywords": [
-        "bitcoin", "ethereum", "macro", "cycle", "risk",
-        "lengthening cycles", "diminishing returns", "analysis"
-      ],
-      "notes": "PhD researcher, data-driven analysis, focus on Bitcoin cycles and risk metrics"
-    },
-    {
-      "name": "DataDash",
-      "channel_id": "@DataDash",
-      "handle": "@DataDash",
-      "focus": "Crypto trading, technical analysis, altcoin picks",
-      "priority": "medium",
-      "asset_class": "crypto",
-      "keywords": [
-        "crypto", "bitcoin", "altcoin", "trading", "analysis",
-        "portfolio", "picks", "bullrun"
-      ],
-      "notes": "Long-running crypto channel, practical trading focus"
-    },
-    {
-      "name": "Altcoin Daily",
-      "channel_id": "@AltcoinDaily",
-      "handle": "@AltcoinDaily",
-      "focus": "Daily crypto news, altcoin picks, market updates",
-      "priority": "medium",
-      "asset_class": "crypto",
-      "keywords": [
-        "crypto", "altcoin", "bitcoin", "ethereum", "news",
-        "today", "picks", "bullish"
-      ],
-      "notes": "Daily crypto updates, high-frequency content, altcoin focus"
-    },
-    {
-      "name": "Crypto Banter",
-      "channel_id": "@CryptoBanterGroup",
-      "handle": "@CryptoBanterGroup",
-      "focus": "Live crypto trading, market analysis, guest experts",
-      "priority": "medium",
-      "asset_class": "crypto",
-      "keywords": [
-        "crypto", "trading", "bitcoin", "defi", "live",
-        "analysis", "pump", "altseason"
-      ],
-      "notes": "Live trading shows, diverse expert opinions, high engagement"
-    }
-  ],
   "global_keywords": [
-    "stock", "stocks", "investing", "investment", "buy",
-    "portfolio", "trading", "market", "dividend", "growth",
-    "analysis", "pick", "recommendation", "opportunity",
-    "undervalued", "earnings", "revenue", "profitable",
-    "bullish", "long-term", "value", "fundamental"
+    "stock",
+    "stocks",
+    "investing",
+    "investment",
+    "buy",
+    "portfolio",
+    "trading",
+    "market",
+    "dividend",
+    "growth",
+    "analysis",
+    "pick",
+    "recommendation",
+    "opportunity",
+    "undervalued",
+    "earnings",
+    "revenue",
+    "profitable",
+    "bullish",
+    "long-term",
+    "value",
+    "fundamental"
   ],
   "exclude_keywords": [
-    "forex", "day trading", "options", "futures", "swing trading",
-    "scalping", "technical analysis only", "chart pattern",
-    "casino", "gambling", "speculation", "penny stock",
-    "pump and dump", "get rich quick", "guaranteed returns",
-    "memecoin", "rugpull", "100x"
-  ],
-  "crypto_keywords": [
-    "bitcoin", "btc", "ethereum", "eth", "solana", "sol",
-    "crypto", "cryptocurrency", "altcoin", "defi", "bullrun",
-    "altseason", "2026", "halving", "etf", "institutional"
+    "forex",
+    "day trading",
+    "options",
+    "futures",
+    "swing trading",
+    "scalping",
+    "technical analysis only",
+    "chart pattern",
+    "casino",
+    "gambling",
+    "speculation",
+    "penny stock",
+    "pump and dump",
+    "get rich quick",
+    "guaranteed returns",
+    "memecoin",
+    "rugpull",
+    "100x"
   ],
   "analysis_parameters": {
     "min_video_length_seconds": 180,
@@ -161,15 +57,6 @@
     "min_ticker_mentions": 3,
     "confidence_threshold": "medium"
   },
-  "notes": [
-    "Channels selected for long-term fundamental investing AND crypto focus",
-    "NOW INCLUDES: 5 stock channels + 5 crypto channels (Coin Bureau, Benjamin Cowen, DataDash, Altcoin Daily, Crypto Banter)",
-    "Excludes forex, day trading, memecoins, and speculative content",
-    "Prioritizes channels with professional credentials or proven track record",
-    "System checks daily at 8:00 AM ET before market open",
-    "Automatically updates watchlists with high-confidence picks",
-    "Crypto channels marked with asset_class: crypto for filtering"
-  ],
   "usage": {
     "monitor_command": "python3 scripts/youtube_monitor.py",
     "cron_schedule": "0 8 * * 1-5",

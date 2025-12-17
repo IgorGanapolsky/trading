@@ -22,7 +22,7 @@ class TestResearchOutput:
         from src.ml.gemini_deep_research import ResearchOutput
 
         output = ResearchOutput(
-            research_name="BTC_test",
+            research_name=_test",
             timestamp="20251216_120000",
             text_content={"recommendation": "BUY", "confidence": 0.8},
             visual_outputs=[
@@ -31,7 +31,7 @@ class TestResearchOutput:
             sources=["https://example.com"],
         )
 
-        assert output.research_name == "BTC_test"
+        assert output.research_name == _test"
         assert output.has_visuals is True
         assert output.text_content["recommendation"] == "BUY"
 
@@ -123,7 +123,7 @@ class TestGeminiDeepResearchVisuals:
                 researcher = GeminiDeepResearch(output_dir=output_dir)
 
             research_output = ResearchOutput(
-                research_name="BTC_test",
+                research_name=_test",
                 timestamp="20251216_120000",
                 text_content={"recommendation": "HOLD"},
             )
@@ -133,7 +133,7 @@ class TestGeminiDeepResearchVisuals:
             assert filepath.exists()
             with open(filepath) as f:
                 saved_data = json.load(f)
-            assert saved_data["research_name"] == "BTC_test"
+            assert saved_data["research_name"] == _test"
 
     @patch("src.ml.gemini_deep_research.GEMINI_AVAILABLE", True)
     def test_get_latest_research_none(self):
@@ -155,12 +155,11 @@ class TestResearchVisualizer:
     def sample_research_data(self):
         """Sample research data for testing."""
         return {
-            "research_name": "BTC_market_research",
+            "research_name": _market_research",
             "recommendation": "BUY",
             "confidence": 0.75,
             "sentiment": "bullish",
             "key_levels": {"support": [95000, 92000], "resistance": [100000, 105000]},
-            "allocation": {"crypto": 30, "stocks": 50, "cash": 20},
             "risk_level": "medium",
             "key_risks": ["Fed policy", "Geopolitical tensions"],
         }

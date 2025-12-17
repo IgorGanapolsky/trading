@@ -50,16 +50,11 @@ class TestAutomationCoverage:
             "See: ll_022_options_not_automated_dec12.md"
         )
 
-    def test_crypto_trading_automated(self, daily_workflow):
-        """Crypto trading must be mentioned in workflow."""
         patterns = [
-            r"crypto",
-            r"ENABLE_CRYPTO",
             r"tier.?5",
             r"weekend.*trad",
         ]
         assert any(re.search(p, daily_workflow, re.IGNORECASE) for p in patterns), (
-            "Crypto trading not found in daily workflow"
         )
 
     def test_no_manual_only_strategies(self, daily_workflow):
@@ -86,7 +81,6 @@ class TestAutomationCoverage:
         strategy_patterns = {
             "tier1": r"Core|SPY|ETF|autonomous_trader",
             "tier2": r"Growth|NVDA|GOOGL|AMZN|autonomous_trader",
-            "tier5": r"crypto|ENABLE_CRYPTO|tier.?5",
         }
 
         for strategy in active_strategies:

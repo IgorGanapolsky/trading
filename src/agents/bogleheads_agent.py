@@ -115,7 +115,6 @@ class BogleHeadsAgent(BaseAgent):
         1. Analyze the "Mood" of the forum based on these topic titles. Are people panicking? Euphoric? Discussing tax loss harvesting?
         2. If the user is asking about '{symbol}', provide specific advice based on Boglehead principles.
            - If '{symbol}' is a broad index ETF (SPY, VOO, VTI, QQQ), you generally APPROVE.
-           - If '{symbol}' is a single stock or crypto, you generally DISAPPROVE or advise CAUTION (max 5% of portfolio).
            - If '{symbol}' is a leveraged ETF (TQQQ, SOXL), you strongly DISAPPROVE.
 
         OUTPUT FORMAT (JSON):

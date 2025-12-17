@@ -97,7 +97,7 @@ class PreTradeRAGCheck:
         Verify if a trade is safe based on lessons learned.
 
         Args:
-            symbol: Trading symbol (e.g., "NVDA", "BTC/USD")
+            symbol: Trading symbol (e.g., "NVDA", /USD")
             action: Trade action ("BUY" or "SELL")
             quantity: Number of shares/units
             strategy: Strategy name (e.g., "momentum", "mean_reversion")
@@ -572,7 +572,6 @@ if __name__ == "__main__":
     trades = [
         {"symbol": "SPY", "action": "BUY", "quantity": 10, "strategy": "momentum"},
         {"symbol": "NVDA", "action": "BUY", "quantity": 50, "strategy": "mean_reversion"},
-        {"symbol": "BTC/USD", "action": "BUY", "quantity": 0.1, "strategy": "crypto_momentum"},
     ]
 
     for trade in trades:

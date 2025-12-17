@@ -93,7 +93,6 @@ def _update_system_state_with_prediction_trade(trade_record: dict[str, Any], log
         "name": "Prediction Markets Strategy (Kalshi)",
         "allocation": 0.05,
         "daily_amount": 5.0,
-        "markets": ["elections", "economics", "crypto", "weather"],
         "trades_executed": 0,
         "total_invested": 0.0,
         "status": "active",
@@ -234,7 +233,6 @@ def _apply_daily_input_scaling(logger) -> None:
     )
 
 
-# CRYPTO REMOVED - CEO directive Dec 16, 2025 (0% win rate, focus on options)
 # See rag_knowledge/lessons_learned/ll_049_config_workflow_sync_failure_dec16.md
 
 

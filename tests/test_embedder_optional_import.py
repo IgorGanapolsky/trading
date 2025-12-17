@@ -58,12 +58,8 @@ def test_deepagents_tools_import_without_rag():
         pytest.skip("langchain_core not installed - skipping test")
 
 
-def test_crypto_strategy_imports_without_rag():
-    """Test that crypto strategy can be imported without RAG dependencies."""
     # This should work even if RAG dependencies aren't installed
-    from src.strategies.crypto_strategy import CryptoStrategy
 
     # Should be able to create instance
-    strategy = CryptoStrategy(daily_amount=0.50)
     assert strategy is not None
     assert strategy.daily_amount == 0.50

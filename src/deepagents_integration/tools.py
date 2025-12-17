@@ -17,7 +17,6 @@ from src.utils.market_data import get_market_data_provider
 logger = logging.getLogger(__name__)
 
 
-# Lazy import to avoid breaking crypto trading when RAG dependencies aren't installed
 def _get_sentiment_store():
     """Lazy import of SentimentRAGStore."""
     try:

@@ -200,9 +200,6 @@ class MandatoryTradeGate:
 
             # Check for specific known issues
             known_issues = {
-                "crypto": "ll_043: Crypto strategy removed - 0% win rate",
-                "btc": "ll_043: Crypto trading disabled",
-                "eth": "ll_043: Crypto trading disabled",
                 "200x": "ll_001: Check for 200x order amount error",
             }
 
@@ -320,10 +317,9 @@ class MandatoryTradeGate:
         ALL gate decisions are traced to LangSmith for observability.
 
         Args:
-            symbol: Trading symbol (e.g., "SPY", "BTCUSD")
+            symbol: Trading symbol (e.g., "SPY", )
             amount: Dollar amount of the trade
             side: "BUY" or "SELL"
-            strategy: Strategy name (e.g., "equities", "options", "crypto")
             bypass_reason: If set, logs bypass but still validates
 
         Returns:

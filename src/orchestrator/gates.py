@@ -601,7 +601,6 @@ class Gate3Sentiment:
 
         neg_threshold = float(os.getenv("LLM_NEGATIVE_SENTIMENT_THRESHOLD", "-0.2"))
         session_type = (session_profile or {}).get("session_type")
-        if session_type == "off_hours_crypto_proxy":
             neg_threshold = float(os.getenv("WEEKEND_SENTIMENT_FLOOR", "-0.1"))
 
         # Try Playwright scraping first

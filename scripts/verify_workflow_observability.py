@@ -26,7 +26,6 @@ from pathlib import Path
 # Workflows that make LLM calls
 LLM_WORKFLOWS = [
     ".github/workflows/daily-trading.yml",
-    ".github/workflows/weekend-crypto-trading.yml",
     ".github/workflows/combined-trading.yml",
 ]
 

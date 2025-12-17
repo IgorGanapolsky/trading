@@ -794,20 +794,11 @@ def generate_world_class_dashboard() -> str:
     today_trades = load_json_file(today_trades_file)
 
     # Determine active strategy
-    is_crypto_mode = False
 
-    # Check today's trades for crypto
-    today_crypto_trades_count = 0
-    today_crypto_invested = 0.0
 
     if today_trades and isinstance(today_trades, list):
         for trade in today_trades:
-            if trade.get("symbol", "").endswith("USD") or trade.get("strategy") == "CryptoStrategy":
-                is_crypto_mode = True
-                today_crypto_trades_count += 1
-                today_crypto_invested += float(trade.get("amount", 0.0))
 
-    if not is_crypto_mode:
         try:
             today_str = datetime.now().strftime("%Y-%m-%d")
             log_files = [
@@ -825,13 +816,10 @@ def generate_world_class_dashboard() -> str:
                             for line in lines:
                                 if (
                                     today_str in line
-                                    and "CRYPTO STRATEGY - Daily Execution" in line
                                 ):
-                                    is_crypto_mode = True
                                     break
                         except Exception:
                             continue
-                if is_crypto_mode:
                     break
         except Exception:
             pass
@@ -839,39 +827,21 @@ def generate_world_class_dashboard() -> str:
     dashboard += """
 **Current Strategy**:
 """
-    # Get crypto strategy info from system state
     strategies = system_state.get("strategies", {})
     tier5 = strategies.get("tier5", {})
 
     # Use system state cumulative values, OR today's values if system state lags
-    crypto_trades_total = tier5.get("trades_executed", 0)
-    crypto_invested_total = tier5.get("total_invested", 0.0)
 
     # If today has trades but state doesn't reflect them (common during day), add them
     # This is a heuristic: if state total < today's total, assume state is stale
-    if crypto_trades_total < today_crypto_trades_count:
-        crypto_trades_total += today_crypto_trades_count
-        crypto_invested_total += today_crypto_invested
 
-    crypto_last_execution = tier5.get("last_execution")
-    if is_crypto_mode and not crypto_last_execution:
-        crypto_last_execution = date.today().isoformat()
 
-    if is_crypto_mode:
-        dashboard += "- **MODE**: 🌐 CRYPTO (Weekend/Holiday)\n"
-        dashboard += "- **Strategy**: Tier 5 - Cryptocurrency 24/7 (BTC/ETH)\n"
-        dashboard += "- **Allocation**: $10/day fixed (Crypto only)\n"
         dashboard += "- **Status**: ✅ Active (Executed Today)\n"
-        dashboard += f"- **Crypto Trades Executed**: {crypto_trades_total}\n"
-        dashboard += f"- **Total Crypto Invested**: ${crypto_invested_total:.2f}\n"
-        if crypto_last_execution:
-            dashboard += f"- **Last Crypto Execution**: {crypto_last_execution}\n"
     else:
         dashboard += "- **MODE**: 📈 STANDARD (Weekday)\n"
         dashboard += "- **Strategy**: Momentum (MACD + RSI + Volume)\n"
         dashboard += "- **Allocation**: 70% Core ETFs (SPY/QQQ/VOO), 30% Growth (NVDA/GOOGL/AMZN)\n"
         dashboard += "- **Daily Investment**: $10/day fixed\n"
-        dashboard += f"- **Crypto Trades (Weekend)**: {crypto_trades_total} executed, ${crypto_invested_total:.2f} invested\n"
 
     dashboard += """
 ---
@@ -1061,28 +1031,19 @@ def generate_world_class_dashboard() -> str:
 
 ---
 
-## 🔍 Crypto Trade Verification & Trust Metrics
 
-**Purpose**: Verify that crypto trades executed correctly and state tracking is accurate. This prevents the "lying" problem where trades execute but aren't tracked.
 
 ### Verification Status
 
 """
 
-    # Get crypto strategy info
     strategies = system_state.get("strategies", {})
     tier5 = strategies.get("tier5", {})
-    crypto_trades = tier5.get("trades_executed", 0)
-    crypto_invested = tier5.get("total_invested", 0.0)
-    crypto_last_execution = tier5.get("last_execution")
 
-    # Run crypto verification tests and capture results
     verification_status = "⚠️ Not Run"
     verification_details = []
     try:
-        from tests.test_crypto_trade_verification import CryptoTradeVerificationTests
 
-        tester = CryptoTradeVerificationTests()
         results = tester.run_all_tests()
 
         passed = results["passed"]
@@ -1103,9 +1064,7 @@ def generate_world_class_dashboard() -> str:
                     verification_details.append(f"**CRITICAL**: {detail['message']}")
                 elif detail["status"] == "✅":
                     verification_details.append("✅ Positions match state tracking")
-            elif detail["test"] == "Crypto strategy tracked":
                 verification_details.append(
-                    f"✅ Crypto strategy tracked: {tier5.get('name', 'Unknown')}"
                 )
             elif detail["test"] == "State file valid JSON":
                 verification_details.append("✅ State file is valid")
@@ -1121,9 +1080,6 @@ def generate_world_class_dashboard() -> str:
 | Metric | Status |
 |--------|--------|
 | **Verification Status** | {verification_status} |
-| **Crypto Trades Tracked** | {crypto_trades} |
-| **Crypto Invested (Tracked)** | ${crypto_invested:.2f} |
-| **Last Execution** | {crypto_last_execution if crypto_last_execution else "Never"} |
 
 ### Verification Details
 
@@ -1138,16 +1094,13 @@ def generate_world_class_dashboard() -> str:
     dashboard += """
 **How Verification Works**:
 1. ✅ Checks `system_state.json` exists and is valid
-2. ✅ Verifies crypto strategy (tier5) is tracked
 3. ✅ Connects to Alpaca API to get actual positions (GROUND TRUTH)
 4. ✅ Compares Alpaca positions with our state tracking
 5. ✅ Detects mismatches (trades executed but not tracked)
 
 **Critical Test**: If positions exist in Alpaca but state shows 0 trades, this indicates a state tracking bug (like the one we fixed).
 
-**Verification runs automatically** after each crypto trading execution via GitHub Actions.
 
-**Manual Verification**: Run `bash scripts/verify_crypto_trade.sh` anytime to verify independently.
 
 ---
 
