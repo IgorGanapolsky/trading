@@ -442,6 +442,64 @@ class MultiBroker:
                 timestamp=datetime.now().isoformat(),
             )
 
+    def close_position(self, symbol: str) -> OrderResult:
+        """
+        Close an entire position for a symbol.
+        
+        This properly handles both LONG and SHORT positions:
+        - Long positions: Sells to close
+        - Short positions (e.g., sold options): Buys to close
+        
+        Added Dec 17, 2025 to fix options exit bug.
+        
+        Args:
+            symbol: Stock/option symbol to close
+            
+        Returns:
+            OrderResult with close order info
+        """
+        def alpaca_call():
+            # Alpaca's close_position automatically determines buy/sell
+            return self.alpaca.close_position(symbol)
+
+        def ibkr_call():
+            if hasattr(self.ibkr, 'close_position'):
+                return self.ibkr.close_position(symbol)
+            raise NotImplementedError("IBKR close_position not available")
+
+        def tradier_call():
+            if hasattr(self.tradier, 'close_position'):
+                return self.tradier.close_position(symbol)
+            raise NotImplementedError("Tradier close_position not available")
+
+        result, broker = self._execute_with_failover(
+            alpaca_call, ibkr_call, f"close_position({symbol})", tradier_call
+        )
+
+        # Convert to unified OrderResult
+        if broker == BrokerType.ALPACA:
+            return OrderResult(
+                broker=broker,
+                order_id=str(result.id) if hasattr(result, 'id') else str(result.get('id', '')),
+                symbol=symbol,
+                side=str(result.side) if hasattr(result, 'side') else result.get('side', 'close'),
+                quantity=float(result.qty) if hasattr(result, 'qty') else float(result.get('qty', 0)),
+                status=result.status.value if hasattr(result.status, 'value') else str(result.get('status', 'pending')),
+                filled_price=float(result.filled_avg_price) if hasattr(result, 'filled_avg_price') and result.filled_avg_price else None,
+                timestamp=datetime.now().isoformat(),
+            )
+        else:
+            return OrderResult(
+                broker=broker,
+                order_id=str(result.get('id', '')),
+                symbol=symbol,
+                side=result.get('side', 'close'),
+                quantity=float(result.get('qty', 0)),
+                status=result.get('status', 'pending'),
+                filled_price=result.get('filled_price'),
+                timestamp=datetime.now().isoformat(),
+            )
+
     def get_quote(self, symbol: str) -> tuple[dict, BrokerType]:
         """Get quote from available broker."""
         from alpaca.data.historical import StockHistoricalDataClient

@@ -732,27 +732,51 @@ class TradingOrchestrator:
 
                     logger.info(f"Executing exit for {symbol}: {reason}")
 
-                    # Create sell request through trade gateway
-                    # Use abs() because short options have negative qty (e.g., -1.0)
-                    # but we need positive qty for the sell order
-                    trade_request = TradeRequest(
-                        symbol=symbol,
-                        side="sell",
-                        quantity=abs(position.quantity),
-                        source=f"position_manager.{reason}",
+                    # CRITICAL FIX Dec 17, 2025:
+                    # Use close_position() which automatically handles buy/sell side
+                    # - Long positions: Sells to close
+                    # - Short positions (sold options): Buys to close
+                    is_short_position = position.quantity < 0
+                    
+                    logger.info(
+                        f"  Position qty: {position.quantity}, "
+                        f"Type: {'SHORT (will buy to close)' if is_short_position else 'LONG (will sell to close)'}"
                     )
-
-                    decision = self.trade_gateway.evaluate(trade_request)
-
-                    if not decision.approved:
-                        logger.warning(
-                            f"Exit rejected by gateway for {symbol}: {[r.value for r in decision.rejection_reasons]}"
+                    
+                    # Try direct close_position first (cleanest for options)
+                    order = None
+                    try:
+                        if hasattr(self.executor, 'trader') and hasattr(self.executor.trader, 'close_position'):
+                            logger.info(f"  Using direct close_position() for {symbol}")
+                            order = self.executor.trader.close_position(symbol)
+                        elif hasattr(self.executor, 'close_position'):
+                            logger.info(f"  Using executor.close_position() for {symbol}")
+                            order = self.executor.close_position(symbol)
+                    except Exception as close_err:
+                        logger.warning(f"  Direct close_position failed: {close_err}")
+                    
+                    # Fallback to trade gateway if close_position didn't work
+                    if not order:
+                        exit_side = "buy" if is_short_position else "sell"
+                        logger.info(f"  Fallback: Using trade gateway with side={exit_side}")
+                        
+                        trade_request = TradeRequest(
+                            symbol=symbol,
+                            side=exit_side,
+                            quantity=abs(position.quantity),
+                            source=f"position_manager.{reason}",
                         )
-                        results["errors"].append(f"{symbol}: gateway rejection")
-                        continue
 
-                    # Execute the sell order
-                    order = self.trade_gateway.execute(decision)
+                        decision = self.trade_gateway.evaluate(trade_request)
+
+                        if not decision.approved:
+                            logger.warning(
+                                f"Exit rejected by gateway for {symbol}: {[r.value for r in decision.rejection_reasons]}"
+                            )
+                            results["errors"].append(f"{symbol}: gateway rejection")
+                            continue
+
+                        order = self.trade_gateway.execute(decision)
                     results["exits_executed"] += 1
 
                     # Record the closed trade for win/loss tracking
