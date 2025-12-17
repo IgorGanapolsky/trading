@@ -30,7 +30,6 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-
 TRACES_DIR = Path("data/traces")
 
 
