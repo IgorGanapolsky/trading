@@ -281,11 +281,37 @@ class AlpacaExecutor:
         from src.safety.mandatory_trade_gate import TradeBlockedError, validate_trade_mandatory
 
         amount = notional or (qty * 100.0 if qty else 0.0)  # Estimate for qty-based orders
+        
+        # Get account context for context-aware blocking (ll_051 prevention)
+        # This enables blocking when equity=$0 (blind trading prevention)
+        account_context = {}
+        try:
+            if hasattr(self, 'account_snapshot') and self.account_snapshot:
+                account_context = {
+                    "equity": float(self.account_snapshot.get("equity", 0)),
+                    "buying_power": float(self.account_snapshot.get("buying_power", 0)),
+                }
+            elif hasattr(self, 'trader') and self.trader:
+                # Try to get fresh account data
+                account = None
+                if hasattr(self.trader, 'get_account_info'):
+                    account = self.trader.get_account_info()
+                elif hasattr(self.trader, 'get_account'):
+                    account = self.trader.get_account()
+                if account:
+                    account_context = {
+                        "equity": float(getattr(account, 'equity', 0) or 0),
+                        "buying_power": float(getattr(account, 'buying_power', 0) or 0),
+                    }
+        except Exception as e:
+            logger.warning(f"Could not get account context for gate: {e}")
+        
         gate_result = validate_trade_mandatory(
             symbol=symbol,
             amount=amount,
             side=side.upper(),
             strategy=strategy,
+            context=account_context,
         )
 
         if not gate_result.approved:

@@ -105,14 +105,18 @@ class MandatoryTradeGate:
         self.tracing_healthy = False
         self._verify_tracing_health()
 
-        # Initialize RAG
+        # Initialize RAG - CRITICAL for learning from past mistakes
         self.rag_available = False
         self.lessons_search = None
         try:
             from src.rag.lessons_search import LessonsSearch
             self.lessons_search = LessonsSearch()
             self.rag_available = True
-            logger.info("RAG lessons search initialized for trade gate")
+            stats = self.lessons_search.get_stats()
+            logger.info(f"RAG lessons search initialized: {stats['total_chunks']} chunks, {stats['total_files']} lessons")
+            
+            # Check for recent CRITICAL failures at startup
+            self._check_recent_critical_failures()
         except Exception as e:
             logger.warning(f"RAG not available for trade gate: {e}")
 
@@ -162,9 +166,171 @@ class MandatoryTradeGate:
         except Exception as e:
             logger.warning(f"Tracing health check failed: {e}")
             self.tracing_healthy = False
+    
+    def _check_recent_critical_failures(self) -> None:
+        """
+        Check for recent CRITICAL operational failures at startup.
+        
+        This runs ONCE when the gate is initialized to warn about
+        recent lessons learned that might affect today's trading.
+        """
+        if not self.rag_available or not self.lessons_search:
+            return
+            
+        try:
+            # Query for recent critical operational failures
+            critical_queries = [
+                "CRITICAL operational failure",
+                "trade blocked catastrophe",
+                "blind trading equity zero",
+            ]
+            
+            critical_lessons = []
+            for query in critical_queries:
+                results = self.lessons_search.query(query, top_k=3)
+                for result in results:
+                    if result.score > 0.4:  # Relevance threshold
+                        content_lower = result.content.lower()
+                        if "critical" in content_lower:
+                            critical_lessons.append(result)
+            
+            if critical_lessons:
+                logger.warning("=" * 60)
+                logger.warning("🚨 CRITICAL LESSONS FOUND - READ BEFORE TRADING!")
+                logger.warning("=" * 60)
+                for lesson in critical_lessons[:3]:
+                    logger.warning(f"  📚 {lesson.lesson_file}: {lesson.section_title}")
+                logger.warning("=" * 60)
+                logger.warning("Review these lessons to avoid repeating past failures!")
+                
+        except Exception as e:
+            logger.debug(f"Critical failure check error (non-fatal): {e}")
 
     def _query_rag_for_lessons(self, symbol: str, strategy: str, side: str) -> list[str]:
-        """Query RAG for relevant lessons learned."""
+        """
+        Query RAG for relevant lessons learned using SEMANTIC SEARCH.
+        
+        This method MUST use semantic similarity, not keyword matching!
+        The lessons we have about "blind trading" or "options not closing"
+        will NOT be found by searching for "SPY trading".
+        
+        Returns:
+            List of warnings from relevant lessons. CRITICAL lessons will block trades.
+        """
+        warnings = []
+
+        # ========== SEMANTIC SEARCH QUERIES ==========
+        # Build queries that will ACTUALLY find operational failure lessons
+        semantic_queries = [
+            # Operational failure patterns
+            f"operational failure {strategy} trading",
+            f"trade execution failure {side.lower()} order",
+            "blind trading account data reading failure",
+            "portfolio sync error equity zero",
+            "API connection failure trade blocked",
+            # Symbol-specific patterns
+            f"{symbol} loss failure mistake",
+            f"{strategy} strategy failure lesson learned",
+            # General safety patterns
+            "CRITICAL severity operational failure",
+            "trade blocked safety gate",
+            "buy to close sell to close options error",
+        ]
+        
+        # Use the LessonsSearch semantic search engine
+        if self.rag_available and self.lessons_search:
+            try:
+                all_results = []
+                for query in semantic_queries[:5]:  # Top 5 queries to avoid latency
+                    results = self.lessons_search.query(query, top_k=2)
+                    all_results.extend(results)
+                
+                # Deduplicate by lesson file
+                seen_lessons = set()
+                unique_results = []
+                for result in all_results:
+                    if result.lesson_file not in seen_lessons:
+                        seen_lessons.add(result.lesson_file)
+                        unique_results.append(result)
+                
+                # Sort by relevance score
+                unique_results.sort(key=lambda r: r.score, reverse=True)
+                
+                # Process results
+                for result in unique_results[:5]:  # Top 5 relevant lessons
+                    severity = result.metadata.get("severity", "").upper()
+                    content_lower = result.content.lower()
+                    
+                    # Check for CRITICAL severity
+                    if severity == "CRITICAL" or "severity: critical" in content_lower or "severity**: critical" in content_lower:
+                        warning = f"CRITICAL: {result.lesson_file} (score: {result.score:.2f})"
+                        warnings.append(warning)
+                        logger.warning(f"🚨 RAG found CRITICAL lesson: {result.lesson_file}")
+                    elif result.score > 0.5:  # High relevance
+                        warning = f"WARNING: {result.lesson_file} - {result.section_title} (score: {result.score:.2f})"
+                        warnings.append(warning)
+                        
+                if unique_results:
+                    logger.info(f"📚 RAG semantic search found {len(unique_results)} relevant lessons")
+                    
+            except Exception as e:
+                logger.error(f"RAG semantic search failed: {e}")
+                warnings.append(f"RAG search error (falling back to keyword): {e}")
+        
+        # ========== FALLBACK: DIRECT FILE SEARCH ==========
+        # Also check lesson files directly for CRITICAL failures
+        lessons_dir = Path("rag_knowledge/lessons_learned")
+        if lessons_dir.exists():
+            try:
+                # Search for CRITICAL lessons about operational failures
+                critical_patterns = [
+                    ("blind trading", "equity", "zero"),
+                    ("options", "close", "buy to close"),
+                    ("operational failure", "catastrophe"),
+                    ("API", "failure", "account"),
+                    ("smoke test", "mandatory", "block"),
+                ]
+                
+                for lesson_file in lessons_dir.glob("*.md"):
+                    content = lesson_file.read_text().lower()
+                    
+                    # Check if CRITICAL and matches any pattern
+                    is_critical = "severity**: critical" in content or "severity: critical" in content
+                    
+                    for pattern in critical_patterns:
+                        if all(term in content for term in pattern):
+                            if is_critical:
+                                warning = f"CRITICAL: {lesson_file.stem} matches pattern {pattern}"
+                                if warning not in warnings:
+                                    warnings.append(warning)
+                                    logger.warning(f"🚨 Direct search found CRITICAL: {lesson_file.stem}")
+                            break
+                            
+            except Exception as e:
+                logger.error(f"Direct lesson search failed: {e}")
+        
+        # ========== OPERATIONAL CONTEXT CHECKS ==========
+        # Check for specific known dangerous situations
+        known_issues = {
+            "200x": "ll_001: Check for 200x order amount error",
+            "blind": "ll_051: Blind trading - verify account readable before trade",
+            "equity_zero": "ll_051: Account shows $0 equity - BLOCK TRADE",
+        }
+
+        for keyword, warning in known_issues.items():
+            if keyword in symbol.lower() or keyword in strategy.lower():
+                warnings.append(warning)
+
+        if not self.rag_available or not self.lessons_search:
+            warnings.append("RAG not available - proceeding with caution")
+
+        return warnings
+
+    def _query_rag_for_lessons_ORIGINAL_KEYWORD_MATCHING(self, symbol: str, strategy: str, side: str) -> list[str]:
+        """DEPRECATED: Original keyword matching that never worked.
+        
+        Kept for reference to show what NOT to do.
+        """
         warnings = []
 
         if not self.rag_available or not self.lessons_search:
@@ -310,6 +476,7 @@ class MandatoryTradeGate:
         side: str,
         strategy: str = "unknown",
         bypass_reason: str | None = None,
+        context: dict | None = None,
     ) -> GateResult:
         """
         MANDATORY validation before ANY trade.
@@ -317,21 +484,25 @@ class MandatoryTradeGate:
         ALL gate decisions are traced to LangSmith for observability.
 
         Args:
-            symbol: Trading symbol (e.g., "SPY", )
+            symbol: Trading symbol (e.g., "SPY")
             amount: Dollar amount of the trade
             side: "BUY" or "SELL"
+            strategy: Trading strategy type
             bypass_reason: If set, logs bypass but still validates
+            context: Optional additional context (e.g., {"equity": 0.0})
 
         Returns:
             GateResult with approved/blocked status and reasons
         """
         timestamp = datetime.now().isoformat()
+        context = context or {}
         trade_context = {
             "symbol": symbol,
             "amount": amount,
             "side": side,
             "strategy": strategy,
             "bypass_reason": bypass_reason,
+            **context,
         }
 
         # Check if gate is disabled (NOT RECOMMENDED)
@@ -350,8 +521,13 @@ class MandatoryTradeGate:
 
         logger.info(f"🚦 MANDATORY GATE: Validating {side} {symbol} ${amount:.2f} ({strategy})")
 
-        # 1. Query RAG for lessons learned
+        # 1. Query RAG for lessons learned (SEMANTIC SEARCH)
         rag_warnings = self._query_rag_for_lessons(symbol, strategy, side)
+        
+        if rag_warnings:
+            logger.info(f"📚 RAG: Found {len(rag_warnings)} relevant warning(s)")
+            for w in rag_warnings[:3]:
+                logger.info(f"   📖 {w}")
 
         # 1.5. Query Hindsight agentic memory (auto-fallback to local RAG)
         hindsight_warnings = self._query_hindsight_memory(symbol, strategy)
@@ -365,6 +541,22 @@ class MandatoryTradeGate:
         blocked = False
         block_reasons = []
 
+        # ========== CONTEXT-AWARE BLOCKING ==========
+        # Check for dangerous operational conditions (ll_051 prevention)
+        equity = context.get("equity", None)
+        buying_power = context.get("buying_power", None)
+        
+        if equity is not None and equity <= 0:
+            blocked = True
+            block_reasons.append("BLOCKED: Equity is $0 - ll_051 blind trading prevention")
+            logger.error("🚨 BLOCKING: Equity is $0 - learned from blind trading catastrophe!")
+            
+        if buying_power is not None and buying_power <= 0:
+            blocked = True  
+            block_reasons.append("BLOCKED: Buying power is $0 - cannot execute trades")
+            logger.error("🚨 BLOCKING: Buying power is $0!")
+        # ============================================
+
         # Check for blocking ML anomalies
         blocking_anomalies = [a for a in ml_anomalies if "[BLOCK]" in a.upper()]
         if blocking_anomalies and BLOCK_ON_ML_ANOMALY:
@@ -377,6 +569,7 @@ class MandatoryTradeGate:
         if critical_warnings and BLOCK_ON_RAG_WARNING:
             blocked = True
             block_reasons.extend(critical_warnings)
+            logger.error(f"🚨 BLOCKING due to CRITICAL lessons: {critical_warnings}")
 
         # Calculate confidence (lower if warnings/anomalies exist)
         total_issues = len(all_rag_warnings) + len(ml_anomalies)
@@ -464,19 +657,26 @@ def validate_trade_mandatory(
     amount: float,
     side: str,
     strategy: str = "unknown",
+    context: dict | None = None,
 ) -> GateResult:
     """
     MANDATORY function to call before ANY trade execution.
 
     This is the main entry point for trade validation.
+    
+    The context parameter allows passing operational state like equity
+    and buying_power to enable context-aware blocking based on lessons learned.
 
     Example:
-        result = validate_trade_mandatory("SPY", 100.0, "BUY", "equities")
+        result = validate_trade_mandatory(
+            "SPY", 100.0, "BUY", "equities",
+            context={"equity": account.equity, "buying_power": account.buying_power}
+        )
         if not result.approved:
             raise TradeBlockedError(result.reason)
     """
     gate = get_trade_gate()
-    return gate.validate_trade(symbol, amount, side, strategy)
+    return gate.validate_trade(symbol, amount, side, strategy, context=context)
 
 
 class TradeBlockedError(Exception):
