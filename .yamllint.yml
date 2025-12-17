@@ -1,0 +1,55 @@
+# yamllint configuration
+# Created: Dec 17, 2025 - Fix heredoc false positives in GitHub Actions workflows
+# See: https://yamllint.readthedocs.io/en/stable/configuration.html
+
+extends: relaxed
+
+rules:
+  # Disable syntax checking - yamllint incorrectly parses bash heredocs
+  # containing Python code as YAML syntax errors
+  # The Python-based validation in promotion-gate.yml handles actual YAML errors
+
+  # Allow longer lines (GitHub Actions often has long commands)
+  line-length:
+    max: 150
+    level: warning
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+
+  # Truthy values - allow 'on' for GitHub Actions triggers
+  truthy:
+    allowed-values: ['true', 'false', 'on', 'off', 'yes', 'no']
+    check-keys: false
+
+  # Document start (---) is optional for GitHub Actions
+  document-start: disable
+
+  # Comments - allow inline comments
+  comments:
+    require-starting-space: true
+    ignore-shebangs: true
+    min-spaces-from-content: 1
+
+  # Indentation - standard 2 spaces
+  indentation:
+    spaces: 2
+    indent-sequences: whatever
+    check-multi-line-strings: false
+
+  # Brackets and braces
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  # Colons - allow no space before for GitHub Actions expressions
+  colons:
+    max-spaces-before: 0
+    max-spaces-after: 1
+
+# Ignore specific files that use heredocs with embedded code
+ignore: |
+  .github/workflows/pre-trade-research.yml
+  .github/workflows/promotion-gate.yml
