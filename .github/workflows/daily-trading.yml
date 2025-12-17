@@ -524,6 +524,13 @@ jobs:
           echo "🚀 EXECUTING DAILY TRADING - $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
           echo "🚀 ========================================"
 
+          # ========== PRE-FLIGHT: LEARN FROM PAST MISTAKES ==========
+          echo "📚 Running pre-session RAG check - learning from past failures..."
+          python3 scripts/pre_session_rag_check.py --days 14 || {
+            echo "⚠️ RAG check had issues but continuing..."
+          }
+          # ========================================================
+
           # ========== PRE-FLIGHT: VERIFY OBSERVABILITY ==========
           echo "🔍 Verifying LangSmith tracing is operational..."
           python3 -c "
