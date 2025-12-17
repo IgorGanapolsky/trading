@@ -14,7 +14,7 @@ Why this exists (LL-035, Dec 15, 2025):
 
 Usage:
     python3 scripts/pre_session_rag_check.py
-    
+
     # Block if CRITICAL lessons found:
     python3 scripts/pre_session_rag_check.py --block-on-critical
 """
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 def check_recent_critical_lessons(days_back: int = 7) -> list[dict]:
     """
     Check for CRITICAL lessons learned in the past N days.
-    
+
     Returns:
         List of critical lessons with metadata
     """
@@ -43,25 +43,25 @@ def check_recent_critical_lessons(days_back: int = 7) -> list[dict]:
     if not lessons_dir.exists():
         logger.warning("No lessons_learned directory found")
         return []
-    
+
     critical_lessons = []
     cutoff_date = datetime.now() - timedelta(days=days_back)
-    
+
     for lesson_file in lessons_dir.glob("*.md"):
         try:
             content = lesson_file.read_text()
             content_lower = content.lower()
-            
+
             # Check if CRITICAL severity
             is_critical = (
-                "severity**: critical" in content_lower or 
+                "severity**: critical" in content_lower or
                 "severity: critical" in content_lower or
                 "**severity**: critical" in content_lower
             )
-            
+
             if not is_critical:
                 continue
-            
+
             # Try to extract date from content
             lesson_date = None
             for line in content.split("\n"):
@@ -75,20 +75,20 @@ def check_recent_critical_lessons(days_back: int = 7) -> list[dict]:
                         except ValueError:
                             pass
                     break
-            
+
             # Also check file modification time
             file_mtime = datetime.fromtimestamp(lesson_file.stat().st_mtime)
-            
+
             # Use whichever date is available
             effective_date = lesson_date or file_mtime
-            
+
             # Extract title/summary
             title = lesson_file.stem
             for line in content.split("\n")[:5]:
                 if line.startswith("# "):
                     title = line[2:].strip()
                     break
-            
+
             critical_lessons.append({
                 "file": lesson_file.name,
                 "title": title,
@@ -96,30 +96,30 @@ def check_recent_critical_lessons(days_back: int = 7) -> list[dict]:
                 "is_recent": effective_date >= cutoff_date,
                 "content_preview": content[:500],
             })
-            
+
         except Exception as e:
             logger.warning(f"Error reading {lesson_file}: {e}")
-    
+
     # Sort by date (most recent first)
     critical_lessons.sort(key=lambda x: x["date"], reverse=True)
-    
+
     return critical_lessons
 
 
 def query_rag_for_operational_failures() -> list[dict]:
     """
     Use semantic search to find operational failure lessons.
-    
+
     Returns:
         List of relevant lessons from semantic search
     """
     try:
         from src.rag.lessons_search import LessonsSearch
-        
+
         search = LessonsSearch()
         stats = search.get_stats()
         logger.info(f"RAG Stats: {stats['total_chunks']} chunks, {stats['total_files']} files")
-        
+
         # Key queries for operational failures
         queries = [
             "operational failure critical catastrophe",
@@ -128,7 +128,7 @@ def query_rag_for_operational_failures() -> list[dict]:
             "options not closing buy to close",
             "API failure connection error",
         ]
-        
+
         all_results = []
         for query in queries:
             results = search.query(query, top_k=3)
@@ -138,7 +138,7 @@ def query_rag_for_operational_failures() -> list[dict]:
                 "score": r.score,
                 "content_preview": r.content[:300],
             } for r in results if r.score > 0.3])
-        
+
         # Deduplicate by lesson file
         seen = set()
         unique = []
@@ -146,9 +146,9 @@ def query_rag_for_operational_failures() -> list[dict]:
             if r["lesson_file"] not in seen:
                 seen.add(r["lesson_file"])
                 unique.append(r)
-        
+
         return sorted(unique, key=lambda x: x["score"], reverse=True)[:10]
-        
+
     except ImportError as e:
         logger.warning(f"RAG not available: {e}")
         return []
@@ -171,57 +171,57 @@ def main():
         help="Days to look back for recent lessons (default: 7)"
     )
     args = parser.parse_args()
-    
+
     print("=" * 70)
     print("🔍 PRE-SESSION RAG CHECK - Learning from past mistakes")
     print("=" * 70)
     print()
-    
+
     has_critical_recent = False
-    
+
     # 1. Check for CRITICAL lessons (direct file search)
     print("📚 Checking for CRITICAL lessons learned...")
     critical_lessons = check_recent_critical_lessons(days_back=args.days)
-    
+
     if critical_lessons:
         print(f"\n🚨 Found {len(critical_lessons)} CRITICAL lessons!")
         print("-" * 50)
-        
+
         for lesson in critical_lessons:
             age_str = "RECENT" if lesson["is_recent"] else "older"
             print(f"\n📖 {lesson['title']}")
             print(f"   File: {lesson['file']}")
             print(f"   Date: {lesson['date'].strftime('%Y-%m-%d')} ({age_str})")
-            
+
             if lesson["is_recent"]:
                 has_critical_recent = True
                 print("   ⚠️  THIS IS A RECENT CRITICAL FAILURE - READ IT!")
-        
+
         print()
     else:
         print("   ✅ No CRITICAL lessons found")
-    
+
     # 2. Semantic search for operational failures
     print("\n📊 Running semantic search for operational failure patterns...")
     rag_results = query_rag_for_operational_failures()
-    
+
     if rag_results:
         print(f"\n📖 Found {len(rag_results)} relevant lessons via semantic search:")
         print("-" * 50)
-        
+
         for i, result in enumerate(rag_results[:5], 1):
             print(f"\n{i}. {result['lesson_file']} (score: {result['score']:.2f})")
             print(f"   Section: {result['section_title']}")
             print(f"   Preview: {result['content_preview'][:100]}...")
     else:
         print("   No additional lessons found via semantic search")
-    
+
     # 3. Summary
     print("\n" + "=" * 70)
     if has_critical_recent:
         print("🚨 CRITICAL RECENT FAILURES DETECTED!")
         print("   Review these lessons before trading to avoid repeating mistakes.")
-        
+
         if args.block_on_critical:
             print("\n❌ BLOCKING: --block-on-critical flag set")
             print("   Fix the issues or acknowledge before proceeding.")
@@ -230,7 +230,7 @@ def main():
             print("\n⚠️  WARNING: Trading will proceed but you should review lessons!")
     else:
         print("✅ No recent CRITICAL failures - clear to proceed")
-    
+
     print("=" * 70)
     return 0
 

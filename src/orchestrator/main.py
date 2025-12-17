@@ -2729,6 +2729,7 @@ class TradingOrchestrator:
 
             return None
 
+        bucket = "weekend"
         reallocated = None
         if hasattr(self, "smart_dca"):
             reallocated = self.smart_dca.reallocate_all_to_bucket(bucket)  # type: ignore[attr-defined]

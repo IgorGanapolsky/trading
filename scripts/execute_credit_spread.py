@@ -26,7 +26,7 @@ import json
 import logging
 import os
 import sys
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
 
 project_root = Path(__file__).parent.parent
@@ -60,7 +60,7 @@ def get_alpaca_clients():
 
     trading_client = TradingClient(api_key, secret_key, paper=paper)
     options_client = OptionHistoricalDataClient(api_key, secret_key)
-    
+
     return trading_client, options_client
 
 
@@ -136,7 +136,7 @@ def find_bull_put_spread(options_client, symbol: str, spread_width: float = 2.0,
                          target_delta: float = 0.25, min_dte: int = 20, max_dte: int = 60):
     """
     Find optimal bull put spread (sell higher strike put, buy lower strike put).
-    
+
     Collateral required = spread_width × 100 (NOT full strike × 100!)
     Example: $2 wide spread = $200 collateral (vs $2,500 for $25 CSP)
     """
@@ -181,7 +181,7 @@ def find_bull_put_spread(options_client, symbol: str, spread_width: float = 2.0,
 
             if exp_date not in puts_by_exp:
                 puts_by_exp[exp_date] = []
-            
+
             puts_by_exp[exp_date].append({
                 "symbol": option_symbol,
                 "strike": strike,
@@ -201,12 +201,12 @@ def find_bull_put_spread(options_client, symbol: str, spread_width: float = 2.0,
 
     for exp_date, puts in puts_by_exp.items():
         puts.sort(key=lambda x: x["strike"], reverse=True)  # High to low
-        
+
         for i, short_put in enumerate(puts):
             # Find long put (lower strike) approximately spread_width away
             for long_put in puts[i+1:]:
                 actual_width = short_put["strike"] - long_put["strike"]
-                
+
                 # Allow some tolerance on spread width
                 if actual_width < spread_width * 0.8 or actual_width > spread_width * 1.5:
                     continue
@@ -260,7 +260,7 @@ def execute_bull_put_spread(trading_client, options_client, symbol: str,
                             spread_width: float = 2.0, dry_run: bool = False):
     """
     Execute a bull put spread.
-    
+
     Much more capital efficient than cash-secured puts!
     Collateral = spread width × 100 (NOT full strike price)
     """
@@ -295,7 +295,7 @@ def execute_bull_put_spread(trading_client, options_client, symbol: str,
 
     # Check if we have enough buying power
     if options_bp < spread["collateral_required"]:
-        logger.error(f"❌ Insufficient options buying power!")
+        logger.error("❌ Insufficient options buying power!")
         logger.error(f"   Need: ${spread['collateral_required']:.2f}")
         logger.error(f"   Have: ${options_bp:.2f}")
         return {

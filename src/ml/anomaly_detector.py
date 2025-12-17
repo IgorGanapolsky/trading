@@ -200,13 +200,14 @@ class TradingAnomalyDetector:
         }
 
         # 1. Check for unknown symbol
-        if symbol not in all_symbols:
+        valid_symbols = [sym for symbols in self.VALID_SYMBOLS.values() for sym in symbols]
+        if symbol not in valid_symbols:
             anomaly = Anomaly(
                 anomaly_id=f"ANO-{datetime.now().strftime('%Y%m%d%H%M%S')}-SYM",
                 anomaly_type=AnomalyType.SYMBOL_UNKNOWN,
                 alert_level=AlertLevel.WARNING,
                 message=f"Unknown symbol: {symbol}",
-                details={"symbol": symbol, "valid_symbols": all_symbols},
+                details={"symbol": symbol, "valid_symbols": valid_symbols},
                 detected_at=datetime.now(timezone.utc),
                 context=context,
             )

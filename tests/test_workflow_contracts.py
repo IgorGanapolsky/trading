@@ -57,6 +57,9 @@ def test_all_cli_flags_exist():
 
     help_text = result.stdout
 
+    # Expected CLI flags that workflows depend on
+    expected_flags = ["--paper", "--live", "--dry-run", "--force"]
+
     # Check expected flags exist in CLI
     for flag in expected_flags:
         if flag in help_text:

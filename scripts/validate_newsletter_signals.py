@@ -11,6 +11,8 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from src.utils.newsletter_analyzer import NewsletterAnalyzer
+
 
 def validate_signal(signal) -> list[str]:
     """Validate a single signal for data quality issues.

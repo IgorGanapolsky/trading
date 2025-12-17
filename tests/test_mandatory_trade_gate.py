@@ -200,5 +200,5 @@ class TestRAGMLNeverSkipped:
             side="BUY",
         )
 
-        all_messages = result.rag_warnings + result.ml_anomalies
+        result.rag_warnings + result.ml_anomalies
 

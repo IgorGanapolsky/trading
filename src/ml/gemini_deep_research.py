@@ -103,13 +103,14 @@ class GeminiDeepResearch:
         (self.output_dir / "visuals").mkdir(exist_ok=True)
         (self.output_dir / "json").mkdir(exist_ok=True)
 
+    def research_crypto(self, symbol: str) -> Optional[dict[str, Any]]:
         """
         Returns sentiment, key news, and trading recommendation.
         """
         if not self.client:
             return None
 
-        query = f"""
+        query = """
 
         1. Latest news and developments (last 24-48 hours)
         2. Market sentiment from social media and news
@@ -361,6 +362,7 @@ class GeminiDeepResearch:
             status=data.get("status", "completed"),
         )
 
+    def analyze_pre_trade(self, symbol: str) -> dict[str, Any]:
         """
         Get comprehensive pre-trade analysis before executing a trade.
         """
@@ -405,4 +407,5 @@ if __name__ == "__main__":
     researcher = get_researcher()
 
     print("Testing Gemini Deep Research for Trading...")
+    result = researcher.research_market_conditions()
     print(json.dumps(result, indent=2) if result else "No result (API key needed)")

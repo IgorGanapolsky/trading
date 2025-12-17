@@ -199,20 +199,6 @@ class TestLessonDataclass:
         assert lesson.tags == []
 
 
-
-        seed_initial_lessons(store)
-
-        assert len(results) > 0
-
-        # Find the MACD lesson
-        macd_lessons = [r for r in results if "MACD" in r["title"]]
-        assert len(macd_lessons) > 0
-
-        seed_initial_lessons(store)
-
-        assert len(results) > 0
-
-
 class TestOrderValidationLessons:
     """Test order amount validation lessons."""
 

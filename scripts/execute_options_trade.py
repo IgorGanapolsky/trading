@@ -495,7 +495,7 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
         # Fall back to credit spread
         try:
             from scripts.execute_credit_spread import execute_bull_put_spread
-            return execute_bull_put_spread(trading_client, options_client, symbol, 
+            return execute_bull_put_spread(trading_client, options_client, symbol,
                                           spread_width=2.0, dry_run=dry_run)
         except Exception as e:
             logger.warning(f"Credit spread fallback failed: {e}")
@@ -564,7 +564,7 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
     except Exception as e:
         error_str = str(e)
         logger.error(f"❌ Alpaca order failed: {e}")
-        
+
         # Check if it's an insufficient buying power error
         if "insufficient options buying power" in error_str.lower():
             logger.info("🔄 CSP blocked by buying power - trying credit spread instead...")
@@ -574,7 +574,7 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
                                               spread_width=2.0, dry_run=dry_run)
             except Exception as spread_error:
                 logger.warning(f"Credit spread also failed: {spread_error}")
-        
+
         logger.info("🔄 Attempting Tradier fallback...")
         return try_tradier_fallback(symbol, dry_run)
 

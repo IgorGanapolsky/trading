@@ -56,10 +56,3 @@ def test_deepagents_tools_import_without_rag():
             assert "error" in result.lower() or "not available" in result.lower()
     except ImportError:
         pytest.skip("langchain_core not installed - skipping test")
-
-
-    # This should work even if RAG dependencies aren't installed
-
-    # Should be able to create instance
-    assert strategy is not None
-    assert strategy.daily_amount == 0.50
