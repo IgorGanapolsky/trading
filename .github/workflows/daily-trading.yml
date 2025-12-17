@@ -497,6 +497,10 @@ jobs:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           DAILY_INVESTMENT: ${{ secrets.DAILY_INVESTMENT || '10.0' }}
           PAPER_TRADING: 'true'
+          # CRITICAL FIX Dec 17: Disable bleeding strategies
+          REIT_ALLOCATION_PCT: '0'  # REITs are ALL losing - disable
+          ENABLE_CRYPTO_TRADING: 'false'  # Crypto losing 6.7% - disable
+          ENABLE_WEEKEND_PROXY: 'false'  # No weekend crypto proxy
           # TURBO MODE: Enable ADK orchestrator
           ADK_ENABLED: ${{ secrets.ADK_ENABLED || '1' }}
           ADK_BASE_URL: ${{ secrets.ADK_BASE_URL || 'http://127.0.0.1:8080/api' }}
