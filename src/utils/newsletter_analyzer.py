@@ -97,6 +97,10 @@ class NewsletterAnalyzer:
         self.data_dir = data_dir or NEWSLETTER_DATA_DIR
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
+        # DEPRECATED: Crypto trading disabled per CEO mandate Dec 15, 2025
+        # This analyzer is for CoinSnacks (crypto newsletter) - NO LONGER USED
+        logger.warning("NewsletterAnalyzer is DEPRECATED - crypto trading disabled")
+
         # Bullish/bearish keywords for sentiment analysis
         self.bullish_keywords = [
             "bullish",
@@ -154,10 +158,8 @@ class NewsletterAnalyzer:
         ]
 
         # Ticker name mappings for article parsing
-        self.ticker_names = {
-            "BTC": ["btc", "bitcoin"],
-            "ETH": ["eth", "ethereum"],
-        }
+        # REMOVED: BTC and ETH - crypto trading disabled Dec 15, 2025
+        self.ticker_names = {}
 
     def get_latest_signals(self, max_age_days: int = 7) -> dict[str, NewsletterSignal]:
         """
@@ -532,17 +534,9 @@ class NewsletterAnalyzer:
 
 # Convenience functions for quick access
 
-
-def get_btc_signal(max_age_days: int = 7) -> NewsletterSignal | None:
-    """Get latest BTC trading signal from newsletter"""
-    analyzer = NewsletterAnalyzer()
-    return analyzer.get_signal_for_ticker("BTC", max_age_days)
-
-
-def get_eth_signal(max_age_days: int = 7) -> NewsletterSignal | None:
-    """Get latest ETH trading signal from newsletter"""
-    analyzer = NewsletterAnalyzer()
-    return analyzer.get_signal_for_ticker("ETH", max_age_days)
+# REMOVED: Crypto-specific functions - crypto trading disabled Dec 15, 2025
+# def get_btc_signal() - REMOVED
+# def get_eth_signal() - REMOVED
 
 
 def get_all_signals(max_age_days: int = 7) -> dict[str, NewsletterSignal]:
