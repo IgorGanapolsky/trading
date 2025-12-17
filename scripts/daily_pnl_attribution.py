@@ -15,9 +15,9 @@ Lesson: LL-020 - Options Primary Strategy (missed for 3 days)
 
 import argparse
 import json
-from pathlib import Path
-from datetime import datetime, timedelta
 from collections import defaultdict
+from datetime import datetime, timedelta
+from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 

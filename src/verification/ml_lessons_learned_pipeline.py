@@ -21,10 +21,9 @@ Lesson: LL-043, LL-035 - Learn from patterns to prevent recurrence
 
 import json
 import logging
-from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -429,7 +428,7 @@ if __name__ == "__main__":
         report = pipeline.generate_weekly_report()
         
         print(f"\nLessons Generated: {report['lessons_generated']}")
-        print(f"\nTop Recurring Patterns:")
+        print("\nTop Recurring Patterns:")
         for pattern_name, stats in report['top_patterns']:
             print(f"  - {pattern_name}: {stats['count']}x ({stats['severity']} severity)")
         

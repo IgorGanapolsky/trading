@@ -15,10 +15,9 @@ Lesson: LL_044 - Documentation Hygiene Mandate
 """
 
 import argparse
-import os
 import subprocess
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent

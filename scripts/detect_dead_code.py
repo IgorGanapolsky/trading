@@ -364,7 +364,7 @@ def main():
                 if group['external_importers']:
                     print(f"      Only imported by: {', '.join(group['external_importers'])}")
                 else:
-                    print(f"      ⚠️  NO external imports at all!")
+                    print("      ⚠️  NO external imports at all!")
                 print()
         
         if significant_unused:

@@ -74,7 +74,7 @@ def scan_file(file_path: Path, patterns: list) -> list:
                     matches.append(
                         {"file": str(file_path), "line": i, "content": line.strip()[:100], "pattern": pattern}
                     )
-    except Exception as e:
+    except Exception:
         pass  # Skip files that can't be read
     return matches
 

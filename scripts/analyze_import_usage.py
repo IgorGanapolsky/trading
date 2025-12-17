@@ -27,7 +27,7 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set
 
 PROJECT_ROOT = Path(__file__).parent.parent
 USAGE_HISTORY_FILE = PROJECT_ROOT / "data" / "ml" / "import_usage_history.json"

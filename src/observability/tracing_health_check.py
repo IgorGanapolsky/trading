@@ -217,7 +217,7 @@ if __name__ == "__main__":
     print(f"  Test Trace Sent: {result.test_trace_sent}")
     
     if result.errors:
-        print(f"\nErrors:")
+        print("\nErrors:")
         for err in result.errors:
             print(f"  - {err}")
     

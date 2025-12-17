@@ -55,7 +55,6 @@ from src.core.unified_domain_model import (
     RelationType,
     # Schema generation
     SchemaGenerator,
-    Signal,
     SignalStrength,
     StrategyTier,
     # Domain objects

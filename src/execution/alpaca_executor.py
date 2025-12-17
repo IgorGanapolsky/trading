@@ -235,7 +235,7 @@ class AlpacaExecutor:
         This method ALWAYS validates through the trade gate before execution.
         """
         # ========== MANDATORY TRADE GATE - NEVER SKIP ==========
-        from src.safety.mandatory_trade_gate import validate_trade_mandatory, TradeBlockedError
+        from src.safety.mandatory_trade_gate import TradeBlockedError, validate_trade_mandatory
         
         amount = notional or (qty * 100.0 if qty else 0.0)  # Estimate for qty-based orders
         gate_result = validate_trade_mandatory(
@@ -252,7 +252,7 @@ class AlpacaExecutor:
             raise TradeBlockedError(gate_result)
         
         if gate_result.rag_warnings or gate_result.ml_anomalies:
-            logger.warning(f"⚠️ ORDER APPROVED WITH WARNINGS:")
+            logger.warning("⚠️ ORDER APPROVED WITH WARNINGS:")
             for w in gate_result.rag_warnings:
                 logger.warning(f"   RAG: {w}")
             for a in gate_result.ml_anomalies:

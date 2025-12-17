@@ -98,7 +98,6 @@ def is_github_actions_stale() -> bool:
 
 def is_trading_hours() -> bool:
     """Check if we're in trading hours (9:30 AM - 4:00 PM ET, Mon-Fri)."""
-    import holidays
 
     now_utc = datetime.now(timezone.utc)
     # Convert to ET (UTC-5 or UTC-4 depending on DST)

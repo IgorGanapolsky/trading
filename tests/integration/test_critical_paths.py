@@ -7,7 +7,6 @@ Run with: pytest tests/integration/test_critical_paths.py -v
 """
 
 import os
-from unittest.mock import patch
 
 import pytest
 
