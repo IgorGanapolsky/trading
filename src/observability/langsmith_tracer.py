@@ -291,10 +291,16 @@ class LangSmithTracer:
 
     def __init__(
         self,
-        project_name: str = "ai-trading-system",
+        project_name: str | None = None,
         storage_path: Optional[Path] = None,
     ):
-        self.project_name = project_name
+        # Use environment variable, then parameter, then default
+        self.project_name = (
+            os.getenv("LANGCHAIN_PROJECT")
+            or os.getenv("LANGSMITH_PROJECT")
+            or project_name
+            or "igor-trading-system"
+        )
         self.storage_path = storage_path or Path("data/traces")
         self.storage_path.mkdir(parents=True, exist_ok=True)
 
