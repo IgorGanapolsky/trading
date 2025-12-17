@@ -61,7 +61,7 @@ Examples:
     parser.add_argument(
         "--symbols",
         nargs="+",
-        default=[-USD", -USD"],
+        default=["SPY", "QQQ"],
     )
 
     parser.add_argument(

@@ -12,8 +12,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-
-    """
+def validate_signal(signal) -> list[str]:
+    """Validate a single signal for data quality issues.
 
     Returns:
         List of validation errors (empty if valid)

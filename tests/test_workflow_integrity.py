@@ -274,6 +274,7 @@ class WorkflowIntegrityTests:
         """
         errors = []
 
+        for workflow_name in ["daily-trading.yml", "weekend-prep.yml"]:
             workflow_path = self.workflows_dir / workflow_name
             if not workflow_path.exists():
                 continue
@@ -282,6 +283,7 @@ class WorkflowIntegrityTests:
 
             # Find the Execute trading step condition
             match = re.search(
+                r"Execute trading.*if:\s*(.+)",
                 content,
                 re.IGNORECASE,
             )

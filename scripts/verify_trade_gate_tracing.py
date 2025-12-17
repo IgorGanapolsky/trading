@@ -64,7 +64,8 @@ def main():
     print(f"   ML anomalies: {len(result1.ml_anomalies)}")
 
     result2 = validate_trade_mandatory(
-        symbol=amount=500.0,
+        symbol="AAPL",
+        amount=500.0,
         side="BUY",
     )
     print(f"   Result: {'✅ APPROVED' if result2.approved else '🚫 BLOCKED'}")

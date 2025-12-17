@@ -22,12 +22,6 @@ from pathlib import Path
 
 # Strategy to workflow mapping
 STRATEGY_WORKFLOW_MAPPING = {
-        "config_path": "strategies.tier5.enabled",
-        "workflow_files": [
-        ],
-        "code_files": [
-        ],
-    },
     "options": {
         "config_path": "strategies.options.enabled",
         "workflow_vars": [],  # Options should always be enabled

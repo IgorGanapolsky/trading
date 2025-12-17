@@ -11,7 +11,7 @@ Key Features:
 Usage:
     from src.ml.rsi_optimizer import RSIOptimizer
 
-    optimizer = RSIOptimizer(symbol=-USD", lookback_days=90)
+    optimizer = RSIOptimizer(symbol="SPY", lookback_days=90)
     results = optimizer.optimize()
     print(f"Optimal RSI: {results['best_threshold']}")
 """
@@ -67,7 +67,7 @@ class RSIOptimizer:
 
     def __init__(
         self,
-        symbol: str = -USD",
+        symbol: str = "SPY",
         lookback_days: int = 90,
         thresholds: list[float] | None = None,
         initial_capital: float = 10000.0,
@@ -435,7 +435,7 @@ if __name__ == "__main__":
     )
 
     # Optimize RSI threshold
-    optimizer = RSIOptimizer(symbol=-USD", lookback_days=90)
+    optimizer = RSIOptimizer(symbol="SPY", lookback_days=90)
     results = optimizer.optimize()
 
     # Save results

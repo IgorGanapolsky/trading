@@ -63,6 +63,7 @@ def check_system_state_freshness(max_age_hours: int = 48) -> tuple[bool, str]:
 
 
 def check_tier5_execution() -> tuple[bool, str]:
+    """Check if Tier 5 has executed any trades.
 
     Returns:
         Tuple of (has_executed, message)
@@ -81,6 +82,7 @@ def check_tier5_execution() -> tuple[bool, str]:
         last_execution = tier5.get("last_execution")
 
         if trades_executed == 0:
+            return False, "Tier 5 has no executed trades yet"
 
         return True, f"Tier 5 has {trades_executed} trades, last: {last_execution}"
 
