@@ -696,56 +696,67 @@ jobs:
             echo "⚠️  Options planner scan failed (may need network/API)"
           }
 
-          # Step 2: Execute wheel strategy on RELIABLE tickers
-          # CRITICAL: RAG screener was returning empty - using hardcoded list that WORKS
+          # Step 2: Check options buying power and select strategy
           echo ""
-          echo "📈 Step 2: Executing wheel strategy on proven tickers..."
-          echo "   Tickers: SOFI, PLTR, F, BAC, AMD, SPY (low collateral + liquid)"
+          echo "📈 Step 2: Checking options buying power..."
           
-          # SOFI (~$16) = $1,600 collateral - MOST ACCESSIBLE
-          echo ""
-          echo "   [1/6] Executing wheel on SOFI..."
-          python3 scripts/execute_options_trade.py --strategy wheel --symbol SOFI || {
-            echo "   ⚠️  SOFI wheel returned non-zero"
-          }
+          OPTIONS_BP=$(python3 -c "
+          import os
+          from alpaca.trading.client import TradingClient
+          try:
+              client = TradingClient(
+                  os.getenv('ALPACA_API_KEY'),
+                  os.getenv('ALPACA_SECRET_KEY'),
+                  paper=True
+              )
+              account = client.get_account()
+              bp = float(getattr(account, 'options_buying_power', 0) or 0)
+              print(f'{bp:.2f}')
+          except Exception as e:
+              print('0.00')
+          " 2>/dev/null || echo "0.00")
           
-          # PLTR (~$75) = $7,500 collateral
-          echo ""
-          echo "   [2/6] Executing wheel on PLTR..."
-          python3 scripts/execute_options_trade.py --strategy wheel --symbol PLTR || {
-            echo "   ⚠️  PLTR wheel returned non-zero"
-          }
+          echo "   Options Buying Power: \$${OPTIONS_BP}"
           
-          # F (~$10) = $1,000 collateral - VERY ACCESSIBLE
-          echo ""
-          echo "   [3/6] Executing wheel on F..."
-          python3 scripts/execute_options_trade.py --strategy wheel --symbol F || {
-            echo "   ⚠️  F wheel returned non-zero"
-          }
-          
-          # BAC (~$45) = $4,500 collateral
-          echo ""
-          echo "   [4/6] Executing wheel on BAC..."
-          python3 scripts/execute_options_trade.py --strategy wheel --symbol BAC || {
-            echo "   ⚠️  BAC wheel returned non-zero"
-          }
-          
-          # AMD (~$120) = $12,000 collateral
-          echo ""
-          echo "   [5/6] Executing wheel on AMD..."
-          python3 scripts/execute_options_trade.py --strategy wheel --symbol AMD || {
-            echo "   ⚠️  AMD wheel returned non-zero"
-          }
-          
-          # SPY - most liquid, always has options
-          echo ""
-          echo "   [6/6] Executing wheel on SPY..."
-          python3 scripts/execute_options_trade.py --strategy wheel --symbol SPY || {
-            echo "   ⚠️  SPY wheel returned non-zero"
-          }
-
-          echo ""
-          echo "✅ Executed wheel strategy on 6 tickers"
+          # SMART STRATEGY SELECTION based on buying power
+          # CSPs need full collateral ($1k-$65k), spreads only need width ($200-$500)
+          if (( $(echo "$OPTIONS_BP < 1000" | bc -l) )); then
+            echo ""
+            echo "⚠️  Low options buying power (<\$1000) - using CREDIT SPREADS"
+            echo "   Credit spreads need only \$200-500 collateral vs \$1k-65k for CSPs"
+            
+            # Credit spreads - much more capital efficient!
+            # $2-wide spread = $200 collateral (vs $2500 for SOFI CSP)
+            TICKERS="SOFI F BAC"  # Best for spreads - liquid, good premium
+            SPREAD_WIDTH=2
+            
+            for TICKER in $TICKERS; do
+              echo ""
+              echo "   📊 Credit spread on ${TICKER} (\$${SPREAD_WIDTH} wide)..."
+              python3 scripts/execute_credit_spread.py --symbol "${TICKER}" --width ${SPREAD_WIDTH} || {
+                echo "   ⚠️  ${TICKER} spread returned non-zero"
+              }
+            done
+            
+            echo ""
+            echo "✅ Executed credit spreads on low-buying-power account"
+          else
+            echo ""
+            echo "✅ Sufficient buying power (\$${OPTIONS_BP}) - using CASH-SECURED PUTS"
+            echo "   Tickers: SOFI, PLTR, F, BAC, AMD, SPY"
+            
+            # Full wheel strategy with CSPs
+            for TICKER in SOFI PLTR F BAC AMD SPY; do
+              echo ""
+              echo "   📊 Wheel on ${TICKER}..."
+              python3 scripts/execute_options_trade.py --strategy wheel --symbol "${TICKER}" || {
+                echo "   ⚠️  ${TICKER} wheel returned non-zero"
+              }
+            done
+            
+            echo ""
+            echo "✅ Executed wheel strategy on 6 tickers"
+          fi
 
           # Update theta harvest timestamp in system state
           echo ""
@@ -769,8 +780,10 @@ jobs:
               state['options']['last_theta_harvest'] = datetime.utcnow().isoformat() + 'Z'
               state['options']['harvest_source'] = 'daily-trading-workflow'
               state['options']['execution_date'] = datetime.utcnow().strftime('%Y-%m-%d')
-              state['options']['selection_method'] = 'hardcoded-reliable'  # Fixed: use proven tickers
+              # Track strategy based on buying power
+              state['options']['selection_method'] = 'adaptive'  # CSPs or spreads based on buying power
               state['options']['target_tickers'] = ['SOFI', 'PLTR', 'F', 'BAC', 'AMD', 'SPY']
+              state['options']['strategy_note'] = 'Uses credit spreads when buying power < $1000, CSPs otherwise'
 
               # Count today's options logs to verify execution
               today = datetime.utcnow().strftime('%Y%m%d')
@@ -800,10 +813,11 @@ jobs:
                   json.dump(state, f, indent=2)
 
               print(f'✅ Options execution recorded:')
-              print(f'   Selection method: hardcoded-reliable')
+              print(f'   Selection method: adaptive (CSPs or spreads)')
               print(f'   Target tickers: SOFI, PLTR, F, BAC, AMD, SPY')
               print(f'   Tickers scanned: {len(log_files)}')
               print(f'   Orders submitted: {orders_submitted}')
+              print(f'   Strategy: Credit spreads if buying power < $1000, CSPs otherwise')
           else:
               print('⚠️  system_state.json not found')
           "
