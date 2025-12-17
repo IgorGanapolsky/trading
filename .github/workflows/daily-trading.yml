@@ -696,65 +696,56 @@ jobs:
             echo "⚠️  Options planner scan failed (may need network/API)"
           }
 
-          # Step 2: RAG-based ticker selection (replaces hardcoded list)
+          # Step 2: Execute wheel strategy on RELIABLE tickers
+          # CRITICAL: RAG screener was returning empty - using hardcoded list that WORKS
           echo ""
-          echo "🧠 Step 2: RAG-based ticker screening..."
-          echo "   Criteria: IV Percentile, Trend, Sentiment, Collateral"
-
-          # Get buying power for collateral check
-          BUYING_POWER=$(python3 -c "
-          import os
-          from alpaca.trading.client import TradingClient
-          try:
-              client = TradingClient(
-                  os.getenv('ALPACA_API_KEY'),
-                  os.getenv('ALPACA_SECRET_KEY'),
-                  paper=True
-              )
-              account = client.get_account()
-              print(float(account.options_buying_power or account.buying_power))
-          except Exception as e:
-              print(10000)  # Default if API fails
-          " 2>/dev/null || echo "10000")
-
-          echo "   Available buying power: \$${BUYING_POWER}"
-
-          # Run RAG screener to get best tickers
-          SELECTED_TICKERS=$(python3 scripts/rag_ticker_screener.py \
-            --buying-power ${BUYING_POWER} \
-            --max-tickers 6 \
-            --output json 2>/dev/null | python3 -c "
-          import sys, json
-          try:
-              data = json.load(sys.stdin)
-              tickers = [t['ticker'] for t in data]
-              print(','.join(tickers))
-          except:
-              # Fallback to safe defaults if RAG fails
-              print('SOFI,PLTR,F,BAC')
-          " 2>/dev/null || echo "SOFI,PLTR,F,BAC")
-
-          echo "   🏆 RAG-selected tickers: ${SELECTED_TICKERS}"
-
-          # Step 3: Execute options on RAG-selected tickers
+          echo "📈 Step 2: Executing wheel strategy on proven tickers..."
+          echo "   Tickers: SOFI, PLTR, F, BAC, AMD, SPY (low collateral + liquid)"
+          
+          # SOFI (~$16) = $1,600 collateral - MOST ACCESSIBLE
           echo ""
-          echo "📈 Step 3: Executing wheel strategy on RAG-selected tickers..."
-
-          TICKER_NUM=0
-          IFS=',' read -ra TICKER_ARRAY <<< "${SELECTED_TICKERS}"
-          for TICKER in "${TICKER_ARRAY[@]}"; do
-            TICKER_NUM=$((TICKER_NUM + 1))
-            echo ""
-            echo "   [${TICKER_NUM}/${#TICKER_ARRAY[@]}] Executing wheel on ${TICKER}..."
-            python3 scripts/execute_options_trade.py \
-              --strategy wheel \
-              --symbol "${TICKER}" || {
-              echo "   ⚠️  ${TICKER} wheel strategy returned non-zero (check logs)"
-            }
-          done
+          echo "   [1/6] Executing wheel on SOFI..."
+          python3 scripts/execute_options_trade.py --strategy wheel --symbol SOFI || {
+            echo "   ⚠️  SOFI wheel returned non-zero"
+          }
+          
+          # PLTR (~$75) = $7,500 collateral
+          echo ""
+          echo "   [2/6] Executing wheel on PLTR..."
+          python3 scripts/execute_options_trade.py --strategy wheel --symbol PLTR || {
+            echo "   ⚠️  PLTR wheel returned non-zero"
+          }
+          
+          # F (~$10) = $1,000 collateral - VERY ACCESSIBLE
+          echo ""
+          echo "   [3/6] Executing wheel on F..."
+          python3 scripts/execute_options_trade.py --strategy wheel --symbol F || {
+            echo "   ⚠️  F wheel returned non-zero"
+          }
+          
+          # BAC (~$45) = $4,500 collateral
+          echo ""
+          echo "   [4/6] Executing wheel on BAC..."
+          python3 scripts/execute_options_trade.py --strategy wheel --symbol BAC || {
+            echo "   ⚠️  BAC wheel returned non-zero"
+          }
+          
+          # AMD (~$120) = $12,000 collateral
+          echo ""
+          echo "   [5/6] Executing wheel on AMD..."
+          python3 scripts/execute_options_trade.py --strategy wheel --symbol AMD || {
+            echo "   ⚠️  AMD wheel returned non-zero"
+          }
+          
+          # SPY - most liquid, always has options
+          echo ""
+          echo "   [6/6] Executing wheel on SPY..."
+          python3 scripts/execute_options_trade.py --strategy wheel --symbol SPY || {
+            echo "   ⚠️  SPY wheel returned non-zero"
+          }
 
           echo ""
-          echo "✅ Executed on ${TICKER_NUM} RAG-selected tickers"
+          echo "✅ Executed wheel strategy on 6 tickers"
 
           # Update theta harvest timestamp in system state
           echo ""
@@ -778,11 +769,8 @@ jobs:
               state['options']['last_theta_harvest'] = datetime.utcnow().isoformat() + 'Z'
               state['options']['harvest_source'] = 'daily-trading-workflow'
               state['options']['execution_date'] = datetime.utcnow().strftime('%Y-%m-%d')
-              state['options']['selection_method'] = 'RAG-based'  # New: track we use RAG
-
-              # Track which tickers were selected by RAG
-              selected_tickers = os.environ.get('SELECTED_TICKERS', '').split(',')
-              state['options']['rag_selected_tickers'] = [t.strip() for t in selected_tickers if t.strip()]
+              state['options']['selection_method'] = 'hardcoded-reliable'  # Fixed: use proven tickers
+              state['options']['target_tickers'] = ['SOFI', 'PLTR', 'F', 'BAC', 'AMD', 'SPY']
 
               # Count today's options logs to verify execution
               today = datetime.utcnow().strftime('%Y%m%d')
@@ -812,13 +800,13 @@ jobs:
                   json.dump(state, f, indent=2)
 
               print(f'✅ Options execution recorded:')
-              print(f'   Selection method: RAG-based')
-              print(f'   RAG-selected tickers: {state[\"options\"][\"rag_selected_tickers\"]}')
+              print(f'   Selection method: hardcoded-reliable')
+              print(f'   Target tickers: SOFI, PLTR, F, BAC, AMD, SPY')
               print(f'   Tickers scanned: {len(log_files)}')
               print(f'   Orders submitted: {orders_submitted}')
           else:
               print('⚠️  system_state.json not found')
-          " SELECTED_TICKERS="${SELECTED_TICKERS}"
+          "
 
           echo ""
           echo "✅ Theta harvest step complete"
