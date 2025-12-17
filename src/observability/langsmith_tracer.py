@@ -291,10 +291,14 @@ class LangSmithTracer:
 
     def __init__(
         self,
-        project_name: str = "ai-trading-system",
+        project_name: str | None = None,
         storage_path: Optional[Path] = None,
     ):
-        self.project_name = project_name
+        # CRITICAL: Read project name from LANGCHAIN_PROJECT env var
+        # This must match the project in LangSmith UI (igor-trading-system)
+        self.project_name = project_name or os.getenv(
+            "LANGCHAIN_PROJECT", "igor-trading-system"
+        )
         self.storage_path = storage_path or Path("data/traces")
         self.storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -390,16 +394,27 @@ class LangSmithTracer:
         # Send to LangSmith if enabled
         if self._langsmith_enabled and self._langsmith_client:
             try:
-                # LangSmith uses runs API
+                # LangSmith runs API - each span becomes a run
                 for span in trace.spans:
+                    run_id = str(uuid.uuid4())
+
+                    # Create run with all required fields
                     self._langsmith_client.create_run(
                         name=span.name,
                         run_type="chain",
-                        inputs=span.inputs,
-                        outputs=span.outputs,
-                        extra=span.metadata,
+                        inputs=span.inputs or {},
+                        outputs=span.outputs or {},
+                        extra={"metadata": span.metadata} if span.metadata else None,
                         project_name=self.project_name,
+                        id=run_id,
+                        start_time=span.start_time,
+                        end_time=span.end_time or datetime.now(timezone.utc),
+                        error=span.error,
+                        tags=[span.trace_type.value, "trading-system"],
                     )
+                    logger.debug(f"Sent run to LangSmith: {span.name} (project={self.project_name})")
+
+                logger.info(f"✅ Sent {len(trace.spans)} trace(s) to LangSmith project '{self.project_name}'")
             except Exception as e:
                 logger.warning(f"Failed to send trace to LangSmith: {e}")
 
