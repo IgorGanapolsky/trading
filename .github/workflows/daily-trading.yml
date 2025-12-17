@@ -543,6 +543,49 @@ jobs:
           " || echo "⚠️ Tracing health check script failed - proceeding anyway"
           # ======================================================
 
+          # ========== MANDATORY: PRE-TRADE SMOKE TESTS ==========
+          # These MUST pass or trading is BLOCKED
+          echo ""
+          echo "🔥 ========================================"
+          echo "🔥 MANDATORY PRE-TRADE SMOKE TESTS"
+          echo "🔥 ========================================"
+          python3 -c "
+          import sys
+          sys.path.insert(0, '.')
+          from src.safety.pre_trade_smoke_test import run_smoke_tests
+          
+          result = run_smoke_tests()
+          
+          print('')
+          print('SMOKE TEST RESULTS:')
+          print(f'  Alpaca Connected: {result.alpaca_connected}')
+          print(f'  Account Readable: {result.account_readable}')
+          print(f'  Positions Readable: {result.positions_readable}')
+          print(f'  Buying Power Valid: {result.buying_power_valid}')
+          print(f'  Equity Valid: {result.equity_valid}')
+          print('')
+          print(f'  Equity: \${result.equity:,.2f}')
+          print(f'  Buying Power: \${result.buying_power:,.2f}')
+          print(f'  Positions: {result.positions_count}')
+          print('')
+          
+          if not result.all_passed:
+              print('❌ SMOKE TESTS FAILED - BLOCKING TRADING')
+              print(f'   Errors: {result.errors}')
+              sys.exit(1)
+          else:
+              print('✅ ALL SMOKE TESTS PASSED - Trading can proceed')
+          "
+          
+          SMOKE_EXIT=$?
+          if [ $SMOKE_EXIT -ne 0 ]; then
+            echo "❌ CRITICAL: Smoke tests failed - ABORTING TRADING"
+            echo "   We cannot trade blind. Fix the issues and retry."
+            exit 1
+          fi
+          echo "🔥 ========================================"
+          # ======================================================
+
           # Track execution start
           EXEC_START=$(date +%s)
 

@@ -140,23 +140,66 @@ class AlpacaExecutor:
             logger.warning(f"Failed to trace trade to LangSmith: {e}")
     
     def sync_portfolio_state(self) -> None:
+        """
+        Sync portfolio state from Alpaca.
+        
+        CRITICAL: If this fails, we MUST know about it.
+        Never fall back silently to empty state - that causes blind trading.
+        """
         if self.simulated:
             equity = float(os.getenv("SIMULATED_EQUITY", "100000"))
             self.account_snapshot = {"equity": equity, "mode": "simulated"}
             self.positions = []
         else:
             try:
-                self.account_snapshot = self.trader.get_account_info()
-                self.positions = self.trader.get_positions()
+                # Try to get account info - this MUST work
+                if hasattr(self.trader, 'get_account_info'):
+                    self.account_snapshot = self.trader.get_account_info()
+                elif hasattr(self.trader, 'get_account'):
+                    # Direct TradingClient fallback
+                    account = self.trader.get_account()
+                    self.account_snapshot = {
+                        "equity": float(account.equity),
+                        "buying_power": float(account.buying_power),
+                        "cash": float(account.cash),
+                        "portfolio_value": float(account.portfolio_value),
+                    }
+                else:
+                    raise RuntimeError("Trader has no get_account_info or get_account method!")
+                
+                # Get positions
+                if hasattr(self.trader, 'get_positions'):
+                    self.positions = self.trader.get_positions()
+                elif hasattr(self.trader, 'get_all_positions'):
+                    self.positions = self.trader.get_all_positions()
+                else:
+                    self.positions = []
+                    logger.warning("Could not get positions - no method available")
+                    
             except Exception as e:
-                logger.error(f"Failed to sync portfolio state: {e}. Falling back to empty state.")
-                self.account_snapshot = {}
+                # CRITICAL: Do NOT fall back silently - this causes blind trading!
+                logger.error(f"❌ CRITICAL: Failed to sync portfolio state: {e}")
+                logger.error("   This means we cannot see our account or positions!")
+                logger.error("   Trading should be BLOCKED until this is fixed.")
+                
+                # Set error state - equity 0 will trigger safety checks
+                self.account_snapshot = {"equity": 0, "error": str(e)}
                 self.positions = []
+                
+                # Re-raise so callers know there's a problem
+                raise RuntimeError(f"Cannot sync portfolio - trading unsafe: {e}") from e
 
+        equity = self.account_equity
+        
+        # Safety check: If equity is 0 or negative, something is VERY wrong
+        if equity <= 0 and not self.simulated:
+            logger.error(f"❌ CRITICAL: Equity is ${equity} - this should never happen!")
+            logger.error("   Either API failed or account is empty. BLOCKING TRADING.")
+        
         logger.info(
             "Synced %s Alpaca state | equity=$%.2f | positions=%d",
             "simulated" if self.simulated else ("paper" if self.paper else "live"),
-            self.account_equity,
+            equity,
             len(self.positions),
         )
 
