@@ -110,6 +110,15 @@ try:
 except ImportError:
     LANGSMITH_AVAILABLE = False
 
+# Go ADK Multi-Agent Trading Orchestrator (Dec 2025)
+# Provides Gemini-powered research/signal/risk/execution agents
+# See: go/adk_trading/ for the Go implementation
+try:
+    from src.orchestration.adk_integration import ADKTradeAdapter, summarize_adk_decision
+    ADK_AVAILABLE = True
+except ImportError:
+    ADK_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 _US_HOLIDAYS_CACHE: dict[int, holidays.HolidayBase] = {}
@@ -332,6 +341,18 @@ class TradingOrchestrator:
             except Exception as e:
                 logger.warning(f"IntrospectiveCouncil init failed: {e}")
 
+        # Go ADK Multi-Agent Adapter (Dec 2025)
+        # Provides Gemini-powered multi-agent analysis: research → signal → risk → execution
+        # Uses google.golang.org/adk with 4 specialized sub-agents
+        self.adk_adapter: ADKTradeAdapter | None = None
+        enable_adk = os.getenv("ENABLE_ADK_AGENTS", "true").lower() in {"1", "true", "yes"}
+        if enable_adk and ADK_AVAILABLE:
+            try:
+                self.adk_adapter = ADKTradeAdapter(enabled=True)
+                logger.info("Go ADK Multi-Agent Adapter initialized (research/signal/risk/execution)")
+            except Exception as e:
+                logger.warning(f"Go ADK adapter init failed (will use Python-only pipeline): {e}")
+
         # Initialize LLM-friendly gate pipeline (Dec 2025 refactor)
         # Each gate is <150 lines, independently testable
         self._init_gate_pipeline()
@@ -516,6 +537,37 @@ class TradingOrchestrator:
 
         # Query lessons learned RAG to avoid repeating past mistakes
         self._query_lessons_learned(context="options momentum trading")
+
+        # Go ADK Multi-Agent Analysis (Dec 2025)
+        # Get Gemini-powered signals from research/signal/risk/execution agents
+        adk_decision = None
+        if self.adk_adapter:
+            try:
+                adk_decision = self.adk_adapter.evaluate(
+                    symbols=active_tickers[:5],  # Limit to reduce latency
+                    context={
+                        "macro_context": macro_context,
+                        "session_type": session_profile["session_type"],
+                        "portfolio_value": self.executor.get_account_info().get("equity", 100000),
+                    },
+                )
+                if adk_decision:
+                    adk_summary = summarize_adk_decision(adk_decision)
+                    self.telemetry.record(
+                        event_type="adk.decision",
+                        ticker=adk_decision.symbol,
+                        status="info",
+                        payload=adk_summary,
+                    )
+                    logger.info(
+                        "ADK agents recommend: %s %s (confidence=%.1f%%, size=%.2f)",
+                        adk_decision.action,
+                        adk_decision.symbol,
+                        adk_decision.confidence * 100,
+                        adk_decision.position_size,
+                    )
+            except Exception as e:
+                logger.debug(f"ADK evaluation skipped: {e}")
 
         # =================================================================
         # OPTIONS FIRST (Dec 12, 2025): Theta decay is proven profit maker
