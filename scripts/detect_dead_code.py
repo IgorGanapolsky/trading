@@ -26,7 +26,6 @@ import json
 import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Set
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
@@ -35,9 +34,9 @@ class ImportAnalyzer(ast.NodeVisitor):
     """Extract imports and definitions from Python AST."""
 
     def __init__(self):
-        self.imports: List[str] = []
-        self.from_imports: Dict[str, List[str]] = defaultdict(list)
-        self.definitions: Set[str] = set()
+        self.imports: list[str] = []
+        self.from_imports: dict[str, list[str]] = defaultdict(list)
+        self.definitions: set[str] = set()
 
     def visit_Import(self, node):
         for alias in node.names:
@@ -58,8 +57,8 @@ class ImportAnalyzer(ast.NodeVisitor):
 
 
 def get_python_files(
-    root: Path, ignore_dirs: List[str] = None
-) -> List[Path]:
+    root: Path, ignore_dirs: list[str] = None
+) -> list[Path]:
     """Get all Python files, excluding ignored directories."""
     ignore_dirs = ignore_dirs or ["__pycache__", ".git", "venv", ".venv", "node_modules"]
     python_files = []
@@ -76,7 +75,7 @@ def get_python_files(
 def analyze_imports(file_path: Path) -> ImportAnalyzer:
     """Parse file and extract imports and definitions."""
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             tree = ast.parse(f.read(), filename=str(file_path))
         analyzer = ImportAnalyzer()
         analyzer.visit(tree)
@@ -90,57 +89,57 @@ def normalize_import_path(import_path: str, project_root: Path) -> str:
     """Convert import path to module path relative to project."""
     # Handle relative imports like "src.medallion.bronze"
     parts = import_path.split(".")
-    
+
     # If starts with src, keep as is
     if parts[0] == "src":
         return import_path
-    
+
     # If it's a module from src, add src prefix
     potential_path = project_root / "src" / parts[0]
     if potential_path.exists():
         return f"src.{import_path}"
-    
+
     return import_path
 
 
 def build_import_graph(
-    files: List[Path], project_root: Path
-) -> Dict[str, Set[str]]:
+    files: list[Path], project_root: Path
+) -> dict[str, set[str]]:
     """Build a graph of module -> modules_that_import_it."""
     import_graph = defaultdict(set)
-    
+
     for file_path in files:
         analyzer = analyze_imports(file_path)
-        
+
         # Convert file path to module path
         try:
             rel_path = file_path.relative_to(project_root)
             # Remove .py and convert path to module notation
             module_path = str(rel_path.with_suffix("")).replace("/", ".")
-            
+
             # Track regular imports
             for imp in analyzer.imports:
                 normalized = normalize_import_path(imp, project_root)
                 import_graph[normalized].add(module_path)
-            
+
             # Track from imports (module level)
-            for from_module in analyzer.from_imports.keys():
+            for from_module in analyzer.from_imports:
                 normalized = normalize_import_path(from_module, project_root)
                 import_graph[normalized].add(module_path)
-        
+
         except ValueError:
             # File not relative to project root
             continue
-    
+
     return import_graph
 
 
 def find_unused_modules(
-    files: List[Path], project_root: Path, import_graph: Dict[str, Set[str]]
-) -> List[Dict]:
+    files: list[Path], project_root: Path, import_graph: dict[str, set[str]]
+) -> list[dict]:
     """Find modules that are never imported by anything."""
     unused = []
-    
+
     # Get all module paths
     all_modules = set()
     for file_path in files:
@@ -150,30 +149,30 @@ def find_unused_modules(
             all_modules.add(module_path)
         except ValueError:
             continue
-    
+
     # Find modules with zero imports
     for module in all_modules:
         # Skip __init__.py files (they organize packages)
         if module.endswith(".__init__"):
             continue
-        
+
         # Skip main entry points
         if "main.py" in module or "autonomous_trader" in module:
             continue
-        
+
         # Skip test files (they import but aren't imported)
         if "test_" in module or "tests." in module:
             continue
-        
+
         # Check if this module is imported anywhere
         importers = import_graph.get(module, set())
-        
+
         # Also check parent package imports (e.g., src.medallion)
         parent_parts = module.split(".")
         for i in range(1, len(parent_parts)):
             parent_module = ".".join(parent_parts[:i])
             importers.update(import_graph.get(parent_module, set()))
-        
+
         if not importers:
             # Check file size to filter out truly empty stubs
             file_path = project_root / module.replace(".", "/")
@@ -185,21 +184,21 @@ def find_unused_modules(
                     "size_bytes": size,
                     "reason": "No imports found"
                 })
-    
+
     return unused
 
 
 def find_isolated_module_groups(
-    import_graph: Dict[str, Set[str]], all_modules: Set[str]
-) -> List[Dict]:
+    import_graph: dict[str, set[str]], all_modules: set[str]
+) -> list[dict]:
     """
     Find groups of modules that only import each other but nothing else uses them.
-    
+
     Example: src.medallion.* modules all import each other, but only
     src.ml.medallion_trainer imports them, and nothing imports medallion_trainer.
     """
     isolated_groups = []
-    
+
     # Check for isolated module prefixes (like src.medallion.*)
     prefixes = set()
     for module in all_modules:
@@ -207,13 +206,13 @@ def find_isolated_module_groups(
         if len(parts) >= 2:
             prefix = ".".join(parts[:2])  # e.g., "src.medallion"
             prefixes.add(prefix)
-    
+
     for prefix in prefixes:
         # Get all modules with this prefix
         group_modules = {m for m in all_modules if m.startswith(prefix + ".")}
         if len(group_modules) <= 1:
             continue
-        
+
         # Find external importers (not in the group)
         external_importers = set()
         for module in group_modules:
@@ -221,7 +220,7 @@ def find_isolated_module_groups(
             external_importers.update(
                 imp for imp in importers if not imp.startswith(prefix + ".")
             )
-        
+
         # If no external importers or only one that's also unused, it's isolated
         if len(external_importers) <= 1:
             total_size = 0
@@ -229,7 +228,7 @@ def find_isolated_module_groups(
                 module_path = PROJECT_ROOT / module.replace(".", "/")
                 if module_path.with_suffix(".py").exists():
                     total_size += module_path.with_suffix(".py").stat().st_size
-            
+
             isolated_groups.append({
                 "prefix": prefix,
                 "modules": sorted(group_modules),
@@ -237,35 +236,35 @@ def find_isolated_module_groups(
                 "total_size_bytes": total_size,
                 "module_count": len(group_modules),
             })
-    
+
     return isolated_groups
 
 
-def find_empty_directories(root: Path, ignore_dirs: List[str]) -> List[Dict]:
+def find_empty_directories(root: Path, ignore_dirs: list[str]) -> list[dict]:
     """Find directories with only .gitkeep or empty subdirectories."""
     empty_dirs = []
-    
+
     for dir_path in root.glob("**/"):
         # Skip ignored directories
         if any(ignored in str(dir_path) for ignored in ignore_dirs):
             continue
-        
+
         if not dir_path.is_dir():
             continue
-        
+
         # Get all files in directory (recursively)
         files = list(dir_path.glob("**/*"))
         files = [f for f in files if f.is_file()]
-        
+
         # Filter out .gitkeep files
         non_gitkeep = [f for f in files if f.name != ".gitkeep"]
-        
+
         if not non_gitkeep and dir_path != root:
             empty_dirs.append({
                 "path": str(dir_path.relative_to(root)),
                 "gitkeep_count": len(files) - len(non_gitkeep),
             })
-    
+
     return empty_dirs
 
 
@@ -291,35 +290,35 @@ def main():
         default=10,
         help="Minimum size in KB to report unused modules"
     )
-    
+
     args = parser.parse_args()
-    
+
     print("=" * 70)
     print("DEAD CODE DETECTOR - Preventing LL-043 Pattern")
     print("=" * 70)
     print()
-    
+
     # Step 1: Get all Python files
     print("[1/5] Scanning Python files...")
     files = get_python_files(PROJECT_ROOT, args.ignore_dirs)
     print(f"  Found {len(files)} Python files")
-    
+
     # Step 2: Build import graph
     print("\n[2/5] Building import graph...")
     import_graph = build_import_graph(files, PROJECT_ROOT)
     print(f"  Tracked imports for {len(import_graph)} modules")
-    
+
     # Step 3: Find unused modules
     print("\n[3/5] Finding unused modules...")
     unused_modules = find_unused_modules(files, PROJECT_ROOT, import_graph)
-    
+
     # Filter by size threshold
     threshold_bytes = args.threshold_kb * 1024
     significant_unused = [
         m for m in unused_modules if m["size_bytes"] > threshold_bytes
     ]
     print(f"  Found {len(significant_unused)} unused modules (>{args.threshold_kb}KB)")
-    
+
     # Step 4: Find isolated module groups
     print("\n[4/5] Finding isolated module groups...")
     all_modules = {
@@ -328,17 +327,17 @@ def main():
     }
     isolated_groups = find_isolated_module_groups(import_graph, all_modules)
     print(f"  Found {len(isolated_groups)} isolated module groups")
-    
+
     # Step 5: Find empty directories
     print("\n[5/5] Finding empty directories...")
     empty_dirs = find_empty_directories(PROJECT_ROOT, args.ignore_dirs + [".git"])
     print(f"  Found {len(empty_dirs)} empty directories")
-    
+
     # Generate report
     print("\n" + "=" * 70)
     print("RESULTS")
     print("=" * 70)
-    
+
     if args.report == "json":
         report = {
             "unused_modules": significant_unused,
@@ -366,7 +365,7 @@ def main():
                 else:
                     print("      ⚠️  NO external imports at all!")
                 print()
-        
+
         if significant_unused:
             print("\n🟡 UNUSED MODULES (medium priority):")
             for module in significant_unused[:10]:
@@ -374,20 +373,20 @@ def main():
                 print(f"   {module['module']} ({size_kb}KB)")
             if len(significant_unused) > 10:
                 print(f"   ... and {len(significant_unused) - 10} more")
-        
+
         if empty_dirs:
             print("\n⚪ EMPTY DIRECTORIES (low priority):")
             for ed in empty_dirs[:10]:
                 print(f"   {ed['path']}")
             if len(empty_dirs) > 10:
                 print(f"   ... and {len(empty_dirs) - 10} more")
-    
+
     # Exit code
     print("\n" + "=" * 70)
     if isolated_groups or significant_unused:
         total_dead_kb = sum(g['total_size_bytes'] for g in isolated_groups) // 1024
         total_dead_kb += sum(m['size_bytes'] for m in significant_unused) // 1024
-        
+
         print(f"DEAD CODE FOUND: ~{total_dead_kb}KB of unused code")
         print("\nRecommendation:")
         print("  1. Review isolated module groups - likely candidates for removal")

@@ -170,7 +170,7 @@ class RAGPreMergeChecker:
         errors = []
         for import_stmt in self.CRITICAL_IMPORTS:
             try:
-                exec(import_stmt)
+                exec(import_stmt)  # noqa: S102 - import validation only
             except ImportError as e:
                 errors.append(f"{import_stmt}: {e}")
             except SyntaxError as e:

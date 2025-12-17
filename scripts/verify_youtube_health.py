@@ -258,8 +258,8 @@ class YouTubeHealthChecker:
                 error_str = str(e)
                 if "403" in error_str or "Forbidden" in error_str:
                     print(f"  {WARN} YouTube blocked in this environment (403 Forbidden)")
-                    print(f"      This is normal in sandboxed environments.")
-                    print(f"      Will work on your local machine or GitHub Actions.")
+                    print("      This is normal in sandboxed environments.")
+                    print("      Will work on your local machine or GitHub Actions.")
                     self.warnings.append("YouTube blocked in sandbox (expected)")
                     return True  # Not a failure - expected in some environments
                 else:
@@ -345,8 +345,8 @@ class YouTubeHealthChecker:
             print(f"{GREEN}✅ YOUTUBE INTEGRATION: HEALTHY{RESET}")
         else:
             print(f"{RED}❌ YOUTUBE INTEGRATION: ISSUES FOUND{RESET}")
-            print(f"\nRun with --fix to attempt automatic fixes:")
-            print(f"  python3 scripts/verify_youtube_health.py --fix")
+            print("\nRun with --fix to attempt automatic fixes:")
+            print("  python3 scripts/verify_youtube_health.py --fix")
         print("=" * 60)
 
         return overall

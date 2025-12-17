@@ -173,7 +173,7 @@ def main():
         issue_body = format_issue_body(skip_days)
 
         # Write to file for GitHub Actions to read
-        output_file = Path("/tmp/skip_alert_body.txt")
+        output_file = Path("/tmp/skip_alert_body.txt")  # noqa: S108 - CI output file
         output_file.write_text(issue_body)
 
         print(f"\nIssue body written to: {output_file}")

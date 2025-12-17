@@ -82,8 +82,7 @@ class LanceDBMigrator:
     def read_from_chromadb(self) -> list[dict[str, Any]]:
         """Read all documents from ChromaDB."""
         try:
-            import chromadb
-            from chromadb.config import Settings
+            import chromadb  # noqa: F401 - availability check
         except ImportError:
             logger.error("ChromaDB not installed. Install with: pip install chromadb")
             return []

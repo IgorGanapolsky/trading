@@ -19,12 +19,11 @@ Then configure Claude Code:
 import argparse
 import json
 from pathlib import Path
-from typing import Any
 
+import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import uvicorn
 
 # Load manifest
 MANIFEST_PATH = Path(__file__).parent / "component_manifest.json"
@@ -250,7 +249,7 @@ def main():
     """Run the MCP server."""
     parser = argparse.ArgumentParser(description="Trading Dashboard MCP Server")
     parser.add_argument("--port", type=int, default=8765, help="Port to run server on")
-    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host to bind to")
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host to bind to")  # noqa: S104 - intentional for MCP server
     args = parser.parse_args()
 
     print(f"""

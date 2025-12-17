@@ -288,8 +288,8 @@ def main() -> None:
             print(
                 json.dumps(
                     [
-                        {"file": l["file"], "id": l["id"], "severity": l["severity"]}
-                        for l in lessons
+                        {"file": lesson["file"], "id": lesson["id"], "severity": lesson["severity"]}
+                        for lesson in lessons
                     ],
                     indent=2,
                 )

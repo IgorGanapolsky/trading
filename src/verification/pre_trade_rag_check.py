@@ -122,7 +122,7 @@ class PreTradeRAGCheck:
         if symbol_lessons:
             checks["symbol_check"] = {
                 "passed": len(symbol_lessons) == 0,
-                "lessons": [l["id"] for l in symbol_lessons[:3]],
+                "lessons": [lesson["id"] for lesson in symbol_lessons[:3]],
             }
             for lesson in symbol_lessons:
                 cumulative_risk += self.SEVERITY_WEIGHTS.get(
@@ -145,7 +145,7 @@ class PreTradeRAGCheck:
         if strategy_lessons:
             checks["strategy_check"] = {
                 "passed": len(strategy_lessons) == 0,
-                "lessons": [l["id"] for l in strategy_lessons[:3]],
+                "lessons": [lesson["id"] for lesson in strategy_lessons[:3]],
             }
             for lesson in strategy_lessons:
                 cumulative_risk += self.SEVERITY_WEIGHTS.get(
@@ -165,7 +165,7 @@ class PreTradeRAGCheck:
             condition_lessons = self._check_market_conditions(market_conditions)
             checks["market_conditions"] = {
                 "passed": len(condition_lessons) == 0,
-                "lessons": [l["id"] for l in condition_lessons[:3]],
+                "lessons": [lesson["id"] for lesson in condition_lessons[:3]],
             }
             for lesson in condition_lessons:
                 cumulative_risk += self.SEVERITY_WEIGHTS.get(
@@ -183,7 +183,7 @@ class PreTradeRAGCheck:
         if time_lessons:
             checks["time_check"] = {
                 "passed": len(time_lessons) == 0,
-                "lessons": [l["id"] for l in time_lessons[:2]],
+                "lessons": [lesson["id"] for lesson in time_lessons[:2]],
             }
             for lesson in time_lessons:
                 cumulative_risk += self.SEVERITY_WEIGHTS.get(

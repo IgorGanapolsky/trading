@@ -38,7 +38,7 @@ except ImportError:
 # Hindsight Agentic Memory - 91% accuracy on LongMemEval (Dec 2025)
 # Provides: retain/recall/reflect API with confidence-scored opinions
 try:
-    from src.rag.hindsight_adapter import HindsightAdapter, is_hindsight_available
+    from src.rag.hindsight_adapter import HindsightAdapter, is_hindsight_available  # noqa: F401
     HINDSIGHT_AVAILABLE = True
 except ImportError:
     HINDSIGHT_AVAILABLE = False
@@ -316,7 +316,7 @@ class MandatoryTradeGate:
     ) -> GateResult:
         """
         MANDATORY validation before ANY trade.
-        
+
         ALL gate decisions are traced to LangSmith for observability.
 
         Args:

@@ -157,7 +157,7 @@ def main():
             print()
 
         # Show critical lessons' key points
-        critical_lessons = [l for l, s in results if l["severity"] == "critical"]
+        critical_lessons = [lesson for lesson, s in results if lesson["severity"] == "critical"]
         if critical_lessons:
             print("\n" + "=" * 70)
             print("CRITICAL LESSONS - READ THESE FIRST:")

@@ -183,7 +183,7 @@ class TextFeatureEngineer:
     def _init_embeddings(self):
         """Initialize embedding model (FinBERT for financial text)"""
         try:
-            import torch
+            import torch  # noqa: F401 - required by transformers
             from transformers import AutoModel, AutoTokenizer
 
             # Use FinBERT for financial sentiment

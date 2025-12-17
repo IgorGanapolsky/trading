@@ -80,80 +80,80 @@ def check_freshness(strict: bool = False, fix: bool = False) -> int:
     # Check critical files
     print("🔴 CRITICAL FILES (must be current):")
     print("-" * 70)
-    
+
     for filepath, max_days in CRITICAL_FILES.items():
         full_path = PROJECT_ROOT / filepath
-        
+
         if not full_path.exists():
             issues.append(f"MISSING: {filepath}")
             print(f"  ❌ {filepath:<40} MISSING!")
             continue
-        
+
         last_modified = get_file_last_modified(Path(filepath))
-        
+
         if last_modified is None:
             warnings.append(f"UNKNOWN DATE: {filepath}")
             print(f"  ⚠️  {filepath:<40} Unknown last modified date")
             continue
-        
+
         age_days = (now - last_modified).days
         status = "✅" if age_days <= max_days else "❌"
-        
+
         if age_days > max_days:
             issues.append(f"STALE ({age_days}d): {filepath} (max: {max_days}d)")
-        
+
         print(f"  {status} {filepath:<40} {age_days}d old (max: {max_days}d)")
 
     print()
-    
+
     # Check warning files
     print("🟡 WARNING FILES (should be current):")
     print("-" * 70)
-    
+
     for filepath, max_days in WARNING_FILES.items():
         full_path = PROJECT_ROOT / filepath
-        
+
         if not full_path.exists():
             print(f"  ⚠️  {filepath:<40} Not found (optional)")
             continue
-        
+
         last_modified = get_file_last_modified(Path(filepath))
-        
+
         if last_modified is None:
             print(f"  ⚠️  {filepath:<40} Unknown date")
             continue
-        
+
         age_days = (now - last_modified).days
         status = "✅" if age_days <= max_days else "⚠️"
-        
+
         if age_days > max_days:
             warnings.append(f"STALE ({age_days}d): {filepath}")
-        
+
         print(f"  {status} {filepath:<40} {age_days}d old (max: {max_days}d)")
 
     print()
     print("=" * 70)
-    
+
     # Summary
     if issues:
         print("❌ CRITICAL ISSUES FOUND:")
         for issue in issues:
             print(f"   • {issue}")
         print()
-    
+
     if warnings:
         print("⚠️  WARNINGS:")
         for warning in warnings:
             print(f"   • {warning}")
         print()
-    
+
     if fix and (issues or warnings):
         print("📝 TO FIX:")
         print("   1. Update stale files with current information")
         print("   2. Commit changes: git add -A && git commit -m 'docs: update stale documentation'")
         print("   3. Re-run this check to verify")
         print()
-    
+
     # Exit code
     if issues:
         print("❌ FRESHNESS CHECK FAILED")
@@ -172,7 +172,7 @@ def main():
     parser.add_argument("--strict", action="store_true", help="Fail on warnings too")
     parser.add_argument("--fix", action="store_true", help="Show fix instructions")
     args = parser.parse_args()
-    
+
     return check_freshness(strict=args.strict, fix=args.fix)
 
 

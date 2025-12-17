@@ -75,7 +75,7 @@ class AlpacaExecutor:
         """Record trade for daily performance tracking and trace to LangSmith."""
         try:
             from src.analytics.daily_performance_tracker import record_trade_pnl
-            
+
             trade_record = {
                 "id": order.get("id"),
                 "symbol": order.get("symbol"),
@@ -89,25 +89,25 @@ class AlpacaExecutor:
                 "commission": order.get("commission", 0),
                 "timestamp": order.get("filled_at") or order.get("submitted_at"),
             }
-            
+
             record_trade_pnl(trade_record)
             logger.debug(f"Trade recorded for performance tracking: {order.get('symbol')}")
-            
+
             # Trace to LangSmith
             self._trace_trade_execution(order, strategy)
         except Exception as e:
             logger.warning(f"Failed to record trade for tracking: {e}")
-    
+
     def _trace_trade_execution(self, order: dict[str, Any], strategy: str) -> None:
         """Trace trade execution to LangSmith for observability."""
         if not LANGSMITH_AVAILABLE:
             return
-            
+
         try:
             tracer = get_tracer()
             symbol = order.get("symbol", "UNKNOWN")
             side = order.get("side", "UNKNOWN")
-            
+
             with tracer.trace(
                 name=f"trade_execution_{symbol}_{side}",
                 trace_type=TraceType.TRADE,
@@ -122,27 +122,27 @@ class AlpacaExecutor:
                     "notional": order.get("notional"),
                     "strategy": strategy,
                 }
-                
+
                 span.add_output("order_id", order.get("id"))
                 span.add_output("filled_qty", order.get("filled_qty"))
                 span.add_output("filled_price", order.get("filled_avg_price"))
                 span.add_output("status", order.get("status"))
                 span.add_output("commission", order.get("commission", 0))
-                
+
                 span.add_metadata({
                     "broker": order.get("broker", "alpaca"),
                     "mode": order.get("mode", "paper"),
                     "slippage_impact": order.get("slippage_impact", 0),
                 })
-                
+
             logger.debug(f"📊 Trade execution traced to LangSmith: {symbol} {side}")
         except Exception as e:
             logger.warning(f"Failed to trace trade to LangSmith: {e}")
-    
+
     def sync_portfolio_state(self) -> None:
         """
         Sync portfolio state from Alpaca.
-        
+
         CRITICAL: If this fails, we MUST know about it.
         Never fall back silently to empty state - that causes blind trading.
         """
@@ -166,7 +166,7 @@ class AlpacaExecutor:
                     }
                 else:
                     raise RuntimeError("Trader has no get_account_info or get_account method!")
-                
+
                 # Get positions
                 if hasattr(self.trader, 'get_positions'):
                     self.positions = self.trader.get_positions()
@@ -175,27 +175,27 @@ class AlpacaExecutor:
                 else:
                     self.positions = []
                     logger.warning("Could not get positions - no method available")
-                    
+
             except Exception as e:
                 # CRITICAL: Do NOT fall back silently - this causes blind trading!
                 logger.error(f"❌ CRITICAL: Failed to sync portfolio state: {e}")
                 logger.error("   This means we cannot see our account or positions!")
                 logger.error("   Trading should be BLOCKED until this is fixed.")
-                
+
                 # Set error state - equity 0 will trigger safety checks
                 self.account_snapshot = {"equity": 0, "error": str(e)}
                 self.positions = []
-                
+
                 # Re-raise so callers know there's a problem
                 raise RuntimeError(f"Cannot sync portfolio - trading unsafe: {e}") from e
 
         equity = self.account_equity
-        
+
         # Safety check: If equity is 0 or negative, something is VERY wrong
         if equity <= 0 and not self.simulated:
             logger.error(f"❌ CRITICAL: Equity is ${equity} - this should never happen!")
             logger.error("   Either API failed or account is empty. BLOCKING TRADING.")
-        
+
         logger.info(
             "Synced %s Alpaca state | equity=$%.2f | positions=%d",
             "simulated" if self.simulated else ("paper" if self.paper else "live"),
@@ -274,12 +274,12 @@ class AlpacaExecutor:
     ) -> dict[str, Any]:
         """
         Place an order with MANDATORY RAG/ML gate validation.
-        
+
         This method ALWAYS validates through the trade gate before execution.
         """
         # ========== MANDATORY TRADE GATE - NEVER SKIP ==========
         from src.safety.mandatory_trade_gate import TradeBlockedError, validate_trade_mandatory
-        
+
         amount = notional or (qty * 100.0 if qty else 0.0)  # Estimate for qty-based orders
         gate_result = validate_trade_mandatory(
             symbol=symbol,
@@ -287,13 +287,13 @@ class AlpacaExecutor:
             side=side.upper(),
             strategy=strategy,
         )
-        
+
         if not gate_result.approved:
             logger.error(f"🚫 ORDER BLOCKED BY MANDATORY GATE: {gate_result.reason}")
             logger.error(f"   RAG Warnings: {gate_result.rag_warnings}")
             logger.error(f"   ML Anomalies: {gate_result.ml_anomalies}")
             raise TradeBlockedError(gate_result)
-        
+
         if gate_result.rag_warnings or gate_result.ml_anomalies:
             logger.warning("⚠️ ORDER APPROVED WITH WARNINGS:")
             for w in gate_result.rag_warnings:
@@ -301,7 +301,7 @@ class AlpacaExecutor:
             for a in gate_result.ml_anomalies:
                 logger.warning(f"   ML: {a}")
         # ========================================================
-        
+
         logger.debug(
             "Submitting %s order via AlpacaExecutor: %s for %s",
             side,
@@ -355,10 +355,10 @@ class AlpacaExecutor:
                 f"SIMULATED FILL: {side} {symbol} {filled_qty} @ {fill_price} "
                 f"(Slippage: ${order['slippage_impact']}, Comm: ${order['commission']})"
             )
-            
+
             # Record trade for daily performance tracking
             self._record_trade_for_tracking(order, strategy)
-            
+
             return order
 
         # Execution via MultiBroker with Failover
@@ -380,10 +380,10 @@ class AlpacaExecutor:
                 "broker": order_result.broker.value,
                 "submitted_at": order_result.timestamp,
             }
-            
+
             # Record trade for daily performance tracking
             self._record_trade_for_tracking(order, strategy)
-            
+
             return order
         except Exception as e:
             # Fallback for notional logic if MultiBroker lacks it,

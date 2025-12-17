@@ -123,7 +123,7 @@ class SandboxSettings:
     # Filesystem isolation
     allowed_paths: list[str] = field(
         default_factory=lambda: [
-            "/tmp",
+            "/tmp",  # noqa: S108
             str(Path.home() / "trading" / "data"),
             str(Path.home() / "trading" / "reports"),
         ]
@@ -161,7 +161,7 @@ class SandboxSettings:
             "no-new-privileges",
             "--read-only",
             "--tmpfs",
-            "/tmp:rw,noexec,nosuid,size=100m",
+            "/tmp:rw,noexec,nosuid,size=100m",  # noqa: S108
             "--memory",
             self.memory_limit,
             "--cpus",

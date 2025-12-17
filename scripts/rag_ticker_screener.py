@@ -20,9 +20,8 @@ Usage:
 import argparse
 import json
 import logging
-import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 # Add project root to path
@@ -347,7 +346,7 @@ def screen_tickers(
         logger.info(f"   🎯 Sentiment: {sentiment.get('sentiment')} ({sentiment.get('reason')})")
 
         if sentiment.get("sentiment") == "BEARISH" and sentiment.get("confidence", 0) > 0.7:
-            logger.info(f"   ⚠️ Strong bearish sentiment - proceeding with caution")
+            logger.info("   ⚠️ Strong bearish sentiment - proceeding with caution")
             # Don't skip for cash-secured puts (we want to buy the stock), just note it
 
         # 6. Get McMillan recommendation
