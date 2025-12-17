@@ -207,7 +207,7 @@ class LessonsKnowledgeGraphQuery:
 
         # Build result
         result = {
-            "matched_lessons": [l.to_dict() for l in aggregated["lessons"]],
+            "matched_lessons": [lesson.to_dict() for lesson in aggregated["lessons"]],
             "prevention_checklist": aggregated["prevention_checklist"],
             "risk_narrative": aggregated["risk_narrative"],
             "query_time_ms": (time.time() - start_time) * 1000,
@@ -325,7 +325,7 @@ class LessonsKnowledgeGraphQuery:
 
         # Sort by severity (critical first) then relevance
         severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-        matched_lessons.sort(key=lambda l: (severity_order.get(l.severity, 4), -l.relevance))
+        matched_lessons.sort(key=lambda lesson: (severity_order.get(lesson.severity, 4), -lesson.relevance))
 
         # Build prevention checklist
         prevention_checklist = []
@@ -372,11 +372,11 @@ class LessonsKnowledgeGraphQuery:
             return f"No past lessons found for {context.symbol} {context.side} {context.strategy}."
 
         # Count by severity
-        critical_count = sum(1 for l in lessons if l.severity == "critical")
-        high_count = sum(1 for l in lessons if l.severity == "high")
+        critical_count = sum(1 for lesson in lessons if lesson.severity == "critical")
+        high_count = sum(1 for lesson in lessons if lesson.severity == "high")
 
         # Calculate total financial impact
-        total_impact = sum(l.financial_impact for l in lessons if l.financial_impact is not None)
+        total_impact = sum(lesson.financial_impact for lesson in lessons if lesson.financial_impact is not None)
 
         # Build narrative
         narrative_parts = []

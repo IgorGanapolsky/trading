@@ -86,11 +86,11 @@ def run_volatility_safety_check(root: Path) -> bool:
     try:
         sys.path.insert(0, str(root))
         from src.safety.volatility_adjusted_safety import (
-            ATRBasedLimits,
-            DriftDetector,
-            HourlyLossHeartbeat,
+            ATRBasedLimits,  # noqa: F401 - import validation
+            DriftDetector,  # noqa: F401 - import validation
+            HourlyLossHeartbeat,  # noqa: F401 - import validation
             LLMHallucinationChecker,
-            run_all_safety_checks,
+            run_all_safety_checks,  # noqa: F401 - import validation
         )
 
         # Quick sanity test

@@ -43,13 +43,13 @@ def calculate_options_stats(state: dict) -> dict:
     """Calculate options-specific statistics."""
     closed_trades = state.get("performance", {}).get("closed_trades", [])
     options_trades = [
-        t for t in closed_trades 
+        t for t in closed_trades
         if "P0" in t.get("symbol", "") or "C0" in t.get("symbol", "")
     ]
-    
+
     if not options_trades:
         return {"total": 0, "wins": 0, "win_rate": 0, "pl": 0}
-    
+
     wins = len([t for t in options_trades if t.get("pl", 0) > 0])
     return {
         "total": len(options_trades),
@@ -64,7 +64,7 @@ def check_milestone_criteria(milestone_day: int, state: dict) -> dict:
     total_trades = state.get("performance", {}).get("total_trades", 0)
     total_pl = state.get("account", {}).get("total_pl", 0)
     options = calculate_options_stats(state)
-    
+
     if milestone_day == 30:
         criteria = [
             {"name": "Total Trades ≥30", "met": total_trades >= 30, "current": total_trades, "required": 30},
@@ -89,7 +89,7 @@ def check_milestone_criteria(milestone_day: int, state: dict) -> dict:
         unlocks = "Phase 3: Full Deployment (50% real money)"
     else:
         return {"criteria": [], "unlocks": "", "all_met": False}
-    
+
     all_met = all(c["met"] for c in criteria)
     return {"criteria": criteria, "unlocks": unlocks, "all_met": all_met}
 
@@ -98,19 +98,19 @@ def get_milestone_status(state: dict) -> list[dict]:
     """Get comprehensive milestone status."""
     current_day = state.get("challenge", {}).get("current_day", 0)
     start_date_str = state.get("challenge", {}).get("start_date", "2025-10-29")
-    
+
     try:
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
     except ValueError:
         start_date = datetime.now() - timedelta(days=current_day)
-    
+
     today = datetime.now()
-    
+
     milestones = []
     for day in [30, 60, 90]:
         target_date = start_date + timedelta(days=day)
         days_until = (target_date - today).days
-        
+
         if current_day >= day:
             status = "REACHED"
             urgency = "✅"
@@ -126,9 +126,9 @@ def get_milestone_status(state: dict) -> list[dict]:
         else:
             status = "UPCOMING"
             urgency = "⏳"
-        
+
         criteria_check = check_milestone_criteria(day, state)
-        
+
         milestones.append({
             "day": day,
             "name": f"Day {day} Review",
@@ -141,14 +141,14 @@ def get_milestone_status(state: dict) -> list[dict]:
             "ready": criteria_check["all_met"],
             "progress_pct": sum(1 for c in criteria_check["criteria"] if c["met"]) / len(criteria_check["criteria"]) * 100 if criteria_check["criteria"] else 0,
         })
-    
+
     return milestones
 
 
 def get_alerts(milestones: list[dict]) -> list[dict]:
     """Generate alerts based on milestone status."""
     alerts = []
-    
+
     for m in milestones:
         if m["status"] == "OVERDUE" and not m["ready"]:
             alerts.append({
@@ -178,7 +178,7 @@ def get_alerts(milestones: list[dict]) -> list[dict]:
                 "message": f"Day {m['day']} reached but criteria not met.",
                 "action": f"Continue working toward: {', '.join(c['name'] for c in m['criteria'] if not c['met'])}"
             })
-    
+
     return alerts
 
 
@@ -186,7 +186,7 @@ def get_next_actions(milestones: list[dict], state: dict) -> list[str]:
     """Get recommended next actions based on milestone status."""
     current_day = state.get("challenge", {}).get("current_day", 0)
     actions = []
-    
+
     # Find the next incomplete milestone
     for m in milestones:
         if not m["ready"]:
@@ -194,11 +194,11 @@ def get_next_actions(milestones: list[dict], state: dict) -> list[str]:
             for c in failing[:3]:  # Top 3 priorities
                 actions.append(f"Work on: {c['name']} (currently: {c['current']}, need: {c['required']})")
             break
-    
+
     # Add time-based recommendations
     if current_day < 30:
         actions.append(f"Execute {max(1, (30 - state.get('performance', {}).get('total_trades', 0)) // (30 - current_day))} trades per day to reach 30 by Day 30")
-    
+
     return actions[:5]  # Max 5 actions
 
 
@@ -208,17 +208,17 @@ def print_report(state: dict, summary: bool = False, upcoming: bool = False):
     alerts = get_alerts(milestones)
     actions = get_next_actions(milestones, state)
     current_day = state.get("challenge", {}).get("current_day", 0)
-    
+
     if summary:
         next_milestone = next((m for m in milestones if m["status"] not in ["REACHED"]), milestones[-1])
         print(f"📅 Day {current_day}/90 | Next: {next_milestone['name']} in {next_milestone['days_until']}d | Ready: {'✅' if next_milestone['ready'] else '❌'} ({next_milestone['progress_pct']:.0f}%)")
         return
-    
+
     print("=" * 70)
     print("📅 MILESTONE TRACKER")
     print(f"   Current Day: {current_day}/90 | Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     print("=" * 70)
-    
+
     # Alerts first
     if alerts:
         print("\n🔔 ALERTS")
@@ -226,26 +226,26 @@ def print_report(state: dict, summary: bool = False, upcoming: bool = False):
         for alert in alerts:
             print(f"\n   {alert['icon']} [{alert['level']}] {alert['message']}")
             print(f"      → {alert['action']}")
-    
+
     # Milestone details
     print("\n" + "-" * 70)
     print("🏁 MILESTONES")
     print("-" * 70)
-    
+
     for m in milestones:
         if upcoming and m["status"] == "REACHED":
             continue
-            
+
         print(f"\n{m['urgency']} {m['name']} ({m['target_date']})")
         print(f"   Status: {m['status']} | Days Until: {m['days_until']} | Ready: {'✅' if m['ready'] else '❌'}")
         print(f"   Progress: [{'█' * int(m['progress_pct'] / 10)}{'░' * (10 - int(m['progress_pct'] / 10))}] {m['progress_pct']:.0f}%")
         print(f"   Unlocks: {m['unlocks']}")
-        
+
         print("\n   Criteria:")
         for c in m["criteria"]:
             status = "✅" if c["met"] else "❌"
             print(f"      {status} {c['name']}: {c['current']} (need: {c['required']})")
-    
+
     # Actions
     if actions:
         print("\n" + "-" * 70)
@@ -253,39 +253,39 @@ def print_report(state: dict, summary: bool = False, upcoming: bool = False):
         print("-" * 70)
         for i, action in enumerate(actions, 1):
             print(f"   {i}. {action}")
-    
+
     # Timeline
     print("\n" + "-" * 70)
     print("📆 TIMELINE")
     print("-" * 70)
-    
+
     start_date_str = state.get("challenge", {}).get("start_date", "2025-10-29")
     try:
-        start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+        _start_date = datetime.strptime(start_date_str, "%Y-%m-%d")  # validates format
     except ValueError:
-        start_date = datetime.now() - timedelta(days=current_day)
-    
+        _start_date = datetime.now() - timedelta(days=current_day)  # fallback
+
     timeline_width = 60
     for m in milestones:
         day_pos = int(m["day"] / 90 * timeline_width)
         current_pos = int(current_day / 90 * timeline_width)
-        
+
         line = ["-"] * timeline_width
         if current_pos < timeline_width:
             line[current_pos] = "●"  # Current position
         line[min(day_pos, timeline_width - 1)] = "◆" if m["ready"] else "○"
-        
+
         print(f"   Day {m['day']:2d}: {''.join(line[:day_pos + 1])} {m['urgency']}")
-    
+
     print(f"\n   Legend: ● = Today (Day {current_day}) | ◆ = Milestone Ready | ○ = Milestone Pending")
-    
+
     print("\n" + "=" * 70)
 
 
 def save_milestone_snapshot(state: dict):
     """Save milestone data for tracking."""
     milestones = get_milestone_status(state)
-    
+
     snapshot = {
         "timestamp": datetime.now().isoformat(),
         "date": datetime.now().strftime("%Y-%m-%d"),
@@ -301,13 +301,13 @@ def save_milestone_snapshot(state: dict):
             for m in milestones
         ]
     }
-    
+
     reports_dir = PROJECT_ROOT / "reports"
     reports_dir.mkdir(exist_ok=True)
-    
+
     with open(reports_dir / f"milestones_{snapshot['date']}.json", "w") as f:
         json.dump(snapshot, f, indent=2)
-    
+
     return snapshot
 
 
@@ -315,16 +315,16 @@ def main():
     args = sys.argv[1:]
     summary = "--summary" in args
     upcoming = "--upcoming" in args
-    
+
     state = load_system_state()
-    
+
     if not state:
         print("❌ Error: Could not load system_state.json")
         return 1
-    
+
     print_report(state, summary=summary, upcoming=upcoming)
     save_milestone_snapshot(state)
-    
+
     return 0
 
 

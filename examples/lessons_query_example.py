@@ -160,7 +160,7 @@ def example_4_risk_assessment():
             # Show highest severity
             highest_severity = max(
                 result["matched_lessons"],
-                key=lambda l: {"critical": 3, "high": 2, "medium": 1, "low": 0}[l["severity"]],
+                key=lambda lesson: {"critical": 3, "high": 2, "medium": 1, "low": 0}[lesson["severity"]],
             )
             print(f"  Highest severity: {highest_severity['severity'].upper()}")
 

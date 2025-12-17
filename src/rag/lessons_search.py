@@ -173,7 +173,7 @@ class LessonsSearch:
             try:
                 import pickle
                 with open(vectorizer_path, 'rb') as f:
-                    self.tfidf_vectorizer = pickle.load(f)
+                    self.tfidf_vectorizer = pickle.load(f)  # noqa: S301 - trusted local vectorizer file
                 logger.info("Loaded pre-fitted TF-IDF vectorizer from indexing")
                 return
             except Exception as e:

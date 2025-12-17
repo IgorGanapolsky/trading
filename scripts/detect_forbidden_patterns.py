@@ -57,10 +57,7 @@ def should_scan_file(file_path: Path, exclude_dirs: list, exclude_files: list) -
             return False
 
     # Check if excluded file
-    if file_path.name in exclude_files:
-        return False
-
-    return True
+    return file_path.name not in exclude_files
 
 
 def scan_file(file_path: Path, patterns: list) -> list:

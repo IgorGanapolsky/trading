@@ -22,7 +22,7 @@ try:
     import requests
 except ImportError:
     print("Installing requests...")
-    os.system("pip install requests -q")
+    os.system("pip install requests -q")  # noqa: S605 - trusted pip install
     import requests
 
 

@@ -254,9 +254,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
         test_code = header
 
         # Group by severity
-        critical = [l for l in lessons if l.get("severity") == "CRITICAL"]
-        high = [l for l in lessons if l.get("severity") == "HIGH"]
-        other = [l for l in lessons if l.get("severity") not in ["CRITICAL", "HIGH"]]
+        critical = [item for item in lessons if item.get("severity") == "CRITICAL"]
+        high = [item for item in lessons if item.get("severity") == "HIGH"]
+        other = [item for item in lessons if item.get("severity") not in ["CRITICAL", "HIGH"]]
 
         if critical:
             test_code += "\n# ============ CRITICAL SEVERITY ============\n"
@@ -315,7 +315,7 @@ def main():
 
     # Filter if specific lesson requested
     if args.lesson:
-        lessons = [l for l in lessons if l.get("id", "").lower() == args.lesson.lower()]
+        lessons = [item for item in lessons if item.get("id", "").lower() == args.lesson.lower()]
         if not lessons:
             print(f"Lesson {args.lesson} not found")
             return 1
@@ -333,8 +333,8 @@ def main():
     print("REGRESSION TEST GENERATION SUMMARY")
     print("=" * 60)
     print(f"Total Lessons Processed: {len(lessons)}")
-    print(f"Critical:               {len([l for l in lessons if l.get('severity') == 'CRITICAL'])}")
-    print(f"High:                   {len([l for l in lessons if l.get('severity') == 'HIGH'])}")
+    print(f"Critical:               {len([item for item in lessons if item.get('severity') == 'CRITICAL'])}")
+    print(f"High:                   {len([item for item in lessons if item.get('severity') == 'HIGH'])}")
     print(f"Output:                 {args.output}")
     print("=" * 60)
 

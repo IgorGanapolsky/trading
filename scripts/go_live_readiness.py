@@ -43,13 +43,13 @@ def load_deployment_config() -> dict:
 def calculate_options_stats(state: dict) -> dict:
     """Calculate options-specific statistics."""
     closed_trades = state.get("performance", {}).get("closed_trades", [])
-    
+
     # Identify options trades (contain P0 for puts or C0 for calls in symbol)
     options_trades = [
-        t for t in closed_trades 
+        t for t in closed_trades
         if "P0" in t.get("symbol", "") or "C0" in t.get("symbol", "")
     ]
-    
+
     if not options_trades:
         return {
             "total_trades": 0,
@@ -60,10 +60,10 @@ def calculate_options_stats(state: dict) -> dict:
             "avg_win": 0,
             "avg_loss": 0,
         }
-    
+
     wins = [t for t in options_trades if t.get("pl", 0) > 0]
     losses = [t for t in options_trades if t.get("pl", 0) <= 0]
-    
+
     return {
         "total_trades": len(options_trades),
         "wins": len(wins),
@@ -78,15 +78,15 @@ def calculate_options_stats(state: dict) -> dict:
 def check_criteria(state: dict) -> list[dict[str, Any]]:
     """Check all go-live criteria and return status."""
     options_stats = calculate_options_stats(state)
-    
+
     # Get current values
     current_day = state.get("challenge", {}).get("current_day", 0)
     total_trades = state.get("performance", {}).get("total_trades", 0)
     win_rate = state.get("performance", {}).get("win_rate", 0)
     total_pl = state.get("account", {}).get("total_pl", 0)
     max_drawdown = abs(state.get("heuristics", {}).get("max_drawdown", 0))
-    sharpe = state.get("heuristics", {}).get("sharpe_ratio", 0)
-    
+    _sharpe = state.get("heuristics", {}).get("sharpe_ratio", 0)  # future use
+
     criteria = [
         {
             "id": "paper_days",
@@ -188,7 +188,7 @@ def check_criteria(state: dict) -> list[dict[str, Any]]:
             "note": "Tracking loss streaks"
         },
     ]
-    
+
     return criteria
 
 
@@ -200,28 +200,28 @@ def calculate_readiness_score(criteria: list[dict]) -> dict:
         "HIGH": 2,
         "MEDIUM": 1,
     }
-    
+
     total_weight = 0
     weighted_progress = 0
     passed_count = 0
     critical_passed = 0
     critical_total = 0
-    
+
     for c in criteria:
         weight = weights.get(c["priority"], 1)
         total_weight += weight
         weighted_progress += c["progress"] * weight
-        
+
         if c["passed"]:
             passed_count += 1
-        
+
         if c["priority"] == "CRITICAL":
             critical_total += 1
             if c["passed"]:
                 critical_passed += 1
-    
+
     score = weighted_progress / total_weight if total_weight > 0 else 0
-    
+
     # Determine phase
     if score >= 100 and critical_passed == critical_total:
         phase = "READY"
@@ -235,7 +235,7 @@ def calculate_readiness_score(criteria: list[dict]) -> dict:
     else:
         phase = "EARLY"
         signal = "🔴 KEEP LEARNING"
-    
+
     return {
         "score": round(score, 1),
         "phase": phase,
@@ -250,7 +250,7 @@ def calculate_readiness_score(criteria: list[dict]) -> dict:
 def get_deployment_recommendation(score: dict, state: dict) -> dict:
     """Get capital deployment recommendation based on readiness."""
     current_day = state.get("challenge", {}).get("current_day", 0)
-    
+
     # Deployment phases based on readiness
     if score["score"] < 50 or current_day < 30:
         return {
@@ -303,12 +303,12 @@ def get_milestone_status(state: dict) -> list[dict]:
     """Get status of key milestones."""
     current_day = state.get("challenge", {}).get("current_day", 0)
     start_date = state.get("challenge", {}).get("start_date", "2025-10-29")
-    
+
     try:
         start = datetime.strptime(start_date, "%Y-%m-%d")
     except ValueError:
         start = datetime.now() - timedelta(days=current_day)
-    
+
     milestones = [
         {
             "name": "Day 30 Review",
@@ -335,7 +335,7 @@ def get_milestone_status(state: dict) -> list[dict]:
             "unlocks": "Phase 3: Full Deployment (50%+ real)",
         },
     ]
-    
+
     return milestones
 
 
@@ -352,16 +352,16 @@ def print_report(state: dict, brief: bool = False):
     score = calculate_readiness_score(criteria)
     deployment = get_deployment_recommendation(score, state)
     milestones = get_milestone_status(state)
-    
+
     if brief:
         print(f"{score['signal']} Readiness: {score['score']}% | {score['passed']}/{score['total']} criteria | {deployment['phase']}")
         return
-    
+
     print("=" * 70)
     print("🎯 GO-LIVE READINESS REPORT")
     print(f"   Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     print("=" * 70)
-    
+
     # Overall Score
     print(f"\n📊 READINESS SCORE: {score['score']}%")
     print(format_progress_bar(score['score'], 40))
@@ -369,12 +369,12 @@ def print_report(state: dict, brief: bool = False):
     print(f"   Phase:  {score['phase']}")
     print(f"   Criteria Passed: {score['passed']}/{score['total']}")
     print(f"   Critical Criteria: {score['critical_passed']}/{score['critical_total']}")
-    
+
     # Criteria Details
     print("\n" + "-" * 70)
     print("📋 CRITERIA CHECKLIST")
     print("-" * 70)
-    
+
     for c in criteria:
         status = "✅" if c["passed"] else "❌"
         priority_icon = {"CRITICAL": "🔴", "HIGH": "🟠", "MEDIUM": "🟡"}.get(c["priority"], "⚪")
@@ -382,7 +382,7 @@ def print_report(state: dict, brief: bool = False):
         print(f"   Current: {c['current']} {c['unit']} | Required: {c['required']} {c['unit']}")
         print(f"   Progress: {format_progress_bar(c['progress'], 15)}")
         print(f"   {c['note']}")
-    
+
     # Deployment Recommendation
     print("\n" + "-" * 70)
     print("💰 CAPITAL DEPLOYMENT RECOMMENDATION")
@@ -393,30 +393,30 @@ def print_report(state: dict, brief: bool = False):
     print(f"   Action:        {deployment['action']}")
     print(f"   Next Goal:     {deployment['next_milestone']}")
     print(f"\n   💡 {deployment['recommendation']}")
-    
+
     # Milestones
     print("\n" + "-" * 70)
     print("🏁 MILESTONES")
     print("-" * 70)
-    
+
     for m in milestones:
         print(f"\n   {m['name']} ({m['date']})")
         print(f"   Status: {m['status']}")
         print(f"   Criteria: {m['criteria']}")
         print(f"   Unlocks: {m['unlocks']}")
-    
+
     # Action Items
     print("\n" + "-" * 70)
     print("📝 ACTION ITEMS FOR TODAY")
     print("-" * 70)
-    
+
     failing = [c for c in criteria if not c["passed"]]
     if failing:
         for i, c in enumerate(failing[:3], 1):
             print(f"   {i}. Work on: {c['name']} ({c['current']}/{c['required']} {c['unit']})")
     else:
         print("   🎉 All criteria passed! Ready for go-live review.")
-    
+
     print("\n" + "=" * 70)
     print("Run this script daily: python3 scripts/go_live_readiness.py")
     print("=" * 70)
@@ -427,7 +427,7 @@ def save_readiness_snapshot(state: dict):
     criteria = check_criteria(state)
     score = calculate_readiness_score(criteria)
     deployment = get_deployment_recommendation(score, state)
-    
+
     snapshot = {
         "timestamp": datetime.now().isoformat(),
         "date": datetime.now().strftime("%Y-%m-%d"),
@@ -441,15 +441,15 @@ def save_readiness_snapshot(state: dict):
         "real_money_max": deployment["real_money_max"],
         "criteria_details": {c["id"]: {"current": c["current"], "required": c["required"], "passed": c["passed"]} for c in criteria}
     }
-    
+
     # Save to reports
     reports_dir = PROJECT_ROOT / "reports"
     reports_dir.mkdir(exist_ok=True)
-    
+
     snapshot_file = reports_dir / f"readiness_{snapshot['date']}.json"
     with open(snapshot_file, "w") as f:
         json.dump(snapshot, f, indent=2)
-    
+
     return snapshot
 
 
@@ -457,20 +457,20 @@ def main():
     args = sys.argv[1:]
     brief = "--brief" in args
     as_json = "--json" in args
-    
+
     state = load_system_state()
-    
+
     if not state:
         print("❌ Error: Could not load system_state.json")
         return 1
-    
+
     if as_json:
         snapshot = save_readiness_snapshot(state)
         print(json.dumps(snapshot, indent=2))
     else:
         print_report(state, brief=brief)
         save_readiness_snapshot(state)
-    
+
     return 0
 
 

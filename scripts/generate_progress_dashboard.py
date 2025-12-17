@@ -307,7 +307,7 @@ def format_ml_rag_status() -> str:
     # Check if embedder available
     embedder_status = "❌ Not Available"
     try:
-        from sentence_transformers import SentenceTransformer
+        from sentence_transformers import SentenceTransformer  # noqa: F401 - availability check
 
         embedder_status = "✅ sentence-transformers"
     except ImportError:

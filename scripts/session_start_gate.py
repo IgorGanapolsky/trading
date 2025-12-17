@@ -72,16 +72,16 @@ def load_system_state() -> dict:
 def load_recent_performance() -> dict:
     """Load recent trading performance."""
     state = load_system_state()
-    
+
     # Extract key metrics
     account = state.get("account", {})
     performance = state.get("performance", {})
     strategies = state.get("strategies", {})
-    
+
     # Calculate strategy P/L
     closed_trades = performance.get("closed_trades", [])
     strategy_pl = {}
-    
+
     for trade in closed_trades:
         symbol = trade.get("symbol", "")
         pl = trade.get("pl", 0)
@@ -98,7 +98,7 @@ def load_recent_performance() -> dict:
         strategy_pl[cat]["trades"] += 1
         if pl > 0:
             strategy_pl[cat]["wins"] += 1
-    
+
     return {
         "equity": account.get("current_equity", 0),
         "total_pl": account.get("total_pl", 0),
@@ -110,17 +110,17 @@ def load_recent_performance() -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description="Session Start Gate")
-    parser.add_argument("--topic", type=str, default="trading performance strategy", 
+    parser.add_argument("--topic", type=str, default="trading performance strategy",
                         help="Topic to query RAG for")
     args = parser.parse_args()
-    
+
     print("=" * 70)
     print("🚀 SESSION START GATE - Mandatory Pre-Session Verification")
     print(f"   Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 70)
-    
+
     issues = []
-    
+
     # 1. Load and display system state
     print("\n📊 CURRENT SYSTEM STATE:")
     print("-" * 70)
@@ -128,19 +128,19 @@ def main():
     print(f"   Day: {perf['day']}/90")
     print(f"   Equity: ${perf['equity']:,.2f}")
     print(f"   Total P/L: ${perf['total_pl']:,.2f}")
-    
+
     print("\n   Strategy Performance:")
     for strategy, data in perf.get("strategy_pl", {}).items():
         wins = data.get("wins", 0)
         trades = data.get("trades", 0)
         wr = (wins / trades * 100) if trades > 0 else 0
         print(f"   - {strategy}: ${data['pl']:.2f} ({wr:.0f}% win rate, {trades} trades)")
-    
+
     print("\n   Active Strategies:")
     for strategy, status in perf.get("active_strategies", {}).items():
         emoji = "✅" if status == "active" else "❌" if status == "disabled" else "⏳"
         print(f"   - {strategy}: {emoji} {status}")
-    
+
     # 2. Check documentation freshness
     print("\n📋 DOCUMENTATION FRESHNESS:")
     print("-" * 70)
@@ -151,13 +151,13 @@ def main():
         print("   ❌ Documentation is stale!")
         issues.append("Stale documentation - update before proceeding")
         print(doc_check["output"])
-    
+
     # 3. Query RAG for relevant lessons
     print("\n🧠 RELEVANT LESSONS LEARNED:")
     print("-" * 70)
     rag_output = check_rag_lessons(args.topic)
     print(rag_output[:2000])  # Truncate if too long
-    
+
     # 4. Summary
     print("\n" + "=" * 70)
     if issues:

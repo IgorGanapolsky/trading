@@ -112,7 +112,7 @@ if __name__ == "__main__":
     with open(output_file, 'w') as f:
         f.write(script_content)
 
-    os.chmod(output_file, 0o755)
+    os.chmod(output_file, 0o755)  # noqa: S103 - intentional script executable
     print(f"✅ Created {output_file}")
 
 

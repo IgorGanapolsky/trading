@@ -16,7 +16,7 @@ __all__ = []
 
 # VIX Monitor imports (optional)
 try:
-    from src.options.vix_monitor import (
+    from src.options.vix_monitor import (  # noqa: F401
         TermStructureState,
         VIXMonitor,
         VIXSignals,
@@ -40,7 +40,7 @@ except ImportError:
 
 # IV Data Integration imports (optional - requires numpy, scipy, alpaca-py)
 try:
-    from src.options.iv_data_integration import (
+    from src.options.iv_data_integration import (  # noqa: F401
         IVAlerts,
         IVDataFetcher,
         IVMetrics,

@@ -79,7 +79,7 @@ except ImportError:
 # Hindsight Agentic Memory - 91% accuracy on LongMemEval (Dec 2025)
 # Auto-learns from trades, provides confidence-scored opinions
 try:
-    from src.rag.hindsight_adapter import HindsightAdapter, get_hindsight_adapter
+    from src.rag.hindsight_adapter import HindsightAdapter, get_hindsight_adapter  # noqa: F401
 
     HINDSIGHT_AVAILABLE = True
 except ImportError:

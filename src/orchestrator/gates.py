@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 # Pipeline checkpointing for fault tolerance (Dec 2025)
 try:
-    from src.orchestrator.checkpoint import (
+    from src.orchestrator.checkpoint import (  # noqa: F401
         CHECKPOINT_GATES,
         PipelineCheckpointer,
         get_checkpointer,
@@ -55,7 +55,7 @@ except ImportError:
     logger.warning("LangSmith not available - gate decisions will only be logged locally")
 
 
-def _trace_gate(gate_name: str, ticker: str, inputs: dict, result: "GateResult") -> None:
+def _trace_gate(gate_name: str, ticker: str, inputs: dict, result: GateResult) -> None:
     """Trace a gate decision to LangSmith for observability."""
     if not LANGSMITH_AVAILABLE:
         return
@@ -943,8 +943,8 @@ class TradingGatePipeline:
         gate_index: float,
         gate_name: str,
         ticker: str,
-        ctx: "TradeContext",
-        results: list["GateResult"],
+        ctx: TradeContext,
+        results: list[GateResult],
         status: str = "success",
     ) -> None:
         """Save checkpoint if checkpointing is enabled and gate is critical."""

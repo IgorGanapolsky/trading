@@ -27,7 +27,6 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Set
 
 PROJECT_ROOT = Path(__file__).parent.parent
 USAGE_HISTORY_FILE = PROJECT_ROOT / "data" / "ml" / "import_usage_history.json"
@@ -35,65 +34,65 @@ USAGE_HISTORY_FILE = PROJECT_ROOT / "data" / "ml" / "import_usage_history.json"
 
 class ImportUsageTracker:
     """Track import usage patterns over time."""
-    
+
     def __init__(self):
-        self.current_snapshot: Dict[str, Set[str]] = defaultdict(set)
-        self.history: List[Dict] = []
+        self.current_snapshot: dict[str, set[str]] = defaultdict(set)
+        self.history: list[dict] = []
         self.load_history()
-    
+
     def load_history(self):
         """Load historical usage data."""
         if USAGE_HISTORY_FILE.exists():
             try:
-                with open(USAGE_HISTORY_FILE, "r") as f:
+                with open(USAGE_HISTORY_FILE) as f:
                     data = json.load(f)
                     self.history = data.get("snapshots", [])
             except Exception as e:
                 print(f"Warning: Could not load history: {e}")
-    
+
     def save_snapshot(self):
         """Save current snapshot to history."""
         USAGE_HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Convert sets to lists for JSON serialization
         serializable_snapshot = {
             module: list(importers)
             for module, importers in self.current_snapshot.items()
         }
-        
+
         snapshot = {
             "timestamp": datetime.now().isoformat(),
             "usage": serializable_snapshot,
             "module_count": len(self.current_snapshot),
         }
-        
+
         self.history.append(snapshot)
-        
+
         # Keep last 90 days only
         cutoff = datetime.now() - timedelta(days=90)
         self.history = [
             s for s in self.history
             if datetime.fromisoformat(s["timestamp"]) > cutoff
         ]
-        
+
         with open(USAGE_HISTORY_FILE, "w") as f:
             json.dump({"snapshots": self.history}, f, indent=2)
-        
+
         print(f"✅ Saved snapshot to {USAGE_HISTORY_FILE}")
         print(f"   Historical snapshots: {len(self.history)}")
-    
-    def analyze_trends(self, module: str, days: int = 30) -> Dict:
+
+    def analyze_trends(self, module: str, days: int = 30) -> dict:
         """Analyze usage trend for a specific module."""
         cutoff = datetime.now() - timedelta(days=days)
-        
+
         recent_snapshots = [
             s for s in self.history
             if datetime.fromisoformat(s["timestamp"]) > cutoff
         ]
-        
+
         if not recent_snapshots:
             return {"trend": "unknown", "data_points": 0}
-        
+
         # Count importers over time
         usage_over_time = []
         for snapshot in recent_snapshots:
@@ -102,14 +101,14 @@ class ImportUsageTracker:
                 "timestamp": snapshot["timestamp"],
                 "importer_count": len(importers),
             })
-        
+
         # Calculate trend
         if len(usage_over_time) < 2:
             trend = "stable"
         else:
             first_count = usage_over_time[0]["importer_count"]
             last_count = usage_over_time[-1]["importer_count"]
-            
+
             if last_count == 0 and first_count > 0:
                 trend = "declining_to_zero"
             elif last_count < first_count:
@@ -118,7 +117,7 @@ class ImportUsageTracker:
                 trend = "growing"
             else:
                 trend = "stable"
-        
+
         return {
             "trend": trend,
             "data_points": len(usage_over_time),
@@ -126,23 +125,23 @@ class ImportUsageTracker:
             "first_importers": usage_over_time[0]["importer_count"],
             "usage_timeline": usage_over_time,
         }
-    
-    def detect_anomalies(self) -> List[Dict]:
+
+    def detect_anomalies(self) -> list[dict]:
         """
         Detect suspicious patterns that might indicate future dead code.
-        
+
         Patterns:
         1. Module with declining usage (5+ importers -> 1-2)
         2. Module never imported outside its own package
         3. Module built but never integrated
         """
         anomalies = []
-        
+
         for module, importers in self.current_snapshot.items():
             # Skip test modules
             if "test_" in module or "tests." in module:
                 continue
-            
+
             # Pattern 1: Declining usage
             trend = self.analyze_trends(module, days=30)
             if trend["trend"] == "declining_to_zero":
@@ -152,7 +151,7 @@ class ImportUsageTracker:
                     "severity": "high",
                     "details": f"Usage dropped from {trend['first_importers']} to {trend['current_importers']} importers",
                 })
-            
+
             # Pattern 2: Never used outside own package
             if importers:
                 module_package = ".".join(module.split(".")[:-1])
@@ -160,7 +159,7 @@ class ImportUsageTracker:
                     imp for imp in importers
                     if not imp.startswith(module_package)
                 ]
-                
+
                 if not external_importers and len(importers) > 0:
                     anomalies.append({
                         "module": module,
@@ -168,7 +167,7 @@ class ImportUsageTracker:
                         "severity": "medium",
                         "details": f"Only imported within {module_package} package",
                     })
-            
+
             # Pattern 3: No imports at all (but exists)
             if not importers and not module.endswith("__main__"):
                 anomalies.append({
@@ -177,30 +176,30 @@ class ImportUsageTracker:
                     "severity": "high",
                     "details": "Module exists but has zero imports",
                 })
-        
+
         return anomalies
 
 
-def scan_imports(root: Path) -> Dict[str, Set[str]]:
+def scan_imports(root: Path) -> dict[str, set[str]]:
     """Scan all Python files and build import graph."""
     import_graph = defaultdict(set)
-    
+
     for py_file in root.glob("**/*.py"):
         # Skip test files and virtual envs
         if any(skip in str(py_file) for skip in ["test_", "__pycache__", ".venv", "venv"]):
             continue
-        
+
         try:
-            with open(py_file, "r", encoding="utf-8") as f:
+            with open(py_file, encoding="utf-8") as f:
                 tree = ast.parse(f.read(), filename=str(py_file))
-            
+
             # Get module name for this file
             try:
                 rel_path = py_file.relative_to(root)
                 importer_module = str(rel_path.with_suffix("")).replace("/", ".")
             except ValueError:
                 continue
-            
+
             # Extract imports
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
@@ -209,17 +208,17 @@ def scan_imports(root: Path) -> Dict[str, Set[str]]:
                 elif isinstance(node, ast.ImportFrom):
                     if node.module:
                         import_graph[node.module].add(importer_module)
-        
+
         except (SyntaxError, UnicodeDecodeError):
             pass
-    
+
     return import_graph
 
 
-def generate_lesson_from_anomaly(anomaly: Dict) -> str:
+def generate_lesson_from_anomaly(anomaly: dict) -> str:
     """Generate a lesson learned markdown from an anomaly."""
     lesson_id = f"ll_auto_{datetime.now().strftime('%Y%m%d_%H%M')}"
-    
+
     template = f"""# Auto-Generated Lesson: {anomaly['pattern'].replace('_', ' ').title()}
 
 **ID**: {lesson_id}
@@ -264,7 +263,7 @@ checks:
 ---
 *This lesson was auto-generated by import usage analyzer*
 """
-    
+
     return template
 
 
@@ -293,40 +292,40 @@ def main():
         action="store_true",
         help="Auto-generate lessons from anomalies"
     )
-    
+
     args = parser.parse_args()
-    
+
     print("=" * 70)
     print("IMPORT USAGE ANALYZER - ML-Powered Dead Code Prevention")
     print("=" * 70)
     print()
-    
+
     # Scan current imports
     print("[1/3] Scanning import usage...")
     import_graph = scan_imports(PROJECT_ROOT)
     print(f"  Tracked {len(import_graph)} imported modules")
-    
+
     # Load tracker
     tracker = ImportUsageTracker()
     tracker.current_snapshot = import_graph
-    
+
     # Save snapshot if learning mode
     if args.learn:
         print("\n[2/3] Saving snapshot for ML learning...")
         tracker.save_snapshot()
     else:
         print("\n[2/3] Skipping snapshot save (use --learn to enable)")
-    
+
     # Detect anomalies
     print("\n[3/3] Detecting usage anomalies...")
     anomalies = tracker.detect_anomalies()
     print(f"  Found {len(anomalies)} suspicious patterns")
-    
+
     # Report results
     print("\n" + "=" * 70)
     print("RESULTS")
     print("=" * 70)
-    
+
     if args.module:
         # Detailed trend analysis for specific module
         print(f"\n📊 Trend Analysis: {args.module}")
@@ -334,18 +333,18 @@ def main():
         print(f"   Trend: {trend['trend']}")
         print(f"   Current importers: {trend.get('current_importers', 0)}")
         print(f"   Data points: {trend['data_points']}")
-        
+
         if trend.get("usage_timeline"):
             print("\n   Timeline:")
             for point in trend["usage_timeline"][-5:]:
                 date = datetime.fromisoformat(point["timestamp"]).strftime("%Y-%m-%d")
                 print(f"     {date}: {point['importer_count']} importers")
-    
+
     elif anomalies:
         # Group by severity
         high_severity = [a for a in anomalies if a["severity"] == "high"]
         medium_severity = [a for a in anomalies if a["severity"] == "medium"]
-        
+
         if high_severity:
             print("\n🔴 HIGH SEVERITY ANOMALIES:")
             for anom in high_severity[:5]:
@@ -353,33 +352,33 @@ def main():
                 print(f"      Pattern: {anom['pattern']}")
                 print(f"      Details: {anom['details']}")
                 print()
-        
+
         if medium_severity:
             print("\n🟡 MEDIUM SEVERITY ANOMALIES:")
             for anom in medium_severity[:5]:
                 print(f"   {anom['module']}")
                 print(f"      Pattern: {anom['pattern']}")
                 print()
-        
+
         # Auto-generate lessons if requested
         if args.generate_lessons:
             print("\n" + "=" * 70)
             print("AUTO-GENERATING LESSONS")
             print("=" * 70)
-            
+
             lessons_dir = PROJECT_ROOT / "rag_knowledge" / "lessons_learned"
             lessons_dir.mkdir(parents=True, exist_ok=True)
-            
+
             for anom in high_severity[:3]:  # Top 3 high severity
                 lesson_content = generate_lesson_from_anomaly(anom)
                 lesson_id = f"ll_auto_{anom['pattern']}_{datetime.now().strftime('%Y%m%d')}"
                 lesson_file = lessons_dir / f"{lesson_id}.md"
-                
+
                 with open(lesson_file, "w") as f:
                     f.write(lesson_content)
-                
+
                 print(f"✅ Generated: {lesson_file.name}")
-        
+
         print("\n" + "=" * 70)
         print(f"ANOMALIES DETECTED: {len(anomalies)}")
         print("\nRecommendations:")

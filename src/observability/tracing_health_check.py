@@ -46,7 +46,7 @@ class TracingHealthResult:
 class TracingHealthChecker:
     """
     Verify LangSmith tracing is fully operational.
-    
+
     Run this BEFORE any trading to ensure observability is working.
     """
 
@@ -110,7 +110,7 @@ class TracingHealthChecker:
             from src.observability.langsmith_tracer import TraceType, get_tracer
 
             tracer = get_tracer()
-            
+
             with tracer.trace(
                 name="health_check_test_trace",
                 trace_type=TraceType.VERIFICATION,
@@ -132,7 +132,7 @@ class TracingHealthChecker:
     def run_full_check(self) -> TracingHealthResult:
         """
         Run complete health check.
-        
+
         Returns TracingHealthResult with all checks.
         """
         self.errors = []
@@ -173,13 +173,13 @@ class TracingHealthChecker:
 def verify_tracing_health(block_on_failure: bool = False) -> TracingHealthResult:
     """
     Verify tracing is healthy before trading.
-    
+
     Args:
         block_on_failure: If True, raise exception on failure
-        
+
     Returns:
         TracingHealthResult
-        
+
     Raises:
         RuntimeError: If block_on_failure=True and check fails
     """
@@ -197,7 +197,7 @@ def verify_tracing_health(block_on_failure: bool = False) -> TracingHealthResult
 def require_healthy_tracing() -> TracingHealthResult:
     """
     Require healthy tracing or raise exception.
-    
+
     Call this before any trading to ensure observability.
     """
     return verify_tracing_health(block_on_failure=True)
@@ -206,19 +206,19 @@ def require_healthy_tracing() -> TracingHealthResult:
 if __name__ == "__main__":
     # Run health check directly
     import sys
-    
+
     logging.basicConfig(level=logging.INFO)
-    
+
     result = verify_tracing_health()
     print(f"\nHealth Check Result: {'✅ HEALTHY' if result.healthy else '❌ UNHEALTHY'}")
     print(f"  LangSmith Configured: {result.langsmith_configured}")
     print(f"  LangSmith Reachable: {result.langsmith_reachable}")
     print(f"  Tracer Initialized: {result.tracer_initialized}")
     print(f"  Test Trace Sent: {result.test_trace_sent}")
-    
+
     if result.errors:
         print("\nErrors:")
         for err in result.errors:
             print(f"  - {err}")
-    
+
     sys.exit(0 if result.healthy else 1)

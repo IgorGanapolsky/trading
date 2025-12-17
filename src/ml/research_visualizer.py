@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 # Check matplotlib availability
 try:
-    import matplotlib.pyplot as plt
     import matplotlib.patches as mpatches
+    import matplotlib.pyplot as plt
     import numpy as np
 
     MATPLOTLIB_AVAILABLE = True
@@ -268,7 +268,7 @@ class ResearchVisualizer:
         ax.set_facecolor(COLORS["background"])
 
         # Create gauge background
-        theta = np.linspace(0, np.pi, 100)
+        np.linspace(0, np.pi, 100)
         r = 1
 
         # Draw gauge sections
