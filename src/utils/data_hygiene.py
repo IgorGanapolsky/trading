@@ -394,15 +394,16 @@ class DataHygieneChecker:
 
         gaps = []
         dates = pd.to_datetime(hist_data.index).sort_values()
+        dates_list = list(dates)  # Convert to list for indexing
 
-        for i in range(len(dates) - 1):
-            gap_days = (dates.iloc[i + 1] - dates.iloc[i]).days
+        for i in range(len(dates_list) - 1):
+            gap_days = (dates_list[i + 1] - dates_list[i]).days
 
             if gap_days > 1:  # More than 1 day gap
                 gaps.append(
                     {
-                        "start": str(dates.iloc[i]),
-                        "end": str(dates.iloc[i + 1]),
+                        "start": str(dates_list[i]),
+                        "end": str(dates_list[i + 1]),
                         "days": gap_days,
                     }
                 )
