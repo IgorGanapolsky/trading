@@ -97,11 +97,19 @@ except ImportError:
 # Introspective awareness imports (Dec 2025)
 try:
     from src.core.introspective_council import IntrospectiveCouncil
-    from src.core.uncertainty_tracker import get_uncertainty_tracker
+    # NOTE: Keep optional import pattern without triggering ruff F401.
+    # We intentionally avoid importing unused callables just to test availability.
+    import importlib.util
 
     INTROSPECTION_AVAILABLE = True
 except ImportError:
     INTROSPECTION_AVAILABLE = False
+
+if INTROSPECTION_AVAILABLE:
+    # Optional module presence check (keeps behavior without unused imports).
+    _UNCERTAINTY_TRACKER_AVAILABLE = (
+        importlib.util.find_spec("src.core.uncertainty_tracker") is not None
+    )
 
 # LangSmith tracing for session observability (Dec 2025)
 try:
