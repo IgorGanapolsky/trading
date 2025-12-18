@@ -1149,6 +1149,16 @@ jobs:
           echo "🏥 Running post-execution health check..."
           python3 scripts/health_monitor.py || echo "⚠️  Health check detected issues (see health-alert workflow)"
 
+      - name: Daily Verification Report
+        if: always()
+        continue-on-error: true
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+        run: |
+          echo "📊 Running daily verification..."
+          python3 scripts/daily_verification.py
+
       - name: Upload execution logs
         if: always()
         continue-on-error: true  # Don't fail workflow if log upload fails
@@ -1161,6 +1171,7 @@ jobs:
             logs/adk_orchestrator.jsonl
             data/system_state.json
             data/trades_*.json
+            data/verification_reports.json
             wiki/Progress-Dashboard.md
           retention-days: 30
 
