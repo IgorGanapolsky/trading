@@ -1,47 +1,46 @@
-# 🤖 AI Options Trading Bot
+# AI Options Trading Bot
 
-[![Options Win Rate](https://img.shields.io/badge/options_win_rate-75%25-success.svg)](docs/options-profit-roadmap.md)
-[![Total Profit](https://img.shields.io/badge/profit-%2B%24327-success.svg)](dashboard.md)
+[![Win Rate](https://img.shields.io/badge/win_rate-50%25-yellow.svg)](docs/r-and-d-phase.md)
 [![Status](https://img.shields.io/badge/status-paper_trading-yellow.svg)](docs/r-and-d-phase.md)
+[![Day](https://img.shields.io/badge/day-50%2F90-blue.svg)](docs/r-and-d-phase.md)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](requirements.txt)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-**Open-source AI-powered trading system** that uses multi-agent LLM consensus and options premium selling to generate consistent profits. Built with Python, Alpaca API, and modern ML techniques.
+**Open-source AI-powered trading system** using options premium selling and Thompson Sampling strategy selection. Built with Python and Alpaca API.
 
-> 📈 **Live Results**: 75% win rate on options, +$327 profit in 9 days of paper trading
+> **Current Status**: Day 50/90 R&D Phase | $99,450 equity | 50% win rate
 
 ---
 
-## 🏆 Why This Project?
+## Why This Project?
 
 Most trading bots fail because they:
-- ❌ Chase complex strategies that don't work
-- ❌ Ignore risk management
-- ❌ Don't learn from mistakes
+- Chase complex strategies that don't work
+- Ignore risk management
+- Don't learn from mistakes
 
 **This system is different:**
-- ✅ **Data-driven strategy selection** - We tried multiple strategies, kept what works (options: 75% win rate)
-- ✅ **Focused on proven strategies** - Removed underperforming approaches to focus on what generates returns
-- ✅ **RAG-powered learning** - 50+ lessons learned indexed and queried before every decision
-- ✅ **Multi-agent verification** - No single point of failure
+- **Radically simplified** - Deleted 90% of bloat, kept what works
+- **Thompson Sampling** - Mathematically optimal strategy selection (~80 lines)
+- **SQLite trade memory** - Query past trades before new ones (~150 lines)
+- **Daily verification** - Honest reporting of actual results
 
 ---
 
-## 📊 Live Performance (Day 9/90)
+## Current Performance (Day 50/90)
 
-| Strategy | P/L | Win Rate | Status |
-|----------|-----|----------|--------|
-| **🏆 Options (Cash-Secured Puts)** | **+$327.82** | **75%** | ✅ PRIMARY |
-| Bonds | $0.00 | 100% | ✅ Hedge |
-| Core ETFs | -$4.15 | N/A | ✅ Active |
+| Metric | Value | Status |
+|--------|-------|--------|
+| Equity | $99,449.77 | Paper |
+| P/L | -$550.23 | -0.55% |
+| Win Rate | 50% | Target: 55%+ |
+| Backtest Pass | 0/13 | Needs work |
 
-**Key Insight**: Options generate 100% of profits. Focus on what works.
+**Honest Assessment**: System is break-even after 50 days. Options strategy shows promise but execution needs improvement.
 
 ---
 
-## 🎯 Options Strategy (The Winner)
-
-Our primary strategy is **cash-secured put selling** on quality stocks:
+## Strategy: Cash-Secured Puts
 
 ```
 Strategy: Sell 15-20 delta puts, 30-45 DTE
@@ -57,17 +56,9 @@ Risk:     Willing to own shares if assigned
 3. **Defined risk** - You know max loss upfront
 4. **Works in sideways markets** - Don't need stocks to go up
 
-### Recent Trades
-
-| Symbol | Entry | Exit | P/L | Result |
-|--------|-------|------|-----|--------|
-| SPY $660 Put | $638 | $441 | **+$197** | ✅ WIN |
-| AMD $200 Put | $590 | $460 | **+$130** | ✅ WIN |
-| SPY $660 Put | $6.38 | $5.56 | **+$0.82** | ✅ WIN |
-
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Clone & Install
 
@@ -89,26 +80,29 @@ cp .env.example .env
 ### 3. Run
 
 ```bash
-# Paper trading (safe)
-PYTHONPATH=src python3 scripts/autonomous_trader.py
+# Paper trading
+python3 scripts/autonomous_trader.py
 
 # Check positions
 python3 scripts/check_positions.py
+
+# Daily verification
+python3 scripts/daily_verification.py
 ```
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Trading Pipeline                          │
 ├─────────────────────────────────────────────────────────────┤
-│  Gate 1: Momentum Filter (MACD, RSI, Volume)                │
-│  Gate 2: RL Agent (Transformer + Heuristics)                │
-│  Gate 3: LLM Sentiment (Claude/GPT consensus)               │
-│  Gate 4: Risk Manager (Position sizing, stops)              │
-│  Gate 5: Options Strategy (Cash-secured puts)               │
+│  1. Thompson Sampler - Select best strategy                 │
+│  2. Trade Memory - Query similar past trades                │
+│  3. Risk Manager - Position sizing, stops                   │
+│  4. Options Strategy - Cash-secured puts                    │
+│  5. Daily Verification - Honest reporting                   │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -122,37 +116,32 @@ python3 scripts/check_positions.py
 | Component | Purpose | Location |
 |-----------|---------|----------|
 | **Orchestrator** | Main trading logic | `src/orchestrator/main.py` |
-| **Options Strategy** | Put selling logic | `src/strategies/options_strategy.py` |
-| **Risk Manager** | Position sizing | `src/safety/risk_manager.py` |
-| **RAG System** | Lessons learned | `rag_knowledge/lessons_learned/` |
-| **ML Pipeline** | Predictions | `src/ml/` |
+| **Thompson Sampler** | Strategy selection | `src/learning/thompson_sampler.py` |
+| **Trade Memory** | SQLite journal | `src/learning/trade_memory.py` |
+| **Risk Manager** | Position sizing | `src/risk/` |
+| **Daily Verification** | Honest reporting | `scripts/daily_verification.py` |
 
 ---
 
-## 📚 Documentation
+## Learning System
 
-### Getting Started
-- **[Quick Start Guide](docs/START_HERE.md)** - Full setup instructions
-- **[Cloud Deployment](docs/CLOUD_DEPLOYMENT.md)** - GitHub Actions automation
-- **[Options Roadmap](docs/options-profit-roadmap.md)** - Options strategy details
+### Thompson Sampling (replaces complex RL)
+- Beta distribution for each strategy
+- Sample to select best strategy
+- Update based on win/loss outcomes
+- Proven optimal for <100 decisions
 
-### Architecture
-- **[RAG/ML Architecture](docs/RAG_ML_ARCHITECTURE.md)** - How the AI learns
-- **[Verification System](docs/VERIFICATION_SYSTEM.md)** - Safety mechanisms
-- **[Multi-Agent Design](docs/MULTI_AGENT_ARCHITECTURE.md)** - Agent coordination
-
-### Operations
-- **[Dashboard](dashboard.md)** - Live performance metrics
-- **[Lessons Learned](rag_knowledge/lessons_learned/)** - 50+ documented learnings
-- **[R&D Phase](docs/r-and-d-phase.md)** - Current 90-day plan
+### Trade Memory (replaces RAG)
+- SQLite database of past trades
+- Query BEFORE each new trade
+- Pattern recognition: "This setup has 30% win rate - AVOID"
+- Simple but effective
 
 ---
 
-## 🛡️ Risk Management
+## Risk Management
 
 **This is NOT financial advice. Paper trade first!**
-
-### Built-in Safeguards
 
 | Safeguard | Description |
 |-----------|-------------|
@@ -161,58 +150,19 @@ python3 scripts/check_positions.py
 | **Circuit Breakers** | Auto-halt on 3 consecutive losses |
 | **Paper Mode** | 90-day validation before live |
 
-### The Rules
+---
 
-1. ✅ Always paper trade first (90 days)
-2. ✅ Never risk more than you can lose
-3. ✅ Understand every trade before placing
-4. ❌ No margin trading initially
-5. ❌ No emotional revenge trading
+## Documentation
+
+- **[R&D Phase](docs/r-and-d-phase.md)** - Current 90-day plan
+- **[Verification Protocols](docs/verification-protocols.md)** - Safety mechanisms
+- **[Profit Optimization](docs/profit-optimization.md)** - Strategy details
+- **[Environment Variables](docs/ENVIRONMENT_VARIABLES.md)** - Configuration
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues
 
 ---
 
-## 🧠 AI/ML Features
-
-### RAG (Retrieval Augmented Generation)
-- 50+ lessons learned indexed
-- Queried before every strategic decision
-- Prevents repeated mistakes
-
-### Multi-Agent Consensus
-- Multiple LLMs vote on trades
-- No single model failure
-- Configurable confidence thresholds
-
-### Reinforcement Learning
-- Transformer-based predictions
-- Online learning from outcomes
-- Adaptive strategy weights
-
----
-
-## 📈 Portfolio Allocation
-
-```
-Options Premium:     37%  ████████████████████░░░░░░░░  PRIMARY
-Core ETFs (SPY):     25%  ██████████████░░░░░░░░░░░░░░
-Treasuries:          15%  ████████░░░░░░░░░░░░░░░░░░░░  Hedge
-Growth Stocks:       10%  █████░░░░░░░░░░░░░░░░░░░░░░░
-REITs:                5%  ██░░░░░░░░░░░░░░░░░░░░░░░░░░  Testing
-Precious Metals:      3%  █░░░░░░░░░░░░░░░░░░░░░░░░░░░  Testing
-Cash Reserve:         5%  ██░░░░░░░░░░░░░░░░░░░░░░░░░░
-```
-
----
-
-## 🤝 Contributing
-
-This is an active project! Contributions welcome:
-
-1. **Report bugs** - Open an issue
-2. **Suggest features** - Open a discussion
-3. **Submit PRs** - Fork and contribute
-
-### Development
+## Development
 
 ```bash
 # Run tests
@@ -227,32 +177,7 @@ ruff check src/
 
 ---
 
-## 📊 Comparison to Other Bots
-
-| Feature | This Project | Most Bots |
-|---------|--------------|-----------|
-| **Strategy** | Options (proven) | Complex strategies |
-| **Win Rate** | 75% | Unknown |
-| **Open Source** | ✅ Yes | Often closed |
-| **Learning System** | RAG + ML | None |
-| **Risk Management** | Multi-layer | Basic |
-| **Documentation** | Extensive | Minimal |
-
----
-
-## ⭐ Star History
-
-If this project helps you, please star it! ⭐
-
----
-
-## 📝 License
-
-MIT License - See [LICENSE](LICENSE)
-
----
-
-## ⚠️ Disclaimer
+## Disclaimer
 
 **This software is for educational purposes only.**
 
@@ -263,14 +188,6 @@ MIT License - See [LICENSE](LICENSE)
 
 ---
 
-## 🔗 Links
-
-- **[Dashboard](dashboard.md)** - Live performance
-- **[Lessons Learned](rag_knowledge/lessons_learned/)** - What we've learned
-- **[GitHub Actions](https://github.com/IgorGanapolsky/trading/actions)** - Automation
-
----
-
-**Built with** ❤️ **using Python, Alpaca, Claude, and coffee**
+**Built with Python, Alpaca, and radical simplicity**
 
 **Maintained by** [Igor Ganapolsky](https://github.com/IgorGanapolsky)
