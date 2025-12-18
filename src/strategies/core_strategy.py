@@ -51,6 +51,7 @@ from src.core.multi_llm_analysis import MultiLLMAnalyzer
 from src.core.multi_llm_analysis_optimized import OptimizedMultiLLMAnalyzer
 from src.core.risk_manager import RiskManager
 from src.ml.forecasters.deep_momentum import DeepMomentumForecaster
+from src.ml.forecasters import HYBRID_AVAILABLE, HybridLSTMTransformerForecaster
 from src.risk.position_manager import (
     ExitConditions,
     get_position_manager,
@@ -315,14 +316,24 @@ class CoreStrategy:
                 logger.warning(f"Failed to initialize RLPolicyLearner: {e}")
                 self.rl_enabled = False
 
-        # Deep learning forecaster
+        # Deep learning forecaster - prefer hybrid LSTM-Transformer if available
         self.deep_forecaster: DeepMomentumForecaster | None = None
+        use_hybrid = os.getenv("USE_HYBRID_FORECASTER", "true").lower() == "true"
         try:
-            self.deep_forecaster = DeepMomentumForecaster()
-            logger.info("Deep momentum forecaster ready")
+            if use_hybrid and HYBRID_AVAILABLE:
+                self.deep_forecaster = HybridLSTMTransformerForecaster()
+                logger.info("Hybrid LSTM-Transformer forecaster ready (PyTorch)")
+            else:
+                self.deep_forecaster = DeepMomentumForecaster()
+                logger.info("Deep momentum forecaster ready (NumPy)")
         except Exception as e:
-            logger.warning(f"Deep momentum forecaster unavailable: {e}")
-            self.deep_forecaster = None
+            # Fallback to simple forecaster
+            try:
+                self.deep_forecaster = DeepMomentumForecaster()
+                logger.info("Fallback to deep momentum forecaster")
+            except Exception as e2:
+                logger.warning(f"All forecasters unavailable: {e}, {e2}")
+                self.deep_forecaster = None
 
         # Initialize dependencies
         try:
