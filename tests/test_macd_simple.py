@@ -15,6 +15,9 @@ from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 
+# Set mock API key before any strategy imports (prevents multi_llm_analysis init errors)
+os.environ.setdefault("OPENROUTER_API_KEY", "mock-key-for-testing")
+
 # Import strategies
 from src.strategies.core_strategy import CoreStrategy
 from src.strategies.growth_strategy import GrowthStrategy

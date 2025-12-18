@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 from src.core.alpaca_trader import AlpacaTrader
-from src.core.multi_llm_analysis import MultiLLMAnalyzer
+# REMOVED: multi_llm_analysis deleted (dormant code)
 from src.risk.trade_gateway import TradeGateway, TradeRequest
 
 
@@ -263,8 +263,8 @@ class GrowthStrategy:
         self.use_intelligent_investor = use_intelligent_investor
 
         # Initialize components
-        # Initialize components
-        self.llm_analyzer = MultiLLMAnalyzer()
+        # REMOVED: MultiLLMAnalyzer (multi_llm_analysis deleted - dormant code)
+        self.llm_analyzer = None
 
         # Use real AlpacaTrader with paper trading default
         # Note: We use execute_order with amount_usd to handle fractional shares properly

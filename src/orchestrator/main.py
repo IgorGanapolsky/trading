@@ -318,9 +318,10 @@ class TradingOrchestrator:
         }
         if enable_introspection and INTROSPECTION_AVAILABLE:
             try:
-                from src.core.multi_llm_analysis import MultiLLMAnalyzer
-
-                analyzer = MultiLLMAnalyzer()
+                # REMOVED: multi_llm_analysis deleted (dormant code)
+                # from src.core.multi_llm_analysis import MultiLLMAnalyzer
+                # analyzer = MultiLLMAnalyzer()
+                analyzer = None
                 self.introspective_council = IntrospectiveCouncil(
                     multi_llm_analyzer=analyzer,
                     enable_introspection=True,

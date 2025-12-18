@@ -47,8 +47,9 @@ from src.agents.reinforcement_learning import RLPolicyLearner
 from src.core.alpaca_trader import AlpacaTrader
 
 # Import project modules
-from src.core.multi_llm_analysis import MultiLLMAnalyzer
-from src.core.multi_llm_analysis_optimized import OptimizedMultiLLMAnalyzer
+# REMOVED: multi_llm_analysis deleted (dormant code)
+# from src.core.multi_llm_analysis import MultiLLMAnalyzer
+# from src.core.multi_llm_analysis_optimized import OptimizedMultiLLMAnalyzer
 from src.core.risk_manager import RiskManager
 from src.ml.forecasters.deep_momentum import DeepMomentumForecaster
 from src.risk.position_manager import (
@@ -326,21 +327,11 @@ class CoreStrategy:
 
         # Initialize dependencies
         try:
-            # Use optimized analyzer if enabled (default: True)
-            use_optimized = os.getenv("USE_OPTIMIZED_LLM", "true").lower() == "true"
+            # REMOVED: multi_llm_analysis deleted (dormant code - never used in 75% win rate)
+            # LLM sentiment analysis disabled - options strategy works without it
             if use_sentiment:
-                if use_optimized:
-                    self.llm_analyzer = OptimizedMultiLLMAnalyzer(
-                        use_async=False,
-                        enable_caching=True,
-                        enable_prioritization=True,
-                        cache_ttl=3600,  # 1 hour cache
-                    )
-                    logger.info("Using OptimizedMultiLLMAnalyzer with caching enabled")
-                else:
-                    self.llm_analyzer = MultiLLMAnalyzer(use_async=False)
-            else:
-                self.llm_analyzer = None
+                logger.warning("LLM sentiment disabled (multi_llm_analysis deleted)")
+            self.llm_analyzer = None
             self.alpaca_trader = AlpacaTrader(paper=True)
             self.risk_manager = RiskManager(
                 max_daily_loss_pct=2.0,

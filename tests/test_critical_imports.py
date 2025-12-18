@@ -88,9 +88,10 @@ class TestCriticalImports:
 
     def test_multi_llm_analysis_imports(self):
         """Verify multi-LLM analysis module imports."""
-        from src.core.multi_llm_analysis import MultiLLMAnalyzer
-
-        assert MultiLLMAnalyzer is not None
+        # REMOVED: multi_llm_analysis deleted (dormant code - never used in 75% win rate)
+        # from src.core.multi_llm_analysis import MultiLLMAnalyzer
+        # assert MultiLLMAnalyzer is not None
+        pytest.skip("multi_llm_analysis deleted (dormant code)")
 
     def test_signal_agent_imports(self):
         """Verify signal agent module imports."""
