@@ -111,9 +111,11 @@ jobs:
           api_key = os.environ["ALPACA_API_KEY"]
           secret_key = os.environ["ALPACA_SECRET_KEY"]
           window = os.environ.get("TRADING_WINDOW", "unknown")
+          alpaca_feed = os.getenv("ALPACA_DATA_FEED", "iex")
 
           print(f"🎯 Intraday Scalp - Window: {window}")
           print(f"⏰ Time: {datetime.now(timezone.utc).isoformat()}")
+          print(f"📡 Alpaca data feed: {alpaca_feed}")
 
           # Initialize clients
           trading_client = TradingClient(api_key, secret_key, paper=True)
@@ -138,6 +140,7 @@ jobs:
                       timeframe=TimeFrame.Minute,
                       start=start,
                       end=end,
+                      feed=alpaca_feed,
                   )
 
                   bars = data_client.get_stock_bars(request)

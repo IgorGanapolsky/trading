@@ -86,9 +86,11 @@ jobs:
 
           api_key = os.environ["ALPACA_API_KEY"]
           secret_key = os.environ["ALPACA_SECRET_KEY"]
+          alpaca_feed = os.getenv("ALPACA_DATA_FEED", "iex")
 
           print("🎯 0DTE Options Scalping")
           print(f"⏰ Time: {datetime.now(timezone.utc).isoformat()}")
+          print(f"📡 Alpaca data feed: {alpaca_feed}")
 
           # Initialize clients
           trading_client = TradingClient(api_key, secret_key, paper=True)
@@ -119,7 +121,7 @@ jobs:
           for symbol in symbols:
               try:
                   # Get current quote
-                  quote_request = StockLatestQuoteRequest(symbol_or_symbols=symbol)
+                  quote_request = StockLatestQuoteRequest(symbol_or_symbols=symbol, feed=alpaca_feed)
                   quote = data_client.get_stock_latest_quote(quote_request)
                   current_price = float(quote[symbol].ask_price + quote[symbol].bid_price) / 2
 
@@ -133,6 +135,7 @@ jobs:
                       timeframe=TimeFrame.Minute,
                       start=start,
                       end=end,
+                      feed=alpaca_feed,
                   )
                   bars = data_client.get_stock_bars(bars_request)
                   bar_list = list(bars[symbol])
