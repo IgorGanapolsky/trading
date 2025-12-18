@@ -35,24 +35,29 @@ def main():
             with open(state_path, encoding="utf-8") as f:
                 data = json.load(f)
 
-            last_updated = data.get("meta", {}).get("last_updated")
-            if last_updated:
+            # CRITICAL: Check last_trade_date, NOT last_updated
+            # last_updated changes whenever ANY workflow touches the file
+            # last_trade_date only changes when actual trades execute
+            last_trade = data.get("trades", {}).get("last_trade_date")
+            if last_trade:
                 try:
-                    # Support both ISO and "YYYY-MM-DD HH:MM:SS" formats
-                    if "T" in last_updated:
-                        last_dt = datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
+                    # Support both ISO and "YYYY-MM-DD" formats
+                    if "T" in last_trade:
+                        last_dt = datetime.fromisoformat(last_trade.replace("Z", "+00:00"))
                     else:
-                        last_dt = datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S")
+                        last_dt = datetime.strptime(last_trade, "%Y-%m-%d")
 
                     if last_dt.date() == today:
                         skip = True
                         reason = f"Trading already executed today at {last_dt.isoformat()}"
                     else:
                         reason = (
-                            f"Last execution was {last_dt.date()}, proceeding with today's trade"
+                            f"Last trade was {last_dt.date()}, proceeding with today's trade"
                         )
                 except ValueError as e:
-                    reason = f"Could not parse last_updated timestamp: {e}"
+                    reason = f"Could not parse last_trade_date timestamp: {e}"
+            else:
+                reason = "No last_trade_date recorded - first trade or data reset"
         except json.JSONDecodeError as e:
             print(f"❌ Error: Invalid JSON in system_state.json: {e}", file=sys.stderr)
             sys.exit(1)

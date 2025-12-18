@@ -512,5 +512,10 @@
     "premium_gap": 0,
     "opportunities_count": 3,
     "on_track": true
+  },
+  "trades": {
+    "last_trade_date": null,
+    "total_trades_today": 0,
+    "daily_trade_log": []
   }
 }
