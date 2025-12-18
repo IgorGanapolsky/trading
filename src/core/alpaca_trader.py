@@ -553,6 +553,32 @@ class AlpacaTrader:
                     # Wait for market order to fill (should be quick)
                     time.sleep(2)
                     order = self.trading_client.get_order_by_id(order.id)
+                else:
+                    # FIX: Market order stuck in PENDING_NEW - cancel and retry
+                    # This fixes the Dec 12, 2025 bug where SPY order got stuck
+                    logger.warning(
+                        f"Market order {order.id} stuck in {order.status}. "
+                        f"Cancelling and retrying..."
+                    )
+                    try:
+                        self.trading_client.cancel_order_by_id(order.id)
+                        time.sleep(1)  # Brief pause before retry
+
+                        # Retry the market order
+                        req = MarketOrderRequest(
+                            symbol=symbol,
+                            notional=amount_usd,
+                            side=OrderSide.BUY if side == "buy" else OrderSide.SELL,
+                            time_in_force=tif,
+                        )
+                        order = self.trading_client.submit_order(req)
+                        logger.info(f"Retried market order: {order.id}")
+
+                        # Wait for retry to fill
+                        time.sleep(2)
+                        order = self.trading_client.get_order_by_id(order.id)
+                    except Exception as e:
+                        logger.error(f"Failed to retry stuck market order: {e}")
 
             filled_avg_price = float(order.filled_avg_price) if order.filled_avg_price else None
 

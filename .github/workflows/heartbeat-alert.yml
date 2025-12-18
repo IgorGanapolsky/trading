@@ -1,0 +1,264 @@
+name: Scheduler Heartbeat Alert
+
+on:
+  schedule:
+    # Run every hour during extended market hours (8 AM - 6 PM ET = 13:00-23:00 UTC)
+    # Checks scheduler health more frequently than the 2-hour threshold
+    - cron: '0 13-23 * * 1-5'  # Weekdays only
+  workflow_dispatch:
+    inputs:
+      force_check:
+        description: 'Force check even outside market hours'
+        required: false
+        default: 'false'
+      dry_run:
+        description: 'Dry run (check only, no alerts)'
+        required: false
+        default: 'false'
+      threshold_minutes:
+        description: 'Alert threshold in minutes (default: 120)'
+        required: false
+        default: '120'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  heartbeat-check:
+    name: Check Scheduler Heartbeat
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Install only required dependencies for heartbeat check
+          pip install alpaca-py 2>/dev/null || echo "Alpaca not needed for heartbeat check"
+
+      - name: Run heartbeat check
+        id: heartbeat_check
+        env:
+          # Emergency alert credentials (optional)
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+        run: |
+          echo "🩺 Checking scheduler heartbeat..."
+
+          # Build command with optional flags
+          CMD="python3 scripts/heartbeat_alert.py"
+
+          if [ "${{ github.event.inputs.force_check }}" = "true" ]; then
+            CMD="$CMD --force"
+          fi
+
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            CMD="$CMD --dry-run"
+          fi
+
+          if [ -n "${{ github.event.inputs.threshold_minutes }}" ]; then
+            CMD="$CMD --threshold ${{ github.event.inputs.threshold_minutes }}"
+          fi
+
+          # Run check and capture output
+          if $CMD > heartbeat_output.txt 2>&1; then
+            echo "heartbeat_status=healthy" >> $GITHUB_OUTPUT
+            echo "✅ Heartbeat is healthy"
+            cat heartbeat_output.txt
+          else
+            echo "heartbeat_status=critical" >> $GITHUB_OUTPUT
+            echo "❌ Heartbeat check failed"
+            cat heartbeat_output.txt
+
+            # Save output for issue creation
+            echo "HEARTBEAT_OUTPUT<<EOF" >> $GITHUB_ENV
+            cat heartbeat_output.txt >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          fi
+
+      - name: Create GitHub issue on failure
+        if: steps.heartbeat_check.outputs.heartbeat_status == 'critical' && github.event.inputs.dry_run != 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const heartbeatOutput = process.env.HEARTBEAT_OUTPUT;
+            const timestamp = new Date().toISOString();
+
+            // Check if there's already an open heartbeat alert issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'heartbeat-alert,auto-alert,critical',
+              per_page: 1
+            });
+
+            if (issues.data.length > 0) {
+              // Update existing issue
+              const issue = issues.data[0];
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `## 🚨 Heartbeat Still Failing\n\n**Time**: ${timestamp}\n\n\`\`\`\n${heartbeatOutput}\n\`\`\``
+              });
+              console.log(`Updated existing heartbeat alert issue #${issue.number}`);
+            } else {
+              // Create new issue
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 CRITICAL: Scheduler heartbeat failed - ${new Date().toISOString().split('T')[0]}`,
+                labels: ['critical', 'heartbeat-alert', 'auto-alert', 'P0'],
+                body: `## 🩺 Scheduler Heartbeat Alert
+
+            **Detected**: ${timestamp}
+            **Severity**: CRITICAL (P0)
+            **Auto-generated**: This issue was created automatically by the heartbeat monitoring system
+
+            ---
+
+            ### Heartbeat Check Results
+
+            \`\`\`
+            ${heartbeatOutput}
+            \`\`\`
+
+            ---
+
+            ### What This Means
+
+            The scheduler heartbeat has not been updated in over 2 hours during market hours.
+            This indicates the trading scheduler may be:
+            - Stuck or frozen
+            - Crashed without recovery
+            - Workflow disabled or not running
+
+            **This is a P0 issue that requires immediate attention.**
+
+            ---
+
+            ### Immediate Actions Required
+
+            1. **Check Scheduler Workflow**
+               - Visit: https://github.com/${context.repo.owner}/${context.repo.repo}/actions/workflows/scheduler-heartbeat.yml
+               - Look for failed or stuck runs
+               - Check if workflow is enabled
+
+            2. **Check Last Heartbeat**
+               - Review: \`data/scheduler_heartbeat.json\`
+               - Check \`last_run\` timestamp
+               - Verify workflow_run_id matches recent runs
+
+            3. **Verify Trading Workflows**
+               - Check if trading workflows are executing
+               - Look at: https://github.com/${context.repo.owner}/${context.repo.repo}/actions
+               - Search for workflows that should run during market hours
+
+            4. **Check System Logs**
+               - Review workflow logs for errors
+               - Check for GitHub Actions outages: https://www.githubstatus.com/
+               - Look for rate limiting or quota issues
+
+            5. **Manual Intervention**
+               - If scheduler is stuck, manually trigger: \`workflow_dispatch\` on scheduler-heartbeat.yml
+               - If needed, restart trading workflows manually
+               - Consider emergency trading halt if scheduler cannot be recovered
+
+            ---
+
+            ### Recovery Steps
+
+            \`\`\`bash
+            # 1. Check current heartbeat age
+            cat data/scheduler_heartbeat.json
+
+            # 2. Manually trigger scheduler heartbeat
+            gh workflow run scheduler-heartbeat.yml
+
+            # 3. Verify heartbeat updated
+            scripts/heartbeat_alert.py --force
+
+            # 4. If still failing, check workflow status
+            gh run list --workflow=scheduler-heartbeat.yml --limit 10
+            \`\`\`
+
+            ---
+
+            ### Auto-Resolution
+
+            This issue will automatically close when the heartbeat check passes again.
+
+            **Monitoring Frequency**: Hourly during market hours
+            **Alert Threshold**: 120 minutes (2 hours)
+            **Escalation**: P0 - Immediate attention required
+
+            ---
+
+            🤖 Generated by Heartbeat Monitoring System
+            `
+              });
+              console.log(`Created new heartbeat alert issue #${issue.data.number}`);
+            }
+
+      - name: Close resolved heartbeat issues
+        if: steps.heartbeat_check.outputs.heartbeat_status == 'healthy'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Find open heartbeat alert issues
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'heartbeat-alert,auto-alert'
+            });
+
+            // Close them with resolution comment
+            for (const issue of issues.data) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `## ✅ Scheduler Heartbeat Restored\n\n**Time**: ${new Date().toISOString()}\n\nHeartbeat check is now passing. Scheduler is running normally. Auto-closing this issue.`
+              });
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+                state_reason: 'completed'
+              });
+
+              console.log(`Closed resolved heartbeat alert issue #${issue.number}`);
+            }
+
+      - name: Upload heartbeat check logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: heartbeat-check-logs-${{ github.run_id }}
+          path: |
+            heartbeat_output.txt
+            data/heartbeat_alerts.json
+          retention-days: 7
+          if-no-files-found: ignore
