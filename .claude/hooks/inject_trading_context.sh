@@ -86,11 +86,27 @@ MARKET_STATUS="Equities: $EQUITY_STATUS | Crypto: $CRYPTO_STATUS"
 # Next automated trade time
 NEXT_TRADE=$(TZ=America/New_York date -v +1d '+%b %d, 9:35 AM ET' 2>/dev/null || date -d '+1 day' '+%b %d, 9:35 AM ET' 2>/dev/null || echo "Tomorrow 9:35 AM ET")
 
+# Get backtest status from actual results if available
+BACKTEST_SUMMARY="$CLAUDE_PROJECT_DIR/data/backtests/latest_summary.json"
+if [[ -f "$BACKTEST_SUMMARY" ]]; then
+    PASSES=$(jq -r '.aggregate_metrics.passes // 0' "$BACKTEST_SUMMARY" 2>/dev/null || echo "0")
+    TOTAL=$(jq -r '.aggregate_metrics.total // 13' "$BACKTEST_SUMMARY" 2>/dev/null || echo "13")
+    MIN_SHARPE=$(jq -r '.aggregate_metrics.min_sharpe_ratio // "N/A"' "$BACKTEST_SUMMARY" 2>/dev/null || echo "N/A")
+    if [[ "$MIN_SHARPE" != "N/A" ]]; then
+        SHARPE_NOTE="Sharpe: $MIN_SHARPE"
+    else
+        SHARPE_NOTE="Sharpe: negative"
+    fi
+    BACKTEST_STATUS="$PASSES/$TOTAL scenarios pass ($SHARPE_NOTE)"
+else
+    BACKTEST_STATUS="Not run yet (run scripts/run_backtest_matrix.py)"
+fi
+
 # Output context (this will be added to the user's prompt)
 cat <<EOF
 [TRADING CONTEXT]
 Portfolio: \$$CURRENT_EQUITY | P/L: \$$TOTAL_PL ($TOTAL_PL_PCT%) | Day: $CURRENT_DAY/90
-Win Rate: $WIN_RATE% (live) | Backtest: 0/13 scenarios pass (Sharpe all negative)
+Win Rate: $WIN_RATE% (live) | Backtest: $BACKTEST_STATUS
 Next Trade: $NEXT_TRADE
 Markets: $MARKET_STATUS
 EOF
