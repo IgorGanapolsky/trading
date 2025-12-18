@@ -152,6 +152,24 @@ jobs:
 
                   if len(bar_list) < 10:
                       print(f"⚠️ Insufficient bars for {symbol}")
+                      # Persist a no-trade reason so the run is auditable.
+                      entry = {
+                          "symbol": symbol,
+                          "action": "NO_TRADE",
+                          "timestamp": datetime.now(timezone.utc).isoformat(),
+                          "type": "0DTE_SCALP",
+                          "executed": False,
+                          "alpaca_feed": alpaca_feed,
+                          "reason": f"INSUFFICIENT_BARS ({len(bar_list)})",
+                      }
+                      try:
+                          with open(log_file, "r") as f:
+                              trades = json.load(f)
+                      except Exception:
+                          trades = []
+                      trades.append(entry)
+                      with open(log_file, "w") as f:
+                          json.dump(trades, f, indent=2)
                       continue
 
                   closes = [float(b.close) for b in bar_list]
@@ -281,6 +299,28 @@ jobs:
                       print(f"📝 Trade logged to {log_file}")
                   else:
                       print(f"⏸️ No options signal - conditions not met")
+                      # Persist a no-trade reason so the run is auditable.
+                      entry = {
+                          "symbol": symbol,
+                          "action": "NO_TRADE",
+                          "timestamp": datetime.now(timezone.utc).isoformat(),
+                          "type": "0DTE_SCALP",
+                          "executed": False,
+                          "alpaca_feed": alpaca_feed,
+                          "reason": "NO_SIGNAL",
+                          "vix": current_vix,
+                          "price_change": price_change,
+                          "volume_ratio": volume_ratio,
+                          "underlying_price": current_price,
+                      }
+                      try:
+                          with open(log_file, "r") as f:
+                              trades = json.load(f)
+                      except Exception:
+                          trades = []
+                      trades.append(entry)
+                      with open(log_file, "w") as f:
+                          json.dump(trades, f, indent=2)
 
               except Exception as e:
                   print(f"❌ Error processing {symbol}: {e}")
