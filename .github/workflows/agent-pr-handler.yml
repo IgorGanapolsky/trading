@@ -33,7 +33,7 @@ jobs:
           export PATH="$HOME/.local/bin:$PATH"
           uv pip sync --system requirements-minimal.txt
           # Fix anthropic SDK compatibility (httpx 0.28+ removed 'proxies' arg)
-          uv pip install "anthropic>=0.73.0,<1.0.0" "httpx>=0.27.0,<0.28.0"
+          uv pip install --system "anthropic>=0.73.0,<1.0.0" "httpx>=0.27.0,<0.28.0"
 
       - name: Run PR Agent
         continue-on-error: true  # Advisory only - don't block PR
