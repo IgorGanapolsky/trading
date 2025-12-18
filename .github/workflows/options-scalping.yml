@@ -96,6 +96,17 @@ jobs:
           trading_client = TradingClient(api_key, secret_key, paper=True)
           data_client = StockHistoricalDataClient(api_key, secret_key)
 
+          # Ensure today's log file exists even if we place no trades or error early.
+          today = date.today()
+          log_file = f"data/trades_{today.strftime('%Y-%m-%d')}.json"
+          try:
+              with open(log_file, "r") as f:
+                  _ = json.load(f)
+          except Exception:
+              with open(log_file, "w") as f:
+                  json.dump([], f, indent=2)
+              print(f"📝 Initialized empty trade log: {log_file}")
+
           # Get account info
           account = trading_client.get_account()
           buying_power = float(account.buying_power)
@@ -112,7 +123,6 @@ jobs:
               current_vix = 20.0
 
           # Today's expiry for 0DTE
-          today = date.today()
           expiry_str = today.strftime("%y%m%d")  # Format: YYMMDD
 
           # Target symbols for 0DTE (SPY has daily options)
@@ -276,6 +286,26 @@ jobs:
                   print(f"❌ Error processing {symbol}: {e}")
                   import traceback
                   traceback.print_exc()
+                  # Persist error into today's log so failures are auditable.
+                  error_entry = {
+                      "symbol": symbol,
+                      "action": "ERROR",
+                      "timestamp": datetime.now(timezone.utc).isoformat(),
+                      "type": "WORKFLOW_ERROR",
+                      "workflow": "options-scalping",
+                      "executed": False,
+                      "alpaca_feed": alpaca_feed,
+                      "error": str(e),
+                  }
+                  try:
+                      with open(log_file, "r") as f:
+                          trades = json.load(f)
+                  except Exception:
+                      trades = []
+                  trades.append(error_entry)
+                  with open(log_file, "w") as f:
+                      json.dump(trades, f, indent=2)
+                  print(f"📝 Error logged to {log_file}")
 
           print(f"\n✅ Options scalp scan complete")
           EOF
