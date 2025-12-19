@@ -11,3 +11,11 @@ class MentalToughnessCoach:
 
     def get_zone(self, *args, **kwargs) -> str:
         return "flow"
+
+    def start_session(self, *args, **kwargs) -> None:
+        """Start a coaching session."""
+        pass
+
+    def pre_trade_check(self, *args, **kwargs) -> dict:
+        """Pre-trade psychological check."""
+        return {"ready": True, "confidence": 1.0}
