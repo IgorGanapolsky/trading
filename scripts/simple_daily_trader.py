@@ -26,7 +26,6 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
-
 from src.utils.error_monitoring import init_sentry
 
 load_dotenv()

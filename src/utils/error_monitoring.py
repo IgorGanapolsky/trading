@@ -244,8 +244,9 @@ def send_slack_alert(
         return False
 
     try:
-        import requests
         from datetime import datetime
+
+        import requests
 
         # Build Slack message with blocks
         emoji_map = {"error": ":rotating_light:", "warning": ":warning:", "info": ":information_source:"}

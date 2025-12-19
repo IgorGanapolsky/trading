@@ -16,14 +16,12 @@ import json
 import logging
 import os
 import sys
-from datetime import datetime
 from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
-
 from src.utils.error_monitoring import init_sentry
 
 load_dotenv()
