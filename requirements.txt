@@ -181,6 +181,10 @@ yfinance==0.2.58
 youtube-transcript-api==1.2.3
 zstandard==0.23.0
 
+# === Error Monitoring (Added Dec 19, 2025) ===
+# Sentry for error tracking and alerting
+sentry-sdk>=2.0.0
+
 # === RAG ML Dependencies (Added Dec 15, 2025) ===
 # Full vectorized RAG with semantic search
 chromadb==0.6.3

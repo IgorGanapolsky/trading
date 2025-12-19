@@ -24,11 +24,22 @@ THIS IS THE MONEY MAKER.
 
 import json
 import logging
+import os
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
+
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from dotenv import load_dotenv
+
+from src.utils.error_monitoring import init_sentry
+
+load_dotenv()
+init_sentry()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)

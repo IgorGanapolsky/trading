@@ -185,3 +185,167 @@ def capture_data_source_failure(source: str, symbol: str, error: str):
 
     except Exception as e:
         logger.debug(f"Failed to capture data source failure in Sentry: {e}")
+
+
+# ============================================
+# Slack Direct Notifications (for critical alerts)
+# ============================================
+
+_slack_webhook_url = None
+
+
+def init_slack_alerts(webhook_url: str | None = None) -> bool:
+    """
+    Initialize Slack webhook for direct alerts.
+
+    Args:
+        webhook_url: Slack webhook URL (optional, reads from SLACK_WEBHOOK_URL env var)
+
+    Returns:
+        True if initialized successfully, False otherwise
+    """
+    global _slack_webhook_url
+
+    _slack_webhook_url = webhook_url or os.getenv("SLACK_WEBHOOK_URL")
+    if not _slack_webhook_url:
+        logger.debug("Slack webhook URL not configured (SLACK_WEBHOOK_URL env var not set)")
+        return False
+
+    logger.info("Slack webhook alerts initialized")
+    return True
+
+
+def send_slack_alert(
+    message: str,
+    level: str = "error",
+    context: dict | None = None,
+    channel: str | None = None,
+) -> bool:
+    """
+    Send alert directly to Slack via webhook.
+
+    Args:
+        message: Alert message
+        level: Alert level (error, warning, info)
+        context: Additional context to include
+        channel: Override channel (if webhook supports it)
+
+    Returns:
+        True if sent successfully, False otherwise
+    """
+    global _slack_webhook_url
+
+    # Try to initialize if not already done
+    if not _slack_webhook_url:
+        init_slack_alerts()
+
+    if not _slack_webhook_url:
+        logger.debug("Slack alerts not configured, skipping notification")
+        return False
+
+    try:
+        import requests
+        from datetime import datetime
+
+        # Build Slack message with blocks
+        emoji_map = {"error": ":rotating_light:", "warning": ":warning:", "info": ":information_source:"}
+        color_map = {"error": "#dc3545", "warning": "#ffc107", "info": "#17a2b8"}
+
+        emoji = emoji_map.get(level, ":bell:")
+        color = color_map.get(level, "#6c757d")
+
+        # Build attachment blocks
+        attachment = {
+            "color": color,
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"{emoji} *Trading System Alert*\n{message}",
+                    },
+                },
+            ],
+        }
+
+        # Add context if provided
+        if context:
+            fields = []
+            for key, value in context.items():
+                fields.append({
+                    "type": "mrkdwn",
+                    "text": f"*{key}:* {value}",
+                })
+            if fields:
+                attachment["blocks"].append({
+                    "type": "section",
+                    "fields": fields[:10],  # Slack limit
+                })
+
+        # Add timestamp
+        attachment["blocks"].append({
+            "type": "context",
+            "elements": [
+                {
+                    "type": "mrkdwn",
+                    "text": f"Timestamp: {datetime.now().isoformat()}",
+                }
+            ],
+        })
+
+        payload = {"attachments": [attachment]}
+
+        response = requests.post(
+            _slack_webhook_url,
+            json=payload,
+            timeout=10,
+        )
+        response.raise_for_status()
+
+        logger.debug(f"Slack alert sent: {message[:50]}...")
+        return True
+
+    except Exception as e:
+        logger.warning(f"Failed to send Slack alert: {e}")
+        return False
+
+
+def capture_critical_error(error: Exception | str, context: dict | None = None):
+    """
+    Capture a critical error in both Sentry and Slack.
+
+    Use this for errors that need immediate attention.
+
+    Args:
+        error: The error/exception or error message
+        context: Additional context
+    """
+    error_msg = str(error) if isinstance(error, Exception) else error
+
+    # Send to Sentry
+    if _sentry_initialized:
+        try:
+            import sentry_sdk
+
+            with sentry_sdk.push_scope() as scope:
+                scope.set_tag("severity", "critical")
+                scope.set_level("fatal")
+
+                if context:
+                    for key, value in context.items():
+                        scope.set_context(key, {"value": value})
+
+                if isinstance(error, Exception):
+                    sentry_sdk.capture_exception(error)
+                else:
+                    sentry_sdk.capture_message(error_msg, level="fatal")
+
+        except Exception as e:
+            logger.debug(f"Failed to capture critical error in Sentry: {e}")
+
+    # Also send to Slack for immediate visibility
+    send_slack_alert(
+        message=f"CRITICAL: {error_msg}",
+        level="error",
+        context=context,
+    )

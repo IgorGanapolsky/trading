@@ -11,11 +11,25 @@ Part of P1: Health Monitoring & Alerts from SYSTEMIC_FAILURE_PREVENTION_PLAN.md
 """
 
 import json
+import logging
 import os
 import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from dotenv import load_dotenv
+
+from src.utils.error_monitoring import init_sentry
+
+load_dotenv()
+init_sentry()
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 
 def check_recent_trades(days=2) -> tuple[bool, str]:
