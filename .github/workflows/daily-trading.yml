@@ -1,6 +1,9 @@
 name: Daily Trading Execution
 
 on:
+  push:
+    paths:
+      - 'TRIGGER_TRADE.md'  # Push trigger for immediate trading
   schedule:
     # Run every weekday at 9:35 AM Eastern
     # AUTOMATIC DST HANDLING: Runs at both times to cover EST/EDT transitions
