@@ -5,7 +5,7 @@ class LessonsLearnedRAG:
     """Stub for deleted lessons learned RAG."""
 
     def __init__(self, *args, **kwargs):
-        pass
+        self.lessons = []  # Empty lessons list
 
     def query(self, *args, **kwargs) -> list:
         return []
