@@ -45,6 +45,18 @@
           }
         ]
       }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/capture_session_learnings.sh",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   }
 }
