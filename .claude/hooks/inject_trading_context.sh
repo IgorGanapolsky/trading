@@ -83,8 +83,29 @@ fi
 # Combined status showing both markets
 MARKET_STATUS="Equities: $EQUITY_STATUS | Crypto: $CRYPTO_STATUS"
 
-# Next automated trade time
-NEXT_TRADE=$(TZ=America/New_York date -v +1d '+%b %d, 9:35 AM ET' 2>/dev/null || date -d '+1 day' '+%b %d, 9:35 AM ET' 2>/dev/null || echo "Tomorrow 9:35 AM ET")
+# Next automated trade time - MUST be a weekday (Mon-Fri)
+# Fixed Dec 19, 2025: Was showing Saturday as next trade date
+get_next_trading_day() {
+    local dow=$(date +%u)  # 1=Mon, 7=Sun
+    local days_to_add=1
+
+    # If Friday (5), next trade is Monday (+3 days)
+    if [[ $dow -eq 5 ]]; then
+        days_to_add=3
+    # If Saturday (6), next trade is Monday (+2 days)
+    elif [[ $dow -eq 6 ]]; then
+        days_to_add=2
+    # If Sunday (7), next trade is Monday (+1 day)
+    elif [[ $dow -eq 7 ]]; then
+        days_to_add=1
+    fi
+
+    # Try macOS date first (-v), then GNU date (-d)
+    TZ=America/New_York date -v +${days_to_add}d '+%b %d, 9:35 AM ET' 2>/dev/null || \
+    date -d "+${days_to_add} days" '+%b %d, 9:35 AM ET' 2>/dev/null || \
+    echo "Next weekday 9:35 AM ET"
+}
+NEXT_TRADE=$(get_next_trading_day)
 
 # Get backtest status from actual results if available
 BACKTEST_SUMMARY="$CLAUDE_PROJECT_DIR/data/backtests/latest_summary.json"
