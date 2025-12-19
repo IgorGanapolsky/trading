@@ -7,6 +7,7 @@
 # to provide Claude with full context for better decision-making.
 #
 # UPDATED Dec 12, 2025 (LL-018, LL-019): Added stale data detection
+# UPDATED Dec 19, 2025: LIVE Alpaca API fetch - no more stale data!
 #
 
 set -euo pipefail
@@ -23,24 +24,57 @@ if [[ ! -f "$STATE_FILE" ]]; then
     exit 0
 fi
 
-# Get most recent data from performance_log.json (more reliable than system_state)
-# Fixed: Use jq .[-1] to get last array element instead of tail -1 which returns "]"
-if [[ -f "$PERF_LOG" ]]; then
-    PERF_DATE=$(jq -r '.[-1].date // ""' "$PERF_LOG" 2>/dev/null || echo "")
-    CURRENT_EQUITY=$(jq -r '.[-1].equity // "N/A"' "$PERF_LOG" 2>/dev/null || echo "N/A")
-    TOTAL_PL=$(jq -r '.[-1].pl // "N/A"' "$PERF_LOG" 2>/dev/null || echo "N/A")
-    TOTAL_PL_PCT_RAW=$(jq -r '.[-1].pl_pct // "N/A"' "$PERF_LOG" 2>/dev/null || echo "N/A")
-    # pl_pct is already a percentage (e.g., -0.09 means -0.09%), just format it
-    if [[ "$TOTAL_PL_PCT_RAW" != "N/A" ]]; then
-        TOTAL_PL_PCT=$(printf "%.2f" "$TOTAL_PL_PCT_RAW" 2>/dev/null || echo "$TOTAL_PL_PCT_RAW")
-    else
-        TOTAL_PL_PCT="N/A"
+# ============================================================================
+# LIVE ALPACA DATA FETCH (Dec 19, 2025 fix)
+# Try to get REAL data from Alpaca API first, fall back to local files
+# ============================================================================
+ALPACA_API_KEY="${ALPACA_API_KEY:-}"
+ALPACA_SECRET_KEY="${ALPACA_SECRET_KEY:-}"
+LIVE_DATA="false"
+PERF_DATE=""
+
+if [[ -n "$ALPACA_API_KEY" && -n "$ALPACA_SECRET_KEY" ]]; then
+    # Try to fetch live data from Alpaca
+    ALPACA_RESPONSE=$(curl -s --max-time 5 \
+        -H "APCA-API-KEY-ID: $ALPACA_API_KEY" \
+        -H "APCA-API-SECRET-KEY: $ALPACA_SECRET_KEY" \
+        "https://paper-api.alpaca.markets/v2/account" 2>/dev/null || echo "")
+
+    if [[ -n "$ALPACA_RESPONSE" && "$ALPACA_RESPONSE" != *"error"* && "$ALPACA_RESPONSE" != *"forbidden"* ]]; then
+        CURRENT_EQUITY=$(echo "$ALPACA_RESPONSE" | jq -r '.equity // "N/A"' 2>/dev/null || echo "N/A")
+        LAST_EQUITY=$(echo "$ALPACA_RESPONSE" | jq -r '.last_equity // "100000"' 2>/dev/null || echo "100000")
+
+        if [[ "$CURRENT_EQUITY" != "N/A" && "$CURRENT_EQUITY" != "null" ]]; then
+            # Calculate P/L from Alpaca data
+            TOTAL_PL=$(echo "$CURRENT_EQUITY - 100000" | bc -l 2>/dev/null || echo "0")
+            TOTAL_PL_PCT=$(echo "scale=2; ($CURRENT_EQUITY - 100000) / 1000" | bc -l 2>/dev/null || echo "0")
+            PERF_DATE="$TODAY"
+            LIVE_DATA="true"
+        fi
     fi
-else
-    PERF_DATE=""
-    CURRENT_EQUITY=$(jq -r '.account.current_equity // "N/A"' "$STATE_FILE")
-    TOTAL_PL=$(jq -r '.account.total_pl // "N/A"' "$STATE_FILE")
-    TOTAL_PL_PCT=$(jq -r '.account.total_pl_pct // "N/A"' "$STATE_FILE")
+fi
+
+# Fall back to local files if live fetch failed
+if [[ "$LIVE_DATA" == "false" ]]; then
+    # Get most recent data from performance_log.json (more reliable than system_state)
+    # Fixed: Use jq .[-1] to get last array element instead of tail -1 which returns "]"
+    if [[ -f "$PERF_LOG" ]]; then
+        PERF_DATE=$(jq -r '.[-1].date // ""' "$PERF_LOG" 2>/dev/null || echo "")
+        CURRENT_EQUITY=$(jq -r '.[-1].equity // "N/A"' "$PERF_LOG" 2>/dev/null || echo "N/A")
+        TOTAL_PL=$(jq -r '.[-1].pl // "N/A"' "$PERF_LOG" 2>/dev/null || echo "N/A")
+        TOTAL_PL_PCT_RAW=$(jq -r '.[-1].pl_pct // "N/A"' "$PERF_LOG" 2>/dev/null || echo "N/A")
+        # pl_pct is already a percentage (e.g., -0.09 means -0.09%), just format it
+        if [[ "$TOTAL_PL_PCT_RAW" != "N/A" ]]; then
+            TOTAL_PL_PCT=$(printf "%.2f" "$TOTAL_PL_PCT_RAW" 2>/dev/null || echo "$TOTAL_PL_PCT_RAW")
+        else
+            TOTAL_PL_PCT="N/A"
+        fi
+    else
+        PERF_DATE=""
+        CURRENT_EQUITY=$(jq -r '.account.current_equity // "N/A"' "$STATE_FILE")
+        TOTAL_PL=$(jq -r '.account.total_pl // "N/A"' "$STATE_FILE")
+        TOTAL_PL_PCT=$(jq -r '.account.total_pl_pct // "N/A"' "$STATE_FILE")
+    fi
 fi
 
 CURRENT_DAY=$(jq -r '.challenge.current_day // "N/A"' "$STATE_FILE")
@@ -48,11 +82,17 @@ WIN_RATE=$(jq -r '.performance.win_rate // "N/A"' "$STATE_FILE")
 
 # Check data freshness and warn if stale
 STALE_WARNING=""
-if [[ -n "$PERF_DATE" && "$PERF_DATE" != "$TODAY" ]]; then
+DATA_SOURCE=""
+if [[ "$LIVE_DATA" == "true" ]]; then
+    DATA_SOURCE="✅ LIVE from Alpaca"
+elif [[ -n "$PERF_DATE" && "$PERF_DATE" != "$TODAY" ]]; then
     DAYS_OLD=$(( ($(date +%s) - $(date -d "$PERF_DATE" +%s 2>/dev/null || echo 0)) / 86400 ))
     if [[ $DAYS_OLD -gt 0 ]]; then
         STALE_WARNING="⚠️ DATA STALE: Last update $PERF_DATE ($DAYS_OLD days ago)"
+        DATA_SOURCE="📁 Local files (stale)"
     fi
+else
+    DATA_SOURCE="📁 Local files"
 fi
 
 # Check if today's trade file exists
@@ -125,7 +165,7 @@ fi
 
 # Output context (this will be added to the user's prompt)
 cat <<EOF
-[TRADING CONTEXT]
+[TRADING CONTEXT] $DATA_SOURCE
 Portfolio: \$$CURRENT_EQUITY | P/L: \$$TOTAL_PL ($TOTAL_PL_PCT%) | Day: $CURRENT_DAY/90
 Win Rate: $WIN_RATE% (live) | Backtest: $BACKTEST_STATUS
 Next Trade: $NEXT_TRADE
