@@ -1,9 +1,11 @@
 {
   "meta": {
-    "version": "1.0",
+    "version": "1.1",
     "created": "2025-11-26",
+    "last_audit": "2025-12-19",
     "description": "Structured feature list for trading system. Features marked as 'passes: false' are not yet complete. Only mark as 'passes: true' after end-to-end testing.",
-    "note": "It is unacceptable to remove or edit tests because this could lead to missing or buggy functionality."
+    "note": "It is unacceptable to remove or edit tests because this could lead to missing or buggy functionality.",
+    "audit_notes": "Dec 19 audit: Fixed 4 false 'passes: true' claims (YouTube, RAG, RL). Many modules stubbed in PR #782."
   },
   "features": [
     {
@@ -115,8 +117,8 @@
         "Identify stock recommendations",
         "Add to Tier 2 watchlist"
       ],
-      "passes": true,
-      "notes": "Automated via GitHub Actions workflow"
+      "passes": false,
+      "notes": "STALE: Last automated run Nov 5, 2025. Workflow exists but not configured to run regularly. Needs investigation."
     },
     {
       "category": "sentiment",
@@ -127,8 +129,8 @@
         "Enable semantic search over historical sentiment",
         "Aggregate sentiment scores per ticker"
       ],
-      "passes": true,
-      "notes": "Implemented in rag_store/"
+      "passes": false,
+      "notes": "BROKEN: Dependencies not installed (sentence-transformers, chromadb). RAG modules stubbed in PR #782. Returns empty results."
     },
     {
       "category": "automation",
@@ -141,7 +143,7 @@
         "Generate daily CEO report"
       ],
       "passes": true,
-      "notes": "Fully automated and operational"
+      "notes": "FIXED Dec 19: Was failing due to missing pre_trade_smoke_test.py (PR #784). Should work starting Dec 22."
     },
     {
       "category": "automation",
@@ -243,8 +245,8 @@
         "Adapt policy based on performance",
         "Use RL for position sizing decisions"
       ],
-      "passes": true,
-      "notes": "RLPolicyLearner now gates CoreStrategy entries and learns from exits"
+      "passes": false,
+      "notes": "UNVALIDATED: DiscoRL added Dec 8 with 0 validated trades. All RL modules stubbed in PR #782. Returns hardcoded 0.5 predictions."
     },
     {
       "category": "ml",
