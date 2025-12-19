@@ -1,0 +1,87 @@
+{
+  "source": "Nassim Nicholas Taleb - Black Swan & Antifragile",
+  "type": "book_synthesis",
+  "ingested": "2025-12-16",
+  "priority": "critical",
+  "chunks": [
+    {
+      "id": "taleb_001",
+      "title": "Black Swan Definition",
+      "content": "A Black Swan is an event with three attributes: (1) It lies outside the realm of regular expectations - nothing in the past can convincingly point to its possibility; (2) It carries an extreme impact; (3) Human nature makes us concoct explanations for its occurrence AFTER the fact, making it appear explainable and predictable. Black Swans underlie almost everything about our world - from religions to history to finance.",
+      "application": "Never assume tail risks are priced correctly in options. The market systematically underprices extreme events.",
+      "tags": ["tail_risk", "fat_tails", "extreme_events"]
+    },
+    {
+      "id": "taleb_002",
+      "title": "Barbell Strategy",
+      "content": "The barbell strategy means being hyperconservative with 85-90% of your capital (treasury bills, cash, no risk) and hyperaggressive with 10-15% (maximum leverage on asymmetric bets). Avoid the middle - medium-risk investments give you the worst of both worlds. You're exposed to large risks without adequate compensation.",
+      "application": "For options: Keep 85% in safe positions (covered calls, cash-secured puts on quality stocks). Use 10-15% for asymmetric bets (cheap OTM puts for crash protection, LEAPS calls on high-conviction ideas).",
+      "tags": ["position_sizing", "risk_management", "asymmetric_payoff"]
+    },
+    {
+      "id": "taleb_003",
+      "title": "Antifragility in Trading",
+      "content": "Antifragile systems gain from disorder and volatility. Fragile systems break under stress. Robust systems resist stress but don't benefit. Your portfolio should be antifragile - it should BENEFIT from volatility spikes, not just survive them.",
+      "application": "Long volatility positions (straddles during low VIX), tail hedges (OTM puts), and convex payoffs make your portfolio antifragile. Selling naked options is FRAGILE - limited upside, unlimited downside.",
+      "tags": ["volatility", "convexity", "portfolio_construction"]
+    },
+    {
+      "id": "taleb_004",
+      "title": "Turkey Problem & Induction",
+      "content": "A turkey is fed every day for 1,000 days, each feeding reinforcing its belief that humans care for its wellbeing. On day 1,001 (Thanksgiving), its model catastrophically fails. Past performance doesn't predict future outcomes when the underlying regime can shift. This is Hume's problem of induction applied to trading.",
+      "application": "Backtests are turkeys. A strategy that worked for 10 years can blow up overnight. Always ask: What event would destroy this strategy? Position size so you survive that event.",
+      "tags": ["backtesting", "regime_change", "survivorship_bias"]
+    },
+    {
+      "id": "taleb_005",
+      "title": "Ludic Fallacy",
+      "content": "The ludic fallacy is thinking real-world uncertainty resembles casino-style probability. In casinos, odds are known and bounded. In markets, we face Knightian uncertainty - unknown unknowns. Options pricing models (Black-Scholes) assume Gaussian distributions, but markets have fat tails.",
+      "application": "Don't trust option Greeks during crisis. Delta, gamma calculated from normal distributions are WRONG during tail events. VIX can spike 5x in days. Size positions for the real distribution, not the model.",
+      "tags": ["model_risk", "fat_tails", "greeks_limitations"]
+    },
+    {
+      "id": "taleb_006",
+      "title": "Skin in the Game",
+      "content": "Never trust advice from someone without skin in the game. Asymmetry of payoffs corrupts judgment. If someone gets upside but no downside (analysts, strategists, newsletter writers), their recommendations are noise. Traders with their own money at risk give better signals.",
+      "application": "Weight insider transactions heavily. When executives buy OTM calls on their own stock, pay attention. Ignore analyst price targets - they have no skin in the game.",
+      "tags": ["signal_quality", "insider_activity", "incentives"]
+    },
+    {
+      "id": "taleb_007",
+      "title": "Via Negativa - Avoiding Ruin",
+      "content": "Via negativa: Focus on what NOT to do. Avoiding ruin is more important than seeking gains. One catastrophic loss eliminates all previous gains. The first rule is survival; returns are secondary.",
+      "application": "Never sell naked puts on leveraged ETFs. Never concentrate >10% in one position. Never trade options on illiquid names. Never hold short gamma through earnings. These rules prevent ruin.",
+      "tags": ["risk_management", "position_limits", "survival"]
+    },
+    {
+      "id": "taleb_008",
+      "title": "Convexity Preference",
+      "content": "Always prefer convex payoffs (limited downside, unlimited upside) over concave payoffs (unlimited downside, limited upside). Selling options is concave. Buying options is convex. In a world of fat tails, convexity is underpriced.",
+      "application": "When selling premium (theta strategies), ALWAYS define risk with spreads. A credit spread is convex with capped loss. A naked short is concave and can blow up.",
+      "tags": ["options_strategy", "defined_risk", "payoff_structure"]
+    },
+    {
+      "id": "taleb_009",
+      "title": "Ergodicity Problem",
+      "content": "Ensemble probability (what happens on average across many traders) differs from time probability (what happens to ONE trader over time). Even with positive expected value, if ruin is possible, you will eventually hit it. A single trader cannot diversify across parallel universes.",
+      "application": "Kelly Criterion exists because ergodicity matters. Never bet more than Kelly fraction. For options, this means: Even if expected value is positive, size positions so you survive multiple consecutive losses.",
+      "tags": ["kelly_criterion", "position_sizing", "expected_value"]
+    },
+    {
+      "id": "taleb_010",
+      "title": "Silent Evidence",
+      "content": "We only see survivors. Failed traders don't write books. Blown-up hedge funds disappear from databases. This creates massive survivorship bias in all trading 'wisdom'. The strategies that worked might just be lucky survivors.",
+      "application": "When evaluating any options strategy: Ask how many traders blew up trying it. Selling premium in Feb 2018 (XIV collapse) or March 2020 wiped out many. Their strategies looked great... until they didn't.",
+      "tags": ["survivorship_bias", "strategy_evaluation", "historical_analysis"]
+    }
+  ],
+  "key_rules": [
+    "Size positions so you survive Black Swans - no single loss >2% of portfolio",
+    "Use barbell: 85% safe + 15% asymmetric bets",
+    "Prefer convex payoffs (defined-risk spreads) over concave (naked shorts)",
+    "Backtests are turkeys - assume the worst scenario WILL happen",
+    "Buy tail protection when VIX is low (cheap insurance)",
+    "Never trust models during crisis - Greeks lie under stress",
+    "Apply Kelly Criterion rigorously - bet sizing is survival"
+  ]
+}

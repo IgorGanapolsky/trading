@@ -1,0 +1,76 @@
+{
+  "metadata": {
+    "title": "Statistical Arbitrage with Options",
+    "description": "Pairs trading, correlation strategies, and statistical edge in options markets",
+    "sources": ["Quantitative Trading - Ernest Chan", "Algorithmic Trading - Ernest Chan", "AQR Research"],
+    "created": "2025-12-10",
+    "last_updated": "2025-12-10"
+  },
+  "chunks": [
+    {
+      "id": "statarb_001_pairs_trading_basics",
+      "topic": "Pairs Trading Fundamentals",
+      "content": "Pairs trading exploits mean reversion between correlated assets. Process: (1) Find highly correlated pair (correlation > 0.8). (2) Calculate spread (price ratio or difference). (3) Enter when spread deviates > 2 standard deviations. (4) Exit when spread reverts to mean. Classic pairs: XOM/CVX (oil), BAC/JPM (banks), GOOG/META (tech), SPY/IWM (large vs small cap). Risk: Correlation can break (regime change). Hedge ratio critical for proper sizing. Options enhance pairs trades by: Defined risk, lower capital, leverage.",
+      "key_insight": "Pairs trading is market-neutral - profits from relative movement, not direction. Options add leverage and defined risk.",
+      "application": "Consider implementing pairs strategies using puts on one leg, calls on the other. Lower capital than stock pairs.",
+      "embedding_text": "pairs trading fundamentals mean reversion correlated assets. Correlation greater 0.8 spread deviates 2 standard deviations exit revert mean. XOM CVX BAC JPM GOOG META SPY IWM. Market neutral profits relative movement. Options defined risk lower capital leverage."
+    },
+    {
+      "id": "statarb_002_dispersion_trading",
+      "topic": "Dispersion Trading - Index vs Components",
+      "content": "Dispersion trading exploits IV difference between index options and component options. Observation: Index IV is typically lower than weighted average of component IVs (correlation discount). Strategy: Sell index straddle, buy component straddles. Profit when realized correlation < implied correlation. Why it works: Index options price in diversification benefit. Component moves offset each other in index. When components move together less than expected, index vol is lower than component vol. Risk: High correlation events (2008, 2020) cause losses. Complex to execute with many positions.",
+      "key_insight": "Dispersion profits from diversification - the reason index IV < component IV. Best when correlations are lower than priced.",
+      "application": "Advanced strategy. For retail: simply note that SPY options are often 'cheaper' than individual stock options due to diversification.",
+      "embedding_text": "dispersion trading index vs components IV difference. Index IV lower than weighted average component IVs correlation discount. Sell index straddle buy component straddles. Profit realized correlation less than implied. Diversification benefit. High correlation events losses."
+    },
+    {
+      "id": "statarb_003_put_call_parity_arb",
+      "topic": "Put-Call Parity Arbitrage",
+      "content": "Put-call parity: C - P = S - K*e^(-rT). Violations create arbitrage. Synthetic positions: Synthetic long stock = Long call + Short put (same strike/expiry). Synthetic short stock = Long put + Short call. If synthetic differs from actual stock price by more than transaction costs, arbitrage exists. Conversion: Long stock + Synthetic short (long put + short call). Reversal: Short stock + Synthetic long (long call + short put). These are 'risk-free' trades capturing pricing discrepancies. Reality: Rare in liquid markets. May exist briefly in volatile conditions or illiquid options.",
+      "key_insight": "True put-call arbitrage is rare for retail traders. But understanding parity helps identify mispriced options and synthetic equivalents.",
+      "application": "Use synthetic positions when one side is cheaper. Example: If put is expensive, sell it and buy call + short stock instead.",
+      "embedding_text": "put-call parity arbitrage C - P = S - K*e^(-rT) violations. Synthetic long stock long call short put. Conversion reversal risk-free trades pricing discrepancies. Rare liquid markets volatile conditions illiquid options. Understanding helps identify mispriced options."
+    },
+    {
+      "id": "statarb_004_volatility_surface_arb",
+      "topic": "Volatility Surface Arbitrage",
+      "content": "The volatility surface shows IV across strikes and expirations. Arbitrage opportunities: Calendar spread: If near-term IV > far-term IV abnormally (beyond normal backwardation). Vertical spread: If IV increases too steeply across strikes (butterfly mispricing). Diagonal: Combination of calendar and vertical anomalies. Detection: Plot IV surface, look for unusual bumps or dips. Compare current surface to historical norms. Execution: Buy 'cheap' options, sell 'expensive' options to normalize surface. Risk: Surface anomalies may reflect genuine risk, not mispricing.",
+      "key_insight": "Volatility surface anomalies indicate potential mispricing. But always ask: 'Why is this cheap/expensive?' before trading.",
+      "application": "Advanced strategy. For our system: monitor IV surface shape for general market conditions rather than active arbitrage.",
+      "embedding_text": "volatility surface arbitrage IV across strikes expirations. Calendar spread near-term IV greater far-term. Vertical spread IV steeply strikes butterfly mispricing. Diagonal combination. Plot IV surface unusual bumps dips historical norms. Buy cheap sell expensive normalize surface."
+    },
+    {
+      "id": "statarb_005_relative_value_options",
+      "topic": "Relative Value Options Strategies",
+      "content": "Relative value compares similar options for mispricing. Strategies: (1) Roll selection: Compare different expirations for best value (time decay vs theta). (2) Strike selection: Compare risk/reward across strikes. (3) Cross-underlying: Compare similar stocks' option prices (AMD vs NVDA puts). (4) ETF vs index: Compare SPY vs SPX options for better execution. Analysis framework: Calculate expected value = (Probability of profit × Max gain) - (Probability of loss × Max loss). Compare across candidates. Choose highest EV trade.",
+      "key_insight": "Never trade in isolation. Always compare your chosen trade to alternatives and pick the highest expected value.",
+      "application": "Before selling a CSP, compare: different strikes, different expirations, different underlyings. Pick the best risk/reward.",
+      "embedding_text": "relative value options strategies comparing mispricing. Roll selection expirations time decay theta. Strike selection risk reward. Cross-underlying AMD NVDA puts. ETF vs index SPY SPX. Expected value probability profit gain probability loss. Highest EV trade."
+    },
+    {
+      "id": "statarb_006_cointegration_pairs",
+      "topic": "Cointegration for Options Pairs Trading",
+      "content": "Cointegration is stronger than correlation for pairs trading. Cointegrated pairs: Their spread is stationary (mean-reverting) even if individual prices aren't. Testing: Use Engle-Granger or Johansen test. Look for p-value < 0.05. Implementation: (1) Find cointegrated pair (e.g., GLD/GDX). (2) Calculate z-score of spread. (3) Long undervalued/Short overvalued when |z| > 2. (4) Exit when z reverts to 0. With options: Use puts on overvalued leg, calls on undervalued leg. Defined risk, leveraged exposure to mean reversion.",
+      "key_insight": "Cointegration (stationary spread) is more reliable than correlation (co-movement). Test for cointegration before pairs trading.",
+      "application": "Screen for cointegrated pairs in our watchlist. Use options for capital-efficient exposure.",
+      "python_example": "from statsmodels.tsa.stattools import coint\nscore, pvalue, _ = coint(series1, series2)\nif pvalue < 0.05:\n    print('Cointegrated pair found')",
+      "embedding_text": "cointegration pairs trading stronger than correlation. Spread stationary mean-reverting individual prices not. Engle-Granger Johansen test p-value less 0.05. Z-score spread long undervalued short overvalued z greater 2. Options puts overvalued calls undervalued defined risk leverage mean reversion."
+    },
+    {
+      "id": "statarb_007_options_market_making",
+      "topic": "Options Market Making Concepts",
+      "content": "Market makers profit from bid-ask spread while hedging directional risk. Retail edge: Understand what market makers do to trade smarter. MM strategy: Quote both sides (bid and ask). Hedge delta continuously. Profit from spread and volatility risk premium. Implications for retail: (1) Wide spreads = high MM profit, bad for you. Trade tight spreads. (2) MM hedge by buying/selling underlying - your trades cause price impact. (3) MM are short gamma - they lose on big moves. Your long options profit when they lose. (4) End-of-day, end-of-week MM flatten positions - liquidity may dry up.",
+      "key_insight": "Trade with the market maker, not against them. Use limit orders, trade liquid options, avoid wide bid-ask spreads.",
+      "application": "Always check bid-ask spread before trading. If spread > 10% of option price, consider more liquid alternative.",
+      "embedding_text": "options market making bid-ask spread hedging directional risk. MM quote both sides hedge delta profit spread volatility risk premium. Wide spreads bad tight spreads good. MM short gamma lose big moves your long options profit. Limit orders liquid options avoid wide bid-ask."
+    },
+    {
+      "id": "statarb_008_edge_detection",
+      "topic": "Finding and Measuring Your Edge",
+      "content": "Statistical edge = positive expected value over many trades. How to find edge: (1) Volatility risk premium: Selling options has ~1-2% monthly edge historically. (2) IV/RV divergence: Sell when IV >> RV forecast. (3) Skew premium: OTM puts consistently overpriced. (4) Mean reversion: Extreme IV percentiles tend to revert. Measuring edge: Track win rate, average win, average loss. Calculate: Edge = (Win% × Avg Win) - (Loss% × Avg Loss). Positive edge doesn't guarantee profit - need many trades for edge to manifest. Kelly Criterion sizes positions based on edge and variance.",
+      "key_insight": "Without measured positive edge, you're gambling. Track every trade, calculate your edge, and only continue strategies with proven positive EV.",
+      "application": "Our system tracks all trades. Calculate rolling edge metric. If edge goes negative, pause strategy and investigate.",
+      "embedding_text": "finding measuring edge statistical positive expected value. Volatility risk premium 1-2% monthly selling options. IV RV divergence sell IV greater than RV. Skew premium OTM puts overpriced. Mean reversion extreme IV percentile revert. Edge = Win% × Avg Win - Loss% × Avg Loss. Kelly Criterion position sizing."
+    }
+  ]
+}
