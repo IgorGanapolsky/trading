@@ -178,8 +178,8 @@ def calculate_simple_risk_metrics(perf_log: list, all_trades: list) -> dict:
     equities = [entry.get("equity", 100000) for entry in perf_log]
     returns = []
     for i in range(1, len(equities)):
-        if equities[i - 1] > 0:
-            returns.append((equities[i] - equities[i - 1]) / equities[i - 1])
+        if equities[i-1] > 0:
+            returns.append((equities[i] - equities[i-1]) / equities[i-1])
 
     if not returns:
         return {"sharpe_ratio": 0, "max_drawdown_pct": 0, "volatility_annualized": 0}
@@ -187,10 +187,10 @@ def calculate_simple_risk_metrics(perf_log: list, all_trades: list) -> dict:
     # Calculate metrics
     avg_return = sum(returns) / len(returns)
     variance = sum((r - avg_return) ** 2 for r in returns) / len(returns) if len(returns) > 1 else 0
-    std_dev = variance**0.5
+    std_dev = variance ** 0.5
 
     # Annualized metrics (assuming daily data)
-    volatility_annualized = std_dev * (252**0.5) * 100
+    volatility_annualized = std_dev * (252 ** 0.5) * 100
     risk_free_rate = 0.05 / 252  # ~5% annual risk-free rate
     sharpe_ratio = (avg_return - risk_free_rate) / std_dev if std_dev > 0 else 0
 
@@ -365,47 +365,14 @@ def generate_world_class_dashboard() -> str:
     }
 
     # Use simple risk metrics calculated above (risk already set)
+    enhanced_risk = {"kelly_fraction": 0, "margin_usage_pct": 0, "leverage": 1.0}
     attribution = {"by_symbol": {}, "by_strategy": {}, "by_time_of_day": {}}
-    execution = {
-        "avg_slippage": 0,
-        "fill_quality": 100,
-        "order_success_rate": 100,
-        "order_reject_rate": 0,
-        "avg_fill_time_ms": 50,
-        "broker_latency_ms": 20,
-    }
-    data_completeness = {
-        "performance_log_completeness": 100,
-        "missing_dates_count": 0,
-        "data_freshness_days": 0,
-        "missing_candle_pct": 0,
-        "data_sources_used": ["Alpaca"],
-        "model_version": "2.0",
-    }
-    predictive = {
-        "expected_pl_30d": 0,
-        "monte_carlo_forecast": {},
-        "risk_of_ruin": 0,
-        "forecasted_drawdown": 0,
-        "strategy_decay_detected": False,
-    }
-    benchmark = {
-        "portfolio_return": basic_metrics.get("total_pl_pct", 0),
-        "benchmark_return": 0,
-        "alpha": basic_metrics.get("total_pl_pct", 0),
-        "beta": 1.0,
-        "data_available": False,
-    }
+    execution = {"avg_slippage": 0, "fill_quality": 100, "order_success_rate": 100, "order_reject_rate": 0, "avg_fill_time_ms": 50, "broker_latency_ms": 20}
+    data_completeness = {"performance_log_completeness": 100, "missing_dates_count": 0, "data_freshness_days": 0, "missing_candle_pct": 0, "data_sources_used": ["Alpaca"], "model_version": "2.0"}
+    predictive = {"expected_pl_30d": 0, "monte_carlo_forecast": {}, "risk_of_ruin": 0, "forecasted_drawdown": 0, "strategy_decay_detected": False}
+    benchmark = {"portfolio_return": basic_metrics.get("total_pl_pct", 0), "benchmark_return": 0, "alpha": basic_metrics.get("total_pl_pct", 0), "beta": 1.0, "data_available": False}
     time_analysis = {"best_time": "N/A", "worst_time": "N/A"}
-    regime = {
-        "regime": "UNKNOWN",
-        "regime_type": "UNKNOWN",
-        "confidence": 0,
-        "trend_strength": 0,
-        "volatility_regime": "NORMAL",
-        "avg_daily_return": 0,
-        "volatility": 0,
-    }
+    regime = {"regime": "UNKNOWN", "regime_type": "UNKNOWN", "confidence": 0, "trend_strength": 0, "volatility_regime": "NORMAL", "avg_daily_return": 0, "volatility": 0}
 
     now = datetime.now()
 
@@ -910,7 +877,9 @@ def generate_world_class_dashboard() -> str:
                         try:
                             lines = f.readlines()[-1000:]
                             for line in lines:
-                                if today_str in line:
+                                if (
+                                    today_str in line
+                                ):
                                     break
                         except Exception:
                             continue
@@ -1158,7 +1127,8 @@ def generate_world_class_dashboard() -> str:
                     verification_details.append(f"**CRITICAL**: {detail['message']}")
                 elif detail["status"] == "✅":
                     verification_details.append("✅ Positions match state tracking")
-                verification_details.append()
+                verification_details.append(
+                )
             elif detail["test"] == "State file valid JSON":
                 verification_details.append("✅ State file is valid")
 
