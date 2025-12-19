@@ -1,0 +1,53 @@
+[
+  {
+    "timestamp": "2025-12-19T21:05:33.923819",
+    "strategy": "iron_condor",
+    "underlying": "SPY",
+    "expiry": "2026-01-18",
+    "dte": 30,
+    "legs": {
+      "long_put": 575,
+      "short_put": 580,
+      "short_call": 620,
+      "long_call": 625
+    },
+    "credit": 3.0,
+    "max_profit": 300.0,
+    "max_risk": 200.0,
+    "status": "SIMULATED"
+  },
+  {
+    "timestamp": "2025-12-19T21:09:14.478315",
+    "strategy": "iron_condor",
+    "underlying": "SPY",
+    "expiry": "2026-01-18",
+    "dte": 30,
+    "legs": {
+      "long_put": 575,
+      "short_put": 580,
+      "short_call": 620,
+      "long_call": 625
+    },
+    "credit": 3.0,
+    "max_profit": 300.0,
+    "max_risk": 200.0,
+    "status": "SIMULATED"
+  },
+  {
+    "timestamp": "2025-12-19T21:14:27.550116",
+    "strategy": "iron_condor",
+    "underlying": "SPY",
+    "expiry": "2026-01-18",
+    "dte": 30,
+    "legs": {
+      "long_put": 575,
+      "short_put": 580,
+      "short_call": 620,
+      "long_call": 625
+    },
+    "credit": 3.0,
+    "max_profit": 300.0,
+    "max_risk": 200.0,
+    "status": "SIMULATED"
+  }
+]
