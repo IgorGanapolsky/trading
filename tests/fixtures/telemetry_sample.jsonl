@@ -1,0 +1,4 @@
+{"event": "gate.momentum", "ticker": "SPY", "status": "pass", "timestamp": "2025-12-19T10:00:00Z"}
+{"event": "gate.momentum", "ticker": "QQQ", "status": "pass", "timestamp": "2025-12-19T10:00:01Z"}
+{"event": "gate.llm", "ticker": "NVDA", "status": "reject", "timestamp": "2025-12-19T10:00:02Z"}
+{"event": "trade.executed", "ticker": "SPY", "amount": 10.0, "status": "pass", "timestamp": "2025-12-19T10:01:00Z"}

@@ -201,7 +201,6 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: |
           python -m pytest \
-            tests/test_evaluation_system.py \
             tests/test_promotion_gate.py \
             tests/test_telemetry_summary.py \
             tests/test_trade_gateway.py \

@@ -1,0 +1,11 @@
+{
+  "aggregate_metrics": {
+    "min_win_rate": 62.0,
+    "min_sharpe_ratio": 1.6,
+    "max_drawdown": 8.0,
+    "min_profitable_streak": 35,
+    "total_trades": 200
+  },
+  "scenarios_passed": 5,
+  "scenarios_total": 5
+}

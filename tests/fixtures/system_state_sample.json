@@ -1,0 +1,14 @@
+{
+  "meta": {
+    "last_updated": "2025-12-19T12:00:00Z"
+  },
+  "performance": {
+    "win_rate": 0.65,
+    "total_trades": 150
+  },
+  "heuristics": {
+    "win_rate": 0.65,
+    "sharpe_ratio": 1.8,
+    "max_drawdown": 0.05
+  }
+}
