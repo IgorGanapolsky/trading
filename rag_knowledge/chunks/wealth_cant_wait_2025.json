@@ -1,0 +1,38 @@
+[
+  {
+    "source_type": "book_summary",
+    "source_name": "Wealth Can't Wait",
+    "author": "David Osborn & Paul Morris",
+    "chapter_or_section": "Avoid the 7 Wealth Traps",
+    "page_or_timestamp": "Audible/2019",
+    "content": "Describes seven wealth traps that derail investors: 1) Waiting for perfect timing, 2) Allowing debt to rule decisions, 3) Chasing shiny opportunities instead of core strengths, 4) Ignoring business fundamentals, 5) Refusing accountability for results, 6) Letting cash flow vanish into unnecessary expenses, and 7) Failing to audit life priorities. The antidote is to identify when you're slipping into these traps and execute disciplined action plans.",
+    "content_type": "warning",
+    "topics": ["wealth_traps", "behavioral_finance", "cash_flow"],
+    "edge_category": "values",
+    "citation": "Osborn & Morris (2019)"
+  },
+  {
+    "source_type": "book_summary",
+    "source_name": "Wealth Can't Wait",
+    "author": "David Osborn & Paul Morris",
+    "chapter_or_section": "Implement the 7 Business Pillars",
+    "page_or_timestamp": "Audible/2019",
+    "content": "Outlines seven pillars for business resilience: clarity of purpose, brand/marketing that attracts the right clients, systems that automate delivery, disciplined operations/finance, building a high-performing team, leveraging assets or capital, and committing to giving back. Each pillar has metrics (lead generation, conversion, retention, margin, capacity, ROI, generosity) that our strategy models can monitor to flag drift before a trap widens the gap.",
+    "content_type": "framework",
+    "topics": ["business_pillars", "strategy", "metrics"],
+    "edge_category": "operations",
+    "citation": "Osborn & Morris (2019)"
+  },
+  {
+    "source_type": "book_summary",
+    "source_name": "Wealth Can't Wait",
+    "author": "David Osborn & Paul Morris",
+    "chapter_or_section": "Complete a Life Audit",
+    "page_or_timestamp": "Audible/2019",
+    "content": "Encourages recurring life audits that score energy, relationships, money, and mission alignment while capturing actionable next steps. The audit keeps our automated strategies mindful of personal purpose, ensures the algorithmic trading plan stays plug-and-play with human intentions, and flags if risk management is overshadowing fulfillment.",
+    "content_type": "practice",
+    "topics": ["life_audit", "purpose", "alignment"],
+    "edge_category": "values",
+    "citation": "Osborn & Morris (2019)"
+  }
+]

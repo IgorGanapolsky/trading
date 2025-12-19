@@ -1,0 +1,26 @@
+[
+  {
+    "source_type": "book_summary",
+    "source_name": "Money: Master the Game",
+    "author": "Tony Robbins",
+    "chapter_or_section": "The 7 Simple Steps",
+    "page_or_timestamp": "Audible/2014",
+    "content": "Robbins frames financial freedom as a seven-step blueprint: 1) Decide to become an investor, 2) Learn the rules of investing and bust myths about fees, 3) Calculate the amount of income you need and the gap to cover it, 4) Allocate across diversified buckets (safe/security vs. growth/risk, with annual rebalancing), 5) Build a lifetime income plan (Ray Dalio-style All Seasons + annuities), 6) Start investing now while minimizing costs, and 7) Act, enjoy, and give back so the system stays aligned with mission-driven wealth.",
+    "content_type": "framework",
+    "topics": ["financial_planning", "asset_allocation", "behavioral_finance"],
+    "edge_category": "income",
+    "citation": "Robbins (2014)"
+  },
+  {
+    "source_type": "book_summary",
+    "source_name": "Money: Master the Game",
+    "author": "Tony Robbins",
+    "chapter_or_section": "Step 7",
+    "page_or_timestamp": "Audible/2014",
+    "content": "Step 7 emphasizes mindset: focus on gratitude, replace expectation with appreciation, prime the positive, invest in experiences and people, and share wealth by mentoring or philanthropy. Success without fulfillment is failure, so the final decision is to use money as a means to serve a higher purpose.",
+    "content_type": "principle",
+    "topics": ["behavioral_finance", "purpose", "wealth_sharing"],
+    "edge_category": "values",
+    "citation": "Robbins (2014)"
+  }
+]
