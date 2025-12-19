@@ -81,8 +81,8 @@
         "Calculate performance metrics (win rate, Sharpe, drawdown)",
         "Generate backtest reports"
       ],
-      "passes": true,
-      "notes": "Engine works. Current strategy backtests show negative Sharpe (-7 to -72) across all regimes. Win rate 38-52%. Strategy needs improvement."
+      "passes": false,
+      "notes": "STUB ONLY: BacktestEngine deleted in PR #782 simplification. Returns 0 trades, 0.0 Sharpe for ALL scenarios. Cannot validate strategies. Options: implement full engine, use forward-testing only, or deprecate."
     },
     {
       "category": "data",
