@@ -8,9 +8,18 @@
 #
 # UPDATED Dec 12, 2025 (LL-018, LL-019): Added stale data detection
 # UPDATED Dec 19, 2025: LIVE Alpaca API fetch - no more stale data!
+# UPDATED Dec 19, 2025: Auto-load credentials from .env.local
 #
 
 set -euo pipefail
+
+# ============================================================================
+# LOAD LOCAL CREDENTIALS (Dec 19, 2025 fix for persistence)
+# Source .env.local if it exists to get Alpaca keys
+# ============================================================================
+if [[ -f "$CLAUDE_PROJECT_DIR/.env.local" ]]; then
+    source "$CLAUDE_PROJECT_DIR/.env.local"
+fi
 
 # Path to data files
 STATE_FILE="$CLAUDE_PROJECT_DIR/data/system_state.json"
