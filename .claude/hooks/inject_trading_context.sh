@@ -9,9 +9,22 @@
 # UPDATED Dec 12, 2025 (LL-018, LL-019): Added stale data detection
 # UPDATED Dec 19, 2025: LIVE Alpaca API fetch - no more stale data!
 # UPDATED Dec 19, 2025: Auto-load credentials from .env.local
+# UPDATED Dec 19, 2025: Added EXPLICIT calendar awareness (day of week)
 #
 
 set -euo pipefail
+
+# ============================================================================
+# CALENDAR AWARENESS - Know what day it is!
+# This is CRITICAL for trading decisions. Markets closed Sat/Sun.
+# ============================================================================
+DAY_OF_WEEK=$(TZ=America/New_York date +%A)      # Monday, Tuesday, etc.
+DAY_NUM=$(TZ=America/New_York date +%u)          # 1=Monday, 7=Sunday
+FULL_DATE=$(TZ=America/New_York date '+%A, %B %d, %Y')  # Friday, December 19, 2025
+IS_WEEKEND="false"
+if [[ $DAY_NUM -ge 6 ]]; then
+    IS_WEEKEND="true"
+fi
 
 # ============================================================================
 # LOAD LOCAL CREDENTIALS (Dec 19, 2025 fix for persistence)
@@ -110,27 +123,20 @@ if [[ ! -f "$TRADE_FILE" ]]; then
     TRADE_WARNING="⚠️ NO TRADES TODAY"
 fi
 
-# Check market status - CRITICAL: Crypto trades 24/7/365!
+# Check market status - US Equities ONLY (we don't trade crypto)
 CURRENT_TIME=$(TZ=America/New_York date +%H:%M)
-CURRENT_DAY_OF_WEEK=$(date +%u)  # 1=Monday, 7=Sunday
 
-# Crypto is ALWAYS open - this is Critical Rule #5
-CRYPTO_STATUS="OPEN 24/7"
-
-if [[ $CURRENT_DAY_OF_WEEK -ge 1 && $CURRENT_DAY_OF_WEEK -le 5 ]]; then
+if [[ $DAY_NUM -ge 1 && $DAY_NUM -le 5 ]]; then
     # Weekday
     if [[ "$CURRENT_TIME" > "09:30" && "$CURRENT_TIME" < "16:00" ]]; then
-        EQUITY_STATUS="OPEN"
+        MARKET_STATUS="OPEN (Mon-Fri 9:30-4:00 ET)"
     else
-        EQUITY_STATUS="CLOSED (opens 9:30 AM ET)"
+        MARKET_STATUS="CLOSED (opens 9:30 AM ET)"
     fi
 else
-    # Weekend - equities closed but CRYPTO IS ALWAYS OPEN
-    EQUITY_STATUS="CLOSED (weekend)"
+    # Weekend - NO TRADING
+    MARKET_STATUS="CLOSED (weekend - no trading Sat/Sun)"
 fi
-
-# Combined status showing both markets
-MARKET_STATUS="Equities: $EQUITY_STATUS | Crypto: $CRYPTO_STATUS"
 
 # Next automated trade time - MUST be a weekday (Mon-Fri)
 # Fixed Dec 19, 2025: Was showing Saturday as next trade date
@@ -173,8 +179,10 @@ else
 fi
 
 # Output context (this will be added to the user's prompt)
+# CALENDAR INFO FIRST - so Claude always knows what day it is
 cat <<EOF
 [TRADING CONTEXT] $DATA_SOURCE
+📅 TODAY: $FULL_DATE $(if [[ "$IS_WEEKEND" == "true" ]]; then echo "⚠️ WEEKEND - NO TRADING"; fi)
 Portfolio: \$$CURRENT_EQUITY | P/L: \$$TOTAL_PL ($TOTAL_PL_PCT%) | Day: $CURRENT_DAY/90
 Win Rate: $WIN_RATE% (live) | Backtest: $BACKTEST_STATUS
 Next Trade: $NEXT_TRADE
