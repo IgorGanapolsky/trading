@@ -3,6 +3,7 @@
 
 class MentalToughnessCoach:
     """Stub for deleted mental toughness coach."""
+
     def __init__(self, *args, **kwargs):
         pass
 

@@ -95,7 +95,9 @@ class ExitConditions:
     take_profit_pct: float = 0.15  # 15% profit target (let winners run - Dec 17, 2025)
     stop_loss_pct: float = 0.08  # 8% stop loss (wider to avoid noise - Dec 17, 2025)
     max_holding_days: int = 30  # Allow trends to develop (was 14 - Dec 17, 2025)
-    enable_momentum_exit: bool = False  # DISABLED: Exit on MACD bearish cross (causes 5-10% false exits in sideways markets)
+    enable_momentum_exit: bool = (
+        False  # DISABLED: Exit on MACD bearish cross (causes 5-10% false exits in sideways markets)
+    )
     enable_atr_stop: bool = True  # Use ATR-based stops
     atr_multiplier: float = 2.5  # 2.5x ATR for stop distance (was 2.0 - Dec 17, 2025)
 
@@ -475,7 +477,6 @@ class PositionManager:
         """
         try:
             import yfinance as yf
-
             from src.utils.technical_indicators import calculate_atr
 
             ticker = yf.Ticker(symbol)

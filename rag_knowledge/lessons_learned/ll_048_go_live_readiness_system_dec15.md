@@ -1,10 +1,10 @@
 # Lesson Learned: Go-Live Readiness System
 
-**ID**: LL_048  
-**Date**: 2025-12-15  
-**Category**: Risk Management / Capital Deployment  
-**Severity**: CRITICAL  
-**Status**: IMPLEMENTED  
+**ID**: LL_048
+**Date**: 2025-12-15
+**Category**: Risk Management / Capital Deployment
+**Severity**: CRITICAL
+**Status**: IMPLEMENTED
 
 ## Context
 

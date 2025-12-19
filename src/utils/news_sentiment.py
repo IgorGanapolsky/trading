@@ -23,6 +23,7 @@ from dotenv import load_dotenv
 # Optional imports - make dependencies optional
 try:
     import yfinance as yf
+
     YFINANCE_AVAILABLE = True
 except ImportError:
     yf = None
@@ -30,6 +31,7 @@ except ImportError:
 
 try:
     from alpha_vantage.timeseries import TimeSeries
+
     ALPHA_VANTAGE_AVAILABLE = True
 except ImportError:
     TimeSeries = None
@@ -37,6 +39,7 @@ except ImportError:
 
 try:
     from bs4 import BeautifulSoup
+
     BEAUTIFULSOUP_AVAILABLE = True
 except ImportError:
     BeautifulSoup = None
@@ -158,9 +161,7 @@ class NewsSentimentAggregator:
 
         try:
             url = f"https://finance.yahoo.com/quote/{ticker}/news"
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-            }
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
             # Disable proxy if it's causing issues
             proxies = {"http": None, "https": None}

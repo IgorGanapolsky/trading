@@ -13,10 +13,8 @@ Total: ~150 lines (vs 10,000+ lines of unused RAG code)
 """
 
 import sqlite3
-import json
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Optional
 
 
 class TradeMemory:
@@ -76,20 +74,23 @@ class TradeMemory:
 
         self.conn.commit()
 
-    def add_trade(self, trade: Dict):
+    def add_trade(self, trade: dict):
         """Add a completed trade to memory."""
-        self.conn.execute("""
+        self.conn.execute(
+            """
             INSERT INTO trades (timestamp, symbol, strategy, entry_reason, won, pnl, lesson)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (
-            datetime.now().isoformat(),
-            trade.get("symbol", ""),
-            trade.get("strategy", ""),
-            trade.get("entry_reason", ""),
-            1 if trade.get("won") else 0,
-            trade.get("pnl", 0.0),
-            trade.get("lesson", "")
-        ))
+        """,
+            (
+                datetime.now().isoformat(),
+                trade.get("symbol", ""),
+                trade.get("strategy", ""),
+                trade.get("entry_reason", ""),
+                1 if trade.get("won") else 0,
+                trade.get("pnl", 0.0),
+                trade.get("lesson", ""),
+            ),
+        )
 
         # Update pattern stats
         pattern_name = f"{trade.get('strategy', '')}_{trade.get('entry_reason', '')}"
@@ -101,8 +102,7 @@ class TradeMemory:
         """Update pattern statistics."""
         # Try to update existing
         cursor = self.conn.execute(
-            "SELECT wins, losses, total_pnl FROM patterns WHERE name = ?",
-            (pattern_name,)
+            "SELECT wins, losses, total_pnl FROM patterns WHERE name = ?", (pattern_name,)
         )
         row = cursor.fetchone()
 
@@ -114,23 +114,23 @@ class TradeMemory:
                 losses += 1
             total_pnl += pnl
 
-            self.conn.execute("""
+            self.conn.execute(
+                """
                 UPDATE patterns SET wins = ?, losses = ?, total_pnl = ?, last_updated = ?
                 WHERE name = ?
-            """, (wins, losses, total_pnl, datetime.now().isoformat(), pattern_name))
+            """,
+                (wins, losses, total_pnl, datetime.now().isoformat(), pattern_name),
+            )
         else:
-            self.conn.execute("""
+            self.conn.execute(
+                """
                 INSERT INTO patterns (name, wins, losses, total_pnl, last_updated)
                 VALUES (?, ?, ?, ?, ?)
-            """, (
-                pattern_name,
-                1 if won else 0,
-                0 if won else 1,
-                pnl,
-                datetime.now().isoformat()
-            ))
+            """,
+                (pattern_name, 1 if won else 0, 0 if won else 1, pnl, datetime.now().isoformat()),
+            )
 
-    def query_similar(self, strategy: str, entry_reason: str) -> Dict:
+    def query_similar(self, strategy: str, entry_reason: str) -> dict:
         """
         Query similar past trades - THE KEY FUNCTION.
 
@@ -139,8 +139,7 @@ class TradeMemory:
         pattern_name = f"{strategy}_{entry_reason}"
 
         cursor = self.conn.execute(
-            "SELECT wins, losses, total_pnl FROM patterns WHERE name = ?",
-            (pattern_name,)
+            "SELECT wins, losses, total_pnl FROM patterns WHERE name = ?", (pattern_name,)
         )
         row = cursor.fetchone()
 
@@ -151,7 +150,7 @@ class TradeMemory:
                 "sample_size": 0,
                 "win_rate": 0.5,  # Neutral prior
                 "avg_pnl": 0.0,
-                "recommendation": "NO_HISTORY"
+                "recommendation": "NO_HISTORY",
             }
 
         wins, losses, total_pnl = row
@@ -182,65 +181,78 @@ class TradeMemory:
             "win_rate": win_rate,
             "total_pnl": total_pnl,
             "avg_pnl": avg_pnl,
-            "recommendation": rec
+            "recommendation": rec,
         }
 
-    def get_top_patterns(self, limit: int = 5) -> List[Dict]:
+    def get_top_patterns(self, limit: int = 5) -> list[dict]:
         """Get best performing patterns."""
-        cursor = self.conn.execute("""
+        cursor = self.conn.execute(
+            """
             SELECT name, wins, losses, total_pnl,
                    CAST(wins AS REAL) / (wins + losses) as win_rate
             FROM patterns
             WHERE wins + losses >= 3
             ORDER BY win_rate DESC, total_pnl DESC
             LIMIT ?
-        """, (limit,))
+        """,
+            (limit,),
+        )
 
         patterns = []
         for row in cursor.fetchall():
             name, wins, losses, total_pnl, win_rate = row
-            patterns.append({
-                "name": name,
-                "wins": wins,
-                "losses": losses,
-                "total_pnl": total_pnl,
-                "win_rate": win_rate
-            })
+            patterns.append(
+                {
+                    "name": name,
+                    "wins": wins,
+                    "losses": losses,
+                    "total_pnl": total_pnl,
+                    "win_rate": win_rate,
+                }
+            )
 
         return patterns
 
-    def get_worst_patterns(self, limit: int = 5) -> List[Dict]:
+    def get_worst_patterns(self, limit: int = 5) -> list[dict]:
         """Get worst performing patterns (to avoid)."""
-        cursor = self.conn.execute("""
+        cursor = self.conn.execute(
+            """
             SELECT name, wins, losses, total_pnl,
                    CAST(wins AS REAL) / (wins + losses) as win_rate
             FROM patterns
             WHERE wins + losses >= 3
             ORDER BY win_rate ASC, total_pnl ASC
             LIMIT ?
-        """, (limit,))
+        """,
+            (limit,),
+        )
 
         patterns = []
         for row in cursor.fetchall():
             name, wins, losses, total_pnl, win_rate = row
-            patterns.append({
-                "name": name,
-                "wins": wins,
-                "losses": losses,
-                "total_pnl": total_pnl,
-                "win_rate": win_rate
-            })
+            patterns.append(
+                {
+                    "name": name,
+                    "wins": wins,
+                    "losses": losses,
+                    "total_pnl": total_pnl,
+                    "win_rate": win_rate,
+                }
+            )
 
         return patterns
 
-    def get_lessons(self, limit: int = 10) -> List[str]:
+    def get_lessons(self, limit: int = 10) -> list[str]:
         """Get recent lessons learned."""
-        cursor = self.conn.execute("""
+        cursor = self.conn.execute(
+            """
             SELECT lesson FROM trades
             WHERE lesson IS NOT NULL AND lesson != ''
             ORDER BY timestamp DESC
             LIMIT ?
-        """, (limit,))
+        """,
+            (limit,),
+        )
 
         return [row[0] for row in cursor.fetchall()]
 
@@ -259,7 +271,7 @@ class TradeMemory:
         wins = wins or 0
         total_pnl = total_pnl or 0
 
-        print(f"\n📊 OVERALL: {total} trades, {wins}W/{total-wins}L, ${total_pnl:,.2f} P/L")
+        print(f"\n📊 OVERALL: {total} trades, {wins}W/{total - wins}L, ${total_pnl:,.2f} P/L")
 
         # Top patterns
         print("\n✅ TOP PATTERNS (replicate these):")
@@ -289,31 +301,37 @@ if __name__ == "__main__":
     memory = TradeMemory()
 
     # Test with sample data
-    memory.add_trade({
-        "symbol": "SPY",
-        "strategy": "iron_condor",
-        "entry_reason": "high_iv",
-        "won": True,
-        "pnl": 150.0,
-        "lesson": "45 DTE works well in low vol environment"
-    })
+    memory.add_trade(
+        {
+            "symbol": "SPY",
+            "strategy": "iron_condor",
+            "entry_reason": "high_iv",
+            "won": True,
+            "pnl": 150.0,
+            "lesson": "45 DTE works well in low vol environment",
+        }
+    )
 
-    memory.add_trade({
-        "symbol": "SPY",
-        "strategy": "iron_condor",
-        "entry_reason": "high_iv",
-        "won": True,
-        "pnl": 120.0
-    })
+    memory.add_trade(
+        {
+            "symbol": "SPY",
+            "strategy": "iron_condor",
+            "entry_reason": "high_iv",
+            "won": True,
+            "pnl": 120.0,
+        }
+    )
 
-    memory.add_trade({
-        "symbol": "SPY",
-        "strategy": "iron_condor",
-        "entry_reason": "high_iv",
-        "won": False,
-        "pnl": -200.0,
-        "lesson": "VIX spike blew through short strike"
-    })
+    memory.add_trade(
+        {
+            "symbol": "SPY",
+            "strategy": "iron_condor",
+            "entry_reason": "high_iv",
+            "won": False,
+            "pnl": -200.0,
+            "lesson": "VIX spike blew through short strike",
+        }
+    )
 
     # Query before next trade
     result = memory.query_similar("iron_condor", "high_iv")

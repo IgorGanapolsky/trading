@@ -104,20 +104,20 @@ For options:
 ```python
 def pre_trade_tax_check(trade):
     """Run BEFORE every trade."""
-    
+
     # Check wash sale blacklist
     if trade.symbol in wash_sale_blacklist:
         if days_since_loss < 30:
             return BLOCK, "Wash sale risk"
-    
+
     # Calculate after-tax expected profit
     gross_profit = trade.expected_profit
     tax_rate = get_tax_rate(trade.holding_period)
     after_tax = gross_profit * (1 - tax_rate)
-    
+
     # Log tax impact
     log(f"Gross: ${gross_profit}, After-tax: ${after_tax}")
-    
+
     return ALLOW, after_tax
 ```
 
@@ -126,7 +126,7 @@ def pre_trade_tax_check(trade):
 ```python
 def post_trade_tax_update(trade):
     """Run AFTER every trade."""
-    
+
     if trade.realized_loss:
         # Add to wash sale blacklist
         wash_sale_blacklist.add(
@@ -134,10 +134,10 @@ def post_trade_tax_update(trade):
             loss_date=today,
             safe_after=today + 30 days
         )
-        
+
         # Track for tax-loss harvesting
         ytd_losses += trade.loss
-    
+
     # Update estimated tax liability
     update_estimated_taxes()
 ```

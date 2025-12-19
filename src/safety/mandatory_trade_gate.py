@@ -3,6 +3,7 @@
 
 class TradeBlockedError(Exception):
     """Exception raised when trade is blocked."""
+
     pass
 
 

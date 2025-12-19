@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 # LangSmith tracing for trade execution
 try:
     from src.observability.langsmith_tracer import TraceType, get_tracer
+
     LANGSMITH_AVAILABLE = True
 except ImportError:
     LANGSMITH_AVAILABLE = False
@@ -129,11 +130,13 @@ class AlpacaExecutor:
                 span.add_output("status", order.get("status"))
                 span.add_output("commission", order.get("commission", 0))
 
-                span.add_metadata({
-                    "broker": order.get("broker", "alpaca"),
-                    "mode": order.get("mode", "paper"),
-                    "slippage_impact": order.get("slippage_impact", 0),
-                })
+                span.add_metadata(
+                    {
+                        "broker": order.get("broker", "alpaca"),
+                        "mode": order.get("mode", "paper"),
+                        "slippage_impact": order.get("slippage_impact", 0),
+                    }
+                )
 
             logger.debug(f"📊 Trade execution traced to LangSmith: {symbol} {side}")
         except Exception as e:
@@ -153,9 +156,9 @@ class AlpacaExecutor:
         else:
             try:
                 # Try to get account info - this MUST work
-                if hasattr(self.trader, 'get_account_info'):
+                if hasattr(self.trader, "get_account_info"):
                     self.account_snapshot = self.trader.get_account_info()
-                elif hasattr(self.trader, 'get_account'):
+                elif hasattr(self.trader, "get_account"):
                     # Direct TradingClient fallback
                     account = self.trader.get_account()
                     self.account_snapshot = {
@@ -168,9 +171,9 @@ class AlpacaExecutor:
                     raise RuntimeError("Trader has no get_account_info or get_account method!")
 
                 # Get positions
-                if hasattr(self.trader, 'get_positions'):
+                if hasattr(self.trader, "get_positions"):
                     self.positions = self.trader.get_positions()
-                elif hasattr(self.trader, 'get_all_positions'):
+                elif hasattr(self.trader, "get_all_positions"):
                     self.positions = self.trader.get_all_positions()
                 else:
                     self.positions = []
@@ -286,22 +289,22 @@ class AlpacaExecutor:
         # This enables blocking when equity=$0 (blind trading prevention)
         account_context = {}
         try:
-            if hasattr(self, 'account_snapshot') and self.account_snapshot:
+            if hasattr(self, "account_snapshot") and self.account_snapshot:
                 account_context = {
                     "equity": float(self.account_snapshot.get("equity", 0)),
                     "buying_power": float(self.account_snapshot.get("buying_power", 0)),
                 }
-            elif hasattr(self, 'trader') and self.trader:
+            elif hasattr(self, "trader") and self.trader:
                 # Try to get fresh account data
                 account = None
-                if hasattr(self.trader, 'get_account_info'):
+                if hasattr(self.trader, "get_account_info"):
                     account = self.trader.get_account_info()
-                elif hasattr(self.trader, 'get_account'):
+                elif hasattr(self.trader, "get_account"):
                     account = self.trader.get_account()
                 if account:
                     account_context = {
-                        "equity": float(getattr(account, 'equity', 0) or 0),
-                        "buying_power": float(getattr(account, 'buying_power', 0) or 0),
+                        "equity": float(getattr(account, "equity", 0) or 0),
+                        "buying_power": float(getattr(account, "buying_power", 0) or 0),
                     }
         except Exception as e:
             logger.warning(f"Could not get account context for gate: {e}")

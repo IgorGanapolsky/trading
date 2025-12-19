@@ -296,9 +296,7 @@ class LangSmithTracer:
     ):
         # CRITICAL: Read project name from LANGCHAIN_PROJECT env var
         # This must match the project in LangSmith UI (igor-trading-system)
-        self.project_name = project_name or os.getenv(
-            "LANGCHAIN_PROJECT", "igor-trading-system"
-        )
+        self.project_name = project_name or os.getenv("LANGCHAIN_PROJECT", "igor-trading-system")
         self.storage_path = storage_path or Path("data/traces")
         self.storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -412,9 +410,13 @@ class LangSmithTracer:
                         error=span.error,
                         tags=[span.trace_type.value, "trading-system"],
                     )
-                    logger.debug(f"Sent run to LangSmith: {span.name} (project={self.project_name})")
+                    logger.debug(
+                        f"Sent run to LangSmith: {span.name} (project={self.project_name})"
+                    )
 
-                logger.info(f"✅ Sent {len(trace.spans)} trace(s) to LangSmith project '{self.project_name}'")
+                logger.info(
+                    f"✅ Sent {len(trace.spans)} trace(s) to LangSmith project '{self.project_name}'"
+                )
             except Exception as e:
                 logger.warning(f"Failed to send trace to LangSmith: {e}")
 

@@ -358,28 +358,28 @@ key_quantum_finance_concepts:
       ground state = optimal portfolio. Works well for discrete constraints.
     practical_use: Portfolio rebalancing with discrete lots
     tools: ["D-Wave", "PyQUBO"]
-    
+
   - concept: Quantum Amplitude Estimation
     description: |
       Quadratic speedup over Monte Carlo for expectation values.
       Key for option pricing and VaR calculations.
     practical_use: Fast option pricing, risk metrics
     tools: ["Qiskit Finance", "Cirq"]
-    
+
   - concept: Quantum Machine Learning
     description: |
       Variational quantum circuits as neural networks.
       Potential for pattern recognition in high-dimensional market data.
     practical_use: Market regime detection, signal generation
     tools: ["PennyLane", "TensorFlow Quantum"]
-    
+
   - concept: Quantum Random Access Memory (QRAM)
     description: |
       Enable quantum algorithms to access classical data efficiently.
       Critical bottleneck for practical quantum finance.
     practical_use: Loading historical market data into quantum states
     tools: ["Research stage"]
-    
+
   - concept: Variational Quantum Eigensolver (VQE)
     description: |
       Hybrid quantum-classical algorithm for finding eigenvalues.
@@ -398,7 +398,7 @@ implementation_roadmap:
       - "MIT OCW Quantum Mechanics (first 6 lectures)"
       - "Qiskit Textbook chapters 1-3"
       - "MinutePhysics quantum computing videos"
-    
+
   phase_2_algorithms:
     duration: "4-8 weeks"
     goals:
@@ -409,7 +409,7 @@ implementation_roadmap:
       - "Qiskit Finance tutorials"
       - "Quantum Computing for Finance edX course"
       - "PennyLane optimization tutorials"
-    
+
   phase_3_applications:
     duration: "8-12 weeks"
     goals:
@@ -420,7 +420,7 @@ implementation_roadmap:
       - "IBM Quantum Experience finance templates"
       - "D-Wave portfolio optimization examples"
       - Custom implementation using existing codebase
-    
+
   phase_4_research:
     duration: ongoing
     goals:
@@ -439,31 +439,31 @@ realistic_expectations:
     - High error rates (1-2% per gate)
     - Limited coherence time (microseconds)
     - Quantum advantage only for specific problems
-    
+
   practical_today:
     - Quantum-inspired classical algorithms (tensor networks, simulated annealing)
     - Hybrid quantum-classical optimization (QAOA, VQE)
     - Quantum annealing for discrete optimization (D-Wave)
     - Research and prototype development
-    
+
   not_practical_yet:
     - Real-time trading decisions on quantum hardware
     - Fault-tolerant quantum algorithms (need error correction)
     - Large-scale portfolio optimization (>100 assets)
     - Grover search for trading patterns (need too many qubits)
-    
+
   timeline_estimates:
     2025_2027: "Hybrid algorithms show consistent small advantages"
     2027_2030: "Error-corrected qubits enable larger problems"
     2030_plus: "Fault-tolerant quantum computers for complex finance"
-  
+
   recommended_approach: |
     1. Learn quantum computing fundamentals NOW
     2. Experiment with quantum-inspired CLASSICAL algorithms
     3. Prototype quantum algorithms in simulation
     4. Test on small problems with real quantum hardware
     5. Stay ready to scale when hardware improves
-    
+
     DON'T: Expect quantum computers to magically solve trading
     DO: Build quantum literacy for when the technology matures
 
@@ -472,17 +472,17 @@ integration_with_existing_system:
     priority: high
     action: Ingest all YouTube transcripts, papers, and book summaries
     tools: ["scripts/ingest_youtube_transcripts.py", "src/rag/ingestion_pipeline.py"]
-    
+
   research_phase:
     priority: medium
     action: Dedicate 2-3 hours/week to quantum finance learning
     budget: No additional cost (free resources)
-    
+
   experimentation:
     priority: low
     action: Set up Qiskit environment and run portfolio optimization examples
     timeline: After current trading system stabilizes
-    
+
   knowledge_capture:
     priority: high
     action: Create lessons_learned entries for key quantum concepts

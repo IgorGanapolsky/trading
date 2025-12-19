@@ -333,8 +333,12 @@ def main():
     print("REGRESSION TEST GENERATION SUMMARY")
     print("=" * 60)
     print(f"Total Lessons Processed: {len(lessons)}")
-    print(f"Critical:               {len([item for item in lessons if item.get('severity') == 'CRITICAL'])}")
-    print(f"High:                   {len([item for item in lessons if item.get('severity') == 'HIGH'])}")
+    print(
+        f"Critical:               {len([item for item in lessons if item.get('severity') == 'CRITICAL'])}"
+    )
+    print(
+        f"High:                   {len([item for item in lessons if item.get('severity') == 'HIGH'])}"
+    )
     print(f"Output:                 {args.output}")
     print("=" * 60)
 

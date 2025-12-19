@@ -64,7 +64,7 @@ def my_decision_function():
 ## Files Modified
 
 - `src/safety/mandatory_trade_gate.py` - Added `_trace_gate_decision()` method
-- `src/execution/alpaca_executor.py` - Added `_trace_trade_execution()` method  
+- `src/execution/alpaca_executor.py` - Added `_trace_trade_execution()` method
 - `.github/workflows/daily-trading.yml` - Added LangSmith environment variables
 - `scripts/verify_trade_gate_tracing.py` - New verification script
 

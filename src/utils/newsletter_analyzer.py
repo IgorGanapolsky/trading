@@ -291,9 +291,7 @@ class NewsletterAnalyzer:
             logger.error(f"Error fetching RSS feed: {e}")
             return {}
 
-    def parse_article(
-        self, article_text: str, source_date: datetime | None = None
-    ) -> dict:
+    def parse_article(self, article_text: str, source_date: datetime | None = None) -> dict:
         """Parse article text and extract trading signals.
 
         Args:
@@ -311,10 +309,7 @@ class NewsletterAnalyzer:
             ticker_lower = ticker.lower()
 
             # Check if ticker is mentioned
-            if (
-                ticker_lower not in article_lower
-                and "ethereum" not in article_lower
-            ):
+            if ticker_lower not in article_lower and "ethereum" not in article_lower:
                 continue
 
             # Extract sentiment
@@ -478,7 +473,9 @@ class NewsletterAnalyzer:
         # Find first paragraph mentioning the ticker
         for paragraph in paragraphs:
             paragraph_lower = paragraph.lower()
-            if any(name in paragraph_lower for name in self.ticker_names.get(ticker, [ticker_lower])):
+            if any(
+                name in paragraph_lower for name in self.ticker_names.get(ticker, [ticker_lower])
+            ):
                 # Truncate to 500 chars
                 if len(paragraph) > 500:
                     return paragraph[:497] + "..."
@@ -515,9 +512,7 @@ class NewsletterAnalyzer:
         logger.info(f"Saved {len(signals)} newsletter signals to {file_path}")
         return file_path
 
-    def get_signal_for_ticker(
-        self, ticker: str, max_age_days: int = 7
-    ) -> NewsletterSignal | None:
+    def get_signal_for_ticker(self, ticker: str, max_age_days: int = 7) -> NewsletterSignal | None:
         """
         Get signal for specific ticker.
 

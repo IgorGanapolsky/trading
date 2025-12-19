@@ -14,18 +14,17 @@ Research backing (Dec 2025):
 THIS SCRIPT WILL TRADE. No excuses. No complex gates.
 """
 
-import os
-import sys
 import json
 import logging
+import os
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -34,12 +33,12 @@ CONFIG = {
     "symbol": "SPY",
     "strategy": "cash_secured_put",
     "target_delta": 0.20,  # 20 delta = ~80% win rate
-    "target_dte": 30,      # 30 days to expiration
+    "target_dte": 30,  # 30 days to expiration
     "max_dte": 45,
     "min_dte": 21,
     "position_size_pct": 0.05,  # 5% of portfolio per trade
-    "take_profit_pct": 0.50,    # Close at 50% profit
-    "max_positions": 3,         # Max 3 open positions
+    "take_profit_pct": 0.50,  # Close at 50% profit
+    "max_positions": 3,  # Max 3 open positions
 }
 
 
@@ -47,6 +46,7 @@ def get_alpaca_client():
     """Get Alpaca trading client."""
     try:
         from alpaca.trading.client import TradingClient
+
         api_key = os.getenv("ALPACA_API_KEY")
         secret_key = os.getenv("ALPACA_SECRET_KEY")
 
@@ -64,6 +64,7 @@ def get_options_client():
     """Get Alpaca options client."""
     try:
         from alpaca.trading.client import TradingClient
+
         api_key = os.getenv("ALPACA_API_KEY")
         secret_key = os.getenv("ALPACA_SECRET_KEY")
 
@@ -77,7 +78,7 @@ def get_options_client():
         return None
 
 
-def get_account_info(client) -> Optional[Dict]:
+def get_account_info(client) -> Optional[dict]:
     """Get account information."""
     try:
         account = client.get_account()
@@ -109,7 +110,7 @@ def get_current_positions(client) -> list:
         return []
 
 
-def find_put_option(symbol: str, target_delta: float, target_dte: int) -> Optional[Dict]:
+def find_put_option(symbol: str, target_delta: float, target_dte: int) -> Optional[dict]:
     """
     Find a put option matching our criteria.
 
@@ -142,7 +143,7 @@ def find_put_option(symbol: str, target_delta: float, target_dte: int) -> Option
     }
 
 
-def should_open_position(client, config: Dict) -> bool:
+def should_open_position(client, config: dict) -> bool:
     """
     Determine if we should open a new position.
 
@@ -152,7 +153,9 @@ def should_open_position(client, config: Dict) -> bool:
     3. Market is open
     """
     positions = get_current_positions(client)
-    options_positions = [p for p in positions if len(p["symbol"]) > 10]  # Options have longer symbols
+    options_positions = [
+        p for p in positions if len(p["symbol"]) > 10
+    ]  # Options have longer symbols
 
     if len(options_positions) >= config["max_positions"]:
         logger.info(f"Max positions reached ({len(options_positions)}/{config['max_positions']})")
@@ -166,22 +169,21 @@ def should_open_position(client, config: Dict) -> bool:
     # SPY ~600, so 1 contract = ~$60,000 cash secured
     required_bp = 60000  # Approximate for SPY put
     if account["buying_power"] < required_bp:
-        logger.info(f"Insufficient buying power: ${account['buying_power']:,.0f} < ${required_bp:,.0f}")
+        logger.info(
+            f"Insufficient buying power: ${account['buying_power']:,.0f} < ${required_bp:,.0f}"
+        )
         return False
 
     return True
 
 
-def execute_cash_secured_put(client, option: Dict, config: Dict) -> Optional[Dict]:
+def execute_cash_secured_put(client, option: dict, config: dict) -> Optional[dict]:
     """
     Execute a cash-secured put sale.
 
     Returns trade details or None if failed.
     """
     try:
-        from alpaca.trading.requests import OptionContractRequest
-        from alpaca.trading.enums import OrderSide, OrderType, TimeInForce
-
         logger.info(f"Executing cash-secured put: {option['symbol']}")
         logger.info(f"  Strike: ${option['strike']}")
         logger.info(f"  Expiry: {option['expiry']} ({option['dte']} DTE)")
@@ -210,7 +212,7 @@ def execute_cash_secured_put(client, option: Dict, config: Dict) -> Optional[Dic
         return None
 
 
-def check_exit_conditions(client, positions: list, config: Dict) -> list:
+def check_exit_conditions(client, positions: list, config: dict) -> list:
     """
     Check if any positions should be closed.
 
@@ -232,17 +234,19 @@ def check_exit_conditions(client, positions: list, config: Dict) -> list:
             if cost_basis > 0:
                 profit_pct = pos["unrealized_pl"] / cost_basis
                 if profit_pct >= config["take_profit_pct"]:
-                    exits.append({
-                        "symbol": pos["symbol"],
-                        "reason": "TAKE_PROFIT",
-                        "profit_pct": profit_pct,
-                    })
+                    exits.append(
+                        {
+                            "symbol": pos["symbol"],
+                            "reason": "TAKE_PROFIT",
+                            "profit_pct": profit_pct,
+                        }
+                    )
                     logger.info(f"Exit signal: {pos['symbol']} - Take profit at {profit_pct:.1%}")
 
     return exits
 
 
-def record_trade(trade: Dict):
+def record_trade(trade: dict):
     """Record trade to memory for learning."""
     try:
         # Use the new TradeMemory system
@@ -250,14 +254,16 @@ def record_trade(trade: Dict):
         from src.learning.trade_memory import TradeMemory
 
         memory = TradeMemory()
-        memory.add_trade({
-            "symbol": trade.get("underlying", trade.get("symbol")),
-            "strategy": trade.get("strategy", "cash_secured_put"),
-            "entry_reason": "daily_execution",
-            "won": trade.get("status") == "FILLED",
-            "pnl": trade.get("pnl", 0),
-            "lesson": f"Executed {trade.get('strategy')} on {trade.get('symbol')}",
-        })
+        memory.add_trade(
+            {
+                "symbol": trade.get("underlying", trade.get("symbol")),
+                "strategy": trade.get("strategy", "cash_secured_put"),
+                "entry_reason": "daily_execution",
+                "won": trade.get("status") == "FILLED",
+                "pnl": trade.get("pnl", 0),
+                "lesson": f"Executed {trade.get('strategy')} on {trade.get('symbol')}",
+            }
+        )
         logger.info("Trade recorded to memory")
     except Exception as e:
         logger.warning(f"Failed to record trade to memory: {e}")
@@ -321,11 +327,7 @@ def run_daily_trading():
         logger.info("Opening new position...")
 
         # Find option contract
-        option = find_put_option(
-            CONFIG["symbol"],
-            CONFIG["target_delta"],
-            CONFIG["target_dte"]
-        )
+        option = find_put_option(CONFIG["symbol"], CONFIG["target_delta"], CONFIG["target_dte"])
 
         if option:
             # Execute trade

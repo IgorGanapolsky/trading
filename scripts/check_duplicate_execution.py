@@ -51,9 +51,7 @@ def main():
                         skip = True
                         reason = f"Trading already executed today at {last_dt.isoformat()}"
                     else:
-                        reason = (
-                            f"Last trade was {last_dt.date()}, proceeding with today's trade"
-                        )
+                        reason = f"Last trade was {last_dt.date()}, proceeding with today's trade"
                 except ValueError as e:
                     reason = f"Could not parse last_trade_date timestamp: {e}"
             else:

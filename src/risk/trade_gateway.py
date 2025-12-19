@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 # LangSmith tracing for gateway observability
 try:
     from src.observability.langsmith_tracer import TraceType, get_tracer
+
     LANGSMITH_AVAILABLE = True
 except ImportError:
     LANGSMITH_AVAILABLE = False

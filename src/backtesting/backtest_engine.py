@@ -7,7 +7,6 @@ Updated: Dec 19, 2025 - Return BacktestResults instead of dict
 from typing import Any
 
 import numpy as np
-
 from src.backtesting.backtest_results import BacktestResults
 
 

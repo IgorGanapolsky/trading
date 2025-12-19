@@ -96,6 +96,7 @@ class TestRAGLessonsLearned:
             try:
                 # Use ast.parse for syntax validation instead of exec for security
                 import ast
+
                 ast.parse(import_stmt)
             except SyntaxError as e:
                 pytest.fail(f"REGRESSION ll_009: {name} has syntax error: {e}")

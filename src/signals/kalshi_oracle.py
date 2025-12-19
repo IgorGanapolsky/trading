@@ -131,8 +131,7 @@ class KalshiOracle:
                 "bullish": 60,  # >60% odds of hitting target
                 "bearish": 40,
             },
-            "targets": {
-            },
+            "targets": {},
         },
     }
 

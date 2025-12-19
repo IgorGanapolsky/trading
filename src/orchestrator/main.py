@@ -8,7 +8,6 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 import holidays
-
 from src.agents.macro_agent import MacroeconomicAgent
 from src.agents.momentum_agent import MomentumAgent
 from src.agents.rl_agent import RLFilter
@@ -96,10 +95,11 @@ except ImportError:
 
 # Introspective awareness imports (Dec 2025)
 try:
-    from src.core.introspective_council import IntrospectiveCouncil
     # NOTE: Keep optional import pattern without triggering ruff F401.
     # We intentionally avoid importing unused callables just to test availability.
     import importlib.util
+
+    from src.core.introspective_council import IntrospectiveCouncil
 
     INTROSPECTION_AVAILABLE = True
 except ImportError:
@@ -114,6 +114,7 @@ if INTROSPECTION_AVAILABLE:
 # LangSmith tracing for session observability (Dec 2025)
 try:
     from src.observability.langsmith_tracer import TraceType, get_tracer
+
     LANGSMITH_AVAILABLE = True
 except ImportError:
     LANGSMITH_AVAILABLE = False
@@ -123,6 +124,7 @@ except ImportError:
 # See: go/adk_trading/ for the Go implementation
 try:
     from src.orchestration.adk_integration import ADKTradeAdapter, summarize_adk_decision
+
     ADK_AVAILABLE = True
 except ImportError:
     ADK_AVAILABLE = False
@@ -339,7 +341,9 @@ class TradingOrchestrator:
         if enable_adk and ADK_AVAILABLE:
             try:
                 self.adk_adapter = ADKTradeAdapter(enabled=True)
-                logger.info("Go ADK Multi-Agent Adapter initialized (research/signal/risk/execution)")
+                logger.info(
+                    "Go ADK Multi-Agent Adapter initialized (research/signal/risk/execution)"
+                )
             except Exception as e:
                 logger.warning(f"Go ADK adapter init failed (will use Python-only pipeline): {e}")
 
@@ -1000,9 +1004,7 @@ class TradingOrchestrator:
                         if momentum_exit:
                             exit_features = momentum_exit.indicators
                     except Exception as fetch_err:
-                        logger.debug(
-                            f"Could not fetch exit features for {symbol}: {fetch_err}"
-                        )
+                        logger.debug(f"Could not fetch exit features for {symbol}: {fetch_err}")
                         exit_features = entry_features  # Fallback to entry features
 
                     pl_pct = (exit_price - entry_price) / entry_price if entry_price > 0 else 0

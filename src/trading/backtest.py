@@ -1,5 +1,4 @@
 import pandas as pd
-
 from src.backtesting.backtest_engine import BacktestEngine
 
 

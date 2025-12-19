@@ -3,6 +3,7 @@
 
 class DailyPerformanceTracker:
     """Stub for deleted performance tracker."""
+
     def __init__(self, *args, **kwargs):
         pass
 

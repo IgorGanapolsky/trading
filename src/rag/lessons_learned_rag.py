@@ -1,6 +1,5 @@
 """Lightweight RAG for lessons learned - no heavy dependencies."""
 
-import json
 import logging
 from pathlib import Path
 from typing import Optional
@@ -53,10 +52,11 @@ class LessonsLearnedRAG:
     def _extract_tags(self, content: str) -> list:
         """Extract tags from lesson content."""
         import re
-        match = re.search(r'`([^`]+)`(?:,\s*`([^`]+)`)*\s*$', content, re.MULTILINE)
+
+        match = re.search(r"`([^`]+)`(?:,\s*`([^`]+)`)*\s*$", content, re.MULTILINE)
         if match:
             tags_line = content.split("## Tags")[-1] if "## Tags" in content else ""
-            return re.findall(r'`([^`]+)`', tags_line)
+            return re.findall(r"`([^`]+)`", tags_line)
         return []
 
     def query(self, query: str, top_k: int = 5, severity_filter: Optional[str] = None) -> list:
@@ -88,13 +88,15 @@ class LessonsLearnedRAG:
                 score *= 2
 
             if score > 0:
-                results.append({
-                    "id": lesson["id"],
-                    "severity": lesson["severity"],
-                    "score": score,
-                    "snippet": lesson["content"][:500],
-                    "file": lesson["file"],
-                })
+                results.append(
+                    {
+                        "id": lesson["id"],
+                        "severity": lesson["severity"],
+                        "score": score,
+                        "snippet": lesson["content"][:500],
+                        "file": lesson["file"],
+                    }
+                )
 
         # Sort by score descending
         results.sort(key=lambda x: x["score"], reverse=True)

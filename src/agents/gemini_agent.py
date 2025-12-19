@@ -18,7 +18,6 @@ from datetime import datetime
 from typing import Any
 
 import google.generativeai as genai
-
 from src.utils.self_healing import health_check, with_retry
 
 # Try to import GenerationConfig, fallback to dict if not available

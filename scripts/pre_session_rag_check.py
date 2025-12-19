@@ -25,10 +25,7 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -54,9 +51,9 @@ def check_recent_critical_lessons(days_back: int = 7) -> list[dict]:
 
             # Check if CRITICAL severity
             is_critical = (
-                "severity**: critical" in content_lower or
-                "severity: critical" in content_lower or
-                "**severity**: critical" in content_lower
+                "severity**: critical" in content_lower
+                or "severity: critical" in content_lower
+                or "**severity**: critical" in content_lower
             )
 
             if not is_critical:
@@ -68,6 +65,7 @@ def check_recent_critical_lessons(days_back: int = 7) -> list[dict]:
                 if "date" in line.lower() and "2025" in line:
                     # Try to parse date
                     import re
+
                     date_match = re.search(r"(\d{4}-\d{2}-\d{2})", line)
                     if date_match:
                         try:
@@ -89,13 +87,15 @@ def check_recent_critical_lessons(days_back: int = 7) -> list[dict]:
                     title = line[2:].strip()
                     break
 
-            critical_lessons.append({
-                "file": lesson_file.name,
-                "title": title,
-                "date": effective_date,
-                "is_recent": effective_date >= cutoff_date,
-                "content_preview": content[:500],
-            })
+            critical_lessons.append(
+                {
+                    "file": lesson_file.name,
+                    "title": title,
+                    "date": effective_date,
+                    "is_recent": effective_date >= cutoff_date,
+                    "content_preview": content[:500],
+                }
+            )
 
         except Exception as e:
             logger.warning(f"Error reading {lesson_file}: {e}")
@@ -132,12 +132,18 @@ def query_rag_for_operational_failures() -> list[dict]:
         all_results = []
         for query in queries:
             results = search.query(query, top_k=3)
-            all_results.extend([{
-                "lesson_file": r.lesson_file,
-                "section_title": r.section_title,
-                "score": r.score,
-                "content_preview": r.content[:300],
-            } for r in results if r.score > 0.3])
+            all_results.extend(
+                [
+                    {
+                        "lesson_file": r.lesson_file,
+                        "section_title": r.section_title,
+                        "score": r.score,
+                        "content_preview": r.content[:300],
+                    }
+                    for r in results
+                    if r.score > 0.3
+                ]
+            )
 
         # Deduplicate by lesson file
         seen = set()
@@ -162,13 +168,10 @@ def main():
     parser.add_argument(
         "--block-on-critical",
         action="store_true",
-        help="Exit with error code if CRITICAL lessons found in last 7 days"
+        help="Exit with error code if CRITICAL lessons found in last 7 days",
     )
     parser.add_argument(
-        "--days",
-        type=int,
-        default=7,
-        help="Days to look back for recent lessons (default: 7)"
+        "--days", type=int, default=7, help="Days to look back for recent lessons (default: 7)"
     )
     args = parser.parse_args()
 

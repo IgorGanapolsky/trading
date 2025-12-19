@@ -16,7 +16,7 @@ With 19 equity positions consuming buying power, our OPTIONS buying power droppe
 
 1. **All capital deployed to equities**: 19 positions using all available margin
 2. **No cash reservation**: System deployed 100% of buying power to stocks
-3. **Options buying power separate from buying power**: Alpaca has separate "options_buying_power" 
+3. **Options buying power separate from buying power**: Alpaca has separate "options_buying_power"
 4. **CSP collateral requirements**: Full strike × 100 needed per contract
 
 ## Solution Implemented

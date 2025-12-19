@@ -85,7 +85,7 @@ def check_workflow_health() -> tuple[bool, str]:
         else:
             return (
                 True,
-                f"✅ Workflows healthy: {success_count}/{len(runs)} succeeded ({100-failure_rate*100:.0f}% success)",
+                f"✅ Workflows healthy: {success_count}/{len(runs)} succeeded ({100 - failure_rate * 100:.0f}% success)",
             )
 
     except subprocess.TimeoutExpired:

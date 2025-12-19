@@ -16,15 +16,14 @@ Strategy: Buy SPY when RSI < 30, sell when RSI > 70
 This is NOT about being smart. It's about EXECUTING.
 """
 
-import os
-import sys
 import json
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Optional
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -32,6 +31,7 @@ def get_alpaca_client():
     """Get Alpaca client."""
     try:
         from alpaca.trading.client import TradingClient
+
         api_key = os.getenv("ALPACA_API_KEY")
         secret = os.getenv("ALPACA_SECRET_KEY")
         if not api_key or not secret:
@@ -47,13 +47,14 @@ def get_spy_rsi() -> float:
     """Get SPY RSI. Returns 50 if unavailable (neutral)."""
     try:
         import yfinance as yf
+
         spy = yf.Ticker("SPY")
         hist = spy.history(period="1mo")
         if len(hist) < 14:
             return 50.0
 
         # Calculate RSI
-        delta = hist['Close'].diff()
+        delta = hist["Close"].diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
         rs = gain / loss
@@ -64,7 +65,7 @@ def get_spy_rsi() -> float:
         return 50.0
 
 
-def get_account(client) -> Optional[Dict]:
+def get_account(client) -> Optional[dict]:
     """Get account info."""
     try:
         acc = client.get_account()
@@ -78,7 +79,7 @@ def get_account(client) -> Optional[Dict]:
         return None
 
 
-def get_spy_position(client) -> Optional[Dict]:
+def get_spy_position(client) -> Optional[dict]:
     """Get current SPY position."""
     try:
         positions = client.get_all_positions()
@@ -95,11 +96,11 @@ def get_spy_position(client) -> Optional[Dict]:
         return None
 
 
-def buy_spy(client, dollars: float) -> Optional[Dict]:
+def buy_spy(client, dollars: float) -> Optional[dict]:
     """Buy SPY with dollar amount."""
     try:
-        from alpaca.trading.requests import MarketOrderRequest
         from alpaca.trading.enums import OrderSide, TimeInForce
+        from alpaca.trading.requests import MarketOrderRequest
 
         request = MarketOrderRequest(
             symbol="SPY",
@@ -121,11 +122,11 @@ def buy_spy(client, dollars: float) -> Optional[Dict]:
         return None
 
 
-def sell_spy(client, qty: float) -> Optional[Dict]:
+def sell_spy(client, qty: float) -> Optional[dict]:
     """Sell SPY shares."""
     try:
-        from alpaca.trading.requests import MarketOrderRequest
         from alpaca.trading.enums import OrderSide, TimeInForce
+        from alpaca.trading.requests import MarketOrderRequest
 
         request = MarketOrderRequest(
             symbol="SPY",
@@ -147,7 +148,7 @@ def sell_spy(client, qty: float) -> Optional[Dict]:
         return None
 
 
-def record_trade(trade: Dict):
+def record_trade(trade: dict):
     """Save trade to file."""
     trades_file = Path(f"data/trades_{datetime.now().strftime('%Y-%m-%d')}.json")
     trades_file.parent.mkdir(parents=True, exist_ok=True)
@@ -197,7 +198,9 @@ def run():
 
     position = get_spy_position(client)
     if position:
-        logger.info(f"SPY Position: {position['qty']} shares, ${position['value']:,.2f}, P/L: ${position['pnl']:,.2f}")
+        logger.info(
+            f"SPY Position: {position['qty']} shares, ${position['value']:,.2f}, P/L: ${position['pnl']:,.2f}"
+        )
     else:
         logger.info("No SPY position")
 

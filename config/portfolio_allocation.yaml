@@ -122,7 +122,7 @@ allocations:
 options_strategy:
   enabled: true
   primary_strategy: "cash_secured_puts"
-  
+
   # Underlying selection criteria
   underlyings:
     tier1:  # Highest conviction - larger position sizes
@@ -133,7 +133,7 @@ options_strategy:
       tickers: ["AMD", "NVDA", "AAPL", "MSFT"]
       max_contracts: 2
       preferred_delta: 0.15  # 15 delta puts
-  
+
   # Entry rules
   entry_rules:
     min_iv_rank: 20          # IV rank > 20% for better premium
@@ -142,14 +142,14 @@ options_strategy:
     max_dte: 45              # No more than 45 DTE
     min_premium: 0.50        # Minimum $0.50 premium per contract
     target_monthly_return: 0.02  # 2% monthly on capital at risk
-  
+
   # Exit rules
   exit_rules:
     profit_target: 0.50      # Close at 50% profit
     loss_limit: 2.0          # Close at 200% loss (2x premium received)
     dte_exit: 7              # Close all positions at 7 DTE
     assignment_action: "accept"  # Accept assignment if ITM at expiry
-  
+
   # Risk management
   risk_management:
     max_portfolio_delta: 30   # Max total delta exposure
@@ -179,7 +179,7 @@ position_rules:
     - symbol: "SHY"
       reason: "Short-term bond hedge, near-cash"
       action: "hold"
-  
+
   # What to LIQUIDATE
   liquidate:
     - symbol: "TLT"
@@ -204,7 +204,7 @@ daily_deployment:
     treasuries: 7.50         # 15% to bonds ($7.50/day)
     growth_stocks: 0.00      # 0% - DISABLED to fund options increase
     reits: 0.00              # 0% - DISABLED to fund options increase
-  
+
   options_deployment:
     strategy: "weekly_premium"
     target_contracts: 1      # 1 contract per week minimum
@@ -250,7 +250,7 @@ projections:
 profit_reinvestment:
   enabled: true
   strategy: "hybrid"  # Options: "tbills", "options_collateral", "hybrid", "compound"
-  
+
   # Hybrid Strategy Allocation (RECOMMENDED)
   hybrid_allocation:
     tbills:
@@ -258,24 +258,24 @@ profit_reinvestment:
       vehicle: "BIL"            # SPDR 1-3 Month T-Bill ETF
       expected_yield: 0.05      # ~5% APY
       description: "Safe yield on idle cash"
-    
+
     options_collateral:
       weight: 0.40              # 40% of idle cash → Options collateral
       expected_yield: 0.24      # ~24% APY (2% monthly premium)
       description: "Fuel the winning options strategy"
-    
+
     cash_reserve:
       weight: 0.10              # 10% of idle cash → Emergency reserve
       min_amount: 5000          # Always keep at least $5k liquid
       description: "Emergency buffer"
-  
+
   # Reinvestment Rules
   rules:
     min_cash_threshold: 10000   # Only reinvest if cash > $10k
     reinvest_frequency: "weekly"  # Check weekly for rebalancing
     reinvest_day: "monday"      # Reinvest on Mondays
     compound_profits: true      # Reinvest realized profits
-    
+
   # Expected Returns (Hybrid)
   projections:
     idle_cash: 83000
@@ -304,7 +304,7 @@ idle_cash_sweep:
 # Goal: Minimize tax liability while staying compliant
 tax_strategy:
   enabled: true
-  
+
   # Tax Rates (update for your bracket)
   rates:
     federal_short_term: 0.32    # Your marginal bracket (10-37%)
@@ -312,7 +312,7 @@ tax_strategy:
     state: 0.05                 # State tax rate
     combined_short_term: 0.37   # Total short-term rate
     combined_long_term: 0.20    # Total long-term rate
-  
+
   # Quarterly Estimated Payments
   estimated_payments:
     enabled: false              # Enable when profits > $3,000
@@ -321,28 +321,28 @@ tax_strategy:
     q2_due: "2025-06-15"
     q3_due: "2025-09-15"
     q4_due: "2026-01-15"
-  
+
   # Wash Sale Prevention
   wash_sale_tracking:
     enabled: true
     window_days: 30             # 30 days before and after
     alert_on_violation: true
     blocked_symbols: []         # Auto-populated with loss sales
-  
+
   # Tax-Loss Harvesting
   tax_loss_harvesting:
     enabled: true
     harvest_before: "2025-12-31"  # Year-end deadline
     min_loss_to_harvest: 100    # Only harvest if loss > $100
     max_annual_deduction: 3000  # IRS limit against ordinary income
-  
+
   # Long-Term Holding Strategy
   long_term_strategy:
     enabled: true
     prefer_assignment: true     # Accept assignment for long-term hold
     min_hold_days: 366          # Hold > 1 year for LTCG rate
     target_symbols: ["SPY", "QQQ", "NVDA"]  # Stocks worth holding
-  
+
   # Record Keeping
   records:
     track_cost_basis: true

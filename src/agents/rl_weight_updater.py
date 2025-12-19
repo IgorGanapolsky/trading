@@ -14,6 +14,7 @@ import numpy as np
 # Optional import - sklearn may not be installed in all environments
 try:
     from sklearn.linear_model import LogisticRegression
+
     SKLEARN_AVAILABLE = True
 except ImportError:
     LogisticRegression = None  # type: ignore
@@ -25,6 +26,7 @@ from src.ml.reward_functions import RiskAdjustedReward
 try:
     import gymnasium as gym
     from gymnasium import spaces
+
     GYMNASIUM_AVAILABLE = True
 except ImportError:
     gym = None  # type: ignore
@@ -33,6 +35,7 @@ except ImportError:
 
 try:
     from stable_baselines3 import PPO
+
     SB3_AVAILABLE = True
 except ImportError:
     PPO = None  # type: ignore
@@ -45,11 +48,17 @@ logger = logging.getLogger(__name__)
 if GYMNASIUM_AVAILABLE:
     _GymEnvBase = gym.Env
 else:
+
     class _GymEnvBase:  # type: ignore
         """Placeholder base class when gymnasium is not installed."""
+
         metadata: dict = {}
-        def reset(self, **kwargs): raise NotImplementedError("gymnasium not installed")
-        def step(self, action): raise NotImplementedError("gymnasium not installed")
+
+        def reset(self, **kwargs):
+            raise NotImplementedError("gymnasium not installed")
+
+        def step(self, action):
+            raise NotImplementedError("gymnasium not installed")
 
 
 @dataclass

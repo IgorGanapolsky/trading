@@ -42,6 +42,7 @@ try:
         MarketOrderRequest,
         StopOrderRequest,
     )
+
     ALPACA_AVAILABLE = True
 except ImportError:
     # Create placeholder types for when alpaca is not installed
@@ -376,8 +377,8 @@ class AlpacaTrader:
         """
         # ========== MANDATORY TRADE GATE - NEVER SKIP ==========
         try:
-            from src.safety.mandatory_trade_gate import validate_trade_mandatory, TradeBlockedError
-            
+            from src.safety.mandatory_trade_gate import TradeBlockedError, validate_trade_mandatory
+
             gate_amount = amount_usd or (qty * 100.0 if qty else 0.0)
             gate_result = validate_trade_mandatory(
                 symbol=symbol,
@@ -385,18 +386,20 @@ class AlpacaTrader:
                 side=side.upper(),
                 strategy=strategy or tier or "unknown",
             )
-            
+
             if not gate_result.approved:
                 logger.error(f"🚫 ORDER BLOCKED BY MANDATORY GATE: {gate_result.reason}")
                 raise TradeBlockedError(gate_result)
-            
+
             if gate_result.rag_warnings or gate_result.ml_anomalies:
-                logger.warning(f"⚠️ ORDER APPROVED WITH WARNINGS (confidence: {gate_result.confidence:.2f})")
+                logger.warning(
+                    f"⚠️ ORDER APPROVED WITH WARNINGS (confidence: {gate_result.confidence:.2f})"
+                )
         except ImportError:
             # Gate not available - log warning but proceed
             logger.warning("⚠️ Mandatory trade gate not available - proceeding without validation")
         # ========================================================
-        
+
         # Validate inputs
         if side not in ["buy", "sell"]:
             raise ValueError(f"Invalid side '{side}'. Must be 'buy' or 'sell'.")

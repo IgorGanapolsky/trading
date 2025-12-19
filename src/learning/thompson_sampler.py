@@ -22,14 +22,14 @@ That's it. No neural networks. No GPUs. No complexity.
 
 import json
 import random
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, Tuple
-from dataclasses import dataclass, asdict
 
 
 @dataclass
 class StrategyStats:
     """Track wins/losses for a strategy."""
+
     name: str
     wins: int = 0
     losses: int = 0
@@ -74,17 +74,17 @@ class ThompsonSampler:
 
     def __init__(self, state_file: str = "data/thompson_state.json"):
         self.state_file = Path(state_file)
-        self.strategies: Dict[str, StrategyStats] = {}
+        self.strategies: dict[str, StrategyStats] = {}
         self._load_state()
         self._init_default_strategies()
 
     def _init_default_strategies(self):
         """Initialize default strategies if not present."""
         defaults = [
-            "iron_condor",      # ~80% win rate historically
-            "wheel_csp",        # ~70% win rate
-            "credit_spread",    # ~70% win rate
-            "covered_call",     # ~65% win rate
+            "iron_condor",  # ~80% win rate historically
+            "wheel_csp",  # ~70% win rate
+            "credit_spread",  # ~70% win rate
+            "covered_call",  # ~65% win rate
         ]
         for name in defaults:
             if name not in self.strategies:
@@ -104,26 +104,18 @@ class ThompsonSampler:
     def _save_state(self):
         """Persist state to disk."""
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
-        data = {
-            "strategies": {
-                name: asdict(stats)
-                for name, stats in self.strategies.items()
-            }
-        }
+        data = {"strategies": {name: asdict(stats) for name, stats in self.strategies.items()}}
         with open(self.state_file, "w") as f:
             json.dump(data, f, indent=2)
 
-    def select_strategy(self) -> Tuple[str, float]:
+    def select_strategy(self) -> tuple[str, float]:
         """
         Select strategy using Thompson Sampling.
 
         Returns:
             (strategy_name, confidence_score)
         """
-        samples = {
-            name: stats.sample()
-            for name, stats in self.strategies.items()
-        }
+        samples = {name: stats.sample() for name, stats in self.strategies.items()}
 
         best = max(samples, key=samples.get)
         confidence = self.strategies[best].expected_win_rate
@@ -148,13 +140,17 @@ class ThompsonSampler:
 
         # Sort by expected win rate
         sorted_strategies = sorted(
-            self.strategies.values(),
-            key=lambda s: s.expected_win_rate,
-            reverse=True
+            self.strategies.values(), key=lambda s: s.expected_win_rate, reverse=True
         )
 
         for stats in sorted_strategies:
-            confidence = "🟢" if stats.expected_win_rate > 0.6 else "🟡" if stats.expected_win_rate > 0.5 else "🔴"
+            confidence = (
+                "🟢"
+                if stats.expected_win_rate > 0.6
+                else "🟡"
+                if stats.expected_win_rate > 0.5
+                else "🔴"
+            )
             lines.append(
                 f"{confidence} {stats.name}: "
                 f"{stats.expected_win_rate:.1%} expected "

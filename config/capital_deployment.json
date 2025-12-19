@@ -3,7 +3,7 @@
   "description": "Gradual capital deployment plan from paper to real trading",
   "created": "2025-12-15",
   "updated": "2025-12-15",
-  
+
   "current_status": {
     "mode": "paper_trading",
     "phase": 0,

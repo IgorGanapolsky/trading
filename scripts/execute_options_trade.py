@@ -495,11 +495,17 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
         # Fall back to credit spread
         try:
             from scripts.execute_credit_spread import execute_bull_put_spread
-            return execute_bull_put_spread(trading_client, options_client, symbol,
-                                          spread_width=2.0, dry_run=dry_run)
+
+            return execute_bull_put_spread(
+                trading_client, options_client, symbol, spread_width=2.0, dry_run=dry_run
+            )
         except Exception as e:
             logger.warning(f"Credit spread fallback failed: {e}")
-            return {"status": "NO_TRADE", "reason": "Insufficient cash for CSP, spread failed", "broker": "alpaca"}
+            return {
+                "status": "NO_TRADE",
+                "reason": "Insufficient cash for CSP, spread failed",
+                "broker": "alpaca",
+            }
 
     # Execute trade
     if dry_run:
@@ -570,8 +576,10 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
             logger.info("🔄 CSP blocked by buying power - trying credit spread instead...")
             try:
                 from scripts.execute_credit_spread import execute_bull_put_spread
-                return execute_bull_put_spread(trading_client, options_client, symbol,
-                                              spread_width=2.0, dry_run=dry_run)
+
+                return execute_bull_put_spread(
+                    trading_client, options_client, symbol, spread_width=2.0, dry_run=dry_run
+                )
             except Exception as spread_error:
                 logger.warning(f"Credit spread also failed: {spread_error}")
 

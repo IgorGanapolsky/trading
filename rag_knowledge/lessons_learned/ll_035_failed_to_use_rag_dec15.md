@@ -157,18 +157,18 @@ uv pip sync --system --no-cache requirements-minimal.txt  # DUPLICATE --system
 def check_rag_before_change(change_description: str):
     """Force AI to query RAG before making changes."""
     rag = TradingRAGDatabase()
-    
+
     # Query for similar past issues
     results = rag.query(change_description, top_k=5)
-    
+
     if results:
         print(f"⚠️  Found {len(results)} relevant lessons:")
         for r in results:
             print(f"   - {r['title']}")
-        
+
         print("\n📖 READ THESE FIRST before proceeding")
         return False  # Block until read
-    
+
     return True
 ```
 

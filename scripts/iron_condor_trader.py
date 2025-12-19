@@ -22,25 +22,22 @@ Exit Rules:
 THIS IS THE MONEY MAKER.
 """
 
-import os
-import sys
 import json
 import logging
+import sys
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, Dict, List, Tuple
-from dataclasses import dataclass
+from typing import Optional
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class IronCondorLegs:
     """Iron condor position legs."""
+
     underlying: str
     expiry: str
     dte: int
@@ -73,10 +70,10 @@ class IronCondorStrategy:
             "target_dte": 30,
             "min_dte": 21,
             "max_dte": 45,
-            "short_delta": 0.16,    # 16 delta = ~84% POP
-            "wing_width": 5,         # $5 wide spreads
-            "take_profit_pct": 0.50, # Close at 50% profit
-            "stop_loss_pct": 2.0,    # Close at 200% loss
+            "short_delta": 0.16,  # 16 delta = ~84% POP
+            "wing_width": 5,  # $5 wide spreads
+            "take_profit_pct": 0.50,  # Close at 50% profit
+            "stop_loss_pct": 2.0,  # Close at 200% loss
             "max_positions": 2,
             "position_size_pct": 0.10,  # 10% of portfolio per IC
         }
@@ -87,7 +84,7 @@ class IronCondorStrategy:
         # For now, estimate SPY price
         return 600.0  # Approximate SPY price Dec 2024
 
-    def calculate_strikes(self, price: float) -> Tuple[float, float, float, float]:
+    def calculate_strikes(self, price: float) -> tuple[float, float, float, float]:
         """
         Calculate iron condor strikes based on delta targeting.
 
@@ -99,7 +96,7 @@ class IronCondorStrategy:
         # 16 delta is roughly 1 standard deviation move
         # For 30 DTE, this is about 3% for SPY
 
-        short_put = round(price * 0.97 / 5) * 5   # Round to $5
+        short_put = round(price * 0.97 / 5) * 5  # Round to $5
         long_put = short_put - self.config["wing_width"]
 
         short_call = round(price * 1.03 / 5) * 5  # Round to $5
@@ -107,7 +104,7 @@ class IronCondorStrategy:
 
         return long_put, short_put, short_call, long_call
 
-    def calculate_premiums(self, legs: Tuple[float, float, float, float], dte: int) -> Dict:
+    def calculate_premiums(self, legs: tuple[float, float, float, float], dte: int) -> dict:
         """
         Estimate premiums for iron condor legs.
 
@@ -117,7 +114,7 @@ class IronCondorStrategy:
 
         # Rough estimates based on typical SPY premiums
         # At 30 DTE, 16 delta options ~$2-3 for SPY
-        put_spread_credit = 1.50   # Sell short put, buy long put
+        put_spread_credit = 1.50  # Sell short put, buy long put
         call_spread_credit = 1.50  # Sell short call, buy long call
 
         total_credit = put_spread_credit + call_spread_credit
@@ -147,8 +144,7 @@ class IronCondorStrategy:
 
         # Estimate premiums
         premiums = self.calculate_premiums(
-            (long_put, short_put, short_call, long_call),
-            self.config["target_dte"]
+            (long_put, short_put, short_call, long_call), self.config["target_dte"]
         )
 
         return IronCondorLegs(
@@ -164,7 +160,7 @@ class IronCondorStrategy:
             max_profit=premiums["max_profit"],
         )
 
-    def check_entry_conditions(self) -> Tuple[bool, str]:
+    def check_entry_conditions(self) -> tuple[bool, str]:
         """
         Check if conditions are right for entry.
 
@@ -177,7 +173,7 @@ class IronCondorStrategy:
         # In production: check VIX, event calendar
         return True, "Conditions favorable"
 
-    def execute(self, ic: IronCondorLegs) -> Dict:
+    def execute(self, ic: IronCondorLegs) -> dict:
         """
         Execute the iron condor trade.
         """
@@ -216,23 +212,24 @@ class IronCondorStrategy:
 
         return trade
 
-    def _record_trade(self, trade: Dict):
+    def _record_trade(self, trade: dict):
         """Record trade for learning."""
         try:
             sys.path.insert(0, str(Path(__file__).parent.parent))
             from src.learning.trade_memory import TradeMemory
-            from src.learning.thompson_sampler import ThompsonSampler
 
             # Record to trade memory
             memory = TradeMemory()
-            memory.add_trade({
-                "symbol": trade["underlying"],
-                "strategy": "iron_condor",
-                "entry_reason": "high_iv_environment",
-                "won": True,  # Will update when closed
-                "pnl": 0,     # Will update when closed
-                "lesson": f"Opened IC at {trade['credit']:.2f} credit, {trade['dte']} DTE",
-            })
+            memory.add_trade(
+                {
+                    "symbol": trade["underlying"],
+                    "strategy": "iron_condor",
+                    "entry_reason": "high_iv_environment",
+                    "won": True,  # Will update when closed
+                    "pnl": 0,  # Will update when closed
+                    "lesson": f"Opened IC at {trade['credit']:.2f} credit, {trade['dte']} DTE",
+                }
+            )
 
             # Update Thompson Sampler (this trade is iron_condor strategy)
             # Don't update win/loss yet - only when closed

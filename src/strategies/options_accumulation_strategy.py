@@ -15,7 +15,6 @@ import logging
 import os
 
 import yfinance as yf
-
 from src.core.alpaca_trader import AlpacaTrader
 
 logger = logging.getLogger(__name__)

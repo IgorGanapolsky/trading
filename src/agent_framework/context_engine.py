@@ -3,5 +3,6 @@
 
 class ContextEngine:
     """Stub for deleted context engine."""
+
     def __init__(self, *args, **kwargs):
         pass

@@ -67,6 +67,7 @@ def get_alpaca_clients():
 def get_underlying_price(symbol: str) -> float:
     """Get current price of underlying symbol."""
     import yfinance as yf
+
     ticker = yf.Ticker(symbol)
     data = ticker.history(period="1d")
     if data.empty:
@@ -132,8 +133,14 @@ def get_trend_filter(symbol: str) -> dict:
         return {"trend": "UNKNOWN", "recommendation": "PROCEED"}
 
 
-def find_bull_put_spread(options_client, symbol: str, spread_width: float = 2.0,
-                         target_delta: float = 0.25, min_dte: int = 20, max_dte: int = 60):
+def find_bull_put_spread(
+    options_client,
+    symbol: str,
+    spread_width: float = 2.0,
+    target_delta: float = 0.25,
+    min_dte: int = 20,
+    max_dte: int = 60,
+):
     """
     Find optimal bull put spread (sell higher strike put, buy lower strike put).
 
@@ -159,9 +166,9 @@ def find_bull_put_spread(options_client, symbol: str, spread_width: float = 2.0,
 
         try:
             base_len = len(symbol)
-            exp_str = option_symbol[base_len:base_len + 6]
+            exp_str = option_symbol[base_len : base_len + 6]
             option_type = option_symbol[base_len + 6]
-            strike_str = option_symbol[base_len + 7:]
+            strike_str = option_symbol[base_len + 7 :]
 
             if option_type != "P":
                 continue
@@ -182,29 +189,31 @@ def find_bull_put_spread(options_client, symbol: str, spread_width: float = 2.0,
             if exp_date not in puts_by_exp:
                 puts_by_exp[exp_date] = []
 
-            puts_by_exp[exp_date].append({
-                "symbol": option_symbol,
-                "strike": strike,
-                "expiration": exp_date,
-                "dte": dte,
-                "delta": snapshot.greeks.delta,
-                "mid": mid,
-                "bid": bid,
-                "ask": ask,
-            })
+            puts_by_exp[exp_date].append(
+                {
+                    "symbol": option_symbol,
+                    "strike": strike,
+                    "expiration": exp_date,
+                    "dte": dte,
+                    "delta": snapshot.greeks.delta,
+                    "mid": mid,
+                    "bid": bid,
+                    "ask": ask,
+                }
+            )
         except (ValueError, IndexError):
             continue
 
     # Find best spread
     best_spread = None
-    best_score = -float('inf')
+    best_score = -float("inf")
 
     for exp_date, puts in puts_by_exp.items():
         puts.sort(key=lambda x: x["strike"], reverse=True)  # High to low
 
         for i, short_put in enumerate(puts):
             # Find long put (lower strike) approximately spread_width away
-            for long_put in puts[i+1:]:
+            for long_put in puts[i + 1 :]:
                 actual_width = short_put["strike"] - long_put["strike"]
 
                 # Allow some tolerance on spread width
@@ -245,8 +254,12 @@ def find_bull_put_spread(options_client, symbol: str, spread_width: float = 2.0,
         return None
 
     logger.info("✅ Found optimal bull put spread:")
-    logger.info(f"   SELL: {best_spread['short_put']['symbol']} @ ${best_spread['short_put']['mid']:.2f}")
-    logger.info(f"   BUY:  {best_spread['long_put']['symbol']} @ ${best_spread['long_put']['mid']:.2f}")
+    logger.info(
+        f"   SELL: {best_spread['short_put']['symbol']} @ ${best_spread['short_put']['mid']:.2f}"
+    )
+    logger.info(
+        f"   BUY:  {best_spread['long_put']['symbol']} @ ${best_spread['long_put']['mid']:.2f}"
+    )
     logger.info(f"   Width: ${best_spread['spread_width']:.2f}")
     logger.info(f"   Net Credit: ${best_spread['credit_received']:.2f}")
     logger.info(f"   Max Loss: ${best_spread['max_loss'] * 100:.2f}")
@@ -256,8 +269,9 @@ def find_bull_put_spread(options_client, symbol: str, spread_width: float = 2.0,
     return best_spread
 
 
-def execute_bull_put_spread(trading_client, options_client, symbol: str,
-                            spread_width: float = 2.0, dry_run: bool = False):
+def execute_bull_put_spread(
+    trading_client, options_client, symbol: str, spread_width: float = 2.0, dry_run: bool = False
+):
     """
     Execute a bull put spread.
 
@@ -371,8 +385,7 @@ def main():
     try:
         trading_client, options_client = get_alpaca_clients()
         result = execute_bull_put_spread(
-            trading_client, options_client,
-            args.symbol, args.width, args.dry_run
+            trading_client, options_client, args.symbol, args.width, args.dry_run
         )
 
         logger.info("\n" + "=" * 60)
@@ -386,12 +399,14 @@ def main():
         if result_file.exists():
             with open(result_file) as f:
                 trades = json.load(f)
-        trades.append({
-            "timestamp": datetime.now().isoformat(),
-            "symbol": args.symbol,
-            "width": args.width,
-            "result": result,
-        })
+        trades.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "symbol": args.symbol,
+                "width": args.width,
+                "result": result,
+            }
+        )
         with open(result_file, "w") as f:
             json.dump(trades, f, indent=2, default=str)
 

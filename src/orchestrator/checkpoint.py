@@ -165,9 +165,7 @@ class PipelineCheckpointer:
         )
         return checkpoint
 
-    def get_latest_checkpoint(
-        self, thread_id: str
-    ) -> PipelineCheckpoint | None:
+    def get_latest_checkpoint(self, thread_id: str) -> PipelineCheckpoint | None:
         """Get the most recent successful checkpoint for a thread."""
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
@@ -211,9 +209,7 @@ class PipelineCheckpointer:
             return PipelineCheckpoint(**d)
         return None
 
-    def get_checkpoint_history(
-        self, thread_id: str
-    ) -> list[PipelineCheckpoint]:
+    def get_checkpoint_history(self, thread_id: str) -> list[PipelineCheckpoint]:
         """Get all checkpoints for a thread (audit trail)."""
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
@@ -227,7 +223,9 @@ class PipelineCheckpointer:
             )
             rows = cursor.fetchall()
 
-        return [PipelineCheckpoint(**{k: v for k, v in dict(row).items() if k != "id"}) for row in rows]
+        return [
+            PipelineCheckpoint(**{k: v for k, v in dict(row).items() if k != "id"}) for row in rows
+        ]
 
     def get_recent_checkpoints(
         self, ticker: str | None = None, limit: int = 50
@@ -256,7 +254,9 @@ class PipelineCheckpointer:
                 )
             rows = cursor.fetchall()
 
-        return [PipelineCheckpoint(**{k: v for k, v in dict(row).items() if k != "id"}) for row in rows]
+        return [
+            PipelineCheckpoint(**{k: v for k, v in dict(row).items() if k != "id"}) for row in rows
+        ]
 
     def cleanup_old_checkpoints(self, days_to_keep: int = 30) -> int:
         """Remove checkpoints older than specified days."""

@@ -47,6 +47,7 @@ import requests
 try:
     import praw
     from praw.exceptions import PRAWException
+
     PRAW_AVAILABLE = True
 except ImportError:
     PRAW_AVAILABLE = False
@@ -224,7 +225,9 @@ class RedditSentiment:
                 logger.warning(f"Failed to initialize PRAW: {e}. Falling back to public JSON API")
                 self.use_praw = False
         else:
-            logger.info("No Reddit API credentials provided. Using public JSON API (no auth required)")
+            logger.info(
+                "No Reddit API credentials provided. Using public JSON API (no auth required)"
+            )
             self.use_praw = False
 
         # Set up user agent for public API requests
@@ -247,7 +250,9 @@ class RedditSentiment:
         Returns:
             List of post dictionaries with metadata
         """
-        logger.info(f"Scraping r/{subreddit_name} via public JSON API (limit={limit}, filter={time_filter})")
+        logger.info(
+            f"Scraping r/{subreddit_name} via public JSON API (limit={limit}, filter={time_filter})"
+        )
 
         # Reddit's public JSON endpoint
         url = f"https://www.reddit.com/r/{subreddit_name}/hot.json"
@@ -269,7 +274,9 @@ class RedditSentiment:
 
                 # Skip if older than time filter
                 created_utc = post_data.get("created_utc", 0)
-                post_age_hours = (datetime.utcnow() - datetime.utcfromtimestamp(created_utc)).total_seconds() / 3600
+                post_age_hours = (
+                    datetime.utcnow() - datetime.utcfromtimestamp(created_utc)
+                ).total_seconds() / 3600
 
                 time_filter_hours = {"day": 24, "week": 168, "month": 720}
                 max_hours = time_filter_hours.get(time_filter, 24)

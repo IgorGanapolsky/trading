@@ -77,7 +77,9 @@ class TracingHealthChecker:
             # Try to get info - this will fail if unreachable
             info = client.info
             if info:
-                logger.info(f"LangSmith reachable: org={info.org_id if hasattr(info, 'org_id') else 'unknown'}")
+                logger.info(
+                    f"LangSmith reachable: org={info.org_id if hasattr(info, 'org_id') else 'unknown'}"
+                )
                 return True
             return False
         except ImportError:
@@ -145,12 +147,14 @@ class TracingHealthChecker:
         test_trace_sent = self.send_test_trace() if tracer_initialized else False
 
         # Overall health
-        healthy = all([
-            langsmith_configured,
-            langsmith_reachable,
-            tracer_initialized,
-            test_trace_sent,
-        ])
+        healthy = all(
+            [
+                langsmith_configured,
+                langsmith_reachable,
+                tracer_initialized,
+                test_trace_sent,
+            ]
+        )
 
         result = TracingHealthResult(
             healthy=healthy,
@@ -187,9 +191,7 @@ def verify_tracing_health(block_on_failure: bool = False) -> TracingHealthResult
     result = checker.run_full_check()
 
     if not result.healthy and block_on_failure:
-        raise RuntimeError(
-            f"Tracing health check failed - BLOCKING TRADING: {result.errors}"
-        )
+        raise RuntimeError(f"Tracing health check failed - BLOCKING TRADING: {result.errors}")
 
     return result
 

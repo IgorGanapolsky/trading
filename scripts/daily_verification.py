@@ -10,9 +10,9 @@ Simple, honest verification that answers:
 No complexity. No lies. Just facts.
 """
 
-import os
 import json
-from datetime import datetime, timedelta
+import os
+from datetime import datetime
 from typing import NamedTuple
 
 
@@ -33,6 +33,7 @@ def get_alpaca_client():
     """Get Alpaca client or None if not configured."""
     try:
         from alpaca.trading.client import TradingClient
+
         api_key = os.getenv("ALPACA_API_KEY")
         secret_key = os.getenv("ALPACA_SECRET_KEY")
         if not api_key or not secret_key:
@@ -71,8 +72,8 @@ def verify_today() -> DailyReport:
     total_pnl = equity - starting
 
     # Get today's orders
-    from alpaca.trading.requests import GetOrdersRequest
     from alpaca.trading.enums import QueryOrderStatus
+    from alpaca.trading.requests import GetOrdersRequest
 
     today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -127,27 +128,29 @@ def print_report(report: DailyReport):
     if report.traded_today:
         print(f"\n✅ TRADED TODAY: {report.fills_today} order(s) filled")
     else:
-        print(f"\n❌ NO TRADES TODAY")
+        print("\n❌ NO TRADES TODAY")
         if report.orders_today > 0:
             print(f"   ⚠️ {report.orders_today} orders submitted but 0 filled")
         else:
-            print(f"   No orders were even submitted")
+            print("   No orders were even submitted")
 
     # Money status
-    print(f"\n💰 ACCOUNT STATUS:")
+    print("\n💰 ACCOUNT STATUS:")
     print(f"   Equity:     ${report.equity:,.2f}")
     print(f"   Cash:       ${report.cash:,.2f}")
     print(f"   Positions:  {report.positions_count}")
 
     # P/L status
-    print(f"\n📈 PROFIT/LOSS:")
+    print("\n📈 PROFIT/LOSS:")
     daily_emoji = "🟢" if report.daily_pnl >= 0 else "🔴"
     total_emoji = "🟢" if report.total_pnl >= 0 else "🔴"
     print(f"   Today:  {daily_emoji} ${report.daily_pnl:+,.2f}")
-    print(f"   Total:  {total_emoji} ${report.total_pnl:+,.2f} ({report.total_pnl/report.starting_equity*100:+.2f}%)")
+    print(
+        f"   Total:  {total_emoji} ${report.total_pnl:+,.2f} ({report.total_pnl / report.starting_equity * 100:+.2f}%)"
+    )
 
     # North Star check
-    print(f"\n🎯 NORTH STAR CHECK:")
+    print("\n🎯 NORTH STAR CHECK:")
     days_elapsed = 50  # From the hook data
     target_daily = 1.0  # $1/day target
     expected_profit = days_elapsed * target_daily
@@ -167,22 +170,24 @@ def save_report(report: DailyReport):
     reports_file = "data/verification_reports.json"
 
     try:
-        with open(reports_file, "r") as f:
+        with open(reports_file) as f:
             reports = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         reports = []
 
     # Add today's report
-    reports.append({
-        "date": report.date,
-        "traded": report.traded_today,
-        "orders": report.orders_today,
-        "fills": report.fills_today,
-        "positions": report.positions_count,
-        "equity": report.equity,
-        "daily_pnl": report.daily_pnl,
-        "total_pnl": report.total_pnl,
-    })
+    reports.append(
+        {
+            "date": report.date,
+            "traded": report.traded_today,
+            "orders": report.orders_today,
+            "fills": report.fills_today,
+            "positions": report.positions_count,
+            "equity": report.equity,
+            "daily_pnl": report.daily_pnl,
+            "total_pnl": report.total_pnl,
+        }
+    )
 
     # Keep last 90 days
     reports = reports[-90:]
@@ -198,7 +203,7 @@ def check_consecutive_no_trades():
     reports_file = "data/verification_reports.json"
 
     try:
-        with open(reports_file, "r") as f:
+        with open(reports_file) as f:
             reports = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return

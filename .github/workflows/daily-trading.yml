@@ -567,9 +567,9 @@ jobs:
           import sys
           sys.path.insert(0, '.')
           from src.safety.pre_trade_smoke_test import run_smoke_tests
-          
+
           result = run_smoke_tests()
-          
+
           print('')
           print('SMOKE TEST RESULTS:')
           print(f'  Alpaca Connected: {result.alpaca_connected}')
@@ -582,7 +582,7 @@ jobs:
           print(f'  Buying Power: \${result.buying_power:,.2f}')
           print(f'  Positions: {result.positions_count}')
           print('')
-          
+
           if not result.all_passed:
               print('❌ SMOKE TESTS FAILED - BLOCKING TRADING')
               print(f'   Errors: {result.errors}')
@@ -590,7 +590,7 @@ jobs:
           else:
               print('✅ ALL SMOKE TESTS PASSED - Trading can proceed')
           "
-          
+
           SMOKE_EXIT=$?
           if [ $SMOKE_EXIT -ne 0 ]; then
             echo "❌ CRITICAL: Smoke tests failed - ABORTING TRADING"
@@ -723,7 +723,7 @@ jobs:
           # Step 2: Check options buying power and select strategy
           echo ""
           echo "📈 Step 2: Checking options buying power..."
-          
+
           OPTIONS_BP=$(python3 -c "
           import os
           from alpaca.trading.client import TradingClient
@@ -739,21 +739,21 @@ jobs:
           except Exception as e:
               print('0.00')
           " 2>/dev/null || echo "0.00")
-          
+
           echo "   Options Buying Power: \$${OPTIONS_BP}"
-          
+
           # SMART STRATEGY SELECTION based on buying power
           # CSPs need full collateral ($1k-$65k), spreads only need width ($200-$500)
           if (( $(echo "$OPTIONS_BP < 1000" | bc -l) )); then
             echo ""
             echo "⚠️  Low options buying power (<\$1000) - using CREDIT SPREADS"
             echo "   Credit spreads need only \$200-500 collateral vs \$1k-65k for CSPs"
-            
+
             # Credit spreads - much more capital efficient!
             # $2-wide spread = $200 collateral (vs $2500 for SOFI CSP)
             TICKERS="SOFI F BAC"  # Best for spreads - liquid, good premium
             SPREAD_WIDTH=2
-            
+
             for TICKER in $TICKERS; do
               echo ""
               echo "   📊 Credit spread on ${TICKER} (\$${SPREAD_WIDTH} wide)..."
@@ -761,14 +761,14 @@ jobs:
                 echo "   ⚠️  ${TICKER} spread returned non-zero"
               }
             done
-            
+
             echo ""
             echo "✅ Executed credit spreads on low-buying-power account"
           else
             echo ""
             echo "✅ Sufficient buying power (\$${OPTIONS_BP}) - using CASH-SECURED PUTS"
             echo "   Tickers: SOFI, PLTR, F, BAC, AMD, SPY"
-            
+
             # Full wheel strategy with CSPs
             for TICKER in SOFI PLTR F BAC AMD SPY; do
               echo ""
@@ -777,7 +777,7 @@ jobs:
                 echo "   ⚠️  ${TICKER} wheel returned non-zero"
               }
             done
-            
+
             echo ""
             echo "✅ Executed wheel strategy on 6 tickers"
           fi

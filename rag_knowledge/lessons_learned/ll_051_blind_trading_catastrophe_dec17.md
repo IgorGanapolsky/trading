@@ -9,7 +9,7 @@
 ## What Happened
 
 On Dec 17, 2025, we discovered the trading system was operating BLIND:
-- System showed `equity=$0.00 | positions=0` 
+- System showed `equity=$0.00 | positions=0`
 - Real Alpaca account had $99,832.56 equity
 - System thought it had $0 buying power
 - Orders were failing silently
@@ -54,7 +54,7 @@ def run_all_tests() -> SmokeTestResult:
 # OLD (BAD) - Silent fallback
 except Exception as e:
     self.account_snapshot = {}  # DANGEROUS - continues blind
-    
+
 # NEW (GOOD) - Fail loudly
 except Exception as e:
     raise TradingBlockedError(f"Cannot read account: {e}")

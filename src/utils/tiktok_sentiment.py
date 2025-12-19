@@ -135,12 +135,14 @@ class TikTokSentiment:
 
         # Session for making requests
         self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": self.USER_AGENT,
-            "Accept": "application/json, text/plain, */*",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Referer": "https://www.tiktok.com/",
-        })
+        self.session.headers.update(
+            {
+                "User-Agent": self.USER_AGENT,
+                "Accept": "application/json, text/plain, */*",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Referer": "https://www.tiktok.com/",
+            }
+        )
 
         logger.info("TikTokSentiment initialized (no API key required)")
 
@@ -230,13 +232,17 @@ class TikTokSentiment:
                         if not video_data:
                             continue
 
-                        videos.append({
-                            "id": video_data.get("id"),
-                            "desc": video_data.get("desc", ""),
-                            "hashtags": [tag.get("name", "") for tag in video_data.get("textExtra", [])],
-                            "stats": video_data.get("stats", {}),
-                            "create_time": video_data.get("createTime", 0),
-                        })
+                        videos.append(
+                            {
+                                "id": video_data.get("id"),
+                                "desc": video_data.get("desc", ""),
+                                "hashtags": [
+                                    tag.get("name", "") for tag in video_data.get("textExtra", [])
+                                ],
+                                "stats": video_data.get("stats", {}),
+                                "create_time": video_data.get("createTime", 0),
+                            }
+                        )
 
                 except json.JSONDecodeError:
                     continue
@@ -264,7 +270,7 @@ class TikTokSentiment:
             return True
 
         # Look for ticker as standalone word
-        pattern = r'\b' + re.escape(ticker_upper) + r'\b'
+        pattern = r"\b" + re.escape(ticker_upper) + r"\b"
         return bool(re.search(pattern, text_upper))
 
     def _calculate_sentiment_score(
@@ -474,7 +480,9 @@ class TikTokSentiment:
 
             # Reduce confidence if sentiment is mixed
             if sentiment_scores:
-                sentiment_variance = sum((s - overall_score) ** 2 for s in sentiment_scores) / len(sentiment_scores)
+                sentiment_variance = sum((s - overall_score) ** 2 for s in sentiment_scores) / len(
+                    sentiment_scores
+                )
                 consistency_factor = max(0.5, 1.0 - sentiment_variance)
                 confidence = base_confidence * consistency_factor
             else:
@@ -559,7 +567,7 @@ def main():
     for ticker in tickers:
         print(f"\n{'=' * 60}")
         print(f"TikTok Sentiment Analysis: {ticker}")
-        print('=' * 60)
+        print("=" * 60)
 
         result = analyzer.get_ticker_sentiment(
             ticker, use_cache=not args.no_cache, limit=args.limit
@@ -575,7 +583,7 @@ def main():
         if result.get("error"):
             print(f"Error: {result['error']}")
 
-        print('=' * 60)
+        print("=" * 60)
 
 
 if __name__ == "__main__":

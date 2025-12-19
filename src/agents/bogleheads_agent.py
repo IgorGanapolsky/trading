@@ -4,7 +4,6 @@ from typing import Any
 
 import requests
 from bs4 import BeautifulSoup
-
 from src.agents.base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
