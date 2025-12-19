@@ -22,6 +22,10 @@ class ContextEngine:
     def get_context(self, *args, **kwargs) -> dict:
         return {}
 
+    def prune_memories(self, *args, **kwargs) -> list:
+        """Stub for memory pruning - returns empty list."""
+        return []
+
 
 class MemoryTimescale:
     """Stub for deleted MemoryTimescale."""

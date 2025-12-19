@@ -10,6 +10,10 @@ class CircuitBreakerPattern:
     def is_open(self) -> bool:
         return False
 
+    def can_execute(self) -> bool:
+        """Check if circuit breaker allows execution."""
+        return not self.open
+
     def record_success(self) -> None:
         pass
 
