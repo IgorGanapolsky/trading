@@ -58,3 +58,28 @@ class BacktestResults:
             "win_rate": self.win_rate,
             "total_trades": self.total_trades,
         }
+
+    def generate_report(self) -> str:
+        """Generate markdown report for backtest results."""
+        data = self.to_dict()
+        report = f"""# Backtest Report
+
+## Period
+- Start: {data['start_date']}
+- End: {data['end_date']}
+- Trading Days: {data['trading_days']}
+
+## Performance
+- Initial Capital: ${data['initial_capital']:,.2f}
+- Final Capital: ${data['final_capital']:,.2f}
+- Total Return: {data['total_return']:.2f}%
+- Annualized Return: {data['annualized_return']:.2f}%
+- Sharpe Ratio: {data['sharpe_ratio']:.3f}
+- Max Drawdown: {data['max_drawdown']:.2f}%
+- Win Rate: {data['win_rate']:.2f}%
+- Total Trades: {data['total_trades']}
+
+## Trade Log
+Total trades executed: {len(self.trades)}
+"""
+        return report
