@@ -325,6 +325,12 @@ def main() -> None:
     write_summary(aggregate, Path(args.summary))
     print(f"✅ Backtest matrix complete. Summary written to {args.summary}")
 
+    # WARNING: Stub implementation detection
+    if aggregate.get("total_trades", 0) == 0:
+        print("\n⚠️  WARNING: BacktestEngine is a STUB (PR #782).")
+        print("⚠️  All scenarios show 0 trades - results are placeholders only.")
+        print("⚠️  Use forward-testing (paper trading) for actual validation.")
+
 
 if __name__ == "__main__":
     main()
