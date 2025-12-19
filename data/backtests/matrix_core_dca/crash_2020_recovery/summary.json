@@ -17,7 +17,7 @@
     "total_trades": 0,
     "status": "pass",
     "description": "Tests ability to capture V-shaped recovery after crash. SPY gained 45% from March 23 low to June 30. Validates that system doesn't stay too defensive after crash. Should capture significant upside while maintaining risk controls.\n",
-    "generated_at": "2025-12-19T21:58:22.302410",
+    "generated_at": "2025-12-19T22:15:51.132414",
     "execution_costs": {
       "fee_cost": 0.0,
       "slippage_cost": 0.0,

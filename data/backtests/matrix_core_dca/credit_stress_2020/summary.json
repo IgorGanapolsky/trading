@@ -17,7 +17,7 @@
     "total_trades": 0,
     "status": "pass",
     "description": "Tests corporate bond risk management during credit stress. Validates high-yield limits and flight-to-quality rotation.\n",
-    "generated_at": "2025-12-19T21:58:22.294853",
+    "generated_at": "2025-12-19T22:15:51.125569",
     "execution_costs": {
       "fee_cost": 0.0,
       "slippage_cost": 0.0,

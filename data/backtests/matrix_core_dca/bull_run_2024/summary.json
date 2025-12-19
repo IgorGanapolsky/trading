@@ -17,7 +17,7 @@
     "total_trades": 0,
     "status": "pass",
     "description": "Tests performance when SPY/QQQ melt upward. Ensures system captures upside without blowing risk allocations.\n",
-    "generated_at": "2025-12-19T21:58:22.283698",
+    "generated_at": "2025-12-19T22:15:51.114558",
     "execution_costs": {
       "fee_cost": 0.0,
       "slippage_cost": 0.0,

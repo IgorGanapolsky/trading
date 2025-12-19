@@ -17,7 +17,7 @@
     "total_trades": 0,
     "status": "pass",
     "description": "Replay the absolute bottom of 2008-2009 bear market. SPY hit $67.10 on March 9, 2009 (down 57% from peak). Tests: Can system survive capitulation without >5% loss? Must prove drawdown controls work at maximum fear.\n",
-    "generated_at": "2025-12-19T21:58:22.300394",
+    "generated_at": "2025-12-19T22:15:51.130493",
     "execution_costs": {
       "fee_cost": 0.0,
       "slippage_cost": 0.0,

@@ -17,7 +17,7 @@
     "total_trades": 0,
     "status": "pass",
     "description": "Tests performance during elevated VIX and rate hike uncertainty. Validates vol-scaled slippage and treasury allocation during stress.\n",
-    "generated_at": "2025-12-19T21:58:22.290638",
+    "generated_at": "2025-12-19T22:15:51.121532",
     "execution_costs": {
       "fee_cost": 0.0,
       "slippage_cost": 0.0,

@@ -17,7 +17,7 @@
     "total_trades": 0,
     "status": "pass",
     "description": "Tests barbell strategy during curve steepening. Validates long-duration allocation during bullish steepener.\n",
-    "generated_at": "2025-12-19T21:58:22.295985",
+    "generated_at": "2025-12-19T22:15:51.126621",
     "execution_costs": {
       "fee_cost": 0.0,
       "slippage_cost": 0.0,

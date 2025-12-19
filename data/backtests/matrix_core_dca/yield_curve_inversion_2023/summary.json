@@ -17,7 +17,7 @@
     "total_trades": 0,
     "status": "pass",
     "description": "Tests yield curve strategy during sustained inversion. Validates short-duration preference and ladder rebalancing.\n",
-    "generated_at": "2025-12-19T21:58:22.293843",
+    "generated_at": "2025-12-19T22:15:51.124517",
     "execution_costs": {
       "fee_cost": 0.0,
       "slippage_cost": 0.0,

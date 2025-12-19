@@ -82,7 +82,7 @@
         "Generate backtest reports"
       ],
       "passes": false,
-      "notes": "STUB ONLY: BacktestEngine deleted in PR #782 simplification. Returns 0 trades, 0.0 Sharpe for ALL scenarios. Cannot validate strategies. Options: implement full engine, use forward-testing only, or deprecate."
+      "notes": "DELETED Dec 19, 2025: Removed stub code that did nothing. Paper trading (forward-testing) provides real market validation with actual fills. Historical backtesting may be re-implemented if needed."
     },
     {
       "category": "data",

@@ -98,7 +98,6 @@ jobs:
           python3 -m pytest \
             tests/test_evaluation_system.py \
             tests/test_promotion_gate.py \
-            tests/test_backtest_matrix_utils.py \
             tests/test_telemetry_summary.py \
             --timeout=120 \
             --timeout-method=thread \
@@ -107,57 +106,10 @@ jobs:
             || echo "⚠️ Tests failed but continuing to allow trading"
           echo "✅ Test step complete"
 
-  # Separate job for backtesting to prevent timeouts
-  run-backtests:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 25
-    needs: validate-and-test
-    if: needs.validate-and-test.outputs.secrets_valid == 'true'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      # Note: pip cache is disabled to avoid large post-job tar uploads that
-      # were cancelling runs on GitHub-hosted runners.
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Restore backtest cache
-        uses: actions/cache@v4
-        with:
-          path: data/backtests/cache
-          key: backtest-cache-${{ hashFiles('config/backtest_scenarios.yaml') }}
-
-      - name: Install dependencies (lean)
-        env:
-          PIP_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
-        run: |
-          python3 -m pip install --upgrade pip
-          # Install multitasking with legacy setup.py to avoid pyproject.toml build issues
-          python3 -m pip install --no-build-isolation multitasking || python3 -m pip install multitasking==0.0.11
-          python3 -m pip install --no-cache-dir -r requirements-minimal.txt
-
-      - name: Run backtest scenario matrix
-        timeout-minutes: 20
-        run: |
-          python3 scripts/run_backtest_matrix.py \
-            --config config/backtest_scenarios.yaml \
-            --output-root data/backtests \
-            --summary data/backtests/latest_summary.json \
-            --use-hybrid-gates
-
-      - name: Upload backtest results
-        uses: actions/upload-artifact@v4
-        with:
-          name: backtest-results-${{ github.run_id }}
-          path: |
-            data/backtests/latest_summary.json
-            data/backtests/**/*.json
-          retention-days: 7
+  # NOTE: Backtest job removed Dec 19, 2025
+  # The BacktestEngine was a stub (PR #782) returning 0 trades.
+  # Paper trading (forward-testing) provides real market validation.
+  # See feature_list.json for details.
 
   # Main trading execution job
   execute-trading:

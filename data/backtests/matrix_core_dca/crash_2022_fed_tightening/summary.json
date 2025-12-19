@@ -17,7 +17,7 @@
     "total_trades": 0,
     "status": "pass",
     "description": "Tests prolonged bear market (not sudden crash). SPY down 27%, QQQ down 37%, TLT down 30% (worst bond year in 40 years). Validates system behavior when BOTH stocks AND bonds fall. No safe haven scenario - pure risk management test.\n",
-    "generated_at": "2025-12-19T21:58:22.303381",
+    "generated_at": "2025-12-19T22:15:51.133613",
     "execution_costs": {
       "fee_cost": 0.0,
       "slippage_cost": 0.0,

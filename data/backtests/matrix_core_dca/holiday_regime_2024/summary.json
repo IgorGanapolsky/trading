@@ -17,7 +17,7 @@
     "total_trades": 0,
     "status": "pass",
     "description": "Tests full-year holiday/weekend trading with treasury flight-to-safety (TLT) and equity exposure. Validates regime detection switches during off-hours sessions.\n",
-    "generated_at": "2025-12-19T21:58:22.289664",
+    "generated_at": "2025-12-19T22:15:51.120401",
     "execution_costs": {
       "fee_cost": 0.0,
       "slippage_cost": 0.0,

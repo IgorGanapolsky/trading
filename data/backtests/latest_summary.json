@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-12-19T21:58:22.304198",
+  "generated_at": "2025-12-19T22:15:51.134467",
   "scenario_count": 19,
   "scenarios": [
     {
@@ -20,7 +20,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "Tests performance when SPY/QQQ melt upward. Ensures system captures upside without blowing risk allocations.\n",
-      "generated_at": "2025-12-19T21:58:22.283698",
+      "generated_at": "2025-12-19T22:15:51.114558",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -58,7 +58,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "Simulates a fast drawdown + chop regime to validate drawdown control, ATR sizing, and halt triggers.\n",
-      "generated_at": "2025-12-19T21:58:22.285055",
+      "generated_at": "2025-12-19T22:15:51.115895",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -96,7 +96,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "Tests performance during low-trend, choppy sideways market. Validates that momentum filters correctly reject false signals and avoids over-trading during range-bound conditions. Critical for proving the system doesn't lose money in neutral markets.\n",
-      "generated_at": "2025-12-19T21:58:22.286324",
+      "generated_at": "2025-12-19T22:15:51.117002",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -134,7 +134,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "Stress test for historic volatility spike. Ensures ATR sizing and guardrails throttle exposure before we allow live promotion.\n",
-      "generated_at": "2025-12-19T21:58:22.287395",
+      "generated_at": "2025-12-19T22:15:51.118021",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -172,7 +172,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "Validates weekend/holiday coverage by routing the funnel through treasury ETFs. Ensures thresholds and sizing logic remain stable when traditional equity markets are unavailable.\n",
-      "generated_at": "2025-12-19T21:58:22.288591",
+      "generated_at": "2025-12-19T22:15:51.119319",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -210,7 +210,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "Tests full-year holiday/weekend trading with treasury flight-to-safety (TLT) and equity exposure. Validates regime detection switches during off-hours sessions.\n",
-      "generated_at": "2025-12-19T21:58:22.289664",
+      "generated_at": "2025-12-19T22:15:51.120401",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -248,7 +248,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "Tests performance during elevated VIX and rate hike uncertainty. Validates vol-scaled slippage and treasury allocation during stress.\n",
-      "generated_at": "2025-12-19T21:58:22.290638",
+      "generated_at": "2025-12-19T22:15:51.121532",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -286,7 +286,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "Tests treasury ladder performance during flight-to-safety rally. Validates duration rotation and yield curve strategy during crisis.\n",
-      "generated_at": "2025-12-19T21:58:22.291798",
+      "generated_at": "2025-12-19T22:15:51.122623",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -324,7 +324,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "Stress test for worst bond market in 40 years (rate hikes). Validates duration-adjusted stops and short-duration rotation.\n",
-      "generated_at": "2025-12-19T21:58:22.292819",
+      "generated_at": "2025-12-19T22:15:51.123580",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -362,7 +362,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "Tests yield curve strategy during sustained inversion. Validates short-duration preference and ladder rebalancing.\n",
-      "generated_at": "2025-12-19T21:58:22.293843",
+      "generated_at": "2025-12-19T22:15:51.124517",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -400,7 +400,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "Tests corporate bond risk management during credit stress. Validates high-yield limits and flight-to-quality rotation.\n",
-      "generated_at": "2025-12-19T21:58:22.294853",
+      "generated_at": "2025-12-19T22:15:51.125569",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -438,7 +438,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "Tests barbell strategy during curve steepening. Validates long-duration allocation during bullish steepener.\n",
-      "generated_at": "2025-12-19T21:58:22.295985",
+      "generated_at": "2025-12-19T22:15:51.126621",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -476,7 +476,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "Tests 60/40-style mixed allocation with bond ladder. Validates correlation benefits and rebalancing triggers.\n",
-      "generated_at": "2025-12-19T21:58:22.297100",
+      "generated_at": "2025-12-19T22:15:51.127596",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -514,7 +514,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "60-day verification window for the theta automation layer after the fundamentals cache + execution tie-in. Validates that IV-gated covered calls hold a 26% annualized pace with drawdowns capped near 2%.\n",
-      "generated_at": "2025-12-19T21:58:22.298217",
+      "generated_at": "2025-12-19T22:15:51.128610",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -552,7 +552,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "CEO DIRECTIVE: Bear-proof the system. Replay 2008 Lehman collapse. Requires >95% capital survival (max 5% drawdown allowed). Tests flight-to-safety rotation (SPY\u2192TLT/SHY) during credit crisis. If system loses >5%, it fails promotion gate.\n",
-      "generated_at": "2025-12-19T21:58:22.299236",
+      "generated_at": "2025-12-19T22:15:51.129588",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -590,7 +590,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "Replay the absolute bottom of 2008-2009 bear market. SPY hit $67.10 on March 9, 2009 (down 57% from peak). Tests: Can system survive capitulation without >5% loss? Must prove drawdown controls work at maximum fear.\n",
-      "generated_at": "2025-12-19T21:58:22.300394",
+      "generated_at": "2025-12-19T22:15:51.130493",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -628,7 +628,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "CEO DIRECTIVE: Bear-proof the system. Replay COVID crash. SPY dropped 34% in 23 trading days - fastest bear ever. VIX hit 82.69 on March 16, 2020. Survival requirement: >95% capital (max 5% drawdown). Tests ATR scaling, circuit breakers, and halt logic under historic vol.\n",
-      "generated_at": "2025-12-19T21:58:22.301386",
+      "generated_at": "2025-12-19T22:15:51.131363",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -666,7 +666,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "Tests ability to capture V-shaped recovery after crash. SPY gained 45% from March 23 low to June 30. Validates that system doesn't stay too defensive after crash. Should capture significant upside while maintaining risk controls.\n",
-      "generated_at": "2025-12-19T21:58:22.302410",
+      "generated_at": "2025-12-19T22:15:51.132414",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,
@@ -704,7 +704,7 @@
       "total_trades": 0,
       "status": "pass",
       "description": "Tests prolonged bear market (not sudden crash). SPY down 27%, QQQ down 37%, TLT down 30% (worst bond year in 40 years). Validates system behavior when BOTH stocks AND bonds fall. No safe haven scenario - pure risk management test.\n",
-      "generated_at": "2025-12-19T21:58:22.303381",
+      "generated_at": "2025-12-19T22:15:51.133613",
       "execution_costs": {
         "fee_cost": 0.0,
         "slippage_cost": 0.0,

@@ -17,7 +17,7 @@
     "total_trades": 0,
     "status": "pass",
     "description": "Stress test for historic volatility spike. Ensures ATR sizing and guardrails throttle exposure before we allow live promotion.\n",
-    "generated_at": "2025-12-19T21:58:22.287395",
+    "generated_at": "2025-12-19T22:15:51.118021",
     "execution_costs": {
       "fee_cost": 0.0,
       "slippage_cost": 0.0,
