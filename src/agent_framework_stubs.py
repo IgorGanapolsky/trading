@@ -26,6 +26,26 @@ class ContextEngine:
         """Stub for memory pruning - returns empty list."""
         return []
 
+    def store_memory(self, *args, **kwargs) -> str:
+        """Stub for memory storage - returns empty ID."""
+        return ""
+
+    def retrieve_memories(self, *args, **kwargs) -> list:
+        """Stub for memory retrieval - returns empty list."""
+        return []
+
+    def send_context_message(self, *args, **kwargs) -> None:
+        """Stub for context messaging."""
+        pass
+
+    def validate_context_flow(self, *args, **kwargs) -> tuple:
+        """Stub for context validation - always valid."""
+        return (True, [])
+
+    def get_agent_context(self, *args, **kwargs) -> dict:
+        """Stub for agent context - returns empty dict."""
+        return {}
+
 
 class MemoryTimescale:
     """Stub for deleted MemoryTimescale."""
