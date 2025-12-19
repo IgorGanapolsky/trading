@@ -249,7 +249,11 @@ def send_slack_alert(
         import requests
 
         # Build Slack message with blocks
-        emoji_map = {"error": ":rotating_light:", "warning": ":warning:", "info": ":information_source:"}
+        emoji_map = {
+            "error": ":rotating_light:",
+            "warning": ":warning:",
+            "info": ":information_source:",
+        }
         color_map = {"error": "#dc3545", "warning": "#ffc107", "info": "#17a2b8"}
 
         emoji = emoji_map.get(level, ":bell:")
@@ -273,26 +277,32 @@ def send_slack_alert(
         if context:
             fields = []
             for key, value in context.items():
-                fields.append({
-                    "type": "mrkdwn",
-                    "text": f"*{key}:* {value}",
-                })
+                fields.append(
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*{key}:* {value}",
+                    }
+                )
             if fields:
-                attachment["blocks"].append({
-                    "type": "section",
-                    "fields": fields[:10],  # Slack limit
-                })
+                attachment["blocks"].append(
+                    {
+                        "type": "section",
+                        "fields": fields[:10],  # Slack limit
+                    }
+                )
 
         # Add timestamp
-        attachment["blocks"].append({
-            "type": "context",
-            "elements": [
-                {
-                    "type": "mrkdwn",
-                    "text": f"Timestamp: {datetime.now().isoformat()}",
-                }
-            ],
-        })
+        attachment["blocks"].append(
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"Timestamp: {datetime.now().isoformat()}",
+                    }
+                ],
+            }
+        )
 
         payload = {"attachments": [attachment]}
 

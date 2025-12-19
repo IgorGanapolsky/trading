@@ -15,17 +15,12 @@ Channel: https://youtube.com/@philtownrule1investing
 
 import json
 import logging
-import os
 import re
-import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Phil Town's channel info
@@ -53,8 +48,8 @@ def get_channel_videos(max_results: int = 50) -> list[dict]:
     Returns list of {id, title, upload_date, duration}
     """
     try:
-        import subprocess
         import json as json_module
+        import subprocess
 
         cmd = [
             "yt-dlp",
@@ -62,23 +57,25 @@ def get_channel_videos(max_results: int = 50) -> list[dict]:
             "--no-check-certificate",
             "-j",
             f"--playlist-end={max_results}",
-            f"{CHANNEL_URL}/videos"
+            f"{CHANNEL_URL}/videos",
         ]
 
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
 
         videos = []
-        for line in result.stdout.strip().split('\n'):
+        for line in result.stdout.strip().split("\n"):
             if line:
                 try:
                     data = json_module.loads(line)
-                    videos.append({
-                        "id": data.get("id"),
-                        "title": data.get("title"),
-                        "upload_date": data.get("upload_date"),
-                        "duration": data.get("duration"),
-                        "url": f"https://www.youtube.com/watch?v={data.get('id')}"
-                    })
+                    videos.append(
+                        {
+                            "id": data.get("id"),
+                            "title": data.get("title"),
+                            "upload_date": data.get("upload_date"),
+                            "duration": data.get("duration"),
+                            "url": f"https://www.youtube.com/watch?v={data.get('id')}",
+                        }
+                    )
                 except json_module.JSONDecodeError:
                     continue
 
@@ -123,18 +120,46 @@ def analyze_transcript(transcript: str, title: str) -> dict:
         "strategies": [],
         "key_concepts": [],
         "sentiment": "neutral",
-        "actionable_items": []
+        "actionable_items": [],
     }
 
     # Stock ticker pattern (1-5 uppercase letters)
-    ticker_pattern = r'\b([A-Z]{1,5})\b'
+    ticker_pattern = r"\b([A-Z]{1,5})\b"
 
     # Known valid tickers to filter noise
     valid_tickers = {
-        "AAPL", "MSFT", "GOOGL", "GOOG", "AMZN", "META", "NVDA", "TSLA",
-        "BRK", "V", "MA", "JPM", "JNJ", "WMT", "PG", "HD", "DIS", "NFLX",
-        "COST", "KO", "PEP", "MCD", "NKE", "SBUX", "TGT", "LOW", "CVS",
-        "SPY", "QQQ", "IWM", "VTI", "VOO"
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "GOOG",
+        "AMZN",
+        "META",
+        "NVDA",
+        "TSLA",
+        "BRK",
+        "V",
+        "MA",
+        "JPM",
+        "JNJ",
+        "WMT",
+        "PG",
+        "HD",
+        "DIS",
+        "NFLX",
+        "COST",
+        "KO",
+        "PEP",
+        "MCD",
+        "NKE",
+        "SBUX",
+        "TGT",
+        "LOW",
+        "CVS",
+        "SPY",
+        "QQQ",
+        "IWM",
+        "VTI",
+        "VOO",
     }
 
     # Find potential tickers
@@ -193,15 +218,15 @@ def save_to_rag(video: dict, transcript: str, insights: dict):
     """Save transcript and insights to RAG storage."""
     video_id = video["id"]
     title = video["title"]
-    safe_title = re.sub(r'[^\w\s-]', '', title)[:50].strip().replace(' ', '_')
+    safe_title = re.sub(r"[^\w\s-]", "", title)[:50].strip().replace(" ", "_")
 
     # Save transcript
     transcript_file = RAG_TRANSCRIPTS / f"{video_id}_{safe_title}.md"
     transcript_content = f"""# {title}
 
 **Video ID**: {video_id}
-**URL**: {video.get('url', f'https://www.youtube.com/watch?v={video_id}')}
-**Upload Date**: {video.get('upload_date', 'Unknown')}
+**URL**: {video.get("url", f"https://www.youtube.com/watch?v={video_id}")}
+**Upload Date**: {video.get("upload_date", "Unknown")}
 **Channel**: Phil Town - Rule #1 Investing
 **Ingested**: {datetime.now().isoformat()}
 
@@ -217,11 +242,11 @@ def save_to_rag(video: dict, transcript: str, insights: dict):
     insights_data = {
         "video_id": video_id,
         "title": title,
-        "url": video.get('url'),
-        "upload_date": video.get('upload_date'),
+        "url": video.get("url"),
+        "upload_date": video.get("upload_date"),
         "ingested_at": datetime.now().isoformat(),
         "channel": "Phil Town - Rule #1 Investing",
-        **insights
+        **insights,
     }
     insights_file.write_text(json.dumps(insights_data, indent=2))
     logger.info(f"Saved insights: {insights_file}")
@@ -245,7 +270,7 @@ def save_processed_videos(processed_ids: set):
     data = {
         "processed_ids": list(processed_ids),
         "last_updated": datetime.now().isoformat(),
-        "count": len(processed_ids)
+        "count": len(processed_ids),
     }
     PROCESSED_FILE.write_text(json.dumps(data, indent=2))
 
@@ -253,12 +278,7 @@ def save_processed_videos(processed_ids: set):
 def ingest_videos(videos: list[dict], skip_processed: bool = True) -> dict:
     """Ingest a list of videos into RAG."""
     processed = load_processed_videos()
-    results = {
-        "success": 0,
-        "failed": 0,
-        "skipped": 0,
-        "videos": []
-    }
+    results = {"success": 0, "failed": 0, "skipped": 0, "videos": []}
 
     for video in videos:
         video_id = video["id"]
@@ -284,12 +304,14 @@ def ingest_videos(videos: list[dict], skip_processed: bool = True) -> dict:
             save_to_rag(video, transcript, insights)
             processed.add(video_id)
             results["success"] += 1
-            results["videos"].append({
-                "id": video_id,
-                "title": video["title"],
-                "concepts": insights["key_concepts"],
-                "stocks": insights["stocks_mentioned"]
-            })
+            results["videos"].append(
+                {
+                    "id": video_id,
+                    "title": video["title"],
+                    "concepts": insights["key_concepts"],
+                    "stocks": insights["stocks_mentioned"],
+                }
+            )
         except Exception as e:
             logger.error(f"Failed to save {video_id}: {e}")
             results["failed"] += 1
@@ -309,18 +331,15 @@ def main():
         "--mode",
         choices=["backfill", "recent", "new"],
         default="recent",
-        help="Ingestion mode: backfill=all, recent=last 10, new=only unprocessed"
+        help="Ingestion mode: backfill=all, recent=last 10, new=only unprocessed",
     )
     parser.add_argument(
-        "--max-videos",
-        type=int,
-        default=50,
-        help="Maximum videos to fetch (default: 50)"
+        "--max-videos", type=int, default=50, help="Maximum videos to fetch (default: 50)"
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be processed without actually doing it"
+        help="Show what would be processed without actually doing it",
     )
     args = parser.parse_args()
 
@@ -334,8 +353,8 @@ def main():
     # Determine how many videos to fetch
     max_videos = {
         "backfill": 500,  # All historical
-        "recent": 10,     # Last 10
-        "new": args.max_videos
+        "recent": 10,  # Last 10
+        "new": args.max_videos,
     }.get(args.mode, 10)
 
     # Fetch videos

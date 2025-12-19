@@ -17,10 +17,7 @@ from pathlib import Path
 from typing import Optional
 from urllib.parse import urljoin
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Blog and Podcast info
@@ -43,8 +40,8 @@ def ensure_directories():
 def fetch_page(url: str) -> Optional[str]:
     """Fetch a web page with retry logic."""
     try:
-        import urllib.request
         import urllib.error
+        import urllib.request
 
         headers = {
             "User-Agent": "Mozilla/5.0 (compatible; TradingBot/1.0; +https://github.com/trading)"
@@ -52,7 +49,7 @@ def fetch_page(url: str) -> Optional[str]:
         request = urllib.request.Request(url, headers=headers)
 
         with urllib.request.urlopen(request, timeout=30) as response:
-            return response.read().decode('utf-8')
+            return response.read().decode("utf-8")
 
     except Exception as e:
         logger.error(f"Failed to fetch {url}: {e}")
@@ -71,18 +68,15 @@ def parse_blog_index(html: str) -> list[dict]:
 
     for url, title in matches:
         # Filter for blog article URLs (not navigation, not external)
-        if '/blog/' in url and len(title) > 10:
+        if "/blog/" in url and len(title) > 10:
             # Skip common non-article links
-            skip_words = ['category', 'tag', 'page', 'author', 'search', 'login']
+            skip_words = ["category", "tag", "page", "author", "search", "login"]
             if any(word in url.lower() for word in skip_words):
                 continue
 
-            full_url = url if url.startswith('http') else urljoin(BLOG_URL, url)
+            full_url = url if url.startswith("http") else urljoin(BLOG_URL, url)
 
-            articles.append({
-                "url": full_url,
-                "title": title.strip()
-            })
+            articles.append({"url": full_url, "title": title.strip()})
 
     # Deduplicate by URL
     seen = set()
@@ -99,15 +93,15 @@ def parse_blog_index(html: str) -> list[dict]:
 def parse_article_content(html: str) -> Optional[str]:
     """Extract main article content from HTML."""
     # Remove scripts and styles
-    html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL | re.IGNORECASE)
-    html = re.sub(r'<style[^>]*>.*?</style>', '', html, flags=re.DOTALL | re.IGNORECASE)
+    html = re.sub(r"<script[^>]*>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
+    html = re.sub(r"<style[^>]*>.*?</style>", "", html, flags=re.DOTALL | re.IGNORECASE)
 
     # Try to find article content
     content_patterns = [
-        r'<article[^>]*>(.*?)</article>',
+        r"<article[^>]*>(.*?)</article>",
         r'<div[^>]+class="[^"]*content[^"]*"[^>]*>(.*?)</div>',
         r'<div[^>]+class="[^"]*post[^"]*"[^>]*>(.*?)</div>',
-        r'<main[^>]*>(.*?)</main>',
+        r"<main[^>]*>(.*?)</main>",
     ]
 
     content = None
@@ -119,7 +113,7 @@ def parse_article_content(html: str) -> Optional[str]:
 
     if not content:
         # Fallback: get body content
-        body_match = re.search(r'<body[^>]*>(.*?)</body>', html, re.DOTALL | re.IGNORECASE)
+        body_match = re.search(r"<body[^>]*>(.*?)</body>", html, re.DOTALL | re.IGNORECASE)
         if body_match:
             content = body_match.group(1)
 
@@ -127,21 +121,21 @@ def parse_article_content(html: str) -> Optional[str]:
         return None
 
     # Clean HTML tags
-    text = re.sub(r'<[^>]+>', ' ', content)
+    text = re.sub(r"<[^>]+>", " ", content)
 
     # Clean whitespace
-    text = re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r"\s+", " ", text).strip()
 
     # Remove common boilerplate
     boilerplate = [
-        'Subscribe to our newsletter',
-        'Share this post',
-        'Leave a comment',
-        'Related posts',
-        'Follow us on',
+        "Subscribe to our newsletter",
+        "Share this post",
+        "Leave a comment",
+        "Related posts",
+        "Follow us on",
     ]
     for bp in boilerplate:
-        text = re.sub(re.escape(bp) + r'.*', '', text, flags=re.IGNORECASE)
+        text = re.sub(re.escape(bp) + r".*", "", text, flags=re.IGNORECASE)
 
     return text if len(text) > 200 else None
 
@@ -152,7 +146,7 @@ def analyze_blog_article(content: str, title: str) -> dict:
         "key_concepts": [],
         "stocks_mentioned": [],
         "strategies": [],
-        "sentiment": "educational"
+        "sentiment": "educational",
     }
 
     content_lower = content.lower()
@@ -173,8 +167,21 @@ def analyze_blog_article(content: str, title: str) -> dict:
             insights["key_concepts"].append(concept)
 
     # Stock tickers
-    ticker_pattern = r'\b([A-Z]{2,5})\b'
-    valid_tickers = {"AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "TSLA", "BRK", "V", "MA", "SPY", "QQQ"}
+    ticker_pattern = r"\b([A-Z]{2,5})\b"
+    valid_tickers = {
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "AMZN",
+        "META",
+        "NVDA",
+        "TSLA",
+        "BRK",
+        "V",
+        "MA",
+        "SPY",
+        "QQQ",
+    }
     for match in re.findall(ticker_pattern, content):
         if match in valid_tickers and match not in insights["stocks_mentioned"]:
             insights["stocks_mentioned"].append(match)
@@ -185,25 +192,29 @@ def analyze_blog_article(content: str, title: str) -> dict:
 def save_article_to_rag(article: dict, content: str, insights: dict):
     """Save article to RAG storage."""
     # Create safe filename from URL
-    safe_name = re.sub(r'[^\w\s-]', '', article["title"])[:50].strip().replace(' ', '_')
-    slug = article["url"].split('/')[-2] if article["url"].endswith('/') else article["url"].split('/')[-1]
-    slug = re.sub(r'[^\w-]', '', slug)[:30]
+    safe_name = re.sub(r"[^\w\s-]", "", article["title"])[:50].strip().replace(" ", "_")
+    slug = (
+        article["url"].split("/")[-2]
+        if article["url"].endswith("/")
+        else article["url"].split("/")[-1]
+    )
+    slug = re.sub(r"[^\w-]", "", slug)[:30]
 
     filename = f"{slug}_{safe_name}.md"
     filepath = RAG_BLOG / filename
 
-    markdown = f"""# {article['title']}
+    markdown = f"""# {article["title"]}
 
-**Source**: {article['url']}
+**Source**: {article["url"]}
 **Author**: Phil Town
 **Ingested**: {datetime.now().isoformat()}
 **Category**: Rule #1 Investing Blog
 
 ## Key Concepts
-{', '.join(insights['key_concepts']) if insights['key_concepts'] else 'General investing education'}
+{", ".join(insights["key_concepts"]) if insights["key_concepts"] else "General investing education"}
 
 ## Stocks Mentioned
-{', '.join(insights['stocks_mentioned']) if insights['stocks_mentioned'] else 'None specific'}
+{", ".join(insights["stocks_mentioned"]) if insights["stocks_mentioned"] else "None specific"}
 
 ## Article Content
 
@@ -235,7 +246,7 @@ def save_processed_articles(urls: set):
     data = {
         "processed_urls": list(urls),
         "last_updated": datetime.now().isoformat(),
-        "count": len(urls)
+        "count": len(urls),
     }
     CACHE_FILE.write_text(json.dumps(data, indent=2))
 
@@ -244,12 +255,7 @@ def ingest_blog(max_articles: int = 20) -> dict:
     """Main blog ingestion function."""
     ensure_directories()
 
-    results = {
-        "success": 0,
-        "failed": 0,
-        "skipped": 0,
-        "articles": []
-    }
+    results = {"success": 0, "failed": 0, "skipped": 0, "articles": []}
 
     processed = load_processed_articles()
 
@@ -293,10 +299,9 @@ def ingest_blog(max_articles: int = 20) -> dict:
             save_article_to_rag(article, content, insights)
             processed.add(article["url"])
             results["success"] += 1
-            results["articles"].append({
-                "title": article["title"],
-                "concepts": insights["key_concepts"]
-            })
+            results["articles"].append(
+                {"title": article["title"], "concepts": insights["key_concepts"]}
+            )
         except Exception as e:
             logger.error(f"Failed to save: {e}")
             results["failed"] += 1
@@ -313,12 +318,7 @@ def ingest_podcast(max_episodes: int = 20) -> dict:
     """Ingest podcast episodes from Phil Town's podcast page."""
     ensure_directories()
 
-    results = {
-        "success": 0,
-        "failed": 0,
-        "skipped": 0,
-        "episodes": []
-    }
+    results = {"success": 0, "failed": 0, "skipped": 0, "episodes": []}
 
     processed = load_processed_articles()
 
@@ -353,22 +353,26 @@ def ingest_podcast(max_episodes: int = 20) -> dict:
         insights = analyze_blog_article(content, episode["title"])
 
         # Save to podcast directory
-        safe_name = re.sub(r'[^\w\s-]', '', episode["title"])[:50].strip().replace(' ', '_')
-        slug = episode["url"].split('/')[-2] if episode["url"].endswith('/') else episode["url"].split('/')[-1]
-        slug = re.sub(r'[^\w-]', '', slug)[:30]
+        safe_name = re.sub(r"[^\w\s-]", "", episode["title"])[:50].strip().replace(" ", "_")
+        slug = (
+            episode["url"].split("/")[-2]
+            if episode["url"].endswith("/")
+            else episode["url"].split("/")[-1]
+        )
+        slug = re.sub(r"[^\w-]", "", slug)[:30]
 
         filename = f"{slug}_{safe_name}.md"
         filepath = RAG_PODCAST / filename
 
-        markdown = f"""# {episode['title']}
+        markdown = f"""# {episode["title"]}
 
-**Source**: {episode['url']}
+**Source**: {episode["url"]}
 **Host**: Phil Town
 **Type**: InvestED Podcast Episode
 **Ingested**: {datetime.now().isoformat()}
 
 ## Key Concepts
-{', '.join(insights['key_concepts']) if insights['key_concepts'] else 'General investing discussion'}
+{", ".join(insights["key_concepts"]) if insights["key_concepts"] else "General investing discussion"}
 
 ## Episode Notes
 
@@ -402,19 +406,15 @@ def main():
         "--max-articles",
         type=int,
         default=20,
-        help="Maximum articles/episodes to process (default: 20)"
+        help="Maximum articles/episodes to process (default: 20)",
     )
     parser.add_argument(
         "--source",
         choices=["blog", "podcast", "all"],
         default="all",
-        help="Source to ingest: blog, podcast, or all (default: all)"
+        help="Source to ingest: blog, podcast, or all (default: all)",
     )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Show what would be processed"
-    )
+    parser.add_argument("--dry-run", action="store_true", help="Show what would be processed")
     args = parser.parse_args()
 
     logger.info("=" * 60)
@@ -430,14 +430,14 @@ def main():
             if html:
                 articles = parse_blog_index(html)
                 logger.info("Blog articles to process:")
-                for a in articles[:args.max_articles]:
+                for a in articles[: args.max_articles]:
                     logger.info(f"  - {a['title'][:60]}...")
         if args.source in ["podcast", "all"]:
             html = fetch_page(PODCAST_URL)
             if html:
                 episodes = parse_blog_index(html)
                 logger.info("Podcast episodes to process:")
-                for e in episodes[:args.max_articles]:
+                for e in episodes[: args.max_articles]:
                     logger.info(f"  - {e['title'][:60]}...")
         return {"dry_run": True}
 
@@ -454,9 +454,13 @@ def main():
     logger.info("=" * 60)
     logger.info("INGESTION COMPLETE")
     if results["blog"]:
-        logger.info(f"Blog - Success: {results['blog'].get('success', 0)}, Failed: {results['blog'].get('failed', 0)}")
+        logger.info(
+            f"Blog - Success: {results['blog'].get('success', 0)}, Failed: {results['blog'].get('failed', 0)}"
+        )
     if results["podcast"]:
-        logger.info(f"Podcast - Success: {results['podcast'].get('success', 0)}, Failed: {results['podcast'].get('failed', 0)}")
+        logger.info(
+            f"Podcast - Success: {results['podcast'].get('success', 0)}, Failed: {results['podcast'].get('failed', 0)}"
+        )
     logger.info("=" * 60)
 
     return results

@@ -282,17 +282,27 @@ class WorkflowIntegrityTests:
             content = workflow_path.read_text()
 
             # Find the Execute trading step condition
-            match = re.search(
-                r"Execute trading.*if:\s*(.+)",
+            # First find the step, then look for its if: condition within next few lines
+            step_match = re.search(
+                r"-\s*name:\s*Execute.*trading",
                 content,
                 re.IGNORECASE,
             )
 
-            if not match:
+            if not step_match:
                 errors.append(f"{workflow_name}: No 'Execute trading' step found")
                 continue
 
-            condition = match.group(1)
+            # Look for if: condition within next 200 chars (covers id: and if: lines)
+            step_end = step_match.end()
+            search_range = content[step_end : step_end + 200]
+            if_match = re.search(r"if:\s*([^\n]+)", search_range)
+
+            if not if_match:
+                errors.append(f"{workflow_name}: 'Execute trading' step has no if: condition")
+                continue
+
+            condition = if_match.group(1)
 
             # Verify both required conditions are present
             if "skip" not in condition.lower():

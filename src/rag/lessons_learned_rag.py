@@ -104,7 +104,7 @@ class LessonsLearnedRAG:
 
     def get_critical_lessons(self) -> list:
         """Get all CRITICAL severity lessons."""
-        return [l for l in self.lessons if l["severity"] == "CRITICAL"]
+        return [lesson for lesson in self.lessons if lesson["severity"] == "CRITICAL"]
 
     def add_lesson(self, lesson_id: str, content: str) -> None:
         """Add a new lesson (writes to file)."""

@@ -54,6 +54,7 @@ jobs:
           ")
 
           echo "Last updated: $LAST_UPDATED"
+          echo "last_updated=$LAST_UPDATED" >> $GITHUB_OUTPUT
 
           # Check if update is recent
           HEALTH_STATUS=$(python3 -c "

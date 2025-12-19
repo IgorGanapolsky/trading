@@ -93,7 +93,6 @@ jobs:
 
       - name: Run tests
         timeout-minutes: 5
-        continue-on-error: true  # TEMP: Allow trading even if tests fail (Dec 11, 2025)
         run: |
           echo "🧪 Running test suite..."
           python3 -m pytest \

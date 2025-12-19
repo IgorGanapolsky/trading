@@ -58,7 +58,8 @@ def test_all_cli_flags_exist():
     help_text = result.stdout
 
     # Expected CLI flags that workflows depend on
-    expected_flags = ["--paper", "--live", "--dry-run", "--force"]
+    # Updated Dec 19, 2025: Match actual CLI flags in autonomous_trader.py
+    expected_flags = ["--prediction-only", "--skip-prediction", "--auto-scale"]
 
     # Check expected flags exist in CLI
     for flag in expected_flags:

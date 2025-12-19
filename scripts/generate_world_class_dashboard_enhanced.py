@@ -365,7 +365,6 @@ def generate_world_class_dashboard() -> str:
     }
 
     # Use simple risk metrics calculated above (risk already set)
-    enhanced_risk = {"kelly_fraction": 0, "margin_usage_pct": 0, "leverage": 1.0}
     attribution = {"by_symbol": {}, "by_strategy": {}, "by_time_of_day": {}}
     execution = {
         "avg_slippage": 0,
