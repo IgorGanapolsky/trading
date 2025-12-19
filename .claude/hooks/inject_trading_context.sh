@@ -182,7 +182,20 @@ fi
 # CALENDAR INFO FIRST - so Claude always knows what day it is
 cat <<EOF
 [TRADING CONTEXT] $DATA_SOURCE
-📅 TODAY: $FULL_DATE $(if [[ "$IS_WEEKEND" == "true" ]]; then echo "⚠️ WEEKEND - NO TRADING"; fi)
+EOF
+
+# AGGRESSIVE CALENDAR WARNING - Claude keeps forgetting day of week
+echo "═══════════════════════════════════════════════════════════"
+echo "📅 TODAY: $FULL_DATE"
+if [[ "$DAY_OF_WEEK" == "Friday" ]]; then
+    echo "⚠️  TOMORROW IS SATURDAY - NO TRADING SATURDAY/SUNDAY"
+    echo "⚠️  NEXT TRADING DAY: MONDAY"
+elif [[ "$IS_WEEKEND" == "true" ]]; then
+    echo "🚫 WEEKEND - MARKETS CLOSED - NO TRADING TODAY"
+fi
+echo "═══════════════════════════════════════════════════════════"
+
+cat <<EOF
 Portfolio: \$$CURRENT_EQUITY | P/L: \$$TOTAL_PL ($TOTAL_PL_PCT%) | Day: $CURRENT_DAY/90
 Win Rate: $WIN_RATE% (live) | Backtest: $BACKTEST_STATUS
 Next Trade: $NEXT_TRADE
