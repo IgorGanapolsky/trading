@@ -181,11 +181,12 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 
-          git add rag_knowledge/
-          git add data/vector_db/
-          git add data/youtube_cache/
-          git add data/blog_cache/
-          git add data/weekend_insights.json
+          # Force add files that may be in .gitignore
+          git add -f rag_knowledge/ 2>/dev/null || true
+          git add -f data/vector_db/ 2>/dev/null || true
+          git add -f data/youtube_cache/ 2>/dev/null || true
+          git add -f data/blog_cache/ 2>/dev/null || true
+          git add -f data/weekend_insights.json 2>/dev/null || true
 
           if git diff --staged --quiet; then
             echo "No changes to commit"

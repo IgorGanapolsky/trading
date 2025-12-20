@@ -76,11 +76,11 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 
-          # Add all new content + vector DB
-          git add rag_knowledge/
-          git add data/youtube_cache/
-          git add data/blog_cache/
-          git add data/vector_db/
+          # Force add files that may be in .gitignore
+          git add -f rag_knowledge/ 2>/dev/null || true
+          git add -f data/youtube_cache/ 2>/dev/null || true
+          git add -f data/blog_cache/ 2>/dev/null || true
+          git add -f data/vector_db/ 2>/dev/null || true
 
           # Check if there are changes
           if git diff --staged --quiet; then
