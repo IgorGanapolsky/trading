@@ -26,26 +26,26 @@ from typing import Optional
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# Options-focused channels (quality over quantity)
+# Options-focused channels (using handles, not IDs - more reliable)
 CHANNELS = {
     "option-alpha": {
         "name": "Option Alpha",
-        "channel_id": "UCyw2F1lQdm6bcQaNQOLDLvA",
+        "handle": "@optionalpha",
         "url": "https://www.youtube.com/@optionalpha",
         "focus": ["options basics", "premium selling", "probability"],
         "relevance": "high",  # Very aligned with CSP strategy
     },
     "inthemoney": {
         "name": "InTheMoney",
-        "channel_id": "UCfMiRVQJuTj3NpZZP1tKShQ",
-        "url": "https://www.youtube.com/@InTheMoney",
+        "handle": "@InTheMoneyAdam",
+        "url": "https://www.youtube.com/@InTheMoneyAdam",
         "focus": ["wheel strategy", "CSPs", "covered calls"],
         "relevance": "high",  # Wheel strategy expert
     },
     "tastylive": {
         "name": "tastylive",
-        "channel_id": "UCLJb9UMR6J5VB7JHWlNZj2Q",
-        "url": "https://www.youtube.com/@tastyliveshow",
+        "handle": "@tastylive",
+        "url": "https://www.youtube.com/@tastylive",
         "focus": ["options mechanics", "greeks", "volatility"],
         "relevance": "medium",  # Good education, more complex
     },
@@ -62,8 +62,13 @@ def ensure_directories():
     CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 
-def get_channel_videos(channel_id: str, max_results: int = 10) -> list[dict]:
-    """Fetch video list from channel using yt-dlp."""
+def get_channel_videos(channel_url: str, max_results: int = 10) -> list[dict]:
+    """Fetch video list from channel using yt-dlp.
+
+    Args:
+        channel_url: Full YouTube channel URL (e.g., https://www.youtube.com/@optionalpha)
+        max_results: Maximum videos to fetch
+    """
     try:
         import yt_dlp
     except ImportError:
@@ -76,11 +81,12 @@ def get_channel_videos(channel_id: str, max_results: int = 10) -> list[dict]:
         "playlistend": max_results,
     }
 
-    channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
+    # Ensure we're fetching from videos tab
+    videos_url = channel_url.rstrip("/") + "/videos"
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            result = ydl.extract_info(channel_url, download=False)
+            result = ydl.extract_info(videos_url, download=False)
             if not result or "entries" not in result:
                 return []
 
@@ -200,7 +206,7 @@ def ingest_channel(channel_key: str, mode: str = "recent", max_videos: int = 10)
 
     logger.info(f"Ingesting from {channel['name']}...")
 
-    videos = get_channel_videos(channel["channel_id"], max_videos)
+    videos = get_channel_videos(channel["url"], max_videos)
     stats = {"fetched": len(videos), "processed": 0, "skipped": 0, "no_transcript": 0}
 
     for video in videos:
