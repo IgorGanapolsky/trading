@@ -87,5 +87,7 @@ jobs:
             echo "No new content to commit"
           else
             git commit -m "feat(rag): Phil Town content + vectorization $(date +%Y-%m-%d)"
-            git push
+            # Pull any changes made since checkout, then push
+            git pull --rebase origin main || true
+            git push origin main
           fi

@@ -88,14 +88,16 @@ def get_channel_videos(max_results: int = 50) -> list[dict]:
 
 
 def get_transcript(video_id: str) -> Optional[str]:
-    """Fetch transcript for a video using youtube-transcript-api."""
+    """Fetch transcript for a video using youtube-transcript-api v1.0+."""
     try:
         from youtube_transcript_api import YouTubeTranscriptApi
 
-        transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+        # v1.0+ API requires instantiation
+        ytt_api = YouTubeTranscriptApi()
+        transcript_data = ytt_api.fetch(video_id)
 
         # Combine all text segments
-        full_text = " ".join([segment["text"] for segment in transcript_list])
+        full_text = " ".join([segment.text for segment in transcript_data])
 
         logger.info(f"Got transcript for {video_id}: {len(full_text)} chars")
         return full_text

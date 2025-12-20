@@ -99,7 +99,7 @@ def get_channel_videos(channel_id: str, max_results: int = 10) -> list[dict]:
 
 
 def get_transcript(video_id: str) -> Optional[str]:
-    """Fetch transcript for a video."""
+    """Fetch transcript for a video using youtube-transcript-api v1.0+."""
     try:
         from youtube_transcript_api import YouTubeTranscriptApi
         from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
@@ -108,8 +108,10 @@ def get_transcript(video_id: str) -> Optional[str]:
         return None
 
     try:
-        transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
-        return " ".join([entry["text"] for entry in transcript_list])
+        # v1.0+ API requires instantiation
+        ytt_api = YouTubeTranscriptApi()
+        transcript_data = ytt_api.fetch(video_id)
+        return " ".join([segment.text for segment in transcript_data])
     except (TranscriptsDisabled, NoTranscriptFound):
         logger.warning(f"No transcript available for {video_id}")
         return None

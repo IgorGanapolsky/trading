@@ -192,7 +192,9 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "feat(weekend): Learning pipeline update $(date +%Y-%m-%d)"
-            git push
+            # Pull any changes made since checkout, then push
+            git pull --rebase origin main || true
+            git push origin main
           fi
 
       - name: Weekend Learning Summary
