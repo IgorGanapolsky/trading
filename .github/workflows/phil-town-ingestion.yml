@@ -38,7 +38,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install yt-dlp youtube-transcript-api
+          pip install yt-dlp youtube-transcript-api chromadb
 
       - name: Run Phil Town YouTube Ingestion
         run: |
@@ -51,44 +51,41 @@ jobs:
           echo "Ingesting Phil Town blog and podcast..."
           python3 scripts/ingest_phil_town_blog.py --source all --max-articles 10
 
+      - name: Vectorize new content into RAG
+        run: |
+          echo "Vectorizing content into ChromaDB..."
+          python3 scripts/vectorize_rag_knowledge.py --update
+
+          echo ""
+          echo "=== RAG Stats ==="
+          python3 scripts/vectorize_rag_knowledge.py --stats
+
       - name: Show ingestion results
         run: |
           echo "=== YouTube Transcripts ==="
-          ls -la rag_knowledge/youtube/transcripts/ 2>/dev/null || echo "No transcripts yet"
-          echo ""
-          echo "=== YouTube Insights ==="
-          ls -la rag_knowledge/youtube/insights/ 2>/dev/null || echo "No insights yet"
+          ls -la rag_knowledge/youtube/transcripts/ 2>/dev/null | head -10 || echo "No transcripts yet"
           echo ""
           echo "=== Blog Articles ==="
-          ls -la rag_knowledge/blogs/phil_town/ 2>/dev/null || echo "No blog articles yet"
+          ls -la rag_knowledge/blogs/phil_town/ 2>/dev/null | head -10 || echo "No blog articles yet"
           echo ""
-          echo "=== Podcast Episodes ==="
-          ls -la rag_knowledge/podcasts/phil_town/ 2>/dev/null || echo "No podcast episodes yet"
-          echo ""
-          echo "=== Processed Cache ==="
-          cat data/youtube_cache/processed_videos.json 2>/dev/null || echo "No YouTube cache"
-          cat data/blog_cache/phil_town_articles.json 2>/dev/null || echo "No blog cache"
+          echo "=== Vector DB ==="
+          ls -la data/vector_db/ 2>/dev/null || echo "No vector DB yet"
 
       - name: Commit ingested content
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 
-          # Add all new content
-          git add rag_knowledge/youtube/
-          git add rag_knowledge/blogs/
-          git add rag_knowledge/podcasts/
+          # Add all new content + vector DB
+          git add rag_knowledge/
           git add data/youtube_cache/
           git add data/blog_cache/
+          git add data/vector_db/
 
           # Check if there are changes
           if git diff --staged --quiet; then
             echo "No new content to commit"
           else
-            git commit -m "feat(rag): Ingest Phil Town content (YouTube, Blog, Podcast) $(date +%Y-%m-%d)"
+            git commit -m "feat(rag): Phil Town content + vectorization $(date +%Y-%m-%d)"
             git push
           fi
-
-  # Future: Add more channels here
-  # ingest-warren-buffett:
-  # ingest-charlie-munger:

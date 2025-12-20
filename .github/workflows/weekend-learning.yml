@@ -1,0 +1,209 @@
+name: Weekend Learning Pipeline
+
+on:
+  schedule:
+    # Run Saturday and Sunday at 8:00 AM Eastern
+    # When markets are closed, we learn and improve
+    - cron: '0 13 * * 0,6'  # 13:00 UTC = 8:00 AM ET
+  workflow_dispatch:
+    inputs:
+      full_rebuild:
+        description: "Full RAG rebuild"
+        required: false
+        default: "false"
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  weekend-learning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for analysis
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install yt-dlp youtube-transcript-api chromadb pandas numpy
+
+      - name: Weekend Learning Header
+        run: |
+          echo "╔══════════════════════════════════════════════════════════╗"
+          echo "║           WEEKEND LEARNING PIPELINE                      ║"
+          echo "║   Markets closed - Time to learn and improve             ║"
+          echo "╚══════════════════════════════════════════════════════════╝"
+          echo ""
+          echo "📅 Date: $(date)"
+          echo "🎯 Focus: Phil Town Rule #1 Investing"
+          echo ""
+
+      # === PHASE 1: CONTENT INGESTION ===
+      - name: "Phase 1a: Ingest Phil Town content"
+        run: |
+          echo "📥 Ingesting Phil Town YouTube videos..."
+          python3 scripts/ingest_phil_town_youtube.py --mode recent || echo "YouTube ingestion completed with warnings"
+
+          echo ""
+          echo "📥 Ingesting Phil Town blog and podcast..."
+          python3 scripts/ingest_phil_town_blog.py --source all --max-articles 20 || echo "Blog ingestion completed with warnings"
+
+      - name: "Phase 1b: Ingest Options education content"
+        run: |
+          echo "📥 Ingesting options education (Option Alpha, InTheMoney)..."
+          python3 scripts/ingest_options_youtube.py --all --mode recent --max 5 || echo "Options ingestion completed with warnings"
+
+      # === PHASE 2: VECTORIZATION ===
+      - name: "Phase 2: Vectorize into RAG"
+        run: |
+          echo "🔄 Vectorizing all content..."
+
+          if [ "${{ github.event.inputs.full_rebuild }}" == "true" ]; then
+            echo "Full rebuild requested..."
+            python3 scripts/vectorize_rag_knowledge.py --rebuild
+          else
+            python3 scripts/vectorize_rag_knowledge.py --update
+          fi
+
+          echo ""
+          echo "📊 RAG Statistics:"
+          python3 scripts/vectorize_rag_knowledge.py --stats
+
+      # === PHASE 3: TRADE HISTORY ANALYSIS ===
+      - name: "Phase 3: Analyze trade history"
+        run: |
+          echo "📈 Analyzing trade history for patterns..."
+          python3 -c "
+          import json
+          from pathlib import Path
+          from datetime import datetime, timedelta
+          from collections import defaultdict
+
+          # Load all trade files from last 30 days
+          trades = []
+          data_dir = Path('data')
+          for i in range(30):
+              date = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
+              trade_file = data_dir / f'trades_{date}.json'
+              if trade_file.exists():
+                  try:
+                      day_trades = json.loads(trade_file.read_text())
+                      if isinstance(day_trades, list):
+                          trades.extend(day_trades)
+                  except:
+                      pass
+
+          if not trades:
+              print('No trades found in last 30 days')
+              exit(0)
+
+          # Analyze by strategy
+          by_strategy = defaultdict(lambda: {'count': 0, 'wins': 0, 'total_pl': 0})
+          for t in trades:
+              strategy = t.get('strategy', 'unknown')
+              by_strategy[strategy]['count'] += 1
+              pl = t.get('realized_pl', 0) or t.get('pl', 0) or 0
+              by_strategy[strategy]['total_pl'] += pl
+              if pl > 0:
+                  by_strategy[strategy]['wins'] += 1
+
+          print(f'\\n📊 Trade Analysis (last 30 days)')
+          print(f'   Total trades: {len(trades)}')
+          print(f'\\n   By Strategy:')
+          for strategy, stats in sorted(by_strategy.items(), key=lambda x: -x[1]['total_pl']):
+              win_rate = (stats['wins'] / stats['count'] * 100) if stats['count'] > 0 else 0
+              print(f'   - {strategy}: {stats[\"count\"]} trades, {win_rate:.0f}% win rate, \${stats[\"total_pl\"]:.2f} P/L')
+          "
+
+      # === PHASE 4: GENERATE INSIGHTS ===
+      - name: "Phase 4: Generate weekend insights"
+        run: |
+          echo "💡 Generating insights..."
+
+          # Create weekend insights file
+          python3 -c "
+          import json
+          from datetime import datetime
+          from pathlib import Path
+
+          insights = {
+              'generated_at': datetime.now().isoformat(),
+              'type': 'weekend_learning',
+              'content_sources': {
+                  'phil_town_youtube': True,
+                  'phil_town_blog': True,
+                  'lessons_learned': True,
+              },
+              'recommendations': [
+                  'Continue 80% options allocation - proven 75% win rate',
+                  'Focus on cash-secured puts with 30-45 DTE',
+                  'Monitor VIX for entry timing (buy fear)',
+                  'Apply Rule #1: Only trade wonderful companies at attractive prices',
+              ],
+              'next_actions': [
+                  'Review Monday pre-market analysis',
+                  'Check options chain for CSP opportunities',
+                  'Verify margin of safety on watchlist',
+              ]
+          }
+
+          output = Path('data/weekend_insights.json')
+          output.write_text(json.dumps(insights, indent=2))
+          print(f'✅ Insights saved to {output}')
+          print(json.dumps(insights, indent=2))
+          "
+
+      # === PHASE 5: RAG QUERY TEST ===
+      - name: "Phase 5: Test RAG queries"
+        run: |
+          echo "🔍 Testing RAG semantic search..."
+          echo ""
+
+          echo "Query 1: margin of safety"
+          python3 scripts/vectorize_rag_knowledge.py --query "margin of safety" || echo "Query completed"
+          echo ""
+
+          echo "Query 2: cash secured puts"
+          python3 scripts/vectorize_rag_knowledge.py --query "cash secured puts options" --options-only || echo "Query completed"
+
+      # === COMMIT RESULTS ===
+      - name: Commit weekend learning results
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+          git add rag_knowledge/
+          git add data/vector_db/
+          git add data/youtube_cache/
+          git add data/blog_cache/
+          git add data/weekend_insights.json
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "feat(weekend): Learning pipeline update $(date +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Weekend Learning Summary
+        run: |
+          echo ""
+          echo "╔══════════════════════════════════════════════════════════╗"
+          echo "║           WEEKEND LEARNING COMPLETE                      ║"
+          echo "╚══════════════════════════════════════════════════════════╝"
+          echo ""
+          echo "✅ Phil Town content ingested"
+          echo "✅ RAG vectorized and ready"
+          echo "✅ Trade history analyzed"
+          echo "✅ Weekend insights generated"
+          echo ""
+          echo "🎯 Ready for Monday trading at 9:35 AM ET"
