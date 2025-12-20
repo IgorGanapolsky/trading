@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   ingest-phil-town:
@@ -72,6 +73,8 @@ jobs:
           ls -la data/vector_db/ 2>/dev/null || echo "No vector DB yet"
 
       - name: Commit ingested content
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
@@ -86,8 +89,14 @@ jobs:
           if git diff --staged --quiet; then
             echo "No new content to commit"
           else
+            # Create a unique branch name with timestamp
+            BRANCH_NAME="auto/phil-town-$(date +%Y%m%d-%H%M%S)"
+            git checkout -b "$BRANCH_NAME"
             git commit -m "feat(rag): Phil Town content + vectorization $(date +%Y-%m-%d)"
-            # Pull any changes made since checkout, then push
-            git pull --rebase origin main || true
-            git push origin main
+            git push -u origin "$BRANCH_NAME"
+
+            # Create PR using gh CLI
+            gh pr create --title "feat(rag): Phil Town content $(date +%Y-%m-%d)" \
+              --body "Automated Phil Town content ingestion." \
+              --base main --head "$BRANCH_NAME"
           fi

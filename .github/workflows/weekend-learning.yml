@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   weekend-learning:
@@ -177,6 +178,8 @@ jobs:
 
       # === COMMIT RESULTS ===
       - name: Commit weekend learning results
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
@@ -191,10 +194,16 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
+            # Create a unique branch name with timestamp
+            BRANCH_NAME="auto/weekend-learning-$(date +%Y%m%d-%H%M%S)"
+            git checkout -b "$BRANCH_NAME"
             git commit -m "feat(weekend): Learning pipeline update $(date +%Y-%m-%d)"
-            # Pull any changes made since checkout, then push
-            git pull --rebase origin main || true
-            git push origin main
+            git push -u origin "$BRANCH_NAME"
+
+            # Create PR using gh CLI
+            gh pr create --title "feat(weekend): Learning pipeline update $(date +%Y-%m-%d)" \
+              --body "Automated weekend learning results. Auto-merge enabled." \
+              --base main --head "$BRANCH_NAME"
           fi
 
       - name: Weekend Learning Summary
