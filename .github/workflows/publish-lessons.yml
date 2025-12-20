@@ -1,0 +1,135 @@
+name: Publish Lessons to Blog
+
+on:
+  push:
+    paths:
+      - 'rag_knowledge/lessons_learned/*.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Find new lessons
+        id: find_lessons
+        run: |
+          # Get lessons modified in this push
+          LESSONS=$(git diff --name-only HEAD~1 HEAD -- 'rag_knowledge/lessons_learned/*.md' | tr '\n' ' ')
+          echo "lessons=$LESSONS" >> $GITHUB_OUTPUT
+          echo "Found lessons: $LESSONS"
+
+      - name: Convert and publish to Dev.to
+        if: steps.find_lessons.outputs.lessons != ''
+        env:
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+        run: |
+          python3 << 'PYTHON'
+          import os
+          import json
+          import requests
+          from pathlib import Path
+
+          api_key = os.environ.get('DEVTO_API_KEY')
+          if not api_key:
+              print("No Dev.to API key configured - skipping Dev.to publish")
+              exit(0)
+
+          lessons = os.environ.get('LESSONS', '').split()
+
+          for lesson_path in lessons:
+              if not lesson_path or not Path(lesson_path).exists():
+                  continue
+
+              content = Path(lesson_path).read_text()
+
+              # Extract title from first H1
+              lines = content.split('\n')
+              title = "AI Trading Lesson"
+              for line in lines:
+                  if line.startswith('# '):
+                      title = line[2:].strip()
+                      break
+
+              # Add footer
+              content += f"""
+
+          ---
+
+          *This lesson was auto-published from our [AI Trading repository](https://github.com/IgorGanapolsky/trading).*
+
+          **More lessons**: [rag_knowledge/lessons_learned](https://github.com/IgorGanapolsky/trading/tree/main/rag_knowledge/lessons_learned)
+          """
+
+              # Publish to Dev.to
+              headers = {
+                  'api-key': api_key,
+                  'Content-Type': 'application/json'
+              }
+
+              payload = {
+                  'article': {
+                      'title': f"AI Trading: {title}",
+                      'body_markdown': content,
+                      'published': True,
+                      'tags': ['ai', 'trading', 'python', 'machinelearning'],
+                      'series': 'AI Trading Journey',
+                      'canonical_url': f"https://github.com/IgorGanapolsky/trading/blob/main/{lesson_path}"
+                  }
+              }
+
+              try:
+                  resp = requests.post(
+                      'https://dev.to/api/articles',
+                      headers=headers,
+                      json=payload
+                  )
+                  if resp.status_code in [200, 201]:
+                      print(f"Published: {title}")
+                      print(f"URL: {resp.json().get('url')}")
+                  else:
+                      print(f"Failed to publish {title}: {resp.status_code}")
+                      print(resp.text)
+              except Exception as e:
+                  print(f"Error publishing {title}: {e}")
+          PYTHON
+        env:
+          LESSONS: ${{ steps.find_lessons.outputs.lessons }}
+
+      - name: Copy lessons to docs for GitHub Pages
+        run: |
+          mkdir -p docs/_lessons
+          for file in rag_knowledge/lessons_learned/*.md; do
+            filename=$(basename "$file")
+            # Add Jekyll front matter
+            echo "---" > "docs/_lessons/$filename"
+            echo "layout: post" >> "docs/_lessons/$filename"
+            echo "title: \"$(head -1 "$file" | sed 's/^# //')\"" >> "docs/_lessons/$filename"
+            echo "---" >> "docs/_lessons/$filename"
+            echo "" >> "docs/_lessons/$filename"
+            cat "$file" >> "docs/_lessons/$filename"
+          done
+
+      - name: Commit docs updates
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "docs: Sync lessons to GitHub Pages"
+          title: "docs: Sync lessons to GitHub Pages"
+          body: "Automated sync of lessons learned to docs folder for GitHub Pages."
+          branch: auto/sync-lessons-${{ github.run_id }}
+          add-paths: docs/_lessons/
+          delete-branch: true

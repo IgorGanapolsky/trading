@@ -1,0 +1,52 @@
+# GitHub Pages Configuration
+title: "AI Trading Journey"
+description: "90-day experiment building an autonomous AI trading system with Claude. Real failures, real fixes, real lessons."
+url: "https://igorganapolsky.github.io"
+baseurl: "/trading"
+
+# SEO
+author: "Igor Ganapolsky & Claude"
+twitter:
+  username: igorganapolsky
+social:
+  name: Igor Ganapolsky
+  links:
+    - https://github.com/IgorGanapolsky
+    - https://twitter.com/igorganapolsky
+
+# Build settings
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# Collections
+collections:
+  lessons:
+    output: true
+    permalink: /lessons/:name/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+      author: "Igor Ganapolsky & Claude"
+  - scope:
+      path: ""
+      type: "lessons"
+    values:
+      layout: "post"
+
+# Analytics (add your GA4 ID)
+google_analytics:
+
+# Exclude from build
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor

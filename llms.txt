@@ -1,13 +1,29 @@
-# AI Trading System
+# AI Trading System - LLM Context File
 
-> Automated trading system using Alpaca API with multi-LLM consensus analysis.
-> Paper trading R&D phase (Days 1-90) building profitable trading edge.
+> A 90-day experiment building an autonomous AI trading system with Claude Opus 4.5.
+> Real failures, real fixes, 60+ documented lessons for AI agents and humans.
+> **Blog**: https://igorganapolsky.github.io/trading/
+
+## Quick Context
+
+- **Phase**: R&D Day 50/90 | **Mode**: Paper Trading (Alpaca) | **Budget**: $100/mo
+- **Strategy**: Phil Town's Rule #1 + Options (CSPs, covered calls)
+- **AI Stack**: Claude Opus 4.5, ChromaDB RAG, PyTorch RL
+- **Win Rate**: 50% (live) | **Portfolio**: ~$100k paper
 
 ## Core Documentation
 
 - [AGENTS.md](AGENTS.md): Universal AI agent instructions (start here)
 - [README.md](README.md): Project overview and setup
 - [.claude/CLAUDE.md](.claude/CLAUDE.md): Claude-specific extended instructions
+- [docs/RETROSPECTIVE.md](docs/RETROSPECTIVE.md): 90-day journey blog
+
+## Critical Lessons (Read These First)
+
+- [ll_051_calendar_awareness](/rag_knowledge/lessons_learned/ll_051_calendar_awareness_critical_dec19.md): AI kept saying "tomorrow" on Friday
+- [ll_054_rag_not_used](/rag_knowledge/lessons_learned/ll_054_rag_not_actually_used_dec17.md): Built RAG but never queried it
+- [ll_055_workflow_failures](/rag_knowledge/lessons_learned/ll_055_gitignore_breaks_workflow_commits_dec20.md): 4-failure cascade in CI/CD
+- [ll_052_no_crypto](/rag_knowledge/lessons_learned/ll_052_no_crypto_trading_dec19.md): Removed all crypto references
 
 ## Architecture
 
