@@ -102,6 +102,37 @@ class LessonsLearnedRAG:
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:top_k]
 
+    def search(self, query: str, top_k: int = 5) -> list:
+        """
+        Search lessons - returns format expected by gates.py and main.py.
+
+        Returns list of (LessonResult, score) tuples for compatibility.
+        """
+        from dataclasses import dataclass
+
+        @dataclass
+        class LessonResult:
+            id: str
+            title: str
+            severity: str
+            snippet: str
+            file: str
+
+        raw_results = self.query(query, top_k=top_k)
+        results = []
+        for r in raw_results:
+            lesson = LessonResult(
+                id=r["id"],
+                title=r.get("title", r["id"]),
+                severity=r["severity"],
+                snippet=r["snippet"],
+                file=r["file"],
+            )
+            # Normalize score to 0-1 range
+            normalized_score = min(r["score"] / 100.0, 1.0)
+            results.append((lesson, normalized_score))
+        return results
+
     def get_critical_lessons(self) -> list:
         """Get all CRITICAL severity lessons."""
         return [lesson for lesson in self.lessons if lesson["severity"] == "CRITICAL"]
