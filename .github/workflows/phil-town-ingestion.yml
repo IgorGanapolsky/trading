@@ -73,7 +73,7 @@ jobs:
           ls -la data/vector_db/ 2>/dev/null || echo "No vector DB yet"
 
       - name: Create Pull Request with ingested content
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "feat(rag): Phil Town content ${{ github.run_id }}"

@@ -178,7 +178,7 @@ jobs:
 
       # === COMMIT RESULTS ===
       - name: Create Pull Request with learned content
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "feat(weekend): Learning pipeline update ${{ github.run_id }}"
