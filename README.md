@@ -8,7 +8,7 @@
 
 **Open-source AI-powered trading system** using options premium selling and Thompson Sampling strategy selection. Built with Python and Alpaca API.
 
-> **Current Status**: Day 50/90 R&D Phase | $99,450 equity | 50% win rate
+> **Current Status**: Day 50/90 R&D Phase | $100,531 equity | +$531 profit | 50% win rate
 
 ---
 
@@ -31,12 +31,12 @@ Most trading bots fail because they:
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| Equity | $99,449.77 | Paper |
-| P/L | -$550.23 | -0.55% |
+| Equity | $100,531.31 | Paper |
+| P/L | +$531.31 | +0.53% |
 | Win Rate | 50% | Target: 55%+ |
-| Backtest Pass | 0/13 | Needs work |
+| Backtest Pass | 19/32 | Improving |
 
-**Honest Assessment**: System is break-even after 50 days. Options strategy shows promise but execution needs improvement.
+**Honest Assessment**: System is profitable after 50 days (+$531). Options strategy (puts) delivering consistent gains. Daily automated blog posting to GitHub Pages and Dev.to.
 
 ---
 

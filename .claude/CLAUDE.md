@@ -32,7 +32,7 @@ data/
 .claude/
 ├── rules/MANDATORY_RULES.md  # All critical rules (single source of truth)
 ├── commands/                 # Slash command procedures
-├── skills/                   # 21 specialized skills (auto-discovered)
+├── skills/                   # 17 specialized skills (auto-discovered)
 └── hooks/                    # Lifecycle automation
 
 docs/
@@ -62,7 +62,7 @@ cat feature_list.json
 git log --oneline -10
 
 # 2. Verify environment
-./init.sh
+python3 -c "from src.orchestrator.main import TradingOrchestrator; print('OK')"
 
 # 3. Check system state
 cat data/system_state.json | head -50
@@ -134,9 +134,9 @@ For complex decisions, use: "Take extra time to reason through the tradeoffs"
 - **Rules**: `.claude/rules/MANDATORY_RULES.md` (all constraints)
 - **R&D Strategy**: `docs/r-and-d-phase.md`
 - **Verification**: `docs/verification-protocols.md`
-- **Lessons Learned**: `rag_knowledge/lessons_learned/` (27 lessons)
-- **Skills**: `.claude/skills/` (21 specialized capabilities)
+- **Lessons Learned**: `rag_knowledge/lessons_learned/` (65+ lessons)
+- **Skills**: `.claude/skills/` (17 specialized capabilities)
 
 ---
 
-**Last Optimized**: December 13, 2025 | **Lines**: ~160 (per Anthropic best practices)
+**Last Optimized**: December 22, 2025 | **Lines**: ~160 (per Anthropic best practices)
