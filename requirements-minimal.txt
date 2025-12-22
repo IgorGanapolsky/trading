@@ -54,7 +54,7 @@ pytest-timeout>=2.0.0
 # selenium==4.15.0               # Never imported - web scraping not implemented
 # beautifulsoup4==4.12.2         # Never imported - HTML parsing not used
 # lxml==4.9.3                    # Never imported - XML parsing not used
-fastapi==0.110.2                # MCP server for component manifest
+fastapi==0.127.0                # MCP server for component manifest
 uvicorn==0.40.0                 # ASGI server for MCP
 # scikit-learn==1.5.0            # Never imported - ML models not implemented
 # python-crontab==3.0.0          # Never imported - using schedule instead
