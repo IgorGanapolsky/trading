@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned #046: Tax-Aware Trading Mandate"
+date: 2025-12-15
 ---
 
 # Lesson Learned #046: Tax-Aware Trading Mandate

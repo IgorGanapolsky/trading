@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Theta Pivot Strategy Implementation (Dec 11, 2025)"
+date: 2025-12-11
 ---
 
 # Lesson Learned: Theta Pivot Strategy Implementation (Dec 11, 2025)

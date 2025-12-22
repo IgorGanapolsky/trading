@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Deep Research Safety Improvements (Dec 11, 2025)"
+date: 2025-12-11
 ---
 
 # Lesson Learned: Deep Research Safety Improvements (Dec 11, 2025)

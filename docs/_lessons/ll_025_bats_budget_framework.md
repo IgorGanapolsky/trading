@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Google's Budget-Aware Test-time Scaling Framework (Dec 13, 2025)"
+date: 2025-12-11
 ---
 
 # Lesson Learned: Google's Budget-Aware Test-time Scaling Framework (Dec 13, 2025)

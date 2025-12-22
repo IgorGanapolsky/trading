@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Session Start Checklist Violation (Dec 13, 2025)"
+date: 2025-12-13
 ---
 
 # Lesson Learned: Session Start Checklist Violation (Dec 13, 2025)

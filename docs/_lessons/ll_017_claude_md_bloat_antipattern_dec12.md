@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: CLAUDE.md Bloat Anti-Pattern"
+date: 2025-12-12
 ---
 
 # Lesson Learned: CLAUDE.md Bloat Anti-Pattern

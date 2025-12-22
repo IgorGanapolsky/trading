@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Dead Code and Dormant Systems"
+date: 2025-12-11
 ---
 
 # Lesson Learned: Dead Code and Dormant Systems

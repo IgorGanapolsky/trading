@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Syntax Error Merged to Main (Dec 11, 2025)"
+date: 2025-12-11
 ---
 
 # Lesson Learned: Syntax Error Merged to Main (Dec 11, 2025)

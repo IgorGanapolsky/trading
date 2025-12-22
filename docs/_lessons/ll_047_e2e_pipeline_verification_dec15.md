@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: E2E Pipeline Verification Tests Added"
+date: 2025-12-15
 ---
 
 # Lesson Learned: E2E Pipeline Verification Tests Added

@@ -113,10 +113,21 @@ jobs:
           mkdir -p docs/_lessons
           for file in rag_knowledge/lessons_learned/*.md; do
             filename=$(basename "$file")
-            # Add Jekyll front matter
+            title=$(head -1 "$file" | sed 's/^# //')
+
+            # Extract date from filename (e.g., ll_056_xxx_dec22.md -> 2025-12-22)
+            if [[ "$filename" =~ dec([0-9]+) ]]; then
+              day="${BASH_REMATCH[1]}"
+              date="2025-12-${day}"
+            else
+              date=$(date +%Y-%m-%d)
+            fi
+
+            # Add Jekyll front matter with date
             echo "---" > "docs/_lessons/$filename"
             echo "layout: post" >> "docs/_lessons/$filename"
-            echo "title: \"$(head -1 "$file" | sed 's/^# //')\"" >> "docs/_lessons/$filename"
+            echo "title: \"$title\"" >> "docs/_lessons/$filename"
+            echo "date: $date" >> "docs/_lessons/$filename"
             echo "---" >> "docs/_lessons/$filename"
             echo "" >> "docs/_lessons/$filename"
             cat "$file" >> "docs/_lessons/$filename"

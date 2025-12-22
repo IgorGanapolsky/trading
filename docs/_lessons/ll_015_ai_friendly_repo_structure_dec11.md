@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: AI-Friendly Repository Structure (Dec 11, 2025)"
+date: 2025-12-11
 ---
 
 # Lesson Learned: AI-Friendly Repository Structure (Dec 11, 2025)

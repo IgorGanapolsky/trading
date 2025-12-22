@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned #045: Verification Systems to Prevent Repeated Mistakes"
+date: 2025-12-15
 ---
 
 # Lesson Learned #045: Verification Systems to Prevent Repeated Mistakes

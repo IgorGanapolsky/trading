@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Trading System Dead for 2 Days (Dec 12, 2025)"
+date: 2025-12-12
 ---
 
 # Lesson Learned: Trading System Dead for 2 Days (Dec 12, 2025)

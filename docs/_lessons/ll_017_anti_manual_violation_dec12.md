@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Anti-Manual Mandate Violation (Dec 12, 2025)"
+date: 2025-12-12
 ---
 
 # Lesson Learned: Anti-Manual Mandate Violation (Dec 12, 2025)

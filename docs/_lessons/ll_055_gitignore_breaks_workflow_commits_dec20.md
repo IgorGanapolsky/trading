@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned #055: Multiple Workflow Commit Failures"
+date: 2025-12-20
 ---
 
 # Lesson Learned #055: Multiple Workflow Commit Failures

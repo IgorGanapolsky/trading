@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Silent Pipeline Failures - The Phil Town Ingestion Disaster (Dec 22, 2025)"
+date: 2025-12-22
 ---
 
 # Lesson Learned: Silent Pipeline Failures - The Phil Town Ingestion Disaster (Dec 22, 2025)

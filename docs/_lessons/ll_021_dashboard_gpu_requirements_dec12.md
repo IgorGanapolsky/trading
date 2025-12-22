@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Dashboard Workflow Failed Due to GPU Requirements (Dec 12, 2025)"
+date: 2025-12-12
 ---
 
 # Lesson Learned: Dashboard Workflow Failed Due to GPU Requirements (Dec 12, 2025)

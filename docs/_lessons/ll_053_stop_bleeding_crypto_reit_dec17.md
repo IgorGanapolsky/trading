@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Stop Bleeding - Disable Crypto and REIT Strategies"
+date: 2025-12-17
 ---
 
 # Lesson Learned: Stop Bleeding - Disable Crypto and REIT Strategies

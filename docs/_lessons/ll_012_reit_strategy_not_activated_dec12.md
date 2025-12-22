@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: REIT Strategy Not Activated Despite CEO Priority (Dec 12, 2025)"
+date: 2025-12-12
 ---
 
 # Lesson Learned: REIT Strategy Not Activated Despite CEO Priority (Dec 12, 2025)

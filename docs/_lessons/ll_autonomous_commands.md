@@ -1,6 +1,7 @@
 ---
 layout: post
-title: "---"
+title: "Lesson: Always Execute Commands Autonomously"
+date: 2025-12-11
 ---
 
 ---

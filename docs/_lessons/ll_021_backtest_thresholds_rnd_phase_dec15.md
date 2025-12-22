@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Backtest Thresholds Too Strict for R&D Phase (Dec 15, 2025)"
+date: 2025-12-15
 ---
 
 # Lesson Learned: Backtest Thresholds Too Strict for R&D Phase (Dec 15, 2025)

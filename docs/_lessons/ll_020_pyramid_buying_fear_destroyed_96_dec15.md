@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Pyramid Buying During Fear Destroyed $96 (Dec 15, 2025)"
+date: 2025-12-15
 ---
 
 # Lesson Learned: Pyramid Buying During Fear Destroyed $96 (Dec 15, 2025)

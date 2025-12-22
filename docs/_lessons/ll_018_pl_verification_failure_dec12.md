@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: P/L Verification Failure (Dec 12, 2025)"
+date: 2025-12-12
 ---
 
 # Lesson Learned: P/L Verification Failure (Dec 12, 2025)

@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Gemini Deep Research for Pre-Trade Analysis (Dec 13, 2025)"
+date: 2025-12-11
 ---
 
 # Lesson Learned: Gemini Deep Research for Pre-Trade Analysis (Dec 13, 2025)

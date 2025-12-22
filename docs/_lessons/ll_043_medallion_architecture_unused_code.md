@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "LL-043: Medallion Architecture - Built But Never Integrated"
+date: 2025-12-11
 ---
 
 # LL-043: Medallion Architecture - Built But Never Integrated

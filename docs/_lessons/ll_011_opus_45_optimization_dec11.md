@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Claude Opus 4.5 Optimization (Dec 11, 2025)"
+date: 2025-12-11
 ---
 
 # Lesson Learned: Claude Opus 4.5 Optimization (Dec 11, 2025)

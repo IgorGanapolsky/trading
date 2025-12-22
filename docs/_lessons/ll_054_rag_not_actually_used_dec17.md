@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: RAG Was Built But Not Used - Keyword Matching is Useless"
+date: 2025-12-17
 ---
 
 # Lesson Learned: RAG Was Built But Not Used - Keyword Matching is Useless

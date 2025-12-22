@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned #052: We Do NOT Trade Crypto - Remove All References"
+date: 2025-12-19
 ---
 
 # Lesson Learned #052: We Do NOT Trade Crypto - Remove All References

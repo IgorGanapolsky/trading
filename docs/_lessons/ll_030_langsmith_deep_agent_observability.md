@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned #030: LangSmith Deep Agent Observability"
+date: 2025-12-11
 ---
 
 # Lesson Learned #030: LangSmith Deep Agent Observability

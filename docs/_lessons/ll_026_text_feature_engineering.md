@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Text Feature Engineering for Trading Signals (Dec 13, 2025)"
+date: 2025-12-11
 ---
 
 # Lesson Learned: Text Feature Engineering for Trading Signals (Dec 13, 2025)

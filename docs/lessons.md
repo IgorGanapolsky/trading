@@ -10,8 +10,9 @@ permalink: /lessons/
 
 ## All Lessons
 
-{% for lesson in site.lessons %}
-- [{{ lesson.title }}]({{ lesson.url | relative_url }})
+{% assign sorted_lessons = site.lessons | sort: 'date' | reverse %}
+{% for lesson in sorted_lessons %}
+- [{{ lesson.title }}]({{ lesson.url | relative_url }}) {% if lesson.date %}*({{ lesson.date | date: "%b %d, %Y" }})*{% endif %}
 {% endfor %}
 
 ---

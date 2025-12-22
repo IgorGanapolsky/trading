@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: System Dead for 2 Days - Overly Strict Filters (Dec 12, 2025)"
+date: 2025-12-12
 ---
 
 # Lesson Learned: System Dead for 2 Days - Overly Strict Filters (Dec 12, 2025)

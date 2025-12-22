@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned 035: Failed to Use RAG Despite Building It (Dec 15, 2025)"
+date: 2025-12-15
 ---
 
 # Lesson Learned 035: Failed to Use RAG Despite Building It (Dec 15, 2025)

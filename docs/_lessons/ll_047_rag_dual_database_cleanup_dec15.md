@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned #047: RAG Dual Database Cleanup Needed"
+date: 2025-12-15
 ---
 
 # Lesson Learned #047: RAG Dual Database Cleanup Needed

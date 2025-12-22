@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned #022: Options Income Not Automated Despite Being Primary Profit Source"
+date: 2025-12-12
 ---
 
 # Lesson Learned #022: Options Income Not Automated Despite Being Primary Profit Source

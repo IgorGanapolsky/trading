@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Dynamic Budget Scaling Was Dead Code"
+date: 2025-12-11
 ---
 
 # Lesson Learned: Dynamic Budget Scaling Was Dead Code

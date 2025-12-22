@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: F-String Syntax Error Crash (Dec 13, 2025)"
+date: 2025-12-13
 ---
 
 # Lesson Learned: F-String Syntax Error Crash (Dec 13, 2025)

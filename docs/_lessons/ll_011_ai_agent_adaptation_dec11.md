@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: AI Agent Adaptation Framework (Dec 11, 2025)"
+date: 2025-12-11
 ---
 
 # Lesson Learned: AI Agent Adaptation Framework (Dec 11, 2025)

@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: LangSmith Tracing Integration"
+date: 2025-12-16
 ---
 
 # Lesson Learned: LangSmith Tracing Integration

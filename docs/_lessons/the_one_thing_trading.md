@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "The ONE Thing - Applied to Trading Systems"
+date: 2025-12-11
 ---
 
 # The ONE Thing - Applied to Trading Systems
