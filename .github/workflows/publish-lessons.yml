@@ -36,6 +36,7 @@ jobs:
         if: steps.find_lessons.outputs.lessons != ''
         env:
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+          LESSONS: ${{ steps.find_lessons.outputs.lessons }}
         run: |
           python3 << 'PYTHON'
           import os
@@ -106,8 +107,6 @@ jobs:
               except Exception as e:
                   print(f"Error publishing {title}: {e}")
           PYTHON
-        env:
-          LESSONS: ${{ steps.find_lessons.outputs.lessons }}
 
       - name: Copy lessons to docs for GitHub Pages
         run: |
