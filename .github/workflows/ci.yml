@@ -86,7 +86,7 @@ jobs:
       - name: Run unit tests with coverage
         run: poetry run pytest -q --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=30
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-report
           path: coverage.xml
@@ -116,7 +116,7 @@ jobs:
           mkdir -p out
           poetry run ./scripts/run_smoke.sh tests/fixtures/fixture.csv 42 out/smoke.json
       - name: Upload smoke artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: smoke-result
           path: out/smoke.json

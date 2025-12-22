@@ -1193,7 +1193,7 @@ jobs:
       - name: Upload execution logs
         if: always()
         continue-on-error: true  # Don't fail workflow if log upload fails
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: trading-logs-${{ github.run_id }}
           path: |
@@ -1209,7 +1209,7 @@ jobs:
       - name: Upload logs on failure (early)
         if: failure() || cancelled()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: failure-logs-${{ github.run_id }}
           path: |
