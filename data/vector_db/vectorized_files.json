@@ -329,7 +329,67 @@
       "hash": "987db7bf5d8b88c3a8561bdd7154ffd4",
       "chunks": 21,
       "vectorized_at": "2025-12-20T00:03:26.351504"
+    },
+    "rag_knowledge/blogs/phil_town/spending-money-wisely_7_Tips_for_Spending_Money_Wisely.md": {
+      "hash": "b61206459d736ba59697b0a91636fa6d",
+      "chunks": 24,
+      "vectorized_at": "2025-12-22T20:18:46.390418"
+    },
+    "rag_knowledge/blogs/phil_town/retirement-planning_Retirement_Planning.md": {
+      "hash": "a954ae8f71450ee627b64ae7be41d762",
+      "chunks": 2,
+      "vectorized_at": "2025-12-22T20:18:46.614941"
+    },
+    "rag_knowledge/blogs/phil_town/how-to-invest_How_to_Invest.md": {
+      "hash": "70dc3581f5df5077402d05dcd3c6a12b",
+      "chunks": 2,
+      "vectorized_at": "2025-12-22T20:18:46.834407"
+    },
+    "rag_knowledge/blogs/phil_town/stock-market-basics_Stock_Market_Basics.md": {
+      "hash": "1bc3842f526eb15a49134b5a51ceefff",
+      "chunks": 2,
+      "vectorized_at": "2025-12-22T20:18:47.050207"
+    },
+    "rag_knowledge/blogs/phil_town/investing-news-and-tips_Investing_News_and_Tips.md": {
+      "hash": "c7ec8a578ec2d0a0e54a27e46306c1c8",
+      "chunks": 2,
+      "vectorized_at": "2025-12-22T20:18:47.291661"
+    },
+    "rag_knowledge/blogs/phil_town/value-investing_What_is_Value_Investing.md": {
+      "hash": "480e09896ddc3f208b6533ed392510bb",
+      "chunks": 25,
+      "vectorized_at": "2025-12-22T20:18:48.426965"
+    },
+    "rag_knowledge/blogs/phil_town/become-investor_How_to_Become_an_Investor.md": {
+      "hash": "aa9ca7365e991bdedefec1ca2bc7b1c2",
+      "chunks": 26,
+      "vectorized_at": "2025-12-22T20:18:49.578616"
+    },
+    "rag_knowledge/blogs/phil_town/financial-control_Financial_Control.md": {
+      "hash": "5d285afa8f5030bb6d7f293c8ccfce6c",
+      "chunks": 2,
+      "vectorized_at": "2025-12-22T20:18:49.796979"
+    },
+    "rag_knowledge/blogs/phil_town/why-you-dont-need-a-financial-_You_Dont_Need_a_Financial_Advisor.md": {
+      "hash": "dffb9ceb845ae465af72f7d1bad72332",
+      "chunks": 14,
+      "vectorized_at": "2025-12-22T20:18:50.480158"
+    },
+    "rag_knowledge/blogs/phil_town/personal-development_Personal_Development.md": {
+      "hash": "2f86178f8f549f1b18d79207201a3c6a",
+      "chunks": 2,
+      "vectorized_at": "2025-12-22T20:18:50.696303"
+    },
+    "rag_knowledge/lessons_learned/ll_055_gitignore_breaks_workflow_commits_dec20.md": {
+      "hash": "697cc226baf3482a3c2857f5966f1bd2",
+      "chunks": 4,
+      "vectorized_at": "2025-12-22T20:18:51.011281"
+    },
+    "rag_knowledge/lessons_learned/ll_056_silent_pipeline_failures_dec22.md": {
+      "hash": "5a4651904315a54931b7b4f8f5815bc0",
+      "chunks": 5,
+      "vectorized_at": "2025-12-22T20:18:51.347100"
     }
   },
-  "last_updated": "2025-12-20T00:03:26.352224"
+  "last_updated": "2025-12-22T20:18:51.349327"
 }
