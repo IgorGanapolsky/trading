@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Lesson Learned: Strategy Thresholds Too Tight - Positions Closed Before Trends Developed (Dec 17, 2025)"
+title: "Lesson Learned: Strategy Thresholds Too Tight - Positions Closed Before Trends Developed"
 ---
 
 # Lesson Learned: Strategy Thresholds Too Tight - Positions Closed Before Trends Developed

@@ -122,13 +122,14 @@ jobs:
             cat "$file" >> "docs/_lessons/$filename"
           done
 
-      - name: Commit docs updates
-        uses: peter-evans/create-pull-request@v8
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "docs: Sync lessons to GitHub Pages"
-          title: "docs: Sync lessons to GitHub Pages"
-          body: "Automated sync of lessons learned to docs folder for GitHub Pages."
-          branch: auto/sync-lessons-${{ github.run_id }}
-          add-paths: docs/_lessons/
-          delete-branch: true
+      - name: Commit docs updates directly to main
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add docs/_lessons/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "docs: Sync lessons to GitHub Pages"
+            git push origin main
+          fi

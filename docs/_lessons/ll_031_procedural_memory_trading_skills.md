@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Lesson Learned #031: Procedural Memory for Trading Skills (Dec 14, 2025)"
+title: "Lesson Learned #031: Procedural Memory for Trading Skills"
 ---
 
 # Lesson Learned #031: Procedural Memory for Trading Skills

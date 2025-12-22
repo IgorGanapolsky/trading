@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "LL-028: Netflix Upper Metamodel - Unified Domain Model (Dec 13, 2025)"
+title: "LL-028: Netflix Upper Metamodel - Unified Domain Model"
 ---
 
 # LL-028: Netflix Upper Metamodel - Unified Domain Model

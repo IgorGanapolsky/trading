@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Lesson Learned #043: Crypto Strategy Removed - Simplify and Focus (Dec 15, 2025)"
+title: "Lesson Learned #043: Crypto Strategy Removed - Simplify and Focus"
 ---
 
 # Lesson Learned #043: Crypto Strategy Removed - Simplify and Focus

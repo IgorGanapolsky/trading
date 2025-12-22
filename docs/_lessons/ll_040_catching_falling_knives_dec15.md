@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "LL-040: Catching Falling Knives - Trend Confirmation Required (Dec 15, 2025)"
+title: "LL-040: Catching Falling Knives - Trend Confirmation Required"
 ---
 
 # LL-040: Catching Falling Knives - Trend Confirmation Required

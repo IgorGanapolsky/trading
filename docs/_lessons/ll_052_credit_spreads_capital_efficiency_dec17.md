@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Lesson Learned: Credit Spreads for Capital-Efficient Options Trading (Dec 17, 2025)"
+title: "Lesson Learned: Credit Spreads for Capital-Efficient Options Trading"
 ---
 
 # Lesson Learned: Credit Spreads for Capital-Efficient Options Trading

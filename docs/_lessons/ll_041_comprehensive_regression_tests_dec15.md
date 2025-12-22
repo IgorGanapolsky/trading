@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Lesson Learned 041: Comprehensive Regression Tests for All Lessons (Dec 15, 2025)"
+title: "Lesson Learned 041: Comprehensive Regression Tests for All Lessons"
 ---
 
 # Lesson Learned 041: Comprehensive Regression Tests for All Lessons

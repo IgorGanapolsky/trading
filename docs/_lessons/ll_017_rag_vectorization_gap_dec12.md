@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Lesson Learned: RAG Vectorization Gap - Critical Knowledge Base Failure (Dec 12, 2025)"
+title: "Lesson Learned: RAG Vectorization Gap - Critical Knowledge Base Failure"
 ---
 
 # Lesson Learned: RAG Vectorization Gap - Critical Knowledge Base Failure

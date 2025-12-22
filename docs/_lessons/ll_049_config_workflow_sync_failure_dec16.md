@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Lesson Learned #049: Config-Workflow Sync Failure - Disabled Features Still Running (Dec 16, 2025)"
+title: "Lesson Learned #049: Config-Workflow Sync Failure - Disabled Features Still Running"
 ---
 
 # Lesson Learned #049: Config-Workflow Sync Failure - Disabled Features Still Running

@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Permanent Mandate: Autonomous GitHub Operations (Dec 14, 2025)"
+title: "Permanent Mandate: Autonomous GitHub Operations"
 ---
 
 # Permanent Mandate: Autonomous GitHub Operations

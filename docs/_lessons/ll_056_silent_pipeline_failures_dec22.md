@@ -1,7 +1,9 @@
 ---
 layout: post
-title: "Silent Pipeline Failures - The Phil Town Ingestion Disaster (Dec 22, 2025)"
+title: "Lesson Learned: Silent Pipeline Failures - The Phil Town Ingestion Disaster (Dec 22, 2025)"
 ---
+
+# Lesson Learned: Silent Pipeline Failures - The Phil Town Ingestion Disaster (Dec 22, 2025)
 
 ## The Failure
 
@@ -55,10 +57,16 @@ Every automated pipeline needs:
 
 A pipeline that runs successfully but produces wrong or empty output is worse than one that fails loudly - at least failures get noticed.
 
+## Related
+
+- LL-037: Verification Required Before Claiming Success
+- LL-045: Never Trust Automated Processes Without Verification
+- The CEO's question: "What did you learn today from Phil Town?" exposed this failure instantly
+
 ## Action Items
 
-- [x] Add output verification to phil-town-ingestion.yml workflow
-- [x] Add content keyword validation
+- [ ] Add output verification to phil-town-ingestion.yml workflow
+- [ ] Add content keyword validation
 - [ ] Create weekly ingestion health report
-- [x] Clear old/wrong cache content
+- [ ] Clear old/wrong cache content
 - [ ] Actually run successful ingestion with real Phil Town content
