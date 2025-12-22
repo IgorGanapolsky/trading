@@ -74,6 +74,7 @@ class RedditSentiment:
         "stocks",  # General market discussion
         "investing",  # Long-term investment talk
         "options",  # Derivatives sentiment
+        "thetagang",  # Credit spreads, wheel strategy (our strategy!)
     ]
 
     # Bullish keywords and their weights
@@ -102,6 +103,15 @@ class RedditSentiment:
         "yolo": 2,
         "ath": 1,
         "bounce": 1,
+        # Thetagang bullish (selling premium = bullish on stability)
+        "wheel": 2,
+        "csp": 2,  # Cash secured put
+        "cash secured put": 2,
+        "theta decay": 2,
+        "iv crush": 2,
+        "premium collected": 2,
+        "credit spread": 1,
+        "put credit spread": 2,  # Bullish strategy
     }
 
     # Bearish keywords and their weights
@@ -127,6 +137,13 @@ class RedditSentiment:
         "rip": -1,
         "rug pull": -3,
         "dead cat bounce": -2,
+        # Thetagang bearish (getting assigned/losing on spreads)
+        "assignment": -1,
+        "assigned": -1,
+        "max loss": -3,
+        "blown out": -3,
+        "call credit spread": -2,  # Bearish strategy
+        "iv expansion": -2,
     }
 
     # Ticker pattern (e.g., $SPY, NVDA, GOOGL)
