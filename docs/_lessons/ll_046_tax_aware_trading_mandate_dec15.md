@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Lesson Learned #046: Tax-Aware Trading Mandate"
+title: "Lesson Learned #046: Tax-Aware Trading Mandate (Dec 15, 2025)"
 ---
 
 # Lesson Learned #046: Tax-Aware Trading Mandate

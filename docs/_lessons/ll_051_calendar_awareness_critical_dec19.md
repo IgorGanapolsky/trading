@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Lesson Learned #051: Calendar Awareness is Critical for Trading AI"
+title: "Lesson Learned #051: Calendar Awareness is Critical for Trading AI (Dec 19, 2025)"
 ---
 
 # Lesson Learned #051: Calendar Awareness is Critical for Trading AI

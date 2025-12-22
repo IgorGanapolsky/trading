@@ -1,13 +1,6 @@
 ---
 layout: post
-title: "Lesson: Always Execute Commands Autonomously"
----
-
----
-title: "Lesson: Always Execute Commands Autonomously"
-date: "2025-12-12"
-severity: "high"
-tags: ["autonomous", "protocol", "error-correction"]
+title: "Lesson: Always Execute Commands Autonomously (Dec 12, 2025)"
 ---
 
 # Lesson: Always Execute Commands Autonomously

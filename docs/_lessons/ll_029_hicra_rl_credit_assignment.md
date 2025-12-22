@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "LL-029: HICRA - Hierarchy-Aware Credit Assignment for RL"
+title: "LL-029: HICRA - Hierarchy-Aware Credit Assignment for RL (Dec 14, 2025)"
 ---
 
 # LL-029: HICRA - Hierarchy-Aware Credit Assignment for RL

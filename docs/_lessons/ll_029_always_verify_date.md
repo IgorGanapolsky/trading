@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "LL-029: ALWAYS Verify Current Date Before Reporting"
+title: "LL-029: ALWAYS Verify Current Date Before Reporting (Dec 14, 2025)"
 ---
 
 # LL-029: ALWAYS Verify Current Date Before Reporting

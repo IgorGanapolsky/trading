@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Lesson Learned: Blind Trading Catastrophe - System Lost Money Without Knowing"
+title: "Lesson Learned: Blind Trading Catastrophe - System Lost Money Without Knowing (Dec 17, 2025)"
 ---
 
 # Lesson Learned: Blind Trading Catastrophe - System Lost Money Without Knowing

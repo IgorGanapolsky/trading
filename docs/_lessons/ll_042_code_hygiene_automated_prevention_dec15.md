@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Lesson Learned: Code Hygiene - Automated Prevention"
+title: "Lesson Learned: Code Hygiene - Automated Prevention (Dec 15, 2025)"
 ---
 
 # Lesson Learned: Code Hygiene - Automated Prevention

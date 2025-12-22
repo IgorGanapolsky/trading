@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Lesson Learned: Go-Live Readiness System"
+title: "Lesson Learned: Go-Live Readiness System (Dec 15, 2025)"
 ---
 
 # Lesson Learned: Go-Live Readiness System

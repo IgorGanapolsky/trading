@@ -3,8 +3,6 @@ layout: home
 title: AI Trading Journey
 ---
 
-# AI Trading Journey
-
 A 90-day experiment building an autonomous AI trading system with Claude Opus 4.5.
 
 **Real failures. Real fixes. Real lessons.**

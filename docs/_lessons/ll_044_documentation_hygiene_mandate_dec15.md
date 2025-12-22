@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Lesson Learned #044: Documentation Hygiene Mandate - Zero Tolerance for Stale Docs"
+title: "Lesson Learned #044: Documentation Hygiene Mandate - Zero Tolerance for Stale Docs (Dec 15, 2025)"
 ---
 
 # Lesson Learned #044: Documentation Hygiene Mandate - Zero Tolerance for Stale Docs
