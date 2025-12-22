@@ -1,0 +1,107 @@
+name: Daily Revenue Blog Post
+
+on:
+  # Run at 5:00 PM ET (22:00 UTC) every weekday after market close
+  schedule:
+    - cron: '0 22 * * 1-5'
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Report date (YYYY-MM-DD, leave empty for today)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+  ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+  DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+  PAPER_TRADING: "true"
+
+jobs:
+  generate-blog-post:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if market day
+        id: market_check
+        run: |
+          # Skip weekends
+          DAY_OF_WEEK=$(date +%u)
+          if [ "$DAY_OF_WEEK" -gt 5 ]; then
+            echo "Weekend - skipping"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Skip major US holidays (add more as needed)
+          TODAY=$(date +%m-%d)
+          HOLIDAYS="01-01 01-20 02-17 04-18 05-26 06-19 07-04 09-01 11-27 12-25"
+          if echo "$HOLIDAYS" | grep -q "$TODAY"; then
+            echo "Holiday - skipping"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "skip=false" >> $GITHUB_OUTPUT
+
+      - name: Set up Python
+        if: steps.market_check.outputs.skip != 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        if: steps.market_check.outputs.skip != 'true'
+        run: |
+          pip install alpaca-py python-dotenv requests
+
+      - name: Update performance log
+        if: steps.market_check.outputs.skip != 'true'
+        run: |
+          python3 scripts/update_performance_log.py
+
+      - name: Generate blog post
+        if: steps.market_check.outputs.skip != 'true'
+        run: |
+          python3 scripts/generate_daily_blog_post.py
+
+      - name: Commit and push
+        if: steps.market_check.outputs.skip != 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          # Add all changed files
+          git add data/performance_log.json
+          git add docs/_reports/
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          # Get today's date for commit message
+          TODAY=$(date +%Y-%m-%d)
+
+          git commit -m "feat(blog): Daily revenue report for $TODAY"
+          git push
+
+      - name: Summary
+        if: steps.market_check.outputs.skip != 'true'
+        run: |
+          echo "## Daily Blog Post Generated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub Pages: https://igorganapolsky.github.io/trading/reports/" >> $GITHUB_STEP_SUMMARY
+          echo "- Performance log updated" >> $GITHUB_STEP_SUMMARY
+          echo "- Dev.to post (if API key configured)" >> $GITHUB_STEP_SUMMARY

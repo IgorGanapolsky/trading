@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2025-12-18T19:13:11.760557",
+    "last_updated": "2025-12-22T16:30:00.000000",
     "last_audit": "2025-11-17T09:00:00.000000",
     "audit_notes": ""
   },
@@ -15,12 +15,12 @@
   },
   "account": {
     "starting_balance": 100000.0,
-    "current_equity": 99635.08,
-    "cash": 90743.0,
-    "positions_value": 8893.077767,
-    "total_pl": -364.91999999999825,
-    "total_pl_pct": -0.36491999999999825,
-    "buying_power": 11108.35
+    "current_equity": 100531.31,
+    "cash": 83114.93,
+    "positions_value": 17416.38,
+    "total_pl": 531.31,
+    "total_pl_pct": 0.53131,
+    "buying_power": 2427.19
   },
   "investments": {
     "total_invested": 1621.93,

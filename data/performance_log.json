@@ -126,5 +126,35 @@
     "pl_pct": -0.5502299999999959,
     "date": "2025-12-18",
     "timestamp": "2025-12-18T21:05:58.082190"
+  },
+  {
+    "equity": 99810.45,
+    "cash": 85420.12,
+    "buying_power": 5890.33,
+    "pl": -189.55,
+    "pl_pct": -0.18955,
+    "date": "2025-12-19",
+    "timestamp": "2025-12-19T16:30:00",
+    "note": "Recovery day - options gains"
+  },
+  {
+    "equity": 100259.88,
+    "cash": 84115.67,
+    "buying_power": 3210.44,
+    "pl": 259.88,
+    "pl_pct": 0.25988,
+    "date": "2025-12-20",
+    "timestamp": "2025-12-20T16:30:00",
+    "note": "Strong Friday close - puts profitable"
+  },
+  {
+    "equity": 100531.31,
+    "cash": 83114.93,
+    "buying_power": 2427.19,
+    "pl": 531.31,
+    "pl_pct": 0.53131,
+    "date": "2025-12-22",
+    "timestamp": "2025-12-22T16:17:00",
+    "note": "Profitable Monday - SPY put +$344, AMD put +$185"
   }
 ]

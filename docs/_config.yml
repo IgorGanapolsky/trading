@@ -26,6 +26,9 @@ collections:
   lessons:
     output: true
     permalink: /lessons/:name/
+  reports:
+    output: true
+    permalink: /reports/:name/
 
 # Defaults
 defaults:
@@ -40,6 +43,12 @@ defaults:
       type: "lessons"
     values:
       layout: "post"
+  - scope:
+      path: ""
+      type: "reports"
+    values:
+      layout: "post"
+      author: "AI Trading System"
 
 # Analytics (add your GA4 ID)
 google_analytics:

@@ -1,0 +1,46 @@
+# AI Trading Journey
+
+> 90-day experiment building an autonomous AI trading system. Real failures, real fixes, real lessons learned.
+
+## Quick Summary
+- **Phase**: R&D Day 50/90
+- **Mode**: Paper Trading (no real money)
+- **Goal**: Fibonacci compounding ($1/day scaling)
+- **Stack**: Python, Alpaca API, Claude AI, PyTorch
+
+## Daily Reports
+- [Latest Report](https://igorganapolsky.github.io/trading/reports/): Most recent daily P/L and trade analysis
+- [Performance Log](https://github.com/IgorGanapolsky/trading/blob/main/data/performance_log.json): Raw JSON performance data
+
+## Lessons Learned
+- [All Lessons](https://igorganapolsky.github.io/trading/lessons/): 60+ documented failures and fixes
+- [Critical Lessons](https://github.com/IgorGanapolsky/trading/tree/main/rag_knowledge/lessons_learned): Markdown source files
+
+## Trading Strategies
+- **5-Tier Strategy**: MACD + RSI + RL + Sentiment + Risk Management
+- **Asset Classes**: US Equities and Options (NO crypto)
+- **Market Hours**: Mon-Fri 9:30 AM - 4:00 PM ET only
+
+## Key Metrics
+- Win Rate Target: >60%
+- Sharpe Ratio Target: >1.5
+- Max Drawdown Limit: -5%
+- Position Size: Kelly Criterion with 25% safety margin
+
+## Risk Management
+- Circuit breakers for rapid loss prevention
+- Position limits per symbol and strategy
+- Volatility-adjusted sizing
+- Pre-trade risk assessment
+
+## Repository
+- [GitHub](https://github.com/IgorGanapolsky/trading): Full source code
+- [Dev.to Series](https://dev.to/igorganapolsky): Blog posts and updates
+
+## Contact
+- Author: Igor Ganapolsky
+- CTO: Claude AI (autonomous execution)
+- Twitter: @igorganapolsky
+
+---
+*Educational purposes only. Not financial advice.*
