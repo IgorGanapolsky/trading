@@ -39,12 +39,15 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install yt-dlp youtube-transcript-api chromadb
+          pip install yt-dlp youtube-transcript-api chromadb requests
 
       - name: Run Phil Town YouTube Ingestion
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: |
           MODE="${{ github.event.inputs.mode || 'recent' }}"
           echo "Running ingestion in $MODE mode..."
+          echo "YOUTUBE_API_KEY: $([ -n \"$YOUTUBE_API_KEY\" ] && echo 'SET' || echo 'NOT SET - using fallback methods')"
           python3 scripts/ingest_phil_town_youtube.py --mode "$MODE"
 
       - name: Run Phil Town Blog and Podcast Ingestion
