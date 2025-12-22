@@ -61,16 +61,48 @@ jobs:
           echo "=== RAG Stats ==="
           python3 scripts/vectorize_rag_knowledge.py --stats
 
-      - name: Show ingestion results
+      - name: Verify ingestion success
         run: |
+          echo "=== Verifying Phil Town Ingestion ==="
+
+          # Count YouTube transcripts
+          TRANSCRIPT_COUNT=$(find rag_knowledge/youtube/transcripts -name "*.md" 2>/dev/null | wc -l)
+          echo "YouTube transcripts: $TRANSCRIPT_COUNT"
+
+          # Count blog articles
+          BLOG_COUNT=$(find rag_knowledge/blogs/phil_town -name "*.md" 2>/dev/null | wc -l)
+          echo "Blog articles: $BLOG_COUNT"
+
+          # Verify at least one type of content exists
+          TOTAL=$((TRANSCRIPT_COUNT + BLOG_COUNT))
+          if [ "$TOTAL" -eq 0 ]; then
+            echo "::error::INGESTION FAILED - No Phil Town content was ingested!"
+            echo "This means the pipeline ran but produced zero output."
+            echo "Check yt-dlp, youtube-transcript-api, and network connectivity."
+            exit 1
+          fi
+
+          echo ""
           echo "=== YouTube Transcripts ==="
-          ls -la rag_knowledge/youtube/transcripts/ 2>/dev/null | head -10 || echo "No transcripts yet"
+          ls -la rag_knowledge/youtube/transcripts/ 2>/dev/null | head -10 || echo "No transcripts"
+
+          # Validate content contains Phil Town keywords
+          if [ "$TRANSCRIPT_COUNT" -gt 0 ]; then
+            echo ""
+            echo "=== Content Validation ==="
+            PHIL_MENTIONS=$(grep -rl -i "phil\|rule.*1\|moat\|margin.*safety" rag_knowledge/youtube/transcripts/*.md 2>/dev/null | wc -l)
+            echo "Files mentioning Phil Town concepts: $PHIL_MENTIONS"
+            if [ "$PHIL_MENTIONS" -eq 0 ]; then
+              echo "::warning::Content may not be from Phil Town - no key concepts found"
+            fi
+          fi
+
           echo ""
           echo "=== Blog Articles ==="
-          ls -la rag_knowledge/blogs/phil_town/ 2>/dev/null | head -10 || echo "No blog articles yet"
+          ls -la rag_knowledge/blogs/phil_town/ 2>/dev/null | head -10 || echo "No blog articles"
+
           echo ""
-          echo "=== Vector DB ==="
-          ls -la data/vector_db/ 2>/dev/null || echo "No vector DB yet"
+          echo "=== SUCCESS: Phil Town content ingested ==="
 
       - name: Create Pull Request with ingested content
         uses: peter-evans/create-pull-request@v8
