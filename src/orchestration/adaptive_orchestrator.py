@@ -19,7 +19,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from src.agent_framework.context_engine import get_context_engine
+from src.orchestration.context_engine import get_context_engine
 from src.core.skills_integration import get_skills
 
 # Optional market regime detector

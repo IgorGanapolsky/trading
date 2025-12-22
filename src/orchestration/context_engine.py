@@ -7,10 +7,43 @@ import json
 import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+# Singleton instance
+_context_engine_instance = None
+
+
+class MemoryTimescale(Enum):
+    """Memory timescales for context retention"""
+    IMMEDIATE = "immediate"  # Current session
+    DAILY = "daily"  # Today's context
+    EPISODIC = "episodic"  # Important events
+    SEMANTIC = "semantic"  # Long-term patterns
+
+
+@dataclass
+class ContextMemory:
+    """Memory entry for agent context"""
+    key: str
+    value: Any
+    timescale: MemoryTimescale
+    timestamp: datetime = None
+
+    def __post_init__(self):
+        if self.timestamp is None:
+            self.timestamp = datetime.now()
+
+
+def get_context_engine() -> "ContextEngine":
+    """Get or create singleton ContextEngine instance"""
+    global _context_engine_instance
+    if _context_engine_instance is None:
+        _context_engine_instance = ContextEngine()
+    return _context_engine_instance
 
 
 @dataclass
