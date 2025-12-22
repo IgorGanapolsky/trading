@@ -115,7 +115,7 @@ ormsgpack==1.12.0
 packaging==25.0
 pandas==2.3.3
 peewee==3.18.3
-pillow==11.1.0  # Compatible with fastembed (<12.0 requirement)
+pillow==11.1.0
 platformdirs==4.5.1
 praw==7.8.1
 prawcore==2.4.0
@@ -141,7 +141,7 @@ requests-oauthlib==2.0.0
 requests-toolbelt==1.0.0
 rpds-py==0.30.0
 rsa==4.9.1
-schedule==1.2.0
+schedule==1.2.2
 scikit-learn==1.8.0
 scipy==1.16.3
 sgmllib3k==1.0.0
@@ -180,24 +180,3 @@ yarl==1.22.0
 yfinance==0.2.58
 youtube-transcript-api==1.2.3
 zstandard==0.23.0
-
-# === Error Monitoring (Added Dec 19, 2025) ===
-# Sentry for error tracking and alerting
-sentry-sdk>=2.0.0
-
-# === RAG ML Dependencies (Added Dec 15, 2025) ===
-# Full vectorized RAG with semantic search
-chromadb==0.6.3
-sentence-transformers==3.4.1
-rank_bm25==0.2.2
-lancedb>=0.4.0
-fastembed>=0.2.0
-pyarrow>=14.0.0
-tqdm>=4.66.0
-
-# === Hindsight Agentic Memory (Added Dec 16, 2025) ===
-# Open-source memory system for AI agents - 91% accuracy on LongMemEval
-# Provides: retain/recall/reflect API, confidence-scored opinions, temporal reasoning
-# Optional: Only used when Hindsight service is running (graceful degradation)
-# See: https://github.com/vectorize-io/hindsight
-hindsight-client>=0.1.0
