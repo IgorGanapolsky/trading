@@ -1,0 +1,77 @@
+name: Deploy Dialogflow Webhook to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/agents/dialogflow_webhook.py'
+      - 'src/rag/**'
+      - 'Dockerfile.webhook'
+      - '.github/workflows/deploy-webhook.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to Cloud Run
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: |
+          gcloud auth configure-docker
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy trading-webhook \
+            --source . \
+            --dockerfile Dockerfile.webhook \
+            --region us-central1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --timeout 60 \
+            --memory 512Mi \
+            --cpu 1 \
+            --max-instances 3 \
+            --project ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Get Service URL
+        id: get-url
+        run: |
+          URL=$(gcloud run services describe trading-webhook \
+            --region us-central1 \
+            --format 'value(status.url)' \
+            --project ${{ secrets.GCP_PROJECT_ID }})
+          echo "SERVICE_URL=$URL" >> $GITHUB_OUTPUT
+          echo "Webhook URL: $URL/webhook"
+
+      - name: Health Check
+        run: |
+          sleep 10
+          curl -f ${{ steps.get-url.outputs.SERVICE_URL }}/health || exit 1
+
+      - name: Deployment Summary
+        run: |
+          echo "✅ Webhook deployed successfully!"
+          echo "📍 Webhook URL: ${{ steps.get-url.outputs.SERVICE_URL }}/webhook"
+          echo ""
+          echo "Next steps:"
+          echo "1. Go to Dialogflow CX Console: https://dialogflow.cloud.google.com/"
+          echo "2. Navigate to your agent → Manage → Webhooks"
+          echo "3. Add webhook URL: ${{ steps.get-url.outputs.SERVICE_URL }}/webhook"
+          echo "4. Configure the default fallback intent to use this webhook"
+          echo "5. Test in Dialogflow CX (not Vertex AI Studio Chat)"
