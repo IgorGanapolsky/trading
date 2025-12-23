@@ -12,6 +12,7 @@ from src.agents.macro_agent import MacroeconomicAgent
 from src.agents.momentum_agent import MomentumAgent
 from src.agents.rl_agent import RLFilter
 from src.analyst.bias_store import BiasProvider, BiasSnapshot, BiasStore
+from src.data.iv_data_provider import IVDataProvider
 from src.execution.alpaca_executor import AlpacaExecutor
 from src.integrations.playwright_mcp import SentimentScraper, TradeVerifier
 from src.langchain_agents.analyst import LangChainSentimentAgent
@@ -660,7 +661,7 @@ class TradingOrchestrator:
                     status="info",
                     payload={
                         "lessons_found": len(results),
-                        "top_lesson": results[0][0].title if results else None,
+                        "top_lesson": results[0][0].title if results and len(results) > 0 and len(results[0]) > 0 else None,
                     },
                 )
                 logger.info("=" * 60)
@@ -2481,11 +2482,9 @@ class TradingOrchestrator:
                 ticker="PORTFOLIO",
                 status="completed",
                 payload={
-                    "positions_checked": results["positions_checked"],
-                    "stop_loss_exits": len(results["stop_loss_exits"]),
-                    "rebalance_needed": results["delta_analysis"]["rebalance_needed"]
-                    if results["delta_analysis"]
-                    else False,
+                    "positions_checked": results.get("positions_checked", 0),
+                    "stop_loss_exits": len(results.get("stop_loss_exits", [])),
+                    "rebalance_needed": results.get("delta_analysis", {}).get("rebalance_needed", False),
                 },
             )
 
@@ -2685,18 +2684,34 @@ class TradingOrchestrator:
             # Generate signals for each ticker in our universe
             options_tickers = os.getenv("OPTIONS_TICKERS", "SPY,QQQ,AAPL,MSFT").split(",")
 
+            # Initialize IV data provider for real IV metrics
+            iv_provider = IVDataProvider()
+
             for ticker in options_tickers:
                 try:
-                    # Get current IV data (simplified - in production would call options API)
-                    iv_rank = 50.0  # TODO: Get real IV rank from options client
-                    iv_percentile = 55.0  # TODO: Get real IV percentile
+                    ticker = ticker.strip()
+
+                    # Get REAL IV data from provider (Alpaca/yfinance/VIX fallback)
+                    iv_metrics = iv_provider.get_current_iv(ticker)
+                    if iv_metrics:
+                        iv_rank = iv_metrics.iv_rank
+                        iv_percentile = iv_metrics.iv_percentile
+                    else:
+                        # Fallback to safe defaults if IV unavailable
+                        iv_rank = 50.0
+                        iv_percentile = 50.0
+                        logger.warning(f"IV data unavailable for {ticker}, using neutral defaults")
+
+                    # Get REAL stock price from Alpaca executor
+                    price_data = self.executor.get_current_price(ticker)
+                    stock_price = price_data.get("price", 100.0) if price_data else 100.0
 
                     # Generate trade signal
                     signal = signal_generator.generate_trade_signal(
-                        ticker=ticker.strip(),
+                        ticker=ticker,
                         iv_rank=iv_rank,
                         iv_percentile=iv_percentile,
-                        stock_price=100.0,  # TODO: Get real price
+                        stock_price=stock_price,
                         market_outlook="neutral",
                         portfolio_value=account_equity,
                     )
