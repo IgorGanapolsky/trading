@@ -4,15 +4,48 @@ These rules are **absolute**. No exceptions. Violations cause real financial los
 
 ---
 
-## 1. Anti-Lying Mandate
+## 1. Anti-Lying Mandate (ZERO TOLERANCE)
 
 **NEVER lie. NEVER make false claims. NEVER claim something exists when it doesn't.**
 
-- If unsure: "I need to verify" or "Let me check"
-- If error: Immediately correct and acknowledge
-- HONESTY > APPEARING SUCCESSFUL
+### Pre-Claim Verification Protocol (MANDATORY)
 
-**Why**: CEO needs truth to make decisions. False data = bad decisions = financial loss.
+Before making ANY claim about:
+- **Trade activity**: MUST verify with live Alpaca data (NOT local files)
+- **Portfolio value**: MUST verify with live Alpaca data (NOT local files)
+- **System status**: MUST check actual service/API status
+- **File contents**: MUST read the actual file first
+
+### Staleness Detection (CRITICAL)
+
+**ALWAYS check data freshness before reporting:**
+```
+1. Check file timestamp: stat -c %y <file>
+2. If older than 1 day: DATA IS STALE - DO NOT TRUST
+3. If stale: Query live source (Alpaca API, actual service)
+4. NEVER report stale data as current without disclosure
+```
+
+**Red Flag Phrases That Require Verification:**
+- "No trades today" → VERIFY with Alpaca orders API
+- "Current portfolio value" → VERIFY with Alpaca account API
+- "System is working" → VERIFY with actual health check
+- "File exists/contains" → VERIFY by reading the file
+
+### If Unsure
+- "I need to verify with live data"
+- "Let me check the actual source"
+- "The local data shows X but it may be stale - let me verify"
+
+### If Error Made
+- Immediately acknowledge: "I was wrong"
+- Explain root cause: "I read stale data without verifying"
+- Fix the data: Update local files with correct info
+- Document: Create lesson learned
+
+**HONESTY > APPEARING SUCCESSFUL**
+
+**Why**: Dec 23, 2025 - CTO claimed "no trades today" based on stale local data when Alpaca showed 9 SPY trades executed. This is UNACCEPTABLE.
 
 ---
 
@@ -52,6 +85,30 @@ Always verify claims against these sources in order:
 | 3 | System State Files | May be stale (check timestamps) |
 
 If sources conflict: Hook > API > Files
+
+### CRITICAL: Staleness Detection
+
+**BEFORE trusting ANY local file:**
+1. Check for "DATA STALE" warning in hook output
+2. Check file's `last_updated` timestamp
+3. If data is >24 hours old: **DO NOT TRUST WITHOUT DISCLOSURE**
+
+**When local data is stale:**
+```
+WRONG: Report the stale data as current
+RIGHT: "Local data is from [date] and may be stale. Let me verify..."
+```
+
+### Verification Required For These Claims
+
+| Claim | Required Verification |
+|-------|----------------------|
+| "No trades today" | Query Alpaca orders API |
+| "Portfolio value is X" | Query Alpaca account API |
+| "Trade executed successfully" | Confirm order in Alpaca |
+| "System is operational" | Health check or recent execution |
+
+**Why**: Dec 23, 2025 - CTO claimed "no trades" when 9 trades had executed. Stale data caused false claim.
 
 ---
 
@@ -130,3 +187,4 @@ When checking P/L or positions on weekends:
 - `docs/r-and-d-phase.md` - Current R&D strategy
 - `rag_knowledge/lessons_learned/ll_009_ci_syntax_failure_dec11.md` - CI failure incident
 - `rag_knowledge/lessons_learned/ll_032_crypto_trades_24_7_365.md` - Crypto 24/7 incident
+- `rag_knowledge/lessons_learned/ll_058_stale_data_lying_incident_dec23.md` - Stale data lying incident (CRITICAL)
