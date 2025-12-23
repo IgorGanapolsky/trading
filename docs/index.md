@@ -23,7 +23,7 @@ A 90-day experiment building an autonomous AI trading system with Claude Opus 4.
 ## Featured Lessons
 
 {% for lesson in site.lessons limit:5 %}
-- [{{ lesson.title }}]({{ lesson.url }})
+- [{{ lesson.title }}]({{ lesson.url }}) - *{{ lesson.date | date: "%b %d, %Y" }}*
 {% endfor %}
 
 ## For AI Agents
