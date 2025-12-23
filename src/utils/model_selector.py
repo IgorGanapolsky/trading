@@ -150,8 +150,7 @@ class ModelSelector:
         self.selection_log: list[dict[str, Any]] = []
 
         logger.info(
-            f"ModelSelector initialized: daily=${daily_budget:.2f}, "
-            f"monthly=${monthly_budget:.2f}"
+            f"ModelSelector initialized: daily=${daily_budget:.2f}, monthly=${monthly_budget:.2f}"
         )
 
     def _reset_daily_if_needed(self) -> None:
@@ -159,8 +158,7 @@ class ModelSelector:
         today = datetime.now().date()
         if today != self.last_reset_date:
             logger.info(
-                f"Daily budget reset: ${self.daily_spend:.2f} spent on "
-                f"{self.last_reset_date}"
+                f"Daily budget reset: ${self.daily_spend:.2f} spent on {self.last_reset_date}"
             )
             self.daily_spend = 0.0
             self.last_reset_date = today
@@ -178,9 +176,7 @@ class ModelSelector:
         """
         complexity = TASK_COMPLEXITY_MAP.get(task_type.lower())
         if complexity is None:
-            logger.warning(
-                f"Unknown task type '{task_type}', defaulting to MEDIUM complexity"
-            )
+            logger.warning(f"Unknown task type '{task_type}', defaulting to MEDIUM complexity")
             return TaskComplexity.MEDIUM
         return complexity
 

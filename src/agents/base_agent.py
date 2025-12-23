@@ -54,9 +54,7 @@ class BaseAgent(ABC):
         if model is None:
             model_selector = get_model_selector()
             self.model = model_selector.get_model_for_agent(name)
-            logger.info(
-                f"{name}: Auto-selected model {self.model} via BATS framework"
-            )
+            logger.info(f"{name}: Auto-selected model {self.model} via BATS framework")
         else:
             self.model = model
             logger.info(f"{name}: Using explicitly provided model {self.model}")
