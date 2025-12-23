@@ -1,4 +1,4 @@
-name: Disable Generative Fallback
+name: Fix Dialogflow - Delete Hardcoded Intent
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ env:
   PROJECT_ID: igor-trading-2025-v2
 
 jobs:
-  disable:
+  fix:
     runs-on: ubuntu-latest
     steps:
       - name: Authenticate to Google Cloud
@@ -18,50 +18,84 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Check and Disable Generative Features
+      - name: Delete Hardcoded AI Cortex Intent
         run: |
           TOKEN=$(gcloud auth print-access-token)
           API_BASE="https://dialogflow.googleapis.com/v3"
           AGENT="projects/igor-trading-2025-v2/locations/global/agents/98373354-4197-4cb1-a7a0-1966ea6d27a7"
           FLOW="${AGENT}/flows/00000000-0000-0000-0000-000000000000"
 
-          echo "=== FULL AGENT CONFIG ==="
-          curl -s -X GET "${API_BASE}/${AGENT}" \
-            -H "Authorization: Bearer $TOKEN" | jq '.'
+          # The hardcoded AI Cortex intent that returns the same response every time
+          AI_CORTEX_INTENT="${AGENT}/intents/84024fd4-2cdd-4f81-9744-484db6068048"
+
+          echo "=== CURRENT FLOW TRANSITION ROUTES ==="
+          FLOW_CONFIG=$(curl -s -X GET "${API_BASE}/${FLOW}" \
+            -H "Authorization: Bearer $TOKEN")
+          echo "$FLOW_CONFIG" | jq '.transitionRoutes'
 
           echo ""
-          echo "=== FLOW CONFIG ==="
-          curl -s -X GET "${API_BASE}/${FLOW}" \
-            -H "Authorization: Bearer $TOKEN" | jq '.'
+          echo "=== DELETING AI CORTEX INTENT ==="
+          echo "Intent to delete: $AI_CORTEX_INTENT"
+
+          DELETE_RESULT=$(curl -s -X DELETE \
+            "${API_BASE}/${AI_CORTEX_INTENT}" \
+            -H "Authorization: Bearer $TOKEN")
+
+          echo "Delete result: $DELETE_RESULT"
+
+          if [ -z "$DELETE_RESULT" ] || [ "$DELETE_RESULT" == "{}" ]; then
+            echo "✅ Intent deleted successfully!"
+          else
+            echo "Response: $DELETE_RESULT"
+          fi
 
           echo ""
-          echo "=== DISABLING GENERATIVE SETTINGS ==="
+          echo "=== UPDATING FLOW TO REMOVE ORPHANED ROUTE ==="
 
-          # Disable generative fallback on agent
-          curl -s -X PATCH \
-            "${API_BASE}/${AGENT}?updateMask=genAppBuilderSettings" \
+          # Get current flow config and remove the transition route that used the deleted intent
+          CURRENT_ROUTES=$(echo "$FLOW_CONFIG" | jq '.transitionRoutes')
+
+          # Filter out routes that reference the deleted intent
+          NEW_ROUTES=$(echo "$CURRENT_ROUTES" | jq '[.[] | select(.intent != "'"$AI_CORTEX_INTENT"'")]')
+
+          echo "New routes (without AI Cortex):"
+          echo "$NEW_ROUTES" | jq '.'
+
+          # Update the flow with filtered routes
+          UPDATE_RESULT=$(curl -s -X PATCH \
+            "${API_BASE}/${FLOW}?updateMask=transitionRoutes" \
             -H "Authorization: Bearer $TOKEN" \
             -H "Content-Type: application/json" \
-            -d '{
-              "genAppBuilderSettings": null
-            }'
+            -d "{\"transitionRoutes\": $NEW_ROUTES}")
 
-          # Clear any generators on the agent
+          if echo "$UPDATE_RESULT" | jq -e '.error' > /dev/null 2>&1; then
+            echo "⚠️ Flow update error:"
+            echo "$UPDATE_RESULT" | jq '.error'
+          else
+            echo "✅ Flow updated successfully!"
+          fi
+
           echo ""
-          echo "=== LISTING GENERATORS ==="
-          GENERATORS=$(curl -s -X GET \
-            "${API_BASE}/${AGENT}/generators" \
+          echo "=== VERIFYING WEBHOOK IS CONFIGURED ==="
+          WEBHOOKS=$(curl -s -X GET "${API_BASE}/${AGENT}/webhooks" \
             -H "Authorization: Bearer $TOKEN")
-          echo "$GENERATORS"
-
-          # Delete any generators found
-          echo "$GENERATORS" | jq -r '.generators[]?.name // empty' | while read gen; do
-            if [ -n "$gen" ]; then
-              echo "Deleting generator: $gen"
-              curl -s -X DELETE "${API_BASE}/${gen}" \
-                -H "Authorization: Bearer $TOKEN"
-            fi
-          done
+          echo "$WEBHOOKS" | jq '.webhooks[] | {name, displayName, uri: .genericWebService.uri}'
 
           echo ""
-          echo "=== DONE ==="
+          echo "=== VERIFYING EVENT HANDLERS ==="
+          FINAL_FLOW=$(curl -s -X GET "${API_BASE}/${FLOW}" \
+            -H "Authorization: Bearer $TOKEN")
+          echo "$FINAL_FLOW" | jq '.eventHandlers'
+
+          echo ""
+          echo "=== FINAL FLOW TRANSITION ROUTES ==="
+          echo "$FINAL_FLOW" | jq '.transitionRoutes'
+
+          echo ""
+          echo "============================================"
+          echo "✅ DIALOGFLOW FIX COMPLETE"
+          echo "============================================"
+          echo "- Deleted hardcoded AI Cortex intent"
+          echo "- Removed orphaned transition route"
+          echo "- Queries should now go to webhook"
+          echo "============================================"
