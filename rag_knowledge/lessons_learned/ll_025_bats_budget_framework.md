@@ -150,5 +150,9 @@ def test_budget_aware_model_selection():
 
 ## Change Log
 
-- 2025-12-13: Implemented BATS framework with budget tracking and model selection
+- 2025-12-13: Documented BATS framework concept
 - 2025-12-13: Integrated budget awareness into CEO hook
+- 2025-12-23: **ACTUALLY IMPLEMENTED** - Created `src/utils/model_selector.py`
+- 2025-12-23: Updated BaseAgent to use ModelSelector for automatic model selection
+- 2025-12-23: Updated BogleHeadsAgent and GammaExposureAgent to use BATS
+- 2025-12-23: Added LLM budget config fields to AppConfig

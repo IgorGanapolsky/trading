@@ -27,7 +27,7 @@ class GammaExposureAgent(BaseAgent):
         super().__init__(
             name="GammaExposureAgent",
             role="Options flow and market maker positioning analysis",
-            model="claude-3-opus-20240229",
+            # model=None -> Uses BATS ModelSelector for budget-aware selection
         )
 
     def analyze(self, data: dict[str, Any]) -> dict[str, Any]:

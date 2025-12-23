@@ -28,7 +28,7 @@ class BogleHeadsAgent(BaseAgent):
         super().__init__(
             name="BogleHeadsAgent",
             role="Long-term investment philosophy and market sentiment sanity check",
-            model="claude-3-opus-20240229",
+            # model=None -> Uses BATS ModelSelector for budget-aware selection
         )
         self.base_url = "https://www.bogleheads.org/forum/viewforum.php?f=10"  # Investing - Theory, News & General
 

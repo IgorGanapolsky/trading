@@ -97,8 +97,25 @@ class AppConfig(BaseSettings):
     ALPACA_SIMULATED: bool = Field(default=True)
     SIMULATED_EQUITY: float = Field(default=100000.0, ge=0.0)
 
-    # LLM/Budget
+    # LLM/Budget - BATS Framework (Budget-Aware Test-time Scaling)
+    # Reference: https://arxiv.org/abs/2511.17006
     HYBRID_LLM_MODEL: str = Field(default="claude-3-5-haiku-20241022")
+    LLM_DAILY_BUDGET: float = Field(
+        default=3.33,  # $100/month ÷ 30 days
+        ge=0.0,
+        le=50.0,
+        description="Daily LLM API budget in USD",
+    )
+    LLM_MONTHLY_BUDGET: float = Field(
+        default=100.0,
+        ge=0.0,
+        le=500.0,
+        description="Monthly LLM API budget in USD",
+    )
+    FORCE_LLM_MODEL: str | None = Field(
+        default=None,
+        description="Force all agents to use this model (for testing/debugging)",
+    )
     RL_CONFIDENCE_THRESHOLD: float = Field(default=0.6, ge=0.0, le=1.0)
     LLM_NEGATIVE_SENTIMENT_THRESHOLD: float = Field(default=-0.2, le=0.0, ge=-1.0)
 

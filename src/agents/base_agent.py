@@ -1,5 +1,8 @@
 """
 Base Agent Class - Foundation for all trading agents
+
+Updated December 2025: Integrated BATS (Budget-Aware Test-time Scaling)
+for intelligent model selection based on task complexity and budget.
 """
 
 import logging
@@ -13,6 +16,7 @@ from src.orchestration.context_engine import (
     MemoryTimescale,
     get_context_engine,
 )
+from src.utils.model_selector import get_model_selector
 from src.utils.self_healing import get_anthropic_api_key, with_retry
 
 logger = logging.getLogger(__name__)
@@ -27,18 +31,36 @@ class BaseAgent(ABC):
     - Tool orchestration (can call external APIs)
     - Memory (learns from past decisions)
     - Transparency (auditable decision logs)
+
+    December 2025 Update:
+    - Integrated BATS framework for budget-aware model selection
+    - Model selection based on agent name and task complexity
+    - CRITICAL tasks (trade execution) always use Opus
+    - Pass model=None to use automatic selection
     """
 
     def __init__(
         self,
         name: str,
         role: str,
-        model: str = "claude-3-opus-20240229",
+        model: str | None = None,  # None = use ModelSelector
         use_context_engine: bool = True,
     ):
         self.name = name
         self.role = role
-        self.model = model
+
+        # BATS Framework: Select model based on agent name if not explicitly provided
+        # This ensures budget-aware model selection while maintaining backward compatibility
+        if model is None:
+            model_selector = get_model_selector()
+            self.model = model_selector.get_model_for_agent(name)
+            logger.info(
+                f"{name}: Auto-selected model {self.model} via BATS framework"
+            )
+        else:
+            self.model = model
+            logger.info(f"{name}: Using explicitly provided model {self.model}")
+
         self.client = Anthropic(api_key=get_anthropic_api_key())
         self.memory: list[dict[str, Any]] = []  # Legacy memory (backward compatibility)
         self.decision_log: list[dict[str, Any]] = []
