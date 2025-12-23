@@ -156,5 +156,15 @@
     "date": "2025-12-22",
     "timestamp": "2025-12-22T16:17:00",
     "note": "Profitable Monday - SPY put +$344, AMD put +$185"
+  },
+  {
+    "equity": 100697.83,
+    "cash": 83114.92,
+    "buying_power": 2136.85,
+    "pl": 697.83,
+    "pl_pct": 0.69783,
+    "date": "2025-12-23",
+    "timestamp": "2025-12-23T14:52:00",
+    "note": "9 SPY buy orders executed, options profitable: SPY +$397, AMD +$215"
   }
 ]

@@ -1,0 +1,11 @@
+[
+  {"symbol": "SPY", "side": "buy", "qty": 0.73491, "type": "market", "timestamp": "2025-12-23T09:35:00"},
+  {"symbol": "SPY", "side": "buy", "qty": 0.7343, "type": "market", "timestamp": "2025-12-23T09:40:00"},
+  {"symbol": "SPY", "side": "buy", "qty": 0.73449, "type": "market", "timestamp": "2025-12-23T09:45:00"},
+  {"symbol": "SPY", "side": "buy", "qty": 0.735004, "type": "market", "timestamp": "2025-12-23T09:50:00"},
+  {"symbol": "SPY", "side": "buy", "qty": 0.734711, "type": "market", "timestamp": "2025-12-23T09:55:00"},
+  {"symbol": "SPY", "side": "buy", "qty": 0.73428, "type": "market", "timestamp": "2025-12-23T10:00:00"},
+  {"symbol": "SPY", "side": "buy", "qty": 0.73440, "type": "market", "timestamp": "2025-12-23T10:05:00"},
+  {"symbol": "SPY", "side": "buy", "qty": 0.73506, "type": "market", "timestamp": "2025-12-23T10:10:00"},
+  {"symbol": "SPY", "side": "buy", "qty": 0.73553, "type": "market", "timestamp": "2025-12-23T10:15:00"}
+]
