@@ -41,7 +41,7 @@ These secrets are needed for the IPO scraper workflow:
 | `GCP_SA_KEY` | Service account JSON for Cloud Run deploy | ✅ **YES** | See below |
 
 **Setup GCP_SA_KEY:**
-1. Go to: https://console.cloud.google.com/iam-admin/serviceaccounts?project=igor-trading
+1. Go to: https://console.cloud.google.com/iam-admin/serviceaccounts?project=igor-trading-2025-v2
 2. Create service account: `github-actions-deployer`
 3. Grant roles: `Cloud Run Admin`, `Storage Admin`, `Service Account User`
 4. Create JSON key and add entire contents as `GCP_SA_KEY` secret
