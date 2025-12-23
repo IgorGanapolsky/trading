@@ -94,6 +94,7 @@ class LessonsLearnedRAG:
                         "severity": lesson["severity"],
                         "score": score,
                         "snippet": lesson["content"][:500],
+                        "content": lesson["content"],  # Keep full content for prevention extraction
                         "file": lesson["file"],
                     }
                 )
@@ -116,22 +117,46 @@ class LessonsLearnedRAG:
             title: str
             severity: str
             snippet: str
+            prevention: str  # Required by gates.py and main.py
             file: str
 
         raw_results = self.query(query, top_k=top_k)
         results = []
         for r in raw_results:
+            # Extract prevention section from content or use snippet as fallback
+            prevention = self._extract_prevention(r.get("content", r["snippet"]))
             lesson = LessonResult(
                 id=r["id"],
                 title=r.get("title", r["id"]),
                 severity=r["severity"],
                 snippet=r["snippet"],
+                prevention=prevention,
                 file=r["file"],
             )
             # Normalize score to 0-1 range
             normalized_score = min(r["score"] / 100.0, 1.0)
             results.append((lesson, normalized_score))
         return results
+
+    def _extract_prevention(self, content: str) -> str:
+        """Extract prevention/action section from lesson content."""
+        import re
+
+        # Try to find Prevention, Action, or Solution section
+        patterns = [
+            r"## Prevention\s*\n(.*?)(?=\n##|\Z)",
+            r"## Action\s*\n(.*?)(?=\n##|\Z)",
+            r"## Solution\s*\n(.*?)(?=\n##|\Z)",
+            r"## What to Do\s*\n(.*?)(?=\n##|\Z)",
+            r"## Fix\s*\n(.*?)(?=\n##|\Z)",
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
+            if match:
+                return match.group(1).strip()[:500]
+
+        # Fallback: use first 300 chars of content
+        return content[:300].strip()
 
     def get_critical_lessons(self) -> list:
         """Get all CRITICAL severity lessons."""
