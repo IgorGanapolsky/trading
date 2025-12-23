@@ -39,7 +39,7 @@ vaderSentiment==3.3.2      # Sentiment scoring for macro/analyst agent
 cohere>=5.11.4             # Cohere Rerank API for RAG retrieval optimization
 # LLM orchestration (kept minimal but required for trading agent)
 langchain==0.3.27
-langchain-core==0.3.80
+langchain-core==0.3.81
 langchain-anthropic==0.3.22
 langchain-community==0.3.31
 sentence-transformers==3.4.1   # Required for RAG embedder used by trading orchestrator
