@@ -398,11 +398,11 @@ class LangSmithTracer:
 
                     # Create run with all required fields
                     self._langsmith_client.create_run(
-                        name=span.name,
+                        name=span.name or f"{span.trace_type.value}_span",
                         run_type="chain",
                         inputs=span.inputs or {},
                         outputs=span.outputs or {},
-                        extra={"metadata": span.metadata} if span.metadata else None,
+                        extra=span.metadata if span.metadata else None,
                         project_name=self.project_name,
                         id=run_id,
                         start_time=span.start_time,

@@ -54,7 +54,8 @@ def _wrap_with_trace(
                 span.add_output("result", str(result)[:500] if result else "None")
                 return result
             except Exception as e:
-                span.complete(error=str(e))
+                # Let context manager handle completion - don't double-complete
+                span.error = str(e)
                 raise
 
     return wrapper  # type: ignore
