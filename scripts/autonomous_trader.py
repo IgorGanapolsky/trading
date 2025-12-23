@@ -75,56 +75,8 @@ def _refresh_account_data(logger) -> None:
 
 
 def _update_system_state_with_prediction_trade(trade_record: dict[str, Any], logger) -> None:
-    """Update `data/system_state.json` so Tier 6 reflects the new prediction market trade."""
-    state_path = Path("data/system_state.json")
-    if not state_path.exists():
-        logger.warning("system_state.json missing; skipping state update")
-        return
-
-    try:
-        with state_path.open("r", encoding="utf-8") as handle:
-            state = json.load(handle)
-    except Exception as exc:
-        logger.error(f"Failed to read system_state.json: {exc}")
-        return
-
-    strategies = state.setdefault("strategies", {})
-    tier6_defaults = {
-        "name": "Prediction Markets Strategy (Kalshi)",
-        "allocation": 0.05,
-        "daily_amount": 5.0,
-        "trades_executed": 0,
-        "total_invested": 0.0,
-        "status": "active",
-        "execution_schedule": "Daily + Weekends (24/7 markets)",
-        "last_execution": None,
-        "next_execution": None,
-    }
-    tier6 = strategies.setdefault("tier6", tier6_defaults)
-    tier6["trades_executed"] = tier6.get("trades_executed", 0) + 1
-    tier6["total_invested"] = round(
-        tier6.get("total_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
-    )
-    tier6["last_execution"] = trade_record.get("timestamp")
-    tier6["status"] = "active"
-
-    investments = state.setdefault("investments", {})
-    investments["tier6_invested"] = round(
-        investments.get("tier6_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
-    )
-    investments["total_invested"] = round(
-        investments.get("total_invested", 0.0) + float(trade_record.get("amount", 0.0)), 6
-    )
-
-    performance = state.setdefault("performance", {})
-    performance["total_trades"] = performance.get("total_trades", 0) + 1
-
-    try:
-        with state_path.open("w", encoding="utf-8") as handle:
-            json.dump(state, handle, indent=2)
-        logger.info("system_state.json updated with prediction market trade metadata")
-    except Exception as exc:
-        logger.error(f"Failed to write system_state.json: {exc}")
+    """Prediction markets (Kalshi) integration removed Dec 2025. No-op stub."""
+    pass
 
 
 def validate_order_size(amount: float, expected: float, tier: str = "T1_CORE") -> tuple[bool, str]:
@@ -292,8 +244,8 @@ def _apply_dynamic_daily_budget(logger) -> float | None:
 
 
 def prediction_enabled() -> bool:
-    """Feature flag for prediction markets (Kalshi)."""
-    return os.getenv("ENABLE_PREDICTION_MARKETS", "true").lower() in {"1", "true", "yes"}
+    """Prediction markets (Kalshi) integration removed Dec 2025. Always returns False."""
+    return False
 
 
 def reit_enabled() -> bool:
@@ -845,101 +797,9 @@ def execute_reit_trading() -> None:
 
 
 def execute_prediction_trading() -> None:
-    """
-    Execute prediction markets trading strategy (Kalshi - Tier 6).
-
-    Kalshi markets trade 24/7, making this suitable for:
-    - Daily execution alongside equity strategies
-    - Weekend execution when equity markets are closed
-    - Event-driven opportunities (elections, Fed meetings, etc.)
-    """
+    """Prediction markets (Kalshi) integration removed Dec 2025. No-op stub."""
     logger = setup_logging()
-    logger.info("=" * 80)
-    logger.info("PREDICTION MARKETS TRADING MODE (Tier 6 - Kalshi)")
-    logger.info("=" * 80)
-
-    try:
-        # Check if Kalshi is configured
-        from src.brokers.kalshi_client import get_kalshi_client
-
-        kalshi = get_kalshi_client(paper=True)
-
-        if not kalshi.is_configured():
-            logger.warning("⚠️  Kalshi not configured (KALSHI_EMAIL/KALSHI_PASSWORD missing)")
-            logger.info("   -> Skipping prediction markets. Set credentials in .env to enable.")
-            return
-
-        # Import and execute prediction strategy
-        from src.strategies.prediction_strategy import PredictionStrategy
-
-        daily_budget = float(os.getenv("PREDICTION_DAILY_BUDGET", "5.0"))
-
-        strategy = PredictionStrategy(
-            client=kalshi,
-            daily_budget=daily_budget,
-        )
-
-        # Execute strategy
-        result = strategy.execute()
-
-        if result.get("success"):
-            entry_trades = result.get("entry_trades", [])
-            exit_trades = result.get("exit_trades", [])
-            signals = result.get("signals", [])
-
-            logger.info("✅ Prediction strategy executed:")
-            logger.info(f"   Entry trades: {len(entry_trades)}")
-            logger.info(f"   Exit trades: {len(exit_trades)}")
-            logger.info(f"   Signals found: {len(signals)}")
-            logger.info(f"   Remaining budget: ${result.get('remaining_budget', 0):.2f}")
-
-            # Persist each trade to daily ledger
-            if entry_trades:
-                today_str = datetime.now().strftime("%Y-%m-%d")
-                trades_file = Path(f"data/trades_{today_str}.json")
-
-                # Load existing
-                if trades_file.exists():
-                    try:
-                        with open(trades_file) as f:
-                            daily_trades = json.load(f)
-                    except Exception:
-                        daily_trades = []
-                else:
-                    daily_trades = []
-
-                for trade in entry_trades:
-                    trade_record = {
-                        "symbol": trade.market_ticker,
-                        "action": f"BUY_{trade.side.upper()}",
-                        "amount": trade.amount_usd,
-                        "quantity": trade.quantity,
-                        "price": trade.price,
-                        "timestamp": trade.timestamp.isoformat(),
-                        "status": "FILLED",
-                        "strategy": "PredictionStrategy",
-                        "reason": trade.reasoning[:100] if trade.reasoning else "Edge opportunity",
-                        "mode": "PAPER" if kalshi.paper else "LIVE",
-                        "order_id": trade.order_id,
-                    }
-                    daily_trades.append(trade_record)
-                    _update_system_state_with_prediction_trade(trade_record, logger)
-
-                # Write back
-                with open(trades_file, "w") as f:
-                    json.dump(daily_trades, f, indent=4)
-
-                logger.info(f"💾 {len(entry_trades)} prediction trades saved to {trades_file}")
-        else:
-            reason = result.get("reason", "unknown")
-            logger.info(f"⚠️  Prediction strategy: {reason}")
-
-    except ImportError as e:
-        logger.warning(f"⚠️  Prediction strategy not available: {e}")
-        logger.info("   -> Kalshi integration may not be fully installed.")
-    except Exception as e:
-        logger.error(f"❌ Prediction trading failed: {e}", exc_info=True)
-        # Don't raise - prediction markets are supplementary, shouldn't crash main workflow
+    logger.info("Prediction markets (Kalshi) integration removed - skipping")
 
 
 def calc_daily_input(equity: float) -> float:

@@ -371,52 +371,11 @@ def find_optimal_put(
 
 def try_tradier_fallback(symbol: str, dry_run: bool = False) -> dict:
     """
-    Try Tradier as fallback broker for options trading.
-
-    Per lesson ll_007: Tradier is configured as backup broker.
-    GitHub Secrets: TRADIER_SANDBOX_API_KEY, TRADIER_SANDBOX_ACCOUNT_NUMBER
+    Tradier fallback has been removed (broker integration deleted Dec 2025).
+    Returns NO_FALLBACK status.
     """
-    logger.info("\n" + "=" * 60)
-    logger.info("🔄 ATTEMPTING TRADIER FALLBACK")
-    logger.info("=" * 60)
-
-    try:
-        from src.brokers.tradier_client import TradierClient
-
-        # Check for Tradier credentials
-        api_key = os.getenv("TRADIER_API_KEY") or os.getenv("TRADIER_SANDBOX_API_KEY")
-        account_num = os.getenv("TRADIER_ACCOUNT_NUMBER") or os.getenv(
-            "TRADIER_SANDBOX_ACCOUNT_NUMBER"
-        )
-
-        if not api_key or not account_num:
-            logger.warning("❌ Tradier credentials not configured")
-            logger.info("   Set TRADIER_API_KEY and TRADIER_ACCOUNT_NUMBER")
-            return {"status": "NO_FALLBACK", "reason": "Tradier not configured"}
-
-        # Initialize Tradier client
-        tradier = TradierClient(
-            account_number=account_num,
-            api_key=api_key,
-            paper=True,  # Always paper trading for safety
-        )
-
-        if not tradier.is_configured():
-            logger.warning("❌ Tradier client not properly configured")
-            return {"status": "NO_FALLBACK", "reason": "Tradier client misconfigured"}
-
-        logger.info("✅ Tradier client initialized for fallback")
-
-        # Execute via Tradier
-        result = tradier.execute_cash_secured_put(symbol, dry_run=dry_run)
-        return result
-
-    except ImportError as e:
-        logger.error(f"❌ Could not import Tradier client: {e}")
-        return {"status": "NO_FALLBACK", "reason": f"Import error: {e}"}
-    except Exception as e:
-        logger.error(f"❌ Tradier fallback failed: {e}")
-        return {"status": "ERROR", "error": str(e), "broker": "tradier"}
+    logger.warning("Tradier fallback not available (broker integration removed)")
+    return {"status": "NO_FALLBACK", "reason": "Tradier integration removed"}
 
 
 def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_run: bool = False):
