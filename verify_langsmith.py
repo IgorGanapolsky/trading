@@ -1,50 +1,82 @@
+#!/usr/bin/env python3
+"""
+LangSmith Verification Script - Ensures tracing is properly configured.
+
+Run this before trading to verify LangSmith connectivity and trace delivery.
+Exit code 0 = success, 1 = failure (blocks trading if used as gate).
+"""
+
 import os
+import sys
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from dotenv import load_dotenv
-from langsmith import Client
 
 # Load environment variables
 load_dotenv(override=True)
 
-project_name = os.getenv("LANGCHAIN_PROJECT")
-print(f"Targeting LangSmith Project: {project_name}")
 
-client = Client()
+def verify_langsmith() -> bool:
+    """Verify LangSmith is properly configured and can receive traces."""
+    try:
+        from langsmith import Client
+    except ImportError:
+        print("❌ CRITICAL: langsmith package not installed")
+        return False
 
-try:
+    project_name = os.getenv("LANGCHAIN_PROJECT", "igor-trading-system")
     api_key = os.getenv("LANGCHAIN_API_KEY")
+
+    print(f"🔍 Verifying LangSmith configuration...")
+    print(f"   Project: {project_name}")
+    print(f"   API Key: {'✅ Set' if api_key else '❌ Missing'}")
+
     if not api_key:
-        print("❌ CRITICAL: LANGCHAIN_API_KEY is missing from .env")
-        # Don't exit, let's see if client picks it up from system headers or elsewhere?
-        # Actually client() will look for it.
+        print("❌ CRITICAL: LANGCHAIN_API_KEY is missing")
+        print("   Set it in .env or GitHub secrets")
+        return False
 
-    # 1. Create the project explicitly (if it doesn't exist)
-    print(f"Creating project {project_name} if missing...")
-    if not client.has_project(project_name):
-        client.create_project(project_name, description="Created via verification script")
-        print(f"✅ Created project '{project_name}' in LangSmith")
-    else:
-        print(f"ℹ️  Project '{project_name}' already exists")
+    try:
+        client = Client()
 
-    # 2. Log a dummy run just to be sure it shows up in "Tracing Projects"
-    # We can use the low-level API or just basic run creation
-    print("Sending test trace...")
+        # 1. Verify we can connect
+        print("📡 Testing LangSmith connectivity...")
 
-    run_id = uuid.uuid4()
-    client.create_run(
-        name="verification_trace",
-        inputs={"input": "Hello LangSmith"},
-        run_type="chain",
-        project_name=project_name,
-        start_time=datetime.utcnow(),
-        end_time=datetime.utcnow(),
-    )
-    print("✅ Test trace sent successfully")
-    print(
-        f"\n👉 Go to https://smith.langchain.com/o/{client.info.org_id}/projects/p/{client.read_project(project_name=project_name).id}"
-    )
+        # 2. Create the project if it doesn't exist
+        if not client.has_project(project_name):
+            client.create_project(project_name, description="Trading system observability")
+            print(f"   Created project '{project_name}'")
+        else:
+            print(f"   Project '{project_name}' exists")
 
-except Exception as e:
-    print(f"❌ Failed to verify LangSmith: {e}")
+        # 3. Send a test trace with timezone-aware datetime
+        print("📤 Sending verification trace...")
+        now = datetime.now(timezone.utc)
+        client.create_run(
+            name="ci_verification_trace",
+            inputs={"test": "verification", "timestamp": now.isoformat()},
+            outputs={"status": "ok"},
+            run_type="chain",
+            project_name=project_name,
+            start_time=now,
+            end_time=now,
+            tags=["verification", "ci"],
+        )
+        print("✅ Verification trace sent successfully")
+
+        # 4. Get project URL for reference
+        project = client.read_project(project_name=project_name)
+        org_id = client.info.org_id if hasattr(client, "info") and client.info else "unknown"
+        print(f"\n👉 LangSmith Dashboard: https://smith.langchain.com/o/{org_id}/projects/p/{project.id}")
+
+        return True
+
+    except Exception as e:
+        print(f"❌ LangSmith verification failed: {e}")
+        return False
+
+
+if __name__ == "__main__":
+    success = verify_langsmith()
+    sys.exit(0 if success else 1)

@@ -432,6 +432,17 @@ jobs:
             echo "health_check_passed=true" >> $GITHUB_OUTPUT
           fi
 
+      - name: Verify LangSmith tracing (ll_050)
+        if: steps.check_execution.outputs.skip != 'true' && steps.health_check.outputs.health_check_passed == 'true'
+        timeout-minutes: 2
+        env:
+          LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
+          LANGCHAIN_PROJECT: 'igor-trading-system'
+          LANGCHAIN_TRACING_V2: 'true'
+        run: |
+          echo "🔍 Verifying LangSmith tracing is configured..."
+          python3 verify_langsmith.py || echo "⚠️ LangSmith verification failed - continuing without blocking"
+
       - name: Execute daily trading
         id: execute_trading
         if: steps.check_execution.outputs.skip != 'true' && steps.health_check.outputs.health_check_passed == 'true'

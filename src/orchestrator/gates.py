@@ -75,7 +75,7 @@ def _trace_gate(gate_name: str, ticker: str, inputs: dict, result: GateResult) -
             if result.metadata:
                 span.add_output("metadata", result.metadata)
     except Exception as e:
-        logger.debug("Gate tracing failed: %s", e)
+        logger.warning("Gate tracing failed for %s/%s: %s", gate_name, ticker, e)
 
 
 class GateStatus(Enum):
@@ -1049,7 +1049,7 @@ class TradingGatePipeline:
         result = self.gate1.evaluate(ticker, ctx)
         results.append(result)
         _trace_gate(
-            "momentum", ticker, {"gate": 1, "has_macd": ctx.macd_signal is not None}, result
+            "momentum", ticker, {"gate": 1, "has_momentum": ctx.momentum_signal is not None}, result
         )
         self._checkpoint(thread_id, 1, "momentum", ticker, ctx, results)
         if result.rejected or result.status == GateStatus.ERROR:

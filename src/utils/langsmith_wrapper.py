@@ -36,7 +36,7 @@ load_dotenv()
 # LangChain SDK uses LANGCHAIN_* but users may set LANGSMITH_* (more intuitive)
 _langsmith_api_key = os.getenv("LANGCHAIN_API_KEY") or os.getenv("LANGSMITH_API_KEY")
 _langsmith_project = (
-    os.getenv("LANGCHAIN_PROJECT") or os.getenv("LANGSMITH_PROJECT") or "trading-system"
+    os.getenv("LANGCHAIN_PROJECT") or os.getenv("LANGSMITH_PROJECT") or "igor-trading-system"
 )
 
 if _langsmith_api_key:
