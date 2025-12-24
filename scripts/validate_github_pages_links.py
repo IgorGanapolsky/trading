@@ -9,9 +9,9 @@ Usage:
     python scripts/validate_github_pages_links.py [--check-live]
 """
 
+import argparse
 import re
 import sys
-import argparse
 from pathlib import Path
 
 
@@ -34,12 +34,12 @@ class LinkValidator:
 
         # Pattern to find {{ something.url }} without relative_url
         bad_url_pattern = re.compile(
-            r'\{\{\s*\w+\.url\s*\}\}'  # {{ lesson.url }} without filter
+            r"\{\{\s*\w+\.url\s*\}\}"  # {{ lesson.url }} without filter
         )
 
         # Pattern to find good usage
         good_url_pattern = re.compile(
-            r'\{\{\s*\w+\.url\s*\|\s*relative_url\s*\}\}'  # {{ lesson.url | relative_url }}
+            r"\{\{\s*\w+\.url\s*\|\s*relative_url\s*\}\}"  # {{ lesson.url | relative_url }}
         )
 
         template_files = list(self.DOCS_DIR.glob("*.md")) + list(self.DOCS_DIR.glob("*.html"))
@@ -97,9 +97,7 @@ class LinkValidator:
             return True
 
         # Pattern for internal links that DON'T start with /trading/ or are absolute
-        internal_link_pattern = re.compile(
-            r'href=["\'](/(?!trading/)[^"\']*)["\']'
-        )
+        internal_link_pattern = re.compile(r'href=["\'](/(?!trading/)[^"\']*)["\']')
 
         found_issues = False
 
@@ -111,10 +109,11 @@ class LinkValidator:
 
             # Filter out valid patterns (anchors, external protocols, etc.)
             bad_links = [
-                link for link in bad_links
+                link
+                for link in bad_links
                 if not link.startswith("/#")  # Anchor links
                 and not link.startswith("/trading")  # Correct baseurl
-                and not "://" in link  # External links
+                and "://" not in link  # External links
                 and link != "/"  # Root might be intentional
             ]
 
@@ -130,7 +129,9 @@ class LinkValidator:
 
         return not found_issues
 
-    def smoke_test_live_site(self, base_url: str = "https://igorganapolsky.github.io/trading") -> bool:
+    def smoke_test_live_site(
+        self, base_url: str = "https://igorganapolsky.github.io/trading"
+    ) -> bool:
         """Test actual deployed site for 404s."""
         print("\n" + "=" * 60)
         print("SMOKE TESTING LIVE SITE")
@@ -226,17 +227,16 @@ class LinkValidator:
 
 def main():
     parser = argparse.ArgumentParser(description="Validate GitHub Pages links")
-    parser.add_argument("--check-live", action="store_true",
-                        help="Also test the live deployed site")
-    parser.add_argument("--templates-only", action="store_true",
-                        help="Only check Jekyll templates, skip built HTML")
+    parser.add_argument(
+        "--check-live", action="store_true", help="Also test the live deployed site"
+    )
+    parser.add_argument(
+        "--templates-only", action="store_true", help="Only check Jekyll templates, skip built HTML"
+    )
     args = parser.parse_args()
 
     validator = LinkValidator()
-    success = validator.run_all(
-        check_live=args.check_live,
-        templates_only=args.templates_only
-    )
+    success = validator.run_all(check_live=args.check_live, templates_only=args.templates_only)
 
     sys.exit(0 if success else 1)
 

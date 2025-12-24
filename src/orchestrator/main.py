@@ -15,6 +15,7 @@ from src.analyst.bias_store import BiasProvider, BiasSnapshot, BiasStore
 from src.data.iv_data_provider import IVDataProvider
 from src.execution.alpaca_executor import AlpacaExecutor
 from src.integrations.playwright_mcp import SentimentScraper, TradeVerifier
+
 # LangChain Sentiment Agent - removed (was stub code)
 # LLM sentiment now handled by Gate 3 with BiasProvider
 LANGCHAIN_AVAILABLE = False

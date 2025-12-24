@@ -9,8 +9,8 @@ Usage:
     python3 scripts/operational_health_check.py
 """
 
+import importlib
 import json
-import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -149,9 +149,10 @@ def check_agent_health() -> bool:
     all_ok = True
     for name, module, cls in agents:
         try:
-            exec(f"from {module} import {cls}")
+            mod = importlib.import_module(module)
+            getattr(mod, cls)
             print(f"   ✅ {name}")
-        except ImportError as e:
+        except (ImportError, AttributeError) as e:
             print(f"   ❌ {name}: {e}")
             all_ok = False
 

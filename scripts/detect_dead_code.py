@@ -24,7 +24,7 @@ def find_stub_functions(file_path: Path) -> list[str]:
     """Find functions that just return hardcoded values (stubs)."""
     stubs = []
     try:
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             tree = ast.parse(f.read(), filename=str(file_path))
     except SyntaxError:
         return []  # Skip files with syntax errors
@@ -40,13 +40,9 @@ def find_stub_functions(file_path: Path) -> list[str]:
                             f"{file_path}:{node.lineno}: {node.name}() returns hardcoded {body.value.value!r}"
                         )
                     elif isinstance(body.value, ast.Dict) and not body.value.keys:
-                        stubs.append(
-                            f"{file_path}:{node.lineno}: {node.name}() returns empty dict"
-                        )
+                        stubs.append(f"{file_path}:{node.lineno}: {node.name}() returns empty dict")
                     elif isinstance(body.value, ast.List) and not body.value.elts:
-                        stubs.append(
-                            f"{file_path}:{node.lineno}: {node.name}() returns empty list"
-                        )
+                        stubs.append(f"{file_path}:{node.lineno}: {node.name}() returns empty list")
     return stubs
 
 
@@ -69,7 +65,7 @@ def find_broken_imports(file_path: Path, src_root: Path) -> list[str]:
     """Find imports that reference non-existent modules (not in try-except)."""
     broken = []
     try:
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             tree = ast.parse(f.read(), filename=str(file_path))
     except SyntaxError:
         return []
@@ -111,7 +107,7 @@ def find_unused_files(src_root: Path) -> list[str]:
         if "__pycache__" in str(py_file):
             continue
         try:
-            with open(py_file, "r") as f:
+            with open(py_file) as f:
                 tree = ast.parse(f.read(), filename=str(py_file))
         except SyntaxError:
             continue
@@ -147,7 +143,7 @@ def find_unused_files(src_root: Path) -> list[str]:
         if not is_imported:
             # Additional check: is it a script with if __name__ == "__main__"?
             try:
-                with open(file_path, "r") as f:
+                with open(file_path) as f:
                     content = f.read()
                     if '__name__ == "__main__"' in content or "__name__ == '__main__'" in content:
                         continue  # It's an executable script

@@ -5,9 +5,10 @@ Unit tests for GitHub Pages link validation.
 Run with: pytest tests/test_github_pages_links.py -v
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add scripts to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
@@ -45,8 +46,7 @@ class TestGitHubPagesLinkValidator:
         validator.validate_jekyll_templates()
 
         assert len(validator.errors) == 0, (
-            f"Validation produced {len(validator.errors)} error(s):\n"
-            + "\n".join(validator.errors)
+            f"Validation produced {len(validator.errors)} error(s):\n" + "\n".join(validator.errors)
         )
 
     def test_index_md_has_relative_url_on_lesson_links(self):
@@ -66,8 +66,9 @@ class TestGitHubPagesLinkValidator:
 
         # Check that lesson.url has relative_url filter
         import re
-        bad_pattern = re.compile(r'\{\{\s*lesson\.url\s*\}\}')
-        good_pattern = re.compile(r'\{\{\s*lesson\.url\s*\|\s*relative_url\s*\}\}')
+
+        bad_pattern = re.compile(r"\{\{\s*lesson\.url\s*\}\}")
+        good_pattern = re.compile(r"\{\{\s*lesson\.url\s*\|\s*relative_url\s*\}\}")
 
         bad_matches = bad_pattern.findall(content)
         good_matches = good_pattern.findall(content)
@@ -108,9 +109,7 @@ class TestRegressionPrevention:
 
         content = config_file.read_text()
 
-        assert 'baseurl: "/trading"' in content, (
-            "_config.yml should have baseurl: \"/trading\" set"
-        )
+        assert 'baseurl: "/trading"' in content, '_config.yml should have baseurl: "/trading" set'
 
     def test_url_configured_in_config(self):
         """Ensure _config.yml has correct URL."""

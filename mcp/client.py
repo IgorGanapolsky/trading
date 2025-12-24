@@ -24,6 +24,7 @@ from src.core.alpaca_trader import AlpacaTrader, AlpacaTraderError
 # OpenRouter sentiment functions will return None
 try:
     from src.core.multi_llm_analysis import MultiLLMAnalyzer
+
     MULTI_LLM_AVAILABLE = True
 except ImportError:
     MultiLLMAnalyzer = None  # type: ignore

@@ -91,6 +91,9 @@ KNOWN_EXTERNAL_OUTPUTS = {
     ("metadata", "dependency"),
     ("metadata", "update"),
     ("is_security", "is_security"),
+    # GitHub Pages actions set these (actions/configure-pages, actions/deploy-pages)
+    ("pages", "base_path"),
+    ("deployment", "page_url"),
 }
 
 
