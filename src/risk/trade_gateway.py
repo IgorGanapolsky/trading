@@ -507,7 +507,7 @@ class TradeGateway:
                         "side": request.side,
                         "notional": request.notional,
                         "quantity": request.quantity,
-                        "strategy": request.strategy,
+                        "strategy": request.strategy_type,
                     }
                     span.add_output("approved", approved)
                     span.add_output("risk_score", risk_score)

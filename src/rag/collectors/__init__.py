@@ -1,11 +1,7 @@
-# Stub module
+# FRED Collector module exports
+from src.rag.collectors.fred_collector import FREDCollector
 
+# Backward compatibility alias (camelCase)
+FredCollector = FREDCollector
 
-class FredCollector:
-    """Stub for deleted FRED collector."""
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def fetch(self, *args, **kwargs) -> dict:
-        return {}
+__all__ = ["FREDCollector", "FredCollector"]
