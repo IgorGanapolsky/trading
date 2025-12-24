@@ -13,7 +13,29 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 load_dotenv()
+
+
+def get_treasury_yields() -> dict:
+    """Fetch live Treasury yields from FRED API."""
+    try:
+        from src.rag.collectors.fred_collector import FREDCollector
+        fred = FREDCollector()
+        yields = fred.get_treasury_yields()
+        spread = fred.get_yield_curve_spread()
+        inverted = fred.is_yield_curve_inverted()
+        return {
+            "yields": yields,
+            "spread": spread,
+            "inverted": inverted,
+            "available": True
+        }
+    except Exception as e:
+        print(f"Warning: Could not fetch FRED data: {e}")
+        return {"available": False}
 
 # Paths
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -109,6 +131,36 @@ def generate_blog_post(perf: dict, trades: list, day_num: int) -> str:
             "\n## Today's Trades\n\nNo trades executed today (market closed or no signals).\n"
         )
 
+    # Build Treasury/FRED section with live data
+    treasury_data = get_treasury_yields()
+    if treasury_data.get("available"):
+        yields = treasury_data.get("yields", {})
+        spread = treasury_data.get("spread")
+        inverted = treasury_data.get("inverted", False)
+
+        curve_status = "**INVERTED** (recession warning)" if inverted else "Normal (positive slope)"
+        spread_str = f"{spread:+.2f}%" if spread is not None else "N/A"
+
+        y2 = f"{yields.get('2Y', 0):.2f}%" if yields.get('2Y') else "N/A"
+        y5 = f"{yields.get('5Y', 0):.2f}%" if yields.get('5Y') else "N/A"
+        y10 = f"{yields.get('10Y', 0):.2f}%" if yields.get('10Y') else "N/A"
+        y30 = f"{yields.get('30Y', 0):.2f}%" if yields.get('30Y') else "N/A"
+
+        treasury_section = f"""| Maturity | Yield |
+|----------|-------|
+| 2-Year | {y2} |
+| 5-Year | {y5} |
+| 10-Year | {y10} |
+| 30-Year | {y30} |
+
+**Yield Curve Spread (10Y-2Y)**: {spread_str}
+
+**Curve Status**: {curve_status}
+
+*Data source: Federal Reserve Economic Data (FRED) API*"""
+    else:
+        treasury_section = "*Treasury data temporarily unavailable*"
+
     # Generate the blog post
     post = f"""---
 layout: post
@@ -145,7 +197,15 @@ day_number: {day_num}
 Our current strategy focuses on:
 - **US Equities**: SPY, sector ETFs
 - **Options**: Cash-secured puts, covered calls
-- **Fixed Income**: Treasury ETFs (BIL, SHY, IEF, TLT)
+- **Fixed Income**: Treasury ETFs (SHY, IEF, TLT)
+
+---
+
+## Treasury & Fixed Income
+
+**Live Treasury Yields (FRED API):**
+
+{treasury_section}
 
 ---
 
