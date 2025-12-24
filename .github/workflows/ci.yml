@@ -508,3 +508,29 @@ jobs:
             echo "Run: python3 scripts/detect_dead_code.py --src src"
             exit 1
           }
+
+  # Added Dec 24, 2025: GitHub Pages Link Validation
+  # Prevents 404s from broken relative_url filters
+  github-pages-validation:
+    name: GitHub Pages Link Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate Jekyll templates use relative_url
+        run: |
+          echo "Validating GitHub Pages link filters..."
+          python3 scripts/validate_github_pages_links.py --templates-only
+
+      - name: Fail on missing relative_url filters
+        if: failure()
+        run: |
+          echo "::error::GitHub Pages links missing relative_url filter!"
+          echo "::error::This causes 404 errors on the live site."
+          echo "Run: python3 scripts/validate_github_pages_links.py"
+          exit 1

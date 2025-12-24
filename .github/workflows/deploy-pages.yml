@@ -17,8 +17,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Validate links BEFORE building to prevent 404 deploys
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate Jekyll templates
+        run: |
+          echo "🔍 Pre-deploy link validation..."
+          python3 scripts/validate_github_pages_links.py --templates-only
+          echo "✅ All templates valid - safe to deploy"
+
   build:
     runs-on: ubuntu-latest
+    needs: validate
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -57,6 +76,17 @@ jobs:
         run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
         env:
           JEKYLL_ENV: production
+
+      - name: Set up Python for validation
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate built HTML links
+        run: |
+          echo "🔍 Post-build link validation..."
+          python3 scripts/validate_github_pages_links.py
+          echo "✅ All built HTML validated"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
