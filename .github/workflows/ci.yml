@@ -81,10 +81,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install poetry
-          poetry install --no-interaction
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-timeout
       - name: Run unit tests with coverage
-        run: poetry run pytest -q --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=30
+        run: python -m pytest -q --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=30
       - name: Upload coverage report
         uses: actions/upload-artifact@v6
         with:
@@ -108,13 +108,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install poetry
-          poetry install --no-interaction
+          pip install -r requirements.txt
+          pip install pytest pytest-timeout
 
       - name: Run smoke backtest
         run: |
           mkdir -p out
-          poetry run ./scripts/run_smoke.sh tests/fixtures/fixture.csv 42 out/smoke.json
+          ./scripts/run_smoke.sh tests/fixtures/fixture.csv 42 out/smoke.json
       - name: Upload smoke artifact
         uses: actions/upload-artifact@v6
         with:
@@ -194,6 +194,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install pytest pytest-timeout pytest-cov
 
       - name: Run core tests
         timeout-minutes: 5
