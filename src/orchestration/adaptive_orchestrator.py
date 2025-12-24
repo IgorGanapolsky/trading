@@ -23,10 +23,11 @@ from src.core.skills_integration import get_skills
 from src.orchestration.context_engine import get_context_engine
 
 # Optional market regime detector
-try:
-    from src.ml.market_regime_detector import MarketRegimeDetector
-except ImportError:
-    MarketRegimeDetector = None  # type: ignore
+# DISABLED: src.ml.market_regime_detector module does not exist
+# try:
+#     from src.ml.market_regime_detector import MarketRegimeDetector
+# except ImportError:
+MarketRegimeDetector = None  # type: ignore
 
 # Import types from elite_orchestrator (avoid circular import)
 try:

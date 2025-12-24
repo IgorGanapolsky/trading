@@ -52,12 +52,13 @@ from src.strategies.treasury_ladder_strategy import TreasuryLadderStrategy
 from src.utils.regime_detector import RegimeDetector
 
 # Mental Toughness Coach - Psychology-based trading guard (Dec 2025)
-try:
-    from src.coaching.mental_toughness_coach import MentalToughnessCoach
-
-    COACHING_AVAILABLE = True
-except ImportError:
-    COACHING_AVAILABLE = False
+# DISABLED: Module not implemented yet
+# try:
+#     from src.coaching.mental_toughness_coach import MentalToughnessCoach
+#     COACHING_AVAILABLE = True
+# except ImportError:
+#     COACHING_AVAILABLE = False
+COACHING_AVAILABLE = False
 
 # Bull/Bear Debate Agents - Multi-perspective analysis (Dec 2025)
 # Based on UCLA/MIT TradingAgents research showing 42% CAGR improvement
@@ -87,21 +88,23 @@ except ImportError:
 
 # Hindsight Agentic Memory - 91% accuracy on LongMemEval (Dec 2025)
 # Auto-learns from trades, provides confidence-scored opinions
-try:
-    from src.rag.hindsight_adapter import HindsightAdapter, get_hindsight_adapter  # noqa: F401
-
-    HINDSIGHT_AVAILABLE = True
-except ImportError:
-    HINDSIGHT_AVAILABLE = False
+# DISABLED: Module not implemented yet
+# try:
+#     from src.rag.hindsight_adapter import HindsightAdapter, get_hindsight_adapter  # noqa: F401
+#     HINDSIGHT_AVAILABLE = True
+# except ImportError:
+#     HINDSIGHT_AVAILABLE = False
+HINDSIGHT_AVAILABLE = False
 
 # Reflexion Loop - Self-improving through trade reflection (Dec 2025)
 # Based on Reflexion framework research
-try:
-    from src.coaching.reflexion_loop import reflect_and_store
-
-    REFLEXION_AVAILABLE = True
-except ImportError:
-    REFLEXION_AVAILABLE = False
+# DISABLED: Module not implemented yet
+# try:
+#     from src.coaching.reflexion_loop import reflect_and_store
+#     REFLEXION_AVAILABLE = True
+# except ImportError:
+#     REFLEXION_AVAILABLE = False
+REFLEXION_AVAILABLE = False
 
 # Introspective awareness imports (Dec 2025)
 try:
@@ -248,20 +251,21 @@ class TradingOrchestrator:
         self.treasury_ladder_strategy = TreasuryLadderStrategy(paper=paper)
 
         # Gate 0: Mental Toughness Coach - Prevents emotional/tilt trading
-        self.mental_coach: MentalToughnessCoach | None = None
-        enable_coaching = os.getenv("ENABLE_MENTAL_COACHING", "true").lower() in {
-            "1",
-            "true",
-            "yes",
-        }
-        if enable_coaching and COACHING_AVAILABLE:
-            try:
-                self.mental_coach = MentalToughnessCoach()
-                logger.info(
-                    "Gate 0: MentalToughnessCoach initialized (psychology-based trading guard)"
-                )
-            except Exception as e:
-                logger.warning(f"MentalToughnessCoach init failed: {e}")
+        # DISABLED: Module not implemented yet
+        self.mental_coach: Any | None = None  # Was: MentalToughnessCoach | None
+        # enable_coaching = os.getenv("ENABLE_MENTAL_COACHING", "true").lower() in {
+        #     "1",
+        #     "true",
+        #     "yes",
+        # }
+        # if enable_coaching and COACHING_AVAILABLE:
+        #     try:
+        #         self.mental_coach = MentalToughnessCoach()
+        #         logger.info(
+        #             "Gate 0: MentalToughnessCoach initialized (psychology-based trading guard)"
+        #         )
+        #     except Exception as e:
+        #         logger.warning(f"MentalToughnessCoach init failed: {e}")
 
         # Gate 0.5: Bull/Bear Debate - Multi-perspective analysis (Dec 2025)
         # Based on UCLA/MIT TradingAgents research showing 42% CAGR improvement

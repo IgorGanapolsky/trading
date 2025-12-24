@@ -623,7 +623,14 @@ def create_introspective_council(
     Returns:
         Configured IntrospectiveCouncil instance
     """
-    from src.core.multi_llm_analysis import MultiLLMAnalyzer
+    try:
+        from src.core.multi_llm_analysis import MultiLLMAnalyzer
+    except ImportError as e:
+        logger.error(f"Cannot create IntrospectiveCouncil: MultiLLMAnalyzer not available: {e}")
+        raise ImportError(
+            "MultiLLMAnalyzer is required for IntrospectiveCouncil. "
+            "Please ensure src.core.multi_llm_analysis module exists."
+        ) from e
 
     analyzer = MultiLLMAnalyzer(api_key=api_key)
 

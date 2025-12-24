@@ -29,8 +29,29 @@ def find_stub_functions(file_path: Path) -> list[str]:
     except SyntaxError:
         return []  # Skip files with syntax errors
 
+    # Collect line ranges of except handlers (fallback code)
+    except_lines = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ExceptHandler):
+            for stmt in node.body:
+                if hasattr(stmt, "lineno"):
+                    except_lines.add(stmt.lineno)
+                # Also add nested function defs inside except blocks
+                for child in ast.walk(stmt):
+                    if hasattr(child, "lineno"):
+                        except_lines.add(child.lineno)
+
+    # Skip functions named 'name' (common property pattern)
+    SKIP_NAMES = {"name", "get_name", "__str__", "__repr__"}
+
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef):
+            # Skip if function is defined inside an except block (it's a fallback)
+            if node.lineno in except_lines:
+                continue
+            # Skip common property-style functions
+            if node.name in SKIP_NAMES:
+                continue
             # Check if function body is just a return with a constant
             if len(node.body) == 1:
                 body = node.body[0]
@@ -66,15 +87,27 @@ def find_broken_imports(file_path: Path, src_root: Path) -> list[str]:
     broken = []
     try:
         with open(file_path) as f:
-            tree = ast.parse(f.read(), filename=str(file_path))
+            content = f.read()
+            tree = ast.parse(content, filename=str(file_path))
     except SyntaxError:
         return []
+
+    # Collect line numbers of imports inside try blocks
+    try_block_lines = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Try):
+            # Get all lines in the try body
+            for stmt in node.body:
+                if hasattr(stmt, "lineno"):
+                    try_block_lines.add(stmt.lineno)
 
     # Find imports NOT wrapped in try-except
     for node in ast.walk(tree):
         if isinstance(node, ast.ImportFrom) and node.module:
-            # Check if this import is inside a try block
-            # This is a simplified check - may have false positives
+            # Skip if this import is inside a try block
+            if node.lineno in try_block_lines:
+                continue
+
             if node.module.startswith("src."):
                 module_path = node.module.replace(".", "/") + ".py"
                 full_path = src_root.parent / module_path

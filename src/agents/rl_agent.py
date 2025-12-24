@@ -21,7 +21,9 @@ from src.agents.rl_transformer import TransformerRLPolicy, TransformerUnavailabl
 # DiscoRL-inspired DQN (Dec 2025)
 DISCO_DQN_AVAILABLE = False
 try:
-    from src.ml.disco_dqn_agent import DiscoDQNAgent
+    # Module removed - commenting out broken import
+    # from src.ml.disco_dqn_agent import DiscoDQNAgent
+    raise ImportError("disco_dqn_agent module not available")
 
     DISCO_DQN_AVAILABLE = True
 except ImportError:

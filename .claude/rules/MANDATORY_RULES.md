@@ -164,20 +164,23 @@ Budget: $100/mo. Enable all, optimize later.
 
 ---
 
-## 10. CRYPTO TRADES 24/7/365
+## 10. WE TRADE US EQUITIES AND OPTIONS ONLY
 
-**CRITICAL: Crypto markets NEVER close. Trade crypto every day including weekends.**
+**We do NOT trade crypto, forex, or futures. US equities and options ONLY.**
 
-| Asset Class | Trading Hours | Trading Days |
-|-------------|---------------|--------------|
-| **Crypto (BTC/ETH)** | 24 hours | 7 days/week (including weekends) |
-| **US Equities** | 9:30 AM - 4:00 PM ET | Mon-Fri only |
+| Asset Class | Status | Trading Hours |
+|-------------|--------|---------------|
+| **US Equities** | YES | Mon-Fri 9:30 AM - 4:00 PM ET |
+| **US Options** | YES | Same as underlying |
+| **Crypto** | NO | N/A |
+| **Forex** | NO | N/A |
+| **Futures** | NO | N/A |
 
-When checking P/L or positions on weekends:
-- **WRONG**: "Markets are closed today"
-- **RIGHT**: "Let me check crypto positions and P/L"
+On weekends:
+- **Markets are CLOSED** - no trading activity
+- Next trading session: Monday 9:30 AM ET
 
-**Why**: Dec 14, 2025 - Incorrectly claimed "$0 today - markets closed (weekend)" when crypto trades 24/7/365.
+**Why**: Dec 19, 2025 - Updated to reflect actual trading strategy (ll_052). Original crypto rule was from initial setup.
 
 ---
 
@@ -186,5 +189,5 @@ When checking P/L or positions on weekends:
 - `docs/verification-protocols.md` - Full verification protocol
 - `docs/r-and-d-phase.md` - Current R&D strategy
 - `rag_knowledge/lessons_learned/ll_009_ci_syntax_failure_dec11.md` - CI failure incident
-- `rag_knowledge/lessons_learned/ll_032_crypto_trades_24_7_365.md` - Crypto 24/7 incident
+- `rag_knowledge/lessons_learned/ll_052_no_crypto_trading_dec19.md` - No crypto trading
 - `rag_knowledge/lessons_learned/ll_058_stale_data_lying_incident_dec23.md` - Stale data lying incident (CRITICAL)

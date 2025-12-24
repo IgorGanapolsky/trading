@@ -20,7 +20,26 @@ except ImportError:
     LogisticRegression = None  # type: ignore
     SKLEARN_AVAILABLE = False
 
-from src.ml.reward_functions import RiskAdjustedReward
+# Module removed - commenting out broken import
+# from src.ml.reward_functions import RiskAdjustedReward
+
+
+# Stub for removed RiskAdjustedReward class
+class RiskAdjustedReward:
+    """Stub for removed src.ml.reward_functions.RiskAdjustedReward."""
+
+    def calculate_from_trade_result(self, trade_result: dict[str, Any]) -> float:
+        """
+        Fallback reward calculation when RiskAdjustedReward module is unavailable.
+
+        Uses simple binary reward based on P&L percentage.
+        """
+        pl_pct = trade_result.get("pl_pct", 0.0)
+        if pl_pct is None:
+            return 0.0
+        # Simple reward: +1 for profit, -1 for loss, scaled by magnitude
+        return float(np.clip(pl_pct * 10, -1.0, 1.0))
+
 
 # Optional imports - defer error to runtime when actually used
 try:

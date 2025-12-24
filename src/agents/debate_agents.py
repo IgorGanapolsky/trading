@@ -23,10 +23,12 @@ logger = logging.getLogger(__name__)
 
 # Psychology integration
 try:
-    from src.coaching.mental_toughness_coach import get_position_size_modifier
-    from src.coaching.mental_toughness_coach import (
-        get_prompt_context as get_psychology_context,
-    )
+    # Module removed - commenting out broken import
+    # from src.coaching.mental_toughness_coach import get_position_size_modifier
+    # from src.coaching.mental_toughness_coach import (
+    #     get_prompt_context as get_psychology_context,
+    # )
+    raise ImportError("mental_toughness_coach module not available")
 
     PSYCHOLOGY_AVAILABLE = True
 except ImportError:

@@ -28,8 +28,12 @@ logger = logging.getLogger(__name__)
 try:
     from src.rag.collectors.mcmillan_options_collector import McMillanOptionsKnowledgeBase
     from src.rag.options_book_retriever import get_options_book_retriever
+    MCMILLAN_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Optional import failed: {e}")
+    McMillanOptionsKnowledgeBase = None
+    get_options_book_retriever = None
+    MCMILLAN_AVAILABLE = False
 
 try:
     from src.utils.iv_analyzer import IVAnalyzer, IVMetrics
@@ -155,7 +159,16 @@ class OptionsSignalEnhancer:
             portfolio_value: Portfolio value for position sizing
         """
         self.portfolio_value = portfolio_value
-        self.mcmillan_kb = McMillanOptionsKnowledgeBase()
+
+        # Initialize McMillan knowledge base if available
+        if MCMILLAN_AVAILABLE and McMillanOptionsKnowledgeBase:
+            try:
+                self.mcmillan_kb = McMillanOptionsKnowledgeBase()
+            except Exception as e:
+                logger.warning(f"McMillan KB init failed: {e}")
+                self.mcmillan_kb = None
+        else:
+            self.mcmillan_kb = None
 
         # Initialize IV analyzer if available
         if IVAnalyzer:
@@ -168,10 +181,13 @@ class OptionsSignalEnhancer:
             self.iv_analyzer = None
 
         # Initialize book retriever
-        try:
-            self.book_retriever = get_options_book_retriever()
-        except Exception as e:
-            logger.warning(f"Book retriever init failed: {e}")
+        if MCMILLAN_AVAILABLE and get_options_book_retriever:
+            try:
+                self.book_retriever = get_options_book_retriever()
+            except Exception as e:
+                logger.warning(f"Book retriever init failed: {e}")
+                self.book_retriever = None
+        else:
             self.book_retriever = None
 
         logger.info("Options Signal Enhancer initialized")
@@ -217,12 +233,25 @@ class OptionsSignalEnhancer:
         )
 
         # Step 2: Calculate expected move (McMillan's formula)
-        expected_move = self.mcmillan_kb.calculate_expected_move(
-            stock_price=iv_metrics["current_price"],
-            implied_volatility=iv_metrics["current_iv"],
-            days_to_expiration=dte,
-            confidence_level=1.0,  # 1 std dev
-        )
+        if self.mcmillan_kb:
+            expected_move = self.mcmillan_kb.calculate_expected_move(
+                stock_price=iv_metrics["current_price"],
+                implied_volatility=iv_metrics["current_iv"],
+                days_to_expiration=dte,
+                confidence_level=1.0,  # 1 std dev
+            )
+        else:
+            # Fallback calculation when McMillan KB not available
+            import math
+            stock_price = iv_metrics["current_price"]
+            iv = iv_metrics["current_iv"]
+            expected_move_amt = stock_price * iv * math.sqrt(dte / 365.0)
+            expected_move = {
+                "expected_move": expected_move_amt,
+                "move_percentage": (expected_move_amt / stock_price) * 100,
+                "upper_bound": stock_price + expected_move_amt,
+                "lower_bound": stock_price - expected_move_amt,
+            }
 
         # Step 3: Cross-check sentiment with expected move
         alignment = self._cross_check_alignment(
@@ -411,9 +440,16 @@ class OptionsSignalEnhancer:
             reason = f"Unknown signal type: {sentiment_signal}"
 
         # Get McMillan's IV guidance
-        iv_rec = self.mcmillan_kb.get_iv_recommendation(
-            iv_rank=iv_rank, iv_percentile=iv_metrics.get("iv_percentile", iv_rank)
-        )
+        if self.mcmillan_kb:
+            iv_rec = self.mcmillan_kb.get_iv_recommendation(
+                iv_rank=iv_rank, iv_percentile=iv_metrics.get("iv_percentile", iv_rank)
+            )
+        else:
+            # Fallback IV recommendation when McMillan KB not available
+            if iv_rank > 50:
+                iv_rec = {"recommendation": "High IV - favor premium selling strategies"}
+            else:
+                iv_rec = {"recommendation": "Low IV - favor premium buying strategies"}
 
         # CRITICAL: Add IV Rank < 20 warning for credit strategies
         iv_rank_warning = ""
