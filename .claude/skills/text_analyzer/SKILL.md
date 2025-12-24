@@ -2,6 +2,7 @@
 skill_id: text_analyzer
 name: Text Analyzer
 version: 1.0.0
+status: dormant  # Implementation file does not exist yet
 description: Skill for analyzing financial text using ML feature engineering techniques
 author: Trading System CTO
 tags: [nlp, text-analysis, sentiment, feature-engineering, trading-signals, finbert]
@@ -12,12 +13,15 @@ tools:
   - extract_tfidf_features
   - extract_embedding
 dependencies:
-  - src/ml/text_feature_engineering.py
+  - src/ml/text_feature_engineering.py  # TODO: Create this file
 integrations:
   - src/ml/text_feature_engineering.py::TextFeatureEngineer
   - src/ml/text_feature_engineering.py::analyze_text
   - src/ml/text_feature_engineering.py::get_news_signal
 ---
+
+> **STATUS: DORMANT** - This skill describes planned functionality.
+> The implementation file `src/ml/text_feature_engineering.py` does not exist yet.
 
 # Text Analyzer Skill
 

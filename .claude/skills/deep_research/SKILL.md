@@ -2,6 +2,7 @@
 skill_id: deep_research
 name: Deep Research
 version: 1.0.0
+status: dormant  # Implementation file does not exist yet
 description: Skill for Gemini Deep Research pre-trade market analysis
 author: Trading System CTO
 tags: [research, gemini, deep-research, market-analysis, pre-trade, autonomous-agents]
@@ -11,11 +12,15 @@ tools:
   - research_market_conditions
   - get_pre_trade_analysis
 dependencies:
-  - src/ml/gemini_deep_research.py
+  - src/ml/gemini_deep_research.py  # TODO: Create this file
 integrations:
   - src/ml/gemini_deep_research.py::GeminiDeepResearch
   - src/ml/gemini_deep_research.py::get_researcher
 ---
+
+> **STATUS: DORMANT** - This skill describes planned functionality.
+> The implementation file `src/ml/gemini_deep_research.py` does not exist yet.
+> To activate: Create the implementation and remove `status: dormant` from frontmatter.
 
 # Deep Research Skill
 

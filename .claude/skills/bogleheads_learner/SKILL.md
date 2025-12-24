@@ -2,6 +2,7 @@
 skill_id: bogleheads_learner
 name: Bogleheads Forum Learner
 version: 1.0.0
+status: active
 description: Continuously learns from Bogleheads.org forum to extract investing wisdom and integrate into RL trading engine
 author: Trading System CTO
 tags: [learning, forum-analysis, investing-wisdom, rl-integration, mcp]
@@ -16,9 +17,8 @@ dependencies:
   - beautifulsoup4
   - anthropic
   - langchain
-integrations:
-  - src/ml/inference.py::MLPredictor
-  - src/strategies/growth_strategy.py::GrowthStrategy
+scripts:
+  - .claude/skills/bogleheads_learner/scripts/bogleheads_learner.py
 ---
 
 # Bogleheads Forum Learner Skill

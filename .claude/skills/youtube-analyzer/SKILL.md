@@ -2,6 +2,7 @@
 skill_id: youtube-analyzer
 name: youtube-analyzer
 version: 1.2.0
+status: active
 description: Extracts and analyzes YouTube videos for trading insights, market sentiment, and stock signals with RAG storage
 author: Trading System CTO
 tags: [youtube, analysis, trading-insights, transcripts, sentiment, rag, learning]
@@ -14,8 +15,9 @@ dependencies:
   - yt-dlp
   - youtube-transcript-api
   - langchain
-integrations:
-  - src/evaluation/rag_storage.py
+scripts:
+  - .claude/skills/youtube-analyzer/scripts/analyze_youtube.py
+storage:
   - rag_knowledge/youtube/
 ---
 
