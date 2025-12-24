@@ -552,7 +552,9 @@ if __name__ == "__main__":
     print("=" * 80)
 
     # Show GARCH status
-    print(f"\nGARCH Volatility Forecasting: {'ENABLED' if GARCH_AVAILABLE else 'DISABLED (install arch)'}")
+    print(
+        f"\nGARCH Volatility Forecasting: {'ENABLED' if GARCH_AVAILABLE else 'DISABLED (install arch)'}"
+    )
 
     # Generate sample returns (200 days)
     np.random.seed(42)
