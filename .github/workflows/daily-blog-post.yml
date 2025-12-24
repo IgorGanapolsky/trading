@@ -72,9 +72,38 @@ jobs:
           python3 scripts/update_performance_log.py
 
       - name: Generate blog post
+        id: generate
         if: steps.market_check.outputs.skip != 'true'
         run: |
-          python3 scripts/generate_daily_blog_post.py
+          python3 scripts/generate_daily_blog_post.py 2>&1 | tee /tmp/blog_output.txt
+
+          # Check if Dev.to posting succeeded
+          if grep -q "Published to Dev.to:" /tmp/blog_output.txt; then
+            echo "devto_published=true" >> $GITHUB_OUTPUT
+            DEVTO_URL=$(grep "Published to Dev.to:" /tmp/blog_output.txt | cut -d' ' -f4)
+            echo "devto_url=$DEVTO_URL" >> $GITHUB_OUTPUT
+          else
+            echo "devto_published=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Check for errors
+          if grep -q "Dev.to publish failed:" /tmp/blog_output.txt; then
+            echo "::warning::Dev.to publishing failed - check API key or rate limits"
+          fi
+
+      - name: Verify Dev.to publication
+        if: steps.market_check.outputs.skip != 'true'
+        run: |
+          if [ "${{ steps.generate.outputs.devto_published }}" = "true" ]; then
+            echo "✅ Dev.to post published: ${{ steps.generate.outputs.devto_url }}"
+          else
+            if [ -n "$DEVTO_API_KEY" ]; then
+              echo "⚠️ Dev.to API key configured but post was NOT published"
+              echo "Check the generate step logs for errors"
+            else
+              echo "ℹ️ DEVTO_API_KEY not configured - skipped Dev.to publishing"
+            fi
+          fi
 
       - name: Commit and push
         if: steps.market_check.outputs.skip != 'true'
@@ -103,6 +132,17 @@ jobs:
         run: |
           echo "## Daily Blog Post Generated" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- GitHub Pages: https://igorganapolsky.github.io/trading/reports/" >> $GITHUB_STEP_SUMMARY
-          echo "- Performance log updated" >> $GITHUB_STEP_SUMMARY
-          echo "- Dev.to post (if API key configured)" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| GitHub Pages | ✅ Published to [/reports/](https://igorganapolsky.github.io/trading/reports/) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Performance Log | ✅ Updated |" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.generate.outputs.devto_published }}" = "true" ]; then
+            echo "| Dev.to | ✅ [Published](${{ steps.generate.outputs.devto_url }}) |" >> $GITHUB_STEP_SUMMARY
+          else
+            if [ -n "$DEVTO_API_KEY" ]; then
+              echo "| Dev.to | ⚠️ API key set but publish failed |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| Dev.to | ⏭️ Skipped (no API key) |" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi

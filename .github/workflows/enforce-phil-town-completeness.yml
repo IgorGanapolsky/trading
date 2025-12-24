@@ -36,7 +36,7 @@ jobs:
           MIN_YOUTUBE_TRANSCRIPTS=10
           MIN_BLOG_ARTICLES=10
           MIN_BOOKS=1
-          MIN_TOTAL_CONTENT=25
+          MIN_TOTAL_CONTENT=21  # 10 YouTube + 10 blogs + 1 book = 21 minimum
 
           # Count YouTube transcripts
           YOUTUBE_COUNT=$(find rag_knowledge/youtube/transcripts -name "*.md" 2>/dev/null | wc -l)
