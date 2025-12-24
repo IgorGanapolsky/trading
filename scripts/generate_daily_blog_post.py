@@ -23,19 +23,16 @@ def get_treasury_yields() -> dict:
     """Fetch live Treasury yields from FRED API."""
     try:
         from src.rag.collectors.fred_collector import FREDCollector
+
         fred = FREDCollector()
         yields = fred.get_treasury_yields()
         spread = fred.get_yield_curve_spread()
         inverted = fred.is_yield_curve_inverted()
-        return {
-            "yields": yields,
-            "spread": spread,
-            "inverted": inverted,
-            "available": True
-        }
+        return {"yields": yields, "spread": spread, "inverted": inverted, "available": True}
     except Exception as e:
         print(f"Warning: Could not fetch FRED data: {e}")
         return {"available": False}
+
 
 # Paths
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -141,10 +138,10 @@ def generate_blog_post(perf: dict, trades: list, day_num: int) -> str:
         curve_status = "**INVERTED** (recession warning)" if inverted else "Normal (positive slope)"
         spread_str = f"{spread:+.2f}%" if spread is not None else "N/A"
 
-        y2 = f"{yields.get('2Y', 0):.2f}%" if yields.get('2Y') else "N/A"
-        y5 = f"{yields.get('5Y', 0):.2f}%" if yields.get('5Y') else "N/A"
-        y10 = f"{yields.get('10Y', 0):.2f}%" if yields.get('10Y') else "N/A"
-        y30 = f"{yields.get('30Y', 0):.2f}%" if yields.get('30Y') else "N/A"
+        y2 = f"{yields.get('2Y', 0):.2f}%" if yields.get("2Y") else "N/A"
+        y5 = f"{yields.get('5Y', 0):.2f}%" if yields.get("5Y") else "N/A"
+        y10 = f"{yields.get('10Y', 0):.2f}%" if yields.get("10Y") else "N/A"
+        y30 = f"{yields.get('30Y', 0):.2f}%" if yields.get("30Y") else "N/A"
 
         treasury_section = f"""| Maturity | Yield |
 |----------|-------|

@@ -23,7 +23,8 @@ def submit_order(
     client: MCPClient | None = None,
     **kwargs: Any,
 ) -> dict[str, Any]:
-    # Map to official Alpaca MCP tool: submit_order(symbol, side, qty, type, time_in_force, extended_hours)
+    # Map to official Alpaca MCP tool: submit_order
+    # Args: symbol, side, qty, type, time_in_force, extended_hours
     payload = {
         "symbol": symbol,
         "side": side,

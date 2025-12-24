@@ -8,6 +8,7 @@ Provides MCP tools for monitoring Bogleheads forum and integrating insights.
 import asyncio
 import json
 import logging
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -25,8 +26,6 @@ logger = logging.getLogger(__name__)
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent.parent
-import sys
-
 sys.path.insert(0, str(project_root))
 
 

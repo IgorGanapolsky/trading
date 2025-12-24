@@ -2,19 +2,17 @@
 
 from __future__ import annotations
 
-import os
-
-# Early diagnostic output for CI visibility
-import sys
-
-# Reduced annotations to avoid GitHub 10-annotation limit
-print("autonomous_trader.py starting - Python:", sys.version.split()[0], flush=True)
-
 import argparse
 import json
+import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+# Early diagnostic output for CI visibility
+# Reduced annotations to avoid GitHub 10-annotation limit
+print("autonomous_trader.py starting - Python:", sys.version.split()[0], flush=True)
 
 # Removed annotation to stay under limit
 
@@ -177,7 +175,8 @@ def _apply_daily_input_scaling(logger) -> None:
     scaled = calc_daily_input(equity)
     os.environ["DAILY_INVESTMENT"] = f"{scaled:.2f}"
     logger.info(
-        "Daily input auto-scaled to $%.2f (equity=$%.2f). Set ENABLE_DAILY_INPUT_SCALING=false to disable.",
+        "Daily input auto-scaled to $%.2f (equity=$%.2f). "
+        "Set ENABLE_DAILY_INPUT_SCALING=false to disable.",
         scaled,
         equity,
     )
@@ -425,9 +424,8 @@ def _update_reit_daily_returns(logger) -> None:
     try:
         with state_path.open("w", encoding="utf-8") as handle:
             json.dump(state, handle, indent=2)
-        logger.info(
-            f"📊 REIT Daily Returns: ${reit_realized + reit_unrealized:.2f} ({len(reit_positions)} positions)"
-        )
+        reit_total = reit_realized + reit_unrealized
+        logger.info(f"📊 REIT Daily Returns: ${reit_total:.2f} ({len(reit_positions)} positions)")
     except Exception:
         pass
 
@@ -572,9 +570,8 @@ def _update_precious_metals_daily_returns(logger) -> None:
     try:
         with state_path.open("w", encoding="utf-8") as handle:
             json.dump(state, handle, indent=2)
-        logger.info(
-            f"Precious Metals Daily Returns: ${metals_realized + metals_unrealized:.2f} ({len(metals_positions)} positions)"
-        )
+        metals_total = metals_realized + metals_unrealized
+        logger.info(f"Precious Metals Returns: ${metals_total:.2f} ({len(metals_positions)} pos)")
     except Exception:
         pass
 
@@ -655,7 +652,7 @@ def execute_precious_metals_trading() -> None:
                             "timestamp": datetime.now().isoformat(),
                             "status": "SUBMITTED",
                             "strategy": "PreciousMetalsStrategy",
-                            "reason": f"Regime: {regime}, Weight: {sig.get('strength', 0) * 100:.0f}%",
+                            "reason": f"Regime: {regime}, Wt: {sig.get('strength', 0) * 100:.0f}%",
                             "mode": "PAPER",
                             "regime": regime,
                         }
@@ -775,9 +772,7 @@ def execute_reit_trading() -> None:
                 json.dump(daily_trades, f, indent=4)
 
             logger.info(f"💾 REIT trades saved to {trades_file}")
-            logger.info(
-                f"✅ REIT strategy executed: {len(signals)} positions @ ${per_trade_amount:.2f} each"
-            )
+            logger.info(f"✅ REIT: {len(signals)} positions @ ${per_trade_amount:.2f} each")
 
             # Update REIT daily returns in system_state for easy CEO visibility
             _update_reit_daily_returns(logger)
