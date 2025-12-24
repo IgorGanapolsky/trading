@@ -393,9 +393,12 @@ class TestLearningLoop:
             content = md_file.read_text()
 
             for field in required_fields:
-                assert f"**{field}**" in content or f"#{field}" in content.lower(), (
-                    f"Lesson {md_file.name} missing required field: {field}"
-                )
+                # Check for bold format (**Field**), heading format (## Field), or lower case heading
+                assert (
+                    f"**{field}**" in content
+                    or f"#{field}" in content.lower()
+                    or f"## {field}" in content
+                ), f"Lesson {md_file.name} missing required field: {field}"
 
     def test_anomaly_log_persistence(self):
         """Test that anomalies are persisted to disk."""

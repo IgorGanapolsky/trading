@@ -518,6 +518,34 @@ class TradeGateway:
 
         return decision
 
+    def validate_trade(self, request: TradeRequest) -> GatewayDecision:
+        """
+        Validate a trade request (alias for evaluate).
+
+        This is the MANDATORY checkpoint. No trade can bypass this.
+
+        Args:
+            request: The trade request from the AI
+
+        Returns:
+            GatewayDecision with approval status and reasons
+        """
+        return self.evaluate(request)
+
+    def check_trade(self, request: TradeRequest) -> GatewayDecision:
+        """
+        Check a trade request (alias for evaluate).
+
+        This is the MANDATORY checkpoint. No trade can bypass this.
+
+        Args:
+            request: The trade request from the AI
+
+        Returns:
+            GatewayDecision with approval status and reasons
+        """
+        return self.evaluate(request)
+
     def execute(self, decision: GatewayDecision) -> dict[str, Any] | None:
         """
         Execute an approved trade.
