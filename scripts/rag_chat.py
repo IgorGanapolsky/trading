@@ -15,10 +15,8 @@ Requires: GOOGLE_API_KEY environment variable
 """
 
 import argparse
-import json
 import os
 import sys
-from datetime import datetime
 from pathlib import Path
 
 # Add project root to path
@@ -41,8 +39,7 @@ def get_chroma_collection():
         return None
 
     client = chromadb.PersistentClient(
-        path=str(VECTOR_DB_PATH),
-        settings=Settings(anonymized_telemetry=False)
+        path=str(VECTOR_DB_PATH), settings=Settings(anonymized_telemetry=False)
     )
 
     try:
@@ -68,13 +65,15 @@ def search_rag(query: str, n_results: int = 5) -> list[dict]:
     formatted = []
     for i, doc in enumerate(results["documents"][0]):
         metadata = results["metadatas"][0][i]
-        formatted.append({
-            "content": doc,
-            "source": metadata.get("source", "unknown"),
-            "type": metadata.get("content_type", "unknown"),
-            "concepts": metadata.get("concepts", "none"),
-            "relevance": round(1 - results["distances"][0][i], 3),
-        })
+        formatted.append(
+            {
+                "content": doc,
+                "source": metadata.get("source", "unknown"),
+                "type": metadata.get("content_type", "unknown"),
+                "concepts": metadata.get("concepts", "none"),
+                "relevance": round(1 - results["distances"][0][i], 3),
+            }
+        )
 
     return formatted
 
@@ -93,10 +92,12 @@ def ask_gemini(question: str, context: list[dict]) -> str:
     genai.configure(api_key=api_key)
 
     # Build context string
-    context_str = "\n\n---\n\n".join([
-        f"[{c['type']}] {c['source']} (relevance: {c['relevance']})\n{c['content'][:1500]}"
-        for c in context[:3]  # Top 3 results
-    ])
+    context_str = "\n\n---\n\n".join(
+        [
+            f"[{c['type']}] {c['source']} (relevance: {c['relevance']})\n{c['content'][:1500]}"
+            for c in context[:3]  # Top 3 results
+        ]
+    )
 
     prompt = f"""You are a Phil Town Rule #1 Investing expert assistant.
 Answer the user's question based on the following context from the knowledge base.
@@ -141,10 +142,10 @@ def show_stats():
     print("\n📊 RAG Database Statistics")
     print("=" * 50)
     print(f"   Total chunks: {count}")
-    print(f"\n   Content types (sample):")
+    print("\n   Content types (sample):")
     for t, c in sorted(types.items(), key=lambda x: -x[1]):
         print(f"     - {t}: {c}")
-    print(f"\n   Top concepts (sample):")
+    print("\n   Top concepts (sample):")
     for c, n in sorted(concepts.items(), key=lambda x: -x[1])[:10]:
         print(f"     - {c}: {n}")
 

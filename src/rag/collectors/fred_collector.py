@@ -11,13 +11,13 @@ Author: Trading System
 Created: 2025-12-23
 """
 
+import json
 import logging
 import os
 from datetime import datetime, timedelta
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
-import json
 
 logger = logging.getLogger(__name__)
 

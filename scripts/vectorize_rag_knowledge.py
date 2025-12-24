@@ -17,11 +17,8 @@ import argparse
 import hashlib
 import json
 import logging
-import os
-import re
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -97,7 +94,7 @@ def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> list[st
         if end < len(text):
             last_period = chunk.rfind(". ")
             if last_period > chunk_size // 2:
-                chunk = chunk[:last_period + 1]
+                chunk = chunk[: last_period + 1]
                 end = start + last_period + 1
 
         chunks.append(chunk.strip())
@@ -127,10 +124,20 @@ def extract_phil_town_metadata(text: str, filepath: Path) -> dict:
         content_type = "book"
 
     # Detect if it's about options/puts
-    is_options_related = any(term in text_lower for term in [
-        "put", "call", "option", "premium", "strike", "expiration",
-        "cash-secured", "covered call", "wheel strategy"
-    ])
+    is_options_related = any(
+        term in text_lower
+        for term in [
+            "put",
+            "call",
+            "option",
+            "premium",
+            "strike",
+            "expiration",
+            "cash-secured",
+            "covered call",
+            "wheel strategy",
+        ]
+    )
 
     return {
         "source": filepath.stem,
@@ -153,8 +160,7 @@ def setup_chroma():
     VECTOR_DB_PATH.mkdir(parents=True, exist_ok=True)
 
     client = chromadb.PersistentClient(
-        path=str(VECTOR_DB_PATH),
-        settings=Settings(anonymized_telemetry=False)
+        path=str(VECTOR_DB_PATH), settings=Settings(anonymized_telemetry=False)
     )
 
     # Create or get Phil Town collection
@@ -164,7 +170,7 @@ def setup_chroma():
             "description": "Phil Town Rule #1 Investing knowledge base",
             "created": datetime.now().isoformat(),
             "hnsw:space": "cosine",  # Cosine similarity for text
-        }
+        },
     )
 
     return client, collection
@@ -289,13 +295,15 @@ def query_rag(query: str, n_results: int = 5, filter_options: bool = False) -> l
     formatted = []
     for i, doc in enumerate(results["documents"][0]):
         concepts_str = results["metadatas"][0][i].get("concepts", "none")
-        formatted.append({
-            "content": doc[:500] + "..." if len(doc) > 500 else doc,
-            "source": results["metadatas"][0][i].get("source", "unknown"),
-            "type": results["metadatas"][0][i].get("content_type", "unknown"),
-            "concepts": concepts_str.split(", ") if concepts_str != "none" else [],
-            "relevance": 1 - results["distances"][0][i],  # Convert distance to similarity
-        })
+        formatted.append(
+            {
+                "content": doc[:500] + "..." if len(doc) > 500 else doc,
+                "source": results["metadatas"][0][i].get("source", "unknown"),
+                "type": results["metadatas"][0][i].get("content_type", "unknown"),
+                "concepts": concepts_str.split(", ") if concepts_str != "none" else [],
+                "relevance": 1 - results["distances"][0][i],  # Convert distance to similarity
+            }
+        )
 
     return formatted
 
@@ -337,7 +345,7 @@ def main():
             print(f"❌ Error: {stats['error']}")
             return
 
-        print(f"\n✅ Vectorization complete!")
+        print("\n✅ Vectorization complete!")
         print(f"   Files processed: {stats['files']}")
         print(f"   Chunks created: {stats['chunks']}")
         print(f"   Files skipped: {stats['skipped']}")

@@ -8,7 +8,6 @@ Exit code 0 = success, 1 = failure (blocks trading if used as gate).
 
 import os
 import sys
-import uuid
 from datetime import datetime, timezone
 
 from dotenv import load_dotenv
@@ -28,7 +27,7 @@ def verify_langsmith() -> bool:
     project_name = os.getenv("LANGCHAIN_PROJECT", "igor-trading-system")
     api_key = os.getenv("LANGCHAIN_API_KEY")
 
-    print(f"🔍 Verifying LangSmith configuration...")
+    print("🔍 Verifying LangSmith configuration...")
     print(f"   Project: {project_name}")
     print(f"   API Key: {'✅ Set' if api_key else '❌ Missing'}")
 
@@ -68,7 +67,9 @@ def verify_langsmith() -> bool:
         # 4. Get project URL for reference
         project = client.read_project(project_name=project_name)
         org_id = client.info.org_id if hasattr(client, "info") and client.info else "unknown"
-        print(f"\n👉 LangSmith Dashboard: https://smith.langchain.com/o/{org_id}/projects/p/{project.id}")
+        print(
+            f"\n👉 LangSmith Dashboard: https://smith.langchain.com/o/{org_id}/projects/p/{project.id}"
+        )
 
         return True
 

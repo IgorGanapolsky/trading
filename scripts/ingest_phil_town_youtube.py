@@ -239,12 +239,14 @@ def get_videos_via_youtube_api(max_results: int = 50) -> list[dict]:
 
             for item in data.get("items", []):
                 snippet = item["snippet"]
-                videos.append({
-                    "id": snippet["resourceId"]["videoId"],
-                    "title": snippet["title"],
-                    "upload_date": snippet["publishedAt"][:10].replace("-", ""),
-                    "url": f"https://www.youtube.com/watch?v={snippet['resourceId']['videoId']}",
-                })
+                videos.append(
+                    {
+                        "id": snippet["resourceId"]["videoId"],
+                        "title": snippet["title"],
+                        "upload_date": snippet["publishedAt"][:10].replace("-", ""),
+                        "url": f"https://www.youtube.com/watch?v={snippet['resourceId']['videoId']}",
+                    }
+                )
 
             next_page = data.get("nextPageToken")
             if not next_page:
@@ -269,8 +271,10 @@ def get_videos_via_ytdlp(max_results: int = 50) -> list[dict]:
             "--no-check-certificate",
             "-j",
             f"--playlist-end={max_results}",
-            "--sleep-requests", "1",  # Rate limiting
-            "--sleep-interval", "2",
+            "--sleep-requests",
+            "1",  # Rate limiting
+            "--sleep-interval",
+            "2",
             f"{CHANNEL_URL}/videos",
         ]
 
@@ -281,12 +285,14 @@ def get_videos_via_ytdlp(max_results: int = 50) -> list[dict]:
             if line:
                 try:
                     data = json.loads(line)
-                    videos.append({
-                        "id": data.get("id"),
-                        "title": data.get("title"),
-                        "upload_date": data.get("upload_date"),
-                        "url": f"https://www.youtube.com/watch?v={data.get('id')}",
-                    })
+                    videos.append(
+                        {
+                            "id": data.get("id"),
+                            "title": data.get("title"),
+                            "upload_date": data.get("upload_date"),
+                            "url": f"https://www.youtube.com/watch?v={data.get('id')}",
+                        }
+                    )
                 except json.JSONDecodeError:
                     continue
 
@@ -349,13 +355,15 @@ def get_transcript_with_retry(video_id: str, max_retries: int = 3) -> Optional[s
                     transcript_data = api.fetch(video_id)
 
                 # Handle different API response formats
-                if hasattr(transcript_data, 'snippets'):
+                if hasattr(transcript_data, "snippets"):
                     full_text = " ".join([s.text for s in transcript_data.snippets])
-                elif hasattr(transcript_data, '__iter__'):
-                    full_text = " ".join([
-                        s.text if hasattr(s, 'text') else s.get('text', '')
-                        for s in transcript_data
-                    ])
+                elif hasattr(transcript_data, "__iter__"):
+                    full_text = " ".join(
+                        [
+                            s.text if hasattr(s, "text") else s.get("text", "")
+                            for s in transcript_data
+                        ]
+                    )
                 else:
                     full_text = str(transcript_data)
 
@@ -363,7 +371,7 @@ def get_transcript_with_retry(video_id: str, max_retries: int = 3) -> Optional[s
                 return full_text
 
             except Exception as e:
-                wait_time = (2 ** attempt) * 2  # Exponential backoff: 2, 4, 8 seconds
+                wait_time = (2**attempt) * 2  # Exponential backoff: 2, 4, 8 seconds
                 logger.warning(f"Attempt {attempt + 1} failed for {video_id}: {e}")
                 if attempt < max_retries - 1:
                     logger.info(f"Retrying in {wait_time} seconds...")
@@ -402,10 +410,38 @@ def analyze_transcript(transcript: str, title: str) -> dict:
     }
 
     valid_tickers = {
-        "AAPL", "MSFT", "GOOGL", "GOOG", "AMZN", "META", "NVDA", "TSLA",
-        "BRK", "V", "MA", "JPM", "JNJ", "WMT", "PG", "HD", "DIS", "NFLX",
-        "COST", "KO", "PEP", "MCD", "NKE", "SBUX", "TGT", "LOW", "CVS",
-        "SPY", "QQQ", "IWM", "VTI", "VOO",
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "GOOG",
+        "AMZN",
+        "META",
+        "NVDA",
+        "TSLA",
+        "BRK",
+        "V",
+        "MA",
+        "JPM",
+        "JNJ",
+        "WMT",
+        "PG",
+        "HD",
+        "DIS",
+        "NFLX",
+        "COST",
+        "KO",
+        "PEP",
+        "MCD",
+        "NKE",
+        "SBUX",
+        "TGT",
+        "LOW",
+        "CVS",
+        "SPY",
+        "QQQ",
+        "IWM",
+        "VTI",
+        "VOO",
     }
 
     # Find tickers
@@ -433,8 +469,16 @@ def analyze_transcript(transcript: str, title: str) -> dict:
                 insights["key_concepts"].append(concept)
 
     # Sentiment
-    bullish = sum(1 for w in ["buy", "bullish", "opportunity", "undervalued", "growth", "profit"] if w in transcript_lower)
-    bearish = sum(1 for w in ["sell", "bearish", "overvalued", "risk", "loss", "avoid"] if w in transcript_lower)
+    bullish = sum(
+        1
+        for w in ["buy", "bullish", "opportunity", "undervalued", "growth", "profit"]
+        if w in transcript_lower
+    )
+    bearish = sum(
+        1
+        for w in ["sell", "bearish", "overvalued", "risk", "loss", "avoid"]
+        if w in transcript_lower
+    )
     if bullish > bearish + 2:
         insights["sentiment"] = "bullish"
     elif bearish > bullish + 2:
@@ -447,7 +491,9 @@ def analyze_transcript(transcript: str, title: str) -> dict:
         insights["strategies"].append("Covered Calls")
     if any(x in transcript_lower for x in ["wheel strategy", "wheel of income"]):
         insights["strategies"].append("Wheel Strategy")
-    if any(x in transcript_lower for x in ["value investing", "intrinsic value", "margin of safety"]):
+    if any(
+        x in transcript_lower for x in ["value investing", "intrinsic value", "margin of safety"]
+    ):
         insights["strategies"].append("Value Investing")
 
     return insights
@@ -469,13 +515,13 @@ def save_to_rag(video: dict, transcript: str, insights: dict):
 **Ingested**: {datetime.now().isoformat()}
 
 ## Key Concepts
-{', '.join(insights.get('key_concepts', [])) or 'None identified'}
+{", ".join(insights.get("key_concepts", [])) or "None identified"}
 
 ## Strategies
-{', '.join(insights.get('strategies', [])) or 'None identified'}
+{", ".join(insights.get("strategies", [])) or "None identified"}
 
 ## Sentiment
-{insights.get('sentiment', 'neutral').title()}
+{insights.get("sentiment", "neutral").title()}
 
 ## Transcript
 
@@ -551,12 +597,14 @@ def ingest_videos(videos: list[dict], skip_processed: bool = True) -> dict:
             save_to_rag(video, transcript, insights)
             processed.add(video_id)
             results["success"] += 1
-            results["videos"].append({
-                "id": video_id,
-                "title": video.get("title"),
-                "concepts": insights["key_concepts"],
-                "strategies": insights["strategies"],
-            })
+            results["videos"].append(
+                {
+                    "id": video_id,
+                    "title": video.get("title"),
+                    "concepts": insights["key_concepts"],
+                    "strategies": insights["strategies"],
+                }
+            )
         except Exception as e:
             logger.error(f"Failed to save {video_id}: {e}")
             results["failed"] += 1

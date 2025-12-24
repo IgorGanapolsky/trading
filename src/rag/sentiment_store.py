@@ -5,7 +5,6 @@ The trading system uses VADER + LLM ensemble for sentiment (see unified_sentimen
 """
 
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

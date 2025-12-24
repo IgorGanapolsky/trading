@@ -83,16 +83,13 @@ def generate_blog_post(perf: dict, trades: list, day_num: int) -> str:
     formatted_date = date_obj.strftime("%B %d, %Y")
     day_of_week = date_obj.strftime("%A")
 
-    # Determine performance emoji
+    # Determine performance text
     if daily_pl > 0:
-        performance_emoji = ""
         performance_text = "Profitable Day"
     elif daily_pl < 0:
-        performance_emoji = ""
         performance_text = "Learning Day"
     else:
         performance_text = "Flat Day"
-        performance_emoji = ""
 
     # Build trade summary
     trade_summary = ""
@@ -108,7 +105,9 @@ def generate_blog_post(perf: dict, trades: list, day_num: int) -> str:
             trade_pl = trade.get("pl", "N/A")
             trade_summary += f"| {symbol} | {action} | {qty:.2f} | ${price:.2f} | {trade_pl} |\n"
     else:
-        trade_summary = "\n## Today's Trades\n\nNo trades executed today (market closed or no signals).\n"
+        trade_summary = (
+            "\n## Today's Trades\n\nNo trades executed today (market closed or no signals).\n"
+        )
 
     # Generate the blog post
     post = f"""---
@@ -132,7 +131,7 @@ day_number: {day_num}
 | Metric | Value |
 |--------|-------|
 | **Daily P/L** | **${daily_pl:+,.2f}** ({daily_pl_pct:+.2f}%) |
-| **Total P/L** | ${total_pl:+,.2f} ({total_pl/1000:.2f}%) |
+| **Total P/L** | ${total_pl:+,.2f} ({total_pl / 1000:.2f}%) |
 | **Portfolio Value** | ${equity:,.2f} |
 | **Cash** | ${cash:,.2f} |
 | **Buying Power** | ${buying_power:,.2f} |
@@ -219,7 +218,7 @@ def post_to_devto(content: str, report_date: str, daily_pl: float) -> str | None
     body = "\n".join(clean_lines)
 
     # Add Dev.to footer
-    body += f"""
+    body += """
 
 ---
 
@@ -228,10 +227,7 @@ def post_to_devto(content: str, report_date: str, daily_pl: float) -> str | None
 *All trades are paper trading - no real money at risk.*
 """
 
-    headers = {
-        "api-key": api_key,
-        "Content-Type": "application/json"
-    }
+    headers = {"api-key": api_key, "Content-Type": "application/json"}
 
     payload = {
         "article": {
@@ -240,16 +236,13 @@ def post_to_devto(content: str, report_date: str, daily_pl: float) -> str | None
             "published": True,
             "tags": ["trading", "ai", "machinelearning", "python"],
             "series": "AI Trading Daily Reports",
-            "canonical_url": f"https://igorganapolsky.github.io/trading/reports/{report_date}-daily-report/"
+            "canonical_url": f"https://igorganapolsky.github.io/trading/reports/{report_date}-daily-report/",
         }
     }
 
     try:
         resp = requests.post(
-            "https://dev.to/api/articles",
-            headers=headers,
-            json=payload,
-            timeout=30
+            "https://dev.to/api/articles", headers=headers, json=payload, timeout=30
         )
 
         if resp.status_code in [200, 201]:

@@ -19,8 +19,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from src.orchestration.context_engine import get_context_engine
 from src.core.skills_integration import get_skills
+from src.orchestration.context_engine import get_context_engine
 
 # Optional market regime detector
 try:

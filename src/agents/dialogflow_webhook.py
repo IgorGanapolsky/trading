@@ -10,7 +10,6 @@ Deploy with: gcloud run deploy trading-webhook --source .
 
 import logging
 import os
-from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -29,17 +28,7 @@ rag = LessonsLearnedRAG()
 
 def format_dialogflow_response(text: str, session_info: dict | None = None) -> dict:
     """Format response for Dialogflow CX webhook."""
-    response = {
-        "fulfillment_response": {
-            "messages": [
-                {
-                    "text": {
-                        "text": [text]
-                    }
-                }
-            ]
-        }
-    }
+    response = {"fulfillment_response": {"messages": [{"text": {"text": [text]}}]}}
     if session_info:
         response["session_info"] = session_info
     return response
@@ -83,7 +72,7 @@ async def health_check():
     return {
         "status": "healthy",
         "lessons_loaded": len(rag.lessons),
-        "critical_lessons": len(rag.get_critical_lessons())
+        "critical_lessons": len(rag.get_critical_lessons()),
     }
 
 
@@ -97,7 +86,9 @@ async def dialogflow_webhook(request: Request) -> JSONResponse:
     """
     try:
         body = await request.json()
-        logger.info(f"Received webhook request: {body.get('intentInfo', {}).get('displayName', 'unknown')}")
+        logger.info(
+            f"Received webhook request: {body.get('intentInfo', {}).get('displayName', 'unknown')}"
+        )
 
         # Extract the user's query
         # Dialogflow CX uses 'text' in the query input
@@ -155,5 +146,7 @@ async def root_webhook(request: Request) -> JSONResponse:
 
 if __name__ == "__main__":
     import uvicorn
+
+    host = os.environ.get("HOST", "127.0.0.1")
     port = int(os.environ.get("PORT", 8080))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host=host, port=port)

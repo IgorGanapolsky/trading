@@ -93,11 +93,14 @@ def get_channel_videos(channel_url: str, max_results: int = 10) -> list[dict]:
             videos = []
             for entry in result["entries"][:max_results]:
                 if entry:
-                    videos.append({
-                        "id": entry.get("id"),
-                        "title": entry.get("title"),
-                        "url": entry.get("url") or f"https://www.youtube.com/watch?v={entry.get('id')}",
-                    })
+                    videos.append(
+                        {
+                            "id": entry.get("id"),
+                            "title": entry.get("title"),
+                            "url": entry.get("url")
+                            or f"https://www.youtube.com/watch?v={entry.get('id')}",
+                        }
+                    )
             return videos
     except Exception as e:
         logger.error(f"Failed to fetch channel videos: {e}")
@@ -108,7 +111,7 @@ def get_transcript(video_id: str) -> Optional[str]:
     """Fetch transcript for a video using youtube-transcript-api v1.0+."""
     try:
         from youtube_transcript_api import YouTubeTranscriptApi
-        from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
+        from youtube_transcript_api._errors import NoTranscriptFound, TranscriptsDisabled
     except ImportError:
         logger.error("youtube-transcript-api not installed")
         return None
@@ -132,16 +135,28 @@ def filter_options_relevant(title: str, transcript: str) -> bool:
 
     # Must-have terms (at least one)
     options_terms = [
-        "put", "call", "option", "premium", "strike", "expiration",
-        "wheel", "covered call", "cash-secured", "credit spread",
-        "theta", "delta", "gamma", "vega", "implied volatility",
-        "iron condor", "strangle", "straddle"
+        "put",
+        "call",
+        "option",
+        "premium",
+        "strike",
+        "expiration",
+        "wheel",
+        "covered call",
+        "cash-secured",
+        "credit spread",
+        "theta",
+        "delta",
+        "gamma",
+        "vega",
+        "implied volatility",
+        "iron condor",
+        "strangle",
+        "straddle",
     ]
 
     # Exclude terms (skip video if present)
-    exclude_terms = [
-        "crypto", "bitcoin", "forex", "futures only", "day trading scalp"
-    ]
+    exclude_terms = ["crypto", "bitcoin", "forex", "futures only", "day trading scalp"]
 
     has_options = any(term in text for term in options_terms)
     has_exclude = any(term in text for term in exclude_terms)
@@ -155,17 +170,17 @@ def save_transcript(channel_key: str, video: dict, transcript: str):
     channel_dir.mkdir(parents=True, exist_ok=True)
 
     # Create markdown file
-    safe_title = re.sub(r'[^\w\s-]', '', video["title"])[:50]
+    safe_title = re.sub(r"[^\w\s-]", "", video["title"])[:50]
     filename = f"{video['id']}_{safe_title}.md"
     filepath = channel_dir / filename
 
-    content = f"""# {video['title']}
+    content = f"""# {video["title"]}
 
-**Source**: {CHANNELS[channel_key]['name']}
-**Video ID**: {video['id']}
-**URL**: {video['url']}
+**Source**: {CHANNELS[channel_key]["name"]}
+**Video ID**: {video["id"]}
+**URL**: {video["url"]}
 **Ingested**: {datetime.now().isoformat()}
-**Topics**: {', '.join(CHANNELS[channel_key]['focus'])}
+**Topics**: {", ".join(CHANNELS[channel_key]["focus"])}
 
 ---
 
@@ -242,12 +257,13 @@ def ingest_channel(channel_key: str, mode: str = "recent", max_videos: int = 10)
 
 def main():
     parser = argparse.ArgumentParser(description="Options YouTube Ingestion")
-    parser.add_argument("--channel", type=str, choices=list(CHANNELS.keys()),
-                        help="Specific channel to ingest")
+    parser.add_argument(
+        "--channel", type=str, choices=list(CHANNELS.keys()), help="Specific channel to ingest"
+    )
     parser.add_argument("--all", action="store_true", help="Ingest from all channels")
-    parser.add_argument("--mode", type=str, default="recent",
-                        choices=["recent", "backfill"],
-                        help="Ingestion mode")
+    parser.add_argument(
+        "--mode", type=str, default="recent", choices=["recent", "backfill"], help="Ingestion mode"
+    )
     parser.add_argument("--max", type=int, default=10, help="Max videos per channel")
     parser.add_argument("--list", action="store_true", help="List available channels")
     args = parser.parse_args()
@@ -271,7 +287,7 @@ def main():
 
     max_videos = 50 if args.mode == "backfill" else args.max
 
-    print(f"\n🎬 Options YouTube Ingestion")
+    print("\n🎬 Options YouTube Ingestion")
     print(f"   Mode: {args.mode}")
     print(f"   Channels: {', '.join(channels)}")
     print()
@@ -285,7 +301,9 @@ def main():
             total_stats["skipped"] += stats.get("skipped", 0)
             print(f"   {CHANNELS[channel_key]['name']}: {stats}")
 
-    print(f"\n✅ Total: {total_stats['processed']} videos ingested, {total_stats['skipped']} skipped")
+    print(
+        f"\n✅ Total: {total_stats['processed']} videos ingested, {total_stats['skipped']} skipped"
+    )
 
 
 if __name__ == "__main__":

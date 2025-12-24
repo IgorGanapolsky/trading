@@ -24,9 +24,7 @@ class StubRetriever:
     def __init__(self):
         logger.debug("StubRetriever initialized (full RAG not available)")
 
-    def get_market_sentiment(
-        self, ticker: str, days_back: int = 7, **kwargs
-    ) -> dict[str, Any]:
+    def get_market_sentiment(self, ticker: str, days_back: int = 7, **kwargs) -> dict[str, Any]:
         """Return neutral market sentiment.
 
         Real sentiment comes from unified_sentiment.py which aggregates:

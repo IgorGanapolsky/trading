@@ -661,7 +661,9 @@ class TradingOrchestrator:
                     status="info",
                     payload={
                         "lessons_found": len(results),
-                        "top_lesson": results[0][0].title if results and len(results) > 0 and len(results[0]) > 0 else None,
+                        "top_lesson": results[0][0].title
+                        if results and len(results) > 0 and len(results[0]) > 0
+                        else None,
                     },
                 )
                 logger.info("=" * 60)
@@ -2484,7 +2486,9 @@ class TradingOrchestrator:
                 payload={
                     "positions_checked": results.get("positions_checked", 0),
                     "stop_loss_exits": len(results.get("stop_loss_exits", [])),
-                    "rebalance_needed": results.get("delta_analysis", {}).get("rebalance_needed", False),
+                    "rebalance_needed": results.get("delta_analysis", {}).get(
+                        "rebalance_needed", False
+                    ),
                 },
             )
 

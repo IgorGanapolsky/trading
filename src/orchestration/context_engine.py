@@ -19,6 +19,7 @@ _context_engine_instance = None
 
 class MemoryTimescale(Enum):
     """Memory timescales for context retention"""
+
     IMMEDIATE = "immediate"  # Current session
     DAILY = "daily"  # Today's context
     EPISODIC = "episodic"  # Important events
@@ -28,6 +29,7 @@ class MemoryTimescale(Enum):
 @dataclass
 class ContextMemory:
     """Memory entry for agent context"""
+
     key: str
     value: Any
     timescale: MemoryTimescale

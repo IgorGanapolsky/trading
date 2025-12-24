@@ -6,10 +6,10 @@ Run daily before trading to catch silent failures.
 Usage: python3 scripts/system_health_check.py
 """
 
-import json
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
 
 def check_rag_system():
     """Verify RAG system works end-to-end."""
@@ -17,22 +17,27 @@ def check_rag_system():
 
     try:
         from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
         rag = LessonsLearnedRAG()
         results["details"].append(f"✓ LessonsLearnedRAG loaded with {len(rag.lessons)} lessons")
 
         # Test query() method
-        if hasattr(rag, 'query'):
+        if hasattr(rag, "query"):
             test_results = rag.query("trading failure", top_k=3)
-            results["details"].append(f"✓ query() method works - returned {len(test_results)} results")
+            results["details"].append(
+                f"✓ query() method works - returned {len(test_results)} results"
+            )
         else:
             results["details"].append("✗ query() method missing")
             results["status"] = "BROKEN"
             return results
 
         # Test search() method (used by gates.py and main.py)
-        if hasattr(rag, 'search'):
+        if hasattr(rag, "search"):
             search_results = rag.search(query="trading failure", top_k=3)
-            results["details"].append(f"✓ search() method works - returned {len(search_results)} results")
+            results["details"].append(
+                f"✓ search() method works - returned {len(search_results)} results"
+            )
             # Verify format is (lesson, score) tuples
             if search_results and len(search_results) > 0:
                 first = search_results[0]
@@ -63,11 +68,13 @@ def check_rl_system():
     try:
         # Check if RL is enabled
         import os
+
         rl_enabled = os.getenv("RL_FILTER_ENABLED", "false").lower() in {"true", "1"}
         results["details"].append(f"RL_FILTER_ENABLED: {rl_enabled}")
 
         # Check if agents are stubs
         from src.ml.dqn_agent import DQNAgent
+
         agent = DQNAgent()
         prediction = agent.predict({})
 
@@ -91,6 +98,7 @@ def check_ml_pipeline():
 
     try:
         from src.ml.inference import MLPredictor
+
         predictor = MLPredictor()
         prediction = predictor.predict({})
 
