@@ -24,10 +24,20 @@ CURRENT_DAY=$(jq -r '.challenge.current_day // "N/A"' "$STATE_FILE")
 LAST_UPDATED=$(jq -r '.meta.last_updated // "N/A"' "$STATE_FILE")
 
 # Check launchd automation status
-if launchctl list | grep -q "com.trading.autonomous"; then
+if launchctl list 2>/dev/null | grep -q "com.trading.autonomous"; then
     AUTOMATION_STATUS="✅ Running"
 else
-    AUTOMATION_STATUS="❌ Not running"
+    AUTOMATION_STATUS="⏸️  Manual mode"
+fi
+
+# Check feedback stats
+FEEDBACK_STATS="$CLAUDE_PROJECT_DIR/data/feedback/stats.json"
+if [[ -f "$FEEDBACK_STATS" ]]; then
+    SAT_RATE=$(jq -r '.satisfaction_rate // "N/A"' "$FEEDBACK_STATS")
+    FEEDBACK_TOTAL=$(jq -r '.total // 0' "$FEEDBACK_STATS")
+    FEEDBACK_LINE="📊 Satisfaction: ${SAT_RATE}% (${FEEDBACK_TOTAL} ratings)"
+else
+    FEEDBACK_LINE="📊 No feedback recorded - acknowledge all thumbs up/down!"
 fi
 
 # Output session summary
@@ -37,9 +47,9 @@ cat <<EOF >&2
 🤖 TRADING SYSTEM SESSION START
 ================================================================================
 Portfolio: \$$CURRENT_EQUITY | P/L: \$$TOTAL_PL | Day: $CURRENT_DAY/90
-Automation: $AUTOMATION_STATUS
+Automation: $AUTOMATION_STATUS | $FEEDBACK_LINE
 Last Updated: $LAST_UPDATED
-Backtest Reality: 0/13 pass | Sharpe: -7 to -2086 | NO EDGE YET
+⚠️  MANDATORY: Acknowledge ALL thumbs up/down feedback immediately!
 ================================================================================
 
 EOF

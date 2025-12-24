@@ -181,6 +181,24 @@ When checking P/L or positions on weekends:
 
 ---
 
+## 11. Feedback Acknowledgment (MANDATORY)
+
+**When user gives feedback (thumbs up/down), ALWAYS:**
+
+1. **Acknowledge immediately**: "Feedback recorded: [positive/negative]"
+2. **For negative feedback**: Ask "What did I do wrong? I want to learn."
+3. **Record manually if hook fails**: Run capture_feedback.sh
+4. **Report satisfaction rate periodically**
+
+**Check at session start:**
+```bash
+cat data/feedback/stats.json  # Current satisfaction rate
+```
+
+**Why**: Dec 24, 2025 - Failed to acknowledge "Thumbs up" feedback. RL system was broken for months without detection.
+
+---
+
 ## References
 
 - `docs/verification-protocols.md` - Full verification protocol
