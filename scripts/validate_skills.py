@@ -69,7 +69,9 @@ def validate_skill(skill_path: Path, strict: bool = False) -> list[str]:
     for dep in info.get("dependencies", []):
         dep_path = PROJECT_ROOT / dep
         if not dep_path.exists():
-            errors.append(f"MISSING: {info.get('name', 'unknown')} depends on {dep} which does not exist")
+            errors.append(
+                f"MISSING: {info.get('name', 'unknown')} depends on {dep} which does not exist"
+            )
 
     return errors
 
@@ -109,8 +111,8 @@ def main():
             all_errors.extend(errors)
 
     # Report results
-    print(f"\nSkill Validation Report")
-    print(f"=" * 40)
+    print("\nSkill Validation Report")
+    print("=" * 40)
     print(f"Skills checked: {skills_checked}")
     print(f"Active: {active_count}")
     print(f"Dormant: {dormant_count}")
@@ -121,7 +123,7 @@ def main():
             print(f"  - {error}")
         sys.exit(1)
     else:
-        print(f"\n✅ All skill dependencies valid")
+        print("\n✅ All skill dependencies valid")
         sys.exit(0)
 
 

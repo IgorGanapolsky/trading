@@ -149,9 +149,7 @@ class BudgetTracker:
         """Get comprehensive budget status."""
         remaining = MONTHLY_BUDGET - self.data["spent_this_month"]
         now = datetime.now()
-        days_left = (
-            32 - now.day
-        )  # Approximate days left in month
+        days_left = 32 - now.day  # Approximate days left in month
 
         return BudgetStatus(
             monthly_budget=MONTHLY_BUDGET,
@@ -211,9 +209,7 @@ def track(api_name: str, cost: float | None = None) -> bool:
     return get_tracker().track(api_name, cost)
 
 
-def should_execute(
-    operation: str, priority: Literal["critical", "high", "medium", "low"]
-) -> bool:
+def should_execute(operation: str, priority: Literal["critical", "high", "medium", "low"]) -> bool:
     """Check if operation should execute."""
     return get_tracker().should_execute(operation, priority)
 
