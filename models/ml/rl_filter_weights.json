@@ -6,10 +6,14 @@
       "momentum": 1.1,
       "rsi_gap": 0.8,
       "volume_premium": 0.6,
-      "sma_ratio": 1.5
+      "sma_ratio": 1.5,
+      "atr_normalized": -0.5,
+      "adx_normalized": 0.8,
+      "di_difference": 0.6
     },
     "action_threshold": 0.58,
-    "base_multiplier": 0.75
+    "base_multiplier": 0.75,
+    "_comment": "Dec 2025: Added ATR, ADX, DI features for improved entry quality"
   },
   "SPY": {
     "bias": -0.1,
@@ -18,7 +22,10 @@
       "momentum": 1.0,
       "rsi_gap": 0.9,
       "volume_premium": 0.5,
-      "sma_ratio": 1.8
+      "sma_ratio": 1.8,
+      "atr_normalized": -0.4,
+      "adx_normalized": 0.9,
+      "di_difference": 0.7
     },
     "action_threshold": 0.57,
     "base_multiplier": 0.8
@@ -30,7 +37,10 @@
       "momentum": 1.2,
       "rsi_gap": 0.7,
       "volume_premium": 0.6,
-      "sma_ratio": 1.6
+      "sma_ratio": 1.6,
+      "atr_normalized": -0.5,
+      "adx_normalized": 0.85,
+      "di_difference": 0.65
     },
     "action_threshold": 0.56,
     "base_multiplier": 0.82

@@ -11,6 +11,7 @@ import holidays
 from src.agents.macro_agent import MacroeconomicAgent
 from src.agents.momentum_agent import MomentumAgent
 from src.agents.rl_agent import RLFilter
+from src.learning.trade_memory import TradeMemory
 from src.analyst.bias_store import BiasProvider, BiasSnapshot, BiasStore
 from src.data.iv_data_provider import IVDataProvider
 from src.execution.alpaca_executor import AlpacaExecutor
@@ -32,6 +33,7 @@ from src.orchestrator.gates import (
     Gate15Debate,
     Gate35Introspection,
     RAGPreTradeQuery,
+    TradeMemoryQuery,
     TradingGatePipeline,
 )
 from src.orchestrator.parallel_processor import (
@@ -453,6 +455,16 @@ class TradingOrchestrator:
             lessons_rag=self.lessons_rag,
             telemetry=self.telemetry,
         )
+
+        # TradeMemory pre-trade query - queries historical pattern performance
+        # THE KEY INSIGHT: Most systems write to journals but never READ before trading
+        self.trade_memory = TradeMemory(db_path="data/trade_memory.db")
+        self.trade_memory_query = TradeMemoryQuery(
+            trade_memory=self.trade_memory,
+            telemetry=self.telemetry,
+        )
+        logger.info("TradeMemory pre-trade query initialized")
+
         logger.info("Gate pipeline initialized (866→~50 lines per method)")
 
     def run(self) -> None:
@@ -2237,13 +2249,83 @@ class TradingOrchestrator:
             logger.info("Smart DCA: allocation exhausted post-gates for %s", ticker)
             return
 
-        # RAG pre-trade query: Get relevant lessons BEFORE execution
+        # ========================================================================
+        # RULE DISCOVERY ENFORCEMENT (Dec 2025)
+        # Both RAG and TradeMemory are now ENFORCED, not just logged
+        # ========================================================================
+
+        # 1. RAG pre-trade query: Get relevant lessons BEFORE execution
         rag_result = self.rag_query.query(ticker, ctx)
         ctx.rag_context = rag_result
         if rag_result.get("warnings"):
             logger.warning("⚠️  RAG Warnings for %s:", ticker)
             for warning in rag_result["warnings"]:
                 logger.warning("    %s", warning)
+
+        # ENFORCE RAG blocking
+        if rag_result.get("should_block"):
+            logger.warning(
+                "🚫 RAG BLOCK (%s): Trade blocked by lessons learned - %s",
+                ticker,
+                rag_result.get("block_reason"),
+            )
+            self.telemetry.gate_reject(
+                "rag_enforcement",
+                ticker,
+                {
+                    "block_reason": rag_result.get("block_reason"),
+                    "lessons": [l.get("title") for l in rag_result.get("lessons", [])],
+                },
+            )
+            return
+
+        # 2. TradeMemory pre-trade query: Check historical pattern performance
+        # Derive strategy and entry_reason from context
+        strategy = "momentum_long"  # Default strategy
+        if ctx.momentum_signal:
+            strength = ctx.momentum_strength
+            if strength >= 0.8:
+                entry_reason = "strong_momentum"
+            elif strength >= 0.6:
+                entry_reason = "moderate_momentum"
+            else:
+                entry_reason = "weak_momentum"
+        else:
+            entry_reason = "unknown"
+
+        memory_result = self.trade_memory_query.query(ticker, strategy, entry_reason)
+
+        # ENFORCE TradeMemory blocking
+        if memory_result.get("should_block"):
+            logger.warning(
+                "🚫 TradeMemory BLOCK (%s): Trade blocked by historical pattern - %s",
+                ticker,
+                memory_result.get("block_reason"),
+            )
+            self.telemetry.gate_reject(
+                "trade_memory_enforcement",
+                ticker,
+                {
+                    "block_reason": memory_result.get("block_reason"),
+                    "pattern": memory_result.get("pattern"),
+                    "win_rate": memory_result.get("win_rate"),
+                    "sample_size": memory_result.get("sample_size"),
+                },
+            )
+            return
+
+        # Log memory recommendation if found (for learning)
+        if memory_result.get("found"):
+            logger.info(
+                "📚 TradeMemory (%s): Pattern '%s' → %s (%.0f%% win rate, %d trades)",
+                ticker,
+                memory_result.get("pattern"),
+                memory_result.get("recommendation"),
+                memory_result.get("win_rate", 0) * 100,
+                memory_result.get("sample_size", 0),
+            )
+
+        # ========================================================================
 
         # Fetch price and history for risk calculation
         try:

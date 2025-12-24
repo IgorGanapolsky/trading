@@ -154,6 +154,8 @@ class RAGPreTradeQuery:
 
     Retrieves relevant lessons, past mistakes, and context for the specific
     ticker and market conditions.
+
+    ENFORCEMENT (Dec 2025): CRITICAL/HIGH severity lessons now BLOCK trades.
     """
 
     def __init__(self, lessons_rag: Any, telemetry: Any):
@@ -165,10 +167,10 @@ class RAGPreTradeQuery:
         Query RAG for relevant lessons before trading this ticker.
 
         Returns:
-            Dict with lessons and any warnings
+            Dict with lessons, warnings, and should_block flag
         """
         if not self.lessons_rag:
-            return {"available": False, "lessons": [], "warnings": []}
+            return {"available": False, "lessons": [], "warnings": [], "should_block": False}
 
         try:
             # Build context-aware query
@@ -180,32 +182,45 @@ class RAGPreTradeQuery:
 
             lessons = []
             warnings = []
+            should_block = False
+            block_reason = None
+
             for lesson, score in results or []:
                 if score > 0.15:  # Relevance threshold
+                    severity = lesson.severity.upper()
                     lessons.append(
                         {
                             "id": getattr(lesson, "id", "unknown"),
                             "title": lesson.title,
-                            "severity": lesson.severity,
+                            "severity": severity,
                             "prevention": lesson.prevention[:200],
                             "score": score,
                         }
                     )
-                    if lesson.severity.upper() in ("HIGH", "CRITICAL"):
+                    if severity in ("HIGH", "CRITICAL"):
                         warnings.append(
                             f"[{lesson.severity}] {lesson.title}: {lesson.prevention[:100]}"
                         )
+                        # ENFORCEMENT: Block on CRITICAL with high relevance, or HIGH with very high relevance
+                        if severity == "CRITICAL" and score > 0.5:
+                            should_block = True
+                            block_reason = f"CRITICAL lesson matched (score={score:.2f}): {lesson.title}"
+                        elif severity == "HIGH" and score > 0.7:
+                            should_block = True
+                            block_reason = f"HIGH lesson matched (score={score:.2f}): {lesson.title}"
 
             if lessons:
                 logger.info("RAG Query (%s): Found %d relevant lessons", ticker, len(lessons))
                 self.telemetry.record(
                     event_type="rag.pre_trade",
                     ticker=ticker,
-                    status="queried",
+                    status="blocked" if should_block else "queried",
                     payload={
                         "lessons_found": len(lessons),
                         "top_lesson": lessons[0]["title"] if lessons else None,
                         "warnings": len(warnings),
+                        "should_block": should_block,
+                        "block_reason": block_reason,
                     },
                 )
 
@@ -214,11 +229,129 @@ class RAGPreTradeQuery:
                 "lessons": lessons,
                 "warnings": warnings,
                 "query": query,
+                "should_block": should_block,
+                "block_reason": block_reason,
             }
 
         except Exception as e:
             logger.debug("RAG query failed for %s: %s", ticker, e)
-            return {"available": True, "lessons": [], "warnings": [], "error": str(e)}
+            return {"available": True, "lessons": [], "warnings": [], "error": str(e), "should_block": False}
+
+
+class TradeMemoryQuery:
+    """
+    Query TradeMemory for historical pattern performance before each trade.
+
+    THE KEY INSIGHT: Most systems write to journals but never READ before trading.
+    This class makes pattern history ACTIONABLE by blocking poor performers.
+
+    Based on December 2025 research:
+    - TradesViz users see 20% win rate improvement with pre-trade queries
+    - Simple pattern matching beats complex ML
+    """
+
+    def __init__(self, trade_memory: Any, telemetry: Any):
+        self.trade_memory = trade_memory
+        self.telemetry = telemetry
+        # Minimum win rate to allow trade (configurable)
+        self.min_win_rate = float(os.getenv("TRADE_MEMORY_MIN_WIN_RATE", "0.4"))
+        # Minimum sample size before enforcing win rate
+        self.min_samples = int(os.getenv("TRADE_MEMORY_MIN_SAMPLES", "5"))
+
+    def query(self, ticker: str, strategy: str, entry_reason: str) -> dict[str, Any]:
+        """
+        Query historical pattern performance before trading.
+
+        Args:
+            ticker: Symbol being traded
+            strategy: Trading strategy (e.g., "iron_condor", "momentum_long")
+            entry_reason: Why we're entering (e.g., "high_iv", "bullish_macd")
+
+        Returns:
+            Dict with pattern stats and should_block flag
+        """
+        if not self.trade_memory:
+            return {
+                "available": False,
+                "should_block": False,
+                "recommendation": "NO_MEMORY",
+            }
+
+        try:
+            # Query the pattern
+            result = self.trade_memory.query_similar(strategy, entry_reason)
+
+            should_block = False
+            block_reason = None
+
+            # Enforce minimum win rate if we have enough samples
+            if result.get("found") and result.get("sample_size", 0) >= self.min_samples:
+                win_rate = result.get("win_rate", 0.5)
+                if win_rate < self.min_win_rate:
+                    should_block = True
+                    block_reason = (
+                        f"Pattern '{result['pattern']}' has {win_rate:.0%} win rate "
+                        f"({result['wins']}W/{result['losses']}L) - below {self.min_win_rate:.0%} threshold"
+                    )
+
+            # Also check for STRONG_AVOID recommendation
+            if result.get("recommendation") == "STRONG_AVOID":
+                should_block = True
+                block_reason = f"Pattern '{result['pattern']}' marked STRONG_AVOID (win rate: {result.get('win_rate', 0):.0%})"
+
+            # Log the query
+            self.telemetry.record(
+                event_type="trade_memory.pre_trade",
+                ticker=ticker,
+                status="blocked" if should_block else "checked",
+                payload={
+                    "pattern": result.get("pattern"),
+                    "found": result.get("found", False),
+                    "sample_size": result.get("sample_size", 0),
+                    "win_rate": result.get("win_rate", 0.5),
+                    "recommendation": result.get("recommendation"),
+                    "should_block": should_block,
+                    "block_reason": block_reason,
+                },
+            )
+
+            if should_block:
+                logger.warning(
+                    "TradeMemory BLOCK (%s): %s", ticker, block_reason
+                )
+            elif result.get("found"):
+                logger.info(
+                    "TradeMemory (%s): Pattern '%s' has %.0f%% win rate (%d trades) - %s",
+                    ticker,
+                    result.get("pattern"),
+                    result.get("win_rate", 0) * 100,
+                    result.get("sample_size", 0),
+                    result.get("recommendation"),
+                )
+
+            return {
+                "available": True,
+                "pattern": result.get("pattern"),
+                "found": result.get("found", False),
+                "sample_size": result.get("sample_size", 0),
+                "win_rate": result.get("win_rate", 0.5),
+                "wins": result.get("wins", 0),
+                "losses": result.get("losses", 0),
+                "total_pnl": result.get("total_pnl", 0.0),
+                "avg_pnl": result.get("avg_pnl", 0.0),
+                "recommendation": result.get("recommendation"),
+                "should_block": should_block,
+                "block_reason": block_reason,
+            }
+
+        except Exception as e:
+            logger.debug("TradeMemory query failed for %s: %s", ticker, e)
+            return {
+                "available": False,
+                "should_block": False,
+                "error": str(e),
+                "recommendation": "QUERY_FAILED",
+            }
 
 
 class Gate0Psychology:
