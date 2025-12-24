@@ -3,7 +3,7 @@ Value at Risk (VaR) and Conditional VaR (CVaR) Risk Metrics
 
 Provides real-time risk monitoring and portfolio risk assessment using:
 - Historical VaR: Based on historical return distribution
-- Parametric VaR: Assumes normal distribution
+- Parametric VaR: GARCH-based volatility forecasting (with Gaussian fallback)
 - Monte Carlo VaR: Simulation-based
 - CVaR (Expected Shortfall): Average loss beyond VaR
 
@@ -13,8 +13,14 @@ Critical for:
 - Circuit breaker triggers
 - Regulatory compliance
 
+GARCH Implementation (Dec 2025):
+- Uses GARCH(1,1) for volatility clustering: σ²_t = ω + α·ε²_{t-1} + β·σ²_{t-1}
+- Captures "big moves follow big moves" phenomenon
+- Falls back to constant volatility if arch library unavailable
+
 Author: Trading System
 Created: 2025-12-02
+Updated: 2025-12-24 - Added GARCH volatility forecasting
 """
 
 import logging
@@ -25,6 +31,14 @@ from typing import Any
 
 import numpy as np
 from scipy import stats
+
+# Optional GARCH support - graceful fallback to constant volatility
+try:
+    from arch import arch_model
+
+    GARCH_AVAILABLE = True
+except ImportError:
+    GARCH_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -194,12 +208,76 @@ class VaRCalculator:
 
         return var_values, cvar_values
 
+    def _garch_volatility_forecast(self, returns: np.ndarray) -> float | None:
+        """
+        Forecast next-day volatility using GARCH(1,1).
+
+        GARCH captures volatility clustering: σ²_t = ω + α·ε²_{t-1} + β·σ²_{t-1}
+        This models the empirical observation that "big moves follow big moves".
+
+        Returns:
+            Forecasted volatility (annualized), or None if GARCH unavailable/fails
+        """
+        if not GARCH_AVAILABLE:
+            return None
+
+        if len(returns) < 100:
+            # GARCH needs sufficient data for reliable estimation
+            logger.debug("Insufficient data for GARCH (need >= 100 returns)")
+            return None
+
+        try:
+            # Scale returns to percentage for numerical stability
+            returns_pct = returns * 100
+
+            # Fit GARCH(1,1) - the workhorse model for financial volatility
+            model = arch_model(returns_pct, vol="Garch", p=1, q=1, rescale=False)
+            result = model.fit(disp="off", show_warning=False)
+
+            # Forecast 1-step ahead variance
+            forecast = result.forecast(horizon=1)
+            next_variance = forecast.variance.values[-1, 0]
+
+            # Convert back from percentage and return as std dev
+            next_vol = np.sqrt(next_variance) / 100
+
+            # Log persistence for monitoring (α+β close to 1 = highly persistent)
+            alpha = result.params.get("alpha[1]", 0)
+            beta = result.params.get("beta[1]", 0)
+            persistence = alpha + beta
+
+            logger.debug(
+                f"GARCH forecast: vol={next_vol:.4f}, "
+                f"persistence={persistence:.3f} (α={alpha:.3f}, β={beta:.3f})"
+            )
+
+            return next_vol
+
+        except Exception as e:
+            logger.warning(f"GARCH fitting failed, using constant vol: {e}")
+            return None
+
     def _parametric_var(
         self, returns: np.ndarray, confidence_levels: list[float]
     ) -> tuple[dict[float, float], dict[float, float]]:
-        """Parametric (Gaussian) VaR."""
+        """
+        Parametric VaR with GARCH volatility forecasting.
+
+        Uses GARCH(1,1) to forecast next-period volatility when available,
+        falling back to historical standard deviation otherwise.
+        """
         mu = np.mean(returns)
-        sigma = np.std(returns)
+
+        # Try GARCH for dynamic volatility, fallback to constant
+        garch_vol = self._garch_volatility_forecast(returns)
+        if garch_vol is not None:
+            sigma = garch_vol
+            method_note = "GARCH"
+        else:
+            sigma = np.std(returns)
+            method_note = "constant"
+
+        logger.debug(f"Parametric VaR using {method_note} volatility: σ={sigma:.4f}")
 
         var_values = {}
         cvar_values = {}
@@ -473,6 +551,9 @@ if __name__ == "__main__":
     print("VaR/CVaR RISK METRICS DEMO")
     print("=" * 80)
 
+    # Show GARCH status
+    print(f"\nGARCH Volatility Forecasting: {'ENABLED' if GARCH_AVAILABLE else 'DISABLED (install arch)'}")
+
     # Generate sample returns (200 days)
     np.random.seed(42)
     returns = np.random.normal(0.0005, 0.015, 200)  # ~0.05% mean, 1.5% daily vol
@@ -486,7 +567,11 @@ if __name__ == "__main__":
         calc = VaRCalculator(method=method)
         result = calc.calculate_var(returns, portfolio_value)
 
-        print(f"\n{method.value.upper()}:")
+        method_label = method.value.upper()
+        if method == VaRMethod.PARAMETRIC:
+            method_label += " (GARCH)" if GARCH_AVAILABLE else " (constant σ)"
+
+        print(f"\n{method_label}:")
         print(f"  VaR 95%: ${result.var_95:,.2f} ({result.var_95 / portfolio_value * 100:.2f}%)")
         print(f"  VaR 99%: ${result.var_99:,.2f} ({result.var_99 / portfolio_value * 100:.2f}%)")
         print(f"  CVaR 95%: ${result.cvar_95:,.2f}")

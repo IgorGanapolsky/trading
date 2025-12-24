@@ -12,6 +12,7 @@ alpha-vantage==2.3.1
 altair==6.0.0
 annotated-types==0.7.0
 anthropic==0.75.0
+arch==7.2.0
 anyio==4.12.0
 attrs==25.4.0
 beautifulsoup4==4.14.3
