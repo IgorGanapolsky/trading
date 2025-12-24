@@ -21,7 +21,7 @@
 src/
 ├── orchestrator/main.py    # TradingOrchestrator - core entry point
 ├── strategies/             # 5-tier trading strategies
-├── ml/                     # RL agent, sentiment analysis
+├── agents/                 # Trading agents (momentum, debate, RL)
 └── risk/                   # Position sizing, circuit breakers
 
 data/
@@ -103,7 +103,7 @@ Pick ONE feature with `"passes": false` and complete it before moving on.
 - Month 2: MACD + RSI + RL system (win rate >55%)
 - Month 3: Validate + optimize (win rate >60%, consistent daily profits)
 
-**Integrations**: LLM Council, DeepAgents, Multi-LLM, Intelligent Investor, Gemini Deep Research
+**Integrations**: Gemini Deep Research, BiasProvider sentiment, RAG lessons learned
 
 ---
 
@@ -139,4 +139,4 @@ For complex decisions, use: "Take extra time to reason through the tradeoffs"
 
 ---
 
-**Last Optimized**: December 22, 2025 | **Lines**: ~160 (per Anthropic best practices)
+**Last Optimized**: December 24, 2025 | **Lines**: ~160 (per Anthropic best practices)

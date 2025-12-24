@@ -88,12 +88,12 @@ While waiting (30 days): $150 × 3.56% APY = ~$0.44 extra
 - ✅ .env verified in .gitignore (will NOT be committed)
 - ⚠️ Old key still in git history but disabled by OpenRouter
 
-### Integration Status
+### Integration Status (Updated Dec 24, 2025)
 
-- ✅ MultiLLMAnalyzer fully built and integrated into CoreStrategy
-- ✅ Configured with 3 models: Claude 3.5 Sonnet, GPT-4o, Gemini 2 Flash
-- ✅ Code supports `use_sentiment=True` flag
-- ❌ Currently NOT calling AI during trades (making simple buy orders)
+- ❌ MultiLLMAnalyzer removed (was dead code - never validated with real trades)
+- ✅ Gemini Deep Research available via `skill: deep_research`
+- ✅ BiasProvider sentiment available via `src/analyst/bias_store.py`
+- ✅ Simple momentum strategy operational (50% win rate, +$697.83 P/L)
 
 ### Cost Analysis
 
