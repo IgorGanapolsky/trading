@@ -1,8 +1,10 @@
 # Lesson Learned #051: Calendar Awareness is Critical for Trading AI
 
+**ID**: LL-051
 **Date**: December 19, 2025
 **Severity**: HIGH
 **Category**: Operational Reliability
+**Impact**: Eroded user trust due to AI not recognizing weekend/holiday trading calendar
 
 ## The Problem
 

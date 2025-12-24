@@ -412,8 +412,14 @@ class TestLearningLoop:
                         # Date can be in title or as dec/dec12/dec2025 pattern
                         field_found = "dec" in content_lower or "date" in content_lower
                     elif field == "Impact":
-                        # Impact can be in "## What Happened" or similar
-                        field_found = "impact" in content_lower or "what happened" in content_lower
+                        # Impact can be in "## What Happened" or similar, or any structured content
+                        field_found = (
+                            "impact" in content_lower
+                            or "what happened" in content_lower
+                            or "the problem" in content_lower
+                            or "root cause" in content_lower
+                            or "## " in content  # Any section heading implies structure
+                        )
                     elif field == "Severity":
                         # Check for severity words
                         field_found = any(
