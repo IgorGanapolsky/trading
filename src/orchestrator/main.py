@@ -35,8 +35,8 @@ from src.orchestrator.gates import (
     TradingGatePipeline,
 )
 from src.orchestrator.parallel_processor import (
-    ParallelTickerProcessor,
     ParallelProcessingResult,
+    ParallelTickerProcessor,
     TickerOutcome,
     create_thread_safe_wrapper,
 )
