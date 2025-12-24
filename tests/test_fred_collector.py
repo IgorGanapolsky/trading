@@ -1,7 +1,3 @@
-import json
-import types
-from unittest.mock import patch, MagicMock
-
 from src.rag.collectors import FredCollector
 from src.rag.collectors.fred_collector import FREDCollector
 
