@@ -509,6 +509,33 @@ jobs:
             exit 1
           }
 
+  # Added Dec 24, 2025: Skill Validation
+  # Prevents dormant skills with missing implementations from being merged
+  # See: Skills audit performed Dec 24, 2025
+  skill-validation:
+    name: Skill Dependency Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate skill dependencies exist
+        run: |
+          echo "Validating all skills have valid dependencies..."
+          python3 scripts/validate_skills.py
+
+      - name: Fail on missing skill dependencies
+        if: failure()
+        run: |
+          echo "::error::Skill validation failed! Skills reference missing files."
+          echo "::error::Mark dormant skills with 'status: dormant' in frontmatter."
+          echo "Run: python3 scripts/validate_skills.py"
+          exit 1
+
   # Added Dec 24, 2025: GitHub Pages Link Validation
   # Prevents 404s from broken relative_url filters
   github-pages-validation:
