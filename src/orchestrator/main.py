@@ -34,6 +34,12 @@ from src.orchestrator.gates import (
     RAGPreTradeQuery,
     TradingGatePipeline,
 )
+from src.orchestrator.parallel_processor import (
+    ParallelTickerProcessor,
+    ParallelProcessingResult,
+    TickerOutcome,
+    create_thread_safe_wrapper,
+)
 from src.orchestrator.smart_dca import SmartDCAAllocator
 from src.orchestrator.telemetry import OrchestratorTelemetry
 from src.risk.capital_efficiency import get_capital_calculator
@@ -191,6 +197,14 @@ class TradingOrchestrator:
             "true",
             "yes",
         }
+
+        # Dec 2025: Parallel ticker processing (ADK Fan-Out/Gather pattern)
+        # Reduces latency from O(n) to O(1) for n tickers
+        self.parallel_processing_enabled = _os.getenv(
+            "PARALLEL_TICKER_PROCESSING", "true"
+        ).lower() in {"1", "true", "yes"}
+        self.parallel_max_workers = int(_os.getenv("PARALLEL_MAX_WORKERS", "5"))
+        self.parallel_processor: ParallelTickerProcessor | None = None  # Lazy init
 
         # Only initialize if enabled (saves memory and API costs)
         if self.rl_filter_enabled:
@@ -582,8 +596,22 @@ class TradingOrchestrator:
         self.run_iv_options_execution()
 
         # THEN run momentum trading (30% of budget per config)
-        for ticker in active_tickers:
-            self._process_ticker(ticker, rl_threshold=session_profile["rl_threshold"])
+        # Dec 2025: ADK Parallel Fan-Out/Gather pattern for reduced latency
+        if self.parallel_processing_enabled and len(active_tickers) > 1:
+            parallel_result = self._process_tickers_parallel(
+                active_tickers, rl_threshold=session_profile["rl_threshold"]
+            )
+            logger.info(
+                "Parallel processing: %d passed, %d rejected, %d errors in %.0fms",
+                parallel_result.passed,
+                parallel_result.rejected,
+                parallel_result.errors,
+                parallel_result.total_time_ms,
+            )
+        else:
+            # Sequential fallback (single ticker or parallel disabled)
+            for ticker in active_tickers:
+                self._process_ticker(ticker, rl_threshold=session_profile["rl_threshold"])
 
         # Allocate any unused DCA budget into the safety bucket
         self._deploy_safe_reserve()
@@ -1206,6 +1234,52 @@ class TradingOrchestrator:
             )
         except Exception as exc:  # pragma: no cover - non-critical
             logger.debug("Anomaly monitor tracking failed for %s: %s", gate, exc)
+
+    def _process_tickers_parallel(
+        self, tickers: list[str], rl_threshold: float
+    ) -> ParallelProcessingResult:
+        """Process multiple tickers in parallel using ADK Fan-Out/Gather pattern.
+
+        This reduces latency from O(n*T) to O(T) where n is number of tickers
+        and T is time per ticker.
+
+        Args:
+            tickers: List of ticker symbols to process
+            rl_threshold: RL confidence threshold for gate 2
+
+        Returns:
+            ParallelProcessingResult with aggregated stats
+        """
+        # Lazy initialization of parallel processor
+        if self.parallel_processor is None:
+            # Create thread-safe wrapper around _process_ticker
+            safe_fn = create_thread_safe_wrapper(
+                telemetry=self.telemetry,
+                process_ticker_fn=self._process_ticker,
+            )
+            self.parallel_processor = ParallelTickerProcessor(
+                process_fn=safe_fn,
+                max_workers=self.parallel_max_workers,
+                timeout_seconds=30.0,
+            )
+            logger.info(
+                "Initialized ParallelTickerProcessor with %d workers",
+                self.parallel_max_workers,
+            )
+
+        # Process all tickers in parallel
+        result = self.parallel_processor.process_tickers(tickers, rl_threshold)
+
+        # Log any errors for debugging
+        for ticker, ticker_result in result.results.items():
+            if ticker_result.outcome == TickerOutcome.ERROR:
+                logger.error(
+                    "Parallel processing error for %s: %s",
+                    ticker,
+                    ticker_result.error_message,
+                )
+
+        return result
 
     def _process_ticker(self, ticker: str, rl_threshold: float) -> None:
         # Dec 2025: Use v2 pipeline if enabled (LLM-friendly, ~100 lines vs 866)
