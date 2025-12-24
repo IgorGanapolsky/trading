@@ -13,8 +13,13 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
 
-from src.langchain_agents.analyst import LangChainSentimentAgent
 from src.rag.sentiment_store import SentimentRAGStore
+
+# Optional LangChain agent - may have been removed in cleanup
+try:
+    from src.langchain_agents.analyst import LangChainSentimentAgent
+except ImportError:
+    LangChainSentimentAgent = None  # type: ignore[misc, assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +47,16 @@ class MacroeconomicAgent:
             logger.warning(f"RAG store initialization failed: {e}")
             self.rag_store = None
 
-        self.llm_agent = LangChainSentimentAgent()
+        # LLM agent is optional - trading can proceed without it
+        if LangChainSentimentAgent is not None:
+            try:
+                self.llm_agent = LangChainSentimentAgent()
+            except Exception as e:
+                logger.warning(f"LangChain agent initialization failed: {e}")
+                self.llm_agent = None
+        else:
+            logger.warning("LangChain agent unavailable (module removed)")
+            self.llm_agent = None
         self.cache_ttl = timedelta(hours=cache_ttl_hours)
         self.cache_path = Path(cache_path)
         self.cache_path.parent.mkdir(exist_ok=True)
@@ -85,7 +99,15 @@ class MacroeconomicAgent:
 
         logger.info("Performing fresh macroeconomic context analysis...")
 
-        # 2. Query RAG store for relevant documents
+        # 2. Check if LLM agent is available
+        if self.llm_agent is None:
+            logger.info("LLM agent unavailable - returning NEUTRAL macro context")
+            return {
+                "state": "NEUTRAL",
+                "reason": "LLM agent disabled (langchain_agents module removed)",
+            }
+
+        # 3. Query RAG store for relevant documents
         # Skip RAG if not available (sentence-transformers not installed)
         if self.rag_store is None:
             logger.info("RAG store unavailable - returning NEUTRAL macro context")
