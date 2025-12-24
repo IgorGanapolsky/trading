@@ -24,7 +24,7 @@ A 90-day experiment building an autonomous AI trading system with Claude Opus 4.
 
 {% assign sorted_lessons = site.lessons | sort: 'date' | reverse %}
 {% for lesson in sorted_lessons limit:5 %}
-- **{{ lesson.date | date: "%b %d" }}** - [{{ lesson.title }}]({{ lesson.url }})
+- **{{ lesson.date | date: "%b %d" }}** - [{{ lesson.title }}]({{ lesson.url | relative_url }})
 {% endfor %}
 
 ## For AI Agents
