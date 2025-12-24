@@ -479,3 +479,32 @@ jobs:
       - name: Check for Anti-Manual Violations
         run: |
           python3 scripts/check_anti_manual_violations.py --check-commits 10 --ci
+
+  # Added Dec 24, 2025: Dead Code Detection
+  # Catches stub files, empty directories, broken imports, unused code
+  # See: rag_knowledge/lessons_learned/ll_010_dead_code_and_dormant_systems_dec11.md
+  dead-code-detection:
+    name: Dead Code Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Detect Dead Code
+        run: |
+          echo "Scanning for dead code..."
+          python3 scripts/detect_dead_code.py --src src --ci
+
+      - name: Fail on dead code (strict mode for PRs)
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Running strict dead code check for PR..."
+          python3 scripts/detect_dead_code.py --src src --strict || {
+            echo "::error::Dead code detected! Clean up before merging."
+            echo "Run: python3 scripts/detect_dead_code.py --src src"
+            exit 1
+          }

@@ -19,7 +19,15 @@ from threading import Lock
 from typing import Any
 
 from src.core.alpaca_trader import AlpacaTrader, AlpacaTraderError
-from src.core.multi_llm_analysis import MultiLLMAnalyzer
+
+# MultiLLMAnalyzer was removed - file no longer exists
+# OpenRouter sentiment functions will return None
+try:
+    from src.core.multi_llm_analysis import MultiLLMAnalyzer
+    MULTI_LLM_AVAILABLE = True
+except ImportError:
+    MultiLLMAnalyzer = None  # type: ignore
+    MULTI_LLM_AVAILABLE = False
 
 DEFAULT_CLI_BIN = os.environ.get("MCP_CLI_BIN", "claude")
 DEFAULT_PROFILE = os.environ.get("MCP_PROFILE")
@@ -123,11 +131,14 @@ def default_client() -> MCPClient:
 
 
 @lru_cache(maxsize=4)
-def get_multi_llm_analyzer(use_async: bool = True) -> MultiLLMAnalyzer:
+def get_multi_llm_analyzer(use_async: bool = True) -> Any:
     """
     Return a cached MultiLLMAnalyzer instance.
-    """
 
+    Returns None if MultiLLMAnalyzer is not available (file was removed).
+    """
+    if not MULTI_LLM_AVAILABLE or MultiLLMAnalyzer is None:
+        return None
     return MultiLLMAnalyzer(use_async=use_async)
 
 

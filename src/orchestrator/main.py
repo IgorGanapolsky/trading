@@ -15,7 +15,9 @@ from src.analyst.bias_store import BiasProvider, BiasSnapshot, BiasStore
 from src.data.iv_data_provider import IVDataProvider
 from src.execution.alpaca_executor import AlpacaExecutor
 from src.integrations.playwright_mcp import SentimentScraper, TradeVerifier
-from src.langchain_agents.analyst import LangChainSentimentAgent
+# LangChain Sentiment Agent - removed (was stub code)
+# LLM sentiment now handled by Gate 3 with BiasProvider
+LANGCHAIN_AVAILABLE = False
 from src.orchestrator.anomaly_monitor import AnomalyMonitor
 from src.orchestrator.budget import BudgetController
 from src.orchestrator.failure_isolation import FailureIsolationManager
@@ -197,11 +199,12 @@ class TradingOrchestrator:
             self.rl_filter = None
             logger.info("Gate 2: RLFilter DISABLED (simplification mode)")
 
+        # LangChain agent removed - was stub returning hardcoded neutral sentiment
+        # LLM sentiment now uses BiasProvider with real data
+        self.llm_agent = None
         if self.llm_sentiment_enabled:
-            self.llm_agent = LangChainSentimentAgent()
-            logger.info("Gate 3: LLM Sentiment ENABLED")
+            logger.info("Gate 3: LLM Sentiment via BiasProvider (LangChain stub removed)")
         else:
-            self.llm_agent = None
             logger.info("Gate 3: LLM Sentiment DISABLED (simplification mode)")
         # Playwright MCP for dynamic sentiment scraping and trade verification
         self.playwright_scraper = SentimentScraper()
