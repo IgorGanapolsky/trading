@@ -1,8 +1,10 @@
 # Lesson Learned #055: Multiple Workflow Commit Failures
 
+**ID**: LL-055
 **Date**: December 20, 2025
 **Severity**: High
 **Category**: CI/CD, Automation
+**Impact**: Multiple failed workflow commits due to gitignore patterns
 
 ## What Happened
 
