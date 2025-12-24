@@ -1,11 +1,10 @@
 # Lesson Learned: Anti-Manual Mandate Violation (Dec 12, 2025)
 
 **ID**: LL-017
-**Impact**: - CEO had to remind CTO of directives
-
-## Incident ID: LL-017
-## Severity: HIGH
-## Category: process_violation
+**Date**: 2025-12-12
+**Severity**: HIGH
+**Category**: process_violation
+**Impact**: CEO had to remind CTO of directives
 
 ## What Happened
 
