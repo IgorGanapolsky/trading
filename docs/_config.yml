@@ -1,18 +1,28 @@
 # GitHub Pages Configuration
 title: "AI Trading Journey"
-description: "90-day experiment building an autonomous AI trading system with Claude. Real failures, real fixes, real lessons."
+tagline: "Building an Autonomous AI Trading System with Claude"
+description: "90-day experiment building an autonomous AI options trading system with Claude Opus 4.5. 75% win rate on options, 66+ documented lessons learned. Real failures, real fixes, real lessons from paper trading to production."
 url: "https://igorganapolsky.github.io"
 baseurl: "/trading"
+lang: en
 
-# SEO
+# SEO - Enhanced for search visibility
 author: "Igor Ganapolsky & Claude"
+keywords: "AI trading, autonomous trading bot, Claude AI, options trading, algorithmic trading, machine learning trading, LLM trading, paper trading, lessons learned"
 twitter:
+  card: summary_large_image
   username: igorganapolsky
 social:
   name: Igor Ganapolsky
   links:
     - https://github.com/IgorGanapolsky
     - https://twitter.com/igorganapolsky
+    - https://linkedin.com/in/igorganapolsky
+
+# Open Graph defaults
+defaults_og:
+  image: /trading/assets/og-image.png
+  type: website
 
 # Build settings
 theme: minima
