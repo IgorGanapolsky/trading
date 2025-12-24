@@ -89,9 +89,6 @@ class TestSlippageSimulation:
         """
         np.random.seed(42)
 
-        # Simulate 252 trading days of returns
-        ideal_returns = np.random.normal(0.0004, 0.01, 252)  # 10% annual, 1% daily vol
-
         # Apply slippage (0.005% to 0.01% per trade, ~2 trades/day)
         slippage_per_trade = 0.00007  # 0.7 bps
         trades_per_day = 2
@@ -116,7 +113,9 @@ class TestSlippageSimulation:
         # Expected annual slippage: 0.00014 * 252 = ~3.5% annual drag
         # With 50-150% variance factor, avg should still be ~3.5%
         # Verify slippage is within expected bounds
-        assert 0.02 < avg_slippage < 0.06, f"Average slippage drag {avg_slippage:.2%} outside expected 2-6%"
+        assert 0.02 < avg_slippage < 0.06, (
+            f"Average slippage drag {avg_slippage:.2%} outside expected 2-6%"
+        )
         # Standard deviation should be reasonable (not too volatile)
         assert std_slippage < 0.02, f"Slippage std dev {std_slippage:.2%} too high"
 
