@@ -289,13 +289,15 @@ class AlpacaExecutor:
             from src.safety.mandatory_trade_gate import TradeBlockedError, validate_trade_mandatory
         except ImportError:
             logger.warning("⚠️ Mandatory trade gate not available - proceeding without validation")
+
             # Define dummy class to avoid NameError
             class TradeBlockedError(Exception):
                 pass
+
             # Continue without gate validation
             gate_result = None
 
-        if 'validate_trade_mandatory' in locals():
+        if "validate_trade_mandatory" in locals():
             amount = notional or (qty * 100.0 if qty else 0.0)  # Estimate for qty-based orders
 
             # Get account context for context-aware blocking (ll_051 prevention)

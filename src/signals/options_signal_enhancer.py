@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 try:
     from src.rag.collectors.mcmillan_options_collector import McMillanOptionsKnowledgeBase
     from src.rag.options_book_retriever import get_options_book_retriever
+
     MCMILLAN_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Optional import failed: {e}")
@@ -243,6 +244,7 @@ class OptionsSignalEnhancer:
         else:
             # Fallback calculation when McMillan KB not available
             import math
+
             stock_price = iv_metrics["current_price"]
             iv = iv_metrics["current_iv"]
             expected_move_amt = stock_price * iv * math.sqrt(dte / 365.0)

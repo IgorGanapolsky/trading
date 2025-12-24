@@ -27,7 +27,8 @@ try:
 
     DISCO_DQN_AVAILABLE = True
 except ImportError:
-    pass  # PyTorch not available
+    # Define placeholder for type hints
+    DiscoDQNAgent = None  # type: ignore[misc]
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +71,7 @@ class RLFilter:
         # RELAXED (Dec 12, 2025): Lowered from 0.6 to 0.35 to let more trades through R&D
         self.default_threshold = float(os.getenv("RL_CONFIDENCE_THRESHOLD", "0.35"))
         self.transformer: TransformerRLPolicy | None = None
-        self.disco_dqn: DiscoDQNAgent | None = None
+        self.disco_dqn: Any = None  # DiscoDQNAgent when available
 
         # Transformer initialization
         flag = (

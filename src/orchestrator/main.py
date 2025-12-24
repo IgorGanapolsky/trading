@@ -106,6 +106,18 @@ HINDSIGHT_AVAILABLE = False
 #     REFLEXION_AVAILABLE = False
 REFLEXION_AVAILABLE = False
 
+
+def reflect_and_store(*args, **kwargs):
+    """Placeholder for reflexion_loop.reflect_and_store (not yet implemented)."""
+    from dataclasses import dataclass
+
+    @dataclass
+    class DummyReflection:
+        lesson_learned: str = "Reflexion module not implemented"
+
+    return DummyReflection()
+
+
 # Introspective awareness imports (Dec 2025)
 try:
     # NOTE: Keep optional import pattern without triggering ruff F401.
