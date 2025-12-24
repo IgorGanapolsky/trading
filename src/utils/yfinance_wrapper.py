@@ -44,6 +44,7 @@ def _get_pandas():
             _pandas = False
     return _pandas if _pandas else None
 
+
 # Lazy import state
 _yfinance = None
 _import_attempted = False
