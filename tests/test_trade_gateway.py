@@ -166,17 +166,17 @@ class TestTradeGatewayAllocationLimits:
     """Test allocation limits per symbol."""
 
     def test_over_allocation_rejected(self):
-        """Test that > 15% allocation to single symbol is rejected."""
+        """Test that > 25% allocation to single symbol is rejected."""
         gateway = TradeGateway(executor=None, paper=True)
-        # Use AAPL (not in any correlation group) to avoid HIGH_CORRELATION rejection
+        # Use XOM (not in any correlation group) to avoid HIGH_CORRELATION rejection
         gateway.executor = MockExecutor(
             account_equity=10000,
-            positions=[{"symbol": "AAPL", "market_value": 1400}],  # 14% already
+            positions=[{"symbol": "XOM", "market_value": 2400}],  # 24% already
         )
 
-        # Trying to add $200 more would push to 16%
+        # Trying to add $200 more would push to 26% (> 25% limit)
         request = TradeRequest(
-            symbol="AAPL",
+            symbol="XOM",
             side="buy",
             notional=200,
             source="test",
