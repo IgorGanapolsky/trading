@@ -35,6 +35,11 @@
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/advise_before_task.sh",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/capture_feedback.sh \"$CLAUDE_USER_PROMPT\"",
+            "timeout": 2
           }
         ]
       }
