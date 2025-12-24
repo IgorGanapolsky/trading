@@ -37,7 +37,7 @@ class BenchmarkComparator:
             Performance metrics
         """
         try:
-            import yfinance as yf
+            from src.utils import yfinance_wrapper as yf
 
             spy = yf.Ticker("SPY")
             hist = spy.history(start=start_date, end=end_date)
@@ -97,7 +97,7 @@ class BenchmarkComparator:
             Performance metrics
         """
         try:
-            import yfinance as yf
+            from src.utils import yfinance_wrapper as yf
 
             spy = yf.Ticker("SPY")
             bnd = yf.Ticker("BND")

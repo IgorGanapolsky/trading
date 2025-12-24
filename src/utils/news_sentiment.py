@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 
 # Optional imports - make dependencies optional
 try:
-    import yfinance as yf
+    from src.utils import yfinance_wrapper as yf
 
     YFINANCE_AVAILABLE = True
 except ImportError:

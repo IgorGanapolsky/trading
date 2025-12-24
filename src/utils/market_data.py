@@ -27,7 +27,7 @@ import requests
 
 # Optional import - yfinance may not be installed in all environments
 try:
-    import yfinance as yf
+    from src.utils import yfinance_wrapper as yf
 
     YFINANCE_AVAILABLE = True
 except ImportError:

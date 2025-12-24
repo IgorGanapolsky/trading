@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 # Import yfinance for options data
 try:
-    import yfinance as yf
+    from src.utils import yfinance_wrapper as yf
 except ImportError:
     logger.error("yfinance not installed. Run: pip install yfinance")
     yf = None

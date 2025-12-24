@@ -493,7 +493,7 @@ def detect_current_regime(
     Returns:
         RegimeState for current market
     """
-    import yfinance as yf
+    from src.utils import yfinance_wrapper as yf
 
     # Fetch data
     ticker = yf.Ticker(symbol)

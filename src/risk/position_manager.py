@@ -425,7 +425,7 @@ class PositionManager:
             True if momentum has reversed bearish, False otherwise
         """
         try:
-            import yfinance as yf
+            from src.utils import yfinance_wrapper as yf
 
             # Get recent price data
             ticker = yf.Ticker(symbol)
@@ -476,7 +476,7 @@ class PositionManager:
             ExitSignal if ATR stop triggered, None otherwise
         """
         try:
-            import yfinance as yf
+            from src.utils import yfinance_wrapper as yf
             from src.utils.technical_indicators import calculate_atr
 
             ticker = yf.Ticker(symbol)

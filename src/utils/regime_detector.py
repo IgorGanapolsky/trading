@@ -153,9 +153,10 @@ class RegimeDetector:
         Returns:
             RegimeSnapshot with allocation recommendations
         """
-        try:
-            import yfinance as yf
-        except ImportError:
+        # Use wrapper for graceful fallback
+        from src.utils import yfinance_wrapper as yf
+
+        if not yf.is_available():
             logger.warning("yfinance not available for live regime detection")
             return self._fallback_snapshot()
 
@@ -510,7 +511,8 @@ class RegimeDetector:
             return snapshot  # Detection failed
 
         try:
-            import yfinance as yf
+            # Use wrapper for graceful fallback
+            from src.utils import yfinance_wrapper as yf
 
             # Fetch data for transition prediction
             tickers = ["^VIX", "^VVIX", "TLT"]

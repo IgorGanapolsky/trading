@@ -24,10 +24,12 @@ from pathlib import Path
 from typing import Any, Optional
 
 import numpy as np
-import yfinance as yf
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
+
+# Use wrapper for graceful yfinance fallback (CI compatibility)
+from src.utils import yfinance_wrapper as yf
 
 logger = logging.getLogger(__name__)
 

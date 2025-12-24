@@ -26,7 +26,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-import yfinance as yf
+# Use wrapper for graceful yfinance fallback (CI compatibility)
+from src.utils import yfinance_wrapper as yf
 
 logger = logging.getLogger(__name__)
 

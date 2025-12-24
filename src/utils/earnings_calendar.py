@@ -172,7 +172,7 @@ class EarningsCalendar:
 
         # Try yfinance
         try:
-            import yfinance as yf
+            from src.utils import yfinance_wrapper as yf
 
             ticker = yf.Ticker(symbol)
 

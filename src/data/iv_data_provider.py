@@ -39,7 +39,9 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-import yfinance as yf
+
+# Use wrapper for graceful yfinance fallback (CI compatibility)
+from src.utils import yfinance_wrapper as yf
 
 logger = logging.getLogger(__name__)
 

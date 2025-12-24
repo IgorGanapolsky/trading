@@ -95,8 +95,8 @@ class LegacyMomentumCalculator:
         }
 
         try:
-            # Lazy import yfinance (for CI compatibility)
-            import yfinance as yf
+            # Use wrapper for graceful fallback
+            from src.utils import yfinance_wrapper as yf
 
             # Fetch 60 days of history for indicator calculations
             stock = yf.Ticker(ticker)
