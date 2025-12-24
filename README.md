@@ -152,6 +152,29 @@ python3 scripts/daily_verification.py
 
 ---
 
+## Follow Our Journey
+
+| Platform | Link | Description |
+|----------|------|-------------|
+| **GitHub Pages Blog** | [igorganapolsky.github.io/trading](https://igorganapolsky.github.io/trading/) | Daily trading reports, lessons learned |
+| **Dev.to** | [@igorganapolsky](https://dev.to/igorganapolsky) | AI trading insights, tutorials |
+| **Daily Reports** | [/reports/](https://igorganapolsky.github.io/trading/reports/) | Transparent P/L tracking |
+| **Lessons Learned** | [/lessons/](https://igorganapolsky.github.io/trading/lessons/) | 66+ documented lessons |
+
+---
+
+## For AI Agents & LLMs
+
+This repo is optimized for AI agent collaboration. See **[AGENTS.md](AGENTS.md)** for:
+- Quick context loading
+- Key file locations
+- Critical rules and constraints
+- RAG knowledge base (`rag_knowledge/`)
+
+**Claude Code users**: See `.claude/CLAUDE.md` for full context.
+
+---
+
 ## Documentation
 
 - **[R&D Phase](docs/r-and-d-phase.md)** - Current 90-day plan
