@@ -40,6 +40,39 @@ else
     FEEDBACK_LINE="📊 No feedback recorded - acknowledge all thumbs up/down!"
 fi
 
+# Check for recent diary entries (last 3 days)
+DIARY_DIR="$HOME/.claude/memory/diary"
+RECENT_LESSONS=""
+if [[ -d "$DIARY_DIR" ]]; then
+    # Count unprocessed diary files
+    PROCESSED_LOG="$DIARY_DIR/processed.log"
+    touch "$PROCESSED_LOG"
+    UNPROCESSED=$(find "$DIARY_DIR" -name "*.md" -mtime -3 -type f 2>/dev/null | while read f; do
+        grep -q "$f" "$PROCESSED_LOG" || echo "$f"
+    done | wc -l)
+
+    if [[ $UNPROCESSED -gt 0 ]]; then
+        RECENT_LESSONS="📝 $UNPROCESSED unprocessed diary entries - run /reflect to learn from them"
+    fi
+
+    # Extract recent negative feedback for immediate attention
+    RECENT_NEGATIVE=$(find "$DIARY_DIR" -name "*_feedback.md" -mtime -1 -type f 2>/dev/null | xargs grep -l "Negative Feedback" 2>/dev/null | head -1)
+    if [[ -n "$RECENT_NEGATIVE" ]]; then
+        RECENT_LESSONS="$RECENT_LESSONS
+⚠️  Recent negative feedback detected - review and learn from it!"
+    fi
+fi
+
+# Check for session-learned rules in CLAUDE.md
+LEARNED_RULES=""
+CLAUDE_MD="$CLAUDE_PROJECT_DIR/CLAUDE.md"
+if [[ -f "$CLAUDE_MD" ]] && grep -q "Session-Learned Rules" "$CLAUDE_MD"; then
+    RULE_COUNT=$(grep -A 50 "Session-Learned Rules" "$CLAUDE_MD" | grep -c "^-" 2>/dev/null || echo "0")
+    if [[ $RULE_COUNT -gt 0 ]]; then
+        LEARNED_RULES="📚 $RULE_COUNT session-learned rules active"
+    fi
+fi
+
 # Output session summary
 cat <<EOF >&2
 
@@ -50,6 +83,20 @@ Portfolio: \$$CURRENT_EQUITY | P/L: \$$TOTAL_PL | Day: $CURRENT_DAY/90
 Automation: $AUTOMATION_STATUS | $FEEDBACK_LINE
 Last Updated: $LAST_UPDATED
 ⚠️  MANDATORY: Acknowledge ALL thumbs up/down feedback immediately!
+EOF
+
+# Show memory/learning status if applicable
+if [[ -n "$RECENT_LESSONS" ]] || [[ -n "$LEARNED_RULES" ]]; then
+    cat <<EOF >&2
+--------------------------------------------------------------------------------
+🧠 PERSISTENT MEMORY STATUS
+$RECENT_LESSONS
+$LEARNED_RULES
+💡 Use /diary to record session learnings, /reflect to generate rules
+EOF
+fi
+
+cat <<EOF >&2
 ================================================================================
 
 EOF

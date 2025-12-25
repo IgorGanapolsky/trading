@@ -70,4 +70,43 @@ EOF
 EOF
 
     echo "📊 Feedback recorded: $FEEDBACK_TYPE (Total: $TOTAL, Satisfaction: ${SAT_RATE}%)"
+
+    # For negative feedback, also save to diary for reflection
+    if [ "$FEEDBACK_TYPE" = "negative" ]; then
+        DIARY_DIR="$HOME/.claude/memory/diary"
+        mkdir -p "$DIARY_DIR"
+        DIARY_FILE="$DIARY_DIR/${DATE}_feedback.md"
+
+        # Append to daily feedback diary
+        cat >> "$DIARY_FILE" <<DIARY
+## Negative Feedback at $TIME
+
+**User said:** $USER_MESSAGE
+
+**Action Required:** Ask user what went wrong and record the lesson.
+
+---
+DIARY
+
+        echo "⚠️ NEGATIVE FEEDBACK - Claude MUST ask: 'What did I do wrong? I want to learn from this.'"
+    fi
+
+    # For positive feedback, also log what worked
+    if [ "$FEEDBACK_TYPE" = "positive" ]; then
+        DIARY_DIR="$HOME/.claude/memory/diary"
+        mkdir -p "$DIARY_DIR"
+        DIARY_FILE="$DIARY_DIR/${DATE}_feedback.md"
+
+        cat >> "$DIARY_FILE" <<DIARY
+## Positive Feedback at $TIME
+
+**User said:** $USER_MESSAGE
+
+**What worked:** [Claude should note what led to this positive feedback]
+
+---
+DIARY
+
+        echo "✅ POSITIVE FEEDBACK recorded - Note what worked well for future reference."
+    fi
 fi

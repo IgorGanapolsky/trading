@@ -1,143 +1,30 @@
 # AI Trading System
 
-**CTO**: Claude (autonomous execution) | **CEO**: Igor Ganapolsky (vision & approval)
-**Phase**: R&D Day 50/90 | **Mode**: Paper Trading | **Budget**: $100/mo
+**CTO**: Claude | **CEO**: Igor Ganapolsky | **Phase**: R&D Day 50/90
 
----
+## Critical Rules
+1. Never lie - verify before claiming
+2. Never merge to main - always use PRs
+3. Never tell CEO what to do - fix it yourself
+4. Show evidence with every claim
 
-## Critical Rules (Memorize These)
+## Essential Commands
+- `python3 -c "from src.orchestrator.main import TradingOrchestrator"` - verify imports
+- `python3 scripts/pre_merge_gate.py` - pre-merge validation
+- `/diary` - record session learnings
+- `/reflect` - generate rules from feedback
 
-1. **Never lie** - Verify before claiming. See `.claude/rules/MANDATORY_RULES.md`
-2. **Never merge to main** - Always use PRs. See `/project:create-pr`
-3. **Never tell CEO what to do** - Fix it yourself or automate it
-4. **Verify claims**: Hook > Alpaca API > Files (in that order)
-5. **Equity market hours matter** - US equities trade Mon-Fri 9:30-4:00 ET only.
+## Quick Reference
+- Rules: `.claude/rules/MANDATORY_RULES.md`
+- State: `data/system_state.json`
+- Feedback: `data/feedback/stats.json`
+- Diary: `~/.claude/memory/diary/`
 
----
+## Session-Learned Rules
+- ALWAYS show evidence (logs, commit hashes, CI status) with every claim
+- NEVER claim a task is complete without verification
+- When user gives thumbs down, IMMEDIATELY ask what went wrong
+- Check CI coverage thresholds, not just test pass/fail
 
-## Architecture
-
-```
-src/
-├── orchestrator/main.py    # TradingOrchestrator - core entry point
-├── strategies/             # 5-tier trading strategies
-├── agents/                 # Trading agents (momentum, debate, RL)
-└── risk/                   # Position sizing, circuit breakers
-
-data/
-├── system_state.json       # Current state (READ FIRST each session)
-├── trades_YYYY-MM-DD.json  # Daily trade logs
-└── performance_log.json    # Historical metrics
-
-.claude/
-├── rules/MANDATORY_RULES.md  # All critical rules (single source of truth)
-├── commands/                 # Slash command procedures
-├── skills/                   # 17 specialized skills (auto-discovered)
-├── hooks/                    # Lifecycle automation
-└── SESSION_START_CHECKLIST.md # ⚠️ RUN THIS EVERY SESSION
-
-docs/
-├── r-and-d-phase.md         # R&D strategy (Days 1-90)
-├── verification-protocols.md # "Show, Don't Tell" protocol
-└── profit-optimization.md    # Cost/benefit analysis
-```
-
----
-
-## Tech Stack
-
-- **Trading**: Alpaca API (paper), OpenRouter (multi-LLM)
-- **Backend**: Python 3.11, FastAPI
-- **ML**: PyTorch, stable-baselines3
-- **Data**: PostgreSQL, Redis
-- **CI/CD**: GitHub Actions, pre-commit hooks
-
----
-
-## Session Start Checklist
-
-```bash
-# 1. Get bearings
-cat claude-progress.txt
-cat feature_list.json
-git log --oneline -10
-
-# 2. Verify environment
-python3 -c "from src.orchestrator.main import TradingOrchestrator; print('OK')"
-
-# 3. Check system state
-cat data/system_state.json | head -50
-```
-
-Pick ONE feature with `"passes": false` and complete it before moving on.
-
----
-
-## Commands & Workflows
-
-| Task | Command/Location |
-|------|------------------|
-| Create PR | `/project:create-pr` or `.claude/commands/create-pr.md` |
-| Pre-merge gate | `python3 scripts/pre_merge_gate.py` |
-| Verify imports | `python3 -c "from src.orchestrator.main import TradingOrchestrator"` |
-| YouTube analysis | `.claude/skills/youtube-analyzer/` |
-| Daily report | `reports/daily_report_YYYY-MM-DD.txt` |
-| Budget tracking | `skill: budget_tracker` - BATS cost optimization |
-| News analysis | `skill: text_analyzer` - BoW/TF-IDF/FinBERT |
-| Pre-trade research | `skill: deep_research` - Gemini Deep Research |
-
----
-
-## Trading Context
-
-**North Star**: Fibonacci compounding ($1/day → scale with profits)
-**Current**: Options-focused strategy with systematic risk management
-
-**MARKET HOURS**:
-| Asset | Hours | Days |
-|-------|-------|------|
-| US Equities | 9:30-4:00 ET | Mon-Fri only |
-| Options | Same as underlying | Mon-Fri only |
-
-**R&D Goals**:
-- Month 1: Infrastructure + data collection (break-even OK)
-- Month 2: MACD + RSI + RL system (win rate >55%)
-- Month 3: Validate + optimize (win rate >60%, consistent daily profits)
-
-**Integrations**: Gemini Deep Research, BiasProvider sentiment, RAG lessons learned
-
----
-
-## Opus 4.5 Optimization
-
-This project runs on Claude Opus 4.5. Leverage:
-- **Extended thinking** for complex trade decisions
-- **Parallel agents** for research (Task tool)
-- **Long-horizon autonomy** for full PR lifecycle
-
-For complex decisions, use: "Take extra time to reason through the tradeoffs"
-
----
-
-## State Files (Persistent Memory)
-
-| File | Purpose | Freshness |
-|------|---------|-----------|
-| `data/system_state.json` | Current state | Check `last_updated` |
-| CEO Hook (conversation start) | Live P/L, portfolio | Real-time |
-| `claude-progress.txt` | Session continuity | Update after each feature |
-| `feature_list.json` | Feature tracking | Mark `passes: true` when done |
-
----
-
-## Key Documentation
-
-- **Rules**: `.claude/rules/MANDATORY_RULES.md` (all constraints)
-- **R&D Strategy**: `docs/r-and-d-phase.md`
-- **Verification**: `docs/verification-protocols.md`
-- **Lessons Learned**: `rag_knowledge/lessons_learned/` (65+ lessons)
-- **Skills**: `.claude/skills/` (17 specialized capabilities)
-
----
-
-**Last Optimized**: December 24, 2025 | **Lines**: ~160 (per Anthropic best practices)
+## Market Hours
+US Equities: Mon-Fri 9:30-4:00 ET only
