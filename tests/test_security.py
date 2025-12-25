@@ -10,14 +10,11 @@ Tests cover:
 """
 
 import pytest
-
 from src.utils.security import (
     LLMOutputValidator,
     PromptInjectionDefense,
     SecurityError,
-    SecurityScanResult,
     ThreatLevel,
-    TradeSignalValidation,
     is_blocked_symbol,
     is_valid_symbol,
     scan_for_injection,

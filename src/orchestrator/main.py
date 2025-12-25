@@ -11,11 +11,11 @@ import holidays
 from src.agents.macro_agent import MacroeconomicAgent
 from src.agents.momentum_agent import MomentumAgent
 from src.agents.rl_agent import RLFilter
-from src.learning.trade_memory import TradeMemory
 from src.analyst.bias_store import BiasProvider, BiasSnapshot, BiasStore
 from src.data.iv_data_provider import IVDataProvider
 from src.execution.alpaca_executor import AlpacaExecutor
 from src.integrations.playwright_mcp import SentimentScraper, TradeVerifier
+from src.learning.trade_memory import TradeMemory
 
 # LangChain Sentiment Agent - removed (was stub code)
 # LLM sentiment now handled by Gate 3 with BiasProvider
@@ -2274,7 +2274,7 @@ class TradingOrchestrator:
                 ticker,
                 {
                     "block_reason": rag_result.get("block_reason"),
-                    "lessons": [l.get("title") for l in rag_result.get("lessons", [])],
+                    "lessons": [lesson.get("title") for lesson in rag_result.get("lessons", [])],
                 },
             )
             return
