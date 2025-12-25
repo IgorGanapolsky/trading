@@ -439,15 +439,9 @@ class AlpacaTrader:
                     f"Required: ${amount_usd}"
                 )
 
-            # Crypto orders require GTC (good-til-canceled), stocks use DAY
-            is_crypto = symbol.endswith("USD") and symbol.replace("USD", "") in [
-                "BTC",
-                "ETH",
-                "LTC",
-                "DOGE",
-                "SOL",
-            ]
-            tif = TimeInForce.GTC if is_crypto else TimeInForce.DAY
+            # All equity orders use DAY time-in-force
+            # NOTE: Crypto removed per Lesson Learned #052 - We do NOT trade crypto
+            tif = TimeInForce.DAY
 
             # Get current quote for limit price and slippage tracking
             quote = self.get_current_quote(symbol)
