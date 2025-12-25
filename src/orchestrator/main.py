@@ -32,6 +32,8 @@ from src.orchestrator.gates import (
     Gate5Execution,
     Gate15Debate,
     Gate35Introspection,
+    GateMemory,
+    GateSecurity,
     RAGPreTradeQuery,
     TradeMemoryQuery,
     TradingGatePipeline,
@@ -390,6 +392,22 @@ class TradingOrchestrator:
 
     def _init_gate_pipeline(self) -> None:
         """Initialize the decomposed trading gate pipeline."""
+        # Gate S: Security validation - MUST run first (Dec 24, 2025)
+        # Protects against prompt injection in external data
+        self.gate_security = GateSecurity(
+            telemetry=self.telemetry,
+            strict_mode=True,  # Block on MEDIUM+ threats
+        )
+        logger.info("Gate S: Security validation initialized (prompt injection defense)")
+
+        # Gate M: Memory feedback loop - query before, record after (Dec 24, 2025)
+        # Closes the learning loop from past trades
+        self.gate_memory = GateMemory(
+            telemetry=self.telemetry,
+            db_path="data/trade_memory.db",
+        )
+        logger.info("Gate M: Memory feedback loop initialized (SQLite)")
+
         self.gate0 = Gate0Psychology(
             mental_coach=self.mental_coach,
             telemetry=self.telemetry,
@@ -915,6 +933,38 @@ class TradingOrchestrator:
                             "outcome_timestamp": datetime.now(timezone.utc).isoformat(),
                         },
                     )
+
+                    # =================================================================
+                    # FEEDBACK LOOP: Record outcome to TradeMemory (GateMemory)
+                    # This completes the learning cycle for pattern-based decisions
+                    # =================================================================
+                    try:
+                        pending = getattr(self, "_pending_trade_outcomes", {})
+                        entry_record = pending.pop(symbol, None)
+                        if entry_record:
+                            won = actual_return_pct > 0
+                            pnl = position.unrealized_pl or 0
+                            lesson = (
+                                f"{'Win' if won else 'Loss'} on {symbol}: "
+                                f"{actual_return_pct:.2f}% ({reason})"
+                            )
+                            self.gate_memory.record_outcome(
+                                ticker=symbol,
+                                strategy=entry_record.get("strategy", "momentum"),
+                                entry_reason=entry_record.get("entry_reason", "technical"),
+                                won=won,
+                                pnl=pnl,
+                                lesson=lesson,
+                            )
+                            logger.info(
+                                "📊 Feedback recorded: %s %s (%.2f%% / $%.2f)",
+                                symbol,
+                                "WON" if won else "LOST",
+                                actual_return_pct,
+                                pnl,
+                            )
+                    except Exception as mem_err:
+                        logger.warning("Failed to record feedback for %s: %s", symbol, mem_err)
 
                     # DiscoRL online learning: Record trade outcome for continuous improvement
                     if hasattr(self.rl_filter, "record_trade_outcome"):
@@ -2191,6 +2241,48 @@ class TradingOrchestrator:
         logger.info("--- Processing %s (v2 pipeline) ---", ticker)
         self.telemetry.start_ticker_decision(ticker)
 
+        # =======================================================================
+        # SECURITY GATE (runs FIRST, before any LLM processing)
+        # Validates ticker against injection patterns and blocklists
+        # =======================================================================
+        security_result = self.gate_security.evaluate(
+            ticker=ticker,
+            external_data={},  # Will be populated with news/sentiment later
+            trade_signal={"symbol": ticker, "action": "ANALYZE"},
+        )
+        if not security_result.passed:
+            logger.warning(
+                "🛡️  Security Gate BLOCKED %s: %s",
+                ticker,
+                security_result.reason,
+            )
+            self.telemetry.record(
+                event_type="security.block",
+                ticker=ticker,
+                status="blocked",
+                payload=security_result.data,
+            )
+            return
+
+        # =======================================================================
+        # MEMORY GATE (query historical pattern performance)
+        # Provides context on how similar trades performed in the past
+        # =======================================================================
+        memory_result = self.gate_memory.evaluate(
+            ticker=ticker,
+            strategy="momentum",  # Will be updated based on actual strategy
+            entry_reason="technical_signal",
+            min_win_rate=0.35,  # Low threshold - we're gathering data, not filtering
+        )
+        memory_context = memory_result.data or {}
+        if memory_result.data and memory_result.data.get("pattern_history"):
+            logger.info(
+                "📊 Memory: %s has %d prior trades (%.1f%% win rate)",
+                ticker,
+                memory_result.data.get("trade_count", 0),
+                memory_result.data.get("win_rate", 0) * 100,
+            )
+
         # Pre-flight: Get allocation plan
         pre_plan = self.smart_dca.plan_allocation(
             ticker=ticker,
@@ -2390,6 +2482,30 @@ class TradingOrchestrator:
         )
 
         logger.info("✅ %s processed successfully via v2 pipeline", ticker)
+
+        # =======================================================================
+        # FEEDBACK LOOP: Store trade entry for outcome tracking
+        # When this position is closed, we'll call gate_memory.record_outcome()
+        # to complete the learning cycle
+        # =======================================================================
+        try:
+            entry_record = {
+                "ticker": ticker,
+                "strategy": "momentum",  # TODO: Get from actual strategy used
+                "entry_reason": "technical_signal",
+                "order_id": order.get("id") if isinstance(order, dict) else None,
+                "entry_time": order.get("created_at") if isinstance(order, dict) else None,
+                "entry_price": ctx.current_price,
+                "order_size": order_size,
+                "memory_context": memory_context,
+            }
+            # Store in pending_outcomes for later matching when position closes
+            if not hasattr(self, "_pending_trade_outcomes"):
+                self._pending_trade_outcomes = {}
+            self._pending_trade_outcomes[ticker] = entry_record
+            logger.debug("📝 Trade entry recorded for feedback loop: %s", ticker)
+        except Exception as e:
+            logger.warning("Failed to record trade entry for feedback: %s", e)
 
     def _deploy_safe_reserve(self) -> None:
         sweep = self.smart_dca.drain_to_safe()
