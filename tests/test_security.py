@@ -107,7 +107,9 @@ class TestPromptInjectionDefense:
         """Indirect injection in news/data must be blocked."""
         result = defense.scan(attack_text)
         assert result.blocked, f"Should block: {attack_text}"
-        assert any("hidden_instruction" in t or "exfiltration" in t for t in result.threats_detected)
+        assert any(
+            "hidden_instruction" in t or "exfiltration" in t for t in result.threats_detected
+        )
 
     @pytest.mark.parametrize(
         "attack_text",

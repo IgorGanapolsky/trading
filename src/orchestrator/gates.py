@@ -207,10 +207,14 @@ class RAGPreTradeQuery:
                         # ENFORCEMENT: Block on CRITICAL with high relevance, or HIGH with very high relevance
                         if severity == "CRITICAL" and score > 0.5:
                             should_block = True
-                            block_reason = f"CRITICAL lesson matched (score={score:.2f}): {lesson.title}"
+                            block_reason = (
+                                f"CRITICAL lesson matched (score={score:.2f}): {lesson.title}"
+                            )
                         elif severity == "HIGH" and score > 0.7:
                             should_block = True
-                            block_reason = f"HIGH lesson matched (score={score:.2f}): {lesson.title}"
+                            block_reason = (
+                                f"HIGH lesson matched (score={score:.2f}): {lesson.title}"
+                            )
 
             if lessons:
                 logger.info("RAG Query (%s): Found %d relevant lessons", ticker, len(lessons))
@@ -238,7 +242,13 @@ class RAGPreTradeQuery:
 
         except Exception as e:
             logger.debug("RAG query failed for %s: %s", ticker, e)
-            return {"available": True, "lessons": [], "warnings": [], "error": str(e), "should_block": False}
+            return {
+                "available": True,
+                "lessons": [],
+                "warnings": [],
+                "error": str(e),
+                "should_block": False,
+            }
 
 
 class TradeMemoryQuery:
@@ -319,9 +329,7 @@ class TradeMemoryQuery:
             )
 
             if should_block:
-                logger.warning(
-                    "TradeMemory BLOCK (%s): %s", ticker, block_reason
-                )
+                logger.warning("TradeMemory BLOCK (%s): %s", ticker, block_reason)
             elif result.get("found"):
                 logger.info(
                     "TradeMemory (%s): Pattern '%s' has %.0f%% win rate (%d trades) - %s",
@@ -419,9 +427,7 @@ class GateSecurity:
                 if content:
                     result = self.scan_for_injection(content)
                     if result.blocked:
-                        threats_found.extend(
-                            [f"{source}:{t}" for t in result.threats_detected]
-                        )
+                        threats_found.extend([f"{source}:{t}" for t in result.threats_detected])
                         blocked = True
                         logger.warning(
                             "🛡️ Gate S (%s): BLOCKED %s - %s",
