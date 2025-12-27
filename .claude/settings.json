@@ -52,6 +52,11 @@
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/load_trading_state.sh",
             "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/process_pending_feedback.sh",
+            "timeout": 5
           }
         ]
       }
