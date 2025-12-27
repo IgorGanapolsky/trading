@@ -56,6 +56,14 @@ class MetaAgent(BaseAgent):
         memory_context = self.get_memory_context(limit=5)
         prompt = f"""You are the Meta-Agent coordinating a multi-agent trading system.
 
+REASONING PROTOCOL:
+Think step-by-step before reaching your coordination decision:
+1. Assess the current market regime and its implications
+2. Determine which agents are most relevant for this regime
+3. Consider how to weight conflicting agent recommendations
+4. Anticipate potential failure modes in the coordination
+5. Critique your own strategy - are you over/under-weighting any agent?
+
 MARKET REGIME: {regime}
 
 CURRENT DATA:

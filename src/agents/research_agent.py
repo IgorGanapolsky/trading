@@ -118,6 +118,15 @@ Focus on value and risk because overpaying destroys long-term returns, even for 
 Fundamentals drive long-term performance; sentiment affects short-term price action.
 </context>
 
+<reasoning_protocol>
+Think step-by-step before reaching your conclusion:
+1. Evaluate fundamentals against Graham-Buffett principles
+2. Assess news sentiment and separate signal from noise
+3. Consider market context and sector dynamics
+4. Weigh conflicting signals using the principle weights
+5. Critique your own assessment - what could you be missing?
+</reasoning_protocol>
+
 <fundamentals>
 P/E: {fundamentals.get("pe_ratio", "N/A")} | Growth: {fundamentals.get("growth_rate", "N/A")} | Margin: {fundamentals.get("profit_margin", "N/A")} | Cap: {fundamentals.get("market_cap", "N/A")}
 </fundamentals>

@@ -76,6 +76,15 @@ A 50% loss requires a 100% gain to recover - survival is non-negotiable.
 Position sizing is the most underappreciated edge in trading.
 </context>
 
+<reasoning_protocol>
+Think step-by-step before reaching your conclusion:
+1. Assess position size against portfolio limits
+2. Evaluate volatility and adjust sizing accordingly
+3. Check confidence level and correlation risk
+4. Consider worst-case scenarios (max drawdown if stopped)
+5. Critique your own assessment - are you underestimating tail risk?
+</reasoning_protocol>
+
 <portfolio>
 Value: ${portfolio_value:,.0f} | Max Risk: {self.max_portfolio_risk:.1%}/trade | Max Position: {self.max_position_size:.1%}
 </portfolio>

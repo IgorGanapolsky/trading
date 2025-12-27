@@ -69,6 +69,15 @@ Being decisive matters because hesitation in trading leads to missed opportuniti
 Strong signals deserve high scores; weak/mixed signals deserve low scores.
 </context>
 
+<reasoning_protocol>
+Think step-by-step before reaching your conclusion:
+1. Analyze each indicator independently (MACD, RSI, Volume, Trend)
+2. Weight signals according to empirical importance
+3. Look for confirmation or divergence across indicators
+4. Assess signal quality - is this high-conviction or ambiguous?
+5. Critique your own assessment - what pattern might you be missing?
+</reasoning_protocol>
+
 <indicators>
 Price: ${indicators.get("price", 0):.2f} | MACD Hist: {indicators.get("macd_histogram", 0):.4f} | RSI: {indicators.get("rsi", 50):.1f} | Volume: {indicators.get("volume_ratio", 1.0):.1f}x
 Trend: {indicators.get("trend", "UNKNOWN")} | MA50: ${indicators.get("ma_50", 0):.2f} | Momentum: {indicators.get("momentum_score", 0):.0f}/100

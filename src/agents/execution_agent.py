@@ -110,6 +110,14 @@ TECHNICALS: MACD Hist {macd_hist:.3f} | RSI {rsi:.1f}
 
 {memory_context}
 
+REASONING PROTOCOL:
+Think step-by-step before deciding:
+1. Check market status and timing constraints
+2. Evaluate liquidity conditions (spread, volume)
+3. Assess technical momentum (RSI, MACD)
+4. Estimate slippage risk based on conditions
+5. Critique your assessment - what execution risk are you underestimating?
+
 PRINCIPLES:
 - Wide spread (>0.1%) = wait for better liquidity or use limit order
 - Low volume (<50% avg) = expect higher slippage, consider splitting
