@@ -41,7 +41,7 @@ cohere>=5.11.4             # Cohere Rerank API for RAG retrieval optimization
 # IMPORTANT: These versions are tightly coupled - do not upgrade independently
 # All langchain packages must stay in the 0.3.x series
 langchain==0.3.27
-langchain-core==0.3.72  # Pinned exact version to prevent conflicts
+langchain-core>=0.3.78,<1.0.0  # Range: langchain needs >=0.3.72, anthropic needs >=0.3.78
 langchain-anthropic==0.3.22
 langchain-community==0.3.27  # Downgraded to match langchain version
 sentence-transformers==3.4.1   # Required for RAG embedder used by trading orchestrator
