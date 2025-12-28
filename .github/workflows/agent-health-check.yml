@@ -63,7 +63,7 @@ jobs:
             "src.strategies.registry:StrategyRegistry"
             "src.agents.momentum_agent:MomentumAgent"
             "src.agents.sentiment_agent:SentimentAgent"
-            "src.risk.position_sizing:PositionSizer"
+            "src.risk.target_aligned_sizing:TargetAlignedSizer"
           )
 
           for agent in "${CRITICAL_AGENTS[@]}"; do
@@ -143,17 +143,17 @@ jobs:
 
           poetry run python << 'PYTHON'
           try:
-              from src.risk.position_sizing import PositionSizer
-              print("✅ PositionSizer available")
+              from src.risk.target_aligned_sizing import TargetAlignedSizer
+              print("✅ TargetAlignedSizer available")
           except ImportError as e:
-              print(f"❌ PositionSizer failed: {e}")
+              print(f"❌ TargetAlignedSizer failed: {e}")
               exit(1)
 
           try:
-              from src.risk.vix_circuit_breaker import VixCircuitBreaker
-              print("✅ VixCircuitBreaker available")
+              from src.risk.vix_circuit_breaker import VIXCircuitBreaker
+              print("✅ VIXCircuitBreaker available")
           except ImportError as e:
-              print(f"::warning::VixCircuitBreaker not available: {e}")
+              print(f"::warning::VIXCircuitBreaker not available: {e}")
 
           print("✅ Risk management OK")
           PYTHON
