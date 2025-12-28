@@ -53,9 +53,9 @@ from src.risk.risk_manager import RiskManager
 from src.risk.trade_gateway import RejectionReason, TradeGateway, TradeRequest
 from src.signals.microstructure_features import MicrostructureFeatureExtractor
 from src.strategies.treasury_ladder_strategy import TreasuryLadderStrategy
-from src.utils.regime_detector import RegimeDetector
 from src.utils.heartbeat import record_heartbeat
-from src.utils.staleness_guard import check_data_staleness, require_fresh_data
+from src.utils.regime_detector import RegimeDetector
+from src.utils.staleness_guard import check_data_staleness
 
 # Mental Toughness Coach - Psychology-based trading guard (Dec 2025)
 # DISABLED: Module not implemented yet
