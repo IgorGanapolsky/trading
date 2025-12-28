@@ -1,6 +1,8 @@
 #!/bin/bash
-# Capture user feedback (thumbs up/down) for reinforcement learning
-# Called when user gives explicit feedback signals
+# Capture user feedback (thumbs up/down) for tracking
+# Records feedback to diary and stats file
+#
+# Simplified Dec 28, 2025: Removed dead RLHF pipeline calls
 
 FEEDBACK_DIR="$CLAUDE_PROJECT_DIR/data/feedback"
 mkdir -p "$FEEDBACK_DIR"
@@ -71,13 +73,12 @@ EOF
 
     echo "📊 Feedback recorded: $FEEDBACK_TYPE (Total: $TOTAL, Satisfaction: ${SAT_RATE}%)"
 
-    # For negative feedback, also save to diary for reflection
+    # For negative feedback, save to diary for reflection
     if [ "$FEEDBACK_TYPE" = "negative" ]; then
         DIARY_DIR="$HOME/.claude/memory/diary"
         mkdir -p "$DIARY_DIR"
         DIARY_FILE="$DIARY_DIR/${DATE}_feedback.md"
 
-        # Append to daily feedback diary
         cat >> "$DIARY_FILE" <<DIARY
 ## Negative Feedback at $TIME
 
@@ -91,7 +92,7 @@ DIARY
         echo "⚠️ NEGATIVE FEEDBACK - Claude MUST ask: 'What did I do wrong? I want to learn from this.'"
     fi
 
-    # For positive feedback, also log what worked
+    # For positive feedback, log what worked
     if [ "$FEEDBACK_TYPE" = "positive" ]; then
         DIARY_DIR="$HOME/.claude/memory/diary"
         mkdir -p "$DIARY_DIR"
@@ -102,46 +103,11 @@ DIARY
 
 **User said:** $USER_MESSAGE
 
-**What worked:** [Claude should note what led to this positive feedback]
+**What worked:** [Note what led to this positive feedback]
 
 ---
 DIARY
 
-        echo "✅ POSITIVE FEEDBACK recorded - Note what worked well for future reference."
+        echo "✅ POSITIVE FEEDBACK recorded"
     fi
-
-    # ═══════════════════════════════════════════════════════════════════════
-    # AUTONOMOUS LEARNING PIPELINE (Added Dec 2025)
-    # Closes the loop: feedback → learning → better behavior
-    # ═══════════════════════════════════════════════════════════════════════
-
-    # 1. Call Python feedback processor (stores in DB, updates RL signals)
-    if [ -f "$CLAUDE_PROJECT_DIR/src/learning/feedback_processor.py" ]; then
-        cd "$CLAUDE_PROJECT_DIR"
-        python3 -c "
-from src.learning.feedback_processor import FeedbackProcessor
-import os
-processor = FeedbackProcessor()
-result = processor.process_feedback(
-    feedback_type='$FEEDBACK_TYPE',
-    user_message='''$USER_MESSAGE''',
-    session_id=os.environ.get('CLAUDE_SESSION_ID', '$(date +%Y%m%d)'),
-)
-print('🔄 Feedback processed:', result.get('actions', []))
-" 2>/dev/null || echo "⚠️ Feedback processor not available"
-    fi
-
-    # 2. Trigger auto-reflection (generates rules without approval)
-    if [ -f "$CLAUDE_PROJECT_DIR/scripts/auto_reflect.py" ]; then
-        cd "$CLAUDE_PROJECT_DIR"
-        python3 scripts/auto_reflect.py 2>/dev/null | head -5 || true
-        echo "🧠 Auto-reflection complete"
-    fi
-
-    echo "═══════════════════════════════════════════════════════════════════════"
-    echo "🔁 AUTONOMOUS LEARNING LOOP ACTIVE"
-    echo "   - Feedback stored in DB"
-    echo "   - RL session signal updated"
-    echo "   - Auto-reflection triggered"
-    echo "═══════════════════════════════════════════════════════════════════════"
 fi

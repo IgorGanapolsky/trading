@@ -126,11 +126,11 @@ class SelfHealingOrchestrator:
         """Lazy load lessons RAG."""
         if self._lessons_rag is None:
             try:
-                from src.learning.feedback_weighted_rag import FeedbackWeightedRAG
+                from src.rag.lessons_learned_rag import LessonsLearnedRAG
 
-                self._lessons_rag = FeedbackWeightedRAG()
+                self._lessons_rag = LessonsLearnedRAG()
             except ImportError:
-                logger.warning("FeedbackWeightedRAG not available")
+                logger.warning("LessonsLearnedRAG not available")
         return self._lessons_rag
 
     @property
