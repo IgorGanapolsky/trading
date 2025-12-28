@@ -124,7 +124,8 @@ jobs:
           strategies = registry.list_all()
 
           print(f"Registered strategies: {len(strategies)}")
-          for s in list(strategies.keys())[:10]:
+          # list_all() returns a list, not a dict
+          for s in strategies[:10]:
               print(f"  - {s}")
 
           if len(strategies) < 1:
