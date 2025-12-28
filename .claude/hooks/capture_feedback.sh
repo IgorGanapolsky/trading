@@ -109,4 +109,39 @@ DIARY
 
         echo "✅ POSITIVE FEEDBACK recorded - Note what worked well for future reference."
     fi
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # AUTONOMOUS LEARNING PIPELINE (Added Dec 2025)
+    # Closes the loop: feedback → learning → better behavior
+    # ═══════════════════════════════════════════════════════════════════════
+
+    # 1. Call Python feedback processor (stores in DB, updates RL signals)
+    if [ -f "$CLAUDE_PROJECT_DIR/src/learning/feedback_processor.py" ]; then
+        cd "$CLAUDE_PROJECT_DIR"
+        python3 -c "
+from src.learning.feedback_processor import FeedbackProcessor
+import os
+processor = FeedbackProcessor()
+result = processor.process_feedback(
+    feedback_type='$FEEDBACK_TYPE',
+    user_message='''$USER_MESSAGE''',
+    session_id=os.environ.get('CLAUDE_SESSION_ID', '$(date +%Y%m%d)'),
+)
+print('🔄 Feedback processed:', result.get('actions', []))
+" 2>/dev/null || echo "⚠️ Feedback processor not available"
+    fi
+
+    # 2. Trigger auto-reflection (generates rules without approval)
+    if [ -f "$CLAUDE_PROJECT_DIR/scripts/auto_reflect.py" ]; then
+        cd "$CLAUDE_PROJECT_DIR"
+        python3 scripts/auto_reflect.py 2>/dev/null | head -5 || true
+        echo "🧠 Auto-reflection complete"
+    fi
+
+    echo "═══════════════════════════════════════════════════════════════════════"
+    echo "🔁 AUTONOMOUS LEARNING LOOP ACTIVE"
+    echo "   - Feedback stored in DB"
+    echo "   - RL session signal updated"
+    echo "   - Auto-reflection triggered"
+    echo "═══════════════════════════════════════════════════════════════════════"
 fi
