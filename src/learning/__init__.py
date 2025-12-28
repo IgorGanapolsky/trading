@@ -10,8 +10,6 @@ Based on December 2025 research:
 Total: ~500 lines (vs 272,000 lines that didn't work)
 """
 
-from src.learning.thompson_sampler import ThompsonSampler
-from src.learning.trade_memory import TradeMemory
 from src.learning.feedback_processor import FeedbackProcessor
 from src.learning.feedback_weighted_rag import FeedbackWeightedRAG
 from src.learning.rl_feedback_connector import (
@@ -19,6 +17,8 @@ from src.learning.rl_feedback_connector import (
     get_rl_feedback_connector,
     shape_reward_with_feedback,
 )
+from src.learning.thompson_sampler import ThompsonSampler
+from src.learning.trade_memory import TradeMemory
 
 __all__ = [
     "ThompsonSampler",

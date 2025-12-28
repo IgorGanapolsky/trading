@@ -114,21 +114,24 @@ class FeedbackProcessor:
         session_id = session_id or datetime.now().strftime("%Y%m%d_%H%M")
 
         # 1. Store feedback with context
-        self.conn.execute("""
+        self.conn.execute(
+            """
             INSERT INTO session_feedback
             (timestamp, feedback_type, score, user_message, session_id,
              context_summary, lessons_cited, actions_taken)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            datetime.now().isoformat(),
-            feedback_type,
-            score,
-            user_message,
-            session_id,
-            context_summary or "",
-            json.dumps(lessons_cited or []),
-            json.dumps(actions_taken or []),
-        ))
+        """,
+            (
+                datetime.now().isoformat(),
+                feedback_type,
+                score,
+                user_message,
+                session_id,
+                context_summary or "",
+                json.dumps(lessons_cited or []),
+                json.dumps(actions_taken or []),
+            ),
+        )
         self.conn.commit()
 
         actions = {"stored": True, "actions": []}
@@ -164,7 +167,7 @@ class FeedbackProcessor:
             cursor = self.conn.execute(
                 "SELECT base_weight, feedback_boost, positive_count, negative_count "
                 "FROM lesson_weights WHERE lesson_id = ?",
-                (lesson_id,)
+                (lesson_id,),
             )
             row = cursor.fetchone()
 
@@ -177,32 +180,37 @@ class FeedbackProcessor:
                     boost -= self.LESSON_DEMOTE
                     neg += 1
 
-                self.conn.execute("""
+                self.conn.execute(
+                    """
                     UPDATE lesson_weights
                     SET feedback_boost = ?, positive_count = ?, negative_count = ?,
                         last_updated = ?
                     WHERE lesson_id = ?
-                """, (boost, pos, neg, datetime.now().isoformat(), lesson_id))
+                """,
+                    (boost, pos, neg, datetime.now().isoformat(), lesson_id),
+                )
             else:
                 boost = self.LESSON_BOOST if score > 0 else -self.LESSON_DEMOTE
                 pos = 1 if score > 0 else 0
                 neg = 0 if score > 0 else 1
 
-                self.conn.execute("""
+                self.conn.execute(
+                    """
                     INSERT INTO lesson_weights
                     (lesson_id, base_weight, feedback_boost, positive_count,
                      negative_count, last_updated)
                     VALUES (?, 1.0, ?, ?, ?, ?)
-                """, (lesson_id, boost, pos, neg, datetime.now().isoformat()))
+                """,
+                    (lesson_id, boost, pos, neg, datetime.now().isoformat()),
+                )
 
         self.conn.commit()
 
     def _update_rl_signal(self, session_id: str, score: int):
         """Update RL quality signal for the session."""
         cursor = self.conn.execute(
-            "SELECT quality_score, feedback_count FROM rl_session_signals "
-            "WHERE session_id = ?",
-            (session_id,)
+            "SELECT quality_score, feedback_count FROM rl_session_signals WHERE session_id = ?",
+            (session_id,),
         )
         row = cursor.fetchone()
 
@@ -210,19 +218,24 @@ class FeedbackProcessor:
             quality, count = row
             # Running average
             new_quality = (quality * count + score) / (count + 1)
-            self.conn.execute("""
+            self.conn.execute(
+                """
                 UPDATE rl_session_signals
                 SET quality_score = ?, feedback_count = ?, net_sentiment = ?,
                     timestamp = ?
                 WHERE session_id = ?
-            """, (new_quality, count + 1, new_quality, datetime.now().isoformat(),
-                  session_id))
+            """,
+                (new_quality, count + 1, new_quality, datetime.now().isoformat(), session_id),
+            )
         else:
-            self.conn.execute("""
+            self.conn.execute(
+                """
                 INSERT INTO rl_session_signals
                 (session_id, timestamp, quality_score, feedback_count, net_sentiment)
                 VALUES (?, ?, ?, 1, ?)
-            """, (session_id, datetime.now().isoformat(), float(score), float(score)))
+            """,
+                (session_id, datetime.now().isoformat(), float(score), float(score)),
+            )
 
         self.conn.commit()
 
@@ -231,24 +244,26 @@ class FeedbackProcessor:
         signal_file.parent.mkdir(parents=True, exist_ok=True)
 
         cursor = self.conn.execute(
-            "SELECT quality_score, feedback_count FROM rl_session_signals "
-            "WHERE session_id = ?",
-            (session_id,)
+            "SELECT quality_score, feedback_count FROM rl_session_signals WHERE session_id = ?",
+            (session_id,),
         )
         row = cursor.fetchone()
 
-        signal_file.write_text(json.dumps({
-            "session_id": session_id,
-            "quality_score": row[0] if row else 0,
-            "feedback_count": row[1] if row else 0,
-            "timestamp": datetime.now().isoformat(),
-        }, indent=2))
+        signal_file.write_text(
+            json.dumps(
+                {
+                    "session_id": session_id,
+                    "quality_score": row[0] if row else 0,
+                    "feedback_count": row[1] if row else 0,
+                    "timestamp": datetime.now().isoformat(),
+                },
+                indent=2,
+            )
+        )
 
     def _count_unprocessed(self) -> int:
         """Count unprocessed feedback entries."""
-        cursor = self.conn.execute(
-            "SELECT COUNT(*) FROM session_feedback WHERE processed = 0"
-        )
+        cursor = self.conn.execute("SELECT COUNT(*) FROM session_feedback WHERE processed = 0")
         return cursor.fetchone()[0]
 
     def _auto_reflect(self) -> list:
@@ -268,10 +283,7 @@ class FeedbackProcessor:
         rules = []
 
         # Pattern detection: look for repeated negative feedback contexts
-        negative_contexts = [
-            (row[1], row[2], row[3])
-            for row in feedbacks if row[0] == "negative"
-        ]
+        negative_contexts = [(row[1], row[2], row[3]) for row in feedbacks if row[0] == "negative"]
 
         if len(negative_contexts) >= self.PATTERN_THRESHOLD:
             # Find common patterns
@@ -290,19 +302,19 @@ class FeedbackProcessor:
                     rule = f"AVOID: {action} (caused {count} negative feedbacks)"
                     confidence = count / len(negative_contexts)
 
-                    self.conn.execute("""
+                    self.conn.execute(
+                        """
                         INSERT INTO auto_rules
                         (rule_text, source_pattern, confidence, created_at)
                         VALUES (?, ?, ?, ?)
-                    """, (rule, action, confidence, datetime.now().isoformat()))
+                    """,
+                        (rule, action, confidence, datetime.now().isoformat()),
+                    )
 
                     rules.append({"rule": rule, "confidence": confidence})
 
         # Pattern detection: reinforce positive behaviors
-        positive_contexts = [
-            (row[1], row[2], row[3])
-            for row in feedbacks if row[0] == "positive"
-        ]
+        positive_contexts = [(row[1], row[2], row[3]) for row in feedbacks if row[0] == "positive"]
 
         if len(positive_contexts) >= self.PATTERN_THRESHOLD:
             action_counts = {}
@@ -319,11 +331,14 @@ class FeedbackProcessor:
                     rule = f"CONTINUE: {action} (led to {count} positive feedbacks)"
                     confidence = count / len(positive_contexts)
 
-                    self.conn.execute("""
+                    self.conn.execute(
+                        """
                         INSERT INTO auto_rules
                         (rule_text, source_pattern, confidence, created_at)
                         VALUES (?, ?, ?, ?)
-                    """, (rule, action, confidence, datetime.now().isoformat()))
+                    """,
+                        (rule, action, confidence, datetime.now().isoformat()),
+                    )
 
                     rules.append({"rule": rule, "confidence": confidence})
 
@@ -342,7 +357,7 @@ class FeedbackProcessor:
         rules_file = Path("data/feedback/auto_rules.md")
         rules_file.parent.mkdir(parents=True, exist_ok=True)
 
-        content = f"# Auto-Generated Rules\n\n"
+        content = "# Auto-Generated Rules\n\n"
         content += f"Generated: {datetime.now().isoformat()}\n\n"
 
         for r in rules:
@@ -350,11 +365,7 @@ class FeedbackProcessor:
 
         rules_file.write_text(content)
 
-    def _analyze_negative_feedback(
-        self,
-        user_message: str,
-        actions_taken: Optional[list]
-    ) -> dict:
+    def _analyze_negative_feedback(self, user_message: str, actions_taken: Optional[list]) -> dict:
         """Analyze what went wrong when negative feedback received."""
         return {
             "user_said": user_message,
@@ -367,7 +378,7 @@ class FeedbackProcessor:
         """Get the feedback-adjusted weight for a lesson."""
         cursor = self.conn.execute(
             "SELECT base_weight, feedback_boost FROM lesson_weights WHERE lesson_id = ?",
-            (lesson_id,)
+            (lesson_id,),
         )
         row = cursor.fetchone()
 
@@ -380,8 +391,7 @@ class FeedbackProcessor:
     def get_session_quality(self, session_id: str) -> float:
         """Get the quality score for a session (for RL reward shaping)."""
         cursor = self.conn.execute(
-            "SELECT quality_score FROM rl_session_signals WHERE session_id = ?",
-            (session_id,)
+            "SELECT quality_score FROM rl_session_signals WHERE session_id = ?", (session_id,)
         )
         row = cursor.fetchone()
         return row[0] if row else 0.0
@@ -427,6 +437,7 @@ def process_feedback_cli():
 
     # Optional: session context from environment
     import os
+
     session_id = os.environ.get("CLAUDE_SESSION_ID", datetime.now().strftime("%Y%m%d"))
 
     processor = FeedbackProcessor()

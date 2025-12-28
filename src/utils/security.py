@@ -140,21 +140,15 @@ class PromptInjectionDefense:
     def _compile_patterns(self):
         """Pre-compile regex patterns for performance."""
         self._direct = [
-            (re.compile(p, re.IGNORECASE), t)
-            for p, t in self.DIRECT_INJECTION_PATTERNS
+            (re.compile(p, re.IGNORECASE), t) for p, t in self.DIRECT_INJECTION_PATTERNS
         ]
         self._indirect = [
-            (re.compile(p, re.IGNORECASE), t)
-            for p, t in self.INDIRECT_INJECTION_PATTERNS
+            (re.compile(p, re.IGNORECASE), t) for p, t in self.INDIRECT_INJECTION_PATTERNS
         ]
         self._obfuscation = [
-            (re.compile(p, re.IGNORECASE), t)
-            for p, t in self.OBFUSCATION_PATTERNS
+            (re.compile(p, re.IGNORECASE), t) for p, t in self.OBFUSCATION_PATTERNS
         ]
-        self._delimiters = [
-            (re.compile(p, re.IGNORECASE), t)
-            for p, t in self.DELIMITER_PATTERNS
-        ]
+        self._delimiters = [(re.compile(p, re.IGNORECASE), t) for p, t in self.DELIMITER_PATTERNS]
 
     def scan(self, text: str) -> SecurityScanResult:
         """
@@ -201,7 +195,9 @@ class PromptInjectionDefense:
             if pattern.search(text):
                 threats.append(f"INDIRECT:{threat_type}")
                 if threat_type in ("trade_manipulation", "exfiltration"):
-                    max_threat = max(max_threat, ThreatLevel.CRITICAL, key=lambda x: threat_scores[x])
+                    max_threat = max(
+                        max_threat, ThreatLevel.CRITICAL, key=lambda x: threat_scores[x]
+                    )
                 else:
                     max_threat = max(max_threat, ThreatLevel.MEDIUM, key=lambda x: threat_scores[x])
 
@@ -260,7 +256,9 @@ class PromptInjectionDefense:
         sanitized = text
 
         # Remove format injection markers
-        sanitized = re.sub(r"\[/?system\]|\[/?assistant\]|\[/?user\]", "", sanitized, flags=re.IGNORECASE)
+        sanitized = re.sub(
+            r"\[/?system\]|\[/?assistant\]|\[/?user\]", "", sanitized, flags=re.IGNORECASE
+        )
         sanitized = re.sub(r"<\|?/?(system|assistant|user)\|?>", "", sanitized, flags=re.IGNORECASE)
 
         # Remove excessive delimiters
@@ -321,9 +319,7 @@ def validate_llm_input(text: str, source: str = "unknown") -> str:
             text[:100] + "..." if len(text) > 100 else text,
             result.threats_detected,
         )
-        raise SecurityError(
-            f"Prompt injection detected from {source}: {result.threats_detected}"
-        )
+        raise SecurityError(f"Prompt injection detected from {source}: {result.threats_detected}")
 
     return text
 
@@ -366,39 +362,133 @@ class LLMOutputValidator:
     # Core watchlist - add more as needed
     ALLOWED_SYMBOLS = {
         # Major indices ETFs
-        "SPY", "QQQ", "IWM", "DIA", "VTI", "VOO",
+        "SPY",
+        "QQQ",
+        "IWM",
+        "DIA",
+        "VTI",
+        "VOO",
         # Sector ETFs
-        "XLK", "XLF", "XLE", "XLV", "XLI", "XLP", "XLU", "XLB", "XLY", "XLRE",
+        "XLK",
+        "XLF",
+        "XLE",
+        "XLV",
+        "XLI",
+        "XLP",
+        "XLU",
+        "XLB",
+        "XLY",
+        "XLRE",
         # Bond ETFs
-        "TLT", "IEF", "SHY", "BND", "AGG", "LQD", "HYG", "TIP",
+        "TLT",
+        "IEF",
+        "SHY",
+        "BND",
+        "AGG",
+        "LQD",
+        "HYG",
+        "TIP",
         # Treasury ETFs
-        "SHV", "SGOV", "BIL", "SCHO", "SCHR",
+        "SHV",
+        "SGOV",
+        "BIL",
+        "SCHO",
+        "SCHR",
         # Volatility
-        "VXX", "UVXY", "SVXY",
+        "VXX",
+        "UVXY",
+        "SVXY",
         # Major tech
-        "AAPL", "MSFT", "GOOGL", "GOOG", "AMZN", "META", "NVDA", "TSLA",
-        "AMD", "INTC", "CRM", "ORCL", "ADBE", "NFLX",
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "GOOG",
+        "AMZN",
+        "META",
+        "NVDA",
+        "TSLA",
+        "AMD",
+        "INTC",
+        "CRM",
+        "ORCL",
+        "ADBE",
+        "NFLX",
         # Financials
-        "JPM", "BAC", "WFC", "GS", "MS", "C", "V", "MA", "AXP",
+        "JPM",
+        "BAC",
+        "WFC",
+        "GS",
+        "MS",
+        "C",
+        "V",
+        "MA",
+        "AXP",
         # Healthcare
-        "JNJ", "UNH", "PFE", "MRK", "ABBV", "LLY", "TMO",
+        "JNJ",
+        "UNH",
+        "PFE",
+        "MRK",
+        "ABBV",
+        "LLY",
+        "TMO",
         # Consumer
-        "WMT", "COST", "HD", "MCD", "NKE", "SBUX", "TGT",
+        "WMT",
+        "COST",
+        "HD",
+        "MCD",
+        "NKE",
+        "SBUX",
+        "TGT",
         # Energy
-        "XOM", "CVX", "COP", "SLB", "EOG",
+        "XOM",
+        "CVX",
+        "COP",
+        "SLB",
+        "EOG",
         # Industrial
-        "CAT", "DE", "BA", "UPS", "FDX", "HON", "GE",
+        "CAT",
+        "DE",
+        "BA",
+        "UPS",
+        "FDX",
+        "HON",
+        "GE",
         # Other major
-        "BRK.B", "BRKB", "DIS", "CMCSA", "VZ", "T", "PEP", "KO",
+        "BRK.B",
+        "BRKB",
+        "DIS",
+        "CMCSA",
+        "VZ",
+        "T",
+        "PEP",
+        "KO",
     }
 
     # CRITICAL: No crypto allowed (Lesson Learned #052)
     BLOCKED_SYMBOLS = {
-        "BTC", "ETH", "DOGE", "SOL", "XRP", "ADA", "DOT", "AVAX",
-        "MATIC", "LINK", "UNI", "ATOM", "LTC", "BCH", "SHIB",
-        "BTCUSD", "ETHUSD", "BTCUSDT", "ETHUSDT",
+        "BTC",
+        "ETH",
+        "DOGE",
+        "SOL",
+        "XRP",
+        "ADA",
+        "DOT",
+        "AVAX",
+        "MATIC",
+        "LINK",
+        "UNI",
+        "ATOM",
+        "LTC",
+        "BCH",
+        "SHIB",
+        "BTCUSD",
+        "ETHUSD",
+        "BTCUSDT",
+        "ETHUSDT",
         # Crypto ETFs (not allowed per policy)
-        "GBTC", "ETHE", "BITO",
+        "GBTC",
+        "ETHE",
+        "BITO",
     }
 
     VALID_ACTIONS = {"BUY", "SELL", "HOLD", "CLOSE", "SKIP"}

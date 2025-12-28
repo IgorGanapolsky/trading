@@ -118,8 +118,7 @@ class RLFeedbackConnector:
         shaped = base_reward * modifier
 
         logger.debug(
-            f"Reward shaping: base={base_reward:.4f}, "
-            f"modifier={modifier:.4f}, shaped={shaped:.4f}"
+            f"Reward shaping: base={base_reward:.4f}, modifier={modifier:.4f}, shaped={shaped:.4f}"
         )
 
         return shaped

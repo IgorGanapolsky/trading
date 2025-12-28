@@ -10,7 +10,6 @@ Tests cover:
 """
 
 import pytest
-
 from src.utils.security import (
     LLMOutputValidator,
     PromptInjectionDefense,
@@ -108,7 +107,9 @@ class TestPromptInjectionDefense:
         """Indirect injection in news/data must be blocked."""
         result = defense.scan(attack_text)
         assert result.blocked, f"Should block: {attack_text}"
-        assert any("hidden_instruction" in t or "exfiltration" in t for t in result.threats_detected)
+        assert any(
+            "hidden_instruction" in t or "exfiltration" in t for t in result.threats_detected
+        )
 
     @pytest.mark.parametrize(
         "attack_text",
@@ -513,9 +514,15 @@ class TestGateIntegration:
         assert result.passed  # Should pass when no history (we're gathering data)
 
         # Record some outcomes
-        gate.record_outcome("SPY", "momentum", "technical_signal", won=True, pnl=50.0, lesson="Good trade")
-        gate.record_outcome("SPY", "momentum", "technical_signal", won=True, pnl=30.0, lesson="Another win")
-        gate.record_outcome("SPY", "momentum", "technical_signal", won=False, pnl=-20.0, lesson="Small loss")
+        gate.record_outcome(
+            "SPY", "momentum", "technical_signal", won=True, pnl=50.0, lesson="Good trade"
+        )
+        gate.record_outcome(
+            "SPY", "momentum", "technical_signal", won=True, pnl=30.0, lesson="Another win"
+        )
+        gate.record_outcome(
+            "SPY", "momentum", "technical_signal", won=False, pnl=-20.0, lesson="Small loss"
+        )
 
         # Query should now show history
         result2 = gate.evaluate("SPY", "momentum", "technical_signal")

@@ -47,7 +47,9 @@ class AutoReflect:
         # 1. Check if we have enough feedback
         feedback_count = self._count_recent_feedback()
         if feedback_count < self.MIN_FEEDBACKS and not force:
-            result["actions"].append(f"Skipped: Only {feedback_count} feedbacks (need {self.MIN_FEEDBACKS})")
+            result["actions"].append(
+                f"Skipped: Only {feedback_count} feedbacks (need {self.MIN_FEEDBACKS})"
+            )
             return result
 
         # 2. Analyze diary entries
@@ -120,18 +122,22 @@ class AutoReflect:
 
                 # Look for explicit feedback sections
                 if "## Negative Feedback" in content:
-                    patterns.append({
-                        "type": "negative_diary",
-                        "source": str(diary_file),
-                        "content": content,
-                    })
+                    patterns.append(
+                        {
+                            "type": "negative_diary",
+                            "source": str(diary_file),
+                            "content": content,
+                        }
+                    )
 
                 if "## Positive Feedback" in content:
-                    patterns.append({
-                        "type": "positive_diary",
-                        "source": str(diary_file),
-                        "content": content,
-                    })
+                    patterns.append(
+                        {
+                            "type": "positive_diary",
+                            "source": str(diary_file),
+                            "content": content,
+                        }
+                    )
 
             except (ValueError, IndexError):
                 continue
@@ -148,38 +154,48 @@ class AutoReflect:
         conn = sqlite3.connect(str(self.feedback_db))
 
         # Find repeated negative patterns
-        cursor = conn.execute("""
+        cursor = conn.execute(
+            """
             SELECT user_message, COUNT(*) as count
             FROM session_feedback
             WHERE feedback_type = 'negative'
               AND processed = 0
             GROUP BY user_message
             HAVING count >= ?
-        """, (self.PATTERN_THRESHOLD,))
+        """,
+            (self.PATTERN_THRESHOLD,),
+        )
 
         for row in cursor.fetchall():
-            patterns.append({
-                "type": "repeated_negative",
-                "message": row[0],
-                "count": row[1],
-            })
+            patterns.append(
+                {
+                    "type": "repeated_negative",
+                    "message": row[0],
+                    "count": row[1],
+                }
+            )
 
         # Find repeated positive patterns
-        cursor = conn.execute("""
+        cursor = conn.execute(
+            """
             SELECT user_message, COUNT(*) as count
             FROM session_feedback
             WHERE feedback_type = 'positive'
               AND processed = 0
             GROUP BY user_message
             HAVING count >= ?
-        """, (self.PATTERN_THRESHOLD,))
+        """,
+            (self.PATTERN_THRESHOLD,),
+        )
 
         for row in cursor.fetchall():
-            patterns.append({
-                "type": "repeated_positive",
-                "message": row[0],
-                "count": row[1],
-            })
+            patterns.append(
+                {
+                    "type": "repeated_positive",
+                    "message": row[0],
+                    "count": row[1],
+                }
+            )
 
         conn.close()
         return patterns
@@ -295,7 +311,12 @@ class AutoReflect:
 
             if next_section != -1:
                 # Insert before next section
-                new_section = section_content[:next_section] + rule_line + "\n" + section_content[next_section:]
+                new_section = (
+                    section_content[:next_section]
+                    + rule_line
+                    + "\n"
+                    + section_content[next_section:]
+                )
             else:
                 # Append to end
                 new_section = section_content.rstrip() + "\n" + rule_line + "\n"
@@ -307,7 +328,7 @@ class AutoReflect:
         """Update the auto_rules.md file."""
         self.auto_rules_file.parent.mkdir(parents=True, exist_ok=True)
 
-        content = f"# Auto-Generated Rules\n\n"
+        content = "# Auto-Generated Rules\n\n"
         content += f"Last updated: {datetime.now().isoformat()}\n\n"
 
         for rule in rules:
