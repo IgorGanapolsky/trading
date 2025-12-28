@@ -55,7 +55,8 @@ def find_output_references(workflow_path: Path) -> list[OutputReference]:
     lines = content.split("\n")
 
     # Pattern: steps.STEP_ID.outputs.OUTPUT_NAME
-    pattern = r"steps\.([a-zA-Z_][a-zA-Z0-9_-]*)\.outputs\.([a-zA-Z_][a-zA-Z0-9_]*)"
+    # Note: OUTPUT_NAME can contain hyphens (e.g., cache-hit from actions/cache)
+    pattern = r"steps\.([a-zA-Z_][a-zA-Z0-9_-]*)\.outputs\.([a-zA-Z_][a-zA-Z0-9_-]*)"
 
     workflow_name = workflow_path.name
 
@@ -94,6 +95,8 @@ KNOWN_EXTERNAL_OUTPUTS = {
     # GitHub Pages actions set these (actions/configure-pages, actions/deploy-pages)
     ("pages", "base_path"),
     ("deployment", "page_url"),
+    # actions/cache sets cache-hit output
+    ("cached-poetry-dependencies", "cache-hit"),
 }
 
 

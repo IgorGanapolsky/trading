@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 class SystemHealth(Enum):
     """System health states for self-healing decisions."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     CRITICAL = "critical"
@@ -42,6 +43,7 @@ class SystemHealth(Enum):
 @dataclass
 class HealthMetrics:
     """Real-time health metrics for self-healing decisions."""
+
     win_rate: float = 0.5
     consecutive_losses: int = 0
     rejection_rate: float = 0.0
@@ -63,10 +65,10 @@ class HealthMetrics:
         loss_score = max(1.0 - (self.consecutive_losses / 5), 0.0)  # Penalty after 5 losses
 
         return (
-            win_weight * win_score +
-            confidence_weight * conf_score +
-            rejection_weight * rej_score +
-            loss_penalty * loss_score
+            win_weight * win_score
+            + confidence_weight * conf_score
+            + rejection_weight * rej_score
+            + loss_penalty * loss_score
         )
 
     def get_health_state(self) -> SystemHealth:
@@ -125,6 +127,7 @@ class SelfHealingOrchestrator:
         if self._lessons_rag is None:
             try:
                 from src.learning.feedback_weighted_rag import FeedbackWeightedRAG
+
                 self._lessons_rag = FeedbackWeightedRAG()
             except ImportError:
                 logger.warning("FeedbackWeightedRAG not available")
@@ -136,6 +139,7 @@ class SelfHealingOrchestrator:
         if self._anomaly_monitor is None:
             try:
                 from src.orchestrator.anomaly_monitor import AnomalyMonitor
+
                 self._anomaly_monitor = AnomalyMonitor()
             except ImportError:
                 logger.warning("AnomalyMonitor not available")
@@ -152,7 +156,9 @@ class SelfHealingOrchestrator:
                     rejection_rate=data.get("rejection_rate", 0.0),
                     avg_confidence=data.get("avg_confidence", 0.7),
                     anomaly_count=data.get("anomaly_count", 0),
-                    last_updated=datetime.fromisoformat(data.get("last_updated", datetime.now().isoformat())),
+                    last_updated=datetime.fromisoformat(
+                        data.get("last_updated", datetime.now().isoformat())
+                    ),
                 )
             except Exception as e:
                 logger.warning(f"Failed to load state: {e}")
@@ -231,13 +237,17 @@ class SelfHealingOrchestrator:
             lessons = []
             for lesson, score in results:
                 if score > 0.3:  # Only relevant lessons
-                    lessons.append({
-                        "id": lesson.id,
-                        "severity": lesson.severity,
-                        "prevention": lesson.prevention,
-                        "score": score,
-                    })
-                    logger.info(f"Lesson {lesson.id} applies to {gate_name}/{ticker}: {lesson.prevention[:100]}")
+                    lessons.append(
+                        {
+                            "id": lesson.id,
+                            "severity": lesson.severity,
+                            "prevention": lesson.prevention,
+                            "score": score,
+                        }
+                    )
+                    logger.info(
+                        f"Lesson {lesson.id} applies to {gate_name}/{ticker}: {lesson.prevention[:100]}"
+                    )
 
             return lessons
 
@@ -261,7 +271,9 @@ class SelfHealingOrchestrator:
         for lesson in lessons:
             if lesson["severity"] == "CRITICAL":
                 adjusted *= 0.7  # 30% reduction for critical lessons
-                logger.warning(f"CRITICAL lesson {lesson['id']} - confidence reduced to {adjusted:.2f}")
+                logger.warning(
+                    f"CRITICAL lesson {lesson['id']} - confidence reduced to {adjusted:.2f}"
+                )
             elif lesson["severity"] == "HIGH":
                 adjusted *= 0.85  # 15% reduction for high severity
 
@@ -294,13 +306,17 @@ class SelfHealingOrchestrator:
         # Check for anomaly (loss with high confidence = bad signal)
         if not won and confidence > 0.7:
             self.metrics.anomaly_count += 1
-            logger.warning(f"Anomaly: High confidence ({confidence:.2f}) but loss. Count: {self.metrics.anomaly_count}")
+            logger.warning(
+                f"Anomaly: High confidence ({confidence:.2f}) but loss. Count: {self.metrics.anomaly_count}"
+            )
 
         # Update health state
         self.health = self.metrics.get_health_state()
         self._save_state()
 
-        logger.info(f"Outcome recorded. Win rate: {self.metrics.win_rate:.2f}, Health: {self.health.value}")
+        logger.info(
+            f"Outcome recorded. Win rate: {self.metrics.win_rate:.2f}, Health: {self.health.value}"
+        )
 
     def reset_halt(self, reason: str = "Manual reset"):
         """
