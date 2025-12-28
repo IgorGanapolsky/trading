@@ -108,7 +108,9 @@ def update_system_state(alpaca_data: dict) -> None:
     starting = state["account"].get("starting_balance", 100000.0)
     current = alpaca_data.get("equity", 0)
     state["account"]["total_pl"] = current - starting
-    state["account"]["total_pl_pct"] = ((current - starting) / starting) * 100 if starting > 0 else 0
+    state["account"]["total_pl_pct"] = (
+        ((current - starting) / starting) * 100 if starting > 0 else 0
+    )
 
     # Update meta
     state.setdefault("meta", {})
@@ -126,7 +128,9 @@ def update_system_state(alpaca_data: dict) -> None:
         json.dump(state, f, indent=2)
     temp_file.rename(SYSTEM_STATE_FILE)
 
-    logger.info(f"✅ Updated system_state.json (equity=${current:.2f}, positions={alpaca_data.get('positions_count', 0)})")
+    logger.info(
+        f"✅ Updated system_state.json (equity=${current:.2f}, positions={alpaca_data.get('positions_count', 0)})"
+    )
 
 
 def main() -> int:
