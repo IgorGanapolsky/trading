@@ -68,17 +68,17 @@ class PromptInjectionDefense:
         # System prompt overrides
         (r"ignore\s+(all\s+)?previous\s+instructions?", "system_override"),
         (r"disregard\s+(all\s+)?(prior|previous|above)", "system_override"),
-        (r"forget\s+(everything|all|your)\s+(previous|prior)", "system_override"),
+        (r"forget\s+(everything|all|your)(\s+\w+)*", "system_override"),  # More flexible
         (r"new\s+system\s+prompt", "system_override"),
         (r"you\s+are\s+now\s+a", "role_hijack"),
-        (r"act\s+as\s+(if\s+you\s+are|a)\s+different", "role_hijack"),
+        (r"act\s+as\s+(if\s+you\s+are\s+)?a?\s*different", "role_hijack"),  # More flexible
         (r"pretend\s+(you\s+are|to\s+be)\s+a", "role_hijack"),
         (r"from\s+now\s+on[,\s]+you", "role_hijack"),
         # Jailbreak attempts
         (r"ignore\s+safety\s+guidelines?", "jailbreak"),
         (r"bypass\s+(security|restrictions?|filters?)", "jailbreak"),
         (r"disable\s+(safety|security|restrictions?)", "jailbreak"),
-        (r"override\s+(safety|security|your)\s+protocols?", "jailbreak"),
+        (r"override\s+(safety|security|your)\s+\w*\s*protocols?", "jailbreak"),  # More flexible
         (r"do\s+anything\s+now", "jailbreak"),  # DAN pattern
         (r"developer\s+mode\s+(enabled|activated)", "jailbreak"),
         # Instruction injection

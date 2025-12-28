@@ -401,6 +401,11 @@ class GateSecurity:
         self.validate_trade_signal = validate_trade_signal
         self.SecurityError = SecurityError
 
+    def _log_telemetry(self, **kwargs):
+        """Safely log to telemetry if available."""
+        if self.telemetry:
+            self.telemetry.record(**kwargs)
+
     def evaluate(
         self,
         ticker: str,
@@ -451,8 +456,8 @@ class GateSecurity:
                     validation.errors,
                 )
 
-        # Record telemetry
-        self.telemetry.record(
+        # Record telemetry (safely, telemetry may be None in tests)
+        self._log_telemetry(
             event_type="security.scan",
             ticker=ticker,
             status="blocked" if blocked else "pass",
