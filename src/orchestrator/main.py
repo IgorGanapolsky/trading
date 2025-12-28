@@ -54,6 +54,8 @@ from src.risk.trade_gateway import RejectionReason, TradeGateway, TradeRequest
 from src.signals.microstructure_features import MicrostructureFeatureExtractor
 from src.strategies.treasury_ladder_strategy import TreasuryLadderStrategy
 from src.utils.regime_detector import RegimeDetector
+from src.utils.heartbeat import record_heartbeat
+from src.utils.staleness_guard import check_data_staleness, require_fresh_data
 
 # Mental Toughness Coach - Psychology-based trading guard (Dec 2025)
 # DISABLED: Module not implemented yet
@@ -486,7 +488,38 @@ class TradingOrchestrator:
         logger.info("Gate pipeline initialized (866→~50 lines per method)")
 
     def run(self) -> None:
+        # GATE -1: Staleness Guard - Block trading on stale data
+        # Prevents the "Dec 23 lying incident" where stale local data
+        # caused system to claim "no trades" while 9 live orders existed
         session_profile = self._build_session_profile()
+        is_market_day = session_profile.get("is_market_day", True)
+
+        staleness = check_data_staleness(is_market_day=is_market_day)
+        if staleness.is_stale and staleness.blocking:
+            logger.error(
+                "⛔ STALENESS GUARD: Trading blocked - %s (last update: %s)",
+                staleness.reason,
+                staleness.last_updated or "unknown",
+            )
+            self.telemetry.record(
+                event_type="staleness.blocked",
+                ticker="SYSTEM",
+                status="blocked",
+                payload={
+                    "reason": staleness.reason,
+                    "hours_old": staleness.hours_old,
+                    "last_updated": staleness.last_updated,
+                },
+            )
+            raise RuntimeError(
+                f"Trading blocked: {staleness.reason}. "
+                "Run 'python scripts/sync_alpaca_state.py' to refresh data."
+            )
+        elif staleness.is_stale:
+            logger.warning("⚠️ STALENESS WARNING: %s", staleness.reason)
+        else:
+            logger.info("✅ Data freshness verified: %.1fh old", staleness.hours_old)
+
         active_tickers = session_profile["tickers"]
         self.session_profile = session_profile
         self.smart_dca.reset_session(active_tickers)
@@ -701,6 +734,20 @@ class TradingOrchestrator:
         # Save and print session summary (always, even with 0 trades)
         self.telemetry.save_session_decisions(self.session_profile)
         self.telemetry.print_session_summary()
+
+        # Record heartbeat to indicate system is alive (Dec 28, 2025)
+        # Prevents the "Dec 11-12 incident" where trading was dead for 2 days unnoticed
+        try:
+            record_heartbeat(
+                workflow_name="trading_session",
+                status="success",
+                details={
+                    "tickers_processed": len(active_tickers),
+                    "session_type": self.session_profile.get("session_type", "unknown"),
+                },
+            )
+        except Exception as e:
+            logger.warning(f"Failed to record heartbeat: {e}")
 
     def _query_lessons_learned(self, context: str = "trading session") -> None:
         """

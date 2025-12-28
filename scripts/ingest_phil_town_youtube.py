@@ -809,9 +809,34 @@ def main():
     logger.info(f"Skipped: {results['skipped']}")
     logger.info("=" * 60)
 
+    # OUTPUT VERIFICATION (Dec 28, 2025)
+    # Prevents "Dec 22 silent failure" where workflow ran but produced nothing
+    if results["success"] == 0 and results["skipped"] == 0:
+        logger.error("⛔ OUTPUT VERIFICATION FAILED: No videos were processed!")
+        logger.error("This is a SILENT FAILURE - workflow completed but produced no output.")
+        results["output_verified"] = False
+        results["silent_failure"] = True
+    else:
+        # Verify files actually exist
+        transcript_files = list(RAG_TRANSCRIPTS.glob("*.json")) if RAG_TRANSCRIPTS.exists() else []
+        if results["success"] > 0 and len(transcript_files) == 0:
+            logger.error("⛔ OUTPUT VERIFICATION FAILED: Claimed success but no transcript files exist!")
+            results["output_verified"] = False
+            results["silent_failure"] = True
+        else:
+            logger.info(f"✅ Output verified: {len(transcript_files)} transcript files in {RAG_TRANSCRIPTS}")
+            results["output_verified"] = True
+            results["silent_failure"] = False
+
     return results
 
 
 if __name__ == "__main__":
     result = main()
     print(f"\nResult: {json.dumps(result, indent=2, default=str)}")
+
+    # Exit with error code if output verification failed (Dec 28, 2025)
+    # This ensures CI/workflow properly detects the failure
+    if result and result.get("silent_failure"):
+        logger.error("Exiting with error code 1 due to silent failure")
+        exit(1)
