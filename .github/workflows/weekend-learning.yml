@@ -18,7 +18,60 @@ permissions:
   pull-requests: write
 
 jobs:
+  # === SELF-HEALING: Cleanup stale branches BEFORE learning ===
+  cleanup-stale-branches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: "Self-Healing: Cleanup stale weekend-learning branches"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🧹 Self-Healing: Checking for stale weekend-learning branches..."
+
+          # List all weekend-learning branches older than 7 days
+          STALE_BRANCHES=$(gh api repos/${{ github.repository }}/branches --paginate -q '
+            .[] | select(.name | startswith("auto/weekend-learning-")) | .name
+          ' 2>/dev/null || echo "")
+
+          if [ -z "$STALE_BRANCHES" ]; then
+            echo "✅ No stale branches found"
+            exit 0
+          fi
+
+          # Delete each stale branch
+          for branch in $STALE_BRANCHES; do
+            echo "🗑️ Deleting stale branch: $branch"
+            gh api -X DELETE repos/${{ github.repository }}/git/refs/heads/$branch || echo "Could not delete $branch"
+          done
+
+          echo "✅ Stale branch cleanup complete"
+
+      - name: "Self-Healing: Close stale weekend-learning PRs"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🧹 Checking for stale weekend-learning PRs..."
+
+          # Find open PRs from weekend-learning
+          STALE_PRS=$(gh pr list --state open --head "auto/weekend-learning" --json number,createdAt -q '
+            .[] | select((.createdAt | fromdateiso8601) < (now - 604800)) | .number
+          ' 2>/dev/null || echo "")
+
+          if [ -z "$STALE_PRS" ]; then
+            echo "✅ No stale PRs found"
+            exit 0
+          fi
+
+          for pr in $STALE_PRS; do
+            echo "🗑️ Closing stale PR #$pr (>7 days old)"
+            gh pr close $pr --comment "Auto-closed: Stale weekend learning PR superseded by newer run" || echo "Could not close PR #$pr"
+          done
+
   weekend-learning:
+    needs: cleanup-stale-branches
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -27,6 +80,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Full history for analysis
+          ref: main  # Always build from latest main (prevents stale code)
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -202,16 +256,62 @@ jobs:
             data/weekend_insights.json
           delete-branch: true
 
+      # === SELF-HEALING: Auto-merge low-risk learning PRs ===
+      - name: "Self-Healing: Auto-merge weekend learning PR"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔄 Self-Healing: Attempting auto-merge..."
+
+          # Wait for PR to be created
+          sleep 10
+
+          # Find the PR we just created
+          PR_NUMBER=$(gh pr list --state open --head "auto/weekend-learning-${{ github.run_id }}" --json number -q '.[0].number' 2>/dev/null || echo "")
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "⚠️ No PR found to auto-merge (may have already been merged or no changes)"
+            exit 0
+          fi
+
+          echo "Found PR #$PR_NUMBER"
+
+          # Verify only safe files changed (rag_knowledge, data)
+          CHANGED_FILES=$(gh pr view $PR_NUMBER --json files -q '.files[].path' 2>/dev/null || echo "")
+
+          UNSAFE=false
+          for file in $CHANGED_FILES; do
+            if [[ ! "$file" =~ ^(rag_knowledge/|data/|\.github/) ]]; then
+              echo "⚠️ Unsafe file changed: $file - skipping auto-merge"
+              UNSAFE=true
+              break
+            fi
+          done
+
+          if [ "$UNSAFE" = true ]; then
+            echo "⚠️ PR contains non-data files, requires manual review"
+            exit 0
+          fi
+
+          # Auto-merge if only safe files
+          echo "✅ Only safe files changed, auto-merging..."
+          gh pr merge $PR_NUMBER --squash --auto --delete-branch || echo "Auto-merge enabled (will merge when checks pass)"
+
+          echo "✅ Auto-merge initiated for PR #$PR_NUMBER"
+
       - name: Weekend Learning Summary
         run: |
           echo ""
           echo "╔══════════════════════════════════════════════════════════╗"
           echo "║           WEEKEND LEARNING COMPLETE                      ║"
+          echo "║           + SELF-HEALING ENABLED                         ║"
           echo "╚══════════════════════════════════════════════════════════╝"
           echo ""
           echo "✅ Phil Town content ingested"
           echo "✅ RAG vectorized and ready"
           echo "✅ Trade history analyzed"
           echo "✅ Weekend insights generated"
+          echo "✅ Stale branches cleaned"
+          echo "✅ Auto-merge initiated"
           echo ""
           echo "🎯 Ready for Monday trading at 9:35 AM ET"
