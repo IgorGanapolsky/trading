@@ -1,0 +1,61 @@
+name: Pre-Market Data Sync
+
+on:
+  schedule:
+    # Run at 9:25 AM ET (14:25 UTC) - 5 minutes before market open
+    - cron: '25 14 * * 1-5'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements-minimal.txt
+
+      - name: Sync Alpaca State
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          APCA_API_KEY_ID: ${{ secrets.ALPACA_API_KEY }}
+          APCA_API_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+        run: |
+          python scripts/sync_alpaca_state.py
+
+      - name: Verify Data Freshness
+        run: |
+          python -c "
+          from src.utils.staleness_guard import check_data_staleness
+          result = check_data_staleness()
+          print(f'Data age: {result.hours_old:.2f} hours')
+          if result.is_stale:
+              print(f'WARNING: {result.reason}')
+              exit(1)
+          print('✅ Data is fresh')
+          "
+
+      - name: Record Heartbeat
+        run: |
+          python -c "
+          from src.utils.heartbeat import record_heartbeat
+          record_heartbeat('pre_market_sync', status='success')
+          print('💓 Heartbeat recorded')
+          "
+
+      - name: Commit Updated State
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/system_state.json data/heartbeat.json
+          git diff --staged --quiet || git commit -m "chore: Pre-market data sync [skip ci]"
+          git push

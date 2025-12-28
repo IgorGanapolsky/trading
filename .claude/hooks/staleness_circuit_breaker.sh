@@ -65,23 +65,31 @@ AGE_INT=${LAST_UPDATED%.*}
 
 if [ "$AGE_INT" -gt "$MAX_STALENESS_HOURS" ]; then
     echo "════════════════════════════════════════════════════════════"
-    echo "🚨 STALENESS CIRCUIT BREAKER ACTIVATED 🚨"
+    echo "🚨 STALENESS DETECTED - AUTO-SYNCING 🚨"
     echo "════════════════════════════════════════════════════════════"
     echo ""
     echo "State file age: ${LAST_UPDATED} hours"
     echo "Maximum allowed: ${MAX_STALENESS_HOURS} hours"
     echo ""
-    echo "TRADING BLOCKED: Cannot make decisions on stale data."
+    echo "Attempting automatic sync from Alpaca..."
     echo ""
-    echo "To proceed:"
-    echo "  1. Update state from Alpaca: python3 scripts/sync_alpaca_state.py"
-    echo "  2. Or manually verify and update: data/system_state.json"
-    echo ""
-    echo "This circuit breaker exists because of incident LL-058:"
-    echo "  'Dec 23 stale data lying incident - 9 SPY trades executed"
-    echo "   but local data showed NO TRADES TODAY'"
-    echo "════════════════════════════════════════════════════════════"
-    exit 1
+
+    # Try to auto-sync
+    if python3 scripts/sync_alpaca_state.py 2>/dev/null; then
+        echo ""
+        echo "✅ AUTO-SYNC SUCCESSFUL - Proceeding with fresh data"
+        echo "════════════════════════════════════════════════════════════"
+        exit 0
+    else
+        echo ""
+        echo "❌ AUTO-SYNC FAILED - TRADING BLOCKED"
+        echo ""
+        echo "This circuit breaker exists because of incident LL-058:"
+        echo "  'Dec 23 stale data lying incident - 9 SPY trades executed"
+        echo "   but local data showed NO TRADES TODAY'"
+        echo "════════════════════════════════════════════════════════════"
+        exit 1
+    fi
 fi
 
 echo "✅ State freshness OK: ${LAST_UPDATED} hours old (max: ${MAX_STALENESS_HOURS}h)"

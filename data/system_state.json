@@ -2,9 +2,11 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2025-12-23T14:52:00.000000",
+    "last_updated": "2025-12-28T18:47:03.820026",
     "last_audit": "2025-12-23T14:52:00.000000",
-    "audit_notes": "Updated from live Alpaca screenshots - multiple SPY buy orders today"
+    "audit_notes": "Updated from live Alpaca screenshots - multiple SPY buy orders today",
+    "last_sync": "2025-12-28T18:47:03.819209",
+    "sync_mode": "simulated"
   },
   "challenge": {
     "start_date": "2025-10-29",
@@ -15,13 +17,14 @@
   },
   "account": {
     "starting_balance": 100000.0,
-    "current_equity": 100697.83,
-    "cash": 83114.92,
-    "positions_value": 17582.91,
-    "total_pl": 697.83,
-    "total_pl_pct": 0.69783,
-    "buying_power": 2136.85,
-    "daily_change_pct": 0.15
+    "current_equity": 100000.0,
+    "cash": 100000.0,
+    "positions_value": 0.0,
+    "total_pl": 0.0,
+    "total_pl_pct": 0.0,
+    "buying_power": 100000.0,
+    "daily_change_pct": 0.15,
+    "positions_count": 0
   },
   "investments": {
     "total_invested": 1621.93,
@@ -518,15 +521,69 @@
     "last_trade_date": "2025-12-23",
     "total_trades_today": 9,
     "daily_trade_log": [
-      {"symbol": "SPY", "side": "buy", "qty": 0.73491, "type": "market", "date": "2025-12-23"},
-      {"symbol": "SPY", "side": "buy", "qty": 0.7343, "type": "market", "date": "2025-12-23"},
-      {"symbol": "SPY", "side": "buy", "qty": 0.73449, "type": "market", "date": "2025-12-23"},
-      {"symbol": "SPY", "side": "buy", "qty": 0.735004, "type": "market", "date": "2025-12-23"},
-      {"symbol": "SPY", "side": "buy", "qty": 0.734711, "type": "market", "date": "2025-12-23"},
-      {"symbol": "SPY", "side": "buy", "qty": 0.73428, "type": "market", "date": "2025-12-23"},
-      {"symbol": "SPY", "side": "buy", "qty": 0.73440, "type": "market", "date": "2025-12-23"},
-      {"symbol": "SPY", "side": "buy", "qty": 0.73506, "type": "market", "date": "2025-12-23"},
-      {"symbol": "SPY", "side": "buy", "qty": 0.73553, "type": "market", "date": "2025-12-23"}
+      {
+        "symbol": "SPY",
+        "side": "buy",
+        "qty": 0.73491,
+        "type": "market",
+        "date": "2025-12-23"
+      },
+      {
+        "symbol": "SPY",
+        "side": "buy",
+        "qty": 0.7343,
+        "type": "market",
+        "date": "2025-12-23"
+      },
+      {
+        "symbol": "SPY",
+        "side": "buy",
+        "qty": 0.73449,
+        "type": "market",
+        "date": "2025-12-23"
+      },
+      {
+        "symbol": "SPY",
+        "side": "buy",
+        "qty": 0.735004,
+        "type": "market",
+        "date": "2025-12-23"
+      },
+      {
+        "symbol": "SPY",
+        "side": "buy",
+        "qty": 0.734711,
+        "type": "market",
+        "date": "2025-12-23"
+      },
+      {
+        "symbol": "SPY",
+        "side": "buy",
+        "qty": 0.73428,
+        "type": "market",
+        "date": "2025-12-23"
+      },
+      {
+        "symbol": "SPY",
+        "side": "buy",
+        "qty": 0.7344,
+        "type": "market",
+        "date": "2025-12-23"
+      },
+      {
+        "symbol": "SPY",
+        "side": "buy",
+        "qty": 0.73506,
+        "type": "market",
+        "date": "2025-12-23"
+      },
+      {
+        "symbol": "SPY",
+        "side": "buy",
+        "qty": 0.73553,
+        "type": "market",
+        "date": "2025-12-23"
+      }
     ]
   }
 }
