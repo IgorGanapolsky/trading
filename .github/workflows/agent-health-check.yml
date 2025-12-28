@@ -62,7 +62,7 @@ jobs:
             "src.orchestrator.main:TradingOrchestrator"
             "src.strategies.registry:StrategyRegistry"
             "src.agents.momentum_agent:MomentumAgent"
-            "src.agents.sentiment_agent:SentimentAgent"
+            "src.agents.signal_agent:SignalAgent"
             "src.risk.target_aligned_sizing:TargetAlignedSizer"
           )
 
