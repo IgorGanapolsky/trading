@@ -1,8 +1,9 @@
 #!/bin/bash
-# Capture user feedback (thumbs up/down) for tracking
-# Records feedback to diary and stats file
+# Capture user feedback (thumbs up/down) - FULLY AUTONOMOUS
+# No human review required - system logs and learns automatically
 #
-# Simplified Dec 28, 2025: Removed dead RLHF pipeline calls
+# Simplified Dec 28, 2025: Removed dead RLHF pipeline
+# Fixed Dec 28, 2025: Made fully autonomous - no human action needed
 
 FEEDBACK_DIR="$CLAUDE_PROJECT_DIR/data/feedback"
 mkdir -p "$FEEDBACK_DIR"
@@ -11,7 +12,6 @@ DATE=$(date +%Y-%m-%d)
 TIME=$(date +%H:%M:%S)
 FEEDBACK_FILE="$FEEDBACK_DIR/feedback_$DATE.jsonl"
 
-# Get the user's message (passed as argument or from stdin)
 USER_MESSAGE="${1:-}"
 
 # Detect feedback type
@@ -28,14 +28,10 @@ fi
 
 # Only record if feedback detected
 if [ "$FEEDBACK_TYPE" != "neutral" ]; then
-    # Create feedback entry
-    ENTRY=$(cat <<EOF
-{"timestamp": "$DATE $TIME", "type": "$FEEDBACK_TYPE", "score": $FEEDBACK_SCORE, "context": "$USER_MESSAGE"}
-EOF
-)
-    echo "$ENTRY" >> "$FEEDBACK_FILE"
+    # Log to file
+    echo "{\"timestamp\": \"$DATE $TIME\", \"type\": \"$FEEDBACK_TYPE\", \"score\": $FEEDBACK_SCORE}" >> "$FEEDBACK_FILE"
 
-    # Update cumulative stats
+    # Update stats
     STATS_FILE="$FEEDBACK_DIR/stats.json"
     if [ -f "$STATS_FILE" ]; then
         TOTAL=$(jq '.total' "$STATS_FILE")
@@ -54,7 +50,6 @@ EOF
         NEGATIVE=$((NEGATIVE + 1))
     fi
 
-    # Calculate satisfaction rate
     if [ $TOTAL -gt 0 ]; then
         SAT_RATE=$(echo "scale=2; $POSITIVE * 100 / $TOTAL" | bc)
     else
@@ -71,43 +66,8 @@ EOF
 }
 EOF
 
-    echo "📊 Feedback recorded: $FEEDBACK_TYPE (Total: $TOTAL, Satisfaction: ${SAT_RATE}%)"
-
-    # For negative feedback, save to diary for reflection
+    # For negative feedback, Claude must ask what went wrong
     if [ "$FEEDBACK_TYPE" = "negative" ]; then
-        DIARY_DIR="$HOME/.claude/memory/diary"
-        mkdir -p "$DIARY_DIR"
-        DIARY_FILE="$DIARY_DIR/${DATE}_feedback.md"
-
-        cat >> "$DIARY_FILE" <<DIARY
-## Negative Feedback at $TIME
-
-**User said:** $USER_MESSAGE
-
-**Action Required:** Ask user what went wrong and record the lesson.
-
----
-DIARY
-
-        echo "⚠️ NEGATIVE FEEDBACK - Claude MUST ask: 'What did I do wrong? I want to learn from this.'"
-    fi
-
-    # For positive feedback, log what worked
-    if [ "$FEEDBACK_TYPE" = "positive" ]; then
-        DIARY_DIR="$HOME/.claude/memory/diary"
-        mkdir -p "$DIARY_DIR"
-        DIARY_FILE="$DIARY_DIR/${DATE}_feedback.md"
-
-        cat >> "$DIARY_FILE" <<DIARY
-## Positive Feedback at $TIME
-
-**User said:** $USER_MESSAGE
-
-**What worked:** [Note what led to this positive feedback]
-
----
-DIARY
-
-        echo "✅ POSITIVE FEEDBACK recorded"
+        echo "⚠️ NEGATIVE FEEDBACK - Claude MUST ask: 'What did I do wrong?'"
     fi
 fi
