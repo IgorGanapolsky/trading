@@ -24,11 +24,13 @@ from src.utils.self_healing import with_retry
 # Falls back to legacy google.generativeai if new SDK not available
 try:
     from google import genai
+
     GENAI_AVAILABLE = True
     GENAI_NEW_SDK = True
 except ImportError:
     try:
         import google.generativeai as genai
+
         GENAI_AVAILABLE = True
         GENAI_NEW_SDK = False
         logging.warning("Using legacy google.generativeai - consider upgrading to google.genai")
@@ -68,9 +70,7 @@ class GeminiDeepResearch:
         """
         self.api_key = api_key or os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
         # Use newer model with new SDK
-        self.model_name = model or (
-            "gemini-2.0-flash" if GENAI_NEW_SDK else self.DEFAULT_MODEL
-        )
+        self.model_name = model or ("gemini-2.0-flash" if GENAI_NEW_SDK else self.DEFAULT_MODEL)
         self.client = None
         self._use_new_sdk = GENAI_NEW_SDK
 
@@ -88,7 +88,9 @@ class GeminiDeepResearch:
                     # Legacy SDK
                     genai.configure(api_key=self.api_key)
                     self.client = genai.GenerativeModel(self.model_name)
-                    logger.info(f"GeminiDeepResearch initialized with legacy SDK ({self.model_name})")
+                    logger.info(
+                        f"GeminiDeepResearch initialized with legacy SDK ({self.model_name})"
+                    )
             except Exception as e:
                 logger.error(f"Failed to initialize Gemini client: {e}")
                 self.client = None
@@ -120,9 +122,7 @@ class GeminiDeepResearch:
 
         return None
 
-    def _save_research_cache(
-        self, symbol: str, research_type: str, data: dict
-    ) -> None:
+    def _save_research_cache(self, symbol: str, research_type: str, data: dict) -> None:
         """Save research to cache."""
         today = datetime.now().strftime("%Y-%m-%d")
         cache_file = RESEARCH_CACHE_DIR / f"{symbol}_{research_type}_{today}.json"
@@ -229,7 +229,7 @@ Analyze:
 Provide your response as JSON with this exact structure:
 {{
     "symbol": "{symbol}",
-    "research_date": "{datetime.now().strftime('%Y-%m-%d')}",
+    "research_date": "{datetime.now().strftime("%Y-%m-%d")}",
     "summary": "2-3 paragraph executive summary",
     "catalysts": ["catalyst 1", "catalyst 2"],
     "risks": ["risk 1", "risk 2"],
@@ -305,7 +305,7 @@ Research:
 
 Provide your response as JSON:
 {{
-    "analysis_date": "{datetime.now().strftime('%Y-%m-%d')}",
+    "analysis_date": "{datetime.now().strftime("%Y-%m-%d")}",
     "market_regime": "bullish/bearish/neutral/volatile",
     "vix_analysis": {{
         "current": 15.0,
@@ -361,9 +361,7 @@ Use current data. If uncertain about specific values, provide reasonable estimat
             logger.error(f"Market conditions research failed: {e}")
             return self._error_response(str(e))
 
-    def get_pre_trade_analysis(
-        self, symbol: str, asset_type: str = "stock"
-    ) -> dict[str, Any]:
+    def get_pre_trade_analysis(self, symbol: str, asset_type: str = "stock") -> dict[str, Any]:
         """
         Comprehensive pre-trade analysis before executing a trade.
 
