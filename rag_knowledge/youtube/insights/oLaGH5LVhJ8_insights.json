@@ -1,18 +1,16 @@
 {
-  "video_id": "Hfq4K1nP4v4",
-  "title": "The Wheel Strategy Explained",
-  "url": "https://www.youtube.com/watch?v=Hfq4K1nP4v4",
+  "video_id": "oLaGH5LVhJ8",
+  "title": "Covered Calls for Income - Options Strategy",
+  "url": "https://www.youtube.com/watch?v=oLaGH5LVhJ8",
   "upload_date": "curated",
-  "ingested_at": "2025-12-28T14:49:38.891453",
+  "ingested_at": "2025-12-28T14:49:48.923279",
   "channel": "Phil Town - Rule #1 Investing",
   "stocks_mentioned": [],
   "strategies": [
     "Cash-Secured Puts",
-    "Covered Calls",
-    "Wheel Strategy"
+    "Covered Calls"
   ],
   "key_concepts": [
-    "4 Ms",
     "Margin of Safety",
     "Options Strategy"
   ],

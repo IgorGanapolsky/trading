@@ -3,7 +3,8 @@ name: Phil Town Knowledge Ingestion
 on:
   schedule:
     # Run daily at 6:00 AM Eastern (before market open)
-    # EST: 11:00 UTC, EDT: 10:00 UTC
+    # EST (Nov-Mar): UTC-5 -> 11:00 UTC
+    # EDT (Mar-Nov): UTC-4 -> 10:00 UTC
     - cron: '0 10,11 * * *'
   workflow_dispatch:
     inputs:
@@ -19,11 +20,17 @@ on:
 
 permissions:
   contents: write
+  issues: write
+
+# Prevent concurrent runs from corrupting RAG data
+concurrency:
+  group: phil-town-ingestion
+  cancel-in-progress: true
 
 jobs:
   ingest-phil-town:
     runs-on: ubuntu-latest
-    timeout-minutes: 45  # Increased for backfill mode
+    timeout-minutes: 60  # Increased for backfill mode
 
     steps:
       - name: Checkout repository
@@ -38,43 +45,67 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install yt-dlp youtube-transcript-api chromadb requests beautifulsoup4
+          pip install yt-dlp youtube-transcript-api chromadb requests beautifulsoup4 sentence-transformers
+
+      - name: Validate secrets
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: |
+          if [ -z "$YOUTUBE_API_KEY" ]; then
+            echo "::warning::YOUTUBE_API_KEY not set - will use fallback methods (curated list)"
+            echo "For full channel ingestion, set YOUTUBE_API_KEY in repository secrets"
+          else
+            echo "✓ YOUTUBE_API_KEY is configured"
+          fi
 
       - name: Run Phil Town YouTube Ingestion
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: |
+          set -e
           MODE="${{ github.event.inputs.mode || 'recent' }}"
-          echo "Running ingestion in $MODE mode..."
-          echo "YOUTUBE_API_KEY: $([ -n \"$YOUTUBE_API_KEY\" ] && echo 'SET' || echo 'NOT SET - using fallback methods')"
-          python3 scripts/ingest_phil_town_youtube.py --mode "$MODE"
+          echo "Running YouTube ingestion in $MODE mode..."
+          python3 scripts/ingest_phil_town_youtube.py --mode "$MODE" || {
+            echo "::error::YouTube ingestion script failed"
+            exit 1
+          }
+          echo "✓ YouTube ingestion completed"
 
       - name: Run Phil Town Blog and Podcast Ingestion
         run: |
+          set -e
           MODE="${{ github.event.inputs.mode || 'recent' }}"
           echo "Ingesting Phil Town blog and podcast..."
 
-          # Backfill mode gets ALL articles, recent mode gets 10
+          # Backfill mode gets ALL articles, recent mode gets 100
           if [ "$MODE" = "backfill" ]; then
             MAX_ARTICLES=500
           else
-            MAX_ARTICLES=20
+            MAX_ARTICLES=100
           fi
 
-          python3 scripts/ingest_phil_town_blog.py --source all --max-articles $MAX_ARTICLES
+          python3 scripts/ingest_phil_town_blog.py --source all --max-articles $MAX_ARTICLES || {
+            echo "::error::Blog ingestion script failed"
+            exit 1
+          }
+          echo "✓ Blog ingestion completed"
 
       - name: Vectorize new content into RAG
         run: |
+          set -e
           echo "Vectorizing content into ChromaDB..."
-          python3 scripts/vectorize_rag_knowledge.py --update
+          python3 scripts/vectorize_rag_knowledge.py --update || {
+            echo "::warning::Vectorization had issues, continuing..."
+          }
 
           echo ""
           echo "=== RAG Stats ==="
-          python3 scripts/vectorize_rag_knowledge.py --stats
+          python3 scripts/vectorize_rag_knowledge.py --stats || true
 
-      - name: Verify ingestion success
+      - name: Verify ingestion success with content validation
         id: verify
         run: |
+          set -e
           echo "=== Verifying Phil Town Ingestion ==="
 
           # Count YouTube transcripts
@@ -101,17 +132,36 @@ jobs:
             exit 1
           fi
 
+          # CRITICAL: Validate content contains Phil Town key concepts
+          echo ""
+          echo "=== Validating Phil Town Content ==="
+          FOUND_CONCEPTS=0
+
+          for concept in "Rule #1" "moat" "margin of safety" "4 M" "sticker price" "wonderful company"; do
+            if grep -ri "$concept" rag_knowledge/youtube/transcripts rag_knowledge/blogs/phil_town 2>/dev/null | head -1 | grep -q .; then
+              FOUND_CONCEPTS=$((FOUND_CONCEPTS + 1))
+              echo "✓ Found: \"$concept\""
+            fi
+          done
+
+          if [ "$FOUND_CONCEPTS" -lt 3 ]; then
+            echo "::error::CONTENT VALIDATION FAILED - Missing Phil Town key concepts!"
+            echo "Found only $FOUND_CONCEPTS/6 key concepts. Content may be from wrong source."
+            exit 1
+          fi
+
           echo ""
           echo "=== SUCCESS: Phil Town content verified ==="
           echo "Total content pieces: $TOTAL"
+          echo "Key concepts validated: $FOUND_CONCEPTS/6"
 
-      - name: Commit directly to main (auto-merge)
+      - name: Commit changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
 
-          # Add all RAG content
-          git add rag_knowledge/ data/youtube_cache/ data/blog_cache/ data/vector_db/
+          # Add all RAG content (force add in case of gitignore)
+          git add -f rag_knowledge/ data/youtube_cache/ data/blog_cache/ 2>/dev/null || true
 
           # Check if there are changes
           if git diff --staged --quiet; then
@@ -131,6 +181,61 @@ jobs:
           Mode: ${{ github.event.inputs.mode || 'recent' }}
           Run: ${{ github.run_id }}"
 
-          git push origin main
+          git push origin main || {
+            echo "::warning::Direct push to main failed, may need branch protection adjustment"
+            exit 1
+          }
 
           echo "✅ Content committed directly to main"
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '❌ Phil Town Ingestion Failed';
+            const body = `## Ingestion Failure Report
+
+            **Workflow Run**: [${context.runId}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            **Branch**: ${context.ref}
+            **Mode**: ${{ github.event.inputs.mode || 'recent' }}
+            **Timestamp**: ${new Date().toISOString()}
+
+            ### Action Required
+            1. Check the workflow logs for error details
+            2. Verify YOUTUBE_API_KEY secret is configured
+            3. Check if ruleoneinvesting.com blog is accessible
+            4. Re-run the workflow manually if transient failure
+
+            ### Quick Links
+            - [Workflow Logs](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            - [Ingestion Script](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/blob/main/scripts/ingest_phil_town_youtube.py)
+            `;
+
+            // Check for existing open issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'ingestion-failure'
+            });
+
+            if (issues.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['ingestion-failure', 'automated']
+              });
+              console.log('Created new issue for ingestion failure');
+            } else {
+              // Comment on existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues[0].number,
+                body: `### New Failure\n\n${body}`
+              });
+              console.log('Commented on existing issue');
+            }

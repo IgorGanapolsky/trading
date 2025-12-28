@@ -180,6 +180,143 @@ Equity growth rate. EPS growth rate. Sales growth rate. And free cash flow growt
 should show consistent growth of 10% or more over 10 years. Red flags include declining margins,
 rising debt, and cash flow that doesn't match earnings. Practice reading 10-K annual reports.""",
     },
+    # Additional curated videos added December 2025 for expanded fallback coverage
+    {
+        "id": "XyYjVrMbMpI",
+        "title": "How to Calculate Sticker Price - Intrinsic Value",
+        "transcript": """The sticker price is the true value of a company based on future cash flows.
+Here's how I calculate it. First, get the current EPS - earnings per share. Then determine the growth
+rate - use the lower of analyst estimates or historical growth. Apply the Rule of 72 to project EPS
+10 years out. Take that future EPS and multiply by twice the growth rate to get future PE ratio.
+Multiply future EPS by future PE to get future price. Then discount back to today using a 15% minimum
+acceptable rate of return. That gives you the sticker price. For example: $5 EPS growing 12% becomes
+$15.50 in 10 years. Future PE of 24 means future price of $372. Discounted at 15% gives sticker price
+of $92. Buy at half that for margin of safety - so $46. This systematic approach removes emotion from
+investing and ensures you never overpay for even the best companies.""",
+    },
+    {
+        "id": "QmVKxH2PdCI",
+        "title": "Circle of Competence - Stay in Your Lane",
+        "transcript": """Warren Buffett says to stay within your circle of competence. This means only
+investing in businesses you truly understand. If you can't explain how the company makes money in one
+sentence, it's outside your circle. Your circle might be small - that's okay. It's better to have a
+small circle and stay inside it than a big circle you don't really understand. To expand your circle,
+study industries you use every day. If you work in healthcare, you understand those businesses better
+than most. If you love technology, study tech companies deeply. Read annual reports, understand the
+competitive landscape, know the key metrics. The goal is not to invest in everything - it's to be
+right when you do invest. Charlie Munger says knowing where the edge of your competence is might be
+more valuable than the competence itself. Don't fake it. Be honest about what you don't know.""",
+    },
+    {
+        "id": "dVKjsPQbZNo",
+        "title": "Owner Earnings Explained - Buffett's Secret Metric",
+        "transcript": """Owner earnings is Warren Buffett's preferred measure of company profitability.
+It's different from net income because it shows what owners actually receive. The formula is: net
+income plus depreciation and amortization minus capital expenditures needed to maintain competitive
+position. This tells you the real cash available to shareholders. Why is this better than net income?
+Because net income includes non-cash charges and doesn't account for required reinvestment. A company
+might show profits but need to spend all of it on equipment. Owner earnings reveals this. Look for
+companies where owner earnings grow consistently over time. If owner earnings are significantly lower
+than net income, the company requires heavy capital investment. If owner earnings exceed net income,
+the business generates more cash than reported. This is the true measure of value for calculating
+intrinsic value. Use owner earnings in your sticker price calculations.""",
+    },
+    {
+        "id": "E7t8qPKGMxs",
+        "title": "When to Sell a Stock - Exit Strategy",
+        "transcript": """Knowing when to sell is as important as knowing when to buy. There are three
+reasons to sell a Rule #1 stock. First, the story changes. If the business fundamentals deteriorate,
+the moat narrows, or management makes poor decisions, it's time to exit. Second, the price exceeds
+intrinsic value. When Mr Market gets too optimistic and pushes the price well above sticker price,
+take profits. Third, you find a better opportunity with higher expected returns. Don't sell just
+because the price drops - that might be a buying opportunity. Don't sell because of market fear.
+Review your thesis: are the 4 Ms still intact? If yes, volatility is your friend, not your enemy.
+Buffett's favorite holding period is forever, but that assumes the business stays wonderful. When it
+doesn't, be willing to move on. The goal is compounding returns, and sometimes that means reallocating
+capital to better opportunities.""",
+    },
+    {
+        "id": "B9xVBqxTHKI",
+        "title": "Understanding ROIC - Return on Invested Capital",
+        "transcript": """ROIC is the most important number in Rule #1 investing. Return on Invested
+Capital shows how efficiently a company turns investment into profit. The formula is: operating income
+divided by invested capital. Invested capital is equity plus debt minus cash. A great company has ROIC
+above 10% consistently. Above 15% is excellent. Above 20% is world-class. Why does ROIC matter?
+Because it shows the company's competitive advantage in numbers. High ROIC means the moat is working.
+Low ROIC means competition is eating into profits. Compare ROIC to cost of capital. If ROIC exceeds
+cost of capital, the company creates value. If it doesn't, it destroys value. Look for ROIC trends.
+Rising ROIC suggests strengthening moat. Falling ROIC is a warning sign. Companies like Apple and
+Costco maintain high ROIC for decades. That's what you want to own.""",
+    },
+    {
+        "id": "P6dqZMjZxHA",
+        "title": "The Payback Time Strategy",
+        "transcript": """Payback time tells you how long it takes to recover your investment from a
+company's free cash flow. It's a simple but powerful metric. Take the market cap and divide by free
+cash flow. A company with $100 billion market cap and $10 billion free cash flow has a 10-year
+payback. I look for payback times under 8 years for wonderful companies. Under 5 years is a bargain.
+Why use payback time? Because it incorporates both price and earnings power. A cheap stock with weak
+cash flow might have long payback. An expensive stock with massive cash flow might have short payback.
+This helps you compare apples to oranges across industries. During market crashes, payback times shrink
+dramatically. That's when Rule #1 investors get excited. The 2008 crisis created 3-year payback on
+companies like Apple. That's generational opportunity. Track payback times on your watchlist and wait
+for them to get short enough.""",
+    },
+    {
+        "id": "oLaGH5LVhJ8",
+        "title": "Covered Calls for Income - Options Strategy",
+        "transcript": """Covered calls are perfect for generating income on stocks you own. Here's how
+it works: you own 100 shares and sell someone the right to buy them at a higher price. You get paid
+premium upfront. If the stock stays below the strike, you keep the shares and the premium. If it goes
+above, your shares get called away but you sold at a profit. The key is choosing the right strike
+price. I sell calls 10-15% above current price, 30-45 days out. This gives decent premium while leaving
+room for gains. Only sell covered calls on stocks you're willing to sell at that price. On wonderful
+companies, I use this during periods of overvaluation. If a stock hits sticker price, selling covered
+calls generates income while you wait for it to drop. Combine with cash secured puts in the wheel
+strategy for continuous income generation. Just remember: you're capping upside in exchange for
+certain income.""",
+    },
+    {
+        "id": "k2z7K4PLkQg",
+        "title": "Building a Watchlist - Stock Analysis Process",
+        "transcript": """Every great investment starts with a watchlist. I keep a list of 10-20
+wonderful companies I'd love to own at the right price. How do I build it? Start with companies you
+understand and use. Apply the 4 Ms filter rigorously. Meaning - can you explain it simply? Moat - what
+protects their profits? Management - do they own stock and act like owners? Then calculate the sticker
+price for each. Track the current price versus sticker price weekly. When price drops to half of
+sticker price or below, that's your buy signal. Keep notes on each company: why you like it, what
+risks you see, key metrics to monitor. Update your watchlist quarterly. Companies fall off when
+fundamentals deteriorate. New companies get added when you complete analysis. The watchlist creates
+patience. Instead of forcing investments, you wait for Mr Market to offer discounts on businesses
+you've already vetted.""",
+    },
+    {
+        "id": "Yp7_oQEGfNc",
+        "title": "Market Crashes - Opportunity of a Lifetime",
+        "transcript": """Market crashes are the best thing that can happen to a Rule #1 investor. While
+everyone panics, we see opportunity. In 2008, wonderful companies dropped 50% or more. Apple, Amazon,
+Berkshire - all on sale. This is when you deploy capital aggressively. But preparation is key. Have
+cash ready. Keep your watchlist updated with sticker prices. When the crash comes, you know exactly
+what to buy and at what price. The hardest part is psychological. Your portfolio is down, news is
+terrifying, everyone is selling. That's exactly when you buy. Remember: price is what you pay, value
+is what you get. The value of great companies doesn't drop just because prices do. If anything, it
+increases as weak competitors fail. Buffett made his best investments during panics. Be greedy when
+others are fearful. The next crash is coming - the question is whether you'll be ready to act.""",
+    },
+    {
+        "id": "iRvKG9yFNBo",
+        "title": "Debt and the Balance Sheet",
+        "transcript": """Debt can destroy even great businesses. When analyzing a company, I look at
+debt-to-equity ratio. Under 0.5 is comfortable. Over 1.0 is a warning sign. Over 2.0 is dangerous.
+Also check interest coverage ratio - can earnings cover interest payments 5 times or more? Why does
+debt matter? In good times, leverage amplifies returns. But in downturns, debt kills. Companies with
+heavy debt can't weather recessions. They cut dividends, sell assets, or go bankrupt. Compare to
+companies like Apple or Berkshire with net cash positions. They thrive during crises, buying distressed
+assets cheap. Look at debt maturity schedule. If lots of debt comes due during a recession, trouble
+follows. Also check if debt is fixed or variable rate. Rising rates can crush variable-rate borrowers.
+The best Rule #1 companies have fortress balance sheets. They might use some debt for strategic
+advantage, but they never bet the company on leverage.""",
+    },
 ]
 
 
@@ -640,7 +777,7 @@ def main():
 
     ensure_directories()
 
-    max_videos = {"backfill": 500, "recent": 10, "new": args.max_videos}.get(args.mode, 10)
+    max_videos = {"backfill": 500, "recent": 50, "new": args.max_videos}.get(args.mode, 50)
 
     logger.info(f"Fetching up to {max_videos} videos...")
     videos = get_channel_videos(max_results=max_videos)

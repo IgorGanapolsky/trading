@@ -87,7 +87,54 @@ def parse_blog_index(html: str) -> list[dict]:
             unique_articles.append(article)
 
     logger.info(f"Found {len(unique_articles)} articles")
-    return unique_articles[:50]  # Limit to avoid overwhelming
+    return unique_articles[:200]  # Increased limit for comprehensive coverage
+
+
+# Known blog category pages to crawl for more articles
+CATEGORY_PAGES = [
+    "https://www.ruleoneinvesting.com/blog/how-to-invest/",
+    "https://www.ruleoneinvesting.com/blog/stock-market-basics/",
+    "https://www.ruleoneinvesting.com/blog/financial-control/",
+    "https://www.ruleoneinvesting.com/blog/personal-development/",
+    "https://www.ruleoneinvesting.com/blog/investing-news-and-tips/",
+    "https://www.ruleoneinvesting.com/blog/retirement-planning/",
+    "https://www.ruleoneinvesting.com/blog/value-investing/",
+    "https://www.ruleoneinvesting.com/blog/options-trading/",
+]
+
+
+def discover_all_articles() -> list[dict]:
+    """Crawl main blog and all category pages to discover articles."""
+    all_articles = []
+    seen_urls = set()
+
+    # Fetch main blog index
+    logger.info("Crawling main blog index...")
+    main_html = fetch_page(BLOG_URL)
+    if main_html:
+        articles = parse_blog_index(main_html)
+        for a in articles:
+            if a["url"] not in seen_urls:
+                seen_urls.add(a["url"])
+                all_articles.append(a)
+
+    # Crawl each category page
+    for category_url in CATEGORY_PAGES:
+        logger.info(f"Crawling category: {category_url}")
+        time.sleep(0.5)  # Rate limiting
+        html = fetch_page(category_url)
+        if html:
+            articles = parse_blog_index(html)
+            for a in articles:
+                # Skip if it's a category page itself
+                if a["url"].rstrip("/") in [c.rstrip("/") for c in CATEGORY_PAGES]:
+                    continue
+                if a["url"] not in seen_urls:
+                    seen_urls.add(a["url"])
+                    all_articles.append(a)
+
+    logger.info(f"Total unique articles discovered: {len(all_articles)}")
+    return all_articles
 
 
 def parse_article_content(html: str) -> Optional[str]:
@@ -251,7 +298,7 @@ def save_processed_articles(urls: set):
     CACHE_FILE.write_text(json.dumps(data, indent=2))
 
 
-def ingest_blog(max_articles: int = 20) -> dict:
+def ingest_blog(max_articles: int = 100) -> dict:
     """Main blog ingestion function."""
     ensure_directories()
 
@@ -259,16 +306,13 @@ def ingest_blog(max_articles: int = 20) -> dict:
 
     processed = load_processed_articles()
 
-    # Fetch blog index
-    logger.info(f"Fetching blog index: {BLOG_URL}")
-    index_html = fetch_page(BLOG_URL)
+    # Discover all articles from main blog AND category pages
+    logger.info("Discovering articles from all sources...")
+    articles = discover_all_articles()
 
-    if not index_html:
-        logger.error("Failed to fetch blog index")
-        return {"success": False, "reason": "failed_to_fetch_index"}
-
-    # Parse articles
-    articles = parse_blog_index(index_html)
+    if not articles:
+        logger.error("Failed to discover any articles")
+        return {"success": False, "reason": "failed_to_discover_articles"}
 
     for article in articles[:max_articles]:
         if article["url"] in processed:
@@ -405,8 +449,8 @@ def main():
     parser.add_argument(
         "--max-articles",
         type=int,
-        default=20,
-        help="Maximum articles/episodes to process (default: 20)",
+        default=100,
+        help="Maximum articles/episodes to process (default: 100)",
     )
     parser.add_argument(
         "--source",
