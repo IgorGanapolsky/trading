@@ -84,9 +84,9 @@ jobs:
               now = datetime.now()
               age = now - last_updated
 
-              if age > timedelta(hours=72):
+              if age > timedelta(hours=24):
                   print('critical')
-              elif age > timedelta(hours=48):
+              elif age > timedelta(hours=12):
                   print('warning')
               else:
                   print('healthy')
