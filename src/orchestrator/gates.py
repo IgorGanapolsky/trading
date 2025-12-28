@@ -516,6 +516,11 @@ class GateMemory:
         except Exception as e:
             logger.warning("TradeMemory init failed: %s", e)
 
+    def _log_telemetry(self, **kwargs):
+        """Safely log to telemetry if available."""
+        if self.telemetry:
+            self.telemetry.record(**kwargs)
+
     def evaluate(
         self,
         ticker: str,
@@ -547,7 +552,7 @@ class GateMemory:
             similar = self.memory.query_similar(strategy, entry_reason)
 
             # Log the query
-            self.telemetry.record(
+            self._log_telemetry(
                 event_type="memory.query",
                 ticker=ticker,
                 status="queried",
