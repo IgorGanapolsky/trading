@@ -121,10 +121,10 @@ jobs:
           from src.strategies.registry import StrategyRegistry
 
           registry = StrategyRegistry()
-          strategies = registry.list_strategies()
+          strategies = registry.list_all()
 
           print(f"Registered strategies: {len(strategies)}")
-          for s in strategies[:10]:
+          for s in list(strategies.keys())[:10]:
               print(f"  - {s}")
 
           if len(strategies) < 1:
