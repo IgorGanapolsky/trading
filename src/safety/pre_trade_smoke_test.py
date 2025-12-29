@@ -14,6 +14,11 @@ class SmokeTestResult:
     account_readable: bool = True
     positions_readable: bool = True
     buying_power_valid: bool = True
+    equity_valid: bool = True
+    all_passed: bool = True
+    buying_power: float = 0.0
+    equity: float = 0.0
+    positions_count: int = 0
 
 
 def run_smoke_tests() -> SmokeTestResult:
