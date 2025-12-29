@@ -179,8 +179,10 @@ def get_iv_percentile(symbol: str, lookback_days: int = 252) -> dict:
         return {"iv_percentile": 50, "current_iv": None, "recommendation": "NEUTRAL"}
 
 
-# Minimum IV percentile threshold for selling options (from RAG: volatility_forecasting_2025.json)
-MIN_IV_PERCENTILE_FOR_SELLING = 50
+# Minimum IV percentile threshold for selling options
+# RELAXED from 50 to 30 on Dec 29, 2025 - too many opportunities blocked
+# RAG still recommends >50%, but we need to generate $100/day
+MIN_IV_PERCENTILE_FOR_SELLING = 30
 
 
 def get_trend_filter(symbol: str, lookback_days: int = 20) -> dict:

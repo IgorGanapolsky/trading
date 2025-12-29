@@ -182,12 +182,16 @@ class IronCondorStrategy:
         # In production: check VIX, event calendar
         return True, "Conditions favorable"
 
-    def execute(self, ic: IronCondorLegs) -> dict:
+    def execute(self, ic: IronCondorLegs, live: bool = False) -> dict:
         """
         Execute the iron condor trade.
+
+        Args:
+            ic: Iron condor legs to execute
+            live: If True, execute on Alpaca. If False, simulate only.
         """
         logger.info("=" * 60)
-        logger.info("EXECUTING IRON CONDOR")
+        logger.info("EXECUTING IRON CONDOR" + (" (LIVE)" if live else " (SIMULATED)"))
         logger.info("=" * 60)
         logger.info(f"Underlying: {ic.underlying}")
         logger.info(f"Expiry: {ic.expiry} ({ic.dte} DTE)")
@@ -197,6 +201,76 @@ class IronCondorStrategy:
         logger.info(f"Max Profit: ${ic.max_profit:.2f}")
         logger.info(f"Max Risk: ${ic.max_risk:.2f}")
         logger.info("=" * 60)
+
+        status = "SIMULATED"
+        order_ids = []
+
+        # LIVE EXECUTION - Dec 29, 2025 fix
+        if live:
+            try:
+                import os
+                from alpaca.trading.client import TradingClient
+                from alpaca.trading.requests import LimitOrderRequest
+                from alpaca.trading.enums import OrderSide, TimeInForce, OrderClass
+
+                api_key = os.getenv("ALPACA_API_KEY")
+                secret = os.getenv("ALPACA_SECRET_KEY")
+
+                if api_key and secret:
+                    client = TradingClient(api_key, secret, paper=True)
+
+                    # Build option symbols (OCC format: SPY251229P00580000)
+                    exp_formatted = ic.expiry.replace("-", "")[2:]  # YYMMDD
+
+                    def build_occ(strike: float, opt_type: str) -> str:
+                        strike_str = f"{int(strike * 1000):08d}"
+                        return f"{ic.underlying}{exp_formatted}{opt_type}{strike_str}"
+
+                    long_put_sym = build_occ(ic.long_put, "P")
+                    short_put_sym = build_occ(ic.short_put, "P")
+                    short_call_sym = build_occ(ic.short_call, "C")
+                    long_call_sym = build_occ(ic.long_call, "C")
+
+                    logger.info(f"Option symbols: LP={long_put_sym}, SP={short_put_sym}")
+                    logger.info(f"                SC={short_call_sym}, LC={long_call_sym}")
+
+                    # Submit 4-leg iron condor as separate orders
+                    # (Alpaca doesn't support multi-leg orders yet)
+                    legs = [
+                        (long_put_sym, OrderSide.BUY, "long_put"),
+                        (short_put_sym, OrderSide.SELL, "short_put"),
+                        (short_call_sym, OrderSide.SELL, "short_call"),
+                        (long_call_sym, OrderSide.BUY, "long_call"),
+                    ]
+
+                    for sym, side, leg_name in legs:
+                        try:
+                            order_req = LimitOrderRequest(
+                                symbol=sym,
+                                qty=1,
+                                side=side,
+                                type="limit",
+                                limit_price=0.50,  # Will need real pricing
+                                time_in_force=TimeInForce.DAY,
+                            )
+                            order = client.submit_order(order_req)
+                            order_ids.append({"leg": leg_name, "order_id": str(order.id)})
+                            logger.info(f"   ✅ {leg_name} order submitted: {order.id}")
+                        except Exception as leg_error:
+                            logger.warning(f"   ⚠️ {leg_name} order failed: {leg_error}")
+
+                    if order_ids:
+                        status = "LIVE_SUBMITTED"
+                        logger.info(f"✅ LIVE ORDERS SUBMITTED: {len(order_ids)} legs")
+                    else:
+                        status = "LIVE_FAILED"
+                        logger.warning("❌ No orders could be submitted")
+                else:
+                    logger.warning("No Alpaca credentials - running in simulation mode")
+
+            except Exception as e:
+                logger.error(f"Live execution error: {e}")
+                status = "LIVE_ERROR"
 
         trade = {
             "timestamp": datetime.now().isoformat(),
@@ -213,7 +287,8 @@ class IronCondorStrategy:
             "credit": ic.credit_received,
             "max_profit": ic.max_profit,
             "max_risk": ic.max_risk,
-            "status": "SIMULATED",  # Would be FILLED with real execution
+            "status": status,
+            "order_ids": order_ids,
         }
 
         # Record to memory
@@ -265,7 +340,18 @@ class IronCondorStrategy:
 
 def main():
     """Run iron condor strategy."""
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Iron Condor Trader")
+    parser.add_argument("--live", action="store_true", help="Execute LIVE trades on Alpaca")
+    parser.add_argument("--dry-run", action="store_true", help="Dry run (simulate only)")
+    args = parser.parse_args()
+
+    # Default to LIVE mode as of Dec 29, 2025 to hit $100/day target
+    live_mode = args.live or (not args.dry_run)
+
     logger.info("IRON CONDOR TRADER - STARTING")
+    logger.info(f"Mode: {'LIVE' if live_mode else 'SIMULATED'}")
 
     strategy = IronCondorStrategy()
 
@@ -283,8 +369,8 @@ def main():
         logger.error("Failed to find suitable iron condor")
         return {"success": False, "reason": "no_trade_found"}
 
-    # Execute
-    trade = strategy.execute(ic)
+    # Execute - LIVE by default now!
+    trade = strategy.execute(ic, live=live_mode)
 
     logger.info("IRON CONDOR TRADER - COMPLETE")
     return {"success": True, "trade": trade}

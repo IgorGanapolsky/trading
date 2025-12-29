@@ -243,13 +243,14 @@ def run():
             record_trade(trade)
 
     else:
-        # Accumulate mode - buy small amount if we have cash
-        if account["cash"] > 1000:
-            buy_amount = min(500, account["cash"] * 0.02)  # 2% or $500
+        # Accumulate mode - buy daily investment to hit $100/day target
+        # INCREASED Dec 29, 2025: Was $500, now $5000 to hit North Star
+        if account["cash"] > 5000:
+            buy_amount = min(5000, account["cash"] * 0.05)  # 5% or $5000 for $100/day target
             action = "ACCUMULATE"
             trade = buy_spy(client, buy_amount)
             if trade:
-                trade["reason"] = "Daily accumulation"
+                trade["reason"] = "Daily accumulation ($100/day target)"
                 record_trade(trade)
 
     logger.info(f"Action taken: {action}")
