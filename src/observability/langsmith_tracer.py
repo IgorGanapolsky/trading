@@ -47,15 +47,19 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 
 class TraceType(Enum):
-    """Types of traces for categorization."""
+    """Types of traces for categorization.
 
-    DECISION = "decision"  # Trade decisions (buy/sell/hold)
-    SIGNAL = "signal"  # Signal generation
-    TRADE = "trade"  # Trade execution
-    ANALYSIS = "analysis"  # Market analysis
-    RISK = "risk"  # Risk calculations
-    SENTIMENT = "sentiment"  # Sentiment analysis
-    RL = "rl"  # RL model inference
+    Dec 2025 Update: Using full descriptive names for better LangSmith filtering.
+    Short tags like 'risk' were truncated in UI - now using 'trading-risk'.
+    """
+
+    DECISION = "trading-decision"  # Trade decisions (buy/sell/hold)
+    SIGNAL = "trading-signal"  # Signal generation
+    TRADE = "trade-execution"  # Trade execution
+    ANALYSIS = "market-analysis"  # Market analysis
+    RISK = "trading-risk"  # Risk calculations
+    SENTIMENT = "sentiment-analysis"  # Sentiment analysis
+    RL = "rl-inference"  # RL model inference
     VERIFICATION = "verification"  # Pre-trade verification
     REFLECTION = "reflection"  # Post-trade reflection
 
@@ -285,20 +289,33 @@ class LangSmithTracer:
 
     Provides LangSmith-compatible tracing with local fallback.
     Integrates with LangSmith API when LANGCHAIN_API_KEY is set.
+
+    Dec 2025 Best Practices:
+    - session_id: Groups related traces across a trading session
+    - version: Tracks app version for A/B testing
+    - Full descriptive tags for better filtering
     """
 
     _instance: Optional[LangSmithTracer] = None
+
+    # Application version from pyproject.toml (Dec 2025)
+    APP_VERSION = "1.0.0"
 
     def __init__(
         self,
         project_name: str | None = None,
         storage_path: Optional[Path] = None,
+        session_id: str | None = None,
     ):
         # CRITICAL: Read project name from LANGCHAIN_PROJECT env var
         # This must match the project in LangSmith UI (igor-trading-system)
         self.project_name = project_name or os.getenv("LANGCHAIN_PROJECT", "igor-trading-system")
         self.storage_path = storage_path or Path("data/traces")
         self.storage_path.mkdir(parents=True, exist_ok=True)
+
+        # Session ID for grouping related traces (Dec 2025 best practice)
+        # If not provided, generate one per tracer instance (per trading session)
+        self.session_id = session_id or str(uuid.uuid4())
 
         # Current trace context (thread-local in production)
         self._current_trace: Optional[Trace] = None
@@ -317,8 +334,8 @@ class LangSmithTracer:
         self._daily_budget = float(os.getenv("DAILY_LLM_BUDGET", "3.33"))  # $100/30 days
 
         logger.info(
-            f"LangSmithTracer initialized: project={project_name}, "
-            f"langsmith_enabled={self._langsmith_enabled}"
+            f"LangSmithTracer initialized: project={self.project_name}, "
+            f"session_id={self.session_id[:8]}..., langsmith_enabled={self._langsmith_enabled}"
         )
 
     def _init_langsmith(self):
@@ -396,22 +413,44 @@ class LangSmithTracer:
                 for span in trace.spans:
                     run_id = str(uuid.uuid4())
 
+                    # Dec 2025 Best Practices: Include session_id, version, and provider metadata
+                    # These enable grouping, A/B testing, and cost tracking in LangSmith
+                    metadata = {
+                        **(span.metadata or {}),
+                        "session_id": self.session_id,  # Groups related traces
+                        "version": self.APP_VERSION,  # For A/B testing
+                        "environment": os.getenv("ENVIRONMENT", "development"),
+                    }
+
+                    # Add model provider info if available (for cost tracking)
+                    if span.cost and span.cost.model:
+                        metadata["ls_model_name"] = span.cost.model
+                        # Infer provider from model name
+                        if "claude" in span.cost.model.lower():
+                            metadata["ls_provider"] = "anthropic"
+                        elif "gpt" in span.cost.model.lower():
+                            metadata["ls_provider"] = "openai"
+                        elif "gemini" in span.cost.model.lower():
+                            metadata["ls_provider"] = "google"
+                        elif "kimi" in span.cost.model.lower():
+                            metadata["ls_provider"] = "moonshot"
+
                     # Create run with all required fields
                     self._langsmith_client.create_run(
                         name=span.name or f"{span.trace_type.value}_span",
                         run_type="chain",
                         inputs=span.inputs or {},
                         outputs=span.outputs or {},
-                        extra=span.metadata if span.metadata else None,
+                        extra=metadata,
                         project_name=self.project_name,
                         id=run_id,
                         start_time=span.start_time,
                         end_time=span.end_time or datetime.now(timezone.utc),
                         error=span.error,
-                        tags=[span.trace_type.value, "trading-system"],
+                        tags=[span.trace_type.value, "igor-trading-system", f"v{self.APP_VERSION}"],
                     )
                     logger.debug(
-                        f"Sent run to LangSmith: {span.name} (project={self.project_name})"
+                        f"Sent run to LangSmith: {span.name} (project={self.project_name}, session={self.session_id[:8]})"
                     )
 
                 logger.info(

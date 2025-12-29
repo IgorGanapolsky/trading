@@ -49,9 +49,12 @@ def verify_langsmith() -> bool:
         else:
             print(f"   Project '{project_name}' exists")
 
-        # 3. Send a test trace with timezone-aware datetime
+        # 3. Send a test trace with timezone-aware datetime and Dec 2025 best practices
         print("📤 Sending verification trace...")
         now = datetime.now(timezone.utc)
+        import uuid
+
+        session_id = str(uuid.uuid4())
         client.create_run(
             name="ci_verification_trace",
             inputs={"test": "verification", "timestamp": now.isoformat()},
@@ -60,7 +63,13 @@ def verify_langsmith() -> bool:
             project_name=project_name,
             start_time=now,
             end_time=now,
-            tags=["verification", "ci"],
+            # Dec 2025 best practices: full tag names, session_id, version
+            tags=["verification", "igor-trading-system", "v1.0.0"],
+            extra={
+                "session_id": session_id,
+                "version": "1.0.0",
+                "environment": os.getenv("ENVIRONMENT", "development"),
+            },
         )
         print("✅ Verification trace sent successfully")
 

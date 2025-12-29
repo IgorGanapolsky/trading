@@ -36,7 +36,7 @@ async def get_langsmith_runs_tool(arguments: dict[str, Any]) -> list[TextContent
         )
 
         monitor = LangSmithMonitor()
-        project = arguments.get("project", "trading-rl-training")
+        project = arguments.get("project", "igor-trading-system")
         hours = arguments.get("hours", 24)
         limit = arguments.get("limit", 50)
 
@@ -55,7 +55,7 @@ async def get_langsmith_stats_tool(arguments: dict[str, Any]) -> list[TextConten
         )
 
         monitor = LangSmithMonitor()
-        project = arguments.get("project", "trading-rl-training")
+        project = arguments.get("project", "igor-trading-system")
         days = arguments.get("days", 7)
 
         result = monitor.get_project_stats(project_name=project, days=days)
@@ -96,7 +96,7 @@ if Server is not None:
                     "properties": {
                         "project": {
                             "type": "string",
-                            "description": "Project name (default: trading-rl-training)",
+                            "description": "Project name (default: igor-trading-system)",
                         },
                         "hours": {
                             "type": "integer",
@@ -117,7 +117,7 @@ if Server is not None:
                     "properties": {
                         "project": {
                             "type": "string",
-                            "description": "Project name (default: trading-rl-training)",
+                            "description": "Project name (default: igor-trading-system)",
                         },
                         "days": {
                             "type": "integer",
