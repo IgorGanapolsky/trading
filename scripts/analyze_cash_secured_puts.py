@@ -7,7 +7,7 @@ Target: $20-30 stocks, 30-45 DTE, 20-30 delta puts.
 """
 
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 # Add project root to path
@@ -18,8 +18,8 @@ sys.path.insert(0, str(project_root))
 from src.utils import yfinance_wrapper as yf
 
 try:
-    import numpy as np
-    import pandas as pd
+    import numpy as np  # noqa: F401 - required by yfinance internally
+    import pandas as pd  # noqa: F401 - yfinance returns pandas DataFrames
 except ImportError:
     print("ERROR: numpy and pandas are required. Install with: pip install numpy pandas")
     sys.exit(1)
@@ -119,8 +119,8 @@ def analyze_put_options(
 
         # Target delta range (puts have negative delta)
         target_puts = puts_with_delta[
-            (puts_with_delta["delta"] >= target_delta_low) &
-            (puts_with_delta["delta"] <= target_delta_high)
+            (puts_with_delta["delta"] >= target_delta_low)
+            & (puts_with_delta["delta"] <= target_delta_high)
         ]
 
         if target_puts.empty:
@@ -130,7 +130,7 @@ def analyze_put_options(
                     puts_with_delta["delta"] - (target_delta_low + target_delta_high) / 2
                 )
                 target_puts = puts_with_delta.nsmallest(3, "delta_diff")
-                print(f"  ⚠️  No puts in exact delta range, showing closest matches")
+                print("  ⚠️  No puts in exact delta range, showing closest matches")
 
         if target_puts.empty:
             return {
@@ -184,26 +184,28 @@ def analyze_put_options(
             # Premium to collateral ratio (what we collect vs what we risk)
             premium_to_collateral = (total_premium / total_collateral) * 100
 
-            results.append({
-                "strike": strike,
-                "delta": delta,
-                "bid": bid,
-                "ask": ask,
-                "mid": mid,
-                "iv": iv,
-                "dte": dte,
-                "expiration": best_expiration,
-                "collateral_per_contract": collateral_per_contract,
-                "max_contracts": max_contracts,
-                "premium_per_contract": premium_per_contract,
-                "total_premium": total_premium,
-                "total_collateral": total_collateral,
-                "daily_income": daily_income,
-                "weekly_income": weekly_income,
-                "annualized_return": annualized_return,
-                "premium_pct": premium_pct,
-                "premium_to_collateral": premium_to_collateral,
-            })
+            results.append(
+                {
+                    "strike": strike,
+                    "delta": delta,
+                    "bid": bid,
+                    "ask": ask,
+                    "mid": mid,
+                    "iv": iv,
+                    "dte": dte,
+                    "expiration": best_expiration,
+                    "collateral_per_contract": collateral_per_contract,
+                    "max_contracts": max_contracts,
+                    "premium_per_contract": premium_per_contract,
+                    "total_premium": total_premium,
+                    "total_collateral": total_collateral,
+                    "daily_income": daily_income,
+                    "weekly_income": weekly_income,
+                    "annualized_return": annualized_return,
+                    "premium_pct": premium_pct,
+                    "premium_to_collateral": premium_to_collateral,
+                }
+            )
 
         if not results:
             return {
@@ -240,18 +242,18 @@ def main():
     print("=" * 80)
     print(f"Buying Power: ${BUYING_POWER:,.2f}")
     print(f"Target Tickers: {', '.join(TICKERS)}")
-    print(f"Target Price Range: $20-30")
-    print(f"Target DTE: 30-45 days")
-    print(f"Target Delta: 20-30 (0.20-0.30)")
+    print("Target Price Range: $20-30")
+    print("Target DTE: 30-45 days")
+    print("Target Delta: 20-30 (0.20-0.30)")
     print("=" * 80)
     print()
 
     all_results = []
 
     for ticker in TICKERS:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Analyzing {ticker}...")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         result = analyze_put_options(
             ticker,
@@ -272,17 +274,17 @@ def main():
         best = result["best_option"]
 
         print(f"\n📊 Current Price: ${current_price:.2f}")
-        print(f"\n🎯 BEST OPPORTUNITY:")
+        print("\n🎯 BEST OPPORTUNITY:")
         print(f"  Strike: ${best['strike']:.2f} ({abs(best['delta']):.2f} delta)")
         print(f"  Expiration: {best['expiration']} ({best['dte']} DTE)")
         print(f"  Premium: ${best['mid']:.2f}/share ({best['premium_pct']:.2f}% of stock price)")
         print(f"  IV: {best['iv']:.1%}")
-        print(f"\n💰 INCOME ANALYSIS:")
+        print("\n💰 INCOME ANALYSIS:")
         print(f"  Max Contracts: {best['max_contracts']}")
         print(f"  Premium per Contract: ${best['premium_per_contract']:.2f}")
         print(f"  Total Premium Collected: ${best['total_premium']:.2f}")
         print(f"  Total Collateral Required: ${best['total_collateral']:.2f}")
-        print(f"\n📈 RETURNS:")
+        print("\n📈 RETURNS:")
         print(f"  Daily Income: ${best['daily_income']:.2f}/day")
         print(f"  Weekly Income: ${best['weekly_income']:.2f}/week")
         print(f"  Annualized Return: {best['annualized_return']:.2%}")
@@ -292,11 +294,13 @@ def main():
 
         # Show top 3 alternatives
         if len(result["options"]) > 1:
-            print(f"\n📋 Alternative Options:")
+            print("\n📋 Alternative Options:")
             for i, opt in enumerate(result["options"][1:4], 1):
-                print(f"  {i}. Strike ${opt['strike']:.2f} (δ={abs(opt['delta']):.2f}): "
-                      f"${opt['total_premium']:.2f} total premium, "
-                      f"${opt['daily_income']:.2f}/day")
+                print(
+                    f"  {i}. Strike ${opt['strike']:.2f} (δ={abs(opt['delta']):.2f}): "
+                    f"${opt['total_premium']:.2f} total premium, "
+                    f"${opt['daily_income']:.2f}/day"
+                )
 
     # Summary comparison
     print("\n\n" + "=" * 80)
@@ -311,35 +315,49 @@ def main():
 
     # Best total premium
     print("\n🏆 HIGHEST TOTAL PREMIUM:")
-    by_premium = sorted(valid_results, key=lambda x: x["best_option"]["total_premium"], reverse=True)
+    by_premium = sorted(
+        valid_results, key=lambda x: x["best_option"]["total_premium"], reverse=True
+    )
     for i, r in enumerate(by_premium[:3], 1):
         best = r["best_option"]
-        print(f"  {i}. {r['symbol']}: ${best['total_premium']:.2f} "
-              f"({best['max_contracts']} contracts × ${best['premium_per_contract']:.2f})")
+        print(
+            f"  {i}. {r['symbol']}: ${best['total_premium']:.2f} "
+            f"({best['max_contracts']} contracts × ${best['premium_per_contract']:.2f})"
+        )
 
     # Best daily income
     print("\n💵 HIGHEST DAILY INCOME:")
     by_daily = sorted(valid_results, key=lambda x: x["best_option"]["daily_income"], reverse=True)
     for i, r in enumerate(by_daily[:3], 1):
         best = r["best_option"]
-        print(f"  {i}. {r['symbol']}: ${best['daily_income']:.2f}/day "
-              f"(${best['weekly_income']:.2f}/week)")
+        print(
+            f"  {i}. {r['symbol']}: ${best['daily_income']:.2f}/day "
+            f"(${best['weekly_income']:.2f}/week)"
+        )
 
     # Best annualized return
     print("\n📊 HIGHEST ANNUALIZED RETURN:")
-    by_return = sorted(valid_results, key=lambda x: x["best_option"]["annualized_return"], reverse=True)
+    by_return = sorted(
+        valid_results, key=lambda x: x["best_option"]["annualized_return"], reverse=True
+    )
     for i, r in enumerate(by_return[:3], 1):
         best = r["best_option"]
-        print(f"  {i}. {r['symbol']}: {best['annualized_return']:.2%} "
-              f"({best['dte']} DTE, ${best['strike']:.2f} strike)")
+        print(
+            f"  {i}. {r['symbol']}: {best['annualized_return']:.2%} "
+            f"({best['dte']} DTE, ${best['strike']:.2f} strike)"
+        )
 
     # Best premium/collateral ratio
     print("\n⚡ BEST PREMIUM-TO-COLLATERAL RATIO:")
-    by_ratio = sorted(valid_results, key=lambda x: x["best_option"]["premium_to_collateral"], reverse=True)
+    by_ratio = sorted(
+        valid_results, key=lambda x: x["best_option"]["premium_to_collateral"], reverse=True
+    )
     for i, r in enumerate(by_ratio[:3], 1):
         best = r["best_option"]
-        print(f"  {i}. {r['symbol']}: {best['premium_to_collateral']:.3f}% "
-              f"(${best['total_premium']:.2f} premium on ${best['total_collateral']:.2f} collateral)")
+        print(
+            f"  {i}. {r['symbol']}: {best['premium_to_collateral']:.3f}% "
+            f"(${best['total_premium']:.2f} premium on ${best['total_collateral']:.2f} collateral)"
+        )
 
     # FINAL RECOMMENDATION
     print("\n\n" + "=" * 80)
@@ -357,10 +375,14 @@ def main():
     print(f"  • Daily Income: ${best['daily_income']:.2f}")
     print(f"  • Weekly Income: ${best['weekly_income']:.2f}")
     print(f"  • Annualized Return: {best['annualized_return']:.2%}")
-    print(f"\n💡 Risk: If assigned, you buy {best['max_contracts'] * 100} shares of {top_pick['symbol']}")
+    print(
+        f"\n💡 Risk: If assigned, you buy {best['max_contracts'] * 100} shares of {top_pick['symbol']}"
+    )
     print(f"    at ${best['strike']:.2f}, requiring ${best['total_collateral']:.2f} cash.")
-    print(f"    Your effective cost basis: ${best['strike'] - best['mid']:.2f} "
-          f"(strike minus premium received)")
+    print(
+        f"    Your effective cost basis: ${best['strike'] - best['mid']:.2f} "
+        f"(strike minus premium received)"
+    )
     print()
 
 

@@ -52,6 +52,7 @@ from src.risk.position_manager import ExitConditions, PositionManager
 from src.risk.risk_manager import RiskManager
 from src.risk.trade_gateway import RejectionReason, TradeGateway, TradeRequest
 from src.signals.microstructure_features import MicrostructureFeatureExtractor
+
 # TreasuryLadderStrategy REMOVED Dec 29, 2025 - Phil Town doesn't recommend bonds
 from src.utils.heartbeat import record_heartbeat
 from src.utils.regime_detector import RegimeDetector
@@ -822,8 +823,6 @@ class TradingOrchestrator:
         if not self.session_profile:
             logger.warning("Session profile not available, skipping portfolio strategies.")
             return
-
-        macro_context = self.session_profile.get("macro_context")
 
         # --- Treasury Ladder Strategy --- REMOVED Dec 29, 2025
         # Phil Town does NOT recommend bonds/treasuries
