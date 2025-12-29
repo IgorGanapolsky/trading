@@ -209,9 +209,10 @@ class IronCondorStrategy:
         if live:
             try:
                 import os
+
                 from alpaca.trading.client import TradingClient
+                from alpaca.trading.enums import OrderSide, TimeInForce
                 from alpaca.trading.requests import LimitOrderRequest
-                from alpaca.trading.enums import OrderSide, TimeInForce, OrderClass
 
                 api_key = os.getenv("ALPACA_API_KEY")
                 secret = os.getenv("ALPACA_SECRET_KEY")
