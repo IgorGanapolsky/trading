@@ -1088,7 +1088,8 @@ jobs:
           python3 scripts/monitor_tlt_momentum.py || echo "⚠️  TLT monitoring completed with warnings"
 
       - name: Update Progress Dashboard Wiki
-        if: steps.check_execution.outputs.skip != 'true'
+        # FIXED Dec 29, 2025: Always update dashboard, even when trading skipped
+        # Bug: Dashboard was stale 7 days because it only updated on trade days
         continue-on-error: true  # Don't fail workflow if wiki update fails
         timeout-minutes: 5
         env:
