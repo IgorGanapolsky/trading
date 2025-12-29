@@ -277,6 +277,7 @@ class IronCondorStrategy:
             "timestamp": datetime.now().isoformat(),
             "strategy": "iron_condor",
             "underlying": ic.underlying,
+            "symbol": ic.underlying,  # Add symbol field for dashboard compatibility
             "expiry": ic.expiry,
             "dte": ic.dte,
             "legs": {
@@ -292,8 +293,11 @@ class IronCondorStrategy:
             "order_ids": order_ids,
         }
 
-        # Record to memory
-        self._record_trade(trade)
+        # Only record successful trades (not failures)
+        if status not in ["LIVE_FAILED", "LIVE_ERROR"]:
+            self._record_trade(trade)
+        else:
+            logger.warning(f"Trade NOT recorded due to failure status: {status}")
 
         return trade
 

@@ -436,12 +436,21 @@ def generate_world_class_dashboard() -> str:
     if recent_trades:
         recent_trades_rows = []
         for trade in recent_trades[:15]:  # Limit to 15 most recent
+            # Skip failed/invalid trades (iron condors that failed to submit)
+            status = trade.get("status", "FILLED").upper()
+            if "FAILED" in status or "ERROR" in status:
+                continue  # Don't show failed trades in dashboard
+
             trade_date = trade.get("trade_date", "")
             symbol = trade.get("symbol", trade.get("underlying", "UNKNOWN"))
             side = trade.get("side", trade.get("action", "BUY")).upper()
             qty = trade.get("qty", trade.get("quantity", trade.get("notional", 0)))
+
+            # Skip trades with zero quantity (invalid/broken entries)
+            if qty == 0 or qty is None:
+                continue
+
             price = trade.get("filled_avg_price", trade.get("price", 0))
-            status = trade.get("status", "FILLED").upper()
 
             # Format quantity (could be shares or notional)
             if isinstance(qty, (int, float)) and qty < 1:
