@@ -603,7 +603,22 @@ def generate_world_class_dashboard() -> str:
 
 """
 
-    dashboard += """---
+    # Build risk metrics table with proper values
+    max_dd = risk.get("max_drawdown_pct", 0)
+    curr_dd = risk.get("current_drawdown_pct", 0)
+    ulcer = risk.get("ulcer_index", 0)
+    sharpe = risk.get("sharpe_ratio", 0)
+    sortino = risk.get("sortino_ratio", 0)
+    calmar = risk.get("calmar_ratio", 0)
+    vol = risk.get("volatility_annualized", 0)
+    var95 = abs(risk.get("var_95", 0))
+    var99 = abs(risk.get("var_99", 0))
+    cvar95 = risk.get("cvar_95", 0)
+    kelly = 0.0  # Not calculated yet
+    margin = 0.0  # Not calculated yet
+    leverage = 1.0  # Default leverage
+
+    dashboard += f"""---
 
 ## 🛡️ Comprehensive Risk Metrics
 
@@ -611,19 +626,19 @@ def generate_world_class_dashboard() -> str:
 
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
-| **Max Drawdown** | {risk.get("max_drawdown_pct", 0):.2f}% | <10% | {"✅" if risk.get("max_drawdown_pct", 0) < 10 else "⚠️"} |
-| **Current Drawdown** | {risk.get("current_drawdown_pct", 0):.2f}% | <5% | {"✅" if risk.get("current_drawdown_pct", 0) < 5 else "⚠️"} |
-| **Ulcer Index** | {risk.get("ulcer_index", 0):.2f} | <5.0 | {"✅" if risk.get("ulcer_index", 0) < 5.0 else "⚠️"} |
-| **Sharpe Ratio** | {risk.get("sharpe_ratio", 0):.2f} | >1.0 | {"✅" if risk.get("sharpe_ratio", 0) >= 1.0 else "⚠️"} |
-| **Sortino Ratio** | {risk.get("sortino_ratio", 0):.2f} | >1.5 | {"✅" if risk.get("sortino_ratio", 0) >= 1.5 else "⚠️"} |
-| **Calmar Ratio** | {risk.get("calmar_ratio", 0):.2f} | >1.0 | {"✅" if risk.get("calmar_ratio", 0) >= 1.0 else "⚠️"} |
-| **Volatility (Annualized)** | {risk.get("volatility_annualized", 0):.2f}% | <20% | {"✅" if risk.get("volatility_annualized", 0) < 20 else "⚠️"} |
-| **VaR (95%)** | {abs(risk.get("var_95", 0)):.2f}% | <3% | {"✅" if abs(risk.get("var_95", 0)) < 3 else "⚠️"} |
-| **VaR (99%)** | {abs(risk.get("var_99", 0)):.2f}% | <5% | {"✅" if abs(risk.get("var_99", 0)) < 5 else "⚠️"} |
-| **CVaR (95%)** | {risk.get("cvar_95", enhanced_risk.get("conditional_var_95", 0)):.2f}% | <5% | {"✅" if risk.get("cvar_95", enhanced_risk.get("conditional_var_95", 0)) < 5 else "⚠️"} |
-| **Kelly Fraction** | {enhanced_risk.get("kelly_fraction", 0):.2f}% | 5-10% | {"✅" if 5 <= enhanced_risk.get("kelly_fraction", 0) <= 10 else "⚠️"} |
-| **Margin Usage** | {enhanced_risk.get("margin_usage_pct", 0):.2f}% | <50% | {"✅" if enhanced_risk.get("margin_usage_pct", 0) < 50 else "⚠️"} |
-| **Leverage** | {enhanced_risk.get("leverage", 1.0):.2f}x | <2.0x | {"✅" if enhanced_risk.get("leverage", 1.0) < 2.0 else "⚠️"} |
+| **Max Drawdown** | {max_dd:.2f}% | <10% | {"✅" if max_dd < 10 else "⚠️"} |
+| **Current Drawdown** | {curr_dd:.2f}% | <5% | {"✅" if curr_dd < 5 else "⚠️"} |
+| **Ulcer Index** | {ulcer:.2f} | <5.0 | {"✅" if ulcer < 5.0 else "⚠️"} |
+| **Sharpe Ratio** | {sharpe:.2f} | >1.0 | {"✅" if sharpe >= 1.0 else "⚠️"} |
+| **Sortino Ratio** | {sortino:.2f} | >1.5 | {"✅" if sortino >= 1.5 else "⚠️"} |
+| **Calmar Ratio** | {calmar:.2f} | >1.0 | {"✅" if calmar >= 1.0 else "⚠️"} |
+| **Volatility (Annualized)** | {vol:.2f}% | <20% | {"✅" if vol < 20 else "⚠️"} |
+| **VaR (95%)** | {var95:.2f}% | <3% | {"✅" if var95 < 3 else "⚠️"} |
+| **VaR (99%)** | {var99:.2f}% | <5% | {"✅" if var99 < 5 else "⚠️"} |
+| **CVaR (95%)** | {cvar95:.2f}% | <5% | {"✅" if cvar95 < 5 else "⚠️"} |
+| **Kelly Fraction** | {kelly:.2f}% | 5-10% | {"✅" if 5 <= kelly <= 10 else "⚠️"} |
+| **Margin Usage** | {margin:.2f}% | <50% | {"✅" if margin < 50 else "⚠️"} |
+| **Leverage** | {leverage:.2f}x | <2.0x | {"✅" if leverage < 2.0 else "⚠️"} |
 
 ### Risk Exposure by Symbol
 
