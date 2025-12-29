@@ -275,15 +275,15 @@
       "disabled_reason": "Allocation shifted to options (60% allocation) - Dec 16, 2025"
     },
     "options": {
-      "name": "Options Premium Strategy (Cash-Secured Puts)",
-      "allocation": 0.6,
-      "daily_amount": 30.0,
+      "name": "Options Day Trading (Phil Town Style)",
+      "allocation": 1.0,
+      "daily_amount": 50.0,
       "status": "active",
       "enabled": true,
       "win_rate": 75.0,
       "total_profit": 327.82,
       "trades_executed": 4,
-      "strategy_notes": "Primary profit driver (60% allocation) - sell puts on SPY/QQQ/AMD/NVDA",
+      "strategy_notes": "100% OPTIONS - Phil Town style concentration. Bonds REMOVED Dec 29, 2025.",
       "risk_rules": {
         "max_delta": 30,
         "preferred_dte": "30-45",

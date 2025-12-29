@@ -31,25 +31,22 @@ logger = logging.getLogger(__name__)
 DEFAULT_STATE_FILE = Path(__file__).parent.parent.parent / "data" / "system_state.json"
 
 # Asset class definitions for exit threshold tuning
-TREASURY_ETFS = {"BIL", "SHY", "IEF", "TLT", "GOVT", "ZROZ", "VGSH", "VGIT", "VGLT", "SCHO", "SCHR"}
-BOND_ETFS = {"AGG", "BND", "LQD", "HYG", "JNK", "TIP", "VCSH", "VCIT"}
+# TREASURY/BOND ETFS REMOVED Dec 29, 2025 - Phil Town doesn't recommend bonds
+TREASURY_ETFS: set[str] = set()  # REMOVED
+BOND_ETFS: set[str] = set()  # REMOVED
 
 
 class AssetClass(Enum):
     """Asset class for threshold selection."""
 
-    TREASURY = "treasury"
-    BOND = "bond"
+    # TREASURY and BOND removed - Phil Town doesn't use bonds
     EQUITY = "equity"
+    OPTIONS = "options"  # Primary focus now
 
 
 def get_asset_class(symbol: str) -> AssetClass:
     """Determine asset class from symbol for appropriate exit thresholds."""
-    symbol_upper = symbol.upper()
-    if symbol_upper in TREASURY_ETFS:
-        return AssetClass.TREASURY
-    if symbol_upper in BOND_ETFS:
-        return AssetClass.BOND
+    # All assets treated as equity or options - no bonds per Phil Town
     return AssetClass.EQUITY
 
 

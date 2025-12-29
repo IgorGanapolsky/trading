@@ -62,27 +62,27 @@ allocations:
     description: "Core equity exposure - also serves as collateral for options"
 
   # ==========================================================================
-  # HEDGE: TREASURY ALLOCATION (5%)
+  # HEDGE: TREASURY ALLOCATION (0% - REMOVED)
   # ==========================================================================
-  # Minimal hedge for stability - most capital goes to options
+  # Phil Town does NOT recommend bonds/treasuries
+  # His target is 26% annual returns from wonderful companies
+  # Bonds yield 4-5% - completely antithetical to Rule #1
+  # REMOVED: Dec 29, 2025 per CEO mandate
   treasury_core:
-    ticker: GOVT
-    weight: 0.03  # 3% fixed allocation - REDUCED from 10% (v2.4)
-    rebalance: monthly
-    bypass_gates: true
-    description: "Minimal treasury hedge for crisis protection"
-    expected_return: 0.045
-    expected_volatility: 0.06
+    ticker: null
+    weight: 0.00  # REMOVED - Phil Town doesn't use bonds
+    rebalance: null
+    bypass_gates: false
+    description: "REMOVED - Phil Town: 'Buy wonderful companies, not bonds'"
+    expected_return: 0.0
+    expected_volatility: 0.0
 
   treasury_dynamic:
-    tickers:
-      default: TLT
-      yield_threshold_below: ZROZ
-    yield_switch_threshold: 4.05
-    weight: 0.02  # 2% allocation - REDUCED from 5% (v2.4)
-    rebalance: weekly
+    tickers: null
+    weight: 0.00  # REMOVED - Phil Town doesn't use bonds
+    rebalance: null
     bypass_gates: false
-    description: "Long-duration treasuries for rate sensitivity"
+    description: "REMOVED - Phil Town: 'Buy wonderful companies, not bonds'"
 
   # ==========================================================================
   # GROWTH: INDIVIDUAL STOCKS (0% - DISABLED)
@@ -199,9 +199,9 @@ daily_deployment:
   total_daily_budget: 50.00  # $50/day
 
   allocation:
-    options_premium: 40.00   # 80% to options ($40/day) - v2.4 increase
-    core_etfs: 7.50          # 15% to SPY/QQQ ($7.50/day) - collateral
-    treasuries: 2.50         # 5% to bonds ($2.50/day) - minimal hedge
+    options_premium: 45.00   # 90% to options ($45/day) - INCREASED (no bonds)
+    core_etfs: 5.00          # 10% to SPY/QQQ ($5/day) - collateral only
+    treasuries: 0.00         # 0% - REMOVED per Phil Town (Dec 29, 2025)
     growth_stocks: 0.00      # 0% - DISABLED
     reits: 0.00              # 0% - DISABLED
   
@@ -216,10 +216,10 @@ daily_deployment:
 # =============================================================================
 risk:
   max_single_position: 0.15
-  max_options_allocation: 0.85  # Cap options at 85% - allows 80% target (v2.4)
-  max_treasury_allocation: 0.30
+  max_options_allocation: 0.95  # Cap options at 95% - allows 90% target (v2.5)
+  max_treasury_allocation: 0.00  # REMOVED - Phil Town doesn't use bonds
   max_equity_drawdown: 0.10
-  safe_havens: ["TLT", "IEF", "BND", "GOVT", "SHY", "BIL"]
+  safe_havens: []  # REMOVED - Phil Town: concentrate on wonderful companies
 
   circuit_breakers:
     daily_loss_pct: 0.03

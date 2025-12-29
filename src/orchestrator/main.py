@@ -52,7 +52,7 @@ from src.risk.position_manager import ExitConditions, PositionManager
 from src.risk.risk_manager import RiskManager
 from src.risk.trade_gateway import RejectionReason, TradeGateway, TradeRequest
 from src.signals.microstructure_features import MicrostructureFeatureExtractor
-from src.strategies.treasury_ladder_strategy import TreasuryLadderStrategy
+# TreasuryLadderStrategy REMOVED Dec 29, 2025 - Phil Town doesn't recommend bonds
 from src.utils.heartbeat import record_heartbeat
 from src.utils.regime_detector import RegimeDetector
 from src.utils.staleness_guard import check_data_staleness
@@ -266,7 +266,8 @@ class TradingOrchestrator:
         self.microstructure = MicrostructureFeatureExtractor()
         self.regime_detector = RegimeDetector()
         self.smart_dca = SmartDCAAllocator()
-        self.treasury_ladder_strategy = TreasuryLadderStrategy(paper=paper)
+        # TreasuryLadderStrategy REMOVED Dec 29, 2025 - Phil Town doesn't recommend bonds
+        self.treasury_ladder_strategy = None
 
         # Gate 0: Mental Toughness Coach - Prevents emotional/tilt trading
         # DISABLED: Module not implemented yet
@@ -824,21 +825,11 @@ class TradingOrchestrator:
 
         macro_context = self.session_profile.get("macro_context")
 
-        # --- Treasury Ladder Strategy ---
-        try:
-            treasury_alloc_pct = float(os.getenv("TREASURY_ALLOCATION_PCT", "0.10"))
-            daily_investment = float(os.getenv("DAILY_INVESTMENT", "50.0"))
-            treasury_amount = daily_investment * treasury_alloc_pct
-
-            if treasury_amount >= 1.0:  # Alpaca minimum is $1
-                logger.info(f"Executing Treasury Ladder Strategy with ${treasury_amount:.2f}...")
-                self.treasury_ladder_strategy.execute_daily(
-                    amount=treasury_amount, macro_context=macro_context
-                )
-            else:
-                logger.info("Skipping Treasury Ladder: allocation amount is too small.")
-        except Exception as e:
-            logger.error(f"Failed to run Treasury Ladder Strategy: {e}", exc_info=True)
+        # --- Treasury Ladder Strategy --- REMOVED Dec 29, 2025
+        # Phil Town does NOT recommend bonds/treasuries
+        # His target is 26% annual returns from wonderful companies
+        # Bonds yield 4-5% - completely antithetical to Rule #1
+        logger.info("Treasury Ladder Strategy DISABLED - Phil Town doesn't recommend bonds")
 
         # --- REIT Smart Income Strategy ---
         try:

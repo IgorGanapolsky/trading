@@ -379,21 +379,7 @@ class LLMOutputValidator:
         "XLB",
         "XLY",
         "XLRE",
-        # Bond ETFs
-        "TLT",
-        "IEF",
-        "SHY",
-        "BND",
-        "AGG",
-        "LQD",
-        "HYG",
-        "TIP",
-        # Treasury ETFs
-        "SHV",
-        "SGOV",
-        "BIL",
-        "SCHO",
-        "SCHR",
+        # Bond/Treasury ETFs REMOVED Dec 29, 2025 - Phil Town doesn't recommend bonds
         # Volatility
         "VXX",
         "UVXY",

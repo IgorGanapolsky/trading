@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 _DEFAULT_BUCKET_TICKERS = {
     "core_etfs": ["SPY", "QQQ", "VTI", "VOO"],
     "growth_stocks": ["NVDA", "TSLA", "AMZN", "GOOGL", "MSFT"],
-    "bonds_treasuries": ["BIL", "BND", "SHY", "IEF", "TLT"],
+    # bonds_treasuries: REMOVED Dec 29, 2025 - Phil Town doesn't recommend bonds
     "reits": ["VNQ", "SCHH"],
     "options_reserve": [],
 }
@@ -64,16 +64,17 @@ class SafeSweep:
 
 class SmartDCAAllocator:
     """
-    Tracks the $10/day budget and routes unused cash into a safety bucket.
+    Tracks the $50/day budget for options day trading.
 
     Each bucket inherits its daily dollar target from `AppConfig.get_tier_allocations()`.
-    Whenever a trade is approved, we mark that bucket as spent. Any remainder is
-    swept into the configured T-Bill / cash proxy (default: BIL).
+    Phil Town strategy: concentrate on wonderful companies, no bonds/treasuries.
+    UPDATED: Dec 29, 2025 - Removed T-Bill sweep per CEO mandate.
     """
 
     def __init__(self, config: AppConfig | None = None) -> None:
         self.config = config or load_config()
-        self.safe_symbol = os.getenv("SMART_DCA_SAFE_SYMBOL", "BIL").upper()
+        # BIL sweep REMOVED Dec 29, 2025 - Phil Town doesn't recommend bonds
+        self.safe_symbol = os.getenv("SMART_DCA_SAFE_SYMBOL", "SPY").upper()  # Options collateral
         self._bucket_targets = self._resolve_bucket_targets()
         self._bucket_spend = {bucket: 0.0 for bucket in self._bucket_targets}
         overrides = _load_custom_bucket_map()
