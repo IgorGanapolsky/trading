@@ -443,22 +443,34 @@ def generate_world_class_dashboard() -> str:
 
             trade_date = trade.get("trade_date", "")
             symbol = trade.get("symbol", trade.get("underlying", "UNKNOWN"))
-            side = trade.get("side", trade.get("action", "BUY")).upper()
-            qty = trade.get("qty", trade.get("quantity", trade.get("notional", 0)))
 
-            # Skip trades with zero quantity (invalid/broken entries)
-            if qty == 0 or qty is None:
+            # Skip crypto trades (violates lesson #052)
+            if symbol and ("BTC" in symbol or "ETH" in symbol or "/USD" in symbol):
                 continue
 
-            price = trade.get("filled_avg_price", trade.get("price", 0))
-
-            # Format quantity (could be shares or notional)
-            if isinstance(qty, (int, float)) and qty < 1:
-                qty_display = f"{qty:.6f}"
-            elif isinstance(qty, (int, float)):
-                qty_display = f"${qty:,.2f}" if trade.get("notional") else f"{qty}"
+            # Handle options strategies (iron condors, etc.) vs regular trades
+            strategy = trade.get("strategy", "")
+            if strategy in ["iron_condor", "vertical_spread", "butterfly"]:
+                side = strategy.upper().replace("_", " ")
+                qty = trade.get("credit", trade.get("max_profit", 0))
+                qty_display = f"${qty:.2f} credit" if qty else "N/A"
             else:
-                qty_display = str(qty)
+                side = trade.get("side", trade.get("action", "BUY")).upper()
+                qty = trade.get("qty", trade.get("quantity", trade.get("notional", 0)))
+
+                # Skip trades with zero quantity (invalid/broken entries)
+                if qty == 0 or qty is None:
+                    continue
+
+                # Format quantity (could be shares or notional)
+                if isinstance(qty, (int, float)) and qty < 1:
+                    qty_display = f"{qty:.6f}"
+                elif isinstance(qty, (int, float)):
+                    qty_display = f"${qty:,.2f}" if trade.get("notional") else f"{qty}"
+                else:
+                    qty_display = str(qty)
+
+            price = trade.get("filled_avg_price", trade.get("price", trade.get("credit", 0)))
 
             # Format price
             if isinstance(price, (int, float)) and price > 0:
