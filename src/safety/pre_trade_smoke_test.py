@@ -10,6 +10,10 @@ class SmokeTestResult:
     passed: bool = True
     errors: list = field(default_factory=list)
     warnings: list = field(default_factory=list)
+    alpaca_connected: bool = True
+    account_readable: bool = True
+    positions_readable: bool = True
+    buying_power_valid: bool = True
 
 
 def run_smoke_tests() -> SmokeTestResult:

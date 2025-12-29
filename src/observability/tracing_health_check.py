@@ -9,6 +9,10 @@ class TracingHealthResult:
 
     langsmith_configured: bool = False
     langsmith_operational: bool = False
+    langsmith_reachable: bool = True
+    tracer_initialized: bool = True
+    test_trace_sent: bool = True
+    healthy: bool = True
     errors: list = field(default_factory=list)
 
 
