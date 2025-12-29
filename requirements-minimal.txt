@@ -43,7 +43,7 @@ cohere>=5.11.4             # Cohere Rerank API for RAG retrieval optimization
 langchain==0.3.27
 langchain-core>=0.3.78,<1.0.0  # Range: langchain needs >=0.3.72, anthropic needs >=0.3.78
 langchain-anthropic==0.3.22
-langchain-community==0.4.1  # Downgraded to match langchain version
+langchain-community==0.3.27  # Must match langchain version (0.3.x series)
 sentence-transformers==3.4.1   # Required for RAG embedder used by trading orchestrator
 
 # Testing (for CI)
