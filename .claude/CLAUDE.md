@@ -10,7 +10,7 @@
 
 ## Essential Commands
 - `python3 -c "from src.orchestrator.main import TradingOrchestrator"` - verify imports
-- `python3 scripts/pre_merge_gate.py` - pre-merge validation
+- `python3 scripts/system_health_check.py` - system health validation
 - `/diary` - record session learnings
 - `/reflect` - generate rules from feedback
 
