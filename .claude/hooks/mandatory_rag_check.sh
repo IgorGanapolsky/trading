@@ -29,6 +29,24 @@ for pattern in "${CRITICAL_LESSONS[@]}"; do
     fi
 done
 
+# Check for lesson staleness
+check_lesson_staleness() {
+    local latest_lesson=$(ls -t "$LESSONS_DIR"/ll_*.md 2>/dev/null | head -1)
+    if [[ -n "$latest_lesson" ]]; then
+        local lesson_date=$(stat -c %Y "$latest_lesson" 2>/dev/null || stat -f %m "$latest_lesson" 2>/dev/null)
+        local now=$(date +%s)
+        local age_hours=$(( (now - lesson_date) / 3600 ))
+
+        if [[ $age_hours -gt 48 ]]; then
+            echo ""
+            echo "🔴 LESSON CAPTURE OVERDUE: Last lesson was ${age_hours} hours ago!"
+            echo "   Use /capture-learning or /diary to document today's insights"
+        fi
+    fi
+}
+
+check_lesson_staleness
+
 # Day-specific reminders
 DAY_OF_WEEK=$(TZ=America/New_York date +%A)
 case $DAY_OF_WEEK in
