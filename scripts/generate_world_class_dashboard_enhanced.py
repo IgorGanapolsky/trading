@@ -299,14 +299,15 @@ def generate_world_class_dashboard() -> str:
                         entry_price = trade.get("entry_price", 0.0)
                         exit_price = trade.get("exit_price", 0.0)
                         quantity = trade.get("quantity", 0.0)
+                        symbol = trade.get("symbol", trade.get("underlying", "UNKNOWN"))
                         trade_id = trade.get(
                             "trade_id",
-                            f"{trade.get('symbol', 'UNKNOWN')}_{entry_date.isoformat()}",
+                            f"{symbol}_{entry_date.isoformat()}",
                         )
 
                         # Record entry
                         tax_optimizer.record_trade_entry(
-                            trade.get("symbol", "UNKNOWN"),
+                            symbol,
                             quantity,
                             entry_price,
                             entry_date,
@@ -315,7 +316,7 @@ def generate_world_class_dashboard() -> str:
 
                         # Record exit
                         tax_optimizer.record_trade_exit(
-                            trade.get("symbol", "UNKNOWN"),
+                            symbol,
                             quantity,
                             exit_price,
                             exit_date,
@@ -436,7 +437,7 @@ def generate_world_class_dashboard() -> str:
         recent_trades_rows = []
         for trade in recent_trades[:15]:  # Limit to 15 most recent
             trade_date = trade.get("trade_date", "")
-            symbol = trade.get("symbol", "UNKNOWN")
+            symbol = trade.get("symbol", trade.get("underlying", "UNKNOWN"))
             side = trade.get("side", trade.get("action", "BUY")).upper()
             qty = trade.get("qty", trade.get("quantity", trade.get("notional", 0)))
             price = trade.get("filled_avg_price", trade.get("price", 0))
