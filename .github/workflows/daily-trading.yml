@@ -607,6 +607,16 @@ jobs:
           print('✅ All pre-flight checks passed')
           "
 
+          # ========== LIQUIDATE LOSING POSITIONS (Dec 29, 2025) ==========
+          # CEO Directive: Options work (75% win rate), REITs/bonds DRAG performance
+          # Action: Sell all REIT and bond positions, keep only SPY + options
+          echo "🗑️ Liquidating losing REIT/bond positions..."
+          python3 -u scripts/liquidate_losing_positions.py 2>&1 || {
+            echo "⚠️ Liquidation had issues, continuing..."
+          }
+          echo "✅ Liquidation complete - freed capital for options"
+          # ================================================================
+
           # ========== GUARANTEED TRADER (Dec 18, 2025) ==========
           # Problem: Complex gates blocked ALL trades for 50 days
           # Solution: Run simple guaranteed trader FIRST

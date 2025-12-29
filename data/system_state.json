@@ -275,15 +275,15 @@
       "disabled_reason": "Allocation shifted to options (60% allocation) - Dec 16, 2025"
     },
     "options": {
-      "name": "Options Day Trading (Phil Town Style)",
+      "name": "Options Premium Strategy (Phil Town Style)",
       "allocation": 1.0,
       "daily_amount": 50.0,
       "status": "active",
       "enabled": true,
       "win_rate": 75.0,
-      "total_profit": 327.82,
-      "trades_executed": 4,
-      "strategy_notes": "100% OPTIONS - Phil Town style concentration. Bonds REMOVED Dec 29, 2025.",
+      "total_profit": 779.0,
+      "trades_executed": 8,
+      "strategy_notes": "100% OPTIONS - Phil Town style. Bonds/REITs REMOVED Dec 29, 2025. Cash-secured puts on SPY/AMD.",
       "risk_rules": {
         "max_delta": 30,
         "preferred_dte": "30-45",
