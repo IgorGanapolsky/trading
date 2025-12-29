@@ -36,9 +36,9 @@
       "vectorized_at": "2025-12-20T00:03:02.820216"
     },
     "rag_knowledge/lessons_learned/ll_017_anti_manual_violation_dec12.md": {
-      "hash": "93299e4ed10bfd061af2ef05d2687ee8",
+      "hash": "88f91420def128aba6128b711bae734d",
       "chunks": 4,
-      "vectorized_at": "2025-12-20T00:03:03.165571"
+      "vectorized_at": "2025-12-29T17:59:54.933764"
     },
     "rag_knowledge/lessons_learned/ll_031_procedural_memory_trading_skills.md": {
       "hash": "6ca7e4b41c8c0891d563455c54a28f6b",
@@ -81,9 +81,9 @@
       "vectorized_at": "2025-12-20T00:03:06.633587"
     },
     "rag_knowledge/lessons_learned/ll_025_bats_budget_framework.md": {
-      "hash": "515bfe9546e7c3712b8ba163934cfb1d",
+      "hash": "7dafd5af76cbf875947b4ae4365a0df6",
       "chunks": 8,
-      "vectorized_at": "2025-12-20T00:03:07.051009"
+      "vectorized_at": "2025-12-29T17:59:53.731688"
     },
     "rag_knowledge/lessons_learned/ll_047_rag_dual_database_cleanup_dec15.md": {
       "hash": "097c06877e7e67690ad7df4af40d23d8",
@@ -306,9 +306,9 @@
       "vectorized_at": "2025-12-20T00:03:24.096286"
     },
     "rag_knowledge/lessons_learned/ll_051_calendar_awareness_critical_dec19.md": {
-      "hash": "87240d360ce13ab7b05e1b710fcf7377",
+      "hash": "b9010b2e623415d8b55505923dfff5d9",
       "chunks": 3,
-      "vectorized_at": "2025-12-20T00:03:24.435870"
+      "vectorized_at": "2025-12-29T17:59:52.910310"
     },
     "rag_knowledge/lessons_learned/ll_018_pl_verification_failure_dec12.md": {
       "hash": "0677621773113e3d5db2efcad56b7cfe",
@@ -381,15 +381,260 @@
       "vectorized_at": "2025-12-22T20:18:50.696303"
     },
     "rag_knowledge/lessons_learned/ll_055_gitignore_breaks_workflow_commits_dec20.md": {
-      "hash": "697cc226baf3482a3c2857f5966f1bd2",
+      "hash": "cc5791e1b74918068e16a148f2a75272",
       "chunks": 4,
-      "vectorized_at": "2025-12-22T20:18:51.011281"
+      "vectorized_at": "2025-12-29T17:59:54.514932"
     },
     "rag_knowledge/lessons_learned/ll_056_silent_pipeline_failures_dec22.md": {
       "hash": "5a4651904315a54931b7b4f8f5815bc0",
       "chunks": 5,
       "vectorized_at": "2025-12-22T20:18:51.347100"
+    },
+    "rag_knowledge/youtube/transcripts/Z5chrxMuBoo_Rule_1_Dont_Lose_Money.md": {
+      "hash": "85fb5eabb1801bcac74e848c79ee951f",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:37.188087"
+    },
+    "rag_knowledge/youtube/transcripts/k2z7K4PLkQg_Building_a_Watchlist_-_Stock_Analysis_Process.md": {
+      "hash": "e31d4dfc1696168bd5a210a25d634a3b",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:37.523067"
+    },
+    "rag_knowledge/youtube/transcripts/gWIi6WLczZA_Warren_Buffett_How_to_Invest_for_Beginners.md": {
+      "hash": "3f1264adf4c5cb3b844c46e20869bf0c",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:37.903510"
+    },
+    "rag_knowledge/youtube/transcripts/A9kZ_fVwLLo_Margin_of_Safety_Explained.md": {
+      "hash": "95bd8feb98df45bdd9a68a179fbd45a0",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:38.223759"
+    },
+    "rag_knowledge/youtube/transcripts/P6dqZMjZxHA_The_Payback_Time_Strategy.md": {
+      "hash": "fc5ad438081794943c13ac502e9fccdf",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:38.562118"
+    },
+    "rag_knowledge/youtube/transcripts/Yp7_oQEGfNc_Market_Crashes_-_Opportunity_of_a_Lifetime.md": {
+      "hash": "d3c1bfc70fed1937d7e33635e108a6b9",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:38.878929"
+    },
+    "rag_knowledge/youtube/transcripts/oLaGH5LVhJ8_Covered_Calls_for_Income_-_Options_Strategy.md": {
+      "hash": "d56cc848f7733fb2f3536f64bde0c65b",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:39.199162"
+    },
+    "rag_knowledge/youtube/transcripts/WRF86rX2wXs_Cash_Secured_Puts_Strategy.md": {
+      "hash": "2c6a463d1fba496250e6ec23f81c0292",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:39.531835"
+    },
+    "rag_knowledge/youtube/transcripts/9hWMAL0q-xw_How_to_Read_Financial_Statements.md": {
+      "hash": "39ef789e9c15222b46a12ff2d4a298e8",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:39.865168"
+    },
+    "rag_knowledge/youtube/transcripts/XyYjVrMbMpI_How_to_Calculate_Sticker_Price_-_Intrinsic_Value.md": {
+      "hash": "02e95b0c177ad60c0d0ccba719f02f98",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:40.201384"
+    },
+    "rag_knowledge/youtube/transcripts/Hfq4K1nP4v4_The_Wheel_Strategy_Explained.md": {
+      "hash": "003149dcec5ef473407e398670cc3629",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:40.518863"
+    },
+    "rag_knowledge/youtube/transcripts/QmVKxH2PdCI_Circle_of_Competence_-_Stay_in_Your_Lane.md": {
+      "hash": "e815dfaf64b55cb3dd6de0a335aee379",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:40.849187"
+    },
+    "rag_knowledge/youtube/transcripts/K6CkCQU_qkE_The_4_Ms_of_Investing_-_Rule_1_Investing.md": {
+      "hash": "92473a5d69f96cea912db0e4aa8355ad",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:41.221213"
+    },
+    "rag_knowledge/youtube/transcripts/8pPnLzZmKKY_What_is_a_Moat_in_Investing.md": {
+      "hash": "840ded1909051e4f8ea8eaa13bcffba1",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:41.547049"
+    },
+    "rag_knowledge/youtube/transcripts/B9xVBqxTHKI_Understanding_ROIC_-_Return_on_Invested_Capital.md": {
+      "hash": "5497c31d5115fafbb15b4ce407af5f06",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:41.855651"
+    },
+    "rag_knowledge/youtube/transcripts/E7t8qPKGMxs_When_to_Sell_a_Stock_-_Exit_Strategy.md": {
+      "hash": "35cedf09ec17fad8b0fb94f1bd27bbfd",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:42.533789"
+    },
+    "rag_knowledge/youtube/transcripts/Rm69dKSsTrA_How_to_Invest_in_Stocks_for_Beginners_2024.md": {
+      "hash": "8ba825d49cec28e1f84ca0325f4619da",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:42.844220"
+    },
+    "rag_knowledge/youtube/transcripts/HcZRD3YUKZM_Value_Investing_vs_Growth_Investing.md": {
+      "hash": "c15e8a8396cedeb980ba45a45732582e",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:43.150234"
+    },
+    "rag_knowledge/youtube/transcripts/iRvKG9yFNBo_Debt_and_the_Balance_Sheet.md": {
+      "hash": "7413e6cd225fccb8cf47ff3ecf730e57",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:43.459928"
+    },
+    "rag_knowledge/youtube/transcripts/dVKjsPQbZNo_Owner_Earnings_Explained_-_Buffetts_Secret_Metric.md": {
+      "hash": "6cc4ad58934e383d1ddc1c78a6d42438",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:43.767868"
+    },
+    "rag_knowledge/youtube/insights/gemini_notebooklm_analysis_20251228.md": {
+      "hash": "aaeb1941e356c338381f7fb9cf50c5f1",
+      "chunks": 3,
+      "vectorized_at": "2025-12-29T17:59:44.082847"
+    },
+    "rag_knowledge/youtube/insights/XyYjVrMbMpI_insights.json": {
+      "hash": "884d13805f821deeb68bb05013fcedaa",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:44.385003"
+    },
+    "rag_knowledge/youtube/insights/oLaGH5LVhJ8_insights.json": {
+      "hash": "b1e09b188e706d7199f28fde3f2ed160",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:44.696457"
+    },
+    "rag_knowledge/youtube/insights/HcZRD3YUKZM_insights.json": {
+      "hash": "41564f40d5e6af38f327ec19f54aab0d",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:44.972861"
+    },
+    "rag_knowledge/youtube/insights/8pPnLzZmKKY_insights.json": {
+      "hash": "1cb124d0cef5e90e52f9ec7cd0092683",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:45.255446"
+    },
+    "rag_knowledge/youtube/insights/QmVKxH2PdCI_insights.json": {
+      "hash": "2836b5fd064596411451886e59083b8a",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:45.551278"
+    },
+    "rag_knowledge/youtube/insights/Rm69dKSsTrA_insights.json": {
+      "hash": "9e2702816a8fac24b5e2bb23203c050a",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:45.844928"
+    },
+    "rag_knowledge/youtube/insights/B9xVBqxTHKI_insights.json": {
+      "hash": "7d647f50e09aeaaaf263cd277fa187d9",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:46.217257"
+    },
+    "rag_knowledge/youtube/insights/A9kZ_fVwLLo_insights.json": {
+      "hash": "184d52e138702cd492a74c26d043f49e",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:46.524305"
+    },
+    "rag_knowledge/youtube/insights/Z5chrxMuBoo_insights.json": {
+      "hash": "930848032e3334b6f4b5f9ca2083630d",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:46.834946"
+    },
+    "rag_knowledge/youtube/insights/dVKjsPQbZNo_insights.json": {
+      "hash": "c6b7c868a1bc2ec0fcef3b2f065c97c1",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:47.142220"
+    },
+    "rag_knowledge/youtube/insights/iRvKG9yFNBo_insights.json": {
+      "hash": "f45c63b6731d2c9fcae7fa01c9e68332",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:47.456030"
+    },
+    "rag_knowledge/youtube/insights/k2z7K4PLkQg_insights.json": {
+      "hash": "e33245327f8d6212bbe9371dafd85665",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:47.764369"
+    },
+    "rag_knowledge/youtube/insights/9hWMAL0q-xw_insights.json": {
+      "hash": "0309b65547b4203d79478c5ca6b85da7",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:48.085332"
+    },
+    "rag_knowledge/youtube/insights/K6CkCQU_qkE_insights.json": {
+      "hash": "d14c9e6acabdd1aacc8f5884d281d21f",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:48.396004"
+    },
+    "rag_knowledge/youtube/insights/E7t8qPKGMxs_insights.json": {
+      "hash": "c9243404fd48a6552c0ad7d4e7a49c36",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:48.698329"
+    },
+    "rag_knowledge/youtube/insights/Yp7_oQEGfNc_insights.json": {
+      "hash": "b03d6aba702886e8608780ce00a2b97e",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:48.996937"
+    },
+    "rag_knowledge/youtube/insights/gWIi6WLczZA_insights.json": {
+      "hash": "1612efcc656f6170b4bae4e219e15ac5",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:49.284594"
+    },
+    "rag_knowledge/youtube/insights/Hfq4K1nP4v4_insights.json": {
+      "hash": "0610ff5ce130cb8239548568260da195",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:49.590157"
+    },
+    "rag_knowledge/youtube/insights/WRF86rX2wXs_insights.json": {
+      "hash": "08e55ea198e2efc9bb325f37737c3e33",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:49.884413"
+    },
+    "rag_knowledge/youtube/insights/P6dqZMjZxHA_insights.json": {
+      "hash": "8d9d2117cf6031fdfb5bc2628398ebe1",
+      "chunks": 1,
+      "vectorized_at": "2025-12-29T17:59:50.179309"
+    },
+    "rag_knowledge/blogs/phil_town/best-way-to-invest-10k_Best_Way_to_Invest_10K.md": {
+      "hash": "c1bf868f68a7c2f7d5598a127fcce1e6",
+      "chunks": 11,
+      "vectorized_at": "2025-12-29T17:59:50.665464"
+    },
+    "rag_knowledge/blogs/phil_town/using-the-rule-of-72_The_Rule_of_72.md": {
+      "hash": "7941756f2c46cefe028f6546ae726d74",
+      "chunks": 20,
+      "vectorized_at": "2025-12-29T17:59:51.319003"
+    },
+    "rag_knowledge/blogs/phil_town/market-capitalization-meaning-_Market_Cap_Doesnt_Equal_Value.md": {
+      "hash": "94f0e413d1d5f2bbf094ecc1d2d77c20",
+      "chunks": 13,
+      "vectorized_at": "2025-12-29T17:59:51.813421"
+    },
+    "rag_knowledge/lessons_learned/ll_068_google_adk_month3_priority.md": {
+      "hash": "c8c584a2250b1b46d1fa9f4dfb879a1d",
+      "chunks": 3,
+      "vectorized_at": "2025-12-29T17:59:52.157900"
+    },
+    "rag_knowledge/lessons_learned/ll_058_langsmith_trace_errors_dec23.md": {
+      "hash": "300c4b16ab28ffd2118112ffc2135d30",
+      "chunks": 3,
+      "vectorized_at": "2025-12-29T17:59:52.501389"
+    },
+    "rag_knowledge/lessons_learned/ll_057_context_engineering_patterns_dec22.md": {
+      "hash": "e5d4046b592b69f9a5162454a99b3945",
+      "chunks": 4,
+      "vectorized_at": "2025-12-29T17:59:53.264325"
+    },
+    "rag_knowledge/lessons_learned/ll_058_stale_data_lying_incident_dec23.md": {
+      "hash": "aca2fb7c706124aaa077972c56f194d3",
+      "chunks": 5,
+      "vectorized_at": "2025-12-29T17:59:54.118886"
+    },
+    "rag_knowledge/lessons_learned/ll_070_acknowledge_user_feedback.md": {
+      "hash": "dab2860424380f9b0e758a818a4340e1",
+      "chunks": 2,
+      "vectorized_at": "2025-12-29T17:59:55.268652"
     }
   },
-  "last_updated": "2025-12-22T20:18:51.349327"
+  "last_updated": "2025-12-29T17:59:55.275163"
 }
