@@ -139,27 +139,41 @@ else
 fi
 
 # Next automated trade time - MUST be a weekday (Mon-Fri)
-# Fixed Dec 19, 2025: Was showing Saturday as next trade date
+# Fixed Dec 30, 2025: Was showing tomorrow even on trading days before market close
 get_next_trading_day() {
-    local dow=$(date +%u)  # 1=Mon, 7=Sun
-    local days_to_add=1
+    local dow=$(TZ=America/New_York date +%u)  # 1=Mon, 7=Sun
+    local hour=$(TZ=America/New_York date +%H)  # Current hour in ET
+    local days_to_add=0
 
-    # If Friday (5), next trade is Monday (+3 days)
-    if [[ $dow -eq 5 ]]; then
-        days_to_add=3
-    # If Saturday (6), next trade is Monday (+2 days)
+    # If it's a weekday (Mon-Fri, dow 1-5)
+    if [[ $dow -ge 1 && $dow -le 5 ]]; then
+        # If before market close (4 PM ET = 16:00), trade is TODAY
+        if [[ $hour -lt 16 ]]; then
+            days_to_add=0
+        else
+            # After market close - next trade is tomorrow (or Monday if Friday)
+            if [[ $dow -eq 5 ]]; then
+                days_to_add=3  # Friday after close -> Monday
+            else
+                days_to_add=1  # Mon-Thu after close -> next day
+            fi
+        fi
+    # Saturday (6) -> Monday (+2)
     elif [[ $dow -eq 6 ]]; then
         days_to_add=2
-    # If Sunday (7), next trade is Monday (+1 day)
+    # Sunday (7) -> Monday (+1)
     elif [[ $dow -eq 7 ]]; then
         days_to_add=1
     fi
 
-    # Try macOS date first (-v), then GNU date (-d)
-    # CRITICAL: TZ must be set for BOTH commands! (Bug fixed Dec 29, 2025)
-    TZ=America/New_York date -v +${days_to_add}d '+%b %d, 9:35 AM ET' 2>/dev/null || \
-    TZ=America/New_York date -d "+${days_to_add} days" '+%b %d, 9:35 AM ET' 2>/dev/null || \
-    echo "Next weekday 9:35 AM ET"
+    if [[ $days_to_add -eq 0 ]]; then
+        echo "TODAY $(TZ=America/New_York date '+%b %d'), 9:35 AM ET"
+    else
+        # Try macOS date first (-v), then GNU date (-d)
+        TZ=America/New_York date -v +${days_to_add}d '+%b %d, 9:35 AM ET' 2>/dev/null || \
+        TZ=America/New_York date -d "+${days_to_add} days" '+%b %d, 9:35 AM ET' 2>/dev/null || \
+        echo "Next weekday 9:35 AM ET"
+    fi
 }
 NEXT_TRADE=$(get_next_trading_day)
 
