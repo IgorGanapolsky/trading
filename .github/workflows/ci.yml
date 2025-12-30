@@ -86,6 +86,11 @@ jobs:
       - name: Run unit tests with coverage
         # FIXED Dec 30, 2025: Increased coverage from 15% to 40%
         # TODO: Increase to 70% as more tests are added
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          PAPER_TRADING: "true"
+          LLM_SENTIMENT_ENABLED: "true"
+          RL_FILTER_ENABLED: "true"
         run: python -m pytest -q --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=40
       - name: Upload coverage report
         uses: actions/upload-artifact@v6
