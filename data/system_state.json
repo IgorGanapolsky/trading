@@ -2,11 +2,11 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2025-12-29T23:00:00.000000",
-    "last_audit": "2025-12-29T23:00:00.000000",
-    "audit_notes": "Updated from live CEO Alpaca screenshots - equity $100,935.44, +$935.44 P/L (+0.94%)",
-    "last_sync": "2025-12-29T22:33:56.275820",
-    "sync_mode": "simulated"
+    "last_updated": "2025-12-30T00:42:59.156251",
+    "last_audit": "2025-12-29T09:46:00.000000",
+    "audit_notes": "Updated from live Alpaca screenshots - portfolio at $100,810.04, daily change -0.10%",
+    "last_sync": "2025-12-30T00:42:59.156263",
+    "sync_mode": "skipped_no_keys"
   },
   "challenge": {
     "start_date": "2025-10-29",
@@ -17,14 +17,14 @@
   },
   "account": {
     "starting_balance": 100000.0,
-    "current_equity": 100935.44,
+    "current_equity": 100810.04,
     "cash": 83114.92,
-    "positions_value": 18173.05,
-    "total_pl": 935.44,
-    "total_pl_pct": 0.94,
+    "positions_value": 17695.12,
+    "total_pl": 810.04,
+    "total_pl_pct": 0.81,
     "buying_power": 2487.77,
-    "daily_change_pct": 0.83,
-    "positions_count": 6
+    "daily_change_pct": -0.1,
+    "positions_count": 15
   },
   "investments": {
     "total_invested": 1621.93,
@@ -275,15 +275,15 @@
       "disabled_reason": "Allocation shifted to options (60% allocation) - Dec 16, 2025"
     },
     "options": {
-      "name": "Options Premium Strategy (Phil Town Style)",
+      "name": "Options Day Trading (Phil Town Style)",
       "allocation": 1.0,
       "daily_amount": 50.0,
       "status": "active",
       "enabled": true,
       "win_rate": 75.0,
-      "total_profit": 779.0,
-      "trades_executed": 8,
-      "strategy_notes": "100% OPTIONS - Phil Town style. Bonds/REITs REMOVED Dec 29, 2025. Cash-secured puts on SPY/AMD.",
+      "total_profit": 327.82,
+      "trades_executed": 4,
+      "strategy_notes": "100% OPTIONS - Phil Town style concentration. Bonds REMOVED Dec 29, 2025.",
       "risk_rules": {
         "max_delta": 30,
         "preferred_dte": "30-45",

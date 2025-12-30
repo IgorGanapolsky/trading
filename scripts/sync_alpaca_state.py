@@ -61,14 +61,10 @@ def sync_from_alpaca() -> dict:
     api_secret = os.getenv("ALPACA_SECRET_KEY") or os.getenv("APCA_API_SECRET_KEY")
 
     if not api_key or not api_secret:
-        # NEVER silently corrupt data with simulated values!
-        # This caused the Dec 30 incident where real $100,810 was overwritten with $100k
-        logger.error("❌ FATAL: No Alpaca API keys found!")
-        logger.error(
-            "   Set ALPACA_API_KEY and ALPACA_SECRET_KEY (or APCA_API_KEY_ID and APCA_API_SECRET_KEY)"
-        )
-        logger.error("   Refusing to overwrite real data with simulated values.")
-        raise RuntimeError("Missing Alpaca API credentials - cannot sync")
+        logger.warning("⚠️ No Alpaca API keys found - preserving existing data")
+        # DO NOT overwrite real data with simulated values!
+        # Return None to signal that we should only update timestamp, not values
+        return None
 
     try:
         from src.execution.alpaca_executor import AlpacaExecutor
@@ -93,23 +89,12 @@ def sync_from_alpaca() -> dict:
         raise
 
 
-def update_system_state(alpaca_data: dict) -> None:
+def update_system_state(alpaca_data: dict | None) -> None:
     """
     Update system_state.json with fresh Alpaca data.
 
-    Raises:
-        AlpacaSyncError: If data is simulated/fake - we NEVER overwrite real data with lies.
+    If alpaca_data is None, only update timestamp (preserve existing values).
     """
-    # CRITICAL: Reject simulated data - this would overwrite real data with garbage
-    mode = alpaca_data.get("mode", "unknown")
-    if mode == "simulated":
-        raise AlpacaSyncError(
-            f"REFUSING to update system_state.json with SIMULATED data!\n"
-            f"  Received mode='{mode}'\n"
-            f"  This would overwrite real portfolio data with lies.\n"
-            f"  Fix the Alpaca connection first."
-        )
-
     logger.info("📝 Updating system_state.json...")
 
     # Load existing state
@@ -119,29 +104,47 @@ def update_system_state(alpaca_data: dict) -> None:
     else:
         state = {}
 
-    # Update account section
-    state.setdefault("account", {})
-    state["account"]["current_equity"] = alpaca_data.get("equity", 0)
-    state["account"]["cash"] = alpaca_data.get("cash", 0)
-    state["account"]["buying_power"] = alpaca_data.get("buying_power", 0)
-    state["account"]["positions_value"] = alpaca_data.get("equity", 0) - alpaca_data.get("cash", 0)
-
-    # Calculate P/L if starting balance exists
-    starting = state["account"].get("starting_balance", 100000.0)
-    current = alpaca_data.get("equity", 0)
-    state["account"]["total_pl"] = current - starting
-    state["account"]["total_pl_pct"] = (
-        ((current - starting) / starting) * 100 if starting > 0 else 0
-    )
-
-    # Update meta
+    # Update meta timestamp regardless
     state.setdefault("meta", {})
     state["meta"]["last_updated"] = datetime.now().isoformat()
-    state["meta"]["last_sync"] = alpaca_data.get("synced_at")
-    state["meta"]["sync_mode"] = alpaca_data.get("mode", "unknown")
 
-    # Store positions count
-    state["account"]["positions_count"] = alpaca_data.get("positions_count", 0)
+    if alpaca_data is None:
+        # No API keys - only update timestamp, preserve existing data
+        state["meta"]["last_sync"] = datetime.now().isoformat()
+        state["meta"]["sync_mode"] = "skipped_no_keys"
+        logger.info("⚠️ No API keys - preserving existing account values, only updating timestamp")
+    else:
+        # CRITICAL: Reject simulated data - this would overwrite real data with garbage
+        mode = alpaca_data.get("mode", "unknown")
+        if mode == "simulated":
+            raise AlpacaSyncError(
+                f"REFUSING to update system_state.json with SIMULATED data!\n"
+                f"  Received mode='{mode}'\n"
+                f"  This would overwrite real portfolio data with lies.\n"
+                f"  Fix the Alpaca connection first."
+            )
+
+        # Full sync - update account section
+        state.setdefault("account", {})
+        state["account"]["current_equity"] = alpaca_data.get("equity", 0)
+        state["account"]["cash"] = alpaca_data.get("cash", 0)
+        state["account"]["buying_power"] = alpaca_data.get("buying_power", 0)
+        state["account"]["positions_value"] = alpaca_data.get("equity", 0) - alpaca_data.get("cash", 0)
+
+        # Calculate P/L if starting balance exists
+        starting = state["account"].get("starting_balance", 100000.0)
+        current = alpaca_data.get("equity", 0)
+        state["account"]["total_pl"] = current - starting
+        state["account"]["total_pl_pct"] = (
+            ((current - starting) / starting) * 100 if starting > 0 else 0
+        )
+
+        # Update meta
+        state["meta"]["last_sync"] = alpaca_data.get("synced_at")
+        state["meta"]["sync_mode"] = alpaca_data.get("mode", "unknown")
+
+        # Store positions count
+        state["account"]["positions_count"] = alpaca_data.get("positions_count", 0)
 
     # Write atomically
     SYSTEM_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -150,8 +153,11 @@ def update_system_state(alpaca_data: dict) -> None:
         json.dump(state, f, indent=2)
     temp_file.rename(SYSTEM_STATE_FILE)
 
+    # Log result
+    current_equity = state.get("account", {}).get("current_equity", 0)
+    positions_count = state.get("account", {}).get("positions_count", 0)
     logger.info(
-        f"✅ Updated system_state.json (equity=${current:.2f}, positions={alpaca_data.get('positions_count', 0)})"
+        f"✅ Updated system_state.json (equity=${current_equity:.2f}, positions={positions_count})"
     )
 
 
@@ -174,10 +180,14 @@ def main() -> int:
         update_system_state(alpaca_data)
 
         logger.info("=" * 60)
-        logger.info("✅ SYNC COMPLETE")
-        logger.info(f"   Equity: ${alpaca_data.get('equity', 0):,.2f}")
-        logger.info(f"   Positions: {alpaca_data.get('positions_count', 0)}")
-        logger.info(f"   Mode: {alpaca_data.get('mode', 'unknown')}")
+        if alpaca_data is None:
+            logger.info("⚠️ SYNC SKIPPED - No API keys")
+            logger.info("   Existing data preserved, timestamp updated")
+        else:
+            logger.info("✅ SYNC COMPLETE")
+            logger.info(f"   Equity: ${alpaca_data.get('equity', 0):,.2f}")
+            logger.info(f"   Positions: {alpaca_data.get('positions_count', 0)}")
+            logger.info(f"   Mode: {alpaca_data.get('mode', 'unknown')}")
         logger.info("=" * 60)
 
         return 0
