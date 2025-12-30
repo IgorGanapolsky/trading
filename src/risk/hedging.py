@@ -286,8 +286,13 @@ class HedgingOverlay:
             return True
 
         try:
+            # Validate expiry is required for option symbols
+            if not hedge.expiry:
+                logger.error("Cannot execute hedge without expiry date")
+                return False
+
             # Format option symbols (Alpaca format)
-            expiry_str = hedge.expiry.strftime("%y%m%d") if hedge.expiry else ""
+            expiry_str = hedge.expiry.strftime("%y%m%d")
 
             # Buy protective put
             put_symbol = f"{hedge.symbol}{expiry_str}P{int(hedge.put_strike * 1000):08d}"

@@ -27,7 +27,7 @@ class OrchestratorTelemetry:
         default_path = Path("data/audit_trail/hybrid_funnel_runs.jsonl")
         self.log_path = Path(log_path) if log_path else default_path
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
-        self.session_id = datetime.utcnow().strftime("%Y%m%dT%H%M%S")
+        self.session_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
         self.run_id = os.getenv("GITHUB_RUN_ID") or os.getenv("RUN_ID")
 
         # Session decision tracking
@@ -149,7 +149,7 @@ class OrchestratorTelemetry:
 
     def record(self, event_type: str, ticker: str, status: str, payload: dict[str, Any]) -> None:
         entry = {
-            "ts": datetime.utcnow().isoformat(),
+            "ts": datetime.now(timezone.utc).isoformat(),
             "session": self.session_id,
             "run_id": self.run_id,
             "event": event_type,

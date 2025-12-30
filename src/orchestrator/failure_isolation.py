@@ -6,7 +6,7 @@ import json
 import traceback
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -97,7 +97,7 @@ class FailureIsolationManager:
                         "attempt": attempt,
                         "error": repr(exc),
                         "traceback": traceback.format_exc(),
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                     }
                 )
 
@@ -182,7 +182,7 @@ class FailureIsolationManager:
         metadata: dict[str, Any] | None,
     ) -> Path:
         """Persist failure details so other agents/tools can inspect them."""
-        timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%S%f")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
         log_path = self.log_dir / f"{timestamp}_{gate}_{ticker}.json"
         log_payload = {
             "gate": gate,

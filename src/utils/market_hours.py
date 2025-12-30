@@ -201,13 +201,13 @@ def get_next_market_open(from_time: datetime | None = None) -> datetime:
         return now_et.replace(hour=9, minute=30, second=0, microsecond=0)
 
     # Otherwise, find next weekday
-    next_open = now_et.replace(hour=9, minute=30, second=0, microsecond=0)
-    days_ahead = 1
-    while True:
-        next_open = next_open.replace(day=next_open.day + days_ahead)
-        if next_open.weekday() < 5:  # Monday = 0, Friday = 4
-            return next_open
-        days_ahead = 1
+    from datetime import timedelta
+
+    next_open = now_et.replace(hour=9, minute=30, second=0, microsecond=0) + timedelta(days=1)
+    # Find next weekday (Monday = 0, Friday = 4)
+    while next_open.weekday() >= 5:  # Saturday or Sunday
+        next_open += timedelta(days=1)
+    return next_open
 
 
 # Convenience alias

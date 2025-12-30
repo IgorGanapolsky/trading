@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-11-09T00:00:00Z",
+  "generated_at": "2025-12-30T00:00:00Z",
   "servers": [
     {
       "id": "trade-agent",
@@ -33,26 +33,6 @@
       }
     },
     {
-      "id": "tradovate",
-      "display_name": "Tradovate Trading",
-      "module": "mcp.servers.tradovate",
-      "tools": {
-        "place_order": "place_order",
-        "get_positions": "get_positions",
-        "get_contract_details": "get_contract_details"
-      }
-    },
-    {
-      "id": "metatrader",
-      "display_name": "MetaTrader 5 Bridge",
-      "module": "mcp.servers.metatrader",
-      "tools": {
-        "place_order": "place_order",
-        "get_open_positions": "get_open_positions",
-        "get_indicator": "get_indicator"
-      }
-    },
-    {
       "id": "gmail",
       "display_name": "Gmail Integration",
       "module": "mcp.servers.gmail",
@@ -70,16 +50,6 @@
         "send_message": "send_message",
         "send_formatted_message": "send_formatted_message",
         "send_dm": "send_dm"
-      }
-    },
-    {
-      "id": "google-sheets",
-      "display_name": "Google Sheets Integration",
-      "module": "mcp.servers.google_sheets",
-      "tools": {
-        "read_range": "read_range",
-        "write_range": "write_range",
-        "create_report": "create_report"
       }
     },
     {

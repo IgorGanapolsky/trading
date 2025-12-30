@@ -173,7 +173,7 @@ def _get_us_holidays(year: int) -> holidays.HolidayBase:
 
 
 def is_us_market_day(day: date | None = None) -> bool:
-    current_day = day or datetime.utcnow().date()
+    current_day = day or datetime.now(timezone.utc).date()
     if current_day.weekday() >= 5:  # Saturday/Sunday
         return False
     calendar = _get_us_holidays(current_day.year)
@@ -1283,7 +1283,7 @@ class TradingOrchestrator:
             logger.error(f"Failed to record closed trade for {symbol}: {e}")
 
     def _build_session_profile(self) -> dict[str, Any]:
-        today = datetime.utcnow().date()
+        today = datetime.now(timezone.utc).date()
         market_day = is_us_market_day(today)
         proxy_symbols = os.getenv("WEEKEND_PROXY_SYMBOLS", "BITO,RWCR")
         proxy_list = [
@@ -3008,7 +3008,7 @@ class TradingOrchestrator:
             # Import and initialize the executor
             from src.trading.options_executor import OptionsExecutor
 
-            OptionsExecutor(paper=self.paper)
+            _options_executor = OptionsExecutor(paper=self.paper)  # noqa: F841 - initialized for validation
             logger.info("Gate 7: OptionsExecutor initialized (paper=%s)", self.paper)
 
             # Get account equity for position sizing
@@ -3136,8 +3136,6 @@ class TradingOrchestrator:
 
         # Respect flag
         if os.getenv("WEEKEND_PROXY_REALLOCATE", "true").lower() not in {"true", "1", "yes"}:
-            return None
-
             return None
 
         bucket = "weekend"

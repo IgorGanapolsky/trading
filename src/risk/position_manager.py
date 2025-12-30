@@ -30,10 +30,7 @@ logger = logging.getLogger(__name__)
 # Default path for persisting position state
 DEFAULT_STATE_FILE = Path(__file__).parent.parent.parent / "data" / "system_state.json"
 
-# Asset class definitions for exit threshold tuning
-# TREASURY/BOND ETFS REMOVED Dec 29, 2025 - Phil Town doesn't recommend bonds
-TREASURY_ETFS: set[str] = set()  # REMOVED
-BOND_ETFS: set[str] = set()  # REMOVED
+# Asset class definitions - Phil Town focuses on equities/options only
 
 
 class AssetClass(Enum):
@@ -98,15 +95,6 @@ class ExitConditions:
     enable_atr_stop: bool = True  # Use ATR-based stops
     atr_multiplier: float = 2.5  # 2.5x ATR for stop distance (was 2.0 - Dec 17, 2025)
 
-    # Asset-class-specific overrides
-    treasury_take_profit_pct: float = 0.0015  # 0.15% for treasuries
-    treasury_stop_loss_pct: float = 0.0015  # 0.15% for treasuries
-    treasury_max_holding_days: int = 5  # 5 days for treasuries
-
-    bond_take_profit_pct: float = 0.005  # 0.5% for bonds
-    bond_stop_loss_pct: float = 0.005  # 0.5% for bonds
-    bond_max_holding_days: int = 7  # 7 days for bonds
-
     def get_thresholds_for_asset(self, asset_class: AssetClass) -> tuple[float, float, int]:
         """
         Get take_profit, stop_loss, and max_holding_days for an asset class.
@@ -114,15 +102,8 @@ class ExitConditions:
         Returns:
             Tuple of (take_profit_pct, stop_loss_pct, max_holding_days)
         """
-        if asset_class == AssetClass.TREASURY:
-            return (
-                self.treasury_take_profit_pct,
-                self.treasury_stop_loss_pct,
-                self.treasury_max_holding_days,
-            )
-        if asset_class == AssetClass.BOND:
-            return (self.bond_take_profit_pct, self.bond_stop_loss_pct, self.bond_max_holding_days)
-        # Default: equity
+        # TREASURY and BOND removed Dec 29, 2025 - Phil Town doesn't recommend bonds
+        # All assets now use equity thresholds
         return (self.take_profit_pct, self.stop_loss_pct, self.max_holding_days)
 
 

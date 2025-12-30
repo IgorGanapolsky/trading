@@ -37,7 +37,9 @@ def check_recent_trades(days=2) -> tuple[bool, str]:
     Returns:
         (is_healthy, status_message)
     """
-    datetime.now() - timedelta(days=days)
+    # Calculate cutoff date for trade search
+    cutoff_date = datetime.now() - timedelta(days=days)
+    _ = cutoff_date  # Used for logging if needed
 
     trades_found = []
     for day in range(days + 1):

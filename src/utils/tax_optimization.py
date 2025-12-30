@@ -325,12 +325,20 @@ class TaxOptimizer:
         long_term_tax = max(0, net_long_term * LONG_TERM_TAX_RATE)
 
         # Apply $3,000 capital loss deduction limit (if net losses)
+        # Per IRS rules, the $3,000 limit applies to COMBINED net capital losses
+        combined_net_loss = 0.0
         if net_short_term < 0:
-            deductible_loss = min(abs(net_short_term), 3000.0)
-            short_term_tax = -deductible_loss * SHORT_TERM_TAX_RATE  # Tax benefit from loss
+            combined_net_loss += abs(net_short_term)
+            short_term_tax = 0.0  # No tax on losses
         if net_long_term < 0:
-            deductible_loss = min(abs(net_long_term), 3000.0)
-            long_term_tax = -deductible_loss * LONG_TERM_TAX_RATE
+            combined_net_loss += abs(net_long_term)
+            long_term_tax = 0.0  # No tax on losses
+
+        # Apply the $3,000 deduction limit to combined losses
+        if combined_net_loss > 0:
+            deductible_loss = min(combined_net_loss, 3000.0)
+            # Tax benefit from deductible losses (at ordinary income rate)
+            short_term_tax = -deductible_loss * SHORT_TERM_TAX_RATE
 
         total_tax = short_term_tax + long_term_tax
 
