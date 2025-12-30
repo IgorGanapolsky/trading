@@ -199,6 +199,11 @@ def query_rag_for_operational_failures() -> list[dict]:
 def main():
     parser = argparse.ArgumentParser(description="Pre-session RAG check")
     parser.add_argument(
+        "--block-on-critical",
+        action="store_true",
+        help="Block only on CRITICAL lessons (same as --allow-warnings)",
+    )
+    parser.add_argument(
         "--allow-warnings",
         action="store_true",
         help="Allow HIGH severity lessons but still block on CRITICAL (default: block on both)",
@@ -222,8 +227,8 @@ def main():
     has_high_recent = False
 
     # 1. Check for CRITICAL and HIGH lessons (direct file search)
-    # If --allow-warnings, only check CRITICAL. Otherwise check both.
-    check_high = not args.allow_warnings
+    # If --allow-warnings or --block-on-critical, only check CRITICAL. Otherwise check both.
+    check_high = not (args.allow_warnings or args.block_on_critical)
     severity_desc = "CRITICAL and HIGH" if check_high else "CRITICAL"
     print(f"📚 Checking for {severity_desc} lessons learned...")
 
