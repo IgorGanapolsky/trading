@@ -11,11 +11,6 @@ Added Dec 30, 2025 after discovering broken dashboard entries.
 
 import json
 import tempfile
-from datetime import date
-from pathlib import Path
-from unittest.mock import patch
-
-import pytest
 
 
 class TestTradeRecordingValidation:
@@ -111,7 +106,7 @@ class TestDashboardOutputValidation:
     def test_dashboard_filters_failed_status(self):
         """Dashboard should skip trades with FAILED or ERROR status."""
         statuses_to_filter = ["LIVE_FAILED", "LIVE_ERROR", "SIMULATED", "failed"]
-        statuses_to_keep = ["FILLED", "COMPLETED", "SUCCESS", "PENDING"]
+        _statuses_to_keep = ["FILLED", "COMPLETED", "SUCCESS", "PENDING"]  # noqa: F841
 
         for status in statuses_to_filter:
             should_skip = "FAILED" in status.upper() or "ERROR" in status.upper()
@@ -143,7 +138,7 @@ class TestOptionsTradeValidation:
         """Iron condor with LIVE_FAILED status should not be recorded."""
         # Simulate iron_condor_trader.py logic (after fix)
         status = "LIVE_FAILED"
-        order_ids = []  # Empty because all legs failed
+        _order_ids = []  # noqa: F841 - Empty because all legs failed
 
         # Our fix: only record if successful
         should_record = status not in ["LIVE_FAILED", "LIVE_ERROR"]

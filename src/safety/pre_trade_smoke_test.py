@@ -112,7 +112,7 @@ def run_smoke_tests() -> SmokeTestResult:
             result.errors.append(f"CRITICAL: Account status is {status}, not ACTIVE")
             logger.error(f"SMOKE TEST FAILED: Account status is {status}")
             return result
-        logger.info(f"✅ SMOKE TEST: Account status is ACTIVE")
+        logger.info("✅ SMOKE TEST: Account status is ACTIVE")
     except Exception as e:
         result.warnings.append(f"Could not check account status: {e}")
 
