@@ -230,8 +230,8 @@ def main():
     all_lessons = check_recent_critical_lessons(days_back=args.days, include_high=check_high)
 
     # Separate by severity
-    critical_lessons = [l for l in all_lessons if l["severity"] == "CRITICAL"]
-    high_lessons = [l for l in all_lessons if l["severity"] == "HIGH"]
+    critical_lessons = [lesson for lesson in all_lessons if lesson["severity"] == "CRITICAL"]
+    high_lessons = [lesson for lesson in all_lessons if lesson["severity"] == "HIGH"]
 
     if critical_lessons:
         print(f"\n🚨 Found {len(critical_lessons)} CRITICAL lessons!")
