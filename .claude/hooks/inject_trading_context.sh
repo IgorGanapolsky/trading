@@ -140,8 +140,9 @@ fi
 
 # Next automated trade time - MUST be a weekday (Mon-Fri)
 # Fixed Dec 19, 2025: Was showing Saturday as next trade date
+# Fixed Dec 30, 2025: Use Eastern timezone for day-of-week calculation
 get_next_trading_day() {
-    local dow=$(date +%u)  # 1=Mon, 7=Sun
+    local dow=$(TZ=America/New_York date +%u)  # 1=Mon, 7=Sun (Eastern time!)
     local days_to_add=1
 
     # If Friday (5), next trade is Monday (+3 days)
@@ -155,9 +156,9 @@ get_next_trading_day() {
         days_to_add=1
     fi
 
-    # Try macOS date first (-v), then GNU date (-d)
+    # Try macOS date first (-v), then GNU date (-d) - both with Eastern TZ
     TZ=America/New_York date -v +${days_to_add}d '+%b %d, 9:35 AM ET' 2>/dev/null || \
-    date -d "+${days_to_add} days" '+%b %d, 9:35 AM ET' 2>/dev/null || \
+    TZ=America/New_York date -d "+${days_to_add} days" '+%b %d, 9:35 AM ET' 2>/dev/null || \
     echo "Next weekday 9:35 AM ET"
 }
 NEXT_TRADE=$(get_next_trading_day)
