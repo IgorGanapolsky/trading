@@ -129,7 +129,9 @@ def update_system_state(alpaca_data: dict | None) -> None:
         state["account"]["current_equity"] = alpaca_data.get("equity", 0)
         state["account"]["cash"] = alpaca_data.get("cash", 0)
         state["account"]["buying_power"] = alpaca_data.get("buying_power", 0)
-        state["account"]["positions_value"] = alpaca_data.get("equity", 0) - alpaca_data.get("cash", 0)
+        state["account"]["positions_value"] = alpaca_data.get("equity", 0) - alpaca_data.get(
+            "cash", 0
+        )
 
         # Calculate P/L if starting balance exists
         starting = state["account"].get("starting_balance", 100000.0)
