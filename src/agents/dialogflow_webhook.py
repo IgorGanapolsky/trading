@@ -11,7 +11,6 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -69,7 +68,7 @@ def format_lessons_response(lessons: list, query: str) -> str:
     if not lessons:
         return f"No lessons found matching '{query}'. Try searching for: trading, risk, CI, RAG, verification, or operational."
 
-    response_parts = [f"Based on our lessons learned:\n"]
+    response_parts = ["Based on our lessons learned:\n"]
 
     for i, lesson in enumerate(lessons, 1):
         lesson_id = lesson.get("id", "unknown")
@@ -226,4 +225,4 @@ if __name__ == "__main__":
     import uvicorn
 
     port = int(os.environ.get("PORT", 8080))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=port)  # noqa: S104 - Required for Cloud Run

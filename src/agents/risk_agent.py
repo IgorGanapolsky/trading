@@ -15,8 +15,9 @@ import contextlib
 import logging
 from typing import Any
 
-from .base_agent import BaseAgent
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +69,7 @@ class RiskAgent(BaseAgent):
 
         # Query RAG for relevant lessons BEFORE making decision
         rag_lessons = self.rag.query(f"{symbol} risk position sizing", top_k=3)
-        critical_lessons = [l for l in rag_lessons if l.get("severity") == "CRITICAL"]
+        critical_lessons = [lesson for lesson in rag_lessons if lesson.get("severity") == "CRITICAL"]
 
         # Build RAG context section
         rag_context = ""

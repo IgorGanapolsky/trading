@@ -31,8 +31,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from src.risk.capital_efficiency import get_capital_calculator
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
+from src.risk.capital_efficiency import get_capital_calculator
 
 logger = logging.getLogger(__name__)
 
@@ -479,7 +479,7 @@ class TradeGateway:
         query_terms += f" {request.side}"
 
         rag_lessons = self.rag.query(query_terms, top_k=5)
-        critical_rag_lessons = [l for l in rag_lessons if l.get("severity") == "CRITICAL"]
+        critical_rag_lessons = [lesson for lesson in rag_lessons if lesson.get("severity") == "CRITICAL"]
 
         if critical_rag_lessons:
             rejection_reasons.append(RejectionReason.RAG_LESSON_CRITICAL)

@@ -6,8 +6,8 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from src.strategies.legacy_momentum import LegacyMomentumCalculator
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
+from src.strategies.legacy_momentum import LegacyMomentumCalculator
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ class MomentumAgent:
 
         # Query RAG for relevant lessons BEFORE finalizing decision
         rag_lessons = self.rag.query(f"{ticker} momentum technical analysis", top_k=3)
-        critical_lessons = [l for l in rag_lessons if l.get("severity") == "CRITICAL"]
+        critical_lessons = [lesson for lesson in rag_lessons if lesson.get("severity") == "CRITICAL"]
 
         # If CRITICAL lessons found, reduce strength/confidence
         if critical_lessons:

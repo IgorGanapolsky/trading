@@ -34,7 +34,7 @@ Created: 2025-12-30
 import json
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -399,9 +399,6 @@ class TestRAGTradeIntegration:
 
         # Take the first CRITICAL lesson
         lesson = critical_lessons[0]
-
-        # Extract key terms from the lesson
-        content_lower = lesson["content"].lower()
 
         # Verify we can query for it
         # Use the lesson ID as query

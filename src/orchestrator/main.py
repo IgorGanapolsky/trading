@@ -1699,12 +1699,12 @@ class TradingOrchestrator:
         sentiment_skill_score = 0.0
         try:
             import sys
-            sentiment_script = _os.path.join(
-                _os.path.dirname(__file__),
+            sentiment_script = os.path.join(
+                os.path.dirname(__file__),
                 "../../.claude/skills/sentiment_analyzer/scripts/sentiment_analyzer.py"
             )
-            if _os.path.exists(sentiment_script):
-                sys.path.insert(0, _os.path.dirname(sentiment_script))
+            if os.path.exists(sentiment_script):
+                sys.path.insert(0, os.path.dirname(sentiment_script))
                 from sentiment_analyzer import SentimentAnalyzer
 
                 analyzer = SentimentAnalyzer()
@@ -2573,12 +2573,12 @@ class TradingOrchestrator:
         try:
             import sys
             from datetime import datetime as dt
-            anomaly_script = _os.path.join(
-                _os.path.dirname(__file__),
+            anomaly_script = os.path.join(
+                os.path.dirname(__file__),
                 "../../.claude/skills/anomaly_detector/scripts/anomaly_detector.py"
             )
-            if _os.path.exists(anomaly_script):
-                sys.path.insert(0, _os.path.dirname(anomaly_script))
+            if os.path.exists(anomaly_script):
+                sys.path.insert(0, os.path.dirname(anomaly_script))
                 from anomaly_detector import AnomalyDetector
 
                 detector = AnomalyDetector()
