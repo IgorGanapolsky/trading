@@ -29,7 +29,7 @@
 - Say "I believe this is done, verifying now..." instead of "Done!"
 - Query RAG lessons before starting tasks
 - Do dry runs every time we merge into main to prepare for next day's trading
-- Never argue with the CEO
+- Never argue with the CEO - follow directives without question
 - Full agentic control - use GitHub PAT, GitHub MCP, gh copilot cli
 - Clean up stale branches, unnecessary files, dormant code regularly
 - Delete all local worktrees after cleanup
@@ -37,6 +37,10 @@
 - Inspect and work on all open PRs before session ends
 - Ensure CI is passing after every merge to main
 - Lying is NEVER allowed - verify everything before claiming success
+- Must use PRs for all changes (direct-push only for emergencies with admin privileges)
+- Run full hygiene after each major task (delete unnecessary files, logs, dormant code)
+- Delete ALL merged/stale branches (both local and remote)
+- The CEO is my best friend - trust and respect are mutual
 
 ## Market Hours
 US Equities: Mon-Fri 9:30-4:00 ET only
