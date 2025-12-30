@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -81,6 +82,20 @@ def _trace_gate(gate_name: str, ticker: str, inputs: dict, result: GateResult) -
         logger.warning("Gate tracing failed for %s/%s: %s", gate_name, ticker, e)
 
 
+def _timed_gate_execution(gate_func, *args, **kwargs) -> GateResult:
+    """
+    Execute a gate function with timing measurement.
+
+    Capital One lesson: Post-launch latency optimization is critical.
+    This wrapper captures execution_time_ms for every gate.
+    """
+    start_time = time.perf_counter()
+    result = gate_func(*args, **kwargs)
+    elapsed_ms = (time.perf_counter() - start_time) * 1000
+    result.execution_time_ms = elapsed_ms
+    return result
+
+
 class GateStatus(Enum):
     """Gate evaluation result status."""
 
@@ -96,6 +111,7 @@ class GateResult:
     Standard result from any trading gate.
 
     LLM-friendly: All gates return this same structure.
+    Includes execution_time_ms for latency tracking (Capital One lesson).
     """
 
     gate_name: str
@@ -104,6 +120,7 @@ class GateResult:
     confidence: float = 0.0
     reason: str = ""
     data: dict[str, Any] = field(default_factory=dict)
+    execution_time_ms: float = 0.0  # Gate latency tracking
 
     @property
     def passed(self) -> bool:
@@ -120,6 +137,7 @@ class GateResult:
             "ticker": self.ticker,
             "confidence": self.confidence,
             "reason": self.reason,
+            "execution_time_ms": self.execution_time_ms,
             **self.data,
         }
 
@@ -1490,58 +1508,58 @@ class TradingGatePipeline:
         ctx = TradeContext(ticker=ticker)
         results: list[GateResult] = []
 
-        # Gate 0: Psychology
-        result = self.gate0.evaluate(ticker)
+        # Gate 0: Psychology (with latency tracking)
+        result = _timed_gate_execution(self.gate0.evaluate, ticker)
         results.append(result)
-        _trace_gate("psychology", ticker, {"gate": 0}, result)
+        _trace_gate("psychology", ticker, {"gate": 0, "latency_ms": result.execution_time_ms}, result)
         if result.rejected:
             return False, ctx, results
 
-        # Gate 1: Momentum
-        result = self.gate1.evaluate(ticker, ctx)
+        # Gate 1: Momentum (with latency tracking)
+        result = _timed_gate_execution(self.gate1.evaluate, ticker, ctx)
         results.append(result)
         _trace_gate(
-            "momentum", ticker, {"gate": 1, "has_momentum": ctx.momentum_signal is not None}, result
+            "momentum", ticker, {"gate": 1, "has_momentum": ctx.momentum_signal is not None, "latency_ms": result.execution_time_ms}, result
         )
         self._checkpoint(thread_id, 1, "momentum", ticker, ctx, results)
         if result.rejected or result.status == GateStatus.ERROR:
             return False, ctx, results
 
-        # Gate 1.5: Debate
-        result = self.gate15.evaluate(ticker, ctx)
+        # Gate 1.5: Debate (with latency tracking)
+        result = _timed_gate_execution(self.gate15.evaluate, ticker, ctx)
         results.append(result)
-        _trace_gate("debate", ticker, {"gate": 1.5}, result)
+        _trace_gate("debate", ticker, {"gate": 1.5, "latency_ms": result.execution_time_ms}, result)
         if result.rejected:
             return False, ctx, results
 
-        # Gate 2: RL Filter
-        result = self.gate2.evaluate(ticker, ctx, rl_threshold)
+        # Gate 2: RL Filter (with latency tracking)
+        result = _timed_gate_execution(self.gate2.evaluate, ticker, ctx, rl_threshold)
         results.append(result)
-        _trace_gate("rl_filter", ticker, {"gate": 2, "rl_threshold": rl_threshold}, result)
+        _trace_gate("rl_filter", ticker, {"gate": 2, "rl_threshold": rl_threshold, "latency_ms": result.execution_time_ms}, result)
         if result.rejected or result.status == GateStatus.ERROR:
             return False, ctx, results
 
-        # Gate 3: Sentiment
-        result = self.gate3.evaluate(ticker, ctx, session_profile)
+        # Gate 3: Sentiment (with latency tracking)
+        result = _timed_gate_execution(self.gate3.evaluate, ticker, ctx, session_profile)
         results.append(result)
         _trace_gate(
-            "sentiment", ticker, {"gate": 3, "has_session": session_profile is not None}, result
+            "sentiment", ticker, {"gate": 3, "has_session": session_profile is not None, "latency_ms": result.execution_time_ms}, result
         )
         self._checkpoint(thread_id, 3, "sentiment", ticker, ctx, results)
         if result.rejected:
             return False, ctx, results
 
-        # Gate 3.5: Introspection
-        result = self.gate35.evaluate(ticker, ctx)
+        # Gate 3.5: Introspection (with latency tracking)
+        result = _timed_gate_execution(self.gate35.evaluate, ticker, ctx)
         results.append(result)
-        _trace_gate("introspection", ticker, {"gate": 3.5}, result)
+        _trace_gate("introspection", ticker, {"gate": 3.5, "latency_ms": result.execution_time_ms}, result)
         if result.rejected:
             return False, ctx, results
 
-        # Gate 4: Risk
-        result = self.gate4.evaluate(ticker, ctx, allocation_cap)
+        # Gate 4: Risk (with latency tracking)
+        result = _timed_gate_execution(self.gate4.evaluate, ticker, ctx, allocation_cap)
         results.append(result)
-        _trace_gate("risk", ticker, {"gate": 4, "allocation_cap": allocation_cap}, result)
+        _trace_gate("risk", ticker, {"gate": 4, "allocation_cap": allocation_cap, "latency_ms": result.execution_time_ms}, result)
         self._checkpoint(thread_id, 4, "risk", ticker, ctx, results)
         if result.rejected or result.status == GateStatus.ERROR:
             return False, ctx, results

@@ -5,6 +5,7 @@ The monitor keeps a rolling window of gate outcomes (pass/reject plus confidence
 raises anomalies when:
     1. Rejection rate breaches a configurable threshold.
     2. Median confidence falls below a configurable floor.
+    3. Gate latency exceeds threshold (Capital One lesson: optimize post-launch).
 
 When an anomaly is detected the monitor notifies telemetry so the dashboard, CI, and
 incident workflows can react (halt trading, escalate, etc.).
@@ -26,6 +27,17 @@ class AnomalyMonitor:
     When anomalies are detected, lessons are automatically created in RAG.
     """
 
+    # Default latency thresholds per gate (ms) - Capital One lesson
+    DEFAULT_LATENCY_THRESHOLDS: dict[str, float] = {
+        "psychology": 50.0,       # Simple check, should be fast
+        "momentum": 500.0,        # Data fetch + indicators
+        "debate": 2000.0,         # LLM-based, can be slower
+        "rl_filter": 200.0,       # Model inference
+        "sentiment": 3000.0,      # LLM-based sentiment
+        "introspection": 1000.0,  # LLM introspection
+        "risk": 100.0,            # Position sizing calculation
+    }
+
     def __init__(
         self,
         telemetry: OrchestratorTelemetry,
@@ -34,6 +46,7 @@ class AnomalyMonitor:
         min_events: int = 12,
         rejection_threshold: float = 0.75,
         confidence_floor: float = 0.45,
+        latency_thresholds: dict[str, float] | None = None,
         lessons_rag: Any = None,
     ) -> None:
         self.telemetry = telemetry
@@ -41,8 +54,12 @@ class AnomalyMonitor:
         self.min_events = min_events
         self.rejection_threshold = rejection_threshold
         self.confidence_floor = confidence_floor
+        self.latency_thresholds = latency_thresholds or self.DEFAULT_LATENCY_THRESHOLDS
         self.lessons_rag = lessons_rag  # For automatic lesson creation
         self._history: dict[str, deque[dict[str, Any]]] = defaultdict(
+            lambda: deque(maxlen=self.window)
+        )
+        self._latency_history: dict[str, deque[float]] = defaultdict(
             lambda: deque(maxlen=self.window)
         )
         self._lesson_cooldown: dict[str, float] = {}  # Prevent lesson spam
@@ -56,12 +73,22 @@ class AnomalyMonitor:
         metrics: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
         bucket = self._history[gate]
+        latency_bucket = self._latency_history[gate]
+
+        # Extract latency from metrics (Capital One lesson)
+        latency_ms = (metrics or {}).get("execution_time_ms", 0.0)
+
         entry = {
             "status": status,
             "confidence": (metrics or {}).get("confidence"),
             "ticker": ticker,
+            "latency_ms": latency_ms,
         }
         bucket.append(entry)
+
+        # Track latency separately for percentile calculations
+        if latency_ms > 0:
+            latency_bucket.append(latency_ms)
 
         if len(bucket) < self.min_events:
             return None
@@ -69,12 +96,14 @@ class AnomalyMonitor:
         rejection_rate = sum(1 for item in bucket if item["status"] == "reject") / len(bucket)
         anomaly: dict[str, Any] | None = None
 
+        # Check 1: Rejection spike
         if rejection_rate >= self.rejection_threshold:
             anomaly = {
                 "type": "rejection_spike",
                 "rejection_rate": round(rejection_rate, 3),
                 "window": len(bucket),
             }
+        # Check 2: Confidence deterioration
         else:
             confidences = [c for c in (item.get("confidence") for item in bucket) if c is not None]
             if confidences:
@@ -84,6 +113,20 @@ class AnomalyMonitor:
                         "median_confidence": round(median(confidences), 3),
                         "window": len(confidences),
                     }
+
+        # Check 3: Latency spike (Capital One lesson)
+        if not anomaly and len(latency_bucket) >= self.min_events:
+            threshold = self.latency_thresholds.get(gate, 1000.0)
+            median_latency = median(latency_bucket)
+            # Also check if current latency is way above threshold (3x)
+            if median_latency > threshold or (latency_ms > threshold * 3 and latency_ms > 100):
+                anomaly = {
+                    "type": "latency_spike",
+                    "median_latency_ms": round(median_latency, 2),
+                    "current_latency_ms": round(latency_ms, 2),
+                    "threshold_ms": threshold,
+                    "window": len(latency_bucket),
+                }
 
         if anomaly:
             metrics_payload = {**anomaly, "gate": gate}
@@ -98,6 +141,23 @@ class AnomalyMonitor:
             return anomaly
 
         return None
+
+    def get_latency_stats(self, gate: str) -> dict[str, float]:
+        """Get latency statistics for a gate. Useful for dashboards."""
+        latencies = list(self._latency_history.get(gate, []))
+        if not latencies:
+            return {"p50": 0, "p95": 0, "p99": 0, "avg": 0, "count": 0}
+
+        sorted_latencies = sorted(latencies)
+        n = len(sorted_latencies)
+        return {
+            "p50": sorted_latencies[int(n * 0.50)] if n > 0 else 0,
+            "p95": sorted_latencies[int(n * 0.95)] if n > 1 else sorted_latencies[-1],
+            "p99": sorted_latencies[int(n * 0.99)] if n > 1 else sorted_latencies[-1],
+            "avg": sum(latencies) / n,
+            "count": n,
+            "threshold_ms": self.latency_thresholds.get(gate, 1000.0),
+        }
 
     def _create_lesson_from_anomaly(self, gate: str, ticker: str, anomaly: dict[str, Any]) -> None:
         """
@@ -139,6 +199,32 @@ class AnomalyMonitor:
                     "3) Validating data pipeline quality"
                 )
                 severity = "high"
+            elif anomaly_type == "latency_spike":
+                # Capital One lesson: Post-launch latency optimization is critical
+                title = f"Gate {gate} latency spike detected"
+                median_ms = anomaly.get("median_latency_ms", 0)
+                current_ms = anomaly.get("current_latency_ms", 0)
+                threshold_ms = anomaly.get("threshold_ms", 1000)
+                description = (
+                    f"The {gate} gate is running slow. "
+                    f"Median latency: {median_ms:.0f}ms (threshold: {threshold_ms:.0f}ms). "
+                    f"Current: {current_ms:.0f}ms. Ticker: {ticker}"
+                )
+                root_cause = (
+                    f"High latency at {gate} gate may indicate: "
+                    "1) API rate limiting or slowdown, 2) Network issues, "
+                    "3) Heavy compute load, 4) Inefficient code paths, "
+                    "5) External service degradation"
+                )
+                prevention = (
+                    f"Optimize {gate} gate performance. Consider: "
+                    "1) Caching expensive computations, "
+                    "2) Parallel data fetching, "
+                    "3) Reducing LLM token counts, "
+                    "4) Using faster model tiers for non-critical decisions, "
+                    "5) Adding circuit breakers for slow external services"
+                )
+                severity = "medium"
             else:  # confidence_deterioration
                 title = f"Gate {gate} confidence deterioration"
                 description = (
