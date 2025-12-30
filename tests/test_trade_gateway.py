@@ -52,6 +52,13 @@ class TestTradeGatewayLiquidityCheck:
         gateway = TradeGateway(executor=None, paper=True)
         gateway.executor = MockExecutor(account_equity=50000)
 
+        # Mock RAG to return no critical lessons (isolate liquidity test)
+        class MockRAG:
+            def query(self, query_terms, top_k=5):
+                return []  # No lessons found
+
+        gateway.rag = MockRAG()
+
         # 2% spread = (2.00 - 1.96) / 2.00 = 0.02
         request = TradeRequest(
             symbol="SPY240315C00500000",
@@ -110,6 +117,13 @@ class TestTradeGatewayIVRankCheck:
         gateway = TradeGateway(executor=None, paper=True)
         gateway.executor = MockExecutor(account_equity=50000)
 
+        # Mock RAG to avoid blocking from critical lessons
+        class MockRAG:
+            def query(self, query_terms, top_k=5):
+                return []
+
+        gateway.rag = MockRAG()
+
         request = TradeRequest(
             symbol="SPY",
             side="buy",
@@ -148,6 +162,13 @@ class TestTradeGatewayCapitalEfficiency:
         """Test that $50k account can trade iron condors."""
         gateway = TradeGateway(executor=None, paper=True)
         gateway.executor = MockExecutor(account_equity=50000)
+
+        # Mock RAG to avoid blocking from critical lessons
+        class MockRAG:
+            def query(self, query_terms, top_k=5):
+                return []
+
+        gateway.rag = MockRAG()
 
         request = TradeRequest(
             symbol="SPY",

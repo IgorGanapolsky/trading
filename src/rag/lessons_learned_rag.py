@@ -64,12 +64,28 @@ class LessonsLearnedRAG:
         if not self.lessons:
             return []
 
-        query_terms = query.lower().split()
+        query_lower = query.lower()
+        query_terms = query_lower.split()
         results = []
 
         for lesson in self.lessons:
             # Filter by severity if specified
             if severity_filter and lesson["severity"] != severity_filter:
+                continue
+
+            # Check for exact ID match first (boost heavily)
+            lesson_id_lower = lesson["id"].lower()
+            if query_lower == lesson_id_lower or query_lower in lesson_id_lower:
+                results.append(
+                    {
+                        "id": lesson["id"],
+                        "severity": lesson["severity"],
+                        "score": 10000,  # Very high score for ID match
+                        "snippet": lesson["content"][:500],
+                        "content": lesson["content"],
+                        "file": lesson["file"],
+                    }
+                )
                 continue
 
             content_lower = lesson["content"].lower()
@@ -79,6 +95,9 @@ class LessonsLearnedRAG:
             for term in query_terms:
                 if term in content_lower:
                     score += content_lower.count(term)
+                # Boost for matches in ID
+                if term in lesson_id_lower:
+                    score += 10
                 # Boost for matches in tags
                 if any(term in tag.lower() for tag in lesson["tags"]):
                     score += 5
