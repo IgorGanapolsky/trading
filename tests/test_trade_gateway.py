@@ -12,18 +12,15 @@ These tests ensure the gateway properly rejects risky trades.
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from src.risk.trade_gateway import RejectionReason, TradeGateway, TradeRequest
 
 
-@pytest.fixture(autouse=True)
-def mock_rag():
-    """Mock RAG to prevent real lessons from blocking test trades."""
-    with patch("src.risk.trade_gateway.LessonsLearnedRAG") as mock_rag_class:
-        mock_rag_instance = MagicMock()
-        mock_rag_instance.query.return_value = []  # No lessons found
-        mock_rag_class.return_value = mock_rag_instance
-        yield mock_rag_instance
+# Mock RAG to prevent CRITICAL lessons from blocking test trades
+def get_mock_rag():
+    """Create a mock RAG that returns no lessons."""
+    mock_rag = MagicMock()
+    mock_rag.query.return_value = []  # No lessons = no CRITICAL blocks
+    return mock_rag
 
 
 class MockExecutor:
@@ -64,6 +61,7 @@ class TestTradeGatewayLiquidityCheck:
         """Test that options with bid-ask spread < 5% are approved."""
         gateway = TradeGateway(executor=None, paper=True)
         gateway.executor = MockExecutor(account_equity=50000)
+        gateway.rag = get_mock_rag()  # Mock RAG to prevent CRITICAL lesson blocks
 
         # Mock RAG to return no critical lessons (isolate liquidity test)
         class MockRAG:
@@ -129,6 +127,7 @@ class TestTradeGatewayIVRankCheck:
         """Test that IV Rank >= 20 allows credit strategies."""
         gateway = TradeGateway(executor=None, paper=True)
         gateway.executor = MockExecutor(account_equity=50000)
+        gateway.rag = get_mock_rag()  # Mock RAG to prevent CRITICAL lesson blocks
 
         # Mock RAG to avoid blocking from critical lessons
         class MockRAG:
@@ -175,6 +174,7 @@ class TestTradeGatewayCapitalEfficiency:
         """Test that $50k account can trade iron condors."""
         gateway = TradeGateway(executor=None, paper=True)
         gateway.executor = MockExecutor(account_equity=50000)
+        gateway.rag = get_mock_rag()  # Mock RAG to prevent CRITICAL lesson blocks
 
         # Mock RAG to avoid blocking from critical lessons
         class MockRAG:
