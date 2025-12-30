@@ -66,7 +66,7 @@ def calculate_basic_metrics():
         latest_perf = perf_log[-1]
         current_equity = latest_perf.get("equity", current_equity)
         total_pl = latest_perf.get("pl", total_pl)
-        total_pl_pct = latest_perf.get("pl_pct", total_pl_pct) * 100
+        total_pl_pct = latest_perf.get("pl_pct", total_pl_pct)  # Already in percentage form
 
     trading_days = len(perf_log) if isinstance(perf_log, list) and perf_log else days_elapsed
     trading_days = max(trading_days, 1)
@@ -79,7 +79,7 @@ def calculate_basic_metrics():
         progress_pct = max(0.01, (total_pl / north_star_target) * 100)
 
     performance = system_state.get("performance", {})
-    win_rate = performance.get("win_rate", 0.0) * 100
+    win_rate = performance.get("win_rate", 0.0)  # Already in percentage form (e.g., 50.0 = 50%)
     total_trades = performance.get("total_trades", 0)
 
     challenge = system_state.get("challenge", {})
@@ -108,7 +108,7 @@ def calculate_basic_metrics():
                 today_perf = entry
                 today_equity = entry.get("equity", current_equity)
                 today_pl = entry.get("pl", 0.0)
-                today_pl_pct = entry.get("pl_pct", 0.0) * 100  # Convert to percentage
+                today_pl_pct = entry.get("pl_pct", 0.0)  # Already in percentage form
                 break
 
         # If no entry for today, calculate from yesterday
