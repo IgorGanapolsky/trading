@@ -10,6 +10,8 @@ Tests key gateway functionality:
 These tests ensure the gateway properly rejects risky trades.
 """
 
+from unittest.mock import MagicMock, patch
+
 from src.risk.trade_gateway import RejectionReason, TradeGateway, TradeRequest
 
 
@@ -47,8 +49,15 @@ class TestTradeGatewayLiquidityCheck:
         assert not decision.approved
         assert RejectionReason.ILLIQUID_OPTION in decision.rejection_reasons
 
-    def test_liquid_option_approved_with_tight_spread(self):
+    @patch("src.risk.trade_gateway.LessonsLearnedRAG")
+    def test_liquid_option_approved_with_tight_spread(self, mock_rag_class):
         """Test that options with bid-ask spread < 5% are approved."""
+        # Mock RAG to return no critical lessons (isolate liquidity test)
+        mock_rag = MagicMock()
+        mock_rag.query.return_value = []
+        mock_rag.get_critical_lessons.return_value = []
+        mock_rag_class.return_value = mock_rag
+
         gateway = TradeGateway(executor=None, paper=True)
         gateway.executor = MockExecutor(account_equity=50000)
 
@@ -64,7 +73,7 @@ class TestTradeGatewayLiquidityCheck:
         )
         decision = gateway.evaluate(request)
 
-        assert decision.approved
+        assert decision.approved, f"Expected approval but got rejections: {[r.value for r in decision.rejection_reasons]}"
 
     def test_equity_trade_bypasses_liquidity_check(self):
         """Test that non-option trades skip liquidity check."""
@@ -105,8 +114,15 @@ class TestTradeGatewayIVRankCheck:
         assert not decision.approved
         assert RejectionReason.IV_RANK_TOO_LOW in decision.rejection_reasons
 
-    def test_high_iv_approves_credit_strategy(self):
+    @patch("src.risk.trade_gateway.LessonsLearnedRAG")
+    def test_high_iv_approves_credit_strategy(self, mock_rag_class):
         """Test that IV Rank >= 20 allows credit strategies."""
+        # Mock RAG to return no critical lessons
+        mock_rag = MagicMock()
+        mock_rag.query.return_value = []
+        mock_rag.get_critical_lessons.return_value = []
+        mock_rag_class.return_value = mock_rag
+
         gateway = TradeGateway(executor=None, paper=True)
         gateway.executor = MockExecutor(account_equity=50000)
 
@@ -120,7 +136,7 @@ class TestTradeGatewayIVRankCheck:
         )
         decision = gateway.evaluate(request)
 
-        assert decision.approved
+        assert decision.approved, f"Expected approval but got rejections: {[r.value for r in decision.rejection_reasons]}"
 
 
 class TestTradeGatewayCapitalEfficiency:
@@ -144,8 +160,15 @@ class TestTradeGatewayCapitalEfficiency:
         assert not decision.approved
         assert RejectionReason.CAPITAL_INEFFICIENT in decision.rejection_reasons
 
-    def test_adequate_capital_allows_iron_condor(self):
+    @patch("src.risk.trade_gateway.LessonsLearnedRAG")
+    def test_adequate_capital_allows_iron_condor(self, mock_rag_class):
         """Test that $50k account can trade iron condors."""
+        # Mock RAG to return no critical lessons
+        mock_rag = MagicMock()
+        mock_rag.query.return_value = []
+        mock_rag.get_critical_lessons.return_value = []
+        mock_rag_class.return_value = mock_rag
+
         gateway = TradeGateway(executor=None, paper=True)
         gateway.executor = MockExecutor(account_equity=50000)
 
@@ -159,7 +182,7 @@ class TestTradeGatewayCapitalEfficiency:
         )
         decision = gateway.evaluate(request)
 
-        assert decision.approved
+        assert decision.approved, f"Expected approval but got rejections: {[r.value for r in decision.rejection_reasons]}"
 
 
 class TestTradeGatewayAllocationLimits:
@@ -186,8 +209,15 @@ class TestTradeGatewayAllocationLimits:
         assert not decision.approved
         assert RejectionReason.MAX_ALLOCATION_EXCEEDED in decision.rejection_reasons
 
-    def test_under_allocation_approved(self):
+    @patch("src.risk.trade_gateway.LessonsLearnedRAG")
+    def test_under_allocation_approved(self, mock_rag_class):
         """Test that < 15% allocation is approved."""
+        # Mock RAG to return no critical lessons
+        mock_rag = MagicMock()
+        mock_rag.query.return_value = []
+        mock_rag.get_critical_lessons.return_value = []
+        mock_rag_class.return_value = mock_rag
+
         gateway = TradeGateway(executor=None, paper=True)
         gateway.executor = MockExecutor(
             account_equity=10000,
