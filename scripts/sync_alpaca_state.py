@@ -54,7 +54,9 @@ def sync_from_alpaca() -> dict:
         # NEVER silently corrupt data with simulated values!
         # This caused the Dec 30 incident where real $100,810 was overwritten with $100k
         logger.error("❌ FATAL: No Alpaca API keys found!")
-        logger.error("   Set ALPACA_API_KEY and ALPACA_SECRET_KEY (or APCA_API_KEY_ID and APCA_API_SECRET_KEY)")
+        logger.error(
+            "   Set ALPACA_API_KEY and ALPACA_SECRET_KEY (or APCA_API_KEY_ID and APCA_API_SECRET_KEY)"
+        )
         logger.error("   Refusing to overwrite real data with simulated values.")
         raise RuntimeError("Missing Alpaca API credentials - cannot sync")
 
