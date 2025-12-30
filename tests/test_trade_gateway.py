@@ -10,7 +10,20 @@ Tests key gateway functionality:
 These tests ensure the gateway properly rejects risky trades.
 """
 
+from unittest.mock import MagicMock, patch
+
+import pytest
 from src.risk.trade_gateway import RejectionReason, TradeGateway, TradeRequest
+
+
+@pytest.fixture(autouse=True)
+def mock_rag():
+    """Mock RAG to prevent real lessons from blocking test trades."""
+    with patch("src.risk.trade_gateway.LessonsLearnedRAG") as mock_rag_class:
+        mock_rag_instance = MagicMock()
+        mock_rag_instance.query.return_value = []  # No lessons found
+        mock_rag_class.return_value = mock_rag_instance
+        yield mock_rag_instance
 
 
 class MockExecutor:
