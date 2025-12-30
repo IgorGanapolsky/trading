@@ -95,14 +95,15 @@ jobs:
         timeout-minutes: 5
         run: |
           echo "🧪 Running test suite..."
+          # FIXED Dec 30, 2025: Tests MUST pass or trading is BLOCKED
+          # Previous version bypassed failures with "|| echo continuing"
           python3 -m pytest \
             tests/test_promotion_gate.py \
             tests/test_telemetry_summary.py \
             --timeout=120 \
             --timeout-method=thread \
             -v \
-            --tb=short \
-            || echo "⚠️ Tests failed but continuing to allow trading"
+            --tb=short
           echo "✅ Test step complete"
 
   # NOTE: Backtest job removed Dec 19, 2025
@@ -826,7 +827,7 @@ jobs:
       # ========================================================================
       - name: Iron Condor Strategy (80% win rate)
         if: steps.execute_trading.outcome == 'success'
-        continue-on-error: true
+        # FIXED Dec 30, 2025: Removed continue-on-error - trading failures must be visible
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
@@ -847,7 +848,7 @@ jobs:
 
       - name: Simple Daily Trader (CSP fallback)
         if: steps.execute_trading.outcome == 'success'
-        continue-on-error: true
+        # FIXED Dec 30, 2025: Removed continue-on-error - trading failures must be visible
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
@@ -868,7 +869,7 @@ jobs:
 
       - name: Rule #1 Options (Phil Town Strategy)
         if: steps.execute_trading.outcome == 'success'
-        continue-on-error: true
+        # FIXED Dec 30, 2025: Removed continue-on-error - trading failures must be visible
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}

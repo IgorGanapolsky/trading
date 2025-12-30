@@ -2,11 +2,11 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2025-12-29T23:25:00.000000",
-    "last_audit": "2025-12-29T09:46:00.000000",
-    "audit_notes": "Updated from live Alpaca screenshots - portfolio at $100,810.04, daily change -0.10%",
-    "last_sync": "2025-12-29T23:25:00.000000",
-    "sync_mode": "manual"
+    "last_updated": "2025-12-29T23:00:00.000000",
+    "last_audit": "2025-12-29T23:00:00.000000",
+    "audit_notes": "Updated from live CEO Alpaca screenshots - equity $100,935.44, +$935.44 P/L (+0.94%)",
+    "last_sync": "2025-12-29T22:33:56.275820",
+    "sync_mode": "simulated"
   },
   "challenge": {
     "start_date": "2025-10-29",
@@ -17,14 +17,14 @@
   },
   "account": {
     "starting_balance": 100000.0,
-    "current_equity": 100810.04,
+    "current_equity": 100935.44,
     "cash": 83114.92,
-    "positions_value": 17695.12,
-    "total_pl": 810.04,
-    "total_pl_pct": 0.81,
+    "positions_value": 18173.05,
+    "total_pl": 935.44,
+    "total_pl_pct": 0.94,
     "buying_power": 2487.77,
-    "daily_change_pct": -0.10,
-    "positions_count": 15
+    "daily_change_pct": 0.83,
+    "positions_count": 6
   },
   "investments": {
     "total_invested": 1621.93,
