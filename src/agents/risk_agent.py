@@ -16,6 +16,7 @@ import logging
 from typing import Any
 
 from .base_agent import BaseAgent
+from src.rag.lessons_learned_rag import LessonsLearnedRAG
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ class RiskAgent(BaseAgent):
         super().__init__(name="RiskAgent", role="Portfolio risk management and position sizing")
         self.max_portfolio_risk = max_portfolio_risk  # Max 2% risk per trade
         self.max_position_size = max_position_size  # Max 5% per position
+        self.rag = LessonsLearnedRAG()  # Initialize RAG for lessons learned
 
     def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
         """
@@ -63,6 +65,23 @@ class RiskAgent(BaseAgent):
 
         # Risk assessment
         memory_context = self.get_memory_context(limit=3)
+
+        # Query RAG for relevant lessons BEFORE making decision
+        rag_lessons = self.rag.query(f"{symbol} risk position sizing", top_k=3)
+        critical_lessons = [l for l in rag_lessons if l.get("severity") == "CRITICAL"]
+
+        # Build RAG context section
+        rag_context = ""
+        if critical_lessons:
+            rag_context = "\n<critical_lessons>\n"
+            rag_context += "⚠️ CRITICAL lessons learned that apply to this decision:\n"
+            for lesson in critical_lessons:
+                rag_context += f"- {lesson['id']}: {lesson['snippet'][:200]}...\n"
+            rag_context += "These CRITICAL lessons should reduce confidence or add warnings.\n"
+            rag_context += "</critical_lessons>\n"
+            logger.warning(
+                f"⚠️ {len(critical_lessons)} CRITICAL lessons found for {symbol} risk assessment"
+            )
 
         # Prompt following Anthropic best practices:
         # - XML tags for structure (Claude trained on XML)
@@ -100,6 +119,8 @@ Max Loss if Stopped: ${position_size * stop_loss_pct:,.0f}
 </calculated_parameters>
 
 {memory_context}
+
+{rag_context}
 
 <principles>
 Kelly Criterion + Safety rules (each prevents a different failure mode):

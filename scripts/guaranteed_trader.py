@@ -28,6 +28,7 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
+from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.utils.error_monitoring import init_sentry
 
 load_dotenv()
@@ -216,6 +217,38 @@ def run():
 
     rsi = get_spy_rsi()
     logger.info(f"SPY RSI: {rsi:.1f}")
+
+    # Query RAG for lessons before trading
+    logger.info("Checking RAG lessons before execution...")
+    rag = LessonsLearnedRAG()
+
+    # Check for SPY trading failures
+    spy_lessons = rag.search("SPY trading failures losses", top_k=3)
+    for lesson, score in spy_lessons:
+        if lesson.severity == "CRITICAL":
+            logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
+            logger.error(f"Prevention: {lesson.prevention}")
+            return {
+                "success": False,
+                "reason": "blocked_by_rag",
+                "lesson": lesson.title,
+                "lesson_id": lesson.id,
+            }
+
+    # Check for strategy-specific failures (RSI-based trading)
+    strategy_lessons = rag.search("RSI trading strategy failures", top_k=3)
+    for lesson, score in strategy_lessons:
+        if lesson.severity == "CRITICAL":
+            logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
+            logger.error(f"Prevention: {lesson.prevention}")
+            return {
+                "success": False,
+                "reason": "blocked_by_rag",
+                "lesson": lesson.title,
+                "lesson_id": lesson.id,
+            }
+
+    logger.info("RAG checks passed - proceeding with execution")
 
     trade = None
     action = "HOLD"

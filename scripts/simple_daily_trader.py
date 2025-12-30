@@ -26,6 +26,7 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
+from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.utils.error_monitoring import init_sentry
 
 load_dotenv()
@@ -192,6 +193,28 @@ def execute_cash_secured_put(client, option: dict, config: dict) -> Optional[dic
 
     Returns trade details or None if failed.
     """
+    # Query RAG for lessons before trading
+    logger.info("Checking RAG lessons before execution...")
+    rag = LessonsLearnedRAG()
+
+    # Check for strategy-specific failures
+    strategy_lessons = rag.search("cash secured put failures losses", top_k=3)
+    for lesson, score in strategy_lessons:
+        if lesson.severity == "CRITICAL":
+            logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
+            logger.error(f"Prevention: {lesson.prevention}")
+            return None
+
+    # Check for ticker-specific failures
+    ticker_lessons = rag.search(f"{option['underlying']} trading failures options losses", top_k=3)
+    for lesson, score in ticker_lessons:
+        if lesson.severity == "CRITICAL":
+            logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
+            logger.error(f"Prevention: {lesson.prevention}")
+            return None
+
+    logger.info("RAG checks passed - proceeding with execution")
+
     try:
         logger.info(f"Executing cash-secured put: {option['symbol']}")
         logger.info(f"  Strike: ${option['strike']}")

@@ -34,6 +34,7 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
+from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.utils.error_monitoring import init_sentry
 
 load_dotenv()
@@ -190,6 +191,41 @@ class IronCondorStrategy:
             ic: Iron condor legs to execute
             live: If True, execute on Alpaca. If False, simulate only.
         """
+        # Query RAG for lessons before trading
+        logger.info("Checking RAG lessons before execution...")
+        rag = LessonsLearnedRAG()
+
+        # Check for strategy-specific failures
+        strategy_lessons = rag.search("iron condor failures losses", top_k=3)
+        for lesson, score in strategy_lessons:
+            if lesson.severity == "CRITICAL":
+                logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
+                logger.error(f"Prevention: {lesson.prevention}")
+                return {
+                    "timestamp": datetime.now().isoformat(),
+                    "strategy": "iron_condor",
+                    "status": "BLOCKED_BY_RAG",
+                    "reason": f"Critical lesson: {lesson.title}",
+                    "lesson_id": lesson.id,
+                }
+
+        # Check for ticker-specific failures
+        ticker_lessons = rag.search(f"{ic.underlying} trading failures options losses", top_k=3)
+        for lesson, score in ticker_lessons:
+            if lesson.severity == "CRITICAL":
+                logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
+                logger.error(f"Prevention: {lesson.prevention}")
+                return {
+                    "timestamp": datetime.now().isoformat(),
+                    "strategy": "iron_condor",
+                    "underlying": ic.underlying,
+                    "status": "BLOCKED_BY_RAG",
+                    "reason": f"Critical lesson for {ic.underlying}: {lesson.title}",
+                    "lesson_id": lesson.id,
+                }
+
+        logger.info("RAG checks passed - proceeding with execution")
+
         logger.info("=" * 60)
         logger.info("EXECUTING IRON CONDOR" + (" (LIVE)" if live else " (SIMULATED)"))
         logger.info("=" * 60)
