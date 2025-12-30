@@ -32,6 +32,7 @@ from pathlib import Path
 from typing import Any
 
 from src.risk.capital_efficiency import get_capital_calculator
+from src.rag.lessons_learned_rag import LessonsLearnedRAG
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,7 @@ class RejectionReason(Enum):
     CAPITAL_INEFFICIENT = "Strategy not viable for current capital level"
     IV_RANK_TOO_LOW = "IV Rank too low for premium selling (<20)"
     ILLIQUID_OPTION = "Option is illiquid (bid-ask spread > 5%)"
+    RAG_LESSON_CRITICAL = "CRITICAL lesson learned blocks this trade"
 
 
 @dataclass
@@ -178,6 +180,9 @@ class TradeGateway:
 
         # Capital efficiency calculator
         self.capital_calculator = get_capital_calculator(daily_deposit_rate=10.0)
+
+        # RAG for lessons learned
+        self.rag = LessonsLearnedRAG()
 
         # State file for persistence
         self.state_file = Path("data/trade_gateway_state.json")
@@ -463,6 +468,46 @@ class TradeGateway:
                     "risk_per_share": risk_per_share,
                 }
                 risk_score += 0.5
+
+        # ============================================================
+        # CHECK 12: RAG Lesson Block (CRITICAL lessons learned)
+        # ============================================================
+        # Query RAG for lessons about this ticker and strategy
+        query_terms = f"{request.symbol}"
+        if request.strategy_type:
+            query_terms += f" {request.strategy_type}"
+        query_terms += f" {request.side}"
+
+        rag_lessons = self.rag.query(query_terms, top_k=5)
+        critical_rag_lessons = [l for l in rag_lessons if l.get("severity") == "CRITICAL"]
+
+        if critical_rag_lessons:
+            rejection_reasons.append(RejectionReason.RAG_LESSON_CRITICAL)
+            logger.warning(
+                f"❌ REJECTED: {len(critical_rag_lessons)} CRITICAL lessons found for "
+                f"{request.symbol} {request.side}"
+            )
+            metadata["rag_lessons"] = {
+                "critical_count": len(critical_rag_lessons),
+                "lessons": [
+                    {
+                        "id": lesson["id"],
+                        "severity": lesson["severity"],
+                        "snippet": lesson["snippet"][:200],
+                    }
+                    for lesson in critical_rag_lessons
+                ],
+            }
+            # Log each critical lesson
+            for lesson in critical_rag_lessons:
+                logger.warning(f"  - CRITICAL: {lesson['id']}: {lesson['snippet'][:150]}...")
+            risk_score += 0.5  # Significant risk increase for CRITICAL lessons
+        elif rag_lessons:
+            # Non-critical lessons - just add warnings
+            for lesson in rag_lessons[:2]:  # Show top 2
+                warnings.append(
+                    f"Lesson learned ({lesson.get('severity', 'UNKNOWN')}): {lesson['id']}"
+                )
 
         # ============================================================
         # FINAL DECISION

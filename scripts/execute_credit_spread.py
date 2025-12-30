@@ -32,6 +32,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
 Path("logs").mkdir(exist_ok=True)
 Path("data").mkdir(exist_ok=True)
 
@@ -278,6 +280,36 @@ def execute_bull_put_spread(
     Much more capital efficient than cash-secured puts!
     Collateral = spread width × 100 (NOT full strike price)
     """
+    # Query RAG for lessons before trading
+    logger.info("Checking RAG lessons before execution...")
+    rag = LessonsLearnedRAG()
+
+    # Check for strategy-specific failures
+    strategy_lessons = rag.search("credit spread bull put spread failures losses", top_k=3)
+    for lesson, score in strategy_lessons:
+        if lesson.severity == "CRITICAL":
+            logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
+            logger.error(f"Prevention: {lesson.prevention}")
+            return {
+                "status": "BLOCKED_BY_RAG",
+                "reason": f"Critical lesson: {lesson.title}",
+                "lesson_id": lesson.id,
+            }
+
+    # Check for ticker-specific failures
+    ticker_lessons = rag.search(f"{symbol} trading failures options losses", top_k=3)
+    for lesson, score in ticker_lessons:
+        if lesson.severity == "CRITICAL":
+            logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
+            logger.error(f"Prevention: {lesson.prevention}")
+            return {
+                "status": "BLOCKED_BY_RAG",
+                "reason": f"Critical lesson for {symbol}: {lesson.title}",
+                "lesson_id": lesson.id,
+            }
+
+    logger.info("RAG checks passed - proceeding with execution")
+
     logger.info("=" * 60)
     logger.info("📊 BULL PUT SPREAD STRATEGY")
     logger.info("=" * 60)

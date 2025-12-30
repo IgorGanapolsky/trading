@@ -389,10 +389,13 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
           PAPER_TRADING: "true"
+          LLM_SENTIMENT_ENABLED: "true"
+          RL_FILTER_ENABLED: "true"
         run: |
           python -m pytest \
             tests/test_safety_matrix.py \
             tests/test_rag_ml_safety.py \
+            tests/test_rag_ml_operational.py \
             --timeout=300 \
             --timeout-method=thread \
             -v \

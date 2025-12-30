@@ -215,7 +215,7 @@ class TradingOrchestrator:
             "true",
             "yes",
         }
-        self.llm_sentiment_enabled = _os.getenv("LLM_SENTIMENT_ENABLED", "false").lower() in {
+        self.llm_sentiment_enabled = _os.getenv("LLM_SENTIMENT_ENABLED", "true").lower() in {
             "1",
             "true",
             "yes",
@@ -1694,6 +1694,55 @@ class TradingOrchestrator:
                 payload={"error": str(exc)},
             )
 
+        # Gate 2.5: Multi-source sentiment analysis (before Gate 3)
+        # Integrates news, social media, and market sentiment
+        sentiment_skill_score = 0.0
+        try:
+            import sys
+            sentiment_script = _os.path.join(
+                _os.path.dirname(__file__),
+                "../../.claude/skills/sentiment_analyzer/scripts/sentiment_analyzer.py"
+            )
+            if _os.path.exists(sentiment_script):
+                sys.path.insert(0, _os.path.dirname(sentiment_script))
+                from sentiment_analyzer import SentimentAnalyzer
+
+                analyzer = SentimentAnalyzer()
+                composite_result = analyzer.get_composite_sentiment(
+                    symbols=[ticker],
+                    include_market_sentiment=True
+                )
+
+                if composite_result.get("success") and ticker in composite_result.get("composite_sentiment", {}):
+                    sentiment_data = composite_result["composite_sentiment"][ticker]
+                    sentiment_skill_score = sentiment_data.get("score", 0.0)
+                    logger.info(
+                        "Gate 2.5 (%s): Sentiment Analyzer score=%.2f, label=%s, confidence=%.2f",
+                        ticker,
+                        sentiment_skill_score,
+                        sentiment_data.get("label", "unknown"),
+                        sentiment_data.get("confidence", 0.0)
+                    )
+                    self.telemetry.record(
+                        event_type="gate.sentiment_analyzer",
+                        ticker=ticker,
+                        status="analyzed",
+                        payload={
+                            "score": sentiment_skill_score,
+                            "label": sentiment_data.get("label"),
+                            "confidence": sentiment_data.get("confidence"),
+                            "recommendation": sentiment_data.get("recommendation")
+                        }
+                    )
+        except Exception as sentiment_exc:
+            logger.warning("Gate 2.5 (%s): Sentiment analyzer failed: %s", ticker, sentiment_exc)
+            self.telemetry.record(
+                event_type="gate.sentiment_analyzer",
+                ticker=ticker,
+                status="error",
+                payload={"error": str(sentiment_exc)}
+            )
+
         # Gate 3: LLM sentiment (budget-aware, bias-cache first)
         # Enhanced with Playwright MCP for dynamic web scraping
         # Dec 10, 2025: Can be SKIPPED in simplification mode
@@ -2518,6 +2567,77 @@ class TradingOrchestrator:
                 "cap": allocation_plan.cap,
             },
         )
+
+        # Gate 5.5: Execution quality monitoring (anomaly detection)
+        # Analyzes slippage, execution price, and identifies anomalies
+        try:
+            import sys
+            from datetime import datetime as dt
+            anomaly_script = _os.path.join(
+                _os.path.dirname(__file__),
+                "../../.claude/skills/anomaly_detector/scripts/anomaly_detector.py"
+            )
+            if _os.path.exists(anomaly_script):
+                sys.path.insert(0, _os.path.dirname(anomaly_script))
+                from anomaly_detector import AnomalyDetector
+
+                detector = AnomalyDetector()
+
+                # Extract order details for anomaly detection
+                filled_price = order.get("filled_avg_price") if isinstance(order, dict) else ctx.current_price
+                if filled_price is None:
+                    filled_price = ctx.current_price
+
+                execution_analysis = detector.detect_execution_anomalies(
+                    order_id=str(order.get("id", "unknown")) if isinstance(order, dict) else "unknown",
+                    expected_price=ctx.current_price,
+                    actual_fill_price=float(filled_price),
+                    quantity=abs(order_size / ctx.current_price) if ctx.current_price > 0 else 0,
+                    order_type=order.get("type", "market") if isinstance(order, dict) else "market",
+                    timestamp=dt.now().isoformat()
+                )
+
+                if execution_analysis.get("success"):
+                    analysis = execution_analysis.get("analysis", {})
+                    slippage = analysis.get("slippage", {})
+                    quality = analysis.get("execution_quality", {})
+
+                    logger.info(
+                        "Gate 5.5 (%s): Execution quality - slippage=%.3f%%, grade=%s, score=%.1f",
+                        ticker,
+                        slippage.get("percentage", 0.0),
+                        quality.get("grade", "N/A"),
+                        quality.get("score", 0.0)
+                    )
+
+                    if analysis.get("anomalies_detected"):
+                        logger.warning(
+                            "Gate 5.5 (%s): ANOMALY DETECTED - warnings: %s",
+                            ticker,
+                            analysis.get("warnings", [])
+                        )
+
+                    self.telemetry.record(
+                        event_type="gate.anomaly_detector",
+                        ticker=ticker,
+                        status="analyzed",
+                        payload={
+                            "slippage_pct": slippage.get("percentage"),
+                            "slippage_severity": slippage.get("severity"),
+                            "execution_grade": quality.get("grade"),
+                            "execution_score": quality.get("score"),
+                            "anomalies_detected": analysis.get("anomalies_detected"),
+                            "warnings": analysis.get("warnings", [])
+                        }
+                    )
+        except Exception as anomaly_exc:
+            logger.warning("Gate 5.5 (%s): Anomaly detection failed: %s", ticker, anomaly_exc)
+            self.telemetry.record(
+                event_type="gate.anomaly_detector",
+                ticker=ticker,
+                status="error",
+                payload={"error": str(anomaly_exc)}
+            )
 
         logger.info("✅ %s processed successfully via v2 pipeline", ticker)
 

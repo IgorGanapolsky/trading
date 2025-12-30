@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.strategies.legacy_momentum import LegacyMomentumCalculator
+from src.rag.lessons_learned_rag import LessonsLearnedRAG
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ class MomentumAgent:
             "rsi_overbought": self._calculator.rsi_overbought,
             "volume_min": self._calculator.volume_min,
         }
+        self.rag = LessonsLearnedRAG()  # Initialize RAG for lessons learned
 
     def configure_regime(
         self,
@@ -58,6 +60,21 @@ class MomentumAgent:
 
         is_buy = score > self._min_score
         strength = self._normalise_score(score)
+
+        # Query RAG for relevant lessons BEFORE finalizing decision
+        rag_lessons = self.rag.query(f"{ticker} momentum technical analysis", top_k=3)
+        critical_lessons = [l for l in rag_lessons if l.get("severity") == "CRITICAL"]
+
+        # If CRITICAL lessons found, reduce strength/confidence
+        if critical_lessons:
+            original_strength = strength
+            strength = strength * 0.7  # Reduce strength by 30% when CRITICAL lessons exist
+            logger.warning(
+                f"⚠️ {len(critical_lessons)} CRITICAL lessons found for {ticker} - "
+                f"Reducing strength from {original_strength:.2f} to {strength:.2f}"
+            )
+            for lesson in critical_lessons:
+                logger.warning(f"  - {lesson['id']}: {lesson['snippet'][:150]}...")
 
         # Detailed logging - show ALL indicator values vs thresholds
         adx = ind.get("adx", 0)

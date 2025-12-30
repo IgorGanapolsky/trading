@@ -496,10 +496,11 @@ jobs:
           echo "🚀 ========================================"
 
           # ========== PRE-FLIGHT: LEARN FROM PAST MISTAKES ==========
+          # BLOCKING CHECK: Will fail workflow if CRITICAL or HIGH severity lessons found
           echo "📚 Running pre-session RAG check - learning from past failures..."
-          python3 scripts/pre_session_rag_check.py --days 14 || {
-            echo "⚠️ RAG check had issues but continuing..."
-          }
+          echo "⚠️  This check will BLOCK trading if CRITICAL/HIGH issues are found"
+          python3 scripts/pre_session_rag_check.py --days 14
+          # If the above exits with code 1, the workflow will stop here
           # ========================================================
 
           # ========== PRE-FLIGHT: VERIFY OBSERVABILITY ==========
