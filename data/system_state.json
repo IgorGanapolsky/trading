@@ -2,11 +2,11 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2025-12-30T17:58:09.233943",
-    "last_audit": "2025-12-30T10:28:00.000000",
-    "audit_notes": "Updated from live Alpaca screenshot - portfolio at $100,942.23, 5 trades today",
-    "last_sync": "2025-12-30T17:58:09.233954",
-    "sync_mode": "skipped_no_keys"
+    "last_updated": "2025-12-30T16:50:20.206984",
+    "last_audit": "2025-12-29T09:46:00.000000",
+    "audit_notes": "Updated from live Alpaca screenshot - Dec 30 10:28 AM EST",
+    "last_sync": "2025-12-30T16:50:20.206999",
+    "sync_mode": "manual_screenshot_audit"
   },
   "challenge": {
     "start_date": "2025-10-29",
@@ -19,12 +19,12 @@
     "starting_balance": 100000.0,
     "current_equity": 100942.23,
     "cash": 86629.95,
-    "positions_value": 14312.28,
+    "positions_value": 17695.12,
     "total_pl": 942.23,
     "total_pl_pct": 0.94,
     "buying_power": 1341.99,
     "daily_change_pct": 0.0,
-    "positions_count": 6
+    "positions_count": 15
   },
   "investments": {
     "total_invested": 1621.93,
