@@ -51,15 +51,12 @@ def sync_from_alpaca() -> dict:
     api_secret = os.getenv("ALPACA_SECRET_KEY") or os.getenv("APCA_API_SECRET_KEY")
 
     if not api_key or not api_secret:
-        logger.warning("⚠️ No Alpaca API keys found - using simulated mode")
-        return {
-            "equity": 100000.0,
-            "cash": 100000.0,
-            "buying_power": 100000.0,
-            "positions": [],
-            "mode": "simulated",
-            "synced_at": datetime.now().isoformat(),
-        }
+        # NEVER silently corrupt data with simulated values!
+        # This caused the Dec 30 incident where real $100,810 was overwritten with $100k
+        logger.error("❌ FATAL: No Alpaca API keys found!")
+        logger.error("   Set ALPACA_API_KEY and ALPACA_SECRET_KEY (or APCA_API_KEY_ID and APCA_API_SECRET_KEY)")
+        logger.error("   Refusing to overwrite real data with simulated values.")
+        raise RuntimeError("Missing Alpaca API credentials - cannot sync")
 
     try:
         from src.execution.alpaca_executor import AlpacaExecutor
