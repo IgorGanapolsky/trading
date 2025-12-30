@@ -1,0 +1,47 @@
+[
+  {
+    "symbol": "EQIX",
+    "side": "sell",
+    "qty": 0.07921694,
+    "type": "market",
+    "status": "filled",
+    "trade_date": "2025-12-30",
+    "timestamp": "2025-12-30T10:28:00"
+  },
+  {
+    "symbol": "SPY",
+    "side": "buy",
+    "qty": 0.727332,
+    "type": "market",
+    "status": "filled",
+    "trade_date": "2025-12-30",
+    "timestamp": "2025-12-30T10:28:00"
+  },
+  {
+    "symbol": "DLR",
+    "side": "sell",
+    "qty": 0.153352,
+    "type": "market",
+    "status": "filled",
+    "trade_date": "2025-12-30",
+    "timestamp": "2025-12-30T10:28:00"
+  },
+  {
+    "symbol": "CCI",
+    "side": "sell",
+    "qty": 0.15023833,
+    "type": "market",
+    "status": "filled",
+    "trade_date": "2025-12-30",
+    "timestamp": "2025-12-30T10:28:00"
+  },
+  {
+    "symbol": "GLD",
+    "side": "sell",
+    "qty": 0.17582635,
+    "type": "market",
+    "status": "filled",
+    "trade_date": "2025-12-30",
+    "timestamp": "2025-12-30T10:28:00"
+  }
+]
