@@ -1699,9 +1699,10 @@ class TradingOrchestrator:
         sentiment_skill_score = 0.0
         try:
             import sys
+
             sentiment_script = os.path.join(
                 os.path.dirname(__file__),
-                "../../.claude/skills/sentiment_analyzer/scripts/sentiment_analyzer.py"
+                "../../.claude/skills/sentiment_analyzer/scripts/sentiment_analyzer.py",
             )
             if os.path.exists(sentiment_script):
                 sys.path.insert(0, os.path.dirname(sentiment_script))
@@ -1709,11 +1710,12 @@ class TradingOrchestrator:
 
                 analyzer = SentimentAnalyzer()
                 composite_result = analyzer.get_composite_sentiment(
-                    symbols=[ticker],
-                    include_market_sentiment=True
+                    symbols=[ticker], include_market_sentiment=True
                 )
 
-                if composite_result.get("success") and ticker in composite_result.get("composite_sentiment", {}):
+                if composite_result.get("success") and ticker in composite_result.get(
+                    "composite_sentiment", {}
+                ):
                     sentiment_data = composite_result["composite_sentiment"][ticker]
                     sentiment_skill_score = sentiment_data.get("score", 0.0)
                     logger.info(
@@ -1721,7 +1723,7 @@ class TradingOrchestrator:
                         ticker,
                         sentiment_skill_score,
                         sentiment_data.get("label", "unknown"),
-                        sentiment_data.get("confidence", 0.0)
+                        sentiment_data.get("confidence", 0.0),
                     )
                     self.telemetry.record(
                         event_type="gate.sentiment_analyzer",
@@ -1731,8 +1733,8 @@ class TradingOrchestrator:
                             "score": sentiment_skill_score,
                             "label": sentiment_data.get("label"),
                             "confidence": sentiment_data.get("confidence"),
-                            "recommendation": sentiment_data.get("recommendation")
-                        }
+                            "recommendation": sentiment_data.get("recommendation"),
+                        },
                     )
         except Exception as sentiment_exc:
             logger.warning("Gate 2.5 (%s): Sentiment analyzer failed: %s", ticker, sentiment_exc)
@@ -1740,7 +1742,7 @@ class TradingOrchestrator:
                 event_type="gate.sentiment_analyzer",
                 ticker=ticker,
                 status="error",
-                payload={"error": str(sentiment_exc)}
+                payload={"error": str(sentiment_exc)},
             )
 
         # Gate 3: LLM sentiment (budget-aware, bias-cache first)
@@ -2573,9 +2575,10 @@ class TradingOrchestrator:
         try:
             import sys
             from datetime import datetime as dt
+
             anomaly_script = os.path.join(
                 os.path.dirname(__file__),
-                "../../.claude/skills/anomaly_detector/scripts/anomaly_detector.py"
+                "../../.claude/skills/anomaly_detector/scripts/anomaly_detector.py",
             )
             if os.path.exists(anomaly_script):
                 sys.path.insert(0, os.path.dirname(anomaly_script))
@@ -2584,17 +2587,21 @@ class TradingOrchestrator:
                 detector = AnomalyDetector()
 
                 # Extract order details for anomaly detection
-                filled_price = order.get("filled_avg_price") if isinstance(order, dict) else ctx.current_price
+                filled_price = (
+                    order.get("filled_avg_price") if isinstance(order, dict) else ctx.current_price
+                )
                 if filled_price is None:
                     filled_price = ctx.current_price
 
                 execution_analysis = detector.detect_execution_anomalies(
-                    order_id=str(order.get("id", "unknown")) if isinstance(order, dict) else "unknown",
+                    order_id=str(order.get("id", "unknown"))
+                    if isinstance(order, dict)
+                    else "unknown",
                     expected_price=ctx.current_price,
                     actual_fill_price=float(filled_price),
                     quantity=abs(order_size / ctx.current_price) if ctx.current_price > 0 else 0,
                     order_type=order.get("type", "market") if isinstance(order, dict) else "market",
-                    timestamp=dt.now().isoformat()
+                    timestamp=dt.now().isoformat(),
                 )
 
                 if execution_analysis.get("success"):
@@ -2607,14 +2614,14 @@ class TradingOrchestrator:
                         ticker,
                         slippage.get("percentage", 0.0),
                         quality.get("grade", "N/A"),
-                        quality.get("score", 0.0)
+                        quality.get("score", 0.0),
                     )
 
                     if analysis.get("anomalies_detected"):
                         logger.warning(
                             "Gate 5.5 (%s): ANOMALY DETECTED - warnings: %s",
                             ticker,
-                            analysis.get("warnings", [])
+                            analysis.get("warnings", []),
                         )
 
                     self.telemetry.record(
@@ -2627,8 +2634,8 @@ class TradingOrchestrator:
                             "execution_grade": quality.get("grade"),
                             "execution_score": quality.get("score"),
                             "anomalies_detected": analysis.get("anomalies_detected"),
-                            "warnings": analysis.get("warnings", [])
-                        }
+                            "warnings": analysis.get("warnings", []),
+                        },
                     )
         except Exception as anomaly_exc:
             logger.warning("Gate 5.5 (%s): Anomaly detection failed: %s", ticker, anomaly_exc)
@@ -2636,7 +2643,7 @@ class TradingOrchestrator:
                 event_type="gate.anomaly_detector",
                 ticker=ticker,
                 status="error",
-                payload={"error": str(anomaly_exc)}
+                payload={"error": str(anomaly_exc)},
             )
 
         logger.info("✅ %s processed successfully via v2 pipeline", ticker)

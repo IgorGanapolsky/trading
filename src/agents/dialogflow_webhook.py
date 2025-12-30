@@ -92,17 +92,7 @@ def create_dialogflow_response(text: str) -> dict:
     2. Dialogflow webhook timeout (should be 30s)
     3. Agent response settings in Dialogflow CX console
     """
-    return {
-        "fulfillmentResponse": {
-            "messages": [
-                {
-                    "text": {
-                        "text": [text]
-                    }
-                }
-            ]
-        }
-    }
+    return {"fulfillmentResponse": {"messages": [{"text": {"text": [text]}}]}}
 
 
 @app.post("/webhook")
@@ -197,7 +187,7 @@ async def root():
             "/webhook": "POST - Dialogflow CX webhook",
             "/health": "GET - Health check",
             "/test": "GET - Test RAG query",
-        }
+        },
     }
 
 
@@ -217,7 +207,7 @@ async def test_rag(query: str = "critical lessons"):
                 "preview": r.get("snippet", "")[:200],
             }
             for r in results
-        ]
+        ],
     }
 
 

@@ -479,7 +479,9 @@ class TradeGateway:
         query_terms += f" {request.side}"
 
         rag_lessons = self.rag.query(query_terms, top_k=5)
-        critical_rag_lessons = [lesson for lesson in rag_lessons if lesson.get("severity") == "CRITICAL"]
+        critical_rag_lessons = [
+            lesson for lesson in rag_lessons if lesson.get("severity") == "CRITICAL"
+        ]
 
         if critical_rag_lessons:
             rejection_reasons.append(RejectionReason.RAG_LESSON_CRITICAL)

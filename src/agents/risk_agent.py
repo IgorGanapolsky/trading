@@ -69,7 +69,9 @@ class RiskAgent(BaseAgent):
 
         # Query RAG for relevant lessons BEFORE making decision
         rag_lessons = self.rag.query(f"{symbol} risk position sizing", top_k=3)
-        critical_lessons = [lesson for lesson in rag_lessons if lesson.get("severity") == "CRITICAL"]
+        critical_lessons = [
+            lesson for lesson in rag_lessons if lesson.get("severity") == "CRITICAL"
+        ]
 
         # Build RAG context section
         rag_context = ""

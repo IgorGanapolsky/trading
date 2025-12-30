@@ -63,7 +63,9 @@ class MomentumAgent:
 
         # Query RAG for relevant lessons BEFORE finalizing decision
         rag_lessons = self.rag.query(f"{ticker} momentum technical analysis", top_k=3)
-        critical_lessons = [lesson for lesson in rag_lessons if lesson.get("severity") == "CRITICAL"]
+        critical_lessons = [
+            lesson for lesson in rag_lessons if lesson.get("severity") == "CRITICAL"
+        ]
 
         # If CRITICAL lessons found, reduce strength/confidence
         if critical_lessons:

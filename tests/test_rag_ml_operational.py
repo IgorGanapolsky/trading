@@ -82,7 +82,9 @@ class TestRAGOperational:
         results = rag.query("blind trading catastrophe", top_k=10)
 
         # MUST find results
-        assert len(results) > 0, "Semantic search returned no results for 'blind trading catastrophe'"
+        assert len(results) > 0, (
+            "Semantic search returned no results for 'blind trading catastrophe'"
+        )
 
         # Look for ll_051 in results
         lesson_ids = [r["id"] for r in results]
@@ -123,7 +125,9 @@ class TestRAGOperational:
 
         # Query for a CRITICAL pattern
         # ll_051: blind trading (no account data)
-        results = rag.query("trading without account equity buying power", severity_filter="CRITICAL")
+        results = rag.query(
+            "trading without account equity buying power", severity_filter="CRITICAL"
+        )
 
         # MUST find CRITICAL lessons
         assert len(results) > 0, "Query for CRITICAL lessons returned nothing"
@@ -151,9 +155,7 @@ class TestRAGOperational:
 
         # Check if RAG is available (attribute or method)
         has_rag = (
-            hasattr(agent, 'rag') or
-            hasattr(agent, 'query_rag') or
-            hasattr(agent, 'check_lessons')
+            hasattr(agent, "rag") or hasattr(agent, "query_rag") or hasattr(agent, "check_lessons")
         )
 
         # For now, we'll skip if not integrated, but log a warning
@@ -273,9 +275,9 @@ class TestTradeGatewayRAG:
         # NOTE: As of Dec 30, 2025, trade_gateway doesn't query RAG yet
         # This test documents the expectation
         has_rag_check = (
-            "LessonsLearnedRAG" in content or
-            "lessons_learned" in content or
-            "rag" in content.lower()
+            "LessonsLearnedRAG" in content
+            or "lessons_learned" in content
+            or "rag" in content.lower()
         )
 
         if not has_rag_check:
@@ -315,9 +317,7 @@ class TestPreSessionRAG:
         )
 
         # Verify it checks for CRITICAL severity
-        assert "CRITICAL" in content, (
-            "pre_session_rag_check.py doesn't check for CRITICAL severity"
-        )
+        assert "CRITICAL" in content, "pre_session_rag_check.py doesn't check for CRITICAL severity"
 
         # Verify it has recency check (days_back)
         assert "days_back" in content or "days" in content, (
@@ -337,7 +337,9 @@ class TestVectorizationComplete:
         - Assert at least 100 files are vectorized
         - Assert last_updated is within 7 days
         """
-        vectorized_path = Path(__file__).parent.parent / "data" / "vector_db" / "vectorized_files.json"
+        vectorized_path = (
+            Path(__file__).parent.parent / "data" / "vector_db" / "vectorized_files.json"
+        )
 
         assert vectorized_path.exists(), (
             "vectorized_files.json not found! Vector database is not set up."
