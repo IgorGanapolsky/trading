@@ -2,11 +2,11 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2025-12-30T16:50:20.206984",
+    "last_updated": "2025-12-30T22:42:30.311309",
     "last_audit": "2025-12-29T09:46:00.000000",
     "audit_notes": "Updated from live Alpaca screenshot - Dec 30 10:28 AM EST",
-    "last_sync": "2025-12-30T16:50:20.206999",
-    "sync_mode": "manual_screenshot_audit"
+    "last_sync": "2025-12-30T22:42:30.311317",
+    "sync_mode": "skipped_no_keys"
   },
   "challenge": {
     "start_date": "2025-10-29",
