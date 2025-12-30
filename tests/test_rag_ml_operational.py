@@ -436,6 +436,7 @@ class TestRAGTradeIntegration:
         # If RAG has lessons but returns nothing, that's a problem
         # But skip if vector DB isn't set up (CI environment)
         from pathlib import Path
+
         if not Path("data/vector_db/chroma.sqlite3").exists():
             pytest.skip("Vector DB not built - run vectorize_rag_knowledge.py")
 
