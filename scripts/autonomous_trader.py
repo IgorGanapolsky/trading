@@ -1101,7 +1101,7 @@ if __name__ == "__main__":
             with open("logs/trading_crash.log", "w") as f:
                 f.write(f"Exception: {type(e).__name__}: {e}\n\n")
                 f.write(tb)
-        except:
+        except Exception:
             pass
 
         sys.exit(2)

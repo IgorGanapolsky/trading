@@ -283,7 +283,7 @@ def load_processed_articles() -> set:
         try:
             data = json.loads(CACHE_FILE.read_text())
             return set(data.get("processed_urls", []))
-        except:
+        except Exception:
             pass
     return set()
 

@@ -84,8 +84,7 @@ def check_rl_system():
 
         if prediction.get("confidence", 0) > 0:
             results["details"].append(
-                f"✓ RLFilter works: action={prediction['action']}, "
-                f"conf={prediction['confidence']}"
+                f"✓ RLFilter works: action={prediction['action']}, conf={prediction['confidence']}"
             )
             results["status"] = "OK"
         else:
@@ -108,7 +107,7 @@ def check_ml_pipeline():
     results = {"name": "ML Pipeline", "status": "UNKNOWN", "details": []}
 
     try:
-        from src.ml import GENAI_AVAILABLE, GeminiDeepResearch
+        from src.ml import GENAI_AVAILABLE
 
         if GENAI_AVAILABLE:
             results["details"].append("✓ Gemini API available")

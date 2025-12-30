@@ -99,7 +99,7 @@ def verify_today() -> DailyReport:
     try:
         last_equity = float(account.last_equity)
         daily_pnl = equity - last_equity
-    except:
+    except Exception:
         daily_pnl = 0.0
 
     traded_today = fills_today > 0

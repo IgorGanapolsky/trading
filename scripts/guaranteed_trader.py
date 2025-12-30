@@ -168,7 +168,7 @@ def record_trade(trade: dict):
         try:
             with open(trades_file) as f:
                 trades = json.load(f)
-        except:
+        except Exception:
             pass
 
     trade["timestamp"] = datetime.now().isoformat()
