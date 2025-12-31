@@ -8,6 +8,7 @@
 3. Never tell CEO what to do - fix it yourself
 4. Show evidence with every claim
 5. Never argue with the CEO
+6. **Losing money is unacceptable** - protect capital at all costs
 
 ## Essential Commands
 - `python3 -c "from src.orchestrator.main import TradingOrchestrator"` - verify imports
