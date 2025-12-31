@@ -56,13 +56,15 @@ class HonestyGuard:
         is_valid = discrepancy < 1.0  # Allow 1% tolerance
 
         if not is_valid:
-            self.violations.append({
-                "type": "WIN_RATE_MISMATCH",
-                "reported": reported_win_rate,
-                "actual": actual_win_rate,
-                "discrepancy": discrepancy,
-                "timestamp": datetime.now().isoformat(),
-            })
+            self.violations.append(
+                {
+                    "type": "WIN_RATE_MISMATCH",
+                    "reported": reported_win_rate,
+                    "actual": actual_win_rate,
+                    "discrepancy": discrepancy,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
         return {
             "valid": is_valid,
@@ -116,13 +118,19 @@ class HonestyGuard:
             if prev_equity > 0:
                 daily_change = abs(curr_equity - prev_equity) / prev_equity
                 if daily_change > 0.10:
-                    suspicious.append(f"Large daily change: {daily_change*100:.1f}%")
+                    suspicious.append(f"Large daily change: {daily_change * 100:.1f}%")
 
         if suspicious:
-            self.warnings.extend([
-                {"type": "SUSPICIOUS_PATTERN", "detail": s, "timestamp": datetime.now().isoformat()}
-                for s in suspicious
-            ])
+            self.warnings.extend(
+                [
+                    {
+                        "type": "SUSPICIOUS_PATTERN",
+                        "detail": s,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                    for s in suspicious
+                ]
+            )
 
         return {
             "valid": is_fresh and not suspicious,
@@ -154,25 +162,34 @@ class HonestyGuard:
         """
         if value is None:
             if allow_none:
-                return {"valid": True, "metric": metric_name, "value": None, "note": "Not calculated"}
-            else:
-                self.violations.append({
-                    "type": "NULL_METRIC",
+                return {
+                    "valid": True,
                     "metric": metric_name,
-                    "timestamp": datetime.now().isoformat(),
-                })
+                    "value": None,
+                    "note": "Not calculated",
+                }
+            else:
+                self.violations.append(
+                    {
+                        "type": "NULL_METRIC",
+                        "metric": metric_name,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
                 return {"valid": False, "metric": metric_name, "error": "Required metric is null"}
 
         if expected_range:
             min_val, max_val = expected_range
             if not (min_val <= value <= max_val):
-                self.warnings.append({
-                    "type": "OUT_OF_RANGE",
-                    "metric": metric_name,
-                    "value": value,
-                    "expected_range": expected_range,
-                    "timestamp": datetime.now().isoformat(),
-                })
+                self.warnings.append(
+                    {
+                        "type": "OUT_OF_RANGE",
+                        "metric": metric_name,
+                        "value": value,
+                        "expected_range": expected_range,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
                 return {
                     "valid": False,
                     "metric": metric_name,
