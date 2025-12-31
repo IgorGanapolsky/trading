@@ -206,14 +206,14 @@ def calculate_simple_risk_metrics(perf_log: list, all_trades: list) -> dict:
 
     return {
         "sharpe_ratio": sharpe_ratio,
-        "sortino_ratio": sharpe_ratio * 1.2,  # Approximate
+        "sortino_ratio": None,  # HONESTY FIX: Was incorrectly approximated as sharpe*1.2
         "max_drawdown_pct": max_drawdown * 100,
         "current_drawdown_pct": ((peak - equities[-1]) / peak * 100) if peak > 0 else 0,
         "volatility_annualized": volatility_annualized,
-        "var_95": -1.65 * std_dev * 100,
-        "var_99": -2.33 * std_dev * 100,
-        "calmar_ratio": (avg_return * 252 / max_drawdown) if max_drawdown > 0 else 0,
-        "ulcer_index": max_drawdown * 100 * 0.5,
+        "var_95": -1.65 * std_dev * 100 if std_dev > 0 else None,
+        "var_99": -2.33 * std_dev * 100 if std_dev > 0 else None,
+        "calmar_ratio": (avg_return * 252 / max_drawdown) if max_drawdown > 0 else None,
+        "ulcer_index": None,  # HONESTY FIX: Was fake calculation (drawdown * 0.5)
     }
 
 
@@ -367,28 +367,34 @@ def generate_world_class_dashboard() -> str:
 
     # Use simple risk metrics calculated above (risk already set)
     attribution = {"by_symbol": {}, "by_strategy": {}, "by_time_of_day": {}}
+    # HONESTY FIX Dec 31, 2025: Mark unmeasured metrics as such
+    # Previously these were hardcoded to perfect values which was misleading
     execution = {
-        "avg_slippage": 0,
-        "fill_quality": 100,
-        "order_success_rate": 100,
-        "order_reject_rate": 0,
-        "avg_fill_time_ms": 50,
-        "broker_latency_ms": 20,
+        "avg_slippage": None,  # NOT MEASURED - would need trade-by-trade analysis
+        "fill_quality": None,  # NOT MEASURED - no benchmark available
+        "order_success_rate": None,  # NOT MEASURED - requires order tracking
+        "order_reject_rate": None,  # NOT MEASURED
+        "avg_fill_time_ms": None,  # NOT MEASURED
+        "broker_latency_ms": None,  # NOT MEASURED
+        "_note": "Execution metrics not currently tracked - values would be misleading",
     }
     data_completeness = {
-        "performance_log_completeness": 100,
-        "missing_dates_count": 0,
-        "data_freshness_days": 0,
-        "missing_candle_pct": 0,
+        "performance_log_completeness": len(perf_log) if perf_log else 0,  # Actual count
+        "missing_dates_count": None,  # Would need calendar analysis
+        "data_freshness_days": None,  # Calculated below if possible
+        "missing_candle_pct": None,  # NOT MEASURED
         "data_sources_used": ["Alpaca"],
         "model_version": "2.0",
+        "_note": "Some completeness metrics require additional implementation",
     }
+    # HONESTY FIX: Predictive metrics are NOT implemented - don't pretend they are
     predictive = {
-        "expected_pl_30d": 0,
-        "monte_carlo_forecast": {},
-        "risk_of_ruin": 0,
-        "forecasted_drawdown": 0,
-        "strategy_decay_detected": False,
+        "expected_pl_30d": None,  # NOT IMPLEMENTED
+        "monte_carlo_forecast": None,  # NOT IMPLEMENTED
+        "risk_of_ruin": None,  # NOT IMPLEMENTED
+        "forecasted_drawdown": None,  # NOT IMPLEMENTED
+        "strategy_decay_detected": None,  # NOT IMPLEMENTED
+        "_note": "Predictive analytics not yet implemented - future feature",
     }
     benchmark = {
         "portfolio_return": basic_metrics.get("total_pl_pct", 0),

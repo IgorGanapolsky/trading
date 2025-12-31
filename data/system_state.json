@@ -39,8 +39,8 @@
   "performance": {
     "total_trades": 20,
     "winning_trades": 4,
-    "losing_trades": 4,
-    "win_rate": 50.0,
+    "losing_trades": 1,
+    "win_rate": 80.0,
     "best_trade": {
       "symbol": "SPY260123P00660000",
       "pl": 197.0,
@@ -162,7 +162,9 @@
         "unrealized_pl_pct": 0.021927229572647314,
         "last_updated": "2025-12-07T18:16:23.571385"
       }
-    ]
+    ],
+    "_win_rate_source": "calculated_from_closed_trades",
+    "_win_rate_fixed_at": "2025-12-31T02:57:09.901650"
   },
   "strategies": {
     "tier1": {
