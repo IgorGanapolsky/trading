@@ -343,8 +343,6 @@ def get_lessons_search() -> LessonsSearch:
 
 if __name__ == "__main__":
     # Test the implementation
-    import sys
-
     logging.basicConfig(level=logging.INFO)
 
     search = get_lessons_search()

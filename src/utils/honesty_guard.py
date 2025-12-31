@@ -9,7 +9,7 @@ MANDATE: Never lie. If a metric can't be calculated, report it as such.
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
