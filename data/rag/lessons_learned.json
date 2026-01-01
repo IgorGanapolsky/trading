@@ -1612,5 +1612,24 @@
       -0.08276665210723877,
       0.02132893167436123
     ]
+  },
+  {
+    "id": "lesson_20260101_015358_0",
+    "timestamp": "2026-01-01T01:53:58.578706",
+    "category": "timezone_handling",
+    "title": "Server Timezone vs Trading Timezone Mismatch",
+    "description": "Hook script used system date (UTC) instead of trading timezone (ET) for TODAY variable, causing wrong dates near midnight",
+    "root_cause": "date command without TZ= prefix uses server timezone (UTC) instead of trading timezone (America/New_York)",
+    "prevention": "1. Always use TZ=America/New_York prefix for date commands in trading context. 2. Add timezone tests to verify correct behavior. 3. Document that server runs UTC but trading uses ET.",
+    "tags": [
+      "bug",
+      "timezone",
+      "hook",
+      "calendar",
+      "testing"
+    ],
+    "severity": "medium",
+    "financial_impact": 0.0,
+    "symbol": null
   }
 ]
