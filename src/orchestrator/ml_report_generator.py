@@ -178,10 +178,16 @@ class MLReportGenerator:
         total = len(self._daily_signals)
 
         # Calculate pass rates
-        gate_1_passed = sum(1 for s in self._daily_signals if s.gate_1_momentum and s.gate_1_momentum.passed)
+        gate_1_passed = sum(
+            1 for s in self._daily_signals if s.gate_1_momentum and s.gate_1_momentum.passed
+        )
         gate_2_passed = sum(1 for s in self._daily_signals if s.gate_2_rl and s.gate_2_rl.passed)
-        gate_3_passed = sum(1 for s in self._daily_signals if s.gate_3_sentiment and s.gate_3_sentiment.passed)
-        gate_4_passed = sum(1 for s in self._daily_signals if s.gate_4_risk and s.gate_4_risk.passed)
+        gate_3_passed = sum(
+            1 for s in self._daily_signals if s.gate_3_sentiment and s.gate_3_sentiment.passed
+        )
+        gate_4_passed = sum(
+            1 for s in self._daily_signals if s.gate_4_risk and s.gate_4_risk.passed
+        )
 
         passed_all = sum(1 for s in self._daily_signals if s.overall_decision == "execute")
         rejected = sum(1 for s in self._daily_signals if s.overall_decision == "reject")
@@ -304,7 +310,9 @@ class MLReportGenerator:
         if rejection_reasons:
             top_reason = max(rejection_reasons.items(), key=lambda x: x[1])
             if top_reason[1] > 5:
-                recs.append(f"Frequent rejection: '{top_reason[0]}' ({top_reason[1]}x) - investigate")
+                recs.append(
+                    f"Frequent rejection: '{top_reason[0]}' ({top_reason[1]}x) - investigate"
+                )
 
         if not recs:
             recs.append("System operating normally - no immediate action needed")
@@ -413,13 +421,13 @@ if __name__ == "__main__":
     print(f"Total Evaluations: {report.total_evaluations}")
     print(f"Executed: {report.passed_all_gates}")
     print(f"Rejected: {report.rejected}")
-    print(f"\nGate Pass Rates:")
+    print("\nGate Pass Rates:")
     print(f"  Gate 1 (Momentum): {report.gate_1_pass_rate:.1%}")
     print(f"  Gate 2 (RL): {report.gate_2_pass_rate:.1%}")
     print(f"  Gate 3 (Sentiment): {report.gate_3_pass_rate:.1%}")
     print(f"  Gate 4 (Risk): {report.gate_4_pass_rate:.1%}")
     print(f"\nAvg RL Confidence: {report.avg_rl_confidence:.1%}")
     print(f"RL Mode Distribution: {report.rl_mode_distribution}")
-    print(f"\nRecommendations:")
+    print("\nRecommendations:")
     for rec in report.recommendations:
         print(f"  - {rec}")
