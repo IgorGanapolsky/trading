@@ -18,7 +18,9 @@ class TestVectorDBInstallation:
         import chromadb
 
         assert chromadb.__version__ is not None
-        assert chromadb.__version__.startswith("0.")  # Expect 0.x.x version
+        # Accept either 0.x.x or 1.x.x versions (API compatible)
+        major_version = int(chromadb.__version__.split(".")[0])
+        assert major_version in [0, 1], f"Unexpected ChromaDB version: {chromadb.__version__}"
 
     def test_chromadb_client_creation(self):
         """ChromaDB client must be creatable without errors."""
@@ -100,9 +102,18 @@ class TestVectorDBData:
         assert len(collections) > 0, "Vector DB has no collections"
 
         # Check first collection has data
-        col = client.get_collection(collections[0])
+        # In ChromaDB 1.x, list_collections() returns Collection objects directly
+        first_collection = collections[0]
+        if hasattr(first_collection, "name"):
+            # ChromaDB 1.x: list_collections returns Collection objects
+            col = first_collection
+            col_name = first_collection.name
+        else:
+            # ChromaDB 0.x: list_collections returns strings
+            col = client.get_collection(first_collection)
+            col_name = first_collection
         count = col.count()
-        assert count > 0, f"Collection '{collections[0]}' is empty"
+        assert count > 0, f"Collection '{col_name}' is empty"
 
 
 class TestRAGNotFallingBack:
