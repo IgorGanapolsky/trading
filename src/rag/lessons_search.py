@@ -71,10 +71,11 @@ class LessonsSearch:
                 settings=Settings(anonymized_telemetry=False),
             )
 
+            # Use phil_town_rag collection (same as vectorize_rag_knowledge.py)
             self.collection = client.get_or_create_collection(
-                name="lessons_learned",
+                name="phil_town_rag",
                 metadata={
-                    "description": "Trading lessons learned knowledge base",
+                    "description": "Phil Town RAG knowledge base including lessons",
                     "hnsw:space": "cosine",
                 },
             )
