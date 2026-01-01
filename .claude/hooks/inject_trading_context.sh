@@ -37,7 +37,8 @@ fi
 # Path to data files
 STATE_FILE="$CLAUDE_PROJECT_DIR/data/system_state.json"
 PERF_LOG="$CLAUDE_PROJECT_DIR/data/performance_log.json"
-TODAY=$(date +%Y-%m-%d)
+# CRITICAL: Use ET timezone for TODAY - server runs in UTC but trading is ET
+TODAY=$(TZ=America/New_York date +%Y-%m-%d)
 TRADE_FILE="$CLAUDE_PROJECT_DIR/data/trades_${TODAY}.json"
 
 # Check if system state exists
@@ -108,7 +109,8 @@ DATA_SOURCE=""
 if [[ "$LIVE_DATA" == "true" ]]; then
     DATA_SOURCE="✅ LIVE from Alpaca"
 elif [[ -n "$PERF_DATE" && "$PERF_DATE" != "$TODAY" ]]; then
-    DAYS_OLD=$(( ($(date +%s) - $(date -d "$PERF_DATE" +%s 2>/dev/null || echo 0)) / 86400 ))
+    # Use ET timezone for date calculations
+    DAYS_OLD=$(( ($(TZ=America/New_York date +%s) - $(TZ=America/New_York date -d "$PERF_DATE" +%s 2>/dev/null || echo 0)) / 86400 ))
     if [[ $DAYS_OLD -gt 0 ]]; then
         STALE_WARNING="⚠️ DATA STALE: Last update $PERF_DATE ($DAYS_OLD days ago)"
         DATA_SOURCE="📁 Local files (stale)"
