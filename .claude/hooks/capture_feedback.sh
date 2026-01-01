@@ -66,6 +66,14 @@ if [ "$FEEDBACK_TYPE" != "neutral" ]; then
 }
 EOF
 
+    # Train RL model from feedback (connected to training pipeline)
+    if command -v python3 &> /dev/null; then
+        TRAIN_SCRIPT="$CLAUDE_PROJECT_DIR/scripts/train_from_feedback.py"
+        if [ -f "$TRAIN_SCRIPT" ]; then
+            python3 "$TRAIN_SCRIPT" --feedback "$FEEDBACK_TYPE" --context "$USER_MESSAGE" 2>/dev/null &
+        fi
+    fi
+
     # For negative feedback, Claude must ask what went wrong
     if [ "$FEEDBACK_TYPE" = "negative" ]; then
         echo "⚠️ NEGATIVE FEEDBACK - Claude MUST ask: 'What did I do wrong?'"

@@ -1,0 +1,10 @@
+{
+  "alpha": 3.0,
+  "beta": 1.0,
+  "feature_weights": {
+    "ci": 0.1,
+    "entry": 0.1,
+    "test": 0.1
+  },
+  "last_updated": "2026-01-01T00:19:46.075235"
+}

@@ -1,16 +1,18 @@
 """
-Learning Module - Trade Memory System
+Learning Module - Trade Memory and Feedback Training.
 
-Simplified Dec 28, 2025:
-- Removed dead RLHF/feedback infrastructure (never integrated)
-- Kept only TradeMemory which is actively used
-
-The feedback system was aspirational code that was never connected
-to the trading pipeline. Deleted to reduce complexity.
+Updated Jan 1, 2026:
+- Added BinaryRewardShaper for shaped rewards
+- Added FeedbackTrainer for thumbs up/down training
+- Connected feedback capture to RL training pipeline
 """
 
 from src.learning.trade_memory import TradeMemory
+from src.learning.reward_shaper import BinaryRewardShaper
+from src.learning.feedback_trainer import FeedbackTrainer
 
 __all__ = [
     "TradeMemory",
+    "BinaryRewardShaper",
+    "FeedbackTrainer",
 ]
