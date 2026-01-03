@@ -16,6 +16,7 @@
     "phase": "R&D Phase - Month 2 (Days 31-60)"
   },
   "account": {
+    "type": "live",
     "starting_balance": 20.0,
     "current_equity": 20.0,
     "cash": 20.0,
@@ -25,7 +26,23 @@
     "buying_power": 20.0,
     "daily_change_pct": 0.0,
     "positions_count": 0,
+    "daily_deposit": 10.0,
+    "target_daily_profit": 100.0,
     "reset_note": "Fresh start Jan 3, 2026 - Real brokerage with $10/day deposits"
+  },
+  "paper_account": {
+    "type": "paper",
+    "purpose": "R&D and RAG knowledge building",
+    "starting_balance": 100000.0,
+    "current_equity": 100942.23,
+    "cash": 86629.95,
+    "positions_value": 17695.12,
+    "total_pl": 942.23,
+    "total_pl_pct": 0.94,
+    "buying_power": 1341.99,
+    "positions_count": 15,
+    "win_rate": 80.0,
+    "note": "Continue paper trading at night to build RAG knowledge"
   },
   "investments": {
     "total_invested": 1621.93,

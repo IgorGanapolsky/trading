@@ -14,14 +14,23 @@ A 90-day experiment building an autonomous AI trading system with Claude Opus 4.
 
 ## Daily Transparency Report
 
+### Real Brokerage (LIVE)
+| Metric | Value | Trend |
+|--------|-------|-------|
+| **Started** | Jan 3, 2026 | Day 1 |
+| **Portfolio** | $20.00 | Fresh Start |
+| **Daily Deposit** | $10/day | Building |
+| **Target** | $100/day profit | North Star |
+
+### Paper Trading (R&D)
 | Metric | Value | Trend |
 |--------|-------|-------|
 | **Day** | 50/90 | R&D Phase |
-| **Portfolio** | $20.00 | Fresh Start |
-| **Win Rate** | 80% | Historic |
+| **Portfolio** | $100,942.23 | +0.94% |
+| **Win Rate** | 80% | Proven |
 | **Lessons** | 75+ | Growing |
 
-> **Jan 3, 2026**: Fresh start with real brokerage account. $10/day deposits to reach $100/day profit goal.
+> **Strategy**: Paper trade at night to build RAG knowledge. Apply winning strategies to real account.
 
 ---
 
