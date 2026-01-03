@@ -1,8 +1,0 @@
-/Users/igorganapolsky/workspace/git/apps/trading/src/core/broker_interface.py:52 - get_account_info() (only pass)
-/Users/igorganapolsky/workspace/git/apps/trading/src/core/broker_interface.py:65 - execute_order() (only pass)
-/Users/igorganapolsky/workspace/git/apps/trading/src/core/broker_interface.py:90 - get_positions() (only pass)
-/Users/igorganapolsky/workspace/git/apps/trading/src/core/broker_interface.py:105 - get_orders() (only pass)
-/Users/igorganapolsky/workspace/git/apps/trading/src/core/broker_interface.py:118 - cancel_order() (only pass)
-/Users/igorganapolsky/workspace/git/apps/trading/src/core/broker_interface.py:134 - is_market_open() (only pass)
-/Users/igorganapolsky/workspace/git/apps/trading/src/core/broker_interface.py:144 - get_historical_bars() (only pass)
-/Users/igorganapolsky/workspace/git/apps/trading/src/agents/base_agent.py:36 - analyze() (only pass)
