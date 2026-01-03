@@ -7,9 +7,9 @@ Updated Jan 1, 2026:
 - Connected feedback capture to RL training pipeline
 """
 
-from src.learning.trade_memory import TradeMemory
-from src.learning.reward_shaper import BinaryRewardShaper
 from src.learning.feedback_trainer import FeedbackTrainer
+from src.learning.reward_shaper import BinaryRewardShaper
+from src.learning.trade_memory import TradeMemory
 
 __all__ = [
     "TradeMemory",

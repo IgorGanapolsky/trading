@@ -6,21 +6,17 @@ Tests for Feedback Training Pipeline.
 - src/learning/feedback_trainer.py
 """
 
-import json
-import math
-import os
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.learning.reward_shaper import BinaryRewardShaper
 from src.learning.feedback_trainer import FeedbackTrainer
+from src.learning.reward_shaper import BinaryRewardShaper
 
 
 class TestBinaryRewardShaper:
@@ -405,7 +401,7 @@ class TestIntegration:
 
     def test_smoke_test_imports(self):
         """Smoke test that all imports work."""
-        from src.learning import TradeMemory, BinaryRewardShaper, FeedbackTrainer
+        from src.learning import BinaryRewardShaper, FeedbackTrainer, TradeMemory
 
         assert TradeMemory is not None
         assert BinaryRewardShaper is not None
@@ -417,9 +413,9 @@ class TestIntegration:
 
         # Import the script functions directly
         from scripts.train_from_feedback import (
-            train_from_logs,
             record_immediate_feedback,
             show_model_stats,
+            train_from_logs,
         )
 
         # These should not raise

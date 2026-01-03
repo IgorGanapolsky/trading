@@ -7,9 +7,10 @@ Created: Jan 1, 2026
 Reason: LL-074 - RAG was broken for 18 days without detection
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -47,8 +48,8 @@ class TestRAGOperational:
         count = collection.count()
 
         assert count > 0, (
-            f"Vector DB has 0 documents. Run: python3 scripts/vectorize_rag_knowledge.py --rebuild\n"
-            f"Empty vector DB means RAG will return nothing."
+            "Vector DB has 0 documents. Run: python3 scripts/vectorize_rag_knowledge.py --rebuild\n"
+            "Empty vector DB means RAG will return nothing."
         )
 
         # Should have at least 100 documents (we have 700+)

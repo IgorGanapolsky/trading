@@ -9,9 +9,10 @@ This test file ensures the trading context hook correctly handles:
 
 import os
 import subprocess
-import pytest
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
+import pytest
 
 
 class TestTimezoneHandling:
@@ -49,7 +50,7 @@ class TestTimezoneHandling:
             "inject_trading_context.sh",
         )
 
-        with open(hook_path, "r") as f:
+        with open(hook_path) as f:
             content = f.read()
 
         # Check that TODAY uses ET timezone
@@ -67,7 +68,7 @@ class TestTimezoneHandling:
             "inject_trading_context.sh",
         )
 
-        with open(hook_path, "r") as f:
+        with open(hook_path) as f:
             content = f.read()
 
         # Check that DAYS_OLD calculation uses ET timezone
@@ -85,7 +86,7 @@ class TestTimezoneHandling:
             "inject_trading_context.sh",
         )
 
-        with open(hook_path, "r") as f:
+        with open(hook_path) as f:
             content = f.read()
 
         assert (
@@ -102,7 +103,7 @@ class TestTimezoneHandling:
             "inject_trading_context.sh",
         )
 
-        with open(hook_path, "r") as f:
+        with open(hook_path) as f:
             content = f.read()
 
         assert (
@@ -184,7 +185,7 @@ class TestHookSmokeTests:
             "inject_trading_context.sh",
         )
 
-        with open(hook_path, "r") as f:
+        with open(hook_path) as f:
             first_line = f.readline()
 
         assert first_line.startswith("#!/bin/bash"), "Hook must start with #!/bin/bash"
@@ -199,7 +200,7 @@ class TestHookSmokeTests:
             "inject_trading_context.sh",
         )
 
-        with open(hook_path, "r") as f:
+        with open(hook_path) as f:
             content = f.read()
 
         assert (
@@ -220,7 +221,7 @@ class TestMarketHoursAwareness:
             "inject_trading_context.sh",
         )
 
-        with open(hook_path, "r") as f:
+        with open(hook_path) as f:
             content = f.read()
 
         assert "IS_WEEKEND" in content, "Hook should check for weekends"
@@ -236,7 +237,7 @@ class TestMarketHoursAwareness:
             "inject_trading_context.sh",
         )
 
-        with open(hook_path, "r") as f:
+        with open(hook_path) as f:
             content = f.read()
 
         # Should reference market hours (9:30 AM - 4:00 PM ET)
