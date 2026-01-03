@@ -6,11 +6,11 @@ generation script tried to format None values with .2f format specifiers.
 
 try:
     import pytest
+
     PYTEST_AVAILABLE = True
 except ImportError:
     PYTEST_AVAILABLE = False
 
-from unittest.mock import patch, MagicMock
 import sys
 from pathlib import Path
 
@@ -28,10 +28,10 @@ class _RaisesContext:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None:
-            raise AssertionError(f"Expected {self.expected_exception.__name__} but no exception was raised")
-        if not issubclass(exc_type, self.expected_exception):
-            return False  # Re-raise the exception
-        return True  # Suppress the exception
+            raise AssertionError(
+                f"Expected {self.expected_exception.__name__} but no exception was raised"
+            )
+        return issubclass(exc_type, self.expected_exception)
 
 
 def raises(expected_exception):
@@ -207,8 +207,11 @@ class TestDashboardSmokeTest:
         """Verify the dashboard script can be imported without errors."""
         try:
             import generate_world_class_dashboard_enhanced
-            assert hasattr(generate_world_class_dashboard_enhanced, 'generate_world_class_dashboard')
-            assert hasattr(generate_world_class_dashboard_enhanced, 'calculate_simple_risk_metrics')
+
+            assert hasattr(
+                generate_world_class_dashboard_enhanced, "generate_world_class_dashboard"
+            )
+            assert hasattr(generate_world_class_dashboard_enhanced, "calculate_simple_risk_metrics")
         except ImportError as e:
             skip(f"Could not import dashboard script: {e}")
             return
@@ -217,6 +220,7 @@ class TestDashboardSmokeTest:
         """Test risk metrics function with empty input."""
         try:
             from generate_world_class_dashboard_enhanced import calculate_simple_risk_metrics
+
             result = calculate_simple_risk_metrics([], [])
             assert result == {}
         except ImportError:
@@ -227,6 +231,7 @@ class TestDashboardSmokeTest:
         """Test risk metrics function with minimal valid input."""
         try:
             from generate_world_class_dashboard_enhanced import calculate_simple_risk_metrics
+
             perf_log = [
                 {"equity": 100000},
                 {"equity": 100500},
@@ -286,14 +291,32 @@ if __name__ == "__main__":
             ("test_none_format_string_would_fail", unit_tests.test_none_format_string_would_fail),
             ("test_fixed_format_string_works", unit_tests.test_fixed_format_string_works),
             ("test_risk_metrics_none_values", unit_tests.test_risk_metrics_none_values),
-            ("test_execution_metrics_none_handling", unit_tests.test_execution_metrics_none_handling),
-            ("test_predictive_metrics_none_handling", unit_tests.test_predictive_metrics_none_handling),
-            ("test_benchmark_metrics_none_handling", unit_tests.test_benchmark_metrics_none_handling),
+            (
+                "test_execution_metrics_none_handling",
+                unit_tests.test_execution_metrics_none_handling,
+            ),
+            (
+                "test_predictive_metrics_none_handling",
+                unit_tests.test_predictive_metrics_none_handling,
+            ),
+            (
+                "test_benchmark_metrics_none_handling",
+                unit_tests.test_benchmark_metrics_none_handling,
+            ),
             ("test_ai_insights_none_handling", unit_tests.test_ai_insights_none_handling),
             ("test_dashboard_script_imports", smoke_tests.test_dashboard_script_imports),
-            ("test_calculate_simple_risk_metrics_empty_input", smoke_tests.test_calculate_simple_risk_metrics_empty_input),
-            ("test_calculate_simple_risk_metrics_minimal_input", smoke_tests.test_calculate_simple_risk_metrics_minimal_input),
-            ("test_dashboard_generation_completes", smoke_tests.test_dashboard_generation_completes),
+            (
+                "test_calculate_simple_risk_metrics_empty_input",
+                smoke_tests.test_calculate_simple_risk_metrics_empty_input,
+            ),
+            (
+                "test_calculate_simple_risk_metrics_minimal_input",
+                smoke_tests.test_calculate_simple_risk_metrics_minimal_input,
+            ),
+            (
+                "test_dashboard_generation_completes",
+                smoke_tests.test_dashboard_generation_completes,
+            ),
         ]
 
         passed = 0
@@ -311,7 +334,7 @@ if __name__ == "__main__":
                 failed += 1
             except Exception as e:
                 if "SKIPPED" in str(e):
-                    print(f"⏭️ SKIPPED")
+                    print("⏭️ SKIPPED")
                     skipped += 1
                 else:
                     print(f"❌ FAILED: {e}")
