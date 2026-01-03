@@ -1095,6 +1095,26 @@ jobs:
           echo "📊 Checking TLT momentum gate status..."
           python3 scripts/monitor_tlt_momentum.py || echo "⚠️  TLT monitoring completed with warnings"
 
+      - name: Update GitHub Pages Data
+        # PREVENTION: Auto-update docs/index.md with current portfolio data
+        # Added Jan 3, 2026 after discovering stale data on GitHub Pages
+        continue-on-error: true
+        timeout-minutes: 2
+        run: |
+          echo "📊 Updating GitHub Pages with current portfolio data..."
+          python3 scripts/update_github_pages.py
+
+          # Commit changes if any
+          if git diff --quiet docs/index.md; then
+            echo "ℹ️ docs/index.md already up to date"
+          else
+            git config user.name "GitHub Actions Bot"
+            git config user.email "actions@github.com"
+            git add docs/index.md
+            git commit -m "chore: Auto-update GitHub Pages with current portfolio data" || true
+            git push || echo "⚠️ Push failed - will retry in next run"
+          fi
+
       - name: Update Progress Dashboard Wiki
         # FIXED Dec 29, 2025: Always update dashboard, even when trading skipped
         # Bug: Dashboard was stale 7 days because it only updated on trade days
