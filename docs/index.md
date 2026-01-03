@@ -17,9 +17,9 @@ A 90-day experiment building an autonomous AI trading system with Claude Opus 4.
 | Metric | Value | Trend |
 |--------|-------|-------|
 | **Day** | 50/90 | R&D Phase |
-| **Portfolio** | $100,810.04 | +0.81% |
-| **Win Rate** | 50% | Stable |
-| **Lessons** | 66+ | Growing |
+| **Portfolio** | $100,942.23 | +0.94% |
+| **Win Rate** | 80% | Improved |
+| **Lessons** | 75+ | Growing |
 
 ---
 
