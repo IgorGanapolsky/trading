@@ -15,6 +15,7 @@ A 90-day experiment building an autonomous AI trading system with Claude Opus 4.
 ## Daily Transparency Report
 
 ### Real Brokerage (LIVE)
+
 | Metric | Value | Trend |
 |--------|-------|-------|
 | **Started** | Jan 3, 2026 | Day 1 |
@@ -23,6 +24,7 @@ A 90-day experiment building an autonomous AI trading system with Claude Opus 4.
 | **Target** | $100/day profit | North Star |
 
 ### Paper Trading (R&D)
+
 | Metric | Value | Trend |
 |--------|-------|-------|
 | **Day** | 50/90 | R&D Phase |
