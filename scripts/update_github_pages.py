@@ -11,7 +11,6 @@ Created: Jan 3, 2026 - After discovering GitHub Pages showed Dec 29 data on Jan 
 import json
 import re
 import sys
-from datetime import date
 from pathlib import Path
 
 
@@ -63,33 +62,37 @@ def update_index_md(
 
     # Update Daily Transparency Report table
     # Pattern: | **Portfolio** | $XXX,XXX.XX | +X.XX% |
-    portfolio_pattern = r'\| \*\*Portfolio\*\* \| \$[\d,]+\.\d+ \| [+\-]?\d+\.\d+% \|'
-    portfolio_replacement = f'| **Portfolio** | {format_currency(equity)} | {format_percentage(pl_pct)} |'
+    portfolio_pattern = r"\| \*\*Portfolio\*\* \| \$[\d,]+\.\d+ \| [+\-]?\d+\.\d+% \|"
+    portfolio_replacement = (
+        f"| **Portfolio** | {format_currency(equity)} | {format_percentage(pl_pct)} |"
+    )
     content = re.sub(portfolio_pattern, portfolio_replacement, content)
 
     # Pattern: | **Win Rate** | XX% | ... |
-    win_rate_pattern = r'\| \*\*Win Rate\*\* \| \d+% \| \w+ \|'
-    win_rate_replacement = f'| **Win Rate** | {int(win_rate)}% | {"Improved" if win_rate >= 60 else "Stable"} |'
+    win_rate_pattern = r"\| \*\*Win Rate\*\* \| \d+% \| \w+ \|"
+    win_rate_replacement = (
+        f"| **Win Rate** | {int(win_rate)}% | {'Improved' if win_rate >= 60 else 'Stable'} |"
+    )
     content = re.sub(win_rate_pattern, win_rate_replacement, content)
 
     # Pattern: | **Lessons** | XX+ | Growing |
-    lessons_pattern = r'\| \*\*Lessons\*\* \| \d+\+ \| Growing \|'
-    lessons_replacement = f'| **Lessons** | {lessons_count}+ | Growing |'
+    lessons_pattern = r"\| \*\*Lessons\*\* \| \d+\+ \| Growing \|"
+    lessons_replacement = f"| **Lessons** | {lessons_count}+ | Growing |"
     content = re.sub(lessons_pattern, lessons_replacement, content)
 
     # Pattern: | **Day** | XX/90 | R&D Phase |
-    day_pattern = r'\| \*\*Day\*\* \| \d+/\d+ \| R&D Phase \|'
-    day_replacement = f'| **Day** | {day}/{total_days} | R&D Phase |'
+    day_pattern = r"\| \*\*Day\*\* \| \d+/\d+ \| R&D Phase \|"
+    day_replacement = f"| **Day** | {day}/{total_days} | R&D Phase |"
     content = re.sub(day_pattern, day_replacement, content)
 
     # Update "What's Actually Working" table - Options Theta row
-    options_pattern = r'\| \*\*Options Theta\*\* \| \d+% \| [+\-]?\$[\d,]+ \| Primary Edge \|'
-    options_replacement = f'| **Options Theta** | {int(win_rate)}% | +{format_currency(equity - 100000).replace("$", "$")} | Primary Edge |'
+    options_pattern = r"\| \*\*Options Theta\*\* \| \d+% \| [+\-]?\$[\d,]+ \| Primary Edge \|"
+    options_replacement = f"| **Options Theta** | {int(win_rate)}% | +{format_currency(equity - 100000).replace('$', '$')} | Primary Edge |"
     content = re.sub(options_pattern, options_replacement, content)
 
     # Update Core ETFs row
-    etf_pattern = r'\| Core ETFs \(SPY\) \| \d+% \| [+\-]?\$[\d,]+ \| Working \|'
-    etf_replacement = f'| Core ETFs (SPY) | {int(win_rate)}% | +{format_currency(equity - 100000).replace("$", "$")} | Working |'
+    etf_pattern = r"\| Core ETFs \(SPY\) \| \d+% \| [+\-]?\$[\d,]+ \| Working \|"
+    etf_replacement = f"| Core ETFs (SPY) | {int(win_rate)}% | +{format_currency(equity - 100000).replace('$', '$')} | Working |"
     content = re.sub(etf_pattern, etf_replacement, content)
 
     # Update description in front matter
@@ -98,7 +101,7 @@ def update_index_md(
     content = re.sub(desc_pattern, desc_replacement, content)
 
     # Update lessons count in Latest Updates section
-    lessons_link_pattern = r'- \[Lessons Learned\].*- \d+\+ documented failures'
+    lessons_link_pattern = r"- \[Lessons Learned\].*- \d+\+ documented failures"
     lessons_link_replacement = f'- [Lessons Learned]({{{{ "/lessons/" | relative_url }}}}) - {lessons_count}+ documented failures'
     content = re.sub(lessons_link_pattern, lessons_link_replacement, content)
 
@@ -136,7 +139,7 @@ def main() -> int:
         # Count lessons
         lessons_count = count_lessons(lessons_dir)
 
-        print(f"📊 Current Portfolio Data:")
+        print("📊 Current Portfolio Data:")
         print(f"   Equity: {format_currency(equity)}")
         print(f"   P/L: {format_percentage(pl_pct)}")
         print(f"   Win Rate: {win_rate}%")

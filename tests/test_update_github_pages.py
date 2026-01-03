@@ -5,21 +5,20 @@ Tests the auto-update functionality that prevents stale GitHub Pages data.
 """
 
 import json
-import tempfile
+
+# Import module under test
+import sys
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
-# Import module under test
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 from update_github_pages import (
     count_lessons,
     format_currency,
     format_percentage,
     load_system_state,
-    main,
     update_index_md,
 )
 
@@ -105,7 +104,7 @@ class TestUpdateIndexMd:
     def sample_index(self, tmp_path):
         """Create sample index.md for testing."""
         index_path = tmp_path / "index.md"
-        content = '''---
+        content = """---
 layout: home
 title: "AI Trading Journey"
 description: "90-day experiment building an AI trading system. 50% overall win rate (+$500 profit). Full transparency."
@@ -130,7 +129,7 @@ description: "90-day experiment building an AI trading system. 50% overall win r
 ## Latest Updates
 
 - [Lessons Learned]({{ "/lessons/" | relative_url }}) - 60+ documented failures
-'''
+"""
         index_path.write_text(content)
         return index_path
 
@@ -237,7 +236,7 @@ class TestMain:
         docs_dir = tmp_path / "docs"
         docs_dir.mkdir()
 
-        index_content = '''---
+        index_content = """---
 description: "90-day experiment building an AI trading system. 50% overall win rate (+$500 profit)."
 ---
 ## Daily Transparency Report
@@ -248,7 +247,7 @@ description: "90-day experiment building an AI trading system. 50% overall win r
 | **Portfolio** | $100,500.00 | +0.50% |
 | **Win Rate** | 50% | Stable |
 | **Lessons** | 60+ | Growing |
-'''
+"""
         (docs_dir / "index.md").write_text(index_content)
 
         lessons_dir = docs_dir / "_lessons"
@@ -258,10 +257,6 @@ description: "90-day experiment building an AI trading system. 50% overall win r
         # Run with mocked paths
         with patch("update_github_pages.Path") as mock_path:
             mock_path.return_value.parent.parent = tmp_path
-            # Use actual implementation
-            import update_github_pages
-            original_main = update_github_pages.main
-
             # Directly test the functions
             state_loaded = load_system_state(data_dir / "system_state.json")
             assert state_loaded["account"]["current_equity"] == 100942.23
@@ -284,6 +279,7 @@ class TestSmokeTests:
     def test_script_is_valid_python(self):
         script_path = Path(__file__).parent.parent / "scripts" / "update_github_pages.py"
         import py_compile
+
         py_compile.compile(str(script_path), doraise=True)
 
     def test_script_has_shebang(self):
@@ -307,7 +303,7 @@ class TestEdgeCases:
 
     def test_format_percentage_large(self):
         result = format_percentage(100.0)
-        assert "+100.00%" == result
+        assert result == "+100.00%"
 
     def test_count_lessons_with_subdirs(self, tmp_path):
         """Ensure subdirectories don't affect count."""
