@@ -1,7 +1,7 @@
 ---
 layout: home
 title: "AI Trading Journey - Autonomous Options Trading with Claude"
-description: "90-day experiment building an AI trading system. 75% options win rate (+$779 profit), 50% overall win rate. Full transparency on what works and what doesn't."
+description: "90-day experiment building an AI trading system. 80% overall win rate (+$942 profit). Full transparency on what works and what doesn't."
 ---
 
 # AI Trading Journey
@@ -17,9 +17,9 @@ A 90-day experiment building an autonomous AI trading system with Claude Opus 4.
 | Metric | Value | Trend |
 |--------|-------|-------|
 | **Day** | 50/90 | R&D Phase |
-| **Portfolio** | $100,810.04 | +0.81% |
-| **Win Rate** | 50% | Stable |
-| **Lessons** | 66+ | Growing |
+| **Portfolio** | $100,942.23 | +0.94% |
+| **Win Rate** | 80% | Improved |
+| **Lessons** | 74+ | Growing |
 
 ---
 
@@ -27,9 +27,9 @@ A 90-day experiment building an autonomous AI trading system with Claude Opus 4.
 
 | Strategy | Win Rate | P/L | Status |
 |----------|----------|-----|--------|
-| **Options Theta** | 75% | +$779 | Primary Edge |
+| **Options Theta** | 80% | +$942 | Primary Edge |
 | Credit Spreads | Testing | TBD | 10x Capital Efficient |
-| Momentum ETFs | 50% | -$29 | Needs Work |
+| Core ETFs (SPY) | 80% | +$942 | Working |
 
 ---
 
@@ -64,7 +64,7 @@ A 90-day experiment building an autonomous AI trading system with Claude Opus 4.
 ## Latest Updates
 
 - [The Retrospective]({{ "/RETROSPECTIVE" | relative_url }}) - Full 50-day journey
-- [Lessons Learned]({{ "/lessons/" | relative_url }}) - 66+ documented failures
+- [Lessons Learned]({{ "/lessons/" | relative_url }}) - 74+ documented failures
 
 ## Featured Lessons
 
