@@ -96,11 +96,7 @@ class BinaryRewardShaper:
 
         # Final shaped reward
         shaped_reward = (
-            binary_reward
-            + risk_penalty
-            + holding_bonus
-            + vol_adjustment
-            + pattern_adjustment
+            binary_reward + risk_penalty + holding_bonus + vol_adjustment + pattern_adjustment
         )
 
         logger.debug(

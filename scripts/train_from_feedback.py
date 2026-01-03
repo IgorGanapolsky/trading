@@ -114,8 +114,7 @@ def main():
         result = train_from_logs(days_back=args.days)
         if result["trained"]:
             logger.info(
-                "Training complete: %d samples (%.1f%% positive). "
-                "Posterior: %.3f ± %.3f",
+                "Training complete: %d samples (%.1f%% positive). Posterior: %.3f ± %.3f",
                 result["samples"],
                 100 * result["positive"] / result["samples"],
                 result["posterior_mean"],

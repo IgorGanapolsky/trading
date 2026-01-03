@@ -186,7 +186,7 @@ class TestFeedbackTrainer:
         assert result["is_positive"] is True
         assert trainer.alpha == 2.0
         assert trainer.beta == 1.0
-        assert result["posterior_mean"] == 2/3
+        assert result["posterior_mean"] == 2 / 3
 
     def test_record_negative_feedback(self, temp_feedback_dir):
         """Test recording negative feedback."""
@@ -202,7 +202,7 @@ class TestFeedbackTrainer:
         assert result["is_positive"] is False
         assert trainer.alpha == 1.0
         assert trainer.beta == 2.0
-        assert result["posterior_mean"] == 1/3
+        assert result["posterior_mean"] == 1 / 3
 
     def test_get_model_stats(self, temp_feedback_dir):
         """Test getting model statistics."""
@@ -272,8 +272,7 @@ class TestFeedbackTrainer:
         # Create feedback file with only 2 samples
         feedback_file = feedback_dir / "feedback_2026-01-01.jsonl"
         feedback_file.write_text(
-            '{"type": "positive", "score": 1}\n'
-            '{"type": "negative", "score": -1}\n'
+            '{"type": "positive", "score": 1}\n{"type": "negative", "score": -1}\n'
         )
 
         trainer = FeedbackTrainer(
@@ -295,7 +294,9 @@ class TestFeedbackTrainer:
         lines = []
         for i in range(10):
             feedback_type = "positive" if i % 3 != 0 else "negative"
-            lines.append(f'{{"type": "{feedback_type}", "score": {1 if feedback_type == "positive" else -1}}}')
+            lines.append(
+                f'{{"type": "{feedback_type}", "score": {1 if feedback_type == "positive" else -1}}}'
+            )
 
         feedback_file = feedback_dir / "feedback_2026-01-01.jsonl"
         feedback_file.write_text("\n".join(lines))
@@ -337,14 +338,8 @@ class TestFeedbackTrainer:
         )
 
         # Record feedback with context to build feature weights
-        trainer.record_feedback(
-            is_positive=True,
-            context={"raw_context": "profit trade momentum"}
-        )
-        trainer.record_feedback(
-            is_positive=False,
-            context={"raw_context": "loss trade risk"}
-        )
+        trainer.record_feedback(is_positive=True, context={"raw_context": "profit trade momentum"})
+        trainer.record_feedback(is_positive=False, context={"raw_context": "loss trade risk"})
 
         # Check feature weights were updated
         assert len(trainer.feature_weights) > 0
@@ -376,9 +371,9 @@ class TestIntegration:
         # 2. Simulate trade outcomes
         trades = [
             {"pnl": 100, "holding_period_days": 2},  # Quick win
-            {"pnl": -50, "holding_period_days": 5},   # Loss
-            {"pnl": 200, "holding_period_days": 1},   # Quick win
-            {"pnl": 75, "holding_period_days": 3},    # Win
+            {"pnl": -50, "holding_period_days": 5},  # Loss
+            {"pnl": 200, "holding_period_days": 1},  # Quick win
+            {"pnl": 75, "holding_period_days": 3},  # Win
         ]
 
         total_shaped_reward = 0
@@ -389,7 +384,7 @@ class TestIntegration:
         # 3. Record user feedback
         trainer.record_feedback(is_positive=True)  # 👍
         trainer.record_feedback(is_positive=True)  # 👍
-        trainer.record_feedback(is_positive=False) # 👎
+        trainer.record_feedback(is_positive=False)  # 👎
 
         # 4. Get prediction
         stats = trainer.get_model_stats()

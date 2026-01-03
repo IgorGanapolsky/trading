@@ -36,9 +36,9 @@ class TestTimezoneHandling:
         )
 
         actual_date = result.stdout.strip()
-        assert (
-            actual_date == expected_date
-        ), f"TODAY should be {expected_date} (ET), got {actual_date}"
+        assert actual_date == expected_date, (
+            f"TODAY should be {expected_date} (ET), got {actual_date}"
+        )
 
     def test_hook_file_contains_et_timezone_for_today(self):
         """Verify the hook file has TZ=America/New_York for TODAY variable."""
@@ -54,9 +54,9 @@ class TestTimezoneHandling:
             content = f.read()
 
         # Check that TODAY uses ET timezone
-        assert (
-            "TODAY=$(TZ=America/New_York date" in content
-        ), "TODAY variable must use TZ=America/New_York"
+        assert "TODAY=$(TZ=America/New_York date" in content, (
+            "TODAY variable must use TZ=America/New_York"
+        )
 
     def test_hook_file_contains_et_timezone_for_days_old(self):
         """Verify the hook file has TZ=America/New_York for DAYS_OLD calculation."""
@@ -72,9 +72,9 @@ class TestTimezoneHandling:
             content = f.read()
 
         # Check that DAYS_OLD calculation uses ET timezone
-        assert (
-            "DAYS_OLD=$(( ($(TZ=America/New_York date" in content
-        ), "DAYS_OLD calculation must use TZ=America/New_York"
+        assert "DAYS_OLD=$(( ($(TZ=America/New_York date" in content, (
+            "DAYS_OLD calculation must use TZ=America/New_York"
+        )
 
     def test_day_of_week_uses_et_timezone(self):
         """Verify DAY_OF_WEEK uses America/New_York timezone."""
@@ -89,9 +89,9 @@ class TestTimezoneHandling:
         with open(hook_path) as f:
             content = f.read()
 
-        assert (
-            "DAY_OF_WEEK=$(TZ=America/New_York date" in content
-        ), "DAY_OF_WEEK must use TZ=America/New_York"
+        assert "DAY_OF_WEEK=$(TZ=America/New_York date" in content, (
+            "DAY_OF_WEEK must use TZ=America/New_York"
+        )
 
     def test_full_date_uses_et_timezone(self):
         """Verify FULL_DATE uses America/New_York timezone."""
@@ -106,9 +106,9 @@ class TestTimezoneHandling:
         with open(hook_path) as f:
             content = f.read()
 
-        assert (
-            "FULL_DATE=$(TZ=America/New_York date" in content
-        ), "FULL_DATE must use TZ=America/New_York"
+        assert "FULL_DATE=$(TZ=America/New_York date" in content, (
+            "FULL_DATE must use TZ=America/New_York"
+        )
 
 
 class TestDateCalculations:
@@ -140,9 +140,7 @@ class TestDateCalculations:
         et_tz = ZoneInfo("America/New_York")
         expected = datetime.now(et_tz).strftime("%Y-%m-%d")
 
-        assert (
-            result.stdout.strip() == expected
-        ), f"Bash TZ command should return {expected}"
+        assert result.stdout.strip() == expected, f"Bash TZ command should return {expected}"
 
 
 class TestHookSmokeTests:
@@ -169,9 +167,7 @@ class TestHookSmokeTests:
             "inject_trading_context.sh",
         )
 
-        result = subprocess.run(
-            ["bash", "-n", hook_path], capture_output=True, text=True
-        )
+        result = subprocess.run(["bash", "-n", hook_path], capture_output=True, text=True)
 
         assert result.returncode == 0, f"Hook has syntax errors: {result.stderr}"
 
@@ -203,9 +199,7 @@ class TestHookSmokeTests:
         with open(hook_path) as f:
             content = f.read()
 
-        assert (
-            "set -euo pipefail" in content
-        ), "Hook should use strict mode: set -euo pipefail"
+        assert "set -euo pipefail" in content, "Hook should use strict mode: set -euo pipefail"
 
 
 class TestMarketHoursAwareness:

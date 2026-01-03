@@ -113,8 +113,7 @@ class FeedbackTrainer:
         }
 
         logger.info(
-            "Feedback training complete: %d samples, %.1f%% positive, "
-            "posterior=%.3f±%.3f",
+            "Feedback training complete: %d samples, %.1f%% positive, posterior=%.3f±%.3f",
             len(feedback_samples),
             100 * positive_count / len(feedback_samples),
             posterior_mean,
@@ -271,9 +270,7 @@ class FeedbackTrainer:
             neg = negative_features.get(feature, 0) + 1
             self.feature_weights[feature] = math.log(pos / neg)
 
-    def _update_feature_weights_single(
-        self, context: dict[str, Any], is_positive: bool
-    ) -> None:
+    def _update_feature_weights_single(self, context: dict[str, Any], is_positive: bool) -> None:
         """Update feature weights from single feedback."""
         features = self._extract_features_from_context(str(context))
         adjustment = 0.1 if is_positive else -0.1

@@ -23,6 +23,7 @@ class TestRAGOperational:
         """Verify chromadb package is installed."""
         try:
             import chromadb
+
             assert chromadb.__version__, "chromadb version should be set"
         except ImportError:
             pytest.fail(

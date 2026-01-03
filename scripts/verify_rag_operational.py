@@ -21,6 +21,7 @@ def verify_chromadb_installed() -> tuple[bool, str]:
     """Verify chromadb package is actually installed."""
     try:
         import chromadb
+
         return True, f"chromadb v{chromadb.__version__}"
     except ImportError:
         return False, "chromadb NOT INSTALLED - run: pip install chromadb"
@@ -86,8 +87,7 @@ def verify_semantic_search_works() -> tuple[bool, str]:
         docs = results.get("documents", [[]])[0]
         relevant_keywords = ["money", "loss", "capital", "protect", "rule", "don't lose"]
         found_relevant = any(
-            any(kw.lower() in doc.lower() for kw in relevant_keywords)
-            for doc in docs if doc
+            any(kw.lower() in doc.lower() for kw in relevant_keywords) for doc in docs if doc
         )
 
         if not found_relevant:
@@ -124,7 +124,7 @@ def verify_lessons_search_class() -> tuple[bool, str]:
 
         # Verify results have correct format
         lesson, score = results[0]
-        if not hasattr(lesson, 'id') or not hasattr(lesson, 'severity'):
+        if not hasattr(lesson, "id") or not hasattr(lesson, "severity"):
             return False, "LessonsSearch results have wrong format"
 
         return True, f"LessonsSearch OK ({ls.count()} lessons, {doc_count} vectors)"
