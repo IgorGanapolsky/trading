@@ -16,6 +16,7 @@
     "phase": "R&D Phase - Month 2 (Days 31-60)"
   },
   "account": {
+    "type": "paper",
     "starting_balance": 100000.0,
     "current_equity": 100942.23,
     "cash": 86629.95,
@@ -25,6 +26,21 @@
     "buying_power": 1341.99,
     "daily_change_pct": 0.0,
     "positions_count": 15
+  },
+  "real_account": {
+    "type": "live",
+    "started": "2026-01-03",
+    "starting_balance": 20.0,
+    "current_equity": 20.0,
+    "cash": 20.0,
+    "positions_value": 0.0,
+    "total_pl": 0.0,
+    "total_pl_pct": 0.0,
+    "buying_power": 20.0,
+    "daily_deposit": 10.0,
+    "target_daily_profit": 100.0,
+    "positions_count": 0,
+    "note": "Real brokerage - applying winning strategies from paper trading"
   },
   "investments": {
     "total_invested": 1621.93,

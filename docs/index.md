@@ -14,12 +14,21 @@ A 90-day experiment building an autonomous AI trading system with Claude Opus 4.
 
 ## Daily Transparency Report
 
+### Paper Trading (R&D)
 | Metric | Value | Trend |
 |--------|-------|-------|
 | **Day** | 50/90 | R&D Phase |
 | **Portfolio** | $100,942.23 | +0.94% |
 | **Win Rate** | 80% | Improved |
 | **Lessons** | 74+ | Growing |
+
+### Real Brokerage (Live)
+| Metric | Value | Trend |
+|--------|-------|-------|
+| **Started** | Jan 3, 2026 | Day 1 |
+| **Portfolio** | $20.00 | Starting |
+| **Daily Deposit** | $10/day | Building |
+| **Target** | $100/day profit | North Star |
 
 ---
 
