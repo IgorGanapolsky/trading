@@ -632,16 +632,17 @@ def generate_world_class_dashboard() -> str:
 """
 
     # Build risk metrics table with proper values
-    max_dd = risk.get("max_drawdown_pct", 0)
-    curr_dd = risk.get("current_drawdown_pct", 0)
-    ulcer = risk.get("ulcer_index", 0)
-    sharpe = risk.get("sharpe_ratio", 0)
-    sortino = risk.get("sortino_ratio", 0)
-    calmar = risk.get("calmar_ratio", 0)
-    vol = risk.get("volatility_annualized", 0)
-    var95 = abs(risk.get("var_95", 0))
-    var99 = abs(risk.get("var_99", 0))
-    cvar95 = risk.get("cvar_95", 0)
+    # Use "or 0" to handle explicit None values (dict.get() returns None, not default, if key exists with None value)
+    max_dd = risk.get("max_drawdown_pct", 0) or 0
+    curr_dd = risk.get("current_drawdown_pct", 0) or 0
+    ulcer = risk.get("ulcer_index", 0) or 0
+    sharpe = risk.get("sharpe_ratio", 0) or 0
+    sortino = risk.get("sortino_ratio", 0) or 0
+    calmar = risk.get("calmar_ratio", 0) or 0
+    vol = risk.get("volatility_annualized", 0) or 0
+    var95 = abs(risk.get("var_95", 0) or 0)
+    var99 = abs(risk.get("var_99", 0) or 0)
+    cvar95 = risk.get("cvar_95", 0) or 0
     kelly = 0.0  # Not calculated yet
     margin = 0.0  # Not calculated yet
     leverage = 1.0  # Default leverage
@@ -750,6 +751,14 @@ def generate_world_class_dashboard() -> str:
         else:
             dashboard += f"*Charts will be generated when matplotlib is available in the environment. Data available: {perf_log_count} data points.*\n\n"
 
+    # Extract execution metrics with None handling
+    exec_slippage = execution.get("avg_slippage", 0) or 0
+    exec_fill_quality = execution.get("fill_quality", 0) or 0
+    exec_success_rate = execution.get("order_success_rate", 0) or 0
+    exec_reject_rate = execution.get("order_reject_rate", 0) or 0
+    exec_fill_time = execution.get("avg_fill_time_ms", 0) or 0
+    exec_broker_latency = execution.get("broker_latency_ms", 0) or 0
+
     dashboard += f"""
 ---
 
@@ -757,12 +766,12 @@ def generate_world_class_dashboard() -> str:
 
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
-| **Avg Slippage** | {execution.get("avg_slippage", 0):.3f}% | <0.5% | {"✅" if execution.get("avg_slippage", 0) < 0.5 else "⚠️"} |
-| **Fill Quality** | {execution.get("fill_quality", 0):.1f}/100 | >90 | {"✅" if execution.get("fill_quality", 0) > 90 else "⚠️"} |
-| **Order Success Rate** | {execution.get("order_success_rate", 0):.1f}% | >95% | {"✅" if execution.get("order_success_rate", 0) > 95 else "⚠️"} |
-| **Order Reject Rate** | {execution.get("order_reject_rate", 0):.1f}% | <5% | {"✅" if execution.get("order_reject_rate", 0) < 5 else "⚠️"} |
-| **Avg Fill Time** | {execution.get("avg_fill_time_ms", 0):.0f} ms | <200ms | {"✅" if execution.get("avg_fill_time_ms", 0) < 200 else "⚠️"} |
-| **Broker Latency** | {execution.get("broker_latency_ms", 0):.0f} ms | <100ms | {"✅" if execution.get("broker_latency_ms", 0) < 100 else "⚠️"} |
+| **Avg Slippage** | {exec_slippage:.3f}% | <0.5% | {"✅" if exec_slippage < 0.5 else "⚠️"} |
+| **Fill Quality** | {exec_fill_quality:.1f}/100 | >90 | {"✅" if exec_fill_quality > 90 else "⚠️"} |
+| **Order Success Rate** | {exec_success_rate:.1f}% | >95% | {"✅" if exec_success_rate > 95 else "⚠️"} |
+| **Order Reject Rate** | {exec_reject_rate:.1f}% | <5% | {"✅" if exec_reject_rate < 5 else "⚠️"} |
+| **Avg Fill Time** | {exec_fill_time:.0f} ms | <200ms | {"✅" if exec_fill_time < 200 else "⚠️"} |
+| **Broker Latency** | {exec_broker_latency:.0f} ms | <100ms | {"✅" if exec_broker_latency < 100 else "⚠️"} |
 
 ---
 
@@ -770,13 +779,41 @@ def generate_world_class_dashboard() -> str:
 
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
-| **Performance Log Completeness** | {data_completeness.get("performance_log_completeness", 0):.1f}% | >95% | {"✅" if data_completeness.get("performance_log_completeness", 0) > 95 else "⚠️"} |
-| **Missing Dates** | {data_completeness.get("missing_dates_count", 0)} | 0 | {"✅" if data_completeness.get("missing_dates_count", 0) == 0 else "⚠️"} |
-| **Data Freshness** | {data_completeness.get("data_freshness_days", 999)} days old | <1 day | {"✅" if data_completeness.get("data_freshness_days", 999) < 1 else "⚠️"} |
-| **Missing Candle %** | {data_completeness.get("missing_candle_pct", 0):.2f}% | <1% | {"✅" if data_completeness.get("missing_candle_pct", 0) < 1 else "⚠️"} |
-| **Data Sources** | {", ".join(data_completeness.get("data_sources_used", []))} | Multiple | {"✅" if len(data_completeness.get("data_sources_used", [])) > 1 else "⚠️"} |
-| **Model Version** | {data_completeness.get("model_version", "1.0")} | Latest | ✅ |
+| **Performance Log Completeness** | {(data_completeness.get("performance_log_completeness", 0) or 0):.1f}% | >95% | {"✅" if (data_completeness.get("performance_log_completeness", 0) or 0) > 95 else "⚠️"} |
+| **Missing Dates** | {data_completeness.get("missing_dates_count", 0) or 0} | 0 | {"✅" if (data_completeness.get("missing_dates_count", 0) or 0) == 0 else "⚠️"} |
+| **Data Freshness** | {data_completeness.get("data_freshness_days", 999) or 999} days old | <1 day | {"✅" if (data_completeness.get("data_freshness_days", 999) or 999) < 1 else "⚠️"} |
+| **Missing Candle %** | {(data_completeness.get("missing_candle_pct", 0) or 0):.2f}% | <1% | {"✅" if (data_completeness.get("missing_candle_pct", 0) or 0) < 1 else "⚠️"} |
+| **Data Sources** | {", ".join(data_completeness.get("data_sources_used", []) or [])} | Multiple | {"✅" if len(data_completeness.get("data_sources_used", []) or []) > 1 else "⚠️"} |
+| **Model Version** | {data_completeness.get("model_version", "1.0") or "1.0"} | Latest | ✅ |
 
+"""
+
+    # Extract predictive analytics with None handling
+    pred_expected_pl = predictive.get("expected_pl_30d", 0) or 0
+    mc_forecast = predictive.get("monte_carlo_forecast", {}) or {}
+    mc_mean = mc_forecast.get("mean_30d", 0) or 0
+    mc_std = mc_forecast.get("std_30d", 0) or 0
+    mc_p5 = mc_forecast.get("percentile_5", 0) or 0
+    mc_p95 = mc_forecast.get("percentile_95", 0) or 0
+    pred_risk_of_ruin = predictive.get("risk_of_ruin", 0) or 0
+    pred_forecast_dd = predictive.get("forecasted_drawdown", 0) or 0
+    pred_decay = predictive.get("strategy_decay_detected", False)
+
+    # Extract benchmark with None handling
+    bench_portfolio_return = benchmark.get("portfolio_return", 0) or 0
+    bench_benchmark_return = benchmark.get("benchmark_return", 0) or 0
+    bench_alpha = benchmark.get("alpha", 0) or 0
+    bench_beta = benchmark.get("beta", 1.0) or 1.0
+    bench_data_available = benchmark.get("data_available", False)
+
+    # Extract AI insights with None handling
+    ai_summary = ai_insights.get("summary", "No summary available.") or "No summary available."
+    ai_health = ai_insights.get("strategy_health", {}) or {}
+    ai_emoji = ai_health.get("emoji", "❓") or "❓"
+    ai_status = ai_health.get("status", "UNKNOWN") or "UNKNOWN"
+    ai_score = ai_health.get("score", 0) or 0
+
+    dashboard += f"""
 ---
 
 ## 🔮 Predictive Analytics
@@ -785,14 +822,14 @@ def generate_world_class_dashboard() -> str:
 
 | Metric | Value |
 |--------|-------|
-| **Expected P/L (30d)** | ${predictive.get("expected_pl_30d", 0):+.2f} |
-| **Forecast Mean** | ${predictive.get("monte_carlo_forecast", {}).get("mean_30d", 0):,.2f} |
-| **Forecast Std Dev** | ${predictive.get("monte_carlo_forecast", {}).get("std_30d", 0):,.2f} |
-| **5th Percentile** | ${predictive.get("monte_carlo_forecast", {}).get("percentile_5", 0):,.2f} |
-| **95th Percentile** | ${predictive.get("monte_carlo_forecast", {}).get("percentile_95", 0):,.2f} |
-| **Risk of Ruin** | {predictive.get("risk_of_ruin", 0):.2f}% | {"✅" if predictive.get("risk_of_ruin", 0) < 5 else "⚠️"} |
-| **Forecasted Drawdown** | {predictive.get("forecasted_drawdown", 0):.2f}% |
-| **Strategy Decay Detected** | {"⚠️ YES" if predictive.get("strategy_decay_detected", False) else "✅ NO"} |
+| **Expected P/L (30d)** | ${pred_expected_pl:+.2f} |
+| **Forecast Mean** | ${mc_mean:,.2f} |
+| **Forecast Std Dev** | ${mc_std:,.2f} |
+| **5th Percentile** | ${mc_p5:,.2f} |
+| **95th Percentile** | ${mc_p95:,.2f} |
+| **Risk of Ruin** | {pred_risk_of_ruin:.2f}% | {"✅" if pred_risk_of_ruin < 5 else "⚠️"} |
+| **Forecasted Drawdown** | {pred_forecast_dd:.2f}% |
+| **Strategy Decay Detected** | {"⚠️ YES" if pred_decay else "✅ NO"} |
 
 ---
 
@@ -800,10 +837,10 @@ def generate_world_class_dashboard() -> str:
 
 | Metric | Portfolio | Benchmark | Difference | Status |
 |--------|-----------|-----------|------------|--------|
-| **Total Return** | {benchmark.get("portfolio_return", 0):+.2f}% | {benchmark.get("benchmark_return", 0):+.2f}% | {benchmark.get("alpha", 0):+.2f}% | {"✅ Outperforming" if benchmark.get("alpha", 0) > 0 else "⚠️ Underperforming"} |
-| **Alpha** | {benchmark.get("alpha", 0):+.2f}% | - | - | {"✅ Positive Alpha" if benchmark.get("alpha", 0) > 0 else "⚠️ Negative Alpha"} |
-| **Beta** | {benchmark.get("beta", 1.0):.2f} | 1.0 | {benchmark.get("beta", 1.0) - 1.0:+.2f} | {"Higher Risk" if benchmark.get("beta", 1.0) > 1.0 else "Lower Risk"} |
-| **Data Available** | {"✅ Yes" if benchmark.get("data_available", False) else "⚠️ Limited"} | - | - | - |
+| **Total Return** | {bench_portfolio_return:+.2f}% | {bench_benchmark_return:+.2f}% | {bench_alpha:+.2f}% | {"✅ Outperforming" if bench_alpha > 0 else "⚠️ Underperforming"} |
+| **Alpha** | {bench_alpha:+.2f}% | - | - | {"✅ Positive Alpha" if bench_alpha > 0 else "⚠️ Negative Alpha"} |
+| **Beta** | {bench_beta:.2f} | 1.0 | {bench_beta - 1.0:+.2f} | {"Higher Risk" if bench_beta > 1.0 else "Lower Risk"} |
+| **Data Available** | {"✅ Yes" if bench_data_available else "⚠️ Limited"} | - | - | - |
 
 ---
 
@@ -811,11 +848,11 @@ def generate_world_class_dashboard() -> str:
 
 ### Daily Summary
 
-{ai_insights.get("summary", "No summary available.")}
+{ai_summary}
 
 ### Strategy Health Score
 
-**{ai_insights.get("strategy_health", {}).get("emoji", "❓")} {ai_insights.get("strategy_health", {}).get("status", "UNKNOWN")}** ({ai_insights.get("strategy_health", {}).get("score", 0):.0f}/100)
+**{ai_emoji} {ai_status}** ({ai_score:.0f}/100)
 
 """
 
