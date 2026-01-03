@@ -16,15 +16,16 @@
     "phase": "R&D Phase - Month 2 (Days 31-60)"
   },
   "account": {
-    "starting_balance": 100000.0,
-    "current_equity": 100942.23,
-    "cash": 86629.95,
-    "positions_value": 17695.12,
-    "total_pl": 942.23,
-    "total_pl_pct": 0.94,
-    "buying_power": 1341.99,
+    "starting_balance": 20.0,
+    "current_equity": 20.0,
+    "cash": 20.0,
+    "positions_value": 0.0,
+    "total_pl": 0.0,
+    "total_pl_pct": 0.0,
+    "buying_power": 20.0,
     "daily_change_pct": 0.0,
-    "positions_count": 15
+    "positions_count": 0,
+    "reset_note": "Fresh start Jan 3, 2026 - Real brokerage with $10/day deposits"
   },
   "investments": {
     "total_invested": 1621.93,
