@@ -1631,5 +1631,29 @@
     "severity": "medium",
     "financial_impact": 0.0,
     "symbol": null
+  },
+  {
+    "id": "lesson_20260103_181006_0",
+    "title": "Dashboard None Value TypeError - Silent Failure Pattern",
+    "category": "bug_fix",
+    "severity": "high",
+    "date_learned": "2026-01-03T18:10:06.063942",
+    "context": "Progress Dashboard stopped updating for 3 days without any visible error",
+    "problem": "The dashboard generation script crashed with TypeError when formatting None values with .2f format specifiers. The calculate_simple_risk_metrics() function returns None for several metrics (sortino_ratio, ulcer_index, var_95, var_99, calmar_ratio) as part of an 'HONESTY FIX'. When the dashboard tried to format these with f'{value:.2f}', it crashed. The workflow had 'continue-on-error: true' which suppressed the error silently.",
+    "solution": "Use 'or 0' pattern to convert None to numeric default: sortino = risk.get('sortino_ratio', 0) or 0. Note: dict.get(key, default) returns None (not default) when key exists with None value.",
+    "prevention": "1. Always use 'or default' after .get() when values might be explicitly None. 2. Add smoke tests that verify dashboard generation completes. 3. Review 'continue-on-error: true' in workflows - they hide failures. 4. Test with real data that includes None values.",
+    "related_files": [
+      "scripts/generate_world_class_dashboard_enhanced.py",
+      "tests/test_dashboard_none_handling.py",
+      ".github/workflows/daily-trading.yml"
+    ],
+    "tags": [
+      "TypeError",
+      "None handling",
+      "silent failure",
+      "dashboard",
+      "formatting",
+      "dict.get"
+    ]
   }
 ]
