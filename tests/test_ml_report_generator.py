@@ -604,6 +604,9 @@ class TestSmokeTests:
         import subprocess
         import sys
 
+        # Use project root relative to this test file
+        project_root = Path(__file__).parent.parent
+
         result = subprocess.run(
             [
                 sys.executable,
@@ -612,7 +615,7 @@ class TestSmokeTests:
             ],
             capture_output=True,
             text=True,
-            cwd="/home/user/trading",
+            cwd=str(project_root),
         )
-        assert result.returncode == 0
+        assert result.returncode == 0, f"Failed with stderr: {result.stderr}"
         assert "OK" in result.stdout
