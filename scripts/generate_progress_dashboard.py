@@ -751,13 +751,14 @@ def generate_dashboard() -> str:
     calculator = TradingMetricsCalculator(DATA_DIR)
     world_class_metrics = calculator.calculate_all_metrics()
 
+    # Load performance log (needed for charts and later in dashboard)
+    perf_log = load_json_file(DATA_DIR / "performance_log.json")
+    if not isinstance(perf_log, list):
+        perf_log = []
+
     # Generate charts (PNG images)
     try:
         from scripts.dashboard_charts import generate_all_charts
-
-        perf_log = load_json_file(DATA_DIR / "performance_log.json")
-        if not isinstance(perf_log, list):
-            perf_log = []
 
         # Get strategy data for attribution chart
         strategy_metrics_data = world_class_metrics.get("strategy_metrics", {})
