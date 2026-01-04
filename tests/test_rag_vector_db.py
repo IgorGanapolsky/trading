@@ -102,16 +102,16 @@ class TestVectorDBData:
         assert len(collections) > 0, "Vector DB has no collections"
 
         # Check first collection has data
-        # In ChromaDB 1.x, list_collections() returns Collection objects directly
+        # ChromaDB 0.6.0: list_collections() returns collection names as strings
         first_collection = collections[0]
-        if hasattr(first_collection, "name"):
-            # ChromaDB 1.x: list_collections returns Collection objects
-            col = first_collection
-            col_name = first_collection.name
-        else:
-            # ChromaDB 0.x: list_collections returns strings
+        # In 0.6.0, collections are strings (names), get the actual collection
+        if isinstance(first_collection, str):
             col = client.get_collection(first_collection)
             col_name = first_collection
+        else:
+            # Older versions might return Collection objects
+            col = first_collection
+            col_name = getattr(first_collection, "name", str(first_collection))
         count = col.count()
         assert count > 0, f"Collection '{col_name}' is empty"
 
