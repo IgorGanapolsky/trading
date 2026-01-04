@@ -33,9 +33,7 @@ class TestDialogflowWebhookFormat:
         assert "messages" in response["fulfillmentResponse"]
         assert len(response["fulfillmentResponse"]["messages"]) == 1
         assert "text" in response["fulfillmentResponse"]["messages"][0]
-        assert response["fulfillmentResponse"]["messages"][0]["text"]["text"] == [
-            "Test message"
-        ]
+        assert response["fulfillmentResponse"]["messages"][0]["text"]["text"] == ["Test message"]
 
     def test_format_lessons_response_no_results(self):
         """Verify empty results return helpful message."""
@@ -249,9 +247,7 @@ class TestDialogflowWebhookEdgeCases:
         # Set up mock to return results on second call
         with patch("src.agents.dialogflow_webhook.rag") as mock:
             mock.lessons = []
-            mock.query.return_value = [
-                {"id": "ll_001", "severity": "INFO", "content": "Test"}
-            ]
+            mock.query.return_value = [{"id": "ll_001", "severity": "INFO", "content": "Test"}]
 
             client = TestClient(app)
 
@@ -268,9 +264,7 @@ class TestDialogflowWebhookEdgeCases:
         """Test extracting query from fulfillmentInfo.tag."""
         with patch("src.agents.dialogflow_webhook.rag") as mock:
             mock.lessons = []
-            mock.query.return_value = [
-                {"id": "ll_001", "severity": "INFO", "content": "Test"}
-            ]
+            mock.query.return_value = [{"id": "ll_001", "severity": "INFO", "content": "Test"}]
 
             from fastapi.testclient import TestClient
             from src.agents.dialogflow_webhook import app
