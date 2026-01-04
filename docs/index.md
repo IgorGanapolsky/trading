@@ -19,9 +19,18 @@ A 90-day experiment building an autonomous AI trading system with Claude Opus 4.
 | Metric | Value | Trend |
 |--------|-------|-------|
 | **Started** | Jan 3, 2026 | Day 1 |
-| **Portfolio** | $20.00 | Fresh Start |
-| **Daily Deposit** | $10/day | Building |
+| **Cash** | $20.00 | Fresh Start |
+| **Positions** | 0 | Building |
+| **Daily Deposit** | $10/day | Accumulating |
 | **Target** | $100/day profit | North Star |
+
+### Current Positions (Live Account)
+
+| Symbol | Type | Entry | Current | P/L |
+|--------|------|-------|---------|-----|
+| *None yet* | - | - | - | - |
+
+> **Status**: Accumulating capital. First options trade when we reach minimum for defined-risk spreads (~$100-200).
 
 ### Paper Trading (R&D)
 
@@ -33,6 +42,8 @@ A 90-day experiment building an autonomous AI trading system with Claude Opus 4.
 | **Lessons** | 75+ | Growing |
 
 > **Strategy**: Paper trade at night to build RAG knowledge. Apply winning strategies to real account.
+
+[View Full Dashboard]({{ "/progress_dashboard" | relative_url }})
 
 ---
 

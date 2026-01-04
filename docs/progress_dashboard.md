@@ -1,55 +1,102 @@
 # Trading System Progress Dashboard
 
-**Generated**: 2025-12-29 18:22:39 UTC
-**Last Data Sync**: 2025-12-29T09:46:00.000000
+**Generated**: {{ "now" | date: "%Y-%m-%d %H:%M:%S" }} UTC
+**Status**: LIVE
 
 ---
 
-## North Star: $100/day Net Profit
+## Portfolio Overview
 
-| Metric | Current | Target | Gap |
-|--------|---------|--------|-----|
-| **Total P/L** | $810.04 | $9,000 | $8,189.96 |
-| **Daily Average** | $16.20/day | $100/day | $83.80 |
-| **Progress** | 16.2% | 100% | 83.8% |
+### Live Account (Real Money)
+
+| Metric | Value |
+|--------|-------|
+| **Started** | Jan 3, 2026 |
+| **Cash** | $20.00 |
+| **Positions** | 0 |
+| **Total P/L** | $0.00 |
+| **Daily Deposit** | $10/day |
+
+### Paper Account (R&D)
+
+| Metric | Value |
+|--------|-------|
+| **Equity** | $100,942.23 |
+| **Cash** | $86,629.95 |
+| **Win Rate** | 80% |
 
 ---
 
-## 90-Day Challenge Status
+## Current Positions
+
+### Live Account
+
+| Symbol | Type | Strike | Expiry | Entry | Current | P/L |
+|--------|------|--------|--------|-------|---------|-----|
+| *No positions yet* | - | - | - | - | - | - |
+
+> Starting fresh with $20. First options trade coming when we reach minimum capital for defined-risk spreads.
+
+---
+
+## Recent Trades
+
+### Last 7 Days
+
+| Date | Action | Symbol | Qty | Price | Notes |
+|------|--------|--------|-----|-------|-------|
+| 2025-12-23 | BUY | SPY | 0.73 | ~$590 | Paper account |
+| 2025-12-23 | BUY | SPY | 0.73 | ~$590 | Paper account |
+| 2025-12-23 | BUY | SPY | 0.73 | ~$590 | Paper account |
+
+---
+
+## Options Strategy Metrics
+
+| Metric | Current | Target |
+|--------|---------|--------|
+| **Win Rate** | 80% | 75%+ |
+| **Avg Days in Trade** | TBD | <30 |
+| **Max Position Size** | TBD | 5% portfolio |
+| **Daily Theta Target** | TBD | $10/day |
+
+---
+
+## 90-Day Challenge Progress
 
 | Metric | Value |
 |--------|-------|
 | **Day** | 50 / 90 |
-| **Phase** | R&D Phase - Month 2 (Days 31-60) |
+| **Phase** | R&D Phase - Month 2 |
 | **Days Remaining** | 40 |
-| **Required Daily (to hit $9K)** | $204.75/day |
+| **Target** | $100/day profit |
 
 ---
 
-## Account Overview
+## Risk Status
 
-| Metric | Value |
-|--------|-------|
-| **Starting Balance** | $100,000.00 |
-| **Current Equity** | $100,810.04 |
-| **Cash** | $83,114.92 |
-| **Positions Value** | $17,695.12 |
-| **Buying Power** | $2,487.77 |
-| **Today's Change** | -0.1% |
-| **Open Positions** | 15 |
+| Check | Status |
+|-------|--------|
+| **Max Drawdown** | 0% (no positions) |
+| **Position Limits** | OK |
+| **Buying Power** | $20.00 |
+| **Circuit Breakers** | Armed |
 
 ---
 
-## Reality Check
+## What's Working
 
-**At current rate ($16.20/day):**
-- 90-day projection: $1,458.07
-- Gap to North Star: $7,541.93
+- **Options Theta**: 80% win rate on paper
+- **Phil Town Rules**: Concentration over diversification
+- **RAG System**: 709 documents, learning from failures
 
-**To hit $100/day for remaining 40 days:**
-- Need: $204.75/day
-- That's 12.6x current performance
+## What's Not Working
+
+- ~~Bonds/Treasuries~~ - Removed Dec 29
+- ~~Crypto~~ - Removed Dec 15
+- ~~Complex ML~~ - Over-engineered
 
 ---
 
-*Dashboard auto-generated from system_state.json*
+*Dashboard syncs from `data/system_state.json`*
+*For full transparency, see [GitHub repo](https://github.com/IgorGanapolsky/trading)*
