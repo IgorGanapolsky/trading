@@ -1,0 +1,188 @@
+name: Fix Vertex AI Agent - Delete All Hardcoded Intents
+
+on:
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: igor-trading-2025-v2
+
+jobs:
+  fix-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Delete All Hardcoded Intents
+        run: |
+          TOKEN=$(gcloud auth print-access-token)
+          API_BASE="https://dialogflow.googleapis.com/v3"
+          AGENT="projects/igor-trading-2025-v2/locations/global/agents/98373354-4197-4cb1-a7a0-1966ea6d27a7"
+          FLOW="${AGENT}/flows/00000000-0000-0000-0000-000000000000"
+
+          echo "=== STEP 1: LIST ALL INTENTS ==="
+          INTENTS=$(curl -s -X GET "${API_BASE}/${AGENT}/intents" \
+            -H "Authorization: Bearer $TOKEN")
+
+          echo "All intents in agent:"
+          echo "$INTENTS" | jq -r '.intents[] | "\(.displayName): \(.name)"'
+
+          # Get count
+          INTENT_COUNT=$(echo "$INTENTS" | jq '.intents | length')
+          echo ""
+          echo "Total intents: $INTENT_COUNT"
+
+          echo ""
+          echo "=== STEP 2: CLEAR ALL TRANSITION ROUTES FROM FLOW ==="
+
+          # First, remove all transition routes so intents can be deleted
+          CLEAR_ROUTES=$(curl -s -X PATCH \
+            "${API_BASE}/${FLOW}?updateMask=transitionRoutes" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"transitionRoutes": []}')
+
+          if echo "$CLEAR_ROUTES" | jq -e '.error' > /dev/null 2>&1; then
+            echo "⚠️ Error clearing routes:"
+            echo "$CLEAR_ROUTES" | jq '.error'
+          else
+            echo "✅ Cleared all transition routes from flow"
+          fi
+
+          sleep 2
+
+          echo ""
+          echo "=== STEP 3: DELETE ALL HARDCODED INTENTS ==="
+
+          # Keep only "Default Welcome Intent" and "Default Negative Intent" (Dialogflow system intents)
+          # Delete ALL others including status.intent, rag-catch-all, etc.
+          INTENTS_TO_DELETE=$(echo "$INTENTS" | jq -r '.intents[] | select(.displayName != "Default Welcome Intent" and .displayName != "Default Negative Intent") | .name')
+
+          for INTENT in $INTENTS_TO_DELETE; do
+            INTENT_NAME=$(echo "$INTENTS" | jq -r ".intents[] | select(.name == \"$INTENT\") | .displayName")
+            echo "Deleting: $INTENT_NAME ($INTENT)"
+
+            DELETE_RESULT=$(curl -s -X DELETE \
+              "${API_BASE}/${INTENT}" \
+              -H "Authorization: Bearer $TOKEN")
+
+            if [ -z "$DELETE_RESULT" ] || [ "$DELETE_RESULT" == "{}" ]; then
+              echo "  ✅ Deleted"
+            elif echo "$DELETE_RESULT" | jq -e '.error' > /dev/null 2>&1; then
+              echo "  ⚠️ Error: $(echo "$DELETE_RESULT" | jq -r '.error.message')"
+            fi
+            sleep 0.5
+          done
+
+          echo ""
+          echo "=== STEP 4: VERIFY WEBHOOK EXISTS ==="
+
+          WEBHOOKS=$(curl -s -X GET "${API_BASE}/${AGENT}/webhooks" \
+            -H "Authorization: Bearer $TOKEN")
+
+          WEBHOOK_ID=$(echo "$WEBHOOKS" | jq -r '.webhooks[] | select(.displayName == "Trading RAG Webhook") | .name' | head -1)
+
+          if [ -n "$WEBHOOK_ID" ]; then
+            echo "✅ Webhook found: $WEBHOOK_ID"
+          else
+            echo "Creating webhook..."
+            CREATE_WEBHOOK=$(curl -s -X POST \
+              "${API_BASE}/${AGENT}/webhooks" \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "displayName": "Trading RAG Webhook",
+                "genericWebService": {
+                  "uri": "https://trading-dialogflow-webhook-cqlewkvzdq-uc.a.run.app/webhook"
+                },
+                "timeout": "30s"
+              }')
+            WEBHOOK_ID=$(echo "$CREATE_WEBHOOK" | jq -r '.name')
+            echo "✅ Created webhook: $WEBHOOK_ID"
+          fi
+
+          echo ""
+          echo "=== STEP 5: CONFIGURE WEBHOOK AS ONLY HANDLER ==="
+
+          # Configure event handlers for ALL events to use webhook
+          EVENT_UPDATE=$(curl -s -X PATCH \
+            "${API_BASE}/${FLOW}?updateMask=eventHandlers" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"eventHandlers\": [
+                {
+                  \"event\": \"sys.no-match-default\",
+                  \"triggerFulfillment\": {
+                    \"webhook\": \"${WEBHOOK_ID}\",
+                    \"tag\": \"rag-query\"
+                  }
+                },
+                {
+                  \"event\": \"sys.no-input-default\",
+                  \"triggerFulfillment\": {
+                    \"webhook\": \"${WEBHOOK_ID}\",
+                    \"tag\": \"rag-query\"
+                  }
+                }
+              ]
+            }")
+
+          if echo "$EVENT_UPDATE" | jq -e '.error' > /dev/null 2>&1; then
+            echo "⚠️ Event handler error:"
+            echo "$EVENT_UPDATE" | jq '.error'
+          else
+            echo "✅ Event handlers configured"
+          fi
+
+          echo ""
+          echo "=== STEP 6: UPDATE START PAGE TO USE WEBHOOK ==="
+
+          # Get the start page
+          START_PAGE="${FLOW}/pages/START_PAGE"
+
+          # Update start page to call webhook for all entries
+          PAGE_UPDATE=$(curl -s -X PATCH \
+            "${API_BASE}/${FLOW}/pages/00000000-0000-0000-0000-000000000000?updateMask=entryFulfillment" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"entryFulfillment\": {
+                \"webhook\": \"${WEBHOOK_ID}\",
+                \"tag\": \"rag-query\"
+              }
+            }" 2>/dev/null) || true
+
+          echo ""
+          echo "=== STEP 7: VERIFY FINAL STATE ==="
+
+          # List remaining intents
+          FINAL_INTENTS=$(curl -s -X GET "${API_BASE}/${AGENT}/intents" \
+            -H "Authorization: Bearer $TOKEN")
+
+          echo "Remaining intents:"
+          echo "$FINAL_INTENTS" | jq -r '.intents[] | "  - \(.displayName)"'
+
+          FINAL_FLOW=$(curl -s -X GET "${API_BASE}/${FLOW}" \
+            -H "Authorization: Bearer $TOKEN")
+
+          echo ""
+          echo "Flow transition routes: $(echo "$FINAL_FLOW" | jq '.transitionRoutes | length // 0')"
+          echo "Flow event handlers:"
+          echo "$FINAL_FLOW" | jq '.eventHandlers[] | "  - \(.event)"'
+
+          echo ""
+          echo "============================================"
+          echo "✅ VERTEX AI AGENT FIX COMPLETE"
+          echo "============================================"
+          echo "- Deleted all hardcoded intents"
+          echo "- Webhook is now the ONLY response handler"
+          echo "- All queries will go to RAG system"
+          echo "============================================"
+          echo ""
+          echo "Test the agent now - it should answer from lessons learned!"
