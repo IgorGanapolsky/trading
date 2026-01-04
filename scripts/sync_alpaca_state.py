@@ -148,6 +148,25 @@ def update_system_state(alpaca_data: dict | None) -> None:
         # Store positions count
         state["account"]["positions_count"] = alpaca_data.get("positions_count", 0)
 
+        # CRITICAL: Store actual positions in performance.open_positions
+        # This is what the blog and verify_positions.py use to display positions
+        positions = alpaca_data.get("positions", [])
+        state.setdefault("performance", {})
+        state["performance"]["open_positions"] = [
+            {
+                "symbol": p.get("symbol"),
+                "quantity": p.get("qty") or p.get("quantity", 0),
+                "entry_price": p.get("avg_entry_price", 0),
+                "current_price": p.get("current_price", 0),
+                "market_value": p.get("market_value", 0),
+                "unrealized_pl": p.get("unrealized_pl", 0),
+                "unrealized_pl_pct": p.get("unrealized_plpc", 0),
+                "side": p.get("side", "long"),
+            }
+            for p in positions
+            if p.get("symbol")
+        ]
+
     # Write atomically
     SYSTEM_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     temp_file = SYSTEM_STATE_FILE.with_suffix(".tmp")

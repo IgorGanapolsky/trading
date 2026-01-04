@@ -41,6 +41,14 @@ A 90-day experiment building an autonomous AI trading system with Claude Opus 4.
 | **Win Rate** | 80% | Proven |
 | **Lessons** | 75+ | Growing |
 
+#### Open Positions (0)
+
+| Symbol | Type | Entry | Current | P/L |
+|--------|------|-------|---------|-----|
+| *No open positions* | - | - | - | - |
+
+> **Total Position Value**: $0.00 | **Unrealized P/L**: +$0.00
+
 > **Strategy**: Backtest and analyze during off-hours. Apply proven strategies to real account.
 
 [View Full Dashboard]({{ "/progress_dashboard" | relative_url }})

@@ -37,6 +37,12 @@
 
 > Starting fresh with $20. First options trade coming when we reach minimum capital for defined-risk spreads.
 
+### Paper Account (0 positions)
+
+| Symbol | Type | Entry | Current | P/L |
+|--------|------|-------|---------|-----|
+| *No open positions* | - | - | - | - |
+
 ---
 
 ## Recent Trades
