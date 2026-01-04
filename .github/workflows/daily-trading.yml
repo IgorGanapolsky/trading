@@ -17,6 +17,14 @@ on:
         description: "Force execution even if trading already ran today"
         required: false
         default: "false"
+      trading_mode:
+        description: "Trading mode: paper or live"
+        required: false
+        default: "paper"
+        type: choice
+        options:
+          - paper
+          - live
   workflow_run:
     # Also trigger when YouTube analysis completes (ensures latest watchlist)
     workflows: ["YouTube Video Analysis"]
@@ -144,10 +152,13 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install uv
 
-      - name: Start Alpaca MCP server (paper)
+      - name: Start Alpaca MCP server
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          # Determine trading mode from input or secret
+          TRADING_MODE: ${{ github.event.inputs.trading_mode || 'paper' }}
+          PAPER_TRADING_SECRET: ${{ secrets.PAPER_TRADING }}
         run: |
           # CRITICAL: Fail workflow if credentials are missing - don't silently skip
           if [ -z "$ALPACA_API_KEY" ] || [ -z "$ALPACA_SECRET_KEY" ]; then
@@ -156,9 +167,19 @@ jobs:
             echo "   Go to: Settings → Secrets → Actions → Add secret"
             exit 1
           fi
+
+          # Determine MCP server mode
+          MCP_MODE="paper"
+          if [ "$TRADING_MODE" = "live" ] || [ "$PAPER_TRADING_SECRET" = "false" ]; then
+            MCP_MODE="live"
+            echo "🔴 LIVE TRADING MODE - Real money at risk!"
+          else
+            echo "📝 Paper trading mode - simulation only"
+          fi
+
           nohup uvx alpaca-mcp-server serve \
             --host 127.0.0.1 --port 8801 \
-            --mode paper \
+            --mode "$MCP_MODE" \
             --alpaca-key "$ALPACA_API_KEY" \
             --alpaca-secret "$ALPACA_SECRET_KEY" \
             --transport http \
@@ -168,7 +189,7 @@ jobs:
             echo "⚠️ MCP server may not have started - check logs"
             cat /tmp/alpaca_mcp.log || true
           fi
-          echo "✅ MCP server started on 127.0.0.1:8801"
+          echo "✅ MCP server started on 127.0.0.1:8801 (mode: $MCP_MODE)"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -467,7 +488,9 @@ jobs:
           POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           DAILY_INVESTMENT: ${{ secrets.DAILY_INVESTMENT || '10.0' }}
-          PAPER_TRADING: 'true'
+          # Trading mode: defaults to paper, can be set via workflow_dispatch input or secret
+          # To enable live trading: set PAPER_TRADING secret to 'false' OR run workflow with trading_mode=live
+          PAPER_TRADING: ${{ github.event.inputs.trading_mode == 'live' && 'false' || secrets.PAPER_TRADING || 'true' }}
           # CRITICAL FIX Dec 17: Disable bleeding strategies
           REIT_ALLOCATION_PCT: '0'  # REITs are ALL losing - disable
           ENABLE_CRYPTO_TRADING: 'false'  # Crypto losing 6.7% - disable
@@ -682,7 +705,7 @@ jobs:
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
-          PAPER_TRADING: 'true'
+          PAPER_TRADING: ${{ github.event.inputs.trading_mode == 'live' && 'false' || secrets.PAPER_TRADING || 'true' }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
           echo "💰 ========================================"
@@ -902,7 +925,7 @@ jobs:
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
-          PAPER_TRADING: 'true'
+          PAPER_TRADING: ${{ github.event.inputs.trading_mode == 'live' && 'false' || secrets.PAPER_TRADING || 'true' }}
         run: |
           echo "📊 Updating performance log with current account data..."
           python3 scripts/update_performance_log.py
