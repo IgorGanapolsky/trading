@@ -8,8 +8,9 @@ Ensures the webhook correctly:
 4. Handles errors gracefully
 """
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 
 class TestDialogflowWebhookFormat:
@@ -97,8 +98,8 @@ class TestDialogflowWebhookIntegration:
 
     def test_webhook_extracts_text_field(self, mock_rag):
         """Verify webhook extracts query from 'text' field."""
-        from src.agents.dialogflow_webhook import app
         from fastapi.testclient import TestClient
+        from src.agents.dialogflow_webhook import app
 
         client = TestClient(app)
 
@@ -117,8 +118,8 @@ class TestDialogflowWebhookIntegration:
 
     def test_webhook_extracts_transcript_field(self, mock_rag):
         """Verify webhook extracts query from 'transcript' field."""
-        from src.agents.dialogflow_webhook import app
         from fastapi.testclient import TestClient
+        from src.agents.dialogflow_webhook import app
 
         client = TestClient(app)
 
@@ -135,8 +136,8 @@ class TestDialogflowWebhookIntegration:
 
     def test_webhook_handles_empty_request(self, mock_rag):
         """Verify webhook handles request with no query gracefully."""
-        from src.agents.dialogflow_webhook import app
         from fastapi.testclient import TestClient
+        from src.agents.dialogflow_webhook import app
 
         client = TestClient(app)
 
@@ -148,8 +149,8 @@ class TestDialogflowWebhookIntegration:
 
     def test_health_endpoint(self, mock_rag):
         """Verify health endpoint returns correct status."""
-        from src.agents.dialogflow_webhook import app
         from fastapi.testclient import TestClient
+        from src.agents.dialogflow_webhook import app
 
         client = TestClient(app)
 
@@ -162,8 +163,8 @@ class TestDialogflowWebhookIntegration:
 
     def test_root_endpoint(self, mock_rag):
         """Verify root endpoint returns service info."""
-        from src.agents.dialogflow_webhook import app
         from fastapi.testclient import TestClient
+        from src.agents.dialogflow_webhook import app
 
         client = TestClient(app)
 
@@ -176,8 +177,8 @@ class TestDialogflowWebhookIntegration:
 
     def test_test_endpoint(self, mock_rag):
         """Verify test endpoint queries RAG."""
-        from src.agents.dialogflow_webhook import app
         from fastapi.testclient import TestClient
+        from src.agents.dialogflow_webhook import app
 
         client = TestClient(app)
 
@@ -242,8 +243,8 @@ class TestDialogflowWebhookEdgeCases:
 
     def test_webhook_session_info_params(self, mock_rag_empty):
         """Test extracting query from sessionInfo.parameters."""
-        from src.agents.dialogflow_webhook import app
         from fastapi.testclient import TestClient
+        from src.agents.dialogflow_webhook import app
 
         # Set up mock to return results on second call
         with patch("src.agents.dialogflow_webhook.rag") as mock:
@@ -271,8 +272,8 @@ class TestDialogflowWebhookEdgeCases:
                 {"id": "ll_001", "severity": "INFO", "content": "Test"}
             ]
 
-            from src.agents.dialogflow_webhook import app
             from fastapi.testclient import TestClient
+            from src.agents.dialogflow_webhook import app
 
             client = TestClient(app)
 
@@ -295,8 +296,8 @@ class TestDialogflowWebhookEdgeCases:
                 [{"id": "ll_001", "severity": "INFO", "content": "Fallback result"}],  # Fallback
             ]
 
-            from src.agents.dialogflow_webhook import app
             from fastapi.testclient import TestClient
+            from src.agents.dialogflow_webhook import app
 
             client = TestClient(app)
 
@@ -314,8 +315,8 @@ class TestDialogflowWebhookEdgeCases:
         with patch("src.agents.dialogflow_webhook.rag") as mock:
             mock.query.side_effect = Exception("Database error")
 
-            from src.agents.dialogflow_webhook import app
             from fastapi.testclient import TestClient
+            from src.agents.dialogflow_webhook import app
 
             client = TestClient(app)
 
