@@ -32,45 +32,26 @@ A 90-day experiment building an autonomous AI trading system with Claude Opus 4.
 | **Win Rate** | 80% | Proven |
 | **Lessons** | 75+ | Growing |
 
-> **Strategy**: Paper trade at night to build RAG knowledge. Apply winning strategies to real account.
+> **Strategy**: Backtest and analyze during off-hours. Apply proven strategies to real account.
 
 ---
 
-## What's Actually Working
+## What's Working
 
-| Strategy | Win Rate | P/L | Status |
-|----------|----------|-----|--------|
-| **Options Theta** | 80% | Historic | Primary Edge |
-| Credit Spreads | Testing | TBD | 10x Capital Efficient |
-| Core ETFs (SPY) | 80% | Starting | Active |
-
----
-
-## What's NOT Working
-
-| Strategy | Win Rate | P/L | Action |
-|----------|----------|-----|--------|
-| ~~Crypto~~ | 0% | -$0.43 | **Removed** |
-| ~~REITs~~ | 33% | -6.7% | **Disabled** |
-| Complex ML | N/A | N/A | Over-engineered |
+| Strategy | Win Rate | Status |
+|----------|----------|--------|
+| **Options Theta** | 80% | Primary Edge |
+| **Core ETFs (SPY)** | 80% | Active |
+| Credit Spreads | Testing | 10x Capital Efficient |
 
 ---
 
-## Top Success Factors
+## Key Success Factors
 
-1. **Options Trading** - 75% win rate, clear edge
-2. **Semantic RAG Search** - Learns from past failures
-3. **Simple > Complex** - 400 lines beats 50,000
+1. **Options Trading** - 80% win rate, clear edge
+2. **Simplicity** - 400 lines beats 50,000
+3. **RAG Learning** - Don't repeat mistakes
 4. **Verification Gates** - Catch errors before trading
-5. **Autonomous Execution** - No manual bottlenecks
-
-## Top Failure Factors
-
-1. **Blind Trading** - Lost $167 without knowing
-2. **Over-Engineering** - 50K lines, 0% win rate
-3. **RAG Built But Not Used** - Same failures repeated 3x
-4. **Config Mismatches** - "Disabled" features still running
-5. **Silent Failures** - 68% error rate undetected
 
 ---
 
