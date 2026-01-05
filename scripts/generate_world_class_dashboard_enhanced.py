@@ -556,10 +556,10 @@ def generate_world_class_dashboard() -> str:
 
 ---
 
-## 💰 Account Summary
+## 💰 Account Summary (All-Time)
 
-| Account | Equity | Starting | P/L | P/L % |
-|---------|--------|----------|-----|-------|
+| Account | Equity | Starting | Total P/L | Total % |
+|---------|--------|----------|-----------|---------|
 | **🔴 LIVE (Brokerage)** | ${basic_metrics.get("live_equity", 20):,.2f} | ${basic_metrics.get("live_starting", 20):,.2f} | ${basic_metrics.get("live_pl", 0):+,.2f} | {basic_metrics.get("live_pl_pct", 0):+.2f}% |
 | **📝 PAPER (R&D)** | ${basic_metrics.get("paper_equity", 100000):,.2f} | ${basic_metrics.get("paper_starting", 100000):,.2f} | ${basic_metrics.get("paper_pl", 0):+,.2f} | {basic_metrics.get("paper_pl_pct", 0):+.2f}% |
 
@@ -576,7 +576,8 @@ def generate_world_class_dashboard() -> str:
 | Metric | Value |
 |--------|-------|
 | **Equity** | ${basic_metrics.get("live_equity", 30):,.2f} |
-| **P/L** | ${basic_metrics.get("live_pl", 0):+,.2f} ({basic_metrics.get("live_pl_pct", 0):+.2f}%) |
+| **Total P/L** | ${basic_metrics.get("live_pl", 0):+,.2f} ({basic_metrics.get("live_pl_pct", 0):+.2f}%) |
+| **Today's P/L** | ${basic_metrics.get("today_pl", 0):+,.2f} ({basic_metrics.get("today_pl_pct", 0):+.2f}%) |
 | **Status** | {"⏸️ Accumulation Phase" if basic_metrics.get("live_equity", 0) < 200 else "✅ Active"} |
 
 > *Live account is building capital through $10/day deposits. Target: $200 before first options trade.*
@@ -586,7 +587,7 @@ def generate_world_class_dashboard() -> str:
 | Metric | Value |
 |--------|-------|
 | **Equity** | ${basic_metrics.get("paper_equity", 100000):,.2f} |
-| **P/L** | ${basic_metrics.get("paper_pl", 0):+,.2f} ({basic_metrics.get("paper_pl_pct", 0):+.2f}%) |
+| **Total P/L** | ${basic_metrics.get("paper_pl", 0):+,.2f} ({basic_metrics.get("paper_pl_pct", 0):+.2f}%) |
 | **Win Rate** | {basic_metrics.get("paper_win_rate", 0):.0f}% |
 | **Trades Today** | {basic_metrics.get("today_trade_count", 0)} |
 
