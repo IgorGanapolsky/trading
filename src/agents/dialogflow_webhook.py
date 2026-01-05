@@ -22,6 +22,7 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
+from src.rag.vertex_rag import get_vertex_rag
 
 # Configure logging
 logging.basicConfig(
@@ -34,12 +35,16 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Trading AI RAG Webhook",
     description="Dialogflow CX webhook for lessons AND trade history queries",
-    version="2.0.0",
+    version="2.1.0",  # Added Vertex AI RAG integration
 )
 
 # Initialize RAG system for lessons
 rag = LessonsLearnedRAG()
 logger.info(f"RAG initialized with {len(rag.lessons)} lessons")
+
+# Initialize Vertex AI RAG for cloud queries
+vertex_rag = get_vertex_rag()
+logger.info(f"Vertex AI RAG initialized: {vertex_rag.is_initialized}")
 
 # Initialize trade history ChromaDB
 trade_collection = None
@@ -131,6 +136,20 @@ def format_lessons_response(lessons: list, query: str) -> str:
         response_parts.append("-" * 50)
 
     return "\n".join(response_parts)
+
+
+def query_vertex_rag(query: str, limit: int = 5) -> list[dict]:
+    """Query Vertex AI RAG for lessons and trades (cloud backup)."""
+    if not vertex_rag.is_initialized:
+        return []
+
+    try:
+        results = vertex_rag.query(query, similarity_top_k=limit)
+        logger.info(f"Vertex AI RAG returned {len(results)} results")
+        return results
+    except Exception as e:
+        logger.error(f"Vertex AI RAG query failed: {e}")
+        return []
 
 
 def query_trades(query: str, limit: int = 10) -> list[dict]:
@@ -298,6 +317,7 @@ async def health():
         "critical_lessons": len(rag.get_critical_lessons()),
         "trades_loaded": trade_count,
         "trade_history_available": trade_collection is not None,
+        "vertex_ai_rag_enabled": vertex_rag.is_initialized,
     }
 
 
@@ -307,14 +327,16 @@ async def root():
     trade_count = trade_collection.count() if trade_collection else 0
     return {
         "service": "Trading AI RAG Webhook",
-        "version": "2.0.0",
+        "version": "2.1.0",
         "lessons_loaded": len(rag.lessons),
         "trades_loaded": trade_count,
+        "vertex_ai_rag_enabled": vertex_rag.is_initialized,
         "endpoints": {
             "/webhook": "POST - Dialogflow CX webhook (lessons + trades)",
             "/health": "GET - Health check",
             "/test": "GET - Test lessons query",
             "/test-trades": "GET - Test trade history query",
+            "/test-vertex": "GET - Test Vertex AI RAG query",
         },
     }
 
@@ -359,6 +381,25 @@ async def test_trades(query: str = "recent trades"):
                 "preview": t.get("document", "")[:200],
             }
             for t in trades
+        ],
+    }
+
+
+@app.get("/test-vertex")
+async def test_vertex(query: str = "recent lessons"):
+    """Test endpoint to verify Vertex AI RAG is working."""
+    results = query_vertex_rag(query, limit=5)
+    return {
+        "query": query,
+        "query_type": "vertex_ai_rag",
+        "vertex_rag_initialized": vertex_rag.is_initialized,
+        "results_count": len(results),
+        "results": [
+            {
+                "text": r.get("text", "")[:200],
+                "score": r.get("score", 0),
+            }
+            for r in results
         ],
     }
 
