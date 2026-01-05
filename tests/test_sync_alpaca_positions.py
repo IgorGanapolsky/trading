@@ -9,8 +9,9 @@ Created: Jan 4, 2026
 
 import json
 import sys
+import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -121,12 +122,36 @@ class TestUpdateSystemStatePositions:
             "cash": 86629.95,
             "buying_power": 1341.99,
             "positions": [
-                {"symbol": "SPY", "qty": 10, "avg_entry_price": 590, "current_price": 595,
-                 "market_value": 5950, "unrealized_pl": 50, "unrealized_plpc": 0.85, "side": "long"},
-                {"symbol": "AAPL", "qty": 5, "avg_entry_price": 180, "current_price": 185,
-                 "market_value": 925, "unrealized_pl": 25, "unrealized_plpc": 2.78, "side": "long"},
-                {"symbol": "GOOGL", "qty": 2, "avg_entry_price": 150, "current_price": 155,
-                 "market_value": 310, "unrealized_pl": 10, "unrealized_plpc": 3.33, "side": "long"},
+                {
+                    "symbol": "SPY",
+                    "qty": 10,
+                    "avg_entry_price": 590,
+                    "current_price": 595,
+                    "market_value": 5950,
+                    "unrealized_pl": 50,
+                    "unrealized_plpc": 0.85,
+                    "side": "long",
+                },
+                {
+                    "symbol": "AAPL",
+                    "qty": 5,
+                    "avg_entry_price": 180,
+                    "current_price": 185,
+                    "market_value": 925,
+                    "unrealized_pl": 25,
+                    "unrealized_plpc": 2.78,
+                    "side": "long",
+                },
+                {
+                    "symbol": "GOOGL",
+                    "qty": 2,
+                    "avg_entry_price": 150,
+                    "current_price": 155,
+                    "market_value": 310,
+                    "unrealized_pl": 10,
+                    "unrealized_plpc": 3.33,
+                    "side": "long",
+                },
             ],
             "positions_count": 3,
             "mode": "paper",
@@ -180,9 +205,16 @@ class TestUpdateSystemStatePositions:
             "cash": 90000,
             "buying_power": 90000,
             "positions": [
-                {"symbol": "SPY", "quantity": 10, "avg_entry_price": 590,
-                 "current_price": 595, "market_value": 5950, "unrealized_pl": 50,
-                 "unrealized_plpc": 0.85, "side": "long"},
+                {
+                    "symbol": "SPY",
+                    "quantity": 10,
+                    "avg_entry_price": 590,
+                    "current_price": 595,
+                    "market_value": 5950,
+                    "unrealized_pl": 50,
+                    "unrealized_plpc": 0.85,
+                    "side": "long",
+                },
             ],
             "positions_count": 1,
             "mode": "paper",
@@ -260,7 +292,9 @@ class TestSmokeTests:
 
     def test_imports_work(self):
         """Verify all imports in the script work."""
-        with patch("sync_alpaca_state.SYSTEM_STATE_FILE", Path("/tmp/test.json")):
+        with patch(
+            "sync_alpaca_state.SYSTEM_STATE_FILE", Path(tempfile.gettempdir()) / "test.json"
+        ):
             from sync_alpaca_state import (
                 AlpacaSyncError,
                 main,
@@ -349,8 +383,16 @@ class TestPositionFieldMapping:
             "cash": 90000,
             "buying_power": 90000,
             "positions": [
-                {"symbol": "VALID", "qty": 10, "avg_entry_price": 100, "current_price": 105,
-                 "market_value": 1050, "unrealized_pl": 50, "unrealized_plpc": 5, "side": "long"},
+                {
+                    "symbol": "VALID",
+                    "qty": 10,
+                    "avg_entry_price": 100,
+                    "current_price": 105,
+                    "market_value": 1050,
+                    "unrealized_pl": 50,
+                    "unrealized_plpc": 5,
+                    "side": "long",
+                },
                 {"qty": 10, "avg_entry_price": 100},  # Missing symbol - should be filtered
                 {"symbol": None, "qty": 5},  # None symbol - should be filtered
                 {"symbol": "", "qty": 5},  # Empty symbol - should be filtered
