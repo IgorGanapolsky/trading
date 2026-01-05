@@ -4,6 +4,12 @@ Enhanced with DiscoRL-inspired DQN (Dec 2025):
 - Categorical value distribution for uncertainty modeling
 - EMA normalization for stable learning
 - Online learning from trade outcomes
+
+RLHF Integration (Jan 2026):
+- Thompson Sampling from human feedback (thumbs up/down)
+- Semantic search for similar contexts via LanceDB
+- Feedback influences confidence scores in real-time
+- This closes the RLHF loop - human feedback now affects trading decisions!
 """
 
 from __future__ import annotations
@@ -17,6 +23,14 @@ from typing import Any
 
 import numpy as np
 from src.agents.rl_transformer import TransformerRLPolicy, TransformerUnavailableError
+
+# RLHF Integration (Jan 2026) - Closes the human feedback loop
+FEEDBACK_TRAINER_AVAILABLE = False
+try:
+    from src.learning.feedback_trainer import FeedbackTrainer
+    FEEDBACK_TRAINER_AVAILABLE = True
+except ImportError:
+    FeedbackTrainer = None  # type: ignore[misc, assignment]
 
 # DiscoRL-inspired DQN (Dec 2025)
 DISCO_DQN_AVAILABLE = False
@@ -90,6 +104,29 @@ class RLFilter:
                 logger.warning("Transformer RL disabled: %s", exc)
             except Exception as exc:  # pragma: no cover - defensive
                 logger.warning("Transformer RL initialisation failed: %s", exc)
+
+        # RLHF FeedbackTrainer initialization (Jan 2026)
+        # Closes the loop: thumbs up/down now influences trading decisions
+        self.feedback_trainer: Any = None
+        rlhf_flag = os.getenv("RL_USE_RLHF", "1").lower() in {"1", "true", "yes", "on"}
+        if rlhf_flag and FEEDBACK_TRAINER_AVAILABLE:
+            try:
+                self.feedback_trainer = FeedbackTrainer(
+                    feedback_dir="data/feedback",
+                    model_path="models/ml/feedback_model.json",
+                    use_lancedb=True,
+                )
+                stats = self.feedback_trainer.get_model_stats()
+                logger.info(
+                    "✅ RLHF FeedbackTrainer enabled - α=%.1f, β=%.1f, posterior=%.3f",
+                    stats.get("alpha", 1),
+                    stats.get("beta", 1),
+                    stats.get("posterior_mean", 0.5),
+                )
+            except Exception as exc:
+                logger.warning("RLHF FeedbackTrainer initialization failed: %s", exc)
+        elif rlhf_flag and not FEEDBACK_TRAINER_AVAILABLE:
+            logger.warning("RLHF requested but FeedbackTrainer not available")
 
         # DiscoRL-inspired DQN initialization (Dec 2025)
         disco_flag = (
@@ -169,6 +206,7 @@ class RLFilter:
         heuristic = self._predict_with_heuristics(symbol, market_state)
         transformer_decision: dict[str, Any] | None = None
         disco_decision: dict[str, Any] | None = None
+        rlhf_feedback: dict[str, Any] | None = None
 
         # Transformer prediction
         if self.transformer:
@@ -184,11 +222,52 @@ class RLFilter:
             except Exception as exc:
                 logger.warning("DiscoRL DQN inference failed for %s: %s", symbol, exc)
 
-        # Blend all available predictions
+        # RLHF Feedback Integration (Jan 2026) - Closes the human feedback loop!
+        # This is where thumbs up/down actually influences trading decisions
+        if self.feedback_trainer:
+            try:
+                # Build context for feedback lookup
+                context = {
+                    "symbol": symbol,
+                    "rsi": market_state.get("rsi", 50),
+                    "momentum": market_state.get("momentum_strength", 0),
+                    "action_proposed": heuristic.get("action", "neutral"),
+                }
+
+                # Get reward from Thompson Sampling posterior (incorporates all past feedback)
+                feedback_reward = self.feedback_trainer.get_feedback_reward(context)
+
+                # Also check for similar past contexts (semantic search)
+                similar_feedback = self.feedback_trainer.search_similar_feedback(
+                    context=context,
+                    limit=3,
+                    filter_positive=None,  # Get both positive and negative
+                )
+
+                rlhf_feedback = {
+                    "reward": feedback_reward,  # [-1, +1] from Thompson Sampling
+                    "confidence_adjustment": feedback_reward * 0.1,  # Scale to ±10%
+                    "similar_contexts_found": len(similar_feedback),
+                    "posterior_mean": self.feedback_trainer.alpha / (
+                        self.feedback_trainer.alpha + self.feedback_trainer.beta
+                    ),
+                }
+
+                logger.debug(
+                    "RLHF feedback for %s: reward=%.3f, adjustment=%.3f",
+                    symbol,
+                    feedback_reward,
+                    rlhf_feedback["confidence_adjustment"],
+                )
+            except Exception as exc:
+                logger.warning("RLHF feedback lookup failed for %s: %s", symbol, exc)
+
+        # Blend all available predictions including RLHF feedback
         decision = self._blend_all_decisions(
             heuristic=heuristic,
             transformer=transformer_decision,
             disco=disco_decision,
+            rlhf=rlhf_feedback,
         )
 
         logger.debug(
@@ -274,12 +353,16 @@ class RLFilter:
         heuristic: dict[str, Any],
         transformer: dict[str, Any] | None,
         disco: dict[str, Any] | None,
+        rlhf: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
-        Blend predictions from all available models.
+        Blend predictions from all available models including RLHF feedback.
 
         Weights are configurable via environment variables.
         Transformer gets highest weight until DiscoRL is validated with real trades.
+
+        Jan 2026: Added RLHF feedback integration - human thumbs up/down now
+        directly influences confidence through Thompson Sampling posterior.
         """
         # Get weights from env (default: conservative until DiscoRL validated)
         # Dec 9, 2025: Reduced DiscoRL from 0.45 to 0.15 - needs validation (0 closed trades)
@@ -290,6 +373,10 @@ class RLFilter:
         heuristic_weight = float(os.getenv("RL_HEURISTIC_WEIGHT", "0.40")) * rl_total_weight
         transformer_weight = float(os.getenv("RL_TRANSFORMER_WEIGHT", "0.45")) * rl_total_weight
         disco_weight = float(os.getenv("RL_DISCO_WEIGHT", "0.15")) * rl_total_weight
+
+        # RLHF weight - additive adjustment, not part of the ensemble blend
+        # Jan 2026: Default 5% influence - conservative until we see it working
+        rlhf_influence = float(os.getenv("RL_RLHF_INFLUENCE", "0.05"))
 
         # Accumulate weighted predictions
         total_weight = 0.0
@@ -320,7 +407,7 @@ class RLFilter:
             sources["disco_q_values"] = disco.get("q_values")
             sources["disco_epsilon"] = disco.get("epsilon")
 
-        # Normalize
+        # Normalize base confidence
         if total_weight > 0:
             blended_confidence = weighted_confidence / total_weight
             blended_multiplier = weighted_multiplier / total_weight
@@ -328,11 +415,48 @@ class RLFilter:
             blended_confidence = heuristic["confidence"]
             blended_multiplier = heuristic["suggested_multiplier"]
 
+        # RLHF Feedback Adjustment (Jan 2026) - THE CLOSED LOOP!
+        # This is where human feedback (thumbs up/down) influences decisions
+        rlhf_adjustment = 0.0
+        if rlhf:
+            # feedback_reward is in [-1, +1] from Thompson Sampling
+            # Scale it by rlhf_influence to get confidence adjustment
+            rlhf_adjustment = rlhf.get("confidence_adjustment", 0.0) * rlhf_influence / 0.1
+
+            # Apply adjustment to blended confidence
+            blended_confidence = blended_confidence + rlhf_adjustment
+
+            # Clamp to valid range [0, 1]
+            blended_confidence = max(0.0, min(1.0, blended_confidence))
+
+            # Also adjust multiplier based on feedback sentiment
+            if rlhf.get("reward", 0) > 0:
+                # Positive feedback history -> slightly more aggressive
+                blended_multiplier = min(1.6, blended_multiplier + 0.05)
+            elif rlhf.get("reward", 0) < 0:
+                # Negative feedback history -> more conservative
+                blended_multiplier = max(0.4, blended_multiplier - 0.05)
+
+            # Record RLHF influence in sources for explainability
+            sources["rlhf_reward"] = rlhf.get("reward", 0)
+            sources["rlhf_adjustment"] = round(rlhf_adjustment, 4)
+            sources["rlhf_posterior_mean"] = rlhf.get("posterior_mean", 0.5)
+            sources["rlhf_similar_contexts"] = rlhf.get("similar_contexts_found", 0)
+
+            logger.debug(
+                "RLHF adjustment applied: reward=%.3f, adjustment=%.4f, new_conf=%.3f",
+                rlhf.get("reward", 0),
+                rlhf_adjustment,
+                blended_confidence,
+            )
+
         # Determine action based on blended confidence
         action = "long" if blended_confidence >= self.default_threshold else "neutral"
 
         # Determine mode for logging
-        if disco:
+        if rlhf:
+            mode = "rlhf_" + ("disco_blend" if disco else "transformer" if transformer else "heuristic")
+        elif disco:
             mode = "disco_blend" if transformer else "disco_heuristic"
         elif transformer:
             mode = "transformer_heuristic"
@@ -341,6 +465,7 @@ class RLFilter:
 
         sources["mode"] = mode
         sources["threshold"] = self.default_threshold
+        sources["rlhf_enabled"] = rlhf is not None
 
         return {
             "action": action,
@@ -351,6 +476,8 @@ class RLFilter:
                 "heuristic_weights": heuristic.get("explainability", {}).get("heuristic_weights"),
                 "disco_q_values": disco.get("q_values") if disco else None,
                 "disco_distribution": disco.get("distribution") is not None if disco else False,
+                "rlhf_posterior_mean": rlhf.get("posterior_mean") if rlhf else None,
+                "rlhf_adjustment": rlhf_adjustment if rlhf else None,
             },
             "sources": sources,
         }
@@ -627,3 +754,70 @@ class RLFilter:
         stats = self.disco_dqn.get_stats()
         stats["enabled"] = True
         return stats
+
+    # ------------------------------------------------------------------
+    # RLHF Integration Methods (Jan 2026)
+    # ------------------------------------------------------------------
+    def record_user_feedback(
+        self,
+        is_positive: bool,
+        context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Record user feedback (thumbs up/down) and update Thompson Sampling.
+
+        This is the entry point for human feedback in the RLHF loop.
+        Call this when the user gives a thumbs up/down on a decision.
+
+        Args:
+            is_positive: True for thumbs up, False for thumbs down
+            context: Optional context about what the feedback was for
+
+        Returns:
+            Updated model statistics
+        """
+        if not self.feedback_trainer:
+            logger.warning("Cannot record feedback - FeedbackTrainer not initialized")
+            return {"recorded": False, "reason": "no_trainer"}
+
+        try:
+            result = self.feedback_trainer.record_feedback(
+                is_positive=is_positive,
+                context=context,
+            )
+
+            logger.info(
+                "✅ RLHF feedback recorded: %s -> posterior=%.3f (α=%.1f, β=%.1f)",
+                "👍" if is_positive else "👎",
+                result.get("posterior_mean", 0.5),
+                result.get("alpha", 1),
+                result.get("beta", 1),
+            )
+
+            return result
+        except Exception as exc:
+            logger.error("Failed to record RLHF feedback: %s", exc)
+            return {"recorded": False, "reason": str(exc)}
+
+    def get_rlhf_stats(self) -> dict[str, Any]:
+        """
+        Get RLHF system statistics for monitoring.
+
+        Returns:
+            Dictionary with:
+            - enabled: Whether RLHF is active
+            - alpha/beta: Thompson Sampling parameters
+            - posterior_mean: Current reward expectation
+            - total_samples: Number of feedback samples recorded
+            - lancedb: LanceDB storage stats if available
+        """
+        if not self.feedback_trainer:
+            return {"enabled": False, "reason": "no_trainer"}
+
+        try:
+            stats = self.feedback_trainer.get_model_stats()
+            stats["enabled"] = True
+            return stats
+        except Exception as exc:
+            logger.error("Failed to get RLHF stats: %s", exc)
+            return {"enabled": False, "reason": str(exc)}
