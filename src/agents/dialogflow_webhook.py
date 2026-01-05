@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Trading AI RAG Webhook",
     description="Dialogflow CX webhook for lessons AND trade history queries",
-    version="2.2.0",  # Fixed money/today query detection + system_state.json fallback
+    version="2.3.0",  # Fixed: Fetch portfolio from GitHub when local unavailable + no lessons dump for P/L queries
 )
 
 # Initialize RAG system for lessons
@@ -60,35 +60,54 @@ except Exception as e:
 
 
 def get_current_portfolio_status() -> dict:
-    """Get current portfolio status from system_state.json."""
+    """Get current portfolio status from system_state.json (local or GitHub)."""
     import json
 
+    state = None
+
+    # Try local file first
     state_path = project_root / "data" / "system_state.json"
     try:
         if state_path.exists():
             with open(state_path) as f:
                 state = json.load(f)
-            return {
-                "live": {
-                    "equity": state.get("account", {}).get("current_equity", 0),
-                    "total_pl": state.get("account", {}).get("total_pl", 0),
-                    "total_pl_pct": state.get("account", {}).get("total_pl_pct", 0),
-                    "positions_count": state.get("account", {}).get("positions_count", 0),
-                },
-                "paper": {
-                    "equity": state.get("paper_account", {}).get("current_equity", 0),
-                    "total_pl": state.get("paper_account", {}).get("total_pl", 0),
-                    "total_pl_pct": state.get("paper_account", {}).get("total_pl_pct", 0),
-                    "positions_count": state.get("paper_account", {}).get("positions_count", 0),
-                    "win_rate": state.get("paper_account", {}).get("win_rate", 0),
-                },
-                "last_trade_date": state.get("trades", {}).get("last_trade_date", "unknown"),
-                "trades_today": state.get("trades", {}).get("total_trades_today", 0),
-                "challenge_day": state.get("challenge", {}).get("current_day", 0),
-            }
+            logger.info("Loaded portfolio from local system_state.json")
     except Exception as e:
-        logger.error(f"Failed to read system state: {e}")
-    return {}
+        logger.warning(f"Failed to read local system state: {e}")
+
+    # Fallback: Fetch from GitHub if local file unavailable
+    if not state:
+        try:
+            import urllib.request
+
+            github_url = "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/system_state.json"
+            with urllib.request.urlopen(github_url, timeout=5) as response:  # noqa: S310 - trusted URL
+                state = json.loads(response.read().decode("utf-8"))
+            logger.info("Loaded portfolio from GitHub system_state.json")
+        except Exception as e:
+            logger.warning(f"Failed to fetch from GitHub: {e}")
+
+    if not state:
+        return {}
+
+    return {
+        "live": {
+            "equity": state.get("account", {}).get("current_equity", 0),
+            "total_pl": state.get("account", {}).get("total_pl", 0),
+            "total_pl_pct": state.get("account", {}).get("total_pl_pct", 0),
+            "positions_count": state.get("account", {}).get("positions_count", 0),
+        },
+        "paper": {
+            "equity": state.get("paper_account", {}).get("current_equity", 0),
+            "total_pl": state.get("paper_account", {}).get("total_pl", 0),
+            "total_pl_pct": state.get("paper_account", {}).get("total_pl_pct", 0),
+            "positions_count": state.get("paper_account", {}).get("positions_count", 0),
+            "win_rate": state.get("paper_account", {}).get("win_rate", 0),
+        },
+        "last_trade_date": state.get("trades", {}).get("last_trade_date", "unknown"),
+        "trades_today": state.get("trades", {}).get("total_trades_today", 0),
+        "challenge_day": state.get("challenge", {}).get("current_day", 0),
+    }
 
 
 def is_trade_query(query: str) -> bool:
@@ -322,12 +341,19 @@ async def webhook(request: Request) -> JSONResponse:
 No new trades today. Markets are open - next execution at scheduled time."""
                     logger.info("Returning portfolio status from system_state.json")
                 else:
-                    # Final fallback: lessons
-                    results = rag.query(user_query, top_k=3)
-                    response_text = format_lessons_response(results, user_query)
-                    response_text = (
-                        f"No trade history found. Here are related lessons:\n\n{response_text}"
-                    )
+                    # Final fallback: Clear message (don't dump lessons for P/L questions)
+                    response_text = """📊 **Portfolio Status Unavailable**
+
+I couldn't retrieve the current portfolio data. This may be because:
+- The system state file is not accessible
+- The GitHub repository data is unavailable
+
+Please check directly:
+- **Dashboard**: View your Alpaca paper/live account dashboard
+- **Local System**: Run `cat data/system_state.json` for latest state
+
+Or ask me about **lessons learned** instead (e.g., "What lessons did we learn about risk management?")"""
+                    logger.warning("Trade query but no portfolio data available")
         else:
             # Query RAG system for relevant lessons
             results = rag.query(user_query, top_k=3)
