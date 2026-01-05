@@ -16,13 +16,14 @@ Building an autonomous AI trading system with Claude Opus 4.5.
 
 | Metric | Value |
 |--------|-------|
-| **Phase** | R&D - Accumulating Capital |
-| **Live Account** | $20.00 (fresh start Jan 3) |
-| **Strategy** | Options Theta Decay |
-| **Win Rate** | 80% (paper validated) |
-| **Lessons Captured** | 80+ |
+| **Phase** | Capital Accumulation (no trading yet) |
+| **Live Account** | $30.00 cash |
+| **Positions** | 0 (accumulating for options) |
+| **Trades (Jan 2026)** | 0 |
+| **Daily Deposits** | $10/day since Jan 3 |
+| **Target** | $100-200 for first options spread |
 
-> **Next Milestone**: First options trade at ~$100-200 capital for defined-risk spreads.
+> **Reality Check**: We reset Jan 3 with $0. Depositing $10/day. No trades until we have enough for defined-risk options (~$100-200). Paper trading showed 80% win rate but that was Dec 2025.
 
 ---
 
