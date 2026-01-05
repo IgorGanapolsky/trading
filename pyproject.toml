@@ -119,6 +119,8 @@ exclude = [
     "venv",
     "__pycache__",
     "*.pyc",
+    "*.txt",  # Exclude requirements files
+    "*.in",   # Exclude pip-compile input files
     "data",
     "reports",
     "research",  # Experimental code, not production

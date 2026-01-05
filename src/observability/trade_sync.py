@@ -48,6 +48,7 @@ class TradeSync:
 
         try:
             from langsmith import Client
+
             self._langsmith_client = Client(api_key=api_key)
             self._project_name = os.getenv("LANGCHAIN_PROJECT", "igor-trading-system")
             logger.info(f"LangSmith client initialized for project: {self._project_name}")
@@ -78,7 +79,9 @@ class TradeSync:
                     "hnsw:space": "cosine",
                 },
             )
-            logger.info(f"ChromaDB trade_history collection initialized ({self._chromadb_collection.count()} docs)")
+            logger.info(
+                f"ChromaDB trade_history collection initialized ({self._chromadb_collection.count()} docs)"
+            )
         except ImportError:
             logger.warning("chromadb package not installed")
         except Exception as e:
@@ -207,15 +210,17 @@ class TradeSync:
 
             self._chromadb_collection.add(
                 documents=[document],
-                metadatas=[{
-                    "symbol": trade_data["symbol"],
-                    "side": trade_data["side"],
-                    "strategy": trade_data["strategy"],
-                    "pnl": pnl,
-                    "outcome": outcome,
-                    "timestamp": trade_data["timestamp"],
-                    "type": "trade",
-                }],
+                metadatas=[
+                    {
+                        "symbol": trade_data["symbol"],
+                        "side": trade_data["side"],
+                        "strategy": trade_data["strategy"],
+                        "pnl": pnl,
+                        "outcome": outcome,
+                        "timestamp": trade_data["timestamp"],
+                        "type": "trade",
+                    }
+                ],
                 ids=[str(uuid.uuid4())],
             )
 

@@ -19,18 +19,30 @@ import pandas as pd
 from mcp.servers import alpaca as alpaca_tools
 from mcp.servers import openrouter as openrouter_tools
 
+
 # Inline stubs for deleted agent_framework (context engine never implemented)
 class ContextType:
     TASK_CONTEXT = "task"
 
+
 class _ContextEngine:
-    def store_memory(self, **kwargs): pass
-    def validate_context_flow(self, **kwargs) -> tuple[bool, list]: return True, []
-    def send_context_message(self, **kwargs): pass
-    def get_agent_context(self, agent_id: str): return {}
+    def store_memory(self, **kwargs):
+        pass
+
+    def validate_context_flow(self, **kwargs) -> tuple[bool, list]:
+        return True, []
+
+    def send_context_message(self, **kwargs):
+        pass
+
+    def get_agent_context(self, agent_id: str):
+        return {}
+
 
 def get_context_engine() -> _ContextEngine:
     return _ContextEngine()
+
+
 from src.agents.execution_agent import ExecutionAgent
 from src.agents.fallback_strategy import FallbackStrategy
 from src.agents.meta_agent import MetaAgent

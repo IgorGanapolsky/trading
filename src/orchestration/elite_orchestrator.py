@@ -19,16 +19,21 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+
 # Inline stubs for deleted agent_framework (never implemented)
 class ContextType:
     TASK_CONTEXT = "task"
 
+
 class RunContext:
     pass
+
 
 class RunMode:
     PAPER = "paper"
     LIVE = "live"
+
+
 from src.core.skills_integration import get_skills
 
 logger = logging.getLogger(__name__)
