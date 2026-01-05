@@ -12,7 +12,7 @@
 | Metric | Value |
 |--------|-------|
 | **Started** | Jan 3, 2026 |
-| **Cash** | $20.00 |
+| **Cash** | $30.00 |
 | **Positions** | 0 |
 | **Total P/L** | $0.00 |
 | **Daily Deposit** | $10/day |
@@ -72,9 +72,9 @@
 
 | Metric | Value |
 |--------|-------|
-| **Day** | 50 / 90 |
-| **Phase** | R&D Phase - Month 2 |
-| **Days Remaining** | 40 |
+| **Day** | 69 / 90 |
+| **Phase** | R&D Phase - Month 3 (Days 61-90) |
+| **Days Remaining** | 21 |
 | **Target** | $100/day profit |
 
 ---
@@ -85,7 +85,7 @@
 |-------|--------|
 | **Max Drawdown** | 0% (no positions) |
 | **Position Limits** | OK |
-| **Buying Power** | $20.00 |
+| **Buying Power** | $30.00 |
 | **Circuit Breakers** | Armed |
 
 ---
