@@ -664,7 +664,17 @@
       "hash": "987db7bf5d8b88c3a8561bdd7154ffd4",
       "chunks": 21,
       "vectorized_at": "2026-01-05T10:51:55.413419"
+    },
+    "rag_knowledge/lessons_learned/ll_077_never_claim_verified_secrets_broken.md": {
+      "hash": "5e133cb779f384ec3f1468efdbe4bf8d",
+      "chunks": 3,
+      "vectorized_at": "2026-01-05T11:00:41.462456"
+    },
+    "rag_knowledge/lessons_learned/ll_078_system_lying_trust_crisis.md": {
+      "hash": "d403a5429e4f9a8eac885b3fadb2e201",
+      "chunks": 3,
+      "vectorized_at": "2026-01-05T11:00:41.849690"
     }
   },
-  "last_updated": "2026-01-05T10:51:55.414274"
+  "last_updated": "2026-01-05T11:00:41.868208"
 }
