@@ -184,7 +184,9 @@ def should_open_position(client, config: dict) -> bool:
         )
         return False
 
-    logger.info(f"Buying power check passed: ${account['buying_power']:,.0f} >= ${required_bp:,.0f}")
+    logger.info(
+        f"Buying power check passed: ${account['buying_power']:,.0f} >= ${required_bp:,.0f}"
+    )
     return True
 
 
@@ -247,7 +249,7 @@ def execute_cash_secured_put(client, option: dict, config: dict) -> Optional[dic
                 "quantity": 1,
                 "strategy": "daily_dca_shares",
                 "status": "SUBMITTED",
-                "order_id": str(order.id) if hasattr(order, 'id') else "unknown",
+                "order_id": str(order.id) if hasattr(order, "id") else "unknown",
             }
 
             logger.info(f"✅ ORDER SUBMITTED: {trade}")
