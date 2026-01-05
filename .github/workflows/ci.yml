@@ -317,6 +317,7 @@ jobs:
       - name: Run reference backtest
         env:
           PYTHONPATH: ${{ github.workspace }}
+          # Use paper trading keys for CI backtests
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
         run: |

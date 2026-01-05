@@ -17,6 +17,14 @@ on:
         description: "Force execution even if trading already ran today"
         required: false
         default: "false"
+      trading_mode:
+        description: "Trading mode: paper or live"
+        required: false
+        default: "paper"
+        type: choice
+        options:
+          - paper
+          - live
   workflow_run:
     # Also trigger when YouTube analysis completes (ensures latest watchlist)
     workflows: ["YouTube Video Analysis"]
@@ -79,8 +87,8 @@ jobs:
       - name: Validate secrets
         id: validate_secrets
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
@@ -144,10 +152,13 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install uv
 
-      - name: Start Alpaca MCP server (paper)
+      - name: Start Alpaca MCP server
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          # Determine trading mode from input or secret
+          TRADING_MODE: ${{ github.event.inputs.trading_mode || 'paper' }}
+          PAPER_TRADING_SECRET: ${{ secrets.PAPER_TRADING }}
         run: |
           # CRITICAL: Fail workflow if credentials are missing - don't silently skip
           if [ -z "$ALPACA_API_KEY" ] || [ -z "$ALPACA_SECRET_KEY" ]; then
@@ -156,9 +167,19 @@ jobs:
             echo "   Go to: Settings → Secrets → Actions → Add secret"
             exit 1
           fi
+
+          # Determine MCP server mode
+          MCP_MODE="paper"
+          if [ "$TRADING_MODE" = "live" ] || [ "$PAPER_TRADING_SECRET" = "false" ]; then
+            MCP_MODE="live"
+            echo "🔴 LIVE TRADING MODE - Real money at risk!"
+          else
+            echo "📝 Paper trading mode - simulation only"
+          fi
+
           nohup uvx alpaca-mcp-server serve \
             --host 127.0.0.1 --port 8801 \
-            --mode paper \
+            --mode "$MCP_MODE" \
             --alpaca-key "$ALPACA_API_KEY" \
             --alpaca-secret "$ALPACA_SECRET_KEY" \
             --transport http \
@@ -168,7 +189,7 @@ jobs:
             echo "⚠️ MCP server may not have started - check logs"
             cat /tmp/alpaca_mcp.log || true
           fi
-          echo "✅ MCP server started on 127.0.0.1:8801"
+          echo "✅ MCP server started on 127.0.0.1:8801 (mode: $MCP_MODE)"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -422,8 +443,8 @@ jobs:
         if: steps.check_execution.outputs.skip != 'true'
         timeout-minutes: 5  # Increased from 1 to allow efficient API checks
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY || secrets.FINHUB_API_KEY }}
         run: |
@@ -454,8 +475,8 @@ jobs:
         id: execute_trading
         if: steps.check_execution.outputs.skip != 'true' && steps.health_check.outputs.health_check_passed == 'true'
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           HELICONE_API_KEY: ${{ secrets.HELICONE_API_KEY }}
           # LangSmith tracing (observability)
@@ -467,7 +488,9 @@ jobs:
           POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           DAILY_INVESTMENT: ${{ secrets.DAILY_INVESTMENT || '10.0' }}
-          PAPER_TRADING: 'true'
+          # Trading mode: defaults to paper, can be set via workflow_dispatch input or secret
+          # To enable live trading: set PAPER_TRADING secret to 'false' OR run workflow with trading_mode=live
+          PAPER_TRADING: ${{ github.event.inputs.trading_mode == 'live' && 'false' || secrets.PAPER_TRADING || 'true' }}
           # CRITICAL FIX Dec 17: Disable bleeding strategies
           REIT_ALLOCATION_PCT: '0'  # REITs are ALL losing - disable
           ENABLE_CRYPTO_TRADING: 'false'  # Crypto losing 6.7% - disable
@@ -680,9 +703,9 @@ jobs:
         continue-on-error: false  # CRITICAL: Options failures must be visible (Dec 16 fix)
         timeout-minutes: 15
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
-          PAPER_TRADING: 'true'
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          PAPER_TRADING: ${{ github.event.inputs.trading_mode == 'live' && 'false' || secrets.PAPER_TRADING || 'true' }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
           echo "💰 ========================================"
@@ -836,8 +859,8 @@ jobs:
         if: steps.execute_trading.outcome == 'success'
         # FIXED Dec 30, 2025: Removed continue-on-error - trading failures must be visible
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
         run: |
           echo ""
           echo "🦅 ========================================"
@@ -857,8 +880,8 @@ jobs:
         if: steps.execute_trading.outcome == 'success'
         # FIXED Dec 30, 2025: Removed continue-on-error - trading failures must be visible
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
         run: |
           echo ""
           echo "💰 ========================================"
@@ -878,8 +901,8 @@ jobs:
         if: steps.execute_trading.outcome == 'success'
         # FIXED Dec 30, 2025: Removed continue-on-error - trading failures must be visible
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
         run: |
           echo ""
           echo "📚 ========================================"
@@ -900,9 +923,9 @@ jobs:
         if: steps.execute_trading.outcome == 'success'
         continue-on-error: true  # Non-fatal - trading succeeded
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
-          PAPER_TRADING: 'true'
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          PAPER_TRADING: ${{ github.event.inputs.trading_mode == 'live' && 'false' || secrets.PAPER_TRADING || 'true' }}
         run: |
           echo "📊 Updating performance log with current account data..."
           python3 scripts/update_performance_log.py
@@ -912,8 +935,8 @@ jobs:
         if: steps.execute_trading.outcome == 'success'
         continue-on-error: true  # Non-fatal - trading succeeded, sync issues shouldn't fail workflow
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
         run: |
           echo "🔍 Verifying positions match between Alpaca and local state..."
           python3 scripts/verify_positions.py || {
@@ -926,8 +949,8 @@ jobs:
         if: steps.execute_trading.outcome == 'success'
         continue-on-error: true  # Non-fatal - Alpaca is source of truth
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
         run: |
           echo "🔍 Verifying orders in Alpaca match our trade logs..."
           python3 scripts/verify_orders.py || {
@@ -939,8 +962,8 @@ jobs:
         id: sanity_check
         if: always()
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
         run: |
           echo "🔍 Running P/L sanity check..."
           echo "   This detects zombie mode (system running but not trading)"
@@ -1234,8 +1257,8 @@ jobs:
         if: always()
         continue-on-error: true
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
         run: |
           echo "📊 Running daily verification..."
           python3 scripts/daily_verification.py
