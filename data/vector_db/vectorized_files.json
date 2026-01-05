@@ -704,7 +704,17 @@
       "hash": "0f8843cded43c72ee50fcbaa1bad91f0",
       "chunks": 3,
       "vectorized_at": "2026-01-05T16:20:42.120482"
+    },
+    "rag_knowledge/lessons_learned/ll_081_test_coverage_rlhf_trade_sync_jan05.md": {
+      "hash": "5a8f870d76ff58ed1b552ed48711e2e9",
+      "chunks": 2,
+      "vectorized_at": "2026-01-05T16:59:22.505083"
+    },
+    "rag_knowledge/lessons_learned/ll_082_ci_failure_resolution_jan05.md": {
+      "hash": "4bacea70943c9bf5d5e104fd5fd8948d",
+      "chunks": 1,
+      "vectorized_at": "2026-01-05T16:59:22.798891"
     }
   },
-  "last_updated": "2026-01-05T16:20:42.125222"
+  "last_updated": "2026-01-05T16:59:22.804453"
 }
