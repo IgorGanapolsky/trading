@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2026-01-05T10:39:17.647671",
+    "last_updated": "2026-01-05T11:07:00.000000",
     "last_audit": "2025-12-29T09:46:00.000000",
     "audit_notes": "Updated from live Alpaca screenshot - Dec 30 10:28 AM EST",
     "last_sync": "2026-01-05T10:39:17.647678",
@@ -18,25 +18,25 @@
   "account": {
     "type": "live",
     "starting_balance": 20.0,
-    "current_equity": 20.0,
-    "cash": 20.0,
+    "current_equity": 30.0,
+    "cash": 30.0,
     "positions_value": 0.0,
     "total_pl": 0.0,
     "total_pl_pct": 0.0,
-    "buying_power": 20.0,
-    "daily_change_pct": 0.0,
+    "buying_power": 30.0,
+    "daily_change_pct": 50.0,
     "positions_count": 0,
     "daily_deposit": 10.0,
     "target_daily_profit": 100.0,
     "reset_note": "Fresh start Jan 3, 2026 - Real brokerage with $10/day deposits",
     "deposit_strategy": {
       "amount_per_day": 10.0,
-      "start_date": "2026-01-05",
-      "total_deposited": 20.0,
-      "deposit_count": 2,
+      "start_date": "2026-01-03",
+      "total_deposited": 30.0,
+      "deposit_count": 3,
       "purpose": "Accumulate capital for defined-risk options spreads (~$100-200 minimum)",
       "target_for_first_trade": 200.0,
-      "estimated_days_to_target": 18,
+      "estimated_days_to_target": 17,
       "tax_strategy": "Section 475 MTM election + Section 1256 index options (60/40 treatment)"
     }
   },
@@ -44,15 +44,17 @@
     "type": "paper",
     "purpose": "R&D and RAG knowledge building",
     "starting_balance": 100000.0,
-    "current_equity": 100942.23,
-    "cash": 86629.95,
-    "positions_value": 17695.12,
-    "total_pl": 942.23,
-    "total_pl_pct": 0.94,
-    "buying_power": 1341.99,
-    "positions_count": 15,
+    "current_equity": 101083.86,
+    "cash": 86629.93,
+    "positions_value": 14488.93,
+    "total_pl": 1083.86,
+    "total_pl_pct": 1.08,
+    "buying_power": 6277.72,
+    "positions_count": 5,
     "win_rate": 80.0,
-    "note": "Continue paper trading at night to build RAG knowledge"
+    "note": "Continue paper trading at night to build RAG knowledge",
+    "last_sync": "2026-01-05T05:45:00",
+    "sync_source": "CEO screenshot"
   },
   "investments": {
     "total_invested": 1621.93,
@@ -137,7 +139,48 @@
         "tier": "unknown"
       }
     ],
-    "open_positions": [],
+    "open_positions": [
+      {
+        "symbol": "SPY",
+        "price": 685.03,
+        "quantity": 21.62,
+        "market_value": 14810.93,
+        "unrealized_pl": 74.60,
+        "side": "long"
+      },
+      {
+        "symbol": "INTC260109P00035000",
+        "price": 0.06,
+        "quantity": -2,
+        "market_value": -12.00,
+        "unrealized_pl": 151.00,
+        "side": "short"
+      },
+      {
+        "symbol": "SOFI260123P00024000",
+        "price": 0.23,
+        "quantity": -1,
+        "market_value": -23.00,
+        "unrealized_pl": 56.00,
+        "side": "short"
+      },
+      {
+        "symbol": "AMD260116P00200000",
+        "price": 1.33,
+        "quantity": -1,
+        "market_value": -133.00,
+        "unrealized_pl": 457.00,
+        "side": "short"
+      },
+      {
+        "symbol": "SPY260123P00660000",
+        "price": 1.89,
+        "quantity": -1,
+        "market_value": -189.00,
+        "unrealized_pl": 449.00,
+        "side": "short"
+      }
+    ],
     "_win_rate_source": "calculated_from_closed_trades",
     "_win_rate_fixed_at": "2025-12-31T02:57:09.901650"
   },
