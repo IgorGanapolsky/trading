@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Trading AI RAG Webhook",
     description="Dialogflow CX webhook for lessons AND trade history queries",
-    version="2.0.0",
+    version="2.2.0",  # Fixed money/today query detection + system_state.json fallback
 )
 
 # Initialize RAG system for lessons
@@ -59,6 +59,38 @@ except Exception as e:
     logger.warning(f"Trade history not available: {e}")
 
 
+def get_current_portfolio_status() -> dict:
+    """Get current portfolio status from system_state.json."""
+    import json
+
+    state_path = project_root / "data" / "system_state.json"
+    try:
+        if state_path.exists():
+            with open(state_path) as f:
+                state = json.load(f)
+            return {
+                "live": {
+                    "equity": state.get("account", {}).get("current_equity", 0),
+                    "total_pl": state.get("account", {}).get("total_pl", 0),
+                    "total_pl_pct": state.get("account", {}).get("total_pl_pct", 0),
+                    "positions_count": state.get("account", {}).get("positions_count", 0),
+                },
+                "paper": {
+                    "equity": state.get("paper_account", {}).get("current_equity", 0),
+                    "total_pl": state.get("paper_account", {}).get("total_pl", 0),
+                    "total_pl_pct": state.get("paper_account", {}).get("total_pl_pct", 0),
+                    "positions_count": state.get("paper_account", {}).get("positions_count", 0),
+                    "win_rate": state.get("paper_account", {}).get("win_rate", 0),
+                },
+                "last_trade_date": state.get("trades", {}).get("last_trade_date", "unknown"),
+                "trades_today": state.get("trades", {}).get("total_trades_today", 0),
+                "challenge_day": state.get("challenge", {}).get("current_day", 0),
+            }
+    except Exception as e:
+        logger.error(f"Failed to read system state: {e}")
+    return {}
+
+
 def is_trade_query(query: str) -> bool:
     """Detect if query is about trades vs lessons."""
     trade_keywords = [
@@ -75,6 +107,16 @@ def is_trade_query(query: str) -> bool:
         "performance",
         "portfolio",
         "spy",
+        "money",
+        "made",
+        "earn",
+        "earned",
+        "today",
+        "gains",
+        "returns",
+        "equity",
+        "balance",
+        "account",
         "aapl",
         "msft",
         "nvda",
@@ -256,12 +298,36 @@ async def webhook(request: Request) -> JSONResponse:
                 response_text = format_trades_response(trades, user_query)
                 logger.info(f"Returning {len(trades)} trades")
             else:
-                # Fallback: also check lessons for trade-related content
-                results = rag.query(user_query, top_k=3)
-                response_text = format_lessons_response(results, user_query)
-                response_text = (
-                    f"No trade history found. Here are related lessons:\n\n{response_text}"
-                )
+                # Fallback: Get current portfolio status from system_state.json
+                portfolio = get_current_portfolio_status()
+                if portfolio:
+                    live = portfolio.get("live", {})
+                    paper = portfolio.get("paper", {})
+                    response_text = f"""📊 Current Portfolio Status (Day {portfolio.get("challenge_day", "?")}/90)
+
+**Live Account:**
+- Equity: ${live.get("equity", 0):.2f}
+- Total P/L: ${live.get("total_pl", 0):.2f} ({live.get("total_pl_pct", 0):.2f}%)
+- Positions: {live.get("positions_count", 0)}
+
+**Paper Account (R&D):**
+- Equity: ${paper.get("equity", 0):,.2f}
+- Total P/L: ${paper.get("total_pl", 0):,.2f} ({paper.get("total_pl_pct", 0):.2f}%)
+- Win Rate: {paper.get("win_rate", 0):.1f}%
+- Positions: {paper.get("positions_count", 0)}
+
+**Today:** {portfolio.get("trades_today", 0)} trades executed
+**Last Trade:** {portfolio.get("last_trade_date", "unknown")}
+
+No new trades today. Markets are open - next execution at scheduled time."""
+                    logger.info("Returning portfolio status from system_state.json")
+                else:
+                    # Final fallback: lessons
+                    results = rag.query(user_query, top_k=3)
+                    response_text = format_lessons_response(results, user_query)
+                    response_text = (
+                        f"No trade history found. Here are related lessons:\n\n{response_text}"
+                    )
         else:
             # Query RAG system for relevant lessons
             results = rag.query(user_query, top_k=3)
