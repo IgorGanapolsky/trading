@@ -1,3 +1,9 @@
+---
+layout: post
+title: "Lesson Learned #080: Dialogflow Trade Query Detection Fix"
+date: 2026-01-05
+---
+
 # Lesson Learned #080: Dialogflow Trade Query Detection Fix
 
 **ID**: LL-080
@@ -38,17 +44,30 @@ Dialogflow responded with lessons learned (ll_023, ll_074) about past incidents 
    - Win Rate: 80.0%
    ```
 
+## Follow-up Fix (Jan 5, 2026 - v2.3.0)
+
+The initial fix worked locally but failed in Cloud Run because:
+
+1. **Container Has No Data**: `data/system_state.json` doesn't exist in Docker container
+2. **ChromaDB Empty**: No trades with `type="trade"` in deployed database
+3. **Final Fallback Wrong**: Dumped RAG lessons for P/L questions (unhelpful)
+
+**Solution**:
+- Added GitHub raw URL fallback: Fetch `system_state.json` from `https://raw.githubusercontent.com/.../main/data/system_state.json`
+- Changed final fallback to clear message instead of lessons dump
+
 ## Prevention
 
 1. **Keyword Coverage**: Always test query detection with natural language variations
-2. **Graceful Fallbacks**: Always have a data source fallback (system_state.json) when primary (ChromaDB) is empty
-3. **Test Coverage**: Added 6 new tests for trade query detection and portfolio status (PR #1074)
+2. **Graceful Fallbacks**: Always have multiple data source fallbacks (local → GitHub → clear message)
+3. **Test Deployment**: Test webhook behavior in Cloud Run, not just locally
+4. **Don't Dump Unrelated Data**: If query is about X, don't return data about Y as fallback
 
 ## Evidence
 
-- PR #1071: https://github.com/IgorGanapolsky/trading/pull/1071
-- PR #1074: https://github.com/IgorGanapolsky/trading/pull/1074
-- Tests: All 24 tests passing
+- PR #1071: Initial keyword fix
+- PR #1074: Added tests
+- Branch `claude/fix-dialogue-flow-BJTTU`: Cloud Run deployment fix (v2.3.0)
 
 ## Keywords
 
