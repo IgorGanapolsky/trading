@@ -14,7 +14,7 @@ dependencies = [
     # Trading APIs
     "alpaca-py>=0.43.2",
     "openai>=1.109.1",
-    "openai-agents>=0.6.2",
+    # "openai-agents>=0.6.2",  # REMOVED: Never imported (Jan 2026)
 
     # Data Processing
     "pandas>=2.3.3",
@@ -23,15 +23,15 @@ dependencies = [
     "alpha-vantage>=2.3.1",
 
     # Scheduling
-    "schedule>=1.2.0",
+    # "schedule>=1.2.0",  # REMOVED: Never imported (Jan 2026)
 
     # Web Scraping & APIs
     "requests>=2.32.5",
     "beautifulsoup4>=4.12.0",
     "lxml>=5.0.0",
     "praw>=7.8.1",
-    "feedparser>=6.0.10",
-    "PyPDF2>=3.0.0",
+    # "feedparser>=6.0.10",  # REMOVED: Never imported (Jan 2026)
+    # "PyPDF2>=3.0.0",  # REMOVED: Never imported (Jan 2026)
 
     # YouTube Monitoring
     "youtube-transcript-api>=1.2.3",
@@ -43,27 +43,27 @@ dependencies = [
 
     # Utilities
     "python-dateutil>=2.9.0",
-    "pytz>=2023.3",
+    # "pytz>=2023.3",  # REMOVED: Never imported (Jan 2026)
     "holidays>=0.56",  # Market holiday detection (Critical for calendar awareness - LL-051)
-    "loguru>=0.7.2",
+    # "loguru>=0.7.2",  # REMOVED: Never imported (Jan 2026)
     "anthropic>=0.73.0,<1.0.0",
     "google-generativeai>=0.8.0,<1.0.0",
 
     # Deep Learning
-    "torch>=2.0.0,<3.0.0",
-    "scikit-learn>=1.3.0,<2.0.0",
+    # "torch>=2.0.0,<3.0.0",  # REMOVED: Never imported (Jan 2026)
+    "scikit-learn>=1.3.0,<2.0.0",  # Used in src/agents/rl_weight_updater.py
 
     # DeepAgents Integration (updated for deepagents 0.3.x compatibility)
     "langchain>=0.3.0",
     "langchain-core>=0.3.0",  # deepagents 0.3.x needs >=1.0, allow auto-resolution
     "langchain-anthropic>=0.3.0",
     "langchain-community>=0.3.0",
-    "langgraph>=0.2.0",
+    # "langgraph>=0.2.0",  # REMOVED: Never imported (Jan 2026)
     "langsmith>=0.1.0",
 
     # Dashboard
-    "streamlit>=1.40.0",
-    "matplotlib>=3.7.0",
+    # "streamlit>=1.40.0",  # REMOVED: Never imported (Jan 2026)
+    # "matplotlib>=3.7.0",  # REMOVED: Never imported (Jan 2026)
 ]
 
 [project.optional-dependencies]
@@ -87,9 +87,9 @@ rag = [
     "chromadb>=0.4.0",
 ]
 
-deepagents = [
-    "deepagents>=0.2.5",
-]
+# deepagents = [  # REMOVED: Never imported (Jan 2026)
+#     "deepagents>=0.2.5",
+# ]
 
 xai = [
     # X.ai SDK - optional due to packaging conflicts with streamlit
