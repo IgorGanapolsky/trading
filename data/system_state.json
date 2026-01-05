@@ -4,9 +4,9 @@
     "created": "2025-10-29T09:35:00",
     "last_updated": "2026-01-05T22:00:10.796435",
     "last_audit": "2025-12-29T09:46:00.000000",
-    "audit_notes": "Updated from live Alpaca screenshot - Dec 30 10:28 AM EST",
+    "audit_notes": "Synced from Alpaca paper dashboard - Jan 5 2026 3:17 PM ET",
     "last_sync": "2026-01-05T22:00:10.796444",
-    "sync_mode": "skipped_no_keys"
+    "sync_mode": "paper_account"
   },
   "challenge": {
     "start_date": "2025-10-29",
@@ -44,17 +44,21 @@
     "type": "paper",
     "purpose": "R&D and RAG knowledge building",
     "starting_balance": 100000.0,
-    "current_equity": 101083.86,
-    "cash": 86629.93,
-    "positions_value": 14488.93,
-    "total_pl": 1083.86,
-    "total_pl_pct": 1.08,
+    "current_equity": 101216.62,
+    "cash": 86626.67,
+    "positions_value": 14589.95,
+    "total_pl": 1216.62,
+    "total_pl_pct": 1.22,
     "buying_power": 6277.72,
     "positions_count": 5,
     "win_rate": 80.0,
     "note": "Continue paper trading at night to build RAG knowledge",
     "last_sync": "2026-01-05T05:45:00",
-    "sync_source": "CEO screenshot"
+    "sync_source": "CEO screenshot",
+    "daily_change_pct": 0.17,
+    "daily_pl": 132.76,
+    "last_trade_date": "2026-01-05",
+    "trades_today": 9
   },
   "investments": {
     "total_invested": 1621.93,
