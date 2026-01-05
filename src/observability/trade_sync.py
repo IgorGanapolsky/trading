@@ -16,6 +16,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
+from src.rag.vertex_rag import get_vertex_rag
+
 logger = logging.getLogger(__name__)
 
 # Storage paths
@@ -107,6 +109,7 @@ class TradeSync:
         results = {
             "langsmith": False,
             "chromadb": False,
+            "vertex_rag": False,
             "local_json": False,
         }
 
@@ -130,12 +133,16 @@ class TradeSync:
         # 2. Sync to ChromaDB
         results["chromadb"] = self._sync_to_chromadb(trade_data)
 
-        # 3. Save to local JSON (backup)
+        # 3. Sync to Vertex AI RAG (for Dialogflow queries)
+        results["vertex_rag"] = self._sync_to_vertex_rag(trade_data)
+
+        # 4. Save to local JSON (backup)
         results["local_json"] = self._sync_to_local_json(trade_data)
 
         logger.info(
             f"Trade sync complete: {symbol} {side} | "
-            f"LangSmith={results['langsmith']}, ChromaDB={results['chromadb']}, JSON={results['local_json']}"
+            f"LangSmith={results['langsmith']}, ChromaDB={results['chromadb']}, "
+            f"VertexRAG={results['vertex_rag']}, JSON={results['local_json']}"
         )
 
         return results
@@ -229,6 +236,30 @@ class TradeSync:
 
         except Exception as e:
             logger.error(f"Failed to sync trade to ChromaDB: {e}")
+            return False
+
+    def _sync_to_vertex_rag(self, trade_data: dict[str, Any]) -> bool:
+        """Sync trade to Vertex AI RAG for Dialogflow queries."""
+        try:
+            vertex_rag = get_vertex_rag()
+            if not vertex_rag.is_initialized:
+                logger.debug("Vertex AI RAG not initialized - skipping")
+                return False
+
+            return vertex_rag.add_trade(
+                symbol=trade_data["symbol"],
+                side=trade_data["side"],
+                qty=trade_data["qty"],
+                price=trade_data["price"],
+                strategy=trade_data["strategy"],
+                pnl=trade_data.get("pnl"),
+                pnl_pct=trade_data.get("pnl_pct"),
+                timestamp=trade_data["timestamp"],
+                metadata=trade_data.get("metadata"),
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to sync trade to Vertex AI RAG: {e}")
             return False
 
     def _sync_to_local_json(self, trade_data: dict[str, Any]) -> bool:
