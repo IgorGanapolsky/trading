@@ -192,14 +192,10 @@ at ${price:.2f} using the {strategy} strategy resulted in a
             from vertexai.preview import rag
 
             # Create a unique document ID for this trade
-            trade_id = f"trade_{symbol}_{ts[:10]}_{ts[11:19].replace(':', '')}".replace(
-                "-", ""
-            )
+            trade_id = f"trade_{symbol}_{ts[:10]}_{ts[11:19].replace(':', '')}".replace("-", "")
 
             # Write to temporary file for upload
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".txt", delete=False
-            ) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
                 f.write(trade_text)
                 temp_path = f.name
 
@@ -246,14 +242,12 @@ Lesson Learned: {title}
 ID: {lesson_id}
 Severity: {severity}
 Category: {category}
-Date: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}
+Date: {datetime.now(timezone.utc).strftime("%Y-%m-%d")}
 
 {content}
 """
             # Write to temporary file for upload
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".txt", delete=False
-            ) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
                 f.write(lesson_text)
                 temp_path = f.name
 
