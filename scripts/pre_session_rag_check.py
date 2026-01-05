@@ -94,7 +94,7 @@ def check_recent_critical_lessons(days_back: int = 7, include_high: bool = False
             # Try to extract date from content
             lesson_date = None
             for line in content.split("\n"):
-                if "date" in line.lower() and "2025" in line:
+                if "date" in line.lower() and ("2025" in line or "2026" in line):
                     # Try to parse date
                     import re
 
@@ -106,11 +106,12 @@ def check_recent_critical_lessons(days_back: int = 7, include_high: bool = False
                             pass
                     break
 
-            # Also check file modification time
+            # Also check file modification time as fallback
             file_mtime = datetime.fromtimestamp(lesson_file.stat().st_mtime)
 
-            # Use whichever date is available
-            effective_date = lesson_date or file_mtime
+            # PRIORITY: Use lesson content date if found, otherwise file mtime
+            # This prevents RAG rebuilds from making old lessons appear "recent"
+            effective_date = lesson_date if lesson_date else file_mtime
 
             # Extract title/summary
             title = lesson_file.stem

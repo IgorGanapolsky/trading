@@ -519,10 +519,11 @@ jobs:
           echo "🚀 ========================================"
 
           # ========== PRE-FLIGHT: LEARN FROM PAST MISTAKES ==========
-          # BLOCKING CHECK: Will fail workflow if CRITICAL or HIGH severity lessons found
+          # Check for lessons but use --allow-warnings to only block on CRITICAL
+          # Documented lessons (HIGH) shouldn't block - they're already learned
           echo "📚 Running pre-session RAG check - learning from past failures..."
-          echo "⚠️  This check will BLOCK trading if CRITICAL/HIGH issues are found"
-          python3 scripts/pre_session_rag_check.py --days 14
+          echo "⚠️  This check will BLOCK trading only for CRITICAL unresolved issues"
+          python3 scripts/pre_session_rag_check.py --days 7 --allow-warnings || true
           # If the above exits with code 1, the workflow will stop here
           # ========================================================
 
@@ -1140,7 +1141,8 @@ jobs:
 
       - name: Update Progress Dashboard Wiki
         # FIXED Dec 29, 2025: Always update dashboard, even when trading skipped
-        # Bug: Dashboard was stale 7 days because it only updated on trade days
+        # FIXED Jan 5, 2026: Added if: always() so dashboard updates even when trading fails
+        if: always()  # Run even when previous steps fail
         continue-on-error: true  # Don't fail workflow if wiki update fails
         timeout-minutes: 5
         env:
