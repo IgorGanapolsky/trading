@@ -6,7 +6,7 @@ full, untruncated lessons learned AND trade history from our RAG knowledge base.
 
 Deployed to Cloud Run at: https://trading-dialogflow-webhook-cqlewkvzdq-uc.a.run.app
 
-Updated Jan 2026: Added trade history queries
+Updated Jan 2026: Added trade history queries via ChromaDB + Vertex AI RAG
 """
 
 import logging
@@ -33,15 +33,27 @@ logger = logging.getLogger(__name__)
 # Initialize FastAPI app
 app = FastAPI(
     title="Trading AI RAG Webhook",
-    description="Dialogflow CX webhook for lessons AND trade history queries",
-    version="2.0.0",
+    description="Dialogflow CX webhook for lessons learned AND trade history queries",
+    version="2.1.0",
 )
 
-# Initialize RAG system for lessons
+# Initialize RAG systems
 rag = LessonsLearnedRAG()
-logger.info(f"RAG initialized with {len(rag.lessons)} lessons")
+logger.info(f"Lessons RAG initialized with {len(rag.lessons)} lessons")
 
-# Initialize trade history ChromaDB
+# Initialize Vertex AI RAG for trade queries (cloud)
+vertex_rag = None
+try:
+    from src.rag.vertex_rag import get_vertex_rag
+    vertex_rag = get_vertex_rag()
+    if vertex_rag.is_initialized:
+        logger.info("✅ Vertex AI RAG initialized for trade queries")
+    else:
+        logger.warning("Vertex AI RAG not initialized (check GOOGLE_CLOUD_PROJECT)")
+except Exception as e:
+    logger.warning(f"Vertex AI RAG not available: {e}")
+
+# Initialize trade history ChromaDB (local fallback)
 trade_collection = None
 try:
     import chromadb
@@ -54,21 +66,24 @@ try:
             settings=Settings(anonymized_telemetry=False),
         )
         trade_collection = client.get_or_create_collection(name="trade_history")
-        logger.info(f"Trade history initialized: {trade_collection.count()} trades")
+        logger.info(f"Trade history ChromaDB initialized: {trade_collection.count()} trades")
 except Exception as e:
-    logger.warning(f"Trade history not available: {e}")
+    logger.warning(f"Trade history ChromaDB not available: {e}")
+
+# Trade-related keywords for routing queries
+TRADE_KEYWORDS = [
+    "trade", "trades", "trading", "bought", "sold", "buy", "sell",
+    "position", "positions", "portfolio", "p/l", "pnl", "profit", "loss",
+    "stock", "stocks", "share", "shares", "order", "orders",
+    "aapl", "spy", "qqq", "tsla", "nvda", "msft", "amzn", "googl",
+    "entry", "exit", "filled", "executed", "performance",
+]
 
 
 def is_trade_query(query: str) -> bool:
-    """Detect if query is about trades vs lessons."""
-    trade_keywords = [
-        "trade", "trades", "trading", "bought", "sold", "position",
-        "pnl", "p/l", "profit", "loss", "performance", "portfolio",
-        "spy", "aapl", "msft", "nvda", "symbol", "stock", "option",
-        "entry", "exit", "filled", "executed", "order"
-    ]
+    """Check if query is about trades vs lessons."""
     query_lower = query.lower()
-    return any(keyword in query_lower for keyword in trade_keywords)
+    return any(keyword in query_lower for keyword in TRADE_KEYWORDS)
 
 
 def format_lesson_full(lesson: dict) -> str:
@@ -113,8 +128,8 @@ def format_lessons_response(lessons: list, query: str) -> str:
     return "\n".join(response_parts)
 
 
-def query_trades(query: str, limit: int = 10) -> list[dict]:
-    """Query trade history from ChromaDB."""
+def query_trades_chromadb(query: str, limit: int = 10) -> list[dict]:
+    """Query trade history from local ChromaDB."""
     if not trade_collection:
         return []
 
@@ -122,7 +137,6 @@ def query_trades(query: str, limit: int = 10) -> list[dict]:
         results = trade_collection.query(
             query_texts=[query],
             n_results=limit,
-            where={"type": "trade"},
         )
 
         trades = []
@@ -131,10 +145,31 @@ def query_trades(query: str, limit: int = 10) -> list[dict]:
                 trades.append({
                     "document": doc,
                     "metadata": meta,
+                    "source": "chromadb",
                 })
         return trades
     except Exception as e:
-        logger.error(f"Trade query failed: {e}")
+        logger.error(f"ChromaDB trade query failed: {e}")
+        return []
+
+
+def query_trades_vertex(query: str) -> list[dict]:
+    """Query trade history from Vertex AI RAG (cloud)."""
+    if not vertex_rag or not vertex_rag.is_initialized:
+        return []
+
+    try:
+        results = vertex_rag.query(query)
+        trades = []
+        for result in results:
+            trades.append({
+                "document": result.get("text", ""),
+                "metadata": result.get("metadata", {}),
+                "source": "vertex_rag",
+            })
+        return trades
+    except Exception as e:
+        logger.error(f"Vertex AI RAG trade query failed: {e}")
         return []
 
 
@@ -148,18 +183,20 @@ def format_trades_response(trades: list, query: str) -> str:
     for i, trade in enumerate(trades, 1):
         doc = trade.get("document", "")
         meta = trade.get("metadata", {})
+        source = trade.get("source", "unknown")
 
         symbol = meta.get("symbol", "UNKNOWN")
         side = meta.get("side", "").upper()
         outcome = meta.get("outcome", "unknown")
         pnl = meta.get("pnl", 0)
-        timestamp = meta.get("timestamp", "")[:10]
+        timestamp = str(meta.get("timestamp", ""))[:10]
 
         outcome_emoji = "✅" if outcome == "profitable" else ("❌" if outcome == "loss" else "➖")
 
         response_parts.append(
             f"\n{i}. {outcome_emoji} **{symbol}** {side} | P/L: ${pnl:.2f} | {timestamp}\n"
             f"   {doc[:200]}...\n"
+            f"   (source: {source})\n"
         )
 
     return "\n".join(response_parts)
@@ -224,11 +261,19 @@ async def webhook(request: Request) -> JSONResponse:
 
         logger.info(f"Processing query: {user_query}")
 
-        # Determine query type and route accordingly
+        # Route query to appropriate RAG system
         if is_trade_query(user_query):
-            # Query trade history from ChromaDB
             logger.info(f"Detected TRADE query: {user_query}")
-            trades = query_trades(user_query, limit=10)
+
+            # Try Vertex AI RAG first (cloud), fallback to ChromaDB (local)
+            trades = []
+            if vertex_rag and vertex_rag.is_initialized:
+                logger.info("Querying Vertex AI RAG for trades...")
+                trades = query_trades_vertex(user_query)
+
+            if not trades:
+                logger.info("Falling back to ChromaDB for trades...")
+                trades = query_trades_chromadb(user_query, limit=10)
 
             if trades:
                 response_text = format_trades_response(trades, user_query)
@@ -272,8 +317,8 @@ async def health():
         "status": "healthy",
         "lessons_loaded": len(rag.lessons),
         "critical_lessons": len(rag.get_critical_lessons()),
-        "trades_loaded": trade_count,
-        "trade_history_available": trade_collection is not None,
+        "trades_chromadb": trade_count,
+        "vertex_rag_enabled": vertex_rag is not None and vertex_rag.is_initialized,
     }
 
 
@@ -283,15 +328,20 @@ async def root():
     trade_count = trade_collection.count() if trade_collection else 0
     return {
         "service": "Trading AI RAG Webhook",
-        "version": "2.0.0",
+        "version": "2.1.0",
         "lessons_loaded": len(rag.lessons),
-        "trades_loaded": trade_count,
+        "trades_chromadb": trade_count,
+        "vertex_rag_enabled": vertex_rag is not None and vertex_rag.is_initialized,
         "endpoints": {
             "/webhook": "POST - Dialogflow CX webhook (lessons + trades)",
             "/health": "GET - Health check",
             "/test": "GET - Test lessons query",
             "/test-trades": "GET - Test trade history query",
         },
+        "capabilities": [
+            "Query lessons learned (local RAG)",
+            "Query trade history (Vertex AI RAG + ChromaDB fallback)",
+        ],
     }
 
 
@@ -319,22 +369,28 @@ async def test_rag(query: str = "critical lessons"):
 @app.get("/test-trades")
 async def test_trades(query: str = "recent trades"):
     """Test endpoint to verify trade history is working."""
-    trades = query_trades(query, limit=10)
+    # Try both sources
+    vertex_trades = query_trades_vertex(query) if vertex_rag else []
+    chromadb_trades = query_trades_chromadb(query, limit=10)
+
     return {
         "query": query,
         "query_type": "trades",
-        "trade_collection_available": trade_collection is not None,
-        "trade_count": trade_collection.count() if trade_collection else 0,
-        "results_count": len(trades),
+        "vertex_rag_available": vertex_rag is not None and vertex_rag.is_initialized,
+        "chromadb_available": trade_collection is not None,
+        "chromadb_count": trade_collection.count() if trade_collection else 0,
+        "vertex_results": len(vertex_trades),
+        "chromadb_results": len(chromadb_trades),
         "results": [
             {
+                "source": t.get("source", "unknown"),
                 "symbol": t.get("metadata", {}).get("symbol", "UNKNOWN"),
                 "side": t.get("metadata", {}).get("side", ""),
                 "outcome": t.get("metadata", {}).get("outcome", ""),
                 "pnl": t.get("metadata", {}).get("pnl", 0),
                 "preview": t.get("document", "")[:200],
             }
-            for t in trades
+            for t in (vertex_trades + chromadb_trades)[:10]
         ],
     }
 

@@ -1,12 +1,14 @@
 """
-Unified Trade Sync - Sync trades to LangSmith AND ChromaDB RAG.
+Unified Trade Sync - Sync trades to LangSmith, ChromaDB RAG, AND Vertex AI RAG.
 
 This module ensures EVERY trade is recorded to:
 1. LangSmith (smith.langchain.com) - for observability and ML training
-2. ChromaDB RAG - for lessons learned and pattern recognition
-3. Local JSON files - for backup
+2. ChromaDB RAG (local) - for lessons learned and pattern recognition
+3. Vertex AI RAG (cloud) - for Dialogflow queries and cross-device access
+4. Local JSON files - for backup
 
 Created: Jan 5, 2026 - Fix for operational gap where trades only went to JSON files.
+Updated: Jan 5, 2026 - Added Vertex AI RAG for Dialogflow integration (CEO directive).
 """
 
 import json
@@ -26,16 +28,19 @@ LESSONS_DIR = Path("rag_knowledge/lessons_learned")
 
 class TradeSync:
     """
-    Unified trade sync to LangSmith and ChromaDB.
+    Unified trade sync to LangSmith, ChromaDB, and Vertex AI RAG.
 
     Every trade should go through this class to ensure proper tracking.
+    CEO can query trades via Dialogflow thanks to Vertex AI RAG integration.
     """
 
     def __init__(self):
         self._langsmith_client = None
         self._chromadb_collection = None
+        self._vertex_rag = None
         self._init_langsmith()
         self._init_chromadb()
+        self._init_vertex_rag()
 
         TRADES_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -87,6 +92,20 @@ class TradeSync:
         except Exception as e:
             logger.warning(f"Failed to initialize ChromaDB: {e}")
 
+    def _init_vertex_rag(self):
+        """Initialize Vertex AI RAG for Dialogflow queries."""
+        try:
+            from src.rag.vertex_rag import get_vertex_rag
+            self._vertex_rag = get_vertex_rag()
+            if self._vertex_rag.is_initialized:
+                logger.info("✅ Vertex AI RAG initialized for Dialogflow integration")
+            else:
+                logger.warning("Vertex AI RAG not initialized (check GOOGLE_CLOUD_PROJECT)")
+        except ImportError:
+            logger.warning("vertex_rag module not available")
+        except Exception as e:
+            logger.warning(f"Failed to initialize Vertex AI RAG: {e}")
+
     def sync_trade(
         self,
         symbol: str,
@@ -107,6 +126,7 @@ class TradeSync:
         results = {
             "langsmith": False,
             "chromadb": False,
+            "vertex_rag": False,
             "local_json": False,
         }
 
@@ -127,15 +147,19 @@ class TradeSync:
         # 1. Sync to LangSmith
         results["langsmith"] = self._sync_to_langsmith(trade_data)
 
-        # 2. Sync to ChromaDB
+        # 2. Sync to ChromaDB (local)
         results["chromadb"] = self._sync_to_chromadb(trade_data)
 
-        # 3. Save to local JSON (backup)
+        # 3. Sync to Vertex AI RAG (cloud - for Dialogflow queries)
+        results["vertex_rag"] = self._sync_to_vertex_rag(trade_data)
+
+        # 4. Save to local JSON (backup)
         results["local_json"] = self._sync_to_local_json(trade_data)
 
         logger.info(
             f"Trade sync complete: {symbol} {side} | "
-            f"LangSmith={results['langsmith']}, ChromaDB={results['chromadb']}, JSON={results['local_json']}"
+            f"LangSmith={results['langsmith']}, ChromaDB={results['chromadb']}, "
+            f"VertexRAG={results['vertex_rag']}, JSON={results['local_json']}"
         )
 
         return results
@@ -229,6 +253,27 @@ class TradeSync:
 
         except Exception as e:
             logger.error(f"Failed to sync trade to ChromaDB: {e}")
+            return False
+
+    def _sync_to_vertex_rag(self, trade_data: dict[str, Any]) -> bool:
+        """Sync trade to Vertex AI RAG for Dialogflow queries."""
+        if not self._vertex_rag or not self._vertex_rag.is_initialized:
+            return False
+
+        try:
+            return self._vertex_rag.add_trade(
+                symbol=trade_data["symbol"],
+                side=trade_data["side"],
+                qty=trade_data["qty"],
+                price=trade_data["price"],
+                strategy=trade_data["strategy"],
+                pnl=trade_data.get("pnl"),
+                pnl_pct=trade_data.get("pnl_pct"),
+                timestamp=trade_data.get("timestamp"),
+                metadata=trade_data.get("metadata"),
+            )
+        except Exception as e:
+            logger.error(f"Failed to sync trade to Vertex AI RAG: {e}")
             return False
 
     def _sync_to_local_json(self, trade_data: dict[str, Any]) -> bool:
