@@ -2,9 +2,11 @@
 Dialogflow CX Webhook for Trading AI RAG System.
 
 This webhook receives queries from Vertex AI Dialogue Agent and returns
-full, untruncated lessons learned from our RAG knowledge base.
+full, untruncated lessons learned AND trade history from our RAG knowledge base.
 
 Deployed to Cloud Run at: https://trading-dialogflow-webhook-cqlewkvzdq-uc.a.run.app
+
+Updated Jan 2026: Added trade history queries
 """
 
 import logging
@@ -31,13 +33,42 @@ logger = logging.getLogger(__name__)
 # Initialize FastAPI app
 app = FastAPI(
     title="Trading AI RAG Webhook",
-    description="Dialogflow CX webhook for lessons learned queries",
-    version="1.0.0",
+    description="Dialogflow CX webhook for lessons AND trade history queries",
+    version="2.0.0",
 )
 
-# Initialize RAG system
+# Initialize RAG system for lessons
 rag = LessonsLearnedRAG()
 logger.info(f"RAG initialized with {len(rag.lessons)} lessons")
+
+# Initialize trade history ChromaDB
+trade_collection = None
+try:
+    import chromadb
+    from chromadb.config import Settings
+
+    db_path = Path("data/vector_db")
+    if db_path.exists():
+        client = chromadb.PersistentClient(
+            path=str(db_path),
+            settings=Settings(anonymized_telemetry=False),
+        )
+        trade_collection = client.get_or_create_collection(name="trade_history")
+        logger.info(f"Trade history initialized: {trade_collection.count()} trades")
+except Exception as e:
+    logger.warning(f"Trade history not available: {e}")
+
+
+def is_trade_query(query: str) -> bool:
+    """Detect if query is about trades vs lessons."""
+    trade_keywords = [
+        "trade", "trades", "trading", "bought", "sold", "position",
+        "pnl", "p/l", "profit", "loss", "performance", "portfolio",
+        "spy", "aapl", "msft", "nvda", "symbol", "stock", "option",
+        "entry", "exit", "filled", "executed", "order"
+    ]
+    query_lower = query.lower()
+    return any(keyword in query_lower for keyword in trade_keywords)
 
 
 def format_lesson_full(lesson: dict) -> str:
@@ -78,6 +109,58 @@ def format_lessons_response(lessons: list, query: str) -> str:
         # Format full lesson content
         response_parts.append(f"\n**{lesson_id}** ({severity}): {content}\n")
         response_parts.append("-" * 50)
+
+    return "\n".join(response_parts)
+
+
+def query_trades(query: str, limit: int = 10) -> list[dict]:
+    """Query trade history from ChromaDB."""
+    if not trade_collection:
+        return []
+
+    try:
+        results = trade_collection.query(
+            query_texts=[query],
+            n_results=limit,
+            where={"type": "trade"},
+        )
+
+        trades = []
+        if results["documents"] and results["metadatas"]:
+            for doc, meta in zip(results["documents"][0], results["metadatas"][0]):
+                trades.append({
+                    "document": doc,
+                    "metadata": meta,
+                })
+        return trades
+    except Exception as e:
+        logger.error(f"Trade query failed: {e}")
+        return []
+
+
+def format_trades_response(trades: list, query: str) -> str:
+    """Format trade history into a response."""
+    if not trades:
+        return f"No trades found matching '{query}'. The trade history may be empty or the query didn't match any trades."
+
+    response_parts = [f"📊 **Trade History** (found {len(trades)} trades):\n"]
+
+    for i, trade in enumerate(trades, 1):
+        doc = trade.get("document", "")
+        meta = trade.get("metadata", {})
+
+        symbol = meta.get("symbol", "UNKNOWN")
+        side = meta.get("side", "").upper()
+        outcome = meta.get("outcome", "unknown")
+        pnl = meta.get("pnl", 0)
+        timestamp = meta.get("timestamp", "")[:10]
+
+        outcome_emoji = "✅" if outcome == "profitable" else ("❌" if outcome == "loss" else "➖")
+
+        response_parts.append(
+            f"\n{i}. {outcome_emoji} **{symbol}** {side} | P/L: ${pnl:.2f} | {timestamp}\n"
+            f"   {doc[:200]}...\n"
+        )
 
     return "\n".join(response_parts)
 
@@ -141,17 +224,32 @@ async def webhook(request: Request) -> JSONResponse:
 
         logger.info(f"Processing query: {user_query}")
 
-        # Query RAG system for relevant lessons
-        results = rag.query(user_query, top_k=3)
+        # Determine query type and route accordingly
+        if is_trade_query(user_query):
+            # Query trade history from ChromaDB
+            logger.info(f"Detected TRADE query: {user_query}")
+            trades = query_trades(user_query, limit=10)
 
-        if not results:
-            # Try broader search
-            results = rag.query("trading operational failure", top_k=3)
+            if trades:
+                response_text = format_trades_response(trades, user_query)
+                logger.info(f"Returning {len(trades)} trades")
+            else:
+                # Fallback: also check lessons for trade-related content
+                results = rag.query(user_query, top_k=3)
+                response_text = format_lessons_response(results, user_query)
+                response_text = f"No trade history found. Here are related lessons:\n\n{response_text}"
+        else:
+            # Query RAG system for relevant lessons
+            results = rag.query(user_query, top_k=3)
 
-        # Format FULL response (no truncation)
-        response_text = format_lessons_response(results, user_query)
+            if not results:
+                # Try broader search
+                results = rag.query("trading operational failure", top_k=3)
 
-        logger.info(f"Returning response with {len(results)} lessons, {len(response_text)} chars")
+            # Format FULL response (no truncation)
+            response_text = format_lessons_response(results, user_query)
+
+        logger.info(f"Returning response with {len(response_text)} chars")
 
         # Create Dialogflow response
         response = create_dialogflow_response(response_text)
@@ -169,34 +267,41 @@ async def webhook(request: Request) -> JSONResponse:
 @app.get("/health")
 async def health():
     """Health check endpoint."""
+    trade_count = trade_collection.count() if trade_collection else 0
     return {
         "status": "healthy",
         "lessons_loaded": len(rag.lessons),
         "critical_lessons": len(rag.get_critical_lessons()),
+        "trades_loaded": trade_count,
+        "trade_history_available": trade_collection is not None,
     }
 
 
 @app.get("/")
 async def root():
     """Root endpoint with info."""
+    trade_count = trade_collection.count() if trade_collection else 0
     return {
         "service": "Trading AI RAG Webhook",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "lessons_loaded": len(rag.lessons),
+        "trades_loaded": trade_count,
         "endpoints": {
-            "/webhook": "POST - Dialogflow CX webhook",
+            "/webhook": "POST - Dialogflow CX webhook (lessons + trades)",
             "/health": "GET - Health check",
-            "/test": "GET - Test RAG query",
+            "/test": "GET - Test lessons query",
+            "/test-trades": "GET - Test trade history query",
         },
     }
 
 
 @app.get("/test")
 async def test_rag(query: str = "critical lessons"):
-    """Test endpoint to verify RAG is working."""
+    """Test endpoint to verify lessons RAG is working."""
     results = rag.query(query, top_k=3)
     return {
         "query": query,
+        "query_type": "lessons",
         "results_count": len(results),
         "results": [
             {
@@ -207,6 +312,29 @@ async def test_rag(query: str = "critical lessons"):
                 "preview": r.get("snippet", "")[:200],
             }
             for r in results
+        ],
+    }
+
+
+@app.get("/test-trades")
+async def test_trades(query: str = "recent trades"):
+    """Test endpoint to verify trade history is working."""
+    trades = query_trades(query, limit=10)
+    return {
+        "query": query,
+        "query_type": "trades",
+        "trade_collection_available": trade_collection is not None,
+        "trade_count": trade_collection.count() if trade_collection else 0,
+        "results_count": len(trades),
+        "results": [
+            {
+                "symbol": t.get("metadata", {}).get("symbol", "UNKNOWN"),
+                "side": t.get("metadata", {}).get("side", ""),
+                "outcome": t.get("metadata", {}).get("outcome", ""),
+                "pnl": t.get("metadata", {}).get("pnl", 0),
+                "preview": t.get("document", "")[:200],
+            }
+            for t in trades
         ],
     }
 
