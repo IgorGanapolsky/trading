@@ -6,17 +6,21 @@ This module bridges the gap between:
 2. RL weight updates (src/agents/rl_agent.py)
 
 Uses contextual bandits for simple, effective learning from binary feedback.
+
+Storage: LanceDB vector database for semantic search and time-travel queries.
 """
 
 import json
 import logging
 import math
 import random
+import uuid
 from datetime import datetime
 from glob import glob
 from pathlib import Path
 from typing import Any
 
+from src.learning.lancedb_feedback_store import LanceDBFeedbackStore
 from src.learning.reward_shaper import BinaryRewardShaper
 
 logger = logging.getLogger(__name__)
@@ -35,6 +39,7 @@ class FeedbackTrainer:
         feedback_dir: str = "data/feedback",
         model_path: str = "models/ml/feedback_model.json",
         min_samples: int = 5,
+        use_lancedb: bool = True,
     ):
         self.feedback_dir = Path(feedback_dir)
         self.model_path = Path(model_path)
@@ -48,6 +53,19 @@ class FeedbackTrainer:
 
         # Feature weights for decision context
         self.feature_weights: dict[str, float] = {}
+
+        # LanceDB store for semantic search and time-travel
+        self.use_lancedb = use_lancedb
+        if use_lancedb:
+            try:
+                self.lancedb_store = LanceDBFeedbackStore()
+                logger.info("✅ LanceDB feedback store enabled for RLHF")
+            except Exception as e:
+                logger.warning("LanceDB unavailable, falling back to JSON: %s", e)
+                self.use_lancedb = False
+                self.lancedb_store = None
+        else:
+            self.lancedb_store = None
 
         # Load existing model if available
         self._load_model()
@@ -181,7 +199,26 @@ class FeedbackTrainer:
         if context:
             self._update_feature_weights_single(context, is_positive)
 
-        # Save immediately
+        # Store in LanceDB for semantic search and time-travel
+        if self.use_lancedb and self.lancedb_store:
+            try:
+                feedback_id = str(uuid.uuid4())
+                self.lancedb_store.add_feedback(
+                    feedback_id=feedback_id,
+                    is_positive=is_positive,
+                    context=context or {},
+                    reward=reward_info["shaped_reward"],
+                    model_checkpoint={
+                        "alpha": self.alpha,
+                        "beta": self.beta,
+                        "feature_weights": self.feature_weights.copy(),
+                    },
+                )
+                logger.debug("Stored feedback %s in LanceDB", feedback_id)
+            except Exception as e:
+                logger.warning("Failed to store feedback in LanceDB: %s", e)
+
+        # Save model state
         self._save_model()
 
         posterior_mean = self.alpha / (self.alpha + self.beta)
@@ -211,7 +248,7 @@ class FeedbackTrainer:
             / ((self.alpha + self.beta) ** 2 * (self.alpha + self.beta + 1))
         )
 
-        return {
+        stats = {
             "alpha": self.alpha,
             "beta": self.beta,
             "total_samples": int(self.alpha + self.beta - 2),  # Subtract priors
@@ -223,6 +260,16 @@ class FeedbackTrainer:
             ),
             "feature_weights": self.feature_weights.copy(),
         }
+
+        # Add LanceDB stats if enabled
+        if self.use_lancedb and self.lancedb_store:
+            try:
+                lancedb_stats = self.lancedb_store.get_statistics()
+                stats["lancedb"] = lancedb_stats
+            except Exception as e:
+                logger.warning("Failed to get LanceDB stats: %s", e)
+
+        return stats
 
     def _load_recent_feedback(self, days_back: int) -> list[dict[str, Any]]:
         """Load feedback samples from JSONL files."""
@@ -343,3 +390,151 @@ class FeedbackTrainer:
             )
         except (json.JSONDecodeError, OSError) as e:
             logger.warning("Failed to load feedback model: %s", e)
+
+    # === LanceDB Semantic Search Methods ===
+
+    def search_similar_feedback(
+        self,
+        context: dict[str, Any],
+        limit: int = 10,
+        filter_positive: bool | None = None,
+    ) -> list[dict[str, Any]]:
+        """
+        Search for similar feedback using semantic search.
+
+        Use case: "What feedback did we get for similar market conditions?"
+
+        Args:
+            context: Current decision context to find similar feedback for
+            limit: Maximum number of results
+            filter_positive: Only positive (True) or negative (False) feedback
+
+        Returns:
+            List of similar feedback records with distance scores
+        """
+        if not self.use_lancedb or not self.lancedb_store:
+            logger.warning("LanceDB not enabled - semantic search unavailable")
+            return []
+
+        try:
+            results = self.lancedb_store.search_similar_contexts(
+                query_context=context,
+                limit=limit,
+                filter_positive=filter_positive,
+            )
+            logger.info(
+                "Found %d similar feedback records (filter_positive=%s)",
+                len(results),
+                filter_positive,
+            )
+            return results
+        except Exception as e:
+            logger.error("Semantic search failed: %s", e)
+            return []
+
+    def get_feedback_at_checkpoint(
+        self,
+        alpha: float | None = None,
+        beta: float | None = None,
+        tolerance: float = 0.5,
+    ) -> list[dict[str, Any]]:
+        """
+        Time-travel query: Get feedback from specific model checkpoint.
+
+        Use case: "What feedback caused the model to drift from alpha=10?"
+
+        Args:
+            alpha: Model alpha at checkpoint (defaults to current)
+            beta: Model beta at checkpoint (defaults to current)
+            tolerance: Checkpoint matching tolerance
+
+        Returns:
+            Feedback records near that checkpoint
+        """
+        if not self.use_lancedb or not self.lancedb_store:
+            logger.warning("LanceDB not enabled - time-travel queries unavailable")
+            return []
+
+        alpha = alpha or self.alpha
+        beta = beta or self.beta
+
+        try:
+            results = self.lancedb_store.get_feedback_at_checkpoint(
+                alpha=alpha,
+                beta=beta,
+                tolerance=tolerance,
+            )
+            logger.info(
+                "Time-travel: Found %d records at α=%.1f, β=%.1f",
+                len(results),
+                alpha,
+                beta,
+            )
+            return results
+        except Exception as e:
+            logger.error("Time-travel query failed: %s", e)
+            return []
+
+    def analyze_feedback_patterns(self, limit: int = 100) -> dict[str, Any]:
+        """
+        Analyze patterns in recent feedback for insights.
+
+        Returns:
+            Dictionary with:
+            - positive_contexts: Common contexts in positive feedback
+            - negative_contexts: Common contexts in negative feedback
+            - feature_correlations: Features correlated with feedback type
+        """
+        if not self.use_lancedb or not self.lancedb_store:
+            logger.warning("LanceDB not enabled - pattern analysis unavailable")
+            return {}
+
+        try:
+            # Get recent positive and negative feedback
+            positive = self.lancedb_store.get_recent_feedback(
+                limit=limit,
+                filter_positive=True,
+            )
+            negative = self.lancedb_store.get_recent_feedback(
+                limit=limit,
+                filter_positive=False,
+            )
+
+            # Extract context features
+            pos_features = self._extract_common_features([f["context_json"] for f in positive])
+            neg_features = self._extract_common_features([f["context_json"] for f in negative])
+
+            logger.info(
+                "Pattern analysis: %d positive, %d negative feedback",
+                len(positive),
+                len(negative),
+            )
+
+            return {
+                "positive_count": len(positive),
+                "negative_count": len(negative),
+                "positive_common_features": pos_features,
+                "negative_common_features": neg_features,
+            }
+        except Exception as e:
+            logger.error("Pattern analysis failed: %s", e)
+            return {}
+
+    def _extract_common_features(self, context_jsons: list[str]) -> dict[str, int]:
+        """Extract common features from context JSON strings."""
+        feature_counts: dict[str, int] = {}
+
+        for ctx_json in context_jsons:
+            try:
+                ctx = json.loads(ctx_json)
+                # Count occurrences of key fields
+                for key, value in ctx.items():
+                    if isinstance(value, (str, int, float, bool)):
+                        feature_key = f"{key}={value}"
+                        feature_counts[feature_key] = feature_counts.get(feature_key, 0) + 1
+            except json.JSONDecodeError:
+                continue
+
+        # Return top 10 features
+        sorted_features = sorted(feature_counts.items(), key=lambda x: x[1], reverse=True)
+        return dict(sorted_features[:10])
