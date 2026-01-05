@@ -217,8 +217,8 @@ def execute_cash_secured_put(client, option: dict, config: dict) -> Optional[dic
     logger.info("RAG checks passed - proceeding with execution")
 
     try:
-        from alpaca.trading.requests import MarketOrderRequest
         from alpaca.trading.enums import OrderSide, TimeInForce
+        from alpaca.trading.requests import MarketOrderRequest
 
         logger.info(f"Executing cash-secured put: {option['symbol']}")
         logger.info(f"  Strike: ${option['strike']}")

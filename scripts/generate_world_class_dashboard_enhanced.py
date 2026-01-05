@@ -128,7 +128,6 @@ def calculate_basic_metrics():
             yesterday_account_type = yesterday_perf.get("account_type", "live")
             # Only calculate P/L if comparing same account type
             if yesterday_account_type == "live":
-                yesterday_equity = yesterday_perf.get("equity", starting_balance)
                 today_equity = current_equity
                 # Avoid negative P/L from deposits - use stored P/L or 0
                 today_pl = live_pl  # Use stored P/L from system_state instead of calculating
