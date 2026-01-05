@@ -1,4 +1,8 @@
-"""Lightweight RAG for lessons learned - no heavy dependencies."""
+"""Lightweight RAG for lessons learned - now with ChromaDB semantic search!
+
+Updated Jan 5, 2026: Now uses LessonsSearch (ChromaDB) for semantic similarity search
+instead of simple keyword matching. Falls back to keyword search if ChromaDB unavailable.
+"""
 
 import logging
 from pathlib import Path
@@ -6,13 +10,35 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
+# Try to use ChromaDB-based semantic search
+try:
+    from src.rag.lessons_search import get_lessons_search
+    CHROMADB_AVAILABLE = True
+except ImportError:
+    CHROMADB_AVAILABLE = False
+    logger.warning("ChromaDB not available - falling back to keyword search")
+
 
 class LessonsLearnedRAG:
-    """Lightweight RAG that loads and searches lessons from files."""
+    """RAG for lessons learned - uses ChromaDB for semantic search when available."""
 
     def __init__(self, knowledge_dir: Optional[str] = None):
         self.knowledge_dir = Path(knowledge_dir or "rag_knowledge/lessons_learned")
         self.lessons = []
+
+        # Try to use ChromaDB-based semantic search first
+        if CHROMADB_AVAILABLE:
+            try:
+                self.search_engine = get_lessons_search()
+                logger.info(f"✅ ChromaDB RAG initialized with {self.search_engine.count()} lessons")
+                # Still load lessons for compatibility
+                self._load_lessons()
+                return
+            except Exception as e:
+                logger.warning(f"ChromaDB initialization failed: {e} - falling back to keyword search")
+
+        # Fallback to keyword-based search
+        self.search_engine = None
         self._load_lessons()
 
     def _load_lessons(self) -> None:
@@ -60,7 +86,29 @@ class LessonsLearnedRAG:
         return []
 
     def query(self, query: str, top_k: int = 5, severity_filter: Optional[str] = None) -> list:
-        """Search lessons using simple relevance scoring."""
+        """Search lessons using semantic search (ChromaDB) or keyword fallback."""
+        # Use ChromaDB semantic search if available
+        if self.search_engine is not None:
+            try:
+                results = self.search_engine.search(query, top_k=top_k, severity_filter=severity_filter)
+                # Convert ChromaDB results to expected format
+                return [
+                    {
+                        "id": lesson.id,
+                        "severity": lesson.severity,
+                        "score": score,
+                        "snippet": lesson.snippet,
+                        "content": lesson.snippet,  # Use snippet as content
+                        "file": lesson.file,
+                        "title": lesson.title,
+                        "prevention": lesson.prevention,
+                    }
+                    for lesson, score in results
+                ]
+            except Exception as e:
+                logger.warning(f"ChromaDB search failed: {e} - falling back to keyword search")
+
+        # Fallback: keyword-based search
         if not self.lessons:
             return []
 
@@ -88,13 +136,15 @@ class LessonsLearnedRAG:
                 score *= 2
 
             if score > 0:
+                # Normalize score to 0-1 range for consistency with ChromaDB
+                normalized_score = min(score / 50.0, 1.0)
                 results.append(
                     {
                         "id": lesson["id"],
                         "severity": lesson["severity"],
-                        "score": score,
+                        "score": normalized_score,
                         "snippet": lesson["content"][:500],
-                        "content": lesson["content"],  # Keep full content for prevention extraction
+                        "content": lesson["content"],
                         "file": lesson["file"],
                     }
                 )
@@ -124,7 +174,7 @@ class LessonsLearnedRAG:
         results = []
         for r in raw_results:
             # Extract prevention section from content or use snippet as fallback
-            prevention = self._extract_prevention(r.get("content", r["snippet"]))
+            prevention = r.get("prevention") or self._extract_prevention(r.get("content", r["snippet"]))
             lesson = LessonResult(
                 id=r["id"],
                 title=r.get("title", r["id"]),
@@ -133,9 +183,8 @@ class LessonsLearnedRAG:
                 prevention=prevention,
                 file=r["file"],
             )
-            # Normalize score to 0-1 range
-            normalized_score = min(r["score"] / 100.0, 1.0)
-            results.append((lesson, normalized_score))
+            # Score is already normalized to 0-1 range by query()
+            results.append((lesson, r["score"]))
         return results
 
     def _extract_prevention(self, content: str) -> str:

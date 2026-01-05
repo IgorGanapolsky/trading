@@ -48,6 +48,10 @@ class TradeSignalRecord:
     rejection_reason: str = ""
     timestamp: str = ""
 
+    # Performance tracking (Jan 5, 2026 - Performance Attribution)
+    actual_pnl: float | None = None  # Actual P&L if trade was executed
+    hypothetical_pnl: float | None = None  # What would have happened if we ignored RL
+
     def __post_init__(self):
         if not self.timestamp:
             self.timestamp = datetime.now().isoformat()
@@ -72,6 +76,14 @@ class DailyMLReport:
     avg_rl_confidence: float = 0.0
     rl_mode_distribution: dict[str, int] = field(default_factory=dict)
     feature_importance: dict[str, float] = field(default_factory=dict)
+
+    # Performance Attribution (Jan 5, 2026)
+    # Did the RL filter actually help us make money?
+    actual_total_pnl: float = 0.0  # Actual P&L with RL filtering
+    hypothetical_pnl_no_rl: float = 0.0  # What we would have made ignoring RL
+    rl_contribution: float = 0.0  # RL value add (can be negative if RL hurt us)
+    rl_saved_from_losses: float = 0.0  # Losses avoided by RL rejections
+    rl_missed_profits: float = 0.0  # Profits we missed by RL rejections
 
     # Top signals
     top_opportunities: list[dict] = field(default_factory=list)
@@ -248,12 +260,44 @@ class MLReportGenerator:
             for r, c in sorted(rejection_reasons.items(), key=lambda x: x[1], reverse=True)[:5]
         ]
 
+        # Performance Attribution (Jan 5, 2026)
+        # Calculate RL contribution to profitability
+        actual_pnl = sum(s.actual_pnl for s in self._daily_signals if s.actual_pnl is not None)
+        hypothetical_pnl = sum(
+            s.hypothetical_pnl for s in self._daily_signals if s.hypothetical_pnl is not None
+        )
+
+        # RL rejections that would have been losses (RL saved us)
+        rl_saved = sum(
+            s.hypothetical_pnl
+            for s in self._daily_signals
+            if s.overall_decision == "reject"
+            and s.gate_1_momentum
+            and s.gate_1_momentum.passed  # Gate 1 passed but RL rejected
+            and s.hypothetical_pnl is not None
+            and s.hypothetical_pnl < 0  # Would have been a loss
+        )
+
+        # RL rejections that would have been profits (RL cost us)
+        rl_missed = sum(
+            s.hypothetical_pnl
+            for s in self._daily_signals
+            if s.overall_decision == "reject"
+            and s.gate_1_momentum
+            and s.gate_1_momentum.passed  # Gate 1 passed but RL rejected
+            and s.hypothetical_pnl is not None
+            and s.hypothetical_pnl > 0  # Would have been a profit
+        )
+
+        rl_contribution = actual_pnl - hypothetical_pnl
+
         # Generate recommendations
         recommendations = self._generate_recommendations(
             gate_1_rate=gate_1_passed / total if total > 0 else 0,
             gate_2_rate=gate_2_passed / total if total > 0 else 0,
             avg_rl_conf=avg_rl_conf,
             rejection_reasons=rejection_reasons,
+            rl_contribution=rl_contribution,
         )
 
         report = DailyMLReport(
@@ -268,6 +312,13 @@ class MLReportGenerator:
             avg_rl_confidence=avg_rl_conf,
             rl_mode_distribution=mode_dist,
             feature_importance=avg_importance,
+            # Performance attribution
+            actual_total_pnl=actual_pnl,
+            hypothetical_pnl_no_rl=hypothetical_pnl,
+            rl_contribution=rl_contribution,
+            rl_saved_from_losses=abs(rl_saved),  # Positive number = amount saved
+            rl_missed_profits=rl_missed,  # Positive number = profits we missed
+            # Signals
             top_opportunities=top_opps,
             top_rejections=top_rejections,
             recommendations=recommendations,
@@ -290,9 +341,24 @@ class MLReportGenerator:
         gate_2_rate: float,
         avg_rl_conf: float,
         rejection_reasons: dict[str, int],
+        rl_contribution: float = 0.0,
     ) -> list[str]:
-        """Generate actionable recommendations based on stats."""
+        """Generate actionable recommendations based on stats and performance attribution."""
         recs = []
+
+        # CRITICAL: Performance Attribution (Jan 5, 2026)
+        if rl_contribution < -50:  # RL cost us $50+ in profits
+            recs.append(
+                f"🚨 RL HURTING PERFORMANCE: Cost us ${abs(rl_contribution):.2f} today - consider disabling"
+            )
+        elif rl_contribution > 50:  # RL saved us $50+
+            recs.append(
+                f"✅ RL ADDING VALUE: Contributed +${rl_contribution:.2f} today - keep enabled"
+            )
+        elif -50 <= rl_contribution <= 50 and abs(rl_contribution) > 0:
+            recs.append(
+                f"⚠️ RL MARGINAL: Contributed ${rl_contribution:+.2f} - monitor closely"
+            )
 
         if gate_1_rate < 0.3:
             recs.append("Gate 1 (Momentum) pass rate low - consider relaxing technical filters")
