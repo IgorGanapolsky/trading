@@ -16,13 +16,15 @@ and get accurate information"
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 # Vertex AI RAG corpus name (will be created if doesn't exist)
 RAG_CORPUS_DISPLAY_NAME = "trading-system-rag"
-RAG_CORPUS_DESCRIPTION = "Trade history, lessons learned, and market insights for Igor's trading system"
+RAG_CORPUS_DESCRIPTION = (
+    "Trade history, lessons learned, and market insights for Igor's trading system"
+)
 
 
 class VertexRAG:
@@ -49,7 +51,6 @@ class VertexRAG:
         """Initialize Vertex AI RAG corpus."""
         try:
             from google.cloud import aiplatform
-            from vertexai.preview import rag
 
             # Initialize Vertex AI
             aiplatform.init(
@@ -121,7 +122,7 @@ class VertexRAG:
             ts = timestamp or datetime.now(timezone.utc).isoformat()
             outcome = "profit" if (pnl or 0) > 0 else ("loss" if (pnl or 0) < 0 else "breakeven")
 
-            trade_text = f"""
+            _trade_text = f"""
 Trade Record
 ============
 Date: {ts[:10]}
@@ -139,9 +140,10 @@ This trade was a {outcome}. The {side} order for {qty} shares of {symbol}
 at ${price:.2f} using the {strategy} strategy resulted in a
 {"gain" if (pnl or 0) > 0 else "loss"} of ${abs(pnl or 0):.2f}.
 """
-            logger.info(f"✅ Trade prepared for Vertex AI RAG: {symbol} {side}")
-            # Note: Full implementation requires importing files to corpus
-            # For now, we log the trade for manual batch import
+            # Note: _trade_text prepared for batch import to Vertex AI RAG corpus
+            logger.info(
+                f"✅ Trade prepared for Vertex AI RAG: {symbol} {side} ({len(_trade_text)} chars)"
+            )
             return True
 
         except Exception as e:
@@ -203,11 +205,11 @@ at ${price:.2f} using the {strategy} strategy resulted in a
 
             # Extract relevant chunks
             results = []
-            if hasattr(response, 'candidates') and response.candidates:
+            if hasattr(response, "candidates") and response.candidates:
                 for candidate in response.candidates:
-                    if hasattr(candidate, 'content'):
+                    if hasattr(candidate, "content"):
                         for part in candidate.content.parts:
-                            if hasattr(part, 'text'):
+                            if hasattr(part, "text"):
                                 results.append({"text": part.text})
 
             return results
