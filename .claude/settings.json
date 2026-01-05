@@ -18,6 +18,11 @@
         "hooks": [
           {
             "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/enforce_verification.sh",
+            "timeout": 2
+          },
+          {
+            "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/detect_task_requests.sh",
             "timeout": 3
           },

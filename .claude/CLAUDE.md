@@ -45,3 +45,34 @@
 
 ## Market Hours
 US Equities: Mon-Fri 9:30-4:00 ET only
+
+## Anti-Hallucination Protocol (Chain-of-Verification)
+Based on Meta Research: https://arxiv.org/abs/2309.11495 (reduces errors by 23%)
+
+### MANDATORY Before Any Time-Related Claim:
+```bash
+date "+%A, %B %d, %Y - %I:%M %p %Z"
+```
+
+### 4-Step Verification Process:
+1. **DRAFT**: What do I want to say?
+2. **QUESTION**: What evidence would prove this?
+3. **VERIFY**: Run command, get output
+4. **CLAIM**: Only state what evidence supports
+
+### FORBIDDEN (causes hallucinations):
+- Saying "tomorrow/yesterday" without running `date`
+- Claiming "done" without showing command output
+- Asserting market status without checking time
+- Stating file exists without `ls` verification
+
+### REQUIRED Phrases:
+- "Let me verify first: [command]"
+- "Evidence shows: [output]"
+- "I need to check this"
+- When uncertain: "I don't know, let me verify"
+
+### Incident: Jan 5, 2026
+Said "tomorrow's trading session" on a trading day (Monday).
+Root cause: Did not run `date` before making time-related claim.
+This is why the verification protocol exists.
