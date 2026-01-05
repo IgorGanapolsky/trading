@@ -9,8 +9,8 @@ import sys
 from datetime import datetime
 
 try:
-    from alpaca.trading.client import TradingClient
     from alpaca.common.exceptions import APIError
+    from alpaca.trading.client import TradingClient
 except ImportError:
     print("❌ alpaca-py not installed. Run: pip install alpaca-py")
     sys.exit(1)
@@ -67,7 +67,7 @@ def verify_credentials(api_key: str, secret_key: str, label: str, paper: bool = 
         }
 
         # Display results
-        print(f"\n✅ Credentials VERIFIED")
+        print("\n✅ Credentials VERIFIED")
         print(f"Account Number: {result['account_number']}")
         print(f"Status: {result['status']}")
         print(f"Equity: ${result['equity']:,.2f}")
@@ -80,7 +80,7 @@ def verify_credentials(api_key: str, secret_key: str, label: str, paper: bool = 
 
         # Check for any issues
         if result["trading_blocked"] or result["account_blocked"]:
-            print(f"\n⚠️  WARNING: Account has restrictions!")
+            print("\n⚠️  WARNING: Account has restrictions!")
 
         if result["status"] != "ACTIVE":
             print(f"\n⚠️  WARNING: Account status is {result['status']}")
@@ -98,7 +98,7 @@ def verify_credentials(api_key: str, secret_key: str, label: str, paper: bool = 
 def main():
     """Main verification routine."""
     print(f"\n{'#' * 60}")
-    print(f"# Alpaca Credentials Verification")
+    print("# Alpaca Credentials Verification")
     print(f"# {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"{'#' * 60}")
 
@@ -135,17 +135,17 @@ def main():
     print(f"{'=' * 60}")
 
     if "paper" in results and results["paper"]["success"]:
-        print(f"✅ Paper Trading: VERIFIED")
+        print("✅ Paper Trading: VERIFIED")
         print(f"   Portfolio Value: ${results['paper']['portfolio_value']:,.2f}")
     else:
-        print(f"❌ Paper Trading: FAILED")
+        print("❌ Paper Trading: FAILED")
 
     if "real" in results and results["real"]["success"]:
-        print(f"✅ Real Trading: VERIFIED")
+        print("✅ Real Trading: VERIFIED")
         print(f"   Portfolio Value: ${results['real']['portfolio_value']:,.2f}")
-        print(f"\n⚠️  CAUTION: Real money account is accessible!")
+        print("\n⚠️  CAUTION: Real money account is accessible!")
     else:
-        print(f"⚠️  Real Trading: NOT TESTED (credentials not provided)")
+        print("⚠️  Real Trading: NOT TESTED (credentials not provided)")
 
     print(f"{'=' * 60}\n")
 
