@@ -44,9 +44,7 @@ def check_vector_db():
                 col_name = collections[0].name
                 col = client.get_collection(col_name)
                 doc_count = col.count()
-                results["details"].append(
-                    f"✓ Vector DB has {doc_count} documents in '{col_name}'"
-                )
+                results["details"].append(f"✓ Vector DB has {doc_count} documents in '{col_name}'")
 
                 if doc_count == 0:
                     results["details"].append(

@@ -58,12 +58,14 @@ class TestVertexRAGProjectIdDetection:
         """Test project ID extraction from GCP_SA_KEY JSON."""
         from src.rag.vertex_rag import VertexRAG
 
-        sa_json = json.dumps({
-            "type": "service_account",
-            "project_id": "sa-extracted-project",
-            "private_key_id": "fake",
-            "client_email": "test@test.iam.gserviceaccount.com"
-        })
+        sa_json = json.dumps(
+            {
+                "type": "service_account",
+                "project_id": "sa-extracted-project",
+                "private_key_id": "fake",
+                "client_email": "test@test.iam.gserviceaccount.com",
+            }
+        )
 
         with patch.dict(os.environ, {"GCP_SA_KEY": sa_json}, clear=True):
             with patch.object(VertexRAG, "_init_vertex_rag"):
@@ -79,7 +81,7 @@ class TestVertexRAGProjectIdDetection:
         sa_data = {
             "type": "service_account",
             "project_id": "file-extracted-project",
-            "private_key_id": "fake"
+            "private_key_id": "fake",
         }
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -137,9 +139,7 @@ class TestVertexRAGNotStub:
         )
 
         # Must write to temp file for upload
-        assert "tempfile" in source, (
-            "add_trade() should use tempfile for upload"
-        )
+        assert "tempfile" in source, "add_trade() should use tempfile for upload"
 
     def test_add_lesson_uses_import_files(self):
         """Verify add_lesson actually calls rag.import_files()."""
@@ -153,9 +153,7 @@ class TestVertexRAGNotStub:
         )
 
         # Must write to temp file for upload
-        assert "tempfile" in source, (
-            "add_lesson() should use tempfile for upload"
-        )
+        assert "tempfile" in source, "add_lesson() should use tempfile for upload"
 
     def test_add_trade_cleans_up_temp_file(self):
         """Verify add_trade cleans up temporary files."""
@@ -189,13 +187,7 @@ class TestVertexRAGBehavior:
             rag = VertexRAG()
             assert rag._initialized is False
 
-            result = rag.add_trade(
-                symbol="AAPL",
-                side="buy",
-                qty=10,
-                price=150.0,
-                strategy="test"
-            )
+            result = rag.add_trade(symbol="AAPL", side="buy", qty=10, price=150.0, strategy="test")
             assert result is False
 
     def test_add_lesson_returns_false_when_not_initialized(self):
@@ -207,9 +199,7 @@ class TestVertexRAGBehavior:
             assert rag._initialized is False
 
             result = rag.add_lesson(
-                lesson_id="test_001",
-                title="Test Lesson",
-                content="Test content"
+                lesson_id="test_001", title="Test Lesson", content="Test content"
             )
             assert result is False
 
@@ -257,11 +247,7 @@ class TestVertexRAGIntegration:
             # Patch the import inside the method
             with patch("vertexai.preview.rag") as mock_rag:
                 result = rag.add_trade(
-                    symbol="AAPL",
-                    side="buy",
-                    qty=10,
-                    price=150.0,
-                    strategy="momentum"
+                    symbol="AAPL", side="buy", qty=10, price=150.0, strategy="momentum"
                 )
 
                 # Should have called import_files
@@ -281,9 +267,7 @@ class TestVertexRAGIntegration:
             # Patch the import inside the method
             with patch("vertexai.preview.rag") as mock_rag:
                 result = rag.add_lesson(
-                    lesson_id="ll_test_001",
-                    title="Test Lesson",
-                    content="This is test content"
+                    lesson_id="ll_test_001", title="Test Lesson", content="This is test content"
                 )
 
                 # Should have called import_files
@@ -325,6 +309,7 @@ class TestSmokeTests:
     def test_vertex_rag_import(self):
         """Smoke test: VertexRAG can be imported."""
         from src.rag.vertex_rag import VertexRAG, get_vertex_rag
+
         assert VertexRAG is not None
         assert get_vertex_rag is not None
 
@@ -342,11 +327,12 @@ class TestSmokeTests:
     def test_system_health_check_runs(self):
         """Smoke test: system_health_check.py runs without import errors."""
         import subprocess
+
         result = subprocess.run(
             ["python3", "scripts/system_health_check.py"],
             capture_output=True,
             text=True,
-            timeout=60
+            timeout=60,
         )
         # Should complete (exit code doesn't matter for smoke test)
         assert result.returncode in [0, 1], f"Health check crashed: {result.stderr}"
