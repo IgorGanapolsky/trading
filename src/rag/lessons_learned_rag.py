@@ -90,9 +90,7 @@ class LessonsLearnedRAG:
             return re.findall(r"`([^`]+)`", tags_line)
         return []
 
-    def query(
-        self, query: str, top_k: int = 5, severity_filter: Optional[str] = None
-    ) -> list:
+    def query(self, query: str, top_k: int = 5, severity_filter: Optional[str] = None) -> list:
         """Search lessons using semantic search (ChromaDB) or keyword fallback."""
         # Use ChromaDB semantic search if available
         if self.search_engine is not None:
@@ -115,9 +113,7 @@ class LessonsLearnedRAG:
                     for lesson, score in results
                 ]
             except Exception as e:
-                logger.warning(
-                    f"ChromaDB search failed: {e} - falling back to keyword search"
-                )
+                logger.warning(f"ChromaDB search failed: {e} - falling back to keyword search")
 
         # Fallback: keyword-based search
         if not self.lessons:

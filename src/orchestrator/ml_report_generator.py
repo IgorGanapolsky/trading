@@ -154,13 +154,9 @@ class MLReportGenerator:
         record = TradeSignalRecord(
             symbol=symbol,
             trade_id=trade_id,
-            gate_1_momentum=(
-                self._dict_to_gate_signal("momentum", gate_1) if gate_1 else None
-            ),
+            gate_1_momentum=(self._dict_to_gate_signal("momentum", gate_1) if gate_1 else None),
             gate_2_rl=self._dict_to_gate_signal("rl", gate_2) if gate_2 else None,
-            gate_3_sentiment=(
-                self._dict_to_gate_signal("sentiment", gate_3) if gate_3 else None
-            ),
+            gate_3_sentiment=(self._dict_to_gate_signal("sentiment", gate_3) if gate_3 else None),
             gate_4_risk=self._dict_to_gate_signal("risk", gate_4) if gate_4 else None,
             overall_decision=decision,
             rejection_reason=rejection_reason,
@@ -195,25 +191,17 @@ class MLReportGenerator:
 
         # Calculate pass rates
         gate_1_passed = sum(
-            1
-            for s in self._daily_signals
-            if s.gate_1_momentum and s.gate_1_momentum.passed
+            1 for s in self._daily_signals if s.gate_1_momentum and s.gate_1_momentum.passed
         )
-        gate_2_passed = sum(
-            1 for s in self._daily_signals if s.gate_2_rl and s.gate_2_rl.passed
-        )
+        gate_2_passed = sum(1 for s in self._daily_signals if s.gate_2_rl and s.gate_2_rl.passed)
         gate_3_passed = sum(
-            1
-            for s in self._daily_signals
-            if s.gate_3_sentiment and s.gate_3_sentiment.passed
+            1 for s in self._daily_signals if s.gate_3_sentiment and s.gate_3_sentiment.passed
         )
         gate_4_passed = sum(
             1 for s in self._daily_signals if s.gate_4_risk and s.gate_4_risk.passed
         )
 
-        passed_all = sum(
-            1 for s in self._daily_signals if s.overall_decision == "execute"
-        )
+        passed_all = sum(1 for s in self._daily_signals if s.overall_decision == "execute")
         rejected = sum(1 for s in self._daily_signals if s.overall_decision == "reject")
 
         # RL confidence stats
@@ -222,9 +210,7 @@ class MLReportGenerator:
             for s in self._daily_signals
             if s.gate_2_rl and s.gate_2_rl.confidence > 0
         ]
-        avg_rl_conf = (
-            sum(rl_confidences) / len(rl_confidences) if rl_confidences else 0.0
-        )
+        avg_rl_conf = sum(rl_confidences) / len(rl_confidences) if rl_confidences else 0.0
 
         # RL mode distribution
         mode_dist: dict[str, int] = {}
@@ -252,9 +238,7 @@ class MLReportGenerator:
 
         # Top opportunities (highest confidence executions)
         executed = [s for s in self._daily_signals if s.overall_decision == "execute"]
-        executed.sort(
-            key=lambda x: x.gate_2_rl.confidence if x.gate_2_rl else 0, reverse=True
-        )
+        executed.sort(key=lambda x: x.gate_2_rl.confidence if x.gate_2_rl else 0, reverse=True)
         top_opps = [
             {
                 "symbol": s.symbol,
@@ -273,20 +257,14 @@ class MLReportGenerator:
 
         top_rejections = [
             {"reason": r, "count": c}
-            for r, c in sorted(
-                rejection_reasons.items(), key=lambda x: x[1], reverse=True
-            )[:5]
+            for r, c in sorted(rejection_reasons.items(), key=lambda x: x[1], reverse=True)[:5]
         ]
 
         # Performance Attribution (Jan 5, 2026)
         # Calculate RL contribution to profitability
-        actual_pnl = sum(
-            s.actual_pnl for s in self._daily_signals if s.actual_pnl is not None
-        )
+        actual_pnl = sum(s.actual_pnl for s in self._daily_signals if s.actual_pnl is not None)
         hypothetical_pnl = sum(
-            s.hypothetical_pnl
-            for s in self._daily_signals
-            if s.hypothetical_pnl is not None
+            s.hypothetical_pnl for s in self._daily_signals if s.hypothetical_pnl is not None
         )
 
         # RL rejections that would have been losses (RL saved us)
@@ -378,14 +356,10 @@ class MLReportGenerator:
                 f"✅ RL ADDING VALUE: Contributed +${rl_contribution:.2f} today - keep enabled"
             )
         elif -50 <= rl_contribution <= 50 and abs(rl_contribution) > 0:
-            recs.append(
-                f"⚠️ RL MARGINAL: Contributed ${rl_contribution:+.2f} - monitor closely"
-            )
+            recs.append(f"⚠️ RL MARGINAL: Contributed ${rl_contribution:+.2f} - monitor closely")
 
         if gate_1_rate < 0.3:
-            recs.append(
-                "Gate 1 (Momentum) pass rate low - consider relaxing technical filters"
-            )
+            recs.append("Gate 1 (Momentum) pass rate low - consider relaxing technical filters")
 
         if gate_2_rate < 0.5:
             recs.append("Gate 2 (RL) pass rate low - RL model may need retraining")
@@ -394,9 +368,7 @@ class MLReportGenerator:
             recs.append("Average RL confidence low - check feature engineering")
 
         if avg_rl_conf > 0.85:
-            recs.append(
-                "RL confidence very high - may be overfitting, validate with backtest"
-            )
+            recs.append("RL confidence very high - may be overfitting, validate with backtest")
 
         # Check top rejection reason
         if rejection_reasons:
@@ -438,9 +410,7 @@ class MLReportGenerator:
     def get_recent_reports(self, days: int = 7) -> list[DailyMLReport]:
         """Get reports from the last N days."""
         reports = []
-        for filepath in sorted(self.reports_dir.glob("ml_report_*.json"), reverse=True)[
-            :days
-        ]:
+        for filepath in sorted(self.reports_dir.glob("ml_report_*.json"), reverse=True)[:days]:
             try:
                 with open(filepath, encoding="utf-8") as f:
                     data = json.load(f)

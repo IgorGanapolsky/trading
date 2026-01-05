@@ -16,9 +16,7 @@ except ImportError:
     sys.exit(1)
 
 
-def verify_credentials(
-    api_key: str, secret_key: str, label: str, paper: bool = True
-) -> dict:
+def verify_credentials(api_key: str, secret_key: str, label: str, paper: bool = True) -> dict:
     """
     Verify Alpaca credentials and return account info.
 
@@ -31,9 +29,9 @@ def verify_credentials(
     Returns:
         Dictionary with verification results
     """
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Testing: {label}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     if not api_key or not secret_key:
         print(f"❌ Missing credentials for {label}")
@@ -41,9 +39,7 @@ def verify_credentials(
 
     # Mask credentials for display
     masked_key = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else "***"
-    masked_secret = (
-        f"{secret_key[:6]}...{secret_key[-4:]}" if len(secret_key) > 10 else "***"
-    )
+    masked_secret = f"{secret_key[:6]}...{secret_key[-4:]}" if len(secret_key) > 10 else "***"
 
     print(f"API Key: {masked_key}")
     print(f"Secret: {masked_secret}")
@@ -101,16 +97,14 @@ def verify_credentials(
 
 def main():
     """Main verification routine."""
-    print(f"\n{'#'*60}")
+    print(f"\n{'#' * 60}")
     print(f"# Alpaca Credentials Verification")
     print(f"# {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"{'#'*60}")
+    print(f"{'#' * 60}")
 
     # Test Paper Trading credentials (from env or GitHub secrets)
     paper_key = os.getenv("ALPACA_PAPER_API_KEY") or os.getenv("ALPACA_API_KEY")
-    paper_secret = os.getenv("ALPACA_PAPER_SECRET_KEY") or os.getenv(
-        "ALPACA_SECRET_KEY"
-    )
+    paper_secret = os.getenv("ALPACA_PAPER_SECRET_KEY") or os.getenv("ALPACA_SECRET_KEY")
 
     # Test Real Trading credentials (separate env vars)
     real_key = os.getenv("ALPACA_REAL_API_KEY")
@@ -136,9 +130,9 @@ def main():
         print("    Set ALPACA_REAL_API_KEY and ALPACA_REAL_SECRET_KEY to test")
 
     # Summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("VERIFICATION SUMMARY")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     if "paper" in results and results["paper"]["success"]:
         print(f"✅ Paper Trading: VERIFIED")
@@ -153,7 +147,7 @@ def main():
     else:
         print(f"⚠️  Real Trading: NOT TESTED (credentials not provided)")
 
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Exit with appropriate code
     if results:
