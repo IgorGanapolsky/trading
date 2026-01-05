@@ -28,7 +28,17 @@
     "positions_count": 0,
     "daily_deposit": 10.0,
     "target_daily_profit": 100.0,
-    "reset_note": "Fresh start Jan 3, 2026 - Real brokerage with $10/day deposits"
+    "reset_note": "Fresh start Jan 3, 2026 - Real brokerage with $10/day deposits",
+    "deposit_strategy": {
+      "amount_per_day": 10.0,
+      "start_date": "2026-01-05",
+      "total_deposited": 20.0,
+      "deposit_count": 2,
+      "purpose": "Accumulate capital for defined-risk options spreads (~$100-200 minimum)",
+      "target_for_first_trade": 200.0,
+      "estimated_days_to_target": 18,
+      "tax_strategy": "Section 475 MTM election + Section 1256 index options (60/40 treatment)"
+    }
   },
   "paper_account": {
     "type": "paper",
