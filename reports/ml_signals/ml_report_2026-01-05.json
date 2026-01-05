@@ -1,0 +1,40 @@
+{
+  "date": "2026-01-05",
+  "total_evaluations": 3,
+  "passed_all_gates": 1,
+  "rejected": 2,
+  "gate_1_pass_rate": 0.6666666666666666,
+  "gate_2_pass_rate": 0.3333333333333333,
+  "gate_3_pass_rate": 0.3333333333333333,
+  "gate_4_pass_rate": 0.3333333333333333,
+  "avg_rl_confidence": 0.5,
+  "rl_mode_distribution": {
+    "transformer": 1,
+    "heuristic": 1
+  },
+  "feature_importance": {
+    "strength": 0.35,
+    "momentum": 0.28
+  },
+  "top_opportunities": [
+    {
+      "symbol": "SPY",
+      "confidence": 0.68,
+      "momentum": 0.72
+    }
+  ],
+  "top_rejections": [
+    {
+      "reason": "RL confidence below threshold",
+      "count": 1
+    },
+    {
+      "reason": "Momentum too weak",
+      "count": 1
+    }
+  ],
+  "recommendations": [
+    "Gate 2 (RL) pass rate low - RL model may need retraining"
+  ],
+  "timestamp": "2026-01-05T11:28:59.175045"
+}
