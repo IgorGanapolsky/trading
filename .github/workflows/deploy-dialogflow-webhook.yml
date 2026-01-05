@@ -39,7 +39,13 @@ jobs:
           project_id: ${{ env.PROJECT_ID }}
 
       - name: Prepare Dockerfile
-        run: cp Dockerfile.webhook Dockerfile
+        run: |
+          cp Dockerfile.webhook Dockerfile
+          # Inject dynamic cache bust to force fresh Docker build
+          CACHE_BUST=$(date +%Y%m%d%H%M%S)
+          sed -i "s/CACHE_BUST=1/CACHE_BUST=$CACHE_BUST/" Dockerfile
+          echo "Cache bust value: $CACHE_BUST"
+          grep CACHE_BUST Dockerfile
 
       - name: Deploy to Cloud Run (source-based)
         run: |
