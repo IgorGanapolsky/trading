@@ -9,7 +9,6 @@ World-class multi-agent system combining:
 - Context engineering with persistent storage
 """
 
-import asyncio  # noqa: F401
 import contextlib
 import json
 import logging
@@ -20,12 +19,16 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-# agent_framework deleted - using stubs to prevent import errors
-from src.agent_framework_stubs import (
-    ContextType,
-    RunContext,
-    RunMode,
-)
+# Inline stubs for deleted agent_framework (never implemented)
+class ContextType:
+    TASK_CONTEXT = "task"
+
+class RunContext:
+    pass
+
+class RunMode:
+    PAPER = "paper"
+    LIVE = "live"
 from src.core.skills_integration import get_skills
 
 logger = logging.getLogger(__name__)
