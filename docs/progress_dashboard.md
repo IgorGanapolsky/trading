@@ -21,8 +21,10 @@
 
 | Metric | Value |
 |--------|-------|
-| **Equity** | $100,942.23 |
-| **Cash** | $86,629.95 |
+| **Equity** | $101,083.86 |
+| **Cash** | $86,629.93 |
+| **Positions Value** | $14,488.93 |
+| **Total P/L** | +$1,083.86 (+1.08%) |
 | **Win Rate** | 80% |
 
 ---
@@ -37,11 +39,17 @@
 
 > Starting fresh with $20. First options trade coming when we reach minimum capital for defined-risk spreads.
 
-### Paper Account (0 positions)
+### Paper Account (5 positions)
 
 | Symbol | Type | Entry | Current | P/L |
 |--------|------|-------|---------|-----|
-| *No open positions* | - | - | - | - |
+| SPY | Long 21.62 shares | ~$682 | $685.03 | +$74.60 |
+| INTC 01/09 $35P | Short Put | $0.82 | $0.06 | +$151.00 |
+| SOFI 01/23 $24P | Short Put | $0.79 | $0.23 | +$56.00 |
+| AMD 01/16 $200P | Short Put | $5.90 | $1.33 | +$457.00 |
+| SPY 01/23 $660P | Short Put | $6.38 | $1.89 | +$449.00 |
+
+**Total Unrealized P/L: +$1,187.60**
 
 ---
 
