@@ -521,13 +521,17 @@ def generate_world_class_dashboard() -> str:
                 f"| {trade_date} | **{symbol}** | {side} | {qty_display} | {price_display} | {status_icon} {status} | {account_label} |"
             )
 
-        recent_trades_section = """| Date | Symbol | Action | Qty/Amount | Price | Status | Account |
+        recent_trades_section = (
+            """| Date | Symbol | Action | Qty/Amount | Price | Status | Account |
 |------|--------|--------|------------|-------|--------|---------|
-""" + "\n".join(recent_trades_rows) + """
+"""
+            + "\n".join(recent_trades_rows)
+            + """
 
 > **📝 Paper** = R&D simulation trades | **🔴 Live** = Real brokerage trades
 >
 > *Live account is in accumulation phase ($30/$200 target) - no live trades until sufficient capital*"""
+        )
     else:
         recent_trades_section = "*No trades in the last 14 days*"
 

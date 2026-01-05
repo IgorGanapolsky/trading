@@ -90,9 +90,7 @@ class TestPLSanityChecker:
         state_file.write_text(json.dumps(state))
         return state_file
 
-    def test_accumulation_phase_detected(
-        self, mock_alpaca, mock_system_state_accumulation
-    ):
+    def test_accumulation_phase_detected(self, mock_alpaca, mock_system_state_accumulation):
         """Test that accumulation phase is correctly detected."""
         import scripts.verify_pl_sanity as module
 
@@ -109,9 +107,7 @@ class TestPLSanityChecker:
             assert "estimated_days_to_target" in checker.accumulation_info
             assert checker.accumulation_info["estimated_days_to_target"] == 17
 
-    def test_accumulation_phase_not_detected_when_ready(
-        self, mock_alpaca, mock_system_state_ready
-    ):
+    def test_accumulation_phase_not_detected_when_ready(self, mock_alpaca, mock_system_state_ready):
         """Test that accumulation phase is not detected when capital is sufficient."""
         import scripts.verify_pl_sanity as module
 
@@ -123,9 +119,7 @@ class TestPLSanityChecker:
             assert checker.in_accumulation_phase is False
             assert checker.accumulation_info == {}
 
-    def test_accumulation_phase_no_strategy(
-        self, mock_alpaca, mock_system_state_no_strategy
-    ):
+    def test_accumulation_phase_no_strategy(self, mock_alpaca, mock_system_state_no_strategy):
         """Test behavior when no deposit strategy is configured."""
         import scripts.verify_pl_sanity as module
 
@@ -185,9 +179,7 @@ class TestPLSanityChecker:
             assert checker.alerts[0]["type"] == "NO_TRADES"
             assert checker.alerts[0]["level"] == "CRITICAL"
 
-    def test_no_trades_no_alert_when_trades_exist(
-        self, mock_alpaca, mock_system_state_ready
-    ):
+    def test_no_trades_no_alert_when_trades_exist(self, mock_alpaca, mock_system_state_ready):
         """Test that no alert is triggered when trades exist."""
         import scripts.verify_pl_sanity as module
 
@@ -203,9 +195,7 @@ class TestPLSanityChecker:
             assert len(checker.alerts) == 0
             assert checker.metrics.get("recent_trades") == 5
 
-    def test_accumulation_info_in_metrics(
-        self, mock_alpaca, mock_system_state_accumulation
-    ):
+    def test_accumulation_info_in_metrics(self, mock_alpaca, mock_system_state_accumulation):
         """Test that accumulation info is included in metrics."""
         import scripts.verify_pl_sanity as module
 
@@ -337,7 +327,7 @@ class TestEdgeCases:
             # Clear import cache
             if "alpaca.trading.client" in sys.modules:
                 del sys.modules["alpaca.trading.client"]
-            result = module._get_trading_client()
+            module._get_trading_client()
             # May return mock or None depending on test environment
 
     def test_initialize_api_without_credentials(self, mock_alpaca):
