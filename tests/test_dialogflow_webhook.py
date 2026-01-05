@@ -12,6 +12,9 @@ from unittest.mock import patch
 
 import pytest
 
+# Skip all tests if fastapi is not installed
+pytest.importorskip("fastapi", reason="fastapi not installed - skipping webhook tests")
+
 
 class TestDialogflowWebhookFormat:
     """Test Dialogflow response format."""
