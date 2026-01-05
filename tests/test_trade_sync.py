@@ -18,7 +18,7 @@ import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -36,17 +36,14 @@ class TestTradeSyncInitialization:
 
     def test_init_creates_trades_dir(self):
         """Initialization should create trades directory."""
-        from src.observability.trade_sync import TradeSync
-
         # Reset singleton
         import src.observability.trade_sync as module
+        from src.observability.trade_sync import TradeSync
 
         module._trade_sync = None
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.object(
-                Path, "mkdir", return_value=None
-            ) as mock_mkdir:
+        with tempfile.TemporaryDirectory():
+            with patch.object(Path, "mkdir", return_value=None):
                 sync = TradeSync()
                 # Should have called mkdir at least once
                 assert sync is not None
@@ -406,10 +403,9 @@ class TestSingleton:
 
     def test_get_trade_sync_singleton(self):
         """Should return same instance."""
-        from src.observability.trade_sync import get_trade_sync
-
         # Reset singleton
         import src.observability.trade_sync as module
+        from src.observability.trade_sync import get_trade_sync
 
         module._trade_sync = None
 

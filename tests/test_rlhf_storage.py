@@ -19,7 +19,7 @@ Tests:
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -245,7 +245,7 @@ class TestStoreTrajectory:
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = RLHFStorage(db_path=tmpdir)
 
-            result = storage.store_trajectory(
+            storage.store_trajectory(
                 episode_id="test_case",
                 step=0,
                 state_vector=[0.0] * 10,
@@ -670,10 +670,9 @@ class TestSingletonPattern:
 
     def test_get_rlhf_storage_singleton(self):
         """Should return the same instance."""
-        from src.learning.rlhf_storage import get_rlhf_storage
-
         # Reset singleton for test
         import src.learning.rlhf_storage as module
+        from src.learning.rlhf_storage import get_rlhf_storage
 
         module._rlhf_storage = None
 
@@ -810,9 +809,8 @@ class TestLanceDBNotAvailable:
         """Storage should be disabled gracefully without LanceDB."""
         with patch.dict("sys.modules", {"lancedb": None}):
             # Force reimport with mocked module
-            from src.learning.rlhf_storage import RLHFStorage
 
-            with tempfile.TemporaryDirectory() as tmpdir:
+            with tempfile.TemporaryDirectory():
                 # This tests the fallback behavior
                 # The actual behavior depends on how import is handled
                 pass
