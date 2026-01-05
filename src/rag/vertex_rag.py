@@ -37,15 +37,61 @@ class VertexRAG:
     def __init__(self):
         self._client = None
         self._corpus = None
-        self._project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
+        self._project_id = self._get_project_id()
         self._location = os.getenv("VERTEX_AI_LOCATION", "us-central1")
         self._initialized = False
 
         if not self._project_id:
-            logger.warning("GOOGLE_CLOUD_PROJECT not set - Vertex AI RAG disabled")
+            logger.warning(
+                "GCP Project ID not found - Vertex AI RAG disabled. "
+                "Set GOOGLE_CLOUD_PROJECT or GCP_PROJECT_ID env var."
+            )
             return
 
         self._init_vertex_rag()
+
+    def _get_project_id(self) -> Optional[str]:
+        """Get GCP project ID from various sources."""
+        # Try multiple env vars
+        project_id = (
+            os.getenv("GOOGLE_CLOUD_PROJECT")
+            or os.getenv("GCP_PROJECT_ID")
+            or os.getenv("GCLOUD_PROJECT")
+        )
+
+        if project_id:
+            return project_id
+
+        # Try to extract from service account JSON
+        sa_key = os.getenv("GCP_SA_KEY") or os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+        if sa_key:
+            try:
+                import json
+
+                sa_data = json.loads(sa_key)
+                project_id = sa_data.get("project_id")
+                if project_id:
+                    logger.info(f"Extracted project ID from service account: {project_id}")
+                    return project_id
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        # Try to read from credentials file
+        creds_file = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        if creds_file and os.path.exists(creds_file):
+            try:
+                import json
+
+                with open(creds_file) as f:
+                    sa_data = json.load(f)
+                    project_id = sa_data.get("project_id")
+                    if project_id:
+                        logger.info(f"Extracted project ID from credentials file: {project_id}")
+                        return project_id
+            except (json.JSONDecodeError, OSError):
+                pass
+
+        return None
 
     def _init_vertex_rag(self):
         """Initialize Vertex AI RAG corpus."""
