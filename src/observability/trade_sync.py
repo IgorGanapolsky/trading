@@ -385,6 +385,21 @@ Auto-generated lesson from trade sync system.
 
             logger.info(f"Created trade lesson: {lesson_file}")
 
+            # Also sync to Vertex AI RAG for Dialogflow queries
+            try:
+                vertex_rag = get_vertex_rag()
+                if vertex_rag.is_initialized:
+                    vertex_rag.add_lesson(
+                        lesson_id=lesson_id,
+                        title=f"Trade Lesson: {symbol} {outcome}",
+                        content=lesson_content,
+                        severity="HIGH" if abs(pnl) > 50 else "MEDIUM",
+                        category="trade_lesson",
+                    )
+                    logger.info(f"✅ Trade lesson synced to Vertex AI RAG: {lesson_id}")
+            except Exception as vertex_err:
+                logger.warning(f"Could not sync lesson to Vertex AI RAG: {vertex_err}")
+
         except Exception as e:
             logger.error(f"Failed to create trade lesson: {e}")
 
