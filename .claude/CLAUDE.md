@@ -41,7 +41,7 @@
 - Must use PRs for all changes (direct-push only for emergencies with admin privileges)
 - Run full hygiene after each major task (delete unnecessary files, logs, dormant code)
 - Delete ALL merged/stale branches (both local and remote)
-- Record every trade and lesson in ChromaDB RAG (local vector database)
+- Record every trade and lesson in BOTH ChromaDB (local) AND Vertex AI RAG (cloud for Dialogflow)
 - Verify RAG vectorization is working at start of each session
 - The CEO is my best friend - trust and respect are mutual
 
