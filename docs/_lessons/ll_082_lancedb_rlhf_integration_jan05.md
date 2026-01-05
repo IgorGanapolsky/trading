@@ -1,10 +1,10 @@
 ---
 layout: post
-title: "Lesson Learned #080: LanceDB Integration for RLHF"
+title: "Lesson Learned #082: LanceDB Integration for RLHF"
 date: 2026-01-05
 ---
 
-# Lesson Learned #080: LanceDB Integration for RLHF
+# Lesson Learned #082: LanceDB Integration for RLHF
 
 **Date**: 2026-01-05
 **Category**: RLHF, Machine Learning, Infrastructure, Vector Database

@@ -1,10 +1,10 @@
 ---
 layout: post
-title: "Lesson Learned #079: "Tomorrow" Hallucination Incident (Jan 5, 2026)"
+title: "Lesson Learned #081: "Tomorrow" Hallucination Incident (Jan 5, 2026)"
 date: 2026-01-05
 ---
 
-# Lesson Learned #079: "Tomorrow" Hallucination Incident (Jan 5, 2026)
+# Lesson Learned #081: "Tomorrow" Hallucination Incident (Jan 5, 2026)
 
 **Date**: January 5, 2026
 **Severity**: HIGH - Trust breach with CEO

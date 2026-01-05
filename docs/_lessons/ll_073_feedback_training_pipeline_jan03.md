@@ -1,3 +1,8 @@
+---
+title: "Lesson Learned #073: Feedback Training Pipeline Implementation"
+date: 2026-01-03
+---
+
 # Lesson Learned #073: Feedback Training Pipeline Implementation
 
 **Date**: 2026-01-03
