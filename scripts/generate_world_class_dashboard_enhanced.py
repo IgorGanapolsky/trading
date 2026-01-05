@@ -173,6 +173,9 @@ def calculate_basic_metrics():
         "paper_pl": paper_pl,
         "paper_pl_pct": paper_pl_pct,
         "paper_win_rate": paper_win_rate,
+        # Today's paper P/L - calculated from today's trades if available
+        "today_paper_pl": 0.0,  # TODO: Calculate from today's closed trades
+        "today_paper_pl_pct": 0.0,
     }
 
 
@@ -588,6 +591,7 @@ def generate_world_class_dashboard() -> str:
 |--------|-------|
 | **Equity** | ${basic_metrics.get("paper_equity", 100000):,.2f} |
 | **Total P/L** | ${basic_metrics.get("paper_pl", 0):+,.2f} ({basic_metrics.get("paper_pl_pct", 0):+.2f}%) |
+| **Today's P/L** | ${basic_metrics.get("today_paper_pl", 0):+,.2f} ({basic_metrics.get("today_paper_pl_pct", 0):+.2f}%) |
 | **Win Rate** | {basic_metrics.get("paper_win_rate", 0):.0f}% |
 | **Trades Today** | {basic_metrics.get("today_trade_count", 0)} |
 
