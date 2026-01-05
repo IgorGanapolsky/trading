@@ -23,13 +23,9 @@
   },
   {
     "date": "2026-01-05",
-    "timestamp": "2026-01-05T17:49:12.978786",
+    "timestamp": "2026-01-05T18:04:12.590896",
     "equity": 30.0,
-    "cash": 30.0,
-    "buying_power": 30.0,
     "pl": 0.0,
-    "pl_pct": 0.0,
-    "account_type": "live",
-    "note": "Monday - $10 deposit completed ($30 total). No trades yet - in accumulation phase."
+    "note": "Accumulation phase - deposits only, no trades yet"
   }
 ]
