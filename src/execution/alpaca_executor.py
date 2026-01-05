@@ -73,35 +73,42 @@ class AlpacaExecutor:
             self.broker = None
 
     def _record_trade_for_tracking(self, order: dict[str, Any], strategy: str) -> None:
-        """Record trade for daily performance tracking and trace to LangSmith."""
+        """Record trade to LangSmith, ChromaDB RAG, and local JSON."""
+        # Use unified trade sync (Jan 2026 - fixes operational gap)
         try:
-            from src.analytics.daily_performance_tracker import record_trade_pnl
+            from src.observability.trade_sync import sync_trade
+
+            symbol = order.get("symbol", "UNKNOWN")
+            side = order.get("side", "UNKNOWN")
+            qty = float(order.get("filled_qty") or order.get("qty") or 0)
+            price = float(order.get("filled_avg_price") or 0)
+
+            results = sync_trade(
+                symbol=symbol,
+                side=side,
+                qty=qty,
+                price=price,
+                strategy=strategy,
+                order_id=order.get("id"),
+                metadata={
+                    "status": order.get("status"),
+                    "commission": order.get("commission", 0),
+                    "broker": "alpaca",
+                    "mode": "paper" if self.paper else "live",
+                },
+            )
+
+            logger.info(
+                f"Trade sync: {symbol} {side} | "
+                f"LangSmith={results['langsmith']}, ChromaDB={results['chromadb']}, JSON={results['local_json']}"
+            )
         except ImportError:
-            logger.debug("daily_performance_tracker not available - skipping trade recording")
-            return
-
-        try:
-            trade_record = {
-                "id": order.get("id"),
-                "symbol": order.get("symbol"),
-                "side": order.get("side"),
-                "qty": order.get("filled_qty") or order.get("qty"),
-                "price": order.get("filled_avg_price"),
-                "notional": order.get("notional"),
-                "status": order.get("status"),
-                "strategy": strategy,
-                "pnl": 0.0,  # Will be calculated on close
-                "commission": order.get("commission", 0),
-                "timestamp": order.get("filled_at") or order.get("submitted_at"),
-            }
-
-            record_trade_pnl(trade_record)
-            logger.debug(f"Trade recorded for performance tracking: {order.get('symbol')}")
-
-            # Trace to LangSmith
+            logger.warning("trade_sync not available - falling back to LangSmith only")
             self._trace_trade_execution(order, strategy)
         except Exception as e:
-            logger.warning(f"Failed to record trade for tracking: {e}")
+            logger.warning(f"Failed to sync trade: {e}")
+            # Fallback to LangSmith-only tracing
+            self._trace_trade_execution(order, strategy)
 
     def _trace_trade_execution(self, order: dict[str, Any], strategy: str) -> None:
         """Trace trade execution to LangSmith for observability."""
