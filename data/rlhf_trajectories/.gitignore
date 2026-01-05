@@ -1,0 +1,9 @@
+# LanceDB RLHF trajectory data (regenerated from trades)
+*.lance
+*.lance/
+_versions/
+_transactions/
+_indices/
+
+# Keep .gitignore
+!.gitignore
