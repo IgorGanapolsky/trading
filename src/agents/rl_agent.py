@@ -28,6 +28,7 @@ from src.agents.rl_transformer import TransformerRLPolicy, TransformerUnavailabl
 FEEDBACK_TRAINER_AVAILABLE = False
 try:
     from src.learning.feedback_trainer import FeedbackTrainer
+
     FEEDBACK_TRAINER_AVAILABLE = True
 except ImportError:
     FeedbackTrainer = None  # type: ignore[misc, assignment]
@@ -248,9 +249,8 @@ class RLFilter:
                     "reward": feedback_reward,  # [-1, +1] from Thompson Sampling
                     "confidence_adjustment": feedback_reward * 0.1,  # Scale to ±10%
                     "similar_contexts_found": len(similar_feedback),
-                    "posterior_mean": self.feedback_trainer.alpha / (
-                        self.feedback_trainer.alpha + self.feedback_trainer.beta
-                    ),
+                    "posterior_mean": self.feedback_trainer.alpha
+                    / (self.feedback_trainer.alpha + self.feedback_trainer.beta),
                 }
 
                 logger.debug(
@@ -455,7 +455,9 @@ class RLFilter:
 
         # Determine mode for logging
         if rlhf:
-            mode = "rlhf_" + ("disco_blend" if disco else "transformer" if transformer else "heuristic")
+            mode = "rlhf_" + (
+                "disco_blend" if disco else "transformer" if transformer else "heuristic"
+            )
         elif disco:
             mode = "disco_blend" if transformer else "disco_heuristic"
         elif transformer:

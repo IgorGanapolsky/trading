@@ -392,16 +392,18 @@ Auto-generated lesson from trade sync system.
                     self._chromadb_collection.upsert(
                         ids=[lesson_id],
                         documents=[lesson_content],
-                        metadatas=[{
-                            "type": "lesson",
-                            "symbol": symbol,
-                            "strategy": strategy,
-                            "pnl": pnl,
-                            "outcome": outcome.lower(),
-                            "severity": severity,
-                            "category": "trade_lesson",
-                            "timestamp": today,
-                        }],
+                        metadatas=[
+                            {
+                                "type": "lesson",
+                                "symbol": symbol,
+                                "strategy": strategy,
+                                "pnl": pnl,
+                                "outcome": outcome.lower(),
+                                "severity": severity,
+                                "category": "trade_lesson",
+                                "timestamp": today,
+                            }
+                        ],
                     )
                     logger.info(f"✅ Trade lesson synced to ChromaDB: {lesson_id}")
             except Exception as chromadb_err:

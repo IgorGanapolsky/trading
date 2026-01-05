@@ -247,6 +247,7 @@ class AnomalyMonitor:
 
             # Generate lesson ID and format content as markdown
             from datetime import datetime as dt
+
             today = dt.now().strftime("%Y%m%d_%H%M%S")
             lesson_id = f"ll_anomaly_{gate}_{anomaly_type}_{today}"
 
