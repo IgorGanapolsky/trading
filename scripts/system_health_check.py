@@ -10,6 +10,9 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# Ensure src is importable
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 
 def check_vector_db():
     """Verify ChromaDB vector database is installed and functional.
@@ -38,10 +41,11 @@ def check_vector_db():
             # Check collection exists and has data
             collections = client.list_collections()
             if collections:
-                col = client.get_collection(collections[0])
+                col_name = collections[0].name
+                col = client.get_collection(col_name)
                 doc_count = col.count()
                 results["details"].append(
-                    f"✓ Vector DB has {doc_count} documents in '{collections[0]}'"
+                    f"✓ Vector DB has {doc_count} documents in '{col_name}'"
                 )
 
                 if doc_count == 0:

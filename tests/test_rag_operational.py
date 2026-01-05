@@ -233,3 +233,47 @@ class TestRAGLessonsLoaded:
                 f"Critical lesson matching '{pattern}' not found. "
                 f"These lessons document important failures and must be present."
             )
+
+
+class TestVertexRAGNotStub:
+    """Verify Vertex AI RAG is not a stub - it must actually upload data."""
+
+    def test_vertex_rag_add_trade_not_stub(self):
+        """Verify add_trade actually uploads, not just logs."""
+        try:
+            from src.rag.vertex_rag import VertexRAG
+        except ImportError:
+            pytest.skip("VertexRAG not available")
+
+        import inspect
+
+        source = inspect.getsource(VertexRAG.add_trade)
+
+        # Must NOT just log and return True (stub pattern)
+        assert "import_files" in source or "upload_file" in source, (
+            "VertexRAG.add_trade() appears to be a STUB - it doesn't actually upload data. "
+            "It must use rag.import_files() or similar to upload to Vertex AI RAG corpus."
+        )
+
+        # Must NOT have the old stub pattern
+        assert "_trade_text prepared for batch import" not in source, (
+            "VertexRAG.add_trade() contains stub comment 'prepared for batch import'. "
+            "This indicates it was never implemented to actually upload data."
+        )
+
+    def test_vertex_rag_add_lesson_not_stub(self):
+        """Verify add_lesson actually uploads, not just logs."""
+        try:
+            from src.rag.vertex_rag import VertexRAG
+        except ImportError:
+            pytest.skip("VertexRAG not available")
+
+        import inspect
+
+        source = inspect.getsource(VertexRAG.add_lesson)
+
+        # Must NOT just log and return True (stub pattern)
+        assert "import_files" in source or "upload_file" in source, (
+            "VertexRAG.add_lesson() appears to be a STUB - it doesn't actually upload data. "
+            "It must use rag.import_files() or similar to upload to Vertex AI RAG corpus."
+        )

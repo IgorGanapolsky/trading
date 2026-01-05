@@ -122,7 +122,7 @@ class VertexRAG:
             ts = timestamp or datetime.now(timezone.utc).isoformat()
             outcome = "profit" if (pnl or 0) > 0 else ("loss" if (pnl or 0) < 0 else "breakeven")
 
-            _trade_text = f"""
+            trade_text = f"""
 Trade Record
 ============
 Date: {ts[:10]}
@@ -140,10 +140,37 @@ This trade was a {outcome}. The {side} order for {qty} shares of {symbol}
 at ${price:.2f} using the {strategy} strategy resulted in a
 {"gain" if (pnl or 0) > 0 else "loss"} of ${abs(pnl or 0):.2f}.
 """
-            # Note: _trade_text prepared for batch import to Vertex AI RAG corpus
-            logger.info(
-                f"✅ Trade prepared for Vertex AI RAG: {symbol} {side} ({len(_trade_text)} chars)"
+            # Actually upload to Vertex AI RAG corpus
+            import tempfile
+
+            from vertexai.preview import rag
+
+            # Create a unique document ID for this trade
+            trade_id = f"trade_{symbol}_{ts[:10]}_{ts[11:19].replace(':', '')}".replace(
+                "-", ""
             )
+
+            # Write to temporary file for upload
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".txt", delete=False
+            ) as f:
+                f.write(trade_text)
+                temp_path = f.name
+
+            try:
+                # Import the file to the RAG corpus
+                rag.import_files(
+                    corpus_name=self._corpus.name,
+                    paths=[temp_path],
+                )
+                logger.info(
+                    f"✅ Trade UPLOADED to Vertex AI RAG: {trade_id} ({len(trade_text)} chars)"
+                )
+            finally:
+                # Clean up temp file
+                import os
+
+                os.unlink(temp_path)
             return True
 
         except Exception as e:
@@ -163,7 +190,40 @@ at ${price:.2f} using the {strategy} strategy resulted in a
             return False
 
         try:
-            logger.info(f"✅ Lesson prepared for Vertex AI RAG: {lesson_id}")
+            import tempfile
+
+            from vertexai.preview import rag
+
+            lesson_text = f"""
+Lesson Learned: {title}
+=======================
+ID: {lesson_id}
+Severity: {severity}
+Category: {category}
+Date: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}
+
+{content}
+"""
+            # Write to temporary file for upload
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".txt", delete=False
+            ) as f:
+                f.write(lesson_text)
+                temp_path = f.name
+
+            try:
+                # Import the file to the RAG corpus
+                rag.import_files(
+                    corpus_name=self._corpus.name,
+                    paths=[temp_path],
+                )
+                logger.info(f"✅ Lesson UPLOADED to Vertex AI RAG: {lesson_id}")
+            finally:
+                # Clean up temp file
+                import os
+
+                os.unlink(temp_path)
+
             return True
 
         except Exception as e:
