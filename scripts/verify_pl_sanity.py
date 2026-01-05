@@ -238,13 +238,39 @@ class PLSanityChecker:
         """Update performance log with current equity snapshot."""
         log_data = self.load_performance_log()
 
+        # Get starting balance from first entry, system state, or default
+        starting_balance = 100000.0  # Default for paper account
+        if log_data:
+            starting_balance = log_data[0].get("equity", starting_balance)
+        else:
+            # Try to get from system_state.json
+            try:
+                if SYSTEM_STATE_FILE.exists():
+                    with open(SYSTEM_STATE_FILE) as f:
+                        state = json.load(f)
+                    starting_balance = state.get("account", {}).get(
+                        "starting_balance", starting_balance
+                    )
+            except Exception:
+                pass
+
+        # During accumulation phase, P/L is 0 (deposits only, no trades)
+        if self.in_accumulation_phase:
+            pl = 0.0
+            note = "Accumulation phase - deposits only, no trades yet"
+        else:
+            pl = current_equity - starting_balance
+            note = None
+
         # Add new entry
         new_entry = {
             "date": datetime.now().date().isoformat(),
             "timestamp": datetime.now().isoformat(),
             "equity": current_equity,
-            "pl": current_equity - 100000.0,  # Assuming $100k starting balance
+            "pl": pl,
         }
+        if note:
+            new_entry["note"] = note
 
         # Check if we already have an entry for today
         today = datetime.now().date().isoformat()
