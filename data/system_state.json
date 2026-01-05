@@ -10,10 +10,10 @@
   },
   "challenge": {
     "start_date": "2025-10-29",
-    "current_day": 50,
+    "current_day": 69,
     "total_days": 90,
     "status": "active",
-    "phase": "R&D Phase - Month 2 (Days 31-60)"
+    "phase": "R&D Phase - Month 3 (Days 61-90)"
   },
   "account": {
     "type": "live",

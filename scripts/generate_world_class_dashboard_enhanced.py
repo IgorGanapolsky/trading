@@ -83,9 +83,16 @@ def calculate_basic_metrics():
     total_trades = performance.get("total_trades", 0)
 
     challenge = system_state.get("challenge", {})
-    current_day = challenge.get("current_day", days_elapsed)
+    # Always calculate current_day dynamically from start_date
+    current_day = days_elapsed  # Use calculated value, not hardcoded
     total_days = challenge.get("total_days", 90)
-    phase = challenge.get("phase", "R&D Phase - Month 1 (Days 1-30)")
+    # Calculate phase dynamically
+    if current_day <= 30:
+        phase = "R&D Phase - Month 1 (Days 1-30)"
+    elif current_day <= 60:
+        phase = "R&D Phase - Month 2 (Days 31-60)"
+    else:
+        phase = "R&D Phase - Month 3 (Days 61-90)"
 
     automation = system_state.get("automation", {})
     automation_status = automation.get("workflow_status", "UNKNOWN")
