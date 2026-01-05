@@ -519,6 +519,7 @@ class RLFilter:
         exit_state: dict[str, Any],
         reward: float,
         done: bool = True,
+        symbol: str = "SPY",
     ) -> dict[str, Any] | None:
         """
         Record a trade outcome for online learning.
@@ -526,16 +527,39 @@ class RLFilter:
         This enables the DiscoRL DQN to learn from actual trade results,
         improving over time as we collect more data.
 
+        Also stores trajectory in LanceDB for RLHF training.
+
         Args:
             entry_state: Market state at trade entry (from momentum agent)
             action: Action taken (0=HOLD, 1=BUY, 2=SELL)
             exit_state: Market state at trade exit
             reward: Trade P/L as reward (positive = profit, negative = loss)
             done: Whether this completes an episode
+            symbol: Trading symbol
 
         Returns:
             Training metrics if training occurred, None otherwise
         """
+        # Store in LanceDB for RLHF
+        try:
+            from src.learning.rlhf_storage import store_trade_trajectory
+            from datetime import datetime, timezone
+
+            episode_id = f"{symbol}_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+            store_trade_trajectory(
+                episode_id=episode_id,
+                entry_state=entry_state,
+                action=action,
+                exit_state=exit_state,
+                reward=reward,
+                symbol=symbol,
+                policy_version="1.0.0",
+                metadata={"done": done, "source": "live_trade"},
+            )
+            logger.debug("Stored trade trajectory in LanceDB: %s", episode_id)
+        except Exception as exc:
+            logger.warning("Failed to store trajectory in LanceDB: %s", exc)
+
         if not self.disco_dqn:
             return None
 
