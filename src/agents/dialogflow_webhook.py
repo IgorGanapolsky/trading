@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Trading AI RAG Webhook",
     description="Dialogflow CX webhook for lessons AND trade history queries",
-    version="2.3.0",  # Fixed: Fetch portfolio from GitHub when local unavailable + no lessons dump for P/L queries
+    version="2.4.0",  # Fixed: trades_today now shows 0 when last_trade_date != actual today (prevents stale data confusion)
 )
 
 # Initialize RAG system for lessons
@@ -62,6 +62,7 @@ except Exception as e:
 def get_current_portfolio_status() -> dict:
     """Get current portfolio status from system_state.json (local or GitHub)."""
     import json
+    from datetime import datetime, timezone
 
     state = None
 
@@ -90,6 +91,25 @@ def get_current_portfolio_status() -> dict:
     if not state:
         return {}
 
+    # Get actual today's date (US Eastern for market hours)
+    try:
+        from zoneinfo import ZoneInfo
+
+        today_str = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
+    except ImportError:
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    # Get last trade date and count from state
+    last_trade_date = state.get("trades", {}).get("last_trade_date", "unknown")
+    stored_trades_today = state.get("trades", {}).get("total_trades_today", 0)
+
+    # CRITICAL FIX: Only show trades_today if the last_trade_date matches actual today
+    # Otherwise, 0 trades have occurred today
+    if last_trade_date == today_str:
+        trades_today = stored_trades_today
+    else:
+        trades_today = 0  # No trades today - the stored count is from a previous day
+
     return {
         "live": {
             "equity": state.get("account", {}).get("current_equity", 0),
@@ -104,8 +124,9 @@ def get_current_portfolio_status() -> dict:
             "positions_count": state.get("paper_account", {}).get("positions_count", 0),
             "win_rate": state.get("paper_account", {}).get("win_rate", 0),
         },
-        "last_trade_date": state.get("trades", {}).get("last_trade_date", "unknown"),
-        "trades_today": state.get("trades", {}).get("total_trades_today", 0),
+        "last_trade_date": last_trade_date,
+        "trades_today": trades_today,
+        "actual_today": today_str,
         "challenge_day": state.get("challenge", {}).get("current_day", 0),
     }
 
@@ -322,6 +343,16 @@ async def webhook(request: Request) -> JSONResponse:
                 if portfolio:
                     live = portfolio.get("live", {})
                     paper = portfolio.get("paper", {})
+                    trades_today = portfolio.get("trades_today", 0)
+                    last_trade = portfolio.get("last_trade_date", "unknown")
+                    actual_today = portfolio.get("actual_today", "unknown")
+
+                    # Build trading activity message based on whether trades happened today
+                    if trades_today > 0:
+                        activity_msg = f"**Today ({actual_today}):** {trades_today} trades executed ✅"
+                    else:
+                        activity_msg = f"**Today ({actual_today}):** No trades yet\n**Last Trade:** {last_trade}"
+
                     response_text = f"""📊 Current Portfolio Status (Day {portfolio.get("challenge_day", "?")}/90)
 
 **Live Account:**
@@ -335,10 +366,7 @@ async def webhook(request: Request) -> JSONResponse:
 - Win Rate: {paper.get("win_rate", 0):.1f}%
 - Positions: {paper.get("positions_count", 0)}
 
-**Today:** {portfolio.get("trades_today", 0)} trades executed
-**Last Trade:** {portfolio.get("last_trade_date", "unknown")}
-
-No new trades today. Markets are open - next execution at scheduled time."""
+{activity_msg}"""
                     logger.info("Returning portfolio status from system_state.json")
                 else:
                     # Final fallback: Clear message (don't dump lessons for P/L questions)
