@@ -511,13 +511,23 @@ def generate_world_class_dashboard() -> str:
                 if status == "PENDING"
                 else "❌"
             )
+
+            # Determine account type - check trade record for account or mode field
+            # Default to PAPER since automated trading uses paper credentials
+            account_type = trade.get("account", trade.get("mode", "paper")).lower()
+            account_label = "📝 Paper" if account_type == "paper" else "🔴 Live"
+
             recent_trades_rows.append(
-                f"| {trade_date} | **{symbol}** | {side} | {qty_display} | {price_display} | {status_icon} {status} |"
+                f"| {trade_date} | **{symbol}** | {side} | {qty_display} | {price_display} | {status_icon} {status} | {account_label} |"
             )
 
-        recent_trades_section = """| Date | Symbol | Action | Qty/Amount | Price | Status |
-|------|--------|--------|------------|-------|--------|
-""" + "\n".join(recent_trades_rows)
+        recent_trades_section = """| Date | Symbol | Action | Qty/Amount | Price | Status | Account |
+|------|--------|--------|------------|-------|--------|---------|
+""" + "\n".join(recent_trades_rows) + """
+
+> **📝 Paper** = R&D simulation trades | **🔴 Live** = Real brokerage trades
+>
+> *Live account is in accumulation phase ($30/$200 target) - no live trades until sufficient capital*"""
     else:
         recent_trades_section = "*No trades in the last 14 days*"
 
