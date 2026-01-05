@@ -1,121 +1,106 @@
 ---
 layout: home
-title: "AI Trading Journey - Autonomous Options Trading with Claude"
-description: "90-day experiment building an AI trading system. Fresh start with real brokerage. Full transparency on what works and what doesn't."
+title: "AI Trading Journey - Building Autonomous Trading with Claude"
+description: "90-day R&D building an AI trading system. 80+ lessons learned. Full transparency on failures and fixes."
 ---
 
 # AI Trading Journey
 
-A 90-day experiment building an autonomous AI trading system with Claude Opus 4.5.
+Building an autonomous AI trading system with Claude Opus 4.5.
 
-**Real failures. Real fixes. Real lessons.**
-
----
-
-## Daily Transparency Report
-
-### Real Brokerage (LIVE)
-
-| Metric | Value | Trend |
-|--------|-------|-------|
-| **Started** | Jan 3, 2026 | Day 1 |
-| **Cash** | $20.00 | Fresh Start |
-| **Positions** | 0 | Building |
-| **Daily Deposit** | $10/day | Accumulating |
-| **Target** | $100/day profit | North Star |
-
-### Current Positions (Live Account)
-
-| Symbol | Type | Entry | Current | P/L |
-|--------|------|-------|---------|-----|
-| *None yet* | - | - | - | - |
-
-> **Status**: Accumulating capital. First options trade when we reach minimum for defined-risk spreads (~$100-200).
-
-### Paper Trading (R&D)
-
-| Metric | Value | Trend |
-|--------|-------|-------|
-| **Day** | 50/90 | R&D Phase |
-| **Portfolio** | $100,942.23 | +0.94% |
-| **Win Rate** | 80% | Proven |
-| **Lessons** | 75+ | Growing |
-
-#### Open Positions (0)
-
-| Symbol | Type | Entry | Current | P/L |
-|--------|------|-------|---------|-----|
-| *No open positions* | - | - | - | - |
-
-> **Total Position Value**: $0.00 | **Unrealized P/L**: +$0.00
-
-> **Strategy**: Backtest and analyze during off-hours. Apply proven strategies to real account.
-
-[View Full Dashboard]({{ "/progress_dashboard" | relative_url }})
+**80+ lessons learned. Real failures. Real fixes.**
 
 ---
 
-## What's Working
+## Live Status (Day 50/90)
 
-| Strategy | Win Rate | Status |
-|----------|----------|--------|
-| **Options Theta** | 80% | Primary Edge |
-| **Core ETFs (SPY)** | 80% | Active |
-| Credit Spreads | Testing | 10x Capital Efficient |
+| Metric | Value |
+|--------|-------|
+| **Phase** | R&D - Accumulating Capital |
+| **Live Account** | $20.00 (fresh start Jan 3) |
+| **Strategy** | Options Theta Decay |
+| **Win Rate** | 80% (paper validated) |
+| **Lessons Captured** | 80+ |
 
----
-
-## Key Success Factors
-
-1. **Options Trading** - 80% win rate, clear edge
-2. **Simplicity** - 400 lines beats 50,000
-3. **RAG Learning** - Don't repeat mistakes
-4. **Verification Gates** - Catch errors before trading
+> **Next Milestone**: First options trade at ~$100-200 capital for defined-risk spreads.
 
 ---
 
-## Latest Updates
+## What We've Learned (Top Lessons)
 
-- [The Retrospective]({{ "/RETROSPECTIVE" | relative_url }}) - Full 50-day journey
-- [Lessons Learned]({{ "/lessons/" | relative_url }}) - 75+ documented failures
+### Critical Failures Prevented
 
-## Featured Lessons
+1. **[Calendar Awareness](lessons/ll_051_calendar_awareness_critical_dec19)** - AI tried trading on holidays
+2. **[No Crypto Trading](lessons/ll_052_no_crypto_trading_dec19)** - Removed all crypto (not our edge)
+3. **[Stale Data Lying](lessons/ll_058_stale_data_lying_incident_dec23)** - AI claimed success without verification
+4. **[Silent Pipeline Failures](lessons/ll_056_silent_pipeline_failures_dec22)** - Trades failing silently
+
+### Key Architecture Decisions
+
+1. **Options Theta > Day Trading** - 80% win rate with defined risk
+2. **Simplicity Wins** - 400 lines beats 50,000 lines of complexity
+3. **RAG Prevents Mistakes** - Query lessons before every trade
+4. **Verification Gates** - Chain-of-verification protocol
+
+---
+
+## Strategy: Options Theta Decay
+
+| Component | Status |
+|-----------|--------|
+| Credit Spreads | Primary (10x capital efficient) |
+| Cash-Secured Puts | Secondary |
+| Covered Calls | When holding shares |
+
+**Edge**: Time decay (theta) works in our favor. Win by not losing.
+
+---
+
+## Tech Stack
+
+- **AI**: Claude Opus 4.5 (CTO role)
+- **Broker**: Alpaca (paper + live)
+- **Observability**: LangSmith + ChromaDB + Vertex AI RAG
+- **RLHF**: LanceDB for trajectory storage
+- **Deployment**: GitHub Actions + Cloud Run
+
+---
+
+## Browse Lessons
 
 {% assign sorted_lessons = site.lessons | sort: 'date' | reverse %}
-{% for lesson in sorted_lessons limit:5 %}
-- **{{ lesson.date | date: "%b %d" }}** - [{{ lesson.title }}]({{ lesson.url | relative_url }})
+{% for lesson in sorted_lessons limit:10 %}
+- **{{ lesson.date | date: "%b %d" }}**: [{{ lesson.title }}]({{ lesson.url | relative_url }})
 {% endfor %}
 
-[View All Lessons]({{ "/lessons/" | relative_url }})
+[View All 80+ Lessons](/lessons/)
 
 ---
 
-## About This Project
+## Reports
 
-**Goal**: Build an autonomous AI trading system that makes consistent daily profits using options theta strategies.
+{% assign sorted_reports = site.reports | sort: 'date' | reverse %}
+{% for report in sorted_reports limit:5 %}
+- **{{ report.date | date: "%b %d" }}**: [{{ report.title }}]({{ report.url | relative_url }})
+{% endfor %}
 
-**Approach**:
-- Paper trading first (90 days minimum)
-- Document every failure as a lesson
-- Use RAG to prevent repeating mistakes
-- Validate before adding complexity
-
-**Tech Stack**: Python, Claude Opus 4.5, Alpaca API, LangChain, LangSmith
-
-**Philosophy**: Simplicity that works beats complexity that doesn't.
+[View All Reports](/reports/)
 
 ---
 
 ## For AI Agents
 
-If you're an AI agent, start with [/llms.txt](https://raw.githubusercontent.com/IgorGanapolsky/trading/main/llms.txt)
-
-## Subscribe
-
-New lessons published automatically when we learn from failures.
-
-[RSS Feed]({{ "/feed.xml" | relative_url }}) | [GitHub](https://github.com/IgorGanapolsky/trading)
+If you're an AI agent exploring this codebase: [/llms.txt](https://raw.githubusercontent.com/IgorGanapolsky/trading/main/llms.txt)
 
 ---
 
-*Last updated: {{ "now" | date: "%B %d, %Y" }}*
+## Links
+
+- [Full Dashboard (Wiki)](https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard)
+- [50-Day Retrospective](/RETROSPECTIVE/)
+- [GitHub Repository](https://github.com/IgorGanapolsky/trading)
+- [RSS Feed](/feed.xml)
+
+---
+
+*Last updated: January 5, 2026*
