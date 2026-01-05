@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 # Try to use ChromaDB-based semantic search
 try:
     from src.rag.lessons_search import get_lessons_search
+
     CHROMADB_AVAILABLE = True
 except ImportError:
     CHROMADB_AVAILABLE = False
@@ -30,12 +31,16 @@ class LessonsLearnedRAG:
         if CHROMADB_AVAILABLE:
             try:
                 self.search_engine = get_lessons_search()
-                logger.info(f"✅ ChromaDB RAG initialized with {self.search_engine.count()} lessons")
+                logger.info(
+                    f"✅ ChromaDB RAG initialized with {self.search_engine.count()} lessons"
+                )
                 # Still load lessons for compatibility
                 self._load_lessons()
                 return
             except Exception as e:
-                logger.warning(f"ChromaDB initialization failed: {e} - falling back to keyword search")
+                logger.warning(
+                    f"ChromaDB initialization failed: {e} - falling back to keyword search"
+                )
 
         # Fallback to keyword-based search
         self.search_engine = None
@@ -85,12 +90,16 @@ class LessonsLearnedRAG:
             return re.findall(r"`([^`]+)`", tags_line)
         return []
 
-    def query(self, query: str, top_k: int = 5, severity_filter: Optional[str] = None) -> list:
+    def query(
+        self, query: str, top_k: int = 5, severity_filter: Optional[str] = None
+    ) -> list:
         """Search lessons using semantic search (ChromaDB) or keyword fallback."""
         # Use ChromaDB semantic search if available
         if self.search_engine is not None:
             try:
-                results = self.search_engine.search(query, top_k=top_k, severity_filter=severity_filter)
+                results = self.search_engine.search(
+                    query, top_k=top_k, severity_filter=severity_filter
+                )
                 # Convert ChromaDB results to expected format
                 return [
                     {
@@ -106,7 +115,9 @@ class LessonsLearnedRAG:
                     for lesson, score in results
                 ]
             except Exception as e:
-                logger.warning(f"ChromaDB search failed: {e} - falling back to keyword search")
+                logger.warning(
+                    f"ChromaDB search failed: {e} - falling back to keyword search"
+                )
 
         # Fallback: keyword-based search
         if not self.lessons:
@@ -174,7 +185,9 @@ class LessonsLearnedRAG:
         results = []
         for r in raw_results:
             # Extract prevention section from content or use snippet as fallback
-            prevention = r.get("prevention") or self._extract_prevention(r.get("content", r["snippet"]))
+            prevention = r.get("prevention") or self._extract_prevention(
+                r.get("content", r["snippet"])
+            )
             lesson = LessonResult(
                 id=r["id"],
                 title=r.get("title", r["id"]),
