@@ -699,7 +699,12 @@
       "hash": "01ff2d2b8ffb0bea116c4c5641e5be1f",
       "chunks": 18,
       "vectorized_at": "2026-01-05T16:11:21.775494"
+    },
+    "rag_knowledge/lessons_learned/ll_081_vertex_rag_stub_failure_jan05.md": {
+      "hash": "0f8843cded43c72ee50fcbaa1bad91f0",
+      "chunks": 3,
+      "vectorized_at": "2026-01-05T16:20:42.120482"
     }
   },
-  "last_updated": "2026-01-05T16:11:21.776233"
+  "last_updated": "2026-01-05T16:20:42.125222"
 }
