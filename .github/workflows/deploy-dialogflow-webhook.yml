@@ -52,7 +52,8 @@ jobs:
             --cpu 1 \
             --min-instances 0 \
             --max-instances 3 \
-            --timeout 60s
+            --timeout 60s \
+            --set-env-vars="BUILD_DATE=$(date +%Y%m%d%H%M%S)"
 
       - name: Get service URL
         run: |

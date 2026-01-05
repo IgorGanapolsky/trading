@@ -1,6 +1,9 @@
 # Dockerfile for Dialogflow Webhook
 FROM python:3.11-slim
 
+# Cache bust: 2026-01-05-1920 (forces fresh build)
+ARG CACHE_BUST=1
+
 WORKDIR /app
 
 # Copy requirements
