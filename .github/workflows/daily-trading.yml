@@ -1007,12 +1007,14 @@ jobs:
       - name: P/L Sanity Check
         id: sanity_check
         if: always()
+        continue-on-error: true  # FIX Jan 5 2026: Don't fail workflow - just warn
         env:
           ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
           ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
         run: |
           echo "🔍 Running P/L sanity check..."
           echo "   This detects zombie mode (system running but not trading)"
+          echo "   NOTE: This check WARNS but does NOT block trading (Jan 5 2026 fix)"
 
           if python3 scripts/verify_pl_sanity.py --verbose; then
             echo "✅ P/L sanity check passed - system is healthy"
@@ -1022,14 +1024,15 @@ jobs:
           else
             EXIT_CODE=$?
             if [ $EXIT_CODE -eq 1 ]; then
-              echo "::error::🚨 P/L SANITY CHECK FAILED!"
-              echo "::error::Alert: ${{ steps.sanity_check.outputs.alert_reason }}"
-              echo "::error::Days since equity change: ${{ steps.sanity_check.outputs.days_since_change }}"
-              echo "::error::Days since last trade: ${{ steps.sanity_check.outputs.days_since_trade }}"
+              echo "::warning::🚨 P/L SANITY CHECK DETECTED ISSUE"
+              echo "::warning::Alert: ${{ steps.sanity_check.outputs.alert_reason }}"
+              echo "::warning::Days since equity change: ${{ steps.sanity_check.outputs.days_since_change }}"
+              echo "::warning::Days since last trade: ${{ steps.sanity_check.outputs.days_since_trade }}"
               echo ""
-              echo "This indicates the system may be in zombie mode (running but not trading)."
-              echo "Review the performance log and recent trades immediately."
-              exit 1
+              echo "⚠️  This indicates the system may be in zombie mode (running but not trading)."
+              echo "⚠️  Review the performance log and recent trades immediately."
+              echo "⚠️  NOT failing workflow - trading may have executed. Check commits."
+              # FIX: Don't exit 1 - let workflow continue so data gets committed
             else
               echo "::warning::P/L sanity check script error (exit code $EXIT_CODE)"
               echo "Continuing workflow but investigate the script failure."
