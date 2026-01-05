@@ -659,6 +659,51 @@ jobs:
           echo "✅ Guaranteed trader complete"
           # ======================================================
 
+          # ========== DIAGNOSTIC CHECKPOINT (Jan 5, 2026) ==========
+          # Added to debug exit code 2 failures
+          echo ""
+          echo "🔍 ========================================"
+          echo "🔍 DIAGNOSTIC CHECKPOINT BEFORE MAIN TRADER"
+          echo "🔍 ========================================"
+          echo "Python version: $(python3 --version)"
+          echo "Working directory: $(pwd)"
+          echo "ALPACA_API_KEY set: $([ -n \"$ALPACA_API_KEY\" ] && echo 'YES' || echo 'NO')"
+          echo "ALPACA_SECRET_KEY set: $([ -n \"$ALPACA_SECRET_KEY\" ] && echo 'YES' || echo 'NO')"
+          echo ""
+          echo "Testing critical imports..."
+          python3 -c "
+          import sys
+          sys.path.insert(0, '.')
+          print('1. Testing src.utils imports...')
+          from src.utils.error_monitoring import init_sentry
+          from src.utils.logging_config import setup_logging
+          print('   ✓ src.utils imports OK')
+
+          print('2. Testing src.core imports...')
+          from src.core.alpaca_trader import AlpacaTrader
+          print('   ✓ src.core imports OK')
+
+          print('3. Testing src.orchestrator imports...')
+          from src.orchestrator.main import TradingOrchestrator
+          print('   ✓ src.orchestrator imports OK')
+
+          print('4. Testing AlpacaTrader initialization...')
+          try:
+              trader = AlpacaTrader(paper=True)
+              account = trader.get_account_info()
+              print(f'   ✓ AlpacaTrader connected - equity: \${float(account.get(\"equity\", 0)):,.2f}')
+          except Exception as e:
+              print(f'   ✗ AlpacaTrader FAILED: {e}')
+              sys.exit(1)
+
+          print('✅ All diagnostic checks passed')
+          " || {
+            echo "::error::DIAGNOSTIC CHECKPOINT FAILED - see output above"
+            exit 1
+          }
+          echo "🔍 ========================================"
+          # =========================================================
+
           set +e  # Don't exit on error
           # Run directly (not captured) to ensure all output is immediately visible
           python3 -u scripts/autonomous_trader.py 2>&1 | tee /tmp/trading_output.log
