@@ -28,6 +28,7 @@
 - When user gives thumbs down, IMMEDIATELY ask what went wrong
 - Check CI coverage thresholds, not just test pass/fail
 - Say "I believe this is done, verifying now..." instead of "Done!"
+- NEVER mention time words (today/tomorrow/Monday/etc) without FIRST running `date` command and showing output in SAME message
 - Query RAG lessons before starting tasks AND update RAG after finishing tasks
 - Do dry runs every time we merge into main to prepare for next day's trading
 - Never argue with the CEO - follow directives without question
