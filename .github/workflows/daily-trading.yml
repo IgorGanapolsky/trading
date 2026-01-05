@@ -1313,6 +1313,28 @@ jobs:
           echo "📊 Running daily verification..."
           python3 scripts/daily_verification.py
 
+      - name: Trade Activity Monitor (Zombie Mode Detection)
+        # CRITICAL: Added Jan 5, 2026 after 13-day silent outage
+        # Detects when workflow "succeeds" but executes ZERO trades
+        if: always()
+        continue-on-error: true  # Don't fail workflow, but warn loudly
+        run: |
+          echo "🔍 ========================================"
+          echo "🔍 TRADE ACTIVITY MONITOR"
+          echo "🔍 ========================================"
+          echo ""
+          echo "Checking for zombie mode (workflow success but no trades)..."
+          echo ""
+
+          if python3 scripts/monitor_trade_activity.py --days 7 --alert-threshold 3; then
+            echo "✅ Trade activity within normal parameters"
+          else
+            echo ""
+            echo "::warning::🚨 TRADE ACTIVITY ALERT - System may be in zombie mode!"
+            echo "::warning::Check the monitor output above for details"
+            echo "::warning::Common causes: max_positions limit, API issues, config bugs"
+          fi
+
       - name: Upload execution logs
         if: always()
         continue-on-error: true  # Don't fail workflow if log upload fails
