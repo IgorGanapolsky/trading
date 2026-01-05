@@ -132,7 +132,7 @@ Quantity: {qty}
 Price: ${price:.2f}
 Notional Value: ${qty * price:.2f}
 Strategy: {strategy}
-P/L: ${pnl:.2f if pnl else 0:.2f} ({pnl_pct:.2f if pnl_pct else 0:.2f}%)
+P/L: ${pnl or 0:.2f} ({pnl_pct or 0:.2f}%)
 Outcome: {outcome}
 
 This trade was a {outcome}. The {side} order for {qty} shares of {symbol}
