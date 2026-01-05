@@ -385,6 +385,28 @@ Auto-generated lesson from trade sync system.
 
             logger.info(f"Created trade lesson: {lesson_file}")
 
+            # Sync to ChromaDB for local RAG queries
+            try:
+                if self._chromadb_collection:
+                    severity = "HIGH" if abs(pnl) > 50 else "MEDIUM"
+                    self._chromadb_collection.upsert(
+                        ids=[lesson_id],
+                        documents=[lesson_content],
+                        metadatas=[{
+                            "type": "lesson",
+                            "symbol": symbol,
+                            "strategy": strategy,
+                            "pnl": pnl,
+                            "outcome": outcome.lower(),
+                            "severity": severity,
+                            "category": "trade_lesson",
+                            "timestamp": today,
+                        }],
+                    )
+                    logger.info(f"✅ Trade lesson synced to ChromaDB: {lesson_id}")
+            except Exception as chromadb_err:
+                logger.warning(f"Could not sync lesson to ChromaDB: {chromadb_err}")
+
             # Also sync to Vertex AI RAG for Dialogflow queries
             try:
                 vertex_rag = get_vertex_rag()

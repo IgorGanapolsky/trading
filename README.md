@@ -1,14 +1,14 @@
 # AI Options Trading Bot
 
-[![Win Rate](https://img.shields.io/badge/win_rate-50%25-yellow.svg)](docs/r-and-d-phase.md)
-[![Status](https://img.shields.io/badge/status-paper_trading-yellow.svg)](docs/r-and-d-phase.md)
-[![Day](https://img.shields.io/badge/day-50%2F90-blue.svg)](docs/r-and-d-phase.md)
+[![Win Rate](https://img.shields.io/badge/win_rate-80%25-brightgreen.svg)](docs/r-and-d-phase.md)
+[![Status](https://img.shields.io/badge/status-live_trading-green.svg)](docs/r-and-d-phase.md)
+[![Day](https://img.shields.io/badge/day-69%2F90-blue.svg)](docs/r-and-d-phase.md)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](requirements.txt)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Open-source AI-powered trading system** using options premium selling and Thompson Sampling strategy selection. Built with Python and Alpaca API.
 
-> **Current Status**: Day 50/90 R&D Phase | $100,531 equity | +$531 profit | 50% win rate
+> **Current Status**: Day 69/90 R&D Phase | Live: $30 (accumulating) | Paper: $101,084 (+1.08%) | 80% win rate
 
 ---
 
@@ -27,16 +27,20 @@ Most trading bots fail because they:
 
 ---
 
-## Current Performance (Day 50/90)
+## Current Performance (Day 69/90)
 
-| Metric | Value | Status |
+| Account | Equity | P/L | Status |
+|---------|--------|-----|--------|
+| Live | $30.00 | $0.00 | Accumulating $10/day |
+| Paper (R&D) | $101,083.86 | +$1,083.86 | +1.08% |
+
+| Metric | Value | Target |
 |--------|-------|--------|
-| Equity | $100,531.31 | Paper |
-| P/L | +$531.31 | +0.53% |
-| Win Rate | 50% | Target: 55%+ |
-| Backtest Pass | 19/32 | Improving |
+| Win Rate | 80% | 55%+ |
+| Positions | 5 | Active |
+| Backtest Pass | 19/13 | Scenarios |
 
-**Honest Assessment**: System is profitable after 50 days (+$531). Options strategy (puts) delivering consistent gains. Daily automated blog posting to GitHub Pages and Dev.to.
+**Honest Assessment**: Live trading started Jan 3, 2026 with fresh $20 deposit. Accumulating $10/day for defined-risk options spreads ($100-200 minimum). Paper account validates strategy with 80% win rate and +$1,083 profit.
 
 ---
 
