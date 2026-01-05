@@ -31,13 +31,39 @@ logger = logging.getLogger(__name__)
 # Initialize FastAPI app
 app = FastAPI(
     title="Trading AI RAG Webhook",
-    description="Dialogflow CX webhook for lessons learned queries",
-    version="1.0.0",
+    description="Dialogflow CX webhook for lessons learned AND trade history queries",
+    version="2.0.0",
 )
 
-# Initialize RAG system
+# Initialize RAG systems
 rag = LessonsLearnedRAG()
-logger.info(f"RAG initialized with {len(rag.lessons)} lessons")
+logger.info(f"Lessons RAG initialized with {len(rag.lessons)} lessons")
+
+# Initialize Vertex AI RAG for trade queries
+vertex_rag = None
+try:
+    from src.rag.vertex_rag import get_vertex_rag
+    vertex_rag = get_vertex_rag()
+    if vertex_rag.is_initialized:
+        logger.info("✅ Vertex AI RAG initialized for trade queries")
+    else:
+        logger.warning("Vertex AI RAG not initialized (check GOOGLE_CLOUD_PROJECT)")
+except Exception as e:
+    logger.warning(f"Vertex AI RAG not available: {e}")
+
+# Trade-related keywords for routing queries
+TRADE_KEYWORDS = [
+    "trade", "trades", "trading", "bought", "sold", "buy", "sell",
+    "position", "positions", "portfolio", "p/l", "pnl", "profit", "loss",
+    "stock", "stocks", "share", "shares", "order", "orders",
+    "aapl", "spy", "qqq", "tsla", "nvda", "msft", "amzn", "googl",
+]
+
+
+def is_trade_query(query: str) -> bool:
+    """Check if query is about trades vs lessons."""
+    query_lower = query.lower()
+    return any(keyword in query_lower for keyword in TRADE_KEYWORDS)
 
 
 def format_lesson_full(lesson: dict) -> str:
@@ -141,17 +167,32 @@ async def webhook(request: Request) -> JSONResponse:
 
         logger.info(f"Processing query: {user_query}")
 
-        # Query RAG system for relevant lessons
-        results = rag.query(user_query, top_k=3)
+        # Route query to appropriate RAG system
+        if is_trade_query(user_query) and vertex_rag and vertex_rag.is_initialized:
+            # Query trade history from Vertex AI RAG
+            logger.info("Routing to Vertex AI RAG for trade query")
+            trade_results = vertex_rag.query(user_query)
 
-        if not results:
-            # Try broader search
-            results = rag.query("trading operational failure", top_k=3)
+            if trade_results:
+                response_text = "Here are your trade results:\n\n"
+                for result in trade_results:
+                    response_text += result.get("text", "") + "\n\n"
+            else:
+                # Fall back to lessons if no trades found
+                results = rag.query(user_query, top_k=3)
+                response_text = format_lessons_response(results, user_query)
+        else:
+            # Query lessons RAG system
+            results = rag.query(user_query, top_k=3)
 
-        # Format FULL response (no truncation)
-        response_text = format_lessons_response(results, user_query)
+            if not results:
+                # Try broader search
+                results = rag.query("trading operational failure", top_k=3)
 
-        logger.info(f"Returning response with {len(results)} lessons, {len(response_text)} chars")
+            # Format FULL response (no truncation)
+            response_text = format_lessons_response(results, user_query)
+
+        logger.info(f"Returning response: {len(response_text)} chars")
 
         # Create Dialogflow response
         response = create_dialogflow_response(response_text)
@@ -173,6 +214,7 @@ async def health():
         "status": "healthy",
         "lessons_loaded": len(rag.lessons),
         "critical_lessons": len(rag.get_critical_lessons()),
+        "vertex_rag_enabled": vertex_rag is not None and vertex_rag.is_initialized,
     }
 
 
@@ -181,13 +223,18 @@ async def root():
     """Root endpoint with info."""
     return {
         "service": "Trading AI RAG Webhook",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "lessons_loaded": len(rag.lessons),
+        "vertex_rag_enabled": vertex_rag is not None and vertex_rag.is_initialized,
         "endpoints": {
-            "/webhook": "POST - Dialogflow CX webhook",
+            "/webhook": "POST - Dialogflow CX webhook (lessons + trades)",
             "/health": "GET - Health check",
             "/test": "GET - Test RAG query",
         },
+        "capabilities": [
+            "Query lessons learned",
+            "Query trade history (via Vertex AI RAG)",
+        ],
     }
 
 
