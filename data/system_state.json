@@ -2,10 +2,10 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2026-01-05T11:07:00.000000",
+    "last_updated": "2026-01-05T16:24:41.386933",
     "last_audit": "2025-12-29T09:46:00.000000",
     "audit_notes": "Updated from live Alpaca screenshot - Dec 30 10:28 AM EST",
-    "last_sync": "2026-01-05T10:39:17.647678",
+    "last_sync": "2026-01-05T16:24:41.386940",
     "sync_mode": "skipped_no_keys"
   },
   "challenge": {
@@ -145,39 +145,39 @@
         "price": 685.03,
         "quantity": 21.62,
         "market_value": 14810.93,
-        "unrealized_pl": 74.60,
+        "unrealized_pl": 74.6,
         "side": "long"
       },
       {
         "symbol": "INTC260109P00035000",
         "price": 0.06,
         "quantity": -2,
-        "market_value": -12.00,
-        "unrealized_pl": 151.00,
+        "market_value": -12.0,
+        "unrealized_pl": 151.0,
         "side": "short"
       },
       {
         "symbol": "SOFI260123P00024000",
         "price": 0.23,
         "quantity": -1,
-        "market_value": -23.00,
-        "unrealized_pl": 56.00,
+        "market_value": -23.0,
+        "unrealized_pl": 56.0,
         "side": "short"
       },
       {
         "symbol": "AMD260116P00200000",
         "price": 1.33,
         "quantity": -1,
-        "market_value": -133.00,
-        "unrealized_pl": 457.00,
+        "market_value": -133.0,
+        "unrealized_pl": 457.0,
         "side": "short"
       },
       {
         "symbol": "SPY260123P00660000",
         "price": 1.89,
         "quantity": -1,
-        "market_value": -189.00,
-        "unrealized_pl": 449.00,
+        "market_value": -189.0,
+        "unrealized_pl": 449.0,
         "side": "short"
       }
     ],
