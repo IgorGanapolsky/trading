@@ -126,19 +126,39 @@ if [[ ! -f "$TRADE_FILE" ]]; then
 fi
 
 # Check market status - US Equities ONLY (we don't trade crypto)
+# UPDATED Jan 5, 2026: Fixed ambiguous output that caused Claude to misinterpret market status
+# See LL-074: Hook output must be EXPLICIT about market state
 CURRENT_TIME=$(TZ=America/New_York date +%H:%M)
+CURRENT_HOUR=$(TZ=America/New_York date +%H)
+
+TRADING_ALLOWED="NO"
+MARKET_STATE=""
+MARKET_REASON=""
 
 if [[ $DAY_NUM -ge 1 && $DAY_NUM -le 5 ]]; then
-    # Weekday
+    # Weekday (Mon-Fri)
     if [[ "$CURRENT_TIME" > "09:30" && "$CURRENT_TIME" < "16:00" ]]; then
-        MARKET_STATUS="OPEN (Mon-Fri 9:30-4:00 ET)"
+        MARKET_STATE="OPEN"
+        MARKET_REASON="Regular trading hours (9:30 AM - 4:00 PM ET)"
+        TRADING_ALLOWED="YES"
+    elif [[ "$CURRENT_HOUR" -lt 9 || ("$CURRENT_HOUR" -eq 9 && "$CURRENT_TIME" < "09:30") ]]; then
+        MARKET_STATE="PRE_MARKET"
+        MARKET_REASON="Market opens TODAY at 9:30 AM ET (currently $CURRENT_TIME ET)"
+        TRADING_ALLOWED="NO"
     else
-        MARKET_STATUS="CLOSED (opens 9:30 AM ET)"
+        MARKET_STATE="POST_MARKET"
+        MARKET_REASON="Market closed for today at 4:00 PM ET"
+        TRADING_ALLOWED="NO"
     fi
 else
-    # Weekend - NO TRADING
-    MARKET_STATUS="CLOSED (weekend - no trading Sat/Sun)"
+    # Weekend (Sat/Sun) - NO TRADING
+    MARKET_STATE="WEEKEND_CLOSED"
+    MARKET_REASON="Markets closed Sat/Sun. Next open: Monday 9:30 AM ET"
+    TRADING_ALLOWED="NO"
 fi
+
+# Build unambiguous status string
+MARKET_STATUS="$MARKET_STATE - $MARKET_REASON [TRADING_ALLOWED=$TRADING_ALLOWED]"
 
 # Next automated trade time - MUST be a weekday (Mon-Fri)
 # Fixed Dec 30, 2025: Was showing tomorrow even on trading days before market close
