@@ -24,10 +24,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # US Market holidays 2026 (approximate)
@@ -51,9 +48,7 @@ def is_trading_day(date: datetime) -> bool:
         return False
     # Holiday check
     date_str = date.strftime("%Y-%m-%d")
-    if date_str in US_HOLIDAYS_2026:
-        return False
-    return True
+    return date_str not in US_HOLIDAYS_2026
 
 
 def get_trading_days(start_date: datetime, end_date: datetime) -> list:
@@ -85,14 +80,10 @@ def get_trade_files(data_dir: Path, days: int = 7) -> dict:
                     trade_files[date_str] = {
                         "exists": True,
                         "count": trade_count,
-                        "path": str(file_path)
+                        "path": str(file_path),
                     }
             except (json.JSONDecodeError, Exception) as e:
-                trade_files[date_str] = {
-                    "exists": True,
-                    "count": 0,
-                    "error": str(e)
-                }
+                trade_files[date_str] = {"exists": True, "count": 0, "error": str(e)}
         else:
             trade_files[date_str] = {"exists": False, "count": 0}
 
@@ -151,10 +142,7 @@ def check_system_state(data_dir: Path) -> dict:
 
 
 def run_monitoring(
-    data_dir: Path,
-    days_to_check: int = 7,
-    alert_threshold: int = 3,
-    verbose: bool = False
+    data_dir: Path, days_to_check: int = 7, alert_threshold: int = 3, verbose: bool = False
 ) -> dict:
     """
     Run trade activity monitoring.
@@ -177,7 +165,7 @@ def run_monitoring(
         "last_trade_date": None,
         "trade_files": {},
         "system_state": {},
-        "recommendations": []
+        "recommendations": [],
     }
 
     # Get trade files
@@ -212,15 +200,11 @@ def run_monitoring(
             f"Last trade: {last_trade_date or 'NEVER'}. "
             f"Threshold: {alert_threshold} days."
         )
-        results["recommendations"].append(
-            "CHECK: max_positions config in simple_daily_trader.py"
-        )
+        results["recommendations"].append("CHECK: max_positions config in simple_daily_trader.py")
         results["recommendations"].append(
             "CHECK: Workflow logs for 'Max positions reached' messages"
         )
-        results["recommendations"].append(
-            "CHECK: API credentials are valid"
-        )
+        results["recommendations"].append("CHECK: API credentials are valid")
 
     # Check for zombie mode (workflow success but no trades)
     state = results["system_state"]
@@ -228,40 +212,29 @@ def run_monitoring(
         if today.hour >= 16:  # After market close
             results["alert"] = True
             results["alert_reason"] = (
-                f"ZOMBIE MODE DETECTED: Today is a trading day but total_trades_today=0. "
-                f"System may be running but not executing trades."
+                "ZOMBIE MODE DETECTED: Today is a trading day but total_trades_today=0. "
+                "System may be running but not executing trades."
             )
 
     return results
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Monitor trade activity and detect zombie mode"
+    parser = argparse.ArgumentParser(description="Monitor trade activity and detect zombie mode")
+    parser.add_argument("--days", type=int, default=7, help="Number of days to check (default: 7)")
+    parser.add_argument(
+        "--alert-threshold",
+        type=int,
+        default=3,
+        help="Alert if no trades for N trading days (default: 3)",
     )
     parser.add_argument(
-        "--days", type=int, default=7,
-        help="Number of days to check (default: 7)"
+        "--data-dir", type=str, default="data", help="Path to data directory (default: data)"
     )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
+    parser.add_argument("--json", action="store_true", help="Output as JSON")
     parser.add_argument(
-        "--alert-threshold", type=int, default=3,
-        help="Alert if no trades for N trading days (default: 3)"
-    )
-    parser.add_argument(
-        "--data-dir", type=str, default="data",
-        help="Path to data directory (default: data)"
-    )
-    parser.add_argument(
-        "--verbose", "-v", action="store_true",
-        help="Verbose output"
-    )
-    parser.add_argument(
-        "--json", action="store_true",
-        help="Output as JSON"
-    )
-    parser.add_argument(
-        "--github-output", action="store_true",
-        help="Set GitHub Actions output variables"
+        "--github-output", action="store_true", help="Set GitHub Actions output variables"
     )
 
     args = parser.parse_args()
@@ -282,7 +255,7 @@ def main():
         data_dir=data_dir,
         days_to_check=args.days,
         alert_threshold=args.alert_threshold,
-        verbose=args.verbose
+        verbose=args.verbose,
     )
 
     # Output results
