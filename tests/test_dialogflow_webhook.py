@@ -398,15 +398,9 @@ class TestTradeQueryFallbackBehavior:
 
     def test_trade_query_returns_portfolio_status_not_lessons(self):
         """Verify P/L queries return portfolio data, not lessons."""
-        from unittest.mock import patch, MagicMock
-        import json
+        from unittest.mock import patch
 
-        mock_state = {
-            "account": {"current_equity": 100, "total_pl": 5, "total_pl_pct": 5.0, "positions_count": 0},
-            "paper_account": {"current_equity": 100000, "total_pl": 1000, "total_pl_pct": 1.0, "positions_count": 2, "win_rate": 80.0},
-            "trades": {"last_trade_date": "2026-01-05", "total_trades_today": 0},
-            "challenge": {"current_day": 69},
-        }
+        # Note: mock_state removed - using mock_portfolio return value instead
 
         with patch("src.agents.dialogflow_webhook.rag") as mock_rag:
             mock_rag.lessons = []
@@ -535,10 +529,10 @@ class TestPortfolioStatusFunction:
 
     def test_get_current_portfolio_status_github_fallback(self):
         """Test that GitHub fallback is attempted when local file unavailable."""
+        import json
         import sys
         from pathlib import Path
-        from unittest.mock import patch, MagicMock
-        import json
+        from unittest.mock import MagicMock, patch
 
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -564,7 +558,7 @@ class TestPortfolioStatusFunction:
                 # Re-import to get fresh function
                 from src.agents.dialogflow_webhook import get_current_portfolio_status
 
-                result = get_current_portfolio_status()
+                _ = get_current_portfolio_status()  # Call function, result not needed for this test
 
                 # GitHub URL should have been called
                 mock_urlopen.assert_called()
