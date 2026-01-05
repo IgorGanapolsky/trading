@@ -8,5 +8,11 @@
     "pl": 0.0,
     "pl_pct": 0.0,
     "note": "RESET: Fresh start with real brokerage account - $20 deposited"
+  },
+  {
+    "date": "2026-01-05",
+    "timestamp": "2026-01-05T17:21:00.642136",
+    "equity": 30.0,
+    "pl": -99970.0
   }
 ]
