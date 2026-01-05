@@ -18,8 +18,8 @@ import pytest
 
 # Check if LanceDB is available - skip all dependent tests if not
 try:
-    import lancedb
     import fastembed
+    import lancedb
 
     LANCEDB_AVAILABLE = True
 except ImportError:
