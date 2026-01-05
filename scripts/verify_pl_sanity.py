@@ -37,12 +37,21 @@ except ImportError:
 from pathlib import Path
 from typing import Any
 
-# Third-party imports
-try:
-    from alpaca.trading.client import TradingClient
-except ImportError:
-    print("ERROR: alpaca-py not installed. Run: pip install alpaca-py")
-    sys.exit(2)
+# Third-party imports - lazy loaded to allow testing without alpaca-py
+TradingClient = None
+
+
+def _get_trading_client():
+    """Lazy import TradingClient to allow testing without alpaca-py."""
+    global TradingClient
+    if TradingClient is None:
+        try:
+            from alpaca.trading.client import TradingClient as TC
+
+            TradingClient = TC
+        except ImportError:
+            return None
+    return TradingClient
 
 # Paths
 DATA_DIR = Path("data")
@@ -64,11 +73,64 @@ class PLSanityChecker:
         self.alerts: list[dict[str, Any]] = []
         self.metrics: dict[str, Any] = {}
         self.api = None
+        self.in_accumulation_phase = False
+        self.accumulation_info: dict[str, Any] = {}
 
     def log(self, message: str):
         """Print verbose logging if enabled."""
         if self.verbose:
             print(f"[DEBUG] {message}")
+
+    def check_accumulation_phase(self) -> bool:
+        """Check if system is in capital accumulation phase.
+
+        During accumulation, we intentionally don't trade until
+        enough capital is accumulated for defined-risk options.
+
+        Returns:
+            True if in accumulation phase (trading paused by design)
+        """
+        if not SYSTEM_STATE_FILE.exists():
+            self.log("System state file not found - assuming not in accumulation")
+            return False
+
+        try:
+            with open(SYSTEM_STATE_FILE) as f:
+                state = json.load(f)
+
+            # Check deposit strategy configuration
+            deposit_strategy = state.get("account", {}).get("deposit_strategy", {})
+            target = deposit_strategy.get("target_for_first_trade", 0)
+            current_equity = state.get("account", {}).get("current_equity", 0)
+
+            if target > 0 and current_equity < target:
+                self.in_accumulation_phase = True
+                self.accumulation_info = {
+                    "current_equity": current_equity,
+                    "target": target,
+                    "gap": target - current_equity,
+                    "daily_deposit": deposit_strategy.get("amount_per_day", 0),
+                    "purpose": deposit_strategy.get("purpose", "Capital accumulation"),
+                }
+
+                # Calculate estimated days to target
+                daily_deposit = deposit_strategy.get("amount_per_day", 10)
+                if daily_deposit > 0:
+                    days_remaining = int((target - current_equity) / daily_deposit)
+                    self.accumulation_info["estimated_days_to_target"] = days_remaining
+
+                self.log(
+                    f"In accumulation phase: ${current_equity:.2f} / ${target:.2f} "
+                    f"(need ${target - current_equity:.2f} more)"
+                )
+                return True
+
+            self.log("Not in accumulation phase - sufficient capital for trading")
+            return False
+
+        except Exception as e:
+            self.log(f"WARNING: Failed to check accumulation phase: {e}")
+            return False
 
     def initialize_alpaca_api(self) -> bool:
         """Initialize Alpaca API connection."""
@@ -79,8 +141,14 @@ class PLSanityChecker:
             self.log("WARNING: Alpaca credentials not found in environment")
             return False
 
+        # Get TradingClient via lazy import
+        client_class = _get_trading_client()
+        if client_class is None:
+            self.log("WARNING: alpaca-py not installed - using fallback")
+            return False
+
         try:
-            self.api = TradingClient(
+            self.api = client_class(
                 api_key=api_key,
                 secret_key=secret_key,
                 paper=True,  # Use paper trading
@@ -291,10 +359,26 @@ class PLSanityChecker:
         return False
 
     def check_no_trades(self) -> bool:
-        """Check if no trades executed for 3+ trading days."""
+        """Check if no trades executed for 3+ trading days.
+
+        Note: If in accumulation phase, this is expected behavior
+        and will not trigger an alert.
+        """
         trade_count = self.count_recent_trades(days=STALE_DAYS_THRESHOLD)
 
         if trade_count == 0:
+            # Check if we're in accumulation phase (intentionally not trading)
+            if self.in_accumulation_phase:
+                self.log(
+                    f"No trades in {STALE_DAYS_THRESHOLD} days - "
+                    "OK: In accumulation phase (by design)"
+                )
+                self.metrics["accumulation_phase"] = True
+                self.metrics["accumulation_info"] = self.accumulation_info
+                # Don't add alert - this is expected behavior
+                return False
+
+            # Not in accumulation - this is a real problem
             self.alerts.append(
                 {
                     "level": "CRITICAL",
@@ -455,9 +539,25 @@ class PLSanityChecker:
                     print(f"   {key}: {value}")
             print()
 
+        # Accumulation Phase Status
+        if self.in_accumulation_phase:
+            print("💰 ACCUMULATION PHASE (Trading paused by design):")
+            info = self.accumulation_info
+            print(f"   Current equity: ${info.get('current_equity', 0):,.2f}")
+            print(f"   Target for trading: ${info.get('target', 0):,.2f}")
+            print(f"   Gap to target: ${info.get('gap', 0):,.2f}")
+            print(f"   Daily deposit: ${info.get('daily_deposit', 0):,.2f}")
+            if "estimated_days_to_target" in info:
+                print(f"   Est. days to target: {info['estimated_days_to_target']}")
+            print(f"   Purpose: {info.get('purpose', 'N/A')}")
+            print()
+
         # Alerts
         if not self.alerts:
-            print("✅ No alerts - P/L system appears healthy")
+            if self.in_accumulation_phase:
+                print("✅ System healthy - In accumulation phase (no trades expected)")
+            else:
+                print("✅ No alerts - P/L system appears healthy")
         else:
             critical = [a for a in self.alerts if a["level"] == "CRITICAL"]
             warnings = [a for a in self.alerts if a["level"] == "WARNING"]
@@ -479,6 +579,9 @@ class PLSanityChecker:
     def run_all_checks(self) -> bool:
         """Run all P/L sanity checks. Returns True if healthy, False if alerts."""
         self.log("Starting P/L sanity checks...")
+
+        # Check accumulation phase FIRST (affects how we interpret no-trade status)
+        self.check_accumulation_phase()
 
         # Initialize Alpaca API
         self.initialize_alpaca_api()
