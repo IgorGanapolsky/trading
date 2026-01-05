@@ -172,9 +172,14 @@ class LanceDBFeedbackStore:
 
         # Semantic search
         results = (
-            self.table.search(query_embedding)
-            .where(where_clause) if where_clause else self.table.search(query_embedding)
-        ).limit(limit).to_list()
+            (
+                self.table.search(query_embedding).where(where_clause)
+                if where_clause
+                else self.table.search(query_embedding)
+            )
+            .limit(limit)
+            .to_list()
+        )
 
         logger.debug(
             "Found %d similar contexts (filter_positive=%s)",
@@ -208,8 +213,7 @@ class LanceDBFeedbackStore:
 
         # Query by model checkpoint values
         results = (
-            self.table
-            .search()
+            self.table.search()
             .where(
                 f"model_alpha >= {alpha - tolerance} AND model_alpha <= {alpha + tolerance} "
                 f"AND model_beta >= {beta - tolerance} AND model_beta <= {beta + tolerance}"

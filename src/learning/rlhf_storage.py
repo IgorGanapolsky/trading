@@ -179,7 +179,9 @@ class RLHFStorage:
             return None
 
         try:
-            trajectory_id = f"{episode_id}_{step}_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')}"
+            trajectory_id = (
+                f"{episode_id}_{step}_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')}"
+            )
 
             # Ensure state_vector is a list of floats
             if isinstance(state_vector, np.ndarray):
@@ -241,8 +243,12 @@ class RLHFStorage:
             episode_id if successful
         """
         if len(states) != len(actions) or len(states) != len(rewards):
-            logger.error("Mismatched lengths: states=%d, actions=%d, rewards=%d",
-                        len(states), len(actions), len(rewards))
+            logger.error(
+                "Mismatched lengths: states=%d, actions=%d, rewards=%d",
+                len(states),
+                len(actions),
+                len(rewards),
+            )
             return None
 
         episode_id = f"{symbol}_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')}"
@@ -269,8 +275,12 @@ class RLHFStorage:
                 logger.error("Failed to store episode at step %d", step)
                 return None
 
-        logger.info("Stored episode %s: %d steps, cumulative_reward=%.4f",
-                   episode_id, len(states), cumulative)
+        logger.info(
+            "Stored episode %s: %d steps, cumulative_reward=%.4f",
+            episode_id,
+            len(states),
+            cumulative,
+        )
         return episode_id
 
     def add_user_feedback(
@@ -304,8 +314,7 @@ class RLHFStorage:
                     "feedback_timestamp": feedback_ts,
                 },
             )
-            logger.info("Added feedback %s to episode %s",
-                       "👍" if thumbs_up else "👎", episode_id)
+            logger.info("Added feedback %s to episode %s", "👍" if thumbs_up else "👎", episode_id)
             return True
 
         except Exception as exc:
@@ -390,7 +399,9 @@ class RLHFStorage:
             total = self.table.count_rows()
             # Get unique episodes
             all_data = self.table.search().limit(10000).to_list()
-            episodes = set(r.get("episode_id", "") for r in all_data if r.get("episode_id") != "_init_")
+            episodes = set(
+                r.get("episode_id", "") for r in all_data if r.get("episode_id") != "_init_"
+            )
             with_feedback = sum(1 for r in all_data if r.get("user_feedback", 0) != 0)
 
             return {

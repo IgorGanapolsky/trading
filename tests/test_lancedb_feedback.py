@@ -9,11 +9,8 @@ Verifies:
 5. Integration with FeedbackTrainer
 """
 
-import json
 import tempfile
 from pathlib import Path
-
-import pytest
 
 
 class TestLanceDBInstallation:
