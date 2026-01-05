@@ -75,13 +75,17 @@ class ChainOfVerification:
                 "today",
             ]
             if not verification["matches"]:
-                verification["WARNING"] = f"CLAIM MISMATCH: '{claimed_date}' does not match {now_et.strftime('%A, %Y-%m-%d')}"
+                verification["WARNING"] = (
+                    f"CLAIM MISMATCH: '{claimed_date}' does not match {now_et.strftime('%A, %Y-%m-%d')}"
+                )
 
-        self.verification_log.append({
-            "type": "date_verification",
-            "result": verification,
-            "timestamp": now_utc.isoformat(),
-        })
+        self.verification_log.append(
+            {
+                "type": "date_verification",
+                "result": verification,
+                "timestamp": now_utc.isoformat(),
+            }
+        )
 
         return verification
 
@@ -142,11 +146,13 @@ class ChainOfVerification:
         if not verification["verified"]:
             verification["WARNING"] = "CLAIM NOT VERIFIED - Need evidence before stating"
 
-        self.verification_log.append({
-            "type": "claim_verification",
-            "result": verification,
-            "timestamp": datetime.now(pytz.UTC).isoformat(),
-        })
+        self.verification_log.append(
+            {
+                "type": "claim_verification",
+                "result": verification,
+                "timestamp": datetime.now(pytz.UTC).isoformat(),
+            }
+        )
 
         return verification
 
@@ -161,16 +167,12 @@ class ChainOfVerification:
                 evidence["type"] = "file"
                 # Don't read entire file, just confirm existence
                 evidence["exists"] = True
-                evidence["modified"] = datetime.fromtimestamp(
-                    filepath.stat().st_mtime
-                ).isoformat()
+                evidence["modified"] = datetime.fromtimestamp(filepath.stat().st_mtime).isoformat()
 
         elif source.startswith("cmd:"):
             cmd = source[4:]
             try:
-                result = subprocess.run(
-                    cmd, shell=True, capture_output=True, text=True, timeout=10
-                )
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=10)
                 evidence["found"] = result.returncode == 0
                 evidence["type"] = "command"
                 evidence["output"] = result.stdout[:500] if result.stdout else None
@@ -189,10 +191,10 @@ class ChainOfVerification:
         verifications = {
             "date": "date '+%A, %B %d, %Y'",
             "time": "date '+%I:%M %p %Z'",
-            "market_status": "python3 -c \"import pytz; from datetime import datetime; et=pytz.timezone('US/Eastern'); now=datetime.now(et); print(f'{now.strftime(\"%A %I:%M %p ET\")} - Market {\"OPEN\" if (now.weekday()<5 and ((now.hour>9 or (now.hour==9 and now.minute>=30)) and now.hour<16)) else \"CLOSED\"}')\""  ,
+            "market_status": 'python3 -c "import pytz; from datetime import datetime; et=pytz.timezone(\'US/Eastern\'); now=datetime.now(et); print(f\'{now.strftime("%A %I:%M %p ET")} - Market {"OPEN" if (now.weekday()<5 and ((now.hour>9 or (now.hour==9 and now.minute>=30)) and now.hour<16)) else "CLOSED"}\')"',
             "file_exists": "ls -la {filepath}",
             "git_status": "git status --short",
-            "ci_status": "curl -s https://api.github.com/repos/IgorGanapolsky/trading/commits/main/check-runs | python3 -c \"import json,sys; d=json.load(sys.stdin); print(f'CI: {sum(1 for r in d.get(\\\"check_runs\\\",[]) if r.get(\\\"conclusion\\\")==\\\"success\\\")}/{d.get(\\\"total_count\\\",0)} passed')\"",
+            "ci_status": 'curl -s https://api.github.com/repos/IgorGanapolsky/trading/commits/main/check-runs | python3 -c "import json,sys; d=json.load(sys.stdin); print(f\'CI: {sum(1 for r in d.get(\\"check_runs\\",[]) if r.get(\\"conclusion\\")==\\"success\\")}/{d.get(\\"total_count\\",0)} passed\')"',
         }
         return verifications.get(claim_type, f"# No verification defined for: {claim_type}")
 

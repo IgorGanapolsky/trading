@@ -62,10 +62,30 @@ except Exception as e:
 def is_trade_query(query: str) -> bool:
     """Detect if query is about trades vs lessons."""
     trade_keywords = [
-        "trade", "trades", "trading", "bought", "sold", "position",
-        "pnl", "p/l", "profit", "loss", "performance", "portfolio",
-        "spy", "aapl", "msft", "nvda", "symbol", "stock", "option",
-        "entry", "exit", "filled", "executed", "order"
+        "trade",
+        "trades",
+        "trading",
+        "bought",
+        "sold",
+        "position",
+        "pnl",
+        "p/l",
+        "profit",
+        "loss",
+        "performance",
+        "portfolio",
+        "spy",
+        "aapl",
+        "msft",
+        "nvda",
+        "symbol",
+        "stock",
+        "option",
+        "entry",
+        "exit",
+        "filled",
+        "executed",
+        "order",
     ]
     query_lower = query.lower()
     return any(keyword in query_lower for keyword in trade_keywords)
@@ -128,10 +148,12 @@ def query_trades(query: str, limit: int = 10) -> list[dict]:
         trades = []
         if results["documents"] and results["metadatas"]:
             for doc, meta in zip(results["documents"][0], results["metadatas"][0]):
-                trades.append({
-                    "document": doc,
-                    "metadata": meta,
-                })
+                trades.append(
+                    {
+                        "document": doc,
+                        "metadata": meta,
+                    }
+                )
         return trades
     except Exception as e:
         logger.error(f"Trade query failed: {e}")
@@ -237,7 +259,9 @@ async def webhook(request: Request) -> JSONResponse:
                 # Fallback: also check lessons for trade-related content
                 results = rag.query(user_query, top_k=3)
                 response_text = format_lessons_response(results, user_query)
-                response_text = f"No trade history found. Here are related lessons:\n\n{response_text}"
+                response_text = (
+                    f"No trade history found. Here are related lessons:\n\n{response_text}"
+                )
         else:
             # Query RAG system for relevant lessons
             results = rag.query(user_query, top_k=3)
