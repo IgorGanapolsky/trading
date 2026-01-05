@@ -38,7 +38,12 @@ SYSTEM_STATE_PATH = Path(os.getenv("SYSTEM_STATE_PATH", "data/system_state.json"
 
 
 def _refresh_account_data(logger) -> None:
-    """Fetch latest account data from Alpaca and update system_state.json."""
+    """Fetch latest account data from Alpaca and update system_state.json.
+
+    IMPORTANT: This uses paper=True, so it updates the PAPER account section,
+    NOT the live account. The live account equity is managed separately via
+    manual deposits during the accumulation phase.
+    """
     try:
         from src.core.alpaca_trader import AlpacaTrader
 
@@ -55,19 +60,22 @@ def _refresh_account_data(logger) -> None:
                 with state_path.open("r", encoding="utf-8") as handle:
                     state = json.load(handle)
 
-                state.setdefault("account", {})
-                state["account"]["current_equity"] = equity
-                state["account"]["cash"] = cash
-                # Update buying_power if available
-                state["account"]["buying_power"] = buying_power
+                # FIX: Write to paper_account section since we're using paper=True
+                # The "account" section is for LIVE brokerage (manual deposits)
+                state.setdefault("paper_account", {})
+                state["paper_account"]["current_equity"] = equity
+                state["paper_account"]["cash"] = cash
+                state["paper_account"]["buying_power"] = buying_power
 
-                # Update timestamp
+                # Update timestamp and sync mode
                 state.setdefault("meta", {})
                 state["meta"]["last_updated"] = datetime.now().isoformat()
+                state["meta"]["last_sync"] = datetime.now().isoformat()
+                state["meta"]["sync_mode"] = "paper_account"
 
                 with state_path.open("w", encoding="utf-8") as handle:
                     json.dump(state, handle, indent=2)
-                logger.info(f"System state refreshed: Equity=${equity:.2f}")
+                logger.info(f"Paper account state refreshed: Equity=${equity:.2f}")
     except Exception as e:
         logger.warning(f"Failed to refresh account data: {e}")
 
