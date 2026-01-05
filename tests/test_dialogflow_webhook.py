@@ -393,6 +393,87 @@ class TestTradeQueryDetection:
         assert is_trade_query("PORTFOLIO BALANCE")
 
 
+class TestTradeQueryFallbackBehavior:
+    """Tests for trade query fallback when no ChromaDB trades exist."""
+
+    def test_trade_query_returns_portfolio_status_not_lessons(self):
+        """Verify P/L queries return portfolio data, not lessons."""
+        from unittest.mock import patch, MagicMock
+        import json
+
+        mock_state = {
+            "account": {"current_equity": 100, "total_pl": 5, "total_pl_pct": 5.0, "positions_count": 0},
+            "paper_account": {"current_equity": 100000, "total_pl": 1000, "total_pl_pct": 1.0, "positions_count": 2, "win_rate": 80.0},
+            "trades": {"last_trade_date": "2026-01-05", "total_trades_today": 0},
+            "challenge": {"current_day": 69},
+        }
+
+        with patch("src.agents.dialogflow_webhook.rag") as mock_rag:
+            mock_rag.lessons = []
+            mock_rag.query.return_value = [{"id": "ll_001", "severity": "INFO", "content": "Test lesson"}]
+
+            with patch("src.agents.dialogflow_webhook.trade_collection", None):
+                with patch("src.agents.dialogflow_webhook.get_current_portfolio_status") as mock_portfolio:
+                    mock_portfolio.return_value = {
+                        "live": {"equity": 100, "total_pl": 5, "total_pl_pct": 5.0, "positions_count": 0},
+                        "paper": {"equity": 100000, "total_pl": 1000, "total_pl_pct": 1.0, "positions_count": 2, "win_rate": 80.0},
+                        "last_trade_date": "2026-01-05",
+                        "trades_today": 0,
+                        "challenge_day": 69,
+                    }
+
+                    from fastapi.testclient import TestClient
+                    from src.agents.dialogflow_webhook import app
+
+                    client = TestClient(app)
+
+                    response = client.post(
+                        "/webhook",
+                        json={"text": "How much money did we make today?"},
+                    )
+
+                    assert response.status_code == 200
+                    data = response.json()
+                    text = data["fulfillmentResponse"]["messages"][0]["text"]["text"][0]
+
+                    # Should return portfolio status, NOT lessons
+                    assert "Portfolio" in text or "Equity" in text or "P/L" in text
+                    # Should NOT contain lesson references
+                    assert "ll_001" not in text
+
+    def test_trade_query_unavailable_portfolio_returns_clear_message(self):
+        """Verify P/L queries don't dump lessons when portfolio unavailable."""
+        from unittest.mock import patch
+
+        with patch("src.agents.dialogflow_webhook.rag") as mock_rag:
+            mock_rag.lessons = []
+            mock_rag.query.return_value = [{"id": "ll_001", "severity": "INFO", "content": "Test lesson"}]
+
+            with patch("src.agents.dialogflow_webhook.trade_collection", None):
+                with patch("src.agents.dialogflow_webhook.get_current_portfolio_status") as mock_portfolio:
+                    mock_portfolio.return_value = {}  # No portfolio data
+
+                    from fastapi.testclient import TestClient
+                    from src.agents.dialogflow_webhook import app
+
+                    client = TestClient(app)
+
+                    response = client.post(
+                        "/webhook",
+                        json={"text": "What's my balance?"},
+                    )
+
+                    assert response.status_code == 200
+                    data = response.json()
+                    text = data["fulfillmentResponse"]["messages"][0]["text"]["text"][0]
+
+                    # Should return clear unavailable message
+                    assert "Unavailable" in text or "couldn't retrieve" in text
+                    # Should NOT dump lessons
+                    assert "ll_001" not in text
+                    assert "Based on our lessons" not in text
+
+
 class TestPortfolioStatusFunction:
     """Tests for get_current_portfolio_status() function."""
 
@@ -451,6 +532,63 @@ class TestPortfolioStatusFunction:
             assert "equity" in paper
             assert "total_pl" in paper
             assert "win_rate" in paper
+
+    def test_get_current_portfolio_status_github_fallback(self):
+        """Test that GitHub fallback is attempted when local file unavailable."""
+        import sys
+        from pathlib import Path
+        from unittest.mock import patch, MagicMock
+        import json
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+
+        # Mock state data that would come from GitHub
+        mock_state = {
+            "account": {"current_equity": 100, "total_pl": 5, "total_pl_pct": 5.0, "positions_count": 0},
+            "paper_account": {"current_equity": 100000, "total_pl": 1000, "total_pl_pct": 1.0, "positions_count": 2, "win_rate": 80.0},
+            "trades": {"last_trade_date": "2026-01-05", "total_trades_today": 0},
+            "challenge": {"current_day": 69},
+        }
+
+        # Patch Path.exists to return False (no local file)
+        # Patch urllib.request.urlopen to return mock data
+        with patch("pathlib.Path.exists", return_value=False):
+            with patch("urllib.request.urlopen") as mock_urlopen:
+                # Set up mock response
+                mock_response = MagicMock()
+                mock_response.read.return_value = json.dumps(mock_state).encode("utf-8")
+                mock_response.__enter__ = MagicMock(return_value=mock_response)
+                mock_response.__exit__ = MagicMock(return_value=False)
+                mock_urlopen.return_value = mock_response
+
+                # Re-import to get fresh function
+                from src.agents.dialogflow_webhook import get_current_portfolio_status
+
+                result = get_current_portfolio_status()
+
+                # GitHub URL should have been called
+                mock_urlopen.assert_called()
+                call_args = mock_urlopen.call_args
+                assert "github.com" in str(call_args) or "githubusercontent" in str(call_args)
+
+    def test_get_current_portfolio_status_returns_empty_on_all_failures(self):
+        """Test that empty dict is returned when both local and GitHub fail."""
+        import sys
+        from pathlib import Path
+        from unittest.mock import patch
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+
+        # Patch Path.exists to return False (no local file)
+        # Patch urllib.request.urlopen to raise exception
+        with patch("pathlib.Path.exists", return_value=False):
+            with patch("urllib.request.urlopen", side_effect=Exception("Network error")):
+                from src.agents.dialogflow_webhook import get_current_portfolio_status
+
+                result = get_current_portfolio_status()
+
+                # Should return empty dict when both sources fail
+                assert result == {}
 
 
 class TestDialogflowWebhookSmokeTests:
