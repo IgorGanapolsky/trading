@@ -22,7 +22,9 @@ class _Memory:
 
 class ContextEngine:
     def prune_memories(self, **kwargs) -> list[str]:
-        return []
+        """Stub: Context engine was never implemented. Returns empty list."""
+        pruned = []  # Intentional stub - context engine not implemented
+        return pruned
 
     def store_memory(self, **kwargs) -> _Memory:
         return _Memory()

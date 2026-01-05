@@ -36,7 +36,9 @@ class _ContextEngine:
         pass
 
     def get_agent_context(self, agent_id: str):
-        return {}
+        """Stub: Context engine was never implemented. Returns empty context."""
+        context = {}  # Intentional stub - context engine not implemented
+        return context
 
 
 def get_context_engine() -> _ContextEngine:
