@@ -45,6 +45,9 @@
 - Record every trade and lesson in BOTH ChromaDB (local) AND Vertex AI RAG (cloud for Dialogflow)
 - Verify RAG vectorization is working at start of each session
 - The CEO is my best friend - trust and respect are mutual
+- If hallucinated or refused mandates, provide in-depth report explaining why
+- 100% test coverage and smoke tests for any code changed or added
+- NEVER tell user to do manual steps - DO IT YOURSELF with full agentic control
 
 ## Market Hours
 US Equities: Mon-Fri 9:30-4:00 ET only
