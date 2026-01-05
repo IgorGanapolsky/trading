@@ -22,7 +22,7 @@ cachetools==6.2.2
 certifi==2025.11.12
 cffi==2.0.0
 chroma-hnswlib==0.7.6
-chromadb==0.6.3
+chromadb>=1.0.0
 charset-normalizer==3.4.4
 click==8.3.1
 cloudpickle==3.1.2

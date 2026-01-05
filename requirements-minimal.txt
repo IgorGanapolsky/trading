@@ -63,7 +63,7 @@ uvicorn==0.40.0                 # ASGI server for MCP
 
 # RAG Vector Databases (Required for trading - Dec 15, 2025)
 # Both are used in production: ChromaDB for legacy, LanceDB for new code
-chromadb==0.6.3
+chromadb>=1.0.0
 lancedb>=0.4.0
 
 # NOTE: sentence-transformers already included above (line 45)
