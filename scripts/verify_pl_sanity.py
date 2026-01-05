@@ -291,22 +291,81 @@ class PLSanityChecker:
         return False
 
     def check_no_trades(self) -> bool:
-        """Check if no trades executed for 3+ trading days."""
+        """Check if no trades executed for 3+ trading days.
+
+        IMPORTANT: If we have open profitable positions, this is expected behavior
+        (holding winners) - downgrade to INFO level, not CRITICAL.
+        """
         trade_count = self.count_recent_trades(days=STALE_DAYS_THRESHOLD)
 
         if trade_count == 0:
-            self.alerts.append(
-                {
-                    "level": "CRITICAL",
-                    "type": "NO_TRADES",
-                    "message": f"No trades executed in last {STALE_DAYS_THRESHOLD} days",
-                    "days_without_trades": STALE_DAYS_THRESHOLD,
-                }
-            )
-            return True
+            # Check if we have open positions before alerting
+            has_positions, is_profitable = self._check_open_positions()
+
+            if has_positions and is_profitable:
+                # Holding profitable positions is EXPECTED - not an error
+                self.log(f"No new trades but holding {has_positions} profitable positions - OK")
+                self.metrics["holding_profitable_positions"] = True
+                return False  # Not an error condition
+            elif has_positions:
+                # Have positions but not profitable - warning only
+                self.alerts.append(
+                    {
+                        "level": "WARNING",
+                        "type": "NO_TRADES",
+                        "message": f"No trades in {STALE_DAYS_THRESHOLD} days, holding positions at loss",
+                        "days_without_trades": STALE_DAYS_THRESHOLD,
+                    }
+                )
+                return True
+            else:
+                # No positions AND no trades - this is zombie mode
+                self.alerts.append(
+                    {
+                        "level": "CRITICAL",
+                        "type": "NO_TRADES",
+                        "message": f"No trades executed in last {STALE_DAYS_THRESHOLD} days and no positions held",
+                        "days_without_trades": STALE_DAYS_THRESHOLD,
+                    }
+                )
+                return True
 
         self.metrics["recent_trades"] = trade_count
         return False
+
+    def _check_open_positions(self) -> tuple[int, bool]:
+        """Check if we have open positions and if they're profitable.
+
+        Returns:
+            tuple: (position_count, is_profitable)
+        """
+        # Try Alpaca API first
+        if self.api:
+            try:
+                positions = self.api.get_all_positions()
+                if positions:
+                    total_unrealized_pl = sum(
+                        float(p.unrealized_pl) for p in positions
+                    )
+                    self.log(f"Found {len(positions)} positions, unrealized P/L: ${total_unrealized_pl:.2f}")
+                    return len(positions), total_unrealized_pl >= 0
+            except Exception as e:
+                self.log(f"WARNING: Failed to get positions from Alpaca: {e}")
+
+        # Fallback to system_state.json
+        if SYSTEM_STATE_FILE.exists():
+            try:
+                with open(SYSTEM_STATE_FILE) as f:
+                    state = json.load(f)
+                positions = state.get("paper_account", {}).get("open_positions", [])
+                if positions:
+                    total_pl = sum(p.get("unrealized_pl", 0) for p in positions)
+                    self.log(f"Found {len(positions)} positions in state file, P/L: ${total_pl:.2f}")
+                    return len(positions), total_pl >= 0
+            except Exception as e:
+                self.log(f"WARNING: Failed to read positions from state: {e}")
+
+        return 0, False
 
     def check_zero_pl(self, log_data: list[dict[str, Any]]) -> bool:
         """Check if P/L has been exactly 0.00 for 3+ days."""
