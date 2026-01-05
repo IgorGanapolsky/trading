@@ -5,10 +5,11 @@ Critical test: Ensure max_positions doesn't block trading
 Root cause of 13-day trading outage (Dec 23 - Jan 5, 2026)
 """
 
-import pytest
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -57,7 +58,7 @@ class TestShouldOpenPosition:
     @patch('scripts.simple_daily_trader.get_account_info')
     def test_allows_new_position_under_max(self, mock_account, mock_positions):
         """Should allow new position when under max_positions limit."""
-        from scripts.simple_daily_trader import should_open_position, CONFIG
+        from scripts.simple_daily_trader import CONFIG, should_open_position
 
         # Simulate 4 options positions (used to block with max=3)
         mock_positions.return_value = [
@@ -88,7 +89,7 @@ class TestShouldOpenPosition:
     @patch('scripts.simple_daily_trader.get_account_info')
     def test_blocks_at_max_positions(self, mock_account, mock_positions):
         """Should block when at max_positions limit."""
-        from scripts.simple_daily_trader import should_open_position, CONFIG
+        from scripts.simple_daily_trader import CONFIG, should_open_position
 
         # Simulate exactly max_positions options
         mock_positions.return_value = [
