@@ -8,8 +8,9 @@ Enhanced with DiscoRL-inspired DQN (Dec 2025):
 RLHF Integration (Jan 2026):
 - Thompson Sampling from human feedback (thumbs up/down)
 - Semantic search for similar contexts via LanceDB
-- Feedback influences confidence scores in real-time
-- This closes the RLHF loop - human feedback now affects trading decisions!
+- NOTE: RLHF is for OPERATIONAL feedback (Claude's performance), NOT for trading
+- Trading decisions are based purely on market data (momentum, RSI, MACD, etc.)
+- RL_RLHF_INFLUENCE defaults to 0 - feedback does NOT affect trading confidence
 """
 
 from __future__ import annotations
@@ -107,7 +108,8 @@ class RLFilter:
                 logger.warning("Transformer RL initialisation failed: %s", exc)
 
         # RLHF FeedbackTrainer initialization (Jan 2026)
-        # Closes the loop: thumbs up/down now influences trading decisions
+        # NOTE: RLHF is for OPERATIONAL feedback (how well Claude performs as assistant)
+        # Trading decisions are based purely on market data, NOT on thumbs up/down
         self.feedback_trainer: Any = None
         rlhf_flag = os.getenv("RL_USE_RLHF", "1").lower() in {"1", "true", "yes", "on"}
         if rlhf_flag and FEEDBACK_TRAINER_AVAILABLE:
@@ -223,8 +225,9 @@ class RLFilter:
             except Exception as exc:
                 logger.warning("DiscoRL DQN inference failed for %s: %s", symbol, exc)
 
-        # RLHF Feedback Integration (Jan 2026) - Closes the human feedback loop!
-        # This is where thumbs up/down actually influences trading decisions
+        # RLHF Feedback Integration (Jan 2026) - For OPERATIONAL tracking only
+        # NOTE: RL_RLHF_INFLUENCE defaults to 0 - feedback does NOT affect trading
+        # Trading decisions are based purely on market data (momentum, RSI, etc.)
         if self.feedback_trainer:
             try:
                 # Build context for feedback lookup
@@ -356,13 +359,14 @@ class RLFilter:
         rlhf: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
-        Blend predictions from all available models including RLHF feedback.
+        Blend predictions from all available models.
 
         Weights are configurable via environment variables.
         Transformer gets highest weight until DiscoRL is validated with real trades.
 
-        Jan 2026: Added RLHF feedback integration - human thumbs up/down now
-        directly influences confidence through Thompson Sampling posterior.
+        Jan 2026: RLHF is tracked for operational purposes but does NOT affect
+        trading decisions by default (RL_RLHF_INFLUENCE=0). Trading is based
+        purely on market data (momentum, RSI, MACD, volume, etc.).
         """
         # Get weights from env (default: conservative until DiscoRL validated)
         # Dec 9, 2025: Reduced DiscoRL from 0.45 to 0.15 - needs validation (0 closed trades)
@@ -375,8 +379,9 @@ class RLFilter:
         disco_weight = float(os.getenv("RL_DISCO_WEIGHT", "0.15")) * rl_total_weight
 
         # RLHF weight - additive adjustment, not part of the ensemble blend
-        # Jan 2026: Default 5% influence - conservative until we see it working
-        rlhf_influence = float(os.getenv("RL_RLHF_INFLUENCE", "0.05"))
+        # Jan 2026: Default 0% - RLHF is for OPERATIONAL feedback (Claude's performance)
+        # NOT for trading decisions. Trading is based purely on market data.
+        rlhf_influence = float(os.getenv("RL_RLHF_INFLUENCE", "0.0"))
 
         # Accumulate weighted predictions
         total_weight = 0.0
@@ -415,8 +420,9 @@ class RLFilter:
             blended_confidence = heuristic["confidence"]
             blended_multiplier = heuristic["suggested_multiplier"]
 
-        # RLHF Feedback Adjustment (Jan 2026) - THE CLOSED LOOP!
-        # This is where human feedback (thumbs up/down) influences decisions
+        # RLHF Feedback Adjustment (Jan 2026) - DISABLED BY DEFAULT
+        # RL_RLHF_INFLUENCE=0 means feedback does NOT affect trading decisions
+        # RLHF is for OPERATIONAL feedback only (Claude's performance as assistant)
         rlhf_adjustment = 0.0
         if rlhf:
             # feedback_reward is in [-1, +1] from Thompson Sampling
