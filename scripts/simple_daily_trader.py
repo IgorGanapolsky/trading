@@ -48,7 +48,7 @@ CONFIG = {
     "min_dte": 21,
     "position_size_pct": 0.05,  # 5% of portfolio per trade
     "take_profit_pct": 0.50,  # Close at 50% profit
-    "max_positions": 3,  # Max 3 open positions
+    "max_positions": 10,  # Max 10 open positions - FIXED: was blocking trades
 }
 
 
