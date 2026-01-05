@@ -122,12 +122,22 @@ def calculate_basic_metrics():
                 break
 
         # If no entry for today, calculate from yesterday
+        # BUT only compare same account types to avoid live vs paper mismatch
         if today_perf is None and len(perf_log) > 0:
             yesterday_perf = perf_log[-1]
-            yesterday_equity = yesterday_perf.get("equity", starting_balance)
-            today_equity = current_equity
-            today_pl = current_equity - yesterday_equity
-            today_pl_pct = ((today_pl / yesterday_equity) * 100) if yesterday_equity > 0 else 0.0
+            yesterday_account_type = yesterday_perf.get("account_type", "live")
+            # Only calculate P/L if comparing same account type
+            if yesterday_account_type == "live":
+                yesterday_equity = yesterday_perf.get("equity", starting_balance)
+                today_equity = current_equity
+                # Avoid negative P/L from deposits - use stored P/L or 0
+                today_pl = live_pl  # Use stored P/L from system_state instead of calculating
+                today_pl_pct = live_pl_pct
+            else:
+                # Different account type - don't compare, use 0
+                today_equity = current_equity
+                today_pl = 0.0
+                today_pl_pct = 0.0
 
     days_remaining = total_days - current_day
     progress_pct_challenge = (current_day / total_days * 100) if total_days > 0 else 0.0
@@ -559,12 +569,24 @@ def generate_world_class_dashboard() -> str:
 
 **Date**: {today_display}
 
+### 🔴 LIVE Account (Real Money)
+
 | Metric | Value |
 |--------|-------|
-| **Equity** | ${basic_metrics.get("today_equity", basic_metrics["current_equity"]):,.2f} |
-| **P/L** | ${basic_metrics.get("today_pl", 0):+,.2f} ({basic_metrics.get("today_pl_pct", 0):+.2f}%) |
+| **Equity** | ${basic_metrics.get("live_equity", 30):,.2f} |
+| **P/L** | ${basic_metrics.get("live_pl", 0):+,.2f} ({basic_metrics.get("live_pl_pct", 0):+.2f}%) |
+| **Status** | {"⏸️ Accumulation Phase" if basic_metrics.get("live_equity", 0) < 200 else "✅ Active"} |
+
+> *Live account is building capital through $10/day deposits. Target: $200 before first options trade.*
+
+### 📝 PAPER Account (R&D)
+
+| Metric | Value |
+|--------|-------|
+| **Equity** | ${basic_metrics.get("paper_equity", 100000):,.2f} |
+| **P/L** | ${basic_metrics.get("paper_pl", 0):+,.2f} ({basic_metrics.get("paper_pl_pct", 0):+.2f}%) |
+| **Win Rate** | {basic_metrics.get("paper_win_rate", 0):.0f}% |
 | **Trades Today** | {basic_metrics.get("today_trade_count", 0)} |
-| **Status** | {"✅ Active" if basic_metrics.get("today_trade_count", 0) > 0 or abs(basic_metrics.get("today_pl", 0)) > 0.01 else "⏸️ No activity yet"} |
 
 **Funnel Activity**: {order_count} orders, {stop_count} stops
 

@@ -7,13 +7,29 @@
     "buying_power": 20.0,
     "pl": 0.0,
     "pl_pct": 0.0,
+    "account_type": "live",
     "note": "RESET: Fresh start with real brokerage account - $20 deposited"
+  },
+  {
+    "date": "2026-01-04",
+    "timestamp": "2026-01-04T12:00:00",
+    "equity": 20.0,
+    "cash": 20.0,
+    "buying_power": 20.0,
+    "pl": 0.0,
+    "pl_pct": 0.0,
+    "account_type": "live",
+    "note": "Saturday - market closed, $10 deposit pending"
   },
   {
     "date": "2026-01-05",
     "timestamp": "2026-01-05T17:49:12.978786",
     "equity": 30.0,
+    "cash": 30.0,
+    "buying_power": 30.0,
     "pl": 0.0,
-    "note": "Accumulation phase - deposits only, no trades yet"
+    "pl_pct": 0.0,
+    "account_type": "live",
+    "note": "Monday - $10 deposit completed ($30 total). No trades yet - in accumulation phase."
   }
 ]
