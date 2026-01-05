@@ -317,8 +317,9 @@ jobs:
       - name: Run reference backtest
         env:
           PYTHONPATH: ${{ github.workspace }}
-          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          # Use paper trading keys for CI backtests
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
         run: |
           python scripts/run_core_strategy_reference_backtest.py || {
             echo "::error::Core strategy metrics degraded. Add 'ACCEPT_METRIC_DEGRADATION' to PR description if intentional."

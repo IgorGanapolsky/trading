@@ -15,8 +15,9 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     env:
-      ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
-      ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+      # Uses paper trading keys (paper=True in code)
+      ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+      ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
       LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
       LANGCHAIN_PROJECT: 'igor-trading-system'
       LANGCHAIN_TRACING_V2: 'true'

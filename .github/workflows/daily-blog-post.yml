@@ -17,8 +17,9 @@ permissions:
   contents: write
 
 env:
-  ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
-  ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+  # Use paper trading keys for blog post data (PAPER_TRADING=true)
+  ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+  ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
   DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
   FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
   PAPER_TRADING: "true"

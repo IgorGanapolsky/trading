@@ -25,10 +25,11 @@ jobs:
 
       - name: Sync Alpaca State
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
-          APCA_API_KEY_ID: ${{ secrets.ALPACA_API_KEY }}
-          APCA_API_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          # Use paper trading keys for data sync (read-only operations)
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          APCA_API_KEY_ID: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          APCA_API_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
         run: |
           python scripts/sync_alpaca_state.py
 
