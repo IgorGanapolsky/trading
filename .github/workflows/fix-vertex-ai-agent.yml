@@ -168,6 +168,20 @@ jobs:
           echo "Remaining intents:"
           echo "$FINAL_INTENTS" | jq -r '.intents[] | "  - \(.displayName)"'
 
+          # CRITICAL: Check if status.intent still exists - FAIL if it does
+          STATUS_INTENT_EXISTS=$(echo "$FINAL_INTENTS" | jq -r '.intents[] | select(.displayName == "status.intent") | .name' | head -1)
+          if [ -n "$STATUS_INTENT_EXISTS" ]; then
+            echo ""
+            echo "❌ CRITICAL ERROR: status.intent STILL EXISTS!"
+            echo "Intent: $STATUS_INTENT_EXISTS"
+            echo ""
+            echo "This means the GCP service account does NOT have permission to delete intents."
+            echo "Required role: Dialogflow API Admin (roles/dialogflow.admin)"
+            echo ""
+            echo "WORKFLOW FAILED - intents were NOT deleted"
+            exit 1
+          fi
+
           FINAL_FLOW=$(curl -s -X GET "${API_BASE}/${FLOW}" \
             -H "Authorization: Bearer $TOKEN")
 
@@ -176,11 +190,22 @@ jobs:
           echo "Flow event handlers:"
           echo "$FINAL_FLOW" | jq '.eventHandlers[] | "  - \(.event)"'
 
+          # Count remaining custom intents (excluding system defaults)
+          CUSTOM_INTENT_COUNT=$(echo "$FINAL_INTENTS" | jq '[.intents[] | select(.displayName != "Default Welcome Intent" and .displayName != "Default Negative Intent")] | length')
+
+          if [ "$CUSTOM_INTENT_COUNT" -gt 0 ]; then
+            echo ""
+            echo "❌ ERROR: $CUSTOM_INTENT_COUNT custom intents still exist!"
+            echo "The GCP service account lacks Dialogflow API Admin permissions."
+            exit 1
+          fi
+
           echo ""
           echo "============================================"
-          echo "✅ VERTEX AI AGENT FIX COMPLETE"
+          echo "✅ VERTEX AI AGENT FIX VERIFIED COMPLETE"
           echo "============================================"
-          echo "- Deleted all hardcoded intents"
+          echo "- All custom intents deleted (verified: 0 remaining)"
+          echo "- status.intent: DELETED"
           echo "- Webhook is now the ONLY response handler"
           echo "- All queries will go to RAG system"
           echo "============================================"
