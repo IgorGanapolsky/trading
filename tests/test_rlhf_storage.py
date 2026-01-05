@@ -27,6 +27,9 @@ import pytest
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Skip all tests if lancedb is not installed
+pytest.importorskip("lancedb", reason="lancedb not installed - skipping RLHF storage tests")
+
 
 class TestRLHFStorageInitialization:
     """Test RLHFStorage initialization."""
