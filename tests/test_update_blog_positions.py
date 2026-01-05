@@ -35,10 +35,24 @@ class TestLoadPositions:
         state = {
             "performance": {
                 "open_positions": [
-                    {"symbol": "SPY", "quantity": 10, "entry_price": 590, "current_price": 595,
-                     "market_value": 5950, "unrealized_pl": 50, "side": "long"},
-                    {"symbol": "AAPL", "quantity": 5, "entry_price": 180, "current_price": 185,
-                     "market_value": 925, "unrealized_pl": 25, "side": "long"},
+                    {
+                        "symbol": "SPY",
+                        "quantity": 10,
+                        "entry_price": 590,
+                        "current_price": 595,
+                        "market_value": 5950,
+                        "unrealized_pl": 50,
+                        "side": "long",
+                    },
+                    {
+                        "symbol": "AAPL",
+                        "quantity": 5,
+                        "entry_price": 180,
+                        "current_price": 185,
+                        "market_value": 925,
+                        "unrealized_pl": 25,
+                        "side": "long",
+                    },
                 ]
             }
         }
@@ -120,10 +134,24 @@ class TestGeneratePositionsTable:
     def test_generate_table_with_positions(self):
         """Test generating table with positions."""
         positions = [
-            {"symbol": "SPY", "side": "long", "entry_price": 590.00, "current_price": 595.00,
-             "unrealized_pl": 50.00, "unrealized_pl_pct": 0.85, "market_value": 5950.00},
-            {"symbol": "AAPL", "side": "long", "entry_price": 180.00, "current_price": 185.00,
-             "unrealized_pl": 25.00, "unrealized_pl_pct": 2.78, "market_value": 925.00},
+            {
+                "symbol": "SPY",
+                "side": "long",
+                "entry_price": 590.00,
+                "current_price": 595.00,
+                "unrealized_pl": 50.00,
+                "unrealized_pl_pct": 0.85,
+                "market_value": 5950.00,
+            },
+            {
+                "symbol": "AAPL",
+                "side": "long",
+                "entry_price": 180.00,
+                "current_price": 185.00,
+                "unrealized_pl": 25.00,
+                "unrealized_pl_pct": 2.78,
+                "market_value": 925.00,
+            },
         ]
 
         table = generate_positions_table(positions)
@@ -144,8 +172,15 @@ class TestGeneratePositionsTable:
     def test_generate_table_negative_pl(self):
         """Test generating table with negative P/L."""
         positions = [
-            {"symbol": "TSLA", "side": "long", "entry_price": 250.00, "current_price": 240.00,
-             "unrealized_pl": -100.00, "unrealized_pl_pct": -4.0, "market_value": 2400.00},
+            {
+                "symbol": "TSLA",
+                "side": "long",
+                "entry_price": 250.00,
+                "current_price": 240.00,
+                "unrealized_pl": -100.00,
+                "unrealized_pl_pct": -4.0,
+                "market_value": 2400.00,
+            },
         ]
 
         table = generate_positions_table(positions)
@@ -156,12 +191,33 @@ class TestGeneratePositionsTable:
     def test_generate_table_sorted_by_value(self):
         """Test that positions are sorted by market value descending."""
         positions = [
-            {"symbol": "SMALL", "side": "long", "entry_price": 10, "current_price": 11,
-             "unrealized_pl": 1, "unrealized_pl_pct": 10, "market_value": 100},
-            {"symbol": "LARGE", "side": "long", "entry_price": 100, "current_price": 110,
-             "unrealized_pl": 100, "unrealized_pl_pct": 10, "market_value": 10000},
-            {"symbol": "MEDIUM", "side": "long", "entry_price": 50, "current_price": 55,
-             "unrealized_pl": 50, "unrealized_pl_pct": 10, "market_value": 1000},
+            {
+                "symbol": "SMALL",
+                "side": "long",
+                "entry_price": 10,
+                "current_price": 11,
+                "unrealized_pl": 1,
+                "unrealized_pl_pct": 10,
+                "market_value": 100,
+            },
+            {
+                "symbol": "LARGE",
+                "side": "long",
+                "entry_price": 100,
+                "current_price": 110,
+                "unrealized_pl": 100,
+                "unrealized_pl_pct": 10,
+                "market_value": 10000,
+            },
+            {
+                "symbol": "MEDIUM",
+                "side": "long",
+                "entry_price": 50,
+                "current_price": 55,
+                "unrealized_pl": 50,
+                "unrealized_pl_pct": 10,
+                "market_value": 1000,
+            },
         ]
 
         table = generate_positions_table(positions)
@@ -206,8 +262,15 @@ layout: home
     def test_update_index_with_positions(self, sample_index):
         """Test updating index.md with positions."""
         positions = [
-            {"symbol": "SPY", "side": "long", "entry_price": 590, "current_price": 595,
-             "unrealized_pl": 50, "unrealized_pl_pct": 0.85, "market_value": 5950},
+            {
+                "symbol": "SPY",
+                "side": "long",
+                "entry_price": 590,
+                "current_price": 595,
+                "unrealized_pl": 50,
+                "unrealized_pl_pct": 0.85,
+                "market_value": 5950,
+            },
         ]
         paper_account = {"current_equity": 100942.23, "total_pl_pct": 0.94, "win_rate": 80.0}
 
@@ -271,10 +334,24 @@ class TestUpdateDashboardMd:
     def test_update_dashboard_with_positions(self, sample_dashboard):
         """Test updating dashboard.md with positions."""
         positions = [
-            {"symbol": "SPY", "side": "long", "entry_price": 590, "current_price": 595,
-             "unrealized_pl": 50, "unrealized_pl_pct": 0.85, "market_value": 5950},
-            {"symbol": "AAPL", "side": "long", "entry_price": 180, "current_price": 185,
-             "unrealized_pl": 25, "unrealized_pl_pct": 2.78, "market_value": 925},
+            {
+                "symbol": "SPY",
+                "side": "long",
+                "entry_price": 590,
+                "current_price": 595,
+                "unrealized_pl": 50,
+                "unrealized_pl_pct": 0.85,
+                "market_value": 5950,
+            },
+            {
+                "symbol": "AAPL",
+                "side": "long",
+                "entry_price": 180,
+                "current_price": 185,
+                "unrealized_pl": 25,
+                "unrealized_pl_pct": 2.78,
+                "market_value": 925,
+            },
         ]
 
         with patch("update_blog_positions.DASHBOARD_MD", sample_dashboard):
@@ -348,11 +425,18 @@ class TestMainFunction:
         state = {
             "performance": {
                 "open_positions": [
-                    {"symbol": "SPY", "side": "long", "entry_price": 590, "current_price": 595,
-                     "unrealized_pl": 50, "unrealized_pl_pct": 0.85, "market_value": 5950}
+                    {
+                        "symbol": "SPY",
+                        "side": "long",
+                        "entry_price": 590,
+                        "current_price": 595,
+                        "unrealized_pl": 50,
+                        "unrealized_pl_pct": 0.85,
+                        "market_value": 5950,
+                    }
                 ]
             },
-            "paper_account": {"current_equity": 100942.23, "total_pl_pct": 0.94, "win_rate": 80}
+            "paper_account": {"current_equity": 100942.23, "total_pl_pct": 0.94, "win_rate": 80},
         }
         state_file.write_text(json.dumps(state))
 
@@ -382,9 +466,11 @@ class TestMainFunction:
 ## Recent Trades
 """)
 
-        with patch("update_blog_positions.SYSTEM_STATE", state_file), \
-             patch("update_blog_positions.INDEX_MD", index_path), \
-             patch("update_blog_positions.DASHBOARD_MD", dashboard_path):
+        with (
+            patch("update_blog_positions.SYSTEM_STATE", state_file),
+            patch("update_blog_positions.INDEX_MD", index_path),
+            patch("update_blog_positions.DASHBOARD_MD", dashboard_path),
+        ):
             from update_blog_positions import main
 
             result = main()
@@ -408,8 +494,15 @@ class TestEdgeCases:
     def test_position_with_zero_values(self):
         """Test handling positions with zero values."""
         positions = [
-            {"symbol": "ZERO", "side": "long", "entry_price": 0, "current_price": 0,
-             "unrealized_pl": 0, "unrealized_pl_pct": 0, "market_value": 0},
+            {
+                "symbol": "ZERO",
+                "side": "long",
+                "entry_price": 0,
+                "current_price": 0,
+                "unrealized_pl": 0,
+                "unrealized_pl_pct": 0,
+                "market_value": 0,
+            },
         ]
 
         table = generate_positions_table(positions)
@@ -419,12 +512,19 @@ class TestEdgeCases:
     def test_large_position_values(self):
         """Test handling large position values."""
         positions = [
-            {"symbol": "BIG", "side": "long", "entry_price": 1000000.00, "current_price": 1100000.00,
-             "unrealized_pl": 100000.00, "unrealized_pl_pct": 10.0, "market_value": 11000000.00},
+            {
+                "symbol": "BIG",
+                "side": "long",
+                "entry_price": 1000000.00,
+                "current_price": 1100000.00,
+                "unrealized_pl": 100000.00,
+                "unrealized_pl_pct": 10.0,
+                "market_value": 11000000.00,
+            },
         ]
 
         table = generate_positions_table(positions)
         assert "BIG" in table
         assert "$1,000,000.00" in table  # entry_price
         assert "$1,100,000.00" in table  # current_price
-        assert "+$100,000.00" in table   # unrealized_pl
+        assert "+$100,000.00" in table  # unrealized_pl

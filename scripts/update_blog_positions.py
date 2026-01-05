@@ -84,8 +84,8 @@ def update_index_md(positions: list[dict], paper_account: dict) -> bool:
 | Metric | Value | Trend |
 |--------|-------|-------|
 | **Day** | 50/90 | R&D Phase |
-| **Portfolio** | ${paper_account.get('current_equity', 100942.23):,.2f} | {paper_account.get('total_pl_pct', 0.94):+.2f}% |
-| **Win Rate** | {paper_account.get('win_rate', 80):.0f}% | Proven |
+| **Portfolio** | ${paper_account.get("current_equity", 100942.23):,.2f} | {paper_account.get("total_pl_pct", 0.94):+.2f}% |
+| **Win Rate** | {paper_account.get("win_rate", 80):.0f}% | Proven |
 | **Lessons** | 75+ | Growing |
 
 #### Open Positions ({positions_count})
