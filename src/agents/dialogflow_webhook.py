@@ -349,7 +349,9 @@ async def webhook(request: Request) -> JSONResponse:
 
                     # Build trading activity message based on whether trades happened today
                     if trades_today > 0:
-                        activity_msg = f"**Today ({actual_today}):** {trades_today} trades executed ✅"
+                        activity_msg = (
+                            f"**Today ({actual_today}):** {trades_today} trades executed ✅"
+                        )
                     else:
                         activity_msg = f"**Today ({actual_today}):** No trades yet\n**Last Trade:** {last_trade}"
 

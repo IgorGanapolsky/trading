@@ -404,13 +404,28 @@ class TestTradeQueryFallbackBehavior:
 
         with patch("src.agents.dialogflow_webhook.rag") as mock_rag:
             mock_rag.lessons = []
-            mock_rag.query.return_value = [{"id": "ll_001", "severity": "INFO", "content": "Test lesson"}]
+            mock_rag.query.return_value = [
+                {"id": "ll_001", "severity": "INFO", "content": "Test lesson"}
+            ]
 
             with patch("src.agents.dialogflow_webhook.trade_collection", None):
-                with patch("src.agents.dialogflow_webhook.get_current_portfolio_status") as mock_portfolio:
+                with patch(
+                    "src.agents.dialogflow_webhook.get_current_portfolio_status"
+                ) as mock_portfolio:
                     mock_portfolio.return_value = {
-                        "live": {"equity": 100, "total_pl": 5, "total_pl_pct": 5.0, "positions_count": 0},
-                        "paper": {"equity": 100000, "total_pl": 1000, "total_pl_pct": 1.0, "positions_count": 2, "win_rate": 80.0},
+                        "live": {
+                            "equity": 100,
+                            "total_pl": 5,
+                            "total_pl_pct": 5.0,
+                            "positions_count": 0,
+                        },
+                        "paper": {
+                            "equity": 100000,
+                            "total_pl": 1000,
+                            "total_pl_pct": 1.0,
+                            "positions_count": 2,
+                            "win_rate": 80.0,
+                        },
                         "last_trade_date": "2026-01-05",
                         "trades_today": 0,
                         "challenge_day": 69,
@@ -441,10 +456,14 @@ class TestTradeQueryFallbackBehavior:
 
         with patch("src.agents.dialogflow_webhook.rag") as mock_rag:
             mock_rag.lessons = []
-            mock_rag.query.return_value = [{"id": "ll_001", "severity": "INFO", "content": "Test lesson"}]
+            mock_rag.query.return_value = [
+                {"id": "ll_001", "severity": "INFO", "content": "Test lesson"}
+            ]
 
             with patch("src.agents.dialogflow_webhook.trade_collection", None):
-                with patch("src.agents.dialogflow_webhook.get_current_portfolio_status") as mock_portfolio:
+                with patch(
+                    "src.agents.dialogflow_webhook.get_current_portfolio_status"
+                ) as mock_portfolio:
                     mock_portfolio.return_value = {}  # No portfolio data
 
                     from fastapi.testclient import TestClient
@@ -538,8 +557,19 @@ class TestPortfolioStatusFunction:
 
         # Mock state data that would come from GitHub
         mock_state = {
-            "account": {"current_equity": 100, "total_pl": 5, "total_pl_pct": 5.0, "positions_count": 0},
-            "paper_account": {"current_equity": 100000, "total_pl": 1000, "total_pl_pct": 1.0, "positions_count": 2, "win_rate": 80.0},
+            "account": {
+                "current_equity": 100,
+                "total_pl": 5,
+                "total_pl_pct": 5.0,
+                "positions_count": 0,
+            },
+            "paper_account": {
+                "current_equity": 100000,
+                "total_pl": 1000,
+                "total_pl_pct": 1.0,
+                "positions_count": 2,
+                "win_rate": 80.0,
+            },
             "trades": {"last_trade_date": "2026-01-05", "total_trades_today": 0},
             "challenge": {"current_day": 69},
         }

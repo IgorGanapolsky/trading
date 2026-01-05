@@ -54,8 +54,8 @@ class TestMaxPositionsConfig:
 class TestShouldOpenPosition:
     """Test the should_open_position logic."""
 
-    @patch('scripts.simple_daily_trader.get_current_positions')
-    @patch('scripts.simple_daily_trader.get_account_info')
+    @patch("scripts.simple_daily_trader.get_current_positions")
+    @patch("scripts.simple_daily_trader.get_account_info")
     def test_allows_new_position_under_max(self, mock_account, mock_positions):
         """Should allow new position when under max_positions limit."""
         from scripts.simple_daily_trader import CONFIG, should_open_position
@@ -64,8 +64,8 @@ class TestShouldOpenPosition:
         mock_positions.return_value = [
             {"symbol": "INTC260109P00035000"},  # Option
             {"symbol": "SOFI260123P00024000"},  # Option
-            {"symbol": "AMD260116P00200000"},   # Option
-            {"symbol": "SPY260123P00660000"},   # Option
+            {"symbol": "AMD260116P00200000"},  # Option
+            {"symbol": "SPY260123P00660000"},  # Option
         ]
 
         mock_account.return_value = {
@@ -85,8 +85,8 @@ class TestShouldOpenPosition:
             "This would cause the 13-day outage bug again!"
         )
 
-    @patch('scripts.simple_daily_trader.get_current_positions')
-    @patch('scripts.simple_daily_trader.get_account_info')
+    @patch("scripts.simple_daily_trader.get_current_positions")
+    @patch("scripts.simple_daily_trader.get_account_info")
     def test_blocks_at_max_positions(self, mock_account, mock_positions):
         """Should block when at max_positions limit."""
         from scripts.simple_daily_trader import CONFIG, should_open_position
@@ -115,8 +115,9 @@ class TestTradingIntegration:
         """Smoke test: script should import without errors."""
         try:
             from scripts import simple_daily_trader
-            assert hasattr(simple_daily_trader, 'run_daily_trading')
-            assert hasattr(simple_daily_trader, 'CONFIG')
+
+            assert hasattr(simple_daily_trader, "run_daily_trading")
+            assert hasattr(simple_daily_trader, "CONFIG")
         except ImportError as e:
             pytest.fail(f"Failed to import simple_daily_trader: {e}")
 
