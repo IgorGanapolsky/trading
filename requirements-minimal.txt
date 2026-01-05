@@ -36,7 +36,7 @@ pytz==2023.3
 loguru==0.7.3
 anthropic>=0.73.0,<1.0.0  # Aligned with pyproject.toml
 vaderSentiment==3.3.2      # Sentiment scoring for macro/analyst agent
-cohere>=5.11.4             # Cohere Rerank API for RAG retrieval optimization
+# cohere - REMOVED: Listed but never imported (Dec 2025)
 # LLM orchestration (kept minimal but required for trading agent)
 # IMPORTANT: These versions are tightly coupled - do not upgrade independently
 # All langchain packages must stay in the 0.3.x series
