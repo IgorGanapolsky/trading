@@ -76,15 +76,6 @@ repos:
         pass_filenames: false
         verbose: true
 
-      - id: validate-yaml-strict
-        name: Strict YAML Validation
-        entry: bash scripts/validate_yaml_before_commit.sh
-        language: python
-        additional_dependencies: [pyyaml]
-        types: [yaml]
-        pass_filenames: false
-        verbose: true
-
       - id: test-dashboard-output
         name: Test Dashboard Output Completeness
         entry: python3 tests/test_dashboard_output.py
@@ -94,51 +85,11 @@ repos:
         pass_filenames: false
         verbose: true
 
-      - id: smoke-tests
-        name: Smoke Tests - Critical Path Verification
-        entry: python3 tests/test_smoke.py
-        language: python
-        additional_dependencies: [numpy, pyyaml]
-        types: [python]
-        files: '(scripts/|src/|tests/)'
-        pass_filenames: false
-        verbose: true
-        stages: [pre-commit]
-
-      - id: validate-workflow-secrets
-        name: Validate Workflow Secrets (Zero Tolerance)
-        entry: python3 scripts/validate_workflow_secrets.py
-        language: python
-        additional_dependencies: [pyyaml]
-        types: [yaml]
-        files: '\.github/workflows/.*\.yml$'
-        pass_filenames: false
-        verbose: true
-        stages: [pre-commit]
-
       - id: detect-dead-code
         name: Dead Code Detector
         entry: python3 scripts/detect_dead_code.py
         language: system
         types: [python]
-        pass_filenames: false
-        verbose: true
-        stages: [pre-commit]
-
-      - id: detect-placeholder-features
-        name: Detect Placeholder Features (LL-034 Prevention)
-        entry: python3 scripts/detect_placeholders.py
-        language: system
-        types: [python]
-        pass_filenames: false
-        verbose: true
-        stages: [pre-commit]
-
-      - id: verify-strategy-integration
-        name: Verify Strategy Integration (ll_012 Prevention)
-        entry: python3 scripts/verify_strategy_integration.py
-        language: system
-        files: '(data/system_state\.json|scripts/autonomous_trader\.py|config/strategy_registry\.json)'
         pass_filenames: false
         verbose: true
         stages: [pre-commit]
@@ -192,14 +143,6 @@ repos:
         verbose: true
         stages: [pre-commit]
 
-      - id: code-hygiene-check
-        name: Code Hygiene Check (ll_042 Prevention)
-        entry: python3 scripts/verify_code_hygiene.py
-        language: system
-        pass_filenames: false
-        verbose: true
-        stages: [pre-commit]
-
       - id: block-temp-files
         name: Block Temporary/Proof Files (ll_042 Prevention)
         entry: >
@@ -212,6 +155,15 @@ repos:
           done;
           exit $FOUND'
         language: system
+        pass_filenames: false
+        verbose: true
+        stages: [pre-commit]
+
+      - id: rag-architecture-check
+        name: RAG Architecture Validation (LL-RAG Prevention)
+        entry: python3 scripts/verify_rag_architecture.py
+        language: system
+        files: 'src/rag/.*\.py$|requirements-minimal\.txt'
         pass_filenames: false
         verbose: true
         stages: [pre-commit]

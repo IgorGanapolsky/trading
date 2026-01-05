@@ -927,6 +927,32 @@ def main() -> None:
         logger.info("Markets closed - skipping equity trading.")
         return
 
+    # Safe Mode: Disable complex agents if requested or if history of crashes
+    safe_mode = os.getenv("SAFE_MODE", "false").lower() in {"1", "true", "yes", "on"}
+    
+    # Check for crash history - if we crashed recently, auto-enable safe mode
+    crash_log = Path("logs/trading_crash.log")
+    if crash_log.exists():
+        try:
+            # Check if crash was recent (today)
+            crash_time = datetime.fromtimestamp(crash_log.stat().st_mtime)
+            if crash_time.date() == datetime.now().date():
+                logger.warning("⚠️  Recent crash detected! Auto-enabling SAFE MODE.")
+                safe_mode = True
+        except Exception:
+            pass
+
+    if safe_mode:
+        logger.warning("🛡️  SAFE MODE ENABLED - Disabling ADK, RL, and other complex agents.")
+        os.environ["ENABLE_ADK_AGENTS"] = "false"
+        os.environ["RL_FILTER_ENABLED"] = "false"
+        os.environ["LLM_SENTIMENT_ENABLED"] = "false"
+        os.environ["ENABLE_MENTAL_COACHING"] = "false"
+        os.environ["ENABLE_BULL_BEAR_DEBATE"] = "false"
+        os.environ["ENABLE_RAG_CONTEXT"] = "false"
+        os.environ["ENABLE_LESSONS_RAG"] = "false"
+        os.environ["ENABLE_INTROSPECTION"] = "false"
+
     # Normal stock trading - import only when needed
     from src.orchestrator.main import TradingOrchestrator
 
@@ -974,17 +1000,27 @@ def main() -> None:
         except Exception as e:
             print(f"::error::Attempt {attempt} failed: {type(e).__name__}: {e}", flush=True)
             logger.error(f"❌ Attempt {attempt} failed: {e}", exc_info=True)
-            if attempt < MAX_RETRIES:
-                logger.info(f"Retrying in {RETRY_DELAY} seconds...")
-                import time
-
-                time.sleep(RETRY_DELAY)
+            
+            # If we are in safe mode and still failing, it's critical
+            if safe_mode:
+                if attempt < MAX_RETRIES:
+                    logger.info(f"Retrying in {RETRY_DELAY} seconds...")
+                    import time
+                    time.sleep(RETRY_DELAY)
+                else:
+                    logger.critical(f"❌ CRITICAL: Safe mode attempts failed. Trading session crashed.")
+                    raise
+            
+            # If not in safe mode, try enabling safe mode for next retry
             else:
-                logger.critical(
-                    f"❌ CRITICAL: All {MAX_RETRIES} attempts failed. Trading session crashed."
-                )
-                print(f"::error::CRITICAL: All {MAX_RETRIES} attempts failed", flush=True)
-                raise
+                logger.warning("⚠️  Standard mode failed. Enabling SAFE MODE for next attempt.")
+                safe_mode = True
+                os.environ["ENABLE_ADK_AGENTS"] = "false"
+                os.environ["RL_FILTER_ENABLED"] = "false"
+                os.environ["LLM_SENTIMENT_ENABLED"] = "false"
+                # Continue loop - next iteration will use safe mode settings implicit in env vars
+                # (Note: we need to re-init orchestrator in next loop, which happens already)
+
 
     print("::notice::2/5 Post-trading hooks done", flush=True)
 

@@ -202,6 +202,68 @@ cat data/feedback/stats.json  # Current satisfaction rate
 
 ---
 
+## 11. RAG Implementation Rules (Added Dec 15, 2025)
+
+**ALWAYS use proper vector databases (ChromaDB/LanceDB) for RAG. NEVER use JSON+numpy.**
+
+### Before Implementing ANY RAG Feature:
+
+1. **Query existing RAG lessons**:
+   ```python
+   from src.rag.lessons_learned_rag import LessonsLearnedRAG
+   rag = LessonsLearnedRAG()
+   lessons = rag.search("RAG implementation mistakes", top_k=5)
+   for lesson, score in lessons:
+       print(f"[{score:.0%}] {lesson.title}")
+       print(f"  Prevention: {lesson.prevention}")
+   ```
+
+2. **Use ChromaDB or LanceDB** - NEVER JSON+numpy
+   ```python
+   # ✅ CORRECT:
+   import chromadb
+   client = chromadb.PersistentClient(path="data/rag/chroma_db")
+
+   # ❌ WRONG:
+   import json
+   lessons = json.load(open("lessons.json"))  # O(n) linear scan!
+   ```
+
+3. **Verify with tests**:
+   ```bash
+   pytest tests/integration/test_rag_quality.py -v
+   python scripts/verify_rag_architecture.py
+   ```
+
+4. **Record architectural decisions in RAG**:
+   - Why this approach?
+   - What alternatives were considered?
+   - What are the trade-offs?
+
+### Requirements:
+
+- ✅ ChromaDB ≥1.3.6 in `requirements-minimal.txt` (NOT commented out)
+- ✅ Persistent storage: `data/rag/chroma_db/`
+- ✅ Embeddings: sentence-transformers (all-MiniLM-L6-v2)
+- ✅ O(log n) ANN search, NOT O(n) linear scan
+- ✅ Cohere Rerank for precision (optional but recommended)
+
+### Violations Caught By:
+
+1. **Pre-commit hook**: `scripts/verify_rag_architecture.py`
+2. **CI tests**: `tests/integration/test_rag_quality.py`
+3. **Weekly health check**: `.github/workflows/weekly-rag-health.yml`
+
+### Why This Rule Exists:
+
+**Dec 15, 2025** - Production RAG used simplified JSON+numpy (O(n) search) instead of proper vector database. Added Cohere Rerank as band-aid to broken system. CEO correctly identified as "half-assed" implementation. Cost: Technical debt, poor scalability, wasted Cohere API calls on bad candidates.
+
+**Lesson**: Always use proper architecture from day 1. Don't add features on top of broken foundations.
+
+**See**: `rag_knowledge/lessons_learned/lesson_20251215_104602_0`
+
+---
+
 ## References
 
 - `docs/verification-protocols.md` - Full verification protocol

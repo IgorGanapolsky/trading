@@ -2,63 +2,43 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2026-01-04T23:20:04.331850",
-    "last_audit": "2025-12-29T09:46:00.000000",
-    "audit_notes": "Updated from live Alpaca screenshot - Dec 30 10:28 AM EST",
-    "last_sync": "2026-01-04T23:20:04.331857",
+    "last_updated": "2026-01-04T20:14:34.381323",
+    "last_audit": "2025-11-17T09:00:00.000000",
+    "audit_notes": "Day 9 - Added Tier 5 crypto tracking (BTC/ETH weekend strategy)",
+    "last_sync": "2026-01-04T20:14:34.381328",
     "sync_mode": "skipped_no_keys"
   },
   "challenge": {
     "start_date": "2025-10-29",
-    "current_day": 50,
+    "current_day": 9,
     "total_days": 90,
     "status": "active",
-    "phase": "R&D Phase - Month 2 (Days 31-60)"
+    "phase": "R&D Phase - Month 1 (Days 1-30)"
   },
   "account": {
-    "type": "live",
-    "starting_balance": 20.0,
-    "current_equity": 20.0,
-    "cash": 20.0,
-    "positions_value": 0.0,
-    "total_pl": 0.0,
-    "total_pl_pct": 0.0,
-    "buying_power": 20.0,
-    "daily_change_pct": 0.0,
-    "positions_count": 0,
-    "daily_deposit": 10.0,
-    "target_daily_profit": 100.0,
-    "reset_note": "Fresh start Jan 3, 2026 - Real brokerage with $10/day deposits"
-  },
-  "paper_account": {
-    "type": "paper",
-    "purpose": "R&D and RAG knowledge building",
     "starting_balance": 100000.0,
-    "current_equity": 100942.23,
-    "cash": 86629.95,
-    "positions_value": 17695.12,
-    "total_pl": 942.23,
-    "total_pl_pct": 0.94,
-    "buying_power": 1341.99,
-    "positions_count": 15,
-    "win_rate": 80.0,
-    "note": "Continue paper trading at night to build RAG knowledge"
+    "current_equity": 99755.52,
+    "cash": 90614.79,
+    "positions_value": 16732.068537,
+    "total_pl": 17.49000000000524,
+    "total_pl_pct": 0.017490000000005237,
+    "buying_power": 10843.79
   },
   "investments": {
-    "total_invested": 1621.93,
+    "total_invested": 1646.93,
     "tier1_invested": 1217.96,
     "tier2_invested": 403.97,
     "tier3_reserve": 0.0,
     "tier4_reserve": 0.0,
-    "tier5_invested": 0.0,
+    "tier5_invested": 25.0,
     "tier7_invested": 0.0,
     "tier8_invested": 0.0
   },
   "performance": {
-    "total_trades": 20,
+    "total_trades": 10,
     "winning_trades": 4,
-    "losing_trades": 1,
-    "win_rate": 80.0,
+    "losing_trades": 4,
+    "win_rate": 50.0,
     "best_trade": {
       "symbol": "SPY260123P00660000",
       "pl": 197.0,
@@ -72,6 +52,17 @@
     "avg_return": -6.96522974230833,
     "closed_trades": [
       {
+        "symbol": "ETHUSD",
+        "entry_price": 3384.31,
+        "exit_price": 3381.025,
+        "quantity": 0.002889092,
+        "entry_date": "2025-11-09T13:42:09.009396",
+        "exit_date": "2025-12-09T13:43:11.677771",
+        "pl": -0.009490667219999579,
+        "pl_pct": -0.09706557614402507,
+        "tier": "unknown"
+      },
+      {
         "symbol": "AMD260116P00200000",
         "entry_price": 5.9,
         "exit_price": 6.75,
@@ -80,6 +71,28 @@
         "exit_date": "2025-12-11T09:36:33.652262",
         "pl": -0.8499999999999996,
         "pl_pct": 14.406779661016941,
+        "tier": "unknown"
+      },
+      {
+        "symbol": "BTCUSD",
+        "entry_price": 94125.628,
+        "exit_price": 90188.2,
+        "quantity": 0.000103949,
+        "entry_date": "2025-11-11T09:36:32.906462",
+        "exit_date": "2025-12-11T09:37:36.563197",
+        "pl": -0.409291703172,
+        "pl_pct": -4.183162528275509,
+        "tier": "unknown"
+      },
+      {
+        "symbol": "SOLUSD",
+        "entry_price": 130.82,
+        "exit_price": 130.7,
+        "quantity": 0.074595054,
+        "entry_date": "2025-11-11T09:36:32.906597",
+        "exit_date": "2025-12-11T09:38:39.691435",
+        "pl": -0.008951406480000338,
+        "pl_pct": -0.09172909341079694,
         "tier": "unknown"
       },
       {
@@ -127,9 +140,84 @@
         "tier": "unknown"
       }
     ],
-    "open_positions": [],
-    "_win_rate_source": "calculated_from_closed_trades",
-    "_win_rate_fixed_at": "2025-12-31T02:57:09.901650"
+    "open_positions": [
+      {
+        "symbol": "IEF",
+        "tier": "unknown",
+        "amount": 119.976634,
+        "order_id": null,
+        "entry_date": "2025-12-07T18:16:23.571369",
+        "entry_price": 96.472651,
+        "current_price": 96.47,
+        "quantity": 1.243667814,
+        "unrealized_pl": -0.003296963374914225,
+        "unrealized_pl_pct": -0.002747929047788042,
+        "last_updated": "2025-12-07T18:16:23.571371"
+      },
+      {
+        "symbol": "SHY",
+        "tier": "unknown",
+        "amount": 459.724132,
+        "order_id": null,
+        "entry_date": "2025-12-07T18:16:23.571374",
+        "entry_price": 82.781859,
+        "current_price": 82.77,
+        "quantity": 5.554236223,
+        "unrealized_pl": -0.06586768736856352,
+        "unrealized_pl_pct": -0.014325602424561611,
+        "last_updated": "2025-12-07T18:16:23.571376"
+      },
+      {
+        "symbol": "SPY",
+        "tier": "unknown",
+        "amount": 4114.14,
+        "order_id": null,
+        "entry_date": "2025-12-07T18:16:23.571379",
+        "entry_price": 686.381176,
+        "current_price": 685.69,
+        "quantity": 6.0,
+        "unrealized_pl": -4.147055999999566,
+        "unrealized_pl_pct": -0.10069856577767332,
+        "last_updated": "2025-12-07T18:16:23.571380"
+      },
+      {
+        "symbol": "TLT",
+        "tier": "unknown",
+        "amount": 19.981388,
+        "order_id": null,
+        "entry_date": "2025-12-07T18:16:23.571384",
+        "entry_price": 88.150671,
+        "current_price": 88.17,
+        "quantity": 0.226623435,
+        "unrealized_pl": 0.004380404375114783,
+        "unrealized_pl_pct": 0.021927229572647314,
+        "last_updated": "2025-12-07T18:16:23.571385"
+      },
+      {
+        "symbol": "ETHUSD",
+        "tier": "tier5",
+        "amount": 12.5,
+        "entry_date": "2025-12-23T09:35:11.010428",
+        "entry_price": 2945.354248046875,
+        "current_price": 2945.354248046875,
+        "quantity": 0.004243971674473115,
+        "unrealized_pl": 0.0,
+        "unrealized_pl_pct": 0.0,
+        "last_updated": "2025-12-23T09:35:11.010428"
+      },
+      {
+        "symbol": "BTCUSD",
+        "tier": "tier5",
+        "amount": 12.500000000000002,
+        "entry_date": "2026-01-02T09:35:11.276928",
+        "entry_price": 88758.3203125,
+        "current_price": 88758.3203125,
+        "quantity": 0.0001408318674349632,
+        "unrealized_pl": 0.0,
+        "unrealized_pl_pct": 0.0,
+        "last_updated": "2026-01-02T09:35:11.276928"
+      }
+    ]
   },
   "strategies": {
     "tier1": {
@@ -142,19 +230,18 @@
     },
     "tier2": {
       "name": "Disruptive Innovation Strategy (NVDA, GOOGL, AMZN)",
-      "allocation": 0.0,
-      "daily_amount": 0.0,
+      "allocation": 0.33,
+      "daily_amount": 5.0,
       "trades_executed": 3,
       "total_invested": 403.97,
-      "status": "disabled",
+      "status": "active",
       "stocks": [
         "NVDA",
         "GOOGL",
         "AMZN"
       ],
       "rotation_strategy": "3-way momentum-based selection",
-      "amzn_catalyst": "OpenAI $38B deal - $295 fair value target (15% upside)",
-      "disabled_reason": "Allocation shifted to options (60% allocation) - Dec 16, 2025"
+      "amzn_catalyst": "OpenAI $38B deal - $295 fair value target (15% upside)"
     },
     "tier3": {
       "name": "IPO Strategy",
@@ -171,19 +258,47 @@
       "status": "tracking"
     },
     "tier5": {
-      "name": "",
-      "allocation": 0.0,
-      "daily_amount": 0.0,
-      "status": "disabled",
-      "enabled": false,
-      "disabled_date": "2025-12-15T18:18:15.595957",
-      "disabled_reason": "0% win rate, -$0.43 total P/L, 3 consecutive losses",
-      "strategy_notes": "REMOVED Dec 15, 2025 - CEO decision to simplify and focus on options"
+      "name": "Crypto Daily Strategy (BTC, ETH, SOL)",
+      "allocation": 0.05,
+      "daily_amount": 25.0,
+      "coins": [
+        "BTC/USD",
+        "ETH/USD",
+        "SOL/USD"
+      ],
+      "trades_executed": 4,
+      "total_invested": 44.67,
+      "status": "active",
+      "enabled": true,
+      "execution_schedule": "Daily 10:00 AM ET",
+      "last_execution": "2026-01-02T09:35:11.276928",
+      "next_execution": "2025-12-08T15:00:00Z",
+      "price_targets": {
+        "ETH": {
+          "target": 10000,
+          "source": "Luke Belmar (ETF catalyst)"
+        },
+        "SOL": {
+          "target": 500,
+          "source": "Luke Belmar (bull run performer)"
+        }
+      },
+      "watchlist": [
+        {
+          "symbol": "TON",
+          "reason": "Telegram ecosystem - await Alpaca listing"
+        },
+        {
+          "symbol": "MONAD",
+          "reason": "Layer 1 - await mainnet launch"
+        }
+      ],
+      "strategy_update": "2025-12-08: Added SOL per Luke Belmar recommendations"
     },
     "tier7": {
       "name": "REIT Smart Income Strategy",
-      "allocation": 0.0,
-      "daily_amount": 0.0,
+      "allocation": 0.1,
+      "daily_amount": 10.0,
       "sectors": [
         "Growth",
         "Defensive",
@@ -211,52 +326,40 @@
       },
       "trades_executed": 0,
       "total_invested": 0.0,
-      "status": "disabled",
-      "enabled": false,
+      "status": "active",
+      "enabled": true,
       "execution_schedule": "Daily 9:35 AM ET (market hours)",
       "last_execution": null,
-      "next_execution": null,
+      "next_execution": "2025-12-13T14:35:00Z",
       "regime": "Neutral",
       "strategy_notes": "Regime-based rotation: Rising Rates \u2192 Defensive REITs, Falling Rates \u2192 Growth REITs",
-      "strategy_update": "2025-12-16: DISABLED - allocation shifted to options (60% allocation)",
-      "disabled_reason": "Allocation shifted to options (60% allocation) - Dec 16, 2025"
+      "strategy_update": "2025-12-12: Activated REIT strategy per CEO priority",
+      "daily_returns": {
+        "date": "2025-12-15",
+        "realized_pl": 0.0,
+        "unrealized_pl": 0.0,
+        "total_pl": 0.0,
+        "positions": 0
+      }
     },
     "tier8": {
       "name": "Precious Metals Strategy (GLD/SLV)",
-      "allocation": 0.0,
-      "daily_amount": 0.0,
+      "allocation": 0.05,
+      "daily_amount": 5.0,
       "etfs": [
         "GLD",
         "SLV"
       ],
       "trades_executed": 0,
       "total_invested": 0.0,
-      "status": "disabled",
-      "enabled": false,
-      "execution_schedule": "Daily 9:35 AM ET (market hours)",
-      "last_execution": null,
-      "next_execution": null,
-      "regime": "Neutral",
-      "strategy_notes": "Regime-based allocation: High GSR \u2192 Equal GLD/SLV, Fear \u2192 Heavy GLD, Normal \u2192 70/30 GLD/SLV",
-      "strategy_update": "2025-12-16: DISABLED - allocation shifted to options (60% allocation)",
-      "disabled_reason": "Allocation shifted to options (60% allocation) - Dec 16, 2025"
-    },
-    "options": {
-      "name": "Options Day Trading (Phil Town Style)",
-      "allocation": 1.0,
-      "daily_amount": 50.0,
       "status": "active",
       "enabled": true,
-      "win_rate": 75.0,
-      "total_profit": 327.82,
-      "trades_executed": 4,
-      "strategy_notes": "100% OPTIONS - Phil Town style concentration. Bonds REMOVED Dec 29, 2025.",
-      "risk_rules": {
-        "max_delta": 30,
-        "preferred_dte": "30-45",
-        "profit_target": "50%",
-        "stop_loss": "200%"
-      }
+      "execution_schedule": "Daily 9:35 AM ET (market hours)",
+      "last_execution": null,
+      "next_execution": "2025-12-13T14:35:00Z",
+      "regime": "Neutral",
+      "strategy_notes": "Regime-based allocation: High GSR \u2192 Equal GLD/SLV, Fear \u2192 Heavy GLD, Normal \u2192 70/30 GLD/SLV",
+      "strategy_update": "2025-12-12: Activated Precious Metals strategy per CEO approval"
     }
   },
   "backtest_reality": {
@@ -293,27 +396,29 @@
       "Nov 5: MACD indicator integrated into both Tier 1 (CoreStrategy) and Tier 2 (GrowthStrategy)",
       "MACD confirms momentum - filters out false signals from RSI alone",
       "MACD histogram > 0 = bullish (MACD above signal line) = BUY signal",
-      "MACD histogram < 0 = bearish (MACD below signal line) = SELL signal",
-      "Dec 15 2025: CTO ANALYSIS - Short options (SPY/AMD) = 75% win rate, +$327 - PRIMARY STRATEGY",
-      "Dec 15 2025: CTO ANALYSIS - 62.2% backtest was cherry-picked, actual range is 38-52%",
-      "Dec 15 2025: PARAMETER CHANGE - Profit target: 1% \u2192 3%, Stop loss: 1% \u2192 2%",
-      "Dec 15 2025: PARAMETER CHANGE - Daily investment: $10 \u2192 $50 (5x increase)",
-      "Dec 15 2025: STRATEGIC PIVOT - Options-first allocation approved by CEO",
-      "Dec 15 2025: Options = 100% of profits, increase allocation 5% \u2192 35%",
-      "Dec 15 2025: KEEP core holdings (SPY, bonds) for stability and collateral"
+      "MACD histogram < 0 = bearish (MACD below signal line) = SELL signal"
+    ],
+    "crypto_patterns": [
+      "Nov 17: Tier 5 crypto strategy activated - BTC/ETH weekend trading",
+      "Execution schedule: Saturday & Sunday 10:00 AM ET",
+      "Initial allocation: $0.50/day (5% of $10 daily budget)",
+      "Strategy: 24/7 crypto markets provide weekend trading opportunities",
+      "Dec 8 2025: Added SOL to universe per Luke Belmar analysis",
+      "Luke Belmar Price Targets: ETH $10,000+ (ETF catalyst), SOL $500 (bull run)",
+      "Watchlist: TON (Telegram ecosystem), Monad (Layer 1, not yet launched)"
     ]
   },
   "automation": {
     "github_actions_enabled": true,
     "workflow_name": "Daily Trading Execution",
     "workflow_status": "OPERATIONAL",
-    "last_execution_attempt": "2025-12-16T19:27:00.000000",
-    "last_successful_execution": "2025-12-15T18:18:15.595991",
-    "execution_count": 3,
+    "last_execution_attempt": "2025-12-09T16:07:24.666526",
+    "last_successful_execution": "2025-12-09T16:07:24.666541",
+    "execution_count": 2,
     "failures": 0,
     "failure_reasons": [],
-    "fix_applied": "2025-12-16: Fixed stale automation metadata, manually triggered combined-trading workflow",
-    "next_scheduled_execution": "2025-12-17T09:35:00"
+    "fix_applied": "2025-11-11: Upgraded protobuf to fix Python 3.14 compatibility, validated GitHub Actions workflow",
+    "next_scheduled_execution": "2025-11-12T09:35:00"
   },
   "video_analysis": {
     "enabled": true,
@@ -440,12 +545,20 @@
     "[2025-11-11 21:15] Current positions: GOOGL +$13.03 (+3.21%), SPY +$0.96 (+0.08%), NVDA -$0.09 (-4.64%)",
     "[2025-11-11 21:15] Win rate: 66.7% (2 of 3 positions profitable)",
     "[2025-11-11 21:15] Automation status: OPERATIONAL - next execution Nov 12 at 9:35 AM ET",
+    "[2025-11-17 09:00] TIER 5 ACTIVATED: Crypto weekend trading strategy (BTC/ETH)",
+    "[2025-11-17 09:00] Allocation: $0.50/day (5% of daily budget)",
+    "[2025-11-17 09:00] Execution: Saturday & Sunday 10:00 AM ET",
+    "[2025-11-17 09:00] Coins: BTC/USD, ETH/USD (24/7 trading capability)",
+    "[2025-11-17 09:00] Status: Active - first execution pending next weekend",
     "[2025-11-25 15:40] SCALING DECISION: Transitioning from R&D to Production Scaling",
     "[2025-11-25 15:40] Analysis: Win rate (62%) is strong, but profit per trade ($0.28) is too low to hit $100/day goal",
     "[2025-11-25 15:40] Action: Increasing Daily Investment from $10 to $1,500 (150x scaling)",
     "[2025-11-25 15:40] New Allocation: Core Strategy $900/day, Growth Strategy $1,500/week ($300/day)",
     "[2025-11-25 15:40] Expected Outcome: ~$100/day profit if 62% win rate holds",
+    "[2025-12-09 13:43] Position closed: ETHUSD - Entry: $3384.31, Exit: $3381.03, P/L: $-0.01 (-0.10%)",
     "[2025-12-11 09:36] Position closed: AMD260116P00200000 - Entry: $5.90, Exit: $6.75, P/L: $-0.85 (+14.41%)",
+    "[2025-12-11 09:37] Position closed: BTCUSD - Entry: $94125.63, Exit: $90188.20, P/L: $-0.41 (-4.18%)",
+    "[2025-12-11 09:38] Position closed: SOLUSD - Entry: $130.82, Exit: $130.70, P/L: $-0.01 (-0.09%)",
     "[2025-12-11 09:39] Position closed: BIL - Entry: $91.56, Exit: $91.56, P/L: $0.00 (+0.01%)",
     "[2025-12-11 09:39] Position closed: SPY260123P00660000 - Entry: $6.38, Exit: $5.56, P/L: $0.82 (-12.85%)",
     "[2025-12-12 09:37] Position closed: AMD260116P00200000 - Entry: $590.00, Exit: $460.00, P/L: $130.00 (-22.03%)",
@@ -457,12 +570,7 @@
     "[2025-12-12 18:00] TIER 8 ACTIVATED: Precious Metals Strategy (GLD/SLV) enabled per CEO approval",
     "[2025-12-12 18:00] Precious Metals Universe: GLD (Gold), SLV (Silver)",
     "[2025-12-12 18:00] Precious Metals Allocation: $5/day (5% of daily budget)",
-    "[2025-12-12 18:00] Precious Metals Strategy: Regime-based allocation using Gold-Silver ratio",
-    "[2025-12-15 18:13] \ud83d\udd04 STRATEGIC PIVOT: Options-First Portfolio Allocation v2.0",
-    "[2025-12-15 18:13] CEO APPROVED: Increase options allocation from 5% \u2192 35%",
-    "[2025-12-15 18:13] RATIONALE: Options = 100% of profits ($327), 75% win rate",
-    "[2025-12-15 18:13] KEEP: SPY (core), IEF/SHY (hedge) - these provide stability",
-    "[2025-12-15 18:13] NEW DAILY BUDGET: $50/day ($25 options, $12.50 equities, $7.50 bonds)"
+    "[2025-12-12 18:00] Precious Metals Strategy: Regime-based allocation using Gold-Silver ratio"
   ],
   "options": {
     "last_theta_harvest": "2025-12-05T17:53:46.287290+00:00",
@@ -484,73 +592,6 @@
     "opportunities_count": 3,
     "on_track": true
   },
-  "trades": {
-    "last_trade_date": "2025-12-23",
-    "total_trades_today": 9,
-    "daily_trade_log": [
-      {
-        "symbol": "SPY",
-        "side": "buy",
-        "qty": 0.73491,
-        "type": "market",
-        "date": "2025-12-23"
-      },
-      {
-        "symbol": "SPY",
-        "side": "buy",
-        "qty": 0.7343,
-        "type": "market",
-        "date": "2025-12-23"
-      },
-      {
-        "symbol": "SPY",
-        "side": "buy",
-        "qty": 0.73449,
-        "type": "market",
-        "date": "2025-12-23"
-      },
-      {
-        "symbol": "SPY",
-        "side": "buy",
-        "qty": 0.735004,
-        "type": "market",
-        "date": "2025-12-23"
-      },
-      {
-        "symbol": "SPY",
-        "side": "buy",
-        "qty": 0.734711,
-        "type": "market",
-        "date": "2025-12-23"
-      },
-      {
-        "symbol": "SPY",
-        "side": "buy",
-        "qty": 0.73428,
-        "type": "market",
-        "date": "2025-12-23"
-      },
-      {
-        "symbol": "SPY",
-        "side": "buy",
-        "qty": 0.7344,
-        "type": "market",
-        "date": "2025-12-23"
-      },
-      {
-        "symbol": "SPY",
-        "side": "buy",
-        "qty": 0.73506,
-        "type": "market",
-        "date": "2025-12-23"
-      },
-      {
-        "symbol": "SPY",
-        "side": "buy",
-        "qty": 0.73553,
-        "type": "market",
-        "date": "2025-12-23"
-      }
-    ]
-  }
+  "position_entries": {},
+  "position_entry_features": {}
 }
