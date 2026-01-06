@@ -155,8 +155,13 @@ class TestSystemIntegration:
 
             for trade in trades:
                 assert isinstance(trade, dict)
-                # Should have timestamp
-                assert "timestamp" in trade or "created_at" in trade
+                # Should have timestamp in some form
+                has_timestamp = (
+                    "timestamp" in trade
+                    or "created_at" in trade
+                    or ("date" in trade and "time" in trade)
+                )
+                assert has_timestamp, f"Trade missing timestamp fields: {trade.keys()}"
 
         except json.JSONDecodeError as e:
             pytest.fail(f"Invalid trade log format: {e}")

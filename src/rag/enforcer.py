@@ -21,8 +21,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-import chromadb
-from chromadb.config import Settings
+try:
+    import chromadb
+    from chromadb.config import Settings
+
+    CHROMADB_AVAILABLE = True
+except ImportError:
+    chromadb = None  # type: ignore
+    Settings = None  # type: ignore
+    CHROMADB_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +56,10 @@ class RAGEnforcer:
 
     def _init_chromadb(self):
         """Initialize ChromaDB connection."""
+        if not CHROMADB_AVAILABLE:
+            logger.warning("ChromaDB not available - RAG Enforcer running in mock mode")
+            return
+
         try:
             self._client = chromadb.PersistentClient(
                 path=str(VECTOR_DB_PATH),

@@ -18,21 +18,25 @@ class TestRAGEnforcer:
             with patch("src.rag.enforcer.DATA_DIR", Path(tmpdir)):
                 with patch("src.rag.enforcer.ENFORCEMENT_LOG", Path(tmpdir) / "log.json"):
                     with patch("src.rag.enforcer.VECTOR_DB_PATH", Path(tmpdir) / "vector_db"):
-                        # Mock ChromaDB
-                        with patch("src.rag.enforcer.chromadb") as mock_chroma:
-                            mock_collection = MagicMock()
-                            mock_collection.count.return_value = 100
-                            mock_collection.query.return_value = {
-                                "documents": [["Test lesson about verification"]],
-                                "metadatas": [[{"source": "test", "severity": "MEDIUM"}]],
-                            }
-                            mock_client = MagicMock()
-                            mock_client.get_collection.return_value = mock_collection
-                            mock_chroma.PersistentClient.return_value = mock_client
+                        # Enable chromadb for testing
+                        with patch("src.rag.enforcer.CHROMADB_AVAILABLE", True):
+                            # Mock Settings
+                            with patch("src.rag.enforcer.Settings", MagicMock()):
+                                # Mock ChromaDB
+                                with patch("src.rag.enforcer.chromadb") as mock_chroma:
+                                    mock_collection = MagicMock()
+                                    mock_collection.count.return_value = 100
+                                    mock_collection.query.return_value = {
+                                        "documents": [["Test lesson about verification"]],
+                                        "metadatas": [[{"source": "test", "severity": "MEDIUM"}]],
+                                    }
+                                    mock_client = MagicMock()
+                                    mock_client.get_collection.return_value = mock_collection
+                                    mock_chroma.PersistentClient.return_value = mock_client
 
-                            from src.rag.enforcer import RAGEnforcer
+                                    from src.rag.enforcer import RAGEnforcer
 
-                            yield RAGEnforcer()
+                                    yield RAGEnforcer()
 
     def test_query_before_action_returns_lessons(self, enforcer):
         """Should return relevant lessons for action."""
@@ -162,18 +166,20 @@ class TestRecommendationLogic:
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch("src.rag.enforcer.DATA_DIR", Path(tmpdir)):
                 with patch("src.rag.enforcer.ENFORCEMENT_LOG", Path(tmpdir) / "log.json"):
-                    with patch("src.rag.enforcer.chromadb") as mock_chroma:
-                        mock_collection = MagicMock()
-                        mock_collection.count.return_value = 100
-                        mock_client = MagicMock()
-                        mock_client.get_collection.return_value = mock_collection
-                        mock_chroma.PersistentClient.return_value = mock_client
+                    with patch("src.rag.enforcer.CHROMADB_AVAILABLE", True):
+                        with patch("src.rag.enforcer.Settings", MagicMock()):
+                            with patch("src.rag.enforcer.chromadb") as mock_chroma:
+                                mock_collection = MagicMock()
+                                mock_collection.count.return_value = 100
+                                mock_client = MagicMock()
+                                mock_client.get_collection.return_value = mock_collection
+                                mock_chroma.PersistentClient.return_value = mock_client
 
-                        from src.rag.enforcer import RAGEnforcer
+                                from src.rag.enforcer import RAGEnforcer
 
-                        enforcer = RAGEnforcer()
-                        enforcer._collection = mock_collection
-                        yield enforcer, mock_collection
+                                enforcer = RAGEnforcer()
+                                enforcer._collection = mock_collection
+                                yield enforcer, mock_collection
 
     def test_proceed_when_no_blocking_lessons(self, enforcer_with_mocks):
         """Should recommend PROCEED when no blocking lessons."""

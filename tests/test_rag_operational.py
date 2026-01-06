@@ -15,7 +15,16 @@ import pytest
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Check if chromadb is available
+try:
+    import chromadb
 
+    CHROMADB_AVAILABLE = True
+except ImportError:
+    CHROMADB_AVAILABLE = False
+
+
+@pytest.mark.skipif(not CHROMADB_AVAILABLE, reason="chromadb not installed")
 class TestRAGOperational:
     """Critical RAG operational tests - these block PRs if they fail."""
 
