@@ -8,5 +8,37 @@
     "type": "market",
     "source": "immediate-trade workflow",
     "time": "16:02:26 UTC"
+  },
+  {
+    "symbol": "SPY",
+    "side": "buy",
+    "qty": 0.73,
+    "price": 684.93,
+    "notional": 499.99889999999994,
+    "strategy": "core_strategy",
+    "pnl": null,
+    "pnl_pct": null,
+    "order_id": null,
+    "timestamp": "2026-01-06T18:48:17.986087+00:00",
+    "metadata": {
+      "source": "test_sync",
+      "mode": "paper"
+    }
+  },
+  {
+    "symbol": "SPY",
+    "side": "buy",
+    "qty": 0.73,
+    "price": 684.93,
+    "notional": 499.99889999999994,
+    "strategy": "core_strategy",
+    "pnl": null,
+    "pnl_pct": null,
+    "order_id": null,
+    "timestamp": "2026-01-06T18:48:49.880301+00:00",
+    "metadata": {
+      "source": "test_sync",
+      "mode": "paper"
+    }
   }
 ]
