@@ -39,7 +39,7 @@ class LiveVsBacktestTracker:
             try:
                 with open(TRACKER_FILE) as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError) as e:
+            except (OSError, json.JSONDecodeError) as e:
                 logger.warning(f"Could not load tracker data: {e}")
 
         return {

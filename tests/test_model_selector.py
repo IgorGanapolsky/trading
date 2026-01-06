@@ -10,11 +10,10 @@ Tests evidence-based model routing (January 2026):
 """
 
 import os
-from datetime import date, datetime
+from datetime import date
 from unittest.mock import patch
 
 import pytest
-
 from src.utils.model_selector import (
     MODEL_REGISTRY,
     TASK_COMPLEXITY_MAP,

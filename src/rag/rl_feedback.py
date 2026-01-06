@@ -27,7 +27,7 @@ from __future__ import annotations
 import json
 import logging
 import random
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -366,7 +366,7 @@ class RLFeedbackLoop:
         """Get statistics for all tracked action types."""
         return {
             action_type.value: self.get_action_stats(action_type)
-            for action_type in self.action_params.keys()
+            for action_type in self.action_params
         }
 
     def analyze_feedback_patterns(self) -> dict[str, Any]:

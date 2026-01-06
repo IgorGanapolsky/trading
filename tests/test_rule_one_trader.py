@@ -6,11 +6,10 @@ Tests the trade execution integration for Phil Town Rule #1 investing:
 - record_trade() saves to JSON and RLHF storage
 """
 
-import json
-import pytest
 from datetime import datetime
-from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestRuleOneTraderConfig:
@@ -61,7 +60,7 @@ class TestGetTradingClient:
     def test_creates_client_with_credentials(self):
         """Should create client when credentials present."""
         try:
-            from alpaca.trading.client import TradingClient
+            from alpaca.trading.client import TradingClient  # noqa: F401
         except ImportError:
             pytest.skip("alpaca module not available in sandbox")
 
@@ -152,7 +151,7 @@ class TestRunRuleOneStrategy:
 
     def test_result_has_expected_structure(self):
         """Result should have expected keys."""
-        expected_keys = ["success"]
+        # Expected keys: "success"
         # Additional keys on success: "opportunities", "trades_executed", "analyses", "trades"
         # Additional keys on failure: "reason"
 
@@ -170,14 +169,14 @@ class TestAnalyzeStockIntegration:
         from src.strategies.rule_one_options import RuleOneOptionsStrategy
 
         assert hasattr(RuleOneOptionsStrategy, "analyze_stock")
-        assert callable(getattr(RuleOneOptionsStrategy, "analyze_stock"))
+        assert callable(RuleOneOptionsStrategy.analyze_stock)
 
     def test_analyze_stock_returns_dict_or_none(self):
         """analyze_stock should return dict with valuation or None."""
-        from src.strategies.rule_one_options import RuleOneOptionsStrategy
-
         # Check method signature accepts symbol string
         import inspect
+
+        from src.strategies.rule_one_options import RuleOneOptionsStrategy
 
         sig = inspect.signature(RuleOneOptionsStrategy.analyze_stock)
         params = list(sig.parameters.keys())
@@ -197,6 +196,7 @@ class TestExecutePhilTownCSP:
     def test_requires_client_and_analysis(self):
         """Function should require client, symbol, and analysis."""
         import inspect
+
         from scripts.rule_one_trader import execute_phil_town_csp
 
         sig = inspect.signature(execute_phil_town_csp)

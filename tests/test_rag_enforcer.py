@@ -1,6 +1,5 @@
 """Tests for RAG Enforcement System."""
 
-import json
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch

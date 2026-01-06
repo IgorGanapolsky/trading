@@ -8,7 +8,6 @@ Tests the fix for RAG blocking all trading due to CI/CD lessons matching
 import os
 import sys
 from dataclasses import dataclass
-from unittest.mock import MagicMock, patch
 
 import pytest
 

@@ -7,13 +7,9 @@ Validates reward scoring, persistence, cumulative tracking.
 """
 
 import json
-import tempfile
-from datetime import datetime
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from src.rag.process_rewards import (
     ActionStage,
     ProcessReward,
@@ -249,7 +245,7 @@ class TestAnswerGenerationRewards:
 
     def test_custom_outcome_quality(self, tracker):
         """Test providing custom outcome quality score."""
-        reward = tracker.record_answer_generation(
+        _reward = tracker.record_answer_generation(  # noqa: F841
             action_type="EXECUTE_TRADE",
             followed_advice=True,
             outcome="success",

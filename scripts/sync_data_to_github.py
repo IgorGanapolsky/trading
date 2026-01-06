@@ -17,11 +17,10 @@ import json
 import os
 import sys
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Optional
-import urllib.request
-import urllib.error
-
 
 GITHUB_API = "https://api.github.com"
 REPO_OWNER = "IgorGanapolsky"
@@ -241,7 +240,7 @@ def main():
     print("GitHub API Data Sync")
     print("=" * 60)
     print(f"Repository: {REPO_OWNER}/{REPO_NAME}")
-    print(f"Branch: main")
+    print("Branch: main")
     print(f"Max retries: {MAX_RETRIES}")
     print("=" * 60)
     print()

@@ -11,7 +11,7 @@ import pytest
 
 # Check if chromadb is available
 try:
-    import chromadb
+    import chromadb  # noqa: F401
 
     CHROMADB_AVAILABLE = True
 except ImportError:

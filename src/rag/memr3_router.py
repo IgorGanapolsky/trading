@@ -577,11 +577,11 @@ if __name__ == "__main__":
             print(f"  Gaps identified: {len(reflection['gaps_identified'])}")
 
         elif decision.action == RouterAction.ANSWER:
-            print(f"  Ready to answer!")
+            print("  Ready to answer!")
             break
 
         print()
 
-    print(f"\n=== Decision History ===")
+    print("\n=== Decision History ===")
     print(f"Total decisions: {len(router.get_decision_history())}")
     print(f"Final confidence: {router.tracker.get_confidence_score():.2f}")

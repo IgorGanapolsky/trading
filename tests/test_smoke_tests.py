@@ -10,7 +10,6 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from src.safety.pre_trade_smoke_test import SmokeTestResult, run_smoke_tests
 
 

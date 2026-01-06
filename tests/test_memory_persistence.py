@@ -11,19 +11,18 @@ Tests cover:
 """
 
 import json
-import pytest
-import tempfile
 import shutil
-from pathlib import Path
+import tempfile
 from datetime import datetime
-from unittest.mock import patch
+from pathlib import Path
 
+import pytest
 from src.rag.memory_persistence import (
-    MemoryStore,
     MemoryCategory,
     MemoryEntry,
+    MemoryStore,
     SessionState,
-    get_memory_store
+    get_memory_store,
 )
 
 
@@ -136,7 +135,7 @@ class TestMemoryStoreInitialization:
 
     def test_creates_directory_structure(self, temp_memory_dir):
         """Test that all category directories are created."""
-        store = MemoryStore(base_path=temp_memory_dir)
+        _store = MemoryStore(base_path=temp_memory_dir)  # noqa: F841
 
         base_path = Path(temp_memory_dir)
 

@@ -6,9 +6,10 @@ Created: Jan 6, 2026
 Coverage: Tests to verify technical indicators return floats, not Series
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -36,7 +37,7 @@ class TestTechnicalScoreCalculation:
             # Function returns (score, indicators_dict) tuple
             score, indicators = calculate_technical_score(data, symbol="SPY")
             # Should be able to format without error
-            formatted = f"{score:.2f}"
+            _formatted = f"{score:.2f}"  # noqa: F841
             assert isinstance(score, (int, float)), f"Score should be numeric, got {type(score)}"
             assert isinstance(indicators, dict), f"Indicators should be dict, got {type(indicators)}"
         except TypeError as e:

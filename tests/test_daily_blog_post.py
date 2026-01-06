@@ -6,13 +6,10 @@ Coverage for:
 - update_index_day_number() - index.md day number update
 """
 
-import json
 import tempfile
 from datetime import date
 from pathlib import Path
-from unittest.mock import patch, mock_open
-
-import pytest
+from unittest.mock import patch
 
 
 class TestCalculateDayNumber:
@@ -55,7 +52,7 @@ class TestUpdateIndexDayNumber:
 
     def test_update_index_day_number_changes_content(self):
         """Test that index.md day number is updated."""
-        from scripts.generate_daily_blog_post import update_index_day_number, DOCS_DIR
+        from scripts.generate_daily_blog_post import update_index_day_number
 
         # Create a temporary index.md
         with tempfile.TemporaryDirectory() as tmpdir:

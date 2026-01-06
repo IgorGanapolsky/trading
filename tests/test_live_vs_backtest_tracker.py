@@ -1,7 +1,5 @@
 """Tests for live vs backtest performance tracker."""
 
-import json
-import os
 import tempfile
 from pathlib import Path
 from unittest.mock import patch

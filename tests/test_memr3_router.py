@@ -17,11 +17,8 @@ Created: Jan 6, 2026
 
 import json
 import tempfile
-from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
-
-import pytest
 
 from src.rag.memr3_router import (
     Evidence,
@@ -509,7 +506,7 @@ class TestMemR3Router:
             "risk", "Risk management and position sizing are key", "source1"
         )
 
-        initial_gaps = len(router.tracker.gaps)
+        _initial_gaps = len(router.tracker.gaps)  # noqa: F841
         router.reflect("test query")
 
         # May still add gaps for other topics, but not all required ones
@@ -558,7 +555,7 @@ class TestMemR3Router:
             # Can't easily test file writing with mocked path,
             # but we can verify the method doesn't crash
             router = MemR3Router(rag_integration=MagicMock())
-            decision = router.route("test query")
+            _decision = router.route("test query")  # noqa: F841
             # If we got here without exception, logging worked
 
     def test_reflect_streak_increments_on_reflect(self):

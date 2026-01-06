@@ -1,7 +1,6 @@
 """Tests for Kelly Criterion position sizing."""
 
 import pytest
-
 from src.risk.kelly import kelly_fraction
 
 

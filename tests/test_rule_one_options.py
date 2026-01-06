@@ -6,9 +6,8 @@ Tests the Phil Town Rule #1 investment strategy including:
 - Error handling behavior
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
 from dataclasses import dataclass
+from unittest.mock import patch
 
 
 @dataclass
@@ -246,7 +245,7 @@ class TestRuleOneTraderErrorHandling:
 
         # This is the critical check - the method must exist
         assert hasattr(RuleOneOptionsStrategy, "analyze_stock")
-        assert callable(getattr(RuleOneOptionsStrategy, "analyze_stock"))
+        assert callable(RuleOneOptionsStrategy.analyze_stock)
 
 
 class TestRLHFTrajectoryStorage:
@@ -257,7 +256,7 @@ class TestRLHFTrajectoryStorage:
         from src.execution.alpaca_executor import AlpacaExecutor
 
         assert hasattr(AlpacaExecutor, "_store_rlhf_trajectory")
-        assert callable(getattr(AlpacaExecutor, "_store_rlhf_trajectory"))
+        assert callable(AlpacaExecutor._store_rlhf_trajectory)
 
     def test_rlhf_storage_function_exists(self):
         """store_trade_trajectory should be importable."""

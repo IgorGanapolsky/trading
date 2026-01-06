@@ -127,7 +127,7 @@ class ProcessRewardTracker:
                 )
 
                 logger.info(f"Loaded {len(self.rewards)} process rewards from disk")
-            except (json.JSONDecodeError, IOError, KeyError) as e:
+            except (OSError, json.JSONDecodeError, KeyError) as e:
                 logger.warning(f"Failed to load process rewards: {e}")
                 self._init_empty()
         else:

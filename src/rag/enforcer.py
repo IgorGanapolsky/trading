@@ -76,7 +76,7 @@ class RAGEnforcer:
             try:
                 with open(ENFORCEMENT_LOG) as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 pass
         return {
             "created": datetime.now(timezone.utc).isoformat(),

@@ -69,7 +69,7 @@ def find_put_option(symbol: str, target_strike: float, client) -> Optional[dict]
         from alpaca.trading.requests import GetOptionContractsRequest
 
         # Calculate target expiration (30 DTE)
-        target_date = datetime.now() + timedelta(days=CONFIG["target_dte"])
+        _target_date = datetime.now() + timedelta(days=CONFIG["target_dte"])  # noqa: F841
 
         request = GetOptionContractsRequest(
             underlying_symbols=[symbol],

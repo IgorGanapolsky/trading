@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Check if chromadb is available
 try:
-    import chromadb
+    import chromadb  # noqa: F401
 
     CHROMADB_AVAILABLE = True
 except ImportError:
