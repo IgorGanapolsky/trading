@@ -24,9 +24,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Mock dependencies before any src imports
-sys.modules["pydantic"] = MagicMock()
-sys.modules["pydantic_settings"] = MagicMock()
+# Note: Do NOT mock pydantic globally - alpaca-py requires it
+# Only mock specific components when needed in individual tests
 
 
 class TestAlpacaExecutorInitialization:
