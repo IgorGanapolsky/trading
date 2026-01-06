@@ -615,6 +615,361 @@ class TestPortfolioStatusFunction:
                 assert result == {}
 
 
+class TestReadinessQueryDetection:
+    """Tests for is_readiness_query() function."""
+
+    def test_is_readiness_query_detects_ready_keyword(self):
+        """Test that 'ready' queries are detected."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+
+        from src.agents.dialogflow_webhook import is_readiness_query
+
+        readiness_queries = [
+            "How ready are we for today's trade?",
+            "Are we ready to trade?",
+            "ready for trading",
+            "Is the system ready?",
+        ]
+
+        for query in readiness_queries:
+            assert is_readiness_query(query), f"Should detect as readiness query: '{query}'"
+
+    def test_is_readiness_query_detects_prepared_keyword(self):
+        """Test that 'prepared' queries are detected."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+
+        from src.agents.dialogflow_webhook import is_readiness_query
+
+        assert is_readiness_query("Are we prepared to trade?")
+        assert is_readiness_query("preparation status")
+
+    def test_is_readiness_query_detects_checklist_keywords(self):
+        """Test that checklist-related queries are detected."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+
+        from src.agents.dialogflow_webhook import is_readiness_query
+
+        assert is_readiness_query("pre-trade checklist")
+        assert is_readiness_query("status check")
+        assert is_readiness_query("preflight check")
+
+    def test_is_readiness_query_case_insensitive(self):
+        """Test that detection is case insensitive."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+
+        from src.agents.dialogflow_webhook import is_readiness_query
+
+        assert is_readiness_query("READY")
+        assert is_readiness_query("Ready")
+        assert is_readiness_query("STATUS CHECK")
+
+    def test_is_readiness_query_not_trade_query(self):
+        """Test that portfolio queries are NOT detected as readiness."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+
+        from src.agents.dialogflow_webhook import is_readiness_query
+
+        non_readiness_queries = [
+            "What's my portfolio?",
+            "Show me my balance",
+            "How much money did we make?",
+            "Show me recent trades",
+        ]
+
+        for query in non_readiness_queries:
+            assert not is_readiness_query(query), f"Should NOT detect as readiness query: '{query}'"
+
+
+class TestReadinessAssessment:
+    """Tests for assess_trading_readiness() function."""
+
+    def test_assess_trading_readiness_returns_dict(self):
+        """Test that function returns expected dictionary structure."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+
+        from src.agents.dialogflow_webhook import assess_trading_readiness
+
+        result = assess_trading_readiness()
+
+        assert isinstance(result, dict)
+        assert "status" in result
+        assert "emoji" in result
+        assert "score" in result
+        assert "max_score" in result
+        assert "readiness_pct" in result
+        assert "checks" in result
+        assert "warnings" in result
+        assert "blockers" in result
+        assert "timestamp" in result
+
+    def test_assess_trading_readiness_valid_status(self):
+        """Test that status is one of expected values."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+
+        from src.agents.dialogflow_webhook import assess_trading_readiness
+
+        result = assess_trading_readiness()
+
+        valid_statuses = ["READY", "NOT_READY", "CAUTION", "PARTIAL"]
+        assert result["status"] in valid_statuses
+
+    def test_assess_trading_readiness_valid_emoji(self):
+        """Test that emoji corresponds to status."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+
+        from src.agents.dialogflow_webhook import assess_trading_readiness
+
+        result = assess_trading_readiness()
+
+        # Emoji should match status
+        emoji_mapping = {
+            "READY": "🟢",
+            "NOT_READY": "🔴",
+            "CAUTION": "🟡",
+            "PARTIAL": "🟡",
+        }
+        expected_emoji = emoji_mapping[result["status"]]
+        assert result["emoji"] == expected_emoji
+
+    def test_assess_trading_readiness_score_bounds(self):
+        """Test that score is within bounds."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+
+        from src.agents.dialogflow_webhook import assess_trading_readiness
+
+        result = assess_trading_readiness()
+
+        assert result["score"] >= 0
+        assert result["score"] <= result["max_score"]
+        assert result["readiness_pct"] >= 0
+        assert result["readiness_pct"] <= 100
+
+    def test_assess_trading_readiness_lists_are_lists(self):
+        """Test that checks/warnings/blockers are lists."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+
+        from src.agents.dialogflow_webhook import assess_trading_readiness
+
+        result = assess_trading_readiness()
+
+        assert isinstance(result["checks"], list)
+        assert isinstance(result["warnings"], list)
+        assert isinstance(result["blockers"], list)
+
+
+class TestFormatReadinessResponse:
+    """Tests for format_readiness_response() function."""
+
+    def test_format_readiness_response_contains_status(self):
+        """Test that formatted response contains status."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+
+        from src.agents.dialogflow_webhook import format_readiness_response
+
+        assessment = {
+            "status": "READY",
+            "emoji": "🟢",
+            "score": 80,
+            "max_score": 100,
+            "readiness_pct": 80.0,
+            "checks": ["Market OPEN"],
+            "warnings": [],
+            "blockers": [],
+            "timestamp": "2026-01-06 06:15 AM ET",
+        }
+
+        result = format_readiness_response(assessment)
+
+        assert "TRADING READINESS: READY" in result
+        assert "🟢" in result
+        assert "80%" in result
+
+    def test_format_readiness_response_shows_blockers(self):
+        """Test that blockers are displayed."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+
+        from src.agents.dialogflow_webhook import format_readiness_response
+
+        assessment = {
+            "status": "NOT_READY",
+            "emoji": "🔴",
+            "score": 20,
+            "max_score": 100,
+            "readiness_pct": 20.0,
+            "checks": [],
+            "warnings": [],
+            "blockers": ["Market CLOSED - Weekend"],
+            "timestamp": "2026-01-06 06:15 AM ET",
+        }
+
+        result = format_readiness_response(assessment)
+
+        assert "BLOCKERS" in result
+        assert "Market CLOSED" in result
+        assert "Do NOT trade" in result
+
+    def test_format_readiness_response_shows_warnings(self):
+        """Test that warnings are displayed."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+
+        from src.agents.dialogflow_webhook import format_readiness_response
+
+        assessment = {
+            "status": "CAUTION",
+            "emoji": "🟡",
+            "score": 60,
+            "max_score": 100,
+            "readiness_pct": 60.0,
+            "checks": ["System state loaded"],
+            "warnings": ["Market opens in 30 minutes", "Live capital building"],
+            "blockers": [],
+            "timestamp": "2026-01-06 06:15 AM ET",
+        }
+
+        result = format_readiness_response(assessment)
+
+        assert "WARNINGS" in result
+        assert "Market opens" in result
+        assert "reduced position sizes" in result
+
+    def test_format_readiness_response_shows_checks(self):
+        """Test that passing checks are displayed."""
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+
+        from src.agents.dialogflow_webhook import format_readiness_response
+
+        assessment = {
+            "status": "READY",
+            "emoji": "🟢",
+            "score": 100,
+            "max_score": 100,
+            "readiness_pct": 100.0,
+            "checks": ["Market OPEN", "Win rate strong: 80%"],
+            "warnings": [],
+            "blockers": [],
+            "timestamp": "2026-01-06 06:15 AM ET",
+        }
+
+        result = format_readiness_response(assessment)
+
+        assert "PASSING" in result
+        assert "Market OPEN" in result
+        assert "All systems GO" in result
+
+
+class TestReadinessWebhookIntegration:
+    """Integration tests for readiness queries through webhook."""
+
+    @pytest.fixture
+    def mock_rag(self):
+        """Mock RAG system."""
+        with patch("src.agents.dialogflow_webhook.rag") as mock:
+            mock.lessons = []
+            mock.query.return_value = []
+            mock.get_critical_lessons.return_value = []
+            yield mock
+
+    def test_webhook_routes_readiness_query(self, mock_rag):
+        """Verify readiness queries are routed correctly."""
+        from fastapi.testclient import TestClient
+        from src.agents.dialogflow_webhook import app
+
+        client = TestClient(app)
+
+        response = client.post(
+            "/webhook",
+            json={"text": "How ready are we for today's trade?"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        text = data["fulfillmentResponse"]["messages"][0]["text"]["text"][0]
+
+        # Should return readiness assessment, not lessons or portfolio
+        assert "TRADING READINESS" in text
+        # Should NOT call RAG query for lessons
+        mock_rag.query.assert_not_called()
+
+    def test_webhook_readiness_takes_priority_over_trade(self, mock_rag):
+        """Verify readiness query takes priority over trade query."""
+        from fastapi.testclient import TestClient
+        from src.agents.dialogflow_webhook import app
+
+        client = TestClient(app)
+
+        # This query contains both "ready" and "trade" keywords
+        response = client.post(
+            "/webhook",
+            json={"text": "Are we ready to trade today?"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        text = data["fulfillmentResponse"]["messages"][0]["text"]["text"][0]
+
+        # Should return readiness assessment (priority)
+        assert "TRADING READINESS" in text
+
+    def test_test_readiness_endpoint(self, mock_rag):
+        """Verify /test-readiness endpoint works."""
+        from fastapi.testclient import TestClient
+        from src.agents.dialogflow_webhook import app
+
+        client = TestClient(app)
+
+        response = client.get("/test-readiness")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["query_type"] == "readiness"
+        assert "assessment" in data
+        assert "formatted_response" in data
+        assert "status" in data["assessment"]
+
+
 class TestDialogflowWebhookSmokeTests:
     """Smoke tests for webhook reliability."""
 
