@@ -1101,16 +1101,7 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 
-          # Pull latest changes to avoid conflicts
-          git pull --rebase origin main || {
-            echo "⚠️  Merge conflict detected - resolving..."
-            git checkout --ours data/
-            git add data/
-            git rebase --continue || echo "::warning::Rebase continue failed"
-          }
-
-          # Stage ALL trading data files (FIX: was only staging system_state.json)
-          # This ensures trade files and performance log are committed
+          # Stage ALL trading data files FIRST
           git add data/system_state.json data/performance_log.json data/trades_*.json 2>/dev/null || true
 
           # Check if there are changes to commit
@@ -1126,13 +1117,34 @@ jobs:
             exit 0
           }
 
-          # Push changes
-          git push origin main || {
-            echo "::warning::Push failed - may need manual sync"
-            exit 0
-          }
+          # Push with retry logic (handles concurrent updates)
+          MAX_RETRIES=3
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Push attempt $i/$MAX_RETRIES..."
 
-          echo "✅ Trading data committed and pushed"
+            # Fetch and rebase before push
+            git fetch origin main
+            git rebase origin/main || {
+              echo "Rebase conflict - using our data files"
+              git checkout --theirs data/ 2>/dev/null || true
+              git add data/
+              git rebase --continue 2>/dev/null || git rebase --abort
+              # Re-commit after abort
+              git add data/system_state.json data/performance_log.json data/trades_*.json 2>/dev/null || true
+              git commit -m "chore: Update trading data ($TODAY) [${{ github.run_id }}]" 2>/dev/null || true
+            }
+
+            if git push origin main; then
+              echo "✅ Trading data committed and pushed"
+              exit 0
+            fi
+
+            echo "Push failed, retrying in 5s..."
+            sleep 5
+          done
+
+          echo "::error::Failed to push trading data after $MAX_RETRIES attempts"
+          exit 1
 
       - name: Stop ADK service
         if: always()
