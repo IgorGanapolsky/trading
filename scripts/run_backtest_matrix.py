@@ -118,9 +118,7 @@ class BacktestResult:
                 "total_execution_cost": 0.0,
                 "cost_pct_of_capital": 0.0,
                 "cost_adjusted_total_return_pct": round(self.total_return_pct, 4),
-                "cost_adjusted_annualized_return_pct": round(
-                    self.annualized_return_pct, 4
-                ),
+                "cost_adjusted_annualized_return_pct": round(self.annualized_return_pct, 4),
                 "assumptions": {"fee_rate": 0.0018, "slippage_model_enabled": False},
             },
             "cost_adjusted_return_pct": round(self.total_return_pct, 4),
@@ -225,9 +223,7 @@ def calculate_rsi(prices: list[float], period: int = 14) -> float:
     return 100 - (100 / (1 + rs))
 
 
-def calculate_macd(
-    prices: list[float], fast: int = 12, slow: int = 26
-) -> tuple[float, float]:
+def calculate_macd(prices: list[float], fast: int = 12, slow: int = 26) -> tuple[float, float]:
     """Calculate MACD line and signal."""
     if len(prices) < slow + 9:
         return 0.0, 0.0
@@ -260,16 +256,12 @@ def generate_signal(prices: list[float], symbol: str) -> str:
 
     # Bullish conditions
     if histogram > 0 and rsi < 70:
-        if rsi < 30:
-            return "buy"
-        elif macd > signal:
+        if rsi < 30 or macd > signal:
             return "buy"
 
     # Bearish conditions
     if histogram < 0 and rsi > 30:
-        if rsi > 70:
-            return "sell"
-        elif macd < signal:
+        if rsi > 70 or macd < signal:
             return "sell"
 
     return "hold"
@@ -298,11 +290,11 @@ def run_backtest(scenario: dict[str, Any], defaults: dict[str, Any]) -> Backtest
     daily_allocation = scenario.get("daily_allocation", defaults.get("daily_allocation", 10.0))
     universe = scenario.get("etf_universe", defaults.get("etf_universe", ["SPY", "QQQ", "VOO"]))
 
-    logger.info(f"\n{'='*60}")
+    logger.info(f"\n{'=' * 60}")
     logger.info(f"Running: {label}")
     logger.info(f"Period: {start_date} to {end_date}")
     logger.info(f"Universe: {', '.join(universe)}")
-    logger.info(f"{'='*60}")
+    logger.info(f"{'=' * 60}")
 
     # Fetch historical data
     price_data = fetch_historical_data(universe, start_date, end_date)
@@ -380,7 +372,9 @@ def run_backtest(scenario: dict[str, Any], defaults: dict[str, Any]) -> Backtest
                 del positions[symbol]
 
         # Calculate daily return
-        day_return = (capital - day_capital_start) / day_capital_start if day_capital_start > 0 else 0
+        day_return = (
+            (capital - day_capital_start) / day_capital_start if day_capital_start > 0 else 0
+        )
         daily_returns.append(day_return)
 
         # Track peak for drawdown
