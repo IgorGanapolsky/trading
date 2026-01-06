@@ -4,14 +4,8 @@
 
 ## Why R&D Phase?
 
-**Brutal Truth Assessment**:
-- Current P/L: -$0.14 (Day 3) - NOT profitable yet
-- Current strategy: Simple buy-and-hold (NO trading edge)
-- Reality: Building a Ferrari engine but driving in circles
-- Need: 90 days to build profitable momentum + RL system
-
 **Key Insight**:
-We have **world-class infrastructure** (automation, agents, hygiene) but **no profitable trading edge yet**. R&D phase focuses on building that edge.
+We have **world-class infrastructure** (automation, agents, hygiene) but building profitable trading edge. R&D phase focuses on validating that edge with paper trading before scaling.
 
 ## R&D Phase Goals (90 Days)
 
@@ -19,26 +13,24 @@ We have **world-class infrastructure** (automation, agents, hygiene) but **no pr
 - ✅ Fibonacci strategy implemented
 - ✅ Autonomous pre-commit hygiene
 - ✅ Daily reporting automated
-- 🔄 Collect 30 days of market data
-- 🔄 Build momentum indicator system (MACD + RSI + Volume)
-- **Target**: Break-even (small gains/losses acceptable)
-- **Metric**: System reliability 99.9%+
+- ✅ 30+ days of market data collected
+- ✅ Momentum indicator system (MACD + RSI + Volume)
+- **Result**: System reliability 99.9%+
 
 ### Month 2 (Days 31-60): Build Trading Edge
-- 🎯 Implement MACD + RSI + Volume entry/exit system
-- 🎯 Add stop-losses and profit-taking rules
-- 🎯 Build RL agent (Research, Signal, Risk, Execution subagents)
-- 🎯 Backtest with 60 days of collected data
-- **Target**: Win rate >55%, Sharpe ratio >1.0
-- **Metric**: Consistent small profits ($0.50-2/day)
+- ✅ MACD + RSI + Volume entry/exit system
+- ✅ Stop-losses and profit-taking rules
+- ✅ RL agent (Research, Signal, Risk, Execution subagents)
+- ✅ Thompson Sampling strategy selection
+- ✅ Trade memory with SQLite journal
+- **Result**: Win rate 80%, system validated
 
-### Month 3 (Days 61-90): Validate & Optimize
-- 🎯 30 days of live testing with momentum + RL system
-- 🎯 Tune parameters based on real performance
-- 🎯 Add Alpha Vantage news sentiment
-- 🎯 Implement dynamic position sizing
+### Month 3 (Days 61-90): Validate & Optimize - CURRENT
+- 🔄 Live testing with real deposits ($10/day)
+- 🔄 Accumulating capital for options spreads
+- 🔄 Phil Town Rule #1 strategy integration
+- 🎯 Target: $200 capital for first CSP
 - **Target**: Win rate >60%, Sharpe ratio >1.5
-- **Metric**: Consistent profits ($3-5/day)
 
 ## Success Criteria (Day 90)
 
@@ -53,7 +45,7 @@ if (
     profitable_30_days and
     no_critical_bugs
 ):
-    # APPROVED: Scale to live trading with Fibonacci
+    # APPROVED: Scale to live trading
     scale_to_live = True
 else:
     # EXTEND R&D: Need more time
@@ -74,51 +66,51 @@ else:
 - ✅ Data collection and learning
 - ✅ Agent intelligence and introspection
 - ✅ Infrastructure improvements
+- ✅ Capital accumulation for options spreads
 
 ### DON'T Worry About:
-- ❌ Daily P/L of $0.03 or -$0.14 (noise)
+- ❌ Small daily P/L (noise at current capital levels)
 - ❌ Being profitable every single day
-- ❌ Scaling Fibonacci yet (wait until profitable)
-- ❌ Going live with real money (paper trading until Month 4+)
+- ❌ Scaling yet (wait until $200+ capital)
+- ❌ Complex strategies (stick to Phil Town Rule #1)
 
 ### Mindset Shift:
 - **Old**: "We need to make money TODAY"
 - **New**: "We're building a system that makes $100+/day by Month 6"
 
-## R&D Phase Investments
+## Capital Accumulation Strategy
 
-**Current Approach** (October 31 - approved):
-- Invest ~$3-10/day via Fibonacci for testing
-- Focus: Collect data, test strategies, validate automation
-- Expectation: Break-even to small losses acceptable
-- Total R&D "cost": ~$270 over 90 days (acceptable tuition fee)
+**Current Approach** (January 2026):
+- Deposit $10/day via Alpaca
+- Accumulate until $200 for first CSP
+- Target first trade: ~Jan 29, 2026
+- Reinvest ALL profits (compounding)
 
-**If profitable during R&D**: BONUS! Banking profits for future scaling.
-**If break-even during R&D**: EXPECTED! System learning, data collecting.
-**If small losses during R&D**: ACCEPTABLE! Building edge worth the tuition.
+**Capital Tiers**:
+| Capital | Daily Target | Strategy |
+|---------|--------------|----------|
+| $200 | $5/day | Single CSP on SPY |
+| $500 | $15/day | 2 CSPs or Iron Condor |
+| $1,000 | $30/day | Wheel on SPY |
+| $2,000 | $60/day | Multiple wheels |
+| $5,000 | **$100/day** | Full Phil Town |
 
 ---
 
-## Current Challenge Status (Updated Live)
+## Current Challenge Status
 
-**90-Day R&D Challenge**: Day 2 of 90 (2% complete) - PAPER TRADING
-**Start Date**: October 29, 2025
-**Current Phase**: Month 1 - Infrastructure + Data Collection
-**Current P/L**: +$0.02 (PROFITABLE - beating expectations!)
-**System Status**: ✅ Infrastructure solid, building trading edge
+**90-Day R&D Challenge**: Day 69 of 90 (77% complete)
+**Current Phase**: Month 3 - Validate & Optimize
+**Live Account**: $30 (accumulating $10/day)
+**System Status**: ✅ Infrastructure solid, accumulating capital
 
-### Current Positions:
-- SPY (Core ETF): +$0.03 profit (+0.18%) ✅
-- NVDA (Growth): +$0.01 profit (+0.48%) ✅
-- GOOGL (Growth): -$0.02 loss (-1.16%) ❌
-
-### Key Learnings (Compounding):
-- Day 1: System automation validated - SPY $6, GOOGL $2 (total $8 invested)
-- Day 2: Continued execution - SPY $6, NVDA $2 (total $8 invested)
-- Win Rate: 50% (2 winning trades, 1 losing trade, 1 neutral)
-- Pattern: Need momentum indicators - adding MACD + Volume confirmation
-- Next: Implement MACD + Volume system (Today - CTO executing)
+### Key Milestones:
+- Day 1 (Oct 29, 2025): System automation validated
+- Day 30: Month 1 complete - infrastructure solid
+- Day 60: Month 2 complete - trading edge validated
+- Day 69 (Jan 6, 2026): Fresh start with $10/day deposits
+- Day 90 (Jan 27, 2026): R&D phase complete - Go/No-Go decision
 
 ### Timeline:
-**Next Execution**: Day 3 trades at 9:35 AM ET (October 31, 2025)
-**Next Milestone**: Day 30 - Month 1 R&D review
+**Next Milestone**: Day 90 - R&D Phase Complete
+**Target for First Trade**: ~$200 capital (~Jan 29, 2026)

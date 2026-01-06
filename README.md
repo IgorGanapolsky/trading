@@ -2,13 +2,13 @@
 
 [![Win Rate](https://img.shields.io/badge/win_rate-80%25-brightgreen.svg)](docs/r-and-d-phase.md)
 [![Status](https://img.shields.io/badge/status-live_trading-green.svg)](docs/r-and-d-phase.md)
-[![Day](https://img.shields.io/badge/day-70%2F90-blue.svg)](docs/r-and-d-phase.md)
+[![Day](https://img.shields.io/badge/day-69%2F90-blue.svg)](docs/r-and-d-phase.md)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](requirements.txt)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Open-source AI-powered trading system** using options premium selling and Thompson Sampling strategy selection. Built with Python and Alpaca API.
 
-> **Current Status**: Day 70/90 R&D Phase | Live: $30 (accumulating) | Paper: $101,084 (+1.08%) | 80% win rate
+> **Current Status**: Day 69/90 R&D Phase | Live: $30 (accumulating) | 80% win rate
 
 ---
 
@@ -27,7 +27,7 @@ Most trading bots fail because they:
 
 ---
 
-## Current Performance (Day 70/90)
+## Current Performance (Day 69/90)
 
 | Account | Equity | P/L | Status |
 |---------|--------|-----|--------|
@@ -163,7 +163,7 @@ python3 scripts/daily_verification.py
 | **GitHub Pages Blog** | [igorganapolsky.github.io/trading](https://igorganapolsky.github.io/trading/) | Daily trading reports, lessons learned |
 | **Dev.to** | [@igorganapolsky](https://dev.to/igorganapolsky) | AI trading insights, tutorials |
 | **Daily Reports** | [/reports/](https://igorganapolsky.github.io/trading/reports/) | Transparent P/L tracking |
-| **Lessons Learned** | [/lessons/](https://igorganapolsky.github.io/trading/lessons/) | 66+ documented lessons |
+| **Lessons Learned** | [/lessons/](https://igorganapolsky.github.io/trading/lessons/) | 101+ documented lessons |
 
 ---
 

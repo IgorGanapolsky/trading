@@ -21,24 +21,18 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-# Psychology integration
-try:
-    # Module removed - commenting out broken import
-    # from src.coaching.mental_toughness_coach import get_position_size_modifier
-    # from src.coaching.mental_toughness_coach import (
-    #     get_prompt_context as get_psychology_context,
-    # )
-    raise ImportError("mental_toughness_coach module not available")
+# Psychology integration - module removed, using stub implementations
+PSYCHOLOGY_AVAILABLE = False
 
-    PSYCHOLOGY_AVAILABLE = True
-except ImportError:
-    PSYCHOLOGY_AVAILABLE = False
 
-    def get_psychology_context() -> str:
-        return ""
+def get_psychology_context() -> str:
+    """Stub: Psychology context not available."""
+    return ""
 
-    def get_position_size_modifier() -> float:
-        return 1.0
+
+def get_position_size_modifier() -> float:
+    """Stub: Psychology modifier not available, return neutral."""
+    return 1.0
 
 
 @dataclass

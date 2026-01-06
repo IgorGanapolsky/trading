@@ -15,13 +15,8 @@ from typing import Any, Literal
 
 from src.rag.sentiment_store import SentimentRAGStore
 
-# Optional LangChain agent - may have been removed in cleanup
-try:
-    # Module removed - commenting out broken import
-    # from src.langchain_agents.analyst import LangChainSentimentAgent
-    raise ImportError("langchain_agents.analyst module not available")
-except ImportError:
-    LangChainSentimentAgent = None  # type: ignore[misc, assignment]
+# LangChain agent removed - not available
+LangChainSentimentAgent = None  # type: ignore[misc, assignment]
 
 logger = logging.getLogger(__name__)
 

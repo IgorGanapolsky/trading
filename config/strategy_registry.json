@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-12-03T11:46:08.249062",
+  "last_updated": "2026-01-06T21:15:00.000000",
   "strategies": {
     "core_momentum": {
       "name": "core_momentum",
@@ -30,35 +30,6 @@
         "daily"
       ]
     },
-    "options_theta": {
-      "name": "options_theta",
-      "description": "Options premium capture via theta decay",
-      "status": "experimental",
-      "asset_class": "options",
-      "metrics": {
-        "sharpe_ratio": 0.0,
-        "max_drawdown": 0.0,
-        "win_rate": 0.0,
-        "avg_daily_pnl": 0.0,
-        "total_return_pct": 0.0,
-        "total_trades": 0,
-        "backtest_date": "",
-        "backtest_period": "",
-        "hit_rate_100_day": 0.0
-      },
-      "config": {},
-      "version": "1.0.0",
-      "author": "Trading System",
-      "created_date": "2025-12-03",
-      "last_modified": "2025-12-03",
-      "source_file": "src/strategies/options_strategy.py",
-      "dependencies": [],
-      "tags": [
-        "options",
-        "theta",
-        "income"
-      ]
-    },
     "rule_one_options": {
       "name": "rule_one_options",
       "description": "Phil Town Rule #1 options strategy for value investing",
@@ -86,64 +57,6 @@
         "options",
         "value",
         "rule1"
-      ]
-    },
-    "growth_portfolio": {
-      "name": "growth_portfolio",
-      "description": "Growth-focused equity portfolio strategy",
-      "status": "experimental",
-      "asset_class": "equity",
-      "metrics": {
-        "sharpe_ratio": 0.0,
-        "max_drawdown": 0.0,
-        "win_rate": 0.0,
-        "avg_daily_pnl": 0.0,
-        "total_return_pct": 0.0,
-        "total_trades": 0,
-        "backtest_date": "",
-        "backtest_period": "",
-        "hit_rate_100_day": 0.0
-      },
-      "config": {},
-      "version": "1.0.0",
-      "author": "Trading System",
-      "created_date": "2025-12-03",
-      "last_modified": "2025-12-03",
-      "source_file": "src/strategies/growth_strategy.py",
-      "dependencies": [],
-      "tags": [
-        "growth",
-        "equity",
-        "long-term"
-      ]
-    },
-    "treasury_ladder": {
-      "name": "treasury_ladder",
-      "description": "Treasury ladder for stable income",
-      "status": "experimental",
-      "asset_class": "equity",
-      "metrics": {
-        "sharpe_ratio": 0.0,
-        "max_drawdown": 0.0,
-        "win_rate": 0.0,
-        "avg_daily_pnl": 0.0,
-        "total_return_pct": 0.0,
-        "total_trades": 0,
-        "backtest_date": "",
-        "backtest_period": "",
-        "hit_rate_100_day": 0.0
-      },
-      "config": {},
-      "version": "1.0.0",
-      "author": "Trading System",
-      "created_date": "2025-12-03",
-      "last_modified": "2025-12-03",
-      "source_file": "src/strategies/treasury_ladder_strategy.py",
-      "dependencies": [],
-      "tags": [
-        "fixed-income",
-        "treasury",
-        "stable"
       ]
     },
     "reit_smart_income": {
@@ -184,10 +97,10 @@
         "real-estate"
       ]
     },
-    "precious_metals": {
-      "name": "precious_metals",
-      "description": "Precious metals ETF strategy (GLD/SLV) with regime-based allocation for inflation hedging and diversification",
-      "status": "paper_trading",
+    "legacy_momentum": {
+      "name": "legacy_momentum",
+      "description": "Legacy momentum strategy (deprecated, for reference only)",
+      "status": "deprecated",
       "asset_class": "equity",
       "metrics": {
         "sharpe_ratio": 0.0,
@@ -200,28 +113,17 @@
         "backtest_period": "",
         "hit_rate_100_day": 0.0
       },
-      "config": {
-        "daily_allocation": 5.0,
-        "base_gold_weight": 0.70,
-        "base_silver_weight": 0.30,
-        "gsr_high_threshold": 85.0,
-        "gsr_low_threshold": 70.0
-      },
+      "config": {},
       "version": "1.0.0",
       "author": "Trading System",
-      "created_date": "2025-12-12",
-      "last_modified": "2025-12-12",
-      "source_file": "src/strategies/precious_metals_strategy.py",
-      "dependencies": [
-        "AlpacaTrader"
-      ],
+      "created_date": "2025-12-03",
+      "last_modified": "2026-01-06",
+      "source_file": "src/strategies/legacy_momentum.py",
+      "dependencies": [],
       "tags": [
-        "commodity",
-        "gold",
-        "silver",
-        "inflation-hedge",
-        "diversification",
-        "safe-haven"
+        "legacy",
+        "momentum",
+        "deprecated"
       ]
     }
   }
