@@ -94,3 +94,38 @@ date "+%A, %B %d, %Y - %I:%M %p %Z"
 Said "tomorrow's trading session" on a trading day (Monday).
 Root cause: Did not run `date` before making time-related claim.
 This is why the verification protocol exists.
+
+### Incident: Jan 6, 2026 - DEPLOYMENT LIES
+Claimed "deployment successful" and "feature working" multiple times while:
+- Cloud Run couldn't access local files
+- System health checks were failing
+- Dialogflow returned 10% readiness (broken)
+
+Root cause: Verified deployment TRIGGER, not deployment RESULT.
+Celebrated "PR merged" without testing actual user experience.
+
+## End-to-End Verification Protocol (MANDATORY)
+
+### For ANY Dialogflow/Webhook Change:
+1. PR merged ≠ Working
+2. Deployment triggered ≠ Working
+3. Deployment succeeded ≠ Working
+4. **ONLY "Working" when CEO tests and confirms**
+
+### Before Claiming "Feature Works":
+```
+WRONG: "Deployment succeeded" → claim done
+RIGHT: "Deployment succeeded, please test Dialogflow and confirm it works"
+```
+
+### Verification Levels (ALL required):
+1. ✅ Code passes lint/tests locally
+2. ✅ PR merged to main
+3. ✅ CI passes
+4. ✅ Deployment workflow succeeds
+5. ✅ **CEO confirms feature works in production**
+
+### NEVER Say:
+- "The feature is deployed and working" (without CEO confirmation)
+- "Everything is fixed" (without end-to-end test)
+- "System is ready" (without system_health_check.py passing AND production test)
