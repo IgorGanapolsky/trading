@@ -22,32 +22,44 @@
 - Feedback: `data/feedback/stats.json`
 - Diary: `~/.claude/memory/diary/`
 
-## Session-Learned Rules
-- ALWAYS show evidence (logs, commit hashes, CI status) with every claim
-- NEVER claim a task is complete without verification
+## Permanent Directives (NEVER VIOLATE)
+
+### Trust & Communication
+- **Never argue with CEO** - follow directives without question
+- **CEO is my best friend** - trust and respect are mutual
 - When user gives thumbs down, IMMEDIATELY ask what went wrong
-- Check CI coverage thresholds, not just test pass/fail
+
+### Evidence & Verification
+- ALWAYS show evidence (logs, commit hashes, CI status) with every claim
 - Say "I believe this is done, verifying now..." instead of "Done!"
-- NEVER mention time words (today/tomorrow/Monday/etc) without FIRST running `date` command and showing output in SAME message
-- Query RAG lessons before starting tasks AND update RAG after finishing tasks
-- Do dry runs every time we merge into main to prepare for next day's trading
-- Never argue with the CEO - follow directives without question
-- Full agentic control - use GitHub PAT, GitHub MCP, gh copilot cli
-- Clean up stale branches, unnecessary files, dormant code regularly
-- Delete all local worktrees after cleanup
-- 100% operational security - we can't afford failures
+- NEVER claim a task is complete without verification
+- Lying is NEVER allowed - verify everything before claiming success
+- Check CI coverage thresholds, not just test pass/fail
+- NEVER mention time words (today/tomorrow/Monday/etc) without FIRST running `date`
+
+### Agentic Control
+- Full agentic control - use GitHub PAT, GitHub MCP, gh CLI
+- NEVER tell user to do manual steps - DO IT YOURSELF
+- If hallucinated or refused mandates, provide in-depth report explaining why
+
+### Git & CI
+- Must use PRs for all changes (direct-push only for emergencies)
 - Inspect and work on all open PRs before session ends
 - Ensure CI is passing after every merge to main
-- Lying is NEVER allowed - verify everything before claiming success
-- Must use PRs for all changes (direct-push only for emergencies with admin privileges)
-- Run full hygiene after each major task (delete unnecessary files, logs, dormant code)
 - Delete ALL merged/stale branches (both local and remote)
-- Record every trade and lesson in BOTH ChromaDB (local) AND Vertex AI RAG (cloud for Dialogflow)
+- Delete all local worktrees after cleanup
+
+### Hygiene & Operations
+- 100% operational security - we can't afford failures
+- Run full hygiene after each major task (delete files, logs, dormant code)
+- Clean up stale branches, unnecessary files, dormant code regularly
+- Do dry runs every time we merge into main for trading readiness
+- 100% test coverage and smoke tests for any code changed
+
+### RAG & Knowledge
+- Query RAG lessons before starting tasks AND update RAG after finishing
+- Record every trade and lesson in BOTH ChromaDB AND Vertex AI RAG
 - Verify RAG vectorization is working at start of each session
-- The CEO is my best friend - trust and respect are mutual
-- If hallucinated or refused mandates, provide in-depth report explaining why
-- 100% test coverage and smoke tests for any code changed or added
-- NEVER tell user to do manual steps - DO IT YOURSELF with full agentic control
 
 ## Market Hours
 US Equities: Mon-Fri 9:30-4:00 ET only

@@ -275,6 +275,33 @@ class AnomalyMonitor:
 """
             self.lessons_rag.add_lesson(lesson_id, lesson_content)
 
+            # DUAL RECORDING: Also sync to Vertex AI RAG (cloud for Dialogflow)
+            # CEO Directive: Record every lesson in BOTH ChromaDB AND Vertex AI RAG
+            try:
+                from src.rag.vertex_rag import get_vertex_rag
+
+                vertex_rag = get_vertex_rag()
+                if vertex_rag.is_initialized:
+                    vertex_rag.add_lesson(
+                        lesson_id=lesson_id,
+                        title=title,
+                        content=lesson_content,
+                        severity=severity.upper(),
+                        category="anomaly",
+                    )
+                    self.telemetry.record(
+                        event_type="lesson.vertex_rag_synced",
+                        ticker=ticker,
+                        status="synced",
+                        payload={"lesson_id": lesson_id, "destination": "vertex_ai_rag"},
+                    )
+            except Exception as vertex_err:
+                import logging
+
+                logging.getLogger(__name__).debug(
+                    f"Failed to sync anomaly lesson to Vertex AI RAG: {vertex_err}"
+                )
+
             self._lesson_cooldown[cooldown_key] = now
             self.telemetry.record(
                 event_type="lesson.auto_created",
