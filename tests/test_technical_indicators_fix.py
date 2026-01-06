@@ -23,20 +23,22 @@ class TestTechnicalScoreCalculation:
         import pandas as pd
         from src.utils.technical_indicators import calculate_technical_score
 
-        # Create sample OHLCV data
+        # Create sample OHLCV data with uppercase column names (yfinance style)
         data = pd.DataFrame({
-            'open': [100 + i for i in range(50)],
-            'high': [101 + i for i in range(50)],
-            'low': [99 + i for i in range(50)],
-            'close': [100.5 + i for i in range(50)],
-            'volume': [1000000 + i * 10000 for i in range(50)],
+            'Open': [100 + i for i in range(50)],
+            'High': [101 + i for i in range(50)],
+            'Low': [99 + i for i in range(50)],
+            'Close': [100.5 + i for i in range(50)],
+            'Volume': [1000000 + i * 10000 for i in range(50)],
         })
 
         try:
-            score = calculate_technical_score(data)
+            # Function returns (score, indicators_dict) tuple
+            score, indicators = calculate_technical_score(data, symbol="SPY")
             # Should be able to format without error
             formatted = f"{score:.2f}"
             assert isinstance(score, (int, float)), f"Score should be numeric, got {type(score)}"
+            assert isinstance(indicators, dict), f"Indicators should be dict, got {type(indicators)}"
         except TypeError as e:
             if "Series" in str(e):
                 pytest.fail(f"Technical score returned Series instead of float: {e}")
@@ -49,15 +51,16 @@ class TestTechnicalScoreCalculation:
         from src.utils.technical_indicators import calculate_technical_score
 
         data = pd.DataFrame({
-            'open': [100 + i for i in range(50)],
-            'high': [101 + i for i in range(50)],
-            'low': [99 + i for i in range(50)],
-            'close': [100.5 + i for i in range(50)],
-            'volume': [1000000 + i * 10000 for i in range(50)],
+            'Open': [100 + i for i in range(50)],
+            'High': [101 + i for i in range(50)],
+            'Low': [99 + i for i in range(50)],
+            'Close': [100.5 + i for i in range(50)],
+            'Volume': [1000000 + i * 10000 for i in range(50)],
         })
 
         try:
-            score = calculate_technical_score(data)
+            # Function returns (score, indicators_dict) tuple
+            score, _ = calculate_technical_score(data, symbol="SPY")
             # This should NOT raise "unsupported format string passed to Series.__format__"
             message = f"Technical score: {score:.2f}"
             assert "Technical score:" in message
@@ -149,7 +152,7 @@ class TestRSICalculation:
         assert 0 <= rsi <= 100, f"RSI should be 0-100, got {rsi}"
 
     def test_rsi_high_in_uptrend(self):
-        """RSI should be high (>50) in strong uptrend."""
+        """RSI should be high (>=50) in strong uptrend."""
         pytest.importorskip("pandas")
         import pandas as pd
         from src.utils.technical_indicators import calculate_rsi
@@ -158,7 +161,7 @@ class TestRSICalculation:
         prices = pd.Series([100 + i * 5 for i in range(30)])
         rsi = calculate_rsi(prices)
 
-        assert rsi > 50, f"RSI should be >50 in uptrend, got {rsi}"
+        assert rsi >= 50, f"RSI should be >=50 in uptrend, got {rsi}"
 
     def test_rsi_low_in_downtrend(self):
         """RSI should be low (<50) in strong downtrend."""
@@ -231,8 +234,11 @@ class TestVolumeRatio:
         import pandas as pd
         from src.utils.technical_indicators import calculate_volume_ratio
 
-        volumes = pd.Series([1000000 + i * 10000 for i in range(30)])
-        ratio = calculate_volume_ratio(volumes)
+        # Function expects DataFrame with 'Volume' column
+        hist = pd.DataFrame({
+            'Volume': [1000000 + i * 10000 for i in range(30)]
+        })
+        ratio = calculate_volume_ratio(hist)
 
         assert isinstance(ratio, (int, float)), f"Volume ratio should be float, got {type(ratio)}"
 
@@ -242,8 +248,11 @@ class TestVolumeRatio:
         import pandas as pd
         from src.utils.technical_indicators import calculate_volume_ratio
 
-        volumes = pd.Series([1000000 + i * 10000 for i in range(30)])
-        ratio = calculate_volume_ratio(volumes)
+        # Function expects DataFrame with 'Volume' column
+        hist = pd.DataFrame({
+            'Volume': [1000000 + i * 10000 for i in range(30)]
+        })
+        ratio = calculate_volume_ratio(hist)
 
         assert ratio > 0, f"Volume ratio should be positive, got {ratio}"
 

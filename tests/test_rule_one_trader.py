@@ -57,22 +57,23 @@ class TestGetTradingClient:
         client = get_trading_client()
         assert client is None
 
-    @patch("alpaca.trading.client.TradingClient")
     @patch.dict("os.environ", {"ALPACA_API_KEY": "test", "ALPACA_SECRET_KEY": "test"})
-    def test_creates_client_with_credentials(self, mock_client_class):
+    def test_creates_client_with_credentials(self):
         """Should create client when credentials present."""
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-
-        from scripts.rule_one_trader import get_trading_client
-
         try:
+            from alpaca.trading.client import TradingClient
+        except ImportError:
+            pytest.skip("alpaca module not available in sandbox")
+
+        with patch("alpaca.trading.client.TradingClient") as mock_client_class:
+            mock_client = MagicMock()
+            mock_client_class.return_value = mock_client
+
+            from scripts.rule_one_trader import get_trading_client
+
             client = get_trading_client()
             # Either returns mock client or None if alpaca not installed
             assert client is not None or mock_client_class.called
-        except ImportError:
-            # Alpaca not installed in test env - that's OK
-            pass
 
 
 class TestRecordTrade:

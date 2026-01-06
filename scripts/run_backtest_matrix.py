@@ -37,6 +37,10 @@ PROJECT_ROOT = Path(__file__).parent.parent
 CONFIG_PATH = PROJECT_ROOT / "config" / "backtest_scenarios.yaml"
 OUTPUT_DIR = PROJECT_ROOT / "data" / "backtests"
 
+# Default survival gate threshold (95% capital preservation required)
+# As per lesson LL-016: backtest must enforce survival gate
+DEFAULT_SURVIVAL_GATE = 0.95  # 95% capital preservation threshold
+
 # Try to import yfinance for historical data
 try:
     import yfinance as yf

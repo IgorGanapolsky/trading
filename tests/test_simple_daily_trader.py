@@ -68,10 +68,12 @@ class TestShouldOpenPosition:
             {"symbol": "SPY260123P00660000"},  # Option
         ]
 
+        # Cash-secured puts require: strike_estimate * 100
+        # For SPY ~$600, strike ~$570, required_bp = $57,000
         mock_account.return_value = {
             "equity": 100000,
-            "cash": 50000,
-            "buying_power": 10000,
+            "cash": 70000,
+            "buying_power": 60000,  # Must be >= $57,000 for CSP
         }
 
         mock_client = MagicMock()
