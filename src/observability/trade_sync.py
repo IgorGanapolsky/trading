@@ -205,13 +205,14 @@ class TradeSync:
             import uuid
 
             # Create a searchable document from the trade
-            pnl = trade_data.get("pnl", 0) or 0
+            pnl = trade_data.get("pnl") or 0
+            pnl_pct = trade_data.get("pnl_pct") or 0
             outcome = "profitable" if pnl > 0 else ("loss" if pnl < 0 else "breakeven")
 
             document = (
                 f"Trade: {trade_data['side'].upper()} {trade_data['qty']} {trade_data['symbol']} "
                 f"at ${trade_data['price']:.2f} using {trade_data['strategy']} strategy. "
-                f"Outcome: {outcome} with P/L ${pnl:.2f} ({trade_data.get('pnl_pct', 0):.2f}%). "
+                f"Outcome: {outcome} with P/L ${pnl:.2f} ({pnl_pct:.2f}%). "
                 f"Date: {trade_data['timestamp'][:10]}"
             )
 

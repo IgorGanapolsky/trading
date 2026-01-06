@@ -149,6 +149,53 @@ class TestSyncToChromaDB:
         )
         assert result is False
 
+    def test_sync_to_chromadb_with_none_pnl(self):
+        """Should handle None pnl and pnl_pct without crashing (bug fix Jan 6, 2026)."""
+        from src.observability.trade_sync import TradeSync
+
+        sync = TradeSync()
+
+        if sync._chromadb_collection:
+            # This test verifies the bug fix for: "unsupported format string passed to NoneType.__format__"
+            # When pnl or pnl_pct is None (not just missing), the format string would fail.
+            result = sync._sync_to_chromadb(
+                {
+                    "symbol": "SPY",
+                    "side": "buy",
+                    "qty": 0.73,
+                    "price": 684.93,
+                    "strategy": "core_strategy",
+                    "pnl": None,  # Explicitly None, not missing
+                    "pnl_pct": None,  # Explicitly None, not missing
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+            assert result is True
+        else:
+            pytest.skip("ChromaDB not available")
+
+    def test_sync_to_chromadb_with_missing_pnl(self):
+        """Should handle missing pnl keys gracefully."""
+        from src.observability.trade_sync import TradeSync
+
+        sync = TradeSync()
+
+        if sync._chromadb_collection:
+            result = sync._sync_to_chromadb(
+                {
+                    "symbol": "QQQ",
+                    "side": "buy",
+                    "qty": 1.5,
+                    "price": 520.0,
+                    "strategy": "momentum",
+                    # pnl and pnl_pct keys are completely absent
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+            assert result is True
+        else:
+            pytest.skip("ChromaDB not available")
+
 
 class TestSyncToLocalJSON:
     """Test local JSON sync functionality."""
