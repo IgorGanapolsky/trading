@@ -2,6 +2,30 @@
 
 **CTO**: Claude | **CEO**: Igor Ganapolsky | **Phase**: R&D Day 69/90
 
+## 🚨 SESSION START LAW #1: COMPOUNDING STRATEGY (MANDATORY)
+
+**CHECK THIS FIRST IN EVERY SESSION!**
+
+Current capital: Check `data/system_state.json` → `account.current_equity`
+
+| Capital | Daily Target | Strategy |
+|---------|--------------|----------|
+| $200 | $5/day | Single CSP on SPY |
+| $500 | $15/day | 2 CSPs or Iron Condor |
+| $1,000 | $30/day | Wheel on SPY |
+| $2,000 | $60/day | Multiple wheels |
+| $5,000 | **$100/day** | Full Phil Town |
+
+**Milestones** (with $10/day deposits + 2% compounding):
+- Jan 29, 2026: $200 → FIRST TRADE
+- Jun 24, 2026: $5,000 → $100/day North Star
+
+**Rules**:
+- Reinvest ALL profits (compounding = +93% more capital)
+- NEVER chase 50% daily returns (impossible without losing money)
+- Scale targets with capital
+- See: `rag_knowledge/lessons_learned/ll_092_compounding_strategy_mandatory_jan06.md`
+
 ## Critical Rules
 1. Never lie - verify before claiming
 2. Always use PRs (direct-push to main only for necessity with admin privileges)
