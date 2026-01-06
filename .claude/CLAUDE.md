@@ -73,6 +73,13 @@ This is non-negotiable. Every trading decision must:
 - Query RAG lessons before starting tasks AND update RAG after finishing
 - Record every trade and lesson in BOTH ChromaDB AND Vertex AI RAG
 - Verify RAG vectorization is working at start of each session
+- Cost-optimize Vertex AI datastore usage (minimize API calls)
+
+### Self-Healing System (Jan 6, 2026)
+- System must be completely self-healing - no manual intervention required
+- If a component fails, auto-retry with exponential backoff
+- Alert on persistent failures, but attempt automatic recovery first
+- Document all failures in lessons learned for pattern detection
 
 ## Market Hours
 US Equities: Mon-Fri 9:30-4:00 ET only
