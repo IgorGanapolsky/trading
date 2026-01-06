@@ -78,7 +78,9 @@ class TestHookExecution:
 
     def test_hook_runs_without_model_file(self, temp_project_dir):
         """Verify hook exits gracefully when model file doesn't exist."""
-        hook_path = Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        hook_path = (
+            Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        )
 
         result = subprocess.run(
             ["bash", str(hook_path)],
@@ -92,7 +94,9 @@ class TestHookExecution:
 
     def test_hook_displays_feedback_with_model(self, temp_project_dir):
         """Verify hook displays feedback when model file exists."""
-        hook_path = Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        hook_path = (
+            Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        )
 
         # Create mock model file
         model_data = {
@@ -137,7 +141,9 @@ class TestHookExecution:
 
     def test_hook_shows_negative_features(self, temp_project_dir):
         """Verify hook correctly identifies negative feature weights."""
-        hook_path = Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        hook_path = (
+            Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        )
 
         # Create model with negative features
         model_data = {
@@ -168,7 +174,9 @@ class TestHookExecution:
 
     def test_hook_shows_positive_features(self, temp_project_dir):
         """Verify hook correctly identifies positive feature weights."""
-        hook_path = Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        hook_path = (
+            Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        )
 
         # Create model with positive features
         model_data = {
@@ -213,7 +221,9 @@ class TestThompsonSamplingDisplay:
 
     def test_posterior_calculation_display(self, temp_project_dir):
         """Verify posterior is calculated correctly: α / (α + β)."""
-        hook_path = Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        hook_path = (
+            Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        )
 
         # α=8, β=2 → posterior = 8/10 = 0.8
         model_data = {
@@ -236,7 +246,9 @@ class TestThompsonSamplingDisplay:
 
     def test_sample_count_display(self, temp_project_dir):
         """Verify sample count is calculated correctly: α + β - 2 (subtract priors)."""
-        hook_path = Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        hook_path = (
+            Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        )
 
         # α=10, β=5 → samples = 10 + 5 - 2 = 13
         model_data = {
@@ -273,7 +285,9 @@ class TestFeedbackStatsDisplay:
 
     def test_stats_display(self, temp_project_dir):
         """Verify feedback stats are displayed correctly."""
-        hook_path = Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        hook_path = (
+            Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        )
 
         model_data = {
             "alpha": 3.0,
@@ -321,7 +335,9 @@ class TestEdgeCases:
 
     def test_handles_empty_feature_weights(self, temp_project_dir):
         """Verify hook handles empty feature weights gracefully."""
-        hook_path = Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        hook_path = (
+            Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        )
 
         model_data = {
             "alpha": 3.0,
@@ -344,7 +360,9 @@ class TestEdgeCases:
 
     def test_handles_malformed_json(self, temp_project_dir):
         """Verify hook handles malformed JSON gracefully."""
-        hook_path = Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        hook_path = (
+            Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        )
 
         model_path = temp_project_dir / "models" / "ml" / "feedback_model.json"
         model_path.write_text("{ invalid json }")
@@ -361,7 +379,9 @@ class TestEdgeCases:
 
     def test_handles_zero_samples(self, temp_project_dir):
         """Verify hook handles zero samples (only priors)."""
-        hook_path = Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        hook_path = (
+            Path(__file__).parent.parent / ".claude" / "hooks" / "surface_feedback_patterns.sh"
+        )
 
         # α=1, β=1 (priors only) → samples = 0
         model_data = {
