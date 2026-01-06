@@ -27,8 +27,20 @@
     "daily_change_pct": 50.0,
     "positions_count": 0,
     "daily_deposit": 10.0,
-    "target_daily_profit": 100.0,
     "reset_note": "Fresh start Jan 3, 2026 - Real brokerage with $10/day deposits",
+    "north_star": {
+      "ultimate_target": 100.0,
+      "current_target": 5.0,
+      "target_explanation": "Target scales with capital: $5/day at $200, $100/day at $2000",
+      "capital_tiers": [
+        {"capital": 200, "daily_target": 5, "strategy": "Single CSP on SPY", "return_pct": 2.5},
+        {"capital": 500, "daily_target": 15, "strategy": "2 CSPs or 1 Iron Condor", "return_pct": 3.0},
+        {"capital": 1000, "daily_target": 30, "strategy": "Wheel strategy on SPY", "return_pct": 3.0},
+        {"capital": 2000, "daily_target": 60, "strategy": "Multiple wheels + 0DTE", "return_pct": 3.0},
+        {"capital": 5000, "daily_target": 100, "strategy": "Full Phil Town portfolio", "return_pct": 2.0}
+      ],
+      "rule_1_reminder": "Don't lose money - 50% daily returns are IMPOSSIBLE without extreme risk"
+    },
     "deposit_strategy": {
       "amount_per_day": 10.0,
       "start_date": "2026-01-03",
@@ -37,12 +49,18 @@
       "purpose": "Accumulate capital for defined-risk options spreads (~$100-200 minimum)",
       "target_for_first_trade": 200.0,
       "estimated_days_to_target": 17,
+      "accelerated_plan": {
+        "option_1": {"deposit": 20, "days_to_200": 9, "days_to_2000": 99},
+        "option_2": {"deposit": 50, "days_to_200": 4, "days_to_2000": 40},
+        "option_3": {"deposit": 100, "days_to_200": 2, "days_to_2000": 20},
+        "recommendation": "Increase to $50/day to reach trading capital faster"
+      },
       "tax_strategy": "Section 475 MTM election + Section 1256 index options (60/40 treatment)"
     }
   },
   "paper_account": {
     "type": "paper",
-    "purpose": "R&D and RAG knowledge building",
+    "purpose": "Test Phil Town Rule #1 strategies before live deployment",
     "starting_balance": 100000.0,
     "current_equity": 101167.20,
     "cash": 86629.93,
@@ -54,11 +72,30 @@
     "win_rate": 80.0,
     "win_rate_sample_size": 5,
     "win_rate_warning": "STATISTICALLY INSIGNIFICANT - Only 5 closed trades. Need 30+ for confidence.",
-    "note": "Continue paper trading at night to build RAG knowledge",
     "last_sync": "2026-01-06T17:27:00",
     "sync_source": "CEO screenshot Jan 6 2026",
     "todays_pl": 83.34,
-    "todays_pl_pct": 0.08
+    "todays_pl_pct": 0.08,
+    "phil_town_strategy": {
+      "enabled": true,
+      "purpose": "Validate Phil Town Rule #1 approach before live trading",
+      "primary_strategy": "Cash Secured Puts on 4Ms stocks",
+      "four_ms_watchlist": ["AAPL", "MSFT", "GOOGL", "AMZN", "BRK.B"],
+      "rules": {
+        "rule_1": "Don't lose money - use stop losses",
+        "entry": "Only sell CSPs when stock is at MOS (Margin of Safety) price",
+        "delta": "0.20 to 0.30 (70-80% probability OTM)",
+        "dte": "30-45 days to expiration",
+        "position_size": "Max 10% of buying power per position",
+        "exit": "Close at 50% profit or roll if challenged"
+      },
+      "target_metrics": {
+        "win_rate_target": 70,
+        "min_trades_for_confidence": 30,
+        "max_drawdown_allowed": 5
+      },
+      "note": "Build track record of 30+ trades before deploying to live account"
+    }
   },
   "investments": {
     "total_invested": 1621.93,
