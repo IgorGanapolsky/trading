@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Trading AI RAG Webhook",
     description="Dialogflow CX webhook for lessons AND trade history queries",
-    version="2.4.0",  # Fixed: trades_today now shows 0 when last_trade_date != actual today (prevents stale data confusion)
+    version="2.5.0",  # Added: Trading readiness assessment for "How ready are we?" queries
 )
 
 # Initialize RAG system for lessons
@@ -131,6 +131,28 @@ def get_current_portfolio_status() -> dict:
     }
 
 
+def is_readiness_query(query: str) -> bool:
+    """Detect if query is asking about trading readiness assessment."""
+    readiness_keywords = [
+        "ready",
+        "readiness",
+        "prepared",
+        "preparation",
+        "should we trade",
+        "can we trade",
+        "safe to trade",
+        "good to trade",
+        "green light",
+        "go ahead",
+        "status check",
+        "pre-trade",
+        "preflight",
+        "checklist",
+    ]
+    query_lower = query.lower()
+    return any(keyword in query_lower for keyword in readiness_keywords)
+
+
 def is_trade_query(query: str) -> bool:
     """Detect if query is about trades vs lessons."""
     trade_keywords = [
@@ -171,6 +193,212 @@ def is_trade_query(query: str) -> bool:
     ]
     query_lower = query.lower()
     return any(keyword in query_lower for keyword in trade_keywords)
+
+
+def assess_trading_readiness() -> dict:
+    """
+    Assess trading readiness based on multiple factors.
+    Returns a comprehensive readiness report with actionable insights.
+    """
+    import json
+    from datetime import datetime
+
+    try:
+        from zoneinfo import ZoneInfo
+
+        et_tz = ZoneInfo("America/New_York")
+        now_et = datetime.now(et_tz)
+    except ImportError:
+        from datetime import timezone
+
+        now_et = datetime.now(timezone.utc)
+
+    checks = []
+    warnings = []
+    blockers = []
+    score = 0
+    max_score = 0
+
+    # 1. MARKET STATUS CHECK
+    max_score += 20
+    weekday = now_et.weekday()
+    hour = now_et.hour
+    minute = now_et.minute
+    current_time = hour * 60 + minute
+    market_open = 9 * 60 + 30  # 9:30 AM
+    market_close = 16 * 60  # 4:00 PM
+
+    if weekday >= 5:  # Weekend
+        blockers.append("Market CLOSED - Weekend (Mon-Fri only)")
+    elif current_time < market_open:
+        minutes_to_open = market_open - current_time
+        warnings.append(f"Market opens in {minutes_to_open} minutes ({now_et.strftime('%I:%M %p')} ET)")
+        score += 10  # Partial credit - we're prepared
+    elif current_time >= market_close:
+        blockers.append(f"Market CLOSED - After hours ({now_et.strftime('%I:%M %p')} ET)")
+    else:
+        checks.append(f"Market OPEN ({now_et.strftime('%I:%M %p')} ET)")
+        score += 20
+
+    # 2. SYSTEM STATE CHECK
+    max_score += 20
+    state_path = project_root / "data" / "system_state.json"
+    state = None
+    try:
+        if state_path.exists():
+            with open(state_path) as f:
+                state = json.load(f)
+            checks.append("System state loaded")
+            score += 10
+        else:
+            warnings.append("System state file not found")
+    except Exception as e:
+        warnings.append(f"System state error: {str(e)[:50]}")
+
+    # Check state freshness
+    if state:
+        last_updated = state.get("meta", {}).get("last_updated", "")
+        if last_updated:
+            try:
+                update_time = datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
+                hours_old = (datetime.now(update_time.tzinfo or None) - update_time).total_seconds() / 3600
+                if hours_old < 4:
+                    checks.append(f"State fresh ({hours_old:.1f}h old)")
+                    score += 10
+                else:
+                    warnings.append(f"State stale ({hours_old:.1f}h old)")
+            except Exception:
+                warnings.append("Could not verify state freshness")
+
+    # 3. CAPITAL CHECK
+    max_score += 20
+    if state:
+        paper_equity = state.get("paper_account", {}).get("current_equity", 0)
+        live_equity = state.get("account", {}).get("current_equity", 0)
+
+        if paper_equity > 100000:
+            checks.append(f"Paper equity healthy: ${paper_equity:,.2f}")
+            score += 10
+        elif paper_equity > 95000:
+            warnings.append(f"Paper equity warning: ${paper_equity:,.2f}")
+            score += 5
+        else:
+            blockers.append(f"Paper equity critical: ${paper_equity:,.2f}")
+
+        if live_equity >= 200:
+            checks.append(f"Live capital sufficient: ${live_equity:.2f}")
+            score += 10
+        else:
+            target = state.get("account", {}).get("deposit_strategy", {}).get("target_for_first_trade", 200)
+            remaining = target - live_equity
+            warnings.append(f"Live capital building: ${live_equity:.2f} (need ${remaining:.0f} more for first trade)")
+
+    # 4. BACKTEST VALIDATION
+    max_score += 20
+    backtest_path = project_root / "data" / "backtests" / "latest_summary.json"
+    try:
+        if backtest_path.exists():
+            with open(backtest_path) as f:
+                backtest = json.load(f)
+            passes = backtest.get("aggregate_metrics", {}).get("passes", 0)
+            total = backtest.get("scenario_count", 0)
+            if passes == total and total > 0:
+                checks.append(f"Backtests: {passes}/{total} scenarios PASS")
+                score += 20
+            elif passes > total * 0.8:
+                warnings.append(f"Backtests: {passes}/{total} scenarios pass")
+                score += 10
+            else:
+                blockers.append(f"Backtests FAILING: only {passes}/{total} pass")
+    except Exception:
+        warnings.append("Could not verify backtest status")
+
+    # 5. WIN RATE CHECK
+    max_score += 20
+    if state:
+        win_rate = state.get("paper_account", {}).get("win_rate", 0)
+        if win_rate >= 60:
+            checks.append(f"Win rate strong: {win_rate:.0f}%")
+            score += 20
+        elif win_rate >= 50:
+            warnings.append(f"Win rate marginal: {win_rate:.0f}%")
+            score += 10
+        else:
+            blockers.append(f"Win rate poor: {win_rate:.0f}%")
+
+    # Calculate overall readiness
+    readiness_pct = (score / max_score * 100) if max_score > 0 else 0
+
+    if blockers:
+        status = "NOT_READY"
+        emoji = "🔴"
+    elif len(warnings) > 2:
+        status = "CAUTION"
+        emoji = "🟡"
+    elif readiness_pct >= 80:
+        status = "READY"
+        emoji = "🟢"
+    else:
+        status = "PARTIAL"
+        emoji = "🟡"
+
+    return {
+        "status": status,
+        "emoji": emoji,
+        "score": score,
+        "max_score": max_score,
+        "readiness_pct": readiness_pct,
+        "checks": checks,
+        "warnings": warnings,
+        "blockers": blockers,
+        "timestamp": now_et.strftime("%Y-%m-%d %I:%M %p ET"),
+    }
+
+
+def format_readiness_response(assessment: dict) -> str:
+    """Format readiness assessment into a user-friendly response."""
+    status = assessment["status"]
+    emoji = assessment["emoji"]
+    score = assessment["score"]
+    max_score = assessment["max_score"]
+    readiness_pct = assessment["readiness_pct"]
+
+    response_parts = [
+        f"{emoji} **TRADING READINESS: {status}** ({readiness_pct:.0f}%)",
+        f"Score: {score}/{max_score}",
+        f"Assessed: {assessment['timestamp']}",
+        "",
+    ]
+
+    if assessment["blockers"]:
+        response_parts.append("🚫 **BLOCKERS:**")
+        for b in assessment["blockers"]:
+            response_parts.append(f"  • {b}")
+        response_parts.append("")
+
+    if assessment["warnings"]:
+        response_parts.append("⚠️ **WARNINGS:**")
+        for w in assessment["warnings"]:
+            response_parts.append(f"  • {w}")
+        response_parts.append("")
+
+    if assessment["checks"]:
+        response_parts.append("✅ **PASSING:**")
+        for c in assessment["checks"]:
+            response_parts.append(f"  • {c}")
+        response_parts.append("")
+
+    # Add actionable recommendation
+    if status == "NOT_READY":
+        response_parts.append("📌 **Recommendation:** Do NOT trade until blockers are resolved.")
+    elif status == "CAUTION":
+        response_parts.append("📌 **Recommendation:** Proceed with reduced position sizes. Monitor closely.")
+    elif status == "READY":
+        response_parts.append("📌 **Recommendation:** All systems GO. Execute per strategy guidelines.")
+    else:
+        response_parts.append("📌 **Recommendation:** Review warnings before trading.")
+
+    return "\n".join(response_parts)
 
 
 def format_lesson_full(lesson: dict) -> str:
@@ -329,7 +557,14 @@ async def webhook(request: Request) -> JSONResponse:
         logger.info(f"Processing query: {user_query}")
 
         # Determine query type and route accordingly
-        if is_trade_query(user_query):
+        # Check readiness queries FIRST (highest priority)
+        if is_readiness_query(user_query):
+            logger.info(f"Detected READINESS query: {user_query}")
+            assessment = assess_trading_readiness()
+            response_text = format_readiness_response(assessment)
+            logger.info(f"Readiness assessment: {assessment['status']} ({assessment['readiness_pct']:.0f}%)")
+
+        elif is_trade_query(user_query):
             # Query trade history from ChromaDB
             logger.info(f"Detected TRADE query: {user_query}")
             trades = query_trades(user_query, limit=10)
@@ -429,14 +664,15 @@ async def root():
     trade_count = trade_collection.count() if trade_collection else 0
     return {
         "service": "Trading AI RAG Webhook",
-        "version": "2.0.0",
+        "version": "2.5.0",
         "lessons_loaded": len(rag.lessons),
         "trades_loaded": trade_count,
         "endpoints": {
-            "/webhook": "POST - Dialogflow CX webhook (lessons + trades)",
+            "/webhook": "POST - Dialogflow CX webhook (lessons + trades + readiness)",
             "/health": "GET - Health check",
             "/test": "GET - Test lessons query",
             "/test-trades": "GET - Test trade history query",
+            "/test-readiness": "GET - Test trading readiness assessment",
         },
     }
 
@@ -482,6 +718,17 @@ async def test_trades(query: str = "recent trades"):
             }
             for t in trades
         ],
+    }
+
+
+@app.get("/test-readiness")
+async def test_readiness():
+    """Test endpoint to verify trading readiness assessment."""
+    assessment = assess_trading_readiness()
+    return {
+        "query_type": "readiness",
+        "assessment": assessment,
+        "formatted_response": format_readiness_response(assessment),
     }
 
 
