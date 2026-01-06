@@ -109,3 +109,4 @@ data/feedback/
 data/backups/
 data/lancedb_feedback/
 data/chroma/
+data/chroma_db/
