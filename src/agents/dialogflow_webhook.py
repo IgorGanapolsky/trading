@@ -232,7 +232,9 @@ def assess_trading_readiness() -> dict:
         blockers.append("Market CLOSED - Weekend (Mon-Fri only)")
     elif current_time < market_open:
         minutes_to_open = market_open - current_time
-        warnings.append(f"Market opens in {minutes_to_open} minutes ({now_et.strftime('%I:%M %p')} ET)")
+        warnings.append(
+            f"Market opens in {minutes_to_open} minutes ({now_et.strftime('%I:%M %p')} ET)"
+        )
         score += 10  # Partial credit - we're prepared
     elif current_time >= market_close:
         blockers.append(f"Market CLOSED - After hours ({now_et.strftime('%I:%M %p')} ET)")
@@ -261,7 +263,9 @@ def assess_trading_readiness() -> dict:
         if last_updated:
             try:
                 update_time = datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
-                hours_old = (datetime.now(update_time.tzinfo or None) - update_time).total_seconds() / 3600
+                hours_old = (
+                    datetime.now(update_time.tzinfo or None) - update_time
+                ).total_seconds() / 3600
                 if hours_old < 4:
                     checks.append(f"State fresh ({hours_old:.1f}h old)")
                     score += 10
@@ -289,9 +293,15 @@ def assess_trading_readiness() -> dict:
             checks.append(f"Live capital sufficient: ${live_equity:.2f}")
             score += 10
         else:
-            target = state.get("account", {}).get("deposit_strategy", {}).get("target_for_first_trade", 200)
+            target = (
+                state.get("account", {})
+                .get("deposit_strategy", {})
+                .get("target_for_first_trade", 200)
+            )
             remaining = target - live_equity
-            warnings.append(f"Live capital building: ${live_equity:.2f} (need ${remaining:.0f} more for first trade)")
+            warnings.append(
+                f"Live capital building: ${live_equity:.2f} (need ${remaining:.0f} more for first trade)"
+            )
 
     # 4. BACKTEST VALIDATION
     max_score += 20
@@ -392,9 +402,13 @@ def format_readiness_response(assessment: dict) -> str:
     if status == "NOT_READY":
         response_parts.append("📌 **Recommendation:** Do NOT trade until blockers are resolved.")
     elif status == "CAUTION":
-        response_parts.append("📌 **Recommendation:** Proceed with reduced position sizes. Monitor closely.")
+        response_parts.append(
+            "📌 **Recommendation:** Proceed with reduced position sizes. Monitor closely."
+        )
     elif status == "READY":
-        response_parts.append("📌 **Recommendation:** All systems GO. Execute per strategy guidelines.")
+        response_parts.append(
+            "📌 **Recommendation:** All systems GO. Execute per strategy guidelines."
+        )
     else:
         response_parts.append("📌 **Recommendation:** Review warnings before trading.")
 
@@ -562,7 +576,9 @@ async def webhook(request: Request) -> JSONResponse:
             logger.info(f"Detected READINESS query: {user_query}")
             assessment = assess_trading_readiness()
             response_text = format_readiness_response(assessment)
-            logger.info(f"Readiness assessment: {assessment['status']} ({assessment['readiness_pct']:.0f}%)")
+            logger.info(
+                f"Readiness assessment: {assessment['status']} ({assessment['readiness_pct']:.0f}%)"
+            )
 
         elif is_trade_query(user_query):
             # Query trade history from ChromaDB
