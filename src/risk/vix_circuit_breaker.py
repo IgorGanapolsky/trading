@@ -405,7 +405,9 @@ class VIXCircuitBreaker:
 
         except Exception as e:
             logger.error(f"Failed to fetch VIX data: {e}")
-            return {"current": 20.0, "previous_close": 20.0}
+            # CRITICAL: Don't return false safety signal - raise error instead
+            # VIX=20 would indicate "normal" conditions, masking potential danger
+            raise RuntimeError(f"Cannot fetch VIX data - trading unsafe: {e}") from e
 
     def _fetch_positions(self) -> list[dict[str, Any]]:
         """Fetch current positions from Alpaca."""
