@@ -246,16 +246,28 @@ def assess_trading_readiness() -> dict:
     max_score += 20
     state_path = project_root / "data" / "system_state.json"
     state = None
+    # Try local file first
     try:
         if state_path.exists():
             with open(state_path) as f:
                 state = json.load(f)
-            checks.append("System state loaded")
+            checks.append("System state loaded (local)")
             score += 10
-        else:
-            warnings.append("System state file not found")
     except Exception as e:
-        warnings.append(f"System state error: {str(e)[:50]}")
+        logger.warning(f"Failed to read local system state: {e}")
+
+    # Fallback to GitHub if local not available
+    if state is None:
+        try:
+            import urllib.request
+
+            github_url = "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/system_state.json"
+            with urllib.request.urlopen(github_url, timeout=5) as response:  # noqa: S310
+                state = json.loads(response.read().decode("utf-8"))
+            checks.append("System state loaded (GitHub)")
+            score += 10
+        except Exception as e:
+            warnings.append(f"System state not found (local or GitHub): {str(e)[:30]}")
 
     # Check state freshness
     if state:
