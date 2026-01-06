@@ -1,0 +1,169 @@
+{
+  "meta": {
+    "created": "2026-01-06T23:30:00",
+    "purpose": "Phil Town 4Ms watchlist for small capital ($200-$5000)",
+    "strategy": "Cash-Secured Puts at Margin of Safety price",
+    "warning": "CSPs require 100x strike price in collateral"
+  },
+  "capital_tiers": {
+    "tier_1_200": {
+      "min_capital": 200,
+      "max_capital": 499,
+      "max_strike": 2.00,
+      "realistic_strategy": "Buy shares or long options only - CSPs not possible",
+      "note": "Cannot sell CSPs with $200. Need $500+ for cheapest stocks."
+    },
+    "tier_2_500": {
+      "min_capital": 500,
+      "max_capital": 999,
+      "max_strike": 5.00,
+      "stocks": ["F", "PLTR", "SOFI", "NIO"],
+      "note": "Can sell CSPs on $5 stocks (100 x $5 = $500 collateral)"
+    },
+    "tier_3_1000": {
+      "min_capital": 1000,
+      "max_capital": 1999,
+      "max_strike": 10.00,
+      "stocks": ["F", "PLTR", "SOFI", "AMD", "INTC", "BAC"],
+      "note": "More options available, can do 2 contracts on cheap stocks"
+    },
+    "tier_4_2000": {
+      "min_capital": 2000,
+      "max_capital": 4999,
+      "max_strike": 20.00,
+      "stocks": ["INTC", "BAC", "T", "VZ", "CSCO", "KO"],
+      "note": "Can access most mid-cap stocks for CSPs"
+    },
+    "tier_5_5000": {
+      "min_capital": 5000,
+      "max_capital": 999999,
+      "max_strike": 50.00,
+      "stocks": ["AAPL", "MSFT", "GOOGL", "V", "MA", "COST", "BRK.B"],
+      "note": "Full Phil Town universe accessible"
+    }
+  },
+  "small_cap_4ms_watchlist": [
+    {
+      "symbol": "F",
+      "name": "Ford Motor Company",
+      "price_range": "$9-12",
+      "meaning": "Understand: Cars, trucks, EVs",
+      "moat": "NARROW - Brand but heavy competition",
+      "management": "FAIR - Turnaround in progress",
+      "mos_calculation": "Conservative - wait for dips",
+      "min_capital_for_csp": 900,
+      "4ms_score": 2.5
+    },
+    {
+      "symbol": "PLTR",
+      "name": "Palantir Technologies",
+      "price_range": "$20-30",
+      "meaning": "Understand: Data analytics, AI/ML platforms",
+      "moat": "NARROW - Switching costs, government contracts",
+      "management": "FAIR - High stock compensation",
+      "mos_calculation": "High growth, volatile - careful",
+      "min_capital_for_csp": 2000,
+      "4ms_score": 2.5
+    },
+    {
+      "symbol": "SOFI",
+      "name": "SoFi Technologies",
+      "price_range": "$8-15",
+      "meaning": "Understand: Fintech, banking, lending",
+      "moat": "NARROW - App ecosystem, young demographic",
+      "management": "GOOD - Aggressive growth",
+      "mos_calculation": "Growth stock, volatile",
+      "min_capital_for_csp": 800,
+      "4ms_score": 2.5
+    },
+    {
+      "symbol": "INTC",
+      "name": "Intel Corporation",
+      "price_range": "$18-25",
+      "meaning": "Understand: Chips, processors, foundry",
+      "moat": "NARROW - Was wide, now under threat",
+      "management": "FAIR - Turnaround CEO",
+      "mos_calculation": "Deep value play",
+      "min_capital_for_csp": 1800,
+      "4ms_score": 2.0
+    },
+    {
+      "symbol": "BAC",
+      "name": "Bank of America",
+      "price_range": "$35-45",
+      "meaning": "Understand: Banking, consumer/commercial",
+      "moat": "WIDE - Too big to fail, brand",
+      "management": "GOOD - Consistent",
+      "mos_calculation": "Buffett favorite",
+      "min_capital_for_csp": 3500,
+      "4ms_score": 3.5
+    },
+    {
+      "symbol": "T",
+      "name": "AT&T",
+      "price_range": "$18-22",
+      "meaning": "Understand: Telecom, 5G, fiber",
+      "moat": "NARROW - High capital requirements",
+      "management": "FAIR - Dividend focused",
+      "mos_calculation": "High dividend, low growth",
+      "min_capital_for_csp": 1800,
+      "4ms_score": 2.5
+    }
+  ],
+  "full_4ms_watchlist": [
+    {
+      "symbol": "AAPL",
+      "name": "Apple Inc",
+      "meaning": "EXCELLENT - Use products daily",
+      "moat": "WIDE - Brand + Ecosystem lock-in",
+      "management": "EXCELLENT - Tim Cook, consistent",
+      "4ms_score": 4.5,
+      "min_capital_for_csp": 18000,
+      "note": "Wait for $5000+ capital"
+    },
+    {
+      "symbol": "MSFT",
+      "name": "Microsoft",
+      "meaning": "EXCELLENT - Use products daily",
+      "moat": "WIDE - Switching costs + Cloud dominance",
+      "management": "EXCELLENT - Satya Nadella",
+      "4ms_score": 5.0,
+      "min_capital_for_csp": 40000,
+      "note": "Wait for $5000+ capital, very expensive"
+    },
+    {
+      "symbol": "V",
+      "name": "Visa",
+      "meaning": "EXCELLENT - Toll bridge on transactions",
+      "moat": "WIDE - Network effects, duopoly",
+      "management": "EXCELLENT - Consistent growth",
+      "4ms_score": 5.0,
+      "min_capital_for_csp": 30000,
+      "note": "Phil Town favorite - wait for capital"
+    },
+    {
+      "symbol": "MA",
+      "name": "Mastercard",
+      "meaning": "EXCELLENT - Toll bridge on transactions",
+      "moat": "WIDE - Network effects, duopoly",
+      "management": "EXCELLENT - Consistent growth",
+      "4ms_score": 5.0,
+      "min_capital_for_csp": 50000,
+      "note": "Phil Town favorite - wait for capital"
+    },
+    {
+      "symbol": "COST",
+      "name": "Costco",
+      "meaning": "EXCELLENT - Shop there",
+      "moat": "WIDE - Price leader + membership model",
+      "management": "EXCELLENT - Member-focused culture",
+      "4ms_score": 4.5,
+      "min_capital_for_csp": 90000,
+      "note": "Very expensive, need major capital"
+    }
+  ],
+  "sticker_prices_to_calculate": [
+    "F", "PLTR", "SOFI", "INTC", "BAC", "T"
+  ],
+  "next_update": "2026-01-07"
+}

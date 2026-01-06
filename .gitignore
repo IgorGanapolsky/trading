@@ -73,6 +73,7 @@ build/
 !data/.gitkeep
 !data/system_state.json
 !data/tier2_watchlist.json
+!data/watchlist_4ms_small_capital.json
 !data/performance_log.json
 !data/trades_*.json
 data/google_sheets_credentials.json

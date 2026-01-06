@@ -35,33 +35,35 @@
       "capital_tiers": [
         {
           "capital": 200,
-          "daily_target": 5,
-          "strategy": "Single CSP on SPY",
-          "return_pct": 2.5
+          "daily_target": 0,
+          "strategy": "ACCUMULATION ONLY - Cannot trade CSPs (need $500+)",
+          "return_pct": 0,
+          "note": "Buy fractional shares only"
         },
         {
           "capital": 500,
-          "daily_target": 15,
-          "strategy": "2 CSPs or 1 Iron Condor",
-          "return_pct": 3.0
+          "daily_target": 1.5,
+          "strategy": "Single CSP on F or SOFI ($5 strike max)",
+          "return_pct": 0.3
         },
-        {
+                {
           "capital": 1000,
-          "daily_target": 30,
-          "strategy": "Wheel strategy on SPY",
-          "return_pct": 3.0
+          "daily_target": 3,
+          "strategy": "CSPs on INTC, BAC ($10 strike max)",
+          "return_pct": 0.3
         },
         {
           "capital": 2000,
-          "daily_target": 60,
-          "strategy": "Multiple wheels + 0DTE",
-          "return_pct": 3.0
+          "daily_target": 6,
+          "strategy": "Multiple CSPs on BAC, T, VZ ($20 strike max)",
+          "return_pct": 0.3
         },
         {
           "capital": 5000,
-          "daily_target": 100,
-          "strategy": "Full Phil Town portfolio",
-          "return_pct": 2.0
+          "daily_target": 15,
+          "strategy": "Multiple CSPs on quality stocks ($50 strike max)",
+          "return_pct": 0.3,
+          "note": "$100/day requires $50,000+ capital realistically"
         }
       ],
       "rule_1_reminder": "Don't lose money - 50% daily returns are IMPOSSIBLE without extreme risk"
@@ -72,8 +74,9 @@
       "total_deposited": 30.0,
       "deposit_count": 3,
       "purpose": "Accumulate capital for defined-risk options spreads (~$100-200 minimum)",
-      "target_for_first_trade": 200.0,
-      "estimated_days_to_target": 17,
+      "target_for_first_trade": 500.0,
+      "target_for_first_trade_note": "CSPs require 100x strike collateral. $500 = max $5 strike (F, SOFI)",
+      "estimated_days_to_target": 47,
       "compounding_strategy": {
         "enabled": true,
         "daily_return_target": 0.02,
@@ -81,33 +84,38 @@
         "milestones": [
           {
             "capital": 200,
-            "target_date": "2026-01-29",
-            "daily_target": 5,
-            "day": 23
+            "target_date": "2026-01-20",
+            "daily_target": 0,
+            "day": 17,
+            "note": "Accumulation only - cannot trade CSPs yet"
           },
           {
             "capital": 500,
-            "target_date": "2026-02-24",
-            "daily_target": 15,
-            "day": 49
+            "target_date": "2026-02-19",
+            "daily_target": 1.5,
+            "day": 47,
+            "note": "FIRST CSP TRADE - F or SOFI"
           },
           {
             "capital": 1000,
             "target_date": "2026-03-24",
-            "daily_target": 30,
-            "day": 77
+            "daily_target": 3,
+            "day": 77,
+            "note": "CSPs on INTC, BAC"
           },
           {
             "capital": 2000,
             "target_date": "2026-04-29",
-            "daily_target": 60,
-            "day": 113
+            "daily_target": 6,
+            "day": 113,
+            "note": "Multiple CSPs possible"
           },
           {
             "capital": 5000,
             "target_date": "2026-06-24",
-            "daily_target": 100,
-            "day": 169
+            "daily_target": 15,
+            "day": 169,
+            "note": "$100/day needs $50K+ capital"
           }
         ],
         "compounding_power": {
