@@ -239,8 +239,12 @@ class PositionManager:
             )
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse state file: {e}")
+            # Don't silently continue - corrupted state means exit logic is broken
+            raise RuntimeError(f"Position state corrupted - exit checks disabled: {e}") from e
         except Exception as e:
             logger.error(f"Failed to load entry dates: {e}")
+            # Don't silently continue - missing state means positions could be held indefinitely
+            raise RuntimeError(f"Cannot load position entry dates - exit checks disabled: {e}") from e
 
     def _save_entry_dates(self) -> None:
         """Save entry dates and features to system_state.json."""
@@ -277,6 +281,8 @@ class PositionManager:
             )
         except Exception as e:
             logger.error(f"Failed to save entry dates: {e}")
+            # CRITICAL: State loss means next session loses exit tracking
+            raise RuntimeError(f"Cannot save position state - risk management compromised: {e}") from e
 
     def evaluate_position(self, position: PositionInfo) -> ExitSignal:
         """
