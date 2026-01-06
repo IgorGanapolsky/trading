@@ -26,7 +26,9 @@ from src.rag.process_rewards import (
 def temp_data_dir(tmp_path):
     """Create temporary data directory."""
     with patch("src.rag.process_rewards.DATA_DIR", tmp_path):
-        with patch("src.rag.process_rewards.PROCESS_REWARDS_FILE", tmp_path / "process_rewards.json"):
+        with patch(
+            "src.rag.process_rewards.PROCESS_REWARDS_FILE", tmp_path / "process_rewards.json"
+        ):
             yield tmp_path
 
 
@@ -35,6 +37,7 @@ def tracker(temp_data_dir):
     """Create fresh tracker instance for each test."""
     # Reset singleton
     import src.rag.process_rewards as pr_module
+
     pr_module._tracker = None
 
     tracker = ProcessRewardTracker()
@@ -279,9 +282,7 @@ class TestCumulativeScoring:
     def test_cumulative_score_with_penalties(self, tracker):
         """Test cumulative score with negative rewards."""
         tracker.record_query_generation("EXECUTE_TRADE", 5, 0.9)  # +1.2
-        tracker.record_answer_generation(
-            "EXECUTE_TRADE", False, "failure"
-        )  # -1.0
+        tracker.record_answer_generation("EXECUTE_TRADE", False, "failure")  # -1.0
 
         total = tracker.get_cumulative_score("EXECUTE_TRADE")
         assert total == pytest.approx(0.2, 0.01)
@@ -486,6 +487,7 @@ class TestConvenienceFunctions:
         """Test convenience function for query reward."""
         # Reset singleton
         import src.rag.process_rewards as pr_module
+
         pr_module._tracker = None
 
         reward = record_query_reward("EXECUTE_TRADE", 5, 0.9)
@@ -497,6 +499,7 @@ class TestConvenienceFunctions:
     def test_record_evidence_reward(self, temp_data_dir):
         """Test convenience function for evidence reward."""
         import src.rag.process_rewards as pr_module
+
         pr_module._tracker = None
 
         reward = record_evidence_reward("EXECUTE_TRADE", True, 0.8)
@@ -508,6 +511,7 @@ class TestConvenienceFunctions:
     def test_record_outcome_reward(self, temp_data_dir):
         """Test convenience function for outcome reward."""
         import src.rag.process_rewards as pr_module
+
         pr_module._tracker = None
 
         reward = record_outcome_reward("EXECUTE_TRADE", True, "success")
@@ -550,7 +554,9 @@ class TestIntegrationScenarios:
         tracker.record_query_generation("EXECUTE_TRADE", lessons_found=5, query_relevance=0.9)
 
         # Evidence stage - low quality evidence
-        tracker.record_evidence_extraction("EXECUTE_TRADE", evidence_used=True, evidence_quality=0.3)
+        tracker.record_evidence_extraction(
+            "EXECUTE_TRADE", evidence_used=True, evidence_quality=0.3
+        )
 
         # Answer stage - ignored advice and failed
         tracker.record_answer_generation("EXECUTE_TRADE", followed_advice=False, outcome="failure")

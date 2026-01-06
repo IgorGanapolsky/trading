@@ -45,9 +45,7 @@ class TradeSync:
         """Initialize LangSmith client."""
         api_key = os.getenv("LANGCHAIN_API_KEY") or os.getenv("LANGSMITH_API_KEY")
         if not api_key:
-            logger.warning(
-                "LangSmith API key not set - trade sync to LangSmith disabled"
-            )
+            logger.warning("LangSmith API key not set - trade sync to LangSmith disabled")
             return
 
         try:
@@ -55,9 +53,7 @@ class TradeSync:
 
             self._langsmith_client = Client(api_key=api_key)
             self._project_name = os.getenv("LANGCHAIN_PROJECT", "igor-trading-system")
-            logger.info(
-                f"LangSmith client initialized for project: {self._project_name}"
-            )
+            logger.info(f"LangSmith client initialized for project: {self._project_name}")
         except ImportError:
             logger.warning("langsmith package not installed")
         except Exception as e:
@@ -188,9 +184,7 @@ class TradeSync:
                 },
                 project_name=self._project_name,
                 id=str(uuid.uuid4()),
-                start_time=datetime.fromisoformat(
-                    trade_data["timestamp"].replace("Z", "+00:00")
-                ),
+                start_time=datetime.fromisoformat(trade_data["timestamp"].replace("Z", "+00:00")),
                 end_time=datetime.now(timezone.utc),
                 tags=["trade", outcome, trade_data["strategy"], trade_data["symbol"]],
             )
@@ -434,9 +428,7 @@ Auto-generated lesson from trade sync system.
         except Exception as e:
             logger.error(f"Failed to create trade lesson: {e}")
 
-    def get_trade_history(
-        self, symbol: Optional[str] = None, limit: int = 100
-    ) -> list[dict]:
+    def get_trade_history(self, symbol: Optional[str] = None, limit: int = 100) -> list[dict]:
         """Query trade history from ChromaDB."""
         if not self._chromadb_collection:
             return []

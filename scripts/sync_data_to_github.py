@@ -39,10 +39,7 @@ def get_github_token() -> str:
 
 
 def api_request(
-    method: str,
-    endpoint: str,
-    token: str,
-    data: Optional[dict] = None
+    method: str, endpoint: str, token: str, data: Optional[dict] = None
 ) -> tuple[int, dict]:
     """Make a GitHub API request with retry logic."""
     url = f"{GITHUB_API}{endpoint}"
@@ -215,19 +212,11 @@ def main():
     parser = argparse.ArgumentParser(
         description="Sync data files to GitHub using API (bypasses git conflicts)"
     )
+    parser.add_argument("--file", "-f", help="Path to specific file to sync")
     parser.add_argument(
-        "--file", "-f",
-        help="Path to specific file to sync"
+        "--all-data", "-a", action="store_true", help="Sync all JSON files in data directory"
     )
-    parser.add_argument(
-        "--all-data", "-a",
-        action="store_true",
-        help="Sync all JSON files in data directory"
-    )
-    parser.add_argument(
-        "--message", "-m",
-        help="Custom commit message"
-    )
+    parser.add_argument("--message", "-m", help="Custom commit message")
 
     args = parser.parse_args()
 

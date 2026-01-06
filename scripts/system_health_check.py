@@ -42,7 +42,9 @@ def check_vector_db():
             # Note: In ChromaDB v0.6.0+, list_collections() returns names (strings), not objects
             collections = client.list_collections()
             if collections:
-                col_name = collections[0] if isinstance(collections[0], str) else collections[0].name
+                col_name = (
+                    collections[0] if isinstance(collections[0], str) else collections[0].name
+                )
                 col = client.get_collection(col_name)
                 doc_count = col.count()
                 results["details"].append(f"✓ Vector DB has {doc_count} documents in '{col_name}'")

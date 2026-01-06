@@ -59,13 +59,9 @@ class TestUpdateIndexDayNumber:
             index_path = Path(tmpdir) / "index.md"
             index_path.write_text("## Live Status (Day 69/90)\nSome content")
 
-            with patch.object(
-                Path, "parent", new_callable=lambda: Path(tmpdir)
-            ):
+            with patch.object(Path, "parent", new_callable=lambda: Path(tmpdir)):
                 # Mock DOCS_DIR to point to temp directory
-                with patch(
-                    "scripts.generate_daily_blog_post.DOCS_DIR", Path(tmpdir)
-                ):
+                with patch("scripts.generate_daily_blog_post.DOCS_DIR", Path(tmpdir)):
                     update_index_day_number(70)
 
                     content = index_path.read_text()
@@ -81,9 +77,7 @@ class TestUpdateIndexDayNumber:
             original_content = "## Live Status (Day 70/90)\nSome content"
             index_path.write_text(original_content)
 
-            with patch(
-                "scripts.generate_daily_blog_post.DOCS_DIR", Path(tmpdir)
-            ):
+            with patch("scripts.generate_daily_blog_post.DOCS_DIR", Path(tmpdir)):
                 update_index_day_number(70)
 
                 # Content should be unchanged

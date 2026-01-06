@@ -221,6 +221,7 @@ def _check_cffi_available():
     """Check if _cffi_backend is available (broken in some sandboxes)."""
     try:
         import _cffi_backend  # noqa: F401
+
         return True
     except (ImportError, ModuleNotFoundError):
         return False
@@ -228,7 +229,7 @@ def _check_cffi_available():
 
 @pytest.mark.skipif(
     not _check_cffi_available(),
-    reason="Skipping ML tests - _cffi_backend not available in this environment"
+    reason="Skipping ML tests - _cffi_backend not available in this environment",
 )
 class TestMLAnomalyDetection:
     """Test ML anomaly detector catches known failure patterns."""
@@ -449,8 +450,7 @@ class TestLearningLoop:
                 assert field_found, f"Lesson {filename} missing required field: {field}"
 
     @pytest.mark.skipif(
-        not _check_cffi_available(),
-        reason="Skipping - _cffi_backend not available"
+        not _check_cffi_available(), reason="Skipping - _cffi_backend not available"
     )
     def test_anomaly_log_persistence(self):
         """Test that anomalies are persisted to disk."""

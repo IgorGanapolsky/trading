@@ -137,7 +137,9 @@ def execute_phil_town_csp(client, symbol: str, analysis: dict) -> Optional[dict]
             logger.info(f"{symbol}: No suitable put option found near ${mos_price:.2f}")
             return None
 
-        logger.info(f"  Found put: {option['symbol']} @ ${option['strike']:.2f} ({option['dte']} DTE)")
+        logger.info(
+            f"  Found put: {option['symbol']} @ ${option['strike']:.2f} ({option['dte']} DTE)"
+        )
 
         # Calculate premium (estimate based on strike distance)
         # In real implementation, fetch actual bid/ask
@@ -170,7 +172,9 @@ def execute_phil_town_csp(client, symbol: str, analysis: dict) -> Optional[dict]
                 "timestamp": datetime.now().isoformat(),
             }
 
-            logger.info(f"  ✅ TRADE EXECUTED: Sold {option['symbol']} for ~${estimated_premium:.2f}")
+            logger.info(
+                f"  ✅ TRADE EXECUTED: Sold {option['symbol']} for ~${estimated_premium:.2f}"
+            )
             record_trade(trade_result)
             return trade_result
 
@@ -277,7 +281,7 @@ def run_rule_one_strategy():
 
         for symbol in watchlist:
             try:
-                logger.info(f"\n{'='*40}")
+                logger.info(f"\n{'=' * 40}")
                 logger.info(f"Analyzing {symbol}...")
 
                 # Calculate sticker price and MOS

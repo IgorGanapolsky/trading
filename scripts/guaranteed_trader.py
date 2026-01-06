@@ -227,7 +227,11 @@ def run():
     spy_lessons = rag.search("SPY trading failures losses", top_k=3)
     for lesson, score in spy_lessons:
         # Only block if lesson is CRITICAL AND in Trading category (not CI/CD, etc.)
-        is_trading_lesson = getattr(lesson, "category", "").lower() in ["trading", "execution", "risk"]
+        is_trading_lesson = getattr(lesson, "category", "").lower() in [
+            "trading",
+            "execution",
+            "risk",
+        ]
         if lesson.severity == "CRITICAL" and is_trading_lesson and score > 0.8:
             logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
             logger.error(f"Prevention: {lesson.prevention}")
@@ -239,12 +243,18 @@ def run():
             }
         elif lesson.severity == "CRITICAL":
             # Log but don't block non-trading lessons
-            logger.warning(f"RAG advisory (not blocking): {lesson.title} (category: {getattr(lesson, 'category', 'unknown')})")
+            logger.warning(
+                f"RAG advisory (not blocking): {lesson.title} (category: {getattr(lesson, 'category', 'unknown')})"
+            )
 
     # Check for strategy-specific failures (RSI-based trading)
     strategy_lessons = rag.search("RSI trading strategy failures", top_k=3)
     for lesson, score in strategy_lessons:
-        is_trading_lesson = getattr(lesson, "category", "").lower() in ["trading", "execution", "risk"]
+        is_trading_lesson = getattr(lesson, "category", "").lower() in [
+            "trading",
+            "execution",
+            "risk",
+        ]
         if lesson.severity == "CRITICAL" and is_trading_lesson and score > 0.8:
             logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
             logger.error(f"Prevention: {lesson.prevention}")

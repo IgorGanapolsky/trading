@@ -121,9 +121,7 @@ def get_current_positions(client) -> list:
         return []
 
 
-def find_put_option(
-    symbol: str, target_delta: float, target_dte: int
-) -> Optional[dict]:
+def find_put_option(symbol: str, target_delta: float, target_dte: int) -> Optional[dict]:
     """
     Find a put option matching our criteria.
 
@@ -171,9 +169,7 @@ def should_open_position(client, config: dict) -> bool:
     ]  # Options have longer symbols
 
     if len(options_positions) >= config["max_positions"]:
-        logger.info(
-            f"Max positions reached ({len(options_positions)}/{config['max_positions']})"
-        )
+        logger.info(f"Max positions reached ({len(options_positions)}/{config['max_positions']})")
         return False
 
     account = get_account_info(client)
@@ -217,21 +213,15 @@ def execute_cash_secured_put(client, option: dict, config: dict) -> Optional[dic
     strategy_lessons = rag.search("cash secured put failures losses", top_k=3)
     for lesson, score in strategy_lessons:
         if lesson.severity == "CRITICAL":
-            logger.error(
-                f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})"
-            )
+            logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
             logger.error(f"Prevention: {lesson.prevention}")
             return None
 
     # Check for ticker-specific failures
-    ticker_lessons = rag.search(
-        f"{option['underlying']} trading failures options losses", top_k=3
-    )
+    ticker_lessons = rag.search(f"{option['underlying']} trading failures options losses", top_k=3)
     for lesson, score in ticker_lessons:
         if lesson.severity == "CRITICAL":
-            logger.error(
-                f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})"
-            )
+            logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
             logger.error(f"Prevention: {lesson.prevention}")
             return None
 
@@ -273,10 +263,7 @@ def execute_cash_secured_put(client, option: dict, config: dict) -> Optional[dic
             # Find put contract closest to our target
             put_contract = None
             for symbol, contract in contracts.items():
-                if (
-                    "P" in symbol
-                    and abs(float(symbol[-8:]) / 1000 - option["strike"]) < 10
-                ):
+                if "P" in symbol and abs(float(symbol[-8:]) / 1000 - option["strike"]) < 10:
                     put_contract = symbol
                     break
 
@@ -397,9 +384,7 @@ def check_exit_conditions(client, positions: list, config: dict) -> list:
                             "profit_pct": profit_pct,
                         }
                     )
-                    logger.info(
-                        f"Exit signal: {pos['symbol']} - Take profit at {profit_pct:.1%}"
-                    )
+                    logger.info(f"Exit signal: {pos['symbol']} - Take profit at {profit_pct:.1%}")
 
     return exits
 
@@ -485,9 +470,7 @@ def run_daily_trading():
         logger.info("Opening new position...")
 
         # Find option contract
-        option = find_put_option(
-            CONFIG["symbol"], CONFIG["target_delta"], CONFIG["target_dte"]
-        )
+        option = find_put_option(CONFIG["symbol"], CONFIG["target_delta"], CONFIG["target_dte"])
 
         if option:
             # Execute trade

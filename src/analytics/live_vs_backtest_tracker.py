@@ -151,7 +151,8 @@ class LiveVsBacktestTracker:
 
         # P/L variance
         pl_variances = [
-            t["pl_variance_pct"] for t in trades
+            t["pl_variance_pct"]
+            for t in trades
             if t.get("pl_variance_pct") is not None and t["pl_variance_pct"] != 0
         ]
         self.data["metrics"]["pl_variance_pct"] = (
@@ -159,10 +160,7 @@ class LiveVsBacktestTracker:
         )
 
         # Signal accuracy (trades with positive actual P/L)
-        profitable = [
-            t for t in trades
-            if t.get("actual_pnl") is not None and t["actual_pnl"] > 0
-        ]
+        profitable = [t for t in trades if t.get("actual_pnl") is not None and t["actual_pnl"] > 0]
         self.data["metrics"]["signal_accuracy"] = (
             len(profitable) / len(trades) * 100 if trades else 0.0
         )
@@ -173,30 +171,36 @@ class LiveVsBacktestTracker:
 
         # High slippage alert
         if abs(trade.get("slippage_pct", 0)) > 1.0:
-            alerts.append({
-                "type": "HIGH_SLIPPAGE",
-                "message": f"Slippage of {trade['slippage_pct']:.2f}% on {trade['symbol']}",
-                "timestamp": trade["timestamp"],
-                "severity": "WARNING",
-            })
+            alerts.append(
+                {
+                    "type": "HIGH_SLIPPAGE",
+                    "message": f"Slippage of {trade['slippage_pct']:.2f}% on {trade['symbol']}",
+                    "timestamp": trade["timestamp"],
+                    "severity": "WARNING",
+                }
+            )
 
         # Low fill rate alert
         if trade.get("fill_rate", 100) < 90:
-            alerts.append({
-                "type": "LOW_FILL_RATE",
-                "message": f"Fill rate of {trade['fill_rate']:.1f}% on {trade['symbol']}",
-                "timestamp": trade["timestamp"],
-                "severity": "WARNING",
-            })
+            alerts.append(
+                {
+                    "type": "LOW_FILL_RATE",
+                    "message": f"Fill rate of {trade['fill_rate']:.1f}% on {trade['symbol']}",
+                    "timestamp": trade["timestamp"],
+                    "severity": "WARNING",
+                }
+            )
 
         # Large P/L variance alert
         if abs(trade.get("pl_variance_pct", 0)) > 20:
-            alerts.append({
-                "type": "PL_VARIANCE",
-                "message": f"P/L variance of {trade['pl_variance_pct']:.1f}% vs backtest",
-                "timestamp": trade["timestamp"],
-                "severity": "HIGH" if abs(trade["pl_variance_pct"]) > 50 else "WARNING",
-            })
+            alerts.append(
+                {
+                    "type": "PL_VARIANCE",
+                    "message": f"P/L variance of {trade['pl_variance_pct']:.1f}% vs backtest",
+                    "timestamp": trade["timestamp"],
+                    "severity": "HIGH" if abs(trade["pl_variance_pct"]) > 50 else "WARNING",
+                }
+            )
 
         self.data["alerts"].extend(alerts)
 

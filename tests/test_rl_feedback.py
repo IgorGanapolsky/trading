@@ -535,7 +535,12 @@ class TestFeedbackPatternAnalysis:
             patterns = analysis["feedback_patterns"]
             assert ActionType.RAG_QUERY.value in patterns
             # 50% success rate for RAG_CONSULTED category
-            assert abs(patterns[ActionType.RAG_QUERY.value][FeedbackCategory.RAG_CONSULTED.value] - 0.5) < 0.01
+            assert (
+                abs(
+                    patterns[ActionType.RAG_QUERY.value][FeedbackCategory.RAG_CONSULTED.value] - 0.5
+                )
+                < 0.01
+            )
 
     def test_analyze_feedback_patterns_empty(self):
         """Should handle no episodes."""

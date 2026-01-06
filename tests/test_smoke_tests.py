@@ -17,6 +17,7 @@ def _alpaca_available():
     """Check if alpaca module is available."""
     try:
         import alpaca.trading.client  # noqa: F401
+
         return True
     except ImportError:
         return False

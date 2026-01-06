@@ -53,7 +53,7 @@ class TestMemoryEntry:
             content="Test content",
             severity="CRITICAL",
             tags=["test", "example"],
-            verified=True
+            verified=True,
         )
 
         data = entry.to_dict()
@@ -76,7 +76,7 @@ class TestMemoryEntry:
             "tags": ["test"],
             "metadata": {"key": "value"},
             "verified": False,
-            "session_id": "abc123"
+            "session_id": "abc123",
         }
 
         entry = MemoryEntry.from_dict(data)
@@ -100,7 +100,7 @@ class TestSessionState:
             memories_created=5,
             memories_updated=2,
             status="completed",
-            learnings=["Test learning"]
+            learnings=["Test learning"],
         )
 
         data = session.to_dict()
@@ -120,7 +120,7 @@ class TestSessionState:
             "memories_updated": 1,
             "status": "active",
             "context": {"key": "value"},
-            "learnings": []
+            "learnings": [],
         }
 
         session = SessionState.from_dict(data)
@@ -170,7 +170,7 @@ class TestMemoryStoreInitialization:
                     "memories_updated": 1,
                     "status": "completed",
                     "context": {},
-                    "learnings": ["Old learning"]
+                    "learnings": ["Old learning"],
                 }
             ]
         }
@@ -194,7 +194,7 @@ class TestMemoryStoreCRUD:
             content="This is a test lesson",
             severity="HIGH",
             tags=["test", "example"],
-            verified=True
+            verified=True,
         )
 
         assert memory_id
@@ -214,7 +214,7 @@ class TestMemoryStoreCRUD:
             category=MemoryCategory.TRADES,
             title="Test Trade",
             content="Trade content",
-            metadata={"pnl": 100.0}
+            metadata={"pnl": 100.0},
         )
 
         # Read memory
@@ -230,9 +230,7 @@ class TestMemoryStoreCRUD:
     def test_read_with_category_hint(self, memory_store):
         """Test reading with category hint for faster lookup."""
         memory_id = memory_store.create(
-            category=MemoryCategory.ERRORS,
-            title="Test Error",
-            content="Error content"
+            category=MemoryCategory.ERRORS, title="Test Error", content="Error content"
         )
 
         # Read with category hint
@@ -253,15 +251,12 @@ class TestMemoryStoreCRUD:
             category=MemoryCategory.CLAIMS,
             title="Original Title",
             content="Original content",
-            verified=False
+            verified=False,
         )
 
         # Update memory
         success = memory_store.update(
-            memory_id,
-            title="Updated Title",
-            content="Updated content",
-            verified=True
+            memory_id, title="Updated Title", content="Updated content", verified=True
         )
 
         assert success is True
@@ -282,7 +277,7 @@ class TestMemoryStoreCRUD:
             category=MemoryCategory.TRADES,
             title="Test",
             content="Content",
-            metadata={"original": "value"}
+            metadata={"original": "value"},
         )
 
         # Update with new metadata
@@ -301,9 +296,7 @@ class TestMemoryStoreCRUD:
         """Test deleting a memory entry."""
         # Create memory
         memory_id = memory_store.create(
-            category=MemoryCategory.LESSONS,
-            title="To Delete",
-            content="Content"
+            category=MemoryCategory.LESSONS, title="To Delete", content="Content"
         )
 
         # Delete memory
@@ -330,21 +323,9 @@ class TestMemoryStoreSearch:
     def test_search_by_category(self, memory_store):
         """Test searching by category."""
         # Create memories in different categories
-        memory_store.create(
-            category=MemoryCategory.LESSONS,
-            title="Lesson 1",
-            content="Content"
-        )
-        memory_store.create(
-            category=MemoryCategory.TRADES,
-            title="Trade 1",
-            content="Content"
-        )
-        memory_store.create(
-            category=MemoryCategory.LESSONS,
-            title="Lesson 2",
-            content="Content"
-        )
+        memory_store.create(category=MemoryCategory.LESSONS, title="Lesson 1", content="Content")
+        memory_store.create(category=MemoryCategory.TRADES, title="Trade 1", content="Content")
+        memory_store.create(category=MemoryCategory.LESSONS, title="Lesson 2", content="Content")
 
         # Search lessons only
         results = memory_store.search(category=MemoryCategory.LESSONS)
@@ -358,19 +339,16 @@ class TestMemoryStoreSearch:
             category=MemoryCategory.LESSONS,
             title="Lesson 1",
             content="Content",
-            tags=["verification", "deployment"]
+            tags=["verification", "deployment"],
         )
         memory_store.create(
-            category=MemoryCategory.LESSONS,
-            title="Lesson 2",
-            content="Content",
-            tags=["testing"]
+            category=MemoryCategory.LESSONS, title="Lesson 2", content="Content", tags=["testing"]
         )
         memory_store.create(
             category=MemoryCategory.LESSONS,
             title="Lesson 3",
             content="Content",
-            tags=["verification", "testing"]
+            tags=["verification", "testing"],
         )
 
         # Search for verification tag
@@ -385,19 +363,16 @@ class TestMemoryStoreSearch:
             category=MemoryCategory.LESSONS,
             title="Critical 1",
             content="Content",
-            severity="CRITICAL"
+            severity="CRITICAL",
         )
         memory_store.create(
-            category=MemoryCategory.LESSONS,
-            title="High 1",
-            content="Content",
-            severity="HIGH"
+            category=MemoryCategory.LESSONS, title="High 1", content="Content", severity="HIGH"
         )
         memory_store.create(
             category=MemoryCategory.LESSONS,
             title="Critical 2",
             content="Content",
-            severity="CRITICAL"
+            severity="CRITICAL",
         )
 
         # Search critical only
@@ -409,16 +384,13 @@ class TestMemoryStoreSearch:
     def test_search_by_verified(self, memory_store):
         """Test searching by verification status."""
         memory_store.create(
-            category=MemoryCategory.CLAIMS,
-            title="Verified Claim",
-            content="Content",
-            verified=True
+            category=MemoryCategory.CLAIMS, title="Verified Claim", content="Content", verified=True
         )
         memory_store.create(
             category=MemoryCategory.CLAIMS,
             title="Unverified Claim",
             content="Content",
-            verified=False
+            verified=False,
         )
 
         # Search unverified
@@ -432,9 +404,7 @@ class TestMemoryStoreSearch:
         # Create 5 memories
         for i in range(5):
             memory_store.create(
-                category=MemoryCategory.LESSONS,
-                title=f"Lesson {i}",
-                content="Content"
+                category=MemoryCategory.LESSONS, title=f"Lesson {i}", content="Content"
             )
 
         # Search with limit
@@ -447,25 +417,15 @@ class TestMemoryStoreSearch:
         # Create memories with slight delay to ensure different timestamps
         import time
 
-        id1 = memory_store.create(
-            category=MemoryCategory.LESSONS,
-            title="First",
-            content="Content"
-        )
+        id1 = memory_store.create(category=MemoryCategory.LESSONS, title="First", content="Content")
         time.sleep(0.01)
 
         id2 = memory_store.create(
-            category=MemoryCategory.LESSONS,
-            title="Second",
-            content="Content"
+            category=MemoryCategory.LESSONS, title="Second", content="Content"
         )
         time.sleep(0.01)
 
-        id3 = memory_store.create(
-            category=MemoryCategory.LESSONS,
-            title="Third",
-            content="Content"
-        )
+        id3 = memory_store.create(category=MemoryCategory.LESSONS, title="Third", content="Content")
 
         results = memory_store.search()
 
@@ -479,9 +439,7 @@ class TestMemoryStoreSearch:
         # Create several memories
         for i in range(5):
             memory_store.create(
-                category=MemoryCategory.LESSONS,
-                title=f"Lesson {i}",
-                content="Content"
+                category=MemoryCategory.LESSONS, title=f"Lesson {i}", content="Content"
             )
 
         recent = memory_store.get_recent(limit=3)
@@ -494,13 +452,10 @@ class TestMemoryStoreSearch:
             category=MemoryCategory.LESSONS,
             title="Critical 1",
             content="Content",
-            severity="CRITICAL"
+            severity="CRITICAL",
         )
         memory_store.create(
-            category=MemoryCategory.LESSONS,
-            title="High 1",
-            content="Content",
-            severity="HIGH"
+            category=MemoryCategory.LESSONS, title="High 1", content="Content", severity="HIGH"
         )
 
         critical = memory_store.get_critical()
@@ -511,16 +466,10 @@ class TestMemoryStoreSearch:
     def test_get_unverified(self, memory_store):
         """Test getting unverified memories."""
         memory_store.create(
-            category=MemoryCategory.CLAIMS,
-            title="Unverified",
-            content="Content",
-            verified=False
+            category=MemoryCategory.CLAIMS, title="Unverified", content="Content", verified=False
         )
         memory_store.create(
-            category=MemoryCategory.CLAIMS,
-            title="Verified",
-            content="Content",
-            verified=True
+            category=MemoryCategory.CLAIMS, title="Verified", content="Content", verified=True
         )
 
         unverified = memory_store.get_unverified()
@@ -531,16 +480,8 @@ class TestMemoryStoreSearch:
     def test_count(self, memory_store):
         """Test counting memories."""
         # Create memories
-        memory_store.create(
-            category=MemoryCategory.LESSONS,
-            title="Lesson 1",
-            content="Content"
-        )
-        memory_store.create(
-            category=MemoryCategory.TRADES,
-            title="Trade 1",
-            content="Content"
-        )
+        memory_store.create(category=MemoryCategory.LESSONS, title="Lesson 1", content="Content")
+        memory_store.create(category=MemoryCategory.TRADES, title="Trade 1", content="Content")
 
         # Count all
         total = memory_store.count()
@@ -558,9 +499,7 @@ class TestBackups:
         """Test that backup is created before update."""
         # Create memory
         memory_id = memory_store.create(
-            category=MemoryCategory.LESSONS,
-            title="Original",
-            content="Content"
+            category=MemoryCategory.LESSONS, title="Original", content="Content"
         )
 
         # Update memory
@@ -576,9 +515,7 @@ class TestBackups:
         """Test that backup is created before delete."""
         # Create memory
         memory_id = memory_store.create(
-            category=MemoryCategory.LESSONS,
-            title="To Delete",
-            content="Content"
+            category=MemoryCategory.LESSONS, title="To Delete", content="Content"
         )
 
         # Delete memory
@@ -597,17 +534,10 @@ class TestSessionManagement:
     def test_save_session(self, memory_store):
         """Test saving session state."""
         # Create some memories
-        memory_store.create(
-            category=MemoryCategory.LESSONS,
-            title="Lesson 1",
-            content="Content"
-        )
+        memory_store.create(category=MemoryCategory.LESSONS, title="Lesson 1", content="Content")
 
         # Save session
-        memory_store.save_session(
-            learnings=["Learning 1", "Learning 2"],
-            context={"key": "value"}
-        )
+        memory_store.save_session(learnings=["Learning 1", "Learning 2"], context={"key": "value"})
 
         # Check session file exists
         sessions_file = Path(memory_store.base_path) / "sessions.json"
@@ -628,11 +558,7 @@ class TestSessionManagement:
         """Test loading previous session."""
         # Create first session
         store1 = MemoryStore(base_path=temp_memory_dir)
-        store1.create(
-            category=MemoryCategory.LESSONS,
-            title="Lesson 1",
-            content="Content"
-        )
+        store1.create(category=MemoryCategory.LESSONS, title="Lesson 1", content="Content")
         store1.save_session(learnings=["First session learning"])
 
         # Create second session
@@ -652,13 +578,10 @@ class TestSessionManagement:
             category=MemoryCategory.LESSONS,
             title="Lesson 1",
             content="Content",
-            severity="CRITICAL"
+            severity="CRITICAL",
         )
         memory_id = memory_store.create(
-            category=MemoryCategory.CLAIMS,
-            title="Claim 1",
-            content="Content",
-            verified=False
+            category=MemoryCategory.CLAIMS, title="Claim 1", content="Content", verified=False
         )
         memory_store.update(memory_id, verified=True)
 
@@ -679,16 +602,8 @@ class TestImportExport:
     def test_export_category(self, memory_store, temp_memory_dir):
         """Test exporting a category."""
         # Create memories
-        memory_store.create(
-            category=MemoryCategory.LESSONS,
-            title="Lesson 1",
-            content="Content 1"
-        )
-        memory_store.create(
-            category=MemoryCategory.LESSONS,
-            title="Lesson 2",
-            content="Content 2"
-        )
+        memory_store.create(category=MemoryCategory.LESSONS, title="Lesson 1", content="Content 1")
+        memory_store.create(category=MemoryCategory.LESSONS, title="Lesson 2", content="Content 2")
 
         # Export
         export_file = Path(temp_memory_dir) / "export.json"
@@ -722,7 +637,7 @@ class TestImportExport:
                     "tags": ["imported"],
                     "metadata": {},
                     "verified": True,
-                    "session_id": "old_session"
+                    "session_id": "old_session",
                 },
                 {
                     "id": "imported_2",
@@ -734,9 +649,9 @@ class TestImportExport:
                     "tags": ["imported"],
                     "metadata": {},
                     "verified": False,
-                    "session_id": "old_session"
-                }
-            ]
+                    "session_id": "old_session",
+                },
+            ],
         }
 
         import_file = Path(temp_memory_dir) / "import.json"
@@ -770,9 +685,7 @@ class TestEdgeCases:
     def test_create_with_minimal_data(self, memory_store):
         """Test creating memory with only required fields."""
         memory_id = memory_store.create(
-            category=MemoryCategory.ERRORS,
-            title="Minimal",
-            content="Content"
+            category=MemoryCategory.ERRORS, title="Minimal", content="Content"
         )
 
         entry = memory_store.read(memory_id)
@@ -793,9 +706,7 @@ class TestEdgeCases:
         """Test that _get_memory_path searches all categories."""
         # Create memory
         memory_id = memory_store.create(
-            category=MemoryCategory.TRADES,
-            title="Test",
-            content="Content"
+            category=MemoryCategory.TRADES, title="Test", content="Content"
         )
 
         # Get path without category hint

@@ -123,7 +123,10 @@ class BacktestResult:
                 "cost_pct_of_capital": 0.0,
                 "cost_adjusted_total_return_pct": round(self.total_return_pct, 4),
                 "cost_adjusted_annualized_return_pct": round(self.annualized_return_pct, 4),
-                "assumptions": {"fee_rate": 0.0018, "slippage_model_enabled": True},  # FIXED Jan 6 2026: Enable slippage for realistic backtests
+                "assumptions": {
+                    "fee_rate": 0.0018,
+                    "slippage_model_enabled": True,
+                },  # FIXED Jan 6 2026: Enable slippage for realistic backtests
             },
             "cost_adjusted_return_pct": round(self.total_return_pct, 4),
             "cost_adjusted_annualized_return_pct": round(self.annualized_return_pct, 4),

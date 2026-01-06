@@ -101,9 +101,7 @@ class TestGap:
 
     def test_gap_to_dict(self):
         """Test Gap serialization to dict."""
-        gap = Gap(
-            question="Missing data?", importance="CRITICAL", suggested_query="data query"
-        )
+        gap = Gap(question="Missing data?", importance="CRITICAL", suggested_query="data query")
         data = gap.to_dict()
         assert data["question"] == "Missing data?"
         assert data["importance"] == "CRITICAL"
@@ -345,9 +343,7 @@ class TestMemR3Router:
 
     def test_router_custom_parameters(self):
         """Test router with custom parameters."""
-        router = MemR3Router(
-            max_iterations=5, max_reflect_streak=3, min_confidence=0.8
-        )
+        router = MemR3Router(max_iterations=5, max_reflect_streak=3, min_confidence=0.8)
         assert router.max_iterations == 5
         assert router.max_reflect_streak == 3
         assert router.min_confidence == 0.8
@@ -474,9 +470,7 @@ class TestMemR3Router:
         router = MemR3Router(rag_integration=MagicMock())
 
         # Add evidence about position sizing
-        router.tracker.add_evidence(
-            "position sizing", "Position sizing is critical", "source1"
-        )
+        router.tracker.add_evidence("position sizing", "Position sizing is critical", "source1")
 
         reflection = router.reflect("test query")
 
@@ -665,7 +659,11 @@ class TestIntegration:
 
         # Second action: might be REFLECT or ANSWER depending on confidence
         decision2 = router.route(query)
-        assert decision2.action in [RouterAction.REFLECT, RouterAction.ANSWER, RouterAction.RETRIEVE]
+        assert decision2.action in [
+            RouterAction.REFLECT,
+            RouterAction.ANSWER,
+            RouterAction.RETRIEVE,
+        ]
 
         # Eventually should reach ANSWER
         for i in range(5):

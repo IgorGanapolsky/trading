@@ -87,9 +87,7 @@ class ProcessRewardTracker:
     def __init__(self):
         self.rewards: list[ProcessReward] = []
         self.cumulative_scores: dict[str, float] = defaultdict(float)
-        self.stage_scores: dict[str, dict[str, float]] = defaultdict(
-            lambda: defaultdict(float)
-        )
+        self.stage_scores: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
         self._load_rewards()
 
     def _load_rewards(self):
@@ -115,15 +113,10 @@ class ProcessRewardTracker:
                     self.rewards.append(reward)
 
                 # Reconstruct cumulative scores
-                self.cumulative_scores = defaultdict(
-                    float, data.get("cumulative_scores", {})
-                )
+                self.cumulative_scores = defaultdict(float, data.get("cumulative_scores", {}))
                 self.stage_scores = defaultdict(
                     lambda: defaultdict(float),
-                    {
-                        k: defaultdict(float, v)
-                        for k, v in data.get("stage_scores", {}).items()
-                    },
+                    {k: defaultdict(float, v) for k, v in data.get("stage_scores", {}).items()},
                 )
 
                 logger.info(f"Loaded {len(self.rewards)} process rewards from disk")
@@ -362,12 +355,8 @@ class ProcessRewardTracker:
 
         # Calculate averages
         query_qualities = [r.query_quality for r in action_rewards if r.query_quality]
-        evidence_qualities = [
-            r.evidence_quality for r in action_rewards if r.evidence_quality
-        ]
-        outcome_qualities = [
-            r.outcome_quality for r in action_rewards if r.outcome_quality
-        ]
+        evidence_qualities = [r.evidence_quality for r in action_rewards if r.evidence_quality]
+        outcome_qualities = [r.outcome_quality for r in action_rewards if r.outcome_quality]
 
         return {
             "action_type": action_type,
@@ -378,14 +367,10 @@ class ProcessRewardTracker:
                 sum(query_qualities) / len(query_qualities) if query_qualities else None
             ),
             "avg_evidence_quality": (
-                sum(evidence_qualities) / len(evidence_qualities)
-                if evidence_qualities
-                else None
+                sum(evidence_qualities) / len(evidence_qualities) if evidence_qualities else None
             ),
             "avg_outcome_quality": (
-                sum(outcome_qualities) / len(outcome_qualities)
-                if outcome_qualities
-                else None
+                sum(outcome_qualities) / len(outcome_qualities) if outcome_qualities else None
             ),
         }
 

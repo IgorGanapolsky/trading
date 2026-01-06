@@ -42,9 +42,7 @@ class TestCoreStrategyParameters:
 
         strategy = CoreStrategy()
         rr_ratio = strategy.TAKE_PROFIT_PCT / strategy.STOP_LOSS_PCT
-        assert rr_ratio == 3.0, (
-            f"R:R ratio should be 3.0, got {rr_ratio}"
-        )
+        assert rr_ratio == 3.0, f"R:R ratio should be 3.0, got {rr_ratio}"
 
     def test_positive_expectancy_at_thirty_percent_win_rate(self):
         """Strategy should have positive expectancy at 30% win rate."""
@@ -55,8 +53,7 @@ class TestCoreStrategyParameters:
 
         # Expected value = (win% * TP) - (loss% * SL)
         expected_value = (
-            win_rate * strategy.TAKE_PROFIT_PCT -
-            (1 - win_rate) * strategy.STOP_LOSS_PCT
+            win_rate * strategy.TAKE_PROFIT_PCT - (1 - win_rate) * strategy.STOP_LOSS_PCT
         )
 
         assert expected_value > 0, (
@@ -71,8 +68,7 @@ class TestCoreStrategyParameters:
         win_rate = 0.25
 
         expected_value = (
-            win_rate * strategy.TAKE_PROFIT_PCT -
-            (1 - win_rate) * strategy.STOP_LOSS_PCT
+            win_rate * strategy.TAKE_PROFIT_PCT - (1 - win_rate) * strategy.STOP_LOSS_PCT
         )
 
         # Should be approximately 0 (break-even)

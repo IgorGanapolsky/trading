@@ -274,11 +274,7 @@ def update_index_day_number(day_num: int) -> None:
     content = index_file.read_text()
 
     # Update "Day X/90" pattern
-    new_content = re.sub(
-        r"Day \d+/90",
-        f"Day {day_num}/90",
-        content
-    )
+    new_content = re.sub(r"Day \d+/90", f"Day {day_num}/90", content)
 
     if new_content != content:
         index_file.write_text(new_content)

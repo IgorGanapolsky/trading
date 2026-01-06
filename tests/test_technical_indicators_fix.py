@@ -25,13 +25,15 @@ class TestTechnicalScoreCalculation:
         from src.utils.technical_indicators import calculate_technical_score
 
         # Create sample OHLCV data with uppercase column names (yfinance style)
-        data = pd.DataFrame({
-            'Open': [100 + i for i in range(50)],
-            'High': [101 + i for i in range(50)],
-            'Low': [99 + i for i in range(50)],
-            'Close': [100.5 + i for i in range(50)],
-            'Volume': [1000000 + i * 10000 for i in range(50)],
-        })
+        data = pd.DataFrame(
+            {
+                "Open": [100 + i for i in range(50)],
+                "High": [101 + i for i in range(50)],
+                "Low": [99 + i for i in range(50)],
+                "Close": [100.5 + i for i in range(50)],
+                "Volume": [1000000 + i * 10000 for i in range(50)],
+            }
+        )
 
         try:
             # Function returns (score, indicators_dict) tuple
@@ -39,7 +41,9 @@ class TestTechnicalScoreCalculation:
             # Should be able to format without error
             _formatted = f"{score:.2f}"  # noqa: F841
             assert isinstance(score, (int, float)), f"Score should be numeric, got {type(score)}"
-            assert isinstance(indicators, dict), f"Indicators should be dict, got {type(indicators)}"
+            assert isinstance(indicators, dict), (
+                f"Indicators should be dict, got {type(indicators)}"
+            )
         except TypeError as e:
             if "Series" in str(e):
                 pytest.fail(f"Technical score returned Series instead of float: {e}")
@@ -51,13 +55,15 @@ class TestTechnicalScoreCalculation:
         import pandas as pd
         from src.utils.technical_indicators import calculate_technical_score
 
-        data = pd.DataFrame({
-            'Open': [100 + i for i in range(50)],
-            'High': [101 + i for i in range(50)],
-            'Low': [99 + i for i in range(50)],
-            'Close': [100.5 + i for i in range(50)],
-            'Volume': [1000000 + i * 10000 for i in range(50)],
-        })
+        data = pd.DataFrame(
+            {
+                "Open": [100 + i for i in range(50)],
+                "High": [101 + i for i in range(50)],
+                "Low": [99 + i for i in range(50)],
+                "Close": [100.5 + i for i in range(50)],
+                "Volume": [1000000 + i * 10000 for i in range(50)],
+            }
+        )
 
         try:
             # Function returns (score, indicators_dict) tuple
@@ -95,7 +101,9 @@ class TestMACDCalculation:
 
         assert isinstance(macd, (int, float)), f"MACD should be float, got {type(macd)}"
         assert isinstance(signal, (int, float)), f"Signal should be float, got {type(signal)}"
-        assert isinstance(histogram, (int, float)), f"Histogram should be float, got {type(histogram)}"
+        assert isinstance(histogram, (int, float)), (
+            f"Histogram should be float, got {type(histogram)}"
+        )
 
     def test_macd_histogram_equals_difference(self):
         """Histogram should equal MACD minus signal."""
@@ -201,11 +209,13 @@ class TestATRCalculation:
         import pandas as pd
         from src.utils.technical_indicators import calculate_atr
 
-        data = pd.DataFrame({
-            'high': [101 + i for i in range(30)],
-            'low': [99 + i for i in range(30)],
-            'close': [100 + i for i in range(30)],
-        })
+        data = pd.DataFrame(
+            {
+                "high": [101 + i for i in range(30)],
+                "low": [99 + i for i in range(30)],
+                "close": [100 + i for i in range(30)],
+            }
+        )
         atr = calculate_atr(data)
 
         assert isinstance(atr, (int, float)), f"ATR should be float, got {type(atr)}"
@@ -216,11 +226,13 @@ class TestATRCalculation:
         import pandas as pd
         from src.utils.technical_indicators import calculate_atr
 
-        data = pd.DataFrame({
-            'high': [101 + i for i in range(30)],
-            'low': [99 + i for i in range(30)],
-            'close': [100 + i for i in range(30)],
-        })
+        data = pd.DataFrame(
+            {
+                "high": [101 + i for i in range(30)],
+                "low": [99 + i for i in range(30)],
+                "close": [100 + i for i in range(30)],
+            }
+        )
         atr = calculate_atr(data)
 
         assert atr >= 0, f"ATR should be positive, got {atr}"
@@ -236,9 +248,7 @@ class TestVolumeRatio:
         from src.utils.technical_indicators import calculate_volume_ratio
 
         # Function expects DataFrame with 'Volume' column
-        hist = pd.DataFrame({
-            'Volume': [1000000 + i * 10000 for i in range(30)]
-        })
+        hist = pd.DataFrame({"Volume": [1000000 + i * 10000 for i in range(30)]})
         ratio = calculate_volume_ratio(hist)
 
         assert isinstance(ratio, (int, float)), f"Volume ratio should be float, got {type(ratio)}"
@@ -250,9 +260,7 @@ class TestVolumeRatio:
         from src.utils.technical_indicators import calculate_volume_ratio
 
         # Function expects DataFrame with 'Volume' column
-        hist = pd.DataFrame({
-            'Volume': [1000000 + i * 10000 for i in range(30)]
-        })
+        hist = pd.DataFrame({"Volume": [1000000 + i * 10000 for i in range(30)]})
         ratio = calculate_volume_ratio(hist)
 
         assert ratio > 0, f"Volume ratio should be positive, got {ratio}"
