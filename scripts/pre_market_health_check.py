@@ -63,29 +63,27 @@ def timeout_handler(signum, frame):
 def check_alpaca_api() -> bool:
     """Check Alpaca API connectivity and account access."""
     try:
-        # Use broker health monitor for comprehensive check
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-        from src.core.broker_health import BrokerHealthMonitor
+        # Use AlpacaTrader for direct API check (Fixed Jan 6, 2026)
+        # Previous code used non-existent BrokerHealthMonitor class
+        from src.core.alpaca_trader import AlpacaTrader
 
-        monitor = BrokerHealthMonitor(broker_name="alpaca")
-        metrics = monitor.check_health()
+        # Determine paper mode from environment
+        paper_mode = os.getenv("PAPER_TRADING", "true").lower() == "true"
+        trader = AlpacaTrader(paper=paper_mode)
+        account = trader.get_account_info()
 
-        if metrics.is_healthy:
+        if account:
+            equity = float(account.get("equity", 0))
+            buying_power = float(account.get("buying_power", 0))
+            status = account.get("status", "unknown")
+
             print("✅ Alpaca API: Connected")
-            if metrics.buying_power:
-                print(f"   Buying Power: ${metrics.buying_power:,.2f}")
-            if metrics.account_status:
-                print(f"   Status: {metrics.account_status}")
-            if metrics.avg_response_time_ms > 0:
-                print(f"   Response Time: {metrics.avg_response_time_ms:.2f}ms")
+            print(f"   Equity: ${equity:,.2f}")
+            print(f"   Buying Power: ${buying_power:,.2f}")
+            print(f"   Status: {status}")
             return True
         else:
-            print("❌ Alpaca API: UNHEALTHY")
-            print(f"   Status: {metrics.status.value}")
-            if metrics.last_error:
-                print(f"   Error: {metrics.last_error}")
-            if metrics.consecutive_failures > 0:
-                print(f"   Consecutive Failures: {metrics.consecutive_failures}")
+            print("❌ Alpaca API: No account data returned")
             return False
     except Exception as e:
         print(f"❌ Alpaca API: FAILED - {e}")

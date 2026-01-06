@@ -348,6 +348,36 @@ def assess_trading_readiness() -> dict:
         else:
             blockers.append(f"Win rate poor: {win_rate:.0f}%")
 
+    # 6. TRADING AUTOMATION CHECK (Critical - added Jan 6, 2026)
+    max_score += 20
+    if state:
+        last_trade_date = state.get("trades", {}).get("last_trade_date", "")
+        if last_trade_date:
+            try:
+                last_trade = datetime.strptime(last_trade_date, "%Y-%m-%d")
+                days_since_trade = (now_et.replace(tzinfo=None) - last_trade).days
+                # Weekend adjustment: subtract 2 days if Mon/Tue
+                weekday = now_et.weekday()
+                if weekday in [0, 1]:  # Monday or Tuesday
+                    days_since_trade -= 2
+                if days_since_trade <= 1:
+                    checks.append(f"Automation active (last trade: {last_trade_date})")
+                    score += 20
+                elif days_since_trade <= 3:
+                    warnings.append(
+                        f"Automation possibly stale ({days_since_trade} days since last trade)"
+                    )
+                    score += 10
+                else:
+                    blockers.append(
+                        f"🚨 AUTOMATION BROKEN: No trades for {days_since_trade} days! "
+                        f"(last trade: {last_trade_date}) Check GitHub Actions secrets!"
+                    )
+            except Exception:
+                warnings.append("Could not verify last trade date")
+        else:
+            blockers.append("No trade history found - automation may not be running")
+
     # Calculate overall readiness
     readiness_pct = (score / max_score * 100) if max_score > 0 else 0
 
