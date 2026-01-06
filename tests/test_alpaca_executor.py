@@ -263,8 +263,9 @@ class TestPlaceOrder:
 
     def test_place_order_via_broker(self):
         """Should place order via broker in live mode."""
-        from src.brokers.multi_broker import BrokerType, OrderResult
         from datetime import datetime
+
+        from src.brokers.multi_broker import BrokerType, OrderResult
 
         with patch.dict(os.environ, {"ALPACA_SIMULATED": "true"}):
             with patch("src.observability.trade_sync.sync_trade"):

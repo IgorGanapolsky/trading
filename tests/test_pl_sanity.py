@@ -327,8 +327,8 @@ class TestEdgeCases:
             # Clear import cache
             if "alpaca.trading.client" in sys.modules:
                 del sys.modules["alpaca.trading.client"]
-            result = module._get_trading_client()
-            # May return mock or None depending on test environment
+            # Call to verify no exception is raised
+            module._get_trading_client()
 
     def test_initialize_api_without_credentials(self, mock_alpaca):
         """Test API initialization fails gracefully without credentials."""

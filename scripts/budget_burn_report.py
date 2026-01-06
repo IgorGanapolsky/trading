@@ -148,7 +148,6 @@ def analyze_api_costs(budget_data: dict[str, Any]) -> dict[str, Any]:
 
 def calculate_cost_per_trade(budget_data: dict[str, Any], trade_count: int) -> dict[str, Any]:
     """Calculate LLM cost per trade."""
-    spent = budget_data.get("spent_this_month", 0.0)
     api_calls = budget_data.get("api_calls", {})
 
     # LLM-specific costs
