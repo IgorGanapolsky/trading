@@ -10,15 +10,19 @@ Current capital: Check `data/system_state.json` → `account.current_equity`
 
 | Capital | Daily Target | Strategy |
 |---------|--------------|----------|
-| $200 | $5/day | Single CSP on SPY |
-| $500 | $15/day | 2 CSPs or Iron Condor |
-| $1,000 | $30/day | Wheel on SPY |
-| $2,000 | $60/day | Multiple wheels |
-| $5,000 | **$100/day** | Full Phil Town |
+| $200 | $0 | Accumulation only (CSPs need $500+) |
+| $500 | $1.50/day | First CSP on F/SOFI ($5 strike) |
+| $1,000 | $3/day | CSPs on INTC, BAC ($10 strike) |
+| $2,000 | $6/day | Multiple CSPs ($20 strike) |
+| $5,000 | $15/day | Quality stocks ($50 strike) |
 
-**Milestones** (with $10/day deposits + 2% compounding):
-- Jan 29, 2026: $200 → FIRST TRADE
-- Jun 24, 2026: $5,000 → $100/day North Star
+**NOTE**: $100/day requires ~$50,000 capital. Use compounding to grow.
+
+**Milestones** (with $10/day deposits + compounding):
+- Jan 20, 2026: $200 → Accumulation only
+- Feb 19, 2026: $500 → FIRST CSP TRADE (F/SOFI)
+- Mar 24, 2026: $1,000 → Expand to INTC, BAC
+- Jun 24, 2026: $5,000 → Quality stocks accessible
 
 **Rules**:
 - Reinvest ALL profits (compounding = +93% more capital)
