@@ -8,7 +8,7 @@ description: "90-day R&D building an AI trading system. 80+ lessons learned. Ful
 
 Building an autonomous AI trading system with Claude Opus 4.5.
 
-**80+ lessons learned. Real failures. Real fixes.**
+**90+ lessons learned. Real failures. Real fixes.**
 
 ---
 
@@ -84,7 +84,7 @@ Building an autonomous AI trading system with Claude Opus 4.5.
 - **{{ lesson.date | date: "%b %d" }}**: [{{ lesson.title }}]({{ lesson.url | relative_url }})
 {% endfor %}
 
-[View All 80+ Lessons](/lessons/)
+[View All 90+ Lessons](/lessons/)
 
 ---
 
