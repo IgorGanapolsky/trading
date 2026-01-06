@@ -439,9 +439,7 @@ def run_backtest(scenario: dict[str, Any], defaults: dict[str, Any]) -> Backtest
 
     # Determine status
     status = "pass"
-    if survival_gate and not survival_passed:
-        status = "fail"
-    elif max_drawdown > 20:  # R&D threshold
+    if survival_gate and not survival_passed or max_drawdown > 20:
         status = "fail"
 
     result = BacktestResult(
@@ -585,7 +583,7 @@ def main() -> int:
         avg_win_rate = sum(r.win_rate_pct for r in results) / len(results)
         avg_return = sum(r.total_return_pct for r in results) / len(results)
 
-        print(f"\nAggregate Metrics:")
+        print("\nAggregate Metrics:")
         print(f"  Total trades: {total_trades}")
         print(f"  Avg win rate: {avg_win_rate:.1f}%")
         print(f"  Avg return: {avg_return:.2f}%")
