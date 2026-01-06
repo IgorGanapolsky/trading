@@ -62,6 +62,8 @@ def calculate_basic_metrics():
     paper_pl = paper_account.get("total_pl", 0.0)
     paper_pl_pct = paper_account.get("total_pl_pct", 0.0)
     paper_win_rate = paper_account.get("win_rate", 0.0)
+    paper_todays_pl = paper_account.get("todays_pl", 0.0)
+    paper_todays_pl_pct = paper_account.get("todays_pl_pct", 0.0)
 
     # Performance log (may contain paper or live data based on workflow)
     perf_log = load_json_file(DATA_DIR / "performance_log.json")
@@ -173,9 +175,9 @@ def calculate_basic_metrics():
         "paper_pl": paper_pl,
         "paper_pl_pct": paper_pl_pct,
         "paper_win_rate": paper_win_rate,
-        # Today's paper P/L - calculated from today's trades if available
-        "today_paper_pl": 0.0,  # TODO: Calculate from today's closed trades
-        "today_paper_pl_pct": 0.0,
+        # Today's paper P/L - read from system_state.json
+        "today_paper_pl": paper_todays_pl,
+        "today_paper_pl_pct": paper_todays_pl_pct,
     }
 
 
