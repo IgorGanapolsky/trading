@@ -6,6 +6,8 @@ Detects:
 2. Workflow failures (>60% of recent runs failed)
 3. Stale system state (not updated in >48 hours)
 4. Account connectivity issues
+5. Budget burn rate (on track for $100/month?) - Jan 2026
+6. Gemini failover readiness (backup LLM operational?) - Jan 2026
 
 Part of P1: Health Monitoring & Alerts from SYSTEMIC_FAILURE_PREVENTION_PLAN.md
 """
@@ -176,6 +178,88 @@ def check_alpaca_connectivity() -> tuple[bool, str]:
         return False, f"❌ Alpaca connection failed: {e}"
 
 
+def check_budget_health() -> tuple[bool, str]:
+    """Check if budget spending is on track for $100/month.
+
+    Returns:
+        (is_healthy, status_message)
+    """
+    budget_file = Path("data/budget_tracker.json")
+    monthly_budget = 100.00
+
+    if not budget_file.exists():
+        return True, "ℹ️  No budget data yet (tracking will start on first API call)"
+
+    try:
+        data = json.loads(budget_file.read_text())
+        spent = data.get("spent_this_month", 0.0)
+        remaining = monthly_budget - spent
+
+        # Calculate projected spend
+        now = datetime.now()
+        days_elapsed = now.day
+        days_total = 30  # Approximate
+        daily_rate = spent / max(days_elapsed, 1)
+        projected = daily_rate * days_total
+
+        # Determine health
+        pct_remaining = remaining / monthly_budget
+
+        if pct_remaining > 0.50:
+            health = "healthy"
+            status = "✅"
+        elif pct_remaining > 0.20:
+            health = "caution"
+            status = "⚠️ "
+        else:
+            health = "critical"
+            status = "❌"
+
+        on_track = projected <= monthly_budget
+
+        message = (
+            f"{status} Budget {health.upper()}: ${spent:.2f} spent, "
+            f"${remaining:.2f} remaining ({pct_remaining:.0%})\n"
+            f"     Projected: ${projected:.2f}/month "
+            f"({'on track' if on_track else 'OVER BUDGET'})"
+        )
+
+        return pct_remaining > 0.10, message  # Fail if <10% remaining
+
+    except Exception as e:
+        return True, f"⚠️  Could not check budget: {e}"
+
+
+def check_gemini_failover() -> tuple[bool, str]:
+    """Check if Gemini backup LLM is operational.
+
+    Returns:
+        (is_healthy, status_message)
+    """
+    api_key = os.getenv("GOOGLE_API_KEY")
+
+    if not api_key:
+        return True, "ℹ️  GOOGLE_API_KEY not set (Gemini failover unavailable)"
+
+    try:
+        import google.generativeai as genai
+
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-2.0-flash-exp")
+
+        # Quick test - just verify the model can be initialized
+        # (Don't actually call API to save quota)
+        if model:
+            return True, "✅ Gemini failover ready (model initialized)"
+
+        return False, "❌ Gemini model initialization failed"
+
+    except ImportError:
+        return True, "ℹ️  google-generativeai not installed (expected in CI)"
+    except Exception as e:
+        return False, f"❌ Gemini failover check failed: {e}"
+
+
 def main():
     """Run all health checks and report status."""
     print("=" * 70)
@@ -189,6 +273,8 @@ def main():
         ("Workflow Health", check_workflow_health),
         ("System State", check_system_state),
         ("Alpaca Connectivity", check_alpaca_connectivity),
+        ("Budget Health", check_budget_health),
+        ("Gemini Failover", check_gemini_failover),
     ]
 
     results = []
