@@ -209,7 +209,7 @@ class RAGEnforcer:
         for key, requirements in required_knowledge.items():
             if key.startswith(action_base):
                 # Check if any lessons cover these requirements
-                lesson_text = " ".join(l["content"].lower() for l in lessons)
+                lesson_text = " ".join(lesson["content"].lower() for lesson in lessons)
                 missing = [r for r in requirements if r not in lesson_text]
                 if missing:
                     return f"Missing knowledge about: {', '.join(missing)}"
