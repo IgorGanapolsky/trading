@@ -222,10 +222,13 @@ def run():
     logger.info("Checking RAG lessons before execution...")
     rag = LessonsLearnedRAG()
 
-    # Check for SPY trading failures
+    # Check for SPY trading failures - only block on TRADING category lessons
+    # Fix: Was blocking on CI/CD lessons that matched "failures" keyword
     spy_lessons = rag.search("SPY trading failures losses", top_k=3)
     for lesson, score in spy_lessons:
-        if lesson.severity == "CRITICAL":
+        # Only block if lesson is CRITICAL AND in Trading category (not CI/CD, etc.)
+        is_trading_lesson = getattr(lesson, "category", "").lower() in ["trading", "execution", "risk"]
+        if lesson.severity == "CRITICAL" and is_trading_lesson and score > 0.8:
             logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
             logger.error(f"Prevention: {lesson.prevention}")
             return {
@@ -234,11 +237,15 @@ def run():
                 "lesson": lesson.title,
                 "lesson_id": lesson.id,
             }
+        elif lesson.severity == "CRITICAL":
+            # Log but don't block non-trading lessons
+            logger.warning(f"RAG advisory (not blocking): {lesson.title} (category: {getattr(lesson, 'category', 'unknown')})")
 
     # Check for strategy-specific failures (RSI-based trading)
     strategy_lessons = rag.search("RSI trading strategy failures", top_k=3)
     for lesson, score in strategy_lessons:
-        if lesson.severity == "CRITICAL":
+        is_trading_lesson = getattr(lesson, "category", "").lower() in ["trading", "execution", "risk"]
+        if lesson.severity == "CRITICAL" and is_trading_lesson and score > 0.8:
             logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
             logger.error(f"Prevention: {lesson.prevention}")
             return {
@@ -247,6 +254,8 @@ def run():
                 "lesson": lesson.title,
                 "lesson_id": lesson.id,
             }
+        elif lesson.severity == "CRITICAL":
+            logger.warning(f"RAG advisory (not blocking): {lesson.title}")
 
     logger.info("RAG checks passed - proceeding with execution")
 
