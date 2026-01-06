@@ -58,13 +58,7 @@ from src.utils.heartbeat import record_heartbeat
 from src.utils.regime_detector import RegimeDetector
 from src.utils.staleness_guard import check_data_staleness
 
-# Mental Toughness Coach - Psychology-based trading guard (Dec 2025)
-# DISABLED: Module not implemented yet
-# try:
-#     from src.coaching.mental_toughness_coach import MentalToughnessCoach
-#     COACHING_AVAILABLE = True
-# except ImportError:
-#     COACHING_AVAILABLE = False
+# Mental Toughness Coach - not implemented
 COACHING_AVAILABLE = False
 
 # Bull/Bear Debate Agents - Multi-perspective analysis (Dec 2025)
@@ -93,24 +87,10 @@ try:
 except ImportError:
     LESSONS_RAG_AVAILABLE = False
 
-# Hindsight Agentic Memory - 91% accuracy on LongMemEval (Dec 2025)
-# Auto-learns from trades, provides confidence-scored opinions
-# DISABLED: Module not implemented yet
-# try:
-#     from src.rag.hindsight_adapter import HindsightAdapter, get_hindsight_adapter  # noqa: F401
-#     HINDSIGHT_AVAILABLE = True
-# except ImportError:
-#     HINDSIGHT_AVAILABLE = False
+# Hindsight Agentic Memory - not implemented
 HINDSIGHT_AVAILABLE = False
 
-# Reflexion Loop - Self-improving through trade reflection (Dec 2025)
-# Based on Reflexion framework research
-# DISABLED: Module not implemented yet
-# try:
-#     from src.coaching.reflexion_loop import reflect_and_store
-#     REFLEXION_AVAILABLE = True
-# except ImportError:
-#     REFLEXION_AVAILABLE = False
+# Reflexion Loop - not implemented
 REFLEXION_AVAILABLE = False
 
 
