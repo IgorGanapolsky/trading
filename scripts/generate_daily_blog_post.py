@@ -76,7 +76,19 @@ def get_trades_for_date(target_date: str) -> list:
 
 def calculate_day_number() -> int:
     """Calculate which day of the 90-day R&D phase we're on."""
-    start_date = date(2025, 11, 3)  # R&D start date
+    # Use start_date from system_state.json (Oct 29, 2025)
+    # Previously hardcoded Nov 3 which was WRONG
+    try:
+        state_file = Path(__file__).parent.parent / "data" / "system_state.json"
+        if state_file.exists():
+            with open(state_file) as f:
+                state = json.load(f)
+                start_str = state.get("start_date", "2025-10-29")
+                start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
+        else:
+            start_date = date(2025, 10, 29)  # Fallback to correct date
+    except Exception:
+        start_date = date(2025, 10, 29)  # Fallback to correct date
     today = date.today()
     return (today - start_date).days + 1
 
@@ -250,6 +262,31 @@ def save_github_pages_post(content: str, report_date: str) -> Path:
     return filepath
 
 
+def update_index_day_number(day_num: int) -> None:
+    """Update the day number in docs/index.md."""
+    import re
+
+    index_file = DOCS_DIR / "index.md"
+    if not index_file.exists():
+        print(f"Warning: {index_file} not found")
+        return
+
+    content = index_file.read_text()
+
+    # Update "Day X/90" pattern
+    new_content = re.sub(
+        r"Day \d+/90",
+        f"Day {day_num}/90",
+        content
+    )
+
+    if new_content != content:
+        index_file.write_text(new_content)
+        print(f"Updated index.md: Day {day_num}/90")
+    else:
+        print(f"index.md already shows Day {day_num}/90")
+
+
 def post_to_devto(content: str, report_date: str, daily_pl: float) -> str | None:
     """Post to Dev.to via API."""
     api_key = os.getenv("DEVTO_API_KEY")
@@ -349,6 +386,9 @@ def main():
 
     # Save to GitHub Pages
     filepath = save_github_pages_post(content, report_date)
+
+    # Update index.md day number
+    update_index_day_number(day_num)
 
     # Post to Dev.to
     devto_url = post_to_devto(content, report_date, daily_pl)

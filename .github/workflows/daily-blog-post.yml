@@ -115,6 +115,7 @@ jobs:
           # Add all changed files
           git add data/performance_log.json
           git add docs/_reports/
+          git add docs/index.md
 
           # Check if there are changes to commit
           if git diff --staged --quiet; then
