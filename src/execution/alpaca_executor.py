@@ -73,7 +73,7 @@ class AlpacaExecutor:
             self.broker = None
 
     def _record_trade_for_tracking(self, order: dict[str, Any], strategy: str) -> None:
-        """Record trade to LangSmith, ChromaDB RAG, and local JSON."""
+        """Record trade to LangSmith, ChromaDB RAG, RLHF storage, and local JSON."""
         # Use unified trade sync (Jan 2026 - fixes operational gap)
         try:
             from src.observability.trade_sync import sync_trade
@@ -102,6 +102,10 @@ class AlpacaExecutor:
                 f"Trade sync: {symbol} {side} | "
                 f"LangSmith={results['langsmith']}, ChromaDB={results['chromadb']}, JSON={results['local_json']}"
             )
+
+            # Store to RLHF trajectory storage for ML learning (Jan 6 2026 fix)
+            self._store_rlhf_trajectory(order, strategy, price)
+
         except ImportError:
             logger.warning("trade_sync not available - falling back to LangSmith only")
             self._trace_trade_execution(order, strategy)
@@ -109,6 +113,52 @@ class AlpacaExecutor:
             logger.warning(f"Failed to sync trade: {e}")
             # Fallback to LangSmith-only tracing
             self._trace_trade_execution(order, strategy)
+
+    def _store_rlhf_trajectory(self, order: dict[str, Any], strategy: str, price: float) -> None:
+        """Store trade as RLHF trajectory for ML learning."""
+        try:
+            from src.learning.rlhf_storage import store_trade_trajectory
+
+            symbol = order.get("symbol", "UNKNOWN")
+            side = order.get("side", "").lower()
+            order_id = order.get("id", f"{symbol}_{int(datetime.now().timestamp())}")
+
+            # Create a basic state representation
+            # TODO: Enhance with actual market features from RLFilter
+            entry_state = {
+                "price": price,
+                "symbol": symbol,
+                "strategy": strategy,
+                "timestamp": datetime.now().isoformat(),
+            }
+
+            # Determine action: 1=BUY, 2=SELL, 0=HOLD
+            action = 1 if side == "buy" else (2 if side == "sell" else 0)
+
+            result = store_trade_trajectory(
+                episode_id=str(order_id),
+                entry_state=entry_state,
+                action=action,
+                exit_state=entry_state,  # Will be updated on position close
+                reward=0.0,  # Will be calculated on position close
+                symbol=symbol,
+                policy_version="1.0.0",
+                metadata={
+                    "strategy": strategy,
+                    "broker": "alpaca",
+                    "mode": "paper" if self.paper else "live",
+                },
+            )
+
+            if result:
+                logger.info(f"RLHF trajectory stored: {symbol} {side} (episode: {order_id})")
+            else:
+                logger.warning(f"RLHF trajectory storage returned None for {symbol}")
+
+        except ImportError as e:
+            logger.warning(f"RLHF storage not available: {e}")
+        except Exception as e:
+            logger.warning(f"Failed to store RLHF trajectory: {e}")
 
     def _trace_trade_execution(self, order: dict[str, Any], strategy: str) -> None:
         """Trace trade execution to LangSmith for observability."""

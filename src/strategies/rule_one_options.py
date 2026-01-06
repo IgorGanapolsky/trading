@@ -409,6 +409,54 @@ class RuleOneOptionsStrategy:
             logger.error(f"Failed to calculate Sticker Price for {symbol}: {e}")
             return None
 
+    def analyze_stock(self, symbol: str) -> dict | None:
+        """
+        Analyze a single stock and return valuation analysis.
+
+        This is the method called by rule_one_trader.py.
+
+        Returns:
+            dict with valuation data or None if analysis fails:
+            {
+                'symbol': str,
+                'current_price': float,
+                'sticker_price': float,
+                'mos_price': float,
+                'growth_rate': float,
+                'recommendation': str,
+                'upside_to_sticker': float,
+                'margin_of_safety': float,
+                'timestamp': str
+            }
+        """
+        result = self.calculate_sticker_price(symbol)
+        if not result:
+            return None
+
+        # Calculate recommendation based on current price vs MOS
+        recommendation = "HOLD"
+        if result.current_price <= result.mos_price:
+            recommendation = "STRONG BUY - Below MOS (Sell Puts)"
+        elif result.current_price <= result.sticker_price:
+            recommendation = "BUY - Below Sticker Price"
+        elif result.current_price > result.sticker_price * 1.2:
+            recommendation = "SELL - 20%+ Above Sticker (Sell Calls)"
+
+        upside = (result.sticker_price - result.current_price) / result.current_price
+        mos = (result.sticker_price - result.current_price) / result.sticker_price
+
+        return {
+            "symbol": symbol,
+            "current_price": result.current_price,
+            "sticker_price": result.sticker_price,
+            "mos_price": result.mos_price,
+            "growth_rate": result.growth_rate,
+            "recommendation": recommendation,
+            "upside_to_sticker": round(upside * 100, 2),
+            "margin_of_safety": round(mos * 100, 2),
+            "timestamp": datetime.now().isoformat(),
+        }
+
     def _get_available_cash(self) -> float:
         """Fetch available cash/buying power for sizing put contracts."""
         try:

@@ -86,15 +86,13 @@ def run_rule_one_strategy():
         }
 
     except ImportError as e:
-        logger.warning(f"Rule #1 strategy not available: {e}")
-        logger.info("Falling back to simple CSP screening...")
-
-        # Fallback: Just log that we would analyze these stocks
-        return {
-            "success": True,
-            "opportunities": 0,
-            "note": "Rule #1 strategy module not fully integrated - will enhance later",
-        }
+        logger.error(f"CRITICAL: Rule #1 strategy import failed: {e}")
+        logger.error("This indicates missing dependencies - FIX REQUIRED")
+        return {"success": False, "reason": f"import_error: {e}"}
+    except AttributeError as e:
+        logger.error(f"CRITICAL: Strategy implementation error: {e}")
+        logger.error("Missing method in RuleOneOptionsStrategy - FIX REQUIRED")
+        return {"success": False, "reason": f"implementation_error: {e}"}
     except Exception as e:
         logger.error(f"Rule #1 strategy error: {e}")
         return {"success": False, "reason": str(e)}
