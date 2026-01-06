@@ -49,11 +49,23 @@
       "purpose": "Accumulate capital for defined-risk options spreads (~$100-200 minimum)",
       "target_for_first_trade": 200.0,
       "estimated_days_to_target": 17,
-      "accelerated_plan": {
-        "option_1": {"deposit": 20, "days_to_200": 9, "days_to_2000": 99},
-        "option_2": {"deposit": 50, "days_to_200": 4, "days_to_2000": 40},
-        "option_3": {"deposit": 100, "days_to_200": 2, "days_to_2000": 20},
-        "recommendation": "Increase to $50/day to reach trading capital faster"
+      "compounding_strategy": {
+        "enabled": true,
+        "daily_return_target": 0.02,
+        "reinvest_profits": true,
+        "milestones": [
+          {"capital": 200, "target_date": "2026-01-29", "daily_target": 5, "day": 23},
+          {"capital": 500, "target_date": "2026-02-24", "daily_target": 15, "day": 49},
+          {"capital": 1000, "target_date": "2026-03-24", "daily_target": 30, "day": 77},
+          {"capital": 2000, "target_date": "2026-04-29", "daily_target": 60, "day": 113},
+          {"capital": 5000, "target_date": "2026-06-24", "daily_target": 100, "day": 169}
+        ],
+        "compounding_power": {
+          "without_compounding": 2637.14,
+          "with_compounding": 5089.07,
+          "advantage_pct": 93
+        },
+        "note": "Compounding at 2% daily nearly DOUBLES capital vs deposits alone"
       },
       "tax_strategy": "Section 475 MTM election + Section 1256 index options (60/40 treatment)"
     }
