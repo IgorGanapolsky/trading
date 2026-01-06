@@ -1,53 +1,38 @@
 {
-  "summary": {
-    "scenario": "crash_2008_bottom",
-    "label": "2008 Financial Crisis - Bear market bottom (Jan-Mar 2009)",
-    "start_date": "2009-01-01",
-    "end_date": "2009-03-31",
-    "trading_days": 61,
-    "total_return_pct": 0.0,
-    "annualized_return_pct": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown_pct": 0.0,
-    "win_rate_pct": 50.0,
-    "profitable_days": 0,
-    "longest_profitable_streak": 0,
-    "final_capital": 100000.0,
-    "final_capital_after_costs": 100000.0,
-    "total_trades": 0,
-    "status": "pass",
-    "description": "Replay the absolute bottom of 2008-2009 bear market. SPY hit $67.10 on March 9, 2009 (down 57% from peak). Tests: Can system survive capitulation without >5% loss? Must prove drawdown controls work at maximum fear.\n",
-    "generated_at": "2025-12-19T22:15:51.130493",
-    "execution_costs": {
-      "fee_cost": 0.0,
-      "slippage_cost": 0.0,
-      "total_execution_cost": 0.0,
-      "cost_pct_of_capital": 0.0,
-      "cost_adjusted_total_return_pct": 0.0,
-      "cost_adjusted_annualized_return_pct": 0.0,
-      "assumptions": {
-        "fee_rate": 0.0018,
-        "slippage_model_enabled": false
-      }
-    },
-    "cost_adjusted_return_pct": 0.0,
-    "cost_adjusted_annualized_return_pct": 0.0,
-    "hybrid_gates": false,
-    "survival_gate": 0.95,
-    "capital_preserved_pct": 100.0,
-    "survival_passed": true
+  "scenario": "crash_2008_bottom",
+  "label": "2008 Financial Crisis - Bear market bottom (Jan-Mar 2009)",
+  "start_date": "2009-01-01",
+  "end_date": "2009-03-31",
+  "trading_days": 105,
+  "total_return_pct": -0.0007,
+  "annualized_return_pct": -0.0017,
+  "sharpe_ratio": -0.4143,
+  "max_drawdown_pct": 0.0007,
+  "win_rate_pct": 22.22,
+  "profitable_days": 7,
+  "longest_profitable_streak": 0,
+  "final_capital": 99999.28,
+  "final_capital_after_costs": 99999.28,
+  "total_trades": 9,
+  "status": "pass",
+  "description": "Replay the absolute bottom of 2008-2009 bear market. SPY hit $67.10 on March 9, 2009 (down 57% from peak). Tests: Can system survive capitulation without >5% loss? Must prove drawdown controls work at maximum fear.\n",
+  "generated_at": "2026-01-06T02:29:24.993014",
+  "execution_costs": {
+    "fee_cost": 0.0,
+    "slippage_cost": 0.0,
+    "total_execution_cost": 0.0,
+    "cost_pct_of_capital": 0.0,
+    "cost_adjusted_total_return_pct": -0.0007,
+    "cost_adjusted_annualized_return_pct": -0.0017,
+    "assumptions": {
+      "fee_rate": 0.0018,
+      "slippage_model_enabled": false
+    }
   },
-  "raw_results": {
-    "start_date": "2009-01-01",
-    "end_date": "2009-03-31",
-    "trading_days": 61,
-    "initial_capital": 100000.0,
-    "final_capital": 100000.0,
-    "total_return": 0.0,
-    "annualized_return": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown": 0.0,
-    "win_rate": 50.0,
-    "total_trades": 0
-  }
+  "cost_adjusted_return_pct": -0.0007,
+  "cost_adjusted_annualized_return_pct": -0.0017,
+  "hybrid_gates": false,
+  "survival_gate": 0.95,
+  "capital_preserved_pct": 100.0,
+  "survival_passed": true
 }

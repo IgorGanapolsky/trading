@@ -1,53 +1,38 @@
 {
-  "summary": {
-    "scenario": "crash_2008_lehman",
-    "label": "2008 Financial Crisis - Lehman collapse (Sep-Nov 2008)",
-    "start_date": "2008-09-01",
-    "end_date": "2008-11-30",
-    "trading_days": 62,
-    "total_return_pct": 0.0,
-    "annualized_return_pct": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown_pct": 0.0,
-    "win_rate_pct": 50.0,
-    "profitable_days": 0,
-    "longest_profitable_streak": 0,
-    "final_capital": 100000.0,
-    "final_capital_after_costs": 100000.0,
-    "total_trades": 0,
-    "status": "pass",
-    "description": "CEO DIRECTIVE: Bear-proof the system. Replay 2008 Lehman collapse. Requires >95% capital survival (max 5% drawdown allowed). Tests flight-to-safety rotation (SPY\u2192TLT/SHY) during credit crisis. If system loses >5%, it fails promotion gate.\n",
-    "generated_at": "2025-12-19T22:15:51.129588",
-    "execution_costs": {
-      "fee_cost": 0.0,
-      "slippage_cost": 0.0,
-      "total_execution_cost": 0.0,
-      "cost_pct_of_capital": 0.0,
-      "cost_adjusted_total_return_pct": 0.0,
-      "cost_adjusted_annualized_return_pct": 0.0,
-      "assumptions": {
-        "fee_rate": 0.0018,
-        "slippage_model_enabled": false
-      }
-    },
-    "cost_adjusted_return_pct": 0.0,
-    "cost_adjusted_annualized_return_pct": 0.0,
-    "hybrid_gates": false,
-    "survival_gate": 0.95,
-    "capital_preserved_pct": 100.0,
-    "survival_passed": true
+  "scenario": "crash_2008_lehman",
+  "label": "2008 Financial Crisis - Lehman collapse (Sep-Nov 2008)",
+  "start_date": "2008-09-01",
+  "end_date": "2008-11-30",
+  "trading_days": 106,
+  "total_return_pct": -0.0006,
+  "annualized_return_pct": -0.0014,
+  "sharpe_ratio": -0.7284,
+  "max_drawdown_pct": 0.0006,
+  "win_rate_pct": 30.0,
+  "profitable_days": 8,
+  "longest_profitable_streak": 0,
+  "final_capital": 99999.42,
+  "final_capital_after_costs": 99999.42,
+  "total_trades": 10,
+  "status": "pass",
+  "description": "CEO DIRECTIVE: Bear-proof the system. Replay 2008 Lehman collapse. Requires >95% capital survival (max 5% drawdown allowed). Tests flight-to-safety rotation (SPY\u2192TLT/SHY) during credit crisis. If system loses >5%, it fails promotion gate.\n",
+  "generated_at": "2026-01-06T02:29:24.992110",
+  "execution_costs": {
+    "fee_cost": 0.0,
+    "slippage_cost": 0.0,
+    "total_execution_cost": 0.0,
+    "cost_pct_of_capital": 0.0,
+    "cost_adjusted_total_return_pct": -0.0006,
+    "cost_adjusted_annualized_return_pct": -0.0014,
+    "assumptions": {
+      "fee_rate": 0.0018,
+      "slippage_model_enabled": false
+    }
   },
-  "raw_results": {
-    "start_date": "2008-09-01",
-    "end_date": "2008-11-30",
-    "trading_days": 62,
-    "initial_capital": 100000.0,
-    "final_capital": 100000.0,
-    "total_return": 0.0,
-    "annualized_return": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown": 0.0,
-    "win_rate": 50.0,
-    "total_trades": 0
-  }
+  "cost_adjusted_return_pct": -0.0006,
+  "cost_adjusted_annualized_return_pct": -0.0014,
+  "hybrid_gates": false,
+  "survival_gate": 0.95,
+  "capital_preserved_pct": 100.0,
+  "survival_passed": true
 }

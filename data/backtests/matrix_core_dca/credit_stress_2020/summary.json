@@ -1,53 +1,38 @@
 {
-  "summary": {
-    "scenario": "credit_stress_2020",
-    "label": "Credit spread blowout (Feb-Apr 2020)",
-    "start_date": "2020-02-01",
-    "end_date": "2020-04-30",
-    "trading_days": 61,
-    "total_return_pct": 0.0,
-    "annualized_return_pct": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown_pct": 0.0,
-    "win_rate_pct": 50.0,
-    "profitable_days": 0,
-    "longest_profitable_streak": 0,
-    "final_capital": 100000.0,
-    "final_capital_after_costs": 100000.0,
-    "total_trades": 0,
-    "status": "pass",
-    "description": "Tests corporate bond risk management during credit stress. Validates high-yield limits and flight-to-quality rotation.\n",
-    "generated_at": "2025-12-19T22:15:51.125569",
-    "execution_costs": {
-      "fee_cost": 0.0,
-      "slippage_cost": 0.0,
-      "total_execution_cost": 0.0,
-      "cost_pct_of_capital": 0.0,
-      "cost_adjusted_total_return_pct": 0.0,
-      "cost_adjusted_annualized_return_pct": 0.0,
-      "assumptions": {
-        "fee_rate": 0.0018,
-        "slippage_model_enabled": false
-      }
-    },
-    "cost_adjusted_return_pct": 0.0,
-    "cost_adjusted_annualized_return_pct": 0.0,
-    "hybrid_gates": false,
-    "survival_gate": null,
-    "capital_preserved_pct": 100.0,
-    "survival_passed": null
+  "scenario": "credit_stress_2020",
+  "label": "Credit spread blowout (Feb-Apr 2020)",
+  "start_date": "2020-02-01",
+  "end_date": "2020-04-30",
+  "trading_days": 105,
+  "total_return_pct": -0.002,
+  "annualized_return_pct": -0.0048,
+  "sharpe_ratio": -0.3508,
+  "max_drawdown_pct": 0.002,
+  "win_rate_pct": 16.67,
+  "profitable_days": 10,
+  "longest_profitable_streak": 0,
+  "final_capital": 99998.01,
+  "final_capital_after_costs": 99998.01,
+  "total_trades": 12,
+  "status": "pass",
+  "description": "Tests corporate bond risk management during credit stress. Validates high-yield limits and flight-to-quality rotation.\n",
+  "generated_at": "2026-01-06T02:29:24.990183",
+  "execution_costs": {
+    "fee_cost": 0.0,
+    "slippage_cost": 0.0,
+    "total_execution_cost": 0.0,
+    "cost_pct_of_capital": 0.0,
+    "cost_adjusted_total_return_pct": -0.002,
+    "cost_adjusted_annualized_return_pct": -0.0048,
+    "assumptions": {
+      "fee_rate": 0.0018,
+      "slippage_model_enabled": false
+    }
   },
-  "raw_results": {
-    "start_date": "2020-02-01",
-    "end_date": "2020-04-30",
-    "trading_days": 61,
-    "initial_capital": 100000.0,
-    "final_capital": 100000.0,
-    "total_return": 0.0,
-    "annualized_return": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown": 0.0,
-    "win_rate": 50.0,
-    "total_trades": 0
-  }
+  "cost_adjusted_return_pct": -0.002,
+  "cost_adjusted_annualized_return_pct": -0.0048,
+  "hybrid_gates": false,
+  "survival_gate": null,
+  "capital_preserved_pct": 100.0,
+  "survival_passed": null
 }

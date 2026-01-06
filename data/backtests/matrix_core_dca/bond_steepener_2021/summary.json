@@ -1,53 +1,38 @@
 {
-  "summary": {
-    "scenario": "bond_steepener_2021",
-    "label": "Yield curve steepening (Jan-Mar 2021)",
-    "start_date": "2021-01-01",
-    "end_date": "2021-03-31",
-    "trading_days": 61,
-    "total_return_pct": 0.0,
-    "annualized_return_pct": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown_pct": 0.0,
-    "win_rate_pct": 50.0,
-    "profitable_days": 0,
-    "longest_profitable_streak": 0,
-    "final_capital": 100000.0,
-    "final_capital_after_costs": 100000.0,
-    "total_trades": 0,
-    "status": "pass",
-    "description": "Tests barbell strategy during curve steepening. Validates long-duration allocation during bullish steepener.\n",
-    "generated_at": "2025-12-19T22:15:51.126621",
-    "execution_costs": {
-      "fee_cost": 0.0,
-      "slippage_cost": 0.0,
-      "total_execution_cost": 0.0,
-      "cost_pct_of_capital": 0.0,
-      "cost_adjusted_total_return_pct": 0.0,
-      "cost_adjusted_annualized_return_pct": 0.0,
-      "assumptions": {
-        "fee_rate": 0.0018,
-        "slippage_model_enabled": false
-      }
-    },
-    "cost_adjusted_return_pct": 0.0,
-    "cost_adjusted_annualized_return_pct": 0.0,
-    "hybrid_gates": false,
-    "survival_gate": null,
-    "capital_preserved_pct": 100.0,
-    "survival_passed": null
+  "scenario": "bond_steepener_2021",
+  "label": "Yield curve steepening (Jan-Mar 2021)",
+  "start_date": "2021-01-01",
+  "end_date": "2021-03-31",
+  "trading_days": 105,
+  "total_return_pct": 0.0012,
+  "annualized_return_pct": 0.0028,
+  "sharpe_ratio": -0.3334,
+  "max_drawdown_pct": -0.0012,
+  "win_rate_pct": 55.56,
+  "profitable_days": 8,
+  "longest_profitable_streak": 0,
+  "final_capital": 100001.17,
+  "final_capital_after_costs": 100001.17,
+  "total_trades": 9,
+  "status": "pass",
+  "description": "Tests barbell strategy during curve steepening. Validates long-duration allocation during bullish steepener.\n",
+  "generated_at": "2026-01-06T02:29:24.990613",
+  "execution_costs": {
+    "fee_cost": 0.0,
+    "slippage_cost": 0.0,
+    "total_execution_cost": 0.0,
+    "cost_pct_of_capital": 0.0,
+    "cost_adjusted_total_return_pct": 0.0012,
+    "cost_adjusted_annualized_return_pct": 0.0028,
+    "assumptions": {
+      "fee_rate": 0.0018,
+      "slippage_model_enabled": false
+    }
   },
-  "raw_results": {
-    "start_date": "2021-01-01",
-    "end_date": "2021-03-31",
-    "trading_days": 61,
-    "initial_capital": 100000.0,
-    "final_capital": 100000.0,
-    "total_return": 0.0,
-    "annualized_return": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown": 0.0,
-    "win_rate": 50.0,
-    "total_trades": 0
-  }
+  "cost_adjusted_return_pct": 0.0012,
+  "cost_adjusted_annualized_return_pct": 0.0028,
+  "hybrid_gates": false,
+  "survival_gate": null,
+  "capital_preserved_pct": 100.0,
+  "survival_passed": null
 }

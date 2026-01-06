@@ -1,53 +1,38 @@
 {
-  "summary": {
-    "scenario": "crash_2022_fed_tightening",
-    "label": "2022 Fed Tightening Crash (Jan-Oct 2022)",
-    "start_date": "2022-01-03",
-    "end_date": "2022-10-12",
-    "trading_days": 194,
-    "total_return_pct": 0.0,
-    "annualized_return_pct": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown_pct": 0.0,
-    "win_rate_pct": 50.0,
-    "profitable_days": 0,
-    "longest_profitable_streak": 0,
-    "final_capital": 100000.0,
-    "final_capital_after_costs": 100000.0,
-    "total_trades": 0,
-    "status": "pass",
-    "description": "Tests prolonged bear market (not sudden crash). SPY down 27%, QQQ down 37%, TLT down 30% (worst bond year in 40 years). Validates system behavior when BOTH stocks AND bonds fall. No safe haven scenario - pure risk management test.\n",
-    "generated_at": "2025-12-19T22:15:51.133613",
-    "execution_costs": {
-      "fee_cost": 0.0,
-      "slippage_cost": 0.0,
-      "total_execution_cost": 0.0,
-      "cost_pct_of_capital": 0.0,
-      "cost_adjusted_total_return_pct": 0.0,
-      "cost_adjusted_annualized_return_pct": 0.0,
-      "assumptions": {
-        "fee_rate": 0.0018,
-        "slippage_model_enabled": false
-      }
-    },
-    "cost_adjusted_return_pct": 0.0,
-    "cost_adjusted_annualized_return_pct": 0.0,
-    "hybrid_gates": false,
-    "survival_gate": 0.95,
-    "capital_preserved_pct": 100.0,
-    "survival_passed": true
+  "scenario": "crash_2022_fed_tightening",
+  "label": "2022 Fed Tightening Crash (Jan-Oct 2022)",
+  "start_date": "2022-01-03",
+  "end_date": "2022-10-12",
+  "trading_days": 298,
+  "total_return_pct": -0.0019,
+  "annualized_return_pct": -0.0016,
+  "sharpe_ratio": -0.5452,
+  "max_drawdown_pct": 0.0019,
+  "win_rate_pct": 17.65,
+  "profitable_days": 14,
+  "longest_profitable_streak": 0,
+  "final_capital": 99998.11,
+  "final_capital_after_costs": 99998.11,
+  "total_trades": 17,
+  "status": "pass",
+  "description": "Tests prolonged bear market (not sudden crash). SPY down 27%, QQQ down 37%, TLT down 30% (worst bond year in 40 years). Validates system behavior when BOTH stocks AND bonds fall. No safe haven scenario - pure risk management test.\n",
+  "generated_at": "2026-01-06T02:29:24.995318",
+  "execution_costs": {
+    "fee_cost": 0.0,
+    "slippage_cost": 0.0,
+    "total_execution_cost": 0.0,
+    "cost_pct_of_capital": 0.0,
+    "cost_adjusted_total_return_pct": -0.0019,
+    "cost_adjusted_annualized_return_pct": -0.0016,
+    "assumptions": {
+      "fee_rate": 0.0018,
+      "slippage_model_enabled": false
+    }
   },
-  "raw_results": {
-    "start_date": "2022-01-03",
-    "end_date": "2022-10-12",
-    "trading_days": 194,
-    "initial_capital": 100000.0,
-    "final_capital": 100000.0,
-    "total_return": 0.0,
-    "annualized_return": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown": 0.0,
-    "win_rate": 50.0,
-    "total_trades": 0
-  }
+  "cost_adjusted_return_pct": -0.0019,
+  "cost_adjusted_annualized_return_pct": -0.0016,
+  "hybrid_gates": false,
+  "survival_gate": 0.95,
+  "capital_preserved_pct": 100.0,
+  "survival_passed": true
 }

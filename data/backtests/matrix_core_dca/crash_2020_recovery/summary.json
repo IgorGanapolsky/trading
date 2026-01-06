@@ -1,53 +1,38 @@
 {
-  "summary": {
-    "scenario": "crash_2020_recovery",
-    "label": "2020 COVID Recovery - V-shaped bounce (Mar-Jun 2020)",
-    "start_date": "2020-03-23",
-    "end_date": "2020-06-30",
-    "trading_days": 68,
-    "total_return_pct": 0.0,
-    "annualized_return_pct": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown_pct": 0.0,
-    "win_rate_pct": 50.0,
-    "profitable_days": 0,
-    "longest_profitable_streak": 0,
-    "final_capital": 100000.0,
-    "final_capital_after_costs": 100000.0,
-    "total_trades": 0,
-    "status": "pass",
-    "description": "Tests ability to capture V-shaped recovery after crash. SPY gained 45% from March 23 low to June 30. Validates that system doesn't stay too defensive after crash. Should capture significant upside while maintaining risk controls.\n",
-    "generated_at": "2025-12-19T22:15:51.132414",
-    "execution_costs": {
-      "fee_cost": 0.0,
-      "slippage_cost": 0.0,
-      "total_execution_cost": 0.0,
-      "cost_pct_of_capital": 0.0,
-      "cost_adjusted_total_return_pct": 0.0,
-      "cost_adjusted_annualized_return_pct": 0.0,
-      "assumptions": {
-        "fee_rate": 0.0018,
-        "slippage_model_enabled": false
-      }
-    },
-    "cost_adjusted_return_pct": 0.0,
-    "cost_adjusted_annualized_return_pct": 0.0,
-    "hybrid_gates": false,
-    "survival_gate": null,
-    "capital_preserved_pct": 100.0,
-    "survival_passed": null
+  "scenario": "crash_2020_recovery",
+  "label": "2020 COVID Recovery - V-shaped bounce (Mar-Jun 2020)",
+  "start_date": "2020-03-23",
+  "end_date": "2020-06-30",
+  "trading_days": 115,
+  "total_return_pct": 0.0014,
+  "annualized_return_pct": 0.0031,
+  "sharpe_ratio": -0.3911,
+  "max_drawdown_pct": -0.0014,
+  "win_rate_pct": 66.67,
+  "profitable_days": 5,
+  "longest_profitable_streak": 0,
+  "final_capital": 100001.43,
+  "final_capital_after_costs": 100001.43,
+  "total_trades": 6,
+  "status": "pass",
+  "description": "Tests ability to capture V-shaped recovery after crash. SPY gained 45% from March 23 low to June 30. Validates that system doesn't stay too defensive after crash. Should capture significant upside while maintaining risk controls.\n",
+  "generated_at": "2026-01-06T02:29:24.994830",
+  "execution_costs": {
+    "fee_cost": 0.0,
+    "slippage_cost": 0.0,
+    "total_execution_cost": 0.0,
+    "cost_pct_of_capital": 0.0,
+    "cost_adjusted_total_return_pct": 0.0014,
+    "cost_adjusted_annualized_return_pct": 0.0031,
+    "assumptions": {
+      "fee_rate": 0.0018,
+      "slippage_model_enabled": false
+    }
   },
-  "raw_results": {
-    "start_date": "2020-03-23",
-    "end_date": "2020-06-30",
-    "trading_days": 68,
-    "initial_capital": 100000.0,
-    "final_capital": 100000.0,
-    "total_return": 0.0,
-    "annualized_return": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown": 0.0,
-    "win_rate": 50.0,
-    "total_trades": 0
-  }
+  "cost_adjusted_return_pct": 0.0014,
+  "cost_adjusted_annualized_return_pct": 0.0031,
+  "hybrid_gates": false,
+  "survival_gate": null,
+  "capital_preserved_pct": 100.0,
+  "survival_passed": null
 }

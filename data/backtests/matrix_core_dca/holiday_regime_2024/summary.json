@@ -1,53 +1,38 @@
 {
-  "summary": {
-    "scenario": "holiday_regime_2024",
-    "label": "Holiday/Weekend regime (TLT + Equities)",
-    "start_date": "2024-01-01",
-    "end_date": "2024-12-31",
-    "trading_days": 252,
-    "total_return_pct": 0.0,
-    "annualized_return_pct": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown_pct": 0.0,
-    "win_rate_pct": 50.0,
-    "profitable_days": 0,
-    "longest_profitable_streak": 0,
-    "final_capital": 100000.0,
-    "final_capital_after_costs": 100000.0,
-    "total_trades": 0,
-    "status": "pass",
-    "description": "Tests full-year holiday/weekend trading with treasury flight-to-safety (TLT) and equity exposure. Validates regime detection switches during off-hours sessions.\n",
-    "generated_at": "2025-12-19T22:15:51.120401",
-    "execution_costs": {
-      "fee_cost": 0.0,
-      "slippage_cost": 0.0,
-      "total_execution_cost": 0.0,
-      "cost_pct_of_capital": 0.0,
-      "cost_adjusted_total_return_pct": 0.0,
-      "cost_adjusted_annualized_return_pct": 0.0,
-      "assumptions": {
-        "fee_rate": 0.0018,
-        "slippage_model_enabled": false
-      }
-    },
-    "cost_adjusted_return_pct": 0.0,
-    "cost_adjusted_annualized_return_pct": 0.0,
-    "hybrid_gates": false,
-    "survival_gate": null,
-    "capital_preserved_pct": 100.0,
-    "survival_passed": null
+  "scenario": "holiday_regime_2024",
+  "label": "Holiday/Weekend regime (TLT + Equities)",
+  "start_date": "2024-01-01",
+  "end_date": "2024-12-31",
+  "trading_days": 381,
+  "total_return_pct": -0.0013,
+  "annualized_return_pct": -0.0008,
+  "sharpe_ratio": -0.0199,
+  "max_drawdown_pct": 0.0017,
+  "win_rate_pct": 15.38,
+  "profitable_days": 13,
+  "longest_profitable_streak": 0,
+  "final_capital": 99998.75,
+  "final_capital_after_costs": 99998.75,
+  "total_trades": 13,
+  "status": "pass",
+  "description": "Tests full-year holiday/weekend trading with treasury flight-to-safety (TLT) and equity exposure. Validates regime detection switches during off-hours sessions.\n",
+  "generated_at": "2026-01-06T02:29:24.987959",
+  "execution_costs": {
+    "fee_cost": 0.0,
+    "slippage_cost": 0.0,
+    "total_execution_cost": 0.0,
+    "cost_pct_of_capital": 0.0,
+    "cost_adjusted_total_return_pct": -0.0013,
+    "cost_adjusted_annualized_return_pct": -0.0008,
+    "assumptions": {
+      "fee_rate": 0.0018,
+      "slippage_model_enabled": false
+    }
   },
-  "raw_results": {
-    "start_date": "2024-01-01",
-    "end_date": "2024-12-31",
-    "trading_days": 252,
-    "initial_capital": 100000.0,
-    "final_capital": 100000.0,
-    "total_return": 0.0,
-    "annualized_return": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown": 0.0,
-    "win_rate": 50.0,
-    "total_trades": 0
-  }
+  "cost_adjusted_return_pct": -0.0013,
+  "cost_adjusted_annualized_return_pct": -0.0008,
+  "hybrid_gates": false,
+  "survival_gate": null,
+  "capital_preserved_pct": 100.0,
+  "survival_passed": null
 }

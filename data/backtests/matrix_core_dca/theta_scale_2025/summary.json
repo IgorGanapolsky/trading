@@ -1,53 +1,38 @@
 {
-  "summary": {
-    "scenario": "theta_scale_2025",
-    "label": "Theta scaling unlock (Sep-Oct 2025)",
-    "start_date": "2025-09-01",
-    "end_date": "2025-10-31",
-    "trading_days": 41,
-    "total_return_pct": 0.0,
-    "annualized_return_pct": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown_pct": 0.0,
-    "win_rate_pct": 50.0,
-    "profitable_days": 0,
-    "longest_profitable_streak": 0,
-    "final_capital": 100000.0,
-    "final_capital_after_costs": 100000.0,
-    "total_trades": 0,
-    "status": "pass",
-    "description": "60-day verification window for the theta automation layer after the fundamentals cache + execution tie-in. Validates that IV-gated covered calls hold a 26% annualized pace with drawdowns capped near 2%.\n",
-    "generated_at": "2025-12-19T22:15:51.128610",
-    "execution_costs": {
-      "fee_cost": 0.0,
-      "slippage_cost": 0.0,
-      "total_execution_cost": 0.0,
-      "cost_pct_of_capital": 0.0,
-      "cost_adjusted_total_return_pct": 0.0,
-      "cost_adjusted_annualized_return_pct": 0.0,
-      "assumptions": {
-        "fee_rate": 0.0018,
-        "slippage_model_enabled": false
-      }
-    },
-    "cost_adjusted_return_pct": 0.0,
-    "cost_adjusted_annualized_return_pct": 0.0,
-    "hybrid_gates": false,
-    "survival_gate": null,
-    "capital_preserved_pct": 100.0,
-    "survival_passed": null
+  "scenario": "theta_scale_2025",
+  "label": "Theta scaling unlock (Sep-Oct 2025)",
+  "start_date": "2025-09-01",
+  "end_date": "2025-10-31",
+  "trading_days": 76,
+  "total_return_pct": 0.0012,
+  "annualized_return_pct": 0.0041,
+  "sharpe_ratio": -0.8525,
+  "max_drawdown_pct": -0.0012,
+  "win_rate_pct": 12.5,
+  "profitable_days": 6,
+  "longest_profitable_streak": 0,
+  "final_capital": 100001.23,
+  "final_capital_after_costs": 100001.23,
+  "total_trades": 8,
+  "status": "pass",
+  "description": "60-day verification window for the theta automation layer after the fundamentals cache + execution tie-in. Validates that IV-gated covered calls hold a 26% annualized pace with drawdowns capped near 2%.\n",
+  "generated_at": "2026-01-06T02:29:24.991509",
+  "execution_costs": {
+    "fee_cost": 0.0,
+    "slippage_cost": 0.0,
+    "total_execution_cost": 0.0,
+    "cost_pct_of_capital": 0.0,
+    "cost_adjusted_total_return_pct": 0.0012,
+    "cost_adjusted_annualized_return_pct": 0.0041,
+    "assumptions": {
+      "fee_rate": 0.0018,
+      "slippage_model_enabled": false
+    }
   },
-  "raw_results": {
-    "start_date": "2025-09-01",
-    "end_date": "2025-10-31",
-    "trading_days": 41,
-    "initial_capital": 100000.0,
-    "final_capital": 100000.0,
-    "total_return": 0.0,
-    "annualized_return": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown": 0.0,
-    "win_rate": 50.0,
-    "total_trades": 0
-  }
+  "cost_adjusted_return_pct": 0.0012,
+  "cost_adjusted_annualized_return_pct": 0.0041,
+  "hybrid_gates": false,
+  "survival_gate": null,
+  "capital_preserved_pct": 100.0,
+  "survival_passed": null
 }

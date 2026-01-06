@@ -1,53 +1,38 @@
 {
-  "summary": {
-    "scenario": "mixed_asset_2024",
-    "label": "Mixed equity/bond allocation (Jan-Jun 2024)",
-    "start_date": "2024-01-02",
-    "end_date": "2024-06-28",
-    "trading_days": 122,
-    "total_return_pct": 0.0,
-    "annualized_return_pct": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown_pct": 0.0,
-    "win_rate_pct": 50.0,
-    "profitable_days": 0,
-    "longest_profitable_streak": 0,
-    "final_capital": 100000.0,
-    "final_capital_after_costs": 100000.0,
-    "total_trades": 0,
-    "status": "pass",
-    "description": "Tests 60/40-style mixed allocation with bond ladder. Validates correlation benefits and rebalancing triggers.\n",
-    "generated_at": "2025-12-19T22:15:51.127596",
-    "execution_costs": {
-      "fee_cost": 0.0,
-      "slippage_cost": 0.0,
-      "total_execution_cost": 0.0,
-      "cost_pct_of_capital": 0.0,
-      "cost_adjusted_total_return_pct": 0.0,
-      "cost_adjusted_annualized_return_pct": 0.0,
-      "assumptions": {
-        "fee_rate": 0.0018,
-        "slippage_model_enabled": false
-      }
-    },
-    "cost_adjusted_return_pct": 0.0,
-    "cost_adjusted_annualized_return_pct": 0.0,
-    "hybrid_gates": false,
-    "survival_gate": null,
-    "capital_preserved_pct": 100.0,
-    "survival_passed": null
+  "scenario": "mixed_asset_2024",
+  "label": "Mixed equity/bond allocation (Jan-Jun 2024)",
+  "start_date": "2024-01-02",
+  "end_date": "2024-06-28",
+  "trading_days": 194,
+  "total_return_pct": -0.001,
+  "annualized_return_pct": -0.0014,
+  "sharpe_ratio": -0.4222,
+  "max_drawdown_pct": 0.001,
+  "win_rate_pct": 35.0,
+  "profitable_days": 15,
+  "longest_profitable_streak": 0,
+  "final_capital": 99998.96,
+  "final_capital_after_costs": 99998.96,
+  "total_trades": 20,
+  "status": "pass",
+  "description": "Tests 60/40-style mixed allocation with bond ladder. Validates correlation benefits and rebalancing triggers.\n",
+  "generated_at": "2026-01-06T02:29:24.991022",
+  "execution_costs": {
+    "fee_cost": 0.0,
+    "slippage_cost": 0.0,
+    "total_execution_cost": 0.0,
+    "cost_pct_of_capital": 0.0,
+    "cost_adjusted_total_return_pct": -0.001,
+    "cost_adjusted_annualized_return_pct": -0.0014,
+    "assumptions": {
+      "fee_rate": 0.0018,
+      "slippage_model_enabled": false
+    }
   },
-  "raw_results": {
-    "start_date": "2024-01-02",
-    "end_date": "2024-06-28",
-    "trading_days": 122,
-    "initial_capital": 100000.0,
-    "final_capital": 100000.0,
-    "total_return": 0.0,
-    "annualized_return": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown": 0.0,
-    "win_rate": 50.0,
-    "total_trades": 0
-  }
+  "cost_adjusted_return_pct": -0.001,
+  "cost_adjusted_annualized_return_pct": -0.0014,
+  "hybrid_gates": false,
+  "survival_gate": null,
+  "capital_preserved_pct": 100.0,
+  "survival_passed": null
 }

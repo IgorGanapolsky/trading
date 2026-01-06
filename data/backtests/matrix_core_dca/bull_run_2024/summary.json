@@ -1,53 +1,38 @@
 {
-  "summary": {
-    "scenario": "bull_run_2024",
-    "label": "Bullish melt-up (Jan-Mar 2024)",
-    "start_date": "2024-01-02",
-    "end_date": "2024-03-29",
-    "trading_days": 60,
-    "total_return_pct": 0.0,
-    "annualized_return_pct": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown_pct": 0.0,
-    "win_rate_pct": 50.0,
-    "profitable_days": 0,
-    "longest_profitable_streak": 0,
-    "final_capital": 100000.0,
-    "final_capital_after_costs": 100000.0,
-    "total_trades": 0,
-    "status": "pass",
-    "description": "Tests performance when SPY/QQQ melt upward. Ensures system captures upside without blowing risk allocations.\n",
-    "generated_at": "2025-12-19T22:15:51.114558",
-    "execution_costs": {
-      "fee_cost": 0.0,
-      "slippage_cost": 0.0,
-      "total_execution_cost": 0.0,
-      "cost_pct_of_capital": 0.0,
-      "cost_adjusted_total_return_pct": 0.0,
-      "cost_adjusted_annualized_return_pct": 0.0,
-      "assumptions": {
-        "fee_rate": 0.0018,
-        "slippage_model_enabled": false
-      }
-    },
-    "cost_adjusted_return_pct": 0.0,
-    "cost_adjusted_annualized_return_pct": 0.0,
-    "hybrid_gates": false,
-    "survival_gate": null,
-    "capital_preserved_pct": 100.0,
-    "survival_passed": null
+  "scenario": "bull_run_2024",
+  "label": "Bullish melt-up (Jan-Mar 2024)",
+  "start_date": "2024-01-02",
+  "end_date": "2024-03-29",
+  "trading_days": 103,
+  "total_return_pct": -0.0016,
+  "annualized_return_pct": -0.0039,
+  "sharpe_ratio": -0.5069,
+  "max_drawdown_pct": 0.0016,
+  "win_rate_pct": 12.5,
+  "profitable_days": 7,
+  "longest_profitable_streak": 0,
+  "final_capital": 99998.39,
+  "final_capital_after_costs": 99998.39,
+  "total_trades": 8,
+  "status": "pass",
+  "description": "Tests performance when SPY/QQQ melt upward. Ensures system captures upside without blowing risk allocations.\n",
+  "generated_at": "2026-01-06T02:29:24.985592",
+  "execution_costs": {
+    "fee_cost": 0.0,
+    "slippage_cost": 0.0,
+    "total_execution_cost": 0.0,
+    "cost_pct_of_capital": 0.0,
+    "cost_adjusted_total_return_pct": -0.0016,
+    "cost_adjusted_annualized_return_pct": -0.0039,
+    "assumptions": {
+      "fee_rate": 0.0018,
+      "slippage_model_enabled": false
+    }
   },
-  "raw_results": {
-    "start_date": "2024-01-02",
-    "end_date": "2024-03-29",
-    "trading_days": 60,
-    "initial_capital": 100000.0,
-    "final_capital": 100000.0,
-    "total_return": 0.0,
-    "annualized_return": 0.0,
-    "sharpe_ratio": 0.0,
-    "max_drawdown": 0.0,
-    "win_rate": 50.0,
-    "total_trades": 0
-  }
+  "cost_adjusted_return_pct": -0.0016,
+  "cost_adjusted_annualized_return_pct": -0.0039,
+  "hybrid_gates": false,
+  "survival_gate": null,
+  "capital_preserved_pct": 100.0,
+  "survival_passed": null
 }
