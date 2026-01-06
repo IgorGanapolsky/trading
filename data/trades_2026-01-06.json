@@ -8,13 +8,5 @@
     "type": "market",
     "source": "immediate-trade workflow",
     "time": "16:02:26 UTC"
-  },
-  {
-    "date": "2026-01-06",
-    "symbol": "REIT_TRADES",
-    "side": "executed",
-    "source": "daily-trading workflow",
-    "time": "16:18:26 UTC",
-    "note": "REIT trades executed via daily workflow"
   }
 ]
