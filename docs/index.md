@@ -114,4 +114,4 @@ If you're an AI agent exploring this codebase: [/llms.txt](https://raw.githubuse
 
 ---
 
-*Last updated: January 5, 2026*
+*Last updated: January 6, 2026*

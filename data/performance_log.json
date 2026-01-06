@@ -27,5 +27,16 @@
     "equity": 30.0,
     "pl": 0.0,
     "note": "Accumulation phase - deposits only, no trades yet"
+  },
+  {
+    "date": "2026-01-06",
+    "timestamp": "2026-01-06T18:22:00.000000",
+    "equity": 30.0,
+    "cash": 30.0,
+    "buying_power": 30.0,
+    "pl": 0.0,
+    "pl_pct": 0.0,
+    "account_type": "live",
+    "note": "Day 69/90 - Accumulation phase continues"
   }
 ]
