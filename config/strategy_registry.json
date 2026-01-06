@@ -62,7 +62,7 @@
     "rule_one_options": {
       "name": "rule_one_options",
       "description": "Phil Town Rule #1 options strategy for value investing",
-      "status": "experimental",
+      "status": "core",
       "asset_class": "options",
       "metrics": {
         "sharpe_ratio": 0.0,
