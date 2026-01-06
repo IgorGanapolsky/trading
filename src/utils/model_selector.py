@@ -4,20 +4,31 @@ Budget-Aware Model Selector - BATS Framework Implementation
 Based on Google's Budget-Aware Test-time Scaling (BATS) research.
 Reference: https://arxiv.org/abs/2511.17006
 
+Updated January 2026 with evidence-based model selection:
+- StockBench benchmark: Kimi K2 ranked #1 for trading (0.0420 Sortino)
+- Mistral Medium 3: 90% of Sonnet quality at 8x cheaper
+- TradingAgents framework (arXiv:2412.20138) validates task-specific routing
+
 This module provides intelligent model selection based on:
-1. Task complexity (simple → Haiku, medium → Sonnet, complex → Opus)
+1. Task complexity (simple → DeepSeek, medium → Mistral, complex → Kimi K2)
 2. Budget remaining (use cheaper models when budget is low)
 3. Operational criticality (always use Opus for trade execution)
 
 OPERATIONAL INTEGRITY RULES:
 - Trade execution ALWAYS uses Opus (no cost-cutting on money decisions)
-- Fallback chain: Opus → Sonnet → Haiku (never fail completely)
+- Fallback chain: Opus → Kimi K2 → Mistral → DeepSeek (never fail completely)
 - All model switches are logged for audit trail
 
-December 2025 Pricing (per 1M tokens):
-- Haiku 4.5:  $1 input / $5 output
-- Sonnet 4.5: $3 input / $15 output
-- Opus 4.5:   $15 input / $75 output
+January 2026 Pricing (per 1M tokens):
+- DeepSeek V3:      $0.14 input / $0.28 output (via OpenRouter)
+- Mistral Medium 3: $0.40 input / $2.00 output (via OpenRouter)
+- Kimi K2:          $0.39 input / $1.90 output (via OpenRouter) - #1 trading benchmark
+- Claude Opus 4.5:  $15 input / $75 output (CRITICAL only)
+
+Sources:
+- https://neurohive.io/en/news/kimi-k2-and-qwen3-235b-ins-best-ai-models-for-stock-trading-chinese-researchers-found/
+- https://mistral.ai/news/mistral-medium-3
+- https://arxiv.org/abs/2412.20138
 """
 
 from __future__ import annotations
@@ -42,11 +53,17 @@ class TaskComplexity(Enum):
 
 
 class ModelTier(Enum):
-    """Model tiers with December 2025 pricing."""
+    """Model tiers with January 2026 evidence-based pricing."""
 
+    # Cost-optimized tiers (via OpenRouter)
+    DEEPSEEK = "deepseek"  # SIMPLE tasks - $0.14/$0.28 per M tokens
+    MISTRAL = "mistral"  # MEDIUM tasks - $0.40/$2.00 per M tokens (90% Sonnet quality)
+    KIMI = "kimi"  # COMPLEX tasks - $0.39/$1.90 per M tokens (#1 trading benchmark)
+    # Premium tier (direct Anthropic API)
+    OPUS = "opus"  # CRITICAL only - $15/$75 per M tokens
+    # Legacy tiers (for backwards compatibility)
     HAIKU = "haiku"
     SONNET = "sonnet"
-    OPUS = "opus"
 
 
 @dataclass
@@ -58,18 +75,61 @@ class ModelConfig:
     input_cost_per_1m: float  # $ per 1M input tokens
     output_cost_per_1m: float  # $ per 1M output tokens
     max_context: int
+    provider: str = "anthropic"  # "anthropic" or "openrouter"
     supports_extended_thinking: bool = False
+    trading_sortino: float | None = None  # StockBench benchmark score (higher = better)
 
 
-# December 2025 Model Registry (latest stable versions)
+# January 2026 Model Registry (evidence-based selection)
+# Sources: StockBench benchmark, Mistral AI, arXiv:2412.20138
 MODEL_REGISTRY: dict[ModelTier, ModelConfig] = {
+    # === COST-OPTIMIZED TIERS (via OpenRouter) ===
+    ModelTier.DEEPSEEK: ModelConfig(
+        model_id="deepseek/deepseek-chat",
+        tier=ModelTier.DEEPSEEK,
+        input_cost_per_1m=0.14,
+        output_cost_per_1m=0.28,
+        max_context=128000,
+        provider="openrouter",
+        trading_sortino=0.0210,  # StockBench: DeepSeek-V3.1
+    ),
+    ModelTier.MISTRAL: ModelConfig(
+        model_id="mistralai/mistral-medium-3",
+        tier=ModelTier.MISTRAL,
+        input_cost_per_1m=0.40,
+        output_cost_per_1m=2.00,
+        max_context=128000,
+        provider="openrouter",
+        # 90% of Sonnet quality at 8x cheaper (Mistral AI claim)
+    ),
+    ModelTier.KIMI: ModelConfig(
+        model_id="moonshotai/kimi-k2-0905",
+        tier=ModelTier.KIMI,
+        input_cost_per_1m=0.39,
+        output_cost_per_1m=1.90,
+        max_context=256000,
+        provider="openrouter",
+        trading_sortino=0.0420,  # StockBench: #1 ranked for trading
+    ),
+    # === PREMIUM TIER (Anthropic API) ===
+    ModelTier.OPUS: ModelConfig(
+        model_id="claude-opus-4-5-20251101",
+        tier=ModelTier.OPUS,
+        input_cost_per_1m=15.0,
+        output_cost_per_1m=75.0,
+        max_context=200000,
+        provider="anthropic",
+        supports_extended_thinking=True,
+        trading_sortino=None,  # Not benchmarked, but best for compliance/safety
+    ),
+    # === LEGACY TIERS (backwards compatibility) ===
     ModelTier.HAIKU: ModelConfig(
         model_id="claude-3-5-haiku-20241022",
         tier=ModelTier.HAIKU,
         input_cost_per_1m=1.0,
         output_cost_per_1m=5.0,
         max_context=200000,
-        supports_extended_thinking=False,
+        provider="anthropic",
     ),
     ModelTier.SONNET: ModelConfig(
         model_id="claude-sonnet-4-5-20250929",
@@ -77,15 +137,8 @@ MODEL_REGISTRY: dict[ModelTier, ModelConfig] = {
         input_cost_per_1m=3.0,
         output_cost_per_1m=15.0,
         max_context=200000,
-        supports_extended_thinking=False,
-    ),
-    ModelTier.OPUS: ModelConfig(
-        model_id="claude-opus-4-5-20251101",
-        tier=ModelTier.OPUS,
-        input_cost_per_1m=15.0,
-        output_cost_per_1m=75.0,
-        max_context=200000,
-        supports_extended_thinking=True,
+        provider="anthropic",
+        trading_sortino=0.0245,  # StockBench: Claude-4-Sonnet
     ),
 }
 
@@ -133,8 +186,8 @@ class ModelSelector:
 
     def __init__(
         self,
-        daily_budget: float = 3.33,  # $100/month ÷ 30 days
-        monthly_budget: float = 100.0,
+        daily_budget: float = 0.83,  # $25/month ÷ 30 days (optimized target)
+        monthly_budget: float = 25.0,  # Reduced from $100 with cost-optimized models
         force_model: str | None = None,  # Override for testing
     ):
         self.daily_budget = daily_budget
@@ -223,33 +276,52 @@ class ModelSelector:
         budget_remaining = self.daily_budget - self.daily_spend
         budget_pct = budget_remaining / self.daily_budget if self.daily_budget > 0 else 0
 
+        # Check if OpenRouter is available (required for cost-optimized models)
+        openrouter_available = bool(os.getenv("OPENROUTER_API_KEY"))
+
         # Determine tier based on complexity and budget
+        # January 2026 evidence-based routing (StockBench, TradingAgents framework)
         if complexity == TaskComplexity.SIMPLE:
-            tier = ModelTier.HAIKU
-            reason = "SIMPLE_TASK"
-        elif complexity == TaskComplexity.MEDIUM:
-            # Use Sonnet if budget allows, else Haiku
-            if budget_pct > 0.3:
-                tier = ModelTier.SONNET
-                reason = "MEDIUM_TASK_BUDGET_OK"
+            # SIMPLE → DeepSeek V3 ($0.14/$0.28) - fast, efficient
+            if openrouter_available:
+                tier = ModelTier.DEEPSEEK
+                reason = "SIMPLE_TASK_DEEPSEEK"
             else:
                 tier = ModelTier.HAIKU
-                reason = "MEDIUM_TASK_LOW_BUDGET"
+                reason = "SIMPLE_TASK_HAIKU_FALLBACK"
+        elif complexity == TaskComplexity.MEDIUM:
+            # MEDIUM → Mistral Medium 3 ($0.40/$2.00) - 90% Sonnet quality
+            if openrouter_available:
+                tier = ModelTier.MISTRAL
+                reason = "MEDIUM_TASK_MISTRAL"
+            elif budget_pct > 0.3:
+                tier = ModelTier.SONNET
+                reason = "MEDIUM_TASK_SONNET_FALLBACK"
+            else:
+                tier = ModelTier.HAIKU
+                reason = "MEDIUM_TASK_HAIKU_FALLBACK"
         elif complexity == TaskComplexity.COMPLEX:
-            # Use Opus if >50% budget, Sonnet if >20%, else Haiku
-            if budget_pct > 0.5:
+            # COMPLEX → Kimi K2 ($0.39/$1.90) - #1 trading benchmark (0.0420 Sortino)
+            if openrouter_available:
+                tier = ModelTier.KIMI
+                reason = "COMPLEX_TASK_KIMI_K2"
+            elif budget_pct > 0.5:
                 tier = ModelTier.OPUS
-                reason = "COMPLEX_TASK_BUDGET_HIGH"
+                reason = "COMPLEX_TASK_OPUS_FALLBACK"
             elif budget_pct > 0.2:
                 tier = ModelTier.SONNET
-                reason = "COMPLEX_TASK_BUDGET_MEDIUM"
+                reason = "COMPLEX_TASK_SONNET_FALLBACK"
             else:
                 tier = ModelTier.HAIKU
                 reason = "COMPLEX_TASK_LOW_BUDGET"
         else:
-            # Fallback to Sonnet
-            tier = ModelTier.SONNET
-            reason = "FALLBACK"
+            # Fallback to Mistral or Sonnet
+            if openrouter_available:
+                tier = ModelTier.MISTRAL
+                reason = "FALLBACK_MISTRAL"
+            else:
+                tier = ModelTier.SONNET
+                reason = "FALLBACK_SONNET"
 
         selected = MODEL_REGISTRY[tier]
         self._log_selection(task_type, complexity, selected, reason)
@@ -338,6 +410,26 @@ class ModelSelector:
             "monthly_remaining": self.monthly_budget - self.monthly_spend,
         }
 
+    def get_model_provider(self, model_id: str) -> str:
+        """
+        Get the API provider for a model ID.
+
+        Returns:
+            "anthropic" for Claude models, "openrouter" for cost-optimized models
+        """
+        for config in MODEL_REGISTRY.values():
+            if config.model_id == model_id:
+                return config.provider
+        # Default to anthropic for unknown models
+        return "anthropic"
+
+    def get_model_config(self, model_id: str) -> ModelConfig | None:
+        """Get full configuration for a model ID."""
+        for config in MODEL_REGISTRY.values():
+            if config.model_id == model_id:
+                return config
+        return None
+
     def get_model_for_agent(self, agent_name: str) -> str:
         """
         Get recommended model for a specific agent type.
@@ -373,9 +465,10 @@ def get_model_selector() -> ModelSelector:
     """Get or create the global ModelSelector instance."""
     global _model_selector
     if _model_selector is None:
-        # Read budget from environment or use defaults
-        daily_budget = float(os.getenv("LLM_DAILY_BUDGET", "3.33"))
-        monthly_budget = float(os.getenv("LLM_MONTHLY_BUDGET", "100.0"))
+        # Read budget from environment or use optimized defaults
+        # January 2026: $25/month target with cost-optimized models
+        daily_budget = float(os.getenv("LLM_DAILY_BUDGET", "0.83"))
+        monthly_budget = float(os.getenv("LLM_MONTHLY_BUDGET", "25.0"))
         _model_selector = ModelSelector(
             daily_budget=daily_budget,
             monthly_budget=monthly_budget,
