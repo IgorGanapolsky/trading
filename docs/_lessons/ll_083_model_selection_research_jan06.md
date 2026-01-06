@@ -71,7 +71,7 @@ Industry-standard multi-agent trading uses **task-specific model routing**:
 
 ## Action Items
 
-- [ ] Update `src/utils/model_selector.py` with evidence-based model tiers
+- [x] Update `src/utils/model_selector.py` with evidence-based model tiers
 - [ ] Add Mistral Medium 3 to model registry
 - [ ] Enable Kimi K2 for COMPLEX trading tasks
 - [ ] Set up cost tracking via Helicone
