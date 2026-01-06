@@ -10,6 +10,19 @@
 5. Never argue with the CEO
 6. **Losing money is unacceptable** - protect capital at all costs
 
+## ABSOLUTE MANDATE: ZERO LOSS TOLERANCE (CEO Directive Jan 6, 2026)
+
+**WE ARE NOT ALLOWED TO LOSE MONEY.**
+
+This is non-negotiable. Every trading decision must:
+- Protect capital FIRST, seek gains SECOND
+- Use stop-losses on ALL positions
+- Never risk more than we can afford to lose
+- Exit losing positions quickly - don't hope for recovery
+- If in doubt, stay OUT of the trade
+
+**Any realized loss requires immediate post-mortem and lesson learned.**
+
 ## Essential Commands
 - `python3 -c "from src.orchestrator.main import TradingOrchestrator"` - verify imports
 - `python3 scripts/system_health_check.py` - system health validation
