@@ -37,7 +37,7 @@
 |--------|------|--------|--------|-------|---------|-----|
 | *No positions yet* | - | - | - | - | - | - |
 
-> Starting fresh with $20. First options trade coming when we reach minimum capital for defined-risk spreads.
+> Starting fresh Jan 3, 2026. Depositing $10/day. First CSP trade at $200 (est. Jan 29, 2026).
 
 ### Paper Account (5 positions)
 
@@ -59,9 +59,8 @@
 
 | Date | Action | Symbol | Qty | Price | Notes |
 |------|--------|--------|-----|-------|-------|
-| 2025-12-23 | BUY | SPY | 0.73 | ~$590 | Paper account |
-| 2025-12-23 | BUY | SPY | 0.73 | ~$590 | Paper account |
-| 2025-12-23 | BUY | SPY | 0.73 | ~$590 | Paper account |
+| 2026-01-06 | BUY | SPY | 0.73 | $500 | Paper - immediate-trade workflow |
+| 2026-01-06 | EXEC | REITs | - | - | Paper - daily-trading workflow |
 
 ---
 
