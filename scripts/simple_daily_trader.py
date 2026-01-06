@@ -121,7 +121,9 @@ def get_current_positions(client) -> list:
         return []
 
 
-def find_put_option(symbol: str, target_delta: float, target_dte: int) -> Optional[dict]:
+def find_put_option(
+    symbol: str, target_delta: float, target_dte: int
+) -> Optional[dict]:
     """
     Find a put option matching our criteria.
 
@@ -169,24 +171,34 @@ def should_open_position(client, config: dict) -> bool:
     ]  # Options have longer symbols
 
     if len(options_positions) >= config["max_positions"]:
-        logger.info(f"Max positions reached ({len(options_positions)}/{config['max_positions']})")
+        logger.info(
+            f"Max positions reached ({len(options_positions)}/{config['max_positions']})"
+        )
         return False
 
     account = get_account_info(client)
     if not account:
         return False
 
-    # Need enough buying power for at least 1 SPY share (~$600)
-    # We buy shares instead of options for simpler execution
-    required_bp = 700  # ~1 SPY share with buffer
+    # For cash-secured puts, we need buying power = strike * 100 (1 contract)
+    # For SPY at ~$600, a 20-delta put might be around $570 strike
+    # Required collateral: $570 * 100 = $57,000 per contract
+    # For paper trading with $100k, we can do 1-2 contracts
+    spy_price_estimate = 600
+    strike_estimate = int(spy_price_estimate * 0.95)  # 5% OTM for 20 delta
+    required_bp = strike_estimate * 100  # 1 contract = 100 shares
+
     if account["buying_power"] < required_bp:
         logger.info(
-            f"Insufficient buying power: ${account['buying_power']:,.0f} < ${required_bp:,.0f}"
+            f"Insufficient buying power for CSP: ${account['buying_power']:,.0f} < ${required_bp:,.0f}"
+        )
+        logger.info(
+            "Need more capital for cash-secured puts. Consider credit spreads for smaller accounts."
         )
         return False
 
     logger.info(
-        f"Buying power check passed: ${account['buying_power']:,.0f} >= ${required_bp:,.0f}"
+        f"✅ Buying power OK for CSP: ${account['buying_power']:,.0f} >= ${required_bp:,.0f}"
     )
     return True
 
@@ -205,15 +217,21 @@ def execute_cash_secured_put(client, option: dict, config: dict) -> Optional[dic
     strategy_lessons = rag.search("cash secured put failures losses", top_k=3)
     for lesson, score in strategy_lessons:
         if lesson.severity == "CRITICAL":
-            logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
+            logger.error(
+                f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})"
+            )
             logger.error(f"Prevention: {lesson.prevention}")
             return None
 
     # Check for ticker-specific failures
-    ticker_lessons = rag.search(f"{option['underlying']} trading failures options losses", top_k=3)
+    ticker_lessons = rag.search(
+        f"{option['underlying']} trading failures options losses", top_k=3
+    )
     for lesson, score in ticker_lessons:
         if lesson.severity == "CRITICAL":
-            logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
+            logger.error(
+                f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})"
+            )
             logger.error(f"Prevention: {lesson.prevention}")
             return None
 
@@ -221,60 +239,132 @@ def execute_cash_secured_put(client, option: dict, config: dict) -> Optional[dic
 
     try:
         from alpaca.trading.enums import OrderSide, TimeInForce
-        from alpaca.trading.requests import MarketOrderRequest
+        from alpaca.trading.requests import LimitOrderRequest
 
-        logger.info(f"Executing cash-secured put: {option['symbol']}")
+        logger.info(f"Executing cash-secured put SALE: {option['symbol']}")
         logger.info(f"  Strike: ${option['strike']}")
         logger.info(f"  Expiry: {option['expiry']} ({option['dte']} DTE)")
         logger.info(f"  Target Delta: {option['delta']}")
+        logger.info(f"  Estimated Premium: ${option['estimated_premium']:.2f}")
 
-        # Try to submit options order, fall back to buying SPY shares
+        # SELL TO OPEN a cash-secured put (Phil Town Rule #1 style)
+        # This collects premium while waiting to buy at our desired price
         try:
-            # First try: buy SPY shares (guaranteed to work)
-            logger.info("Executing SPY share purchase (paper trading)...")
-            order_request = MarketOrderRequest(
-                symbol="SPY",
-                qty=1,  # Buy 1 share of SPY
-                side=OrderSide.BUY,
+            # Get options chain to find real contract
+            from alpaca.data.historical.option import OptionHistoricalDataClient
+            from alpaca.data.requests import OptionChainRequest
+
+            api_key = os.getenv("ALPACA_API_KEY")
+            secret_key = os.getenv("ALPACA_SECRET_KEY")
+            options_data_client = OptionHistoricalDataClient(api_key, secret_key)
+
+            # Find the actual option contract
+            chain_request = OptionChainRequest(
+                underlying_symbol=option["underlying"],
+                expiration_date_gte=datetime.now().strftime("%Y-%m-%d"),
+                expiration_date_lte=option["expiry"],
+                strike_price_lte=option["strike"] + 10,
+                strike_price_gte=option["strike"] - 10,
+            )
+
+            # Get option contracts
+            contracts = options_data_client.get_option_chain(chain_request)
+
+            # Find put contract closest to our target
+            put_contract = None
+            for symbol, contract in contracts.items():
+                if (
+                    "P" in symbol
+                    and abs(float(symbol[-8:]) / 1000 - option["strike"]) < 10
+                ):
+                    put_contract = symbol
+                    break
+
+            if not put_contract:
+                # Use calculated symbol if API doesn't return contracts
+                put_contract = option["symbol"]
+                logger.warning(f"Using calculated contract symbol: {put_contract}")
+
+            logger.info(f"📊 SELLING PUT: {put_contract}")
+
+            # Submit SELL TO OPEN order for the put option
+            order_request = LimitOrderRequest(
+                symbol=put_contract,
+                qty=1,  # 1 contract = 100 shares exposure
+                side=OrderSide.SELL,  # SELL to open (collect premium)
                 time_in_force=TimeInForce.DAY,
+                limit_price=option["estimated_premium"],  # Limit price for premium
             )
             order = client.submit_order(order_request)
 
             trade = {
                 "timestamp": datetime.now().isoformat(),
-                "action": "BUY",
-                "symbol": "SPY",
-                "underlying": "SPY",
-                "strike": None,
-                "expiry": None,
+                "action": "SELL_TO_OPEN",
+                "symbol": put_contract,
+                "underlying": option["underlying"],
+                "strike": option["strike"],
+                "expiry": option["expiry"],
                 "quantity": 1,
-                "strategy": "daily_dca_shares",
+                "premium": option["estimated_premium"],
+                "strategy": "cash_secured_put",
                 "status": "SUBMITTED",
                 "order_id": str(order.id) if hasattr(order, "id") else "unknown",
+                "phil_town_rule": "Getting paid to wait for a great company at a great price",
             }
 
-            logger.info(f"✅ ORDER SUBMITTED: {trade}")
+            logger.info(f"✅ CSP ORDER SUBMITTED: {trade}")
             return trade
 
         except Exception as order_err:
-            logger.error(f"Order submission failed: {order_err}")
-            # Record as failed attempt
-            trade = {
-                "timestamp": datetime.now().isoformat(),
-                "action": "BUY",
-                "symbol": "SPY",
-                "quantity": 1,
-                "strategy": "daily_dca_shares",
-                "status": "FAILED",
-                "error": str(order_err),
-            }
-            return trade
+            logger.error(f"Options order failed: {order_err}")
+            logger.error("Attempting market order for put...")
+
+            # Fallback: try market order for the put
+            try:
+                from alpaca.trading.requests import MarketOrderRequest
+
+                order_request = MarketOrderRequest(
+                    symbol=option["symbol"],
+                    qty=1,
+                    side=OrderSide.SELL,  # SELL the put
+                    time_in_force=TimeInForce.DAY,
+                )
+                order = client.submit_order(order_request)
+
+                trade = {
+                    "timestamp": datetime.now().isoformat(),
+                    "action": "SELL_TO_OPEN",
+                    "symbol": option["symbol"],
+                    "underlying": option["underlying"],
+                    "strike": option["strike"],
+                    "expiry": option["expiry"],
+                    "quantity": 1,
+                    "strategy": "cash_secured_put",
+                    "status": "SUBMITTED_MARKET",
+                    "order_id": str(order.id) if hasattr(order, "id") else "unknown",
+                }
+                logger.info(f"✅ CSP MARKET ORDER SUBMITTED: {trade}")
+                return trade
+
+            except Exception as market_err:
+                logger.error(f"Market order also failed: {market_err}")
+                trade = {
+                    "timestamp": datetime.now().isoformat(),
+                    "action": "SELL_TO_OPEN",
+                    "symbol": option["symbol"],
+                    "quantity": 1,
+                    "strategy": "cash_secured_put",
+                    "status": "FAILED",
+                    "error": f"Limit: {order_err}, Market: {market_err}",
+                }
+                return trade
 
     except ImportError as ie:
         logger.error(f"Missing Alpaca imports: {ie}")
+        logger.error("Install with: pip install alpaca-py")
         return None
     except Exception as e:
-        logger.error(f"Failed to execute trade: {e}")
+        logger.error(f"Failed to execute CSP trade: {e}")
         return None
 
 
@@ -307,7 +397,9 @@ def check_exit_conditions(client, positions: list, config: dict) -> list:
                             "profit_pct": profit_pct,
                         }
                     )
-                    logger.info(f"Exit signal: {pos['symbol']} - Take profit at {profit_pct:.1%}")
+                    logger.info(
+                        f"Exit signal: {pos['symbol']} - Take profit at {profit_pct:.1%}"
+                    )
 
     return exits
 
@@ -393,7 +485,9 @@ def run_daily_trading():
         logger.info("Opening new position...")
 
         # Find option contract
-        option = find_put_option(CONFIG["symbol"], CONFIG["target_delta"], CONFIG["target_dte"])
+        option = find_put_option(
+            CONFIG["symbol"], CONFIG["target_delta"], CONFIG["target_dte"]
+        )
 
         if option:
             # Execute trade
