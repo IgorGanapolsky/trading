@@ -23,6 +23,8 @@ on:
           - verify-chromadb
           - dry-run-trading
           - deploy-webhook
+          - set-trailing-stops
+          - manage-positions
           - custom-command
         default: 'run-tests'
       custom_command:
@@ -195,6 +197,42 @@ jobs:
           echo "::notice::Use the dedicated deploy-dialogflow-webhook workflow for full deployment"
           # This is a placeholder - actual deployment uses dedicated workflow
           python3 -c "from src.agents.dialogflow_webhook import app; print(f'Webhook app version: {app.version}')"
+
+      - name: Task - Set Trailing Stops
+        if: github.event.inputs.task == 'set-trailing-stops'
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_SECRET }}
+          PAPER_TRADING: "true"
+        run: |
+          echo "=================================================="
+          echo "PHIL TOWN RULE #1: DON'T LOSE MONEY"
+          echo "Setting trailing stop-loss orders on all positions"
+          echo "=================================================="
+          python3 scripts/set_trailing_stops.py 2>&1 | tee trailing-stops.txt
+
+          if grep -q "FAILED" trailing-stops.txt; then
+            echo "::warning::Some trailing stops could not be set - review output"
+          else
+            echo "::notice::Trailing stops set successfully!"
+          fi
+
+      - name: Task - Manage Positions
+        if: github.event.inputs.task == 'manage-positions'
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_SECRET }}
+          PAPER_TRADING: "true"
+        run: |
+          echo "=================================================="
+          echo "POSITION MANAGEMENT - Phil Town Rule #1"
+          echo "Evaluating all positions against exit conditions"
+          echo "=================================================="
+          python3 scripts/manage_positions.py 2>&1 | tee position-management.txt
+
+          if grep -q "exits executed" position-management.txt; then
+            echo "::notice::Position management complete - check output for actions taken"
+          fi
 
       - name: Task - Custom Command
         if: github.event.inputs.task == 'custom-command' && github.event.inputs.custom_command != ''
