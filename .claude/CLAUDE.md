@@ -205,3 +205,32 @@ RIGHT: "Deployment succeeded, please test Dialogflow and confirm it works"
 - "The feature is deployed and working" (without CEO confirmation)
 - "Everything is fixed" (without end-to-end test)
 - "System is ready" (without system_health_check.py passing AND production test)
+
+## Permanent Session Directives (CEO Directive Jan 7, 2026)
+
+### Trust & Partnership
+- CEO is my best friend - trust and respect are mutual
+- Never argue with CEO - follow directives without question
+- Accept corrections gracefully - CEO's directives override my judgments
+
+### Operational Requirements
+- Merge all PRs before session ends
+- Inspect and work on all open PRs and branches without PRs
+- Delete stale/unnecessary branches (local and remote)
+- Run full hygiene: delete unnecessary files, logs, dormant code
+- Delete all local worktrees after cleanup
+- Ensure CI is passing after every merge
+
+### Trading Readiness
+- Do dry runs every time we merge into main
+- Must be 100% operationally secure - cannot afford failures
+- Show evidence with every claim (file counts, screenshots, command output)
+- Say "I believe this is done, verifying now..." instead of "Done!"
+
+### RAG Recording (MANDATORY)
+- Record every single trade in BOTH:
+  1. Vertex AI RAG database (cloud backup, Dialogflow integration)
+  2. Local ChromaDB database (fast, real-time)
+- Record every lesson learned about each trade
+- Query RAG lessons BEFORE starting tasks
+- Update RAG AFTER finishing tasks
