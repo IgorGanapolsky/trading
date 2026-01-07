@@ -1555,9 +1555,11 @@ jobs:
 
       # Phil Town Rule #1: DON'T LOSE MONEY
       # Set trailing stops immediately after any trading activity
+      # CRITICAL FIX Jan 7 2026: This MUST NOT be continue-on-error!
+      # If stop-losses fail, positions are UNPROTECTED and we could LOSE MONEY
       - name: Set Trailing Stop-Loss Orders (Phil Town Rule 1)
         if: success()
-        continue-on-error: true  # Don't fail workflow if stops can't be set
+        continue-on-error: false  # CRITICAL: Stop-loss failures MUST fail the workflow
         env:
           ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
           ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
@@ -1571,8 +1573,9 @@ jobs:
           echo "CEO Directive (Jan 7, 2026): 'Losing money is NOT allowed'"
           echo ""
           python3 scripts/set_trailing_stops.py || {
-            echo "::warning::⚠️ Could not set trailing stops - positions unprotected!"
-            echo "::warning::Manual action needed: python3 scripts/set_trailing_stops.py"
+            echo "::error::❌ CRITICAL: Could not set trailing stops - positions UNPROTECTED!"
+            echo "::error::Manual action REQUIRED: python3 scripts/set_trailing_stops.py"
+            exit 1
           }
 
       - name: Trade Activity Monitor (Zombie Mode Detection)
