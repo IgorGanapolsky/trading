@@ -42,6 +42,11 @@
             "type": "command",
             "command": "if [[ \"$CLAUDE_FILE_PATH\" == *.py ]]; then ruff format --quiet \"$CLAUDE_FILE_PATH\" 2>/dev/null || true; fi",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/auto_run_tests.sh",
+            "timeout": 35
           }
         ]
       }
