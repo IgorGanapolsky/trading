@@ -231,7 +231,8 @@ RIGHT: "Deployment succeeded, please test Dialogflow and confirm it works"
 ### RAG Recording (MANDATORY)
 - Record every single trade in:
   1. Vertex AI RAG database (via CI - cloud backup, Dialogflow integration)
-  2. Local JSON files (sandbox - always works, real-time)
+  2. Local JSON files (`data/system_state.json` - always works)
+- ChromaDB REMOVED Jan 7, 2026 (unnecessary complexity - Vertex AI is sufficient)
 - Record every lesson learned about each trade
 - Query RAG lessons BEFORE starting tasks
 - Update RAG AFTER finishing tasks
