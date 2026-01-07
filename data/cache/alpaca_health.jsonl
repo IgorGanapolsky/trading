@@ -1,2 +1,0 @@
-{"timestamp": "2025-11-21T10:31:51.738963", "broker": "alpaca", "success": true, "response_time_ms": 3727.85, "status": "healthy", "consecutive_failures": 0, "error": null, "account_status": "ACTIVE", "buying_power": 199512.68}
-{"timestamp": "2025-11-21T10:38:31.405164", "broker": "alpaca", "success": true, "response_time_ms": 1100.88, "status": "healthy", "consecutive_failures": 0, "error": null, "account_status": "ACTIVE", "buying_power": 199510.83}
