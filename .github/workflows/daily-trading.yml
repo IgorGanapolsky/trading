@@ -125,11 +125,128 @@ jobs:
   # Paper trading (forward-testing) provides real market validation.
   # See feature_list.json for details.
 
+  # ========================================================================
+  # VERTEX AI RAG PRE-TRADE QUERY (Jan 7, 2026)
+  # CEO Directive: "We need to LEARN from Vertex AI RAG BEFORE trades!"
+  #
+  # This implements BIDIRECTIONAL learning:
+  # - READ: Query RAG for lessons BEFORE trading (this job)
+  # - WRITE: Sync trades to RAG after execution (post-trade sync)
+  #
+  # Based on 2026 best practices:
+  # - Gemini 2.0 Flash for grounded generation
+  # - Hybrid search (semantic + keyword)
+  # - Query-first decision making pattern
+  # ========================================================================
+  pretrade-rag-query:
+    name: Query Vertex AI RAG for Pre-Trade Advice
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    needs: validate-and-test
+    if: needs.validate-and-test.outputs.secrets_valid == 'true'
+    outputs:
+      has_warnings: ${{ steps.query.outputs.has_warnings }}
+      advice_available: ${{ steps.query.outputs.advice_available }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Vertex AI dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-cloud-aiplatform vertexai
+          pip install -r requirements-minimal.txt
+
+      - name: Query Vertex AI RAG
+        id: query
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID || 'igor-trading-2025-v2' }}
+        run: |
+          echo "=" * 70
+          echo "VERTEX AI RAG PRE-TRADE QUERY"
+          echo "Bidirectional Learning System - READ Phase"
+          echo "=" * 70
+          echo ""
+
+          # Set up GCP auth
+          if [ -n "$GCP_SA_KEY" ]; then
+            echo "$GCP_SA_KEY" > /tmp/gcp_sa_key.json
+            export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_sa_key.json
+          fi
+
+          # Query for pre-trade advice
+          python3 scripts/query_vertex_rag.py \
+            --symbol SPY --symbol SOFI --symbol AMD --symbol PLTR \
+            --json --output data/rag_pretrade_advice.json 2>&1 || {
+            echo "::warning::Vertex AI RAG query failed - proceeding with local lessons only"
+            echo '{"error": "RAG query failed", "fallback": true}' > data/rag_pretrade_advice.json
+          }
+
+          # Check for critical warnings
+          HAS_WARNINGS="false"
+          if [ -f data/rag_pretrade_advice.json ]; then
+            echo "advice_available=true" >> $GITHUB_OUTPUT
+
+            # Check for critical keywords in advice
+            if grep -qi "critical\|loss\|failure\|stop-loss\|avoid" data/rag_pretrade_advice.json 2>/dev/null; then
+              HAS_WARNINGS="true"
+              echo "::warning::RAG advice contains critical warnings - review before trading"
+            fi
+          else
+            echo "advice_available=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "has_warnings=$HAS_WARNINGS" >> $GITHUB_OUTPUT
+
+          # Display summary
+          echo ""
+          echo "Pre-trade RAG query complete."
+          echo "Has warnings: $HAS_WARNINGS"
+
+      - name: Display RAG Advice Summary
+        continue-on-error: true
+        run: |
+          if [ -f data/rag_pretrade_advice.json ]; then
+            echo ""
+            echo "📚 RAG ADVICE SUMMARY:"
+            python3 -c "
+          import json
+          try:
+              with open('data/rag_pretrade_advice.json', 'r') as f:
+                  advice = json.load(f)
+              if 'error' in advice:
+                  print(f'  Status: {advice.get(\"error\", \"unknown\")}')
+              else:
+                  print(f'  Timestamp: {advice.get(\"timestamp\", \"unknown\")}')
+                  print(f'  General advice items: {len(advice.get(\"general_advice\", []))}')
+                  print(f'  Risk warnings: {len(advice.get(\"risk_warnings\", []))}')
+                  print(f'  Recent lessons: {len(advice.get(\"recent_lessons\", []))}')
+          except Exception as e:
+              print(f'  Could not parse advice: {e}')
+          "
+          fi
+
+      - name: Upload RAG advice artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rag-pretrade-advice
+          path: data/rag_pretrade_advice.json
+          retention-days: 7
+
   # Main trading execution job
   execute-trading:
     runs-on: ubuntu-22.04  # Pinned Ubuntu version
     timeout-minutes: 30  # Increased to handle retries
-    needs: validate-and-test
+    needs: [validate-and-test, pretrade-rag-query]
     if: needs.validate-and-test.outputs.secrets_valid == 'true'
     env:
       PYTHONPATH: ${{ github.workspace }}
