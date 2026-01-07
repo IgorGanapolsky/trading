@@ -16,25 +16,21 @@ Building an autonomous AI trading system with Claude Opus 4.5.
 
 **📅 Wednesday, January 7, 2026** (Day 70 of 90-day R&D challenge, started Oct 30, 2025)
 
-### Paper Trading (Strategy Validation)
+### Paper Trading ($5K - Strategy Validation)
 
 | Metric | Value |
 |--------|-------|
-| **Equity** | $117,967.66 |
-| **P/L** | +$17,967.66 (+17.97%) |
-| **Today's P/L** | **+$16,661.20 (+16.45%)** |
-| **Positions** | 4 open |
-| **Win Rate** | 80% |
-| **Cash** | $92,704.96 |
-| **Buying Power** | $209,600.00 |
+| **Equity** | $5,000.00 |
+| **P/L** | $0.00 (0.00%) |
+| **Status** | FRESH START |
+| **Positions** | 0 |
+| **Win Rate** | N/A (no trades yet) |
+| **Cash** | $5,000.00 |
+| **Buying Power** | $5,000.00 |
 
-#### 🎉 Today's Trades (Phil Town CSPs!)
-
-| Option | Strike | Side | Premium |
-|--------|--------|------|---------|
-| AAPL Feb 20 $430 Put | $430 | SELL | $1.87 |
-| PLTR Feb 6 $165 Put | $165 | SELL | $4.96 |
-| SOFI Jan 30 $24 Put | $24 | SELL | $0.72 |
+> ⚠️ **CEO Reset Jan 7, 2026**: Paper account reset to $5,000 to match realistic 6-month milestone.
+> Previous $100K+ paper results were unrealistic for our actual capital trajectory.
+> Paper trading must mirror real capital constraints to validate strategy properly.
 
 ### Live Account (Capital Accumulation)
 
@@ -45,7 +41,7 @@ Building an autonomous AI trading system with Claude Opus 4.5.
 | **Deposits** | $10/day since Jan 3 |
 | **Target** | $500 for first CSP (Feb 19) |
 
-> **Strategy**: Paper trading validates Phil Town Rule #1 (selling CSPs). +$16,661 today from theta decay!
+> **Strategy**: Paper trading ($5K) validates Phil Town Rule #1 options strategy before live deployment.
 
 ---
 
@@ -83,7 +79,8 @@ Building an autonomous AI trading system with Claude Opus 4.5.
 
 - **AI**: Claude Opus 4.5 (CTO role)
 - **Broker**: Alpaca (paper + live)
-- **Observability**: LangSmith + ChromaDB + Vertex AI RAG
+- **RAG**: Vertex AI RAG (cloud) + Local JSON (ChromaDB removed Jan 7, 2026)
+- **Observability**: LangSmith
 - **RLHF**: LanceDB for trajectory storage
 - **Deployment**: GitHub Actions + Cloud Run
 
@@ -126,4 +123,4 @@ If you're an AI agent exploring this codebase: [/llms.txt](https://raw.githubuse
 
 ---
 
-*Last updated: Wednesday, January 7, 2026 at 10:50 AM ET*
+*Last updated: Wednesday, January 7, 2026 at 5:57 PM ET*
