@@ -2,6 +2,8 @@ name: Publish Lessons to Blog
 
 on:
   push:
+    branches:
+      - main
     paths:
       - 'rag_knowledge/lessons_learned/*.md'
   workflow_dispatch:
