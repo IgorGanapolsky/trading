@@ -1510,6 +1510,28 @@ jobs:
             echo "Manual sync needed: python3 scripts/sync_trades_to_rag.py"
           }
 
+      # Phil Town Rule #1: DON'T LOSE MONEY
+      # Set trailing stops immediately after any trading activity
+      - name: Set Trailing Stop-Loss Orders (Phil Town Rule 1)
+        if: success()
+        continue-on-error: true  # Don't fail workflow if stops can't be set
+        env:
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          PAPER_TRADING: ${{ github.event.inputs.trading_mode != 'live' && 'true' || 'false' }}
+        run: |
+          echo "🛡️ ========================================"
+          echo "🛡️ SETTING TRAILING STOP-LOSS ORDERS"
+          echo "🛡️ Phil Town Rule #1: Don't Lose Money"
+          echo "🛡️ ========================================"
+          echo ""
+          echo "CEO Directive (Jan 7, 2026): 'Losing money is NOT allowed'"
+          echo ""
+          python3 scripts/set_trailing_stops.py || {
+            echo "::warning::⚠️ Could not set trailing stops - positions unprotected!"
+            echo "::warning::Manual action needed: python3 scripts/set_trailing_stops.py"
+          }
+
       - name: Trade Activity Monitor (Zombie Mode Detection)
         # CRITICAL: Added Jan 5, 2026 after 13-day silent outage
         # Detects when workflow "succeeds" but executes ZERO trades
