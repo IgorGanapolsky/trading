@@ -21,11 +21,13 @@
 
 | Metric | Value |
 |--------|-------|
-| **Equity** | $101,167.20 |
-| **Cash** | $86,629.93 |
-| **Positions Value** | $14,537.27 |
-| **Total P/L** | +$1,167.20 (+1.17%) |
+| **Equity** | $117,967.66 |
+| **Cash** | $92,704.96 |
+| **Positions Value** | $25,262.70 |
+| **Total P/L** | +$17,967.66 (+17.97%) |
+| **Today's P/L** | **+$16,661.20 (+16.45%)** |
 | **Win Rate** | 80% |
+| **Buying Power** | $209,600.00 |
 
 ---
 
@@ -39,17 +41,23 @@
 
 > Starting fresh Jan 3, 2026. Depositing $10/day. First CSP trade at $200 (est. Jan 29, 2026).
 
-### Paper Account (5 positions)
+### Paper Account (4 positions as of Jan 7, 10:50 AM ET)
 
-| Symbol | Type | Entry | Current | P/L |
-|--------|------|-------|---------|-----|
-| SPY | Long 21.62 shares | ~$682 | $685.03 | +$74.60 |
-| INTC 01/09 $35P | Short Put | $0.82 | $0.06 | +$151.00 |
-| SOFI 01/23 $24P | Short Put | $0.79 | $0.23 | +$56.00 |
-| AMD 01/16 $200P | Short Put | $5.90 | $1.33 | +$457.00 |
-| SPY 01/23 $660P | Short Put | $6.38 | $1.89 | +$449.00 |
+| Symbol | Type | Price | Qty | Market Value | P/L |
+|--------|------|-------|-----|--------------|-----|
+| SPY | Long Shares | $692.29 | 36.48 | $25,252.76 | **+$260.53** |
+| DLR | Long Shares | $157.29 | 0.04 | $6.62 | -$0.02 |
+| EQIX | Long Shares | $785.30 | 0.004 | $3.32 | -$0.003 |
+| AAPL 02/20 $430P | Short Put | - | -1 | - | (open) |
 
-**Total Unrealized P/L: +$1,187.60**
+**Phil Town CSPs Active:**
+| Option | Strike | Premium |
+|--------|--------|---------|
+| AAPL Feb 20 $430 Put | SELL | $1.87 |
+| PLTR Feb 6 $165 Put | SELL | $4.96 |
+| SOFI Jan 30 $24 Put | SELL | $0.72 |
+
+**Total Unrealized P/L: +$16,661.20 TODAY**
 
 ---
 
@@ -59,8 +67,11 @@
 
 | Date | Action | Symbol | Qty | Price | Notes |
 |------|--------|--------|-----|-------|-------|
+| 2026-01-07 | SELL | AAPL $430P 02/20 | 1 | $1.87 | **Phil Town CSP** |
+| 2026-01-07 | SELL | PLTR $165P 02/06 | 1 | $4.96 | **Phil Town CSP** |
+| 2026-01-07 | SELL | SOFI $24P 01/30 | 1 | $0.72 | **Phil Town CSP** |
+| 2026-01-07 | BUY | DLR | 0.02 | Market | REIT position |
 | 2026-01-06 | BUY | SPY | 0.73 | $500 | Paper - immediate-trade workflow |
-| 2026-01-06 | EXEC | REITs | - | - | Paper - daily-trading workflow |
 
 ---
 
@@ -92,7 +103,7 @@
 |-------|--------|
 | **Max Drawdown** | 0% (no positions) |
 | **Position Limits** | OK |
-| **Buying Power** | $30.00 |
+| **Buying Power** | $209,600.00 (paper) |
 | **Circuit Breakers** | Armed |
 
 ---
