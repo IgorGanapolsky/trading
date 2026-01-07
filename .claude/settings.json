@@ -126,6 +126,11 @@
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/surface_feedback_patterns.sh",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/cost_circuit_breaker.sh",
+            "timeout": 5
           }
         ]
       }
