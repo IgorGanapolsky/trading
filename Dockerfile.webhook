@@ -15,6 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 COPY src/ src/
 COPY rag_knowledge/ rag_knowledge/
 
+# Copy system state for portfolio data (fallback to GitHub raw if stale)
+COPY data/system_state.json data/system_state.json
+
 # Create data directory for ChromaDB
 RUN mkdir -p data/rag/chroma_db
 

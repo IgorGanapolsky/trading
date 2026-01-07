@@ -340,11 +340,14 @@ def assess_trading_readiness(
                 hours_old = (
                     datetime.now(update_time.tzinfo or None) - update_time
                 ).total_seconds() / 3600
-                if hours_old < 4:
+                if hours_old < 2:
                     checks.append(f"State fresh ({hours_old:.1f}h old)")
                     score += 10
+                elif hours_old < 4:
+                    warnings.append(f"State aging ({hours_old:.1f}h old) - consider refreshing")
+                    score += 5
                 else:
-                    warnings.append(f"State stale ({hours_old:.1f}h old)")
+                    warnings.append(f"State STALE ({hours_old:.1f}h old) - data may be outdated")
             except Exception:
                 warnings.append("Could not verify state freshness")
 
