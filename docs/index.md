@@ -96,7 +96,7 @@ Building an autonomous AI trading system with Claude Opus 4.5.
 - **{{ lesson.date | date: "%b %d" }}**: [{{ lesson.title }}]({{ lesson.url | relative_url }})
 {% endfor %}
 
-[View All 90+ Lessons](/lessons/)
+[View All 90+ Lessons]({{ '/lessons/' | relative_url }})
 
 ---
 
@@ -107,7 +107,7 @@ Building an autonomous AI trading system with Claude Opus 4.5.
 - **{{ report.date | date: "%b %d" }}**: [{{ report.title }}]({{ report.url | relative_url }})
 {% endfor %}
 
-[View All Reports](/reports/)
+[View All Reports]({{ '/reports/' | relative_url }})
 
 ---
 
@@ -120,9 +120,9 @@ If you're an AI agent exploring this codebase: [/llms.txt](https://raw.githubuse
 ## Links
 
 - [Full Dashboard (Wiki)](https://github.com/IgorGanapolsky/trading/wiki/Progress-Dashboard)
-- [50-Day Retrospective](/RETROSPECTIVE/)
+- [50-Day Retrospective]({{ '/RETROSPECTIVE/' | relative_url }})
 - [GitHub Repository](https://github.com/IgorGanapolsky/trading)
-- [RSS Feed](/feed.xml)
+- [RSS Feed]({{ '/feed.xml' | relative_url }})
 
 ---
 

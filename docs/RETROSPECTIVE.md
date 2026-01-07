@@ -59,7 +59,7 @@ feat: Add world's simplest learning system (~250 lines)
 
 We built a beautiful RAG system with ChromaDB, 400+ vectorized chunks, semantic search... and then **never actually queried it**.
 
-From [LL-054](/rag_knowledge/lessons_learned/ll_054_rag_not_actually_used_dec17.md):
+From [LL-054](https://github.com/IgorGanapolsky/trading/blob/main/rag_knowledge/lessons_learned/ll_054_rag_not_actually_used_dec17.md):
 > "The RAG system exists but is not integrated into any decision-making process. We have knowledge but don't use it."
 
 ### The Friday Problem
@@ -243,7 +243,7 @@ trading/
 ## Connect
 
 - **GitHub**: [IgorGanapolsky/trading](https://github.com/IgorGanapolsky/trading)
-- **llms.txt**: [/llms.txt](/llms.txt) - For AI agents
+- **llms.txt**: [/llms.txt]({{ '/llms.txt' | relative_url }}) - For AI agents
 - **Issues**: Open an issue if you have questions
 
 ---
