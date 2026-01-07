@@ -1,1 +1,1 @@
-# Analytics module for trading performance tracking
+"""Analytics module for trading system."""
