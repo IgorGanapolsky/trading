@@ -127,13 +127,21 @@ def run_smoke_tests() -> SmokeTestResult:
         logger.error(f"SMOKE TEST FAILED: Cannot read positions: {e}")
         return result
 
-    # ========== TEST 6: Buying Power Valid ==========
+    # ========== TEST 6: Buying Power OR Cash Valid ==========
+    # FIX (Jan 7, 2026): For options accounts, buying power can be $0 when
+    # cash is used as collateral for short options. We still need to allow
+    # trading (especially CLOSING positions) if we have cash.
     if result.buying_power > 0:
         result.buying_power_valid = True
         logger.info(f"✅ SMOKE TEST: Buying power valid (${result.buying_power:,.2f})")
+    elif result.cash > 0:
+        # Cash available even if buying power is $0 (collateral locked)
+        result.buying_power_valid = True
+        logger.info(f"✅ SMOKE TEST: Cash available (${result.cash:,.2f}) - can close positions")
+        logger.warning(f"   Note: Buying power is ${result.buying_power} (collateral locked)")
     else:
-        result.errors.append(f"CRITICAL: Buying power is ${result.buying_power} (must be > 0)")
-        logger.error(f"SMOKE TEST FAILED: Buying power is ${result.buying_power}")
+        result.errors.append(f"CRITICAL: Both buying power (${result.buying_power}) and cash (${result.cash}) are $0")
+        logger.error(f"SMOKE TEST FAILED: No buying power AND no cash")
         # Don't return - continue to check equity
 
     # ========== TEST 7: Equity Valid ==========
