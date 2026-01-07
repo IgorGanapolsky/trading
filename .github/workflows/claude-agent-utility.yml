@@ -106,9 +106,10 @@ jobs:
       - name: Task - Sync Trades to RAG
         if: github.event.inputs.task == 'sync-trades-to-rag'
         env:
-          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
-          echo "Syncing trades to Vertex AI RAG and ChromaDB..."
+          echo "Syncing trades to Vertex AI RAG..."
           python3 scripts/sync_trades_to_rag.py || {
             echo "::warning::RAG sync had issues - check logs"
           }
