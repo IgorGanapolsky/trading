@@ -133,6 +133,16 @@
   "paper_account": {
     "type": "paper",
     "purpose": "Test Phil Town Rule #1 strategies before live deployment",
+    "CRITICAL_WARNING": "INVALID SIMULATION - $100k paper tests strategies impossible with $500 real capital",
+    "simulation_mismatch": {
+      "paper_capital": 100000,
+      "real_target_capital": 500,
+      "mismatch_ratio": "200x",
+      "invalid_strategies_tested": ["AMD $200 CSPs", "SPY $660 CSPs", "INTC $35 CSPs"],
+      "valid_strategies_at_500": ["F $5 CSP", "SOFI $5 CSP"],
+      "recommendation": "Reset paper account to $500 to validate executable strategies",
+      "lesson_learned": "rag_knowledge/lessons_learned/ll_111_paper_capital_must_match_real_jan07.md"
+    },
     "starting_balance": 100000.0,
     "current_equity": 117967.66,
     "cash": 92704.96,
