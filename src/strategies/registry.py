@@ -446,6 +446,7 @@ def initialize_registry() -> None:
     registry = get_registry()
 
     # Register core strategies
+    # NOTE: Only register strategies with existing source files (audit Jan 7, 2026)
     strategies_to_register = [
         {
             "name": "core_momentum",
@@ -456,36 +457,36 @@ def initialize_registry() -> None:
             "tags": ["momentum", "etf", "daily"],
         },
         {
-            "name": "options_theta",
-            "description": "Options premium capture via theta decay",
-            "status": StrategyStatus.EXPERIMENTAL,
-            "asset_class": AssetClass.OPTIONS,
-            "source_file": "src/strategies/options_strategy.py",
-            "tags": ["options", "theta", "income"],
-        },
-        {
             "name": "rule_one_options",
             "description": "Phil Town Rule #1 options strategy for value investing",
-            "status": StrategyStatus.EXPERIMENTAL,
+            "status": StrategyStatus.PAPER_TRADING,
             "asset_class": AssetClass.OPTIONS,
             "source_file": "src/strategies/rule_one_options.py",
-            "tags": ["options", "value", "rule1"],
+            "tags": ["options", "value", "rule1", "phil-town"],
         },
         {
-            "name": "growth_portfolio",
-            "description": "Growth-focused equity portfolio strategy",
+            "name": "reit_strategy",
+            "description": "REIT sector rotation strategy (Tier 7 - disabled by default)",
             "status": StrategyStatus.EXPERIMENTAL,
             "asset_class": AssetClass.EQUITY,
-            "source_file": "src/strategies/growth_strategy.py",
-            "tags": ["growth", "equity", "long-term"],
+            "source_file": "src/strategies/reit_strategy.py",
+            "tags": ["reit", "sector", "income"],
         },
         {
-            "name": "treasury_ladder",
-            "description": "Treasury ladder for stable income",
+            "name": "precious_metals",
+            "description": "Precious metals allocation strategy (disabled by default)",
             "status": StrategyStatus.EXPERIMENTAL,
             "asset_class": AssetClass.EQUITY,
-            "source_file": "src/strategies/treasury_ladder_strategy.py",
-            "tags": ["fixed-income", "treasury", "stable"],
+            "source_file": "src/strategies/precious_metals_strategy.py",
+            "tags": ["metals", "gold", "hedge"],
+        },
+        {
+            "name": "legacy_momentum",
+            "description": "Legacy momentum strategy (deprecated - use core_momentum)",
+            "status": StrategyStatus.DEPRECATED,
+            "asset_class": AssetClass.EQUITY,
+            "source_file": "src/strategies/legacy_momentum.py",
+            "tags": ["momentum", "legacy", "deprecated"],
         },
     ]
 
