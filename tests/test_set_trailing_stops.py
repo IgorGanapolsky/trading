@@ -4,10 +4,11 @@ Phil Town Rule #1: Don't Lose Money
 These tests ensure trailing stop functionality works correctly.
 """
 
-import pytest
-from unittest.mock import Mock, patch
 import sys
 from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Add scripts to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))

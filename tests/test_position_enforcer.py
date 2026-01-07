@@ -8,10 +8,10 @@ Purpose: 100% test coverage for position_enforcer.py
 from unittest.mock import MagicMock
 
 from src.safety.position_enforcer import (
-    EnforcementResult,
-    enforce_positions,
-    _check_symbol_banned,
     BANNED_SYMBOLS,
+    EnforcementResult,
+    _check_symbol_banned,
+    enforce_positions,
 )
 
 
