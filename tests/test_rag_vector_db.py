@@ -1,162 +1,171 @@
 """
-Test RAG Vector Database - Ensures ChromaDB is installed and functional.
+Test RAG Search - Ensures LessonsSearch is functional.
 
 Created: Dec 30, 2025
-Reason: ChromaDB silently fell back to TF-IDF when not installed (LL-074)
+Updated: Jan 7, 2026 - Removed ChromaDB tests (CEO directive), replaced with LessonsSearch tests
 
-This test MUST run in CI to catch vector DB installation failures early.
+This test MUST run in CI to catch RAG search failures early.
 """
 
 import pytest
-
-# Check if chromadb is available
-try:
-    import chromadb  # noqa: F401
-
-    CHROMADB_AVAILABLE = True
-except ImportError:
-    CHROMADB_AVAILABLE = False
+from pathlib import Path
+from unittest.mock import patch, MagicMock
 
 
-@pytest.mark.skipif(not CHROMADB_AVAILABLE, reason="chromadb not installed")
-class TestVectorDBInstallation:
-    """Verify vector database packages are installed."""
+class TestLessonsSearchInstallation:
+    """Verify LessonsSearch is functional."""
 
-    def test_chromadb_importable(self):
-        """ChromaDB must be importable - prevents silent TF-IDF fallback."""
-        import chromadb
+    def test_lessons_search_importable(self):
+        """LessonsSearch must be importable."""
+        from src.rag.lessons_search import LessonsSearch
 
-        assert chromadb.__version__ is not None
-        # Accept either 0.x.x or 1.x.x versions (API compatible)
-        major_version = int(chromadb.__version__.split(".")[0])
-        assert major_version in [0, 1], f"Unexpected ChromaDB version: {chromadb.__version__}"
+        assert LessonsSearch is not None
 
-    def test_chromadb_client_creation(self):
-        """ChromaDB client must be creatable without errors."""
-        import tempfile
+    def test_lessons_search_initialization(self):
+        """LessonsSearch must initialize without errors."""
+        from src.rag.lessons_search import LessonsSearch
 
-        import chromadb
-        from chromadb.config import Settings
+        search = LessonsSearch()
+        assert search is not None
+        assert hasattr(search, "_lessons_cache")
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            client = chromadb.PersistentClient(
-                path=tmpdir, settings=Settings(anonymized_telemetry=False)
-            )
-            assert client is not None
+    def test_lessons_search_deprecated_chromadb_param(self):
+        """use_chromadb parameter should be deprecated but not error."""
+        from src.rag.lessons_search import LessonsSearch
 
-    def test_chromadb_collection_operations(self):
-        """Basic collection operations must work."""
-        import tempfile
-
-        import chromadb
-        from chromadb.config import Settings
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            client = chromadb.PersistentClient(
-                path=tmpdir, settings=Settings(anonymized_telemetry=False)
-            )
-
-            # Create collection
-            collection = client.create_collection(name="test_collection")
-            assert collection is not None
-
-            # Add documents
-            collection.add(
-                documents=["This is a test document about trading."],
-                ids=["doc1"],
-                metadatas=[{"source": "test"}],
-            )
-
-            # Verify count
-            assert collection.count() == 1
-
-            # Query (semantic search)
-            results = collection.query(query_texts=["trading"], n_results=1)
-            assert len(results["documents"][0]) == 1
-
-    def test_chroma_hnswlib_importable(self):
-        """chroma-hnswlib must be importable (ChromaDB dependency)."""
-        try:
-            import hnswlib  # noqa: F401
-
-            assert True
-        except ImportError:
-            # Some ChromaDB versions bundle hnswlib internally
-            import chromadb
-
-            # If chromadb works, hnswlib is available somehow
-            assert chromadb is not None
+        # Should not raise, just warn
+        search = LessonsSearch(use_chromadb=True)
+        assert search is not None
 
 
-@pytest.mark.skipif(not CHROMADB_AVAILABLE, reason="chromadb not installed")
-class TestVectorDBData:
-    """Verify vector database has data (if running in full environment)."""
+class TestLessonsSearchFunctionality:
+    """Verify LessonsSearch keyword search works."""
 
-    @pytest.mark.skipif(
-        not __import__("pathlib").Path("data/vector_db/chroma.sqlite3").exists(),
-        reason="Vector DB not built (CI environment - run vectorize_rag_knowledge.py)",
-    )
-    def test_vector_db_has_data(self):
-        """Production vector DB should have indexed documents."""
-        from pathlib import Path
+    def test_search_returns_list(self):
+        """Search should return a list of results."""
+        from src.rag.lessons_search import LessonsSearch
 
-        import chromadb
-        from chromadb.config import Settings
+        search = LessonsSearch()
+        results = search.search("trading", top_k=5)
+        assert isinstance(results, list)
 
-        db_path = Path("data/vector_db")
-        client = chromadb.PersistentClient(
-            path=str(db_path), settings=Settings(anonymized_telemetry=False)
-        )
+    def test_search_with_severity_filter(self):
+        """Search should support severity filtering."""
+        from src.rag.lessons_search import LessonsSearch
 
-        collections = client.list_collections()
-        assert len(collections) > 0, "Vector DB has no collections"
+        search = LessonsSearch()
+        results = search.search("error", severity_filter="CRITICAL")
+        # All results should be CRITICAL if filtering works
+        for lesson, score in results:
+            if hasattr(lesson, 'severity'):
+                assert lesson.severity == "CRITICAL"
 
-        # Check first collection has data
-        # ChromaDB 0.6.0: list_collections() returns collection names as strings
-        first_collection = collections[0]
-        # In 0.6.0, collections are strings (names), get the actual collection
-        if isinstance(first_collection, str):
-            col = client.get_collection(first_collection)
-            col_name = first_collection
-        else:
-            # Older versions might return Collection objects
-            col = first_collection
-            col_name = getattr(first_collection, "name", str(first_collection))
-        count = col.count()
-        assert count > 0, f"Collection '{col_name}' is empty"
+    def test_get_critical_lessons(self):
+        """Should be able to get critical lessons."""
+        from src.rag.lessons_search import LessonsSearch
+
+        search = LessonsSearch()
+        critical = search.get_critical_lessons()
+        assert isinstance(critical, list)
+
+    def test_count_lessons(self):
+        """Should be able to count loaded lessons."""
+        from src.rag.lessons_search import LessonsSearch
+
+        search = LessonsSearch()
+        count = search.count()
+        assert isinstance(count, int)
+        assert count >= 0
+
+    def test_index_lessons_reload(self):
+        """index_lessons should reload lessons from disk."""
+        from src.rag.lessons_search import LessonsSearch
+
+        search = LessonsSearch()
+        count = search.index_lessons(force_rebuild=True)
+        assert isinstance(count, int)
 
 
-@pytest.mark.skipif(not CHROMADB_AVAILABLE, reason="chromadb not installed")
-class TestRAGNotFallingBack:
-    """Ensure RAG isn't silently falling back to TF-IDF."""
+class TestLessonsLearnedRAG:
+    """Verify LessonsLearnedRAG wrapper works."""
+
+    def test_rag_importable(self):
+        """LessonsLearnedRAG must be importable."""
+        from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
+        assert LessonsLearnedRAG is not None
+
+    def test_rag_initialization(self):
+        """LessonsLearnedRAG must initialize without errors."""
+        from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
+        rag = LessonsLearnedRAG()
+        assert rag is not None
+
+    def test_rag_query(self):
+        """RAG query should return results."""
+        from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
+        rag = LessonsLearnedRAG()
+        results = rag.query("trading lessons")
+        assert isinstance(results, list)
+
+    def test_rag_search_format(self):
+        """RAG search should return (LessonResult, score) tuples."""
+        from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
+        rag = LessonsLearnedRAG()
+        results = rag.search("risk management")
+        assert isinstance(results, list)
+        for result in results:
+            assert isinstance(result, tuple)
+            assert len(result) == 2
+
+
+class TestRAGDataPresence:
+    """Verify RAG has data (if running in full environment)."""
 
     @pytest.mark.skipif(
-        not __import__("pathlib").Path("data/rag/lessons_indexing_stats.json").exists(),
-        reason="Lessons stats not present",
+        not Path("rag_knowledge/lessons_learned").exists(),
+        reason="Lessons directory not present",
     )
-    def test_not_using_tfidf_fallback(self):
-        """RAG should use vector embeddings, not TF-IDF fallback."""
+    def test_lessons_directory_has_files(self):
+        """Lessons directory should have markdown files."""
+        lessons_dir = Path("rag_knowledge/lessons_learned")
+        md_files = list(lessons_dir.glob("*.md"))
+        assert len(md_files) > 0, "No lessons found in rag_knowledge/lessons_learned"
+
+    @pytest.mark.skipif(
+        not Path("rag_knowledge/lessons_learned").exists(),
+        reason="Lessons directory not present",
+    )
+    def test_lessons_search_has_data(self):
+        """LessonsSearch should find lessons if directory has files."""
+        from src.rag.lessons_search import LessonsSearch
+
+        search = LessonsSearch()
+        count = search.count()
+
+        lessons_dir = Path("rag_knowledge/lessons_learned")
+        md_files = list(lessons_dir.glob("*.md"))
+
+        # Count should match number of files (approximately)
+        if len(md_files) > 0:
+            assert count > 0, "LessonsSearch has no lessons loaded"
+
+
+class TestVectorDBCacheFile:
+    """Verify vectorized_files.json cache works."""
+
+    @pytest.mark.skipif(
+        not Path("data/vector_db/vectorized_files.json").exists(),
+        reason="Cache file not present",
+    )
+    def test_cache_file_valid_json(self):
+        """Cache file should be valid JSON."""
         import json
-        from pathlib import Path
 
-        stats_file = Path("data/rag/lessons_indexing_stats.json")
-        stats = json.loads(stats_file.read_text())
-
-        # If using_tfidf is True and fastembed/lancedb are False, we're in fallback mode
-        using_tfidf = stats.get("using_tfidf", False)
-        using_fastembed = stats.get("using_fastembed", False)
-        using_lancedb = stats.get("using_lancedb", False)
-
-        # Either fastembed or lancedb should be True, OR tfidf should be False
-        # (ChromaDB uses its own embeddings, so tfidf=True might be stale)
-        if using_tfidf and not using_fastembed and not using_lancedb:
-            # Check if ChromaDB is available as alternative
-            try:
-                import chromadb  # noqa: F401
-
-                # ChromaDB available - TF-IDF status in stats may be stale
-                pass
-            except ImportError:
-                pytest.fail(
-                    "RAG is using TF-IDF fallback! Install chromadb: pip install chromadb==0.6.3"
-                )
+        cache_file = Path("data/vector_db/vectorized_files.json")
+        data = json.loads(cache_file.read_text())
+        assert isinstance(data, dict)
+        assert "files" in data or "last_updated" in data

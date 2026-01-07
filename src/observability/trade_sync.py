@@ -1,12 +1,13 @@
 """
-Unified Trade Sync - Sync trades to LangSmith AND ChromaDB RAG.
+Unified Trade Sync - Sync trades to LangSmith, Vertex AI RAG, and local JSON.
 
 This module ensures EVERY trade is recorded to:
 1. LangSmith (smith.langchain.com) - for observability and ML training
-2. ChromaDB RAG - for lessons learned and pattern recognition
-3. Local JSON files - for backup
+2. Vertex AI RAG - for Dialogflow queries and cloud backup
+3. Local JSON files - for backup and local querying
 
 Created: Jan 5, 2026 - Fix for operational gap where trades only went to JSON files.
+Updated: Jan 7, 2026 - Removed ChromaDB (CEO directive - use Vertex AI RAG instead)
 """
 
 import json
@@ -28,16 +29,14 @@ LESSONS_DIR = Path("rag_knowledge/lessons_learned")
 
 class TradeSync:
     """
-    Unified trade sync to LangSmith and ChromaDB.
+    Unified trade sync to LangSmith, Vertex AI RAG, and local JSON.
 
     Every trade should go through this class to ensure proper tracking.
     """
 
     def __init__(self):
         self._langsmith_client = None
-        self._chromadb_collection = None
         self._init_langsmith()
-        self._init_chromadb()
 
         TRADES_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -59,36 +58,6 @@ class TradeSync:
         except Exception as e:
             logger.warning(f"Failed to initialize LangSmith: {e}")
 
-    def _init_chromadb(self):
-        """Initialize ChromaDB collection for trade lessons."""
-        try:
-            import chromadb
-            from chromadb.config import Settings
-
-            db_path = DATA_DIR / "vector_db"
-            db_path.mkdir(parents=True, exist_ok=True)
-
-            client = chromadb.PersistentClient(
-                path=str(db_path),
-                settings=Settings(anonymized_telemetry=False),
-            )
-
-            # Create or get trade_history collection
-            self._chromadb_collection = client.get_or_create_collection(
-                name="trade_history",
-                metadata={
-                    "description": "Historical trades for pattern recognition",
-                    "hnsw:space": "cosine",
-                },
-            )
-            logger.info(
-                f"ChromaDB trade_history collection initialized ({self._chromadb_collection.count()} docs)"
-            )
-        except ImportError:
-            logger.warning("chromadb package not installed")
-        except Exception as e:
-            logger.warning(f"Failed to initialize ChromaDB: {e}")
-
     def sync_trade(
         self,
         symbol: str,
@@ -108,7 +77,6 @@ class TradeSync:
         """
         results = {
             "langsmith": False,
-            "chromadb": False,
             "vertex_rag": False,
             "local_json": False,
         }
@@ -130,18 +98,15 @@ class TradeSync:
         # 1. Sync to LangSmith
         results["langsmith"] = self._sync_to_langsmith(trade_data)
 
-        # 2. Sync to ChromaDB
-        results["chromadb"] = self._sync_to_chromadb(trade_data)
-
-        # 3. Sync to Vertex AI RAG (for Dialogflow queries)
+        # 2. Sync to Vertex AI RAG (for Dialogflow queries)
         results["vertex_rag"] = self._sync_to_vertex_rag(trade_data)
 
-        # 4. Save to local JSON (backup)
+        # 3. Save to local JSON (backup)
         results["local_json"] = self._sync_to_local_json(trade_data)
 
         logger.info(
             f"Trade sync complete: {symbol} {side} | "
-            f"LangSmith={results['langsmith']}, ChromaDB={results['chromadb']}, "
+            f"LangSmith={results['langsmith']}, "
             f"VertexRAG={results['vertex_rag']}, JSON={results['local_json']}"
         )
 
@@ -194,49 +159,6 @@ class TradeSync:
 
         except Exception as e:
             logger.error(f"Failed to sync trade to LangSmith: {e}")
-            return False
-
-    def _sync_to_chromadb(self, trade_data: dict[str, Any]) -> bool:
-        """Sync trade to ChromaDB for pattern recognition."""
-        if not self._chromadb_collection:
-            return False
-
-        try:
-            import uuid
-
-            # Create a searchable document from the trade
-            pnl = trade_data.get("pnl") or 0
-            pnl_pct = trade_data.get("pnl_pct") or 0
-            outcome = "profitable" if pnl > 0 else ("loss" if pnl < 0 else "breakeven")
-
-            document = (
-                f"Trade: {trade_data['side'].upper()} {trade_data['qty']} {trade_data['symbol']} "
-                f"at ${trade_data['price']:.2f} using {trade_data['strategy']} strategy. "
-                f"Outcome: {outcome} with P/L ${pnl:.2f} ({pnl_pct:.2f}%). "
-                f"Date: {trade_data['timestamp'][:10]}"
-            )
-
-            self._chromadb_collection.add(
-                documents=[document],
-                metadatas=[
-                    {
-                        "symbol": trade_data["symbol"],
-                        "side": trade_data["side"],
-                        "strategy": trade_data["strategy"],
-                        "pnl": pnl,
-                        "outcome": outcome,
-                        "timestamp": trade_data["timestamp"],
-                        "type": "trade",
-                    }
-                ],
-                ids=[str(uuid.uuid4())],
-            )
-
-            logger.debug(f"✅ Trade synced to ChromaDB: {trade_data['symbol']}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to sync trade to ChromaDB: {e}")
             return False
 
     def _sync_to_vertex_rag(self, trade_data: dict[str, Any]) -> bool:
@@ -386,31 +308,7 @@ Auto-generated lesson from trade sync system.
 
             logger.info(f"Created trade lesson: {lesson_file}")
 
-            # Sync to ChromaDB for local RAG queries
-            try:
-                if self._chromadb_collection:
-                    severity = "HIGH" if abs(pnl) > 50 else "MEDIUM"
-                    self._chromadb_collection.upsert(
-                        ids=[lesson_id],
-                        documents=[lesson_content],
-                        metadatas=[
-                            {
-                                "type": "lesson",
-                                "symbol": symbol,
-                                "strategy": strategy,
-                                "pnl": pnl,
-                                "outcome": outcome.lower(),
-                                "severity": severity,
-                                "category": "trade_lesson",
-                                "timestamp": today,
-                            }
-                        ],
-                    )
-                    logger.info(f"✅ Trade lesson synced to ChromaDB: {lesson_id}")
-            except Exception as chromadb_err:
-                logger.warning(f"Could not sync lesson to ChromaDB: {chromadb_err}")
-
-            # Also sync to Vertex AI RAG for Dialogflow queries
+            # Sync to Vertex AI RAG for Dialogflow queries
             try:
                 vertex_rag = get_vertex_rag()
                 if vertex_rag.is_initialized:
@@ -429,25 +327,19 @@ Auto-generated lesson from trade sync system.
             logger.error(f"Failed to create trade lesson: {e}")
 
     def get_trade_history(self, symbol: Optional[str] = None, limit: int = 100) -> list[dict]:
-        """Query trade history from ChromaDB."""
-        if not self._chromadb_collection:
-            return []
-
+        """Query trade history from local JSON files."""
+        trades = []
         try:
-            where_filter = {"type": "trade"}
-            if symbol:
-                where_filter["symbol"] = symbol
-
-            results = self._chromadb_collection.query(
-                query_texts=["recent trades"],
-                n_results=limit,
-                where=where_filter,
-            )
-
-            return [
-                {"document": doc, "metadata": meta}
-                for doc, meta in zip(results["documents"][0], results["metadatas"][0])
-            ]
+            # Read all trade files
+            for trades_file in sorted(DATA_DIR.glob("trades_*.json"), reverse=True):
+                with open(trades_file) as f:
+                    file_trades = json.load(f)
+                    if symbol:
+                        file_trades = [t for t in file_trades if t.get("symbol") == symbol]
+                    trades.extend(file_trades)
+                    if len(trades) >= limit:
+                        break
+            return trades[:limit]
         except Exception as e:
             logger.error(f"Failed to query trade history: {e}")
             return []

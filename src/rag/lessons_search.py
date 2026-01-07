@@ -2,10 +2,10 @@
 LessonsSearch - Simple keyword search for lessons learned.
 
 Uses straightforward keyword matching on markdown files.
-ChromaDB was REMOVED on Jan 7, 2026 (CEO directive - unnecessary complexity).
+Fast and dependency-free - no external vector database required.
 
 Created: Dec 31, 2025 (Fix for ll_054 - RAG not actually used)
-Updated: Jan 7, 2026 - Removed ChromaDB, simplified to keyword search
+Updated: Jan 7, 2026 - Simplified to keyword search only (CEO directive)
 """
 
 import logging
@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 # Paths
 LESSONS_DIR = Path("rag_knowledge/lessons_learned")
-VECTOR_DB_PATH = Path("data/vector_db")
 
 
 @dataclass
@@ -38,7 +37,7 @@ class LessonsSearch:
     Simple keyword search over lessons learned.
 
     Scans markdown files for matching terms. Fast and dependency-free.
-    ChromaDB was removed Jan 7, 2026 - simple search is sufficient.
+    For cloud-based semantic search, use Vertex AI RAG via CI workflows.
     """
 
     def __init__(self, use_chromadb: bool = False):
@@ -46,51 +45,16 @@ class LessonsSearch:
         Initialize LessonsSearch.
 
         Args:
-            use_chromadb: Whether to use ChromaDB for semantic search.
-                         Falls back to keyword search if unavailable.
+            use_chromadb: Deprecated parameter, kept for backward compatibility.
+                         Always uses keyword search now.
         """
-        self.collection = None
-        self.use_chromadb = use_chromadb
         self._lessons_cache: list[dict] = []
 
         if use_chromadb:
-            self._init_chromadb()
+            logger.warning("ChromaDB is deprecated - using keyword search instead")
 
-        # Always load lessons for fallback
+        # Load lessons for keyword search
         self._load_lessons()
-
-    def _init_chromadb(self) -> None:
-        """Initialize ChromaDB collection for lessons."""
-        try:
-            import chromadb
-            from chromadb.config import Settings
-
-            VECTOR_DB_PATH.mkdir(parents=True, exist_ok=True)
-
-            client = chromadb.PersistentClient(
-                path=str(VECTOR_DB_PATH),
-                settings=Settings(anonymized_telemetry=False),
-            )
-
-            # Use phil_town_rag collection (same as vectorize_rag_knowledge.py)
-            self.collection = client.get_or_create_collection(
-                name="phil_town_rag",
-                metadata={
-                    "description": "Phil Town RAG knowledge base including lessons",
-                    "hnsw:space": "cosine",
-                },
-            )
-
-            logger.info(
-                f"LessonsSearch: ChromaDB initialized with {self.collection.count()} documents"
-            )
-
-        except ImportError:
-            logger.warning("ChromaDB not available - falling back to keyword search")
-            self.collection = None
-        except Exception as e:
-            logger.warning(f"ChromaDB init failed: {e} - falling back to keyword search")
-            self.collection = None
 
     def _load_lessons(self) -> None:
         """Load all lessons from markdown files."""
@@ -162,7 +126,7 @@ class LessonsSearch:
         self, query: str, top_k: int = 5, severity_filter: Optional[str] = None
     ) -> list[tuple[LessonResult, float]]:
         """
-        Search lessons using semantic similarity.
+        Search lessons using keyword matching.
 
         Args:
             query: Search query (e.g., "position sizing error", "API failure")
@@ -172,58 +136,12 @@ class LessonsSearch:
         Returns:
             List of (LessonResult, score) tuples, sorted by relevance
         """
-        # Try ChromaDB semantic search first
-        if self.collection is not None and self.collection.count() > 0:
-            try:
-                return self._search_chromadb(query, top_k, severity_filter)
-            except Exception as e:
-                logger.warning(f"ChromaDB search failed: {e} - falling back to keyword")
-
-        # Fallback to keyword search
         return self._search_keywords(query, top_k, severity_filter)
-
-    def _search_chromadb(
-        self, query: str, top_k: int, severity_filter: Optional[str]
-    ) -> list[tuple[LessonResult, float]]:
-        """Search using ChromaDB semantic similarity."""
-        where_filter = None
-        if severity_filter:
-            where_filter = {"severity": severity_filter}
-
-        results = self.collection.query(
-            query_texts=[query],
-            n_results=min(top_k * 2, 20),  # Get more, then filter
-            where=where_filter,
-            include=["documents", "metadatas", "distances"],
-        )
-
-        output = []
-        if results and results.get("ids") and results["ids"][0]:
-            for i, doc_id in enumerate(results["ids"][0]):
-                metadata = results["metadatas"][0][i] if results.get("metadatas") else {}
-                document = results["documents"][0][i] if results.get("documents") else ""
-                distance = results["distances"][0][i] if results.get("distances") else 1.0
-
-                # Convert distance to similarity score (0-1)
-                score = max(0, 1 - distance)
-
-                lesson = LessonResult(
-                    id=doc_id,
-                    title=metadata.get("title", doc_id),
-                    severity=metadata.get("severity", "MEDIUM"),
-                    snippet=document[:500] if document else "",
-                    prevention=metadata.get("prevention", ""),
-                    file=metadata.get("file", ""),
-                    score=score,
-                )
-                output.append((lesson, score))
-
-        return output[:top_k]
 
     def _search_keywords(
         self, query: str, top_k: int, severity_filter: Optional[str]
     ) -> list[tuple[LessonResult, float]]:
-        """Fallback keyword-based search."""
+        """Keyword-based search over loaded lessons."""
         query_terms = query.lower().split()
         results = []
 
@@ -267,49 +185,20 @@ class LessonsSearch:
 
     def index_lessons(self, force_rebuild: bool = False) -> int:
         """
-        Index all lessons into ChromaDB for semantic search.
+        Reload lessons from disk.
 
         Args:
-            force_rebuild: If True, delete existing index and rebuild
+            force_rebuild: If True, reload all lessons from disk
 
         Returns:
-            Number of lessons indexed
+            Number of lessons loaded
         """
-        if self.collection is None:
-            logger.error("ChromaDB not available - cannot index lessons")
-            return 0
-
         if force_rebuild:
-            # Clear existing documents
-            try:
-                existing_ids = self.collection.get()["ids"]
-                if existing_ids:
-                    self.collection.delete(ids=existing_ids)
-                    logger.info(f"Cleared {len(existing_ids)} existing documents")
-            except Exception as e:
-                logger.warning(f"Failed to clear collection: {e}")
+            self._lessons_cache = []
 
-        indexed = 0
-        for lesson in self._lessons_cache:
-            try:
-                self.collection.upsert(
-                    ids=[lesson["id"]],
-                    documents=[lesson["content"]],
-                    metadatas=[
-                        {
-                            "title": lesson["title"],
-                            "severity": lesson["severity"],
-                            "prevention": lesson["prevention"][:500],
-                            "file": lesson["file"],
-                        }
-                    ],
-                )
-                indexed += 1
-            except Exception as e:
-                logger.warning(f"Failed to index lesson {lesson['id']}: {e}")
-
-        logger.info(f"Indexed {indexed} lessons into ChromaDB")
-        return indexed
+        self._load_lessons()
+        logger.info(f"Loaded {len(self._lessons_cache)} lessons")
+        return len(self._lessons_cache)
 
     def get_critical_lessons(self) -> list[LessonResult]:
         """Get all CRITICAL severity lessons."""

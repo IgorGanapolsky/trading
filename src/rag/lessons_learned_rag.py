@@ -1,7 +1,7 @@
-"""Lightweight RAG for lessons learned - now with ChromaDB semantic search!
+"""Lightweight RAG for lessons learned using keyword search.
 
-Updated Jan 5, 2026: Now uses LessonsSearch (ChromaDB) for semantic similarity search
-instead of simple keyword matching. Falls back to keyword search if ChromaDB unavailable.
+Updated Jan 7, 2026: Simplified to use keyword search only (CEO directive).
+For cloud-based semantic search, use Vertex AI RAG via CI workflows.
 """
 
 import logging
@@ -10,39 +10,39 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# Try to use ChromaDB-based semantic search
+# Use the simplified LessonsSearch
 try:
     from src.rag.lessons_search import get_lessons_search
 
-    CHROMADB_AVAILABLE = True
+    LESSONS_SEARCH_AVAILABLE = True
 except ImportError:
-    CHROMADB_AVAILABLE = False
-    logger.warning("ChromaDB not available - falling back to keyword search")
+    LESSONS_SEARCH_AVAILABLE = False
+    logger.warning("LessonsSearch not available")
 
 
 class LessonsLearnedRAG:
-    """RAG for lessons learned - uses ChromaDB for semantic search when available."""
+    """RAG for lessons learned using keyword search."""
 
     def __init__(self, knowledge_dir: Optional[str] = None):
         self.knowledge_dir = Path(knowledge_dir or "rag_knowledge/lessons_learned")
         self.lessons = []
 
-        # Try to use ChromaDB-based semantic search first
-        if CHROMADB_AVAILABLE:
+        # Use LessonsSearch for keyword-based search
+        if LESSONS_SEARCH_AVAILABLE:
             try:
                 self.search_engine = get_lessons_search()
                 logger.info(
-                    f"✅ ChromaDB RAG initialized with {self.search_engine.count()} lessons"
+                    f"✅ LessonsSearch initialized with {self.search_engine.count()} lessons"
                 )
                 # Still load lessons for compatibility
                 self._load_lessons()
                 return
             except Exception as e:
                 logger.warning(
-                    f"ChromaDB initialization failed: {e} - falling back to keyword search"
+                    f"LessonsSearch initialization failed: {e} - using direct file search"
                 )
 
-        # Fallback to keyword-based search
+        # Fallback to direct file-based search
         self.search_engine = None
         self._load_lessons()
 
@@ -91,14 +91,14 @@ class LessonsLearnedRAG:
         return []
 
     def query(self, query: str, top_k: int = 5, severity_filter: Optional[str] = None) -> list:
-        """Search lessons using semantic search (ChromaDB) or keyword fallback."""
-        # Use ChromaDB semantic search if available
+        """Search lessons using keyword matching."""
+        # Use LessonsSearch if available
         if self.search_engine is not None:
             try:
                 results = self.search_engine.search(
                     query, top_k=top_k, severity_filter=severity_filter
                 )
-                # Convert ChromaDB results to expected format
+                # Convert results to expected format
                 return [
                     {
                         "id": lesson.id,
@@ -113,7 +113,7 @@ class LessonsLearnedRAG:
                     for lesson, score in results
                 ]
             except Exception as e:
-                logger.warning(f"ChromaDB search failed: {e} - falling back to keyword search")
+                logger.warning(f"LessonsSearch failed: {e} - using direct file search")
 
         # Fallback: keyword-based search
         if not self.lessons:
