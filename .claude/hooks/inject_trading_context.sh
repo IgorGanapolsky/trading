@@ -261,4 +261,15 @@ if [[ "$DEFERRED_COUNT" -gt 0 ]]; then
     echo "📌 Deferred items: $DEFERRED_COUNT (see .claude/SESSION_START_CHECKLIST.md)"
 fi
 
+# Check for pending dry-run requirement (Gap fix Jan 7, 2026)
+DRYRUN_STATE="$CLAUDE_PROJECT_DIR/data/dryrun_state.json"
+if [[ -f "$DRYRUN_STATE" ]]; then
+    DRYRUN_REQUIRED=$(jq -r '.dryrun_required // false' "$DRYRUN_STATE" 2>/dev/null || echo "false")
+    if [[ "$DRYRUN_REQUIRED" == "true" ]]; then
+        LAST_MERGE=$(jq -r '.last_merge // "unknown"' "$DRYRUN_STATE" 2>/dev/null || echo "unknown")
+        echo "🚨 DRY-RUN REQUIRED: Merge detected at $LAST_MERGE"
+        echo "   Run: python3 scripts/system_health_check.py --dry-run"
+    fi
+fi
+
 exit 0
