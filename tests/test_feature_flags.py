@@ -13,8 +13,9 @@ These tests verify that feature flags:
 """
 
 import os
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 
 class TestFeatureFlagsDefaults:
@@ -32,8 +33,8 @@ class TestFeatureFlagsDefaults:
             os.environ.pop("ENABLE_REIT_STRATEGY", None)
 
             # Import after clearing env to get fresh state
-            from importlib import reload
             import scripts.autonomous_trader as trader
+            from importlib import reload
             reload(trader)
 
             # CRITICAL: Must be False by default
@@ -47,8 +48,8 @@ class TestFeatureFlagsDefaults:
         with patch.dict(os.environ, {}, clear=True):
             os.environ.pop("ENABLE_PRECIOUS_METALS", None)
 
-            from importlib import reload
             import scripts.autonomous_trader as trader
+            from importlib import reload
             reload(trader)
 
             assert trader.precious_metals_enabled() is False, (
@@ -70,8 +71,8 @@ class TestFeatureFlagsEnvOverride:
     def test_reit_enabled_via_env(self, value):
         """REIT can be enabled via environment variable."""
         with patch.dict(os.environ, {"ENABLE_REIT_STRATEGY": value}):
-            from importlib import reload
             import scripts.autonomous_trader as trader
+            from importlib import reload
             reload(trader)
 
             assert trader.reit_enabled() is True, (
@@ -82,8 +83,8 @@ class TestFeatureFlagsEnvOverride:
     def test_reit_disabled_via_env(self, value):
         """REIT stays disabled with falsy values."""
         with patch.dict(os.environ, {"ENABLE_REIT_STRATEGY": value}):
-            from importlib import reload
             import scripts.autonomous_trader as trader
+            from importlib import reload
             reload(trader)
 
             assert trader.reit_enabled() is False, (
@@ -94,8 +95,8 @@ class TestFeatureFlagsEnvOverride:
     def test_precious_metals_enabled_via_env(self, value):
         """Precious Metals can be enabled via environment variable."""
         with patch.dict(os.environ, {"ENABLE_PRECIOUS_METALS": value}):
-            from importlib import reload
             import scripts.autonomous_trader as trader
+            from importlib import reload
             reload(trader)
 
             assert trader.precious_metals_enabled() is True, (
@@ -111,8 +112,8 @@ class TestFeatureFlagsIntegration:
         with patch.dict(os.environ, {}, clear=True):
             os.environ.pop("ENABLE_REIT_STRATEGY", None)
 
-            from importlib import reload
             import scripts.autonomous_trader as trader
+            from importlib import reload
             reload(trader)
 
             # Verify disabled

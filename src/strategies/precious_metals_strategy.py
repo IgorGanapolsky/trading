@@ -44,6 +44,6 @@ class PreciousMetalsStrategy:
                 "trades_executed": 0,
                 "reason": "Strategy disabled"
             }
-        
+
         # TODO: Implement actual trading logic when enabled
         return {"success": True, "trades_executed": 0}

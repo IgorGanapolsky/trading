@@ -9,9 +9,6 @@ This tests the position management script that enforces stop-losses.
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -47,13 +44,14 @@ class TestManagePositions:
 
     def test_stop_loss_triggers(self):
         """Test that stop-loss correctly triggers on losing position."""
+        from datetime import datetime
+
         from src.risk.position_manager import (
             ExitConditions,
             ExitReason,
             PositionInfo,
             PositionManager,
         )
-        from datetime import datetime
 
         conditions = ExitConditions(stop_loss_pct=0.08)
         manager = PositionManager(conditions=conditions)
@@ -77,13 +75,14 @@ class TestManagePositions:
 
     def test_take_profit_triggers(self):
         """Test that take-profit correctly triggers on winning position."""
+        from datetime import datetime
+
         from src.risk.position_manager import (
             ExitConditions,
             ExitReason,
             PositionInfo,
             PositionManager,
         )
-        from datetime import datetime
 
         conditions = ExitConditions(take_profit_pct=0.15)
         manager = PositionManager(conditions=conditions)
@@ -107,12 +106,13 @@ class TestManagePositions:
 
     def test_hold_when_no_exit_condition(self):
         """Test that position is held when no exit conditions met."""
+        from datetime import datetime
+
         from src.risk.position_manager import (
             ExitConditions,
             PositionInfo,
             PositionManager,
         )
-        from datetime import datetime
 
         conditions = ExitConditions(stop_loss_pct=0.08, take_profit_pct=0.15)
         manager = PositionManager(conditions=conditions)

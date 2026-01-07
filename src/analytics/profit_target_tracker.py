@@ -39,7 +39,7 @@ class ProfitTargetTracker:
             account = trader.get_account_info()
             # Calculate today's P/L
             current_profit = float(account.get("unrealized_pl", 0) or 0)
-            
+
             return ProfitTargetResult(
                 daily_target=self.daily_target,
                 current_profit=current_profit,

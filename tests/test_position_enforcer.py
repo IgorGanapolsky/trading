@@ -5,8 +5,7 @@ Created: Jan 7, 2026
 Purpose: 100% test coverage for position_enforcer.py
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from src.safety.position_enforcer import (
     EnforcementResult,

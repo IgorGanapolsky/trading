@@ -50,7 +50,6 @@ def main(dry_run: bool = False):
         from src.risk.position_manager import (
             ExitConditions,
             PositionManager,
-            PositionInfo,
         )
     except ImportError as e:
         logger.error(f"Cannot import PositionManager: {e}")
