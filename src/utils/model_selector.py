@@ -233,10 +233,78 @@ class ModelSelector:
             return TaskComplexity.MEDIUM
         return complexity
 
+    def can_afford_model(self, tier: ModelTier, estimated_tokens: int = 2000) -> bool:
+        """
+        Check if we can afford to use a model tier.
+
+        Args:
+            tier: Model tier to check
+            estimated_tokens: Estimated total tokens (input + output)
+
+        Returns:
+            True if within budget, False if would exceed daily limit
+        """
+        config = MODEL_REGISTRY[tier]
+        # Assume 60/40 split input/output for estimation
+        input_tokens = int(estimated_tokens * 0.6)
+        output_tokens = int(estimated_tokens * 0.4)
+        estimated_cost = (
+            (input_tokens / 1_000_000) * config.input_cost_per_1m
+            + (output_tokens / 1_000_000) * config.output_cost_per_1m
+        )
+        return (self.daily_spend + estimated_cost) <= self.daily_budget
+
+    def enforce_budget(
+        self,
+        model_id: str,
+        estimated_tokens: int = 2000,
+    ) -> tuple[bool, str]:
+        """
+        Enforce budget BEFORE making an API call.
+
+        Args:
+            model_id: Model to use
+            estimated_tokens: Estimated total tokens
+
+        Returns:
+            (allowed, reason) - allowed=True if call should proceed,
+            or (False, reason) with explanation if blocked
+
+        CRITICAL tasks are NEVER blocked (operational integrity).
+        """
+        self._reset_daily_if_needed()
+
+        config = self.get_model_config(model_id)
+        if config is None:
+            return True, "unknown_model_allowed"
+
+        # CRITICAL tier is never blocked
+        if config.tier == ModelTier.OPUS:
+            return True, "critical_always_allowed"
+
+        # Estimate cost
+        input_tokens = int(estimated_tokens * 0.6)
+        output_tokens = int(estimated_tokens * 0.4)
+        estimated_cost = (
+            (input_tokens / 1_000_000) * config.input_cost_per_1m
+            + (output_tokens / 1_000_000) * config.output_cost_per_1m
+        )
+
+        if (self.daily_spend + estimated_cost) > self.daily_budget:
+            overage = (self.daily_spend + estimated_cost) - self.daily_budget
+            logger.warning(
+                f"BUDGET ENFORCEMENT: Blocking {model_id} call - "
+                f"would exceed daily budget by ${overage:.4f}"
+            )
+            return False, f"budget_exceeded_by_{overage:.4f}"
+
+        return True, "within_budget"
+
     def select_model(
         self,
         task_type: str,
         force_tier: ModelTier | None = None,
+        enforce_budget: bool = True,
     ) -> str:
         """
         Select the appropriate model based on task and budget.
@@ -244,6 +312,7 @@ class ModelSelector:
         Args:
             task_type: Type of task (see TASK_COMPLEXITY_MAP)
             force_tier: Optional override to force a specific tier
+            enforce_budget: If True, downgrade model if budget exceeded (default: True)
 
         Returns:
             Model ID string for API calls
@@ -322,6 +391,28 @@ class ModelSelector:
             else:
                 tier = ModelTier.SONNET
                 reason = "FALLBACK_SONNET"
+
+        # BUDGET ENFORCEMENT: Downgrade if selected tier would exceed budget
+        if enforce_budget and not self.can_afford_model(tier):
+            original_tier = tier
+            # Downgrade chain: KIMI → MISTRAL → DEEPSEEK → HAIKU
+            downgrade_chain = [ModelTier.MISTRAL, ModelTier.DEEPSEEK, ModelTier.HAIKU]
+            for fallback_tier in downgrade_chain:
+                if self.can_afford_model(fallback_tier):
+                    tier = fallback_tier
+                    reason = f"BUDGET_DOWNGRADE_FROM_{original_tier.value.upper()}"
+                    logger.warning(
+                        f"Budget enforcement: downgraded {original_tier.value} → {tier.value} "
+                        f"(${self.daily_spend:.2f}/${self.daily_budget:.2f} daily)"
+                    )
+                    break
+            else:
+                # Even HAIKU exceeds budget - log but allow (never completely block)
+                logger.error(
+                    f"BUDGET EXHAUSTED: All models exceed daily budget! "
+                    f"Allowing {tier.value} anyway. Spent: ${self.daily_spend:.2f}"
+                )
+                reason = "BUDGET_EXHAUSTED_ALLOWED"
 
         selected = MODEL_REGISTRY[tier]
         self._log_selection(task_type, complexity, selected, reason)
