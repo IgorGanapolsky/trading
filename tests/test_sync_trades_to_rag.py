@@ -1,16 +1,16 @@
 """Tests for sync_trades_to_rag.py - Post-trade RAG sync functionality."""
 
 import json
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-
-# Import the functions we're testing
 import sys
+from pathlib import Path
+from unittest.mock import patch
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from scripts.sync_trades_to_rag import (
-    load_todays_trades,
     format_trade_document,
+    load_todays_trades,
 )
 
 
@@ -30,7 +30,7 @@ class TestLoadTodaysTrades:
 
         with patch("scripts.sync_trades_to_rag.Path") as mock_path:
             mock_path.return_value = trades_file
-            trades = load_todays_trades("2026-01-06")
+            _trades = load_todays_trades("2026-01-06")  # noqa: F841
 
         # Function uses hardcoded path, so just test the real file
         # This is an integration test using actual data

@@ -11,6 +11,7 @@ class TestCapitalTiers:
         """Verify tier configuration is properly defined."""
         # Import after patching potential dependencies
         import sys
+
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from scripts.small_capital_csp import CAPITAL_TIERS
@@ -23,6 +24,7 @@ class TestCapitalTiers:
     def test_tier_500_has_cheap_stocks(self):
         """$500 tier should only have cheap stocks."""
         import sys
+
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from scripts.small_capital_csp import CAPITAL_TIERS
@@ -34,6 +36,7 @@ class TestCapitalTiers:
     def test_get_tier_for_insufficient_capital(self):
         """$200 should return insufficient tier."""
         import sys
+
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from scripts.small_capital_csp import get_tier_for_capital
@@ -46,6 +49,7 @@ class TestCapitalTiers:
     def test_get_tier_for_500(self):
         """$500 should return tier 500."""
         import sys
+
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from scripts.small_capital_csp import get_tier_for_capital
@@ -57,6 +61,7 @@ class TestCapitalTiers:
     def test_get_tier_for_750(self):
         """$750 should still use tier 500."""
         import sys
+
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from scripts.small_capital_csp import get_tier_for_capital
@@ -67,6 +72,7 @@ class TestCapitalTiers:
     def test_get_tier_for_5000(self):
         """$5000 should use tier 5000."""
         import sys
+
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from scripts.small_capital_csp import get_tier_for_capital
@@ -82,6 +88,7 @@ class TestRecommendation:
     def test_strong_buy_below_mos(self):
         """Price below MOS should be STRONG BUY."""
         import sys
+
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from scripts.small_capital_csp import get_recommendation
@@ -92,6 +99,7 @@ class TestRecommendation:
     def test_buy_below_sticker(self):
         """Price below sticker but above MOS should be BUY."""
         import sys
+
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from scripts.small_capital_csp import get_recommendation
@@ -102,6 +110,7 @@ class TestRecommendation:
     def test_hold_near_fair_value(self):
         """Price near sticker should be HOLD."""
         import sys
+
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from scripts.small_capital_csp import get_recommendation
@@ -112,6 +121,7 @@ class TestRecommendation:
     def test_overvalued(self):
         """Price well above sticker should be OVERVALUED."""
         import sys
+
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
         from scripts.small_capital_csp import get_recommendation

@@ -16,14 +16,11 @@ Usage:
 
 import json
 import logging
-import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -62,7 +59,8 @@ def sync_to_vertex_rag(trades: list[dict]) -> bool:
             try:
                 # Format trade as document for RAG
                 doc_content = format_trade_document(trade)
-                doc_id = f"trade_{trade.get('symbol', 'UNK')}_{trade.get('timestamp', datetime.now().isoformat())}"
+                timestamp_val = trade.get("timestamp", datetime.now().isoformat())
+                doc_id = f"trade_{trade.get('symbol', 'UNK')}_{timestamp_val}"
 
                 # Add to RAG corpus
                 rag.add_document(
@@ -105,18 +103,21 @@ def sync_to_chromadb(trades: list[dict]) -> bool:
         for trade in trades:
             try:
                 doc_content = format_trade_document(trade)
-                doc_id = f"trade_{trade.get('symbol', 'UNK')}_{trade.get('timestamp', datetime.now().isoformat())}"
+                timestamp_val = trade.get("timestamp", datetime.now().isoformat())
+                doc_id = f"trade_{trade.get('symbol', 'UNK')}_{timestamp_val}"
 
                 collection.upsert(
                     documents=[doc_content],
                     ids=[doc_id],
-                    metadatas=[{
-                        "type": "trade",
-                        "symbol": str(trade.get("symbol", "")),
-                        "date": str(trade.get("timestamp", ""))[:10],
-                        "strategy": str(trade.get("strategy", "unknown")),
-                        "pnl": str(trade.get("pnl", 0)),
-                    }],
+                    metadatas=[
+                        {
+                            "type": "trade",
+                            "symbol": str(trade.get("symbol", "")),
+                            "date": str(trade.get("timestamp", ""))[:10],
+                            "strategy": str(trade.get("strategy", "unknown")),
+                            "pnl": str(trade.get("pnl", 0)),
+                        }
+                    ],
                 )
                 synced += 1
             except Exception as e:

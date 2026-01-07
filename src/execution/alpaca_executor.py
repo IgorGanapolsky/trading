@@ -437,7 +437,9 @@ class AlpacaExecutor:
                         f"Consider reducing position size."
                     )
             else:
-                logger.info(f"📊 PATTERN CHECK: No history for {strategy}_{entry_reason} - proceeding with caution")
+                logger.info(
+                    f"📊 PATTERN CHECK: No history for {strategy}_{entry_reason} - proceeding with caution"
+                )
 
         except ImportError:
             logger.debug("TradeMemory not available - skipping pattern check")

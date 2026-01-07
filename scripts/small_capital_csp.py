@@ -80,10 +80,7 @@ def get_tier_for_capital(capital: float) -> dict:
 
     for tier_capital in reversed(sorted_tiers):
         if capital >= tier_capital:
-            return {
-                "tier_capital": tier_capital,
-                **CAPITAL_TIERS[tier_capital]
-            }
+            return {"tier_capital": tier_capital, **CAPITAL_TIERS[tier_capital]}
 
     return {
         "tier_capital": 0,
@@ -104,6 +101,7 @@ def calculate_sticker_price(symbol: str) -> Optional[dict]:
         # Try yfinance first
         try:
             from src.utils import yfinance_wrapper as yf
+
             ticker = yf.Ticker(symbol)
             info = ticker.info
 
@@ -156,7 +154,9 @@ def get_recommendation(current: float, sticker: float, mos: float) -> str:
         return "OVERVALUED - Avoid"
 
 
-def find_csp_opportunity(symbol: str, mos_price: float, max_strike: float, capital: float) -> Optional[dict]:
+def find_csp_opportunity(
+    symbol: str, mos_price: float, max_strike: float, capital: float
+) -> Optional[dict]:
     """
     Find a CSP opportunity for the given symbol.
 
@@ -360,17 +360,16 @@ def run_small_capital_csp():
         # Find CSP opportunity
         if "BUY" in valuation["recommendation"] or "STRONG" in valuation["recommendation"]:
             option = find_csp_opportunity(
-                symbol,
-                valuation["mos_price"],
-                tier["max_strike"],
-                capital
+                symbol, valuation["mos_price"], tier["max_strike"], capital
             )
 
             if option:
-                opportunities.append({
-                    "valuation": valuation,
-                    "option": option,
-                })
+                opportunities.append(
+                    {
+                        "valuation": valuation,
+                        "option": option,
+                    }
+                )
                 logger.info(f"  ✅ Found CSP: {option['symbol']} @ ${option['strike']:.2f}")
 
     logger.info(f"\n{'=' * 60}")
