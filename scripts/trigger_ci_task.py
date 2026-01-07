@@ -43,6 +43,8 @@ VALID_TASKS = [
     "verify-chromadb",
     "dry-run-trading",
     "deploy-webhook",
+    "set-trailing-stops",
+    "manage-positions",
     "custom-command",
 ]
 
