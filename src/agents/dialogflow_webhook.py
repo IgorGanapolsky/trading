@@ -263,9 +263,6 @@ def assess_trading_readiness(
     score = 0
     max_score = 0
 
-    # Determine trading mode label for messages
-    mode_label = "paper" if is_paper else "live"
-
     # 1. MARKET STATUS CHECK
     max_score += 20
     weekday = now_et.weekday()
@@ -299,7 +296,7 @@ def assess_trading_readiness(
     elif current_time >= market_close:
         if is_future:
             # After hours but asking about tomorrow - NOT a blocker
-            checks.append(f"Market opens tomorrow at 9:30 AM ET")
+            checks.append("Market opens tomorrow at 9:30 AM ET")
             score += 20
         else:
             blockers.append(f"Market CLOSED - After hours ({now_et.strftime('%I:%M %p')} ET)")
