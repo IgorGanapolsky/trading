@@ -113,6 +113,18 @@ This is non-negotiable. Every trading decision must:
 - Instead: Add dependencies to `requirements.txt` for CI/GitHub Actions
 - Code must handle missing dependencies gracefully with try/except
 
+### CI-First Approach (CEO Directive Jan 7, 2026)
+- **NEVER say "sandbox can't do X"** - create CI workflows to do it instead
+- Use `claude-agent-utility.yml` workflow for tasks that need full dependencies
+- Trigger workflows via API from sandbox:
+  ```bash
+  curl -X POST -H "Authorization: token $PAT" \
+    https://api.github.com/repos/IgorGanapolsky/trading/actions/workflows/claude-agent-utility.yml/dispatches \
+    -d '{"ref":"main","inputs":{"task":"run-tests"}}'
+  ```
+- Available tasks: run-tests, run-lint, verify-rag, sync-trades-to-rag, system-health-check, verify-chromadb, dry-run-trading, custom-command
+- Helper script: `python3 scripts/trigger_ci_task.py --task <task>`
+
 ### Self-Healing System (Jan 6, 2026)
 - System must be completely self-healing - no manual intervention required
 - If a component fails, auto-retry with exponential backoff
