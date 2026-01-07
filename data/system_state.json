@@ -529,14 +529,18 @@
   "automation": {
     "github_actions_enabled": true,
     "workflow_name": "Daily Trading Execution",
-    "workflow_status": "OPERATIONAL",
+    "workflow_status": "NEEDS_VERIFICATION",
+    "workflow_status_reason": "Jan 7 2026: No trades_2026-01-07.json file exists - automation may not be creating trade files",
     "last_execution_attempt": "2025-12-16T19:27:00.000000",
+    "last_execution_attempt_note": "WARNING: This timestamp is stale (3+ weeks old) - not being updated by workflow",
     "last_successful_execution": "2025-12-15T18:18:15.595991",
     "execution_count": 3,
     "failures": 0,
     "failure_reasons": [],
     "fix_applied": "2025-12-16: Fixed stale automation metadata, manually triggered combined-trading workflow",
-    "next_scheduled_execution": "2025-12-17T09:35:00"
+    "next_scheduled_execution": "2025-12-17T09:35:00",
+    "incident_jan07_2026": "No trade file created today despite workflow being scheduled. Jan 6 trades were MANUAL triggers.",
+    "verification_needed": "Check GitHub Actions logs to see if daily-trading workflow actually executed and what blocked trade file creation"
   },
   "video_analysis": {
     "enabled": true,
