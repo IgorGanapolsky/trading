@@ -7,7 +7,7 @@ trade and every single lesson about each trade in our vertex rag database"
 This script runs post-trade to ensure:
 1. All trades are recorded in Vertex AI RAG corpus
 2. Lessons can be queried via Dialogflow
-3. ChromaDB backup is kept in sync
+3. Local JSON backup is maintained (ChromaDB deprecated Jan 7, 2026)
 
 Usage:
     python3 scripts/sync_trades_to_rag.py
@@ -88,49 +88,50 @@ def sync_to_vertex_rag(trades: list[dict]) -> bool:
         return False
 
 
-def sync_to_chromadb(trades: list[dict]) -> bool:
-    """Sync trades to local ChromaDB for fast queries."""
+def sync_to_local_json(trades: list[dict]) -> bool:
+    """Backup trades to local JSON file.
+
+    NOTE: ChromaDB was deprecated Jan 7, 2026 per CLAUDE.md.
+    Local JSON is now the primary local backup mechanism.
+    """
     try:
-        import chromadb
+        backup_file = Path("data/trades_backup.json")
 
-        client = chromadb.PersistentClient(path="data/chromadb")
-        collection = client.get_or_create_collection(
-            name="trades",
-            metadata={"description": "Trading history for RAG queries"},
-        )
+        # Load existing backups if present
+        existing = []
+        if backup_file.exists():
+            try:
+                with open(backup_file) as f:
+                    existing = json.load(f)
+            except (json.JSONDecodeError, OSError):
+                existing = []
 
+        # Add new trades
         synced = 0
         for trade in trades:
-            try:
-                doc_content = format_trade_document(trade)
-                timestamp_val = trade.get("timestamp", datetime.now().isoformat())
-                doc_id = f"trade_{trade.get('symbol', 'UNK')}_{timestamp_val}"
+            # Create unique ID
+            timestamp_val = trade.get("timestamp", datetime.now().isoformat())
+            doc_id = f"trade_{trade.get('symbol', 'UNK')}_{timestamp_val}"
 
-                collection.upsert(
-                    documents=[doc_content],
-                    ids=[doc_id],
-                    metadatas=[
-                        {
-                            "type": "trade",
-                            "symbol": str(trade.get("symbol", "")),
-                            "date": str(trade.get("timestamp", ""))[:10],
-                            "strategy": str(trade.get("strategy", "unknown")),
-                            "pnl": str(trade.get("pnl", 0)),
-                        }
-                    ],
-                )
+            # Check if already exists
+            if not any(t.get("id") == doc_id for t in existing):
+                trade_record = {
+                    "id": doc_id,
+                    "trade": trade,
+                    "synced_at": datetime.now().isoformat(),
+                }
+                existing.append(trade_record)
                 synced += 1
-            except Exception as e:
-                logger.error(f"ChromaDB upsert failed: {e}")
 
-        logger.info(f"✅ Synced {synced}/{len(trades)} trades to ChromaDB")
+        # Save backup
+        with open(backup_file, "w") as f:
+            json.dump(existing, f, indent=2)
+
+        logger.info(f"✅ Backed up {synced}/{len(trades)} trades to local JSON")
         return synced > 0
 
-    except ImportError:
-        logger.warning("ChromaDB not available - skipping local sync")
-        return False
     except Exception as e:
-        logger.error(f"ChromaDB sync failed: {e}")
+        logger.error(f"Local JSON backup failed: {e}")
         return False
 
 
@@ -184,15 +185,15 @@ def main():
         logger.info("No trades to sync")
         return 0
 
-    # Sync to both databases
+    # Sync to Vertex AI RAG (cloud) and local JSON backup
     vertex_ok = sync_to_vertex_rag(trades)
-    chroma_ok = sync_to_chromadb(trades)
+    local_ok = sync_to_local_json(trades)
 
-    if vertex_ok or chroma_ok:
+    if vertex_ok or local_ok:
         logger.info("✅ RAG sync completed successfully")
         return 0
     else:
-        logger.warning("⚠️ RAG sync partially failed - trades backed up in JSON")
+        logger.warning("⚠️ RAG sync failed - check logs")
         return 1
 
 
