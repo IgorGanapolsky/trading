@@ -42,8 +42,8 @@ def get_vertex_rag_client():
         # Check for service account key
         sa_key = os.getenv("GCP_SA_KEY")
         if sa_key:
-            import tempfile
             import json as json_lib
+            import tempfile
 
             # Write SA key to temp file for auth
             with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:

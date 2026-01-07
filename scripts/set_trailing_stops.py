@@ -53,7 +53,7 @@ def main(dry_run: bool = False, trail_pct: float | None = None):
     """Set trailing stop-loss orders on all open positions."""
     try:
         from alpaca.trading.client import TradingClient
-        from alpaca.trading.enums import OrderSide, TimeInForce, OrderType
+        from alpaca.trading.enums import OrderSide, TimeInForce
         from alpaca.trading.requests import TrailingStopOrderRequest
     except ImportError:
         logger.error("alpaca-py not installed. Add to requirements.txt for CI.")
