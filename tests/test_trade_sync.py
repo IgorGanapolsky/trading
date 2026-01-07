@@ -6,11 +6,13 @@ Tests for Trade Sync Module.
 
 Tests:
 1. TradeSync initialization
-2. Sync to ChromaDB
+2. Sync to Vertex AI RAG
 3. Sync to local JSON
 4. Trade outcome calculation
 5. Lesson creation
 6. Trade history queries
+
+Updated: Jan 7, 2026 - Removed ChromaDB tests (CEO directive)
 """
 
 import json
@@ -18,7 +20,7 @@ import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -56,145 +58,6 @@ class TestTradeSyncInitialization:
             sync = TradeSync()
             # LangSmith should be disabled
             assert sync._langsmith_client is None or sync._langsmith_client is not None
-
-
-class TestSyncToChromaDB:
-    """Test ChromaDB sync functionality."""
-
-    def test_sync_to_chromadb_basic(self):
-        """Should sync trade to ChromaDB."""
-        from src.observability.trade_sync import TradeSync
-
-        sync = TradeSync()
-
-        if sync._chromadb_collection:
-            result = sync._sync_to_chromadb(
-                {
-                    "symbol": "SPY",
-                    "side": "buy",
-                    "qty": 10,
-                    "price": 450.0,
-                    "strategy": "momentum",
-                    "pnl": 50.0,
-                    "pnl_pct": 1.11,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                }
-            )
-            assert result is True
-        else:
-            pytest.skip("ChromaDB not available")
-
-    def test_sync_to_chromadb_loss(self):
-        """Should sync losing trade to ChromaDB."""
-        from src.observability.trade_sync import TradeSync
-
-        sync = TradeSync()
-
-        if sync._chromadb_collection:
-            result = sync._sync_to_chromadb(
-                {
-                    "symbol": "AAPL",
-                    "side": "sell",
-                    "qty": 5,
-                    "price": 180.0,
-                    "strategy": "mean_reversion",
-                    "pnl": -25.0,
-                    "pnl_pct": -2.78,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                }
-            )
-            assert result is True
-        else:
-            pytest.skip("ChromaDB not available")
-
-    def test_sync_to_chromadb_breakeven(self):
-        """Should sync breakeven trade to ChromaDB."""
-        from src.observability.trade_sync import TradeSync
-
-        sync = TradeSync()
-
-        if sync._chromadb_collection:
-            result = sync._sync_to_chromadb(
-                {
-                    "symbol": "TSLA",
-                    "side": "buy",
-                    "qty": 2,
-                    "price": 250.0,
-                    "strategy": "theta_decay",
-                    "pnl": 0.0,
-                    "pnl_pct": 0.0,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                }
-            )
-            assert result is True
-        else:
-            pytest.skip("ChromaDB not available")
-
-    def test_sync_to_chromadb_not_initialized(self):
-        """Should return False when ChromaDB not initialized."""
-        from src.observability.trade_sync import TradeSync
-
-        sync = TradeSync()
-        sync._chromadb_collection = None
-
-        result = sync._sync_to_chromadb(
-            {
-                "symbol": "SPY",
-                "side": "buy",
-                "qty": 10,
-                "price": 450.0,
-                "strategy": "momentum",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            }
-        )
-        assert result is False
-
-    def test_sync_to_chromadb_with_none_pnl(self):
-        """Should handle None pnl and pnl_pct without crashing (bug fix Jan 6, 2026)."""
-        from src.observability.trade_sync import TradeSync
-
-        sync = TradeSync()
-
-        if sync._chromadb_collection:
-            # This test verifies the bug fix for: "unsupported format string passed to NoneType.__format__"
-            # When pnl or pnl_pct is None (not just missing), the format string would fail.
-            result = sync._sync_to_chromadb(
-                {
-                    "symbol": "SPY",
-                    "side": "buy",
-                    "qty": 0.73,
-                    "price": 684.93,
-                    "strategy": "core_strategy",
-                    "pnl": None,  # Explicitly None, not missing
-                    "pnl_pct": None,  # Explicitly None, not missing
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                }
-            )
-            assert result is True
-        else:
-            pytest.skip("ChromaDB not available")
-
-    def test_sync_to_chromadb_with_missing_pnl(self):
-        """Should handle missing pnl keys gracefully."""
-        from src.observability.trade_sync import TradeSync
-
-        sync = TradeSync()
-
-        if sync._chromadb_collection:
-            result = sync._sync_to_chromadb(
-                {
-                    "symbol": "QQQ",
-                    "side": "buy",
-                    "qty": 1.5,
-                    "price": 520.0,
-                    "strategy": "momentum",
-                    # pnl and pnl_pct keys are completely absent
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                }
-            )
-            assert result is True
-        else:
-            pytest.skip("ChromaDB not available")
 
 
 class TestSyncToLocalJSON:
@@ -297,6 +160,8 @@ class TestSyncTrade:
 
             # At minimum, local_json should succeed
             assert results["local_json"] is True
+            # Results should include vertex_rag (may be False if not configured)
+            assert "vertex_rag" in results
 
     def test_sync_trade_with_metadata(self):
         """Should sync trade with custom metadata."""
@@ -421,28 +286,76 @@ class TestGetTradeHistory:
     """Test trade history queries."""
 
     def test_get_trade_history_empty(self):
-        """Should return empty list when no trades."""
+        """Should return empty list when no trades in directory."""
         from src.observability.trade_sync import TradeSync
 
-        sync = TradeSync()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            import src.observability.trade_sync as module
 
-        if sync._chromadb_collection:
-            # Query for nonexistent symbol
+            original_data_dir = module.DATA_DIR
+            module.DATA_DIR = Path(tmpdir)
+
+            sync = TradeSync()
             history = sync.get_trade_history(symbol="NONEXISTENT", limit=10)
-            # May return empty or some results depending on data
-            assert isinstance(history, list)
-        else:
-            pytest.skip("ChromaDB not available")
 
-    def test_get_trade_history_not_initialized(self):
-        """Should return empty list when ChromaDB not initialized."""
+            module.DATA_DIR = original_data_dir
+
+            assert isinstance(history, list)
+            assert history == []
+
+    def test_get_trade_history_with_data(self):
+        """Should return trades from JSON files."""
         from src.observability.trade_sync import TradeSync
 
-        sync = TradeSync()
-        sync._chromadb_collection = None
+        with tempfile.TemporaryDirectory() as tmpdir:
+            import src.observability.trade_sync as module
 
-        history = sync.get_trade_history()
-        assert history == []
+            original_data_dir = module.DATA_DIR
+            module.DATA_DIR = Path(tmpdir)
+
+            # Create some test data
+            today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            trades_file = Path(tmpdir) / f"trades_{today}.json"
+            trades_file.write_text(json.dumps([
+                {"symbol": "SPY", "side": "buy", "qty": 10, "price": 450.0},
+                {"symbol": "AAPL", "side": "sell", "qty": 5, "price": 180.0},
+            ]))
+
+            sync = TradeSync()
+            history = sync.get_trade_history(limit=10)
+
+            module.DATA_DIR = original_data_dir
+
+            assert isinstance(history, list)
+            assert len(history) == 2
+
+    def test_get_trade_history_with_symbol_filter(self):
+        """Should filter trades by symbol."""
+        from src.observability.trade_sync import TradeSync
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            import src.observability.trade_sync as module
+
+            original_data_dir = module.DATA_DIR
+            module.DATA_DIR = Path(tmpdir)
+
+            # Create test data
+            today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            trades_file = Path(tmpdir) / f"trades_{today}.json"
+            trades_file.write_text(json.dumps([
+                {"symbol": "SPY", "side": "buy"},
+                {"symbol": "AAPL", "side": "sell"},
+                {"symbol": "SPY", "side": "sell"},
+            ]))
+
+            sync = TradeSync()
+            history = sync.get_trade_history(symbol="SPY", limit=10)
+
+            module.DATA_DIR = original_data_dir
+
+            assert len(history) == 2
+            for trade in history:
+                assert trade["symbol"] == "SPY"
 
 
 class TestSingleton:

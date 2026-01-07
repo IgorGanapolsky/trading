@@ -124,10 +124,8 @@ class WorkflowHealthMonitor:
 
             should_run = False
             if (
-                schedule_type == "weekdays"
-                and weekday < 5
-                or schedule_type == "weekends"
-                and weekday >= 5
+                (schedule_type == "weekdays" and weekday < 5)
+                or (schedule_type == "weekends" and weekday >= 5)
                 or schedule_type == "daily"
             ):
                 should_run = True
