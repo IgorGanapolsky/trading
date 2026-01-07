@@ -8,7 +8,7 @@
 
 **Open-source AI-powered trading system** using options premium selling and Thompson Sampling strategy selection. Built with Python and Alpaca API.
 
-> **Current Status**: Day 69/90 R&D Phase | Live: $30 (accumulating) | 80% win rate
+> **Current Status**: Day 70/90 R&D Phase (Jan 7, 2026) | Live: $30 (accumulating) | 80% win rate
 
 ---
 
@@ -27,7 +27,7 @@ Most trading bots fail because they:
 
 ---
 
-## Current Performance (Day 69/90)
+## Current Performance (Day 70/90 - Jan 7, 2026)
 
 | Account | Equity | P/L | Status |
 |---------|--------|-----|--------|
