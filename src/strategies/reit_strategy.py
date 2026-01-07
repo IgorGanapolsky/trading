@@ -49,7 +49,7 @@ class ReitStrategy(StrategyInterface):
     # Liquid REIT Universe by Sector
     SECTOR_MAP = {
         "Growth": ["AMT", "CCI", "DLR", "EQIX", "PLD"],  # Tech, Towers, Industrial
-        "Defensive": ["O", "VICI", "PSA", "WELL", "Dlr"],  # Retail, Healthcare, Storage
+        "Defensive": ["O", "VICI", "PSA", "WELL", "DLR"],  # Retail, Healthcare, Storage
         "Residential": ["AVB", "EQR", "INVH"],  # Apartments
     }
 
