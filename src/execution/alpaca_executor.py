@@ -403,6 +403,50 @@ class AlpacaExecutor:
                     logger.warning(f"   ML: {a}")
         # ========================================================
 
+        # ========== PRE-TRADE PATTERN VALIDATION (Jan 7, 2026) ==========
+        # Query TradeMemory BEFORE executing - learn from history
+        try:
+            from src.learning.trade_memory import TradeMemory
+
+            memory = TradeMemory()
+            entry_reason = strategy  # Use strategy as entry reason for now
+            pattern_check = memory.query_similar(strategy, entry_reason)
+
+            if pattern_check.get("found", False):
+                win_rate = pattern_check.get("win_rate", 0.5)
+                sample_size = pattern_check.get("sample_size", 0)
+                avg_pnl = pattern_check.get("avg_pnl", 0.0)
+
+                logger.info(
+                    f"📊 PATTERN CHECK: {strategy}_{entry_reason} | "
+                    f"Win Rate: {win_rate:.1%} | Samples: {sample_size} | Avg P/L: ${avg_pnl:.2f}"
+                )
+
+                # Block trades with poor historical performance (Rule #1: Don't Lose Money)
+                if sample_size >= 5 and win_rate < 0.50:
+                    logger.error(
+                        f"🚫 TRADE BLOCKED BY PATTERN HISTORY: {strategy} has {win_rate:.1%} win rate "
+                        f"over {sample_size} trades. Rule #1: Don't lose money."
+                    )
+                    raise TradeBlockedError(
+                        f"Historical pattern {strategy} has {win_rate:.1%} win rate - below 50% threshold"
+                    )
+                elif sample_size >= 5 and win_rate < 0.60:
+                    logger.warning(
+                        f"⚠️ CAUTION: {strategy} has marginal {win_rate:.1%} win rate. "
+                        f"Consider reducing position size."
+                    )
+            else:
+                logger.info(f"📊 PATTERN CHECK: No history for {strategy}_{entry_reason} - proceeding with caution")
+
+        except ImportError:
+            logger.debug("TradeMemory not available - skipping pattern check")
+        except TradeBlockedError:
+            raise  # Re-raise blocking exceptions
+        except Exception as e:
+            logger.warning(f"Pattern check failed (non-blocking): {e}")
+        # ================================================================
+
         logger.debug(
             "Submitting %s order via AlpacaExecutor: %s for %s",
             side,

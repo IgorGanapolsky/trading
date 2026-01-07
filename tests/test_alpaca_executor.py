@@ -455,5 +455,132 @@ class TestEdgeCases:
                 assert order["slippage_impact"] < 100.0
 
 
+class TestPreTradePatternValidation:
+    """Test pre-trade pattern validation using TradeMemory (Jan 7, 2026)."""
+
+    def test_pattern_check_blocks_losing_strategy(self):
+        """Should block trades with historically poor win rate."""
+        with patch.dict(os.environ, {"ALPACA_SIMULATED": "true"}):
+            with patch("src.observability.trade_sync.sync_trade"):
+                with patch("src.learning.trade_memory.TradeMemory") as MockMemory:
+                    # Mock a pattern with poor historical performance
+                    mock_instance = MagicMock()
+                    mock_instance.query_similar.return_value = {
+                        "pattern": "bad_strategy_bad_strategy",
+                        "found": True,
+                        "sample_size": 10,
+                        "win_rate": 0.30,  # 30% - should block
+                        "avg_pnl": -50.0,
+                        "recommendation": "AVOID",
+                    }
+                    MockMemory.return_value = mock_instance
+
+                    from src.execution.alpaca_executor import AlpacaExecutor
+                    from src.safety.mandatory_trade_gate import TradeBlockedError
+
+                    executor = AlpacaExecutor(paper=True)
+
+                    with pytest.raises(TradeBlockedError):
+                        executor.place_order(
+                            symbol="AAPL",
+                            notional=1000.0,
+                            side="buy",
+                            strategy="bad_strategy",
+                        )
+
+    def test_pattern_check_allows_winning_strategy(self):
+        """Should allow trades with historically good win rate."""
+        with patch.dict(os.environ, {"ALPACA_SIMULATED": "true"}):
+            with patch("src.observability.trade_sync.sync_trade"):
+                with patch("src.learning.trade_memory.TradeMemory") as MockMemory:
+                    # Mock a pattern with good historical performance
+                    mock_instance = MagicMock()
+                    mock_instance.query_similar.return_value = {
+                        "pattern": "good_strategy_good_strategy",
+                        "found": True,
+                        "sample_size": 15,
+                        "win_rate": 0.75,  # 75% - should allow
+                        "avg_pnl": 150.0,
+                        "recommendation": "PROCEED",
+                    }
+                    MockMemory.return_value = mock_instance
+
+                    from src.execution.alpaca_executor import AlpacaExecutor
+
+                    executor = AlpacaExecutor(paper=True)
+                    order = executor.place_order(
+                        symbol="AAPL",
+                        notional=1000.0,
+                        side="buy",
+                        strategy="good_strategy",
+                    )
+
+                    # Should succeed
+                    assert order["symbol"] == "AAPL"
+                    assert order["status"] == "filled"
+
+    def test_pattern_check_allows_new_strategy(self):
+        """Should allow trades with no historical data (new patterns)."""
+        with patch.dict(os.environ, {"ALPACA_SIMULATED": "true"}):
+            with patch("src.observability.trade_sync.sync_trade"):
+                with patch("src.learning.trade_memory.TradeMemory") as MockMemory:
+                    # Mock a pattern with no history
+                    mock_instance = MagicMock()
+                    mock_instance.query_similar.return_value = {
+                        "pattern": "new_strategy_new_strategy",
+                        "found": False,
+                        "sample_size": 0,
+                        "win_rate": 0.5,  # Neutral prior
+                        "avg_pnl": 0.0,
+                        "recommendation": "NO_HISTORY",
+                    }
+                    MockMemory.return_value = mock_instance
+
+                    from src.execution.alpaca_executor import AlpacaExecutor
+
+                    executor = AlpacaExecutor(paper=True)
+                    order = executor.place_order(
+                        symbol="AAPL",
+                        notional=1000.0,
+                        side="buy",
+                        strategy="new_strategy",
+                    )
+
+                    # Should succeed - no history shouldn't block
+                    assert order["symbol"] == "AAPL"
+                    assert order["status"] == "filled"
+
+    def test_pattern_check_warns_marginal_strategy(self):
+        """Should warn but allow trades with marginal win rate (50-60%)."""
+        with patch.dict(os.environ, {"ALPACA_SIMULATED": "true"}):
+            with patch("src.observability.trade_sync.sync_trade"):
+                with patch("src.learning.trade_memory.TradeMemory") as MockMemory:
+                    # Mock a pattern with marginal historical performance
+                    mock_instance = MagicMock()
+                    mock_instance.query_similar.return_value = {
+                        "pattern": "marginal_strategy_marginal_strategy",
+                        "found": True,
+                        "sample_size": 8,
+                        "win_rate": 0.55,  # 55% - should warn but allow
+                        "avg_pnl": 25.0,
+                        "recommendation": "PROCEED_WITH_CAUTION",
+                    }
+                    MockMemory.return_value = mock_instance
+
+                    from src.execution.alpaca_executor import AlpacaExecutor
+
+                    executor = AlpacaExecutor(paper=True)
+                    order = executor.place_order(
+                        symbol="AAPL",
+                        notional=1000.0,
+                        side="buy",
+                        strategy="marginal_strategy",
+                    )
+
+                    # Should succeed - marginal is OK
+                    assert order["symbol"] == "AAPL"
+                    assert order["status"] == "filled"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
