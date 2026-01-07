@@ -24,9 +24,18 @@ logger = logging.getLogger(__name__)
 class TradeBlockedError(Exception):
     """Raised when a trade is blocked by the mandatory gate."""
 
-    def __init__(self, gate_result: GateValidationResult):
-        self.gate_result = gate_result
-        super().__init__(f"Trade blocked: {gate_result.reason}")
+    def __init__(self, gate_result_or_message: GateValidationResult | str):
+        """Accept either a GateValidationResult or a string message."""
+        if isinstance(gate_result_or_message, str):
+            # String message passed (e.g., from pattern check)
+            self.gate_result = None
+            self.reason = gate_result_or_message
+            super().__init__(f"Trade blocked: {gate_result_or_message}")
+        else:
+            # GateValidationResult object passed
+            self.gate_result = gate_result_or_message
+            self.reason = gate_result_or_message.reason
+            super().__init__(f"Trade blocked: {gate_result_or_message.reason}")
 
 
 @dataclass

@@ -135,17 +135,15 @@ class TestFormatTradeDocument:
 class TestSyncFunctions:
     """Tests for sync functions (mocked)."""
 
-    @patch("scripts.sync_trades_to_rag.VertexRAG")
-    def test_sync_to_vertex_rag_not_available(self, mock_vertex):
+    def test_sync_to_vertex_rag_not_available(self):
         """Test Vertex AI sync handles import error gracefully."""
         # When VertexRAG import fails, function should return False
         from scripts.sync_trades_to_rag import sync_to_vertex_rag
 
-        mock_vertex.side_effect = ImportError("No module")
-
+        # Patch the import inside the function by patching sys.modules
         with patch.dict("sys.modules", {"src.rag.vertex_rag": None}):
             result = sync_to_vertex_rag([{"symbol": "SPY"}])
-            # In sandbox, this will return False (not available)
+            # In sandbox/CI, this will return False (not available)
             assert result in [True, False]
 
     def test_sync_to_chromadb_not_available(self):
