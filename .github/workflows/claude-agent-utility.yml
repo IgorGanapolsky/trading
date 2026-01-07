@@ -166,8 +166,8 @@ jobs:
       - name: Task - Dry Run Trading
         if: github.event.inputs.task == 'dry-run-trading'
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           ALPACA_PAPER: "true"
         run: |
           echo "Running trading system dry run..."
@@ -202,8 +202,8 @@ jobs:
       - name: Task - Set Trailing Stops
         if: github.event.inputs.task == 'set-trailing-stops'
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           PAPER_TRADING: "true"
         run: |
           echo "=================================================="
@@ -221,8 +221,8 @@ jobs:
       - name: Task - Manage Positions
         if: github.event.inputs.task == 'manage-positions'
         env:
-          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_KEY }}
-          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           PAPER_TRADING: "true"
         run: |
           echo "=================================================="
