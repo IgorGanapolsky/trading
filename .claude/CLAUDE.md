@@ -100,12 +100,13 @@ This is non-negotiable. Every trading decision must:
 
 ### RAG & Knowledge (CRITICAL for Learning)
 - Query RAG lessons before starting tasks AND update RAG after finishing
-- Record every trade and lesson in BOTH ChromaDB AND Vertex AI RAG (MANDATORY)
+- Record every trade and lesson in Vertex AI RAG (via CI) + local JSON backup
 - Verify RAG vectorization is working at start of each session
 - Cost-optimize Vertex AI datastore usage (minimize API calls)
-- **KNOWN ISSUE (Jan 6, 2026)**: ChromaDB not installed, Vertex AI SSL-blocked in sandbox
-- Local JSON backup is currently the only working recording system
+- **Vertex AI RAG**: SSL-blocked in sandbox, use CI workflows to sync
+- **Local JSON**: Primary recording system in sandbox (always works)
 - CI (GitHub Actions) can write to Vertex AI RAG with proper credentials
+- **NOTE**: ChromaDB deprecated (Dec 2025) - do NOT use or mention
 
 ### Sandbox Environment (CRITICAL)
 - This is a sandboxed web environment - packages do NOT persist between sessions
@@ -122,7 +123,7 @@ This is non-negotiable. Every trading decision must:
     https://api.github.com/repos/IgorGanapolsky/trading/actions/workflows/claude-agent-utility.yml/dispatches \
     -d '{"ref":"main","inputs":{"task":"run-tests"}}'
   ```
-- Available tasks: run-tests, run-lint, verify-rag, sync-trades-to-rag, system-health-check, verify-chromadb, dry-run-trading, custom-command
+- Available tasks: run-tests, run-lint, verify-rag, sync-trades-to-rag, system-health-check, dry-run-trading, custom-command
 - Helper script: `python3 scripts/trigger_ci_task.py --task <task>`
 
 ### Self-Healing System (Jan 6, 2026)
@@ -228,9 +229,10 @@ RIGHT: "Deployment succeeded, please test Dialogflow and confirm it works"
 - Say "I believe this is done, verifying now..." instead of "Done!"
 
 ### RAG Recording (MANDATORY)
-- Record every single trade in BOTH:
-  1. Vertex AI RAG database (cloud backup, Dialogflow integration)
-  2. Local ChromaDB database (fast, real-time)
+- Record every single trade in:
+  1. Vertex AI RAG database (via CI - cloud backup, Dialogflow integration)
+  2. Local JSON files (sandbox - always works, real-time)
 - Record every lesson learned about each trade
 - Query RAG lessons BEFORE starting tasks
 - Update RAG AFTER finishing tasks
+- Use CI workflows to sync to Vertex AI (sandbox cannot connect directly)

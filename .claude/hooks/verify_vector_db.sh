@@ -25,11 +25,9 @@ if [[ $VERIFY_EXIT_CODE -ne 0 ]]; then
     echo ""
     echo "🔧 Attempting auto-repair..."
 
-    # Try to install chromadb if missing
-    python3 -c "import chromadb" 2>/dev/null || pip install chromadb==0.6.3 --quiet
-
-    # Rebuild vector DB
-    PYTHONPATH="${CLAUDE_PROJECT_DIR}" python3 "${CLAUDE_PROJECT_DIR}/scripts/vectorize_rag_knowledge.py" --rebuild 2>&1 | tail -5
+    # ChromaDB deprecated (Dec 2025) - use local JSON RAG only
+    # The verify script handles fallback to local RAG automatically
+    echo "Using local JSON-based RAG (ChromaDB deprecated)"
 
     # Verify again
     VERIFY_OUTPUT=$(PYTHONPATH="${CLAUDE_PROJECT_DIR}" python3 "${CLAUDE_PROJECT_DIR}/scripts/verify_rag_operational.py" 2>&1 | grep -v "telemetry" || true)
