@@ -1363,6 +1363,25 @@ jobs:
           echo "📊 Running daily verification..."
           python3 scripts/daily_verification.py
 
+      - name: Sync Trades to RAG (Post-Execution)
+        # CRITICAL: Added Jan 7, 2026 - CEO mandate to record ALL trades to RAG
+        # Without this, we violate: "Record every trade in BOTH ChromaDB AND Vertex AI RAG"
+        if: always()
+        continue-on-error: true  # Non-blocking - JSON backup always exists
+        env:
+          GOOGLE_CLOUD_PROJECT: igor-trading-2025-v2
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          echo "📚 ========================================"
+          echo "📚 POST-TRADE RAG SYNC"
+          echo "📚 ========================================"
+          echo ""
+          echo "Syncing today's trades to Vertex AI RAG and ChromaDB..."
+          python3 scripts/sync_trades_to_rag.py || {
+            echo "⚠️ RAG sync failed - trades backed up in JSON"
+            echo "Manual sync needed: python3 scripts/sync_trades_to_rag.py"
+          }
+
       - name: Trade Activity Monitor (Zombie Mode Detection)
         # CRITICAL: Added Jan 5, 2026 after 13-day silent outage
         # Detects when workflow "succeeds" but executes ZERO trades
