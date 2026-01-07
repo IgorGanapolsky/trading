@@ -38,5 +38,16 @@
     "pl_pct": 0.0,
     "account_type": "live",
     "note": "Day 69/90 - Accumulation phase continues"
+  },
+  {
+    "date": "2026-01-07",
+    "timestamp": "2026-01-07T17:23:00.000000",
+    "equity": 30.0,
+    "cash": 30.0,
+    "buying_power": 30.0,
+    "pl": 0.0,
+    "pl_pct": 0.0,
+    "account_type": "live",
+    "note": "Day 70/90 - Live account: Accumulation phase. Paper account: +$16,661.20 today (+16.45%)"
   }
 ]
