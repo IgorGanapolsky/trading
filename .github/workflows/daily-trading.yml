@@ -242,11 +242,54 @@ jobs:
           path: data/rag_pretrade_advice.json
           retention-days: 7
 
+  # ========================================================================
+  # PRE-MARKET POSITION PROTECTION (Phil Town Rule #1)
+  # CEO Directive (Jan 7, 2026): "Losing money is NOT allowed"
+  # This runs BEFORE any new trades to protect existing positions
+  # ========================================================================
+  protect-existing-positions:
+    name: Set Trailing Stops on Existing Positions
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [validate-and-test]
+    if: needs.validate-and-test.outputs.secrets_valid == 'true'
+    continue-on-error: true  # Don't block trading if stops can't be set
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install alpaca-py
+
+      - name: Set Trailing Stop-Loss Orders
+        env:
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          PAPER_TRADING: ${{ github.event.inputs.trading_mode != 'live' && 'true' || 'false' }}
+        run: |
+          echo "🛡️ ========================================"
+          echo "🛡️ PRE-MARKET POSITION PROTECTION"
+          echo "🛡️ Phil Town Rule #1: Don't Lose Money"
+          echo "🛡️ ========================================"
+          echo ""
+          echo "Setting trailing stops BEFORE any new trades..."
+          echo ""
+          python3 scripts/set_trailing_stops.py || {
+            echo "::warning::Could not set trailing stops - positions may be unprotected"
+          }
+
   # Main trading execution job
   execute-trading:
     runs-on: ubuntu-22.04  # Pinned Ubuntu version
     timeout-minutes: 30  # Increased to handle retries
-    needs: [validate-and-test, pretrade-rag-query]
+    needs: [validate-and-test, pretrade-rag-query, protect-existing-positions]
     if: needs.validate-and-test.outputs.secrets_valid == 'true'
     env:
       PYTHONPATH: ${{ github.workspace }}
