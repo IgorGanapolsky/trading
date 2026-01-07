@@ -2,10 +2,10 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2026-01-07T14:16:59.577199",
+    "last_updated": "2026-01-07T21:00:32.411351",
     "last_audit": "2026-01-06T16:38:45",
     "audit_notes": "Updated after trades synced - Jan 6 2026 paper trades executed",
-    "last_sync": "2026-01-07T14:16:59.577209",
+    "last_sync": "2026-01-07T21:00:32.411362",
     "sync_mode": "skipped_no_keys"
   },
   "challenge": {
@@ -136,17 +136,17 @@
     "starting_balance": 100000.0,
     "current_equity": 117967.66,
     "cash": 92704.96,
-    "positions_value": 25262.70,
+    "positions_value": 25262.7,
     "total_pl": 17967.66,
     "total_pl_pct": 17.97,
-    "buying_power": 209600.00,
+    "buying_power": 209600.0,
     "positions_count": 4,
     "win_rate": 80.0,
     "win_rate_sample_size": 5,
     "win_rate_warning": "STATISTICALLY INSIGNIFICANT - Only 5 closed trades. Need 30+ for confidence.",
     "last_sync": "2026-01-07T10:50:00",
     "sync_source": "CEO screenshot Jan 7 2026 10:50 AM ET",
-    "todays_pl": 16661.20,
+    "todays_pl": 16661.2,
     "todays_pl_pct": 16.45,
     "phil_town_strategy": {
       "enabled": true,
