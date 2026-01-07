@@ -256,13 +256,21 @@ def prediction_enabled() -> bool:
 
 
 def reit_enabled() -> bool:
-    """Feature flag for REIT strategy (Tier 7)."""
-    return os.getenv("ENABLE_REIT_STRATEGY", "true").lower() in {"1", "true", "yes"}
+    """Feature flag for REIT strategy (Tier 7).
+
+    FIXED Jan 7, 2026: Default to FALSE - respect system_state.json config.
+    REITs were disabled Dec 16, 2025 per CEO directive.
+    """
+    return os.getenv("ENABLE_REIT_STRATEGY", "false").lower() in {"1", "true", "yes"}
 
 
 def precious_metals_enabled() -> bool:
-    """Feature flag for Precious Metals strategy (Tier 8 - GLD/SLV)."""
-    return os.getenv("ENABLE_PRECIOUS_METALS", "true").lower() in {"1", "true", "yes"}
+    """Feature flag for Precious Metals strategy (Tier 8 - GLD/SLV).
+
+    FIXED Jan 7, 2026: Default to FALSE - respect system_state.json config.
+    Precious metals were disabled Dec 16, 2025 per CEO directive.
+    """
+    return os.getenv("ENABLE_PRECIOUS_METALS", "false").lower() in {"1", "true", "yes"}
 
 
 def _update_system_state_with_reit_trade(trade_record: dict[str, Any], logger) -> None:
