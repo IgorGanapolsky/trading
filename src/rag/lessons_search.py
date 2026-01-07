@@ -1,10 +1,11 @@
 """
-LessonsSearch - Semantic search for lessons learned using ChromaDB.
+LessonsSearch - Simple keyword search for lessons learned.
 
-This module provides proper vector-based semantic search on lessons learned,
-replacing the simple keyword matching with true embeddings-based retrieval.
+Uses straightforward keyword matching on markdown files.
+ChromaDB was REMOVED on Jan 7, 2026 (CEO directive - unnecessary complexity).
 
 Created: Dec 31, 2025 (Fix for ll_054 - RAG not actually used)
+Updated: Jan 7, 2026 - Removed ChromaDB, simplified to keyword search
 """
 
 import logging
@@ -34,13 +35,13 @@ class LessonResult:
 
 class LessonsSearch:
     """
-    Semantic search over lessons learned using ChromaDB embeddings.
+    Simple keyword search over lessons learned.
 
-    Provides true semantic similarity search, not just keyword matching.
-    Falls back to keyword search if ChromaDB is unavailable.
+    Scans markdown files for matching terms. Fast and dependency-free.
+    ChromaDB was removed Jan 7, 2026 - simple search is sufficient.
     """
 
-    def __init__(self, use_chromadb: bool = True):
+    def __init__(self, use_chromadb: bool = False):
         """
         Initialize LessonsSearch.
 

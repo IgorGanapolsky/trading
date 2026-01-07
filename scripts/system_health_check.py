@@ -19,8 +19,11 @@ def check_vector_db():
 
     Added Dec 30, 2025: This check ensures the RAG vector packages
     are actually installed and working, not silently falling back to TF-IDF.
+
+    Updated Jan 7, 2026: ChromaDB is now OPTIONAL (removed per CEO directive).
+    Simple keyword search on markdown files is sufficient.
     """
-    results = {"name": "Vector Database (ChromaDB)", "status": "UNKNOWN", "details": []}
+    results = {"name": "Vector Database (ChromaDB - OPTIONAL)", "status": "UNKNOWN", "details": []}
 
     try:
         import chromadb
@@ -71,8 +74,8 @@ def check_vector_db():
         results["status"] = "OK"
 
     except ImportError:
-        results["status"] = "BROKEN"
-        results["details"].append("✗ chromadb NOT INSTALLED - run: pip install chromadb==0.6.3")
+        results["status"] = "SKIPPED"
+        results["details"].append("ℹ️ chromadb not installed (OPTIONAL - removed Jan 7, 2026)")
     except Exception as e:
         results["status"] = "BROKEN"
         results["details"].append(f"✗ Error: {e}")
