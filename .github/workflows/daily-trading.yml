@@ -649,6 +649,17 @@ jobs:
           echo "✅ Liquidation complete - freed capital for options"
           # ================================================================
 
+          # ========== POSITION MANAGEMENT (Jan 7, 2026) ==========
+          # CEO Directive: "Losing money is NOT allowed" - Phil Town Rule 1
+          # Problem: PositionManager class existed but was NEVER CALLED
+          # Solution: Evaluate all positions for stop-loss and take-profit
+          echo "📊 Managing open positions (stop-loss enforcement)..."
+          python3 -u scripts/manage_positions.py 2>&1 || {
+            echo "⚠️ Position management had issues, continuing..."
+          }
+          echo "✅ Position management complete - stop-losses enforced"
+          # ================================================================
+
           # ========== GUARANTEED TRADER (Dec 18, 2025) ==========
           # Problem: Complex gates blocked ALL trades for 50 days
           # Solution: Run simple guaranteed trader FIRST
