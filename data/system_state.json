@@ -2,10 +2,10 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2026-01-06T22:00:30.027064",
+    "last_updated": "2026-01-07T03:36:07.583443",
     "last_audit": "2026-01-06T16:38:45",
     "audit_notes": "Updated after trades synced - Jan 6 2026 paper trades executed",
-    "last_sync": "2026-01-06T22:00:30.027073",
+    "last_sync": "2026-01-07T03:36:07.583450",
     "sync_mode": "skipped_no_keys"
   },
   "challenge": {
@@ -46,7 +46,7 @@
           "strategy": "Single CSP on F or SOFI ($5 strike max)",
           "return_pct": 0.3
         },
-                {
+        {
           "capital": 1000,
           "daily_target": 3,
           "strategy": "CSPs on INTC, BAC ($10 strike max)",
