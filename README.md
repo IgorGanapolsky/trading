@@ -2,7 +2,7 @@
 
 [![Win Rate](https://img.shields.io/badge/win_rate-80%25-brightgreen.svg)](docs/r-and-d-phase.md)
 [![Status](https://img.shields.io/badge/status-live_trading-green.svg)](docs/r-and-d-phase.md)
-[![Day](https://img.shields.io/badge/day-69%2F90-blue.svg)](docs/r-and-d-phase.md)
+[![Day](https://img.shields.io/badge/day-70%2F90-blue.svg)](docs/r-and-d-phase.md)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](requirements.txt)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
