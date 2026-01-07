@@ -6,11 +6,11 @@ Verifies runtime budget enforcement prevents overspending.
 """
 
 import pytest
+
 from src.utils.model_selector import (
+    MODEL_REGISTRY,
     ModelSelector,
     ModelTier,
-    TaskComplexity,
-    MODEL_REGISTRY,
 )
 
 
@@ -195,7 +195,7 @@ class TestToolDefinitions:
 
     def test_tool_registry(self):
         """Test tool registry operations."""
-        from src.utils.tool_definitions import ToolRegistry, ToolDefinition
+        from src.utils.tool_definitions import ToolDefinition, ToolRegistry
 
         registry = ToolRegistry()
         tool = ToolDefinition(name="my_tool", description="Test")
@@ -244,7 +244,7 @@ class TestUnifiedMCPClient:
 
     def test_mcp_tool_result_failure(self):
         """Test MCPToolResult for failed calls."""
-        from mcp.client import MCPToolResult, MCPError
+        from mcp.client import MCPError, MCPToolResult
 
         result = MCPToolResult(
             success=False,

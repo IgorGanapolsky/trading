@@ -170,7 +170,7 @@ def get_alpaca_trader(paper: bool = True) -> AlpacaTrader:
 import asyncio
 import logging
 from enum import Enum
-from typing import Callable, TypeVar
+from typing import TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -398,8 +398,8 @@ class UnifiedMCPClient:
         timeout: int,
     ) -> dict[str, Any]:
         """Call an HTTP-based MCP server."""
-        import urllib.request
         import urllib.error
+        import urllib.request
 
         # Server endpoint mapping
         endpoints = {
