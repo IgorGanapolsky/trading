@@ -117,6 +117,17 @@ jobs:
           echo "📥 Ingesting options education (Option Alpha, InTheMoney)..."
           python3 scripts/ingest_options_youtube.py --all --mode recent --max 5 || echo "Options ingestion completed with warnings"
 
+      - name: "Phase 1c: Learn from Bogleheads Forum (CEO Directive)"
+        # CEO Directive (Jan 7, 2026): Learn from top traders, Bogleheads, blogs
+        continue-on-error: true
+        run: |
+          echo "📥 Learning from Bogleheads.org forum..."
+          echo "Extracting investing wisdom from experienced value investors..."
+          python3 .claude/skills/bogleheads_learner/scripts/bogleheads_learner.py --mode recent --max-posts 20 || {
+            echo "⚠️ Bogleheads learning completed with warnings"
+            echo "Note: Forum scraping may have rate limits"
+          }
+
       # === PHASE 2: VECTORIZATION ===
       - name: "Phase 2: Vectorize into RAG"
         run: |
