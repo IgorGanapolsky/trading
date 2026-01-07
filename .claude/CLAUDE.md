@@ -119,6 +119,12 @@ This is non-negotiable. Every trading decision must:
 - Alert on persistent failures, but attempt automatic recovery first
 - Document all failures in lessons learned for pattern detection
 
+### Dashboard & Monitoring (Jan 7, 2026)
+- Always verify Progress Dashboard has accurate data after changes
+- Verify GitHub Pages blog is working (https://igorganapolsky.github.io/trading/)
+- System state in `data/system_state.json` must be fresh (< 4 hours old)
+- Check dashboard metrics match actual Alpaca account data
+
 ## Market Hours
 US Equities: Mon-Fri 9:30-4:00 ET only
 
