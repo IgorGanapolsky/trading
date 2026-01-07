@@ -133,14 +133,16 @@
   "paper_account": {
     "type": "paper",
     "purpose": "Test Phil Town Rule #1 strategies before live deployment",
-    "CRITICAL_WARNING": "INVALID SIMULATION - $100k paper tests strategies impossible with $500 real capital",
+    "CRITICAL_WARNING": "INVALID SIMULATION - $100k paper tests strategies impossible with real capital",
     "simulation_mismatch": {
       "paper_capital": 100000,
+      "recommended_paper_capital": 5000,
       "real_target_capital": 500,
-      "mismatch_ratio": "200x",
+      "mismatch_ratio": "20x (should be testing at $5k, not $100k)",
       "invalid_strategies_tested": ["AMD $200 CSPs", "SPY $660 CSPs", "INTC $35 CSPs"],
-      "valid_strategies_at_500": ["F $5 CSP", "SOFI $5 CSP"],
-      "recommendation": "Reset paper account to $500 to validate executable strategies",
+      "valid_strategies_at_5000": ["CSPs on stocks with strike ≤$50", "1-2 positions max"],
+      "recommendation": "Reset Alpaca paper to $5,000 - realistic 6-month milestone",
+      "how_to_reset": "Alpaca Dashboard → Account → Reset Account → Set balance to $5,000",
       "lesson_learned": "rag_knowledge/lessons_learned/ll_111_paper_capital_must_match_real_jan07.md"
     },
     "starting_balance": 100000.0,

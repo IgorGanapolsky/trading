@@ -1,4 +1,4 @@
-# Lesson Learned #111: Paper Trading Capital Must Match Real Account
+# Lesson Learned #111: Paper Trading Capital Must Be Realistic
 
 **Date**: January 7, 2026
 **Category**: Strategy / Risk Management
@@ -7,58 +7,54 @@
 
 ## The Problem
 
-Paper trading account was configured with $100,000 starting balance while real account target is $500.
+Paper trading account was configured with $100,000 starting balance while real account target is $500 (growing to $5,000 by June 2026).
 
-This creates a **fundamentally false simulation** because:
+This 200x mismatch creates a **fundamentally false simulation** because:
 
-1. **Strategy Mismatch**: Paper account can sell AMD $200 strike CSPs (requires ~$20,000 collateral). Real account with $500 can ONLY sell $5 strike CSPs (F, SOFI).
+1. **Strategy Mismatch**: Paper tests AMD $200 CSPs (needs $20k collateral) - impossible with real capital
+2. **False Confidence**: 80% win rate on $100k means nothing when testing impossible strategies
+3. **Diversification Illusion**: Paper holds 4-5 positions; real can hold 1-2 max
 
-2. **Position Sizing Doesn't Translate**:
-   - Paper: 10% position = $10,000
-   - Real: 10% position = $50
-   - Completely different risk dynamics
+## The Correct Approach
 
-3. **False Confidence**: 80% win rate on $100k paper account means nothing when strategies are impossible to replicate with $500.
+Paper trading capital should match **next realistic milestone**, not current capital:
 
-4. **Diversification Illusion**: Paper account can hold 5+ positions simultaneously. Real account can hold 1 CSP max.
+| Milestone | Target Date | Paper Capital | Valid Strategies |
+|-----------|-------------|---------------|------------------|
+| $500 | Feb 2026 | $500 | F/SOFI $5 CSPs only |
+| $1,000 | Mar 2026 | $1,000 | INTC/BAC $10 CSPs |
+| **$5,000** | Jun 2026 | **$5,000** | Quality stocks $50 CSPs |
+| $50,000 | Future | $50,000 | Full strategy suite |
 
-## Current vs Required
+## Recommended Paper Account: $5,000
 
-| Metric | Current Paper | Should Be |
-|--------|---------------|-----------|
-| Starting Capital | $100,000 | $500 |
-| Max Strike Price | $200+ | $5 |
-| Eligible Underlyings | Any | F, SOFI only |
-| Positions at Once | 4-5 | 1 |
-| Commission Impact | Negligible | ~1% per trade |
+Why $5,000 is the sweet spot:
+1. **Realistic 6-month target** - achievable with $10/day deposits + compounding
+2. **Tests real strategies** - CSPs on quality stocks ($50 strike max)
+3. **Forces discipline** - 1-2 positions max, proper sizing
+4. **North Star path** - builds toward $100/day goal (needs ~$50k)
 
-## The Fix
+## What's Wrong with Current $100k Paper
 
-Paper trading should simulate EXACTLY what we can do with real capital:
-
-1. **Start paper account at $500** (not $100,000)
-2. **Only allow $5 strike CSPs** (F, SOFI)
-3. **Single position maximum** until capital grows
-4. **Account for commission impact** (~$0.65/contract = 0.13% on $500)
-
-## Validation Test
-
-Before going live, paper trading must prove profitability with SAME constraints:
-- Same capital level
-- Same position limits
-- Same underlying universe
-- Same strategy parameters
-
-## Key Insight
-
-"Simulating with $100,000 when trading with $500 is like practicing golf with unlimited mulligans then expecting to score the same in a real tournament."
+| What Paper Tests | Collateral Needed | When Realistic? |
+|------------------|-------------------|-----------------|
+| AMD $200 CSP | $20,000 | 2+ years away |
+| SPY $660 CSP | $66,000 | Never (unrealistic) |
+| INTC $35 CSP | $3,500 | ~6 months |
 
 ## Action Items
 
-- [ ] Reset paper account to $500 starting balance
-- [ ] Limit paper trading to F/SOFI $5 strike CSPs only
-- [ ] Re-run win rate calculations with constrained strategy
-- [ ] Update backtest configs to use $500 starting capital
+- [ ] Reset Alpaca paper account to $5,000
+- [ ] Close current paper positions
+- [ ] Only test CSPs with strikes ≤ $50
+- [ ] Limit to 1-2 positions maximum
+- [ ] Re-run backtests with $5,000 starting capital
+
+## Key Insight
+
+"Test strategies you'll ACTUALLY USE when you reach the next milestone, not strategies that require 200x more capital than you'll ever have."
+
+The goal isn't to paper trade at current capital ($30) - that's too restrictive to learn anything useful. The goal is to paper trade at the **next achievable tier** ($5,000) to validate strategies before deploying real capital.
 
 ## Tags
 #paper-trading #capital-alignment #risk-management #simulation-fidelity #ceo-insight
