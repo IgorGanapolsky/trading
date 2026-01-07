@@ -38,10 +38,13 @@ def test_trailing_pct_defaults():
     assert OPTIONS_TRAILING_PCT == 0.20  # 20% for options
 
 
-@patch.dict("os.environ", {
-    "ALPACA_API_KEY": "",
-    "ALPACA_SECRET_KEY": "",
-})
+@patch.dict(
+    "os.environ",
+    {
+        "ALPACA_API_KEY": "",
+        "ALPACA_SECRET_KEY": "",
+    },
+)
 def test_main_no_credentials():
     """Test graceful failure when credentials missing."""
     from set_trailing_stops import main
@@ -51,11 +54,14 @@ def test_main_no_credentials():
     assert exc_info.value.code == 1
 
 
-@patch.dict("os.environ", {
-    "ALPACA_API_KEY": "test_key",
-    "ALPACA_SECRET_KEY": "test_secret",
-    "PAPER_TRADING": "true",
-})
+@patch.dict(
+    "os.environ",
+    {
+        "ALPACA_API_KEY": "test_key",
+        "ALPACA_SECRET_KEY": "test_secret",
+        "PAPER_TRADING": "true",
+    },
+)
 @patch("set_trailing_stops.TradingClient")
 def test_main_no_positions(mock_client_class):
     """Test handling when no positions exist."""
@@ -69,11 +75,14 @@ def test_main_no_positions(mock_client_class):
     assert result is None  # No positions to protect
 
 
-@patch.dict("os.environ", {
-    "ALPACA_API_KEY": "test_key",
-    "ALPACA_SECRET_KEY": "test_secret",
-    "PAPER_TRADING": "true",
-})
+@patch.dict(
+    "os.environ",
+    {
+        "ALPACA_API_KEY": "test_key",
+        "ALPACA_SECRET_KEY": "test_secret",
+        "PAPER_TRADING": "true",
+    },
+)
 @patch("set_trailing_stops.TradingClient")
 def test_main_dry_run_with_positions(mock_client_class):
     """Test dry run with mock positions."""
@@ -96,11 +105,14 @@ def test_main_dry_run_with_positions(mock_client_class):
     assert result is True  # Would set trailing stop
 
 
-@patch.dict("os.environ", {
-    "ALPACA_API_KEY": "test_key",
-    "ALPACA_SECRET_KEY": "test_secret",
-    "PAPER_TRADING": "true",
-})
+@patch.dict(
+    "os.environ",
+    {
+        "ALPACA_API_KEY": "test_key",
+        "ALPACA_SECRET_KEY": "test_secret",
+        "PAPER_TRADING": "true",
+    },
+)
 @patch("set_trailing_stops.TradingClient")
 def test_short_position_handling(mock_client_class):
     """Test that short positions use BUY to close."""

@@ -36,6 +36,7 @@ class TestFeatureFlagsDefaults:
             from importlib import reload
 
             import scripts.autonomous_trader as trader
+
             reload(trader)
 
             # CRITICAL: Must be False by default
@@ -52,6 +53,7 @@ class TestFeatureFlagsDefaults:
             from importlib import reload
 
             import scripts.autonomous_trader as trader
+
             reload(trader)
 
             assert trader.precious_metals_enabled() is False, (
@@ -76,6 +78,7 @@ class TestFeatureFlagsEnvOverride:
             from importlib import reload
 
             import scripts.autonomous_trader as trader
+
             reload(trader)
 
             assert trader.reit_enabled() is True, (
@@ -89,6 +92,7 @@ class TestFeatureFlagsEnvOverride:
             from importlib import reload
 
             import scripts.autonomous_trader as trader
+
             reload(trader)
 
             assert trader.reit_enabled() is False, (
@@ -102,6 +106,7 @@ class TestFeatureFlagsEnvOverride:
             from importlib import reload
 
             import scripts.autonomous_trader as trader
+
             reload(trader)
 
             assert trader.precious_metals_enabled() is True, (
@@ -120,6 +125,7 @@ class TestFeatureFlagsIntegration:
             from importlib import reload
 
             import scripts.autonomous_trader as trader
+
             reload(trader)
 
             # Verify disabled

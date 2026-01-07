@@ -158,7 +158,9 @@ def main(dry_run: bool = False, trail_pct: float | None = None):
         except Exception as e:
             error_msg = str(e)
             if "fractional" in error_msg.lower():
-                logger.warning("    Status: SKIPPED - Fractional shares don't support trailing stops")
+                logger.warning(
+                    "    Status: SKIPPED - Fractional shares don't support trailing stops"
+                )
                 stops_skipped += 1
             elif "option" in error_msg.lower() or "cannot" in error_msg.lower():
                 logger.warning(f"    Status: SKIPPED - {error_msg}")
@@ -208,15 +210,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Set trailing stop-loss orders on all open positions"
     )
+    parser.add_argument("--dry-run", action="store_true", help="Preview without executing orders")
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Preview without executing orders"
-    )
-    parser.add_argument(
-        "--trail-pct",
-        type=float,
-        help="Override trailing stop percentage (e.g., 0.10 for 10%%)"
+        "--trail-pct", type=float, help="Override trailing stop percentage (e.g., 0.10 for 10%%)"
     )
     args = parser.parse_args()
 

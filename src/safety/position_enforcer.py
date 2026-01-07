@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EnforcementResult:
     """Result of position enforcement check."""
+
     violations_found: int = 0
     violations: list[dict] = None
     positions_checked: int = 0
@@ -38,10 +39,18 @@ class EnforcementResult:
 
 # Symbols that violate lesson LL-052: "We Do NOT Trade Crypto"
 BANNED_SYMBOLS = {
-    "BTCUSD", "ETHUSD", "BTC/USD", "ETH/USD",
-    "BTCUSDT", "ETHUSDT", "SOLUSD", "DOGEUSD",
+    "BTCUSD",
+    "ETHUSD",
+    "BTC/USD",
+    "ETH/USD",
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSD",
+    "DOGEUSD",
     # Crypto ETFs are also banned per lesson
-    "BITO", "GBTC", "ETHE",
+    "BITO",
+    "GBTC",
+    "ETHE",
 }
 
 
@@ -103,17 +112,15 @@ def enforce_positions(trader: AlpacaTrader) -> EnforcementResult:
         logger.info(f"Position Enforcer: Checking {len(positions)} positions")
 
         for position in positions:
-            symbol = getattr(position, 'symbol', str(position))
+            symbol = getattr(position, "symbol", str(position))
 
             is_banned, reason = _check_symbol_banned(symbol)
 
             if is_banned:
                 result.violations_found += 1
-                result.violations.append({
-                    "symbol": symbol,
-                    "reason": reason,
-                    "action": "close_position"
-                })
+                result.violations.append(
+                    {"symbol": symbol, "reason": reason, "action": "close_position"}
+                )
                 logger.warning(f"VIOLATION: {symbol} - {reason}")
 
                 # Close the violating position

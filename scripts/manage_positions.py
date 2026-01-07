@@ -93,15 +93,17 @@ def main(dry_run: bool = False):
     # Convert Alpaca positions to dict format for PositionManager
     position_dicts = []
     for pos in positions:
-        position_dicts.append({
-            "symbol": pos.symbol,
-            "qty": pos.qty,
-            "avg_entry_price": pos.avg_entry_price,
-            "current_price": pos.current_price,
-            "unrealized_pl": pos.unrealized_pl,
-            "unrealized_plpc": pos.unrealized_plpc,
-            "market_value": pos.market_value,
-        })
+        position_dicts.append(
+            {
+                "symbol": pos.symbol,
+                "qty": pos.qty,
+                "avg_entry_price": pos.avg_entry_price,
+                "current_price": pos.current_price,
+                "unrealized_pl": pos.unrealized_pl,
+                "unrealized_plpc": pos.unrealized_plpc,
+                "market_value": pos.market_value,
+            }
+        )
 
     # Evaluate all positions
     exits = position_manager.manage_all_positions(position_dicts)
@@ -125,7 +127,9 @@ def main(dry_run: bool = False):
         logger.info(f"    Qty: {position.quantity}")
         logger.info(f"    Entry: ${position.entry_price:.2f}")
         logger.info(f"    Current: ${position.current_price:.2f}")
-        logger.info(f"    P/L: ${position.unrealized_pl:.2f} ({position.unrealized_plpc*100:.2f}%)")
+        logger.info(
+            f"    P/L: ${position.unrealized_pl:.2f} ({position.unrealized_plpc * 100:.2f}%)"
+        )
 
         if dry_run:
             logger.info("    Action: WOULD SELL (dry run)")

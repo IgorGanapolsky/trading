@@ -32,18 +32,14 @@ class PreciousMetalsStrategy:
             "status": "disabled",
             "tickers": self.tickers,
             "recommendation": "HOLD",
-            "reason": "Strategy disabled per system_state.json"
+            "reason": "Strategy disabled per system_state.json",
         }
 
     def execute(self) -> dict:
         """Execute precious metals trades (if enabled)."""
         if not self.enabled:
             logger.info("Precious metals execution skipped - strategy disabled")
-            return {
-                "success": True,
-                "trades_executed": 0,
-                "reason": "Strategy disabled"
-            }
+            return {"success": True, "trades_executed": 0, "reason": "Strategy disabled"}
 
         # TODO: Implement actual trading logic when enabled
         return {"success": True, "trades_executed": 0}

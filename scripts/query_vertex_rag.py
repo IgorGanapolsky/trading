@@ -46,7 +46,7 @@ def get_vertex_rag_client():
             import tempfile
 
             # Write SA key to temp file for auth
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
                 f.write(sa_key)
                 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = f.name
 
@@ -57,6 +57,7 @@ def get_vertex_rag_client():
             project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "igor-trading-2025-v2")
 
         from google.cloud import aiplatform
+
         aiplatform.init(project=project_id, location="us-central1")
 
         return project_id
@@ -126,11 +127,13 @@ Include relevant lesson IDs if available."""
                 if hasattr(candidate, "content"):
                     for part in candidate.content.parts:
                         if hasattr(part, "text"):
-                            results.append({
-                                "text": part.text,
-                                "query": query_text,
-                                "timestamp": datetime.now(timezone.utc).isoformat(),
-                            })
+                            results.append(
+                                {
+                                    "text": part.text,
+                                    "query": query_text,
+                                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                                }
+                            )
 
         return results
 
@@ -214,13 +217,15 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
-        "--symbol", "-s",
+        "--symbol",
+        "-s",
         action="append",
         dest="symbols",
         help="Symbol to get specific advice for (can be used multiple times)",
     )
     parser.add_argument(
-        "--query", "-q",
+        "--query",
+        "-q",
         help="Custom query to run against RAG",
     )
     parser.add_argument(
@@ -229,7 +234,8 @@ def main():
         help="Output in JSON format",
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         help="Output file path (for CI integration)",
     )
 

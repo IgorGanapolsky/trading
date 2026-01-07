@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ProfitTargetResult:
     """Result of profit target tracking."""
+
     daily_target: float = 100.0
     current_profit: float = 0.0
     on_track: bool = False
@@ -44,7 +45,7 @@ class ProfitTargetTracker:
                 daily_target=self.daily_target,
                 current_profit=current_profit,
                 on_track=current_profit >= self.daily_target * 0.5,
-                gap_to_target=max(0, self.daily_target - current_profit)
+                gap_to_target=max(0, self.daily_target - current_profit),
             )
         except Exception as e:
             logger.warning(f"Failed to check profit target: {e}")
