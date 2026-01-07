@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Trading AI RAG Webhook",
     description="Dialogflow CX webhook for lessons AND trade history queries",
-    version="2.5.0",  # Added: Trading readiness assessment for "How ready are we?" queries
+    version="2.6.0",  # Context-aware readiness: paper/live mode, tomorrow/now queries
 )
 
 # Initialize RAG system for lessons
@@ -153,6 +153,41 @@ def is_readiness_query(query: str) -> bool:
     return any(keyword in query_lower for keyword in readiness_keywords)
 
 
+def parse_readiness_context(query: str) -> dict:
+    """
+    Parse the query to understand context for readiness assessment.
+
+    Returns dict with:
+    - is_future: True if asking about tomorrow/future trading
+    - is_paper: True if asking about paper trading specifically
+    - is_live: True if asking about live trading specifically
+    """
+    query_lower = query.lower()
+
+    # Detect future-oriented queries
+    future_keywords = ["tomorrow", "next", "upcoming", "future", "will we", "later"]
+    is_future = any(kw in query_lower for kw in future_keywords)
+
+    # Detect paper trading context
+    paper_keywords = ["paper", "simulation", "simulated", "test", "demo", "practice"]
+    is_paper = any(kw in query_lower for kw in paper_keywords)
+
+    # Detect live trading context
+    live_keywords = ["live", "real", "actual", "production", "real money"]
+    is_live = any(kw in query_lower for kw in live_keywords)
+
+    # If neither specified, default based on current capital strategy
+    # (We're in paper trading phase with $30 live capital)
+    if not is_paper and not is_live:
+        is_paper = True  # Default to paper since that's our current mode
+
+    return {
+        "is_future": is_future,
+        "is_paper": is_paper,
+        "is_live": is_live,
+    }
+
+
 def is_trade_query(query: str) -> bool:
     """Detect if query is about trades vs lessons."""
     trade_keywords = [
@@ -195,10 +230,19 @@ def is_trade_query(query: str) -> bool:
     return any(keyword in query_lower for keyword in trade_keywords)
 
 
-def assess_trading_readiness() -> dict:
+def assess_trading_readiness(
+    is_future: bool = False,
+    is_paper: bool = True,
+    is_live: bool = False,
+) -> dict:
     """
     Assess trading readiness based on multiple factors.
     Returns a comprehensive readiness report with actionable insights.
+
+    Args:
+        is_future: If True, evaluating readiness for future trading (e.g., tomorrow)
+        is_paper: If True, evaluating paper trading readiness
+        is_live: If True, evaluating live trading readiness
     """
     import json
     from datetime import datetime
@@ -219,6 +263,9 @@ def assess_trading_readiness() -> dict:
     score = 0
     max_score = 0
 
+    # Determine trading mode label for messages
+    mode_label = "paper" if is_paper else "live"
+
     # 1. MARKET STATUS CHECK
     max_score += 20
     weekday = now_et.weekday()
@@ -229,15 +276,33 @@ def assess_trading_readiness() -> dict:
     market_close = 16 * 60  # 4:00 PM
 
     if weekday >= 5:  # Weekend
-        blockers.append("Market CLOSED - Weekend (Mon-Fri only)")
+        if is_future:
+            # Weekend but asking about future - check if next trading day is accessible
+            days_until_monday = (7 - weekday) % 7
+            if days_until_monday == 0:
+                days_until_monday = 7
+            warnings.append(f"Weekend - next trading day in {days_until_monday} days")
+            score += 10  # Partial credit for future planning
+        else:
+            blockers.append("Market CLOSED - Weekend (Mon-Fri only)")
     elif current_time < market_open:
         minutes_to_open = market_open - current_time
-        warnings.append(
-            f"Market opens in {minutes_to_open} minutes ({now_et.strftime('%I:%M %p')} ET)"
-        )
-        score += 10  # Partial credit - we're prepared
+        if is_future:
+            # Before open but asking about future - this is fine
+            checks.append(f"Market opens at 9:30 AM ET (in {minutes_to_open} min)")
+            score += 20
+        else:
+            warnings.append(
+                f"Market opens in {minutes_to_open} minutes ({now_et.strftime('%I:%M %p')} ET)"
+            )
+            score += 10  # Partial credit - we're prepared
     elif current_time >= market_close:
-        blockers.append(f"Market CLOSED - After hours ({now_et.strftime('%I:%M %p')} ET)")
+        if is_future:
+            # After hours but asking about tomorrow - NOT a blocker
+            checks.append(f"Market opens tomorrow at 9:30 AM ET")
+            score += 20
+        else:
+            blockers.append(f"Market CLOSED - After hours ({now_et.strftime('%I:%M %p')} ET)")
     else:
         checks.append(f"Market OPEN ({now_et.strftime('%I:%M %p')} ET)")
         score += 20
@@ -286,34 +351,43 @@ def assess_trading_readiness() -> dict:
             except Exception:
                 warnings.append("Could not verify state freshness")
 
-    # 3. CAPITAL CHECK
+    # 3. CAPITAL CHECK (context-aware: paper vs live)
     max_score += 20
     if state:
         paper_equity = state.get("paper_account", {}).get("current_equity", 0)
         live_equity = state.get("account", {}).get("current_equity", 0)
 
-        if paper_equity > 100000:
-            checks.append(f"Paper equity healthy: ${paper_equity:,.2f}")
-            score += 10
-        elif paper_equity > 95000:
-            warnings.append(f"Paper equity warning: ${paper_equity:,.2f}")
-            score += 5
+        if is_paper:
+            # Paper trading mode - only evaluate paper equity (full 20 points)
+            if paper_equity > 100000:
+                checks.append(f"Paper equity healthy: ${paper_equity:,.2f}")
+                score += 20
+            elif paper_equity > 95000:
+                warnings.append(f"Paper equity warning: ${paper_equity:,.2f}")
+                score += 10
+            else:
+                blockers.append(f"Paper equity critical: ${paper_equity:,.2f}")
+            # Note about live capital (informational, not blocking for paper)
+            if live_equity < 200:
+                target = 500  # First CSP target
+                remaining = target - live_equity
+                warnings.append(
+                    f"FYI: Live capital ${live_equity:.2f} (need ${remaining:.0f} more for live trading)"
+                )
         else:
-            blockers.append(f"Paper equity critical: ${paper_equity:,.2f}")
-
-        if live_equity >= 200:
-            checks.append(f"Live capital sufficient: ${live_equity:.2f}")
-            score += 10
-        else:
-            target = (
-                state.get("account", {})
-                .get("deposit_strategy", {})
-                .get("target_for_first_trade", 200)
-            )
-            remaining = target - live_equity
-            warnings.append(
-                f"Live capital building: ${live_equity:.2f} (need ${remaining:.0f} more for first trade)"
-            )
+            # Live trading mode - evaluate live equity (full 20 points)
+            if live_equity >= 500:
+                checks.append(f"Live capital sufficient: ${live_equity:.2f}")
+                score += 20
+            elif live_equity >= 200:
+                warnings.append(f"Live capital minimal: ${live_equity:.2f}")
+                score += 10
+            else:
+                target = 500  # First CSP target
+                remaining = target - live_equity
+                blockers.append(
+                    f"Live capital insufficient: ${live_equity:.2f} (need ${remaining:.0f} more)"
+                )
 
     # 4. BACKTEST VALIDATION
     max_score += 20
@@ -404,6 +478,10 @@ def assess_trading_readiness() -> dict:
         "warnings": warnings,
         "blockers": blockers,
         "timestamp": now_et.strftime("%Y-%m-%d %I:%M %p ET"),
+        # Include context for response formatting
+        "is_future": is_future,
+        "is_paper": is_paper,
+        "is_live": is_live,
     }
 
 
@@ -415,8 +493,18 @@ def format_readiness_response(assessment: dict) -> str:
     max_score = assessment["max_score"]
     readiness_pct = assessment["readiness_pct"]
 
+    # Show context if available
+    context_parts = []
+    if assessment.get("is_paper"):
+        context_parts.append("PAPER")
+    elif assessment.get("is_live"):
+        context_parts.append("LIVE")
+    if assessment.get("is_future"):
+        context_parts.append("TOMORROW")
+    context_str = f" [{'/'.join(context_parts)}]" if context_parts else ""
+
     response_parts = [
-        f"{emoji} **TRADING READINESS: {status}** ({readiness_pct:.0f}%)",
+        f"{emoji} **TRADING READINESS: {status}** ({readiness_pct:.0f}%){context_str}",
         f"Score: {score}/{max_score}",
         f"Assessed: {assessment['timestamp']}",
         "",
@@ -616,10 +704,18 @@ async def webhook(request: Request) -> JSONResponse:
         # Check readiness queries FIRST (highest priority)
         if is_readiness_query(user_query):
             logger.info(f"Detected READINESS query: {user_query}")
-            assessment = assess_trading_readiness()
+            # Parse context from query (tomorrow? paper? live?)
+            context = parse_readiness_context(user_query)
+            logger.info(f"Readiness context: {context}")
+            assessment = assess_trading_readiness(
+                is_future=context["is_future"],
+                is_paper=context["is_paper"],
+                is_live=context["is_live"],
+            )
             response_text = format_readiness_response(assessment)
             logger.info(
-                f"Readiness assessment: {assessment['status']} ({assessment['readiness_pct']:.0f}%)"
+                f"Readiness assessment: {assessment['status']} ({assessment['readiness_pct']:.0f}%) "
+                f"[future={context['is_future']}, paper={context['is_paper']}]"
             )
 
         elif is_trade_query(user_query):
@@ -780,11 +876,41 @@ async def test_trades(query: str = "recent trades"):
 
 
 @app.get("/test-readiness")
-async def test_readiness():
-    """Test endpoint to verify trading readiness assessment."""
-    assessment = assess_trading_readiness()
+async def test_readiness(
+    query: str = "How ready are we for paper trading?",
+    is_future: bool = False,
+    is_paper: bool = True,
+    is_live: bool = False,
+):
+    """
+    Test endpoint to verify trading readiness assessment.
+
+    Args:
+        query: Optional query to parse context from (overrides explicit params)
+        is_future: If True, evaluate for tomorrow/future trading
+        is_paper: If True, evaluate paper trading mode
+        is_live: If True, evaluate live trading mode
+    """
+    # Parse context from query if provided
+    if query:
+        context = parse_readiness_context(query)
+        is_future = context["is_future"]
+        is_paper = context["is_paper"]
+        is_live = context["is_live"]
+
+    assessment = assess_trading_readiness(
+        is_future=is_future,
+        is_paper=is_paper,
+        is_live=is_live,
+    )
     return {
         "query_type": "readiness",
+        "query": query,
+        "context": {
+            "is_future": is_future,
+            "is_paper": is_paper,
+            "is_live": is_live,
+        },
         "assessment": assessment,
         "formatted_response": format_readiness_response(assessment),
     }
