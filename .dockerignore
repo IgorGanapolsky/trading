@@ -37,7 +37,9 @@ htmlcov/
 
 # Documentation
 docs/
+# Exclude .md but keep lessons learned files for webhook
 *.md
+!rag_knowledge/lessons_learned/*.md
 README*
 LICENSE
 
@@ -56,7 +58,9 @@ docker-compose*.yml
 .env.*
 
 # Data and logs (mounted as volumes)
-data/
+# Exclude data dir but keep system_state.json for webhook
+data/*
+!data/system_state.json
 logs/
 *.log
 
