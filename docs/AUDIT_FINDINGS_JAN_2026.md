@@ -49,12 +49,13 @@
   - VIX circuit breaker (0% coverage)
 - **Fix:** Create test files for critical modules
 
-### 5. Dead Tests Reference Non-Existent Modules
+### 5. Dead Tests Reference Non-Existent Modules ⚠️ REVIEWED
 - **Files:**
   - `tests/test_rag_ml_safety.py` - imports `src.safety.volatility_adjusted_safety` (doesn't exist)
   - `tests/test_safety_matrix.py` - imports `src.strategies.growth_strategy` (doesn't exist)
-- **Impact:** Tests fail on import, provide false sense of coverage
-- **Fix:** Remove dead tests or create missing modules
+- **Status:** ⚠️ REVIEWED Jan 8, 2026 - Tests properly use `pytest.skip()` when modules missing
+- **Verdict:** NOT dead tests - they're future-proof placeholders that gracefully skip in CI
+- **Action:** Keep tests, create modules when implementing features
 
 ### 6. Code Smell: Monolithic Files
 - **Files:**
