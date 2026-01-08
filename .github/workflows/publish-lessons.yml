@@ -121,9 +121,28 @@ jobs:
             title=$(head -1 "$file" | sed 's/^# //')
 
             # Extract date from filename (e.g., ll_056_xxx_dec22.md -> 2025-12-22)
-            if [[ "$filename" =~ dec([0-9]+) ]]; then
-              day="${BASH_REMATCH[1]}"
-              date="2025-12-${day}"
+            # Supports: jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec
+            if [[ "$filename" =~ (jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)([0-9]+) ]]; then
+              month="${BASH_REMATCH[1]}"
+              day="${BASH_REMATCH[2]}"
+              # Map month abbreviations to numbers
+              case "$month" in
+                jan) month_num="01"; year="2026" ;;
+                feb) month_num="02"; year="2026" ;;
+                mar) month_num="03"; year="2026" ;;
+                apr) month_num="04"; year="2026" ;;
+                may) month_num="05"; year="2026" ;;
+                jun) month_num="06"; year="2026" ;;
+                jul) month_num="07"; year="2026" ;;
+                aug) month_num="08"; year="2026" ;;
+                sep) month_num="09"; year="2026" ;;
+                oct) month_num="10"; year="2025" ;;
+                nov) month_num="11"; year="2025" ;;
+                dec) month_num="12"; year="2025" ;;
+              esac
+              # Pad day with leading zero if needed
+              day=$(printf "%02d" "$day")
+              date="${year}-${month_num}-${day}"
             else
               date=$(date +%Y-%m-%d)
             fi
