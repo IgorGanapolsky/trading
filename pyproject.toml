@@ -168,7 +168,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "S105", "S106"]
+# Tests use sys.path manipulation which breaks isort (I001)
+"tests/*" = ["S101", "S105", "S106", "I001"]
+"tests/unit/*" = ["S101", "S105", "S106", "I001"]
 # Files that check library availability via import
 "scripts/check_alpaca_minimum_orders.py" = ["F401"]
 "scripts/test_langsmith.py" = ["F401"]
