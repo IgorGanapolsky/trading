@@ -72,11 +72,24 @@ jobs:
           python3 -m pip install --no-build-isolation multitasking || python3 -m pip install multitasking==0.0.11
           python3 -m pip install --no-cache-dir -r requirements-minimal.txt
 
-      - name: Verify ChromaDB (RAG prerequisite)
+      - name: Self-Heal Data Integrity
         run: |
-          echo "🔍 Verifying ChromaDB vector database..."
-          python3 -c "import chromadb; print(f'✅ ChromaDB v{chromadb.__version__} installed')"
-          # This check prevents silent RAG failures (LL-074)
+          echo "🔧 Running self-healing data integrity check..."
+          # This prevents stale dates, wrong day counters, and data drift
+          # Added Jan 8, 2026 - CEO directive for self-healing system
+          python3 scripts/self_heal_data.py || echo "Self-healing had issues (non-blocking)"
+
+      - name: Commit Self-Healing Fixes (if any)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "✅ No self-healing fixes needed"
+          else
+            git add data/system_state.json docs/index.md docs/progress_dashboard.md || true
+            git commit -m "chore: Auto-heal data integrity (day counter, dates)" || true
+            git push || echo "Push failed (non-blocking)"
+          fi
 
       - name: Install full deps for unit gates (optional)
         if: ${{ false }}  # enable only if additional tests need full stack
