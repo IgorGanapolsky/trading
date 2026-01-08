@@ -89,7 +89,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install yt-dlp youtube-transcript-api chromadb pandas numpy
+          pip install yt-dlp youtube-transcript-api pandas numpy
 
       - name: Weekend Learning Header
         run: |

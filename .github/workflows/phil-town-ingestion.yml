@@ -45,7 +45,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install yt-dlp youtube-transcript-api chromadb requests beautifulsoup4 sentence-transformers
+          pip install yt-dlp youtube-transcript-api requests beautifulsoup4 sentence-transformers
 
       - name: Validate secrets
         env:
@@ -93,7 +93,7 @@ jobs:
       - name: Vectorize new content into RAG
         run: |
           set -e
-          echo "Vectorizing content into ChromaDB..."
+          echo "Vectorizing content into RAG..."
           python3 scripts/vectorize_rag_knowledge.py --update || {
             echo "::warning::Vectorization had issues, continuing..."
           }
