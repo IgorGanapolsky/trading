@@ -1,0 +1,84 @@
+# .gcloudignore - Files to exclude from Cloud Build upload
+# This reduces upload size and speeds up builds
+
+# Git
+.git/
+.gitignore
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.eggs/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test and dev files
+tests/
+
+# Documentation (not needed for webhook)
+docs/
+
+# Data files we DON'T need (but keep system_state.json)
+data/backtests/
+data/backups/
+data/feedback/
+data/rag/
+data/trades_*.json
+data/performance_log.json
+
+# Reports
+reports/
+
+# Local configs
+.env
+.env.*
+*.local
+
+# Large dependencies we don't need
+node_modules/
+
+# CI/CD configs (not needed in container)
+.github/
+.claude/
+
+# Other large dirs we don't need for webhook
+scripts/
+config/
+
+# Source files we DON'T need (keep only src/agents, src/rag)
+src/analyst/
+src/analytics/
+src/brokers/
+src/core/
+src/data/
+src/execution/
+src/integrations/
+src/learning/
+src/ml/
+src/observability/
+src/options/
+src/orchestration/
+src/orchestrator/
+src/risk/
+src/safety/
+src/signals/
+src/strategies/
+src/trading/
+src/utils/
