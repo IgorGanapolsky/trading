@@ -2,10 +2,10 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2026-01-07T21:00:32.411351",
+    "last_updated": "2026-01-08T02:05:27.121190",
     "last_audit": "2026-01-06T16:38:45",
     "audit_notes": "Updated after trades synced - Jan 6 2026 paper trades executed",
-    "last_sync": "2026-01-07T21:00:32.411362",
+    "last_sync": "2026-01-08T02:05:27.121201",
     "sync_mode": "skipped_no_keys"
   },
   "challenge": {
@@ -135,7 +135,10 @@
     "purpose": "Test Phil Town Rule #1 strategies before live deployment",
     "capital_aligned": true,
     "alignment_note": "RESET Jan 7, 2026 by CEO to $5,000 - realistic 6-month milestone",
-    "valid_strategies": ["CSPs on stocks with strike ≤$50", "1-2 positions max"],
+    "valid_strategies": [
+      "CSPs on stocks with strike \u2264$50",
+      "1-2 positions max"
+    ],
     "lesson_learned": "rag_knowledge/lessons_learned/ll_111_paper_capital_must_match_real_jan07.md",
     "starting_balance": 5000.0,
     "current_equity": 5000.0,
