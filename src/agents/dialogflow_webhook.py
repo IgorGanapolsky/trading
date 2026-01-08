@@ -345,14 +345,17 @@ def assess_trading_readiness(
         live_equity = state.get("account", {}).get("current_equity", 0)
 
         if is_paper:
-            # Paper trading mode - only evaluate paper equity (full 20 points)
-            if paper_equity > 100000:
+            # Paper trading mode - evaluate paper equity (full 20 points)
+            # Thresholds aligned with $5,000 starting capital (Jan 7, 2026)
+            if paper_equity >= 5000:
                 checks.append(f"Paper equity healthy: ${paper_equity:,.2f}")
                 score += 20
-            elif paper_equity > 95000:
+            elif paper_equity >= 4500:
+                # 10% drawdown warning threshold
                 warnings.append(f"Paper equity warning: ${paper_equity:,.2f}")
                 score += 10
             else:
+                # Below $4,500 = more than 10% loss = critical
                 blockers.append(f"Paper equity critical: ${paper_equity:,.2f}")
             # Note about live capital (informational, not blocking for paper)
             if live_equity < 200:
@@ -399,15 +402,23 @@ def assess_trading_readiness(
     # 5. WIN RATE CHECK
     max_score += 20
     if state:
-        win_rate = state.get("paper_account", {}).get("win_rate", 0)
-        if win_rate >= 60:
-            checks.append(f"Win rate strong: {win_rate:.0f}%")
+        paper_account = state.get("paper_account", {})
+        win_rate = paper_account.get("win_rate", 0)
+        sample_size = paper_account.get("win_rate_sample_size", 0)
+
+        # Handle fresh accounts with no trades yet (Jan 7, 2026)
+        if sample_size == 0:
+            # No trades yet - give partial credit, not a blocker
+            warnings.append("Win rate: No trades yet (fresh account)")
+            score += 10
+        elif win_rate >= 60:
+            checks.append(f"Win rate strong: {win_rate:.0f}% ({sample_size} trades)")
             score += 20
         elif win_rate >= 50:
-            warnings.append(f"Win rate marginal: {win_rate:.0f}%")
+            warnings.append(f"Win rate marginal: {win_rate:.0f}% ({sample_size} trades)")
             score += 10
         else:
-            blockers.append(f"Win rate poor: {win_rate:.0f}%")
+            blockers.append(f"Win rate poor: {win_rate:.0f}% ({sample_size} trades)")
 
     # 6. TRADING AUTOMATION CHECK (Critical - added Jan 6, 2026)
     max_score += 20
