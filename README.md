@@ -1,14 +1,14 @@
 # AI Options Trading Bot
 
-[![Win Rate](https://img.shields.io/badge/win_rate-80%25-brightgreen.svg)](docs/r-and-d-phase.md)
+[![Win Rate](https://img.shields.io/badge/win_rate-N%2FA_(fresh_start)-yellow.svg)](docs/r-and-d-phase.md)
 [![Status](https://img.shields.io/badge/status-live_trading-green.svg)](docs/r-and-d-phase.md)
-[![Day](https://img.shields.io/badge/day-70%2F90-blue.svg)](docs/r-and-d-phase.md)
+[![Day](https://img.shields.io/badge/day-72%2F90-blue.svg)](docs/r-and-d-phase.md)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](requirements.txt)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Open-source AI-powered trading system** using options premium selling and Thompson Sampling strategy selection. Built with Python and Alpaca API.
 
-> **Current Status**: Day 70/90 R&D Phase (Jan 7, 2026) | Live: $30 (accumulating) | 80% win rate
+> **Current Status**: Day 72/90 R&D Phase (Jan 8, 2026) | Live: $30 (accumulating) | Paper: FRESH START ($5K reset Jan 7)
 
 ---
 
@@ -27,20 +27,20 @@ Most trading bots fail because they:
 
 ---
 
-## Current Performance (Day 70/90 - Jan 7, 2026)
+## Current Performance (Day 72/90 - Jan 8, 2026)
 
 | Account | Equity | P/L | Status |
 |---------|--------|-----|--------|
 | Live | $30.00 | $0.00 | Accumulating $10/day |
-| Paper (R&D) | $101,083.86 | +$1,083.86 | +1.08% |
+| Paper (R&D) | $5,000.00 | $0.00 | FRESH START (reset Jan 7) |
 
 | Metric | Value | Target |
 |--------|-------|--------|
-| Win Rate | 80% | 55%+ |
-| Positions | 5 | Active |
+| Win Rate | N/A | 55%+ |
+| Positions | 0 | - |
 | Backtest Pass | 19/13 | Scenarios |
 
-**Honest Assessment**: Live trading started Jan 3, 2026 with fresh $20 deposit. Accumulating $10/day for defined-risk options spreads ($100-200 minimum). Paper account validates strategy with 80% win rate and +$1,083 profit.
+**Honest Assessment**: Live trading started Jan 3, 2026 with fresh $20 deposit. Accumulating $10/day for defined-risk options spreads ($500 minimum for CSPs). Paper account was RESET to $5,000 on Jan 7, 2026 by CEO to match realistic 6-month capital milestone. Previous $100K+ paper results were unrealistic for actual capital trajectory.
 
 ---
 
