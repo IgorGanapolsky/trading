@@ -16,25 +16,29 @@
 
 ## CRITICAL ISSUES (Must Fix Immediately)
 
-### 1. CI Reliability: 38 `continue-on-error: true` Steps
+### 1. CI Reliability: `continue-on-error: true` Steps ✅ REVIEWED
 - **File:** `.github/workflows/daily-trading.yml`
-- **Impact:** Trading can fail silently - workflow succeeds but no trades execute
-- **Evidence:** 13-day silent outage documented in code comments
-- **Fix:** Convert ALL trading execution steps to `continue-on-error: false`
+- **Actual Count:** 19 (not 38 as originally estimated)
+- **Impact:** Originally caused 13-day silent outage (already fixed with "Trading step skipped" alert)
+- **Status:** ✅ REVIEWED Jan 8, 2026
+  - Trading execution step does NOT have continue-on-error
+  - All 19 instances are post-trading operations (logging, monitoring, wiki updates)
+  - Added CRITICAL Telegram alert for trailing stop-loss failures
+  - Continue-on-error is APPROPRIATE for these post-trading steps
 
 ### 2. Security: immediate-trade.yml Has No Approval Gate
 - **File:** `.github/workflows/immediate-trade.yml`
 - **Impact:** ANY push to `claude/*` with EXECUTE_NOW.md triggers trades immediately
 - **Fix:** Add manual approval requirement or delete workflow
 
-### 3. Architecture: ChromaDB Code Still Exists (Deprecated Dec 2025)
-- **Files:**
-  - `src/agents/dialogflow_webhook.py` (lines 44-59)
-  - `src/rag/lessons_search.py` (lines 44-93)
-  - `src/rag/enforcer.py` (lines 57-71)
-  - `src/observability/trade_sync.py` (lines 62-90)
-- **Impact:** Violates CLAUDE.md directive to remove ChromaDB
-- **Fix:** Remove all ChromaDB code, use Vertex AI RAG only
+### 3. Architecture: ChromaDB Code Still Exists (Deprecated Dec 2025) ✅ FIXED
+- **Files:** (all fixed)
+  - `src/agents/dialogflow_webhook.py` ✅ Fixed Jan 8, 2026
+  - `src/rag/lessons_search.py` ✅ Fixed Jan 8, 2026
+  - `src/rag/enforcer.py` ✅ Fixed Jan 8, 2026
+  - `src/observability/trade_sync.py` ✅ Fixed Jan 8, 2026
+- **Status:** ✅ FIXED Jan 8, 2026 - 376 lines of ChromaDB code removed
+- **Architecture now:** Vertex AI RAG (cloud) + Local JSON (backup)
 
 ### 4. Test Coverage: 63% of Modules UNTESTED
 - **Untested modules:** 83 out of 131
@@ -63,10 +67,11 @@
 
 ## HIGH PRIORITY ISSUES
 
-### DRY Violations (5 instances)
-1. `_init_chromadb()` duplicated in 3 files (30+ identical lines each)
+### DRY Violations (4 instances remaining)
+1. ~~`_init_chromadb()` duplicated in 3 files~~ ✅ FIXED - ChromaDB removed entirely
 2. `get_scalar()` nested 4 times in `technical_indicators.py`
 3. Traceable decorators nearly identical in `langsmith_tracer.py`
+4. Multiple dashboard generators overlap
 
 ### Scripts in Wrong Directory
 - `scripts/test_gemini_failover.py` → should be `tests/test_gemini_failover.py`
@@ -88,7 +93,7 @@
 - Inline imports in several test files
 
 ### Outdated Comments
-- `lessons_search.py` line 5-8: Says "ChromaDB was REMOVED" but code still implements it
+- ~~`lessons_search.py` line 5-8: Says "ChromaDB was REMOVED" but code still implements it~~ ✅ FIXED - Code matches comment now
 - `alpaca_trader.py` docstring claims "Comprehensive error handling" but it's minimal
 
 ### Race Conditions
