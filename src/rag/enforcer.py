@@ -13,6 +13,7 @@ This module enforces RAG consultation BEFORE any action, with:
 3. Process-level feedback recording
 
 Created: Jan 6, 2026
+Updated: Jan 8, 2026 - Removed ChromaDB, use keyword-based LessonsSearch instead
 """
 
 import json
@@ -21,21 +22,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-try:
-    import chromadb
-    from chromadb.config import Settings
-
-    CHROMADB_AVAILABLE = True
-except ImportError:
-    chromadb = None  # type: ignore
-    Settings = None  # type: ignore
-    CHROMADB_AVAILABLE = False
+# Use local keyword search (no external dependencies)
+from src.rag.lessons_search import get_lessons_search
 
 logger = logging.getLogger(__name__)
 
 DATA_DIR = Path("data")
 ENFORCEMENT_LOG = DATA_DIR / "rag_enforcement_log.json"
-VECTOR_DB_PATH = DATA_DIR / "vector_db"
 
 
 class RAGEnforcer:
@@ -49,26 +42,9 @@ class RAGEnforcer:
     """
 
     def __init__(self):
-        self._client = None
-        self._collection = None
+        self._lessons_search = get_lessons_search()
         self._enforcement_log = self._load_log()
-        self._init_chromadb()
-
-    def _init_chromadb(self):
-        """Initialize ChromaDB connection."""
-        if not CHROMADB_AVAILABLE:
-            logger.warning("ChromaDB not available - RAG Enforcer running in mock mode")
-            return
-
-        try:
-            self._client = chromadb.PersistentClient(
-                path=str(VECTOR_DB_PATH),
-                settings=Settings(anonymized_telemetry=False),
-            )
-            self._collection = self._client.get_collection("phil_town_rag")
-            logger.info(f"RAG Enforcer initialized: {self._collection.count()} lessons")
-        except Exception as e:
-            logger.error(f"RAG Enforcer init failed: {e}")
+        logger.info(f"RAG Enforcer initialized: {self._lessons_search.count()} lessons loaded")
 
     def _load_log(self) -> dict[str, Any]:
         """Load enforcement log."""
@@ -111,44 +87,34 @@ class RAGEnforcer:
                 - evidence_gap: What's missing from current knowledge
                 - recommendation: Proceed/Block/Review
         """
-        if not self._collection:
-            return {
-                "lessons": [],
-                "blocking": False,
-                "evidence_gap": "RAG not available",
-                "recommendation": "PROCEED_WITH_CAUTION",
-            }
-
         # Build query from action
-        query_text = f"{action_type}: {action_description}"
+        query_text = f"{action_type} {action_description}"
         if context:
-            query_text += f" Context: {context}"
+            query_text += f" {context}"
 
-        # Query RAG
-        results = self._collection.query(
-            query_texts=[query_text],
-            n_results=5,
-        )
+        # Query using keyword search
+        results = self._lessons_search.search(query_text, top_k=5)
 
         lessons = []
         blocking = False
         blocking_lessons = []
 
-        for doc, meta in zip(results["documents"][0], results["metadatas"][0]):
+        for lesson_result, score in results:
             lesson = {
-                "source": meta.get("source", "unknown"),
-                "content": doc[:500],
-                "severity": meta.get("severity", "MEDIUM"),
-                "category": meta.get("category", "general"),
+                "source": lesson_result.file,
+                "content": lesson_result.snippet,
+                "severity": lesson_result.severity,
+                "title": lesson_result.title,
+                "score": score,
             }
             lessons.append(lesson)
 
-            # Check for blocking conditions
-            if meta.get("severity") == "CRITICAL":
+            # Check for blocking conditions (CRITICAL lessons relevant to action)
+            if lesson_result.severity == "CRITICAL":
                 # Check if lesson is relevant to this action
-                action_keywords = action_type.lower().split("_")
-                doc_lower = doc.lower()
-                if any(kw in doc_lower for kw in action_keywords):
+                action_keywords = action_type.lower().replace("_", " ").split()
+                content_lower = lesson_result.snippet.lower()
+                if any(kw in content_lower for kw in action_keywords):
                     blocking = True
                     blocking_lessons.append(lesson)
 
@@ -251,7 +217,7 @@ class RAGEnforcer:
 
         # Log warning if advice was ignored and outcome was failure
         if not followed_advice and outcome == "failure":
-            logger.warning(f"⚠️ IGNORED RAG ADVICE led to FAILURE: {action_type} - {notes}")
+            logger.warning(f"IGNORED RAG ADVICE led to FAILURE: {action_type} - {notes}")
 
     def get_stats(self) -> dict[str, Any]:
         """Get enforcement statistics."""

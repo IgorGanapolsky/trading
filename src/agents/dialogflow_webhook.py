@@ -41,22 +41,9 @@ app = FastAPI(
 rag = LessonsLearnedRAG()
 logger.info(f"RAG initialized with {len(rag.lessons)} lessons")
 
-# Initialize trade history ChromaDB
-trade_collection = None
-try:
-    import chromadb
-    from chromadb.config import Settings
-
-    db_path = Path("data/vector_db")
-    if db_path.exists():
-        client = chromadb.PersistentClient(
-            path=str(db_path),
-            settings=Settings(anonymized_telemetry=False),
-        )
-        trade_collection = client.get_or_create_collection(name="trade_history")
-        logger.info(f"Trade history initialized: {trade_collection.count()} trades")
-except Exception as e:
-    logger.warning(f"Trade history not available: {e}")
+# Trade history is now loaded from local JSON files
+# ChromaDB was removed Jan 8, 2026 per CLAUDE.md directive
+logger.info("Trade history loaded from local JSON files (ChromaDB removed)")
 
 
 def get_current_portfolio_status() -> dict:
@@ -588,27 +575,48 @@ def format_lessons_response(lessons: list, query: str) -> str:
 
 
 def query_trades(query: str, limit: int = 10) -> list[dict]:
-    """Query trade history from ChromaDB."""
-    if not trade_collection:
-        return []
+    """Query trade history from local JSON files."""
+    import json
+    from pathlib import Path
+
+    trades = []
+    data_dir = project_root / "data"
 
     try:
-        results = trade_collection.query(
-            query_texts=[query],
-            n_results=limit,
-            where={"type": "trade"},
-        )
+        # Get trades from recent JSON files
+        for trades_file in sorted(data_dir.glob("trades_*.json"), reverse=True):
+            if len(trades) >= limit:
+                break
 
-        trades = []
-        if results["documents"] and results["metadatas"]:
-            for doc, meta in zip(results["documents"][0], results["metadatas"][0]):
-                trades.append(
-                    {
-                        "document": doc,
-                        "metadata": meta,
-                    }
-                )
-        return trades
+            with open(trades_file) as f:
+                file_trades = json.load(f)
+                for trade in file_trades:
+                    # Build document string like ChromaDB did
+                    pnl = trade.get("pnl") or 0
+                    outcome = "profitable" if pnl > 0 else ("loss" if pnl < 0 else "breakeven")
+                    document = (
+                        f"Trade: {trade.get('side', '').upper()} {trade.get('qty', 0)} "
+                        f"{trade.get('symbol', '')} at ${trade.get('price', 0):.2f} "
+                        f"using {trade.get('strategy', '')} strategy. "
+                        f"Outcome: {outcome} with P/L ${pnl:.2f}. "
+                        f"Date: {trade.get('timestamp', '')[:10]}"
+                    )
+                    trades.append({
+                        "document": document,
+                        "metadata": {
+                            "symbol": trade.get("symbol", "UNKNOWN"),
+                            "side": trade.get("side", ""),
+                            "strategy": trade.get("strategy", ""),
+                            "pnl": pnl,
+                            "outcome": outcome,
+                            "timestamp": trade.get("timestamp", ""),
+                        },
+                    })
+                    if len(trades) >= limit:
+                        break
+
+        return trades[:limit]
+
     except Exception as e:
         logger.error(f"Trade query failed: {e}")
         return []
@@ -719,7 +727,7 @@ async def webhook(request: Request) -> JSONResponse:
             )
 
         elif is_trade_query(user_query):
-            # Query trade history from ChromaDB
+            # Query trade history from local JSON files
             logger.info(f"Detected TRADE query: {user_query}")
             trades = query_trades(user_query, limit=10)
 
@@ -802,25 +810,27 @@ Or ask me about **lessons learned** instead (e.g., "What lessons did we learn ab
 @app.get("/health")
 async def health():
     """Health check endpoint."""
-    trade_count = trade_collection.count() if trade_collection else 0
+    # Count trades from local JSON files
+    trade_count = len(query_trades("all", limit=1000))
     return {
         "status": "healthy",
         "lessons_loaded": len(rag.lessons),
         "critical_lessons": len(rag.get_critical_lessons()),
         "trades_loaded": trade_count,
-        "trade_history_available": trade_collection is not None,
+        "trade_history_source": "local_json",
     }
 
 
 @app.get("/")
 async def root():
     """Root endpoint with info."""
-    trade_count = trade_collection.count() if trade_collection else 0
+    trade_count = len(query_trades("all", limit=1000))
     return {
         "service": "Trading AI RAG Webhook",
-        "version": "2.5.0",
+        "version": "2.7.0",  # Updated: ChromaDB removed, using local JSON
         "lessons_loaded": len(rag.lessons),
         "trades_loaded": trade_count,
+        "trade_history_source": "local_json",
         "endpoints": {
             "/webhook": "POST - Dialogflow CX webhook (lessons + trades + readiness)",
             "/health": "GET - Health check",
@@ -856,11 +866,12 @@ async def test_rag(query: str = "critical lessons"):
 async def test_trades(query: str = "recent trades"):
     """Test endpoint to verify trade history is working."""
     trades = query_trades(query, limit=10)
+    total_trades = len(query_trades("all", limit=1000))
     return {
         "query": query,
         "query_type": "trades",
-        "trade_collection_available": trade_collection is not None,
-        "trade_count": trade_collection.count() if trade_collection else 0,
+        "trade_history_source": "local_json",
+        "total_trade_count": total_trades,
         "results_count": len(trades),
         "results": [
             {

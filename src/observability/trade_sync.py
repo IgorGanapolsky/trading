@@ -4,10 +4,10 @@ Unified Trade Sync - Sync trades to LangSmith, Vertex AI RAG, and local JSON.
 This module ensures EVERY trade is recorded to:
 1. LangSmith (smith.langchain.com) - for observability and ML training
 2. Vertex AI RAG - for Dialogflow queries and cloud backup
-3. Local JSON files - for backup and local querying
+3. Local JSON files - for backup
 
 Created: Jan 5, 2026 - Fix for operational gap where trades only went to JSON files.
-Updated: Jan 7, 2026 - Removed ChromaDB (CEO directive - use Vertex AI RAG instead)
+Updated: Jan 8, 2026 - Removed ChromaDB (deprecated per CLAUDE.md Jan 7, 2026)
 """
 
 import json
@@ -154,7 +154,7 @@ class TradeSync:
                 tags=["trade", outcome, trade_data["strategy"], trade_data["symbol"]],
             )
 
-            logger.debug(f"✅ Trade synced to LangSmith: {run_name}")
+            logger.debug(f"Trade synced to LangSmith: {run_name}")
             return True
 
         except Exception as e:
@@ -204,7 +204,7 @@ class TradeSync:
             with open(trades_file, "w") as f:
                 json.dump(trades, f, indent=2)
 
-            logger.debug(f"✅ Trade saved to {trades_file}")
+            logger.debug(f"Trade saved to {trades_file}")
             return True
 
         except Exception as e:
@@ -292,7 +292,7 @@ class TradeSync:
 - **Date**: {today}
 
 ## Outcome
-{"✅ Profitable trade" if pnl > 0 else "❌ Loss - review strategy"}
+{"Profitable trade" if pnl > 0 else "Loss - review strategy"}
 
 ## Notes
 Auto-generated lesson from trade sync system.
@@ -319,7 +319,7 @@ Auto-generated lesson from trade sync system.
                         severity="HIGH" if abs(pnl) > 50 else "MEDIUM",
                         category="trade_lesson",
                     )
-                    logger.info(f"✅ Trade lesson synced to Vertex AI RAG: {lesson_id}")
+                    logger.info(f"Trade lesson synced to Vertex AI RAG: {lesson_id}")
             except Exception as vertex_err:
                 logger.warning(f"Could not sync lesson to Vertex AI RAG: {vertex_err}")
 
@@ -327,19 +327,29 @@ Auto-generated lesson from trade sync system.
             logger.error(f"Failed to create trade lesson: {e}")
 
     def get_trade_history(self, symbol: Optional[str] = None, limit: int = 100) -> list[dict]:
-        """Query trade history from local JSON files."""
+        """
+        Query trade history from local JSON files.
+
+        For cloud queries, use Vertex AI RAG via Dialogflow.
+        """
         trades = []
         try:
-            # Read all trade files
+            # Get trades from recent JSON files
             for trades_file in sorted(DATA_DIR.glob("trades_*.json"), reverse=True):
+                if len(trades) >= limit:
+                    break
+
                 with open(trades_file) as f:
                     file_trades = json.load(f)
-                    if symbol:
-                        file_trades = [t for t in file_trades if t.get("symbol") == symbol]
-                    trades.extend(file_trades)
-                    if len(trades) >= limit:
-                        break
+                    for trade in file_trades:
+                        if symbol and trade.get("symbol") != symbol:
+                            continue
+                        trades.append(trade)
+                        if len(trades) >= limit:
+                            break
+
             return trades[:limit]
+
         except Exception as e:
             logger.error(f"Failed to query trade history: {e}")
             return []

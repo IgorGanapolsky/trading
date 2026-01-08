@@ -2,10 +2,10 @@
 LessonsSearch - Simple keyword search for lessons learned.
 
 Uses straightforward keyword matching on markdown files.
-Fast and dependency-free - no external vector database required.
+ChromaDB was REMOVED on Jan 7, 2026 (CEO directive - unnecessary complexity).
 
 Created: Dec 31, 2025 (Fix for ll_054 - RAG not actually used)
-Updated: Jan 7, 2026 - Simplified to keyword search only (CEO directive)
+Updated: Jan 8, 2026 - ACTUALLY removed ChromaDB code (was still present despite docstring)
 """
 
 import logging
@@ -37,23 +37,12 @@ class LessonsSearch:
     Simple keyword search over lessons learned.
 
     Scans markdown files for matching terms. Fast and dependency-free.
-    For cloud-based semantic search, use Vertex AI RAG via CI workflows.
+    No external vector DB required - simple TF-IDF style matching.
     """
 
-    def __init__(self, use_chromadb: bool = False):
-        """
-        Initialize LessonsSearch.
-
-        Args:
-            use_chromadb: Deprecated parameter, kept for backward compatibility.
-                         Always uses keyword search now.
-        """
+    def __init__(self):
+        """Initialize LessonsSearch with keyword-only search."""
         self._lessons_cache: list[dict] = []
-
-        if use_chromadb:
-            logger.warning("ChromaDB is deprecated - using keyword search instead")
-
-        # Load lessons for keyword search
         self._load_lessons()
 
     def _load_lessons(self) -> None:
@@ -136,12 +125,6 @@ class LessonsSearch:
         Returns:
             List of (LessonResult, score) tuples, sorted by relevance
         """
-        return self._search_keywords(query, top_k, severity_filter)
-
-    def _search_keywords(
-        self, query: str, top_k: int, severity_filter: Optional[str]
-    ) -> list[tuple[LessonResult, float]]:
-        """Keyword-based search over loaded lessons."""
         query_terms = query.lower().split()
         results = []
 
@@ -182,23 +165,6 @@ class LessonsSearch:
         # Sort by score descending
         results.sort(key=lambda x: x[1], reverse=True)
         return results[:top_k]
-
-    def index_lessons(self, force_rebuild: bool = False) -> int:
-        """
-        Reload lessons from disk.
-
-        Args:
-            force_rebuild: If True, reload all lessons from disk
-
-        Returns:
-            Number of lessons loaded
-        """
-        if force_rebuild:
-            self._lessons_cache = []
-
-        self._load_lessons()
-        logger.info(f"Loaded {len(self._lessons_cache)} lessons")
-        return len(self._lessons_cache)
 
     def get_critical_lessons(self) -> list[LessonResult]:
         """Get all CRITICAL severity lessons."""
