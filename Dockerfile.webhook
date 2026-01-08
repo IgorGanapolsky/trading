@@ -1,25 +1,32 @@
 # Dockerfile for Dialogflow Webhook
+# Minimal dependencies for fast deployment (~2 min vs ~10 min)
 FROM python:3.11-slim
 
-# Cache bust: 2026-01-05-1920 (forces fresh build)
+# Cache bust to force fresh build on deploy
 ARG CACHE_BUST=1
 
 WORKDIR /app
 
-# Copy requirements
-COPY requirements-minimal.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir fastapi uvicorn chromadb sentence-transformers
+# Install ONLY what webhook actually needs (no chromadb/sentence-transformers)
+# This reduces build time from ~10 min to ~2 min
+# ChromaDB was REMOVED per CLAUDE.md directive (Jan 7, 2026)
+RUN pip install --no-cache-dir \
+    fastapi==0.128.0 \
+    uvicorn==0.40.0 \
+    requests==2.32.5
 
-# Copy source code
-COPY src/ src/
-COPY rag_knowledge/ rag_knowledge/
+# Copy source code (only what's needed)
+COPY src/agents/dialogflow_webhook.py src/agents/dialogflow_webhook.py
+COPY src/rag/ src/rag/
+COPY src/__init__.py src/__init__.py
+COPY src/agents/__init__.py src/agents/__init__.py
+COPY rag_knowledge/lessons_learned/ rag_knowledge/lessons_learned/
 
 # Copy system state for portfolio data (fallback to GitHub raw if stale)
 COPY data/system_state.json data/system_state.json
 
-# Create data directory for ChromaDB
-RUN mkdir -p data/rag/chroma_db
+# Create data directory
+RUN mkdir -p data
 
 # Expose port
 EXPOSE 8080
