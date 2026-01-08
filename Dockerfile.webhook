@@ -18,12 +18,13 @@ RUN pip install --no-cache-dir \
 # Create required package structure
 RUN mkdir -p src/agents src/rag rag_knowledge/lessons_learned data
 
-# Create __init__.py files for Python packages
+# Create empty __init__.py files for Python packages
 RUN touch src/__init__.py src/agents/__init__.py src/rag/__init__.py
 
-# Copy only required source files
+# Copy ONLY the specific RAG files needed (not vertex_rag.py which needs google.cloud)
 COPY src/agents/dialogflow_webhook.py src/agents/
-COPY src/rag/ src/rag/
+COPY src/rag/lessons_learned_rag.py src/rag/
+COPY src/rag/lessons_search.py src/rag/
 COPY rag_knowledge/lessons_learned/ rag_knowledge/lessons_learned/
 
 # Copy system state for portfolio data (fallback to GitHub raw if stale)
