@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Trading AI RAG Webhook",
     description="Dialogflow CX webhook for lessons AND trade history queries",
-    version="2.6.0",  # Context-aware readiness: paper/live mode, tomorrow/now queries
+    version="2.8.0",  # Fixed: $5K paper equity is healthy (not blocker), fresh starts = warning
 )
 
 # Initialize RAG system for lessons
@@ -841,7 +841,7 @@ async def root():
     trade_count = len(query_trades("all", limit=1000))
     return {
         "service": "Trading AI RAG Webhook",
-        "version": "2.7.0",  # Updated: ChromaDB removed, using local JSON
+        "version": "2.8.0",  # Fixed: $5K paper equity is healthy, fresh starts = warning
         "lessons_loaded": len(rag.lessons),
         "trades_loaded": trade_count,
         "trade_history_source": "local_json",
