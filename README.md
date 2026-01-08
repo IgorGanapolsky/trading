@@ -32,15 +32,15 @@ Most trading bots fail because they:
 | Account | Equity | P/L | Status |
 |---------|--------|-----|--------|
 | Live | $30.00 | $0.00 | Accumulating $10/day |
-| Paper (R&D) | $101,083.86 | +$1,083.86 | +1.08% |
+| Paper (R&D) | $5,000.00 | $0.00 | FRESH START |
 
 | Metric | Value | Target |
 |--------|-------|--------|
 | Win Rate | 80% | 55%+ |
-| Positions | 5 | Active |
+| Positions | 0 | Building capital |
 | Backtest Pass | 19/13 | Scenarios |
 
-**Honest Assessment**: Live trading started Jan 3, 2026 with fresh $20 deposit. Accumulating $10/day for defined-risk options spreads ($100-200 minimum). Paper account validates strategy with 80% win rate and +$1,083 profit.
+**Honest Assessment**: Live trading started Jan 3, 2026 with fresh $20 deposit. Accumulating $10/day for defined-risk options spreads ($100-200 minimum). Paper account reset to $5K (Jan 7, 2026) to match realistic 6-month milestone. No positions or trades yet.
 
 ---
 
