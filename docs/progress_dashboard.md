@@ -1,6 +1,6 @@
 # Trading System Progress Dashboard
 
-**Generated**: {{ "now" | date: "%Y-%m-%d %H:%M:%S" }} UTC
+**Generated**: 2026-01-08 20:20:00 UTC
 **Status**: LIVE
 
 ---
@@ -21,13 +21,15 @@
 
 | Metric | Value |
 |--------|-------|
-| **Equity** | $117,967.66 |
-| **Cash** | $92,704.96 |
-| **Positions Value** | $25,262.70 |
-| **Total P/L** | +$17,967.66 (+17.97%) |
-| **Today's P/L** | **+$16,661.20 (+16.45%)** |
-| **Win Rate** | 80% |
-| **Buying Power** | $209,600.00 |
+| **Equity** | $5,000.00 |
+| **Cash** | $5,000.00 |
+| **Positions Value** | $0.00 |
+| **Total P/L** | $0.00 (0.00%) |
+| **Win Rate** | 0% (fresh start) |
+| **Buying Power** | $10,000.00 |
+
+> **RESET Jan 7, 2026** - Paper account aligned to realistic 6-month milestone ($5K)
+> See: LL-111 Paper Trading Capital Must Be Realistic
 
 ---
 
@@ -41,23 +43,13 @@
 
 > Starting fresh Jan 3, 2026. Depositing $10/day. First CSP trade at $200 (est. Jan 29, 2026).
 
-### Paper Account (4 positions as of Jan 7, 10:50 AM ET)
+### Paper Account
 
 | Symbol | Type | Price | Qty | Market Value | P/L |
 |--------|------|-------|-----|--------------|-----|
-| SPY | Long Shares | $692.29 | 36.48 | $25,252.76 | **+$260.53** |
-| DLR | Long Shares | $157.29 | 0.04 | $6.62 | -$0.02 |
-| EQIX | Long Shares | $785.30 | 0.004 | $3.32 | -$0.003 |
-| AAPL 02/20 $430P | Short Put | - | -1 | - | (open) |
+| *No positions* | - | - | - | - | - |
 
-**Phil Town CSPs Active:**
-| Option | Strike | Premium |
-|--------|--------|---------|
-| AAPL Feb 20 $430 Put | SELL | $1.87 |
-| PLTR Feb 6 $165 Put | SELL | $4.96 |
-| SOFI Jan 30 $24 Put | SELL | $0.72 |
-
-**Total Unrealized P/L: +$16,661.20 TODAY**
+> Fresh start after Jan 7 reset. Will test Phil Town CSPs on stocks with strike ≤$50.
 
 ---
 
@@ -67,22 +59,8 @@
 
 | Date | Action | Symbol | Qty | Price | Notes |
 |------|--------|--------|-----|-------|-------|
-| 2026-01-07 | SELL | AAPL $430P 02/20 | 1 | $1.87 | **Phil Town CSP** |
-| 2026-01-07 | SELL | PLTR $165P 02/06 | 1 | $4.96 | **Phil Town CSP** |
-| 2026-01-07 | SELL | SOFI $24P 01/30 | 1 | $0.72 | **Phil Town CSP** |
-| 2026-01-07 | BUY | DLR | 0.02 | Market | REIT position |
+| 2026-01-07 | RESET | PAPER | - | - | Account reset to $5,000 |
 | 2026-01-06 | BUY | SPY | 0.73 | $500 | Paper - immediate-trade workflow |
-
----
-
-## Options Strategy Metrics
-
-| Metric | Current | Target |
-|--------|---------|--------|
-| **Win Rate** | 80% | 75%+ |
-| **Avg Days in Trade** | TBD | <30 |
-| **Max Position Size** | TBD | 5% portfolio |
-| **Daily Theta Target** | TBD | $10/day |
 
 ---
 
@@ -90,10 +68,10 @@
 
 | Metric | Value |
 |--------|-------|
-| **Day** | 70 / 90 (Jan 7, 2026) |
+| **Day** | 71 / 90 (Jan 8, 2026) |
 | **Phase** | R&D Phase - Month 3 (Days 61-90) |
-| **Days Remaining** | 21 |
-| **Target** | $100/day profit |
+| **Days Remaining** | 19 |
+| **Target** | Build to $500 for first CSP |
 
 ---
 
@@ -101,26 +79,22 @@
 
 | Check | Status |
 |-------|--------|
-| **Max Drawdown** | 0% (no positions) |
-| **Position Limits** | OK |
-| **Buying Power** | $209,600.00 (paper) |
-| **Circuit Breakers** | Armed |
+| Live Account Protected | ✅ Accumulation only |
+| Paper Aligned to Real | ✅ $5K matches 6-month milestone |
+| Stop Losses | ✅ Configured |
+| Position Limits | ✅ Max 2 positions |
 
 ---
 
-## What's Working
+## Capital Milestones (Compounding Strategy)
 
-- **Options Theta**: 80% win rate on paper
-- **Phil Town Rules**: Concentration over diversification
-- **RAG System**: 709 documents, learning from failures
-
-## What's Not Working
-
-- ~~Bonds/Treasuries~~ - Removed Dec 29
-- ~~Crypto~~ - Removed Dec 15
-- ~~Complex ML~~ - Over-engineered
+| Capital | Target Date | Daily Target | Strategy |
+|---------|-------------|--------------|----------|
+| $200 | Jan 20, 2026 | $0 | Accumulation only |
+| $500 | Feb 19, 2026 | $1.50 | First CSP (F/SOFI) |
+| $1,000 | Mar 24, 2026 | $3 | CSPs (INTC, BAC) |
+| $5,000 | Jun 24, 2026 | $15 | Quality stocks |
 
 ---
 
-*Dashboard syncs from `data/system_state.json`*
-*For full transparency, see [GitHub repo](https://github.com/IgorGanapolsky/trading)*
+*Dashboard auto-generated. Data sourced from system_state.json and Alpaca API.*
