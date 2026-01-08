@@ -7,9 +7,9 @@ Updated: Jan 7, 2026 - Removed ChromaDB tests (CEO directive), replaced with Les
 This test MUST run in CI to catch RAG search failures early.
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+
+import pytest
 
 
 class TestLessonsSearchInstallation:

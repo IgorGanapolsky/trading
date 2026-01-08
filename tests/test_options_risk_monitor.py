@@ -17,10 +17,7 @@ import pytest
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.risk.options_risk_monitor import (  # noqa: E402
-    OptionsPosition,
-    OptionsRiskMonitor,
-)
+from src.risk.options_risk_monitor import OptionsPosition, OptionsRiskMonitor  # noqa: E402
 
 
 # =============================================================================

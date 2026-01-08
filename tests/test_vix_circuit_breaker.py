@@ -12,14 +12,14 @@ Created: 2026-01-08
 import sys
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.risk.vix_circuit_breaker import (
+from src.risk.vix_circuit_breaker import (  # noqa: E402
     AlertLevel,
     CircuitBreakerEvent,
     DeRiskAction,

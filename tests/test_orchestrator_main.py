@@ -76,10 +76,10 @@ class TestOrchestratorConfiguration:
 
     def test_risk_parameters(self):
         """Test risk parameters are within safe bounds."""
-        from src.utils.constants import (
-            MAX_POSITION_PCT,
+        from src.utils.constants import (  # noqa: I001
             MAX_DAILY_LOSS_PCT,
             MAX_DRAWDOWN_PCT,
+            MAX_POSITION_PCT,
         )
 
         # Risk limits should be conservative
