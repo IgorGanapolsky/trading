@@ -72,11 +72,8 @@ jobs:
           python3 -m pip install --no-build-isolation multitasking || python3 -m pip install multitasking==0.0.11
           python3 -m pip install --no-cache-dir -r requirements-minimal.txt
 
-      - name: Verify ChromaDB (RAG prerequisite)
-        run: |
-          echo "🔍 Verifying ChromaDB vector database..."
-          python3 -c "import chromadb; print(f'✅ ChromaDB v{chromadb.__version__} installed')"
-          # This check prevents silent RAG failures (LL-074)
+      # ChromaDB REMOVED Jan 7, 2026 - Using Vertex AI RAG + local JSON instead
+      # See: rag_knowledge/lessons_learned/ll_109_bidirectional_rag_learning_jan07.md
 
       - name: Install full deps for unit gates (optional)
         if: ${{ false }}  # enable only if additional tests need full stack
@@ -1536,7 +1533,7 @@ jobs:
 
       - name: Sync Trades to RAG (Post-Execution)
         # CRITICAL: Added Jan 7, 2026 - CEO mandate to record ALL trades to RAG
-        # Without this, we violate: "Record every trade in BOTH ChromaDB AND Vertex AI RAG"
+        # ChromaDB REMOVED Jan 7, 2026 - Using Vertex AI RAG + local JSON instead
         if: always()
         continue-on-error: true  # Non-blocking - JSON backup always exists
         env:
@@ -1547,7 +1544,7 @@ jobs:
           echo "📚 POST-TRADE RAG SYNC"
           echo "📚 ========================================"
           echo ""
-          echo "Syncing today's trades to Vertex AI RAG and ChromaDB..."
+          echo "Syncing today's trades to Vertex AI RAG..."
           python3 scripts/sync_trades_to_rag.py || {
             echo "⚠️ RAG sync failed - trades backed up in JSON"
             echo "Manual sync needed: python3 scripts/sync_trades_to_rag.py"
