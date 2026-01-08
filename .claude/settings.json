@@ -19,6 +19,28 @@
       "Bash(ls:*)",
       "Bash(wc:*)",
       "Skill"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(git rebase:*)",
+      "Bash(git reset:*)",
+      "Bash(git checkout -B:*)",
+      "Edit(.github/workflows/**)",
+      "Edit(.claude/settings.json)"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Bash(rm -rf /:*)",
+      "Bash(rm -rf /*:*)",
+      "Bash(chmod 777:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(curl|bash:*)",
+      "Bash(wget|bash:*)",
+      "Read(.env)",
+      "Edit(.env)",
+      "Edit(.git/**)"
     ]
   },
   "hooks": {
