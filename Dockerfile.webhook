@@ -15,18 +15,19 @@ RUN pip install --no-cache-dir \
     uvicorn==0.40.0 \
     requests==2.32.5
 
-# Copy source code (only what's needed)
-COPY src/agents/dialogflow_webhook.py src/agents/dialogflow_webhook.py
+# Create required package structure
+RUN mkdir -p src/agents src/rag rag_knowledge/lessons_learned data
+
+# Create __init__.py files for Python packages
+RUN touch src/__init__.py src/agents/__init__.py src/rag/__init__.py
+
+# Copy only required source files
+COPY src/agents/dialogflow_webhook.py src/agents/
 COPY src/rag/ src/rag/
-COPY src/__init__.py src/__init__.py
-COPY src/agents/__init__.py src/agents/__init__.py
 COPY rag_knowledge/lessons_learned/ rag_knowledge/lessons_learned/
 
 # Copy system state for portfolio data (fallback to GitHub raw if stale)
-COPY data/system_state.json data/system_state.json
-
-# Create data directory
-RUN mkdir -p data
+COPY data/system_state.json data/
 
 # Expose port
 EXPOSE 8080
