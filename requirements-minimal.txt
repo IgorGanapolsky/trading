@@ -61,8 +61,8 @@ uvicorn==0.40.0                 # ASGI server for MCP
 # scikit-learn==1.5.0            # Never imported - ML models not implemented
 # python-crontab==3.0.0          # Never imported - using schedule instead
 
-# RAG Vector Databases (Required for trading - Dec 15, 2025)
-chromadb>=1.0.0
+# RAG Vector Databases (Updated Jan 8, 2026)
+# chromadb>=1.0.0              # REMOVED: Using Vertex AI RAG + local JSON (Jan 2026)
 lancedb>=0.26.0                # RLHF trajectory storage (Jan 2026)
 
 # NOTE: sentence-transformers already included above (line 45)
