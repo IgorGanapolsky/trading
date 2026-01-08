@@ -49,6 +49,10 @@ jobs:
 
       - name: Deploy to Cloud Run (source-based)
         run: |
+          # Show what files will be uploaded
+          echo "=== Files being uploaded (after .gcloudignore) ==="
+          find . -type f ! -path './.git/*' | head -50
+          echo "=== Starting deployment ==="
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --source . \
             --region ${{ env.REGION }} \
@@ -59,7 +63,15 @@ jobs:
             --min-instances 0 \
             --max-instances 3 \
             --timeout 60s \
-            --set-env-vars="BUILD_DATE=$(date +%Y%m%d%H%M%S)"
+            --verbosity=debug \
+            --set-env-vars="BUILD_DATE=$(date +%Y%m%d%H%M%S)" 2>&1 || {
+              echo "=== Deployment failed, fetching Cloud Build logs ==="
+              BUILD_ID=$(gcloud builds list --limit=1 --format='value(id)' --filter="source.storageSource.bucket~trading")
+              if [ -n "$BUILD_ID" ]; then
+                gcloud builds log $BUILD_ID --stream || true
+              fi
+              exit 1
+            }
 
       - name: Get service URL
         run: |
