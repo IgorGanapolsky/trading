@@ -5,9 +5,9 @@ Critical module: 3,260 lines - controls entire trading workflow.
 Added Jan 7, 2026 to address test coverage gap.
 """
 
+from datetime import date
+
 import pytest
-from unittest.mock import MagicMock, patch
-from datetime import datetime, date
 
 
 class TestTradingOrchestratorImports:
@@ -28,10 +28,6 @@ class TestTradingOrchestratorImports:
             from src.orchestrator.gates import (
                 Gate0Psychology,
                 Gate1Momentum,
-                Gate2RLFilter,
-                Gate3Sentiment,
-                Gate4Risk,
-                Gate5Execution,
             )
             assert Gate0Psychology is not None
             assert Gate1Momentum is not None

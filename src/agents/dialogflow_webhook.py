@@ -591,7 +591,6 @@ def format_lessons_response(lessons: list, query: str) -> str:
 def query_trades(query: str, limit: int = 10) -> list[dict]:
     """Query trade history from local JSON files."""
     import json
-    from pathlib import Path
 
     trades = []
     data_dir = project_root / "data"

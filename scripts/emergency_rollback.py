@@ -15,9 +15,9 @@ Safety features:
 """
 
 import argparse
+import json
 import subprocess
 import sys
-import json
 from datetime import datetime
 from pathlib import Path
 
@@ -137,7 +137,7 @@ def main():
 
         print("\n" + "═" * 60)
         print("To revert this merge, run:")
-        print(f"  python3 scripts/emergency_rollback.py --revert")
+        print("  python3 scripts/emergency_rollback.py --revert")
         print("═" * 60)
 
     elif args.revert:
