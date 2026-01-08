@@ -9,6 +9,7 @@ on:
       - 'src/rag/**'
       - 'rag_knowledge/lessons_learned/**'
       - 'Dockerfile.webhook'
+      - 'cloudbuild-webhook.yaml'
       - '.github/workflows/deploy-dialogflow-webhook.yml'
   workflow_dispatch:  # Manual trigger
 
@@ -41,34 +42,27 @@ jobs:
       - name: Prepare Dockerfile
         run: |
           cp Dockerfile.webhook Dockerfile
-          # Inject dynamic cache bust to force fresh Docker build
-          CACHE_BUST=$(date +%Y%m%d%H%M%S)
-          sed -i "s/CACHE_BUST=1/CACHE_BUST=$CACHE_BUST/" Dockerfile
-          echo "Cache bust value: $CACHE_BUST"
-          grep CACHE_BUST Dockerfile
-
-      - name: Deploy to Cloud Run (source-based)
-        run: |
-          # Show what files will be uploaded
-          echo "=== Files being uploaded (after .gcloudignore) ==="
+          echo "=== Dockerfile contents ==="
+          cat Dockerfile
+          echo ""
+          echo "=== Files to be uploaded ==="
           find . -type f ! -path './.git/*' | head -50
-          echo "=== Starting deployment ==="
-          gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --source . \
-            --region ${{ env.REGION }} \
-            --platform managed \
-            --allow-unauthenticated \
-            --memory 512Mi \
-            --cpu 1 \
-            --min-instances 0 \
-            --max-instances 3 \
-            --timeout 60s \
-            --verbosity=debug \
-            --set-env-vars="BUILD_DATE=$(date +%Y%m%d%H%M%S)" 2>&1 || {
-              echo "=== Deployment failed, fetching Cloud Build logs ==="
-              BUILD_ID=$(gcloud builds list --limit=1 --format='value(id)' --filter="source.storageSource.bucket~trading")
+
+      - name: Build and Deploy with Cloud Build (no-cache)
+        run: |
+          # Use Cloud Build with explicit --no-cache to prevent stale images
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          echo "Building with SHA: $SHORT_SHA"
+
+          gcloud builds submit \
+            --config=cloudbuild-webhook.yaml \
+            --substitutions=SHORT_SHA=$SHORT_SHA \
+            --project=${{ env.PROJECT_ID }} \
+            . 2>&1 || {
+              echo "=== Build failed, fetching Cloud Build logs ==="
+              BUILD_ID=$(gcloud builds list --limit=1 --format='value(id)' --project=${{ env.PROJECT_ID }})
               if [ -n "$BUILD_ID" ]; then
-                gcloud builds log $BUILD_ID --stream || true
+                gcloud builds log $BUILD_ID --project=${{ env.PROJECT_ID }} || true
               fi
               exit 1
             }
