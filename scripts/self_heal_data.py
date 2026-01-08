@@ -135,7 +135,7 @@ def fix_index_md(docs_path: Path, current_day: int) -> list[str]:
             new_date_line = f"**📅 {day_name}, {month_day_year}** (Day {current_day} of 90"
             if old_date_match.group() != new_date_line:
                 content = re.sub(date_pattern, new_date_line, content)
-                fixes.append(f"Updated date in header")
+                fixes.append("Updated date in header")
 
         # Fix "Last updated:" at bottom
         last_updated_pattern = r"\*Last updated: \w+, \w+ \d+, \d{4} at .*"
