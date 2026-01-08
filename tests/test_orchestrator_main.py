@@ -17,6 +17,7 @@ class TestTradingOrchestratorImports:
         """Verify TradingOrchestrator class can be imported."""
         try:
             from src.orchestrator.main import TradingOrchestrator
+
             assert TradingOrchestrator is not None
         except ImportError as e:
             # Expected in sandbox without all dependencies
@@ -29,6 +30,7 @@ class TestTradingOrchestratorImports:
                 Gate0Psychology,
                 Gate1Momentum,
             )
+
             assert Gate0Psychology is not None
             assert Gate1Momentum is not None
         except ImportError as e:
@@ -42,6 +44,7 @@ class TestTradingGatePipeline:
         """Verify TradingGatePipeline can be imported."""
         try:
             from src.orchestrator.gates import TradingGatePipeline
+
             assert TradingGatePipeline is not None
         except ImportError as e:
             pytest.skip(f"Import skipped: {e}")

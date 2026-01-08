@@ -57,7 +57,7 @@ class TestLessonsSearchFunctionality:
         results = search.search("error", severity_filter="CRITICAL")
         # All results should be CRITICAL if filtering works
         for lesson, score in results:
-            if hasattr(lesson, 'severity'):
+            if hasattr(lesson, "severity"):
                 assert lesson.severity == "CRITICAL"
 
     def test_get_critical_lessons(self):

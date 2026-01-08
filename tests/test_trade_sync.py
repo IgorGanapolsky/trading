@@ -316,10 +316,14 @@ class TestGetTradeHistory:
             # Create some test data
             today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
             trades_file = Path(tmpdir) / f"trades_{today}.json"
-            trades_file.write_text(json.dumps([
-                {"symbol": "SPY", "side": "buy", "qty": 10, "price": 450.0},
-                {"symbol": "AAPL", "side": "sell", "qty": 5, "price": 180.0},
-            ]))
+            trades_file.write_text(
+                json.dumps(
+                    [
+                        {"symbol": "SPY", "side": "buy", "qty": 10, "price": 450.0},
+                        {"symbol": "AAPL", "side": "sell", "qty": 5, "price": 180.0},
+                    ]
+                )
+            )
 
             sync = TradeSync()
             history = sync.get_trade_history(limit=10)
@@ -342,11 +346,15 @@ class TestGetTradeHistory:
             # Create test data
             today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
             trades_file = Path(tmpdir) / f"trades_{today}.json"
-            trades_file.write_text(json.dumps([
-                {"symbol": "SPY", "side": "buy"},
-                {"symbol": "AAPL", "side": "sell"},
-                {"symbol": "SPY", "side": "sell"},
-            ]))
+            trades_file.write_text(
+                json.dumps(
+                    [
+                        {"symbol": "SPY", "side": "buy"},
+                        {"symbol": "AAPL", "side": "sell"},
+                        {"symbol": "SPY", "side": "sell"},
+                    ]
+                )
+            )
 
             sync = TradeSync()
             history = sync.get_trade_history(symbol="SPY", limit=10)

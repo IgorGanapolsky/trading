@@ -315,9 +315,7 @@ class UnifiedMCPClient:
                 data = run_sync(self._call_async_impl(server, tool, payload))
 
             latency = (time.perf_counter() - start) * 1000
-            return MCPToolResult(
-                success=True, data=data, transport=transport, latency_ms=latency
-            )
+            return MCPToolResult(success=True, data=data, transport=transport, latency_ms=latency)
 
         except Exception as e:
             latency = (time.perf_counter() - start) * 1000
@@ -447,9 +445,7 @@ class UnifiedMCPClient:
                 raise MCPError("Playwright MCP not available")
 
         # Fallback to sync shell call in thread
-        return await asyncio.to_thread(
-            self._shell_client.call_tool, server, tool, payload
-        )
+        return await asyncio.to_thread(self._shell_client.call_tool, server, tool, payload)
 
 
 # Singleton unified client

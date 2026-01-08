@@ -224,7 +224,9 @@ class TestVIXCircuitBreaker:
     def test_reduction_targets_defined(self, circuit_breaker):
         """Verify reduction targets are defined for all alert levels."""
         for level in AlertLevel:
-            assert level in circuit_breaker.REDUCTION_TARGETS, f"Missing reduction target for {level}"
+            assert level in circuit_breaker.REDUCTION_TARGETS, (
+                f"Missing reduction target for {level}"
+            )
             target = circuit_breaker.REDUCTION_TARGETS[level]
             assert 0.0 <= target <= 1.0, f"Invalid reduction target for {level}: {target}"
 

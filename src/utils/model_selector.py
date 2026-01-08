@@ -248,10 +248,9 @@ class ModelSelector:
         # Assume 60/40 split input/output for estimation
         input_tokens = int(estimated_tokens * 0.6)
         output_tokens = int(estimated_tokens * 0.4)
-        estimated_cost = (
-            (input_tokens / 1_000_000) * config.input_cost_per_1m
-            + (output_tokens / 1_000_000) * config.output_cost_per_1m
-        )
+        estimated_cost = (input_tokens / 1_000_000) * config.input_cost_per_1m + (
+            output_tokens / 1_000_000
+        ) * config.output_cost_per_1m
         return (self.daily_spend + estimated_cost) <= self.daily_budget
 
     def enforce_budget(
@@ -285,10 +284,9 @@ class ModelSelector:
         # Estimate cost
         input_tokens = int(estimated_tokens * 0.6)
         output_tokens = int(estimated_tokens * 0.4)
-        estimated_cost = (
-            (input_tokens / 1_000_000) * config.input_cost_per_1m
-            + (output_tokens / 1_000_000) * config.output_cost_per_1m
-        )
+        estimated_cost = (input_tokens / 1_000_000) * config.input_cost_per_1m + (
+            output_tokens / 1_000_000
+        ) * config.output_cost_per_1m
 
         if (self.daily_spend + estimated_cost) > self.daily_budget:
             overage = (self.daily_spend + estimated_cost) - self.daily_budget

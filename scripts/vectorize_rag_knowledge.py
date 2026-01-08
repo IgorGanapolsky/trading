@@ -213,13 +213,17 @@ def query_rag(query: str, n_results: int = 5, filter_options: bool = False) -> l
                 if not any(term in content_lower for term in ["put", "call", "option", "premium"]):
                     continue
 
-            formatted.append({
-                "content": lesson.snippet[:500] + "..." if len(lesson.snippet) > 500 else lesson.snippet,
-                "source": lesson.id,
-                "type": "lesson_learned",
-                "concepts": [],
-                "relevance": score,
-            })
+            formatted.append(
+                {
+                    "content": lesson.snippet[:500] + "..."
+                    if len(lesson.snippet) > 500
+                    else lesson.snippet,
+                    "source": lesson.id,
+                    "type": "lesson_learned",
+                    "concepts": [],
+                    "relevance": score,
+                }
+            )
 
         return formatted[:n_results]
     except ImportError:
@@ -241,7 +245,7 @@ def main():
         print(f"\n🔍 Query: {args.query}\n")
         for i, r in enumerate(results, 1):
             print(f"{i}. [{r['type']}] {r['source']} (relevance: {r['relevance']:.2f})")
-            concepts = r.get('concepts', [])
+            concepts = r.get("concepts", [])
             print(f"   Concepts: {', '.join(concepts[:3]) if concepts else 'none'}")
             print(f"   {r['content'][:200]}...")
             print()

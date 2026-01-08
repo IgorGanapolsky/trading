@@ -195,9 +195,7 @@ class ToolRegistry:
             tools = [t for t in tools if t.name in tool_names]
         return {"function_declarations": [t.to_gemini() for t in tools]}
 
-    def to_openrouter(
-        self, tool_names: list[str] | None = None
-    ) -> list[dict[str, Any]]:
+    def to_openrouter(self, tool_names: list[str] | None = None) -> list[dict[str, Any]]:
         """Convert all or selected tools to OpenRouter format."""
         tools = self._tools.values()
         if tool_names:

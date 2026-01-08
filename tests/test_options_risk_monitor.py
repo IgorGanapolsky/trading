@@ -458,7 +458,10 @@ class TestCapitalProtection:
         assert OptionsRiskMonitor.CREDIT_SPREAD_STOP_MULTIPLIER <= 2.5
 
         # Iron condors should have tighter stop
-        assert OptionsRiskMonitor.IRON_CONDOR_STOP_MULTIPLIER < OptionsRiskMonitor.CREDIT_SPREAD_STOP_MULTIPLIER
+        assert (
+            OptionsRiskMonitor.IRON_CONDOR_STOP_MULTIPLIER
+            < OptionsRiskMonitor.CREDIT_SPREAD_STOP_MULTIPLIER
+        )
 
         # Long options: 50% max loss
         assert OptionsRiskMonitor.LONG_OPTION_STOP_PCT == 0.50

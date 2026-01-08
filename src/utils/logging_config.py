@@ -202,6 +202,8 @@ def get_langsmith_trace_url(trace_id: str | None = None) -> str | None:
         trace_id = ctx.get("full_trace_id")
 
     if trace_id:
-        return f"https://smith.langchain.com/o/igor-trading-system/projects/{project}/runs/{trace_id}"
+        return (
+            f"https://smith.langchain.com/o/igor-trading-system/projects/{project}/runs/{trace_id}"
+        )
 
     return None

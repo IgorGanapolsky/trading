@@ -421,7 +421,9 @@ def assess_trading_readiness(
             if sample_size >= 10:
                 blockers.append(f"Win rate poor: {win_rate:.0f}% ({sample_size} trades)")
             else:
-                warnings.append(f"Win rate {win_rate:.0f}% (only {sample_size} trades - need more data)")
+                warnings.append(
+                    f"Win rate {win_rate:.0f}% (only {sample_size} trades - need more data)"
+                )
 
     # 6. TRADING AUTOMATION CHECK (Critical - added Jan 6, 2026)
     max_score += 20
@@ -614,17 +616,19 @@ def query_trades(query: str, limit: int = 10) -> list[dict]:
                         f"Outcome: {outcome} with P/L ${pnl:.2f}. "
                         f"Date: {trade.get('timestamp', '')[:10]}"
                     )
-                    trades.append({
-                        "document": document,
-                        "metadata": {
-                            "symbol": trade.get("symbol", "UNKNOWN"),
-                            "side": trade.get("side", ""),
-                            "strategy": trade.get("strategy", ""),
-                            "pnl": pnl,
-                            "outcome": outcome,
-                            "timestamp": trade.get("timestamp", ""),
-                        },
-                    })
+                    trades.append(
+                        {
+                            "document": document,
+                            "metadata": {
+                                "symbol": trade.get("symbol", "UNKNOWN"),
+                                "side": trade.get("side", ""),
+                                "strategy": trade.get("strategy", ""),
+                                "pnl": pnl,
+                                "outcome": outcome,
+                                "timestamp": trade.get("timestamp", ""),
+                            },
+                        }
+                    )
                     if len(trades) >= limit:
                         break
 
