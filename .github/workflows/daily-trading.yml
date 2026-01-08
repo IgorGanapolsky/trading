@@ -283,8 +283,10 @@ jobs:
 
       - name: Set Trailing Stop-Loss Orders
         env:
-          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_API_KEY }}
-          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+          # FIXED Jan 8, 2026: Was using OLD secrets (ALPACA_PAPER_TRADING_API_KEY)
+          # Must use NEW 5K account secrets after Jan 7 reset
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           PAPER_TRADING: ${{ github.event.inputs.trading_mode != 'live' && 'true' || 'false' }}
         run: |
           echo "🛡️ ========================================"
