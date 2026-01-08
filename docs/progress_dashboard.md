@@ -68,9 +68,9 @@
 
 | Metric | Value |
 |--------|-------|
-| **Day** | 71 / 90 (Jan 8, 2026) |
+| **Day** | 72 / 90 (Jan 8, 2026) |
 | **Phase** | R&D Phase - Month 3 (Days 61-90) |
-| **Days Remaining** | 19 |
+| **Days Remaining** | 18 |
 | **Target** | Build to $500 for first CSP |
 
 ---
