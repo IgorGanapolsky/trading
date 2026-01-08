@@ -4,8 +4,8 @@
 
 # Install with: pip install -r requirements-minimal.txt -r requirements-rag.txt
 
-# Vector Database + Embeddings (Legacy - ChromaDB)
-chromadb>=1.0.0
+# Vector Database + Embeddings
+# chromadb>=1.0.0              # REMOVED: Deprecated Jan 7, 2026 per CEO directive
 sentence-transformers==3.4.1
 rank_bm25==0.2.2
 

@@ -29,19 +29,8 @@ class DailyReport(NamedTuple):
     starting_equity: float = 100000.0
 
 
-def get_alpaca_client():
-    """Get Alpaca client or None if not configured."""
-    try:
-        from alpaca.trading.client import TradingClient
-
-        api_key = os.getenv("ALPACA_API_KEY")
-        secret_key = os.getenv("ALPACA_SECRET_KEY")
-        if not api_key or not secret_key:
-            return None
-        return TradingClient(api_key, secret_key, paper=True)
-    except Exception as e:
-        print(f"⚠️ Could not initialize Alpaca client: {e}")
-        return None
+# Use shared utility to avoid code duplication
+from src.utils.alpaca_client import get_alpaca_client
 
 
 def verify_today() -> DailyReport:

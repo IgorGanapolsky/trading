@@ -53,44 +53,16 @@ CONFIG = {
 }
 
 
-def get_alpaca_client():
-    """Get Alpaca trading client."""
-    try:
-        from alpaca.trading.client import TradingClient
-
-        api_key = os.getenv("ALPACA_API_KEY")
-        secret_key = os.getenv("ALPACA_SECRET_KEY")
-
-        if not api_key or not secret_key:
-            logger.error("ALPACA_API_KEY and ALPACA_SECRET_KEY required")
-            return None
-
-        return TradingClient(api_key, secret_key, paper=True)
-    except Exception as e:
-        logger.error(f"Failed to create Alpaca client: {e}")
-        return None
+# Use shared utilities to avoid code duplication
+from src.utils.alpaca_client import get_alpaca_client, get_options_client, get_account_info
 
 
-def get_options_client():
-    """Get Alpaca options client."""
-    try:
-        from alpaca.trading.client import TradingClient
-
-        api_key = os.getenv("ALPACA_API_KEY")
-        secret_key = os.getenv("ALPACA_SECRET_KEY")
-
-        if not api_key or not secret_key:
-            return None
-
-        # Options require the trading client
-        return TradingClient(api_key, secret_key, paper=True)
-    except Exception as e:
-        logger.error(f"Failed to create options client: {e}")
-        return None
-
-
-def get_account_info(client) -> Optional[dict]:
-    """Get account information."""
+def get_account_info_extended(client) -> Optional[dict]:
+    """Get extended account information (wraps shared utility)."""
+    base_info = get_account_info(client)
+    if base_info:
+        return base_info
+    # Fallback if shared utility fails
     try:
         account = client.get_account()
         return {

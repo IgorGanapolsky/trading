@@ -18,7 +18,7 @@ import json
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 
 class IVRegime(Enum):
@@ -64,7 +64,7 @@ class TradeSignal:
     ticker: str
     strategy: str
     action: str  # "BUY" or "SELL"
-    legs: list[dict[str, any]]  # List of option legs
+    legs: list[dict[str, Any]]  # List of option legs
     rationale: str
     iv_regime: str
     iv_rank: float

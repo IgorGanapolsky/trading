@@ -38,20 +38,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
-def get_alpaca_client():
-    """Get Alpaca client."""
-    try:
-        from alpaca.trading.client import TradingClient
-
-        api_key = os.getenv("ALPACA_API_KEY")
-        secret = os.getenv("ALPACA_SECRET_KEY")
-        if not api_key or not secret:
-            logger.error("Missing Alpaca credentials")
-            return None
-        return TradingClient(api_key, secret, paper=True)
-    except Exception as e:
-        logger.error(f"Client error: {e}")
-        return None
+# Use shared utility to avoid code duplication
+from src.utils.alpaca_client import get_alpaca_client
 
 
 def get_spy_rsi() -> float:

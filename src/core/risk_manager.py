@@ -19,6 +19,7 @@ Updated: 2025-12-09 - Added Kelly Criterion position sizing
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +114,7 @@ class RiskManager:
         self,
         account_value: float,
         daily_pl: float,
-        account_info: dict[str, any] | None = None,
+        account_info: dict[str, Any] | None = None,
     ) -> bool:
         """
         Determine if trading is allowed based on current risk parameters.
@@ -414,11 +415,11 @@ class RiskManager:
         sentiment_score: float,
         account_value: float,
         trade_type: str = "BUY",
-        account_info: dict[str, any] | None = None,
+        account_info: dict[str, Any] | None = None,
         expected_return_pct: float | None = None,
         confidence: float | None = None,
         pattern_type: str | None = None,
-    ) -> dict[str, any]:
+    ) -> dict[str, Any]:
         """
         Validate a trade before execution.
 
@@ -620,7 +621,7 @@ class RiskManager:
                 actual_return_pct=actual_return_pct,
             )
 
-    def get_behavioral_summary(self) -> dict[str, any]:
+    def get_behavioral_summary(self) -> dict[str, Any]:
         """
         Get behavioral finance summary.
 
@@ -631,7 +632,7 @@ class RiskManager:
             return self.behavioral_manager.get_behavioral_summary()
         return {}
 
-    def check_circuit_breakers(self, account_info: dict[str, float]) -> dict[str, any]:
+    def check_circuit_breakers(self, account_info: dict[str, float]) -> dict[str, Any]:
         """
         Check all circuit breaker conditions.
 
@@ -803,7 +804,7 @@ class RiskManager:
 
         return historical_trades
 
-    def get_risk_metrics(self) -> dict[str, any]:
+    def get_risk_metrics(self) -> dict[str, Any]:
         """
         Get current risk metrics and statistics.
 

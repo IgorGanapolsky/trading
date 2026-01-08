@@ -35,7 +35,7 @@ distro==1.9.0
 docstring-parser==0.17.0
 farama-notifications==0.0.4
 fastapi==0.115.0
-feedparser==6.0.12
+# feedparser==6.0.12  # REMOVED: Never imported (Jan 2026)
 filelock==3.20.1
 fonttools==4.61.0
 frozendict==2.4.7
@@ -136,7 +136,7 @@ pydeck==0.9.1
 pyparsing==3.2.5
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
-pytz==2023.3
+# pytz==2023.3  # REMOVED: Never imported (Jan 2026)
 pyyaml==6.0.3
 referencing==0.37.0
 requests==2.32.5
@@ -144,7 +144,7 @@ requests-oauthlib==2.0.0
 requests-toolbelt==1.0.0
 rpds-py==0.30.0
 rsa==4.9.1
-schedule==1.2.2
+# schedule==1.2.2  # REMOVED: Never imported (Jan 2026)
 scikit-learn==1.8.0
 scipy==1.16.3
 sgmllib3k==1.0.0
@@ -161,7 +161,7 @@ sympy==1.14.0
 tenacity==9.1.2
 threadpoolctl==3.6.0
 toml==0.10.2
-torch==2.9.1
+# torch==2.9.1  # REMOVED: Never imported, only used by optional sentence-transformers (Jan 2026)
 tornado==6.5.2
 tqdm==4.67.1
 triton==3.5.1

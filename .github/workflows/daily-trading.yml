@@ -1512,9 +1512,9 @@ jobs:
 
       # Phil Town Rule #1: DON'T LOSE MONEY
       # Set trailing stops immediately after any trading activity
+      # NOTE: This step MUST NOT use continue-on-error - failing to set stops = failing to protect capital
       - name: Set Trailing Stop-Loss Orders (Phil Town Rule 1)
         if: success()
-        continue-on-error: true  # Don't fail workflow if stops can't be set
         env:
           ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
           ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
