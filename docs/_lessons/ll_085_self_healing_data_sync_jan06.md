@@ -1,3 +1,9 @@
+---
+layout: post
+title: "Lesson Learned #085: Self-Healing Data Sync via GitHub API"
+date: 2026-01-06
+---
+
 # Lesson Learned #085: Self-Healing Data Sync via GitHub API
 
 **Date**: January 6, 2026

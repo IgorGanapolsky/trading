@@ -1,3 +1,9 @@
+---
+layout: post
+title: "Lesson Learned #086: False Claims About System Status"
+date: 2026-01-06
+---
+
 # Lesson Learned #086: False Claims About System Status
 
 **Date**: January 6, 2026

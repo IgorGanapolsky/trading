@@ -1,3 +1,9 @@
+---
+layout: post
+title: "Lesson Learned: RAG Blocking ALL Trading Due to Overly Aggressive Matching"
+date: 2026-01-06
+---
+
 # Lesson Learned: RAG Blocking ALL Trading Due to Overly Aggressive Matching
 
 **ID**: LL-084

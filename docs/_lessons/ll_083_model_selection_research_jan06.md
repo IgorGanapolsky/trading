@@ -1,3 +1,9 @@
+---
+layout: post
+title: "Lesson #083: Evidence-Based LLM Model Selection for Trading"
+date: 2026-01-06
+---
+
 # Lesson Learned #083: Evidence-Based LLM Model Selection for Trading
 
 **Date:** 2026-01-06

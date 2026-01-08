@@ -1,3 +1,9 @@
+---
+layout: post
+title: "Lesson Learned #116: Observability Lasagna - Connecting Logs to Traces"
+date: 2026-01-08
+---
+
 # Lesson Learned #116: Observability Lasagna - Connecting Logs to Traces
 
 **Date**: 2026-01-08
