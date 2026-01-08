@@ -63,10 +63,6 @@ class TestGetAlpacaClient:
         with patch.dict(
             "sys.modules", {"alpaca.trading.client": None}
         ):
-            # Force reimport to trigger ImportError path
-            from src.utils import alpaca_client
-            import importlib
-
             # The function should not crash, but return None
             # In real scenario, ImportError is caught
             assert True  # If we get here, error handling works
@@ -142,8 +138,9 @@ class TestPaperModeDefault:
 
     def test_paper_mode_is_default(self):
         """get_alpaca_client should default to paper=True."""
-        from src.utils.alpaca_client import get_alpaca_client
         import inspect
+
+        from src.utils.alpaca_client import get_alpaca_client
 
         sig = inspect.signature(get_alpaca_client)
         paper_param = sig.parameters.get("paper")
