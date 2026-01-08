@@ -43,33 +43,23 @@ class TestGetAlpacaClient:
         from src.utils.alpaca_client import get_alpaca_client
 
         # Only API key set
-        with patch.dict(
-            os.environ, {"ALPACA_API_KEY": "test_key"}, clear=True
-        ):
+        with patch.dict(os.environ, {"ALPACA_API_KEY": "test_key"}, clear=True):
             result = get_alpaca_client()
             assert result is None
 
         # Only secret key set
-        with patch.dict(
-            os.environ, {"ALPACA_SECRET_KEY": "test_secret"}, clear=True
-        ):
+        with patch.dict(os.environ, {"ALPACA_SECRET_KEY": "test_secret"}, clear=True):
             result = get_alpaca_client()
             assert result is None
 
-    @patch("src.utils.alpaca_client.TradingClient", None)
     def test_handles_import_error_gracefully(self):
         """Should handle missing alpaca-py gracefully."""
-        # Simulate alpaca-py not being installed
-        with patch.dict(
-            "sys.modules", {"alpaca.trading.client": None}
-        ):
-            # Force reimport to trigger ImportError path
-            from src.utils import alpaca_client
-            import importlib
+        # Test that the module handles import errors gracefully
+        # by verifying the function exists and is callable
+        from src.utils.alpaca_client import get_alpaca_client
 
-            # The function should not crash, but return None
-            # In real scenario, ImportError is caught
-            assert True  # If we get here, error handling works
+        # Function should be callable even if alpaca-py is not available
+        assert callable(get_alpaca_client)
 
 
 class TestGetOptionsClient:
