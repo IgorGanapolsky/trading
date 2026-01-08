@@ -44,7 +44,7 @@ jobs:
   # Quick validation and setup job
   validate-and-test:
     runs-on: ubuntu-22.04  # Pinned Ubuntu version
-    timeout-minutes: 10
+    timeout-minutes: 20  # Increased from 10 - sentence-transformers downloads large models
     outputs:
       secrets_valid: ${{ steps.validate_secrets.outputs.secrets_valid }}
     steps:
@@ -1549,7 +1549,7 @@ jobs:
 
       - name: Sync Trades to RAG (Post-Execution)
         # CRITICAL: Added Jan 7, 2026 - CEO mandate to record ALL trades to RAG
-        # Without this, we violate: "Record every trade in BOTH ChromaDB AND Vertex AI RAG"
+        # Without this, we violate: "Record every trade in Vertex AI RAG"
         if: always()
         continue-on-error: true  # Non-blocking - JSON backup always exists
         env:
@@ -1560,7 +1560,7 @@ jobs:
           echo "📚 POST-TRADE RAG SYNC"
           echo "📚 ========================================"
           echo ""
-          echo "Syncing today's trades to Vertex AI RAG and ChromaDB..."
+          echo "Syncing today's trades to Vertex AI RAG..."
           python3 scripts/sync_trades_to_rag.py || {
             echo "⚠️ RAG sync failed - trades backed up in JSON"
             echo "Manual sync needed: python3 scripts/sync_trades_to_rag.py"
