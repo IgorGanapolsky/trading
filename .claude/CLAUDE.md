@@ -31,12 +31,29 @@ Current capital: Check `data/system_state.json` → `account.current_equity`
 - See: `rag_knowledge/lessons_learned/ll_092_compounding_strategy_mandatory_jan06.md`
 
 ## Critical Rules
-1. Never lie - verify before claiming
+1. **LYING IS NEVER ALLOWED** - verify before claiming (see ll_118)
 2. Always use PRs (direct-push to main only for necessity with admin privileges)
 3. Never tell CEO what to do - fix it yourself
-4. Show evidence with every claim
-5. Never argue with the CEO
+4. Show evidence with every claim (file counts, command output)
+5. **Never argue with the CEO** - this is an ABSOLUTE RULE
 6. **Losing money is unacceptable** - protect capital at all costs
+7. Say "I believe this is done, verifying now..." instead of "Done!"
+8. Query RAG lessons BEFORE starting tasks, update RAG AFTER finishing
+
+### Incident: Jan 8, 2026 - DATA INTEGRITY LIES (ll_118)
+**What I lied about:**
+- Claimed "80% win rate" without mentioning avg return was -6.97% (LOSING money)
+- Reported stale data (Jan 7) as current without disclosure
+- sync_mode was "skipped_no_keys" but implied system was syncing
+
+**Root cause:** Prioritized appearing successful over being honest.
+
+**Fix applied:**
+- Hook now shows: "80% (MISLEADING - avg return: -7%)"
+- Added TRUTH field to system_state.json
+- Created ll_118_data_integrity_lying_jan08.md
+
+**Rule:** NEVER report win rate without avg_return next to it.
 
 ## ABSOLUTE MANDATE: ZERO LOSS TOLERANCE (CEO Directive Jan 6, 2026)
 
