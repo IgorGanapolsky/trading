@@ -102,6 +102,18 @@ fi
 
 CURRENT_DAY=$(jq -r '.challenge.current_day // "N/A"' "$STATE_FILE")
 WIN_RATE=$(jq -r '.performance.win_rate // "N/A"' "$STATE_FILE")
+AVG_RETURN=$(jq -r '.performance.avg_return // "N/A"' "$STATE_FILE")
+WIN_RATE_SAMPLE=$(jq -r '.performance.win_rate_sample_size // "N/A"' "$STATE_FILE")
+
+# HONEST REPORTING (LL-118): Win rate without avg_return is MISLEADING
+# If avg_return is negative, the win rate is lying to us
+WIN_RATE_DISPLAY="$WIN_RATE"
+if [[ "$AVG_RETURN" != "N/A" ]]; then
+    AVG_RETURN_ROUNDED=$(printf "%.1f" "$AVG_RETURN" 2>/dev/null || echo "$AVG_RETURN")
+    if (( $(echo "$AVG_RETURN < 0" | bc -l 2>/dev/null || echo 0) )); then
+        WIN_RATE_DISPLAY="$WIN_RATE (MISLEADING - avg return: ${AVG_RETURN_ROUNDED}%)"
+    fi
+fi
 
 # Check data freshness and warn if stale
 STALE_WARNING=""
@@ -234,7 +246,7 @@ echo "════════════════════════�
 
 cat <<EOF
 Portfolio: \$$CURRENT_EQUITY | P/L: \$$TOTAL_PL ($TOTAL_PL_PCT%) | Day: $CURRENT_DAY/90
-Win Rate: $WIN_RATE% (live) | Backtest: $BACKTEST_STATUS
+Win Rate: $WIN_RATE_DISPLAY% (n=$WIN_RATE_SAMPLE) | Backtest: $BACKTEST_STATUS
 Next Trade: $NEXT_TRADE
 Markets: $MARKET_STATUS
 EOF

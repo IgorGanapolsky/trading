@@ -198,9 +198,11 @@
     "losing_trades": 1,
     "win_rate": 80.0,
     "win_rate_sample_size": 5,
+    "win_rate_HONEST": "MEANINGLESS - 5 trades is not statistically significant. TRUE metric: avg_return = -6.97%",
     "win_rate_warning": "STATISTICALLY INSIGNIFICANT - Only 5 closed trades. Need 30+ for meaningful win rate.",
     "confidence_interval_95pct": "28.4% to 99.5%",
     "statistical_significance": "NONE - Sample too small for reliable conclusions",
+    "TRUTH": "We are LOSING money on average (-6.97% per trade) despite 80% win rate. The win rate is MISLEADING.",
     "best_trade": {
       "symbol": "SPY260123P00660000",
       "pl": 197.0,
