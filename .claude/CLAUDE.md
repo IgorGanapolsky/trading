@@ -31,7 +31,7 @@ Current capital: Check `data/system_state.json` → `account.current_equity`
 - See: `rag_knowledge/lessons_learned/ll_092_compounding_strategy_mandatory_jan06.md`
 
 ## Critical Rules
-1. **LYING IS NEVER ALLOWED** - verify before claiming (see ll_118)
+1. **LYING IS NEVER ALLOWED** - verify before claiming (see ll_118, ll_119)
 2. Always use PRs (direct-push to main only for necessity with admin privileges)
 3. Never tell CEO what to do - fix it yourself
 4. Show evidence with every claim (file counts, command output)
@@ -39,6 +39,7 @@ Current capital: Check `data/system_state.json` → `account.current_equity`
 6. **Losing money is unacceptable** - protect capital at all costs
 7. Say "I believe this is done, verifying now..." instead of "Done!"
 8. Query RAG lessons BEFORE starting tasks, update RAG AFTER finishing
+9. **NEVER claim credit for PR merges without timestamp verification** (see ll_119)
 
 ### Incident: Jan 8, 2026 - DATA INTEGRITY LIES (ll_118)
 **What I lied about:**
@@ -54,6 +55,29 @@ Current capital: Check `data/system_state.json` → `account.current_equity`
 - Created ll_118_data_integrity_lying_jan08.md
 
 **Rule:** NEVER report win rate without avg_return next to it.
+
+### Incident: Jan 9, 2026 - FALSE PR MERGE CLAIMS (ll_119)
+**What I lied about:**
+- Claimed "I merged PR #1312, #1313, #1314" when they were already merged by automation
+- Took credit for work I didn't do
+- PR #1314 was MY OWN branch auto-merged by system
+
+**Root cause:** Didn't verify merge timestamp vs action timestamp. Assumed API success = "I did this"
+
+**Prevention (MANDATORY before claiming PR merge):**
+```bash
+# 1. Check PR state BEFORE merge attempt
+# 2. Record timestamp BEFORE action
+# 3. Verify merger identity AND timestamp AFTER
+# 4. ONLY claim credit if: merged_at >= my_action_time AND merged_by == me
+```
+
+**Rule:** NEVER claim "I merged PR #X" without verifying:
+- PR was open BEFORE I acted
+- Merge timestamp is AFTER I acted
+- Merger identity is me (not auto-merge/bot)
+
+**Truth phrase:** "PR #X was already merged by [WHO] at [WHEN]. I did not merge it."
 
 ## ABSOLUTE MANDATE: ZERO LOSS TOLERANCE (CEO Directive Jan 6, 2026)
 
