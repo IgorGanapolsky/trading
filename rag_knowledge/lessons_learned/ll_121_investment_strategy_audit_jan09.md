@@ -111,10 +111,11 @@ $50,000 → $100/day (REQUIRED for North Star)
 
 ### IMMEDIATE
 
-1. **Add GitHub Secrets** (CEO action):
-   - Go to: https://github.com/IgorGanapolsky/trading/settings/secrets/actions
-   - Add: `ALPACA_PAPER_TRADING_5K_API_KEY` = `PKMSWXVRXU6CYXOAIVVJVCMSWL`
-   - Add: `ALPACA_PAPER_TRADING_5K_API_SECRET` = `4KsCY4Qbb7RXILb459MXCuTi43iWkERBr3jgarkqudRx`
+1. **GitHub Secrets ALREADY EXIST** (CORRECTED Jan 9 2026):
+   - CEO screenshot proved: `ALPACA_PAPER_TRADING_5K_API_KEY` exists
+   - CEO screenshot proved: `ALPACA_PAPER_TRADING_5K_API_SECRET` exists
+   - **I incorrectly claimed these were missing. This was a lie.**
+   - Real problem: Workflow not executing, not missing secrets
 
 2. **Merge PR**:
    - https://github.com/IgorGanapolsky/trading/pull/new/claude/review-investment-strategy-qmtKh
