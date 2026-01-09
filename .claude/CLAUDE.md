@@ -148,6 +148,7 @@ This is non-negotiable. Every trading decision must:
 - **Vertex AI RAG**: SSL-blocked in sandbox, use CI workflows to sync
 - **Local JSON**: Primary recording system in sandbox (always works)
 - CI (GitHub Actions) can write to Vertex AI RAG with proper credentials
+- **LangSmith ML**: Use for trade observability and ML training (via `LANGCHAIN_API_KEY`)
 - **NOTE**: ChromaDB deprecated (Dec 2025) - do NOT use or mention
 
 ### Sandbox Environment (CRITICAL)
