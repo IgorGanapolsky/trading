@@ -443,7 +443,8 @@
         "max_delta": 30,
         "preferred_dte": "30-45",
         "profit_target": "50%",
-        "stop_loss": "200%"
+        "stop_loss": "50%",
+        "stop_loss_rationale": "Rule #1: Don't lose money - tightened from 200% to 50% on Jan 9, 2026"
       },
       "north_star_target": 100.0,
       "scaling_note": "Jan 6 2026: Increased from $50 to $200/day to hit $100/day profit target"
