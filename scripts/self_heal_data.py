@@ -121,6 +121,7 @@ def fix_index_md(docs_path: Path, current_day: int) -> list[str]:
 
         # Fix "Live Status (Day XX/90)"
         import re
+
         old_status = re.search(r"Live Status \(Day \d+/90\)", content)
         if old_status:
             new_status = f"Live Status (Day {current_day}/90)"
