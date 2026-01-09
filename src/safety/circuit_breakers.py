@@ -5,10 +5,10 @@ This module provides a simple CircuitBreaker class that tracks consecutive losse
 and API errors to halt trading when thresholds are exceeded.
 """
 
-from datetime import datetime
-from pathlib import Path
 import json
 from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
 
 
 @dataclass
