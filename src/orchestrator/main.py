@@ -2974,8 +2974,8 @@ class TradingOrchestrator:
         results: dict[str, Any] = {
             "put_signals": 0,
             "call_signals": 0,
-            "puts_logged": 0,      # HONEST: we log, not execute here
-            "calls_logged": 0,     # HONEST: we log, not execute here
+            "puts_logged": 0,  # HONEST: we log, not execute here
+            "calls_logged": 0,  # HONEST: we log, not execute here
             "est_total_premium": 0.0,  # HONEST: estimated, not realized
             "errors": [],
             "note": "Signals logged here; execution in rule_one_trader.py",
@@ -3030,7 +3030,9 @@ class TradingOrchestrator:
                 # FIXED: Use accurate counter - we're LOGGING not EXECUTING here
                 # Actual execution happens in rule_one_trader.py script
                 results["puts_logged"] = results.get("puts_logged", 0) + 1
-                results["est_total_premium"] = results.get("est_total_premium", 0) + signal.total_premium
+                results["est_total_premium"] = (
+                    results.get("est_total_premium", 0) + signal.total_premium
+                )
 
             for signal in call_signals[:3]:
                 logger.info(
@@ -3057,7 +3059,9 @@ class TradingOrchestrator:
                 )
                 # FIXED: Use accurate counter - we're LOGGING not EXECUTING here
                 results["calls_logged"] = results.get("calls_logged", 0) + 1
-                results["est_total_premium"] = results.get("est_total_premium", 0) + signal.total_premium
+                results["est_total_premium"] = (
+                    results.get("est_total_premium", 0) + signal.total_premium
+                )
 
             logger.info(
                 "Gate 6 Summary: %d puts, %d calls LOGGED (execution in rule_one_trader.py). Est. Premium: $%.2f",

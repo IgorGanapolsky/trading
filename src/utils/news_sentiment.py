@@ -123,9 +123,7 @@ class NewsSentimentAggregator:
             try:
                 from openai import OpenAI
 
-                self.grok_client = OpenAI(
-                    api_key=self.grok_api_key, base_url="https://api.x.ai/v1"
-                )
+                self.grok_client = OpenAI(api_key=self.grok_api_key, base_url="https://api.x.ai/v1")
                 logger.info("Grok/X.ai API client initialized for Twitter sentiment")
             except Exception as e:
                 logger.warning(f"Failed to initialize Grok client: {e}")

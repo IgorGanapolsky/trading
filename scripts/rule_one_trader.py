@@ -39,12 +39,12 @@ logger = logging.getLogger(__name__)
 CONFIG = {
     "watchlist": [
         # TIER 1: Affordable for $5K account (strike <= $50)
-        "F",      # Ford - ~$10 strike
-        "SOFI",   # SoFi - ~$15 strike
-        "T",      # AT&T - ~$20 strike
-        "INTC",   # Intel - ~$20 strike
-        "BAC",    # Bank of America - ~$35 strike
-        "VZ",     # Verizon - ~$40 strike
+        "F",  # Ford - ~$10 strike
+        "SOFI",  # SoFi - ~$15 strike
+        "T",  # AT&T - ~$20 strike
+        "INTC",  # Intel - ~$20 strike
+        "BAC",  # Bank of America - ~$35 strike
+        "VZ",  # Verizon - ~$40 strike
     ],
     "max_position_pct": 0.10,  # Max 10% of portfolio per position
     "target_dte": 30,  # 30 days to expiration for puts
@@ -335,8 +335,12 @@ def run_rule_one_strategy():
                 elif "BUY" in recommendation:
                     # FIX: This is WHERE we should be trading!
                     # Stock is above MOS but below Sticker = "getting paid to wait"
-                    logger.info(f"  🎯 ACTIONABLE: {symbol} above MOS, below Sticker - Selling CSP to wait!")
-                    logger.info(f"     Current: ${current_price:.2f} | MOS: ${mos_price:.2f} | Sticker: ${sticker_price:.2f}")
+                    logger.info(
+                        f"  🎯 ACTIONABLE: {symbol} above MOS, below Sticker - Selling CSP to wait!"
+                    )
+                    logger.info(
+                        f"     Current: ${current_price:.2f} | MOS: ${mos_price:.2f} | Sticker: ${sticker_price:.2f}"
+                    )
 
                     trade = execute_phil_town_csp(client, symbol, analysis)
                     if trade:
@@ -346,7 +350,9 @@ def run_rule_one_strategy():
                         logger.warning(f"  ⚠️ Trade execution failed for {symbol}")
 
                 elif "SELL" in recommendation or "HOLD" in recommendation:
-                    logger.info(f"  📈 {symbol} near/above fair value - skip CSP, consider covered calls if holding")
+                    logger.info(
+                        f"  📈 {symbol} near/above fair value - skip CSP, consider covered calls if holding"
+                    )
 
             except Exception as e:
                 logger.warning(f"  Failed to process {symbol}: {e}")

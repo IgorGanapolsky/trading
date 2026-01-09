@@ -635,7 +635,9 @@ class TradeGateway:
                 # CRITICAL FIX (Jan 9, 2026 - ll_124): Use place_order_with_stop_loss
                 # for BUY orders to ensure every new position is protected from inception.
                 # Phil Town Rule #1: Don't Lose Money
-                if request.side.lower() == "buy" and hasattr(self.executor, 'place_order_with_stop_loss'):
+                if request.side.lower() == "buy" and hasattr(
+                    self.executor, "place_order_with_stop_loss"
+                ):
                     result = self.executor.place_order_with_stop_loss(
                         symbol=request.symbol,
                         notional=notional,
@@ -644,10 +646,8 @@ class TradeGateway:
                     )
                     order = result.get("order")
                     if result.get("stop_loss"):
-                        stop_price = result.get('stop_loss_price', 0)
-                        logger.info(
-                            f"🛡️ Stop-loss set: {request.symbol} @ ${stop_price:.2f}"
-                        )
+                        stop_price = result.get("stop_loss_price", 0)
+                        logger.info(f"🛡️ Stop-loss set: {request.symbol} @ ${stop_price:.2f}")
                     elif result.get("error"):
                         logger.warning(
                             f"⚠️ Order placed but stop-loss failed: {result.get('error')}"

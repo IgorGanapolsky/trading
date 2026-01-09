@@ -73,8 +73,12 @@ def check_alpaca_api() -> bool:
 
     print("🔍 Alpaca API Configuration:")
     print(f"   Mode: {'PAPER' if paper_mode else 'LIVE'}")
-    print(f"   API Key: {api_key[:8] if len(api_key) >= 8 else 'MISSING'}...{api_key[-4:] if len(api_key) >= 4 else ''}")
-    print(f"   Secret: {secret_key[:8] if len(secret_key) >= 8 else 'MISSING'}...{secret_key[-4:] if len(secret_key) >= 4 else ''}")
+    print(
+        f"   API Key: {api_key[:8] if len(api_key) >= 8 else 'MISSING'}...{api_key[-4:] if len(api_key) >= 4 else ''}"
+    )
+    print(
+        f"   Secret: {secret_key[:8] if len(secret_key) >= 8 else 'MISSING'}...{secret_key[-4:] if len(secret_key) >= 4 else ''}"
+    )
     print()
 
     # Self-healing: Retry up to 3 times with exponential backoff
@@ -84,6 +88,7 @@ def check_alpaca_api() -> bool:
     for attempt in range(max_retries):
         try:
             from src.core.alpaca_trader import AlpacaTrader
+
             trader = AlpacaTrader(paper=paper_mode)
             account = trader.get_account_info()
 
@@ -107,7 +112,7 @@ def check_alpaca_api() -> bool:
 
         # Exponential backoff before retry
         if attempt < max_retries - 1:
-            wait_time = 2 ** attempt  # 1s, 2s, 4s
+            wait_time = 2**attempt  # 1s, 2s, 4s
             print(f"   Retrying in {wait_time}s...")
             time.sleep(wait_time)
 

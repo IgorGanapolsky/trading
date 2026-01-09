@@ -1,0 +1,46 @@
+name: Auto-format Code
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  auto-format:
+    name: Auto-format with Ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Ruff
+        run: pip install ruff
+
+      - name: Run Ruff format (auto-fix)
+        run: ruff format .
+
+      - name: Run Ruff check (auto-fix)
+        run: ruff check . --fix || true
+
+      - name: Commit changes
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No formatting changes needed"
+          else
+            git commit -m "style: Auto-format with ruff"
+            git push origin main
+          fi

@@ -243,29 +243,29 @@ class RuleOneOptionsStrategy:
     # $5K account can only do CSPs on stocks with strike <= $50
     DEFAULT_UNIVERSE = [
         # TIER 1: Affordable for $5K account (strike <= $50)
-        "F",      # Ford - ~$10 strike, solid dividend, EV transition
-        "SOFI",   # SoFi - ~$15 strike, fintech growth
-        "T",      # AT&T - ~$20 strike, high dividend, 5G
-        "INTC",   # Intel - ~$20 strike, semiconductor turnaround
-        "BAC",    # Bank of America - ~$35 strike, banking moat
-        "VZ",     # Verizon - ~$40 strike, high dividend, 5G
-        "C",      # Citigroup - ~$60 strike, banking (may need $6K)
+        "F",  # Ford - ~$10 strike, solid dividend, EV transition
+        "SOFI",  # SoFi - ~$15 strike, fintech growth
+        "T",  # AT&T - ~$20 strike, high dividend, 5G
+        "INTC",  # Intel - ~$20 strike, semiconductor turnaround
+        "BAC",  # Bank of America - ~$35 strike, banking moat
+        "VZ",  # Verizon - ~$40 strike, high dividend, 5G
+        "C",  # Citigroup - ~$60 strike, banking (may need $6K)
         # TIER 2: Need $10K+ account
-        "KO",     # Coca-Cola - ~$60 strike
-        "PG",     # Procter & Gamble - ~$160 strike
-        "JNJ",    # Johnson & Johnson - ~$150 strike
-        "HD",     # Home Depot - ~$350 strike
-        "MCD",    # McDonald's - ~$290 strike
+        "KO",  # Coca-Cola - ~$60 strike
+        "PG",  # Procter & Gamble - ~$160 strike
+        "JNJ",  # Johnson & Johnson - ~$150 strike
+        "HD",  # Home Depot - ~$350 strike
+        "MCD",  # McDonald's - ~$290 strike
         # TIER 3: Need $20K+ account
-        "AAPL",   # Apple - ~$180 strike
-        "MSFT",   # Microsoft - ~$420 strike
+        "AAPL",  # Apple - ~$180 strike
+        "MSFT",  # Microsoft - ~$420 strike
         "GOOGL",  # Alphabet - ~$180 strike
-        "AMZN",   # Amazon - ~$220 strike
-        "NVDA",   # Nvidia - ~$140 strike
-        "V",      # Visa - ~$290 strike
-        "MA",     # Mastercard - ~$500 strike
-        "COST",   # Costco - ~$900 strike
-        "UNH",    # UnitedHealth - ~$500 strike
+        "AMZN",  # Amazon - ~$220 strike
+        "NVDA",  # Nvidia - ~$140 strike
+        "V",  # Visa - ~$290 strike
+        "MA",  # Mastercard - ~$500 strike
+        "COST",  # Costco - ~$900 strike
+        "UNH",  # UnitedHealth - ~$500 strike
         "BRK-B",  # Berkshire B - ~$450 strike
     ]
 

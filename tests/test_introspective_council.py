@@ -16,6 +16,7 @@ class TestAnonymizeResponses:
         """Set up test fixtures."""
         try:
             from src.core.introspective_council import IntrospectiveCouncil
+
             self.council_class = IntrospectiveCouncil
         except ImportError:
             pytest.skip("IntrospectiveCouncil not available")
@@ -98,6 +99,7 @@ class TestCouncilValidationWithAnonymization:
         """Set up test fixtures."""
         try:
             from src.core.introspective_council import IntrospectiveCouncil
+
             self.council_class = IntrospectiveCouncil
         except ImportError:
             pytest.skip("IntrospectiveCouncil not available")
@@ -107,11 +109,13 @@ class TestCouncilValidationWithAnonymization:
         """Test that validate_trade receives anonymized peer_responses."""
         mock_analyzer = MagicMock()
         mock_council = MagicMock()
-        mock_council.validate_trade = AsyncMock(return_value={
-            "approved": True,
-            "confidence": 0.8,
-            "reasoning": "Test passed",
-        })
+        mock_council.validate_trade = AsyncMock(
+            return_value={
+                "approved": True,
+                "confidence": 0.8,
+                "reasoning": "Test passed",
+            }
+        )
         council = self.council_class(
             multi_llm_analyzer=mock_analyzer,
             llm_council=mock_council,
@@ -122,7 +126,7 @@ class TestCouncilValidationWithAnonymization:
         ensemble = {
             "sentiment": 0.5,
             "confidence": 0.7,
-            "individual_scores": {"claude": 0.6, "gpt4": 0.7}
+            "individual_scores": {"claude": 0.6, "gpt4": 0.7},
         }
         _result = await council._get_council_validation(
             symbol="SPY",
@@ -144,6 +148,7 @@ class TestSmokeTests:
         """Smoke test: Can import IntrospectiveCouncil."""
         try:
             from src.core.introspective_council import IntrospectiveCouncil
+
             assert IntrospectiveCouncil is not None
         except ImportError as e:
             pytest.skip(f"Import failed: {e}")
@@ -152,6 +157,7 @@ class TestSmokeTests:
         """Smoke test: Can import TradeDecision enum."""
         try:
             from src.core.introspective_council import TradeDecision
+
             assert TradeDecision.BUY is not None
             assert TradeDecision.SELL is not None
             assert TradeDecision.HOLD is not None
@@ -163,6 +169,7 @@ class TestSmokeTests:
         """Smoke test: _anonymize_responses method exists."""
         try:
             from src.core.introspective_council import IntrospectiveCouncil
+
             assert hasattr(IntrospectiveCouncil, "_anonymize_responses")
         except ImportError as e:
             pytest.skip(f"Import failed: {e}")
