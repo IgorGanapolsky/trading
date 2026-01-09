@@ -123,13 +123,8 @@ if INTROSPECTION_AVAILABLE:
         importlib.util.find_spec("src.core.uncertainty_tracker") is not None
     )
 
-# LangSmith tracing for session observability (Dec 2025)
-try:
-    from src.observability.langsmith_tracer import TraceType, get_tracer
-
-    LANGSMITH_AVAILABLE = True
-except ImportError:
-    LANGSMITH_AVAILABLE = False
+# LangSmith removed Jan 9, 2026 - using Vertex AI RAG instead
+LANGSMITH_AVAILABLE = False
 
 # Go ADK Multi-Agent Trading Orchestrator (Dec 2025)
 # Provides Gemini-powered research/signal/risk/execution agents

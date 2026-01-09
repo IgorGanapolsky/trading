@@ -50,15 +50,8 @@ except ImportError:
     CHECKPOINTING_AVAILABLE = False
     logger.warning("Checkpointing not available - pipeline will not be resumable")
 
-# LangSmith tracing for gate observability
-try:
-    from src.observability.langsmith_tracer import TraceType, get_tracer
-
-    LANGSMITH_AVAILABLE = True
-    logger.info("LangSmith tracing enabled for trading gates")
-except ImportError:
-    LANGSMITH_AVAILABLE = False
-    logger.warning("LangSmith not available - gate decisions will only be logged locally")
+# LangSmith removed Jan 9, 2026 - using Vertex AI RAG instead
+LANGSMITH_AVAILABLE = False
 
 
 def _trace_gate(gate_name: str, ticker: str, inputs: dict, result: GateResult) -> None:

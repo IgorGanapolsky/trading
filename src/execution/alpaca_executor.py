@@ -23,13 +23,8 @@ from src.core.alpaca_trader import AlpacaTrader
 
 logger = logging.getLogger(__name__)
 
-# LangSmith tracing for trade execution
-try:
-    from src.observability.langsmith_tracer import TraceType, get_tracer
-
-    LANGSMITH_AVAILABLE = True
-except ImportError:
-    LANGSMITH_AVAILABLE = False
+# LangSmith removed Jan 9, 2026 - using Vertex AI RAG instead
+LANGSMITH_AVAILABLE = False
 
 # Default stop-loss configuration
 DEFAULT_STOP_LOSS_PCT = 0.05  # 5% default if ATR unavailable

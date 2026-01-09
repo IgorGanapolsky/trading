@@ -36,13 +36,8 @@ from src.risk.capital_efficiency import get_capital_calculator
 
 logger = logging.getLogger(__name__)
 
-# LangSmith tracing for gateway observability
-try:
-    from src.observability.langsmith_tracer import TraceType, get_tracer
-
-    LANGSMITH_AVAILABLE = True
-except ImportError:
-    LANGSMITH_AVAILABLE = False
+# LangSmith removed Jan 9, 2026 - using Vertex AI RAG instead
+LANGSMITH_AVAILABLE = False
 
 
 class RejectionReason(Enum):
