@@ -101,9 +101,11 @@ if [[ "$LIVE_DATA" == "false" ]]; then
 fi
 
 CURRENT_DAY=$(jq -r '.challenge.current_day // "N/A"' "$STATE_FILE")
-WIN_RATE=$(jq -r '.performance.win_rate // "N/A"' "$STATE_FILE")
-AVG_RETURN=$(jq -r '.performance.avg_return // "N/A"' "$STATE_FILE")
-WIN_RATE_SAMPLE=$(jq -r '.performance.win_rate_sample_size // "N/A"' "$STATE_FILE")
+# FIXED Jan 9, 2026: Read from paper_account (current) instead of performance (stale pre-reset data)
+WIN_RATE=$(jq -r '.paper_account.win_rate // "N/A"' "$STATE_FILE")
+# paper_account doesn't track avg_return per trade yet - calculate from total_pl_pct if needed
+AVG_RETURN=$(jq -r '.paper_account.total_pl_pct // "0"' "$STATE_FILE")
+WIN_RATE_SAMPLE=$(jq -r '.paper_account.win_rate_sample_size // "N/A"' "$STATE_FILE")
 
 # HONEST REPORTING (LL-118): Win rate without avg_return is MISLEADING
 # If avg_return is negative, the win rate is lying to us
