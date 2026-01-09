@@ -75,7 +75,8 @@ def main(dry_run: bool = False, trail_pct: float | None = None):
 
     if not positions:
         logger.info("No open positions - nothing to protect")
-        return
+        logger.info("SUCCESS: No positions to protect is a valid state")
+        return True  # No positions = nothing at risk = success
 
     logger.info("=" * 70)
     logger.info("TRAILING STOP-LOSS SETUP - Phil Town Rule #1: Don't Lose Money")
