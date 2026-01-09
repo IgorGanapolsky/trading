@@ -748,5 +748,17 @@
         "time": "16:18:26 UTC"
       }
     ]
-  }
+  },
+  "last_updated": "2026-01-09T20:45:22Z",
+  "last_updated_by": "CTO Claude - Jan 9, 2026 session",
+  "security_incidents": [
+    {
+      "date": "2026-01-09",
+      "type": "credential_exposure",
+      "severity": "P0",
+      "status": "RESOLVED",
+      "resolution": "Credentials rotated by CEO, old keys invalidated",
+      "lesson_learned": "ll_124_secret_exposure_incident_jan09.md"
+    }
+  ]
 }
