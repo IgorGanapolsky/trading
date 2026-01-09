@@ -631,11 +631,28 @@ class TradeGateway:
             else:
                 # Use adjusted notional if available (from batching)
                 notional = decision.adjusted_notional or request.notional
-                order = self.executor.place_order(
-                    symbol=request.symbol,
-                    notional=notional,
-                    side=request.side,
-                )
+
+                # CRITICAL FIX (Jan 9, 2026 - ll_124): Use place_order_with_stop_loss
+                # for BUY orders to ensure every new position is protected from inception.
+                # Phil Town Rule #1: Don't Lose Money
+                if request.side.lower() == "buy" and hasattr(self.executor, 'place_order_with_stop_loss'):
+                    result = self.executor.place_order_with_stop_loss(
+                        symbol=request.symbol,
+                        notional=notional,
+                        side=request.side,
+                        stop_loss_pct=0.08,  # 8% stop-loss per position_manager defaults
+                    )
+                    order = result.get("order")
+                    if result.get("stop_loss"):
+                        logger.info(f"🛡️ Stop-loss set: {request.symbol} @ ${result.get('stop_loss_price', 0):.2f}")
+                    elif result.get("error"):
+                        logger.warning(f"⚠️ Order placed but stop-loss failed: {result.get('error')}")
+                else:
+                    order = self.executor.place_order(
+                        symbol=request.symbol,
+                        notional=notional,
+                        side=request.side,
+                    )
 
             # Track the trade
             self.recent_trades.append(datetime.now())

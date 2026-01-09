@@ -183,5 +183,6 @@ xxhash==3.6.0
 yarl==1.22.0
 yfinance==0.2.58
 youtube-transcript-api==1.2.3
+yt-dlp>=2024.10.0
 zstandard==0.23.0
 google-cloud-aiplatform>=1.38.0

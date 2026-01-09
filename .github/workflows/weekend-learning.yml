@@ -128,6 +128,23 @@ jobs:
             echo "Note: Forum scraping may have rate limits"
           }
 
+      - name: "Phase 1d: Analyze YouTube transcripts for trading insights"
+        # FIX (Jan 9, 2026): Transcripts were being fetched but NOT analyzed
+        # This extracts actionable trading insights from Phil Town/options videos
+        continue-on-error: true
+        run: |
+          echo "🔍 Analyzing YouTube transcripts for trading insights..."
+          for transcript in rag_knowledge/youtube/transcripts/*.md; do
+            if [ -f "$transcript" ]; then
+              echo "  Analyzing: $(basename $transcript)"
+              python3 .claude/skills/youtube-analyzer/scripts/analyze_youtube.py \
+                --file "$transcript" \
+                --output-dir rag_knowledge/youtube/insights \
+                --extract-rules || echo "  ⚠️ Analysis warning: $transcript"
+            fi
+          done
+          echo "✅ YouTube analysis complete. Insights stored in rag_knowledge/youtube/insights/"
+
       # === PHASE 2: VECTORIZATION ===
       - name: "Phase 2: Vectorize into RAG"
         run: |
