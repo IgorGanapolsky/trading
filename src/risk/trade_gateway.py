@@ -644,9 +644,14 @@ class TradeGateway:
                     )
                     order = result.get("order")
                     if result.get("stop_loss"):
-                        logger.info(f"🛡️ Stop-loss set: {request.symbol} @ ${result.get('stop_loss_price', 0):.2f}")
+                        stop_price = result.get('stop_loss_price', 0)
+                        logger.info(
+                            f"🛡️ Stop-loss set: {request.symbol} @ ${stop_price:.2f}"
+                        )
                     elif result.get("error"):
-                        logger.warning(f"⚠️ Order placed but stop-loss failed: {result.get('error')}")
+                        logger.warning(
+                            f"⚠️ Order placed but stop-loss failed: {result.get('error')}"
+                        )
                 else:
                     order = self.executor.place_order(
                         symbol=request.symbol,
