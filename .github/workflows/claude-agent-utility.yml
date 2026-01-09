@@ -25,6 +25,8 @@ on:
           - deploy-webhook
           - set-trailing-stops
           - manage-positions
+          - verify-alpaca-account
+          - execute-paper-trade
           - custom-command
         default: 'run-tests'
       custom_command:
@@ -204,6 +206,117 @@ jobs:
           if grep -q "exits executed" position-management.txt; then
             echo "::notice::Position management complete - check output for actions taken"
           fi
+
+      - name: Task - Verify Alpaca Account
+        if: github.event.inputs.task == 'verify-alpaca-account'
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          echo "=================================================="
+          echo "VERIFYING ALPACA PAPER ACCOUNT STATUS"
+          echo "=================================================="
+          pip install alpaca-py
+          python3 -c "
+          import os
+          from alpaca.trading.client import TradingClient
+          from alpaca.trading.requests import GetOrdersRequest
+          from alpaca.trading.enums import QueryOrderStatus
+
+          client = TradingClient(
+              os.environ['ALPACA_API_KEY'],
+              os.environ['ALPACA_SECRET_KEY'],
+              paper=True
+          )
+
+          account = client.get_account()
+          print('=== ALPACA PAPER ACCOUNT ===')
+          print(f'Equity: \${float(account.equity):,.2f}')
+          print(f'Cash: \${float(account.cash):,.2f}')
+          print(f'Buying Power: \${float(account.buying_power):,.2f}')
+          print(f'Status: {account.status}')
+
+          positions = client.get_all_positions()
+          print(f'\n=== POSITIONS ({len(positions)}) ===')
+          for p in positions:
+              print(f'  {p.symbol}: {p.qty} @ \${float(p.current_price):.2f} | P/L: \${float(p.unrealized_pl):.2f}')
+
+          if not positions:
+              print('  NO POSITIONS')
+
+          orders = client.get_orders(GetOrdersRequest(status=QueryOrderStatus.ALL, limit=10))
+          print(f'\n=== RECENT ORDERS ({len(orders)}) ===')
+          for o in orders[:5]:
+              print(f'  {o.created_at.strftime(\"%Y-%m-%d %H:%M\")} | {o.side} {o.qty} {o.symbol} | {o.status}')
+
+          if not orders:
+              print('  NO ORDERS')
+          "
+
+      - name: Task - Execute Paper Trade
+        if: github.event.inputs.task == 'execute-paper-trade'
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          PAPER_TRADING: "true"
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          echo "=================================================="
+          echo "EXECUTING PAPER TRADE - Phil Town Strategy"
+          echo "=================================================="
+          echo ""
+
+          # First, verify account
+          pip install alpaca-py
+          python3 -c "
+          import os
+          from alpaca.trading.client import TradingClient
+          client = TradingClient(
+              os.environ['ALPACA_API_KEY'],
+              os.environ['ALPACA_SECRET_KEY'],
+              paper=True
+          )
+          account = client.get_account()
+          print(f'Pre-trade equity: \${float(account.equity):,.2f}')
+          print(f'Buying power: \${float(account.buying_power):,.2f}')
+          "
+
+          # Run guaranteed trader for immediate execution
+          echo ""
+          echo "Running guaranteed_trader.py..."
+          python3 scripts/guaranteed_trader.py 2>&1 || {
+            echo "::warning::Guaranteed trader had issues"
+          }
+
+          # Verify results
+          echo ""
+          echo "Post-trade verification..."
+          python3 -c "
+          import os
+          from alpaca.trading.client import TradingClient
+          from alpaca.trading.requests import GetOrdersRequest
+          from alpaca.trading.enums import QueryOrderStatus
+          from datetime import datetime, timedelta
+
+          client = TradingClient(
+              os.environ['ALPACA_API_KEY'],
+              os.environ['ALPACA_SECRET_KEY'],
+              paper=True
+          )
+
+          account = client.get_account()
+          print(f'Post-trade equity: \${float(account.equity):,.2f}')
+
+          # Check for recent orders
+          orders = client.get_orders(GetOrdersRequest(
+              status=QueryOrderStatus.ALL,
+              limit=5,
+              after=datetime.now() - timedelta(hours=1)
+          ))
+          print(f'\nOrders in last hour: {len(orders)}')
+          for o in orders:
+              print(f'  {o.side} {o.qty} {o.symbol} | {o.status}')
+          "
 
       - name: Task - Custom Command
         if: github.event.inputs.task == 'custom-command' && github.event.inputs.custom_command != ''
