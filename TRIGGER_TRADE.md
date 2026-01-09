@@ -1,42 +1,34 @@
 # Trade Trigger
 
-Triggered: 2026-01-09 03:11:27 UTC
-Reason: EMERGENCY - Paper trading broken 4 days (Jan 5-9). CEO directive to fix immediately.
+Triggered: 2026-01-09 03:48:00 UTC
+Reason: DIAGNOSTIC - Testing workflow after 4-day paper trading outage (ll_120)
 
-## Context
-- **CRITICAL**: Paper trading has been DEAD for 4 consecutive days
-- Last successful trade: 2026-01-06
-- Current time: Friday Jan 9, 2026 03:11 UTC (before market open)
-- Markets open at 9:35 AM ET (14:35 UTC)
-- This trigger will verify workflow executes and trades are placed
+## Problem Being Diagnosed
+- Paper trading BROKEN since Jan 6, 2026
+- ZERO trades executed for Jan 7, 8, 9
+- Suspected cause: GitHub Secrets may not exist for new 5K account
 
-## Issue Diagnosis (ll_120)
-1. Secrets may not exist in GitHub: `ALPACA_PAPER_TRADING_5K_API_KEY`, `ALPACA_PAPER_TRADING_5K_API_SECRET`
-2. Scheduled workflow may not be triggering
-3. validate-and-test job may be failing silently
+## Expected Outcome
+This trigger will:
+1. Run the daily-trading.yml workflow
+2. Show which step fails (if any)
+3. Help identify if secrets exist in GitHub repo settings
 
-## Action Required
-1. Verify GitHub Secrets exist (go to repo Settings > Secrets)
-2. Check GitHub Actions tab for workflow runs
-3. This push triggers daily-trading.yml on path 'TRIGGER_TRADE.md'
+## Critical Check
+If the workflow fails at `validate-and-test` → `Validate secrets`:
+- Confirms: ALPACA_PAPER_TRADING_5K_API_KEY secret missing from GitHub
+- CEO must add secrets via GitHub UI: https://github.com/IgorGanapolsky/trading/settings/secrets/actions
 
-## Secrets Required
-The following must exist in GitHub Secrets (Settings > Secrets):
-- ALPACA_PAPER_TRADING_5K_API_KEY
-- ALPACA_PAPER_TRADING_5K_API_SECRET
-- ALPACA_BROKERAGE_TRADING_API_KEY
-- ALPACA_BROKERAGE_TRADING_API_SECRET
+## Market Status
+- Markets: CLOSED (after hours)
+- This is a diagnostic run only
+- Real trading will occur at next market open: Jan 9, 9:35 AM ET
 
-(Values provided by CEO in session - do NOT commit to repo)
+## Related Lessons
+- ll_120: Paper Trading System Broken for 4 Days
+- ll_119: Paper Trading API Key Mismatch
 
-## Verification Checklist
-- [ ] Workflow triggers on push
-- [ ] validate-and-test job passes
-- [ ] Paper trading job runs
-- [ ] Trade file created (data/trades_2026-01-09.json)
-- [ ] Dashboard updated
-
-## Phil Town Strategy
-- CSPs on 4Ms stocks (AAPL, MSFT, GOOGL, AMZN, BRK.B)
-- Margin of Safety pricing
-- Rule #1: Don't lose money
+## Urgency
+- R&D Day 72/90 (18 days remaining)
+- Lost 4 trading days already
+- MUST diagnose and fix before next market open
