@@ -69,6 +69,17 @@ def check_alpaca_api() -> bool:
 
         # Determine paper mode from environment
         paper_mode = os.getenv("PAPER_TRADING", "true").lower() == "true"
+
+        # Show diagnostic info
+        api_key = os.getenv("ALPACA_API_KEY", "")
+        secret_key = os.getenv("ALPACA_SECRET_KEY", "")
+
+        print(f"🔍 Alpaca API Configuration:")
+        print(f"   Mode: {'PAPER' if paper_mode else 'LIVE'}")
+        print(f"   API Key: {api_key[:8] if len(api_key) >= 8 else 'MISSING'}...{api_key[-4:] if len(api_key) >= 4 else ''}")
+        print(f"   Secret: {secret_key[:8] if len(secret_key) >= 8 else 'MISSING'}...{secret_key[-4:] if len(secret_key) >= 4 else ''}")
+        print()
+
         trader = AlpacaTrader(paper=paper_mode)
         account = trader.get_account_info()
 
@@ -86,7 +97,29 @@ def check_alpaca_api() -> bool:
             print("❌ Alpaca API: No account data returned")
             return False
     except Exception as e:
+        error_str = str(e).lower()
         print(f"❌ Alpaca API: FAILED - {e}")
+        print()
+        print("💡 Diagnostic Info:")
+
+        if "unauthorized" in error_str or "forbidden" in error_str:
+            print("   - Authentication FAILED")
+            print("   - Possible causes:")
+            print("     1. Keys are for LIVE account (not PAPER)")
+            print("     2. Keys were regenerated after adding to GitHub Secrets")
+            print("     3. Typo when copying keys to GitHub Secrets")
+            print("   - Solution: Verify credentials using scripts/test_alpaca_credentials_local.py")
+            print("   - See: ALPACA_AUTH_DIAGNOSTIC.md for detailed steps")
+        elif "ssl" in error_str or "certificate" in error_str:
+            print("   - SSL/TLS connection issue")
+            print("   - Check network/firewall settings")
+        elif "timeout" in error_str:
+            print("   - API timeout")
+            print("   - Check Alpaca API status: https://alpaca.markets/support")
+        else:
+            print("   - Unknown error")
+            print("   - Check Alpaca API status: https://alpaca.markets/support")
+
         return False
 
 
