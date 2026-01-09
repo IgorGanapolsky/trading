@@ -148,13 +148,17 @@ jobs:
             fi
 
             # Add Jekyll front matter with date
-            echo "---" > "docs/_lessons/$filename"
-            echo "layout: post" >> "docs/_lessons/$filename"
-            echo "title: \"$title\"" >> "docs/_lessons/$filename"
-            echo "date: $date" >> "docs/_lessons/$filename"
-            echo "---" >> "docs/_lessons/$filename"
-            echo "" >> "docs/_lessons/$filename"
-            cat "$file" >> "docs/_lessons/$filename"
+            # Use single quotes and escape special chars in title to avoid shell expansion
+            safe_title=$(echo "$title" | sed "s/'/'\\\\''/g")
+            {
+              echo "---"
+              echo "layout: post"
+              printf 'title: "%s"\n' "$title"
+              echo "date: $date"
+              echo "---"
+              echo ""
+              cat "$file"
+            } > "docs/_lessons/$filename"
           done
 
       - name: Commit docs updates directly to main
