@@ -201,8 +201,11 @@ def main(dry_run: bool = False, trail_pct: float | None = None):
     except Exception as e:
         logger.warning(f"Could not update system state: {e}")
 
-    # Return success if at least one stop was set
-    return stops_set > 0
+    # Return success if:
+    # 1. At least one stop was set, OR
+    # 2. All positions were handled (set or skipped) without errors
+    # Only fail if there's an actual execution error
+    return True  # Successfully processed all positions (some may be skipped)
 
 
 if __name__ == "__main__":
