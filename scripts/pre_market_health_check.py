@@ -61,66 +61,81 @@ def timeout_handler(signum, frame):
 
 
 def check_alpaca_api() -> bool:
-    """Check Alpaca API connectivity and account access."""
-    try:
-        # Use AlpacaTrader for direct API check (Fixed Jan 6, 2026)
-        # Previous code used non-existent BrokerHealthMonitor class
-        from src.core.alpaca_trader import AlpacaTrader
+    """Check Alpaca API connectivity and account access with retry."""
+    import time
 
-        # Determine paper mode from environment
-        paper_mode = os.getenv("PAPER_TRADING", "true").lower() == "true"
+    # Determine paper mode from environment
+    paper_mode = os.getenv("PAPER_TRADING", "true").lower() == "true"
 
-        # Show diagnostic info
-        api_key = os.getenv("ALPACA_API_KEY", "")
-        secret_key = os.getenv("ALPACA_SECRET_KEY", "")
+    # Show diagnostic info
+    api_key = os.getenv("ALPACA_API_KEY", "")
+    secret_key = os.getenv("ALPACA_SECRET_KEY", "")
 
-        print(f"🔍 Alpaca API Configuration:")
-        print(f"   Mode: {'PAPER' if paper_mode else 'LIVE'}")
-        print(f"   API Key: {api_key[:8] if len(api_key) >= 8 else 'MISSING'}...{api_key[-4:] if len(api_key) >= 4 else ''}")
-        print(f"   Secret: {secret_key[:8] if len(secret_key) >= 8 else 'MISSING'}...{secret_key[-4:] if len(secret_key) >= 4 else ''}")
-        print()
+    print(f"🔍 Alpaca API Configuration:")
+    print(f"   Mode: {'PAPER' if paper_mode else 'LIVE'}")
+    print(f"   API Key: {api_key[:8] if len(api_key) >= 8 else 'MISSING'}...{api_key[-4:] if len(api_key) >= 4 else ''}")
+    print(f"   Secret: {secret_key[:8] if len(secret_key) >= 8 else 'MISSING'}...{secret_key[-4:] if len(secret_key) >= 4 else ''}")
+    print()
 
-        trader = AlpacaTrader(paper=paper_mode)
-        account = trader.get_account_info()
+    # Self-healing: Retry up to 3 times with exponential backoff
+    max_retries = 3
+    last_error = None
 
-        if account:
-            equity = float(account.get("equity", 0))
-            buying_power = float(account.get("buying_power", 0))
-            status = account.get("status", "unknown")
+    for attempt in range(max_retries):
+        try:
+            from src.core.alpaca_trader import AlpacaTrader
+            trader = AlpacaTrader(paper=paper_mode)
+            account = trader.get_account_info()
 
-            print("✅ Alpaca API: Connected")
-            print(f"   Equity: ${equity:,.2f}")
-            print(f"   Buying Power: ${buying_power:,.2f}")
-            print(f"   Status: {status}")
-            return True
-        else:
-            print("❌ Alpaca API: No account data returned")
-            return False
-    except Exception as e:
-        error_str = str(e).lower()
-        print(f"❌ Alpaca API: FAILED - {e}")
-        print()
-        print("💡 Diagnostic Info:")
+            if account:
+                equity = float(account.get("equity", 0))
+                buying_power = float(account.get("buying_power", 0))
+                status = account.get("status", "unknown")
 
-        if "unauthorized" in error_str or "forbidden" in error_str:
-            print("   - Authentication FAILED")
-            print("   - Possible causes:")
-            print("     1. Keys are for LIVE account (not PAPER)")
-            print("     2. Keys were regenerated after adding to GitHub Secrets")
-            print("     3. Typo when copying keys to GitHub Secrets")
-            print("   - Solution: Verify credentials using scripts/test_alpaca_credentials_local.py")
-            print("   - See: ALPACA_AUTH_DIAGNOSTIC.md for detailed steps")
-        elif "ssl" in error_str or "certificate" in error_str:
-            print("   - SSL/TLS connection issue")
-            print("   - Check network/firewall settings")
-        elif "timeout" in error_str:
-            print("   - API timeout")
-            print("   - Check Alpaca API status: https://alpaca.markets/support")
-        else:
-            print("   - Unknown error")
-            print("   - Check Alpaca API status: https://alpaca.markets/support")
+                print("✅ Alpaca API: Connected")
+                print(f"   Equity: ${equity:,.2f}")
+                print(f"   Buying Power: ${buying_power:,.2f}")
+                print(f"   Status: {status}")
+                return True
+            else:
+                print(f"⚠️  Alpaca API: No account data (attempt {attempt + 1}/{max_retries})")
+                last_error = "No account data returned"
 
-        return False
+        except Exception as e:
+            last_error = str(e)
+            print(f"⚠️  Alpaca API attempt {attempt + 1}/{max_retries} failed: {e}")
+
+        # Exponential backoff before retry
+        if attempt < max_retries - 1:
+            wait_time = 2 ** attempt  # 1s, 2s, 4s
+            print(f"   Retrying in {wait_time}s...")
+            time.sleep(wait_time)
+
+    # All retries exhausted
+    error_str = (last_error or "").lower()
+    print(f"❌ Alpaca API: FAILED after {max_retries} attempts - {last_error}")
+    print()
+    print("💡 Diagnostic Info:")
+
+    if "unauthorized" in error_str or "forbidden" in error_str:
+        print("   - Authentication FAILED")
+        print("   - Possible causes:")
+        print("     1. Keys are for LIVE account (not PAPER)")
+        print("     2. Keys were regenerated after adding to GitHub Secrets")
+        print("     3. Typo when copying keys to GitHub Secrets")
+        print("   - Solution: Verify credentials using scripts/test_alpaca_credentials_local.py")
+        print("   - See: ALPACA_AUTH_DIAGNOSTIC.md for detailed steps")
+    elif "ssl" in error_str or "certificate" in error_str:
+        print("   - SSL/TLS connection issue")
+        print("   - Check network/firewall settings")
+    elif "timeout" in error_str:
+        print("   - API timeout")
+        print("   - Check Alpaca API status: https://alpaca.markets/support")
+    else:
+        print("   - Unknown error")
+        print("   - Check Alpaca API status: https://alpaca.markets/support")
+
+    return False
 
 
 def check_anthropic_api() -> bool:
