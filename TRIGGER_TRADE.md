@@ -1,33 +1,34 @@
 # Trade Trigger
 
-Triggered: 2026-01-07 15:32:00 UTC
-Reason: RETRY #2 - After fixing missing modules (position_enforcer, profit_target_tracker, precious_metals)
+Triggered: 2026-01-09 03:48:00 UTC
+Reason: DIAGNOSTIC - Testing workflow after 4-day paper trading outage (ll_120)
 
-## Context
-- Daily trading workflow FAILED at 9:44 AM ET today (Jan 7, 2026)
-- Markets are OPEN until 4:00 PM ET
-- This trigger will execute today's paper trades
-- CEO directive: Execute trades NOW, do not lose another trading day
+## Problem Being Diagnosed
+- Paper trading BROKEN since Jan 6, 2026
+- ZERO trades executed for Jan 7, 8, 9
+- Suspected cause: GitHub Secrets may not exist for new 5K account
 
-## Evidence
-- Last successful trade: 2026-01-06
-- Workflow failures: 4+ today (multiple attempts)
-- Failed step: "Execute daily trading"
+## Expected Outcome
+This trigger will:
+1. Run the daily-trading.yml workflow
+2. Show which step fails (if any)
+3. Help identify if secrets exist in GitHub repo settings
 
-## Fixes Applied This Session
-1. Created src/safety/position_enforcer.py (was missing)
-2. Created src/analytics/profit_target_tracker.py (was missing)
-3. Created src/strategies/precious_metals_strategy.py (was missing)
-4. Added tests for all new modules
-5. This is retry #2 after applying all fixes
+## Critical Check
+If the workflow fails at `validate-and-test` → `Validate secrets`:
+- Confirms: ALPACA_PAPER_TRADING_5K_API_KEY secret missing from GitHub
+- CEO must add secrets via GitHub UI: https://github.com/IgorGanapolsky/trading/settings/secrets/actions
 
-## Strategy
-- Phil Town Rule #1 options strategy (CSPs on quality stocks)
-- Iron Condor strategy on SPY
-- Guaranteed trader fallback
+## Market Status
+- Markets: CLOSED (after hours)
+- This is a diagnostic run only
+- Real trading will occur at next market open: Jan 9, 9:35 AM ET
 
-## Phil Town 4 Ms Check
-- Meaning: We understand SPY, SOFI, F, BAC, AMD
-- Moat: Established companies with moats
-- Management: Strong leadership
-- Margin of Safety: Sell puts at MOS price
+## Related Lessons
+- ll_120: Paper Trading System Broken for 4 Days
+- ll_119: Paper Trading API Key Mismatch
+
+## Urgency
+- R&D Day 72/90 (18 days remaining)
+- Lost 4 trading days already
+- MUST diagnose and fix before next market open

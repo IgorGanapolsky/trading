@@ -266,6 +266,29 @@ class IntrospectiveCouncil:
                 "individual_scores": {},
             }
 
+    def _anonymize_responses(self, individual_scores: dict[str, Any]) -> dict[str, Any]:
+        """
+        Anonymize model responses for peer review to prevent self-preference bias.
+
+        Based on Karpathy's LLM Council insight: models favor their own output.
+        By labeling as "Response A", "Response B", etc., we force evaluation
+        based on semantic content, not model reputation.
+
+        Reference: https://github.com/karpathy/llm-council
+        """
+        if not individual_scores:
+            return {}
+
+        anonymized = {}
+        labels = ["A", "B", "C", "D", "E", "F", "G", "H"]
+        for i, (model_name, score) in enumerate(individual_scores.items()):
+            label = labels[i] if i < len(labels) else f"Response_{i+1}"
+            anonymized[f"Response_{label}"] = score
+            # Store mapping for internal logging only (not sent to peer review)
+            logger.debug(f"Anonymized {model_name} -> Response_{label}")
+
+        return anonymized
+
     async def _get_council_validation(
         self,
         symbol: str,
@@ -281,14 +304,21 @@ class IntrospectiveCouncil:
             }
 
         try:
+            # Anonymize individual model scores for peer review (prevents bias)
+            anonymized_scores = self._anonymize_responses(
+                ensemble.get("individual_scores", {})
+            )
+
             # Create trade request for council
             proposed_action = self._sentiment_to_action(ensemble["sentiment"])
 
+            # Pass anonymized scores to council for unbiased peer review
             validation = await self.council.validate_trade(
                 symbol=symbol,
                 action=proposed_action,
                 sentiment=ensemble["sentiment"],
                 confidence=introspection.aggregate_confidence,
+                peer_responses=anonymized_scores,  # Anonymized for bias prevention
             )
 
             return {
