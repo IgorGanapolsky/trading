@@ -35,8 +35,17 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Phil Town Strategy Configuration
+# CAPITAL-TIERED: With $5K, can only do CSPs on stocks with strike <= $50
 CONFIG = {
-    "watchlist": ["AAPL", "MSFT", "V", "MA", "COST"],  # Quality stocks with moats
+    "watchlist": [
+        # TIER 1: Affordable for $5K account (strike <= $50)
+        "F",      # Ford - ~$10 strike
+        "SOFI",   # SoFi - ~$15 strike
+        "T",      # AT&T - ~$20 strike
+        "INTC",   # Intel - ~$20 strike
+        "BAC",    # Bank of America - ~$35 strike
+        "VZ",     # Verizon - ~$40 strike
+    ],
     "max_position_pct": 0.10,  # Max 10% of portfolio per position
     "target_dte": 30,  # 30 days to expiration for puts
     "min_dte": 21,

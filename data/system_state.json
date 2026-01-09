@@ -158,14 +158,16 @@
     "phil_town_strategy": {
       "enabled": true,
       "purpose": "Validate Phil Town Rule #1 approach before live trading",
-      "primary_strategy": "Cash Secured Puts on 4Ms stocks",
+      "primary_strategy": "Cash Secured Puts on affordable quality stocks",
       "four_ms_watchlist": [
-        "AAPL",
-        "MSFT",
-        "GOOGL",
-        "AMZN",
-        "BRK.B"
+        "F",
+        "SOFI",
+        "T",
+        "INTC",
+        "BAC",
+        "VZ"
       ],
+      "watchlist_note": "CAPITAL-TIERED: $5K account can only do CSPs with strike <= $50",
       "rules": {
         "rule_1": "Don't lose money - use stop losses",
         "entry": "Only sell CSPs when stock is at MOS (Margin of Safety) price",
