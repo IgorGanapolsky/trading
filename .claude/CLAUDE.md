@@ -287,6 +287,17 @@ RIGHT: "Deployment succeeded, please test Dialogflow and confirm it works"
 - Based on 2026 best practices: Gemini 2.0 Flash, hybrid search, query-first pattern
 - See: `rag_knowledge/lessons_learned/ll_109_bidirectional_rag_learning_jan07.md`
 
+### Continuous Learning System (CEO Directive Jan 9, 2026)
+- **ALWAYS** learn from mistakes - record in Vertex AI RAG AND LangSmith ML
+- Continuously synthesize lessons from:
+  - YouTube (top options traders, especially those who started with nothing)
+  - Blogs and publications
+  - White papers
+  - Bogleheads forum wisdom
+- System must CONSTANTLY be learning and improving via orchestration
+- Use `weekend-learning.yml` workflow to ingest new content
+- LangSmith provides ML observability - use for tracking agent decisions
+
 ### PR Completion Protocol
 - When done merging all PRs, confirm with: **"done merging PRs"**
 - Never claim PR work is complete without this explicit confirmation
