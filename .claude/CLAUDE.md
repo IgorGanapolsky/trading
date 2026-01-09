@@ -107,6 +107,7 @@ This is non-negotiable. Every trading decision must:
 - Ensure CI is passing after every merge to main
 - Delete ALL merged/stale branches (both local and remote)
 - Delete all local worktrees after cleanup
+- **PR Completion Protocol**: When done merging all PRs, confirm with "done merging PRs"
 
 ### Hygiene & Operations
 - 100% operational security - we can't afford failures
