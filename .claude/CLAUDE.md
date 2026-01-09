@@ -148,8 +148,7 @@ This is non-negotiable. Every trading decision must:
 - **Vertex AI RAG**: SSL-blocked in sandbox, use CI workflows to sync
 - **Local JSON**: Primary recording system in sandbox (always works)
 - CI (GitHub Actions) can write to Vertex AI RAG with proper credentials
-- **LangSmith ML**: Use for trade observability and ML training (via `LANGCHAIN_API_KEY`)
-- **NOTE**: ChromaDB deprecated (Dec 2025) - do NOT use or mention
+- **NOTE**: LangSmith/LangChain REMOVED (Jan 9, 2026) - not essential for trading
 
 ### Sandbox Environment (CRITICAL)
 - This is a sandboxed web environment - packages do NOT persist between sessions
@@ -289,7 +288,7 @@ RIGHT: "Deployment succeeded, please test Dialogflow and confirm it works"
 - See: `rag_knowledge/lessons_learned/ll_109_bidirectional_rag_learning_jan07.md`
 
 ### Continuous Learning System (CEO Directive Jan 9, 2026)
-- **ALWAYS** learn from mistakes - record in Vertex AI RAG AND LangSmith ML
+- **ALWAYS** learn from mistakes - record in Vertex AI RAG
 - Continuously synthesize lessons from:
   - YouTube (top options traders, especially those who started with nothing)
   - Blogs and publications
@@ -297,7 +296,6 @@ RIGHT: "Deployment succeeded, please test Dialogflow and confirm it works"
   - Bogleheads forum wisdom
 - System must CONSTANTLY be learning and improving via orchestration
 - Use `weekend-learning.yml` workflow to ingest new content
-- LangSmith provides ML observability - use for tracking agent decisions
 
 ### PR Completion Protocol
 - When done merging all PRs, confirm with: **"done merging PRs"**

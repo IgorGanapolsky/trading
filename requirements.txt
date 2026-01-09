@@ -72,17 +72,7 @@ jsonpointer==3.0.0
 jsonschema==4.25.1
 jsonschema-specifications==2025.9.1
 kiwisolver==1.4.9
-langchain==1.1.2
-langchain-anthropic==1.2.0
-langchain-classic==1.0.0
-langchain-community==0.4.1
-langchain-core==1.1.1
-langchain-text-splitters==1.0.0
-langgraph==1.0.4
-langgraph-checkpoint==3.0.1
-langgraph-prebuilt==1.0.5
-langgraph-sdk==0.2.14
-langsmith==0.5.0
+# LangChain/LangSmith REMOVED - Jan 9, 2026 CEO directive (not essential for trading)
 loguru==0.7.3
 lxml==6.0.2
 markupsafe==3.0.3

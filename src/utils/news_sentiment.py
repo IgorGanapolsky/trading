@@ -121,23 +121,12 @@ class NewsSentimentAggregator:
         self.grok_client = None
         if self.grok_api_key:
             try:
-                # Use LangSmith wrapper if available
-                try:
-                    from src.utils.langsmith_wrapper import get_traced_openai_client
+                from openai import OpenAI
 
-                    # Grok uses OpenAI-compatible API
-                    self.grok_client = get_traced_openai_client(
-                        api_key=self.grok_api_key, base_url="https://api.x.ai/v1"
-                    )
-                except ImportError:
-                    from src.utils.langsmith_wrapper import get_traced_openai_client
-
-                    # Fallback to regular client
-                    self.grok_client = get_traced_openai_client(
-                        api_key=self.grok_api_key,
-                        base_url="https://api.grok.com/openai/v1",
-                    )
-                logger.info("✅ Grok/X.ai API client initialized for Twitter sentiment")
+                self.grok_client = OpenAI(
+                    api_key=self.grok_api_key, base_url="https://api.x.ai/v1"
+                )
+                logger.info("Grok/X.ai API client initialized for Twitter sentiment")
             except Exception as e:
                 logger.warning(f"Failed to initialize Grok client: {e}")
         else:
