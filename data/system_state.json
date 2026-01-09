@@ -2,10 +2,10 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2026-01-09T16:18:30.177372",
+    "last_updated": "2026-01-09T21:48:48.160668",
     "last_audit": "2026-01-06T16:38:45",
     "audit_notes": "Updated after trades synced - Jan 6 2026 paper trades executed",
-    "last_sync": "2026-01-09T16:18:30.177380",
+    "last_sync": "2026-01-09T21:48:48.160676",
     "sync_mode": "skipped_no_keys"
   },
   "challenge": {
@@ -274,48 +274,8 @@
         "tier": "unknown"
       }
     ],
-    "open_positions": [
-      {
-        "symbol": "SPY",
-        "price": 685.03,
-        "quantity": 21.62,
-        "market_value": 14810.93,
-        "unrealized_pl": 74.6,
-        "side": "long"
-      },
-      {
-        "symbol": "INTC260109P00035000",
-        "price": 0.06,
-        "quantity": -2,
-        "market_value": -12.0,
-        "unrealized_pl": 151.0,
-        "side": "short"
-      },
-      {
-        "symbol": "SOFI260123P00024000",
-        "price": 0.23,
-        "quantity": -1,
-        "market_value": -23.0,
-        "unrealized_pl": 56.0,
-        "side": "short"
-      },
-      {
-        "symbol": "AMD260116P00200000",
-        "price": 1.33,
-        "quantity": -1,
-        "market_value": -133.0,
-        "unrealized_pl": 457.0,
-        "side": "short"
-      },
-      {
-        "symbol": "SPY260123P00660000",
-        "price": 1.89,
-        "quantity": -1,
-        "market_value": -189.0,
-        "unrealized_pl": 449.0,
-        "side": "short"
-      }
-    ],
+    "open_positions": [],
+    "_open_positions_note": "CLEARED Jan 9, 2026 - Paper account was reset Jan 7. Previous data was STALE. Verify via CI workflow.",
     "_win_rate_source": "calculated_from_closed_trades",
     "_win_rate_fixed_at": "2025-12-31T02:57:09.901650"
   },
