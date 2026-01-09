@@ -10,7 +10,6 @@ Simplified: Jan 9, 2026 - Removed LangSmith (not essential for trading).
 
 import json
 import logging
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional

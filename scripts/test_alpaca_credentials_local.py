@@ -31,10 +31,10 @@ def test_credentials():
         print("   Set ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables")
         return False
 
-    print(f"Testing credentials:")
+    print("Testing credentials:")
     print(f"  API Key: {api_key[:8]}...{api_key[-4:]}")
     print(f"  Secret:  {secret_key[:8]}...{secret_key[-4:]}")
-    print(f"  Mode:    PAPER")
+    print("  Mode:    PAPER")
     print()
 
     try:

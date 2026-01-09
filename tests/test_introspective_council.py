@@ -124,7 +124,7 @@ class TestCouncilValidationWithAnonymization:
             "confidence": 0.7,
             "individual_scores": {"claude": 0.6, "gpt4": 0.7}
         }
-        result = await council._get_council_validation(
+        _result = await council._get_council_validation(
             symbol="SPY",
             ensemble=ensemble,
             introspection=mock_introspection,

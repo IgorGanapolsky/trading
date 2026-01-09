@@ -71,7 +71,7 @@ def check_alpaca_api() -> bool:
     api_key = os.getenv("ALPACA_API_KEY", "")
     secret_key = os.getenv("ALPACA_SECRET_KEY", "")
 
-    print(f"🔍 Alpaca API Configuration:")
+    print("🔍 Alpaca API Configuration:")
     print(f"   Mode: {'PAPER' if paper_mode else 'LIVE'}")
     print(f"   API Key: {api_key[:8] if len(api_key) >= 8 else 'MISSING'}...{api_key[-4:] if len(api_key) >= 4 else ''}")
     print(f"   Secret: {secret_key[:8] if len(secret_key) >= 8 else 'MISSING'}...{secret_key[-4:] if len(secret_key) >= 4 else ''}")
