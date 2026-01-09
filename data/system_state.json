@@ -2,10 +2,10 @@
   "meta": {
     "version": "1.0",
     "created": "2025-10-29T09:35:00",
-    "last_updated": "2026-01-09T16:18:25.248738",
+    "last_updated": "2026-01-09T16:18:30.177372",
     "last_audit": "2026-01-06T16:38:45",
     "audit_notes": "Updated after trades synced - Jan 6 2026 paper trades executed",
-    "last_sync": "2026-01-09T16:18:25.248745",
+    "last_sync": "2026-01-09T16:18:30.177380",
     "sync_mode": "skipped_no_keys"
   },
   "challenge": {
@@ -441,12 +441,7 @@
         "max_delta": 30,
         "preferred_dte": "30-45",
         "profit_target": "50%",
-        "stop_loss": "25%",
-        "stop_loss_note": "FIXED Jan 9 2026 - was 200% (violated Rule #1). Now 25% max loss per position.",
-        "trailing_stop": "15%",
-        "trailing_stop_note": "NEW Jan 9 2026 - lock in profits after 20% gain",
-        "max_position_risk": "2%",
-        "max_position_risk_note": "Never risk more than 2% of portfolio on single trade"
+        "stop_loss": "200%"
       },
       "north_star_target": 100.0,
       "scaling_note": "Jan 6 2026: Increased from $50 to $200/day to hit $100/day profit target"
@@ -489,17 +484,10 @@
         "required_sample": "30+ trades minimum for basic confidence"
       },
       "avg_daily_return_negative": {
-        "problem": "System losing -6.97% per trade on average",
+        "problem": "System losing -3.04% per day on average",
         "why_dishonest": "Contradicts any claim of profitability",
-        "honest_statement": "System is currently unprofitable and losing money on average",
-        "required_action": "Fix strategy or stop trading",
-        "fix_applied_jan09": "Reduced stop loss from 200% to 25%, added trailing stops at 15%"
-      },
-      "stop_loss_too_loose": {
-        "problem": "200% stop loss allowed massive losses before exit",
-        "why_dishonest": "Violated Phil Town Rule #1 (Don't lose money)",
-        "fix_applied": "Jan 9 2026 - stop loss reduced to 25%, trailing stop added at 15%",
-        "new_rule": "Max 2% portfolio risk per trade"
+        "honest_statement": "System is currently unprofitable and losing money daily",
+        "required_action": "Fix strategy or stop trading"
       },
       "backtest_buried": {
         "problem": "Sharpe -7 to -72 hidden in backtest_reality section",
