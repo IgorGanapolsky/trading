@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-01-06T22:12:29.910347",
+  "last_updated": "2026-01-09T16:36:18.551185",
   "strategies": {
     "core_momentum": {
       "name": "core_momentum",
@@ -211,6 +211,64 @@
         "fixed-income",
         "treasury",
         "stable"
+      ]
+    },
+    "reit_strategy": {
+      "name": "reit_strategy",
+      "description": "REIT sector rotation strategy (Tier 7 - disabled by default)",
+      "status": "experimental",
+      "asset_class": "equity",
+      "metrics": {
+        "sharpe_ratio": 0.0,
+        "max_drawdown": 0.0,
+        "win_rate": 0.0,
+        "avg_daily_pnl": 0.0,
+        "total_return_pct": 0.0,
+        "total_trades": 0,
+        "backtest_date": "",
+        "backtest_period": "",
+        "hit_rate_100_day": 0.0
+      },
+      "config": {},
+      "version": "1.0.0",
+      "author": "Trading System",
+      "created_date": "2026-01-09",
+      "last_modified": "2026-01-09",
+      "source_file": "src/strategies/reit_strategy.py",
+      "dependencies": [],
+      "tags": [
+        "reit",
+        "sector",
+        "income"
+      ]
+    },
+    "precious_metals": {
+      "name": "precious_metals",
+      "description": "Precious metals allocation strategy (disabled by default)",
+      "status": "experimental",
+      "asset_class": "equity",
+      "metrics": {
+        "sharpe_ratio": 0.0,
+        "max_drawdown": 0.0,
+        "win_rate": 0.0,
+        "avg_daily_pnl": 0.0,
+        "total_return_pct": 0.0,
+        "total_trades": 0,
+        "backtest_date": "",
+        "backtest_period": "",
+        "hit_rate_100_day": 0.0
+      },
+      "config": {},
+      "version": "1.0.0",
+      "author": "Trading System",
+      "created_date": "2026-01-09",
+      "last_modified": "2026-01-09",
+      "source_file": "src/strategies/precious_metals_strategy.py",
+      "dependencies": [],
+      "tags": [
+        "metals",
+        "gold",
+        "hedge"
       ]
     }
   }
