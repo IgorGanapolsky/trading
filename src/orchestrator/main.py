@@ -17,9 +17,7 @@ from src.execution.alpaca_executor import AlpacaExecutor
 from src.integrations.playwright_mcp import SentimentScraper, TradeVerifier
 from src.learning.trade_memory import TradeMemory
 
-# LangChain Sentiment Agent - removed (was stub code)
-# LLM sentiment now handled by Gate 3 with BiasProvider
-LANGCHAIN_AVAILABLE = False
+# LLM sentiment handled by Gate 3 with BiasProvider
 from src.orchestrator.anomaly_monitor import AnomalyMonitor
 from src.orchestrator.budget import BudgetController
 from src.orchestrator.failure_isolation import FailureIsolationManager

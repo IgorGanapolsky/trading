@@ -101,7 +101,7 @@ class MacroeconomicAgent:
             logger.info("LLM agent unavailable - returning NEUTRAL macro context")
             return {
                 "state": "NEUTRAL",
-                "reason": "LLM agent disabled (langchain_agents module removed)",
+                "reason": "LLM agent disabled",
             }
 
         # 3. Query RAG store for relevant documents

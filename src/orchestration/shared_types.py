@@ -41,7 +41,6 @@ class AgentType(Enum):
 
     Represents different agent frameworks and their specializations:
     - CLAUDE_SKILLS: Claude Skills for core trading operations
-    - LANGCHAIN: Langchain agents for RAG and multi-modal fusion
     - GEMINI: Gemini agents for research and long-horizon planning
     - GO_ADK: Go ADK agents for high-speed execution
     - MCP: MCP orchestrator for multi-agent coordination
@@ -49,7 +48,6 @@ class AgentType(Enum):
     """
 
     CLAUDE_SKILLS = "claude_skills"
-    LANGCHAIN = "langchain"
     GEMINI = "gemini"
     GO_ADK = "go_adk"
     MCP = "mcp"

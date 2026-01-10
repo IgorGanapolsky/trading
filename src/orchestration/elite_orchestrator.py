@@ -2,7 +2,6 @@
 Elite AI Trading Orchestrator
 World-class multi-agent system combining:
 - Claude Agents SDK + Skills (core flows)
-- Langchain Agents (RAG, multi-modal fusion)
 - Gemini Agents (research, long-horizon planning)
 - Go ADK Agents (high-speed execution)
 - Planning-first agentic flows
@@ -58,11 +57,11 @@ class EliteOrchestrator:
 
     Combines all agent frameworks into a unified, planning-first system:
     1. Planning phase: Explicit planning before acting
-    2. Multi-agent coordination: Claude Skills, Langchain, Gemini, Go ADK
+    2. Multi-agent coordination: Claude Skills, Gemini, Go ADK, MCP
     3. Context engineering: Persistent storage outside prompts
     4. Hybrid orchestration: Each agent type for its strengths
     5. Autonomous operation: Minimal human intervention
-    6. Adaptive organization: Dynamic agent reorganization (NEW)
+    6. Adaptive organization: Dynamic agent reorganization
     """
 
     def __init__(
@@ -91,7 +90,6 @@ class EliteOrchestrator:
         self.skills = get_skills()
         self.mcp_orchestrator = None
         self.adk_adapter = None
-        self.langchain_agent = None
         self.gemini_agent = None
 
         # Planning storage
@@ -165,8 +163,7 @@ class EliteOrchestrator:
         """Load ensemble weights from environment with defaults and optional YAML config."""
         weights = {
             "mcp": float(os.getenv("ENSEMBLE_WEIGHT_MCP", "0.35")),
-            "langchain": float(os.getenv("ENSEMBLE_WEIGHT_LANGCHAIN", "0.15")),
-            "gemini": float(os.getenv("ENSEMBLE_WEIGHT_GEMINI", "0.15")),
+            "gemini": float(os.getenv("ENSEMBLE_WEIGHT_GEMINI", "0.20")),
             "ml": float(os.getenv("ENSEMBLE_WEIGHT_ML", "0.25")),
             "ensemble_rl": float(os.getenv("ENSEMBLE_WEIGHT_ENSEMBLE_RL", "0.25")),
             "grok": float(os.getenv("ENSEMBLE_WEIGHT_GROK", "0.10")),
@@ -250,15 +247,6 @@ class EliteOrchestrator:
             logger.warning(f"⚠️ Go ADK Adapter unavailable: {e}")
             self.adk_adapter = None
 
-        # Langchain Agent (RAG, multi-modal fusion)
-        try:
-            from langchain_agents.agents import build_price_action_agent
-
-            self.langchain_agent = build_price_action_agent()
-            logger.info("✅ Langchain Agent initialized")
-        except Exception as e:
-            logger.warning(f"⚠️ Langchain Agent unavailable: {e}")
-
         # Gemini Agent (research, long-horizon planning)
         try:
             from src.agents.gemini_agent import GeminiAgent
@@ -329,7 +317,7 @@ class EliteOrchestrator:
             self.bogleheads_agent = None
 
         logger.info(
-            "✅ Elite Orchestrator Agents Initialized (Claude, Langchain, Gemini, MCP, ML, Gamma, BogleHeads, Agent0)"
+            "✅ Elite Orchestrator Agents Initialized (Claude, Gemini, MCP, ML, Gamma, BogleHeads, Agent0)"
         )
 
     def create_trade_plan(
@@ -379,7 +367,6 @@ class EliteOrchestrator:
                 "description": "Collect market data and signals",
                 "agents": [
                     AgentType.CLAUDE_SKILLS.value,
-                    AgentType.LANGCHAIN.value,
                     AgentType.GEMINI.value,
                 ],
                 "tasks": [
@@ -394,12 +381,11 @@ class EliteOrchestrator:
                 "description": "Multi-agent analysis",
                 # Analysis Phase: Agents analyze data and form opinions
                 "agents": [
-                    AgentType.LANGCHAIN.value,
                     AgentType.GEMINI.value,
                     AgentType.MCP.value,
                     AgentType.ML_MODEL.value,
-                    "gamma_agent",  # New Gamma Exposure Agent
-                    "bogleheads_agent",  # New BogleHeads Agent
+                    "gamma_agent",
+                    "bogleheads_agent",
                 ],
                 "tasks": [
                     "Technical analysis",
@@ -657,30 +643,6 @@ class EliteOrchestrator:
                 except Exception as e:
                     logger.warning(f"Price data collection failed for {symbol}: {e}")
 
-            # Langchain: RAG for news/sentiment
-            if self.langchain_agent:
-                try:
-                    # Get context for langchain agent
-
-                    prompt = (
-                        f"Analyze recent news and sentiment for {symbol}. Provide key insights."
-                    )
-                    langchain_result = self.langchain_agent.invoke({"input": prompt})
-
-                    result_data = {"agent": "langchain", "data": str(langchain_result)}
-                    results["data_sources"][f"{symbol}_sentiment"] = result_data
-
-                    # Send context message
-                    self.context_engine.send_context_message(
-                        sender="langchain_agent",
-                        receiver="meta_agent",
-                        payload=result_data,
-                        context_type="TASK_CONTEXT",  # ContextType removed - agent_framework deleted
-                        metadata={"symbol": symbol, "phase": "data_collection"},
-                    )
-                except Exception as e:
-                    logger.warning(f"Langchain data collection failed for {symbol}: {e}")
-
             # Gemini: Long-horizon research
             if self.gemini_agent:
                 try:
@@ -769,23 +731,6 @@ class EliteOrchestrator:
                         )
             except Exception as e:
                 logger.warning(f"MCP analysis failed: {e}")
-
-        # Langchain Agent
-        if self.langchain_agent and self._agent_enabled("langchain"):
-            for symbol in plan.symbols:
-                try:
-                    prompt = f"Should we trade {symbol}? Provide recommendation with reasoning."
-                    langchain_result = self.langchain_agent.invoke({"input": prompt})
-                    text = str(langchain_result)
-                    approve = "approve" in text.lower() and "decline" not in text.lower()
-                    recommendations[f"{symbol}_langchain"] = {
-                        "agent": "langchain",
-                        "recommendation": "BUY" if approve else "HOLD",
-                        "confidence": 0.7,
-                        "reasoning": text[:200],
-                    }
-                except Exception as e:
-                    logger.warning(f"Langchain analysis failed for {symbol}: {e}")
 
         # Gemini Agent
         if self.gemini_agent and self._agent_enabled("gemini"):

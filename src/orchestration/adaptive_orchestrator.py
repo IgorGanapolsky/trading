@@ -462,8 +462,7 @@ class AdaptiveOrchestrator:
                 "description": "Parallel data collection",
                 "agents": [
                     AgentType.CLAUDE_SKILLS.value,
-                    AgentType.LANGCHAIN.value,
-                    AgentType.GEMINI.value,
+                                        AgentType.GEMINI.value,
                 ],
                 "tasks": ["Fetch price data", "Retrieve sentiment", "Gather research"],
                 "status": "pending",
@@ -501,8 +500,7 @@ class AdaptiveOrchestrator:
                 "initialize": [AgentType.CLAUDE_SKILLS.value],
                 "data_collection": [
                     AgentType.CLAUDE_SKILLS.value,
-                    AgentType.LANGCHAIN.value,
-                    AgentType.GEMINI.value,
+                                        AgentType.GEMINI.value,
                 ],
                 "analysis": [
                     AgentType.ML_MODEL.value,
@@ -542,7 +540,6 @@ class AdaptiveOrchestrator:
                 "status": "pending",
                 "sub_agents": {
                     "price_data": [AgentType.CLAUDE_SKILLS.value],
-                    "sentiment": [AgentType.LANGCHAIN.value],
                     "research": [AgentType.GEMINI.value],
                 },
             },
@@ -554,7 +551,6 @@ class AdaptiveOrchestrator:
                 "sub_agents": {
                     "technical": [AgentType.ML_MODEL.value, AgentType.MCP.value],
                     "fundamental": [AgentType.GEMINI.value],
-                    "sentiment": [AgentType.LANGCHAIN.value],
                 },
             },
             PlanningPhase.RISK_ASSESSMENT.value: {
@@ -588,16 +584,14 @@ class AdaptiveOrchestrator:
                 "initialize": [AgentType.CLAUDE_SKILLS.value],
                 "data_collection": [
                     AgentType.CLAUDE_SKILLS.value,
-                    AgentType.LANGCHAIN.value,
-                    AgentType.GEMINI.value,
+                                        AgentType.GEMINI.value,
                 ],
                 "analysis": [
                     AgentType.CLAUDE_SKILLS.value,
                     AgentType.ML_MODEL.value,
                     AgentType.MCP.value,
                     AgentType.GEMINI.value,
-                    AgentType.LANGCHAIN.value,
-                ],
+                                    ],
                 "risk": [AgentType.CLAUDE_SKILLS.value],
                 "execution": [
                     AgentType.CLAUDE_SKILLS.value,
@@ -628,8 +622,7 @@ class AdaptiveOrchestrator:
                 "description": "Mesh data collection",
                 "agents": [
                     AgentType.CLAUDE_SKILLS.value,
-                    AgentType.LANGCHAIN.value,
-                    AgentType.GEMINI.value,
+                                        AgentType.GEMINI.value,
                 ],
                 "tasks": ["Fetch price data", "Retrieve sentiment", "Gather research"],
                 "status": "pending",
@@ -641,8 +634,7 @@ class AdaptiveOrchestrator:
                     AgentType.ML_MODEL.value,
                     AgentType.MCP.value,
                     AgentType.GEMINI.value,
-                    AgentType.LANGCHAIN.value,
-                    "gamma_agent",
+                                        "gamma_agent",
                     "bogleheads_agent",
                 ],
                 "tasks": [
@@ -696,15 +688,13 @@ class AdaptiveOrchestrator:
                 "initialize": [AgentType.CLAUDE_SKILLS.value],
                 "data_collection": [
                     AgentType.CLAUDE_SKILLS.value,
-                    AgentType.LANGCHAIN.value,
-                    AgentType.GEMINI.value,
+                                        AgentType.GEMINI.value,
                 ],
                 "analysis": [
                     AgentType.ML_MODEL.value,
                     AgentType.MCP.value,
                     AgentType.GEMINI.value,
-                    AgentType.LANGCHAIN.value,
-                    "gamma_agent",
+                                        "gamma_agent",
                     "bogleheads_agent",
                 ],
                 "risk": [AgentType.CLAUDE_SKILLS.value],
