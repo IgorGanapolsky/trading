@@ -265,8 +265,28 @@ jobs:
           echo "Query 2: cash secured puts"
           python3 scripts/vectorize_rag_knowledge.py --query "cash secured puts options" --options-only || echo "Query completed"
 
+      # === CHECK FOR CHANGES BEFORE PR ===
+      - name: Check for changes to commit
+        id: check_changes
+        run: |
+          # Ensure directories exist for git add
+          mkdir -p data/vector_db data/youtube_cache data/blog_cache
+          touch data/weekend_insights.json 2>/dev/null || true
+
+          # Check if there are any changes
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected:"
+            git diff --staged --name-only | head -20
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
       # === COMMIT RESULTS ===
       - name: Create Pull Request with learned content
+        if: steps.check_changes.outputs.has_changes == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -293,6 +313,7 @@ jobs:
 
       # === SELF-HEALING: Auto-merge low-risk learning PRs ===
       - name: "Self-Healing: Auto-merge weekend learning PR"
+        if: steps.check_changes.outputs.has_changes == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
