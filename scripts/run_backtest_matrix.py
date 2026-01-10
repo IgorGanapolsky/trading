@@ -50,6 +50,18 @@ except ImportError:
     YFINANCE_AVAILABLE = False
     logger.warning("yfinance not available - using mock data")
 
+# Import slippage model for realistic execution costs
+try:
+    from src.risk.slippage_model import SlippageModel, SlippageModelType
+
+    SLIPPAGE_MODEL_AVAILABLE = True
+except ImportError:
+    SLIPPAGE_MODEL_AVAILABLE = False
+    logger.warning("SlippageModel not available - using zero slippage")
+
+# Fee rate for commission costs (0.18% per trade)
+FEE_RATE = 0.0018
+
 
 @dataclass
 class Trade:
@@ -64,6 +76,8 @@ class Trade:
     side: str  # "long" or "short"
     pnl: float = 0.0
     pnl_pct: float = 0.0
+    slippage_cost: float = 0.0  # Total slippage cost for this trade
+    fee_cost: float = 0.0  # Commission/fee cost for this trade
 
 
 @dataclass
@@ -83,6 +97,7 @@ class BacktestResult:
     sharpe_ratio: float = 0.0
     max_drawdown_pct: float = 0.0
     win_rate_pct: float = 0.0
+    avg_return_pct: float = 0.0  # NEW: Average return per trade (critical metric!)
     profitable_days: int = 0
     longest_profitable_streak: int = 0
     final_capital: float = 100000.0
@@ -94,9 +109,17 @@ class BacktestResult:
     survival_gate: float | None = None
     capital_preserved_pct: float = 100.0
     survival_passed: bool | None = None
+    # NEW: Execution cost tracking
+    total_slippage_cost: float = 0.0
+    total_fee_cost: float = 0.0
+    slippage_model_enabled: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
+        # Calculate cost-adjusted returns
+        total_execution_cost = self.total_slippage_cost + self.total_fee_cost
+        cost_pct_of_capital = (total_execution_cost / 100000) * 100 if total_execution_cost > 0 else 0
+
         return {
             "scenario": self.scenario,
             "label": self.label,
@@ -107,7 +130,10 @@ class BacktestResult:
             "annualized_return_pct": round(self.annualized_return_pct, 4),
             "sharpe_ratio": round(self.sharpe_ratio, 4),
             "max_drawdown_pct": round(self.max_drawdown_pct, 4),
+            # CRITICAL: Always show win_rate AND avg_return together (ll_118)
             "win_rate_pct": round(self.win_rate_pct, 2),
+            "avg_return_pct": round(self.avg_return_pct, 4),
+            "win_rate_with_context": f"{self.win_rate_pct:.1f}% (avg return: {self.avg_return_pct:.2f}%)",
             "profitable_days": self.profitable_days,
             "longest_profitable_streak": self.longest_profitable_streak,
             "final_capital": round(self.final_capital, 2),
@@ -117,19 +143,19 @@ class BacktestResult:
             "description": self.description,
             "generated_at": datetime.now().isoformat(),
             "execution_costs": {
-                "fee_cost": 0.0,
-                "slippage_cost": 0.0,
-                "total_execution_cost": 0.0,
-                "cost_pct_of_capital": 0.0,
-                "cost_adjusted_total_return_pct": round(self.total_return_pct, 4),
-                "cost_adjusted_annualized_return_pct": round(self.annualized_return_pct, 4),
+                "fee_cost": round(self.total_fee_cost, 4),
+                "slippage_cost": round(self.total_slippage_cost, 4),
+                "total_execution_cost": round(total_execution_cost, 4),
+                "cost_pct_of_capital": round(cost_pct_of_capital, 4),
+                "cost_adjusted_total_return_pct": round(self.total_return_pct - cost_pct_of_capital, 4),
+                "cost_adjusted_annualized_return_pct": round(self.annualized_return_pct - cost_pct_of_capital * (252 / max(self.trading_days, 1)), 4),
                 "assumptions": {
-                    "fee_rate": 0.0018,
-                    "slippage_model_enabled": True,
-                },  # FIXED Jan 6 2026: Enable slippage for realistic backtests
+                    "fee_rate": FEE_RATE,
+                    "slippage_model_enabled": self.slippage_model_enabled,
+                },
             },
-            "cost_adjusted_return_pct": round(self.total_return_pct, 4),
-            "cost_adjusted_annualized_return_pct": round(self.annualized_return_pct, 4),
+            "cost_adjusted_return_pct": round(self.total_return_pct - cost_pct_of_capital, 4),
+            "cost_adjusted_annualized_return_pct": round(self.annualized_return_pct - cost_pct_of_capital * (252 / max(self.trading_days, 1)), 4),
             "hybrid_gates": False,
             "survival_gate": self.survival_gate,
             "capital_preserved_pct": round(self.capital_preserved_pct, 2),
@@ -276,14 +302,14 @@ def generate_signal(prices: list[float], symbol: str) -> str:
 
 def run_backtest(scenario: dict[str, Any], defaults: dict[str, Any]) -> BacktestResult:
     """
-    Run a single backtest scenario.
+    Run a single backtest scenario with realistic execution costs.
 
     Args:
         scenario: Scenario configuration
         defaults: Default configuration values
 
     Returns:
-        BacktestResult with trade outcomes
+        BacktestResult with trade outcomes including slippage and fee costs
     """
     name = scenario["name"]
     label = scenario.get("label", name)
@@ -301,7 +327,13 @@ def run_backtest(scenario: dict[str, Any], defaults: dict[str, Any]) -> Backtest
     logger.info(f"Running: {label}")
     logger.info(f"Period: {start_date} to {end_date}")
     logger.info(f"Universe: {', '.join(universe)}")
+    logger.info(f"Slippage model: {'ENABLED' if SLIPPAGE_MODEL_AVAILABLE else 'DISABLED'}")
     logger.info(f"{'=' * 60}")
+
+    # Initialize slippage model for realistic execution costs
+    slippage_model = None
+    if SLIPPAGE_MODEL_AVAILABLE:
+        slippage_model = SlippageModel(model_type=SlippageModelType.FIXED)
 
     # Fetch historical data
     price_data = fetch_historical_data(universe, start_date, end_date)
@@ -320,10 +352,12 @@ def run_backtest(scenario: dict[str, Any], defaults: dict[str, Any]) -> Backtest
     # Simulate trading
     capital = initial_capital
     peak_capital = capital
-    positions: dict[str, dict] = {}  # symbol -> {qty, entry_price, entry_date}
+    positions: dict[str, dict] = {}  # symbol -> {qty, entry_price, entry_date, slippage_cost}
     trades: list[Trade] = []
     daily_returns: list[float] = []
     trading_days = 0
+    total_slippage_cost = 0.0
+    total_fee_cost = 0.0
 
     # Get minimum data length across symbols
     min_length = min(len(v) for v in price_data.values() if v)
@@ -345,37 +379,83 @@ def run_backtest(scenario: dict[str, Any], defaults: dict[str, Any]) -> Backtest
             # Generate signal
             signal = generate_signal(price_slice, symbol)
 
-            # Execute trades
+            # Execute trades with slippage
             if signal == "buy" and symbol not in positions:
-                # Buy with daily allocation
-                qty = daily_allocation / current_price
+                # Apply slippage to entry price
+                executed_price = current_price
+                entry_slippage = 0.0
+                if slippage_model:
+                    slip_result = slippage_model.calculate_slippage(
+                        price=current_price,
+                        quantity=daily_allocation / current_price,
+                        side="buy",
+                        symbol=symbol,
+                    )
+                    executed_price = slip_result.executed_price
+                    entry_slippage = abs(slip_result.slippage_amount) * (daily_allocation / current_price)
+
+                # Calculate fee cost
+                fee_cost = daily_allocation * FEE_RATE
+                total_fee_cost += fee_cost
+
+                # Buy with daily allocation (adjusted for slippage)
+                qty = daily_allocation / executed_price
                 positions[symbol] = {
                     "qty": qty,
-                    "entry_price": current_price,
+                    "entry_price": executed_price,
                     "entry_date": f"day_{day_idx}",
+                    "slippage_cost": entry_slippage,
+                    "fee_cost": fee_cost,
                 }
                 capital -= daily_allocation
+                total_slippage_cost += entry_slippage
 
             elif signal == "sell" and symbol in positions:
-                # Close position
+                # Close position with slippage
                 pos = positions[symbol]
-                exit_value = pos["qty"] * current_price
-                pnl = exit_value - (pos["qty"] * pos["entry_price"])
-                pnl_pct = (current_price / pos["entry_price"] - 1) * 100
+
+                # Apply slippage to exit price
+                executed_exit = current_price
+                exit_slippage = 0.0
+                if slippage_model:
+                    slip_result = slippage_model.calculate_slippage(
+                        price=current_price,
+                        quantity=pos["qty"],
+                        side="sell",
+                        symbol=symbol,
+                    )
+                    executed_exit = slip_result.executed_price
+                    exit_slippage = abs(slip_result.slippage_amount) * pos["qty"]
+
+                # Calculate fee cost for exit
+                exit_value = pos["qty"] * executed_exit
+                fee_cost = exit_value * FEE_RATE
+                total_fee_cost += fee_cost
+                total_slippage_cost += exit_slippage
+
+                # Total trade costs
+                trade_slippage = pos["slippage_cost"] + exit_slippage
+                trade_fee = pos["fee_cost"] + fee_cost
+
+                # Calculate P/L after costs
+                pnl = exit_value - (pos["qty"] * pos["entry_price"]) - trade_slippage - trade_fee
+                pnl_pct = (executed_exit / pos["entry_price"] - 1) * 100
 
                 trade = Trade(
                     symbol=symbol,
                     entry_date=pos["entry_date"],
                     entry_price=pos["entry_price"],
                     exit_date=f"day_{day_idx}",
-                    exit_price=current_price,
+                    exit_price=executed_exit,
                     quantity=pos["qty"],
                     side="long",
                     pnl=pnl,
                     pnl_pct=pnl_pct,
+                    slippage_cost=trade_slippage,
+                    fee_cost=trade_fee,
                 )
                 trades.append(trade)
-                capital += exit_value
+                capital += exit_value - fee_cost
                 del positions[symbol]
 
         # Calculate daily return
@@ -388,34 +468,62 @@ def run_backtest(scenario: dict[str, Any], defaults: dict[str, Any]) -> Backtest
         if capital > peak_capital:
             peak_capital = capital
 
-    # Close any remaining positions at end
-    for symbol, pos in positions.items():
+    # Close any remaining positions at end (with slippage)
+    for symbol, pos in list(positions.items()):
         prices = price_data.get(symbol, [])
         if prices:
             current_price = prices[-1]
-            exit_value = pos["qty"] * current_price
-            pnl = exit_value - (pos["qty"] * pos["entry_price"])
-            pnl_pct = (current_price / pos["entry_price"] - 1) * 100
+
+            # Apply slippage to exit
+            executed_exit = current_price
+            exit_slippage = 0.0
+            if slippage_model:
+                slip_result = slippage_model.calculate_slippage(
+                    price=current_price,
+                    quantity=pos["qty"],
+                    side="sell",
+                    symbol=symbol,
+                )
+                executed_exit = slip_result.executed_price
+                exit_slippage = abs(slip_result.slippage_amount) * pos["qty"]
+
+            exit_value = pos["qty"] * executed_exit
+            fee_cost = exit_value * FEE_RATE
+            total_fee_cost += fee_cost
+            total_slippage_cost += exit_slippage
+
+            trade_slippage = pos["slippage_cost"] + exit_slippage
+            trade_fee = pos["fee_cost"] + fee_cost
+
+            pnl = exit_value - (pos["qty"] * pos["entry_price"]) - trade_slippage - trade_fee
+            pnl_pct = (executed_exit / pos["entry_price"] - 1) * 100
 
             trade = Trade(
                 symbol=symbol,
                 entry_date=pos["entry_date"],
                 entry_price=pos["entry_price"],
                 exit_date="end",
-                exit_price=current_price,
+                exit_price=executed_exit,
                 quantity=pos["qty"],
                 side="long",
                 pnl=pnl,
                 pnl_pct=pnl_pct,
+                slippage_cost=trade_slippage,
+                fee_cost=trade_fee,
             )
             trades.append(trade)
-            capital += exit_value
+            capital += exit_value - fee_cost
 
     # Calculate metrics
     total_trades = len(trades)
     winning_trades = sum(1 for t in trades if t.pnl > 0)
     losing_trades = sum(1 for t in trades if t.pnl < 0)
     win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else 0.0
+
+    # CRITICAL: Calculate average return per trade (ll_118 fix)
+    avg_return_pct = (
+        sum(t.pnl_pct for t in trades) / total_trades if total_trades > 0 else 0.0
+    )
 
     total_return = (capital - initial_capital) / initial_capital * 100
     annualized_return = total_return * (252 / trading_days) if trading_days > 0 else 0
@@ -424,9 +532,9 @@ def run_backtest(scenario: dict[str, Any], defaults: dict[str, Any]) -> Backtest
     if daily_returns:
         import statistics
 
-        avg_return = statistics.mean(daily_returns) if daily_returns else 0
+        avg_daily = statistics.mean(daily_returns) if daily_returns else 0
         std_return = statistics.stdev(daily_returns) if len(daily_returns) > 1 else 0
-        sharpe = (avg_return * 252) / (std_return * (252**0.5)) if std_return > 0 else 0
+        sharpe = (avg_daily * 252) / (std_return * (252**0.5)) if std_return > 0 else 0
     else:
         sharpe = 0
 
@@ -436,7 +544,7 @@ def run_backtest(scenario: dict[str, Any], defaults: dict[str, Any]) -> Backtest
     # Calculate profitable days
     profitable_days = sum(1 for r in daily_returns if r > 0)
 
-    # Capital preservation
+    # Capital preservation (after costs)
     capital_preserved = capital / initial_capital * 100
 
     # Check survival gate
@@ -463,6 +571,7 @@ def run_backtest(scenario: dict[str, Any], defaults: dict[str, Any]) -> Backtest
         sharpe_ratio=sharpe,
         max_drawdown_pct=max_drawdown,
         win_rate_pct=win_rate,
+        avg_return_pct=avg_return_pct,
         profitable_days=profitable_days,
         final_capital=capital,
         final_capital_after_costs=capital,
@@ -473,11 +582,15 @@ def run_backtest(scenario: dict[str, Any], defaults: dict[str, Any]) -> Backtest
         survival_gate=survival_gate,
         capital_preserved_pct=capital_preserved,
         survival_passed=survival_passed,
+        total_slippage_cost=total_slippage_cost,
+        total_fee_cost=total_fee_cost,
+        slippage_model_enabled=SLIPPAGE_MODEL_AVAILABLE,
     )
 
-    # Log results
-    logger.info(f"Results: {total_trades} trades, {win_rate:.1f}% win rate")
+    # Log results with context (ll_118 fix: always show avg_return with win_rate)
+    logger.info(f"Results: {total_trades} trades, {win_rate:.1f}% win rate (avg return: {avg_return_pct:.2f}%)")
     logger.info(f"Return: {total_return:.2f}%, Sharpe: {sharpe:.2f}")
+    logger.info(f"Execution costs: slippage=${total_slippage_cost:.2f}, fees=${total_fee_cost:.2f}")
     logger.info(f"Max Drawdown: {max_drawdown:.2f}%, Status: {status.upper()}")
 
     return result
@@ -588,12 +701,18 @@ def main() -> int:
     if results:
         total_trades = sum(r.total_trades for r in results)
         avg_win_rate = sum(r.win_rate_pct for r in results) / len(results)
-        avg_return = sum(r.total_return_pct for r in results) / len(results)
+        # CRITICAL: Calculate avg return per trade (ll_118 fix)
+        avg_return_per_trade = sum(r.avg_return_pct for r in results) / len(results)
+        avg_total_return = sum(r.total_return_pct for r in results) / len(results)
+        total_slippage = sum(r.total_slippage_cost for r in results)
+        total_fees = sum(r.total_fee_cost for r in results)
 
         print("\nAggregate Metrics:")
         print(f"  Total trades: {total_trades}")
-        print(f"  Avg win rate: {avg_win_rate:.1f}%")
-        print(f"  Avg return: {avg_return:.2f}%")
+        # ll_118 fix: Always show avg_return with win_rate
+        print(f"  Avg win rate: {avg_win_rate:.1f}% (avg return per trade: {avg_return_per_trade:.2f}%)")
+        print(f"  Avg total return: {avg_total_return:.2f}%")
+        print(f"  Total execution costs: slippage=${total_slippage:.2f}, fees=${total_fees:.2f}")
 
     return 0 if failed == 0 and errors == 0 else 1
 
