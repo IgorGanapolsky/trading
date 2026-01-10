@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 DATA_DIR = Path("data")
 TRACKER_FILE = DATA_DIR / "live_vs_backtest.json"
+# NEW: File for bidirectional learning - live observations update backtest assumptions
+SLIPPAGE_ASSUMPTIONS_FILE = DATA_DIR / "live_slippage_assumptions.json"
 
 
 class LiveVsBacktestTracker:
@@ -222,6 +224,85 @@ class LiveVsBacktestTracker:
             alerts = [a for a in alerts if a.get("severity") == severity]
         return alerts
 
+    def calculate_slippage_assumptions(self) -> dict[str, Any]:
+        """
+        Calculate slippage assumptions from live trading observations.
+
+        This implements BIDIRECTIONAL LEARNING: live execution data
+        updates the assumptions used in backtesting.
+
+        Returns:
+            Dictionary with per-symbol slippage estimates and overall stats
+        """
+        trades = self.data.get("trades", [])
+        if not trades:
+            return {"symbol_slippage": {}, "overall": {"avg_slippage_bps": 5.0}}
+
+        # Group slippage by symbol
+        symbol_slippages: dict[str, list[float]] = {}
+        all_slippages: list[float] = []
+
+        for trade in trades:
+            symbol = trade.get("symbol", "UNKNOWN")
+            slippage = trade.get("slippage_pct", 0.0)
+
+            if symbol not in symbol_slippages:
+                symbol_slippages[symbol] = []
+            symbol_slippages[symbol].append(abs(slippage))
+            all_slippages.append(abs(slippage))
+
+        # Calculate per-symbol averages
+        symbol_assumptions = {}
+        for symbol, slippages in symbol_slippages.items():
+            avg_slippage = sum(slippages) / len(slippages) if slippages else 0.0
+            # Convert to basis points (1% = 100 bps)
+            avg_slippage_bps = avg_slippage * 100
+            symbol_assumptions[symbol] = {
+                "avg_slippage_bps": round(avg_slippage_bps, 2),
+                "sample_size": len(slippages),
+                "max_slippage_bps": round(max(slippages) * 100, 2) if slippages else 0,
+            }
+
+        # Overall average
+        overall_avg = sum(all_slippages) / len(all_slippages) if all_slippages else 0.0
+
+        return {
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "symbol_slippage": symbol_assumptions,
+            "overall": {
+                "avg_slippage_bps": round(overall_avg * 100, 2),
+                "sample_size": len(all_slippages),
+            },
+        }
+
+    def sync_to_backtest_assumptions(self) -> bool:
+        """
+        Sync live slippage observations to backtest assumption file.
+
+        This completes the bidirectional learning loop:
+        Live trading → Observed slippage → Updated backtest assumptions
+
+        Returns:
+            True if sync successful, False otherwise
+        """
+        try:
+            assumptions = self.calculate_slippage_assumptions()
+
+            DATA_DIR.mkdir(parents=True, exist_ok=True)
+            with open(SLIPPAGE_ASSUMPTIONS_FILE, "w") as f:
+                json.dump(assumptions, f, indent=2)
+
+            logger.info(
+                f"Synced live slippage assumptions: "
+                f"overall={assumptions['overall']['avg_slippage_bps']}bps, "
+                f"symbols={len(assumptions['symbol_slippage'])}"
+            )
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to sync slippage assumptions: {e}")
+            return False
+
 
 # Singleton instance
 _tracker: Optional[LiveVsBacktestTracker] = None
@@ -238,3 +319,37 @@ def get_tracker() -> LiveVsBacktestTracker:
 def record_trade(**kwargs) -> None:
     """Convenience function to record a trade."""
     get_tracker().record_trade(**kwargs)
+
+
+def sync_slippage_to_backtest() -> bool:
+    """
+    Convenience function to sync live slippage to backtest assumptions.
+
+    Call this after trading sessions to update backtest assumptions
+    with real-world slippage data (bidirectional learning).
+    """
+    return get_tracker().sync_to_backtest_assumptions()
+
+
+def load_live_slippage_assumptions() -> dict[str, Any]:
+    """
+    Load slippage assumptions derived from live trading.
+
+    Use this in backtests to apply realistic slippage based on
+    actual execution data.
+
+    Returns:
+        Dictionary with symbol-level and overall slippage assumptions
+    """
+    if SLIPPAGE_ASSUMPTIONS_FILE.exists():
+        try:
+            with open(SLIPPAGE_ASSUMPTIONS_FILE) as f:
+                return json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            logger.warning(f"Could not load slippage assumptions: {e}")
+
+    # Default assumptions if no live data available
+    return {
+        "symbol_slippage": {},
+        "overall": {"avg_slippage_bps": 5.0, "sample_size": 0},
+    }
