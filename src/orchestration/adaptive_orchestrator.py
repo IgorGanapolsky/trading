@@ -23,9 +23,8 @@ from src.core.skills_integration import get_skills
 from src.orchestration.context_engine import get_context_engine
 from src.orchestration.shared_types import AgentType, PlanningPhase, TradePlan
 
-# Optional market regime detector
-# DISABLED: src.ml.market_regime_detector module does not exist
-MarketRegimeDetector = None  # type: ignore
+# Market regime detector (not yet implemented)
+MarketRegimeDetector = None
 
 
 logger = logging.getLogger(__name__)

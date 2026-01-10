@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 
-# Inline stubs for deleted agent_framework (context engine never implemented)
+# Stub types for context engineering (actual implementations pending)
 class MemoryTimescale:
     INTRADAY = "intraday"
 
@@ -21,10 +21,10 @@ class _Memory:
 
 
 class ContextEngine:
+    """Minimal context engine stub for failure isolation."""
+
     def prune_memories(self, **kwargs) -> list[str]:
-        """Stub: Context engine was never implemented. Returns empty list."""
-        pruned = []  # Intentional stub - context engine not implemented
-        return pruned
+        return []
 
     def store_memory(self, **kwargs) -> _Memory:
         return _Memory()

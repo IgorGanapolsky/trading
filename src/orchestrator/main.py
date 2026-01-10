@@ -240,25 +240,11 @@ class TradingOrchestrator:
         self.microstructure = MicrostructureFeatureExtractor()
         self.regime_detector = RegimeDetector()
         self.smart_dca = SmartDCAAllocator()
-        # TreasuryLadderStrategy REMOVED Dec 29, 2025 - Phil Town doesn't recommend bonds
+        # Treasury strategy removed (Phil Town doesn't recommend bonds)
         self.treasury_ladder_strategy = None
 
-        # Gate 0: Mental Toughness Coach - Prevents emotional/tilt trading
-        # DISABLED: Module not implemented yet
-        self.mental_coach: Any | None = None  # Was: MentalToughnessCoach | None
-        # enable_coaching = os.getenv("ENABLE_MENTAL_COACHING", "true").lower() in {
-        #     "1",
-        #     "true",
-        #     "yes",
-        # }
-        # if enable_coaching and COACHING_AVAILABLE:
-        #     try:
-        #         self.mental_coach = MentalToughnessCoach()
-        #         logger.info(
-        #             "Gate 0: MentalToughnessCoach initialized (psychology-based trading guard)"
-        #         )
-        #     except Exception as e:
-        #         logger.warning(f"MentalToughnessCoach init failed: {e}")
+        # Mental coach (not yet implemented)
+        self.mental_coach = None
 
         # Gate 0.5: Bull/Bear Debate - Multi-perspective analysis (Dec 2025)
         # Based on UCLA/MIT TradingAgents research showing 42% CAGR improvement

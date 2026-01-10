@@ -20,12 +20,14 @@ from mcp.servers import alpaca as alpaca_tools
 from mcp.servers import openrouter as openrouter_tools
 
 
-# Inline stubs for deleted agent_framework (context engine never implemented)
+# Stub types for context engineering (actual implementations pending)
 class ContextType:
     TASK_CONTEXT = "task"
 
 
 class _ContextEngine:
+    """Minimal context engine stub for agent communication."""
+
     def store_memory(self, **kwargs):
         pass
 
@@ -36,9 +38,7 @@ class _ContextEngine:
         pass
 
     def get_agent_context(self, agent_id: str):
-        """Stub: Context engine was never implemented. Returns empty context."""
-        context = {}  # Intentional stub - context engine not implemented
-        return context
+        return {}
 
 
 def get_context_engine() -> _ContextEngine:

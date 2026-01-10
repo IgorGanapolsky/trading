@@ -18,13 +18,14 @@ from pathlib import Path
 from typing import Any
 
 
-# Inline stubs for deleted agent_framework (never implemented)
+# Stub types for context engineering (actual implementations pending)
 class ContextType:
     TASK_CONTEXT = "task"
 
 
 class RunContext:
-    pass
+    def __init__(self, mode=None):
+        self.mode = mode
 
 
 class RunMode:
@@ -256,42 +257,9 @@ class EliteOrchestrator:
         except Exception as e:
             logger.warning(f"⚠️ Gemini Agent unavailable: {e}")
 
-        # ML Predictor (LSTM-PPO)
-        # DISABLED: src.ml.inference module does not exist
-        # try:
-        #     from src.ml.inference import MLPredictor
-        #     self.ml_predictor = MLPredictor()
-        #     logger.info("✅ ML Predictor (LSTM-PPO) initialized")
-        # except Exception as e:
-        #     logger.warning(f"⚠️ ML Predictor unavailable: {e}")
+        # ML components (not yet implemented)
         self.ml_predictor = None
-
-        # Deep Q-Network Agent (Enhanced RL)
-        # DISABLED: src.ml.dqn_agent and src.ml.multi_step_learning modules do not exist
         self.dqn_agent = None
-        self.use_dqn = os.getenv("USE_DQN", "false").lower() == "true"
-        if self.use_dqn:
-            logger.info("ℹ️ DQN Agent disabled (modules not available)")
-            # try:
-            #     from src.ml.dqn_agent import DQNAgent
-            #     from src.ml.multi_step_learning import NStepDQNAgent
-            #     # Determine state dimension (will be set based on feature extraction)
-            #     state_dim = 50  # Default, can be configured
-            #     dqn = DQNAgent(
-            #         state_dim=state_dim,
-            #         use_dueling=True,
-            #         use_double=True,
-            #         use_prioritized_replay=True,
-            #         device="cpu",
-            #     )
-            #     # Wrap with n-step learning
-            #     self.dqn_agent = NStepDQNAgent(dqn, n=3)
-            #     logger.info("✅ DQN Agent (with n-step learning) initialized")
-            # except Exception as e:
-            #     logger.warning(f"⚠️ DQN Agent unavailable: {e}")
-            #     self.dqn_agent = None
-        else:
-            logger.info("ℹ️ DQN Agent disabled (set USE_DQN=true to enable)")
 
         # Gamma Exposure Agent
         try:
@@ -750,63 +718,8 @@ class EliteOrchestrator:
                 except Exception as e:
                     logger.warning(f"Gemini analysis failed for {symbol}: {e}")
 
-        # ML Predictor (LSTM-PPO or Ensemble)
-        if self.ml_predictor and (
-            self._agent_enabled("ml_model") or self._agent_enabled("ensemble_rl")
-        ):
-            for symbol in plan.symbols:
-                try:
-                    # Try to use ensemble RL if available
-                    use_ensemble = os.getenv("USE_ENSEMBLE_RL", "false").lower() == "true"
-
-                    if use_ensemble:
-                        # DISABLED: src.ml.data_processor and src.ml.ensemble_rl modules do not exist
-                        logger.debug("Ensemble RL not available (modules do not exist)")
-                        # try:
-                        #     import torch  # noqa: F401
-                        #     from src.ml.data_processor import DataProcessor
-                        #     from src.ml.ensemble_rl import EnsembleRLAgent
-                        #     # Get state representation
-                        #     data_processor = DataProcessor()
-                        #     df = data_processor.fetch_data(symbol, period="1y")
-                        #     if not df.empty:
-                        #         df = data_processor.add_technical_indicators(df)
-                        #         df = data_processor.normalize_data(df)
-                        #         sequences = data_processor.create_sequences(df)
-                        #         if len(sequences) > 0:
-                        #             # Use last sequence
-                        #             state = sequences[-1:].unsqueeze(0)  # Add batch dimension
-                        #             # Initialize ensemble agent
-                        #             ensemble_agent = EnsembleRLAgent(
-                        #                 input_dim=len(data_processor.feature_columns),
-                        #                 device="cpu",
-                        #             )
-                        #             # Get prediction
-                        #             action, confidence, details = ensemble_agent.predict(state)
-                        #             action_map = {0: "HOLD", 1: "BUY", 2: "SELL"}
-                        #             recommendations[f"{symbol}_ml"] = {
-                        #                 "agent": "ensemble_rl",
-                        #                 "recommendation": action_map.get(action, "HOLD"),
-                        #                 "confidence": confidence,
-                        #                 "reasoning": f"Ensemble RL (PPO+A2C+SAC): {details.get('individual_predictions', {})}",
-                        #             }
-                        #             logger.info(
-                        #                 f"✅ Ensemble RL prediction for {symbol}: {action_map.get(action)} (confidence: {confidence:.2f})"
-                        #             )
-                        # except Exception as e:
-                        #     logger.debug(f"Ensemble RL not available, using single model: {e}")
-
-                    # Fallback to single model
-                    if f"{symbol}_ml" not in recommendations:
-                        ml_signal = self.ml_predictor.get_signal(symbol)
-                        recommendations[f"{symbol}_ml"] = {
-                            "agent": "ml_model",
-                            "recommendation": ml_signal["action"],
-                            "confidence": ml_signal["confidence"],
-                            "reasoning": f"LSTM-PPO Value Estimate: {ml_signal.get('value_estimate', 0):.2f}",
-                        }
-                except Exception as e:
-                    logger.warning(f"ML prediction failed for {symbol}: {e}")
+        # ML Predictor (not yet implemented)
+        # When implemented, this will use LSTM-PPO or Ensemble RL for predictions
 
         # Social sentiment (Grok) from context memory, if enabled
         if self._agent_enabled("grok_twitter"):
