@@ -161,14 +161,27 @@ jobs:
             } > "docs/_lessons/$filename"
           done
 
-      - name: Commit docs updates directly to main
+      - name: Create PR for docs updates
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add docs/_lessons/
           if git diff --staged --quiet; then
             echo "No changes to commit"
-          else
-            git commit -m "docs: Sync lessons to GitHub Pages"
-            git push origin main
+            exit 0
           fi
+
+          # Create branch with timestamp
+          BRANCH="auto/sync-lessons-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$BRANCH"
+          git commit -m "docs: Sync lessons to GitHub Pages"
+          git push origin "$BRANCH"
+
+          # Create and auto-merge PR
+          PR_URL=$(gh pr create --title "docs: Sync lessons to GitHub Pages" --body "Auto-synced lessons from rag_knowledge/lessons_learned/" --base main --head "$BRANCH")
+          echo "Created PR: $PR_URL"
+
+          # Auto-merge the PR
+          gh pr merge "$BRANCH" --squash --delete-branch --auto || echo "Auto-merge not enabled, PR needs manual merge"
