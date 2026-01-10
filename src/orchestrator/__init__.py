@@ -7,6 +7,8 @@ This module provides:
 - FailureIsolationManager: Error handling and recovery
 - OrchestratorTelemetry: Performance monitoring
 - SREMonitor: Production-grade SRE-style monitoring
+- OptionsStrategyCoordinator: Gate 6/7 options strategy execution (Jan 10, 2026)
+- SessionManager: Session profile and market day management (Jan 10, 2026)
 
 Note: This is distinct from src/orchestration/ which contains specialized
 orchestrator implementations (Elite, MCP, Workflow). Both may be used together.
@@ -17,7 +19,13 @@ from __future__ import annotations
 from importlib import import_module
 from typing import Any
 
-__all__ = ["TradingOrchestrator", "SREMonitor", "get_sre_monitor"]
+__all__ = [
+    "TradingOrchestrator",
+    "SREMonitor",
+    "get_sre_monitor",
+    "OptionsStrategyCoordinator",
+    "SessionManager",
+]
 
 
 def __getattr__(name: str) -> Any:
@@ -26,5 +34,11 @@ def __getattr__(name: str) -> Any:
         return getattr(module, name)
     if name in ("SREMonitor", "get_sre_monitor"):
         module = import_module("src.orchestrator.sre_monitor")
+        return getattr(module, name)
+    if name == "OptionsStrategyCoordinator":
+        module = import_module("src.orchestrator.options_coordinator")
+        return getattr(module, name)
+    if name == "SessionManager":
+        module = import_module("src.orchestrator.session_manager")
         return getattr(module, name)
     raise AttributeError(f"module 'src.orchestrator' has no attribute {name}")
