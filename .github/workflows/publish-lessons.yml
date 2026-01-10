@@ -140,8 +140,8 @@ jobs:
                 nov) month_num="11"; year="2025" ;;
                 dec) month_num="12"; year="2025" ;;
               esac
-              # Pad day with leading zero if needed
-              day=$(printf "%02d" "$day")
+              # Pad day with leading zero if needed (use 10# to force decimal interpretation)
+              day=$(printf "%02d" "$((10#$day))")
               date="${year}-${month_num}-${day}"
             else
               date=$(date +%Y-%m-%d)
