@@ -63,16 +63,6 @@
       }
     },
     {
-      "id": "langsmith-monitor",
-      "display_name": "LangSmith Monitor",
-      "module": "mcp.servers.langsmith_server",
-      "tools": {
-        "get_langsmith_runs": "get_langsmith_runs",
-        "get_langsmith_stats": "get_langsmith_stats",
-        "check_langsmith_health": "check_langsmith_health"
-      }
-    },
-    {
       "id": "alpaca",
       "display_name": "Alpaca Official MCP Server",
       "transport": "http",

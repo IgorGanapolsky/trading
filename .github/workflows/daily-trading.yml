@@ -310,10 +310,7 @@ jobs:
       PYTHONPATH: ${{ github.workspace }}
       ENABLE_WEEKEND_PROXY: 'false'
       ALLOW_PROMOTION_OVERRIDE: '1'  # Temporary override to allow trading while metrics are repaired
-      # LangSmith observability - traces every trade gate decision
-      LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
-      LANGCHAIN_PROJECT: 'igor-trading-system'
-      LANGCHAIN_TRACING_V2: 'true'
+      # LangSmith removed Jan 9, 2026 - using Vertex AI RAG for observability
 
     steps:
       - name: Checkout repository
@@ -657,16 +654,7 @@ jobs:
             echo "health_check_passed=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Verify LangSmith tracing (ll_050)
-        if: steps.check_execution.outputs.skip != 'true' && steps.health_check.outputs.health_check_passed == 'true'
-        timeout-minutes: 2
-        env:
-          LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
-          LANGCHAIN_PROJECT: 'igor-trading-system'
-          LANGCHAIN_TRACING_V2: 'true'
-        run: |
-          echo "🔍 Verifying LangSmith tracing is configured..."
-          python3 verify_langsmith.py || echo "⚠️ LangSmith verification failed - continuing without blocking"
+      # LangSmith verification step removed Jan 9, 2026 - using Vertex AI RAG
 
       - name: Execute daily trading
         id: execute_trading
@@ -676,10 +664,7 @@ jobs:
           ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           HELICONE_API_KEY: ${{ secrets.HELICONE_API_KEY }}
-          # LangSmith tracing (observability)
-          LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
-          LANGCHAIN_PROJECT: 'igor-trading-system'
-          LANGCHAIN_TRACING_V2: 'true'
+          # LangSmith removed Jan 9, 2026 - using Vertex AI RAG
           ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
           # Phase 1: Polygon.io + Finnhub integration
           POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
