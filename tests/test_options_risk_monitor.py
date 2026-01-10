@@ -249,7 +249,7 @@ class TestIronCondorStopLoss:
             side="short",
             quantity=1,
             entry_price=2.00,  # Received $2.00 credit
-            current_price=5.00,  # Loss = $3.00 < 2.2x=$4.40 but > 2.0x=$4.00
+            current_price=6.00,  # Loss = $4.00 = 2.0x, triggers IC stop (< 2.2x=$4.40)
             delta=0.0,
             gamma=0.02,
             theta=0.04,
@@ -259,7 +259,7 @@ class TestIronCondorStopLoss:
             opened_at=datetime.now(),
         )
         monitor.add_position(position)
-        exits = monitor.check_stop_losses({"SPY_IC": 5.00})
+        exits = monitor.check_stop_losses({"SPY_IC": 6.00})
 
         assert len(exits) == 1, "Iron condor should trigger stop at 2.0x"
         assert exits[0]["position_type"] == "iron_condor"

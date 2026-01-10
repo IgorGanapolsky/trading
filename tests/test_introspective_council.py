@@ -104,41 +104,45 @@ class TestCouncilValidationWithAnonymization:
         except ImportError:
             pytest.skip("IntrospectiveCouncil not available")
 
-    @pytest.mark.asyncio
-    async def test_validation_passes_anonymized_scores(self):
+    def test_validation_passes_anonymized_scores(self):
         """Test that validate_trade receives anonymized peer_responses."""
-        mock_analyzer = MagicMock()
-        mock_council = MagicMock()
-        mock_council.validate_trade = AsyncMock(
-            return_value={
-                "approved": True,
-                "confidence": 0.8,
-                "reasoning": "Test passed",
+        import asyncio
+
+        async def run_test():
+            mock_analyzer = MagicMock()
+            mock_council = MagicMock()
+            mock_council.validate_trade = AsyncMock(
+                return_value={
+                    "approved": True,
+                    "confidence": 0.8,
+                    "reasoning": "Test passed",
+                }
+            )
+            council = self.council_class(
+                multi_llm_analyzer=mock_analyzer,
+                llm_council=mock_council,
+                enable_introspection=False,
+            )
+            mock_introspection = MagicMock()
+            mock_introspection.aggregate_confidence = 0.7
+            ensemble = {
+                "sentiment": 0.5,
+                "confidence": 0.7,
+                "individual_scores": {"claude": 0.6, "gpt4": 0.7},
             }
-        )
-        council = self.council_class(
-            multi_llm_analyzer=mock_analyzer,
-            llm_council=mock_council,
-            enable_introspection=False,
-        )
-        mock_introspection = MagicMock()
-        mock_introspection.aggregate_confidence = 0.7
-        ensemble = {
-            "sentiment": 0.5,
-            "confidence": 0.7,
-            "individual_scores": {"claude": 0.6, "gpt4": 0.7},
-        }
-        _result = await council._get_council_validation(
-            symbol="SPY",
-            ensemble=ensemble,
-            introspection=mock_introspection,
-        )
-        mock_council.validate_trade.assert_called_once()
-        call_kwargs = mock_council.validate_trade.call_args[1]
-        assert "peer_responses" in call_kwargs
-        peer_responses = call_kwargs["peer_responses"]
-        assert "claude" not in peer_responses
-        assert "gpt4" not in peer_responses
+            _result = await council._get_council_validation(
+                symbol="SPY",
+                ensemble=ensemble,
+                introspection=mock_introspection,
+            )
+            mock_council.validate_trade.assert_called_once()
+            call_kwargs = mock_council.validate_trade.call_args[1]
+            assert "peer_responses" in call_kwargs
+            peer_responses = call_kwargs["peer_responses"]
+            assert "claude" not in peer_responses
+            assert "gpt4" not in peer_responses
+
+        asyncio.run(run_test())
 
 
 class TestSmokeTests:

@@ -414,47 +414,46 @@ class TestTradeQueryFallbackBehavior:
                 {"id": "ll_001", "severity": "INFO", "content": "Test lesson"}
             ]
 
-            with patch("src.agents.dialogflow_webhook.trade_collection", None):
-                with patch(
-                    "src.agents.dialogflow_webhook.get_current_portfolio_status"
-                ) as mock_portfolio:
-                    mock_portfolio.return_value = {
-                        "live": {
-                            "equity": 100,
-                            "total_pl": 5,
-                            "total_pl_pct": 5.0,
-                            "positions_count": 0,
-                        },
-                        "paper": {
-                            "equity": 100000,
-                            "total_pl": 1000,
-                            "total_pl_pct": 1.0,
-                            "positions_count": 2,
-                            "win_rate": 80.0,
-                        },
-                        "last_trade_date": "2026-01-05",
-                        "trades_today": 0,
-                        "challenge_day": 69,
-                    }
+            with patch(
+                "src.agents.dialogflow_webhook.get_current_portfolio_status"
+            ) as mock_portfolio:
+                mock_portfolio.return_value = {
+                    "live": {
+                        "equity": 100,
+                        "total_pl": 5,
+                        "total_pl_pct": 5.0,
+                        "positions_count": 0,
+                    },
+                    "paper": {
+                        "equity": 100000,
+                        "total_pl": 1000,
+                        "total_pl_pct": 1.0,
+                        "positions_count": 2,
+                        "win_rate": 80.0,
+                    },
+                    "last_trade_date": "2026-01-05",
+                    "trades_today": 0,
+                    "challenge_day": 69,
+                }
 
-                    from fastapi.testclient import TestClient
-                    from src.agents.dialogflow_webhook import app
+                from fastapi.testclient import TestClient
+                from src.agents.dialogflow_webhook import app
 
-                    client = TestClient(app)
+                client = TestClient(app)
 
-                    response = client.post(
-                        "/webhook",
-                        json={"text": "How much money did we make today?"},
-                    )
+                response = client.post(
+                    "/webhook",
+                    json={"text": "How much money did we make today?"},
+                )
 
-                    assert response.status_code == 200
-                    data = response.json()
-                    text = data["fulfillmentResponse"]["messages"][0]["text"]["text"][0]
+                assert response.status_code == 200
+                data = response.json()
+                text = data["fulfillmentResponse"]["messages"][0]["text"]["text"][0]
 
-                    # Should return portfolio status, NOT lessons
-                    assert "Portfolio" in text or "Equity" in text or "P/L" in text
-                    # Should NOT contain lesson references
-                    assert "ll_001" not in text
+                # Should return portfolio status, NOT lessons
+                assert "Portfolio" in text or "Equity" in text or "P/L" in text
+                # Should NOT contain lesson references
+                assert "ll_001" not in text
 
     def test_trade_query_unavailable_portfolio_returns_clear_message(self):
         """Verify P/L queries don't dump lessons when portfolio unavailable."""
@@ -466,31 +465,30 @@ class TestTradeQueryFallbackBehavior:
                 {"id": "ll_001", "severity": "INFO", "content": "Test lesson"}
             ]
 
-            with patch("src.agents.dialogflow_webhook.trade_collection", None):
-                with patch(
-                    "src.agents.dialogflow_webhook.get_current_portfolio_status"
-                ) as mock_portfolio:
-                    mock_portfolio.return_value = {}  # No portfolio data
+            with patch(
+                "src.agents.dialogflow_webhook.get_current_portfolio_status"
+            ) as mock_portfolio:
+                mock_portfolio.return_value = {}  # No portfolio data
 
-                    from fastapi.testclient import TestClient
-                    from src.agents.dialogflow_webhook import app
+                from fastapi.testclient import TestClient
+                from src.agents.dialogflow_webhook import app
 
-                    client = TestClient(app)
+                client = TestClient(app)
 
-                    response = client.post(
-                        "/webhook",
-                        json={"text": "What's my balance?"},
-                    )
+                response = client.post(
+                    "/webhook",
+                    json={"text": "What's my balance?"},
+                )
 
-                    assert response.status_code == 200
-                    data = response.json()
-                    text = data["fulfillmentResponse"]["messages"][0]["text"]["text"][0]
+                assert response.status_code == 200
+                data = response.json()
+                text = data["fulfillmentResponse"]["messages"][0]["text"]["text"][0]
 
-                    # Should return clear unavailable message
-                    assert "Unavailable" in text or "couldn't retrieve" in text
-                    # Should NOT dump lessons
-                    assert "ll_001" not in text
-                    assert "Based on our lessons" not in text
+                # Should return clear unavailable message
+                assert "Unavailable" in text or "couldn't retrieve" in text
+                # Should NOT dump lessons
+                assert "ll_001" not in text
+                assert "Based on our lessons" not in text
 
 
 class TestPortfolioStatusFunction:

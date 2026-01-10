@@ -282,7 +282,7 @@ class IntrospectiveCouncil:
         anonymized = {}
         labels = ["A", "B", "C", "D", "E", "F", "G", "H"]
         for i, (model_name, score) in enumerate(individual_scores.items()):
-            label = labels[i] if i < len(labels) else f"Response_{i+1}"
+            label = labels[i] if i < len(labels) else str(i + 1)
             anonymized[f"Response_{label}"] = score
             # Store mapping for internal logging only (not sent to peer review)
             logger.debug(f"Anonymized {model_name} -> Response_{label}")
