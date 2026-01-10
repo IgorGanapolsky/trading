@@ -74,6 +74,13 @@ jobs:
     needs: cleanup-stale-branches
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      # API keys needed for content ingestion
+      YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      # Vertex AI credentials for RAG sync
+      GCP_PROJECT_ID: "github-456508"
+      VERTEX_LOCATION: "us-central1"
 
     steps:
       - name: Checkout repository
