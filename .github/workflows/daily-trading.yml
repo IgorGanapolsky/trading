@@ -266,7 +266,10 @@ jobs:
     timeout-minutes: 5
     needs: [validate-and-test]
     if: needs.validate-and-test.outputs.secrets_valid == 'true'
-    continue-on-error: true  # Don't block trading if stops can't be set
+    # Jan 10, 2026 AUDIT FIX: REMOVED continue-on-error: true
+    # CEO Directive: "We cannot lose money" - position protection MUST succeed
+    # If trailing stops fail, trading should NOT proceed with unprotected positions
+    continue-on-error: false
 
     steps:
       - name: Checkout repository

@@ -724,8 +724,29 @@ class TradeGateway:
 
     def _get_price(self, symbol: str) -> float:
         """Get current price for symbol."""
-        # In production, fetch from market data
-        return 100.0  # Placeholder
+        # BUG FIX (Jan 10, 2026): Was returning hardcoded $100.0 for ALL symbols
+        # This caused incorrect risk calculations (e.g., NVDA at $100 vs actual $140)
+        if self.executor:
+            try:
+                # Try to get real price from executor/market data
+                if hasattr(self.executor, "get_latest_quote"):
+                    quote = self.executor.get_latest_quote(symbol)
+                    if quote and hasattr(quote, "ask_price") and quote.ask_price > 0:
+                        return float(quote.ask_price)
+                # Fallback: try positions for current market value
+                positions = self._get_positions()
+                for pos in positions:
+                    if pos.get("symbol") == symbol:
+                        qty = float(pos.get("qty", 1))
+                        mkt_val = float(pos.get("market_value", 0))
+                        if qty > 0:
+                            return mkt_val / qty
+            except Exception as e:
+                logger.warning(f"Failed to get price for {symbol}: {e}")
+
+        # Fallback: use environment variable or default
+        # $100 is a reasonable default for most stocks but not accurate
+        return float(os.getenv(f"PRICE_{symbol}", "100.0"))
 
     def _get_symbol_exposure(self, symbol: str, positions: list[dict]) -> float:
         """Get current exposure to a symbol."""

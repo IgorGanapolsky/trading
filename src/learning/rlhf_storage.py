@@ -306,9 +306,11 @@ class RLHFStorage:
             feedback_ts = datetime.now(timezone.utc).isoformat()
 
             # Update all steps in the episode
-            # LanceDB uses SQL-like syntax
+            # SECURITY FIX (Jan 10, 2026): Sanitize episode_id to prevent injection
+            # LanceDB uses SQL-like syntax - must escape single quotes
+            safe_episode_id = episode_id.replace("'", "''")
             self.table.update(
-                where=f"episode_id = '{episode_id}'",
+                where=f"episode_id = '{safe_episode_id}'",
                 values={
                     "user_feedback": feedback_value,
                     "feedback_timestamp": feedback_ts,
@@ -335,9 +337,11 @@ class RLHFStorage:
             return []
 
         try:
+            # SECURITY FIX (Jan 10, 2026): Sanitize episode_id to prevent injection
+            safe_episode_id = episode_id.replace("'", "''")
             results = (
                 self.table.search()
-                .where(f"episode_id = '{episode_id}'", prefilter=True)
+                .where(f"episode_id = '{safe_episode_id}'", prefilter=True)
                 .limit(1000)
                 .to_list()
             )
@@ -372,11 +376,14 @@ class RLHFStorage:
             query = self.table.search()
 
             # Build where clause
+            # SECURITY FIX (Jan 10, 2026): Sanitize inputs to prevent injection
             conditions = ["trajectory_id != '_init_'"]
             if policy_version:
-                conditions.append(f"policy_version = '{policy_version}'")
+                safe_version = policy_version.replace("'", "''")
+                conditions.append(f"policy_version = '{safe_version}'")
             if symbol:
-                conditions.append(f"symbol = '{symbol.upper()}'")
+                safe_symbol = symbol.upper().replace("'", "''")
+                conditions.append(f"symbol = '{safe_symbol}'")
             if only_with_feedback:
                 conditions.append("user_feedback != 0")
 
