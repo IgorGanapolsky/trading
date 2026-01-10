@@ -27,7 +27,7 @@ from pathlib import Path
 # Try to import Alpaca - graceful fallback if not available
 try:
     from alpaca.trading.client import TradingClient
-    from alpaca.trading.enums import OrderSide, QueryOrderStatus
+    from alpaca.trading.enums import QueryOrderStatus
     from alpaca.trading.requests import GetOrdersRequest
 
     ALPACA_AVAILABLE = True
