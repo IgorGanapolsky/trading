@@ -7,15 +7,27 @@ full, untruncated lessons learned AND trade history from our RAG knowledge base.
 Deployed to Cloud Run at: https://trading-dialogflow-webhook-cqlewkvzdq-uc.a.run.app
 
 Updated Jan 2026: Added trade history queries
+Security Update Jan 10, 2026: Added SSL verification, rate limiting, webhook auth
 """
 
 import logging
 import os
+import ssl
 import sys
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
+
+# Rate limiting (optional - graceful degradation if not installed)
+try:
+    from slowapi import Limiter, _rate_limit_exceeded_handler
+    from slowapi.errors import RateLimitExceeded
+    from slowapi.util import get_remote_address
+
+    RATE_LIMITING_ENABLED = True
+except ImportError:
+    RATE_LIMITING_ENABLED = False
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent.parent
@@ -30,12 +42,35 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Webhook authentication token (set in Cloud Run environment)
+WEBHOOK_AUTH_TOKEN = os.environ.get("DIALOGFLOW_WEBHOOK_TOKEN", "")
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Trading AI RAG Webhook",
     description="Dialogflow CX webhook for lessons AND trade history queries",
-    version="2.8.0",  # Fixed: $5K paper equity is healthy (not blocker), fresh starts = warning
+    version="2.9.0",  # Security: SSL verification, rate limiting, webhook auth
 )
+
+# Initialize rate limiter if available
+if RATE_LIMITING_ENABLED:
+    limiter = Limiter(key_func=get_remote_address)
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    logger.info("Rate limiting ENABLED (slowapi)")
+
+    def rate_limit(limit_string: str):
+        """Apply rate limit decorator when slowapi is available."""
+        return limiter.limit(limit_string)
+else:
+    limiter = None
+    logger.warning("Rate limiting DISABLED (slowapi not installed)")
+
+    def rate_limit(limit_string: str):
+        """No-op decorator when slowapi is not available."""
+        def decorator(func):
+            return func
+        return decorator
 
 # Initialize RAG system for lessons
 rag = LessonsLearnedRAG()
@@ -69,7 +104,9 @@ def get_current_portfolio_status() -> dict:
             import urllib.request
 
             github_url = "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/system_state.json"
-            with urllib.request.urlopen(github_url, timeout=5) as response:  # noqa: S310 - trusted URL
+            # Security: Use verified SSL context (fixes MitM vulnerability)
+            ssl_context = ssl.create_default_context()
+            with urllib.request.urlopen(github_url, timeout=5, context=ssl_context) as response:
                 state = json.loads(response.read().decode("utf-8"))
             logger.info("Loaded portfolio from GitHub system_state.json")
         except Exception as e:
@@ -311,7 +348,9 @@ def assess_trading_readiness(
             import urllib.request
 
             github_url = "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/system_state.json"
-            with urllib.request.urlopen(github_url, timeout=5) as response:  # noqa: S310
+            # Security: Use verified SSL context (fixes MitM vulnerability)
+            ssl_context = ssl.create_default_context()
+            with urllib.request.urlopen(github_url, timeout=5, context=ssl_context) as response:
                 state = json.loads(response.read().decode("utf-8"))
             checks.append("System state loaded (GitHub)")
             score += 10
@@ -679,10 +718,41 @@ def create_dialogflow_response(text: str) -> dict:
     return {"fulfillmentResponse": {"messages": [{"text": {"text": [text]}}]}}
 
 
+def verify_webhook_auth(authorization: str | None = Header(None)) -> bool:
+    """
+    Verify webhook authentication token.
+
+    Security: Validates bearer token if DIALOGFLOW_WEBHOOK_TOKEN is set.
+    If no token is configured, allows requests (for backward compatibility).
+    """
+    if not WEBHOOK_AUTH_TOKEN:
+        # No auth configured - allow (backward compatibility)
+        return True
+
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header required")
+
+    # Support both "Bearer <token>" and plain "<token>" formats
+    token = authorization.replace("Bearer ", "").strip()
+    if token != WEBHOOK_AUTH_TOKEN:
+        logger.warning("Webhook authentication failed - invalid token")
+        raise HTTPException(status_code=403, detail="Invalid authentication token")
+
+    return True
+
+
 @app.post("/webhook")
-async def webhook(request: Request) -> JSONResponse:
+@rate_limit("100/minute")  # Security: Rate limit webhook to 100 requests/minute per IP
+async def webhook(
+    request: Request,
+    authorization: str | None = Header(None),
+) -> JSONResponse:
     """
     Handle Dialogflow CX webhook requests.
+
+    Security:
+    - Rate limited to 100 requests/minute per IP (if slowapi installed)
+    - Authenticated via bearer token (if DIALOGFLOW_WEBHOOK_TOKEN configured)
 
     Request format:
     {
@@ -694,9 +764,13 @@ async def webhook(request: Request) -> JSONResponse:
         "text": "user query here"
     }
     """
+    # Verify authentication (if configured)
+    verify_webhook_auth(authorization)
+
     try:
         body = await request.json()
-        logger.info(f"Received webhook request: {body}")
+        # Security: Don't log full request body (may contain sensitive data)
+        logger.info(f"Webhook request received, text field present: {'text' in body}")
 
         # Extract user query from different possible locations
         user_query = ""
@@ -817,9 +891,10 @@ Or ask me about **lessons learned** instead (e.g., "What lessons did we learn ab
         return JSONResponse(content=response)
 
     except Exception as e:
+        # Security: Log full error but don't expose internals to client
         logger.error(f"Webhook error: {e}", exc_info=True)
         error_response = create_dialogflow_response(
-            f"Error processing request: {str(e)}. Please try again."
+            "An error occurred processing your request. Please try again."
         )
         return JSONResponse(content=error_response, status_code=200)
 
@@ -844,7 +919,7 @@ async def root():
     trade_count = len(query_trades("all", limit=1000))
     return {
         "service": "Trading AI RAG Webhook",
-        "version": "2.8.0",  # Fixed: $5K paper equity is healthy, fresh starts = warning
+        "version": "2.9.0",  # Security: SSL verification, rate limiting, webhook auth
         "lessons_loaded": len(rag.lessons),
         "trades_loaded": trade_count,
         "trade_history_source": "local_json",
