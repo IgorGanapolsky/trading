@@ -65,4 +65,3 @@ Trigger conditions (NOT met today):
 ## Tags
 
 #architecture #context-engineering #future-reference #adk
-

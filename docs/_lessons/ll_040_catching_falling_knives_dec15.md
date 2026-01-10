@@ -93,4 +93,3 @@ valid_entry = above_ma AND rsi_bullish
 ## Tags
 
 `trading-strategy` `crypto` `risk-management` `trend-following` `rsi` `moving-average`
-

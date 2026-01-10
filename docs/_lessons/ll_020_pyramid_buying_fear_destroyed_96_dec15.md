@@ -208,4 +208,3 @@ Before deploying any strategy change:
 *Generated: December 15, 2025*
 *Author: Claude (CTO)*
 *PR: #654 - Merged*
-

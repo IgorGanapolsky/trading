@@ -96,4 +96,3 @@ This fixes CI but doesn't solve the underlying mess.
 ## Tags
 
 `rag`, `technical_debt`, `chromadb`, `lancedb`, `cleanup`
-

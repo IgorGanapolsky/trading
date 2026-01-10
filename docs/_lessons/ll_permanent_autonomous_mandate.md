@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Permanent Mandate: Autonomous GitHub Operations"
-date: 2025-12-30
+date: 2026-01-10
 ---
 
 # Permanent Mandate: Autonomous GitHub Operations
@@ -33,4 +33,3 @@ The agent (CTO) MUST fully utilize its autonomous capabilities to manage the sof
 - Use `gh pr create`
 - Use `gh pr merge --auto`
 - Use `gh pr view` to confirm status
-

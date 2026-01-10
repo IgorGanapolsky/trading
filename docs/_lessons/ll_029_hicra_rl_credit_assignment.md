@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "LL-029: HICRA - Hierarchy-Aware Credit Assignment for RL"
-date: 2025-12-30
+date: 2026-01-10
 ---
 
 # LL-029: HICRA - Hierarchy-Aware Credit Assignment for RL
@@ -123,4 +123,3 @@ Based on HICRA benchmarks:
 ## Tags
 
 #rl #hicra #credit-assignment #strategic-grams #aha-moments #ml
-

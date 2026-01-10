@@ -65,4 +65,3 @@ if error:
 ## Tags
 
 `data-integrity`, `anti-lying`, `critical`, `sync`, `alpaca`
-

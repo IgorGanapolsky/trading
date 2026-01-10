@@ -165,4 +165,3 @@ If we can't trust our system, we can't trust our trades.
 If we can't trust our trades, we lose money.
 
 **Documentation hygiene is not optional. It's survival.**
-

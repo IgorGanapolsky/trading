@@ -220,4 +220,3 @@ The system now learns from:
 ## Change Log
 
 - 2025-12-12: Initial lesson from regime pivot implementation
-

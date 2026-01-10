@@ -91,4 +91,3 @@ def test_pl_data_freshness():
 
 ## Tags
 `critical` `trust` `data-integrity` `verification` `cto-behavior`
-

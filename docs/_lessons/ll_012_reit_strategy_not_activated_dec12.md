@@ -180,4 +180,3 @@ def test_reit_strategy_enabled():
 - 2025-12-12: PR #587 created and merged - REIT strategy activated
 - 2025-12-12: Lesson learned documented
 - 2025-12-12: Prevention measures defined
-

@@ -212,4 +212,3 @@ Every 1% reduction in effective tax rate on $10,000 profit = $100 more in your p
 - LL_044: Documentation Hygiene Mandate
 - LL_045: Verification Systems
 - LL_020: Options Primary Strategy
-

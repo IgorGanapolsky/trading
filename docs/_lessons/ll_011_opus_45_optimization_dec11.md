@@ -209,4 +209,3 @@ This lesson is indexed for:
 
 - 2025-12-11: Initial implementation
 - 2025-12-11: Added to RAG lessons learned
-

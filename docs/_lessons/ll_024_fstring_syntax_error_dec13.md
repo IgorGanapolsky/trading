@@ -113,4 +113,3 @@ def test_ll_024_no_syntax_errors():
 ## Change Log
 
 - 2025-12-13: Discovered and fixed f-string syntax error in autonomous_trader.py
-

@@ -82,4 +82,3 @@ After this fix, every successful trading run should:
 
 ## Tags
 `workflow` `data` `trades` `commit` `bug-fix` `ci`
-

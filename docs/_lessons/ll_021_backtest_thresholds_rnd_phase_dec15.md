@@ -103,4 +103,3 @@ Expecting hedge-fund-level Sharpe ratios from a $10/day DCA strategy during its 
 ## Change Log
 
 - 2025-12-15: Identified threshold mismatch, applied ll_019 wisdom, lowered R&D thresholds
-

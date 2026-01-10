@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "LL-028: Netflix Upper Metamodel - Unified Domain Model"
-date: 2025-12-30
+date: 2026-01-10
 ---
 
 # LL-028: Netflix Upper Metamodel - Unified Domain Model
@@ -129,4 +129,3 @@ trade.to_performance_record() # Analytics
 ## Tags
 
 #architecture #netflix #domain-model #consistency #upper-metamodel #validation #shacl
-

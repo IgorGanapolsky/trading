@@ -258,4 +258,3 @@ This lesson learned is being written AFTER the user called out the failure.
 The correct time to write it was BEFORE making changes, by reading the 49 existing lessons that would have prevented this entire disaster.
 
 **Lesson 036 Preview**: Tomorrow, if AI doesn't read THIS lesson before starting work, the cycle repeats.
-

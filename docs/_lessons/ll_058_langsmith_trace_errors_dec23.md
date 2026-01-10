@@ -65,4 +65,3 @@ LangSmith dashboard showed 68% error rate across 304 runs. The observability sys
 - ll_017: Missing LangSmith env vars
 - ll_050: LangSmith tracing integration
 - ll_056: Silent pipeline failures
-

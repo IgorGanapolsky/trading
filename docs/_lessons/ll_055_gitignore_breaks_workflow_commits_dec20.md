@@ -112,4 +112,3 @@ permissions:
 - `scripts/ingest_phil_town_youtube.py`
 - `scripts/ingest_options_youtube.py`
 - `.gitignore`
-

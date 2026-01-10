@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Always Acknowledge User Feedback (Thumbs Up/Down)"
-date: 2025-12-30
+date: 2026-01-10
 ---
 
 # Lesson Learned: Always Acknowledge User Feedback (Thumbs Up/Down)
@@ -46,4 +46,3 @@ Claude: Feedback recorded (negative). What did I miss or do poorly? I want to le
 - `.claude/hooks/capture_feedback.sh`
 - `data/feedback/feedback_YYYY-MM-DD.jsonl`
 - `data/feedback/stats.json`
-

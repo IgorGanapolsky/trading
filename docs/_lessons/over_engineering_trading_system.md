@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Over-Engineering Trading System"
-date: 2025-12-30
+date: 2026-01-10
 ---
 
 # Lesson Learned: Over-Engineering Trading System
@@ -184,4 +184,3 @@ def test_complexity_within_budget():
 ## Tags
 
 #over-engineering #trading-system #complexity #validation #lessons-learned #critical
-

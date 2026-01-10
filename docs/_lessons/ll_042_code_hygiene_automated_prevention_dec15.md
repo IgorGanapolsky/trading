@@ -77,4 +77,3 @@ pre-commit run --all-files
 
 ## Tags
 `code-hygiene` `dead-code` `ci-cd` `prevention` `ruff` `pre-commit` `automation`
-

@@ -157,4 +157,3 @@ python scripts/verify_rag_hygiene.py
 ---
 
 **Key Takeaway**: VERIFY, DON'T ASSUME. If something can fail silently, it will.
-

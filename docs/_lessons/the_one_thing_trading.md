@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "The ONE Thing - Applied to Trading Systems"
-date: 2025-12-30
+date: 2026-01-10
 ---
 
 # The ONE Thing - Applied to Trading Systems
@@ -112,4 +112,3 @@ Close a profitable trade. Just one.
 
 *Added to trading system knowledge base: December 11, 2025*
 *Category: Mental Framework / Trading Psychology*
-

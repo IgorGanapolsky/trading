@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Lesson Learned #089: Phil Town Strategy & RLHF Pipeline Broken"
+title: "Lesson Learned #089: Phil Town Strategy & RLHF Pipeline Broken (Jan 6, 2026)"
 date: 2026-01-06
 ---
 

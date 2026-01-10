@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Lesson: CI Test Failures Blocking Trading Execution"
-date: 2025-12-30
+date: 2026-01-10
 ---
 
 # Lesson: CI Test Failures Blocking Trading Execution
@@ -127,4 +127,3 @@ Better to trade with a warning than to not trade at all.
 
 ## Tags
 `ci`, `testing`, `blocking`, `trading_execution`, `monitoring`, `alerting`
-

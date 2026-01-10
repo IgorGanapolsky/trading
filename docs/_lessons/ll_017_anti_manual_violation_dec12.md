@@ -82,4 +82,3 @@ Add test to CI that scans Claude's responses for forbidden phrases in commit mes
 
 ## Tags
 `process` `autonomy` `anti-manual` `cto-behavior` `critical`
-

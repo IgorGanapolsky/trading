@@ -134,4 +134,3 @@ A workflow can exit 0 (success) while doing absolutely nothing useful. The tradi
 ## Change Log
 
 - 2025-12-12: Root cause identified and fixed - relaxed filters + expanded tickers
-

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "LL-068: Google ADK Integration is Month 3 Priority"
-date: 2025-12-30
+date: 2026-01-10
 ---
 
 # LL-068: Google ADK Integration is Month 3 Priority
@@ -62,4 +62,3 @@ This lesson will surface via:
 - #month3
 - #google-adk
 - #orchestration
-

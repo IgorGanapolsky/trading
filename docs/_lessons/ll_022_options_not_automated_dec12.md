@@ -107,4 +107,3 @@ Pre-commit hook to verify all income strategies have workflow coverage.
 ## Tags
 
 `#automation` `#options` `#revenue` `#workflow` `#gap-detection` `#theta`
-

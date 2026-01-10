@@ -168,4 +168,3 @@ The money being deposited daily will be there when ready. There's no prize for g
 
 ## Tags
 `#risk-management` `#capital-deployment` `#go-live` `#paper-trading` `#milestones`
-

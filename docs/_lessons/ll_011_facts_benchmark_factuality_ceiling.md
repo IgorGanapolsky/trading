@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: FACTS Benchmark & 70% Factuality Ceiling"
-date: 2025-12-30
+date: 2026-01-10
 ---
 
 # Lesson Learned: FACTS Benchmark & 70% Factuality Ceiling
@@ -59,4 +59,3 @@ LLMs have fundamental factuality limitations:
 
 - [Google DeepMind FACTS Benchmark](https://deepmind.google/blog/facts-benchmark-suite)
 - [VentureBeat Analysis](https://venturebeat.com/ai/the-70-factuality-ceiling-why-googles-new-facts-benchmark-is-a-wake-up-call)
-

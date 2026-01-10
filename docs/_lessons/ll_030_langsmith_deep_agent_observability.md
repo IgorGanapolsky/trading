@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned #030: LangSmith Deep Agent Observability"
-date: 2025-12-30
+date: 2026-01-10
 ---
 
 # Lesson Learned #030: LangSmith Deep Agent Observability
@@ -203,4 +203,3 @@ DAILY_LLM_BUDGET=3.33
 ## Tags
 
 #observability #langsmith #monitoring #tracing #evaluation #cost-tracking #deep-agents
-

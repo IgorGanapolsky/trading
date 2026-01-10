@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Text Feature Engineering for Trading Signals (Dec 13, 2025)"
-date: 2025-12-30
+date: 2026-01-10
 ---
 
 # Lesson Learned: Text Feature Engineering for Trading Signals (Dec 13, 2025)
@@ -254,4 +254,3 @@ def test_text_feature_engineering():
 
 - 2025-12-13: Implemented TextFeatureEngineer with BoW, TF-IDF, FinBERT support
 - 2025-12-13: Integrated with pre-market news analysis pipeline
-

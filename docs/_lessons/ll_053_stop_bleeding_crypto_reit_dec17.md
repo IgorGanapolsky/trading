@@ -91,4 +91,3 @@ If we had only traded options:
 Average: **+37.5% on options** vs **-2.5% on crypto/REITs**
 
 OPTIONS ARE THE WAY.
-

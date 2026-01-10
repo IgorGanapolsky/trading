@@ -123,4 +123,3 @@ def test_options_runs_before_momentum_in_source():
 ## Change Log
 
 - 2025-12-12: Reordered execution flow - options now run FIRST
-

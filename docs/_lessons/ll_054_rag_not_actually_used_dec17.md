@@ -121,4 +121,3 @@ This lesson is about ensuring tools are not just built, but USED CORRECTLY.
 ## Tags
 
 `rag`, `semantic_search`, `lessons_learned`, `operational_failure`, `blind_trading`, `context_aware`, `pre_session_check`
-

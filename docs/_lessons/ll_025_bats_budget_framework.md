@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Google's Budget-Aware Test-time Scaling Framework (Dec 13, 2025)"
-date: 2025-12-30
+date: 2026-01-10
 ---
 
 # Lesson Learned: Google's Budget-Aware Test-time Scaling Framework (Dec 13, 2025)
@@ -162,4 +162,3 @@ def test_budget_aware_model_selection():
 - 2025-12-23: Updated BaseAgent to use ModelSelector for automatic model selection
 - 2025-12-23: Updated BogleHeadsAgent and GammaExposureAgent to use BATS
 - 2025-12-23: Added LLM budget config fields to AppConfig
-

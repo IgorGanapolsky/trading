@@ -74,4 +74,3 @@ Deep research using parallel agents to:
 - Expected value per trade = (win_rate × avg_win) - (loss_rate × avg_loss)
 - Risk-adjusted return (Sharpe/Sortino) must be positive
 - Position sizing must scale with volatility
-

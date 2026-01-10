@@ -140,4 +140,3 @@ Comments should explain rationale, not restate code.
 - 2025-12-11: Initial research and implementation
 - 2025-12-11: Created AGENTS.md, llms.txt, nested module files
 - 2025-12-11: Added docs/ai-friendly-repo-guide.md
-

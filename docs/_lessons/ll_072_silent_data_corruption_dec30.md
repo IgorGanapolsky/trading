@@ -66,4 +66,3 @@ After fix, sync without credentials will:
 2. Raise exception
 3. Return non-zero exit code
 4. Trigger circuit breaker BLOCK (not silent success)
-

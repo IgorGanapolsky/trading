@@ -155,4 +155,3 @@ This is a much bigger issue than I initially realized - and I would have caught 
 ## Change Log
 
 - 2025-12-13: Initial incident - CTO violated session start checklist, failed to identify weekend crypto trading, gave incorrect information to CEO
-

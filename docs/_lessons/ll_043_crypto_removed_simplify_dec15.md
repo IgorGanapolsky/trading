@@ -121,4 +121,3 @@ A strategy should be removed when:
 
 - LL_020: Options Primary Strategy
 - LL_040: Catching Falling Knives (DCA into downtrends)
-

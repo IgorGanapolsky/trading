@@ -250,4 +250,3 @@ Every mistake we make should result in:
 - LL_035: Failed to Use RAG Despite Building It
 - LL_044: Documentation Hygiene Mandate
 - LL_043: Crypto Removed - Simplify and Focus
-

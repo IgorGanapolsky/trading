@@ -171,4 +171,3 @@ Before merging any RL/ML changes:
 - 2025-12-11: Initial implementation of A1 mode (DiscoRL + RiskAdjustedReward)
 - 2025-12-11: Initial implementation of A2 foundation (prediction tracking)
 - 2025-12-11: Created this lessons learned entry
-

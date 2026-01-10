@@ -80,4 +80,3 @@ python3 scripts/execute_credit_spread.py --symbol SOFI --width 2 --dry-run
 - Alpaca Options API: https://alpaca.markets/docs/trading/options/
 - Bull Put Spreads: Max loss = width - credit received
 - TastyTrade: Spreads are capital-efficient but have lower max profit
-

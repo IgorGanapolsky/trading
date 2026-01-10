@@ -82,4 +82,3 @@ After any workflow change:
 - Pattern: workflow_dependency_mismatch
 - Prevention: use_minimal_requirements_for_ci
 - Test: test_workflow_dependencies.py
-

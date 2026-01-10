@@ -71,4 +71,3 @@ A pipeline that runs successfully but produces wrong or empty output is worse th
 - [ ] Create weekly ingestion health report
 - [ ] Clear old/wrong cache content
 - [ ] Actually run successful ingestion with real Phil Town content
-

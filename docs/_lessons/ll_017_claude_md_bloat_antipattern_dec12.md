@@ -126,4 +126,3 @@ curl -X POST \
 1. Apply lessons learned from this incident
 2. Add automated checks to prevent recurrence
 3. Update RAG knowledge base
-

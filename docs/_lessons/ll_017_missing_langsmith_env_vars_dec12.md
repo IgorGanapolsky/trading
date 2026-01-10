@@ -195,4 +195,3 @@ required_secrets = [
 
 - 2025-12-12: Initial incident discovered and fixed (PR #565)
 - 2025-12-12: Added to RAG knowledge base
-

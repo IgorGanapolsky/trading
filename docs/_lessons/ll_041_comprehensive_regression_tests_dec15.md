@@ -147,4 +147,3 @@ python3 scripts/mandatory_rag_check.py "import errors"
 
 *Created: December 15, 2025*
 *Author: Claude (CTO)*
-
