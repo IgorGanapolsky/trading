@@ -21,6 +21,8 @@ from src.learning.trade_memory import TradeMemory
 from src.orchestrator.anomaly_monitor import AnomalyMonitor
 from src.orchestrator.budget import BudgetController
 from src.orchestrator.failure_isolation import FailureIsolationManager
+from src.orchestrator.options_coordinator import OptionsStrategyCoordinator
+from src.orchestrator.session_manager import SessionManager, is_us_market_day
 from src.orchestrator.gates import (
     Gate0Psychology,
     Gate1Momentum,
@@ -135,21 +137,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-_US_HOLIDAYS_CACHE: dict[int, holidays.HolidayBase] = {}
-
-
-def _get_us_holidays(year: int) -> holidays.HolidayBase:
-    if year not in _US_HOLIDAYS_CACHE:
-        _US_HOLIDAYS_CACHE[year] = holidays.US(years=[year])
-    return _US_HOLIDAYS_CACHE[year]
-
-
-def is_us_market_day(day: date | None = None) -> bool:
-    current_day = day or datetime.now(timezone.utc).date()
-    if current_day.weekday() >= 5:  # Saturday/Sunday
-        return False
-    calendar = _get_us_holidays(current_day.year)
-    return current_day not in calendar
+# is_us_market_day imported from session_manager
 
 
 class TradingOrchestrator:
@@ -236,6 +224,20 @@ class TradingOrchestrator:
         # Capital efficiency calculator - determines what strategies are viable
         self.capital_calculator = get_capital_calculator(daily_deposit_rate=10.0)
         self.session_profile: dict[str, Any] | None = None
+
+        # Jan 10, 2026: Extracted classes for cleaner architecture
+        # OptionsStrategyCoordinator handles Gate 6/7 (options strategies)
+        self.options_coordinator = OptionsStrategyCoordinator(
+            executor=self.executor,
+            options_risk_monitor=self.options_risk_monitor,
+            telemetry=self.telemetry,
+            paper=paper,
+        )
+        # SessionManager handles session profiles and market day detection
+        self.session_manager = SessionManager(
+            default_tickers=self.tickers,
+            weekend_proxy_symbols=os.getenv("WEEKEND_PROXY_SYMBOLS", "BITO,RWCR"),
+        )
         self.microstructure = MicrostructureFeatureExtractor()
         self.regime_detector = RegimeDetector()
         self.smart_dca = SmartDCAAllocator()
@@ -1222,37 +1224,11 @@ class TradingOrchestrator:
             logger.error(f"Failed to record closed trade for {symbol}: {e}")
 
     def _build_session_profile(self) -> dict[str, Any]:
-        today = datetime.now(timezone.utc).date()
-        market_day = is_us_market_day(today)
-        proxy_symbols = os.getenv("WEEKEND_PROXY_SYMBOLS", "BITO,RWCR")
-        proxy_list = [
-            symbol.strip().upper() for symbol in proxy_symbols.split(",") if symbol.strip()
-        ]
-        momentum_overrides: dict[str, float] = {}
-        # RELAXED THRESHOLD (Dec 4, 2025): Reduced from 0.6 to 0.45 to allow more trades
-        # Previous: 60% confidence → rejected 30-40% of candidates at Gate 2
-        # New: 45% confidence → more balanced, still above random (50%)
-        rl_threshold = float(os.getenv("RL_CONFIDENCE_THRESHOLD", "0.45"))
-        session_type = "market_hours"
+        """Build session profile - delegates to SessionManager.
 
-        if not market_day:
-            proxy_list = proxy_list or ["BITO"]
-            momentum_overrides = {
-                "rsi_overbought": float(os.getenv("WEEKEND_RSI_OVERBOUGHT", "65.0")),
-                "macd_threshold": float(os.getenv("WEEKEND_MACD_THRESHOLD", "-0.05")),
-                "volume_min": float(os.getenv("WEEKEND_VOLUME_MIN", "0.5")),
-            }
-            rl_threshold = float(os.getenv("RL_WEEKEND_CONFIDENCE_THRESHOLD", "0.55"))
-
-        tickers = self.tickers if market_day else proxy_list
-
-        return {
-            "session_type": session_type,
-            "is_market_day": market_day,
-            "tickers": tickers,
-            "rl_threshold": rl_threshold,
-            "momentum_overrides": momentum_overrides,
-        }
+        Jan 10, 2026: Extracted to SessionManager for cleaner architecture.
+        """
+        return self.session_manager.build_session_profile()
 
     def _estimate_execution_costs(self, notional: float) -> dict[str, float]:
         sec_fee_rate = float(os.getenv("SEC_FEE_RATE", "0.000018"))
@@ -2849,385 +2825,29 @@ class TradingOrchestrator:
             return {"action": "error", "error": str(e)}
 
     def run_options_risk_check(self, option_prices: dict = None) -> dict:
+        """Run options risk check - delegates to OptionsStrategyCoordinator.
+
+        Jan 10, 2026: Extracted to OptionsStrategyCoordinator for cleaner architecture.
         """
-        Run options position risk check (stop-losses and delta management).
-
-        McMillan Rules Applied:
-        - Credit spreads/iron condors: Exit at 2.2x credit received
-        - Long options: Exit at 50% loss
-        - Delta: Rebalance if |net delta| > 60
-
-        Args:
-            option_prices: Dict mapping option symbols to current prices
-                          If None, will attempt to fetch from executor
-
-        Returns:
-            Risk check results with any actions taken
-        """
-        logger.info("--- Running Options Risk Check ---")
-
-        if option_prices is None:
-            option_prices = {}
-
-        try:
-            results = self.options_risk_monitor.run_risk_check(
-                current_prices=option_prices, executor=self.executor
-            )
-
-            self.telemetry.record(
-                event_type="options.risk_check",
-                ticker="PORTFOLIO",
-                status="completed",
-                payload={
-                    "positions_checked": results.get("positions_checked", 0),
-                    "stop_loss_exits": len(results.get("stop_loss_exits", [])),
-                    "rebalance_needed": results.get("delta_analysis", {}).get(
-                        "rebalance_needed", False
-                    ),
-                },
-            )
-
-            return results
-
-        except Exception as e:
-            logger.error("Options risk check failed: %s", e)
-            return {"error": str(e)}
+        return self.options_coordinator.run_options_risk_check(option_prices)
 
     def run_options_strategy(self) -> dict:
+        """Run options strategy - delegates to OptionsStrategyCoordinator.
+
+        Jan 10, 2026: Extracted to OptionsStrategyCoordinator for cleaner architecture.
         """
-        Gate 6: Phil Town Rule #1 Options Strategy
-
-        Implements both Rule #1 options strategies:
-        1. "Getting Paid to Wait" - Cash-secured puts at MOS price
-           - Uses CASH to secure puts (no shares needed)
-           - If assigned: Own stock at 50% discount to fair value
-           - If not: Keep premium as profit
-
-        2. "Getting Paid to Sell" - Covered calls at Sticker Price
-           - Requires 100+ shares (skipped if not available)
-
-        Returns:
-            Dict with options strategy execution results
-        """
-        from src.strategies.rule_one_options import RuleOneOptionsStrategy
-
-        logger.info("--- Gate 6: Phil Town Rule #1 Options Strategy ---")
-
-        # Check if theta automation is enabled
-        theta_enabled = os.getenv("ENABLE_THETA_AUTOMATION", "true").lower() in (
-            "true",
-            "1",
-            "yes",
-        )
-
-        if not theta_enabled:
-            # Options disabled - log but don't execute
-            logger.info("Gate 6: Options disabled (set ENABLE_THETA_AUTOMATION=true to enable)")
-            return {"action": "disabled", "reason": "ENABLE_THETA_AUTOMATION not set"}
-
-        logger.info("Gate 6: Theta automation ENABLED - executing options strategy")
-
-        # FIXED Jan 9, 2026: Renamed counters to be HONEST
-        # This function LOGS signals; actual EXECUTION happens in rule_one_trader.py
-        results: dict[str, Any] = {
-            "put_signals": 0,
-            "call_signals": 0,
-            "puts_logged": 0,  # HONEST: we log, not execute here
-            "calls_logged": 0,  # HONEST: we log, not execute here
-            "est_total_premium": 0.0,  # HONEST: estimated, not realized
-            "errors": [],
-            "note": "Signals logged here; execution in rule_one_trader.py",
-        }
-
-        try:
-            options_strategy = RuleOneOptionsStrategy(paper=True)
-            signals = options_strategy.generate_daily_signals()
-            put_signals = signals.get("puts", [])
-            call_signals = signals.get("calls", [])
-
-            results["put_signals"] = len(put_signals)
-            results["call_signals"] = len(call_signals)
-
-            logger.info(
-                "Gate 6: Found %d put opportunities, %d call opportunities",
-                len(put_signals),
-                len(call_signals),
-            )
-
-            # FIX Jan 9, 2026: This function now DELEGATES to rule_one_trader.py
-            # which runs later in the workflow and has actual order execution.
-            # Here we only log signals for visibility - actual trades happen in scripts.
-            #
-            # NOTE: "puts_logged" not "puts_executed" - be honest about what we do!
-
-            for signal in put_signals[:3]:
-                logger.info(
-                    "Gate 6 PUT SIGNAL: %s - Strike $%.2f, Premium $%.2f, "
-                    "Annualized %.1f%%, Contracts %d",
-                    signal.symbol,
-                    signal.strike,
-                    signal.premium,
-                    signal.annualized_return * 100,
-                    signal.contracts,
-                )
-                self.telemetry.record(
-                    event_type="gate.options",
-                    ticker=signal.symbol,
-                    status="put_signal",
-                    payload={
-                        "strategy": "cash_secured_put",
-                        "strike": signal.strike,
-                        "premium": signal.premium,
-                        "expiration": signal.expiration,
-                        "annualized_return": signal.annualized_return,
-                        "contracts": signal.contracts,
-                        "total_premium": signal.total_premium,
-                        "rationale": signal.rationale,
-                    },
-                )
-                # FIXED: Use accurate counter - we're LOGGING not EXECUTING here
-                # Actual execution happens in rule_one_trader.py script
-                results["puts_logged"] = results.get("puts_logged", 0) + 1
-                results["est_total_premium"] = (
-                    results.get("est_total_premium", 0) + signal.total_premium
-                )
-
-            for signal in call_signals[:3]:
-                logger.info(
-                    "Gate 6 CALL SIGNAL: %s - Strike $%.2f, Premium $%.2f, "
-                    "Annualized %.1f%%, Contracts %d",
-                    signal.symbol,
-                    signal.strike,
-                    signal.premium,
-                    signal.annualized_return * 100,
-                    signal.contracts,
-                )
-                self.telemetry.record(
-                    event_type="gate.options",
-                    ticker=signal.symbol,
-                    status="call_signal",
-                    payload={
-                        "strategy": "covered_call",
-                        "strike": signal.strike,
-                        "premium": signal.premium,
-                        "expiration": signal.expiration,
-                        "annualized_return": signal.annualized_return,
-                        "contracts": signal.contracts,
-                    },
-                )
-                # FIXED: Use accurate counter - we're LOGGING not EXECUTING here
-                results["calls_logged"] = results.get("calls_logged", 0) + 1
-                results["est_total_premium"] = (
-                    results.get("est_total_premium", 0) + signal.total_premium
-                )
-
-            logger.info(
-                "Gate 6 Summary: %d puts, %d calls LOGGED (execution in rule_one_trader.py). Est. Premium: $%.2f",
-                results.get("puts_logged", 0),
-                results.get("calls_logged", 0),
-                results.get("est_total_premium", 0),
-            )
-
-            self.telemetry.record(
-                event_type="gate.options",
-                ticker="PORTFOLIO",
-                status="completed",
-                payload=results,
-            )
-
-            return results
-
-        except Exception as e:
-            logger.error("Gate 6: Options strategy failed: %s", e)
-            self.telemetry.record(
-                event_type="gate.options",
-                ticker="PORTFOLIO",
-                status="error",
-                payload={"error": str(e)},
-            )
-            return {"action": "error", "error": str(e)}
+        return self.options_coordinator.run_options_strategy()
 
     def run_iv_options_execution(self) -> dict:
+        """Run IV options execution - delegates to OptionsStrategyCoordinator.
+
+        Jan 10, 2026: Extracted to OptionsStrategyCoordinator for cleaner architecture.
         """
-        Gate 7: IV-Aware Options Execution Pipeline
-
-        Dec 10, 2025: CEO mandate - no dead code! This integrates:
-        - OptionsIVSignalGenerator (924 lines) - generates IV-aware signals
-        - OptionsExecutor (925 lines) - executes covered calls, iron condors, spreads
-
-        Returns:
-            Dict with execution results including trades placed
-        """
-        logger.info("--- Gate 7: IV-Aware Options Execution Pipeline ---")
-
-        # Check if IV options enabled
-        iv_options_enabled = os.getenv("ENABLE_IV_OPTIONS", "true").lower() in (
-            "true",
-            "1",
-            "yes",
-        )
-
-        if not iv_options_enabled:
-            logger.info("Gate 7: IV Options disabled (set ENABLE_IV_OPTIONS=true to enable)")
-            return {"action": "disabled", "reason": "ENABLE_IV_OPTIONS not set"}
-
-        results: dict[str, Any] = {
-            "signals_generated": 0,
-            "trades_executed": 0,
-            "total_premium": 0.0,
-            "strategies": [],
-            "errors": [],
-        }
-
-        try:
-            # Import and initialize the signal generator
-            from src.signals.options_iv_signal_generator import OptionsIVSignalGenerator
-
-            signal_generator = OptionsIVSignalGenerator()
-            logger.info("Gate 7: OptionsIVSignalGenerator initialized")
-
-            # Import and initialize the executor
-            from src.trading.options_executor import OptionsExecutor
-
-            _options_executor = OptionsExecutor(paper=self.paper)  # noqa: F841 - initialized for validation
-            logger.info("Gate 7: OptionsExecutor initialized (paper=%s)", self.paper)
-
-            # Get account equity for position sizing
-            account_equity = self.executor.account_equity
-
-            # Generate signals for each ticker in our universe
-            options_tickers = os.getenv("OPTIONS_TICKERS", "SPY,QQQ,AAPL,MSFT").split(",")
-
-            # Initialize IV data provider for real IV metrics
-            iv_provider = IVDataProvider()
-
-            for ticker in options_tickers:
-                try:
-                    ticker = ticker.strip()
-
-                    # Get REAL IV data from provider (Alpaca/yfinance/VIX fallback)
-                    iv_metrics = iv_provider.get_current_iv(ticker)
-                    if iv_metrics:
-                        iv_rank = iv_metrics.iv_rank
-                        iv_percentile = iv_metrics.iv_percentile
-                    else:
-                        # Fallback to safe defaults if IV unavailable
-                        iv_rank = 50.0
-                        iv_percentile = 50.0
-                        logger.warning(f"IV data unavailable for {ticker}, using neutral defaults")
-
-                    # Get REAL stock price from Alpaca executor
-                    price_data = self.executor.get_current_price(ticker)
-                    stock_price = price_data.get("price", 100.0) if price_data else 100.0
-
-                    # Generate trade signal
-                    signal = signal_generator.generate_trade_signal(
-                        ticker=ticker,
-                        iv_rank=iv_rank,
-                        iv_percentile=iv_percentile,
-                        stock_price=stock_price,
-                        market_outlook="neutral",
-                        portfolio_value=account_equity,
-                    )
-
-                    if signal:
-                        results["signals_generated"] += 1
-                        logger.info(
-                            "Gate 7 SIGNAL: %s - %s (IV Rank: %.1f%%, IV Regime: %s)",
-                            signal.ticker,
-                            signal.strategy,
-                            signal.iv_rank,
-                            signal.iv_regime,
-                        )
-
-                        # Record telemetry
-                        self.telemetry.record(
-                            event_type="gate.iv_options",
-                            ticker=ticker,
-                            status="signal_generated",
-                            payload={
-                                "strategy": signal.strategy,
-                                "iv_rank": signal.iv_rank,
-                                "iv_regime": signal.iv_regime,
-                                "expected_profit": signal.expected_profit,
-                                "max_risk": signal.max_risk,
-                                "probability_profit": signal.probability_profit,
-                            },
-                        )
-
-                        results["strategies"].append(
-                            {
-                                "ticker": signal.ticker,
-                                "strategy": signal.strategy,
-                                "iv_regime": signal.iv_regime,
-                            }
-                        )
-
-                        # Execute based on strategy type
-                        # Note: Actual execution requires options approval on Alpaca
-                        # For now, log the signal and track it
-                        logger.info(
-                            "Gate 7: Signal logged for %s - %s "
-                            "(execution requires options approval)",
-                            signal.ticker,
-                            signal.strategy,
-                        )
-
-                except Exception as ticker_exc:
-                    logger.warning("Gate 7: Failed to process %s: %s", ticker, ticker_exc)
-                    results["errors"].append(f"{ticker}: {str(ticker_exc)}")
-                    continue
-
-            logger.info(
-                "Gate 7 Summary: %d signals generated, %d executed",
-                results["signals_generated"],
-                results["trades_executed"],
-            )
-
-            self.telemetry.record(
-                event_type="gate.iv_options",
-                ticker="PORTFOLIO",
-                status="completed",
-                payload=results,
-            )
-
-            return results
-
-        except ImportError as ie:
-            # Handle case where modules aren't available
-            logger.warning("Gate 7: Import failed - %s", ie)
-            return {"action": "import_error", "error": str(ie)}
-
-        except Exception as e:
-            logger.error("Gate 7: IV Options execution failed: %s", e)
-            self.telemetry.record(
-                event_type="gate.iv_options",
-                ticker="PORTFOLIO",
-                status="error",
-                payload={"error": str(e)},
-            )
-            return {"action": "error", "error": str(e)}
+        return self.options_coordinator.run_iv_options_execution()
 
     def _maybe_reallocate_for_weekend(self, session: dict | None = None) -> None:
+        """Reallocate for weekend - delegates to SessionManager.
+
+        Jan 10, 2026: Extracted to SessionManager for cleaner architecture.
         """
-        Placeholder to satisfy weekend dispatch tests.
-        Real implementation would rebalance exposures ahead of weekend sessions.
-        """
-        import os
-
-        # Respect flag
-        if os.getenv("WEEKEND_PROXY_REALLOCATE", "true").lower() not in {"true", "1", "yes"}:
-            return None
-
-        bucket = "weekend"
-        reallocated = None
-        if hasattr(self, "smart_dca"):
-            reallocated = self.smart_dca.reallocate_all_to_bucket(bucket)  # type: ignore[attr-defined]
-
-        if hasattr(self, "telemetry"):
-            self.telemetry.record(  # type: ignore[attr-defined]
-                event_type="weekend.reallocate",
-                payload={"bucket": bucket, "reallocated_budget": reallocated},
-            )
-
-        return None
+        self.session_manager.maybe_reallocate_for_weekend(self.smart_dca, self.telemetry)
