@@ -34,10 +34,10 @@ This checklist ensures critical tasks are reviewed at the start of each session.
 
 Track items that need follow-up but aren't blocking:
 
-1. **URGENT (Jan 8, 2026)**: Trigger `set-trailing-stops` workflow before 9:30 AM ET
-   - 5 positions with $1,187.60 unrealized gains currently UNPROTECTED
-   - Command: `gh workflow run claude-agent-utility.yml -f task=set-trailing-stops`
+1. **RESOLVED (Jan 10, 2026)**: Previous trailing stops item no longer applicable
+   - Paper account was reset Jan 7, 2026 to $5,000 with 0 positions
+   - Will set trailing stops on new positions after Monday's trade
 
 ---
 
-*Last updated: January 7, 2026*
+*Last updated: January 10, 2026*
