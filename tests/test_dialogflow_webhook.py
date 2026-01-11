@@ -333,9 +333,8 @@ class TestDialogflowWebhookEdgeCases:
             # Should return 200 with error message (Dialogflow expects 200)
             assert response.status_code == 200
             data = response.json()
-            # Check for error indication (case-insensitive)
-            error_text = data["fulfillmentResponse"]["messages"][0]["text"]["text"][0].lower()
-            assert "error" in error_text or "occurred" in error_text
+            # Security fix (Jan 10, 2026): Error message no longer exposes exception details
+            assert "error occurred" in data["fulfillmentResponse"]["messages"][0]["text"]["text"][0].lower()
 
 
 class TestTradeQueryDetection:
