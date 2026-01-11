@@ -70,6 +70,11 @@ jobs:
             gh pr close $pr --comment "Auto-closed: Stale weekend learning PR superseded by newer run" || echo "Could not close PR #$pr"
           done
 
+      - name: "Self-Healing: Cleanup old JSON files"
+        run: |
+          echo "🧹 Cleaning up old JSON files per retention policy..."
+          python3 scripts/cleanup_old_files.py || echo "⚠️ Cleanup script not found or failed"
+
   weekend-learning:
     needs: cleanup-stale-branches
     runs-on: ubuntu-latest
