@@ -6,10 +6,13 @@ ChromaDB was REMOVED on Jan 7, 2026 (CEO directive - unnecessary complexity).
 
 Created: Dec 31, 2025 (Fix for ll_054 - RAG not actually used)
 Updated: Jan 8, 2026 - ACTUALLY removed ChromaDB code (was still present despite docstring)
+Updated: Jan 11, 2026 - Added recency boost to prioritize recent lessons
 """
 
 import logging
+import re
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -32,12 +35,52 @@ class LessonResult:
     score: float = 0.0
 
 
+def _extract_date_from_filename(filename: str) -> datetime | None:
+    """
+    Extract date from lesson filename like 'll_130_investment_strategy_review_jan11.md'.
+
+    Returns datetime if found, None otherwise.
+    """
+    # Pattern: month + day (e.g., jan11, dec25, nov03)
+    month_map = {
+        "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+        "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+    }
+
+    match = re.search(r"(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d{1,2})", filename.lower())
+    if match:
+        month_str, day_str = match.groups()
+        month = month_map[month_str]
+        day = int(day_str)
+        # Assume current year (2026) for recent, previous year for older
+        year = datetime.now().year
+        try:
+            date = datetime(year, month, day)
+            # If date is in future, assume previous year
+            if date > datetime.now():
+                date = datetime(year - 1, month, day)
+            return date
+        except ValueError:
+            return None
+
+    # Pattern: YYYYMMDD (e.g., 20260106)
+    match = re.search(r"(\d{8})", filename)
+    if match:
+        try:
+            return datetime.strptime(match.group(1), "%Y%m%d")
+        except ValueError:
+            return None
+
+    return None
+
+
 class LessonsSearch:
     """
     Simple keyword search over lessons learned.
 
     Scans markdown files for matching terms. Fast and dependency-free.
     No external vector DB required - simple TF-IDF style matching.
+    Includes recency boost: recent lessons score higher (Jan 11, 2026 fix).
     """
 
     def __init__(self):
@@ -63,6 +106,7 @@ class LessonsSearch:
                     "severity": self._extract_severity(content),
                     "title": self._extract_title(content, lesson_file.stem),
                     "prevention": self._extract_prevention(content),
+                    "date": _extract_date_from_filename(lesson_file.stem),
                 }
                 self._lessons_cache.append(lesson)
             except Exception as e:
@@ -146,6 +190,18 @@ class LessonsSearch:
                 score *= 2
             elif lesson["severity"] == "HIGH":
                 score *= 1.5
+
+            # Recency boost: newer lessons score higher
+            # Lessons from last 7 days get 2x boost, 30 days get 1.5x boost
+            if lesson.get("date"):
+                days_old = (datetime.now() - lesson["date"]).days
+                if days_old <= 7:
+                    score *= 2.0  # Strong boost for very recent
+                elif days_old <= 30:
+                    score *= 1.5  # Moderate boost for recent
+                elif days_old <= 90:
+                    score *= 1.2  # Small boost for somewhat recent
+                # Older lessons get no boost (but no penalty either)
 
             if score > 0:
                 # Normalize score to 0-1 range
