@@ -216,7 +216,14 @@ def parse_readiness_context(query: str) -> dict:
 
 
 def is_trade_query(query: str) -> bool:
-    """Detect if query is about trades vs lessons."""
+    """
+    Detect if query is about trades vs lessons.
+
+    Uses word boundary matching to avoid false positives like
+    "learned" matching "earn" or "earned".
+    """
+    import re
+
     trade_keywords = [
         "trade",
         "trades",
@@ -254,7 +261,11 @@ def is_trade_query(query: str) -> bool:
         "order",
     ]
     query_lower = query.lower()
-    return any(keyword in query_lower for keyword in trade_keywords)
+    # Use word boundary matching to avoid "learned" matching "earn"
+    for keyword in trade_keywords:
+        if re.search(rf"\b{re.escape(keyword)}\b", query_lower):
+            return True
+    return False
 
 
 def assess_trading_readiness(
