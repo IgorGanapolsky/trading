@@ -120,16 +120,11 @@ def should_delete(filename: str) -> bool:
     filename_lower = filename.lower()
 
     # Check keep patterns first (whitelist)
-    for pattern in KEEP_PATTERNS:
-        if re.search(pattern, filename_lower):
-            return False
+    if any(re.search(pattern, filename_lower) for pattern in KEEP_PATTERNS):
+        return False
 
     # Check delete patterns (blacklist)
-    for pattern in DELETE_PATTERNS:
-        if re.search(pattern, filename_lower):
-            return True
-
-    return False
+    return any(re.search(pattern, filename_lower) for pattern in DELETE_PATTERNS)
 
 
 def delete_file(corpus_name: str, file_name: str) -> bool:
