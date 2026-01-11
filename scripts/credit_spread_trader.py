@@ -128,9 +128,8 @@ def find_put_credit_spread(symbol: str, current_price: float, client) -> Optiona
         sell_strike = round(current_price * 0.95, 0)  # ~30 delta
         buy_strike = sell_strike - CONFIG["max_spread_width"]  # Protection leg
 
-        # Calculate expiration target
-        target_exp = datetime.now() + timedelta(days=CONFIG["target_dte"])
-
+        # Note: target_dte config used for optimal expiration preference
+        # Actual filtering uses max_dte to get all available contracts
         request = GetOptionContractsRequest(
             underlying_symbols=[symbol],
             expiration_date_gte=datetime.now().strftime("%Y-%m-%d"),
