@@ -44,10 +44,16 @@ def find_stub_functions(file_path: Path) -> list[str]:
     # Skip functions named 'name' (common property pattern) and context engine stubs
     # Context engine stubs are placeholders for future implementation
     SKIP_NAMES = {
-        "name", "get_name", "__str__", "__repr__",
+        "name",
+        "get_name",
+        "__str__",
+        "__repr__",
         # Context engine stub methods (intentional placeholders)
-        "prune_memories", "get_agent_context", "store_memory",
-        "validate_context_flow", "send_context_message",
+        "prune_memories",
+        "get_agent_context",
+        "store_memory",
+        "validate_context_flow",
+        "send_context_message",
     }
 
     for node in ast.walk(tree):
