@@ -134,7 +134,8 @@ jobs:
               echo "Copied (has frontmatter): $filename"
             else
               # No frontmatter - add it
-              title=$(echo "$first_line" | sed 's/^# //')
+              # Strip quotes from title to avoid YAML parsing issues
+              title=$(echo "$first_line" | sed 's/^# //' | tr -d '"')
 
               # Extract date from filename (e.g., ll_056_xxx_dec22.md -> 2025-12-22)
               if [[ "$filename" =~ (jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)([0-9]+) ]]; then

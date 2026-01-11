@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Lesson Learned #079: "Tomorrow" Hallucination Incident (Jan 5, 2026)"
+title: "Lesson Learned #079: Tomorrow Hallucination Incident (Jan 5, 2026)"
 date: 2026-01-05
 ---
 
