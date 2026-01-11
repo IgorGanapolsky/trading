@@ -143,15 +143,15 @@ class LessonsLearnedRAG:
             if lesson["severity"] == "CRITICAL":
                 score *= 2
 
-            # RECENCY BOOST: Prioritize 2026 content over old incidents
+            # RECENCY BOOST: Prioritize recent content (but don't PENALIZE old lessons)
+            # CRITICAL lessons from any date should still be findable
             if "jan11" in lesson_id or "jan10" in lesson_id or "jan09" in lesson_id:
-                score *= 3  # Strong boost for last 3 days
-            elif "jan" in lesson_id and "2026" in lesson_id:
-                score *= 2  # Moderate boost for January 2026
+                score *= 2.0  # Boost recent lessons
+            elif "jan" in lesson_id:
+                score *= 1.5  # Moderate boost for January
             elif "trading_rules" in lesson_id or "2026" in lesson_id:
-                score *= 4  # Highest boost for actionable rules
-            elif "dec" in lesson_id and ("2025" in lesson_id or "dec11" in lesson_id):
-                score *= 0.3  # Deprioritize old Dec 2025 incidents
+                score *= 2.0  # Boost actionable rules
+            # Note: Old lessons are NOT penalized - we need to find CRITICAL lessons from any date
 
             if score > 0:
                 # Normalize score to 0-1 range for consistency with ChromaDB

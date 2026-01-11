@@ -30,13 +30,15 @@ class TestRuleOneTraderConfig:
         for key in required_keys:
             assert key in CONFIG, f"Missing config key: {key}"
 
-    def test_watchlist_has_quality_stocks(self):
-        """Watchlist should contain quality stocks with moats."""
+    def test_watchlist_has_affordable_stocks(self):
+        """Watchlist should contain affordable stocks for small accounts."""
         from scripts.rule_one_trader import CONFIG
 
         assert len(CONFIG["watchlist"]) >= 3
-        # Should include well-known moat stocks
-        assert any(s in CONFIG["watchlist"] for s in ["AAPL", "MSFT", "V", "MA", "COST"])
+        # Should include stocks with affordable option strikes (<= $50)
+        # Updated Jan 2026: Focus on low-strike stocks for $5K account
+        affordable_stocks = ["F", "SOFI", "T", "INTC", "BAC", "VZ"]
+        assert any(s in CONFIG["watchlist"] for s in affordable_stocks)
 
     def test_north_star_target_is_100(self):
         """North Star daily target should be $100."""

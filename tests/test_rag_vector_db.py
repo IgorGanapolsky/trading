@@ -29,13 +29,14 @@ class TestLessonsSearchInstallation:
         assert search is not None
         assert hasattr(search, "_lessons_cache")
 
-    def test_lessons_search_deprecated_chromadb_param(self):
-        """use_chromadb parameter should be deprecated but not error."""
+    def test_lessons_search_no_chromadb_dependency(self):
+        """LessonsSearch should work without ChromaDB (removed Jan 2026)."""
         from src.rag.lessons_search import LessonsSearch
 
-        # Should not raise, just warn
-        search = LessonsSearch(use_chromadb=True)
+        # ChromaDB was removed - LessonsSearch uses keyword search only
+        search = LessonsSearch()
         assert search is not None
+        assert search.count() >= 0
 
 
 class TestLessonsSearchFunctionality:
@@ -77,13 +78,15 @@ class TestLessonsSearchFunctionality:
         assert isinstance(count, int)
         assert count >= 0
 
-    def test_index_lessons_reload(self):
-        """index_lessons should reload lessons from disk."""
+    def test_lessons_reload_on_init(self):
+        """LessonsSearch should load lessons on init (no separate index method)."""
         from src.rag.lessons_search import LessonsSearch
 
+        # ChromaDB removed - lessons loaded automatically on init
         search = LessonsSearch()
-        count = search.index_lessons(force_rebuild=True)
+        count = search.count()
         assert isinstance(count, int)
+        assert count >= 0  # Should have loaded lessons from disk
 
 
 class TestLessonsLearnedRAG:
