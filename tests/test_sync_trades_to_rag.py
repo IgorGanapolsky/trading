@@ -146,14 +146,7 @@ class TestSyncFunctions:
             # In sandbox/CI, this will return False (not available)
             assert result in [True, False]
 
-    def test_sync_to_chromadb_not_available(self):
-        """Test ChromaDB sync handles import error gracefully."""
-        from scripts.sync_trades_to_rag import sync_to_chromadb
-
-        # In sandbox, ChromaDB is not installed, should return False
-        result = sync_to_chromadb([{"symbol": "SPY"}])
-        # Either works (if installed) or gracefully fails
-        assert result in [True, False]
+    # Note: sync_to_chromadb test removed - ChromaDB removed Jan 7, 2026
 
 
 if __name__ == "__main__":
