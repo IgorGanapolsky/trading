@@ -5,6 +5,7 @@ date: 2026-01-03
 category: infrastructure
 severity: critical
 ---
+layout: post
 
 ## Summary
 
