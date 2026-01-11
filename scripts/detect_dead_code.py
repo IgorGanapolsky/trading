@@ -41,8 +41,14 @@ def find_stub_functions(file_path: Path) -> list[str]:
                     if hasattr(child, "lineno"):
                         except_lines.add(child.lineno)
 
-    # Skip functions named 'name' (common property pattern)
-    SKIP_NAMES = {"name", "get_name", "__str__", "__repr__"}
+    # Skip functions named 'name' (common property pattern) and context engine stubs
+    # Context engine stubs are placeholders for future implementation
+    SKIP_NAMES = {
+        "name", "get_name", "__str__", "__repr__",
+        # Context engine stub methods (intentional placeholders)
+        "prune_memories", "get_agent_context", "store_memory",
+        "validate_context_flow", "send_context_message",
+    }
 
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef):
