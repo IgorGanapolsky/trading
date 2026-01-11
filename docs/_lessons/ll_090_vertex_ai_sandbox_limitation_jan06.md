@@ -1,11 +1,5 @@
 ---
 layout: post
-title: "---"
-date: 2026-01-06
----
-
----
-layout: post
 title: "Lesson Learned #090: Vertex AI RAG Works in CI Only (Sandbox SSL Limitation)"
 date: 2026-01-06
 ---

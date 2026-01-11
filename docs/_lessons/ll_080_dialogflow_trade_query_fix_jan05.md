@@ -1,11 +1,5 @@
 ---
 layout: post
-title: "---"
-date: 2026-01-05
----
-
----
-layout: post
 title: "Lesson Learned #080: Dialogflow Trade Query Detection Fix"
 date: 2026-01-05
 ---

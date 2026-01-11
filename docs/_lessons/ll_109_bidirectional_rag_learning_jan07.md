@@ -1,11 +1,5 @@
 ---
 layout: post
-title: "---"
-date: 2026-01-07
----
-
----
-layout: post
 title: "Lesson Learned #109: Bidirectional Vertex AI RAG Learning System"
 date: 2026-01-07
 ---

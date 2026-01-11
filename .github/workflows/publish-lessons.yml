@@ -118,47 +118,59 @@ jobs:
           mkdir -p docs/_lessons
           for file in rag_knowledge/lessons_learned/*.md; do
             filename=$(basename "$file")
-            title=$(head -1 "$file" | sed 's/^# //')
+            first_line=$(head -1 "$file")
 
-            # Extract date from filename (e.g., ll_056_xxx_dec22.md -> 2025-12-22)
-            # Supports: jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec
-            if [[ "$filename" =~ (jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)([0-9]+) ]]; then
-              month="${BASH_REMATCH[1]}"
-              day="${BASH_REMATCH[2]}"
-              # Map month abbreviations to numbers
-              case "$month" in
-                jan) month_num="01"; year="2026" ;;
-                feb) month_num="02"; year="2026" ;;
-                mar) month_num="03"; year="2026" ;;
-                apr) month_num="04"; year="2026" ;;
-                may) month_num="05"; year="2026" ;;
-                jun) month_num="06"; year="2026" ;;
-                jul) month_num="07"; year="2026" ;;
-                aug) month_num="08"; year="2026" ;;
-                sep) month_num="09"; year="2026" ;;
-                oct) month_num="10"; year="2025" ;;
-                nov) month_num="11"; year="2025" ;;
-                dec) month_num="12"; year="2025" ;;
-              esac
-              # Pad day with leading zero if needed (use 10# to force decimal interpretation)
-              day=$(printf "%02d" "$((10#$day))")
-              date="${year}-${month_num}-${day}"
+            # Check if file already has Jekyll frontmatter (starts with ---)
+            if [[ "$first_line" == "---" ]]; then
+              # File already has frontmatter - just copy it, adding layout if missing
+              if grep -q "^layout:" "$file"; then
+                # Has layout, copy as-is
+                cp "$file" "docs/_lessons/$filename"
+              else
+                # Add layout to existing frontmatter
+                sed '1,/^---$/{ /^---$/a\layout: post
+                }' "$file" > "docs/_lessons/$filename"
+              fi
+              echo "Copied (has frontmatter): $filename"
             else
-              date=$(date +%Y-%m-%d)
-            fi
+              # No frontmatter - add it
+              title=$(echo "$first_line" | sed 's/^# //')
 
-            # Add Jekyll front matter with date
-            # Use single quotes and escape special chars in title to avoid shell expansion
-            safe_title=$(echo "$title" | sed "s/'/'\\\\''/g")
-            {
-              echo "---"
-              echo "layout: post"
-              printf 'title: "%s"\n' "$title"
-              echo "date: $date"
-              echo "---"
-              echo ""
-              cat "$file"
-            } > "docs/_lessons/$filename"
+              # Extract date from filename (e.g., ll_056_xxx_dec22.md -> 2025-12-22)
+              if [[ "$filename" =~ (jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)([0-9]+) ]]; then
+                month="${BASH_REMATCH[1]}"
+                day="${BASH_REMATCH[2]}"
+                case "$month" in
+                  jan) month_num="01"; year="2026" ;;
+                  feb) month_num="02"; year="2026" ;;
+                  mar) month_num="03"; year="2026" ;;
+                  apr) month_num="04"; year="2026" ;;
+                  may) month_num="05"; year="2026" ;;
+                  jun) month_num="06"; year="2026" ;;
+                  jul) month_num="07"; year="2026" ;;
+                  aug) month_num="08"; year="2026" ;;
+                  sep) month_num="09"; year="2026" ;;
+                  oct) month_num="10"; year="2025" ;;
+                  nov) month_num="11"; year="2025" ;;
+                  dec) month_num="12"; year="2025" ;;
+                esac
+                day=$(printf "%02d" "$((10#$day))")
+                date="${year}-${month_num}-${day}"
+              else
+                date=$(date +%Y-%m-%d)
+              fi
+
+              {
+                echo "---"
+                echo "layout: post"
+                printf 'title: "%s"\n' "$title"
+                echo "date: $date"
+                echo "---"
+                echo ""
+                cat "$file"
+              } > "docs/_lessons/$filename"
+              echo "Added frontmatter: $filename"
+            fi
           done
 
       - name: Create PR for docs updates
