@@ -74,9 +74,9 @@ class TestRAGLessonsSearch:
 
         # All should be CRITICAL severity
         for lesson in critical:
-            assert lesson["severity"] == "CRITICAL", (
-                f"Lesson {lesson['id']} returned by get_critical_lessons() "
-                f"has severity {lesson['severity']}, expected CRITICAL"
+            assert lesson.severity == "CRITICAL", (
+                f"Lesson {lesson.id} returned by get_critical_lessons() "
+                f"has severity {lesson.severity}, expected CRITICAL"
             )
 
     def test_search_finds_relevant_content(self):

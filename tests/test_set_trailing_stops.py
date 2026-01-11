@@ -62,7 +62,7 @@ def test_main_no_credentials():
         "PAPER_TRADING": "true",
     },
 )
-@patch("set_trailing_stops.TradingClient")
+@patch("alpaca.trading.client.TradingClient")
 def test_main_no_positions(mock_client_class):
     """Test handling when no positions exist."""
     mock_client = Mock()
@@ -83,7 +83,7 @@ def test_main_no_positions(mock_client_class):
         "PAPER_TRADING": "true",
     },
 )
-@patch("set_trailing_stops.TradingClient")
+@patch("alpaca.trading.client.TradingClient")
 def test_main_dry_run_with_positions(mock_client_class):
     """Test dry run with mock positions."""
     # Create mock position
@@ -113,7 +113,7 @@ def test_main_dry_run_with_positions(mock_client_class):
         "PAPER_TRADING": "true",
     },
 )
-@patch("set_trailing_stops.TradingClient")
+@patch("alpaca.trading.client.TradingClient")
 def test_short_position_handling(mock_client_class):
     """Test that short positions use BUY to close."""
     # Create mock short position (sold option)
