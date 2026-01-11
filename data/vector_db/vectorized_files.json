@@ -1360,7 +1360,74 @@
       },
       "indexed_at": "2026-01-10T13:22:03.492869",
       "size": 2060
+    },
+    "rag_knowledge/lessons_learned/ll_129_ceo_trust_audit_answers_jan10.md": {
+      "hash": "057b54a0dbc8e948ec2fbc6e50f88ca7",
+      "metadata": {
+        "source": "ll_129_ceo_trust_audit_answers_jan10",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1",
+          "meaning"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_129_ceo_trust_audit_answers_jan10.md"
+      },
+      "indexed_at": "2026-01-11T00:01:17.547670",
+      "size": 2824
+    },
+    "rag_knowledge/lessons_learned/ll_128_trust_audit_jan10_comprehensive.md": {
+      "hash": "1cf36bb77e532514d61ce8aa6c638370",
+      "metadata": {
+        "source": "ll_128_trust_audit_jan10_comprehensive",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "meaning"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_128_trust_audit_jan10_comprehensive.md"
+      },
+      "indexed_at": "2026-01-11T00:01:17.548426",
+      "size": 2338
+    },
+    "rag_knowledge/lessons_learned/ll_129_small_account_options_strategies_jan10.md": {
+      "hash": "956ff1f721823513a5e84b681ea3f7f7",
+      "metadata": {
+        "source": "ll_129_small_account_options_strategies_jan10",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_129_small_account_options_strategies_jan10.md"
+      },
+      "indexed_at": "2026-01-11T00:01:17.551091",
+      "size": 2886
+    },
+    "rag_knowledge/lessons_learned/ll_129_execute_trades_not_analyze_jan10.md": {
+      "hash": "a5dca6c6b33f522bc33595d6fe9928be",
+      "metadata": {
+        "source": "ll_129_execute_trades_not_analyze_jan10",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_129_execute_trades_not_analyze_jan10.md"
+      },
+      "indexed_at": "2026-01-11T00:01:17.551877",
+      "size": 1778
+    },
+    "rag_knowledge/lessons_learned/ll_129_backtest_eval_bugs_jan10.md": {
+      "hash": "98fe178772645264f99c505f11c33660",
+      "metadata": {
+        "source": "ll_129_backtest_eval_bugs_jan10",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_129_backtest_eval_bugs_jan10.md"
+      },
+      "indexed_at": "2026-01-11T00:01:17.552505",
+      "size": 2885
     }
   },
-  "last_updated": "2026-01-10T13:22:03.494022"
+  "last_updated": "2026-01-11T00:01:17.553866"
 }
