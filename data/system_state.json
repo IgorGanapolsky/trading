@@ -36,36 +36,39 @@
       "target_explanation": "Target scales with capital: $5/day at $200, $100/day at $2000",
       "capital_tiers": [
         {
-          "capital": 200,
-          "daily_target": 0,
-          "strategy": "ACCUMULATION ONLY - Cannot trade CSPs (need $500+)",
-          "return_pct": 0,
-          "note": "Buy fractional shares only"
+          "capital": 100,
+          "daily_target": 0.5,
+          "strategy": "CREDIT SPREADS - $5 wide put spreads on F, SOFI",
+          "return_pct": 0.5,
+          "note": "2026 best practice: Credit spreads work with $100+ (vs $5000 for wheel)",
+          "rules": ["50/25 delta rule", "33% premium rule", "50% profit target", "100% stop loss"]
         },
         {
           "capital": 500,
-          "daily_target": 1.5,
-          "strategy": "Single CSP on F or SOFI ($5 strike max)",
-          "return_pct": 0.3
+          "daily_target": 2.5,
+          "strategy": "CREDIT SPREADS + First CSP on F/SOFI ($5 strike)",
+          "return_pct": 0.5,
+          "note": "Mix credit spreads and CSPs for diversification"
         },
         {
           "capital": 1000,
-          "daily_target": 3,
-          "strategy": "CSPs on INTC, BAC ($10 strike max)",
-          "return_pct": 0.3
+          "daily_target": 5,
+          "strategy": "CSPs on F, SOFI, INTC, BAC + credit spreads",
+          "return_pct": 0.5,
+          "note": "Wheel strategy now viable on low-price stocks"
         },
         {
           "capital": 2000,
-          "daily_target": 6,
-          "strategy": "Multiple CSPs on BAC, T, VZ ($20 strike max)",
-          "return_pct": 0.3
+          "daily_target": 10,
+          "strategy": "Full wheel on BAC, T, VZ + SPX credit spreads",
+          "return_pct": 0.5
         },
         {
           "capital": 5000,
-          "daily_target": 15,
-          "strategy": "Multiple CSPs on quality stocks ($50 strike max)",
-          "return_pct": 0.3,
-          "note": "$100/day requires $50,000+ capital realistically"
+          "daily_target": 25,
+          "strategy": "Multiple CSPs on quality stocks + SPX spreads",
+          "return_pct": 0.5,
+          "note": "$100/day requires ~$20,000 with credit spreads strategy"
         }
       ],
       "rule_1_reminder": "Don't lose money - 50% daily returns are IMPOSSIBLE without extreme risk"
