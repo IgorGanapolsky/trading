@@ -191,9 +191,11 @@ def validate_spread(spread: dict, min_credit: float = 0.30) -> bool:
     if width <= 0:
         return False
 
+    # Use passed credit if available, otherwise estimate
     # In real implementation, would get actual bid/ask prices
-    # For now, estimate ~15-20% of width for 30 delta
-    estimated_credit = width * 0.18  # Conservative estimate
+    estimated_credit = spread.get("estimated_credit")
+    if estimated_credit is None:
+        estimated_credit = width * 0.18  # Conservative estimate for 30 delta
 
     # Check 33% rule
     min_required = width * CONFIG["min_premium_pct"]
