@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Lesson: CI Test Failures Blocking Trading Execution"
-date: 2026-01-10
+date: 2026-01-11
 ---
 
 # Lesson: CI Test Failures Blocking Trading Execution

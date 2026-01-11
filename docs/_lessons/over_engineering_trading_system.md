@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: Over-Engineering Trading System"
-date: 2026-01-10
+date: 2026-01-11
 ---
 
 # Lesson Learned: Over-Engineering Trading System

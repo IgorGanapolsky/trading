@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Lesson Learned: FACTS Benchmark & 70% Factuality Ceiling"
-date: 2026-01-10
+date: 2026-01-11
 ---
 
 # Lesson Learned: FACTS Benchmark & 70% Factuality Ceiling

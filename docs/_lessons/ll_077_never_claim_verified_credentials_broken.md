@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "LL-077: Never Claim Verified Credentials Are Broken"
-date: 2026-01-10
+date: 2026-01-11
 ---
 
 # LL-077: Never Claim Verified Credentials Are Broken

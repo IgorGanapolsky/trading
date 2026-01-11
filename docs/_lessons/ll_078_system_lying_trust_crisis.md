@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "LL-078: System Lying / Trust Crisis - Verify All Claims"
-date: 2026-01-10
+date: 2026-01-11
 ---
 
 # LL-078: System Lying / Trust Crisis - Verify All Claims

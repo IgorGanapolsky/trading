@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Gate momentum rejection spike detected"
-date: 2026-01-10
+date: 2026-01-11
 ---
 
 # Gate momentum rejection spike detected
