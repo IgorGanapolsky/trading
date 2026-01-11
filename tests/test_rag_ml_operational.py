@@ -129,12 +129,11 @@ class TestRAGOperational:
             "trading without account equity buying power", severity_filter="CRITICAL"
         )
 
-        # Note: ChromaDB chunk indexing may not preserve severity correctly
+        # Note: Keyword search with severity_filter may not always find results
         # so we validate that CRITICAL lessons exist (via get_critical_lessons)
-        # rather than relying on the severity_filter in queries
         if len(results) == 0:
-            # ChromaDB severity filter may not work - but we verified CRITICAL lessons exist above
-            print("⚠️ Query severity filter returned nothing - ChromaDB index may need refresh")
+            # Severity filter may not match - but we verified CRITICAL lessons exist above
+            print("⚠️ Query severity filter returned nothing - keyword search limitation")
             print(f"✅ RAG blocks validated via {len(critical_lessons)} CRITICAL lessons")
             return
 
@@ -438,11 +437,9 @@ class TestRAGTradeIntegration:
 
         # At minimum, RAG should be able to find SOME results for trading queries
         # If RAG has lessons but returns nothing, that's a problem
-        # But skip if vector DB isn't set up (CI environment)
-        from pathlib import Path
-
-        if not Path("data/vector_db/chroma.sqlite3").exists():
-            pytest.skip("Vector DB not built - run vectorize_rag_knowledge.py")
+        # Note: ChromaDB was removed Jan 7, 2026 - we use keyword search now
+        if len(rag.lessons) == 0:
+            pytest.skip("No lessons loaded - check rag_knowledge/lessons_learned/")
 
         print(f"✅ RAG operational with {len(critical_lessons)} CRITICAL lessons")
 
@@ -460,12 +457,12 @@ def test_summary():
     print("\n✅ All tests passed - RAG and ML systems are operational!")
     print("\nVerified:")
     print("  ✓ RAG lessons loaded (50+ lessons)")
-    print("  ✓ Semantic search finds CRITICAL lessons (ll_051)")
+    print("  ✓ Keyword search finds CRITICAL lessons (ll_051)")
     print("  ✓ RAG blocks on CRITICAL lessons")
     print("  ✓ Sentiment enabled by default")
     print("  ✓ RL filter enabled by default")
     print("  ✓ Pre-session RAG blocks on CRITICAL")
-    print("  ✓ Vector database current (100+ files, <7 days old)")
+    print("  ✓ Lessons directory current (100+ files)")
     print("\nTODO (documented via skipped tests):")
     print("  • MomentumAgent RAG integration")
     print("  • Options scripts RAG checks")

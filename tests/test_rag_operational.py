@@ -4,6 +4,7 @@ RAG Operational Tests - CI verification that RAG is working.
 These tests MUST pass for any PR to be merged. No more silent RAG failures.
 
 Created: Jan 1, 2026
+Updated: Jan 11, 2026 - Removed ChromaDB tests (ChromaDB removed Jan 7, 2026 CEO directive)
 Reason: LL-074 - RAG was broken for 18 days without detection
 """
 
@@ -15,97 +16,12 @@ import pytest
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Check if chromadb is available
-try:
-    import chromadb  # noqa: F401
 
-    CHROMADB_AVAILABLE = True
-except ImportError:
-    CHROMADB_AVAILABLE = False
+class TestRAGLessonsSearch:
+    """Test LessonsSearch keyword-based RAG (ChromaDB was removed Jan 7, 2026)."""
 
-
-@pytest.mark.skipif(not CHROMADB_AVAILABLE, reason="chromadb not installed")
-class TestRAGOperational:
-    """Critical RAG operational tests - these block PRs if they fail."""
-
-    def test_chromadb_is_installed(self):
-        """Verify chromadb package is installed."""
-        try:
-            import chromadb
-
-            assert chromadb.__version__, "chromadb version should be set"
-        except ImportError:
-            pytest.fail(
-                "chromadb is NOT INSTALLED. Run: pip install chromadb\n"
-                "This caused LL-074 where RAG silently fell back to useless keyword matching."
-            )
-
-    def test_vector_db_has_documents(self):
-        """Verify vector database has documents indexed."""
-        import chromadb
-        from chromadb.config import Settings
-
-        db_path = Path("data/vector_db")
-        if not db_path.exists():
-            pytest.skip("Vector DB directory not present (may be CI without data)")
-
-        client = chromadb.PersistentClient(
-            path=str(db_path),
-            settings=Settings(anonymized_telemetry=False),
-        )
-
-        collection = client.get_or_create_collection(name="phil_town_rag")
-        count = collection.count()
-
-        # Skip in CI when vector DB exists but is empty (not vectorized)
-        if count == 0:
-            pytest.skip("Vector DB is empty (CI environment without vectorized data)")
-
-        # Should have at least 100 documents (we have 700+)
-        assert count >= 100, (
-            f"Vector DB only has {count} documents (expected 100+). "
-            f"This may indicate incomplete vectorization."
-        )
-
-    def test_semantic_search_returns_results(self):
-        """Verify semantic search actually works."""
-        import chromadb
-        from chromadb.config import Settings
-
-        db_path = Path("data/vector_db")
-        if not db_path.exists():
-            pytest.skip("Vector DB directory not present")
-
-        client = chromadb.PersistentClient(
-            path=str(db_path),
-            settings=Settings(anonymized_telemetry=False),
-        )
-
-        collection = client.get_or_create_collection(name="phil_town_rag")
-        if collection.count() == 0:
-            pytest.skip("Vector DB is empty")
-
-        # Test query
-        results = collection.query(
-            query_texts=["losing money protect capital"],
-            n_results=5,
-            include=["documents", "distances"],
-        )
-
-        assert results is not None, "Query returned None"
-        assert results.get("ids"), "Query returned no IDs"
-        assert len(results["ids"][0]) > 0, "Query returned empty results"
-
-        # Verify results are relevant (low distance = high similarity)
-        distances = results.get("distances", [[]])[0]
-        assert len(distances) > 0, "No distance scores returned"
-        assert min(distances) < 2.0, (
-            f"Results have high distance ({min(distances):.2f}), "
-            f"indicating poor semantic match. Embeddings may be broken."
-        )
-
-    def test_lessons_search_connects_to_correct_collection(self):
-        """Verify LessonsSearch uses the same collection as vectorize script."""
+    def test_lessons_search_loads_lessons(self):
+        """Verify LessonsSearch loads lessons from disk."""
         try:
             from src.rag.lessons_search import LessonsSearch
         except ImportError:
@@ -113,30 +29,21 @@ class TestRAGOperational:
 
         ls = LessonsSearch()
 
-        # Should connect to phil_town_rag, not lessons_learned
-        assert ls.collection is not None, "LessonsSearch not connected to ChromaDB"
+        # Should have loaded lessons
+        count = ls.count()
+        assert count > 0, "LessonsSearch failed to load any lessons"
+        assert count >= 50, f"Only {count} lessons loaded - expected at least 50"
 
-        # The collection should have documents
-        doc_count = ls.collection.count()
-        if doc_count == 0:
-            pytest.skip("Collection is empty in CI environment")
-
-        # Critical: should have same count as what vectorize script created
-        assert doc_count > 100, (
-            f"LessonsSearch collection only has {doc_count} docs. "
-            f"May be connected to wrong collection (was: lessons_learned, should be: phil_town_rag)"
-        )
-
-    def test_lessons_search_returns_semantic_results(self):
-        """Verify LessonsSearch.search() returns semantically relevant results."""
+    def test_lessons_search_returns_results(self):
+        """Verify LessonsSearch.search() returns results."""
         try:
             from src.rag.lessons_search import LessonsSearch
         except ImportError:
             pytest.skip("LessonsSearch not available")
 
         ls = LessonsSearch()
-        if ls.collection is None or ls.collection.count() == 0:
-            pytest.skip("No vector data available")
+        if ls.count() == 0:
+            pytest.skip("No lessons loaded")
 
         # Query that should find blind trading lesson
         results = ls.search("blind trading catastrophe account data", top_k=5)
@@ -147,34 +54,49 @@ class TestRAGOperational:
         lesson, score = results[0]
         assert hasattr(lesson, "id"), "Result missing 'id' attribute"
         assert hasattr(lesson, "severity"), "Result missing 'severity' attribute"
-        assert hasattr(lesson, "score"), "Result missing 'score' attribute"
-
-        # Score should be reasonable
         assert score >= 0, f"Score should be non-negative, got {score}"
 
-    def test_semantic_vs_keyword_differentiation(self):
-        """
-        Verify semantic search finds relevant content that keyword search would miss.
-
-        This is the CRITICAL test - if this fails, RAG is doing useless keyword matching.
-        """
+    def test_lessons_search_finds_critical_lessons(self):
+        """Verify search can find CRITICAL severity lessons."""
         try:
             from src.rag.lessons_search import LessonsSearch
         except ImportError:
             pytest.skip("LessonsSearch not available")
 
         ls = LessonsSearch()
-        if ls.collection is None or ls.collection.count() == 0:
-            pytest.skip("No vector data available")
+        if ls.count() == 0:
+            pytest.skip("No lessons loaded")
 
-        # Query using synonyms/related terms that wouldn't match exact keywords
-        # "capital protection" should find lessons about "losing money", "don't lose"
-        results = ls.search("capital protection investment safety", top_k=10)
+        # Get critical lessons
+        critical = ls.get_critical_lessons()
+
+        assert len(critical) > 0, "No CRITICAL lessons found - system has no safety guardrails"
+
+        # All should be CRITICAL severity
+        for lesson in critical:
+            assert lesson["severity"] == "CRITICAL", (
+                f"Lesson {lesson['id']} returned by get_critical_lessons() "
+                f"has severity {lesson['severity']}, expected CRITICAL"
+            )
+
+    def test_search_finds_relevant_content(self):
+        """Verify search finds relevant content based on keywords."""
+        try:
+            from src.rag.lessons_search import LessonsSearch
+        except ImportError:
+            pytest.skip("LessonsSearch not available")
+
+        ls = LessonsSearch()
+        if ls.count() == 0:
+            pytest.skip("No lessons loaded")
+
+        # Query about capital protection
+        results = ls.search("capital protection losing money", top_k=10)
 
         if len(results) == 0:
             pytest.fail(
-                "Semantic search returned no results for 'capital protection'. "
-                "This indicates embeddings are not working properly."
+                "Search returned no results for 'capital protection losing money'. "
+                "This indicates keyword search is not working."
             )
 
         # At least one result should be about money/loss/protection
@@ -191,9 +113,8 @@ class TestRAGOperational:
                 break
 
         assert found_relevant, (
-            "Semantic search didn't find relevant results for 'capital protection'. "
-            "Results should include lessons about losing money or capital preservation. "
-            "This suggests RAG is doing keyword matching instead of semantic search."
+            "Search didn't find relevant results for 'capital protection'. "
+            "Results should include lessons about losing money or capital preservation."
         )
 
 
