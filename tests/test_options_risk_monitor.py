@@ -344,7 +344,8 @@ class TestLongOptionStopLoss:
 
         assert len(exits) == 1
         assert exits[0]["action"] == "CLOSE"
-        assert "50%" in exits[0]["reason"]
+        # Accept both "50%" and "50.0%" formats
+        assert "50%" in exits[0]["reason"] or "50.0%" in exits[0]["reason"]
 
 
 # =============================================================================

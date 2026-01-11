@@ -1427,7 +1427,19 @@
       },
       "indexed_at": "2026-01-11T00:01:17.552505",
       "size": 2885
+    },
+    "rag_knowledge/lessons_learned/ll_129_wheel_strategy_criticism_research_jan10.md": {
+      "hash": "c4611969cc5d5759210e7399343f49fa",
+      "metadata": {
+        "source": "ll_129_wheel_strategy_criticism_research_jan10",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_129_wheel_strategy_criticism_research_jan10.md"
+      },
+      "indexed_at": "2026-01-11T13:21:47.237569",
+      "size": 3888
     }
   },
-  "last_updated": "2026-01-11T00:01:17.553866"
+  "last_updated": "2026-01-11T13:21:47.243268"
 }
