@@ -1,12 +1,15 @@
 ---
-layout: lesson
-title: "Lesson Learned #075: API Key Validation Before Trading"
+layout: post
+title: "---"
+date: 2026-01-03
+---
+
+---
+title: "API Key Validation Before Trading"
 date: 2026-01-03
 category: infrastructure
 severity: critical
 ---
-
-# Lesson Learned #075: API Key Validation Before Trading
 
 ## Summary
 
@@ -38,6 +41,6 @@ curl https://paper-api.alpaca.markets/v2/account → Access denied
 
 ## Action Items
 
-- [x] Add API key validation to SessionStart hook
-- [x] Create GitHub Action to test API connectivity daily
-- [x] Store key validation timestamp in system_state.json
+- [ ] Add API key validation to SessionStart hook
+- [ ] Create GitHub Action to test API connectivity daily
+- [ ] Store key validation timestamp in system_state.json

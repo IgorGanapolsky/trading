@@ -1,9 +1,13 @@
 ---
-layout: lesson
+layout: post
+title: "---"
+date: 2026-01-06
+---
+
+---
+layout: post
 title: "Lesson Learned #090: Vertex AI RAG Works in CI Only (Sandbox SSL Limitation)"
 date: 2026-01-06
-category: Infrastructure
-severity: MEDIUM
 ---
 
 # Lesson Learned #090: Vertex AI RAG Works in CI Only
@@ -41,13 +45,13 @@ The sandboxed environment routes all HTTPS traffic through an intercepting proxy
 
 ## Trade Recording Architecture
 
-| Environment | Local JSON | Vertex AI RAG | Status |
-|-------------|------------|---------------|--------|
-| Local Sandbox | Works | Blocked | Partial |
-| GitHub Actions | Works | Works | Full |
+| Environment | ChromaDB | Vertex AI RAG | Status |
+|-------------|----------|---------------|--------|
+| Local Sandbox | ✅ Works | ❌ Blocked | Partial |
+| GitHub Actions | ✅ Works | ✅ Works | Full |
 
 ## Lesson
 
 - Accept that Vertex AI is CI-only for now
-- Local JSON provides primary trade recording
+- ChromaDB provides local RAG functionality
 - All production trades go through CI workflows which have full Vertex AI access

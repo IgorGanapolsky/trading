@@ -1,9 +1,13 @@
 ---
-layout: lesson
+layout: post
+title: "---"
+date: 2026-01-05
+---
+
+---
+layout: post
 title: "Lesson Learned #080: Dialogflow Trade Query Detection Fix"
 date: 2026-01-05
-category: System Integration
-severity: HIGH
 ---
 
 # Lesson Learned #080: Dialogflow Trade Query Detection Fix
@@ -32,7 +36,19 @@ Dialogflow responded with lessons learned (ll_023, ll_074) about past incidents 
 
 2. Added `get_current_portfolio_status()` function that reads from `system_state.json`
 
-3. When trade query detected but no trades found → return formatted portfolio status
+3. When trade query detected but no trades found → return formatted portfolio status:
+   ```
+   📊 Current Portfolio Status (Day 50/90)
+   
+   **Live Account:**
+   - Equity: $30.00
+   - Total P/L: $0.00 (0.00%)
+   
+   **Paper Account (R&D):**
+   - Equity: $101,083.86
+   - Total P/L: $1,083.86 (1.08%)
+   - Win Rate: 80.0%
+   ```
 
 ## Follow-up Fix (Jan 5, 2026 - v2.3.0)
 
@@ -43,7 +59,7 @@ The initial fix worked locally but failed in Cloud Run because:
 3. **Final Fallback Wrong**: Dumped RAG lessons for P/L questions (unhelpful)
 
 **Solution**:
-- Added GitHub raw URL fallback: Fetch `system_state.json` from GitHub
+- Added GitHub raw URL fallback: Fetch `system_state.json` from `https://raw.githubusercontent.com/.../main/data/system_state.json`
 - Changed final fallback to clear message instead of lessons dump
 
 ## Prevention
@@ -52,6 +68,12 @@ The initial fix worked locally but failed in Cloud Run because:
 2. **Graceful Fallbacks**: Always have multiple data source fallbacks (local → GitHub → clear message)
 3. **Test Deployment**: Test webhook behavior in Cloud Run, not just locally
 4. **Don't Dump Unrelated Data**: If query is about X, don't return data about Y as fallback
+
+## Evidence
+
+- PR #1071: Initial keyword fix
+- PR #1074: Added tests
+- Branch `claude/fix-dialogue-flow-BJTTU`: Cloud Run deployment fix (v2.3.0)
 
 ## Keywords
 
