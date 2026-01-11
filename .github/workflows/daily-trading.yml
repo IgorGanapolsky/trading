@@ -1200,6 +1200,25 @@ jobs:
             echo "::warning::This is informational - Alpaca API is the source of truth."
           }
 
+      # CEO DIRECTIVE Jan 11, 2026: Record account balances to RAG ALWAYS
+      # This fixes the major operational breach where account values were not being recorded
+      # See: rag_knowledge/lessons_learned/ll_130_account_rag_recording_failure_jan11.md
+      - name: Record Account Balances to RAG (MANDATORY)
+        id: record_to_rag
+        if: always()  # Run even if trading failed - we NEED account history
+        continue-on-error: true  # Non-fatal but should be investigated if fails
+        env:
+          ALPACA_BROKERAGE_TRADING_API_KEY: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_KEY }}
+          ALPACA_BROKERAGE_TRADING_API_SECRET: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_SECRET }}
+          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          echo "📊 Recording account balances to RAG (CEO directive Jan 11, 2026)..."
+          python3 scripts/record_account_to_rag.py || {
+            echo "::warning::Account RAG recording failed - investigate immediately!"
+            echo "::warning::This is a CRITICAL operational requirement."
+          }
+
       - name: P/L Sanity Check
         id: sanity_check
         if: always()
