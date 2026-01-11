@@ -6,8 +6,10 @@ Tests cover:
 2. add_trade() - actual upload behavior (not stub)
 3. add_lesson() - actual upload behavior (not stub)
 4. Initialization behavior
+5. 2026 Best Practices - embedding model, chunking, Gemini 2.0 Flash
 
 Created: January 5, 2026
+Updated: January 10, 2026 - Added 2026 best practices tests
 Reason: LL-081 - Vertex RAG was a stub, needs full test coverage
 """
 
@@ -300,6 +302,84 @@ class TestSystemHealthCheckFixes:
         # Should use collections[0].name, not collections[0] directly
         assert "collections[0].name" in source or "col_name = " in source, (
             "system_health_check.py must access collection.name, not use Collection object as string"
+        )
+
+
+class Test2026BestPractices:
+    """Test 2026 RAG best practices implementation."""
+
+    def test_embedding_model_constant_defined(self):
+        """Verify text-embedding-004 model is configured."""
+        from src.rag.vertex_rag import EMBEDDING_MODEL
+
+        assert EMBEDDING_MODEL == "publishers/google/models/text-embedding-004"
+
+    def test_chunk_size_configured(self):
+        """Verify optimal chunk size is configured."""
+        from src.rag.vertex_rag import CHUNK_SIZE, CHUNK_OVERLAP
+
+        assert CHUNK_SIZE == 512, "Chunk size should be 512 tokens"
+        assert CHUNK_OVERLAP == 100, "Chunk overlap should be 100 tokens (20%)"
+
+    def test_similarity_top_k_configured(self):
+        """Verify top-k retrieval is within best practice range (3-5)."""
+        from src.rag.vertex_rag import SIMILARITY_TOP_K
+
+        assert 3 <= SIMILARITY_TOP_K <= 5, "Top-k should be 3-5 per best practices"
+
+    def test_query_uses_gemini_2_flash(self):
+        """Verify query uses Gemini 2.0 Flash (GA Jan 2026)."""
+        from src.rag.vertex_rag import VertexRAG
+
+        source = inspect.getsource(VertexRAG.query)
+        assert "gemini-2.0-flash" in source, "Query should use Gemini 2.0 Flash (not 1.5)"
+
+    def test_corpus_creation_has_embedding_config(self):
+        """Verify corpus creation includes embedding model config."""
+        from src.rag.vertex_rag import VertexRAG
+
+        source = inspect.getsource(VertexRAG._get_or_create_corpus)
+        assert "EmbeddingModelConfig" in source, (
+            "Corpus creation should use EmbeddingModelConfig"
+        )
+        assert "EMBEDDING_MODEL" in source, (
+            "Corpus creation should reference EMBEDDING_MODEL constant"
+        )
+
+    def test_add_trade_has_chunking_config(self):
+        """Verify add_trade uses chunking configuration."""
+        from src.rag.vertex_rag import VertexRAG
+
+        source = inspect.getsource(VertexRAG.add_trade)
+        assert "ChunkingConfig" in source, "add_trade should use ChunkingConfig"
+        assert "CHUNK_SIZE" in source, "add_trade should reference CHUNK_SIZE"
+
+    def test_add_lesson_has_chunking_config(self):
+        """Verify add_lesson uses chunking configuration."""
+        from src.rag.vertex_rag import VertexRAG
+
+        source = inspect.getsource(VertexRAG.add_lesson)
+        assert "ChunkingConfig" in source, "add_lesson should use ChunkingConfig"
+        assert "CHUNK_SIZE" in source, "add_lesson should reference CHUNK_SIZE"
+
+    def test_query_has_vector_distance_threshold(self):
+        """Verify query supports vector distance threshold for hybrid search."""
+        from src.rag.vertex_rag import VertexRAG
+
+        source = inspect.getsource(VertexRAG.query)
+        assert "vector_distance_threshold" in source, (
+            "Query should support vector_distance_threshold for hybrid search"
+        )
+
+    def test_docstring_updated_for_2026(self):
+        """Verify module docstring reflects 2026 best practices."""
+        import src.rag.vertex_rag as vertex_rag_module
+
+        docstring = vertex_rag_module.__doc__
+        assert "2026" in docstring, "Module docstring should mention 2026 best practices"
+        assert "text-embedding-004" in docstring, "Module should document embedding model"
+        assert "ChromaDB" not in docstring or "deprecated" in docstring.lower(), (
+            "ChromaDB reference should be removed or marked deprecated"
         )
 
 

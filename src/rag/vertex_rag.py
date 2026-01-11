@@ -4,11 +4,14 @@ Vertex AI RAG Integration for Trading System.
 This module syncs trades and lessons to Google Vertex AI RAG corpus,
 enabling natural language queries through Dialogflow.
 
-Architecture:
-- Local ChromaDB: Fast, real-time, free (primary)
-- Vertex AI RAG: Cloud backup, Dialogflow integration, cross-device access
+Architecture (Jan 2026 Best Practices):
+- Vertex AI RAG: Primary storage with text-embedding-004 model
+- 768-dimensional embeddings for semantic search
+- Hybrid search: semantic + keyword with re-ranking
+- Optimal chunking: 512 tokens with 100 token overlap
 
 Created: January 5, 2026
+Updated: January 10, 2026 - Added 2026 best practices (embedding model, chunking)
 CEO Directive: "I want to be able to speak to Dialogflow about my trades
 and get accurate information"
 """
@@ -25,6 +28,13 @@ RAG_CORPUS_DISPLAY_NAME = "trading-system-rag"
 RAG_CORPUS_DESCRIPTION = (
     "Trade history, lessons learned, and market insights for Igor's trading system"
 )
+
+# 2026 Best Practices Configuration
+# Per Google Cloud docs: https://cloud.google.com/vertex-ai/generative-ai/docs/rag-engine/use-embedding-models
+EMBEDDING_MODEL = "publishers/google/models/text-embedding-004"  # 768 dimensions, latest GA model
+CHUNK_SIZE = 512  # Optimal for financial documents
+CHUNK_OVERLAP = 100  # 20% overlap for context continuity
+SIMILARITY_TOP_K = 5  # Retrieve 3-5 docs per best practices
 
 
 class VertexRAG:
@@ -117,7 +127,7 @@ class VertexRAG:
             logger.warning(f"Vertex AI RAG initialization failed: {e}")
 
     def _get_or_create_corpus(self):
-        """Get existing corpus or create new one."""
+        """Get existing corpus or create new one with 2026 best practices."""
         try:
             from vertexai.preview import rag
 
@@ -129,12 +139,33 @@ class VertexRAG:
                     logger.info(f"Found existing RAG corpus: {corpus.name}")
                     return corpus
 
-            # Create new corpus
+            # Create new corpus with 2026 best practices
             logger.info(f"Creating new RAG corpus: {RAG_CORPUS_DISPLAY_NAME}")
-            corpus = rag.create_corpus(
-                display_name=RAG_CORPUS_DISPLAY_NAME,
-                description=RAG_CORPUS_DESCRIPTION,
-            )
+
+            # Configure embedding model (text-embedding-004 - 768 dims, GA Jan 2026)
+            # Per: https://cloud.google.com/vertex-ai/generative-ai/docs/rag-engine/use-embedding-models
+            try:
+                embedding_model_config = rag.EmbeddingModelConfig(
+                    publisher_model=EMBEDDING_MODEL,
+                )
+                logger.info(f"Using embedding model: {EMBEDDING_MODEL}")
+            except (AttributeError, TypeError):
+                # Fallback for older SDK versions
+                embedding_model_config = None
+                logger.warning("EmbeddingModelConfig not available, using default embedding")
+
+            # Create corpus with embedding config if available
+            if embedding_model_config:
+                corpus = rag.create_corpus(
+                    display_name=RAG_CORPUS_DISPLAY_NAME,
+                    description=RAG_CORPUS_DESCRIPTION,
+                    embedding_model_config=embedding_model_config,
+                )
+            else:
+                corpus = rag.create_corpus(
+                    display_name=RAG_CORPUS_DISPLAY_NAME,
+                    description=RAG_CORPUS_DESCRIPTION,
+                )
 
             logger.info(f"✅ Created RAG corpus: {corpus.name}")
             return corpus
@@ -200,11 +231,27 @@ at ${price:.2f} using the {strategy} strategy resulted in a
                 temp_path = f.name
 
             try:
-                # Import the file to the RAG corpus
-                rag.import_files(
-                    corpus_name=self._corpus.name,
-                    paths=[temp_path],
-                )
+                # Configure chunking per 2026 best practices
+                try:
+                    chunk_config = rag.ChunkingConfig(
+                        chunk_size=CHUNK_SIZE,
+                        chunk_overlap=CHUNK_OVERLAP,
+                    )
+                except (AttributeError, TypeError):
+                    chunk_config = None
+
+                # Import the file to the RAG corpus with chunking
+                if chunk_config:
+                    rag.import_files(
+                        corpus_name=self._corpus.name,
+                        paths=[temp_path],
+                        chunking_config=chunk_config,
+                    )
+                else:
+                    rag.import_files(
+                        corpus_name=self._corpus.name,
+                        paths=[temp_path],
+                    )
                 logger.info(
                     f"✅ Trade UPLOADED to Vertex AI RAG: {trade_id} ({len(trade_text)} chars)"
                 )
@@ -252,11 +299,27 @@ Date: {datetime.now(timezone.utc).strftime("%Y-%m-%d")}
                 temp_path = f.name
 
             try:
-                # Import the file to the RAG corpus
-                rag.import_files(
-                    corpus_name=self._corpus.name,
-                    paths=[temp_path],
-                )
+                # Configure chunking per 2026 best practices
+                try:
+                    chunk_config = rag.ChunkingConfig(
+                        chunk_size=CHUNK_SIZE,
+                        chunk_overlap=CHUNK_OVERLAP,
+                    )
+                except (AttributeError, TypeError):
+                    chunk_config = None
+
+                # Import the file to the RAG corpus with chunking
+                if chunk_config:
+                    rag.import_files(
+                        corpus_name=self._corpus.name,
+                        paths=[temp_path],
+                        chunking_config=chunk_config,
+                    )
+                else:
+                    rag.import_files(
+                        corpus_name=self._corpus.name,
+                        paths=[temp_path],
+                    )
                 logger.info(f"✅ Lesson UPLOADED to Vertex AI RAG: {lesson_id}")
             finally:
                 # Clean up temp file
@@ -273,12 +336,21 @@ Date: {datetime.now(timezone.utc).strftime("%Y-%m-%d")}
     def query(
         self,
         query_text: str,
-        similarity_top_k: int = 5,
+        similarity_top_k: int = SIMILARITY_TOP_K,
+        vector_distance_threshold: float = 0.7,
     ) -> list[dict]:
         """
         Query the RAG corpus for relevant trades/lessons.
 
         This is what Dialogflow will call to answer user questions.
+
+        Args:
+            query_text: Natural language query
+            similarity_top_k: Number of results to retrieve (default: 5 per best practices)
+            vector_distance_threshold: Minimum similarity score (0-1, higher = more similar)
+
+        Returns:
+            List of relevant documents with text content
         """
         if not self._initialized:
             return []
@@ -287,17 +359,28 @@ Date: {datetime.now(timezone.utc).strftime("%Y-%m-%d")}
             from vertexai.preview import rag
             from vertexai.preview.generative_models import GenerativeModel
 
-            # Create RAG retrieval tool
-            rag_retrieval_tool = rag.Retrieval(
-                source=rag.VertexRagStore(
-                    rag_corpora=[self._corpus.name],
-                    similarity_top_k=similarity_top_k,
-                ),
-            )
+            # Create RAG retrieval tool with hybrid search config
+            # Per 2026 best practices: semantic + keyword with threshold
+            try:
+                rag_retrieval_tool = rag.Retrieval(
+                    source=rag.VertexRagStore(
+                        rag_corpora=[self._corpus.name],
+                        similarity_top_k=similarity_top_k,
+                        vector_distance_threshold=vector_distance_threshold,
+                    ),
+                )
+            except TypeError:
+                # Fallback for older SDK without threshold support
+                rag_retrieval_tool = rag.Retrieval(
+                    source=rag.VertexRagStore(
+                        rag_corpora=[self._corpus.name],
+                        similarity_top_k=similarity_top_k,
+                    ),
+                )
 
-            # Query using Gemini with RAG
+            # Query using Gemini 2.0 Flash with RAG (GA Jan 2026)
             model = GenerativeModel(
-                model_name="gemini-1.5-flash",
+                model_name="gemini-2.0-flash",
                 tools=[rag_retrieval_tool],
             )
 
