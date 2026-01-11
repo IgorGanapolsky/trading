@@ -139,7 +139,7 @@ class TestRAGOperational:
         # If keyword search returns no results, that's OK (keyword search limitation)
         # The important thing is that CRITICAL lessons exist (verified above)
         if len(results) == 0:
-            print(f"⚠️ Query severity filter returned nothing - keyword search limitation")
+            print("⚠️ Query severity filter returned nothing - keyword search limitation")
             print(f"✅ RAG blocks validated via {len(critical_lessons)} CRITICAL lessons")
             return
 
