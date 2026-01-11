@@ -128,6 +128,7 @@ class LessonsLearnedRAG:
                 continue
 
             content_lower = lesson["content"].lower()
+            lesson_id = lesson["id"].lower()
 
             # Score based on term matches
             score = 0
@@ -141,6 +142,16 @@ class LessonsLearnedRAG:
             # Boost CRITICAL lessons
             if lesson["severity"] == "CRITICAL":
                 score *= 2
+
+            # RECENCY BOOST: Prioritize 2026 content over old incidents
+            if "jan11" in lesson_id or "jan10" in lesson_id or "jan09" in lesson_id:
+                score *= 3  # Strong boost for last 3 days
+            elif "jan" in lesson_id and "2026" in lesson_id:
+                score *= 2  # Moderate boost for January 2026
+            elif "trading_rules" in lesson_id or "2026" in lesson_id:
+                score *= 4  # Highest boost for actionable rules
+            elif "dec" in lesson_id and ("2025" in lesson_id or "dec11" in lesson_id):
+                score *= 0.3  # Deprioritize old Dec 2025 incidents
 
             if score > 0:
                 # Normalize score to 0-1 range for consistency with ChromaDB
