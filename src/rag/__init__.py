@@ -1,4 +1,5 @@
-# RAG module stub - original deleted in cleanup
-# Minimal implementation to prevent import errors
+"""RAG (Retrieval-Augmented Generation) module for trading lessons."""
 
-__all__ = []
+from src.rag.vertex_rag import VertexRAG
+
+__all__ = ["VertexRAG"]
