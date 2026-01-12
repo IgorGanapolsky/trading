@@ -12,6 +12,10 @@ class LessonsLearnedRAG:
         """Search lessons - returns empty list."""
         return []
 
+    def query(self, query: str, *args, **kwargs) -> list:
+        """Query lessons - returns empty list."""
+        return []
+
     def add_lesson(self, lesson: dict, *args, **kwargs) -> bool:
         """Add lesson - returns success."""
         return True
