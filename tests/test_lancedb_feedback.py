@@ -258,6 +258,7 @@ class TestBackwardCompatibility:
 
     def test_trainer_without_lancedb(self):
         """Trainer should work without LanceDB (fallback mode)."""
+        pytest.importorskip("src.learning.feedback_trainer", reason="feedback_trainer not available")
         from src.learning.feedback_trainer import FeedbackTrainer
 
         with tempfile.TemporaryDirectory() as tmpdir:

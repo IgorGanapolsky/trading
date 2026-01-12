@@ -7,7 +7,11 @@ Tests the Phil Town Rule #1 investment strategy including:
 """
 
 from dataclasses import dataclass
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
+import pytest
+
+# Skip if numpy is not available (rule_one_options requires it)
+pytest.importorskip("numpy", reason="rule_one_options requires numpy")
 
 
 @dataclass
@@ -24,27 +28,24 @@ class MockStickerResult:
 class TestAnalyzeStock:
     """Test the analyze_stock method that rule_one_trader.py calls."""
 
-    @patch("src.strategies.rule_one_options.RuleOneOptionsStrategy.__init__")
-    @patch("src.strategies.rule_one_options.RuleOneOptionsStrategy.calculate_sticker_price")
-    def test_analyze_stock_returns_none_when_calculation_fails(self, mock_calc, mock_init):
+    def test_analyze_stock_returns_none_when_calculation_fails(self):
         """analyze_stock should return None when sticker price calculation fails."""
-        mock_init.return_value = None
-        mock_calc.return_value = None
-
         from src.strategies.rule_one_options import RuleOneOptionsStrategy
 
-        strategy = RuleOneOptionsStrategy.__new__(RuleOneOptionsStrategy)
-        strategy.calculate_sticker_price = mock_calc
+        # Create instance and mock the method directly
+        strategy = MagicMock(spec=RuleOneOptionsStrategy)
+        strategy.calculate_sticker_price.return_value = None
 
-        result = strategy.analyze_stock("AAPL")
+        # Call the real analyze_stock implementation with mocked dependencies
+        result = RuleOneOptionsStrategy.analyze_stock(strategy, "AAPL")
         assert result is None
 
-    @patch("src.strategies.rule_one_options.RuleOneOptionsStrategy.__init__")
-    @patch("src.strategies.rule_one_options.RuleOneOptionsStrategy.calculate_sticker_price")
-    def test_analyze_stock_strong_buy_below_mos(self, mock_calc, mock_init):
+    def test_analyze_stock_strong_buy_below_mos(self):
         """Price below MOS should return STRONG BUY recommendation."""
-        mock_init.return_value = None
-        mock_calc.return_value = MockStickerResult(
+        from src.strategies.rule_one_options import RuleOneOptionsStrategy
+
+        strategy = MagicMock(spec=RuleOneOptionsStrategy)
+        strategy.calculate_sticker_price.return_value = MockStickerResult(
             symbol="AAPL",
             current_price=100.0,  # Below MOS of 125
             sticker_price=250.0,
@@ -52,12 +53,7 @@ class TestAnalyzeStock:
             growth_rate=0.15,
         )
 
-        from src.strategies.rule_one_options import RuleOneOptionsStrategy
-
-        strategy = RuleOneOptionsStrategy.__new__(RuleOneOptionsStrategy)
-        strategy.calculate_sticker_price = mock_calc
-
-        result = strategy.analyze_stock("AAPL")
+        result = RuleOneOptionsStrategy.analyze_stock(strategy, "AAPL")
         assert result is not None
         assert result["symbol"] == "AAPL"
         assert "STRONG BUY" in result["recommendation"]
@@ -66,12 +62,12 @@ class TestAnalyzeStock:
         assert result["sticker_price"] == 250.0
         assert result["mos_price"] == 125.0
 
-    @patch("src.strategies.rule_one_options.RuleOneOptionsStrategy.__init__")
-    @patch("src.strategies.rule_one_options.RuleOneOptionsStrategy.calculate_sticker_price")
-    def test_analyze_stock_buy_below_sticker(self, mock_calc, mock_init):
+    def test_analyze_stock_buy_below_sticker(self):
         """Price above MOS but below Sticker should return BUY recommendation."""
-        mock_init.return_value = None
-        mock_calc.return_value = MockStickerResult(
+        from src.strategies.rule_one_options import RuleOneOptionsStrategy
+
+        strategy = MagicMock(spec=RuleOneOptionsStrategy)
+        strategy.calculate_sticker_price.return_value = MockStickerResult(
             symbol="MSFT",
             current_price=200.0,  # Above MOS of 125, below sticker of 250
             sticker_price=250.0,
@@ -79,21 +75,16 @@ class TestAnalyzeStock:
             growth_rate=0.12,
         )
 
-        from src.strategies.rule_one_options import RuleOneOptionsStrategy
-
-        strategy = RuleOneOptionsStrategy.__new__(RuleOneOptionsStrategy)
-        strategy.calculate_sticker_price = mock_calc
-
-        result = strategy.analyze_stock("MSFT")
+        result = RuleOneOptionsStrategy.analyze_stock(strategy, "MSFT")
         assert result is not None
         assert "BUY - Below Sticker Price" in result["recommendation"]
 
-    @patch("src.strategies.rule_one_options.RuleOneOptionsStrategy.__init__")
-    @patch("src.strategies.rule_one_options.RuleOneOptionsStrategy.calculate_sticker_price")
-    def test_analyze_stock_sell_above_sticker_20_percent(self, mock_calc, mock_init):
+    def test_analyze_stock_sell_above_sticker_20_percent(self):
         """Price 20%+ above sticker should return SELL recommendation."""
-        mock_init.return_value = None
-        mock_calc.return_value = MockStickerResult(
+        from src.strategies.rule_one_options import RuleOneOptionsStrategy
+
+        strategy = MagicMock(spec=RuleOneOptionsStrategy)
+        strategy.calculate_sticker_price.return_value = MockStickerResult(
             symbol="V",
             current_price=310.0,  # > 250 * 1.2 = 300
             sticker_price=250.0,
@@ -101,22 +92,17 @@ class TestAnalyzeStock:
             growth_rate=0.10,
         )
 
-        from src.strategies.rule_one_options import RuleOneOptionsStrategy
-
-        strategy = RuleOneOptionsStrategy.__new__(RuleOneOptionsStrategy)
-        strategy.calculate_sticker_price = mock_calc
-
-        result = strategy.analyze_stock("V")
+        result = RuleOneOptionsStrategy.analyze_stock(strategy, "V")
         assert result is not None
         assert "SELL" in result["recommendation"]
         assert "Above Sticker" in result["recommendation"]
 
-    @patch("src.strategies.rule_one_options.RuleOneOptionsStrategy.__init__")
-    @patch("src.strategies.rule_one_options.RuleOneOptionsStrategy.calculate_sticker_price")
-    def test_analyze_stock_hold_between_sticker_and_120_percent(self, mock_calc, mock_init):
+    def test_analyze_stock_hold_between_sticker_and_120_percent(self):
         """Price between sticker and 120% should return HOLD recommendation."""
-        mock_init.return_value = None
-        mock_calc.return_value = MockStickerResult(
+        from src.strategies.rule_one_options import RuleOneOptionsStrategy
+
+        strategy = MagicMock(spec=RuleOneOptionsStrategy)
+        strategy.calculate_sticker_price.return_value = MockStickerResult(
             symbol="COST",
             current_price=275.0,  # Between 250 and 300 (120%)
             sticker_price=250.0,
@@ -124,21 +110,16 @@ class TestAnalyzeStock:
             growth_rate=0.08,
         )
 
-        from src.strategies.rule_one_options import RuleOneOptionsStrategy
-
-        strategy = RuleOneOptionsStrategy.__new__(RuleOneOptionsStrategy)
-        strategy.calculate_sticker_price = mock_calc
-
-        result = strategy.analyze_stock("COST")
+        result = RuleOneOptionsStrategy.analyze_stock(strategy, "COST")
         assert result is not None
         assert result["recommendation"] == "HOLD"
 
-    @patch("src.strategies.rule_one_options.RuleOneOptionsStrategy.__init__")
-    @patch("src.strategies.rule_one_options.RuleOneOptionsStrategy.calculate_sticker_price")
-    def test_analyze_stock_contains_all_required_fields(self, mock_calc, mock_init):
+    def test_analyze_stock_contains_all_required_fields(self):
         """Result should contain all required fields for rule_one_trader.py."""
-        mock_init.return_value = None
-        mock_calc.return_value = MockStickerResult(
+        from src.strategies.rule_one_options import RuleOneOptionsStrategy
+
+        strategy = MagicMock(spec=RuleOneOptionsStrategy)
+        strategy.calculate_sticker_price.return_value = MockStickerResult(
             symbol="AAPL",
             current_price=150.0,
             sticker_price=200.0,
@@ -146,12 +127,7 @@ class TestAnalyzeStock:
             growth_rate=0.15,
         )
 
-        from src.strategies.rule_one_options import RuleOneOptionsStrategy
-
-        strategy = RuleOneOptionsStrategy.__new__(RuleOneOptionsStrategy)
-        strategy.calculate_sticker_price = mock_calc
-
-        result = strategy.analyze_stock("AAPL")
+        result = RuleOneOptionsStrategy.analyze_stock(strategy, "AAPL")
         assert result is not None
 
         # All fields that rule_one_trader.py expects
@@ -169,12 +145,12 @@ class TestAnalyzeStock:
         for field in required_fields:
             assert field in result, f"Missing required field: {field}"
 
-    @patch("src.strategies.rule_one_options.RuleOneOptionsStrategy.__init__")
-    @patch("src.strategies.rule_one_options.RuleOneOptionsStrategy.calculate_sticker_price")
-    def test_analyze_stock_upside_calculation(self, mock_calc, mock_init):
+    def test_analyze_stock_upside_calculation(self):
         """Upside calculation should be correct percentage."""
-        mock_init.return_value = None
-        mock_calc.return_value = MockStickerResult(
+        from src.strategies.rule_one_options import RuleOneOptionsStrategy
+
+        strategy = MagicMock(spec=RuleOneOptionsStrategy)
+        strategy.calculate_sticker_price.return_value = MockStickerResult(
             symbol="AAPL",
             current_price=100.0,
             sticker_price=150.0,  # 50% upside
@@ -182,22 +158,17 @@ class TestAnalyzeStock:
             growth_rate=0.15,
         )
 
-        from src.strategies.rule_one_options import RuleOneOptionsStrategy
-
-        strategy = RuleOneOptionsStrategy.__new__(RuleOneOptionsStrategy)
-        strategy.calculate_sticker_price = mock_calc
-
-        result = strategy.analyze_stock("AAPL")
+        result = RuleOneOptionsStrategy.analyze_stock(strategy, "AAPL")
         assert result is not None
         # (150 - 100) / 100 = 0.5 = 50%
         assert result["upside_to_sticker"] == 50.0
 
-    @patch("src.strategies.rule_one_options.RuleOneOptionsStrategy.__init__")
-    @patch("src.strategies.rule_one_options.RuleOneOptionsStrategy.calculate_sticker_price")
-    def test_analyze_stock_margin_of_safety_calculation(self, mock_calc, mock_init):
+    def test_analyze_stock_margin_of_safety_calculation(self):
         """Margin of safety calculation should be correct percentage."""
-        mock_init.return_value = None
-        mock_calc.return_value = MockStickerResult(
+        from src.strategies.rule_one_options import RuleOneOptionsStrategy
+
+        strategy = MagicMock(spec=RuleOneOptionsStrategy)
+        strategy.calculate_sticker_price.return_value = MockStickerResult(
             symbol="AAPL",
             current_price=100.0,
             sticker_price=200.0,  # MOS = (200 - 100) / 200 = 50%
@@ -205,12 +176,7 @@ class TestAnalyzeStock:
             growth_rate=0.15,
         )
 
-        from src.strategies.rule_one_options import RuleOneOptionsStrategy
-
-        strategy = RuleOneOptionsStrategy.__new__(RuleOneOptionsStrategy)
-        strategy.calculate_sticker_price = mock_calc
-
-        result = strategy.analyze_stock("AAPL")
+        result = RuleOneOptionsStrategy.analyze_stock(strategy, "AAPL")
         assert result is not None
         # (200 - 100) / 200 = 0.5 = 50%
         assert result["margin_of_safety"] == 50.0

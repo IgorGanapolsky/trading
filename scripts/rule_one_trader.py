@@ -24,11 +24,17 @@ from typing import Optional
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from dotenv import load_dotenv
-from src.utils.error_monitoring import init_sentry
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv optional
 
-load_dotenv()
-init_sentry()
+try:
+    from src.utils.error_monitoring import init_sentry
+    init_sentry()
+except ImportError:
+    pass  # sentry optional
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)

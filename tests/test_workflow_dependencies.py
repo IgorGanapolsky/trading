@@ -14,7 +14,10 @@ import re
 from pathlib import Path
 
 import pytest
-import yaml
+try:
+    import yaml
+except ImportError:
+    pytest.skip("pyyaml not installed", allow_module_level=True)
 
 PROJECT_ROOT = Path(__file__).parent.parent
 WORKFLOWS_DIR = PROJECT_ROOT / ".github" / "workflows"

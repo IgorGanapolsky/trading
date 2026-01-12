@@ -19,7 +19,11 @@ import sys
 from pathlib import Path
 from typing import NamedTuple
 
-import yaml
+import pytest
+try:
+    import yaml
+except ImportError:
+    pytest.skip("pyyaml not installed", allow_module_level=True)
 
 
 class OutputReference(NamedTuple):

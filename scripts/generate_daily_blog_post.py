@@ -10,13 +10,19 @@ import sys
 from datetime import date, datetime
 from pathlib import Path
 
-import requests
-from dotenv import load_dotenv
+try:
+    import requests
+except ImportError:
+    requests = None  # Optional for tests
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv optional
 
 # Add project root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
-load_dotenv()
 
 
 def get_treasury_yields() -> dict:

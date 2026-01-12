@@ -9,7 +9,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-import yaml
+try:
+    import yaml
+except ImportError:
+    import pytest
+    pytest.skip("pyyaml not installed", allow_module_level=True)
 
 
 def check_workflow_commands(workflow_path: Path):

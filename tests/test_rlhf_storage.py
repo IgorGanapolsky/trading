@@ -21,8 +21,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import numpy as np
 import pytest
+np = pytest.importorskip("numpy", reason="numpy required for RLHF storage tests")
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))

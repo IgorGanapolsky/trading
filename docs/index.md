@@ -20,12 +20,12 @@ Building an autonomous AI trading system with Claude Opus 4.5.
 
 | Metric | Value |
 |--------|-------|
-| **Brokerage Capital** | $4,998.98 |
-| **Paper Account** | $5,002.98 |
-| **Open Positions** | 1 (SOFI $25 Put, Jan 30 exp) |
-| **Pending Orders** | 1 (SOFI $24 Put, Feb 20 exp) |
+| **Brokerage Capital** | $60.00 |
+| **Paper Account** | $5,000.00 |
+| **Open Positions** | 0 (accumulation phase) |
+| **Pending Orders** | 0 |
 | **Day of Journey** | 74/90 |
-| **Next Goal** | Execute more CSPs on F, BAC |
+| **Next Goal** | Reach $500 for first CSP on F |
 
 ---
 
