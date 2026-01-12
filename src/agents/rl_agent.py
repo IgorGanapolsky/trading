@@ -12,3 +12,7 @@ class RLFilter:
 
     def get_score(self, *args, **kwargs):
         return 1.0
+
+    def predict(self, *args, **kwargs):
+        """Predict action - stub returns 1 (buy/approve)."""
+        return 1
