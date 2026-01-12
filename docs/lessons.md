@@ -1,22 +1,29 @@
 ---
 layout: default
-title: Lessons Learned
+title: Trading Rules
 permalink: /lessons/
 ---
 
-# Lessons Learned
+# Essential Trading Rules
 
-60+ documented failures and fixes from our AI trading journey. Each lesson represents a real problem we encountered and how we solved it.
+We deleted 164 lesson files because they were noise - documenting failures instead of making money.
 
-## All Lessons
+**The only rules that matter are in [ESSENTIAL_TRADING_RULES.md](https://github.com/IgorGanapolsky/trading/blob/main/ESSENTIAL_TRADING_RULES.md)**
 
-{% assign sorted_lessons = site.lessons | sort: 'date' | reverse %}
-{% for lesson in sorted_lessons %}
-- [{{ lesson.title }}]({{ lesson.url | relative_url }}) {% if lesson.date %}*({{ lesson.date | date: "%b %d, %Y" }})*{% endif %}
-{% endfor %}
+## Quick Summary
+
+1. **Need $500 minimum** to start trading CSPs
+2. **Strategy**: Sell cash-secured puts on F/SOFI at $5 strike
+3. **Don't lose money** - protect capital first
+4. **Compound everything** - reinvest all profits
+5. **Keep it simple** - no ML, no agents, no complexity
+
+## Current Status
+
+- Capital: $30
+- Trades: 0
+- Action: Deposit $10/day until $500
 
 ---
-
-*New lessons are added automatically when we learn from failures.*
 
 [Back to Home]({{ "/" | relative_url }})
