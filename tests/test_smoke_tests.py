@@ -153,10 +153,13 @@ class TestRunSmokeTests:
                 assert "Cannot read positions" in str(result.errors)
 
     @pytest.mark.skipif(not _alpaca_available(), reason="alpaca not available in sandbox")
-    def test_fails_when_buying_power_zero(self):
-        """Test that smoke tests fail when buying power is zero."""
+    def test_passes_when_buying_power_zero_but_equity_high(self):
+        """Test that smoke tests pass when buying power zero but equity high (fully invested).
+
+        Fixed Jan 7, 2026: Zero buying power with substantial equity = fully invested (OK)
+        """
         mock_account = MagicMock()
-        mock_account.equity = 100000.0
+        mock_account.equity = 100000.0  # High equity = fully invested
         mock_account.buying_power = 0.0  # No buying power
         mock_account.cash = 0.0
         mock_account.status = "ACTIVE"
@@ -176,9 +179,10 @@ class TestRunSmokeTests:
             ):
                 result = run_smoke_tests()
 
-                assert result.all_passed is False
-                assert result.buying_power_valid is False
-                assert "Buying power is $0" in str(result.errors)
+                # Jan 7, 2026 fix: $0 buying power + high equity = valid (fully invested)
+                assert result.all_passed is True
+                assert result.buying_power_valid is True
+                assert "fully invested" in str(result.warnings)
 
     @pytest.mark.skipif(not _alpaca_available(), reason="alpaca not available in sandbox")
     def test_fails_when_equity_zero(self):

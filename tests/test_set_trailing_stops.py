@@ -72,7 +72,7 @@ def test_main_no_positions(mock_client_class):
     from set_trailing_stops import main
 
     result = main(dry_run=True)
-    assert result is None  # No positions to protect
+    assert result is True  # No positions to protect = success (nothing at risk)
 
 
 @patch.dict(

@@ -338,7 +338,8 @@ class TestVIXCircuitBreakerIntegration:
             status = circuit_breaker.get_current_status(force_refresh=True)
             assert isinstance(status, VIXStatus)
             assert status.current_level == 18.5
-            assert status.alert_level == AlertLevel.HIGH
+            # VIX 18.5 is between 15-20, so ELEVATED (not HIGH which requires >= 20)
+            assert status.alert_level == AlertLevel.ELEVATED
 
     def test_status_caching(self, circuit_breaker):
         """Status should be cached within check interval."""

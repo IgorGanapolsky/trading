@@ -51,13 +51,16 @@ class TestTradeSyncInitialization:
                 assert sync is not None
 
     def test_init_without_langsmith_key(self):
-        """Should initialize without LangSmith when no key."""
+        """Should initialize without LangSmith when no key.
+
+        Note: LangSmith was REMOVED Jan 9, 2026 - only Vertex AI RAG now.
+        """
         from src.observability.trade_sync import TradeSync
 
         with patch.dict("os.environ", {}, clear=False):
             sync = TradeSync()
-            # LangSmith should be disabled
-            assert sync._langsmith_client is None or sync._langsmith_client is not None
+            # LangSmith removed Jan 9, 2026 - just verify TradeSync initializes
+            assert sync is not None
 
 
 class TestSyncToLocalJSON:
