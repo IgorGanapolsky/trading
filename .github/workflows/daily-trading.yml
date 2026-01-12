@@ -249,7 +249,7 @@ jobs:
           fi
 
       - name: Upload RAG advice artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: rag-pretrade-advice
           path: data/rag_pretrade_advice.json
