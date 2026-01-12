@@ -284,6 +284,21 @@ jobs:
       - name: Install dependencies
         run: pip install alpaca-py
 
+      - name: Cancel Stale Orders (Free Buying Power)
+        env:
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          PAPER_TRADING: ${{ github.event.inputs.trading_mode != 'live' && 'true' || 'false' }}
+        run: |
+          echo "🧹 ========================================"
+          echo "🧹 STALE ORDER CLEANUP"
+          echo "🧹 Lesson ll_134: Cancel orders > 24h old"
+          echo "🧹 ========================================"
+          echo ""
+          python3 scripts/cancel_stale_orders.py || {
+            echo "::warning::Could not cancel stale orders"
+          }
+
       - name: Set Trailing Stop-Loss Orders
         env:
           # FIXED Jan 8, 2026: Was using OLD secrets (ALPACA_PAPER_TRADING_API_KEY)
