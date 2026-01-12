@@ -15,7 +15,7 @@
     "alpaca": {
       "command": "uvx",
       "args": ["alpaca-mcp-server"],
-      "description": "Official Alpaca MCP Server (alpacahq/alpaca-mcp-server) - 50+ tools for stocks, options, crypto, and market data",
+      "description": "Official Alpaca MCP Server (alpacahq/alpaca-mcp-server) - tools for US equities, options, and market data",
       "env": {
         "APCA_API_KEY_ID": "${ALPACA_API_KEY}",
         "APCA_API_SECRET_KEY": "${ALPACA_SECRET_KEY}",
@@ -25,9 +25,9 @@
     "rss": {
       "command": "npx",
       "args": ["-y", "@veithly/rss-mcp"],
-      "description": "RSS feed reader for consuming crypto newsletters and market analysis",
+      "description": "RSS feed reader for US equities market news and analysis",
       "env": {
-        "RSS_FEEDS": "https://medium.com/feed/coinsnacks"
+        "RSS_FEEDS": "https://feeds.marketwatch.com/marketwatch/topstories"
       }
     },
     "youtube-transcript": {
