@@ -1,14 +1,35 @@
 """Stub file - BiasStore (original deleted in cleanup)."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
 
 
 @dataclass
 class BiasSnapshot:
-    """Stub for BiasSnapshot."""
+    """Stub for BiasSnapshot - returns neutral values."""
 
     sentiment: str = "neutral"
     confidence: float = 0.0
+    score: float = 0.0
+    reason: str = "stub - no real sentiment analysis"
+    direction: str = "neutral"
+    conviction: float = 0.0
+    symbol: str = ""
+    created_at: datetime = field(default_factory=datetime.now)
+    expires_at: datetime = field(default_factory=datetime.now)
+    model: str = "stub"
+    sources: list = field(default_factory=list)
+    metadata: dict = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return dict representation."""
+        return {
+            "sentiment": self.sentiment,
+            "confidence": self.confidence,
+            "score": self.score,
+            "reason": self.reason,
+        }
 
 
 class BiasProvider:
@@ -28,6 +49,10 @@ class BiasStore:
         pass
 
     def store(self, *args, **kwargs):
+        pass
+
+    def persist(self, *args, **kwargs):
+        """Stub for persist - does nothing."""
         pass
 
     def retrieve(self, *args, **kwargs) -> BiasSnapshot:

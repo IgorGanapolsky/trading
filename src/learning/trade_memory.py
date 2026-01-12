@@ -17,3 +17,11 @@ class TradeMemory:
 
     def get_recent(self, *args, **kwargs) -> list[Any]:
         return []
+
+    def query_similar(self, strategy: str = "", entry_reason: str = "", *args, **kwargs) -> dict[str, Any]:
+        """Stub for query_similar - returns no matches."""
+        return {"found": False, "win_rate": 0.5, "sample_size": 0, "avg_pnl": 0.0}
+
+    def add_trade(self, *args, **kwargs):
+        """Stub for add_trade - does nothing."""
+        pass
