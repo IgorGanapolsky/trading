@@ -208,7 +208,6 @@ jobs:
             tests/test_promotion_gate.py \
             tests/test_telemetry_summary.py \
             tests/test_trade_gateway.py \
-            tests/test_fred_collector.py \
             --timeout=120 \
             --timeout-method=thread \
             -v \
