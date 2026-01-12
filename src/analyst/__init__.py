@@ -1,0 +1,1 @@
+"""Analyst module stub."""
