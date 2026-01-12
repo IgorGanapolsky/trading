@@ -1,8 +1,8 @@
 {
-  "last_updated": "2026-01-12T15:10:00.000000",
+  "last_updated": "2026-01-12T16:33:00.000000",
   "portfolio": {
-    "equity": 60.0,
-    "cash": 60.0
+    "equity": 4998.98,
+    "cash": 4998.98
   },
   "total_trades": 0,
   "win_rate": 0,
@@ -11,5 +11,5 @@
   "strategy": "CSP on F/SOFI at $5 strike when capital >= $500",
   "capital_needed": 500,
   "daily_deposit": 10,
-  "days_to_first_trade": 44
+  "days_to_first_trade": 0
 }
