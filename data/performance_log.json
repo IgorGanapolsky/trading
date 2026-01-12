@@ -49,5 +49,16 @@
     "pl_pct": 0.0,
     "account_type": "live",
     "note": "Day 70/90 - Live account: Accumulation phase. Paper account: +$16,661.20 today (+16.45%)"
+  },
+  {
+    "date": "2026-01-12",
+    "timestamp": "2026-01-12T15:10:00.000000",
+    "equity": 60.0,
+    "cash": 60.0,
+    "buying_power": 60.0,
+    "pl": 0.0,
+    "pl_pct": 0.0,
+    "account_type": "live",
+    "note": "Day 74/90 - Accumulation phase. $30 deposited since Jan 7. 44 days to first CSP."
   }
 ]
