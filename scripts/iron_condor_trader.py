@@ -75,42 +75,44 @@ class IronCondorStrategy:
     """
 
     def __init__(self):
+        # FIXED Jan 12 2026: Use SOFI not SPY (SPY needs $50K+, we have $5K)
         self.config = {
-            "underlying": "SPY",
+            "underlying": "SOFI",  # SOFI ~$14/share, iron condor on SOFI fits $5K account
             "target_dte": 30,
             "min_dte": 21,
             "max_dte": 45,
             "short_delta": 0.16,  # 16 delta = ~84% POP
-            "wing_width": 5,  # $5 wide spreads
+            "wing_width": 1,  # $1 wide spreads (appropriate for ~$14 stock)
             "take_profit_pct": 0.50,  # Close at 50% profit
             "stop_loss_pct": 2.0,  # Close at 200% loss
-            "max_positions": 2,
-            "position_size_pct": 0.10,  # 10% of portfolio per IC
+            "max_positions": 3,  # Can do more positions with smaller underlying
+            "position_size_pct": 0.15,  # 15% of portfolio per IC
         }
 
     def get_underlying_price(self) -> float:
         """Get current price of underlying."""
         # In production: use market data API
-        # For now, estimate SPY price
-        return 600.0  # Approximate SPY price Dec 2024
+        # For now, estimate SOFI price
+        return 14.0  # Approximate SOFI price Jan 2026
 
     def calculate_strikes(self, price: float) -> tuple[float, float, float, float]:
         """
         Calculate iron condor strikes based on delta targeting.
 
-        For 16 delta on SPY:
-        - Short put: ~3% below price
-        - Short call: ~3% above price
-        - Wing width: $5
+        For 16 delta on SOFI (~$14):
+        - Short put: ~7% below price (~$13)
+        - Short call: ~7% above price (~$15)
+        - Wing width: $1 (appropriate for small stocks)
         """
         # 16 delta is roughly 1 standard deviation move
-        # For 30 DTE, this is about 3% for SPY
+        # For 30 DTE on smaller stocks, use ~7% OTM
 
-        short_put = round(price * 0.97 / 5) * 5  # Round to $5
-        long_put = short_put - self.config["wing_width"]
+        wing = self.config["wing_width"]
+        short_put = round(price * 0.93)  # Round to $1 for small stocks
+        long_put = short_put - wing
 
-        short_call = round(price * 1.03 / 5) * 5  # Round to $5
-        long_call = short_call + self.config["wing_width"]
+        short_call = round(price * 1.07)  # Round to $1 for small stocks
+        long_call = short_call + wing
 
         return long_put, short_put, short_call, long_call
 
@@ -122,10 +124,10 @@ class IronCondorStrategy:
         """
         long_put, short_put, short_call, long_call = legs
 
-        # Rough estimates based on typical SPY premiums
-        # At 30 DTE, 16 delta options ~$2-3 for SPY
-        put_spread_credit = 1.50  # Sell short put, buy long put
-        call_spread_credit = 1.50  # Sell short call, buy long call
+        # Rough estimates based on typical SOFI premiums (~$14 stock)
+        # At 30 DTE, 16 delta options ~$0.20-0.40 for SOFI
+        put_spread_credit = 0.25  # Sell short put, buy long put
+        call_spread_credit = 0.25  # Sell short call, buy long call
 
         total_credit = put_spread_credit + call_spread_credit
         wing_width = self.config["wing_width"]
@@ -135,7 +137,7 @@ class IronCondorStrategy:
             "credit": total_credit,
             "max_risk": max_risk,
             "max_profit": total_credit * 100,
-            "risk_reward": max_risk / (total_credit * 100),
+            "risk_reward": max_risk / (total_credit * 100) if total_credit > 0 else 0,
         }
 
     def find_trade(self) -> Optional[IronCondorLegs]:

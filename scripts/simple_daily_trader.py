@@ -38,18 +38,19 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Configuration - SCALED UP Jan 6 2026 to hit $100/day North Star
+# Configuration - FIXED Jan 12 2026: Use SOFI not SPY (SPY needs $50K+, we have $5K)
 CONFIG = {
-    "symbol": "SPY",
+    "symbol": "SOFI",  # SOFI ~$14/share, CSP at $10 strike = $1,000 collateral (fits $5K account)
     "strategy": "cash_secured_put",
     "target_delta": 0.20,  # 20 delta = ~80% win rate
     "target_dte": 30,  # 30 days to expiration
     "max_dte": 45,
     "min_dte": 21,
-    "position_size_pct": 0.10,  # 10% of portfolio per trade (doubled from 5%)
+    "position_size_pct": 0.20,  # 20% of portfolio per trade (can do multiple $1K positions)
     "take_profit_pct": 0.50,  # Close at 50% profit
-    "max_positions": 10,  # Max 10 open positions - FIXED: was blocking trades
+    "max_positions": 5,  # Max 5 positions with $5K = ~$1K each
     "north_star_daily_target": 100.0,  # $100/day profit target
+    "fallback_symbols": ["F", "PLTR"],  # Backup symbols if SOFI not available
 }
 
 
