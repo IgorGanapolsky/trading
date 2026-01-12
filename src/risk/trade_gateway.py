@@ -48,7 +48,7 @@ class RejectionReason(Enum):
     FREQUENCY_LIMIT = "Frequency limit exceeded (>5 trades/hour)"
     CIRCUIT_BREAKER_DAILY_LOSS = "Daily loss limit exceeded"
     CIRCUIT_BREAKER_DRAWDOWN = "Maximum drawdown exceeded"
-    MINIMUM_BATCH_NOT_MET = "Minimum trade batch not accumulated ($200)"
+    MINIMUM_BATCH_NOT_MET = "Minimum trade batch not accumulated"
     INVALID_ORDER = "Invalid order parameters"
     MARKET_CLOSED = "Market is closed"
     RISK_SCORE_TOO_HIGH = "Trade risk score exceeds threshold"
@@ -119,7 +119,8 @@ class TradeGateway:
     MAX_SYMBOL_ALLOCATION_PCT = 0.25  # 25% max per symbol (was 15%)
     MAX_CORRELATION_THRESHOLD = 0.80  # 80% correlation threshold
     MAX_TRADES_PER_HOUR = 5  # Frequency limit
-    MIN_TRADE_BATCH = 50.0  # $50 minimum - ensures positions large enough to overcome 0.18% fees
+    MIN_TRADE_BATCH = 10.0  # $10 minimum for paper trading - FIXED Jan 12, 2026 (was $50, blocked all trades)
+    MIN_TRADE_BATCH_LIVE = 50.0  # $50 for live trading - fee protection
     MAX_DAILY_LOSS_PCT = 0.03  # 3% max daily loss
     MAX_DRAWDOWN_PCT = 0.10  # 10% max drawdown
     MAX_RISK_PER_TRADE_PCT = 0.01  # 1% max risk to equity per trade (NEW)
@@ -298,21 +299,23 @@ class TradeGateway:
             risk_score += 0.2
 
         # ============================================================
-        # CHECK 5: Minimum Trade Batch ($50)
+        # CHECK 5: Minimum Trade Batch (Paper: $10, Live: $50)
+        # FIXED Jan 12, 2026: Was blocking all paper trades for days
         # ============================================================
-        if request.side == "buy" and trade_value < self.MIN_TRADE_BATCH:
+        min_batch = self.MIN_TRADE_BATCH if self.paper else self.MIN_TRADE_BATCH_LIVE
+        if request.side == "buy" and trade_value < min_batch:
             # Don't reject immediately - check if we should accumulate
-            if self.accumulated_cash + trade_value < self.MIN_TRADE_BATCH:
+            if self.accumulated_cash + trade_value < min_batch:
                 # Accumulate instead of trading
                 warnings.append(
-                    f"Accumulating ${trade_value:.2f} toward ${self.MIN_TRADE_BATCH} batch "
+                    f"Accumulating ${trade_value:.2f} toward ${min_batch} batch "
                     f"(current: ${self.accumulated_cash:.2f})"
                 )
                 self.accumulated_cash += trade_value
                 self._save_state()
                 rejection_reasons.append(RejectionReason.MINIMUM_BATCH_NOT_MET)
                 logger.info(
-                    f"⏳ Accumulating: ${self.accumulated_cash:.2f} / ${self.MIN_TRADE_BATCH}"
+                    f"⏳ Accumulating: ${self.accumulated_cash:.2f} / ${min_batch}"
                 )
             else:
                 # Use accumulated cash
