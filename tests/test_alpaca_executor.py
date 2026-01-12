@@ -24,8 +24,18 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Note: Do NOT mock pydantic globally - alpaca-py requires it
-# Only mock specific components when needed in individual tests
+# Check if pydantic is available (required for alpaca-py)
+try:
+    import pydantic  # noqa: F401
+    PYDANTIC_AVAILABLE = True
+except ImportError:
+    PYDANTIC_AVAILABLE = False
+
+# Skip all tests in this module if pydantic is not available
+pytestmark = pytest.mark.skipif(
+    not PYDANTIC_AVAILABLE,
+    reason="pydantic not available - required for alpaca-py"
+)
 
 
 class TestAlpacaExecutorInitialization:

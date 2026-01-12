@@ -14,6 +14,19 @@ import pytest
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Check if dotenv is available
+try:
+    from dotenv import load_dotenv  # noqa: F401
+    DOTENV_AVAILABLE = True
+except ImportError:
+    DOTENV_AVAILABLE = False
+
+# Skip all tests if dotenv not available
+pytestmark = pytest.mark.skipif(
+    not DOTENV_AVAILABLE,
+    reason="python-dotenv not available"
+)
+
 
 class TestMaxPositionsConfig:
     """Test max_positions configuration to prevent trading blockage."""

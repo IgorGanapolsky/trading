@@ -11,6 +11,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+# Check if numpy is available (needed for RuleOneOptionsStrategy)
+try:
+    import numpy  # noqa: F401
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+
 
 class TestRuleOneTraderConfig:
     """Test configuration settings."""
@@ -163,6 +170,7 @@ class TestRunRuleOneStrategy:
         assert callable(run_rule_one_strategy)
 
 
+@pytest.mark.skipif(not NUMPY_AVAILABLE, reason="numpy not available")
 class TestAnalyzeStockIntegration:
     """Test integration with RuleOneOptionsStrategy.analyze_stock()."""
 

@@ -13,6 +13,13 @@ import pytest
 # Add scripts to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
+# Check if alpaca is available
+try:
+    import alpaca.trading.client  # noqa: F401
+    ALPACA_AVAILABLE = True
+except ImportError:
+    ALPACA_AVAILABLE = False
+
 
 def test_is_option_symbol():
     """Test option symbol detection."""
@@ -54,6 +61,7 @@ def test_main_no_credentials():
     assert exc_info.value.code == 1
 
 
+@pytest.mark.skipif(not ALPACA_AVAILABLE, reason="alpaca not available")
 @patch.dict(
     "os.environ",
     {
@@ -75,6 +83,7 @@ def test_main_no_positions(mock_client_class):
     assert result is True  # No positions to protect = success (nothing at risk)
 
 
+@pytest.mark.skipif(not ALPACA_AVAILABLE, reason="alpaca not available")
 @patch.dict(
     "os.environ",
     {
@@ -105,6 +114,7 @@ def test_main_dry_run_with_positions(mock_client_class):
     assert result is True  # Would set trailing stop
 
 
+@pytest.mark.skipif(not ALPACA_AVAILABLE, reason="alpaca not available")
 @patch.dict(
     "os.environ",
     {
