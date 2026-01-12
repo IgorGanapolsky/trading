@@ -644,7 +644,19 @@ class VIXSignals:
     - When to buy premium (low VIX)
     - Position size multipliers
     - Strategy recommendations
+    - Cash allocation guidance (Matt Giannino framework)
     """
+
+    # Cash allocation by regime (inspired by Matt Giannino's portfolio analyzer)
+    # Higher VIX = keep more cash on sidelines for buying opportunities
+    CASH_ALLOCATION_BY_REGIME = {
+        VolatilityRegime.EXTREME_LOW: 0.10,  # 10% cash - deploy capital aggressively
+        VolatilityRegime.LOW: 0.15,  # 15% cash - mostly deployed
+        VolatilityRegime.NORMAL: 0.20,  # 20% cash - standard allocation
+        VolatilityRegime.ELEVATED: 0.30,  # 30% cash - building dry powder
+        VolatilityRegime.HIGH: 0.40,  # 40% cash - ready to buy the dip
+        VolatilityRegime.EXTREME: 0.60,  # 60% cash - capital preservation mode
+    }
 
     def __init__(self, vix_monitor: Optional[VIXMonitor] = None):
         """
@@ -756,6 +768,65 @@ class VIXSignals:
 
         return recommendation
 
+    def get_cash_allocation_recommendation(self) -> dict[str, Any]:
+        """
+        Get recommended cash allocation based on VIX regime.
+
+        Inspired by Matt Giannino's portfolio analyzer framework:
+        - Healthy markets: Keep cash low (<20%) to maximize returns
+        - Uncertain markets: Increase cash to 40% for "buy the dip" opportunities
+        - Crisis mode: Up to 60% cash for capital preservation
+
+        Returns:
+            Dict with recommended cash %, current regime, and rationale
+        """
+        regime = self.vix_monitor.get_volatility_regime()
+        percentile = self.vix_monitor.get_vix_percentile()
+        current_vix = self.vix_monitor.get_current_vix()
+
+        # Base allocation from regime
+        base_allocation = self.CASH_ALLOCATION_BY_REGIME.get(regime, 0.20)
+
+        # Fine-tune based on percentile
+        if percentile > 80:
+            # VIX in top 20% historically - add 10% more cash
+            cash_pct = min(0.70, base_allocation + 0.10)
+        elif percentile < 20:
+            # VIX in bottom 20% historically - reduce cash by 5%
+            cash_pct = max(0.05, base_allocation - 0.05)
+        else:
+            cash_pct = base_allocation
+
+        # Build rationale
+        if cash_pct <= 0.15:
+            guidance = "AGGRESSIVE DEPLOYMENT - Low volatility favors being fully invested"
+        elif cash_pct <= 0.25:
+            guidance = "STANDARD ALLOCATION - Maintain normal cash buffer"
+        elif cash_pct <= 0.40:
+            guidance = "BUILD DRY POWDER - Keep cash ready for opportunities"
+        else:
+            guidance = "CAPITAL PRESERVATION - Prioritize safety over returns"
+
+        recommendation = {
+            "recommended_cash_pct": cash_pct,
+            "recommended_cash_pct_display": f"{cash_pct:.0%}",
+            "regime": regime.value,
+            "current_vix": current_vix,
+            "vix_percentile": percentile,
+            "guidance": guidance,
+            "rationale": (
+                f"VIX at {current_vix:.2f} ({regime.value}, {percentile:.0f}th percentile). "
+                f"Recommend keeping {cash_pct:.0%} cash allocation. {guidance}"
+            ),
+        }
+
+        logger.info(
+            f"Cash Allocation: {cash_pct:.0%} "
+            f"(Regime: {regime.value}, VIX Percentile: {percentile:.1f}%)"
+        )
+
+        return recommendation
+
     def get_position_size_multiplier(self) -> dict[str, Any]:
         """
         Calculate position size multiplier based on VIX regime.
@@ -811,7 +882,7 @@ class VIXSignals:
         Get comprehensive strategy recommendation based on current VIX regime.
 
         Returns:
-            Dict with strategy recommendations, position sizing, and entry/exit rules
+            Dict with strategy recommendations, position sizing, cash allocation, and entry/exit rules
         """
         current_vix = self.vix_monitor.get_current_vix()
         regime = self.vix_monitor.get_volatility_regime(current_vix)
@@ -820,6 +891,7 @@ class VIXSignals:
         sell_signal = self.should_sell_premium()
         buy_signal = self.should_buy_premium()
         position_size = self.get_position_size_multiplier()
+        cash_allocation = self.get_cash_allocation_recommendation()
 
         recommendation = {
             "primary_action": self._get_primary_action(sell_signal, buy_signal),
@@ -828,6 +900,8 @@ class VIXSignals:
             "percentile": percentile,
             "term_structure": term_state.value,
             "position_size_multiplier": position_size["multiplier"],
+            "recommended_cash_pct": cash_allocation["recommended_cash_pct"],
+            "cash_guidance": cash_allocation["guidance"],
             "recommended_strategies": self._get_all_strategy_recommendations(
                 regime, sell_signal, buy_signal
             ),
@@ -839,7 +913,7 @@ class VIXSignals:
 
         logger.info(
             f"Strategy Recommendation: {recommendation['primary_action']} "
-            f"(Regime: {regime.value}, VIX: {current_vix:.2f})"
+            f"(Regime: {regime.value}, VIX: {current_vix:.2f}, Cash: {cash_allocation['recommended_cash_pct']:.0%})"
         )
 
         return recommendation
@@ -1121,11 +1195,19 @@ if __name__ == "__main__":
     print(f"Position Size Multiplier: {position_size['multiplier']:.2f}x")
     print(f"Guidance: {position_size['guidance']}")
 
+    print("\n--- Cash Allocation (Giannino Framework) ---")
+    cash_rec = signals.get_cash_allocation_recommendation()
+    print(f"Recommended Cash: {cash_rec['recommended_cash_pct_display']}")
+    print(f"Guidance: {cash_rec['guidance']}")
+    print(f"Rationale: {cash_rec['rationale']}")
+
     print("\n--- Comprehensive Strategy Recommendation ---")
     recommendation = signals.get_strategy_recommendation()
     print(f"Primary Action: {recommendation['primary_action']}")
     print(f"Risk Level: {recommendation['risk_level']}")
     print(f"Position Size Multiplier: {recommendation['position_size_multiplier']:.2f}x")
+    print(f"Recommended Cash: {recommendation['recommended_cash_pct']:.0%}")
+    print(f"Cash Guidance: {recommendation['cash_guidance']}")
 
     print("\nRecommended Strategies:")
     for strat in recommendation["recommended_strategies"]:
