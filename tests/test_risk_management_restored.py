@@ -209,7 +209,7 @@ class TestIntegration:
     def test_full_trade_workflow(self):
         """Test complete trade risk assessment workflow."""
         rm = RiskManager(portfolio_value=5000.0)
-        cb = VIXCircuitBreaker()
+        # VIXCircuitBreaker would be used for volatility checks in production
 
         # Simulate a CSP trade on F at $5 strike
         symbol = "F"
