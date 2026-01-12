@@ -6,8 +6,16 @@ full, untruncated lessons learned AND trade history from our RAG knowledge base.
 
 Deployed to Cloud Run at: https://trading-dialogflow-webhook-cqlewkvzdq-uc.a.run.app
 
-Updated Jan 2026: Added trade history queries
-Security Update Jan 10, 2026: Added SSL verification, rate limiting, webhook auth
+Version History:
+- v2.9.0 Jan 10, 2026: Security - SSL verification, rate limiting, webhook auth
+- v3.0.0 Jan 12, 2026: Vertex AI RAG integration - semantic search with fallback
+
+Architecture (v3.0.0):
+- Primary: Vertex AI RAG (cloud semantic search with text-embedding-004)
+- Fallback: Local keyword-based RAG (when GCP credentials unavailable)
+
+CEO Directive: "I want to be able to speak to Dialogflow about my trades
+and get accurate information" - This requires semantic search (Vertex AI).
 """
 
 import logging
@@ -34,6 +42,14 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
+
+# Import Vertex AI RAG for cloud-based semantic search (primary)
+try:
+    from src.rag.vertex_rag import get_vertex_rag
+
+    VERTEX_RAG_AVAILABLE = True
+except ImportError:
+    VERTEX_RAG_AVAILABLE = False
 
 # Configure logging
 logging.basicConfig(
@@ -75,13 +91,82 @@ else:
         return decorator
 
 
-# Initialize RAG system for lessons
-rag = LessonsLearnedRAG()
-logger.info(f"RAG initialized with {len(rag.lessons)} lessons")
+# Initialize RAG systems
+# Primary: Vertex AI RAG (cloud semantic search) - for accurate answers to CEO
+# Fallback: Local keyword RAG - when Vertex AI unavailable
+vertex_rag = None
+if VERTEX_RAG_AVAILABLE:
+    try:
+        vertex_rag = get_vertex_rag()
+        if vertex_rag.is_initialized:
+            logger.info("✅ Vertex AI RAG initialized (primary - semantic search)")
+        else:
+            logger.warning("Vertex AI RAG not initialized - missing GCP credentials")
+            vertex_rag = None
+    except Exception as e:
+        logger.warning(f"Vertex AI RAG init failed: {e}")
+        vertex_rag = None
+
+# Local RAG as fallback
+local_rag = LessonsLearnedRAG()
+logger.info(f"Local RAG initialized with {len(local_rag.lessons)} lessons (fallback)")
 
 # Trade history is now loaded from local JSON files
 # ChromaDB was removed Jan 8, 2026 per CLAUDE.md directive
 logger.info("Trade history loaded from local JSON files (ChromaDB removed)")
+
+
+def query_rag_hybrid(query: str, top_k: int = 5) -> tuple[list, str]:
+    """
+    Query RAG using Vertex AI first (semantic), fall back to local (keyword).
+
+    Returns:
+        Tuple of (results_list, source_name)
+        - For Vertex AI: [{text: str}]
+        - For Local: [{id, severity, score, snippet, content}]
+    """
+    # Try Vertex AI RAG first (semantic search - better for natural language)
+    if vertex_rag is not None:
+        try:
+            results = vertex_rag.query(query, similarity_top_k=top_k)
+            if results:
+                logger.info(f"Vertex AI RAG returned {len(results)} results")
+                return results, "vertex_ai"
+            logger.info("Vertex AI RAG returned no results, trying local")
+        except Exception as e:
+            logger.warning(f"Vertex AI RAG query failed: {e}")
+
+    # Fallback to local keyword-based RAG
+    results = local_rag.query(query, top_k=top_k)
+    logger.info(f"Local RAG returned {len(results)} results")
+    return results, "local"
+
+
+def format_rag_response(results: list, query: str, source: str) -> str:
+    """Format RAG results into response text, handling both Vertex AI and local formats."""
+    if not results:
+        return f"No lessons found matching '{query}'. Try searching for: trading, risk, CI, RAG, verification, or operational."
+
+    response_parts = []
+
+    if source == "vertex_ai":
+        # Vertex AI returns [{text: str}] - Gemini-generated response
+        response_parts.append("Based on our trading knowledge base (Vertex AI RAG):\n")
+        for i, result in enumerate(results, 1):
+            text = result.get("text", "")
+            if text:
+                response_parts.append(f"\n{text}\n")
+    else:
+        # Local RAG returns [{id, severity, score, snippet, content}]
+        response_parts.append("Based on our lessons learned (local search):\n")
+        for lesson in results:
+            lesson_id = lesson.get("id", "unknown")
+            severity = lesson.get("severity", "UNKNOWN")
+            content = lesson.get("content", lesson.get("snippet", ""))
+            response_parts.append(f"\n**{lesson_id}** ({severity}): {content}\n")
+            response_parts.append("-" * 50)
+
+    return "\n".join(response_parts)
 
 
 def get_current_portfolio_status() -> dict:
@@ -884,15 +969,15 @@ Please check directly:
 Or ask me about **lessons learned** instead (e.g., "What lessons did we learn about risk management?")"""
                     logger.warning("Trade query but no portfolio data available")
         else:
-            # Query RAG system for relevant lessons
-            results = rag.query(user_query, top_k=3)
+            # Query RAG system for relevant lessons (Vertex AI first, then local)
+            results, source = query_rag_hybrid(user_query, top_k=5)
 
             if not results:
                 # Try broader search
-                results = rag.query("trading operational failure", top_k=3)
+                results, source = query_rag_hybrid("trading operational failure", top_k=3)
 
-            # Format FULL response (no truncation)
-            response_text = format_lessons_response(results, user_query)
+            # Format response based on source (Vertex AI or local)
+            response_text = format_rag_response(results, user_query, source)
 
         logger.info(f"Returning response with {len(response_text)} chars")
 
@@ -917,10 +1002,12 @@ async def health():
     trade_count = len(query_trades("all", limit=1000))
     return {
         "status": "healthy",
-        "lessons_loaded": len(rag.lessons),
-        "critical_lessons": len(rag.get_critical_lessons()),
+        "vertex_ai_rag_enabled": vertex_rag is not None,
+        "local_lessons_loaded": len(local_rag.lessons),
+        "critical_lessons": len(local_rag.get_critical_lessons()),
         "trades_loaded": trade_count,
         "trade_history_source": "local_json",
+        "rag_mode": "vertex_ai_primary" if vertex_rag else "local_only",
     }
 
 
@@ -930,10 +1017,12 @@ async def root():
     trade_count = len(query_trades("all", limit=1000))
     return {
         "service": "Trading AI RAG Webhook",
-        "version": "2.9.0",  # Security: SSL verification, rate limiting, webhook auth
-        "lessons_loaded": len(rag.lessons),
+        "version": "3.0.0",  # Vertex AI RAG integration (semantic search)
+        "vertex_ai_rag_enabled": vertex_rag is not None,
+        "local_lessons_loaded": len(local_rag.lessons),
         "trades_loaded": trade_count,
         "trade_history_source": "local_json",
+        "rag_mode": "vertex_ai_primary" if vertex_rag else "local_only",
         "endpoints": {
             "/webhook": "POST - Dialogflow CX webhook (lessons + trades + readiness)",
             "/health": "GET - Health check",
@@ -947,12 +1036,17 @@ async def root():
 @app.get("/test")
 async def test_rag(query: str = "critical lessons"):
     """Test endpoint to verify lessons RAG is working."""
-    results = rag.query(query, top_k=3)
-    return {
-        "query": query,
-        "query_type": "lessons",
-        "results_count": len(results),
-        "results": [
+    results, source = query_rag_hybrid(query, top_k=3)
+
+    if source == "vertex_ai":
+        # Vertex AI returns [{text: str}]
+        formatted_results = [
+            {"text_preview": r.get("text", "")[:500], "source": "vertex_ai"}
+            for r in results
+        ]
+    else:
+        # Local RAG returns [{id, severity, score, snippet, content}]
+        formatted_results = [
             {
                 "id": r["id"],
                 "severity": r["severity"],
@@ -961,7 +1055,15 @@ async def test_rag(query: str = "critical lessons"):
                 "preview": r.get("snippet", "")[:200],
             }
             for r in results
-        ],
+        ]
+
+    return {
+        "query": query,
+        "query_type": "lessons",
+        "rag_source": source,
+        "vertex_ai_available": vertex_rag is not None,
+        "results_count": len(results),
+        "results": formatted_results,
     }
 
 
