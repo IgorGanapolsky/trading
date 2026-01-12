@@ -34,7 +34,7 @@ plugins:
 # Collections
 collections:
   lessons:
-    output: true
+    output: false  # Disabled Jan 12, 2026 - lessons contain stale stats, keep in rag_knowledge only
     permalink: /lessons/:name/
   reports:
     output: true
@@ -48,11 +48,6 @@ defaults:
     values:
       layout: "post"
       author: "Igor Ganapolsky & Claude"
-  - scope:
-      path: ""
-      type: "lessons"
-    values:
-      layout: "post"
   - scope:
       path: ""
       type: "reports"
