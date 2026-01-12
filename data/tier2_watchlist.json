@@ -1,52 +1,63 @@
 {
   "meta": {
-    "version": "1.0",
+    "version": "2.0",
     "created": "2025-11-05",
-    "last_updated": "2025-11-05",
-    "description": "Tier 2 Growth Strategy Watchlist - High-growth disruptive stocks"
+    "last_updated": "2026-01-12",
+    "description": "CSP Strategy Watchlist - Stocks for cash-secured puts with $5K capital"
   },
-  "current_holdings": [
-    {
-      "ticker": "NVDA",
-      "name": "NVIDIA Corporation",
-      "source": "Initial Strategy",
-      "date_added": "2025-10-29",
-      "rationale": "AI chip leader, semiconductor dominance",
-      "priority": "high",
-      "status": "active"
-    },
-    {
-      "ticker": "GOOGL",
-      "name": "Alphabet Inc.",
-      "source": "Initial Strategy",
-      "date_added": "2025-10-29",
-      "rationale": "AI/ML platform, search dominance, cloud growth",
-      "priority": "high",
-      "status": "active"
-    }
-  ],
+  "current_holdings": [],
   "watchlist": [
     {
-      "ticker": "AMZN",
-      "name": "Amazon.com Inc.",
-      "source": "YouTube - Parkev Tatevosian (OpenAI Partnership Analysis)",
-      "date_added": "2025-11-04",
-      "rationale": "$38B OpenAI cloud deal, 15% upside to fair value ($295), 35% AWS margins, AI infrastructure leader",
+      "ticker": "F",
+      "name": "Ford Motor Company",
+      "source": "CSP Strategy - CLAUDE.md",
+      "date_added": "2026-01-12",
+      "rationale": "$5 strike CSPs need only $500 collateral, high IV, liquid options",
       "priority": "high",
-      "status": "watchlist",
-      "entry_zones": ["$245-250 (strong support)", "$256-258 (current)", "$260-265 (breakout)"],
-      "profit_targets": ["$280 (+9%)", "$295 (+15%)", "$320 (+25%)"],
-      "stop_loss": "$240",
-      "catalyst": "OpenAI $38B AWS deal announced, +5% rally on news",
-      "analyst_rating": "BUY (CFA analyst owns stock, adding more)",
-      "video_analysis": "docs/youtube_analysis/video_4_amzn_openai_deal.md"
+      "status": "active",
+      "csp_strategy": {
+        "target_strike": 5.0,
+        "collateral_needed": 500,
+        "target_premium": 10,
+        "target_dte": 30
+      }
+    },
+    {
+      "ticker": "SOFI",
+      "name": "SoFi Technologies Inc.",
+      "source": "CSP Strategy - CLAUDE.md",
+      "date_added": "2026-01-12",
+      "rationale": "$5 strike CSPs need only $500 collateral, fintech growth, high IV",
+      "priority": "high",
+      "status": "active",
+      "csp_strategy": {
+        "target_strike": 5.0,
+        "collateral_needed": 500,
+        "target_premium": 15,
+        "target_dte": 30
+      }
+    },
+    {
+      "ticker": "BAC",
+      "name": "Bank of America Corporation",
+      "source": "Wheel Strategy Addition",
+      "date_added": "2026-01-12",
+      "rationale": "Liquid options, stable bank, good for wheel strategy at lower strikes",
+      "priority": "medium",
+      "status": "active",
+      "csp_strategy": {
+        "target_strike": 30.0,
+        "collateral_needed": 3000,
+        "target_premium": 30,
+        "target_dte": 30
+      }
     }
   ],
   "notes": [
-    "Tier 2 allocation: 20% of daily investment ($2/day)",
-    "Focus: High-growth disruptive companies",
-    "Risk level: MEDIUM",
-    "Target return: 15-25% annually",
-    "YouTube analysis integration: November 2025"
+    "Strategy: Cash-secured puts on low-priced stocks",
+    "Capital: $5,000 paper account",
+    "Primary targets: F and SOFI at $5 strike ($500 collateral each)",
+    "Can run up to 10 CSP contracts with full capital",
+    "Focus: Generate theta income, not stock appreciation"
   ]
 }
