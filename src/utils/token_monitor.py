@@ -287,8 +287,8 @@ class TokenUsageMonitor:
 
     def _get_recent_alerts_unsafe(self) -> list[str]:
         """Get recent alerts (must hold lock)."""
-        recent = [e for e in self._entries if e.timestamp >= self._session_start]
         # This is a simplified version - in production, alerts would be stored separately
+        # Would filter self._entries by timestamp >= self._session_start
         return []
 
     def _get_recommendations(self, stats: UsageStats) -> list[str]:
