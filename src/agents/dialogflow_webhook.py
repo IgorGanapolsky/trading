@@ -224,13 +224,15 @@ def get_current_portfolio_status() -> dict:
 
     return {
         "live": {
-            "equity": state.get("account", {}).get("current_equity", 0),
+            # FIX Jan 12, 2026: system_state.json uses "equity" or "cash" not "current_equity"
+            "equity": state.get("account", {}).get("equity", 0) or state.get("account", {}).get("cash", 0),
             "total_pl": state.get("account", {}).get("total_pl", 0),
             "total_pl_pct": state.get("account", {}).get("total_pl_pct", 0),
             "positions_count": state.get("account", {}).get("positions_count", 0),
         },
         "paper": {
-            "equity": state.get("paper_account", {}).get("current_equity", 0),
+            # FIX Jan 12, 2026: system_state.json uses "equity" not "current_equity"
+            "equity": state.get("paper_account", {}).get("equity", 0) or state.get("paper_account", {}).get("cash", 0),
             "total_pl": state.get("paper_account", {}).get("total_pl", 0),
             "total_pl_pct": state.get("paper_account", {}).get("total_pl_pct", 0),
             "positions_count": state.get("paper_account", {}).get("positions_count", 0),
@@ -476,8 +478,9 @@ def assess_trading_readiness(
     # 3. CAPITAL CHECK (context-aware: paper vs live)
     max_score += 20
     if state:
-        paper_equity = state.get("paper_account", {}).get("current_equity", 0)
-        live_equity = state.get("account", {}).get("current_equity", 0)
+        # FIX Jan 12, 2026: Use "equity" or "cash" as fallback (system_state.json schema)
+        paper_equity = state.get("paper_account", {}).get("equity", 0) or state.get("paper_account", {}).get("cash", 0)
+        live_equity = state.get("account", {}).get("equity", 0) or state.get("account", {}).get("cash", 0)
 
         if is_paper:
             # Paper trading mode - realistic thresholds for $5K paper account (CEO reset Jan 7, 2026)

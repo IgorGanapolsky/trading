@@ -1676,21 +1676,41 @@
     "symbol": "SOFI"
   },
   {
-    "id": "lesson_20260112_221752_session",
-    "timestamp": "2026-01-12T22:17:52.614267",
-    "category": "operational",
-    "title": "Full PR Merge and Branch Cleanup - January 12, 2026",
-    "description": "Successfully merged workflow updates to main using GitHub PAT. Deleted 3 stale branches. Updated CLAUDE.md with 3 new permanent directives (clean up, agentic control, parallel execution).",
-    "root_cause": "Previous session lacked PAT access, now resolved",
-    "prevention": "Always request PAT from CEO at session start if needed for merges",
+    "id": "lesson_20260112_172200_dialogflow_equity",
+    "timestamp": "2026-01-12T17:22:00.000000",
+    "category": "data_mismatch",
+    "title": "Dialogflow Webhook Used Wrong Key for Paper Equity (Jan 12, 2026)",
+    "description": "Webhook looked for paper_account.current_equity but system_state.json has paper_account.equity. Showed $0 instead of $5000.",
+    "root_cause": "Schema mismatch between webhook code and system_state.json data structure",
+    "prevention": "Always verify JSON key names match between producer (system_state updater) and consumer (webhook). Use fallback: .get(\"equity\", 0) or .get(\"cash\", 0)",
     "tags": [
-      "merge",
-      "cleanup",
-      "operational",
-      "success"
+      "bug",
+      "dialogflow",
+      "webhook",
+      "schema_mismatch",
+      "data"
     ],
-    "severity": "low",
-    "financial_impact": 0.0,
+    "severity": "high",
+    "financial_impact": 0,
+    "symbol": null
+  },
+  {
+    "id": "lesson_20260112_172200_dialogflow_equity",
+    "timestamp": "2026-01-12T17:22:00.000000",
+    "category": "data_mismatch",
+    "title": "Dialogflow Webhook Used Wrong Key for Paper Equity (Jan 12, 2026)",
+    "description": "Webhook looked for paper_account.current_equity but system_state.json has paper_account.equity. Showed $0 instead of $5000.",
+    "root_cause": "Schema mismatch between webhook code and system_state.json data structure",
+    "prevention": "Always verify JSON key names match between producer (system_state updater) and consumer (webhook). Use fallback: .get(\"equity\", 0) or .get(\"cash\", 0)",
+    "tags": [
+      "bug",
+      "dialogflow",
+      "webhook",
+      "schema_mismatch",
+      "data"
+    ],
+    "severity": "high",
+    "financial_impact": 0,
     "symbol": null
   }
 ]
