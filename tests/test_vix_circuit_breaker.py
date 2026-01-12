@@ -3,16 +3,19 @@
 Tests for VIX Circuit Breaker Module
 
 Tests the volatility-based circuit breaker that protects positions
-during market stress by monitoring VIX levels and intraday spikes.
+during market stress by monitoring VIX levels.
+
+Phil Town Rule #1: Don't lose money.
 
 Author: Trading System CTO
 Created: 2026-01-08
+Updated: 2026-01-12 (aligned with restored implementation)
 """
 
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -21,10 +24,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.risk.vix_circuit_breaker import (  # noqa: E402
     AlertLevel,
-    CircuitBreakerEvent,
-    DeRiskAction,
     VIXCircuitBreaker,
     VIXStatus,
+    VIX_THRESHOLDS,
+    POSITION_MULTIPLIERS,
 )
 
 
@@ -60,356 +63,298 @@ class TestAlertLevel:
 class TestVIXStatus:
     """Test VIXStatus dataclass functionality."""
 
-    @pytest.fixture
-    def sample_status(self):
-        """Create a sample VIXStatus for testing."""
-        return VIXStatus(
+    def test_status_creation(self):
+        """Verify VIXStatus can be created with required fields."""
+        status = VIXStatus(
             current_level=22.5,
-            previous_close=20.0,
-            intraday_change_pct=0.125,
             alert_level=AlertLevel.HIGH,
+            message="Test message",
             position_multiplier=0.5,
-            new_position_allowed=True,
-            reduction_target_pct=0.0,
-            message="VIX elevated - reduce new positions",
-            timestamp=datetime.now(),
-            vvix_level=95.0,
+            halt_trading=False,
         )
+        assert status.current_level == 22.5
+        assert status.alert_level == AlertLevel.HIGH
+        assert status.position_multiplier == 0.5
+        assert status.halt_trading is False
 
-    def test_to_dict_contains_all_fields(self, sample_status):
-        """Verify to_dict() includes all required fields."""
-        result = sample_status.to_dict()
-        required_keys = [
-            "vix_current",
-            "vix_prev_close",
-            "intraday_change_pct",
-            "alert_level",
-            "position_multiplier",
-            "new_position_allowed",
-            "reduction_target_pct",
-            "message",
-            "timestamp",
-        ]
-        for key in required_keys:
-            assert key in result, f"Missing key in to_dict(): {key}"
+    def test_status_with_halt(self):
+        """Verify halt_trading is set correctly for extreme VIX."""
+        status = VIXStatus(
+            current_level=35.0,
+            alert_level=AlertLevel.EXTREME,
+            message="Trading halted",
+            position_multiplier=0.0,
+            halt_trading=True,
+        )
+        assert status.halt_trading is True
+        assert status.position_multiplier == 0.0
 
-    def test_to_dict_rounds_floats(self, sample_status):
-        """Verify to_dict() rounds float values appropriately."""
-        result = sample_status.to_dict()
-        assert result["vix_current"] == 22.5
-        assert result["intraday_change_pct"] == 0.12  # Rounded to 2 decimals
-
-    def test_to_dict_handles_none_vvix(self):
-        """Verify to_dict() handles None VVIX gracefully."""
+    def test_timestamp_auto_set(self):
+        """Verify timestamp is automatically set if not provided."""
         status = VIXStatus(
             current_level=15.0,
-            previous_close=14.5,
-            intraday_change_pct=0.03,
-            alert_level=AlertLevel.ELEVATED,
-            position_multiplier=0.8,
-            new_position_allowed=True,
-            reduction_target_pct=0.0,
-            message="Markets stable",
-            timestamp=datetime.now(),
-            vvix_level=None,
+            alert_level=AlertLevel.NORMAL,
+            message="Normal",
         )
-        result = status.to_dict()
-        assert result["vvix_level"] is None
+        assert status.timestamp is not None
+        assert isinstance(status.timestamp, datetime)
 
 
 # =============================================================================
-# DeRiskAction Dataclass Tests
-# =============================================================================
-
-
-class TestDeRiskAction:
-    """Test DeRiskAction dataclass."""
-
-    def test_action_creation(self):
-        """Test creating a de-risk action."""
-        action = DeRiskAction(
-            symbol="SPY",
-            action="reduce",
-            current_qty=100.0,
-            target_qty=50.0,
-            reason="VIX spike above 30",
-            priority=1,
-        )
-        assert action.symbol == "SPY"
-        assert action.action == "reduce"
-        assert action.current_qty == 100.0
-        assert action.target_qty == 50.0
-        assert action.priority == 1
-
-
-# =============================================================================
-# CircuitBreakerEvent Dataclass Tests
-# =============================================================================
-
-
-class TestCircuitBreakerEvent:
-    """Test CircuitBreakerEvent dataclass."""
-
-    def test_event_creation(self):
-        """Test creating a circuit breaker event record."""
-        event = CircuitBreakerEvent(
-            timestamp=datetime.now(),
-            alert_level=AlertLevel.EXTREME,
-            vix_level=35.0,
-            intraday_change_pct=0.25,
-            action_taken="reduce_positions",
-            positions_affected=["SPY", "QQQ", "AAPL"],
-            total_reduced_value=15000.0,
-        )
-        assert event.alert_level == AlertLevel.EXTREME
-        assert event.vix_level == 35.0
-        assert len(event.positions_affected) == 3
-
-
-# =============================================================================
-# VIXCircuitBreaker Class Tests
+# VIXCircuitBreaker Tests
 # =============================================================================
 
 
 class TestVIXCircuitBreaker:
-    """Test VIXCircuitBreaker class functionality."""
+    """Test VIX Circuit Breaker functionality."""
 
     @pytest.fixture
     def circuit_breaker(self):
-        """Create a VIX circuit breaker instance for testing."""
-        return VIXCircuitBreaker(
-            vix_symbol="^VIX",
-            check_interval_seconds=60,
-            enable_auto_reduce=False,
-            paper_mode=True,
-        )
+        """Create a VIXCircuitBreaker for testing."""
+        return VIXCircuitBreaker(halt_threshold=30.0)
 
-    def test_init_defaults(self):
-        """Test circuit breaker initialization with defaults."""
+    def test_init_default_threshold(self):
+        """Verify default halt threshold."""
         cb = VIXCircuitBreaker()
-        assert cb.vix_symbol == "^VIX"
-        assert cb.check_interval_seconds == 300
-        assert cb.enable_auto_reduce is True
-        assert cb.paper_mode is True
+        assert cb.halt_threshold == 30.0
 
-    def test_init_custom_values(self, circuit_breaker):
-        """Test circuit breaker initialization with custom values."""
-        assert circuit_breaker.check_interval_seconds == 60
-        assert circuit_breaker.enable_auto_reduce is False
+    def test_init_custom_threshold(self):
+        """Verify custom halt threshold."""
+        cb = VIXCircuitBreaker(halt_threshold=25.0)
+        assert cb.halt_threshold == 25.0
 
-    def test_threshold_constants_exist(self, circuit_breaker):
-        """Verify all threshold constants are defined."""
-        # VIX level thresholds
-        assert hasattr(circuit_breaker, "VIX_NORMAL")
-        assert hasattr(circuit_breaker, "VIX_ELEVATED")
-        assert hasattr(circuit_breaker, "VIX_HIGH")
-        assert hasattr(circuit_breaker, "VIX_VERY_HIGH")
+    def test_get_alert_level_normal(self, circuit_breaker):
+        """VIX < 15 should be NORMAL."""
+        assert circuit_breaker._get_alert_level(12.0) == AlertLevel.NORMAL
 
-        # Spike thresholds
-        assert hasattr(circuit_breaker, "SPIKE_WARNING")
-        assert hasattr(circuit_breaker, "SPIKE_ALERT")
-        assert hasattr(circuit_breaker, "SPIKE_EMERGENCY")
-        assert hasattr(circuit_breaker, "SPIKE_CRISIS")
+    def test_get_alert_level_elevated(self, circuit_breaker):
+        """VIX 15-20 should be ELEVATED."""
+        assert circuit_breaker._get_alert_level(17.0) == AlertLevel.ELEVATED
 
-    def test_threshold_values_are_ordered(self, circuit_breaker):
-        """Verify thresholds are in ascending order."""
-        assert circuit_breaker.VIX_NORMAL < circuit_breaker.VIX_ELEVATED
-        assert circuit_breaker.VIX_ELEVATED < circuit_breaker.VIX_HIGH
-        assert circuit_breaker.VIX_HIGH < circuit_breaker.VIX_VERY_HIGH
+    def test_get_alert_level_high(self, circuit_breaker):
+        """VIX 20-25 should be HIGH."""
+        assert circuit_breaker._get_alert_level(22.0) == AlertLevel.HIGH
 
-        assert circuit_breaker.SPIKE_WARNING < circuit_breaker.SPIKE_ALERT
-        assert circuit_breaker.SPIKE_ALERT < circuit_breaker.SPIKE_EMERGENCY
-        assert circuit_breaker.SPIKE_EMERGENCY < circuit_breaker.SPIKE_CRISIS
+    def test_get_alert_level_very_high(self, circuit_breaker):
+        """VIX 25-30 should be VERY_HIGH."""
+        assert circuit_breaker._get_alert_level(27.0) == AlertLevel.VERY_HIGH
 
-    def test_reduction_targets_defined(self, circuit_breaker):
-        """Verify reduction targets are defined for all alert levels."""
-        for level in AlertLevel:
-            assert level in circuit_breaker.REDUCTION_TARGETS, (
-                f"Missing reduction target for {level}"
-            )
-            target = circuit_breaker.REDUCTION_TARGETS[level]
-            assert 0.0 <= target <= 1.0, f"Invalid reduction target for {level}: {target}"
+    def test_get_alert_level_extreme(self, circuit_breaker):
+        """VIX 30-40 should be EXTREME."""
+        assert circuit_breaker._get_alert_level(35.0) == AlertLevel.EXTREME
 
-    def test_size_multipliers_defined(self, circuit_breaker):
-        """Verify size multipliers are defined for all alert levels."""
-        for level in AlertLevel:
-            assert level in circuit_breaker.SIZE_MULTIPLIERS, f"Missing size multiplier for {level}"
-            mult = circuit_breaker.SIZE_MULTIPLIERS[level]
-            assert 0.0 <= mult <= 1.0, f"Invalid size multiplier for {level}: {mult}"
+    def test_get_alert_level_spike(self, circuit_breaker):
+        """VIX >= 40 should be SPIKE."""
+        assert circuit_breaker._get_alert_level(45.0) == AlertLevel.SPIKE
 
-    def test_extreme_blocks_new_positions(self, circuit_breaker):
-        """EXTREME alert should block all new positions."""
-        assert circuit_breaker.SIZE_MULTIPLIERS[AlertLevel.EXTREME] == 0.0
+    @patch.object(VIXCircuitBreaker, "_fetch_vix")
+    def test_get_current_status_normal(self, mock_fetch, circuit_breaker):
+        """Test status when VIX is normal."""
+        mock_fetch.return_value = 12.0
+        status = circuit_breaker.get_current_status(force_refresh=True)
 
-    def test_spike_blocks_new_positions(self, circuit_breaker):
-        """SPIKE alert should block all new positions."""
-        assert circuit_breaker.SIZE_MULTIPLIERS[AlertLevel.SPIKE] == 0.0
+        assert status.current_level == 12.0
+        assert status.alert_level == AlertLevel.NORMAL
+        assert status.position_multiplier == 1.0
+        assert status.halt_trading is False
 
-    def test_normal_allows_full_positions(self, circuit_breaker):
-        """NORMAL alert should allow full position sizes."""
-        assert circuit_breaker.SIZE_MULTIPLIERS[AlertLevel.NORMAL] == 1.0
+    @patch.object(VIXCircuitBreaker, "_fetch_vix")
+    def test_get_current_status_halt(self, mock_fetch, circuit_breaker):
+        """Test status when VIX exceeds halt threshold."""
+        mock_fetch.return_value = 35.0
+        status = circuit_breaker.get_current_status(force_refresh=True)
 
+        assert status.halt_trading is True
+        assert "HALTED" in status.message
 
-# =============================================================================
-# Alert Level Determination Tests
-# =============================================================================
+    @patch.object(VIXCircuitBreaker, "_fetch_vix")
+    def test_should_halt_trading_false(self, mock_fetch, circuit_breaker):
+        """Test should_halt_trading returns False for normal VIX."""
+        mock_fetch.return_value = 15.0
+        assert circuit_breaker.should_halt_trading() is False
 
+    @patch.object(VIXCircuitBreaker, "_fetch_vix")
+    def test_should_halt_trading_true(self, mock_fetch, circuit_breaker):
+        """Test should_halt_trading returns True for extreme VIX."""
+        mock_fetch.return_value = 35.0
+        assert circuit_breaker.should_halt_trading() is True
 
-class TestAlertLevelDetermination:
-    """Test the _determine_alert_level method."""
+    @patch.object(VIXCircuitBreaker, "_fetch_vix")
+    def test_get_position_multiplier_full(self, mock_fetch, circuit_breaker):
+        """Test full position multiplier at normal VIX."""
+        mock_fetch.return_value = 12.0
+        assert circuit_breaker.get_position_multiplier() == 1.0
 
-    @pytest.fixture
-    def circuit_breaker(self):
-        return VIXCircuitBreaker()
+    @patch.object(VIXCircuitBreaker, "_fetch_vix")
+    def test_get_position_multiplier_reduced(self, mock_fetch, circuit_breaker):
+        """Test reduced position multiplier at elevated VIX."""
+        mock_fetch.return_value = 17.0
+        assert circuit_breaker.get_position_multiplier() == 0.75
 
-    def test_normal_level(self, circuit_breaker):
-        """VIX < 15 with no spike should return NORMAL."""
-        level = circuit_breaker._determine_alert_level(vix_level=12.0, intraday_change=0.02)
-        assert level == AlertLevel.NORMAL
+    @patch.object(VIXCircuitBreaker, "_fetch_vix")
+    def test_get_position_multiplier_half(self, mock_fetch, circuit_breaker):
+        """Test half position multiplier at high VIX."""
+        mock_fetch.return_value = 22.0
+        assert circuit_breaker.get_position_multiplier() == 0.50
 
-    def test_elevated_level(self, circuit_breaker):
-        """VIX 15-20 with no spike should return ELEVATED."""
-        level = circuit_breaker._determine_alert_level(vix_level=17.0, intraday_change=0.05)
-        assert level == AlertLevel.ELEVATED
+    @patch.object(VIXCircuitBreaker, "_fetch_vix")
+    def test_get_position_multiplier_zero(self, mock_fetch, circuit_breaker):
+        """Test zero position multiplier at extreme VIX."""
+        mock_fetch.return_value = 35.0
+        assert circuit_breaker.get_position_multiplier() == 0.0
 
-    def test_high_level(self, circuit_breaker):
-        """VIX 20-25 with no spike should return HIGH."""
-        level = circuit_breaker._determine_alert_level(vix_level=22.0, intraday_change=0.05)
-        assert level == AlertLevel.HIGH
+    @patch.object(VIXCircuitBreaker, "_fetch_vix")
+    def test_check_trade_allowed_yes(self, mock_fetch, circuit_breaker):
+        """Test trade is allowed at normal VIX."""
+        mock_fetch.return_value = 15.0
+        allowed, reason = circuit_breaker.check_trade_allowed("SPY")
+        assert allowed is True
 
-    def test_very_high_level(self, circuit_breaker):
-        """VIX 25-30 with no spike should return VERY_HIGH."""
-        level = circuit_breaker._determine_alert_level(vix_level=27.0, intraday_change=0.05)
-        assert level == AlertLevel.VERY_HIGH
+    @patch.object(VIXCircuitBreaker, "_fetch_vix")
+    def test_check_trade_allowed_no(self, mock_fetch, circuit_breaker):
+        """Test trade is blocked at extreme VIX."""
+        mock_fetch.return_value = 35.0
+        allowed, reason = circuit_breaker.check_trade_allowed("SPY")
+        assert allowed is False
+        assert "halted" in reason.lower() or "HALTED" in reason
 
-    def test_extreme_level_from_vix(self, circuit_breaker):
-        """VIX > 30 should return EXTREME."""
-        level = circuit_breaker._determine_alert_level(vix_level=35.0, intraday_change=0.05)
-        assert level == AlertLevel.EXTREME
-
-    def test_spike_overrides_level(self, circuit_breaker):
-        """50%+ intraday spike should override VIX level and return SPIKE."""
-        # Even with low VIX, a 50% spike should trigger SPIKE alert
-        level = circuit_breaker._determine_alert_level(vix_level=18.0, intraday_change=0.55)
-        assert level == AlertLevel.SPIKE
-
-    def test_emergency_spike_returns_extreme(self, circuit_breaker):
-        """30%+ intraday spike should return EXTREME."""
-        level = circuit_breaker._determine_alert_level(vix_level=18.0, intraday_change=0.35)
-        assert level == AlertLevel.EXTREME
-
-    def test_alert_spike_returns_very_high(self, circuit_breaker):
-        """20%+ intraday spike should return VERY_HIGH."""
-        level = circuit_breaker._determine_alert_level(vix_level=15.0, intraday_change=0.22)
-        assert level == AlertLevel.VERY_HIGH
-
-    def test_spike_priority_over_level(self, circuit_breaker):
-        """Spike detection should take priority over absolute VIX level."""
-        # Low VIX but high spike should still trigger elevated response
-        level = circuit_breaker._determine_alert_level(vix_level=12.0, intraday_change=0.25)
-        # 25% spike (between SPIKE_ALERT and SPIKE_EMERGENCY) should return VERY_HIGH
-        assert level == AlertLevel.VERY_HIGH
-
-
-# =============================================================================
-# Integration Tests with Mocked Data
-# =============================================================================
-
-
-class TestVIXCircuitBreakerIntegration:
-    """Integration tests with mocked VIX data."""
-
-    @pytest.fixture
-    def circuit_breaker(self):
-        return VIXCircuitBreaker(
-            check_interval_seconds=1,  # Fast for testing
-            enable_auto_reduce=False,
-            paper_mode=True,
+    def test_cache_respects_ttl(self, circuit_breaker):
+        """Test that cached status is used within TTL."""
+        # Manually set cache
+        status = VIXStatus(
+            current_level=20.0,
+            alert_level=AlertLevel.HIGH,
+            message="Cached",
+            position_multiplier=0.5,
         )
+        circuit_breaker._cached_status = status
+        circuit_breaker._cache_time = datetime.now()
 
-    def test_get_current_status_returns_vix_status(self, circuit_breaker):
-        """get_current_status should return VIXStatus object."""
-        with patch.object(circuit_breaker, "_fetch_vix_data") as mock_fetch:
-            mock_fetch.return_value = {
-                "current": 18.5,
-                "previous_close": 17.0,
-                "vvix": 90.0,
-            }
-            status = circuit_breaker.get_current_status(force_refresh=True)
-            assert isinstance(status, VIXStatus)
-            assert status.current_level == 18.5
-            # VIX 18.5 is between 15-20, so ELEVATED (not HIGH which requires >= 20)
-            assert status.alert_level == AlertLevel.ELEVATED
-
-    def test_status_caching(self, circuit_breaker):
-        """Status should be cached within check interval."""
-        with patch.object(circuit_breaker, "_fetch_vix_data") as mock_fetch:
-            mock_fetch.return_value = {"current": 15.0, "previous_close": 14.0}
-
-            # First call should fetch
-            circuit_breaker.get_current_status(force_refresh=True)
-            assert mock_fetch.call_count == 1
-
-            # Second call should use cache (within 1 second interval)
-            circuit_breaker.get_current_status(force_refresh=False)
-            # Still 1 because cached
-            assert mock_fetch.call_count == 1
+        # Should return cached value
+        result = circuit_breaker.get_current_status(force_refresh=False)
+        assert result.message == "Cached"
 
     def test_force_refresh_bypasses_cache(self, circuit_breaker):
-        """force_refresh=True should bypass cache."""
-        with patch.object(circuit_breaker, "_fetch_vix_data") as mock_fetch:
-            mock_fetch.return_value = {"current": 15.0, "previous_close": 14.0}
+        """Test that force_refresh bypasses cache."""
+        # Manually set cache
+        status = VIXStatus(
+            current_level=20.0,
+            alert_level=AlertLevel.HIGH,
+            message="Cached",
+            position_multiplier=0.5,
+        )
+        circuit_breaker._cached_status = status
+        circuit_breaker._cache_time = datetime.now()
 
-            circuit_breaker.get_current_status(force_refresh=True)
-            circuit_breaker.get_current_status(force_refresh=True)
-            assert mock_fetch.call_count == 2
-
-
-# =============================================================================
-# Phil Town Rule #1 - Capital Protection Tests
-# =============================================================================
-
-
-class TestCapitalProtection:
-    """
-    Tests ensuring the circuit breaker protects capital per Phil Town Rule #1.
-
-    CEO Directive (Jan 6, 2026): "Losing money is NOT allowed"
-    """
-
-    @pytest.fixture
-    def circuit_breaker(self):
-        return VIXCircuitBreaker()
-
-    def test_high_vix_blocks_new_positions(self, circuit_breaker):
-        """High VIX should restrict or block new positions."""
-        extreme_mult = circuit_breaker.SIZE_MULTIPLIERS[AlertLevel.EXTREME]
-        very_high_mult = circuit_breaker.SIZE_MULTIPLIERS[AlertLevel.VERY_HIGH]
-
-        assert extreme_mult == 0.0, "EXTREME should block all new positions"
-        assert very_high_mult <= 0.25, "VERY_HIGH should heavily restrict new positions"
-
-    def test_high_vix_triggers_reduction(self, circuit_breaker):
-        """High VIX should trigger position reductions."""
-        extreme_reduction = circuit_breaker.REDUCTION_TARGETS[AlertLevel.EXTREME]
-        very_high_reduction = circuit_breaker.REDUCTION_TARGETS[AlertLevel.VERY_HIGH]
-
-        assert extreme_reduction >= 0.5, "EXTREME should reduce positions by at least 50%"
-        assert very_high_reduction >= 0.25, "VERY_HIGH should reduce positions by at least 25%"
-
-    def test_spike_triggers_immediate_action(self, circuit_breaker):
-        """VIX spike should trigger immediate protective action."""
-        spike_reduction = circuit_breaker.REDUCTION_TARGETS[AlertLevel.SPIKE]
-        spike_multiplier = circuit_breaker.SIZE_MULTIPLIERS[AlertLevel.SPIKE]
-
-        assert spike_reduction >= 0.5, "SPIKE should reduce positions by at least 50%"
-        assert spike_multiplier == 0.0, "SPIKE should block all new positions"
+        # Force refresh should fetch new data
+        with patch.object(circuit_breaker, "_fetch_vix", return_value=12.0):
+            result = circuit_breaker.get_current_status(force_refresh=True)
+            assert result.message != "Cached"
 
 
 # =============================================================================
-# Run Tests
+# Position Multiplier Constants Tests
 # =============================================================================
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--tb=short"])
+class TestPositionMultipliers:
+    """Test position multiplier constants."""
+
+    def test_normal_full_position(self):
+        """NORMAL allows full position."""
+        assert POSITION_MULTIPLIERS[AlertLevel.NORMAL] == 1.0
+
+    def test_elevated_reduced_position(self):
+        """ELEVATED reduces to 75%."""
+        assert POSITION_MULTIPLIERS[AlertLevel.ELEVATED] == 0.75
+
+    def test_high_half_position(self):
+        """HIGH reduces to 50%."""
+        assert POSITION_MULTIPLIERS[AlertLevel.HIGH] == 0.50
+
+    def test_very_high_quarter_position(self):
+        """VERY_HIGH reduces to 25%."""
+        assert POSITION_MULTIPLIERS[AlertLevel.VERY_HIGH] == 0.25
+
+    def test_extreme_no_position(self):
+        """EXTREME stops new positions."""
+        assert POSITION_MULTIPLIERS[AlertLevel.EXTREME] == 0.0
+
+    def test_spike_no_position(self):
+        """SPIKE halts all trading."""
+        assert POSITION_MULTIPLIERS[AlertLevel.SPIKE] == 0.0
+
+
+# =============================================================================
+# VIX Thresholds Tests
+# =============================================================================
+
+
+class TestVIXThresholds:
+    """Test VIX threshold constants."""
+
+    def test_thresholds_ascending(self):
+        """Verify thresholds are in ascending order."""
+        thresholds = [
+            VIX_THRESHOLDS[AlertLevel.NORMAL],
+            VIX_THRESHOLDS[AlertLevel.ELEVATED],
+            VIX_THRESHOLDS[AlertLevel.HIGH],
+            VIX_THRESHOLDS[AlertLevel.VERY_HIGH],
+            VIX_THRESHOLDS[AlertLevel.EXTREME],
+        ]
+        assert thresholds == sorted(thresholds)
+
+    def test_normal_threshold(self):
+        """NORMAL threshold is 15."""
+        assert VIX_THRESHOLDS[AlertLevel.NORMAL] == 15.0
+
+    def test_halt_threshold(self):
+        """EXTREME threshold is 40 (halt above 30)."""
+        assert VIX_THRESHOLDS[AlertLevel.EXTREME] == 40.0
+
+
+# =============================================================================
+# Integration / Smoke Tests
+# =============================================================================
+
+
+class TestIntegration:
+    """Integration tests for VIX circuit breaker."""
+
+    def test_phil_town_rule_one_enforced(self):
+        """
+        Phil Town Rule #1: Don't lose money.
+
+        The circuit breaker enforces this by:
+        1. Halting trades when VIX > 30
+        2. Reducing position sizes during volatility
+        """
+        cb = VIXCircuitBreaker(halt_threshold=30.0)
+
+        with patch.object(cb, "_fetch_vix", return_value=35.0):
+            # Must halt trading
+            assert cb.should_halt_trading() is True
+
+            # Must not allow trades
+            allowed, _ = cb.check_trade_allowed("ANY")
+            assert allowed is False
+
+            # Position multiplier must be zero
+            assert cb.get_position_multiplier() == 0.0
+
+    def test_gradual_risk_reduction(self):
+        """Test that risk reduces gradually as VIX rises."""
+        cb = VIXCircuitBreaker()
+
+        vix_to_multiplier = [
+            (10.0, 1.0),    # NORMAL
+            (17.0, 0.75),   # ELEVATED
+            (22.0, 0.50),   # HIGH
+            (27.0, 0.25),   # VERY_HIGH
+            (35.0, 0.0),    # EXTREME
+        ]
+
+        for vix, expected in vix_to_multiplier:
+            with patch.object(cb, "_fetch_vix", return_value=vix):
+                cb._cached_status = None  # Clear cache
+                assert cb.get_position_multiplier() == expected, f"VIX {vix} should give multiplier {expected}"
