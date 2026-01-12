@@ -1655,5 +1655,22 @@
       "formatting",
       "dict.get"
     ]
+  },
+  {
+    "id": "hardcoded-spy-price-bug-2026-01-12",
+    "title": "Hardcoded SPY Price Blocking SOFI CSP Trades (Jan 12, 2026)",
+    "category": "trading-bug",
+    "severity": "CRITICAL",
+    "description": "simple_daily_trader.py was configured for SOFI but should_open_position() still used hardcoded SPY price of $600 for buying power calculation. With $5K account, it always failed the $57K check.",
+    "root_cause": "CONFIG symbol changed but buying power logic not updated",
+    "fix": "Added symbol_prices dict mapping each symbol to its price, calculate strike dynamically",
+    "prevention": "When changing CONFIG symbol, grep for hardcoded prices in ALL functions",
+    "created": "2026-01-12",
+    "tags": [
+      "options",
+      "csp",
+      "buying-power",
+      "sofi"
+    ]
   }
 ]

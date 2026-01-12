@@ -127,6 +127,8 @@ def find_put_option(symbol: str, target_delta: float, target_dte: int) -> Option
 
     For now, returns a mock option contract.
     In production, this would query Alpaca's options chain.
+
+    FIXED Jan 12 2026: Use symbol-appropriate pricing, not hardcoded SPY.
     """
     # Calculate target expiration date
     today = datetime.now()
@@ -135,13 +137,29 @@ def find_put_option(symbol: str, target_delta: float, target_dte: int) -> Option
     # Format as YYMMDD for options symbol
     expiry_str = target_expiry.strftime("%y%m%d")
 
-    # For SPY around 600, 20 delta put is roughly 5% OTM
-    # SPY at 600 -> strike around 570
-    estimated_price = 600  # Would get from market data
-    strike = int(estimated_price * 0.95)  # 5% OTM for ~20 delta
+    # Symbol-appropriate pricing (FIXED: was hardcoded SPY $600)
+    symbol_prices = {
+        "SOFI": 14,   # SOFI ~$14/share
+        "F": 10,      # Ford ~$10/share
+        "PLTR": 80,   # PLTR ~$80/share
+        "BAC": 40,    # BAC ~$40/share
+        "AMD": 120,   # AMD ~$120/share
+        "SPY": 600,   # SPY ~$600/share (needs $57K for CSP)
+    }
+    estimated_price = symbol_prices.get(symbol, 14)  # Default to SOFI-like
 
-    # Options symbol format: SPY241220P00570000
-    option_symbol = f"{symbol}{expiry_str}P{strike:08d}"
+    # 20 delta put is roughly 5-10% OTM depending on volatility
+    # For cheaper stocks use 30% OTM for safer strikes
+    otm_pct = 0.70 if estimated_price < 50 else 0.95
+    strike = int(estimated_price * otm_pct)
+
+    # Ensure minimum strike of $5 for tradeable options
+    strike = max(strike, 5)
+
+    # Options symbol format: SOFI260211P00010000 (strike in cents, 8 digits)
+    option_symbol = f"{symbol}{expiry_str}P{strike * 1000:08d}"
+
+    logger.info(f"Finding put option for {symbol}: price=${estimated_price}, strike=${strike}")
 
     return {
         "symbol": option_symbol,
@@ -150,7 +168,7 @@ def find_put_option(symbol: str, target_delta: float, target_dte: int) -> Option
         "expiry": target_expiry.strftime("%Y-%m-%d"),
         "dte": target_dte,
         "delta": target_delta,
-        "estimated_premium": strike * 0.01,  # Rough estimate
+        "estimated_premium": max(strike * 0.02, 0.10),  # ~2% of strike or min $0.10
     }
 
 
@@ -162,6 +180,9 @@ def should_open_position(client, config: dict) -> bool:
     1. Less than max positions
     2. Have enough buying power
     3. Market is open
+
+    FIXED Jan 12 2026: Use symbol from config (SOFI) not hardcoded SPY price.
+    SOFI ~$14/share, CSP at $10 strike = $1,000 collateral (fits $5K account)
     """
     positions = get_current_positions(client)
     options_positions = [
@@ -177,12 +198,21 @@ def should_open_position(client, config: dict) -> bool:
         return False
 
     # For cash-secured puts, we need buying power = strike * 100 (1 contract)
-    # For SPY at ~$600, a 20-delta put might be around $570 strike
-    # Required collateral: $570 * 100 = $57,000 per contract
-    # For paper trading with $100k, we can do 1-2 contracts
-    spy_price_estimate = 600
-    strike_estimate = int(spy_price_estimate * 0.95)  # 5% OTM for 20 delta
+    # FIXED: Use symbol-appropriate pricing from SYMBOL_PRICES
+    symbol = config.get("symbol", "SOFI")
+    symbol_prices = {
+        "SOFI": 14,   # SOFI ~$14, 20-delta put at $10 strike
+        "F": 10,      # Ford ~$10, 20-delta put at $8 strike
+        "PLTR": 80,   # PLTR ~$80, 20-delta put at $70 strike
+        "BAC": 40,    # BAC ~$40, 20-delta put at $35 strike
+        "SPY": 600,   # SPY ~$600, needs $57K (too much for $5K account)
+    }
+    price_estimate = symbol_prices.get(symbol, 14)  # Default to SOFI-like price
+    strike_estimate = int(price_estimate * 0.70)  # ~30% OTM for conservative strike
     required_bp = strike_estimate * 100  # 1 contract = 100 shares
+
+    logger.info(f"Symbol: {symbol}, Price estimate: ${price_estimate}, Strike: ${strike_estimate}")
+    logger.info(f"Required buying power: ${required_bp:,} for 1 CSP contract")
 
     if account["buying_power"] < required_bp:
         logger.info(
