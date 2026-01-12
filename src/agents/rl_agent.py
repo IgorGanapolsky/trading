@@ -14,5 +14,5 @@ class RLFilter:
         return 1.0
 
     def predict(self, *args, **kwargs):
-        """Predict action - stub returns 1 (buy/approve)."""
-        return 1
+        """Predict action - stub returns buy with high confidence."""
+        return {"action": "buy", "confidence": 0.75}
