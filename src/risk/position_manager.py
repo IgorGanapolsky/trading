@@ -9,10 +9,13 @@ from typing import Any
 class ExitConditions:
     """Exit conditions for positions."""
 
-    stop_loss_pct: float = 0.25
-    take_profit_pct: float = 0.50
+    take_profit_pct: float = 0.15
+    stop_loss_pct: float = 0.08
+    max_holding_days: int = 30
+    enable_momentum_exit: bool = False
+    enable_atr_stop: bool = True
+    atr_multiplier: float = 2.5
     trailing_stop_pct: float = 0.0
-    max_hold_days: int = 30
 
 
 class PositionManager:
