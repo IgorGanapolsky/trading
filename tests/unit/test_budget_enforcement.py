@@ -217,6 +217,15 @@ class TestToolDefinitions:
         assert registry.get("query_lessons_learned") is not None
 
 
+# Check if pydantic is available (required by mcp.client import chain)
+try:
+    import pydantic  # noqa: F401
+    PYDANTIC_AVAILABLE = True
+except ImportError:
+    PYDANTIC_AVAILABLE = False
+
+
+@pytest.mark.skipif(not PYDANTIC_AVAILABLE, reason="pydantic not installed")
 class TestUnifiedMCPClient:
     """Tests for unified MCP client."""
 

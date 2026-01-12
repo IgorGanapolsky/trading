@@ -3,6 +3,14 @@
 
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timedelta, timezone
+import pytest
+
+# Check if alpaca is available for mocking tests
+try:
+    import alpaca.trading.client  # noqa: F401
+    ALPACA_AVAILABLE = True
+except ImportError:
+    ALPACA_AVAILABLE = False
 
 
 class TestCancelStaleOrders:
@@ -48,6 +56,7 @@ class TestCancelStaleOrders:
         is_stale = fresh_order_time < threshold
         assert not is_stale, "1-hour-old order should NOT be cancelled"
 
+    @pytest.mark.skipif(not ALPACA_AVAILABLE, reason="alpaca-py not installed")
     @patch.dict(
         "os.environ",
         {"ALPACA_API_KEY": "test_key", "ALPACA_SECRET_KEY": "test_secret", "PAPER_TRADING": "true"},

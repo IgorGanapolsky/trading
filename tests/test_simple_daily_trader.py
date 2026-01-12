@@ -14,7 +14,15 @@ import pytest
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Check if dotenv is available (required by simple_daily_trader)
+try:
+    import dotenv  # noqa: F401
+    DOTENV_AVAILABLE = True
+except ImportError:
+    DOTENV_AVAILABLE = False
 
+
+@pytest.mark.skipif(not DOTENV_AVAILABLE, reason="python-dotenv not installed")
 class TestMaxPositionsConfig:
     """Test max_positions configuration to prevent trading blockage."""
 
@@ -51,6 +59,7 @@ class TestMaxPositionsConfig:
             assert key in CONFIG, f"Missing required config key: {key}"
 
 
+@pytest.mark.skipif(not DOTENV_AVAILABLE, reason="python-dotenv not installed")
 class TestShouldOpenPosition:
     """Test the should_open_position logic."""
 
@@ -110,6 +119,7 @@ class TestShouldOpenPosition:
         assert result is False, "Should block when at max_positions"
 
 
+@pytest.mark.skipif(not DOTENV_AVAILABLE, reason="python-dotenv not installed")
 class TestTradingIntegration:
     """Integration smoke tests."""
 
