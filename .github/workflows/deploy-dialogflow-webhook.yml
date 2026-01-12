@@ -72,7 +72,8 @@ jobs:
             --cpu 1 \
             --min-instances 0 \
             --max-instances 3 \
-            --timeout 60s
+            --timeout 60s \
+            --set-env-vars="ALPACA_API_KEY=${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }},ALPACA_SECRET_KEY=${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }},ALPACA_BROKERAGE_TRADING_API_KEY=${{ secrets.ALPACA_BROKERAGE_TRADING_API_KEY }},ALPACA_BROKERAGE_TRADING_API_SECRET=${{ secrets.ALPACA_BROKERAGE_TRADING_API_SECRET }}"
 
       - name: Get service URL
         run: |
