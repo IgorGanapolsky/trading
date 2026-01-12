@@ -25,23 +25,61 @@ logger = logging.getLogger(__name__)
 
 
 def load_todays_trades(date_str: str | None = None) -> list[dict]:
-    """Load trades from JSON file for given date."""
+    """Load trades from ALL trade files for given date.
+
+    FIX (Jan 12, 2026): Now looks for MULTIPLE file formats:
+    - data/trades_YYYY-MM-DD.json (autonomous_trader, rule_one_trader)
+    - data/options_trades_YYYYMMDD.json (execute_options_trade.py)
+
+    Previously only looked for trades_ format, causing OPTIONS TRADES
+    to be silently dropped and never synced to RAG.
+    """
     if date_str is None:
         date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    trades_file = Path(f"data/trades_{date_str}.json")
-    if not trades_file.exists():
-        logger.warning(f"No trades file found: {trades_file}")
-        return []
+    # Also create YYYYMMDD format for options trades
+    date_no_hyphens = date_str.replace("-", "")
 
-    try:
-        with open(trades_file) as f:
-            trades = json.load(f)
-        logger.info(f"Loaded {len(trades)} trades from {trades_file}")
-        return trades
-    except (json.JSONDecodeError, OSError) as e:
-        logger.error(f"Error loading trades: {e}")
-        return []
+    all_trades = []
+    files_checked = []
+
+    # Check all possible trade file formats
+    trade_files = [
+        Path(f"data/trades_{date_str}.json"),  # Standard format
+        Path(f"data/options_trades_{date_no_hyphens}.json"),  # Options format (CRITICAL FIX!)
+        Path(f"data/options_trades_{date_str}.json"),  # Options with hyphens (backup)
+    ]
+
+    for trades_file in trade_files:
+        files_checked.append(str(trades_file))
+        if trades_file.exists():
+            try:
+                with open(trades_file) as f:
+                    data = json.load(f)
+
+                # Handle both list and single trade formats
+                if isinstance(data, list):
+                    trades = data
+                elif isinstance(data, dict):
+                    # Options trades may be saved as single dict with 'result' key
+                    if "result" in data:
+                        trades = [data]
+                    else:
+                        trades = [data]
+                else:
+                    trades = []
+
+                logger.info(f"✅ Loaded {len(trades)} trades from {trades_file}")
+                all_trades.extend(trades)
+            except (json.JSONDecodeError, OSError) as e:
+                logger.error(f"Error loading {trades_file}: {e}")
+
+    if not all_trades:
+        logger.warning(f"No trades found in any of: {files_checked}")
+    else:
+        logger.info(f"📊 Total trades loaded: {len(all_trades)} from {len([f for f in trade_files if Path(f).exists() if hasattr(f, 'exists') else Path(f).exists()])} files")
+
+    return all_trades
 
 
 def sync_to_vertex_rag(trades: list[dict]) -> bool:
@@ -136,7 +174,40 @@ def sync_to_local_json(trades: list[dict]) -> bool:
 
 
 def format_trade_document(trade: dict) -> str:
-    """Format a trade as a natural language document for RAG."""
+    """Format a trade as a natural language document for RAG.
+
+    FIX (Jan 12, 2026): Now handles OPTIONS trade format from execute_options_trade.py
+    which has nested 'result' structure with different field names.
+    """
+    # Handle nested options trade format
+    result = trade.get("result", {})
+    if result:
+        # Options trade format from execute_options_trade.py
+        symbol = trade.get("symbol", "UNKNOWN")
+        strategy = trade.get("strategy", "cash_secured_put")
+        timestamp = trade.get("timestamp", "unknown")
+        status = result.get("status", "unknown")
+        order_id = result.get("order_id", "unknown")
+        premium = result.get("premium", 0)
+        strike = result.get("strike", 0)
+        expiry = result.get("expiry", "unknown")
+        broker = result.get("broker", "alpaca")
+
+        date_str = timestamp[:10] if len(str(timestamp)) >= 10 else str(timestamp)
+
+        doc = f"""Options Trade Record: {symbol}
+Date: {date_str}
+Strategy: {strategy}
+Status: {status}
+Order ID: {order_id}
+Strike: ${strike:.2f}
+Expiry: {expiry}
+Premium Collected: ${premium:.2f}
+Broker: {broker}
+"""
+        return doc
+
+    # Standard equity trade format
     symbol = trade.get("symbol", "UNKNOWN")
     side = trade.get("side", "unknown")
     qty = trade.get("qty", 0)
