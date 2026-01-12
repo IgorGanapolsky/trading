@@ -73,6 +73,28 @@ class TestFormatTradeDocument:
         assert "$500.00" in doc
         assert "core_strategy" in doc
 
+    def test_format_options_trade(self):
+        """Test formatting options trade with nested result structure (Jan 12, 2026 fix)."""
+        options_trade = {
+            "symbol": "SOFI",
+            "strategy": "cash_secured_put",
+            "timestamp": "2026-01-12T10:00:00",
+            "result": {
+                "status": "ORDER_SUBMITTED",
+                "order_id": "abc123",
+                "premium": 75.0,
+                "strike": 5.0,
+                "expiry": "2026-01-30",
+            },
+        }
+
+        doc = format_trade_document(options_trade)
+
+        assert "Options Trade Record: SOFI" in doc
+        assert "cash_secured_put" in doc
+        assert "ORDER_SUBMITTED" in doc
+        assert "75" in doc  # Premium
+
     def test_format_trade_with_pnl(self):
         """Test formatting a trade with P/L information."""
         trade = {
