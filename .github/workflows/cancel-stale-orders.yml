@@ -1,0 +1,86 @@
+name: Cancel Stale Orders
+
+on:
+  workflow_dispatch:
+    inputs:
+      account:
+        description: "Account to cleanup (paper or live)"
+        required: true
+        default: "paper"
+        type: choice
+        options:
+          - paper
+          - live
+  schedule:
+    # Run daily at 6 AM ET (before market open) to cleanup overnight stale orders
+    # EST: 11:00 UTC, EDT: 10:00 UTC
+    - cron: '0 10,11 * * 1-5'
+
+permissions:
+  contents: read
+
+jobs:
+  cancel-stale:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    env:
+      PAPER_TRADING: ${{ github.event.inputs.account == 'live' && 'false' || 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install alpaca-py
+
+      - name: Set credentials based on account type
+        run: |
+          if [ "${{ github.event.inputs.account }}" = "live" ]; then
+            echo "Using LIVE brokerage account"
+            echo "ALPACA_API_KEY=${{ secrets.ALPACA_BROKERAGE_TRADING_API_KEY }}" >> $GITHUB_ENV
+            echo "ALPACA_SECRET_KEY=${{ secrets.ALPACA_BROKERAGE_TRADING_API_SECRET }}" >> $GITHUB_ENV
+          else
+            echo "Using PAPER trading account"
+            echo "ALPACA_API_KEY=${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}" >> $GITHUB_ENV
+            echo "ALPACA_SECRET_KEY=${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}" >> $GITHUB_ENV
+          fi
+
+      - name: Cancel stale orders
+        run: |
+          python3 scripts/cancel_stale_orders.py
+
+      - name: Verify buying power restored
+        run: |
+          python3 -c "
+          import os
+          from alpaca.trading.client import TradingClient
+
+          api_key = os.environ['ALPACA_API_KEY']
+          secret_key = os.environ['ALPACA_SECRET_KEY']
+          paper = os.environ.get('PAPER_TRADING', 'true').lower() == 'true'
+
+          client = TradingClient(api_key, secret_key, paper=paper)
+          account = client.get_account()
+
+          print('=' * 60)
+          print('ACCOUNT STATUS AFTER CLEANUP')
+          print('=' * 60)
+          print(f'Cash: \${float(account.cash):,.2f}')
+          print(f'Buying Power: \${float(account.buying_power):,.2f}')
+          print(f'Options Buying Power: \${float(account.options_buying_power or 0):,.2f}')
+          print(f'Equity: \${float(account.equity):,.2f}')
+
+          # Check if options buying power is restored
+          obp = float(account.options_buying_power or 0)
+          if obp > 0:
+              print('\\n✅ OPTIONS BUYING POWER RESTORED!')
+          else:
+              print('\\n⚠️ Options buying power still $0 - may need manual investigation')
+          "
