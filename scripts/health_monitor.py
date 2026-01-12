@@ -157,8 +157,9 @@ def check_alpaca_connectivity() -> tuple[bool, str]:
     Returns:
         (is_healthy, status_message)
     """
-    api_key = os.getenv("ALPACA_API_KEY")
-    secret_key = os.getenv("ALPACA_SECRET_KEY")
+    from src.utils.alpaca_client import get_alpaca_credentials
+
+    api_key, secret_key = get_alpaca_credentials()
 
     if not api_key or not secret_key:
         return True, "ℹ️  Alpaca credentials not in environment (expected in CI)"

@@ -35,8 +35,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Configuration
-ALPACA_KEY = os.getenv("ALPACA_API_KEY")
-ALPACA_SECRET = os.getenv("ALPACA_SECRET_KEY")
+from src.utils.alpaca_client import get_alpaca_credentials
+
+ALPACA_KEY, ALPACA_SECRET = get_alpaca_credentials()
 ANTHROPIC_KEY = os.getenv("ANTHROPIC_API_KEY")
 GITHUB_OUTPUT = os.getenv("GITHUB_OUTPUT")
 

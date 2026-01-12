@@ -11,7 +11,6 @@ No complexity. No lies. Just facts.
 """
 
 import json
-import os
 from datetime import datetime
 from typing import NamedTuple
 
@@ -33,9 +32,9 @@ def get_alpaca_client():
     """Get Alpaca client or None if not configured."""
     try:
         from alpaca.trading.client import TradingClient
+        from src.utils.alpaca_client import get_alpaca_credentials
 
-        api_key = os.getenv("ALPACA_API_KEY")
-        secret_key = os.getenv("ALPACA_SECRET_KEY")
+        api_key, secret_key = get_alpaca_credentials()
         if not api_key or not secret_key:
             return None
         return TradingClient(api_key, secret_key, paper=True)

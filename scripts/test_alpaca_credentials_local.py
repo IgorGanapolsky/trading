@@ -3,14 +3,12 @@
 Test Alpaca credentials locally.
 
 USAGE:
-  export ALPACA_API_KEY="your_key_here"
-  export ALPACA_SECRET_KEY="your_secret_here"
+  Set environment variables, then run this script.
   python3 scripts/test_alpaca_credentials_local.py
 
 This bypasses GitHub Actions to test if credentials work directly.
 """
 
-import os
 import sys
 
 try:
@@ -23,8 +21,9 @@ except ImportError:
 
 def test_credentials():
     """Test Alpaca API credentials for paper trading."""
-    api_key = os.getenv("ALPACA_API_KEY")
-    secret_key = os.getenv("ALPACA_SECRET_KEY")
+    from src.utils.alpaca_client import get_alpaca_credentials
+
+    api_key, secret_key = get_alpaca_credentials()
 
     if not api_key or not secret_key:
         print("❌ Missing credentials")

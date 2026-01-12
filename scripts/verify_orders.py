@@ -56,8 +56,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration
-ALPACA_API_KEY = os.getenv("ALPACA_API_KEY")
-ALPACA_SECRET_KEY = os.getenv("ALPACA_SECRET_KEY")
+from src.utils.alpaca_client import get_alpaca_credentials
+
+ALPACA_API_KEY, ALPACA_SECRET_KEY = get_alpaca_credentials()
 PAPER_TRADING = os.getenv("PAPER_TRADING", "true").lower() == "true"
 
 # Slippage thresholds

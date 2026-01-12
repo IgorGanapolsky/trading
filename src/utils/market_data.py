@@ -203,8 +203,9 @@ class MarketDataProvider:
 
         # Initialize Alpaca API if credentials available (PRIMARY SOURCE - MOST RELIABLE)
         self._alpaca_api = None
-        alpaca_key = os.getenv("ALPACA_API_KEY")
-        alpaca_secret = os.getenv("ALPACA_SECRET_KEY")
+        from src.utils.alpaca_client import get_alpaca_credentials
+
+        alpaca_key, alpaca_secret = get_alpaca_credentials()
         if alpaca_key and alpaca_secret:
             try:
                 from alpaca.data.historical import StockHistoricalDataClient

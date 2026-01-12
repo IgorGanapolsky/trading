@@ -16,7 +16,6 @@ THIS SCRIPT WILL TRADE. No excuses. No complex gates.
 
 import json
 import logging
-import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -57,9 +56,9 @@ def get_alpaca_client():
     """Get Alpaca trading client."""
     try:
         from alpaca.trading.client import TradingClient
+        from src.utils.alpaca_client import get_alpaca_credentials
 
-        api_key = os.getenv("ALPACA_API_KEY")
-        secret_key = os.getenv("ALPACA_SECRET_KEY")
+        api_key, secret_key = get_alpaca_credentials()
 
         if not api_key or not secret_key:
             logger.error("ALPACA_API_KEY and ALPACA_SECRET_KEY required")
@@ -75,9 +74,9 @@ def get_options_client():
     """Get Alpaca options client."""
     try:
         from alpaca.trading.client import TradingClient
+        from src.utils.alpaca_client import get_alpaca_credentials
 
-        api_key = os.getenv("ALPACA_API_KEY")
-        secret_key = os.getenv("ALPACA_SECRET_KEY")
+        api_key, secret_key = get_alpaca_credentials()
 
         if not api_key or not secret_key:
             return None
@@ -243,9 +242,9 @@ def execute_cash_secured_put(client, option: dict, config: dict) -> Optional[dic
             # Get options chain to find real contract
             from alpaca.data.historical.option import OptionHistoricalDataClient
             from alpaca.data.requests import OptionChainRequest
+            from src.utils.alpaca_client import get_alpaca_credentials
 
-            api_key = os.getenv("ALPACA_API_KEY")
-            secret_key = os.getenv("ALPACA_SECRET_KEY")
+            api_key, secret_key = get_alpaca_credentials()
             options_data_client = OptionHistoricalDataClient(api_key, secret_key)
 
             # Find the actual option contract

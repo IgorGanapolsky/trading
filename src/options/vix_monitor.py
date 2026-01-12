@@ -96,8 +96,9 @@ class VIXMonitor:
         # Initialize Alpaca client if enabled
         if use_alpaca:
             try:
-                api_key = os.getenv("ALPACA_API_KEY")
-                secret_key = os.getenv("ALPACA_SECRET_KEY")
+                from src.utils.alpaca_client import get_alpaca_credentials
+
+                api_key, secret_key = get_alpaca_credentials()
 
                 if api_key and secret_key:
                     self.alpaca_client = StockHistoricalDataClient(

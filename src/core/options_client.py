@@ -14,7 +14,6 @@ Note: Requires an Alpaca account with Options trading enabled.
 """
 
 import logging
-import os
 from typing import Any
 
 from alpaca.data.historical.option import OptionHistoricalDataClient
@@ -44,8 +43,9 @@ class AlpacaOptionsClient:
             paper: If True, use paper trading environment.
         """
         self.paper = paper
-        self.api_key = os.getenv("ALPACA_API_KEY")
-        self.secret_key = os.getenv("ALPACA_SECRET_KEY")
+        from src.utils.alpaca_client import get_alpaca_credentials
+
+        self.api_key, self.secret_key = get_alpaca_credentials()
 
         if not self.api_key or not self.secret_key:
             raise ValueError("ALPACA_API_KEY and ALPACA_SECRET_KEY must be set.")

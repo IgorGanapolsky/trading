@@ -244,14 +244,12 @@ class IronCondorStrategy:
         # LIVE EXECUTION - Dec 29, 2025 fix
         if live:
             try:
-                import os
-
                 from alpaca.trading.client import TradingClient
                 from alpaca.trading.enums import OrderSide, TimeInForce
                 from alpaca.trading.requests import LimitOrderRequest
+                from src.utils.alpaca_client import get_alpaca_credentials
 
-                api_key = os.getenv("ALPACA_API_KEY")
-                secret = os.getenv("ALPACA_SECRET_KEY")
+                api_key, secret = get_alpaca_credentials()
 
                 if api_key and secret:
                     client = TradingClient(api_key, secret, paper=True)

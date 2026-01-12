@@ -145,8 +145,9 @@ class AlpacaTrader:
         self.config = load_config()
 
         # Get API credentials from environment variables
-        api_key = os.getenv("ALPACA_API_KEY")
-        secret_key = os.getenv("ALPACA_SECRET_KEY")
+        from src.utils.alpaca_client import get_alpaca_credentials
+
+        api_key, secret_key = get_alpaca_credentials()
 
         # Store API credentials for data client reuse
         self.api_key = api_key

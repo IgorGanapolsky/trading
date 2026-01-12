@@ -18,7 +18,6 @@ This is NOT about being smart. It's about EXECUTING.
 
 import json
 import logging
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -42,9 +41,9 @@ def get_alpaca_client():
     """Get Alpaca client."""
     try:
         from alpaca.trading.client import TradingClient
+        from src.utils.alpaca_client import get_alpaca_credentials
 
-        api_key = os.getenv("ALPACA_API_KEY")
-        secret = os.getenv("ALPACA_SECRET_KEY")
+        api_key, secret = get_alpaca_credentials()
         if not api_key or not secret:
             logger.error("Missing Alpaca credentials")
             return None

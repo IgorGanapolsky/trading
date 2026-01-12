@@ -55,8 +55,9 @@ def main(dry_run: bool = False):
         logger.error(f"Cannot import PositionManager: {e}")
         sys.exit(1)
 
-    api_key = os.getenv("ALPACA_API_KEY")
-    secret_key = os.getenv("ALPACA_SECRET_KEY")
+    from src.utils.alpaca_client import get_alpaca_credentials
+
+    api_key, secret_key = get_alpaca_credentials()
     paper = os.getenv("PAPER_TRADING", "true").lower() == "true"
 
     if not api_key or not secret_key:

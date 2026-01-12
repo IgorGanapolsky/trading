@@ -6,6 +6,10 @@ avoiding code duplication across scripts.
 
 Created: Jan 8, 2026
 Reason: DRY violation - get_alpaca_client() was duplicated in 5+ scripts
+
+Updated: Jan 12, 2026
+- Added get_alpaca_credentials() to prioritize $5K paper account
+- All code must use get_alpaca_credentials() for API key access
 """
 
 import logging
@@ -13,6 +17,40 @@ import os
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+
+def get_alpaca_credentials() -> tuple[Optional[str], Optional[str]]:
+    """
+    Get Alpaca API credentials with proper priority.
+
+    Priority order (first found wins):
+    1. ALPACA_PAPER_TRADING_5K_API_KEY / ALPACA_PAPER_TRADING_5K_API_SECRET ($5K account - PRIMARY)
+    2. ALPACA_PAPER_TRADING_API_KEY / ALPACA_PAPER_TRADING_API_SECRET ($100K account)
+    3. ALPACA_API_KEY / ALPACA_SECRET_KEY (legacy fallback)
+
+    Returns:
+        Tuple of (api_key, secret_key) or (None, None) if not found.
+    """
+    api_key = (
+        os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY")
+        or os.getenv("ALPACA_PAPER_TRADING_API_KEY")
+        or os.getenv("ALPACA_API_KEY")
+    )
+    secret_key = (
+        os.getenv("ALPACA_PAPER_TRADING_5K_API_SECRET")
+        or os.getenv("ALPACA_PAPER_TRADING_API_SECRET")
+        or os.getenv("ALPACA_SECRET_KEY")
+    )
+
+    if api_key:
+        if os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY"):
+            logger.debug("Using $5K paper trading account credentials")
+        elif os.getenv("ALPACA_PAPER_TRADING_API_KEY"):
+            logger.debug("Using $100K paper trading account credentials")
+        else:
+            logger.debug("Using legacy ALPACA_API_KEY credentials")
+
+    return api_key, secret_key
 
 
 def get_alpaca_client(paper: bool = True):
@@ -33,11 +71,12 @@ def get_alpaca_client(paper: bool = True):
     try:
         from alpaca.trading.client import TradingClient
 
-        api_key = os.getenv("ALPACA_API_KEY")
-        secret_key = os.getenv("ALPACA_SECRET_KEY")
+        api_key, secret_key = get_alpaca_credentials()
 
         if not api_key or not secret_key:
-            logger.error("ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables required")
+            logger.error(
+                "Alpaca credentials not found. Set ALPACA_PAPER_TRADING_5K_API_KEY or ALPACA_API_KEY"
+            )
             return None
 
         return TradingClient(api_key, secret_key, paper=paper)

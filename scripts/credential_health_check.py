@@ -25,8 +25,9 @@ from urllib.request import Request, urlopen
 
 def check_alpaca_credentials() -> dict:
     """Check Alpaca API credentials are valid."""
-    api_key = os.getenv("ALPACA_API_KEY")
-    secret_key = os.getenv("ALPACA_SECRET_KEY")
+    from src.utils.alpaca_client import get_alpaca_credentials
+
+    api_key, secret_key = get_alpaca_credentials()
     paper_mode = os.getenv("PAPER_TRADING", "true").lower() == "true"
 
     result = {

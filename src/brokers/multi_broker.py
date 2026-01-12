@@ -12,7 +12,6 @@ Updated: 2025-12-23 - Simplified to Alpaca-only (removed dead code)
 """
 
 import logging
-import os
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -61,11 +60,9 @@ class MultiBroker:
         if self._alpaca_client is None:
             try:
                 from alpaca.trading.client import TradingClient
+                from src.utils.alpaca_client import get_alpaca_credentials
 
-                api_key = os.environ.get("ALPACA_API_KEY") or os.environ.get("APCA_API_KEY_ID")
-                secret_key = os.environ.get("ALPACA_SECRET_KEY") or os.environ.get(
-                    "APCA_API_SECRET_KEY"
-                )
+                api_key, secret_key = get_alpaca_credentials()
 
                 if api_key and secret_key:
                     self._alpaca_client = TradingClient(api_key, secret_key, paper=True)
@@ -157,9 +154,9 @@ class MultiBroker:
         """Get quote from Alpaca."""
         from alpaca.data.historical import StockHistoricalDataClient
         from alpaca.data.requests import StockLatestQuoteRequest
+        from src.utils.alpaca_client import get_alpaca_credentials
 
-        api_key = os.environ.get("ALPACA_API_KEY") or os.environ.get("APCA_API_KEY_ID")
-        secret_key = os.environ.get("ALPACA_SECRET_KEY") or os.environ.get("APCA_API_SECRET_KEY")
+        api_key, secret_key = get_alpaca_credentials()
 
         client = StockHistoricalDataClient(api_key, secret_key)
         request = StockLatestQuoteRequest(symbol_or_symbols=[symbol])

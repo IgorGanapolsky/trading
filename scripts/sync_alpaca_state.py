@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -57,8 +56,9 @@ def sync_from_alpaca() -> dict:
     logger.info("🔄 Syncing from Alpaca...")
 
     # Check for API keys - FAIL LOUDLY if missing
-    api_key = os.getenv("ALPACA_API_KEY") or os.getenv("APCA_API_KEY_ID")
-    api_secret = os.getenv("ALPACA_SECRET_KEY") or os.getenv("APCA_API_SECRET_KEY")
+    from src.utils.alpaca_client import get_alpaca_credentials
+
+    api_key, api_secret = get_alpaca_credentials()
 
     if not api_key or not api_secret:
         logger.warning("⚠️ No Alpaca API keys found - preserving existing data")

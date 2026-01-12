@@ -29,8 +29,9 @@ def get_account_summary(client=None):
     paper_trading = os.getenv("PAPER_TRADING", "true").lower() == "true"
 
     if client is None:
-        api_key = os.getenv("ALPACA_API_KEY")
-        secret_key = os.getenv("ALPACA_SECRET_KEY")
+        from src.utils.alpaca_client import get_alpaca_credentials
+
+        api_key, secret_key = get_alpaca_credentials()
 
         if not api_key or not secret_key:
             print("ERROR: Missing ALPACA_API_KEY or ALPACA_SECRET_KEY in .env")
@@ -125,8 +126,9 @@ def update_performance_log():
     print("=" * 70)
 
     # Initialize client once
-    api_key = os.getenv("ALPACA_API_KEY")
-    secret_key = os.getenv("ALPACA_SECRET_KEY")
+    from src.utils.alpaca_client import get_alpaca_credentials
+
+    api_key, secret_key = get_alpaca_credentials()
     paper_trading = os.getenv("PAPER_TRADING", "true").lower() == "true"
 
     if not api_key or not secret_key:

@@ -62,8 +62,9 @@ def check_alpaca_orders(date_str: str) -> dict:
         result["error"] = "Alpaca SDK not installed"
         return result
 
-    api_key = os.getenv("ALPACA_API_KEY")
-    api_secret = os.getenv("ALPACA_SECRET_KEY")
+    from src.utils.alpaca_client import get_alpaca_credentials
+
+    api_key, api_secret = get_alpaca_credentials()
 
     if not api_key or not api_secret:
         result["error"] = "Alpaca credentials not set"

@@ -16,7 +16,6 @@ Created: January 6, 2026
 
 import json
 import logging
-import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -172,9 +171,9 @@ def find_csp_opportunity(
     try:
         from alpaca.trading.client import TradingClient
         from alpaca.trading.requests import GetOptionContractsRequest
+        from src.utils.alpaca_client import get_alpaca_credentials
 
-        api_key = os.getenv("ALPACA_API_KEY")
-        secret_key = os.getenv("ALPACA_SECRET_KEY")
+        api_key, secret_key = get_alpaca_credentials()
 
         if not api_key or not secret_key:
             logger.warning("No Alpaca credentials")
@@ -265,9 +264,9 @@ def execute_csp(option: dict, capital: float) -> dict:
         from alpaca.trading.client import TradingClient
         from alpaca.trading.enums import OrderSide, TimeInForce
         from alpaca.trading.requests import LimitOrderRequest
+        from src.utils.alpaca_client import get_alpaca_credentials
 
-        api_key = os.getenv("ALPACA_API_KEY")
-        secret_key = os.getenv("ALPACA_SECRET_KEY")
+        api_key, secret_key = get_alpaca_credentials()
 
         client = TradingClient(api_key, secret_key, paper=True)
 
