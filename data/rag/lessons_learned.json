@@ -1673,5 +1673,23 @@
     "severity": "high",
     "financial_impact": 0.0,
     "symbol": null
+  },
+  {
+    "id": "lesson_20260112_214711_violation",
+    "timestamp": "2026-01-12T21:47:11.841398",
+    "category": "directive_violation",
+    "title": "CTO Told CEO to Do Manual Work - January 12, 2026",
+    "description": "Violated Directive #3 by telling CEO to run '/youtube-analyzer' commands instead of doing it myself. CEO rightfully called this out.",
+    "root_cause": "Defaulted to giving instructions instead of taking action. Sandbox limitations are not an excuse - use CI workflows or find another way.",
+    "prevention": "1. NEVER give manual instructions. 2. If I can't do it locally, trigger a GitHub Action. 3. Always ask 'Can I do this myself?' before responding.",
+    "tags": [
+      "directive_violation",
+      "manual_work",
+      "claude_md",
+      "critical"
+    ],
+    "severity": "critical",
+    "financial_impact": 0.0,
+    "symbol": null
   }
 ]
