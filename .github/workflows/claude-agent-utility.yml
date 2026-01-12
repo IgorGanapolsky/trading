@@ -1,13 +1,20 @@
 # Claude Agent Utility Workflow
 # Purpose: Execute tasks that cannot be done in the Claude sandbox
 # Triggered via API: curl -X POST with workflow_dispatch
+# Also triggers on push to claude/* branches with TRIGGER_TRADE.md changes
 #
 # Created: Jan 7, 2026
+# Updated: Jan 12, 2026 - Added push trigger for paper trades
 # Reason: CEO directive - "Don't tell me sandbox can't do it, create CI workflows"
 
 name: Claude Agent Utility
 
 on:
+  push:
+    branches:
+      - 'claude/**'
+    paths:
+      - 'TRIGGER_TRADE.md'
   workflow_dispatch:
     inputs:
       task:
@@ -50,10 +57,21 @@ env:
 
 jobs:
   execute-task:
-    name: Execute ${{ github.event.inputs.task }}
+    name: Execute ${{ github.event.inputs.task || 'execute-paper-trade' }}
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set task from trigger
+        id: task
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            echo "task=execute-paper-trade" >> $GITHUB_OUTPUT
+            echo "Triggered by push to claude/* branch - executing paper trade"
+          else
+            echo "task=${{ github.event.inputs.task }}" >> $GITHUB_OUTPUT
+            echo "Triggered by workflow_dispatch - task: ${{ github.event.inputs.task }}"
+          fi
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -254,7 +272,7 @@ jobs:
           "
 
       - name: Task - Execute Paper Trade
-        if: github.event.inputs.task == 'execute-paper-trade'
+        if: github.event.inputs.task == 'execute-paper-trade' || github.event_name == 'push'
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
