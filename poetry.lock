@@ -2442,21 +2442,21 @@ orjson = ">=3.10.1"
 
 [[package]]
 name = "langsmith"
-version = "0.5.1"
+version = "0.6.2"
 description = "Client library to connect to the LangSmith Observability and Evaluation Platform."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "langsmith-0.5.1-py3-none-any.whl", hash = "sha256:70aa2a4c75add3f723c3bbac80dbb8adc575077834d3a733ee1ec133206ff351"},
-    {file = "langsmith-0.5.1.tar.gz", hash = "sha256:6a10b38cb4ce58941b7f1dbdf41a461868605dd0162bf05d17690f2e4b6e50e7"},
+    {file = "langsmith-0.6.2-py3-none-any.whl", hash = "sha256:1ea1a591f52683a5aeebdaa2b58458d72ce9598105dd8b29e16f7373631a6434"},
+    {file = "langsmith-0.6.2.tar.gz", hash = "sha256:c2efd7ed61eed3b6fdbf158ea2e9862bc2636f2edc95e90d2faad9462773d097"},
 ]
 
 [package.dependencies]
 httpx = ">=0.23.0,<1"
 orjson = {version = ">=3.9.14", markers = "platform_python_implementation != \"PyPy\""}
 packaging = ">=23.2"
-pydantic = ">=1,<3"
+pydantic = ">=2,<3"
 requests = ">=2.0.0"
 requests-toolbelt = ">=1.0.0"
 uuid-utils = ">=0.12.0,<1.0"
