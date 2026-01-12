@@ -1655,5 +1655,24 @@
       "formatting",
       "dict.get"
     ]
+  },
+  {
+    "id": "lesson_20260112_170000_hardcoded_spy",
+    "timestamp": "2026-01-12T17:00:00.000000",
+    "category": "critical_bug",
+    "title": "Hardcoded SPY Price Prevented All Trades (Jan 12, 2026)",
+    "description": "should_open_position() in simple_daily_trader.py hardcoded SPY price at $600 for collateral calculation, even when CONFIG specified SOFI ($14). Required $57,000 buying power when only $1,000 was needed.",
+    "root_cause": "Hardcoded spy_price_estimate = 600 instead of using CONFIG symbol price",
+    "prevention": "Always derive collateral requirements from the actual CONFIG symbol. Use symbol_prices dict lookup, not hardcoded values.",
+    "tags": [
+      "bug",
+      "critical",
+      "collateral",
+      "buying_power",
+      "no_trades"
+    ],
+    "severity": "critical",
+    "financial_impact": 0,
+    "symbol": "SOFI"
   }
 ]
