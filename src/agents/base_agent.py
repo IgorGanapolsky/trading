@@ -18,6 +18,7 @@ from src.orchestration.context_engine import (
 )
 from src.utils.model_selector import get_model_selector
 from src.utils.self_healing import get_anthropic_api_key, with_retry
+from src.utils.token_monitor import record_llm_usage
 
 logger = logging.getLogger(__name__)
 
@@ -102,12 +103,27 @@ class BaseAgent(ABC):
                     model=self.model, max_tokens=4096, messages=messages
                 )
 
+            # Record token usage for monitoring
+            if hasattr(response, "usage") and response.usage:
+                alerts = record_llm_usage(
+                    agent_name=self.name,
+                    input_tokens=response.usage.input_tokens,
+                    output_tokens=response.usage.output_tokens,
+                    model=self.model,
+                )
+                if alerts:
+                    logger.warning(f"{self.name} token alerts: {alerts}")
+
             # Extract text content
             result = {
                 "reasoning": "",
                 "decision": "",
                 "confidence": 0.0,
                 "tool_calls": [],
+                "token_usage": {
+                    "input": response.usage.input_tokens if response.usage else 0,
+                    "output": response.usage.output_tokens if response.usage else 0,
+                },
             }
 
             for block in response.content:
@@ -125,6 +141,7 @@ class BaseAgent(ABC):
                 "decision": "NO_ACTION",
                 "confidence": 0.0,
                 "tool_calls": [],
+                "token_usage": {"input": 0, "output": 0},
             }
 
     def log_decision(self, decision: dict[str, Any]) -> None:
