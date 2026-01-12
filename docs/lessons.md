@@ -1,28 +1,35 @@
 ---
 layout: default
-title: Trading Rules
+title: Trading Lessons
 permalink: /lessons/
 ---
 
-# Essential Trading Rules
+# Trading Lessons
 
-We deleted 164 lesson files because they were noise - documenting failures instead of making money.
+Lessons are now stored in our **Vertex AI RAG knowledge base**.
 
-**The only rules that matter are in [ESSENTIAL_TRADING_RULES.md](https://github.com/IgorGanapolsky/trading/blob/main/ESSENTIAL_TRADING_RULES.md)**
+## Current Lessons (7 total)
 
-## Quick Summary
+| ID | Lesson | Date |
+|----|--------|------|
+| ll_131 | Never tell CEO to run CI | Jan 12, 2026 |
+| ll_132 | Alpaca API investigation | Jan 12, 2026 |
+| ll_133 | Registry fix and hygiene | Jan 12, 2026 |
+| ll_134 | Options buying power = $0 | Jan 12, 2026 |
+| ll_135 | Stale order threshold fix | Jan 12, 2026 |
 
-1. **Need $500 minimum** to start trading CSPs
-2. **Strategy**: Sell cash-secured puts on F/SOFI at $5 strike
-3. **Don't lose money** - protect capital first
-4. **Compound everything** - reinvest all profits
-5. **Keep it simple** - no ML, no agents, no complexity
+## Essential Rules
+
+1. **Phil Town Rule #1**: Don't lose money
+2. **Strategy**: Sell CSPs on F/SOFI at $5 strike
+3. **Capital needed**: $500 minimum
+4. **Compound**: Reinvest all profits
 
 ## Current Status
 
-- Capital: $30
-- Trades: 0
-- Action: Deposit $10/day until $500
+- Paper Account: $5,000
+- Brokerage: $60
+- Next Trade: Jan 13, 9:35 AM ET
 
 ---
 
