@@ -1655,5 +1655,23 @@
       "formatting",
       "dict.get"
     ]
+  },
+  {
+    "id": "lesson_20260112_213752_0",
+    "timestamp": "2026-01-12T21:37:52.572840",
+    "category": "operational",
+    "title": "RAG Database Underutilization - Knowledge Gap",
+    "description": "RAG has only 5 lessons after 74 days. We're not recording trades or learnings from top traders. This violates CLAUDE.md mandate to 'record every trade and lesson'.",
+    "root_cause": "No automated pipeline to ingest YouTube content, blog posts, or trade outcomes into RAG",
+    "prevention": "1. Run youtube-analyzer skill weekly on Phil Town, tastytrade, etc. 2. Auto-record every paper trade outcome. 3. Query RAG before EVERY session.",
+    "tags": [
+      "rag",
+      "learning",
+      "operational",
+      "mandate_violation"
+    ],
+    "severity": "high",
+    "financial_impact": 0.0,
+    "symbol": null
   }
 ]
