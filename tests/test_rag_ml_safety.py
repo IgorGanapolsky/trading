@@ -813,7 +813,9 @@ class TestRegimePivotPatterns:
         # Check ll_016 exists - skip if deleted in NUCLEAR CLEANUP (Jan 12, 2026)
         ll_016_files = list(lessons_dir.glob("ll_016*.md"))
         if len(ll_016_files) == 0:
-            pytest.skip("ll_016 deleted in NUCLEAR CLEANUP - regime pivot patterns checked via code")
+            pytest.skip(
+                "ll_016 deleted in NUCLEAR CLEANUP - regime pivot patterns checked via code"
+            )
 
         # Verify content mentions all patterns
         content = ll_016_files[0].read_text()
