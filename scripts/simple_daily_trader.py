@@ -177,16 +177,23 @@ def should_open_position(client, config: dict) -> bool:
         return False
 
     # For cash-secured puts, we need buying power = strike * 100 (1 contract)
-    # For SPY at ~$600, a 20-delta put might be around $570 strike
-    # Required collateral: $570 * 100 = $57,000 per contract
-    # For paper trading with $100k, we can do 1-2 contracts
-    spy_price_estimate = 600
-    strike_estimate = int(spy_price_estimate * 0.95)  # 5% OTM for 20 delta
+    # CRITICAL FIX Jan 12, 2026: Use CONFIG symbol price, not hardcoded SPY!
+    # Previous bug: Hardcoded SPY at $600 = $57,000 collateral required
+    # With SOFI at ~$14 and $10 strike = $1,000 collateral (fits $5K account)
+    symbol_prices = {
+        "SOFI": 14,   # ~$14/share, $10 strike = $1,000 collateral
+        "F": 10,      # ~$10/share, $8 strike = $800 collateral
+        "PLTR": 80,   # ~$80/share, $70 strike = $7,000 collateral
+        "SPY": 600,   # ~$600/share, $570 strike = $57,000 collateral
+    }
+    symbol = config.get("symbol", "SOFI")
+    price_estimate = symbol_prices.get(symbol, 20)  # Default to $20 if unknown
+    strike_estimate = int(price_estimate * 0.70)  # 30% OTM for conservative strike
     required_bp = strike_estimate * 100  # 1 contract = 100 shares
 
     if account["buying_power"] < required_bp:
         logger.info(
-            f"Insufficient buying power for CSP: ${account['buying_power']:,.0f} < ${required_bp:,.0f}"
+            f"Insufficient buying power for {symbol} CSP: ${account['buying_power']:,.0f} < ${required_bp:,.0f}"
         )
         logger.info(
             "Need more capital for cash-secured puts. Consider credit spreads for smaller accounts."
@@ -194,7 +201,7 @@ def should_open_position(client, config: dict) -> bool:
         return False
 
     logger.info(
-        f"✅ Buying power OK for CSP: ${account['buying_power']:,.0f} >= ${required_bp:,.0f}"
+        f"✅ Buying power OK for {symbol} CSP: ${account['buying_power']:,.0f} >= ${required_bp:,.0f} required"
     )
     return True
 
