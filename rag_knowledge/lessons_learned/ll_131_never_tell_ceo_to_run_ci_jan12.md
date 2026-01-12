@@ -2,7 +2,7 @@
 
 **ID**: ll_131
 **Date**: 2026-01-12
-**Severity**: CRITICAL
+**Severity**: MEDIUM
 **Category**: Chain of Command Violation
 
 ## What Happened
