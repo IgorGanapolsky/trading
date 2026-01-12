@@ -91,8 +91,8 @@ jobs:
             export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_sa_key.json
             echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_sa_key.json" >> $GITHUB_ENV
 
-            # Extract project ID from SA key
-            PROJECT_ID=$(python3 -c "import json; print(json.loads('''$GCP_SA_KEY''').get('project_id', 'igor-trading-2025-v2'))")
+            # Extract project ID from SA key file (safer than shell variable parsing)
+            PROJECT_ID=$(python3 -c "import json; print(json.load(open('/tmp/gcp_sa_key.json')).get('project_id', 'igor-trading-2025-v2'))")
             echo "GOOGLE_CLOUD_PROJECT=$PROJECT_ID" >> $GITHUB_ENV
             echo "Authenticated with project: $PROJECT_ID"
           else
