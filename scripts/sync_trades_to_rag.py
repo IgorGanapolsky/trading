@@ -25,23 +25,66 @@ logger = logging.getLogger(__name__)
 
 
 def load_todays_trades(date_str: str | None = None) -> list[dict]:
-    """Load trades from JSON file for given date."""
+    """Load trades from JSON file for given date.
+
+    Supports both file formats:
+    - trades_YYYY-MM-DD.json (legacy format)
+    - options_trades_YYYYMMDD.json (execute_options_trade.py format)
+
+    Fixed Jan 12, 2026: PR #1512 discovered format mismatch causing 74 days
+    of options trades to not sync to RAG.
+    """
     if date_str is None:
         date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    trades_file = Path(f"data/trades_{date_str}.json")
-    if not trades_file.exists():
-        logger.warning(f"No trades file found: {trades_file}")
-        return []
+    # Convert date formats
+    date_nodash = date_str.replace("-", "")  # YYYYMMDD for options trades
 
-    try:
-        with open(trades_file) as f:
-            trades = json.load(f)
-        logger.info(f"Loaded {len(trades)} trades from {trades_file}")
-        return trades
-    except (json.JSONDecodeError, OSError) as e:
-        logger.error(f"Error loading trades: {e}")
-        return []
+    all_trades = []
+
+    # Try legacy format: trades_YYYY-MM-DD.json
+    trades_file = Path(f"data/trades_{date_str}.json")
+    if trades_file.exists():
+        try:
+            with open(trades_file) as f:
+                trades = json.load(f)
+            logger.info(f"Loaded {len(trades)} trades from {trades_file}")
+            all_trades.extend(trades)
+        except (json.JSONDecodeError, OSError) as e:
+            logger.error(f"Error loading trades from {trades_file}: {e}")
+
+    # Try options format: options_trades_YYYYMMDD.json
+    options_file = Path(f"data/options_trades_{date_nodash}.json")
+    if options_file.exists():
+        try:
+            with open(options_file) as f:
+                options_trades = json.load(f)
+            logger.info(f"Loaded {len(options_trades)} options trades from {options_file}")
+            # Options trades have different structure - normalize them
+            for opt in options_trades:
+                if "result" in opt:
+                    # Extract from nested result
+                    result = opt.get("result", {})
+                    normalized = {
+                        "symbol": opt.get("symbol", ""),
+                        "strategy": opt.get("strategy", "options"),
+                        "timestamp": opt.get("timestamp", ""),
+                        "side": "sell" if "put" in opt.get("strategy", "").lower() else "buy",
+                        "qty": 1,  # Options contracts
+                        "price": result.get("premium", 0) / 100 if result.get("premium") else 0,
+                        "notional": result.get("premium", 0),
+                        "metadata": {"source": "options_trade", "result": result},
+                    }
+                    all_trades.append(normalized)
+                else:
+                    all_trades.append(opt)
+        except (json.JSONDecodeError, OSError) as e:
+            logger.error(f"Error loading options from {options_file}: {e}")
+
+    if not all_trades:
+        logger.warning(f"No trades found for {date_str}")
+
+    return all_trades
 
 
 def sync_to_vertex_rag(trades: list[dict]) -> bool:
