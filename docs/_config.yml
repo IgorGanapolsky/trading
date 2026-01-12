@@ -31,6 +31,12 @@ plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
 
+# Navigation - explicitly set header pages (excludes 404)
+header_pages:
+  - index.md
+  - lessons.md
+  - reports.md
+
 # Collections
 collections:
   lessons:
