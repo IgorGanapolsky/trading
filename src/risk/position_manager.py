@@ -41,6 +41,10 @@ class PositionManager:
         """Return empty exit list."""
         return []
 
+    def manage_all_positions(self, positions: list = None) -> list:
+        """Evaluate positions for exits - stub returns empty list (no exits)."""
+        return []
+
 
 # Default instance for imports
 DEFAULT_POSITION_MANAGER = PositionManager()
