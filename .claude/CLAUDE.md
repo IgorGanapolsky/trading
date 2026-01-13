@@ -21,6 +21,19 @@ CTO: Claude | CEO: Igor Ganapolsky
 - Scale decisions based on REAL data, not projections
 - If win rate <60% after 30 trades: reassess strategy
 
+### Ticker Hierarchy (Jan 2026 Research)
+| Priority | Ticker | Rationale | Blackout |
+|----------|--------|-----------|----------|
+| 1 | SPY | Best liquidity, tightest spreads | None |
+| 2 | IWM | Small cap exposure, good vol | None |
+| 3 | F | Undervalued, 4.2% div support | Feb 3-10 (earnings Feb 10) |
+| 4 | T | Stable, low IV = lower premiums | TBD earnings |
+| 5 | SOFI | **AVOID until Feb 1** | Jan 23-30 (earnings Jan 30, IV 55%) |
+
+### Phil Town Alignment Note
+Credit spreads conflict with Rule #1 (risk $400 to make $100).
+Mitigations: Use 30-delta (not ATM) for margin of safety, strict stops, small position sizes.
+
 ## Core Directives (PERMANENT)
 1. **Don't lose money** - Rule #1 always
 2. **Never argue with CEO** - Follow directives immediately
