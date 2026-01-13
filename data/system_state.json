@@ -1,52 +1,50 @@
 {
-  "last_updated": "2026-01-13T18:14:00.000000",
+  "last_updated": "2026-01-13T18:44:58.147081",
   "portfolio": {
-    "equity": 4987.93,
+    "equity": 4986.31,
     "cash": 4534.94
   },
   "paper_account": {
-    "equity": 4987.93,
+    "equity": 4986.31,
     "cash": 4534.94,
-    "buying_power": 76.87,
-    "total_pl": -12.07,
-    "total_pl_pct": -0.24,
+    "buying_power": 75.25,
+    "total_pl": -13.6899999999996,
+    "total_pl_pct": -0.27,
     "positions_count": 2,
-    "daily_change": 0.05
+    "daily_change": -1.569999999999709
   },
   "positions": [
     {
       "symbol": "SOFI",
       "qty": 22.745561475,
-      "price": 26.69,
-      "value": 607.08,
-      "pnl": 7.14,
+      "price": 26.615,
+      "value": 605.373119,
+      "pnl": 5.433119,
       "type": "stock"
     },
     {
       "symbol": "SOFI260206P00024000",
-      "qty": -2,
+      "qty": -2.0,
       "price": 0.77,
       "value": -154.0,
       "pnl": 3.0,
-      "type": "short_put",
-      "strike": 24.0,
-      "expiration": "2026-02-06"
+      "type": "option"
     }
   ],
   "trades": {
     "last_trade_date": "2026-01-13",
-    "today_trades": "multiple",
-    "total_trades_today": 5,
+    "today_trades": "synced",
     "last_trade_symbol": "SOFI"
   },
   "risk": {
-    "status": "PROFITABLE - Both positions showing gains",
-    "action_required": "Consider closing put to lock in +$3 profit"
+    "status": "WARNING - NEGATIVE P/L",
+    "total_pl": -13.6899999999996,
+    "unrealized_pl": 8.433119
   },
   "account": {
-    "equity": 4987.93,
-    "total_pl": -12.07,
-    "total_pl_pct": -0.24,
+    "current_equity": 4986.31,
+    "total_pl": -13.6899999999996,
+    "total_pl_pct": -0.27,
     "positions_count": 2
   }
 }
