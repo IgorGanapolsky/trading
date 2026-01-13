@@ -1478,7 +1478,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "📊 Generating enhanced world-class progress dashboard..."
-          python3 scripts/generate_world_class_dashboard_enhanced.py || python3 scripts/generate_world_class_dashboard.py || python3 scripts/generate_progress_dashboard.py
+          python3 scripts/generate_world_class_dashboard_enhanced.py || python3 scripts/generate_world_class_dashboard.py
 
           echo "📝 Updating GitHub Wiki..."
 
@@ -1575,7 +1575,7 @@ jobs:
       - name: Regenerate dashboard snapshot
         if: always()
         run: |
-          python3 scripts/generate_progress_dashboard.py || true
+          python3 scripts/generate_world_class_dashboard_enhanced.py || true
 
       - name: Run health check
         if: always()
