@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-01-13T15:50:39.155470",
+  "last_updated": "2026-01-13T16:58:42.823390",
   "portfolio": {
     "equity": 4969.94,
     "cash": 4534.94
@@ -40,6 +40,13 @@
   },
   "risk": {
     "VIOLATION": "System added to losing positions without stop-loss",
-    "action_required": "Set stop-loss on puts immediately"
+    "action_required": "Set stop-loss on puts immediately",
+    "status": "MONITORED - Short puts have -$7 unrealized loss"
+  },
+  "account": {
+    "current_equity": 4969.94,
+    "total_pl": -30.06,
+    "total_pl_pct": -0.6,
+    "positions_count": 2
   }
 }
