@@ -143,19 +143,44 @@ def main(dry_run: bool = False, trail_pct: float | None = None):
             continue
 
         try:
-            # Create trailing stop order
-            order_request = TrailingStopOrderRequest(
-                symbol=symbol,
-                qty=qty,
-                side=order_side,
-                time_in_force=TimeInForce.GTC,  # Good til canceled
-                trail_percent=trailing_pct * 100,  # API expects percentage as number
-            )
+            # OPTIONS: Use limit order (Alpaca doesn't support trailing stops for options)
+            if is_option_symbol(symbol):
+                # For short options: stop-loss = buy back at 50% loss (1.5x sold price)
+                # For long options: stop-loss = sell at 50% loss (0.5x current price)
+                if side == "short":
+                    # Calculate stop price: 50% max loss means buy at 1.5x current
+                    stop_price = round(current_price * 1.5, 2)
+                    logger.info(f"    Stop-Loss Price: ${stop_price:.2f} (50% max loss)")
+                else:
+                    stop_price = round(current_price * 0.5, 2)
+                    logger.info(f"    Stop-Loss Price: ${stop_price:.2f} (50% trailing)")
 
-            result = client.submit_order(order_request)
-            logger.info(f"    Status: TRAILING STOP SET - Order ID: {result.id}")
-            stops_set += 1
-            total_protected_value += market_value
+                from alpaca.trading.requests import LimitOrderRequest
+                order_request = LimitOrderRequest(
+                    symbol=symbol,
+                    qty=qty,
+                    side=order_side,
+                    type="limit",
+                    time_in_force=TimeInForce.GTC,
+                    limit_price=stop_price,
+                )
+                result = client.submit_order(order_request)
+                logger.info(f"    Status: LIMIT STOP SET - Order ID: {result.id}")
+                stops_set += 1
+                total_protected_value += market_value
+            else:
+                # STOCKS: Use trailing stop
+                order_request = TrailingStopOrderRequest(
+                    symbol=symbol,
+                    qty=qty,
+                    side=order_side,
+                    time_in_force=TimeInForce.GTC,
+                    trail_percent=trailing_pct * 100,
+                )
+                result = client.submit_order(order_request)
+                logger.info(f"    Status: TRAILING STOP SET - Order ID: {result.id}")
+                stops_set += 1
+                total_protected_value += market_value
 
         except Exception as e:
             error_msg = str(e)
@@ -164,7 +189,7 @@ def main(dry_run: bool = False, trail_pct: float | None = None):
                     "    Status: SKIPPED - Fractional shares don't support trailing stops"
                 )
                 stops_skipped += 1
-            elif "option" in error_msg.lower() or "cannot" in error_msg.lower():
+            elif "42210000" in error_msg or "invalid order" in error_msg.lower():
                 logger.warning(f"    Status: SKIPPED - {error_msg}")
                 stops_skipped += 1
             else:
