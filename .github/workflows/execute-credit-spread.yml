@@ -1,0 +1,244 @@
+name: Execute Credit Spread
+
+on:
+  workflow_dispatch:
+    inputs:
+      symbol:
+        description: "Underlying symbol (F, SOFI, T)"
+        required: true
+        default: "SOFI"
+        type: choice
+        options:
+          - F
+          - SOFI
+          - T
+      spread_width:
+        description: "Spread width in dollars"
+        required: true
+        default: "5"
+      quantity:
+        description: "Number of spreads"
+        required: true
+        default: "1"
+
+env:
+  ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+  ALPACA_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+  ALPACA_BASE_URL: "https://paper-api.alpaca.markets"
+
+jobs:
+  execute-spread:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install alpaca-py requests
+
+      - name: Execute Bull Put Credit Spread
+        env:
+          INPUT_SYMBOL: ${{ inputs.symbol }}
+          INPUT_SPREAD_WIDTH: ${{ inputs.spread_width }}
+          INPUT_QUANTITY: ${{ inputs.quantity }}
+        run: |
+          python3 << 'EOF'
+          import os
+          import json
+          from datetime import datetime, timedelta
+          from alpaca.trading.client import TradingClient
+          from alpaca.trading.enums import OrderSide, TimeInForce, OrderType
+
+          # Config from environment
+          symbol = os.environ.get("INPUT_SYMBOL", "SOFI")
+          spread_width = int(os.environ.get("INPUT_SPREAD_WIDTH", "5"))
+          quantity = int(os.environ.get("INPUT_QUANTITY", "1"))
+
+          print("═══════════════════════════════════════════════════════════")
+          print("📊 CREDIT SPREAD EXECUTION")
+          print("═══════════════════════════════════════════════════════════")
+          print(f"Symbol: {symbol}")
+          print(f"Spread Width: ${spread_width}")
+          print(f"Quantity: {quantity}")
+          print()
+
+          # Initialize client
+          client = TradingClient(
+              os.environ["ALPACA_API_KEY"],
+              os.environ["ALPACA_API_SECRET"],
+              paper=True
+          )
+
+          # Get account info
+          account = client.get_account()
+          print(f"Account Equity: ${float(account.equity):,.2f}")
+          print(f"Buying Power: ${float(account.buying_power):,.2f}")
+          print()
+
+          # Calculate collateral needed
+          collateral_needed = spread_width * 100 * quantity
+          print(f"Collateral Needed: ${collateral_needed}")
+
+          if float(account.buying_power) < collateral_needed:
+              print(f"❌ Insufficient buying power!")
+              print(f"   Need: ${collateral_needed}, Have: ${float(account.buying_power):,.2f}")
+              exit(1)
+
+          # Get current approximate strikes based on symbol
+          strike_map = {
+              "F": 10,      # F ~$10
+              "SOFI": 15,   # SOFI ~$15
+              "T": 22,      # T ~$22
+          }
+
+          if symbol not in strike_map:
+              print(f"❌ Unknown symbol: {symbol}")
+              exit(1)
+
+          short_strike = strike_map[symbol]
+          long_strike = short_strike - spread_width
+
+          # Find next Friday expiration
+          today = datetime.now()
+          days_until_friday = (4 - today.weekday()) % 7
+          if days_until_friday == 0:
+              days_until_friday = 7  # Next Friday if today is Friday
+          expiry_date = today + timedelta(days=days_until_friday)
+          expiry = expiry_date.strftime("%y%m%d")
+
+          # Construct option symbols (OCC format)
+          short_put_symbol = f"{symbol}{expiry}P{str(int(short_strike * 1000)).zfill(8)}"
+          long_put_symbol = f"{symbol}{expiry}P{str(int(long_strike * 1000)).zfill(8)}"
+
+          print("═══════════════════════════════════════════════════════════")
+          print("📋 SPREAD DETAILS")
+          print("═══════════════════════════════════════════════════════════")
+          print(f"Expiration: {expiry_date.strftime('%Y-%m-%d')} ({expiry})")
+          print(f"Short Put (SELL): {short_put_symbol} @ ${short_strike}")
+          print(f"Long Put (BUY): {long_put_symbol} @ ${long_strike}")
+          print(f"Max Profit: Premium received")
+          print(f"Max Loss: ${spread_width * 100 * quantity}")
+          print()
+
+          # First, check what options are actually available
+          print("═══════════════════════════════════════════════════════════")
+          print("🔍 CHECKING AVAILABLE OPTIONS")
+          print("═══════════════════════════════════════════════════════════")
+
+          try:
+              from alpaca.trading.requests import GetOptionContractsRequest
+              from alpaca.trading.enums import AssetStatus, ContractType
+
+              req = GetOptionContractsRequest(
+                  underlying_symbols=[symbol],
+                  status=AssetStatus.ACTIVE,
+                  expiration_date_gte=datetime.now().strftime("%Y-%m-%d"),
+                  expiration_date_lte=(datetime.now() + timedelta(days=14)).strftime("%Y-%m-%d"),
+                  type=ContractType.PUT,
+              )
+              contracts = client.get_option_contracts(req)
+
+              if contracts.option_contracts:
+                  puts = sorted(contracts.option_contracts, key=lambda x: (x.expiration_date, float(x.strike_price)))
+                  print(f"Found {len(puts)} put options")
+
+                  # Find suitable strikes near our targets
+                  target_expiry = expiry_date.strftime("%Y-%m-%d")
+                  available_for_expiry = [p for p in puts if str(p.expiration_date) == target_expiry]
+
+                  if available_for_expiry:
+                      print(f"\nOptions expiring {target_expiry}:")
+                      for p in available_for_expiry[:10]:
+                          print(f"  {p.symbol} - Strike: ${float(p.strike_price):.2f}")
+
+                      # Find best matching strikes
+                      strikes = sorted(set(float(p.strike_price) for p in available_for_expiry))
+                      print(f"\nAvailable strikes: {strikes[:10]}")
+
+                      # Pick the closest strikes to our targets
+                      best_short = min(strikes, key=lambda x: abs(x - short_strike))
+                      best_long = min(strikes, key=lambda x: abs(x - long_strike))
+
+                      # Get actual symbols
+                      short_contract = next((p for p in available_for_expiry if float(p.strike_price) == best_short), None)
+                      long_contract = next((p for p in available_for_expiry if float(p.strike_price) == best_long), None)
+
+                      if short_contract and long_contract and best_short > best_long:
+                          short_put_symbol = short_contract.symbol
+                          long_put_symbol = long_contract.symbol
+                          actual_width = best_short - best_long
+
+                          print(f"\n✅ Using actual contracts:")
+                          print(f"   Short: {short_put_symbol} @ ${best_short}")
+                          print(f"   Long: {long_put_symbol} @ ${best_long}")
+                          print(f"   Spread width: ${actual_width}")
+                      else:
+                          print(f"❌ Could not find suitable spread strikes")
+                          exit(1)
+                  else:
+                      print(f"No options found for expiry {target_expiry}")
+                      print("Available expiries:")
+                      expiries = sorted(set(str(p.expiration_date) for p in puts))
+                      for e in expiries[:5]:
+                          print(f"  {e}")
+                      exit(1)
+              else:
+                  print(f"No option contracts found for {symbol}")
+                  exit(1)
+
+          except Exception as e:
+              print(f"Error checking options: {e}")
+              print("Proceeding with calculated symbols...")
+
+          # Execute the spread
+          print()
+          print("═══════════════════════════════════════════════════════════")
+          print("🚀 EXECUTING ORDERS")
+          print("═══════════════════════════════════════════════════════════")
+
+          try:
+              # Sell the short put (collect premium)
+              print(f"Selling {quantity} x {short_put_symbol}...")
+              short_order = client.submit_order(
+                  symbol=short_put_symbol,
+                  qty=quantity,
+                  side=OrderSide.SELL,
+                  type=OrderType.MARKET,
+                  time_in_force=TimeInForce.DAY
+              )
+              print(f"✅ Short put order submitted: {short_order.id}")
+
+              # Buy the long put (protection)
+              print(f"Buying {quantity} x {long_put_symbol}...")
+              long_order = client.submit_order(
+                  symbol=long_put_symbol,
+                  qty=quantity,
+                  side=OrderSide.BUY,
+                  type=OrderType.MARKET,
+                  time_in_force=TimeInForce.DAY
+              )
+              print(f"✅ Long put order submitted: {long_order.id}")
+
+              print()
+              print("═══════════════════════════════════════════════════════════")
+              print("✅ CREDIT SPREAD EXECUTED SUCCESSFULLY!")
+              print("═══════════════════════════════════════════════════════════")
+
+          except Exception as e:
+              print(f"❌ Error executing spread: {e}")
+              exit(1)
+
+          EOF
+
+      - name: Record trade in system state
+        if: success()
+        run: |
+          echo "Credit spread executed at $(date)"
