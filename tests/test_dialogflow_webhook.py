@@ -1137,3 +1137,52 @@ class TestAnalyticalQueryDetection:
         assert is_analytical_query("WHY did we lose money?")
         assert is_analytical_query("EXPLAIN the trade failure")
         assert is_analytical_query("What HAPPENED to profits?")
+
+
+class TestDirectPLQueryDetection:
+    """
+    Tests for is_direct_pl_query() function (added Jan 13, 2026).
+
+    Direct P/L queries like "How much money we made today?" should get
+    conversational answers, not full portfolio dumps.
+    """
+
+    def test_direct_pl_queries_detected(self):
+        """Test that direct P/L questions are detected correctly."""
+        from src.agents.dialogflow_webhook import is_direct_pl_query
+
+        direct_pl_queries = [
+            "How much money we made today?",
+            "How much did we make?",
+            "What's our profit today?",
+            "Did we make money?",
+            "How are we doing today?",
+            "What did we make?",
+            "Any profit today?",
+            "how much money did we earn",
+            "did we earn anything today",
+        ]
+        for query in direct_pl_queries:
+            assert is_direct_pl_query(query), f"Should be direct P/L: '{query}'"
+
+    def test_non_direct_pl_queries(self):
+        """Non-direct P/L questions should not match."""
+        from src.agents.dialogflow_webhook import is_direct_pl_query
+
+        non_direct_queries = [
+            "What lessons did we learn?",
+            "Show me the portfolio",
+            "What is our strategy?",
+            "Tell me about risk management",
+            "List all positions",
+        ]
+        for query in non_direct_queries:
+            assert not is_direct_pl_query(query), f"NOT direct P/L: '{query}'"
+
+    def test_direct_pl_case_insensitive(self):
+        """Direct P/L detection should be case insensitive."""
+        from src.agents.dialogflow_webhook import is_direct_pl_query
+
+        assert is_direct_pl_query("HOW MUCH MONEY we made?")
+        assert is_direct_pl_query("Did We Make Money?")
+        assert is_direct_pl_query("ANY PROFIT today?")

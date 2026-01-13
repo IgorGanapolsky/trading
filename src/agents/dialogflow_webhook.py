@@ -11,6 +11,7 @@ Version History:
 - v3.0.0 Jan 12, 2026: Vertex AI RAG integration - semantic search with fallback
 - v3.1.0 Jan 13, 2026: Fix analytical queries - WHY questions route to RAG not status
 - v3.2.0 Jan 13, 2026: Add CI status check to readiness assessment (CEO directive)
+- v3.3.0 Jan 13, 2026: Fix direct P/L queries - conversational "How much money" answers
 
 Architecture (v3.0.0):
 - Primary: Vertex AI RAG (cloud semantic search with text-embedding-004)
@@ -67,7 +68,7 @@ WEBHOOK_AUTH_TOKEN = os.environ.get("DIALOGFLOW_WEBHOOK_TOKEN", "")
 app = FastAPI(
     title="Trading AI RAG Webhook",
     description="Dialogflow CX webhook for lessons AND trade history queries",
-    version="3.2.0",  # Add CI status check to readiness assessment
+    version="3.3.0",  # Fix direct P/L queries - conversational answers
 )
 
 # Initialize rate limiter if available
@@ -398,6 +399,36 @@ def is_analytical_query(query: str) -> bool:
     ]
     query_lower = query.lower()
     return any(re.search(pattern, query_lower) for pattern in analytical_keywords)
+
+
+def is_direct_pl_query(query: str) -> bool:
+    """
+    Detect if query is asking for a DIRECT P/L answer (not a full status dump).
+
+    These questions expect a conversational answer like "You made $X today"
+    instead of a portfolio status dump.
+
+    Examples:
+    - "How much money we made today?"
+    - "How much did we make?"
+    - "What's our profit today?"
+    - "Did we make money?"
+    - "How are we doing today?"
+    """
+    import re
+
+    # Patterns for direct P/L questions
+    direct_pl_patterns = [
+        r"\bhow much.{0,20}(money|profit|made|make|earn)",
+        r"\bhow much did we (make|earn|profit|lose)",
+        r"\bwhat('s| is| did).{0,15}(our|the|my).{0,10}(profit|loss|p/?l|pnl)",
+        r"\bdid we (make|lose|earn).{0,10}(money|profit)?",
+        r"\bhow are we doing",
+        r"\bwhat did we (make|earn|lose)",
+        r"\bany (profit|money|gains)",
+    ]
+    query_lower = query.lower()
+    return any(re.search(pattern, query_lower) for pattern in direct_pl_patterns)
 
 
 def is_trade_query(query: str) -> bool:
@@ -1125,6 +1156,54 @@ async def webhook(
 - Review paper account positions in Alpaca dashboard
 - Ask: "Are we ready to trade?" for full readiness assessment"""
                 logger.info(f"Returning analytical response with RAG from {source}")
+            elif is_direct_pl_query(user_query):
+                # FIX Jan 13, 2026: Direct P/L questions get conversational answers
+                # Not a full portfolio dump - just answer the question directly
+                logger.info(f"Detected DIRECT P/L query: {user_query}")
+                portfolio = get_current_portfolio_status()
+                if portfolio:
+                    paper = portfolio.get("paper", {})
+                    live = portfolio.get("live", {})
+                    trades_today = portfolio.get("trades_today", 0)
+                    today_pl = portfolio.get("today_pl", 0)
+                    actual_today = portfolio.get("actual_today", "today")
+
+                    if trades_today > 0 and today_pl != 0:
+                        # Trades executed with P/L
+                        if today_pl > 0:
+                            response_text = (
+                                f"You made **${today_pl:,.2f}** today "
+                                f"from {trades_today} trade(s). Nice work!"
+                            )
+                        else:
+                            response_text = (
+                                f"You lost **${abs(today_pl):,.2f}** today "
+                                f"from {trades_today} trade(s). Let's review."
+                            )
+                    elif trades_today > 0:
+                        # Trades executed but no P/L data
+                        paper_pl = paper.get("total_pl", 0)
+                        pct = paper.get("total_pl_pct", 0)
+                        response_text = (
+                            f"You executed {trades_today} trade(s) today. "
+                            f"Paper P/L: **${paper_pl:,.2f}** ({pct:.2f}%)."
+                        )
+                    else:
+                        # No trades today
+                        paper_pl = paper.get("total_pl", 0)
+                        pct = paper.get("total_pl_pct", 0)
+                        response_text = (
+                            f"No money made **today** ({actual_today}) - "
+                            f"no trades yet.\n\n"
+                            f"Overall paper P/L: **${paper_pl:,.2f}** ({pct:.2f}%)"
+                        )
+                    logger.info("Returning conversational P/L response")
+                else:
+                    response_text = (
+                        "I couldn't retrieve your P/L data right now. "
+                        "Try asking 'Are we ready to trade?' for status."
+                    )
+                    logger.warning("Direct P/L query but no portfolio data")
             else:
                 # Fallback: Get current portfolio status from system_state.json
                 portfolio = get_current_portfolio_status()
