@@ -608,7 +608,17 @@ def execute_precious_metals_trading() -> None:
 
     try:
         from src.core.alpaca_trader import AlpacaTrader
-        from src.strategies.precious_metals_strategy import PreciousMetalsStrategy
+
+        # BUG FIX (Jan 13, 2026): PreciousMetalsStrategy module doesn't exist
+        # This feature was disabled Dec 16, 2025. Guard against import error.
+        try:
+            from src.strategies.precious_metals_strategy import PreciousMetalsStrategy
+        except ImportError:
+            logger.error(
+                "PreciousMetalsStrategy module not found. "
+                "Precious metals trading disabled until module is created."
+            )
+            return
 
         # Initialize trader
         trader = None

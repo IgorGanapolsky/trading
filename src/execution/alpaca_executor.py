@@ -787,22 +787,25 @@ class AlpacaExecutor:
         # Simulated orders - estimate from notional
         if order.get("mode") == "simulated":
             # Try to get current price
+            # BUG FIX (Jan 13, 2026): Was using self.trader.api which doesn't exist
+            # AlpacaTrader has get_current_quote() method instead
             try:
-                if self.trader:
-                    quote = self.trader.api.get_latest_quote(symbol)
-                    if quote and quote.ask_price:
-                        return float(quote.ask_price)
+                if self.trader and hasattr(self.trader, "get_current_quote"):
+                    quote_data = self.trader.get_current_quote(symbol)
+                    if quote_data and quote_data.get("ask_price"):
+                        return float(quote_data["ask_price"])
             except Exception:
                 pass
             # Default estimate: assume 1 share = notional (rough)
             return notional / 1.0 if notional > 0 else 0.0
 
         # Try to get current market price
+        # BUG FIX (Jan 13, 2026): Was using self.trader.api which doesn't exist
         try:
-            if self.trader:
-                quote = self.trader.api.get_latest_quote(symbol)
-                if quote and quote.ask_price:
-                    return float(quote.ask_price)
+            if self.trader and hasattr(self.trader, "get_current_quote"):
+                quote_data = self.trader.get_current_quote(symbol)
+                if quote_data and quote_data.get("ask_price"):
+                    return float(quote_data["ask_price"])
         except Exception:
             pass
 
