@@ -9,6 +9,7 @@ Date: January 13, 2026
 """
 
 import json
+import sys
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -332,6 +333,7 @@ class TestMainFunction:
     """Test main CLI function."""
 
     @patch("scripts.verify_stops_in_place.get_alpaca_client")
+    @patch.object(sys, "argv", ["verify_stops_in_place.py"])
     def test_main_no_client(self, mock_client):
         """When client unavailable, should warn but not fail."""
         mock_client.return_value = None
@@ -346,6 +348,7 @@ class TestMainFunction:
     @patch("scripts.verify_stops_in_place.get_open_orders")
     @patch("scripts.verify_stops_in_place.save_verification_result")
     @patch("scripts.verify_stops_in_place.update_system_state")
+    @patch.object(sys, "argv", ["verify_stops_in_place.py"])
     def test_main_all_stops_ok(
         self, mock_state, mock_save, mock_orders, mock_positions, mock_client
     ):
@@ -382,6 +385,7 @@ class TestMainFunction:
     @patch("scripts.verify_stops_in_place.get_open_orders")
     @patch("scripts.verify_stops_in_place.save_verification_result")
     @patch("scripts.verify_stops_in_place.update_system_state")
+    @patch.object(sys, "argv", ["verify_stops_in_place.py"])
     def test_main_missing_stops_blocks(
         self, mock_state, mock_save, mock_orders, mock_positions, mock_client
     ):
