@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "created": "2026-01-13",
+    "purpose": "Track credit spread win rate for data-driven decisions",
+    "decision_point": "After 30 trades OR 90 days, evaluate strategy"
+  },
+  "summary": {
+    "total_trades": 0,
+    "wins": 0,
+    "losses": 0,
+    "win_rate_pct": 0,
+    "total_premium_collected": 0,
+    "total_pnl": 0,
+    "avg_win": 0,
+    "avg_loss": 0,
+    "profit_factor": 0,
+    "start_date": "2026-01-13",
+    "days_tracked": 0
+  },
+  "trades": []
+}

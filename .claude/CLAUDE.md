@@ -2,16 +2,24 @@
 
 CTO: Claude | CEO: Igor Ganapolsky
 
-## Strategy (Updated Jan 13, 2026)
-- **North Star**: $100/day after-tax via compounding
-- **Primary strategy**: CREDIT SPREADS (not CSPs) - 10x capital efficiency
+## Strategy (Updated Jan 13, 2026 - REVISED)
+- **North Star**: $25/day (~$500/month = 10% monthly = 120% annually)
+- **Why revised**: $100/day = 2%/day = unsustainable. Research shows 0.2-0.5%/day is realistic max.
+- **Primary strategy**: CREDIT SPREADS - capital efficient, defined risk
 - **Primary targets**: F, SOFI, T - bull put spreads $5 wide
 - **Spread setup**: Sell ATM put, buy $5 OTM put = $500 collateral, ~$100 premium
-- **Position limit**: MAX 10 spreads with $5K (vs only 2 CSPs)
-- **Weekly target**: 10 spreads x $100 = $1,000/week = $200/day
-- **Stop-loss**: Close at 25% loss OR $50 daily loss per spread
+- **Position limit**: 2-3 spreads/week (conservative until win rate proven)
+- **Weekly target**: 2 spreads x $100 x 70% win rate = ~$80/week = $16/day (floor)
+- **Stop-loss**: Close at 25% loss ($125 max per spread)
 - **Risk management**: Never risk >5% of account on single trade
-- **Until $500 brokerage**: Paper trade only, deposit $10/day
+- **Paper trading phase**: 90 days to validate win rate before scaling
+- **Decision point**: After 90 days, real data determines if we scale up or adjust
+
+## Win Rate Tracking (Data-Driven)
+- Track every paper trade: entry, exit, P/L, win/loss
+- Required metrics: win rate %, avg win, avg loss, profit factor
+- Scale decisions based on REAL data, not projections
+- If win rate <60% after 30 trades: reassess strategy
 
 ## Core Directives (PERMANENT)
 1. **Don't lose money** - Rule #1 always
