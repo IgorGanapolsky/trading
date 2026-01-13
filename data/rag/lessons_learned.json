@@ -1820,5 +1820,25 @@
     "severity": "high",
     "financial_impact": 0,
     "symbol": "SOFI"
+  },
+  {
+    "id": "lesson_20260113_142500_0",
+    "timestamp": "2026-01-13T14:26:30.815561",
+    "category": "operational_failure",
+    "title": "74 Days Zero Trades - System Complexity Killed Execution (Jan 13, 2026)",
+    "description": "Trading system ran for 74 days with zero trades executed. Complex 5-gate pipeline, 23 workflows, and multiple continue-on-error flags masked all failures. Portfolio remained 100% cash while system reported success.",
+    "root_cause": "Over-engineering. Too many gates, too many workflows, insufficient end-to-end testing. Critical bugs (hardcoded SPY price) went undetected because outputs were suppressed.",
+    "prevention": "1. Simplify: One workflow, one strategy, one execution path. 2. Remove all continue-on-error flags from critical paths. 3. Add mandatory trade verification that fails loudly. 4. Run manual trade test before declaring system operational.",
+    "tags": [
+      "critical",
+      "operational",
+      "complexity",
+      "zero_trades",
+      "system_failure"
+    ],
+    "severity": "critical",
+    "financial_impact": 0.0,
+    "symbol": null,
+    "resolution": "Under investigation - need to execute first trade to prove system works"
   }
 ]
