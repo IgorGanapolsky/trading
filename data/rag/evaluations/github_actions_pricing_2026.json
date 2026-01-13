@@ -1,0 +1,17 @@
+{
+  "title": "GitHub Actions 2026 Pricing Changes Evaluation",
+  "type": "devops_knowledge",
+  "source": "https://youtu.be/FXYGeOA_TIo",
+  "date_evaluated": "2026-01-13",
+  "verdict": "VALUABLE_INFORMATIONAL",
+  "summary": "GitHub Actions pricing changed Jan 1, 2026. GitHub-hosted runners get 40% discount + $0.002/min platform fee = net 25% savings. Self-hosted runners get $0.002/min fee starting March 31, 2026. Our system uses only GitHub-hosted runners so we benefit from the discount automatically.",
+  "key_facts": [
+    "GitHub-hosted Linux 2-core: $0.008 -> $0.006/min (25% savings)",
+    "Self-hosted runners: $0 -> $0.002/min platform fee (March 2026)",
+    "Enterprise and public repos exempt from changes",
+    "We have 30 workflows with 54 GitHub-hosted runner jobs",
+    "No action needed - pricing benefits us automatically"
+  ],
+  "action_required": false,
+  "tags": ["github-actions", "ci-cd", "pricing", "devops", "cost-optimization"]
+}
