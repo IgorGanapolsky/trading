@@ -51,8 +51,9 @@ fi
 # LIVE ALPACA DATA FETCH (Dec 19, 2025 fix)
 # Try to get REAL data from Alpaca API first, fall back to local files
 # ============================================================================
-ALPACA_API_KEY="${ALPACA_API_KEY:-}"
-ALPACA_SECRET_KEY="${ALPACA_SECRET_KEY:-}"
+# PRIORITY: Use $5K paper account keys first (per CLAUDE.md directive)
+ALPACA_API_KEY="${ALPACA_PAPER_TRADING_5K_API_KEY:-${ALPACA_API_KEY:-}}"
+ALPACA_SECRET_KEY="${ALPACA_PAPER_TRADING_5K_API_SECRET:-${ALPACA_SECRET_KEY:-}}"
 LIVE_DATA="false"
 PERF_DATE=""
 
@@ -79,14 +80,24 @@ fi
 
 # Fall back to local files if live fetch failed
 if [[ "$LIVE_DATA" == "false" ]]; then
-    # Get most recent data from performance_log.json (more reliable than system_state)
-    # Fixed: Use jq .[-1] to get last array element instead of tail -1 which returns "]"
-    if [[ -f "$PERF_LOG" ]]; then
+    # PRIORITY: Use system_state.json (paper account) - per CLAUDE.md directive
+    # performance_log.json tracks brokerage ($60), system_state tracks paper ($5K)
+    if [[ -f "$STATE_FILE" ]]; then
+        PERF_DATE=$(jq -r '.last_updated // ""' "$STATE_FILE" 2>/dev/null | cut -d'T' -f1 || echo "")
+        CURRENT_EQUITY=$(jq -r '.paper_account.equity // .portfolio.equity // "N/A"' "$STATE_FILE" 2>/dev/null || echo "N/A")
+        TOTAL_PL=$(jq -r '.paper_account.total_pl // "N/A"' "$STATE_FILE" 2>/dev/null || echo "N/A")
+        TOTAL_PL_PCT_RAW=$(jq -r '.paper_account.total_pl_pct // "N/A"' "$STATE_FILE" 2>/dev/null || echo "N/A")
+        if [[ "$TOTAL_PL_PCT_RAW" != "N/A" ]]; then
+            TOTAL_PL_PCT=$(printf "%.2f" "$TOTAL_PL_PCT_RAW" 2>/dev/null || echo "$TOTAL_PL_PCT_RAW")
+        else
+            TOTAL_PL_PCT="N/A"
+        fi
+    elif [[ -f "$PERF_LOG" ]]; then
+        # Secondary fallback to performance_log (brokerage account)
         PERF_DATE=$(jq -r '.[-1].date // ""' "$PERF_LOG" 2>/dev/null || echo "")
         CURRENT_EQUITY=$(jq -r '.[-1].equity // "N/A"' "$PERF_LOG" 2>/dev/null || echo "N/A")
         TOTAL_PL=$(jq -r '.[-1].pl // "N/A"' "$PERF_LOG" 2>/dev/null || echo "N/A")
         TOTAL_PL_PCT_RAW=$(jq -r '.[-1].pl_pct // "N/A"' "$PERF_LOG" 2>/dev/null || echo "N/A")
-        # pl_pct is already a percentage (e.g., -0.09 means -0.09%), just format it
         if [[ "$TOTAL_PL_PCT_RAW" != "N/A" ]]; then
             TOTAL_PL_PCT=$(printf "%.2f" "$TOTAL_PL_PCT_RAW" 2>/dev/null || echo "$TOTAL_PL_PCT_RAW")
         else
@@ -94,9 +105,9 @@ if [[ "$LIVE_DATA" == "false" ]]; then
         fi
     else
         PERF_DATE=""
-        CURRENT_EQUITY=$(jq -r '.account.current_equity // "N/A"' "$STATE_FILE")
-        TOTAL_PL=$(jq -r '.account.total_pl // "N/A"' "$STATE_FILE")
-        TOTAL_PL_PCT=$(jq -r '.account.total_pl_pct // "N/A"' "$STATE_FILE")
+        CURRENT_EQUITY="N/A"
+        TOTAL_PL="N/A"
+        TOTAL_PL_PCT="N/A"
     fi
 fi
 
