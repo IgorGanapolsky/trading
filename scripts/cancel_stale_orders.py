@@ -28,6 +28,8 @@ def main() -> int:
     """Cancel stale orders to free buying power."""
     try:
         from alpaca.trading.client import TradingClient
+        from alpaca.trading.enums import QueryOrderStatus
+        from alpaca.trading.requests import GetOrdersRequest
     except ImportError:
         logger.error("alpaca-py not installed")
         return 1
@@ -43,8 +45,9 @@ def main() -> int:
 
     client = TradingClient(api_key, secret_key, paper=paper)
 
-    # Get all open orders
-    orders = client.get_orders(status="open")
+    # Get all open orders using GetOrdersRequest (alpaca-py API)
+    request_params = GetOrdersRequest(status=QueryOrderStatus.OPEN)
+    orders = client.get_orders(filter=request_params)
 
     if not orders:
         logger.info("No open orders found")
