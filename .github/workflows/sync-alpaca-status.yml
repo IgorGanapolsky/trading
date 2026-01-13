@@ -90,6 +90,22 @@ jobs:
           print(f"\nTotal Unrealized P/L: ${total_unrealized:,.2f}")
           print(f"Total P/L (from $5K): ${total_pl:,.2f} ({total_pl_pct:.2f}%)")
 
+          # Count today's filled orders (FIX: webhook needs total_trades_today)
+          today_str = datetime.now().strftime("%Y-%m-%d")
+          try:
+              orders = api.list_orders(
+                  status='closed',
+                  after=today_str,
+                  direction='desc',
+                  limit=100
+              )
+              filled_orders = [o for o in orders if o.status == 'filled']
+              total_trades_today = len(filled_orders)
+              print(f"Filled orders today: {total_trades_today}")
+          except Exception as e:
+              print(f"Could not fetch orders: {e}")
+              total_trades_today = 0
+
           # Update system_state.json
           state_file = Path("data/system_state.json")
           state = {
@@ -109,8 +125,9 @@ jobs:
               },
               "positions": position_list,
               "trades": {
-                  "last_trade_date": datetime.now().strftime("%Y-%m-%d"),
+                  "last_trade_date": today_str,
                   "today_trades": "synced",
+                  "total_trades_today": total_trades_today,
                   "last_trade_symbol": positions[0].symbol if positions else "none"
               },
               "risk": {
