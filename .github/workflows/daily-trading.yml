@@ -124,9 +124,9 @@ jobs:
           echo "🧪 Running test suite..."
           # FIXED Dec 30, 2025: Tests MUST pass or trading is BLOCKED
           # Previous version bypassed failures with "|| echo continuing"
+          # FIXED Jan 13, 2026: Removed test_telemetry_summary.py (file doesn't exist)
           python3 -m pytest \
             tests/test_promotion_gate.py \
-            tests/test_telemetry_summary.py \
             --timeout=120 \
             --timeout-method=thread \
             -v \
