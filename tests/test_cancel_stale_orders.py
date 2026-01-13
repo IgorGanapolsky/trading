@@ -8,8 +8,8 @@ from datetime import datetime, timedelta, timezone
 class TestCancelStaleOrders:
     """Test stale order cancellation logic."""
 
-    def test_max_order_age_is_4_hours(self):
-        """Verify CEO fix: stale threshold is 4 hours, not 24."""
+    def test_max_order_age_is_zero_cancel_all(self):
+        """Verify CEO fix Jan 13: cancel ALL orders to restore buying power."""
         # Import the module to check the constant
         import sys
 
@@ -19,8 +19,8 @@ class TestCancelStaleOrders:
         with open("scripts/cancel_stale_orders.py") as f:
             content = f.read()
 
-        assert "MAX_ORDER_AGE_HOURS = 4" in content, (
-            "CEO Fix Jan 12, 2026: MAX_ORDER_AGE_HOURS must be 4, not 24"
+        assert "MAX_ORDER_AGE_HOURS = 0" in content, (
+            "CEO Fix Jan 13, 2026: MAX_ORDER_AGE_HOURS must be 0 to cancel ALL orders"
         )
 
     def test_stale_order_detection(self):
