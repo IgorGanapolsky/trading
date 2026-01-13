@@ -263,7 +263,7 @@ class TestTradeGatewayIntegration:
         mock_validator.validate.return_value = mock_result
 
         # Create gateway and evaluate
-        gateway = TradeGateway(trader=mock_trader, paper=True)
+        gateway = TradeGateway(executor=mock_trader, paper=True)
         request = TradeRequest(
             symbol="SOFI",
             side="buy",
@@ -299,7 +299,7 @@ class TestTradeGatewayIntegration:
         mock_validator.validate.return_value = mock_result
 
         # Create gateway and evaluate
-        gateway = TradeGateway(trader=mock_trader, paper=True)
+        gateway = TradeGateway(executor=mock_trader, paper=True)
         request = TradeRequest(
             symbol="UNKNOWN",
             side="buy",
