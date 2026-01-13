@@ -1067,3 +1067,73 @@ class TestTradeQueryWordBoundary:
         assert is_trade_query("Is the data lossless?") is False
         # "gain" in "again" - should NOT match
         assert is_trade_query("Try again") is False
+
+
+class TestAnalyticalQueryDetection:
+    """
+    Tests for is_analytical_query() function (added Jan 13, 2026).
+
+    Analytical queries (WHY, explain, etc.) should be routed to RAG
+    for semantic understanding, not to simple portfolio status display.
+
+    Bug: "Why did we not make money yesterday" was returning generic
+    portfolio status instead of actually analyzing the question.
+    """
+
+    def test_why_questions_are_analytical(self):
+        """WHY questions should be detected as analytical."""
+        from src.agents.dialogflow_webhook import is_analytical_query
+
+        analytical_queries = [
+            "Why did we not make money yesterday?",
+            "Why are we losing money?",
+            "Why didn't the trade execute?",
+            "Why is the system not trading?",
+        ]
+
+        for query in analytical_queries:
+            assert is_analytical_query(query), f"Should detect as analytical: '{query}'"
+
+    def test_explain_questions_are_analytical(self):
+        """EXPLAIN/HOW COME questions should be analytical."""
+        from src.agents.dialogflow_webhook import is_analytical_query
+
+        analytical_queries = [
+            "Explain what went wrong with our trades",
+            "How come we lost on that trade?",
+            "What happened to our profits?",
+            "Tell me about why we didn't trade",
+        ]
+
+        for query in analytical_queries:
+            assert is_analytical_query(query), f"Should detect as analytical: '{query}'"
+
+    def test_in_detail_is_analytical(self):
+        """Requests for detailed analysis should be analytical."""
+        from src.agents.dialogflow_webhook import is_analytical_query
+
+        assert is_analytical_query("Tell me in detail why we lost money")
+        assert is_analytical_query("Please explain in detail the trade results")
+
+    def test_simple_status_queries_not_analytical(self):
+        """Simple status queries should NOT be analytical."""
+        from src.agents.dialogflow_webhook import is_analytical_query
+
+        non_analytical_queries = [
+            "Show me my trades",
+            "How much did we make today?",
+            "What's my portfolio balance?",
+            "Portfolio status",
+            "Account balance",
+        ]
+
+        for query in non_analytical_queries:
+            assert not is_analytical_query(query), f"Should NOT be analytical: '{query}'"
+
+    def test_analytical_query_case_insensitive(self):
+        """Analytical detection should be case insensitive."""
+        from src.agents.dialogflow_webhook import is_analytical_query
+
+        assert is_analytical_query("WHY did we lose money?")
+        assert is_analytical_query("EXPLAIN the trade failure")
+        assert is_analytical_query("What HAPPENED to profits?")
