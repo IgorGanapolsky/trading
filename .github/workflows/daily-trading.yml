@@ -190,9 +190,10 @@ jobs:
           echo "=" * 70
           echo ""
 
-          # Set up GCP auth
+          # Set up GCP auth (chmod 600 for security - Jan 13, 2026 fix)
           if [ -n "$GCP_SA_KEY" ]; then
             echo "$GCP_SA_KEY" > /tmp/gcp_sa_key.json
+            chmod 600 /tmp/gcp_sa_key.json
             export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_sa_key.json
           fi
 
