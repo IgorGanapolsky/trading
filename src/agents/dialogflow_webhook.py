@@ -9,6 +9,7 @@ Deployed to Cloud Run at: https://trading-dialogflow-webhook-cqlewkvzdq-uc.a.run
 Version History:
 - v2.9.0 Jan 10, 2026: Security - SSL verification, rate limiting, webhook auth
 - v3.0.0 Jan 12, 2026: Vertex AI RAG integration - semantic search with fallback
+- v3.1.0 Jan 13, 2026: Fix analytical queries - WHY questions route to RAG not status
 
 Architecture (v3.0.0):
 - Primary: Vertex AI RAG (cloud semantic search with text-embedding-004)
@@ -65,7 +66,7 @@ WEBHOOK_AUTH_TOKEN = os.environ.get("DIALOGFLOW_WEBHOOK_TOKEN", "")
 app = FastAPI(
     title="Trading AI RAG Webhook",
     description="Dialogflow CX webhook for lessons AND trade history queries",
-    version="2.9.0",  # Security: SSL verification, rate limiting, webhook auth
+    version="3.1.0",  # Fix: Analytical queries (WHY) route to RAG
 )
 
 # Initialize rate limiter if available
@@ -302,6 +303,37 @@ def parse_readiness_context(query: str) -> dict:
         "is_paper": is_paper,
         "is_live": is_live,
     }
+
+
+def is_analytical_query(query: str) -> bool:
+    """
+    Detect if query is asking for analysis/explanation (WHY questions).
+
+    These should be routed to RAG for semantic understanding, not simple
+    status lookups. Examples:
+    - "Why did we not make money yesterday?"
+    - "How come we lost on that trade?"
+    - "Explain what went wrong with paper trades"
+    - "What happened to our profits?"
+    """
+    import re
+
+    analytical_keywords = [
+        r"\bwhy\b",
+        r"\bhow come\b",
+        r"\bexplain\b",
+        r"\bwhat happened\b",
+        r"\bwhat went wrong\b",
+        r"\breason\b",
+        r"\bcause\b",
+        r"\banalyze\b",
+        r"\banalysis\b",
+        r"\bunderstand\b",
+        r"\bin detail\b",
+        r"\btell me about\b",
+    ]
+    query_lower = query.lower()
+    return any(re.search(pattern, query_lower) for pattern in analytical_keywords)
 
 
 def is_trade_query(query: str) -> bool:
@@ -930,6 +962,49 @@ async def webhook(
             if trades:
                 response_text = format_trades_response(trades, user_query)
                 logger.info(f"Returning {len(trades)} trades")
+            elif is_analytical_query(user_query):
+                # FIX Jan 13, 2026: Analytical questions (WHY, explain, etc.)
+                # should go to RAG for semantic understanding, not portfolio status
+                logger.info(
+                    f"Detected ANALYTICAL trade query: {user_query} - routing to RAG"
+                )
+                results, source = query_rag_hybrid(user_query, top_k=5)
+
+                # Get portfolio context to include in response
+                portfolio = get_current_portfolio_status()
+                portfolio_context = ""
+                if portfolio:
+                    live = portfolio.get("live", {})
+                    paper = portfolio.get("paper", {})
+                    last_trade = portfolio.get("last_trade_date", "unknown")
+                    portfolio_context = f"""
+**Current Status:**
+- Paper Equity: ${paper.get("equity", 0):,.2f} | P/L: ${paper.get("total_pl", 0):,.2f}
+- Live Equity: ${live.get("equity", 0):.2f}
+- Last Trade: {last_trade}
+
+"""
+
+                if results:
+                    rag_response = format_rag_response(results, user_query, source)
+                    response_text = f"""📊 **Analysis: {user_query}**
+
+{portfolio_context}{rag_response}"""
+                else:
+                    # No RAG results - provide helpful analysis
+                    response_text = f"""📊 **Analysis: {user_query}**
+
+{portfolio_context}**Possible reasons for no profit:**
+1. **No trades executed** - Check if automation is running
+2. **Market conditions** - Weekend/after hours means no trading
+3. **Strategy parameters** - Entry signals may not have triggered
+4. **Capital constraints** - Insufficient buying power for options
+
+**To investigate further:**
+- Check GitHub Actions for trading workflow status
+- Review paper account positions in Alpaca dashboard
+- Ask: "Are we ready to trade?" for full readiness assessment"""
+                logger.info(f"Returning analytical response with RAG from {source}")
             else:
                 # Fallback: Get current portfolio status from system_state.json
                 portfolio = get_current_portfolio_status()
