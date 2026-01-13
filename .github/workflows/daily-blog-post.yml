@@ -72,6 +72,11 @@ jobs:
         run: |
           python3 scripts/update_performance_log.py
 
+      - name: Sync RAG lessons to blog
+        if: steps.market_check.outputs.skip != 'true'
+        run: |
+          python3 scripts/sync_rag_to_blog.py
+
       - name: Generate blog post
         id: generate
         if: steps.market_check.outputs.skip != 'true'
@@ -115,6 +120,7 @@ jobs:
           # Add all changed files
           git add data/performance_log.json
           git add docs/_reports/
+          git add docs/_posts/
           git add docs/index.md
 
           # Check if there are changes to commit
