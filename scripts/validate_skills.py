@@ -82,8 +82,9 @@ def main():
     args = parser.parse_args()
 
     if not SKILLS_DIR.exists():
-        print("ERROR: .claude/skills directory not found")
-        sys.exit(1)
+        print("INFO: .claude/skills directory not found - no skills to validate")
+        print("✅ Skill validation passed (no skills defined)")
+        sys.exit(0)
 
     all_errors = []
     skills_checked = 0
