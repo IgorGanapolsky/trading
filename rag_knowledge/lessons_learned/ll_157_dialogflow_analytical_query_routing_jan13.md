@@ -1,4 +1,4 @@
-# LL-147: Dialogflow Analytical Query Routing Fix
+# LL-157: Dialogflow Analytical Query Routing Fix
 
 **Date:** 2026-01-13
 **Severity:** HIGH

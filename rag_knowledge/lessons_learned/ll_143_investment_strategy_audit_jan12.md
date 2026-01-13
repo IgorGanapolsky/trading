@@ -1,6 +1,6 @@
 # Lesson Learned: Investment Strategy Audit - January 12, 2026
 
-**ID**: ll_132
+**ID**: ll_143
 **Date**: 2026-01-12
 **Severity**: HIGH
 **Category**: Strategy Audit

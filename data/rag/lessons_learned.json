@@ -1,5 +1,22 @@
 [
   {
+    "id": "404-links-baseurl-2026-01-12",
+    "title": "GitHub Pages 404.html links need relative_url filter",
+    "category": "ci-failure",
+    "severity": "MEDIUM",
+    "description": "404.md had hardcoded /lessons/ link without /trading baseurl prefix. Jekyll needs {{ url | relative_url }} filter for all internal links when deployed to github.io/trading/",
+    "root_cause": "Links in 404.md did not use Jekyll relative_url filter",
+    "fix": "Use relative_url filter: {{ \"/\" | relative_url }} and remove dead /lessons/ link",
+    "prevention": "Always use relative_url filter in Jekyll pages, run validate_github_pages_links.py locally",
+    "created": "2026-01-12",
+    "tags": [
+      "github-pages",
+      "jekyll",
+      "ci",
+      "404"
+    ]
+  },
+  {
     "id": "lesson_20251217_185308_0",
     "timestamp": "2025-12-17T18:53:08.354791",
     "category": "size_error",
@@ -1695,23 +1712,6 @@
     "symbol": null
   },
   {
-    "id": "404-links-baseurl-2026-01-12",
-    "title": "GitHub Pages 404.html links need relative_url filter",
-    "category": "ci-failure",
-    "severity": "MEDIUM",
-    "description": "404.md had hardcoded /lessons/ link without /trading baseurl prefix. Jekyll needs {{ url | relative_url }} filter for all internal links when deployed to github.io/trading/",
-    "root_cause": "Links in 404.md did not use Jekyll relative_url filter",
-    "fix": "Use relative_url filter: {{ \"/\" | relative_url }} and remove dead /lessons/ link",
-    "prevention": "Always use relative_url filter in Jekyll pages, run validate_github_pages_links.py locally",
-    "created": "2026-01-12",
-    "tags": [
-      "github-pages",
-      "jekyll",
-      "ci",
-      "404"
-    ]
-  },
-  {
     "id": "lesson_20260113_013259_cleanup",
     "timestamp": "2026-01-13T01:32:59.039135",
     "category": "cleanup",
@@ -1901,6 +1901,26 @@
     "severity": "high",
     "financial_impact": 0,
     "symbol": null
+  },
+  {
+    "id": "lesson_20260113_193331_hook_data",
+    "timestamp": "2026-01-13T19:33:31.975354",
+    "category": "data_integrity",
+    "title": "Hook showed wrong account data causing hallucinations",
+    "description": "Trading context hook showed brokerage account ($60) instead of paper account ($5K), causing Claude to make wrong recommendations",
+    "root_cause": "Hook used ALPACA_API_KEY (brokerage) instead of ALPACA_PAPER_TRADING_5K_API_KEY, and fell back to performance_log.json (brokerage) instead of system_state.json (paper)",
+    "prevention": "Always verify hook output against source files. Prioritize paper account keys per CLAUDE.md directive. Use system_state.json as primary data source.",
+    "tags": [
+      "bug",
+      "high",
+      "hook",
+      "data_integrity",
+      "hallucination"
+    ],
+    "severity": "high",
+    "financial_impact": 0.0,
+    "symbol": null,
+    "embedding": []
   },
   {
     "id": "lesson_20260113_193400_north_star_review",

@@ -1,7 +1,7 @@
 {
-  "last_updated": "2026-01-13T19:40:12.738388",
+  "last_updated": "2026-01-13T19:44:00.000000",
   "portfolio": {
-    "equity": 4987.29,
+    "equity": 4997.5,
     "cash": 4534.94
   },
   "paper_account": {
@@ -42,9 +42,9 @@
     "unrealized_pl": 19.62
   },
   "account": {
-    "current_equity": 4987.29,
-    "total_pl": -12.710000000000036,
-    "total_pl_pct": -0.25,
+    "current_equity": 4997.5,
+    "total_pl": 19.62,
+    "total_pl_pct": 0.39,
     "positions_count": 2
   }
 }
