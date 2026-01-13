@@ -33,6 +33,7 @@ from typing import Any
 
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.risk.capital_efficiency import get_capital_calculator
+from src.validators.rule_one_validator import RuleOneValidator
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,7 @@ class RejectionReason(Enum):
     ILLIQUID_OPTION = "Option is illiquid (bid-ask spread > 5%)"
     RAG_LESSON_CRITICAL = "CRITICAL lesson learned blocks this trade"
     PORTFOLIO_NEGATIVE_PL = "Portfolio P/L is negative - Rule #1: Don't lose money"
+    RULE_ONE_VIOLATION = "Phil Town Rule #1 validation failed - not a wonderful company at attractive price"
 
 
 @dataclass
@@ -574,6 +576,50 @@ class TradeGateway:
                 warnings.append(
                     f"Lesson learned ({lesson.get('severity', 'UNKNOWN')}): {lesson['id']}"
                 )
+
+        # ============================================================
+        # CHECK 13: Phil Town Rule #1 Validation (Jan 13, 2026)
+        # Validates that symbol is a "wonderful company at attractive price"
+        # ============================================================
+        try:
+            rule_one_validator = RuleOneValidator(
+                strict_mode=False,  # Allow trades with warnings
+                capital_tier="small" if account_equity < 10000 else "large",
+            )
+            rule_one_result = rule_one_validator.validate(request.symbol)
+
+            if not rule_one_result.approved:
+                rejection_reasons.append(RejectionReason.RULE_ONE_VIOLATION)
+                logger.warning(
+                    f"❌ REJECTED: Phil Town Rule #1 failed for {request.symbol} - "
+                    f"{rule_one_result.rejection_reasons}"
+                )
+                metadata["rule_one_validation"] = rule_one_result.to_dict()
+                risk_score += 0.4
+
+            elif rule_one_result.warnings:
+                # Approved but with warnings
+                for warning in rule_one_result.warnings:
+                    warnings.append(f"Rule #1: {warning}")
+                metadata["rule_one_validation"] = rule_one_result.to_dict()
+                logger.info(
+                    f"⚠️ Rule #1 passed with warnings for {request.symbol}: "
+                    f"{rule_one_result.warnings}"
+                )
+            else:
+                # Full approval
+                metadata["rule_one_validation"] = {
+                    "approved": True,
+                    "confidence": rule_one_result.confidence,
+                }
+                logger.info(
+                    f"✅ Rule #1 passed for {request.symbol} "
+                    f"(confidence: {rule_one_result.confidence:.0%})"
+                )
+        except Exception as e:
+            # Don't block trades if validator fails - just warn
+            logger.warning(f"⚠️ Rule #1 validator error for {request.symbol}: {e}")
+            warnings.append(f"Rule #1 validation skipped: {e}")
 
         # ============================================================
         # FINAL DECISION
