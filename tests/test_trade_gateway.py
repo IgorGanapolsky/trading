@@ -26,6 +26,29 @@ def mock_rag():
         yield mock_rag_instance
 
 
+@pytest.fixture(autouse=True)
+def mock_system_state(tmp_path):
+    """Mock system_state.json with positive P/L to allow test trades."""
+    import json
+
+    mock_state = {
+        "paper_account": {
+            "total_pl": 100.0,  # Positive P/L to pass Rule #1
+            "equity": 50000.0,
+        },
+        "portfolio": {"equity": 50000.0},
+    }
+    state_file = tmp_path / "system_state.json"
+    state_file.write_text(json.dumps(mock_state))
+
+    # Patch the Path used in trade_gateway
+    with patch("src.risk.trade_gateway.Path") as mock_path:
+        mock_path.return_value.parent.parent.parent.__truediv__.return_value.__truediv__.return_value = state_file
+        # Also handle direct path construction
+        mock_path.__call__ = lambda *args: tmp_path / "system_state.json" if "system_state" in str(args) else MagicMock()
+        yield state_file
+
+
 class MockExecutor:
     """Mock executor for testing."""
 
