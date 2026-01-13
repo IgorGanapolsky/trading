@@ -33,3 +33,7 @@ Building an autonomous AI trading system with Claude Opus 4.5.
 
 - [GitHub Repository](https://github.com/IgorGanapolsky/trading)
 - [Lessons Learned]({{ "/lessons" | relative_url }}) (in RAG only)
+
+---
+
+*Built by Igor Ganapolsky & Claude*
