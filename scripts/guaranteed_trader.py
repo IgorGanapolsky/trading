@@ -55,8 +55,10 @@ def get_stock_price(symbol: str) -> float:
         return 0.0
 
 
-# Target symbols for CSP strategy (from CLAUDE.md)
-TARGET_SYMBOLS = ["SOFI", "F"]
+# Target symbols for CSP strategy (from centralized constants)
+from src.constants.trading_thresholds import SYMBOLS
+
+TARGET_SYMBOLS = SYMBOLS.CSP_WATCHLIST
 
 
 def get_account(client) -> Optional[dict]:

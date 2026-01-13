@@ -106,8 +106,22 @@ class RiskThresholds:
     IRON_CONDOR_TAKE_PROFIT_PCT = 0.50
 
 
+class TargetSymbols:
+    """Target symbols for trading strategies (per CLAUDE.md)."""
+
+    # Primary CSP targets - cheap stocks for $500 capital
+    CSP_WATCHLIST = ["SOFI", "F"]
+
+    # Max strike price for CSPs with small capital
+    MAX_CSP_STRIKE = 5.0
+
+    # Fallback symbols if primary not available
+    FALLBACK_SYMBOLS = ["PLTR", "T", "INTC"]
+
+
 # Singleton access for easy importing
 IV = IVThresholds
 CAPITAL = CapitalThresholds
 SIZING = PositionSizing
 RISK = RiskThresholds
+SYMBOLS = TargetSymbols
