@@ -1,25 +1,25 @@
 {
-  "last_updated": "2026-01-13T21:06:15.290257",
+  "last_updated": "2026-01-13T21:37:31.910721",
   "portfolio": {
-    "equity": 5018.25,
+    "equity": 5017.76,
     "cash": 4481.4
   },
   "paper_account": {
-    "equity": 5018.25,
+    "equity": 5017.76,
     "cash": 4481.4,
-    "buying_power": 33.65,
-    "total_pl": 18.25,
+    "buying_power": 33.16,
+    "total_pl": 17.76000000000022,
     "total_pl_pct": 0.36,
     "positions_count": 2,
-    "daily_change": 30.36999999999989
+    "daily_change": 29.88000000000011
   },
   "positions": [
     {
       "symbol": "SOFI",
       "qty": 24.745561475,
-      "price": 27.11,
-      "value": 670.852172,
-      "pnl": 17.372172,
+      "price": 27.09,
+      "value": 670.35726,
+      "pnl": 16.87726,
       "type": "stock"
     },
     {
@@ -39,12 +39,12 @@
   },
   "risk": {
     "status": "MONITORING",
-    "total_pl": 18.25,
-    "unrealized_pl": 40.372172
+    "total_pl": 17.76000000000022,
+    "unrealized_pl": 39.87726
   },
   "account": {
-    "current_equity": 5018.25,
-    "total_pl": 18.25,
+    "current_equity": 5017.76,
+    "total_pl": 17.76000000000022,
     "total_pl_pct": 0.36,
     "positions_count": 2
   }
