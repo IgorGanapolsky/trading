@@ -62,8 +62,8 @@ jobs:
             "src.orchestrator.main:TradingOrchestrator"
             "src.strategies.registry:StrategyRegistry"
             "src.agents.momentum_agent:MomentumAgent"
-            "src.agents.signal_agent:SignalAgent"
-            "src.risk.target_aligned_sizing:TargetAlignedSizer"
+            "src.agents.execution_agent:ExecutionAgent"
+            "src.risk.risk_manager:RiskManager"
           )
 
           for agent in "${CRITICAL_AGENTS[@]}"; do
@@ -144,17 +144,17 @@ jobs:
 
           poetry run python << 'PYTHON'
           try:
-              from src.risk.target_aligned_sizing import TargetAlignedSizer
-              print("✅ TargetAlignedSizer available")
+              from src.risk.risk_manager import RiskManager
+              print("✅ RiskManager available")
           except ImportError as e:
-              print(f"❌ TargetAlignedSizer failed: {e}")
+              print(f"❌ RiskManager failed: {e}")
               exit(1)
 
           try:
-              from src.risk.vix_circuit_breaker import VIXCircuitBreaker
-              print("✅ VIXCircuitBreaker available")
+              from src.risk.options_risk_monitor import OptionsRiskMonitor
+              print("✅ OptionsRiskMonitor available")
           except ImportError as e:
-              print(f"::warning::VIXCircuitBreaker not available: {e}")
+              print(f"::warning::OptionsRiskMonitor not available: {e}")
 
           print("✅ Risk management OK")
           PYTHON
