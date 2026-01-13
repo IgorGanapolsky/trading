@@ -50,12 +50,14 @@ jobs:
           INPUT_SPREAD_WIDTH: ${{ inputs.spread_width }}
           INPUT_QUANTITY: ${{ inputs.quantity }}
         run: |
-          python3 << 'EOF'
+          python3 << 'PYTHON_SCRIPT'
           import os
           import json
           from datetime import datetime, timedelta
           from alpaca.trading.client import TradingClient
           from alpaca.trading.enums import OrderSide, TimeInForce, OrderType
+          from alpaca.data.historical import StockHistoricalDataClient
+          from alpaca.data.requests import StockLatestQuoteRequest
 
           # Config from environment
           symbol = os.environ.get("INPUT_SYMBOL", "SOFI")
@@ -70,15 +72,15 @@ jobs:
           print(f"Quantity: {quantity}")
           print()
 
-          # Initialize client
-          client = TradingClient(
-              os.environ["ALPACA_API_KEY"],
-              os.environ["ALPACA_API_SECRET"],
-              paper=True
-          )
+          # Initialize clients
+          api_key = os.environ["ALPACA_API_KEY"]
+          api_secret = os.environ["ALPACA_API_SECRET"]
+
+          trading_client = TradingClient(api_key, api_secret, paper=True)
+          data_client = StockHistoricalDataClient(api_key, api_secret)
 
           # Get account info
-          account = client.get_account()
+          account = trading_client.get_account()
           print(f"Account Equity: ${float(account.equity):,.2f}")
           print(f"Buying Power: ${float(account.buying_power):,.2f}")
           print()
@@ -92,113 +94,132 @@ jobs:
               print(f"   Need: ${collateral_needed}, Have: ${float(account.buying_power):,.2f}")
               exit(1)
 
-          # Get current approximate strikes based on symbol
-          strike_map = {
-              "F": 10,      # F ~$10
-              "SOFI": 15,   # SOFI ~$15
-              "T": 22,      # T ~$22
-          }
-
-          if symbol not in strike_map:
-              print(f"❌ Unknown symbol: {symbol}")
-              exit(1)
-
-          short_strike = strike_map[symbol]
-          long_strike = short_strike - spread_width
-
-          # Find next Friday expiration
-          today = datetime.now()
-          days_until_friday = (4 - today.weekday()) % 7
-          if days_until_friday == 0:
-              days_until_friday = 7  # Next Friday if today is Friday
-          expiry_date = today + timedelta(days=days_until_friday)
-          expiry = expiry_date.strftime("%y%m%d")
-
-          # Construct option symbols (OCC format)
-          short_put_symbol = f"{symbol}{expiry}P{str(int(short_strike * 1000)).zfill(8)}"
-          long_put_symbol = f"{symbol}{expiry}P{str(int(long_strike * 1000)).zfill(8)}"
-
-          print("═══════════════════════════════════════════════════════════")
-          print("📋 SPREAD DETAILS")
-          print("═══════════════════════════════════════════════════════════")
-          print(f"Expiration: {expiry_date.strftime('%Y-%m-%d')} ({expiry})")
-          print(f"Short Put (SELL): {short_put_symbol} @ ${short_strike}")
-          print(f"Long Put (BUY): {long_put_symbol} @ ${long_strike}")
-          print(f"Max Profit: Premium received")
-          print(f"Max Loss: ${spread_width * 100 * quantity}")
+          # Step 1: Get current stock price
           print()
-
-          # First, check what options are actually available
           print("═══════════════════════════════════════════════════════════")
-          print("🔍 CHECKING AVAILABLE OPTIONS")
+          print("📈 GETTING CURRENT PRICE")
           print("═══════════════════════════════════════════════════════════")
 
           try:
-              from alpaca.trading.requests import GetOptionContractsRequest
-              from alpaca.trading.enums import AssetStatus, ContractType
+              quote_request = StockLatestQuoteRequest(symbol_or_symbols=symbol)
+              quote = data_client.get_stock_latest_quote(quote_request)
+              current_price = float(quote[symbol].ask_price)
+              print(f"Current {symbol} price: ${current_price:.2f}")
+          except Exception as e:
+              print(f"Error getting quote: {e}")
+              # Fallback prices
+              fallback = {"F": 10.0, "SOFI": 15.0, "T": 22.0}
+              current_price = fallback.get(symbol, 15.0)
+              print(f"Using fallback price: ${current_price:.2f}")
 
+          # Step 2: Query available options
+          print()
+          print("═══════════════════════════════════════════════════════════")
+          print("🔍 DISCOVERING AVAILABLE OPTIONS")
+          print("═══════════════════════════════════════════════════════════")
+
+          from alpaca.trading.requests import GetOptionContractsRequest
+          from alpaca.trading.enums import AssetStatus, ContractType
+
+          # Find expiration 7-14 days out
+          today = datetime.now()
+          min_expiry = (today + timedelta(days=3)).strftime("%Y-%m-%d")
+          max_expiry = (today + timedelta(days=21)).strftime("%Y-%m-%d")
+
+          try:
               req = GetOptionContractsRequest(
                   underlying_symbols=[symbol],
                   status=AssetStatus.ACTIVE,
-                  expiration_date_gte=datetime.now().strftime("%Y-%m-%d"),
-                  expiration_date_lte=(datetime.now() + timedelta(days=14)).strftime("%Y-%m-%d"),
+                  expiration_date_gte=min_expiry,
+                  expiration_date_lte=max_expiry,
                   type=ContractType.PUT,
               )
-              contracts = client.get_option_contracts(req)
+              contracts = trading_client.get_option_contracts(req)
 
-              if contracts.option_contracts:
-                  puts = sorted(contracts.option_contracts, key=lambda x: (x.expiration_date, float(x.strike_price)))
-                  print(f"Found {len(puts)} put options")
-
-                  # Find suitable strikes near our targets
-                  target_expiry = expiry_date.strftime("%Y-%m-%d")
-                  available_for_expiry = [p for p in puts if str(p.expiration_date) == target_expiry]
-
-                  if available_for_expiry:
-                      print(f"\nOptions expiring {target_expiry}:")
-                      for p in available_for_expiry[:10]:
-                          print(f"  {p.symbol} - Strike: ${float(p.strike_price):.2f}")
-
-                      # Find best matching strikes
-                      strikes = sorted(set(float(p.strike_price) for p in available_for_expiry))
-                      print(f"\nAvailable strikes: {strikes[:10]}")
-
-                      # Pick the closest strikes to our targets
-                      best_short = min(strikes, key=lambda x: abs(x - short_strike))
-                      best_long = min(strikes, key=lambda x: abs(x - long_strike))
-
-                      # Get actual symbols
-                      short_contract = next((p for p in available_for_expiry if float(p.strike_price) == best_short), None)
-                      long_contract = next((p for p in available_for_expiry if float(p.strike_price) == best_long), None)
-
-                      if short_contract and long_contract and best_short > best_long:
-                          short_put_symbol = short_contract.symbol
-                          long_put_symbol = long_contract.symbol
-                          actual_width = best_short - best_long
-
-                          print(f"\n✅ Using actual contracts:")
-                          print(f"   Short: {short_put_symbol} @ ${best_short}")
-                          print(f"   Long: {long_put_symbol} @ ${best_long}")
-                          print(f"   Spread width: ${actual_width}")
-                      else:
-                          print(f"❌ Could not find suitable spread strikes")
-                          exit(1)
-                  else:
-                      print(f"No options found for expiry {target_expiry}")
-                      print("Available expiries:")
-                      expiries = sorted(set(str(p.expiration_date) for p in puts))
-                      for e in expiries[:5]:
-                          print(f"  {e}")
-                      exit(1)
-              else:
-                  print(f"No option contracts found for {symbol}")
+              if not contracts.option_contracts:
+                  print(f"❌ No put options found for {symbol}")
+                  print(f"   Date range: {min_expiry} to {max_expiry}")
                   exit(1)
 
-          except Exception as e:
-              print(f"Error checking options: {e}")
-              print("Proceeding with calculated symbols...")
+              puts = contracts.option_contracts
+              print(f"Found {len(puts)} put options")
 
-          # Execute the spread
+              # Group by expiration
+              by_expiry = {}
+              for p in puts:
+                  exp = str(p.expiration_date)
+                  if exp not in by_expiry:
+                      by_expiry[exp] = []
+                  by_expiry[exp].append(p)
+
+              # Pick nearest expiration with enough strikes
+              sorted_expiries = sorted(by_expiry.keys())
+              target_expiry = None
+              for exp in sorted_expiries:
+                  if len(by_expiry[exp]) >= 4:  # Need at least 4 strikes for spread
+                      target_expiry = exp
+                      break
+
+              if not target_expiry:
+                  target_expiry = sorted_expiries[0]
+
+              available_puts = by_expiry[target_expiry]
+              strikes = sorted(set(float(p.strike_price) for p in available_puts))
+
+              print(f"Using expiration: {target_expiry}")
+              print(f"Available strikes: {strikes}")
+
+              # Step 3: Find ATM short strike (closest to current price, at or below)
+              atm_strikes = [s for s in strikes if s <= current_price]
+              if not atm_strikes:
+                  atm_strikes = strikes  # Use all if none below
+
+              short_strike = max(atm_strikes)  # Highest strike at or below current price
+
+              # Step 4: Find long strike (spread_width below short)
+              target_long = short_strike - spread_width
+              long_strike = min(strikes, key=lambda x: abs(x - target_long))
+
+              # Ensure long is below short
+              if long_strike >= short_strike:
+                  available_longs = [s for s in strikes if s < short_strike]
+                  if available_longs:
+                      long_strike = max(available_longs)
+                  else:
+                      print(f"❌ Cannot find valid long strike below {short_strike}")
+                      exit(1)
+
+              actual_width = short_strike - long_strike
+
+              # Get contract symbols
+              short_contract = next((p for p in available_puts if float(p.strike_price) == short_strike), None)
+              long_contract = next((p for p in available_puts if float(p.strike_price) == long_strike), None)
+
+              if not short_contract or not long_contract:
+                  print(f"❌ Could not find contracts for strikes {short_strike}/{long_strike}")
+                  exit(1)
+
+              short_symbol = short_contract.symbol
+              long_symbol = long_contract.symbol
+
+              print()
+              print("═══════════════════════════════════════════════════════════")
+              print("📋 SPREAD DETAILS")
+              print("═══════════════════════════════════════════════════════════")
+              print(f"Current Price: ${current_price:.2f}")
+              print(f"Expiration: {target_expiry}")
+              print(f"Short Put (SELL): {short_symbol} @ ${short_strike}")
+              print(f"Long Put (BUY): {long_symbol} @ ${long_strike}")
+              print(f"Spread Width: ${actual_width}")
+              print(f"Max Loss: ${actual_width * 100 * quantity}")
+
+          except Exception as e:
+              print(f"❌ Error discovering options: {e}")
+              import traceback
+              traceback.print_exc()
+              exit(1)
+
+          # Step 5: Execute the spread
           print()
           print("═══════════════════════════════════════════════════════════")
           print("🚀 EXECUTING ORDERS")
@@ -206,37 +227,45 @@ jobs:
 
           try:
               # Sell the short put (collect premium)
-              print(f"Selling {quantity} x {short_put_symbol}...")
-              short_order = client.submit_order(
-                  symbol=short_put_symbol,
+              print(f"Selling {quantity} x {short_symbol}...")
+              short_order = trading_client.submit_order(
+                  symbol=short_symbol,
                   qty=quantity,
                   side=OrderSide.SELL,
                   type=OrderType.MARKET,
                   time_in_force=TimeInForce.DAY
               )
               print(f"✅ Short put order submitted: {short_order.id}")
+              print(f"   Status: {short_order.status}")
 
               # Buy the long put (protection)
-              print(f"Buying {quantity} x {long_put_symbol}...")
-              long_order = client.submit_order(
-                  symbol=long_put_symbol,
+              print(f"Buying {quantity} x {long_symbol}...")
+              long_order = trading_client.submit_order(
+                  symbol=long_symbol,
                   qty=quantity,
                   side=OrderSide.BUY,
                   type=OrderType.MARKET,
                   time_in_force=TimeInForce.DAY
               )
               print(f"✅ Long put order submitted: {long_order.id}")
+              print(f"   Status: {long_order.status}")
 
               print()
               print("═══════════════════════════════════════════════════════════")
               print("✅ CREDIT SPREAD EXECUTED SUCCESSFULLY!")
               print("═══════════════════════════════════════════════════════════")
+              print(f"Strategy: Bull Put Spread on {symbol}")
+              print(f"Expiration: {target_expiry}")
+              print(f"Short: ${short_strike} | Long: ${long_strike}")
+              print(f"Width: ${actual_width} | Qty: {quantity}")
 
           except Exception as e:
               print(f"❌ Error executing spread: {e}")
+              import traceback
+              traceback.print_exc()
               exit(1)
 
-          EOF
+          PYTHON_SCRIPT
 
       - name: Record trade in system state
         if: success()
