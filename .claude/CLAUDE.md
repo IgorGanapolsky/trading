@@ -2,10 +2,14 @@
 
 CTO: Claude | CEO: Igor Ganapolsky
 
-## Strategy
+## Strategy (Updated Jan 13, 2026)
+- **North Star**: $100/day after-tax via compounding
 - **Capital needed**: $500 minimum for first CSP trade
-- **Strategy**: Sell cash-secured puts on F/SOFI at $5 strike
-- **Until $500**: Deposit $10/day. Cannot trade yet.
+- **Primary targets**: F ($14), SOFI ($26), T ($20) - affordable CSP strikes
+- **Strike selection**: 10-20% OTM puts (e.g., F $10-12, SOFI $20-24)
+- **Position limit**: MAX 1 CSP per symbol at a time
+- **Stop-loss**: Close at 50% premium loss OR $10 daily loss
+- **Until $500 brokerage**: Paper trade only, deposit $10/day
 
 ## Core Directives (PERMANENT)
 1. **Don't lose money** - Rule #1 always

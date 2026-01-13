@@ -248,22 +248,30 @@ class TradeGateway:
         # ============================================================
         # CHECK 0: ZERO TOLERANCE - Block trading when P/L is negative
         # Phil Town Rule #1: Don't lose money
-        # Only allow SELL orders to close positions and reduce exposure
+        # Block ALL risk-increasing trades:
+        #   - BUY orders (buying stock/calls = increases exposure)
+        #   - SELL orders on options when opening short positions (short puts = increases risk)
+        # Only allow: SELL orders that CLOSE existing positions
         # ============================================================
-        if request.side.lower() == "buy":
-            total_pl = self._get_total_pl()
-            if total_pl < 0:
-                rejection_reasons.append(RejectionReason.PORTFOLIO_NEGATIVE_PL)
-                logger.warning(
-                    f"🛑 CIRCUIT BREAKER: Portfolio P/L is ${total_pl:.2f} (NEGATIVE). "
-                    f"NO new buys until profitable. Phil Town Rule #1: Don't lose money!"
-                )
-                risk_score += 1.0  # Maximum risk score - automatic rejection
-                metadata["zero_tolerance_breach"] = {
-                    "total_pl": total_pl,
-                    "rule": "Phil Town Rule #1: Don't lose money",
-                    "action_required": "Close losing positions or wait for recovery",
-                }
+        total_pl = self._get_total_pl()
+        is_risk_increasing = (
+            request.side.lower() == "buy"
+            or (request.is_option and request.side.lower() == "sell")  # Short puts/calls
+        )
+
+        if is_risk_increasing and total_pl < 0:
+            rejection_reasons.append(RejectionReason.PORTFOLIO_NEGATIVE_PL)
+            logger.warning(
+                f"🛑 CIRCUIT BREAKER: Portfolio P/L is ${total_pl:.2f} (NEGATIVE). "
+                f"NO new risk-increasing trades until profitable. Phil Town Rule #1!"
+            )
+            risk_score += 1.0  # Maximum risk score - automatic rejection
+            metadata["zero_tolerance_breach"] = {
+                "total_pl": total_pl,
+                "rule": "Phil Town Rule #1: Don't lose money",
+                "trade_type": "short_option" if request.is_option else "buy",
+                "action_required": "Close losing positions or wait for recovery",
+            }
 
         # ============================================================
         # CHECK 1: Insufficient Funds
@@ -295,6 +303,38 @@ class TradeGateway:
             )
             metadata["exposure_pct"] = exposure_pct
             risk_score += 0.3
+
+        # ============================================================
+        # CHECK 2.5: Duplicate Short Position Prevention (Jan 13, 2026)
+        # Max 1 CSP per underlying symbol - prevents doubling down
+        # ============================================================
+        if request.is_option and request.side.lower() == "sell":
+            # Extract underlying from option symbol (e.g., SOFI260206P00024000 -> SOFI)
+            underlying = request.symbol[:4].rstrip("0123456789")
+            if not underlying:
+                underlying = request.symbol.split("2")[0]  # Fallback for year prefix
+
+            existing_short_count = sum(
+                1
+                for pos in positions
+                if (
+                    underlying in pos.get("symbol", "")
+                    and pos.get("qty", 0) < 0  # Negative qty = short position
+                )
+            )
+
+            if existing_short_count >= 1:
+                rejection_reasons.append(RejectionReason.MAX_ALLOCATION_EXCEEDED)
+                logger.warning(
+                    f"🛑 REJECTED: Already have {existing_short_count} short position(s) on {underlying}. "
+                    f"Max 1 CSP per symbol per CLAUDE.md directive!"
+                )
+                metadata["duplicate_short_blocked"] = {
+                    "underlying": underlying,
+                    "existing_short_count": existing_short_count,
+                    "rule": "Max 1 CSP per symbol",
+                }
+                risk_score += 0.5
 
         # ============================================================
         # CHECK 3: Correlation with Existing Positions
