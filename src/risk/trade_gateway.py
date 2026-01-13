@@ -711,10 +711,11 @@ class TradeGateway:
         """Get current account equity."""
         if self.executor:
             try:
-                return float(self.executor.account_equity or 100000)
+                return float(self.executor.account_equity or 5000)
             except Exception:
                 pass
-        return float(os.getenv("ACCOUNT_EQUITY", "100000"))
+        # Default to $5K (our paper trading account size) not $100K
+        return float(os.getenv("ACCOUNT_EQUITY", "5000"))
 
     def _get_positions(self) -> list[dict[str, Any]]:
         """Get current positions."""
