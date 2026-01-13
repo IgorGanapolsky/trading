@@ -1,21 +1,28 @@
-# URGENT: Merge to Main
+# EMERGENCY: Close Losing Put Positions
 
-**Triggered:** 2026-01-13T15:32:00Z
-**Action:** MERGE BRANCH TO MAIN
-**Branch:** claude/research-ml-agent-prediction-T2an1
+**Triggered:** 2026-01-13T16:29:00Z
+**Action:** CLOSE SHORT PUT POSITIONS IMMEDIATELY
+**Priority:** CRITICAL - Rule #1 Protection
 
-## Why
+## CEO Directive
 
-Dialogflow is reading stale data from main branch.
-Updated system_state.json has correct trade data.
-Must merge to main for webhook to work.
+"We are not allowed to lose money!!!!!"
 
-## Changes to Merge
+## Current Risk
 
-1. data/system_state.json - Updated with actual paper trading data
-2. data/trades_2026-01-13.json - Today's trade records
-3. data/rag/lessons_learned.json - New lessons
-4. scripts/guaranteed_trader.py - Stop-loss feature
-5. scripts/set_put_stop_loss.py - Stop-loss script
-6. .github/workflows/emergency-simple-trade.yml - New workflow
-7. .github/workflows/merge-branch.yml - Self-service merge
+- Position: SOFI260206P00024000 (-2 contracts)
+- Unrealized P/L: -$7.00
+- Assignment Risk: $4,800
+- Buying Power: $68.88 (CANNOT cover assignment!)
+
+## Required Action
+
+1. Run emergency-protection workflow to close puts
+2. Or run manage-positions workflow
+3. Or manually trigger close-put-position workflow
+
+## Workflows Available on Branch
+
+- close-put-position.yml (on claude/research-ml-agent-prediction-T2an1)
+- emergency-protection.yml (on main)
+- manage-positions.yml (in daily-trading pipeline)
