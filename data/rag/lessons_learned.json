@@ -1695,25 +1695,6 @@
     "symbol": null
   },
   {
-    "id": "lesson_20260112_172200_dialogflow_equity",
-    "timestamp": "2026-01-12T17:22:00.000000",
-    "category": "data_mismatch",
-    "title": "Dialogflow Webhook Used Wrong Key for Paper Equity (Jan 12, 2026)",
-    "description": "Webhook looked for paper_account.current_equity but system_state.json has paper_account.equity. Showed $0 instead of $5000.",
-    "root_cause": "Schema mismatch between webhook code and system_state.json data structure",
-    "prevention": "Always verify JSON key names match between producer (system_state updater) and consumer (webhook). Use fallback: .get(\"equity\", 0) or .get(\"cash\", 0)",
-    "tags": [
-      "bug",
-      "dialogflow",
-      "webhook",
-      "schema_mismatch",
-      "data"
-    ],
-    "severity": "high",
-    "financial_impact": 0,
-    "symbol": null
-  },
-  {
     "id": "404-links-baseurl-2026-01-12",
     "title": "GitHub Pages 404.html links need relative_url filter",
     "category": "ci-failure",
@@ -1900,5 +1881,25 @@
     "severity": "critical",
     "financial_impact": -17.94,
     "symbol": "SOFI"
+  },
+  {
+    "id": "lesson_20260113_164500_tech_debt_audit",
+    "timestamp": "2026-01-13T16:45:00.000000",
+    "category": "technical_debt",
+    "title": "Comprehensive Technical Debt Audit (Jan 13, 2026)",
+    "description": "Full codebase audit revealed: 83% of source modules have NO tests (93/112), 22 bare exception handlers, 5 duplicate trader scripts, 3 duplicate Dialogflow workflows, 1 duplicate RAG entry, 15/19 RAG entries missing embeddings, 24 orphaned lesson .md files. Critical: orchestrator/main.py (2852 LOC), orchestrator/gates.py (1803 LOC), trading/options_executor.py (982 LOC), risk/position_manager.py (603 LOC) have ZERO tests.",
+    "root_cause": "Rapid development without test coverage. Copy-paste coding creating duplicates. No RAG embedding generation. Orphaned files from incomplete cleanup.",
+    "prevention": "1. Require tests for all new modules (min 50% coverage). 2. Run deduplication check before adding new code. 3. Auto-generate embeddings when adding RAG entries. 4. Monthly audit for orphaned files.",
+    "tags": [
+      "audit",
+      "technical_debt",
+      "testing",
+      "coverage",
+      "dry",
+      "duplicates"
+    ],
+    "severity": "high",
+    "financial_impact": 0,
+    "symbol": null
   }
 ]
