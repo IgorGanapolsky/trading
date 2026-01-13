@@ -19,9 +19,9 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 # Orders older than this are considered stale
-# CEO FIX Jan 12, 2026: Reduced from 24h to 4h to free buying power faster
-# With $5K account and $2.5K per CSP, we can only afford 2 positions at once
-MAX_ORDER_AGE_HOURS = 4
+# CEO FIX Jan 13, 2026: Cancel ALL orders immediately to free buying power
+# With $5K account and open orders blocking, we have $0 buying power
+MAX_ORDER_AGE_HOURS = 0  # Cancel ALL orders regardless of age
 
 
 def main() -> int:
