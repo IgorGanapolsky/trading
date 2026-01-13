@@ -570,3 +570,21 @@ jobs:
           echo "::error::This causes 404 errors on the live site."
           echo "Run: python3 scripts/validate_github_pages_links.py"
           exit 1
+
+  # Enforce CLAUDE.md: No new markdown files
+  check-no-new-markdown:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for new markdown files
+        run: |
+          NEW_MD=$(git diff --name-only origin/main...HEAD | grep '\.md$' | grep -v 'CLAUDE.md\|MANDATORY_RULES.md' || true)
+          if [ -n "$NEW_MD" ]; then
+            echo "❌ CLAUDE.md VIOLATION: New markdown files detected:"
+            echo "$NEW_MD"
+            echo "Rule: Don't create unnecessary documentation"
+            exit 1
+          fi
+          echo "✅ No new markdown files"
