@@ -82,6 +82,10 @@ class StrategyRegistry:
         """List all registered strategies."""
         return list(self._strategies.keys())
 
+    def list_all(self) -> list[str]:
+        """List all registered strategies (alias for list_strategies)."""
+        return self.list_strategies()
+
 
 # Global registry instance
 _registry: StrategyRegistry | None = None

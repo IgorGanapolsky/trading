@@ -76,6 +76,7 @@ build/
 !data/watchlist_4ms_small_capital.json
 !data/performance_log.json
 !data/trades_*.json
+!data/heartbeat.json
 data/google_sheets_credentials.json
 
 # Local CI/CD
