@@ -1,6 +1,6 @@
 # Lesson Learned: Prevent Duplicate Short Positions
 
-**ID**: ll_169
+**ID**: ll_172
 **Date**: 2026-01-13
 **Category**: Risk Management
 **Severity**: CRITICAL
