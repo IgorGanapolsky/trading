@@ -50,14 +50,9 @@ from src.risk.position_manager import ExitConditions, PositionManager
 from src.risk.risk_manager import RiskManager
 from src.risk.trade_gateway import RejectionReason, TradeGateway, TradeRequest
 from src.signals.microstructure_features import MicrostructureFeatureExtractor
-
-# TreasuryLadderStrategy REMOVED Dec 29, 2025 - Phil Town doesn't recommend bonds
 from src.utils.heartbeat import record_heartbeat
 from src.utils.regime_detector import RegimeDetector
 from src.utils.staleness_guard import check_data_staleness
-
-# Mental Toughness Coach - not implemented
-COACHING_AVAILABLE = False
 
 # Bull/Bear Debate Agents - Multi-perspective analysis (Dec 2025)
 # Based on UCLA/MIT TradingAgents research showing 42% CAGR improvement
@@ -221,11 +216,6 @@ class TradingOrchestrator:
         self.microstructure = MicrostructureFeatureExtractor()
         self.regime_detector = RegimeDetector()
         self.smart_dca = SmartDCAAllocator()
-        # Treasury strategy removed (Phil Town doesn't recommend bonds)
-        self.treasury_ladder_strategy = None
-
-        # Mental coach (not yet implemented)
-        self.mental_coach = None
 
         # Gate 0.5: Bull/Bear Debate - Multi-perspective analysis (Dec 2025)
         # Based on UCLA/MIT TradingAgents research showing 42% CAGR improvement
@@ -744,12 +734,6 @@ class TradingOrchestrator:
         if not self.session_profile:
             logger.warning("Session profile not available, skipping portfolio strategies.")
             return
-
-        # --- Treasury Ladder Strategy --- REMOVED Dec 29, 2025
-        # Phil Town does NOT recommend bonds/treasuries
-        # His target is 26% annual returns from wonderful companies
-        # Bonds yield 4-5% - completely antithetical to Rule #1
-        logger.info("Treasury Ladder Strategy DISABLED - Phil Town doesn't recommend bonds")
 
         # --- REIT Smart Income Strategy ---
         try:
