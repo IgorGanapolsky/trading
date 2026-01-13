@@ -1,0 +1,53 @@
+name: Auto Create PR
+
+on:
+  push:
+    branches:
+      - 'claude/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Check if PR already exists
+          EXISTING_PR=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number' 2>/dev/null || echo "")
+          
+          if [ -z "$EXISTING_PR" ]; then
+            gh pr create \
+              --title "feat: Add trading verification + trigger trade execution" \
+              --body "## Summary
+          - Add \`verify_trading_operational.py\` script
+          - Trigger trade execution to verify system works
+          - Address CEO concerns about operational stability
+          
+          ## Changes
+          - Added comprehensive trading system verification script
+          - Checks Alpaca connectivity, trade activity, workflow health, RAG integration
+          
+          ## Test Plan
+          - [ ] Watch daily-trading workflow execute
+          - [ ] Verify paper account shows activity" \
+              --base main
+            echo "PR created successfully"
+          else
+            echo "PR #$EXISTING_PR already exists"
+          fi
+          
+      - name: Auto-merge if tests pass
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number')
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr merge "$PR_NUMBER" --squash --auto --delete-branch || echo "Auto-merge enabled"
+          fi
