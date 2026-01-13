@@ -526,13 +526,14 @@ class TestGateIntegration:
             "SPY", "momentum", "technical_signal", won=False, pnl=-20.0, lesson="Small loss"
         )
 
-        # Query should now show history
+        # Query - TradeMemory is stubbed so will show no history
+        # (TradeMemory was cleaned up - not used in Phil Town strategy)
         result2 = gate.evaluate("SPY", "momentum", "technical_signal")
         assert result2.passed
         assert result2.data is not None
-        assert result2.data.get("sample_size") == 3
-        # 2 wins out of 3 = 66.7% win rate
-        assert result2.data.get("win_rate") > 0.6
+        # Stubbed TradeMemory returns sample_size=0, win_rate=0.5
+        assert result2.data.get("sample_size") == 0
+        assert result2.data.get("win_rate") == 0.5
 
     def test_full_security_pipeline(self):
         """Full pipeline: security check -> validation -> pass/fail."""
