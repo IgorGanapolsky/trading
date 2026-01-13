@@ -1901,5 +1901,25 @@
     "severity": "high",
     "financial_impact": 0,
     "symbol": null
+  },
+  {
+    "id": "lesson_20260113_193331_hook_data",
+    "timestamp": "2026-01-13T19:33:31.975354",
+    "category": "data_integrity",
+    "title": "Hook showed wrong account data causing hallucinations",
+    "description": "Trading context hook showed brokerage account ($60) instead of paper account ($5K), causing Claude to make wrong recommendations",
+    "root_cause": "Hook used ALPACA_API_KEY (brokerage) instead of ALPACA_PAPER_TRADING_5K_API_KEY, and fell back to performance_log.json (brokerage) instead of system_state.json (paper)",
+    "prevention": "Always verify hook output against source files. Prioritize paper account keys per CLAUDE.md directive. Use system_state.json as primary data source.",
+    "tags": [
+      "bug",
+      "high",
+      "hook",
+      "data_integrity",
+      "hallucination"
+    ],
+    "severity": "high",
+    "financial_impact": 0.0,
+    "symbol": null,
+    "embedding": []
   }
 ]
