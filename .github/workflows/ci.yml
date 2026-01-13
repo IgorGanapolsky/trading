@@ -87,7 +87,7 @@ jobs:
         # Coverage threshold: Start at 15%, increase as tests are added
         # Dec 30, 2025: Keep at 15% until test coverage improves
         # TODO: Increase to 40% then 70% as more tests are added
-        run: python -m pytest -q --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=15
+        run: python -m pytest -v --tb=long --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=15 2>&1 || (echo "Tests failed - showing last 100 lines" && tail -100 && exit 1)
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
