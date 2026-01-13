@@ -54,12 +54,37 @@ class TestCancelStaleOrders:
     )
     def test_returns_zero_on_no_orders(self):
         """Test script returns 0 when no orders exist."""
-        with patch("scripts.cancel_stale_orders.TradingClient") as mock_client:
-            mock_instance = MagicMock()
-            mock_instance.get_orders.return_value = []
-            mock_client.return_value = mock_instance
+        import sys
 
-            # Import and run main
+        # Create mock alpaca module hierarchy
+        mock_trading_client = MagicMock()
+        mock_instance = MagicMock()
+        mock_instance.get_orders.return_value = []
+        mock_trading_client.return_value = mock_instance
+
+        mock_client_module = MagicMock()
+        mock_client_module.TradingClient = mock_trading_client
+
+        mock_trading_module = MagicMock()
+        mock_trading_module.client = mock_client_module
+
+        mock_alpaca = MagicMock()
+        mock_alpaca.trading = mock_trading_module
+        mock_alpaca.trading.client = mock_client_module
+
+        # Inject mock modules
+        with patch.dict(
+            sys.modules,
+            {
+                "alpaca": mock_alpaca,
+                "alpaca.trading": mock_trading_module,
+                "alpaca.trading.client": mock_client_module,
+            },
+        ):
+            # Force reimport to pick up mocks
+            if "scripts.cancel_stale_orders" in sys.modules:
+                del sys.modules["scripts.cancel_stale_orders"]
+
             from scripts.cancel_stale_orders import main
 
             result = main()
