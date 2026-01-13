@@ -47,20 +47,16 @@ jobs:
           import os
           from datetime import datetime
           from alpaca.trading.client import TradingClient
-          from alpaca.trading.requests import MarketOrderRequest
-          from alpaca.trading.enums import OrderSide, TimeInForce
 
           api_key = os.environ['ALPACA_API_KEY']
           secret_key = os.environ['ALPACA_SECRET_KEY']
           symbol = "${{ github.event.inputs.symbol }}"
-          qty = int("${{ github.event.inputs.quantity }}")
 
           print("=" * 60)
-          print("RULE #1 PROTECTION: CLOSING LOSING PUT POSITION")
+          print("RULE #1 PROTECTION: CLOSING PUT POSITION")
           print("=" * 60)
           print(f"   Symbol: {symbol}")
-          print(f"   Quantity: {qty} contracts")
-          print(f"   Action: BUY TO CLOSE")
+          print(f"   Action: CLOSE POSITION (Alpaca API)")
           print(f"   Timestamp: {datetime.now().isoformat()}")
           print("=" * 60)
 
@@ -70,53 +66,77 @@ jobs:
           account = client.get_account()
           print(f"\n   Account Equity: ${float(account.equity):,.2f}")
           print(f"   Account Cash: ${float(account.cash):,.2f}")
+          print(f"   Buying Power: ${float(account.buying_power):,.2f}")
 
           # Get current positions
           positions = client.get_all_positions()
           put_found = False
+          actual_symbol = None
           for pos in positions:
-              if symbol in pos.symbol:
+              print(f"\n   Position: {pos.symbol} qty={pos.qty}")
+              if symbol in pos.symbol or pos.symbol in symbol:
                   put_found = True
-                  print(f"\n   Current Put Position:")
+                  actual_symbol = pos.symbol
+                  print(f"\n   TARGET Put Position Found:")
                   print(f"   - Symbol: {pos.symbol}")
                   print(f"   - Qty: {pos.qty}")
                   print(f"   - Current Price: ${float(pos.current_price):.2f}")
                   print(f"   - Unrealized P/L: ${float(pos.unrealized_pl):.2f}")
+                  print(f"   - Market Value: ${float(pos.market_value):,.2f}")
                   break
 
           if not put_found:
-              print(f"\n   No position found for {symbol}")
-              print("   Position may have already been closed")
-              exit(0)
+              print(f"\n   ERROR: No position found matching {symbol}")
+              print("   Available positions listed above")
+              exit(1)
 
           # Check market
           clock = client.get_clock()
           print(f"\n   Market Open: {clock.is_open}")
 
-          # Submit buy-to-close order
-          print(f"\n   Submitting BUY TO CLOSE order...")
-          order_request = MarketOrderRequest(
-              symbol=symbol,
-              qty=qty,
-              side=OrderSide.BUY,  # BUY to close short position
-              time_in_force=TimeInForce.DAY
-          )
+          if not clock.is_open:
+              print("   ERROR: Market is closed - cannot close position")
+              exit(1)
 
-          order = client.submit_order(order_request)
+          # Use close_position() method - works for both stocks and options
+          print(f"\n   Closing position {actual_symbol}...")
+          try:
+              result = client.close_position(actual_symbol)
+              print(f"\n   POSITION CLOSED!")
+              print(f"   Order ID: {result.id if hasattr(result, 'id') else 'N/A'}")
+              print(f"   Status: {result.status if hasattr(result, 'status') else 'submitted'}")
+              print("=" * 60)
+              print("   RULE #1 PROTECTION EXECUTED!")
+              print("=" * 60)
 
-          print(f"\n   ORDER SUBMITTED!")
-          print(f"   Order ID: {order.id}")
-          print(f"   Status: {order.status}")
-          print(f"   Side: {order.side}")
-          print("=" * 60)
-          print("   RULE #1 PROTECTION EXECUTED!")
-          print("   Losing put position is being closed")
-          print("=" * 60)
+              # Output for GitHub Actions
+              order_id = result.id if hasattr(result, 'id') else 'closed'
+              status = result.status if hasattr(result, 'status') else 'submitted'
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f"order_id={order_id}\n")
+                  f.write(f"status={status}\n")
+          except Exception as e:
+              print(f"\n   ERROR closing position: {e}")
+              print("   Trying alternative: liquidate via order...")
 
-          # Output for GitHub Actions
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f"order_id={order.id}\n")
-              f.write(f"status={order.status}\n")
+              # Fallback: Submit market order to close
+              from alpaca.trading.requests import MarketOrderRequest
+              from alpaca.trading.enums import OrderSide, TimeInForce
+
+              # For short positions, we BUY to close
+              qty = abs(int(float("${{ github.event.inputs.quantity }}")))
+              order_request = MarketOrderRequest(
+                  symbol=actual_symbol,
+                  qty=qty,
+                  side=OrderSide.BUY,
+                  time_in_force=TimeInForce.DAY
+              )
+              order = client.submit_order(order_request)
+              print(f"   Fallback order submitted: {order.id}")
+
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f"order_id={order.id}\n")
+                  f.write(f"status={order.status}\n")
           PYTHON_SCRIPT
 
       - name: Update State
