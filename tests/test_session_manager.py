@@ -21,6 +21,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+# Skip if holidays module not available (sandbox environments)
+holidays = pytest.importorskip("holidays", reason="holidays module required for this test")
+
 from src.orchestrator.session_manager import (
     SessionManager,
     _get_us_holidays,
