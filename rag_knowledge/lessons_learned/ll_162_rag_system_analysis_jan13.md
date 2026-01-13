@@ -1,6 +1,6 @@
 # Lesson Learned: RAG System Analysis - Build vs Buy vs Already Have
 
-**ID**: ll_139_rag_system_analysis_jan13
+**ID**: ll_162
 **Date**: 2026-01-13
 **Severity**: MEDIUM
 **Category**: Architecture

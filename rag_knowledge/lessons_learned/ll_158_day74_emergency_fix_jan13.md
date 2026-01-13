@@ -1,4 +1,4 @@
-# Lesson LL-139: Day 74 Emergency Fix - SPY to SOFI
+# Lesson LL-158: Day 74 Emergency Fix - SPY to SOFI
 
 **Date**: 2026-01-13
 **Severity**: CRITICAL
