@@ -29,7 +29,9 @@
     "last_trade_symbol": "SPY"
   },
   "meta": {
-    "last_updated": "2026-01-12T21:07:09.922221",
-    "updated_by": "claude_session_fix"
+    "last_updated": "2026-01-13T11:47:28.462585",
+    "updated_by": "claude_session_fix",
+    "last_sync": "2026-01-13T11:47:28.462597",
+    "sync_mode": "skipped_no_keys"
   }
 }
