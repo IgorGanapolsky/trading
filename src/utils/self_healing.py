@@ -264,8 +264,6 @@ def self_heal() -> None:
 
         # Action 4: Fallback to safe mode
         try:
-            from src.agents.fallback_strategy import FallbackStrategy  # noqa: F401
-
             # Signal that we're in fallback mode
             state = load_state()
             state["fallback_mode"] = True
