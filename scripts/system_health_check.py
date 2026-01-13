@@ -204,9 +204,9 @@ def check_blog_deployment():
     try:
         lessons_dir = Path("docs/_lessons")
         if not lessons_dir.exists():
-            # Not critical - lessons sync is pending
-            results["details"].append("⚠️ docs/_lessons/ not synced yet")
-            results["details"].append("   (73 lessons pending merge from feature branch)")
+            # Lessons are now in Vertex AI RAG, not docs/_lessons
+            rag_lessons = list(Path("rag_knowledge/lessons_learned").glob("*.md"))
+            results["details"].append(f"⚠️ docs/_lessons/ not synced (lessons in RAG: {len(rag_lessons)})")
             results["status"] = "OK"
             return results
 
