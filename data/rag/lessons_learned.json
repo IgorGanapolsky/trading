@@ -1712,5 +1712,22 @@
     "severity": "high",
     "financial_impact": 0,
     "symbol": null
+  },
+  {
+    "id": "404-links-baseurl-2026-01-12",
+    "title": "GitHub Pages 404.html links need relative_url filter",
+    "category": "ci-failure",
+    "severity": "MEDIUM",
+    "description": "404.md had hardcoded /lessons/ link without /trading baseurl prefix. Jekyll needs {{ url | relative_url }} filter for all internal links when deployed to github.io/trading/",
+    "root_cause": "Links in 404.md did not use Jekyll relative_url filter",
+    "fix": "Use relative_url filter: {{ \"/\" | relative_url }} and remove dead /lessons/ link",
+    "prevention": "Always use relative_url filter in Jekyll pages, run validate_github_pages_links.py locally",
+    "created": "2026-01-12",
+    "tags": [
+      "github-pages",
+      "jekyll",
+      "ci",
+      "404"
+    ]
   }
 ]
