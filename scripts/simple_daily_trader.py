@@ -311,6 +311,35 @@ def execute_cash_secured_put(client, option: dict, config: dict) -> Optional[dic
 
             logger.info(f"📊 SELLING PUT: {put_contract}")
 
+            # CRITICAL SAFETY CHECK: Don't sell more if we're already short this contract
+            # Phil Town Rule #1: Don't lose money by over-leveraging
+            try:
+                existing_positions = client.get_all_positions()
+                for pos in existing_positions:
+                    if pos.symbol == put_contract:
+                        pos_qty = float(pos.qty)
+                        if pos_qty < 0:  # Already short this contract
+                            logger.error(f"🚫 BLOCKED: Already SHORT {put_contract} (qty={pos_qty})")
+                            logger.error("   Cannot SELL more - would increase risk exposure!")
+                            logger.error("   Rule #1: Don't lose money by doubling down on losers")
+                            return None
+                        else:
+                            logger.warning(f"⚠️ Existing LONG position on {put_contract}")
+            except Exception as pos_err:
+                logger.warning(f"Could not check existing positions: {pos_err}")
+
+            # Also check for pending SELL orders on this contract
+            try:
+                open_orders = client.get_orders()
+                for order in open_orders:
+                    if order.symbol == put_contract and str(order.side).lower() == "sell":
+                        logger.error(f"🚫 BLOCKED: Pending SELL order exists for {put_contract}")
+                        logger.error(f"   Order ID: {order.id}, Status: {order.status}")
+                        logger.error("   Cannot submit duplicate order")
+                        return None
+            except Exception as ord_err:
+                logger.warning(f"Could not check open orders: {ord_err}")
+
             # Submit SELL TO OPEN order for the put option
             order_request = LimitOrderRequest(
                 symbol=put_contract,
