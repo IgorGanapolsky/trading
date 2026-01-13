@@ -75,10 +75,10 @@ def generate_daily_summary_post(date_str: str, lessons: list[dict]) -> str:
     day_num = (date_obj - start_date).days + 1
 
     # Count by severity
-    critical = sum(1 for l in lessons if l["severity"] == "CRITICAL")
-    high = sum(1 for l in lessons if l["severity"] == "HIGH")
-    medium = sum(1 for l in lessons if l["severity"] == "MEDIUM")
-    low = sum(1 for l in lessons if l["severity"] == "LOW")
+    critical = sum(1 for item in lessons if item["severity"] == "CRITICAL")
+    high = sum(1 for item in lessons if item["severity"] == "HIGH")
+    medium = sum(1 for item in lessons if item["severity"] == "MEDIUM")
+    low = sum(1 for item in lessons if item["severity"] == "LOW")
 
     # Build lessons summary
     lessons_md = ""
