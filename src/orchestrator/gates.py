@@ -36,13 +36,9 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 # Pipeline checkpointing for fault tolerance (Dec 2025)
+# Tech debt cleanup Jan 13, 2026: Removed unused imports (CHECKPOINT_GATES, PipelineCheckpointer, should_checkpoint)
 try:
-    from src.orchestrator.checkpoint import (  # noqa: F401
-        CHECKPOINT_GATES,
-        PipelineCheckpointer,
-        get_checkpointer,
-        should_checkpoint,
-    )
+    from src.orchestrator.checkpoint import get_checkpointer
 
     CHECKPOINTING_AVAILABLE = True
     logger.info("Pipeline checkpointing enabled")
