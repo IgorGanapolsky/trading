@@ -1,0 +1,19 @@
+{
+  "id": "trades_20260113_164927_7653c237",
+  "category": "trades",
+  "timestamp": "2026-01-13T16:49:27.086602",
+  "title": "SPY iron condor loss",
+  "content": "Lost $200 on iron condor due to VIX spike. Should use wider strikes in high IV.",
+  "metadata": {
+    "pnl": -200,
+    "symbol": "SPY",
+    "strategy": "iron_condor"
+  },
+  "tags": [
+    "options",
+    "risk_management"
+  ],
+  "severity": "HIGH",
+  "verified": false,
+  "session_id": "10a4f3f5"
+}

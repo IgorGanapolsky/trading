@@ -1,0 +1,15 @@
+{
+  "id": "lessons_20260113_164927_13170503",
+  "category": "lessons",
+  "timestamp": "2026-01-13T16:49:27.086132",
+  "title": "Never skip verification",
+  "content": "Claimed deployment successful without testing. Must verify end-to-end.",
+  "metadata": {},
+  "tags": [
+    "verification",
+    "deployment"
+  ],
+  "severity": "CRITICAL",
+  "verified": true,
+  "session_id": "10a4f3f5"
+}

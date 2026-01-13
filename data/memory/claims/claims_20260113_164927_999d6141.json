@@ -1,0 +1,15 @@
+{
+  "id": "claims_20260113_164927_999d6141",
+  "category": "claims",
+  "timestamp": "2026-01-13T16:49:27.087004",
+  "title": "CI tests passing",
+  "content": "Claimed all tests passed. Need to verify coverage thresholds, not just pass/fail.",
+  "metadata": {},
+  "tags": [
+    "testing",
+    "verification"
+  ],
+  "severity": "MEDIUM",
+  "verified": false,
+  "session_id": "10a4f3f5"
+}
