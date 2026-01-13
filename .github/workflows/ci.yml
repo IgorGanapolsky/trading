@@ -268,10 +268,10 @@ jobs:
         run: pip install bandit detect-secrets
 
       - name: Run Bandit security scan
-        run: bandit -r src/ -ll --skip B101,B105,B106 || true
+        run: bandit -r src/ -ll --skip B101,B105,B106
 
       - name: Check for secrets
-        run: detect-secrets scan --baseline .secrets.baseline || true
+        run: detect-secrets scan --baseline .secrets.baseline
 
   type-check:
     name: Type Check
@@ -291,7 +291,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run mypy
-        run: mypy src/ --ignore-missing-imports || true
+        run: mypy src/ --ignore-missing-imports
 
   core-strategy-validation:
     name: Core Strategy Metric Validation

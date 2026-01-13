@@ -706,14 +706,14 @@ class RiskManager:
         if profit_loss > 0:
             self.metrics.winning_trades += 1
             self.metrics.consecutive_losses = 0
-            print(f"[RISK MANAGER] Trade result: PROFIT ${profit_loss:.2f}")
+            logger.info(f"Trade result: PROFIT ${profit_loss:.2f}")
         elif profit_loss < 0:
             self.metrics.losing_trades += 1
             self.metrics.consecutive_losses += 1
             self.metrics.max_consecutive_losses = max(
                 self.metrics.max_consecutive_losses, self.metrics.consecutive_losses
             )
-            print(f"[RISK MANAGER] Trade result: LOSS ${profit_loss:.2f}")
+            logger.warning(f"Trade result: LOSS ${profit_loss:.2f}")
 
             # Alert on consecutive losses
             if self.metrics.consecutive_losses >= self.max_consecutive_losses:
@@ -723,7 +723,7 @@ class RiskManager:
                     details={"total_loss": profit_loss},
                 )
         else:
-            print("[RISK MANAGER] Trade result: BREAKEVEN")
+            logger.info("Trade result: BREAKEVEN")
 
         # Log current metrics
         win_rate = (
@@ -731,7 +731,7 @@ class RiskManager:
             if self.metrics.total_trades > 0
             else 0
         )
-        print(f"[RISK MANAGER] Daily P&L: ${self.metrics.daily_pl:.2f} | Win Rate: {win_rate:.1f}%")
+        logger.info(f"Daily P&L: ${self.metrics.daily_pl:.2f} | Win Rate: {win_rate:.1f}%")
 
     def reset_daily_counters(self) -> None:
         """
@@ -742,9 +742,10 @@ class RiskManager:
         """
         current_date = datetime.now().strftime("%Y-%m-%d")
 
-        print("[RISK MANAGER] Resetting daily counters")
-        print(f"  - Previous Daily P&L: ${self.metrics.daily_pl:.2f}")
-        print(f"  - Previous Daily Trades: {self.metrics.daily_trades}")
+        logger.info(
+            f"Resetting daily counters - Previous: P&L=${self.metrics.daily_pl:.2f}, "
+            f"Trades={self.metrics.daily_trades}"
+        )
 
         self.metrics.daily_pl = 0.0
         self.metrics.daily_trades = 0
@@ -752,7 +753,7 @@ class RiskManager:
         self.metrics.last_reset_date = current_date
         self.alerts.clear()
 
-        print(f"[RISK MANAGER] Daily counters reset for {current_date}")
+        logger.info(f"Daily counters reset for {current_date}")
 
     def get_historical_trades_for_kelly(self, data_dir: str = "data") -> list[dict]:
         """
@@ -866,112 +867,11 @@ class RiskManager:
 
         self.alerts.append(alert)
 
-        # Console output with color-coded severity
-        severity_symbols = {"INFO": "ℹ️", "WARNING": "⚠️", "CRITICAL": "🚨"}
+        # Log alert with appropriate severity level
+        log_method = {
+            "INFO": logger.info,
+            "WARNING": logger.warning,
+            "CRITICAL": logger.critical,
+        }.get(severity, logger.info)
 
-        symbol = severity_symbols.get(severity, "•")
-        print(f"\n{symbol} [RISK ALERT - {severity}] {timestamp}")
-        print(f"  Message: {message}")
-        if details:
-            print(f"  Details: {details}")
-        print()
-
-
-# Example usage and testing
-if __name__ == "__main__":
-    print("=" * 70)
-    print("RISK MANAGER - Example Usage")
-    print("=" * 70)
-
-    # Initialize risk manager
-    risk_mgr = RiskManager(
-        max_daily_loss_pct=2.0,
-        max_position_size_pct=10.0,
-        max_drawdown_pct=10.0,
-        max_consecutive_losses=3,
-    )
-
-    # Simulate trading scenarios
-    account_value = 100000.0
-    daily_pl = 0.0
-
-    print("\n--- Scenario 1: Normal Trading ---")
-    can_trade = risk_mgr.can_trade(account_value, daily_pl)
-    print(f"Can trade: {can_trade}")
-
-    print("\n--- Scenario 2: Calculate Position Size ---")
-    position_size = risk_mgr.calculate_position_size(account_value, risk_per_trade_pct=1.0)
-    print(f"Position size (1% risk): ${position_size:.2f}")
-
-    print("\n--- Scenario 3: Validate Trade ---")
-    validation = risk_mgr.validate_trade(
-        symbol="AAPL",
-        amount=5000.0,
-        sentiment_score=0.75,
-        account_value=account_value,
-        trade_type="BUY",
-    )
-    print(f"Trade valid: {validation['valid']}")
-    if validation["warnings"]:
-        print(f"Warnings: {validation['warnings']}")
-
-    print("\n--- Scenario 4: Record Trade Results ---")
-    risk_mgr.record_trade_result(-500.0)  # Loss
-    risk_mgr.record_trade_result(-300.0)  # Loss
-    risk_mgr.record_trade_result(-200.0)  # Loss
-
-    print("\n--- Scenario 5: Check Circuit Breakers ---")
-    daily_pl = -1500.0  # Total losses
-    account_info = {"account_value": account_value, "daily_pl": daily_pl}
-    breaker_status = risk_mgr.check_circuit_breakers(account_info)
-    print(f"Trading allowed: {breaker_status['trading_allowed']}")
-    print(f"Daily loss: {breaker_status['daily_loss']['current_pct']:.2f}%")
-
-    print("\n--- Scenario 6: Get Risk Metrics ---")
-    metrics = risk_mgr.get_risk_metrics()
-    print(f"Total trades: {metrics['trade_statistics']['total_trades']}")
-    print(f"Consecutive losses: {metrics['trade_statistics']['consecutive_losses']}")
-    print(f"Win rate: {metrics['trade_statistics']['win_rate_pct']:.2f}%")
-
-    print("\n--- Scenario 7: Kelly Criterion Position Sizing ---")
-    # Example with explicit win rate and win/loss ratio
-    kelly_frac = risk_mgr.calculate_kelly_fraction(
-        win_rate=0.60,  # 60% win rate
-        win_loss_ratio=2.0,  # Average win is 2x average loss
-        use_half_kelly=True,  # Conservative half-Kelly
-        max_kelly_cap=0.25,  # Cap at 25% of portfolio
-    )
-    print(f"Kelly fraction (60% win rate, 2:1 W/L): {kelly_frac:.2%}")
-
-    # Example with Kelly-adjusted position sizing
-    base_position = 10000.0  # $10,000 base position
-    kelly_adjusted = risk_mgr.kelly_adjusted_size(
-        base_position_size=base_position,
-        win_rate=0.60,
-        win_loss_ratio=2.0,
-        use_half_kelly=True,
-    )
-    print(f"Kelly-adjusted position: ${base_position:.2f} → ${kelly_adjusted:.2f}")
-
-    print("\n--- Scenario 8: Kelly with Historical Trades ---")
-    # Simulate historical trades
-    simulated_trades = [
-        {"profit_loss": 100},  # Win
-        {"profit_loss": -50},  # Loss
-        {"profit_loss": 150},  # Win
-        {"profit_loss": -40},  # Loss
-        {"profit_loss": 120},  # Win
-    ]
-    kelly_frac_historical = risk_mgr.calculate_kelly_fraction(
-        historical_trades=simulated_trades, use_half_kelly=True
-    )
-    print(f"Kelly fraction from historical trades: {kelly_frac_historical:.2%}")
-    print("Historical: 3 wins (avg $123.33), 2 losses (avg $45.00)")
-    print("Win rate: 60%, W/L ratio: 2.74")
-
-    print("\n--- Scenario 9: Daily Reset ---")
-    risk_mgr.reset_daily_counters()
-
-    print("\n" + "=" * 70)
-    print("Example completed successfully!")
-    print("=" * 70)
+        log_method(f"RISK ALERT [{severity}]: {message} | Details: {details or 'none'}")
