@@ -216,7 +216,14 @@ def get_current_portfolio_status() -> dict:
 
     # Get last trade date and count from state
     last_trade_date = state.get("trades", {}).get("last_trade_date", "unknown")
-    stored_trades_today = state.get("trades", {}).get("total_trades_today", 0)
+    # FIX Jan 13: Key is "today_trades" not "total_trades_today"
+    # Value can be int OR string "synced" meaning trades happened
+    raw_trades = state.get("trades", {}).get("today_trades", 0)
+    if isinstance(raw_trades, str):
+        # "synced" or other string means trades DID happen
+        stored_trades_today = 1 if raw_trades else 0
+    else:
+        stored_trades_today = int(raw_trades) if raw_trades else 0
 
     # CRITICAL FIX: Only show trades_today if the last_trade_date matches actual today
     # Otherwise, 0 trades have occurred today
