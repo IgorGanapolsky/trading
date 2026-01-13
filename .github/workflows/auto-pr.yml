@@ -14,29 +14,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+        with:
+          fetch-depth: 0  # Full history for git log comparison
+
       - name: Create Pull Request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Check if PR already exists
           EXISTING_PR=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number' 2>/dev/null || echo "")
-          
+
           if [ -z "$EXISTING_PR" ]; then
+            # Get branch name and latest commit message for dynamic title
+            BRANCH_NAME="${{ github.ref_name }}"
+            COMMIT_MSG=$(git log -1 --format=%s)
+
+            # Create PR with dynamic title from commit message
             gh pr create \
-              --title "feat: Add trading verification + trigger trade execution" \
+              --title "$COMMIT_MSG" \
               --body "## Summary
-          - Add \`verify_trading_operational.py\` script
-          - Trigger trade execution to verify system works
-          - Address CEO concerns about operational stability
-          
+          Auto-generated PR from branch: \`$BRANCH_NAME\`
+
           ## Changes
-          - Added comprehensive trading system verification script
-          - Checks Alpaca connectivity, trade activity, workflow health, RAG integration
-          
+          $(git log origin/main..HEAD --oneline | head -10)
+
           ## Test Plan
-          - [ ] Watch daily-trading workflow execute
-          - [ ] Verify paper account shows activity" \
+          - [ ] CI passes
+          - [ ] Manual verification if needed" \
               --base main
             echo "PR created successfully"
           else
