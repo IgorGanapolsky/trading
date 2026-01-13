@@ -10,6 +10,7 @@ Version History:
 - v2.9.0 Jan 10, 2026: Security - SSL verification, rate limiting, webhook auth
 - v3.0.0 Jan 12, 2026: Vertex AI RAG integration - semantic search with fallback
 - v3.1.0 Jan 13, 2026: Fix analytical queries - WHY questions route to RAG not status
+- v3.2.0 Jan 13, 2026: Add CI status check to readiness assessment (CEO directive)
 
 Architecture (v3.0.0):
 - Primary: Vertex AI RAG (cloud semantic search with text-embedding-004)
@@ -66,7 +67,7 @@ WEBHOOK_AUTH_TOKEN = os.environ.get("DIALOGFLOW_WEBHOOK_TOKEN", "")
 app = FastAPI(
     title="Trading AI RAG Webhook",
     description="Dialogflow CX webhook for lessons AND trade history queries",
-    version="3.1.0",  # Fix: Analytical queries (WHY) route to RAG
+    version="3.2.0",  # Add CI status check to readiness assessment
 )
 
 # Initialize rate limiter if available
@@ -246,6 +247,67 @@ def get_current_portfolio_status() -> dict:
         "actual_today": today_str,
         "challenge_day": state.get("challenge", {}).get("current_day", 0),
     }
+
+
+def check_ci_status() -> dict:
+    """
+    Check GitHub Actions CI status for the main branch.
+
+    Returns:
+        dict with:
+        - is_passing: True if CI is passing
+        - failed_workflows: List of failed workflow names
+        - running_workflows: List of running workflow names
+        - error: Error message if API call failed
+    """
+    import urllib.request
+    import json
+
+    result = {
+        "is_passing": True,
+        "failed_workflows": [],
+        "running_workflows": [],
+        "error": None,
+    }
+
+    try:
+        # Use GitHub API to check workflow runs (no auth needed for public repos)
+        url = "https://api.github.com/repos/IgorGanapolsky/trading/actions/runs?branch=main&per_page=10"
+        req = urllib.request.Request(
+            url,
+            headers={"Accept": "application/vnd.github.v3+json", "User-Agent": "TradingBot/1.0"}
+        )
+        ssl_context = ssl.create_default_context()
+
+        with urllib.request.urlopen(req, timeout=10, context=ssl_context) as response:
+            data = json.loads(response.read().decode("utf-8"))
+
+        # Check recent workflow runs
+        seen_workflows = set()
+        for run in data.get("workflow_runs", []):
+            workflow_name = run.get("name", "unknown")
+
+            # Only check each workflow once (most recent run)
+            if workflow_name in seen_workflows:
+                continue
+            seen_workflows.add(workflow_name)
+
+            conclusion = run.get("conclusion")
+            status = run.get("status")
+
+            if status == "in_progress" or status == "queued":
+                result["running_workflows"].append(workflow_name)
+            elif conclusion == "failure":
+                result["is_passing"] = False
+                result["failed_workflows"].append(workflow_name)
+
+        logger.info(f"CI check: passing={result['is_passing']}, failed={result['failed_workflows']}")
+
+    except Exception as e:
+        logger.warning(f"CI status check failed: {e}")
+        result["error"] = str(e)
+
+    return result
 
 
 def is_readiness_query(query: str) -> bool:
@@ -601,7 +663,26 @@ def assess_trading_readiness(
                     f"Win rate {win_rate:.0f}% (only {sample_size} trades - need more data)"
                 )
 
-    # 6. TRADING AUTOMATION CHECK (Critical - added Jan 6, 2026)
+    # 6. CI/CD STATUS CHECK (Critical - added Jan 13, 2026)
+    # CEO Directive: "CI is failing" should lower readiness score
+    max_score += 20
+    ci_status = check_ci_status()
+    if ci_status["error"]:
+        warnings.append(f"Could not verify CI status: {ci_status['error'][:50]}")
+        score += 10  # Partial credit - we tried
+    elif ci_status["is_passing"]:
+        if ci_status["running_workflows"]:
+            checks.append(f"CI passing ({len(ci_status['running_workflows'])} workflows running)")
+        else:
+            checks.append("CI passing (all workflows green)")
+        score += 20
+    else:
+        # CI is failing - this is a WARNING, not blocker (code still runs)
+        failed_list = ", ".join(ci_status["failed_workflows"][:3])
+        warnings.append(f"CI FAILING: {failed_list}")
+        score += 5  # Some credit for having CI
+
+    # 7. TRADING AUTOMATION CHECK (Critical - added Jan 6, 2026)
     max_score += 20
     if state:
         last_trade_date = state.get("trades", {}).get("last_trade_date", "")
