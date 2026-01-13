@@ -4,6 +4,15 @@
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
+# Check for alpaca dependency
+try:
+    from alpaca.trading.client import TradingClient  # noqa: F401
+    HAS_ALPACA = True
+except ImportError:
+    HAS_ALPACA = False
+
 
 class TestCancelStaleOrders:
     """Test stale order cancellation logic."""
@@ -48,13 +57,14 @@ class TestCancelStaleOrders:
         is_stale = fresh_order_time < threshold
         assert not is_stale, "1-hour-old order should NOT be cancelled"
 
+    @pytest.mark.skipif(not HAS_ALPACA, reason="alpaca-py not installed")
     @patch.dict(
         "os.environ",
         {"ALPACA_API_KEY": "test_key", "ALPACA_SECRET_KEY": "test_secret", "PAPER_TRADING": "true"},
     )
     def test_returns_zero_on_no_orders(self):
         """Test script returns 0 when no orders exist."""
-        with patch("scripts.cancel_stale_orders.TradingClient") as mock_client:
+        with patch("alpaca.trading.client.TradingClient") as mock_client:
             mock_instance = MagicMock()
             mock_instance.get_orders.return_value = []
             mock_client.return_value = mock_instance
