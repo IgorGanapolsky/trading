@@ -277,7 +277,7 @@ class TestTradeGatewayIntegration:
                         with patch.object(gateway, "_count_recent_trades", return_value=0):
                             with patch.object(gateway, "_update_daily_pnl"):
                                 with patch.object(gateway, "_get_drawdown", return_value=0.0):
-                                    decision = gateway.evaluate(request)
+                                    gateway.evaluate(request)  # Testing side effect
 
         # Validator should have been called
         mock_validator.validate.assert_called_once_with("SOFI")
