@@ -1861,5 +1861,25 @@
     "financial_impact": -4.0,
     "symbol": "SOFI",
     "resolution": "System operational. Monitor put position for assignment risk at $24 strike."
+  },
+  {
+    "id": "lesson_20260113_151900_0",
+    "timestamp": "2026-01-13T15:20:07.319122",
+    "category": "trust_violation",
+    "title": "CTO Made Claims Without Verifying RAG Data (Jan 13, 2026)",
+    "description": "CTO claimed theta decay income and profits while actual P/L was -$24.19. RAG webhook showed stale data (Last Trade: Jan 6) but CTO did not verify before making claims. CEO correctly said \"I dont trust you.\"",
+    "root_cause": "Did not query RAG before making claims. Did not sync trade data after execution. Violated Chain-of-Verification protocol.",
+    "prevention": "1. ALWAYS query RAG webhook before making financial claims. 2. Sync trade data to RAG immediately after execution. 3. Say \"I dont know, let me verify\" when uncertain.",
+    "tags": [
+      "critical",
+      "trust",
+      "verification",
+      "rag_sync",
+      "honesty"
+    ],
+    "severity": "critical",
+    "financial_impact": -24.19,
+    "symbol": "SOFI",
+    "resolution": "Trade data synced. Lesson recorded. Must rebuild trust through verified actions."
   }
 ]
