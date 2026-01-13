@@ -7,6 +7,13 @@ Verifies runtime budget enforcement prevents overspending.
 
 import pytest
 
+# Check for pydantic dependency (required by mcp client)
+try:
+    import pydantic  # noqa: F401
+    HAS_PYDANTIC = True
+except ImportError:
+    HAS_PYDANTIC = False
+
 from src.utils.model_selector import (
     MODEL_REGISTRY,
     ModelSelector,
@@ -217,6 +224,7 @@ class TestToolDefinitions:
         assert registry.get("query_lessons_learned") is not None
 
 
+@pytest.mark.skipif(not HAS_PYDANTIC, reason="pydantic not installed")
 class TestUnifiedMCPClient:
     """Tests for unified MCP client."""
 
