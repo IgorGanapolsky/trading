@@ -1901,5 +1901,31 @@
     "severity": "high",
     "financial_impact": 0,
     "symbol": null
+  },
+  {
+    "id": "lesson_20260113_193400_north_star_review",
+    "date": "2026-01-13",
+    "timestamp": "2026-01-13T19:38:21.434326",
+    "category": "strategic_review",
+    "title": "North Star Review - System Working, Strategy Failing (Jan 13, 2026)",
+    "description": "CEO asked: Will we reach North Star $100/day? Analysis revealed: Infrastructure works (webhook accurate, RAG has 19 lessons). Strategy FAILS (total P/L -$12.71, added to losing positions, stop-losses exist but not verified running).",
+    "root_cause": "1. Stop-loss code exists but not verified running 2. Position sizing not enforced 3. RAG not queried before trades 4. No pre-trade stop-loss verification",
+    "prevention": "1. ADD pre-trade verification that stop-losses exist 2. Block new trades if existing positions have no stops 3. Query RAG advice before every trade 4. Track stop-loss order IDs in system_state.json",
+    "tags": [
+      "north_star",
+      "strategy",
+      "stop_loss",
+      "verification",
+      "rule_1"
+    ],
+    "severity": "critical",
+    "financial_impact": -12.71,
+    "symbol": "SYSTEM",
+    "action_items": [
+      "Create verify_stops_in_place.py script",
+      "Add to pre-trade checks in daily-trading.yml",
+      "Block trading if stops missing",
+      "Record stop order IDs after setting"
+    ]
   }
 ]
