@@ -1783,5 +1783,23 @@
     "severity": "medium",
     "financial_impact": 0.0,
     "symbol": null
+  },
+  {
+    "id": "lesson_20260113_120454_find_put_option_fix",
+    "timestamp": "2026-01-13T12:04:54.572979",
+    "category": "critical_bug",
+    "title": "find_put_option() Hardcoded SPY Price Blocked ALL Trades (Jan 13, 2026)",
+    "description": "find_put_option() had hardcoded estimated_price=600 (SPY) even when CONFIG=SOFI. Strike=$570, collateral=$57K blocked $5K account.",
+    "root_cause": "Incomplete fix - should_open_position() was fixed but find_put_option() was missed",
+    "prevention": "When fixing bugs, grep ALL occurrences. Add unit tests. Never hardcode prices.",
+    "tags": [
+      "bug",
+      "critical",
+      "strike_calculation",
+      "hardcoded_price"
+    ],
+    "severity": "critical",
+    "financial_impact": 0,
+    "symbol": "SOFI"
   }
 ]

@@ -135,13 +135,26 @@ def find_put_option(symbol: str, target_delta: float, target_dte: int) -> Option
     # Format as YYMMDD for options symbol
     expiry_str = target_expiry.strftime("%y%m%d")
 
-    # For SPY around 600, 20 delta put is roughly 5% OTM
-    # SPY at 600 -> strike around 570
-    estimated_price = 600  # Would get from market data
-    strike = int(estimated_price * 0.95)  # 5% OTM for ~20 delta
+    # CRITICAL FIX Jan 13, 2026: Use symbol-specific prices, not hardcoded SPY!
+    # This bug was causing strike calculations to be wildly wrong for SOFI
+    symbol_prices = {
+        "SOFI": 14,   # ~$14/share
+        "F": 10,      # ~$10/share
+        "PLTR": 80,   # ~$80/share
+        "SPY": 600,   # ~$600/share
+    }
+    estimated_price = symbol_prices.get(symbol, 20)  # Default to $20 if unknown
 
-    # Options symbol format: SPY241220P00570000
+    # For 20 delta put, use ~30% OTM strike (conservative for small account)
+    strike = int(estimated_price * 0.70)  # 30% OTM for ~20 delta
+
+    # Minimum strike of $5 to ensure tradeable
+    strike = max(strike, 5)
+
+    # Options symbol format: SOFI260213P00010000
     option_symbol = f"{symbol}{expiry_str}P{strike:08d}"
+
+    logger.info(f"Option search: {symbol} @ ~${estimated_price} -> strike ${strike}")
 
     return {
         "symbol": option_symbol,
@@ -150,7 +163,7 @@ def find_put_option(symbol: str, target_delta: float, target_dte: int) -> Option
         "expiry": target_expiry.strftime("%Y-%m-%d"),
         "dte": target_dte,
         "delta": target_delta,
-        "estimated_premium": strike * 0.01,  # Rough estimate
+        "estimated_premium": max(strike * 0.02, 0.10),  # Min $0.10 premium
     }
 
 
