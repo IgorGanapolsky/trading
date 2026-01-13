@@ -1,0 +1,43 @@
+name: Emergency Position Protection
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (show what would be done)'
+        required: false
+        default: 'false'
+        type: boolean
+      max_loss_pct:
+        description: 'Max loss percentage for protection (e.g., 0.50 = 50%)'
+        required: false
+        default: '0.50'
+        type: string
+
+jobs:
+  protect-positions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install alpaca-py python-dotenv
+
+      - name: Run Emergency Protection
+        env:
+          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          DRY_RUN_FLAG=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            DRY_RUN_FLAG="--dry-run"
+          fi
+          python scripts/cancel_and_protect.py $DRY_RUN_FLAG --max-loss ${{ inputs.max_loss_pct }}
