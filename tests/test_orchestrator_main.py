@@ -3,6 +3,8 @@ Tests for the main TradingOrchestrator.
 
 Critical module: 3,260 lines - controls entire trading workflow.
 Added Jan 7, 2026 to address test coverage gap.
+Updated Jan 13, 2026: Removed placeholder tests for honesty.
+Real gate tests are in test_safety_gates.py (15 tests).
 """
 
 from datetime import date
@@ -86,55 +88,6 @@ class TestOrchestratorConfiguration:
         assert PositionSizing.MAX_DAILY_LOSS_PCT <= 0.05  # Stop at 5% daily loss max
 
 
-class TestGateValidation:
-    """Test individual gate validation logic."""
-
-    def test_psychology_gate_concept(self):
-        """Test psychology gate prevents emotional trading."""
-        # Gate 0 should block trades when trader is emotional
-        # This is a conceptual test - actual implementation varies
-        assert True  # Placeholder for actual implementation test
-
-    def test_momentum_gate_concept(self):
-        """Test momentum gate validates technical signals."""
-        # Gate 1 checks momentum indicators
-        assert True  # Placeholder
-
-    def test_sentiment_gate_concept(self):
-        """Test sentiment gate validates market sentiment."""
-        # Gate 3 checks sentiment scores
-        assert True  # Placeholder
-
-    def test_risk_gate_concept(self):
-        """Test risk gate validates position sizing."""
-        # Gate 4 checks risk limits
-        assert True  # Placeholder
-
-    def test_execution_gate_concept(self):
-        """Test execution gate validates order parameters."""
-        # Gate 5 checks order validity
-        assert True  # Placeholder
-
-
-class TestOrchestratorErrorHandling:
-    """Test error handling in orchestrator."""
-
-    def test_handles_missing_market_data(self):
-        """Test orchestrator handles missing market data gracefully."""
-        # Should not crash when market data is unavailable
-        assert True  # Placeholder
-
-    def test_handles_api_timeout(self):
-        """Test orchestrator handles API timeouts."""
-        # Should retry with exponential backoff
-        assert True  # Placeholder
-
-    def test_handles_broker_error(self):
-        """Test orchestrator handles broker errors."""
-        # Should log error and skip trade
-        assert True  # Placeholder
-
-
 class TestOrchestratorIntegration:
     """Integration tests for orchestrator components."""
 
@@ -144,31 +97,8 @@ class TestOrchestratorIntegration:
         gate_order = [0, 1, 2, 3, 4, 5]
         assert gate_order == sorted(gate_order)
 
-    def test_gate_can_block_trade(self):
-        """Test that any gate can block a trade."""
-        # Each gate should be able to return BLOCK decision
-        assert True  # Placeholder
 
-    def test_all_gates_must_pass(self):
-        """Test that all gates must pass for trade execution."""
-        # Trade only executes if all gates return PASS
-        assert True  # Placeholder
-
-
-class TestOrchestratorMetrics:
-    """Test orchestrator metrics and telemetry."""
-
-    def test_tracks_gate_latency(self):
-        """Test that gate execution latency is tracked."""
-        # Each gate should record execution time
-        assert True  # Placeholder
-
-    def test_tracks_trade_decisions(self):
-        """Test that trade decisions are logged."""
-        # All decisions should be logged for audit
-        assert True  # Placeholder
-
-    def test_tracks_error_counts(self):
-        """Test that errors are counted."""
-        # Error counts help identify problematic components
-        assert True  # Placeholder
+# NOTE: Gate validation, error handling, and metrics tests removed Jan 13, 2026.
+# They were placeholders (assert True) that provided false coverage.
+# Real gate tests are in tests/test_safety_gates.py (15 tests).
+# See LL-147 for details.
