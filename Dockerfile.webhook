@@ -1,5 +1,5 @@
-# Dockerfile for Dialogflow Webhook
-# Minimal dependencies for fast deployment (~2 min vs ~10 min)
+# Dockerfile for Dialogflow Webhook with Vertex AI RAG
+# FIXED Jan 13, 2026: Now includes Vertex AI for semantic search
 FROM python:3.11-slim
 
 # Cache bust to force fresh build on deploy
@@ -7,13 +7,14 @@ ARG CACHE_BUST=1
 
 WORKDIR /app
 
-# Install ONLY what webhook actually needs (no chromadb/sentence-transformers)
-# This reduces build time from ~10 min to ~2 min
-# ChromaDB was REMOVED per CLAUDE.md directive (Jan 7, 2026)
+# Install webhook dependencies INCLUDING Vertex AI for semantic search
+# Build time ~3-4 min but enables real RAG answers
 RUN pip install --no-cache-dir \
     fastapi==0.128.0 \
     uvicorn==0.40.0 \
-    requests==2.32.5
+    requests==2.32.5 \
+    google-cloud-aiplatform>=1.72.0 \
+    vertexai>=1.72.0
 
 # Create required package structure
 RUN mkdir -p src/agents src/rag rag_knowledge/lessons_learned data
@@ -21,10 +22,11 @@ RUN mkdir -p src/agents src/rag rag_knowledge/lessons_learned data
 # Create empty __init__.py files for Python packages
 RUN touch src/__init__.py src/agents/__init__.py src/rag/__init__.py
 
-# Copy ONLY the specific RAG files needed (not vertex_rag.py which needs google.cloud)
+# Copy RAG files INCLUDING vertex_rag.py for semantic search
 COPY src/agents/dialogflow_webhook.py src/agents/
 COPY src/rag/lessons_learned_rag.py src/rag/
 COPY src/rag/lessons_search.py src/rag/
+COPY src/rag/vertex_rag.py src/rag/
 COPY rag_knowledge/lessons_learned/ rag_knowledge/lessons_learned/
 
 # Copy system state for portfolio data (fallback to GitHub raw if stale)

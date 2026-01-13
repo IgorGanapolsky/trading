@@ -63,6 +63,7 @@ jobs:
       - name: Deploy to Cloud Run
         run: |
           IMAGE=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/cloud-run-source-deploy/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          # CRITICAL: Set GOOGLE_CLOUD_PROJECT for Vertex AI RAG initialization
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image $IMAGE \
             --region ${{ env.REGION }} \
@@ -72,7 +73,8 @@ jobs:
             --cpu 1 \
             --min-instances 0 \
             --max-instances 3 \
-            --timeout 60s
+            --timeout 60s \
+            --set-env-vars "GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},VERTEX_AI_LOCATION=${{ env.REGION }}"
 
       - name: Get service URL
         run: |
