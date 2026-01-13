@@ -1747,5 +1747,23 @@
     "severity": "medium",
     "financial_impact": 0.0,
     "symbol": null
+  },
+  {
+    "id": "lesson_20260113_013829_sandbox_tests",
+    "timestamp": "2026-01-13T01:40:33.989042",
+    "category": "testing",
+    "title": "Tests Must Be Sandbox-Resilient (Jan 13, 2026)",
+    "description": "Tests that import optional dependencies (alpaca, pydantic, yaml, requests, dotenv, numpy) must use pytest.mark.skipif to handle sandbox environments where packages are not installed.",
+    "root_cause": "Tests imported optional packages at module level without checking availability, causing test failures in sandbox",
+    "prevention": "Add skipif decorators: try: import pkg; HAS_PKG=True except ImportError: HAS_PKG=False. Then @pytest.mark.skipif(not HAS_PKG, reason=\"pkg not installed\")",
+    "tags": [
+      "testing",
+      "sandbox",
+      "ci",
+      "optional_deps"
+    ],
+    "severity": "medium",
+    "financial_impact": 0.0,
+    "symbol": null
   }
 ]
