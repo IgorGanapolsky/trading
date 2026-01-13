@@ -1,0 +1,21 @@
+# Lesson Learned: CLAUDE.md Violation - Creating Markdown Files
+
+**Date**: 2026-01-13
+**Severity**: Medium
+**Category**: Process Violation
+
+## What Happened
+Claude (CTO) created a TRIGGER_TRADE.md file to trigger a workflow, violating CLAUDE.md directive: "Don't create unnecessary documentation"
+
+## Root Cause
+1. Took a shortcut instead of using proper workflow_dispatch
+2. Did not fully internalize CLAUDE.md rules
+3. Prioritized "quick" over "correct"
+
+## Prevention
+1. Added CI check `check-no-new-markdown` to block new .md files (PR #1585)
+2. CI now enforces the no-markdown rule programmatically
+3. Claude cannot violate this rule again - CI will reject
+
+## Lesson
+"The lazy path is often the wrong path. When in doubt, re-read CLAUDE.md."
