@@ -85,24 +85,6 @@ try:
 except ImportError:
     LESSONS_RAG_AVAILABLE = False
 
-# Hindsight Agentic Memory - not implemented
-HINDSIGHT_AVAILABLE = False
-
-# Reflexion Loop - not implemented
-REFLEXION_AVAILABLE = False
-
-
-def reflect_and_store(*args, **kwargs):
-    """Placeholder for reflexion_loop.reflect_and_store (not yet implemented)."""
-    from dataclasses import dataclass
-
-    @dataclass
-    class DummyReflection:
-        lesson_learned: str = "Reflexion module not implemented"
-
-    return DummyReflection()
-
-
 # Introspective awareness imports (Dec 2025)
 try:
     # NOTE: Keep optional import pattern without triggering ruff F401.
@@ -1180,43 +1162,6 @@ class TradingOrchestrator:
 
                 except Exception as coach_err:
                     logger.warning(f"Gate 0: Coaching feedback failed: {coach_err}")
-
-            # Reflexion Loop: Generate and store reflection for learning
-            if REFLEXION_AVAILABLE:
-                try:
-                    import uuid
-
-                    # Generate reflection on this trade
-                    reflection = reflect_and_store(
-                        trade_id=str(uuid.uuid4())[:8],
-                        symbol=symbol,
-                        action="SELL",  # This is an exit
-                        entry_price=entry_price,
-                        exit_price=exit_price,
-                        pnl=pl,
-                        pre_trade_signals={},  # Entry signals not tracked for exits
-                        pre_trade_confidence=0.0,  # Entry confidence not tracked for exits
-                        pre_trade_reasoning=exit_reason,
-                    )
-
-                    logger.info(
-                        f"Reflexion: Stored reflection for {symbol} - "
-                        f"{'WIN' if is_winner else 'LOSS'}: {reflection.lesson_learned}"
-                    )
-
-                    self.telemetry.record(
-                        event_type="reflexion.stored",
-                        ticker=symbol,
-                        status="ok",
-                        payload={
-                            "is_win": is_winner,
-                            "lesson": reflection.lesson_learned,
-                            "pattern_tags": reflection.pattern_tags,
-                            "would_take_again": reflection.would_take_again,
-                        },
-                    )
-                except Exception as refl_err:
-                    logger.warning(f"Reflexion: Failed to store reflection: {refl_err}")
 
         except Exception as e:
             logger.error(f"Failed to record closed trade for {symbol}: {e}")
