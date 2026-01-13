@@ -1,14 +1,14 @@
 # AI Options Trading Bot
 
-[![Win Rate](https://img.shields.io/badge/win_rate-N%2FA_(fresh_start)-yellow.svg)](docs/r-and-d-phase.md)
-[![Status](https://img.shields.io/badge/status-live_trading-green.svg)](docs/r-and-d-phase.md)
-[![Day](https://img.shields.io/badge/day-72%2F90-blue.svg)](docs/r-and-d-phase.md)
+[![Win Rate](https://img.shields.io/badge/win_rate-N%2FA_(fresh_start)-yellow.svg)](#)
+[![Status](https://img.shields.io/badge/status-live_trading-green.svg)](#)
+[![Day](https://img.shields.io/badge/day-75%2F90-blue.svg)](#)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](requirements.txt)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Open-source AI-powered trading system** using options premium selling and Thompson Sampling strategy selection. Built with Python and Alpaca API.
 
-> **Current Status**: Day 72/90 R&D Phase (Jan 8, 2026) | Live: $30 (accumulating) | Paper: FRESH START ($5K reset Jan 7)
+> **Current Status**: Day 75/90 R&D Phase (Jan 13, 2026) | Live: $60 (accumulating) | Paper: $4,969.94 (-0.60%)
 
 ---
 
@@ -169,23 +169,17 @@ python3 scripts/daily_verification.py
 
 ## For AI Agents & LLMs
 
-This repo is optimized for AI agent collaboration. See **[AGENTS.md](AGENTS.md)** for:
-- Quick context loading
-- Key file locations
-- Critical rules and constraints
-- RAG knowledge base (`rag_knowledge/`)
-
-**Claude Code users**: See `.claude/CLAUDE.md` for full context.
+This repo is optimized for AI agent collaboration:
+- Quick context: `.claude/CLAUDE.md`
+- Rules: `.claude/rules/MANDATORY_RULES.md`
+- RAG knowledge base: `rag_knowledge/`
 
 ---
 
 ## Documentation
 
-- **[R&D Phase](docs/r-and-d-phase.md)** - Current 90-day plan
-- **[Verification Protocols](docs/verification-protocols.md)** - Safety mechanisms
-- **[Profit Optimization](docs/profit-optimization.md)** - Strategy details
-- **[Environment Variables](docs/ENVIRONMENT_VARIABLES.md)** - Configuration
-- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues
+- **[Lessons Learned](docs/lessons.md)** - Trading lessons from RAG
+- **[Reports](docs/reports.md)** - Performance reports
 
 ---
 

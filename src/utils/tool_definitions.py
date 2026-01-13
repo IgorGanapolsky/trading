@@ -60,26 +60,27 @@ class ToolDefinition:
     description: str
     parameters: list[ToolParameter] = field(default_factory=list)
 
-    def to_claude(self) -> dict[str, Any]:
-        """Convert to Anthropic Claude tool format."""
+    def _build_properties(self, uppercase_types: bool = False) -> tuple[dict, list]:
+        """Build properties dict and required list from parameters (DRY helper)."""
         properties = {}
         required = []
-
         for param in self.parameters:
             prop: dict[str, Any] = {
-                "type": param.type,
+                "type": param.type.upper() if uppercase_types else param.type,
                 "description": param.description,
             }
             if param.enum:
                 prop["enum"] = param.enum
             if param.items:
                 prop["items"] = param.items
-
             properties[param.name] = prop
-
             if param.required:
                 required.append(param.name)
+        return properties, required
 
+    def to_claude(self) -> dict[str, Any]:
+        """Convert to Anthropic Claude tool format."""
+        properties, required = self._build_properties()
         return {
             "name": self.name,
             "description": self.description,
@@ -92,24 +93,7 @@ class ToolDefinition:
 
     def to_gemini(self) -> dict[str, Any]:
         """Convert to Google Gemini function declaration format."""
-        properties = {}
-        required = []
-
-        for param in self.parameters:
-            prop: dict[str, Any] = {
-                "type": param.type.upper(),  # Gemini uses uppercase types
-                "description": param.description,
-            }
-            if param.enum:
-                prop["enum"] = param.enum
-            if param.items:
-                prop["items"] = param.items
-
-            properties[param.name] = prop
-
-            if param.required:
-                required.append(param.name)
-
+        properties, required = self._build_properties(uppercase_types=True)
         return {
             "name": self.name,
             "description": self.description,
@@ -122,24 +106,7 @@ class ToolDefinition:
 
     def to_openrouter(self) -> dict[str, Any]:
         """Convert to OpenRouter format (OpenAI-compatible)."""
-        properties = {}
-        required = []
-
-        for param in self.parameters:
-            prop: dict[str, Any] = {
-                "type": param.type,
-                "description": param.description,
-            }
-            if param.enum:
-                prop["enum"] = param.enum
-            if param.items:
-                prop["items"] = param.items
-
-            properties[param.name] = prop
-
-            if param.required:
-                required.append(param.name)
-
+        properties, required = self._build_properties()
         return {
             "type": "function",
             "function": {
