@@ -1,23 +1,37 @@
-# Trade Trigger - Proof of Life
+# Trade Trigger - STOP LOSS ORDER
 
-**Triggered:** 2026-01-13T14:45:00Z
-**Session:** Proof of Life - First Trade After 74 Days
-**Symbol:** SOFI / F
-**Strategy:** Phil Town CSP or Simple Stock Purchase
+**Triggered:** 2026-01-13T15:12:00Z
+**Action:** SET STOP-LOSS ON PUT
+**Symbol:** SOFI260206P00024000
+**Order:** BUY TO CLOSE @ $1.50 LIMIT (GTC)
 
-## Reason
+## Risk Management
 
-After 74 days of ZERO trades, executing first paper trade to prove system works.
-This is triggered by CEO directive to stop analyzing and start trading.
+CEO Directive: "We are never allowed to lose money!"
+
+Setting protective stop-loss on existing short put position:
+- Current put price: ~$0.80
+- Stop-loss trigger: $1.50
+- Max loss if triggered: $150 - $79 premium = $71 net loss
+- Without stop-loss: Unlimited downside risk
+
+## Order Details
+
+```python
+# Buy to close the short put if it reaches $1.50
+order = {
+    "symbol": "SOFI260206P00024000",
+    "qty": 1,
+    "side": "buy",  # Buy to close short position
+    "type": "stop_limit",
+    "stop_price": 1.50,
+    "limit_price": 1.55,
+    "time_in_force": "gtc"  # Good till canceled
+}
+```
 
 ## Expected Outcome
 
-1. Verify Alpaca connection
-2. Execute trade (buy 1 share or sell 1 CSP)
-3. Record in trades JSON
-4. Sync to RAG
-
-## Verification
-
-Check: https://github.com/IgorGanapolsky/trading/actions
-Check: Alpaca paper account dashboard
+1. Stop-loss order placed on existing put position
+2. If SOFI drops and put rises to $1.50, order triggers
+3. Max loss capped at ~$71 instead of unlimited
