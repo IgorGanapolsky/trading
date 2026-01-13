@@ -88,6 +88,7 @@ jobs:
           echo "Setting up GCP authentication..."
           if [ -n "$GCP_SA_KEY" ]; then
             echo "$GCP_SA_KEY" > /tmp/gcp_sa_key.json
+            chmod 600 /tmp/gcp_sa_key.json  # Security fix Jan 13, 2026
             export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_sa_key.json
             echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_sa_key.json" >> $GITHUB_ENV
 

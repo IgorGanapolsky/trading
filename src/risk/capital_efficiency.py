@@ -105,10 +105,10 @@ class CapitalEfficiencyCalculator:
         },
         "cash_secured_put": {
             "name": "Cash-Secured Put",
-            "min_capital": 2000,
+            "min_capital": 500,  # $5 strike * 100 = $500 (F/SOFI tier)
             "tier": StrategyTier.TIER_2_COVERED_CALLS,
             "description": "Sell OTM put, keep cash to buy shares",
-            "collateral_per_trade": 2000,  # Strike * 100 shares
+            "collateral_per_trade": 500,  # $5 strike * 100 shares for F/SOFI
             "monthly_fee_impact": 0.005,
         },
         "vertical_spread": {

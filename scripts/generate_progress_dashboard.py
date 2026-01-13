@@ -34,9 +34,8 @@ load_dotenv()
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import yfinance as yf
-from src.utils.data_validator import DataValidator
-
 from scripts.dashboard_metrics import TradingMetricsCalculator
+from src.utils.data_validator import DataValidator
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")

@@ -133,6 +133,8 @@ class TaxOptimizer:
             )
 
         # Select tax lot based on method (FIFO by default)
+        if not self.tax_lots[symbol]:
+            raise ValueError(f"No tax lots available for {symbol}")
         if method == "FIFO":
             tax_lot = self.tax_lots[symbol].pop(0)  # First in, first out
         elif method == "LIFO":

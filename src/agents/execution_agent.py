@@ -385,22 +385,30 @@ RECOMMENDATION: [EXECUTE/DELAY/CANCEL]"""
         for line in lines:
             line = line.strip()
             if line.startswith("TIMING:"):
-                timing = line.split(":")[1].strip().upper()
-                if timing in ["IMMEDIATE", "WAIT_5MIN", "WAIT_OPEN"]:
-                    analysis["timing"] = timing
+                parts = line.split(":", 1)  # maxsplit=1 for safety
+                if len(parts) > 1:
+                    timing = parts[1].strip().upper()
+                    if timing in ["IMMEDIATE", "WAIT_5MIN", "WAIT_OPEN"]:
+                        analysis["timing"] = timing
             elif line.startswith("SLIPPAGE:"):
                 try:
-                    slippage_str = line.split(":")[1].strip().replace("%", "")
-                    analysis["slippage"] = float(slippage_str) / 100
+                    parts = line.split(":", 1)
+                    if len(parts) > 1:
+                        slippage_str = parts[1].strip().replace("%", "")
+                        analysis["slippage"] = float(slippage_str) / 100
                 except Exception:
                     pass
             elif line.startswith("CONFIDENCE:"):
                 with contextlib.suppress(builtins.BaseException):
-                    analysis["confidence"] = float(line.split(":")[1].strip())
+                    parts = line.split(":", 1)
+                    if len(parts) > 1:
+                        analysis["confidence"] = float(parts[1].strip())
             elif line.startswith("RECOMMENDATION:"):
-                rec = line.split(":")[1].strip().upper()
-                if rec in ["EXECUTE", "DELAY", "CANCEL"]:
-                    analysis["action"] = rec
+                parts = line.split(":", 1)
+                if len(parts) > 1:
+                    rec = parts[1].strip().upper()
+                    if rec in ["EXECUTE", "DELAY", "CANCEL"]:
+                        analysis["action"] = rec
 
         return analysis
 

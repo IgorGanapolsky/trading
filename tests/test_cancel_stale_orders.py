@@ -4,16 +4,6 @@
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timedelta, timezone
 
-import pytest
-
-# Check for alpaca dependency
-try:
-    from alpaca.trading.client import TradingClient  # noqa: F401
-
-    HAS_ALPACA = True
-except ImportError:
-    HAS_ALPACA = False
-
 
 class TestCancelStaleOrders:
     """Test stale order cancellation logic."""
@@ -58,19 +48,43 @@ class TestCancelStaleOrders:
         is_stale = fresh_order_time < threshold
         assert not is_stale, "1-hour-old order should NOT be cancelled"
 
-    @pytest.mark.skipif(not HAS_ALPACA, reason="alpaca-py not installed")
     @patch.dict(
         "os.environ",
         {"ALPACA_API_KEY": "test_key", "ALPACA_SECRET_KEY": "test_secret", "PAPER_TRADING": "true"},
     )
     def test_returns_zero_on_no_orders(self):
         """Test script returns 0 when no orders exist."""
-        with patch("alpaca.trading.client.TradingClient") as mock_client:
-            mock_instance = MagicMock()
-            mock_instance.get_orders.return_value = []
-            mock_client.return_value = mock_instance
+        import sys
 
-            # Import and run main
+        # Create mock alpaca module hierarchy
+        mock_trading_client = MagicMock()
+        mock_instance = MagicMock()
+        mock_instance.get_orders.return_value = []
+        mock_trading_client.return_value = mock_instance
+
+        mock_client_module = MagicMock()
+        mock_client_module.TradingClient = mock_trading_client
+
+        mock_trading_module = MagicMock()
+        mock_trading_module.client = mock_client_module
+
+        mock_alpaca = MagicMock()
+        mock_alpaca.trading = mock_trading_module
+        mock_alpaca.trading.client = mock_client_module
+
+        # Inject mock modules
+        with patch.dict(
+            sys.modules,
+            {
+                "alpaca": mock_alpaca,
+                "alpaca.trading": mock_trading_module,
+                "alpaca.trading.client": mock_client_module,
+            },
+        ):
+            # Force reimport to pick up mocks
+            if "scripts.cancel_stale_orders" in sys.modules:
+                del sys.modules["scripts.cancel_stale_orders"]
+
             from scripts.cancel_stale_orders import main
 
             result = main()

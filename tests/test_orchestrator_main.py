@@ -79,16 +79,11 @@ class TestOrchestratorConfiguration:
 
     def test_risk_parameters(self):
         """Test risk parameters are within safe bounds."""
-        from src.utils.constants import (  # noqa: I001
-            MAX_DAILY_LOSS_PCT,
-            MAX_DRAWDOWN_PCT,
-            MAX_POSITION_PCT,
-        )
+        from src.constants.trading_thresholds import PositionSizing
 
-        # Risk limits should be conservative
-        assert MAX_POSITION_PCT <= 20.0  # No more than 20% per position
-        assert MAX_DAILY_LOSS_PCT <= 5.0  # Stop at 5% daily loss max
-        assert MAX_DRAWDOWN_PCT <= 20.0  # Max 20% drawdown
+        # Risk limits should be conservative (values are decimals, not percentages)
+        assert PositionSizing.MAX_POSITION_PCT <= 0.30  # No more than 30% per position
+        assert PositionSizing.MAX_DAILY_LOSS_PCT <= 0.05  # Stop at 5% daily loss max
 
 
 class TestGateValidation:

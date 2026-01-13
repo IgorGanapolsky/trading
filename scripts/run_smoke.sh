@@ -32,17 +32,10 @@ except ImportError as e:
     sys.exit(1)
 
 try:
-    from src.risk.vix_circuit_breaker import VIXCircuitBreaker
-    print("  ✅ VIXCircuitBreaker")
+    from src.risk.position_manager import PositionManager
+    print("  ✅ PositionManager")
 except ImportError as e:
-    print(f"  ❌ VIXCircuitBreaker: {e}")
-    sys.exit(1)
-
-try:
-    from src.risk.risk_manager import RiskManager
-    print("  ✅ RiskManager")
-except ImportError as e:
-    print(f"  ❌ RiskManager: {e}")
+    print(f"  ❌ PositionManager: {e}")
     sys.exit(1)
 
 print("\n✅ Smoke test passed - core modules load correctly")
