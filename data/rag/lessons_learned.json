@@ -1927,5 +1927,25 @@
       "Block trading if stops missing",
       "Record stop order IDs after setting"
     ]
+  },
+  {
+    "id": "lesson_20260113_194100_stale_data_trust",
+    "date": "2026-01-13",
+    "timestamp": "2026-01-13T19:41:42.844069",
+    "category": "trust_violation",
+    "title": "CTO Reported Stale Data as Current Fact (Jan 13, 2026 - 2nd violation)",
+    "description": "CTO read system_state.json showing -$12.71 P/L and reported it as current. Alpaca dashboard showed actual P/L was +$19.62. CEO had to correct CTO with screenshot. This is SECOND trust violation today.",
+    "root_cause": "Alpaca API returned 403 from sandbox. Instead of acknowledging uncertainty, CTO reported stale local data as truth.",
+    "prevention": "1. When API unavailable, SAY SO explicitly 2. Never report local cache as current fact 3. Say \"I cannot verify live data\" when blocked 4. Ask CEO to check dashboard when uncertain",
+    "tags": [
+      "critical",
+      "trust",
+      "verification",
+      "stale_data",
+      "honesty"
+    ],
+    "severity": "critical",
+    "financial_impact": 0,
+    "symbol": "SYSTEM"
   }
 ]
