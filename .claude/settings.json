@@ -158,6 +158,11 @@
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/github_secrets_reminder.sh",
             "timeout": 2
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/auto_blog_generator.sh",
+            "timeout": 3
           }
         ]
       }
