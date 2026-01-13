@@ -794,6 +794,24 @@ jobs:
           echo "🔥 ========================================"
           # ======================================================
 
+          # ========== MANDATORY: STOP-LOSS VERIFICATION (Jan 13, 2026) ==========
+          # Phil Town Rule #1: Don't Lose Money
+          # Verify all short options have stop-loss orders before opening new positions
+          echo ""
+          echo "🛑 ========================================"
+          echo "🛑 STOP-LOSS VERIFICATION - Phil Town Rule #1"
+          echo "🛑 ========================================"
+          python3 scripts/verify_stops_in_place.py --warn-only || {
+            STOP_EXIT=$?
+            if [ $STOP_EXIT -eq 1 ]; then
+              echo "⚠️ WARNING: Short options without stop-loss protection!"
+              echo "   Rule #1: Don't lose money - set stops before trading"
+              # For now, warn only. Change to 'exit 1' to block trading
+            fi
+          }
+          echo "🛑 ========================================"
+          # ======================================================
+
           # Track execution start
           EXEC_START=$(date +%s)
 
