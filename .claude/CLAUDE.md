@@ -2,16 +2,29 @@
 
 CTO: Claude | CEO: Igor Ganapolsky
 
-## Strategy (Updated Jan 13, 2026)
+## Strategy (Updated Jan 13, 2026 - CTO Research-Based Revision)
 - **North Star**: $100/day after-tax via compounding
 - **Primary strategy**: CREDIT SPREADS (not CSPs) - 10x capital efficiency
-- **Primary targets**: F, SOFI, T - bull put spreads $5 wide
-- **Spread setup**: Sell ATM put, buy $5 OTM put = $500 collateral, ~$100 premium
-- **Position limit**: MAX 10 spreads with $5K (vs only 2 CSPs)
-- **Weekly target**: 10 spreads x $100 = $1,000/week = $200/day
-- **Stop-loss**: Close at 25% loss OR $50 daily loss per spread
+- **Spread setup**: Sell 30-delta put, buy $5 OTM put = $500 collateral
+- **Premium target**: $60-80/spread (1/3 of width unrealistic in low IV)
+- **Position limit**: MAX 5 concurrent spreads (not 10) - limits risk to 40%
+- **Weekly target**: 5 spreads x $70 = $350/week = $70/day (sustainable)
+- **Exit rules**: Close at 50% profit OR 25% loss OR 7 DTE
 - **Risk management**: Never risk >5% of account on single trade
 - **Until $500 brokerage**: Paper trade only, deposit $10/day
+
+### Ticker Hierarchy (Jan 2026)
+| Priority | Ticker | Rationale | Blackout |
+|----------|--------|-----------|----------|
+| 1 | SPY | Best liquidity, tightest spreads | None |
+| 2 | IWM | Small cap exposure, good vol | None |
+| 3 | F | Undervalued, 4.2% div support | Feb 3-10 (earnings Feb 10) |
+| 4 | T | Stable, low IV = lower premiums | TBD earnings |
+| 5 | SOFI | **BLACKOUT until Feb 1** | Jan 23-30 (earnings Jan 30) |
+
+### Phil Town Alignment Note
+Credit spreads partially conflict with Rule #1 (risk $400 to make $80).
+Mitigation: Use 30-delta (not ATM) for margin of safety, strict stops.
 
 ## Core Directives (PERMANENT)
 1. **Don't lose money** - Rule #1 always
