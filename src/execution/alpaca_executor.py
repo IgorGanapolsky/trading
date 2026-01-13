@@ -6,6 +6,7 @@ Dec 3, 2025 Enhancement:
 - Automatic stop-loss on every new position
 
 Jan 9, 2026: Observability via Vertex AI RAG + Local JSON (LangSmith removed)
+Jan 13, 2026: Auto-reflection on failures (Reflexion pattern - arXiv 2303.11366)
 """
 
 from __future__ import annotations
@@ -192,6 +193,13 @@ class AlpacaExecutor:
                 logger.error("   This means we cannot see our account or positions!")
                 logger.error("   Trading should be BLOCKED until this is fixed.")
 
+                # Auto-reflect on sync failure (Reflexion pattern)
+                try:
+                    from src.learning.failure_reflection import reflect_on_failure
+                    reflect_on_failure("SYNC_FAILED", error_message=str(e))
+                except Exception as refl_err:
+                    logger.debug(f"Reflection failed: {refl_err}")
+
                 # Set error state - equity 0 will trigger safety checks
                 self.account_snapshot = {"equity": 0, "error": str(e)}
                 self.positions = []
@@ -339,6 +347,19 @@ class AlpacaExecutor:
                 logger.error(f"🚫 ORDER BLOCKED BY MANDATORY GATE: {gate_result.reason}")
                 logger.error(f"   RAG Warnings: {gate_result.rag_warnings}")
                 logger.error(f"   ML Anomalies: {gate_result.ml_anomalies}")
+
+                # Auto-reflect on blocked trade (Reflexion pattern)
+                try:
+                    from src.learning.failure_reflection import reflect_trade_blocked
+                    reflect_trade_blocked(
+                        symbol=symbol,
+                        reason=gate_result.reason,
+                        strategy=strategy,
+                        context={"rag_warnings": gate_result.rag_warnings, "ml_anomalies": gate_result.ml_anomalies}
+                    )
+                except Exception as refl_err:
+                    logger.debug(f"Reflection failed: {refl_err}")
+
                 raise TradeBlockedError(gate_result)
 
             if gate_result.rag_warnings or gate_result.ml_anomalies:
@@ -374,6 +395,14 @@ class AlpacaExecutor:
                         f"🚫 TRADE BLOCKED BY PATTERN HISTORY: {strategy} has {win_rate:.1%} win rate "
                         f"over {sample_size} trades. Rule #1: Don't lose money."
                     )
+
+                    # Auto-reflect on pattern block (Reflexion pattern)
+                    try:
+                        from src.learning.failure_reflection import reflect_pattern_blocked
+                        reflect_pattern_blocked(strategy, win_rate, sample_size)
+                    except Exception as refl_err:
+                        logger.debug(f"Reflection failed: {refl_err}")
+
                     raise TradeBlockedError(
                         f"Historical pattern {strategy} has {win_rate:.1%} win rate - below 50% threshold"
                     )
@@ -489,14 +518,30 @@ class AlpacaExecutor:
                 logger.warning(
                     f"MultiBroker submit failed or skipped: {e}. Falling back to direct AlpacaTrader."
                 )
-                order = self.trader.execute_order(
-                    symbol=symbol,
-                    amount_usd=notional,
-                    qty=qty,
-                    side=side,
-                    tier="T1_CORE",
-                )
-                return order
+                try:
+                    order = self.trader.execute_order(
+                        symbol=symbol,
+                        amount_usd=notional,
+                        qty=qty,
+                        side=side,
+                        tier="T1_CORE",
+                    )
+                    return order
+                except Exception as inner_e:
+                    # Auto-reflect on order execution failure (Reflexion pattern)
+                    try:
+                        from src.learning.failure_reflection import reflect_order_failed
+                        reflect_order_failed(symbol, str(inner_e), strategy)
+                    except Exception as refl_err:
+                        logger.debug(f"Reflection failed: {refl_err}")
+                    raise inner_e
+
+            # Auto-reflect on broker failure (Reflexion pattern)
+            try:
+                from src.learning.failure_reflection import reflect_order_failed
+                reflect_order_failed(symbol, str(e), strategy)
+            except Exception as refl_err:
+                logger.debug(f"Reflection failed: {refl_err}")
             raise e
 
     def set_stop_loss(self, symbol: str, qty: float, stop_price: float) -> dict[str, Any]:
@@ -660,6 +705,13 @@ class AlpacaExecutor:
                 f"[RISK] Position {symbol} opened WITHOUT stop-loss protection! "
                 f"Manual intervention required."
             )
+
+            # Auto-reflect on CRITICAL stop-loss failure (Reflexion pattern)
+            try:
+                from src.learning.failure_reflection import reflect_stop_loss_failed
+                reflect_stop_loss_failed(symbol, str(e))
+            except Exception as refl_err:
+                logger.debug(f"Reflection failed: {refl_err}")
 
         return result
 
