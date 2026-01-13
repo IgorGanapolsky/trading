@@ -605,6 +605,7 @@ def assess_trading_readiness(
     max_score += 20
     if state:
         last_trade_date = state.get("trades", {}).get("last_trade_date", "")
+        automation_fix_date = state.get("meta", {}).get("automation_fix_date", "")
         if last_trade_date:
             try:
                 last_trade = datetime.strptime(last_trade_date, "%Y-%m-%d")
@@ -622,10 +623,20 @@ def assess_trading_readiness(
                     )
                     score += 10
                 else:
-                    blockers.append(
-                        f"🚨 AUTOMATION BROKEN: No trades for {days_since_trade} days! "
-                        f"(last trade: {last_trade_date}) Check GitHub Actions secrets!"
-                    )
+                    # Check if a fix was applied today
+                    today_str = now_et.strftime("%Y-%m-%d")
+                    if automation_fix_date == today_str:
+                        # Fix applied but no trade yet - show warning not blocker
+                        warnings.append(
+                            f"Fix applied today - awaiting 9:35 AM ET trade run "
+                            f"(last trade: {last_trade_date})"
+                        )
+                        score += 10
+                    else:
+                        blockers.append(
+                            f"🚨 AUTOMATION BROKEN: No trades for {days_since_trade} days! "
+                            f"(last trade: {last_trade_date})"
+                        )
             except Exception:
                 warnings.append("Could not verify last trade date")
         else:
