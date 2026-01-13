@@ -176,6 +176,10 @@ class TradeGateway:
         self.daily_pnl = 0.0
         self.daily_pnl_date: datetime | None = None
 
+        # Peak equity tracking for drawdown calculation (CRITICAL SAFETY)
+        # Added Jan 13, 2026: Was stub returning 0.0, now tracks actual drawdown
+        self.peak_equity: float = 0.0
+
         # Capital efficiency calculator
         self.capital_calculator = get_capital_calculator(daily_deposit_rate=10.0)
 
@@ -196,6 +200,7 @@ class TradeGateway:
                     state = json.load(f)
                     self.accumulated_cash = state.get("accumulated_cash", 0.0)
                     self.daily_pnl = state.get("daily_pnl", 0.0)
+                    self.peak_equity = state.get("peak_equity", 0.0)
                     if state.get("daily_pnl_date"):
                         self.daily_pnl_date = datetime.fromisoformat(state["daily_pnl_date"])
             except Exception as e:
@@ -213,6 +218,7 @@ class TradeGateway:
                         "daily_pnl_date": self.daily_pnl_date.isoformat()
                         if self.daily_pnl_date
                         else None,
+                        "peak_equity": self.peak_equity,
                     },
                     f,
                 )
@@ -850,9 +856,37 @@ class TradeGateway:
             self._save_state()
 
     def _get_drawdown(self) -> float:
-        """Calculate current drawdown from peak."""
-        # In production, track peak equity and calculate drawdown
-        return 0.0  # Placeholder
+        """Calculate current drawdown from peak.
+
+        CRITICAL SAFETY FEATURE - Added Jan 13, 2026
+        Was a stub returning 0.0, now tracks actual drawdown.
+
+        Drawdown = (peak_equity - current_equity) / peak_equity
+        """
+        current_equity = self._get_account_equity()
+
+        # Update peak if we have a new high
+        if current_equity > self.peak_equity:
+            self.peak_equity = current_equity
+            self._save_state()
+            logger.info(f"📈 New peak equity: ${current_equity:.2f}")
+
+        # Calculate drawdown (0 if at or above peak)
+        if self.peak_equity <= 0:
+            # Initialize peak_equity on first call
+            self.peak_equity = current_equity
+            self._save_state()
+            return 0.0
+
+        if current_equity >= self.peak_equity:
+            return 0.0
+
+        drawdown = (self.peak_equity - current_equity) / self.peak_equity
+        logger.debug(
+            f"Drawdown: {drawdown * 100:.2f}% "
+            f"(peak=${self.peak_equity:.2f}, current=${current_equity:.2f})"
+        )
+        return drawdown
 
 
 def create_suicide_test() -> TradeRequest:

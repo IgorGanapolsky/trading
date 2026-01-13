@@ -490,12 +490,34 @@ class AlpacaExecutor:
             return order
 
         # Execution via MultiBroker with Failover
+        # Check API circuit breaker before any API call (Jan 13, 2026)
+        try:
+            from src.utils.api_circuit_breaker import (
+                CircuitBreakerOpen,
+                check_circuit_breaker,
+                get_api_circuit_breaker,
+            )
+
+            check_circuit_breaker()
+        except CircuitBreakerOpen as cb_err:
+            logger.critical(f"🚨 CIRCUIT BREAKER OPEN - Order blocked: {cb_err}")
+            raise
+        except ImportError:
+            pass  # Circuit breaker not available, proceed
+
         try:
             order_result = self.broker.submit_order(
                 symbol=symbol,
                 qty=qty,  # MultiBroker needs qty currently, or we need to calc it
                 side=side,
             )
+
+            # Record success for circuit breaker (Jan 13, 2026)
+            try:
+                breaker = get_api_circuit_breaker()
+                breaker.record_success()
+            except Exception:
+                pass
 
             # Convert OrderResult back to dict for compatibility
             order = {
@@ -542,6 +564,15 @@ class AlpacaExecutor:
                     except Exception as refl_err:
                         logger.debug(f"Reflection failed: {refl_err}")
                     raise inner_e
+
+            # Record failure for circuit breaker (Jan 13, 2026)
+            try:
+                from src.utils.api_circuit_breaker import get_api_circuit_breaker
+
+                breaker = get_api_circuit_breaker()
+                breaker.record_failure(str(e))
+            except Exception:
+                pass
 
             # Auto-reflect on broker failure (Reflexion pattern)
             try:
@@ -713,6 +744,26 @@ class AlpacaExecutor:
                 f"[RISK] Position {symbol} opened WITHOUT stop-loss protection! "
                 f"Manual intervention required."
             )
+
+            # CRITICAL: Alert CEO immediately - Added Jan 13, 2026
+            # Position is unprotected, this is a safety emergency
+            try:
+                from src.utils.error_monitoring import send_slack_alert
+
+                send_slack_alert(
+                    message=(
+                        f"🚨 *STOP-LOSS FAILED: {symbol}*\n\n"
+                        f"Position opened WITHOUT stop-loss protection!\n"
+                        f"Symbol: {symbol}\n"
+                        f"Entry: ${entry_price:.2f}\n"
+                        f"Intended Stop: ${stop_price:.2f}\n"
+                        f"Error: {e}\n"
+                        f"ACTION REQUIRED: Set stop-loss manually or close position!"
+                    ),
+                    level="error",
+                )
+            except Exception as slack_err:
+                logger.error(f"Failed to send Slack alert: {slack_err}")
 
             # Auto-reflect on CRITICAL stop-loss failure (Reflexion pattern)
             try:

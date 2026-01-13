@@ -35,7 +35,8 @@ logger = logging.getLogger(__name__)
 HEARTBEAT_FILE = Path(__file__).parent.parent.parent / "data" / "heartbeat.json"
 
 # Maximum time without heartbeat before considered dead
-MAX_HEARTBEAT_AGE_HOURS = 25  # Allow for weekends, but alert if no heartbeat for >25h on weekday
+# Reduced from 25h to 18h (Jan 13, 2026) - ensures same-day detection of failures
+MAX_HEARTBEAT_AGE_HOURS = 18  # Alert within same trading day if system goes silent
 
 
 @dataclass
