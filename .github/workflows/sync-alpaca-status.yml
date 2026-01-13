@@ -1,0 +1,140 @@
+name: Sync Alpaca Status
+
+# Runs every 30 minutes during market hours to keep data fresh
+on:
+  schedule:
+    - cron: '*/30 14-21 * * 1-5'  # Every 30 min, 9:30 AM - 4 PM ET (UTC+5)
+  workflow_dispatch:  # Manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: Sync Paper Account Status
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py
+
+      - name: Sync Alpaca Status
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'EOF'
+          import os
+          import json
+          from datetime import datetime
+          from pathlib import Path
+          from alpaca.trading.client import TradingClient
+
+          api_key = os.environ['ALPACA_API_KEY']
+          secret_key = os.environ['ALPACA_SECRET_KEY']
+
+          print("=" * 60)
+          print("ALPACA PAPER ACCOUNT SYNC")
+          print(f"Timestamp: {datetime.now().isoformat()}")
+          print("=" * 60)
+
+          client = TradingClient(api_key, secret_key, paper=True)
+
+          # Get account
+          account = client.get_account()
+          equity = float(account.equity)
+          cash = float(account.cash)
+          buying_power = float(account.buying_power)
+          last_equity = float(account.last_equity)
+          today_pl = equity - last_equity
+
+          print(f"\nAccount Status:")
+          print(f"  Equity: ${equity:,.2f}")
+          print(f"  Cash: ${cash:,.2f}")
+          print(f"  Buying Power: ${buying_power:,.2f}")
+          print(f"  Today P/L: ${today_pl:,.2f}")
+
+          # Get positions
+          positions = client.get_all_positions()
+          print(f"\nPositions ({len(positions)}):")
+
+          position_list = []
+          total_unrealized = 0
+          for pos in positions:
+              unrealized = float(pos.unrealized_pl)
+              total_unrealized += unrealized
+              print(f"  {pos.symbol}: qty={pos.qty}, P/L=${unrealized:,.2f}")
+              position_list.append({
+                  "symbol": pos.symbol,
+                  "qty": float(pos.qty),
+                  "price": float(pos.current_price),
+                  "value": float(pos.market_value),
+                  "pnl": unrealized,
+                  "type": "option" if len(pos.symbol) > 10 else "stock"
+              })
+
+          # Calculate total P/L from initial $5000
+          initial_equity = 5000.0
+          total_pl = equity - initial_equity
+          total_pl_pct = (total_pl / initial_equity) * 100
+
+          print(f"\nTotal Unrealized P/L: ${total_unrealized:,.2f}")
+          print(f"Total P/L (from $5K): ${total_pl:,.2f} ({total_pl_pct:.2f}%)")
+
+          # Update system_state.json
+          state_file = Path("data/system_state.json")
+          state = {
+              "last_updated": datetime.now().isoformat(),
+              "portfolio": {
+                  "equity": equity,
+                  "cash": cash
+              },
+              "paper_account": {
+                  "equity": equity,
+                  "cash": cash,
+                  "buying_power": buying_power,
+                  "total_pl": total_pl,
+                  "total_pl_pct": round(total_pl_pct, 2),
+                  "positions_count": len(positions),
+                  "daily_change": today_pl
+              },
+              "positions": position_list,
+              "trades": {
+                  "last_trade_date": datetime.now().strftime("%Y-%m-%d"),
+                  "today_trades": "synced",
+                  "last_trade_symbol": positions[0].symbol if positions else "none"
+              },
+              "risk": {
+                  "status": "MONITORING" if total_pl >= 0 else "WARNING - NEGATIVE P/L",
+                  "total_pl": total_pl,
+                  "unrealized_pl": total_unrealized
+              },
+              "account": {
+                  "current_equity": equity,
+                  "total_pl": total_pl,
+                  "total_pl_pct": round(total_pl_pct, 2),
+                  "positions_count": len(positions)
+              }
+          }
+
+          state_file.write_text(json.dumps(state, indent=2))
+          print(f"\n✅ Updated {state_file}")
+          print("=" * 60)
+          EOF
+
+      - name: Commit Updated State
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/system_state.json
+          git diff --staged --quiet || git commit -m "chore: Sync Alpaca paper account status [auto]"
+          git push
