@@ -28,6 +28,12 @@ CTO: Claude | CEO: Igor Ganapolsky
 12. **Clean up after merging** - Delete stale branches, close PRs, maintain hygiene
 13. **Full agentic control** - Use GitHub PAT, GitHub MCP, gh CLI for automation
 14. **Parallel execution** - Use Task tool agents for maximum velocity
+15. **Test coverage** - 100% tests and smoke tests for any changed/added code
+16. **Self-healing system** - System must recover from failures automatically
+17. **Verify dashboards** - Check Progress Dashboard and GitHub Pages Blog accuracy
+18. **Cost optimize** - Minimize Vertex AI data store usage costs
+19. **Continuous learning** - Synthesize from YouTube, blogs, papers into RAG
+20. **Phil Town Rule #1** - Verify compliance BEFORE any trade executes
 
 ## Commands
 ```bash

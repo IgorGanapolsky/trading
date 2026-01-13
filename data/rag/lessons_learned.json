@@ -1984,5 +1984,22 @@
       "stop_loss",
       "pre_trade_verification"
     ]
+  },
+  {
+    "id": "lesson_20260113_220517_sandbox_limits",
+    "timestamp": "2026-01-13T22:05:17.597221",
+    "title": "Sandbox Environment Cannot Push to Main Branch (Jan 13, 2026)",
+    "category": "technical_limitation",
+    "severity": "high",
+    "description": "Claude Code web sandbox environment blocks push to main branch with 403 error. Can only push to branches starting with 'claude/' and ending with session ID. PAT provided (ghp_FVU...) returns 401 Bad Credentials. gh CLI not installed.",
+    "root_cause": "Sandbox security restrictions prevent direct pushes to main. PAT token may be expired or invalid.",
+    "prevention": "1. Use GitHub Actions workflows to merge (e.g., auto-pr.yml, merge-branch.yml). 2. Verify PAT validity before sessions. 3. Document working authentication methods.",
+    "financial_impact": 0,
+    "tags": [
+      "sandbox",
+      "github",
+      "authentication",
+      "limitation"
+    ]
   }
 ]
