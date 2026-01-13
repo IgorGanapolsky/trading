@@ -1,0 +1,114 @@
+name: Scheduled Close Put Position
+
+# CEO DIRECTIVE: Close the profitable put tomorrow to lock in gains
+# PDT blocked us today - this will execute tomorrow at market open
+# Created: Jan 13, 2026
+
+on:
+  schedule:
+    # Run at 9:35 AM ET (14:35 UTC) on Jan 14, 2026 - market open
+    - cron: '35 14 14 1 *'
+  workflow_dispatch:  # Manual trigger for testing
+
+permissions:
+  contents: write
+
+jobs:
+  close-put:
+    name: Close SOFI Put - Lock In Profit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py
+
+      - name: Close Put Position
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'EOF'
+          import os
+          from datetime import datetime
+          from alpaca.trading.client import TradingClient
+          from alpaca.trading.requests import MarketOrderRequest
+          from alpaca.trading.enums import OrderSide, TimeInForce
+
+          api_key = os.environ['ALPACA_API_KEY']
+          secret_key = os.environ['ALPACA_SECRET_KEY']
+
+          print("=" * 60)
+          print("SCHEDULED PUT CLOSURE - RULE #1 PROTECTION")
+          print(f"Timestamp: {datetime.now().isoformat()}")
+          print("=" * 60)
+
+          client = TradingClient(api_key, secret_key, paper=True)
+
+          # Get account and positions
+          account = client.get_account()
+          positions = client.get_all_positions()
+
+          print(f"\nAccount Equity: ${float(account.equity):,.2f}")
+
+          # Find the put position
+          put_symbol = "SOFI260206P00024000"
+          put_position = None
+          for pos in positions:
+              if put_symbol in pos.symbol:
+                  put_position = pos
+                  break
+
+          if not put_position:
+              print(f"\nNo put position found for {put_symbol}")
+              print("Position may have already been closed or assigned")
+              exit(0)
+
+          qty = abs(int(float(put_position.qty)))
+          unrealized_pl = float(put_position.unrealized_pl)
+
+          print(f"\nPut Position Found:")
+          print(f"  Symbol: {put_position.symbol}")
+          print(f"  Qty: {put_position.qty}")
+          print(f"  Unrealized P/L: ${unrealized_pl:,.2f}")
+
+          # Only close if still profitable
+          if unrealized_pl < 0:
+              print(f"\n⚠️ Position is now LOSING (${unrealized_pl:,.2f})")
+              print("Not closing - wait for recovery per Rule #1")
+              exit(0)
+
+          # Submit buy-to-close order
+          print(f"\n✅ Position is PROFITABLE - Closing to lock in gains!")
+          order_request = MarketOrderRequest(
+              symbol=put_symbol,
+              qty=qty,
+              side=OrderSide.BUY,
+              time_in_force=TimeInForce.DAY
+          )
+
+          order = client.submit_order(order_request)
+
+          print(f"\nORDER SUBMITTED!")
+          print(f"  Order ID: {order.id}")
+          print(f"  Status: {order.status}")
+          print("=" * 60)
+          print("RULE #1 PROTECTION: Profit locked in!")
+          print("=" * 60)
+          EOF
+
+      - name: Disable This Workflow
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          echo "Put position closed - this scheduled workflow completed its purpose"
+          # The workflow will only run once due to the specific date in cron
