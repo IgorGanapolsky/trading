@@ -60,7 +60,7 @@ class StrategyInterface(ABC):
 
 
 class StrategyRegistry:
-    """Stub registry for strategies - not used in Phil Town strategy."""
+    """Stub registry for strategies - Phil Town CSP strategy is primary."""
 
     _instance = None
     _strategies: dict[str, StrategyRegistration] = {}
@@ -68,6 +68,12 @@ class StrategyRegistry:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
+            # Auto-register Phil Town strategy for health checks
+            cls._strategies["PhilTownCSP"] = StrategyRegistration(
+                name="PhilTownCSP",
+                status=StrategyStatus.ACTIVE,
+                asset_class=AssetClass.OPTIONS,
+            )
         return cls._instance
 
     def register(self, name: str, strategy: Any) -> None:
