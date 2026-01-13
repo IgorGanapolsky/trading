@@ -1,37 +1,21 @@
-# Trade Trigger - STOP LOSS ORDER
+# URGENT: Merge to Main
 
-**Triggered:** 2026-01-13T15:12:00Z
-**Action:** SET STOP-LOSS ON PUT
-**Symbol:** SOFI260206P00024000
-**Order:** BUY TO CLOSE @ $1.50 LIMIT (GTC)
+**Triggered:** 2026-01-13T15:32:00Z
+**Action:** MERGE BRANCH TO MAIN
+**Branch:** claude/research-ml-agent-prediction-T2an1
 
-## Risk Management
+## Why
 
-CEO Directive: "We are never allowed to lose money!"
+Dialogflow is reading stale data from main branch.
+Updated system_state.json has correct trade data.
+Must merge to main for webhook to work.
 
-Setting protective stop-loss on existing short put position:
-- Current put price: ~$0.80
-- Stop-loss trigger: $1.50
-- Max loss if triggered: $150 - $79 premium = $71 net loss
-- Without stop-loss: Unlimited downside risk
+## Changes to Merge
 
-## Order Details
-
-```python
-# Buy to close the short put if it reaches $1.50
-order = {
-    "symbol": "SOFI260206P00024000",
-    "qty": 1,
-    "side": "buy",  # Buy to close short position
-    "type": "stop_limit",
-    "stop_price": 1.50,
-    "limit_price": 1.55,
-    "time_in_force": "gtc"  # Good till canceled
-}
-```
-
-## Expected Outcome
-
-1. Stop-loss order placed on existing put position
-2. If SOFI drops and put rises to $1.50, order triggers
-3. Max loss capped at ~$71 instead of unlimited
+1. data/system_state.json - Updated with actual paper trading data
+2. data/trades_2026-01-13.json - Today's trade records
+3. data/rag/lessons_learned.json - New lessons
+4. scripts/guaranteed_trader.py - Stop-loss feature
+5. scripts/set_put_stop_loss.py - Stop-loss script
+6. .github/workflows/emergency-simple-trade.yml - New workflow
+7. .github/workflows/merge-branch.yml - Self-service merge
