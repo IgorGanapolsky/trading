@@ -1801,5 +1801,24 @@
     "severity": "critical",
     "financial_impact": 0,
     "symbol": "SOFI"
+  },
+  {
+    "id": "lesson_20260113_125020_market_hours_check",
+    "timestamp": "2026-01-13T12:50:20.062172",
+    "category": "critical_bug",
+    "title": "Missing Market Hours Check Caused Wasted Trade Attempts (Jan 13, 2026)",
+    "description": "simple_daily_trader.py attempted trades outside market hours (before 9:30 AM ET). Alpaca rejected orders silently. Workflow showed 'success' but no trade executed.",
+    "root_cause": "No market hours validation in should_open_position() - assumed scheduled workflow timing was sufficient",
+    "prevention": "Always check market hours FIRST in trading logic. Don't rely on scheduler alone. Log WHY trade didn't execute.",
+    "tags": [
+      "bug",
+      "critical",
+      "market_hours",
+      "alpaca",
+      "options"
+    ],
+    "severity": "high",
+    "financial_impact": 0,
+    "symbol": "SOFI"
   }
 ]

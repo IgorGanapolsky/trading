@@ -154,6 +154,41 @@ def should_open_position(client, config: dict) -> bool:
     2. Have enough buying power
     3. Market is open
     """
+    # CRITICAL: Check market hours FIRST (Jan 13, 2026 fix)
+    # Options market: 9:30 AM - 4:00 PM ET, Mon-Fri
+    try:
+        from zoneinfo import ZoneInfo
+        et_tz = ZoneInfo("America/New_York")
+        now_et = datetime.now(et_tz)
+    except ImportError:
+        # Fallback for older Python
+        now_et = datetime.utcnow()
+        # Adjust for ET (UTC-5 in winter, UTC-4 in summer)
+        from datetime import timedelta
+        now_et = now_et - timedelta(hours=5)
+
+    weekday = now_et.weekday()
+    hour = now_et.hour
+    minute = now_et.minute
+    current_time_mins = hour * 60 + minute
+    market_open = 9 * 60 + 30  # 9:30 AM
+    market_close = 16 * 60  # 4:00 PM
+
+    if weekday >= 5:  # Weekend
+        logger.info(f"Market CLOSED: Weekend (today is {now_et.strftime('%A')})")
+        return False
+
+    if current_time_mins < market_open:
+        mins_to_open = market_open - current_time_mins
+        logger.info(f"Market CLOSED: Pre-market ({now_et.strftime('%I:%M %p')} ET). Opens in {mins_to_open} mins")
+        return False
+
+    if current_time_mins >= market_close:
+        logger.info(f"Market CLOSED: After hours ({now_et.strftime('%I:%M %p')} ET)")
+        return False
+
+    logger.info(f"✅ Market OPEN: {now_et.strftime('%I:%M %p')} ET")
+
     positions = get_current_positions(client)
     options_positions = [
         p for p in positions if len(p["symbol"]) > 10

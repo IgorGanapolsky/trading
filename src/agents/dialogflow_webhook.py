@@ -622,10 +622,31 @@ def assess_trading_readiness(
                     )
                     score += 10
                 else:
-                    blockers.append(
-                        f"🚨 AUTOMATION BROKEN: No trades for {days_since_trade} days! "
-                        f"(last trade: {last_trade_date}) Check GitHub Actions secrets!"
-                    )
+                    # Provide detailed diagnosis for automation failure
+                    diagnosis = []
+                    diagnosis.append(f"🚨 AUTOMATION BROKEN: No trades for {days_since_trade} days! (last trade: {last_trade_date})")
+
+                    # Check for known issues in lessons
+                    try:
+                        from src.rag.lessons_learned_rag import LessonsLearnedRAG
+                        rag = LessonsLearnedRAG()
+                        recent_issues = rag.search("trading failed blocked automation bug", top_k=2)
+                        if recent_issues:
+                            diagnosis.append("**Recent Issues Found:**")
+                            for lesson, score in recent_issues[:2]:
+                                if hasattr(lesson, 'title'):
+                                    diagnosis.append(f"  • {lesson.title}")
+                    except Exception:
+                        pass
+
+                    # Add actionable diagnostics
+                    diagnosis.append("**Likely Causes:**")
+                    diagnosis.append("  • Market hours: Trades only execute 9:35 AM ET on trading days")
+                    diagnosis.append("  • Bug in trading logic: Check simple_daily_trader.py")
+                    diagnosis.append("  • Alpaca API: Check GitHub Actions logs for API errors")
+                    diagnosis.append("**Action:** Monitor next 9:35 AM ET workflow run")
+
+                    blockers.append("\n".join(diagnosis))
             except Exception:
                 warnings.append("Could not verify last trade date")
         else:
