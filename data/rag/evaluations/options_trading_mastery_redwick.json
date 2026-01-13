@@ -1,0 +1,28 @@
+{
+  "resource": "Options Trading Mastery: From Zero to Trader",
+  "author": "Caleb Redwick",
+  "type": "audiobook",
+  "source": "Audible B0FTMVVQ3K",
+  "evaluated_date": "2026-01-13",
+  "verdict": "FLUFF",
+  "verdict_reason": "Generic beginner options content. We already have superior Phil Town Rule #1 strategy with capital efficiency tiering and IV-aware execution.",
+  "topics_covered": [
+    "cash-secured puts",
+    "covered calls", 
+    "wheel strategy",
+    "credit spreads",
+    "trading psychology",
+    "IV awareness"
+  ],
+  "our_coverage": {
+    "cash_secured_puts": "src/strategies/rule_one_options.py - MOS-based CSPs",
+    "covered_calls": "src/strategies/rule_one_options.py - Sticker Price calls",
+    "credit_spreads": "src/risk/capital_efficiency.py + src/trading/options_executor.py",
+    "iv_analysis": "src/utils/iv_analyzer.py - McMillan framework",
+    "capital_tiering": "src/risk/capital_efficiency.py - 5-tier system",
+    "risk_management": "2x stop-loss, sequence risk, 5% max risk"
+  },
+  "gap_identified": "Wheel strategy not explicitly formalized as a cycle (components exist separately)",
+  "action_required": false,
+  "notes": "4.92/5 from 51 reviews in 3 months for unknown author - suspicious review pattern"
+}
