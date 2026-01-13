@@ -1,0 +1,22 @@
+{
+  "lesson_id": 187,
+  "date": "2026-01-13",
+  "category": "system_hygiene",
+  "title": "PR & Branch Cleanup Session",
+  "summary": "Closed 4 stale PRs, deleted 3 orphan branches, consolidated to main only",
+  "actions_taken": [
+    "Closed PR #1695 (duplicate of merged #1697)",
+    "Closed PR #1702 (lint failures on docs-only change)",
+    "Closed PR #1703 (lint failures on docs-only change)",
+    "Closed PR #1705 (orphan - branch deleted)",
+    "Deleted branch: claude/trading-system-setup-nBug3",
+    "Deleted branch: claude/git-workflow-strategies-aJRnf"
+  ],
+  "result": {
+    "open_prs_before": 4,
+    "open_prs_after": 0,
+    "branches_before": 5,
+    "branches_after": 1
+  },
+  "lesson": "Documentation-only PRs with lint failures are low-value. Close and consolidate rather than fixing lint for non-critical files."
+}
