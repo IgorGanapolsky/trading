@@ -131,10 +131,31 @@ jobs:
           print("=" * 60)
           EOF
 
-      - name: Commit Updated State
+      - name: Commit and Create PR
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
+          # Check if there are changes
+          git add data/system_state.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          # Configure git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/system_state.json
-          git diff --staged --quiet || git commit -m "chore: Sync Alpaca paper account status [auto]"
-          git push
+
+          # Create unique branch
+          BRANCH="auto/sync-alpaca-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$BRANCH"
+          git commit -m "chore: Sync Alpaca paper account status [auto]"
+          git push -u origin "$BRANCH"
+
+          # Create and merge PR using gh CLI
+          PR_URL=$(gh pr create --title "chore: Sync Alpaca status [auto]" --body "Automated sync of paper account data" --head "$BRANCH" --base main)
+          echo "Created PR: $PR_URL"
+
+          # Auto-merge
+          gh pr merge "$BRANCH" --squash --delete-branch --admin
+          echo "PR merged and branch deleted"
