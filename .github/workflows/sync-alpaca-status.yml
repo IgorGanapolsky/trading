@@ -93,13 +93,15 @@ jobs:
           # Count today's filled orders (FIX: webhook needs total_trades_today)
           today_str = datetime.now().strftime("%Y-%m-%d")
           try:
-              orders = api.list_orders(
-                  status='closed',
-                  after=today_str,
-                  direction='desc',
+              from alpaca.trading.requests import GetOrdersRequest
+              from alpaca.trading.enums import QueryOrderStatus
+              request = GetOrdersRequest(
+                  status=QueryOrderStatus.CLOSED,
+                  after=datetime.strptime(today_str, "%Y-%m-%d"),
                   limit=100
               )
-              filled_orders = [o for o in orders if o.status == 'filled']
+              orders = client.get_orders(filter=request)
+              filled_orders = [o for o in orders if str(o.status) == 'filled']
               total_trades_today = len(filled_orders)
               print(f"Filled orders today: {total_trades_today}")
           except Exception as e:

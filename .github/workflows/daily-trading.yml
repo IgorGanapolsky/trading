@@ -184,10 +184,10 @@ jobs:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID || 'igor-trading-2025-v2' }}
         run: |
-          echo "=" * 70
+          echo "======================================================================"
           echo "VERTEX AI RAG PRE-TRADE QUERY"
           echo "Bidirectional Learning System - READ Phase"
-          echo "=" * 70
+          echo "======================================================================"
           echo ""
 
           # Set up GCP auth (chmod 600 for security - Jan 13, 2026 fix)
@@ -638,7 +638,7 @@ jobs:
           ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY || secrets.FINHUB_API_KEY }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY || secrets.FINNHUB_API_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           echo "🔑 Running credential health check..."
@@ -659,7 +659,7 @@ jobs:
           ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
           ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY || secrets.FINHUB_API_KEY }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY || secrets.FINNHUB_API_KEY }}
         run: |
           echo "🏥 Running pre-market health check..."
           python3 scripts/pre_market_health_check.py

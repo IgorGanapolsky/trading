@@ -7,9 +7,11 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 # Check if alpaca-py is installed for integration tests
-import importlib.util
-
-HAS_ALPACA = importlib.util.find_spec("alpaca.trading.client") is not None
+try:
+    from alpaca.trading.client import TradingClient  # noqa: F401
+    HAS_ALPACA = True
+except (ImportError, ModuleNotFoundError):
+    HAS_ALPACA = False
 
 
 class TestCancelStaleOrders:

@@ -106,9 +106,9 @@ jobs:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
-          echo "=" * 70
+          echo "======================================================================"
           echo "VERTEX AI RAG PRE-TRADE QUERY"
-          echo "=" * 70
+          echo "======================================================================"
           echo ""
           echo "Symbols: ${{ inputs.symbols || 'SPY,SOFI,PLTR,AMD' }}"
           echo ""
@@ -181,9 +181,9 @@ jobs:
       - name: Display advice summary
         run: |
           echo ""
-          echo "=" * 70
+          echo "======================================================================"
           echo "PRE-TRADE RAG ADVICE SUMMARY"
-          echo "=" * 70
+          echo "======================================================================"
 
           python3 -c "
           import json
