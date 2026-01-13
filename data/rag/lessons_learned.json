@@ -2001,5 +2001,31 @@
       "authentication",
       "limitation"
     ]
+  },
+  {
+    "id": "lesson_20260113_223500_stop_verification",
+    "timestamp": "2026-01-13T22:35:00.000000",
+    "title": "Created Pre-Trade Stop-Loss Verification Script (Jan 13, 2026)",
+    "category": "critical_fix",
+    "severity": "critical",
+    "description": "Created verify_stops_in_place.py to enforce Phil Town Rule #1 (Don't Lose Money). Script verifies all short option positions have stop-loss orders before allowing new trades. Added to daily-trading.yml workflow. This closes the action item from lesson_20260113_193400_north_star_review.",
+    "root_cause": "RAG recorded action items to create stop verification but they were never implemented. Four separate lessons identified this gap but it was never fixed until now.",
+    "prevention": "1. Always complete RAG action items before closing sessions. 2. Review open action items at start of each session. 3. Track action item completion in RAG.",
+    "financial_impact": 0,
+    "tags": [
+      "critical",
+      "stop_loss",
+      "rule_1",
+      "phil_town",
+      "pre_trade_verification",
+      "action_item_completed"
+    ],
+    "files_created": [
+      "scripts/verify_stops_in_place.py",
+      "tests/test_verify_stops_in_place.py"
+    ],
+    "files_modified": [
+      ".github/workflows/daily-trading.yml"
+    ]
   }
 ]
