@@ -56,6 +56,7 @@ class RejectionReason(Enum):
     IV_RANK_TOO_LOW = "IV Rank too low for premium selling (<20)"
     ILLIQUID_OPTION = "Option is illiquid (bid-ask spread > 5%)"
     RAG_LESSON_CRITICAL = "CRITICAL lesson learned blocks this trade"
+    PORTFOLIO_NEGATIVE_PL = "Portfolio P/L is negative - Rule #1: Don't lose money"
 
 
 @dataclass
@@ -243,6 +244,26 @@ class TradeGateway:
         # Get account info
         account_equity = self._get_account_equity()
         positions = self._get_positions()
+
+        # ============================================================
+        # CHECK 0: ZERO TOLERANCE - Block trading when P/L is negative
+        # Phil Town Rule #1: Don't lose money
+        # Only allow SELL orders to close positions and reduce exposure
+        # ============================================================
+        if request.side.lower() == "buy":
+            total_pl = self._get_total_pl()
+            if total_pl < 0:
+                rejection_reasons.append(RejectionReason.PORTFOLIO_NEGATIVE_PL)
+                logger.warning(
+                    f"🛑 CIRCUIT BREAKER: Portfolio P/L is ${total_pl:.2f} (NEGATIVE). "
+                    f"NO new buys until profitable. Phil Town Rule #1: Don't lose money!"
+                )
+                risk_score += 1.0  # Maximum risk score - automatic rejection
+                metadata["zero_tolerance_breach"] = {
+                    "total_pl": total_pl,
+                    "rule": "Phil Town Rule #1: Don't lose money",
+                    "action_required": "Close losing positions or wait for recovery",
+                }
 
         # ============================================================
         # CHECK 1: Insufficient Funds
@@ -716,6 +737,29 @@ class TradeGateway:
                 pass
         # Default to $5K (our paper trading account size) not $100K
         return float(os.getenv("ACCOUNT_EQUITY", "5000"))
+
+    def _get_total_pl(self) -> float:
+        """Get total portfolio P/L from system state.
+
+        Phil Town Rule #1: Don't lose money.
+        This method reads the total_pl from system_state.json to enforce
+        the zero-tolerance circuit breaker.
+
+        Returns:
+            Total P/L in dollars. Negative means losing money.
+        """
+        try:
+            state_file = Path(__file__).parent.parent.parent / "data" / "system_state.json"
+            if state_file.exists():
+                with open(state_file, encoding="utf-8") as f:
+                    state = json.load(f)
+                paper_account = state.get("paper_account", {})
+                total_pl = paper_account.get("total_pl", 0.0)
+                logger.debug(f"Total P/L from system state: ${total_pl:.2f}")
+                return float(total_pl)
+        except Exception as e:
+            logger.warning(f"Failed to read total P/L: {e}")
+        return 0.0  # Default to 0 if unable to read (allows trading)
 
     def _get_positions(self) -> list[dict[str, Any]]:
         """Get current positions."""
