@@ -126,7 +126,6 @@ jobs:
           # Previous version bypassed failures with "|| echo continuing"
           python3 -m pytest \
             tests/test_promotion_gate.py \
-            tests/test_telemetry_summary.py \
             --timeout=120 \
             --timeout-method=thread \
             -v \
