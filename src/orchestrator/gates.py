@@ -243,7 +243,33 @@ class RAGPreTradeQuery:
             }
 
         except Exception as e:
-            logger.debug("RAG query failed for %s: %s", ticker, e)
+            logger.warning("RAG query failed for %s: %s - checking local CRITICAL lessons", ticker, e)
+
+            # FALLBACK: Check local CRITICAL lessons even if primary search fails
+            # This ensures we never miss blocking a dangerous trade
+            try:
+                if hasattr(self.lessons_rag, 'get_critical_lessons'):
+                    critical_lessons = self.lessons_rag.get_critical_lessons()
+                    trading_critical = [
+                        l for l in critical_lessons
+                        if l.get("category", "").lower() in ("trading", "execution", "risk")
+                    ]
+                    if trading_critical:
+                        logger.warning(
+                            "RAG fallback: %d CRITICAL trading lessons exist - blocking for safety",
+                            len(trading_critical)
+                        )
+                        return {
+                            "available": True,
+                            "lessons": [],
+                            "warnings": [f"[CRITICAL] RAG unavailable but {len(trading_critical)} critical lessons exist"],
+                            "error": str(e),
+                            "should_block": True,
+                            "block_reason": f"RAG query failed but {len(trading_critical)} CRITICAL trading lessons exist - blocking for safety",
+                        }
+            except Exception as fallback_error:
+                logger.warning("CRITICAL lesson fallback also failed: %s", fallback_error)
+
             return {
                 "available": True,
                 "lessons": [],
@@ -1177,12 +1203,15 @@ class Gate3Sentiment:
         )
 
         if not outcome.ok:
-            logger.warning("Gate 3 (%s): LLM error, falling back", ticker)
+            # CONSERVATIVE: Reject trades when sentiment is unknown rather than allowing them through
+            # This prevents trading on uncertain data - "Don't lose money" (Rule #1)
+            logger.warning("Gate 3 (%s): LLM error - REJECTING for safety (conservative mode)", ticker)
+            self.telemetry.gate_reject("llm", ticker, {"reason": "llm_unavailable", "error": str(outcome.failure.error)})
             return GateResult(
                 gate_name="llm_sentiment",
-                status=GateStatus.SKIP,
+                status=GateStatus.REJECT,
                 ticker=ticker,
-                reason=f"LLM error: {outcome.failure.error}",
+                reason=f"LLM unavailable - rejecting for safety: {outcome.failure.error}",
             )
 
         llm_result = outcome.result
