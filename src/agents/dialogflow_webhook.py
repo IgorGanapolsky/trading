@@ -242,6 +242,8 @@ def get_current_portfolio_status() -> dict:
             "total_pl_pct": state.get("paper_account", {}).get("total_pl_pct", 0),
             "positions_count": state.get("paper_account", {}).get("positions_count", 0),
             "win_rate": state.get("paper_account", {}).get("win_rate", 0),
+            # FIX Jan 13, 2026: Add daily_change for "today" questions
+            "daily_change": state.get("paper_account", {}).get("daily_change", 0),
         },
         "last_trade_date": last_trade_date,
         "trades_today": trades_today,
@@ -1181,13 +1183,26 @@ async def webhook(
                                 f"from {trades_today} trade(s). Let's review."
                             )
                     elif trades_today > 0:
-                        # Trades executed but no P/L data
-                        paper_pl = paper.get("total_pl", 0)
-                        pct = paper.get("total_pl_pct", 0)
-                        response_text = (
-                            f"You executed {trades_today} trade(s) today. "
-                            f"Paper P/L: **${paper_pl:,.2f}** ({pct:.2f}%)."
-                        )
+                        # Trades executed - show TODAY's change, not total P/L
+                        daily_change = paper.get("daily_change", 0)
+                        total_pl = paper.get("total_pl", 0)
+                        if daily_change > 0:
+                            response_text = (
+                                f"You executed {trades_today} trade(s) today. "
+                                f"**Today's gain: +${daily_change:,.2f}** "
+                                f"(Overall P/L: ${total_pl:,.2f})"
+                            )
+                        elif daily_change < 0:
+                            response_text = (
+                                f"You executed {trades_today} trade(s) today. "
+                                f"**Today's loss: ${daily_change:,.2f}** "
+                                f"(Overall P/L: ${total_pl:,.2f})"
+                            )
+                        else:
+                            response_text = (
+                                f"You executed {trades_today} trade(s) today. "
+                                f"**Flat today** (Overall P/L: ${total_pl:,.2f})"
+                            )
                     else:
                         # No trades today
                         paper_pl = paper.get("total_pl", 0)
