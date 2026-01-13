@@ -87,23 +87,61 @@ def sync_to_vertex_rag(trades: list[dict]) -> bool:
         synced = 0
         for trade in trades:
             try:
-                # Format trade as document for RAG
-                doc_content = format_trade_document(trade)
-                timestamp_val = trade.get("timestamp", datetime.now().isoformat())
-                doc_id = f"trade_{trade.get('symbol', 'UNK')}_{timestamp_val}"
+                # Handle nested options trade format from execute_options_trade.py
+                result = trade.get("result", {})
+                if result and result.get("status"):
+                    # Options trade format
+                    symbol = trade.get("symbol", "UNKNOWN")
+                    strategy = trade.get("strategy", "cash_secured_put")
+                    timestamp_val = trade.get("timestamp", datetime.now().isoformat())
+                    premium = result.get("premium", 0)
+                    strike = result.get("strike", 0)
 
-                # Add to RAG corpus
-                rag.add_document(
-                    content=doc_content,
-                    metadata={
-                        "type": "trade",
-                        "symbol": trade.get("symbol"),
-                        "date": trade.get("timestamp", "")[:10],
-                        "strategy": trade.get("strategy", "unknown"),
-                    },
-                    doc_id=doc_id,
-                )
-                synced += 1
+                    # Use add_trade() with options data
+                    success = rag.add_trade(
+                        symbol=symbol,
+                        side="sell",  # CSPs are sell orders
+                        qty=1,  # 1 contract
+                        price=premium,  # Premium as price
+                        strategy=strategy,
+                        pnl=premium,  # Premium collected is immediate P/L
+                        pnl_pct=0.0,  # No percentage for options yet
+                        timestamp=timestamp_val,
+                        metadata={
+                            "type": "options",
+                            "strike": strike,
+                            "expiry": result.get("expiry", "unknown"),
+                        },
+                    )
+                else:
+                    # Standard equity trade format - use add_trade() correctly
+                    symbol = trade.get("symbol", "UNKNOWN")
+                    side = trade.get("side", "buy")
+                    qty = trade.get("qty", 0)
+                    price = trade.get("price", 0)
+                    notional = trade.get("notional", 0)
+                    if price == 0 and qty and notional:
+                        price = notional / qty
+                    strategy = trade.get("strategy", "unknown")
+                    timestamp_val = (
+                        trade.get("timestamp") or trade.get("time") or datetime.now().isoformat()
+                    )
+                    pnl = trade.get("pnl")
+                    pnl_pct = trade.get("pnl_pct")
+
+                    success = rag.add_trade(
+                        symbol=symbol,
+                        side=side,
+                        qty=float(qty),
+                        price=float(price),
+                        strategy=strategy,
+                        pnl=float(pnl) if pnl else None,
+                        pnl_pct=float(pnl_pct) if pnl_pct else None,
+                        timestamp=timestamp_val,
+                    )
+
+                if success:
+                    synced += 1
             except Exception as e:
                 logger.error(f"Failed to sync trade: {e}")
 
