@@ -4,6 +4,16 @@
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
+# Check if alpaca is available for integration tests
+try:
+    import alpaca.trading.client  # noqa: F401
+
+    ALPACA_AVAILABLE = True
+except ImportError:
+    ALPACA_AVAILABLE = False
+
 
 class TestCancelStaleOrders:
     """Test stale order cancellation logic."""
@@ -48,23 +58,26 @@ class TestCancelStaleOrders:
         is_stale = fresh_order_time < threshold
         assert not is_stale, "1-hour-old order should NOT be cancelled"
 
+    @pytest.mark.skipif(not ALPACA_AVAILABLE, reason="alpaca-py not installed")
     @patch.dict(
         "os.environ",
         {"ALPACA_API_KEY": "test_key", "ALPACA_SECRET_KEY": "test_secret", "PAPER_TRADING": "true"},
     )
     def test_returns_zero_on_no_orders(self):
         """Test script returns 0 when no orders exist."""
-        with patch("scripts.cancel_stale_orders.TradingClient") as mock_client:
-            mock_instance = MagicMock()
-            mock_instance.get_orders.return_value = []
-            mock_client.return_value = mock_instance
+        # Patch TradingClient where it's imported from (alpaca.trading.client)
+        with patch("alpaca.trading.client.TradingClient") as mock_client:
+            with patch("src.utils.alpaca_client.get_alpaca_credentials", return_value=("key", "secret")):
+                mock_instance = MagicMock()
+                mock_instance.get_orders.return_value = []
+                mock_client.return_value = mock_instance
 
-            # Import and run main
-            from scripts.cancel_stale_orders import main
+                # Import and run main
+                from scripts.cancel_stale_orders import main
 
-            result = main()
+                result = main()
 
-            assert result == 0, "Should return 0 when no orders"
+                assert result == 0, "Should return 0 when no orders"
 
 
 class TestBuyingPowerMath:
