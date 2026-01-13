@@ -638,7 +638,7 @@ jobs:
           ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY || secrets.FINNHUB_API_KEY }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           echo "🔑 Running credential health check..."
@@ -659,7 +659,7 @@ jobs:
           ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
           ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY || secrets.FINNHUB_API_KEY }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
         run: |
           echo "🏥 Running pre-market health check..."
           python3 scripts/pre_market_health_check.py
@@ -975,7 +975,7 @@ jobs:
 
       - name: Harvest theta (options income)
         id: harvest_theta
-        if: steps.execute_trading.outcome == 'success'
+        if: steps.execute_trading.conclusion == 'success'
         continue-on-error: false  # CRITICAL: Options failures must be visible (Dec 16 fix)
         timeout-minutes: 15
         env:
@@ -1132,7 +1132,7 @@ jobs:
       # These were dormant - now active for $100/day target
       # ========================================================================
       - name: Iron Condor Strategy (80% win rate)
-        if: steps.execute_trading.outcome == 'success'
+        if: steps.execute_trading.conclusion == 'success'
         # FIXED Dec 30, 2025: Removed continue-on-error - trading failures must be visible
         env:
           ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
@@ -1153,7 +1153,7 @@ jobs:
           echo "✅ Iron condor strategy complete"
 
       - name: Simple Daily Trader (CSP fallback)
-        if: steps.execute_trading.outcome == 'success'
+        if: steps.execute_trading.conclusion == 'success'
         # FIXED Dec 30, 2025: Removed continue-on-error - trading failures must be visible
         env:
           ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
@@ -1174,7 +1174,7 @@ jobs:
           echo "✅ Simple daily trader complete"
 
       - name: Rule #1 Options (Phil Town Strategy)
-        if: steps.execute_trading.outcome == 'success'
+        if: steps.execute_trading.conclusion == 'success'
         # FIXED Dec 30, 2025: Removed continue-on-error - trading failures must be visible
         env:
           ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
@@ -1196,7 +1196,7 @@ jobs:
           echo "✅ Rule #1 strategy complete"
 
       - name: Update performance log
-        if: steps.execute_trading.outcome == 'success'
+        if: steps.execute_trading.conclusion == 'success'
         continue-on-error: true  # Non-fatal - trading succeeded
         env:
           ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
@@ -1208,7 +1208,7 @@ jobs:
 
       - name: Verify Positions (Alpaca vs Local)
         id: verify_positions
-        if: steps.execute_trading.outcome == 'success'
+        if: steps.execute_trading.conclusion == 'success'
         continue-on-error: true  # Non-fatal - trading succeeded, sync issues shouldn't fail workflow
         env:
           ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
@@ -1222,7 +1222,7 @@ jobs:
 
       - name: Verify Orders (Trust But Verify)
         id: verify_orders
-        if: steps.execute_trading.outcome == 'success'
+        if: steps.execute_trading.conclusion == 'success'
         continue-on-error: true  # Non-fatal - Alpaca is source of truth
         env:
           ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
@@ -1293,7 +1293,7 @@ jobs:
           always() &&
           steps.check_execution.outputs.skip != 'true' &&
           steps.health_check.outputs.health_check_passed == 'true' &&
-          steps.execute_trading.outcome == 'skipped'
+          steps.execute_trading.conclusion == 'skipped'
         run: |
           echo "::error::CRITICAL: Trading step was SKIPPED despite passing all checks!"
           echo "::error::This is the bug that caused 30+ days of silent failures."
@@ -1342,7 +1342,7 @@ jobs:
           fi
 
       - name: Commit trading data updates
-        if: steps.check_execution.outputs.skip != 'true' && steps.execute_trading.outcome == 'success'
+        if: steps.check_execution.outputs.skip != 'true' && steps.execute_trading.conclusion == 'success'
         continue-on-error: true  # Non-fatal - trading already succeeded
         run: |
           echo "💾 Committing trading data updates..."
@@ -1399,7 +1399,7 @@ jobs:
         # SELF-HEALING: If git push fails due to conflicts, use GitHub API directly
         # This is an atomic operation that bypasses git conflicts entirely
         # Added Jan 6, 2026 after repeated push failures during concurrent merges
-        if: steps.check_execution.outputs.skip != 'true' && steps.execute_trading.outcome == 'success'
+        if: steps.check_execution.outputs.skip != 'true' && steps.execute_trading.conclusion == 'success'
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
