@@ -1,6 +1,9 @@
 name: Execute Credit Spread
 
 on:
+  schedule:
+    # Run at 9:35 AM ET on weekdays (covers EST/EDT)
+    - cron: '35 13,14 * * 1-5'
   workflow_dispatch:
     inputs:
       symbol:
@@ -46,9 +49,9 @@ jobs:
 
       - name: Execute Bull Put Credit Spread
         env:
-          INPUT_SYMBOL: ${{ inputs.symbol }}
-          INPUT_SPREAD_WIDTH: ${{ inputs.spread_width }}
-          INPUT_QUANTITY: ${{ inputs.quantity }}
+          INPUT_SYMBOL: ${{ inputs.symbol || 'SOFI' }}
+          INPUT_SPREAD_WIDTH: ${{ inputs.spread_width || '5' }}
+          INPUT_QUANTITY: ${{ inputs.quantity || '1' }}
         run: |
           python3 << 'PYTHON_SCRIPT'
           import os
