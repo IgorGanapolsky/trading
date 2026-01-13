@@ -260,6 +260,70 @@ def run():
     }
 
 
+def set_stop_losses(client):
+    """
+    Set stop-losses on short put positions.
+
+    CEO Directive: "We are never allowed to lose money!"
+    This protects short put positions with buy-to-close stop orders.
+    """
+    try:
+        from alpaca.trading.requests import StopLimitOrderRequest
+        from alpaca.trading.enums import OrderSide, TimeInForce
+
+        positions = client.get_all_positions()
+        stops_set = []
+
+        for p in positions:
+            # Check if it's a short put (negative qty, symbol contains 'P')
+            qty = float(p.qty)
+            if qty < 0 and 'P' in p.symbol and len(p.symbol) > 10:
+                logger.info(f"Found short put: {p.symbol}, qty={qty}")
+
+                current_price = float(p.current_price)
+                # Set stop at 2x current price to cap losses
+                stop_price = round(max(1.50, current_price * 2), 2)
+                limit_price = round(stop_price + 0.05, 2)
+
+                logger.info(f"  Setting stop-loss: buy to close @ ${stop_price}")
+
+                try:
+                    order_request = StopLimitOrderRequest(
+                        symbol=p.symbol,
+                        qty=abs(int(qty)),
+                        side=OrderSide.BUY,
+                        stop_price=stop_price,
+                        limit_price=limit_price,
+                        time_in_force=TimeInForce.GTC
+                    )
+                    order = client.submit_order(order_request)
+                    logger.info(f"  ✅ Stop-loss order placed: {order.id}")
+                    stops_set.append({
+                        "symbol": p.symbol,
+                        "stop_price": stop_price,
+                        "order_id": str(order.id)
+                    })
+                except Exception as e:
+                    logger.warning(f"  ⚠️ Could not set stop: {e}")
+
+        return stops_set
+    except Exception as e:
+        logger.error(f"Error setting stop-losses: {e}")
+        return []
+
+
 if __name__ == "__main__":
     result = run()
     print(f"\nResult: {json.dumps(result, indent=2, default=str)}")
+
+    # Also set stop-losses on any short puts
+    client = get_alpaca_client()
+    if client:
+        print("\n🛡️ Setting stop-losses on short puts...")
+        stops = set_stop_losses(client)
+        if stops:
+            print(f"✅ Set {len(stops)} stop-loss orders")
+            for s in stops:
+                print(f"   {s['symbol']} @ ${s['stop_price']}")
+        else:
+            print("ℹ️ No short puts to protect")
