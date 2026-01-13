@@ -30,16 +30,17 @@ class TestMaxPositionsConfig:
     """Test max_positions configuration to prevent trading blockage."""
 
     def test_max_positions_is_sufficient(self):
-        """CRITICAL: max_positions must be >= 10 to prevent blocking trades.
+        """CRITICAL: max_positions must be >= 5 to allow trading with $5K account.
 
         This test exists because max_positions=3 blocked all trades for 13 days.
-        See lesson LL-079.
+        See lesson LL-079. Updated Jan 2026: With $5K account and ~$1K per CSP,
+        max 5 positions is appropriate (5 × $1K = $5K collateral).
         """
         from scripts.simple_daily_trader import CONFIG
 
-        assert CONFIG["max_positions"] >= 10, (
-            f"max_positions is {CONFIG['max_positions']} but must be >= 10. "
-            "Lower values can block trading when we have multiple options positions."
+        assert CONFIG["max_positions"] >= 5, (
+            f"max_positions is {CONFIG['max_positions']} but must be >= 5. "
+            "With $5K account and ~$1K per position, 5 is the safe minimum."
         )
 
     def test_config_has_required_keys(self):
