@@ -72,6 +72,9 @@ class CapitalThresholds:
 class PositionSizing:
     """Position sizing constraints."""
 
+    # Minimum capital for trading (per CLAUDE.md: $500 for first CSP trade)
+    MIN_CAPITAL = 500.0
+
     # Max allocation per position
     MAX_POSITION_PCT = 0.25  # 25% max per position
 
