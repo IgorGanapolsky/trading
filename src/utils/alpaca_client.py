@@ -104,6 +104,33 @@ def get_options_client(paper: bool = True):
     return get_alpaca_client(paper=paper)
 
 
+def get_options_data_client():
+    """
+    Get Alpaca options historical data client.
+
+    Used for fetching options chain data, IV, greeks, etc.
+
+    Returns:
+        OptionHistoricalDataClient instance or None if creation fails.
+    """
+    try:
+        from alpaca.data.historical.option import OptionHistoricalDataClient
+
+        api_key, secret_key = get_alpaca_credentials()
+
+        if not api_key or not secret_key:
+            logger.error("Alpaca credentials not found for options data client")
+            return None
+
+        return OptionHistoricalDataClient(api_key, secret_key)
+    except ImportError:
+        logger.error("alpaca-py not installed. Add to requirements.txt")
+        return None
+    except Exception as e:
+        logger.error(f"Failed to create options data client: {e}")
+        return None
+
+
 def get_account_info(client) -> Optional[dict]:
     """
     Get account information from Alpaca.

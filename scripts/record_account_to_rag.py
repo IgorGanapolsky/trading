@@ -28,24 +28,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 def get_alpaca_client(paper: bool = False):
     """Get Alpaca trading client."""
-    try:
-        from alpaca.trading.client import TradingClient
-    except ImportError:
-        print("ERROR: alpaca-py not installed. Run: pip install alpaca-py")
-        return None
+    from src.utils.alpaca_client import get_alpaca_client as _get_client
 
-    if paper:
-        api_key = os.environ.get("ALPACA_PAPER_TRADING_5K_API_KEY")
-        api_secret = os.environ.get("ALPACA_PAPER_TRADING_5K_API_SECRET")
-    else:
-        api_key = os.environ.get("ALPACA_BROKERAGE_TRADING_API_KEY")
-        api_secret = os.environ.get("ALPACA_BROKERAGE_TRADING_API_SECRET")
-
-    if not api_key or not api_secret:
-        print(f"ERROR: Missing Alpaca {'paper' if paper else 'brokerage'} credentials")
-        return None
-
-    return TradingClient(api_key, api_secret, paper=paper)
+    return _get_client(paper=paper)
 
 
 def fetch_account_data(client) -> dict:

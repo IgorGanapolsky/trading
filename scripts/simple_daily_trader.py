@@ -55,38 +55,16 @@ CONFIG = {
 
 def get_alpaca_client():
     """Get Alpaca trading client."""
-    try:
-        from alpaca.trading.client import TradingClient
-        from src.utils.alpaca_client import get_alpaca_credentials
+    from src.utils.alpaca_client import get_alpaca_client as _get_client
 
-        api_key, secret_key = get_alpaca_credentials()
-
-        if not api_key or not secret_key:
-            logger.error("ALPACA_API_KEY and ALPACA_SECRET_KEY required")
-            return None
-
-        return TradingClient(api_key, secret_key, paper=True)
-    except Exception as e:
-        logger.error(f"Failed to create Alpaca client: {e}")
-        return None
+    return _get_client(paper=True)
 
 
 def get_options_client():
     """Get Alpaca options client."""
-    try:
-        from alpaca.trading.client import TradingClient
-        from src.utils.alpaca_client import get_alpaca_credentials
+    from src.utils.alpaca_client import get_options_client as _get_options
 
-        api_key, secret_key = get_alpaca_credentials()
-
-        if not api_key or not secret_key:
-            return None
-
-        # Options require the trading client
-        return TradingClient(api_key, secret_key, paper=True)
-    except Exception as e:
-        logger.error(f"Failed to create options client: {e}")
-        return None
+    return _get_options(paper=True)
 
 
 def get_account_info(client) -> Optional[dict]:

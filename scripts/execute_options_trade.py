@@ -49,36 +49,20 @@ logger = logging.getLogger(__name__)
 
 def get_alpaca_clients():
     """Initialize Alpaca trading and options clients."""
-    from alpaca.data.historical.option import OptionHistoricalDataClient
-    from alpaca.trading.client import TradingClient
-    from src.utils.alpaca_client import get_alpaca_credentials
+    from src.utils.alpaca_client import get_alpaca_client, get_options_data_client
 
-    api_key, secret_key = get_alpaca_credentials()
     paper = os.getenv("PAPER_TRADING", "true").lower() == "true"
-
-    # Debug: show if keys are present (without revealing them)
-    logger.info(f"   API Key present: {bool(api_key)} (length: {len(api_key) if api_key else 0})")
-    logger.info(
-        f"   Secret Key present: {bool(secret_key)} (length: {len(secret_key) if secret_key else 0})"
-    )
     logger.info(f"   Paper trading: {paper}")
 
-    if not api_key or not secret_key:
-        raise ValueError("ALPACA_API_KEY and ALPACA_SECRET_KEY must be set")
+    trading_client = get_alpaca_client(paper=paper)
+    if not trading_client:
+        raise ValueError("Failed to initialize trading client")
+    logger.info("   ✅ Trading client initialized")
 
-    try:
-        trading_client = TradingClient(api_key, secret_key, paper=paper)
-        logger.info("   ✅ Trading client initialized")
-    except Exception as e:
-        logger.error(f"   ❌ Trading client failed: {e}")
-        raise
-
-    try:
-        options_client = OptionHistoricalDataClient(api_key, secret_key)
-        logger.info("   ✅ Options client initialized")
-    except Exception as e:
-        logger.error(f"   ❌ Options client failed: {e}")
-        raise
+    options_client = get_options_data_client()
+    if not options_client:
+        raise ValueError("Failed to initialize options data client")
+    logger.info("   ✅ Options client initialized")
 
     # Verify account has options trading enabled
     try:

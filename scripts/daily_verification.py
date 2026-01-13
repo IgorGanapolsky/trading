@@ -30,17 +30,9 @@ class DailyReport(NamedTuple):
 
 def get_alpaca_client():
     """Get Alpaca client or None if not configured."""
-    try:
-        from alpaca.trading.client import TradingClient
-        from src.utils.alpaca_client import get_alpaca_credentials
+    from src.utils.alpaca_client import get_alpaca_client as _get_client
 
-        api_key, secret_key = get_alpaca_credentials()
-        if not api_key or not secret_key:
-            return None
-        return TradingClient(api_key, secret_key, paper=True)
-    except Exception as e:
-        print(f"⚠️ Could not initialize Alpaca client: {e}")
-        return None
+    return _get_client(paper=True)
 
 
 def verify_today() -> DailyReport:

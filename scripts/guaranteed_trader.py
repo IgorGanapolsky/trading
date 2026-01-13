@@ -35,18 +35,9 @@ logger = logging.getLogger(__name__)
 
 def get_alpaca_client():
     """Get Alpaca client."""
-    try:
-        from alpaca.trading.client import TradingClient
-        from src.utils.alpaca_client import get_alpaca_credentials
+    from src.utils.alpaca_client import get_alpaca_client as _get_client
 
-        api_key, secret = get_alpaca_credentials()
-        if not api_key or not secret:
-            logger.error("Missing Alpaca credentials")
-            return None
-        return TradingClient(api_key, secret, paper=True)
-    except Exception as e:
-        logger.error(f"Client error: {e}")
-        return None
+    return _get_client(paper=True)
 
 
 def get_stock_price(symbol: str) -> float:

@@ -50,18 +50,14 @@ logger = logging.getLogger(__name__)
 
 def get_alpaca_clients():
     """Initialize Alpaca trading and options clients."""
-    from alpaca.data.historical.option import OptionHistoricalDataClient
-    from alpaca.trading.client import TradingClient
-    from src.utils.alpaca_client import get_alpaca_credentials
+    from src.utils.alpaca_client import get_alpaca_client, get_options_data_client
 
-    api_key, secret_key = get_alpaca_credentials()
     paper = os.getenv("PAPER_TRADING", "true").lower() == "true"
+    trading_client = get_alpaca_client(paper=paper)
+    options_client = get_options_data_client()
 
-    if not api_key or not secret_key:
-        raise ValueError("ALPACA_API_KEY and ALPACA_SECRET_KEY must be set")
-
-    trading_client = TradingClient(api_key, secret_key, paper=paper)
-    options_client = OptionHistoricalDataClient(api_key, secret_key)
+    if not trading_client or not options_client:
+        raise ValueError("Failed to initialize Alpaca clients")
 
     return trading_client, options_client
 
