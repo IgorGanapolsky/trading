@@ -272,6 +272,7 @@ class RuleOneValidator:
         if underlying in RULE_ONE_UNIVERSE:
             info = RULE_ONE_UNIVERSE[underlying]
             result.universe_info = info
+            result.in_universe = True
 
             # Check capital tier compatibility
             if info["capital_tier"] == "large" and self.capital_tier == "small":

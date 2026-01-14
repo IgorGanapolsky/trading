@@ -139,31 +139,30 @@ class TestRuleOneValidator:
         assert validator._extract_underlying("F260117P00012000") == "F"
         assert validator._extract_underlying("AAPL") == "AAPL"
 
-    @patch("src.validators.rule_one_validator.RuleOneOptionsStrategy")
-    def test_validate_approved_for_good_stock(self, mock_strategy, validator):
+    def test_validate_approved_for_good_stock(self, validator):
         """A stock passing all checks should be approved."""
-        # Mock Big Five metrics
-        mock_big_five = MagicMock()
-        mock_big_five.roic = 0.15
-        mock_big_five.sales_growth = 0.12
-        mock_big_five.eps_growth = 0.11
-        mock_big_five.equity_growth = 0.13
-        mock_big_five.fcf_growth = 0.10
+        # Mock Big Five result
+        mock_big_five = BigFiveResult(
+            roic=0.15,
+            sales_growth=0.12,
+            eps_growth=0.11,
+            equity_growth=0.13,
+            fcf_growth=0.10,
+        )
 
-        # Mock Sticker Price
-        mock_sticker = MagicMock()
-        mock_sticker.current_price = 10.0
-        mock_sticker.sticker_price = 30.0
-        mock_sticker.mos_price = 15.0
+        # Mock Sticker Price result
+        mock_sticker = StickerPriceResult(
+            current_price=10.0,
+            sticker_price=30.0,
+            mos_price=15.0,
+        )
 
-        mock_instance = mock_strategy.return_value
-        mock_instance.calculate_big_five.return_value = mock_big_five
-        mock_instance.calculate_sticker_price.return_value = mock_sticker
-
-        result = validator.validate("SOFI")
-        assert result.approved is True
-        assert result.in_universe is True
-        assert len(result.rejection_reasons) == 0
+        with patch.object(validator, "_check_big_five", return_value=mock_big_five):
+            with patch.object(validator, "_check_sticker_price", return_value=mock_sticker):
+                result = validator.validate("SOFI")
+                assert result.approved is True
+                assert result.in_universe is True
+                assert len(result.rejection_reasons) == 0
 
     def test_validate_rejected_for_unknown_stock(self, validator):
         """Unknown stock should be rejected."""

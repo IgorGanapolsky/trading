@@ -53,6 +53,26 @@ def mock_system_state(tmp_path):
         yield state_file
 
 
+@pytest.fixture(autouse=True)
+def mock_rule_one_validator():
+    """Mock Rule #1 validator to pass for all test trades.
+
+    Tests in this file focus on liquidity/IV/capital checks, not Rule #1 compliance.
+    """
+    with patch("src.risk.trade_gateway.RuleOneValidator") as mock_validator_class:
+        mock_validator = MagicMock()
+        mock_result = MagicMock()
+        mock_result.approved = True
+        mock_result.in_universe = True
+        mock_result.rejection_reasons = []
+        mock_result.warnings = []
+        mock_result.confidence = 0.85
+        mock_result.to_dict.return_value = {"approved": True, "in_universe": True}
+        mock_validator.validate.return_value = mock_result
+        mock_validator_class.return_value = mock_validator
+        yield mock_validator
+
+
 class MockExecutor:
     """Mock executor for testing."""
 
