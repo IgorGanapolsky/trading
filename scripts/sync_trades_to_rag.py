@@ -156,6 +156,78 @@ def sync_to_vertex_rag(trades: list[dict]) -> bool:
         return False
 
 
+def sync_to_master_ledger(trades: list[dict]) -> bool:
+    """Sync trades to master ledger (data/trades.json) for win rate tracking.
+
+    Added Jan 14, 2026 per CLAUDE.md: Track every trade with win rate metrics.
+    Required metrics: win rate %, avg win, avg loss, profit factor.
+    """
+    try:
+        from scripts.calculate_win_rate import add_trade
+
+        synced = 0
+        for trade in trades:
+            # Handle nested options trade format
+            result = trade.get("result", {})
+            if result and result.get("status"):
+                # Options trade
+                symbol = trade.get("symbol", "UNKNOWN")
+                timestamp = trade.get("timestamp", datetime.now().isoformat())
+                date_str = timestamp[:10]
+                trade_id = f"{symbol}_CSP_{date_str.replace('-', '')}"
+
+                success = add_trade(
+                    trade_id=trade_id,
+                    symbol=result.get("contract", symbol),
+                    trade_type="option",
+                    side="sell",
+                    qty=1,
+                    entry_price=result.get("premium", 0),
+                    strategy=trade.get("strategy", "cash_secured_put"),
+                    entry_date=date_str,
+                    underlying=symbol,
+                    strike=result.get("strike", 0),
+                    expiration=result.get("expiry", "unknown"),
+                    notes=f"Premium collected: ${result.get('premium', 0)}",
+                )
+            else:
+                # Standard equity trade
+                symbol = trade.get("symbol", "UNKNOWN")
+                timestamp = trade.get("timestamp") or trade.get("time") or datetime.now().isoformat()
+                date_str = timestamp[:10]
+                trade_id = f"{symbol}_STOCK_{date_str.replace('-', '')}"
+
+                qty = trade.get("qty", 0)
+                price = trade.get("price", 0)
+                notional = trade.get("notional", 0)
+                if price == 0 and qty and notional:
+                    price = notional / qty
+
+                success = add_trade(
+                    trade_id=trade_id,
+                    symbol=symbol,
+                    trade_type="stock",
+                    side=trade.get("side", "buy"),
+                    qty=float(qty),
+                    entry_price=float(price),
+                    strategy=trade.get("strategy", "unknown"),
+                    entry_date=date_str,
+                )
+
+            if success:
+                synced += 1
+
+        logger.info(f"✅ Synced {synced}/{len(trades)} trades to master ledger")
+        return synced > 0
+
+    except ImportError:
+        logger.warning("calculate_win_rate not available - skipping master ledger sync")
+        return False
+    except Exception as e:
+        logger.error(f"Master ledger sync failed: {e}")
+        return False
+
+
 def sync_to_local_json(trades: list[dict]) -> bool:
     """Backup trades to local JSON file.
 
@@ -280,11 +352,12 @@ def main():
         logger.info("No trades to sync")
         return 0
 
-    # Sync to Vertex AI RAG (cloud) and local JSON backup
+    # Sync to Vertex AI RAG (cloud), master ledger (win rate), and local JSON backup
     vertex_ok = sync_to_vertex_rag(trades)
+    ledger_ok = sync_to_master_ledger(trades)
     local_ok = sync_to_local_json(trades)
 
-    if vertex_ok or local_ok:
+    if vertex_ok or ledger_ok or local_ok:
         logger.info("✅ RAG sync completed successfully")
         return 0
     else:
