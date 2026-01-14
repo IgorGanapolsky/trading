@@ -234,6 +234,15 @@ class TestRuleOneValidator:
 class TestTradeGatewayIntegration:
     """Tests for TradeGateway CHECK 13 integration."""
 
+    @pytest.fixture(autouse=True)
+    def mock_rag(self):
+        """Mock RAG to prevent initialization failures in CI."""
+        with patch("src.risk.trade_gateway.LessonsLearnedRAG") as mock_rag_class:
+            mock_rag_instance = MagicMock()
+            mock_rag_instance.query.return_value = []
+            mock_rag_class.return_value = mock_rag_instance
+            yield mock_rag_instance
+
     @pytest.fixture
     def mock_trader(self):
         """Create mock AlpacaTrader."""
