@@ -124,10 +124,11 @@ jobs:
           from alpaca.trading.requests import GetOptionContractsRequest
           from alpaca.trading.enums import AssetStatus, ContractType
 
-          # Find expiration 7-14 days out
+          # BUGFIX Jan 14, 2026: Use 30-45 DTE per CLAUDE.md strategy
+          # 7-14 days had insufficient options liquidity for F/T
           today = datetime.now()
-          min_expiry = (today + timedelta(days=3)).strftime("%Y-%m-%d")
-          max_expiry = (today + timedelta(days=21)).strftime("%Y-%m-%d")
+          min_expiry = (today + timedelta(days=25)).strftime("%Y-%m-%d")
+          max_expiry = (today + timedelta(days=50)).strftime("%Y-%m-%d")
 
           try:
               req = GetOptionContractsRequest(
