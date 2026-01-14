@@ -9,8 +9,15 @@ Functions:
 - get_underlying_price: Get current price of underlying symbol
 - get_iv_percentile: Calculate IV Percentile for trading decisions
 - get_trend_filter: Check market trend to avoid adverse conditions
+- validate_contract_quality: Matt Giannino checklist validation (Jan 2026)
+- get_atr: Average True Range for expiration timing
+- check_liquidity: Open interest and bid-ask spread validation
 
 Author: AI Trading System
+
+References:
+- Matt Giannino "My Top Secrets to Picking the Perfect Option Contract" (Jan 2026)
+  https://youtu.be/LRpGK6bOH1Y
 """
 
 from __future__ import annotations
@@ -293,4 +300,340 @@ def analyze_options_conditions(symbol: str) -> dict:
         "trend_analysis": trend_result,
         "overall_recommendation": overall,
         "safe_to_sell_puts": safe_to_sell,
+    }
+
+
+# =============================================================================
+# Matt Giannino Options Contract Validation (Jan 2026)
+# Source: https://youtu.be/LRpGK6bOH1Y
+# =============================================================================
+
+# Validation thresholds
+MIN_DELTA_THETA_RATIO = 3.0  # Delta should be 3x Theta
+MAX_THETA_DECAY_PCT = 10.0  # Max 10% daily decay
+MIN_OPEN_INTEREST = 500  # Minimum liquidity
+MAX_BID_ASK_SPREAD_PCT = 10.0  # Max 10% bid-ask spread
+
+
+def get_atr(symbol: str, period: int = 14) -> dict:
+    """
+    Calculate Average True Range (ATR) for expiration timing.
+
+    ATR measures average daily price movement. Use to determine:
+    - How many days needed to reach target price
+    - Appropriate expiration date (3-5x expected move time)
+
+    Per Matt Giannino: If target is $2 away and ATR is $1/day,
+    stock needs ~2 days. Choose expiration 7-10 days out (3-5x buffer).
+
+    Args:
+        symbol: Stock ticker symbol
+        period: ATR period in days (default: 14)
+
+    Returns:
+        dict containing:
+            - atr (float): Average True Range in dollars
+            - atr_pct (float): ATR as percentage of price
+            - current_price (float): Current stock price
+            - suggested_min_dte (int): Minimum DTE for typical move
+
+    Example:
+        >>> result = get_atr('SPY')
+        >>> if result['atr'] > 5:
+        ...     print("High volatility - use shorter DTE")
+    """
+    logger.info(f"Calculating ATR for {symbol}...")
+
+    try:
+        ticker = yf.Ticker(symbol)
+        hist = ticker.history(period="1mo")
+
+        if len(hist) < period + 1:
+            logger.warning(f"Insufficient data for ATR calculation on {symbol}")
+            return {"atr": 0, "atr_pct": 0, "current_price": 0, "suggested_min_dte": 30}
+
+        # Calculate True Range
+        high = hist["High"]
+        low = hist["Low"]
+        close = hist["Close"]
+        prev_close = close.shift(1)
+
+        tr1 = high - low
+        tr2 = abs(high - prev_close)
+        tr3 = abs(low - prev_close)
+
+        true_range = np.maximum(tr1, np.maximum(tr2, tr3))
+
+        # Calculate ATR (simple moving average of TR)
+        atr = true_range.rolling(window=period).mean().iloc[-1]
+        current_price = close.iloc[-1]
+        atr_pct = (atr / current_price) * 100
+
+        # Suggested minimum DTE: assume 1 ATR move target, 3x buffer
+        # For a credit spread, we want time for theta decay
+        suggested_min_dte = max(14, int(3 * (1 / (atr_pct / 100)) if atr_pct > 0 else 30))
+
+        logger.info(f"ATR for {symbol}: ${atr:.2f} ({atr_pct:.2f}%)")
+
+        return {
+            "atr": round(atr, 2),
+            "atr_pct": round(atr_pct, 2),
+            "current_price": round(current_price, 2),
+            "suggested_min_dte": min(suggested_min_dte, 60),  # Cap at 60 DTE
+        }
+
+    except Exception as e:
+        logger.error(f"ATR calculation failed: {e}")
+        return {"atr": 0, "atr_pct": 0, "current_price": 0, "suggested_min_dte": 30}
+
+
+def check_liquidity(
+    open_interest: int,
+    bid: float,
+    ask: float,
+    min_oi: int = MIN_OPEN_INTEREST,
+    max_spread_pct: float = MAX_BID_ASK_SPREAD_PCT,
+) -> dict:
+    """
+    Validate option contract liquidity.
+
+    Per Matt Giannino:
+    - Open Interest should be > 500 (ideally much higher)
+    - Bid-Ask spread should be < 10% (tighter is better)
+    - Wide spreads mean 20-30% loss on entry
+
+    Args:
+        open_interest: Contract open interest
+        bid: Current bid price
+        ask: Current ask price
+        min_oi: Minimum acceptable open interest (default: 500)
+        max_spread_pct: Maximum acceptable spread percentage (default: 10%)
+
+    Returns:
+        dict containing:
+            - is_liquid (bool): Whether contract meets liquidity requirements
+            - open_interest (int): Open interest value
+            - oi_ok (bool): Whether OI meets minimum
+            - bid_ask_spread (float): Spread in dollars
+            - spread_pct (float): Spread as percentage
+            - spread_ok (bool): Whether spread is acceptable
+            - warnings (list): List of liquidity warnings
+
+    Example:
+        >>> result = check_liquidity(1200, 1.50, 1.60)
+        >>> if not result['is_liquid']:
+        ...     print(f"Skip contract: {result['warnings']}")
+    """
+    warnings = []
+
+    # Check open interest
+    oi_ok = open_interest >= min_oi
+    if not oi_ok:
+        warnings.append(f"Low open interest: {open_interest} < {min_oi}")
+
+    # Check bid-ask spread
+    mid_price = (bid + ask) / 2 if bid > 0 and ask > 0 else 0
+    spread = ask - bid if bid > 0 and ask > 0 else 0
+    spread_pct = (spread / mid_price * 100) if mid_price > 0 else 100
+
+    spread_ok = spread_pct <= max_spread_pct
+    if not spread_ok:
+        warnings.append(f"Wide bid-ask spread: {spread_pct:.1f}% > {max_spread_pct}%")
+
+    is_liquid = oi_ok and spread_ok
+
+    return {
+        "is_liquid": is_liquid,
+        "open_interest": open_interest,
+        "oi_ok": oi_ok,
+        "bid_ask_spread": round(spread, 2),
+        "spread_pct": round(spread_pct, 2),
+        "spread_ok": spread_ok,
+        "warnings": warnings,
+    }
+
+
+def validate_delta_theta_ratio(
+    delta: float,
+    theta: float,
+    contract_price: float,
+    min_ratio: float = MIN_DELTA_THETA_RATIO,
+    max_decay_pct: float = MAX_THETA_DECAY_PCT,
+) -> dict:
+    """
+    Validate Delta-to-Theta ratio for contract quality.
+
+    Per Matt Giannino's "Top Secret":
+    - Delta/Theta ratio should be >= 3:1
+    - Theta should not exceed 10% of contract price per day
+    - 1:1 or 2:1 ratio is "super risky"
+
+    For SELLING premium (our strategy):
+    - We WANT high theta (decay works for us)
+    - But we still want decent delta for directional moves
+    - Ratio matters less for short positions, but we validate anyway
+
+    Args:
+        delta: Option delta (0 to 1 for calls, -1 to 0 for puts)
+        theta: Option theta (negative number, daily decay)
+        contract_price: Current contract price in dollars
+        min_ratio: Minimum acceptable delta/theta ratio (default: 3.0)
+        max_decay_pct: Maximum acceptable daily decay % (default: 10%)
+
+    Returns:
+        dict containing:
+            - is_valid (bool): Whether contract passes validation
+            - delta (float): Delta value
+            - theta (float): Theta value (negative)
+            - ratio (float): Delta/|Theta| ratio
+            - ratio_ok (bool): Whether ratio meets minimum
+            - theta_decay_pct (float): Daily decay as % of price
+            - decay_ok (bool): Whether decay is acceptable
+            - warnings (list): List of quality warnings
+
+    Example:
+        >>> result = validate_delta_theta_ratio(0.45, -0.10, 2.50)
+        >>> if result['ratio'] >= 3:
+        ...     print("Good delta/theta ratio!")
+    """
+    warnings = []
+
+    # Use absolute values for calculation
+    abs_delta = abs(delta) * 100  # Convert to dollars per $1 move
+    abs_theta = abs(theta)  # Already in dollars per day
+
+    # Calculate ratio
+    ratio = abs_delta / abs_theta if abs_theta > 0 else float("inf")
+    ratio_ok = ratio >= min_ratio
+
+    if not ratio_ok:
+        warnings.append(f"Low delta/theta ratio: {ratio:.1f} < {min_ratio}")
+
+    # Calculate theta decay percentage
+    theta_decay_pct = (abs_theta / contract_price * 100) if contract_price > 0 else 0
+    decay_ok = theta_decay_pct <= max_decay_pct
+
+    if not decay_ok:
+        warnings.append(f"High daily decay: {theta_decay_pct:.1f}% > {max_decay_pct}%")
+
+    # For selling premium, high theta is actually good
+    # But we still flag if ratio is dangerously low
+    is_valid = ratio_ok and decay_ok
+
+    return {
+        "is_valid": is_valid,
+        "delta": delta,
+        "theta": theta,
+        "ratio": round(ratio, 2),
+        "ratio_ok": ratio_ok,
+        "theta_decay_pct": round(theta_decay_pct, 2),
+        "decay_ok": decay_ok,
+        "warnings": warnings,
+    }
+
+
+def validate_contract_quality(
+    symbol: str,
+    delta: float,
+    theta: float,
+    contract_price: float,
+    open_interest: int,
+    bid: float,
+    ask: float,
+    implied_volatility: float | None = None,
+) -> dict:
+    """
+    Complete Matt Giannino options contract validation checklist.
+
+    Combines all quality checks:
+    1. Delta/Theta ratio >= 3:1
+    2. Theta < 10% daily decay
+    3. Open Interest > 500
+    4. Bid-Ask spread < 10%
+    5. (Optional) IV crush warning
+
+    Args:
+        symbol: Underlying symbol for context
+        delta: Option delta
+        theta: Option theta (negative)
+        contract_price: Contract price in dollars
+        open_interest: Contract open interest
+        bid: Current bid price
+        ask: Current ask price
+        implied_volatility: Optional IV for crush warning
+
+    Returns:
+        dict containing:
+            - passes_checklist (bool): Whether contract passes all checks
+            - checks_passed (int): Number of checks passed
+            - checks_total (int): Total number of checks
+            - delta_theta (dict): Delta/theta validation results
+            - liquidity (dict): Liquidity validation results
+            - iv_warning (str|None): IV crush warning if applicable
+            - all_warnings (list): Combined list of all warnings
+            - recommendation (str): Overall recommendation
+
+    Example:
+        >>> result = validate_contract_quality(
+        ...     symbol='SPY', delta=0.45, theta=-0.10,
+        ...     contract_price=2.50, open_interest=1500,
+        ...     bid=2.45, ask=2.55, implied_volatility=0.25
+        ... )
+        >>> if result['passes_checklist']:
+        ...     print("Contract meets all quality criteria!")
+    """
+    logger.info(f"Running Matt Giannino checklist for {symbol} contract...")
+
+    all_warnings = []
+
+    # Check 1 & 2: Delta/Theta ratio and decay
+    dt_result = validate_delta_theta_ratio(delta, theta, contract_price)
+    all_warnings.extend(dt_result["warnings"])
+
+    # Check 3 & 4: Liquidity
+    liquidity_result = check_liquidity(open_interest, bid, ask)
+    all_warnings.extend(liquidity_result["warnings"])
+
+    # Check 5: IV crush warning (if IV provided)
+    iv_warning = None
+    if implied_volatility is not None:
+        iv_pct = implied_volatility * 100 if implied_volatility < 1 else implied_volatility
+        if iv_pct > 50:
+            iv_warning = f"HIGH IV ({iv_pct:.1f}%) - potential IV crush risk"
+            all_warnings.append(iv_warning)
+
+    # Count passed checks
+    checks = [
+        dt_result["ratio_ok"],
+        dt_result["decay_ok"],
+        liquidity_result["oi_ok"],
+        liquidity_result["spread_ok"],
+    ]
+    checks_passed = sum(checks)
+    checks_total = len(checks)
+
+    # Overall pass/fail
+    passes_checklist = all(checks)
+
+    # Generate recommendation
+    if passes_checklist and not iv_warning:
+        recommendation = "PROCEED"
+    elif passes_checklist and iv_warning:
+        recommendation = "PROCEED_WITH_CAUTION"
+    elif checks_passed >= 3:
+        recommendation = "MARGINAL"
+    else:
+        recommendation = "SKIP"
+
+    logger.info(f"Checklist result: {checks_passed}/{checks_total} passed, {recommendation}")
+
+    return {
+        "passes_checklist": passes_checklist,
+        "checks_passed": checks_passed,
+        "checks_total": checks_total,
+        "delta_theta": dt_result,
+        "liquidity": liquidity_result,
+        "iv_warning": iv_warning,
+        "all_warnings": all_warnings,
+        "recommendation": recommendation,
     }

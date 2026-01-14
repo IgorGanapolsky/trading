@@ -1,0 +1,67 @@
+{
+  "resource": "My Top Secrets to Picking the Perfect Option Contract",
+  "author": "Matt Giannino",
+  "type": "youtube_video",
+  "source": "https://youtu.be/LRpGK6bOH1Y",
+  "evaluated_date": "2026-01-14",
+  "verdict": "VALUABLE",
+  "verdict_reason": "Added 4 missing validation checks: Delta/Theta ratio, Open Interest, Bid-Ask spread, ATR-based expiration timing. Directly improves trade quality.",
+  "checklist_summary": {
+    "rule_1_position_sizing": {
+      "giannino_rule": "Max 10% of buying power per trade",
+      "our_implementation": "5% max risk (MAX_PORTFOLIO_RISK_PCT)",
+      "status": "ALREADY_IMPLEMENTED"
+    },
+    "rule_2_theta_decay_limit": {
+      "giannino_rule": "Theta < 10% of contract price per day",
+      "our_implementation": "MAX_THETA_DECAY_PCT = 10.0 in validate_delta_theta_ratio()",
+      "status": "IMPLEMENTED_JAN_14"
+    },
+    "rule_3_itm_preference": {
+      "giannino_rule": "Favor ITM contracts for buying",
+      "our_implementation": "We SELL OTM (30-delta) for credit spreads - correct for our strategy",
+      "status": "NOT_APPLICABLE"
+    },
+    "rule_4_delta_theta_ratio": {
+      "giannino_rule": "Delta/Theta >= 3:1",
+      "our_implementation": "MIN_DELTA_THETA_RATIO = 3.0 in validate_delta_theta_ratio()",
+      "status": "IMPLEMENTED_JAN_14"
+    },
+    "rule_5_iv_crush_avoidance": {
+      "giannino_rule": "Avoid high IV (pre-earnings)",
+      "our_implementation": "get_iv_percentile() + validate_contract_quality() IV warning",
+      "status": "ENHANCED_JAN_14"
+    },
+    "rule_6_liquidity_oi": {
+      "giannino_rule": "Open Interest > 500",
+      "our_implementation": "MIN_OPEN_INTEREST = 500 in check_liquidity()",
+      "status": "IMPLEMENTED_JAN_14"
+    },
+    "rule_7_liquidity_spread": {
+      "giannino_rule": "Bid-Ask spread < 10%",
+      "our_implementation": "MAX_BID_ASK_SPREAD_PCT = 10.0 in check_liquidity()",
+      "status": "IMPLEMENTED_JAN_14"
+    },
+    "rule_8_atr_expiration": {
+      "giannino_rule": "Expiration 3-5x ATR-based move time",
+      "our_implementation": "get_atr() with suggested_min_dte",
+      "status": "IMPLEMENTED_JAN_14"
+    }
+  },
+  "files_created": [
+    "src/utils/options_analysis.py - Added validate_contract_quality(), check_liquidity(), validate_delta_theta_ratio(), get_atr()",
+    "tests/test_options_analysis.py - Comprehensive tests for new functions"
+  ],
+  "integration_notes": [
+    "validate_contract_quality() should be called before executing any options trade",
+    "get_atr() can inform DTE selection instead of hardcoded 30-45 days",
+    "check_liquidity() prevents trades with poor fills"
+  ],
+  "gap_identified": "Options executor doesn't currently call these validation functions - needs integration",
+  "action_required": true,
+  "next_steps": [
+    "Integrate validate_contract_quality() into OptionsExecutor.execute_credit_spread()",
+    "Use get_atr() to dynamically select expiration dates",
+    "Add liquidity check to contract selection flow"
+  ]
+}
