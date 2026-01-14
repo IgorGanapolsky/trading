@@ -1,0 +1,79 @@
+name: Analyze $100K Trade History
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  analyze:
+    name: Fetch and Analyze $100K Trades
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py
+
+      - name: Fetch $100K Trade History
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_API_SECRET }}
+        run: python3 scripts/fetch_100k_trade_history.py
+
+      - name: Commit and Create PR
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          # Check if there are changes
+          git add data/100k_trade_history_analysis.json rag_knowledge/lessons_learned/ll_203_100k_account_analysis_jan14.md
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create unique branch
+          BRANCH="auto/100k-analysis-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$BRANCH"
+          git commit -m "feat(rag): Add $100K account trade analysis
+
+This analysis extracts lessons from our profitable $100K paper account
+to apply to our $5K account strategy."
+
+          git push -u origin "$BRANCH"
+
+          # Create and merge PR
+          PR_URL=$(gh pr create \
+            --title "feat(rag): Learn from $100K account profits" \
+            --body "## Summary
+Automated analysis of \$100K paper account trade history.
+
+## Why This Matters
+We had profits but never learned from them. This PR:
+- Extracts all filled orders from past 90 days
+- Analyzes which underlyings/strategies worked
+- Creates RAG lesson for future reference
+
+## Files
+- \`data/100k_trade_history_analysis.json\` - Raw data
+- \`rag_knowledge/lessons_learned/ll_203_100k_account_analysis_jan14.md\` - Lesson" \
+            --head "$BRANCH" \
+            --base main)
+
+          echo "Created PR: $PR_URL"
+          gh pr merge "$BRANCH" --squash --delete-branch --admin
+          echo "PR merged"
