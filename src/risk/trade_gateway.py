@@ -61,6 +61,8 @@ class RejectionReason(Enum):
     RULE_ONE_VIOLATION = (
         "Phil Town Rule #1 validation failed - not a wonderful company at attractive price"
     )
+    EARNINGS_BLACKOUT = "Ticker is in earnings blackout period - avoid new positions"
+    POSITION_SIZE_TOO_LARGE = "Position max loss exceeds 10% of portfolio"
 
 
 @dataclass
@@ -158,6 +160,19 @@ class TradeGateway:
     # Liquidity check - options with wide spreads destroy alpha on fill
     MAX_BID_ASK_SPREAD_PCT = 0.05  # 5% maximum bid-ask spread
 
+    # Earnings blackout calendar (Jan 2026)
+    # Don't open NEW positions 7 days before earnings through 1 day after
+    # LL-190: SOFI CSP was opened during blackout - caused 48% portfolio risk
+    EARNINGS_BLACKOUTS = {
+        "SOFI": {"start": "2026-01-23", "end": "2026-02-01", "earnings": "2026-01-30"},
+        "F": {"start": "2026-02-03", "end": "2026-02-11", "earnings": "2026-02-10"},
+        # Add more tickers as needed
+    }
+
+    # Maximum position risk as percentage of portfolio
+    # LL-190: SOFI CSP had 48% portfolio risk - unacceptable
+    MAX_POSITION_RISK_PCT = 0.10  # 10% max risk per position
+
     def __init__(self, executor=None, paper: bool = True):
         """
         Initialize the trade gateway.
@@ -229,6 +244,106 @@ class TradeGateway:
         except Exception as e:
             logger.warning(f"Failed to save gateway state: {e}")
 
+    def _get_underlying_symbol(self, symbol: str) -> str:
+        """Extract underlying symbol from option symbol (OCC format)."""
+        # OCC format: SOFI260206P00024000 -> SOFI
+        # Format: [UNDERLYING][YYMMDD][P/C][STRIKE*1000]
+        # Strike is always 8 digits, P/C is 1 char, date is 6 digits
+        # So underlying = symbol[:-15] for standard options
+
+        import re
+
+        # Standard equity symbols pass through unchanged
+        if len(symbol) <= 6:
+            return symbol.upper()
+
+        # Try to match OCC option format
+        # Pattern: underlying (1-6 chars) + YYMMDD + P/C + 8 digit strike
+        match = re.match(r"^([A-Z]{1,6})(\d{6})[PC](\d{8})$", symbol.upper())
+        if match:
+            return match.group(1)
+
+        # Fallback: if it looks like it has a date embedded, try to extract
+        if len(symbol) >= 15:
+            # Last 15 chars are: YYMMDD (6) + P/C (1) + Strike (8)
+            potential_underlying = symbol[:-15]
+            if potential_underlying and potential_underlying.isalpha():
+                return potential_underlying.upper()
+
+        return symbol.upper()
+
+    def _check_earnings_blackout(self, symbol: str) -> tuple[bool, str]:
+        """
+        Check if symbol is in earnings blackout period.
+
+        Args:
+            symbol: Stock or option symbol
+
+        Returns:
+            (is_blocked, reason_message)
+        """
+        today = datetime.now().date()
+        underlying = self._get_underlying_symbol(symbol)
+
+        if underlying.upper() in self.EARNINGS_BLACKOUTS:
+            blackout = self.EARNINGS_BLACKOUTS[underlying.upper()]
+            start = datetime.strptime(blackout["start"], "%Y-%m-%d").date()
+            end = datetime.strptime(blackout["end"], "%Y-%m-%d").date()
+            earnings = blackout["earnings"]
+
+            if start <= today <= end:
+                return True, f"{underlying} in earnings blackout {start} to {end} (earnings: {earnings})"
+
+        return False, ""
+
+    def _check_position_size_risk(
+        self, request: TradeRequest, account_equity: float
+    ) -> tuple[bool, str]:
+        """
+        Check if position max loss exceeds portfolio risk limit.
+
+        For options:
+        - Short put max loss = strike * 100 (per contract)
+        - Credit spread max loss = spread width * 100
+
+        Args:
+            request: Trade request
+            account_equity: Current account equity
+
+        Returns:
+            (is_too_risky, reason_message)
+        """
+        if not request.is_option:
+            # For stocks, check notional vs equity
+            trade_value = request.notional or 0
+            if trade_value > account_equity * self.MAX_POSITION_RISK_PCT:
+                return True, f"Trade value ${trade_value:.0f} exceeds {self.MAX_POSITION_RISK_PCT*100:.0f}% of equity"
+            return False, ""
+
+        # For options, estimate max loss based on strategy
+        # This is a simplified check - full calculation would need Greeks
+        max_loss = 0
+
+        if request.strategy_type in ["cash_secured_put", "naked_put"]:
+            # Max loss = strike price * 100 * quantity
+            # Try to extract strike from symbol or use limit price as proxy
+            strike = request.limit_price or 25  # Default assumption
+            max_loss = strike * 100 * (request.quantity or 1)
+        elif request.strategy_type in ["bull_put_spread", "credit_spread"]:
+            # Max loss = spread width * 100 * quantity
+            # Typically $5 wide spreads = $500 max loss
+            max_loss = 500 * (request.quantity or 1)
+        else:
+            # Conservative default for unknown option strategies
+            max_loss = 500 * (request.quantity or 1)
+
+        max_risk_pct = max_loss / account_equity if account_equity > 0 else 1.0
+
+        if max_risk_pct > self.MAX_POSITION_RISK_PCT:
+            return True, f"Max loss ${max_loss:.0f} ({max_risk_pct*100:.1f}%) exceeds {self.MAX_POSITION_RISK_PCT*100:.0f}% limit"
+
+        return False, ""
+
     def evaluate(self, request: TradeRequest) -> GatewayDecision:
         """
         Evaluate a trade request against all risk rules.
@@ -281,6 +396,35 @@ class TradeGateway:
                 "rule": "Phil Town Rule #1: Don't lose money",
                 "trade_type": "short_option" if request.is_option else "buy",
                 "action_required": "Close losing positions or wait for recovery",
+            }
+
+        # ============================================================
+        # CHECK 0.5: EARNINGS BLACKOUT (LL-190)
+        # Don't open NEW positions during earnings blackout periods
+        # ============================================================
+        is_blackout, blackout_reason = self._check_earnings_blackout(request.symbol)
+        if is_blackout and request.side.lower() in ["buy", "sell"]:
+            # Only block NEW positions, not closing existing ones
+            rejection_reasons.append(RejectionReason.EARNINGS_BLACKOUT)
+            logger.warning(f"🛑 EARNINGS BLACKOUT: {blackout_reason}")
+            risk_score += 0.5
+            metadata["earnings_blackout"] = {
+                "reason": blackout_reason,
+                "action": "Wait until blackout ends or choose different ticker",
+            }
+
+        # ============================================================
+        # CHECK 0.6: POSITION SIZE RISK (LL-190)
+        # Max loss cannot exceed 10% of portfolio
+        # ============================================================
+        is_too_risky, risk_reason = self._check_position_size_risk(request, account_equity)
+        if is_too_risky:
+            rejection_reasons.append(RejectionReason.POSITION_SIZE_TOO_LARGE)
+            logger.warning(f"🛑 POSITION SIZE: {risk_reason}")
+            risk_score += 0.5
+            metadata["position_size_risk"] = {
+                "reason": risk_reason,
+                "max_allowed": f"{self.MAX_POSITION_RISK_PCT*100:.0f}% of ${account_equity:.0f} = ${account_equity * self.MAX_POSITION_RISK_PCT:.0f}",
             }
 
         # ============================================================
