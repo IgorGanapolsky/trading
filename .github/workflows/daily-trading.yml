@@ -199,7 +199,7 @@ jobs:
 
           # Query for pre-trade advice
           python3 scripts/query_vertex_rag.py \
-            --symbol SPY --symbol SOFI --symbol AMD --symbol PLTR \
+            --symbol SPY --symbol IWM --symbol AMD --symbol PLTR \
             --json --output data/rag_pretrade_advice.json 2>&1 || {
             echo "::warning::Vertex AI RAG query failed - proceeding with local lessons only"
             echo '{"error": "RAG query failed", "fallback": true}' > data/rag_pretrade_advice.json
@@ -1029,7 +1029,9 @@ jobs:
 
             # Credit spreads - much more capital efficient!
             # $2-wide spread = $200 collateral (vs $2500 for SOFI CSP)
-            TICKERS="SOFI F BAC"  # Best for spreads - liquid, good premium
+            # FIXED Jan 14, 2026: Removed SOFI (blackout until Feb 1 per CLAUDE.md)
+            # Using SPY/IWM per ticker hierarchy - best liquidity
+            TICKERS="SPY IWM F"  # Per CLAUDE.md ticker hierarchy
             SPREAD_WIDTH=2
 
             for TICKER in $TICKERS; do
@@ -1045,10 +1047,11 @@ jobs:
           else
             echo ""
             echo "✅ Sufficient buying power (\$${OPTIONS_BP}) - using CASH-SECURED PUTS"
-            echo "   Tickers: SOFI, PLTR, F, BAC, AMD, SPY"
+            # FIXED Jan 14, 2026: Removed SOFI (blackout until Feb 1 per CLAUDE.md)
+            echo "   Tickers: SPY, IWM, F, T, PLTR, AMD"
 
-            # Full wheel strategy with CSPs
-            for TICKER in SOFI PLTR F BAC AMD SPY; do
+            # Full wheel strategy with CSPs - per CLAUDE.md ticker hierarchy
+            for TICKER in SPY IWM F T PLTR AMD; do
               echo ""
               echo "   📊 Wheel on ${TICKER}..."
               python3 scripts/execute_options_trade.py --strategy wheel --symbol "${TICKER}" || {
@@ -1057,7 +1060,7 @@ jobs:
             done
 
             echo ""
-            echo "✅ Executed wheel strategy on 6 tickers"
+            echo "✅ Executed wheel strategy on 6 tickers (no SOFI until Feb 1)"
           fi
 
           # Update theta harvest timestamp in system state
@@ -1084,7 +1087,7 @@ jobs:
               state['options']['execution_date'] = datetime.utcnow().strftime('%Y-%m-%d')
               # Track strategy based on buying power
               state['options']['selection_method'] = 'adaptive'  # CSPs or spreads based on buying power
-              state['options']['target_tickers'] = ['SOFI', 'PLTR', 'F', 'BAC', 'AMD', 'SPY']
+              state['options']['target_tickers'] = ['SPY', 'IWM', 'F', 'T', 'PLTR', 'AMD']  # FIXED Jan 14: No SOFI until Feb 1
               state['options']['strategy_note'] = 'Uses credit spreads when buying power < $1000, CSPs otherwise'
 
               # Count today's options logs to verify execution

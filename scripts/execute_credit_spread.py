@@ -400,7 +400,7 @@ def execute_bull_put_spread(
 
 def main():
     parser = argparse.ArgumentParser(description="Execute bull put spread")
-    parser.add_argument("--symbol", default="SOFI", help="Underlying symbol")
+    parser.add_argument("--symbol", default="SPY", help="Underlying symbol (default: SPY per CLAUDE.md)")
     parser.add_argument("--width", type=float, default=2.0, help="Spread width in $")
     parser.add_argument("--dry-run", action="store_true", help="Dry run mode")
     args = parser.parse_args()
