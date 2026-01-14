@@ -6,6 +6,7 @@ Root cause of 13-day trading outage (Dec 23 - Jan 5, 2026)
 """
 
 import sys
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -65,11 +66,23 @@ class TestMaxPositionsConfig:
 class TestShouldOpenPosition:
     """Test the should_open_position logic."""
 
+    @patch("scripts.simple_daily_trader.datetime")
     @patch("scripts.simple_daily_trader.get_current_positions")
     @patch("scripts.simple_daily_trader.get_account_info")
-    def test_allows_new_position_under_max(self, mock_account, mock_positions):
+    def test_allows_new_position_under_max(self, mock_account, mock_positions, mock_datetime):
         """Should allow new position when under max_positions limit."""
         from scripts.simple_daily_trader import CONFIG, should_open_position
+
+        # Mock datetime to be during market hours (10:30 AM ET on a Tuesday)
+        try:
+            from zoneinfo import ZoneInfo
+
+            et_tz = ZoneInfo("America/New_York")
+            mock_now = datetime(2026, 1, 13, 10, 30, 0, tzinfo=et_tz)  # Tuesday
+        except ImportError:
+            mock_now = datetime(2026, 1, 13, 10, 30, 0)
+
+        mock_datetime.now.return_value = mock_now
 
         # Simulate 4 options positions (used to block with max=3)
         mock_positions.return_value = [
@@ -98,11 +111,23 @@ class TestShouldOpenPosition:
             "This would cause the 13-day outage bug again!"
         )
 
+    @patch("scripts.simple_daily_trader.datetime")
     @patch("scripts.simple_daily_trader.get_current_positions")
     @patch("scripts.simple_daily_trader.get_account_info")
-    def test_blocks_at_max_positions(self, mock_account, mock_positions):
+    def test_blocks_at_max_positions(self, mock_account, mock_positions, mock_datetime):
         """Should block when at max_positions limit."""
         from scripts.simple_daily_trader import CONFIG, should_open_position
+
+        # Mock datetime to be during market hours (10:30 AM ET on a Tuesday)
+        try:
+            from zoneinfo import ZoneInfo
+
+            et_tz = ZoneInfo("America/New_York")
+            mock_now = datetime(2026, 1, 13, 10, 30, 0, tzinfo=et_tz)  # Tuesday
+        except ImportError:
+            mock_now = datetime(2026, 1, 13, 10, 30, 0)
+
+        mock_datetime.now.return_value = mock_now
 
         # Simulate exactly max_positions options
         mock_positions.return_value = [
