@@ -2,18 +2,20 @@
 
 CTO: Claude | CEO: Igor Ganapolsky
 
-## Strategy (Updated Jan 13, 2026 - REVISED)
-- **North Star**: $25/day (~$500/month = 10% monthly = 120% annually)
-- **Why revised**: $100/day = 2%/day = unsustainable. Research shows 0.2-0.5%/day is realistic max.
+## Strategy (Updated Jan 14, 2026 - CTO AUTONOMOUS REVISION)
+- **North Star**: $14-25/day (~$300-500/month = 6-10% monthly)
+- **Why revised**: Research confirms 0.2-0.5%/day max sustainable. VIX at 15 = low IV environment.
 - **Primary strategy**: CREDIT SPREADS - capital efficient, defined risk
-- **Primary targets**: F, SOFI, T - bull put spreads $5 wide
-- **Spread setup**: Sell ATM put, buy $5 OTM put = $500 collateral, ~$100 premium
-- **Position limit**: 2-3 spreads/week (conservative until win rate proven)
-- **Weekly target**: 2 spreads x $100 x 70% win rate = ~$80/week = $16/day (floor)
-- **Stop-loss**: Close at 25% loss ($125 max per spread)
-- **Risk management**: Never risk >5% of account on single trade
+- **Primary targets**: SPY, IWM first (best liquidity), then F, T (avoid SOFI until Feb 1)
+- **Spread setup**: Sell 30-delta put, buy 20-delta put = ~$500 collateral, ~$60-80 premium
+- **Why 30-delta**: ATM violates Phil Town Rule #1 (no margin of safety). 30-delta = 70% win rate.
+- **Expiration**: 30-45 DTE (sweet spot for theta decay), close at 50% max profit
+- **Position limit**: 1 spread at a time initially (5% max risk per trade)
+- **Weekly target**: 1 spread x $70 x 70% win rate = ~$50/week = $10/day (floor)
+- **Stop-loss**: Close at 2x credit received OR 25% of spread width
+- **Risk management**: Max 1-2 concurrent spreads, never >5% account on single trade
 - **Paper trading phase**: 90 days to validate win rate before scaling
-- **Decision point**: After 90 days, real data determines if we scale up or adjust
+- **Decision point**: After 30 trades with real data, adjust or continue
 
 ## Win Rate Tracking (Data-Driven)
 - Track every paper trade: entry, exit, P/L, win/loss

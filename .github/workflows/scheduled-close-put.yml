@@ -1,8 +1,9 @@
-name: Scheduled Close Put Position
+name: Scheduled Close SOFI Positions
 
-# CEO DIRECTIVE: Close the profitable put tomorrow to lock in gains
+# CTO AUTONOMOUS DECISION (Jan 14, 2026):
+# CLOSE ALL SOFI POSITIONS - Earnings Jan 30, IV 55%, 12.2% expected move
+# Phil Town Rule #1: Don't lose money through earnings volatility
 # PDT blocked us today - this will execute tomorrow at market open
-# Created: Jan 13, 2026
 
 on:
   schedule:
@@ -14,8 +15,8 @@ permissions:
   contents: write
 
 jobs:
-  close-put:
-    name: Close SOFI Put - Lock In Profit
+  close-sofi:
+    name: Close ALL SOFI - Avoid Earnings Risk
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -59,49 +60,54 @@ jobs:
 
           print(f"\nAccount Equity: ${float(account.equity):,.2f}")
 
-          # Find the put position
-          put_symbol = "SOFI260206P00024000"
-          put_position = None
-          for pos in positions:
-              if put_symbol in pos.symbol:
-                  put_position = pos
-                  break
+          # CTO DECISION: Close ALL SOFI positions before Jan 30 earnings
+          # 12.2% expected move, IV 55% - too risky to hold through
 
-          if not put_position:
-              print(f"\nNo put position found for {put_symbol}")
-              print("Position may have already been closed or assigned")
+          print("\n📊 SOFI POSITIONS TO CLOSE:")
+          sofi_positions = [p for p in positions if 'SOFI' in p.symbol]
+
+          if not sofi_positions:
+              print("No SOFI positions found - already closed")
               exit(0)
 
-          qty = abs(int(float(put_position.qty)))
-          unrealized_pl = float(put_position.unrealized_pl)
+          for pos in sofi_positions:
+              print(f"  {pos.symbol}: {pos.qty} shares/contracts, P/L: ${float(pos.unrealized_pl):,.2f}")
 
-          print(f"\nPut Position Found:")
-          print(f"  Symbol: {put_position.symbol}")
-          print(f"  Qty: {put_position.qty}")
-          print(f"  Unrealized P/L: ${unrealized_pl:,.2f}")
+          total_pl = sum(float(p.unrealized_pl) for p in sofi_positions)
+          print(f"\nTotal SOFI P/L: ${total_pl:,.2f}")
 
-          # Only close if still profitable
-          if unrealized_pl < 0:
-              print(f"\n⚠️ Position is now LOSING (${unrealized_pl:,.2f})")
-              print("Not closing - wait for recovery per Rule #1")
-              exit(0)
+          # Close ALL positions - don't wait for profit, avoid earnings risk
+          print("\n🚨 CLOSING ALL SOFI - Earnings Jan 30 (16 days)")
+          print("Expected move: 12.2% - too risky per Phil Town Rule #1")
 
-          # Submit buy-to-close order
-          print(f"\n✅ Position is PROFITABLE - Closing to lock in gains!")
-          order_request = MarketOrderRequest(
-              symbol=put_symbol,
-              qty=qty,
-              side=OrderSide.BUY,
-              time_in_force=TimeInForce.DAY
-          )
+          for pos in sofi_positions:
+              qty = abs(float(pos.qty))
+              is_short = float(pos.qty) < 0
+              side = OrderSide.BUY if is_short else OrderSide.SELL
 
-          order = client.submit_order(order_request)
+              print(f"\nClosing {pos.symbol}...")
 
-          print(f"\nORDER SUBMITTED!")
-          print(f"  Order ID: {order.id}")
-          print(f"  Status: {order.status}")
-          print("=" * 60)
-          print("RULE #1 PROTECTION: Profit locked in!")
+              # Handle fractional shares for stock
+              if len(pos.symbol) <= 6:  # Stock symbol
+                  order_request = MarketOrderRequest(
+                      symbol=pos.symbol,
+                      qty=qty,
+                      side=side,
+                      time_in_force=TimeInForce.DAY
+                  )
+              else:  # Option symbol
+                  order_request = MarketOrderRequest(
+                      symbol=pos.symbol,
+                      qty=int(qty),
+                      side=side,
+                      time_in_force=TimeInForce.DAY
+                  )
+
+              order = client.submit_order(order_request)
+              print(f"  ✅ Order ID: {order.id}, Status: {order.status}")
+
+          print("\n" + "=" * 60)
+          print("RULE #1 PROTECTION: All SOFI positions closed before earnings!")
           print("=" * 60)
           EOF
 
