@@ -1,8 +1,31 @@
 """Options Risk Monitor - Monitors options positions for risk."""
 
 import logging
+from dataclasses import dataclass
+from datetime import date, datetime
+from typing import Literal
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class OptionsPosition:
+    """Represents an options position for risk monitoring."""
+
+    symbol: str  # OCC option symbol
+    underlying: str  # Underlying stock symbol
+    position_type: str  # 'covered_call', 'credit_spread', 'iron_condor', etc.
+    side: Literal["long", "short"]
+    quantity: int
+    entry_price: float
+    current_price: float
+    delta: float
+    gamma: float
+    theta: float
+    vega: float
+    expiration_date: date
+    strike: float
+    opened_at: datetime
 
 
 class OptionsRiskMonitor:
@@ -12,9 +35,18 @@ class OptionsRiskMonitor:
         self.max_loss_percent = max_loss_percent
         self.positions: dict = {}
 
-    def add_position(self, symbol: str, position_data: dict) -> None:
-        """Track an options position."""
-        self.positions[symbol] = position_data
+    def add_position(self, position: OptionsPosition | dict, position_data: dict | None = None) -> None:
+        """Track an options position.
+
+        Args:
+            position: Either an OptionsPosition object or a symbol string (for backwards compat)
+            position_data: Position data dict (only used if position is a string)
+        """
+        if isinstance(position, OptionsPosition):
+            self.positions[position.symbol] = position
+        else:
+            # Backwards compatibility: position is symbol string
+            self.positions[position] = position_data
 
     def remove_position(self, symbol: str) -> None:
         """Stop tracking a position."""
