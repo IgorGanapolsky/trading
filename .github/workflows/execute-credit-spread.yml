@@ -124,25 +124,51 @@ jobs:
           from alpaca.trading.enums import AssetStatus, ContractType
 
           # BUGFIX Jan 14, 2026: Use 30-45 DTE per CLAUDE.md strategy
-          # 7-14 days had insufficient options liquidity for F/T
+          # Also use 30-delta (OTM) not ATM per Phil Town margin of safety
           today = datetime.now()
-          min_expiry = (today + timedelta(days=25)).strftime("%Y-%m-%d")
-          max_expiry = (today + timedelta(days=50)).strftime("%Y-%m-%d")
+          min_expiry = (today + timedelta(days=30)).strftime("%Y-%m-%d")
+          max_expiry = (today + timedelta(days=45)).strftime("%Y-%m-%d")
+
+          # For SPY/IWM: target 30-delta = roughly 5-7% OTM
+          # SPY at 590 -> 30-delta put ~ 555-565
+          # IWM at 220 -> 30-delta put ~ 205-210
+          target_delta_pct = 0.05  # 5% OTM for ~30 delta
 
           try:
+              # Filter strikes to reduce data - only OTM puts near our target
+              min_strike = current_price * 0.90  # 10% below current
+              max_strike = current_price * 0.98  # 2% below current (OTM)
+
+              print(f"Filtering strikes: ${min_strike:.0f} to ${max_strike:.0f}")
+
               req = GetOptionContractsRequest(
                   underlying_symbols=[symbol],
                   status=AssetStatus.ACTIVE,
                   expiration_date_gte=min_expiry,
                   expiration_date_lte=max_expiry,
                   type=ContractType.PUT,
+                  strike_price_gte=str(min_strike),
+                  strike_price_lte=str(max_strike),
               )
               contracts = trading_client.get_option_contracts(req)
 
-              if not contracts.option_contracts:
+              if not contracts or not contracts.option_contracts:
                   print(f"❌ No put options found for {symbol}")
                   print(f"   Date range: {min_expiry} to {max_expiry}")
-                  exit(1)
+                  print(f"   Strike range: ${min_strike:.0f} to ${max_strike:.0f}")
+                  # Try without strike filter as fallback
+                  print("Retrying without strike filter...")
+                  req = GetOptionContractsRequest(
+                      underlying_symbols=[symbol],
+                      status=AssetStatus.ACTIVE,
+                      expiration_date_gte=min_expiry,
+                      expiration_date_lte=max_expiry,
+                      type=ContractType.PUT,
+                  )
+                  contracts = trading_client.get_option_contracts(req)
+                  if not contracts or not contracts.option_contracts:
+                      print("❌ Still no options found. Exiting.")
+                      exit(1)
 
               puts = contracts.option_contracts
               print(f"Found {len(puts)} put options")
@@ -151,15 +177,23 @@ jobs:
               by_expiry = {}
               for p in puts:
                   exp = str(p.expiration_date)
+                  strike = float(p.strike_price)
+                  # Only keep OTM puts (strike < current price)
+                  if strike >= current_price:
+                      continue
                   if exp not in by_expiry:
                       by_expiry[exp] = []
                   by_expiry[exp].append(p)
+
+              if not by_expiry:
+                  print("❌ No OTM puts found after filtering")
+                  exit(1)
 
               # Pick nearest expiration with enough strikes
               sorted_expiries = sorted(by_expiry.keys())
               target_expiry = None
               for exp in sorted_expiries:
-                  if len(by_expiry[exp]) >= 4:  # Need at least 4 strikes for spread
+                  if len(by_expiry[exp]) >= 4:
                       target_expiry = exp
                       break
 
@@ -170,27 +204,22 @@ jobs:
               strikes = sorted(set(float(p.strike_price) for p in available_puts))
 
               print(f"Using expiration: {target_expiry}")
-              print(f"Available strikes: {strikes}")
+              print(f"Available OTM strikes ({len(strikes)}): {strikes[:10]}...")
 
-              # Step 3: Find ATM short strike (closest to current price, at or below)
-              atm_strikes = [s for s in strikes if s <= current_price]
-              if not atm_strikes:
-                  atm_strikes = strikes  # Use all if none below
-
-              short_strike = max(atm_strikes)  # Highest strike at or below current price
+              # Step 3: Find 30-delta short strike (~5% OTM)
+              target_short = current_price * (1 - target_delta_pct)
+              short_strike = min(strikes, key=lambda x: abs(x - target_short))
+              print(f"Target 30-delta strike: ${target_short:.2f}, Selected: ${short_strike}")
 
               # Step 4: Find long strike (spread_width below short)
               target_long = short_strike - spread_width
-              long_strike = min(strikes, key=lambda x: abs(x - target_long))
+              available_longs = [s for s in strikes if s < short_strike]
 
-              # Ensure long is below short
-              if long_strike >= short_strike:
-                  available_longs = [s for s in strikes if s < short_strike]
-                  if available_longs:
-                      long_strike = max(available_longs)
-                  else:
-                      print(f"❌ Cannot find valid long strike below {short_strike}")
-                      exit(1)
+              if not available_longs:
+                  print(f"❌ No strikes below short strike ${short_strike}")
+                  exit(1)
+
+              long_strike = min(available_longs, key=lambda x: abs(x - target_long))
 
               actual_width = short_strike - long_strike
 
@@ -207,11 +236,11 @@ jobs:
 
               print()
               print("═══════════════════════════════════════════════════════════")
-              print("📋 SPREAD DETAILS")
+              print("📋 SPREAD DETAILS (30-DELTA TARGET)")
               print("═══════════════════════════════════════════════════════════")
               print(f"Current Price: ${current_price:.2f}")
               print(f"Expiration: {target_expiry}")
-              print(f"Short Put (SELL): {short_symbol} @ ${short_strike}")
+              print(f"Short Put (SELL): {short_symbol} @ ${short_strike} ({((current_price - short_strike)/current_price)*100:.1f}% OTM)")
               print(f"Long Put (BUY): {long_symbol} @ ${long_strike}")
               print(f"Spread Width: ${actual_width}")
               print(f"Max Loss: ${actual_width * 100 * quantity}")
