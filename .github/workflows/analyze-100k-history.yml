@@ -49,28 +49,14 @@ jobs:
           # Create unique branch
           BRANCH="auto/100k-analysis-$(date +%Y%m%d-%H%M%S)"
           git checkout -b "$BRANCH"
-          git commit -m "feat(rag): Add $100K account trade analysis
-
-This analysis extracts lessons from our profitable $100K paper account
-to apply to our $5K account strategy."
+          git commit -m "feat(rag): Add \$100K account trade analysis - extracts lessons from profitable paper account"
 
           git push -u origin "$BRANCH"
 
           # Create and merge PR
           PR_URL=$(gh pr create \
-            --title "feat(rag): Learn from $100K account profits" \
-            --body "## Summary
-Automated analysis of \$100K paper account trade history.
-
-## Why This Matters
-We had profits but never learned from them. This PR:
-- Extracts all filled orders from past 90 days
-- Analyzes which underlyings/strategies worked
-- Creates RAG lesson for future reference
-
-## Files
-- \`data/100k_trade_history_analysis.json\` - Raw data
-- \`rag_knowledge/lessons_learned/ll_203_100k_account_analysis_jan14.md\` - Lesson" \
+            --title "feat(rag): Learn from \$100K account profits" \
+            --body "Automated analysis of \$100K paper account trade history. Extracts filled orders from past 90 days and creates RAG lesson." \
             --head "$BRANCH" \
             --base main)
 

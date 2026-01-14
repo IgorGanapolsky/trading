@@ -79,6 +79,11 @@
         "hooks": [
           {
             "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/ralph_inject_prompt.sh",
+            "timeout": 3
+          },
+          {
+            "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/enforce_verification.sh",
             "timeout": 2
           },
@@ -163,6 +168,11 @@
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/auto_blog_generator.sh",
             "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/ralph_check_resume.sh",
+            "timeout": 3
           }
         ]
       }
@@ -174,6 +184,18 @@
           {
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/capture_session_learnings.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/ralph_stop_hook.sh",
             "timeout": 5
           }
         ]

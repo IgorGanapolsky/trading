@@ -16,8 +16,10 @@ __pycache__/
 # IDEs
 .vscode/
 .idea/
-.claude/
 *.swp
+
+# Claude Code - allow configuration but ignore state
+.claude/ralph_state.json
 *.swo
 .DS_Store
 
