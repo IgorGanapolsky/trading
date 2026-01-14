@@ -267,6 +267,37 @@ def find_bull_put_spread(
     return best_spread
 
 
+# Earnings blackout calendar - MUST match trade_gateway.py
+# Added Jan 14, 2026 (LL-205): Script was bypassing TradeGateway blackout checks
+EARNINGS_BLACKOUTS = {
+    "SOFI": {"start": "2025-12-30", "end": "2026-02-01", "earnings": "2026-01-30"},
+    "F": {"start": "2026-02-03", "end": "2026-02-11", "earnings": "2026-02-10"},
+}
+
+
+def check_earnings_blackout(symbol: str) -> tuple[bool, str]:
+    """
+    Check if symbol is in earnings blackout period.
+    Returns (is_blocked, reason).
+
+    Added Jan 14, 2026: Script was bypassing TradeGateway blackout checks,
+    causing SOFI trade during blackout which resulted in -$65.58 loss.
+    """
+    today = date.today()
+    underlying = symbol.upper()[:4] if len(symbol) > 10 else symbol.upper()
+
+    if underlying in EARNINGS_BLACKOUTS:
+        blackout = EARNINGS_BLACKOUTS[underlying]
+        start = datetime.strptime(blackout["start"], "%Y-%m-%d").date()
+        end = datetime.strptime(blackout["end"], "%Y-%m-%d").date()
+        earnings = blackout["earnings"]
+
+        if start <= today <= end:
+            return True, f"{underlying} in earnings blackout {start} to {end} (earnings: {earnings})"
+
+    return False, ""
+
+
 def execute_bull_put_spread(
     trading_client, options_client, symbol: str, spread_width: float = 2.0, dry_run: bool = False
 ):
@@ -276,6 +307,17 @@ def execute_bull_put_spread(
     Much more capital efficient than cash-secured puts!
     Collateral = spread width × 100 (NOT full strike price)
     """
+    # CHECK 0: Earnings blackout (LL-205 fix - Jan 14, 2026)
+    # This script was bypassing TradeGateway, causing SOFI blackout violation
+    is_blocked, blackout_reason = check_earnings_blackout(symbol)
+    if is_blocked:
+        logger.error(f"🛑 EARNINGS BLACKOUT: {blackout_reason}")
+        return {
+            "status": "BLOCKED_EARNINGS",
+            "reason": blackout_reason,
+            "action": "Wait until blackout ends or choose SPY/IWM (no individual earnings)"
+        }
+
     # Query RAG for lessons before trading
     logger.info("Checking RAG lessons before execution...")
     rag = LessonsLearnedRAG()

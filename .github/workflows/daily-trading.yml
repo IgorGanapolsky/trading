@@ -1030,8 +1030,9 @@ jobs:
             # Credit spreads - much more capital efficient!
             # $2-wide spread = $200 collateral (vs $2500 for SOFI CSP)
             # FIXED Jan 14, 2026: Removed SOFI (blackout until Feb 1 per CLAUDE.md)
-            # Using SPY/IWM per ticker hierarchy - best liquidity
-            TICKERS="SPY IWM F"  # Per CLAUDE.md ticker hierarchy
+            # FIXED Jan 14, 2026: Removed F (earnings Feb 10, blackout until Feb 11)
+            # Using SPY/IWM ONLY per ticker hierarchy - best liquidity, no earnings risk
+            TICKERS="SPY IWM"  # SAFE: No individual stock earnings risk
             SPREAD_WIDTH=2
 
             for TICKER in $TICKERS; do
@@ -1048,10 +1049,12 @@ jobs:
             echo ""
             echo "✅ Sufficient buying power (\$${OPTIONS_BP}) - using CASH-SECURED PUTS"
             # FIXED Jan 14, 2026: Removed SOFI (blackout until Feb 1 per CLAUDE.md)
-            echo "   Tickers: SPY, IWM, F, T, PLTR, AMD"
+            # FIXED Jan 14, 2026: Removed F (earnings Feb 10, blackout until Feb 11)
+            # FIXED Jan 14, 2026: Using SPY/IWM ONLY - no individual stock earnings risk
+            echo "   Tickers: SPY, IWM (SAFE - no individual earnings)"
 
-            # Full wheel strategy with CSPs - per CLAUDE.md ticker hierarchy
-            for TICKER in SPY IWM F T PLTR AMD; do
+            # Full wheel strategy with CSPs - SPY/IWM only for safety
+            for TICKER in SPY IWM; do
               echo ""
               echo "   📊 Wheel on ${TICKER}..."
               python3 scripts/execute_options_trade.py --strategy wheel --symbol "${TICKER}" || {
