@@ -20,6 +20,14 @@ class IVThresholds:
     # Phil Town approach: sell CSPs on wonderful companies, not volatility plays
     MAX_IV_RANK_FOR_CSP = 50
 
+    # Optimal IV Rank for aggressive premium selling (Invest with Henry)
+    # "IVR > 80% = Premiums unusually high = OPTIMAL time to sell"
+    OPTIMAL_IV_RANK_FOR_SELLING = 80
+
+    # Good IV Rank range for selling (50-80%)
+    GOOD_IV_RANK_MIN = 50
+    GOOD_IV_RANK_MAX = 80
+
     # Optimal IV ranges by strategy
     OPTIMAL_IV_RANK = {
         "cash_secured_put": {"min": 20, "max": 50, "optimal": 30},
@@ -76,7 +84,9 @@ class PositionSizing:
     MIN_CAPITAL = 500.0
 
     # Max allocation per position
-    MAX_POSITION_PCT = 0.25  # 25% max per position
+    # Tightened from 25% to 15% per Invest with Henry recommendation
+    # "Never allocate more than 15% to any single position"
+    MAX_POSITION_PCT = 0.15  # 15% max per position (was 25%)
 
     # Cash reserve requirement
     MIN_CASH_RESERVE_PCT = 0.20  # Keep 20% in cash
@@ -104,6 +114,18 @@ class RiskThresholds:
     # Take profit levels
     CSP_TAKE_PROFIT_PCT = 0.50  # Close at 50% profit
     IRON_CONDOR_TAKE_PROFIT_PCT = 0.50
+
+    # Rolling threshold (Invest with Henry: "Roll before expiration")
+    # Roll options when DTE falls below this to avoid assignment risk
+    ROLL_AT_DTE = 5  # Roll positions when 5 DTE or less
+
+    # Trade frequency limit (Invest with Henry: "10-15 trades/week max")
+    # Prevents overtrading which "primarily benefits the brokerage"
+    MAX_TRADES_PER_WEEK = 15
+
+    # Ex-dividend buffer (days) - check before selling covered calls
+    # "Options may be exercised EARLY to capture dividend"
+    EX_DIV_BUFFER_DAYS = 7  # Avoid selling CCs within 7 days of ex-div
 
 
 class TargetSymbols:
