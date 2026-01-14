@@ -23,6 +23,7 @@ class SmokeTestResult:
     positions_readable: bool = False
     buying_power_valid: bool = False
     equity_valid: bool = False
+    fomo_check_passed: bool = True  # Default True - only fails if explicitly blocked
 
     # Aggregate result
     all_passed: bool = False
@@ -157,6 +158,24 @@ def run_smoke_tests() -> SmokeTestResult:
         result.errors.append(f"CRITICAL: Equity is ${result.equity} (must be > 0)")
         logger.error(f"SMOKE TEST FAILED: Equity is ${result.equity}")
 
+    # ========== TEST 8: FOMO Prevention Check (Scott Bauer Secret #4) ==========
+    # "If conviction is not 100%, pass immediately and wait for next opportunity"
+    # Check for FOMO_BLOCK environment variable (set by manual override or external signals)
+    fomo_block = os.getenv("FOMO_BLOCK", "").lower()
+    if fomo_block in ("true", "1", "yes"):
+        result.fomo_check_passed = False
+        result.errors.append(
+            "FOMO BLOCK ACTIVE: Conviction not 100%. "
+            "Scott Bauer Secret #4: There will ALWAYS be another trade."
+        )
+        logger.warning(
+            "🛑 FOMO CHECK: Trade blocked - conviction not 100%. "
+            "Remember: There will ALWAYS be another trade!"
+        )
+    else:
+        result.fomo_check_passed = True
+        logger.info("✅ SMOKE TEST: FOMO check passed (no block active)")
+
     # ========== FINAL RESULT ==========
     result.all_passed = (
         result.alpaca_connected
@@ -164,6 +183,7 @@ def run_smoke_tests() -> SmokeTestResult:
         and result.positions_readable
         and result.buying_power_valid
         and result.equity_valid
+        and result.fomo_check_passed
     )
     result.passed = result.all_passed  # Backwards compatibility
 
@@ -207,6 +227,7 @@ if __name__ == "__main__":
     print(f"Positions Readable:  {result.positions_readable}")
     print(f"Buying Power Valid:  {result.buying_power_valid}")
     print(f"Equity Valid:        {result.equity_valid}")
+    print(f"FOMO Check Passed:   {result.fomo_check_passed}")
     print("-" * 60)
     print(f"Equity:              ${result.equity:,.2f}")
     print(f"Buying Power:        ${result.buying_power:,.2f}")

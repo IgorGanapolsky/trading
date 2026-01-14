@@ -273,8 +273,15 @@ def main():
                 print(
                     f"  - {pos['symbol']}: {pos['qty']} contracts, P/L: ${pos['unrealized_pl']:.2f}"
                 )
-            print("\nPHIL TOWN RULE #1: DON'T LOSE MONEY")
+            print("\n" + "-" * 60)
+            print("PHIL TOWN RULE #1: DON'T LOSE MONEY")
             print("Set stop-losses before opening new positions!")
+            print("-" * 60)
+            print("\n💡 PROFESSIONAL LOSING (Scott Bauer Secret #2):")
+            print("   - Treat losses with OBJECTIVITY and acceptance")
+            print("   - NEVER 'hope and pray' for a losing trade to reverse")
+            print("   - Exit objectively - holding on is amateur behavior")
+            print("   - If a trade is failing, close it NOW")
             print("!" * 60)
 
         if result.get("verified_stops"):

@@ -399,12 +399,16 @@ class TradeGateway:
                 f"🛑 CIRCUIT BREAKER: Portfolio P/L is ${total_pl:.2f} (NEGATIVE). "
                 f"NO new risk-increasing trades until profitable. Phil Town Rule #1!"
             )
+            logger.warning(
+                "💡 PROFESSIONAL LOSING (Bauer Secret #2): Exit objectively, don't 'hope and pray'"
+            )
             risk_score += 1.0  # Maximum risk score - automatic rejection
             metadata["zero_tolerance_breach"] = {
                 "total_pl": total_pl,
                 "rule": "Phil Town Rule #1: Don't lose money",
                 "trade_type": "short_option" if request.is_option else "buy",
                 "action_required": "Close losing positions or wait for recovery",
+                "psychology_reminder": "Professional Losing: Exit objectively, never hope and pray",
             }
 
         # ============================================================
