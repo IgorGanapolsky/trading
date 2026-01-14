@@ -24,7 +24,8 @@ def parse_lesson_file(filepath: Path) -> dict | None:
         lesson_id = filepath.stem
 
         # Try to extract date from filename (e.g., ll_131_..._jan12.md)
-        date_match = re.search(r"jan(\d+)", lesson_id, re.IGNORECASE)
+        # Use negative lookahead to only match 1-2 digit days, not years like jan2026
+        date_match = re.search(r"jan(\d{1,2})(?!\d)", lesson_id, re.IGNORECASE)
         if date_match:
             day = int(date_match.group(1))
             year = 2026
