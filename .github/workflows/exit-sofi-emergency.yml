@@ -1,0 +1,181 @@
+name: Emergency SOFI Exit
+
+# CEO DIRECTIVE: "Exit SOFI before Jan 23 earnings blackout"
+# CLAUDE.md: "SOFI | AVOID until Feb 1 | Jan 23-30 (earnings Jan 30, IV 55%)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type 'CONFIRM' to execute"
+        required: true
+        default: ""
+      dry_run:
+        description: "Dry run only (no actual trades)"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+jobs:
+  exit-sofi:
+    name: Exit All SOFI Positions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Validate Confirmation
+        if: ${{ github.event.inputs.confirm != 'CONFIRM' }}
+        run: |
+          echo "ERROR: Must type 'CONFIRM' to execute"
+          echo "This is a safety measure to prevent accidental execution"
+          exit 1
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install alpaca-py requests
+
+      - name: Exit All SOFI Positions
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          from datetime import datetime
+          from alpaca.trading.client import TradingClient
+          from alpaca.trading.requests import MarketOrderRequest
+          from alpaca.trading.enums import OrderSide, TimeInForce
+
+          api_key = os.environ['ALPACA_API_KEY']
+          secret_key = os.environ['ALPACA_SECRET_KEY']
+          dry_run = os.environ.get('DRY_RUN', 'false').lower() == 'true'
+
+          print("=" * 70)
+          print("EMERGENCY SOFI EXIT - RULE #1 PROTECTION")
+          print("=" * 70)
+          print(f"   Reason: SOFI earnings Jan 30, blackout starts Jan 23")
+          print(f"   Per CLAUDE.md: AVOID SOFI until Feb 1")
+          print(f"   Timestamp: {datetime.now().isoformat()}")
+          print(f"   Dry Run: {dry_run}")
+          print("=" * 70)
+
+          client = TradingClient(api_key, secret_key, paper=True)
+
+          # Get account status
+          account = client.get_account()
+          print(f"\nACCOUNT STATUS BEFORE:")
+          print(f"   Equity: ${float(account.equity):,.2f}")
+          print(f"   Cash: ${float(account.cash):,.2f}")
+          print(f"   Buying Power: ${float(account.buying_power):,.2f}")
+
+          # Get all positions
+          positions = client.get_all_positions()
+          sofi_positions = [p for p in positions if 'SOFI' in p.symbol.upper()]
+
+          if not sofi_positions:
+              print("\nNo SOFI positions found - nothing to exit")
+              exit(0)
+
+          print(f"\nSOFI POSITIONS FOUND: {len(sofi_positions)}")
+          total_pl = 0
+
+          for pos in sofi_positions:
+              pl = float(pos.unrealized_pl)
+              total_pl += pl
+              print(f"\n   {pos.symbol}:")
+              print(f"   - Qty: {pos.qty}")
+              print(f"   - Current Price: ${float(pos.current_price):.2f}")
+              print(f"   - Market Value: ${float(pos.market_value):,.2f}")
+              print(f"   - Unrealized P/L: ${pl:,.2f}")
+              print(f"   - Asset Class: {pos.asset_class}")
+
+          print(f"\n   TOTAL UNREALIZED P/L: ${total_pl:,.2f}")
+
+          # Check market
+          clock = client.get_clock()
+          print(f"\n   Market Open: {clock.is_open}")
+
+          if not clock.is_open:
+              print("\n   WARNING: Market is closed - positions will be queued for next open")
+
+          if dry_run:
+              print("\n" + "=" * 70)
+              print("DRY RUN - NO ACTUAL TRADES EXECUTED")
+              print("=" * 70)
+              exit(0)
+
+          # Exit positions - options first (to free collateral), then stock
+          # Sort so options come first
+          sofi_positions.sort(key=lambda p: 0 if len(p.symbol) > 10 else 1)
+
+          print("\n" + "=" * 70)
+          print("EXECUTING POSITION CLOSURES")
+          print("=" * 70)
+
+          results = []
+          for pos in sofi_positions:
+              print(f"\n   Closing {pos.symbol}...")
+              try:
+                  result = client.close_position(pos.symbol)
+                  status = "SUCCESS"
+                  order_id = result.id if hasattr(result, 'id') else 'closed'
+                  print(f"   ✅ Position closed - Order ID: {order_id}")
+                  results.append({"symbol": pos.symbol, "status": "SUCCESS", "order_id": order_id})
+              except Exception as e:
+                  print(f"   ❌ Error: {e}")
+                  results.append({"symbol": pos.symbol, "status": "FAILED", "error": str(e)})
+
+          # Final status
+          print("\n" + "=" * 70)
+          print("EXIT SUMMARY")
+          print("=" * 70)
+
+          success_count = sum(1 for r in results if r["status"] == "SUCCESS")
+          print(f"   Positions closed: {success_count}/{len(results)}")
+          print(f"   P/L locked in: ~${total_pl:,.2f}")
+
+          for r in results:
+              status_icon = "✅" if r["status"] == "SUCCESS" else "❌"
+              print(f"   {status_icon} {r['symbol']}: {r['status']}")
+
+          # Get updated account
+          account = client.get_account()
+          print(f"\nACCOUNT STATUS AFTER:")
+          print(f"   Equity: ${float(account.equity):,.2f}")
+          print(f"   Cash: ${float(account.cash):,.2f}")
+          print(f"   Buying Power: ${float(account.buying_power):,.2f}")
+
+          print("\n" + "=" * 70)
+          print("RULE #1 PROTECTION EXECUTED - CAPITAL PRESERVED")
+          print("=" * 70)
+          PYTHON_SCRIPT
+
+      - name: Sync State
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          # Trigger state sync
+          gh workflow run sync-alpaca-status.yml || echo "State sync will happen on schedule"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "EMERGENCY SOFI EXIT COMPLETE"
+          echo "=========================================="
+          echo "Reason: Earnings blackout protection"
+          echo "Per CLAUDE.md strategy mandate"
+          echo "=========================================="
