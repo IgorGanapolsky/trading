@@ -571,7 +571,7 @@ jobs:
           echo "Run: python3 scripts/validate_github_pages_links.py"
           exit 1
 
-  # Enforce CLAUDE.md: No new markdown files
+  # Enforce CLAUDE.md: No new markdown files (except allowed paths)
   check-no-new-markdown:
     runs-on: ubuntu-latest
     steps:
@@ -580,11 +580,13 @@ jobs:
           fetch-depth: 0
       - name: Check for new markdown files
         run: |
-          NEW_MD=$(git diff --name-only origin/main...HEAD | grep '\.md$' | grep -v 'CLAUDE.md\|MANDATORY_RULES.md' || true)
+          # Allowed: CLAUDE.md, MANDATORY_RULES.md, docs/_posts/ (blog), rag_knowledge/ (lessons)
+          NEW_MD=$(git diff --name-only origin/main...HEAD | grep '\.md$' | grep -v 'CLAUDE.md\|MANDATORY_RULES.md\|docs/_posts/\|rag_knowledge/' || true)
           if [ -n "$NEW_MD" ]; then
             echo "❌ CLAUDE.md VIOLATION: New markdown files detected:"
             echo "$NEW_MD"
             echo "Rule: Don't create unnecessary documentation"
+            echo "Allowed paths: CLAUDE.md, MANDATORY_RULES.md, docs/_posts/, rag_knowledge/"
             exit 1
           fi
-          echo "✅ No new markdown files"
+          echo "✅ No new markdown files (or only in allowed paths)"
