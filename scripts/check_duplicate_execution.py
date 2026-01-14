@@ -47,9 +47,15 @@ def main():
                     else:
                         last_dt = datetime.strptime(last_trade, "%Y-%m-%d")
 
-                    if last_dt.date() == today:
+                    # BUGFIX Jan 14, 2026: Also check total_trades_today > 0
+                    # The sync workflow sets last_trade_date even when no trades executed
+                    # This caused false-positive duplicate detection blocking ALL trades
+                    total_trades_today = data.get("trades", {}).get("total_trades_today", 0)
+                    if last_dt.date() == today and total_trades_today > 0:
                         skip = True
-                        reason = f"Trading already executed today at {last_dt.isoformat()}"
+                        reason = f"Trading already executed today ({total_trades_today} trades at {last_dt.isoformat()})"
+                    elif last_dt.date() == today and total_trades_today == 0:
+                        reason = f"Date sync'd today but no trades executed yet - proceeding"
                     else:
                         reason = f"Last trade was {last_dt.date()}, proceeding with today's trade"
                 except ValueError as e:
