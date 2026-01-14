@@ -12,7 +12,6 @@ alpha-vantage==2.3.1
 altair==6.0.0
 annotated-types==0.7.0
 anthropic==0.75.0
-arch==7.2.0
 anyio==4.12.0
 attrs==25.4.0
 beautifulsoup4==4.14.3
@@ -21,7 +20,6 @@ bracex==2.6
 cachetools==6.2.2
 certifi==2025.11.12
 cffi==2.0.0
-# chromadb REMOVED - Jan 7, 2026 CEO directive (unnecessary complexity)
 charset-normalizer==3.4.4
 click==8.3.1
 cloudpickle==3.1.2
@@ -34,9 +32,8 @@ defusedxml==0.7.1
 distro==1.9.0
 docstring-parser==0.17.0
 farama-notifications==0.0.4
-fastapi==0.115.0
 feedparser==6.0.12
-filelock==3.20.1
+filelock==3.20.3
 fonttools==4.61.0
 frozendict==2.4.7
 frozenlist==1.8.0
@@ -44,7 +41,7 @@ fsspec==2025.12.0
 gitdb==4.0.12
 gitpython==3.1.45
 google-ai-generativelanguage==0.6.15
-google-api-core[grpc]==2.28.1
+google-api-core==2.28.1
 google-api-python-client==2.187.0
 google-auth==2.41.1
 google-auth-httplib2==0.3.0
@@ -72,7 +69,17 @@ jsonpointer==3.0.0
 jsonschema==4.25.1
 jsonschema-specifications==2025.9.1
 kiwisolver==1.4.9
-# LangChain/LangSmith REMOVED - Jan 9, 2026 CEO directive (not essential for trading)
+langchain==1.2.4
+langchain-anthropic==1.3.1
+langchain-classic==1.0.1
+langchain-community==0.4.1
+langchain-core==1.2.7
+langchain-text-splitters==1.1.0
+langgraph==1.0.6
+langgraph-checkpoint==4.0.0
+langgraph-prebuilt==1.0.6
+langgraph-sdk==0.3.3
+langsmith==0.6.3
 loguru==0.7.3
 lxml==6.0.2
 markupsafe==3.0.3
@@ -142,7 +149,6 @@ six==1.17.0
 slack-sdk==3.39.0
 smmap==5.0.2
 sniffio==1.3.1
-slowapi==0.1.9  # Rate limiting for FastAPI (security - Jan 10, 2026)
 soupsieve==2.8
 sqlalchemy==2.0.44
 sseclient-py==1.8.0
@@ -163,7 +169,6 @@ tzdata==2025.2
 update-checker==0.18.0
 uritemplate==4.2.0
 urllib3==2.6.3
-uvicorn==0.34.0
 uuid-utils==0.12.0
 vadersentiment==3.3.2
 watchdog==6.0.0
@@ -174,6 +179,4 @@ xxhash==3.6.0
 yarl==1.22.0
 yfinance==0.2.58
 youtube-transcript-api==1.2.3
-yt-dlp>=2024.10.0
 zstandard==0.23.0
-google-cloud-aiplatform>=1.38.0
