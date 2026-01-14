@@ -81,7 +81,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements-minimal.txt  # Faster CI - skip unused PyTorch/transformers
           pip install pytest pytest-cov pytest-timeout
       - name: Run unit tests with coverage
         # Coverage threshold: Start at 15%, increase as tests are added
