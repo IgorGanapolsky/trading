@@ -2,7 +2,7 @@
   "meta": {
     "version": "2.0",
     "created": "2025-11-05",
-    "last_updated": "2026-01-12",
+    "last_updated": "2026-01-14",
     "description": "CSP Strategy Watchlist - Stocks for cash-secured puts with $5K capital"
   },
   "current_holdings": [],
@@ -29,7 +29,8 @@
       "date_added": "2026-01-12",
       "rationale": "$5 strike CSPs need only $500 collateral, fintech growth, high IV",
       "priority": "high",
-      "status": "active",
+      "status": "blackout",
+      "blackout_reason": "Earnings Jan 30, 2026 - avoid until Feb 1",
       "csp_strategy": {
         "target_strike": 5.0,
         "collateral_needed": 500,
