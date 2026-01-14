@@ -63,6 +63,8 @@ class RejectionReason(Enum):
     )
     EARNINGS_BLACKOUT = "Ticker is in earnings blackout period - avoid new positions"
     POSITION_SIZE_TOO_LARGE = "Position max loss exceeds 10% of portfolio"
+    TICKER_NOT_ALLOWED = "Ticker not in whitelist - only SPY/IWM allowed per CLAUDE.md"
+    FORBIDDEN_STRATEGY = "Strategy is forbidden - naked positions not allowed"
 
 
 @dataclass
@@ -153,9 +155,25 @@ class TradeGateway:
         "covered_call",
         "cash_secured_put",
         "strangle_short",
-        "naked_put",
+        # REMOVED: "naked_put" - NO NAKED PUTS per CLAUDE.md (Jan 14, 2026)
     }
     MIN_IV_RANK_FOR_CREDIT = 20  # Minimum IV Rank for premium selling
+
+    # ============================================================
+    # TICKER WHITELIST - CRITICAL ENFORCEMENT (Jan 14, 2026)
+    # Per CLAUDE.md: "CREDIT SPREADS on SPY/IWM ONLY"
+    # This prevents trades like SOFI that violated strategy
+    # ============================================================
+    ALLOWED_TICKERS = {"SPY", "IWM"}  # ONLY these tickers allowed
+    TICKER_WHITELIST_ENABLED = True  # Toggle for paper testing
+
+    # FORBIDDEN strategies - will be rejected outright
+    FORBIDDEN_STRATEGIES = {
+        "naked_put",  # NO NAKED PUTS - must use spreads
+        "naked_call",  # NO NAKED CALLS
+        "short_straddle",  # Undefined risk
+        "short_strangle",  # Undefined risk without wings
+    }
 
     # Liquidity check - options with wide spreads destroy alpha on fill
     MAX_BID_ASK_SPREAD_PCT = 0.05  # 5% maximum bid-ask spread
@@ -419,6 +437,43 @@ class TradeGateway:
                 "trade_type": "short_option" if request.is_option else "buy",
                 "action_required": "Close losing positions or wait for recovery",
                 "psychology_reminder": "Professional Losing: Exit objectively, never hope and pray",
+            }
+
+        # ============================================================
+        # CHECK 0.3: TICKER WHITELIST (Jan 14, 2026 - LL-192)
+        # CLAUDE.md: "CREDIT SPREADS on SPY/IWM ONLY"
+        # This would have prevented the $40.74 SOFI loss
+        # ============================================================
+        if self.TICKER_WHITELIST_ENABLED:
+            underlying = self._get_underlying_symbol(request.symbol)
+            if underlying not in self.ALLOWED_TICKERS:
+                rejection_reasons.append(RejectionReason.TICKER_NOT_ALLOWED)
+                logger.warning(
+                    f"🛑 TICKER BLOCKED: {underlying} not in whitelist {self.ALLOWED_TICKERS}. "
+                    f"Per CLAUDE.md: SPY/IWM ONLY!"
+                )
+                risk_score += 1.0  # Maximum risk - hard block
+                metadata["ticker_whitelist_violation"] = {
+                    "ticker": underlying,
+                    "allowed": list(self.ALLOWED_TICKERS),
+                    "rule": "CLAUDE.md: CREDIT SPREADS on SPY/IWM ONLY",
+                }
+
+        # ============================================================
+        # CHECK 0.4: FORBIDDEN STRATEGIES (Jan 14, 2026 - LL-192)
+        # NO naked puts/calls - must use defined-risk spreads
+        # ============================================================
+        if request.strategy_type and request.strategy_type in self.FORBIDDEN_STRATEGIES:
+            rejection_reasons.append(RejectionReason.FORBIDDEN_STRATEGY)
+            logger.warning(
+                f"🛑 STRATEGY BLOCKED: '{request.strategy_type}' is FORBIDDEN. "
+                f"Use spreads for defined risk!"
+            )
+            risk_score += 1.0  # Maximum risk - hard block
+            metadata["forbidden_strategy"] = {
+                "strategy": request.strategy_type,
+                "reason": "Naked positions have undefined risk",
+                "alternative": "Use bull_put_spread or bear_call_spread instead",
             }
 
         # ============================================================
@@ -1265,6 +1320,52 @@ if __name__ == "__main__":
     decision = gateway.stress_test(suicide_request)
     print(f"Approved: {decision.approved}")
     print(f"Rejections: {[r.value for r in decision.rejection_reasons]}")
+
+    # Test NEW: Ticker whitelist - SOFI should be BLOCKED
+    print("\n--- Test NEW: SOFI Trade (Should be BLOCKED) ---")
+    sofi_request = TradeRequest(
+        symbol="SOFI",
+        side="buy",
+        notional=100,
+        strategy_type="cash_secured_put",
+    )
+    decision = gateway.evaluate(sofi_request)
+    print(f"Approved: {decision.approved}")
+    print(f"Rejections: {[r.value for r in decision.rejection_reasons]}")
+    assert not decision.approved, "SOFI should be BLOCKED by ticker whitelist!"
+    print("✅ SOFI correctly blocked!")
+
+    # Test NEW: Naked put - should be BLOCKED
+    print("\n--- Test NEW: Naked Put Strategy (Should be BLOCKED) ---")
+    naked_put_request = TradeRequest(
+        symbol="SPY",
+        side="sell",
+        quantity=1,
+        strategy_type="naked_put",
+        is_option=True,
+    )
+    decision = gateway.evaluate(naked_put_request)
+    print(f"Approved: {decision.approved}")
+    print(f"Rejections: {[r.value for r in decision.rejection_reasons]}")
+    assert not decision.approved, "Naked put should be BLOCKED!"
+    print("✅ Naked put correctly blocked!")
+
+    # Test NEW: SPY credit spread - should be ALLOWED (if P/L positive)
+    print("\n--- Test NEW: SPY Credit Spread (Should be ALLOWED if P/L >= 0) ---")
+    spy_spread_request = TradeRequest(
+        symbol="SPY",
+        side="sell",
+        quantity=1,
+        strategy_type="bull_put_spread",
+        is_option=True,
+        iv_rank=50.0,  # Good IV
+    )
+    decision = gateway.evaluate(spy_spread_request)
+    print(f"Approved: {decision.approved}")
+    if not decision.approved:
+        print(f"Rejections: {[r.value for r in decision.rejection_reasons]}")
+    else:
+        print("✅ SPY spread correctly allowed!")
 
     # Test 2: Normal trade
     print("\n--- Test 2: Normal Trade ($100 SPY) ---")
