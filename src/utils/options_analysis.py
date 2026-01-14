@@ -499,8 +499,10 @@ def validate_delta_theta_ratio(
     warnings = []
 
     # Use absolute values for calculation
-    abs_delta = abs(delta) * 100  # Convert to dollars per $1 move
-    abs_theta = abs(theta)  # Already in dollars per day
+    # Both delta and theta are per-share, so the 100x multiplier cancels out
+    # Delta 0.45 / Theta 0.10 = 4.5 ratio (per Giannino's example)
+    abs_delta = abs(delta)
+    abs_theta = abs(theta)
 
     # Calculate ratio
     ratio = abs_delta / abs_theta if abs_theta > 0 else float("inf")
