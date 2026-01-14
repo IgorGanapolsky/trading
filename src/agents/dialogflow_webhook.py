@@ -12,6 +12,7 @@ Version History:
 - v3.1.0 Jan 13, 2026: Fix analytical queries - WHY questions route to RAG not status
 - v3.2.0 Jan 13, 2026: Add CI status check to readiness assessment (CEO directive)
 - v3.3.0 Jan 13, 2026: Fix direct P/L queries - conversational "How much money" answers
+- v3.4.0 Jan 14, 2026: Fix stale P/L data - use GitHub API instead of raw URL (bypass CDN cache)
 
 Architecture (v3.0.0):
 - Primary: Vertex AI RAG (cloud semantic search with text-embedding-004)
@@ -68,7 +69,7 @@ WEBHOOK_AUTH_TOKEN = os.environ.get("DIALOGFLOW_WEBHOOK_TOKEN", "")
 app = FastAPI(
     title="Trading AI RAG Webhook",
     description="Dialogflow CX webhook for lessons AND trade history queries",
-    version="3.3.0",  # Fix direct P/L queries - conversational answers
+    version="3.4.0",  # Fix stale P/L data - use GitHub API instead of raw URL
 )
 
 # Initialize rate limiter if available
@@ -189,19 +190,33 @@ def get_current_portfolio_status() -> dict:
     except Exception as e:
         logger.warning(f"Failed to read local system state: {e}")
 
-    # Fallback: Fetch from GitHub if local file unavailable
+    # Fallback: Fetch from GitHub API if local file unavailable
+    # Use GitHub API v3 instead of raw URL to bypass CDN caching (fixes stale data issue)
     if not state:
         try:
+            import base64
             import urllib.request
 
-            github_url = "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/system_state.json"
+            # GitHub API v3 endpoint - provides fresh data, no CDN caching
+            github_url = "https://api.github.com/repos/IgorGanapolsky/trading/contents/data/system_state.json"
+            req = urllib.request.Request(
+                github_url,
+                headers={
+                    "Accept": "application/vnd.github.v3+json",
+                    "User-Agent": "TradingBot/1.0",
+                },
+            )
             # Security: Use verified SSL context (fixes MitM vulnerability)
             ssl_context = ssl.create_default_context()
-            with urllib.request.urlopen(github_url, timeout=5, context=ssl_context) as response:
-                state = json.loads(response.read().decode("utf-8"))
-            logger.info("Loaded portfolio from GitHub system_state.json")
+            with urllib.request.urlopen(req, timeout=5, context=ssl_context) as response:
+                api_response = json.loads(response.read().decode("utf-8"))
+                # GitHub API returns base64-encoded content
+                content_b64 = api_response.get("content", "")
+                content = base64.b64decode(content_b64).decode("utf-8")
+                state = json.loads(content)
+            logger.info("Loaded portfolio from GitHub API (fresh data)")
         except Exception as e:
-            logger.warning(f"Failed to fetch from GitHub: {e}")
+            logger.warning(f"Failed to fetch from GitHub API: {e}")
 
     if not state:
         return {}
@@ -578,20 +593,34 @@ def assess_trading_readiness(
     except Exception as e:
         logger.warning(f"Failed to read local system state: {e}")
 
-    # Fallback to GitHub if local not available
+    # Fallback to GitHub API if local not available
+    # Use GitHub API v3 instead of raw URL to bypass CDN caching (fixes stale data issue)
     if state is None:
         try:
+            import base64
             import urllib.request
 
-            github_url = "https://raw.githubusercontent.com/IgorGanapolsky/trading/main/data/system_state.json"
+            # GitHub API v3 endpoint - provides fresh data, no CDN caching
+            github_url = "https://api.github.com/repos/IgorGanapolsky/trading/contents/data/system_state.json"
+            req = urllib.request.Request(
+                github_url,
+                headers={
+                    "Accept": "application/vnd.github.v3+json",
+                    "User-Agent": "TradingBot/1.0",
+                },
+            )
             # Security: Use verified SSL context (fixes MitM vulnerability)
             ssl_context = ssl.create_default_context()
-            with urllib.request.urlopen(github_url, timeout=5, context=ssl_context) as response:
-                state = json.loads(response.read().decode("utf-8"))
-            checks.append("System state loaded (GitHub)")
+            with urllib.request.urlopen(req, timeout=5, context=ssl_context) as response:
+                api_response = json.loads(response.read().decode("utf-8"))
+                # GitHub API returns base64-encoded content
+                content_b64 = api_response.get("content", "")
+                content = base64.b64decode(content_b64).decode("utf-8")
+                state = json.loads(content)
+            checks.append("System state loaded (GitHub API)")
             score += 10
         except Exception as e:
-            warnings.append(f"System state not found (local or GitHub): {str(e)[:30]}")
+            warnings.append(f"System state not found (local or GitHub API): {str(e)[:30]}")
 
     # Check state freshness
     if state:
@@ -1322,7 +1351,7 @@ async def root():
     trade_count = len(query_trades("all", limit=1000))
     return {
         "service": "Trading AI RAG Webhook",
-        "version": "3.0.0",  # Vertex AI RAG integration (semantic search)
+        "version": "3.4.0",  # Fix stale P/L data - use GitHub API instead of raw URL
         "vertex_ai_rag_enabled": vertex_rag is not None,
         "local_lessons_loaded": len(local_rag.lessons),
         "trades_loaded": trade_count,
