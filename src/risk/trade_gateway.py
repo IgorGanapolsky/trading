@@ -161,11 +161,13 @@ class TradeGateway:
     MAX_BID_ASK_SPREAD_PCT = 0.05  # 5% maximum bid-ask spread
 
     # Earnings blackout calendar (Jan 2026)
-    # Don't open NEW positions 7 days before earnings through 1 day after
+    # UPDATED Jan 14, 2026 (LL-191): Extended from 7 to 30 days before earnings
+    # Don't open NEW positions 30 days before earnings through 1 day after
     # LL-190: SOFI CSP was opened during blackout - caused 48% portfolio risk
+    # LL-191: SOFI position still open despite strategy saying "AVOID until Feb 1"
     EARNINGS_BLACKOUTS = {
-        "SOFI": {"start": "2026-01-23", "end": "2026-02-01", "earnings": "2026-01-30"},
-        "F": {"start": "2026-02-03", "end": "2026-02-11", "earnings": "2026-02-10"},
+        "SOFI": {"start": "2025-12-30", "end": "2026-02-01", "earnings": "2026-01-30"},  # 30 days before
+        "F": {"start": "2026-01-10", "end": "2026-02-11", "earnings": "2026-02-10"},  # 30 days before
         # Add more tickers as needed
     }
 
