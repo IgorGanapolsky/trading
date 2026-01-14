@@ -1,0 +1,70 @@
+name: Emergency SOFI Exit
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run mode (preview only)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: write
+
+jobs:
+  exit-sofi:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install alpaca-py python-dotenv
+
+      - name: Execute SOFI Exit
+        env:
+          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          echo "🚨 EMERGENCY SOFI EXIT - Earnings Blackout Protection"
+          echo "Date: $(date)"
+          echo "Mode: ${{ github.event.inputs.dry_run == 'true' && 'DRY RUN' || 'LIVE EXECUTION' }}"
+          echo "==============================================="
+
+          if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
+            python3 scripts/exit_sofi_positions.py --dry-run
+          else
+            python3 scripts/exit_sofi_positions.py
+          fi
+
+      - name: Sync Portfolio State
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 -m pip install requests
+          python3 scripts/sync_alpaca_state.py || echo "Sync had issues"
+
+      - name: Commit Results
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/ || true
+          git commit -m "fix(trading): Emergency SOFI exit - earnings blackout protection" || true
+          git push || echo "Push failed"
