@@ -1,0 +1,16 @@
+{
+  "date": "2026-01-15",
+  "entry_time": "10:15 AM ET",
+  "ticker": "SPY",
+  "strategy": "put_credit_spread",
+  "spread_width": 2,
+  "collateral": 200,
+  "delta": 30,
+  "dte": "0-7",
+  "target_profit_pct": 15,
+  "stop_loss_pct": 25,
+  "max_loss": 50,
+  "expected_premium": 25,
+  "approved_by": "CEO",
+  "rationale": "Small position, tight stop, SPY only per CLAUDE.md"
+}
