@@ -613,7 +613,10 @@ class TestPortfolioStatusFunction:
                 # GitHub URL should have been called
                 mock_urlopen.assert_called()
                 call_args = mock_urlopen.call_args
-                assert "github.com" in str(call_args) or "githubusercontent" in str(call_args)
+                # Extract the Request object and get the actual URL
+                request_obj = call_args[0][0]
+                url = request_obj.full_url if hasattr(request_obj, 'full_url') else request_obj.get_full_url()
+                assert "github.com" in url or "githubusercontent" in url, f"Expected GitHub URL, got: {url}"
 
     def test_get_current_portfolio_status_returns_empty_on_all_failures(self):
         """Test that empty dict is returned when both local and GitHub fail."""
