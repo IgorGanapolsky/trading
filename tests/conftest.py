@@ -7,8 +7,24 @@ to prevent CI failures from hanging tests or memory leaks.
 
 import asyncio
 import gc
+from unittest.mock import MagicMock, patch
 
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def mock_trade_gateway_rag():
+    """Global mock for TradeGateway's LessonsLearnedRAG.
+
+    This prevents RAG initialization failures in CI environments
+    where the RAG knowledge directory may not be properly set up.
+    Applied automatically to all tests.
+    """
+    with patch("src.risk.trade_gateway.LessonsLearnedRAG") as mock_rag_class:
+        mock_rag_instance = MagicMock()
+        mock_rag_instance.query.return_value = []
+        mock_rag_class.return_value = mock_rag_instance
+        yield mock_rag_instance
 
 
 @pytest.fixture(scope="function")
