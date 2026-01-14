@@ -1,0 +1,82 @@
+name: Daily VOO Buy (Buffett Strategy)
+
+on:
+  schedule:
+    # Run at 10:30 AM ET (after market opens, after options trade)
+    - cron: '30 15 * * 1-5'  # 15:30 UTC = 10:30 AM ET
+  workflow_dispatch:  # Manual trigger
+
+env:
+  ALPACA_API_KEY: ${{ secrets.ALPACA_BROKERAGE_API_KEY }}
+  ALPACA_API_SECRET: ${{ secrets.ALPACA_BROKERAGE_API_SECRET }}
+
+jobs:
+  buy-voo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install requests
+      
+      - name: Buy VOO (90% of available cash)
+        run: |
+          python3 << 'PYTHON'
+import os
+import requests
+import json
+
+API_KEY = os.environ.get('ALPACA_API_KEY')
+API_SECRET = os.environ.get('ALPACA_API_SECRET')
+BASE_URL = 'https://api.alpaca.markets'  # Live trading
+
+headers = {
+    'APCA-API-KEY-ID': API_KEY,
+    'APCA-API-SECRET-KEY': API_SECRET
+}
+
+# Get account info
+account = requests.get(f'{BASE_URL}/v2/account', headers=headers).json()
+cash = float(account.get('cash', 0))
+print(f"Account cash: ${cash:.2f}")
+
+# Calculate VOO buy amount (90% of cash, minimum $1)
+buy_amount = cash * 0.90
+if buy_amount < 1:
+    print("Not enough cash to buy VOO (need at least $1)")
+    exit(0)
+
+# Get VOO price
+quote = requests.get(f'{BASE_URL}/v2/stocks/VOO/quotes/latest', headers=headers).json()
+voo_price = float(quote.get('quote', {}).get('ap', 500))  # Ask price
+print(f"VOO price: ${voo_price:.2f}")
+
+# Place fractional share order
+order = {
+    'symbol': 'VOO',
+    'notional': round(buy_amount, 2),  # Dollar amount
+    'side': 'buy',
+    'type': 'market',
+    'time_in_force': 'day'
+}
+
+print(f"Placing order: Buy ${buy_amount:.2f} of VOO")
+response = requests.post(f'{BASE_URL}/v2/orders', headers=headers, json=order)
+
+if response.status_code == 200:
+    result = response.json()
+    print(f"✅ Order placed: {result.get('id')}")
+    print(f"   Status: {result.get('status')}")
+else:
+    print(f"❌ Order failed: {response.text}")
+PYTHON
+
+      - name: Log result
+        run: |
+          echo "VOO buy attempt completed at $(date)"
