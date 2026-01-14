@@ -124,8 +124,9 @@ class TradeGateway:
     """
 
     # Risk limits (HARD CODED - cannot be bypassed)
-    # UPDATED Dec 11, 2025: Increased from 15% to 25% for conviction trades
-    MAX_SYMBOL_ALLOCATION_PCT = 0.25  # 25% max per symbol (was 15%)
+    # UPDATED Jan 14, 2026: Reduced to 2% per INDUSTRY BEST PRACTICE research
+    # Previous: 25% per symbol (Dec 11) - TOO HIGH, caused SOFI 96% allocation
+    MAX_SYMBOL_ALLOCATION_PCT = 0.10  # 10% max per symbol (conservative)
     MAX_CORRELATION_THRESHOLD = 0.80  # 80% correlation threshold
     MAX_TRADES_PER_HOUR = 5  # Frequency limit
     MIN_TRADE_BATCH = (
@@ -134,8 +135,9 @@ class TradeGateway:
     MIN_TRADE_BATCH_LIVE = 50.0  # $50 for live trading - fee protection
     MAX_DAILY_LOSS_PCT = 0.03  # 3% max daily loss
     MAX_DRAWDOWN_PCT = 0.10  # 10% max drawdown
-    MAX_RISK_PER_TRADE_PCT = 0.01  # 1% max risk to equity per trade (NEW)
+    MAX_RISK_PER_TRADE_PCT = 0.02  # 2% max risk per trade - INDUSTRY STANDARD (was 1%)
     MAX_RISK_SCORE = 0.75  # Risk score threshold
+    MIN_CASH_RESERVE_PCT = 0.50  # 50% cash reserve minimum (NEW Jan 14, 2026)
 
     # Correlation matrix for common holdings (simplified)
     # In production, this would be calculated dynamically
@@ -408,12 +410,11 @@ class TradeGateway:
         positions = self._get_positions()
 
         # ============================================================
-        # CHECK 0: ZERO TOLERANCE - Block trading when P/L is negative
-        # Phil Town Rule #1: Don't lose money
-        # Block ALL risk-increasing trades:
-        #   - BUY orders (buying stock/calls = increases exposure)
-        #   - SELL orders on options when opening short positions (short puts = increases risk)
-        # Only allow: SELL orders that CLOSE existing positions
+        # CHECK 0: DAILY LOSS LIMIT - Block trading when daily loss exceeds 5%
+        # Phil Town Rule #1: Don't lose money - enforced via daily limit, not total P/L
+        # FIXED Jan 14, 2026 (LL-205): Previous logic blocked ALL trades when total P/L
+        # was negative, making recovery impossible. Now uses daily loss limit only.
+        # This allows recovery trading while still protecting against runaway losses.
         # ============================================================
         total_pl = self._get_total_pl()
         is_risk_increasing = (
@@ -421,22 +422,37 @@ class TradeGateway:
             or (request.is_option and request.side.lower() == "sell")  # Short puts/calls
         )
 
-        if is_risk_increasing and total_pl < 0:
+        # ONLY block if DAILY loss exceeds limit - not total P/L
+        # This allows trading to recover from previous losses
+        self._update_daily_pnl()
+        account_equity = self._get_account_equity()
+        daily_loss_limit = account_equity * self.MAX_DAILY_LOSS_PCT  # 5% default
+
+        if is_risk_increasing and self.daily_pnl < -daily_loss_limit:
             rejection_reasons.append(RejectionReason.PORTFOLIO_NEGATIVE_PL)
             logger.warning(
-                f"🛑 CIRCUIT BREAKER: Portfolio P/L is ${total_pl:.2f} (NEGATIVE). "
-                f"NO new risk-increasing trades until profitable. Phil Town Rule #1!"
-            )
-            logger.warning(
-                "💡 PROFESSIONAL LOSING (Bauer Secret #2): Exit objectively, don't 'hope and pray'"
+                f"🛑 DAILY LOSS LIMIT: Today's P/L is ${self.daily_pnl:.2f}, "
+                f"exceeds {self.MAX_DAILY_LOSS_PCT * 100}% limit (${-daily_loss_limit:.2f}). "
+                f"NO new trades until tomorrow. Phil Town Rule #1!"
             )
             risk_score += 1.0  # Maximum risk score - automatic rejection
-            metadata["zero_tolerance_breach"] = {
+            metadata["daily_loss_breach"] = {
+                "daily_pnl": self.daily_pnl,
+                "daily_limit": -daily_loss_limit,
                 "total_pl": total_pl,
-                "rule": "Phil Town Rule #1: Don't lose money",
-                "trade_type": "short_option" if request.is_option else "buy",
-                "action_required": "Close losing positions or wait for recovery",
-                "psychology_reminder": "Professional Losing: Exit objectively, never hope and pray",
+                "rule": "Phil Town Rule #1: Don't lose more than 5% per day",
+                "action_required": "Wait until tomorrow to trade again",
+            }
+        elif total_pl < 0:
+            # Log warning but DON'T block - allow recovery trading
+            logger.info(
+                f"📊 NOTE: Total P/L is ${total_pl:.2f} (negative), but daily loss "
+                f"${self.daily_pnl:.2f} is within limit. Allowing recovery trade."
+            )
+            metadata["recovery_trade_allowed"] = {
+                "total_pl": total_pl,
+                "daily_pnl": self.daily_pnl,
+                "reason": "Daily loss within limit - recovery trading permitted"
             }
 
         # ============================================================
