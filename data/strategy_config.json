@@ -1,0 +1,31 @@
+{
+  "strategy": "HYBRID",
+  "updated": "2026-01-14",
+  "approved_by": "CEO",
+  
+  "paper_account": {
+    "purpose": "Options trading practice",
+    "capital": 4959.26,
+    "strategy": "SPY credit spreads",
+    "position_size": "2% max ($100)",
+    "entry_time": "10:15 AM ET",
+    "goal": "Learn without losing real money"
+  },
+  
+  "real_brokerage": {
+    "purpose": "Wealth building (Buffett strategy)",
+    "deposits": "$25/day",
+    "allocation": {
+      "VOO": "90%",
+      "cash": "10%"
+    },
+    "strategy": "Buy and hold S&P 500",
+    "goal": "Build to $50K, then scale options"
+  },
+  
+  "milestones": {
+    "phase1": {"target": 25000, "action": "Continue VOO + paper options"},
+    "phase2": {"target": 50000, "action": "Start small real options"},
+    "phase3": {"target": 100000, "action": "$100/day becomes realistic"}
+  }
+}
