@@ -2,20 +2,36 @@
 
 CTO: Claude | CEO: Igor Ganapolsky
 
-## Strategy (Updated Jan 14, 2026 - CTO AUTONOMOUS REVISION)
-- **North Star**: $14-25/day (~$300-500/month = 6-10% monthly)
-- **Why revised**: Research confirms 0.2-0.5%/day max sustainable. VIX at 15 = low IV environment.
-- **Primary strategy**: CREDIT SPREADS - capital efficient, defined risk
-- **Primary targets**: SPY, IWM first (best liquidity), then F, T (avoid SOFI until Feb 1)
-- **Spread setup**: Sell 30-delta put, buy 20-delta put = ~$500 collateral, ~$60-80 premium
-- **Why 30-delta**: ATM violates Phil Town Rule #1 (no margin of safety). 30-delta = 70% win rate.
-- **Expiration**: 30-45 DTE (sweet spot for theta decay), close at 50% max profit
-- **Position limit**: 1 spread at a time initially (5% max risk per trade)
-- **Weekly target**: 1 spread x $70 x 70% win rate = ~$50/week = $10/day (floor)
-- **Stop-loss**: Close at 2x credit received OR 25% of spread width
-- **Risk management**: Max 1-2 concurrent spreads, never >5% account on single trade
-- **Paper trading phase**: 90 days to validate win rate before scaling
-- **Decision point**: After 30 trades with real data, adjust or continue
+## Strategy (Updated Jan 14, 2026 - RESEARCH-BACKED REVISION)
+- **North Star**: $150-250/month (3-5% monthly) - RESEARCH VALIDATED
+- **Why revised**: Deep research confirms 3-5% monthly is realistic for $5K accounts. 40%/month ($100/day) requires $40K+ capital.
+- **Current capital**: $4,959.26 | Loss: -$40.74 (-0.81%) | Lesson paid.
+- **Primary strategy**: CREDIT SPREADS on SPY/IWM ONLY - defined risk
+- **Spread setup**: Sell 30-delta put, buy 20-delta put = ~$500 collateral, ~$50-70 premium
+- **Why 30-delta**: 70% probability of profit. Margin of safety per Phil Town.
+- **Expiration**: 30-45 DTE, close at 50% max profit
+- **Position limit**: 1 spread at a time (5% max = $248 risk)
+- **Monthly target**: 3-4 spreads x $50 x 70% = $105-140/month (realistic)
+- **Stop-loss**: Close at 2x credit received OR 25% spread width
+- **Risk management**: NEVER more than 5% on single trade. NO NAKED PUTS.
+- **Paper phase**: 90 days to validate 70%+ win rate before scaling
+
+## Recovery Path (Research-Based)
+| Phase | Capital | Monthly Target | Timeline |
+|-------|---------|----------------|----------|
+| Now | $4,959 | $150-250 (3-5%) | Immediate |
+| +6mo | ~$6,500 | $195-325 | With $25/day deposits |
+| +12mo | ~$9,000 | $270-450 | Compounding |
+| +24mo | ~$15,000 | $450-750 | On track |
+| Goal | $40,000 | $2,000 ($100/day) | 3-4 years realistic |
+
+## MANDATORY Pre-Trade Checklist
+1. [ ] Is ticker SPY or IWM? (NO individual stocks until proven)
+2. [ ] Is position size ≤5% of account ($248)?
+3. [ ] Is it a SPREAD (not naked put)?
+4. [ ] Checked earnings calendar? (No blackout violations)
+5. [ ] 30-45 DTE expiration?
+6. [ ] Stop-loss defined before entry?
 
 ## Win Rate Tracking (Data-Driven)
 - Track every paper trade: entry, exit, P/L, win/loss
