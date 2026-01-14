@@ -7,14 +7,13 @@ on:
   workflow_dispatch:
     inputs:
       symbol:
-        description: "Underlying symbol (F, SOFI, T)"
+        description: "Underlying symbol (SPY/IWM per $100K success)"
         required: true
-        default: "SOFI"
+        default: "SPY"
         type: choice
         options:
-          - F
-          - SOFI
-          - T
+          - SPY
+          - IWM
       spread_width:
         description: "Spread width in dollars"
         required: true
@@ -49,7 +48,7 @@ jobs:
 
       - name: Execute Bull Put Credit Spread
         env:
-          INPUT_SYMBOL: ${{ inputs.symbol || 'SOFI' }}
+          INPUT_SYMBOL: ${{ inputs.symbol || 'SPY' }}
           INPUT_SPREAD_WIDTH: ${{ inputs.spread_width || '5' }}
           INPUT_QUANTITY: ${{ inputs.quantity || '1' }}
         run: |
@@ -63,7 +62,7 @@ jobs:
           from alpaca.data.requests import StockLatestQuoteRequest
 
           # Config from environment
-          symbol = os.environ.get("INPUT_SYMBOL", "SOFI")
+          symbol = os.environ.get("INPUT_SYMBOL", "SPY")
           spread_width = int(os.environ.get("INPUT_SPREAD_WIDTH", "5"))
           quantity = int(os.environ.get("INPUT_QUANTITY", "1"))
 
@@ -111,7 +110,7 @@ jobs:
           except Exception as e:
               print(f"Error getting quote: {e}")
               # Fallback prices
-              fallback = {"F": 10.0, "SOFI": 15.0, "T": 22.0}
+              fallback = {"SPY": 590.0, "IWM": 220.0, "F": 10.0, "SOFI": 15.0, "T": 22.0}
               current_price = fallback.get(symbol, 15.0)
               print(f"Using fallback price: ${current_price:.2f}")
 
