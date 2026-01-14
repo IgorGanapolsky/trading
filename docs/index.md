@@ -11,11 +11,13 @@ Building an autonomous AI trading system with Claude Opus 4.5.
 
 | Metric | Value |
 |--------|-------|
-| Paper Account | $5,017.76 |
-| Total P/L | +$17.76 (+0.36%) |
-| Open Positions | 2 (SOFI stock, SOFI put) |
+| Paper Account | $4,959.26 |
+| Total P/L | -$40.74 (-0.81%) |
+| Open Positions | 0 (All closed) |
 | Strategy | Credit Spreads |
-| North Star | $100/day after-tax |
+| North Star | $14-25/day (realistic) |
+
+**Jan 14 Update:** Emergency closed SOFI positions before Jan 30 earnings. Accepted -$65.58 daily loss to avoid potential -$800+ earnings risk.
 
 ## Strategy Evolution
 

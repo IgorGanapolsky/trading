@@ -26,6 +26,7 @@ defaults_og:
 
 # Build settings
 theme: minima
+permalink: /:year/:month/:day/:title/
 plugins:
   - jekyll-feed
   - jekyll-seo-tag
