@@ -29,9 +29,8 @@ def execute_pending_trades() -> dict:
     results = {"executed": [], "failed": [], "skipped": []}
 
     data_dir = Path("data")
-    today = datetime.now().strftime("%Y-%m-%d")
 
-    # Find pending trade files for today
+    # Find pending trade files
     pending_files = list(data_dir.glob("pending_trades_*.json"))
 
     if not pending_files:
