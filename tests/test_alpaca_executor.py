@@ -44,8 +44,12 @@ def mock_trade_gate():
 
     Tests should not be blocked by the $0 equity safety check (ll_051).
     The function is imported at runtime inside place_order(), so we patch at source.
+    Must return a GateResult object with approved=True, not None.
     """
-    with patch("src.safety.mandatory_trade_gate.validate_trade_mandatory", return_value=None):
+    from src.safety.mandatory_trade_gate import GateResult
+
+    mock_result = GateResult(approved=True, reason="Test mock - approved")
+    with patch("src.safety.mandatory_trade_gate.validate_trade_mandatory", return_value=mock_result):
         yield
 
 
