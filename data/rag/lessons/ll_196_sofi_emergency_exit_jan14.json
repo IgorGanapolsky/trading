@@ -1,0 +1,75 @@
+{
+  "lesson_id": 196,
+  "date": "2026-01-14",
+  "category": "risk_management",
+  "severity": "CRITICAL",
+  "title": "Emergency SOFI Exit - Rule #1 Violations Caught and Fixed",
+  "summary": "CTO detected and fixed catastrophic Rule #1 violations before earnings announcement",
+  "context": {
+    "date": "2026-01-14",
+    "trigger": "CEO directive: 'People are losing money'",
+    "positions_before": {
+      "SOFI_stock": "24.75 shares",
+      "SOFI_put": "-2 contracts @ $24 strike, Feb 6 expiry",
+      "risk_exposure": "$4,800 (96% of account)",
+      "buying_power": "$16.34"
+    },
+    "positions_after": {
+      "SOFI_stock": "0",
+      "SOFI_put": "0",
+      "risk_exposure": "$0 (0%)",
+      "buying_power": "$9,918.52"
+    }
+  },
+  "violations_fixed": [
+    {
+      "rule": "Phil Town Rule #1 - Don't Lose Money",
+      "violation": "96% of account at risk on single ticker",
+      "fix": "Closed all positions, restored buying power"
+    },
+    {
+      "rule": "Position sizing (5% max per trade)",
+      "violation": "96% risk exposure",
+      "fix": "Reduced to 0% risk exposure"
+    },
+    {
+      "rule": "SOFI earnings blackout (avoid until Feb 1)",
+      "violation": "Held positions with Jan 30 earnings pending",
+      "fix": "Exited 16 days before earnings"
+    },
+    {
+      "rule": "Credit spreads not naked puts",
+      "violation": "Sold naked puts without protective put",
+      "fix": "Closed positions, will use proper spreads on SPY/IWM"
+    }
+  ],
+  "action_taken": {
+    "workflow": "emergency-sofi-exit.yml",
+    "method": "workflow_dispatch via GitHub API",
+    "result": "SUCCESS - all positions closed",
+    "p_l_realized": "-$40.74 (-0.81%)"
+  },
+  "lessons": [
+    "Always verify position sizing before opening trades (5% max)",
+    "Check earnings calendar BEFORE entering positions",
+    "Use credit spreads (defined risk) not naked puts (undefined risk)",
+    "Emergency exit workflow should exist for all tickers with earnings risk",
+    "CTO autonomy enabled rapid response to prevent larger losses"
+  ],
+  "prevention": {
+    "pre_trade_check": "Verify ticker not in earnings blackout period",
+    "position_limit": "Max 5% of account per position",
+    "strategy_validation": "Only 30-delta PUT SPREADS, not naked puts",
+    "ticker_priority": "SPY/IWM first (no earnings), then F/T with blackout checks"
+  },
+  "tags": [
+    "critical",
+    "risk_management",
+    "rule_1",
+    "earnings_blackout",
+    "sofi",
+    "emergency_exit",
+    "phil_town",
+    "lesson_learned"
+  ]
+}
