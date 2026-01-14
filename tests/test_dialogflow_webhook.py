@@ -88,8 +88,12 @@ class TestDialogflowWebhookIntegration:
 
     @pytest.fixture
     def mock_rag(self):
-        """Mock RAG system to avoid ChromaDB dependency."""
-        with patch("src.agents.dialogflow_webhook.rag") as mock:
+        """Mock RAG systems to avoid ChromaDB/Vertex AI dependency.
+
+        The dialogflow_webhook module uses local_rag (LessonsLearnedRAG) and vertex_rag.
+        We mock local_rag since that's the fallback used in CI (no GCP credentials).
+        """
+        with patch("src.agents.dialogflow_webhook.local_rag") as mock:
             mock.lessons = [{"id": "ll_001", "severity": "CRITICAL"}]
             mock.query.return_value = [
                 {
@@ -244,7 +248,7 @@ class TestDialogflowWebhookEdgeCases:
     @pytest.fixture
     def mock_rag_empty(self):
         """Mock RAG that returns empty results."""
-        with patch("src.agents.dialogflow_webhook.rag") as mock:
+        with patch("src.agents.dialogflow_webhook.local_rag") as mock:
             mock.lessons = []
             mock.query.return_value = []
             mock.get_critical_lessons.return_value = []
@@ -256,7 +260,7 @@ class TestDialogflowWebhookEdgeCases:
         from src.agents.dialogflow_webhook import app
 
         # Set up mock to return results on second call
-        with patch("src.agents.dialogflow_webhook.rag") as mock:
+        with patch("src.agents.dialogflow_webhook.local_rag") as mock:
             mock.lessons = []
             mock.query.return_value = [{"id": "ll_001", "severity": "INFO", "content": "Test"}]
 
@@ -273,7 +277,7 @@ class TestDialogflowWebhookEdgeCases:
 
     def test_webhook_fulfillment_tag(self):
         """Test extracting query from fulfillmentInfo.tag."""
-        with patch("src.agents.dialogflow_webhook.rag") as mock:
+        with patch("src.agents.dialogflow_webhook.local_rag") as mock:
             mock.lessons = []
             mock.query.return_value = [{"id": "ll_001", "severity": "INFO", "content": "Test"}]
 
@@ -293,7 +297,7 @@ class TestDialogflowWebhookEdgeCases:
 
     def test_webhook_fallback_search(self):
         """Test fallback to broader search when no results."""
-        with patch("src.agents.dialogflow_webhook.rag") as mock:
+        with patch("src.agents.dialogflow_webhook.local_rag") as mock:
             mock.lessons = []
             # First call returns empty, second call returns results
             mock.query.side_effect = [
@@ -317,7 +321,7 @@ class TestDialogflowWebhookEdgeCases:
 
     def test_webhook_error_handling(self):
         """Test error handling returns proper response."""
-        with patch("src.agents.dialogflow_webhook.rag") as mock:
+        with patch("src.agents.dialogflow_webhook.local_rag") as mock:
             mock.query.side_effect = Exception("Database error")
 
             from fastapi.testclient import TestClient
@@ -412,7 +416,7 @@ class TestTradeQueryFallbackBehavior:
 
         # Note: mock_state removed - using mock_portfolio return value instead
 
-        with patch("src.agents.dialogflow_webhook.rag") as mock_rag:
+        with patch("src.agents.dialogflow_webhook.local_rag") as mock_rag:
             mock_rag.lessons = []
             mock_rag.query.return_value = [
                 {"id": "ll_001", "severity": "INFO", "content": "Test lesson"}
@@ -463,7 +467,7 @@ class TestTradeQueryFallbackBehavior:
         """Verify P/L queries return trade history or portfolio status, not raw lessons."""
         from unittest.mock import patch
 
-        with patch("src.agents.dialogflow_webhook.rag") as mock_rag:
+        with patch("src.agents.dialogflow_webhook.local_rag") as mock_rag:
             mock_rag.lessons = []
             mock_rag.query.return_value = [
                 {"id": "ll_001", "severity": "INFO", "content": "Test lesson"}
@@ -920,7 +924,7 @@ class TestReadinessWebhookIntegration:
     @pytest.fixture
     def mock_rag(self):
         """Mock RAG system."""
-        with patch("src.agents.dialogflow_webhook.rag") as mock:
+        with patch("src.agents.dialogflow_webhook.local_rag") as mock:
             mock.lessons = []
             mock.query.return_value = []
             mock.get_critical_lessons.return_value = []

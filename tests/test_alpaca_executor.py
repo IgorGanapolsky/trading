@@ -38,13 +38,16 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def mock_trade_gate():
     """Mock mandatory trade gate to allow test trades.
 
     Tests should not be blocked by the $0 equity safety check (ll_051).
     The function is imported at runtime inside place_order(), so we patch at source.
     Must return a GateResult object with approved=True, not None.
+
+    NOTE: Not autouse - only apply to tests that need it.
+    TestPreTradePatternValidation needs the REAL trade gate to test blocking.
     """
     from src.safety.mandatory_trade_gate import GateResult
 
@@ -55,6 +58,7 @@ def mock_trade_gate():
         yield
 
 
+@pytest.mark.usefixtures("mock_trade_gate")
 class TestAlpacaExecutorInitialization:
     """Test AlpacaExecutor initialization and configuration."""
 
@@ -101,6 +105,7 @@ class TestAlpacaExecutorInitialization:
             assert executor.trader is None
 
 
+@pytest.mark.usefixtures("mock_trade_gate")
 class TestAccountEquityProperty:
     """Test account_equity property."""
 
@@ -135,6 +140,7 @@ class TestAccountEquityProperty:
             assert executor.account_equity == 50000.0
 
 
+@pytest.mark.usefixtures("mock_trade_gate")
 class TestSyncPortfolioState:
     """Test sync_portfolio_state() method."""
 
@@ -194,6 +200,7 @@ class TestSyncPortfolioState:
             assert "error" in executor.account_snapshot
 
 
+@pytest.mark.usefixtures("mock_trade_gate")
 class TestGetPositions:
     """Test get_positions() method."""
 
@@ -255,6 +262,7 @@ class TestGetPositions:
             assert positions[0]["qty"] == 15.0
 
 
+@pytest.mark.usefixtures("mock_trade_gate")
 class TestPlaceOrder:
     """Test place_order() method."""
 
@@ -319,6 +327,7 @@ class TestPlaceOrder:
                 assert order["status"] == "filled"
 
 
+@pytest.mark.usefixtures("mock_trade_gate")
 class TestSetStopLoss:
     """Test set_stop_loss() method."""
 
@@ -360,6 +369,7 @@ class TestSetStopLoss:
                 executor.set_stop_loss(symbol="AAPL", qty=10, stop_price=0)
 
 
+@pytest.mark.usefixtures("mock_trade_gate")
 class TestPlaceOrderWithStopLoss:
     """Test place_order_with_stop_loss() method."""
 
@@ -434,6 +444,7 @@ class TestPlaceOrderWithStopLoss:
                 assert result["stop_loss_pct"] <= MAX_STOP_LOSS_PCT
 
 
+@pytest.mark.usefixtures("mock_trade_gate")
 class TestEdgeCases:
     """Test edge cases and error scenarios."""
 
