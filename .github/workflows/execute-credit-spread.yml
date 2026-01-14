@@ -2,8 +2,10 @@ name: Execute Credit Spread
 
 on:
   schedule:
-    # Run at 9:35 AM ET on weekdays (covers EST/EDT)
-    - cron: '35 13,14 * * 1-5'
+    # Run at 10:15 AM ET on weekdays (OPTIMAL ENTRY TIME)
+    # Research shows 10:15 AM is optimal: opening volatility settled, better spreads
+    # Updated Jan 14, 2026: Changed from 9:35 AM to 10:15 AM (research-backed)
+    - cron: '15 14,15 * * 1-5'
   workflow_dispatch:
     inputs:
       symbol:

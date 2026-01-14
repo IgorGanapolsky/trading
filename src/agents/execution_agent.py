@@ -141,7 +141,7 @@ TIMING: WAIT_OPEN
 SLIPPAGE: 0.15%
 CONFIDENCE: 0.75
 RECOMMENDATION: DELAY
-(Market closed, queue order for 9:35 AM to avoid opening volatility)
+(Market closed, queue order for 10:15 AM to avoid opening volatility)
 
 Example 3 - Cancel:
 TIMING: N/A

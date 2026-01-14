@@ -7,8 +7,9 @@ name: Scheduled Close SOFI Positions
 
 on:
   schedule:
-    # Run at 9:35 AM ET (14:35 UTC) on Jan 14, 2026 - market open
-    - cron: '35 14 14 1 *'
+    # Run at 10:15 AM ET (15:15 UTC) on Jan 14, 2026 - market open
+    # Note: This is a one-time workflow for SOFI earnings protection
+    - cron: '15 15 14 1 *'
   workflow_dispatch:  # Manual trigger for testing
 
 permissions:

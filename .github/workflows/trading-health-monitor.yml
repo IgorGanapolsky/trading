@@ -5,7 +5,7 @@ name: Trading Health Monitor
 
 on:
   schedule:
-    # Run at 11:00 AM ET (after trading should have executed at 9:35 AM)
+    # Run at 11:00 AM ET (after trading should have executed at 10:15 AM)
     - cron: '0 16 * * 1-5'  # 16:00 UTC = 11:00 AM ET
   workflow_dispatch:
 

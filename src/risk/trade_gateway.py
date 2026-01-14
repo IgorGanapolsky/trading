@@ -178,6 +178,16 @@ class TradeGateway:
     # Liquidity check - options with wide spreads destroy alpha on fill
     MAX_BID_ASK_SPREAD_PCT = 0.05  # 5% maximum bid-ask spread
 
+    # Volatility-based position sizing (Jan 14, 2026)
+    # When volatility is high, reduce position size to limit risk
+    # When volatility is low, can use normal or slightly larger size
+    VOLATILITY_POSITION_SIZING_ENABLED = os.getenv(
+        "VOLATILITY_POSITION_SIZING_ENABLED", "true"
+    ).lower() == "true"
+    VOLATILITY_MIN_MULTIPLIER = 0.5  # Minimum position size multiplier (50%)
+    VOLATILITY_MAX_MULTIPLIER = 1.5  # Maximum position size multiplier (150%)
+    VOLATILITY_LOOKBACK_DAYS = 20  # Days for average volatility calculation
+
     # Earnings blackout calendar (Jan 2026)
     # UPDATED Jan 14, 2026 (LL-191): Extended from 7 to 30 days before earnings
     # Don't open NEW positions 30 days before earnings through 1 day after
@@ -514,11 +524,30 @@ class TradeGateway:
             }
 
         # ============================================================
+        # CHECK 0.7: VOLATILITY-BASED POSITION SIZING (Jan 14, 2026)
+        # Adjust position size based on current vs average volatility
+        # High volatility = reduce position, Low volatility = normal/larger
+        # ============================================================
+        vol_multiplier, vol_metadata = self._calculate_volatility_adjustment(request.symbol)
+        metadata["volatility_adjustment"] = vol_metadata
+
+        # ============================================================
         # CHECK 1: Insufficient Funds
         # ============================================================
         trade_value = request.notional or (
             request.quantity * self._get_price(request.symbol) if request.quantity else 0
         )
+
+        # Apply volatility adjustment to trade value
+        original_trade_value = trade_value
+        if vol_multiplier != 1.0 and trade_value > 0:
+            trade_value = trade_value * vol_multiplier
+            logger.info(
+                f"📊 Position size adjusted: ${original_trade_value:.2f} -> ${trade_value:.2f} "
+                f"(volatility multiplier: {vol_multiplier:.2f})"
+            )
+            metadata["volatility_adjustment"]["original_trade_value"] = original_trade_value
+            metadata["volatility_adjustment"]["adjusted_trade_value"] = trade_value
 
         if request.side == "buy" and trade_value > account_equity * 0.95:
             rejection_reasons.append(RejectionReason.INSUFFICIENT_FUNDS)
@@ -875,12 +904,30 @@ class TradeGateway:
             approved = False
             logger.warning(f"❌ REJECTED: Risk score {risk_score:.2f} exceeds threshold")
 
+        # Calculate adjusted quantity if quantity was specified
+        adjusted_quantity = None
+        if approved and request.quantity is not None and vol_multiplier != 1.0:
+            adjusted_quantity = request.quantity * vol_multiplier
+            # Round to nearest whole number for shares
+            if not request.is_option:
+                adjusted_quantity = round(adjusted_quantity)
+            else:
+                # Options: round to nearest 0.01 (some brokers support fractional)
+                adjusted_quantity = round(adjusted_quantity, 2)
+            logger.info(
+                f"📊 Quantity adjusted: {request.quantity} -> {adjusted_quantity} "
+                f"(volatility multiplier: {vol_multiplier:.2f})"
+            )
+            metadata["volatility_adjustment"]["original_quantity"] = request.quantity
+            metadata["volatility_adjustment"]["adjusted_quantity"] = adjusted_quantity
+
         decision = GatewayDecision(
             approved=approved,
             request=request,
             rejection_reasons=rejection_reasons,
             warnings=warnings,
             risk_score=risk_score,
+            adjusted_quantity=adjusted_quantity,
             adjusted_notional=trade_value if approved else None,
             metadata=metadata,
         )
@@ -1297,6 +1344,157 @@ class TradeGateway:
             else:
                 return "MONITOR: Track position as blackout approaches"
 
+    # ============================================================
+    # VOLATILITY-BASED POSITION SIZING (Jan 14, 2026)
+    # ============================================================
+
+    def _get_current_volatility(self, symbol: str) -> float:
+        """
+        Get current volatility for a symbol.
+
+        Uses ATR (Average True Range) as a proxy for volatility.
+        Falls back to implied volatility if available.
+
+        Args:
+            symbol: Stock or ETF symbol
+
+        Returns:
+            Current volatility measure (ATR or IV percentage)
+        """
+        try:
+            # Try to get from executor/market data provider
+            if self.executor and hasattr(self.executor, "get_atr"):
+                atr = self.executor.get_atr(symbol, period=14)
+                if atr and atr > 0:
+                    return float(atr)
+
+            # Try IV if available (for options strategies)
+            if self.executor and hasattr(self.executor, "get_iv"):
+                iv = self.executor.get_iv(symbol)
+                if iv and iv > 0:
+                    return float(iv)
+
+            # Fallback: estimate from recent price movement
+            # This is a simplified calculation
+            price = self._get_price(symbol)
+            if price > 0:
+                # Default assumption: 2% daily volatility (annualized ~32%)
+                return price * 0.02
+
+        except Exception as e:
+            logger.warning(f"Failed to get current volatility for {symbol}: {e}")
+
+        # Default fallback
+        return 0.0
+
+    def _get_average_volatility(self, symbol: str, days: int = 20) -> float:
+        """
+        Get average historical volatility for a symbol.
+
+        Args:
+            symbol: Stock or ETF symbol
+            days: Number of days to average over
+
+        Returns:
+            Average volatility over the lookback period
+        """
+        try:
+            # Try to get historical ATR from executor
+            if self.executor and hasattr(self.executor, "get_historical_atr"):
+                avg_atr = self.executor.get_historical_atr(symbol, period=14, lookback=days)
+                if avg_atr and avg_atr > 0:
+                    return float(avg_atr)
+
+            # Try historical IV if available
+            if self.executor and hasattr(self.executor, "get_historical_iv"):
+                avg_iv = self.executor.get_historical_iv(symbol, lookback=days)
+                if avg_iv and avg_iv > 0:
+                    return float(avg_iv)
+
+            # Fallback: use a default based on symbol type
+            # SPY/IWM typically have lower vol than individual stocks
+            if symbol.upper() in ["SPY", "IWM", "QQQ"]:
+                return self._get_price(symbol) * 0.015  # ~1.5% daily for ETFs
+            else:
+                return self._get_price(symbol) * 0.025  # ~2.5% daily for stocks
+
+        except Exception as e:
+            logger.warning(f"Failed to get average volatility for {symbol}: {e}")
+
+        return 0.0
+
+    def _calculate_volatility_adjustment(
+        self, symbol: str
+    ) -> tuple[float, dict[str, Any]]:
+        """
+        Calculate position size adjustment based on current volatility.
+
+        Volatility-adjusted position sizing:
+        - When volatility is high (2x normal), cut position to 50%
+        - When volatility is low (0.5x normal), can use up to 150%
+
+        Args:
+            symbol: Stock or ETF symbol
+
+        Returns:
+            Tuple of (multiplier, metadata_dict)
+        """
+        if not self.VOLATILITY_POSITION_SIZING_ENABLED:
+            return 1.0, {"enabled": False}
+
+        current_vol = self._get_current_volatility(symbol)
+        avg_vol = self._get_average_volatility(symbol, self.VOLATILITY_LOOKBACK_DAYS)
+
+        # Avoid division by zero
+        if avg_vol <= 0:
+            logger.warning(
+                f"Average volatility is zero for {symbol}, skipping adjustment"
+            )
+            return 1.0, {
+                "enabled": True,
+                "skipped": True,
+                "reason": "avg_vol is zero",
+            }
+
+        vol_ratio = current_vol / avg_vol
+
+        # Calculate multiplier: inverse of vol ratio, capped
+        # High vol (ratio=2.0) -> multiplier=0.5 (reduce position)
+        # Low vol (ratio=0.5) -> multiplier=2.0, capped to 1.5 (slightly larger position)
+        # Normal vol (ratio=1.0) -> multiplier=1.0 (no change)
+        raw_multiplier = 1.0 / vol_ratio if vol_ratio > 0 else 1.0
+
+        # Apply caps
+        vol_multiplier = min(
+            self.VOLATILITY_MAX_MULTIPLIER,
+            max(self.VOLATILITY_MIN_MULTIPLIER, raw_multiplier),
+        )
+
+        metadata = {
+            "enabled": True,
+            "current_volatility": round(current_vol, 4),
+            "average_volatility": round(avg_vol, 4),
+            "vol_ratio": round(vol_ratio, 2),
+            "raw_multiplier": round(raw_multiplier, 2),
+            "applied_multiplier": round(vol_multiplier, 2),
+            "position_adjustment": f"{(vol_multiplier - 1) * 100:+.0f}%",
+        }
+
+        # Log significant adjustments
+        if abs(vol_multiplier - 1.0) > 0.1:  # More than 10% adjustment
+            if vol_multiplier < 1.0:
+                logger.info(
+                    f"📉 VOLATILITY ADJUSTMENT: {symbol} vol is {vol_ratio:.1f}x normal, "
+                    f"reducing position to {vol_multiplier * 100:.0f}%"
+                )
+            else:
+                logger.info(
+                    f"📈 VOLATILITY ADJUSTMENT: {symbol} vol is {vol_ratio:.1f}x normal, "
+                    f"position can be {vol_multiplier * 100:.0f}% of base"
+                )
+
+        return vol_multiplier, metadata
+
 
 def create_suicide_test() -> TradeRequest:
     """
@@ -1416,3 +1614,28 @@ if __name__ == "__main__":
     print(f"Approved: {decision.approved}")
     if not decision.approved:
         print(f"Rejections: {[r.value for r in decision.rejection_reasons]}")
+
+    # Test 5: Volatility-Based Position Sizing
+    print("\n--- Test 5: Volatility-Based Position Sizing ---")
+    vol_request = TradeRequest(
+        symbol="SPY",
+        side="buy",
+        notional=500,
+        strategy_type="bull_put_spread",
+    )
+    decision = gateway.evaluate(vol_request)
+    print(f"Approved: {decision.approved}")
+    vol_adj = decision.metadata.get("volatility_adjustment", {})
+    print(f"Volatility adjustment enabled: {vol_adj.get('enabled', False)}")
+    if vol_adj.get("enabled") and not vol_adj.get("skipped"):
+        print(f"  Current volatility: {vol_adj.get('current_volatility', 'N/A')}")
+        print(f"  Average volatility: {vol_adj.get('average_volatility', 'N/A')}")
+        print(f"  Vol ratio: {vol_adj.get('vol_ratio', 'N/A')}")
+        print(f"  Applied multiplier: {vol_adj.get('applied_multiplier', 'N/A')}")
+        print(f"  Position adjustment: {vol_adj.get('position_adjustment', 'N/A')}")
+        if "original_trade_value" in vol_adj:
+            print(
+                f"  Trade value: ${vol_adj.get('original_trade_value', 0):.2f} "
+                f"-> ${vol_adj.get('adjusted_trade_value', 0):.2f}"
+            )
+    print(f"Final adjusted notional: ${decision.adjusted_notional:.2f}" if decision.adjusted_notional else "")

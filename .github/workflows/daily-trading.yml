@@ -5,12 +5,13 @@ on:
     paths:
       - 'TRIGGER_TRADE.md'  # Push trigger for immediate trading
   schedule:
-    # Run every weekday at 9:35 AM Eastern
+    # Run every weekday at 10:15 AM Eastern (OPTIMAL ENTRY TIME)
+    # Research shows 10:15 AM is optimal: opening volatility settled, better spreads
     # AUTOMATIC DST HANDLING: Runs at both times to cover EST/EDT transitions
-    # EST (Nov-Mar): UTC-5 -> 9:35 AM ET = 14:35 UTC
-    # EDT (Mar-Nov): UTC-4 -> 9:35 AM ET = 13:35 UTC
-    # Run: python3 scripts/get_utc_time.py 9 35 1-5
-    - cron: '35 13,14 * * 1-5'   # 9:35 AM Eastern (covers both EST and EDT)
+    # EST (Nov-Mar): UTC-5 -> 10:15 AM ET = 15:15 UTC
+    # EDT (Mar-Nov): UTC-4 -> 10:15 AM ET = 14:15 UTC
+    # Updated Jan 14, 2026: Changed from 9:35 AM to 10:15 AM (research-backed)
+    - cron: '15 14,15 * * 1-5'   # 10:15 AM Eastern (covers both EST and EDT)
   workflow_dispatch:
     inputs:
       force_trade:

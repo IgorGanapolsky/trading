@@ -214,12 +214,12 @@ get_next_trading_day() {
     fi
 
     if [[ $days_to_add -eq 0 ]]; then
-        echo "TODAY $(TZ=America/New_York date '+%b %d'), 9:35 AM ET"
+        echo "TODAY $(TZ=America/New_York date '+%b %d'), 10:15 AM ET"
     else
         # Try macOS date first (-v), then GNU date (-d)
-        TZ=America/New_York date -v +${days_to_add}d '+%b %d, 9:35 AM ET' 2>/dev/null || \
-        TZ=America/New_York date -d "+${days_to_add} days" '+%b %d, 9:35 AM ET' 2>/dev/null || \
-        echo "Next weekday 9:35 AM ET"
+        TZ=America/New_York date -v +${days_to_add}d '+%b %d, 10:15 AM ET' 2>/dev/null || \
+        TZ=America/New_York date -d "+${days_to_add} days" '+%b %d, 10:15 AM ET' 2>/dev/null || \
+        echo "Next weekday 10:15 AM ET"
     fi
 }
 NEXT_TRADE=$(get_next_trading_day)

@@ -10,6 +10,52 @@ Ref: Investment strategy review - alignment audit
 """
 
 
+class EntryTiming:
+    """Optimal trade entry timing constants.
+
+    Research shows 10:15 AM is optimal because:
+    - Opening volatility has settled (first 30-45 min choppy)
+    - Better bid-ask spreads (liquidity improved)
+    - More reliable price action (trend direction clearer)
+
+    Updated Jan 14, 2026: Changed from 9:35 AM to 10:15 AM.
+    """
+
+    # Optimal entry time (research-backed)
+    OPTIMAL_ENTRY_TIME = "10:15"  # Research-backed optimal entry
+
+    # Entry window boundaries
+    ENTRY_WINDOW_START = "10:00"
+    ENTRY_WINDOW_END = "10:30"
+
+    # Legacy entry time (kept for reference)
+    LEGACY_ENTRY_TIME = "09:35"
+
+    @classmethod
+    def is_optimal_entry_window(cls) -> bool:
+        """Check if current time is in the optimal 10:00-10:30 AM entry window.
+
+        Returns:
+            True if current ET time is between 10:00 AM and 10:30 AM.
+        """
+        from datetime import datetime
+
+        try:
+            from pytz import timezone
+
+            eastern = timezone("US/Eastern")
+            now = datetime.now(eastern)
+        except ImportError:
+            # Fallback for environments without pytz
+            from zoneinfo import ZoneInfo
+
+            now = datetime.now(ZoneInfo("America/New_York"))
+
+        start = now.replace(hour=10, minute=0, second=0, microsecond=0)
+        end = now.replace(hour=10, minute=30, second=0, microsecond=0)
+        return start <= now <= end
+
+
 class IVThresholds:
     """Implied Volatility thresholds for premium selling strategies."""
 
@@ -142,6 +188,7 @@ class TargetSymbols:
 
 
 # Singleton access for easy importing
+ENTRY = EntryTiming
 IV = IVThresholds
 CAPITAL = CapitalThresholds
 SIZING = PositionSizing

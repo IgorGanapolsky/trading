@@ -35,11 +35,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Workflow schedules (expected execution times)
+# Updated Jan 14, 2026: Changed from 09:35 to 10:15 (optimal entry time)
 WORKFLOW_SCHEDULES = {
     "daily-trading": {
         "name": "Daily Trading Execution",
         "schedule": "weekdays",  # Mon-Fri
-        "time_et": "09:35",
+        "time_et": "10:15",  # Optimal entry time (research-backed)
         "critical": True,
     },
     "dashboard-update": {
@@ -112,7 +113,7 @@ class WorkflowHealthMonitor:
         """Calculate expected execution times for a workflow."""
         schedule = WORKFLOW_SCHEDULES.get(workflow_id, {})
         schedule_type = schedule.get("schedule", "")
-        time_et = schedule.get("time_et", "09:35")
+        time_et = schedule.get("time_et", "10:15")
 
         hour, minute = map(int, time_et.split(":"))
         expected = []

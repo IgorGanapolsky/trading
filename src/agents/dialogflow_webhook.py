@@ -780,7 +780,7 @@ def assess_trading_readiness(
                     if automation_fix_date == today_str:
                         # Fix applied but no trade yet - show warning not blocker
                         warnings.append(
-                            f"Fix applied today - awaiting 9:35 AM ET trade run "
+                            f"Fix applied today - awaiting 10:15 AM ET trade run "
                             f"(last trade: {last_trade_date})"
                         )
                         score += 10
@@ -810,11 +810,11 @@ def assess_trading_readiness(
                         # Add actionable diagnostics
                         diagnosis.append("**Likely Causes:**")
                         diagnosis.append(
-                            "  • Market hours: Trades only execute 9:35 AM ET on trading days"
+                            "  • Market hours: Trades only execute 10:15 AM ET on trading days"
                         )
                         diagnosis.append("  • Bug in trading logic: Check simple_daily_trader.py")
                         diagnosis.append("  • Alpaca API: Check GitHub Actions logs for API errors")
-                        diagnosis.append("**Action:** Monitor next 9:35 AM ET workflow run")
+                        diagnosis.append("**Action:** Monitor next 10:15 AM ET workflow run")
 
                         blockers.append("\n".join(diagnosis))
             except Exception:
