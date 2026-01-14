@@ -1439,7 +1439,630 @@
       },
       "indexed_at": "2026-01-11T13:21:47.237569",
       "size": 3888
+    },
+    "rag_knowledge/lessons_learned/ll_133_registry_fix_and_hygiene_jan12.md": {
+      "hash": "7ac250e04bda60556576f89fee3a3e54",
+      "metadata": {
+        "source": "ll_133_registry_fix_and_hygiene_jan12",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_133_registry_fix_and_hygiene_jan12.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.381797",
+      "size": 1697
+    },
+    "rag_knowledge/lessons_learned/ll_186_github_agent_hq_evaluation_jan13.md": {
+      "hash": "fa3063c2f2908a214a7f481491604844",
+      "metadata": {
+        "source": "ll_186_github_agent_hq_evaluation_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_186_github_agent_hq_evaluation_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.382222",
+      "size": 1812
+    },
+    "rag_knowledge/lessons_learned/ll_178_ceo_qa_session_jan13.md": {
+      "hash": "a35ef99a5ccc09f8b36736be2596730f",
+      "metadata": {
+        "source": "ll_178_ceo_qa_session_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_178_ceo_qa_session_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.382564",
+      "size": 1084
+    },
+    "rag_knowledge/lessons_learned/ll_190_sofi_blackout_violation_jan13.md": {
+      "hash": "41578fe35d51469ca5822b6ad3a8ad0f",
+      "metadata": {
+        "source": "ll_190_sofi_blackout_violation_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_190_sofi_blackout_violation_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.382884",
+      "size": 2123
+    },
+    "rag_knowledge/lessons_learned/ll_177_codebase_audit_jan13.md": {
+      "hash": "7443395086c6bc84838e728b618f7540",
+      "metadata": {
+        "source": "ll_177_codebase_audit_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_177_codebase_audit_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.383183",
+      "size": 1329
+    },
+    "rag_knowledge/lessons_learned/ll_166_dialogflow_vertex_ai_missing_jan13.md": {
+      "hash": "52f6b28101ed54dc21dd4f31c67954c0",
+      "metadata": {
+        "source": "ll_166_dialogflow_vertex_ai_missing_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_166_dialogflow_vertex_ai_missing_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.383467",
+      "size": 1589
+    },
+    "rag_knowledge/lessons_learned/ll_182_math_reality_check_jan13.md": {
+      "hash": "f83d3c2435bb701b38918e4c392098ee",
+      "metadata": {
+        "source": "ll_182_math_reality_check_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_182_math_reality_check_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.383777",
+      "size": 1868
+    },
+    "rag_knowledge/lessons_learned/ll_189_semantic_caching_evaluation_jan13.md": {
+      "hash": "c180a2bec472ac3a0a439f340f0e0e6d",
+      "metadata": {
+        "source": "ll_189_semantic_caching_evaluation_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_189_semantic_caching_evaluation_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.384136",
+      "size": 1507
+    },
+    "rag_knowledge/lessons_learned/ll_190_agentic_memory_paper_evaluation_jan13.md": {
+      "hash": "3a07d913564c40039bc79fec89efbef7",
+      "metadata": {
+        "source": "ll_190_agentic_memory_paper_evaluation_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_190_agentic_memory_paper_evaluation_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.384436",
+      "size": 1344
+    },
+    "rag_knowledge/lessons_learned/ll_143_investment_strategy_audit_jan12.md": {
+      "hash": "fc8ef60fae3c3dd957ffc84a087ce890",
+      "metadata": {
+        "source": "ll_143_investment_strategy_audit_jan12",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1",
+          "meaning"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_143_investment_strategy_audit_jan12.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.384768",
+      "size": 1963
+    },
+    "rag_knowledge/lessons_learned/ll_161_zero_options_buying_power_root_cause_jan13.md": {
+      "hash": "3ef83a82defd9d768da26d45522ec825",
+      "metadata": {
+        "source": "ll_161_zero_options_buying_power_root_cause_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_161_zero_options_buying_power_root_cause_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.385070",
+      "size": 1573
+    },
+    "rag_knowledge/lessons_learned/ll_163_sandbox_vs_github_api_access_jan12.md": {
+      "hash": "02dd6e9bc1265918d9bb3329bf5d4e8f",
+      "metadata": {
+        "source": "ll_163_sandbox_vs_github_api_access_jan12",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_163_sandbox_vs_github_api_access_jan12.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.385384",
+      "size": 1486
+    },
+    "rag_knowledge/lessons_learned/ll_175_trade_gateway_rule1_fix_jan13.md": {
+      "hash": "998ee635aecdd142bf14642a8bc67f6f",
+      "metadata": {
+        "source": "ll_175_trade_gateway_rule1_fix_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_175_trade_gateway_rule1_fix_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.385661",
+      "size": 1412
+    },
+    "rag_knowledge/lessons_learned/ll_154_tech_debt_audit_jan13.md": {
+      "hash": "20ebd76c4dd5f965aae380338b495a09",
+      "metadata": {
+        "source": "ll_154_tech_debt_audit_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_154_tech_debt_audit_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.385977",
+      "size": 2363
+    },
+    "rag_knowledge/lessons_learned/ll_135_investment_strategy_comprehensive_review_jan12.md": {
+      "hash": "f6465858579a83222dd3a176b839101f",
+      "metadata": {
+        "source": "ll_135_investment_strategy_comprehensive_review_jan12",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_135_investment_strategy_comprehensive_review_jan12.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.386279",
+      "size": 2297
+    },
+    "rag_knowledge/lessons_learned/ll_144_stale_order_threshold_fix_jan12.md": {
+      "hash": "224cb86dafd10849e7c126f7e8139fa5",
+      "metadata": {
+        "source": "ll_144_stale_order_threshold_fix_jan12",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_144_stale_order_threshold_fix_jan12.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.386555",
+      "size": 1103
+    },
+    "rag_knowledge/lessons_learned/ll_174_rule1_violation_jan13_session2.md": {
+      "hash": "d396d68ca8341071765d585b81c3d787",
+      "metadata": {
+        "source": "ll_174_rule1_violation_jan13_session2",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_174_rule1_violation_jan13_session2.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.386994",
+      "size": 1556
+    },
+    "rag_knowledge/lessons_learned/ll_158_day74_emergency_fix_jan13.md": {
+      "hash": "80b2ff8e3bec8376a74260d38db7cd43",
+      "metadata": {
+        "source": "ll_158_day74_emergency_fix_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_158_day74_emergency_fix_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.387450",
+      "size": 1408
+    },
+    "rag_knowledge/lessons_learned/ll_180_credit_spread_first_attempt_jan13.md": {
+      "hash": "402024e4eda8a65be851d20d6851e495",
+      "metadata": {
+        "source": "ll_180_credit_spread_first_attempt_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_180_credit_spread_first_attempt_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.387771",
+      "size": 1055
+    },
+    "rag_knowledge/lessons_learned/ll_192_pandrea_money_options_beginners_evaluation_jan14.md": {
+      "hash": "c9a8ac41c848f12d65be18e24918afa2",
+      "metadata": {
+        "source": "ll_192_pandrea_money_options_beginners_evaluation_jan14",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_192_pandrea_money_options_beginners_evaluation_jan14.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.388101",
+      "size": 4320
+    },
+    "rag_knowledge/lessons_learned/ll_148_missing_test_files_blocking_trading_jan13.md": {
+      "hash": "00317cf045d95d569cd7398aa58a3c92",
+      "metadata": {
+        "source": "ll_148_missing_test_files_blocking_trading_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_148_missing_test_files_blocking_trading_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.388439",
+      "size": 1458
+    },
+    "rag_knowledge/lessons_learned/ll_153_ci_missing_tests_jan13.md": {
+      "hash": "8f25a276954fcb6464ef7175d3382f2a",
+      "metadata": {
+        "source": "ll_153_ci_missing_tests_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_153_ci_missing_tests_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.388761",
+      "size": 1011
+    },
+    "rag_knowledge/lessons_learned/ll_168_alpaca_options_no_trailing_stop_jan13.md": {
+      "hash": "45b88830ea916f41d97b6e326198ec54",
+      "metadata": {
+        "source": "ll_168_alpaca_options_no_trailing_stop_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_168_alpaca_options_no_trailing_stop_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.389759",
+      "size": 1566
+    },
+    "rag_knowledge/lessons_learned/ll_179_strategy_pivot_credit_spreads_jan13.md": {
+      "hash": "1660fed50e4673f1972e8cf5ea8ceec4",
+      "metadata": {
+        "source": "ll_179_strategy_pivot_credit_spreads_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_179_strategy_pivot_credit_spreads_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.390093",
+      "size": 1328
+    },
+    "rag_knowledge/lessons_learned/ll_185_north_star_revision_data_driven_jan13.md": {
+      "hash": "49a6370690adb1489be8f9f3f5a6444c",
+      "metadata": {
+        "source": "ll_185_north_star_revision_data_driven_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_185_north_star_revision_data_driven_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.390431",
+      "size": 2088
+    },
+    "rag_knowledge/lessons_learned/ll_175_stop_repeating_failures_jan13.md": {
+      "hash": "113bc521476122688a7eff779dcfb9ea",
+      "metadata": {
+        "source": "ll_175_stop_repeating_failures_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_175_stop_repeating_failures_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.390747",
+      "size": 1254
+    },
+    "rag_knowledge/lessons_learned/ll_172_prevent_duplicate_short_positions_jan13.md": {
+      "hash": "8b13b5cc9c28dd1423d2976c5056c836",
+      "metadata": {
+        "source": "ll_172_prevent_duplicate_short_positions_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_172_prevent_duplicate_short_positions_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.391060",
+      "size": 1759
+    },
+    "rag_knowledge/lessons_learned/ll_181_ceo_review_session_jan13.md": {
+      "hash": "20e73335482ab6d47720c5b31403f624",
+      "metadata": {
+        "source": "ll_181_ceo_review_session_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "sticker price"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_181_ceo_review_session_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.391394",
+      "size": 2752
+    },
+    "rag_knowledge/lessons_learned/ll_193_fabio_valentino_scalping_evaluation_jan14.md": {
+      "hash": "8e8a753151d5647260e1130f96357a5e",
+      "metadata": {
+        "source": "ll_193_fabio_valentino_scalping_evaluation_jan14",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_193_fabio_valentino_scalping_evaluation_jan14.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.391773",
+      "size": 5874
+    },
+    "rag_knowledge/lessons_learned/ll_182_resource_eval_options_audiobook_jan13.md": {
+      "hash": "ca8c6438b5af0d2d2d34958ad97604e3",
+      "metadata": {
+        "source": "ll_182_resource_eval_options_audiobook_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1",
+          "sticker price"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_182_resource_eval_options_audiobook_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.392061",
+      "size": 1479
+    },
+    "rag_knowledge/lessons_learned/ll_188_dead_code_cleanup_jan13.md": {
+      "hash": "afdd9390afda7857c99dd067c12a8cdb",
+      "metadata": {
+        "source": "ll_188_dead_code_cleanup_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_188_dead_code_cleanup_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.392346",
+      "size": 646
+    },
+    "rag_knowledge/lessons_learned/ll_171_phil_town_rule_violation_jan13.md": {
+      "hash": "1eab7cd201e58d4d78f3296ccaa67567",
+      "metadata": {
+        "source": "ll_171_phil_town_rule_violation_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_171_phil_town_rule_violation_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.392612",
+      "size": 942
+    },
+    "rag_knowledge/lessons_learned/ll_157_dialogflow_analytical_query_routing_jan13.md": {
+      "hash": "72284f1e93e3c5dd7b4b0f12704fe53f",
+      "metadata": {
+        "source": "ll_157_dialogflow_analytical_query_routing_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_157_dialogflow_analytical_query_routing_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.392921",
+      "size": 1770
+    },
+    "rag_knowledge/lessons_learned/ll_145_technical_debt_cleanup_jan13.md": {
+      "hash": "a8536b6d74abd3f64f5f4a7997860990",
+      "metadata": {
+        "source": "ll_145_technical_debt_cleanup_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_145_technical_debt_cleanup_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.393216",
+      "size": 1179
+    },
+    "rag_knowledge/lessons_learned/ll_188_jan2026_strategy_research_jan13.md": {
+      "hash": "1bb30f413dad0812dec95a3b3af70c04",
+      "metadata": {
+        "source": "ll_188_jan2026_strategy_research_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "margin of safety",
+          "moat",
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_188_jan2026_strategy_research_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.393489",
+      "size": 1584
+    },
+    "rag_knowledge/lessons_learned/ll_187_tech_debt_audit_jan13.md": {
+      "hash": "635612b7ac6338627669ea3ca08f71d2",
+      "metadata": {
+        "source": "ll_187_tech_debt_audit_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_187_tech_debt_audit_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.393822",
+      "size": 2089
+    },
+    "rag_knowledge/lessons_learned/ll_176_pdt_protection_blocks_trade_jan13.md": {
+      "hash": "56d24a3362cfd06eaac964855010b046",
+      "metadata": {
+        "source": "ll_176_pdt_protection_blocks_trade_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "rule #1"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_176_pdt_protection_blocks_trade_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.394144",
+      "size": 1371
+    },
+    "rag_knowledge/lessons_learned/ll_187_joseph_hogue_2026_outlook_evaluation_jan13.md": {
+      "hash": "cca0c91aef8b725edb7c8cc4a4a8ac5f",
+      "metadata": {
+        "source": "ll_187_joseph_hogue_2026_outlook_evaluation_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "margin of safety",
+          "moat",
+          "rule #1",
+          "meaning"
+        ],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_187_joseph_hogue_2026_outlook_evaluation_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.394492",
+      "size": 3262
+    },
+    "rag_knowledge/lessons_learned/ll_191_financial_minutes_3_strategies_evaluation_jan13.md": {
+      "hash": "60b722a2d3c9e066295c7b3e436448b7",
+      "metadata": {
+        "source": "ll_191_financial_minutes_3_strategies_evaluation_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_191_financial_minutes_3_strategies_evaluation_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.394807",
+      "size": 3295
+    },
+    "rag_knowledge/lessons_learned/ll_147_placeholder_tests_removed_jan13.md": {
+      "hash": "9b7c885a5daaff9e7124ed965cb545cb",
+      "metadata": {
+        "source": "ll_147_placeholder_tests_removed_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_147_placeholder_tests_removed_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.395109",
+      "size": 1225
+    },
+    "rag_knowledge/lessons_learned/ll_155_technical_debt_audit_jan13.md": {
+      "hash": "c82f7c36ddb5dc783f569db4d6ec2385",
+      "metadata": {
+        "source": "ll_155_technical_debt_audit_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_155_technical_debt_audit_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.395437",
+      "size": 1937
+    },
+    "rag_knowledge/lessons_learned/ll_131_never_tell_ceo_to_run_ci_jan12.md": {
+      "hash": "127e5b952aaee096b7d9fee6c4e8c0aa",
+      "metadata": {
+        "source": "ll_131_never_tell_ceo_to_run_ci_jan12",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_131_never_tell_ceo_to_run_ci_jan12.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.395717",
+      "size": 1371
+    },
+    "rag_knowledge/lessons_learned/ll_137_branch_and_pr_hygiene_jan12.md": {
+      "hash": "fd775abceae5dfd63be13d305af66f91",
+      "metadata": {
+        "source": "ll_137_branch_and_pr_hygiene_jan12",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_137_branch_and_pr_hygiene_jan12.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.396028",
+      "size": 1425
+    },
+    "rag_knowledge/lessons_learned/ll_183_comprehensive_review_jan13.md": {
+      "hash": "de39714d0df977e2aa5c2c660597cc17",
+      "metadata": {
+        "source": "ll_183_comprehensive_review_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_183_comprehensive_review_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.396353",
+      "size": 2586
+    },
+    "rag_knowledge/lessons_learned/ll_184_graph_vs_vector_db_evaluation_jan13.md": {
+      "hash": "50839fb46ebbc6f9ff14790761f2a509",
+      "metadata": {
+        "source": "ll_184_graph_vs_vector_db_evaluation_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_184_graph_vs_vector_db_evaluation_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.396694",
+      "size": 1383
+    },
+    "rag_knowledge/lessons_learned/ll_162_rag_system_analysis_jan13.md": {
+      "hash": "4d7725f3d41566b081b17656bdf72b8e",
+      "metadata": {
+        "source": "ll_162_rag_system_analysis_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_162_rag_system_analysis_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.397017",
+      "size": 1334
+    },
+    "rag_knowledge/lessons_learned/ll_184_git_workflows_evaluation_jan13.md": {
+      "hash": "2cbec2f3a892acd76e6debc29adf5d96",
+      "metadata": {
+        "source": "ll_184_git_workflows_evaluation_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [],
+        "is_options_related": true,
+        "file_path": "rag_knowledge/lessons_learned/ll_184_git_workflows_evaluation_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.397381",
+      "size": 2378
+    },
+    "rag_knowledge/lessons_learned/ll_189_tradinglab_price_action_evaluation_jan13.md": {
+      "hash": "6ee27451a524711e51abdc9db4947d2f",
+      "metadata": {
+        "source": "ll_189_tradinglab_price_action_evaluation_jan13",
+        "content_type": "lesson_learned",
+        "concepts": [
+          "margin of safety",
+          "moat",
+          "meaning"
+        ],
+        "is_options_related": false,
+        "file_path": "rag_knowledge/lessons_learned/ll_189_tradinglab_price_action_evaluation_jan13.md"
+      },
+      "indexed_at": "2026-01-14T03:47:41.397717",
+      "size": 1562
     }
   },
-  "last_updated": "2026-01-11T13:21:47.243268"
+  "last_updated": "2026-01-14T03:47:41.400198"
 }
