@@ -75,5 +75,16 @@
     "pl_pct": 0.0,
     "account_type": "live",
     "note": "Day 75/90 - Live: $60 accumulation. Paper: $4,969.94 (-0.60% P/L). 2 positions open."
+  },
+  {
+    "date": "2026-01-14",
+    "timestamp": "2026-01-14T23:20:46.549519",
+    "equity": 4959.26,
+    "cash": 4959.26,
+    "buying_power": 9918.52,
+    "pl": -40.73999999999978,
+    "pl_pct": -0.81,
+    "account_type": "paper",
+    "note": "Day 76/90 - Paper: $4,959.26 (-0.81% P/L). 0 positions. SOFI closed before earnings."
   }
 ]
