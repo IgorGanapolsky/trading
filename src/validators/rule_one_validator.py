@@ -24,9 +24,14 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 # Approved wonderful companies (Rule #1 compliant or capital-appropriate)
-# Per CLAUDE.md: Primary targets are F, SOFI, T for credit spreads
+# Per CLAUDE.md: Primary strategy is "CREDIT SPREADS on SPY/IWM ONLY"
+# ETFs don't require Big Five analysis - they're index funds
 RULE_ONE_UNIVERSE = {
-    # Primary credit spread targets (low share price, liquid options)
+    # PRIMARY: Index ETFs for credit spreads (Jan 14, 2026 - per CLAUDE.md)
+    # These are EXEMPT from Big Five analysis as they're not individual companies
+    "SPY": {"name": "S&P 500 ETF", "moat": "etf", "capital_tier": "any", "skip_big_five": True},
+    "IWM": {"name": "Russell 2000 ETF", "moat": "etf", "capital_tier": "any", "skip_big_five": True},
+    # Secondary credit spread targets (low share price, liquid options)
     "F": {"name": "Ford", "moat": "brand", "capital_tier": "small"},
     "SOFI": {"name": "SoFi Technologies", "moat": "switching", "capital_tier": "small"},
     "T": {"name": "AT&T", "moat": "toll", "capital_tier": "small"},
@@ -228,6 +233,17 @@ class RuleOneValidator:
         if not result.in_universe:
             result.rejection_reasons.append(f"{symbol} not in Rule #1 wonderful companies universe")
             logger.warning(f"Rule #1 REJECTED: {symbol} not in universe")
+            return result
+
+        # CHECK 1.5: ETF bypass (Jan 14, 2026 - per CLAUDE.md)
+        # SPY/IWM are index ETFs - they don't require Big Five or Sticker Price analysis
+        underlying = self._extract_underlying(symbol)
+        universe_info = RULE_ONE_UNIVERSE.get(underlying, {})
+        if universe_info.get("skip_big_five", False):
+            logger.info(f"Rule #1: {symbol} is ETF - skipping Big Five/Sticker checks")
+            result.approved = True
+            result.confidence = 0.8  # High confidence for ETFs
+            result.warnings.append(f"{underlying} is ETF - Big Five not applicable")
             return result
 
         # CHECK 2: Big Five metrics
