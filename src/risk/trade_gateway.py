@@ -1129,6 +1129,88 @@ class TradeGateway:
         )
         return drawdown
 
+    def check_positions_for_earnings(self) -> list[dict[str, Any]]:
+        """
+        Monitor existing positions for upcoming earnings blackouts.
+
+        AUTOMATION: This method allows the system to proactively warn about
+        positions that will cross earnings dates, enabling automated
+        position management before volatility events.
+
+        Returns:
+            List of position alerts with action recommendations
+        """
+        alerts = []
+        today = datetime.now().date()
+        positions = self._get_positions()
+
+        for position in positions:
+            symbol = position.get("symbol", "")
+            qty = float(position.get("qty", 0))
+            unrealized_pl = float(position.get("unrealized_pl", 0))
+
+            # Extract underlying symbol (handles options)
+            underlying = self._get_underlying_symbol(symbol)
+
+            if underlying.upper() in self.EARNINGS_BLACKOUTS:
+                blackout = self.EARNINGS_BLACKOUTS[underlying.upper()]
+                blackout_start = datetime.strptime(blackout["start"], "%Y-%m-%d").date()
+                blackout_end = datetime.strptime(blackout["end"], "%Y-%m-%d").date()
+                earnings_date = datetime.strptime(blackout["earnings"], "%Y-%m-%d").date()
+
+                days_to_blackout = (blackout_start - today).days
+                days_to_earnings = (earnings_date - today).days
+
+                # Check if position is at risk
+                if days_to_blackout <= 14:  # Alert 2 weeks before blackout
+                    alert = {
+                        "symbol": symbol,
+                        "underlying": underlying,
+                        "qty": qty,
+                        "unrealized_pl": unrealized_pl,
+                        "earnings_date": str(earnings_date),
+                        "blackout_start": str(blackout_start),
+                        "blackout_end": str(blackout_end),
+                        "days_to_blackout": days_to_blackout,
+                        "days_to_earnings": days_to_earnings,
+                        "status": "IN_BLACKOUT" if days_to_blackout <= 0 else "APPROACHING",
+                        "action": self._get_earnings_action(
+                            days_to_blackout, unrealized_pl, symbol
+                        ),
+                    }
+                    alerts.append(alert)
+                    logger.warning(
+                        f"⚠️ EARNINGS ALERT: {symbol} - {alert['status']} "
+                        f"(earnings: {earnings_date}, {days_to_earnings} days)"
+                    )
+
+        return alerts
+
+    def _get_earnings_action(
+        self, days_to_blackout: int, unrealized_pl: float, symbol: str
+    ) -> str:
+        """Determine recommended action for position approaching earnings."""
+        is_option = len(symbol) > 10  # Options have longer symbols
+
+        if days_to_blackout <= 0:
+            # Already in blackout
+            if unrealized_pl > 0:
+                return "CLOSE_AT_PROFIT: Lock in gains before earnings volatility"
+            else:
+                return "MONITOR_CLOSELY: Consider closing to limit loss before earnings"
+        elif days_to_blackout <= 7:
+            # Within 1 week of blackout
+            if unrealized_pl > 0:
+                return "CONSIDER_CLOSING: Profit at risk from earnings IV crush"
+            else:
+                return "EVALUATE_EXIT: Weigh loss vs earnings risk"
+        else:
+            # 1-2 weeks out
+            if is_option:
+                return "PLAN_EXIT: Options decay accelerates near earnings"
+            else:
+                return "MONITOR: Track position as blackout approaches"
+
 
 def create_suicide_test() -> TradeRequest:
     """

@@ -269,3 +269,75 @@ class TestTradeGatewaySuicideCommand:
         # Should fail for insufficient funds AND over-allocation
         assert RejectionReason.INSUFFICIENT_FUNDS in decision.rejection_reasons
         assert RejectionReason.MAX_ALLOCATION_EXCEEDED in decision.rejection_reasons
+
+
+class TestEarningsPositionMonitor:
+    """Test earnings position monitoring functionality."""
+
+    def test_no_positions_returns_empty(self):
+        """Test that no positions returns empty alerts list."""
+        gateway = TradeGateway(executor=None, paper=True)
+        gateway.executor = MockExecutor(positions=[])
+
+        alerts = gateway.check_positions_for_earnings()
+        assert alerts == []
+
+    def test_position_without_earnings_no_alert(self):
+        """Test that positions without earnings calendar don't trigger alerts."""
+        gateway = TradeGateway(executor=None, paper=True)
+        gateway.executor = MockExecutor(
+            positions=[{"symbol": "SPY", "qty": 100, "unrealized_pl": 50}]
+        )
+
+        alerts = gateway.check_positions_for_earnings()
+        assert alerts == []  # SPY not in EARNINGS_BLACKOUTS
+
+    def test_sofi_position_generates_alert(self):
+        """Test that SOFI position triggers earnings alert (Jan 30 earnings)."""
+        gateway = TradeGateway(executor=None, paper=True)
+        gateway.executor = MockExecutor(
+            positions=[{"symbol": "SOFI", "qty": 25, "unrealized_pl": 16.88}]
+        )
+
+        alerts = gateway.check_positions_for_earnings()
+
+        # Should have alert since SOFI has Jan 30 earnings
+        assert len(alerts) == 1
+        alert = alerts[0]
+        assert alert["underlying"] == "SOFI"
+        assert alert["earnings_date"] == "2026-01-30"
+        assert "action" in alert
+
+    def test_sofi_option_generates_alert(self):
+        """Test that SOFI option position triggers earnings alert."""
+        gateway = TradeGateway(executor=None, paper=True)
+        gateway.executor = MockExecutor(
+            positions=[
+                {"symbol": "SOFI260206P00024000", "qty": -2, "unrealized_pl": 23.00}
+            ]
+        )
+
+        alerts = gateway.check_positions_for_earnings()
+
+        # Should have alert - option underlying is SOFI
+        assert len(alerts) == 1
+        alert = alerts[0]
+        assert alert["underlying"] == "SOFI"
+        assert "CLOSE" in alert["action"] or "PLAN" in alert["action"]
+
+    def test_action_recommends_close_on_profit(self):
+        """Test that profitable position in blackout gets close recommendation."""
+        gateway = TradeGateway(executor=None, paper=True)
+        # Simulate position already in blackout with profit
+        action = gateway._get_earnings_action(
+            days_to_blackout=0, unrealized_pl=100, symbol="SOFI"
+        )
+        assert "CLOSE_AT_PROFIT" in action
+
+    def test_action_recommends_monitor_on_loss(self):
+        """Test that losing position in blackout gets monitor recommendation."""
+        gateway = TradeGateway(executor=None, paper=True)
+        action = gateway._get_earnings_action(
+            days_to_blackout=0, unrealized_pl=-50, symbol="SOFI"
+        )
+        assert "MONITOR_CLOSELY" in action
