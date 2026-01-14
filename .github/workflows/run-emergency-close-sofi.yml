@@ -1,0 +1,71 @@
+name: Run Emergency SOFI Close
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (true = preview, false = execute)"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: write
+
+jobs:
+  close-sofi:
+    name: Emergency Close SOFI
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install alpaca-py
+
+      - name: Run Emergency Close
+        env:
+          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            python scripts/emergency_close_sofi.py --dry-run
+          else
+            echo "yes" | python scripts/emergency_close_sofi.py
+          fi
+
+      - name: Verify Positions After
+        env:
+          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'EOF'
+          import os
+          from alpaca.trading.client import TradingClient
+
+          client = TradingClient(
+              os.environ['ALPACA_PAPER_TRADING_5K_API_KEY'],
+              os.environ['ALPACA_PAPER_TRADING_5K_API_SECRET'],
+              paper=True
+          )
+
+          positions = client.get_all_positions()
+          sofi_found = False
+          for pos in positions:
+              if pos.symbol.startswith('SOFI'):
+                  sofi_found = True
+                  print(f"⚠️ SOFI still open: {pos.symbol} qty={pos.qty}")
+
+          if not sofi_found:
+              print("✅ All SOFI positions closed successfully")
+          EOF
