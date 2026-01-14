@@ -1,0 +1,70 @@
+name: Daily VOO DCA
+
+on:
+  schedule:
+    # Run every weekday at 10:00 AM Eastern (after market opens, deposits settle)
+    # EST (Nov-Mar): UTC-5 -> 10:00 AM ET = 15:00 UTC
+    # EDT (Mar-Nov): UTC-4 -> 10:00 AM ET = 14:00 UTC
+    - cron: '0 14,15 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      amount:
+        description: "Dollar amount to invest (0 = all available cash)"
+        required: false
+        default: "0"
+      dry_run:
+        description: "Dry run mode (no actual purchase)"
+        required: false
+        default: "false"
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-voo-dca
+  cancel-in-progress: false
+
+jobs:
+  buy-voo:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install alpaca-py yfinance
+
+      - name: Run VOO DCA
+        env:
+          ALPACA_BROKERAGE_TRADING_API_KEY: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_KEY }}
+          ALPACA_BROKERAGE_TRADING_API_SECRET: ${{ secrets.ALPACA_BROKERAGE_TRADING_API_SECRET }}
+        run: |
+          ARGS=""
+          if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
+            ARGS="--dry-run"
+          fi
+          if [ "${{ github.event.inputs.amount }}" != "0" ] && [ -n "${{ github.event.inputs.amount }}" ]; then
+            ARGS="$ARGS --amount ${{ github.event.inputs.amount }}"
+          fi
+          python3 scripts/daily_voo_dca.py $ARGS
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: voo-dca-logs
+          path: |
+            logs/voo_dca_*.log
+            data/voo_dca_log.json
+          retention-days: 30

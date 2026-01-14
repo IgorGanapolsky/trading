@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 def get_alpaca_credentials() -> tuple[Optional[str], Optional[str]]:
     """
-    Get Alpaca API credentials with proper priority.
+    Get Alpaca API credentials with proper priority (paper trading).
 
     Priority order (first found wins):
     1. ALPACA_PAPER_TRADING_5K_API_KEY / ALPACA_PAPER_TRADING_5K_API_SECRET ($5K account - PRIMARY)
@@ -51,6 +51,53 @@ def get_alpaca_credentials() -> tuple[Optional[str], Optional[str]]:
             logger.debug("Using legacy ALPACA_API_KEY credentials")
 
     return api_key, secret_key
+
+
+def get_brokerage_credentials() -> tuple[Optional[str], Optional[str]]:
+    """
+    Get Alpaca BROKERAGE (live) API credentials.
+
+    Uses ALPACA_BROKERAGE_TRADING_API_KEY/SECRET for real money trading.
+
+    Returns:
+        Tuple of (api_key, secret_key) or (None, None) if not found.
+    """
+    api_key = os.getenv("ALPACA_BROKERAGE_TRADING_API_KEY")
+    secret_key = os.getenv("ALPACA_BROKERAGE_TRADING_API_SECRET")
+
+    if api_key:
+        logger.info("Using BROKERAGE (live) trading credentials")
+    else:
+        logger.warning("Brokerage credentials not found - set ALPACA_BROKERAGE_TRADING_API_KEY")
+
+    return api_key, secret_key
+
+
+def get_brokerage_client():
+    """
+    Get Alpaca BROKERAGE (live money) trading client.
+
+    WARNING: This uses real money! Only for actual trading.
+
+    Returns:
+        TradingClient instance for live trading or None if creation fails.
+    """
+    try:
+        from alpaca.trading.client import TradingClient
+
+        api_key, secret_key = get_brokerage_credentials()
+
+        if not api_key or not secret_key:
+            logger.error("Brokerage credentials not found. Set ALPACA_BROKERAGE_TRADING_API_KEY")
+            return None
+
+        return TradingClient(api_key, secret_key, paper=False)
+    except ImportError:
+        logger.error("alpaca-py not installed. Add to requirements.txt")
+        return None
+    except Exception as e:
+        logger.error(f"Failed to create brokerage client: {e}")
+        return None
 
 
 def get_alpaca_client(paper: bool = True):
