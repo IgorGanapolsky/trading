@@ -408,36 +408,44 @@ class TradeGateway:
         positions = self._get_positions()
 
         # ============================================================
-        # CHECK 0: ZERO TOLERANCE - Block trading when P/L is negative
-        # Phil Town Rule #1: Don't lose money
-        # Block ALL risk-increasing trades:
-        #   - BUY orders (buying stock/calls = increases exposure)
-        #   - SELL orders on options when opening short positions (short puts = increases risk)
-        # Only allow: SELL orders that CLOSE existing positions
+        # CHECK 0: LOSS THRESHOLD - Block trading when P/L exceeds threshold
+        # Phil Town Rule #1: Don't lose money (but small losses are normal)
+        # Block risk-increasing trades only when loss exceeds threshold:
+        #   - Default: -5% total loss (configurable via env)
+        #   - Note: 3% daily and 10% drawdown circuit breakers also exist
         # ============================================================
         total_pl = self._get_total_pl()
+        # Threshold: only block if loss > 5% of starting capital
+        # -0.81% ($40 on $5K) should NOT block trading
+        pl_block_threshold = float(os.getenv("PL_BLOCK_THRESHOLD_PCT", "-0.05"))  # -5%
+        starting_capital = float(os.getenv("STARTING_CAPITAL", "5000"))
+        pl_threshold_amount = pl_block_threshold * starting_capital  # e.g., -$250 for 5K
+
         is_risk_increasing = (
             request.side.lower() == "buy"
             or (request.is_option and request.side.lower() == "sell")  # Short puts/calls
         )
 
-        if is_risk_increasing and total_pl < 0:
+        if is_risk_increasing and total_pl < pl_threshold_amount:
             rejection_reasons.append(RejectionReason.PORTFOLIO_NEGATIVE_PL)
             logger.warning(
-                f"🛑 CIRCUIT BREAKER: Portfolio P/L is ${total_pl:.2f} (NEGATIVE). "
-                f"NO new risk-increasing trades until profitable. Phil Town Rule #1!"
-            )
-            logger.warning(
-                "💡 PROFESSIONAL LOSING (Bauer Secret #2): Exit objectively, don't 'hope and pray'"
+                f"🛑 CIRCUIT BREAKER: Portfolio P/L is ${total_pl:.2f} exceeds "
+                f"{pl_block_threshold * 100}% threshold (${pl_threshold_amount:.2f}). "
+                f"Phil Town Rule #1!"
             )
             risk_score += 1.0  # Maximum risk score - automatic rejection
-            metadata["zero_tolerance_breach"] = {
+            metadata["loss_threshold_breach"] = {
                 "total_pl": total_pl,
+                "threshold_pct": pl_block_threshold,
+                "threshold_amount": pl_threshold_amount,
                 "rule": "Phil Town Rule #1: Don't lose money",
-                "trade_type": "short_option" if request.is_option else "buy",
-                "action_required": "Close losing positions or wait for recovery",
-                "psychology_reminder": "Professional Losing: Exit objectively, never hope and pray",
             }
+        elif total_pl < 0:
+            # Log warning but don't block - loss is within acceptable range
+            logger.info(
+                f"📊 Portfolio P/L: ${total_pl:.2f} ({total_pl / starting_capital * 100:.2f}%) - "
+                f"within threshold, trading allowed"
+            )
 
         # ============================================================
         # CHECK 0.3: TICKER WHITELIST (Jan 14, 2026 - LL-192)
@@ -761,16 +769,27 @@ class TradeGateway:
 
         # ============================================================
         # CHECK 12: RAG Lesson Block (CRITICAL lessons learned)
+        # Only block if lesson is ABOUT this specific ticker, not generic
+        # Fix: SOFI lessons should NOT block SPY trades (Jan 14, 2026)
         # ============================================================
-        # Query RAG for lessons about this ticker and strategy
-        query_terms = f"{request.symbol}"
+        underlying = self._get_underlying_symbol(request.symbol)
+        query_terms = f"{underlying}"
         if request.strategy_type:
             query_terms += f" {request.strategy_type}"
         query_terms += f" {request.side}"
 
         rag_lessons = self.rag.query(query_terms, top_k=5)
+        # FILTER: Only consider lessons that SPECIFICALLY mention this ticker
+        # A lesson about SOFI shouldn't block SPY trades
+        ticker_specific_lessons = []
+        for lesson in rag_lessons:
+            lesson_text = lesson.get("snippet", "") + lesson.get("id", "")
+            # Only count as ticker-specific if the lesson mentions this ticker
+            if underlying.upper() in lesson_text.upper():
+                ticker_specific_lessons.append(lesson)
+
         critical_rag_lessons = [
-            lesson for lesson in rag_lessons if lesson.get("severity") == "CRITICAL"
+            lesson for lesson in ticker_specific_lessons if lesson.get("severity") == "CRITICAL"
         ]
 
         if critical_rag_lessons:
