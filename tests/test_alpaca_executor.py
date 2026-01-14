@@ -38,6 +38,18 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+@pytest.fixture(autouse=True)
+def mock_trade_gate():
+    """Mock mandatory trade gate to allow test trades.
+
+    Tests should not be blocked by the $0 equity safety check (ll_051).
+    """
+    with patch(
+        "src.execution.alpaca_executor.validate_trade_mandatory", return_value=None
+    ):
+        yield
+
+
 class TestAlpacaExecutorInitialization:
     """Test AlpacaExecutor initialization and configuration."""
 
