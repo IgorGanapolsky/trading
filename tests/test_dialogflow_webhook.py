@@ -172,7 +172,8 @@ class TestDialogflowWebhookIntegration:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
-        assert "lessons_loaded" in data
+        # Check for lessons loaded (API returns local_lessons_loaded or lessons_loaded)
+        assert "local_lessons_loaded" in data or "lessons_loaded" in data
 
     def test_root_endpoint(self, mock_rag):
         """Verify root endpoint returns service info."""
