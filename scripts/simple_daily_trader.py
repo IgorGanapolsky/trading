@@ -47,7 +47,7 @@ CONFIG = {
     "min_dte": 21,
     "position_size_pct": 0.20,  # 20% of portfolio per trade (can do multiple $1K positions)
     "take_profit_pct": 0.50,  # Close at 50% profit
-    "max_positions": 5,  # Max 5 positions with $5K = ~$1K each
+    "max_positions": 10,  # Safety buffer to prevent trading blockage (LL-079)
     "north_star_daily_target": 100.0,  # $100/day profit target
     "fallback_symbols": ["F", "PLTR"],  # Backup symbols if SOFI not available
 }
