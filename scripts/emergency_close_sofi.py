@@ -26,8 +26,6 @@ def get_paper_trading_client():
     """Get Alpaca paper trading client."""
     try:
         from alpaca.trading.client import TradingClient
-        from alpaca.trading.enums import OrderSide, TimeInForce
-        from alpaca.trading.requests import MarketOrderRequest
 
         api_key = os.getenv("ALPACA_PAPER_TRADING_5K_API_KEY")
         secret_key = os.getenv("ALPACA_PAPER_TRADING_5K_API_SECRET")
