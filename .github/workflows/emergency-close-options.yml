@@ -1,0 +1,199 @@
+name: EMERGENCY - Close Options Position
+
+# CRITICAL: Close short options before earnings
+# Created: Jan 14, 2026 - SOFI earnings risk mitigation
+
+on:
+  workflow_dispatch:
+    inputs:
+      option_symbol:
+        description: "Option symbol (e.g., SOFI260206P00024000)"
+        required: true
+        default: "SOFI260206P00024000"
+      quantity:
+        description: "Contracts to close (positive number)"
+        required: true
+        default: "2"
+      dry_run:
+        description: "Dry run only (true/false)"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: write
+
+jobs:
+  close-options:
+    name: Close Options Position
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install alpaca-py
+
+      - name: Close Options Position
+        id: close
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          from datetime import datetime
+          from alpaca.trading.client import TradingClient
+          from alpaca.trading.requests import MarketOrderRequest
+          from alpaca.trading.enums import OrderSide, TimeInForce, AssetClass
+
+          api_key = os.environ['ALPACA_API_KEY']
+          secret_key = os.environ['ALPACA_SECRET_KEY']
+          option_symbol = "${{ github.event.inputs.option_symbol }}"
+          qty = int("${{ github.event.inputs.quantity }}")
+          dry_run = "${{ github.event.inputs.dry_run }}" == "true"
+
+          print("=" * 60)
+          print("🚨 EMERGENCY OPTIONS CLOSE - Risk Mitigation")
+          print("=" * 60)
+          print(f"   Option: {option_symbol}")
+          print(f"   Quantity: {qty} contracts")
+          print(f"   Action: BUY TO CLOSE (closing short position)")
+          print(f"   Dry Run: {dry_run}")
+          print(f"   Timestamp: {datetime.now().isoformat()}")
+          print("=" * 60)
+
+          client = TradingClient(api_key, secret_key, paper=True)
+
+          # Get account status
+          account = client.get_account()
+          print(f"\n📊 Account Status:")
+          print(f"   Equity: ${float(account.equity):,.2f}")
+          print(f"   Cash: ${float(account.cash):,.2f}")
+          print(f"   Buying Power: ${float(account.buying_power):,.2f}")
+
+          # Get current positions
+          print(f"\n📋 Current Positions:")
+          positions = client.get_all_positions()
+          target_position = None
+          for pos in positions:
+              print(f"   {pos.symbol}: {pos.qty} @ ${float(pos.current_price):.2f} (P/L: ${float(pos.unrealized_pl):.2f})")
+              if pos.symbol == option_symbol:
+                  target_position = pos
+
+          if not target_position:
+              print(f"\n⚠️ Position {option_symbol} not found!")
+              print("Available positions:")
+              for pos in positions:
+                  print(f"   - {pos.symbol}")
+              exit(1)
+
+          print(f"\n🎯 Target Position Found:")
+          print(f"   Symbol: {target_position.symbol}")
+          print(f"   Qty: {target_position.qty}")
+          print(f"   Current Price: ${float(target_position.current_price):.2f}")
+          print(f"   Unrealized P/L: ${float(target_position.unrealized_pl):.2f}")
+          print(f"   Cost to close: ~${float(target_position.current_price) * qty * 100:.2f}")
+
+          # Check market status
+          clock = client.get_clock()
+          print(f"\n⏰ Market Status: {'OPEN' if clock.is_open else 'CLOSED'}")
+
+          if dry_run:
+              print("\n🔍 DRY RUN - No order submitted")
+              print("   Would submit: BUY TO CLOSE")
+              print(f"   Symbol: {option_symbol}")
+              print(f"   Qty: {qty}")
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f"order_id=DRY_RUN\n")
+                  f.write(f"status=simulated\n")
+                  f.write(f"cost_estimate={float(target_position.current_price) * qty * 100:.2f}\n")
+          else:
+              # Submit BUY TO CLOSE order
+              print(f"\n📝 Submitting BUY TO CLOSE order...")
+
+              order_request = MarketOrderRequest(
+                  symbol=option_symbol,
+                  qty=qty,
+                  side=OrderSide.BUY,  # BUY to close short position
+                  time_in_force=TimeInForce.DAY
+              )
+
+              order = client.submit_order(order_request)
+
+              print(f"\n✅ ORDER SUBMITTED!")
+              print(f"   Order ID: {order.id}")
+              print(f"   Status: {order.status}")
+              print(f"   Symbol: {order.symbol}")
+              print(f"   Qty: {order.qty}")
+              print(f"   Side: {order.side}")
+              print(f"   Created: {order.created_at}")
+
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f"order_id={order.id}\n")
+                  f.write(f"status={order.status}\n")
+                  f.write(f"symbol={order.symbol}\n")
+
+          print("\n" + "=" * 60)
+          print("🛡️ RISK MITIGATION: Short option position closing")
+          print("=" * 60)
+          PYTHON_SCRIPT
+
+      - name: Record Exit
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          echo "Position close initiated"
+          echo "Order ID: ${{ steps.close.outputs.order_id }}"
+          echo "Status: ${{ steps.close.outputs.status }}"
+
+          # Log to file
+          mkdir -p data/trades
+          cat << EOF > data/trades/emergency_close_$(date +%Y%m%d_%H%M%S).json
+          {
+            "type": "emergency_options_close",
+            "option_symbol": "${{ github.event.inputs.option_symbol }}",
+            "quantity": ${{ github.event.inputs.quantity }},
+            "action": "BUY_TO_CLOSE",
+            "reason": "Earnings risk - SOFI Jan 30 2026",
+            "order_id": "${{ steps.close.outputs.order_id }}",
+            "status": "${{ steps.close.outputs.status }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "dry_run": ${{ github.event.inputs.dry_run }}
+          }
+          EOF
+
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add data/
+          git commit -m "🚨 EMERGENCY: Close SOFI short puts - earnings risk" || echo "No changes"
+          git push || echo "Push failed"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "🚨 EMERGENCY OPTIONS CLOSE SUMMARY"
+          echo "=========================================="
+          echo "Option: ${{ github.event.inputs.option_symbol }}"
+          echo "Quantity: ${{ github.event.inputs.quantity }}"
+          echo "Dry Run: ${{ github.event.inputs.dry_run }}"
+          echo "Order ID: ${{ steps.close.outputs.order_id }}"
+          echo "Status: ${{ steps.close.outputs.status }}"
+          echo "=========================================="
+          echo ""
+          echo "⚠️ VERIFY: Check Alpaca dashboard to confirm position closed"
+          echo "=========================================="
