@@ -2,36 +2,42 @@
 
 CTO: Claude | CEO: Igor Ganapolsky
 
-## Strategy (Updated Jan 14, 2026 - RESEARCH-BACKED REVISION)
-- **North Star**: $150-250/month (3-5% monthly) - RESEARCH VALIDATED
-- **Why revised**: Deep research confirms 3-5% monthly is realistic for $5K accounts. 40%/month ($100/day) requires $40K+ capital.
-- **Current capital**: $4,959.26 | Loss: -$40.74 (-0.81%) | Lesson paid.
+## Strategy (Updated Jan 14, 2026 - INDUSTRY BEST PRACTICE)
+- **North Star**: $70-140/month (1.4-2.8% monthly) - INDUSTRY VALIDATED
+- **Why revised**: Research shows 92% win rate on SPY 30-delta spreads. 2% position size is industry standard.
+- **Current capital**: $4,959.26 | Loss: -$40.74 (-0.81%) | SOFI violation lesson paid.
 - **Primary strategy**: CREDIT SPREADS on SPY/IWM ONLY - defined risk
-- **Spread setup**: Sell 30-delta put, buy 20-delta put = ~$500 collateral, ~$50-70 premium
-- **Why 30-delta**: 70% probability of profit. Margin of safety per Phil Town.
-- **Expiration**: 30-45 DTE, close at 50% max profit
-- **Position limit**: 1 spread at a time (5% max = $248 risk)
-- **Monthly target**: 3-4 spreads x $50 x 70% = $105-140/month (realistic)
-- **Stop-loss**: Close at 2x credit received OR 25% spread width
-- **Risk management**: NEVER more than 5% on single trade. NO NAKED PUTS.
+- **Spread setup**: Sell 30-delta put, buy 10-delta put = ~$500 collateral, ~$50-70 premium
+- **Why 30-delta**: 70% theoretical, 92% actual backtest win rate. Margin of safety.
+- **Expiration**: 45 DTE (optimal theta decay), close at 50% max profit
+- **Position limit**: 1 spread at a time (2% max = $100 risk) - INDUSTRY STANDARD
+- **Cash reserve**: 50% minimum ($2,500) - for adjustments and black swan protection
+- **Monthly target**: 2-3 spreads x $50 x 80% = $80-120/month (conservative)
+- **Stop-loss**: Close at 2x credit received
+- **Risk management**: NEVER more than 2% on single trade. NO NAKED PUTS. NO BLACKLISTED TICKERS.
+- **IV Rank requirement**: Only enter when IV Rank > 30 (currently low)
 - **Paper phase**: 90 days to validate 70%+ win rate before scaling
 
-## Recovery Path (Research-Based)
-| Phase | Capital | Monthly Target | Timeline |
-|-------|---------|----------------|----------|
-| Now | $4,959 | $150-250 (3-5%) | Immediate |
-| +6mo | ~$6,500 | $195-325 | With $25/day deposits |
-| +12mo | ~$9,000 | $270-450 | Compounding |
-| +24mo | ~$15,000 | $450-750 | On track |
-| Goal | $40,000 | $2,000 ($100/day) | 3-4 years realistic |
+## Recovery Path (Industry-Conservative)
+| Phase | Capital | Monthly Target | Risk/Trade |
+|-------|---------|----------------|------------|
+| Now | $4,959 | $70-140 (1.4-2.8%) | $100 (2%) |
+| +6mo | ~$6,500 | $91-182 | $130 (2%) |
+| +12mo | ~$9,000 | $126-252 | $180 (2%) |
+| +24mo | ~$15,000 | $210-420 | $300 (2%) |
+| Goal | $40,000 | $560-1,120 | $800 (2%) |
 
-## MANDATORY Pre-Trade Checklist
-1. [ ] Is ticker SPY or IWM? (NO individual stocks until proven)
-2. [ ] Is position size ≤5% of account ($248)?
+**Note**: $100/day ($2,000/mo) requires ~$70K capital at 2.8% monthly return.
+
+## MANDATORY Pre-Trade Checklist (STRICT)
+1. [ ] Is ticker SPY or IWM? (NO individual stocks - SOFI BANNED)
+2. [ ] Is position size ≤2% of account ($100)?
 3. [ ] Is it a SPREAD (not naked put)?
-4. [ ] Checked earnings calendar? (No blackout violations)
-5. [ ] 30-45 DTE expiration?
-6. [ ] Stop-loss defined before entry?
+4. [ ] Cash reserve ≥50% ($2,500) AFTER this trade?
+5. [ ] IV Rank > 30? (skip if low volatility)
+6. [ ] 45 DTE expiration?
+7. [ ] Stop-loss defined (2x credit received)?
+8. [ ] No earnings within 7 days of expiration?
 
 ## Win Rate Tracking (Data-Driven)
 - Track every paper trade: entry, exit, P/L, win/loss

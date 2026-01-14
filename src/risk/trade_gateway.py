@@ -506,6 +506,29 @@ class TradeGateway:
             }
 
         # ============================================================
+        # CHECK 0.5: CASH RESERVE (50% minimum) - NEW Jan 14, 2026
+        # ============================================================
+        cash_balance = account_equity  # Assuming all equity is cash for paper trading
+        if hasattr(self, "_last_cash_balance"):
+            cash_balance = self._last_cash_balance
+        cash_after_trade = cash_balance - (
+            request.notional or request.quantity * self._get_price(request.symbol)
+            if request.quantity
+            else 0
+        )
+        cash_reserve_pct = cash_after_trade / account_equity if account_equity > 0 else 0
+        if request.side == "buy" and cash_reserve_pct < self.MIN_CASH_RESERVE_PCT:
+            rejection_reasons.append(RejectionReason.INSUFFICIENT_FUNDS)
+            warnings.append(
+                f"⚠️ Cash reserve would drop to {cash_reserve_pct * 100:.1f}% "
+                f"(min 50% required). Trade blocked."
+            )
+            logger.warning(
+                f"❌ REJECTED: Cash reserve violation. Would have {cash_reserve_pct * 100:.1f}% "
+                f"after trade (minimum 50% required)"
+            )
+
+        # ============================================================
         # CHECK 1: Insufficient Funds
         # ============================================================
         trade_value = request.notional or (
