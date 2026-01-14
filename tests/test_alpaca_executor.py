@@ -43,8 +43,11 @@ def mock_trade_gate():
     """Mock mandatory trade gate to allow test trades.
 
     Tests should not be blocked by the $0 equity safety check (ll_051).
+    The function is imported at runtime inside place_order(), so we patch at source.
     """
-    with patch("src.execution.alpaca_executor.validate_trade_mandatory", return_value=None):
+    with patch(
+        "src.safety.mandatory_trade_gate.validate_trade_mandatory", return_value=None
+    ):
         yield
 
 
