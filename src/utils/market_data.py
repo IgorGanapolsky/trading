@@ -1317,3 +1317,7 @@ def get_market_data_provider() -> MarketDataProvider:
     if not hasattr(get_market_data_provider, "_instance"):
         get_market_data_provider._instance = MarketDataProvider()  # type: ignore[attr-defined]
     return get_market_data_provider._instance  # type: ignore[attr-defined]
+
+
+# Alias for backward compatibility
+MarketDataFetcher = MarketDataProvider
