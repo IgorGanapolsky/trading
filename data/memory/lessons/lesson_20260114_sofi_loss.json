@@ -1,0 +1,22 @@
+{
+  "id": "lesson_20260114_sofi_loss",
+  "category": "lessons",
+  "timestamp": "2026-01-14T15:15:00.000000",
+  "title": "SOFI blackout violation - lost $40.74",
+  "content": "Traded SOFI during earnings blackout period (Jan 30 earnings). Violated multiple rules: (1) Not SPY/IWM only, (2) Used CSP not spread, (3) Ignored blackout. Result: -$40.74 loss. NEVER trade stocks with earnings < 16 days away.",
+  "metadata": {
+    "pnl": -40.74,
+    "symbol": "SOFI",
+    "violations": ["blackout_period", "ticker_restriction", "spread_requirement"],
+    "root_cause": "Ignored earnings calendar and ticker hierarchy"
+  },
+  "tags": ["risk_management", "earnings", "blackout", "critical_lesson"],
+  "severity": "CRITICAL",
+  "verified": true,
+  "action_items": [
+    "ALWAYS check earnings calendar before ANY trade",
+    "SPY/IWM ONLY - no exceptions",
+    "Use spreads, not naked CSPs",
+    "Pre-trade checklist is MANDATORY"
+  ]
+}
