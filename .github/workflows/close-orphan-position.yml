@@ -7,11 +7,14 @@ on:
         description: "Type 'CLOSE' to confirm closing the orphan put position"
         required: true
         default: ""
+  push:
+    paths:
+      - 'CLOSE_ORPHAN.trigger'
 
 jobs:
   close-position:
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.confirm == 'CLOSE' }}
+    if: ${{ github.event.inputs.confirm == 'CLOSE' || github.event_name == 'push' }}
 
     steps:
       - uses: actions/checkout@v4
