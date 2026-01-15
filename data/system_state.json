@@ -1,39 +1,25 @@
 {
-  "meta": {
-    "last_updated": "2026-01-15T13:51:00.000000-05:00",
-    "source": "alpaca_api_direct_FIXED",
-    "automation_fix_date": "2026-01-15"
-  },
+  "last_updated": "2026-01-15T19:10:30.540694",
   "portfolio": {
-    "equity": 4951.45,
+    "equity": 4957.21,
     "cash": 4260.12
   },
-  "account": {
-    "equity": 0,
-    "cash": 0,
-    "total_pl": 0,
-    "total_pl_pct": 0,
-    "positions_count": 0
-  },
   "paper_account": {
-    "equity": 4951.45,
+    "equity": 4957.21,
     "cash": 4260.12,
-    "buying_power": 8920.57,
-    "total_pl": -48.55,
-    "total_pl_pct": -0.97,
+    "buying_power": 8920.33,
+    "total_pl": -42.789999999999964,
+    "total_pl_pct": -0.86,
     "positions_count": 6,
-    "daily_change": -7.73,
-    "current_equity": 4951.45,
-    "win_rate": 0,
-    "win_rate_sample_size": 0
+    "daily_change": -1.9700000000002547
   },
   "positions": [
     {
       "symbol": "SPY",
       "qty": 0.576037269,
-      "price": 694.98,
-      "value": 400.334381,
-      "pnl": 0.374382,
+      "price": 694.56,
+      "value": 400.092446,
+      "pnl": 0.132447,
       "type": "stock"
     },
     {
@@ -71,26 +57,27 @@
     {
       "symbol": "SPY260220P00660000",
       "qty": 1.0,
-      "price": 3.02,
-      "value": 302.0,
-      "pnl": -5.0,
-      "type": "option",
-      "note": "ORPHAN - No matching short leg - MUST CLOSE"
+      "price": 3.08,
+      "value": 308.0,
+      "pnl": 1.0,
+      "type": "option"
     }
   ],
   "trades": {
     "last_trade_date": "2026-01-15",
-    "today_trades": 9,
-    "total_trades_today": 9,
+    "today_trades": "synced",
+    "total_trades_today": 0,
     "last_trade_symbol": "SPY"
   },
   "risk": {
-    "status": "CRISIS - ORPHAN POSITION DETECTED",
-    "total_pl": -48.55,
-    "unrealized_pl": -7.63,
-    "alert": "SPY260220P00660000 is orphan LONG put - violates Rule #1"
+    "status": "WARNING - NEGATIVE P/L",
+    "total_pl": -42.789999999999964,
+    "unrealized_pl": -1.867553
   },
-  "challenge": {
-    "current_day": 76
+  "account": {
+    "current_equity": 4957.21,
+    "total_pl": -42.789999999999964,
+    "total_pl_pct": -0.86,
+    "positions_count": 6
   }
 }
