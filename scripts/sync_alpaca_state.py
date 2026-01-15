@@ -148,6 +148,23 @@ def update_system_state(alpaca_data: dict | None) -> None:
         # Store positions count
         state["account"]["positions_count"] = alpaca_data.get("positions_count", 0)
 
+        # CRITICAL FIX (Jan 15, 2026): Also update paper_account section
+        # Dashboard reads from paper_account.current_equity, not account.current_equity
+        # Without this, dashboard defaults to $100,000 instead of real value
+        if alpaca_data.get("mode") == "paper":
+            state.setdefault("paper_account", {})
+            state["paper_account"]["current_equity"] = alpaca_data.get("equity", 0)
+            state["paper_account"]["equity"] = alpaca_data.get("equity", 0)
+            state["paper_account"]["cash"] = alpaca_data.get("cash", 0)
+            state["paper_account"]["buying_power"] = alpaca_data.get("buying_power", 0)
+            state["paper_account"]["positions_count"] = alpaca_data.get("positions_count", 0)
+            state["paper_account"]["starting_balance"] = state["paper_account"].get("starting_balance", 5000.0)
+            state["paper_account"]["total_pl"] = current - state["paper_account"]["starting_balance"]
+            state["paper_account"]["total_pl_pct"] = (
+                ((current - state["paper_account"]["starting_balance"]) / state["paper_account"]["starting_balance"]) * 100
+                if state["paper_account"]["starting_balance"] > 0 else 0
+            )
+
         # CRITICAL: Store actual positions in performance.open_positions
         # This is what the blog and verify_positions.py use to display positions
         positions = alpaca_data.get("positions", [])
