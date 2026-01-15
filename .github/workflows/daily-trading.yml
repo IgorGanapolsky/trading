@@ -1537,6 +1537,28 @@ jobs:
             git push || echo "⚠️ Push failed - will retry in next run"
           fi
 
+      # FIX Jan 15, 2026: Sync trades FROM Alpaca before dashboard generation
+      # ROOT CAUSE: Dashboard showed 0 trades while Dialogflow showed 9 trades
+      # because trading scripts don't create local trade files.
+      # SOLUTION: Fetch fills from Alpaca API and create trades_{date}.json
+      - name: Sync Trades from Alpaca (Pre-Dashboard)
+        if: always()
+        continue-on-error: true
+        env:
+          ALPACA_API_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_KEY || secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ github.event.inputs.trading_mode == 'live' && secrets.ALPACA_BROKERAGE_TRADING_API_SECRET || secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          echo "🔄 ========================================"
+          echo "🔄 SYNC TRADES FROM ALPACA (Pre-Dashboard)"
+          echo "🔄 ========================================"
+          echo ""
+          echo "FIX Jan 15: Dashboard was showing 0 trades while Dialogflow showed 9"
+          echo "This sync fetches fills from Alpaca and creates local trade files"
+          echo ""
+          python3 scripts/sync_trades_from_alpaca.py || {
+            echo "⚠️ Trade sync from Alpaca failed - dashboard may show stale data"
+          }
+
       - name: Update Progress Dashboard Wiki
         # FIXED Dec 29, 2025: Always update dashboard, even when trading skipped
         # FIXED Jan 5, 2026: Added if: always() so dashboard updates even when trading fails
