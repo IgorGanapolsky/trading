@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-01-15T03:20:00.000000",
+  "last_updated": "2026-01-15T20:30:00.000000",
   "challenge": {
     "current_day": 76,
     "total_days": 90,
@@ -8,39 +8,40 @@
     "phase": "paper_trading_validation"
   },
   "portfolio": {
-    "equity": 4959.26,
-    "cash": 4959.26
+    "equity": 5005.54,
+    "cash": 5005.54
   },
   "paper_account": {
-    "equity": 4959.26,
-    "cash": 4959.26,
-    "buying_power": 9918.52,
-    "total_pl": -40.73999999999978,
-    "total_pl_pct": -0.81,
+    "equity": 5005.54,
+    "current_equity": 5005.54,
+    "cash": 5005.54,
+    "buying_power": 10011.08,
+    "total_pl": 5.54,
+    "total_pl_pct": 0.11,
     "positions_count": 0,
-    "daily_change": -65.58453843149982
+    "daily_change": 46.36
   },
   "positions": [],
   "trades": {
-    "last_trade_date": "2026-01-14",
-    "today_trades": "synced",
-    "total_trades_today": 0,
-    "last_trade_symbol": "none"
+    "last_trade_date": "2026-01-15",
+    "today_trades": 9,
+    "total_trades_today": 9,
+    "last_trade_symbol": "SPY"
   },
   "risk": {
-    "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -40.73999999999978,
+    "status": "HEALTHY",
+    "total_pl": 5.54,
     "unrealized_pl": 0
   },
   "account": {
-    "current_equity": 4959.26,
-    "total_pl": -40.73999999999978,
-    "total_pl_pct": -0.81,
+    "current_equity": 5005.54,
+    "total_pl": 5.54,
+    "total_pl_pct": 0.11,
     "positions_count": 0
   },
   "meta": {
-    "last_updated": "2026-01-15T16:05:57.931816",
-    "last_sync": "2026-01-15T16:05:57.931823",
-    "sync_mode": "skipped_no_keys"
+    "last_updated": "2026-01-15T20:30:00.000000",
+    "last_sync": "2026-01-15T20:30:00.000000",
+    "sync_mode": "manual_cto_update"
   }
 }
