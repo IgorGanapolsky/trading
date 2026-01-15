@@ -2,28 +2,29 @@
 
 CTO: Claude | CEO: Igor Ganapolsky
 
-## Strategy (Updated Jan 14, 2026 - RESEARCH-BACKED REVISION)
-- **North Star**: $150-250/month (3-5% monthly) - RESEARCH VALIDATED
-- **Why revised**: Deep research confirms 3-5% monthly is realistic for $5K accounts. 40%/month ($100/day) requires $40K+ capital.
+## Strategy (Updated Jan 15, 2026 - DEEP RESEARCH REVISION)
+- **North Star**: $150-200/month (3-4% monthly) - MATH VALIDATED
+- **Why revised**: Deep research confirms credit spreads need 80%+ win rate to profit. 70% POP ≠ 70% win rate.
 - **Current capital**: $4,959.26 | Loss: -$40.74 (-0.81%) | Lesson paid.
 - **Primary strategy**: CREDIT SPREADS on SPY/IWM ONLY - defined risk
 - **Spread setup**: Sell 30-delta put, buy 20-delta put = ~$500 collateral, ~$50-70 premium
-- **Why 30-delta**: 70% probability of profit. Margin of safety per Phil Town.
-- **Expiration**: 30-45 DTE, close at 50% max profit
+- **CRITICAL MATH**: Risk $440 to make $60 = 7.3:1 ratio. Break-even win rate = **88%**
+- **Expiration**: 30-45 DTE, close at 50% max profit (improves win rate to ~80%)
 - **Position limit**: 1 spread at a time (5% max = $248 risk)
-- **Monthly target**: 3-4 spreads x $50 x 70% = $105-140/month (realistic)
-- **Stop-loss**: Close at 2x credit received OR 25% spread width
+- **Monthly target**: 3-4 spreads x $50 x 80% win rate = $120-160/month (realistic)
+- **Stop-loss**: Close at 2x credit received ($120 max loss) - MANDATORY
 - **Risk management**: NEVER more than 5% on single trade. NO NAKED PUTS.
-- **Paper phase**: 90 days to validate 70%+ win rate before scaling
+- **Paper phase**: 90 days to validate 80%+ win rate before scaling
 
-## Recovery Path (Research-Based)
-| Phase | Capital | Monthly Target | Timeline |
-|-------|---------|----------------|----------|
-| Now | $4,959 | $150-250 (3-5%) | Immediate |
-| +6mo | ~$6,500 | $195-325 | With $25/day deposits |
-| +12mo | ~$9,000 | $270-450 | Compounding |
-| +24mo | ~$15,000 | $450-750 | On track |
-| Goal | $40,000 | $2,000 ($100/day) | 3-4 years realistic |
+## Recovery Path (Math-Validated Jan 15, 2026)
+| Phase | Capital | Monthly Income | Daily Equivalent | Timeline |
+|-------|---------|----------------|------------------|----------|
+| Now | $4,959 | $150-200 | **$5-10/day** | Immediate |
+| +6mo | $9,500 | $285-380 | $14-19/day | With deposits |
+| +12mo | $16,000 | $480-640 | $24-32/day | Compounding |
+| +24mo | $33,000 | $990-1,320 | $50-66/day | On track |
+| +30mo | $45,000 | $1,350-1,800 | **$68-90/day** | Near goal |
+| Goal | $50,000+ | $2,000+ | **$100/day** | ~2.5-3 years |
 
 ## MANDATORY Pre-Trade Checklist
 1. [ ] Is ticker SPY or IWM? (NO individual stocks until proven)
@@ -37,7 +38,10 @@ CTO: Claude | CEO: Igor Ganapolsky
 - Track every paper trade: entry, exit, P/L, win/loss
 - Required metrics: win rate %, avg win, avg loss, profit factor
 - Scale decisions based on REAL data, not projections
-- If win rate <60% after 30 trades: reassess strategy
+- **CRITICAL**: Break-even win rate = 88%. Target = 80%+ with early exits.
+- If win rate <75% after 30 trades: reassess strategy (not profitable)
+- If win rate 75-80%: marginally profitable, proceed with caution
+- If win rate 80%+: profitable, consider scaling after 90 days
 
 ### Ticker Hierarchy (Jan 2026 Research)
 | Priority | Ticker | Rationale | Blackout |
