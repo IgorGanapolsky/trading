@@ -31,7 +31,7 @@ Most trading bots fail because they:
 
 | Account | Equity | P/L | Status |
 |---------|--------|-----|--------|
-| Live | $30.00 | $0.00 | Accumulating $10/day |
+| Live | $30.00 | $0.00 | Accumulating $25/day |
 | Paper (R&D) | $5,000.00 | $0.00 | FRESH START (reset Jan 7) |
 
 | Metric | Value | Target |
@@ -40,7 +40,7 @@ Most trading bots fail because they:
 | Positions | 0 | - |
 | Backtest Pass | 19/13 | Scenarios |
 
-**Honest Assessment**: Live trading started Jan 3, 2026 with fresh $20 deposit. Accumulating $10/day for defined-risk options spreads ($500 minimum for CSPs). Paper account was RESET to $5,000 on Jan 7, 2026 by CEO to match realistic 6-month capital milestone. Previous $100K+ paper results were unrealistic for actual capital trajectory.
+**Honest Assessment**: Live trading started Jan 3, 2026 with fresh $20 deposit. Accumulating $25/day for defined-risk options spreads ($500 minimum for CSPs). Paper account was RESET to $5,000 on Jan 7, 2026 by CEO to match realistic 6-month capital milestone. Previous $100K+ paper results were unrealistic for actual capital trajectory.
 
 ---
 
