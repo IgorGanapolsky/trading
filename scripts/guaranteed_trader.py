@@ -215,13 +215,16 @@ def run():
         else:
             logger.info(f"No {symbol} position")
 
-    # RULE #1 CHECK: NEVER add to losing positions
-    if total_unrealized_pnl < -5.0:  # Allow small fluctuations
+    # RULE #1 CHECK: Only block if losses are SIGNIFICANT (>2% of portfolio)
+    # CEO FIX Jan 15, 2026: $0.03 unrealized loss was blocking ALL trades!
+    # Phil Town Rule #1 means don't lose BIG, not "never have red days"
+    loss_threshold = -account["equity"] * 0.02  # 2% of portfolio
+    if total_unrealized_pnl < loss_threshold:
         logger.warning("=" * 60)
         logger.warning("⚠️ RULE #1 VIOLATION PREVENTED!")
         logger.warning(f"   Unrealized P/L: ${total_unrealized_pnl:.2f}")
+        logger.warning(f"   Threshold: ${loss_threshold:.2f} (2% of portfolio)")
         logger.warning("   REFUSING to add to losing positions.")
-        logger.warning("   Wait for positions to recover before adding.")
         logger.warning("=" * 60)
         return {
             "success": False,
@@ -229,6 +232,8 @@ def run():
             "unrealized_pnl": total_unrealized_pnl,
             "message": "Phil Town Rule #1: Don't lose money. Not adding to losing positions.",
         }
+    elif total_unrealized_pnl < 0:
+        logger.info(f"Minor unrealized loss (${total_unrealized_pnl:.2f}) - proceeding with trade")
 
     # SIMPLE STRATEGY: Buy $100 of SPY (most liquid ETF)
     # $100/day * 5 days = $500 = 1 credit spread collateral
