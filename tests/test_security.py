@@ -508,8 +508,8 @@ class TestGateIntegration:
         """GateMemory should record and query trade outcomes."""
         from src.orchestrator.gates import GateMemory
 
-        db_path = str(tmp_path / "test_memory.db")
-        gate = GateMemory(telemetry=None, db_path=db_path)
+        memory_path = str(tmp_path / "test_memory.json")
+        gate = GateMemory(telemetry=None, memory_path=memory_path)
 
         # Initially no history
         result = gate.evaluate("SPY", "momentum", "technical_signal")

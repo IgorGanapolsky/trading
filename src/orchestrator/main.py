@@ -346,7 +346,7 @@ class TradingOrchestrator:
         # Closes the learning loop from past trades
         self.gate_memory = GateMemory(
             telemetry=self.telemetry,
-            db_path="data/trade_memory.db",
+            memory_path="data/trade_memory.json",
         )
         logger.info("Gate M: Memory feedback loop initialized (SQLite)")
 
