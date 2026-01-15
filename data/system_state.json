@@ -1,29 +1,33 @@
 {
   "meta": {
-    "last_updated": "2026-01-15T13:36:09.369896-05:00",
+    "last_updated": "2026-01-15T13:44:00-05:00",
     "source": "alpaca_api_direct",
     "automation_fix_date": "2026-01-15"
   },
   "account": {
-    "equity": 0,
-    "cash": 0,
-    "total_pl": 0,
-    "total_pl_pct": 0,
-    "positions_count": 0
+    "equity": 4955.29,
+    "cash": 4260.12,
+    "total_pl": -44.71,
+    "total_pl_pct": -0.89,
+    "positions_count": 4,
+    "current_equity": 4955.29
   },
   "paper_account": {
-    "equity": 4946.59,
-    "cash": 4260.12,
-    "total_pl": -53.409999999999854,
-    "total_pl_pct": -1.0681999999999972,
-    "positions_count": 6,
+    "equity": 4950.45,
+    "cash": 4268.12,
+    "buying_power": 8928.57,
+    "total_pl": -48.58,
+    "total_pl_pct": -0.97,
+    "positions_count": 4,
     "win_rate": 0,
     "win_rate_sample_size": 0,
-    "daily_change": -12.590000000000146
+    "daily_change": -8.73,
+    "current_equity": 4950.45
   },
   "trades": {
-    "last_trade_date": "2026-01-06",
-    "today_trades": 0
+    "last_trade_date": "2026-01-15",
+    "today_trades": 9,
+    "total_trades_today": 9
   },
   "challenge": {
     "current_day": 76
