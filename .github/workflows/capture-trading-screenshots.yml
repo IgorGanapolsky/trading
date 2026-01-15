@@ -17,6 +17,9 @@ on:
           - alpaca
           - progress
 
+permissions:
+  contents: write
+
 jobs:
   capture-screenshots:
     name: Capture Trading Dashboards

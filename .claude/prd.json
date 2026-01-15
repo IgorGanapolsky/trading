@@ -8,7 +8,7 @@
       "category": "testing",
       "title": "Run pytest and fix failures",
       "description": "Run full test suite, identify failures, fix them iteratively",
-      "passes": false,
+      "passes": true,
       "priority": 1,
       "command": "pytest tests/ -q --tb=short",
       "acceptance_criteria": "All tests pass with 0 failures"
