@@ -41,10 +41,38 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # ========================================================================
+  # TRADING HALT CHECK (Jan 15, 2026)
+  # CEO Directive: HALT all trading until orphan position root cause fixed
+  # See: rag_knowledge/lessons_learned/ll_221_orphan_put_crisis_jan15.md
+  # ========================================================================
+  check-trading-halt:
+    runs-on: ubuntu-latest
+    outputs:
+      trading_halted: ${{ steps.check.outputs.halted }}
+    steps:
+      - name: Check if trading is halted
+        id: check
+        run: |
+          # CRITICAL: Trading HALTED due to orphan position crisis
+          # Root cause: execute_credit_spread.py created LONG put without matching SHORT leg
+          # Impact: -$48.55 loss (-0.97%) from $5K starting capital
+          # Date: Jan 15, 2026
+          #
+          # TO RESUME TRADING:
+          # 1. Fix execute_credit_spread.py to verify both legs before submission
+          # 2. Add position validation after each spread execution
+          # 3. Set halted=false below
+          #
+          echo "🛑 TRADING HALTED - Orphan position crisis (Jan 15, 2026)"
+          echo "halted=true" >> $GITHUB_OUTPUT
+
   # Quick validation and setup job
   validate-and-test:
     runs-on: ubuntu-22.04  # Pinned Ubuntu version
     timeout-minutes: 20  # Increased from 10 - sentence-transformers downloads large models
+    needs: [check-trading-halt]
+    if: needs.check-trading-halt.outputs.trading_halted != 'true'
     outputs:
       secrets_valid: ${{ steps.validate_secrets.outputs.secrets_valid }}
     steps:
