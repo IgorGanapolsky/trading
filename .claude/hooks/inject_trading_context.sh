@@ -228,7 +228,7 @@ NEXT_TRADE=$(get_next_trading_day)
 BACKTEST_SUMMARY="$CLAUDE_PROJECT_DIR/data/backtests/latest_summary.json"
 if [[ -f "$BACKTEST_SUMMARY" ]]; then
     PASSES=$(jq -r '.aggregate_metrics.passes // 0' "$BACKTEST_SUMMARY" 2>/dev/null || echo "0")
-    TOTAL=$(jq -r '.aggregate_metrics.total // 13' "$BACKTEST_SUMMARY" 2>/dev/null || echo "13")
+    TOTAL=$(jq -r '.scenario_count // 19' "$BACKTEST_SUMMARY" 2>/dev/null || echo "19")
     MIN_SHARPE=$(jq -r '.aggregate_metrics.min_sharpe_ratio // "N/A"' "$BACKTEST_SUMMARY" 2>/dev/null || echo "N/A")
     if [[ "$MIN_SHARPE" != "N/A" ]]; then
         SHARPE_NOTE="Sharpe: $MIN_SHARPE"
