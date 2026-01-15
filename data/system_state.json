@@ -1,65 +1,65 @@
 {
-  "last_updated": "2026-01-15T20:54:31.964034",
+  "last_updated": "2026-01-15T21:06:40.326825",
   "portfolio": {
-    "equity": 5003.5,
+    "equity": 4989.81,
     "cash": 4260.12
   },
   "paper_account": {
-    "equity": 5003.5,
+    "equity": 4989.81,
     "cash": 4260.12,
-    "buying_power": 8918.62,
-    "total_pl": 3.5,
-    "total_pl_pct": 0.07,
+    "buying_power": 8918.93,
+    "total_pl": -10.1899999999996,
+    "total_pl_pct": -0.2,
     "positions_count": 6,
-    "daily_change": 44.31999999999971
+    "daily_change": 30.63000000000011
   },
   "positions": [
     {
       "symbol": "SPY",
       "qty": 0.576037269,
-      "price": 691.59,
-      "value": 398.381615,
-      "pnl": -1.578384,
+      "price": 692.13,
+      "value": 398.692675,
+      "pnl": -1.267324,
       "type": "stock"
     },
     {
       "symbol": "SPY260220P00565000",
       "qty": 1.0,
-      "price": 0.52,
-      "value": 52.0,
-      "pnl": 5.0,
+      "price": 0.5,
+      "value": 50.0,
+      "pnl": 3.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00570000",
       "qty": -1.0,
-      "price": 0.57,
-      "value": -57.0,
-      "pnl": -7.0,
+      "price": 0.54,
+      "value": -54.0,
+      "pnl": -4.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00595000",
       "qty": 1.0,
-      "price": 0.81,
-      "value": 81.0,
-      "pnl": 8.0,
+      "price": 0.78,
+      "value": 78.0,
+      "pnl": 5.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00600000",
       "qty": -1.0,
-      "price": 0.89,
-      "value": -89.0,
-      "pnl": -11.0,
+      "price": 0.86,
+      "value": -86.0,
+      "pnl": -8.0,
       "type": "option"
     },
     {
       "symbol": "SPY260220P00660000",
       "qty": 1.0,
-      "price": 3.58,
-      "value": 358.0,
-      "pnl": 51.0,
+      "price": 3.43,
+      "value": 343.0,
+      "pnl": 36.0,
       "type": "option"
     }
   ],
@@ -70,19 +70,14 @@
     "last_trade_symbol": "SPY"
   },
   "risk": {
-    "status": "MONITORING",
-    "total_pl": 3.5,
-    "unrealized_pl": 44.421616
+    "status": "WARNING - NEGATIVE P/L",
+    "total_pl": -10.1899999999996,
+    "unrealized_pl": 30.732675999999998
   },
   "account": {
-    "current_equity": 5003.5,
-    "total_pl": 3.5,
-    "total_pl_pct": 0.07,
+    "current_equity": 4989.81,
+    "total_pl": -10.1899999999996,
+    "total_pl_pct": -0.2,
     "positions_count": 6
-  },
-  "meta": {
-    "last_updated": "2026-01-15T20:53:31.875756",
-    "last_sync": "2026-01-15T20:53:31.875764",
-    "sync_mode": "skipped_no_keys"
   }
 }
