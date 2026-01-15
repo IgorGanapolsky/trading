@@ -1,5 +1,6 @@
-# Risk module stub - original code deleted in cleanup PR #1445
-# These are placeholder imports to prevent import errors
-# The Phil Town strategy doesn't use these modules
+# Risk module - Phil Town Rule #1: Don't Lose Money
+# Pre-trade checklist enforces CLAUDE.md trading rules
 
-__all__ = []
+from src.risk.pre_trade_checklist import PreTradeChecklist
+
+__all__ = ["PreTradeChecklist"]

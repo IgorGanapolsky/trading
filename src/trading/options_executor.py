@@ -7,6 +7,7 @@ Implements complete options strategy execution with comprehensive risk managemen
 3. Credit Spreads - Directional premium plays with defined risk
 
 Safety Features:
+- Ticker whitelist (SPY/IWM only per CLAUDE.md) - Jan 15, 2026
 - Max 2% portfolio risk per trade
 - Min $0.30 premium per contract
 - IV Rank > 30 for premium selling
@@ -18,6 +19,7 @@ Date: December 10, 2025
 """
 
 import logging
+import re
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Any, Literal
@@ -27,6 +29,70 @@ from src.core.options_client import AlpacaOptionsClient
 from src.risk.options_risk_monitor import OptionsPosition, OptionsRiskMonitor
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================
+# TICKER WHITELIST - CRITICAL ENFORCEMENT (Jan 15, 2026)
+# Per CLAUDE.md: "CREDIT SPREADS on SPY/IWM ONLY"
+# This prevents trades like SOFI that violated strategy
+# ============================================================
+ALLOWED_TICKERS = {"SPY", "IWM"}  # Per CLAUDE.md strategy
+TICKER_WHITELIST_ENABLED = True  # Toggle for paper testing
+
+
+def _extract_underlying_from_option(symbol: str) -> str:
+    """
+    Extract underlying symbol from option symbol (OCC format).
+
+    OCC format: [UNDERLYING][YYMMDD][P/C][STRIKE*1000]
+    Example: SOFI260206P00024000 -> SOFI
+    Example: SPY260115C00600000 -> SPY
+
+    Args:
+        symbol: Stock or option symbol
+
+    Returns:
+        Underlying ticker symbol in uppercase
+    """
+    # Standard equity symbols pass through unchanged
+    if len(symbol) <= 6:
+        return symbol.upper()
+
+    # Try to match OCC option format
+    # Pattern: underlying (1-6 chars) + YYMMDD + P/C + 8 digit strike
+    match = re.match(r"^([A-Z]{1,6})(\d{6})[PC](\d{8})$", symbol.upper())
+    if match:
+        return match.group(1)
+
+    # Fallback: if it looks like it has a date embedded, try to extract
+    if len(symbol) >= 15:
+        # Last 15 chars are: YYMMDD (6) + P/C (1) + Strike (8)
+        potential_underlying = symbol[:-15]
+        if potential_underlying and potential_underlying.isalpha():
+            return potential_underlying.upper()
+
+    return symbol.upper()
+
+
+def validate_ticker_for_options(underlying: str) -> tuple[bool, str]:
+    """
+    Validate ticker is in allowed whitelist for options trading.
+
+    Only allow SPY and IWM trades per CLAUDE.md strategy.
+
+    Args:
+        underlying: Underlying ticker symbol
+
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    if not TICKER_WHITELIST_ENABLED:
+        return True, ""
+
+    underlying = underlying.upper()
+    if underlying not in ALLOWED_TICKERS:
+        return False, f"{underlying} not allowed. Strategy permits SPY/IWM only per CLAUDE.md."
+    return True, ""
 
 
 @dataclass
@@ -137,6 +203,11 @@ class OptionsExecutor:
         logger.info(
             f"Executing covered call: {ticker} ({shares} shares, {dte} DTE, Δ={target_delta})"
         )
+
+        # 0. TICKER WHITELIST CHECK (Jan 15, 2026)
+        ticker_valid, ticker_error = validate_ticker_for_options(ticker)
+        if not ticker_valid:
+            raise ValueError(f"TICKER NOT ALLOWED: {ticker_error}")
 
         # 1. Validate we own the shares
         account = self.trader.get_account_info()
@@ -324,6 +395,11 @@ class OptionsExecutor:
         target_delta = target_delta or self.IRON_CONDOR_TARGET_DELTA
 
         logger.info(f"Executing iron condor: {ticker} ({width}w, {dte} DTE, Δ={target_delta})")
+
+        # 0. TICKER WHITELIST CHECK (Jan 15, 2026)
+        ticker_valid, ticker_error = validate_ticker_for_options(ticker)
+        if not ticker_valid:
+            raise ValueError(f"TICKER NOT ALLOWED: {ticker_error}")
 
         # 1. Get account info for position sizing
         account = self.trader.get_account_info()
@@ -574,6 +650,11 @@ class OptionsExecutor:
 
         logger.info(f"Executing {spread_type}: {ticker} ({width}w, {dte} DTE, Δ={target_delta})")
 
+        # 0. TICKER WHITELIST CHECK (Jan 15, 2026)
+        ticker_valid, ticker_error = validate_ticker_for_options(ticker)
+        if not ticker_valid:
+            raise ValueError(f"TICKER NOT ALLOWED: {ticker_error}")
+
         # 1. Get account info
         account = self.trader.get_account_info()
 
@@ -745,6 +826,7 @@ class OptionsExecutor:
         Validate options strategy against risk limits.
 
         Safety checks:
+        0. Ticker whitelist: SPY/IWM only per CLAUDE.md (Jan 15, 2026)
         1. Max portfolio risk: 2% per trade
         2. Minimum premium: $0.30 per contract
         3. Position size limits: Max 5 contracts
@@ -757,6 +839,16 @@ class OptionsExecutor:
         Returns:
             Dict with 'approved' bool and 'reason' string
         """
+        # 0. TICKER WHITELIST CHECK (Jan 15, 2026)
+        # Per CLAUDE.md: "CREDIT SPREADS on SPY/IWM ONLY"
+        ticker_valid, ticker_error = validate_ticker_for_options(strategy.underlying)
+        if not ticker_valid:
+            logger.warning(f"🚫 TICKER BLOCKED: {ticker_error}")
+            return {
+                "approved": False,
+                "reason": f"TICKER NOT ALLOWED: {ticker_error}",
+            }
+
         equity = float(account["equity"])
         buying_power = float(account["buying_power"])
 

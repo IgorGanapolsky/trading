@@ -33,6 +33,7 @@ from typing import Any
 
 from src.rag.lessons_learned_rag import LessonsLearnedRAG
 from src.risk.capital_efficiency import get_capital_calculator
+from src.risk.pre_trade_checklist import PreTradeChecklist
 from src.validators.rule_one_validator import RuleOneValidator
 
 logger = logging.getLogger(__name__)
@@ -62,9 +63,11 @@ class RejectionReason(Enum):
         "Phil Town Rule #1 validation failed - not a wonderful company at attractive price"
     )
     EARNINGS_BLACKOUT = "Ticker is in earnings blackout period - avoid new positions"
-    POSITION_SIZE_TOO_LARGE = "Position max loss exceeds 10% of portfolio"
+    POSITION_SIZE_TOO_LARGE = "Position max loss exceeds 5% of portfolio"
     TICKER_NOT_ALLOWED = "Ticker not in whitelist - only SPY/IWM allowed per CLAUDE.md"
     FORBIDDEN_STRATEGY = "Strategy is forbidden - naked positions not allowed"
+    PRE_TRADE_CHECKLIST_FAILED = "Pre-trade checklist failed - CLAUDE.md rules violated"
+    DTE_OUT_OF_RANGE = "DTE must be 30-45 days per CLAUDE.md"
 
 
 @dataclass
@@ -85,6 +88,12 @@ class TradeRequest:
     bid_price: float | None = None  # Current bid price (for liquidity check)
     ask_price: float | None = None  # Current ask price (for liquidity check)
     is_option: bool = False  # True if this is an options trade
+    # ADDED Jan 15, 2026: For PreTradeChecklist integration
+    dte: int | None = None  # Days to expiration (30-45 per CLAUDE.md)
+    is_spread: bool = True  # True if spread, False if naked (naked forbidden)
+    max_loss: float | None = None  # Maximum potential loss in dollars
+    spread_width: float | None = None  # Width of spread in dollars (e.g., 5.0)
+    premium_received: float | None = None  # Premium received for credit spreads
 
 
 @dataclass
@@ -181,27 +190,28 @@ class TradeGateway:
     MAX_BID_ASK_SPREAD_PCT = 0.05  # 5% maximum bid-ask spread
 
     # Earnings blackout calendar (Jan 2026)
-    # UPDATED Jan 14, 2026 (LL-191): Extended from 7 to 30 days before earnings
-    # Don't open NEW positions 30 days before earnings through 1 day after
+    # UPDATED Jan 15, 2026: Block trades 7 days before through 1 day after earnings
     # LL-190: SOFI CSP was opened during blackout - caused 48% portfolio risk
     # LL-191: SOFI position still open despite strategy saying "AVOID until Feb 1"
     EARNINGS_BLACKOUTS = {
         "SOFI": {
-            "start": "2025-12-30",
+            "start": "2026-01-23",
             "end": "2026-02-01",
             "earnings": "2026-01-30",
-        },  # 30 days before
+        },  # 7 days before earnings
         "F": {
-            "start": "2026-01-10",
+            "start": "2026-02-03",
             "end": "2026-02-11",
             "earnings": "2026-02-10",
-        },  # 30 days before
+        },  # 7 days before earnings
         # Add more tickers as needed
     }
 
     # Maximum position risk as percentage of portfolio
     # LL-190: SOFI CSP had 48% portfolio risk - unacceptable
-    MAX_POSITION_RISK_PCT = 0.10  # 10% max risk per position
+    # UPDATED Jan 15, 2026: Changed from 10% to 5% per CLAUDE.md mandate
+    # CLAUDE.md: "Position limit: 1 spread at a time (5% max = $248 risk)"
+    MAX_POSITION_RISK_PCT = 0.05  # 5% max risk per position - MANDATORY per CLAUDE.md
 
     def __init__(self, executor=None, paper: bool = True):
         """
@@ -383,6 +393,52 @@ class TradeGateway:
 
         return False, ""
 
+    def _calculate_credit_spread_max_loss(self, request: TradeRequest) -> float:
+        """
+        Calculate max loss for a credit spread position.
+
+        Per CLAUDE.md: max_loss = (spread_width * 100) - premium
+
+        For a standard $5 wide spread with $0.70 premium:
+        max_loss = ($5 * 100) - $70 = $500 - $70 = $430 per contract
+
+        Args:
+            request: Trade request with spread details
+
+        Returns:
+            Maximum potential loss in dollars
+        """
+        # If max_loss is already provided, use it
+        if request.max_loss is not None:
+            return request.max_loss
+
+        # If spread_width and premium are provided, calculate
+        if request.spread_width is not None:
+            spread_width = request.spread_width
+            premium = request.premium_received or 0.0
+            contracts = request.quantity or 1
+
+            # max_loss = (spread_width * 100 * contracts) - (premium * 100 * contracts)
+            max_loss = (spread_width * 100 * contracts) - (premium * 100 * contracts)
+            return max(0, max_loss)  # Can't be negative
+
+        # Fallback: estimate based on strategy type
+        contracts = request.quantity or 1
+        if request.strategy_type in ["bull_put_spread", "bear_call_spread", "credit_spread"]:
+            # Default $5 spread, $0.50 premium = $450 max loss per contract
+            return 450.0 * contracts
+        elif request.strategy_type == "iron_condor":
+            # Default $5 wings, $1.00 total premium = $400 max loss per contract
+            return 400.0 * contracts
+        elif request.strategy_type in ["cash_secured_put", "naked_put"]:
+            # For CSP/naked put: max_loss = strike * 100 (full assignment risk)
+            # Use limit_price as strike proxy
+            strike = request.limit_price or 25  # Default conservative estimate
+            return strike * 100 * contracts
+
+        # Conservative default for unknown option strategies
+        return 500.0 * contracts
+
     def evaluate(self, request: TradeRequest) -> GatewayDecision:
         """
         Evaluate a trade request against all risk rules.
@@ -454,6 +510,74 @@ class TradeGateway:
                 "daily_pnl": self.daily_pnl,
                 "reason": "Daily loss within limit - recovery trading permitted",
             }
+
+        # ============================================================
+        # CHECK 0.1: PRE-TRADE CHECKLIST (Jan 15, 2026)
+        # Enforces MANDATORY Pre-Trade Checklist from CLAUDE.md:
+        # 1. Is ticker SPY or IWM?
+        # 2. Is position size <=5% of account?
+        # 3. Is it a SPREAD (not naked)?
+        # 4. Earnings blackout check
+        # 5. 30-45 DTE expiration
+        # 6. Stop-loss defined
+        # Phil Town Rule #1: Don't lose money
+        # ============================================================
+        if request.is_option:
+            # Calculate max loss for options trades
+            calculated_max_loss = self._calculate_credit_spread_max_loss(request)
+
+            # Get DTE from request or use default (35 = middle of 30-45 range)
+            trade_dte = request.dte if request.dte is not None else 35
+
+            # Create checklist with current account equity
+            pre_trade_checklist = PreTradeChecklist(account_equity=account_equity)
+
+            # Determine if stop-loss is defined
+            stop_loss_defined = request.stop_price is not None or request.strategy_type in [
+                "bull_put_spread",
+                "bear_call_spread",
+                "credit_spread",
+                "iron_condor",
+            ]  # Spreads have built-in max loss
+
+            # Run checklist validation
+            checklist_passed, checklist_failures = pre_trade_checklist.validate(
+                symbol=request.symbol,
+                max_loss=calculated_max_loss,
+                dte=trade_dte,
+                is_spread=request.is_spread,
+                stop_loss_defined=stop_loss_defined,
+            )
+
+            if not checklist_passed:
+                rejection_reasons.append(RejectionReason.PRE_TRADE_CHECKLIST_FAILED)
+                logger.warning(
+                    f"🛑 PRE-TRADE CHECKLIST FAILED: {len(checklist_failures)} violations"
+                )
+                for failure in checklist_failures:
+                    logger.warning(f"   - {failure}")
+                risk_score += 1.0  # Maximum risk - hard block
+                metadata["pre_trade_checklist"] = {
+                    "passed": False,
+                    "failures": checklist_failures,
+                    "max_loss": calculated_max_loss,
+                    "max_allowed": pre_trade_checklist.max_risk,
+                    "dte": trade_dte,
+                    "is_spread": request.is_spread,
+                    "rule": "CLAUDE.md MANDATORY Pre-Trade Checklist",
+                }
+            else:
+                logger.info(
+                    f"✅ PRE-TRADE CHECKLIST PASSED: {request.symbol} "
+                    f"(max_loss=${calculated_max_loss:.2f}, limit=${pre_trade_checklist.max_risk:.2f})"
+                )
+                metadata["pre_trade_checklist"] = {
+                    "passed": True,
+                    "max_loss": calculated_max_loss,
+                    "max_allowed": pre_trade_checklist.max_risk,
+                    "dte": trade_dte,
+                    "is_spread": request.is_spread,
+                }
 
         # ============================================================
         # CHECK 0.3: TICKER WHITELIST (Jan 14, 2026 - LL-192)

@@ -5,6 +5,7 @@ compliance with risk rules, RAG lessons, and position limits.
 
 ENFORCEMENT (Jan 2026): This is the FINAL checkpoint before execution.
 No trade bypasses this gate. It enforces:
+- Ticker whitelist (SPY/IWM only per CLAUDE.md strategy) - Jan 15, 2026
 - Position size limits (max 10% of portfolio per position)
 - Daily loss limits (max 5% of portfolio per day)
 - RAG lesson blocking (CRITICAL lessons block trades)
@@ -13,10 +14,78 @@ No trade bypasses this gate. It enforces:
 
 import logging
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================
+# TICKER WHITELIST - CRITICAL ENFORCEMENT (Jan 15, 2026)
+# Per CLAUDE.md: "CREDIT SPREADS on SPY/IWM ONLY"
+# This prevents trades like SOFI that violated strategy
+# ============================================================
+ALLOWED_TICKERS = {"SPY", "IWM"}  # Per CLAUDE.md strategy
+TICKER_WHITELIST_ENABLED = True  # Toggle for paper testing
+
+
+def validate_ticker(symbol: str) -> tuple[bool, str]:
+    """
+    Validate ticker is in allowed whitelist.
+
+    Only allow SPY and IWM trades per CLAUDE.md strategy.
+    Handles both stock symbols and OCC option symbols.
+
+    Args:
+        symbol: Stock ticker or OCC option symbol (e.g., "SPY", "SPY260115P00585000")
+
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    if not TICKER_WHITELIST_ENABLED:
+        return True, ""
+
+    # Extract underlying from options symbol (OCC format)
+    underlying = _extract_underlying(symbol)
+
+    if underlying not in ALLOWED_TICKERS:
+        return False, f"{underlying} not allowed. Strategy permits SPY/IWM only."
+    return True, ""
+
+
+def _extract_underlying(symbol: str) -> str:
+    """
+    Extract underlying symbol from option symbol (OCC format).
+
+    OCC format: [UNDERLYING][YYMMDD][P/C][STRIKE*1000]
+    Example: SOFI260206P00024000 -> SOFI
+    Example: SPY260115C00600000 -> SPY
+
+    Args:
+        symbol: Stock or option symbol
+
+    Returns:
+        Underlying ticker symbol in uppercase
+    """
+    # Standard equity symbols pass through unchanged
+    if len(symbol) <= 6:
+        return symbol.upper()
+
+    # Try to match OCC option format
+    # Pattern: underlying (1-6 chars) + YYMMDD + P/C + 8 digit strike
+    match = re.match(r"^([A-Z]{1,6})(\d{6})[PC](\d{8})$", symbol.upper())
+    if match:
+        return match.group(1)
+
+    # Fallback: if it looks like it has a date embedded, try to extract
+    if len(symbol) >= 15:
+        # Last 15 chars are: YYMMDD (6) + P/C (1) + Strike (8)
+        potential_underlying = symbol[:-15]
+        if potential_underlying and potential_underlying.isalpha():
+            return potential_underlying.upper()
+
+    return symbol.upper()
 
 
 @dataclass
@@ -158,6 +227,21 @@ def validate_trade_mandatory(
     """
     warnings: list[str] = []
     checks_performed: list[str] = []
+
+    # =========================================================================
+    # CHECK 0: TICKER WHITELIST (Jan 15, 2026 - per CLAUDE.md)
+    # Per CLAUDE.md: "CREDIT SPREADS on SPY/IWM ONLY"
+    # This is the FIRST check - reject non-allowed tickers immediately
+    # =========================================================================
+    ticker_valid, ticker_error = validate_ticker(symbol)
+    if not ticker_valid:
+        logger.warning(f"🚫 TICKER BLOCKED: {ticker_error}")
+        return GateResult(
+            approved=False,
+            reason=f"TICKER NOT ALLOWED: {ticker_error}",
+            checks_performed=["ticker_whitelist: BLOCKED"],
+        )
+    checks_performed.append(f"ticker_whitelist: PASS ({_extract_underlying(symbol)})")
 
     # =========================================================================
     # CHECK 1: Basic sanity checks

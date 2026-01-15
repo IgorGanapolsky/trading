@@ -96,6 +96,7 @@ class TestTradeGatewayLiquidityCheck:
         gateway.executor = MockExecutor(account_equity=50000)
 
         # 2% spread = (2.00 - 1.96) / 2.00 = 0.02
+        # Added Jan 15, 2026: stop_price required by PreTradeChecklist per CLAUDE.md
         request = TradeRequest(
             symbol="SPY240315C00500000",
             side="buy",
@@ -104,6 +105,10 @@ class TestTradeGatewayLiquidityCheck:
             is_option=True,
             bid_price=1.96,
             ask_price=2.00,
+            stop_price=1.50,  # Stop-loss required per CLAUDE.md checklist
+            is_spread=True,  # Mark as spread to pass checklist (debit spread)
+            max_loss=200.0,  # Within 5% of $50000 equity
+            dte=35,  # Within 30-45 DTE range
         )
         decision = gateway.evaluate(request)
 
@@ -269,6 +274,124 @@ class TestTradeGatewaySuicideCommand:
         # Should fail for insufficient funds AND over-allocation
         assert RejectionReason.INSUFFICIENT_FUNDS in decision.rejection_reasons
         assert RejectionReason.MAX_ALLOCATION_EXCEEDED in decision.rejection_reasons
+
+
+class TestEarningsBlackoutEnforcement:
+    """Test earnings blackout trade blocking during evaluation."""
+
+    def test_sofi_blocked_during_blackout(self):
+        """Test that SOFI trades are blocked during earnings blackout period."""
+        gateway = TradeGateway(executor=None, paper=True)
+        gateway.executor = MockExecutor(account_equity=50000)
+        # Disable ticker whitelist for this test (SOFI not in SPY/IWM whitelist)
+        gateway.TICKER_WHITELIST_ENABLED = False
+
+        # Mock current date to be within SOFI blackout (Jan 23 - Feb 1)
+        with patch("src.risk.trade_gateway.datetime") as mock_dt:
+            mock_dt.now.return_value.date.return_value = type(
+                "Date", (), {"__le__": lambda s, o: True, "__ge__": lambda s, o: True}
+            )()
+            # Use actual date parsing
+            from datetime import datetime as real_datetime
+
+            mock_dt.strptime = real_datetime.strptime
+            mock_dt.now.return_value = real_datetime(2026, 1, 25)  # During blackout
+
+            request = TradeRequest(
+                symbol="SOFI",
+                side="buy",
+                notional=500,
+                source="test",
+            )
+            decision = gateway.evaluate(request)
+
+            assert not decision.approved
+            assert RejectionReason.EARNINGS_BLACKOUT in decision.rejection_reasons
+
+    def test_sofi_option_blocked_during_blackout(self):
+        """Test that SOFI options are blocked during earnings blackout."""
+        gateway = TradeGateway(executor=None, paper=True)
+        gateway.executor = MockExecutor(account_equity=50000)
+        gateway.TICKER_WHITELIST_ENABLED = False
+
+        with patch("src.risk.trade_gateway.datetime") as mock_dt:
+            from datetime import datetime as real_datetime
+
+            mock_dt.strptime = real_datetime.strptime
+            mock_dt.now.return_value = real_datetime(2026, 1, 28)  # During blackout
+
+            # SOFI option symbol (OCC format)
+            request = TradeRequest(
+                symbol="SOFI260206P00024000",
+                side="sell",
+                quantity=1,
+                source="test",
+                is_option=True,
+            )
+            decision = gateway.evaluate(request)
+
+            assert not decision.approved
+            assert RejectionReason.EARNINGS_BLACKOUT in decision.rejection_reasons
+
+    def test_f_blocked_during_blackout(self):
+        """Test that F (Ford) trades are blocked during earnings blackout."""
+        gateway = TradeGateway(executor=None, paper=True)
+        gateway.executor = MockExecutor(account_equity=50000)
+        gateway.TICKER_WHITELIST_ENABLED = False
+
+        with patch("src.risk.trade_gateway.datetime") as mock_dt:
+            from datetime import datetime as real_datetime
+
+            mock_dt.strptime = real_datetime.strptime
+            mock_dt.now.return_value = real_datetime(2026, 2, 5)  # During F blackout (Feb 3-11)
+
+            request = TradeRequest(
+                symbol="F",
+                side="buy",
+                notional=500,
+                source="test",
+            )
+            decision = gateway.evaluate(request)
+
+            assert not decision.approved
+            assert RejectionReason.EARNINGS_BLACKOUT in decision.rejection_reasons
+
+    def test_spy_not_in_blackout(self):
+        """Test that SPY (no earnings) is not blocked by blackout check."""
+        gateway = TradeGateway(executor=None, paper=True)
+        gateway.executor = MockExecutor(account_equity=50000)
+
+        request = TradeRequest(
+            symbol="SPY",
+            side="buy",
+            notional=500,
+            source="test",
+        )
+        decision = gateway.evaluate(request)
+
+        # SPY should not have earnings blackout rejection
+        assert RejectionReason.EARNINGS_BLACKOUT not in decision.rejection_reasons
+
+    def test_check_earnings_blackout_method(self):
+        """Test the _check_earnings_blackout method directly."""
+        gateway = TradeGateway(executor=None, paper=True)
+
+        with patch("src.risk.trade_gateway.datetime") as mock_dt:
+            from datetime import datetime as real_datetime
+
+            mock_dt.strptime = real_datetime.strptime
+            mock_dt.now.return_value = real_datetime(2026, 1, 25)
+
+            # SOFI should be blocked
+            is_blocked, reason = gateway._check_earnings_blackout("SOFI")
+            assert is_blocked
+            assert "SOFI" in reason
+            assert "blackout" in reason.lower()
+
+            # SPY should not be blocked
+            is_blocked, reason = gateway._check_earnings_blackout("SPY")
+            assert not is_blocked
+            assert reason == ""
 
 
 class TestEarningsPositionMonitor:
