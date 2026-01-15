@@ -173,6 +173,11 @@
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/ralph_check_resume.sh",
             "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session_start_account_report.sh",
+            "timeout": 10
           }
         ]
       }
