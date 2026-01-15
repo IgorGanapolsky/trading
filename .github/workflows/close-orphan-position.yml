@@ -1,0 +1,34 @@
+name: Close Orphan Position
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type 'CLOSE' to confirm closing the orphan put position"
+        required: true
+        default: ""
+
+jobs:
+  close-position:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm == 'CLOSE' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install alpaca-py yfinance
+
+      - name: Close Orphan Put
+        env:
+          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+          PAPER_TRADING: "true"
+        run: |
+          python3 scripts/close_orphan_put.py
