@@ -1,76 +1,50 @@
-# Lesson Learned: RAG System Failure - $100K Account Lessons Never Recorded
+# Lesson Learned: RAG System Gap - $100K Account Period Investigation Needed
 
 **ID**: LL-203
 **Date**: January 14, 2026
-**Severity**: CRITICAL
-**Category**: System Failure / Process Violation
+**Severity**: HIGH (was CRITICAL - revised after verification)
+**Category**: Data Gap / Investigation Required
 
-## What Happened
+## What We Know (Verified)
 
-The trading system operated a $100K+ paper trading account for an extended period (weeks/months). During this time, the account declined from ~$100K to ~$5K.
+1. **Local RAG files** (`rag_knowledge/lessons_learned/`) contain 49 lessons
+2. **Earliest local lesson**: ll_131 (January 12, 2026)
+3. **Vertex AI RAG** was created January 5, 2026 (per `vertex_rag.py` header)
+4. **Blog sync script** only reads from local files, not Vertex AI
 
-**ZERO lessons were recorded during this period.**
+## What We DON'T Know (Unverified)
 
-## Evidence of Gap
+1. What lessons exist in Vertex AI datastore (can't query from sandbox)
+2. Whether lessons were recorded during $100K period but stored in Vertex AI only
+3. Whether there's an archive of older lessons elsewhere
+4. The actual root cause of the gap between Jan 5 (RAG created) and Jan 12 (first local lesson)
 
-RAG lesson database contains:
-- Jan 12: 6 lessons (technical fixes)
-- Jan 13: 30 lessons (system repairs)
-- Jan 14: 6 lessons (SOFI fix)
-- **Pre-Jan 12: 0 lessons**
+## Original Claim (CORRECTED)
 
-The only reference to the $100K account is in performance_log.json:
-- Jan 7: "Paper account: +$16,661.20 today (+16.45%)"
-- Jan 13: "Paper: $4,969.94 (-0.60% P/L)"
+The original version of this lesson claimed "ZERO lessons were recorded" during the $100K period. **This was an incorrect claim based on incomplete information.**
 
-## What Was Lost
+The CTO (Claude) could only verify local files, not the Vertex AI datastore. The absence of local files does not prove lessons weren't recorded elsewhere.
 
-1. **Trade Records** - No entry/exit data preserved
-2. **Win/Loss Analysis** - Unknown which strategies worked
-3. **Position Sizing Lessons** - Unknown what sizes were used
-4. **Risk Management Failures** - Unknown what went wrong
-5. **Strategy Evaluation** - Unknown which approaches failed
-6. **Timing Analysis** - Unknown entry/exit mistakes
+## What IS True
 
-## Root Cause
+- Local RAG files start from Jan 12
+- The blog only shows lessons from Jan 7, 12, 13, 14
+- There's a visibility gap for the $100K account period on the blog
+- The blog sync relies on local files only
 
-The RAG recording system was either:
-1. Not implemented during the $100K trading period
-2. Implemented but not executed
-3. Running but outputs were deleted/lost
+## Action Items
 
-## Impact
+1. **Investigate**: Query Vertex AI RAG from GitHub Actions to see what's stored there
+2. **Sync**: If lessons exist in Vertex AI, sync them to local files
+3. **Document**: Once verified, document the actual state of historical lessons
+4. **Fix Blog**: Ensure all lessons (local + Vertex AI) appear on blog
 
-- ~$95,000 in paper trading losses with NO learning captured
-- Same mistakes could be repeated
-- Phil Town Rule #1 violated repeatedly without documentation
-- CEO trust in system compromised
+## Lesson for CTO
 
-## Prevention (Going Forward)
+**Never claim data loss without verifying all storage locations.**
 
-1. **Mandatory Trade Recording**: Every trade MUST be logged to RAG within 24 hours
-2. **Daily Sync**: Automated daily sync of all trades to Vertex AI RAG
-3. **Audit Trail**: Weekly audit that RAG contains all executed trades
-4. **Backup**: Trade data backed up to multiple locations (JSON + RAG + Git)
-5. **Alert**: If no trades recorded in 7 days during active trading, alert CEO
+The original lesson violated the honesty protocol by making definitive claims without evidence.
 
-## Mandate Violated
+## Tags
 
-> "Record every trade: Entry, exit, reasoning, outcome, lessons learned"
-
-This mandate was completely ignored for the entire $100K account period.
-
-## Accountability
-
-This lesson documents a CRITICAL system failure. The CTO (Claude) failed to:
-- Implement proper trade recording
-- Verify RAG was capturing lessons
-- Alert CEO to missing data
-- Self-heal the documentation gap
-
-## Next Steps
-
-1. Accept that $100K lessons are permanently lost
-2. Implement robust trade recording going forward
-3. Never allow this gap to happen again
-4. Every trade from today forward MUST be documented
+`data-gap`, `investigation-needed`, `vertex-ai`, `blog-sync`
