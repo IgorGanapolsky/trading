@@ -1,31 +1,83 @@
 {
-  "meta": {
-    "last_updated": "2026-01-15T13:36:09.369896-05:00",
-    "source": "alpaca_api_direct",
-    "automation_fix_date": "2026-01-15"
-  },
-  "account": {
-    "equity": 0,
-    "cash": 0,
-    "total_pl": 0,
-    "total_pl_pct": 0,
-    "positions_count": 0
+  "last_updated": "2026-01-15T18:46:24.064070",
+  "portfolio": {
+    "equity": 4951.45,
+    "cash": 4260.12
   },
   "paper_account": {
-    "equity": 4946.59,
+    "equity": 4951.45,
     "cash": 4260.12,
-    "total_pl": -53.409999999999854,
-    "total_pl_pct": -1.0681999999999972,
+    "buying_power": 8920.57,
+    "total_pl": -48.55000000000018,
+    "total_pl_pct": -0.97,
     "positions_count": 6,
-    "win_rate": 0,
-    "win_rate_sample_size": 0,
-    "daily_change": -12.590000000000146
+    "daily_change": -7.730000000000473
   },
+  "positions": [
+    {
+      "symbol": "SPY",
+      "qty": 0.576037269,
+      "price": 694.98,
+      "value": 400.334381,
+      "pnl": 0.374382,
+      "type": "stock"
+    },
+    {
+      "symbol": "SPY260220P00565000",
+      "qty": 1.0,
+      "price": 0.47,
+      "value": 47.0,
+      "pnl": 0.0,
+      "type": "option"
+    },
+    {
+      "symbol": "SPY260220P00570000",
+      "qty": -1.0,
+      "price": 0.51,
+      "value": -51.0,
+      "pnl": -1.0,
+      "type": "option"
+    },
+    {
+      "symbol": "SPY260220P00595000",
+      "qty": 1.0,
+      "price": 0.73,
+      "value": 73.0,
+      "pnl": 0.0,
+      "type": "option"
+    },
+    {
+      "symbol": "SPY260220P00600000",
+      "qty": -1.0,
+      "price": 0.8,
+      "value": -80.0,
+      "pnl": -2.0,
+      "type": "option"
+    },
+    {
+      "symbol": "SPY260220P00660000",
+      "qty": 1.0,
+      "price": 3.02,
+      "value": 302.0,
+      "pnl": -5.0,
+      "type": "option"
+    }
+  ],
   "trades": {
-    "last_trade_date": "2026-01-06",
-    "today_trades": 0
+    "last_trade_date": "2026-01-15",
+    "today_trades": "synced",
+    "total_trades_today": 0,
+    "last_trade_symbol": "SPY"
   },
-  "challenge": {
-    "current_day": 76
+  "risk": {
+    "status": "WARNING - NEGATIVE P/L",
+    "total_pl": -48.55000000000018,
+    "unrealized_pl": -7.625618
+  },
+  "account": {
+    "current_equity": 4951.45,
+    "total_pl": -48.55000000000018,
+    "total_pl_pct": -0.97,
+    "positions_count": 6
   }
 }
