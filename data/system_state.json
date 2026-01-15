@@ -1,5 +1,12 @@
 {
-  "last_updated": "2026-01-14T23:36:02.623871",
+  "last_updated": "2026-01-15T03:20:00.000000",
+  "challenge": {
+    "current_day": 76,
+    "total_days": 90,
+    "start_date": "2025-11-01",
+    "target_end_date": "2026-01-30",
+    "phase": "paper_trading_validation"
+  },
   "portfolio": {
     "equity": 4959.26,
     "cash": 4959.26
