@@ -477,7 +477,7 @@ def execute_cash_secured_put(trading_client, options_client, symbol: str, dry_ru
             side=OrderSide.SELL,
             type="limit",
             limit_price=limit_price,
-            time_in_force=TimeInForce.DAY,
+            time_in_force=TimeInForce.GTC,  # Options require GTC, not DAY
         )
 
         order = trading_client.submit_order(order_request)

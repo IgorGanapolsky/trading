@@ -288,7 +288,7 @@ class IronCondorStrategy:
                                 side=side,
                                 type="limit",
                                 limit_price=0.50,  # Will need real pricing
-                                time_in_force=TimeInForce.DAY,
+                                time_in_force=TimeInForce.GTC,  # Options require GTC
                             )
                             order = client.submit_order(order_req)
                             order_ids.append({"leg": leg_name, "order_id": str(order.id)})

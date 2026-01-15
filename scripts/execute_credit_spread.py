@@ -452,13 +452,15 @@ def execute_bull_put_spread(
         from alpaca.trading.requests import LimitOrderRequest
 
         # SELL the higher strike put (short leg)
+        # NOTE: Options orders require GTC (Good Til Canceled), not DAY
+        # Alpaca error: "order_time_in_force provided not supported for options trading"
         short_order = LimitOrderRequest(
             symbol=spread["short_put"]["symbol"],
             qty=1,
             side=OrderSide.SELL,
             type="limit",
             limit_price=round(spread["short_put"]["mid"], 2),
-            time_in_force=TimeInForce.DAY,
+            time_in_force=TimeInForce.GTC,
         )
 
         # BUY the lower strike put (long leg)
@@ -468,7 +470,7 @@ def execute_bull_put_spread(
             side=OrderSide.BUY,
             type="limit",
             limit_price=round(spread["long_put"]["mid"], 2),
-            time_in_force=TimeInForce.DAY,
+            time_in_force=TimeInForce.GTC,
         )
 
         # Submit orders
