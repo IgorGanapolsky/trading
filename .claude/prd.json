@@ -1,0 +1,73 @@
+{
+  "version": "1.0.0",
+  "description": "Ralph Wiggum technique - Structured task backlog for autonomous CTO mode",
+  "last_updated": "2026-01-15",
+  "tasks": [
+    {
+      "id": "T001",
+      "category": "testing",
+      "title": "Run pytest and fix failures",
+      "description": "Run full test suite, identify failures, fix them iteratively",
+      "passes": false,
+      "priority": 1,
+      "command": "pytest tests/ -q --tb=short",
+      "acceptance_criteria": "All tests pass with 0 failures"
+    },
+    {
+      "id": "T002",
+      "category": "code_quality",
+      "title": "Run linter and fix issues",
+      "description": "Run ruff check, fix any lint errors or warnings",
+      "passes": false,
+      "priority": 2,
+      "command": "ruff check src/",
+      "acceptance_criteria": "ruff check returns 0 issues"
+    },
+    {
+      "id": "T003",
+      "category": "ci",
+      "title": "Verify CI passes on main",
+      "description": "Check GitHub Actions, ensure all workflows pass",
+      "passes": false,
+      "priority": 3,
+      "command": "gh run list --limit 5",
+      "acceptance_criteria": "Latest workflow run shows success"
+    },
+    {
+      "id": "T004",
+      "category": "hygiene",
+      "title": "Clean up stale branches",
+      "description": "Delete merged branches older than 7 days",
+      "passes": false,
+      "priority": 4,
+      "command": "git branch -r --merged | grep -v main",
+      "acceptance_criteria": "No stale merged branches remain"
+    },
+    {
+      "id": "T005",
+      "category": "trading",
+      "title": "Review portfolio performance",
+      "description": "Check current P/L, win rate metrics, and position status",
+      "passes": false,
+      "priority": 5,
+      "command": "cat data/system_state.json",
+      "acceptance_criteria": "Performance metrics reviewed and logged"
+    },
+    {
+      "id": "T006",
+      "category": "learning",
+      "title": "Query RAG for pending lessons",
+      "description": "Check Vertex AI RAG for any unimplemented lessons",
+      "passes": false,
+      "priority": 6,
+      "acceptance_criteria": "RAG lessons reviewed"
+    }
+  ],
+  "completed_tasks": [],
+  "metadata": {
+    "total_iterations": 0,
+    "tasks_completed_this_session": 0,
+    "last_task_completed": null,
+    "last_iteration_at": null
+  }
+}
