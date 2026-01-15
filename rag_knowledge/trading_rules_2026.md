@@ -6,7 +6,7 @@
 
 ## Current Capital Situation
 
-- **Brokerage**: $30 (accumulating via $10/day deposits)
+- **Brokerage**: $30 (accumulating via $25/day deposits)
 - **Paper Trading**: $5,000 (practice account)
 - **Target**: $100/day requires ~$20,000 capital
 
@@ -65,7 +65,7 @@
 
 - Ultimate: $100/day after-tax
 - Requires: ~$20,000 capital with credit spreads
-- Timeline: June 2026 with $10/day deposits + compounding
+- Timeline: June 2026 with $25/day deposits + compounding
 
 ## Trading Hours
 
