@@ -137,9 +137,9 @@ def generate_blog_post(perf: dict, trades: list, day_num: int) -> str:
         trade_summary += "|--------|--------|-----|-------|-----|\n"
         for trade in trades[:10]:  # Limit to 10 trades
             symbol = trade.get("symbol", "N/A")
-            action = trade.get("action", "N/A")
-            qty = trade.get("quantity", 0)
-            price = trade.get("price", 0)
+            action = trade.get("action", trade.get("side", "N/A"))
+            qty = float(trade.get("quantity", trade.get("qty", 0)))
+            price = float(trade.get("price", 0))
             trade_pl = trade.get("pl", "N/A")
             trade_summary += f"| {symbol} | {action} | {qty:.2f} | ${price:.2f} | {trade_pl} |\n"
     else:

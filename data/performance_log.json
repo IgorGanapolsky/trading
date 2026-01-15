@@ -86,5 +86,16 @@
     "pl_pct": -0.81,
     "account_type": "paper",
     "note": "Day 76/90 - Paper: $4,959.26 (-0.81% P/L). 0 positions. SOFI closed before earnings."
+  },
+  {
+    "date": "2026-01-15",
+    "timestamp": "2026-01-15T22:35:02.638900",
+    "equity": 4989.69,
+    "cash": 4989.69,
+    "buying_power": 9979.38,
+    "pl": -10.31,
+    "pl_pct": -0.21,
+    "account_type": "paper",
+    "note": "Day 77/90 - Paper: $4,989.69 (-0.21% P/L). 0 positions. Market closed."
   }
 ]
