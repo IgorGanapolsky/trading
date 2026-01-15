@@ -1,25 +1,25 @@
 {
-  "last_updated": "2026-01-15T17:57:00.000000",
+  "last_updated": "2026-01-15T18:12:09.171225",
   "portfolio": {
-    "equity": 4960.26,
-    "cash": 4555.13
+    "equity": 4955.29,
+    "cash": 4355.15
   },
   "paper_account": {
-    "equity": 4960.26,
-    "cash": 4555.13,
-    "buying_power": 9218.39,
-    "total_pl": -39.74,
-    "total_pl_pct": -0.79,
+    "equity": 4955.29,
+    "cash": 4355.15,
+    "buying_power": 9010.44,
+    "total_pl": -44.710000000000036,
+    "total_pl_pct": -0.89,
     "positions_count": 4,
-    "daily_change": 1.88
+    "daily_change": -3.8900000000003274
   },
   "positions": [
     {
       "symbol": "SPY",
-      "qty": 0.144198737,
-      "price": 694.68,
-      "value": 100.171979,
-      "pnl": 0.181979,
+      "qty": 0.432129081,
+      "price": 694.56,
+      "value": 300.139574,
+      "pnl": 0.169575,
       "type": "stock"
     },
     {
@@ -41,35 +41,27 @@
     {
       "symbol": "SPY260220P00660000",
       "qty": 1.0,
-      "price": 3.04,
-      "value": 304.0,
-      "pnl": -3.0,
+      "price": 3.05,
+      "value": 305.0,
+      "pnl": -2.0,
       "type": "option"
     }
   ],
   "trades": {
     "last_trade_date": "2026-01-15",
     "today_trades": "synced",
-    "total_trades_today": 4,
-    "last_trade_symbol": "SPY",
-    "note": "4 trades executed - SPY shares + credit spread positions"
+    "total_trades_today": 0,
+    "last_trade_symbol": "SPY"
   },
   "risk": {
-    "status": "RECOVERING",
-    "total_pl": -39.74,
-    "unrealized_pl": -3.82,
-    "daily_gain": 2.08
+    "status": "WARNING - NEGATIVE P/L",
+    "total_pl": -44.710000000000036,
+    "unrealized_pl": -3.830425
   },
   "account": {
-    "current_equity": 4960.26,
-    "total_pl": -39.74,
-    "total_pl_pct": -0.79,
+    "current_equity": 4955.29,
+    "total_pl": -44.710000000000036,
+    "total_pl_pct": -0.89,
     "positions_count": 4
-  },
-  "meta": {
-    "last_updated": "2026-01-15T17:57:00.000000",
-    "last_sync": "2026-01-15T17:57:00.000000",
-    "sync_mode": "manual_cto_update",
-    "note": "Updated after confirming 4 trades executed via Dialogflow"
   }
 }
