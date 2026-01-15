@@ -44,11 +44,11 @@ class TestEquityStrategyIntegration:
 
             # Basic validation
             if macd is not None:
-                assert isinstance(macd, (int, float, dict, tuple))
+                assert isinstance(macd, int | float | dict | tuple)
 
             if rsi is not None:
-                assert isinstance(rsi, (int, float))
-                if isinstance(rsi, (int, float)):
+                assert isinstance(rsi, int | float)
+                if isinstance(rsi, int | float):
                     assert 0 <= rsi <= 100, f"Invalid RSI: {rsi}"
 
         except ImportError:
@@ -152,11 +152,14 @@ class TestSystemIntegration:
 
             for trade in trades:
                 assert isinstance(trade, dict)
-                # Should have timestamp in some form (timestamp, created_at, or date+time)
+                # Should have timestamp in some form (timestamp, created_at, date+time, or ISO date)
                 has_timestamp = (
                     "timestamp" in trade
                     or "created_at" in trade
                     or ("date" in trade and "time" in trade)
+                    or (
+                        "date" in trade and "T" in str(trade.get("date", ""))
+                    )  # ISO datetime format
                 )
                 assert has_timestamp, f"Trade missing timestamp field: {trade}"
 
