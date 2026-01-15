@@ -1599,6 +1599,11 @@ class TradingOrchestrator:
         # Dec 10, 2025: Can be SKIPPED in simplification mode
         sentiment_score = 0.0
         playwright_score = 0.0
+        # Initialize variables that may be used later (Jan 15, 2026 fix - prevent NameError)
+        llm_model = None
+        bias_snapshot: BiasSnapshot | None = None
+        neg_threshold = float(os.getenv("LLM_NEGATIVE_SENTIMENT_THRESHOLD", "-0.2"))
+        playwright_weight = float(os.getenv("PLAYWRIGHT_SENTIMENT_WEIGHT", "0.3"))
 
         if not self.llm_sentiment_enabled or self.llm_agent is None:
             logger.info(
