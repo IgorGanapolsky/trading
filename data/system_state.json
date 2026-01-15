@@ -11,7 +11,8 @@
     "total_pl": -48.55000000000018,
     "total_pl_pct": -0.97,
     "positions_count": 6,
-    "daily_change": -7.730000000000473
+    "daily_change": -7.730000000000473,
+    "current_equity": 4951.45
   },
   "positions": [
     {
@@ -65,8 +66,8 @@
   ],
   "trades": {
     "last_trade_date": "2026-01-15",
-    "today_trades": "synced",
-    "total_trades_today": 0,
+    "today_trades": 9,
+    "total_trades_today": 9,
     "last_trade_symbol": "SPY"
   },
   "risk": {
