@@ -447,13 +447,17 @@ def execute_bull_put_spread(
         return {"status": "DRY_RUN", "spread": spread}
 
     # Execute the spread (2-leg order)
+    # CRITICAL FIX Jan 15, 2026 (LL-221): Must submit SHORT leg FIRST and verify
+    # before submitting long leg. If short fails, DO NOT buy the long leg!
+    # Previous bug: Both legs submitted blindly, creating orphan positions.
     try:
         from alpaca.trading.enums import OrderSide, TimeInForce
         from alpaca.trading.requests import LimitOrderRequest
 
-        # SELL the higher strike put (short leg)
+        # STEP 1: SELL the higher strike put (short leg) FIRST
+        # This is the leg that COLLECTS premium - must succeed first!
         # NOTE: Options orders require GTC (Good Til Canceled), not DAY
-        # Alpaca error: "order_time_in_force provided not supported for options trading"
+        logger.info("\n🔄 STEP 1: Submitting SHORT leg (sell put)...")
         short_order = LimitOrderRequest(
             symbol=spread["short_put"]["symbol"],
             qty=1,
@@ -463,7 +467,25 @@ def execute_bull_put_spread(
             time_in_force=TimeInForce.GTC,
         )
 
-        # BUY the lower strike put (long leg)
+        short_result = trading_client.submit_order(short_order)
+        logger.info(f"   ✅ Short leg submitted: {short_result.id}")
+        logger.info(f"   Status: {short_result.status}")
+
+        # CRITICAL: Verify short leg was accepted before proceeding
+        # If short leg fails, we must NOT submit long leg (creates orphan!)
+        if short_result.status.value in ["rejected", "canceled", "expired", "suspended"]:
+            logger.error(f"❌ SHORT LEG FAILED: {short_result.status}")
+            logger.error("   ⛔ NOT submitting long leg to prevent orphan position!")
+            return {
+                "status": "SHORT_LEG_FAILED",
+                "reason": f"Short leg rejected: {short_result.status}",
+                "short_order_id": str(short_result.id),
+                "spread": spread,
+            }
+
+        # STEP 2: BUY the lower strike put (long leg) - protective position
+        # Only submit if short leg was accepted!
+        logger.info("\n🔄 STEP 2: Submitting LONG leg (buy put)...")
         long_order = LimitOrderRequest(
             symbol=spread["long_put"]["symbol"],
             qty=1,
@@ -473,9 +495,40 @@ def execute_bull_put_spread(
             time_in_force=TimeInForce.GTC,
         )
 
-        # Submit orders
-        short_result = trading_client.submit_order(short_order)
         long_result = trading_client.submit_order(long_order)
+        logger.info(f"   ✅ Long leg submitted: {long_result.id}")
+        logger.info(f"   Status: {long_result.status}")
+
+        # STEP 3: Verify BOTH legs are in acceptable state
+        # If long leg fails after short succeeded, we have an orphan SHORT position!
+        if long_result.status.value in ["rejected", "canceled", "expired", "suspended"]:
+            logger.error(f"❌ LONG LEG FAILED: {long_result.status}")
+            logger.error("   ⚠️  WARNING: Short leg is open without protection!")
+            logger.error("   ⚠️  MANUAL ACTION REQUIRED: Cancel short leg or buy protective put!")
+
+            # Try to cancel the short leg to prevent naked short exposure
+            try:
+                logger.info("   🔄 Attempting to cancel short leg...")
+                trading_client.cancel_order_by_id(str(short_result.id))
+                logger.info("   ✅ Short leg canceled - no orphan created")
+                return {
+                    "status": "LONG_LEG_FAILED_RECOVERED",
+                    "reason": f"Long leg rejected, short canceled: {long_result.status}",
+                    "short_order_id": str(short_result.id),
+                    "long_order_id": str(long_result.id),
+                    "spread": spread,
+                }
+            except Exception as cancel_error:
+                logger.error(f"   ❌ Could not cancel short leg: {cancel_error}")
+                logger.error("   🚨 ORPHAN SHORT POSITION CREATED - MANUAL INTERVENTION REQUIRED!")
+                return {
+                    "status": "ORPHAN_SHORT_CREATED",
+                    "reason": f"Long failed, could not cancel short: {cancel_error}",
+                    "short_order_id": str(short_result.id),
+                    "long_order_id": str(long_result.id),
+                    "spread": spread,
+                    "action_required": "MANUAL: Cancel or close the short position!",
+                }
 
         logger.info("\n✅ SPREAD ORDER SUBMITTED!")
         logger.info(f"   Short Leg: {short_result.id}")
@@ -493,6 +546,8 @@ def execute_bull_put_spread(
 
     except Exception as e:
         logger.error(f"❌ Order failed: {e}")
+        # Log whether we created any orphan positions
+        logger.error("   ⚠️  Check Alpaca dashboard for any orphan positions!")
         return {"status": "ERROR", "error": str(e), "spread": spread}
 
 
