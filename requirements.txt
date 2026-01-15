@@ -144,7 +144,6 @@ rsa==4.9.1
 schedule==1.2.2
 scikit-learn==1.8.0
 scipy==1.16.3
-sgmllib3k==1.0.0
 six==1.17.0
 slack-sdk==3.39.0
 smmap==5.0.2
