@@ -50,10 +50,10 @@ This position violates Rule #1 (Don't Lose Money):
 3. ⏳ Orphan 660 put needs manual closure (PDT restriction)
 4. ⏳ execute_credit_spread.py needs fix to verify both legs
 
-## Resolution Criteria (Updated Jan 15, 4:30 PM)
+## Resolution Criteria (Updated Jan 15, 4:45 PM)
 - [x] execute_credit_spread.py validates both legs before submission (lines 450-549)
 - [x] SHORT leg submitted FIRST, verified before LONG leg (line 457-484)
 - [x] Auto-cancel short if long fails (line 509-513)
-- [ ] Orphan 660 put still open (currently +$36 profit - hold or close?)
-- [ ] Win rate tracking is implemented
-- [ ] Set halted=false in daily-trading.yml to resume
+- [x] Win rate tracking is implemented (data/trades.json master ledger - PR #1937)
+- [ ] Orphan 660 put still open (currently +$36 profit - hold or close? CEO decision)
+- [ ] Set halted=false in daily-trading.yml to resume (requires CEO approval)
