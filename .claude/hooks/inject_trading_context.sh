@@ -297,4 +297,8 @@ if [[ -f "$DRYRUN_STATE" ]]; then
     fi
 fi
 
+# CEO Directive (Jan 15, 2026): Session start verification reminder
+# Verify Alpaca (truth) vs Dashboard vs Dialogflow on session start
+echo "💡 Verify status: python3 scripts/session_start_verification.py"
+
 exit 0
