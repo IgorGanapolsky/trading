@@ -1,6 +1,6 @@
 # Lesson Learned: Dashboard Showing Wrong $100K Balance
 
-**ID**: LL-215
+**ID**: LL-218
 **Date**: January 15, 2026
 **Category**: Bug Fix / Data Sync
 **Severity**: HIGH
