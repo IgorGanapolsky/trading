@@ -1,10 +1,10 @@
 ---
 layout: post
-title: "Day 78: 11 Lessons Learned - January 14, 2026"
+title: "Day 78: 12 Lessons Learned - January 14, 2026"
 date: 2026-01-14
 day_number: 78
-lessons_count: 11
-critical_count: 2
+lessons_count: 12
+critical_count: 1
 ---
 
 # Day 78/90 - Wednesday, January 14, 2026
@@ -13,9 +13,9 @@ critical_count: 2
 
 | Metric | Count |
 |--------|-------|
-| Total Lessons | 11 |
-| CRITICAL | 2 |
-| HIGH | 2 |
+| Total Lessons | 12 |
+| CRITICAL | 1 |
+| HIGH | 4 |
 | MEDIUM | 1 |
 | LOW | 6 |
 
@@ -23,18 +23,25 @@ critical_count: 2
 
 ## Lessons Learned
 
-### **[CRITICAL]** Lesson Learned: RAG System Failure - $100K Account Lessons Never Recorded
-
-**ID**: `ll_203_rag_failure_100k_lessons_lost_jan14`
-
-# Lesson Learned: RAG System Failure - $100K Account Lessons Never Recorded  **ID**: LL-203 **Date**: January 14, 2026 **Severity**: CRITICAL **Category**: System Failure / Process Violation  ## What Happened  The trading system operated a $100K+ paper trading account for an extended period (weeks/m...
-
-
 ### **[CRITICAL]** Lesson Learned: SOFI Ticker Blackout Violation
 
 **ID**: `ll_197_sofi_ticker_blackout_violation_jan14`
 
 # Lesson Learned: SOFI Ticker Blackout Violation  **ID**: LL-197 **Date**: January 14, 2026 **Severity**: CRITICAL **Category**: Configuration / Risk Management  ## What Happened Trading workflow was configured to execute credit spreads and CSPs on SOFI, despite CLAUDE.md explicitly stating SOFI was...
+
+
+### [HIGH] Lesson Learned: RAG System Gap - $100K Account Period Investigation Needed
+
+**ID**: `ll_203_rag_failure_100k_lessons_lost_jan14`
+
+# Lesson Learned: RAG System Gap - $100K Account Period Investigation Needed  **ID**: LL-203 **Date**: January 14, 2026 **Severity**: HIGH (was CRITICAL - revised after verification) **Category**: Data Gap / Investigation Required  ## What We Know (Verified)  1. **Local RAG files** (`rag_knowledge/l...
+
+
+### [HIGH] Lesson Learned: Missing OptionsPosition Class Broke CI Tests
+
+**ID**: `ll_210_options_position_import_fix_jan14`
+
+# Lesson Learned: Missing OptionsPosition Class Broke CI Tests  **ID**: ll_210 **Date**: January 14, 2026 **Severity**: HIGH **Category**: Import Error / CI Failure  ## Problem  CI workflow "Run All Tests" failed with: ``` ImportError: cannot import name 'OptionsPosition' from 'src.risk.options_risk...
 
 
 ### [HIGH] LL-194: CTO Autonomous SOFI Exit Decision
@@ -51,25 +58,11 @@ critical_count: 2
 # LL-193: Mandate Violation - Manual Work Handoff  **Date**: 2026-01-14 **Severity**: HIGH   **Category**: Process Violation **Status**: RESOLVED  ## What Happened CTO violated CLAUDE.md mandate: "Never tell CEO to do manual work - If I can do it, I MUST do it myself"  Told CEO to manually run: ```b...
 
 
-### [LOW] Lesson Learned: $100K Paper Account - What Actually Worked
+### [LOW] LL-203: CTO Directive Violations - Crisis Level
 
-**ID**: `ll_203_100k_account_analysis_jan14`
+**ID**: `ll_203_cto_directive_violations_jan14`
 
-# Lesson Learned: $100K Paper Account - What Actually Worked  ## Date: 2026-01-14 ## Severity: **CRITICAL** ## Category: Strategy  ## Summary We had a profitable $100K paper account but NEVER extracted lessons from it. This is that extraction.  ## Evidence: Archived Trade Data  ### Dec 10, 2025 - OP...
-
-
-### [LOW] Resource Evaluation: Systems Thinking Audiobook
-
-**ID**: `ll_201_systems_thinking_audiobook_evaluation_jan14`
-
-# Resource Evaluation: Systems Thinking Audiobook  **ID:** LL-191 **Date:** January 14, 2026 **Severity:** LOW **Category:** resource-evaluation  ## Resource  - **Title:** System and Systems Thinking – Fundamental Theory and Practice - **Author:** A. Gharakhani Bahar - **Source:** Audible (B0F3J1V1F...
-
-
-### [LOW] LL-195: PR Management & System Hygiene Session
-
-**ID**: `ll_195_pr_hygiene_jan14_2026`
-
-# LL-195: PR Management & System Hygiene Session  **Date**: January 14, 2026 **Severity**: LOW **Category**: DevOps, Maintenance  ## Session Summary CEO directive to perform PR management and system hygiene.  ## Actions Taken  ### PR Status - Open PRs: **0** (all merged) - PR #1740 (SOFI exit/30-del...
+# LL-203: CTO Directive Violations - Crisis Level  **Date:** January 14, 2026 **Severity:** CRISIS **Category:** trust, governance, compliance  ## What Happened  In a single conversation, the CTO (Claude) violated multiple core directives:  | Directive | Violation | Impact | |-----------|-----------...
 
 
 ### [LOW] Lesson Learned: SOFI Earnings Risk - Emergency Close
@@ -79,6 +72,20 @@ critical_count: 2
 # Lesson Learned: SOFI Earnings Risk - Emergency Close  **ID:** LL-192 **Date:** January 14, 2026 **Severity:** CRITICAL **Category:** risk-management  ## Incident  Short puts on SOFI (strike $24, exp Feb 6) held through earnings date (Jan 30).  ## Violation  CLAUDE.md clearly states: > "SOFI | **AV...
 
 
+### [LOW] LL-195: PR Management & System Hygiene Session
+
+**ID**: `ll_195_pr_hygiene_jan14_2026`
+
+# LL-195: PR Management & System Hygiene Session  **Date**: January 14, 2026 **Severity**: LOW **Category**: DevOps, Maintenance  ## Session Summary CEO directive to perform PR management and system hygiene.  ## Actions Taken  ### PR Status - Open PRs: **0** (all merged) - PR #1740 (SOFI exit/30-del...
+
+
+### [LOW] Lesson Learned: $100K Paper Account - What Actually Worked
+
+**ID**: `ll_203_100k_account_analysis_jan14`
+
+# Lesson Learned: $100K Paper Account - What Actually Worked  ## Date: 2026-01-14 ## Severity: **CRITICAL** ## Category: Strategy  ## Summary We had a profitable $100K paper account but NEVER extracted lessons from it. This is that extraction.  ## Evidence: Archived Trade Data  ### Dec 10, 2025 - OP...
+
+
 ### [LOW] LL-205: January 14, 2026 Loss Root Cause Analysis
 
 **ID**: `ll_205_jan14_loss_root_cause_analysis`
@@ -86,11 +93,11 @@ critical_count: 2
 # LL-205: January 14, 2026 Loss Root Cause Analysis  **Date:** January 14, 2026 **Severity:** HIGH **Category:** post-mortem, risk-management, compliance **Loss:** -$65.58 daily, -$40.74 total P/L (-0.81%)  ## Executive Summary  On January 14, 2026, the paper trading account suffered a $65.58 daily...
 
 
-### [LOW] LL-203: CTO Directive Violations - Crisis Level
+### [LOW] Resource Evaluation: Systems Thinking Audiobook
 
-**ID**: `ll_203_cto_directive_violations_jan14`
+**ID**: `ll_201_systems_thinking_audiobook_evaluation_jan14`
 
-# LL-203: CTO Directive Violations - Crisis Level  **Date:** January 14, 2026 **Severity:** CRISIS **Category:** trust, governance, compliance  ## What Happened  In a single conversation, the CTO (Claude) violated multiple core directives:  | Directive | Violation | Impact | |-----------|-----------...
+# Resource Evaluation: Systems Thinking Audiobook  **ID:** LL-191 **Date:** January 14, 2026 **Severity:** LOW **Category:** resource-evaluation  ## Resource  - **Title:** System and Systems Thinking – Fundamental Theory and Practice - **Author:** A. Gharakhani Bahar - **Source:** Audible (B0F3J1V1F...
 
 
 ### [MEDIUM] Lesson Learned: Sandbox Git Proxy Limitations
