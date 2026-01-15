@@ -1,0 +1,73 @@
+name: 📸 Capture Trading Screenshots
+
+on:
+  # Run daily at market close (4:15 PM ET = 9:15 PM UTC)
+  schedule:
+    - cron: "15 21 * * 1-5"  # Mon-Fri only (trading days)
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      dashboard:
+        description: 'Which dashboard to capture'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - alpaca
+          - progress
+
+jobs:
+  capture-screenshots:
+    name: Capture Trading Dashboards
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install playwright pillow
+          playwright install chromium
+
+      - name: Capture screenshots
+        env:
+          ALPACA_PAPER_TRADING_5K_API_KEY: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_KEY }}
+          ALPACA_PAPER_TRADING_5K_API_SECRET: ${{ secrets.ALPACA_PAPER_TRADING_5K_API_SECRET }}
+        run: |
+          python3 scripts/capture_trading_screenshots.py \
+            --dashboard ${{ github.event.inputs.dashboard || 'all' }}
+
+      - name: Upload screenshots as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trading-screenshots-${{ github.run_number }}
+          path: data/screenshots/
+          retention-days: 30
+
+      - name: Commit screenshots to repo
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add data/screenshots/
+          git diff-index --quiet HEAD || git commit -m "chore: Add trading screenshots (automated capture)"
+
+      - name: Push screenshots
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GH_PAT }}
+          branch: ${{ github.ref }}
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Screenshot capture failed"
+          echo "Check logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
