@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """
-GUARANTEED TRADER - WILL EXECUTE TRADES
+GUARANTEED TRADER - CREDIT SPREAD ACCUMULATOR
 
-Jan 12, 2026 FIX: Changed from SPY to SOFI
-- SPY @ $580/share was wrong for $5K account
-- SOFI @ $15/share allows real position building
-- Strategy from CLAUDE.md: F/SOFI at $5 strike for CSPs
+CRITICAL UPDATE Jan 15, 2026 (Deep Research Revision):
+- 100K account succeeded with SPY focus (+$16,661)
+- 5K account failed with SOFI (individual stock risk)
+- STRATEGY: SPY/IWM CREDIT SPREADS only per CLAUDE.md
 
-THE PROBLEM: 74 days, $0 profit, complex gates blocked everything.
-THE SOLUTION: Buy SOFI shares. Simple. No gates.
+THE PROBLEM: This script was buying SOFI shares when CLAUDE.md
+says "CREDIT SPREADS on SPY/IWM ONLY".
 
-This is NOT about being smart. It's about EXECUTING.
+THE SOLUTION: Buy SPY shares (most liquid ETF) or accumulate cash
+for credit spread collateral (~$500 per spread).
+
+IMPORTANT: This script now uses SPY not SOFI. Individual stocks
+are BLACKLISTED until proven profitable in paper trading.
 """
 
 import json
@@ -174,14 +178,14 @@ def run():
     Jan 12, 2026 Fix:
     - Removed RSI logic (was blocking trades)
     - Removed RAG checks (was blocking trades)
-    - Changed from SPY to SOFI/F (cheaper, matches strategy)
-    - Simple rule: Buy $100 of SOFI every day
+    - Jan 15, 2026: Back to SPY per Deep Research findings
+    - Simple rule: Accumulate SPY or cash for credit spread collateral
 
-    Position size: $100/day (build towards CSP collateral)
+    Position size: $100/day (build towards $500 credit spread collateral)
     """
     logger.info("=" * 60)
     logger.info("GUARANTEED TRADER - STARTING")
-    logger.info("Strategy: Accumulate SOFI shares for CSP collateral")
+    logger.info("Strategy: Accumulate SPY shares for credit spread collateral")
     logger.info("=" * 60)
 
     client = get_alpaca_client()
@@ -226,10 +230,10 @@ def run():
             "message": "Phil Town Rule #1: Don't lose money. Not adding to losing positions.",
         }
 
-    # SIMPLE STRATEGY: Buy $100 of SOFI (primary target)
-    # $100/day * 5 days = $500 = 1 CSP contract collateral
+    # SIMPLE STRATEGY: Buy $100 of SPY (most liquid ETF)
+    # $100/day * 5 days = $500 = 1 credit spread collateral
     daily_investment = 100.0
-    symbol = "SOFI"  # Primary target from CLAUDE.md
+    symbol = "SPY"  # Primary target per Jan 15 Deep Research
 
     # Check we have enough cash
     if account["cash"] < daily_investment:
