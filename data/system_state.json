@@ -1,46 +1,34 @@
 {
-  "last_updated": "2026-01-15T03:20:00.000000",
-  "challenge": {
-    "current_day": 76,
-    "total_days": 90,
-    "start_date": "2025-11-01",
-    "target_end_date": "2026-01-30",
-    "phase": "paper_trading_validation"
-  },
+  "last_updated": "2026-01-15T14:08:17.105482",
   "portfolio": {
-    "equity": 4959.26,
-    "cash": 4959.26
+    "equity": 4959.18,
+    "cash": 4959.18
   },
   "paper_account": {
-    "equity": 4959.26,
-    "cash": 4959.26,
-    "buying_power": 9918.52,
-    "total_pl": -40.73999999999978,
-    "total_pl_pct": -0.81,
+    "equity": 4959.18,
+    "cash": 4959.18,
+    "buying_power": 9918.36,
+    "total_pl": -40.81999999999971,
+    "total_pl_pct": -0.82,
     "positions_count": 0,
-    "daily_change": -65.58453843149982
+    "daily_change": 0.0
   },
   "positions": [],
   "trades": {
-    "last_trade_date": "2026-01-14",
+    "last_trade_date": "2026-01-15",
     "today_trades": "synced",
     "total_trades_today": 0,
     "last_trade_symbol": "none"
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -40.73999999999978,
+    "total_pl": -40.81999999999971,
     "unrealized_pl": 0
   },
   "account": {
-    "current_equity": 4959.26,
-    "total_pl": -40.73999999999978,
-    "total_pl_pct": -0.81,
+    "current_equity": 4959.18,
+    "total_pl": -40.81999999999971,
+    "total_pl_pct": -0.82,
     "positions_count": 0
-  },
-  "meta": {
-    "last_updated": "2026-01-15T14:01:21.539531",
-    "last_sync": "2026-01-15T14:01:21.539539",
-    "sync_mode": "skipped_no_keys"
   }
 }
