@@ -443,6 +443,33 @@ def execute_bull_put_spread(
         return {"status": "ERROR", "error": str(e), "spread": spread}
 
 
+def save_execution_diagnostic(symbol: str, result: dict):
+    """Save diagnostic info for debugging NO_TRADE issues. Added Jan 15, 2026."""
+    from pathlib import Path
+
+    diag_file = Path("data") / f"credit_spread_diagnostic_{datetime.now().strftime('%Y%m%d')}.json"
+    diagnostics = []
+    if diag_file.exists():
+        try:
+            with open(diag_file) as f:
+                diagnostics = json.load(f)
+        except Exception:
+            pass
+
+    diagnostics.append({
+        "timestamp": datetime.now().isoformat(),
+        "symbol": symbol,
+        "status": result.get("status", "UNKNOWN"),
+        "reason": result.get("reason", "N/A"),
+        "spread_found": "spread" in result,
+        "details": {k: v for k, v in result.items() if k not in ["spread"]},
+    })
+
+    with open(diag_file, "w") as f:
+        json.dump(diagnostics, f, indent=2, default=str)
+    logger.info(f"📊 Diagnostic saved to {diag_file}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Execute bull put spread")
     parser.add_argument(
@@ -467,6 +494,14 @@ def main():
         logger.info("📊 RESULT")
         logger.info("=" * 60)
         logger.info(json.dumps(result, indent=2, default=str))
+
+        # Save diagnostic for debugging (Jan 15, 2026 fix)
+        save_execution_diagnostic(args.symbol, result)
+
+        # Alert on NO_TRADE for visibility
+        if result.get("status") == "NO_TRADE":
+            logger.warning(f"⚠️ NO_TRADE: {result.get('reason', 'Unknown reason')}")
+            logger.warning("   This is logged but treated as success - check diagnostics")
 
         # Save result
         result_file = Path("data") / f"credit_spreads_{datetime.now().strftime('%Y%m%d')}.json"
