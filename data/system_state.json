@@ -1,17 +1,17 @@
 {
-  "last_updated": "2026-01-15T17:44:37.833222",
+  "last_updated": "2026-01-15T17:57:00.000000",
   "portfolio": {
-    "equity": 4954.3,
+    "equity": 4960.26,
     "cash": 4555.13
   },
   "paper_account": {
-    "equity": 4954.3,
+    "equity": 4960.26,
     "cash": 4555.13,
-    "buying_power": 9210.43,
-    "total_pl": -45.69999999999982,
-    "total_pl_pct": -0.91,
+    "buying_power": 9218.39,
+    "total_pl": -39.74,
+    "total_pl_pct": -0.79,
     "positions_count": 4,
-    "daily_change": -4.880000000000109
+    "daily_change": 1.88
   },
   "positions": [
     {
@@ -50,18 +50,26 @@
   "trades": {
     "last_trade_date": "2026-01-15",
     "today_trades": "synced",
-    "total_trades_today": 0,
-    "last_trade_symbol": "SPY"
+    "total_trades_today": 4,
+    "last_trade_symbol": "SPY",
+    "note": "4 trades executed - SPY shares + credit spread positions"
   },
   "risk": {
-    "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -45.69999999999982,
-    "unrealized_pl": -4.818021
+    "status": "RECOVERING",
+    "total_pl": -39.74,
+    "unrealized_pl": -3.82,
+    "daily_gain": 2.08
   },
   "account": {
-    "current_equity": 4954.3,
-    "total_pl": -45.69999999999982,
-    "total_pl_pct": -0.91,
+    "current_equity": 4960.26,
+    "total_pl": -39.74,
+    "total_pl_pct": -0.79,
     "positions_count": 4
+  },
+  "meta": {
+    "last_updated": "2026-01-15T17:57:00.000000",
+    "last_sync": "2026-01-15T17:57:00.000000",
+    "sync_mode": "manual_cto_update",
+    "note": "Updated after confirming 4 trades executed via Dialogflow"
   }
 }
