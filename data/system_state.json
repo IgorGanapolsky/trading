@@ -1,17 +1,18 @@
 {
-  "last_updated": "2026-01-15T17:57:00.000000",
+  "last_updated": "2026-01-15T18:33:00.000000",
   "portfolio": {
-    "equity": 4960.26,
-    "cash": 4555.13
+    "equity": 4950.45,
+    "cash": 4268.12
   },
   "paper_account": {
-    "equity": 4960.26,
-    "cash": 4555.13,
-    "buying_power": 9218.39,
-    "total_pl": -39.74,
-    "total_pl_pct": -0.79,
+    "equity": 4950.45,
+    "cash": 4268.12,
+    "buying_power": 8928.57,
+    "total_pl": -48.58,
+    "total_pl_pct": -0.97,
     "positions_count": 4,
-    "daily_change": 1.88
+    "daily_change": -8.73,
+    "todays_pl": -7.76
   },
   "positions": [
     {
@@ -50,20 +51,20 @@
   "trades": {
     "last_trade_date": "2026-01-15",
     "today_trades": "synced",
-    "total_trades_today": 4,
+    "total_trades_today": 9,
     "last_trade_symbol": "SPY",
-    "note": "4 trades executed - SPY shares + credit spread positions"
+    "note": "9 trades executed per Dialogflow - includes options positions"
   },
   "risk": {
-    "status": "RECOVERING",
-    "total_pl": -39.74,
-    "unrealized_pl": -3.82,
-    "daily_gain": 2.08
+    "status": "WARNING - LOSING TODAY",
+    "total_pl": -48.58,
+    "unrealized_pl": -7.76,
+    "daily_loss": -8.73
   },
   "account": {
-    "current_equity": 4960.26,
-    "total_pl": -39.74,
-    "total_pl_pct": -0.79,
+    "current_equity": 4950.45,
+    "total_pl": -48.58,
+    "total_pl_pct": -0.97,
     "positions_count": 4
   },
   "meta": {

@@ -57,8 +57,9 @@ def calculate_basic_metrics():
 
     # ========== PAPER ACCOUNT (R&D - Simulation) ==========
     paper_account = system_state.get("paper_account", {})
-    paper_equity = paper_account.get("current_equity", 100000.0)
-    paper_starting = paper_account.get("starting_balance", 100000.0)
+    # FIX Jan 15, 2026: Read "equity" not "current_equity" (was showing $100K instead of ~$5K)
+    paper_equity = paper_account.get("equity", paper_account.get("current_equity", 5000.0))
+    paper_starting = paper_account.get("starting_balance", 5000.0)  # $5K paper account started Jan 7
     paper_pl = paper_account.get("total_pl", 0.0)
     paper_pl_pct = paper_account.get("total_pl_pct", 0.0)
     paper_win_rate = paper_account.get("win_rate", 0.0)
