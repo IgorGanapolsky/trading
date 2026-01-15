@@ -10,7 +10,7 @@
 
 | Account | Equity | Starting | Total P/L | Total % |
 |---------|--------|----------|-----------|---------|
-| **🔴 LIVE (Brokerage)** | $4,989.81 | $20.00 | $-10.19 | -0.20% |
+| **🔴 LIVE (Brokerage)** | $4,989.81 | $0.00 | $-10.19 | -0.20% |
 | **📝 PAPER (R&D)** | $4,989.81 | $5,000.00 | $-10.19 | -0.20% |
 
 > ⚠️ **LIVE account** = Real money. **PAPER account** = R&D simulation for testing strategies.
@@ -30,7 +30,7 @@
 | **Today's P/L** | $+0.00 (+0.00%) |
 | **Status** | ✅ Active |
 
-> *Live account is building capital through $10/day deposits. Target: $200 before first options trade.*
+> *Live account is building capital through $25/day deposits. Target: $200 before first options trade.*
 
 ### 📝 PAPER Account (R&D)
 
@@ -242,7 +242,7 @@ Run full dashboard generation for AI insights.
 
 | Metric | Value |
 |--------|-------|
-| **Starting Balance** | $20.00 |
+| **Starting Balance** | $0.00 |
 | **Current Equity** | $4,989.81 |
 | **Total P/L** | $-10.19 (-0.20%) |
 | **Average Daily Profit** | $-1.27 |
@@ -290,7 +290,7 @@ Run full dashboard generation for AI insights.
 - **MODE**: 📈 STANDARD (Weekday)
 - **Strategy**: Momentum (MACD + RSI + Volume)
 - **Allocation**: 70% Core ETFs (SPY/QQQ/VOO), 30% Growth (NVDA/GOOGL/AMZN)
-- **Daily Investment**: $10/day fixed
+- **Daily Investment**: $25/day fixed
 
 ---
 
