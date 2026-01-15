@@ -13,6 +13,8 @@ CTO: Claude | CEO: Igor Ganapolsky
 - **Position limit**: 1 spread at a time (5% max = $248 risk)
 - **Monthly target**: 3-4 spreads x $50 x 80% win rate = $120-160/month (realistic)
 - **Stop-loss**: Close at 2x credit received ($120 max loss) - MANDATORY
+- **Rolling**: If thesis intact and not at stop-loss, roll "down and out" (lower strike, further expiration) for credit
+- **Assignment risk**: Close positions MANUALLY before expiration if stock is between strikes
 - **Risk management**: NEVER more than 5% on single trade. NO NAKED PUTS.
 - **Paper phase**: 90 days to validate 80%+ win rate before scaling
 
