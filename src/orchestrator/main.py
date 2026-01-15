@@ -418,7 +418,7 @@ class TradingOrchestrator:
 
         # TradeMemory pre-trade query - queries historical pattern performance
         # THE KEY INSIGHT: Most systems write to journals but never READ before trading
-        self.trade_memory = TradeMemory(db_path="data/trade_memory.db")
+        self.trade_memory = TradeMemory(memory_path=Path("data/trade_memory.json"))
         self.trade_memory_query = TradeMemoryQuery(
             trade_memory=self.trade_memory,
             telemetry=self.telemetry,

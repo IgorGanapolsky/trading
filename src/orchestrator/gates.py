@@ -31,6 +31,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -508,16 +509,16 @@ class GateMemory:
     Added: Dec 24, 2025
     """
 
-    def __init__(self, telemetry: Any, db_path: str = "data/trade_memory.db"):
+    def __init__(self, telemetry: Any, memory_path: str = "data/trade_memory.json"):
         self.telemetry = telemetry
-        self.db_path = db_path
+        self.memory_path = memory_path
         self.memory = None
 
         # Lazy initialization to avoid import errors
         try:
             from src.learning.trade_memory import TradeMemory
 
-            self.memory = TradeMemory(db_path=db_path)
+            self.memory = TradeMemory(memory_path=Path(memory_path))
             logger.info("TradeMemory initialized for feedback loop")
         except Exception as e:
             logger.warning("TradeMemory init failed: %s", e)
