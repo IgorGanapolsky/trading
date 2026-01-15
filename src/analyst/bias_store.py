@@ -51,8 +51,14 @@ class BiasProvider:
 class BiasStore:
     """Persists bias snapshots to disk."""
 
-    def __init__(self, bias_dir: Optional[Path] = None):
-        self.bias_dir = bias_dir or Path("data/bias")
+    def __init__(self, bias_dir: Optional[Path | str] = None):
+        # Handle both str and Path inputs (CEO FIX Jan 15, 2026)
+        if bias_dir is None:
+            self.bias_dir = Path("data/bias")
+        elif isinstance(bias_dir, str):
+            self.bias_dir = Path(bias_dir)
+        else:
+            self.bias_dir = bias_dir
         self.bias_dir.mkdir(parents=True, exist_ok=True)
         self.snapshots: list[BiasSnapshot] = []
 
