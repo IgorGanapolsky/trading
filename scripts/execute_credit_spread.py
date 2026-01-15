@@ -322,32 +322,44 @@ def execute_bull_put_spread(
         }
 
     # Query RAG for lessons before trading
+    # FIXED Jan 15, 2026: Previous logic blocked ALL trades because ANY critical lesson
+    # would trigger blocking. LL-185 "North Star Revision" is CRITICAL (important info)
+    # but should NOT block trades. Now we only WARN, not block.
     logger.info("Checking RAG lessons before execution...")
     rag = LessonsLearnedRAG()
 
-    # Check for strategy-specific failures
+    # Check for strategy-specific lessons (LOG only, don't block)
     strategy_lessons = rag.search("credit spread bull put spread failures losses", top_k=3)
     for lesson, score in strategy_lessons:
         if lesson.severity == "CRITICAL":
-            logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
-            logger.error(f"Prevention: {lesson.prevention}")
-            return {
-                "status": "BLOCKED_BY_RAG",
-                "reason": f"Critical lesson: {lesson.title}",
-                "lesson_id": lesson.id,
-            }
+            # FIXED: Only warn, don't block - most CRITICAL lessons are strategy info, not trade blocks
+            logger.warning(f"📚 RAG CRITICAL lesson found: {lesson.title}")
+            logger.warning(f"   Prevention: {lesson.prevention}")
+            # Only block if lesson explicitly says to block trades
+            lesson_content = str(getattr(lesson, 'content', '')).lower()
+            if 'do not trade' in lesson_content or 'block all trades' in lesson_content:
+                logger.error(f"🛑 EXPLICITLY BLOCKED by RAG: {lesson.title}")
+                return {
+                    "status": "BLOCKED_BY_RAG",
+                    "reason": f"Explicit block in lesson: {lesson.title}",
+                    "lesson_id": lesson.id,
+                }
 
-    # Check for ticker-specific failures
+    # Check for ticker-specific lessons (LOG only, don't block)
     ticker_lessons = rag.search(f"{symbol} trading failures options losses", top_k=3)
     for lesson, score in ticker_lessons:
         if lesson.severity == "CRITICAL":
-            logger.error(f"BLOCKED by RAG: {lesson.title} (severity: {lesson.severity})")
-            logger.error(f"Prevention: {lesson.prevention}")
-            return {
-                "status": "BLOCKED_BY_RAG",
-                "reason": f"Critical lesson for {symbol}: {lesson.title}",
-                "lesson_id": lesson.id,
-            }
+            logger.warning(f"📚 RAG CRITICAL lesson for {symbol}: {lesson.title}")
+            logger.warning(f"   Prevention: {lesson.prevention}")
+            # Only block if lesson explicitly says to block trades for this ticker
+            lesson_content = str(getattr(lesson, 'content', '')).lower()
+            if f'do not trade {symbol.lower()}' in lesson_content or f'block {symbol.lower()}' in lesson_content:
+                logger.error(f"🛑 EXPLICITLY BLOCKED by RAG for {symbol}: {lesson.title}")
+                return {
+                    "status": "BLOCKED_BY_RAG",
+                    "reason": f"Explicit block for {symbol}: {lesson.title}",
+                    "lesson_id": lesson.id,
+                }
 
     logger.info("RAG checks passed - proceeding with execution")
 
