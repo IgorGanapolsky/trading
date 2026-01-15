@@ -29,17 +29,15 @@ paper_starting = paper_account.get("starting_balance", 100000.0)
 
 ## The Fix
 
-1. **sync_alpaca_state.py** - Added code to write BOTH keys:
-   - `paper_account.equity` (original)
-   - `paper_account.current_equity` (what dashboard expects)
-
-2. **system_state.json** - Fixed manually with correct values
+**sync_alpaca_state.py** - Added code to write BOTH keys for paper accounts:
+- `paper_account.equity` (original)
+- `paper_account.current_equity` (what dashboard expects)
 
 ## Prevention
 
-1. **Use consistent key names** across all scripts
-2. **Validate dashboard data** against Alpaca API after each sync
-3. **Add unit tests** for key name consistency
+1. Use consistent key names across all scripts
+2. Validate dashboard data against Alpaca API after each sync
+3. Add unit tests for key name consistency
 
 ## Impact
 
@@ -51,4 +49,3 @@ paper_starting = paper_account.get("starting_balance", 100000.0)
 
 - `scripts/sync_alpaca_state.py:151-166` - Fix applied
 - `scripts/generate_world_class_dashboard_enhanced.py:60-61` - Where default was used
-- `data/system_state.json` - Data file that was missing key
