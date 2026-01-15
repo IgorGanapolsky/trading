@@ -63,6 +63,5 @@ echo ""
 echo "💡 To cancel: /cancel-ralph"
 echo "═══════════════════════════════════════════════════════════"
 
-# Block the exit by returning non-zero (depends on hook type)
-# This signals to continue the loop
-exit 1
+# Exit cleanly - Ralph mode continuation is handled by prompt injection
+exit 0

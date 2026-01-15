@@ -1022,7 +1022,24 @@ jobs:
 
           # SMART STRATEGY SELECTION based on buying power
           # CSPs need full collateral ($1k-$65k), spreads only need width ($200-$500)
-          if (( $(echo "$OPTIONS_BP < 1000" | bc -l) )); then
+          # FIX Jan 15, 2026: When options_buying_power=$0, fall back to equity
+          if (( $(echo "$OPTIONS_BP == 0" | bc -l) )); then
+            echo ""
+            echo "🚨 OPTIONS BUYING POWER = \$0 - EQUITY FALLBACK MODE"
+            echo "   Root cause: Stale orders or margin calculation issue"
+            echo "   Action: Buy SPY shares instead of options"
+            echo ""
+
+            # Buy $100 of SPY as fallback (builds towards credit spread collateral)
+            echo "   📈 Buying \$100 of SPY (equity fallback)..."
+            python3 scripts/guaranteed_trader.py || {
+              echo "   ⚠️  Equity fallback also failed - check account state"
+            }
+
+            echo ""
+            echo "⚠️  Options blocked - used equity fallback. Check Alpaca for stale orders."
+
+          elif (( $(echo "$OPTIONS_BP < 1000" | bc -l) )); then
             echo ""
             echo "⚠️  Low options buying power (<\$1000) - using CREDIT SPREADS"
             echo "   Credit spreads need only \$200-500 collateral vs \$1k-65k for CSPs"

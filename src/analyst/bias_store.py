@@ -2,7 +2,7 @@
 
 import json
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -34,7 +34,11 @@ class BiasSnapshot:
 class BiasProvider:
     """Provides market bias signals."""
 
-    def __init__(self):
+    def __init__(self, bias_store: "BiasStore" = None, freshness: "timedelta" = None):
+        # Accept bias_store and freshness for compatibility with TradingOrchestrator
+        # CEO FIX Jan 15, 2026: Orchestrator passes these args
+        self.bias_store = bias_store
+        self.freshness = freshness
         self.current_bias = "neutral"
         self.confidence = 0.5
 
@@ -52,7 +56,13 @@ class BiasStore:
     """Persists bias snapshots to disk."""
 
     def __init__(self, bias_dir: Optional[Path | str] = None):
-        self.bias_dir = Path(bias_dir) if bias_dir else Path("data/bias")
+        # Handle both str and Path inputs (CEO FIX Jan 15, 2026)
+        if bias_dir is None:
+            self.bias_dir = Path("data/bias")
+        elif isinstance(bias_dir, str):
+            self.bias_dir = Path(bias_dir)
+        else:
+            self.bias_dir = bias_dir
         self.bias_dir.mkdir(parents=True, exist_ok=True)
         self.snapshots: list[BiasSnapshot] = []
 

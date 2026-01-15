@@ -1,46 +1,75 @@
 {
-  "last_updated": "2026-01-15T03:20:00.000000",
-  "challenge": {
-    "current_day": 76,
-    "total_days": 90,
-    "start_date": "2025-11-01",
-    "target_end_date": "2026-01-30",
-    "phase": "paper_trading_validation"
-  },
+  "last_updated": "2026-01-15T17:57:00.000000",
   "portfolio": {
-    "equity": 4959.26,
-    "cash": 4959.26
+    "equity": 4960.26,
+    "cash": 4555.13
   },
   "paper_account": {
-    "equity": 4959.26,
-    "cash": 4959.26,
-    "buying_power": 9918.52,
-    "total_pl": -40.73999999999978,
-    "total_pl_pct": -0.81,
-    "positions_count": 0,
-    "daily_change": -65.58453843149982
+    "equity": 4960.26,
+    "cash": 4555.13,
+    "buying_power": 9218.39,
+    "total_pl": -39.74,
+    "total_pl_pct": -0.79,
+    "positions_count": 4,
+    "daily_change": 1.88
   },
-  "positions": [],
+  "positions": [
+    {
+      "symbol": "SPY",
+      "qty": 0.144198737,
+      "price": 694.68,
+      "value": 100.171979,
+      "pnl": 0.181979,
+      "type": "stock"
+    },
+    {
+      "symbol": "SPY260220P00565000",
+      "qty": 1.0,
+      "price": 0.46,
+      "value": 46.0,
+      "pnl": -1.0,
+      "type": "option"
+    },
+    {
+      "symbol": "SPY260220P00570000",
+      "qty": -1.0,
+      "price": 0.51,
+      "value": -51.0,
+      "pnl": -1.0,
+      "type": "option"
+    },
+    {
+      "symbol": "SPY260220P00660000",
+      "qty": 1.0,
+      "price": 3.04,
+      "value": 304.0,
+      "pnl": -3.0,
+      "type": "option"
+    }
+  ],
   "trades": {
-    "last_trade_date": "2026-01-14",
+    "last_trade_date": "2026-01-15",
     "today_trades": "synced",
-    "total_trades_today": 0,
-    "last_trade_symbol": "none"
+    "total_trades_today": 4,
+    "last_trade_symbol": "SPY",
+    "note": "4 trades executed - SPY shares + credit spread positions"
   },
   "risk": {
-    "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -40.73999999999978,
-    "unrealized_pl": 0
+    "status": "RECOVERING",
+    "total_pl": -39.74,
+    "unrealized_pl": -3.82,
+    "daily_gain": 2.08
   },
   "account": {
-    "current_equity": 4959.26,
-    "total_pl": -40.73999999999978,
-    "total_pl_pct": -0.81,
-    "positions_count": 0
+    "current_equity": 4960.26,
+    "total_pl": -39.74,
+    "total_pl_pct": -0.79,
+    "positions_count": 4
   },
   "meta": {
-    "last_updated": "2026-01-15T16:05:57.931816",
-    "last_sync": "2026-01-15T16:05:57.931823",
-    "sync_mode": "skipped_no_keys"
+    "last_updated": "2026-01-15T17:57:00.000000",
+    "last_sync": "2026-01-15T17:57:00.000000",
+    "sync_mode": "manual_cto_update",
+    "note": "Updated after confirming 4 trades executed via Dialogflow"
   }
 }

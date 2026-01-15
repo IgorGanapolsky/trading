@@ -267,12 +267,50 @@ def find_bull_put_spread(
     return best_spread
 
 
+# Ticker whitelist - MUST match mandatory_trade_gate.py and pre_trade_checklist.py
+# Added Jan 15, 2026 (LL-209): Ensures this script can't bypass ticker restrictions
+# Even if someone runs `python execute_credit_spread.py --symbol SOFI` directly
+ALLOWED_TICKERS = {"SPY", "IWM"}
+
 # Earnings blackout calendar - MUST match trade_gateway.py
 # Added Jan 14, 2026 (LL-205): Script was bypassing TradeGateway blackout checks
 EARNINGS_BLACKOUTS = {
     "SOFI": {"start": "2025-12-30", "end": "2026-02-01", "earnings": "2026-01-30"},
     "F": {"start": "2026-02-03", "end": "2026-02-11", "earnings": "2026-02-10"},
 }
+
+
+def check_ticker_whitelist(symbol: str) -> tuple[bool, str]:
+    """
+    Check if symbol is in allowed ticker whitelist.
+    Returns (is_blocked, reason).
+
+    Added Jan 15, 2026 (LL-209): The $5K account switched to SOFI because
+    we incorrectly believed SPY was "too expensive". SPY credit spreads only
+    need $500 collateral (not $58K). This check prevents any non-SPY/IWM trades
+    even if this script is run directly, bypassing the workflow.
+    """
+    # Extract underlying from options symbol if needed
+    underlying = symbol.upper()
+    if len(symbol) > 10:  # OCC options symbol
+        # For SPY/IWM (3 char tickers), underlying is first 3 chars
+        if symbol[:3].upper() in ALLOWED_TICKERS:
+            underlying = symbol[:3].upper()
+        else:
+            # Extract until we hit a digit
+            underlying = ""
+            for char in symbol.upper():
+                if char.isdigit():
+                    break
+                underlying += char
+
+    if underlying not in ALLOWED_TICKERS:
+        return (
+            True,
+            f"{underlying} not in whitelist. Per CLAUDE.md: SPY/IWM ONLY until strategy proven.",
+        )
+
+    return False, ""
 
 
 def check_earnings_blackout(symbol: str) -> tuple[bool, str]:
@@ -310,7 +348,20 @@ def execute_bull_put_spread(
     Much more capital efficient than cash-secured puts!
     Collateral = spread width × 100 (NOT full strike price)
     """
-    # CHECK 0: Earnings blackout (LL-205 fix - Jan 14, 2026)
+    # CHECK 0: Ticker whitelist (LL-209 fix - Jan 15, 2026)
+    # The $5K account lost money because we switched from SPY to SOFI due to
+    # a math error. SPY credit spreads only need $500 collateral, not $58K.
+    # This check blocks ANY ticker not in the whitelist, even if run directly.
+    is_blocked, whitelist_reason = check_ticker_whitelist(symbol)
+    if is_blocked:
+        logger.error(f"🛑 TICKER NOT ALLOWED: {whitelist_reason}")
+        return {
+            "status": "BLOCKED_TICKER",
+            "reason": whitelist_reason,
+            "action": "Use SPY or IWM only. Credit spreads on SPY only need $500 collateral.",
+        }
+
+    # CHECK 1: Earnings blackout (LL-205 fix - Jan 14, 2026)
     # This script was bypassing TradeGateway, causing SOFI blackout violation
     is_blocked, blackout_reason = check_earnings_blackout(symbol)
     if is_blocked:

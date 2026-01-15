@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """
-Simple Daily Trader - GUARANTEED TO EXECUTE
+Simple Daily Trader - SPY CREDIT SPREADS ONLY
 
-This script exists because our complex system trades 0 times/day.
-It implements ONE proven strategy: Cash-Secured Puts on SPY.
+CRITICAL UPDATE Jan 15, 2026 (Deep Research Revision):
+- 100K account succeeded with SPY focus (+$16,661)
+- 5K account failed with SOFI (individual stock risk)
+- Strategy: CREDIT SPREADS on SPY/IWM only per CLAUDE.md
 
-Research backing (Dec 2025):
-- Cash-secured puts: 70-80% win rate historically
-- SPY: Most liquid options, tight spreads
-- 30-45 DTE: Optimal theta decay window
-- 15-20 delta: 80%+ probability of profit
+Why Credit Spreads (not naked puts):
+- Defined risk: Max loss = spread width - premium (~$440)
+- $500 collateral per spread (fits $5K account)
+- 30-delta short, 20-delta long = ~$60-70 premium
+- Close at 50% profit to boost win rate to ~80%
 
-THIS SCRIPT WILL TRADE. No excuses. No complex gates.
+THIS SCRIPT WILL TRADE. No excuses. SPY/IWM only.
 """
 
 import json
@@ -37,19 +39,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Configuration - FIXED Jan 12 2026: Use SOFI not SPY (SPY needs $50K+, we have $5K)
+# Configuration - UPDATED Jan 15 2026: Back to SPY per Deep Research Revision
+# Credit spreads on SPY only need ~$500 collateral (spread width), not $50K!
+# 100K account succeeded with SPY focus (+$16,661). 5K account failed with SOFI.
 CONFIG = {
-    "symbol": "SOFI",  # SOFI ~$14/share, CSP at $10 strike = $1,000 collateral (fits $5K account)
-    "strategy": "cash_secured_put",
-    "target_delta": 0.20,  # 20 delta = ~80% win rate
+    "symbol": "SPY",  # SPY ~$590/share, credit spread = $500 collateral (fits $5K account!)
+    "strategy": "credit_spread",  # Bull put spread per CLAUDE.md
+    "target_delta": 0.30,  # 30 delta per CLAUDE.md strategy
     "target_dte": 30,  # 30 days to expiration
     "max_dte": 45,
     "min_dte": 21,
-    "position_size_pct": 0.20,  # 20% of portfolio per trade (can do multiple $1K positions)
-    "take_profit_pct": 0.50,  # Close at 50% profit
-    "max_positions": 10,  # Safety buffer to prevent trading blockage (LL-079)
-    "north_star_daily_target": 100.0,  # $100/day profit target
-    "fallback_symbols": ["F", "PLTR"],  # Backup symbols if SOFI not available
+    "position_size_pct": 0.10,  # 10% of portfolio per spread (~$500 collateral)
+    "take_profit_pct": 0.50,  # Close at 50% profit (improves win rate)
+    "max_positions": 1,  # Per CLAUDE.md: "1 spread at a time"
+    "north_star_daily_target": 10.0,  # $5-10/day realistic for $5K (CLAUDE.md updated)
+    "fallback_symbols": ["IWM"],  # Only IWM as backup per CLAUDE.md whitelist
 }
 
 

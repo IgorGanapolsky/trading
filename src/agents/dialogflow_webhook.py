@@ -13,6 +13,7 @@ Version History:
 - v3.2.0 Jan 13, 2026: Add CI status check to readiness assessment (CEO directive)
 - v3.3.0 Jan 13, 2026: Fix direct P/L queries - conversational "How much money" answers
 - v3.4.0 Jan 14, 2026: Fix stale P/L data - use GitHub API instead of raw URL (bypass CDN cache)
+- v3.5.0 Jan 15, 2026: Query Alpaca API DIRECTLY for real-time P/L (fixes stale data issue)
 
 Architecture (v3.0.0):
 - Primary: Vertex AI RAG (cloud semantic search with text-embedding-004)
@@ -69,7 +70,7 @@ WEBHOOK_AUTH_TOKEN = os.environ.get("DIALOGFLOW_WEBHOOK_TOKEN", "")
 app = FastAPI(
     title="Trading AI RAG Webhook",
     description="Dialogflow CX webhook for lessons AND trade history queries",
-    version="3.4.0",  # Fix stale P/L data - use GitHub API instead of raw URL
+    version="3.5.0",  # Query Alpaca API DIRECTLY for real-time P/L
 )
 
 # Initialize rate limiter if available
@@ -173,11 +174,147 @@ def format_rag_response(results: list, query: str, source: str) -> str:
     return "\n".join(response_parts)
 
 
+def query_alpaca_api_direct() -> dict | None:
+    """
+    Query Alpaca API directly for REAL-TIME portfolio data.
+
+    FIX Jan 15, 2026: Dialogflow was showing stale data from cached files.
+    This function queries Alpaca directly for accurate, real-time data.
+
+    Returns:
+        dict with account data or None if API unavailable
+    """
+    import json
+    import urllib.request
+
+    # Get Alpaca credentials from environment
+    api_key = os.environ.get("ALPACA_PAPER_TRADING_5K_API_KEY", "")
+    api_secret = os.environ.get("ALPACA_PAPER_TRADING_5K_API_SECRET", "")
+
+    if not api_key or not api_secret:
+        logger.warning("Alpaca API credentials not available in environment")
+        return None
+
+    try:
+        # Query Alpaca account endpoint
+        account_url = "https://paper-api.alpaca.markets/v2/account"
+        req = urllib.request.Request(
+            account_url,
+            headers={
+                "accept": "application/json",
+                "APCA-API-KEY-ID": api_key,
+                "APCA-API-SECRET-KEY": api_secret,
+            },
+        )
+        ssl_context = ssl.create_default_context()
+        with urllib.request.urlopen(req, timeout=10, context=ssl_context) as response:
+            account = json.loads(response.read().decode("utf-8"))
+
+        # Query positions
+        positions_url = "https://paper-api.alpaca.markets/v2/positions"
+        req = urllib.request.Request(
+            positions_url,
+            headers={
+                "accept": "application/json",
+                "APCA-API-KEY-ID": api_key,
+                "APCA-API-SECRET-KEY": api_secret,
+            },
+        )
+        with urllib.request.urlopen(req, timeout=10, context=ssl_context) as response:
+            positions = json.loads(response.read().decode("utf-8"))
+
+        # Query today's fills
+        from datetime import datetime
+
+        try:
+            from zoneinfo import ZoneInfo
+
+            today_str = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
+        except ImportError:
+            from datetime import timezone
+
+            today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+        activities_url = (
+            f"https://paper-api.alpaca.markets/v2/account/activities/FILL?date={today_str}"
+        )
+        req = urllib.request.Request(
+            activities_url,
+            headers={
+                "accept": "application/json",
+                "APCA-API-KEY-ID": api_key,
+                "APCA-API-SECRET-KEY": api_secret,
+            },
+        )
+        with urllib.request.urlopen(req, timeout=10, context=ssl_context) as response:
+            activities = json.loads(response.read().decode("utf-8"))
+
+        equity = float(account.get("equity", 0))
+        last_equity = float(account.get("last_equity", 0))
+        daily_change = equity - last_equity
+
+        logger.info(
+            f"✅ Alpaca API: equity=${equity:.2f}, daily_change=${daily_change:.2f}, fills={len(activities)}"
+        )
+
+        return {
+            "equity": equity,
+            "cash": float(account.get("cash", 0)),
+            "buying_power": float(account.get("buying_power", 0)),
+            "last_equity": last_equity,
+            "daily_change": daily_change,
+            "positions_count": len(positions),
+            "trades_today": len(activities),
+            "source": "alpaca_api_direct",
+        }
+
+    except Exception as e:
+        logger.warning(f"Alpaca API query failed: {e}")
+        return None
+
+
 def get_current_portfolio_status() -> dict:
-    """Get current portfolio status from system_state.json (local or GitHub)."""
+    """Get current portfolio status - PREFER Alpaca API, fallback to cached files."""
     import json
     from datetime import datetime, timezone
 
+    # FIX Jan 15, 2026: Query Alpaca API FIRST for real-time data
+    alpaca_data = query_alpaca_api_direct()
+
+    # Get actual today's date
+    try:
+        from zoneinfo import ZoneInfo
+
+        today_str = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
+    except ImportError:
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    if alpaca_data:
+        # Use fresh Alpaca data directly
+        return {
+            "live": {
+                "equity": 0,  # Live account not queried
+                "total_pl": 0,
+                "total_pl_pct": 0,
+                "positions_count": 0,
+            },
+            "paper": {
+                "equity": alpaca_data["equity"],
+                "total_pl": alpaca_data["equity"] - 5000,  # Started with $5K
+                "total_pl_pct": ((alpaca_data["equity"] - 5000) / 5000) * 100,
+                "positions_count": alpaca_data["positions_count"],
+                "win_rate": 0,  # Not tracked via API
+                "daily_change": alpaca_data["daily_change"],
+            },
+            "last_trade_date": today_str if alpaca_data["trades_today"] > 0 else "unknown",
+            "trades_today": alpaca_data["trades_today"],
+            "actual_today": today_str,
+            "challenge_day": 76,  # Hardcoded for now
+            "source": "alpaca_api_direct",
+        }
+
+    # FALLBACK: Use cached files if Alpaca API unavailable
+    logger.warning("Alpaca API unavailable, falling back to cached files")
     state = None
 
     # Try local file first
@@ -186,7 +323,7 @@ def get_current_portfolio_status() -> dict:
         if state_path.exists():
             with open(state_path) as f:
                 state = json.load(f)
-            logger.info("Loaded portfolio from local system_state.json")
+            logger.info("Loaded portfolio from local system_state.json (FALLBACK)")
     except Exception as e:
         logger.warning(f"Failed to read local system state: {e}")
 
@@ -214,7 +351,7 @@ def get_current_portfolio_status() -> dict:
                 content_b64 = api_response.get("content", "")
                 content = base64.b64decode(content_b64).decode("utf-8")
                 state = json.loads(content)
-            logger.info("Loaded portfolio from GitHub API (fresh data)")
+            logger.info("Loaded portfolio from GitHub API (FALLBACK)")
         except Exception as e:
             logger.warning(f"Failed to fetch from GitHub API: {e}")
 
@@ -1351,7 +1488,7 @@ async def root():
     trade_count = len(query_trades("all", limit=1000))
     return {
         "service": "Trading AI RAG Webhook",
-        "version": "3.4.0",  # Fix stale P/L data - use GitHub API instead of raw URL
+        "version": "3.5.0",  # Query Alpaca API DIRECTLY for real-time P/L
         "vertex_ai_rag_enabled": vertex_rag is not None,
         "local_lessons_loaded": len(local_rag.lessons),
         "trades_loaded": trade_count,

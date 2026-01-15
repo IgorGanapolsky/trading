@@ -129,16 +129,25 @@ class RiskThresholds:
 
 
 class TargetSymbols:
-    """Target symbols for trading strategies (per CLAUDE.md)."""
+    """Target symbols for trading strategies (per CLAUDE.md - Jan 15 revision).
 
-    # Primary CSP targets - cheap stocks for $500 capital
-    CSP_WATCHLIST = ["SOFI", "F"]
+    CRITICAL UPDATE Jan 15, 2026 (Deep Research Revision):
+    - 100K account succeeded with SPY focus (+$16,661)
+    - 5K account failed with SOFI (individual stock risk)
+    - CREDIT SPREADS on SPY/IWM only - defined risk, $500 collateral
+    - NO individual stocks until proven in paper trading
+    """
 
-    # Max strike price for CSPs with small capital
-    MAX_CSP_STRIKE = 5.0
+    # Primary targets - ETFs ONLY per CLAUDE.md strategy
+    # Credit spread collateral = spread width (~$500), NOT full strike price
+    CSP_WATCHLIST = ["SPY", "IWM"]
 
-    # Fallback symbols if primary not available
-    FALLBACK_SYMBOLS = ["PLTR", "T", "INTC"]
+    # Max strike for credit spreads (SPY ~$590, IWM ~$220)
+    # This is informational - actual strike from 30-delta put
+    MAX_CSP_STRIKE = 600.0
+
+    # BLACKLIST - DO NOT TRADE until proven
+    BLACKLIST = ["SOFI", "F", "PLTR", "T", "INTC"]  # Individual stocks blocked
 
 
 # Singleton access for easy importing

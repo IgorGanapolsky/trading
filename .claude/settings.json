@@ -196,7 +196,7 @@
           {
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/ralph_stop_hook.sh",
-            "timeout": 5
+            "timeout": 5000
           }
         ]
       }

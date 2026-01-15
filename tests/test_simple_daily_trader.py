@@ -30,17 +30,20 @@ pytestmark = pytest.mark.skipif(not DOTENV_AVAILABLE, reason="python-dotenv not 
 class TestMaxPositionsConfig:
     """Test max_positions configuration to prevent trading blockage."""
 
-    def test_max_positions_is_sufficient(self):
-        """CRITICAL: max_positions must be >= 10 to prevent blocking trades.
+    def test_max_positions_is_valid(self):
+        """Verify max_positions is configured.
 
-        This test exists because max_positions=3 blocked all trades for 13 days.
-        See lesson LL-079.
+        Note: max_positions=1 is now valid per CLAUDE.md strategy update (Jan 2026).
+        The $5K account uses "1 spread at a time" for 5% max position risk.
+        This is different from the $100K account which had max_positions=10.
+
+        See lesson LL-079 for original issue, LL-209 for strategy update.
         """
         from scripts.simple_daily_trader import CONFIG
 
-        assert CONFIG["max_positions"] >= 10, (
-            f"max_positions is {CONFIG['max_positions']} but must be >= 10. "
-            "Lower values can block trading when we have multiple options positions."
+        assert CONFIG["max_positions"] >= 1, (
+            f"max_positions is {CONFIG['max_positions']} but must be >= 1. "
+            "At least 1 position must be allowed for trading."
         )
 
     def test_config_has_required_keys(self):
@@ -102,13 +105,16 @@ class TestShouldOpenPosition:
 
         mock_client = MagicMock()
 
-        # With max_positions=10, 4 positions should NOT block
+        # With max_positions=1 (per CLAUDE.md), 4 options positions SHOULD block
+        # because we already have 4 positions and max is 1
+        # This is CORRECT behavior for the $5K account strategy
         result = should_open_position(mock_client, CONFIG)
 
-        # Should return True because 4 < 10
-        assert result is True, (
-            "should_open_position returned False with 4 positions and max=10. "
-            "This would cause the 13-day outage bug again!"
+        # With max_positions=1 and 4 existing positions, should return False
+        # This is the expected behavior per CLAUDE.md "1 spread at a time"
+        assert result is False, (
+            "should_open_position returned True with 4 positions but max=1. "
+            "Per CLAUDE.md $5K strategy, we should only have 1 spread at a time."
         )
 
     @patch("scripts.simple_daily_trader.datetime")

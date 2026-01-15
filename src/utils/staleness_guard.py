@@ -67,7 +67,9 @@ def check_data_staleness(
         with open(state_path) as f:
             state = json.load(f)
 
-        last_updated = state.get("meta", {}).get("last_updated")
+        # Check both meta.last_updated (preferred) and top-level last_updated (fallback)
+        # Fix for Jan 15 crisis: top-level timestamp was being ignored
+        last_updated = state.get("meta", {}).get("last_updated") or state.get("last_updated")
 
         if not last_updated:
             return StalenessResult(
