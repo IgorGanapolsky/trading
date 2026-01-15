@@ -1,67 +1,39 @@
 {
-  "last_updated": "2026-01-15T17:44:37.833222",
+  "last_updated": "2026-01-14T23:36:02.623871",
   "portfolio": {
-    "equity": 4954.3,
-    "cash": 4555.13
+    "equity": 4959.26,
+    "cash": 4959.26
   },
   "paper_account": {
-    "equity": 4954.3,
-    "cash": 4555.13,
-    "buying_power": 9210.43,
-    "total_pl": -45.69999999999982,
-    "total_pl_pct": -0.91,
-    "positions_count": 4,
-    "daily_change": -4.880000000000109
+    "equity": 4959.26,
+    "cash": 4959.26,
+    "buying_power": 9918.52,
+    "total_pl": -40.73999999999978,
+    "total_pl_pct": -0.81,
+    "positions_count": 0,
+    "daily_change": -65.58453843149982
   },
-  "positions": [
-    {
-      "symbol": "SPY",
-      "qty": 0.144198737,
-      "price": 694.68,
-      "value": 100.171979,
-      "pnl": 0.181979,
-      "type": "stock"
-    },
-    {
-      "symbol": "SPY260220P00565000",
-      "qty": 1.0,
-      "price": 0.46,
-      "value": 46.0,
-      "pnl": -1.0,
-      "type": "option"
-    },
-    {
-      "symbol": "SPY260220P00570000",
-      "qty": -1.0,
-      "price": 0.51,
-      "value": -51.0,
-      "pnl": -1.0,
-      "type": "option"
-    },
-    {
-      "symbol": "SPY260220P00660000",
-      "qty": 1.0,
-      "price": 3.04,
-      "value": 304.0,
-      "pnl": -3.0,
-      "type": "option"
-    }
-  ],
+  "positions": [],
   "trades": {
-    "last_trade_date": "2026-01-15",
+    "last_trade_date": "2026-01-14",
     "today_trades": "synced",
     "total_trades_today": 0,
-    "last_trade_symbol": "SPY"
+    "last_trade_symbol": "none"
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -45.69999999999982,
-    "unrealized_pl": -4.818021
+    "total_pl": -40.73999999999978,
+    "unrealized_pl": 0
   },
   "account": {
-    "current_equity": 4954.3,
-    "total_pl": -45.69999999999982,
-    "total_pl_pct": -0.91,
-    "positions_count": 4
+    "current_equity": 4959.26,
+    "total_pl": -40.73999999999978,
+    "total_pl_pct": -0.81,
+    "positions_count": 0
+  },
+  "meta": {
+    "last_updated": "2026-01-15T14:01:36.589744",
+    "last_sync": "2026-01-15T14:01:36.589750",
+    "sync_mode": "skipped_no_keys"
   }
 }
