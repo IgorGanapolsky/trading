@@ -588,7 +588,7 @@ def generate_world_class_dashboard() -> str:
 | **Today's P/L** | ${basic_metrics.get("today_pl", 0):+,.2f} ({basic_metrics.get("today_pl_pct", 0):+.2f}%) |
 | **Status** | {"⏸️ Accumulation Phase" if basic_metrics.get("live_equity", 0) < 200 else "✅ Active"} |
 
-> *Live account is building capital through $10/day deposits. Target: $200 before first options trade.*
+> *Live account is building capital through $25/day deposits. Target: $200 before first options trade.*
 
 ### 📝 PAPER Account (R&D)
 
@@ -1095,7 +1095,7 @@ def generate_world_class_dashboard() -> str:
         dashboard += "- **MODE**: 📈 STANDARD (Weekday)\n"
         dashboard += "- **Strategy**: Momentum (MACD + RSI + Volume)\n"
         dashboard += "- **Allocation**: 70% Core ETFs (SPY/QQQ/VOO), 30% Growth (NVDA/GOOGL/AMZN)\n"
-        dashboard += "- **Daily Investment**: $10/day fixed\n"
+        dashboard += "- **Daily Investment**: $25/day fixed\n"
 
     dashboard += """
 ---
