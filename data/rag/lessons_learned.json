@@ -2048,5 +2048,24 @@
       "resource-evaluation",
       "sky-view-trading"
     ]
+  },
+  {
+    "id": "LL-217-rag-blocked-all-trades-jan15",
+    "title": "RAG Incorrectly Blocked ALL Credit Spread Trades (Jan 15, 2026)",
+    "category": "bug",
+    "severity": "CRITICAL",
+    "description": "execute_credit_spread.py blocked on ANY CRITICAL RAG lesson matching keywords. LL-185 'North Star Revision' is marked CRITICAL (important strategy info) but was blocking ALL trades. Result: 0 trades executed despite CI showing 'Success'.",
+    "root_cause": "Overly aggressive RAG blocking logic: `if lesson.severity == 'CRITICAL': return BLOCKED`. Any lesson with CRITICAL severity that matched keywords like 'spread' or 'losses' would block trades, even informational lessons.",
+    "fix": "Changed RAG check to only WARN about CRITICAL lessons. Only blocks if lesson explicitly contains 'do not trade' or 'block all trades' language.",
+    "prevention": "1. CRITICAL severity should mean 'important' not 'blocking'. 2. Only block on explicit block language. 3. Test RAG logic before deploying. 4. Add diagnostic logging to see why NO_TRADE occurs.",
+    "created": "2026-01-15",
+    "tags": [
+      "bug",
+      "critical",
+      "rag",
+      "credit-spread",
+      "zero-trades",
+      "false-positive"
+    ]
   }
 ]
