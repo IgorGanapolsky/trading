@@ -27,7 +27,7 @@ try:
     with open('$STATE_FILE') as f:
         state = json.load(f)
 
-    last_updated_str = state.get('meta', {}).get('last_updated', '')
+    last_updated_str = state.get('last_updated', '') or state.get('meta', {}).get('last_updated', '')
     if not last_updated_str:
         print('MISSING')
         sys.exit(0)
