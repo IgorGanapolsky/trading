@@ -199,6 +199,8 @@ class TradingOrchestrator:
         # Capital efficiency calculator - determines what strategies are viable
         self.capital_calculator = get_capital_calculator(daily_deposit_rate=10.0)
         self.session_profile: dict[str, Any] | None = None
+        # Mental coach disabled - class not implemented (Jan 15, 2026 fix)
+        self.mental_coach = None
 
         # Jan 10, 2026: Extracted classes for cleaner architecture
         # OptionsStrategyCoordinator handles Gate 6/7 (options strategies)
