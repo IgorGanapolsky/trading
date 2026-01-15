@@ -11,7 +11,9 @@
     "total_pl": -40.73999999999978,
     "total_pl_pct": -0.81,
     "positions_count": 0,
-    "daily_change": -65.58453843149982
+    "daily_change": -65.58453843149982,
+    "current_equity": 4959.26,
+    "starting_balance": 5000.0
   },
   "positions": [],
   "trades": {
@@ -29,11 +31,12 @@
     "current_equity": 4959.26,
     "total_pl": -40.73999999999978,
     "total_pl_pct": -0.81,
-    "positions_count": 0
+    "positions_count": 0,
+    "starting_balance": 5000.0
   },
   "meta": {
-    "last_updated": "2026-01-15T14:01:36.589744",
-    "last_sync": "2026-01-15T14:01:36.589750",
+    "last_updated": "2026-01-15T15:42:11.610162",
+    "last_sync": "2026-01-15T15:40:07.004388",
     "sync_mode": "skipped_no_keys"
   }
 }
