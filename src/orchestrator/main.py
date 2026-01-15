@@ -193,7 +193,7 @@ class TradingOrchestrator:
             confidence_floor=float(os.getenv("ANOMALY_CONFIDENCE_FLOOR", "0.45")),
         )
         self.failure_manager = FailureIsolationManager(self.telemetry)
-        self.options_risk_monitor = OptionsRiskMonitor(paper=paper)
+        self.options_risk_monitor = OptionsRiskMonitor()
         # CRITICAL: All trades must go through the gateway - no direct executor calls
         self.trade_gateway = TradeGateway(executor=self.executor, paper=paper)
         # Capital efficiency calculator - determines what strategies are viable
