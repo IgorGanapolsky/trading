@@ -38,7 +38,7 @@ except Exception:  # noqa: BLE001
 # - Daily drawdown circuit: 2%
 # =============================================================================
 
-OPTIMIZED_DAILY_INVESTMENT = 10.0  # Base daily investment amount
+OPTIMIZED_DAILY_INVESTMENT = 25.0  # Base daily investment amount
 
 # Theta-pivot allocation (Dec 11, 2025 strategic shift)
 # 70% theta, 30% momentum - NO CRYPTO (Lesson #052)
@@ -86,10 +86,10 @@ assert abs(sum(OPTIMIZED_ALLOCATION.values()) - 1.0) < 0.001, (
 
 class AppConfig(BaseSettings):
     # Trading
-    DAILY_INVESTMENT: float = Field(default=10.0, ge=0.01, description="Daily budget in USD")
+    DAILY_INVESTMENT: float = Field(default=25.0, ge=0.01, description="Daily budget in USD")
     USE_OPTIMIZED_ALLOCATION: bool = Field(
         default=False,
-        description="Use optimized $10/day allocation (theta, momentum, options reserve)",
+        description="Use optimized $25/day allocation (theta, momentum, options reserve)",
     )
     ALPACA_SIMULATED: bool = Field(default=True)
     SIMULATED_EQUITY: float = Field(default=100000.0, ge=0.0)
