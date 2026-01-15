@@ -69,6 +69,8 @@ jobs:
 
       - name: Update performance log
         if: steps.market_check.outputs.skip != 'true'
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           python3 scripts/update_performance_log.py
 
@@ -80,6 +82,8 @@ jobs:
       - name: Generate blog post
         id: generate
         if: steps.market_check.outputs.skip != 'true'
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           python3 scripts/generate_daily_blog_post.py 2>&1 | tee /tmp/blog_output.txt
 
