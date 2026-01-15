@@ -8,10 +8,12 @@
     "equity": 4989.81,
     "cash": 4260.12,
     "buying_power": 8918.93,
-    "total_pl": -10.1899999999996,
+    "total_pl": -10.19,
     "total_pl_pct": -0.2,
     "positions_count": 6,
-    "daily_change": 30.63000000000011
+    "daily_change": 30.63,
+    "win_rate": 0,
+    "today_trades": 5
   },
   "positions": [
     {
@@ -65,18 +67,18 @@
   ],
   "trades": {
     "last_trade_date": "2026-01-15",
-    "today_trades": "synced",
-    "total_trades_today": 0,
+    "today_trades": 5,
+    "total_trades_today": 5,
     "last_trade_symbol": "SPY"
   },
   "risk": {
     "status": "WARNING - NEGATIVE P/L",
-    "total_pl": -10.1899999999996,
-    "unrealized_pl": 30.732675999999998
+    "total_pl": -10.19,
+    "unrealized_pl": 30.73
   },
   "account": {
     "current_equity": 4989.81,
-    "total_pl": -10.1899999999996,
+    "total_pl": -10.19,
     "total_pl_pct": -0.2,
     "positions_count": 6
   }
