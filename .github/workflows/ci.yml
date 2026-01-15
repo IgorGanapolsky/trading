@@ -68,6 +68,10 @@ jobs:
         run: |
           python scripts/rag_pre_deployment_check.py --check-workflows
 
+      - name: Validate ticker whitelist (LL-197 Prevention)
+        run: |
+          python scripts/validate_ticker_whitelist.py
+
   tests:
     name: Run All Tests
     runs-on: ubuntu-latest
